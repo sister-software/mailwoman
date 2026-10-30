@@ -11,7 +11,7 @@
  */
 
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { pyRound, pySum } from "@mailwoman/core/numeric"
@@ -73,6 +73,88 @@ export async function writeCJKCorpusParquet(
 	columns: ParquetColumns = CJK_CORPUS_COLUMNS
 ): Promise<void> {
 	await writeColumnParquetFile(await stampRowLicenses(rows, context), columns, path)
+}
+
+/**
+ * Which rows of a split {@linkcode writeCJKSplit} counts coverage over.
+ */
+export const CJKStatsSample = {
+	/**
+	 * The first `n` records of every part, as the label corpora count them.
+	 */
+	FirstOfEachPart: "first-of-each-part",
+	/**
+	 * The first `n` records of the split, as the KR registry corpus counts them.
+	 */
+	FirstOfSplit: "first-of-split",
+} as const
+
+export type CJKStatsSample = (typeof CJKStatsSample)[keyof typeof CJKStatsSample]
+
+/**
+ * Options for {@linkcode writeCJKSplit}.
+ */
+export interface WriteCJKSplitOptions<T> {
+	/**
+	 * The split's directory, created when absent.
+	 */
+	directory: PathBuilderLike
+	rows: readonly T[]
+	rowsPerPart: number
+	/**
+	 * Encodes one part's rows, in order.
+	 *
+	 * A builder whose encoder draws from a generator encodes the part in one call,
+	 * so the draws follow the part order.
+	 */
+	encodePart: (rows: readonly T[]) => CJKRecord[]
+	/**
+	 * The part file name's prefix: `part` writes `part-0000.parquet`.
+	 */
+	partPrefix: string
+	/**
+	 * The context named in a refused license stamp.
+	 */
+	context: string
+	statsSample: { kind: CJKStatsSample; rows: number }
+}
+
+/**
+ * One written split's row and part counts and the coverage over its sampled records.
+ */
+export interface CJKSplitReport {
+	rows: number
+	parts: number
+	coverage: CoverageStats
+}
+
+/**
+ * Writes one split as parquet parts of `rowsPerPart` rows each, and counts its coverage.
+ */
+export async function writeCJKSplit<T>(options: WriteCJKSplitOptions<T>): Promise<CJKSplitReport> {
+	await makeDirectories(options.directory)
+
+	const sampled: CJKRecord[] = []
+	let parts = 0
+	let rows = 0
+
+	for (let start = 0; start < options.rows.length; start += options.rowsPerPart) {
+		const records = options.encodePart(options.rows.slice(start, start + options.rowsPerPart))
+		const name = `${options.partPrefix}-${String(parts).padStart(4, "0")}.parquet`
+
+		await writeCJKCorpusParquet(records, resolvePath(options.directory, name), options.context)
+
+		parts++
+		rows += records.length
+
+		if (options.statsSample.kind === CJKStatsSample.FirstOfEachPart) {
+			sampled.push(...records.slice(0, options.statsSample.rows))
+		} else if (sampled.length < options.statsSample.rows) {
+			sampled.push(...records.slice(0, options.statsSample.rows - sampled.length))
+		}
+	}
+
+	return { rows, parts, coverage: coverageStats(sampled) }
 }
 
 /**

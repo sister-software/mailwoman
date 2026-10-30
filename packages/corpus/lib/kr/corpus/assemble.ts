@@ -14,7 +14,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { isDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pySum } from "@mailwoman/core/numeric"
 import { runFileSync } from "@mailwoman/core/process"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
@@ -25,6 +25,7 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	type CJKRecord,
+	CJKStatsSample,
 	coverageStats,
 	MAX_FIELD_CHARS,
 	muniBucket,
@@ -34,7 +35,7 @@ import {
 	selectExact,
 	verifyCJKRecord,
 	waterFillQuotas,
-	writeCJKCorpusParquet,
+	writeCJKSplit,
 } from "#cjk/builder"
 import { type JusoLabelRow, parenthetical, readJusoLabelRows } from "#kr/adapters/juso/label-rows"
 import { aliasKeyIndex, emptyKeyIndex, indexLabelRow, type KeyIndex } from "#kr/adapters/localdata/key-index"
@@ -181,8 +182,6 @@ export const KR_CORPUS_DEFAULTS = {
 	maxFieldChars: MAX_FIELD_CHARS,
 	seed: 42,
 } as const
-
-const partName = (prefix: string, part: number) => `${prefix}-${String(part).padStart(4, "0")}.parquet`
 
 /**
  * Pass 1: counts eligible register rows per 시도 and builds the key index, without a draw.
@@ -399,23 +398,18 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<Map<strin
 		["train", train],
 		["val", val],
 	] as const) {
-		await makeDirectories(resolvePath(outDir, split))
-
-		const statsInput: CJKRecord[] = []
-		let part = 0
-		let written = 0
-
-		for (let start = 0; start < sourceRows.length; start += options.rowsPerPart) {
-			const chunk = sourceRows.slice(start, start + options.rowsPerPart).map(encode)
-
-			await writeCJKCorpusParquet(chunk, resolvePath(outDir, split, partName("kr-part", part)), "KR corpus assembly")
-
-			part++
-			written += chunk.length
-			statsInput.push(...chunk.slice(0, options.statsSamplePerPart))
-		}
-
-		splits.set(split, { rows: written, parts: part, coverage: coverageStats(statsInput) })
+		splits.set(
+			split,
+			await writeCJKSplit({
+				directory: resolvePath(outDir, split),
+				rows: sourceRows,
+				rowsPerPart: options.rowsPerPart,
+				encodePart: (rows) => rows.map(encode),
+				partPrefix: "kr-part",
+				context: "KR corpus assembly",
+				statsSample: { kind: CJKStatsSample.FirstOfEachPart, rows: options.statsSamplePerPart },
+			})
+		)
 	}
 
 	const boardRecords: CJKRecord[] = []
@@ -536,25 +530,18 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<Map<strin
 		["train", registryRows.slice(registryVal)],
 		["val", registryRows.slice(0, registryVal)],
 	] as const) {
-		await makeDirectories(resolvePath(registryDir, split))
-
-		let part = 0
-
-		for (let start = 0; start < splitRows.length; start += options.rowsPerPart) {
-			await writeCJKCorpusParquet(
-				splitRows.slice(start, start + options.rowsPerPart),
-				resolvePath(registryDir, split, partName("kr-registry", part)),
-				"KR registry assembly"
-			)
-
-			part++
-		}
-
-		registrySplits.set(split, {
-			rows: splitRows.length,
-			parts: part,
-			coverage: coverageStats(splitRows.slice(0, options.statsSamplePerPart)),
-		})
+		registrySplits.set(
+			split,
+			await writeCJKSplit({
+				directory: resolvePath(registryDir, split),
+				rows: splitRows,
+				rowsPerPart: options.rowsPerPart,
+				encodePart: (rows) => [...rows],
+				partPrefix: "kr-registry",
+				context: "KR registry assembly",
+				statsSample: { kind: CJKStatsSample.FirstOfSplit, rows: options.statsSamplePerPart },
+			})
+		)
 	}
 
 	const projected = transform(boardPoints.filter((point) => point !== null))

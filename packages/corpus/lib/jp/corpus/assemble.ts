@@ -13,7 +13,7 @@
  */
 
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
@@ -22,6 +22,7 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	type CJKRecord,
+	CJKStatsSample,
 	coverageStats,
 	MAX_FIELD_CHARS,
 	muniBucket,
@@ -30,7 +31,7 @@ import {
 	sealCharVocab,
 	selectExact,
 	waterFillQuotas,
-	writeCJKCorpusParquet,
+	writeCJKSplit,
 } from "#cjk/builder"
 import { normalizeCJKText } from "#cjk/text"
 import {
@@ -362,29 +363,20 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<strin
 		["train", selection.train],
 		["val", selection.val],
 	] as const) {
-		await makeDirectories(resolvePath(outDir, split))
+		const report = await writeCJKSplit({
+			directory: resolvePath(outDir, split),
+			rows: sourceRows,
+			rowsPerPart: options.rowsPerPart,
+			encodePart: (rows) => encoder.encode(rows),
+			partPrefix: "part",
+			context: "JP corpus assembly",
+			statsSample: { kind: CJKStatsSample.FirstOfEachPart, rows: options.statsSamplePerPart },
+		})
 
-		const statsInput: CJKRecord[] = []
-		let part = 0
-		let written = 0
-
-		for (let start = 0; start < sourceRows.length; start += options.rowsPerPart) {
-			const chunk = encoder.encode(sourceRows.slice(start, start + options.rowsPerPart))
-			const name = `part-${String(part).padStart(4, "0")}.parquet`
-
-			await writeCJKCorpusParquet(chunk, resolvePath(outDir, split, name), "JP corpus assembly")
-
-			part++
-			written += chunk.length
-			statsInput.push(...chunk.slice(0, options.statsSamplePerPart))
-		}
-
-		const coverage = coverageStats(statsInput)
-
-		splits.set(split, { rows: written, parts: part, coverage })
+		splits.set(split, report)
 
 		console.log(
-			`${split}: ${written.toLocaleString("en-US")} rows in ${part} parts; BIO char coverage ${coverage.bio_char_coverage_significant.value.toFixed(4)}`
+			`${split}: ${report.rows.toLocaleString("en-US")} rows in ${report.parts} parts; BIO char coverage ${report.coverage.bio_char_coverage_significant.value.toFixed(4)}`
 		)
 	}
 

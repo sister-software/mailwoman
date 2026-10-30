@@ -12,7 +12,7 @@
  */
 
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
@@ -21,6 +21,7 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	type CJKRecord,
+	CJKStatsSample,
 	coverageStats,
 	MAX_FIELD_CHARS,
 	muniBucket,
@@ -29,7 +30,7 @@ import {
 	sealCharVocab,
 	selectExact,
 	waterFillQuotas,
-	writeCJKCorpusParquet,
+	writeCJKSplit,
 } from "#cjk/builder"
 import { normalizeCJKText } from "#cjk/text"
 import { PyRandom } from "#training/pyrandom"
@@ -200,26 +201,19 @@ export async function buildTWCorpus(options: TWCorpusOptions): Promise<Map<strin
 		["train", train],
 		["val", val],
 	] as const) {
-		await makeDirectories(resolvePath(outDir, split))
+		const report = await writeCJKSplit({
+			directory: resolvePath(outDir, split),
+			rows: sourceRows,
+			rowsPerPart: options.rowsPerPart,
+			encodePart: (rows) => rows.map(encode),
+			partPrefix: "tw-part",
+			context: "TW corpus assembly",
+			statsSample: { kind: CJKStatsSample.FirstOfEachPart, rows: options.statsSamplePerPart },
+		})
 
-		const statsInput: CJKRecord[] = []
-		let part = 0
-		let written = 0
+		splits.set(split, report)
 
-		for (let start = 0; start < sourceRows.length; start += options.rowsPerPart) {
-			const chunk = sourceRows.slice(start, start + options.rowsPerPart).map(encode)
-			const name = `tw-part-${String(part).padStart(4, "0")}.parquet`
-
-			await writeCJKCorpusParquet(chunk, resolvePath(outDir, split, name), "TW corpus assembly")
-
-			part++
-			written += chunk.length
-			statsInput.push(...chunk.slice(0, options.statsSamplePerPart))
-		}
-
-		splits.set(split, { rows: written, parts: part, coverage: coverageStats(statsInput) })
-
-		console.log(`${split}: ${written.toLocaleString("en-US")} rows in ${part} parts`)
+		console.log(`${split}: ${report.rows.toLocaleString("en-US")} rows in ${report.parts} parts`)
 	}
 
 	const boardRecords: CJKRecord[] = []
