@@ -289,10 +289,12 @@ jobs:
           echo "edbf4cbed78433d803e90a65f1752e57783d164bce66c95c0872b2ab8f5c159e  $RUNNER_TEMP/libtorch.zip" | sha256sum -c -
           unzip -q "$RUNNER_TEMP/libtorch.zip" -d "$RUNNER_TEMP"
 
+      # MKL reads `MKL_CBWR` when libtorch loads, before the F1 test can set it, so the step sets it here.
       - name: Test the Rust trainer crates
         env:
           LIBTORCH: ${{ runner.temp }}/libtorch
           LD_LIBRARY_PATH: ${{ runner.temp }}/libtorch/lib
+          MKL_CBWR: AVX2
         run: |
           cargo test -p trainer-model -p trainer-loop -p trainer-cli --locked
 
