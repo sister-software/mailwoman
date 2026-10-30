@@ -292,9 +292,13 @@ export interface HeldoutSamplingRule {
 	 * A record is `<source>` plus the part of `source_id` before the last `#`.
 	 * It replaced `per-record-country-kind-hash-order`, which read one row per whole `source_id`.
 	 *
+	 * `per-group-text-hash-order`: rows ordered by the sha256 of their text, then the
+	 * first row of each group up to the quota, as `firstByTextHash` keeps them.
+	 * The trailing-country sample draws this way.
+	 *
 	 * The method enters the dataset version, so a change to which rows a sample reads changes the method name.
 	 */
-	method: "per-record-id-country-kind-hash-order"
+	method: "per-record-id-country-kind-hash-order" | "per-group-text-hash-order"
 	/**
 	 * Rows drawn per country and row kind.
 	 */
