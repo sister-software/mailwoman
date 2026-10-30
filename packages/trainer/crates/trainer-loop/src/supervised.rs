@@ -503,6 +503,15 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		None => 0,
 	};
 	let max_steps = run.train_i64("max_steps")?;
+	// A launch on a finished run resumes at its last step: it has no step left to train, and its final checkpoint and
+	// Fisher artifact are already written.
+	if let Some(dir) = resume_from.as_deref().filter(|_| resume_step >= max_steps) {
+		println!(
+			"[resume] {} is at step {resume_step} of max_steps {max_steps}: the run is complete",
+			dir.display()
+		);
+		return Ok(());
+	}
 	let params: Vec<(String, Tensor)> = model.store.parameters();
 	let mut fisher = None;
 	let mut fisher_window_start = None;

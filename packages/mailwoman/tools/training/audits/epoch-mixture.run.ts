@@ -66,8 +66,7 @@ if (values.json) {
 
 const count = (n: number) => n.toLocaleString("en-US")
 
-const fixed = (value: unknown, digits: number) =>
-	value == null ? "nan" : (value as { value: number }).value.toFixed(digits)
+const fixed = (value: unknown, digits: number) => (typeof value === "number" ? value.toFixed(digits) : "nan")
 
 console.log(`=== epoch mixture audit (${count(report.meta.draws_realized as number)} draws) ===`)
 
@@ -95,7 +94,7 @@ for (const receipt of report.required_corpus_receipts) {
 }
 
 const reps = Object.entries(report.draw_level.per_source)
-	.map(([source, stats]) => [source, (stats.reps_per_row as { value: number } | null)?.value ?? 0] as const)
+	.map(([source, stats]) => [source, typeof stats.reps_per_row === "number" ? stats.reps_per_row : 0] as const)
 	.filter(([, value]) => value)
 
 const medianReps = median(reps.map(([, value]) => value))
