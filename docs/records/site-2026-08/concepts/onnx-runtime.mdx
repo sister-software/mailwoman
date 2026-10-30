@@ -117,8 +117,8 @@ A few subtle issues come up during ONNX export:
 
 ## Where this lives in the code
 
-- **Export script:** `corpus-python/src/mailwoman_train/export/onnx.py`
-- **Quantization:** `corpus-python/src/mailwoman_train/export/quantize.py`
+- **Export:** `packages/trainer/crates/trainer-export/src/export.rs`, which replaced the Python `export/onnx.py` (deleted in #2879)
+- **Quantization:** `packages/trainer/crates/trainer-export/src/quantize.rs`, which replaced `export/quantize.py`
 - **Node runtime wrapper:** `neural/onnx-runner.ts`
 - **Web runtime wrapper:** `neural-web/web-onnx-runner.ts`
 - **Demo integration:** `docs/src/pages/demo/index.tsx`
