@@ -286,6 +286,44 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 		expect(unit.value).toBe("rear entrance")
 	})
 
+	test("keeps a closing paren whose opener is inside the span (Lübben (Spreewald))", () => {
+		const raw = "Aldi, Parkstraße 2, 15907 Lübben (Spreewald)"
+		const tokens: DecoderToken[] = [tok("Lübben", 26, 32, "B-locality"), tok("(Spreewald)", 33, 44, "I-locality")]
+		const locality = findByTag(buildAddressTree(raw, tokens).roots, "locality")!
+
+		expect(locality.value).toBe("Lübben (Spreewald)")
+		expect(raw.slice(locality.start, locality.end)).toBe("Lübben (Spreewald)")
+	})
+
+	test('keeps a closing straight quote whose opener is inside the span (микрорайон "Восход")', () => {
+		const raw = '10, микрорайон "Восход"'
+
+		const tokens: DecoderToken[] = [
+			tok("микрорайон", 4, 14, "B-dependent_locality"),
+			tok('"Восход"', 15, 23, "I-dependent_locality"),
+		]
+
+		const district = findByTag(buildAddressTree(raw, tokens).roots, "dependent_locality")!
+
+		expect(district.value).toBe('микрорайон "Восход"')
+	})
+
+	test("keeps a possessive apostrophe after a word character (Bojangles')", () => {
+		const raw = "Bojangles', 775 Huffman Mill Road, Burlington, 27215"
+		const tokens: DecoderToken[] = [tok("Bojangles',", 0, 11, "B-venue")]
+		const venue = findByTag(buildAddressTree(raw, tokens).roots, "venue")!
+
+		expect(venue.value).toBe("Bojangles'")
+	})
+
+	test("trims a single quote that wraps the span ('The Grange')", () => {
+		const raw = "'The Grange', Fishburn"
+		const tokens: DecoderToken[] = [tok("'The", 0, 4, "B-venue"), tok("Grange',", 5, 13, "I-venue")]
+		const venue = findByTag(buildAddressTree(raw, tokens).roots, "venue")!
+
+		expect(venue.value).toBe("The Grange")
+	})
+
 	test("an all-punctuation paired-quote-only span (empty content) is dropped, not crashed on", () => {
 		const raw = '"", Fishburn'
 		const tokens: DecoderToken[] = [tok('"",', 0, 3, "B-venue"), tok("Fishburn", 4, 12, "B-locality")]

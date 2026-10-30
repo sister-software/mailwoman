@@ -87,6 +87,22 @@ function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 // We preserve the period when it is immediately preceded by \p{L}\p{N} and not separated by whitespace.
 // The slip pattern we guard against is ", 22220" / "Paris 75004," / wrapping quotes,
 // where the punctuation is isolated from the word body.
+/**
+ * The opening character of each closing bracket or quote a span may end on.
+ */
+const CLOSER_OPENERS: Readonly<Record<string, string>> = {
+	")": "(",
+	"]": "[",
+	'"': '"',
+	"”": "“",
+	"»": "«",
+}
+
+/**
+ * The apostrophes a possessive name ends on.
+ */
+const APOSTROPHES = new Set(["'", "’"])
+
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
 	let s = start
 	let e = end
@@ -107,10 +123,22 @@ function trimBoundary(raw: string, start: number, end: number): { start: number;
 
 	// The end trim skips punctuation but preserves a final abbreviation period.
 	while (e > s && !isWordChar(e - 1)) {
-		if (raw[e - 1] === "." && e - 2 >= s && isWordChar(e - 2)) {
+		const last = raw[e - 1]!
+
+		if (last === "." && e - 2 >= s && isWordChar(e - 2)) {
 			// Abbreviation-dot suffix: "Str." / "Ave." — adjacent to the last word char, preserve.
 			break
 		}
+
+		// A closer whose opener sits inside the span belongs to it: `Lübben (Spreewald)`, `микрорайон "Восход"`.
+		// A span wrapped in quotes has lost its opener to the start trim, so its closer is trimmed.
+		const opener = CLOSER_OPENERS[last]
+
+		if (opener && raw.slice(s, e - 1).includes(opener)) break
+
+		// A possessive apostrophe after a word character belongs to the name (`Bojangles'`),
+		// unless the same quote opens the span, which makes it a wrapping quote.
+		if (APOSTROPHES.has(last) && e - 2 >= s && isWordChar(e - 2) && raw[s - 1] !== last) break
 
 		e--
 	}
