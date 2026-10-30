@@ -6,9 +6,11 @@
  *   rest, and refuses to delete when the selection moved after planning.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { ServingRole } from "@mailwoman/core/layers"
+import { resolvePath } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { LayerCatalog, replaceActiveSelection } from "#data/catalog"
@@ -96,5 +98,55 @@ describe("planPrune and executePrune", () => {
 
 		await expect(executePrune(plan)).rejects.toThrow(/sessions holding generations changed/u)
 		expect(await pathExists(a.path)).toBe(true)
+	})
+})
+
+describe("planPrune's retain count", () => {
+	it.each([Number.NaN, Number("not-a-number"), Number.POSITIVE_INFINITY, 0.5, 0, -1, Number.MAX_SAFE_INTEGER + 1])(
+		"refuses retain %s before a plan exists",
+		async (retain) => {
+			const { a, b, c } = await threeGenerations()
+
+			await expect(planPrune(scratch.path, { retain })).rejects.toThrow(/retain must be a positive whole number/u)
+			expect(await pathExists(a.path)).toBe(true)
+			expect(await pathExists(b.path)).toBe(true)
+			expect(await pathExists(c.path)).toBe(true)
+		}
+	)
+
+	it("keeps only the active generation at retain 1", async () => {
+		const { a, b } = await threeGenerations()
+		const plan = await planPrune(scratch.path, { retain: 1 })
+
+		expect(plan.retainedGenerations).toEqual([3])
+
+		expect(plan.candidates.map((candidate) => candidate.artifactID).toSorted()).toEqual(
+			[a.entry.order[0]!.artifactID, b.entry.order[0]!.artifactID].toSorted()
+		)
+	})
+})
+
+describe("executePrune's active-generation check", () => {
+	it("refuses a plan that lists an artifact the active generation selects, and keeps its bytes", async () => {
+		const { c } = await threeGenerations()
+		const plan = await planPrune(scratch.path)
+		const active = c.entry.order[0]!
+
+		const corrupted = {
+			...plan,
+			candidates: [
+				...plan.candidates,
+				{
+					installationID: active.installationID,
+					artifactID: active.artifactID,
+					directory: resolvePath(c.path, ".."),
+					bytes: "release c".length,
+				},
+			],
+		}
+
+		await expect(executePrune(corrupted)).rejects.toThrow(/active generation 3 selects/u)
+		expect(await pathExists(c.path)).toBe(true)
+		expect(await readLocalTextFile(c.path)).toBe("release c")
 	})
 })

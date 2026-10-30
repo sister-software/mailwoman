@@ -168,15 +168,49 @@ async function readGeneration(dataRoot: string, generation: number): Promise<Act
 }
 
 /**
+ * The number of generations a prune keeps, refused unless it is a positive safe integer.
+ *
+ * @throws When `retain` is not a whole number from 1 to `Number.MAX_SAFE_INTEGER`.
+ */
+function assertRetainCount(retain: number): number {
+	if (!Number.isSafeInteger(retain) || retain < 1) {
+		throw new RangeError(`retain must be a positive whole number of generations, got ${String(retain)}`)
+	}
+
+	return retain
+}
+
+/**
+ * Refuse a candidate list that names an artifact the active selection reads.
+ *
+ * This holds whatever the retain count and the plan say, so a plan built from a bad count
+ * or altered after planning cannot delete the active generation's files.
+ */
+function assertActiveArtifactsKept(selection: ActiveSelection | null, candidates: readonly PruneCandidate[]): void {
+	if (!selection) return
+
+	const active = new Set(selection.entries.flatMap((entry) => entry.order.map((source) => source.artifactID)))
+
+	for (const candidate of candidates) {
+		if (active.has(candidate.artifactID)) {
+			throw new Error(
+				`prune refused: the active generation ${selection.generation} selects ${candidate.artifactID}, which the plan lists for deletion at ${candidate.directory}`
+			)
+		}
+	}
+}
+
+/**
  * Plan a prune without deleting anything.
  *
  * @param options.retain The number of generations to keep, counting the active one.
- * At least 1.
- * @throws When a selection, installation, manifest or lease record cannot be read.
+ * A positive whole number.
+ * @throws When `retain` is not a positive safe integer, or when a selection,
+ * installation, manifest or lease record cannot be read.
  */
 export async function planPrune(dataRoot: PathBuilderLike, options: { retain?: number } = {}): Promise<PrunePlan> {
 	const root = resolvePath(dataRoot.toString())
-	const retain = Math.max(1, options.retain ?? DEFAULT_RETAINED_GENERATIONS)
+	const retain = assertRetainCount(options.retain ?? DEFAULT_RETAINED_GENERATIONS)
 	const selection = await readActiveSelection(root)
 	const leases = await readLiveLeases(root)
 	const generations = new Set<number>()
@@ -193,6 +227,10 @@ export async function planPrune(dataRoot: PathBuilderLike, options: { retain?: n
 
 	for (const lease of leases) {
 		generations.add(lease.generation)
+	}
+
+	if (selection && !generations.has(selection.generation)) {
+		throw new Error(`prune refused: the plan does not retain the active generation ${selection.generation}`)
 	}
 
 	const referencedBy = new Map<string, number[]>()
@@ -231,6 +269,8 @@ export async function planPrune(dataRoot: PathBuilderLike, options: { retain?: n
 		})
 	}
 
+	assertActiveArtifactsKept(selection, candidates)
+
 	return {
 		dataRoot: root,
 		generation: selection?.generation ?? null,
@@ -247,8 +287,9 @@ export async function planPrune(dataRoot: PathBuilderLike, options: { retain?: n
  *
  * An installation record whose every artifact is deleted is removed with them.
  *
- * @throws When another installer holds a lock, or when the selection generation
- * or the live leases differ from the plan's, before any file is deleted.
+ * @throws When another installer holds a lock, when the selection generation
+ * or the live leases differ from the plan's, or when the plan lists an artifact the
+ * active generation selects, before any file is deleted.
  */
 export async function executePrune(plan: PrunePlan): Promise<{ deleted: PruneCandidate[]; reclaimedBytes: number }> {
 	const paths = catalogPaths(plan.dataRoot)
@@ -275,6 +316,8 @@ export async function executePrune(plan: PrunePlan): Promise<{ deleted: PruneCan
 	if (stringifyJSON(leases) !== stringifyJSON(plan.leases)) {
 		throw new Error("prune refused: the sessions holding generations changed after planning; plan again")
 	}
+
+	assertActiveArtifactsKept(current, plan.candidates)
 
 	// A lease left by a process that exited keeps no generation, so its file is removed.
 	for (const path of stale) {

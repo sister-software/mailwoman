@@ -10,6 +10,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
@@ -36,11 +37,25 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
+/**
+ * The `--retain` value as a generation count, refused unless it is written as a positive whole number.
+ */
+function parseRetainOption(text: string): number {
+	const retain = /^\d+$/u.test(text.trim()) ? Number(text.trim()) : Number.NaN
+
+	if (!Number.isSafeInteger(retain) || retain < 1) {
+		throw new RangeError(`--retain must be a positive whole number of generations, got ${stringifyJSON(text)}`)
+	}
+
+	return retain
+}
+
 const DataPrune: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const dataRoot = options.dataRoot ?? dataRootPath()
-			const plan = await planPrune(dataRoot, options.retain ? { retain: Number(options.retain) } : {})
+			const retain = options.retain != null ? { retain: parseRetainOption(options.retain) } : {}
+			const plan = await planPrune(dataRoot, retain)
 
 			if (options.dryRun) {
 				if (options.json) {
