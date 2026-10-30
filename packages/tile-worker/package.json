@@ -30,15 +30,15 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@cloudflare/workers-types": "^5.20261015.1",
+		"@cloudflare/workers-types": "^5.20261027.1",
 		"@mailwoman/api-worker": "workspace:*",
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"hono": "^4.13.13",
+		"hono": "^4.13.14",
 		"pmtiles": "^4.5.0"
 	},
 	"devDependencies": {
-		"wrangler": "^4.151.0"
+		"wrangler": "^4.154.0"
 	},
 	"engines": {
 		"node": "^24.22.1 || >=26.12.1"

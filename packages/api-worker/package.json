@@ -36,12 +36,12 @@
 		"@mailwoman/api": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"hono": "^4.13.13"
+		"hono": "^4.13.14"
 	},
 	"devDependencies": {
-		"@cloudflare/workers-types": "^5.20261015.1",
+		"@cloudflare/workers-types": "^5.20261027.1",
 		"vitest": "^4.1.12",
-		"wrangler": "^4.151.0"
+		"wrangler": "^4.154.0"
 	},
 	"engines": {
 		"node": "^24.22.1 || >=26.12.1"

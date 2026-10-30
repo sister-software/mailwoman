@@ -82,7 +82,7 @@
 		"htmlparser2": "^12.0.0",
 		"js-yaml": "^5.5.0",
 		"mailwoman": "workspace:*",
-		"maplibre-gl": "^6.14.0",
+		"maplibre-gl": "^6.16.0",
 		"onnxruntime-web": "1.30.0",
 		"path-ts": "^2.5.0",
 		"prism-react-renderer": "^2.4.1",
@@ -95,8 +95,8 @@
 		"@docusaurus/types": "^3.10.2",
 		"@mailwoman/browser": "workspace:*",
 		"@playwright/test": "^1.64.1",
-		"@storybook/addon-docs": "^10.6.2",
-		"@storybook/react-vite": "^10.6.2",
+		"@storybook/addon-docs": "^10.6.5",
+		"@storybook/react-vite": "^10.6.5",
 		"@types/node": "^26.6.5",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
@@ -106,11 +106,11 @@
 		"find-free-ports": "^3.1.1",
 		"playwright": "^1.64.1",
 		"spliterator": "^10.1.1",
-		"storybook": "^10.6.2",
+		"storybook": "^10.6.5",
 		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"unist": "^0.0.1",
-		"unist-util-visit": "^5.1.0",
-		"vite": "^8.3.4"
+		"unist-util-visit": "^5.2.0",
+		"vite": "^8.3.5"
 	},
 	"browserslist": {
 		"production": [

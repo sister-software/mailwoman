@@ -92,9 +92,9 @@
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"kysely": "^0.29.6",
+		"kysely": "^0.29.7",
 		"path-ts": "^2.5.0",
-		"read-excel-file": "^9.3.12",
+		"read-excel-file": "^9.3.13",
 		"spliterator": "^10.1.1",
 		"type-fest": "^5.10.0",
 		"zod": "^4.6.7"

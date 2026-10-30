@@ -60,7 +60,7 @@
 		"@math.gl/core": "^4.1.0",
 		"@math.gl/geospatial": "^4.1.0",
 		"mailwoman": "workspace:*",
-		"maplibre-gl": "^6.14.0",
+		"maplibre-gl": "^6.16.0",
 		"onnxruntime-web": "1.30.0",
 		"pmtiles": "^4.5.0",
 		"react": "^19.3.1",
@@ -74,10 +74,10 @@
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
 		"@vitejs/plugin-react": "^6.1.2",
-		"vite": "^8.3.4",
+		"vite": "^8.3.5",
 		"vite-plugin-pwa": "^2.0.0",
 		"workbox-window": "^7.4.1",
-		"wrangler": "^4.151.0"
+		"wrangler": "^4.154.0"
 	},
 	"engines": {
 		"node": "^24.22.1 || >=26.12.1"
