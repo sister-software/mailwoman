@@ -91,6 +91,46 @@ export async function readLiveLeases(dataRoot: PathBuilderLike): Promise<Selecti
 }
 
 /**
+ * One lease file, or `null` when the file no longer exists.
+ *
+ * A lease that exists but cannot be read, parsed or validated may belong to a running
+ * session, so it stops the prune rather than counting as no reader.
+ *
+ * @throws When the file cannot be read or parsed, or lacks a valid `pid`, `host` or `generation`.
+ */
+async function readLeaseFile(path: string): Promise<SelectionLease | null> {
+	let value: Partial<SelectionLease> | null
+
+	try {
+		value = await tryReadLocalJSONFile<Partial<SelectionLease>>(path)
+	} catch (error) {
+		throw new Error(`prune refused: the lease ${path} cannot be read`, { cause: error })
+	}
+
+	if (value == null) return null
+
+	const { pid, host, generation, startedAt } = value
+
+	if (typeof pid !== "number" || !Number.isSafeInteger(pid) || pid < 1) {
+		throw new TypeError(`prune refused: the lease ${path} is not a lease: pid ${String(pid)}`)
+	}
+
+	if (typeof host !== "string" || !host) {
+		throw new TypeError(`prune refused: the lease ${path} is not a lease: host ${String(host)}`)
+	}
+
+	if (typeof generation !== "number" || !Number.isSafeInteger(generation) || generation < 1) {
+		throw new TypeError(`prune refused: the lease ${path} is not a lease: generation ${String(generation)}`)
+	}
+
+	if (typeof startedAt !== "string") {
+		throw new TypeError(`prune refused: the lease ${path} is not a lease: startedAt ${String(startedAt)}`)
+	}
+
+	return { pid, host, generation, startedAt }
+}
+
+/**
  * The live leases, and the paths of lease files whose process on this host no longer exists.
  */
 async function readLeases(dataRoot: PathBuilderLike): Promise<{ live: SelectionLease[]; stale: string[] }> {
@@ -111,8 +151,9 @@ async function readLeases(dataRoot: PathBuilderLike): Promise<{ live: SelectionL
 
 	for (const entry of entries) {
 		const path = directory(entry.name).toString()
-		const lease = await tryReadLocalJSONFile<SelectionLease>(path).catch(() => null)
+		const lease = await readLeaseFile(path)
 
+		// The session removed its lease after the directory was listed.
 		if (!lease) continue
 
 		if (lease.host === here && !processExists(lease.pid)) {

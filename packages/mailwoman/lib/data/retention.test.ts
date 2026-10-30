@@ -9,10 +9,11 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { createSymbolicLink, removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { ServingRole } from "@mailwoman/core/layers"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { catalogPaths, LayerCatalog, replaceActiveSelection } from "#data/catalog"
@@ -185,6 +186,47 @@ describe("planPrune's reading of retained history", () => {
 		await writeLocalTextFile(`{"generation":1}`, catalogPaths(scratch.path).selectionHistory("1.json"))
 
 		await expect(planPrune(scratch.path)).rejects.toThrow(/generation 1's record .* has no entries list/u)
+	})
+})
+
+describe("planPrune's reading of session leases", () => {
+	it.each([
+		["unparsable", "{broken"],
+		["missing its pid", `{"host":"h","generation":1,"startedAt":"2026-10-30T00:00:00Z"}`],
+		["with a string generation", `{"pid":1,"host":"h","generation":"1","startedAt":"2026-10-30T00:00:00Z"}`],
+		["with an empty host", `{"pid":1,"host":"","generation":1,"startedAt":"2026-10-30T00:00:00Z"}`],
+	])("refuses a lease file %s, naming its path", async (_label, text) => {
+		const { a } = await threeGenerations()
+		const lease = catalogPaths(scratch.path).root("leases", "live.json")
+
+		await writeLocalTextFile(text, lease)
+
+		await expect(planPrune(scratch.path)).rejects.toThrow(
+			new RegExp(`lease ${escapeRegExp(lease.toString())} (cannot be read|is not a lease)`, "u")
+		)
+
+		await expect(readLiveLeases(scratch.path)).rejects.toThrow(lease.toString())
+		expect(await pathExists(a.path)).toBe(true)
+	})
+
+	it("plans when a lease file disappears between listing and reading", async () => {
+		await threeGenerations()
+
+		// A link to a file that does not exist is listed by name and reads as ENOENT,
+		// the state of a lease its session removed after the directory was listed.
+		const leases = catalogPaths(scratch.path).root("leases")
+
+		await createSymbolicLink(leases("gone-target.json"), leases("gone.json"))
+
+		// The listing prune reads does name the link, so the read below meets ENOENT.
+		const listed = await Globerator.from("*.json", { cwd: leases, withFileTypes: true }).toArray()
+
+		expect(listed.map((entry) => entry.name)).toEqual(["gone.json"])
+
+		const plan = await planPrune(scratch.path)
+
+		expect(plan.leases).toEqual([])
+		expect(plan.retainedGenerations).toEqual([2, 3])
 	})
 })
 
