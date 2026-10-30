@@ -6,7 +6,7 @@
  *   ranking and preserves the answer's epistemic status alongside its constraints.
  */
 
-import { z } from "zod"
+import * as z from "zod"
 
 import { EvidenceSchema } from "#evidence"
 import { type EpistemicStatus, EpistemicStatusSchema } from "#status"
