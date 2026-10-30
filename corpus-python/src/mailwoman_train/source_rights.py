@@ -10,8 +10,9 @@ A local experiment may pass an `unshippable_reason`. The check then logs every g
 and the caller records the output as not shippable. The override admits a source only into an output marked not shippable.
 
 The two files live in the repository checkout rather than in this package. The check therefore runs where a checkout is
-present: the corpus builders, the `train` command and the Modal launcher's local entry point. A Modal container's
-volume holds `corpus-python/src` without `packages/`, so the check runs before the container starts.
+present: the training config loader. The `train` command and the Modal launcher's local entry point call it. A Modal
+container's volume holds `corpus-python/src` without `packages/`, so the check runs before the container starts. No
+Python corpus builder remains. The TypeScript builders run the same check through `corpus-inputs.ts`.
 """
 
 from __future__ import annotations
@@ -335,24 +336,3 @@ def admit_sources(
         sources_checked=checked,
         gaps=[asdict(gap) for gap in gaps],
     )
-
-
-def add_unshippable_flag(parser: Any) -> None:
-    """Declare the override on an argparse parser, so every builder spells it the same way."""
-    parser.add_argument(
-        UNSHIPPABLE_FLAG,
-        dest="unshippable_reason",
-        default=None,
-        help=(
-            "Admit corpus sources whose register rows lack an elected decision permitting transform and train, "
-            "for a local experiment. States why; the output is recorded as not shippable."
-        ),
-    )
-
-
-def write_rights_record(record: SourceRightsRecord, out_dir: Path | str) -> Path:
-    """Write the record beside an output as `SOURCE_RIGHTS.json`."""
-    path = Path(out_dir) / "SOURCE_RIGHTS.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(record.to_json(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    return path

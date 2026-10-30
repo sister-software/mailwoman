@@ -5,10 +5,9 @@
  * @file The deterministic halves of the DeepSeek generator: the batch ids a checkpoint stores, the two batch plans,
  *   the response parser, the surface-form validator, the seed loader and the canonical rows.
  *
- *   The request path stays in `corpus-python/src/mailwoman_train/corpora/deepseek/` (`client.py`, `run.py` and the
- *   workers in `transliteration.py` and `kryptonite.py`): it calls a paid API, so it moves when it can be verified
- *   against a recorded transport. Each function here reproduces the Python one that the batch ids and row ids
- *   depend on, because a changed derivation invalidates every checkpoint on disk.
+ *   The request path is `client.ts`, `run.ts`, `transliteration.ts` and `kryptonite.ts` beside this file. Each
+ *   function here reproduces the Python one that the batch ids and row ids depended on, because a changed derivation
+ *   invalidates every checkpoint on disk.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"

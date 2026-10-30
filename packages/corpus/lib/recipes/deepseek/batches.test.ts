@@ -198,6 +198,61 @@ describe("the DeepSeek generator's deterministic halves", async () => {
 		]).toEqual(reference.emitted)
 	})
 
+	it("gives two batches that differ in script or seeds two ids, so neither is skipped as done", () => {
+		const base = deterministicID("translit-cyrl", '["seed-us-0001"]|cyrl')
+
+		expect(deterministicID("translit-kana", '["seed-us-0001"]|kana')).not.toBe(base)
+		expect(deterministicID("translit-cyrl", '["seed-fr-0002"]|cyrl')).not.toBe(base)
+	})
+
+	it("keeps the hand-maintained tables well formed, since a bad row fails mid-spend", () => {
+		for (const [label, language, script, slug] of TRANSLIT_SCRIPTS) {
+			expect([label, language, script, slug].every(Boolean)).toBe(true)
+			expect(slug).toMatch(/^[a-z]+$/)
+			// A script names no territory, so the language subtag carries no region.
+			expect(language).not.toContain("-")
+			// An ISO 15924 code: four letters, title case.
+			expect(script).toMatch(/^[A-Z][a-z]{3}$/)
+		}
+
+		const slugs = TRANSLIT_SCRIPTS.map((entry) => entry[3])
+
+		expect(new Set(slugs).size).toBe(slugs.length)
+
+		for (const category of KRYPTONITE_CATEGORIES) {
+			expect(category.examples.length, `${category.category} has no examples`).toBeGreaterThan(0)
+			expect(category.description).toBeTruthy()
+			expect(category.weight).toBeGreaterThan(0)
+		}
+
+		const names = KRYPTONITE_CATEGORIES.map((category) => category.category)
+
+		expect(new Set(names).size).toBe(names.length)
+	})
+
+	it("keeps a seed's own country and locale on its transliteration, for either seed locale", () => {
+		const batch: TranslitBatch = {
+			batchID: "translit-hang-test",
+			scriptLabel: "Korean Hangul",
+			scriptSlug: "hang",
+			surfaceLanguage: "ko",
+			surfaceScript: "Hang",
+			seeds: SEEDS,
+		}
+
+		expect(canonicalTranslitRow(batch, SEEDS[0]!, "뉴욕 5번가 350", { street: "5번가" })).toMatchObject({
+			country: "US",
+			locale: "en-US",
+			surface_script: "Hang",
+			surface_language: "ko",
+		})
+
+		expect(canonicalTranslitRow(batch, SEEDS[1]!, "파리 아나톨 프랑스 대로 5", { locality: "파리" })).toMatchObject({
+			country: "FR",
+			locale: "fr-FR",
+		})
+	})
+
 	it("refuses a seed without a country at load, and a missing seed file, naming each", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-deepseek-")
 		const path = scratch.path("seeds.jsonl").toString()

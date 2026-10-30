@@ -54,10 +54,11 @@ export const PrivateCorpusEnvSchema = z.object({
 		title: "OpenAddresses batch token",
 		description: "API token used by the OpenAddresses batch-download corpus fetcher.",
 	}),
-	// LLM API keys for the corpus golden-expansion tooling.
+	// LLM API keys for the corpus golden-expansion tooling and the DeepSeek generator.
 	DEEPSEEK_API_KEY: z.string().optional().meta({
 		title: "DeepSeek API key",
-		description: "API key used by corpus golden-expansion tooling when calling DeepSeek.",
+		description:
+			"API key used by corpus golden-expansion tooling and the DeepSeek corpus generator (`lib/tools/deepseek.run.ts`) when calling DeepSeek.",
 	}),
 	ANTHROPIC_API_KEY: z.string().optional().meta({
 		title: "Anthropic API key",

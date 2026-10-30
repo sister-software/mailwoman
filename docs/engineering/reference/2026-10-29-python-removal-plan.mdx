@@ -726,11 +726,41 @@ Deleted: `countries/cjk/{overlay,foreign_places}.py`, `countries/jp/probe_corpor
 The DE board is under `packages/corpus/lib/de/` rather than the `eval-harness/de/` path the table in §3 lists, because
 its one-country rules and its parquet reader belong to the corpus package. It writes the eval fixture where it was.
 
-The DeepSeek request path stays in Python: `client.py` (the HTTP call and its retry), `run.py` (the checkpointed
-concurrent runner and its sink) and the two workers in `transliteration.py` and `kryptonite.py`, with `cli.py` and
-`test_deepseek_interface.py`. It calls a paid API, so it moves when a test can drive it through a recorded transport,
-and the TypeScript halves are its prompts and ids until then. Python's `json.loads` accepts `NaN` and `Infinity` in a
-completion line, which `JSON.parse` drops.
+**The DeepSeek request path (observed 2026-10-30).** `client.py`, `run.py`, the workers in `transliteration.py` and
+`kryptonite.py`, `cli.py` and `test_deepseek_interface.py` moved to `packages/corpus/lib/recipes/deepseek/`, beside
+`prompts.ts` and `batches.ts`. The new modules are `client.ts` (`DeepSeekClient`, an `APIClient`), `run.ts`
+(checkpoint, sink, runner), `transliteration.ts`, `kryptonite.ts` and `generate.ts`, the admission, key and mode
+sequence `cli.py` ran. The command is `node packages/corpus/lib/tools/deepseek.run.ts`. The tests drive the real client
+through `@mailwoman/core/api/test-transport` and a fake clock, so no request is made:
+
+- `client.test.ts` covers the endpoint, the key header, the timeout, the retry and the refusal of a response with no
+  choice.
+- `run.test.ts` covers the checkpoint's `json.dumps` form, a retried id left pending, a resume, and the checkpoint
+  written after a worker fails.
+- `generate.test.ts` runs both modes end to end. It covers the validated rows, the reject tally, a truncated batch
+  that stays pending and is the only request of the rerun, and the source-rights refusal before the key is read or
+  the output directory is made. That last case was `test_source_rights.py`'s DeepSeek case.
+- `batches.test.ts` gains the Python test's invariants that `deepseek-reference.json` did not already pin: id
+  non-collision, the tables' well-formedness, and a French seed staying French.
+
+The Python package `corpora/` and its tests are deleted. The differences are decided:
+
+1. Retry runs through `APIClient`. It makes the same five attempts, but the backoff doubles from 2 s where Python
+   multiplied by 1.5. It also honors `Retry-After`, and it retries 408 and every 5xx status, where Python retried
+   429, 500, 502, 503 and 504 only.
+2. A kryptonite request that fails leaves its batch pending. Python marked the batch complete, so a rerun never asked
+   for those rows again.
+3. A response with no `choices[0].message` is a failed request, so it is tallied and the batch stays pending. Python
+   raised a `KeyError` that ended the run.
+4. The checkpoint is also written when a worker throws.
+5. `int(rec["i"])` is reproduced by `pythonInt`. Node's Unicode tables are newer than CPython 3.12's, so a decimal
+   digit assigned after Unicode 15.0 is read in TypeScript and refused in Python.
+
+Python's `json.loads` accepts `NaN` and `Infinity` in a completion line, which `JSON.parse` drops.
+
+After the deletion, `source_rights.py` has no importer outside the config loader (`config/load.py` and
+`config/dump.py`) and the tests. `add_unshippable_flag` and `write_rights_record` had no other caller, so they are
+deleted. `launch/train.py` reaches the module only through `load_training_config`.
 
 Once these ports landed, `corpora/builder.py` had no importer but three training tests that wrote fixture parquet
 with its `SCHEMA`, which moved to `tests/corpus_fixture.py` as `CJK_CORPUS_SCHEMA`. `builder.py`,
@@ -739,8 +769,8 @@ renderer, bucket and record-check cases that test pinned are in `lib/cjk/builder
 had no importer, and `sample_balanced_raws` in `packages/mtf/crates/mtf-tools/src/corpus.rs` is its port, so it is
 deleted unported.
 
-Not ported yet: the DeepSeek request path. `source_rights.py` stays, because `config/load.py`, `config/dump.py` and
-the DeepSeek `cli.py` import it.
+`source_rights.py` stays, because `config/load.py` and `config/dump.py` import it. It goes with the config loader
+(Phase 7).
 
 ### Phase 3 — The Rust sampler and character path
 

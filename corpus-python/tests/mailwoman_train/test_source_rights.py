@@ -1,23 +1,19 @@
 """The Python reader of the corpus-source rights check, over the committed register and table.
 
-The builders and the training launch call it before writing a row or billing a GPU, so a refusal here is the
-whole defense on the Python side. It must refuse the source that carried Price Paid Data and a source nobody
-mapped, and admit one whose every register row is elected for transform and train.
+The training config loader calls it before a launch bills a GPU, so a refusal here is the whole defense on the
+Python side. It must refuse the source built from Price Paid Data and an unmapped source, and admit one whose every
+register row is elected for transform and train.
 """
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
 
-from mailwoman_train import source_rights
 from mailwoman_train.config import admitted_sources, load_config, load_training_config
-from mailwoman_train.corpora.deepseek import cli as deepseek_cli
-from mailwoman_train.corpora.deepseek.cli import main as deepseek_main
-from mailwoman_train.paths import package_path, repo_root_path
-from mailwoman_train.source_rights import SourceRights, SourceRightsError, admit_sources, committed_source_rights
+from mailwoman_train.paths import package_path
+from mailwoman_train.source_rights import SourceRightsError, admit_sources, committed_source_rights
 
 
 def test_rendered_gb_is_refused_on_the_price_paid_data_row() -> None:
@@ -109,31 +105,3 @@ def test_a_built_corpus_is_judged_by_the_inputs_that_built_it() -> None:
     assert [gap.register_source for gap in stale] == ["us-geodata-aggregate-3"]
     with pytest.raises(SourceRightsError, match="fragment-assay reads register source us-geodata-aggregate-3"):
         load_training_config(package_path("configs", "v7.7.0-no-ppd-60k.yaml"))
-
-
-def test_a_corpus_builder_refuses_before_it_reads_a_key_or_writes_a_row(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """The builder checks rights before it reads an API key.
-
-    The committed DeepSeek decision is elected, so the test refuses that row in a copy of the register. A builder
-    that reads the API key fails the test, because a builder that got that far would bill the DeepSeek API.
-    """
-    data = repo_root_path("packages", "corpus", "data")
-    register = json.loads((data / "address-source-register.json").read_text(encoding="utf-8"))
-    table = json.loads((data / "corpus-source-inputs.json").read_text(encoding="utf-8"))
-    license_id = next(row["license"] for row in register["sources"] if row["sourceID"] == "cn-generated-text-1")
-    for decision in register["licenses"]:
-        if decision["licenseID"] == license_id:
-            decision["state"] = "refused"
-    monkeypatch.setattr(source_rights, "committed_source_rights", lambda: SourceRights.from_documents(register, table))
-
-    def refuse_key() -> str:
-        raise AssertionError("the builder read the DeepSeek API key before the rights check refused it")
-
-    monkeypatch.setattr(deepseek_cli, "require_api_key", refuse_key)
-
-    out_dir = tmp_path / "out"
-    with pytest.raises(SourceRightsError, match="deepseek-kryptonite reads register source cn-generated-text-1"):
-        deepseek_main(["--mode", "kryptonite", "--out-dir", str(out_dir)])
-    assert not out_dir.exists()

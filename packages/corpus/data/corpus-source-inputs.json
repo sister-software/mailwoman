@@ -323,9 +323,7 @@
 					"reads": "the model's output for each kryptonite category"
 				}
 			],
-			"authored": [
-				"KRYPTONITE_CATEGORIES seed examples in corpus-python/src/mailwoman_train/corpora/deepseek/prompts.py"
-			]
+			"authored": ["KRYPTONITE_CATEGORIES seed examples in packages/corpus/lib/recipes/deepseek/prompts.ts"]
 		},
 		"deepseek-translit-armn": {
 			"inputs": [
