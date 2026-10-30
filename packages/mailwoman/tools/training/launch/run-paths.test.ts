@@ -25,6 +25,10 @@ describe("the launch run paths", () => {
 	it("refuses to clear the mount, a shared root, or a path outside the mount", () => {
 		expect(() => checkClearable("/data", "/data")).toThrow(/not inside/)
 		expect(() => checkClearable("/data/corpus/versioned/v0.8.7", "/data")).toThrow(/shared assets/)
+		// A dot segment would let a run's path name a shared directory.
+		expect(() => checkClearable("/data/output/../corpus", "/data")).toThrow(/segment hides/)
+		expect(() => checkClearable("/data/models/checkpoints/..", "/data")).toThrow(/segment hides/)
+		expect(() => resolveRunPaths("/data/output/./../corpus", "train_log.csv", "/data")).toThrow(/segment hides/)
 		expect(() => checkClearable("/elsewhere/run", "/data")).toThrow(/not inside/)
 		expect(() => checkClearable("/data/output-v8-s42/checkpoints", "/data")).not.toThrow()
 		expect(() => checkClearable("/data/models/checkpoints/v7", "/data")).not.toThrow()

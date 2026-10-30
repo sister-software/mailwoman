@@ -98,8 +98,10 @@ export interface LaunchDependencies {
 	boundary: ModalBoundary
 	/**
 	 * Runs the preflight audits for `config` on `device` and writes the receipt.
+	 *
+	 * The wall-clock estimate is checked against `timeoutSeconds`, the sandbox's own timeout.
 	 */
-	preflight(config: ResolvedLaunchConfig, device: string): Promise<PreflightResult>
+	preflight(config: ResolvedLaunchConfig, device: string, timeoutSeconds: number): Promise<PreflightResult>
 	/**
 	 * The trainer image build for `variant`, whose name hashes the sources.
 	 */
@@ -166,14 +168,13 @@ const GPU_RESOURCES = { cpu: 8, memoryMiB: 32_768 }
 export function supervisorEnvironment(
 	config: ResolvedLaunchConfig,
 	preflight: PreflightResult,
-	options: LaunchOptions,
-	runKey: string
+	options: LaunchOptions
 ): SupervisorEnvironment {
 	const paths = resolveRunPaths(config.outputDir, config.csvLogPath, options.mount)
 	const staged = `${options.mount.replace(/\/+$/, "")}/launch/${config.configSHA256.slice(0, 16)}`
 
 	return {
-		MW_RUN_ID: runKey,
+		MW_LAUNCH_ID: crypto.randomUUID(),
 		MW_VOLUME: options.mount,
 		MW_CONFIG_PATH: `${staged}/${config.name}`,
 		MW_RESOLVED_PATH: `${staged}/resolved.json`,
@@ -184,7 +185,7 @@ export function supervisorEnvironment(
 		MW_MANIFEST_SHA256: preflight.manifestSHA256,
 		MW_RUN_BASE: paths.runBase,
 		MW_EXPECT_DEVICE: options.device === "cpu" ? "cpu" : "cuda",
-		MW_RESUME: options.branchFrom ?? "auto",
+		MW_BRANCH_FROM: options.branchFrom ?? "",
 		MW_THREADS: String(options.threads),
 		MW_RETRIES: String(options.retries),
 		MW_RETRY_DELAY_SECONDS: "10",
@@ -227,7 +228,7 @@ export async function startLaunch(
 
 	if (holder) throw new DuplicateLaunchError(runKey, holder.id)
 
-	const preflight = await deps.preflight(config, options.device)
+	const preflight = await deps.preflight(config, options.device, options.timeoutSeconds)
 
 	deps.log(`Preflight receipt: ${preflight.token} (${preflight.audits.join(", ")})`)
 
@@ -238,7 +239,7 @@ export async function startLaunch(
 		timeoutMs: options.timeoutSeconds * 1000,
 	}
 
-	const environment = supervisorEnvironment(config, preflight, options, runKey)
+	const environment = supervisorEnvironment(config, preflight, options)
 
 	const record: LaunchRecord = {
 		runKey,
@@ -341,7 +342,15 @@ export async function restartLaunch(runKey: string, deps: LaunchDependencies): P
 	if (state !== LaunchState.Stopped) throw new Error(`run ${runKey} is ${state}; only a stopped run restarts`)
 
 	return startSandbox(
-		{ ...record, environment: { ...record.environment, MW_FRESH: "0", MW_RESUME: "auto", MW_FAIL_AT_STEP: "0" } },
+		{
+			...record,
+			environment: {
+				...record.environment,
+				MW_LAUNCH_ID: crypto.randomUUID(),
+				MW_FRESH: "0",
+				MW_FAIL_AT_STEP: "0",
+			},
+		},
 		deps
 	)
 }

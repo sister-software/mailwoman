@@ -62,6 +62,7 @@ function harness() {
 	const logs: string[] = []
 	const fetches: Array<{ remoteDir: string; localDir: string }> = []
 	let preflights = 0
+	const preflightTimeouts: number[] = []
 
 	const boundary: ModalBoundary = {
 		ensureTrainerImage: async (build) => `im-${build.name}`,
@@ -99,8 +100,9 @@ function harness() {
 
 	const deps: LaunchDependencies = {
 		boundary,
-		preflight: async () => {
+		preflight: async (_config, _device, timeoutSeconds) => {
 			preflights++
+			preflightTimeouts.push(timeoutSeconds)
 
 			return {
 				token: "key-1",
@@ -123,19 +125,21 @@ function harness() {
 		log: (line) => logs.push(line),
 	}
 
-	return { deps, sandboxes, records, terminated, logs, fetches, preflights: () => preflights }
+	return { deps, sandboxes, records, terminated, logs, fetches, preflights: () => preflights, preflightTimeouts }
 }
 
 describe("the training launch lifecycle", () => {
 	const runKey = runKeyOf(CONFIG.outputDir)
 
 	it("preflights, then starts one detached sandbox and records it", async () => {
-		const { deps, sandboxes, records } = harness()
+		const { deps, sandboxes, records, preflightTimeouts } = harness()
 		const record = await startLaunch(CONFIG, OPTIONS, deps)
 		const sandbox = sandboxes.get(record.sandboxes[0]!)!
 
 		expect(record.imageID).toBe("im-mailwoman-trainer-cpu")
 		expect(sandbox.spec).toMatchObject({ cpu: 4, timeoutMs: 3_600_000, tags: { [RUN_TAG]: runKey } })
+		// The wall clock is checked against the timeout the sandbox runs under.
+		expect(preflightTimeouts).toEqual([3600])
 		expect(sandbox.spec.gpu).toBeUndefined()
 		expect(sandbox.spec.env).toMatchObject({ MW_FRESH: "1", MW_EXPECT_DEVICE: "cpu", MW_MANIFEST_SHA256: "m" })
 		// The inputs travel as files, `ready` last, so no environment value carries a config.
@@ -183,7 +187,9 @@ describe("the training launch lifecycle", () => {
 		const second = await restartLaunch(runKey, deps)
 		const spec = sandboxes.get(second.sandboxes[1]!)!.spec
 
-		expect(spec.env).toMatchObject({ MW_FRESH: "0", MW_RESUME: "auto", MW_FAIL_AT_STEP: "0" })
+		expect(spec.env).toMatchObject({ MW_FRESH: "0", MW_FAIL_AT_STEP: "0" })
+		// A restart is a new launch, so an earlier launch's fault-injection marker does not apply to it.
+		expect(spec.env?.["MW_LAUNCH_ID"]).not.toBe(first.environment.MW_LAUNCH_ID)
 		await expect(restartLaunch(runKey, deps)).rejects.toThrow(/is running/)
 
 		sandboxes.get(second.sandboxes[1]!)!.exitCode = SUPERVISOR_REFUSED_EXIT

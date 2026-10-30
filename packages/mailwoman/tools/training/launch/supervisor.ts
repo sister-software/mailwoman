@@ -7,7 +7,8 @@
  *
  *   It writes the launch's YAML and resolved JSON onto the volume, refuses inputs that describe another config or
  *   corpus, checks the device, and runs `trainer train`. It commits the volume after every checkpoint the trainer
- *   saves, and it restarts the trainer with `--resume auto` after a failed exit, up to the retry count. It deletes no
+ *   saves, and it restarts the trainer after a failed exit, up to the retry count, resuming from the newest complete
+ *   checkpoint, or from the branch checkpoint while the run has none. It deletes no
  *   file. The host passes every input through {@linkcode SupervisorEnvironment}.
  */
 
@@ -27,9 +28,12 @@ export const SAVE_LINE_MARKER = "[save] checkpoint"
  */
 export interface SupervisorEnvironment {
 	/**
-	 * The run's id, which the fault-injection marker's file name carries.
+	 * One launch's id, which the fault-injection marker's file name carries.
+	 *
+	 * The marker stays in the run directory, so a marker keyed on the run would turn
+	 * off `--fail-at-step` for every later launch of the run.
 	 */
-	MW_RUN_ID: string
+	MW_LAUNCH_ID: string
 	MW_VOLUME: string
 	MW_CONFIG_PATH: string
 	MW_RESOLVED_PATH: string
@@ -60,9 +64,13 @@ export interface SupervisorEnvironment {
 	 */
 	MW_EXPECT_DEVICE: string
 	/**
-	 * `auto`, or a branch checkpoint for the first attempt of a run with no checkpoint yet.
+	 * The checkpoint a branched run starts from, or empty for a run that starts
+	 * from `train.init_from` or scratch.
+	 *
+	 * Every attempt resumes with `auto` once the output directory holds a complete checkpoint,
+	 * and from this checkpoint until then, so a retry before the first save keeps the branch point.
 	 */
-	MW_RESUME: string
+	MW_BRANCH_FROM: string
 	MW_THREADS: string
 	MW_RETRIES: string
 	MW_RETRY_DELAY_SECONDS: string
@@ -126,12 +134,16 @@ fi
 
 threads=()
 [ "$MW_THREADS" -gt 0 ] && threads=(--threads "$MW_THREADS")
-resume="$MW_RESUME"
 attempt=0
 fifo=$(mktemp -u)
-marker="$MW_RUN_BASE/fault-injected-$MW_RUN_ID"
+marker="$MW_RUN_BASE/fault-injected-$MW_LAUNCH_ID"
 
 while :; do
+	# A complete checkpoint is a step directory with its training state, the file a save writes last.
+	resume=auto
+	if [ -n "$MW_BRANCH_FROM" ] && ! compgen -G "$MW_OUTPUT_DIR/step-*/training_state.json" > /dev/null; then
+		resume="$MW_BRANCH_FROM"
+	fi
 	inject=0
 	[ "$MW_FAIL_AT_STEP" -gt 0 ] && [ ! -e "$marker" ] && inject=1
 	log "attempt $attempt: trainer train $MW_RESOLVED_PATH --resume $resume"
@@ -185,8 +197,7 @@ while :; do
 	fi
 
 	attempt=$((attempt + 1))
-	resume=auto
-	log "trainer train exited $code; retrying in $MW_RETRY_DELAY_SECONDS s with --resume auto"
+	log "trainer train exited $code; retrying in $MW_RETRY_DELAY_SECONDS s"
 	sleep "$MW_RETRY_DELAY_SECONDS"
 done
 `

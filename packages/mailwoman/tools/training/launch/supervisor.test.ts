@@ -22,8 +22,9 @@ import {
 } from "#tools/training/launch/supervisor"
 
 /**
- * A `trainer` whose `train` follows `FAKE_PLAN`, one word per attempt: `ok`, `crash`
- * (exit 1 after one save), `cuda` (reports the CUDA device) or `fail` (exit 2 before training).
+ * A `trainer` whose `train` follows `FAKE_PLAN`, one word per attempt: `ok`,
+ * `crash` (exit 1 after one complete save), `die` (exit 1 before its first save),
+ * `cuda` (reports the CUDA device) or `fail` (exit 2 before training).
  */
 const FAKE_TRAINER = String.raw`#!/usr/bin/env bash
 [ "$1" = device ] && exit 0
@@ -35,8 +36,11 @@ mode=${"$"}{plan[$count]:-ok}
 [ "$mode" = cuda ] && { echo "device=Cuda(0) param_count=10"; sleep 5; exit 0; }
 [ "$mode" = fail ] && { echo "error: no corpus"; exit 2; }
 echo "device=Cpu param_count=10"
+[ "$mode" = die ] && exit 1
 for step in 10 20 30; do
 	echo "step $step/30  train_loss=1.0"
+	mkdir -p "$MW_OUTPUT_DIR/step-0000$step"
+	echo '{"step": '"$step"'}' > "$MW_OUTPUT_DIR/step-0000$step/training_state.json"
 	echo "[save] checkpoint step-0000$step"
 	[ "$mode" = crash ] && exit 1
 done
@@ -78,10 +82,15 @@ async function runSupervisor(
 
 	if (seedCheckpoint) {
 		await writeLocalTextFile("weights", earlier)
+
+		await writeLocalTextFile(
+			'{"step": 100}',
+			scratch.path("volume", "output", "checkpoints", "step-000100", "training_state.json")
+		)
 	}
 
 	const environment: SupervisorEnvironment = {
-		MW_RUN_ID: "run-1",
+		MW_LAUNCH_ID: "launch-1",
 		MW_VOLUME: scratch.path("volume").toString(),
 		MW_CONFIG_PATH: scratch.path("volume", "launch", "config.yaml").toString(),
 		MW_RESOLVED_PATH: scratch.path("volume", "launch", "resolved.json").toString(),
@@ -92,7 +101,7 @@ async function runSupervisor(
 		MW_MANIFEST_SHA256: sha256Hex(manifest),
 		MW_RUN_BASE: scratch.path("volume", "output").toString(),
 		MW_EXPECT_DEVICE: "cpu",
-		MW_RESUME: "auto",
+		MW_BRANCH_FROM: "",
 		MW_THREADS: "0",
 		MW_RETRIES: "2",
 		MW_RETRY_DELAY_SECONDS: "0",
@@ -140,11 +149,24 @@ describe("the training sandbox supervisor", () => {
 	})
 
 	it("retries a failed exit with --resume auto after committing its checkpoint", async () => {
-		const run = await runSupervisor("crash ok", { MW_RESUME: "/data/branch/step-000100" })
+		const run = await runSupervisor("crash ok", { MW_BRANCH_FROM: "/data/branch/step-000100" })
 
 		expect(run.code).toBe(0)
 		expect(run.calls).toEqual(["train /data/branch/step-000100", "train auto"])
 		expect(run.stdout).toContain("trainer train exited 1; retrying")
+	})
+
+	it("keeps the branch point for a retry when the failed attempt saved no checkpoint", async () => {
+		const run = await runSupervisor("die ok", { MW_BRANCH_FROM: "/data/branch/step-000100" })
+
+		expect(run.code).toBe(0)
+		expect(run.calls).toEqual(["train /data/branch/step-000100", "train /data/branch/step-000100"])
+	})
+
+	it("resumes a branched run's own checkpoint when its output directory already holds one", async () => {
+		const run = await runSupervisor("crash ok", { MW_BRANCH_FROM: "/data/branch/step-000100" }, true)
+
+		expect(run.calls).toEqual(["train auto", "train auto"])
 	})
 
 	it("kills the trainer once after the fault step, then resumes", async () => {

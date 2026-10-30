@@ -24,7 +24,7 @@ import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import { manifestFileDigests, writePreflightReceipt } from "#tools/training/audits/receipt"
 import type { PreflightResult, ResolvedLaunchConfig } from "#tools/training/launch/launch"
 import { rerootConfigText } from "#tools/training/launch/run-paths"
-import { checkWallClock, TRAIN_TIMEOUT_SECONDS } from "#tools/training/launch/wall-clock"
+import { checkWallClock } from "#tools/training/launch/wall-clock"
 import { volumePathOnHost } from "#tools/training/sampler"
 
 /**
@@ -76,6 +76,10 @@ export interface HostPreflightOptions {
 	configPath: string
 	mount: string
 	dataRoot: string
+	/**
+	 * The timeout the sandbox will run under, which the wall-clock estimate must fit.
+	 */
+	timeoutSeconds: number
 	log: (line: string) => void
 }
 
@@ -129,11 +133,11 @@ export async function hostPreflight(
 	const estimate = checkWallClock(
 		device,
 		{ maxSteps: config.maxSteps, evalEverySteps: config.evalEverySteps, batchSize: config.batchSize },
-		TRAIN_TIMEOUT_SECONDS
+		options.timeoutSeconds
 	)
 
 	options.log(
-		`Wall clock on ${estimate.device}: ~${estimate.totalSeconds}s of the ${TRAIN_TIMEOUT_SECONDS}s budget ` +
+		`Wall clock on ${estimate.device}: ~${estimate.totalSeconds}s of the ${options.timeoutSeconds}s timeout ` +
 			`(${estimate.trainSeconds}s of steps, ${estimate.evaluations} validation passes)`
 	)
 

@@ -141,13 +141,14 @@ function dependencies(configPath: string | null, dryRun: boolean): LaunchDepende
 
 	return {
 		boundary: dryRun ? { ...lazy, list: async () => [] } : lazy,
-		preflight: (config, device) => {
+		preflight: (config, device, timeoutSeconds) => {
 			if (!configPath) throw new Error("a preflight needs --config")
 
 			return hostPreflight(config, device, {
 				configPath,
 				mount: settings.MAILWOMAN_VOLUME_MOUNT,
 				dataRoot: settings.MAILWOMAN_DATA_ROOT,
+				timeoutSeconds,
 				log,
 			})
 		},

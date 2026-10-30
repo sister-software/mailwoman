@@ -28,9 +28,17 @@ const parentOf = (path: string) => path.slice(0, path.lastIndexOf("/")) || "/"
  *
  * The log follows `{output_dir}` when the config names it, and otherwise sits
  * beside the checkpoint directory.
+ *
+ * @throws When an `output_dir` under the mount holds a `.` or `..` segment, which would
+ * let it name a shared directory that {@link checkClearable} compares by its segments.
  */
 export function resolveRunPaths(outputDir: string, csvLogPath: string, mount: string): RunPaths {
 	const prefix = `${mount.replace(/\/+$/, "")}/`
+
+	if (outputDir.startsWith(prefix)) {
+		refuseDotSegments(outputDir)
+	}
+
 	const resolved = outputDir.startsWith(prefix) ? outputDir : `${prefix}output/checkpoints`
 	const runBase = parentOf(resolved)
 
@@ -39,6 +47,15 @@ export function resolveRunPaths(outputDir: string, csvLogPath: string, mount: st
 		: `${runBase}/train_log.csv`
 
 	return { outputDir: resolved, csvLogPath: log, runBase }
+}
+
+/**
+ * Refuses a path with a `.` or `..` segment, whose segments do not name the directory it resolves to.
+ */
+function refuseDotSegments(outputDir: string): void {
+	if (outputDir.split("/").some((segment) => segment === "." || segment === "..")) {
+		throw new Error(`refusing output_dir ${outputDir}: a "." or ".." segment hides the directory it names`)
+	}
 }
 
 /**
@@ -61,6 +78,8 @@ const SHARED_ROOTS = new Set(["corpus", "corpus-python", "models", "audits", "ga
  * @throws Naming the directory and the reason.
  */
 export function checkClearable(outputDir: string, mount: string): void {
+	refuseDotSegments(outputDir)
+
 	const prefix = `${mount.replace(/\/+$/, "")}/`
 
 	if (!outputDir.startsWith(prefix)) throw new Error(`refusing to clear ${outputDir}: it is not inside ${mount}`)
