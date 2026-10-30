@@ -31,7 +31,13 @@ import { hostName } from "@mailwoman/core/utils/system"
 import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { catalogPaths, readActiveSelection, readInstallations, writeRecordAtomically } from "#data/catalog"
+import {
+	catalogPaths,
+	LayerCatalog,
+	readActiveSelection,
+	readInstallations,
+	writeRecordAtomically,
+} from "#data/catalog"
 import { readInstalledCopies } from "#data/plan"
 
 /**
@@ -77,6 +83,46 @@ export async function holdSelectionLease(
 			void removePathIfPresent(path).catch(() => {})
 		},
 	}
+}
+
+/**
+ * How many times {@linkcode holdActiveSelection} reads the selection and leases it before refusing.
+ *
+ * A retry is needed only when an activation lands between the read and the lease, so a third
+ * consecutive miss means the selection is being rewritten continuously rather than once.
+ */
+export const LEASE_ATTEMPTS = 3
+
+/**
+ * A catalog snapshot and a lease on its generation, published while that generation is still the active one.
+ *
+ * A prune reads the leases once, under its lock, and never deletes the active generation's artifacts.
+ * A lease published after a prune read the leases is therefore safe only if its generation
+ * was still active when it landed: a prune planned against that generation keeps it,
+ * and one planned against an earlier generation is refused for the moved selection.
+ *
+ * When the selection moved between the snapshot and the lease, the lease is released
+ * and the snapshot read again.
+ *
+ * @throws When the selection moves on each of {@linkcode LEASE_ATTEMPTS} attempts.
+ */
+export async function holdActiveSelection(
+	dataRoot: PathBuilderLike
+): Promise<{ catalog: LayerCatalog; lease: (Disposable & { path: string | null }) | null }> {
+	for (let attempt = 0; attempt < LEASE_ATTEMPTS; attempt++) {
+		const catalog = await LayerCatalog.read(dataRoot)
+		const generation = catalog.generation
+
+		if (!generation) return { catalog, lease: null }
+
+		const lease = await holdSelectionLease(dataRoot, generation)
+
+		if ((await readActiveSelection(dataRoot))?.generation === generation) return { catalog, lease }
+
+		lease[Symbol.dispose]()
+	}
+
+	throw new Error(`the active selection under ${dataRoot} changed on each of ${LEASE_ATTEMPTS} attempts to lease it`)
 }
 
 /**

@@ -17,7 +17,7 @@ import { Globerator } from "spliterator/node/fs"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { catalogPaths, LayerCatalog, replaceActiveSelection } from "#data/catalog"
-import { executePrune, holdSelectionLease, planPrune, readLiveLeases } from "#data/retention"
+import { executePrune, holdActiveSelection, holdSelectionLease, planPrune, readLiveLeases } from "#data/retention"
 import { installFixtureArtifact } from "#test-kit/fixture-registry"
 
 let scratch: TemporaryDirectory
@@ -91,6 +91,16 @@ describe("planPrune and executePrune", () => {
 		await expect(executePrune(plan)).rejects.toThrow(/selection moved from generation 3 to 4 after planning/u)
 		expect(await pathExists(a.path)).toBe(true)
 		expect(await pathExists(c.path)).toBe(true)
+	})
+
+	it("leases the active generation with the snapshot it read", async () => {
+		await threeGenerations()
+
+		const { catalog, lease } = await holdActiveSelection(scratch.path)
+
+		expect(catalog.generation).toBe(3)
+		expect((await readLiveLeases(scratch.path)).map((held) => held.generation)).toEqual([3])
+		lease?.[Symbol.dispose]()
 	})
 
 	it("refuses to delete when a session took a lease after planning", async () => {
