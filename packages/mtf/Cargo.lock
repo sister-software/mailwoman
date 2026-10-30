@@ -698,9 +698,11 @@ dependencies = [
 name = "mtf-tools"
 version = "0.1.0"
 dependencies = [
+ "arrow-array",
  "mtf-channels",
  "mtf-core",
  "mtf-sampler",
+ "parquet",
  "serde_json",
  "tempfile",
 ]

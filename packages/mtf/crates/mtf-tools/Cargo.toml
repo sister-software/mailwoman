@@ -17,4 +17,6 @@ mtf-sampler = { path = "../mtf-sampler" }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 
 [dev-dependencies]
+arrow-array = "60"
+parquet = { version = "60", default-features = false, features = ["arrow"] }
 tempfile = "3"

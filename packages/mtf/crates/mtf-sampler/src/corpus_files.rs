@@ -270,10 +270,17 @@ fn deletion_ids(deletion: &Value, corpus_dir: &Path, config: &SamplerConfig) -> 
 	let inline = deletion.get("source_ids").filter(|v| !v.is_null());
 	let sidecar = deletion.get("source_ids_file").filter(|v| !v.is_null());
 	match (inline, sidecar) {
-		(Some(ids), None) => Ok(ids
+		// A non-array, or an entry that is not a string, would otherwise read as fewer deletions than the manifest lists.
+		(Some(ids), None) => ids
 			.as_array()
-			.map(|a| a.iter().filter_map(Value::as_str).map(Into::into).collect())
-			.unwrap_or_default()),
+			.ok_or_else(|| Error::Input(format!("MANIFEST deletion source_ids is {ids}, not an array")))?
+			.iter()
+			.map(|id| {
+				id.as_str()
+					.map(Into::into)
+					.ok_or_else(|| Error::Input(format!("MANIFEST deletion source_ids holds {id}, not a string")))
+			})
+			.collect(),
 		(None, Some(sidecar)) => {
 			let raw = str_field(sidecar, "path")
 				.ok_or_else(|| Error::Input("MANIFEST deletion sidecar has no path".into()))?;
@@ -384,19 +391,26 @@ fn split_attribute(entry: &Value, corpus_dir: &Path, config: &SamplerConfig) -> 
 /// The directory-glob listing of a corpus with no manifest file list, each file verified against its record.
 fn glob_split(corpus_dir: &Path, split: &str, config: &SamplerConfig) -> Result<Vec<PathBuf>> {
 	let dir = corpus_dir.join(split);
-	let mut paths: Vec<PathBuf> = match std::fs::read_dir(&dir) {
+	// A missing directory lists no file and is refused below with the corpus's own message. Any other failure to read
+	// the directory or one of its entries is reported, because a partial listing would sample from fewer files.
+	let entries = match std::fs::read_dir(&dir) {
 		Ok(entries) => entries
-			.filter_map(|e| e.ok().map(|e| e.path()))
-			.filter(|p| {
-				let name = p
-					.file_name()
-					.map(|n| n.to_string_lossy().into_owned())
-					.unwrap_or_default();
-				!name.starts_with('.') && name.ends_with(".parquet")
-			})
-			.collect(),
-		Err(_) => Vec::new(),
+			.map(|entry| entry.map(|e| e.path()))
+			.collect::<std::io::Result<Vec<_>>>()
+			.map_err(|e| Error::Input(format!("{}: {e}", dir.display())))?,
+		Err(e) if e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+		Err(e) => return Err(Error::Input(format!("{}: {e}", dir.display()))),
 	};
+	let mut paths: Vec<PathBuf> = entries
+		.into_iter()
+		.filter(|p| {
+			let name = p
+				.file_name()
+				.map(|n| n.to_string_lossy().into_owned())
+				.unwrap_or_default();
+			!name.starts_with('.') && name.ends_with(".parquet")
+		})
+		.collect();
 	paths.sort();
 	if paths.is_empty() {
 		return Err(Error::Input(format!(

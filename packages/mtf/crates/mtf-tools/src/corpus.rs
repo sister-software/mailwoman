@@ -219,8 +219,15 @@ pub fn mine_postcode_literals(
 						continue;
 					}
 				}
-				let toks = tokens.get(i).map_err(|e| e.to_string())?.unwrap_or_default();
-				let labs = labels.get(i).map_err(|e| e.to_string())?.unwrap_or_default();
+				// A null list is a malformed row: reading it as empty would skip the row and undercount its postcodes.
+				let toks = tokens
+					.get(i)
+					.map_err(|e| e.to_string())?
+					.ok_or_else(|| format!("{}: row {i} has null tokens", path.display()))?;
+				let labs = labels
+					.get(i)
+					.map_err(|e| e.to_string())?
+					.ok_or_else(|| format!("{}: row {i} has null labels", path.display()))?;
 				if toks.len() != labs.len() {
 					return Err(format!(
 						"{}: row {i} has {} tokens and {} labels",
@@ -405,6 +412,44 @@ mod tests {
 		assert_eq!(draw(42).len(), 50);
 		assert_eq!(draw(42), draw(42));
 		assert_ne!(draw(42), draw(7));
+	}
+
+	#[test]
+	fn a_row_with_null_tokens_is_refused_rather_than_read_as_empty() {
+		use arrow_array::builder::{ListBuilder, StringBuilder};
+		use arrow_array::{ArrayRef, RecordBatch};
+		use std::sync::Arc;
+
+		let lists = |rows: &[Option<&[&str]>]| -> ArrayRef {
+			let mut builder = ListBuilder::new(StringBuilder::new());
+			for row in rows {
+				match row {
+					Some(values) => {
+						for v in *values {
+							builder.values().append_value(v);
+						}
+						builder.append(true);
+					}
+					None => builder.append(false),
+				}
+			}
+			Arc::new(builder.finish())
+		};
+		let batch = RecordBatch::try_from_iter([
+			("tokens", lists(&[Some(&["10117"]), None])),
+			("labels", lists(&[Some(&["B-postcode"]), Some(&[])])),
+		])
+		.unwrap();
+		let root = tempfile::tempdir().unwrap();
+		let path = root.path().join("train/part-0000.parquet");
+		std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+		let mut writer =
+			parquet::arrow::ArrowWriter::try_new(std::fs::File::create(&path).unwrap(), batch.schema(), None).unwrap();
+		writer.write(&batch).unwrap();
+		writer.close().unwrap();
+
+		let refusal = mine_postcode_literals(&[path], 5, None, None).unwrap_err();
+		assert!(refusal.contains("row 1 has null tokens"), "{refusal}");
 	}
 
 	#[test]

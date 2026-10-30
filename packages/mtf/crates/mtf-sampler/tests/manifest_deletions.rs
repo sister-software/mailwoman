@@ -67,6 +67,19 @@ fn counts(corpus: &Path) -> BTreeMap<String, u64> {
 		.collect()
 }
 
+#[test]
+fn an_inline_deletion_whose_ids_are_not_strings_is_refused() {
+	for ids in [json!("tiger:1"), json!(["tiger:1", 4])] {
+		let dir = tempfile::tempdir().unwrap();
+		let corpus = corpus(
+			dir.path(),
+			json!([{"target": {"source": "tiger"}, "source_ids": ids, "reason": "r", "issue": "#1"}]),
+		);
+		let refusal = source_row_counts(&settings(&corpus), "train").unwrap_err().to_string();
+		assert!(refusal.contains("MANIFEST deletion source_ids"), "{refusal}");
+	}
+}
+
 /// Writes a sidecar holding only a `source_id` column.
 fn write_sidecar(path: &Path, ids: &[&str]) {
 	std::fs::create_dir_all(path.parent().unwrap()).unwrap();
