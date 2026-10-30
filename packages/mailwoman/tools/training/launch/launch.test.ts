@@ -13,6 +13,7 @@ import type { ModalBoundary, SandboxState, TrainingSandboxSpec } from "#tools/tr
 import {
 	cancelLaunch,
 	DuplicateLaunchError,
+	fetchRun,
 	launchStatus,
 	LaunchState,
 	type LaunchDependencies,
@@ -54,6 +55,7 @@ function harness() {
 	const records = new Map<string, LaunchRecord>()
 	const terminated: string[] = []
 	const logs: string[] = []
+	const fetches: Array<{ remoteDir: string; localDir: string }> = []
 	let preflights = 0
 
 	const boundary: ModalBoundary = {
@@ -78,6 +80,11 @@ function harness() {
 			sandboxes.get(id)!.exitCode = 137
 		},
 		runToCompletion: async () => ({ exitCode: 0, output: "" }),
+		fetchDirectory: async (remoteDir, localDir) => {
+			fetches.push({ remoteDir, localDir })
+
+			return ["model.safetensors"]
+		},
 	}
 
 	const deps: LaunchDependencies = {
@@ -106,7 +113,7 @@ function harness() {
 		log: (line) => logs.push(line),
 	}
 
-	return { deps, sandboxes, records, terminated, logs, preflights: () => preflights }
+	return { deps, sandboxes, records, terminated, logs, fetches, preflights: () => preflights }
 }
 
 describe("the training launch lifecycle", () => {
@@ -121,6 +128,9 @@ describe("the training launch lifecycle", () => {
 		expect(sandbox.spec).toMatchObject({ cpu: 4, timeoutMs: 3_600_000, tags: { [RUN_TAG]: runKey } })
 		expect(sandbox.spec.gpu).toBeUndefined()
 		expect(sandbox.spec.env).toMatchObject({ MW_FRESH: "1", MW_EXPECT_DEVICE: "cpu", MW_MANIFEST_SHA256: "m" })
+		// The inputs travel as files, `ready` last, so no environment value carries a config.
+		expect(sandbox.spec.files.map((file) => file.path.split("/").at(-1))).toEqual(["config", "resolved.json", "ready"])
+		expect(Object.values(sandbox.spec.env).every((value) => value.length < 4096)).toBe(true)
 		expect(records.get(runKey)?.sandboxes).toEqual([record.sandboxes[0]])
 		expect(await launchStatus(runKey, deps)).toMatchObject({ state: LaunchState.Running })
 	})
@@ -166,6 +176,21 @@ describe("the training launch lifecycle", () => {
 		await cancelLaunch(runKey, deps)
 		expect(terminated).toEqual([record.sandboxes[0]])
 		expect(await launchStatus(runKey, deps)).toMatchObject({ state: LaunchState.Stopped })
+	})
+
+	it("fetches a run's output directory, or one checkpoint of it, from the volume", async () => {
+		const { deps, fetches } = harness()
+		const record = await startLaunch(CONFIG, OPTIONS, deps)
+
+		expect(await fetchRun(runKey, "step-000200", "/tmp/out", deps)).toEqual(["model.safetensors"])
+		await fetchRun(runKey, null, "/tmp/out", deps)
+
+		expect(fetches.map((fetch) => fetch.remoteDir)).toEqual([
+			`${record.environment.MW_OUTPUT_DIR}/step-000200`,
+			record.environment.MW_OUTPUT_DIR,
+		])
+
+		await expect(fetchRun("0".repeat(16), null, "/tmp/out", deps)).rejects.toThrow(/no launch record/)
 	})
 
 	it("runs the preflight on a dry run and starts nothing", async () => {

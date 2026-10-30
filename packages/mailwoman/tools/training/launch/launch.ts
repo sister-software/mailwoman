@@ -113,8 +113,18 @@ export interface LaunchRecord {
 	imageID: string
 	resources: SandboxResources
 	environment: SupervisorEnvironment
+	/**
+	 * The YAML's bytes in base64, and the resolved config, which each sandbox of
+	 * the run receives in {@linkcode LAUNCH_INPUTS_DIR}.
+	 */
+	inputs: { configBase64: string; resolved: string }
 	sandboxes: string[]
 }
+
+/**
+ * The container directory a training sandbox receives its launch inputs in.
+ */
+export const LAUNCH_INPUTS_DIR = "/tmp/mailwoman-launch-inputs"
 
 export interface LaunchOptions {
 	/**
@@ -161,8 +171,8 @@ export function supervisorEnvironment(
 		MW_VOLUME: options.mount,
 		MW_CONFIG_PATH: `${staged}/${config.name}`,
 		MW_RESOLVED_PATH: `${staged}/resolved.json`,
-		MW_CONFIG_B64: Buffer.from(config.text).toString("base64"),
-		MW_RESOLVED_B64: Buffer.from(config.resolvedJSON).toString("base64"),
+		MW_INPUTS_DIR: LAUNCH_INPUTS_DIR,
+		MW_INPUTS_WAIT_SECONDS: "300",
 		MW_CONFIG_SHA256: config.configSHA256,
 		MW_MANIFEST_PATH: preflight.manifestPath,
 		MW_MANIFEST_SHA256: preflight.manifestSHA256,
@@ -231,6 +241,7 @@ export async function startLaunch(
 		imageID: "",
 		resources,
 		environment,
+		inputs: { configBase64: Buffer.from(config.text).toString("base64"), resolved: config.resolvedJSON },
 		sandboxes: [],
 	}
 
@@ -248,12 +259,22 @@ export async function startLaunch(
 }
 
 async function startSandbox(record: LaunchRecord, deps: LaunchDependencies): Promise<LaunchRecord> {
+	if (typeof record.inputs?.configBase64 !== "string" || typeof record.inputs.resolved !== "string") {
+		throw new TypeError(`the record of run ${record.runKey} holds no launch inputs; start the run again with start`)
+	}
+
 	const sandbox = await deps.boundary.start({
 		...record.resources,
 		name: `train-${record.runKey}-${record.sandboxes.length}`,
 		imageID: record.imageID,
 		command: ["bash", "-c", SUPERVISOR_SCRIPT],
 		env: { ...record.environment },
+		// `ready` comes last: the supervisor reads the other two once it exists.
+		files: [
+			{ path: `${LAUNCH_INPUTS_DIR}/config`, contents: Buffer.from(record.inputs.configBase64, "base64") },
+			{ path: `${LAUNCH_INPUTS_DIR}/resolved.json`, contents: Buffer.from(record.inputs.resolved) },
+			{ path: `${LAUNCH_INPUTS_DIR}/ready`, contents: new Uint8Array() },
+		],
 		tags: { [RUN_TAG]: record.runKey, config: record.config },
 	})
 
@@ -321,6 +342,25 @@ export async function cancelLaunch(runKey: string, deps: LaunchDependencies): Pr
 
 	await deps.boundary.terminate(record.sandboxes.at(-1)!)
 	deps.log(`Terminated sandbox ${record.sandboxes.at(-1)} of run ${runKey}`)
+}
+
+/**
+ * Copies a run's output directory from the volume to the host, or one checkpoint directory of it
+ * when `checkpoint` names one, and returns the copied files' paths relative to `localDir`.
+ *
+ * @throws When the host holds no record of the run, or the volume holds no
+ * file under the requested directory.
+ */
+export async function fetchRun(
+	runKey: string,
+	checkpoint: string | null,
+	localDir: string,
+	deps: LaunchDependencies
+): Promise<string[]> {
+	const record = await requireRecord(runKey, deps)
+	const remote = checkpoint ? `${record.environment.MW_OUTPUT_DIR}/${checkpoint}` : record.environment.MW_OUTPUT_DIR
+
+	return deps.boundary.fetchDirectory(remote, localDir)
 }
 
 async function requireRecord(runKey: string, deps: LaunchDependencies): Promise<LaunchRecord> {

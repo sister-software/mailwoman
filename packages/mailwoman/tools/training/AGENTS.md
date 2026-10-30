@@ -37,8 +37,10 @@ staged on the volume but not mirrored on the host, or the reverse, starts no tra
 
 The sandbox runs the supervisor (`launch/supervisor.ts`), a bash script:
 
-1. It writes the YAML and the resolved JSON under `<mount>/launch/<YAML sha256 prefix>/` and refuses a resolved
-   config that describes another YAML.
+1. It waits up to 300 s for the host to write the YAML, the resolved JSON and a `ready` marker into the container,
+   copies the two under `<mount>/launch/<YAML sha256 prefix>/`, and refuses a resolved config that describes another
+   YAML. The inputs travel as files because a sandbox's environment is a Modal secret, which holds at most 32 KiB per
+   value.
 2. It checks the device with `trainer device` and refuses another one. Under `--fresh` it then clears the output
    directory once.
 3. It runs `trainer train <resolved.json> --resume <auto | branch>` and commits the volume (`sync <mount>`) after every

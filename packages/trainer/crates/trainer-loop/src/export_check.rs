@@ -11,6 +11,7 @@
 use crate::batch::TensorBatch;
 use crate::compare::Record;
 use crate::{fail, Result};
+use mtf_channels::encoder::CHANNEL_NAMES;
 use serde_json::{json, Map, Value};
 use std::path::Path;
 use tch::{Kind, Tensor};
@@ -48,6 +49,13 @@ pub fn write_feeds(
 	model.mode = Mode::Eval;
 	let record = Record::read(record)?;
 	let systems = model.spec.num_address_systems;
+	let dims = model.spec.channel_dims();
+	let enabled: Vec<String> = CHANNEL_NAMES
+		.iter()
+		.zip(dims.iter())
+		.filter(|(_, dim)| **dim > 0)
+		.map(|(name, _)| (*name).to_owned())
+		.collect();
 	let mut probes = Vec::new();
 	let mut b = 0;
 	while probes.len() < rows {
@@ -72,9 +80,12 @@ pub fn write_feeds(
 				labels: one(&batch.labels),
 				locale_ids: one(&batch.locale_ids),
 				address_system_ids: one(&batch.address_system_ids),
+				// A channel the checkpoint was built without has no input on the model or the graph, so a record from a
+				// config with more channels feeds only the ones this checkpoint enables.
 				channels: batch
 					.channels
 					.iter()
+					.filter(|(n, _, _)| enabled.contains(n))
 					.map(|(n, f, c)| (n.clone(), one(f), one(c)))
 					.collect(),
 				char_ids: batch.char_ids.as_ref().map(one),

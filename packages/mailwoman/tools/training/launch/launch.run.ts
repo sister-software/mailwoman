@@ -13,12 +13,14 @@
  *     node packages/mailwoman/tools/training/launch/launch.run.ts logs <run key> [--lines <n>]
  *     node packages/mailwoman/tools/training/launch/launch.run.ts cancel <run key>
  *     node packages/mailwoman/tools/training/launch/launch.run.ts restart <run key>
+ *     node packages/mailwoman/tools/training/launch/launch.run.ts fetch <run key> --out <dir> [--checkpoint <step-NNNNNN>]
  *     node packages/mailwoman/tools/training/launch/launch.run.ts sync --corpus <entry>
  *
  *   `start` resolves the config, which is also the source-rights admission, runs the preflight against the host copy
  *   of the volume under `MAILWOMAN_DATA_ROOT`, and starts one detached sandbox. `--dry-run` runs everything up to the
  *   sandbox and prints what it would start, without contacting Modal. `restart` resumes a stopped run from its newest
- *   complete checkpoint in a fresh sandbox. Every command prints the run key the others take. `sync` stages the bucket's
+ *   complete checkpoint in a fresh sandbox. `fetch` copies the run's output directory, or one checkpoint of it, from
+ *   the volume to the host. Every command prints the run key the others take. `sync` stages the bucket's
  *   `corpus/<entry>/` onto the volume (`sync.ts`) and waits for it.
  */
 
@@ -48,6 +50,7 @@ import {
 	type LaunchDependencies,
 	type LaunchRecord,
 	cancelLaunch,
+	fetchRun,
 	launchStatus,
 	restartLaunch,
 	startLaunch,
@@ -72,6 +75,8 @@ const { values, positionals } = parseArguments({
 		"dry-run": { type: "boolean", default: false },
 		lines: { type: "string", default: "100" },
 		corpus: { type: "string" },
+		out: { type: "string" },
+		checkpoint: { type: "string" },
 	},
 })
 
@@ -265,6 +270,16 @@ switch (command) {
 		break
 	}
 
+	case "fetch": {
+		if (!values.out) throw new Error("fetch needs --out <directory>")
+
+		const files = await fetchRun(requireRunKey(), values.checkpoint ?? null, values.out, dependencies(null, false))
+
+		log(`Fetched ${files.length} file(s) into ${values.out}`)
+
+		break
+	}
+
 	default:
-		throw new Error("the first argument is one of start, status, logs, cancel, restart or sync")
+		throw new Error("the first argument is one of start, status, logs, cancel, restart, fetch or sync")
 }

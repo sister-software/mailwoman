@@ -30,6 +30,10 @@ export interface TrainingSandboxSpec extends SandboxResources {
 	imageID: string
 	command: string[]
 	env: Record<string, string>
+	/**
+	 * Files written into the sandbox after it starts, in order.
+	 */
+	files: Array<{ path: string; contents: Uint8Array }>
 	tags: Record<string, string>
 }
 
@@ -95,4 +99,11 @@ export interface ModalBoundary {
 	 * Runs a sandbox to its exit and returns its exit code and combined output.
 	 */
 	runToCompletion(spec: OneShotSandboxSpec): Promise<{ exitCode: number; output: string }>
+	/**
+	 * Copies every file under `remoteDir` on the volume into `localDir`, keeping each
+	 * file's path relative to `remoteDir`, and returns those relative paths.
+	 *
+	 * @throws When `remoteDir` holds no file.
+	 */
+	fetchDirectory(remoteDir: string, localDir: string): Promise<string[]>
 }

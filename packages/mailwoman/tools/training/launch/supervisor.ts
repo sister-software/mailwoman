@@ -33,8 +33,18 @@ export interface SupervisorEnvironment {
 	MW_VOLUME: string
 	MW_CONFIG_PATH: string
 	MW_RESOLVED_PATH: string
-	MW_CONFIG_B64: string
-	MW_RESOLVED_B64: string
+	/**
+	 * The container directory the host writes the launch inputs into after the sandbox
+	 * starts: `config`, `resolved.json`, then `ready`.
+	 *
+	 * A sandbox's environment is a Modal secret, which holds at most 32 KiB per value,
+	 * and a resolved config can be larger.
+	 */
+	MW_INPUTS_DIR: string
+	/**
+	 * How long the supervisor waits for `ready` before it refuses.
+	 */
+	MW_INPUTS_WAIT_SECONDS: string
 	MW_CONFIG_SHA256: string
 	/**
 	 * The corpus MANIFEST the preflight receipt was written over, and the sha256 of its bytes on the host.
@@ -85,9 +95,15 @@ log() { printf '[launch] %s\n' "$*"; }
 refuse() { log "refused: $*"; exit ${SUPERVISOR_REFUSED_EXIT}; }
 commit() { "$MW_SYNC" "$MW_VOLUME"; }
 
+waited=0
+while [ ! -f "$MW_INPUTS_DIR/ready" ]; do
+	[ "$waited" -ge "$MW_INPUTS_WAIT_SECONDS" ] && refuse "the launch inputs did not arrive in $MW_INPUTS_DIR within $MW_INPUTS_WAIT_SECONDS s"
+	sleep 1
+	waited=$((waited + 1))
+done
 mkdir -p "$(dirname "$MW_CONFIG_PATH")" "$(dirname "$MW_RESOLVED_PATH")" "$MW_RUN_BASE"
-printf '%s' "$MW_CONFIG_B64" | base64 -d > "$MW_CONFIG_PATH"
-printf '%s' "$MW_RESOLVED_B64" | base64 -d > "$MW_RESOLVED_PATH"
+cp "$MW_INPUTS_DIR/config" "$MW_CONFIG_PATH"
+cp "$MW_INPUTS_DIR/resolved.json" "$MW_RESOLVED_PATH"
 
 config_sha=$(sha256sum "$MW_CONFIG_PATH" | awk '{print $1}')
 [ "$config_sha" = "$MW_CONFIG_SHA256" ] || refuse "the staged config's sha256 is $config_sha, the launch's $MW_CONFIG_SHA256"

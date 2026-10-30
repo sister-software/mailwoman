@@ -7,7 +7,9 @@
  *   the active profile in `~/.modal.toml`, as the SDK reads them.
  */
 
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { type App, type Image, ModalClient, NotFoundError, type Secret, type Volume } from "modal"
+import { dirname, resolvePath } from "path-ts"
 
 import type {
 	ModalBoundary,
@@ -142,6 +144,16 @@ export class SDKModalBoundary implements ModalBoundary {
 			tags: spec.tags,
 		})
 
+		try {
+			for (const file of spec.files) {
+				await sandbox.filesystem.writeBytes(file.contents, file.path)
+			}
+		} catch (error) {
+			await sandbox.terminate()
+
+			throw new Error(`sandbox ${sandbox.sandboxId}: the launch inputs could not be written`, { cause: error })
+		}
+
 		// The sandbox runs on after this process exits.
 		sandbox.detach()
 
@@ -211,4 +223,55 @@ export class SDKModalBoundary implements ModalBoundary {
 
 		return { exitCode, output: `${stdout}${stderr}` }
 	}
+
+	async fetchDirectory(remoteDir: string, localDir: string): Promise<string[]> {
+		const app = await this.#appHandle()
+
+		// A sandbox that idles while the host reads the volume through its filesystem.
+		const sandbox = await this.#client.sandboxes.create(app, this.#client.images.fromRegistry(FETCH_IMAGE), {
+			command: ["sleep", String(FETCH_TIMEOUT_MS / 1000)],
+			cpu: 1,
+			memoryMiB: 1024,
+			timeoutMs: FETCH_TIMEOUT_MS,
+			volumes: { [this.#options.mount]: await this.#volumeHandle() },
+		})
+
+		try {
+			const fetched: string[] = []
+			const pending = [remoteDir.replace(/\/+$/, "")]
+
+			while (pending.length) {
+				const dir = pending.pop()!
+
+				for (const entry of await sandbox.filesystem.listFiles(dir)) {
+					const remote = `${dir}/${entry.name}`
+
+					if (entry.type === "directory") {
+						pending.push(remote)
+
+						continue
+					}
+
+					const relative = remote.slice(remoteDir.replace(/\/+$/, "").length + 1)
+
+					await makeDirectories(dirname(resolvePath(localDir, relative)))
+					await sandbox.filesystem.copyToLocal(remote, resolvePath(localDir, relative).toString())
+					fetched.push(relative)
+				}
+			}
+
+			if (!fetched.length) throw new Error(`${remoteDir} holds no file on the volume`)
+
+			return fetched.toSorted()
+		} finally {
+			await sandbox.terminate()
+		}
+	}
 }
+
+/**
+ * The image of the sandbox `fetchDirectory` reads the volume through: any image with a shell.
+ */
+const FETCH_IMAGE = "alpine:3.22"
+
+const FETCH_TIMEOUT_MS = 30 * 60 * 1000

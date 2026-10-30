@@ -47,13 +47,25 @@ const FAKE_SYNC = String.raw`#!/usr/bin/env bash
 echo "sync $1" >> "$FAKE_STATE/syncs"
 `
 
-async function runSupervisor(plan: string, overrides: Partial<SupervisorEnvironment> = {}, seedCheckpoint = false) {
+async function runSupervisor(
+	plan: string,
+	overrides: Partial<SupervisorEnvironment> = {},
+	seedCheckpoint = false,
+	writeInputs = true
+) {
 	await using scratch = await temporaryDirectory("mailwoman-supervisor-")
 	const config = "data:\n  corpus_dir: /data/corpus\n"
 	const configSHA = sha256Hex(config)
 	const manifest = '{"files":[]}'
 	const trainer = scratch.path("trainer").toString()
 	const sync = scratch.path("sync").toString()
+
+	// The inputs the host writes into the sandbox, `ready` last.
+	if (writeInputs) {
+		await writeLocalTextFile(config, scratch.path("inputs", "config"))
+		await writeLocalTextFile(`{"config_sha256": "${configSHA}"}`, scratch.path("inputs", "resolved.json"))
+		await writeLocalTextFile("", scratch.path("inputs", "ready"))
+	}
 
 	await writeLocalTextFile(FAKE_TRAINER, trainer)
 	await writeLocalTextFile(FAKE_SYNC, sync)
@@ -73,8 +85,8 @@ async function runSupervisor(plan: string, overrides: Partial<SupervisorEnvironm
 		MW_VOLUME: scratch.path("volume").toString(),
 		MW_CONFIG_PATH: scratch.path("volume", "launch", "config.yaml").toString(),
 		MW_RESOLVED_PATH: scratch.path("volume", "launch", "resolved.json").toString(),
-		MW_CONFIG_B64: Buffer.from(config).toString("base64"),
-		MW_RESOLVED_B64: Buffer.from(`{"config_sha256": "${configSHA}"}`).toString("base64"),
+		MW_INPUTS_DIR: scratch.path("inputs").toString(),
+		MW_INPUTS_WAIT_SECONDS: "2",
 		MW_CONFIG_SHA256: configSHA,
 		MW_MANIFEST_PATH: scratch.path("volume", "corpus", "MANIFEST.json").toString(),
 		MW_MANIFEST_SHA256: sha256Hex(manifest),
@@ -177,5 +189,13 @@ describe("the training sandbox supervisor", () => {
 		expect(config.calls).toEqual([])
 		expect(manifest.code).toBe(SUPERVISOR_REFUSED_EXIT)
 		expect(manifest.stdout).toContain("stage the corpus the receipt was written over")
+	})
+
+	it("refuses when the launch inputs never arrive", async () => {
+		const result = await runSupervisor("ok", {}, false, false)
+
+		expect(result.code).toBe(SUPERVISOR_REFUSED_EXIT)
+		expect(result.stdout).toContain("the launch inputs did not arrive")
+		expect(result.calls).toEqual([])
 	})
 })
