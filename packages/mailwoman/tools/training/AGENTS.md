@@ -45,8 +45,9 @@ The sandbox runs the supervisor (`launch/supervisor.ts`), a bash script:
    directory once.
 3. It runs `trainer train <resolved.json> --resume <auto | branch>` and commits the volume (`sync <mount>`) after every
    `[save] checkpoint` line.
-4. It restarts the trainer with `--resume auto` after a failed exit, up to `--retries` (default
-   `MAILWOMAN_MODAL_TRAIN_RETRIES`, 3), in the same container.
+4. It restarts the trainer after a failed exit, up to `--retries` (default `MAILWOMAN_MODAL_TRAIN_RETRIES`, 3), in
+   the same container. Each attempt resumes with `--resume auto` once the output directory holds a complete
+   checkpoint, and a `--branch-from` run resumes from its branch checkpoint until then.
 
 The sandbox exits 0 when training completes and 3 on a refusal. `status` reads that code: `completed`, `refused`,
 `running`, or `stopped` for any other exit, which covers a spent retry count, the timeout and a preemption. `restart`
