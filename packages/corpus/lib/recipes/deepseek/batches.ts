@@ -16,7 +16,7 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { pyRound, pySum } from "@mailwoman/core/numeric"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
-import { pythonSplitLines, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { splitLines } from "@mailwoman/core/strings/unicode"
 import { JSONSpliterator } from "spliterator"
 
 import {
@@ -52,8 +52,8 @@ export function deterministicID(prefix: string, payload: string): string {
 export function parseJSONLResponse(content: string | null | undefined, onUnparsed?: (line: string) => void): unknown[] {
 	const out: unknown[] = []
 
-	for (const line of pythonSplitLines(content || "")) {
-		const text = pythonStrip(line)
+	for (const line of splitLines(content || "")) {
+		const text = line.trim()
 
 		if (!text || text.startsWith("```") || !text.startsWith("{")) continue
 

@@ -15,7 +15,6 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { pythonStrip } from "@mailwoman/core/strings/python-text"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -42,7 +41,7 @@ export class RefusedGBTupleSourceError extends Error {
 	override name = "RefusedGBTupleSourceError"
 }
 
-const field = (components: Record<string, unknown>, key: string): string => pythonStrip(String(components[key] || ""))
+const field = (components: Record<string, unknown>, key: string): string => String(components[key] || "").trim()
 
 /**
  * Up to `count` tuples, reservoir-sampled from the adapter's rows in one streaming pass and then shuffled.

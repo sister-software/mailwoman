@@ -23,7 +23,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { basename, dirname } from "path-ts"
 
 import { openParquetRowStream } from "#parquet/streams"
@@ -76,7 +76,7 @@ const EDGE_NON_WORD = new RegExp(String.raw`^(?:(?!${WORD}).)+|(?:(?!${WORD}).)+
  * leading and trailing non-word characters removed, lower-cased, empty tokens dropped.
  */
 export function foldBoardWords(surface: string): string[] {
-	return pythonSplitWhitespace(surface)
+	return splitWhitespace(surface)
 		.map((word) => word.replace(EDGE_NON_WORD, ""))
 		.filter((word) => word)
 		.map((word) => word.toLowerCase())

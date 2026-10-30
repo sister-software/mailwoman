@@ -18,7 +18,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
-import { pythonIsAlphaCharacter } from "@mailwoman/core/strings/python-text"
+import { isLetter } from "@mailwoman/core/strings/unicode"
 import { basename, resolvePath } from "path-ts"
 
 import {
@@ -59,11 +59,12 @@ export const FOREIGN_PLACES_SOURCE = "wof-admin"
 export const FOREIGN_PLACES_REGISTER = "wof-foreign-cjk"
 
 /**
- * The letters whose Unicode 15.0 name begins `CJK UNIFIED`, `CJK COMPATIBILITY`,
- * `HIRAGANA`, `KATAKANA` or `HANGUL`, as inclusive code-point ranges.
+ * The letters whose name begins `CJK UNIFIED`, `CJK COMPATIBILITY`, `HIRAGANA`,
+ * `KATAKANA` or `HANGUL`, as inclusive code-point ranges.
  *
- * JavaScript exposes no character names, so the table is frozen from CPython 3.12's
- * `unicodedata` (Unicode 15.0), the set the Python builder counted.
+ * JavaScript exposes no character names, so the table was listed from CPython 3.12's
+ * `unicodedata` (Unicode 15.0), and CJK Unified Ideographs Extensions I (Unicode 15.1)
+ * and J (Unicode 17.0) were added from the Unicode charts.
  * Halfwidth katakana and halfwidth Hangul are named `HALFWIDTH …` and are not in it.
  */
 const CJK_LETTER_RANGES: ReadonlyArray<readonly [number, number]> = [
@@ -96,9 +97,11 @@ const CJK_LETTER_RANGES: ReadonlyArray<readonly [number, number]> = [
 	[0x2_b7_40, 0x2_b8_1d],
 	[0x2_b8_20, 0x2_ce_a1],
 	[0x2_ce_b0, 0x2_eb_e0],
+	[0x2_eb_f0, 0x2_ee_5d],
 	[0x2_f8_00, 0x2_fa_1d],
 	[0x3_00_00, 0x3_13_4a],
 	[0x3_13_50, 0x3_23_af],
+	[0x3_23_b0, 0x3_34_79],
 ]
 
 const isCJKLetter = (codePoint: number): boolean =>
@@ -107,16 +110,15 @@ const isCJKLetter = (codePoint: number): boolean =>
 /**
  * The share of `text`'s letters that are Han, Kana or Hangul, or 0 for a text with no letter.
  *
- * A letter is Python 3.12's `str.isalpha`, read from Unicode 15.0 through `pythonIsAlphaCharacter`.
- * A letter a later Unicode version assigned, such as a CJK Extension I or J character, is no
- * letter here, as in the Python builder, rather than a non-CJK letter that lowers the share.
+ * A letter is `\p{L}` at the running Node's Unicode version (`isLetter`),
+ * and a CJK Extension I or J character is a CJK letter.
  */
 export function cjkShare(text: string): number {
 	let letters = 0
 	let cjk = 0
 
 	for (const character of text) {
-		if (!pythonIsAlphaCharacter(character)) continue
+		if (!isLetter(character)) continue
 
 		letters++
 

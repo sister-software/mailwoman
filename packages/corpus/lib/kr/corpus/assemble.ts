@@ -20,7 +20,7 @@ import { pySum } from "@mailwoman/core/numeric"
 import { runFileSync } from "@mailwoman/core/process"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { pythonSplitLines, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import { splitLines, splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
@@ -105,8 +105,8 @@ export function transformKRCoordinates(
 		maxBuffer: 1 << 30,
 	})
 
-	const out = pythonSplitLines(String(stdout)).map((line) => {
-		const parts = pythonSplitWhitespace(line)
+	const out = splitLines(String(stdout)).map((line) => {
+		const parts = splitWhitespace(line)
 
 		if (parts.length < 2) return null
 

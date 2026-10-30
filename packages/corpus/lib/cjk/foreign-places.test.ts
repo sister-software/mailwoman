@@ -8,7 +8,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -49,7 +49,7 @@ function row(raw: string, country: string, sourceID: string, spans: readonly (re
 		cursor = start + text.length
 	}
 
-	const tokens = pythonSplitWhitespace(raw)
+	const tokens = splitWhitespace(raw)
 
 	return {
 		raw,
@@ -73,10 +73,10 @@ describe("cjkShare", () => {
 		expect(cjkShare("𠮷野")).toBe(1)
 	})
 
-	it("counts no letter that Unicode 15.0 had not assigned, as Python 3.12's isalpha did", () => {
-		// U+2EBF0 is CJK Extension I (Unicode 15.1).
-		// Python counted the row's two letters, both CJK.
-		expect(cjkShare("東京\u{2EBF0}")).toBe(1)
+	it("counts a CJK Extension I or J letter as CJK", () => {
+		// U+2EBF0 is CJK Extension I (Unicode 15.1) and U+323B0 CJK Extension J (Unicode 17.0).
+		expect(cjkShare("東京\u{2EBF0}\u{323B0}")).toBe(1)
+		expect(cjkShare("Tokyo\u{2EBF0}")).toBeCloseTo(1 / 6)
 		expect(isForeignCJKRow({ raw: "東京\u{2EBF0}", country: "US" })).toBe(true)
 	})
 

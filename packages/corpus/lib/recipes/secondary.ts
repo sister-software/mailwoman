@@ -18,7 +18,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
-import { pythonSplitWhitespace, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 
 import { PyRandom } from "#training/pyrandom"
 
@@ -150,7 +150,7 @@ function rowFromGroups(groups: ReadonlyArray<readonly Part[]>, separator: string
 				cursor += 1
 			}
 
-			const tokens = pythonSplitWhitespace(text)
+			const tokens = splitWhitespace(text)
 
 			row.tokens.push(...tokens)
 			row.labels.push(`B-${tag}`, ...tokens.slice(1).map(() => `I-${tag}`))
@@ -268,7 +268,7 @@ export function checkSecondaryRows(rows: readonly SecondaryRow[]): void {
 
 			previousEnd = end
 
-			if (!pythonStrip(characters.slice(start, end).join(""))) {
+			if (!characters.slice(start, end).join("").trim()) {
 				throw new Error(`empty span text for tag ${row.span_tags[index]} in ${quoted}`)
 			}
 		}

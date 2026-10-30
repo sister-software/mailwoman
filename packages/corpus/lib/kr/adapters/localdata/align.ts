@@ -8,16 +8,14 @@
  * a training row of matched spans and one that does not becomes a board row.
  */
 
-import { PYTHON_DECIMAL } from "@mailwoman/core/strings/python-text"
-
 import { unitKey } from "#cjk/builder"
 import { type KeyIndex, sigunguSpan } from "#kr/adapters/localdata/key-index"
 
 /**
- * Python's `\d`: every Unicode 15.0 decimal digit, the fullwidth `１` among them.
+ * A decimal digit in any script, the fullwidth `１` among them.
  * A JavaScript `\d` matches ASCII only.
  */
-const D = PYTHON_DECIMAL
+const D = "\\p{Nd}"
 
 /**
  * A building number: `233`, `43-1`, `지하 1476`.

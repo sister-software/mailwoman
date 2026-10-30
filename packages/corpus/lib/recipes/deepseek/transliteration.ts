@@ -8,8 +8,6 @@
  *   seed's index in the batch, and each line is checked against the surface-form invariant before it is written.
  */
 
-import { pythonStrip } from "@mailwoman/core/strings/python-text"
-
 import {
 	canonicalTranslitRow,
 	type DeepSeekRow,
@@ -89,7 +87,7 @@ export function pythonInt(value: unknown): number | null {
 
 	if (typeof value !== "string") return null
 
-	const text = pythonStrip(value)
+	const text = value.trim()
 
 	if (!PYTHON_INT_TEXT.test(text)) return null
 

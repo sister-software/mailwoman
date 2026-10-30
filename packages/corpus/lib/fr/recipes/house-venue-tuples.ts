@@ -9,12 +9,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
-import {
-	pythonCapitalize,
-	pythonSplitLines,
-	pythonSplitWhitespace,
-	pythonStrip,
-} from "@mailwoman/core/strings/python-text"
+import { capitalize, splitLines, splitWhitespace } from "@mailwoman/core/strings/unicode"
 import type { PathBuilderLike } from "path-ts"
 
 import { sampleAddressPoints } from "#recipes/address-points"
@@ -39,26 +34,26 @@ export function frReservedSurfacesPath() {
  * Particles that stay lower case inside a French name unless they open it:
  * `Rue de la Paix`, not `Rue De La Paix`.
  */
-const PARTICLES = new Set(pythonSplitWhitespace("de la du des le les l d au aux et sur sous en un une"))
+const PARTICLES = new Set(splitWhitespace("de la du des le les l d au aux et sur sous en un une"))
 
 /**
  * French title case: particles stay lower case after the first word,
  * and an elision capitalizes after its apostrophe.
  */
 export function frenchTitleCase(text: string): string {
-	return pythonSplitWhitespace(text)
+	return splitWhitespace(text)
 		.map((word, index) => {
 			if (index > 0 && PARTICLES.has(word)) return word
 
 			const apostrophe = word.indexOf("'")
 
 			if (apostrophe !== -1) {
-				return word.slice(0, apostrophe).toLowerCase() + "'" + pythonCapitalize(word.slice(apostrophe + 1))
+				return word.slice(0, apostrophe).toLowerCase() + "'" + capitalize(word.slice(apostrophe + 1))
 			}
 
-			if (word.includes("-")) return word.split("-").map(pythonCapitalize).join("-")
+			if (word.includes("-")) return word.split("-").map(capitalize).join("-")
 
-			return pythonCapitalize(word)
+			return capitalize(word)
 		})
 		.join(" ")
 }
@@ -75,8 +70,8 @@ export async function readFRReservedSurfaces(path: PathBuilderLike = frReservedS
 	}
 
 	return new Set(
-		pythonSplitLines(await readLocalTextFile(path))
-			.map(pythonStrip)
+		splitLines(await readLocalTextFile(path))
+			.map((line) => line.trim())
 			.filter((line) => line)
 	)
 }

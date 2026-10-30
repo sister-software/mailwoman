@@ -35,11 +35,14 @@ test("a building number in fullwidth digits aligns, as Python's \\d matched it",
 	expect(aligned!.spanTags).toContain("house_number")
 })
 
-test("a building number in a digit set Unicode 15.0 did not assign does not align", () => {
+test("a building number in any decimal digit script aligns", () => {
 	const index = emptyKeyIndex()
 
 	indexLabelRow(index, ROW)
 
-	// Garay digits, assigned in Unicode 16.0: Node's \p{Nd} matches them and CPython 3.12's \d does not.
-	expect(alignRoadAddress("서울특별시 중구 세종대로 \u{10D41}\u{10D41}\u{10D40}", index)).toBeNull()
+	// Garay digits, assigned in Unicode 16.0, are general category Nd.
+	const aligned = alignRoadAddress("서울특별시 중구 세종대로 \u{10D41}\u{10D41}\u{10D40}", index)
+
+	expect(aligned).not.toBeNull()
+	expect(aligned!.spanTags).toContain("house_number")
 })

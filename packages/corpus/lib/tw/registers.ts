@@ -11,7 +11,7 @@
 import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { isDirectory } from "@mailwoman/core/fs/readers/stat"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
-import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
@@ -186,7 +186,7 @@ function longestPrefix(characters: readonly string[], at: number, candidates: Re
  * or `null` when any required part does not match the key sets.
  */
 export function alignRegisterAddress(text: string, index: TWKeyIndex): TWAligned | null {
-	const raw = pythonSplitWhitespace(text).join("")
+	const raw = splitWhitespace(text).join("")
 
 	if (!raw) return null
 

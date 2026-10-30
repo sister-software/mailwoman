@@ -11,7 +11,7 @@
  *   segment is the shape under review, so the two positions are counted apart, by the tag each opens.
  */
 
-import { pythonIsDigit } from "@mailwoman/core/strings/python-text"
+import { isDecimalDigits } from "@mailwoman/core/strings/unicode"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode, SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 
@@ -20,7 +20,7 @@ import { drawnRows, emittedRows, type CensusOptions } from "./census.ts"
 function bare(token: string): string | null {
 	const body = token.endsWith(",") ? token.slice(0, -1) : token
 
-	return pythonIsDigit(body) ? body : null
+	return isDecimalDigits(body) ? body : null
 }
 
 /**

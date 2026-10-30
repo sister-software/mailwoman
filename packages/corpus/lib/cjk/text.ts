@@ -9,7 +9,7 @@
  *   equals the one the Python builders wrote.
  */
 
-import { pythonIsDigit, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import { isDecimalDigits, splitWhitespace } from "@mailwoman/core/strings/unicode"
 
 const FULLWIDTH_DIGITS = "０１２３４５６７８９"
 
@@ -20,7 +20,7 @@ const FULLWIDTH_DIGITS = "０１２３４５６７８９"
  * It is the join key the KEN_ALL probe and the TW builder use.
  */
 export function normalizeCJKText(text: string): string {
-	return pythonSplitWhitespace(text.normalize("NFC")).join("")
+	return splitWhitespace(text.normalize("NFC")).join("")
 }
 
 /**
@@ -137,7 +137,7 @@ export function kanjiToInt(text: string): number | null {
 
 	const asciiForm = text.normalize("NFKC")
 
-	if (pythonIsDigit(asciiForm)) {
+	if (isDecimalDigits(asciiForm)) {
 		const value = Number(asciiForm)
 
 		// `int()` reads every Unicode decimal digit.

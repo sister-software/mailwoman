@@ -24,8 +24,9 @@ describe("isolatedPositions", () => {
 		expect(isolatedPositions(["Athens,", "GA,", "30601"])).toEqual([2])
 	})
 
-	test("a superscript digit is a digit, as Python's isdigit reads it", () => {
-		expect(isolatedPositions(["²,", "Main"])).toEqual([0])
+	test("a superscript digit is no decimal digit, and a fullwidth one is", () => {
+		expect(isolatedPositions(["²,", "Main"])).toEqual([])
+		expect(isolatedPositions(["１５,", "Main"])).toEqual([0])
 	})
 })
 

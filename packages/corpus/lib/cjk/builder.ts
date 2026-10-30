@@ -19,7 +19,7 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { pythonIsSpace, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import { isWhitespaceCharacter, splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { normalizeCJKText } from "#cjk/text"
@@ -221,7 +221,7 @@ export function labelTokensByFirstSpan(
 	const labels: string[] = []
 	let cursor = 0
 
-	for (const token of pythonSplitWhitespace(raw)) {
+	for (const token of splitWhitespace(raw)) {
 		const found = raw.indexOf(token, cursor)
 		const index = codePointLength(raw.slice(0, found))
 
@@ -480,7 +480,7 @@ export function verifyRecord(
 
 		if (!text.length) throw new RecordCheckError(`empty span ${tag}@[${start},${end}) in ${quoted}`)
 
-		if ((options.forbidWhitespace ?? true) && text.some(pythonIsSpace)) {
+		if ((options.forbidWhitespace ?? true) && text.some(isWhitespaceCharacter)) {
 			throw new RecordCheckError(`whitespace inside span ${tag}@[${start},${end}): ${pythonRepr(text.join(""))}`)
 		}
 	}
@@ -578,7 +578,7 @@ export function coverageStats(
 		}
 
 		total += characters.length
-		significant += characters.filter((character) => !pythonIsSpace(character) && character !== "〒").length
+		significant += characters.filter((character) => !isWhitespaceCharacter(character) && character !== "〒").length
 		labeled += array.filter((label) => label !== "O").length
 
 		for (const tag of new Set(record.span_tags)) {

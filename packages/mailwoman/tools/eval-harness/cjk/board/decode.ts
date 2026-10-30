@@ -9,7 +9,7 @@
  *   offset here counts code points, the unit the board's `span_starts` and `span_ends` use.
  */
 
-import { pythonSplitWhitespace, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { centralAngle } from "@mailwoman/spatial/distance"
 
 /**
@@ -24,7 +24,7 @@ export const BOARD_EARTH_RADIUS_KM = 6371.0088
  * The centroid table's key form of `text`: NFC, with every whitespace character removed.
  */
 export function normalizeCentroidKey(text: string): string {
-	return pythonSplitWhitespace(text.normalize("NFC")).join("").replaceAll("　", "")
+	return splitWhitespace(text.normalize("NFC")).join("").replaceAll("　", "")
 }
 
 /**
@@ -116,7 +116,7 @@ export function decodeAllSpans(
 		let groupSize = 1
 
 		for (const [start, end] of offsets.slice(1)) {
-			if (pythonStrip(slice(groupEnd, start)) === "") {
+			if (slice(groupEnd, start).trim() === "") {
 				groupEnd = end
 
 				groupSize++

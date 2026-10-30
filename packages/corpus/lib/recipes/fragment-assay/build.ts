@@ -15,7 +15,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { pythonSplitWhitespace, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { TextSpliterator } from "spliterator"
 
 import { ParquetColumnKind, type ParquetColumns, writeColumnParquetFile } from "#parquet/writers"
@@ -184,7 +184,7 @@ async function readFamousLocalities(path: string): Promise<string[]> {
 	const names: string[] = []
 
 	for await (const line of TextSpliterator.fromAsync(path)) {
-		const name = pythonStrip(line)
+		const name = line.trim()
 
 		if (name) {
 			names.push(name)
@@ -228,7 +228,7 @@ async function pushCorpusHarvest(options: FragmentAssayOptions, push: Push) {
 	}
 
 	const directional = adminPairs.filter(([locality]) =>
-		DIRECTIONALS.has(pythonSplitWhitespace(locality)[0]!.replace(/\.+$/u, "").toUpperCase())
+		DIRECTIONALS.has(splitWhitespace(locality)[0]!.replace(/\.+$/u, "").toUpperCase())
 	)
 
 	for (const [locality] of directional) {
@@ -337,7 +337,7 @@ async function pushCountryCounterweight(
 	const regions = adminPairs.map(([, region]) => region)
 	const localities = corpusLocalities.get("US") ?? []
 	const usForms = surfaces.get("US") ?? []
-	const multiWord = usForms.filter((form) => pythonSplitWhitespace(form).length >= 2)
+	const multiWord = usForms.filter((form) => splitWhitespace(form).length >= 2)
 	const leadingForms = multiWord.length ? multiWord : usForms
 	let leadingRows = 0
 

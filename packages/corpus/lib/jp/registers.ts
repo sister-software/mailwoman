@@ -19,7 +19,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
-import { pythonIsDigit, pythonSplitWhitespace, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { isDecimalDigits, splitWhitespace } from "@mailwoman/core/strings/unicode"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
@@ -208,7 +208,7 @@ export function alignCorporateRow(row: CorporateRow, index: JPKeyIndex, withPost
 
 	if (!districts?.size) return null
 
-	const split = splitTypedStreet(pythonSplitWhitespace(row.street).join(""), districts)
+	const split = splitTypedStreet(splitWhitespace(row.street).join(""), districts)
 
 	if (!split) return null
 
@@ -238,7 +238,7 @@ export function alignCorporateRow(row: CorporateRow, index: JPKeyIndex, withPost
 		glue(text)
 	}
 
-	if (withPostcode && codePointLength(row.postcode) === POSTCODE_DIGITS && pythonIsDigit(row.postcode)) {
+	if (withPostcode && codePointLength(row.postcode) === POSTCODE_DIGITS && isDecimalDigits(row.postcode)) {
 		glue("〒")
 		put("postcode", `${row.postcode.slice(0, POSTCODE_SPLIT)}-${row.postcode.slice(POSTCODE_SPLIT)}`)
 		glue(" ")
@@ -256,7 +256,7 @@ export function alignCorporateRow(row: CorporateRow, index: JPKeyIndex, withPost
 		put("house_number", number)
 	}
 
-	const building = pythonStrip(rest)
+	const building = rest.trim()
 
 	if (building) {
 		put("building_name", building)

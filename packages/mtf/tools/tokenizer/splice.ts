@@ -18,7 +18,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
-import { pythonSplitLines, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { splitLines } from "@mailwoman/core/strings/unicode"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -154,8 +154,8 @@ export async function buildSlavicCorpus(options: SlavicCorpusOptions): Promise<n
 	const corpus = (await readLocalJSONFile<string[]>(shuffled)).slice(0, CORPUS_SAMPLE)
 
 	if (options.extraText && (await isFile(options.extraText))) {
-		const extra = pythonSplitLines(await readLocalTextFile(options.extraText))
-			.map(pythonStrip)
+		const extra = splitLines(await readLocalTextFile(options.extraText))
+			.map((line) => line.trim())
 			.filter((line) => line && codePointLength(line) < MAX_LINE_CODE_POINTS)
 
 		for (let i = 0; i < Math.max(1, options.extraRepeat ?? 10); i++) {

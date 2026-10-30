@@ -10,7 +10,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { pythonCapitalize, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import { capitalize, splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { basename, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -80,7 +80,7 @@ export function situsStateCode(path: string): string {
 	return basename(path).replace(/\.db$/u, "").slice(SITUS_PREFIX.length).split("-", 1)[0]!.toUpperCase()
 }
 
-const titleCase = (text: string): string => pythonSplitWhitespace(text).map(pythonCapitalize).join(" ")
+const titleCase = (text: string): string => splitWhitespace(text).map(capitalize).join(" ")
 
 /**
  * The state databases in `directory`, in code-point order of their paths.

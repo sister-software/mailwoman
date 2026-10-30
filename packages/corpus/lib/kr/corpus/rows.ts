@@ -12,7 +12,7 @@
  */
 
 import { codePointLength } from "@mailwoman/core/strings/code-points"
-import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 
 import { type CJKRecord, labelTokensByFirstSpan, MAX_RENDERED_CHARS, RowRenderer } from "#cjk/builder"
 import { normalizeCJKText } from "#cjk/text"
@@ -124,7 +124,7 @@ export function renderKRRow(row: JusoLabelRow, options: KRRenderOptions): CJKRec
 
 	renderer.glue(separator)
 
-	for (const [index, unit] of pythonSplitWhitespace(row.sigungu).entries()) {
+	for (const [index, unit] of splitWhitespace(row.sigungu).entries()) {
 		if (index) {
 			renderer.glue(separator)
 		}

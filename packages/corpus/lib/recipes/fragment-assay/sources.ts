@@ -14,7 +14,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { pythonIsDigit, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { isDecimalDigits } from "@mailwoman/core/strings/unicode"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -186,7 +186,7 @@ class TupleSet<T extends readonly string[]> {
 	}
 }
 
-const isBareDigits = (text: string) => pythonIsDigit(text)
+const isBareDigits = (text: string) => isDecimalDigits(text)
 
 /**
  * Each OpenAddresses file's records, its header matched in upper case so a file's
@@ -340,7 +340,7 @@ async function* ryhtiRecords(path: string): AsyncGenerator<AddressRecord> {
 
 		if (!street) continue
 
-		const number = rendered.startsWith(`${street} `) ? pythonStrip(rendered.slice(street.length)) : ""
+		const number = rendered.startsWith(`${street} `) ? rendered.slice(street.length).trim() : ""
 
 		yield [street, number, row["postal_office_fin"] || "", row["postal_code"] || "", ""]
 	}
@@ -411,7 +411,7 @@ function spanTexts(row: SpanRow, tag: string): string[] {
 	const characters = [...row.raw]
 
 	return row.span_tags.flatMap((each, index) =>
-		each === tag ? [pythonStrip(characters.slice(row.span_starts[index], row.span_ends[index]).join(""))] : []
+		each === tag ? [characters.slice(row.span_starts[index], row.span_ends[index]).join("").trim()] : []
 	)
 }
 
