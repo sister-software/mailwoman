@@ -3,7 +3,7 @@
 //! `fixtures/tiny-bundle` is a `MailwomanCoarseEncoder` with hidden size 8 and one block, built with every channel of
 //! the shipped interface (the evidence bundle, the locale head and the locale hint, four address systems) and saved
 //! with `save_pretrained`. `reference-fp32.onnx` beside it is that model exported by
-//! `mailwoman_train.export.onnx.export_to_onnx(opset=17, max_length=16)` with torch 2.12.0 and onnxscript 0.7.2.
+//! the Python exporter's `export_to_onnx(opset=17, max_length=16)` with torch 2.12.0 and onnxscript 0.7.2.
 //! `fixtures/storages.bin` is `torch.save` of one 2x3 float32 tensor in float32, bfloat16 and float16, its
 //! transpose, and a view at storage offset 2. The fixtures were written once with the pinned Python stack; the numeric
 //! comparison of full checkpoints is `packages/neural/tools/onnx-export-parity.run.ts`.
@@ -230,12 +230,32 @@ fn a_char_checkpoint_refuses_to_export_without_its_window() {
 }
 
 #[test]
-fn the_quantizer_refuses_the_char_paths_convolutions_by_name() {
+fn the_quantizer_rewrites_the_char_paths_convolutions_as_conv_integer() {
 	let dir = tempfile::tempdir().unwrap();
 	char_checkpoint(dir.path());
 	let model = export_checkpoint(dir.path(), &ExportOptions { char_window: Some(7) }).unwrap();
-	let error = quantize_dynamic_qint8(model).unwrap_err();
-	assert!(error.0.contains("Conv"), "{error}");
+	let convs = count_ops(&model, "Conv");
+	assert!(convs > 0, "the char checkpoint exports no Conv node");
+	let quantized = quantize_dynamic_qint8(model).unwrap();
+	assert_eq!(count_ops(&quantized, "Conv"), 0);
+	assert_eq!(count_ops(&quantized, "ConvInteger"), convs);
+	let graph = quantized.graph.as_ref().unwrap();
+	let bias_adds = graph
+		.node
+		.iter()
+		.filter(|n| {
+			n.op_type.as_deref() == Some("Add") && n.name.as_deref().is_some_and(|name| name.ends_with("_bias_add"))
+		})
+		.count();
+	assert_eq!(bias_adds, convs, "each biased Conv adds its bias after the scale");
+}
+
+fn count_ops(model: &ModelProto, op: &str) -> usize {
+	model
+		.graph
+		.as_ref()
+		.map(|g| g.node.iter().filter(|n| n.op_type.as_deref() == Some(op)).count())
+		.unwrap_or(0)
 }
 
 fn split_fixture(name: &str) -> PathBuf {
