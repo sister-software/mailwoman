@@ -635,8 +635,9 @@ vi.mock("#source-register/register", async (importOriginal) => {
 
 	return {
 		...original,
-		readAddressSourceRegister: async () => {
-			const register = await original.readAddressSourceRegister()
+		// The worker shares this mocked module with later test files, so it reads the path a caller names.
+		readAddressSourceRegister: async (...args: Parameters<typeof original.readAddressSourceRegister>) => {
+			const register = await original.readAddressSourceRegister(...args)
 
 			if (!refuseWhosOnFirst.active) return register
 
