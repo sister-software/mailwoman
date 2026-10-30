@@ -163,10 +163,10 @@ switch (command) {
 	case "start": {
 		if (!values.config) throw new Error("start needs --config <yaml>")
 
-		// A bare name reads the committed config of that name.
+		// A bare name reads the committed config of that name, with or without its `.yaml` extension.
 		const configPath = (await isFile(values.config))
 			? resolvePath(values.config).toString()
-			: trainingConfigPath(values.config)
+			: trainingConfigPath(values.config.endsWith(".yaml") ? values.config : `${values.config}.yaml`)
 
 		const document = await buildResolvedTrainingConfig(configPath, { log })
 		const train = document.config.train
