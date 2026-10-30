@@ -785,6 +785,18 @@ lexicon paths, the probe's `source_reps` folded into fixed weights at its own 2,
 steps, warmup 20, fp32, Fisher over the last 50 steps), and a lab copy of `v8-cjk-regs` on the sealed corpus for the
 char path. Every Python reference ran under `torch==2.13.0+cpu`, CPython 3.12.3, 4 threads.
 
+**Runtime block (observed 2026-10-30).** A Python record's `runtime` holds `python`, `torch`, `threads` and
+`cpu_capability`. The Rust reports written before 2026-10-30 hold no runtime. Each `--report` written by `trainer parity`
+or `trainer compare-checkpoints` is now `{"runtime", "stages"}`. `trainer_model::runtime::read` fills `runtime` from the
+loaded library when the report is written: `libtorch` comes from the `TORCH_VERSION` entry of `at::show_config()`,
+`libtorch_library` from `dladdr`, and `libtorch_build` from the archive's `build-version` file beside that library.
+`threads` is `at::get_num_threads()` and `cpu_capability` is `at::get_cpu_capability()`. Only `tch` is fixed at build
+time, from `Cargo.lock`. `trainer-loop/tests/runtime.rs` covers the reader. The cells runner,
+`$MAILWOMAN_DATA_ROOT/audits/trainer-parity/run-cells.ts`, writes both sides' blocks into each cell's summary entry.
+Two records were backfilled as `rust-report-2026-10-30.json`, `f1/` and `cells/sup-all-crf/`. Both still compare at
+0 on every stage. Each holds `tch` 0.26.0, `libtorch` 2.13.0 (`2.13.0+cpu`), 4 threads and `AVX512`, which matches the
+Python side's `torch`, `threads` and `cpu_capability`. The other records were not rerun.
+
 The 200-step reference run itself, from scratch, was reproduced by `trainer train` on the same config: every
 `train_log.csv` loss, rate and eval cell is equal, the step-200 weights are equal on all 115 tensors, and the Fisher
 artifact is equal on all 112 arrays (0 difference on every element). Construction from the seed draws the same

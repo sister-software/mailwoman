@@ -44,7 +44,8 @@ fn report(results: &[StageResult], args: &[String]) -> Result<bool, String> {
 		}
 	}
 	if let Some(path) = option(args, "--report") {
-		let text = serde_json::to_string_pretty(results).map_err(|e| e.to_string())?;
+		let report = trainer_loop::parity::Report::new(results).map_err(|e| e.to_string())?;
+		let text = serde_json::to_string_pretty(&report).map_err(|e| e.to_string())?;
 		std::fs::write(path, text + "\n").map_err(|e| format!("{path}: {e}"))?;
 	}
 	Ok(results.iter().all(|r| r.pass() && r.notes.is_empty()))

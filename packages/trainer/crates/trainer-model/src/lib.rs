@@ -25,6 +25,7 @@ pub mod crf;
 pub mod encoder;
 pub mod init;
 pub mod layers;
+pub mod runtime;
 pub mod span;
 pub mod store;
 
