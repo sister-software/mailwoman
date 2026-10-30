@@ -5,6 +5,7 @@
 		"each line keys-sorted, compact and newline-terminated. A cap-1 run is the first 24 rows of a cap-400 run."
 	],
 	"source_revision": "a3530ac73efc108dc9754413b69e2804f22251b5",
+	"source_revision_note": "a3530ac73 is a branch commit outside origin/main's history. Its main counterpart, 1edee244c (same subject), holds corpora/secondary.py as the same blob, 08a7d9f3bd7b0f0a43103dd8a65475ed490eeada.",
 	"python": "3.12.3",
 	"offset_unit": "code_point",
 	"seed": 20260714,
