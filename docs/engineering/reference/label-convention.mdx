@@ -11,7 +11,11 @@ them (`packages/mailwoman/tools/eval-harness/battery/classify.ts`).
 
 The hand-labeled disagreement rows in
 `packages/mailwoman/tools/eval-harness/fixtures/label-convention/disagreement-labels-v1.jsonl` apply these rules, and
-each row records the rule that decided it. `battery/hand-labels.ts` scores a battery report against them.
+each row records the rule that decided it. `battery/hand-labels.ts` scores a battery report against them. The file is
+hand-authored. Each of its 229 rows was read and labeled by hand: 183 keep their source labels, 41 are corrected and 5
+are written. A scratch writer serialized the session's decisions. `readHandLabels` refuses a row that names no known
+rule, lacks labels, or is corrected without keeping its source labels. No
+committed tool regenerates the file, so a correction is an edit to the row.
 
 ## A city that shares its region's name
 
