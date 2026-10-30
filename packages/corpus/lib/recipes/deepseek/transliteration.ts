@@ -158,7 +158,9 @@ export function translitWorker(
 		const tally: Tally = new Map()
 		const rows: DeepSeekRow[] = []
 
-		for (const [position, record] of parseJSONLResponse(content).entries()) {
+		const records = parseJSONLResponse(content, () => tallyOutcome(tally, "parse-error"))
+
+		for (const [position, record] of records.entries()) {
 			if (!isRecord(record)) continue
 
 			const index = ("i" in record ? pythonInt(record.i) : position) ?? position

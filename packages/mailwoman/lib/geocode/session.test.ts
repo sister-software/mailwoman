@@ -28,7 +28,7 @@ test("a session that fails to start releases the lease it took on the active gen
 		dataRoot: scratch.path,
 		locale: "zz-ZZ",
 		weightsCacheRoot: weights.path.toString(),
-	} as unknown as GeocodeSessionOptions
+	} as GeocodeSessionOptions
 
 	await expect(createGeocodeSession(options)).rejects.toThrow(/geocode requires the neural weights/u)
 

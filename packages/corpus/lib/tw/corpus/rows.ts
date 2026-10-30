@@ -276,6 +276,33 @@ export async function* iterTWSourceRows(
 			}
 		}
 
-		yield [region, district, village, street, houseNumber, floor, Number(row.lon), Number(row.lat)]
+		yield [
+			region,
+			district,
+			village,
+			street,
+			houseNumber,
+			floor,
+			coordinate(row.lon, "lon"),
+			coordinate(row.lat, "lat"),
+		]
+	}
+
+	/**
+	 * A row's coordinate as a finite number.
+	 *
+	 * `Number(null)` is `0`, which would place the row at the origin and pull its district's centroid there.
+	 * Python's `float(None)` raised, so a missing coordinate raises here as well,
+	 * naming the file and the field.
+	 */
+	function coordinate(value: unknown, field: "lon" | "lat"): number {
+		const parsed =
+			typeof value === "number" ? value : typeof value === "string" && value.trim() ? Number(value) : Number.NaN
+
+		if (!Number.isFinite(parsed)) {
+			throw new TypeError(`${parquet.toString()}: a row's ${field} is ${String(value)}, not a finite number`)
+		}
+
+		return parsed
 	}
 }

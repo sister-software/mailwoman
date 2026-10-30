@@ -145,4 +145,25 @@ describe("the Taiwan corpus assembler", async () => {
 
 		await expect(iterTWSourceRows(missing).next()).rejects.toThrow(missing)
 	})
+
+	it("refuses a row with no longitude rather than placing it at the origin", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-tw-corpus-")
+		const path = scratch.path("addresses-tw.parquet").toString()
+
+		using db = await openDuckDB()
+
+		await db.run(
+			"CREATE TABLE source (address_levels STRUCT(value VARCHAR)[], street VARCHAR, number VARCHAR, unit VARCHAR, " +
+				"lon DOUBLE, lat DOUBLE, sources STRUCT(dataset VARCHAR)[])"
+		)
+
+		await db.run(
+			"INSERT INTO source VALUES ([{'value': '臺北市'}, {'value': '中正區'}, {'value': '黎明里'}], " +
+				"'重慶南路一段', '122號', '', NULL, 25.04, [])"
+		)
+
+		await db.run(`COPY source TO ${sqlString(path)} (FORMAT parquet)`)
+
+		await expect(iterTWSourceRows(path).next()).rejects.toThrow(/lon is null, not a finite number/u)
+	})
 })

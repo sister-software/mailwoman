@@ -265,4 +265,24 @@ describe("the DeepSeek generator's deterministic halves", async () => {
 		await expect(loadTranslitSeeds([path], 0)).rejects.toThrow("seed 'seed-x' carries no 'country'")
 		await expect(loadTranslitSeeds([`${path}.absent`], 0)).rejects.toThrow(`${path}.absent`)
 	})
+
+	it("refuses a batch size of 0 and a seed without a source id", () => {
+		const seed = { raw: "350 5th Ave", components: {}, source_id: "seed-x", country: "US", locale: "en-US" }
+
+		expect(() => planTranslitBatches([seed], 0, null)).toThrow("batch size must be a positive whole number, not 0")
+		expect(() => planKryptoniteBatches(10, 0)).toThrow("batch size must be a positive whole number, not 0")
+
+		expect(() => planTranslitBatches([{ ...seed, source_id: "" }], 5, null)).toThrow("carries no source_id")
+	})
+
+	it("reports a record line that does not parse, such as one holding NaN, to the caller", () => {
+		const unparsed: string[] = []
+
+		const records = parseJSONLResponse('{"raw": "1 Main St"}\n{"raw": "2 Main St", "score": NaN}\n```', (line) =>
+			unparsed.push(line)
+		)
+
+		expect(records).toEqual([{ raw: "1 Main St" }])
+		expect(unparsed).toEqual(['{"raw": "2 Main St", "score": NaN}'])
+	})
 })

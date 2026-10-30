@@ -233,7 +233,8 @@ export async function* readJusoLabelRows(
 
 			emitted += 1
 
-			if (options.maxRowsPerRegion && emitted >= options.maxRowsPerRegion) break
+			// Checked after the row is emitted, as Python's loop did, so a limit of 0 still emits one row per region.
+			if (typeof options.maxRowsPerRegion === "number" && emitted >= options.maxRowsPerRegion) break
 		}
 	}
 }
