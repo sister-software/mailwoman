@@ -47,7 +47,11 @@ async function train(recipe: Recipe, directory: string) {
 	return trainSentencePiece(recipe.flags, { spmTrain, workDirectory: directory, cwd: directory })
 }
 
-describe.skipIf(!available)("native spm_train in the wheel's form", () => {
+if (!available) {
+	console.warn(`skipped: the recipe test needs a built spm_train at ${spmTrain}, and this host has none`)
+}
+
+describe.skipIf(!available)("native spm_train in the wheel's form (requires a built spm_train)", () => {
 	// The first call compiles `mtf-tokenizer` when the checkout has no current build.
 	beforeAll(async () => {
 		await mtfTokenizerBinary()
