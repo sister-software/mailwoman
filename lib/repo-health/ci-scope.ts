@@ -63,6 +63,14 @@ const PYTHON_EXTENSION_INPUTS = [
 ]
 
 /**
+ * The TypeScript training-config resolver and its fixtures.
+ *
+ * `load-python-parity.test.ts` compares the resolver with the Python loader and skips
+ * without `uv`, which only the `python` job installs, so a change here selects that job.
+ */
+const PYTHON_PARITY_INPUTS = ["packages/corpus/lib/training/config/", "packages/corpus/fixtures/training-config/"]
+
+/**
  * The cargo workspace of the Rust trainer crates.
  *
  * It has no npm package.
@@ -215,7 +223,8 @@ export function selectCIScope(
 		if (
 			file.startsWith("corpus-python/") ||
 			file.endsWith(".py") ||
-			PYTHON_EXTENSION_INPUTS.some((input) => file === input || (input.endsWith("/") && file.startsWith(input)))
+			PYTHON_EXTENSION_INPUTS.some((input) => file === input || (input.endsWith("/") && file.startsWith(input))) ||
+			PYTHON_PARITY_INPUTS.some((input) => file.startsWith(input))
 		) {
 			python = true
 		}

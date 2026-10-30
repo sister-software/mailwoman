@@ -160,6 +160,13 @@ describe("selectCIScope", () => {
 		}
 	)
 
+	it.each(["packages/corpus/lib/training/config/resolve.ts", "packages/corpus/fixtures/training-config/minimal.yaml"])(
+		"selects Python for %s, which the config-parity test compares with the Python loader",
+		(file) => {
+			expect(selectCIScope(workspaces, files, [file], []).python).toBe(true)
+		}
+	)
+
 	it("leaves Python unselected for an mtf change outside the extension's inputs", () => {
 		expect(selectCIScope(withMTF, files, ["packages/mtf/lib/index.ts"], [])).toMatchObject({
 			full: false,
