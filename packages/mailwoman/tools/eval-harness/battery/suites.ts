@@ -72,9 +72,17 @@ const decisionRow = () => null
 /**
  * The ten frozen suites, five built from the OSM corpus extracts and five from the Photon planet index.
  *
- * Every row was checked absent from both training corpora's OSM files by id and group
- * when the suites were built, through the overlap audit in `heldout/dataset/overlap.ts`.
+ * The five `osm-` suites are built by `osm-suites/build.run.ts`, and each row was
+ * checked absent from both training corpora's OSM files by id and group through
+ * the overlap audit in `heldout/dataset/overlap.ts`.
  * That audit compares no text, so a training row holding the same address under another id is not detected.
+ *
+ * The five `photon-` suites were sampled by a script that was not committed.
+ * Each frozen manifest's `sampling.order` and `drawnFrom` record the rule and the inputs:
+ * rows ordered by a SHA-256 of the suite name, the OSM id and the house number, and rows whose
+ * house number and postcode match a training row containing the street's longest word left out.
+ *
+ * A Photon suite can therefore be read and scored, and cannot be rebuilt.
  */
 export const BATTERY_SUITES: readonly BatterySuiteSpec[] = [
 	{
