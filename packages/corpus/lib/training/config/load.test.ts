@@ -72,6 +72,18 @@ describe("readTrainingConfigText", () => {
 		expect(refusal("trainer:\n  max_steps: 10\n").message).toContain("Config has no field 'trainer'")
 	})
 
+	it("reads a retired key recorded false and refuses one set true", () => {
+		expect(
+			typedOf("model:\n  use_deploc_head: false\ntrain:\n  freeze_encoder: false\n  max_steps: 10\n").train.max_steps
+		).toBe(10)
+
+		const error = refusal("model:\n  use_affix_head: true\n")
+
+		expect(error.kind).toBe(ConfigErrorKind.Key)
+		expect(error.message).toContain("'model.use_affix_head'")
+		expect(error.message).toContain("retired feature")
+	})
+
 	it("merges known keys and leaves every other field at its default", () => {
 		const config = typedOf(
 			"train:\n  max_steps: 123\n  reinit_label_rows: [B-dependent_locality]\n" +

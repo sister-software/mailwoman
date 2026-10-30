@@ -17,7 +17,7 @@ export function clamp(value: number, min: number, max: number): number {
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Python-parity numeric helpers, beside `strings/python-json.ts` (CPython `json.dumps` spacing).
+ *   Python-parity numeric helpers.
  *
  *   These exist because the gazetteer pipeline was ported from Python and its outputs have to match
  *   the originals bit for bit. A postcode centroid that rounds differently is a different centroid.

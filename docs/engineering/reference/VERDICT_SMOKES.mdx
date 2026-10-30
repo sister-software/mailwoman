@@ -61,7 +61,7 @@ or launch it on Modal:
 ```bash
 # New recipe: constant-LR smoke (recommended)
 mailwoman train config resolve packages/corpus/data/training-configs/<recipe>-smoke.yaml --out ./smoke.resolved.json
-cargo run --release --manifest-path packages/trainer/Cargo.toml -p trainer-cli -- \
+cargo run --profile trainer -p trainer-cli -- \
     train ./smoke.resolved.json --set train.lr_schedule=constant
 
 # The same smoke on Modal, with `lr_schedule: constant` in the YAML

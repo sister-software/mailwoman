@@ -7,14 +7,19 @@
  *   `section.key=value` overrides and the volume paths re-rooted to their host copies.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { isFile } from "@mailwoman/core/fs/readers/stat"
-import { sha256File } from "@mailwoman/core/hash"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { gitSync } from "@mailwoman/core/git"
+import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPlainObject } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readTrainingConfig, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
 import { parsePythonYAML, type PythonValue } from "@mailwoman/corpus/training/config/python-yaml"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
+import { relative } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { hostPath } from "./sampler.ts"
 
@@ -102,8 +107,13 @@ export function rerootToHost(config: TrainingConfig): TrainingConfig {
 }
 
 /**
- * The config a record was captured with: its recorded path, or the committed config
- * of the same name, refused unless its SHA-256 is the recorded one.
+ * The config a record was captured with: its recorded path, or the committed config of the same name.
+ *
+ * When the committed file's SHA-256 is not the recorded one, the revision of it
+ * with the recorded bytes is read from the file's git history, across its renames,
+ * and written once under `<data root>/cache/recorded-configs/`.
+ *
+ * @throws When no revision of the file has the recorded SHA-256.
  */
 export async function recordedConfigPath(recorded: { path: string; sha256: string }): Promise<string> {
 	const path = (await isFile(recorded.path))
@@ -112,9 +122,34 @@ export async function recordedConfigPath(recorded: { path: string; sha256: strin
 
 	const digest = await sha256File(path)
 
-	if (digest !== recorded.sha256) {
-		throw new Error(`${path} has sha256 ${digest}, the record was captured with ${recorded.sha256}`)
+	if (digest === recorded.sha256) return path
+
+	const cached = dataRootPath("cache", "recorded-configs", `${recorded.sha256}.yaml`).toString()
+
+	if (await isFile(cached)) return cached
+
+	const relativeToRoot = relative(repoRootPath(), path).toString()
+	// One file's history: a revision line, then the path that revision held the file at.
+	const lines = TextSpliterator.from(gitSync(["log", "--follow", "--format=%H", "--name-only", "--", relativeToRoot]))
+	let revision: string | null = null
+
+	for (const line of lines) {
+		if (/^[0-9a-f]{40}$/.test(line)) {
+			revision = line
+
+			continue
+		}
+
+		if (!line || !revision) continue
+
+		const text = gitSync(["show", `${revision}:${line}`], { trim: false })
+
+		if (sha256Hex(text) === recorded.sha256) {
+			await writeLocalTextFile(text, cached)
+
+			return cached
+		}
 	}
 
-	return path
+	throw new Error(`${path} has sha256 ${digest}, and no revision of it has the recorded ${recorded.sha256}`)
 }

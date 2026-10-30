@@ -3,7 +3,7 @@ name = "mtf-node"
 description = "The `mtf-node` Node addon: the training-row sampler, the row encoder and the char encoder for the TypeScript audits and tools."
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0 AND BSD-2-Clause"
 repository.workspace = true
 publish = false
 
@@ -11,8 +11,8 @@ publish = false
 name = "mtf_node"
 crate-type = ["cdylib"]
 
-# The addon is built from source on first use under the workspace's `node` profile, as `mtf-py` is built for each
-# interpreter. It is never part of the browser `mtf.wasm`, which depends on `mtf-core` alone.
+# The addon is built from source on first use under the root workspace's `node` profile. It is never part of the
+# browser `mtf.wasm`, which depends on `mtf-core` alone.
 [dependencies]
 mtf-core = { path = "../mtf-core" }
 mtf-channels = { path = "../mtf-channels", features = ["finders"] }

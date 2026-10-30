@@ -5,14 +5,14 @@
  *
  *   The `mtf-node` addon: the training-row sampler and the row encoders of `crates/mtf-node`, loaded into Node.
  *
- *   Cargo builds the addon from source the first time a process asks for it, under the workspace's `node` profile
- *   and the toolchain `rust-toolchain.toml` pins, as the Python extension is built for each interpreter. The build
+ *   Cargo builds the addon from source the first time a process asks for it, under the root workspace's `node`
+ *   profile and the toolchain the root `rust-toolchain.toml` pins, into the root `target/node/`. The build
  *   reads `mtf-sampler` with its parquet reader, so it stays out of the browser `wasm/mtf.wasm`, whose one dependency is
  *   `mtf-core`. The addon is built for the host it runs on: Linux and macOS, where Cargo writes the library to
  *   `libmtf_node.so` and `libmtf_node.dylib`.
  */
 
-import { workspacePath } from "@mailwoman/core/paths"
+import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { platformName as platform } from "@mailwoman/core/utils/system"
 
@@ -344,7 +344,7 @@ export async function buildMTFNode(): Promise<string> {
 		maxBuffer: OUTPUT_LIMIT,
 	})
 
-	return workspacePath("mtf", "target", "node", name)
+	return repoRootPath("target", "node", name)
 }
 
 /**

@@ -54,7 +54,7 @@ starts a fresh sandbox for a stopped run, which resumes from the newest complete
 ### The trainer image
 
 The JavaScript SDK copies no local files into an image. A build sandbox on the base layers (libtorch at its pinned
-sha256, the CUDA wheels for the CUDA image, the Rust toolchain `packages/trainer/rust-toolchain.toml` pins) receives a
+sha256, the CUDA wheels for the CUDA image, the Rust toolchain the root `rust-toolchain.toml` pins) receives a
 tarball of the trainer sources on stdin, builds `trainer-cli`, and refuses a binary whose shared objects do not resolve.
 Its filesystem snapshot is published as `mailwoman-trainer-<variant>-<toolchain>-<source digest>`, so a later launch
 with the same sources reuses it. A change under `packages/trainer` or the mtf crates builds a new image on the next

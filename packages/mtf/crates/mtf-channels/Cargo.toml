@@ -3,7 +3,7 @@ name = "mtf-channels"
 description = "Mailwoman's training-row encoder: label projection, the soft-feed channel painters and row packing."
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0 AND BSD-2-Clause"
 repository.workspace = true
 
 [features]

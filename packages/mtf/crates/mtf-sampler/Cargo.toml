@@ -3,7 +3,7 @@ name = "mtf-sampler"
 description = "Mailwoman's training-row sampler: the corpus reader, the source mixture, augmentation and relabeling, the character path, and the row and batch streams built on a CPython-compatible generator."
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0 AND BSD-2-Clause"
 repository.workspace = true
 
 [dependencies]

@@ -251,7 +251,7 @@ so it draws different rows in the same source proportions.
 
 ## Builds
 
-`packages/mtf/rust-toolchain.toml` pins the toolchain.
+The root `rust-toolchain.toml` pins the toolchain, and every crate is a member of the root cargo workspace.
 
 - The Rust trainer links the crates directly, and `trainer-cli` builds them with the trainer workspace.
 - The Node addon `mtf-node` builds from source on first use, with
@@ -259,8 +259,8 @@ so it draws different rows in the same source proportions.
   `panic = "unwind"`, so napi-rs raises a Rust panic as a JavaScript exception. The addon builds on Linux and
   macOS. It is never part of `wasm/mtf.wasm`, whose dependency tree is `mtf-wasm` → `mtf-core` alone. The
   wasm build with the addon in the workspace gives the same SHA-256 as a build without it.
-- The CI `rust` job installs the pinned toolchain and runs `cargo fmt --check`, `cargo test` and `cargo clippy` for
-  the `packages/mtf` and `packages/trainer` workspaces. `lib/repo-health/ci-scope.ts` selects that job for a change
+- The CI `rust` job installs the pinned toolchain and runs `cargo fmt --check`, `cargo test` and `cargo clippy` over
+  the root workspace. `lib/repo-health/ci-scope.ts` selects that job for a change
   to the crates' inputs.
 - The Modal training image builds `trainer-cli`, which links these crates
   (`packages/mailwoman/tools/training/launch/image.ts`).

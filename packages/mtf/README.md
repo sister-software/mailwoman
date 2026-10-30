@@ -52,13 +52,11 @@ The work proceeds in two phases.
 ### Layout
 
 ```text
-packages/mtf/
-  Cargo.toml            Cargo workspace for the crates below
+packages/mtf/           (the crates are members of the repository root's cargo workspace)
   crates/mtf-core/      Model representation, normalization, unigram encode, decode, errors
   crates/mtf-wasm/      Thin wasm-bindgen adapter around mtf-core
   crates/mtf-channels/  The training-row encoder: label projection, channel painters, packing
   crates/mtf-sampler/   The training-row sampler: corpus listing, source mixture, augmentation, relabel, char path
-  crates/mtf-py/        The `mailwoman_mtf` Python extension over mtf-core, mtf-channels and mtf-sampler
   crates/mtf-node/      The Node addon over mtf-sampler and mtf-channels, for the TypeScript audits and tools
   crates/mtf-tools/     The `mtf-tokenizer` binary behind tools/tokenizer: model edits, corpus sampling, ONNX surgery
   lib/                  TypeScript loader and result conversion

@@ -81,12 +81,11 @@ updates:
         update-types: ["version-update:semver-major"]
 
   # Rust (cargo)
-  # - Dependency files: each workspace's Cargo.toml and Cargo.lock.
+  # - Dependency files: the root workspace's Cargo.toml and Cargo.lock.
   # - `tch` stays pinned: its version selects the libtorch archive the trainer images download.
   - package-ecosystem: "cargo"
     directories:
-      - "/packages/mtf"
-      - "/packages/trainer"
+      - "/"
     schedule:
       interval: "weekly"
     commit-message:

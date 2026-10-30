@@ -161,6 +161,18 @@ interface MergeContext {
 }
 
 /**
+ * The dotted keys of retired features: the affix and dependent-locality heads,
+ * the first-token anchor injection and the encoder freeze.
+ * No trained model uses them.
+ */
+const RETIRED_KEYS: ReadonlySet<string> = new Set([
+	"model.use_affix_head",
+	"model.use_deploc_head",
+	"model.inject_first_token",
+	"train.freeze_encoder",
+])
+
+/**
  * Merges `src` into `dst` key by key, as `merge_into` does.
  *
  * A key the dataclass does not declare is refused under `strict` and skipped otherwise.
@@ -182,6 +194,17 @@ export function mergeIntoConfig(dst: ConfigInstance, src: PythonMapping, context
 		}
 
 		if (!Object.hasOwn(dst.spec.fields, key)) {
+			if (RETIRED_KEYS.has(dotted)) {
+				// A config written before the retirement records the key as false.
+				// One that enables the feature is refused.
+				if (value === false) continue
+
+				throw new TrainingConfigError(
+					ConfigErrorKind.Key,
+					`config key ${pythonRepr(dotted)} in ${source} enables a retired feature; no trainer builds it`
+				)
+			}
+
 			if (strict) {
 				throw new TrainingConfigError(
 					ConfigErrorKind.Key,

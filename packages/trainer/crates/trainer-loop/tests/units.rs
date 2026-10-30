@@ -61,7 +61,7 @@ fn a_model_section_enabling_a_retired_head_is_refused() {
 			"hidden_size": 16, "num_hidden_layers": 2, "num_attention_heads": 2, "intermediate_size": 32,
 			"max_position_embeddings": 12, "hidden_dropout_prob": 0.1, key: true
 		});
-		let error = EncoderSpec::from_model_section(
+		let Err(error) = EncoderSpec::from_model_section(
 			model.as_object().unwrap(),
 			50,
 			0,
@@ -71,9 +71,9 @@ fn a_model_section_enabling_a_retired_head_is_refused() {
 			9,
 			4,
 			&conventions(),
-		)
-		.err()
-		.expect("a retired key set true is refused");
+		) else {
+			panic!("model.{key} set true was accepted");
+		};
 		assert!(error.to_string().contains(key), "{error}");
 	}
 }

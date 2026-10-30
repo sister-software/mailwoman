@@ -58,6 +58,8 @@ pids
 # Build output
 out
 dist
+# The cargo workspace's target directory.
+/target/
 
 # Storybook build output
 storybook-static

@@ -3,7 +3,7 @@ name = "mtf-tools"
 description = "The `mtf-tokenizer` binary behind @mailwoman/mtf's tokenizer tools: model editing, corpus sampling, byte-fallback measurement, and ONNX embedding surgery."
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0 AND BSD-2-Clause"
 repository.workspace = true
 
 [[bin]]

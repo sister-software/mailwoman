@@ -244,7 +244,7 @@ jobs:
       - run: corepack enable
       - run: yarn install --immutable
 
-      # The toolchain matches `packages/mtf/rust-toolchain.toml` and `packages/trainer/rust-toolchain.toml`.
+      # The toolchain matches the root `rust-toolchain.toml`.
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@master
         with:
@@ -254,30 +254,20 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            packages/mtf
-            packages/trainer
+          workspaces: .
 
       - name: Check the Rust formatting
         run: |
-          cargo fmt --manifest-path packages/mtf/Cargo.toml --all --check
-          cargo fmt --manifest-path packages/trainer/Cargo.toml --all --check
+          cargo fmt --all --check
 
       - name: Test the training encoder, sampler and export crates
         run: |
-          cargo test --manifest-path packages/trainer/Cargo.toml -p trainer-export --locked
-          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-channels --locked
-          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-channels --features finders --locked
-          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-sampler --locked
-          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-core --features edit --test model_edit --locked
-          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-tools --locked
-
-      # `mtf-node` and `mtf-wasm` have no Rust tests. The fast suite loads `mtf-node`. Clippy checks every crate's
-      # code, and the `panic-probe` feature's export once more.
-      - name: Lint the mtf crates
-        run: |
-          cargo clippy --manifest-path packages/mtf/Cargo.toml --workspace --all-targets --locked -- -D warnings
-          cargo clippy --manifest-path packages/mtf/Cargo.toml -p mtf-node --features panic-probe --locked -- -D warnings
+          cargo test -p trainer-export --locked
+          cargo test -p mtf-channels --locked
+          cargo test -p mtf-channels --features finders --locked
+          cargo test -p mtf-sampler --locked
+          cargo test -p mtf-core --features edit --test model_edit --locked
+          cargo test -p mtf-tools --locked
 
       # A panic inside an `mtf-node` export must reach Node as a thrown error rather than abort the process.
       - name: Test the mtf-node addon's panic handling
@@ -304,13 +294,17 @@ jobs:
           LIBTORCH: ${{ runner.temp }}/libtorch
           LD_LIBRARY_PATH: ${{ runner.temp }}/libtorch/lib
         run: |
-          cargo test --manifest-path packages/trainer/Cargo.toml -p trainer-model -p trainer-loop -p trainer-cli --locked
+          cargo test -p trainer-model -p trainer-loop -p trainer-cli --locked
 
-      - name: Lint the Rust trainer crates
+      # `mtf-node` and `mtf-wasm` have no Rust tests. The fast suite loads `mtf-node`. Clippy checks every crate's code,
+      # which links libtorch for the trainer crates, and the `panic-probe` feature's export once more.
+      - name: Lint the Rust crates
         env:
           LIBTORCH: ${{ runner.temp }}/libtorch
           LD_LIBRARY_PATH: ${{ runner.temp }}/libtorch/lib
-        run: cargo clippy --manifest-path packages/trainer/Cargo.toml --workspace --all-targets --locked -- -D warnings
+        run: |
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo clippy -p mtf-node --features panic-probe --locked -- -D warnings
 
   # The root Vitest sweep runs as two concurrent legs. unit-fast runs every test that needs no
   # model, WOF database or CLI harness. unit-slow runs the rest.
@@ -377,7 +371,7 @@ jobs:
 
       # The training audit and exposure tests load the `mtf-node` addon.
       # `packages/mtf/tools/sampler/native.ts` builds it with Cargo on first use. This step installs
-      # everything `packages/mtf/rust-toolchain.toml` names before the tests start. Without it,
+      # everything the root `rust-toolchain.toml` names before the tests start. Without it,
       # rustup installs the toolchain while the tests run, and parallel test files race on the
       # download.
       - name: Setup Rust (mtf-node addon)
@@ -390,7 +384,7 @@ jobs:
       - name: Cache Cargo (mtf-node addon)
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: packages/mtf
+          workspaces: .
 
       - name: Test (fast)
         env:

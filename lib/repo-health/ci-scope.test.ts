@@ -128,14 +128,21 @@ describe("selectCIScope", () => {
 
 	const withMTF = [...workspaces, { name: "@mailwoman/mtf", directory: "packages/mtf", dependencies: [] }]
 
-	it.each(["packages/mtf/crates/mtf-channels/src/anchor.rs", "packages/mtf/Cargo.toml", "packages/mtf/Cargo.lock"])(
+	it.each(["packages/mtf/crates/mtf-channels/src/anchor.rs", "packages/mtf/crates/mtf-core/Cargo.toml"])(
 		"selects the rust job for %s, an mtf crate input",
 		(file) => {
 			expect(selectCIScope(withMTF, files, [file], [])).toMatchObject({ full: false, rust: true })
 		}
 	)
 
-	it.each(["packages/trainer/crates/trainer-export/src/quantize.rs", "packages/trainer/Cargo.lock"])(
+	it.each(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"])(
+		"selects the rust job and every suite for %s, a root cargo workspace file",
+		(file) => {
+			expect(selectCIScope(withMTF, files, [file], [])).toMatchObject({ full: true, rust: true })
+		}
+	)
+
+	it.each(["packages/trainer/crates/trainer-export/src/quantize.rs", "packages/trainer/crates/trainer-cli/Cargo.toml"])(
 		"selects only the job that tests the trainer crates for %s",
 		(file) => {
 			expect(selectCIScope(workspaces, files, [file], [])).toMatchObject({

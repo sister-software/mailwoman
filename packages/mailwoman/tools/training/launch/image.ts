@@ -6,7 +6,7 @@
  *   The images a training sandbox runs: the Rust `trainer` binary linked against libtorch, for the CPU and for CUDA.
  *
  *   An image is built in two parts. The base layers ({@linkcode trainerBaseCommands}) download the libtorch archive at its
- *   pinned sha256 and install the Rust toolchain `packages/trainer/rust-toolchain.toml` names. A build sandbox on that
+ *   pinned sha256 and install the Rust toolchain the root `rust-toolchain.toml` names. A build sandbox on that
  *   base then receives a tarball of {@linkcode trainerSourceBundle}'s files on stdin and runs {@linkcode trainerBuildScript}, and
  *   its filesystem snapshot is the training image. The JavaScript SDK copies no local files into an image, so the
  *   sources travel this way. The snapshot is published under {@linkcode trainerImageName}, which hashes every file the
@@ -85,12 +85,12 @@ export const TRAINER_REPO_ROOT = "/repo"
 export const TRAINER_DATA_FILES = ["packages/neural/data/label-schema.v1.json"] as const
 
 /**
- * The channel `packages/trainer/rust-toolchain.toml` pins.
+ * The channel the root `rust-toolchain.toml` pins.
  *
  * @throws When the file states no channel.
  */
 export async function trainerRustToolchain(): Promise<string> {
-	const path = repoRootPath("packages", "trainer", "rust-toolchain.toml")
+	const path = repoRootPath("rust-toolchain.toml")
 	const channel = /^channel\s*=\s*"([^"]+)"/m.exec(await readLocalTextFile(path))?.[1]
 
 	if (!channel) throw new Error(`${path} states no toolchain channel`)
@@ -156,10 +156,10 @@ export function trainerBuildScript(variant: TrainerVariant): string {
 		"set -euo pipefail",
 		`mkdir -p ${TRAINER_REPO_ROOT}`,
 		`base64 -d | tar -xz -C ${TRAINER_REPO_ROOT}`,
-		`cd ${TRAINER_REPO_ROOT}/packages/trainer`,
-		"cargo build --release --locked -p trainer-cli",
-		`install -m 0755 ${TRAINER_REPO_ROOT}/packages/trainer/target/release/trainer /usr/local/bin/trainer`,
-		`rm -rf ${TRAINER_REPO_ROOT}/packages/trainer/target /root/.cargo/registry`,
+		`cd ${TRAINER_REPO_ROOT}`,
+		"cargo build --profile trainer --locked -p trainer-cli",
+		`install -m 0755 ${TRAINER_REPO_ROOT}/target/trainer/trainer /usr/local/bin/trainer`,
+		`rm -rf ${TRAINER_REPO_ROOT}/target /root/.cargo/registry`,
 		"! ldd /usr/local/bin/trainer | grep 'not found' | grep -v 'libcuda\\.so\\.1'",
 		linkage,
 		"du -sxm / /opt/libtorch 2>/dev/null || true",
@@ -169,19 +169,13 @@ export function trainerBuildScript(variant: TrainerVariant): string {
 /**
  * The repository files a trainer image holds, relative to the repository root and sorted.
  *
- * Every file Git includes under `packages/trainer` except its Markdown,
- * the mtf workspace's manifest, lockfile, toolchain file and crates
- * (the trainer's path dependencies inherit the workspace's fields), and the data files.
+ * Every file Git includes under `packages/trainer` except its Markdown, the mtf crates the trainer
+ * depends on, the root workspace's manifest, lockfile and toolchain file, and the data files.
  */
 export async function trainerSourceFiles(): Promise<string[]> {
 	const trainer = await workingTreeFiles(["packages/trainer"])
 
-	const mtf = await workingTreeFiles([
-		"packages/mtf/Cargo.toml",
-		"packages/mtf/Cargo.lock",
-		"packages/mtf/rust-toolchain.toml",
-		"packages/mtf/crates",
-	])
+	const mtf = await workingTreeFiles(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "packages/mtf/crates"])
 
 	return [...new Set([...trainer.filter((path) => !path.endsWith(".md")), ...mtf, ...TRAINER_DATA_FILES])].toSorted()
 }

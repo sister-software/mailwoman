@@ -35,7 +35,7 @@ fn main() {
 /// version is fixed when it is compiled, so it is read here rather than at run time.
 fn locked_version(package: &str) -> String {
 	let manifest = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("cargo sets CARGO_MANIFEST_DIR"));
-	let lock_path = manifest.join("../../Cargo.lock");
+	let lock_path = manifest.join("../../../../Cargo.lock");
 	let lock = std::fs::read_to_string(&lock_path).unwrap_or_else(|e| panic!("{}: {e}", lock_path.display()));
 	let name_line = format!("name = \"{package}\"");
 	let mut lines = lock.lines();

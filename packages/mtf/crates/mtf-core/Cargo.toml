@@ -3,7 +3,7 @@ name = "mtf-core"
 description = "Mailwoman's subword tokenizer core: model loading, normalization, unigram encoding with offsets, and decoding."
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0 AND BSD-2-Clause"
 repository.workspace = true
 
 [features]

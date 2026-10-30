@@ -37,11 +37,11 @@ node packages/mailwoman/tools/training/launch/launch.run.ts start --config v1.0.
 
 # 2. Copy the checkpoint directory (config.json and the weights) from the volume to the host, then export ONNX.
 #    A span-scorer checkpoint also gets semi-crf-transitions.json.
-cargo run --release --manifest-path packages/trainer/Cargo.toml -p trainer-export -- \
+cargo run --profile trainer -p trainer-export -- \
   export-onnx --checkpoint ./step-020000 --output ./model-fp32.onnx
 
 # 3. Quantize int8 on the host
-cargo run --release --manifest-path packages/trainer/Cargo.toml -p trainer-export -- \
+cargo run --profile trainer -p trainer-export -- \
   quantize --input ./model-fp32.onnx --output ./model-int8.onnx
 
 # 4. Check (one command — the check spec is the interface)
