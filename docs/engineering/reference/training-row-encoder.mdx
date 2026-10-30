@@ -54,7 +54,10 @@ Training uses the Rust encoder while serving continues to use the TypeScript pai
 
 ## Interfaces
 
-`mtf_channels::Encoder` reads each configured lexicon once and encodes a batch of rows into an `EncodedBatch`:
+`mtf_channels::resources` (the `finders` feature) reads an encoder's files once: `EncoderResources::load` takes the
+label schema, the postcode finders, the anchor table and the lexicons a run configures, and `read_processor` the
+tokenizer model. Each file it cannot read or parse is refused with its path. The trainer and the Node addon only
+convert their options and errors around it. `mtf_channels::Encoder` encodes a batch of rows into an `EncodedBatch`:
 
 - `input_ids`, `attention_mask`, `labels`: int64 `[B, L]`;
 - per configured channel, `<name>_features` float32 `[B, L, D]` and `<name>_confidence` float32 `[B, L]`.

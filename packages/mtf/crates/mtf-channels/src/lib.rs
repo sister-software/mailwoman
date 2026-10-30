@@ -25,6 +25,8 @@ pub mod gazetteer;
 pub mod label_schema;
 pub mod labels;
 pub mod python_text;
+#[cfg(feature = "finders")]
+pub mod resources;
 
 pub use channel::{Channel, Piece};
 pub use encoder::{AnchorMode, EncodedBatch, Encoder, EncoderConfig, Finders, Lexicons, RowInput};
@@ -32,3 +34,5 @@ pub use error::Error;
 
 #[cfg(feature = "finders")]
 pub use finders::RegexFinders;
+#[cfg(feature = "finders")]
+pub use resources::{EncoderResources, ResourcePaths};

@@ -896,6 +896,7 @@ name = "mtf-channels"
 version = "0.1.0"
 dependencies = [
  "fancy-regex",
+ "mtf-core",
  "serde",
  "serde_json",
 ]

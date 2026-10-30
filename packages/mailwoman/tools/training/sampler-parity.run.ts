@@ -30,11 +30,13 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { mtfNode } from "@mailwoman/mtf/tools/sampler/native"
+import { mtfNode, type SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 
 import { applyOverrides, loadTrainingConfig, recordedConfigPath, rerootToHost } from "./config.ts"
 import {
+	createConfigCharEncoder,
 	createConfigRowEncoder,
+	encodeCharModelBatch,
 	encodeModelBatch,
 	openSampler,
 	readAddressSystemLookup,
@@ -116,6 +118,10 @@ function batchTensors(batch: ModelBatch): Array<{
 		)
 	}
 
+	if (batch.char) {
+		out.push({ name: "char_ids", dtype: "int64", rowShape: [length, batch.char.width], data: batch.char.ids })
+	}
+
 	return out
 }
 
@@ -143,8 +149,19 @@ async function verify(name: string, reportPath: string | undefined): Promise<boo
 	const config = rerootToHost(applyOverrides(await loadTrainingConfig(configPath), record.config.overrides))
 	const started = performance.now()
 	const mtf = await mtfNode()
-	const encoder = createConfigRowEncoder(mtf, config.data)
 	const addressSystem = await readAddressSystemLookup()
+
+	// A char-mode config encodes through the char encoder, a SentencePiece config through the row encoder.
+	const encode: (rows: SampledRow[]) => ModelBatch =
+		config.data.char_mode === "off"
+			? (
+					(encoder) => (rows) =>
+						encodeModelBatch(encoder, addressSystem, rows)
+				)(createConfigRowEncoder(mtf, config.data))
+			: (
+					(encoder) => (rows) =>
+						encodeCharModelBatch(encoder, addressSystem, rows)
+				)(createConfigCharEncoder(mtf, config.data))
 
 	const sampler = openSampler(mtf, config, record.split, record.seed, {
 		rowLimit: record.requested_rows,
@@ -159,7 +176,7 @@ async function verify(name: string, reportPath: string | undefined): Promise<boo
 	const shapes: Record<string, { dtype: string; row_shape: number[] }> = {}
 
 	for (const rows of sampledBatches(sampler, record.batch_size)) {
-		const batch = encodeModelBatch(encoder, addressSystem, rows)
+		const batch = encode(rows)
 
 		sizes.push(rows.length)
 		identities.push(...rows.map(rowIdentity))

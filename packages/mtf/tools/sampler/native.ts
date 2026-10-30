@@ -394,7 +394,9 @@ export async function mtfNode(): Promise<MTFNode> {
 		SplitColumns: native.SplitColumns,
 		createRowEncoder(options) {
 			const { padID, ...rest } = options
-			const encoder = new native.RowEncoder({ ...rest, padId: padID })
+			// napi-rs reads an `Option` from `undefined` and refuses `null`, which an unset config path holds.
+			const present = Object.fromEntries(Object.entries(rest).filter(([, value]) => value != null))
+			const encoder = new native.RowEncoder({ ...(present as typeof rest), padId: padID })
 
 			return {
 				get channelDims() {

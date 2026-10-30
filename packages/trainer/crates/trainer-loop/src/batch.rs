@@ -7,15 +7,13 @@
 use crate::address_systems::{locale_id, AddressSystems};
 use crate::config::{DataFiles, RunConfig};
 use crate::{fail, Result};
-use mtf_channels::anchor::AnchorLookup;
-use mtf_channels::finders::{PostcodeShapes, PostcodeSyntax, RegexFinders};
-use mtf_channels::gazetteer::Lexicon;
+use mtf_channels::finders::RegexFinders;
 use mtf_channels::label_schema::LabelSchema;
-use mtf_channels::{AnchorMode, Encoder, EncoderConfig, Finders, Lexicons};
+use mtf_channels::{AnchorMode, Encoder, EncoderConfig, EncoderResources, Finders, Lexicons, ResourcePaths};
 use mtf_core::Processor;
 use mtf_sampler::char_path::CharEncoder;
 use mtf_sampler::Row;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tch::{Device, Kind, Tensor};
 use trainer_model::encoder::{ChannelInput, EncoderInputs, CHANNELS};
 use trainer_model::SchemaDefaults;
@@ -127,12 +125,7 @@ fn read(path: &Path) -> Result<String> {
 
 /// The label schema the repository data files name.
 pub fn read_label_schema(files: &DataFiles) -> Result<LabelSchema> {
-	Ok(LabelSchema::from_json(&read(&files.label_schema)?)?)
-}
-
-fn lexicon(path: Option<String>) -> Result<Option<Lexicon>> {
-	path.map(|p| Lexicon::from_json(&read(Path::new(&p))?, &p).map_err(Into::into))
-		.transpose()
+	Ok(mtf_channels::resources::read_label_schema(&files.label_schema)?)
 }
 
 enum Path_ {
@@ -224,34 +217,28 @@ impl RunEncoder {
 		let tokenizer_dir = run
 			.data_str("tokenizer_dir")?
 			.ok_or_else(|| fail!("data.tokenizer_dir is empty"))?;
-		let model_path = Path::new(&tokenizer_dir).join("tokenizer.model");
-		let bytes = std::fs::read(&model_path).map_err(|e| fail!("{}: {e}", model_path.display()))?;
-		let processor = Processor::from_model_proto(&bytes).map_err(|e| fail!("{}: {e}", model_path.display()))?;
+		let processor = mtf_channels::resources::read_processor(&Path::new(&tokenizer_dir).join("tokenizer.model"))?;
 		let specials = processor.special_ids();
-		let anchor_mode = match run.data_str("anchor_paint_mode")?.as_deref() {
-			None | Some("gold") => AnchorMode::Gold,
-			Some("shaped") => AnchorMode::Shaped,
-			Some(other) => return Err(fail!("anchor_paint_mode {other:?} is not \"gold\" or \"shaped\"")),
-		};
-		let anchor = run
-			.data_str("anchor_lookup_path")?
-			.map(|p| AnchorLookup::from_json(&read(Path::new(&p))?, &p).map_err(crate::Error::from))
-			.transpose()?;
-		let shapes_path = files.postcode_shapes.display().to_string();
-		let syntax_path = files.postcode_syntax.display().to_string();
-		let finders = RegexFinders {
-			shapes: PostcodeShapes::from_record(&read(&files.postcode_shapes)?, &shapes_path)?,
-			syntax: PostcodeSyntax::from_json(&read(&files.postcode_syntax)?, &syntax_path)?,
-		};
-		let lexicons = Lexicons {
-			labels: schema.label_table("stage3")?,
-			locales: schema.locale_countries.clone(),
-			anchor,
-			gazetteer: lexicon(run.data_str("gazetteer_lexicon_path")?)?,
-			country: lexicon(run.data_str("country_lexicon_path")?)?,
-			street_type: lexicon(run.data_str("street_type_lexicon_path")?)?,
-			locality_surface: lexicon(run.data_str("locality_surface_lexicon_path")?)?,
-		};
+		let anchor_mode = AnchorMode::parse(run.data_str("anchor_paint_mode")?.as_deref())?;
+		let data_path = |key: &str| run.data_str(key).map(|value| value.map(PathBuf::from));
+		let (anchor_lookup, gazetteer, country, street_type, locality_surface) = (
+			data_path("anchor_lookup_path")?,
+			data_path("gazetteer_lexicon_path")?,
+			data_path("country_lexicon_path")?,
+			data_path("street_type_lexicon_path")?,
+			data_path("locality_surface_lexicon_path")?,
+		);
+		let EncoderResources { lexicons, finders, .. } = EncoderResources::load(&ResourcePaths {
+			label_schema: &files.label_schema,
+			label_set: "stage3",
+			postcode_shapes: &files.postcode_shapes,
+			postcode_syntax: &files.postcode_syntax,
+			anchor_lookup: anchor_lookup.as_deref(),
+			gazetteer: gazetteer.as_deref(),
+			country: country.as_deref(),
+			street_type: street_type.as_deref(),
+			locality_surface: locality_surface.as_deref(),
+		})?;
 		let config = EncoderConfig {
 			max_length: run
 				.data_i64("max_length")?
