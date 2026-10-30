@@ -163,8 +163,34 @@ function artifactKey(installationID: string, artifactID: string): string {
 	return `${installationID}|${artifactID}`
 }
 
-async function readGeneration(dataRoot: string, generation: number): Promise<ActiveSelection | null> {
-	return tryReadLocalJSONFile<ActiveSelection>(catalogPaths(dataRoot).selectionHistory(`${generation}.json`))
+/**
+ * The history record of a generation the plan keeps.
+ *
+ * The plan keeps the artifacts a kept generation's record selects.
+ * A record that is missing, unparsable or without an entries list stops the plan,
+ * because reading it as empty would list that generation's artifacts for deletion.
+ *
+ * @throws When the record is missing, cannot be read or parsed, or has no `entries` array.
+ */
+async function readRetainedGeneration(dataRoot: string, generation: number): Promise<ActiveSelection> {
+	const path = catalogPaths(dataRoot).selectionHistory(`${generation}.json`).toString()
+	let record: ActiveSelection | null
+
+	try {
+		record = await tryReadLocalJSONFile<ActiveSelection>(path)
+	} catch (error) {
+		throw new Error(`prune refused: generation ${generation}'s record ${path} cannot be read`, { cause: error })
+	}
+
+	if (!record) {
+		throw new Error(`prune refused: generation ${generation} is retained, but its record ${path} is missing`)
+	}
+
+	if (!Array.isArray(record.entries)) {
+		throw new TypeError(`prune refused: generation ${generation}'s record ${path} has no entries list`)
+	}
+
+	return record
 }
 
 /**
@@ -236,9 +262,9 @@ export async function planPrune(dataRoot: PathBuilderLike, options: { retain?: n
 	const referencedBy = new Map<string, number[]>()
 
 	for (const generation of generations) {
-		const record = generation === selection?.generation ? selection : await readGeneration(root, generation)
+		const record = generation === selection?.generation ? selection : await readRetainedGeneration(root, generation)
 
-		for (const entry of record?.entries ?? []) {
+		for (const entry of record.entries) {
 			for (const source of entry.order) {
 				const key = artifactKey(source.installationID, source.artifactID)
 

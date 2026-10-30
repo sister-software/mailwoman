@@ -9,11 +9,13 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { ServingRole } from "@mailwoman/core/layers"
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { resolvePath } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { LayerCatalog, replaceActiveSelection } from "#data/catalog"
+import { catalogPaths, LayerCatalog, replaceActiveSelection } from "#data/catalog"
 import { executePrune, holdSelectionLease, planPrune, readLiveLeases } from "#data/retention"
 import { installFixtureArtifact } from "#test-kit/fixture-registry"
 
@@ -123,6 +125,66 @@ describe("planPrune's retain count", () => {
 		expect(plan.candidates.map((candidate) => candidate.artifactID).toSorted()).toEqual(
 			[a.entry.order[0]!.artifactID, b.entry.order[0]!.artifactID].toSorted()
 		)
+	})
+})
+
+describe("planPrune's reading of retained history", () => {
+	/**
+	 * A, activated as generation 1, then B as generation 2.
+	 */
+	async function twoGenerations() {
+		const a = await installFixtureArtifact(scratch.path, ServingRole.Candidate, "candidate.db", "release a")
+		const b = await installFixtureArtifact(scratch.path, ServingRole.Candidate, "candidate.db", "release b")
+
+		await replaceActiveSelection(scratch.path, { basedOn: null, set: [a.entry] })
+		await replaceActiveSelection(scratch.path, { basedOn: 1, set: [b.entry] })
+
+		return { a, b }
+	}
+
+	it("refuses when a retained generation's history record is missing, and deletes nothing", async () => {
+		const { a, b } = await twoGenerations()
+		const history = catalogPaths(scratch.path).selectionHistory("1.json")
+
+		await removePath(history)
+
+		await expect(planPrune(scratch.path)).rejects.toThrow(
+			new RegExp(`generation 1 is retained, but its record ${escapeRegExp(history.toString())} is missing`, "u")
+		)
+
+		expect(await pathExists(a.path)).toBe(true)
+		expect(await pathExists(b.path)).toBe(true)
+	})
+
+	it("refuses when a leased generation's history record is missing", async () => {
+		const { a } = await threeGenerations()
+
+		await removePath(catalogPaths(scratch.path).selectionHistory("1.json"))
+
+		using _lease = await holdSelectionLease(scratch.path, 1)
+
+		await expect(planPrune(scratch.path)).rejects.toThrow(/generation 1 is retained, but its record .* is missing/u)
+		expect(await pathExists(a.path)).toBe(true)
+	})
+
+	it("refuses when a retained generation's history record cannot be parsed, naming its path", async () => {
+		await twoGenerations()
+
+		const history = catalogPaths(scratch.path).selectionHistory("1.json")
+
+		await writeLocalTextFile("{broken", history)
+
+		await expect(planPrune(scratch.path)).rejects.toThrow(
+			new RegExp(`generation 1's record ${escapeRegExp(history.toString())} cannot be read`, "u")
+		)
+	})
+
+	it("refuses when a retained generation's history record has no entries list", async () => {
+		await twoGenerations()
+
+		await writeLocalTextFile(`{"generation":1}`, catalogPaths(scratch.path).selectionHistory("1.json"))
+
+		await expect(planPrune(scratch.path)).rejects.toThrow(/generation 1's record .* has no entries list/u)
 	})
 })
 
