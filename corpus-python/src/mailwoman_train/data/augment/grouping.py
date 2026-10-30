@@ -84,8 +84,15 @@ def _append_words(row: dict[str, Any], text: str) -> dict[str, Any]:
     }
 
 
-def wrap_row(row: dict[str, Any], pair: tuple[str, str]) -> dict[str, Any]:
-    """Return a copy of ``row`` wrapped in ``pair``."""
+def wrap_row(row: dict[str, Any], pair: tuple[str, str]) -> dict[str, Any] | None:
+    """Return a copy of ``row`` wrapped in ``pair``, or ``None`` when ``raw`` does not begin and end on a token edge.
+
+    A row whose text runs past its last token, such as ``'114, СНТ «Пчёлка»'`` with its closing guillemet outside
+    every token, has no token for the closing character to join (#2878).
+    """
+    edges = {edge for span in whitespace_spans(row["raw"], row["tokens"]) for edge in span}
+    if 0 not in edges or len(row["raw"]) not in edges:
+        return None
     opened = _insert(row, 0, pair[0])
     return _insert(opened, len(opened["raw"]), pair[1])
 

@@ -172,11 +172,14 @@ its files without a sha256, and the loader refuses such a manifest. `char-v8-cjk
 `$MAILWOMAN_DATA_ROOT/audits/port-parity/corpora/v8-cjk-regs-2026-09-08-sealed/MANIFEST.json`: the
 original manifest's entries, unchanged, with each file's sha256 measured on 2026-10-29.
 
-The grouping records stop short of 5,000 rows because the grouping augmentation raises on C6 rows whose
-whitespace tokens do not reach the end of `raw`, in the Python sampler and the Rust sampler alike. At
-probability 0.5, seed 43, the stream raises after 250 rows on `insert position 18 is not a token edge
-(raw='{114, СНТ «Пчёлка»')`; at 0.05 it raises after 1,994 rows on `'(22 Whampoa East S(338527)'`. No training
-config sets `augment_grouping_prob`. The two grouping records were captured by replacing `iter_batch_rows` with
+The grouping records stop short of 5,000 rows because, when they were captured, the grouping augmentation raised
+on C6 rows whose tokens do not reach the end of `raw`, in the Python sampler and the Rust sampler alike. At
+probability 0.5, seed 43, the stream raised after 250 rows on `insert position 18 is not a token edge
+(raw='{114, СНТ «Пчёлка»')`; at 0.05 it raised after 1,994 rows on `'(22 Whampoa East S(338527)'`. The `osm-ru`
+row's tokens are `114`, `СНТ` and `Пчёлка`, so its closing guillemet ends `raw` past the last token. Since #2878,
+`wrap_row` skips a row whose text does not begin and end on a token edge, in both samplers, and the stream runs on.
+The skip takes no draw, so every row before the first such row is unchanged, and both grouping records still
+verify at 0 differing rows. No training config sets `augment_grouping_prob`. The two grouping records were captured by replacing `iter_batch_rows` with
 the composition the Python loader ran, `random.Random(seed)` over `stream.iter_rows` with the astral skip, which
 reproduced `c6-train-2k`'s row identities and tensor digests exactly before it captured them.
 

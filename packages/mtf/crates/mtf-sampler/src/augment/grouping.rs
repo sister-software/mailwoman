@@ -105,11 +105,22 @@ fn append_words(row: &Row, text: &str) -> Row {
 	}
 }
 
-/// A copy of `row` wrapped in `pair`.
-pub fn wrap_row(row: &Row, pair: (&str, &str)) -> Result<Row> {
+/// A copy of `row` wrapped in `pair`, or `None` when `raw` does not begin and end on a token edge.
+///
+/// A corpus row's tokens may leave out punctuation, as `osm-ru` writes `114, СНТ «Пчёлка»` with the tokens `114`,
+/// `СНТ` and `Пчёлка`. Its text then runs past its last token, and the closing character has no token to join
+/// (#2878). The row is skipped, so the variant and pair draws already taken are the only ones it consumes.
+pub fn wrap_row(row: &Row, pair: (&str, &str)) -> Result<Option<Row>> {
+	let raw = row.chars();
+	let spans = token_spans(&raw, &row.tokens)?;
+	let starts_on_edge = spans.iter().any(|&(start, _)| start == 0);
+	let ends_on_edge = spans.iter().any(|&(_, end)| end == raw.len());
+	if !starts_on_edge || !ends_on_edge {
+		return Ok(None);
+	}
 	let opened = insert(row, 0, pair.0)?;
 	let end = chars(&opened.raw).len();
-	insert(&opened, end, pair.1)
+	insert(&opened, end, pair.1).map(Some)
 }
 
 /// A copy with the first span tagged one of `tags` wrapped in `pair`, or `None` when no such span begins and ends on
@@ -165,7 +176,7 @@ pub fn group_row(row: &Row, rng: &mut PyRandom) -> Result<Option<Row>> {
 			} else {
 				pick(rng, &LATIN_PAIRS)?
 			};
-			wrap_row(row, pair).map(Some)
+			wrap_row(row, pair)
 		}
 		"wrap_name" => {
 			let pair = if cjk {

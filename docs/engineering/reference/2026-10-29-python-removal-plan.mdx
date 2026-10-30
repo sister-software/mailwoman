@@ -795,6 +795,23 @@ Caller checklist: `data/loader/*` ← `train/loop.py`, `train/validation.py`, `t
 - Deletion: `data/`, `tokenizer/{char,spans,uds}.py`, `audits/{encoder_parity,loader_profile,painted_anchor_rows}.py`
   (rewritten as Rust examples), `audits/epoch_mixture/`, `exposure/report.py`, and their tests.
 
+**#2878, the grouping augmentation (observed 2026-10-30, lab host).** On the C6 host config, seed 43, at
+`augment_grouping_prob=0.5`, the sampler stream stopped after 250 rows with `corrupt row: insert position 18 is not
+a token edge (raw="{114, СНТ «Пчёлка»")`. The row is `osm-ru`'s `114, СНТ «Пчёлка»`, and its corpus tokens are
+`114`, `СНТ` and `Пчёлка`. The comma and the guillemets are in no token, so `raw` ends one character past the last
+token, and `wrap_row`'s closing insert has no token to join. `wrap_row` now answers `None` for a row whose text does
+not begin and end on a token edge, in `mtf-sampler` and in `data/augment/grouping.py`. The variant and pair draws
+are taken before it, so the stream draws what it drew before, and only that row's grouped copy is missing.
+
+- After the fix, the same stream reads 5,000 rows at 0.5 and at 0.05.
+- `aug-grouping-2k` (1,990 rows), `aug-grouping-p50-250` (250 rows) and `c6-train-2k` (2,000 rows) each verify at 0
+  differing rows through `sampler-parity.run.ts verify`, run one at a time.
+- `tests/grouping.rs` and `test_grouping.py` hold the `osm-ru` row, a row with a guillemet before its first token,
+  and a 40-seed `group_row` check. Both new Rust tests failed with the recorded message before the fix.
+- No committed config sets `augment_grouping_prob` (0 of 268), so no committed config's sampled rows change.
+- The two grouping records were not recaptured past the failing rows. The only Python stream left is the Rust
+  sampler through `mtf-py`, so a recapture would compare the Rust sampler with itself.
+
 ### Phase 4 — Tokenizer tooling
 
 Caller checklist: `tokenizer/train.py` ← `cli/commands/tokenizer.py`. `splice.py` ← `launch/splices.py`,

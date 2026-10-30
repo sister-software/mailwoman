@@ -52,11 +52,46 @@ fn assert_consistent(before: &Row, after: &Row) {
 #[test]
 fn wrapping_the_row_shifts_every_span_and_keeps_its_text() {
 	let row = boston();
-	let wrapped = wrap_row(&row, ("\"", "\"")).unwrap();
+	let wrapped = wrap_row(&row, ("\"", "\"")).unwrap().expect("a wrapped copy");
 	assert_eq!(wrapped.raw, "\"123 Main St, Boston, MA 02111, USA\"");
 	assert_eq!(wrapped.tokens[0], "\"123");
 	assert_eq!(wrapped.labels, row.labels);
 	assert_consistent(&row, &wrapped);
+}
+
+/// The `osm-ru` row of #2878, with its corpus tokens: the comma and the guillemets belong to no token, so the
+/// closing guillemet ends `raw` past the last token.
+fn pchyolka() -> Row {
+	make_row(
+		"114, СНТ «Пчёлка»",
+		&[("house_number", "114"), ("dependent_locality", "СНТ «Пчёлка»")],
+		"RU",
+		Some(&["114", "СНТ", "Пчёлка"]),
+	)
+}
+
+#[test]
+fn a_row_whose_text_runs_past_its_last_token_is_not_wrapped() {
+	assert!(wrap_row(&pchyolka(), ("{", "}")).unwrap().is_none());
+	// The same shape at the start: a guillemet before the first token.
+	let leading = make_row(
+		"«Пчёлка» 114",
+		&[("dependent_locality", "«Пчёлка»"), ("house_number", "114")],
+		"RU",
+		Some(&["Пчёлка", "114"]),
+	);
+	assert!(wrap_row(&leading, ("{", "}")).unwrap().is_none());
+	// A row whose tokens reach both ends is still wrapped.
+	assert!(wrap_row(&boston(), ("{", "}")).unwrap().is_some());
+}
+
+#[test]
+fn grouping_skips_the_row_rather_than_failing_the_stream() {
+	for seed in 0..40 {
+		if let Some(grouped) = group_row(&pchyolka(), &mut rng(seed)).unwrap() {
+			assert_consistent(&pchyolka(), &grouped);
+		}
+	}
 }
 
 #[test]

@@ -57,10 +57,40 @@ def test_wrapping_the_row_shifts_every_span_and_keeps_its_text() -> None:
     row = _boston()
     wrapped = wrap_row(row, ('"', '"'))
 
+    assert wrapped is not None
     assert wrapped["raw"] == '"123 Main St, Boston, MA 02111, USA"'
     assert wrapped["tokens"][0] == '"123'
     assert wrapped["labels"] == row["labels"]
     _assert_consistent(row, wrapped)
+
+
+def _pchyolka() -> dict[str, Any]:
+    """The `osm-ru` row of #2878 with its corpus tokens. The tokens leave out the comma and the guillemets."""
+    return make_row(
+        "114, СНТ «Пчёлка»",
+        [("house_number", "114"), ("dependent_locality", "СНТ «Пчёлка»")],
+        "RU",
+        tokens=["114", "СНТ", "Пчёлка"],
+    )
+
+
+def test_a_row_whose_text_runs_past_its_last_token_is_not_wrapped() -> None:
+    assert wrap_row(_pchyolka(), ("{", "}")) is None
+    leading = make_row(
+        "«Пчёлка» 114",
+        [("dependent_locality", "«Пчёлка»"), ("house_number", "114")],
+        "RU",
+        tokens=["Пчёлка", "114"],
+    )
+    assert wrap_row(leading, ("{", "}")) is None
+    assert wrap_row(_boston(), ("{", "}")) is not None
+
+
+def test_grouping_skips_the_row_rather_than_failing_the_stream() -> None:
+    for seed in range(40):
+        grouped = group_row(_pchyolka(), random.Random(seed))
+        if grouped is not None:
+            _assert_consistent(_pchyolka(), grouped)
 
 
 def test_wrapping_a_venue_leaves_the_guillemets_outside_its_span() -> None:
