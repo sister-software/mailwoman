@@ -18,16 +18,59 @@ const NON_DECIMAL_DIGITS =
 	"⓪⓵-⓽⓿❶-❾➀-➈➊-➒\u{10A40}-\u{10A43}\u{10E60}-\u{10E68}" +
 	"\u{11052}-\u{1105A}\u{1F100}-\u{1F10A}"
 
-const PYTHON_DIGITS = new RegExp(`^[\\p{Nd}${NON_DECIMAL_DIGITS}]+$`, "u")
+/**
+ * The decimal digits Unicode 15.1 to 17.0 assigned: general category `Nd` in Node's tables
+ * and not `str.isdecimal()` in CPython 3.12.
+ *
+ * Listed by comparing `/^\p{Nd}$/u` under Node's Unicode 17.0 with `c.isdecimal()` under
+ * CPython 3.12.3 (`unicodedata.unidata_version` 15.0.0) over every code point.
+ * No code point is decimal in CPython and not in Node.
+ */
+const POST_UNICODE_15_DECIMALS =
+	"\u{10D40}-\u{10D49}\u{116D0}-\u{116E3}\u{11BF0}-\u{11BF9}\u{11DE0}-\u{11DE9}" +
+	"\u{16130}-\u{16139}\u{16D70}-\u{16D79}\u{1CCF0}-\u{1CCF9}\u{1E5F1}-\u{1E5FA}"
 
 /**
- * Python `str.isdigit()`: non-empty, and every character a decimal digit or a digit of numeric type Digit.
- *
- * Node's `\p{Nd}` follows its own Unicode version, so a decimal digit a later
- * Unicode version added counts here and not in CPython 3.12.
+ * One character Python's `\d` matches in a `str` pattern, a decimal digit of Unicode 15.0,
+ * as a pattern for a `u` or `v` regular expression.
+ */
+export const PYTHON_DECIMAL = `(?:(?![${POST_UNICODE_15_DECIMALS}])\\p{Nd})`
+
+const PYTHON_DIGITS = new RegExp(`^(?:${PYTHON_DECIMAL}|[${NON_DECIMAL_DIGITS}])+$`, "u")
+
+/**
+ * Python `str.isdigit()`: non-empty, and every character a decimal digit or a digit of
+ * numeric type Digit, both as CPython 3.12's Unicode 15.0 tables assign them.
  */
 export function pythonIsDigit(value: string): boolean {
 	return PYTHON_DIGITS.test(value)
+}
+
+/**
+ * The letters Unicode 15.1 to 17.0 assigned: general category `L` in Node's tables and not
+ * `str.isalpha()` in CPython 3.12, 9,568 code points in 45 ranges, among them CJK Extensions I and J.
+ *
+ * Listed by comparing `/^\p{L}$/u` under Node's Unicode 17.0 with `c.isalpha()` under
+ * CPython 3.12.3 (`unicodedata.unidata_version` 15.0.0) over every code point.
+ * No code point is a letter in CPython and not in Node.
+ */
+const POST_UNICODE_15_LETTERS =
+	"࢏౜೜Ᲊ-ᲊꟋ-꟏꟒꟔Ꟛ-Ƛ꟱" +
+	"\u{105C0}-\u{105F3}\u{10940}-\u{10959}\u{10D4A}-\u{10D65}\u{10D6F}-\u{10D85}\u{10EC2}-\u{10EC7}" +
+	"\u{11380}-\u{11389}\u{1138B}\u{1138E}\u{11390}-\u{113B5}\u{113B7}\u{113D1}\u{113D3}" +
+	"\u{11BC0}-\u{11BE0}\u{11DB0}-\u{11DDB}\u{13460}-\u{143FA}\u{16100}-\u{1611D}\u{16D40}-\u{16D6C}" +
+	"\u{16EA0}-\u{16EB8}\u{16EBB}-\u{16ED3}\u{16FF2}-\u{16FF3}\u{187F8}-\u{187FF}\u{18CFF}" +
+	"\u{18D09}-\u{18D1E}\u{18D80}-\u{18DF2}\u{1E5D0}-\u{1E5ED}\u{1E5F0}\u{1E6C0}-\u{1E6DE}" +
+	"\u{1E6E0}-\u{1E6E2}\u{1E6E4}-\u{1E6E5}\u{1E6E7}-\u{1E6ED}\u{1E6F0}-\u{1E6F4}\u{1E6FE}-\u{1E6FF}" +
+	"\u{2B73A}-\u{2B73F}\u{2CEA2}-\u{2CEAD}\u{2EBF0}-\u{2EE5D}\u{323B0}-\u{33479}"
+
+const PYTHON_LETTER = new RegExp(`^(?![${POST_UNICODE_15_LETTERS}])\\p{L}$`, "u")
+
+/**
+ * Python `str.isalpha()` for one character, as CPython 3.12's Unicode 15.0 tables assign letters.
+ */
+export function pythonIsAlphaCharacter(character: string): boolean {
+	return PYTHON_LETTER.test(character)
 }
 
 /**

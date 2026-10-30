@@ -18,6 +18,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
+import { pythonIsAlphaCharacter } from "@mailwoman/core/strings/python-text"
 import { basename, resolvePath } from "path-ts"
 
 import {
@@ -101,24 +102,22 @@ const CJK_LETTER_RANGES: ReadonlyArray<readonly [number, number]> = [
 	[0x3_13_50, 0x3_23_af],
 ]
 
-const LETTER = /^\p{L}$/u
-
 const isCJKLetter = (codePoint: number): boolean =>
 	CJK_LETTER_RANGES.some(([low, high]) => codePoint >= low && codePoint <= high)
 
 /**
  * The share of `text`'s letters that are Han, Kana or Hangul, or 0 for a text with no letter.
  *
- * A letter is a character of general category `L`, Python's `str.isalpha`.
- * Node's Unicode tables are newer than Python 3.12's, so a letter assigned
- * after Unicode 15.0 counts as a non-CJK letter here.
+ * A letter is Python 3.12's `str.isalpha`, read from Unicode 15.0 through `pythonIsAlphaCharacter`.
+ * A letter a later Unicode version assigned, such as a CJK Extension I or J character, is no
+ * letter here, as in the Python builder, rather than a non-CJK letter that lowers the share.
  */
 export function cjkShare(text: string): number {
 	let letters = 0
 	let cjk = 0
 
 	for (const character of text) {
-		if (!LETTER.test(character)) continue
+		if (!pythonIsAlphaCharacter(character)) continue
 
 		letters++
 

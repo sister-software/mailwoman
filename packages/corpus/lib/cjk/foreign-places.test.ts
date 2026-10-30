@@ -73,6 +73,13 @@ describe("cjkShare", () => {
 		expect(cjkShare("𠮷野")).toBe(1)
 	})
 
+	it("counts no letter that Unicode 15.0 had not assigned, as Python 3.12's isalpha did", () => {
+		// U+2EBF0 is CJK Extension I (Unicode 15.1).
+		// Python counted the row's two letters, both CJK.
+		expect(cjkShare("東京\u{2EBF0}")).toBe(1)
+		expect(isForeignCJKRow({ raw: "東京\u{2EBF0}", country: "US" })).toBe(true)
+	})
+
 	it("keeps a mixed row and a CJK country's row with their own families", () => {
 		expect(isForeignCJKRow({ raw: "ニューヨーク州ブルックリン区", country: "US" })).toBe(true)
 		expect(isForeignCJKRow({ raw: "フェアモント, WV", country: "US" })).toBe(false)
