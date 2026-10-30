@@ -661,6 +661,24 @@ capped real-data runs read `$MAILWOMAN_DATA_ROOT` with the flags each row names.
 | `countries/jp/corpora/`, `countries/jp/{kana,text}.py`  | `lib/jp/corpus/`, `lib/jp/{kana,text}.ts`                                           | `jp-build-reference.json` reproduced. 4 row groups, 20,500 rows plus 1,000 board rows equal with the kana register on                    |
 | `countries/tw/corpora/`                                 | `lib/tw/corpus/`                                                                    | `tw-build-reference.json` reproduced. 4 row groups, 20,500 rows, board and centroids equal                                               |
 
+**Re-measured on 2026-10-30 (#2879 T30).** The Python builders ran from a `git archive` of `d55834896^`, the last
+revision holding all seven, in its own locked environment, against today's TypeScript builders on the same inputs. Each
+record under `$MAILWOMAN_DATA_ROOT/audits/port-parity/<builder>/` holds both outputs, both logs and `record.json`
+(commands, exits, timings, and a per-file verdict: parquet by schema and ordered rows, other files by SHA-256).
+
+| Builder                       | Result                                                                                                                                                            |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `house-venue-tuples-1000`     | 1,000 tuples byte-equal, SHA-256 `22ba8a49…`                                                                                                                      |
+| `house-venue-tuples-carry-gb` | 62,290 tuples byte-equal, SHA-256 `05b84b23…`                                                                                                                     |
+| `tw-corpus`                   | 20,500 rows in four parts equal. Board (377,811 bytes), centroids, vocabulary and rights record byte-equal. Report equal with keys sorted (`per_tag_rows` order)  |
+| `jp-corpus`                   | 20,500 rows equal. Board (358,397 bytes), vocabulary and rights record byte-equal. Report as TW                                                                   |
+| `kr-corpus`                   | label 20,500 and registry 2,590 rows equal. Both boards, the 19 centroids, both vocabularies and both rights records byte-equal. Reports as TW                    |
+| `cjk-foreign-places`          | 8,793 rows equal. Report and vocabulary byte-equal. The manifest differs only in the output directory's name (`FINDINGS.md`)                                      |
+| `fragment-assay`              | 216,570 rows (schema equal) and 24,063 dev lines. 2,000 differ (1,803 and 197), each an NZ row ending `Aotearoa` where Python wrote `New Zealand` (`FINDINGS.md`) |
+
+The TW and JP registry counts (25,006 and 176,544 aligned) were not re-measured: that run read a scratch data root
+assembled by hand, which no longer exists, and the record states its inputs only by name.
+
 Classified differences (**decided**):
 
 - `coverage_stats` counts `per_tag_rows` from a Python `set`, so its tie order follows `PYTHONHASHSEED`: two Python runs
