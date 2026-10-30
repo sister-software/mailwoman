@@ -329,6 +329,12 @@ The battery registers no margin, so `m` is twice the largest final seed differen
   in full. The final order puts B ahead by 1.8 and 1.3.
 - The WOF-only primer parses no battery row right. Rule 1 excludes its screen.
 
+Arms A, B and C cast their parameters to bf16. A run that keeps fp32 master weights (#2871) follows a different
+optimization path, so whether its step-30,000 checkpoint ranks arms the way its final step does is unknown. The
+rule is unverified for that lineage. The first comparison inside it, the Phase 2 pair of #2869 against the
+fp32-master control, can check it: grade both arms' step-30,000 checkpoints beside their final steps before the
+screen decides any fp32-master comparison.
+
 The two measures disagree on the final order of A and B: the structure board puts B ahead by 0.040 to 0.055, and
 the battery puts A ahead by 0.4 points. A screen inherits whichever measure it is read on, so a screen decision
 names its measure. These are three arm pairs, each with two seeds, so the rule rests on 12 screen readings and
@@ -360,15 +366,18 @@ completed learning-rate schedule requires an explicit new-run decision.
 | Re-split, 853 files                      | 76 min CPU, 8 workers                  |
 | Held-out span check                      | 22 to 50 min CPU, now inside the build |
 | Held-out freeze and overlap audit        | about 3 and 2.5 min per set            |
-| 60,000-step from-scratch run             | 6 to 8 h on an A100, about $17 to $23  |
+| 90,000-step from-scratch run             | about 2 h on an A100, about $7.40      |
 | One candidate graded                     | about 1 h CPU                          |
 | A corpus change judged under section 7.2 | one further run, the same cost again   |
 
-The run figures are the October 2026 observations, CPU and memory included. The training step runs at about
-5.5 steps/s on an A100 between validation passes. The median of 18.2 s per 100 steps is from the arm B seed 42
-run's `train_log.csv`. Before `d7ea0f5a9` each validation pass took a median of 355 s, and a 90,000-step run
-spent 4.4 of about 9 h in its 44 passes. The validation cache in `train/validation.py` encodes the draw once, so
-later runs spend about one pass of that time.
+The run figures come from the #2871 pair, `v8.3.0-base-c6-90k-fp32master-s42` and `-s43` (2026-10-29), on an
+A100-40GB with fp32 master weights and the Rust row encoder. The pair cost $14.74 of Modal, CPU and memory
+included, with one restart each. Between validation passes the step ran at a median 7.2 and 7.0 s per 100 steps,
+read from each run's `train_log.csv`. Each attempt's first validation pass encodes the draw and took 140 to 146 s.
+Each later pass replays it and took a median 7.6 s. The two logs record 2.17 and at least 1.90 h of wall clock from
+step 100 to step 90,000, restarts included. The seed 43 log lacks the rows from step 44,000 to 50,000 written
+before its restart. `OBSERVED_SECONDS_PER_100_STEPS` and `EVALUATION_SECONDS` in `launch/wall_clock.py` hold these
+rates.
 
 ## 10. Current state against this specification
 

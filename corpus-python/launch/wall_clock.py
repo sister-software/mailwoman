@@ -17,20 +17,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 #: The training function's wall-clock budget per attempt, 32,400 s (9 h). The estimate below puts a 90,000-step
-#: A100 recipe evaluated every 2,000 steps at about 24,900 s.
+#: A100 recipe evaluated every 2,000 steps at about 9,900 s.
 TRAIN_TIMEOUT_SECONDS = 32400
 
 #: Seconds per 100 optimizer steps at batch 128, between validation passes, by Modal GPU type.
 #:
-#: ``A100-40GB``: the 2,000-step probe ``v8.3.0-probe-rust-loader-2k.yaml`` (call fc-01M62R4Y9MDJW0WMAHRR5KVGQ6,
-#: 2026-10-29) ran the Rust row encoder at a median 6.50 s per 100 steps over steps 300 to 2,000 (17 windows,
-#: 6.10 to 7.70), read from its train_log.csv. Runs on the Python encoder it replaced ran 16.2 to 24.4 s.
+#: ``A100-40GB``: the two 90,000-step runs ``v8.3.0-base-c6-90k-fp32master-s42`` and ``-s43`` (2026-10-29) keep
+#: fp32 parameters under bf16 autocast. They ran at a median 7.2 and 7.0 s per 100 steps over 932 and 837 windows
+#: (10th to 90th percentile 6.8 to 7.8), read from their train_log.csv. The Rust trainer is faster on the same card,
+#: so its runs are estimated from above. The earlier bf16-cast loop ran 6.50 s. Fp32 master weights are slower.
 #:
 #: ``A100-80GB`` reuses the 40 GB rate. It has the same compute and more memory bandwidth, so the 40 GB rate bounds
 #: it from above. That bound is inferred, and no run has measured the 80 GB card.
 OBSERVED_SECONDS_PER_100_STEPS: dict[str, float] = {
-    "A100-40GB": 6.50,
-    "A100-80GB": 6.50,
+    "A100-40GB": 7.20,
+    "A100-80GB": 7.20,
 }
 
 #: Seconds per 100 steps for the dev-only CPU device the Rust lifecycle checks run on (`launch/train_rust.py`'s
@@ -45,11 +46,10 @@ GPU_ALIASES: dict[str, str] = {"A100": "A100-40GB"}
 #: Multiplicative headroom over the step time for slow batches and checkpoint writes.
 STEP_HEADROOM = 1.15
 
-#: Seconds per validation pass. 355 s is the median over the 44 passes of the seed 42 arm B run
-#: (``v8.3.0-base-c6-90k-mixed-s42``, 2026-10-27). That run's validation rows sat inside the training files.
-#: Its seed 43 run measured 363 s over 44. The validation draw is now encoded once and replayed. No Modal run
-#: has measured a replayed pass, so this figure is an upper bound.
-EVALUATION_SECONDS = 355
+#: Seconds per validation pass. An attempt encodes its validation draw at the first pass and replays it after.
+#: The two fp32-master runs above measured a first pass of 145.5 and 140.2 s and a replayed pass of a median 7.6 s.
+#: Their mean over every pass, restarts included, was 13.4 and 14.1 s over 46 and 41 passes.
+EVALUATION_SECONDS = 15
 
 #: A flat allowance for the image start, the preflight receipt check and the final save.
 STARTUP_SHUTDOWN_SECONDS = 1800
