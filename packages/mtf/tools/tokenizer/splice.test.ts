@@ -13,7 +13,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { describe, expect, it } from "vitest"
 
-import { checkCodepointOverlap, collectSampleCodepoints, type OverlapReport } from "./splice.ts"
+import { assertTableShape, checkCodepointOverlap, collectSampleCodepoints, type OverlapReport } from "./splice.ts"
 
 async function samples(directory: { path: (...segments: string[]) => { toString(): string } }) {
 	const fr = directory.path("fr.jsonl").toString()
@@ -72,5 +72,25 @@ describe("checkCodepointOverlap", () => {
 
 		expect(result["fr"]).toEqual(["è"])
 		expect((await readLocalJSONFile<OverlapReport>(report)).accepted_overlap).toEqual(["fr"])
+	})
+})
+
+describe("assertTableShape", () => {
+	it("accepts a table whose dims and bytes agree", () => {
+		expect(() =>
+			assertTableShape("embedding", { dims: [3, 2], bytes: new Uint8Array(24) }, [3, 2], Float32Array.BYTES_PER_ELEMENT)
+		).not.toThrow()
+	})
+
+	it("refuses raw data shorter than its dims", () => {
+		expect(() =>
+			assertTableShape("embedding", { dims: [3, 2], bytes: new Uint8Array(20) }, [3, 2], Float32Array.BYTES_PER_ELEMENT)
+		).toThrow("embedding has dims [3, 2] and 20 bytes; expected [3, 2] in 24 bytes")
+	})
+
+	it("refuses an int8 table whose width differs from the fp32 table's", () => {
+		expect(() => assertTableShape("quantized", { dims: [3, 4], bytes: new Uint8Array(12) }, [3, 2], 1)).toThrow(
+			"quantized has dims [3, 4] and 12 bytes; expected [3, 2] in 6 bytes"
+		)
 	})
 })

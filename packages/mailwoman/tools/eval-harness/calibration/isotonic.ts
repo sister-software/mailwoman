@@ -214,8 +214,12 @@ export function robustMCE(rows: readonly ReliabilityBin[]): number {
 
 /**
  * The Brier score: the mean squared gap between confidence and correctness.
+ *
+ * @throws For no records, whose mean NumPy reports as NaN.
  */
 export function brier(conf: readonly number[], correct: readonly number[]): number {
+	if (!conf.length) throw new Error("the Brier score needs at least one record")
+
 	return numpyMean(conf.map((c, i) => (c - correct[i]!) ** 2))
 }
 
@@ -304,6 +308,14 @@ export function fitAndMeasure(
 	const conf = records.map((r) => r.conf)
 	const correct = records.map((r) => (r.correct ? 1 : 0))
 	const nEval = Math.floor(records.length / EVAL_DIVISOR)
+
+	// Under five records the evaluation split is empty, and every metric would be NaN or a vacuous 0.
+	if (nEval === 0) {
+		throw new Error(
+			`${records.length} records give an empty evaluation split; the split holds one record in ${EVAL_DIVISOR}`
+		)
+	}
+
 	const evalIndex = permutation.slice(0, nEval)
 	const fitIndex = permutation.slice(nEval)
 	const { xs, g } = fitIsotonic(atIndexes(conf, fitIndex), atIndexes(correct, fitIndex))
@@ -319,8 +331,13 @@ export function fitAndMeasure(
 	const raw = ece(evConf, evCorrect, eceBins)
 	const cal = ece(evCal, evCorrect, eceBins)
 
+	// A source with no evaluation record has no calibration error to report.
+	// Its metric is `null`, unmeasured, where Python wrote `0.0`, which reads
+	// as a perfectly calibrated subgroup.
 	const bySource = (source: string) => {
 		const members = evSource.flatMap((s, i) => (s === source ? [i] : []))
+
+		if (!members.length) return { raw: null, cal: null }
 
 		return {
 			raw: ece(atIndexes(evConf, members), atIndexes(evCorrect, members), eceBins).e,
@@ -346,10 +363,10 @@ export function fitAndMeasure(
 			mce_cal_eval_allbins: float(cal.mce),
 			brier_raw_eval: float(brier(evConf, evCorrect)),
 			brier_cal_eval: float(brier(evCal, evCorrect)),
-			ece_raw_oa_eval: float(oa.raw),
-			ece_cal_oa_eval: float(oa.cal),
-			ece_raw_corpus_eval: float(corpus.raw),
-			ece_cal_corpus_eval: float(corpus.cal),
+			ece_raw_oa_eval: oa.raw === null ? null : float(oa.raw),
+			ece_cal_oa_eval: oa.cal === null ? null : float(oa.cal),
+			ece_raw_corpus_eval: corpus.raw === null ? null : float(corpus.raw),
+			ece_cal_corpus_eval: corpus.cal === null ? null : float(corpus.cal),
 		},
 		perTag: subgroupECE(
 			atIndexes(

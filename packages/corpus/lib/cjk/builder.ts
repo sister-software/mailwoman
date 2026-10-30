@@ -176,9 +176,16 @@ export function labelTokensByFirstSpan(
 export async function directoryHasEntries(directory: PathBuilderLike): Promise<boolean> {
 	if (!(await isDirectory(directory))) return false
 
-	const entries = await Globerator.from("*", { cwd: directory.toString(), onlyFiles: false }).toArray()
+	// `*` skips dot-files, so a directory holding only a `.corpus-build.lock`
+	// would read as empty and be overwritten.
+	// Python's `iterdir()` lists them, so the `.*` pattern is read as well.
+	for (const pattern of ["*", ".*"]) {
+		const entries = await Globerator.from(pattern, { cwd: directory.toString(), onlyFiles: false }).toArray()
 
-	return entries.length > 0
+		if (entries.length) return true
+	}
+
+	return false
 }
 
 /**

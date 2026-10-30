@@ -73,7 +73,8 @@ const fit = fitAndMeasure(records, {
 await writeLocalTextFile(pythonJSONDumps(buildPayload(options, fit), { indent: 2 }) + "\n", values.out)
 
 const m = fit.metrics
-const f = (x: { value: number }) => pyFixed(x.value, 4)
+// A subgroup with no evaluation record has a null metric, printed as a dash.
+const f = (x: { value: number } | null) => (x ? pyFixed(x.value, 4) : "—")
 
 console.log(`wrote calibration table → ${values.out}`)
 console.log(`  ECE eval: raw ${f(m.ece_raw_eval)} → cal ${f(m.ece_cal_eval)}   (target <0.05)`)

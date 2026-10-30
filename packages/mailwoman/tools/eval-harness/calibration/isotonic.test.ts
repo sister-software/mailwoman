@@ -50,6 +50,29 @@ describe("the NumPy operations", () => {
 	})
 })
 
+test("too few records for an evaluation split are refused, and a source with none reports no ECE", () => {
+	const record = (conf: number, source: string): SpanConfidence => ({
+		conf,
+		correct: conf > 0.5,
+		source,
+		tag: "street",
+		country: "US",
+	})
+
+	const four = [0.2, 0.4, 0.6, 0.8].map((conf) => record(conf, "corpus"))
+
+	expect(() => fitAndMeasure(four, { bins: 10, eceBins: 10, permutation: [0, 1, 2, 3] })).toThrow(
+		"4 records give an empty evaluation split"
+	)
+
+	const ten = Array.from({ length: 10 }, (_, i) => record(i / 10, "corpus"))
+	const fit = fitAndMeasure(ten, { bins: 10, eceBins: 10, permutation: ten.map((_, i) => i) })
+
+	expect(fit.metrics.ece_raw_oa_eval).toBeNull()
+	expect(fit.metrics.ece_cal_oa_eval).toBeNull()
+	expect(fit.metrics.ece_raw_corpus_eval).not.toBeNull()
+})
+
 test("PAVA pools a decreasing run into its weighted mean", () => {
 	expect(pava([1, 0, 0, 1], [1, 1, 1, 1])).toEqual([1 / 3, 1 / 3, 1 / 3, 1])
 })

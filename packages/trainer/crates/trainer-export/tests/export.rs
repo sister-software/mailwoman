@@ -205,6 +205,23 @@ fn a_char_checkpoint_exports_char_ids_and_no_input_ids() {
 }
 
 #[test]
+fn a_float16_safetensors_tensor_widens_to_float32() {
+	let dir = tempfile::tempdir().unwrap();
+	// 1.0, -2.0 and 0.5 in IEEE binary16.
+	let bytes: Vec<u8> = [0x3c00u16, 0xc000, 0x3800]
+		.iter()
+		.flat_map(|bits| bits.to_le_bytes())
+		.collect();
+	let view = safetensors::tensor::TensorView::new(safetensors::Dtype::F16, vec![3], &bytes).unwrap();
+	let path = dir.path().join("model.safetensors");
+	std::fs::write(&path, safetensors::serialize([("w".to_owned(), view)], None).unwrap()).unwrap();
+	let state = trainer_export::checkpoint::read_safetensors(&path).unwrap();
+	let tensor = &state.tensors["w"];
+	assert_eq!(tensor.storage, "HalfStorage");
+	assert_eq!(tensor.data.as_deref(), Some(&[1.0f32, -2.0, 0.5][..]));
+}
+
+#[test]
 fn a_char_checkpoint_refuses_to_export_without_its_window() {
 	let dir = tempfile::tempdir().unwrap();
 	char_checkpoint(dir.path());

@@ -8,6 +8,7 @@
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, it } from "vitest"
 
@@ -15,6 +16,7 @@ import {
 	buildCharVocab,
 	charLabelArrayFromSpans,
 	coverageStats,
+	directoryHasEntries,
 	MAX_RENDERED_CHARS,
 	muniBucket,
 	readLabelSetTags,
@@ -226,5 +228,17 @@ describe("the record check and the renderer", () => {
 		])
 
 		expect(muniBucket("千代田区")).toBe(muniBucket("千代田　区"))
+	})
+})
+
+describe("directoryHasEntries", () => {
+	it("counts a directory holding only a dot-file as holding an entry", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-cjk-out-")
+
+		expect(await directoryHasEntries(scratch.path)).toBe(false)
+
+		await makeDirectories(scratch.path(".corpus-build.lock"))
+
+		expect(await directoryHasEntries(scratch.path)).toBe(true)
 	})
 })

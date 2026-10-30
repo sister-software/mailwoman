@@ -360,6 +360,32 @@ interface Initializer {
 	bytes: Buffer
 }
 
+/**
+ * Refuses a table initializer whose dims or byte length differ from `[rows, columns]` at `bytesPerValue`.
+ *
+ * @throws Naming the initializer, its dims and byte length, and the shape it was expected to have.
+ */
+export function assertTableShape(
+	label: string,
+	tensor: { dims: readonly number[]; bytes: Uint8Array },
+	[rows, columns]: readonly [number, number],
+	bytesPerValue: number
+): void {
+	const expectedBytes = rows * columns * bytesPerValue
+
+	if (
+		tensor.dims.length !== 2 ||
+		tensor.dims[0] !== rows ||
+		tensor.dims[1] !== columns ||
+		tensor.bytes.length !== expectedBytes
+	) {
+		throw new Error(
+			`${label} has dims [${tensor.dims.join(", ")}] and ${tensor.bytes.length} bytes; ` +
+				`expected [${rows}, ${columns}] in ${expectedBytes} bytes`
+		)
+	}
+}
+
 async function readInitializer(model: string, name: string, directory: string): Promise<Initializer> {
 	const raw = `${directory}/${name.replaceAll("/", "_")}.bin`
 
@@ -478,6 +504,10 @@ export async function meanInitONNXEmbeddings(options: ONNXMeanInitOptions): Prom
 	}
 
 	const [oldVocab, hidden] = embedding.dims as [number, number]
+
+	// A short `raw_data` would read as a table of zeros past its end, and every spliced row would average them in.
+	assertTableShape(`${name} in ${options.fp32ONNX}`, embedding, [oldVocab, hidden], Float32Array.BYTES_PER_ELEMENT)
+
 	// A copy, because a `Float32Array` view needs a 4-byte-aligned offset that a read buffer need not have.
 	const table = new Float32Array(new Uint8Array(embedding.bytes).buffer, 0, oldVocab * hidden)
 	const spliced = await readModelPieces(options.splicedTokenizer)
@@ -525,6 +555,14 @@ export async function meanInitONNXEmbeddings(options: ONNXMeanInitOptions): Prom
 		const zeroTensor = await readInitializer(options.int8ONNX, `${name}_zero_point`, directory)
 
 		if (quantized.data_type !== ONNX_UINT8) throw new Error(`${name}_quantized is not a uint8 table`)
+
+		// The int8 table must describe the same vocabulary and width as the fp32 one, or the grown table mixes rows.
+		assertTableShape(`${name}_quantized in ${options.int8ONNX}`, quantized, [oldVocab, hidden], 1)
+
+		if (scaleTensor.bytes.length < Float32Array.BYTES_PER_ELEMENT || !zeroTensor.bytes.length) {
+			throw new Error(`${name}_scale or ${name}_zero_point in ${options.int8ONNX} holds no value`)
+		}
+
 		const scale = scaleTensor.bytes.readFloatLE(0)
 		const zeroPoint = zeroTensor.bytes[0]!
 		const lastRow = oldVocab - 1
