@@ -19,6 +19,7 @@ pub mod checkpoint;
 pub mod config;
 pub mod export;
 pub mod graph;
+pub mod npy;
 pub mod pickle;
 pub mod quantize;
 pub mod shape;

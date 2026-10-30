@@ -1724,6 +1724,7 @@ dependencies = [
 name = "trainer-export"
 version = "0.1.0"
 dependencies = [
+ "mtf-channels",
  "prost",
  "prost-build",
  "protox",
@@ -1748,6 +1749,7 @@ dependencies = [
  "sha2",
  "tch",
  "tempfile",
+ "trainer-export",
  "trainer-model",
  "zip 9.1.3",
  "zstd 0.14.3",
@@ -1758,6 +1760,7 @@ name = "trainer-model"
 version = "0.1.0"
 dependencies = [
  "cc",
+ "mtf-channels",
  "safetensors 0.6.2",
  "serde",
  "serde_json",

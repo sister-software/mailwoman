@@ -11,10 +11,6 @@ use serde::Deserialize;
 
 use crate::{fail, Result};
 
-fn yes() -> bool {
-	true
-}
-
 fn two() -> usize {
 	2
 }
@@ -108,8 +104,6 @@ pub struct ModelConfig {
 	pub num_address_systems: usize,
 	#[serde(default)]
 	pub use_locale_hint: bool,
-	#[serde(default = "yes")]
-	pub use_crf: bool,
 	#[serde(default)]
 	pub id2label: BTreeMap<String, String>,
 }

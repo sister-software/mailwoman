@@ -13,6 +13,8 @@ torch-sys = "0.26.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip", "preserve_order"] }
 safetensors = "0.6"
+# The channel names and their order.
+mtf-channels.workspace = true
 # Reads a `pytorch_model.bin` for the one-time conversion to safetensors.
 trainer-export = { path = "../trainer-export" }
 

@@ -113,10 +113,12 @@ fn byte_kind(kind: Kind) -> Kind {
 pub struct Record(pub Vec<(String, Tensor)>);
 
 impl Record {
+	/// Reads the tensors sorted by name. The file's header is a JSON map, which the reader returns in no fixed order, so
+	/// a report that walks the record lists its entries in one order only after the sort.
 	pub fn read(path: &Path) -> Result<Self> {
-		Ok(Self(
-			Tensor::read_safetensors(path).map_err(|e| fail!("{}: {e}", path.display()))?,
-		))
+		let mut tensors = Tensor::read_safetensors(path).map_err(|e| fail!("{}: {e}", path.display()))?;
+		tensors.sort_by(|(a, _), (b, _)| a.cmp(b));
+		Ok(Self(tensors))
 	}
 
 	pub fn get(&self, name: &str) -> Result<&Tensor> {

@@ -7,6 +7,7 @@
 use crate::address_systems::{locale_id, AddressSystems};
 use crate::config::{DataFiles, RunConfig};
 use crate::{fail, Result};
+use mtf_channels::encoder::CHANNEL_NAMES as CHANNELS;
 use mtf_channels::finders::RegexFinders;
 use mtf_channels::label_schema::LabelSchema;
 use mtf_channels::{AnchorMode, Encoder, EncoderConfig, EncoderResources, Finders, Lexicons, ResourcePaths};
@@ -15,7 +16,7 @@ use mtf_sampler::char_path::CharEncoder;
 use mtf_sampler::Row;
 use std::path::{Path, PathBuf};
 use tch::{Device, Kind, Tensor};
-use trainer_model::encoder::{ChannelInput, EncoderInputs, CHANNELS};
+use trainer_model::encoder::{ChannelInput, EncoderInputs};
 use trainer_model::SchemaDefaults;
 
 /// One batch as the model reads it, every tensor on the CPU until moved.

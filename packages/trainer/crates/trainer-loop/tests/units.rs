@@ -1,10 +1,9 @@
-//! The loop's pieces that need no corpus: schedules, `.npy` round trips, checkpoint discovery, the CSV row, the
-//! metrics, and the model's construction and save/restore on a small spec.
+//! The loop's pieces that need no corpus: schedules, checkpoint discovery, the CSV row, the metrics, and the model's
+//! construction and save/restore on a small spec.
 
 use std::path::Path;
 use tch::{Device, Kind, Tensor};
 use trainer_loop::checkpoint::{checkpoint_dir_name, find_latest_checkpoint, restore_generators, save_checkpoint};
-use trainer_loop::fisher::{npy_bytes, parse_npy};
 use trainer_loop::metrics::{eval_csv_row, token_f1, Metrics};
 use trainer_loop::optim::{build_groups, AdamW};
 use trainer_loop::schedules::{LambdaLr, Schedule};
@@ -125,21 +124,6 @@ fn schedules_follow_the_python_lambdas() {
 	assert_eq!(cooldown.multiplier(15), 0.5);
 	assert_eq!(Schedule::Constant { warmup_steps: 4 }.multiplier(2), 0.5);
 	assert!(Schedule::from_config("linear_cooldown", 1, 2, None).is_err());
-}
-
-#[test]
-fn npy_round_trips_and_matches_numpys_header() {
-	let bytes = npy_bytes(&[2, 3], &[1.0, 2.0, 3.0, 4.0, 5.0, 6.5]);
-	assert_eq!((bytes.len() - 6 * 4) % 64, 0);
-	let header = "{'descr': '<f4', 'fortran_order': False, 'shape': (2, 3), }";
-	assert_eq!(std::str::from_utf8(&bytes[10..10 + header.len()]).unwrap(), header);
-	assert_eq!(bytes.len(), 128 + 6 * 4, "the header pads to a multiple of 64 bytes");
-	assert_eq!(bytes[127], b'\n', "the header ends in a newline");
-	let (shape, data) = parse_npy(&bytes).unwrap();
-	assert_eq!(shape, vec![2, 3]);
-	assert_eq!(data[5], 6.5);
-	let (shape, _) = parse_npy(&npy_bytes(&[4], &[0.0; 4])).unwrap();
-	assert_eq!(shape, vec![4]);
 }
 
 #[test]

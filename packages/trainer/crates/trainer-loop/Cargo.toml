@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 tch.workspace = true
 trainer-model = { path = "../trainer-model" }
+trainer-export = { path = "../trainer-export" }
 mtf-core.workspace = true
 mtf-channels = { workspace = true, features = ["finders"] }
 mtf-sampler.workspace = true

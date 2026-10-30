@@ -11,6 +11,8 @@ name = "trainer-export"
 path = "src/main.rs"
 
 [dependencies]
+# The channel names and their order, which the graph's inputs follow.
+mtf-channels.workspace = true
 prost = "0.14"
 # The Rust trainer's `model.safetensors`.
 safetensors = "0.6"
