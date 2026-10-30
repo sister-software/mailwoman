@@ -57,11 +57,14 @@ export const HOUSE_VENUE_SAMPLERS: ReadonlyArray<readonly [code: string, sampler
 /**
  * The tuples file the sub-venue recipe reads.
  *
- * v6 keeps NAD rows and the rows of each US body whose own register decision permits training,
- * and carried its GB rows from v4 (`--carry gb --carry-from <v4>`).
+ * v7 holds out the FR fragment board's street surfaces, which v6's FR rows did not:
+ * 59,725 FR tuples where v6 held 60,000, 275 of them on 132 board streets.
+ * Its US and GB rows are v6's, byte for byte (`--carry us --carry gb --carry-from <v6>`).
+ * v6 kept NAD rows and the rows of each US body whose own register decision
+ * permits training, and carried its GB rows from v4.
  */
 export function houseVenueTuplesPath() {
-	return dataRootPath("corpus", "intermediate", "house-venue-tuples-v6.jsonl")
+	return dataRootPath("corpus", "intermediate", "house-venue-tuples-v7.jsonl")
 }
 
 /**

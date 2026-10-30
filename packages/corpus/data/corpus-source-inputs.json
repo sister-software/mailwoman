@@ -943,522 +943,522 @@
 				{
 					"registerSource": "fr-property-building-1",
 					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
-					"reads": "French tuples of house-venue-tuples-v6"
+					"reads": "French tuples of house-venue-tuples-v7"
 				},
 				{
 					"registerSource": "us-property-building-1",
 					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
-					"reads": "US situs tuples of house-venue-tuples-v6, NAD rows"
+					"reads": "US situs tuples of house-venue-tuples-v7, NAD rows"
 				},
 				{
 					"registerSource": "us-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-us-overture-maps-foundation",
-					"reads": "US situs tuples of house-venue-tuples-v6, NAD rows read through the Overture Addresses theme"
+					"reads": "US situs tuples of house-venue-tuples-v7, NAD rows read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-3",
 					"license": "unchecked-corpus-input-us-marin-county",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Marin County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Marin County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-9",
 					"license": "unchecked-corpus-input-us-massgis-bureau-of-geographic-information-comm",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MA/MassGIS`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/MA/MassGIS`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-10",
 					"license": "unchecked-corpus-input-us-county-of-los-angeles-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/County of Los Angeles`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/County of Los Angeles`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-11",
 					"license": "unchecked-corpus-input-us-state-of-colorado-governor-s-office-of-inform",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CO/Governor's Office of Information Technology`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CO/Governor's Office of Information Technology`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-12",
 					"license": "unchecked-corpus-input-us-minnesota-geospatial-information-office-mngeo",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MN/Department of Public Safety`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/MN/Department of Public Safety`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-13",
 					"license": "unchecked-corpus-input-us-oregon-geospatial-enterprise-office-geohub-or",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/OR/State of Oregon`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/OR/State of Oregon`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-14",
 					"license": "unchecked-corpus-input-us-miami-dade-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Miami-Dade County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Miami-Dade County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-15",
 					"license": "unchecked-corpus-input-us-county-of-orange-oc-public-works-oc-survey-ge",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Orange County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Orange County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-16",
 					"license": "unchecked-corpus-input-us-mississippi-automated-resource-information-sy",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MS/MARIS`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/MS/MARIS`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-18",
 					"license": "unchecked-corpus-input-us-city-of-new-york-office-of-technology-and-inn",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/NY/NYC Open Data`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/NY/NYC Open Data`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-19",
 					"license": "unchecked-corpus-input-us-san-bernardino-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Bernardino County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/San Bernardino County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-20",
 					"license": "unchecked-corpus-input-us-county-of-riverside-rcit-sheriff-usps-assesso",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Riverside County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Riverside County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-21",
 					"license": "unchecked-corpus-input-us-palm-beach-county-pbcgov-gis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Palm Beach County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Palm Beach County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-22",
 					"license": "unchecked-corpus-input-us-hillsborough-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hillsborough County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Hillsborough County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-23",
 					"license": "unchecked-corpus-input-us-orange-county-fl-orange-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Orange County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Orange County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-25",
 					"license": "unchecked-corpus-input-us-sacramento-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sacramento County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Sacramento County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-26",
 					"license": "unchecked-corpus-input-us-city-of-jacksonville-duval-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Duval County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Duval County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-27",
 					"license": "unchecked-corpus-input-us-county-of-alameda-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Alameda County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Alameda County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-28",
 					"license": "unchecked-corpus-input-us-pinellas-county-safety-and-emergency-services",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Pinellas County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Pinellas County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-29",
 					"license": "unchecked-corpus-input-us-oakland-county-michigan",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MI/Oakland County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/MI/Oakland County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-30",
 					"license": "unchecked-corpus-input-us-county-of-santa-clara-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Santa Clara County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Santa Clara County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-31",
 					"license": "unchecked-corpus-input-us-broward-county-gis-bcgis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Broward County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Broward County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-32",
 					"license": "unchecked-corpus-input-us-florida-department-of-revenue",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Florida Department of Revenue`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Florida Department of Revenue`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-33",
 					"license": "unchecked-corpus-input-us-polk-county-florida-gis-polk-county-net",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Polk County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Polk County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-34",
 					"license": "unchecked-corpus-input-us-dekalb-county-gis-georgia",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/GA/DeKalb County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/GA/DeKalb County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-35",
 					"license": "unchecked-corpus-input-us-contra-costa-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Contra Costa County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Contra Costa County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-36",
 					"license": "unchecked-corpus-input-us-city-and-county-of-san-francisco-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Francisco County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/San Francisco County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-37",
 					"license": "unchecked-corpus-input-us-county-of-fresno-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Fresno County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Fresno County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-38",
 					"license": "unchecked-corpus-input-us-pasco-county-pascogisonline-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Pasco County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Pasco County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-39",
 					"license": "unchecked-corpus-input-us-sarasota-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Sarasota County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Sarasota County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-41",
 					"license": "unchecked-corpus-input-us-charlotte-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Charlotte County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Charlotte County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-42",
 					"license": "unchecked-corpus-input-us-manatee-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Manatee County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Manatee County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-43",
 					"license": "unchecked-corpus-input-us-collier-county-growth-management-department-g",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Collier County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Collier County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-44",
 					"license": "unchecked-corpus-input-us-volusia-county-fl-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Volusia County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Volusia County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-46",
 					"license": "unchecked-corpus-input-us-county-of-kern-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Kern County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Kern County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-47",
 					"license": "unchecked-corpus-input-us-lake-county-board-of-county-commissioners-lak",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Lake County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Lake County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-48",
 					"license": "unchecked-corpus-input-us-county-of-san-joaquin-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Joaquin County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/San Joaquin County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-49",
 					"license": "unchecked-corpus-input-us-county-of-san-mateo-psc-isd-gis-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Mateo County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/San Mateo County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-50",
 					"license": "unchecked-corpus-input-us-county-of-sonoma-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sonoma County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Sonoma County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-51",
 					"license": "unchecked-corpus-input-us-seminole-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Seminole County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Seminole County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-53",
 					"license": "unchecked-corpus-input-us-st-lucie-county-slcgis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/St. Lucie County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/St. Lucie County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-55",
 					"license": "unchecked-corpus-input-us-osceolagis-osceola-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Osceola County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Osceola County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-56",
 					"license": "unchecked-corpus-input-us-citrus-county-board-of-county-commissioners-f",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Citrus County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Citrus County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-57",
 					"license": "unchecked-corpus-input-us-st-johns-county-gis-division-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/St. Johns County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/St. Johns County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-58",
 					"license": "unchecked-corpus-input-us-solano-county-maintained-by-geographic-techno",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Solano County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Solano County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-60",
 					"license": "unchecked-corpus-input-us-tulare-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Tulare County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Tulare County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-61",
 					"license": "unchecked-corpus-input-us-county-of-santa-barbara-regional-fire-communi",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Santa Barbara County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Santa Barbara County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-62",
 					"license": "unchecked-corpus-input-us-alachua-county-gis-alachuacountygis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Alachua County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Alachua County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-63",
 					"license": "unchecked-corpus-input-us-tallahassee-leon-county-gis-tlcgis-lcdsem-cot",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Leon County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Leon County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-64",
 					"license": "unchecked-corpus-input-us-highlands-county-fl-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Highlands County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Highlands County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-65",
 					"license": "unchecked-corpus-input-us-bay-county-gis-division-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Bay County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Bay County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-67",
 					"license": "unchecked-corpus-input-us-county-of-monterey-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Monterey County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Monterey County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-68",
 					"license": "unchecked-corpus-input-us-florida-department-of-revenue-marion-county-m",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Marion County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Marion County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-70",
 					"license": "unchecked-corpus-input-us-okaloosa-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Okaloosa County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Okaloosa County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-71",
 					"license": "unchecked-corpus-input-us-butte-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Butte County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Butte County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-72",
 					"license": "unchecked-corpus-input-us-jackson-county-oregon-gis",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/OR/Jackson County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/OR/Jackson County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-74",
 					"license": "unchecked-corpus-input-us-indian-river-county-gis-ircgis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Indian River County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Indian River County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-76",
 					"license": "unchecked-corpus-input-us-merced-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Merced County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Merced County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-77",
 					"license": "unchecked-corpus-input-us-yolo-county-gis-cooperative-county-of-yolo-ca",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Yolo County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Yolo County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-79",
 					"license": "unchecked-corpus-input-us-martin-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Martin County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Martin County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-80",
 					"license": "unchecked-corpus-input-us-santa-rosa-county-bocc-it-gis-department-flor",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Santa Rosa County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Santa Rosa County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-81",
 					"license": "unchecked-corpus-input-us-city-of-scranton-gis-pennsylvania",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/PA/City of Scranton GIS`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/PA/City of Scranton GIS`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-82",
 					"license": "unchecked-corpus-input-us-flagler-county-board-of-county-commissioners",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Flagler County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Flagler County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-83",
 					"license": "unchecked-corpus-input-us-clay-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Clay County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Clay County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-84",
 					"license": "unchecked-corpus-input-us-putnam-county-gis-amanda-gabriel-pcgis-florid",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Putnam County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Putnam County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-85",
 					"license": "unchecked-corpus-input-us-desoto-county-mississippi-dcms-gis",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MS/Desoto County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/MS/Desoto County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-86",
 					"license": "unchecked-corpus-input-us-county-of-shasta-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Shasta County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Shasta County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-87",
 					"license": "unchecked-corpus-input-us-athens-clarke-county-gis-georgia",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/GA/Athens-Clarke County GIS`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/GA/Athens-Clarke County GIS`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-89",
 					"license": "unchecked-corpus-input-us-walton-county-gis-department-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Walton County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Walton County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-90",
 					"license": "unchecked-corpus-input-us-imperial-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Imperial County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Imperial County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-91",
 					"license": "unchecked-corpus-input-us-napa-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Napa County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Napa County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-92",
 					"license": "unchecked-corpus-input-us-county-of-nevada-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Nevada County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Nevada County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-93",
 					"license": "unchecked-corpus-input-us-lake-county-i-t-dept-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Lake County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Lake County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-96",
 					"license": "unchecked-corpus-input-us-nassau-county-property-appraiser-s-office-ncp",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Nassau County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Nassau County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-97",
 					"license": "unchecked-corpus-input-us-humboldt-county-gis-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Humboldt County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Humboldt County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-98",
 					"license": "unchecked-corpus-input-us-kings-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Kings County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Kings County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-99",
 					"license": "unchecked-corpus-input-us-mendocino-county-information-services-departm",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Mendocino County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Mendocino County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-100",
 					"license": "unchecked-corpus-input-us-sutter-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sutter County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Sutter County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-101",
 					"license": "unchecked-corpus-input-us-county-of-calaveras-gis-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Calaveras County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Calaveras County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-102",
 					"license": "unchecked-corpus-input-us-columbia-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Columbia County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Columbia County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-103",
 					"license": "unchecked-corpus-input-us-yuba-county-ca-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Yuba County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Yuba County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-104",
 					"license": "unchecked-corpus-input-us-hendry-county-robert-elsesser-hendryfla-net-f",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hendry County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Hendry County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-105",
 					"license": "unchecked-corpus-input-us-tuolumne-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Tuolumne County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Tuolumne County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-107",
 					"license": "unchecked-corpus-input-us-waupaca-county-land-information-wisconsin",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/WI/Waupaca County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/WI/Waupaca County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-108",
 					"license": "unchecked-corpus-input-us-carson-city-nevada-consolidated-municipality",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/NV/Carson City`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/NV/Carson City`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-109",
 					"license": "unchecked-corpus-input-us-plumas-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Plumas County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Plumas County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-110",
 					"license": "unchecked-corpus-input-us-county-of-san-benito-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Benito County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/San Benito County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-111",
 					"license": "unchecked-corpus-input-us-siskiyou-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Siskiyou County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Siskiyou County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-112",
 					"license": "unchecked-corpus-input-us-amador-county-information-technology-departme",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Amador County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Amador County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-114",
 					"license": "unchecked-corpus-input-us-desoto-county-served-by-horner-shifrin-skyvie",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Desoto County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Desoto County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-115",
 					"license": "unchecked-corpus-input-us-hardee-county-gis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hardee County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Hardee County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-116",
 					"license": "unchecked-corpus-input-us-baker-county-fl-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Baker County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Baker County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-117",
 					"license": "unchecked-corpus-input-us-trinity-county-planning-department-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Trinity County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Trinity County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-118",
 					"license": "unchecked-corpus-input-us-del-norte-county-assessor-s-office-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Del Norte County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Del Norte County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-119",
 					"license": "unchecked-corpus-input-us-inyo-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Inyo County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Inyo County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-121",
 					"license": "unchecked-corpus-input-us-glenn-county-gis-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Glenn County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Glenn County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-122",
 					"license": "unchecked-corpus-input-us-county-of-colusa-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Colusa County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Colusa County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-123",
 					"license": "unchecked-corpus-input-us-modoc-county-reach-parcels-service-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Modoc County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Modoc County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-124",
 					"license": "unchecked-corpus-input-us-advanced-gis-lab-data-from-lassen-county-asse",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Lassen County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Lassen County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-125",
 					"license": "unchecked-corpus-input-us-sierra-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sierra County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Sierra County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-126",
 					"license": "unchecked-corpus-input-us-alpine-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Alpine County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Alpine County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "ch-geodata-aggregate-1",
@@ -1500,7 +1500,7 @@
 						"v0.31.0-region-code-and-unit",
 						"v0.32.0-locality-shape"
 					],
-					"because": "Built over house-venue-v2, whose US situs tuples mixed NAD with county and state bodies collected by OpenAddresses, before house-venue-tuples-v6 kept only NAD rows and the bodies whose own decisions permit training under the same source id.",
+					"because": "Built over house-venue-v2, whose US situs tuples mixed NAD with county and state bodies collected by OpenAddresses, before house-venue-tuples-v7 kept only NAD rows and the bodies whose own decisions permit training under the same source id.",
 					"inputs": [
 						{
 							"registerSource": "fr-property-building-1",
@@ -3563,537 +3563,537 @@
 				{
 					"registerSource": "fr-property-building-1",
 					"license": "unchecked-access-free-fr-institut-national-de-l-information-g-ographiq",
-					"reads": "French address skeletons of house-venue-tuples-v6"
+					"reads": "French address skeletons of house-venue-tuples-v7"
 				},
 				{
 					"registerSource": "us-property-building-1",
 					"license": "unchecked-corpus-input-us-u-s-department-of-transportation",
-					"reads": "US address skeletons of house-venue-tuples-v6, the NAD rows of the US situs databases"
+					"reads": "US address skeletons of house-venue-tuples-v7, the NAD rows of the US situs databases"
 				},
 				{
 					"registerSource": "us-geodata-aggregate-1",
 					"license": "unchecked-corpus-input-us-overture-maps-foundation",
-					"reads": "US address skeletons of house-venue-tuples-v6, NAD rows read through the Overture Addresses theme"
+					"reads": "US address skeletons of house-venue-tuples-v7, NAD rows read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-3",
 					"license": "unchecked-corpus-input-us-marin-county",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Marin County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Marin County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-9",
 					"license": "unchecked-corpus-input-us-massgis-bureau-of-geographic-information-comm",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MA/MassGIS`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/MA/MassGIS`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-10",
 					"license": "unchecked-corpus-input-us-county-of-los-angeles-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/County of Los Angeles`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/County of Los Angeles`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-11",
 					"license": "unchecked-corpus-input-us-state-of-colorado-governor-s-office-of-inform",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CO/Governor's Office of Information Technology`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CO/Governor's Office of Information Technology`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-12",
 					"license": "unchecked-corpus-input-us-minnesota-geospatial-information-office-mngeo",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MN/Department of Public Safety`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/MN/Department of Public Safety`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-13",
 					"license": "unchecked-corpus-input-us-oregon-geospatial-enterprise-office-geohub-or",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/OR/State of Oregon`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/OR/State of Oregon`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-14",
 					"license": "unchecked-corpus-input-us-miami-dade-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Miami-Dade County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Miami-Dade County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-15",
 					"license": "unchecked-corpus-input-us-county-of-orange-oc-public-works-oc-survey-ge",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Orange County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Orange County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-16",
 					"license": "unchecked-corpus-input-us-mississippi-automated-resource-information-sy",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MS/MARIS`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/MS/MARIS`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-18",
 					"license": "unchecked-corpus-input-us-city-of-new-york-office-of-technology-and-inn",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/NY/NYC Open Data`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/NY/NYC Open Data`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-19",
 					"license": "unchecked-corpus-input-us-san-bernardino-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Bernardino County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/San Bernardino County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-20",
 					"license": "unchecked-corpus-input-us-county-of-riverside-rcit-sheriff-usps-assesso",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Riverside County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Riverside County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-21",
 					"license": "unchecked-corpus-input-us-palm-beach-county-pbcgov-gis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Palm Beach County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Palm Beach County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-22",
 					"license": "unchecked-corpus-input-us-hillsborough-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hillsborough County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Hillsborough County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-23",
 					"license": "unchecked-corpus-input-us-orange-county-fl-orange-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Orange County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Orange County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-25",
 					"license": "unchecked-corpus-input-us-sacramento-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sacramento County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Sacramento County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-26",
 					"license": "unchecked-corpus-input-us-city-of-jacksonville-duval-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Duval County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Duval County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-27",
 					"license": "unchecked-corpus-input-us-county-of-alameda-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Alameda County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Alameda County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-28",
 					"license": "unchecked-corpus-input-us-pinellas-county-safety-and-emergency-services",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Pinellas County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Pinellas County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-29",
 					"license": "unchecked-corpus-input-us-oakland-county-michigan",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MI/Oakland County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/MI/Oakland County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-30",
 					"license": "unchecked-corpus-input-us-county-of-santa-clara-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Santa Clara County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Santa Clara County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-31",
 					"license": "unchecked-corpus-input-us-broward-county-gis-bcgis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Broward County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Broward County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-32",
 					"license": "unchecked-corpus-input-us-florida-department-of-revenue",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Florida Department of Revenue`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Florida Department of Revenue`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-33",
 					"license": "unchecked-corpus-input-us-polk-county-florida-gis-polk-county-net",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Polk County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Polk County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-34",
 					"license": "unchecked-corpus-input-us-dekalb-county-gis-georgia",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/GA/DeKalb County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/GA/DeKalb County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-35",
 					"license": "unchecked-corpus-input-us-contra-costa-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Contra Costa County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Contra Costa County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-36",
 					"license": "unchecked-corpus-input-us-city-and-county-of-san-francisco-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Francisco County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/San Francisco County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-37",
 					"license": "unchecked-corpus-input-us-county-of-fresno-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Fresno County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Fresno County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-38",
 					"license": "unchecked-corpus-input-us-pasco-county-pascogisonline-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Pasco County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Pasco County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-39",
 					"license": "unchecked-corpus-input-us-sarasota-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Sarasota County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Sarasota County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-41",
 					"license": "unchecked-corpus-input-us-charlotte-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Charlotte County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Charlotte County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-42",
 					"license": "unchecked-corpus-input-us-manatee-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Manatee County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Manatee County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-43",
 					"license": "unchecked-corpus-input-us-collier-county-growth-management-department-g",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Collier County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Collier County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-44",
 					"license": "unchecked-corpus-input-us-volusia-county-fl-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Volusia County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Volusia County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-46",
 					"license": "unchecked-corpus-input-us-county-of-kern-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Kern County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Kern County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-47",
 					"license": "unchecked-corpus-input-us-lake-county-board-of-county-commissioners-lak",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Lake County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Lake County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-48",
 					"license": "unchecked-corpus-input-us-county-of-san-joaquin-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Joaquin County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/San Joaquin County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-49",
 					"license": "unchecked-corpus-input-us-county-of-san-mateo-psc-isd-gis-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Mateo County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/San Mateo County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-50",
 					"license": "unchecked-corpus-input-us-county-of-sonoma-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sonoma County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Sonoma County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-51",
 					"license": "unchecked-corpus-input-us-seminole-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Seminole County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Seminole County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-53",
 					"license": "unchecked-corpus-input-us-st-lucie-county-slcgis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/St. Lucie County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/St. Lucie County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-55",
 					"license": "unchecked-corpus-input-us-osceolagis-osceola-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Osceola County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Osceola County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-56",
 					"license": "unchecked-corpus-input-us-citrus-county-board-of-county-commissioners-f",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Citrus County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Citrus County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-57",
 					"license": "unchecked-corpus-input-us-st-johns-county-gis-division-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/St. Johns County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/St. Johns County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-58",
 					"license": "unchecked-corpus-input-us-solano-county-maintained-by-geographic-techno",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Solano County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Solano County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-60",
 					"license": "unchecked-corpus-input-us-tulare-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Tulare County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Tulare County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-61",
 					"license": "unchecked-corpus-input-us-county-of-santa-barbara-regional-fire-communi",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Santa Barbara County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Santa Barbara County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-62",
 					"license": "unchecked-corpus-input-us-alachua-county-gis-alachuacountygis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Alachua County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Alachua County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-63",
 					"license": "unchecked-corpus-input-us-tallahassee-leon-county-gis-tlcgis-lcdsem-cot",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Leon County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Leon County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-64",
 					"license": "unchecked-corpus-input-us-highlands-county-fl-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Highlands County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Highlands County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-65",
 					"license": "unchecked-corpus-input-us-bay-county-gis-division-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Bay County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Bay County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-67",
 					"license": "unchecked-corpus-input-us-county-of-monterey-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Monterey County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Monterey County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-68",
 					"license": "unchecked-corpus-input-us-florida-department-of-revenue-marion-county-m",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Marion County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Marion County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-70",
 					"license": "unchecked-corpus-input-us-okaloosa-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Okaloosa County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Okaloosa County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-71",
 					"license": "unchecked-corpus-input-us-butte-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Butte County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Butte County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-72",
 					"license": "unchecked-corpus-input-us-jackson-county-oregon-gis",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/OR/Jackson County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/OR/Jackson County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-74",
 					"license": "unchecked-corpus-input-us-indian-river-county-gis-ircgis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Indian River County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Indian River County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-76",
 					"license": "unchecked-corpus-input-us-merced-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Merced County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Merced County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-77",
 					"license": "unchecked-corpus-input-us-yolo-county-gis-cooperative-county-of-yolo-ca",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Yolo County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Yolo County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-79",
 					"license": "unchecked-corpus-input-us-martin-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Martin County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Martin County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-80",
 					"license": "unchecked-corpus-input-us-santa-rosa-county-bocc-it-gis-department-flor",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Santa Rosa County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Santa Rosa County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-81",
 					"license": "unchecked-corpus-input-us-city-of-scranton-gis-pennsylvania",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/PA/City of Scranton GIS`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/PA/City of Scranton GIS`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-82",
 					"license": "unchecked-corpus-input-us-flagler-county-board-of-county-commissioners",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Flagler County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Flagler County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-83",
 					"license": "unchecked-corpus-input-us-clay-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Clay County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Clay County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-84",
 					"license": "unchecked-corpus-input-us-putnam-county-gis-amanda-gabriel-pcgis-florid",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Putnam County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Putnam County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-85",
 					"license": "unchecked-corpus-input-us-desoto-county-mississippi-dcms-gis",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/MS/Desoto County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/MS/Desoto County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-86",
 					"license": "unchecked-corpus-input-us-county-of-shasta-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Shasta County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Shasta County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-87",
 					"license": "unchecked-corpus-input-us-athens-clarke-county-gis-georgia",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/GA/Athens-Clarke County GIS`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/GA/Athens-Clarke County GIS`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-89",
 					"license": "unchecked-corpus-input-us-walton-county-gis-department-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Walton County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Walton County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-90",
 					"license": "unchecked-corpus-input-us-imperial-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Imperial County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Imperial County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-91",
 					"license": "unchecked-corpus-input-us-napa-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Napa County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Napa County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-92",
 					"license": "unchecked-corpus-input-us-county-of-nevada-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Nevada County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Nevada County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-93",
 					"license": "unchecked-corpus-input-us-lake-county-i-t-dept-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Lake County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Lake County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-96",
 					"license": "unchecked-corpus-input-us-nassau-county-property-appraiser-s-office-ncp",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Nassau County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Nassau County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-97",
 					"license": "unchecked-corpus-input-us-humboldt-county-gis-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Humboldt County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Humboldt County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-98",
 					"license": "unchecked-corpus-input-us-kings-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Kings County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Kings County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-99",
 					"license": "unchecked-corpus-input-us-mendocino-county-information-services-departm",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Mendocino County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Mendocino County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-100",
 					"license": "unchecked-corpus-input-us-sutter-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sutter County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Sutter County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-101",
 					"license": "unchecked-corpus-input-us-county-of-calaveras-gis-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Calaveras County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Calaveras County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-102",
 					"license": "unchecked-corpus-input-us-columbia-county-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Columbia County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Columbia County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-103",
 					"license": "unchecked-corpus-input-us-yuba-county-ca-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Yuba County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Yuba County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-104",
 					"license": "unchecked-corpus-input-us-hendry-county-robert-elsesser-hendryfla-net-f",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hendry County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Hendry County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-105",
 					"license": "unchecked-corpus-input-us-tuolumne-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Tuolumne County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Tuolumne County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-107",
 					"license": "unchecked-corpus-input-us-waupaca-county-land-information-wisconsin",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/WI/Waupaca County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/WI/Waupaca County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-108",
 					"license": "unchecked-corpus-input-us-carson-city-nevada-consolidated-municipality",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/NV/Carson City`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/NV/Carson City`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-109",
 					"license": "unchecked-corpus-input-us-plumas-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Plumas County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Plumas County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-110",
 					"license": "unchecked-corpus-input-us-county-of-san-benito-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/San Benito County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/San Benito County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-111",
 					"license": "unchecked-corpus-input-us-siskiyou-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Siskiyou County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Siskiyou County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-112",
 					"license": "unchecked-corpus-input-us-amador-county-information-technology-departme",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Amador County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Amador County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-114",
 					"license": "unchecked-corpus-input-us-desoto-county-served-by-horner-shifrin-skyvie",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Desoto County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Desoto County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-115",
 					"license": "unchecked-corpus-input-us-hardee-county-gis-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Hardee County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Hardee County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-116",
 					"license": "unchecked-corpus-input-us-baker-county-fl-florida",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/FL/Baker County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/FL/Baker County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-117",
 					"license": "unchecked-corpus-input-us-trinity-county-planning-department-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Trinity County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Trinity County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-118",
 					"license": "unchecked-corpus-input-us-del-norte-county-assessor-s-office-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Del Norte County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Del Norte County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-119",
 					"license": "unchecked-corpus-input-us-inyo-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Inyo County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Inyo County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-121",
 					"license": "unchecked-corpus-input-us-glenn-county-gis-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Glenn County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Glenn County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-122",
 					"license": "unchecked-corpus-input-us-county-of-colusa-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Colusa County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Colusa County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-123",
 					"license": "unchecked-corpus-input-us-modoc-county-reach-parcels-service-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Modoc County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Modoc County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-124",
 					"license": "unchecked-corpus-input-us-advanced-gis-lab-data-from-lassen-county-asse",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Lassen County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Lassen County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-125",
 					"license": "unchecked-corpus-input-us-sierra-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Sierra County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Sierra County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "us-property-building-126",
 					"license": "unchecked-corpus-input-us-alpine-county-california",
-					"reads": "US skeletons of house-venue-tuples-v6 from `overture:OpenAddresses/CA/Alpine County`, read through the Overture Addresses theme"
+					"reads": "US skeletons of house-venue-tuples-v7 from `overture:OpenAddresses/CA/Alpine County`, read through the Overture Addresses theme"
 				},
 				{
 					"registerSource": "gb-public-administration-1",
 					"license": "unchecked-access-free-gb-gb-public-administration-1",
-					"reads": "GB postcodes of house-venue-tuples-v6, through the gb-os-open adapter"
+					"reads": "GB postcodes of house-venue-tuples-v7, through the gb-os-open adapter"
 				},
 				{
 					"registerSource": "gb-transport-1",
 					"license": "unchecked-access-free-gb-gb-transport-1",
-					"reads": "GB road joins of house-venue-tuples-v6, through the gb-os-open adapter"
+					"reads": "GB road joins of house-venue-tuples-v7, through the gb-os-open adapter"
 				},
 				{
 					"registerSource": "gb-public-administration-2",
 					"license": "unchecked-access-free-gb-gb-public-administration-2",
-					"reads": "GB streets and localities of house-venue-tuples-v6, through the gb-os-open adapter"
+					"reads": "GB streets and localities of house-venue-tuples-v7, through the gb-os-open adapter"
 				},
 				{
 					"registerSource": "de-property-building-1",
@@ -4115,7 +4115,7 @@
 			"history": [
 				{
 					"corpora": ["v0.7.7-no-ppd"],
-					"because": "Holds v0.7.2's non-GB rows, whose US skeletons mixed NAD with county and state bodies collected by OpenAddresses, beside GB rows rendered over house-venue-tuples-v4, before house-venue-tuples-v6 kept only NAD rows and the bodies whose own decisions permit training under the same source id.",
+					"because": "Holds v0.7.2's non-GB rows, whose US skeletons mixed NAD with county and state bodies collected by OpenAddresses, beside GB rows rendered over house-venue-tuples-v4, before house-venue-tuples-v7 kept only NAD rows and the bodies whose own decisions permit training under the same source id.",
 					"inputs": [
 						{
 							"registerSource": "gb-geodata-aggregate-1",

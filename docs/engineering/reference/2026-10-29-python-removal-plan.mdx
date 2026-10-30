@@ -661,7 +661,9 @@ Classified differences (**decided**):
 - The Python FR tuple sampler named the board's reserved surfaces by a working-directory path that resolves from no
   directory of the checkout, so the reserved set was empty: `house-venue-tuples-v6.jsonl` holds 275 FR tuples on 132 reserved
   streets. The port reads the list from the repository and refuses when it is missing. Python as committed keeps 10 more
-  FR tuples out of 2,000; the US and GB tuples are unchanged, because the filter runs after the draws.
+  FR tuples out of 2,000; the US and GB tuples are unchanged, because the filter runs after the draws. On 2026-10-30
+  `house-venue-tuples-v7.jsonl` (sha256 `e765e08e…`) replaced v6 as the recipes' input: 0 of its 59,725 FR tuples sit on
+  the 2,404 reserved surfaces, and its US and GB rows are v6's byte for byte (#2879 T12).
 - An empty US situs directory and a missing FR, GB or situs-table input now throw an error naming the path. Python
   answered no US tuples for an empty directory.
 - `pythonCapitalize` reads CPython's title case through a frozen table of the 135 characters whose title case differs
