@@ -303,3 +303,9 @@ The monorepo itself stays `sister-software/mailwoman`.
 Preserve unrelated working-tree changes. Edit files through your agent's file-editing tool or a patch
 it applies, so the symbol precheck runs on every edit. A `PreToolUse` hook enforces this by refusing
 shell writes inside the repository. Do not use destructive Git commands to discard operator work.
+
+`main` has no branch protection, so a direct push lands before the `test` workflow reports. Before a direct push to `main`,
+run the fast suite (`yarn test --run`), `yarn lint:prose:code`, `yarn lint:prose:vocab`, `yarn health` and the integration
+suites of the workspaces the push touches, and state their exit statuses in the push's PR or commit. Do not push
+while the previous push's `Test` run is still queued or running, because the new push cancels it. A change too large
+to check this way goes through a pull request.
