@@ -74,8 +74,8 @@ export interface TreeValidity {
  */
 export function validateTree(tree: AddressTree): TreeValidity {
 	const violations: TreeViolation[] = []
-	// Validate against the tree's own addressing system's hierarchy (defaults to Western).
-	const parentOf = containmentFor(tree.system)
+	// Validate against the hierarchy of the tree's own addressing system and country (defaults to Western).
+	const parentOf = containmentFor(tree.system, tree.country)
 
 	const present = new Set<ComponentTag>()
 

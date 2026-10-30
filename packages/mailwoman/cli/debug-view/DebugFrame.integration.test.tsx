@@ -88,6 +88,7 @@ const TRACE = {
 	parse: {
 		text: RESULT.input,
 		caseNormalized: false,
+		containmentCountry: null,
 		pieces: [
 			{ piece: "▁3215", id: 1, start: 0, end: 4 },
 			{ piece: "▁Portland", id: 2, start: 20, end: 28 },

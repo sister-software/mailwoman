@@ -48,6 +48,12 @@ export interface BuildTreeOpts {
 	 */
 	system?: AddressSystem
 	/**
+	 * The ISO 3166-1 alpha-2 country of the address, when the caller knows it.
+	 *
+	 * It selects the country's containment through `containmentFor` and is stamped onto `AddressTree.country`.
+	 */
+	country?: string | null
+	/**
 	 * Optional confidence calibrator.
 	 *
 	 * When provided, each span's mean-of-token-softmax confidence is mapped through it before
@@ -277,7 +283,7 @@ function sortByStart(nodes: AddressNode[]): void {
 export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: BuildTreeOpts = {}): AddressTree {
 	const spans = emitSpans(raw, tokens, opts)
 	const roots: AddressNode[] = []
-	const parentOf = containmentFor(opts.system)
+	const parentOf = containmentFor(opts.system, opts.country)
 
 	for (const span of spans) {
 		const parent = findParent(span, spans, parentOf)
@@ -294,6 +300,10 @@ export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: Buil
 
 	if (opts.system) {
 		tree.system = opts.system
+	}
+
+	if (opts.country) {
+		tree.country = opts.country
 	}
 
 	return tree

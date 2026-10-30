@@ -132,13 +132,30 @@ export interface NeuralRunner {
 	inferChars?: InferCharsFunction
 }
 
+/**
+ * The country a parse's tree resolves containment for: the caller's locale hint,
+ * or the locale classifier's confident country when no hint was given.
+ */
+function containmentCountry(
+	localeCountry: { country: string; confidence: number } | null,
+	localeHint: string | null | undefined
+): string | null {
+	return localeHint?.trim().toUpperCase() || localeCountry?.country || null
+}
+
+/**
+ * The tree for a decode, built under its {@linkcode containmentCountry}.
+ */
 function treeWithLocaleCountry(
 	text: string,
 	tokens: DecoderToken[],
 	calibrate: { calibrate: NonNullable<ParseOpts["calibrate"]> } | null,
-	localeCountry: { country: string; confidence: number } | null
+	localeCountry: { country: string; confidence: number } | null,
+	localeHint: string | null | undefined
 ): AddressTree {
-	return Object.assign(buildAddressTree(text, tokens, calibrate ?? undefined), localeCountry ? { localeCountry } : {})
+	const tree = buildAddressTree(text, tokens, { ...calibrate, country: containmentCountry(localeCountry, localeHint) })
+
+	return Object.assign(tree, localeCountry ? { localeCountry } : {})
 }
 
 /**
@@ -320,7 +337,8 @@ export class NeuralAddressClassifier {
 			modelText,
 			tokens,
 			opts?.calibrate ? { calibrate: opts.calibrate } : null,
-			localeCountry
+			localeCountry,
+			opts?.localeHint
 		)
 	}
 
@@ -343,7 +361,8 @@ export class NeuralAddressClassifier {
 				modelText,
 				tokens,
 				opts?.calibrate ? { calibrate: opts.calibrate } : null,
-				localeCountry
+				localeCountry,
+				opts?.localeHint
 			),
 			logits,
 			pieces: pieces.map((p) => ({ start: p.start, end: p.end })),
@@ -353,7 +372,8 @@ export class NeuralAddressClassifier {
 	/**
 	 * Parses text and returns the serializable decode trace instead of a tree.
 	 *
-	 * `buildAddressTree(trace.text, trace.tokens)` reproduces the tree returned by `parse`.
+	 * `buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry })`
+	 * reproduces the tree returned by `parse`.
 	 * The trace omits `opts.calibrate`.
 	 */
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
@@ -365,6 +385,7 @@ export class NeuralAddressClassifier {
 				text,
 				caseNormalized: false,
 				pieces: [],
+				containmentCountry: null,
 				anchor: null,
 				gazetteer: null,
 				country: null,
@@ -393,7 +414,7 @@ export class NeuralAddressClassifier {
 		const modelText =
 			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
 
-		const { tokens, logits, pieces, trace } = await this.#decode(modelText, opts, true)
+		const { tokens, logits, pieces, localeCountry, trace } = await this.#decode(modelText, opts, true)
 
 		if (!trace) throw new Error("traceParse: #decode returned no trace despite trace=true (invariant)")
 
@@ -401,6 +422,7 @@ export class NeuralAddressClassifier {
 			text: modelText,
 			caseNormalized: modelText !== text,
 			pieces: pieces.map((p) => ({ piece: p.piece, id: p.id, start: p.start, end: p.end })),
+			containmentCountry: containmentCountry(localeCountry, opts?.localeHint),
 			anchor: trace.anchor,
 			gazetteer: trace.gazetteer,
 			country: trace.country,

@@ -30,6 +30,21 @@ describe("validateTree", () => {
 		expect(v.violations).toHaveLength(0)
 	})
 
+	test("a house_number under a numbered settlement is valid in a country the codex lists", () => {
+		const tree = buildAddressTree(
+			"10, Parcelles Assainies, Dakar",
+			[
+				tok("10", 0, 2, "B-house_number"),
+				tok("Parcelles", 4, 13, "B-dependent_locality"),
+				tok("Assainies", 14, 23, "I-dependent_locality"),
+				tok("Dakar", 25, 30, "B-locality"),
+			],
+			{ country: "SN" }
+		)
+
+		expect(validateTree(tree).violations).toEqual([])
+	})
+
 	test("a house_number with no street anywhere is a stranded dependent", () => {
 		const tree = buildAddressTree("100 Springfield", [
 			tok("100", 0, 3, "B-house_number"),

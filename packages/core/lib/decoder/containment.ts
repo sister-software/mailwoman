@@ -29,6 +29,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
+import { numbersHousesInSettlements, SETTLEMENT_HOUSE_NUMBER_PARENTS } from "@mailwoman/codex/settlement-house-numbers"
 
 import type { AddressSystem } from "#decoder/types"
 
@@ -83,18 +84,30 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 }
 
 /**
- * The containment map for a given addressing system.
+ * {@link WESTERN_PARENT_OF} with a house number that may also attach to a dependent locality
+ * or a locality, for the countries whose addresses number a building inside a settlement with no street.
+ */
+const SETTLEMENT_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = {
+	...WESTERN_PARENT_OF,
+	house_number: [...(WESTERN_PARENT_OF.house_number ?? []), ...SETTLEMENT_HOUSE_NUMBER_PARENTS],
+}
+
+/**
+ * The containment map for a given addressing system and country.
  *
- * Currently every system maps to {@link WESTERN_PARENT_OF} — the indirection exists
- * so a future system-specific map (e.g. Japanese block addressing) can be introduced
- * without touching the tree builder or validator.
+ * Every system maps to {@link WESTERN_PARENT_OF} today.
+ * The indirection exists so a system-specific map (e.g. Japanese block addressing)
+ * can be introduced without touching the tree builder or validator.
+ *
+ * A country the codex lists in `settlement-house-numbers` gets {@link SETTLEMENT_PARENT_OF}, whose extra
+ * house-number parents come after the street, so a number beside a street attaches to it as before.
  * `undefined` (the common case — system not yet detected) uses the default.
  */
-export function containmentFor(_system?: AddressSystem | null): Partial<Record<ComponentTag, ComponentTag[]>> {
-	// Single system today.
-	// The parameter is intentionally consumed lazily — adding `case "japanese":`
-	// here is the entire surface area for a new system's hierarchy.
-	return WESTERN_PARENT_OF
+export function containmentFor(
+	_system?: AddressSystem | null,
+	country?: string | null
+): Partial<Record<ComponentTag, ComponentTag[]>> {
+	return numbersHousesInSettlements(country) ? SETTLEMENT_PARENT_OF : WESTERN_PARENT_OF
 }
 
 /**

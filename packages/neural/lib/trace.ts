@@ -100,6 +100,14 @@ export interface NeuralParseTrace {
 	pieces: TokenizedPiece[]
 
 	/**
+	 * The country the parse's tree resolved containment for: the caller's locale hint,
+	 * or the locale classifier's confident country, or null.
+	 *
+	 * `buildAddressTree(text, tokens, { country })` reproduces the parse's tree.
+	 */
+	containmentCountry: string | null
+
+	/**
 	 * The postcode-anchor channel as fed to the model, null when the channel was not fed.
 	 */
 	anchor: SoftFeatureChannel | null

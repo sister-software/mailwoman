@@ -169,6 +169,10 @@ export interface AddressTree {
 	 */
 	system?: AddressSystem | null
 	/**
+	 * The ISO 3166-1 alpha-2 country the containment hierarchy was resolved for, when one was known.
+	 */
+	country?: string
+	/**
 	 * The country predicted by the parse-time locale classifier, when it was confident.
 	 */
 	localeCountry?: { country: string; confidence: number }
