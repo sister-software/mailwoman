@@ -34,62 +34,11 @@ export const CITED_SETTLEMENT_HOUSE_NUMBER_COUNTRIES: Readonly<Record<string, st
 }
 
 /**
- * The countries whose held-out OpenStreetMap suite rows hold a house number and no street in
- * at least 25 rows, and for which no source is cited yet. #2880 cites each or removes it.
- */
-export const UNCITED_SETTLEMENT_HOUSE_NUMBER_COUNTRIES: readonly string[] = [
-	"AE",
-	"AL",
-	"AM",
-	"AR",
-	"AU",
-	"AZ",
-	"BA",
-	"BB",
-	"BY",
-	"BZ",
-	"CL",
-	"CO",
-	"CR",
-	"CU",
-	"CW",
-	"DE",
-	"DO",
-	"DZ",
-	"EC",
-	"EG",
-	"GE",
-	"GL",
-	"GT",
-	"HK",
-	"IQ",
-	"IR",
-	"KG",
-	"KZ",
-	"MG",
-	"MK",
-	"MN",
-	"MV",
-	"MY",
-	"PA",
-	"PE",
-	"PH",
-	"PR",
-	"SA",
-	"TH",
-	"UA",
-	"UZ",
-	"ZW",
-]
-
-const LISTED = new Set([
-	...Object.keys(CITED_SETTLEMENT_HOUSE_NUMBER_COUNTRIES),
-	...UNCITED_SETTLEMENT_HOUSE_NUMBER_COUNTRIES,
-])
-
-/**
  * Whether a country's addresses number a building inside a settlement that has no street.
+ *
+ * Only a country with a cited source is listed. #2880 holds the countries whose held-out
+ * suite rows show the form without a source yet, and each joins the table with its citation.
  */
 export function numbersHousesInSettlements(country: string | null | undefined): boolean {
-	return typeof country === "string" && LISTED.has(country.toUpperCase())
+	return typeof country === "string" && Object.hasOwn(CITED_SETTLEMENT_HOUSE_NUMBER_COUNTRIES, country.toUpperCase())
 }
