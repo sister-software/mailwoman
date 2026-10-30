@@ -551,28 +551,72 @@ pub fn corpus_split_files(config: &SamplerConfig, split: &str) -> Result<Vec<Cor
 /// A null `source` among the admitted rows is an error: the known cause is a label-less golden file listed as a
 /// training file.
 pub fn file_source_counts(file: &CorpusFile) -> Result<Vec<(String, u64)>> {
-	let key = (
-		file.path.clone(),
-		file.filter.as_ref().map_or(0, |f| Arc::as_ptr(f) as usize),
-	);
+	let key = CountsKey::of(file);
 	if let Some(found) = counts_cache().lock().expect("not poisoned").get(&key) {
-		return found.clone();
+		return Ok(found.clone());
 	}
-	let counted = count_sources(file);
+	let counted = count_sources(file)?;
 	counts_cache()
 		.lock()
 		.expect("not poisoned")
 		.insert(key, counted.clone());
-	counted
+	Ok(counted)
 }
 
 /// One file's rows per source in first-appearance order, or the failure to count them.
 pub type SourceCounts = Result<Vec<(String, u64)>>;
 
-type CountsCache = FxHashMap<(PathBuf, usize), SourceCounts>;
+/// A file's path and the id sets its filter reads.
+///
+/// Each listing builds a new `RowFilter`, but its id sets are shared `Arc`s from the split-attribute cache, so two
+/// listings with the same split share them. The key holds those `Arc`s, which keeps each set's address unique while
+/// its entry exists, and compares them by address, so equal sets are recognized without hashing their ids.
+struct CountsKey {
+	path: PathBuf,
+	keep: Option<Arc<IdSet>>,
+	drop: Vec<Arc<IdSet>>,
+}
 
-/// Source counts computed in this process, keyed by path and filter identity. The filter's `Arc` is held by the
-/// listing for the life of the process, through the attribute cache, so its address is not reused.
+impl CountsKey {
+	fn of(file: &CorpusFile) -> Self {
+		let (keep, drop) = file
+			.filter
+			.as_ref()
+			.map_or((None, Vec::new()), |filter| (filter.keep.clone(), filter.drop.clone()));
+		Self {
+			path: file.path.clone(),
+			keep,
+			drop,
+		}
+	}
+
+	fn addresses(&self) -> (Option<*const IdSet>, Vec<*const IdSet>) {
+		(
+			self.keep.as_ref().map(Arc::as_ptr),
+			self.drop.iter().map(Arc::as_ptr).collect(),
+		)
+	}
+}
+
+impl PartialEq for CountsKey {
+	fn eq(&self, other: &Self) -> bool {
+		self.path == other.path && self.addresses() == other.addresses()
+	}
+}
+
+impl Eq for CountsKey {}
+
+impl std::hash::Hash for CountsKey {
+	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+		self.path.hash(state);
+		self.addresses().hash(state);
+	}
+}
+
+/// Counts are cached only when they succeed, so a failed read is retried rather than replayed for the process.
+type CountsCache = FxHashMap<CountsKey, Vec<(String, u64)>>;
+
+/// Source counts computed in this process, keyed by path and the id sets the file's filter reads.
 fn counts_cache() -> &'static Mutex<CountsCache> {
 	static CACHE: OnceLock<Mutex<CountsCache>> = OnceLock::new();
 	CACHE.get_or_init(Default::default)
