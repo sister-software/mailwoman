@@ -86,6 +86,54 @@ at::Generator* trainer_generator_new(uint64_t seed) {
 
 void trainer_generator_free(at::Generator* g) { delete g; }
 
+// The default generator `torch.rand` and dropout draw from: the CPU one for `cuda_index < 0`, else that CUDA
+// device's. Throws when the build or the host has no such device.
+static at::Generator default_generator(int cuda_index) {
+  if (cuda_index < 0) return at::detail::getDefaultCPUGenerator();
+  return at::globalContext().defaultGenerator(at::Device(at::kCUDA, static_cast<c10::DeviceIndex>(cuda_index)));
+}
+
+// `generator.get_state()`: a uint8 CPU tensor the caller owns, or null when libtorch raised.
+static at::Tensor* generator_state(at::Generator g) {
+  try {
+    std::lock_guard<std::mutex> lock(g.mutex());
+    return new at::Tensor(g.get_state());
+  } catch (const std::exception&) {
+    return nullptr;
+  }
+}
+
+// `generator.set_state(state)`: 0 on success, -1 when libtorch raised.
+static int generator_set_state(at::Generator g, const at::Tensor* state) {
+  try {
+    std::lock_guard<std::mutex> lock(g.mutex());
+    g.set_state(*state);
+    return 0;
+  } catch (const std::exception&) {
+    return -1;
+  }
+}
+
+at::Tensor* trainer_default_generator_state(int cuda_index) {
+  try {
+    return generator_state(default_generator(cuda_index));
+  } catch (const std::exception&) {
+    return nullptr;
+  }
+}
+
+int trainer_default_generator_set_state(int cuda_index, const at::Tensor* state) {
+  try {
+    return generator_set_state(default_generator(cuda_index), state);
+  } catch (const std::exception&) {
+    return -1;
+  }
+}
+
+at::Tensor* trainer_generator_state(at::Generator* g) { return generator_state(*g); }
+
+int trainer_generator_set_state(at::Generator* g, const at::Tensor* state) { return generator_set_state(*g, state); }
+
 // `torch.bernoulli(probs, generator=g)`.
 at::Tensor* trainer_bernoulli(const at::Tensor* probs, at::Generator* g) {
   try {

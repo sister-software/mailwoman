@@ -2,12 +2,13 @@
 //! metrics, and the model's construction and save/restore on a small spec.
 
 use std::path::Path;
-use tch::{Kind, Tensor};
-use trainer_loop::checkpoint::{checkpoint_dir_name, find_latest_checkpoint, save_checkpoint};
+use tch::{Device, Kind, Tensor};
+use trainer_loop::checkpoint::{checkpoint_dir_name, find_latest_checkpoint, restore_generators, save_checkpoint};
 use trainer_loop::fisher::{npy_bytes, parse_npy};
 use trainer_loop::metrics::{eval_csv_row, token_f1, Metrics};
 use trainer_loop::optim::{build_groups, AdamW};
 use trainer_loop::schedules::{LambdaLr, Schedule};
+use trainer_model::autocast::Generator;
 use trainer_model::layers::Mode;
 use trainer_model::{CoarseEncoder, EncoderInputs, EncoderSpec, SchemaDefaults};
 
@@ -332,6 +333,7 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 		&serde_json::json!({"step": 1}),
 		Some(&optim),
 		Some(&sched),
+		&[],
 	)
 	.unwrap();
 	assert_eq!(saved.file_name().unwrap().to_str().unwrap(), checkpoint_dir_name(1));
@@ -373,4 +375,40 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 	assert_eq!(sched3.schedule, live);
 	assert_eq!(sched3.schedule.multiplier(30), live.multiplier(30));
 	assert_ne!(sched3.schedule.multiplier(9), sched.schedule.multiplier(9));
+}
+
+#[test]
+fn a_checkpoint_restores_the_generators_a_resume_draws_from() {
+	let _guard = seeded(3);
+	let model = CoarseEncoder::new(spec()).unwrap();
+	let mut owned = Generator::new(11).unwrap();
+	let _ = Tensor::rand([4], (Kind::Float, Device::Cpu));
+	let _ = owned.randint(0, 1000, &[4]).unwrap();
+	let dir = tempfile::tempdir().unwrap();
+	let saved = save_checkpoint(
+		&model,
+		dir.path(),
+		1,
+		&serde_json::json!({"step": 1}),
+		None,
+		None,
+		&[("owned", &owned)],
+	)
+	.unwrap();
+	// The draws an uninterrupted run makes after the save.
+	let default_next = Tensor::rand([4], (Kind::Float, Device::Cpu));
+	let owned_next = owned.randint(0, 1000, &[4]).unwrap();
+
+	// A resumed process reseeds, then restores.
+	tch::manual_seed(3);
+	let mut resumed = Generator::new(11).unwrap();
+	assert!(restore_generators(&saved, Device::Cpu, &mut [("owned", &mut resumed)]).unwrap());
+	assert!(Tensor::rand([4], (Kind::Float, Device::Cpu)).equal(&default_next));
+	assert!(resumed.randint(0, 1000, &[4]).unwrap().equal(&owned_next));
+
+	// A checkpoint without the file leaves the generators as they are, and one missing an owned state is refused.
+	let older = tempfile::tempdir().unwrap();
+	assert!(!restore_generators(older.path(), Device::Cpu, &mut []).unwrap());
+	let mut other = Generator::new(5).unwrap();
+	assert!(restore_generators(&saved, Device::Cpu, &mut [("missing", &mut other)]).is_err());
 }

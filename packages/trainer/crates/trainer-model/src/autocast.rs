@@ -30,6 +30,36 @@ extern "C" {
 		ndim: i32,
 		g: *mut std::ffi::c_void,
 	) -> *mut torch_sys::C_tensor;
+	fn trainer_default_generator_state(cuda_index: i32) -> *mut torch_sys::C_tensor;
+	fn trainer_default_generator_set_state(cuda_index: i32, state: *const torch_sys::C_tensor) -> i32;
+	fn trainer_generator_state(g: *mut std::ffi::c_void) -> *mut torch_sys::C_tensor;
+	fn trainer_generator_set_state(g: *mut std::ffi::c_void, state: *const torch_sys::C_tensor) -> i32;
+}
+
+fn cuda_index(device: Device) -> i32 {
+	match device {
+		Device::Cuda(index) => index as i32,
+		_ => -1,
+	}
+}
+
+/// The state of the default generator on `device`, which `torch.rand`, `randint` and dropout draw from, as a uint8
+/// tensor.
+pub fn default_generator_state(device: Device) -> Result<tch::Tensor> {
+	// SAFETY: returns a heap tensor or null.
+	owned(
+		unsafe { trainer_default_generator_state(cuda_index(device)) },
+		"the default generator's state",
+	)
+}
+
+/// Restores the default generator on `device` to a state `default_generator_state` read.
+pub fn set_default_generator_state(device: Device, state: &tch::Tensor) -> Result<()> {
+	// SAFETY: `state` is live for the call.
+	match unsafe { trainer_default_generator_set_state(cuda_index(device), state.as_ptr()) } {
+		0 => Ok(()),
+		_ => Err(fail!("libtorch refused the default generator state for {device:?}")),
+	}
 }
 
 fn owned(ptr: *mut torch_sys::C_tensor, what: &str) -> Result<tch::Tensor> {
@@ -66,6 +96,21 @@ impl Generator {
 			unsafe { trainer_randint(low, high, shape.as_ptr(), shape.len() as i32, self.0) },
 			"randint",
 		)
+	}
+
+	/// `generator.get_state()`, a uint8 tensor.
+	pub fn state(&self) -> Result<tch::Tensor> {
+		// SAFETY: the generator is live for the call.
+		owned(unsafe { trainer_generator_state(self.0) }, "a generator's state")
+	}
+
+	/// `generator.set_state(state)`.
+	pub fn set_state(&mut self, state: &tch::Tensor) -> Result<()> {
+		// SAFETY: both pointers are live for the call.
+		match unsafe { trainer_generator_set_state(self.0, state.as_ptr()) } {
+			0 => Ok(()),
+			_ => Err(fail!("libtorch refused the generator state")),
+		}
 	}
 }
 

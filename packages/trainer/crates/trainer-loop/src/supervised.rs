@@ -5,7 +5,10 @@
 
 use crate::batch::{RunEncoder, TensorBatch};
 use crate::callbacks::{Callback, Checkpointer, Console, CsvMetrics, StepView};
-use crate::checkpoint::{checkpoint_extras, find_latest_checkpoint, resume_drift, save_checkpoint, TRAINING_STATE};
+use crate::checkpoint::{
+	checkpoint_extras, find_latest_checkpoint, restore_generators, resume_drift, save_checkpoint, RNG_STATE,
+	TRAINING_STATE,
+};
 use crate::config::{sampler_config, DataFiles, RunConfig};
 use crate::fisher::{EwcPenalty, FisherAccumulator};
 use crate::metrics::{cross_pollution, per_locale_tag_f1, token_f1, Metrics};
@@ -427,7 +430,21 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	println!("lr_schedule={}", run.train_str("lr_schedule")?);
 	let precision = resolve_precision(run, device, options.autocast_on_cpu)?;
 	let resume_step = match &resume_from {
-		Some(dir) => restore_training_state(run, dir, &mut optim, &mut scheduler, &live)?,
+		Some(dir) => {
+			let step = restore_training_state(run, dir, &mut optim, &mut scheduler, &live)?;
+			if restore_generators(dir, device, &mut [])? {
+				println!(
+					"[resume] generator states restored from {}",
+					dir.join(RNG_STATE).display()
+				);
+			} else {
+				println!(
+					"[resume] {} holds no generator states; the generators restart from train.seed",
+					dir.display()
+				);
+			}
+			step
+		}
 		None => 0,
 	};
 	let max_steps = run.train_i64("max_steps")?;
@@ -604,6 +621,7 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		&checkpoint_extras(step, &run.config, encoder.vocab_size),
 		Some(&optim),
 		Some(&scheduler),
+		&[],
 	)?;
 	if let Some(f) = &fisher {
 		let mut meta = serde_json::Map::new();

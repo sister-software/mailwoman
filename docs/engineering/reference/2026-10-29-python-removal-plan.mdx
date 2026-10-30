@@ -1248,6 +1248,30 @@ stream is not saved"). The smallest test that separates it from a data-stream ca
 `locale_hint_drop_prob`, `locale_hint_noise_prob` and `evidence_noise_prob` set to 0: equal rows after step 100 would
 confirm the generator.
 
+**Resume restores the generators (decided 2026-10-30, #2879 T18 and decision D3).** The operator chose to save and
+restore every generator a run draws from, a deliberate change from the Python trainer. Each checkpoint now holds
+`rng_state.safetensors`: libtorch's default CPU generator, the default generator of the CUDA device the model trains
+on, and the MLM loop's mask generator. A resume restores them after the optimizer and scheduler. A checkpoint written
+before the change holds no such file, so its resume reseeds from `train.seed` as before and says so. The experiment
+ran the generator test directly instead of zeroing the noise. On the lab CPU, the 200-step parity config
+(`probe-code-unit-cpu.resolved.json`, dropout and every curriculum noise on) ran uninterrupted, then again with the
+trainer killed after step 110, then resumed from step 100. `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/t18/compare.json`
+records the comparison:
+
+| Compared                                                     | Result                                            |
+| ------------------------------------------------------------ | ------------------------------------------------- |
+| `train_log.csv` cells except `wall_seconds`, 22 rows         | 814 of 814 equal                                  |
+| realized rows after step 100, the batch identities           | 800 of 800 equal                                  |
+| step-200 `rng_state.safetensors`                             | equal bytes                                       |
+| step-200 weights and Fisher artifact (`compare-checkpoints`) | 115 tensors and 112 arrays equal on every element |
+
+With the reseed, the same comparison differed on 20 of 814 cells from step 110 on. That measurement isolates the
+generator restore as the change, because the data stream was already identical. `resume-parity.run.ts` in
+`packages/mailwoman/tools/training/` repeats the experiment for any resolved config and exits 1 on a difference. The
+comparison ran on the CPU device only. A CUDA run's nondeterministic kernels can still differ between attempts, and no
+CUDA resume has been compared. Every future two-seed comparison inherits the restored generators, which the Python
+trainer's runs did not have.
+
 **Stage 8's first run.** `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/stage8/v8.3.0-probe-rust-trainer-2k.yaml`
 (SHA-256 `59035f19…308f5a`) is `v8.3.0-probe-rust-loader-2k.yaml` with `train.output_dir` and `train.trackio_run_name`
 renamed, so its rate compares with that probe's 6.50 s per 100 steps on the A100-40GB. It resolves (170 admitted

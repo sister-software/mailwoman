@@ -5,7 +5,12 @@
 //! accumulate gradients.
 
 use crate::batch::RunEncoder;
-use crate::checkpoint::{checkpoint_extras, find_latest_checkpoint, save_checkpoint, TRAINING_STATE};
+use crate::checkpoint::{
+	checkpoint_extras, find_latest_checkpoint, restore_generators, save_checkpoint, TRAINING_STATE,
+};
+
+/// The name the MLM mask generator's state is saved under in `rng_state.safetensors`.
+const MLM_MASK_GENERATOR: &str = "mlm_mask";
 use crate::config::{sampler_config, DataFiles, RunConfig};
 use crate::masking::mask_tokens;
 use crate::optim::{clip_grad_norm, AdamW, Group};
@@ -90,6 +95,16 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 
 	let seed = run.train_i64("seed")?;
 	let mut generator = Generator::new(seed as u64)?;
+	if let Some(dir) = &resume {
+		if restore_generators(dir, model.device(), &mut [(MLM_MASK_GENERATOR, &mut generator)])? {
+			println!("[pretrain] generator states restored from {}", dir.display());
+		} else {
+			println!(
+				"[pretrain] {} holds no generator states; the generators restart from train.seed",
+				dir.display()
+			);
+		}
+	}
 	let sampler = sampler_config(run, &files, &encoder.active_tags()?)?;
 	let batch_size = run.train_i64("batch_size")? as usize;
 	let log_every = run.train_i64("log_every_steps")?.max(1);
@@ -171,6 +186,7 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 					&checkpoint_extras(step, &run.config, vocab),
 					Some(&optim),
 					Some(&scheduler),
+					&[(MLM_MASK_GENERATOR, &generator)],
 				)?;
 				println!("[pretrain]   [save] checkpoint @ step {step}");
 			}
@@ -183,6 +199,7 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		&checkpoint_extras(step, &run.config, vocab),
 		Some(&optim),
 		Some(&scheduler),
+		&[(MLM_MASK_GENERATOR, &generator)],
 	)?;
 	println!("[pretrain] done @ step {step} -> {}", output_dir.display());
 	Ok(())
