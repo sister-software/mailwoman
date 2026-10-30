@@ -13,7 +13,7 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
-import { afterEach, beforeEach } from "vitest"
+import { afterEach, beforeEach, expect } from "vitest"
 
 import type { ParquetRow } from "#parquet/schema"
 import type { CanonicalRow } from "#types"
@@ -145,5 +145,36 @@ export function gbOverlayRow(sourceID: string, street: string, locality: string,
 		surface: "composed",
 		augmentation: null,
 		base_source_id: null,
+	}
+}
+
+/**
+ * Asserts the invariants of every span-labeled row a corpus builder writes:
+ * `0 <= start < end <= length` in code points, each span beginning and ending on a
+ * non-whitespace character, and starts in ascending order.
+ *
+ * A builder's own record check allows whitespace inside a CJK span, so the edge rule is checked here.
+ */
+export function expectSpanInvariants(rows: readonly unknown[]): void {
+	expect(rows.length).toBeGreaterThan(0)
+
+	for (const row of rows as ReadonlyArray<{ raw: unknown; span_starts: unknown; span_ends: unknown }>) {
+		const characters = Array.from(String(row.raw))
+		const starts = Array.from(row.span_starts as Iterable<number | bigint>, Number)
+		const ends = Array.from(row.span_ends as Iterable<number | bigint>, Number)
+
+		expect(ends).toHaveLength(starts.length)
+
+		for (const [i, start] of starts.entries()) {
+			const end = ends[i]!
+			const text = characters.slice(start, end)
+
+			expect(start >= 0 && start < end && end <= characters.length, `${row.raw} [${start}, ${end})`).toBe(true)
+			expect(/\s/u.test(text[0]!) || /\s/u.test(text.at(-1)!), `${row.raw} [${start}, ${end})`).toBe(false)
+
+			if (i > 0) {
+				expect(start, String(row.raw)).toBeGreaterThanOrEqual(starts[i - 1]!)
+			}
+		}
 	}
 }

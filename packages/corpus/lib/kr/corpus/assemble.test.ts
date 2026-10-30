@@ -18,6 +18,7 @@ import { describe, expect, it } from "vitest"
 import { sortedGlob } from "#cjk/builder"
 import { buildKRCorpus } from "#kr/corpus/assemble"
 import { readParquetRows } from "#parquet/readers"
+import { expectSpanInvariants } from "#test-kit"
 
 const fixture = (name: string) => resolvePackagePath("@mailwoman/corpus", "fixtures", "builders", "kr", name)
 
@@ -100,6 +101,8 @@ describe("the Korea corpus assembler", async () => {
 		})
 
 		expect(await rendered(outDir)).toEqual(reference.label)
+		expectSpanInvariants(await rendered(outDir))
+		expectSpanInvariants(await rendered(registryOutDir))
 		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/kr-board.jsonl`))).toEqual(reference.board)
 		expect(await rendered(registryOutDir)).toEqual(reference.registry)
 

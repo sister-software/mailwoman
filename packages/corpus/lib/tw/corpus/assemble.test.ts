@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest"
 import { sortedGlob } from "#cjk/builder"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { readParquetRows } from "#parquet/readers"
+import { expectSpanInvariants } from "#test-kit"
 import { buildTWCorpus } from "#tw/corpus/assemble"
 import { iterTWSourceRows, splitNumberUnit } from "#tw/corpus/rows"
 
@@ -122,6 +123,7 @@ describe("the Taiwan corpus assembler", async () => {
 
 		expect(await rendered(`${outDir}/train`)).toEqual(reference.train)
 		expect(await rendered(`${outDir}/val`)).toEqual(reference.val)
+		expectSpanInvariants([...(await rendered(`${outDir}/train`)), ...(await rendered(`${outDir}/val`))])
 		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/tw-board.jsonl`))).toEqual(reference.board)
 		expect(await readLocalJSONFile(`${outDir}/tw-district-centroids.json`)).toEqual(reference.centroids)
 

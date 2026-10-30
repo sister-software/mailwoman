@@ -6,15 +6,20 @@
  *   The KEN_ALL 〒 join's tiers, ported from the deleted `test_jp_corpus.py`.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { afterAll, beforeAll, expect, it } from "vitest"
 
 import { type KenAllIndex, loadKenAllPostcodes } from "#jp/corpus/sources"
 
 /**
- * Four KEN_ALL_ROME rows in cp932, as Japan Post writes the file: Sapporo's catch-all, a town,
- * a town with a parenthetical annotation, and an Ishigaki town KEN_ALL spells without 字.
+ * `fixtures/builders/jp/kenall-tiers.csv.b64`: four KEN_ALL_ROME rows in cp932,
+ * as Japan Post writes the file, encoded with CPython's cp932 codec.
+ *
+ * They are Sapporo's catch-all, a town, a town with a parenthetical annotation,
+ * and an Ishigaki town KEN_ALL spells without 字.
  *
  * Sapporo's municipality is written with an ideographic space, shown here as [U+3000].
  *
@@ -25,22 +30,19 @@ import { type KenAllIndex, loadKenAllPostcodes } from "#jp/corpus/sources"
  * "9070003","沖縄県","石垣市","崎枝","OKINAWA KEN","ISHIGAKI SHI","SAKIEDA"
  * ```
  */
-const KEN_ALL_CP932 = [
-	"IjA2MDAwMDAiLCKWa4pDk7kiLCKORJZ5jnOBQJKGiZuL5iIsIojIibqCyYxmjdqCqoLIgqKP6o2H",
-	"IiwiSE9LS0FJRE8iLCJTQVBQT1JPIFNISSBDSFVPIEtVIiwiSUtBTkkiCiIwNjQwOTQxIiwilmuK",
-	"Q5O5IiwijkSWeY5zgUCShombi+YiLCKIroNQi3UiLCJIT0tLQUlETyIsIlNBUFBPUk8gU0hJIENI",
-	"VU8gS1UiLCJBU0FISUdBT0tBIgoiMDYwMDA0MSIsIpZrikOTuSIsIo5ElnmOc4FAkoaJm4vmIiwi",
-	"keWSypOMgWmCUIFgglCCUpKaltqBaiIsIkhPS0tBSURPIiwiU0FQUE9STyBTSEkgQ0hVTyBLVSIs",
-	"Ik9ET1JJIgoiOTA3MDAwMyIsIomrk+qMpyIsIpDOil+OcyIsIo3ojn0iLCJPS0lOQVdBIEtFTiIs",
-	"IklTSElHQUtJIFNISSIsIlNBS0lFREEi",
-].join("")
+const FIXTURE = resolvePackagePath("@mailwoman/corpus", "fixtures", "builders", "jp", "kenall-tiers.csv.b64")
 
 let scratch: TemporaryDirectory
 let index: KenAllIndex
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mailwoman-kenall-")
-	await writeLocalBuffer(Buffer.from(KEN_ALL_CP932, "base64"), scratch.path("KEN_ALL_ROME.CSV"))
+
+	await writeLocalBuffer(
+		Buffer.from((await readLocalTextFile(FIXTURE)).replaceAll("\n", ""), "base64"),
+		scratch.path("KEN_ALL_ROME.CSV")
+	)
+
 	index = await loadKenAllPostcodes(scratch.path("KEN_ALL_ROME.CSV"))
 })
 
