@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman dev generate address-systems` regenerates the trainer's address-system registry,
- *   `corpus-python/src/mailwoman_train/address_systems.json`, from codex's layouts.
+ *   `packages/trainer/data/address_systems.json`, from codex's layouts.
  */
 
 import { Text } from "ink"

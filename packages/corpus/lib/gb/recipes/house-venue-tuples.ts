@@ -15,13 +15,12 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { pythonStrip } from "@mailwoman/core/strings/python-text"
+import type { SeededRandom } from "@mailwoman/core/random"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { GB_OS_OPEN_ADAPTER_ID, gbOSOpenCanonicalRowsPath } from "#gb/adapters/os-open/adapter"
 import type { HouseVenueTuple } from "#recipes/house-venue-tuples"
-import type { PyRandom } from "#training/pyrandom"
 
 /**
  * The license every accepted row records: the adapter's OGL v3.0 SPDX id.
@@ -42,7 +41,7 @@ export class RefusedGBTupleSourceError extends Error {
 	override name = "RefusedGBTupleSourceError"
 }
 
-const field = (components: Record<string, unknown>, key: string): string => pythonStrip(String(components[key] || ""))
+const field = (components: Record<string, unknown>, key: string): string => String(components[key] || "").trim()
 
 /**
  * Up to `count` tuples, reservoir-sampled from the adapter's rows in one streaming pass and then shuffled.
@@ -55,7 +54,7 @@ const field = (components: Record<string, unknown>, key: string): string => pyth
  */
 export async function sampleGBHouseVenueTuples(
 	count: number,
-	rng: PyRandom,
+	rng: SeededRandom,
 	path: PathBuilderLike = gbOSOpenCanonicalRowsPath()
 ): Promise<HouseVenueTuple[]> {
 	const location = path.toString()

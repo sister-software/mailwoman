@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The training run config: every section, field and default of `corpus-python/src/mailwoman_train/config/schema.py`,
+ *   The training run config: every section, field and default of the deleted Python schema (`config/schema.py`),
  *   in its declaration order, and the zod schema of the resolved config the Rust trainer and sampler read.
  *
  *   Each field records its Python annotation because the loader's coercion reads it. A numeric string converts
@@ -222,10 +222,7 @@ export const MODEL_SECTION = {
 		locale_hint_drop_prob: float(0.5),
 		locale_hint_noise_prob: float(0.05),
 		use_postcode_anchor: bool(false),
-		inject_first_token: bool(false),
 		use_gazetteer_anchor: bool(false),
-		use_affix_head: bool(false),
-		use_deploc_head: bool(false),
 		use_conventions_loss_mask: bool(false),
 		use_span_boundary_head: bool(false),
 		span_boundary_loss_weight: float(0),
@@ -289,7 +286,6 @@ export const TRAIN_SECTION = {
 		objective: str("supervised"),
 		mlm_mask_prob: float(0.15),
 		init_from: str(""),
-		freeze_encoder: bool(false),
 		freeze_token_embeddings: bool(false),
 		trainable_only_prefixes: strList(),
 		trackio_enabled: bool(false),

@@ -6,10 +6,10 @@
  *   The training sampler for TypeScript tools: a resolved training config turned into the sampler's JSON
  *   configuration, the row and batch streams of the `mtf-node` addon, and the model inputs one batch encodes to.
  *
- *   `samplerConfigJSON` writes the document `sampler_config` in `corpus-python/src/mailwoman_train/data/loader/encode.py`
- *   writes, except that it hands the sampler `source_reps` with the run length rather than weights folded in
- *   beforehand: `mtf-sampler` folds them with the same row counts and the same derivation. `encodeBatch` adds each
- *   row's locale and address-system ids to the row encoder's arrays, as `encode_rows` in `data/loader/batch.py` does.
+ *   `samplerConfigJSON` writes the sampler's configuration document with `source_reps` and the run length rather than
+ *   weights folded in beforehand: `mtf-sampler` folds them with the same row counts and the same derivation the
+ *   trainer uses. `encodeBatch` adds each row's locale and address-system ids to the row encoder's arrays, as the
+ *   trainer's batch does.
  */
 
 import { isLatinScriptText } from "@mailwoman/codex/address/format"
@@ -22,6 +22,7 @@ import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type {
 	EncodedRows,
 	MTFNode,
+	NativeCharEncoder,
 	NativeRawRows,
 	NativeSampler,
 	NativeStreamOptions,
@@ -33,27 +34,26 @@ import { IGNORE_INDEX, LOCALE_COUNTRIES, STAGE3_TAGS } from "@mailwoman/neural/l
 import { readAddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
 
 /**
- * A file under the Python training package's data, which the sampler
- * and encoder read until the package moves.
+ * A data file the Rust trainer and the sampler read, under `packages/trainer/data`.
  */
-export function trainingPackagePath(...segments: string[]): string {
-	return repoRootPath("corpus-python", "src", "mailwoman_train", ...segments)
+export function trainerDataPath(name: string): string {
+	return repoRootPath("packages", "trainer", "data", name)
 }
 
 /**
  * The postcode-shape record the shaped anchor and the postcode finders compile.
  */
-export const POSTCODE_SHAPES_PATH = trainingPackagePath("features", "postcode-shapes.json")
+export const POSTCODE_SHAPES_PATH = trainerDataPath("postcode-shapes.json")
 
 /**
  * Each country's postcode syntax, which the postcode finders accept a value against.
  */
-export const POSTCODE_SYNTAX_PATH = trainingPackagePath("data", "postcode-syntax.json")
+export const POSTCODE_SYNTAX_PATH = trainerDataPath("postcode-syntax.json")
 
 /**
  * Each country's postcode side relative to its locality-and-region block, which the postcode move reads.
  */
-export const POSTCODE_LAYOUTS_PATH = trainingPackagePath("data", "augment", "postcode-layouts.json")
+export const POSTCODE_LAYOUTS_PATH = trainerDataPath("postcode-layouts.json")
 
 /**
  * The label schema `packages/neural/tools/emit-label-schema.run.ts` writes from the TypeScript label sets.
@@ -165,6 +165,45 @@ export function samplerConfigJSON(config: TrainingConfig, options: SamplerConfig
 		volume_mount: $public.MAILWOMAN_VOLUME_MOUNT,
 		sha256_cache_path: $public.MAILWOMAN_SHA256_CACHE ?? null,
 		...(options.shuffleBuffer == null ? {} : { shuffle_buffer: options.shuffleBuffer }),
+		...(data.char_mode === "off" ? {} : { char: charSamplerConfig(data) }),
+	})
+}
+
+/**
+ * The sampler's character-path section, as the trainer's `sampler_config` builds it:
+ * the unit count defaults to `max_length`, then 128.
+ */
+function charSamplerConfig(data: TrainingConfig["data"]) {
+	if (!data.char_vocab_path) throw new Error("data.char_mode requires data.char_vocab_path")
+
+	return {
+		mode: data.char_mode,
+		vocab_path: data.char_vocab_path,
+		max_units: data.max_units ?? data.max_length ?? 128,
+		max_unit_width: data.max_unit_width,
+		char_ctx: data.char_ctx,
+		label_set: data.label_set,
+	}
+}
+
+/**
+ * The char encoder a config's character path encodes with.
+ *
+ * @throws When the config encodes on the SentencePiece path.
+ */
+export function createConfigCharEncoder(mtf: MTFNode, data: TrainingConfig["data"]): NativeCharEncoder {
+	if (data.char_mode === "off") throw new Error("data.char_mode=off encodes on the SentencePiece path")
+
+	const char = charSamplerConfig(data)
+
+	return mtf.createCharEncoder({
+		mode: char.mode as "word" | "char",
+		vocabPath: char.vocab_path,
+		maxUnits: char.max_units,
+		maxUnitWidth: char.max_unit_width,
+		charCtx: char.char_ctx,
+		labelSet: char.label_set,
+		labelSchemaPath: LABEL_SCHEMA_PATH,
 	})
 }
 
@@ -380,6 +419,34 @@ export async function readAddressSystemLookup(): Promise<AddressSystemLookup> {
 export interface ModelBatch extends EncodedRows {
 	localeIDs: BigInt64Array
 	addressSystemIDs: BigInt64Array
+	/**
+	 * The character path's `[B, S, W]` ids and their unit width, absent on the SentencePiece path.
+	 */
+	char?: { ids: BigInt64Array; width: number }
+}
+
+/**
+ * Encodes a character-path batch as the trainer feeds it: the char ids, an all-zero
+ * `input_ids`, and each row's locale and address-system ids in row order.
+ */
+export function encodeCharModelBatch(
+	encoder: NativeCharEncoder,
+	addressSystem: AddressSystemLookup,
+	rows: SampledRow[]
+): ModelBatch {
+	const encoded = encoder.encodeBatch(rows)
+
+	return {
+		rows: encoded.rows,
+		maxLength: encoded.maxUnits,
+		inputIDs: new BigInt64Array(encoded.rows * encoded.maxUnits),
+		attentionMask: encoded.attentionMask,
+		labels: encoded.labels,
+		channels: [],
+		localeIDs: BigInt64Array.from(rows, (row) => BigInt(localeID(row.country))),
+		addressSystemIDs: BigInt64Array.from(rows, (row) => BigInt(addressSystem(row.country, row.raw))),
+		char: { ids: encoded.charIDs, width: encoded.maxUnitWidth },
+	}
 }
 
 /**

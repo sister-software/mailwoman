@@ -82,6 +82,14 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 	it("names the command it did not admit", () => {
 		expect(refusalFor(`curl -sS https://example.com`)).toContain("`curl`")
 	})
+
+	it("reads a removal's derived status below the repository root, for a checkout under a scratchpad directory", () => {
+		const root = "/tmp/session/scratchpad/clone"
+
+		expect(judgeCommand(`rm -rf packages/core/lib`, root, root)).not.toBeNull()
+		expect(judgeCommand(`rm -rf packages/core/out`, root, root)).toBeNull()
+		expect(judgeCommand(`rm -rf scratchpad/notes`, root, root)).toBeNull()
+	})
 })
 
 describe("bash-write-guard: a Modal launch this shell could kill", () => {
@@ -91,22 +99,19 @@ describe("bash-write-guard: a Modal launch this shell could kill", () => {
 	// was stopped by the host's memory guard on 2026-09-09 and Modal cancelled the
 	// input at step 21,000 of 60,000, last save at 20,000.
 	it.each([
-		["a detached launch", `modal run -d corpus-python/launch/train_remote.py --config x.yaml`],
-		["a detached launch, long flag", `modal run --detach corpus-python/launch/train_remote.py --config x.yaml`],
-		["a timed launch", `timeout 600 modal run -d corpus-python/launch/train_remote.py --config x.yaml`],
-		["a timed Modal command with no detach", `timeout 200 modal run corpus-python/launch/train_remote.py::audit`],
-		["a detached launch behind a directory change", `cd corpus-python && modal run -d launch/train_remote.py`],
-		["a detached launch through the venv", `uv run --extra dev modal run -d -m launch.train_remote --config x.yaml`],
-		["a detached launch through the venv, long flag", `uv run modal run --detach -m launch.train_remote`],
-		["a timed launch through the venv", `timeout 600 uv run --extra dev modal run -m launch.train_remote::audit`],
+		["a detached launch", `modal run -d launch/app.py --config x.yaml`],
+		["a detached launch, long flag", `modal run --detach launch/app.py --config x.yaml`],
+		["a timed launch", `timeout 600 modal run -d launch/app.py --config x.yaml`],
+		["a timed Modal command with no detach", `timeout 200 modal run launch/app.py::audit`],
+		["a detached launch behind a directory change", `cd launch && modal run -d app.py`],
 	])("refuses %s", (_label, command) => {
 		expect(refusalFor(command)).not.toBeNull()
 	})
 
 	it("explains process ownership rather than the Write tool", () => {
-		const command = `modal run -d corpus-python/launch/train_remote.py --config x.yaml`
+		const command = `modal run -d launch/app.py --config x.yaml`
 
-		expect(guidanceFor(command)).toContain("launch-detached.run.ts")
+		expect(guidanceFor(command)).toContain("launch.run.ts start")
 		expect(guidanceFor(command)).not.toContain("Edit tool")
 	})
 
@@ -219,13 +224,8 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a log captured through tee outside the tree", `yarn compile 2>&1 | tee /tmp/compile.log`],
 		["a timeout around a test run", `timeout 600 yarn test`],
 		["this repository's operator CLI", `yarn mwops health all`],
-		[
-			"a short Modal command with no detach and no timeout",
-			`modal run corpus-python/launch/train_remote.py::sync_v540`,
-		],
+		["a short Modal command with no detach and no timeout", `modal run launch/app.py::sync_v540`],
 		["a Modal volume read", `modal volume ls mailwoman-training /output-v540/checkpoints`],
-		["a short Modal command through the venv", `uv run --extra dev modal run -m launch.train_remote::sync --version x`],
-		["a venv test run", `uv run --extra dev pytest corpus-python/tests -q -d`],
 		[
 			"the detached launcher itself",
 			`node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log /tmp/r.log -- modal run -d x.py`,
@@ -279,11 +279,11 @@ describe("bash-write-guard: the hook around the judgment", () => {
 			hook_event_name: "PreToolUse",
 			tool_name: "Bash",
 			cwd: REPO_ROOT,
-			tool_input: { command: `modal run -d corpus-python/launch/train_remote.py --config x.yaml` },
+			tool_input: { command: `modal run -d launch/app.py --config x.yaml` },
 		})
 
 		expect(output.hookSpecificOutput?.permissionDecision).toBe("deny")
-		expect(output.hookSpecificOutput?.permissionDecisionReason).toContain("launch-detached.run.ts")
+		expect(output.hookSpecificOutput?.permissionDecisionReason).toContain("launch.run.ts start")
 	})
 
 	it("ignores a tool that is not Bash", () => {

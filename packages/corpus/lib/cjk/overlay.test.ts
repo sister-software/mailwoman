@@ -185,6 +185,12 @@ describe("buildCJKOverlay", () => {
 
 		expect((report.get("cn_span_tags") as Map<string, number>).get("locality_unit")).toBe(2)
 		expect((report.get("char_vocab") as Map<string, number>).get("juso-kr")).toBe(16)
+
+		// The merged vocabulary adds the Chinese and extra corpora's characters to the JP one, so it is larger.
+		expect((report.get("char_vocab") as Map<string, number>).get("cjk")).toBeGreaterThan(
+			(report.get("char_vocab") as Map<string, number>).get("jp")!
+		)
+
 		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/cn-board.jsonl`))).toHaveLength(2)
 
 		const vocab = await readLocalJSONFile<Record<string, number>>(`${outDir}/char-vocab-cjk.json`)

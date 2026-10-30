@@ -1,7 +1,0 @@
-# The toolchain every build of this workspace uses: the WebAssembly binary, the `mailwoman_mtf` Python extension the
-# lab venv and CI build through uv, and the Modal training image (`corpus-python/launch/app.py` pins the same version).
-[toolchain]
-channel = "1.99.1"
-targets = ["wasm32-unknown-unknown"]
-profile = "minimal"
-components = ["rustfmt", "clippy"]

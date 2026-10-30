@@ -9,7 +9,7 @@
  */
 
 import { JP_PREFECTURES as CODEX_JP_PREFECTURES } from "@mailwoman/codex/jp"
-import { pythonSplitWhitespace, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 
 import { foldHalfwidthKana, kanjiToInt } from "#cjk/text"
 
@@ -46,14 +46,14 @@ const CHOME_TAIL = /^(.*?)([0-9０-９〇一二三四五六七八九十百]+)丁
  * Hyphens are kept, because U+30FC is a katakana character in a name, and itaiji are not folded.
  */
 export function normalizeJPName(text: string): string {
-	return pythonSplitWhitespace(foldHalfwidthKana(text.normalize("NFC"))).join("")
+	return splitWhitespace(foldHalfwidthKana(text.normalize("NFC"))).join("")
 }
 
 /**
  * A number field: NFC, half-width kana folded, and every hyphen equivalent folded to `-`.
  */
 export function normalizeJPNumber(text: string): string {
-	return pythonStrip(foldHalfwidthKana(text.normalize("NFC")).replace(HYPHEN_CLASS, "-"))
+	return foldHalfwidthKana(text.normalize("NFC")).replace(HYPHEN_CLASS, "-").trim()
 }
 
 /**

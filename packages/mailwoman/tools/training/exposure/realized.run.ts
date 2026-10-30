@@ -118,6 +118,6 @@ const report = buildReport([realized], {
 
 const out = values.json ?? join(dirname(descriptionPath), `exposure-realized-from-${inputs.counted_from_step}.json`)
 
-await writeAuditReport(out, report, { ensureASCII: false, trailingNewline: true })
+await writeAuditReport(out, report, { trailingNewline: true })
 
 console.log(`[exposure] realized draws (${rows} rows) → ${out}`)

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Cross-language guard for the inference-side anchor features: the feature layout must match the
- *   Python training pipeline (`mailwoman_train/tokenizer.py::anchor_feature_vector`) or the model is
+ *   Python training pipeline (`anchor_feature_vector`, now `mtf-channels`) or the model is
  *   fed garbage at inference. The pinned vectors fail if the TypeScript implementation drifts.
  */
 import { mulberry32 } from "@mailwoman/core/random"
@@ -95,7 +95,7 @@ describe("anchorFeatureVector — pinned to Python anchor_feature_vector", () =>
 	})
 
 	it("a DE+US collision (10115) byte-matches Python", () => {
-		// python: anchor_feature_vector({"DE":0.5,"US":0.5}, 52.5323, 13.3846)
+		// The Python trainer's anchor_feature_vector({"DE":0.5,"US":0.5}, 52.5323, 13.3846)
 		const v = anchorFeatureVector({ DE: 0.5, US: 0.5 }, 52.5323, 13.3846)
 		const expected = [0.5, 0, 0.5, 0, 0, 0, 0, 0, 0, 0.583692, 0.074359]
 		expected.forEach((e, i) => expect(v[i]!).toBeCloseTo(e, 5))
@@ -152,9 +152,8 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
  * The default stays byte-identical to the pre-fix scan.
  * The test compares against a verbatim copy rather than a hash, so the oracle is readable.
  *
- * It also checks that `spanMode: "shaped"` keys a span exactly the way
- * `mailwoman_train/tokenizer.py::_paint_anchor_chars` does (`raw[begin:end].replace(" ", "").upper()`)
- * and paints the span's full extent.
+ * It also checks that `spanMode: "shaped"` keys a span exactly the way the trainer's `_paint_anchor_chars`
+ * does (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
  */
 describe("buildAnchorFeatures — span modes", () => {
 	/**

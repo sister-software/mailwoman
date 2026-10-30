@@ -25,7 +25,12 @@ import type { APIClient } from "@mailwoman/core/api"
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories, movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import {
+	makeDirectories,
+	movePath,
+	removePathIfPresent,
+	writeLocalJSONFileAtomically,
+} from "@mailwoman/core/fs/writers"
 import { md5File, sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import {
@@ -45,6 +50,7 @@ import {
 	readerIncompatibility,
 	type SelectedSource,
 	type SelectionEntry,
+	selectionScopesOf,
 } from "@mailwoman/core/layers"
 import { isoDate } from "@mailwoman/core/utils"
 import { PathBuilder, type PathBuilderLike, relative, resolvePath } from "path-ts"
@@ -58,7 +64,6 @@ import {
 	readInstalledManifest,
 	replaceActiveSelection,
 	writeInstallation,
-	writeRecordAtomically,
 } from "#data/catalog"
 import { placeArtifact, readerCompatibility } from "#data/install"
 import { ProblemKind } from "#data/plan"
@@ -384,8 +389,8 @@ async function acquireInput(
 		acquiredAt: (options.now?.() ?? new Date()).toISOString(),
 	}
 
-	await writeRecordAtomically(receipt, directory("receipt.json"))
-	await writeRecordAtomically(acquired.receipt, directory("transfer.json"))
+	await writeLocalJSONFileAtomically(receipt, directory("receipt.json"))
+	await writeLocalJSONFileAtomically(acquired.receipt, directory("transfer.json"))
 	await removePathIfPresent(acquisitionDirectory(dataRoot, url))
 
 	return {
@@ -455,27 +460,29 @@ async function activationEntries(
 	}
 
 	for (const built of outputs) {
-		const scope = { country: built.output.country, subdivision: null }
+		for (const scope of selectionScopesOf(built.manifest.scope)) {
+			const existing =
+				current?.entries.find(
+					(entry) =>
+						entry.role === built.manifest.role &&
+						entry.scope.country === scope.country &&
+						entry.scope.subdivision === scope.subdivision
+				)?.order ?? []
 
-		const existing =
-			current?.entries.find(
-				(entry) =>
-					entry.role === built.manifest.role && entry.scope.country === scope.country && !entry.scope.subdivision
-			)?.order ?? []
+			const kept: SelectedSource[] = []
 
-		const kept: SelectedSource[] = []
-
-		for (const source of existing) {
-			if ((await recipeOf(source)) !== built.manifest.recipe) {
-				kept.push(source)
+			for (const source of existing) {
+				if ((await recipeOf(source)) !== built.manifest.recipe) {
+					kept.push(source)
+				}
 			}
-		}
 
-		entries.push({
-			role: built.manifest.role,
-			scope,
-			order: [...kept, { installationID: installation.id, artifactID: built.manifest.id }],
-		})
+			entries.push({
+				role: built.manifest.role,
+				scope,
+				order: [...kept, { installationID: installation.id, artifactID: built.manifest.id }],
+			})
+		}
 	}
 
 	return entries
@@ -616,7 +623,7 @@ export async function executeBuild(
 			builtAt: createdAt,
 		}
 
-		await writeRecordAtomically(record, directory("build.json"))
+		await writeLocalJSONFileAtomically(record, directory("build.json"))
 	}
 
 	const members = outputs.map((built) => ({

@@ -3,7 +3,7 @@ name = "mtf-wasm"
 description = "The C-ABI WebAssembly adapter that @mailwoman/mtf's TypeScript loader calls."
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0 AND BSD-2-Clause"
 repository.workspace = true
 
 [lib]

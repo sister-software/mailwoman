@@ -378,12 +378,12 @@ describe("resolveTrainingConfig", () => {
 		untieredShippingLocales: {},
 		trainingConfigs: {
 			"en-us": {
-				config: "corpus-python/src/mailwoman_train/configs/fixture-latin.yaml",
+				config: "packages/corpus/data/training-configs/fixture-latin.yaml",
 				graphPackage: "@mailwoman/neural-weights-en-us",
 				readFrom: "model_lineage",
 			},
 			cjk: {
-				config: "corpus-python/src/mailwoman_train/configs/fixture-char.yaml",
+				config: "packages/corpus/data/training-configs/fixture-char.yaml",
 				graphPackage: "@mailwoman/neural-weights-cjk",
 				readFrom: "training.run",
 			},

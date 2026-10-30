@@ -39,7 +39,6 @@ pub struct EncoderSpec {
 	pub locale_loss_weight: f64,
 	pub use_postcode_anchor: bool,
 	pub anchor_feature_dim: i64,
-	pub inject_first_token: bool,
 	pub use_gazetteer_anchor: bool,
 	pub gazetteer_feature_dim: i64,
 	pub use_country_anchor: bool,
@@ -51,8 +50,6 @@ pub struct EncoderSpec {
 	pub locality_surface_feature_dim: i64,
 	pub use_code_unit_anchor: bool,
 	pub code_unit_feature_dim: i64,
-	pub use_affix_head: bool,
-	pub use_deploc_head: bool,
 	pub use_conventions_loss_mask: bool,
 	pub use_span_boundary_head: bool,
 	pub span_boundary_loss_weight: f64,
@@ -86,6 +83,20 @@ pub struct SchemaDefaults<'a> {
 
 fn get<'a>(obj: &'a Map<String, Value>, key: &str) -> Option<&'a Value> {
 	obj.get(key).filter(|v| !v.is_null())
+}
+
+/// The model keys of retired features: the affix and dependent-locality heads and the first-token anchor injection.
+/// No trained model sets one. A checkpoint config that records one as `false` reads as before, and `true` is refused.
+const RETIRED_KEYS: [&str; 3] = ["use_affix_head", "use_deploc_head", "inject_first_token"];
+
+/// Refuses a model section that enables a retired feature.
+fn refuse_retired(obj: &Map<String, Value>) -> Result<()> {
+	for key in RETIRED_KEYS {
+		if bool_or(obj, key, false)? {
+			return Err(fail!("model.{key} is a retired feature; no trained model uses it"));
+		}
+	}
+	Ok(())
 }
 
 fn bool_or(obj: &Map<String, Value>, key: &str, default: bool) -> Result<bool> {
@@ -168,6 +179,7 @@ impl EncoderSpec {
 		let default_labels = defaults.labels;
 		let doc: Value = serde_json::from_str(text)?;
 		let obj = doc.as_object().ok_or_else(|| fail!("config.json is not an object"))?;
+		refuse_retired(obj)?;
 		let num_labels = i64_req(obj, "num_labels")?;
 		let id_to_label: Vec<String> = match get(obj, "id2label").and_then(Value::as_object) {
 			Some(map) if !map.is_empty() => (0..num_labels)
@@ -209,7 +221,6 @@ impl EncoderSpec {
 			locale_loss_weight: f64_or(obj, "locale_loss_weight", 0.0)?,
 			use_postcode_anchor: bool_or(obj, "use_postcode_anchor", false)?,
 			anchor_feature_dim: i64_or(obj, "anchor_feature_dim", 9 + 2)?,
-			inject_first_token: bool_or(obj, "inject_first_token", false)?,
 			use_gazetteer_anchor: bool_or(obj, "use_gazetteer_anchor", false)?,
 			gazetteer_feature_dim: i64_or(obj, "gazetteer_feature_dim", 5)?,
 			use_country_anchor: bool_or(obj, "use_country_anchor", false)?,
@@ -221,8 +232,6 @@ impl EncoderSpec {
 			locality_surface_feature_dim: i64_or(obj, "locality_surface_feature_dim", 2)?,
 			use_code_unit_anchor: bool_or(obj, "use_code_unit_anchor", false)?,
 			code_unit_feature_dim: i64_or(obj, "code_unit_feature_dim", 5)?,
-			use_affix_head: bool_or(obj, "use_affix_head", false)?,
-			use_deploc_head: bool_or(obj, "use_deploc_head", false)?,
 			use_conventions_loss_mask: bool_or(obj, "use_conventions_loss_mask", false)?,
 			use_span_boundary_head: bool_or(obj, "use_span_boundary_head", false)?,
 			span_boundary_loss_weight: f64_or(obj, "span_boundary_loss_weight", 0.0)?,
@@ -263,14 +272,9 @@ impl EncoderSpec {
 		num_address_systems: i64,
 		conventions: &[Vec<String>],
 	) -> Result<Self> {
+		refuse_retired(model)?;
 		if label_set != "stage3" {
-			for flag in [
-				"use_conventions_loss_mask",
-				"use_affix_head",
-				"use_deploc_head",
-				"use_span_boundary_head",
-				"use_span_scorer",
-			] {
+			for flag in ["use_conventions_loss_mask", "use_span_boundary_head", "use_span_scorer"] {
 				if bool_or(model, flag, false)? {
 					return Err(fail!("model.{flag} is not supported with data.label_set={label_set:?}"));
 				}
@@ -304,7 +308,6 @@ impl EncoderSpec {
 			locale_loss_weight: f64_or(model, "locale_loss_weight", 0.0)?,
 			use_postcode_anchor: bool_or(model, "use_postcode_anchor", false)?,
 			anchor_feature_dim: num_locales + 2,
-			inject_first_token: bool_or(model, "inject_first_token", false)?,
 			use_gazetteer_anchor: bool_or(model, "use_gazetteer_anchor", false)?,
 			gazetteer_feature_dim: i64_or(model, "gazetteer_feature_dim", 5)?,
 			use_country_anchor: bool_or(model, "use_country_anchor", false)?,
@@ -316,8 +319,6 @@ impl EncoderSpec {
 			locality_surface_feature_dim: i64_or(model, "locality_surface_feature_dim", 2)?,
 			use_code_unit_anchor: bool_or(model, "use_code_unit_anchor", false)?,
 			code_unit_feature_dim: i64_or(model, "code_unit_feature_dim", 5)?,
-			use_affix_head: bool_or(model, "use_affix_head", false)?,
-			use_deploc_head: bool_or(model, "use_deploc_head", false)?,
 			use_conventions_loss_mask: bool_or(model, "use_conventions_loss_mask", false)?,
 			use_span_boundary_head: bool_or(model, "use_span_boundary_head", false)?,
 			span_boundary_loss_weight: f64_or(model, "span_boundary_loss_weight", 0.0)?,
@@ -447,7 +448,6 @@ impl EncoderSpec {
 			"locale_loss_weight": self.locale_loss_weight,
 			"use_postcode_anchor": self.use_postcode_anchor,
 			"anchor_feature_dim": dims[0],
-			"inject_first_token": self.inject_first_token && self.use_postcode_anchor,
 			"use_gazetteer_anchor": self.use_gazetteer_anchor,
 			"gazetteer_feature_dim": dims[1],
 			"use_country_anchor": self.use_country_anchor,
@@ -459,8 +459,6 @@ impl EncoderSpec {
 			"use_code_unit_anchor": self.use_code_unit_anchor,
 			"code_unit_feature_dim": dims[5],
 			"country_ambiguous_scale": self.country_ambiguous_scale,
-			"use_affix_head": self.use_affix_head,
-			"use_deploc_head": self.use_deploc_head,
 			"use_conventions_loss_mask": self.use_conventions_loss_mask,
 			"use_span_boundary_head": self.use_span_boundary_head,
 			"span_boundary_loss_weight": self.span_boundary_loss_weight,

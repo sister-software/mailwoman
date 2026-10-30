@@ -152,7 +152,7 @@ const written = await writeHeldoutDataset(values.out, {
 		files: [...extracts, ...wof.files],
 	},
 	sampling: {
-		method: "per-record-id-country-kind-hash-order",
+		method: "per-group-text-hash-order",
 		perCountry,
 		seed: null,
 		order:

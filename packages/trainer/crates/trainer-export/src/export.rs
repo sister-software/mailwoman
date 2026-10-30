@@ -29,8 +29,10 @@ use crate::checkpoint::{read_checkpoint, StateDict};
 use crate::config::ModelConfig;
 use crate::graph::{attr_float, attr_int, attr_ints, value_info, Dim, GraphBuilder};
 use crate::onnx::tensor_proto::DataType;
-use crate::onnx::{GraphProto, ModelProto, OperatorSetIdProto};
+use crate::onnx::{GraphProto, ModelProto, OperatorSetIdProto, ValueInfoProto};
 use crate::{fail, Result};
+// The soft-feed channels, in the order the encoder writes them and the graph declares their inputs.
+use mtf_channels::encoder::CHANNEL_NAMES as CHANNELS;
 
 /// The opset the Python exporter targets (`export_to_onnx(opset=17)`).
 pub const OPSET: i64 = 17;
@@ -40,16 +42,6 @@ pub const IR_VERSION: i64 = 10;
 
 /// `nn.LayerNorm`'s default epsilon, as the float32 the graph stores.
 const LAYER_NORM_EPSILON: f32 = 1e-5;
-
-/// The soft-feed channels in the order `build_export_graph` declares their inputs.
-const CHANNELS: [&str; 6] = [
-	"anchor",
-	"gazetteer",
-	"country",
-	"street_type",
-	"locality_surface",
-	"code_unit",
-];
 
 /// One soft-feed channel the checkpoint enables.
 struct Channel {
@@ -152,15 +144,14 @@ fn char_front(config: &ModelConfig, state: &StateDict, options: &ExportOptions) 
 
 /// Reads the interface and refuses a combination the Python exporter refuses or this writer does not build.
 pub fn interface(config: &ModelConfig, state: &StateDict, options: &ExportOptions) -> Result<Interface> {
-	let unsupported = [
+	// Retired features. A checkpoint written before the retirement may still record one.
+	let retired = [
 		(config.use_affix_head, "use_affix_head"),
 		(config.use_deploc_head, "use_deploc_head"),
 		(config.inject_first_token, "inject_first_token"),
 	];
-	if let Some((_, what)) = unsupported.iter().find(|(on, _)| *on) {
-		return Err(fail!(
-			"the Rust exporter does not build {what} yet; export it with corpus-python's exporter"
-		));
+	if let Some((_, what)) = retired.iter().find(|(on, _)| *on) {
+		return Err(fail!("{what} is a retired feature; no exporter builds it"));
 	}
 
 	let hidden = config.hidden_size;
@@ -577,6 +568,288 @@ impl Writer<'_> {
 	}
 }
 
+/// The graph's declared inputs: the token ids or character windows, the attention mask, each channel's features and
+/// confidence, and the locale hint.
+fn graph_inputs(iface: &Interface) -> Vec<ValueInfoProto> {
+	let batch = || Dim::Param("batch".into());
+	let sequence = || Dim::Param("sequence".into());
+
+	// The char path reads no token ids: an `input_ids` input would bind the runtime to a vocabulary the model lacks.
+	let units = match &iface.char {
+		Some(front) => value_info(
+			"char_ids",
+			DataType::Int64,
+			&[batch(), sequence(), Dim::Fixed(front.window as i64)],
+		),
+		None => value_info("input_ids", DataType::Int64, &[batch(), sequence()]),
+	};
+	let mut inputs = vec![
+		units,
+		value_info("attention_mask", DataType::Int64, &[batch(), sequence()]),
+	];
+	for channel in &iface.channels {
+		let width = Dim::Fixed(channel.width as i64);
+		inputs.push(value_info(
+			&format!("{}_features", channel.prefix),
+			DataType::Float,
+			&[batch(), sequence(), width],
+		));
+		inputs.push(value_info(
+			&format!("{}_confidence", channel.prefix),
+			DataType::Float,
+			&[batch(), sequence()],
+		));
+	}
+	if iface.locale_hint {
+		inputs.push(value_info("locale_hint", DataType::Int64, &[batch()]));
+	}
+	inputs
+}
+
+/// The sequence's dynamic dimensions, which later sections reshape by.
+struct Dims {
+	batch: String,
+	sequence: String,
+	zero: String,
+}
+
+impl Writer<'_> {
+	/// The token (or character-window) and position embeddings, summed. The token path's node order is the one F2
+	/// measured.
+	fn embeddings(&mut self, config: &ModelConfig, iface: &Interface, units: &str) -> Result<(String, Dims)> {
+		let e = self.hidden;
+		let mut tokens = match iface.char {
+			Some(_) => String::new(),
+			None => {
+				let token_table = self.param("token_embeddings.weight", &[config.vocab_size, e])?;
+				self.g.op(
+					"Gather",
+					&[&token_table, "input_ids"],
+					vec![attr_int("axis", 0)],
+					"embedding",
+				)
+			}
+		};
+		let batch_dim = self.g.op(
+			"Shape",
+			&[units],
+			vec![attr_int("start", 0), attr_int("end", 1)],
+			"batch_dim",
+		);
+		let seq_dim = self.g.op(
+			"Shape",
+			&[units],
+			vec![attr_int("start", 1), attr_int("end", 2)],
+			"sequence_dim",
+		);
+		let mut batch_seq = String::new();
+		if let Some(front) = &iface.char {
+			batch_seq = self.g.op(
+				"Concat",
+				&[&batch_dim, &seq_dim],
+				vec![attr_int("axis", 0)],
+				"batch_sequence",
+			);
+			tokens = self.char_front(front, &batch_seq)?;
+		}
+		let seq_len = self.g.op("Squeeze", &[&seq_dim], vec![], "sequence_len");
+		let zero = self.g.scalar_i64(0);
+		let step = self.g.scalar_i64(1);
+		let positions = self.g.op("Range", &[&zero, &seq_len, &step], vec![], "positions");
+		let positions = self.unsqueeze(&positions, &[0], "positions.row");
+		if iface.char.is_none() {
+			batch_seq = self.g.op(
+				"Concat",
+				&[&batch_dim, &seq_dim],
+				vec![attr_int("axis", 0)],
+				"batch_sequence",
+			);
+		}
+		let positions = self.g.op("Expand", &[&positions, &batch_seq], vec![], "position_ids");
+		let position_table = self.param("position_embeddings.weight", &[config.max_position_embeddings, e])?;
+		let positions = self.g.op(
+			"Gather",
+			&[&position_table, &positions],
+			vec![attr_int("axis", 0)],
+			"position_embedding",
+		);
+		let h = self.g.op("Add", &[&tokens, &positions], vec![], "embedded");
+		Ok((
+			h,
+			Dims {
+				batch: batch_dim,
+				sequence: seq_dim,
+				zero,
+			},
+		))
+	}
+
+	/// The phrase-prior projection over zeros: the export interface feeds no phrase features.
+	fn phrase_input(&mut self, h: String, width: usize, dims: &Dims) -> Result<String> {
+		let e = self.hidden;
+		let width_dim = self.g.ints(&[width as i64]);
+		let shape = self.g.op(
+			"Concat",
+			&[&dims.batch, &dims.sequence, &width_dim],
+			vec![attr_int("axis", 0)],
+			"phrase_features.shape",
+		);
+		let zero_f = self.g.scalar_f32(0.0);
+		let zeros = self.g.op("Expand", &[&zero_f, &shape], vec![], "phrase_features");
+		let joined = self
+			.g
+			.op("Concat", &[&h, &zeros], vec![attr_int("axis", -1)], "phrase_input");
+		self.linear3(&joined, "phrase_input_projection", e, e + width, "phrase_projected")
+	}
+
+	/// Each channel adds confidence * (W @ features + b + cue).
+	fn channels(&mut self, mut h: String, channels: &[Channel]) -> Result<String> {
+		let e = self.hidden;
+		for channel in channels {
+			let prefix = channel.prefix;
+			let mut features = format!("{prefix}_features");
+			if let Some(scale) = &channel.scale {
+				let scale = self.g.f32("country_feature_scale", &[scale.len() as i64], scale);
+				features = self.g.op(
+					"Mul",
+					&[&features, &scale],
+					vec![],
+					&format!("{prefix}_features.scaled"),
+				);
+			}
+			let projected = self.linear3(
+				&features,
+				&format!("{prefix}_projection"),
+				e,
+				channel.width,
+				&format!("{prefix}.projected"),
+			)?;
+			let cue = self.param(&format!("{prefix}_token_embedding"), &[e])?;
+			let vector = self
+				.g
+				.op("Add", &[&projected, &cue], vec![], &format!("{prefix}.vector"));
+			let confidence = self.unsqueeze(&format!("{prefix}_confidence"), &[-1], &format!("{prefix}.confidence"));
+			let signal = self
+				.g
+				.op("Mul", &[&confidence, &vector], vec![], &format!("{prefix}.signal"));
+			h = self.g.op("Add", &[&h, &signal], vec![], &format!("{prefix}.added"));
+		}
+		Ok(h)
+	}
+
+	/// Adds the locale hint's address-system embedding to every position.
+	fn locale_hint(&mut self, h: String, config: &ModelConfig) -> Result<String> {
+		let systems = config.num_address_systems + 1;
+		let table = self.param("locale_hint_embedding.weight", &[systems, self.hidden])?;
+		let hint = self.g.op(
+			"Gather",
+			&[&table, "locale_hint"],
+			vec![attr_int("axis", 0)],
+			"locale_hint.embedding",
+		);
+		let hint = self.unsqueeze(&hint, &[1], "locale_hint.row");
+		Ok(self.g.op("Add", &[&h, &hint], vec![], "hinted"))
+	}
+
+	/// The key-padding mask, [B, 1, 1, S], added to every head's scores.
+	fn padding_mask(&mut self, zero: &str) -> String {
+		let padded = self.g.op("Equal", &["attention_mask", zero], vec![], "padding");
+		let minus_inf = self.g.scalar_f32(f32::NEG_INFINITY);
+		let zero_f = self.g.scalar_f32(0.0);
+		let mask = self
+			.g
+			.op("Where", &[&padded, &minus_inf, &zero_f], vec![], "padding.additive");
+		self.unsqueeze(&mask, &[1, 2], "padding.mask")
+	}
+
+	/// The heads over the masked mean of the sequence: the address-system and locale logits, and the locale FiLM that
+	/// conditions `h`. Each head's output is declared in `outputs` where `PlainOutputs._outputs` orders it.
+	fn pooled_heads(
+		&mut self,
+		mut h: String,
+		config: &ModelConfig,
+		iface: &Interface,
+		outputs: &mut Vec<ValueInfoProto>,
+	) -> Result<String> {
+		let e = self.hidden;
+		// The masked mean over the sequence: sum(h * m) / max(sum(m), 1).
+		let m = self.g.op(
+			"Cast",
+			&["attention_mask"],
+			vec![attr_int("to", DataType::Float as i64)],
+			"mask.float",
+		);
+		let m = self.unsqueeze(&m, &[-1], "mask.column");
+		let masked = self.g.op("Mul", &[&h, &m], vec![], "pool.masked");
+		let axis = self.g.ints(&[1]);
+		let attrs = || vec![attr_int("keepdims", 0), attr_int("noop_with_empty_axes", 0)];
+		let total = self.g.op("ReduceSum", &[&masked, &axis], attrs(), "pool.sum");
+		let count = self.g.op("ReduceSum", &[&m, &axis], attrs(), "pool.count");
+		let one = self.g.scalar_f32(1.0);
+		let count = self.g.op("Clip", &[&count, &one], vec![], "pool.count.clamped");
+		let pooled = self.g.op("Div", &[&total, &count], vec![], "pooled");
+
+		if iface.address_system {
+			let n = config.num_address_systems;
+			self.gemm(&pooled, "address_system_head", n, e, Some("address_system_logits"))?;
+			outputs.push(value_info(
+				"address_system_logits",
+				DataType::Float,
+				&[Dim::Fixed(1), Dim::Fixed(n as i64)],
+			));
+		}
+		if iface.locale {
+			let n = self.state.shape("locale_head.weight")?.first().copied().unwrap_or(0);
+			if let Some(declared) = config.num_locales {
+				if declared != n {
+					return Err(fail!(
+						"locale_head.weight has {n} rows, config num_locales is {declared}"
+					));
+				}
+			}
+			self.gemm(&pooled, "locale_head", n, e, Some("locale_logits"))?;
+			outputs.insert(
+				1,
+				value_info("locale_logits", DataType::Float, &[Dim::Fixed(1), Dim::Fixed(n as i64)]),
+			);
+
+			// FiLM: h = (1 + gamma) * h + beta, gamma and beta the two halves of locale_film(pooled).
+			let film = self.gemm(&pooled, "locale_film", 2 * e, e, None)?;
+			let (start, middle, end, axes, steps) = (
+				self.g.ints(&[0]),
+				self.g.ints(&[e as i64]),
+				self.g.ints(&[i64::MAX]),
+				self.g.ints(&[1]),
+				self.g.ints(&[1]),
+			);
+			let gamma = self
+				.g
+				.op("Slice", &[&film, &start, &middle, &axes, &steps], vec![], "film.gamma");
+			let beta = self
+				.g
+				.op("Slice", &[&film, &middle, &end, &axes, &steps], vec![], "film.beta");
+			let gamma = self.g.op("Add", &[&gamma, &one], vec![], "film.gain");
+			let gamma = self.unsqueeze(&gamma, &[1], "film.gain.row");
+			let beta = self.unsqueeze(&beta, &[1], "film.beta.row");
+			let scaled = self.g.op("Mul", &[&gamma, &h], vec![], "film.scaled");
+			h = self.g.op("Add", &[&scaled, &beta], vec![], "film");
+		}
+		Ok(h)
+	}
+
+	/// The token classifier, written to the `logits` output.
+	fn classifier(&mut self, h: &str, labels: usize) -> Result<()> {
+		let e = self.hidden;
+		let weight = self.state.f32("classifier.weight", &[labels, e])?;
+		let wt = transposed(weight, labels, e);
+		let wt = self.g.f32("classifier.weight.T", &[e as i64, labels as i64], &wt);
+		let bias = self.param("classifier.bias", &[labels])?;
+		let product = self.g.op("MatMul", &[h, &wt], vec![], "classifier.matmul");
+		self.g.op_into("Add", &[&product, &bias], vec![], "logits");
+		Ok(())
+	}
+}
+
 /// Builds the ONNX model for a checkpoint already read.
 pub fn build_model(config: &ModelConfig, state: &StateDict, options: &ExportOptions) -> Result<ModelProto> {
 	let iface = interface(config, state, options)?;
@@ -601,174 +874,22 @@ pub fn build_model(config: &ModelConfig, state: &StateDict, options: &ExportOpti
 		state,
 		hidden: e,
 	};
-	let batch = || Dim::Param("batch".into());
-	let sequence = || Dim::Param("sequence".into());
-
-	// The char path reads no token ids: an `input_ids` input would bind the runtime to a vocabulary the model lacks.
-	let units = match &iface.char {
-		Some(front) => value_info(
-			"char_ids",
-			DataType::Int64,
-			&[batch(), sequence(), Dim::Fixed(front.window as i64)],
-		),
-		None => value_info("input_ids", DataType::Int64, &[batch(), sequence()]),
-	};
-	let units_name = units.name.clone().unwrap_or_default();
-	let mut inputs = vec![
-		units,
-		value_info("attention_mask", DataType::Int64, &[batch(), sequence()]),
-	];
-	for channel in &iface.channels {
-		let width = Dim::Fixed(channel.width as i64);
-		inputs.push(value_info(
-			&format!("{}_features", channel.prefix),
-			DataType::Float,
-			&[batch(), sequence(), width],
-		));
-		inputs.push(value_info(
-			&format!("{}_confidence", channel.prefix),
-			DataType::Float,
-			&[batch(), sequence()],
-		));
-	}
-	if iface.locale_hint {
-		inputs.push(value_info("locale_hint", DataType::Int64, &[batch()]));
-	}
+	let inputs = graph_inputs(&iface);
+	let units = inputs[0].name.clone().unwrap_or_default();
 	for input in &inputs {
 		w.g.reserve(input.name.as_deref().unwrap_or_default());
 	}
 
-	// The token (or character-window) and position embeddings. The token path's node order is the one F2 measured.
-	let token_gather = |w: &mut Writer| -> Result<String> {
-		let token_table = w.param("token_embeddings.weight", &[config.vocab_size, e])?;
-		Ok(w.g.op(
-			"Gather",
-			&[&token_table, "input_ids"],
-			vec![attr_int("axis", 0)],
-			"embedding",
-		))
-	};
-	let mut tokens = match iface.char {
-		Some(_) => String::new(),
-		None => token_gather(&mut w)?,
-	};
-	let batch_dim = w.g.op(
-		"Shape",
-		&[&units_name],
-		vec![attr_int("start", 0), attr_int("end", 1)],
-		"batch_dim",
-	);
-	let seq_dim = w.g.op(
-		"Shape",
-		&[&units_name],
-		vec![attr_int("start", 1), attr_int("end", 2)],
-		"sequence_dim",
-	);
-	let mut batch_seq = String::new();
-	if let Some(front) = &iface.char {
-		batch_seq = w.g.op(
-			"Concat",
-			&[&batch_dim, &seq_dim],
-			vec![attr_int("axis", 0)],
-			"batch_sequence",
-		);
-		tokens = w.char_front(front, &batch_seq)?;
-	}
-	let seq_len = w.g.op("Squeeze", &[&seq_dim], vec![], "sequence_len");
-	let zero = w.g.scalar_i64(0);
-	let step = w.g.scalar_i64(1);
-	let positions = w.g.op("Range", &[&zero, &seq_len, &step], vec![], "positions");
-	let positions = w.unsqueeze(&positions, &[0], "positions.row");
-	if iface.char.is_none() {
-		batch_seq = w.g.op(
-			"Concat",
-			&[&batch_dim, &seq_dim],
-			vec![attr_int("axis", 0)],
-			"batch_sequence",
-		);
-	}
-	let positions = w.g.op("Expand", &[&positions, &batch_seq], vec![], "position_ids");
-	let position_table = w.param("position_embeddings.weight", &[config.max_position_embeddings, e])?;
-	let positions = w.g.op(
-		"Gather",
-		&[&position_table, &positions],
-		vec![attr_int("axis", 0)],
-		"position_embedding",
-	);
-	let mut h = w.g.op("Add", &[&tokens, &positions], vec![], "embedded");
-
-	// The phrase-prior projection reads zeros: the export interface feeds no phrase features.
+	let (mut h, dims) = w.embeddings(config, &iface, &units)?;
 	if iface.phrase_width > 0 {
-		let width = w.g.ints(&[iface.phrase_width as i64]);
-		let shape = w.g.op(
-			"Concat",
-			&[&batch_dim, &seq_dim, &width],
-			vec![attr_int("axis", 0)],
-			"phrase_features.shape",
-		);
-		let zero_f = w.g.scalar_f32(0.0);
-		let zeros = w.g.op("Expand", &[&zero_f, &shape], vec![], "phrase_features");
-		let joined =
-			w.g.op("Concat", &[&h, &zeros], vec![attr_int("axis", -1)], "phrase_input");
-		h = w.linear3(
-			&joined,
-			"phrase_input_projection",
-			e,
-			e + iface.phrase_width,
-			"phrase_projected",
-		)?;
+		h = w.phrase_input(h, iface.phrase_width, &dims)?;
 	}
-
-	// Each channel adds confidence * (W @ features + b + cue).
-	for channel in &iface.channels {
-		let prefix = channel.prefix;
-		let mut features = format!("{prefix}_features");
-		if let Some(scale) = &channel.scale {
-			let scale = w.g.f32("country_feature_scale", &[scale.len() as i64], scale);
-			features = w.g.op(
-				"Mul",
-				&[&features, &scale],
-				vec![],
-				&format!("{prefix}_features.scaled"),
-			);
-		}
-		let projected = w.linear3(
-			&features,
-			&format!("{prefix}_projection"),
-			e,
-			channel.width,
-			&format!("{prefix}.projected"),
-		)?;
-		let cue = w.param(&format!("{prefix}_token_embedding"), &[e])?;
-		let vector = w.g.op("Add", &[&projected, &cue], vec![], &format!("{prefix}.vector"));
-		let confidence = w.unsqueeze(&format!("{prefix}_confidence"), &[-1], &format!("{prefix}.confidence"));
-		let signal =
-			w.g.op("Mul", &[&confidence, &vector], vec![], &format!("{prefix}.signal"));
-		h = w.g.op("Add", &[&h, &signal], vec![], &format!("{prefix}.added"));
-	}
+	h = w.channels(h, &iface.channels)?;
 	h = w.layer_norm(&h, "input_ln")?;
-
 	if iface.locale_hint {
-		let systems = config.num_address_systems + 1;
-		let table = w.param("locale_hint_embedding.weight", &[systems, e])?;
-		let hint = w.g.op(
-			"Gather",
-			&[&table, "locale_hint"],
-			vec![attr_int("axis", 0)],
-			"locale_hint.embedding",
-		);
-		let hint = w.unsqueeze(&hint, &[1], "locale_hint.row");
-		h = w.g.op("Add", &[&h, &hint], vec![], "hinted");
+		h = w.locale_hint(h, config)?;
 	}
-
-	// The key-padding mask, [B, 1, 1, S], added to every head's scores.
-	let padded = w.g.op("Equal", &["attention_mask", &zero], vec![], "padding");
-	let minus_inf = w.g.scalar_f32(f32::NEG_INFINITY);
-	let zero_f = w.g.scalar_f32(0.0);
-	let mask =
-		w.g.op("Where", &[&padded, &minus_inf, &zero_f], vec![], "padding.additive");
-	let mask = w.unsqueeze(&mask, &[1, 2], "padding.mask");
-
+	let mask = w.padding_mask(&dims.zero);
 	for layer in 0..config.num_hidden_layers {
 		h = w.block(&h, layer, config.num_attention_heads, config.intermediate_size, &mask)?;
 	}
@@ -777,83 +898,21 @@ pub fn build_model(config: &ModelConfig, state: &StateDict, options: &ExportOpti
 	let mut outputs = vec![value_info(
 		"logits",
 		DataType::Float,
-		&[Dim::Fixed(1), sequence(), Dim::Fixed(config.num_labels as i64)],
+		&[
+			Dim::Fixed(1),
+			Dim::Param("sequence".into()),
+			Dim::Fixed(config.num_labels as i64),
+		],
 	)];
 	if iface.locale || iface.address_system {
-		// The masked mean over the sequence: sum(h * m) / max(sum(m), 1).
-		let m = w.g.op(
-			"Cast",
-			&["attention_mask"],
-			vec![attr_int("to", DataType::Float as i64)],
-			"mask.float",
-		);
-		let m = w.unsqueeze(&m, &[-1], "mask.column");
-		let masked = w.g.op("Mul", &[&h, &m], vec![], "pool.masked");
-		let axis = w.g.ints(&[1]);
-		let attrs = || vec![attr_int("keepdims", 0), attr_int("noop_with_empty_axes", 0)];
-		let total = w.g.op("ReduceSum", &[&masked, &axis], attrs(), "pool.sum");
-		let count = w.g.op("ReduceSum", &[&m, &axis], attrs(), "pool.count");
-		let one = w.g.scalar_f32(1.0);
-		let count = w.g.op("Clip", &[&count, &one], vec![], "pool.count.clamped");
-		let pooled = w.g.op("Div", &[&total, &count], vec![], "pooled");
-
-		if iface.address_system {
-			let n = config.num_address_systems;
-			w.gemm(&pooled, "address_system_head", n, e, Some("address_system_logits"))?;
-			outputs.push(value_info(
-				"address_system_logits",
-				DataType::Float,
-				&[Dim::Fixed(1), Dim::Fixed(n as i64)],
-			));
-		}
-		if iface.locale {
-			let n = w.state.shape("locale_head.weight")?.first().copied().unwrap_or(0);
-			if let Some(declared) = config.num_locales {
-				if declared != n {
-					return Err(fail!(
-						"locale_head.weight has {n} rows, config num_locales is {declared}"
-					));
-				}
-			}
-			w.gemm(&pooled, "locale_head", n, e, Some("locale_logits"))?;
-			outputs.insert(
-				1,
-				value_info("locale_logits", DataType::Float, &[Dim::Fixed(1), Dim::Fixed(n as i64)]),
-			);
-
-			// FiLM: h = (1 + gamma) * h + beta, gamma and beta the two halves of locale_film(pooled).
-			let film = w.gemm(&pooled, "locale_film", 2 * e, e, None)?;
-			let (start, middle, end, axes, steps) = (
-				w.g.ints(&[0]),
-				w.g.ints(&[e as i64]),
-				w.g.ints(&[i64::MAX]),
-				w.g.ints(&[1]),
-				w.g.ints(&[1]),
-			);
-			let gamma =
-				w.g.op("Slice", &[&film, &start, &middle, &axes, &steps], vec![], "film.gamma");
-			let beta =
-				w.g.op("Slice", &[&film, &middle, &end, &axes, &steps], vec![], "film.beta");
-			let gamma = w.g.op("Add", &[&gamma, &one], vec![], "film.gain");
-			let gamma = w.unsqueeze(&gamma, &[1], "film.gain.row");
-			let beta = w.unsqueeze(&beta, &[1], "film.beta.row");
-			let scaled = w.g.op("Mul", &[&gamma, &h], vec![], "film.scaled");
-			h = w.g.op("Add", &[&scaled, &beta], vec![], "film");
-		}
+		h = w.pooled_heads(h, config, &iface, &mut outputs)?;
 	}
-
-	let weight = w.state.f32("classifier.weight", &[config.num_labels, e])?;
-	let wt = transposed(weight, config.num_labels, e);
-	let wt =
-		w.g.f32("classifier.weight.T", &[e as i64, config.num_labels as i64], &wt);
-	let bias = w.param("classifier.bias", &[config.num_labels])?;
-	let product = w.g.op("MatMul", &[&h, &wt], vec![], "classifier.matmul");
-	w.g.op_into("Add", &[&product, &bias], vec![], "logits");
+	w.classifier(&h, config.num_labels)?;
 
 	// The span scores read the classifier's input. They come after `locale_logits` and before
 	// `address_system_logits`, as `PlainOutputs._outputs` orders them.
 	if let Some(span) = &iface.span {
-		w.span_scores(&h, span, &seq_dim)?;
+		w.span_scores(&h, span, &dims.sequence)?;
 		outputs.insert(
 			1 + usize::from(iface.locale),
 			value_info(
@@ -861,7 +920,7 @@ pub fn build_model(config: &ModelConfig, state: &StateDict, options: &ExportOpti
 				DataType::Float,
 				&[
 					Dim::Fixed(1),
-					sequence(),
+					Dim::Param("sequence".into()),
 					Dim::Fixed(span.max_span as i64),
 					Dim::Fixed(span.types as i64),
 				],

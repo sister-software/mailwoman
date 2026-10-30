@@ -171,9 +171,8 @@ export interface ExpandGoldenSummary {
 /**
  * Decode BIO labels + tokens into a verified components map.
  *
- * Mirrors the Python `decode_components` in mailwoman_train/eval.py —
- * first-occurrence-wins per tag, contiguous B-X/I-X runs concatenated with a single
- * space (the canonical separator used by corpus alignment).
+ * Mirrors the deleted Python trainer's `decode_components` — first-occurrence-wins per tag, contiguous
+ * B-X/I-X runs concatenated with a single space (the canonical separator used by corpus alignment).
  */
 function decodeComponents(tokens: string[], labels: string[]): Record<string, string> {
 	const out: Record<string, string> = {}

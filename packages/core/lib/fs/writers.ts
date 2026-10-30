@@ -15,6 +15,7 @@ import {
 	mkdir,
 	rename,
 	rm,
+	rmdir,
 	symlink,
 	truncate,
 	utimes,
@@ -269,6 +270,25 @@ export function removePath(path: PathBuilderLike): Promise<void> {
 }
 
 /**
+ * Removes a directory only when it is empty, and reports whether it did.
+ *
+ * A directory that still holds an entry is kept and returns `false`, so a caller
+ * that deleted the files it owns never removes one it does not.
+ * A missing directory raises.
+ */
+export async function removeEmptyDirectory(path: PathBuilderLike): Promise<boolean> {
+	try {
+		await rmdir(path.toString())
+
+		return true
+	} catch (error) {
+		if ((error as { code?: unknown } | null)?.code === "ENOTEMPTY") return false
+
+		throw error
+	}
+}
+
+/**
  * Removes a directory and everything under it.
  *
  * @param path The directory to remove.
@@ -371,6 +391,18 @@ export function stagingSiblingPath(destination: PathBuilderLike): string {
 	const target = destination.toString()
 
 	return `${target}.staging-${process.pid}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+/**
+ * Writes a JSON record so that a concurrent reader sees the old record or the new one, never a partial one.
+ *
+ * The record is written beside its destination and renamed over it, on the destination's filesystem.
+ */
+export async function writeLocalJSONFileAtomically(record: unknown, destination: PathBuilderLike): Promise<void> {
+	const staging = stagingSiblingPath(destination)
+
+	await writeLocalJSONFile(record as Record<string, unknown>, staging)
+	await movePath(staging, destination)
 }
 
 /**

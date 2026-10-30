@@ -5,7 +5,6 @@ extend-exclude = [
 	"/.git/",
 	"/.yarn/",
 	"yarn.lock",
-	"corpus-python/uv.lock",
 	"docs/static/sbom/",
 	"docs/static/maps/",
 	"docs/static/mailwoman/",
@@ -14,8 +13,6 @@ extend-exclude = [
 	"packages/mailwoman/tools/eval-harness/conformance/*.jsonl",
 	"packages/mailwoman/tools/eval-harness/activity-lexicon/collision-census.json",
 	"packages/codex/lib/us/street-suffix.json",
-	# A dated design record kept byte for byte; its SHA-256 is cited in layer-installation.mdx.
-	"docs/records/plan/2026-10-28-layer-paths-plan-v2.md",
 	# Postal designators spelled as each country's operator writes them: `Blok`, `lok.`, `Chambre`.
 	"packages/codex/lib/*/designators.ts",
 	"packages/poi-taxonomy/data/",
@@ -396,7 +393,6 @@ extend-glob = [
 	"input.pty.integration.test.ts",
 	"QueryInput.integration.test.ts",
 	"demo-cascade-rows.test.ts",
-	"test_config_strict.py",
 	"correct.test.ts",
 	"2026-10-02-docs-search.md",
 ]

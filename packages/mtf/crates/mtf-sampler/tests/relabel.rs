@@ -491,6 +491,35 @@ fn a_lexicon_missing_a_key_is_refused() {
 }
 
 #[test]
+fn a_lexicon_with_a_malformed_entry_is_refused_rather_than_shortened() {
+	let cases = [
+		(
+			r#"{"directionals": {"n": 1}, "suffixes": {"st": "ST"}, "version": "x"}"#,
+			"maps \"n\" to 1",
+		),
+		(
+			r#"{"directionals": [], "suffixes": {"st": "ST"}, "version": "x"}"#,
+			"is not an object",
+		),
+		(
+			r#"{"directionals": {"n": "N"}, "suffixes": {"st": "ST"}, "version": 2}"#,
+			"version is 2",
+		),
+		(
+			r#"{"directionals": {"n": "N"}, "suffixes": {"st": "ST"}, "version": "x", "name_prone": ["a", 3]}"#,
+			"name_prone holds 3",
+		),
+	];
+	for (text, message) in cases {
+		let dir = tempfile::tempdir().unwrap();
+		let path = dir.path().join("bad.json");
+		std::fs::write(&path, text).unwrap();
+		let error = AffixRelabelLexicon::load(&path).expect_err("an error");
+		assert!(error.to_string().contains(message), "{error}");
+	}
+}
+
+#[test]
 fn a_lexicon_with_an_empty_vocabulary_is_refused() {
 	let dir = tempfile::tempdir().unwrap();
 	let path = dir.path().join("empty.json");

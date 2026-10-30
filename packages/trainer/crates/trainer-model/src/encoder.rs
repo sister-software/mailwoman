@@ -19,15 +19,8 @@ use trainer_export::span::segment_types;
 /// The ignore index of every label tensor, `labels.IGNORE_INDEX`.
 pub const IGNORE_INDEX: i64 = -100;
 
-/// The soft-feed channels in the order the encoder injects them, with each one's module prefix.
-pub const CHANNELS: [&str; 6] = [
-	"anchor",
-	"gazetteer",
-	"country",
-	"street_type",
-	"locality_surface",
-	"code_unit",
-];
+// The soft-feed channels in the order the encoder injects them, each name also its module prefix.
+use mtf_channels::encoder::CHANNEL_NAMES as CHANNELS;
 
 /// A channel's features `(B, S, D)` and confidence `(B, S)`.
 #[derive(Default)]
@@ -70,15 +63,68 @@ struct Channel {
 	dim: i64,
 }
 
-struct Head2 {
-	first: Linear,
-	second: Linear,
+/// `_build_channels`: each enabled channel's projection and cue, and the country channel's per-feature scale.
+fn build_channels(s: &mut Store, spec: &EncoderSpec) -> ([Option<Channel>; 6], Option<Tensor>) {
+	let h = spec.hidden_size;
+	let dims = spec.channel_dims();
+	let mut channels: [Option<Channel>; 6] = Default::default();
+	let mut country_feature_scale = None;
+	for (i, name) in CHANNELS.iter().enumerate() {
+		if dims[i] > 0 {
+			let projection = Linear::new(s, &format!("{name}_projection"), dims[i], h, true);
+			let cue = s.param(
+				&format!("{name}_token_embedding"),
+				Tensor::zeros([h], (Kind::Float, Device::Cpu)),
+			);
+			channels[i] = Some(Channel {
+				projection,
+				cue,
+				dim: dims[i],
+			});
+		}
+		if *name == "country" && dims[i] > 0 {
+			let mut scale = vec![1f32; dims[i] as usize];
+			if dims[i] >= 2 {
+				scale[1] = spec.country_ambiguous_scale as f32;
+			}
+			country_feature_scale = Some(s.buffer("country_feature_scale", Tensor::from_slice(&scale), false));
+		}
+	}
+	(channels, country_feature_scale)
 }
 
-impl Head2 {
-	fn forward(&self, x: &Tensor, mode: Mode) -> Tensor {
-		self.second
-			.forward(&dropout(&self.first.forward(x).gelu("none"), 0.1, mode))
+/// `conventions_forbidden`: 1 where a locale's conventions forbid the B- or I- label of a tag.
+fn build_conventions_mask(s: &mut Store, spec: &EncoderSpec, labels: &[String]) -> Result<Tensor> {
+	let n_labels = spec.num_labels();
+	let locales = spec.conventions.len();
+	if locales as i64 != spec.num_locales {
+		return Err(fail!(
+			"use_conventions_loss_mask needs the conventions table for each of the {} locales, got {locales}",
+			spec.num_locales
+		));
+	}
+	let mut mask = vec![0f32; locales * n_labels as usize];
+	for (locale, tags) in spec.conventions.iter().enumerate() {
+		for tag in tags {
+			for prefix in ["B-", "I-"] {
+				if let Some(id) = labels.iter().position(|l| *l == format!("{prefix}{tag}")) {
+					mask[locale * n_labels as usize + id] = 1.0;
+				}
+			}
+		}
+	}
+	let mask = Tensor::from_slice(&mask).view([locales as i64, n_labels]);
+	Ok(s.buffer("conventions_forbidden", mask, false))
+}
+
+/// Adds a weighted loss term to the running total, in the total's dtype, or starts the total with it.
+fn add_term(loss: Option<Tensor>, term: Tensor) -> Tensor {
+	match loss {
+		None => term,
+		Some(l) => {
+			let k = l.kind();
+			l + term.to_kind(k)
+		}
 	}
 }
 
@@ -98,11 +144,6 @@ pub struct CoarseEncoder {
 	blocks: Vec<EncoderBlock>,
 	final_ln: LayerNorm,
 	classifier: Linear,
-	affix_head: Option<Head2>,
-	affix_label_ids: Option<Tensor>,
-	affix_target_lut: Option<Tensor>,
-	deploc_head: Option<Head2>,
-	deploc_label_ids: Option<Tensor>,
 	span_boundary_head: Option<Linear>,
 	bio_is_begin: Option<Tensor>,
 	bio_is_inside: Option<Tensor>,
@@ -118,14 +159,6 @@ pub struct CoarseEncoder {
 	address_system_head: Option<Linear>,
 	locale_hint_embedding: Option<Embedding>,
 	device: Device,
-}
-
-fn label_index(labels: &[String], label: &str) -> Result<i64> {
-	labels
-		.iter()
-		.position(|l| l == label)
-		.map(|i| i as i64)
-		.ok_or_else(|| fail!("the label set has no {label}"))
 }
 
 impl CoarseEncoder {
@@ -159,31 +192,7 @@ impl CoarseEncoder {
 		let phrase_input_projection = spec
 			.use_phrase_priors
 			.then(|| Linear::new(&mut s, "phrase_input_projection", h + spec.phrase_feature_dim, h, true));
-		// `_build_channels`.
-		let dims = spec.channel_dims();
-		let mut channels: [Option<Channel>; 6] = Default::default();
-		let mut country_feature_scale = None;
-		for (i, name) in CHANNELS.iter().enumerate() {
-			if dims[i] > 0 {
-				let projection = Linear::new(&mut s, &format!("{name}_projection"), dims[i], h, true);
-				let cue = s.param(
-					&format!("{name}_token_embedding"),
-					Tensor::zeros([h], (Kind::Float, Device::Cpu)),
-				);
-				channels[i] = Some(Channel {
-					projection,
-					cue,
-					dim: dims[i],
-				});
-			}
-			if *name == "country" && dims[i] > 0 {
-				let mut scale = vec![1f32; dims[i] as usize];
-				if dims[i] >= 2 {
-					scale[1] = spec.country_ambiguous_scale as f32;
-				}
-				country_feature_scale = Some(s.buffer("country_feature_scale", Tensor::from_slice(&scale), false));
-			}
-		}
+		let (channels, country_feature_scale) = build_channels(&mut s, &spec);
 		// `_build_body`.
 		let blocks = (0..spec.num_hidden_layers)
 			.map(|i| {
@@ -201,63 +210,10 @@ impl CoarseEncoder {
 		let classifier = Linear::new(&mut s, "classifier", h, n_labels, true);
 		// `_build_merge_heads`.
 		let conventions_forbidden = if spec.use_conventions_loss_mask {
-			let locales = spec.conventions.len();
-			if locales as i64 != spec.num_locales {
-				return Err(fail!(
-					"use_conventions_loss_mask needs the conventions table for each of the {} locales, got {locales}",
-					spec.num_locales
-				));
-			}
-			let mut mask = vec![0f32; locales * n_labels as usize];
-			for (locale, tags) in spec.conventions.iter().enumerate() {
-				for tag in tags {
-					for prefix in ["B-", "I-"] {
-						if let Some(id) = labels.iter().position(|l| *l == format!("{prefix}{tag}")) {
-							mask[locale * n_labels as usize + id] = 1.0;
-						}
-					}
-				}
-			}
-			let mask = Tensor::from_slice(&mask).view([locales as i64, n_labels]);
-			Some(s.buffer("conventions_forbidden", mask, false))
+			Some(build_conventions_mask(&mut s, &spec, &labels)?)
 		} else {
 			None
 		};
-		let (mut affix_head, mut affix_label_ids, mut affix_target_lut) = (None, None, None);
-		if spec.use_affix_head {
-			let affix_in = h + if dims[1] > 0 { dims[1] } else { 5 };
-			affix_head = Some(Head2 {
-				first: Linear::new(&mut s, "affix_head.0", affix_in, 256, true),
-				second: Linear::new(&mut s, "affix_head.3", 256, 5, true),
-			});
-			let ids = [
-				"B-street_prefix",
-				"I-street_prefix",
-				"B-street_suffix",
-				"I-street_suffix",
-			]
-			.iter()
-			.map(|l| label_index(&labels, l))
-			.collect::<Result<Vec<i64>>>()?;
-			let mut lut = vec![0i64; n_labels as usize];
-			for (k, &id) in ids.iter().enumerate() {
-				lut[id as usize] = k as i64 + 1;
-			}
-			affix_label_ids = Some(s.buffer("affix_label_ids", Tensor::from_slice(&ids), false));
-			affix_target_lut = Some(s.buffer("affix_target_lut", Tensor::from_slice(&lut), false));
-		}
-		let (mut deploc_head, mut deploc_label_ids) = (None, None);
-		if spec.use_deploc_head {
-			deploc_head = Some(Head2 {
-				first: Linear::new(&mut s, "deploc_head.0", h, 256, true),
-				second: Linear::new(&mut s, "deploc_head.3", 256, 3, true),
-			});
-			let ids = [
-				label_index(&labels, "B-dependent_locality")?,
-				label_index(&labels, "I-dependent_locality")?,
-			];
-			deploc_label_ids = Some(s.buffer("deploc_label_ids", Tensor::from_slice(&ids), false));
-		}
 		// `_build_structured_heads`.
 		let (mut span_boundary_head, mut bio_is_begin, mut bio_is_inside) = (None, None, None);
 		if spec.use_span_boundary_head {
@@ -305,11 +261,6 @@ impl CoarseEncoder {
 			blocks,
 			final_ln,
 			classifier,
-			affix_head,
-			affix_label_ids,
-			affix_target_lut,
-			deploc_head,
-			deploc_label_ids,
 			span_boundary_head,
 			bio_is_begin,
 			bio_is_inside,
@@ -502,21 +453,6 @@ impl CoarseEncoder {
 			}
 			let vector = channel.projection.forward(&projected) + &channel.cue;
 			h = &h + confidence.to_kind(h.kind()).unsqueeze(-1) * &vector;
-			if *name == "anchor" && self.spec.inject_first_token && self.spec.use_postcode_anchor {
-				let conf = match &input.confidence {
-					Some(c) if input.features.is_some() => c.to_kind(h.kind()),
-					_ => self.zeros(&[bsz, seq], h.kind()),
-				};
-				let (max_conf, max_idx) = conf.max_dim(1, false);
-				let idx = max_idx.view([bsz, 1, 1]).expand([bsz, 1, h.size()[2]], false);
-				let pooled = vector.gather(1, &idx, false).squeeze_dim(1);
-				let pos0 = (max_conf.unsqueeze(-1) * pooled).unsqueeze(1);
-				let indicator = Tensor::arange(seq, (Kind::Int64, self.device))
-					.eq(0)
-					.to_kind(h.kind())
-					.view([1, seq, 1]);
-				h = &h + pos0 * indicator;
-			}
 		}
 		Ok(h)
 	}
@@ -577,42 +513,9 @@ impl CoarseEncoder {
 			let beta = film.narrow(-1, hs, hs);
 			h = (gamma + 1.0).unsqueeze(1) * &h + beta.unsqueeze(1);
 		}
-		let mut logits = self.classifier.forward(&h);
-		let mut affix_logits = None;
-		if let (Some(head), Some(ids)) = (&self.affix_head, &self.affix_label_ids) {
-			let (bsz, seq) = (h.size()[0], h.size()[1]);
-			let gaz = match &inputs.channels[1].features {
-				Some(g) => g.shallow_clone(),
-				None => {
-					let d = if self.spec.use_gazetteer_anchor {
-						self.spec.gazetteer_feature_dim
-					} else {
-						5
-					};
-					self.zeros(&[bsz, seq, d], h.kind())
-				}
-			};
-			let a = head.forward(&Tensor::cat(&[&h, &gaz.to_kind(h.kind())], -1), self.mode);
-			let mut merged = logits.copy();
-			let _ = merged.index_put_(&[None, None, Some(ids)], &a.narrow(-1, 1, 4), false);
-			logits = merged;
-			affix_logits = Some(a);
-		}
-		if let (Some(head), Some(ids)) = (&self.deploc_head, &self.deploc_label_ids) {
-			let d = head.forward(&h, self.mode);
-			let mut merged = logits.copy();
-			let _ = merged.index_put_(&[None, None, Some(ids)], &d.narrow(-1, 1, 2), false);
-			logits = merged;
-		}
+		let logits = self.classifier.forward(&h);
 		let mut terms = Vec::new();
-		let (loss, span_scores) = self.compute_losses(
-			&h,
-			&logits,
-			inputs,
-			locale_logits.as_ref(),
-			affix_logits.as_ref(),
-			&mut terms,
-		)?;
+		let (loss, span_scores) = self.compute_losses(&h, &logits, inputs, locale_logits.as_ref(), &mut terms)?;
 		let loss = self.address_system_loss(loss, address_system_logits.as_ref(), inputs, &mut terms);
 		Ok(EncoderOutput {
 			logits,
@@ -624,181 +527,189 @@ impl CoarseEncoder {
 		})
 	}
 
-	/// `_compute_losses` and `_add_auxiliary_losses`.
+	/// `_compute_losses` and `_add_auxiliary_losses`: the token loss, then each weighted auxiliary term in the order
+	/// Python adds them.
 	fn compute_losses(
 		&self,
 		hidden: &Tensor,
 		logits: &Tensor,
 		inputs: &EncoderInputs,
 		locale_logits: Option<&Tensor>,
-		affix_logits: Option<&Tensor>,
 		terms: &mut Vec<(&'static str, Tensor)>,
 	) -> Result<(Option<Tensor>, Option<Tensor>)> {
-		let n = self.spec.num_labels();
-		let mut loss: Option<Tensor> = None;
-		if let Some(labels) = &inputs.labels {
-			// The conventions mask reaches the cross-entropy's input only; the returned logits are unmasked. An ignored
-			// locale id reads locale 0's row, as `losses.py` clamps it.
-			let ce_logits = match (&self.conventions_forbidden, &inputs.locale_ids) {
-				(Some(forbidden), Some(ids)) => {
-					let rows = forbidden.index(&[Some(&ids.clamp_min(0))]);
-					logits.masked_fill(&rows.unsqueeze(1).to_kind(Kind::Bool), -1e9)
-				}
-				_ => logits.shallow_clone(),
-			};
-			let mut ce = ce_logits.view([-1, n]).cross_entropy_loss(
-				&labels.view([-1]),
-				self.class_weights.as_ref(),
-				tch::Reduction::Mean,
-				IGNORE_INDEX,
-				self.spec.label_smoothing,
-			);
-			terms.push(("ce", ce.shallow_clone()));
-			if let (Some(a), Some(lut)) = (affix_logits, &self.affix_target_lut) {
-				let safe = labels.clamp_min(0);
-				let targets = lut.index(&[Some(&safe)]);
-				let targets = targets
-					.full_like(IGNORE_INDEX)
-					.where_self(&labels.eq(IGNORE_INDEX), &targets);
-				let affix = a.view([-1, 5]).cross_entropy_loss::<Tensor>(
-					&targets.view([-1]),
-					None,
-					tch::Reduction::Mean,
-					IGNORE_INDEX,
-					0.0,
-				);
-				terms.push(("affix", affix.shallow_clone()));
-				ce = ce + affix;
-			}
-			loss = Some(match (&self.crf, &inputs.attention_mask) {
-				(Some(crf), Some(mask)) if self.spec.crf_loss_weight > 0.0 => {
-					let reduction = if self.spec.crf_normalization == "per_token" {
-						Reduction::PerToken
-					} else {
-						Reduction::Mean
-					};
-					let tags = labels.clamp_min(0);
-					let crf_loss = if self.spec.crf_fp32 {
-						let _off = crate::autocast::AutocastOff::enter(self.device)?;
-						let emissions = logits.to_kind(Kind::Float);
-						crf.nll(&emissions, &tags, &mask.to_kind(Kind::Float), reduction)?
-					} else {
-						crf.nll(logits, &tags, &mask.to_kind(logits.kind()), reduction)?
-					};
-					terms.push(("crf", crf_loss.shallow_clone()));
-					&ce + crf_loss.to_kind(ce.kind()) * self.spec.crf_loss_weight
-				}
-				_ => ce,
-			});
+		let mut loss = self.token_loss(logits, inputs, terms)?;
+		if let Some(term) = self.locale_loss(locale_logits, inputs, terms) {
+			loss = Some(add_term(loss, term));
 		}
-		// Locale cross-entropy, in fp32.
-		if let (Some(ll), Some(ids)) = (locale_logits, &inputs.locale_ids) {
-			if self.spec.use_locale_conditioning
-				&& self.spec.locale_loss_weight > 0.0
-				&& ids.ne(IGNORE_INDEX).any().int64_value(&[]) != 0
-			{
-				let locale = ll.to_kind(Kind::Float).cross_entropy_loss::<Tensor>(
-					ids,
-					None,
-					tch::Reduction::Mean,
-					IGNORE_INDEX,
-					0.0,
-				);
-				terms.push(("locale", locale.shallow_clone()));
-				let term = locale * self.spec.locale_loss_weight;
-				loss = Some(match loss {
-					None => term,
-					Some(l) => {
-						let k = l.kind();
-						l + term.to_kind(k)
-					}
-				});
-			}
+		if let Some(term) = self.span_boundary_loss(hidden, inputs, terms) {
+			loss = Some(add_term(loss, term));
 		}
-		// Span-boundary BCE.
-		if let (Some(head), Some(labels), Some(mask), Some(is_begin), Some(is_inside)) = (
-			&self.span_boundary_head,
-			&inputs.labels,
-			&inputs.attention_mask,
-			&self.bio_is_begin,
-			&self.bio_is_inside,
-		) {
-			if self.spec.span_boundary_loss_weight > 0.0 {
-				let valid = mask.to_kind(Kind::Bool).logical_and(&labels.ne(IGNORE_INDEX));
-				if valid.any().int64_value(&[]) != 0 {
-					let safe = labels.clamp_min(0);
-					let is_b = is_begin.index(&[Some(&safe)]);
-					let is_i = is_inside.index(&[Some(&safe)]);
-					let in_entity = is_b.logical_or(&is_i);
-					let seq = is_i.size()[1];
-					let next_is_i = is_i.zeros_like();
-					next_is_i.narrow(1, 0, seq - 1).copy_(&is_i.narrow(1, 1, seq - 1));
-					let start = is_b.to_kind(Kind::Float);
-					let end = in_entity.logical_and(&next_is_i.logical_not()).to_kind(Kind::Float);
-					let sb_logits = head.forward(hidden);
-					let targets = Tensor::stack(&[start, end], -1);
-					let per_pos = sb_logits
-						.to_kind(Kind::Float)
-						.binary_cross_entropy_with_logits::<Tensor>(&targets, None, None, tch::Reduction::None)
-						.mean_dim(&[-1i64][..], false, None);
-					let sb = per_pos.index(&[Some(&valid)]).mean(None);
-					terms.push(("span_boundary", sb.shallow_clone()));
-					let term = sb * self.spec.span_boundary_loss_weight;
-					loss = Some(match loss {
-						None => term,
-						Some(l) => {
-							let k = l.kind();
-							l + term.to_kind(k)
-						}
-					});
-				}
-			}
-		}
-		// The semi-Markov span loss, in fp32. A row whose gold segmentation holds a span longer than `max_span` is left
-		// out rather than truncated.
 		let mut span_scores = None;
 		if let (Some(scorer), Some(semi_crf)) = (&self.span_scorer, &self.semi_crf) {
 			let scores = scorer.forward(hidden);
-			if let (Some(labels), Some(mask)) = (&inputs.labels, &inputs.attention_mask) {
-				if self.spec.span_loss_weight > 0.0 {
-					let lengths = mask.sum_dim_intlist(&[1i64][..], false, None).to_kind(Kind::Int64);
-					let lengths_cpu = Vec::<i64>::try_from(lengths.to_device(Device::Cpu))?;
-					let labels_cpu = labels.to_device(Device::Cpu);
-					let (mut rows, mut segments) = (Vec::new(), Vec::new());
-					for (b, &n) in lengths_cpu.iter().enumerate() {
-						let row = Vec::<i64>::try_from(labels_cpu.get(b as i64).narrow(0, 0, n))?;
-						let (segs, representable) = gold_segments(
-							&row,
-							&self.spec.id_to_label,
-							&self.segment_types,
-							IGNORE_INDEX,
-							scorer.max_span as usize,
-						)?;
-						if representable && !segs.is_empty() {
-							rows.push(b as i64);
-							segments.push(segs);
-						}
-					}
-					if !rows.is_empty() {
-						let idx = Tensor::from_slice(&rows).to_device(scores.device());
-						let nll = semi_crf
-							.nll(&scores.index_select(0, &idx), &segments, &lengths.index_select(0, &idx))
-							.mean(None);
-						terms.push(("span", nll.shallow_clone()));
-						let term = nll * self.spec.span_loss_weight;
-						loss = Some(match loss {
-							None => term,
-							Some(l) => {
-								let k = l.kind();
-								l + term.to_kind(k)
-							}
-						});
-					}
-				}
+			if let Some(term) = self.span_loss(scorer, semi_crf, &scores, inputs, terms)? {
+				loss = Some(add_term(loss, term));
 			}
 			span_scores = Some(scores);
 		}
 		Ok((loss, span_scores))
+	}
+
+	/// The cross-entropy over the labels, plus the weighted CRF negative log-likelihood when the model has a CRF.
+	fn token_loss(
+		&self,
+		logits: &Tensor,
+		inputs: &EncoderInputs,
+		terms: &mut Vec<(&'static str, Tensor)>,
+	) -> Result<Option<Tensor>> {
+		let Some(labels) = &inputs.labels else {
+			return Ok(None);
+		};
+		let n = self.spec.num_labels();
+		// The conventions mask reaches the cross-entropy's input only; the returned logits are unmasked. An ignored
+		// locale id reads locale 0's row, as `losses.py` clamps it.
+		let ce_logits = match (&self.conventions_forbidden, &inputs.locale_ids) {
+			(Some(forbidden), Some(ids)) => {
+				let rows = forbidden.index(&[Some(&ids.clamp_min(0))]);
+				logits.masked_fill(&rows.unsqueeze(1).to_kind(Kind::Bool), -1e9)
+			}
+			_ => logits.shallow_clone(),
+		};
+		let ce = ce_logits.view([-1, n]).cross_entropy_loss(
+			&labels.view([-1]),
+			self.class_weights.as_ref(),
+			tch::Reduction::Mean,
+			IGNORE_INDEX,
+			self.spec.label_smoothing,
+		);
+		terms.push(("ce", ce.shallow_clone()));
+		Ok(Some(match (&self.crf, &inputs.attention_mask) {
+			(Some(crf), Some(mask)) if self.spec.crf_loss_weight > 0.0 => {
+				let reduction = if self.spec.crf_normalization == "per_token" {
+					Reduction::PerToken
+				} else {
+					Reduction::Mean
+				};
+				let tags = labels.clamp_min(0);
+				let crf_loss = if self.spec.crf_fp32 {
+					let _off = crate::autocast::AutocastOff::enter(self.device)?;
+					let emissions = logits.to_kind(Kind::Float);
+					crf.nll(&emissions, &tags, &mask.to_kind(Kind::Float), reduction)?
+				} else {
+					crf.nll(logits, &tags, &mask.to_kind(logits.kind()), reduction)?
+				};
+				terms.push(("crf", crf_loss.shallow_clone()));
+				&ce + crf_loss.to_kind(ce.kind()) * self.spec.crf_loss_weight
+			}
+			_ => ce,
+		}))
+	}
+
+	/// The weighted locale cross-entropy, in fp32, when a row carries a locale id.
+	fn locale_loss(
+		&self,
+		locale_logits: Option<&Tensor>,
+		inputs: &EncoderInputs,
+		terms: &mut Vec<(&'static str, Tensor)>,
+	) -> Option<Tensor> {
+		let (ll, ids) = (locale_logits?, inputs.locale_ids.as_ref()?);
+		if !self.spec.use_locale_conditioning
+			|| self.spec.locale_loss_weight <= 0.0
+			|| ids.ne(IGNORE_INDEX).any().int64_value(&[]) == 0
+		{
+			return None;
+		}
+		let locale =
+			ll.to_kind(Kind::Float)
+				.cross_entropy_loss::<Tensor>(ids, None, tch::Reduction::Mean, IGNORE_INDEX, 0.0);
+		terms.push(("locale", locale.shallow_clone()));
+		Some(locale * self.spec.locale_loss_weight)
+	}
+
+	/// The weighted span-boundary BCE over the valid positions.
+	fn span_boundary_loss(
+		&self,
+		hidden: &Tensor,
+		inputs: &EncoderInputs,
+		terms: &mut Vec<(&'static str, Tensor)>,
+	) -> Option<Tensor> {
+		let (head, labels, mask, is_begin, is_inside) = (
+			self.span_boundary_head.as_ref()?,
+			inputs.labels.as_ref()?,
+			inputs.attention_mask.as_ref()?,
+			self.bio_is_begin.as_ref()?,
+			self.bio_is_inside.as_ref()?,
+		);
+		if self.spec.span_boundary_loss_weight <= 0.0 {
+			return None;
+		}
+		let valid = mask.to_kind(Kind::Bool).logical_and(&labels.ne(IGNORE_INDEX));
+		if valid.any().int64_value(&[]) == 0 {
+			return None;
+		}
+		let safe = labels.clamp_min(0);
+		let is_b = is_begin.index(&[Some(&safe)]);
+		let is_i = is_inside.index(&[Some(&safe)]);
+		let in_entity = is_b.logical_or(&is_i);
+		let seq = is_i.size()[1];
+		let next_is_i = is_i.zeros_like();
+		next_is_i.narrow(1, 0, seq - 1).copy_(&is_i.narrow(1, 1, seq - 1));
+		let start = is_b.to_kind(Kind::Float);
+		let end = in_entity.logical_and(&next_is_i.logical_not()).to_kind(Kind::Float);
+		let sb_logits = head.forward(hidden);
+		let targets = Tensor::stack(&[start, end], -1);
+		let per_pos = sb_logits
+			.to_kind(Kind::Float)
+			.binary_cross_entropy_with_logits::<Tensor>(&targets, None, None, tch::Reduction::None)
+			.mean_dim(&[-1i64][..], false, None);
+		let sb = per_pos.index(&[Some(&valid)]).mean(None);
+		terms.push(("span_boundary", sb.shallow_clone()));
+		Some(sb * self.spec.span_boundary_loss_weight)
+	}
+
+	/// The weighted semi-Markov span loss, in fp32. A row whose gold segmentation holds a span longer than `max_span`
+	/// is left out rather than truncated.
+	fn span_loss(
+		&self,
+		scorer: &SpanScorer,
+		semi_crf: &SemiMarkovCrf,
+		scores: &Tensor,
+		inputs: &EncoderInputs,
+		terms: &mut Vec<(&'static str, Tensor)>,
+	) -> Result<Option<Tensor>> {
+		let (Some(labels), Some(mask)) = (&inputs.labels, &inputs.attention_mask) else {
+			return Ok(None);
+		};
+		if self.spec.span_loss_weight <= 0.0 {
+			return Ok(None);
+		}
+		let lengths = mask.sum_dim_intlist(&[1i64][..], false, None).to_kind(Kind::Int64);
+		let lengths_cpu = Vec::<i64>::try_from(lengths.to_device(Device::Cpu))?;
+		let labels_cpu = labels.to_device(Device::Cpu);
+		let (mut rows, mut segments) = (Vec::new(), Vec::new());
+		for (b, &n) in lengths_cpu.iter().enumerate() {
+			let row = Vec::<i64>::try_from(labels_cpu.get(b as i64).narrow(0, 0, n))?;
+			let (segs, representable) = gold_segments(
+				&row,
+				&self.spec.id_to_label,
+				&self.segment_types,
+				IGNORE_INDEX,
+				scorer.max_span as usize,
+			)?;
+			if representable && !segs.is_empty() {
+				rows.push(b as i64);
+				segments.push(segs);
+			}
+		}
+		if rows.is_empty() {
+			return Ok(None);
+		}
+		let idx = Tensor::from_slice(&rows).to_device(scores.device());
+		let nll = semi_crf
+			.nll(&scores.index_select(0, &idx), &segments, &lengths.index_select(0, &idx))
+			.mean(None);
+		terms.push(("span", nll.shallow_clone()));
+		Ok(Some(nll * self.spec.span_loss_weight))
 	}
 
 	/// `_address_system_loss`.
@@ -823,14 +734,7 @@ impl CoarseEncoder {
 			0.0,
 		);
 		terms.push(("address_system", ce.shallow_clone()));
-		let term = ce * self.spec.address_system_loss_weight;
-		Some(match loss {
-			None => term,
-			Some(l) => {
-				let k = l.kind();
-				l + term.to_kind(k)
-			}
-		})
+		Some(add_term(loss, ce * self.spec.address_system_loss_weight))
 	}
 
 	/// `forward_mlm`: the tied-embedding masked-language-model pass.

@@ -10,9 +10,8 @@
  */
 
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "@mailwoman/codex/country"
-import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
-
-import { codePointLength } from "#cjk/builder"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 
 /**
  * One rendered fragment row before its provenance columns.
@@ -97,7 +96,7 @@ class FieldRow {
 	 * renderers appended a house number or postcode.
 	 */
 	field(tag: string, text: string, whole = false): void {
-		const words = whole ? [text] : pythonSplitWhitespace(text)
+		const words = whole ? [text] : splitWhitespace(text)
 
 		this.tokens.push(...words)
 		this.labels.push(...words.map((_, index) => (index ? `I-${tag}` : `B-${tag}`)))

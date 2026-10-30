@@ -100,6 +100,14 @@ export interface NeuralParseTrace {
 	pieces: TokenizedPiece[]
 
 	/**
+	 * The country the parse's tree resolved containment for: the caller's locale hint,
+	 * or the locale classifier's confident country, or null.
+	 *
+	 * `buildAddressTree(text, tokens, { country })` reproduces the parse's tree.
+	 */
+	containmentCountry: string | null
+
+	/**
 	 * The postcode-anchor channel as fed to the model, null when the channel was not fed.
 	 */
 	anchor: SoftFeatureChannel | null
@@ -226,6 +234,14 @@ export interface NeuralParseTrace {
 	 */
 	explanation: DecodeExplanation | null
 	repairs: TraceRepair[]
+
+	/**
+	 * The cardinality filter's choice when the parse ran with `cardinalityFilter`:
+	 * the rank of the path it took among the 20 best, and whether every path repeated
+	 * a singleton tag so the best path was kept.
+	 * Absent when the filter was off.
+	 */
+	cardinalityFilter?: { rank: number; fellBack: boolean }
 
 	/**
 	 * The final tokens, matching those `parse()` builds its tree from.

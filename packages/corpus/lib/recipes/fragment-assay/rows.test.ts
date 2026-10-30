@@ -5,7 +5,7 @@
  * @file Each `fragment-assay` renderer's spans cover the text they claim, in code points, and agree with its labels.
  */
 
-import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -64,7 +64,7 @@ describe.each(Object.entries(CASES))("%s", (_, row) => {
 	})
 
 	it("reconstructs the tokens from the spans, one label per token", () => {
-		expect(pythonSplitWhitespace(covered.join(" "))).toEqual(row.tokens)
+		expect(splitWhitespace(covered.join(" "))).toEqual(row.tokens)
 		expect(row.labels).toHaveLength(row.tokens.length)
 	})
 
@@ -109,6 +109,7 @@ describe("codexCountrySurfaces", () => {
 			"United States of America",
 			"America",
 		])
+
 		expect(surfaces.get("CZ")?.length).toBeGreaterThan(0)
 	})
 })

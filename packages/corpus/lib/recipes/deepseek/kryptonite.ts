@@ -85,7 +85,9 @@ export function kryptoniteWorker(
 		const tally: Tally = new Map()
 		const rows: DeepSeekRow[] = []
 
-		for (const [position, record] of parseJSONLResponse(content).entries()) {
+		const records = parseJSONLResponse(content, () => tallyOutcome(tally, "parse-error"))
+
+		for (const [position, record] of records.entries()) {
 			const fields = record as Record<string, unknown>
 			const { raw, components } = fields
 			const kind = (fields.kind as string | null | undefined) || category.category

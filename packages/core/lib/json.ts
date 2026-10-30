@@ -60,6 +60,71 @@ export function stringifyJSON<T>(input: T, keys?: readonly string[]): Stringifie
 }
 
 /**
+ * Options for {@linkcode orderedJSON}.
+ */
+export interface OrderedJSONOptions {
+	/**
+	 * The indent, as `JSON.stringify` takes it.
+	 * Unset writes one line.
+	 */
+	indent?: string | number
+	/**
+	 * Sorts every object's keys by code unit.
+	 */
+	sortKeys?: boolean
+}
+
+/**
+ * Serializes a value as JSON, writing a `Map` as an object in its insertion order.
+ *
+ * A plain object prints its integer-like keys first, because JavaScript orders an object's keys that way.
+ * A caller whose keys are codes, such as `11110` or `0123`, passes a `Map` to keep its own order.
+ *
+ * The layout and the leaf values are `JSON.stringify`'s, and an `undefined` entry is dropped.
+ */
+export function orderedJSON(value: unknown, options: OrderedJSONOptions = {}): string {
+	const indent = typeof options.indent === "number" ? " ".repeat(options.indent) : (options.indent ?? "")
+
+	return orderedValue(value, indent, options.sortKeys ?? false, "") ?? "null"
+}
+
+function orderedValue(value: unknown, indent: string, sortKeys: boolean, depth: string): string | undefined {
+	if (typeof value === "bigint") return value.toString()
+
+	if (value === null || typeof value !== "object") return stringifyJSON(value)
+
+	const inner = depth + indent
+	const open = indent ? `\n${inner}` : ""
+	const close = indent ? `\n${depth}` : ""
+	const separator = indent ? `,\n${inner}` : ","
+
+	if (Array.isArray(value)) {
+		if (!value.length) return "[]"
+
+		const items = value.map((item) => orderedValue(item, indent, sortKeys, inner) ?? "null")
+
+		return `[${open}${items.join(separator)}${close}]`
+	}
+
+	const entries: Array<[string, unknown]> =
+		value instanceof Map
+			? [...value.entries()].map(([key, item]) => [String(key), item])
+			: Object.entries(value as Record<string, unknown>)
+
+	if (sortKeys) {
+		entries.sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+	}
+
+	const items = entries.flatMap(([key, item]) => {
+		const text = orderedValue(item, indent, sortKeys, inner)
+
+		return text === undefined ? [] : [`${stringifyJSON(key)}:${indent ? " " : ""}${text}`]
+	})
+
+	return items.length ? `{${open}${items.join(separator)}${close}}` : "{}"
+}
+
+/**
  * Serializes a value as canonical JSON for hashing.
  *
  * Object keys are sorted at every depth and `undefined` entries are dropped,

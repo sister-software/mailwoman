@@ -286,6 +286,44 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 		expect(unit.value).toBe("rear entrance")
 	})
 
+	test("keeps a closing paren whose opener is inside the span (Lübben (Spreewald))", () => {
+		const raw = "Aldi, Parkstraße 2, 15907 Lübben (Spreewald)"
+		const tokens: DecoderToken[] = [tok("Lübben", 26, 32, "B-locality"), tok("(Spreewald)", 33, 44, "I-locality")]
+		const locality = findByTag(buildAddressTree(raw, tokens).roots, "locality")!
+
+		expect(locality.value).toBe("Lübben (Spreewald)")
+		expect(raw.slice(locality.start, locality.end)).toBe("Lübben (Spreewald)")
+	})
+
+	test('keeps a closing straight quote whose opener is inside the span (микрорайон "Восход")', () => {
+		const raw = '10, микрорайон "Восход"'
+
+		const tokens: DecoderToken[] = [
+			tok("микрорайон", 4, 14, "B-dependent_locality"),
+			tok('"Восход"', 15, 23, "I-dependent_locality"),
+		]
+
+		const district = findByTag(buildAddressTree(raw, tokens).roots, "dependent_locality")!
+
+		expect(district.value).toBe('микрорайон "Восход"')
+	})
+
+	test("keeps a possessive apostrophe after a word character (Bojangles')", () => {
+		const raw = "Bojangles', 775 Huffman Mill Road, Burlington, 27215"
+		const tokens: DecoderToken[] = [tok("Bojangles',", 0, 11, "B-venue")]
+		const venue = findByTag(buildAddressTree(raw, tokens).roots, "venue")!
+
+		expect(venue.value).toBe("Bojangles'")
+	})
+
+	test("trims a single quote that wraps the span ('The Grange')", () => {
+		const raw = "'The Grange', Fishburn"
+		const tokens: DecoderToken[] = [tok("'The", 0, 4, "B-venue"), tok("Grange',", 5, 13, "I-venue")]
+		const venue = findByTag(buildAddressTree(raw, tokens).roots, "venue")!
+
+		expect(venue.value).toBe("The Grange")
+	})
+
 	test("an all-punctuation paired-quote-only span (empty content) is dropped, not crashed on", () => {
 		const raw = '"", Fishburn'
 		const tokens: DecoderToken[] = [tok('"",', 0, 3, "B-venue"), tok("Fishburn", 4, 12, "B-locality")]
@@ -466,5 +504,68 @@ describe("buildAddressTree — dependent_locality/locality comma separation (spe
 
 		expect(localities).toHaveLength(2)
 		expect(localities.map((l) => l.value).toSorted()).toEqual(["Chicago", "Springfield"])
+	})
+})
+
+describe("a house number in a numbered settlement without a street", () => {
+	const RAW = "10, Parcelles Assainies, commune de parcelles assainies"
+
+	const TOKENS = [
+		tok("10", 0, 2, "B-house_number"),
+		tok("Parcelles", 4, 13, "B-dependent_locality"),
+		tok("Assainies", 14, 23, "I-dependent_locality"),
+		tok("commune", 25, 32, "B-locality"),
+		tok("de", 33, 35, "I-locality"),
+		tok("parcelles", 36, 45, "I-locality"),
+		tok("assainies", 46, 55, "I-locality"),
+	]
+
+	test("attaches under the dependent locality in a country whose addresses number houses that way", () => {
+		const tree = buildAddressTree(RAW, TOKENS, { country: "SN" })
+		const settlement = findByTag(tree.roots, "dependent_locality")
+
+		expect(tree.country).toBe("SN")
+		expect(settlement?.children.map((child) => [child.tag, child.value])).toEqual([["house_number", "10"]])
+	})
+
+	test("stays a root without a country, or in a country the codex does not list with a cited source", () => {
+		// DE shows the form in the held-out suites but has no cited source yet (#2880), so it is not listed.
+		for (const country of [undefined, "US", "DE"]) {
+			const tree = buildAddressTree(RAW, TOKENS, { country })
+
+			expect(tree.roots.map((root) => root.tag)).toContain("house_number")
+		}
+	})
+
+	test("still attaches to a street when the parse has one", () => {
+		const tree = buildAddressTree(
+			"12 Rue Carnot, Parcelles Assainies",
+			[
+				tok("12", 0, 2, "B-house_number"),
+				tok("Rue", 3, 6, "B-street"),
+				tok("Carnot", 7, 13, "I-street"),
+				tok("Parcelles", 15, 24, "B-dependent_locality"),
+				tok("Assainies", 25, 34, "I-dependent_locality"),
+			],
+			{ country: "SN" }
+		)
+
+		expect(findByTag(tree.roots, "street")?.children.map((child) => child.tag)).toEqual(["house_number"])
+	})
+
+	test("leaves a CN production team's house number under its locality unit", () => {
+		const raw = "古北口村南关生产队6号"
+
+		const tree = buildAddressTree(
+			raw,
+			[
+				tok("古北口村", 0, 4, "B-locality"),
+				tok("南关生产队", 4, 9, "B-locality_unit"),
+				tok("6号", 9, 11, "B-house_number"),
+			],
+			{ country: "CN" }
+		)
+
+		expect(findByTag(tree.roots, "locality_unit")?.children.map((child) => child.tag)).toEqual(["house_number"])
 	})
 })

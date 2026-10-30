@@ -23,7 +23,7 @@ import {
 const NAMES = Object.keys(LABEL_SETS) as LabelSetName[]
 
 describe("semantic tag registry", () => {
-	// The values `corpus-python/src/mailwoman_train/semantic_tags.py` held when the registry moved here.
+	// The values the Python trainer's `semantic_tags.py` held when the registry moved here.
 	// Global ids are append-only, so these stay true as tags are added.
 	test("keeps the ids, refinements and head mappings the Python registry assigned", () => {
 		expect(SEMANTIC_TAG_REGISTRY_VERSION).toBe(1)

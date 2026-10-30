@@ -15,7 +15,7 @@
  *   the defect this package exists to prevent.
  */
 
-import { z } from "zod"
+import * as z from "zod"
 
 import { ExclusionSchema } from "#coverage"
 import { Assertion, AssertionSchema } from "#status"

@@ -11,8 +11,8 @@
  *       [--stats-sample 50000] [--max-row-groups <n>] [--seed 42] [--force] [--unshippable-reason <why>]
  */
 
-import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
+import { orderedJSON } from "@mailwoman/core/json"
+import { integerArgument, parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 
 import { buildRegistryCorpus, REGISTRY_LOCALES, type RegistryLocale } from "#cjk/registry"
 import { openSourceRightsAdmission, writeSourceRightsRecord } from "#source-register/corpus-inputs"
@@ -41,14 +41,6 @@ if (!locale || !locales.includes(locale)) throw new Error(`the first argument na
 
 const outDir = requiredArgument("registry-corpus", "--out-dir", values["out-dir"])
 
-const integer = (name: string, value: string): number => {
-	const parsed = Number(value)
-
-	if (!Number.isSafeInteger(parsed)) throw new Error(`--${name} must be an integer, got ${value}`)
-
-	return parsed
-}
-
 const admission = await openSourceRightsAdmission({
 	context: `${locale} registry build`,
 	unshippableReason: values["unshippable-reason"] ?? null,
@@ -59,19 +51,17 @@ admission.admitAll([REGISTRY_LOCALES[locale as RegistryLocale].source])
 const report = await buildRegistryCorpus({
 	locale: locale as RegistryLocale,
 	outDir,
-	rows: integer("rows", values.rows),
+	rows: integerArgument("rows", values.rows),
 	valFraction: Number(values["val-fraction"]),
-	boardRows: integer("board-rows", values["board-rows"]),
+	boardRows: integerArgument("board-rows", values["board-rows"]),
 	postcodeFraction: Number(values["postcode-fraction"]),
-	rowsPerPart: integer("rows-per-part", values["rows-per-part"]),
-	statsSample: integer("stats-sample", values["stats-sample"]),
-	maxRowGroups: values["max-row-groups"] ? integer("max-row-groups", values["max-row-groups"]) : undefined,
-	seed: integer("seed", values.seed),
+	rowsPerPart: integerArgument("rows-per-part", values["rows-per-part"]),
+	statsSample: integerArgument("stats-sample", values["stats-sample"]),
+	maxRowGroups: values["max-row-groups"] ? integerArgument("max-row-groups", values["max-row-groups"]) : undefined,
+	seed: integerArgument("seed", values.seed),
 	force: values.force,
 })
 
 await writeSourceRightsRecord(admission.record(), outDir)
 
-console.log(
-	pythonJSONDumps(new Map([...report].filter(([key]) => key !== "splits")), { indent: 2, ensureASCII: false })
-)
+console.log(orderedJSON(new Map([...report].filter(([key]) => key !== "splits")), { indent: "\t" }))

@@ -10,8 +10,8 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { resolvePath } from "path-ts"
 
 import {
@@ -56,7 +56,7 @@ const parts = await assembleHouseVenueTuples({
 
 await writeLocalTextFile(
 	// An iterable writes one line per entry, each newline-terminated.
-	parts.flatMap(([, tuples]) => tuples.map((tuple) => pythonJSONDumps(tuple, { ensureASCII: false }))),
+	parts.flatMap(([, tuples]) => tuples.map((tuple) => orderedJSON(tuple))),
 	out
 )
 

@@ -9,8 +9,7 @@
  *   The address-system head has one output per id, so ids are append-only. `mailwoman dev generate address-systems`
  *   derives the registry from codex's layouts, and the label schema references the systems by these ids.
  *
- *   The file sits in the Python training package because training containers read it as package data from the
- *   volume's copy of `corpus-python/src`. It moves when the trainer does.
+ *   The file sits under `packages/trainer/data`, where the Rust trainer reads it (`DataFiles::in_repository`).
  */
 
 import type { AddressScript } from "@mailwoman/codex/address/layouts"
@@ -22,7 +21,7 @@ import type { LabelSchemaAddressSystems } from "#label-schema"
 /**
  * The committed registry's path segments from the repository root.
  */
-const REGISTRY_SEGMENTS = ["corpus-python", "src", "mailwoman_train", "address_systems.json"] as const
+const REGISTRY_SEGMENTS = ["packages", "trainer", "data", "address_systems.json"] as const
 
 /**
  * The committed registry's path.

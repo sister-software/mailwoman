@@ -58,15 +58,15 @@ and the `hashes` line gives the total.
 ## 4. Know the rollback
 
 The plan's `rollback` line states how to undo it. With no earlier selection, the undo is to remove
-`active.json` and the `installations/` directory; the registered files are neither moved nor changed.
+`active.json` and the `installations/` directory. The registered files are neither moved nor changed.
 With an earlier selection, `mailwoman data activate --rollback` restores the generation the migration
 replaced.
 
 ## Cleanup is a separate step
 
-Migration deletes no file. `mailwoman data prune --dry-run` lists installed artifacts that no
+Migration deletes no file. `mailwoman data prune` lists installed artifacts that no
 retained generation and no running session references. It keeps the active generation, the one before
-it and every generation a running session holds. Run `mailwoman data prune` without `--dry-run` to
+it and every generation a running session holds. Run `mailwoman data prune --yes` to
 delete what it listed. The command refuses when the selection changed after it planned. The
-[layer installation reference](../../../engineering/reference/layer-installation.mdx) states the
+[layer installation reference](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-installation.mdx) states the
 retention policy in full.

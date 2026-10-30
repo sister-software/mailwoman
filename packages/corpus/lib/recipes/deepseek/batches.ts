@@ -14,11 +14,11 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { pyRound, pySum } from "@mailwoman/core/numeric"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
-import { pythonSplitLines, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { splitLines } from "@mailwoman/core/strings/unicode"
 import { JSONSpliterator } from "spliterator"
 
-import { codePointLength } from "#cjk/builder"
 import {
 	KRYPTONITE_CATEGORIES,
 	type KryptoniteCategory,
@@ -44,13 +44,16 @@ export function deterministicID(prefix: string, payload: string): string {
 /**
  * The JSON object lines of a completion.
  *
- * A fence line, a line that does not begin with `{` and a line that does not parse are dropped.
+ * A fence line and a line that does not begin with `{` are not records and are skipped.
+ * A line that begins with `{` and does not parse, such as one holding `NaN`,
+ * which Python's `json.loads` accepted and `JSON.parse` refuses, is a failed record:
+ * `onUnparsed` receives it so the caller can count it.
  */
-export function parseJSONLResponse(content: string | null | undefined): unknown[] {
+export function parseJSONLResponse(content: string | null | undefined, onUnparsed?: (line: string) => void): unknown[] {
 	const out: unknown[] = []
 
-	for (const line of pythonSplitLines(content || "")) {
-		const text = pythonStrip(line)
+	for (const line of splitLines(content || "")) {
+		const text = line.trim()
 
 		if (!text || text.startsWith("```") || !text.startsWith("{")) continue
 
@@ -59,6 +62,8 @@ export function parseJSONLResponse(content: string | null | undefined): unknown[
 
 		if (parsed != null) {
 			out.push(parsed)
+		} else {
+			onUnparsed?.(text)
 		}
 	}
 
@@ -91,6 +96,15 @@ export function validateComponents(raw: string, components: unknown): readonly [
 }
 
 /**
+ * @throws When a batch size is not a positive whole number, which would plan no batch or loop without end.
+ */
+function assertBatchSize(batchSize: number): void {
+	if (!Number.isSafeInteger(batchSize) || batchSize < 1) {
+		throw new Error(`batch size must be a positive whole number, not ${batchSize}`)
+	}
+}
+
+/**
  * One transliteration request: a chunk of seeds and the script it renders them into.
  */
 export interface TranslitBatch {
@@ -110,6 +124,17 @@ export function planTranslitBatches(
 	batchSize: number,
 	scripts: readonly string[] | null
 ): TranslitBatch[] {
+	assertBatchSize(batchSize)
+
+	for (const seed of seeds) {
+		if (typeof seed.source_id !== "string" || !seed.source_id) {
+			throw new Error(
+				`a transliteration seed with raw ${pythonRepr(seed.raw)} carries no source_id; ` +
+					"the batch id and each row's id are derived from it"
+			)
+		}
+	}
+
 	const batches: TranslitBatch[] = []
 
 	for (const [scriptLabel, surfaceLanguage, surfaceScript, slug] of TRANSLIT_SCRIPTS) {
@@ -153,6 +178,8 @@ export interface KryptoniteBatch {
  * with Python's half-to-even rounding, then divides each share into batches of `batchSize`.
  */
 export function planKryptoniteBatches(targetCount: number, batchSize: number): KryptoniteBatch[] {
+	assertBatchSize(batchSize)
+
 	const totalWeight = pySum(KRYPTONITE_CATEGORIES.map((category) => category.weight))
 	const batches: KryptoniteBatch[] = []
 

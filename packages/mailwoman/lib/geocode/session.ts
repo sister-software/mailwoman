@@ -30,8 +30,8 @@ import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
-import { LayerCatalog } from "#data/catalog"
-import { holdSelectionLease } from "#data/retention"
+import type { LayerCatalog } from "#data/catalog"
+import { holdActiveSelection } from "#data/retention"
 import { loadBundledCoarsePlacer } from "#default/placer"
 import { $public } from "#env"
 import { openBANRegionDatabases } from "#geocode/ban-layers"
@@ -348,9 +348,10 @@ export interface ForkEntityProbe {
  * returning `undefined` when the layer is missing or fails to open.
  */
 export async function loadAuthorityDesignationRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">
+	options: Pick<GeocodeSessionOptions, "dataRoot">,
+	catalog?: LayerCatalog
 ): Promise<AuthorityDesignationRoute | null> {
-	const floodDBPath = await resolveLayerDatabasePath(options.dataRoot, "flood")
+	const floodDBPath = await resolveLayerDatabasePath(options.dataRoot, "flood", catalog)
 
 	if (!(await pathExists(floodDBPath))) return null
 
@@ -368,9 +369,10 @@ export async function loadAuthorityDesignationRoute(
  * returning `undefined` when the layer is missing or fails to open.
  */
 export async function loadSoilCapabilityRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">
+	options: Pick<GeocodeSessionOptions, "dataRoot">,
+	catalog?: LayerCatalog
 ): Promise<SoilCapabilityRoute | null> {
-	const soilDBPath = await resolveLayerDatabasePath(options.dataRoot, "soil")
+	const soilDBPath = await resolveLayerDatabasePath(options.dataRoot, "soil", catalog)
 
 	if (!(await pathExists(soilDBPath))) return null
 
@@ -388,9 +390,10 @@ export async function loadSoilCapabilityRoute(
  * returning `undefined` when the layer is missing or fails to open.
  */
 export async function loadCoastalErosionRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">
+	options: Pick<GeocodeSessionOptions, "dataRoot">,
+	catalog?: LayerCatalog
 ): Promise<CoastalErosionRoute | null> {
-	const coastalDBPath = await resolveLayerDatabasePath(options.dataRoot, "coastal")
+	const coastalDBPath = await resolveLayerDatabasePath(options.dataRoot, "coastal", catalog)
 
 	if (!(await pathExists(coastalDBPath))) return null
 
@@ -408,9 +411,10 @@ export async function loadCoastalErosionRoute(
  * returning `undefined` when the layer is missing or fails to open.
  */
 export async function loadZoningDesignationRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">
+	options: Pick<GeocodeSessionOptions, "dataRoot">,
+	catalog?: LayerCatalog
 ): Promise<ZoningDesignationRoute | null> {
-	const zoningDBPath = await resolveLayerDatabasePath(options.dataRoot, "zoning")
+	const zoningDBPath = await resolveLayerDatabasePath(options.dataRoot, "zoning", catalog)
 
 	if (!(await pathExists(zoningDBPath))) return null
 
@@ -429,9 +433,10 @@ export async function loadZoningDesignationRoute(
  * street-generic test to keep street queries from matching venues.
  */
 export async function loadForkEntityDeps(
-	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
+	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">,
+	catalog?: LayerCatalog
 ): Promise<ForkEntityProbe> {
-	const poiDBPath = await resolveLayerDatabasePath(options.dataRoot, "poi")
+	const poiDBPath = await resolveLayerDatabasePath(options.dataRoot, "poi", catalog)
 	// The rail-station layer sits beside the conventional poi.db as its own sealed database,
 	// because it is built from OSM under a different license and tier than the Overture places in poi.db.
 	// It has no registry entry, so it stays at that path when the selection lists a POI database elsewhere.
@@ -452,7 +457,7 @@ export async function loadForkEntityDeps(
 	])
 
 	// The street-morphology FST the active selection lists, else the loader's own data-root default.
-	const streetMorphologyPath = await selectedStreetMorphologyPath(options.dataRoot)
+	const streetMorphologyPath = await selectedStreetMorphologyPath(options.dataRoot, catalog)
 	const morphology = await loadStreetMorphologyFST(streetMorphologyPath ? { artifactPath: streetMorphologyPath } : {})
 	const lookups = paths.map((databasePath) => new POILookup({ databasePath }))
 
@@ -493,9 +498,15 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// so a prune keeps those artifacts until the session is disposed.
 	// A data root with no selection takes no lease and receives no write.
 	// Every reader below takes this one snapshot, so the session reads one generation throughout.
-	const catalog = await LayerCatalog.read(options.dataRoot)
-	const generation = catalog.generation
-	const lease = generation ? await holdSelectionLease(options.dataRoot, generation) : null
+	const { catalog, lease } = await holdActiveSelection(options.dataRoot)
+	// Owns the lease and every handle opened below until the session is built,
+	// so a failure part-way through releases them.
+	// A pinned lease would keep a prune from reclaiming its generation for the life of the process.
+	using pending = new DisposableStack()
+
+	if (lease) {
+		pending.use(lease)
+	}
 
 	const candidateDB = await resolveCandidateDBPath(options.candidateDB, options.dataRoot, catalog)
 	const wofPath = candidateDB ? [] : await resolveWOFPath(options, catalog)
@@ -552,12 +563,15 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const resolverImportedAt = performance.now()
 
-	const lookup = await createResolverBackend(mod, {
-		candidateDB,
-		dataRoot: options.dataRoot,
-		wofPaths: wofPath,
-		variantAliasExemption: settings.variantAliasExemption,
-	})
+	const lookup = pending.use(
+		await createResolverBackend(mod, {
+			candidateDB,
+			catalog,
+			dataRoot: options.dataRoot,
+			wofPaths: wofPath,
+			variantAliasExemption: settings.variantAliasExemption,
+		})
+	)
 
 	const capitals = await capitalIndexFor(settings.capitalTier, candidateDB)
 
@@ -566,22 +580,26 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: null
 
-	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)
+	const regionDatabaseProvider = pending.use(await USStateDatabaseProvider.create(mod, options.dataRoot, catalog))
 
-	const explicitApLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? ("fr" as const) : ("us" as const)
+	const explicitAPLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? ("fr" as const) : ("us" as const)
 
-	const explicitAp = options.addressPointsDB
-		? new mod.AddressPointSqliteLookup(options.addressPointsDB, { streetLocale: explicitApLocale })
-		: null
+	const explicitAP = pending.use(
+		options.addressPointsDB
+			? new mod.AddressPointSqliteLookup(options.addressPointsDB, { streetLocale: explicitAPLocale })
+			: null
+	)
 
-	const explicitIp = options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null
+	const explicitIP = pending.use(
+		options.interpolationDB ? new mod.StreetInterpolator({ dbPath: options.interpolationDB }) : null
+	)
 
 	const databases: RegionDatabaseResolver =
-		explicitAp || explicitIp
+		explicitAP || explicitIP
 			? (slug) => {
-					const base = explicitAp && explicitIp ? {} : regionDatabaseProvider.for(slug)
+					const base = explicitAP && explicitIP ? {} : regionDatabaseProvider.for(slug)
 
-					return { addressPoints: explicitAp ?? base.addressPoints, interpolation: explicitIp ?? base.interpolation }
+					return { addressPoints: explicitAP ?? base.addressPoints, interpolation: explicitIP ?? base.interpolation }
 				}
 			: regionDatabaseProvider.for
 
@@ -598,7 +616,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	}
 
 	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS is not caught: it stops the session.
-	const osmProvider = await openOSMRegionDatabases(options.dataRoot, catalog)
+	const osmProvider = pending.use(await openOSMRegionDatabases(options.dataRoot, catalog))
 
 	const optionalProvidersLoadedAt = performance.now()
 
@@ -616,8 +634,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const dispose = (): void => {
 		disposeQuietly(lease)
-		disposeQuietly(explicitAp)
-		disposeQuietly(explicitIp)
+		disposeQuietly(explicitAP)
+		disposeQuietly(explicitIP)
 		disposeQuietly(regionDatabaseProvider)
 		disposeQuietly(osmProvider)
 		disposeQuietly(lookup)
@@ -659,15 +677,17 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		resolver = createWOFResolver(lookup)
 		bias = parseBiasPoints(options.bias ?? null)
 
-		const probe = await loadForkEntityDeps(options)
+		const probe = await loadForkEntityDeps(options, catalog)
 
 		forkEntityDeps = probe.deps
 		poiHandle = probe.handle ?? null
-		designationRoute = await loadAuthorityDesignationRoute(options)
-		soilRoute = await loadSoilCapabilityRoute(options)
-		coastalRoute = await loadCoastalErosionRoute(options)
-		zoningRoute = await loadZoningDesignationRoute(options)
+		designationRoute = await loadAuthorityDesignationRoute(options, catalog)
+		soilRoute = await loadSoilCapabilityRoute(options, catalog)
+		coastalRoute = await loadCoastalErosionRoute(options, catalog)
+		zoningRoute = await loadZoningDesignationRoute(options, catalog)
 	} catch (error) {
+		// `dispose` releases everything the stack holds and the handles opened in this block, so the stack lets go.
+		pending.move()
 		dispose()
 
 		throw error
@@ -827,6 +847,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(trace ? { trace: { ...trace, resolver: resolverTrace } } : {}),
 		}
 	}
+
+	// The session's `dispose` owns the lease and the handles from here.
+	pending.move()
 
 	return {
 		initTiming,

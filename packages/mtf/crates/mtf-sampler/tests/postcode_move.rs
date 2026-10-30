@@ -552,3 +552,14 @@ fn a_validation_split_never_moves_a_postcode() {
 		["Via del Corso 12, 00186 Roma", "Via del Corso 12, Roma 00186"]
 	);
 }
+
+#[test]
+fn a_layout_table_entry_that_is_neither_a_string_nor_null_is_refused() {
+	let path = std::path::Path::new("layouts.json");
+	assert!(PostcodeLayouts::from_json(r#"{"countries": {"US": "postcode-last", "AQ": null}}"#, path).is_ok());
+	let Err(refusal) = PostcodeLayouts::from_json(r#"{"countries": {"US": 5}}"#, path) else {
+		panic!("a numeric layout was accepted");
+	};
+	let refusal = refusal.to_string();
+	assert!(refusal.contains("country \"US\" has layout 5"), "{refusal}");
+}

@@ -49,7 +49,7 @@ import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { resolveFSTPath, runAutocomplete } from "#autocomplete-core"
-import { LayerCatalog, replaceActiveSelection } from "#data/catalog"
+import { activateInstallation, LayerCatalog, replaceActiveSelection } from "#data/catalog"
 import { openBANRegionDatabases } from "#geocode/ban-layers"
 import { gazetteerFSTScope, selectedParsePriorArtifacts } from "#geocode/fst-layers"
 import { layerDatabasePath, layerDatabases, resolveLayerDatabasePath } from "#geocode/layer-paths"
@@ -285,6 +285,36 @@ describe("a multi-country source", () => {
 			lat: 48.2085,
 		})
 	})
+
+	it("activates a four-country artifact under its own countries only, as data activate writes it", async () => {
+		const root = scratch.path("dach-activate")
+		const countries = ["AT", "CH", "DE", "LI"]
+
+		const installed = await installFixtureArtifact(
+			root,
+			ServingRole.AddressPoints,
+			"address-points-dach.db",
+			banBytes,
+			{
+				scope: { countries, subdivisions: null },
+				locale: "de",
+			}
+		)
+
+		const selection = await activateInstallation(root, installed.installationID)
+
+		expect(selection.entries.map((entry) => entry.scope)).toEqual(
+			countries.map((country) => ({ country, subdivision: null }))
+		)
+
+		const catalog = await LayerCatalog.read(root)
+
+		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "DE", subdivision: null })).toBe(
+			installed.path
+		)
+		// An unscoped entry would answer every country's lookup, France's included.
+		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "FR", subdivision: null })).toBeNull()
+	})
 })
 
 describe("a non-SQLite artifact set", () => {
@@ -513,11 +543,10 @@ describe("the OpenStreetMap extract provider on the active selection, against it
 
 		await removePath(resolveDirectory(ban.path))
 
-		using fallback = await openServingRooftopProviders(root)
-
-		// With BAN gone, the national tier reads its conventional path, and the build stays the OpenStreetMap tier's.
-		expect(fallback.national.for("fr").addressPoints).toBeUndefined()
-		expect(fallback.osm?.for("fr").addressPoints?.find(FR_QUERIES[2]!)).toMatchObject({ source: "openstreetmap:fr" })
+		// With the selected BAN artifact gone, the national tier has no named source to read.
+		// Reading its conventional path would answer from a layer the selection did not choose,
+		// so opening the providers refuses and names BAN's file.
+		await expect(openServingRooftopProviders(root)).rejects.toThrow(ban.path)
 	})
 })
 

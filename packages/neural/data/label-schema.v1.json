@@ -416,7 +416,7 @@
 		}
 	},
 	"address_systems": {
-		"registry": "corpus-python/src/mailwoman_train/address_systems.json",
+		"registry": "packages/trainer/data/address_systems.json",
 		"systems": [
 			{
 				"id": 0,

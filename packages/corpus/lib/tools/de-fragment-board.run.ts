@@ -13,7 +13,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { integerArgument, parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { buildDEFragmentBoard } from "#de/fragment-board"
 
@@ -26,14 +26,6 @@ const { values } = parseArguments({
 		out: { type: "string" },
 	},
 })
-
-const integer = (name: string, value: string): number => {
-	const parsed = Number(value)
-
-	if (!Number.isSafeInteger(parsed)) throw new Error(`--${name} must be an integer, got ${value}`)
-
-	return parsed
-}
 
 const counts = await buildDEFragmentBoard({
 	parquet: values.parquet ?? dataRootPath("overture", "2026-06-17.0", "addresses-de.parquet").toString(),
@@ -48,8 +40,8 @@ const counts = await buildDEFragmentBoard({
 			"fixtures",
 			"overture-fragments-de.jsonl"
 		).toString(),
-	perClass: integer("per-class", values["per-class"]),
-	seed: integer("seed", values.seed),
+	perClass: integerArgument("per-class", values["per-class"]),
+	seed: integerArgument("seed", values.seed),
 })
 
 for (const [klass, count] of counts) {

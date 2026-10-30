@@ -140,9 +140,14 @@ export async function createResolverBackend(
 		 * The candidate backend's variant-alias exemption, defaulting to the backend's own default.
 		 */
 		variantAliasExemption?: VariantAliasExemption
+		/**
+		 * The snapshot of the active selection the caller already read,
+		 * so the backend resolves from its generation.
+		 */
+		catalog?: LayerCatalog
 	}
 ): Promise<PlaceLookup> {
-	const candidate = await resolveCandidateDBPath(opts.candidateDB, opts.dataRoot)
+	const candidate = await resolveCandidateDBPath(opts.candidateDB, opts.dataRoot, opts.catalog)
 
 	if (candidate) {
 		console.error(`[resolver] candidate-table backend (demo-parity, population-first): ${candidate}`)

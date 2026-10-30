@@ -9,22 +9,23 @@
  *   is a board row, never a training row. Hold-out follows the label corpus of the same locale: Taiwan holds out a
  *   (縣市, 鄉鎮市區) unit by its hash bucket, Japan a municipality.
  *
- *   Ported from the Python builders' `corpora/registry.py`. The draws are its draws: one {@linkcode PyRandom} seeded
+ *   Ported from the Python builders' `corpora/registry.py`, in its draw order: one {@linkcode SeededRandom} seeded
  *   with the seed runs the two exact selectors and the shuffle, and Japan's postcode coin draws from a second one
  *   seeded `<seed>-postcode`, one draw per register row.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
+import { SeededRandom } from "@mailwoman/core/random"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
-import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	CJK_LABEL_SET_NAME,
 	type CJKRecord,
 	coverageStats,
-	directoryHasEntries,
 	muniBucket,
 	nextSelection,
 	readLabelSetTags,
@@ -42,7 +43,6 @@ import {
 	JPKeyIndex,
 	jpRegistryRecord,
 } from "#jp/registers"
-import { PyRandom } from "#training/pyrandom"
 import {
 	alignRegisterAddress,
 	iterTWRegisterRows,
@@ -116,7 +116,11 @@ export function houjinZipPath() {
 	return dataRootPath("corpus", "sources", JP_REGISTRY_SOURCE, "00_zenkoku_all_20260831.zip")
 }
 
-async function* jpCandidates(index: JPKeyIndex, rng: PyRandom, postcodeFraction: number): AsyncGenerator<Candidate> {
+async function* jpCandidates(
+	index: JPKeyIndex,
+	rng: SeededRandom,
+	postcodeFraction: number
+): AsyncGenerator<Candidate> {
 	for await (const row of iterCorporateRows(houjinZipPath())) {
 		const aligned = alignCorporateRow(row, index, rng.random() < postcodeFraction)
 		const text = `${row.prefecture}${row.municipality}${row.street}`
@@ -143,7 +147,7 @@ export const REGISTRY_LOCALES = {
 
 			// A separate stream for the postcode coin: drawn in lockstep with the selector,
 			// a selected row (draw < 0.12) would always be a postcode row (draw < 0.3).
-			return () => jpCandidates(index, new PyRandom(`${options.seed}-postcode`), options.postcodeFraction)
+			return () => jpCandidates(index, new SeededRandom(`${options.seed}-postcode`), options.postcodeFraction)
 		},
 	},
 	tw: {
@@ -174,7 +178,7 @@ export type RegistryLocale = keyof typeof REGISTRY_LOCALES
  * @throws When `outDir` holds files and `force` is unset, or a register input is missing.
  */
 export async function buildRegistryCorpus(options: RegistryCorpusOptions): Promise<Map<string, unknown>> {
-	const rng = new PyRandom(options.seed)
+	const rng = new SeededRandom(options.seed)
 	const tagSet = await readLabelSetTags(CJK_LABEL_SET_NAME)
 	const locale: RegistryLocaleSpec = REGISTRY_LOCALES[options.locale]
 	const outDir = resolvePath(options.outDir)
@@ -286,7 +290,7 @@ export async function buildRegistryCorpus(options: RegistryCorpusOptions): Promi
 	}
 
 	await writeLocalTextFile(
-		board.map((entry) => pythonJSONDumps(entry, { ensureASCII: false })),
+		board.map((entry) => orderedJSON(entry)),
 		resolvePath(outDir, locale.board)
 	)
 
@@ -298,7 +302,7 @@ export async function buildRegistryCorpus(options: RegistryCorpusOptions): Promi
 		["label_set", CJK_LABEL_SET_NAME],
 		["seed", options.seed],
 		["alignment_census", counts],
-		["alignment_rate", asPythonFloat(alignmentRate)],
+		["alignment_rate", alignmentRate],
 		["board_bucket_min", locale.bucketMin],
 		["span_tags", new Map(mostCommon(tags))],
 		["splits", splits],
@@ -306,10 +310,7 @@ export async function buildRegistryCorpus(options: RegistryCorpusOptions): Promi
 		["char_vocab_size", vocab.size],
 	])
 
-	await writeLocalTextFile(
-		pythonJSONDumps(report, { indent: 2, ensureASCII: false }) + "\n",
-		resolvePath(outDir, "build-report.json")
-	)
+	await writeLocalTextFile(orderedJSON(report, { indent: "\t" }) + "\n", resolvePath(outDir, "build-report.json"))
 
 	return report
 }

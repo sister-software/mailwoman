@@ -33,7 +33,7 @@ fn keep_ids(rule: &str, n: usize) -> Vec<usize> {
 }
 
 #[test]
-fn every_recorded_edit_matches_python() {
+fn every_recorded_edit_matches_the_record() {
 	let reference: Value = serde_json::from_str(
 		&std::fs::read_to_string(manifest("tests/fixtures/model-edit-reference.json")).expect("reference"),
 	)
@@ -57,12 +57,13 @@ fn every_recorded_edit_matches_python() {
 	}
 }
 
+/// Reads the shipped tokenizers under `MAILWOMAN_DATA_ROOT`, which CI does not hold, so the test is ignored unless run
+/// with `--ignored` on a host that holds them. It fails when it reads none of them.
 #[test]
-fn the_shipped_tokenizers_round_trip_when_present() {
-	let Some(root) = std::env::var_os("MAILWOMAN_DATA_ROOT") else {
-		eprintln!("MAILWOMAN_DATA_ROOT is unset; the shipped tokenizers were not read");
-		return;
-	};
+#[ignore = "reads the shipped tokenizers under MAILWOMAN_DATA_ROOT; run with --ignored on a host that holds them"]
+fn the_shipped_tokenizers_round_trip() {
+	let root = std::env::var_os("MAILWOMAN_DATA_ROOT").expect("MAILWOMAN_DATA_ROOT names the data root");
+	let mut read = 0;
 	for relative in [
 		"weights/en-us/tokenizer.model",
 		"models/tokenizer/v0.9.0-multisplice/tokenizer.model",
@@ -75,7 +76,13 @@ fn the_shipped_tokenizers_round_trip_when_present() {
 		};
 		let editor = ModelEditor::parse(&model).expect("model parses");
 		assert_eq!(editor.to_bytes(), model, "{}", path.display());
+		read += 1;
 	}
+	assert!(
+		read > 0,
+		"read none of the shipped tokenizers under {}",
+		Path::new(&root).display()
+	);
 }
 
 #[test]

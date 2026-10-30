@@ -1,7 +1,6 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
 	"ignore": [
-		"corpus-python/scripts/**/*.ts",
 		"docker/server.ts",
 		"docs/**/*.mdx",
 		"docs/build/**",
@@ -15,7 +14,6 @@
 	"workspaces": {
 		".": {
 			"entry": [
-				"corpus-python/scripts/**/*.ts",
 				"docker/server.ts",
 				"*.config.ts",
 				"oxlint.plugin.ts",

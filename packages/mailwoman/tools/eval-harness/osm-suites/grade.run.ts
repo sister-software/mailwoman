@@ -21,6 +21,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { formatPercent } from "@mailwoman/core/stats"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { resolvePath } from "path-ts"
 
@@ -129,8 +130,6 @@ for (const shape of Object.values(OSMSuiteShape)) {
 	}
 }
 
-const percent = (exact: number, rows: number) => (rows ? `${((100 * exact) / rows).toFixed(1)}%` : "–")
-
 const table = [
 	`| Suite | Rows | ${arms.map((arm) => arm.name).join(" | ")} |`,
 	`| --- | ---: | ${arms.map(() => "---:").join(" | ")} |`,
@@ -140,7 +139,7 @@ const table = [
 				.map((arm) => {
 					const { exact, rows } = grade.arms[arm.name]!
 
-					return `${percent(exact, rows)} (${exact.toLocaleString("en-US")})`
+					return `${formatPercent(exact, rows)} (${exact.toLocaleString("en-US")})`
 				})
 				.join(" | ")} |`
 	),

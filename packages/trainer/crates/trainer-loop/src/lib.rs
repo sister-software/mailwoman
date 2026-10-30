@@ -1,6 +1,6 @@
 //! The Mailwoman training loops over `trainer-model`.
 //!
-//! The supervised loop is `corpus-python/src/mailwoman_train/train/loop.py` and the MLM loop `train/pretrain.py`.
+//! The supervised loop ports the Python trainer's `train/loop.py` and the MLM loop its `train/pretrain.py`.
 //! Both read batches from `mtf-sampler`'s `TrainingBatches`, encode them through `mtf-channels` (or the character
 //! encoder), and step `optim::AdamW` under `schedules::LambdaLr`. Each draw from the global generator (dropout, the
 //! locale hint, the curricula, the MLM mask) happens where the Python loop makes it.

@@ -30,15 +30,31 @@ pub struct AffixRelabelLexicon {
 	pub name_prone: FxHashSet<String>,
 }
 
-fn string_map(value: &Value) -> HashMap<String, String> {
-	value
-		.as_object()
-		.map(|m| {
-			m.iter()
-				.filter_map(|(k, v)| v.as_str().map(|v| (k.clone(), v.to_owned())))
-				.collect()
+/// A lexicon section as a word map.
+///
+/// A section that is not an object, or a value that is not a string, is refused: dropping it would relabel fewer
+/// words than the lexicon lists.
+fn string_map(value: &Value, key: &str, path: &Path) -> Result<HashMap<String, String>> {
+	let section = value.as_object().ok_or_else(|| {
+		Error::Input(format!(
+			"affix relabel lexicon {key:?} is not an object: {}",
+			path.display()
+		))
+	})?;
+	section
+		.iter()
+		.map(|(word, label)| {
+			label
+				.as_str()
+				.map(|label| (word.clone(), label.to_owned()))
+				.ok_or_else(|| {
+					Error::Input(format!(
+						"affix relabel lexicon {key:?} maps {word:?} to {label}, not a string: {}",
+						path.display()
+					))
+				})
 		})
-		.unwrap_or_default()
+		.collect()
 }
 
 impl AffixRelabelLexicon {
@@ -59,23 +75,46 @@ impl AffixRelabelLexicon {
 				)));
 			}
 		}
-		let directionals = string_map(&data["directionals"]);
-		let suffixes = string_map(&data["suffixes"]);
+		let directionals = string_map(&data["directionals"], "directionals", path)?;
+		let suffixes = string_map(&data["suffixes"], "suffixes", path)?;
 		if directionals.is_empty() || suffixes.is_empty() {
 			return Err(Error::Input(format!(
 				"affix relabel lexicon has empty vocab: {}",
 				path.display()
 			)));
 		}
+		let version = data["version"].as_str().ok_or_else(|| {
+			Error::Input(format!(
+				"affix relabel lexicon version is {}, not a string: {}",
+				data["version"],
+				path.display()
+			))
+		})?;
+		let name_prone = match data.get("name_prone") {
+			None | Some(Value::Null) => FxHashSet::default(),
+			Some(Value::Array(words)) => words
+				.iter()
+				.map(|word| {
+					word.as_str().map(str::to_owned).ok_or_else(|| {
+						Error::Input(format!(
+							"affix relabel lexicon name_prone holds {word}, not a string: {}",
+							path.display()
+						))
+					})
+				})
+				.collect::<Result<_>>()?,
+			Some(other) => {
+				return Err(Error::Input(format!(
+					"affix relabel lexicon name_prone is {other}, not an array: {}",
+					path.display()
+				)))
+			}
+		};
 		Ok(Self {
 			directionals,
 			suffixes,
-			version: data["version"].as_str().unwrap_or_default().to_owned(),
-			name_prone: data
-				.get("name_prone")
-				.and_then(Value::as_array)
-				.map(|a| a.iter().filter_map(Value::as_str).map(str::to_owned).collect())
-				.unwrap_or_default(),
+			version: version.to_owned(),
+			name_prone,
 		})
 	}
 }

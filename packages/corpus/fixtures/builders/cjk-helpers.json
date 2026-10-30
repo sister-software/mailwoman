@@ -6,11 +6,17 @@
 		"random.Random(42): two selectors, then the next random() value. coverage_stats.per_tag_rows was counted from a",
 		"Python set, so its key order is the order of that run's PYTHONHASHSEED and only its counts are compared."
 	],
-	"muni_bucket": { "千代田区": 81, "札幌市 中央区": 71, "臺北市|大安區": 19, "𠮷野町": 17, "": 66 },
+	"muni_bucket": {
+		"千代田区": 81,
+		"札幌市 中央区": 71,
+		"臺北市|大安區": 19,
+		"𠮷野町": 17,
+		"": 66
+	},
 	"select_exact": [
-		[false, true, false, true, false, false, false, true, false, false],
+		[false, false, false, false, true, false, true, false, false, true],
 		[true, true, true, true, true],
-		0.1988376506866485
+		0.5007294877432287
 	],
 	"water_fill": [4, 0, 2],
 	"kanji_to_int": {
@@ -34,9 +40,20 @@
 		"105": "百五",
 		"999": "九百九十九"
 	},
-	"fold_halfwidth_kana": { "ﾃﾞﾝｴﾝ": "デンエン", "テスト": "テスト", "ｶﾞｷﾞ１２": "ガギ１２" },
-	"normalize_name": { "西与賀町　字今津乙": "西与賀町字今津乙", " ｻｸﾗ 町 ": "サクラ町" },
-	"normalize_number": { "３ー１６": "３-１６", " 12－3 ": "12-3", "5‐7": "5-7" },
+	"fold_halfwidth_kana": {
+		"ﾃﾞﾝｴﾝ": "デンエン",
+		"テスト": "テスト",
+		"ｶﾞｷﾞ１２": "ガギ１２"
+	},
+	"normalize_name": {
+		"西与賀町　字今津乙": "西与賀町字今津乙",
+		" ｻｸﾗ 町 ": "サクラ町"
+	},
+	"normalize_number": {
+		"３ー１６": "３-１６",
+		" 12－3 ": "12-3",
+		"5‐7": "5-7"
+	},
 	"split_street": {
 		"八島町二丁目": ["八島町", 2],
 		"字崎枝": ["字崎枝", null],
@@ -97,12 +114,33 @@
 	"coverage_stats": {
 		"rows": 2,
 		"bio_char_coverage_all": 0.913043,
-		"bio_char_coverage_significant": 1.0,
+		"bio_char_coverage_significant": 1,
 		"raw_len_min_median_max": [6, 17, 17],
-		"registers": { "registry": 1, "native": 1 },
-		"per_tag_rows": { "postcode": 1, "prefecture": 1, "municipality": 1, "subregion": 1, "region": 1 },
-		"per_tag_spans": { "postcode": 1, "prefecture": 1, "municipality": 1, "region": 1, "subregion": 1 },
-		"per_tag_chars": { "postcode": 8, "municipality": 4, "prefecture": 3, "region": 3, "subregion": 3 },
+		"registers": {
+			"registry": 1,
+			"native": 1
+		},
+		"per_tag_rows": {
+			"postcode": 1,
+			"prefecture": 1,
+			"municipality": 1,
+			"subregion": 1,
+			"region": 1
+		},
+		"per_tag_spans": {
+			"postcode": 1,
+			"prefecture": 1,
+			"municipality": 1,
+			"region": 1,
+			"subregion": 1
+		},
+		"per_tag_chars": {
+			"postcode": 8,
+			"municipality": 4,
+			"prefecture": 3,
+			"region": 3,
+			"subregion": 3
+		},
 		"per_label_chars": {
 			"I-postcode": 7,
 			"I-municipality": 3,
@@ -117,7 +155,11 @@
 			"B-subregion": 1
 		}
 	},
-	"tw_fold_key": { "台北市 和平東路２段": "臺北市和平東路二段", "中山路11段": "中山路11段", "臺中市": "臺中市" },
+	"tw_fold_key": {
+		"台北市 和平東路２段": "臺北市和平東路二段",
+		"中山路11段": "中山路11段",
+		"臺中市": "臺中市"
+	},
 	"tw_align": {
 		"台北市大安區錦安里和平東路1段１２號３樓": {
 			"raw": "台北市大安區錦安里和平東路1段１２號３樓",

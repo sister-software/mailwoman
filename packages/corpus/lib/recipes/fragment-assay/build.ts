@@ -12,10 +12,11 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
+import { SeededRandom } from "@mailwoman/core/random"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
-import { pythonSplitWhitespace, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { TextSpliterator } from "spliterator"
 
 import { ParquetColumnKind, type ParquetColumns, writeColumnParquetFile } from "#parquet/writers"
@@ -41,7 +42,6 @@ import {
 	spanSurfacesFromCorpus,
 } from "#recipes/fragment-assay/sources"
 import { stampRowLicenses } from "#source-register/row-license"
-import { PyRandom } from "#training/pyrandom"
 
 /**
  * The columns of the recipe output, in the order and with the types pyarrow
@@ -184,7 +184,7 @@ async function readFamousLocalities(path: string): Promise<string[]> {
 	const names: string[] = []
 
 	for await (const line of TextSpliterator.fromAsync(path)) {
-		const name = pythonStrip(line)
+		const name = line.trim()
 
 		if (name) {
 			names.push(name)
@@ -228,7 +228,7 @@ async function pushCorpusHarvest(options: FragmentAssayOptions, push: Push) {
 	}
 
 	const directional = adminPairs.filter(([locality]) =>
-		DIRECTIONALS.has(pythonSplitWhitespace(locality)[0]!.replace(/\.+$/u, "").toUpperCase())
+		DIRECTIONALS.has(splitWhitespace(locality)[0]!.replace(/\.+$/u, "").toUpperCase())
 	)
 
 	for (const [locality] of directional) {
@@ -288,8 +288,8 @@ const NUMBER_FIRST = new Set(["US", "GB", "CA", "FR"])
 /**
  * The country rows: a tail-position block over US streets and localities, and a leading-position block.
  *
- * Their house numbers come from their own `PyRandom`, so a block before them
- * that changes size leaves them unchanged.
+ * Their house numbers come from their own `SeededRandom`, so a block
+ * before them that changes size leaves them unchanged.
  */
 async function pushCountryCounterweight(
 	options: FragmentAssayOptions,
@@ -310,7 +310,7 @@ async function pushCountryCounterweight(
 		40
 	)
 
-	const rng = new PyRandom(`${FRAGMENT_SEED}:countryrows`)
+	const rng = new SeededRandom(`${FRAGMENT_SEED}:countryrows`)
 	const countryLocalities = new Map([["US", adminPairs.map(([locality]) => locality)]])
 	let tailRows = 0
 
@@ -337,7 +337,7 @@ async function pushCountryCounterweight(
 	const regions = adminPairs.map(([, region]) => region)
 	const localities = corpusLocalities.get("US") ?? []
 	const usForms = surfaces.get("US") ?? []
-	const multiWord = usForms.filter((form) => pythonSplitWhitespace(form).length >= 2)
+	const multiWord = usForms.filter((form) => splitWhitespace(form).length >= 2)
 	const leadingForms = multiWord.length ? multiWord : usForms
 	let leadingRows = 0
 
@@ -369,7 +369,7 @@ async function pushCountryCounterweight(
  */
 export async function buildFragmentAssay(options: FragmentAssayOptions): Promise<{ train: number; dev: number }> {
 	const surfaces = options.countrySurfaces ?? codexCountrySurfaces()
-	const shuffle = new PyRandom(FRAGMENT_SEED)
+	const shuffle = new SeededRandom(FRAGMENT_SEED)
 	const rows: FragmentAssayRow[] = []
 
 	const pusher =
@@ -429,7 +429,7 @@ export async function buildFragmentAssay(options: FragmentAssayOptions): Promise
 	await writeColumnParquetFile(train, FRAGMENT_COLUMNS, options.outParquet)
 
 	await writeLocalTextFile(
-		dev.map((row) => pythonJSONDumps(row, { ensureASCII: false })),
+		dev.map((row) => orderedJSON(row)),
 		options.outDev
 	)
 

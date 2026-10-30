@@ -3,7 +3,7 @@ name = "trainer-cli"
 description = "The `trainer` command: Rust training runs from a resolved config, the checkpoint converter, and the staged comparison against the Python trainer's reference records."
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0"
 repository.workspace = true
 
 [[bin]]
@@ -15,3 +15,6 @@ tch.workspace = true
 trainer-model = { path = "../trainer-model" }
 trainer-loop = { path = "../trainer-loop" }
 serde_json = { version = "1", features = ["float_roundtrip", "preserve_order"] }
+
+[dev-dependencies]
+tempfile = "3"

@@ -12,9 +12,11 @@ import { readFileSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
-import { open } from "#fs/readers/stat"
+import { isDirectory, open } from "#fs/readers/stat"
 import { parseJSONStrict } from "#json"
+import { compareByScalarValue } from "#strings/compare"
 
 export type { Dirent, PathLike, Stats } from "node:fs"
 export type { FileHandle } from "node:fs/promises"
@@ -209,6 +211,35 @@ export async function readStandardInput(): Promise<string> {
  */
 export async function readStandardInputJSON<T = Record<string, unknown>>(): Promise<T> {
 	return parseJSONStrict<T>(await readStandardInput())
+}
+
+/**
+ * Whether `directory` exists and holds any entry, dot-files included.
+ *
+ * `*` alone skips dot-files, so a directory holding only a `.corpus-build.lock`
+ * would read as empty and a builder would overwrite it.
+ * The `.*` pattern is read as well.
+ */
+export async function directoryHasEntries(directory: PathBuilderLike): Promise<boolean> {
+	if (!(await isDirectory(directory))) return false
+
+	for (const pattern of ["*", ".*"]) {
+		const entries = await Globerator.from(pattern, { cwd: directory.toString(), onlyFiles: false }).toArray()
+
+		if (entries.length) return true
+	}
+
+	return false
+}
+
+/**
+ * The absolute paths `pattern` matches in `directory`, in code-point order,
+ * as Python's `sorted(Path.glob())` lists one directory's files.
+ */
+export async function sortedGlob(directory: PathBuilderLike, pattern: string): Promise<string[]> {
+	const paths: string[] = await Globerator.from(pattern, { cwd: directory.toString(), absolute: true }).toArray()
+
+	return paths.toSorted(compareByScalarValue)
 }
 
 // #endregion

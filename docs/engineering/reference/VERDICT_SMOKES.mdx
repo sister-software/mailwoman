@@ -55,27 +55,21 @@ When unsure, pick constant-LR. A false positive (a stable recipe flagged at sust
 
 ## How to invoke
 
-The CLI accepts `--smoke-mode {constant,long-tail}` on both `train` and `smoke` subcommands.
+A smoke is a config whose `train.lr_schedule` states the schedule. Resolve it and run the Rust trainer on the host,
+or launch it on Modal:
 
 ```bash
-# New recipe — default constant-LR smoke (recommended)
-python -m mailwoman_train train \
-    --config corpus-python/src/mailwoman_train/configs/<recipe>-smoke.yaml \
-    --smoke-mode constant
+# New recipe: constant-LR smoke (recommended)
+mailwoman train config resolve packages/corpus/data/training-configs/<recipe>-smoke.yaml --out ./smoke.resolved.json
+cargo run --profile trainer -p trainer-cli -- \
+    train ./smoke.resolved.json --set train.lr_schedule=constant
 
-# Tweak on a known-stable baseline — long-tail cosine
-python -m mailwoman_train train \
-    --config corpus-python/src/mailwoman_train/configs/<recipe>-smoke.yaml \
-    --smoke-mode long-tail   # requires max_steps >= 10000 in the config
-
-# End-to-end pipeline smoke (train → eval → export → quantize → package)
-# Defaults to --smoke-mode constant.
-python -m mailwoman_train smoke --config <recipe>-smoke.yaml
+# The same smoke on Modal, with `lr_schedule: constant` in the YAML
+node packages/mailwoman/tools/training/launch/launch.run.ts start --config <recipe>-smoke.yaml --fresh
 ```
 
-The flag overrides `cfg.train.lr_schedule`. Full-length runs continue to use whatever the config declares. The default is cosine, as in v0.4.0.
-
-Long-tail mode does not change `max_steps`; it asserts the recipe already has it sized correctly and warns when `max_steps < 10000`.
+A tweak on a known-stable baseline keeps the cosine schedule and sizes `max_steps` at 10,000 or more, so the smoke
+reaches the cosine tail. Full-length runs use whatever the config declares. The default is cosine, as in v0.4.0.
 
 ## Read a smoke result
 
@@ -94,10 +88,10 @@ Run these three v0.4.0 diagnostic tools against every v0.5.0 smoke / full-run pa
 
   ```bash
   mailwoman corpus audit /data/corpus/versioned/<rev>/corpus-<rev> \
-      --config corpus-python/src/mailwoman_train/configs/<recipe>.yaml
+      --config packages/corpus/data/training-configs/<recipe>.yaml
   ```
 
-- **`regression_diagnostic.py`** ([`corpus-python/src/mailwoman_train/evaluation/regression_diagnostic.py`](https://github.com/sister-software/mailwoman/blob/main/corpus-python/src/mailwoman_train/evaluation/regression_diagnostic.py)) — post-eval FP/FN bucketing (`non_latin` / `case_only` / `bio_slip` / `empty_pred` / `num_confused` / `other`). Use it on every eval pass rather than after the fact, because bucket distributions are how individual recipe choices get debugged. The v0.4.0 retrospective entry documents reference distributions for calibration.
+- **`regression_diagnostic.py`** bucketed post-eval false positives and negatives (`non_latin` / `case_only` / `bio_slip` / `empty_pred` / `num_confused` / `other`). It was deleted with the Python trainer (#2874) and has no TypeScript port. The v0.4.0 retrospective entry records its reference distributions.
 
 - **Decoder span-trim** (commit [`c72ab4c`](https://github.com/sister-software/mailwoman/commit/c72ab4c), `core/decoder/build-tree.ts:58`) — `trimBoundary(raw, start, end)` shrinks BIO span bounds past leading / trailing non-`/[\p{L}\p{N}]/u` characters. It requires no retrain and covers the `bio_slip` long tail that the phrase grouper (Thread E) was not designed to catch.
 

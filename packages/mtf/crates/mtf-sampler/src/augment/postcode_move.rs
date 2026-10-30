@@ -84,12 +84,20 @@ impl PostcodeLayouts {
 			.get("countries")
 			.and_then(Value::as_object)
 			.ok_or_else(|| Error::Input(format!("{} has no countries object", path.display())))?;
-		Ok(Self(
-			countries
-				.iter()
-				.map(|(k, v)| (k.clone(), v.as_str().map(str::to_owned)))
-				.collect(),
-		))
+		// `null` records a country with no layout. Any other non-string value is a malformed entry, which would
+		// otherwise read as that same "no layout" and skip the country's rows.
+		countries
+			.iter()
+			.map(|(country, layout)| match layout {
+				Value::Null => Ok((country.clone(), None)),
+				Value::String(layout) => Ok((country.clone(), Some(layout.clone()))),
+				other => Err(Error::Input(format!(
+					"{}: country {country:?} has layout {other}, not a string or null",
+					path.display()
+				))),
+			})
+			.collect::<Result<_>>()
+			.map(Self)
 	}
 
 	pub fn from_pairs(pairs: &[(&str, Option<&str>)]) -> Self {

@@ -6,7 +6,6 @@
  *   order with `fixtures/builders/fragment-assay/fragment-build-reference.json`, which the Python builder wrote.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -16,7 +15,17 @@ import { describe, expect, it } from "vitest"
 import { readParquetRows } from "#parquet/readers"
 import { ParquetColumnKind, writeColumnParquetFile } from "#parquet/writers"
 import { buildFragmentAssay, type FragmentAssayOptions } from "#recipes/fragment-assay/build"
-import { collectOAParts, collectRyhtiParts, OA_FILES } from "#recipes/fragment-assay/sources"
+import {
+	collectOAParts,
+	collectRyhtiParts,
+	FRAGMENT_SOURCE,
+	OA_FILES,
+	OA_LOCALES,
+	RYHTI_REGISTER_ROW,
+} from "#recipes/fragment-assay/sources"
+import { mappingInputsFor, readCorpusSourceInputs, sourceRightsGaps } from "#source-register/corpus-inputs"
+import { readAddressSourceRegister } from "#source-register/register"
+import { ReferenceFixture } from "#test-kit"
 
 const REFERENCE = resolvePackagePath(
 	"@mailwoman/corpus",
@@ -145,7 +154,7 @@ const RYHTI_ROWS = [
 
 describe("the fragment-assay build", () => {
 	it("writes the Python builder's rows, in emission order, and its dev holdout", async () => {
-		const reference = await readLocalJSONFile<{ train: IdentifiedRow[]; dev: IdentifiedRow[] }>(REFERENCE)
+		const reference = await ReferenceFixture.read<{ train: IdentifiedRow[]; dev: IdentifiedRow[] }>(REFERENCE)
 
 		await using scratch = await temporaryDirectory("mailwoman-fragment-")
 		const options = await writeFixture(scratch.path.toString())
@@ -153,12 +162,19 @@ describe("the fragment-assay build", () => {
 		await buildFragmentAssay(options)
 
 		const train = await readParquetRows<IdentifiedRow>(options.outParquet, { columns: ["source_id", "country", "raw"] })
+
 		const dev = await Array.fromAsync(
 			JSONSpliterator.fromAsync<IdentifiedRow & Record<string, unknown>>(options.outDev)
 		)
 
-		expect(train).toEqual(reference.train)
-		expect(dev.map(({ source_id, country, raw }) => ({ source_id, country, raw }))).toEqual(reference.dev)
+		reference.expect("train", train)
+
+		reference.expect(
+			"dev",
+			dev.map(({ source_id, country, raw }) => ({ source_id, country, raw }))
+		)
+
+		await reference.save()
 		expect(dev).toHaveLength(Math.floor((train.length + dev.length) / 10))
 	})
 
@@ -202,5 +218,23 @@ describe("the fragment-assay build", () => {
 		const path = scratch.path("open_address.csv").toString()
 
 		await expect(collectRyhtiParts(path, 4)).rejects.toThrow(path)
+	})
+
+	it("reads only files whose register row the source's input table maps, and the source has no rights gap", async () => {
+		const register = await readAddressSourceRegister()
+		const inputs = await readCorpusSourceInputs(register)
+
+		const mapped = new Set(
+			mappingInputsFor(inputs.resolve(FRAGMENT_SOURCE)!.mapping).map((input) => input.registerSource)
+		)
+
+		const named = new Set([
+			...Object.values(OA_FILES).flatMap((files) => files.map(([, row]) => row)),
+			RYHTI_REGISTER_ROW,
+		])
+
+		expect(Object.keys(OA_FILES).toSorted()).toEqual(Object.keys(OA_LOCALES).toSorted())
+		expect([...named].filter((row) => !mapped.has(row))).toEqual([])
+		expect(sourceRightsGaps(FRAGMENT_SOURCE, inputs, register)).toEqual([])
 	})
 })

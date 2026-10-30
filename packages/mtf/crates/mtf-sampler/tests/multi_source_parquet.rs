@@ -8,7 +8,7 @@ mod common;
 
 use arrow_array::{ArrayRef, NullArray, RecordBatch, StringArray};
 use common::{config, write_corpus_parquet, WriteOptions};
-use mtf_sampler::corpus_files::{file_source_counts, source_row_counts, CorpusFile};
+use mtf_sampler::corpus_files::{file_source_counts, source_row_counts, CorpusFile, IdSet, RowFilter};
 use mtf_sampler::{Row, Sampler};
 use parquet::arrow::ArrowWriter;
 use serde_json::json;
@@ -135,4 +135,33 @@ fn row_counts_split_a_multi_source_file_between_its_sources() {
 		as_map(counts),
 		BTreeMap::from([("tiger".to_owned(), 9), ("usgov-nad".to_owned(), 6)])
 	);
+}
+
+#[test]
+fn source_counts_follow_the_filter_a_listing_passes_not_an_earlier_listings() {
+	let dir = tempfile::tempdir().unwrap();
+	let path = dir.path().join("train/part-0000.parquet");
+	let rows = concat(&[quiet_lane("tiger", 0, 4), quiet_lane("usgov-nad", 0, 2)]);
+	let ids: Vec<Option<String>> = (0..rows.len()).map(|i| Some(format!("id-{i}"))).collect();
+	let options = WriteOptions {
+		without_spans: true,
+		source_ids: Some(ids),
+	};
+	write_corpus_parquet(&rows, &path, 1 << 20, &options);
+	let set = |members: &[&str]| -> Arc<IdSet> { Arc::new(members.iter().map(|m| Box::from(*m)).collect()) };
+	let listing = |keep: Arc<IdSet>| CorpusFile {
+		path: path.clone(),
+		filter: Some(Arc::new(RowFilter {
+			keep: Some(keep),
+			drop: Vec::new(),
+		})),
+	};
+
+	// Two listings of one file, as a val pass then a train pass make them, each with its own id sets. The first
+	// listing's filter is freed before the second is built, so the allocator may hand the second the same address.
+	let tiger_only = file_source_counts(&listing(set(&["id-0", "id-1"]))).unwrap();
+	let nad_only = file_source_counts(&listing(set(&["id-4", "id-5"]))).unwrap();
+
+	assert_eq!(tiger_only, vec![("tiger".to_owned(), 2)]);
+	assert_eq!(nad_only, vec![("usgov-nad".to_owned(), 2)]);
 }

@@ -14,14 +14,14 @@
 import { statPath } from "@mailwoman/core/fs/readers/stat"
 import { replaceFileAtomically } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { workspacePath } from "@mailwoman/core/paths"
+import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
 
 const workspace = workspacePath("mtf")
-const built = workspacePath("mtf", "target", "wasm32-unknown-unknown", "release", "mtf_wasm.wasm")
+const built = repoRootPath("target", "wasm32-unknown-unknown", "release", "mtf_wasm.wasm")
 const committed = workspacePath("mtf", "wasm", "mtf.wasm")
 
 await runFile("cargo", ["build", "--release", "--locked", "--target", "wasm32-unknown-unknown", "-p", "mtf-wasm"], {

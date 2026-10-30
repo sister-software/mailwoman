@@ -7,7 +7,7 @@
  *   `fixtures/builders/kr/kr-build-reference.json`. `gdaltransform` is replaced by the Python test's stub.
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -15,9 +15,9 @@ import { pyRound } from "@mailwoman/core/numeric"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-import { sortedGlob } from "#cjk/builder"
 import { buildKRCorpus } from "#kr/corpus/assemble"
 import { readParquetRows } from "#parquet/readers"
+import { ReferenceFixture, expectSpanInvariants } from "#test-kit"
 
 const fixture = (name: string) => resolvePackagePath("@mailwoman/corpus", "fixtures", "builders", "kr", name)
 
@@ -58,7 +58,7 @@ async function rendered(directory: string): Promise<unknown[]> {
 }
 
 describe("the Korea corpus assembler", async () => {
-	const reference = await readLocalJSONFile<Reference>(fixture("kr-build-reference.json"))
+	const reference = await ReferenceFixture.read<Reference>(fixture("kr-build-reference.json"))
 
 	it("writes the Python assembler's corpora, boards, centroids and report from the same fixture and seed", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-kr-corpus-")
@@ -99,22 +99,26 @@ describe("the Korea corpus assembler", async () => {
 			transform: stubTransform,
 		})
 
-		expect(await rendered(outDir)).toEqual(reference.label)
-		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/kr-board.jsonl`))).toEqual(reference.board)
-		expect(await rendered(registryOutDir)).toEqual(reference.registry)
+		reference.expect("label", await rendered(outDir))
+		expectSpanInvariants(await rendered(outDir))
+		expectSpanInvariants(await rendered(registryOutDir))
+		reference.expect("board", await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/kr-board.jsonl`)))
+		reference.expect("registry", await rendered(registryOutDir))
 
-		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${registryOutDir}/kr-registry-board.jsonl`))).toEqual(
-			reference.registry_board
+		reference.expect(
+			"registry_board",
+			await Array.fromAsync(JSONSpliterator.fromAsync(`${registryOutDir}/kr-registry-board.jsonl`))
 		)
 
-		expect(await readLocalJSONFile(`${outDir}/kr-sigungu-centroids.json`)).toEqual(reference.centroids)
+		reference.expect("centroids", await readLocalJSONFile(`${outDir}/kr-sigungu-centroids.json`))
 
 		const report = await readLocalJSONFile<Record<string, unknown>>(`${outDir}/build-report.json`)
 
 		delete report["juso_zip"]
 		delete report["permit_dir"]
 
-		expect(report).toEqual(reference.report)
+		reference.expectReport("report", report)
+		await reference.save()
 	})
 
 	it("names a missing register archive", async () => {

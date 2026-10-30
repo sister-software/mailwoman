@@ -6,7 +6,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { pythonSplitLines, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { splitLines } from "@mailwoman/core/strings/unicode"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -45,8 +45,10 @@ describe("user-defined symbols", () => {
 		expect(dedupeKeepOrder(["CA", "", "DE", "CA", "US"])).toEqual(["CA", "DE", "US"])
 	})
 
-	it("splits and strips lines the way Python's str methods do", () => {
-		expect(pythonSplitLines(`a\r\nb${LINE_SEPARATOR}c\n`)).toEqual(["a", "b", "c"])
-		expect(pythonStrip(`${FILE_SEPARATOR}${IDEOGRAPHIC_SPACE} x ${NO_BREAK_SPACE}`)).toBe("x")
+	it("splits lines at CRLF, LF and CR, and trims every whitespace character", () => {
+		expect(splitLines(`a\r\nb${LINE_SEPARATOR}c\n`)).toEqual(["a", `b${LINE_SEPARATOR}c`])
+		expect(`${IDEOGRAPHIC_SPACE} x ${NO_BREAK_SPACE}`.trim()).toBe("x")
+		// U+001C is no `\s` character, so it stays.
+		expect(`${FILE_SEPARATOR} x`.trim()).toBe(`${FILE_SEPARATOR} x`)
 	})
 })

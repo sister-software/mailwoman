@@ -16,22 +16,21 @@
  *   and in character mode the space is its own unit.
  */
 
+import { directoryHasEntries, sortedGlob } from "@mailwoman/core/fs/readers"
 import { isDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import {
 	CJK_LABEL_SET_NAME,
 	type CJKRecord,
-	directoryHasEntries,
 	loadCharVocab,
 	readLabelSetTags,
 	saveCharVocab,
 	sealCharacters,
-	sortedGlob,
 	verifyCJKRecord,
 	writeCJKCorpusParquet,
 } from "#cjk/builder"
@@ -220,7 +219,7 @@ export async function buildCJKOverlay(options: CJKOverlayOptions): Promise<Map<s
 	}
 
 	await writeLocalTextFile(
-		board.map((record) => pythonJSONDumps(record, { ensureASCII: false })),
+		board.map((record) => orderedJSON(record)),
 		resolvePath(outDir, "cn-board.jsonl")
 	)
 
@@ -275,10 +274,7 @@ export async function buildCJKOverlay(options: CJKOverlayOptions): Promise<Map<s
 		["files", entries],
 	])
 
-	await writeLocalTextFile(
-		pythonJSONDumps(manifest, { indent: 2, ensureASCII: false }) + "\n",
-		resolvePath(outDir, "MANIFEST.json")
-	)
+	await writeLocalTextFile(orderedJSON(manifest, { indent: "\t" }) + "\n", resolvePath(outDir, "MANIFEST.json"))
 
 	const report = new Map<string, unknown>([
 		["label_set", CJK_LABEL_SET_NAME],
@@ -299,10 +295,7 @@ export async function buildCJKOverlay(options: CJKOverlayOptions): Promise<Map<s
 		["cn_sources", [options.cnTrain, options.cnVal, options.cnTest]],
 	])
 
-	await writeLocalTextFile(
-		pythonJSONDumps(report, { indent: 2, ensureASCII: false }) + "\n",
-		resolvePath(outDir, "build-report.json")
-	)
+	await writeLocalTextFile(orderedJSON(report, { indent: "\t" }) + "\n", resolvePath(outDir, "build-report.json"))
 
 	return report
 }

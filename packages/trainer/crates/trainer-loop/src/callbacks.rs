@@ -208,6 +208,7 @@ impl Callback for Checkpointer {
 			&checkpoint_extras(step, view.config, view.vocab_size),
 			Some(view.optim),
 			Some(view.scheduler),
+			&[],
 		)?;
 		println!("  [save] checkpoint → {}", saved.display());
 		Ok(())

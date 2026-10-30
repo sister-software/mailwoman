@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { mulberry32 } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -14,6 +15,7 @@ import {
 	perTokenArgmax,
 	softmax,
 	viterbi,
+	viterbiKBest,
 	viterbiPathTerms,
 } from "#viterbi"
 
@@ -278,6 +280,59 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 
 		expect(withEmpty.path).toEqual(without.path)
 		expect(withEmpty.score).toBe(without.score)
+	})
+})
+
+describe("viterbiKBest", () => {
+	const random = mulberry32(2879)
+	const transitions = buildBIOTransitionMask(LABELS)
+	const startTransitions = buildBIOStartMask(LABELS)
+
+	const scoresFor = (length: number) =>
+		Array.from({ length }, () => Array.from({ length: LABELS.length }, () => Math.round(random() * 40) / 10 - 2))
+
+	const pathScore = (path: number[], emissions: number[][]) =>
+		path.reduce(
+			(sum, label, t) =>
+				sum + emissions[t]![label]! + (t ? transitions[path[t - 1]!]![label]! : startTransitions[label]!),
+			0
+		)
+
+	it("returns viterbi's path and score at k = 1, adjustments included", () => {
+		for (let trial = 0; trial < 50; trial++) {
+			const emissions = scoresFor(1 + (trial % 7))
+			const transitionAdjustments = [{ timestep: trial % 3, toLabel: trial % LABELS.length, bonus: 1.5 }]
+			const input = { emissions, transitions, startTransitions, transitionAdjustments }
+
+			expect(viterbiKBest(input, 1)).toEqual([viterbi(input)])
+		}
+	})
+
+	it("returns distinct paths in score order, equal to the brute-force top k", () => {
+		for (let trial = 0; trial < 20; trial++) {
+			const emissions = scoresFor(4)
+			const best = viterbiKBest({ emissions, transitions, startTransitions }, 20)
+			const all: number[] = []
+
+			for (let code = 0; code < LABELS.length ** 4; code++) {
+				const path = [0, 1, 2, 3].map((t) => Math.floor(code / LABELS.length ** t) % LABELS.length)
+				const score = pathScore(path, emissions)
+
+				if (score > NEG_INF / 2) {
+					all.push(score)
+				}
+			}
+
+			const expected = all.toSorted((a, b) => b - a).slice(0, 20)
+
+			expect(new Set(best.map((result) => result.path.join(","))).size).toBe(best.length)
+			expect(best.map((result) => result.score)).toEqual(best.map((result) => result.score).toSorted((a, b) => b - a))
+
+			for (const [index, result] of best.entries()) {
+				expect(result.score).toBeCloseTo(expected[index]!, 9)
+				expect(pathScore(result.path, emissions)).toBeCloseTo(result.score, 9)
+			}
+		}
 	})
 })
 

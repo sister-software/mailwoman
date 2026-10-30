@@ -23,7 +23,7 @@
 
 set -euo pipefail
 
-# The pin. corpus-python trains with `sentencepiece>=0.2.2` — the runtime must tokenize
+# The pin. The tokenizer was trained with `sentencepiece>=0.2.2` — the runtime must tokenize
 # byte-identically to the trainer, so the tags travel together (see project-tokenizer-mismatch).
 SP_TAG="v0.2.2"
 

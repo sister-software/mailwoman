@@ -7,13 +7,11 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
-import { parseJSONStrict } from "@mailwoman/core/json"
-import { runFile } from "@mailwoman/core/process"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { relative, resolvePath, type PathBuilderLike } from "path-ts"
 import ts from "typescript"
 
-type CommentKind = "line" | "block" | "jsdoc" | "docstring"
+type CommentKind = "line" | "block" | "jsdoc"
 
 type TriageCategory = "outdated" | "sensational" | "unclear" | "overly_verbose"
 
@@ -54,7 +52,7 @@ CREATE TABLE IF NOT EXISTS source_comment (
   start_column INTEGER NOT NULL,
   end_line INTEGER NOT NULL,
   end_column INTEGER NOT NULL,
-  kind TEXT NOT NULL CHECK (kind IN ('line', 'block', 'jsdoc', 'docstring')),
+  kind TEXT NOT NULL CHECK (kind IN ('line', 'block', 'jsdoc')),
   text TEXT NOT NULL,
   content_hash TEXT NOT NULL,
   observed_at TEXT NOT NULL
@@ -144,44 +142,6 @@ export function sourceComments(path: string, text: string): SourceComment[] {
 	return comments
 }
 
-interface PythonCommentNode {
-	start: number
-	end: number
-	startLine: number
-	startColumn: number
-	endLine: number
-	endColumn: number
-	kind: "line" | "docstring"
-	text: string
-}
-
-/**
- * Read Python line comments and module docstrings with the standard-library tokenizer and AST.
- */
-export async function pythonSourceComments(
-	repoRoot: PathBuilderLike,
-	files: readonly string[]
-): Promise<SourceComment[]> {
-	if (!files.length) return []
-	const helper = resolvePath(repoRoot, "corpus-python/scripts/comment_nodes.py")
-
-	const { stdout } = await runFile("python3", [helper, ...files.map((file) => resolvePath(repoRoot, file))], {
-		cwd: repoRoot.toString(),
-	})
-
-	const parsed = parseJSONStrict<Record<string, PythonCommentNode[]>>(stdout)
-
-	return Object.entries(parsed).flatMap(([absolutePath, nodes]) => {
-		const path = relative(repoRoot, absolutePath).toString()
-
-		return nodes.map((node) => {
-			const contentHash = digest(node.text)
-
-			return { ...node, id: digest(`${path}:${node.start}:${node.end}:${contentHash}`), path, contentHash }
-		})
-	})
-}
-
 /**
  * Heuristics are leads only: each points at wording a human reviewer must confirm.
  */
@@ -254,20 +214,16 @@ export async function inventorySourceComments(
 
 	try {
 		const typescriptFiles = files.filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))
-		const pythonFiles = files.filter((file) => file.endsWith(".py"))
 
-		const collected = [
-			...(
-				await Promise.all(
-					typescriptFiles.map(async (file) => {
-						const absolutePath = resolvePath(repoRoot, file)
+		const collected = (
+			await Promise.all(
+				typescriptFiles.map(async (file) => {
+					const absolutePath = resolvePath(repoRoot, file)
 
-						return sourceComments(relative(repoRoot, absolutePath).toString(), await readLocalTextFile(absolutePath))
-					})
-				)
-			).flat(),
-			...(await pythonSourceComments(repoRoot, pythonFiles)),
-		]
+					return sourceComments(relative(repoRoot, absolutePath).toString(), await readLocalTextFile(absolutePath))
+				})
+			)
+		).flat()
 
 		for (const comment of collected) {
 			insertComment.run(

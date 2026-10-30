@@ -487,6 +487,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/neural/lib/span/proposal-prior.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.test.ts", "span proposal tests name the physical gate"],
+	[
+		"packages/neural/lib/span/proposer-lexicon.test.ts",
+		"the tests quote a Norwegian street (`Friggs gate 6`) beside an airport gate (`Gate 6, Heathrow Airport`)",
+	],
 	["packages/core/lib/decoder/containment.ts", "containment names the physical gate"],
 	["packages/mailwoman/lib/geocode/result.ts", "the result shape names the physical gate"],
 	[

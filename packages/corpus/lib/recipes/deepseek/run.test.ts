@@ -5,7 +5,7 @@
  * @file The shared runner's checkpoint: what it records, what it leaves pending, and what it refuses to read.
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { TextSpliterator } from "spliterator"
@@ -51,13 +51,11 @@ describe("runBatches", () => {
 		const checkpoint = await readLocalJSONFile<{ done: string[] }>(checkpointPath)
 
 		expect(checkpoint.done).toEqual(ids.filter((id) => id !== "b-03"))
-		// `json.dumps` spacing, so a Python run can resume from it.
-		expect(await readLocalTextFile(checkpointPath)).toMatch(/^\{"done": \["b-00", "b-01", /)
 
 		const rows = await TextSpliterator.fromAsync(scratch.path("rows.jsonl").toString()).toArray()
 
 		expect(rows).toHaveLength(ids.length)
-		expect(rows[0]).toMatch(/^\{"raw": "row b-\d\d", "synth": \{"base_source_id": "ü"\}\}$/)
+		expect(rows[0]).toMatch(/^\{"raw":"row b-\d\d","synth":\{"base_source_id":"ü"\}\}$/)
 
 		const done = await loadCheckpoint(checkpointPath, quiet)
 

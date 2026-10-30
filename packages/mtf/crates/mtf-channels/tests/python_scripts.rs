@@ -45,6 +45,15 @@ fn every_operation_gives_the_recorded_python_answer() {
 	}
 }
 
+/// The deleted `test_audit_mixed_script.py`: an apostrophe, a hyphen, an accented capital and the ordinal indicator
+/// each stay inside one Latin run.
+#[test]
+fn punctuation_and_latin_marks_keep_one_latin_run() {
+	for text in ["L'oscar", "Champs-Élysées", "Formación 1º de Mayo"] {
+		assert_eq!(script_runs(text), ["Latin"], "script_runs({text:?})");
+	}
+}
+
 #[test]
 fn a_character_that_is_not_a_letter_has_no_letter_script() {
 	assert_eq!(letter_script('5'), None);

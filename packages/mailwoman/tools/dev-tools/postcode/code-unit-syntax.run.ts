@@ -33,7 +33,7 @@ await writeLocalTextFile(
 		$note: "Each pattern is anchored and matched case-insensitively against a value with its prefix removed.",
 		countries,
 	}),
-	repoRootPath("corpus-python", "src", "mailwoman_train", "data", "postcode-syntax.json")
+	repoRootPath("packages", "trainer", "data", "postcode-syntax.json")
 )
 
 /**

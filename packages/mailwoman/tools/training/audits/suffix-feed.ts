@@ -13,7 +13,6 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { asPythonFloat } from "@mailwoman/core/strings/python-json"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode } from "@mailwoman/mtf/tools/sampler/native"
 
@@ -232,7 +231,7 @@ export function suffixFeedAudit(mtf: MTFNode, config: TrainingConfig, options: S
 		const n = carriers.get(`${cls}\u0000${bucket}`) ?? 0
 		const k = correct.get(`${cls}\u0000${bucket}`) ?? 0
 
-		return { carriers: n, correct: k, rate: n ? asPythonFloat(k / n) : null }
+		return { carriers: n, correct: k, rate: n ? k / n : null }
 	}
 
 	// Python sorts the `(class, source)` pairs as tuples, which orders by class and then by source.

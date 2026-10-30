@@ -456,6 +456,16 @@ export interface ParseOpts {
 	localeHint?: string
 
 	/**
+	 * Decodes the 20 best label paths and takes the first that opens at most one span
+	 * of each singleton tag (street, house number, locality, postcode, venue, region),
+	 * falling back to the best path when all repeat one.
+	 *
+	 * Off by default.
+	 * It applies under Viterbi decoding only, and the trace records the rank it took as `cardinalityFilter`.
+	 */
+	cardinalityFilter?: boolean
+
+	/**
 	 * Per-parse selection of the placetype-pair prior.
 	 *
 	 * The default `"inherit"` uses the config's `placetypePair`, `"off"` disables the prior,

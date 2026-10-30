@@ -6,8 +6,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
+import { parseJSONStrict, stringifyJSON, orderedJSON } from "@mailwoman/core/json"
 import { mtfNode } from "@mailwoman/mtf/tools/sampler/native"
 import { IGNORE_INDEX } from "@mailwoman/neural/labels"
 import type { AddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
@@ -87,7 +86,7 @@ describe("exposure report", () => {
 				{ stages: Record<string, unknown>; phenomena: Record<string, Record<string, unknown>> }
 			>
 			address_systems: { systems: Array<{ rows: unknown }> }
-		}>(pythonJSONDumps(buildReport([canonicalStage, counter("eligible_training_rows")], context)))
+		}>(orderedJSON(buildReport([canonicalStage, counter("eligible_training_rows")], context)))
 
 		const ru = report.jurisdictions["RU"]!
 

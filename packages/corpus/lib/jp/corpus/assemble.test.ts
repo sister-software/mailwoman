@@ -7,19 +7,19 @@
  *   order of the rows is the assertion: one moved draw re-renders the corpus.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-import { sortedGlob } from "#cjk/builder"
 import { buildJPCorpus } from "#jp/corpus/assemble"
 import { iterJPSourceRows, loadKenAllPostcodes } from "#jp/corpus/sources"
 import { municipalityKanaFromAdminDB } from "#jp/kana"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { readParquetRows } from "#parquet/readers"
+import { ReferenceFixture, expectSpanInvariants } from "#test-kit"
 
 const REFERENCE = resolvePackagePath("@mailwoman/corpus", "fixtures", "builders", "jp", "jp-build-reference.json")
 
@@ -110,7 +110,7 @@ async function rendered(directory: string): Promise<Pinned[]> {
 }
 
 describe("the Japan corpus assembler", async () => {
-	const reference = await readLocalJSONFile<Reference>(REFERENCE)
+	const reference = await ReferenceFixture.read<Reference>(REFERENCE)
 
 	it("writes the Python assembler's rows, board and report from the same fixture and seed", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-jp-corpus-")
@@ -142,21 +142,23 @@ describe("the Japan corpus assembler", async () => {
 			force: true,
 		})
 
-		expect(await rendered(`${outDir}/train`)).toEqual(reference.train)
-		expect(await rendered(`${outDir}/val`)).toEqual(reference.val)
+		reference.expect("train", await rendered(`${outDir}/train`))
+		reference.expect("val", await rendered(`${outDir}/val`))
+		expectSpanInvariants([...(await rendered(`${outDir}/train`)), ...(await rendered(`${outDir}/val`))])
 
 		const board = (
 			await Array.fromAsync(JSONSpliterator.fromAsync<Record<string, unknown>>(`${outDir}/jp-board.jsonl`))
 		).map(pin)
 
-		expect(board).toEqual(reference.board)
+		reference.expect("board", board)
 
 		const report = await readLocalJSONFile<Record<string, unknown>>(`${outDir}/build-report.json`)
 
 		delete report["source_parquet"]
 		delete report["kenall"]
 
-		expect(report).toEqual(reference.report)
+		reference.expectReport("report", report)
+		await reference.save()
 	})
 
 	it("names each missing input", async () => {

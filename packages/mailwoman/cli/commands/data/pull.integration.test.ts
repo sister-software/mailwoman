@@ -11,18 +11,23 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { changeMode, writeLocalBuffer } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { artifactIDFromSHA256, ServingRole } from "@mailwoman/core/layers"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build/candidate"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import type { PathBuilder } from "path-ts"
+import { type PathBuilder, resolvePath } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 
+import { stripAnsi } from "#cli-kit"
 import { BUNDLES } from "#data/bundles"
+import { LayerCatalog, readInstalledManifest } from "#data/catalog"
 import { mailwomanCLIPath } from "#metadata"
 import { withCLISpawnLockAsync } from "#test-kit/cli-spawn-lock"
 import {
@@ -106,11 +111,18 @@ afterAll(async () => {
  * Run the compiled CLI with the fixture data root, answering its exit status and output.
  */
 async function cli(...args: string[]): Promise<{ status: number; stdout: string; stderr: string }> {
+	return cliIn(root.path.toString(), ...args)
+}
+
+/**
+ * Run the compiled CLI with `dataRoot` as its data root, answering its exit status and output.
+ */
+async function cliIn(dataRoot: string, ...args: string[]): Promise<{ status: number; stdout: string; stderr: string }> {
 	return withCLISpawnLockAsync(() =>
 		runFile(process.execPath, [cliBin, ...args], {
 			env: childEnv({
 				NODE_NO_WARNINGS: "1",
-				MAILWOMAN_DATA_ROOT: root.path.toString(),
+				MAILWOMAN_DATA_ROOT: dataRoot,
 				MAILWOMAN_CANDIDATE_DB: undefined,
 				MAILWOMAN_WOF_DB: undefined,
 			}),
@@ -191,5 +203,56 @@ describe("mailwoman data pull from an empty data root", () => {
 		const result = parseJSONStrict<{ resolution_tier?: string; lat?: number; lon?: number }>(geocode.stdout)
 
 		expect(result).toMatchObject({ resolution_tier: "address_point", ...FIXTURE_DC_POINT })
+	})
+})
+
+describe("mailwoman data pull --force over a corrupted installed artifact", () => {
+	test("replaces bytes that no longer hash to the artifact's identity", async () => {
+		await using repair = await temporaryDirectory("mw-cli-repair-")
+		const dataRoot = repair.path.toString()
+		const host = ["--host", registry.baseURL]
+
+		expect((await cliIn(dataRoot, "data", "pull", "candidate", ...host)).status).toBe(0)
+
+		const catalog = await LayerCatalog.read(dataRoot)
+		const path = await catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })
+
+		if (path == null) throw new Error("the candidate pull selected no candidate artifact")
+
+		const manifest = await readInstalledManifest(resolvePath(path, ".."))
+
+		if (manifest == null) throw new Error(`no manifest beside ${path}`)
+
+		const original = await readLocalBuffer(path)
+
+		expect(artifactIDFromSHA256(await sha256File(path))).toBe(manifest.id)
+
+		// Flip the last byte, keeping the size, so only a hash tells the copies apart.
+		const corrupted = Buffer.from(original)
+		const last = corrupted.length - 1
+
+		corrupted.writeUInt8(corrupted.readUInt8(last) ^ 0xff, last)
+		// The installer seals the file read-only, so the test lifts that to write the bad bytes.
+		await changeMode(path, 0o644)
+		await writeLocalBuffer(corrupted, path)
+
+		expect((await statPath(path)).size).toBe(original.length)
+		expect(artifactIDFromSHA256(await sha256File(path))).not.toBe(manifest.id)
+
+		// Without --force the installed copy is verified, and the corruption is reported.
+		const plain = await cliIn(dataRoot, "data", "pull", "candidate", ...host)
+
+		expect(plain.status).not.toBe(0)
+
+		// Ink wraps a line at the terminal width, so the match allows a break between any two words.
+		expect(stripAnsi(`${plain.stdout}\n${plain.stderr}`)).toMatch(
+			/failed\s+verification:[\s\S]*Pull\s+again\s+with\s+--force/u
+		)
+
+		const forced = await cliIn(dataRoot, "data", "pull", "candidate", "--force", ...host)
+
+		expect(forced.status, forced.stderr).toBe(0)
+		expect(artifactIDFromSHA256(await sha256File(path))).toBe(manifest.id)
+		expect((await readLocalBuffer(path)).equals(original)).toBe(true)
 	})
 })

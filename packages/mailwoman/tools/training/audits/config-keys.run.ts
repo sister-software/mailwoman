@@ -15,34 +15,16 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { workingTreeFiles } from "@mailwoman/core/git"
 import { readTrainingConfigText, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
-import { parsePythonYAML, type PythonValue } from "@mailwoman/corpus/training/config/python-yaml"
-import { CONFIG_SECTION, type ConfigSectionSpec } from "@mailwoman/corpus/training/config/schema"
+import { parsePythonYAML } from "@mailwoman/corpus/training/config/python-yaml"
+import { CONFIG_SECTION } from "@mailwoman/corpus/training/config/schema"
 
-import { trainingPackagePath } from "../sampler.ts"
+import { trainingConfigPath } from "../config.ts"
+import { unknownConfigKeys } from "./config-keys.ts"
 
-function unknownKeys(node: PythonValue, section: ConfigSectionSpec, prefix: string, junk: string[]): void {
-	if (!(node instanceof Map)) return
-
-	for (const [key, value] of node) {
-		const dotted = prefix ? `${prefix}.${String(key)}` : String(key)
-		const field = section.fields[String(key)]
-
-		if (!field) {
-			junk.push(dotted)
-
-			continue
-		}
-
-		if (field.section) {
-			unknownKeys(value, field.section, dotted, junk)
-		}
-	}
-}
-
-const directory = trainingPackagePath("configs")
+const directory = trainingConfigPath()
 
 // The committed configs, as the Python audit's `glob("*.yaml")` over the package directory read them.
-const files = (await workingTreeFiles(["corpus-python/src/mailwoman_train/configs/*.yaml"]))
+const files = (await workingTreeFiles(["packages/corpus/data/training-configs/*.yaml"]))
 	.map((path) => path.split("/").at(-1)!)
 	.toSorted()
 
@@ -52,9 +34,7 @@ const otherErrors = new Map<string, string>()
 for (const name of files) {
 	const path = `${directory}/${name}`
 	const text = await readLocalTextFile(path)
-	const junk: string[] = []
-
-	unknownKeys(parsePythonYAML(text, path), CONFIG_SECTION, "", junk)
+	const junk = unknownConfigKeys(parsePythonYAML(text, path), CONFIG_SECTION)
 
 	if (junk.length) {
 		junkByFile.set(name, junk)

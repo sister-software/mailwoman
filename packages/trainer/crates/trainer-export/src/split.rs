@@ -294,70 +294,10 @@ pub fn hot_ids(counts: &[i64], coverage: f64, always: &[usize]) -> Result<BTreeS
 pub fn read_counts(path: &Path) -> Result<Vec<i64>> {
 	let bytes = std::fs::read(path).map_err(|error| fail!("{}: {error}", path.display()))?;
 	if bytes.starts_with(b"\x93NUMPY") {
-		return parse_integer_npy(&bytes).map_err(|error| fail!("{}: {error}", path.display()));
+		return crate::npy::read_integer_vector(&bytes).map_err(|error| fail!("{}: {error}", path.display()));
 	}
 	serde_json::from_slice(&bytes)
 		.map_err(|error| fail!("{}: not an .npy or a JSON integer array: {error}", path.display()))
-}
-
-/// A one-dimensional little-endian integer `.npy` (v1 to v3, C order), widened to i64.
-fn parse_integer_npy(bytes: &[u8]) -> Result<Vec<i64>> {
-	if bytes.len() < 10 {
-		return Err(fail!("truncated .npy"));
-	}
-	let (len, start) = match bytes[6] {
-		1 => (u16::from_le_bytes([bytes[8], bytes[9]]) as usize, 10),
-		2 | 3 if bytes.len() >= 12 => (
-			u32::from_le_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]) as usize,
-			12,
-		),
-		v => return Err(fail!(".npy version {v} is not read")),
-	};
-	let header = bytes
-		.get(start..start + len)
-		.and_then(|h| std::str::from_utf8(h).ok())
-		.ok_or_else(|| fail!(".npy header is unreadable"))?;
-	if header.contains("'fortran_order': True") {
-		return Err(fail!(".npy array is Fortran-ordered"));
-	}
-	let descr = header
-		.split("'descr': '")
-		.nth(1)
-		.and_then(|s| s.split('\'').next())
-		.ok_or_else(|| fail!(".npy header has no descr: {header}"))?;
-	let body = &bytes[start + len..];
-	let values: Vec<i64> = match descr {
-		"<i8" => body.as_chunks::<8>().0.iter().map(|b| i64::from_le_bytes(*b)).collect(),
-		"<u8" => body
-			.as_chunks::<8>()
-			.0
-			.iter()
-			.map(|b| i64::try_from(u64::from_le_bytes(*b)).map_err(|_| fail!("a u64 count exceeds i64")))
-			.collect::<Result<_>>()?,
-		"<i4" => body
-			.as_chunks::<4>()
-			.0
-			.iter()
-			.map(|b| i32::from_le_bytes(*b) as i64)
-			.collect(),
-		"<u4" => body
-			.as_chunks::<4>()
-			.0
-			.iter()
-			.map(|b| u32::from_le_bytes(*b) as i64)
-			.collect(),
-		other => return Err(fail!(".npy dtype {other} is not an integer count type")),
-	};
-	let shape = header
-		.split("'shape': (")
-		.nth(1)
-		.and_then(|s| s.split(')').next())
-		.ok_or_else(|| fail!(".npy header has no shape: {header}"))?;
-	let dims: Vec<&str> = shape.split(',').map(str::trim).filter(|s| !s.is_empty()).collect();
-	if dims.len() != 1 || dims[0].parse::<usize>().ok() != Some(values.len()) {
-		return Err(fail!(".npy shape ({shape}) is not a vector of {} counts", values.len()));
-	}
-	Ok(values)
 }
 
 /// What `split_model_file` wrote, as `split-embeddings` prints it.
@@ -470,18 +410,5 @@ mod tests {
 		assert!(hot_ids(&[0, 0], 0.5, &[]).is_err());
 		assert!(hot_ids(&[1], 0.0, &[]).is_err());
 		assert!(hot_ids(&[1], 1.5, &[]).is_err());
-	}
-
-	#[test]
-	fn reads_integer_npy_counts() {
-		let header = "{'descr': '<i8', 'fortran_order': False, 'shape': (3,), }";
-		let mut bytes = b"\x93NUMPY\x01\x00".to_vec();
-		let padded = format!("{header}{}\n", " ".repeat((64 - (10 + header.len() + 1) % 64) % 64));
-		bytes.extend_from_slice(&(padded.len() as u16).to_le_bytes());
-		bytes.extend_from_slice(padded.as_bytes());
-		for v in [7i64, 0, 2] {
-			bytes.extend_from_slice(&v.to_le_bytes());
-		}
-		assert_eq!(parse_integer_npy(&bytes).unwrap(), [7, 0, 2]);
 	}
 }

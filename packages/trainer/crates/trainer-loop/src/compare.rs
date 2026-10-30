@@ -113,10 +113,12 @@ fn byte_kind(kind: Kind) -> Kind {
 pub struct Record(pub Vec<(String, Tensor)>);
 
 impl Record {
+	/// Reads the tensors sorted by name. The file's header is a JSON map, which the reader returns in no fixed order, so
+	/// a report that walks the record lists its entries in one order only after the sort.
 	pub fn read(path: &Path) -> Result<Self> {
-		Ok(Self(
-			Tensor::read_safetensors(path).map_err(|e| fail!("{}: {e}", path.display()))?,
-		))
+		let mut tensors = Tensor::read_safetensors(path).map_err(|e| fail!("{}: {e}", path.display()))?;
+		tensors.sort_by(|(a, _), (b, _)| a.cmp(b));
+		Ok(Self(tensors))
 	}
 
 	pub fn get(&self, name: &str) -> Result<&Tensor> {
@@ -199,4 +201,70 @@ impl StageResult {
 			}
 		)
 	}
+}
+
+/// What `compare_checkpoints` leaves uncompared.
+pub const CHECKPOINT_SCOPE: &str =
+	"compares model weights and the Fisher artifact; optimizer, scheduler and training_state.json are not compared";
+
+/// Compares two named tensor sets over the union of their names. A name only one side holds is a note, and a note
+/// fails the comparison, in either direction.
+pub fn compare_named(
+	stage: &str,
+	tolerance_label: &str,
+	tolerance: Tolerance,
+	(a_label, a): (&str, &[(String, Tensor)]),
+	(b_label, b): (&str, &[(String, Tensor)]),
+) -> Result<StageResult> {
+	let mut result = StageResult::new(stage, tolerance_label);
+	for (name, t) in a {
+		match b.iter().find(|(n, _)| n == name) {
+			Some((_, o)) => result.push(diff(name, t, o, tolerance)?),
+			None => result.notes.push(format!("{name} is in the {a_label} only")),
+		}
+	}
+	for (name, _) in b {
+		if !a.iter().any(|(n, _)| n == name) {
+			result.notes.push(format!("{name} is in the {b_label} only"));
+		}
+	}
+	Ok(result)
+}
+
+/// Compares two checkpoint directories' model weights exactly and their Fisher artifacts at 1e-5 relative. A Fisher
+/// artifact in one directory only is a failing note.
+pub fn compare_checkpoints(a: &Path, b: &Path) -> Result<Vec<StageResult>> {
+	let ta = trainer_model::checkpoint::read_model_tensors(a).map_err(|e| fail!("{}: {e}", a.display()))?;
+	let tb = trainer_model::checkpoint::read_model_tensors(b).map_err(|e| fail!("{}: {e}", b.display()))?;
+	let mut results = vec![compare_named(
+		"model weights",
+		"exact",
+		Tolerance::Exact,
+		("first checkpoint", &ta),
+		("second checkpoint", &tb),
+	)?];
+	let fa = a.join(crate::fisher::FISHER_ARTIFACT);
+	let fb = b.join(crate::fisher::FISHER_ARTIFACT);
+	match (fa.is_file(), fb.is_file()) {
+		(true, true) => results.push(compare_named(
+			"Fisher artifact",
+			"1e-5 rel",
+			Tolerance::Relative { rel: 1e-5, floor: 1e-3 },
+			("first artifact", &crate::fisher::read_npz(&fa)?),
+			("second artifact", &crate::fisher::read_npz(&fb)?),
+		)?),
+		(false, false) => {}
+		(a_has, _) => {
+			let (present, absent) = if a_has { (&fa, b) } else { (&fb, a) };
+			let mut fisher = StageResult::new("Fisher artifact", "1e-5 rel");
+			fisher.notes.push(format!(
+				"{} exists and {} holds no {}",
+				present.display(),
+				absent.display(),
+				crate::fisher::FISHER_ARTIFACT
+			));
+			results.push(fisher);
+		}
+	}
+	Ok(results)
 }

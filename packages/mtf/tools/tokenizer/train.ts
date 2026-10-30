@@ -50,7 +50,7 @@ export interface TokenizerTrainingConfig {
 }
 
 /**
- * The defaults `mailwoman_train tokenizer` trained with.
+ * The defaults the Python tokenizer trainer used.
  */
 export const TOKENIZER_TRAINING_DEFAULTS = {
 	vocabSize: 48_000,

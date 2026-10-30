@@ -142,8 +142,9 @@ impl<'a> Inference<'a> {
 				single(Some(Info { elem, dims }))
 			}
 			"Erf" | "Softmax" | "LayerNormalization" | "Clip" | "Relu" | "Tanh" => single(same(None)),
-			"Conv" => {
+			"Conv" | "ConvInteger" => {
 				// onnx's `convPoolShapeInference` for a 1-D convolution with explicit pads, unit strides and dilations.
+				// `ConvInteger` takes the same shapes and yields int32.
 				let (Some(x), Some(w)) = (input(0), input(1)) else {
 					return vec![None];
 				};
@@ -155,15 +156,21 @@ impl<'a> Inference<'a> {
 					(D::Value(n), D::Value(k)) => D::Value(n + pads[0] + pads[1] - k + 1),
 					_ => D::Unknown,
 				};
+				let elem = if node.op_type.as_deref() == Some("ConvInteger") {
+					DataType::Int32 as i32
+				} else {
+					x.elem
+				};
 				single(Some(Info {
-					elem: x.elem,
+					elem,
 					dims: vec![x.dims[0].clone(), w.dims[0].clone(), length],
 				}))
 			}
 			"ReduceMax" => single(input(0).and_then(|x| {
-				// Opset 17's `ReduceMax` takes its axes as an attribute.
+				// Opset 17's `ReduceMax` takes its axes as an attribute, and opset 18's as a constant second input.
 				let rank = x.dims.len();
-				let axes: Vec<usize> = attr_ints(node, "axes")?.iter().map(|a| normalize(*a, rank)).collect();
+				let axes = attr_ints(node, "axes").or_else(|| node.input.get(1).and_then(|a| self.constant(a)))?;
+				let axes: Vec<usize> = axes.iter().map(|a| normalize(*a, rank)).collect();
 				let keep = attr_i(node, "keepdims").unwrap_or(1) == 1;
 				let dims = x
 					.dims

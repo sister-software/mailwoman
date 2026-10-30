@@ -13,12 +13,12 @@
 
 #![deny(clippy::all)]
 
-use mtf_channels::anchor::AnchorLookup;
 use mtf_channels::encoder::{require_whole_triple, CHANNEL_NAMES};
-use mtf_channels::finders::{PostcodeShapes, PostcodeSyntax, RegexFinders};
-use mtf_channels::gazetteer::Lexicon;
+use mtf_channels::finders::RegexFinders;
 use mtf_channels::label_schema::LabelSchema;
-use mtf_channels::{AnchorMode, Encoder, EncoderConfig, Finders, Lexicons, Piece, RowInput};
+use mtf_channels::{
+	AnchorMode, Encoder, EncoderConfig, EncoderResources, Finders, Lexicons, Piece, ResourcePaths, RowInput,
+};
 use mtf_core::Processor;
 use mtf_sampler::batch::encode_pieces;
 use mtf_sampler::char_path::CharEncoder as RustCharEncoder;
@@ -32,6 +32,7 @@ use napi::bindgen_prelude::{BigInt64Array, Float32Array};
 use napi::{Error, Result, Status};
 use napi_derive::napi;
 use std::collections::HashMap;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 fn sampler_error(error: mtf_sampler::Error) -> Error {
@@ -291,7 +292,7 @@ pub struct Sampler {
 #[napi]
 impl Sampler {
 	/// Opens `split` with a generator seeded as `random.Random(seed)`. `config` is the sampler's JSON configuration.
-	#[napi(constructor)]
+	#[napi(constructor, catch_unwind)]
 	pub fn new(config: String, split: String, seed: i64, options: Option<StreamOptions>) -> Result<Self> {
 		let parsed = self::config(&config)?;
 		let (row_limit, collector) = stream_options(options)?;
@@ -313,7 +314,7 @@ impl Sampler {
 	}
 
 	/// The next `count` rows, fewer at exhaustion, and an empty array once no row remains.
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn next_rows(&mut self, count: u32) -> Result<Vec<SampledRow>> {
 		Ok(rows_out(
 			self.inner
@@ -324,31 +325,31 @@ impl Sampler {
 	}
 
 	/// The events collected since the last call.
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn take_events(&self) -> Vec<SamplerEvent> {
 		self.collector.as_ref().map(Collector::take).unwrap_or_default()
 	}
 
 	/// Stops the stream; the next read fails with the `Cancelled` status.
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn cancel(&self) {
 		self.cancel.cancel();
 	}
 
 	/// The rows yielded so far.
-	#[napi(getter)]
+	#[napi(getter, catch_unwind)]
 	pub fn yielded(&self) -> i64 {
 		self.inner.yielded() as i64
 	}
 
 	/// The rows skipped so far because a span end runs past the code-point length.
-	#[napi(getter)]
+	#[napi(getter, catch_unwind)]
 	pub fn astral_skipped(&self) -> i64 {
 		self.inner.astral_skipped() as i64
 	}
 
 	/// Each postcode-move draw so far, as `moved` or under its skip reason.
-	#[napi(getter)]
+	#[napi(getter, catch_unwind)]
 	pub fn postcode_move_outcomes(&self) -> Vec<OutcomeCount> {
 		outcome_counts(self.inner.postcode_move_outcomes())
 	}
@@ -364,7 +365,7 @@ pub struct TrainingBatches {
 #[napi]
 impl TrainingBatches {
 	/// `skipBatches` batches are sampled and dropped first, so a resumed run continues where it stopped.
-	#[napi(constructor)]
+	#[napi(constructor, catch_unwind)]
 	pub fn new(
 		config: String,
 		batch_size: u32,
@@ -390,18 +391,18 @@ impl TrainingBatches {
 	}
 
 	/// The next batch the trainer reads.
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn next_batch(&mut self) -> Result<Vec<SampledRow>> {
 		Ok(rows_out(self.inner.next_batch().map_err(sampler_error)?))
 	}
 
 	/// The epoch the last batch came from, counted from 1.
-	#[napi(getter)]
+	#[napi(getter, catch_unwind)]
 	pub fn epoch(&self) -> i64 {
 		self.inner.epoch() as i64
 	}
 
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn cancel(&self) {
 		self.cancel.cancel();
 	}
@@ -424,7 +425,7 @@ pub struct RawRows {
 
 #[napi]
 impl RawRows {
-	#[napi(constructor)]
+	#[napi(constructor, catch_unwind)]
 	pub fn new(config: String, split: String, seed: i64, options: Option<StreamOptions>) -> Result<Self> {
 		let parsed = self::config(&config)?;
 		let (row_limit, collector) = stream_options(options)?;
@@ -446,7 +447,7 @@ impl RawRows {
 	}
 
 	/// The next `count` upstream rows, fewer at exhaustion.
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn next_raw(&mut self, count: u32) -> Result<Vec<SampledRow>> {
 		let mut out = Vec::with_capacity(count as usize);
 		while out.len() < count as usize {
@@ -459,7 +460,7 @@ impl RawRows {
 	}
 
 	/// The next `count` upstream rows, each with what the emit step made of it, fewer at exhaustion.
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn next_emitted(&mut self, count: u32) -> Result<Vec<EmittedDraw>> {
 		let mut out = Vec::with_capacity(count as usize);
 		while out.len() < count as usize {
@@ -474,23 +475,23 @@ impl RawRows {
 		Ok(out)
 	}
 
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn take_events(&self) -> Vec<SamplerEvent> {
 		self.collector.as_ref().map(Collector::take).unwrap_or_default()
 	}
 
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn cancel(&self) {
 		self.cancel.cancel();
 	}
 
 	/// The upstream rows drawn so far.
-	#[napi(getter)]
+	#[napi(getter, catch_unwind)]
 	pub fn drawn(&self) -> i64 {
 		self.inner.drawn() as i64
 	}
 
-	#[napi(getter)]
+	#[napi(getter, catch_unwind)]
 	pub fn postcode_move_outcomes(&self) -> Vec<OutcomeCount> {
 		outcome_counts(self.inner.postcode_move_outcomes())
 	}
@@ -540,9 +541,8 @@ pub struct EncodedRows {
 	pub channels: Vec<EncodedChannel>,
 }
 
-fn lexicon(path: Option<&str>) -> Result<Option<Lexicon>> {
-	path.map(|p| Lexicon::from_json(&read(p)?, p).map_err(channel_error))
-		.transpose()
+fn optional_file(path: &Option<String>) -> Option<&Path> {
+	optional_path(path).map(Path::new)
 }
 
 fn optional_path(path: &Option<String>) -> Option<&str> {
@@ -566,33 +566,23 @@ impl RowEncoder {
 
 #[napi]
 impl RowEncoder {
-	#[napi(constructor)]
+	#[napi(constructor, catch_unwind)]
 	pub fn new(options: RowEncoderOptions) -> Result<Self> {
-		let model = std::fs::read(&options.tokenizer_model_path)
-			.map_err(|e| input(format!("cannot read {}: {e}", options.tokenizer_model_path)))?;
 		let processor =
-			Processor::from_model_proto(&model).map_err(|e| input(format!("{}: {e}", options.tokenizer_model_path)))?;
-		let anchor_mode = match options.anchor_paint_mode.as_deref().unwrap_or("gold") {
-			"gold" => AnchorMode::Gold,
-			"shaped" => AnchorMode::Shaped,
-			other => {
-				return Err(input(format!(
-					"anchorPaintMode {other:?} is not \"gold\" or \"shaped\""
-				)))
-			}
-		};
-		let schema = LabelSchema::from_json(&read(&options.label_schema_path)?).map_err(channel_error)?;
-		let set = options.label_set.as_deref().unwrap_or("stage3");
-		let labels = schema.label_table(set).map_err(channel_error)?;
-		let anchor = optional_path(&options.anchor_lookup_path)
-			.map(|path| AnchorLookup::from_json(&read(path)?, path).map_err(channel_error))
-			.transpose()?;
-		let finders = RegexFinders {
-			shapes: PostcodeShapes::from_record(&read(&options.postcode_shapes_path)?, &options.postcode_shapes_path)
-				.map_err(channel_error)?,
-			syntax: PostcodeSyntax::from_json(&read(&options.postcode_syntax_path)?, &options.postcode_syntax_path)
-				.map_err(channel_error)?,
-		};
+			mtf_channels::resources::read_processor(Path::new(&options.tokenizer_model_path)).map_err(channel_error)?;
+		let anchor_mode = AnchorMode::parse(options.anchor_paint_mode.as_deref()).map_err(channel_error)?;
+		let EncoderResources { lexicons, finders, .. } = EncoderResources::load(&ResourcePaths {
+			label_schema: Path::new(&options.label_schema_path),
+			label_set: options.label_set.as_deref().unwrap_or("stage3"),
+			postcode_shapes: Path::new(&options.postcode_shapes_path),
+			postcode_syntax: Path::new(&options.postcode_syntax_path),
+			anchor_lookup: optional_file(&options.anchor_lookup_path),
+			gazetteer: optional_file(&options.gazetteer_lexicon_path),
+			country: optional_file(&options.country_lexicon_path),
+			street_type: optional_file(&options.street_type_lexicon_path),
+			locality_surface: optional_file(&options.locality_surface_lexicon_path),
+		})
+		.map_err(channel_error)?;
 		let pad_id = options.pad_id.unwrap_or_else(|| processor.special_ids().pad);
 		let encoder = Self {
 			processor: Arc::new(processor),
@@ -603,15 +593,7 @@ impl RowEncoder {
 				gazetteer_choreography: options.gazetteer_choreography.unwrap_or(false),
 				code_units: options.code_units.unwrap_or(false),
 			},
-			lexicons: Lexicons {
-				labels,
-				locales: schema.locale_countries.clone(),
-				anchor,
-				gazetteer: lexicon(optional_path(&options.gazetteer_lexicon_path))?,
-				country: lexicon(optional_path(&options.country_lexicon_path))?,
-				street_type: lexicon(optional_path(&options.street_type_lexicon_path))?,
-				locality_surface: lexicon(optional_path(&options.locality_surface_lexicon_path))?,
-			},
+			lexicons,
 			finders,
 		};
 		encoder.encoder()?;
@@ -619,7 +601,7 @@ impl RowEncoder {
 	}
 
 	/// The batch's arrays.
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn encode_batch(&self, rows: Vec<SampledRow>) -> Result<EncodedRows> {
 		let owned = rows
 			.into_iter()
@@ -673,7 +655,7 @@ impl RowEncoder {
 	}
 
 	/// Each configured channel's feature width, in the order `encodeBatch` emits them.
-	#[napi(getter)]
+	#[napi(getter, catch_unwind)]
 	pub fn channel_dims(&self) -> Result<Vec<EncodedChannelDim>> {
 		Ok(self
 			.encoder()?
@@ -725,7 +707,7 @@ pub struct CharEncoder {
 
 #[napi]
 impl CharEncoder {
-	#[napi(constructor)]
+	#[napi(constructor, catch_unwind)]
 	pub fn new(options: CharEncoderOptions) -> Result<Self> {
 		let schema = LabelSchema::from_json(&read(&options.label_schema_path)?).map_err(channel_error)?;
 		let config = CharConfig {
@@ -741,7 +723,7 @@ impl CharEncoder {
 		})
 	}
 
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn encode_batch(&self, rows: Vec<SampledRow>) -> Result<EncodedChars> {
 		let rows = rows
 			.into_iter()
@@ -785,7 +767,7 @@ pub struct SplitKeep {
 
 #[napi]
 impl SplitColumns {
-	#[napi(constructor)]
+	#[napi(constructor, catch_unwind)]
 	pub fn new(config: String, split: String, columns: Vec<String>, keep: Option<SplitKeep>) -> Result<Self> {
 		let keep = keep.map(|k| KeepRows {
 			column: k.column,
@@ -798,13 +780,13 @@ impl SplitColumns {
 	}
 
 	/// The files the split lists.
-	#[napi(getter)]
+	#[napi(getter, catch_unwind)]
 	pub fn files(&self) -> u32 {
 		self.inner.files() as u32
 	}
 
 	/// The next row group's admitted rows, or null after the last file.
-	#[napi]
+	#[napi(catch_unwind)]
 	pub fn next_chunk(&mut self) -> Result<Option<SplitColumnChunk>> {
 		let Some(chunk) = self.inner.next_chunk().map_err(sampler_error)? else {
 			return Ok(None);
@@ -833,7 +815,7 @@ impl SplitColumns {
 }
 
 /// Rows per source across every file of `split`, over the rows each file's filter admits.
-#[napi]
+#[napi(catch_unwind)]
 pub fn source_row_counts(config: String, split: String) -> Result<Vec<SourceCount>> {
 	let parsed = self::config(&config)?;
 	Ok(source_counts(
@@ -868,7 +850,7 @@ fn weights(entries: Vec<SourceWeight>) -> Weights {
 }
 
 /// `fixed` with each reps target merged in as a derived weight, and the derivation per target.
-#[napi]
+#[napi(catch_unwind)]
 pub fn derive_source_weights(
 	fixed: Option<Vec<SourceWeight>>,
 	source_reps: Vec<SourceWeight>,
@@ -913,13 +895,13 @@ pub fn derive_source_weights(
 }
 
 /// `str.casefold` under the trainer's CPython Unicode tables.
-#[napi]
+#[napi(catch_unwind)]
 pub fn python_casefold(text: String) -> String {
 	mtf_channels::python_text::casefold(&text)
 }
 
 /// The consecutive runs of letter scripts in `text`, as the mixed-script audit's `script_runs` names them.
-#[napi]
+#[napi(catch_unwind)]
 pub fn python_script_runs(text: String) -> Vec<String> {
 	mtf_channels::python_text::script_runs(&text)
 		.into_iter()
@@ -928,19 +910,26 @@ pub fn python_script_runs(text: String) -> Vec<String> {
 }
 
 /// The exposure phenomena's coarse script tag for `text`.
-#[napi]
+#[napi(catch_unwind)]
 pub fn python_detect_script(text: String) -> String {
 	mtf_channels::python_text::detect_script(&text).to_owned()
 }
 
 /// Whether `text` holds a letter and every letter is Latin script by Unicode name.
-#[napi]
+#[napi(catch_unwind)]
 pub fn python_is_latin_text(text: String) -> bool {
 	mtf_channels::python_text::is_latin_text(&text)
 }
 
 /// The channel names the row encoder may emit, in its block order.
-#[napi]
+#[napi(catch_unwind)]
 pub fn channel_names() -> Vec<String> {
 	CHANNEL_NAMES.iter().map(|s| s.to_string()).collect()
+}
+
+/// Panics with `message`, so a test can observe what a panic inside an export does to the Node process.
+#[cfg(feature = "panic-probe")]
+#[napi(catch_unwind)]
+pub fn panic_for_test(message: String) {
+	panic!("{message}");
 }

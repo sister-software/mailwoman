@@ -52,13 +52,11 @@ The work proceeds in two phases.
 ### Layout
 
 ```text
-packages/mtf/
-  Cargo.toml            Cargo workspace for the crates below
+packages/mtf/           (the crates are members of the repository root's cargo workspace)
   crates/mtf-core/      Model representation, normalization, unigram encode, decode, errors
   crates/mtf-wasm/      Thin wasm-bindgen adapter around mtf-core
   crates/mtf-channels/  The training-row encoder: label projection, channel painters, packing
   crates/mtf-sampler/   The training-row sampler: corpus listing, source mixture, augmentation, relabel, char path
-  crates/mtf-py/        The `mailwoman_mtf` Python extension over mtf-core, mtf-channels and mtf-sampler
   crates/mtf-node/      The Node addon over mtf-sampler and mtf-channels, for the TypeScript audits and tools
   crates/mtf-tools/     The `mtf-tokenizer` binary behind tools/tokenizer: model edits, corpus sampling, ONNX surgery
   lib/                  TypeScript loader and result conversion
@@ -93,7 +91,7 @@ toolchain. A repository check will rebuild it and compare hashes.
 - **Model loading.** The loader validates lengths, counts and versions before allocating, and bounds input
   length and token count.
 - **Downstream consumers.** `packages/neural/lib/tokenizer.ts` converts byte offsets to UTF-16 ranges and
-  trims leading whitespace. `corpus-python/src/mailwoman_train/tokenizer/` converts them to Python
+  trims leading whitespace. The deleted Python tokenizer converted them to Python
   character positions for label projection. A change to `▁` or to word boundaries changes both.
 
 ## Stage 1 baseline

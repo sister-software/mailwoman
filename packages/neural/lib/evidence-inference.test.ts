@@ -44,7 +44,7 @@ const fixture = await readLocalJSONFile<Fixture>(
 const toPieces = (c: FixtureCase): TokenizedPiece[] =>
 	c.pieces.map((p) => ({ piece: p.piece, id: 0, start: p.start, end: p.end }))
 
-describe("evidence-channel painter parity (TS ↔ corpus-python)", () => {
+describe("evidence-channel painter parity (TS ↔ the recorded trainer painter)", () => {
 	const street = parseGazetteerLexicon(fixture.street_lexicon)
 	const locality = parseGazetteerLexicon(fixture.locality_lexicon)
 

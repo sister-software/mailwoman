@@ -9,19 +9,19 @@
  *   `lib/<cc>/recipes/house-venue-tuples.ts`. This module knows the order the samplers run in, the budget per
  *   country and the output, so adding a country adds a sampler and an entry in {@linkcode HOUSE_VENUE_SAMPLERS}.
  *
- *   The samplers draw from one shared {@linkcode PyRandom}, in {@linkcode HOUSE_VENUE_SAMPLERS} order, as the
- *   Python assembler (`corpora/house_venue_tuples.py`) drew them. A country copied from an earlier file leaves the
+ *   The samplers draw from one shared {@linkcode SeededRandom}, in {@linkcode HOUSE_VENUE_SAMPLERS} order, the order
+ *   of the Python assembler (`corpora/house_venue_tuples.py`). A country copied from an earlier file leaves the
  *   generator where it was, so the countries after it draw what they drew when it was sampled.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { SeededRandom } from "@mailwoman/core/random"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { readFRReservedSurfaces, sampleFRHouseVenueTuples } from "#fr/recipes/house-venue-tuples"
 import { sampleGBHouseVenueTuples } from "#gb/recipes/house-venue-tuples"
-import { PyRandom } from "#training/pyrandom"
 import { sampleUSHouseVenueTuples } from "#us/recipes/house-venue-tuples"
 
 /**
@@ -43,7 +43,7 @@ export interface HouseVenueTuple {
 /**
  * Draws up to `count` tuples for one country from the shared generator.
  */
-export type HouseVenueSampler = (count: number, rng: PyRandom) => Promise<HouseVenueTuple[]>
+export type HouseVenueSampler = (count: number, rng: SeededRandom) => Promise<HouseVenueTuple[]>
 
 /**
  * Each country's sampler, in output and draw order.
@@ -57,11 +57,14 @@ export const HOUSE_VENUE_SAMPLERS: ReadonlyArray<readonly [code: string, sampler
 /**
  * The tuples file the sub-venue recipe reads.
  *
- * v6 keeps NAD rows and the rows of each US body whose own register decision permits training,
- * and carried its GB rows from v4 (`--carry gb --carry-from <v4>`).
+ * v7 holds out the FR fragment board's street surfaces, which v6's FR rows did not:
+ * 59,725 FR tuples where v6 held 60,000, 275 of them on 132 board streets.
+ * Its US and GB rows are v6's, byte for byte (`--carry us --carry gb --carry-from <v6>`).
+ * v6 kept NAD rows and the rows of each US body whose own register decision
+ * permits training, and carried its GB rows from v4.
  */
 export function houseVenueTuplesPath() {
-	return dataRootPath("corpus", "intermediate", "house-venue-tuples-v6.jsonl")
+	return dataRootPath("corpus", "intermediate", "house-venue-tuples-v7.jsonl")
 }
 
 /**
@@ -128,7 +131,7 @@ export async function assembleHouseVenueTuples(
 
 	if (carry.size && !options.carryFrom) throw new Error("--carry needs --carry-from")
 
-	const rng = new PyRandom(options.seed ?? HOUSE_VENUE_DEFAULT_SEED)
+	const rng = new SeededRandom(options.seed ?? HOUSE_VENUE_DEFAULT_SEED)
 	const parts: Array<readonly [string, HouseVenueTuple[]]> = []
 
 	for (const [code, sample] of options.samplers ?? HOUSE_VENUE_SAMPLERS) {

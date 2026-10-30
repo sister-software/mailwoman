@@ -510,9 +510,9 @@ export interface RecipeOptions {
 	/**
 	 * `sub-venue`: GB/US/FR address-context tuples jsonl.
 	 *
-	 * @defaultValue the house-venue v6 tuples (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v6.jsonl`),
-	 * whose GB rows come from OS OpenData and whose US rows come from NAD and from the bodies whose own decisions
-	 * permit training. DE and ES read OpenAddresses directly.
+	 * @defaultValue the house-venue v7 tuples (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v7.jsonl`),
+	 * whose FR rows hold out the FR board's streets, whose GB rows come from OS OpenData and whose US rows come from
+	 * NAD and from the bodies whose own decisions permit training. DE and ES read OpenAddresses directly.
 	 */
 	subVenueTuples?: string
 	/**

@@ -5,7 +5,7 @@
 //! Time reading row groups over the columns the sampler reads, one row group at a time.
 //!
 //! The input is a JSON list of `[path, row_group]` pairs; the output is the milliseconds per row group and the rows
-//! read. `corpus-python`'s pyarrow reader is timed over the same list for the comparison the encoder reference
+//! read. The deleted Python trainer's pyarrow reader is timed over the same list for the comparison the encoder reference
 //! records.
 //!
 //! Usage: `cargo run --release -p mtf-sampler --example read_profile -- <pairs.json>`

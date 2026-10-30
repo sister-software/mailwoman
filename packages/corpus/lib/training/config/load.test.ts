@@ -5,9 +5,8 @@
  * @file Tests the training config resolver: the strict merge, the floor-list validations, the Norway refusal, the
  *   source admission and the resolved document.
  *
- *   The cases port `corpus-python/tests/mailwoman_train/config/test_config_strict.py`,
- *   `test_country_weights_norway.py` and the config-loader cases of `test_source_rights.py`, so they run where
- *   Python does not. `load-python-parity.test.ts` compares the two loaders directly.
+ *   The cases port the deleted Python loader's strict-config tests,
+ *   `test_country_weights_norway.py` and the config-loader cases of `test_source_rights.py`.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -18,10 +17,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { readCorpusSourceInputs, SourceRightsError } from "#source-register/corpus-inputs"
 import { readAddressSourceRegister } from "#source-register/register"
+import { admitTrainingConfig, admittedTrainingSources, type TrainingAdmissionInputs } from "#training/config/admission"
 import {
-	admitTrainingConfig,
-	admittedTrainingSources,
-	buildResolvedTrainingConfig,
 	ConfigErrorKind,
 	defaultConfigInstance,
 	mergeIntoConfig,
@@ -31,13 +28,12 @@ import {
 	trainingCorpusVersion,
 	trainingCSVLogPath,
 	typedTrainingConfig,
-	writeResolvedTrainingConfig,
-	type TrainingAdmissionInputs,
 } from "#training/config/load"
 import { parsePythonYAML, type PythonMapping } from "#training/config/python-yaml"
+import { buildResolvedTrainingConfig, writeResolvedTrainingConfig } from "#training/config/resolved"
 import { RESOLVED_TRAINING_CONFIG_VERSION, type TrainingConfig } from "#training/config/schema"
 
-const CONFIG_DIR = repoRootPath("corpus-python", "src", "mailwoman_train", "configs")
+const CONFIG_DIR = repoRootPath("packages", "corpus", "data", "training-configs")
 
 const load = (text: string, strict = true) => readTrainingConfigText(text, "probe.yaml", { strict })
 const typedOf = (text: string): TrainingConfig => typedTrainingConfig(load(text), "probe.yaml")
@@ -74,6 +70,18 @@ describe("readTrainingConfigText", () => {
 
 	it("refuses an unknown top-level section", () => {
 		expect(refusal("trainer:\n  max_steps: 10\n").message).toContain("Config has no field 'trainer'")
+	})
+
+	it("reads a retired key recorded false and refuses one set true", () => {
+		expect(
+			typedOf("model:\n  use_deploc_head: false\ntrain:\n  freeze_encoder: false\n  max_steps: 10\n").train.max_steps
+		).toBe(10)
+
+		const error = refusal("model:\n  use_affix_head: true\n")
+
+		expect(error.kind).toBe(ConfigErrorKind.Key)
+		expect(error.message).toContain("'model.use_affix_head'")
+		expect(error.message).toContain("retired feature")
 	})
 
 	it("merges known keys and leaves every other field at its default", () => {

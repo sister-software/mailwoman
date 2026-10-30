@@ -441,8 +441,8 @@ export const isCorpusVersion = (value: string): boolean => /^\d+(\.\d+)*(-[A-Za-
  *
  * The entry name includes the leading `v` that a corpus version must omit.
  *
- * `corpus("v0.7.0-de-holdout")` in `corpus-python/launch/corpora.py` passes the same string.
- * `launch/plan.py` composes the R2 key and volume path from it.
+ * The launcher's sync (`tools/training/launch/sync.ts`) composes the R2 key
+ * and volume path from the same string.
  * All three readers therefore use this spelling.
  *
  * Repository code does not derive the entry name.

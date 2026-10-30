@@ -5,7 +5,10 @@
 
 use crate::batch::{RunEncoder, TensorBatch};
 use crate::callbacks::{Callback, Checkpointer, Console, CsvMetrics, StepView};
-use crate::checkpoint::{checkpoint_extras, find_latest_checkpoint, resume_drift, save_checkpoint, TRAINING_STATE};
+use crate::checkpoint::{
+	checkpoint_extras, find_latest_checkpoint, read_resume_state, restore_generators, resume_drift, save_checkpoint,
+	RNG_STATE, TRAINING_COMPLETE,
+};
 use crate::config::{sampler_config, DataFiles, RunConfig};
 use crate::fisher::{EwcPenalty, FisherAccumulator};
 use crate::metrics::{cross_pollution, per_locale_tag_f1, token_f1, Metrics};
@@ -145,18 +148,7 @@ fn reinit_label_rows(model: &CoarseEncoder, labels: &[String]) -> Result<()> {
 /// `apply_freezes`.
 pub fn apply_freezes(run: &RunConfig, model: &CoarseEncoder) -> Result<()> {
 	let params = model.store.parameters();
-	let freeze_encoder = run.train_bool("freeze_encoder")?;
 	let freeze_tokens = run.train_bool("freeze_token_embeddings")?;
-	if freeze_encoder {
-		for (n, p) in &params {
-			let _ = p.set_requires_grad(n.starts_with("affix_head"));
-		}
-		if !params.iter().any(|(_, p)| p.requires_grad()) {
-			return Err(fail!(
-				"freeze_encoder=True but no affix_head params found — set model.use_affix_head: true"
-			));
-		}
-	}
 	if freeze_tokens {
 		let mut frozen = 0;
 		for (n, p) in &params {
@@ -173,9 +165,9 @@ pub fn apply_freezes(run: &RunConfig, model: &CoarseEncoder) -> Result<()> {
 	}
 	let prefixes = run.train_strings("trainable_only_prefixes")?;
 	if !prefixes.is_empty() {
-		if freeze_encoder || freeze_tokens {
+		if freeze_tokens {
 			return Err(fail!(
-				"train.trainable_only_prefixes is mutually exclusive with freeze_encoder/freeze_token_embeddings — \
+				"train.trainable_only_prefixes is mutually exclusive with freeze_token_embeddings — \
 				 combining them makes setting attribution ambiguous"
 			));
 		}
@@ -224,25 +216,18 @@ pub fn restore_training_state(
 	scheduler: &mut LambdaLr,
 	live: &[f64],
 ) -> Result<i64> {
-	if resume_from.join("optimizer.json").is_file() {
-		optim.load(resume_from)?;
-	}
-	let mut resume_step = 0;
-	let state_path = resume_from.join(TRAINING_STATE);
-	if state_path.is_file() {
-		let state: Value = serde_json::from_str(&std::fs::read_to_string(&state_path)?)?;
-		resume_step = state["step"].as_i64().unwrap_or(0);
-		let drift = resume_drift(&run.config, &state["config"]);
-		if drift.is_empty() {
-			println!("[resume-drift] none — live config matches the checkpoint's stamped state");
-		} else {
-			println!(
-				"[resume-drift] {} config field(s) differ from the checkpoint's stamped state:",
-				drift.len()
-			);
-			for line in drift {
-				println!("  ! {line}");
-			}
+	let (resume_step, state) = read_resume_state(resume_from)?;
+	optim.load(resume_from)?;
+	let drift = resume_drift(&run.config, &state["config"]);
+	if drift.is_empty() {
+		println!("[resume-drift] none — live config matches the checkpoint's stamped state");
+	} else {
+		println!(
+			"[resume-drift] {} config field(s) differ from the checkpoint's stamped state:",
+			drift.len()
+		);
+		for line in drift {
+			println!("  ! {line}");
 		}
 	}
 	if resume_from.join("scheduler.json").is_file() {
@@ -385,6 +370,86 @@ pub struct TrainOptions {
 	pub autocast_on_cpu: bool,
 }
 
+/// Restores the optimizer, the scheduler and the generators from a checkpoint, and returns its step.
+fn resume_state(
+	run: &RunConfig,
+	dir: &Path,
+	device: Device,
+	optim: &mut AdamW,
+	scheduler: &mut LambdaLr,
+	live: &[f64],
+) -> Result<i64> {
+	let step = restore_training_state(run, dir, optim, scheduler, live)?;
+	if restore_generators(dir, device, &mut [])? {
+		println!(
+			"[resume] generator states restored from {}",
+			dir.join(RNG_STATE).display()
+		);
+	} else {
+		println!(
+			"[resume] {} holds no generator states; the generators restart from train.seed",
+			dir.display()
+		);
+	}
+	Ok(step)
+}
+
+/// The EWC penalty when `train.ewc_lambda` is positive, braking against `train.ewc_reference` (or `train.init_from`)
+/// with the Fisher diagonal at `train.ewc_fisher_path`.
+fn ewc_penalty(run: &RunConfig, device: Device) -> Result<Option<EwcPenalty>> {
+	let lambda = run.train_f64("ewc_lambda")?;
+	if lambda <= 0.0 {
+		return Ok(None);
+	}
+	let reference = run
+		.train
+		.get("ewc_reference")
+		.and_then(Value::as_str)
+		.filter(|s| !s.is_empty())
+		.map(str::to_owned)
+		.unwrap_or(run.train_str("init_from")?);
+	let fisher_path = run
+		.train
+		.get("ewc_fisher_path")
+		.and_then(Value::as_str)
+		.unwrap_or_default();
+	if fisher_path.is_empty() || reference.is_empty() {
+		return Err(fail!(
+			"train.ewc_lambda > 0 requires train.ewc_fisher_path and train.ewc_reference/init_from"
+		));
+	}
+	let e = EwcPenalty::new(Path::new(fisher_path), Path::new(&reference), lambda, device)?;
+	println!(
+		"[ewc] λ={lambda}, {} params braked against {reference}",
+		e.covered_params
+	);
+	Ok(Some(e))
+}
+
+/// Writes the Fisher artifact into the final checkpoint with its provenance.
+fn save_fisher(
+	fisher: &FisherAccumulator,
+	run: &RunConfig,
+	final_ck: &Path,
+	step: i64,
+	corpus_dir: &str,
+	seed: i64,
+	output_dir: &Path,
+) -> Result<()> {
+	let mut meta = serde_json::Map::new();
+	meta.insert("captured_at_step".into(), step.into());
+	meta.insert(
+		"window_last_n_steps".into(),
+		run.train_i64("fisher_capture_last_n_steps")?.into(),
+	);
+	meta.insert("corpus_dir".into(), corpus_dir.into());
+	meta.insert("seed".into(), seed.into());
+	meta.insert("output_dir".into(), output_dir.display().to_string().into());
+	let path = fisher.save(final_ck, meta)?;
+	println!("[fisher] artifact → {} ({} batches)", path.display(), fisher.count);
+	Ok(())
+}
+
 /// `train`: the supervised run, or the MLM run when `train.objective` is `mlm`.
 pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	crate::callbacks::refuse_trackio(run)?;
@@ -427,10 +492,28 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	println!("lr_schedule={}", run.train_str("lr_schedule")?);
 	let precision = resolve_precision(run, device, options.autocast_on_cpu)?;
 	let resume_step = match &resume_from {
-		Some(dir) => restore_training_state(run, dir, &mut optim, &mut scheduler, &live)?,
+		Some(dir) => resume_state(run, dir, device, &mut optim, &mut scheduler, &live)?,
 		None => 0,
 	};
 	let max_steps = run.train_i64("max_steps")?;
+	// A launch on a finished run resumes at its last step and has no step left to train. The periodic checkpoint at
+	// `max_steps` precedes the end-of-run writes, so the run is finished only when its completion record exists. Without
+	// it those writes failed, and a resume cannot redo them: the Fisher window's gradients are gone.
+	if let Some(dir) = resume_from.as_deref().filter(|_| resume_step >= max_steps) {
+		if !output_dir.join(TRAINING_COMPLETE).is_file() {
+			return Err(fail!(
+				"{} is at step {resume_step} of max_steps {max_steps}, but {} holds no {TRAINING_COMPLETE}: the final \
+				 checkpoint, Fisher artifact or realized draws were not all written; rerun from an earlier checkpoint",
+				dir.display(),
+				output_dir.display()
+			));
+		}
+		println!(
+			"[resume] {} is at step {resume_step} of max_steps {max_steps}: the run is complete",
+			dir.display()
+		);
+		return Ok(());
+	}
 	let params: Vec<(String, Tensor)> = model.store.parameters();
 	let mut fisher = None;
 	let mut fisher_window_start = None;
@@ -440,39 +523,7 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		fisher_window_start = Some(start);
 		println!("[fisher] capture armed for steps >= {}", start.max(0));
 	}
-	let ewc = if run.train_f64("ewc_lambda")? > 0.0 {
-		let reference = run
-			.train
-			.get("ewc_reference")
-			.and_then(Value::as_str)
-			.filter(|s| !s.is_empty())
-			.map(str::to_owned)
-			.unwrap_or(run.train_str("init_from")?);
-		let fisher_path = run
-			.train
-			.get("ewc_fisher_path")
-			.and_then(Value::as_str)
-			.unwrap_or_default();
-		if fisher_path.is_empty() || reference.is_empty() {
-			return Err(fail!(
-				"train.ewc_lambda > 0 requires train.ewc_fisher_path and train.ewc_reference/init_from"
-			));
-		}
-		let e = EwcPenalty::new(
-			Path::new(fisher_path),
-			Path::new(&reference),
-			run.train_f64("ewc_lambda")?,
-			device,
-		)?;
-		println!(
-			"[ewc] λ={}, {} params braked against {reference}",
-			run.train_f64("ewc_lambda")?,
-			e.covered_params
-		);
-		Some(e)
-	} else {
-		None
-	};
+	let ewc = ewc_penalty(run, device)?;
 
 	let log_every = run.train_i64("log_every_steps")?.max(1);
 	let tags = encoder.schema.set(&encoder.label_set)?.tags.clone();
@@ -508,6 +559,23 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let (mut train_loss, mut learning_rate) = (0.0f64, 0.0f64);
 	// Every row a consumed batch held: the realized draws the exposure report counts.
 	let mut realized = RealizedRows::create(&output_dir, resume_step)?;
+	// The view the callbacks read, built where each callback runs so the evaluation can borrow the model in between.
+	macro_rules! step_view {
+		($elapsed:expr) => {
+			StepView {
+				model: &model,
+				optim: &optim,
+				scheduler: &scheduler,
+				output_dir: &output_dir,
+				config: &run.config,
+				vocab_size: encoder.vocab_size,
+				start_step: resume_step,
+				elapsed: $elapsed,
+				train_loss,
+				learning_rate,
+			}
+		};
+	}
 	if step < max_steps {
 		let mut batches = TrainingBatches::new(
 			sampler.clone(),
@@ -559,37 +627,14 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 				running = 0.0;
 			}
 			learning_rate = scheduler.get_last_lr()[0];
-			let elapsed = started.elapsed().as_secs_f64();
-			let view = StepView {
-				model: &model,
-				optim: &optim,
-				scheduler: &scheduler,
-				output_dir: &output_dir,
-				config: &run.config,
-				vocab_size: encoder.vocab_size,
-				start_step: resume_step,
-				elapsed,
-				train_loss,
-				learning_rate,
-			};
+			let view = step_view!(started.elapsed().as_secs_f64());
 			for c in &mut callbacks {
 				c.on_step_end(&view, step)?;
 			}
 			if step % eval_every == 0 {
 				let draw = validation.batches(&sampler, &encoder, i128::from(seed + 1), val_rows, eval_batch)?;
 				let metrics = evaluate(&mut model, draw, &labels, &locales)?;
-				let view = StepView {
-					model: &model,
-					optim: &optim,
-					scheduler: &scheduler,
-					output_dir: &output_dir,
-					config: &run.config,
-					vocab_size: encoder.vocab_size,
-					start_step: resume_step,
-					elapsed: started.elapsed().as_secs_f64(),
-					train_loss,
-					learning_rate,
-				};
+				let view = step_view!(started.elapsed().as_secs_f64());
 				for c in &mut callbacks {
 					c.on_eval_end(&view, step, &metrics)?;
 				}
@@ -604,19 +649,10 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		&checkpoint_extras(step, &run.config, encoder.vocab_size),
 		Some(&optim),
 		Some(&scheduler),
+		&[],
 	)?;
 	if let Some(f) = &fisher {
-		let mut meta = serde_json::Map::new();
-		meta.insert("captured_at_step".into(), step.into());
-		meta.insert(
-			"window_last_n_steps".into(),
-			run.train_i64("fisher_capture_last_n_steps")?.into(),
-		);
-		meta.insert("corpus_dir".into(), corpus_dir.clone().into());
-		meta.insert("seed".into(), seed.into());
-		meta.insert("output_dir".into(), output_dir.display().to_string().into());
-		let path = f.save(&final_ck, meta)?;
-		println!("[fisher] artifact → {} ({} batches)", path.display(), f.count);
+		save_fisher(f, run, &final_ck, step, &corpus_dir, seed, &output_dir)?;
 	}
 	let described = realized.finish(&output_dir, &corpus_dir, &encoder.label_set, step)?;
 	println!(
@@ -627,5 +663,9 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	for c in &mut callbacks {
 		c.on_train_end()?;
 	}
+	std::fs::write(
+		output_dir.join(TRAINING_COMPLETE),
+		serde_json::to_string_pretty(&json!({"step": step, "final_checkpoint": final_ck}))? + "\n",
+	)?;
 	Ok(())
 }

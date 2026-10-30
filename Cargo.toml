@@ -1,0 +1,47 @@
+[workspace]
+resolver = "2"
+# Each crate sits beside the npm package that builds or ships it: the tokenizer, encoder and sampler crates under
+# `packages/mtf`, the trainer crates under `packages/trainer`.
+members = ["packages/*/crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/sister-software/mailwoman"
+
+[workspace.dependencies]
+# The crates that link libtorch read it from `LIBTORCH`: the `libtorch-shared-with-deps` archive of the version `tch`
+# names (`torch-sys`'s `TORCH_VERSION`). `trainer-export` needs no libtorch.
+tch = "0.26.0"
+mtf-core = { path = "packages/mtf/crates/mtf-core" }
+mtf-channels = { path = "packages/mtf/crates/mtf-channels" }
+mtf-sampler = { path = "packages/mtf/crates/mtf-sampler" }
+
+# The size-optimized profile `wasm/mtf.wasm` is built with.
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+
+# The profile the `mtf-node` addon is built with. A panic must unwind, and each export carries `#[napi(catch_unwind)]`,
+# so napi-rs throws it as a JavaScript exception. Without the attribute an unwinding panic still aborts Node with
+# SIGABRT, as `packages/mtf/tools/sampler/native.panic.integration.test.ts` records.
+[profile.node]
+inherits = "release"
+opt-level = 3
+panic = "unwind"
+
+# The profile `packages/mtf/tools/tokenizer` builds `mtf-tokenizer` with. It encodes every training row when it counts
+# piece use, so it is optimized for speed rather than size.
+[profile.tools]
+inherits = "release"
+opt-level = 3
+
+# The profile the trainer and the exporter are built with: speed, and a panic that unwinds so a refusal reports.
+[profile.trainer]
+inherits = "release"
+opt-level = 3
+lto = false
+codegen-units = 16
+panic = "unwind"

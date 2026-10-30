@@ -10,26 +10,24 @@
  *   the Basic Multilingual Plane, which JavaScript counts as two code units.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { isDirectory } from "@mailwoman/core/fs/readers/stat"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { pyRound, pySum } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
+import type { SeededRandom } from "@mailwoman/core/random"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { asPythonFloat, type PythonFloat } from "@mailwoman/core/strings/python-json"
-import { pythonIsSpace, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import { isWhitespaceCharacter, splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { type PathBuilderLike, resolvePath } from "path-ts"
-import { Globerator } from "spliterator/node/fs"
 
 import { normalizeCJKText } from "#cjk/text"
 import { readParquetRows } from "#parquet/readers"
 import { ParquetColumnKind, type ParquetColumns, writeColumnParquetFile } from "#parquet/writers"
 import { stampRowLicenses } from "#source-register/row-license"
 import { pythonRepr } from "#training/config/python-yaml"
-import type { PyRandom } from "#training/pyrandom"
 
 /**
  * The columns of a CJK corpus parquet file, in file order.
@@ -77,6 +75,92 @@ export async function writeCJKCorpusParquet(
 }
 
 /**
+ * Which rows of a split {@linkcode writeCJKSplit} counts coverage over.
+ */
+export const CJKStatsSample = {
+	/**
+	 * The first `n` records of every part, as the label corpora count them.
+	 */
+	FirstOfEachPart: "first-of-each-part",
+	/**
+	 * The first `n` records of the split, as the KR registry corpus counts them.
+	 */
+	FirstOfSplit: "first-of-split",
+} as const
+
+export type CJKStatsSample = (typeof CJKStatsSample)[keyof typeof CJKStatsSample]
+
+/**
+ * Options for {@linkcode writeCJKSplit}.
+ */
+export interface WriteCJKSplitOptions<T> {
+	/**
+	 * The split's directory, created when absent.
+	 */
+	directory: PathBuilderLike
+	rows: readonly T[]
+	rowsPerPart: number
+	/**
+	 * Encodes one part's rows, in order.
+	 *
+	 * A builder whose encoder draws from a generator encodes the part in one call,
+	 * so the draws follow the part order.
+	 */
+	encodePart: (rows: readonly T[]) => CJKRecord[]
+	/**
+	 * The part file name's prefix: `part` writes `part-0000.parquet`.
+	 */
+	partPrefix: string
+	/**
+	 * The context named in a refused license stamp.
+	 */
+	context: string
+	statsSample: { kind: CJKStatsSample; rows: number }
+}
+
+/**
+ * One written split's row and part counts and the coverage over its sampled records.
+ */
+export interface CJKSplitReport {
+	rows: number
+	parts: number
+	coverage: CoverageStats
+}
+
+/**
+ * Writes one split as parquet parts of `rowsPerPart` rows each, and counts its coverage.
+ */
+export async function writeCJKSplit<T>(options: WriteCJKSplitOptions<T>): Promise<CJKSplitReport> {
+	if (!Number.isInteger(options.rowsPerPart) || options.rowsPerPart < 1) {
+		throw new Error(`rowsPerPart must be a positive integer, got ${options.rowsPerPart}`)
+	}
+
+	await makeDirectories(options.directory)
+
+	const sampled: CJKRecord[] = []
+	let parts = 0
+	let rows = 0
+
+	for (let start = 0; start < options.rows.length; start += options.rowsPerPart) {
+		const records = options.encodePart(options.rows.slice(start, start + options.rowsPerPart))
+		const name = `${options.partPrefix}-${String(parts).padStart(4, "0")}.parquet`
+
+		await writeCJKCorpusParquet(records, resolvePath(options.directory, name), options.context)
+
+		parts++
+		rows += records.length
+
+		if (options.statsSample.kind === CJKStatsSample.FirstOfEachPart) {
+			sampled.push(...records.slice(0, options.statsSample.rows))
+		} else if (sampled.length < options.statsSample.rows) {
+			sampled.push(...records.slice(0, options.statsSample.rows - sampled.length))
+		}
+	}
+
+	return { rows, parts, coverage: coverageStats(sampled) }
+}
+
+/**
  * The longest field value a renderer keeps.
  */
 export const MAX_FIELD_CHARS = 64
@@ -85,19 +169,6 @@ export const MAX_FIELD_CHARS = 64
  * The longest rendered row, in code points, the character model reads without truncation.
  */
 export const MAX_RENDERED_CHARS = 96
-
-/**
- * The number of code points in `text`.
- */
-export const codePointLength = (text: string): number => {
-	let length = 0
-
-	for (const _ of text) {
-		length++
-	}
-
-	return length
-}
 
 /**
  * Builds a row's raw text and its spans, one tagged field or untagged glue at a time.
@@ -154,7 +225,7 @@ export function labelTokensByFirstSpan(
 	const labels: string[] = []
 	let cursor = 0
 
-	for (const token of pythonSplitWhitespace(raw)) {
+	for (const token of splitWhitespace(raw)) {
 		const found = raw.indexOf(token, cursor)
 		const index = codePointLength(raw.slice(0, found))
 
@@ -167,28 +238,6 @@ export function labelTokensByFirstSpan(
 	}
 
 	return { tokens, labels }
-}
-
-/**
- * Whether `directory` exists and holds any entry, the test a builder runs
- * before refusing to overwrite a corpus.
- */
-export async function directoryHasEntries(directory: PathBuilderLike): Promise<boolean> {
-	if (!(await isDirectory(directory))) return false
-
-	const entries = await Globerator.from("*", { cwd: directory.toString(), onlyFiles: false }).toArray()
-
-	return entries.length > 0
-}
-
-/**
- * The absolute paths `pattern` matches in `directory`, in code-point order,
- * as Python's `sorted(Path.glob())` lists one directory's files.
- */
-export async function sortedGlob(directory: PathBuilderLike, pattern: string): Promise<string[]> {
-	const paths: string[] = await Globerator.from(pattern, { cwd: directory.toString(), absolute: true }).toArray()
-
-	return paths.toSorted(compareByScalarValue)
 }
 
 /**
@@ -235,7 +284,7 @@ export function muniBucket(unit: string): number {
  * Each item is taken with probability `remaining quota / remaining items`, drawn from `rng`.
  * No draw is made once the quota is filled, so the draw count depends on where the quota fills.
  */
-export function* selectExact(count: number, quota: number, rng: PyRandom): Generator<boolean, void, undefined> {
+export function* selectExact(count: number, quota: number, rng: SeededRandom): Generator<boolean, void, undefined> {
 	let remainingQuota = Math.min(quota, count)
 	let remaining = count
 
@@ -435,7 +484,7 @@ export function verifyRecord(
 
 		if (!text.length) throw new RecordCheckError(`empty span ${tag}@[${start},${end}) in ${quoted}`)
 
-		if ((options.forbidWhitespace ?? true) && text.some(pythonIsSpace)) {
+		if ((options.forbidWhitespace ?? true) && text.some(isWhitespaceCharacter)) {
 			throw new RecordCheckError(`whitespace inside span ${tag}@[${start},${end}): ${pythonRepr(text.join(""))}`)
 		}
 	}
@@ -487,8 +536,8 @@ const ranked = (counts: ReadonlyMap<string, number>): Map<string, number> => new
  */
 export interface CoverageStats {
 	rows: number
-	bio_char_coverage_all: PythonFloat
-	bio_char_coverage_significant: PythonFloat
+	bio_char_coverage_all: number
+	bio_char_coverage_significant: number
 	raw_len_min_median_max: [number, number, number] | null
 	registers: Map<string, number>
 	per_tag_rows: Map<string, number>
@@ -533,7 +582,7 @@ export function coverageStats(
 		}
 
 		total += characters.length
-		significant += characters.filter((character) => !pythonIsSpace(character) && character !== "〒").length
+		significant += characters.filter((character) => !isWhitespaceCharacter(character) && character !== "〒").length
 		labeled += array.filter((label) => label !== "O").length
 
 		for (const tag of new Set(record.span_tags)) {
@@ -550,8 +599,8 @@ export function coverageStats(
 
 	return {
 		rows,
-		bio_char_coverage_all: asPythonFloat(total ? pyRound(labeled / total, COVERAGE_DIGITS) : 0),
-		bio_char_coverage_significant: asPythonFloat(significant ? pyRound(labeled / significant, COVERAGE_DIGITS) : 0),
+		bio_char_coverage_all: total ? pyRound(labeled / total, COVERAGE_DIGITS) : 0,
+		bio_char_coverage_significant: significant ? pyRound(labeled / significant, COVERAGE_DIGITS) : 0,
 		raw_len_min_median_max: lengths.length
 			? [lengths[0]!, lengths[Math.floor(lengths.length / 2)]!, lengths.at(-1)!]
 			: null,

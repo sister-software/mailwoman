@@ -30,10 +30,26 @@ fn options<'a>(args: &'a [String], name: &str) -> Vec<&'a str> {
 		.collect()
 }
 
-fn set_threads(args: &[String]) {
-	if let Some(n) = option(args, "--threads").and_then(|n| n.parse().ok()) {
+/// An option's value parsed, `None` when the option is absent, and an error naming it when it is the last argument
+/// with no value or its value does not parse.
+fn parsed_option<T: std::str::FromStr>(args: &[String], name: &str) -> Result<Option<T>, String> {
+	if args.last().is_some_and(|last| last == name) {
+		return Err(format!("{name} needs a value"));
+	}
+	option(args, name)
+		.map(|value| {
+			value
+				.parse()
+				.map_err(|_| format!("{name} {value} is not a valid value"))
+		})
+		.transpose()
+}
+
+fn set_threads(args: &[String]) -> Result<(), String> {
+	if let Some(n) = parsed_option(args, "--threads")? {
 		tch::set_num_threads(n);
 	}
+	Ok(())
 }
 
 fn report(results: &[StageResult], args: &[String]) -> Result<bool, String> {
@@ -94,7 +110,7 @@ fn check_device(args: &[String]) -> Result<(), String> {
 }
 
 fn run(args: &[String]) -> Result<bool, String> {
-	set_threads(args);
+	set_threads(args)?;
 	let err = |e: trainer_loop::Error| e.to_string();
 	match args.first().map(String::as_str) {
 		Some("device") => {
@@ -128,53 +144,17 @@ fn run(args: &[String]) -> Result<bool, String> {
 			Ok(true)
 		}
 		Some("compare-checkpoints") => {
-			// Two checkpoint directories' weights, and their Fisher artifacts when both hold one.
 			let a = PathBuf::from(args.get(1).ok_or(USAGE)?);
 			let b = PathBuf::from(args.get(2).ok_or(USAGE)?);
-			let ta = trainer_model::checkpoint::read_model_tensors(&a).map_err(|e| e.to_string())?;
-			let tb = trainer_model::checkpoint::read_model_tensors(&b).map_err(|e| e.to_string())?;
-			let mut result = StageResult::new("checkpoint weights", "exact");
-			for (name, t) in &ta {
-				let other = tb.iter().find(|(n, _)| n == name).map(|(_, t)| t);
-				match other {
-					Some(o) => result.push(
-						trainer_loop::compare::diff(name, t, o, trainer_loop::compare::Tolerance::Exact)
-							.map_err(err)?,
-					),
-					None => result.notes.push(format!("{name} is in the first checkpoint only")),
-				}
-			}
-			let mut results = vec![result];
-			let fa = a.join(trainer_loop::fisher::FISHER_ARTIFACT);
-			let fb = b.join(trainer_loop::fisher::FISHER_ARTIFACT);
-			if fa.is_file() && fb.is_file() {
-				let xa = trainer_loop::fisher::read_npz(&fa).map_err(err)?;
-				let xb = trainer_loop::fisher::read_npz(&fb).map_err(err)?;
-				let mut fisher = StageResult::new("Fisher artifact", "1e-5 rel");
-				for (name, t) in &xa {
-					if let Some((_, o)) = xb.iter().find(|(n, _)| n == name) {
-						fisher.push(
-							trainer_loop::compare::diff(
-								name,
-								t,
-								o,
-								trainer_loop::compare::Tolerance::Relative { rel: 1e-5, floor: 1e-3 },
-							)
-							.map_err(err)?,
-						);
-					} else {
-						fisher.notes.push(format!("{name} is in the first artifact only"));
-					}
-				}
-				results.push(fisher);
-			}
+			println!("scope: {}", trainer_loop::compare::CHECKPOINT_SCOPE);
+			let results = trainer_loop::compare::compare_checkpoints(&a, &b).map_err(err)?;
 			report(&results, args)
 		}
 		Some("export-feeds") => {
 			let checkpoint = PathBuf::from(option(args, "--checkpoint").ok_or(USAGE)?);
 			let record = PathBuf::from(option(args, "--record").ok_or(USAGE)?);
 			let out = PathBuf::from(option(args, "--out").ok_or(USAGE)?);
-			let rows = option(args, "--rows").and_then(|n| n.parse().ok()).unwrap_or(64);
+			let rows = parsed_option(args, "--rows")?.unwrap_or(64);
 			let files = DataFiles::discover();
 			let schema = trainer_loop::batch::read_label_schema(&files).map_err(err)?;
 			let (labels, conventions) = (

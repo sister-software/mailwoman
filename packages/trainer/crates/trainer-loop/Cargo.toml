@@ -1,17 +1,18 @@
 [package]
 name = "trainer-loop"
-description = "The Mailwoman training loops in Rust: corpus-python's train/loop.py and train/pretrain.py with their callbacks, the optim/ parameter groups, schedules and Fisher capture, and checkpoints in safetensors, reading batches from mtf-sampler."
+description = "The Mailwoman training loops in Rust: the Python trainer's train/loop.py and train/pretrain.py with their callbacks, the optim/ parameter groups, schedules and Fisher capture, and checkpoints in safetensors, reading batches from mtf-sampler."
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0"
 repository.workspace = true
 
 [dependencies]
 tch.workspace = true
 trainer-model = { path = "../trainer-model" }
-mtf-core = { path = "../../../mtf/crates/mtf-core" }
-mtf-channels = { path = "../../../mtf/crates/mtf-channels", features = ["finders"] }
-mtf-sampler = { path = "../../../mtf/crates/mtf-sampler" }
+trainer-export = { path = "../trainer-export" }
+mtf-core.workspace = true
+mtf-channels = { workspace = true, features = ["finders"] }
+mtf-sampler.workspace = true
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip", "preserve_order"] }
 sha2 = "0.10"

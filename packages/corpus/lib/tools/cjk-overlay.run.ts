@@ -15,14 +15,14 @@
  *   `--volume-root` defaults to the training volume's `corpus/versioned`, where the manifest's paths point.
  */
 
+import { orderedJSON } from "@mailwoman/core/json"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 
 import { buildCJKOverlay, CN_UNITS_SOURCE, OVERLAY_JP_SOURCE, OVERLAY_JP_VERSION } from "#cjk/overlay"
 import { openSourceRightsAdmission, writeSourceRightsRecord } from "#source-register/corpus-inputs"
 
 /**
- * The training volume's mount, as `mailwoman_train.env.volume_mount` reads it.
+ * The training volume's mount, as `MAILWOMAN_VOLUME_MOUNT` sets it for the trainer.
  */
 const VOLUME_ROOT = "/data/corpus/versioned"
 
@@ -76,4 +76,4 @@ const report = await buildCJKOverlay({
 
 await writeSourceRightsRecord(admission.record(), outDir)
 
-console.log(pythonJSONDumps(report, { indent: 2, ensureASCII: false }))
+console.log(orderedJSON(report, { indent: "\t" }))

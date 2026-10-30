@@ -5,46 +5,9 @@
 //! The rate at which a tokenizer falls back to raw bytes, overall and per script: `tokenizer/byte_fallback.py`.
 
 use crate::args::Result;
-use mtf_channels::python_text::{is_script_skipped, script_block, strip};
+use mtf_channels::python_text::{detect_script, strip};
 use mtf_core::Processor;
 use serde_json::{json, Value};
-
-/// A coarse script tag for a string: one of the script blocks, `mixed`, or `other`.
-///
-/// Spaces, numbers, punctuation, separators and symbols are skipped. A character whose Unicode name starts with no
-/// block's prefix, or that has no name, counts as `other`. A block holding at least 90% of the counted characters
-/// names the string, so surrounding Latin punctuation does not force `mixed`.
-pub fn detect_script(text: &str) -> &'static str {
-	let mut blocks: Vec<(&'static str, usize)> = Vec::new();
-	for c in text.chars() {
-		if is_script_skipped(c) {
-			continue;
-		}
-		let block = script_block(c).unwrap_or("other");
-		match blocks.iter_mut().find(|(name, _)| *name == block) {
-			Some((_, n)) => *n += 1,
-			None => blocks.push((block, 1)),
-		}
-	}
-	match blocks.len() {
-		0 => "other",
-		1 => blocks[0].0,
-		_ => {
-			let total: usize = blocks.iter().map(|(_, n)| n).sum();
-			let mut top = blocks[0];
-			for &entry in &blocks[1..] {
-				if entry.1 > top.1 {
-					top = entry;
-				}
-			}
-			if top.1 as f64 / total as f64 >= 0.9 {
-				top.0
-			} else {
-				"mixed"
-			}
-		}
-	}
-}
 
 /// Whether a piece is a byte-fallback piece, `<0xNN>`.
 fn is_byte_piece(piece: &str) -> bool {

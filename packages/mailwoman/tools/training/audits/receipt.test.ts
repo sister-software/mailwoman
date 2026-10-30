@@ -7,7 +7,6 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
-import { asPythonFloat } from "@mailwoman/core/strings/python-json"
 import type { PathBuilderLike } from "path-ts"
 import { expect, test } from "vitest"
 
@@ -30,10 +29,8 @@ async function corpus(directory: PathBuilderLike, files: Array<{ path: string; s
 	return { config, corpusDir: `${directory}/corpus` }
 }
 
-test("a report is json.dumps(report, indent=2)", () => {
-	expect(auditReportText({ share: asPythonFloat(0.5), rows: 3, empty: {} })).toBe(
-		'{\n  "share": 0.5,\n  "rows": 3,\n  "empty": {}\n}'
-	)
+test("a report is tab-indented JSON", () => {
+	expect(auditReportText({ share: 0.5, rows: 3, empty: {} })).toBe('{\n\t"share": 0.5,\n\t"rows": 3,\n\t"empty": {}\n}')
 })
 
 test("the key ignores manifest order and formatting and moves with a digest or the config", async () => {

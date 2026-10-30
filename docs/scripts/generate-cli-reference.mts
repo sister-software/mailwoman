@@ -7,10 +7,13 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import type { PathBuilder } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
 import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.mts"
 
@@ -234,11 +237,46 @@ export const COMMANDS_DIRECTORY = packagePath("out", "cli", "commands")
 export const NATIVE_COMMANDS_DIRECTORY = packagePath("out", "cli", "native", "commands")
 
 /**
+ * The compiled command modules under `compiled` whose source under `source` no longer exists.
+ *
+ * Incremental `tsc -b` leaves a moved or deleted command's output in `out/`,
+ * so a stale tree renders commands the checkout no longer has.
+ */
+export async function compiledCommandsWithoutSource(compiled: PathBuilder, source: PathBuilder): Promise<string[]> {
+	const modules = await Globerator.from("**/*.js", { cwd: compiled, absolute: false }).toArray()
+	const orphans: string[] = []
+
+	for (const module of modules.filter((entry) => !entry.endsWith(".d.js") && !entry.includes(".test."))) {
+		const stem = module.replace(/\.js$/u, "")
+
+		if (!(await isFile(source(`${stem}.ts`))) && !(await isFile(source(`${stem}.tsx`)))) {
+			orphans.push(stem)
+		}
+	}
+
+	return orphans.toSorted()
+}
+
+/**
  * Read the compiled commands and split them into documented and summarized groups.
  *
+ * @throws When a compiled command has no source, naming each.
  * @throws When a group outside {@link DOCUMENTED_GROUPS} has no {@link GROUP_NOTES} entry.
  */
-export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY): Promise<CLISurface> {
+export async function collectCLISurface(): Promise<CLISurface> {
+	const stale = [
+		...(await compiledCommandsWithoutSource(COMMANDS_DIRECTORY, packagePath("cli", "commands"))),
+		...(await compiledCommandsWithoutSource(NATIVE_COMMANDS_DIRECTORY, packagePath("cli", "native", "commands"))),
+	]
+
+	if (stale.length) {
+		throw new Error(
+			`out/ holds ${stale.length} compiled commands with no source (${stale.join(", ")}). Remove ` +
+				"packages/mailwoman/out and run `yarn compile` before rendering the CLI reference."
+		)
+	}
+
+	const commandsDirectory = COMMANDS_DIRECTORY
 	const nativeCommands = await readCommands(NATIVE_COMMANDS_DIRECTORY)
 	const tree = await readCommands(commandsDirectory, new Set(nativeCommands.keys()))
 

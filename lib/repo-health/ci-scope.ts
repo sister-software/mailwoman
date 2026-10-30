@@ -10,7 +10,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
-import { dirname, relative, resolvePath } from "path-ts"
+import { dirname, isAbsolute, join, relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
 /**
@@ -20,7 +20,6 @@ export interface CIWorkspace {
 	name: string
 	directory: string
 	dependencies: string[]
-	externalInputs?: string[]
 }
 
 /**
@@ -45,31 +44,48 @@ export interface CIScope {
 	smoke: boolean
 	lexicon: boolean
 	docs: boolean
-	python: boolean
+	rust: boolean
 }
 
 /**
- * The paths the `mailwoman_mtf` Python extension builds from.
+ * The mtf crates and the root cargo workspace's files, which the `rust` job tests.
  *
- * The training loader imports the extension, so a change to a crate source, manifest
- * or the lockfile changes what the Python suite tests.
+ * `@mailwoman/mtf` also builds its WebAssembly and Node addon from them, so a change to a crate still
+ * selects that workspace's suites, and a change to a root workspace file selects every suite.
  */
-const PYTHON_EXTENSION_INPUTS = [
+const MTF_CRATE_INPUTS = [
 	"packages/mtf/crates/",
-	"packages/mtf/Cargo.toml",
-	"packages/mtf/Cargo.lock",
 	"packages/mtf/rustfmt.toml",
-	"packages/mtf/rust-toolchain.toml",
+	"Cargo.toml",
+	"Cargo.lock",
+	"rust-toolchain.toml",
 ]
 
 /**
  * The cargo workspace of the Rust trainer crates.
  *
  * It has no npm package.
- * The `python` job runs its crate tests beside the training encoder's.
+ * The `rust` job runs its crate tests beside the mtf crates'.
  * A change under it selects that job and no JavaScript suite.
  */
-const TRAINER_CRATES = "packages/trainer/"
+const TRAINER_CRATES = join("packages", "trainer")
+
+/**
+ * The trainer's data tables.
+ *
+ * The neural, mailwoman and mtf JavaScript tests read them through `trainerDataPath`.
+ * A change to one therefore selects every suite.
+ */
+const TRAINER_DATA = join(TRAINER_CRATES, "data")
+
+/**
+ * Whether a repository-relative path lies inside a repository-relative directory.
+ */
+function isInside(file: string, directory: string): boolean {
+	const path = relative(directory, file)
+
+	return path.length > 0 && !path.startsWith("..") && !isAbsolute(path)
+}
 
 /**
  * Finds the workspace containing a repository-relative path.
@@ -102,7 +118,6 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 			return {
 				name: manifest.name,
 				directory,
-				externalInputs: [],
 				dependencies: Object.keys({
 					...manifest.dependencies,
 					...manifest.devDependencies,
@@ -143,27 +158,6 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 				}
 
 				const visit = (node: ts.Node): void => {
-					// Python scripts and fixture files can be consumed without a module import.
-					// A literal directory selects all changes below it when a narrower path is unavailable.
-					if (ts.isStringLiteral(node) && /^corpus-python(?:\/|$)/u.test(node.text)) {
-						let input = node.text
-
-						if (
-							ts.isCallExpression(node.parent) &&
-							ts.isIdentifier(node.parent.expression) &&
-							["repoRootPath", "resolvePath", "join"].includes(node.parent.expression.text)
-						) {
-							const argumentsAfter = node.parent.arguments.slice(node.parent.arguments.indexOf(node) + 1)
-
-							for (const argument of argumentsAfter) {
-								if (!ts.isStringLiteral(argument)) break
-								input += `/${argument.text}`
-							}
-						}
-
-						owner.externalInputs!.push(input)
-					}
-
 					if (
 						(ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
 						node.moduleSpecifier &&
@@ -207,33 +201,21 @@ export function selectCIScope(
 ): CIScope {
 	const reasons: string[] = forceFull ? ["The event requires every suite."] : []
 	const affected = new Set<string>()
-	let python = forceFull
+	let rust = forceFull
 
 	for (const file of changed) {
 		const owner = workspaceForFile(file, workspaces)
 
-		if (
-			file.startsWith("corpus-python/") ||
-			file.endsWith(".py") ||
-			PYTHON_EXTENSION_INPUTS.some((input) => file === input || (input.endsWith("/") && file.startsWith(input)))
-		) {
-			python = true
+		if (MTF_CRATE_INPUTS.some((input) => file === input || (input.endsWith("/") && file.startsWith(input)))) {
+			rust = true
 		}
 
-		if (file.startsWith(TRAINER_CRATES)) {
-			python = true
+		if (isInside(file, TRAINER_CRATES)) {
+			rust = true
 
-			continue
-		}
-
-		if (file.startsWith("corpus-python/")) {
-			for (const workspace of workspaces) {
-				if (workspace.externalInputs?.some((input) => file === input || file.startsWith(`${input}/`))) {
-					affected.add(workspace.name)
-				}
-			}
-
-			continue
+			// The data tables beside the crates are read by the JavaScript suites too,
+			// so they fall through to the rule for a file no workspace owns.
+			if (!isInside(file, TRAINER_DATA)) continue
 		}
 
 		if (!owner || file === `${owner.directory}/package.json` || file === `${owner.directory}/AGENTS.md`) {
@@ -252,7 +234,7 @@ export function selectCIScope(
 			affected.add(workspace.name)
 		}
 
-		python = true
+		rust = true
 	} else {
 		// The queue terminates when every consumer has been visited, including dependency cycles.
 		const queue = [...affected]
@@ -313,6 +295,6 @@ export function selectCIScope(
 			has("@mailwoman/universe/release-mcp"),
 		lexicon: has("mailwoman") || has("@mailwoman/codex"),
 		docs: has("@mailwoman/docs"),
-		python,
+		rust,
 	}
 }

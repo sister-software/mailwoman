@@ -20,7 +20,7 @@ import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { git, gitHead } from "@mailwoman/core/git"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { workspacePath } from "@mailwoman/core/paths"
+import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 
 /**
@@ -49,7 +49,7 @@ export function mtfTokenizerBinary(): Promise<string> {
 			maxBuffer: OUTPUT_LIMIT,
 		})
 
-		return workspacePath("mtf", "target", "tools", "mtf-tokenizer")
+		return repoRootPath("target", "tools", "mtf-tokenizer")
 	})()
 
 	return mtfTokenizerBuild

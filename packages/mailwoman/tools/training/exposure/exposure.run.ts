@@ -18,9 +18,8 @@
  *       --config <config>.yaml [--countries RU,KZ] [--draws <n>] [--replay-only] --json exposure.json
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { asPythonFloat } from "@mailwoman/core/strings/python-json"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import { mtfNode, type MTFNode, type SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 import type { LabelSetName } from "@mailwoman/neural/labels"
@@ -60,17 +59,6 @@ const { values } = parseArguments({
 if (!values.json) throw new Error("--json is required")
 
 /**
- * Parses JSON keeping a number written with a fraction or an exponent as a Python float,
- * so a stats file's values are written back as `json.dumps` wrote them.
- */
-function parsePythonJSON(text: string): unknown {
-	// oxlint-disable-next-line no-restricted-properties -- `parseJSONStrict` takes no reviver, and the reviver reads each number's source text.
-	return JSON.parse(text, (_key, value, context?: { source?: string }) =>
-		typeof value === "number" && context?.source && /[.eE]/.test(context.source) ? asPythonFloat(value) : value
-	)
-}
-
-/**
  * The `source_records` stage per jurisdiction, read from each acquisition's stats file.
  */
 async function sourceStats(entries: readonly string[]): Promise<Map<string, Map<string, unknown>>> {
@@ -79,7 +67,7 @@ async function sourceStats(entries: readonly string[]): Promise<Map<string, Map<
 	for (const entry of entries) {
 		const separator = entry.indexOf("=")
 		const [country, path] = separator === -1 ? [entry, ""] : [entry.slice(0, separator), entry.slice(separator + 1)]
-		const stats = parsePythonJSON(await readLocalTextFile(path)) as Record<string, unknown>
+		const stats = await readLocalJSONFile<Record<string, unknown>>(path)
 		const extract = (stats["extract"] ?? null) as Record<string, Record<string, unknown>> | null
 		const layers = extract ? Object.values(extract) : []
 
@@ -255,4 +243,4 @@ const report = buildReport(counters, {
 	registry,
 })
 
-await writeAuditReport(values.json, report, { ensureASCII: false, trailingNewline: true })
+await writeAuditReport(values.json, report, { trailingNewline: true })

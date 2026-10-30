@@ -14,10 +14,11 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { countInto } from "@mailwoman/core/stats"
-import { pythonIsDigit, pythonSplitLines, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
+import { isDecimalDigits, splitLines } from "@mailwoman/core/strings/unicode"
 import type { PathBuilderLike } from "path-ts"
 
-import { codePointLength, MAX_FIELD_CHARS } from "#cjk/builder"
+import { MAX_FIELD_CHARS } from "#cjk/builder"
 import { decodeCP932, normalizeCJKText } from "#cjk/text"
 import { JP_PREFECTURE_NAMES, normalizeJPName, normalizeJPNumber } from "#jp/text"
 import { parquetRowGroupRows } from "#parquet/readers"
@@ -112,13 +113,17 @@ export async function loadKenAllPostcodes(path: PathBuilderLike): Promise<KenAll
 	const town = new Map<string, string>()
 	const municipality = new Map<string, string>()
 
-	for (const line of pythonSplitLines(decodeCP932(await readLocalBuffer(path)))) {
+	for (const line of splitLines(decodeCP932(await readLocalBuffer(path)))) {
 		const cells = line
 			.replace(/[\r\n]+$/u, "")
 			.split(",")
 			.map((cell) => cell.replaceAll(/^"+|"+$/gu, ""))
 
-		if (cells.length < KENALL_COLUMNS || codePointLength(cells[0]!) !== POSTCODE_DIGITS || !pythonIsDigit(cells[0]!)) {
+		if (
+			cells.length < KENALL_COLUMNS ||
+			codePointLength(cells[0]!) !== POSTCODE_DIGITS ||
+			!isDecimalDigits(cells[0]!)
+		) {
 			continue
 		}
 
@@ -128,7 +133,7 @@ export async function loadKenAllPostcodes(path: PathBuilderLike): Promise<KenAll
 			municipality.set(head, cells[0]!)
 		}
 
-		const name = pythonStrip(cells[3]!.replace(KENALL_PAREN, ""))
+		const name = cells[3]!.replace(KENALL_PAREN, "").trim()
 
 		if (!name || name === KENALL_CATCH_ALL) continue
 

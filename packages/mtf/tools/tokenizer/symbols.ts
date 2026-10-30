@@ -12,7 +12,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pythonRightStrip, pythonSplitLines, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { splitLines } from "@mailwoman/core/strings/unicode"
 
 /**
  * The default symbols: US state and territory codes, country abbreviations
@@ -99,9 +99,9 @@ export const DEFAULT_USER_DEFINED_SYMBOLS: readonly string[] = [
  * because a symbol may hold a space (`PO Box`).
  */
 export async function readUserDefinedSymbolsFile(path: string): Promise<string[]> {
-	return pythonSplitLines(await readLocalTextFile(path))
-		.map(pythonRightStrip)
-		.filter((line) => line && !pythonStrip(line).startsWith("#"))
+	return splitLines(await readLocalTextFile(path))
+		.map((line) => line.trimEnd())
+		.filter((line) => line && !line.trim().startsWith("#"))
 }
 
 /**

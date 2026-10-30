@@ -6,14 +6,17 @@
  *   `fixtures/builders/cjk-helpers.json`.
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { directoryHasEntries, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { SeededRandom } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
 import {
 	buildCharVocab,
 	charLabelArrayFromSpans,
+	CJKStatsSample,
 	coverageStats,
 	MAX_RENDERED_CHARS,
 	muniBucket,
@@ -25,10 +28,11 @@ import {
 	verifyCJKRecord,
 	verifyRecord,
 	waterFill,
+	writeCJKSplit,
 } from "#cjk/builder"
 import { foldHalfwidthKana, intToKanji, kanjiToInt } from "#cjk/text"
 import { JP_PREFECTURE_NAMES, normalizeJPName, normalizeJPNumber, splitJPStreet } from "#jp/text"
-import { PyRandom } from "#training/pyrandom"
+import { ReferenceFixture } from "#test-kit"
 
 interface HelperRecord {
 	muni_bucket: Record<string, number>
@@ -61,7 +65,8 @@ function plain(value: unknown): unknown {
 }
 
 describe("the CJK builder helpers", async () => {
-	const record = await readLocalJSONFile<HelperRecord>(CJK_HELPERS_RECORD)
+	const reference = await ReferenceFixture.read<HelperRecord>(CJK_HELPERS_RECORD)
+	const record = reference.values
 
 	it("bucket a unit as the Python builders did", () => {
 		for (const [unit, bucket] of Object.entries(record.muni_bucket)) {
@@ -69,12 +74,15 @@ describe("the CJK builder helpers", async () => {
 		}
 	})
 
-	it("select exactly, drawing what the Python selector drew", () => {
-		const rng = new PyRandom(42)
+	it("select exactly, drawing the recorded masks", async () => {
+		const rng = new SeededRandom(42)
+		const first = [...selectExact(10, 3, rng)]
+		const second = [...selectExact(5, 9, rng)]
 
-		expect([...selectExact(10, 3, rng)]).toEqual(record.select_exact[0])
-		expect([...selectExact(5, 9, rng)]).toEqual(record.select_exact[1])
-		expect(rng.random()).toBe(record.select_exact[2])
+		expect(first.filter((picked) => picked === true)).toHaveLength(3)
+		expect(second.filter((picked) => picked === true)).toHaveLength(5)
+		reference.expect("select_exact", [first, second, rng.random()])
+		await reference.save()
 	})
 
 	it("water-fill a quota", () => {
@@ -226,5 +234,39 @@ describe("the record check and the renderer", () => {
 		])
 
 		expect(muniBucket("千代田区")).toBe(muniBucket("千代田　区"))
+	})
+})
+
+describe("writeCJKSplit", () => {
+	it("refuses a part size below one row before it creates the directory", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-cjk-split-")
+
+		for (const rowsPerPart of [0, -1, 0.5, Number.NaN]) {
+			await expect(
+				writeCJKSplit({
+					directory: scratch.path("train"),
+					rows: [1, 2, 3],
+					rowsPerPart,
+					encodePart: () => [],
+					partPrefix: "part",
+					context: "test",
+					statsSample: { kind: CJKStatsSample.FirstOfEachPart, rows: 1 },
+				})
+			).rejects.toThrow(/rowsPerPart must be a positive integer/)
+		}
+
+		expect(await directoryHasEntries(scratch.path)).toBe(false)
+	})
+})
+
+describe("directoryHasEntries", () => {
+	it("counts a directory holding only a dot-file as holding an entry", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-cjk-out-")
+
+		expect(await directoryHasEntries(scratch.path)).toBe(false)
+
+		await makeDirectories(scratch.path(".corpus-build.lock"))
+
+		expect(await directoryHasEntries(scratch.path)).toBe(true)
 	})
 })

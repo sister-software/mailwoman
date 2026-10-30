@@ -1,13 +1,13 @@
-//! The loop's pieces that need no corpus: schedules, `.npy` round trips, checkpoint discovery, the CSV row, the
-//! metrics, and the model's construction and save/restore on a small spec.
+//! The loop's pieces that need no corpus: schedules, checkpoint discovery, the CSV row, the metrics, and the model's
+//! construction and save/restore on a small spec.
 
 use std::path::Path;
-use tch::{Kind, Tensor};
-use trainer_loop::checkpoint::{checkpoint_dir_name, find_latest_checkpoint, save_checkpoint};
-use trainer_loop::fisher::{npy_bytes, parse_npy};
+use tch::{Device, Kind, Tensor};
+use trainer_loop::checkpoint::{checkpoint_dir_name, find_latest_checkpoint, restore_generators, save_checkpoint};
 use trainer_loop::metrics::{eval_csv_row, token_f1, Metrics};
 use trainer_loop::optim::{build_groups, AdamW};
 use trainer_loop::schedules::{LambdaLr, Schedule};
+use trainer_model::autocast::Generator;
 use trainer_model::layers::Mode;
 use trainer_model::{CoarseEncoder, EncoderInputs, EncoderSpec, SchemaDefaults};
 
@@ -34,7 +34,7 @@ fn spec() -> EncoderSpec {
 		"hidden_size": 16, "num_hidden_layers": 2, "num_attention_heads": 2, "intermediate_size": 32,
 		"max_position_embeddings": 12, "hidden_dropout_prob": 0.1, "use_crf": true, "crf_loss_weight": 0.1,
 		"use_locale_conditioning": true, "locale_loss_weight": 0.3, "use_postcode_anchor": true,
-		"use_span_boundary_head": true, "span_boundary_loss_weight": 0.5, "use_affix_head": true,
+		"use_span_boundary_head": true, "span_boundary_loss_weight": 0.5,
 		"use_address_system_head": true, "address_system_loss_weight": 0.3, "use_locale_hint": true,
 		"use_span_scorer": true, "span_loss_weight": 0.5, "span_dim": 8, "max_span": 3,
 		"use_conventions_loss_mask": true, "class_weights": {"O": 0.5}
@@ -51,6 +51,30 @@ fn spec() -> EncoderSpec {
 		&conventions(),
 	)
 	.unwrap()
+}
+
+#[test]
+fn a_model_section_enabling_a_retired_head_is_refused() {
+	for key in ["use_affix_head", "use_deploc_head", "inject_first_token"] {
+		let model = serde_json::json!({
+			"hidden_size": 16, "num_hidden_layers": 2, "num_attention_heads": 2, "intermediate_size": 32,
+			"max_position_embeddings": 12, "hidden_dropout_prob": 0.1, key: true
+		});
+		let Err(error) = EncoderSpec::from_model_section(
+			model.as_object().unwrap(),
+			50,
+			0,
+			0,
+			&labels(),
+			"stage3",
+			9,
+			4,
+			&conventions(),
+		) else {
+			panic!("model.{key} set true was accepted");
+		};
+		assert!(error.to_string().contains(key), "{error}");
+	}
 }
 
 /// Locale 1 forbids `street_suffix`, as the schema's FR row does; the other eight forbid nothing.
@@ -103,21 +127,6 @@ fn schedules_follow_the_python_lambdas() {
 }
 
 #[test]
-fn npy_round_trips_and_matches_numpys_header() {
-	let bytes = npy_bytes(&[2, 3], &[1.0, 2.0, 3.0, 4.0, 5.0, 6.5]);
-	assert_eq!((bytes.len() - 6 * 4) % 64, 0);
-	let header = "{'descr': '<f4', 'fortran_order': False, 'shape': (2, 3), }";
-	assert_eq!(std::str::from_utf8(&bytes[10..10 + header.len()]).unwrap(), header);
-	assert_eq!(bytes.len(), 128 + 6 * 4, "the header pads to a multiple of 64 bytes");
-	assert_eq!(bytes[127], b'\n', "the header ends in a newline");
-	let (shape, data) = parse_npy(&bytes).unwrap();
-	assert_eq!(shape, vec![2, 3]);
-	assert_eq!(data[5], 6.5);
-	let (shape, _) = parse_npy(&npy_bytes(&[4], &[0.0; 4])).unwrap();
-	assert_eq!(shape, vec![4]);
-}
-
-#[test]
 fn metrics_skip_unsupported_tags_and_write_gaps() {
 	let bio = labels();
 	let m = token_f1(&[1, 2, 0, 3], &[1, 2, 0, -100], &bio);
@@ -132,7 +141,7 @@ fn metrics_skip_unsupported_tags_and_write_gaps() {
 }
 
 #[test]
-fn construction_is_deterministic_and_named_as_in_python() {
+fn construction_is_deterministic_and_named_as_the_checkpoint_format() {
 	let guard = seeded(3);
 	let a = CoarseEncoder::new(spec()).unwrap();
 	tch::manual_seed(3);
@@ -276,21 +285,12 @@ fn every_loss_term_fires_and_backward_reaches_the_heads() {
 	let names: Vec<&str> = out.terms.iter().map(|(n, _)| *n).collect();
 	assert_eq!(
 		names,
-		vec![
-			"ce",
-			"affix",
-			"crf",
-			"locale",
-			"span_boundary",
-			"span",
-			"address_system"
-		]
+		vec!["ce", "crf", "locale", "span_boundary", "span", "address_system"]
 	);
 	assert_eq!(out.span_scores.as_ref().unwrap().size(), vec![2, 6, 3, 6]);
 	out.loss.unwrap().backward();
 	for name in [
 		"span_boundary_head.weight",
-		"affix_head.0.weight",
 		"address_system_head.weight",
 		"crf.transitions",
 		"span_scorer.start_proj.weight",
@@ -332,6 +332,7 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 		&serde_json::json!({"step": 1}),
 		Some(&optim),
 		Some(&sched),
+		&[],
 	)
 	.unwrap();
 	assert_eq!(saved.file_name().unwrap().to_str().unwrap(), checkpoint_dir_name(1));
@@ -358,4 +359,97 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 	assert_eq!(sched2.last_epoch, 1);
 	assert_eq!(optim2.state.len(), optim.state.len());
 	assert!(Path::new(&saved.join("training_state.json")).is_file());
+
+	// A resume under another schedule keeps the restored step and follows the live config, as torch's
+	// `load_state_dict` does: the saved run was cosine to step 10, and the live config cools down linearly to 40.
+	let live = Schedule::LinearCooldown {
+		cooldown_start: 20,
+		max_steps: 40,
+	};
+	let groups = build_groups(restored.store.parameters(), 1e-3, 0.01, None, Some(1e-2)).unwrap();
+	let mut optim3 = AdamW::new(groups);
+	let mut sched3 = LambdaLr::new(&mut optim3, live.clone());
+	sched3.load(&saved).unwrap();
+	assert_eq!(sched3.last_epoch, 1);
+	assert_eq!(sched3.schedule, live);
+	// The rate the restored scheduler sets is the live schedule's at the restored step plus the steps taken: at
+	// step 25 the cooldown gives 0.75 of the restored base rate, where the saved cosine run would give 0.
+	for _ in 0..24 {
+		sched3.step(&mut optim3);
+	}
+	assert_eq!(sched3.last_epoch, 25);
+	let expected = sched3.base_lrs[0] * live.multiplier(25);
+	assert!(
+		(sched3.get_last_lr()[0] - expected).abs() < 1e-15,
+		"{:?}",
+		sched3.get_last_lr()
+	);
+	assert!((live.multiplier(25) - 0.75).abs() < 1e-12);
+	assert_ne!(live.multiplier(25), sched.schedule.multiplier(25));
+
+	// A resume refuses a directory that is not a run to resume, rather than restarting it from step 0.
+	use trainer_loop::supervised::restore_training_state;
+	let run = run_config(serde_json::json!({}));
+	let lrs = vec![1e-3; optim3.groups.len()];
+	let weights_only = dir.path().join("weights-only");
+	std::fs::create_dir_all(&weights_only).unwrap();
+	let error = restore_training_state(&run, &weights_only, &mut optim3, &mut sched3, &lrs)
+		.unwrap_err()
+		.to_string();
+	assert!(error.contains("holds no optimizer.json"), "{error}");
+	let no_step = dir.path().join("no-step");
+	std::fs::create_dir_all(&no_step).unwrap();
+	for entry in std::fs::read_dir(&saved).unwrap() {
+		let entry = entry.unwrap();
+		std::fs::copy(entry.path(), no_step.join(entry.file_name())).unwrap();
+	}
+	std::fs::write(
+		no_step.join("training_state.json"),
+		r#"{"step": "seven", "config": {}}"#,
+	)
+	.unwrap();
+	let states_before = optim3.state.len();
+	let error = restore_training_state(&run, &no_step, &mut optim3, &mut sched3, &lrs)
+		.unwrap_err()
+		.to_string();
+	assert!(error.contains("`step` is not an integer"), "{error}");
+	// The checkpoint's step is checked before its optimizer state is loaded, so a refused resume changes no state.
+	assert!(saved.join("optimizer.json").is_file());
+	assert_eq!(optim3.state.len(), states_before);
+}
+
+#[test]
+fn a_checkpoint_restores_the_generators_a_resume_draws_from() {
+	let _guard = seeded(3);
+	let model = CoarseEncoder::new(spec()).unwrap();
+	let mut owned = Generator::new(11).unwrap();
+	let _ = Tensor::rand([4], (Kind::Float, Device::Cpu));
+	let _ = owned.randint(0, 1000, &[4]).unwrap();
+	let dir = tempfile::tempdir().unwrap();
+	let saved = save_checkpoint(
+		&model,
+		dir.path(),
+		1,
+		&serde_json::json!({"step": 1}),
+		None,
+		None,
+		&[("owned", &owned)],
+	)
+	.unwrap();
+	// The draws an uninterrupted run makes after the save.
+	let default_next = Tensor::rand([4], (Kind::Float, Device::Cpu));
+	let owned_next = owned.randint(0, 1000, &[4]).unwrap();
+
+	// A resumed process reseeds, then restores.
+	tch::manual_seed(3);
+	let mut resumed = Generator::new(11).unwrap();
+	assert!(restore_generators(&saved, Device::Cpu, &mut [("owned", &mut resumed)]).unwrap());
+	assert!(Tensor::rand([4], (Kind::Float, Device::Cpu)).equal(&default_next));
+	assert!(resumed.randint(0, 1000, &[4]).unwrap().equal(&owned_next));
+
+	// A checkpoint without the file leaves the generators as they are, and one missing an owned state is refused.
+	let older = tempfile::tempdir().unwrap();
+	assert!(!restore_generators(older.path(), Device::Cpu, &mut []).unwrap());
+	let mut other = Generator::new(5).unwrap();
+	assert!(restore_generators(&saved, Device::Cpu, &mut [("missing", &mut other)]).is_err());
 }

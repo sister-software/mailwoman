@@ -23,6 +23,7 @@ import { sha256Hex } from "#hash"
 import { canonicalJSON, stringifyJSON } from "#json"
 import {
 	type ArtifactID,
+	type ArtifactScope,
 	type ArtifactSetID,
 	isArtifactID,
 	isScopeCountryCode,
@@ -368,17 +369,64 @@ export function assertSelectionSuccessor(current: ActiveSelection | null, next: 
 }
 
 /**
+ * The selection scopes an artifact is activated under, one entry per scope.
+ *
+ * An artifact scoped to subdivisions gets one entry per subdivision, one scoped to
+ * countries one entry per country, and one scoped to neither the unscoped entry.
+ * A multi-country artifact therefore answers only for its own countries:
+ * the unscoped entry would answer every country's lookup.
+ */
+export function selectionScopesOf(scope: ArtifactScope): SelectionScope[] {
+	if (scope.subdivisions?.length) {
+		return scope.subdivisions.map((subdivision) => ({ country: subdivision.slice(0, 2), subdivision }))
+	}
+
+	if (scope.countries.length) return scope.countries.map((country) => ({ country, subdivision: null }))
+
+	return [{ country: null, subdivision: null }]
+}
+
+/**
  * The ordered sources a role reads for a scope, most specific entry first.
  *
  * A subdivision entry answers before its country's entry, and a country entry before an unscoped one.
  * This returns each entry's order whole and joins them in that sequence.
  * It reads the document only and opens no artifact.
+ *
+ * An unscoped lookup asks for the role whatever its scope, as the readers that
+ * attach every installed source do.
+ * It returns the unscoped entry first and then every scoped entry of the role in key order, each source
+ * once, because {@link selectionScopesOf} files a multi-country artifact only under its countries.
  */
 export function selectedSources(
 	selection: ActiveSelection,
 	role: ServingRole,
 	scope: SelectionScope
 ): readonly SelectedSource[] {
+	if (!scope.country && !scope.subdivision) {
+		const entries = selection.entries
+			.filter((entry) => entry.role === role)
+			.toSorted((a, b) => {
+				const unscoped = Number(Boolean(a.scope.country)) - Number(Boolean(b.scope.country))
+
+				return unscoped || scopeKey(a).localeCompare(scopeKey(b))
+			})
+
+		const seen = new Set<string>()
+
+		return entries
+			.flatMap((entry) => entry.order)
+			.filter((source) => {
+				const key = `${source.installationID}|${source.artifactID}`
+
+				if (seen.has(key)) return false
+
+				seen.add(key)
+
+				return true
+			})
+	}
+
 	const keys = [
 		scope.subdivision ? `${role}|${scope.country ?? "*"}|${scope.subdivision}` : null,
 		scope.country ? `${role}|${scope.country}|*` : null,

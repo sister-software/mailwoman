@@ -58,7 +58,7 @@ jobs:
       smoke: ${{ steps.select.outputs.smoke }}
       lexicon: ${{ steps.select.outputs.lexicon }}
       docs: ${{ steps.select.outputs.docs }}
-      python: ${{ steps.select.outputs.python }}
+      rust: ${{ steps.select.outputs.rust }}
       fast_files: ${{ steps.select.outputs.fast_files }}
       slow_files: ${{ steps.select.outputs.slow_files }}
     steps:
@@ -227,9 +227,9 @@ jobs:
       - name: Lint
         run: yarn lint:ci
 
-  python:
+  rust:
     needs: scope
-    if: needs.scope.outputs.python == 'true'
+    if: needs.scope.outputs.rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -244,33 +244,34 @@ jobs:
       - run: corepack enable
       - run: yarn install --immutable
 
-      # The training loader imports `mailwoman_mtf`, which uv builds from `packages/mtf/crates/mtf-py` with maturin.
-      # The toolchain matches `packages/mtf/rust-toolchain.toml`.
+      # The toolchain matches the root `rust-toolchain.toml`.
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: "1.99.1"
+          components: rustfmt, clippy
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            packages/mtf
-            packages/trainer
+          workspaces: .
+
+      - name: Check the Rust formatting
+        run: |
+          cargo fmt --all --check
 
       - name: Test the training encoder, sampler and export crates
         run: |
-          cargo test --manifest-path packages/trainer/Cargo.toml -p trainer-export --locked
-          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-channels --locked
-          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-channels --features finders --locked
-          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-sampler --locked
-          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-core --features edit --test model_edit --locked
-          cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-tools --locked
+          cargo test -p trainer-export --locked
+          cargo test -p mtf-channels --locked
+          cargo test -p mtf-channels --features finders --locked
+          cargo test -p mtf-sampler --locked
+          cargo test -p mtf-core --features edit --test model_edit --locked
+          cargo test -p mtf-tools --locked
 
-      # `mtf-node`, `mtf-py` and `mtf-wasm` have no Rust tests. The fast suite loads `mtf-node`, and
-      # this leg's Python tests build `mtf-py`. Clippy checks every crate's code.
-      - name: Lint the mtf crates
-        run: cargo clippy --manifest-path packages/mtf/Cargo.toml --workspace --all-targets --locked -- -D warnings
+      # A panic inside an `mtf-node` export must reach Node as a thrown error rather than abort the process.
+      - name: Test the mtf-node addon's panic handling
+        run: yarn vitest run --config vitest.slow.config.ts packages/mtf/tools/sampler/native.panic.integration.test.ts
 
       # The Rust trainer links libtorch through `tch` 0.26.0, which pins libtorch 2.13.0 (`torch-sys`'s TORCH_VERSION).
       - name: Restore libtorch
@@ -288,37 +289,24 @@ jobs:
           echo "edbf4cbed78433d803e90a65f1752e57783d164bce66c95c0872b2ab8f5c159e  $RUNNER_TEMP/libtorch.zip" | sha256sum -c -
           unzip -q "$RUNNER_TEMP/libtorch.zip" -d "$RUNNER_TEMP"
 
+      # MKL reads `MKL_CBWR` when libtorch loads, before the F1 test can set it, so the step sets it here.
       - name: Test the Rust trainer crates
         env:
           LIBTORCH: ${{ runner.temp }}/libtorch
           LD_LIBRARY_PATH: ${{ runner.temp }}/libtorch/lib
+          MKL_CBWR: AVX2
         run: |
-          cargo test --manifest-path packages/trainer/Cargo.toml -p trainer-model -p trainer-loop -p trainer-cli --locked
+          cargo test -p trainer-model -p trainer-loop -p trainer-cli --locked
 
-      - name: Lint the Rust trainer crates
+      # `mtf-node` and `mtf-wasm` have no Rust tests. The fast suite loads `mtf-node`. Clippy checks every crate's code,
+      # which links libtorch for the trainer crates, and the `panic-probe` feature's export once more.
+      - name: Lint the Rust crates
         env:
           LIBTORCH: ${{ runner.temp }}/libtorch
           LD_LIBRARY_PATH: ${{ runner.temp }}/libtorch/lib
-        run: cargo clippy --manifest-path packages/trainer/Cargo.toml --workspace --all-targets --locked -- -D warnings
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: "0.11.16"
-          enable-cache: true
-          cache-dependency-glob: |
-            uv.lock
-            pyproject.toml
-
-      - name: Lint and typecheck Python
-        run: yarn lint:python
-
-      - name: Test Python
-        run: yarn python:test
-
-      # The fast suite skips this comparison where uv is absent, so this leg runs it against the Python loader.
-      - name: Compare the training config resolver with the Python loader
-        run: yarn vitest run packages/corpus/lib/training/config/load-python-parity.test.ts
+        run: |
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo clippy -p mtf-node --features panic-probe --locked -- -D warnings
 
   # The root Vitest sweep runs as two concurrent legs. unit-fast runs every test that needs no
   # model, WOF database or CLI harness. unit-slow runs the rest.
@@ -385,7 +373,7 @@ jobs:
 
       # The training audit and exposure tests load the `mtf-node` addon.
       # `packages/mtf/tools/sampler/native.ts` builds it with Cargo on first use. This step installs
-      # everything `packages/mtf/rust-toolchain.toml` names before the tests start. Without it,
+      # everything the root `rust-toolchain.toml` names before the tests start. Without it,
       # rustup installs the toolchain while the tests run, and parallel test files race on the
       # download.
       - name: Setup Rust (mtf-node addon)
@@ -398,7 +386,7 @@ jobs:
       - name: Cache Cargo (mtf-node addon)
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: packages/mtf
+          workspaces: .
 
       - name: Test (fast)
         env:
@@ -745,7 +733,7 @@ jobs:
   # The ruleset and release auto-merge require this `test` check. `if: always()` makes it report
   # after a leg fails, because a skipped required check blocks the merge.
   test:
-    needs: [data-fleet, scope, static, python, unit-fast, unit-slow, lexicon-full, react, earth, smoke]
+    needs: [data-fleet, scope, static, rust, unit-fast, unit-slow, lexicon-full, react, earth, smoke]
     if: always()
     # The aggregator runs hosted so that it still reports when the lab fleet is down.
     runs-on: ubuntu-latest
@@ -758,7 +746,7 @@ jobs:
           node --input-type=module <<'JS'
           const jobs = JSON.parse(process.env.JOBS);
           const scope = jobs.scope.outputs;
-          for (const key of ['full', 'fast', 'slow', 'earth', 'react', 'planetary', 'opportunity', 'worker', 'smoke', 'lexicon', 'docs', 'python']) {
+          for (const key of ['full', 'fast', 'slow', 'earth', 'react', 'planetary', 'opportunity', 'worker', 'smoke', 'lexicon', 'docs', 'rust']) {
             if (!['true', 'false'].includes(scope[key])) {
               throw new Error('Scope did not report a boolean for ' + key);
             }
@@ -768,7 +756,7 @@ jobs:
             scope: true,
             'data-fleet': true,
             static: true,
-            python: scope.python === 'true',
+            rust: scope.rust === 'true',
             'unit-fast': scope.fast === 'true',
             'unit-slow': fleet && scope.slow === 'true',
             'lexicon-full': fleet && scope.lexicon === 'true',

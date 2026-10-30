@@ -11,15 +11,16 @@
  *   Ported from the Python builders' `countries/kr/corpora/rows.py`.
  */
 
-import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
+import type { SeededRandom } from "@mailwoman/core/random"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
+import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 
-import { type CJKRecord, codePointLength, labelTokensByFirstSpan, MAX_RENDERED_CHARS, RowRenderer } from "#cjk/builder"
+import { type CJKRecord, labelTokensByFirstSpan, MAX_RENDERED_CHARS, RowRenderer } from "#cjk/builder"
 import { normalizeCJKText } from "#cjk/text"
 import { type JusoLabelRow, parenthetical, REGION_ALIASES } from "#kr/adapters/juso/label-rows"
 import { type Aligned, alignLotAddress, alignRoadAddress } from "#kr/adapters/localdata/align"
 import type { KeyIndex } from "#kr/adapters/localdata/key-index"
 import { alignedToCJKRow, type PermitRow } from "#kr/adapters/localdata/permit-rows"
-import type { PyRandom } from "#training/pyrandom"
 
 /**
  * The label set Korean rows are tagged against.
@@ -123,7 +124,7 @@ export function renderKRRow(row: JusoLabelRow, options: KRRenderOptions): CJKRec
 
 	renderer.glue(separator)
 
-	for (const [index, unit] of pythonSplitWhitespace(row.sigungu).entries()) {
+	for (const [index, unit] of splitWhitespace(row.sigungu).entries()) {
 		if (index) {
 			renderer.glue(separator)
 		}
@@ -219,16 +220,19 @@ export function availableKRRegisters(row: JusoLabelRow): string[] {
  * One of `options`, drawn by {@linkcode KR_REGISTER_WEIGHTS}.
  * A single option is returned without a draw.
  */
-export function chooseKRRegister(rng: PyRandom, options: readonly string[]): string {
+export function chooseKRRegister(rng: SeededRandom, options: readonly string[]): string {
 	if (options.length === 1) return options[0]!
 
-	return rng.choices(options, { weights: options.map((name) => KR_REGISTER_WEIGHTS.get(name)!) })[0]!
+	return rng.weightedChoice(
+		options,
+		options.map((name) => KR_REGISTER_WEIGHTS.get(name)!)
+	)
 }
 
 /**
  * One of a region's short forms, or `null` without a draw when it has none.
  */
-export function chooseShortRegion(rng: PyRandom, region: string): string | null {
+export function chooseShortRegion(rng: SeededRandom, region: string): string | null {
 	const forms = SHORT_REGIONS[region]
 
 	return forms?.length ? rng.choice(forms) : null

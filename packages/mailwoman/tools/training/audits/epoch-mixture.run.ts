@@ -16,6 +16,7 @@
  */
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { median } from "@mailwoman/core/stats"
 import { mtfNode } from "@mailwoman/mtf/tools/sampler/native"
 
 import { loadTrainingConfig } from "../config.ts"
@@ -60,13 +61,12 @@ if (config.data.required_corpus_receipts.length) {
 }
 
 if (values.json) {
-	await writeAuditReport(values.json, report, { ensureASCII: false, trailingNewline: true })
+	await writeAuditReport(values.json, report, { trailingNewline: true })
 }
 
 const count = (n: number) => n.toLocaleString("en-US")
 
-const fixed = (value: unknown, digits: number) =>
-	value == null ? "nan" : (value as { value: number }).value.toFixed(digits)
+const fixed = (value: unknown, digits: number) => (typeof value === "number" ? value.toFixed(digits) : "nan")
 
 console.log(`=== epoch mixture audit (${count(report.meta.draws_realized as number)} draws) ===`)
 
@@ -94,18 +94,17 @@ for (const receipt of report.required_corpus_receipts) {
 }
 
 const reps = Object.entries(report.draw_level.per_source)
-	.map(([source, stats]) => [source, (stats.reps_per_row as { value: number } | null)?.value ?? 0] as const)
+	.map(([source, stats]) => [source, typeof stats.reps_per_row === "number" ? stats.reps_per_row : 0] as const)
 	.filter(([, value]) => value)
 
-const sortedReps = reps.map(([, value]) => value).toSorted((a, b) => a - b)
-const median = sortedReps[Math.floor(sortedReps.length / 2)]
+const medianReps = median(reps.map(([, value]) => value))
 
-if (median != null) {
-	const hot = reps.filter(([, value]) => value > median * REPS_OUTLIER_MULTIPLE)
+if (medianReps != null) {
+	const hot = reps.filter(([, value]) => value > medianReps * REPS_OUTLIER_MULTIPLE)
 
 	if (hot.length) {
 		console.log(
-			`⚠ REPS OUTLIER — median exposure is ${median.toFixed(1)} reps/row; these exceed ${REPS_OUTLIER_MULTIPLE}x that:`
+			`⚠ REPS OUTLIER — median exposure is ${medianReps.toFixed(1)} reps/row; these exceed ${REPS_OUTLIER_MULTIPLE}x that:`
 		)
 
 		for (const [source, value] of hot.toSorted((a, b) => b[1] - a[1])) {

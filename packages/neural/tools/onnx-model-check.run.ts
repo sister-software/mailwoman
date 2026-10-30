@@ -70,6 +70,10 @@ function tensor(recorded: RecordedTensor): ort.Tensor {
 
 const recorded = await readLocalJSONFile<FeedsFile>(feedsPath)
 
+// A check over no probe would report every output within tolerance, so an empty feeds file is a failure.
+if (!recorded.probes?.length)
+	throw new Error(`${feedsPath} holds no probe, so the graph would be checked against nothing`)
+
 const session = await ort.InferenceSession.create(modelPath, {
 	executionProviders: ["cpu"],
 	graphOptimizationLevel: "all",

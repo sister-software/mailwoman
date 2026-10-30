@@ -25,6 +25,7 @@ import {
 	NormalizationRequirement,
 	ROLE_REQUIREMENTS,
 	type SelectionScope,
+	selectionScopesOf,
 	ServingRole,
 } from "@mailwoman/core/layers"
 import { STREET_KEY_NORMALIZATION } from "@mailwoman/resolver-wof-sqlite/street/normalize"
@@ -110,14 +111,13 @@ export function availableDataEntry(bundle: DataBundle): AvailableDataEntry {
 }
 
 /**
- * The selection scope an available artifact is activated under: its subdivision
- * when it has one, else its single country, else none.
+ * The first selection scope an available artifact is activated under, for a lookup of its selected sources.
+ *
+ * Activation writes one entry per scope from {@linkcode selectionScopesOf}, and every one
+ * of them holds the same order, so the first answers a lookup for the artifact.
  */
 export function selectionScopeOf(available: AvailableArtifact): SelectionScope {
-	const subdivision = available.scope.subdivisions?.[0] ?? null
-	const country = available.scope.countries.length === 1 ? (available.scope.countries[0] ?? null) : null
-
-	return { country: subdivision ? subdivision.slice(0, 2) : country, subdivision }
+	return selectionScopesOf(available.scope)[0]!
 }
 
 /**

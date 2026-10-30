@@ -16,6 +16,7 @@ import { slimParseTrace } from "#dev-mcp/tool-kit"
 const PARSE: NeuralParseTrace = {
 	text: "KT2 6AB",
 	caseNormalized: false,
+	containmentCountry: null,
 	detectedSystem: null,
 	systemSource: "off",
 	pieces: [{ piece: "▁K", id: 1, start: 0, end: 1 }],

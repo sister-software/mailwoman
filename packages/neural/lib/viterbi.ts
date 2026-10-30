@@ -194,6 +194,96 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 }
 
 /**
+ * The `k` highest-scoring label sequences under the same scores {@linkcode viterbi}
+ * decodes, best first, each with its total score.
+ *
+ * Each cell keeps its `k` best partial paths in O(seqLen × numLabels² × k) time.
+ * Ties order by the lower previous label and then the lower rank.
+ *
+ * `viterbi` resolves ties in that order, so the first path equals `viterbi`'s.
+ *
+ * A path that crosses a forbidden transition (a score at or below half the mask's `-1e9`)
+ * is left out, so fewer than `k` paths can return.
+ */
+export function viterbiKBest(input: ViterbiInput, k: number): ViterbiResult[] {
+	const { emissions, transitions } = input
+	const T = emissions.length
+
+	if (T === 0) return [{ path: [], score: 0 }]
+
+	const numLabels = emissions[0]!.length
+	const startTrans = input.startTransitions ?? new Array<number>(numLabels).fill(0)
+	const endTrans = input.endTransitions ?? new Array<number>(numLabels).fill(0)
+	const adjustAt = adjustmentLookup(input.transitionAdjustments)
+
+	interface Entry {
+		score: number
+		previous: number
+		rank: number
+	}
+
+	const byScore = (a: Entry, b: Entry) =>
+		(a.score === b.score ? 0 : a.score > b.score ? -1 : 1) || a.previous - b.previous || a.rank - b.rank
+
+	const cells: Entry[][][] = []
+	const firstAdjust = adjustAt?.get(0)
+
+	cells.push(
+		Array.from({ length: numLabels }, (_, label) => [
+			{ score: startTrans[label]! + (firstAdjust?.get(label) ?? 0) + emissions[0]![label]!, previous: -1, rank: -1 },
+		])
+	)
+
+	for (let t = 1; t < T; t++) {
+		const tAdjust = adjustAt?.get(t)
+		const row: Entry[][] = []
+
+		for (let label = 0; label < numLabels; label++) {
+			const candidates: Entry[] = []
+			const add = (tAdjust?.get(label) ?? 0) + emissions[t]![label]!
+
+			for (let previous = 0; previous < numLabels; previous++) {
+				for (const [rank, entry] of cells[t - 1]![previous]!.entries()) {
+					candidates.push({ score: entry.score + transitions[previous]![label]! + add, previous, rank })
+				}
+			}
+
+			row.push(candidates.toSorted(byScore).slice(0, k))
+		}
+
+		cells.push(row)
+	}
+
+	const ends: Entry[] = []
+
+	for (let label = 0; label < numLabels; label++) {
+		for (const [rank, entry] of cells[T - 1]![label]!.entries()) {
+			ends.push({ score: entry.score + endTrans[label]!, previous: label, rank })
+		}
+	}
+
+	return ends
+		.toSorted(byScore)
+		.slice(0, k)
+		.filter((end) => end.score > NEG_INF / 2)
+		.map((end) => {
+			const path = new Array<number>(T)
+			let label = end.previous
+			let rank = end.rank
+
+			for (let t = T - 1; t >= 0; t--) {
+				path[t] = label
+				const entry = cells[t]![label]![rank]!
+
+				label = entry.previous
+				rank = entry.rank
+			}
+
+			return { path, score: end.score }
+		})
+}
+
+/**
  * Indexes transition adjustments by timestep and label, keeping the largest bonus
  * where several target the same cell, or returns `null` when there are none.
  */

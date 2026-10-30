@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Mirror of `packages/corpus-python/src/mailwoman_train/labels.py`.
+ *   The label sets the trainer reads through `data/label-schema.v1.json`.
  *
  *   Index ↔ label parity is essential. The model emits logits in one canonical order on both sides.
  *   Any drift silently corrupts BIO decoding. STAGE2 strictly extends STAGE1. The first
@@ -200,8 +200,10 @@ export const DEFAULT_LABEL_SET: LabelSetName = "stage3"
 export const IGNORE_INDEX = -100
 
 /**
- * Locale-head class order — must mirror `corpus-python/src/mailwoman_train/labels.py` `LOCALE_COUNTRIES`
- * exactly (same never-reorder/append-only discipline. A drift here silently mislabels every detection).
+ * Locale-head class order.
+ *
+ * The trainer reads it from `data/label-schema.v1.json`, so it is append-only:
+ * a reorder mislabels every detection of a trained model.
  *
  * The postcode-anchor feature layout indexes the same array
  * (`anchor-inference.ts` re-exports it as `LOCALE_ORDER`): the posterior occupies indices

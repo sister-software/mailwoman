@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reads a training run config into the schema's defaults, checks the corpus sources it admits, and writes the
- *   versioned resolved config the Rust trainer and sampler read.
+ *   Reads a training run config into the schema's defaults and types it. `#training/config/admission` checks the
+ *   corpus sources a typed config admits, and `#training/config/resolved` writes the versioned resolved config the
+ *   Rust trainer and sampler read.
  *
- *   The merge and coercion reproduce `corpus-python/src/mailwoman_train/config/load.py`. A known key replaces the
+ *   The merge and coercion reproduce those of the deleted Python loader (`config/load.py`). A known key replaces the
  *   default and an unknown key is refused with its dotted path and file. A numeric string converts only under a
  *   field annotated exactly `int` or `float`. The three held-out floor lists are validated with the Python
  *   loader's messages.
@@ -18,20 +19,8 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/hash"
-import { resolvePath, type PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
-import {
-	createSourceRightsAdmission,
-	readCorpusSourceInputs,
-	SourceRightsError,
-	TRAINING_OPERATIONS,
-	type CorpusSourceInputs,
-	type SourceRightsRecord,
-} from "#source-register/corpus-inputs"
-import { readAddressSourceRegister } from "#source-register/register"
-import type { AddressSourceRegister } from "#source-register/types"
 import {
 	parsePythonYAML,
 	pythonRepr,
@@ -43,7 +32,6 @@ import {
 	CONFIG_SECTION,
 	CORPUS_RECEIPT_SECTION,
 	LABEL_SUPPORT_SECTION,
-	RESOLVED_TRAINING_CONFIG_VERSION,
 	TrainingConfigSchema,
 	VALIDATION_COVERAGE_SECTION,
 	type ConfigSectionSpec,
@@ -173,6 +161,18 @@ interface MergeContext {
 }
 
 /**
+ * The dotted keys of retired features: the affix and dependent-locality heads,
+ * the first-token anchor injection and the encoder freeze.
+ * No trained model uses them.
+ */
+const RETIRED_KEYS: ReadonlySet<string> = new Set([
+	"model.use_affix_head",
+	"model.use_deploc_head",
+	"model.inject_first_token",
+	"train.freeze_encoder",
+])
+
+/**
  * Merges `src` into `dst` key by key, as `merge_into` does.
  *
  * A key the dataclass does not declare is refused under `strict` and skipped otherwise.
@@ -194,6 +194,17 @@ export function mergeIntoConfig(dst: ConfigInstance, src: PythonMapping, context
 		}
 
 		if (!Object.hasOwn(dst.spec.fields, key)) {
+			if (RETIRED_KEYS.has(dotted)) {
+				// A config written before the retirement records the key as false.
+				// One that enables the feature is refused.
+				if (value === false) continue
+
+				throw new TrainingConfigError(
+					ConfigErrorKind.Key,
+					`config key ${pythonRepr(dotted)} in ${source} enables a retired feature; no trainer builds it`
+				)
+			}
+
 			if (strict) {
 				throw new TrainingConfigError(
 					ConfigErrorKind.Key,
@@ -584,20 +595,6 @@ export function typedTrainingConfig(config: ConfigInstance, source: string): Tra
 }
 
 /**
- * The corpus sources a config admits: every positive `source_weights` or `source_reps` key, sorted.
- *
- * A config without `source_weights` admits every source its corpus holds and lists none of them.
- */
-export function admittedTrainingSources(config: TrainingConfig): string[] {
-	const positive = (weights: Record<string, number> | null) =>
-		Object.entries(weights ?? {})
-			.filter(([, weight]) => weight > 0)
-			.map(([source]) => source)
-
-	return [...new Set([...positive(config.data.source_weights), ...positive(config.data.source_reps)])].toSorted()
-}
-
-/**
  * The version of the built corpus a config trains on: `data.corpus_dir`'s last segment without `corpus-`.
  */
 export function trainingCorpusVersion(config: TrainingConfig): string {
@@ -621,164 +618,4 @@ export function trainingCSVLogPath(config: TrainingConfig): string {
 
 		throw new TrainingConfigError(ConfigErrorKind.Key, pythonRepr(name ?? ""))
 	})
-}
-
-/**
- * The register and corpus-source table an admission reads, when a caller has read them already.
- */
-export interface TrainingAdmissionInputs {
-	register: AddressSourceRegister
-	inputs: CorpusSourceInputs
-}
-
-/**
- * Where a training config sets the override a refusal names.
- */
-const CONFIG_OVERRIDE_HINT = "a config's data.unshippable_reason for a training run"
-
-/**
- * Options for {@linkcode admitTrainingConfig}.
- */
-export interface AdmitTrainingConfigOptions {
-	/**
-	 * Names the config in a refusal, as `training config v7.2.0-address-systems-60k.yaml`.
-	 */
-	context: string
-	/**
-	 * The committed register and table are read when omitted.
-	 */
-	rights?: TrainingAdmissionInputs
-	log?: (line: string) => void
-}
-
-/**
- * Refuses a config that admits a source lacking a transform and train permission,
- * as `load_training_config` does.
- *
- * `data.unshippable_reason` admits the rest for a local experiment, and the record then reads not shippable.
- * A config without `source_weights` names no source to check, so it is refused unless that reason is set.
- *
- * @throws {SourceRightsError} naming each source, register row and missing permission.
- */
-export async function admitTrainingConfig(
-	config: TrainingConfig,
-	options: AdmitTrainingConfigOptions
-): Promise<SourceRightsRecord> {
-	const reason = config.data.unshippable_reason
-
-	if (config.data.source_weights === null && reason === null) {
-		throw new SourceRightsError(
-			options.context,
-			[
-				{
-					source: "*",
-					registerSource: null,
-					licenseID: null,
-					state: null,
-					missing: [...TRAINING_OPERATIONS],
-					because:
-						"the config sets no source_weights, so it admits every source its corpus holds and names none to check",
-				},
-			],
-			CONFIG_OVERRIDE_HINT
-		)
-	}
-
-	const register = options.rights?.register ?? (await readAddressSourceRegister())
-	const inputs = options.rights?.inputs ?? (await readCorpusSourceInputs(register))
-
-	const admission = createSourceRightsAdmission(register, inputs, {
-		context: options.context,
-		unshippableReason: reason,
-		corpusVersion: trainingCorpusVersion(config),
-		overrideHint: CONFIG_OVERRIDE_HINT,
-		log: options.log,
-	})
-
-	if (config.data.source_weights === null) {
-		admission.admitUnverified("the corpus sources a config without source_weights admits")
-	} else {
-		admission.admitAll(admittedTrainingSources(config))
-	}
-
-	return admission.record()
-}
-
-/**
- * The versioned resolved config: every default applied and the admission result embedded.
- */
-export interface ResolvedTrainingConfigDocument {
-	schema_version: typeof RESOLVED_TRAINING_CONFIG_VERSION
-	/**
-	 * The YAML file the config was read from, absolute.
-	 */
-	config_path: string
-	config_sha256: string
-	config: TrainingConfig
-	/**
-	 * Values the Python loader computes from the config where a caller asks for them.
-	 */
-	derived: {
-		admitted_sources: string[]
-		corpus_version: string
-		csv_log_path: string
-	}
-	source_rights: SourceRightsRecord
-}
-
-/**
- * Options for {@linkcode buildResolvedTrainingConfig}.
- */
-export interface ResolvedTrainingConfigOptions {
-	rights?: TrainingAdmissionInputs
-	log?: (line: string) => void
-}
-
-/**
- * Reads, types and admits the config at `path`, and returns the resolved document.
- *
- * @throws {TrainingConfigError} for a config the loader or the schema refuses.
- * @throws {SourceRightsError} for a config that admits a source lacking a permission.
- */
-export async function buildResolvedTrainingConfig(
-	path: PathBuilderLike,
-	options: ResolvedTrainingConfigOptions = {}
-): Promise<ResolvedTrainingConfigDocument> {
-	const absolute = resolvePath(path)
-	const config = typedTrainingConfig(await readTrainingConfig(absolute), absolute)
-	const name = absolute.split("/").at(-1) ?? absolute
-
-	const sourceRights = await admitTrainingConfig(config, {
-		context: `training config ${name}`,
-		rights: options.rights,
-		log: options.log,
-	})
-
-	return {
-		schema_version: RESOLVED_TRAINING_CONFIG_VERSION,
-		config_path: absolute,
-		config_sha256: await sha256File(absolute),
-		config,
-		derived: {
-			admitted_sources: admittedTrainingSources(config),
-			corpus_version: trainingCorpusVersion(config),
-			csv_log_path: trainingCSVLogPath(config),
-		},
-		source_rights: sourceRights,
-	}
-}
-
-/**
- * Writes the resolved config for the YAML at `configPath` to `outPath` as JSON.
- */
-export async function writeResolvedTrainingConfig(
-	configPath: PathBuilderLike,
-	outPath: PathBuilderLike,
-	options: ResolvedTrainingConfigOptions = {}
-): Promise<ResolvedTrainingConfigDocument> {
-	const document = await buildResolvedTrainingConfig(configPath, options)
-
-	await writeLocalJSONFile(document, outPath)
-
-	return document
 }

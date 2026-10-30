@@ -12,19 +12,28 @@ import { unitKey } from "#cjk/builder"
 import { type KeyIndex, sigunguSpan } from "#kr/adapters/localdata/key-index"
 
 /**
+ * A decimal digit in any script, the fullwidth `１` among them.
+ * A JavaScript `\d` matches ASCII only.
+ */
+const D = "\\p{Nd}"
+
+/**
  * A building number: `233`, `43-1`, `지하 1476`.
  */
-const BUILDING_NUMBER = /^(?:지하\s?)?\d+(?:-\d+)?$/u
+const BUILDING_NUMBER = new RegExp(`^(?:지하\\s?)?${D}+(?:-${D}+)?$`, "u")
 
 /**
  * A lot number: `43-1`, `산12`, `43번지`.
  */
-const LOT_NUMBER = /^산?\d+(?:-\d+)?(?:번지)?$/u
+const LOT_NUMBER = new RegExp(`^산?${D}+(?:-${D}+)?(?:번지)?$`, "u")
 
 /**
  * A floor or unit the clerk appended: `2층`, `일부호`, `B1`, `지하1층`, `101동`.
  */
-const UNIT_TOKEN = /^(?:지하\s?)?(?:B?\d+(?:~\d+)?(?:층|호)|\d+층|B\d+|지하\d*층?|\d+동|[가-힣]?\d*호)(?:,)?$/u
+const UNIT_TOKEN = new RegExp(
+	`^(?:지하\\s?)?(?:B?${D}+(?:~${D}+)?(?:층|호)|${D}+층|B${D}+|지하${D}*층?|${D}+동|[가-힣]?${D}*호)(?:,)?$`,
+	"u"
+)
 
 /**
  * The shortest either form can be — 시도, 시군구 and the road or the 법정동.

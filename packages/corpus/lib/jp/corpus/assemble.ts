@@ -4,25 +4,29 @@
  * @author Teffen Ellis, et al.
  * @file Assembles the Japan corpus through survey, selection, rendering, writing and reporting.
  *
- *   One {@linkcode PyRandom} runs through every stage: the exact-selection masks, the shuffles, the register draw
+ *   One {@linkcode SeededRandom} runs through every stage: the exact-selection masks, the shuffles, the register draw
  *   and each per-row fraction. The order of the stages and of the draws inside them decides what the corpus holds,
  *   and `jp-build-reference.json` pins the emitted rows. Pass 1 counts eligible rows so the per-prefecture cap can
  *   be water-filled against the target, and pass 2 streams the selection under that cap.
  *
- *   Ported from the Python builders' `countries/jp/corpora/assemble.py`, draw for draw.
+ *   Ported from the Python builders' `countries/jp/corpora/assemble.py`, in its draw order.
  */
 
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { directoryHasEntries } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
+import { SeededRandom } from "@mailwoman/core/random"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	type CJKRecord,
+	type CJKSplitReport,
+	CJKStatsSample,
+	type CoverageStats,
 	coverageStats,
-	directoryHasEntries,
 	MAX_FIELD_CHARS,
 	muniBucket,
 	nextSelection,
@@ -30,7 +34,7 @@ import {
 	sealCharVocab,
 	selectExact,
 	waterFillQuotas,
-	writeCJKCorpusParquet,
+	writeCJKSplit,
 } from "#cjk/builder"
 import { normalizeCJKText } from "#cjk/text"
 import {
@@ -46,7 +50,6 @@ import { iterJPSourceRows, type JPSourceRow, type KenAllIndex, loadKenAllPostcod
 import { municipalityKanaFromAdminDB, municipalityKanaLookup } from "#jp/kana"
 import { JP_BOARD_BUCKET_MIN } from "#jp/registers"
 import { splitJPStreet, VARIANT_HYPHENS } from "#jp/text"
-import { PyRandom } from "#training/pyrandom"
 
 /**
  * The prefectures a full build's train split must cover.
@@ -167,7 +170,7 @@ async function surveySource(options: JPCorpusOptions): Promise<SourceSurvey> {
 	return { scanned, dropped, poolCounts, boardCount, cap, quotas }
 }
 
-async function selectRows(options: JPCorpusOptions, rng: PyRandom, survey: SourceSurvey): Promise<Selection> {
+async function selectRows(options: JPCorpusOptions, rng: SeededRandom, survey: SourceSurvey): Promise<Selection> {
 	const selectors = new Map(
 		[...survey.poolCounts].map(([prefecture, count]) => [
 			prefecture,
@@ -231,14 +234,14 @@ class JPRowEncoder {
 	readonly kenallTiers = new Map<string, number>()
 	readonly registerAvailability = new Map<string, number>()
 	readonly #options: JPCorpusOptions
-	readonly #rng: PyRandom
+	readonly #rng: SeededRandom
 	readonly #kenall: KenAllIndex
 	readonly #tagSet: ReadonlySet<string>
 	readonly #kana: ReadonlyMap<string, string>
 
 	constructor(
 		options: JPCorpusOptions,
-		rng: PyRandom,
+		rng: SeededRandom,
 		kenall: KenAllIndex,
 		tagSet: ReadonlySet<string>,
 		kana: ReadonlyMap<string, string>
@@ -329,7 +332,34 @@ class JPRowEncoder {
 	}
 }
 
-const pythonNumber = (value: number | null) => (value === null ? null : asPythonFloat(value))
+/**
+ * The JP build report, which `build-report.json` serializes in this key order.
+ */
+export interface JPCorpusReport {
+	seed: number
+	source_parquet: string
+	kenall: string
+	label_set: string
+	source: string
+	eligible_rows_scanned: number
+	/**
+	 * Rows dropped before selection, by reason, most common first.
+	 */
+	dropped_at_source: ReadonlyMap<string, number>
+	max_field_chars: number
+	per_prefecture_cap: number
+	prefectures_train: number
+	board_municipalities: number
+	board_rows: number
+	kenall_join_tiers: ReadonlyMap<string, number>
+	register_availability: ReadonlyMap<string, number>
+	char_vocab_size: number
+	fractions: { postcode: number; country: number; spaced: number; variant_hyphen: number }
+	register_weights: ReadonlyMap<string, number>
+	upweight: { pattern: string | null; copies_appended: number }
+	splits: ReadonlyMap<string, CJKSplitReport>
+	board_coverage: CoverageStats
+}
 
 /**
  * Builds the corpus, its board and its character vocabulary under `outDir`, and returns the build report.
@@ -337,8 +367,8 @@ const pythonNumber = (value: number | null) => (value === null ? null : asPython
  * @throws When `outDir` holds files and `force` is unset, an input is missing, the drop rate exceeds 2%,
  * a full build's train split misses a prefecture, or a board municipality reaches train or val.
  */
-export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<string, unknown>> {
-	const rng = new PyRandom(options.seed)
+export async function buildJPCorpus(options: JPCorpusOptions): Promise<JPCorpusReport> {
+	const rng = new SeededRandom(options.seed)
 	const tagSet = await readLabelSetTags(JP_LABEL_SET_NAME)
 	const kenall = await loadKenAllPostcodes(options.kenall)
 	const survey = await surveySource(options)
@@ -356,35 +386,26 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<strin
 		)
 	}
 
-	const splits = new Map<string, unknown>()
+	const splits = new Map<string, CJKSplitReport>()
 
 	for (const [split, sourceRows] of [
 		["train", selection.train],
 		["val", selection.val],
 	] as const) {
-		await makeDirectories(resolvePath(outDir, split))
+		const report = await writeCJKSplit({
+			directory: resolvePath(outDir, split),
+			rows: sourceRows,
+			rowsPerPart: options.rowsPerPart,
+			encodePart: (rows) => encoder.encode(rows),
+			partPrefix: "part",
+			context: "JP corpus assembly",
+			statsSample: { kind: CJKStatsSample.FirstOfEachPart, rows: options.statsSamplePerPart },
+		})
 
-		const statsInput: CJKRecord[] = []
-		let part = 0
-		let written = 0
-
-		for (let start = 0; start < sourceRows.length; start += options.rowsPerPart) {
-			const chunk = encoder.encode(sourceRows.slice(start, start + options.rowsPerPart))
-			const name = `part-${String(part).padStart(4, "0")}.parquet`
-
-			await writeCJKCorpusParquet(chunk, resolvePath(outDir, split, name), "JP corpus assembly")
-
-			part++
-			written += chunk.length
-			statsInput.push(...chunk.slice(0, options.statsSamplePerPart))
-		}
-
-		const coverage = coverageStats(statsInput)
-
-		splits.set(split, { rows: written, parts: part, coverage })
+		splits.set(split, report)
 
 		console.log(
-			`${split}: ${written.toLocaleString("en-US")} rows in ${part} parts; BIO char coverage ${coverage.bio_char_coverage_significant.value.toFixed(4)}`
+			`${split}: ${report.rows.toLocaleString("en-US")} rows in ${report.parts} parts; BIO char coverage ${report.coverage.bio_char_coverage_significant.toFixed(4)}`
 		)
 	}
 
@@ -398,22 +419,19 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<strin
 		boardRecords.push(record)
 
 		boardLines.push(
-			pythonJSONDumps(
-				{
-					raw: record.raw,
-					span_starts: record.span_starts,
-					span_ends: record.span_ends,
-					span_tags: record.span_tags,
-					register: record.register,
-					pref: prefecture,
-					muni: municipality,
-					street,
-					number,
-					lon: pythonNumber(lon),
-					lat: pythonNumber(lat),
-				},
-				{ ensureASCII: false }
-			)
+			orderedJSON({
+				raw: record.raw,
+				span_starts: record.span_starts,
+				span_ends: record.span_ends,
+				span_tags: record.span_tags,
+				register: record.register,
+				pref: prefecture,
+				muni: municipality,
+				street,
+				number,
+				lon,
+				lat,
+			})
 		)
 	}
 
@@ -436,44 +454,35 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<strin
 
 	const vocab = await sealCharVocab(outDir, "char-vocab-jp-full.json")
 
-	const report = new Map<string, unknown>([
-		["seed", options.seed],
-		["source_parquet", options.parquet.toString()],
-		["kenall", options.kenall.toString()],
-		["label_set", JP_LABEL_SET_NAME],
-		["source", JP_CORPUS_SOURCE],
-		["eligible_rows_scanned", survey.scanned],
-		["dropped_at_source", new Map(mostCommon(survey.dropped))],
-		["max_field_chars", options.maxFieldChars],
-		["per_prefecture_cap", survey.cap],
-		["prefectures_train", trainPrefectures.size],
-		["board_municipalities", boardMunicipalities.size],
-		["board_rows", boardRecords.length],
-		["kenall_join_tiers", new Map(mostCommon(encoder.kenallTiers))],
-		["register_availability", encoder.registerAvailability],
-		["char_vocab_size", vocab.size],
-		[
-			"fractions",
-			new Map([
-				["postcode", asPythonFloat(options.postcodeFraction)],
-				["country", asPythonFloat(options.countryFraction)],
-				["spaced", asPythonFloat(options.spacedFraction)],
-				["variant_hyphen", asPythonFloat(options.variantHyphenFraction)],
-			]),
-		],
-		["register_weights", new Map([...JP_REGISTER_WEIGHTS].map(([name, weight]) => [name, asPythonFloat(weight)]))],
-		[
-			"upweight",
-			new Map<string, unknown>([
-				["pattern", options.upweightPattern ?? null],
-				["copies_appended", selection.upweighted],
-			]),
-		],
-		["splits", splits],
-		["board_coverage", coverageStats(boardRecords)],
-	])
+	const report: JPCorpusReport = {
+		seed: options.seed,
+		source_parquet: options.parquet.toString(),
+		kenall: options.kenall.toString(),
+		label_set: JP_LABEL_SET_NAME,
+		source: JP_CORPUS_SOURCE,
+		eligible_rows_scanned: survey.scanned,
+		dropped_at_source: new Map(mostCommon(survey.dropped)),
+		max_field_chars: options.maxFieldChars,
+		per_prefecture_cap: survey.cap,
+		prefectures_train: trainPrefectures.size,
+		board_municipalities: boardMunicipalities.size,
+		board_rows: boardRecords.length,
+		kenall_join_tiers: new Map(mostCommon(encoder.kenallTiers)),
+		register_availability: encoder.registerAvailability,
+		char_vocab_size: vocab.size,
+		fractions: {
+			postcode: options.postcodeFraction,
+			country: options.countryFraction,
+			spaced: options.spacedFraction,
+			variant_hyphen: options.variantHyphenFraction,
+		},
+		register_weights: new Map([...JP_REGISTER_WEIGHTS].map(([name, weight]) => [name, weight])),
+		upweight: { pattern: options.upweightPattern ?? null, copies_appended: selection.upweighted },
+		splits,
+		board_coverage: coverageStats(boardRecords),
+	}
 
-	const text = pythonJSONDumps(report, { indent: 2, ensureASCII: false })
+	const text = orderedJSON(report, { indent: "\t" })
 
 	await writeLocalTextFile(text + "\n", resolvePath(outDir, "build-report.json"))
 

@@ -107,7 +107,7 @@ the eval floor because of a convention disagreement rather than a model regressi
 | `building_number` | JP gō (号)                      | `1号`                  |
 | `building_name`   | JP building name (romaji form)  | `Tokyo Building`       |
 
-**Activation status (CJK Phase 2, 2026-07-29):** the JP tags are live in the training stack as the `stage3-jp` label set (`corpus-python labels.py`, 47 BIO labels = STAGE3 + these seven). That set is the JP CHAR model's head vocabulary. The Latin model stays on STAGE3 and never emits them. Under the encoder-design D4 rule, compact numbers (`2-3-16`) remain whole-span `house_number`, and `block`/`sub_block`/`building_number` label only the kanji-designator long form (`2丁目3番16号`). The `componentsSupported` field on `LocaleProfile` declares which tags a locale uses. `ja-JP` declares these seven plus `house_number`/`country`/`postcode`.
+**Activation status (CJK Phase 2, 2026-07-29):** the JP tags are live in the training stack as the `stage3-jp` label set (`packages/neural/data/label-schema.v1.json`, 47 BIO labels = STAGE3 + these seven). That set is the JP CHAR model's head vocabulary. The Latin model stays on STAGE3 and never emits them. Under the encoder-design D4 rule, compact numbers (`2-3-16`) remain whole-span `house_number`, and `block`/`sub_block`/`building_number` label only the kanji-designator long form (`2丁目3番16号`). The `componentsSupported` field on `LocaleProfile` declares which tags a locale uses. `ja-JP` declares these seven plus `house_number`/`country`/`postcode`.
 
 ### CN-specific — organizational units (#2034)
 

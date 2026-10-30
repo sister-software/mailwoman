@@ -3,7 +3,7 @@ name = "trainer-export"
 description = "Exports a Mailwoman coarse-encoder checkpoint to an opset-17 ONNX graph and quantizes it to int8 the way onnxruntime 1.30.0's quantize_dynamic(QInt8) does, without Python."
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0"
 repository.workspace = true
 
 [[bin]]
@@ -11,6 +11,8 @@ name = "trainer-export"
 path = "src/main.rs"
 
 [dependencies]
+# The channel names and their order, which the graph's inputs follow.
+mtf-channels.workspace = true
 prost = "0.14"
 # The Rust trainer's `model.safetensors`.
 safetensors = "0.6"

@@ -13,18 +13,20 @@
 //! - A `Gather` from a float initializer reads the table quantized to uint8 with the activation scheme and leaves
 //!   its output quantized (`operators/gather.py::GatherQuant`). A consumer that cannot read the quantized value gets a
 //!   `DequantizeLinear` in front of it (`operators/base_operator.py`, `onnx_quantizer.py::_dequantize_value`).
+//! - A `Conv` whose weight is an initializer becomes `DynamicQuantizeLinear` of the input, `ConvInteger` against the
+//!   int8 weight, `Cast` and `Mul` by the scales, with a bias added after a `Reshape` (`operators/conv.py::ConvInteger`).
 //! - A `Transpose` of a quantized value transposes the quantized tensor (`operators/direct_q8.py::Direct8BitOp`).
 //! - Scale and zero point follow `quant_utils.py::compute_scale_zp` and the elements `quant_utils.py::quantize_nparray`,
 //!   with the same float32 and float64 steps, so the stored integers and scales equal onnxruntime's bit for bit.
 //!
-//! Before any of it the graph's `value_info` is cleared, the guard `corpus-python/src/mailwoman_train/export/quantize.py`
+//! Before any of it the graph's `value_info` is cleared, the guard the Python quantizer (`export/quantize.py`, deleted in #2874)
 //! applies: an exporter can leave an intermediate shape annotation that onnx's shape inference rejects (the stale
 //! `locale_film` annotation, `[768]` against an inferred `384`). The output then carries the shapes
 //! [`crate::shape::annotate`] infers, as `quantize_dynamic` saves the shapes onnx infers: onnxruntime's
 //! optimizer reads them, and without them it fuses differently and the int8 logits move.
 //!
-//! The other operators of onnxruntime's `IntegerOpsRegistry` (`Conv`, `Attention`, `LSTM`,
-//! `EmbedLayerNormalization`) are refused by name rather than passed through unquantized.
+//! The other operators of onnxruntime's `IntegerOpsRegistry` (`Attention`, `LSTM`, `EmbedLayerNormalization`) are
+//! refused by name rather than passed through unquantized.
 
 use std::collections::{HashMap, HashSet};
 
@@ -40,7 +42,7 @@ const INT64: i32 = DataType::Int64 as i32;
 const BOOL: i32 = DataType::Bool as i32;
 
 /// The operators onnxruntime's dynamic mode quantizes that this module does not implement.
-const UNIMPLEMENTED_OPS: [&str; 4] = ["Conv", "Attention", "LSTM", "EmbedLayerNormalization"];
+const UNIMPLEMENTED_OPS: [&str; 3] = ["Attention", "LSTM", "EmbedLayerNormalization"];
 
 /// The integer range and symmetry of one quantization.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -318,7 +320,7 @@ fn infer_types(graph: &GraphProto) -> HashMap<String, i32> {
 			"Equal" | "Less" | "Greater" | "Not" | "And" | "Or" => vec![Some(BOOL)],
 			"Where" => vec![n.input.get(1).and_then(|i| types.get(i)).copied()],
 			"Cast" => vec![attr(n, "to").and_then(|a| a.i).map(|v| v as i32)],
-			"MatMulInteger" => vec![Some(INT32)],
+			"MatMulInteger" | "ConvInteger" => vec![Some(INT32)],
 			"DynamicQuantizeLinear" => vec![Some(UINT8), Some(FLOAT), Some(UINT8)],
 			"DequantizeLinear" => vec![n.input.get(1).and_then(|i| types.get(i)).copied()],
 			_ => vec![first; n.output.len().max(1)],
@@ -497,6 +499,93 @@ impl Quantizer {
 		Ok(())
 	}
 
+	/// `operators/conv.py::ConvInteger`: `DynamicQuantizeLinear` of the input, `ConvInteger` against the int8 weight
+	/// with the Conv's attributes, `Cast` to float and `Mul` by the product of the scales. A bias is added after a
+	/// `Reshape` to `[1, -1, 1, …]`, the weight's rank with the channel axis free, under onnxruntime's node names.
+	fn conv(&mut self, n: NodeProto) -> Result<()> {
+		let mut nodes = Vec::new();
+		let a = self.quantize_activation(&n.input[0], &mut nodes)?;
+		let rank = self
+			.initializer(&n.input[1])
+			.map(|w| w.dims.len())
+			.ok_or_else(|| fail!("{} is not an initializer", n.input[1]))?;
+		let w = self.quantize_initializer(&n.input[1], Scheme::WeightInt8Symmetric)?;
+		let output = n.output[0].clone();
+		let base = name_of(&n);
+		let conv_name = if base.is_empty() {
+			String::new()
+		} else {
+			format!("{base}_quant")
+		};
+		let conv_out = format!("{output}_output_quantized");
+		let mut conv = node(
+			"ConvInteger",
+			&[&a.q_name, &w.q_name, &a.zero_point, &w.zero_point],
+			&[&conv_out],
+			&conv_name,
+		);
+		conv.attribute = n.attribute.clone();
+		nodes.push(conv);
+		let otype = *self
+			.types
+			.get(&output)
+			.ok_or_else(|| fail!("the element type of {output} is unknown"))?;
+		let cast_out = format!("{conv_out}_cast_output");
+		let mut cast = node("Cast", &[&conv_out], &[&cast_out], &format!("{conv_out}_cast"));
+		cast.attribute.push(AttributeProto {
+			name: Some("to".into()),
+			r#type: Some(AttributeType::Int as i32),
+			i: Some(i64::from(otype)),
+			..Default::default()
+		});
+		nodes.push(cast);
+		let scales_name = if conv_name.is_empty() {
+			format!("{}_{}_mul", a.scale, w.scale)
+		} else {
+			format!("{conv_name}_scales_mul")
+		};
+		let scales_out = format!("{scales_name}:0");
+		let exists = self.new_nodes.iter().chain(&nodes).any(|n| name_of(n) == scales_name);
+		if !exists {
+			nodes.push(node("Mul", &[&a.scale, &w.scale], &[&scales_out], &scales_name));
+		}
+		let bias = n.input.get(2).filter(|b| !b.is_empty()).cloned();
+		let scaled = if bias.is_some() {
+			format!("{output}quant_scaled_output")
+		} else {
+			output.clone()
+		};
+		let out_name = if conv_name.is_empty() {
+			String::new()
+		} else {
+			format!("{conv_name}_output_scale_mul")
+		};
+		nodes.push(node("Mul", &[&cast_out, &scales_out], &[&scaled], &out_name));
+		if let Some(bias) = bias {
+			let shape_name = format!("{output}_bias_reshape_shape");
+			let reshaped = format!("{output}_bias_reshape_output");
+			let shape: Vec<u8> = (0..rank)
+				.flat_map(|axis| (if axis == 1 { -1i64 } else { 1 }).to_le_bytes())
+				.collect();
+			self.add_initializer(TensorProto {
+				dims: vec![rank as i64],
+				data_type: Some(INT64),
+				name: Some(shape_name.clone()),
+				raw_data: Some(shape),
+				..Default::default()
+			});
+			nodes.push(node("Reshape", &[&bias, &shape_name], &[&reshaped], ""));
+			nodes.push(node(
+				"Add",
+				&[&scaled, &reshaped],
+				&[&output],
+				&format!("{output}_bias_add"),
+			));
+		}
+		self.new_nodes.extend(nodes);
+		Ok(())
+	}
+
 	fn gather(&mut self, mut n: NodeProto) -> Result<()> {
 		let table = self.quantize_activation(&n.input[0], &mut Vec::new())?;
 		let output = n.output[0].clone();
@@ -612,6 +701,14 @@ pub fn quantize_dynamic_qint8(mut model: ModelProto) -> Result<ModelProto> {
 					.unwrap_or(false);
 				if table {
 					q.gather(n)?;
+				} else {
+					q.pass_through(n);
+				}
+			}
+			"Conv" => {
+				let weight_const = q.initializer(&n.input[1]).is_some();
+				if weight_const && q.is_float(&n.input[0]) {
+					q.conv(n)?;
 				} else {
 					q.pass_through(n);
 				}
@@ -809,8 +906,8 @@ mod tests {
 			.as_mut()
 			.unwrap()
 			.node
-			.push(node("Conv", &["x", "w"], &["c"], "conv"));
+			.push(node("LSTM", &["x", "w"], &["c"], "lstm"));
 		let error = quantize_dynamic_qint8(model).unwrap_err();
-		assert!(error.0.contains("Conv"), "{error}");
+		assert!(error.0.contains("LSTM"), "{error}");
 	}
 }

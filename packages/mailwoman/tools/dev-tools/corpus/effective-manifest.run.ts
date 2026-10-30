@@ -16,7 +16,7 @@
  *   Usage:
  *   node packages/mailwoman/tools/dev-tools/corpus/effective-manifest.run.ts \
  *     --corpus-manifest <corpus>/TRAINING_SOURCES.json \
- *     --config corpus-python/src/mailwoman_train/configs/<name>.yaml \
+ *     --config packages/corpus/data/training-configs/<name>.yaml \
  *     [--mixture-audit <path>] [--out <path>] [--declared a,b,c]
  */
 

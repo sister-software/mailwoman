@@ -10,14 +10,12 @@
  *   report it is given, and, for a model trained with an address-system head, the `address_systems` table the runtime
  *   reads to feed `locale_hint` and to read `address_system_logits`.
  *
- *   The JSON files are written the way Python's `json.dumps(indent=2)` writes them, so a card this module writes and
- *   one the Python packager wrote from the same inputs compare byte for byte: `ensure_ascii` escapes, and a value the
- *   card holds as a float keeps its `.0`.
+ *   The JSON files are tab-indented with each `Map` in its insertion order (`packageFileText`).
  */
 
 import { copyFileTo, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON, parseJSONStrict } from "@mailwoman/core/json"
 import { pyFixed } from "@mailwoman/core/numeric"
-import { asPythonFloat, PythonFloat, pythonFloatRepr, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import {
 	bioLabelsOf,
 	DEFAULT_LABEL_SET,
@@ -52,7 +50,7 @@ export const ACTIVE_BIO_LABELS: readonly string[] = bioLabelsOf(ACTIVE_TAGS)
 /**
  * An eval report as the card stores it.
  *
- * It is a JSON object, and its float-valued numbers are {@linkcode PythonFloat}s.
+ * It is a JSON object, and its float-valued numbers are {@linkcode number}s.
  */
 export type EvalReport = Record<string, unknown>
 
@@ -64,8 +62,8 @@ export type EvalReport = Record<string, unknown>
 export function noEvalReport(): EvalReport {
 	return {
 		n_entries: 0,
-		full_parse_exact_match: asPythonFloat(0),
-		mean_token_confidence: asPythonFloat(0),
+		full_parse_exact_match: 0,
+		mean_token_confidence: 0,
 		per_component: {},
 		calibration: [],
 		note: "no golden_dir provided; eval skipped",
@@ -73,17 +71,10 @@ export function noEvalReport(): EvalReport {
 }
 
 /**
- * Parses an eval report, keeping each number written with a fraction or an exponent as a Python float.
+ * Parses an eval report and refuses one that is not a JSON object.
  */
 export function parseEvalReport(text: string): EvalReport {
-	// oxlint-disable-next-line no-restricted-properties -- parseJSONStrict takes no reviver, and this one reads each number's source text.
-	const report: unknown = JSON.parse(text, (_key, value: unknown, context?: { source?: string }) => {
-		if (typeof value === "number" && context?.source != null && /[.eE]/u.test(context.source)) {
-			return new PythonFloat(value)
-		}
-
-		return value
-	})
+	const report: unknown = parseJSONStrict(text)
 
 	if (report == null || typeof report !== "object" || Array.isArray(report)) {
 		throw new Error("the eval report is not a JSON object")
@@ -96,18 +87,7 @@ export function parseEvalReport(text: string): EvalReport {
  * The number a report field holds, whether it was written as an integer or a float.
  */
 function numeric(value: unknown, fallback: number): number {
-	if (value instanceof PythonFloat) return value.value
-
 	return typeof value === "number" ? value : fallback
-}
-
-/**
- * A report value as Python's `str` writes it into the README.
- */
-function pythonStr(value: unknown): string {
-	if (value instanceof PythonFloat) return pythonFloatRepr(value.value)
-
-	return String(value)
 }
 
 function sameTags(a: readonly string[], b: readonly string[]): boolean {
@@ -217,7 +197,7 @@ export function buildModelCard(inputs: ModelCardInputs): Record<string, unknown>
 			tokenizer_version: inputs.tokenizerVersion,
 			steps: inputs.trainingSteps,
 			hardware: inputs.trainingHardware,
-			duration_seconds: asPythonFloat(inputs.trainingDurationSeconds),
+			duration_seconds: inputs.trainingDurationSeconds,
 			started_at: null,
 			completed_at: pythonUTCTimestamp(inputs.completedAt),
 		},
@@ -402,7 +382,7 @@ export function renderReadme(inputs: ReadmeInputs): string {
 		"",
 		"## Eval (golden set)",
 		"",
-		`- entries: **${pythonStr(report["n_entries"] ?? 0)}**`,
+		`- entries: **${String(report["n_entries"] ?? 0)}**`,
 		`- full-parse exact match: **${pyFixed(numeric(report["full_parse_exact_match"], 0), 4)}**`,
 		`- mean token confidence: **${pyFixed(numeric(report["mean_token_confidence"], 0), 4)}**`,
 		"",
@@ -426,10 +406,10 @@ export function renderReadme(inputs: ReadmeInputs): string {
 }
 
 /**
- * A JSON document as `json.dumps(value, indent=2) + "\n"` writes it.
+ * A package's JSON file: tab-indented, a `Map` in its insertion order, and a trailing newline.
  */
-export function pythonJSONFileText(value: unknown): string {
-	return pythonJSONDumps(value, { indent: 2 }) + "\n"
+export function packageFileText(value: unknown): string {
+	return orderedJSON(value, { indent: "\t" }) + "\n"
 }
 
 /**
@@ -450,7 +430,7 @@ export async function writeWeightsPackage(packageDirectory: PathBuilderLike, fil
 	await makeDirectories(packageDirectory)
 	await copyFileTo(files.int8ModelPath, join(packageDirectory, "model.onnx"))
 	await copyFileTo(files.tokenizerModelPath, join(packageDirectory, "tokenizer.model"))
-	await writeLocalTextFile(pythonJSONFileText(files.modelCard), packageDirectory, "model-card.json")
-	await writeLocalTextFile(pythonJSONFileText(files.packageJSON), packageDirectory, "package.json")
+	await writeLocalTextFile(packageFileText(files.modelCard), packageDirectory, "model-card.json")
+	await writeLocalTextFile(packageFileText(files.packageJSON), packageDirectory, "package.json")
 	await writeLocalTextFile(files.readme, packageDirectory, "README.md")
 }

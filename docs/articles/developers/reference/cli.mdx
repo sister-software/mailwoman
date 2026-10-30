@@ -382,12 +382,12 @@ Delete installed artifacts that no retained generation or running session refere
 mailwoman data prune [options]
 ```
 
-| Flag                      | Type    | Default | Description                                             |
-| ------------------------- | ------- | ------- | ------------------------------------------------------- |
-| `--dry-run`               | boolean | `false` | List the artifacts a prune would delete and delete none |
-| `--retain [retain]`       | string  | —       | Generations to keep, counting the active one. Default 2 |
-| `--data-root [data-root]` | string  | —       | Override the data root                                  |
-| `--json`                  | boolean | `false` | Emit the plan or the result as JSON                     |
+| Flag                      | Type    | Default | Description                                                                           |
+| ------------------------- | ------- | ------- | ------------------------------------------------------------------------------------- |
+| `--yes`                   | boolean | `false` | Delete the planned artifacts. Without it the command prints the plan and deletes none |
+| `--retain [retain]`       | string  | —       | Generations to keep, counting the active one. Default 2                               |
+| `--data-root [data-root]` | string  | —       | Override the data root                                                                |
+| `--json`                  | boolean | `false` | Emit the plan or the result as JSON                                                   |
 
 ### `mailwoman data pull`
 

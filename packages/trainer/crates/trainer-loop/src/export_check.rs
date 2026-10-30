@@ -1,7 +1,7 @@
 //! The export's check against the model: the Rust forward pass on recorded batches, written as ONNX feeds with
 //! their expected outputs.
 //!
-//! `corpus-python`'s `verify_parity` runs the torch model and the exported graph on the same inputs. Here the Rust
+//! The Python trainer's `verify_parity` runs the torch model and the exported graph on the same inputs. Here the Rust
 //! encoder computes the expected outputs, one row per probe in eval mode, and
 //! `packages/neural/tools/onnx-model-check.run.ts` runs the feeds through the graph `trainer-export` wrote and compares
 //! every element. Every other probe passes the row's own address system as `locale_hint`, the rest the "no hint" id.
@@ -11,6 +11,7 @@
 use crate::batch::TensorBatch;
 use crate::compare::Record;
 use crate::{fail, Result};
+use mtf_channels::encoder::CHANNEL_NAMES;
 use serde_json::{json, Map, Value};
 use std::path::Path;
 use tch::{Kind, Tensor};
@@ -48,6 +49,13 @@ pub fn write_feeds(
 	model.mode = Mode::Eval;
 	let record = Record::read(record)?;
 	let systems = model.spec.num_address_systems;
+	let dims = model.spec.channel_dims();
+	let enabled: Vec<String> = CHANNEL_NAMES
+		.iter()
+		.zip(dims.iter())
+		.filter(|(_, dim)| **dim > 0)
+		.map(|(name, _)| (*name).to_owned())
+		.collect();
 	let mut probes = Vec::new();
 	let mut b = 0;
 	while probes.len() < rows {
@@ -72,9 +80,12 @@ pub fn write_feeds(
 				labels: one(&batch.labels),
 				locale_ids: one(&batch.locale_ids),
 				address_system_ids: one(&batch.address_system_ids),
+				// A channel the checkpoint was built without has no input on the model or the graph, so a record from a
+				// config with more channels feeds only the ones this checkpoint enables.
 				channels: batch
 					.channels
 					.iter()
+					.filter(|(n, _, _)| enabled.contains(n))
 					.map(|(n, f, c)| (n.clone(), one(f), one(c)))
 					.collect(),
 				char_ids: batch.char_ids.as_ref().map(one),

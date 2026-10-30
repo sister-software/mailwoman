@@ -22,7 +22,9 @@ import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
 import {
+	AIRPORT_CONTEXT_TERMS,
 	MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS,
+	STREET_FORMING_STRUCTURE_DESIGNATORS,
 	VENUE_STRUCTURE_DESIGNATORS,
 	VENUE_STRUCTURE_MODIFIERS,
 } from "#venue/structure"
@@ -164,6 +166,8 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 		venueStructureDesignators: new Set<string>(VENUE_STRUCTURE_DESIGNATORS),
 		venueStructureModifiers: new Set<string>(VENUE_STRUCTURE_MODIFIERS),
 		modifierEligibleStructureDesignators: new Set<string>(MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS),
+		streetFormingStructureDesignators: new Set<string>(STREET_FORMING_STRUCTURE_DESIGNATORS),
+		airportContextTerms: new Set<string>(AIRPORT_CONTEXT_TERMS),
 		...(deliveryService ? { deliveryService } : {}),
 	}
 }

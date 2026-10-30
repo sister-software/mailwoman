@@ -72,6 +72,19 @@ export function requiredArgument(scope: string, name: string, value: string | nu
 }
 
 /**
+ * A flag's string value read as a safe integer.
+ *
+ * @throws When the value is not one, naming the flag and the value.
+ */
+export function integerArgument(name: string, value: string): number {
+	const parsed = Number(value)
+
+	if (!Number.isSafeInteger(parsed)) throw new Error(`--${name} must be an integer, got ${value}`)
+
+	return parsed
+}
+
+/**
  * Kebab segments whose property spelling capitalizes the whole acronym, because a
  * segment missing here derives a property the command's own `Options` does not declare:
  * the flag still parses but reaches the component under a name no code reads,

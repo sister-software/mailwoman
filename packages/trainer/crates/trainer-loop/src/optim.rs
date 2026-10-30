@@ -257,7 +257,6 @@ pub fn build_groups(
 		carveouts.push((
 			vec![
 				"classifier.",
-				"deploc_head.",
 				"street_type_projection.",
 				"street_type_token_embedding",
 				"locality_surface_projection.",

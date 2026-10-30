@@ -2,7 +2,7 @@
 #
 # Quick summary:
 # - Runs weekly.
-# - Covers 3 ecosystems: npm, uv (Python), and GitHub Actions.
+# - Covers 3 ecosystems: npm, cargo, and GitHub Actions.
 # - Minor + patch updates are grouped.
 #
 # Important:
@@ -80,36 +80,24 @@ updates:
       - dependency-name: "release-it"
         update-types: ["version-update:semver-major"]
 
-  # Python (uv)
-  # - Dependency files: root pyproject.toml + uv.lock.
-  # - Source code location: corpus-python/.
-  - package-ecosystem: "uv"
-    directory: "/"
+  # Rust (cargo)
+  # - Dependency files: the root workspace's Cargo.toml and Cargo.lock.
+  # - `tch` stays pinned: its version selects the libtorch archive the trainer images download.
+  - package-ecosystem: "cargo"
+    directories:
+      - "/"
     schedule:
       interval: "weekly"
     commit-message:
       prefix: "chore(deps)"
     groups:
-      python-dependencies:
+      rust-dependencies:
         applies-to: version-updates
         update-types:
           - "minor"
           - "patch"
     ignore:
-      # Exact pins for the int8 / mobile-Safari WebGPU invariant.
-      # Before bumping, read the pin note in root pyproject.toml.
-      #
-      # This list mirrors verify_toolchain.py -> INVARIANT_DEPS.
-      # If any of these change, updates must be coordinated together:
-      # - pyproject
-      # - Modal image
-      # - export-verification flow
-      #
-      # Dependabot PRs only touch pyproject, so they fail verify-toolchain CI.
-      - dependency-name: "torch"
-      - dependency-name: "transformers"
-      - dependency-name: "onnx"
-      - dependency-name: "onnxruntime"
+      - dependency-name: "tch"
 
   # GitHub Actions
   # - Handles tag pins (e.g., @v7).

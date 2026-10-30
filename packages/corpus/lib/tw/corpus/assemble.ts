@@ -5,23 +5,27 @@
  * @file The two passes that turn eligible Overture-TW rows into a corpus.
  *
  *   Pass 1 counts eligible rows per 縣市, sums each district's coordinates and lists the source agencies, without a
- *   draw. Pass 2 selects under the quotas pass 1 set. One {@linkcode PyRandom} feeds the selectors, then the
- *   shuffle, then each row's register and country prefix, in that order, as the Python assembler drew them
+ *   draw. Pass 2 selects under the quotas pass 1 set. One {@linkcode SeededRandom} feeds the selectors, then the
+ *   shuffle, then each row's register and country prefix, in that order, the order of the Python assembler
  *   (`countries/tw/corpora/assemble.py`). The Taiwanese license voids its grant on a missing attribution, so the
  *   report lists the datasets the rows came from.
  */
 
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { directoryHasEntries } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
+import { SeededRandom } from "@mailwoman/core/random"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	type CJKRecord,
+	type CJKSplitReport,
+	CJKStatsSample,
+	type CoverageStats,
 	coverageStats,
-	directoryHasEntries,
 	MAX_FIELD_CHARS,
 	muniBucket,
 	nextSelection,
@@ -29,10 +33,9 @@ import {
 	sealCharVocab,
 	selectExact,
 	waterFillQuotas,
-	writeCJKCorpusParquet,
+	writeCJKSplit,
 } from "#cjk/builder"
 import { normalizeCJKText } from "#cjk/text"
-import { PyRandom } from "#training/pyrandom"
 import {
 	availableTWRegisters,
 	chooseTWRegister,
@@ -94,14 +97,43 @@ export const TW_CORPUS_DEFAULTS = {
 const unitOf = (row: TWSourceRow) => `${row[0]}|${row[1]}`
 
 /**
+ * The TW build report, which `build-report.json` serializes in this key order.
+ */
+export interface TWCorpusReport {
+	seed: number
+	parquet: string
+	label_set: string
+	source: string
+	license: string
+	/**
+	 * Rows per publishing agency, most common first.
+	 */
+	attribution: ReadonlyMap<string, number>
+	eligible_rows_scanned: number
+	dropped_at_source: ReadonlyMap<string, number>
+	per_region_cap: number
+	regions_train: number
+	board_bucket_min: number
+	board_districts: number
+	board_rows: number
+	registers: ReadonlyMap<string, number>
+	char_vocab_size: number
+	centroid_units: number
+	fractions: { country: number }
+	register_weights: ReadonlyMap<string, number>
+	splits: ReadonlyMap<string, CJKSplitReport>
+	board_coverage: CoverageStats
+}
+
+/**
  * Builds the corpus, its board, the district centroids and the character vocabulary
  * under `outDir`, and returns the build report.
  *
  * @throws When `outDir` holds files and `force` is unset, the parquet is missing,
  * the drop rate exceeds 2%, or a board district reaches train or val.
  */
-export async function buildTWCorpus(options: TWCorpusOptions): Promise<Map<string, unknown>> {
-	const rng = new PyRandom(options.seed)
+export async function buildTWCorpus(options: TWCorpusOptions): Promise<TWCorpusReport> {
+	const rng = new SeededRandom(options.seed)
 	const tagSet = await readLabelSetTags(TW_LABEL_SET_NAME)
 	const rowOptions = { maxRowGroups: options.maxRowGroups, maxFieldChars: options.maxFieldChars }
 
@@ -194,32 +226,25 @@ export async function buildTWCorpus(options: TWCorpusOptions): Promise<Map<strin
 		)
 	}
 
-	const splits = new Map<string, unknown>()
+	const splits = new Map<string, CJKSplitReport>()
 
 	for (const [split, sourceRows] of [
 		["train", train],
 		["val", val],
 	] as const) {
-		await makeDirectories(resolvePath(outDir, split))
+		const report = await writeCJKSplit({
+			directory: resolvePath(outDir, split),
+			rows: sourceRows,
+			rowsPerPart: options.rowsPerPart,
+			encodePart: (rows) => rows.map(encode),
+			partPrefix: "tw-part",
+			context: "TW corpus assembly",
+			statsSample: { kind: CJKStatsSample.FirstOfEachPart, rows: options.statsSamplePerPart },
+		})
 
-		const statsInput: CJKRecord[] = []
-		let part = 0
-		let written = 0
+		splits.set(split, report)
 
-		for (let start = 0; start < sourceRows.length; start += options.rowsPerPart) {
-			const chunk = sourceRows.slice(start, start + options.rowsPerPart).map(encode)
-			const name = `tw-part-${String(part).padStart(4, "0")}.parquet`
-
-			await writeCJKCorpusParquet(chunk, resolvePath(outDir, split, name), "TW corpus assembly")
-
-			part++
-			written += chunk.length
-			statsInput.push(...chunk.slice(0, options.statsSamplePerPart))
-		}
-
-		splits.set(split, { rows: written, parts: part, coverage: coverageStats(statsInput) })
-
-		console.log(`${split}: ${written.toLocaleString("en-US")} rows in ${part} parts`)
+		console.log(`${split}: ${report.rows.toLocaleString("en-US")} rows in ${report.parts} parts`)
 	}
 
 	const boardRecords: CJKRecord[] = []
@@ -232,24 +257,21 @@ export async function buildTWCorpus(options: TWCorpusOptions): Promise<Map<strin
 		boardRecords.push(record)
 
 		boardLines.push(
-			pythonJSONDumps(
-				{
-					raw: record.raw,
-					span_starts: record.span_starts,
-					span_ends: record.span_ends,
-					span_tags: record.span_tags,
-					register: record.register,
-					region,
-					city: district,
-					district: village,
-					street,
-					number: houseNumber,
-					unit,
-					lon: asPythonFloat(lon),
-					lat: asPythonFloat(lat),
-				},
-				{ ensureASCII: false }
-			)
+			orderedJSON({
+				raw: record.raw,
+				span_starts: record.span_starts,
+				span_ends: record.span_ends,
+				span_tags: record.span_tags,
+				register: record.register,
+				region,
+				city: district,
+				district: village,
+				street,
+				number: houseNumber,
+				unit,
+				lon,
+				lat,
+			})
 		)
 	}
 
@@ -262,45 +284,37 @@ export async function buildTWCorpus(options: TWCorpusOptions): Promise<Map<strin
 	if (overlap.length) throw new Error(`board 鄉鎮市區 leak into train/val: ${overlap.slice(0, 5).join(", ")}`)
 
 	const centroids = new Map(
-		[...centroidSums]
-			.filter(([, sums]) => sums[2])
-			.map(([key, [lon, lat, n]]) => [key, [asPythonFloat(lon / n), asPythonFloat(lat / n)]])
+		[...centroidSums].filter(([, sums]) => sums[2]).map(([key, [lon, lat, n]]) => [key, [lon / n, lat / n]])
 	)
 
-	await writeLocalTextFile(
-		pythonJSONDumps(centroids, { ensureASCII: false }) + "\n",
-		resolvePath(outDir, "tw-district-centroids.json")
-	)
+	await writeLocalTextFile(orderedJSON(centroids) + "\n", resolvePath(outDir, "tw-district-centroids.json"))
 
 	const vocab = await sealCharVocab(outDir, "char-vocab-tw.json")
 
-	const report = new Map<string, unknown>([
-		["seed", options.seed],
-		["parquet", options.parquet.toString()],
-		["label_set", TW_LABEL_SET_NAME],
-		["source", TW_CORPUS_SOURCE],
-		["license", TW_LICENSE_STATEMENT],
-		["attribution", new Map(mostCommon(agencies))],
-		["eligible_rows_scanned", scanned],
-		["dropped_at_source", new Map(mostCommon(dropped))],
-		["per_region_cap", cap],
-		["regions_train", new Set(train.map((row) => row[0])).size],
-		["board_bucket_min", options.boardBucketMin],
-		["board_districts", boardUnits.size],
-		["board_rows", boardRecords.length],
-		["registers", new Map(mostCommon(registerCounts))],
-		["char_vocab_size", vocab.size],
-		["centroid_units", centroids.size],
-		["fractions", new Map([["country", asPythonFloat(options.countryFraction)]])],
-		["register_weights", new Map([...TW_REGISTER_WEIGHTS].map(([name, weight]) => [name, asPythonFloat(weight)]))],
-		["splits", splits],
-		["board_coverage", coverageStats(boardRecords)],
-	])
+	const report: TWCorpusReport = {
+		seed: options.seed,
+		parquet: options.parquet.toString(),
+		label_set: TW_LABEL_SET_NAME,
+		source: TW_CORPUS_SOURCE,
+		license: TW_LICENSE_STATEMENT,
+		attribution: new Map(mostCommon(agencies)),
+		eligible_rows_scanned: scanned,
+		dropped_at_source: new Map(mostCommon(dropped)),
+		per_region_cap: cap,
+		regions_train: new Set(train.map((row) => row[0])).size,
+		board_bucket_min: options.boardBucketMin,
+		board_districts: boardUnits.size,
+		board_rows: boardRecords.length,
+		registers: new Map(mostCommon(registerCounts)),
+		char_vocab_size: vocab.size,
+		centroid_units: centroids.size,
+		fractions: { country: options.countryFraction },
+		register_weights: new Map([...TW_REGISTER_WEIGHTS].map(([name, weight]) => [name, weight])),
+		splits,
+		board_coverage: coverageStats(boardRecords),
+	}
 
-	await writeLocalTextFile(
-		pythonJSONDumps(report, { indent: 2, ensureASCII: false }) + "\n",
-		resolvePath(outDir, "build-report.json")
-	)
+	await writeLocalTextFile(orderedJSON(report, { indent: "\t" }) + "\n", resolvePath(outDir, "build-report.json"))
 
 	return report
 }

@@ -6,15 +6,15 @@
  *   board, centroids and report the Python assembler wrote to `fixtures/builders/tw/tw-build-reference.json`.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-import { sortedGlob } from "#cjk/builder"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { readParquetRows } from "#parquet/readers"
+import { ReferenceFixture, expectSpanInvariants } from "#test-kit"
 import { buildTWCorpus } from "#tw/corpus/assemble"
 import { iterTWSourceRows, splitNumberUnit } from "#tw/corpus/rows"
 
@@ -95,7 +95,7 @@ async function rendered(directory: string): Promise<unknown[]> {
 }
 
 describe("the Taiwan corpus assembler", async () => {
-	const reference = await readLocalJSONFile<Reference>(REFERENCE)
+	const reference = await ReferenceFixture.read<Reference>(REFERENCE)
 
 	it("writes the Python assembler's rows, board, centroids and report from the same fixture and seed", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-tw-corpus-")
@@ -120,16 +120,18 @@ describe("the Taiwan corpus assembler", async () => {
 			force: true,
 		})
 
-		expect(await rendered(`${outDir}/train`)).toEqual(reference.train)
-		expect(await rendered(`${outDir}/val`)).toEqual(reference.val)
-		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/tw-board.jsonl`))).toEqual(reference.board)
-		expect(await readLocalJSONFile(`${outDir}/tw-district-centroids.json`)).toEqual(reference.centroids)
+		reference.expect("train", await rendered(`${outDir}/train`))
+		reference.expect("val", await rendered(`${outDir}/val`))
+		expectSpanInvariants([...(await rendered(`${outDir}/train`)), ...(await rendered(`${outDir}/val`))])
+		reference.expect("board", await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/tw-board.jsonl`)))
+		reference.expect("centroids", await readLocalJSONFile(`${outDir}/tw-district-centroids.json`))
 
 		const report = await readLocalJSONFile<Record<string, unknown>>(`${outDir}/build-report.json`)
 
 		delete report["parquet"]
 
-		expect(report).toEqual(reference.report)
+		reference.expectReport("report", report)
+		await reference.save()
 	})
 
 	it("moves a sub-number from the unit onto the number", () => {
@@ -144,5 +146,26 @@ describe("the Taiwan corpus assembler", async () => {
 		const missing = scratch.path("addresses-tw.parquet").toString()
 
 		await expect(iterTWSourceRows(missing).next()).rejects.toThrow(missing)
+	})
+
+	it("refuses a row with no longitude rather than placing it at the origin", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-tw-corpus-")
+		const path = scratch.path("addresses-tw.parquet").toString()
+
+		using db = await openDuckDB()
+
+		await db.run(
+			"CREATE TABLE source (address_levels STRUCT(value VARCHAR)[], street VARCHAR, number VARCHAR, unit VARCHAR, " +
+				"lon DOUBLE, lat DOUBLE, sources STRUCT(dataset VARCHAR)[])"
+		)
+
+		await db.run(
+			"INSERT INTO source VALUES ([{'value': '臺北市'}, {'value': '中正區'}, {'value': '黎明里'}], " +
+				"'重慶南路一段', '122號', '', NULL, 25.04, [])"
+		)
+
+		await db.run(`COPY source TO ${sqlString(path)} (FORMAT parquet)`)
+
+		await expect(iterTWSourceRows(path).next()).rejects.toThrow(/lon is null, not a finite number/u)
 	})
 })

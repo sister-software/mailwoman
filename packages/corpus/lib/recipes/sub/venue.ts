@@ -14,6 +14,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { upperFirst } from "@mailwoman/normalize/case"
 import type { PathBuilderLike } from "path-ts"
 
+import { houseVenueTuplesPath } from "#recipes/house-venue-tuples"
 import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { buildStreetNegatives, loadContextTuples, type StreetNegatives } from "#recipes/sub/venue/context"
@@ -308,13 +309,6 @@ export function buildSubVenueForm(
 		designatorID: promotedSurface.designatorID,
 	}
 }
-
-/**
- * An alias of {@link buildSubVenueForm}.
- *
- * @deprecated Use {@link buildSubVenueForm}.
- */
-export const buildPositiveForms = buildSubVenueForm
 
 // #endregion
 
@@ -763,7 +757,7 @@ export const subVenueRecipe: CorpusRecipe = {
 		const negativeFraction = opts.negativeFraction ?? DEFAULT_NEGATIVE_FRACTION
 		const extractsDir = opts.extractsDir ?? dataRootPath("sub-venue", "extracts")
 		const venueNames = opts.venueNames ?? DEFAULT_VENUE_NAMES
-		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v6.jsonl")
+		const tuplesPath = opts.subVenueTuples ?? houseVenueTuplesPath()
 		const lexicon: SubVenueLexiconTable = await readSubVenueLexicon(opts.lexicon ?? defaultLexiconPath())
 
 		const context: EmitContext = {

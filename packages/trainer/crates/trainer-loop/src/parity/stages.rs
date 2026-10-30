@@ -424,6 +424,7 @@ fn stage6(
 		&checkpoint_extras(step, &run.config, encoder.vocab_size),
 		Some(optim),
 		Some(scheduler),
+		&[],
 	)?;
 	// A later directory without `training_state.json` is an interrupted save, which the resume passes over.
 	std::fs::create_dir_all(dir.join("step-999999"))?;

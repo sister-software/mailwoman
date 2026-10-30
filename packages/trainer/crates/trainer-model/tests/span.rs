@@ -1,5 +1,5 @@
 //! The span scorer's gold segmentation, partition function and gold path score, on small inputs whose answers are
-//! enumerated by hand, as `tests/mailwoman_train/nn/test_span_scorer.py` checks the Python module.
+//! enumerated by hand, as the Python trainer's span-scorer test checked its module.
 
 use tch::{Device, Kind, Tensor};
 use trainer_export::span::segment_types;

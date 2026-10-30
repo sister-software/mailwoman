@@ -12,10 +12,10 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { pyFixed } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { JSONSpliterator } from "spliterator"
 
 import {
@@ -70,10 +70,11 @@ const fit = fitAndMeasure(records, {
 	permutation: recorded ?? seededPermutation(seed, records.length),
 })
 
-await writeLocalTextFile(pythonJSONDumps(buildPayload(options, fit), { indent: 2 }) + "\n", values.out)
+await writeLocalTextFile(orderedJSON(buildPayload(options, fit), { indent: "\t" }) + "\n", values.out)
 
 const m = fit.metrics
-const f = (x: { value: number }) => pyFixed(x.value, 4)
+// A subgroup with no evaluation record has a null metric, printed as a dash.
+const f = (x: number | null) => (x == null ? "—" : pyFixed(x, 4))
 
 console.log(`wrote calibration table → ${values.out}`)
 console.log(`  ECE eval: raw ${f(m.ece_raw_eval)} → cal ${f(m.ece_cal_eval)}   (target <0.05)`)

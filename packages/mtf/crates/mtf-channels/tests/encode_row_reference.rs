@@ -34,8 +34,8 @@ fn strings(v: &Value) -> Vec<String> {
 }
 
 fn finders() -> RegexFinders {
-	let shapes = "../../../../corpus-python/src/mailwoman_train/features/postcode-shapes.json";
-	let syntax = "../../../../corpus-python/src/mailwoman_train/data/postcode-syntax.json";
+	let shapes = "../../../../packages/trainer/data/postcode-shapes.json";
+	let syntax = "../../../../packages/trainer/data/postcode-syntax.json";
 	RegexFinders {
 		shapes: PostcodeShapes::from_record(&read(shapes), shapes).unwrap(),
 		syntax: PostcodeSyntax::from_json(&read(syntax), syntax).unwrap(),
@@ -177,21 +177,21 @@ fn check(case: &str) {
 }
 
 #[test]
-fn the_token_label_source_matches_python() {
+fn the_token_label_source_matches_the_record() {
 	check("tokens");
 }
 
 #[test]
-fn the_span_label_source_matches_python() {
+fn the_span_label_source_matches_the_record() {
 	check("spans");
 }
 
 #[test]
-fn the_shaped_anchor_matches_python() {
+fn the_shaped_anchor_matches_the_record() {
 	check("shaped_anchor");
 }
 
 #[test]
-fn a_row_without_channels_matches_python() {
+fn a_row_without_channels_matches_the_record() {
 	check("no_channels");
 }

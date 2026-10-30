@@ -11,8 +11,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { appendLocalTextFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
+import { appendLocalTextFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 
 /**
  * The prefix a worker puts on a batch id to leave the batch pending.
@@ -86,20 +86,17 @@ export class DeepSeekSink {
 	}
 
 	/**
-	 * Appends canonical rows, one `json.dumps(row, ensure_ascii=False)` line each.
+	 * Appends canonical rows, one JSON line each.
 	 */
 	writeRows(rows: readonly unknown[]): Promise<void> {
-		return this.#append(
-			this.canonicalPath,
-			rows.map((row) => pythonJSONDumps(row, { ensureASCII: false }) + "\n").join("")
-		)
+		return this.#append(this.canonicalPath, rows.map((row) => orderedJSON(row) + "\n").join(""))
 	}
 
 	/**
 	 * Appends the raw response entry of one request, so a row can be traced to the call that produced it.
 	 */
 	writeResponse(entry: Record<string, unknown>): Promise<void> {
-		return this.#append(this.rawLogPath, pythonJSONDumps(entry, { ensureASCII: false }) + "\n")
+		return this.#append(this.rawLogPath, orderedJSON(entry) + "\n")
 	}
 
 	/**
@@ -131,11 +128,10 @@ export async function loadCheckpoint(path: string, log: (line: string) => void =
 }
 
 /**
- * Writes the checkpoint as `json.dumps({"done": sorted(done)})`.
+ * Writes the checkpoint: the completed batch ids, sorted.
  */
 async function writeCheckpoint(path: string, done: ReadonlySet<string>): Promise<void> {
-	// Batch ids are ASCII, so the default sort is Python's `sorted`.
-	await writeLocalTextFile(pythonJSONDumps({ done: [...done].toSorted() }), path)
+	await writeLocalJSONFile({ done: [...done].toSorted() }, path)
 }
 
 /**

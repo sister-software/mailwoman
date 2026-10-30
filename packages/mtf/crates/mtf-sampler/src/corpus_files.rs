@@ -270,10 +270,17 @@ fn deletion_ids(deletion: &Value, corpus_dir: &Path, config: &SamplerConfig) -> 
 	let inline = deletion.get("source_ids").filter(|v| !v.is_null());
 	let sidecar = deletion.get("source_ids_file").filter(|v| !v.is_null());
 	match (inline, sidecar) {
-		(Some(ids), None) => Ok(ids
+		// A non-array, or an entry that is not a string, would otherwise read as fewer deletions than the manifest lists.
+		(Some(ids), None) => ids
 			.as_array()
-			.map(|a| a.iter().filter_map(Value::as_str).map(Into::into).collect())
-			.unwrap_or_default()),
+			.ok_or_else(|| Error::Input(format!("MANIFEST deletion source_ids is {ids}, not an array")))?
+			.iter()
+			.map(|id| {
+				id.as_str()
+					.map(Into::into)
+					.ok_or_else(|| Error::Input(format!("MANIFEST deletion source_ids holds {id}, not a string")))
+			})
+			.collect(),
 		(None, Some(sidecar)) => {
 			let raw = str_field(sidecar, "path")
 				.ok_or_else(|| Error::Input("MANIFEST deletion sidecar has no path".into()))?;
@@ -384,19 +391,26 @@ fn split_attribute(entry: &Value, corpus_dir: &Path, config: &SamplerConfig) -> 
 /// The directory-glob listing of a corpus with no manifest file list, each file verified against its record.
 fn glob_split(corpus_dir: &Path, split: &str, config: &SamplerConfig) -> Result<Vec<PathBuf>> {
 	let dir = corpus_dir.join(split);
-	let mut paths: Vec<PathBuf> = match std::fs::read_dir(&dir) {
+	// A missing directory lists no file and is refused below with the corpus's own message. Any other failure to read
+	// the directory or one of its entries is reported, because a partial listing would sample from fewer files.
+	let entries = match std::fs::read_dir(&dir) {
 		Ok(entries) => entries
-			.filter_map(|e| e.ok().map(|e| e.path()))
-			.filter(|p| {
-				let name = p
-					.file_name()
-					.map(|n| n.to_string_lossy().into_owned())
-					.unwrap_or_default();
-				!name.starts_with('.') && name.ends_with(".parquet")
-			})
-			.collect(),
-		Err(_) => Vec::new(),
+			.map(|entry| entry.map(|e| e.path()))
+			.collect::<std::io::Result<Vec<_>>>()
+			.map_err(|e| Error::Input(format!("{}: {e}", dir.display())))?,
+		Err(e) if e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+		Err(e) => return Err(Error::Input(format!("{}: {e}", dir.display()))),
 	};
+	let mut paths: Vec<PathBuf> = entries
+		.into_iter()
+		.filter(|p| {
+			let name = p
+				.file_name()
+				.map(|n| n.to_string_lossy().into_owned())
+				.unwrap_or_default();
+			!name.starts_with('.') && name.ends_with(".parquet")
+		})
+		.collect();
 	paths.sort();
 	if paths.is_empty() {
 		return Err(Error::Input(format!(
@@ -551,28 +565,72 @@ pub fn corpus_split_files(config: &SamplerConfig, split: &str) -> Result<Vec<Cor
 /// A null `source` among the admitted rows is an error: the known cause is a label-less golden file listed as a
 /// training file.
 pub fn file_source_counts(file: &CorpusFile) -> Result<Vec<(String, u64)>> {
-	let key = (
-		file.path.clone(),
-		file.filter.as_ref().map_or(0, |f| Arc::as_ptr(f) as usize),
-	);
+	let key = CountsKey::of(file);
 	if let Some(found) = counts_cache().lock().expect("not poisoned").get(&key) {
-		return found.clone();
+		return Ok(found.clone());
 	}
-	let counted = count_sources(file);
+	let counted = count_sources(file)?;
 	counts_cache()
 		.lock()
 		.expect("not poisoned")
 		.insert(key, counted.clone());
-	counted
+	Ok(counted)
 }
 
 /// One file's rows per source in first-appearance order, or the failure to count them.
 pub type SourceCounts = Result<Vec<(String, u64)>>;
 
-type CountsCache = FxHashMap<(PathBuf, usize), SourceCounts>;
+/// A file's path and the id sets its filter reads.
+///
+/// Each listing builds a new `RowFilter`, but its id sets are shared `Arc`s from the split-attribute cache, so two
+/// listings with the same split share them. The key holds those `Arc`s, which keeps each set's address unique while
+/// its entry exists, and compares them by address, so equal sets are recognized without hashing their ids.
+struct CountsKey {
+	path: PathBuf,
+	keep: Option<Arc<IdSet>>,
+	drop: Vec<Arc<IdSet>>,
+}
 
-/// Source counts computed in this process, keyed by path and filter identity. The filter's `Arc` is held by the
-/// listing for the life of the process, through the attribute cache, so its address is not reused.
+impl CountsKey {
+	fn of(file: &CorpusFile) -> Self {
+		let (keep, drop) = file
+			.filter
+			.as_ref()
+			.map_or((None, Vec::new()), |filter| (filter.keep.clone(), filter.drop.clone()));
+		Self {
+			path: file.path.clone(),
+			keep,
+			drop,
+		}
+	}
+
+	fn addresses(&self) -> (Option<*const IdSet>, Vec<*const IdSet>) {
+		(
+			self.keep.as_ref().map(Arc::as_ptr),
+			self.drop.iter().map(Arc::as_ptr).collect(),
+		)
+	}
+}
+
+impl PartialEq for CountsKey {
+	fn eq(&self, other: &Self) -> bool {
+		self.path == other.path && self.addresses() == other.addresses()
+	}
+}
+
+impl Eq for CountsKey {}
+
+impl std::hash::Hash for CountsKey {
+	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+		self.path.hash(state);
+		self.addresses().hash(state);
+	}
+}
+
+/// Counts are cached only when they succeed, so a failed read is retried rather than replayed for the process.
+type CountsCache = FxHashMap<CountsKey, Vec<(String, u64)>>;
+
+/// Source counts computed in this process, keyed by path and the id sets the file's filter reads.
 fn counts_cache() -> &'static Mutex<CountsCache> {
 	static CACHE: OnceLock<Mutex<CountsCache>> = OnceLock::new();
 	CACHE.get_or_init(Default::default)

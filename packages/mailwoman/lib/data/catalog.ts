@@ -26,7 +26,7 @@ import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import type { Dirent } from "@mailwoman/core/fs/readers"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { movePath, stagingSiblingPath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFileAtomically } from "@mailwoman/core/fs/writers"
 import { JSONParseError } from "@mailwoman/core/json"
 import {
 	type ActiveSelection,
@@ -44,6 +44,7 @@ import {
 	selectedSources,
 	type SelectionEntry,
 	type SelectionScope,
+	selectionScopesOf,
 	type ServingRole,
 	type UncheckedActiveSelection,
 	UnreadableArtifactError,
@@ -94,18 +95,6 @@ async function readRecord<T>(path: PathBuilderLike): Promise<T | null> {
 }
 
 /**
- * Write a JSON record so a reader sees the old record or the new one, never a partial one.
- *
- * The record is written beside its destination and renamed over it, on the destination's filesystem.
- */
-export async function writeRecordAtomically(record: unknown, destination: PathBuilderLike): Promise<void> {
-	const staging = stagingSiblingPath(destination)
-
-	await writeLocalJSONFile(record as Record<string, unknown>, staging)
-	await movePath(staging, destination)
-}
-
-/**
  * The installation records under the data root.
  *
  * @throws {@link UnreadableArtifactError} when a record exists and cannot be read
@@ -148,7 +137,7 @@ export async function writeInstallation(dataRoot: PathBuilderLike, installation:
 
 	if (await tryStat(destination)) return
 
-	await writeRecordAtomically(installation, destination)
+	await writeLocalJSONFileAtomically(installation, destination)
 }
 
 /**
@@ -260,9 +249,12 @@ export class LayerCatalog {
 	/**
 	 * The selected sources for a role and scope, in order, each resolved to its file.
 	 *
-	 * A source whose installation record or file is missing is absent, and the next one is consulted.
-	 * A file present with a size other than its manifest records, or a manifest that
-	 * cannot be read, is unreadable and raises an error.
+	 * A source whose installation record or file is missing is skipped,
+	 * so the next source the selection names answers.
+	 * When every named source is missing, the call raises rather than answering with none, because an
+	 * empty answer would send the caller to its conventional path, a layer the selection did not choose.
+	 *
+	 * A file whose size differs from its manifest, or a manifest that cannot be read, always raises.
 	 *
 	 * @throws {@link UnreadableArtifactError} naming the artifact's path.
 	 */
@@ -270,14 +262,19 @@ export class LayerCatalog {
 		if (!this.selection) return []
 
 		const resolved: ResolvedSource[] = []
+		let missing: UnreadableArtifactError | null = null
 
 		for (const source of selectedSources(this.selection, role, scope)) {
 			const found = await this.#resolveSource(source)
 
-			if (found) {
+			if (found instanceof UnreadableArtifactError) {
+				missing ??= found
+			} else {
 				resolved.push(found)
 			}
 		}
+
+		if (missing && !resolved.length) throw missing
 
 		return resolved
 	}
@@ -289,7 +286,11 @@ export class LayerCatalog {
 	 * providers of one role, such as a national register and an OpenStreetMap build,
 	 * each read their own sources in the entry's order.
 	 * Absent, every source is read.
-	 * @throws {@link UnreadableArtifactError} when an installed source before the answer is unreadable.
+	 * A named source whose record or file is missing is skipped.
+	 * `null` means no named source was missing and none was accepted,
+	 * which leaves the caller its conventional path.
+	 * @throws {@link UnreadableArtifactError} when a named source before the answer is unreadable,
+	 * or when no source answered and one was missing, since the missing source may have been the answer.
 	 */
 	async firstPath(
 		role: ServingRole,
@@ -298,25 +299,52 @@ export class LayerCatalog {
 	): Promise<string | null> {
 		if (!this.selection) return null
 
+		let missing: UnreadableArtifactError | null = null
+
 		for (const source of selectedSources(this.selection, role, scope)) {
 			const found = await this.#resolveSource(source)
 
-			if (found && (!accept || accept(found.manifest))) return found.path
+			if (found instanceof UnreadableArtifactError) {
+				missing ??= found
+			} else if (!accept || accept(found.manifest)) return found.path
 		}
+
+		if (missing) throw missing
 
 		return null
 	}
 
-	async #resolveSource(source: SelectedSource): Promise<ResolvedSource | null> {
+	/**
+	 * Resolves a source the selection names, or returns the error that describes its absence.
+	 *
+	 * A missing installation record or file is returned rather than thrown, so the caller
+	 * can try the selection's next source and raise only when none answers.
+	 *
+	 * @throws {@link UnreadableArtifactError} when the file is present and its manifest
+	 * is absent or does not identify it, or its size differs from the manifest's.
+	 */
+	async #resolveSource(source: SelectedSource): Promise<ResolvedSource | UnreadableArtifactError> {
 		const installation = this.installations.get(source.installationID)
 		const artifact = installation?.artifacts.find((candidate) => candidate.artifactID === source.artifactID)
 
-		if (!artifact) return null
+		if (!artifact) {
+			return new UnreadableArtifactError(
+				catalogPaths(this.dataRoot).installations(`${source.installationID}.json`).toString(),
+				UnreadableReason.Unmanifested,
+				`the selection names artifact ${source.artifactID} of installation ${source.installationID}, and no installation record lists it`
+			)
+		}
 
 		const path = resolvePath(this.dataRoot, artifact.path)
 		const stats = await tryStat(path)
 
-		if (!stats) return null
+		if (!stats) {
+			return new UnreadableArtifactError(
+				path,
+				UnreadableReason.Unopenable,
+				`the selection names artifact ${source.artifactID}, and its file is missing`
+			)
+		}
 
 		const directory = resolvePath(path, "..")
 		let manifest = this.#manifests.get(directory)
@@ -442,7 +470,7 @@ export async function replaceActiveSelection(
 	options: SelectionWriteOptions = {}
 ): Promise<ActiveSelection> {
 	const now = options.now ?? (() => new Date())
-	const writeRecord = options.writeRecord ?? writeRecordAtomically
+	const writeRecord = options.writeRecord ?? writeLocalJSONFileAtomically
 	const root = resolvePath(dataRoot.toString())
 	const paths = catalogPaths(root)
 
@@ -491,7 +519,7 @@ export interface SelectionWriteOptions {
 	/**
 	 * Writes one record atomically.
 	 *
-	 * Defaults to {@link writeRecordAtomically}.
+	 * Defaults to {@link writeLocalJSONFileAtomically}.
 	 * A test passes a writer that fails on `active.json` to check that the previous generation survives.
 	 */
 	writeRecord?: (record: unknown, destination: PathBuilderLike) => Promise<void>
@@ -528,19 +556,9 @@ export async function activateInstallation(
 			throw new ActiveSelectionError("activation", [`${artifact.path} has no manifest`])
 		}
 
-		const subdivision = manifest.scope.subdivisions?.[0] ?? null
-
-		const country = subdivision
-			? subdivision.slice(0, 2)
-			: manifest.scope.countries.length === 1
-				? (manifest.scope.countries[0] ?? null)
-				: null
-
-		set.push({
-			role: manifest.role,
-			scope: { country, subdivision },
-			order: [{ installationID, artifactID: artifact.artifactID }],
-		})
+		for (const scope of selectionScopesOf(manifest.scope)) {
+			set.push({ role: manifest.role, scope, order: [{ installationID, artifactID: artifact.artifactID }] })
+		}
 	}
 
 	const current = await readActiveSelection(root)

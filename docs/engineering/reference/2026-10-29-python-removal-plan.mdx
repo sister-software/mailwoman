@@ -3,7 +3,7 @@ title: Python removal plan — porting corpus-python to TypeScript and Rust with
 role: reference
 audience: maintainer
 owner: model
-source-of-truth: corpus-python/src/mailwoman_train
+source-of-truth: packages/trainer
 tags:
   - model
   - training
@@ -22,6 +22,14 @@ Every claim below is tagged **observed** (read from the tree at `9a2220290`, the
 2026-10-29, or from a tool result on that date), **inferred**, **decided** (a choice this plan makes that the
 operator may override) or **unknown**. Where the issue corrects the earlier host-local draft, this document records
 the correction and the source that confirms it.
+
+**Status on 2026-10-30 (#2879).** The tree holds no tracked Python file: `corpus-python/` and `mtf-py` are deleted
+(T39), the trainer is `packages/trainer`, the launcher is `packages/mailwoman/tools/training/launch/` (T38), and CI
+runs a `rust` job in place of `python` (T40). The affix and dependent-locality heads and `inject_first_token` are
+retired rather than exported (T34). The 2,000-step CUDA probe ran on the Rust trainer (T37), and the 90,000-step run
+is deferred (T36, decision D1). Each phase section below records the tree as of that phase's work, so a sentence there
+that says a Python file is kept, or that a step is unrun, describes that date. The notes marked "2026-10-30" point to
+what replaced it.
 
 ## 1. Inventory
 
@@ -141,7 +149,7 @@ exposes the trainer is **unknown** until Phase 0 reads `sentencepiece-sys`.
 | Python                                                                                                                                                                     | Destination                                                                                                                                                                                                                      | Interface the consumers use                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `labels.py`, `semantic_tags.py`, `address_systems.py`, `features/phrase_priors.py`, `types.py`                                                                             | `packages/neural/lib/labels.ts` (every label set, BIO expansion, semantic mapping, `LOCALE_COUNTRIES`, `IGNORE_INDEX`). `packages/codex` keeps the address-system registry with append-only IDs                                  | `packages/neural/tools/labels/emit-label-schema.run.ts` writes `packages/neural/data/label-schema.v1.json`, read by `mtf-channels` and the trainer. A vitest pins the JSON to the TS constants                                                                                                                                                                                                                                                                                                          |
-| `config/schema.py`, `config/load.py`, 148 YAML files                                                                                                                       | `packages/corpus/lib/training/config/{schema,load}.ts` (zod). YAMLs move to `packages/corpus/data/training-configs/`                                                                                                             | `mailwoman train config resolve <yaml> --out resolved.json` writes a versioned resolved config (`schema_version`, every default applied, paths absolute, source admission result embedded) that the Rust sampler and trainer read. `scope.config.json` and `packages/core/lib/scope-config.ts` repoint to the new directory                                                                                                                                                                             |
+| `config/schema.py`, `config/load.py`, 268 YAML files                                                                                                                       | `packages/corpus/lib/training/config/{schema,load,admission,resolved}.ts` (zod). YAMLs move to `packages/corpus/data/training-configs/`                                                                                          | `mailwoman train config resolve <yaml> --out resolved.json` writes a versioned resolved config (`schema_version`, every default applied, paths absolute, source admission result embedded) that the Rust sampler and trainer read. `scope.config.json` and `packages/core/lib/scope-config.ts` repoint to the new directory                                                                                                                                                                             |
 | `source_rights.py`                                                                                                                                                         | `packages/corpus/lib/source-register/corpus-inputs.ts`                                                                                                                                                                           | `admitSources(config)` returns the admitted set, the gaps, provenance and the `unshippable_reason` behavior. Every Python consumer in §1.2 is replaced by a TS consumer that calls it, and the config resolver embeds the result                                                                                                                                                                                                                                                                        |
 | `countries/{jp,kr,tw,cjk}`, `countries/{gb,fr,us}/tuples.py`, `countries/de/fragment_board.py`                                                                             | `packages/corpus/lib/<cc>/recipes/` and `packages/corpus/lib/cjk/`. The DE board goes to `packages/mailwoman/tools/eval-harness/de/fragment-board.ts`                                                                            | `mailwoman corpus build --recipe <id>`                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `corpora/{fragment,secondary,builder,registry,house_venue_tuples,address_points,sample_raws}.py`, `corpora/deepseek/`                                                      | `packages/corpus/lib/recipes/fragment/`, `recipes/secondary.ts`, `recipes/house-venue-tuples.ts`. `deepseek/` becomes `packages/corpus/sdk/deepseek/` (it fetches generated rows from an external service, so it is acquisition) | recipe ids in the corpus registry                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -202,7 +210,7 @@ how it is verified.
 | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Model-input tensors from the sampler and encoder on the C6 and code-unit configs | Names, shapes, dtypes, batch boundaries, little-endian bytes, emitted row identity sequence                                                                                                                                                                                                                                                                                   | No deliberate change: the TS output equals the Python output on each listed field                                                                                      | The nine existing `encoder-parity` records (113,920 rows, **observed** in `docs/engineering/reference/training-row-encoder.mdx`) plus new records for augmentation paths and the char path, at 0 differing rows |
 | Corpus outputs of the JP, KR, TW, CJK, fragment and secondary builders           | Schema, ordered logical rows, labels, code-point offsets, provenance block, manifest invariants, split and admission rules                                                                                                                                                                                                                                                    | Parquet compression and footer metadata (the writer differs). Logical rows are compared, physical bytes are left aside                                                 | Row-hash sequence over a canonical JSON serialization (§3.1) against the Phase 0 record and the existing `*-reference.json` files                                                                               |
-| Resolved configuration                                                           | Values, defaults, coercions, validation failures that identify the key, iteration order of `source_weights` and `country_weights`                                                                                                                                                                                                                                             | Serialization format (YAML dataclass dump → versioned JSON)                                                                                                            | 148-config dump comparison and the `NO` key refusal                                                                                                                                                             |
+| Resolved configuration                                                           | Values, defaults, coercions, validation failures that identify the key, iteration order of `source_weights` and `country_weights`                                                                                                                                                                                                                                             | Serialization format (YAML dataclass dump → versioned JSON)                                                                                                            | dump comparison over every committed config and the `NO` key refusal                                                                                                                                            |
 | Source admission                                                                 | Permission set (`transform`, `train`), source enumeration, gaps, provenance records, `unshippable_reason` behavior                                                                                                                                                                                                                                                            | No deliberate change: the TS output equals the Python output on each listed field                                                                                      | `corpus-inputs.ts` tested against every Python consumer's fixtures in `corpus-python/tests/mailwoman_train/test_source_rights.py`                                                                               |
 | Deterministic evaluation (golden set, JP probe board, metrics)                   | Per-row predictions and integer counts (TP, FP, FN per tag) before rounding                                                                                                                                                                                                                                                                                                   | No deliberate change: the TS output equals the Python output on each listed field                                                                                      | Per-row diff, then integer counts, then rounded F1                                                                                                                                                              |
 | Calibration fit                                                                  | The PAV lookup table (exact arithmetic over sorted means)                                                                                                                                                                                                                                                                                                                     | The held-out permutation: NumPy's PCG64 `permutation` is replaced by a recorded permutation file for the existing artifacts and a documented TS generator for new ones | Table equality on the recorded permutation. A new permutation is a new fit with its own report                                                                                                                  |
@@ -231,7 +239,7 @@ arrays, so a mismatch report identifies the first differing row, field, tensor o
 | `aug-splice-5k`, `aug-postcode-move-5k`, `aug-grouping-5k`, `relabel-5k` | `encoder_parity capture` with the matching config overrides                                | each augmentation and relabel path                                                                                                                    |
 | `char-v8-cjk-regs-5k`                                                    | `encoder_parity capture` after the reader accepts `char_mode != "off"` with no tokenizer   | the character path                                                                                                                                    |
 | `builders/<recipe>/record.json`                                          | each assembler on fixed inputs                                                             | JP, KR, TW, CJK overlay, fragment, secondary, house-venue, DE board, JP probe corpora                                                                 |
-| `configs/resolved.json`                                                  | `config/load.py` over the 148 YAMLs                                                        | resolved configuration                                                                                                                                |
+| `configs/resolved.json`                                                  | `config/load.py` over the 268 YAMLs                                                        | resolved configuration                                                                                                                                |
 | `audits/<name>/receipt.json`                                             | each audit on the C6 config                                                                | audit receipts                                                                                                                                        |
 | `exposure/exposure.json`, `release-check cases`                          | exposure CLI                                                                               | exposure                                                                                                                                              |
 | `calibration/permutation.json`                                           | `np.random.default_rng(seed).permutation(n)` for the seeds in the committed reports        | held-out split                                                                                                                                        |
@@ -300,13 +308,13 @@ run. None runs as part of this plan's commit.
 
 | Id  | Check                                    | Must demonstrate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Spend                                                     |
 | --- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| F1  | `tch-rs` runtime                         | A `tch` version whose libtorch matches `torch==2.12.0`, or a recorded decision to upgrade. A CPU build on the lab host. Forward and backward of one pre-norm block with `MultiheadAttention`, `LayerNorm`, GELU. AdamW and a `LambdaLR`-equivalent schedule. A CUDA image build with its build minutes and size. **Result (observed 2026-10-29):** no `tch` release links 2.12, so `tch` 0.26.0 and libtorch 2.13.0 run against a torch 2.13.0 reference; the block, AdamW and the schedule are bit-identical on the lab CPU. The CUDA image (`trainer_image("cu130")` in `corpus-python/launch/app.py`, libtorch `2.13.0+cu130` and torch 2.13.0+cu130's CUDA wheels) built on Modal on 2026-10-29: about 134 s of layer build time, 4,910 MB. See §4.2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | image build on Modal: **spend** (approval). Lab CPU: none |
-| F2  | Python-free ONNX export and quantization | A hand-written opset-17 graph writer (`prost`) for the reference checkpoint that `onnxruntime-node` 1.30.0 loads. Inputs, outputs and dynamic axes equal to the pinned exporter's. Logits within 1e-4 on the 1,000-sample probe. An int8 graph reproducing `quantize_dynamic(QInt8)` within 1e-3 and passing the stale-`value_info` case. The browser SLO suite `packages/neural/lib/web/browser-slo.integration.test.ts` on the new artifact. The WebGPU constraint checked on a real iOS device before any promotion (per the image comment in `corpus-python/launch/app.py`). **Result (observed 2026-10-29):** met on both checkpoints, the int8 graphs equal to `quantize_dynamic`'s on every probe element; the iOS device check was not run. See §4.1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | none                                                      |
+| F1  | `tch-rs` runtime                         | A `tch` version whose libtorch matches `torch==2.12.0`, or a recorded decision to upgrade. A CPU build on the lab host. Forward and backward of one pre-norm block with `MultiheadAttention`, `LayerNorm`, GELU. AdamW and a `LambdaLR`-equivalent schedule. A CUDA image build with its build minutes and size. **Result (observed 2026-10-29):** no `tch` release links 2.12, so `tch` 0.26.0 and libtorch 2.13.0 run against a torch 2.13.0 reference. The block, AdamW and the schedule are bit-identical on the lab CPU. The CUDA image (`trainer_image("cu130")` in `corpus-python/launch/app.py`, libtorch `2.13.0+cu130` and torch 2.13.0+cu130's CUDA wheels) built on Modal on 2026-10-29: about 134 s of layer build time, 4,910 MB. See §4.2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | image build on Modal: **spend** (approval). Lab CPU: none |
+| F2  | Python-free ONNX export and quantization | A hand-written opset-17 graph writer (`prost`) for the reference checkpoint that `onnxruntime-node` 1.30.0 loads. Inputs, outputs and dynamic axes equal to the pinned exporter's. Logits within 1e-4 on the 1,000-sample probe. An int8 graph reproducing `quantize_dynamic(QInt8)` within 1e-3 and passing the stale-`value_info` case. The browser SLO suite `packages/neural/lib/web/browser-slo.integration.test.ts` on the new artifact. The WebGPU constraint checked on a real iOS device before any promotion (per the image comment in `corpus-python/launch/app.py`). **Result (observed 2026-10-29):** met on both checkpoints, the int8 graphs equal to `quantize_dynamic`'s on every probe element. The iOS device check was not run. See §4.1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | none                                                      |
 | F3  | Node sampler binding                     | `mtf-node` (napi-rs) builds with the pinned toolchain, opens a parquet manifest, streams rows with bounded memory (RSS recorded over 100k rows), and matches `c6-train-2k`. The browser `mtf.wasm` is unchanged in size and dependencies. **Passed 2026-10-29** (§2.1): `c6-train-2k` at 0 differing rows, RSS 1,955 → 1,988 MB from 10k to 90k rows                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | none                                                      |
-| F4  | TypeScript launcher lifecycle            | Through the `modal` npm SDK (Sandboxes and calls to deployed Functions, where Python is the only Function runtime, **observed** in the SDK intro): CPU preflight writing the receipt and the GPU step refusing without it. Execution continuing after the client exits. GPU and resource overrides, secrets, an image built from a Dockerfile. Retries in fresh containers resuming from the newest complete checkpoint. A Volume written by one container readable from another. Status, logs, identifiers and dashboard links. Cancellation. Timeout. Duplicate-launch detection by output directory lock. A controlled failure (kill at step N), persisted checkpoint, restart and artifact recovery are run end to end on a small CPU job. If the SDK cannot provide a behavior, the orchestration moves to a Python-free alternative (a Rust `trainer` supervisor inside the Sandbox for retries and resume, and a TS poller for status) and the result is recorded. **Result (observed 2026-10-29), through the temporary Python shell-out rather than the SDK:** every listed behavior ran on a CPU job of the 200-step parity config; resume continues from the newest complete checkpoint but does not reproduce the uninterrupted `train_log.csv` after it. See "Phase 7 status" | CPU Sandbox minutes: **spend** (approval)                 |
+| F4  | TypeScript launcher lifecycle            | Through the `modal` npm SDK (Sandboxes and calls to deployed Functions, where Python is the only Function runtime, **observed** in the SDK intro): CPU preflight writing the receipt and the GPU step refusing without it. Execution continuing after the client exits. GPU and resource overrides, secrets, an image built from a Dockerfile. Retries in fresh containers resuming from the newest complete checkpoint. A Volume written by one container readable from another. Status, logs, identifiers and dashboard links. Cancellation. Timeout. Duplicate-launch detection by output directory lock. A controlled failure (kill at step N), persisted checkpoint, restart and artifact recovery are run end to end on a small CPU job. If the SDK cannot provide a behavior, the orchestration moves to a Python-free alternative (a Rust `trainer` supervisor inside the Sandbox for retries and resume, and a TS poller for status) and the result is recorded. **Result (observed 2026-10-29), through the temporary Python shell-out rather than the SDK:** every listed behavior ran on a CPU job of the 200-step parity config. Resume continues from the newest complete checkpoint but does not reproduce the uninterrupted `train_log.csv` after it. See "Phase 7 status" | CPU Sandbox minutes: **spend** (approval)                 |
 | F5  | Native SentencePiece                     | `spm_train` built from the `v0.2.2` tag reproduces the recorded tokenizer model hash on the recorded inputs with one thread. The Rust `sentencepiece` 0.14.0 crate's trainer exposure is checked. The proto writer round-trips the shipped model byte for byte                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | none                                                      |
 | F6  | Bounded CPython RNG                      | `pyrandom.rs` matches `cpython-random.json` for every method and seed form in §1.3, including string seeds and `_randbelow` rejection. The mixed-call sequence test (the JP assembler's draw order) matches                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | none                                                      |
-| F7  | Config resolver                          | The 148-config dump comparison and the `NO` key refusal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | none                                                      |
+| F7  | Config resolver                          | The dump comparison over every committed config and the `NO` key refusal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | none                                                      |
 
 ### 4.1 F2 result: the Rust exporter and quantizer
 
@@ -346,8 +354,14 @@ tokenizer. Every tenth probe is also run trimmed to its real length, so the `seq
 | fp32 argmax label agreement on real tokens              | 18,157 of 18,157               | 21,337 of 21,337               | not a threshold  |
 | int8 from the Rust graph and quantizer, every output    | 0 on every element             | 0 on every element             | 1e-3             |
 | Rust quantizer on the reference fp32: initializers      | 189 of 189 equal               | 189 of 189 equal               | none registered  |
-| Browser SLO suite on the Rust int8 (wasm arm), 11 tests | pass; p50 43.5 ms, p95 45.6 ms | pass; p50 43.7 ms, p95 45.4 ms | the suite        |
+| Browser SLO suite on the Rust int8 (wasm arm), 11 tests | pass. P50 43.5 ms, p95 45.6 ms | pass. P50 43.7 ms, p95 45.4 ms | the suite        |
 | WebGPU on a real iOS device                             | not run                        | not run                        | before promotion |
+
+The initializer row was re-measured on 2026-10-30 and recorded in
+`$MAILWOMAN_DATA_ROOT/audits/trainer-parity/quantizer-initializers/` (`record.json`, `FINDINGS.md`, one diff report
+per arm). en-us reproduces at 189 of 189. Arm B's reference fp32 graph is not on disk: the `model-fp32.onnx` beside
+its int8 was written later and its float initializers differ, so arm B's 189 of 189 rests on the 2026-10-29 run
+alone.
 
 The shipped en-us int8 measured 43.7 ms p50 and 46.1 ms p95 on the same host in the same session. The SLO suite
 has no WebGPU arm, so the WebGPU constraint is untested. The quantizer's unit tests cover the stale `value_info`
@@ -372,7 +386,8 @@ What does not match, and why:
    at `node_add_440`); the Rust graph computes it. The runtime feeds one row per run, so no served output changes.
 5. **Not built yet:** the char path's CharCNN, the span scorer's `span_scores`, the affix and dependent-locality
    heads, and `inject_first_token`. The exporter refuses each by name. The quantizer refuses `Conv`, `Attention`,
-   `LSTM`, `EmbedLayerNormalization` and subgraphs, which onnxruntime would quantize.
+   `LSTM`, `EmbedLayerNormalization` and subgraphs, which onnxruntime would quantize. (2026-10-30: the CharCNN, the
+   span scores and the `Conv` rule are built. The heads and `inject_first_token` are retired, #2879 T34.)
 
 The Rust export took 0.49 s and 0.57 s with peak RSS 246 MB and 322 MB, and quantization 0.48 s and 0.64 s. The Python
 export was not timed. The shipped artifacts and the Python export path are unchanged.
@@ -389,10 +404,10 @@ separate environment, so the language comparison is same-runtime. The repository
 upgrade is made as its own change with its own export and runtime checks (§3.3).
 
 **Download and build.** `libtorch-shared-with-deps-2.13.0+cpu.zip` is 126,385,248 bytes (SHA-256
-`edbf4cbed78433d803e90a65f1752e57783d164bce66c95c0872b2ab8f5c159e`) and 479 MB unpacked; it downloaded in 63 s. The
+`edbf4cbed78433d803e90a65f1752e57783d164bce66c95c0872b2ab8f5c159e`) and 479 MB unpacked. It downloaded in 63 s. The
 build reads it from `LIBTORCH`. A cold release build of `trainer-cli` into an empty target directory (164 crates,
 including `torch-sys`'s C++ wrapper and the shim, with the crate sources already downloaded) took 1 min 24 s at
-`cargo -j 4` and a host load average of 5.7; the `trainer` binary is 17.6 MB and links the libtorch shared objects at
+`cargo -j 4` and a host load average of 5.7. The `trainer` binary is 17.6 MB and links the libtorch shared objects at
 run time (`LD_LIBRARY_PATH` or an rpath).
 
 **What `tch` does not expose.** `trainer-model/csrc/autocast.cpp` is a C++ shim compiled against the same headers. It
@@ -438,11 +453,12 @@ there). The `cu129` image also built (7,223 MB) before the decision moved to `cu
 | Image                                       | Layer build time (cold)                                                        | Size (`du -sxm /`) |
 | ------------------------------------------- | ------------------------------------------------------------------------------ | ------------------ |
 | CUDA, `cu130` (`im-cA4FqLzyXuuyDRjdSVxXRL`) | 134 s: archive 17 s, wheels 16 s, rustup 10 s, copies 14 s, `cargo build` 66 s | 4,910 MB           |
-| CPU (`trainer_cpu_image`)                   | about 100 s (archive 10 s, `cargo build` 66 s; the rest not separated)         | 1,683 MB           |
+| CPU (`trainer_cpu_image`)                   | about 100 s (archive 10 s, `cargo build` 66 s. The rest not separated)         | 1,683 MB           |
 
 The layer times exclude the shared `debian_slim` and `apt_install` base. Over all six build runs, including the failed
-`ldd` checks and the `cu129` detour, Modal built 730 s of image layers. The binary has not run on a GPU. Stage 8 is
-its first CUDA run.
+`ldd` checks and the `cu129` detour, Modal built 730 s of image layers. Stage 8 status: startup on CUDA is observed
+(`fc-01M64Y2MXCRYCT5Y2P8H1810EA`, `device=Cuda(0)`, cancelled at step 400), and the 2,000-step probe and the
+90,000-step run are unrun. (2026-10-30: the probe completed, #2879 T37. The 90,000-step run is deferred, T36.)
 
 ## 5. Phases
 
@@ -482,7 +498,12 @@ function and audit, and `source_rights.py` by the fifteen importers in §1.2. Al
   (temporary readers, deleted in Phase 2 and Phase 7).
 - Preservation: §3 rows "Resolved configuration" and "Source admission". The label JSON is pinned to the Python
   constants recorded in Phase 0.
-- Verification: F7. `corpus-inputs.ts` tests cover every fixture in
+- Verification: F7. On 2026-10-30 `load-python-parity.test.ts` reads all 268 committed configs through both loaders
+  and compares the loaded document, the admitted sources, the corpus version, the log path and the admission record:
+  268 of 268 agree. The `python` CI job runs it, and a change to the resolver or its fixtures selects that job.
+  (2026-10-30: the Python loader and this comparison were deleted with the Python tree, #2879 T39, so no check of it
+  runs now. 268 of 268 is the last result.) The
+  earlier counts, 148 and 264, were the committed configs at their dates. `corpus-inputs.ts` tests cover every fixture in
   `corpus-python/tests/mailwoman_train/test_source_rights.py`. `test_labels.py` and `test_label_sets.py` pass over the
   JSON.
 - Deletion: deferred (the readers go when their last Python consumer goes).
@@ -529,10 +550,10 @@ TypeScript port wrote its report from the same config, seed and row count. The d
 | `audits/comma_segment_number.py`        | `comma-segment-number.run.ts`                                       | byte-equal (349 bytes)                                                                |
 | `audits/suffix_feed.py`                 | `suffix-feed.run.ts`                                                | byte-equal (8,094 bytes) against `audit_feed` given the resolved weights, see below   |
 | `audits/config_keys.py`                 | `config-keys.run.ts`                                                | output equal over the 264 configs                                                     |
-| `audits/preflight.py` (receipt writer)  | `receipt.ts`, `preflight.run.ts`                                    | receipt byte-equal; the TypeScript `verify` accepts the Python receipt                |
+| `audits/preflight.py` (receipt writer)  | `receipt.ts`, `preflight.run.ts`                                    | receipt byte-equal. The TypeScript `verify` accepts the Python receipt                |
 | `calibration/isotonic.py`               | `packages/mailwoman/tools/eval-harness/calibration/isotonic.run.ts` | table and report byte-equal for `confidences-v413.jsonl` and `confidences-v530.jsonl` |
 | `calibration/drift_guard.py`            | `drift-guard.run.ts`                                                | output line equal on both tables                                                      |
-| `semantic_tags.py` (Phase 1)            | `packages/neural/lib/semantic-tags.ts`, schema `semantic_tags`      | 33 tags, 6 refinements, 11 unrefined, 5 head mappings equal; Python reader pinned     |
+| `semantic_tags.py` (Phase 1)            | `packages/neural/lib/semantic-tags.ts`, schema `semantic_tags`      | 33 tags, 6 refinements, 11 unrefined, 5 head mappings equal. Python reader pinned     |
 | `exposure/cli.py`, replayed draws       | `packages/mailwoman/tools/training/exposure/exposure.run.ts`        | byte-equal (495,948 bytes) but `measured_at`; Python 209 s, TypeScript 43 s           |
 | `exposure/cli.py`, eligible rows        | the same, `--countries LU,MD,NZ,JP,SG,EG`                           | byte-equal (34,931 bytes) but `measured_at`; Python 408 s, TypeScript 179 s           |
 | `exposure/cli.py`, canonical rows       | the same, three OSM `canonical.jsonl.zst` files and two stats files | byte-equal but `measured_at` (153,968 rows, 745 unreadable)                           |
@@ -552,16 +573,16 @@ capture. `index.json` lists every verdict, and `inputs/` keeps both config copie
 
 | Record directory          | Verdict                                                    | Bytes          | Python s / TS s | 2026-10-29 Python output reproduced |
 | ------------------------- | ---------------------------------------------------------- | -------------- | --------------- | ----------------------------------- |
-| `epoch-mixture-200k`      | byte-equal; both exit 1 with the same refusal              | 137,562        | 275 / 50        | yes                                 |
+| `epoch-mixture-200k`      | byte-equal. Both exit 1 with the same refusal              | 137,562        | 275 / 50        | yes                                 |
 | `epoch-mixture-1m`        | byte-equal                                                 | 167,345        | 303 / 62        | yes                                 |
 | `validation-coverage`     | byte-equal                                                 | 75,124         | 172 / 160       | yes                                 |
-| `label-support`           | values equal; key order differs                            | 1,606          | 87 / 83         | values equal; key order differs     |
+| `label-support`           | values equal. Key order differs                            | 1,606          | 87 / 83         | values equal. Key order differs     |
 | `opening-token`           | byte-equal                                                 | 76,979         | 220 / 37        | yes                                 |
 | `region-code-token`       | byte-equal                                                 | 45,357         | 196 / 36        | yes                                 |
 | `comma-segment-number`    | byte-equal                                                 | 349            | 196 / 36        | yes                                 |
 | `suffix-feed`             | byte-equal (`audit_feed` with folded weights)              | 8,094          | 99 / 20         | yes                                 |
 | `config-keys`             | differs in the count line only: 264 against 268            | 127            | 4 / 1           | yes                                 |
-| `preflight`               | byte-equal; TypeScript `verify` accepts the Python receipt | 847            | 0.5 / 0.1       | yes                                 |
+| `preflight`               | byte-equal. TypeScript `verify` accepts the Python receipt | 847            | 0.5 / 0.1       | yes                                 |
 | `calibration-isotonic`    | byte-equal, all four files                                 | 9,461 to 5,245 | 0.3 / 0.4       | yes                                 |
 | `calibration-drift-guard` | byte-equal                                                 | 188            | 0.2 / 0.3       | not captured on 2026-10-29          |
 | `mixed-script`            | byte-equal (`audit_rows` with folded weights)              | 67,532         | 104 / 20        | yes                                 |
@@ -598,7 +619,7 @@ Classified differences (**decided**):
   which records the checkout's `HEAD`. Case folding, letter scripts and the Latin-text test read CPython 3.12's
   Unicode tables through `mtf-node` (`python_text::casefold`, `detect_script`, `is_latin_text`), generated into
   `mtf-channels/src/python_text/tables.rs` by `python_text_tables.py` and checked over every scalar value by its
-  `--check`. The eligible stage reads `SplitColumns` with a country filter in Rust; without it the same output took
+  `--check`. The eligible stage reads `SplitColumns` with a country filter in Rust. Without it the same output took
   1,374 s. `exposure/report.py` and `exposure/phenomena.py` stay, because `train/loop.py` counts realized draws
   with `StageCounter`, `exposure/grade.py` reads the phenomena and `python_text_tables.py` reads
   `SCRIPT_NAME_PREFIXES`. They go with the trainer (Phase 3 and 5). The `measure_exposure` Modal function is
@@ -640,16 +661,34 @@ move with the trainer or onto exported ONNX models).
 
 **Observed**, lab host, branch `feat/2874-corpus-builders`. `packages/corpus/lib/training/pyrandom.ts` reproduces all
 136 cases of `cpython-random.json`, so the builders draw CPython's stream. Each Python reference was captured before
-its module was deleted. Parquet files are compared by schema and by ordered logical rows; other outputs by bytes. The
+its module was deleted. Parquet files are compared by schema and by ordered logical rows. Other outputs by bytes. The
 capped real-data runs read `$MAILWOMAN_DATA_ROOT` with the flags each row names.
 
 | Python module                                           | TypeScript port                                                                     | Result                                                                                                                                   |
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `corpora/secondary.py`                                  | `lib/recipes/secondary.ts`, `lib/tools/secondary.run.ts`                            | 9,600 of 9,600 rows equal; `SOURCE_RIGHTS.json` byte-equal; both refuse at the license stamp, see below                                  |
+| `corpora/secondary.py`                                  | `lib/recipes/secondary.ts`, `lib/tools/secondary.run.ts`                            | 9,600 of 9,600 rows equal; `SOURCE_RIGHTS.json` byte-equal. Both refuse at the license stamp, see below                                  |
 | `corpora/house_venue_tuples.py` and its samplers        | `lib/recipes/house-venue-tuples.ts`, `lib/{fr,us,gb}/recipes/house-venue-tuples.ts` | byte-equal at 1,000 tuples and at 62,290 with `--carry gb`, with the reserved list resolved, see below                                   |
-| `corpora/registry.py`, `countries/{jp,tw}/registers.py` | `lib/cjk/registry.ts`, `lib/{jp,tw}/registers.ts`                                   | TW (25,006 aligned) and JP (176,544 aligned) parts, board, vocabulary and rights record equal; report equal but for `per_tag_rows` order |
-| `countries/jp/corpora/`, `countries/jp/{kana,text}.py`  | `lib/jp/corpus/`, `lib/jp/{kana,text}.ts`                                           | `jp-build-reference.json` reproduced; 4 row groups, 20,500 rows plus 1,000 board rows equal with the kana register on                    |
-| `countries/tw/corpora/`                                 | `lib/tw/corpus/`                                                                    | `tw-build-reference.json` reproduced; 4 row groups, 20,500 rows, board and centroids equal                                               |
+| `corpora/registry.py`, `countries/{jp,tw}/registers.py` | `lib/cjk/registry.ts`, `lib/{jp,tw}/registers.ts`                                   | TW (25,006 aligned) and JP (176,544 aligned) parts, board, vocabulary and rights record equal. Report equal but for `per_tag_rows` order |
+| `countries/jp/corpora/`, `countries/jp/{kana,text}.py`  | `lib/jp/corpus/`, `lib/jp/{kana,text}.ts`                                           | `jp-build-reference.json` reproduced. 4 row groups, 20,500 rows plus 1,000 board rows equal with the kana register on                    |
+| `countries/tw/corpora/`                                 | `lib/tw/corpus/`                                                                    | `tw-build-reference.json` reproduced. 4 row groups, 20,500 rows, board and centroids equal                                               |
+
+**Re-measured on 2026-10-30 (#2879 T30).** The Python builders ran from a `git archive` of `d55834896^`, the last
+revision holding all seven, in its own locked environment, against today's TypeScript builders on the same inputs. Each
+record under `$MAILWOMAN_DATA_ROOT/audits/port-parity/<builder>/` holds both outputs, both logs and `record.json`
+(commands, exits, timings, and a per-file verdict: parquet by schema and ordered rows, other files by SHA-256).
+
+| Builder                       | Result                                                                                                                                                            |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `house-venue-tuples-1000`     | 1,000 tuples byte-equal, SHA-256 `22ba8a49…`                                                                                                                      |
+| `house-venue-tuples-carry-gb` | 62,290 tuples byte-equal, SHA-256 `05b84b23…`                                                                                                                     |
+| `tw-corpus`                   | 20,500 rows in four parts equal. Board (377,811 bytes), centroids, vocabulary and rights record byte-equal. Report equal with keys sorted (`per_tag_rows` order)  |
+| `jp-corpus`                   | 20,500 rows equal. Board (358,397 bytes), vocabulary and rights record byte-equal. Report as TW                                                                   |
+| `kr-corpus`                   | label 20,500 and registry 2,590 rows equal. Both boards, the 19 centroids, both vocabularies and both rights records byte-equal. Reports as TW                    |
+| `cjk-foreign-places`          | 8,793 rows equal. Report and vocabulary byte-equal. The manifest differs only in the output directory's name (`FINDINGS.md`)                                      |
+| `fragment-assay`              | 216,570 rows (schema equal) and 24,063 dev lines. 2,000 differ (1,803 and 197), each an NZ row ending `Aotearoa` where Python wrote `New Zealand` (`FINDINGS.md`) |
+
+The TW and JP registry counts (25,006 and 176,544 aligned) were not re-measured: that run read a scratch data root
+assembled by hand, which no longer exists, and the record states its inputs only by name.
 
 Classified differences (**decided**):
 
@@ -661,21 +700,27 @@ Classified differences (**decided**):
 - The Python FR tuple sampler named the board's reserved surfaces by a working-directory path that resolves from no
   directory of the checkout, so the reserved set was empty: `house-venue-tuples-v6.jsonl` holds 275 FR tuples on 132 reserved
   streets. The port reads the list from the repository and refuses when it is missing. Python as committed keeps 10 more
-  FR tuples out of 2,000; the US and GB tuples are unchanged, because the filter runs after the draws.
+  FR tuples out of 2,000. The US and GB tuples are unchanged, because the filter runs after the draws. On 2026-10-30
+  `house-venue-tuples-v7.jsonl` (sha256 `e765e08e…`) replaced v6 as the recipes' input: 0 of its 59,725 FR tuples sit on
+  the 2,404 reserved surfaces, and its US and GB rows are v6's byte for byte (#2879 T12).
 - An empty US situs directory and a missing FR, GB or situs-table input now throw an error naming the path. Python
   answered no US tuples for an empty directory.
 - `pythonCapitalize` reads CPython's title case through a frozen table of the 135 characters whose title case differs
   from upper case. Over every code point, 55 of 1,112,064 inputs still differ, each a character Node's newer Unicode
-  version gave a case mapping.
+  version gave a case mapping (re-measured 2026-10-30 against CPython 3.12.3 and Unicode 15.0.0,
+  `$MAILWOMAN_DATA_ROOT/audits/port-parity/python-text/record.json`, which lists the 55 code points).
 - `pick_kana_stem` sorted a `set` of readings by length, so between two shortest readings of equal length Python's choice
   followed `PYTHONHASHSEED`. The port keeps the first in the database's row order.
-- KEN_ALL is read through Node's `shift_jis` decoder, which decodes all 9,792 two-byte sequences CPython's cp932 decodes
-  the same way. `decodeCP932` maps the eight single bytes where the two differ.
+- KEN_ALL is read through Node's `shift_jis` decoder, and `decodeCP932` maps the eight single bytes where the two
+  differ. Re-measured on 2026-10-30 (`audits/port-parity/python-text/record.json`): over every lead byte 81–9F and E0–FC
+  and every trail byte 40–7E and 80–FC, CPython's cp932 decodes 9,604 two-byte sequences, and `decodeCP932` decodes
+  each of them the same way. It also decodes the 196 single bytes CPython decodes the same way. The earlier figure of
+  9,792 sequences came from a counting rule that was not recorded.
 
 Korea (`countries/kr/corpora/`, `countries/kr/{juso,registers}.py`) moved to `lib/kr/corpus/` over the existing
 `lib/kr/adapters/` readers. It reproduces `kr-build-reference.json` with the Python test's `gdaltransform` stub, and on
 real data (`--max-rows-per-region 20000 --permit-glob barber_shops.csv`, real `gdaltransform`) both the label corpus
-(20,500 rows) and the registry corpus (2,590 rows), both boards and the 19 centroids are equal; both reports differ only
+(20,500 rows) and the registry corpus (2,590 rows), both boards and the 19 centroids are equal. Both reports differ only
 in `per_tag_rows` order.
 
 Deleted: `corpora/{secondary,house_venue_tuples,address_points,registry}.py`, `countries/{fr,gb,us}/`,
@@ -690,9 +735,9 @@ Deleted: `corpora/{secondary,house_venue_tuples,address_points,registry}.py`, `c
 | Python module                             | TypeScript port                                                    | Result                                                                                                                                                                                                                                                                                       |
 | ----------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `countries/cjk/overlay.py`                | `lib/cjk/overlay.ts`, `lib/tools/cjk-overlay.run.ts`               | over `v8-jp-full-2026-08-04`, the 151 `cn-units` rows and four extra corpora (the KR, TW, KR-registry and TW-registry corpora): both parts, the board, vocabulary, manifest, report and rights record equal                                                                                  |
-| `countries/cjk/foreign_places.py`         | `lib/cjk/foreign-places.ts`, `lib/tools/cjk-foreign-places.run.ts` | over the first 3,000,000 rows of the v0.8.4 overlay's `wof-admin.parquet` and its split attribute: 8,793 train rows, the vocabulary and report equal; 502 test rows left out by both                                                                                                         |
-| `countries/jp/probe_corpora.py`           | `lib/jp/corpus/probe.ts`, `lib/tools/jp-probe-corpus.run.ts`       | `jp-probe-reference.json` reproduced; over all 19.6M Overture-JP rows with `--train-rows 20000 --val-rows 400 --board-rows 300`, both parts, the board, vocabulary, report and rights record equal                                                                                           |
-| `corpora/fragment/`                       | `lib/recipes/fragment-assay/`, `lib/tools/fragment-assay.run.ts`   | `fragment-build-reference.json` reproduced; on the lab data at the default cap (13 OpenAddresses locales, Ryhti, the v0.5.0 harvest), 216,570 train rows and the 24,063-row dev file equal, schema included, with the snapshot's surfaces; with the codex's, 2,000 NZ rows differ, see below |
+| `countries/cjk/foreign_places.py`         | `lib/cjk/foreign-places.ts`, `lib/tools/cjk-foreign-places.run.ts` | over the first 3,000,000 rows of the v0.8.4 overlay's `wof-admin.parquet` and its split attribute: 8,793 train rows, the vocabulary and report equal. 502 test rows left out by both                                                                                                         |
+| `countries/jp/probe_corpora.py`           | `lib/jp/corpus/probe.ts`, `lib/tools/jp-probe-corpus.run.ts`       | `jp-probe-reference.json` reproduced. Over all 19.6M Overture-JP rows with `--train-rows 20000 --val-rows 400 --board-rows 300`, both parts, the board, vocabulary, report and rights record equal                                                                                           |
+| `corpora/fragment/`                       | `lib/recipes/fragment-assay/`, `lib/tools/fragment-assay.run.ts`   | `fragment-build-reference.json` reproduced. On the lab data at the default cap (13 OpenAddresses locales, Ryhti, the v0.5.0 harvest), 216,570 train rows and the 24,063-row dev file equal, schema included, with the snapshot's surfaces. With the codex's, 2,000 NZ rows differ, see below |
 | `countries/de/fragment_board.py`          | `lib/de/fragment-board.ts`, `lib/tools/de-fragment-board.run.ts`   | over all of Overture-DE and `locality-surface-lexicon-v7.json` with the defaults, both write the committed `overture-fragments-de.jsonl` (2,404 rows, `4292479b…`) and `overture-fragments-de.surfaces.txt` (2,293 surfaces, `ca6a1538…`) byte for byte                                      |
 | `corpora/deepseek/` (deterministic parts) | `lib/recipes/deepseek/{prompts,batches}.ts`                        | `deepseek-reference.json`, recorded from the Python module with no request made, reproduced: prompt text and tables, batch plans and ids, both row builders, the response parser and the validator                                                                                           |
 
@@ -704,8 +749,8 @@ Classified differences (**decided**):
   order. Its other callers are unchanged.
 - `cjk_share` named a CJK letter by `unicodedata.name`. JavaScript has no character names, so the port freezes the 32
   code-point ranges CPython 3.12 (Unicode 15.0) names, and counts letters by general category `L`. Node's tables are
-  Unicode 17.0, which has 9,568 letters Python's `isalpha` refuses; a row holding one has a larger denominator here.
-- The overlay's `--volume-root` defaults to `/data/corpus/versioned`, and `MAILWOMAN_VOLUME_MOUNT` is not read; a caller
+  Unicode 17.0, which has 9,568 letters Python's `isalpha` refuses. A row holding one has a larger denominator here.
+- The overlay's `--volume-root` defaults to `/data/corpus/versioned`, and `MAILWOMAN_VOLUME_MOUNT` is not read. A caller
   on another mount passes the flag.
 - The overlay takes the first `char-vocab-*.json` in code-point order where Python took the first the directory listed.
   Every corpus on the volume holds one.
@@ -916,7 +961,7 @@ no difference at all. Two findings on the way, both in the comparison rather tha
 at libtorch's default 8 threads against the reference's 4. That moved the char path's logits by up to 2.4e-5 relative
 and its convolution gradients by up to 3.8e-6 absolute, and one LayerNorm bias gradient by 1.46e-4 relative, which
 failed 3 of the 16 cells on gradients (the other 13 stayed inside the tolerances). At 4 threads every cell is equal, so the thread count is part of a record. And
-the first MLM capture applied the supervised curricula in its train-mode pass, which the MLM loop does not; the
+the first MLM capture applied the supervised curricula in its train-mode pass, which the MLM loop does not. The
 corrected capture is the one above. Stage 6 also checks that `find_latest_checkpoint` passes over a later
 `step-*` directory without `training_state.json`.
 
@@ -936,10 +981,11 @@ system as `locale_hint`. Largest absolute difference from the Rust forward: `log
 to 0.102 on `logits`, which is the quantization and not a parity bar.
 
 **What remains.** Stage 8, one GPU run of a current recipe on the CUDA libtorch, graded by `training-arc` and
-`eval-model`, needs spend approval; it also checks the CUDA autocast path, which this CPU work exercises only through
+`eval-model`, needs spend approval. It also checks the CUDA autocast path, which this CPU work exercises only through
 the same shim on the CPU device. The torch 2.12 → 2.13 upgrade of the Python export pin. The items listed under "Not
 built". The launcher (Phase 7) calling `trainer train` in place of the Python entry point. The Python trainer stays
-until stage 8 and the launcher land.
+until stage 8 and the launcher land. (2026-10-30: the launcher landed, the export pin went with the Python tree, and
+the Python trainer is deleted, #2879 T38, T44, T39.)
 
 ### Phase 6 — Export, quantization and packaging
 
@@ -1007,12 +1053,13 @@ coverage 0.99 and ids 0 to 3 always kept, the Python and Rust outputs are equal 
 **Weights package.** `packages/mailwoman/tools/release-tools/package-weights.run.ts` writes the package directory:
 `model.onnx`, `tokenizer.model`, `model-card.json`, `package.json` and `README.md`. The cards and `package.json` are
 written as `json.dumps(indent=2)` writes them, through `pythonJSONDumps`. Over three packages from two input sets
-(no eval report and 40 address systems; an eval report with float fields, non-ASCII notes and hardware, a
+(no eval report and 40 address systems. An eval report with float fields, non-ASCII notes and hardware, a
 trailing-slash checkpoint path, `--smoke`, and no address systems), all 15 files equal the Python packager's output
-byte for byte, with `completed_at` given to both. Differences, by decision:
+byte for byte, with `completed_at` given to both (`$MAILWOMAN_DATA_ROOT/audits/trainer-parity/phase6-reference/package/compare.txt`:
+`15 files, 0 differ`). Differences, by decision:
 
 1. The eval report is an input (`--eval-report`). The Python command ran the golden-set eval on the torch model
-   itself; that eval moves with `evaluation/`.
+   itself. That eval moves with `evaluation/`.
 2. The tool refuses a checkpoint whose `num_labels` differs from the active label set's BIO count. The Python command
    wrote the stage 3 labels for any head.
 3. `--completed-at` fixes the card's timestamp, which the Python command took from the clock.
@@ -1032,7 +1079,7 @@ step-200 checkpoint gives the same fp32 and int8 bytes as before (SHA-256 `f5122
 char graph, the Rust int8 graph and the Rust split encoder are opset 17, and each uses only operator types the
 shipped graph it replaces uses. The repository has no operator allowlist, and the browser SLO suite has no WebGPU
 arm. The token-path bytes did not change, so F2's SLO result (11 of 11 on the wasm arm) still describes them. The
-real iOS device check was not run; it is required before any promotion.
+real iOS device check was not run. It is required before any promotion.
 
 **Callers and deletions.** Deleted: `export/split_embeddings.py`,
 `cli/commands/{export,quantize,package,split_embeddings}.py`,
@@ -1122,11 +1169,11 @@ consumed batch to `exposure-realized-from-<step>.rows.jsonl.zst` and, when the r
 `exposure-realized-from-<step>.rows.json`, which records the stream's file name, its row count, the label set and the
 report's inputs. `realized.run.ts <description>` counts the rows with the same `StageCounter` and writes
 `exposure-realized-from-<step>.json`. Over the 200-step reference run (1,600 rows) the report equals the Python loop's
-on 6,335 of its 6,338 lines; the 3 that differ hold `measured_at`, `code_revision` and `inputs.output_dir`. The stream took 61,745 bytes,
+on 6,335 of its 6,338 lines. The 3 that differ hold `measured_at`, `code_revision` and `inputs.output_dir`. The stream took 61,745 bytes,
 38.6 bytes per row. A 90,000-step run of 128 rows would write about 440 MB (an estimate from that rate). The report is
 now a step after training: the launcher (Phase 7) runs `realized.run.ts` before the release check reads the report.
 
-**fp16 and ROCm parameter casts: retired (decided).** No committed config sets `train.precision: fp16` (0 of 264; all
+**fp16 and ROCm parameter casts: retired (decided).** No committed config sets `train.precision: fp16` (0 of 264. All
 264 are `bf16`). The Python fp16 path cast the parameters to fp16 and ran with no gradient scaler. `resolve_precision`'s
 docstring gives the missing scaler as the reason it does not autocast fp16. Fp16 parameters also lose any AdamW update
 below half the fp16 spacing at a weight's magnitude, the failure that docstring gives for bf16 parameters. That loss is
@@ -1140,7 +1187,7 @@ for. `tests/units.rs` covers the refusal and the CUDA bf16 autocast path.
 only path that does. `train_log.csv` records the loss, rate, validation loss, macro F1, and per-tag F1 and support that
 the mirror sent. The mirror also sent the cross-pollution rates and the locale accuracy, which the console prints and
 the CSV omits. `trainer train` refuses `train.trackio_enabled: true` by name. The CSV-to-HF uploader in the Phase 5
-item list is unbuilt; it is optional Phase 7 work.
+item list is unbuilt. It is optional Phase 7 work.
 
 **Python moved and deleted.** Deleted: the `export_onnx` Modal function in `launch/artifacts.py`,
 `export/package_weights.py::export_semi_crf_transitions`, and its two tests in `test_span_export.py`. The launcher's
@@ -1150,9 +1197,11 @@ launcher land: `export/onnx.py`, `graph.py` and `wrappers.py` (`cli/commands/smo
 `exposure/report.py` (`train/loop.py`), `data/loader/verify.py` (`train/setup.py`), `features/conventions.py`
 (`nn/encoder/heads.py`), and `observability/` (the Python Trackio mirror).
 
-**Not done.** Stage 8 on CUDA libtorch, which also exercises CUDA autocast for the span and mask paths. A browser and
+**Not done.** Stage 8 on CUDA libtorch, which also exercises CUDA autocast for the span and mask paths: startup on
+CUDA is observed, and the 2,000-step probe and the 90,000-step run are unrun. A browser and
 iOS WebGPU check of a span-scorer graph. The launcher step that runs `realized.run.ts`. The affix and
-dependent-locality heads and `inject_first_token` in the exporter, which it still refuses by name.
+dependent-locality heads and `inject_first_token` in the exporter, which it still refuses by name. (2026-10-30:
+retired, #2879 T34.)
 
 ### Phase 7 — TypeScript launcher
 
@@ -1176,7 +1225,8 @@ Observed on Modal and the lab host, branch `feat/2874-rust-launch`. This is the 
 `trainer train` on Modal: a Python shell-out the TypeScript launcher replaces, so stage 8 does not wait on Phase 7. The
 records are under `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/f4/`.
 
-**Built.** `corpus-python/launch/train_rust.py` holds `stage_launch_inputs`, `verify_launch`, `_train_rust_gpu` (the
+(2026-10-30: this temporary Python launcher is deleted; `packages/mailwoman/tools/training/launch/` replaced it, #2879
+T38, T39.) **Built.** `corpus-python/launch/train_rust.py` holds `stage_launch_inputs`, `verify_launch`, `_train_rust_gpu` (the
 `cu130` image, the configured GPU) and `_train_rust_cpu` (the CPU image, 4 CPUs). Both training functions run under
 `modal.Retries` with `single_use_containers=True`. `launch/run_lock.py` is the output-directory lock. The entry point
 in `launch/train.py` takes `--trainer rust`, and `--cpu`, `--threads`, `--fail-at-step`, `--timeout-seconds` and
@@ -1210,19 +1260,19 @@ to `/data`. They differ only in `train.output_dir`. All ran with `--trainer rust
 | Behavior                              | How                                                                              | Result                                                                                                                                                                                             | Call                            |
 | ------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
 | Uninterrupted reference               | `f4-reference-cpu.yaml --fresh`                                                  | finished; `train_log.csv` equal to the lab `rust-smoke` run on all 814 compared cells (22 rows × 37 columns, `wall_seconds` excluded)                                                              | `fc-01M64QHMBT5RCP7XMAF5V2SM5P` |
-| Controlled failure, retry, resume     | `f4-lifecycle-cpu.yaml --fresh --fail-at-step 150`                               | attempt 1 saved `step-000100`, was killed after step 150 and raised; Modal retried 15 s later in a new container, which re-entered the lock, logged `resumed at step=100` and finished at step 200 | `fc-01M64QKZGFQ6RXZPPNVKAN77G9` |
+| Controlled failure, retry, resume     | `f4-lifecycle-cpu.yaml --fresh --fail-at-step 150`                               | attempt 1 saved `step-000100`, was killed after step 150 and raised. Modal retried 15 s later in a new container, which re-entered the lock, logged `resumed at step=100` and finished at step 200 | `fc-01M64QKZGFQ6RXZPPNVKAN77G9` |
 | Checkpoints persisted, read elsewhere | the retry container, then `modal volume ls` and `modal volume get` from the host | the retry read the killed attempt's `step-000100`; the host listed `step-000100` and `step-000200` and fetched `train_log.csv` and `LAUNCH_LOCK.json`                                              | —                               |
-| Status, logs, identifiers             | `call_status <id>`, `--logs`, `--wait`, the call graph                           | each call's verdict and log tail read from the host with no container; exit status 1 for a failed call                                                                                             | all                             |
+| Status, logs, identifiers             | `call_status <id>`, `--logs`, `--wait`, the call graph                           | each call's verdict and log tail read from the host with no container. Exit status 1 for a failed call                                                                                             | all                             |
 | Duplicate launch                      | `f4-lifecycle-cpu.yaml --retries 0` while B ran                                  | refused: `DuplicateLaunchError: the run is held by function call fc-01M64QKZGFQ6RXZPPNVKAN77G9, which is still running`                                                                            | `fc-01M64QPDSQV5C73E8J78ZDPB93` |
 | Duplicate `--fresh` launch            | `f4-lifecycle-cpu.yaml --fresh` while B ran                                      | refused in the preflight before any deletion, so the entry point spawned no call                                                                                                                   | app `ap-vCWqGUOksq4GuSWfk9qZJZ` |
-| Cancellation                          | `call_status <id> --cancel` after step 10                                        | `cancelled`; the container logged the cancellation signal; no retry; the call's verdict is `RemoteError: Function call was cancelled`, call-graph status `TERMINATED`                              | `fc-01M64QTG963CCYFN3522EBX83V` |
-| Timeout                               | `f4-timeout-cpu.yaml --fresh --timeout-seconds 150 --retries 1`                  | attempt 1 timed out at 150 s; the retry started in a new container, saved `step-000100` (still on the volume), and timed out; verdict `FunctionTimeoutError`, status `TIMEOUT`                     | `fc-01M64QTK2N11DSXFN97GJZ6Z8J` |
+| Cancellation                          | `call_status <id> --cancel` after step 10                                        | `cancelled`; the container logged the cancellation signal. No retry. The call's verdict is `RemoteError: Function call was cancelled`, call-graph status `TERMINATED`                              | `fc-01M64QTG963CCYFN3522EBX83V` |
+| Timeout                               | `f4-timeout-cpu.yaml --fresh --timeout-seconds 150 --retries 1`                  | attempt 1 timed out at 150 s. The retry started in a new container, saved `step-000100` (still on the volume), and timed out. Verdict `FunctionTimeoutError`, status `TIMEOUT`                     | `fc-01M64QTK2N11DSXFN97GJZ6Z8J` |
 | Lock takeover after a finished holder | `f4-cancel-cpu.yaml --fresh` after D was cancelled                               | `Run lock: take_over`; finished                                                                                                                                                                    | `fc-01M64RGB9HC9V9P854Y11N2HHW` |
 
 **Resume does not reproduce the uninterrupted run after the checkpoint.** Compared with the reference
 (`compare-train-logs.json`), the resumed run's effective log (the last row of each step, since the CSV is appended on a
 resume) equals it through step 100, including the step-100 evaluation row, except one cell. From step 110 on, every
-`train_loss` differs (step 110: 2.385463 against 2.364570; step 200: 2.102011 against 2.095606), and so does the
+`train_loss` differs (step 110: 2.385463 against 2.364570. Step 200: 2.102011 against 2.095606), and so does the
 step-200 evaluation (`val_loss` 1.900138 against 1.895484, macro F1 0.370858 against 0.371849). `lr` is equal on all
 22 rows, so the schedule restored. The killed attempt's own rows 110 to 150 equal the reference's. The one cell is
 step 50's `train_loss`, 3.250855 against 3.250856. A third uninterrupted run, the takeover run F, shows the same
@@ -1233,6 +1283,30 @@ draws after the checkpoint therefore differ from the uninterrupted run's, as in 
 stream is not saved"). The smallest test that separates it from a data-stream cause is the same pair with dropout,
 `locale_hint_drop_prob`, `locale_hint_noise_prob` and `evidence_noise_prob` set to 0: equal rows after step 100 would
 confirm the generator.
+
+**Resume restores the generators (decided 2026-10-30, #2879 T18 and decision D3).** The operator chose to save and
+restore every generator a run draws from, a deliberate change from the Python trainer. Each checkpoint now holds
+`rng_state.safetensors`: libtorch's default CPU generator, the default generator of the CUDA device the model trains
+on, and the MLM loop's mask generator. A resume restores them after the optimizer and scheduler. A checkpoint written
+before the change holds no such file, so its resume reseeds from `train.seed` as before and says so. The experiment
+ran the generator test directly instead of zeroing the noise. On the lab CPU, the 200-step parity config
+(`probe-code-unit-cpu.resolved.json`, dropout and every curriculum noise on) ran uninterrupted, then again with the
+trainer killed after step 110, then resumed from step 100. `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/t18/compare.json`
+records the comparison:
+
+| Compared                                                     | Result                                            |
+| ------------------------------------------------------------ | ------------------------------------------------- |
+| `train_log.csv` cells except `wall_seconds`, 22 rows         | 814 of 814 equal                                  |
+| realized rows after step 100, the batch identities           | 800 of 800 equal                                  |
+| step-200 `rng_state.safetensors`                             | equal bytes                                       |
+| step-200 weights and Fisher artifact (`compare-checkpoints`) | 115 tensors and 112 arrays equal on every element |
+
+With the reseed, the same comparison differed on 20 of 814 cells from step 110 on. That measurement isolates the
+generator restore as the change, because the data stream was already identical. `resume-parity.run.ts` in
+`packages/mailwoman/tools/training/` repeats the experiment for any resolved config and exits 1 on a difference. The
+comparison ran on the CPU device only. A CUDA run's nondeterministic kernels can still differ between attempts, and no
+CUDA resume has been compared. Every future two-seed comparison inherits the restored generators, which the Python
+trainer's runs did not have.
 
 **Stage 8's first run.** `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/stage8/v8.3.0-probe-rust-trainer-2k.yaml`
 (SHA-256 `59035f19…308f5a`) is `v8.3.0-probe-rust-loader-2k.yaml` with `train.output_dir` and `train.trackio_run_name`
@@ -1255,7 +1329,7 @@ node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cw
    take the builtin only, and the lock's probe uses the same rule.
 2. A killed attempt leaves `exposure-realized-from-0.rows.jsonl.zst.partial` and the resumed attempt writes
    `exposure-realized-from-100.*`, so the realized-exposure stream of a resumed run covers only the rows after the
-   resume (observed in the listing; that `realized.run.ts` then reports a partial run is inferred).
+   resume (observed in the listing. That `realized.run.ts` then reports a partial run is inferred).
 3. The lock is advisory. Two launches inside the seconds between one's check and its volume commit can both pass.
 4. The image is rebuilt whenever a file under `packages/trainer` or `packages/mtf` changes, and every `modal run` of
    the app hydrates both trainer images, as it does `training_image`.
@@ -1281,7 +1355,9 @@ running apps.
 
 **Not done.** The TypeScript launcher and the `modal` npm SDK (F4's SDK-specific items: Sandboxes, a Dockerfile image,
 JS calls into a deployed function); this shell-out is what Phase 7 deletes. A GPU run of the image. The Rust launch
-still runs the Python preflight and receipt in the training image. The launcher step that runs `realized.run.ts`. — `mtf-py` and the Python manifests
+still runs the Python preflight and receipt in the training image. The launcher step that runs `realized.run.ts`.
+
+### Phase 8 — Delete `mtf-py` and the Python manifests
 
 - Delete `packages/mtf/crates/mtf-py`, its `pyproject.toml` and the `py` profile in `packages/mtf/Cargo.toml`. Delete
   the root `pyproject.toml`, `uv.lock`, `.python-version`, `corpus-python/` entirely, `scripts/comment_nodes.py`,
@@ -1315,6 +1391,46 @@ still runs the Python preflight and receipt in the training image. The launcher 
   `docs/records/evals/` report: behavior comparisons, cold initialization, peak and steady memory, per-batch costs,
   and measured training performance. Any unmeasured speedup stays labeled as an estimate.
 
+### Final measurements (#2879 T42)
+
+The host side of a training step, measured with `sampler-parity.run.ts profile` on 2026-10-30 at revision
+`3988395a0`. Host: the lab machine, AMD Ryzen 9 8945HS, 16 threads. Config: `v8.3.0-base-c6-90k-mixed-s42.yaml`
+with the encoder-parity records' host lexicon overrides, the train split, seed 43. Each run times 40 batches of 128
+rows after the first batch: sampling through the `mtf-node` sampler, then encoding through its row encoder and the
+TypeScript locale and address-system ids. Records: `/mnt/mw/audits/trainer-parity/t42/profile-run{1,2}.json`.
+
+| Run, path                  | Load (1 min) before | Init s | Encoder build s | Sampler init s | Sampling ms per batch | Encoding ms per batch | Host ms per batch | RSS after init MB | Peak RSS MB |
+| -------------------------- | ------------------: | -----: | --------------: | -------------: | --------------------: | --------------------: | ----------------: | ----------------: | ----------: |
+| 1, Rust through `mtf-node` |                4.75 |   59.7 |             4.1 |           55.6 |                  1.35 |                 10.51 |             11.86 |             2,355 |       2,441 |
+| 2, Rust through `mtf-node` |               11.65 |   40.3 |             2.4 |           37.8 |                  1.25 |                 10.10 |             11.34 |             2,364 |       2,450 |
+
+Run 1 read the corpus files cold and run 2 warm from the page cache, so the initialization difference is the cache.
+"Sampler init" covers the corpus listing, the sha256 check against the sidecar cache, the source index, the
+131,072-row buffer fill and the first batch.
+
+The Python arm cannot be re-measured, because the Python sampler and encoder are deleted. Its figures stand as recorded
+in `training-row-encoder.mdx` (Phase 3: sampler init 220.3 s and sampling 8.09 ms per batch at load 18, through the
+Python loader). Those were measured through the Python binding under a different harness, so no ratio is taken
+between them and the rows above.
+
+| Measurement                                     | Value                                                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Rust trainer, 2,000-step probe on an A100-40GB  | 15.46 steps/s at batch 128 over the whole run, 6.5 s per 100 steps (2026-10-30, #2879 T37) |
+| Rust trainer over a 90,000-step recipe on a GPU | not measured: T36 (the stage 8 run) is deferred (decision D1)                              |
+| 2,000-step probe, Rust loader, Python trainer   | 6.50 s per 100 steps (measured 2026-10-29, `training-row-encoder.mdx`)                     |
+
+**T37, the 2,000-step CUDA probe (2026-10-30).** `v8.3.0-probe-rust-trainer-2k.yaml` ran through the TypeScript
+launcher on an A100-40GB, bf16, and completed (step 2,000 `train_loss=0.8268`). Its step-2000 checkpoint, fetched with
+`launch.run.ts fetch`, exported through `trainer-export`; on 16 recorded rows the float32 graph's largest difference
+from the Rust forward is 7.5e-6 on `logits` against 1e-4. Record: `/mnt/mw/audits/trainer-parity/stage8/T37-FINDINGS.md`.
+
+**T61, the launcher's lifecycle on Modal CPU (2026-10-30).** Every F4 behavior ran through the TypeScript launcher on
+`v8.4.0-cpu-lifecycle.yaml`. An uninterrupted reference completed. A controlled failure at step 150 retried, resumed
+from `step-000100` with the generator states, and matched the reference on every logged value through the step-200
+evaluation. Duplicate launches were refused while the run held its lock. Cancellation, restart of a stopped run and a
+timeout each ended as recorded. A new sandbox resumed from a checkpoint another container wrote, and `fetch` copied a
+checkpoint to the host. Record: `/mnt/mw/audits/trainer-parity/t61/FINDINGS.md`.
+
 ## 6. Milestones
 
 Hour estimates from the earlier draft are withdrawn. Milestones are concrete deliverables, and the ones that depend
@@ -1345,6 +1461,6 @@ on an unresolved feasibility check are marked.
 | The `parquet` crate orders row groups differently from pyarrow                               | `c6-train-2k` before any larger record in Phase 3                                                    |
 | A hand-written ONNX graph is refused by `onnxruntime-web` WebGPU on Safari                   | F2's browser SLO suite and the iOS device check                                                      |
 | The quantizer's rounding differs from ORT's                                                  | F2's same-fp32-file comparison before any eval                                                       |
-| A TS YAML parser resolves `NO`, `on`, `yes` differently from PyYAML                          | F7's refusal test and the 148-config dump                                                            |
+| A TS YAML parser resolves `NO`, `on`, `yes` differently from PyYAML                          | F7's refusal test and the every-config dump                                                          |
 | A deletion leaves an importer                                                                | each phase's caller checklist is grepped before the PR, and CI's Python job still runs until Phase 9 |
 | A sweep edits recorded data while repointing paths                                           | commit messages list touched file types, and `docs/records/` and `evals/` are excluded               |

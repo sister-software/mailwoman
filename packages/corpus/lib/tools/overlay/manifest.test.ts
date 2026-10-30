@@ -425,7 +425,14 @@ describe("assembleOverlayManifest", () => {
 
 			opened.length = 0
 
-			await assembleOverlayManifest({
+			// The suite shares each worker's module cache, so a file earlier in the worker
+			// may have loaded the overlay modules over the real `#parquet/duckdb`.
+			// Reloading them here makes them open connections through the mock.
+			vi.resetModules()
+
+			const { assembleOverlayManifest: assembleThroughMock } = await import("#tools/overlay/manifest")
+
+			await assembleThroughMock({
 				...overlay(name),
 				base,
 				files: [{ parquet: name, source: "rendered-de" }],

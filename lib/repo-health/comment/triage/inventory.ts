@@ -30,9 +30,7 @@ export interface TriageInventoryReport extends InventoryResult {
  * so both would inventory comments this repository did not write and cannot edit.
  */
 function isInventorySource(path: string): boolean {
-	const isPython = path.startsWith("corpus-python/") && path.endsWith(".py")
-
-	if (!isPython && !path.endsWith(".ts") && !path.endsWith(".tsx")) return false
+	if (!path.endsWith(".ts") && !path.endsWith(".tsx")) return false
 
 	if (path.endsWith(".d.ts")) return false
 

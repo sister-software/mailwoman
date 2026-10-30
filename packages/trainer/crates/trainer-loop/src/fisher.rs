@@ -9,67 +9,10 @@ use serde_json::{Map, Value};
 use std::io::{Read, Write};
 use std::path::Path;
 use tch::{Kind, Tensor};
+use trainer_export::npy;
 
 pub const FISHER_ARTIFACT: &str = "fisher-diag-v1.npz";
 pub const FISHER_SIDECAR: &str = "fisher-diag-v1.json";
-
-/// One array as an `.npy` v1.0 file: little-endian float32 in C order.
-pub fn npy_bytes(shape: &[i64], data: &[f32]) -> Vec<u8> {
-	let dims = match shape.len() {
-		0 => "()".to_owned(),
-		1 => format!("({},)", shape[0]),
-		_ => format!("({})", shape.iter().map(i64::to_string).collect::<Vec<_>>().join(", ")),
-	};
-	let mut header = format!("{{'descr': '<f4', 'fortran_order': False, 'shape': {dims}, }}");
-	let total = 10 + header.len() + 1;
-	header.push_str(&" ".repeat((64 - total % 64) % 64));
-	header.push('\n');
-	let mut out = Vec::with_capacity(10 + header.len() + data.len() * 4);
-	out.extend_from_slice(b"\x93NUMPY\x01\x00");
-	out.extend_from_slice(&(header.len() as u16).to_le_bytes());
-	out.extend_from_slice(header.as_bytes());
-	for v in data {
-		out.extend_from_slice(&v.to_le_bytes());
-	}
-	out
-}
-
-/// Parses a float32 `.npy` (v1 or v2, little-endian, C order).
-pub fn parse_npy(bytes: &[u8]) -> Result<(Vec<i64>, Vec<f32>)> {
-	if bytes.len() < 10 || &bytes[..6] != b"\x93NUMPY" {
-		return Err(fail!("not an .npy array"));
-	}
-	let (len, start) = match bytes[6] {
-		1 => (u16::from_le_bytes([bytes[8], bytes[9]]) as usize, 10),
-		2 | 3 => (
-			u32::from_le_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]) as usize,
-			12,
-		),
-		v => return Err(fail!(".npy version {v} is not read")),
-	};
-	let header = std::str::from_utf8(&bytes[start..start + len]).map_err(|_| fail!(".npy header is not UTF-8"))?;
-	if !header.contains("'<f4'") || header.contains("'fortran_order': True") {
-		return Err(fail!(".npy array is not C-order little-endian float32: {header}"));
-	}
-	let shape_text = header
-		.split("'shape': (")
-		.nth(1)
-		.and_then(|s| s.split(')').next())
-		.ok_or_else(|| fail!(".npy header has no shape: {header}"))?;
-	let shape: Vec<i64> = shape_text
-		.split(',')
-		.map(str::trim)
-		.filter(|s| !s.is_empty())
-		.map(|s| s.parse().map_err(|_| fail!(".npy shape {shape_text}")))
-		.collect::<Result<_>>()?;
-	let data = bytes[start + len..]
-		.as_chunks::<4>()
-		.0
-		.iter()
-		.map(|c| f32::from_le_bytes(*c))
-		.collect();
-	Ok((shape, data))
-}
 
 /// Reads every array of an `.npz` archive, in archive order.
 pub fn read_npz(path: &Path) -> Result<Vec<(String, Tensor)>> {
@@ -85,7 +28,7 @@ pub fn read_npz(path: &Path) -> Result<Vec<(String, Tensor)>> {
 			.to_owned();
 		let mut bytes = Vec::new();
 		entry.read_to_end(&mut bytes)?;
-		let (shape, data) = parse_npy(&bytes)?;
+		let (shape, data) = npy::read_f32(&bytes).map_err(|e| fail!("{}: {entry_name}: {e}", path.display()))?;
 		out.push((name, Tensor::from_slice(&data).view(shape.as_slice())));
 	}
 	Ok(out)
@@ -154,7 +97,7 @@ impl FisherAccumulator {
 			let data: Vec<f32> = Vec::try_from(t.contiguous().view([-1]))?;
 			param_count += data.len() as i64;
 			zip.start_file(format!("{name}.npy"), options)?;
-			zip.write_all(&npy_bytes(&shape, &data))?;
+			zip.write_all(&npy::f32_bytes(&shape, &data))?;
 		}
 		zip.finish()?;
 		let mut sidecar = Map::new();

@@ -6,20 +6,20 @@
  *   building address file and from an existing corpus's spans.
  *
  *   No collector renders. Each returns surfaces, and `rows.ts` labels them. Each collector seeds its own
- *   `PyRandom` from {@linkcode FRAGMENT_SEED} and a per-collector key, so one collector's sampling leaves
+ *   `SeededRandom` from {@linkcode FRAGMENT_SEED} and a per-collector key, so one collector's sampling leaves
  *   another's unchanged. Lengths are code-point lengths and sorts are code-point sorts, as the Python
  *   builder measured and sorted.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { SeededRandom } from "@mailwoman/core/random"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { pythonIsDigit, pythonStrip } from "@mailwoman/core/strings/python-text"
+import { isDecimalDigits } from "@mailwoman/core/strings/unicode"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { codePointLength } from "#cjk/builder"
 import { openParquetRowStream } from "#parquet/streams"
-import { PyRandom } from "#training/pyrandom"
 
 /**
  * OpenAddresses locale directory to ISO country, BCP 47 locale, and
@@ -186,7 +186,7 @@ class TupleSet<T extends readonly string[]> {
 	}
 }
 
-const isBareDigits = (text: string) => pythonIsDigit(text)
+const isBareDigits = (text: string) => isDecimalDigits(text)
 
 /**
  * Each OpenAddresses file's records, its header matched in upper case so a file's
@@ -232,7 +232,7 @@ const NUMBER_MAX = 8
  * are held, then samples each pool.
  */
 async function collectParts(records: AsyncIterable<AddressRecord>, rngKey: string, cap: number): Promise<LocaleParts> {
-	const rng = new PyRandom(`${FRAGMENT_SEED}:${rngKey}`)
+	const rng = new SeededRandom(`${FRAGMENT_SEED}:${rngKey}`)
 	const pairs = new Map<string, string>()
 	const cities = new Set<string>()
 	const cityPostcodes = new TupleSet<readonly [string, string]>()
@@ -340,7 +340,7 @@ async function* ryhtiRecords(path: string): AsyncGenerator<AddressRecord> {
 
 		if (!street) continue
 
-		const number = rendered.startsWith(`${street} `) ? pythonStrip(rendered.slice(street.length)) : ""
+		const number = rendered.startsWith(`${street} `) ? rendered.slice(street.length).trim() : ""
 
 		yield [street, number, row["postal_office_fin"] || "", row["postal_code"] || "", ""]
 	}
@@ -411,7 +411,7 @@ function spanTexts(row: SpanRow, tag: string): string[] {
 	const characters = [...row.raw]
 
 	return row.span_tags.flatMap((each, index) =>
-		each === tag ? [pythonStrip(characters.slice(row.span_starts[index], row.span_ends[index]).join(""))] : []
+		each === tag ? [characters.slice(row.span_starts[index], row.span_ends[index]).join("").trim()] : []
 	)
 }
 
@@ -429,7 +429,7 @@ export async function spanSurfacesFromCorpus(
 	tag = "street",
 	maxParts?: number
 ): Promise<Map<string, string[]>> {
-	const rng = new PyRandom(`${FRAGMENT_SEED}:corpus`)
+	const rng = new SeededRandom(`${FRAGMENT_SEED}:corpus`)
 	const out = new Map<string, Set<string>>(countries ? [...countries].map((country) => [country, new Set()]) : [])
 	const paths = (await matchingFiles(parquetGlob)).slice(0, maxParts)
 
@@ -480,7 +480,7 @@ export async function adminPairsFromCorpus(
 	parquetGlob: string,
 	cap: number
 ): Promise<(readonly [locality: string, region: string])[]> {
-	const rng = new PyRandom(`${FRAGMENT_SEED}:adminpairs`)
+	const rng = new SeededRandom(`${FRAGMENT_SEED}:adminpairs`)
 	const pairs = new TupleSet<readonly [string, string]>()
 
 	scan: for (const path of await matchingFiles(parquetGlob)) {

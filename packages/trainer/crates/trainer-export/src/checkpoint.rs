@@ -237,11 +237,19 @@ pub fn read_safetensors(path: &Path) -> Result<StateDict> {
 					.map(|c| f32::from_bits(u32::from(u16::from_le_bytes(*c)) << 16))
 					.collect(),
 			),
+			safetensors::Dtype::F16 => Some(
+				raw.as_chunks::<2>()
+					.0
+					.iter()
+					.map(|c| half_to_f32(u16::from_le_bytes(*c)))
+					.collect(),
+			),
 			_ => None,
 		};
 		let storage = match view.dtype() {
 			safetensors::Dtype::F32 => "FloatStorage".to_owned(),
 			safetensors::Dtype::BF16 => "BFloat16Storage".to_owned(),
+			safetensors::Dtype::F16 => "HalfStorage".to_owned(),
 			other => format!("{other:?}"),
 		};
 		state.order.push(name.clone());

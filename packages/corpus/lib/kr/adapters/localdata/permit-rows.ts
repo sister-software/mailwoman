@@ -11,12 +11,14 @@
  * aligning so the alignment rate per file can be measured before any row enters a corpus.
  */
 
+import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { decodeByteStream, openReadStream } from "@mailwoman/core/fs/streams"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, extname, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CJKRecord, labelTokensByFirstSpan, sortedGlob } from "#cjk/builder"
+import { type CJKRecord, labelTokensByFirstSpan } from "#cjk/builder"
 import type { Aligned } from "#kr/adapters/localdata/align"
 
 /**
@@ -80,12 +82,22 @@ function firstColumn(row: Record<string, string | undefined>, ...names: readonly
 	return ""
 }
 
-function toNumber(value: string): number | null {
+/**
+ * A coordinate field as a number, or `null` when the field is empty.
+ *
+ * A non-empty field that is not a number, such as `198,000`, raises: Python's `float` did,
+ * and reading it as absent would drop the row from its district's centroid without a count.
+ *
+ * @throws Naming the value and the field.
+ */
+function toNumber(value: string, field: string): number | null {
 	if (!value.trim()) return null
 
 	const parsed = Number(value)
 
-	return Number.isFinite(parsed) ? parsed : null
+	if (!Number.isFinite(parsed)) throw new Error(`a permit row's ${field} is ${stringifyJSON(value)}, not a number`)
+
+	return parsed
 }
 
 export interface ReadPermitOptions {
@@ -133,8 +145,8 @@ export async function* readPermitFile(
 			lotAddress,
 			roadPostcode: firstColumn(row, "도로명우편번호"),
 			lotPostcode: firstColumn(row, "소재지우편번호"),
-			x: toNumber(firstColumn(row, "좌표정보(X)", "좌표정보(x)")),
-			y: toNumber(firstColumn(row, "좌표정보(Y)", "좌표정보(y)")),
+			x: toNumber(firstColumn(row, "좌표정보(X)", "좌표정보(x)"), `좌표정보(X) in ${file}`),
+			y: toNumber(firstColumn(row, "좌표정보(Y)", "좌표정보(y)"), `좌표정보(Y) in ${file}`),
 		}
 	}
 }

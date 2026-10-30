@@ -33,7 +33,6 @@ import { packageLicenseCheck } from "#repo-health/checks/package-license"
 import { prefixDirectoriesCheck } from "#repo-health/checks/prefix-directories"
 import { privateNameShadowsCheck } from "#repo-health/checks/private-name-shadows"
 import { publishedBundlesCheck } from "#repo-health/checks/published-bundles"
-import { pythonPrefixDirectoriesCheck } from "#repo-health/checks/python-prefix-directories"
 import { rightsChainCheck } from "#repo-health/checks/rights-chain"
 import { runtimeFlagsCheck } from "#repo-health/checks/runtime-flags"
 import { stalePathLiteralsCheck } from "#repo-health/checks/stale-path-literals"
@@ -79,7 +78,6 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	cliFlagPropertiesCheck,
 	prefixDirectoriesCheck,
 	nestedIndexCheck,
-	pythonPrefixDirectoriesCheck,
 	exportNameAffixCheck,
 	docLinkTargetsCheck,
 	duplicateExportedShapeCheck,

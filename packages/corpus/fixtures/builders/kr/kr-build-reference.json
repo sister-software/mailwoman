@@ -1,8 +1,8 @@
 {
 	"README": [
 		"Pins one seeded Korea build across a refactor.",
-		"Written by the Python assembler (corpus-python countries/kr/corpora) before it moved to",
-		"  packages/corpus/lib/kr/corpus. It records that assembler's output and is not regenerated.",
+		"First written by the Python assembler; re-frozen 2026-10-30 (#2879 T62) when the assembler moved to",
+		"  SeededRandom. Regenerate: MAILWOMAN_REFREEZE_FIXTURES=1 yarn vitest run <the test beside this file>",
 		"Fixture: juso-fixture.zip.b64 and permits-fixture.csv.b64 beside this file, the bytes the Python",
 		"  parity test's REGIONS and PERMITS wrote — a 주소DB archive and permit CSVs",
 		"  at the portal's CP949 shapes, sized so a build finishes in a second.",
@@ -17,51 +17,51 @@
 	"label": [
 		{
 			"split": "train",
-			"raw": "부산시 중구 광복로 55",
-			"register": "short_region",
-			"span_starts": [0, 4, 7, 11],
-			"span_ends": [3, 6, 10, 13],
-			"span_tags": ["region", "subregion", "street", "house_number"]
-		},
-		{
-			"split": "train",
-			"raw": "대한민국서울특별시중구세종대로136-12",
-			"register": "unspaced",
-			"span_starts": [0, 4, 9, 11, 15],
-			"span_ends": [4, 9, 11, 15, 21],
-			"span_tags": ["country", "region", "subregion", "street", "house_number"]
-		},
-		{
-			"split": "train",
-			"raw": "대한민국 제주특별자치도 제주시 문연로 18",
-			"register": "no_dong",
-			"span_starts": [0, 5, 13, 17, 21],
-			"span_ends": [4, 12, 16, 20, 23],
-			"span_tags": ["country", "region", "subregion", "street", "house_number"]
-		},
-		{
-			"split": "train",
-			"raw": "대한민국 부산광역시 중구 광복로 85-3 (신창동)",
+			"raw": "서울특별시 중구 세종대로 110 (태평로1가)",
 			"register": "official",
-			"span_starts": [0, 5, 11, 14, 18, 24],
-			"span_ends": [4, 10, 13, 17, 22, 27],
-			"span_tags": ["country", "region", "subregion", "street", "house_number", "dependent_locality"]
+			"span_starts": [0, 6, 9, 14, 19],
+			"span_ends": [5, 8, 13, 17, 24],
+			"span_tags": ["region", "subregion", "street", "house_number", "dependent_locality"]
 		},
 		{
 			"split": "train",
-			"raw": "제주특별자치도 제주시 연동 52-1",
+			"raw": "제주특별자치도 제주시 문연로 6 (연동)",
+			"register": "official",
+			"span_starts": [0, 8, 12, 16, 19],
+			"span_ends": [7, 11, 15, 17, 21],
+			"span_tags": ["region", "subregion", "street", "house_number", "dependent_locality"]
+		},
+		{
+			"split": "train",
+			"raw": "대한민국 부산광역시 중구 광복로 85-3",
+			"register": "no_dong",
+			"span_starts": [0, 5, 11, 14, 18],
+			"span_ends": [4, 10, 13, 17, 22],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"]
+		},
+		{
+			"split": "train",
+			"raw": "부산광역시 중구 창선동1가 52-1",
 			"register": "jibun",
-			"span_starts": [0, 8, 12, 15],
-			"span_ends": [7, 11, 14, 19],
+			"span_starts": [0, 6, 9, 15],
+			"span_ends": [5, 8, 14, 19],
 			"span_tags": ["region", "subregion", "dependent_locality", "house_number"]
 		},
 		{
 			"split": "train",
-			"raw": "경기도성남시분당구분당로72-1",
-			"register": "unspaced",
-			"span_starts": [0, 3, 9, 12],
-			"span_ends": [3, 9, 12, 16],
-			"span_tags": ["region", "subregion", "street", "house_number"]
+			"raw": "경기도 성남시분당구 분당로 50 (정자동)",
+			"register": "official",
+			"span_starts": [0, 4, 11, 15, 19],
+			"span_ends": [3, 10, 14, 17, 22],
+			"span_tags": ["region", "subregion", "street", "house_number", "dependent_locality"]
+		},
+		{
+			"split": "train",
+			"raw": "대한민국 경기도 성남시분당구 수내동 52-1",
+			"register": "jibun",
+			"span_starts": [0, 5, 9, 16, 20],
+			"span_ends": [4, 8, 15, 19, 24],
+			"span_tags": ["country", "region", "subregion", "dependent_locality", "house_number"]
 		},
 		{
 			"split": "val",
@@ -73,20 +73,20 @@
 		},
 		{
 			"split": "val",
-			"raw": "경기 성남시분당구 분당로 50",
-			"register": "short_region",
-			"span_starts": [0, 3, 10, 14],
-			"span_ends": [2, 9, 13, 16],
-			"span_tags": ["region", "subregion", "street", "house_number"]
+			"raw": "63122 대한민국 제주특별자치도 제주시 문연로 18",
+			"register": "postcode_first",
+			"span_starts": [0, 6, 11, 19, 23, 27],
+			"span_ends": [5, 10, 18, 22, 26, 29],
+			"span_tags": ["postcode", "country", "region", "subregion", "street", "house_number"]
 		}
 	],
 	"board": [
 		{
-			"raw": "부산시 해운대구 해운대해변로 264",
-			"span_starts": [0, 4, 9, 16],
-			"span_ends": [3, 8, 15, 19],
-			"span_tags": ["region", "subregion", "street", "house_number"],
-			"register": "short_region",
+			"raw": "대한민국 부산광역시 해운대구 해운대해변로 264 (우동)",
+			"span_starts": [0, 5, 11, 16, 23, 28],
+			"span_ends": [4, 10, 15, 22, 26, 30],
+			"span_tags": ["country", "region", "subregion", "street", "house_number", "dependent_locality"],
+			"register": "official",
 			"region": "부산광역시",
 			"city": "해운대구",
 			"district": "우동",
@@ -112,10 +112,10 @@
 			"lat": 36.4125
 		},
 		{
-			"raw": "서울특별시 종로구 자하문로 120",
-			"span_starts": [0, 6, 10, 15],
-			"span_ends": [5, 9, 14, 18],
-			"span_tags": ["region", "subregion", "street", "house_number"],
+			"raw": "대한민국 서울특별시 종로구 자하문로 120",
+			"span_starts": [0, 5, 11, 15, 20],
+			"span_ends": [4, 10, 14, 19, 23],
+			"span_tags": ["country", "region", "subregion", "street", "house_number"],
 			"register": "no_dong",
 			"region": "서울특별시",
 			"city": "종로구",
@@ -130,10 +130,18 @@
 	"registry": [
 		{
 			"split": "train",
-			"raw": "부산광역시 중구 창선동1가 5",
+			"raw": "제주특별자치도 제주시 문연로 6",
+			"register": "registry_road",
+			"span_starts": [0, 8, 12, 16],
+			"span_ends": [7, 11, 15, 17],
+			"span_tags": ["region", "subregion", "street", "house_number"]
+		},
+		{
+			"split": "train",
+			"raw": "경기도 성남시분당구 정자동 178",
 			"register": "registry_lot",
-			"span_starts": [0, 6, 9, 15],
-			"span_ends": [5, 8, 14, 16],
+			"span_starts": [0, 4, 11, 15],
+			"span_ends": [3, 10, 14, 18],
 			"span_tags": ["region", "subregion", "dependent_locality", "house_number"]
 		},
 		{
@@ -146,44 +154,36 @@
 		},
 		{
 			"split": "train",
-			"raw": "서울특별시 중구 태평로1가 31",
-			"register": "registry_lot",
-			"span_starts": [0, 6, 9, 15],
-			"span_ends": [5, 8, 14, 17],
-			"span_tags": ["region", "subregion", "dependent_locality", "house_number"]
-		},
-		{
-			"split": "train",
-			"raw": "서울특별시 중구 세종대로 110",
+			"raw": "서울특별시 중구 세종대로 40",
 			"register": "registry_road",
 			"span_starts": [0, 6, 9, 14],
-			"span_ends": [5, 8, 13, 17],
+			"span_ends": [5, 8, 13, 16],
 			"span_tags": ["region", "subregion", "street", "house_number"]
 		},
 		{
 			"split": "train",
-			"raw": "부산광역시 중구 광복로 55",
-			"register": "registry_road",
-			"span_starts": [0, 6, 9, 13],
-			"span_ends": [5, 8, 12, 15],
-			"span_tags": ["region", "subregion", "street", "house_number"]
-		},
-		{
-			"split": "val",
 			"raw": "제주특별자치도 제주시 연동 312",
 			"register": "registry_lot",
 			"span_starts": [0, 8, 12, 15],
 			"span_ends": [7, 11, 14, 18],
 			"span_tags": ["region", "subregion", "dependent_locality", "house_number"]
+		},
+		{
+			"split": "val",
+			"raw": "부산광역시 중구 광복로 55",
+			"register": "registry_road",
+			"span_starts": [0, 6, 9, 13],
+			"span_ends": [5, 8, 12, 15],
+			"span_tags": ["region", "subregion", "street", "house_number"]
 		}
 	],
 	"registry_board": [
 		{
-			"raw": "서울특별시 종로구 청운동 52-1",
-			"span_starts": [0, 6, 10, 14],
-			"span_ends": [5, 9, 13, 18],
-			"span_tags": ["region", "subregion", "dependent_locality", "house_number"],
-			"register": "registry_lot",
+			"raw": "서울특별시 종로구 자하문로 94",
+			"span_starts": [0, 6, 10, 15],
+			"span_ends": [5, 9, 14, 17],
+			"span_tags": ["region", "subregion", "street", "house_number"],
+			"register": "registry_road",
 			"aligned": true,
 			"category": "일반음식점",
 			"lon": 131.832,
@@ -218,7 +218,7 @@
 		"부산광역시|중구": [131.04, 37.81],
 		"부산광역시|해운대구": [131.6, 37.94],
 		"경기도|성남시분당구": [124.56, 35.145],
-		"제주특별자치도|제주시": [128.0, 35.405]
+		"제주특별자치도|제주시": [128, 35.405]
 	},
 	"report": {
 		"seed": 42,
@@ -234,13 +234,12 @@
 		"board_rows": 3,
 		"board_rows_without_centroid": 0,
 		"registers": {
-			"short_region": 3,
-			"unspaced": 2,
+			"official": 5,
+			"jibun": 3,
 			"no_dong": 2,
-			"official": 2,
-			"jibun": 2
+			"postcode_first": 1
 		},
-		"char_vocab_size": 32,
+		"char_vocab_size": 37,
 		"centroid_units": 6,
 		"fractions": {
 			"country": 0.4
@@ -260,54 +259,52 @@
 				"parts": 2,
 				"coverage": {
 					"rows": 6,
-					"bio_char_coverage_all": 0.858333,
-					"bio_char_coverage_significant": 0.980952,
-					"raw_len_min_median_max": [13, 21, 28],
+					"bio_char_coverage_all": 0.785185,
+					"bio_char_coverage_significant": 0.946429,
+					"raw_len_min_median_max": [19, 23, 25],
 					"registers": {
-						"unspaced": 2,
-						"short_region": 1,
-						"no_dong": 1,
-						"official": 1,
-						"jibun": 1
+						"official": 3,
+						"jibun": 2,
+						"no_dong": 1
 					},
 					"per_tag_rows": {
 						"region": 6,
 						"subregion": 6,
 						"house_number": 6,
-						"street": 5,
-						"country": 3,
-						"dependent_locality": 2
+						"dependent_locality": 5,
+						"street": 4,
+						"country": 2
 					},
 					"per_tag_spans": {
 						"region": 6,
 						"subregion": 6,
 						"house_number": 6,
-						"street": 5,
-						"country": 3,
-						"dependent_locality": 2
+						"dependent_locality": 5,
+						"street": 4,
+						"country": 2
 					},
 					"per_tag_chars": {
-						"region": 30,
-						"house_number": 22,
-						"subregion": 18,
-						"street": 16,
-						"country": 12,
-						"dependent_locality": 5
+						"region": 28,
+						"subregion": 21,
+						"house_number": 18,
+						"dependent_locality": 18,
+						"street": 13,
+						"country": 8
 					},
 					"per_label_chars": {
-						"I-region": 24,
-						"O": 17,
-						"I-house_number": 16,
-						"I-subregion": 12,
-						"I-street": 11,
-						"I-country": 9,
+						"O": 29,
+						"I-region": 22,
+						"I-subregion": 15,
+						"I-dependent_locality": 13,
+						"I-house_number": 12,
+						"I-street": 9,
 						"B-region": 6,
 						"B-subregion": 6,
 						"B-house_number": 6,
-						"B-street": 5,
-						"B-country": 3,
-						"I-dependent_locality": 3,
-						"B-dependent_locality": 2
+						"I-country": 6,
+						"B-dependent_locality": 5,
+						"B-street": 4,
+						"B-country": 2
 					}
 				}
 			},
@@ -316,62 +313,67 @@
 				"parts": 1,
 				"coverage": {
 					"rows": 2,
-					"bio_char_coverage_all": 0.761905,
-					"bio_char_coverage_significant": 0.941176,
-					"raw_len_min_median_max": [16, 26, 26],
+					"bio_char_coverage_all": 0.781818,
+					"bio_char_coverage_significant": 0.955556,
+					"raw_len_min_median_max": [26, 29, 29],
 					"registers": {
 						"official": 1,
-						"short_region": 1
+						"postcode_first": 1
 					},
 					"per_tag_rows": {
-						"street": 2,
-						"subregion": 2,
-						"house_number": 2,
+						"country": 2,
 						"region": 2,
-						"country": 1,
-						"dependent_locality": 1
+						"subregion": 2,
+						"street": 2,
+						"house_number": 2,
+						"dependent_locality": 1,
+						"postcode": 1
 					},
 					"per_tag_spans": {
+						"country": 2,
 						"region": 2,
 						"subregion": 2,
 						"street": 2,
 						"house_number": 2,
-						"country": 1,
-						"dependent_locality": 1
+						"dependent_locality": 1,
+						"postcode": 1
 					},
 					"per_tag_chars": {
-						"subregion": 8,
-						"region": 7,
+						"region": 12,
+						"country": 8,
 						"street": 7,
-						"country": 4,
+						"subregion": 5,
+						"postcode": 5,
 						"house_number": 4,
 						"dependent_locality": 2
 					},
 					"per_label_chars": {
-						"O": 10,
-						"I-subregion": 6,
-						"I-region": 5,
+						"O": 12,
+						"I-region": 10,
+						"I-country": 6,
 						"I-street": 5,
-						"I-country": 3,
+						"I-postcode": 4,
+						"I-subregion": 3,
+						"B-country": 2,
 						"B-region": 2,
 						"B-subregion": 2,
 						"B-street": 2,
 						"B-house_number": 2,
 						"I-house_number": 2,
-						"B-country": 1,
 						"B-dependent_locality": 1,
-						"I-dependent_locality": 1
+						"I-dependent_locality": 1,
+						"B-postcode": 1
 					}
 				}
 			}
 		},
 		"board_coverage": {
 			"rows": 3,
-			"bio_char_coverage_all": 0.833333,
-			"bio_char_coverage_significant": 1.0,
-			"raw_len_min_median_max": [18, 19, 23],
+			"bio_char_coverage_all": 0.805195,
+			"bio_char_coverage_significant": 0.96875,
+			"raw_len_min_median_max": [23, 23, 31],
 			"registers": {
-				"short_region": 1,
+				"official": 1,
 				"jibun": 1,
 				"no_dong": 1
 			},
@@ -379,39 +381,44 @@
 				"region": 3,
 				"subregion": 3,
 				"house_number": 3,
+				"country": 2,
 				"street": 2,
-				"dependent_locality": 1,
+				"dependent_locality": 2,
 				"venue": 1
 			},
 			"per_tag_spans": {
 				"region": 3,
 				"subregion": 3,
 				"house_number": 3,
+				"country": 2,
 				"street": 2,
-				"dependent_locality": 1,
+				"dependent_locality": 2,
 				"venue": 1
 			},
 			"per_tag_chars": {
-				"region": 13,
+				"region": 15,
 				"subregion": 10,
 				"street": 10,
 				"house_number": 10,
-				"venue": 4,
-				"dependent_locality": 3
+				"country": 8,
+				"dependent_locality": 5,
+				"venue": 4
 			},
 			"per_label_chars": {
-				"I-region": 10,
-				"O": 10,
+				"O": 15,
+				"I-region": 12,
 				"I-street": 8,
 				"I-subregion": 7,
 				"I-house_number": 7,
+				"I-country": 6,
 				"B-region": 3,
 				"B-subregion": 3,
 				"B-house_number": 3,
+				"I-dependent_locality": 3,
 				"I-venue": 3,
+				"B-country": 2,
 				"B-street": 2,
-				"I-dependent_locality": 2,
-				"B-dependent_locality": 1,
+				"B-dependent_locality": 2,
 				"B-venue": 1
 			}
 		},
@@ -438,8 +445,8 @@
 				"unaligned": 1
 			},
 			"registers": {
-				"registry_road": 3,
-				"registry_lot": 3
+				"registry_road": 4,
+				"registry_lot": 2
 			},
 			"splits": {
 				"train": {
@@ -447,17 +454,17 @@
 					"parts": 2,
 					"coverage": {
 						"rows": 5,
-						"bio_char_coverage_all": 0.817073,
-						"bio_char_coverage_significant": 1.0,
-						"raw_len_min_median_max": [15, 17, 17],
+						"bio_char_coverage_all": 0.825581,
+						"bio_char_coverage_significant": 1,
+						"raw_len_min_median_max": [16, 17, 18],
 						"registers": {
 							"registry_road": 3,
 							"registry_lot": 2
 						},
 						"per_tag_rows": {
 							"region": 5,
-							"house_number": 5,
 							"subregion": 5,
+							"house_number": 5,
 							"street": 3,
 							"dependent_locality": 2
 						},
@@ -469,23 +476,23 @@
 							"dependent_locality": 2
 						},
 						"per_tag_chars": {
-							"region": 23,
-							"subregion": 14,
-							"dependent_locality": 10,
-							"house_number": 10,
-							"street": 10
+							"region": 25,
+							"subregion": 20,
+							"house_number": 11,
+							"street": 10,
+							"dependent_locality": 5
 						},
 						"per_label_chars": {
-							"I-region": 18,
+							"I-region": 20,
 							"O": 15,
-							"I-subregion": 9,
-							"I-dependent_locality": 8,
+							"I-subregion": 15,
 							"I-street": 7,
+							"I-house_number": 6,
 							"B-region": 5,
 							"B-subregion": 5,
 							"B-house_number": 5,
-							"I-house_number": 5,
 							"B-street": 3,
+							"I-dependent_locality": 3,
 							"B-dependent_locality": 2
 						}
 					}
@@ -495,46 +502,46 @@
 					"parts": 1,
 					"coverage": {
 						"rows": 1,
-						"bio_char_coverage_all": 0.833333,
-						"bio_char_coverage_significant": 1.0,
-						"raw_len_min_median_max": [18, 18, 18],
+						"bio_char_coverage_all": 0.8,
+						"bio_char_coverage_significant": 1,
+						"raw_len_min_median_max": [15, 15, 15],
 						"registers": {
-							"registry_lot": 1
+							"registry_road": 1
 						},
 						"per_tag_rows": {
 							"region": 1,
-							"dependent_locality": 1,
-							"house_number": 1,
-							"subregion": 1
+							"subregion": 1,
+							"street": 1,
+							"house_number": 1
 						},
 						"per_tag_spans": {
 							"region": 1,
 							"subregion": 1,
-							"dependent_locality": 1,
+							"street": 1,
 							"house_number": 1
 						},
 						"per_tag_chars": {
-							"region": 7,
-							"subregion": 3,
-							"house_number": 3,
-							"dependent_locality": 2
+							"region": 5,
+							"street": 3,
+							"subregion": 2,
+							"house_number": 2
 						},
 						"per_label_chars": {
-							"I-region": 6,
+							"I-region": 4,
 							"O": 3,
-							"I-subregion": 2,
-							"I-house_number": 2,
+							"I-street": 2,
 							"B-region": 1,
 							"B-subregion": 1,
-							"B-dependent_locality": 1,
-							"I-dependent_locality": 1,
-							"B-house_number": 1
+							"I-subregion": 1,
+							"B-street": 1,
+							"B-house_number": 1,
+							"I-house_number": 1
 						}
 					}
 				}
 			},
 			"board_rows": 3,
-			"char_vocab_size": 21
+			"char_vocab_size": 23
 		}
 	}
 }

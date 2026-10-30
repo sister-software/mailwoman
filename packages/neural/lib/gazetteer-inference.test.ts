@@ -1,9 +1,10 @@
 /**
  * Cross-language parity for the gazetteer-anchor matcher.
  *
- * These assertions mirror corpus-python's `tokenizer/test_channel_painters.py`,
- * which runs the training painter in `mtf-channels`, so a drift in the TS matcher
- * would show the model different clues at inference than it trained on.
+ * These assertions mirror the deleted Python trainer's channel-painter tests.
+ * The training painter is `mtf-channels`.
+ *
+ * A drift in the TS matcher would show the model different clues at inference than it trained on.
  * The inline lexicon matches that test's fixture exactly.
  */
 

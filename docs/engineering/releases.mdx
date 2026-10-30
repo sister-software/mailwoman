@@ -99,8 +99,8 @@ These are merged to `main` after 10.7.0 and belong in the next release's notes
   second pull under the same data root refuses before any transfer and prints the holder's pid.
 - **Interrupted transfers resume.** A cancelled or dropped transfer keeps its bytes, and the next pull
   resumes it when the remote ETag, Last-Modified date and length still match.
-- **New commands.** `data activate <installation-id>` and `data activate --rollback`, `data prune` with
-  `--dry-run`, and `data migrate --dry-run`. `data pull` and `data status` gain `--json`.
+- **New commands.** `data activate <installation-id>` and `data activate --rollback`, `data prune`, which
+  deletes only under `--yes`, and `data migrate --dry-run`. `data pull` and `data status` gain `--json`.
 - **Setup reports capabilities.** `mailwoman setup` lists what works now per capability and the next
   smallest installation, and lists the `fr`, `us` and `poi` tiers only for the countries they cover.
 - **Every data reader consults the selection.** The OpenStreetMap address-point layers, the WOF extract
@@ -115,7 +115,7 @@ These are merged to `main` after 10.7.0 and belong in the next release's notes
   `--activate` selection after any national register the country already selects. The recipe ships in
   `@mailwoman/osm`; without it the command prints the package to install and stops. The command-line builder
   `build-rooftop-database` keeps working.
-- **`@mailwoman/nominatim` and `@mailwoman/photon`** no longer depend on `@mailwoman/ban` directly; they
+- **`@mailwoman/nominatim` and `@mailwoman/photon`** no longer depend on `@mailwoman/ban` directly. They
   open BAN through `mailwoman`.
 
 ## In flight

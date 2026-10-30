@@ -57,12 +57,14 @@ report.set(
 )
 
 if (values.json) {
-	await writeAuditReport(values.json, report, { ensureASCII: false, trailingNewline: true })
+	await writeAuditReport(values.json, report, { trailingNewline: true })
 }
 
-const totals = report.get("totals") as Map<string, number | { value: number }>
-const count = (key: string) => ((totals.get(key) as number | undefined) ?? 0).toLocaleString("en-US")
-const rate = (totals.get("mixed_rate") as { value: number }).value
+const totals = report.get("totals") as Map<string, number>
+const count = (key: string) => (totals.get(key) ?? 0).toLocaleString("en-US")
+const rate = totals.get("mixed_rate")
+
+if (typeof rate !== "number") throw new Error("the mixed-script report's totals hold no mixed_rate")
 
 console.log(
 	`rows=${count("rows")} multiple-script=${count("rows_with_multiple_scripts")} ` +

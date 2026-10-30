@@ -31,7 +31,7 @@ The corpus pipeline assembles training data from multiple sources:
 | **OpenStreetMap**  | Pakistan, Bangladesh, Vietnam — ODbL, refused by `--license-policy share-alike-free` |
 
 Output format: TSV rows with `raw<TAB>BIO_labels` consumed by the Python
-training pipeline (`corpus-python/`).
+training pipeline (`packages/trainer`).
 
 ## Key modules
 

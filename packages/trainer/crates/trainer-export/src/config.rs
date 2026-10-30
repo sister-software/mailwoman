@@ -1,4 +1,4 @@
-//! The checkpoint's `config.json`, as `mailwoman_train/nn/serialization.py::to_config_dict` writes it.
+//! The checkpoint's `config.json`, as the trainer writes it (the format the Python trainer's `to_config_dict` defined).
 //!
 //! A key the file omits takes the default `serialization._constructor_kwargs` gives it, so a config written by an
 //! older trainer reads the way `MailwomanCoarseEncoder.from_pretrained` reads it. Keys the export does not use are
@@ -10,10 +10,6 @@ use std::path::Path;
 use serde::Deserialize;
 
 use crate::{fail, Result};
-
-fn yes() -> bool {
-	true
-}
 
 fn two() -> usize {
 	2
@@ -108,8 +104,6 @@ pub struct ModelConfig {
 	pub num_address_systems: usize,
 	#[serde(default)]
 	pub use_locale_hint: bool,
-	#[serde(default = "yes")]
-	pub use_crf: bool,
 	#[serde(default)]
 	pub id2label: BTreeMap<String, String>,
 }
