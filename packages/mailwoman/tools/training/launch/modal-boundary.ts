@@ -8,15 +8,16 @@
  */
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { type App, type Image, ModalClient, NotFoundError, type Secret, type Volume } from "modal"
+import { AlreadyExistsError, type App, type Image, ModalClient, NotFoundError, type Secret, type Volume } from "modal"
 import { dirname, resolvePath } from "path-ts"
 
-import type {
-	ModalBoundary,
-	OneShotSandboxSpec,
-	SandboxState,
-	TrainerImageBuild,
-	TrainingSandboxSpec,
+import {
+	type ModalBoundary,
+	type OneShotSandboxSpec,
+	SandboxNameTakenError,
+	type SandboxState,
+	type TrainerImageBuild,
+	type TrainingSandboxSpec,
 } from "#tools/training/launch/boundary"
 
 /**
@@ -131,18 +132,22 @@ export class SDKModalBoundary implements ModalBoundary {
 
 		this.#secret ??= this.#options.secretName ? this.#client.secrets.fromName(this.#options.secretName) : null
 
-		const sandbox = await this.#client.sandboxes.create(app, image, {
-			command: spec.command,
-			env: spec.env,
-			...(spec.gpu ? { gpu: spec.gpu } : {}),
-			cpu: spec.cpu,
-			memoryMiB: spec.memoryMiB,
-			timeoutMs: spec.timeoutMs,
-			volumes: { [this.#options.mount]: await this.#volumeHandle() },
-			...(this.#secret ? { secrets: [await this.#secret] } : {}),
-			name: spec.name,
-			tags: spec.tags,
-		})
+		const sandbox = await this.#client.sandboxes
+			.create(app, image, {
+				command: spec.command,
+				env: spec.env,
+				...(spec.gpu ? { gpu: spec.gpu } : {}),
+				cpu: spec.cpu,
+				memoryMiB: spec.memoryMiB,
+				timeoutMs: spec.timeoutMs,
+				volumes: { [this.#options.mount]: await this.#volumeHandle() },
+				...(this.#secret ? { secrets: [await this.#secret] } : {}),
+				name: spec.name,
+				tags: spec.tags,
+			})
+			.catch((error: unknown) => {
+				throw error instanceof AlreadyExistsError ? new SandboxNameTakenError(spec.name) : error
+			})
 
 		try {
 			for (const file of spec.files) {

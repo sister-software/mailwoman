@@ -30,10 +30,22 @@ fn options<'a>(args: &'a [String], name: &str) -> Vec<&'a str> {
 		.collect()
 }
 
-fn set_threads(args: &[String]) {
-	if let Some(n) = option(args, "--threads").and_then(|n| n.parse().ok()) {
+/// An option's value parsed, `None` when the option is absent, and an error naming it when its value does not parse.
+fn parsed_option<T: std::str::FromStr>(args: &[String], name: &str) -> Result<Option<T>, String> {
+	option(args, name)
+		.map(|value| {
+			value
+				.parse()
+				.map_err(|_| format!("{name} {value} is not a valid value"))
+		})
+		.transpose()
+}
+
+fn set_threads(args: &[String]) -> Result<(), String> {
+	if let Some(n) = parsed_option(args, "--threads")? {
 		tch::set_num_threads(n);
 	}
+	Ok(())
 }
 
 fn report(results: &[StageResult], args: &[String]) -> Result<bool, String> {
@@ -94,7 +106,7 @@ fn check_device(args: &[String]) -> Result<(), String> {
 }
 
 fn run(args: &[String]) -> Result<bool, String> {
-	set_threads(args);
+	set_threads(args)?;
 	let err = |e: trainer_loop::Error| e.to_string();
 	match args.first().map(String::as_str) {
 		Some("device") => {
@@ -138,7 +150,7 @@ fn run(args: &[String]) -> Result<bool, String> {
 			let checkpoint = PathBuf::from(option(args, "--checkpoint").ok_or(USAGE)?);
 			let record = PathBuf::from(option(args, "--record").ok_or(USAGE)?);
 			let out = PathBuf::from(option(args, "--out").ok_or(USAGE)?);
-			let rows = option(args, "--rows").and_then(|n| n.parse().ok()).unwrap_or(64);
+			let rows = parsed_option(args, "--rows")?.unwrap_or(64);
 			let files = DataFiles::discover();
 			let schema = trainer_loop::batch::read_label_schema(&files).map_err(err)?;
 			let (labels, conventions) = (

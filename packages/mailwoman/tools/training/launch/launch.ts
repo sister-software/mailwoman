@@ -17,7 +17,13 @@
 
 import { sha256Hex } from "@mailwoman/core/hash"
 
-import type { ModalBoundary, SandboxResources, SandboxState, TrainerImageBuild } from "#tools/training/launch/boundary"
+import {
+	type ModalBoundary,
+	SandboxNameTakenError,
+	type SandboxResources,
+	type SandboxState,
+	type TrainerImageBuild,
+} from "#tools/training/launch/boundary"
 import { checkClearable, resolveRunPaths } from "#tools/training/launch/run-paths"
 import {
 	SUPERVISOR_REFUSED_EXIT,
@@ -263,20 +269,29 @@ async function startSandbox(record: LaunchRecord, deps: LaunchDependencies): Pro
 		throw new TypeError(`the record of run ${record.runKey} holds no launch inputs; start the run again with start`)
 	}
 
-	const sandbox = await deps.boundary.start({
-		...record.resources,
-		name: `train-${record.runKey}-${record.sandboxes.length}`,
-		imageID: record.imageID,
-		command: ["bash", "-c", SUPERVISOR_SCRIPT],
-		env: { ...record.environment },
-		// `ready` comes last: the supervisor reads the other two once it exists.
-		files: [
-			{ path: `${LAUNCH_INPUTS_DIR}/config`, contents: Buffer.from(record.inputs.configBase64, "base64") },
-			{ path: `${LAUNCH_INPUTS_DIR}/resolved.json`, contents: Buffer.from(record.inputs.resolved) },
-			{ path: `${LAUNCH_INPUTS_DIR}/ready`, contents: new Uint8Array() },
-		],
-		tags: { [RUN_TAG]: record.runKey, config: record.config },
-	})
+	// Every sandbox of a run carries one name, so Modal refuses a second one
+	// while the first runs: the refusal holds between the host's check for a running sandbox
+	// and this start, which the check alone leaves open.
+	const sandbox = await deps.boundary
+		.start({
+			...record.resources,
+			name: `train-${record.runKey}`,
+			imageID: record.imageID,
+			command: ["bash", "-c", SUPERVISOR_SCRIPT],
+			env: { ...record.environment },
+			// `ready` comes last: the supervisor reads the other two once it exists.
+			files: [
+				{ path: `${LAUNCH_INPUTS_DIR}/config`, contents: Buffer.from(record.inputs.configBase64, "base64") },
+				{ path: `${LAUNCH_INPUTS_DIR}/resolved.json`, contents: Buffer.from(record.inputs.resolved) },
+				{ path: `${LAUNCH_INPUTS_DIR}/ready`, contents: new Uint8Array() },
+			],
+			tags: { [RUN_TAG]: record.runKey, config: record.config },
+		})
+		.catch((error: unknown) => {
+			throw error instanceof SandboxNameTakenError
+				? new DuplicateLaunchError(record.runKey, `named ${error.sandboxName}`)
+				: error
+		})
 
 	const next = { ...record, sandboxes: [...record.sandboxes, sandbox.id] }
 

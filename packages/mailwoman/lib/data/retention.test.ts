@@ -68,6 +68,30 @@ describe("planPrune and executePrune", () => {
 		expect(await catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })).toBe(c.path)
 	})
 
+	it("deletes the installed file, its manifest and its receipt, and keeps a file prune did not install", async () => {
+		const { a } = await threeGenerations()
+		const plan = await planPrune(scratch.path)
+		const directory = plan.candidates[0]!.directory
+		const foreign = resolvePath(directory, "notes.txt")
+
+		await writeLocalTextFile("kept", foreign)
+		await executePrune(plan)
+
+		expect(await pathExists(a.path)).toBe(false)
+		expect(await pathExists(resolvePath(directory, "manifest.json"))).toBe(false)
+		expect(await pathExists(resolvePath(directory, "receipt.json"))).toBe(false)
+		expect(await readLocalTextFile(foreign)).toBe("kept")
+	})
+
+	it("removes the artifact's directory once its three files are gone", async () => {
+		await threeGenerations()
+		const plan = await planPrune(scratch.path)
+
+		await executePrune(plan)
+
+		expect(await pathExists(plan.candidates[0]!.directory)).toBe(false)
+	})
+
 	it("refuses a candidate whose directory is a conventional layer path rather than db/<role>/<hex>", async () => {
 		const { a } = await threeGenerations()
 		const plan = await planPrune(scratch.path)

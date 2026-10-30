@@ -379,9 +379,39 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 	}
 	assert_eq!(sched3.last_epoch, 25);
 	let expected = sched3.base_lrs[0] * live.multiplier(25);
-	assert!((sched3.get_last_lr()[0] - expected).abs() < 1e-15, "{:?}", sched3.get_last_lr());
+	assert!(
+		(sched3.get_last_lr()[0] - expected).abs() < 1e-15,
+		"{:?}",
+		sched3.get_last_lr()
+	);
 	assert!((live.multiplier(25) - 0.75).abs() < 1e-12);
 	assert_ne!(live.multiplier(25), sched.schedule.multiplier(25));
+
+	// A resume refuses a directory that is not a run to resume, rather than restarting it from step 0.
+	use trainer_loop::supervised::restore_training_state;
+	let run = run_config(serde_json::json!({}));
+	let lrs = vec![1e-3; optim3.groups.len()];
+	let weights_only = dir.path().join("weights-only");
+	std::fs::create_dir_all(&weights_only).unwrap();
+	let error = restore_training_state(&run, &weights_only, &mut optim3, &mut sched3, &lrs)
+		.unwrap_err()
+		.to_string();
+	assert!(error.contains("holds no optimizer.json"), "{error}");
+	let no_step = dir.path().join("no-step");
+	std::fs::create_dir_all(&no_step).unwrap();
+	for entry in std::fs::read_dir(&saved).unwrap() {
+		let entry = entry.unwrap();
+		std::fs::copy(entry.path(), no_step.join(entry.file_name())).unwrap();
+	}
+	std::fs::write(
+		no_step.join("training_state.json"),
+		r#"{"step": "seven", "config": {}}"#,
+	)
+	.unwrap();
+	let error = restore_training_state(&run, &no_step, &mut optim3, &mut sched3, &lrs)
+		.unwrap_err()
+		.to_string();
+	assert!(error.contains("`step` is not an integer"), "{error}");
 }
 
 #[test]

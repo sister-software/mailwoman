@@ -20,11 +20,25 @@ export interface SandboxResources {
 }
 
 /**
+ * Modal refused a sandbox because a running sandbox of the app already holds its name.
+ */
+export class SandboxNameTakenError extends Error {
+	readonly sandboxName: string
+
+	constructor(sandboxName: string) {
+		super(`a running sandbox already holds the name ${sandboxName}`)
+		this.name = "SandboxNameTakenError"
+		this.sandboxName = sandboxName
+	}
+}
+
+/**
  * One training sandbox to start.
  */
 export interface TrainingSandboxSpec extends SandboxResources {
 	/**
-	 * Unique among the app's running sandboxes, so Modal itself refuses a second sandbox under one name.
+	 * Unique among the app's running sandboxes, so Modal itself refuses a second sandbox under
+	 * one name, and {@linkcode ModalBoundary.start} throws a {@linkcode SandboxNameTakenError}.
 	 */
 	name: string
 	imageID: string

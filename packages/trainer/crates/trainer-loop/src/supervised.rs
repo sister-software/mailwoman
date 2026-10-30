@@ -216,25 +216,32 @@ pub fn restore_training_state(
 	scheduler: &mut LambdaLr,
 	live: &[f64],
 ) -> Result<i64> {
-	if resume_from.join("optimizer.json").is_file() {
-		optim.load(resume_from)?;
+	// A resume continues a run, so the optimizer state and the step are required. A weights-only checkpoint
+	// is a starting point for `train.init_from`, not a run to resume.
+	if !resume_from.join("optimizer.json").is_file() {
+		return Err(fail!(
+			"{} holds no optimizer.json, so it is not a run to resume; start from it with train.init_from",
+			resume_from.display()
+		));
 	}
-	let mut resume_step = 0;
+	optim.load(resume_from)?;
 	let state_path = resume_from.join(TRAINING_STATE);
-	if state_path.is_file() {
-		let state: Value = serde_json::from_str(&std::fs::read_to_string(&state_path)?)?;
-		resume_step = state["step"].as_i64().unwrap_or(0);
-		let drift = resume_drift(&run.config, &state["config"]);
-		if drift.is_empty() {
-			println!("[resume-drift] none — live config matches the checkpoint's stamped state");
-		} else {
-			println!(
-				"[resume-drift] {} config field(s) differ from the checkpoint's stamped state:",
-				drift.len()
-			);
-			for line in drift {
-				println!("  ! {line}");
-			}
+	let state: Value = serde_json::from_str(
+		&std::fs::read_to_string(&state_path).map_err(|e| fail!("{}: {e}", state_path.display()))?,
+	)?;
+	let resume_step = state["step"]
+		.as_i64()
+		.ok_or_else(|| fail!("{}: `step` is not an integer: {}", state_path.display(), state["step"]))?;
+	let drift = resume_drift(&run.config, &state["config"]);
+	if drift.is_empty() {
+		println!("[resume-drift] none — live config matches the checkpoint's stamped state");
+	} else {
+		println!(
+			"[resume-drift] {} config field(s) differ from the checkpoint's stamped state:",
+			drift.len()
+		);
+		for line in drift {
+			println!("  ! {line}");
 		}
 	}
 	if resume_from.join("scheduler.json").is_file() {

@@ -24,7 +24,7 @@ import { acquireDirectoryLock, processExists } from "@mailwoman/core/fs/lock"
 import type { Dirent } from "@mailwoman/core/fs/readers"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { removePath, removePathIfPresent, writeLocalJSONFileAtomically } from "@mailwoman/core/fs/writers"
+import { removeEmptyDirectory, removePathIfPresent, writeLocalJSONFileAtomically } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { ActiveSelection, ArtifactID, LayerInstallationID } from "@mailwoman/core/layers"
 import { hostName } from "@mailwoman/core/utils/system"
@@ -218,6 +218,10 @@ export interface PruneCandidate {
 	 * The artifact's directory, `db/<role>/<hex>/`.
 	 */
 	directory: string
+	/**
+	 * The installed file, which prune deletes with the directory's `manifest.json` and `receipt.json`.
+	 */
+	path: string
 	bytes: number
 }
 
@@ -372,6 +376,7 @@ export async function planPrune(dataRoot: PathBuilderLike, options: { retain?: n
 			installationID: copy.installationID,
 			artifactID: copy.artifactID,
 			directory: resolvePath(copy.path, ".."),
+			path: copy.path.toString(),
 			bytes: copy.manifest.bytes,
 		})
 	}
@@ -393,8 +398,11 @@ export async function planPrune(dataRoot: PathBuilderLike, options: { retain?: n
  * Raise unless every candidate's directory is `<dataRoot>/db/<role>/<hex>`,
  * with `<hex>` its own artifact's digest.
  *
- * Prune deletes whole directories, so a candidate whose file sits at a conventional path, such as
- * a `legacy` installation registered in place under `db/wof/`, would take its neighbors with it.
+ * Prune deletes a candidate's file, `manifest.json` and `receipt.json`,
+ * then its directory when that left it empty.
+ * A candidate whose file sits at a conventional path, such as a `legacy` installation
+ * registered in place under `db/wof/`, shares its directory with other layers' files,
+ * so it is refused before anything is deleted.
  */
 export function assertContentAddressedCandidates(dataRoot: string, candidates: readonly PruneCandidate[]): void {
 	const root = `${resolvePath(dataRoot).toString()}/db/`
@@ -459,10 +467,20 @@ export async function executePrune(plan: PrunePlan): Promise<{ deleted: PruneCan
 
 	const deleted: PruneCandidate[] = []
 
+	// Prune deletes the three files an installation writes and then the directory only
+	// when that left it empty, so a file it did not install is never removed with them.
 	for (const candidate of plan.candidates) {
 		if (!(await tryStat(candidate.directory))) continue
 
-		await removePath(candidate.directory)
+		for (const file of [
+			candidate.path,
+			resolvePath(candidate.directory, "manifest.json"),
+			resolvePath(candidate.directory, "receipt.json"),
+		]) {
+			await removePathIfPresent(file)
+		}
+
+		await removeEmptyDirectory(candidate.directory)
 		deleted.push(candidate)
 	}
 

@@ -9,7 +9,12 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { ModalBoundary, SandboxState, TrainingSandboxSpec } from "#tools/training/launch/boundary"
+import {
+	type ModalBoundary,
+	SandboxNameTakenError,
+	type SandboxState,
+	type TrainingSandboxSpec,
+} from "#tools/training/launch/boundary"
 import {
 	cancelLaunch,
 	DuplicateLaunchError,
@@ -61,6 +66,11 @@ function harness() {
 	const boundary: ModalBoundary = {
 		ensureTrainerImage: async (build) => `im-${build.name}`,
 		start: async (spec) => {
+			// Modal refuses a name a running sandbox of the app holds.
+			if ([...sandboxes.values()].some((sandbox) => sandbox.exitCode === null && sandbox.spec.name === spec.name)) {
+				throw new SandboxNameTakenError(spec.name)
+			}
+
 			const id = `sb-${sandboxes.size}`
 
 			sandboxes.set(id, { id, tags: spec.tags, exitCode: null, spec })
@@ -150,6 +160,17 @@ describe("the training launch lifecycle", () => {
 		await startLaunch(CONFIG, OPTIONS, deps)
 		await expect(startLaunch(CONFIG, OPTIONS, deps)).rejects.toBeInstanceOf(DuplicateLaunchError)
 		expect(preflights()).toBe(1)
+	})
+
+	it("refuses a second launch that passes the host check while the first sandbox runs, by the sandbox name", async () => {
+		const { deps } = harness()
+		const record = await startLaunch(CONFIG, OPTIONS, deps)
+		// The race: the second launch's check ran before the first sandbox was listed.
+		const racing = { ...deps, boundary: { ...deps.boundary, list: async () => [] } }
+
+		await expect(startLaunch(CONFIG, OPTIONS, racing)).rejects.toThrow(
+			new DuplicateLaunchError(record.runKey, `named train-${record.runKey}`)
+		)
 	})
 
 	it("restarts a stopped run in a fresh sandbox without clearing it, and refuses to restart a refusal", async () => {
