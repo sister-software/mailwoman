@@ -30,8 +30,12 @@ fn options<'a>(args: &'a [String], name: &str) -> Vec<&'a str> {
 		.collect()
 }
 
-/// An option's value parsed, `None` when the option is absent, and an error naming it when its value does not parse.
+/// An option's value parsed, `None` when the option is absent, and an error naming it when it is the last argument
+/// with no value or its value does not parse.
 fn parsed_option<T: std::str::FromStr>(args: &[String], name: &str) -> Result<Option<T>, String> {
+	if args.last().is_some_and(|last| last == name) {
+		return Err(format!("{name} needs a value"));
+	}
 	option(args, name)
 		.map(|value| {
 			value

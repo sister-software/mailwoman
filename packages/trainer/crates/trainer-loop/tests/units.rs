@@ -408,10 +408,14 @@ fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 		r#"{"step": "seven", "config": {}}"#,
 	)
 	.unwrap();
+	let states_before = optim3.state.len();
 	let error = restore_training_state(&run, &no_step, &mut optim3, &mut sched3, &lrs)
 		.unwrap_err()
 		.to_string();
 	assert!(error.contains("`step` is not an integer"), "{error}");
+	// The checkpoint's step is checked before its optimizer state is loaded, so a refused resume changes no state.
+	assert!(saved.join("optimizer.json").is_file());
+	assert_eq!(optim3.state.len(), states_before);
 }
 
 #[test]

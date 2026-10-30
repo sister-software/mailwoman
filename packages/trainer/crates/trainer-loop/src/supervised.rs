@@ -6,8 +6,8 @@
 use crate::batch::{RunEncoder, TensorBatch};
 use crate::callbacks::{Callback, Checkpointer, Console, CsvMetrics, StepView};
 use crate::checkpoint::{
-	checkpoint_extras, find_latest_checkpoint, restore_generators, resume_drift, save_checkpoint, RNG_STATE,
-	TRAINING_STATE,
+	checkpoint_extras, find_latest_checkpoint, read_resume_state, restore_generators, resume_drift, save_checkpoint,
+	RNG_STATE,
 };
 use crate::config::{sampler_config, DataFiles, RunConfig};
 use crate::fisher::{EwcPenalty, FisherAccumulator};
@@ -216,22 +216,8 @@ pub fn restore_training_state(
 	scheduler: &mut LambdaLr,
 	live: &[f64],
 ) -> Result<i64> {
-	// A resume continues a run, so the optimizer state and the step are required. A weights-only checkpoint
-	// is a starting point for `train.init_from`, not a run to resume.
-	if !resume_from.join("optimizer.json").is_file() {
-		return Err(fail!(
-			"{} holds no optimizer.json, so it is not a run to resume; start from it with train.init_from",
-			resume_from.display()
-		));
-	}
+	let (resume_step, state) = read_resume_state(resume_from)?;
 	optim.load(resume_from)?;
-	let state_path = resume_from.join(TRAINING_STATE);
-	let state: Value = serde_json::from_str(
-		&std::fs::read_to_string(&state_path).map_err(|e| fail!("{}: {e}", state_path.display()))?,
-	)?;
-	let resume_step = state["step"]
-		.as_i64()
-		.ok_or_else(|| fail!("{}: `step` is not an integer: {}", state_path.display(), state["step"]))?;
 	let drift = resume_drift(&run.config, &state["config"]);
 	if drift.is_empty() {
 		println!("[resume-drift] none — live config matches the checkpoint's stamped state");

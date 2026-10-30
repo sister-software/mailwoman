@@ -22,6 +22,28 @@ use trainer_model::CoarseEncoder;
 
 pub const TRAINING_STATE: &str = "training_state.json";
 
+/// The step and the stamped `training_state.json` of a checkpoint a run resumes from.
+///
+/// A resume continues a run, so `optimizer.json` and an integer `step` are required. A weights-only checkpoint is a
+/// starting point for `train.init_from`, not a run to resume. This reads and checks both before any state is loaded,
+/// so a refused resume leaves the caller's optimizer and scheduler as they were.
+pub fn read_resume_state(resume_from: &Path) -> Result<(i64, Value)> {
+	if !resume_from.join("optimizer.json").is_file() {
+		return Err(fail!(
+			"{} holds no optimizer.json, so it is not a run to resume; start from it with train.init_from",
+			resume_from.display()
+		));
+	}
+	let state_path = resume_from.join(TRAINING_STATE);
+	let state: Value = serde_json::from_str(
+		&std::fs::read_to_string(&state_path).map_err(|e| fail!("{}: {e}", state_path.display()))?,
+	)?;
+	let step = state["step"]
+		.as_i64()
+		.ok_or_else(|| fail!("{}: `step` is not an integer: {}", state_path.display(), state["step"]))?;
+	Ok((step, state))
+}
+
 /// The generator states a checkpoint saves beside the model.
 pub const RNG_STATE: &str = "rng_state.safetensors";
 

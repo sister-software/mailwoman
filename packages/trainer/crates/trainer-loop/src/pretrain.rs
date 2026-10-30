@@ -6,7 +6,7 @@
 
 use crate::batch::RunEncoder;
 use crate::checkpoint::{
-	checkpoint_extras, find_latest_checkpoint, restore_generators, save_checkpoint, TRAINING_STATE,
+	checkpoint_extras, find_latest_checkpoint, read_resume_state, restore_generators, save_checkpoint,
 };
 
 /// The name the MLM mask generator's state is saved under in `rng_state.safetensors`.
@@ -18,7 +18,6 @@ use crate::schedules::{LambdaLr, Schedule};
 use crate::supervised::{build_model, device, resolve_precision, TrainOptions};
 use crate::{fail, Result};
 use mtf_sampler::{CancelToken, Sampler, TrainingBatches};
-use serde_json::Value;
 use std::path::PathBuf;
 use std::time::Instant;
 use tch::{Device, Tensor};
@@ -76,13 +75,8 @@ pub fn pretrain(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let mut scheduler = LambdaLr::new(&mut optim, schedule);
 	let mut resume_step = 0;
 	if let Some(dir) = &resume {
-		if dir.join("optimizer.json").is_file() {
-			optim.load(dir)?;
-		}
-		if dir.join(TRAINING_STATE).is_file() {
-			let state: Value = serde_json::from_str(&std::fs::read_to_string(dir.join(TRAINING_STATE))?)?;
-			resume_step = state["step"].as_i64().unwrap_or(0);
-		}
+		(resume_step, _) = read_resume_state(dir)?;
+		optim.load(dir)?;
 		if dir.join("scheduler.json").is_file() {
 			scheduler.load(dir)?;
 		} else {
