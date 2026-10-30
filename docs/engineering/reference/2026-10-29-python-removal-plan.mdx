@@ -1399,10 +1399,23 @@ in `training-row-encoder.mdx` (Phase 3: sampler init 220.3 s and sampling 8.09 m
 Python loader). Those were measured through the Python binding under a different harness, so no ratio is taken
 between them and the rows above.
 
-| Measurement                                   | Value                                                                   |
-| --------------------------------------------- | ----------------------------------------------------------------------- |
-| Rust trainer steps per second on an A100-40GB | not measured: T36 (the stage 8 run) records it from its `train_log.csv` |
-| 2,000-step probe, Rust loader on an A100-40GB | 6.50 s per 100 steps (measured 2026-10-29, `training-row-encoder.mdx`)  |
+| Measurement                                     | Value                                                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Rust trainer, 2,000-step probe on an A100-40GB  | 15.46 steps/s at batch 128 over the whole run, 6.5 s per 100 steps (2026-10-30, #2879 T37) |
+| Rust trainer over a 90,000-step recipe on a GPU | not measured: T36 (the stage 8 run) is deferred (decision D1)                              |
+| 2,000-step probe, Rust loader, Python trainer   | 6.50 s per 100 steps (measured 2026-10-29, `training-row-encoder.mdx`)                     |
+
+**T37, the 2,000-step CUDA probe (2026-10-30).** `v8.3.0-probe-rust-trainer-2k.yaml` ran through the TypeScript
+launcher on an A100-40GB, bf16, and completed (step 2,000 `train_loss=0.8268`). Its step-2000 checkpoint, fetched with
+`launch.run.ts fetch`, exported through `trainer-export`; on 16 recorded rows the float32 graph's largest difference
+from the Rust forward is 7.5e-6 on `logits` against 1e-4. Record: `/mnt/mw/audits/trainer-parity/stage8/T37-FINDINGS.md`.
+
+**T61, the launcher's lifecycle on Modal CPU (2026-10-30).** Every F4 behavior ran through the TypeScript launcher on
+`v8.4.0-cpu-lifecycle.yaml`: an uninterrupted reference; a controlled failure at step 150 whose retry resumed from
+`step-000100` with the generator states and matched the reference on every logged value through the step-200
+evaluation; duplicate launches refused while the run held its lock; cancellation; restart of a stopped run; a timeout;
+a new sandbox resuming from a checkpoint another container wrote; and `fetch` of a checkpoint to the host. Record:
+`/mnt/mw/audits/trainer-parity/t61/FINDINGS.md`.
 
 ## 6. Milestones
 
