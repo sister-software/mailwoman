@@ -26,7 +26,7 @@ version. Rows appended from 2026-10-24 also record `tokenizer_md5`, read from th
 ## The commands
 
 The trainer and the exporter are the Rust crates in `packages/trainer`. A release before the Python trainer's removal
-(#2874) was trained by the Python trainer at its release tag; the Rust trainer reproduces that trainer's draws and
+(#2874) was trained by the Python trainer at its release tag. The Rust trainer reproduces that trainer's draws and
 updates within the tolerances in `docs/engineering/reference/training-row-encoder.mdx`, so a retrain today matches the
 recorded scores rather than the recorded bytes.
 

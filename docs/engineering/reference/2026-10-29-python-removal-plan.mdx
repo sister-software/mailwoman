@@ -28,7 +28,7 @@ the correction and the source that confirms it.
 runs a `rust` job in place of `python` (T40). The affix and dependent-locality heads and `inject_first_token` are
 retired rather than exported (T34). The 2,000-step CUDA probe ran on the Rust trainer (T37), and the 90,000-step run
 is deferred (T36, decision D1). Each phase section below records the tree as of that phase's work, so a sentence there
-that says a Python file is kept, or that a step is unrun, describes that date; the notes marked "2026-10-30" point to
+that says a Python file is kept, or that a step is unrun, describes that date. The notes marked "2026-10-30" point to
 what replaced it.
 
 ## 1. Inventory
@@ -387,7 +387,7 @@ What does not match, and why:
 5. **Not built yet:** the char path's CharCNN, the span scorer's `span_scores`, the affix and dependent-locality
    heads, and `inject_first_token`. The exporter refuses each by name. The quantizer refuses `Conv`, `Attention`,
    `LSTM`, `EmbedLayerNormalization` and subgraphs, which onnxruntime would quantize. (2026-10-30: the CharCNN, the
-   span scores and the `Conv` rule are built; the heads and `inject_first_token` are retired, #2879 T34.)
+   span scores and the `Conv` rule are built. The heads and `inject_first_token` are retired, #2879 T34.)
 
 The Rust export took 0.49 s and 0.57 s with peak RSS 246 MB and 322 MB, and quantization 0.48 s and 0.64 s. The Python
 export was not timed. The shipped artifacts and the Python export path are unchanged.
@@ -458,7 +458,7 @@ there). The `cu129` image also built (7,223 MB) before the decision moved to `cu
 The layer times exclude the shared `debian_slim` and `apt_install` base. Over all six build runs, including the failed
 `ldd` checks and the `cu129` detour, Modal built 730 s of image layers. Stage 8 status: startup on CUDA is observed
 (`fc-01M64Y2MXCRYCT5Y2P8H1810EA`, `device=Cuda(0)`, cancelled at step 400), and the 2,000-step probe and the
-90,000-step run are unrun. (2026-10-30: the probe completed, #2879 T37; the 90,000-step run is deferred, T36.)
+90,000-step run are unrun. (2026-10-30: the probe completed, #2879 T37. The 90,000-step run is deferred, T36.)
 
 ## 5. Phases
 
@@ -502,7 +502,7 @@ function and audit, and `source_rights.py` by the fifteen importers in §1.2. Al
   and compares the loaded document, the admitted sources, the corpus version, the log path and the admission record:
   268 of 268 agree. The `python` CI job runs it, and a change to the resolver or its fixtures selects that job.
   (2026-10-30: the Python loader and this comparison were deleted with the Python tree, #2879 T39, so no check of it
-  runs now; 268 of 268 is the last result.) The
+  runs now. 268 of 268 is the last result.) The
   earlier counts, 148 and 264, were the committed configs at their dates. `corpus-inputs.ts` tests cover every fixture in
   `corpus-python/tests/mailwoman_train/test_source_rights.py`. `test_labels.py` and `test_label_sets.py` pass over the
   JSON.
@@ -1425,11 +1425,11 @@ launcher on an A100-40GB, bf16, and completed (step 2,000 `train_loss=0.8268`). 
 from the Rust forward is 7.5e-6 on `logits` against 1e-4. Record: `/mnt/mw/audits/trainer-parity/stage8/T37-FINDINGS.md`.
 
 **T61, the launcher's lifecycle on Modal CPU (2026-10-30).** Every F4 behavior ran through the TypeScript launcher on
-`v8.4.0-cpu-lifecycle.yaml`: an uninterrupted reference; a controlled failure at step 150 whose retry resumed from
-`step-000100` with the generator states and matched the reference on every logged value through the step-200
-evaluation; duplicate launches refused while the run held its lock; cancellation; restart of a stopped run; a timeout;
-a new sandbox resuming from a checkpoint another container wrote; and `fetch` of a checkpoint to the host. Record:
-`/mnt/mw/audits/trainer-parity/t61/FINDINGS.md`.
+`v8.4.0-cpu-lifecycle.yaml`. An uninterrupted reference completed. A controlled failure at step 150 retried, resumed
+from `step-000100` with the generator states, and matched the reference on every logged value through the step-200
+evaluation. Duplicate launches were refused while the run held its lock. Cancellation, restart of a stopped run and a
+timeout each ended as recorded. A new sandbox resumed from a checkpoint another container wrote, and `fetch` copied a
+checkpoint to the host. Record: `/mnt/mw/audits/trainer-parity/t61/FINDINGS.md`.
 
 ## 6. Milestones
 

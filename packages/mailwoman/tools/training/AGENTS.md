@@ -51,7 +51,7 @@ The sandbox runs the supervisor (`launch/supervisor.ts`), a bash script:
 The sandbox exits 0 when training completes and 3 on a refusal. `status` reads that code: `completed`, `refused`,
 `running`, or `stopped` for any other exit, which covers a spent retry count, the timeout and a preemption. `restart`
 starts a fresh sandbox for a stopped run, which resumes from the newest complete checkpoint and keeps every file the run wrote.
-`cancel` terminates the running sandbox; the checkpoints it committed stay.
+`cancel` terminates the running sandbox, and the checkpoints it committed stay.
 
 ### The trainer image
 
