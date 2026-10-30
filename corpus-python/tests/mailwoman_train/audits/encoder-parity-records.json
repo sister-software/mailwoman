@@ -377,7 +377,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"aug-grouping-p50-250": {
@@ -639,7 +642,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"aug-postcode-move-5k": {
@@ -1032,7 +1038,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"aug-splice-5k": {
@@ -1426,7 +1435,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"c6-channel-free-5k": {
@@ -1742,7 +1754,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"c6-gold-spans-5k": {
@@ -2205,7 +2220,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"c6-gold-tokens-5k": {
@@ -2668,7 +2686,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"c6-max-length-16-5k": {
@@ -3131,7 +3152,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"c6-no-choreography-5k": {
@@ -3594,7 +3618,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"c6-train-2k": {
@@ -4031,7 +4058,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"c6-train-50k": {
@@ -4504,7 +4534,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"c6-val-36864": {
@@ -4925,7 +4958,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"char-v8-cjk-regs-5k": {
@@ -5007,7 +5043,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"code-unit-train-5k": {
@@ -5398,7 +5437,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		},
 		"relabel-5k": {
@@ -5796,7 +5838,10 @@
 				"differing_rows": 0,
 				"structural": [],
 				"changed_inputs": [],
-				"first_mismatch": null
+				"first_mismatch": null,
+				"verified_on": "2026-10-29",
+				"revision": "aaa4c1b0aec9b98ba678123637b81a59ad33750c",
+				"host": "the lab host (x86-64, AVX-512)"
 			}
 		}
 	}

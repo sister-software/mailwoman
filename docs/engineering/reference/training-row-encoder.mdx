@@ -198,7 +198,8 @@ reproduced every row identity and every tensor digest, including the `locale_ids
 TypeScript computes.
 
 Every record, the nine and the six, verified with 0 differing rows against the Rust sampler on 2026-10-29
-(136,158 emitted rows in total): no emitted count, row identity, batch boundary, tensor set, shape or digest
+(136,174 emitted rows in total, the sum of the 15 records' `emitted_rows`; each `verified_rust_sampler` entry records
+its date, revision and host): no emitted count, row identity, batch boundary, tensor set, shape or digest
 moved. `mtf-sampler`'s tests cover what a sample may miss: `loader_split_reference.rs` replays the Python
 loader's recorded fixture in order (train, validation, the char path and source counts), `sampler_stream.rs`
 covers row limits, exhaustion, the astral skip, source restarts, held-out quotas, observer events,
