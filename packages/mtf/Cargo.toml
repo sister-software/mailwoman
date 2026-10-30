@@ -31,8 +31,9 @@ inherits = "release"
 opt-level = 3
 panic = "unwind"
 
-# The profile the `mtf-node` addon is built with. napi-rs turns a Rust panic into a JavaScript exception only when the
-# panic unwinds, so a panic fails the call rather than ending the Node process.
+# The profile the `mtf-node` addon is built with. A panic must unwind, and each export carries `#[napi(catch_unwind)]`,
+# so napi-rs throws it as a JavaScript exception. Without the attribute an unwinding panic still aborts Node with
+# SIGABRT, as `tools/sampler/native.panic.integration.test.ts` records.
 [profile.node]
 inherits = "release"
 opt-level = 3

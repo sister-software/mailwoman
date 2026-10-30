@@ -268,9 +268,16 @@ jobs:
           cargo test --manifest-path packages/mtf/Cargo.toml -p mtf-tools --locked
 
       # `mtf-node`, `mtf-py` and `mtf-wasm` have no Rust tests. The fast suite loads `mtf-node`, and
-      # this leg's Python tests build `mtf-py`. Clippy checks every crate's code.
+      # this leg's Python tests build `mtf-py`. Clippy checks every crate's code, and the `panic-probe`
+      # feature's export once more.
       - name: Lint the mtf crates
-        run: cargo clippy --manifest-path packages/mtf/Cargo.toml --workspace --all-targets --locked -- -D warnings
+        run: |
+          cargo clippy --manifest-path packages/mtf/Cargo.toml --workspace --all-targets --locked -- -D warnings
+          cargo clippy --manifest-path packages/mtf/Cargo.toml -p mtf-node --features panic-probe --locked -- -D warnings
+
+      # A panic inside an `mtf-node` export must reach Node as a thrown error rather than abort the process.
+      - name: Test the mtf-node addon's panic handling
+        run: yarn vitest run --config vitest.slow.config.ts packages/mtf/tools/sampler/native.panic.integration.test.ts
 
       # The Rust trainer links libtorch through `tch` 0.26.0, which pins libtorch 2.13.0 (`torch-sys`'s TORCH_VERSION).
       - name: Restore libtorch
