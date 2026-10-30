@@ -20,7 +20,6 @@ import {
 	readActiveSelection,
 	replaceActiveSelection,
 	rollbackActiveSelection,
-	writeRecordAtomically,
 } from "#data/catalog"
 import { installFixtureArtifact } from "#test-kit/fixture-registry"
 
@@ -108,7 +107,7 @@ describe("replaceActiveSelection", () => {
 		const writeRecord = async (record: unknown, destination: PathBuilderLike) => {
 			if (destination.toString().endsWith("active.json")) throw new Error("injected rename failure")
 
-			await writeRecordAtomically(record, destination)
+			await writers.writeLocalJSONFileAtomically(record, destination)
 		}
 
 		await expect(

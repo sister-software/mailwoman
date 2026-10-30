@@ -374,6 +374,18 @@ export function stagingSiblingPath(destination: PathBuilderLike): string {
 }
 
 /**
+ * Writes a JSON record so that a concurrent reader sees the old record or the new one, never a partial one.
+ *
+ * The record is written beside its destination and renamed over it, on the destination's filesystem.
+ */
+export async function writeLocalJSONFileAtomically(record: unknown, destination: PathBuilderLike): Promise<void> {
+	const staging = stagingSiblingPath(destination)
+
+	await writeLocalJSONFile(record as Record<string, unknown>, staging)
+	await movePath(staging, destination)
+}
+
+/**
  * Copies one file onto `destination` so that a concurrent reader sees the old file
  * or the new one, never an absent or partly written destination.
  *

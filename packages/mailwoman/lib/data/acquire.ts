@@ -18,13 +18,13 @@ import type { APIClient } from "@mailwoman/core/api"
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { makeDirectories, removePathIfPresent, writeLocalJSONFileAtomically } from "@mailwoman/core/fs/writers"
 import { md5File, sha256Hex } from "@mailwoman/core/hash"
 import { UnreadableArtifactError, UnreadableReason } from "@mailwoman/core/layers"
 import { ResumeRefusedError, streamToDisk } from "@mailwoman/core/utils"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 
-import { catalogPaths, writeRecordAtomically } from "#data/catalog"
+import { catalogPaths } from "#data/catalog"
 
 /**
  * What the host reported about a remote object before the transfer.
@@ -226,7 +226,7 @@ export async function acquireRemoteObject(options: {
 		verifiedBy: null,
 	}
 
-	await writeRecordAtomically(receipt, receiptPath)
+	await writeLocalJSONFileAtomically(receipt, receiptPath)
 
 	// The transfer's own response states the object's length when the head did not:
 	// `Content-Range` states the total, and `Content-Length` the bytes after the offset.
@@ -309,7 +309,7 @@ export async function acquireRemoteObject(options: {
 
 	const completed: AcquisitionReceipt = { ...receipt, completedAt: now().toISOString(), verifiedBy }
 
-	await writeRecordAtomically(completed, receiptPath)
+	await writeLocalJSONFileAtomically(completed, receiptPath)
 
 	return { path: finalPath, bytes, receipt: completed, restartReason, resumedFrom: resumeFrom }
 }

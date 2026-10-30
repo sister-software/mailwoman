@@ -26,7 +26,7 @@ import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import type { Dirent } from "@mailwoman/core/fs/readers"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { movePath, stagingSiblingPath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFileAtomically } from "@mailwoman/core/fs/writers"
 import { JSONParseError } from "@mailwoman/core/json"
 import {
 	type ActiveSelection,
@@ -95,18 +95,6 @@ async function readRecord<T>(path: PathBuilderLike): Promise<T | null> {
 }
 
 /**
- * Write a JSON record so a reader sees the old record or the new one, never a partial one.
- *
- * The record is written beside its destination and renamed over it, on the destination's filesystem.
- */
-export async function writeRecordAtomically(record: unknown, destination: PathBuilderLike): Promise<void> {
-	const staging = stagingSiblingPath(destination)
-
-	await writeLocalJSONFile(record as Record<string, unknown>, staging)
-	await movePath(staging, destination)
-}
-
-/**
  * The installation records under the data root.
  *
  * @throws {@link UnreadableArtifactError} when a record exists and cannot be read
@@ -149,7 +137,7 @@ export async function writeInstallation(dataRoot: PathBuilderLike, installation:
 
 	if (await tryStat(destination)) return
 
-	await writeRecordAtomically(installation, destination)
+	await writeLocalJSONFileAtomically(installation, destination)
 }
 
 /**
@@ -482,7 +470,7 @@ export async function replaceActiveSelection(
 	options: SelectionWriteOptions = {}
 ): Promise<ActiveSelection> {
 	const now = options.now ?? (() => new Date())
-	const writeRecord = options.writeRecord ?? writeRecordAtomically
+	const writeRecord = options.writeRecord ?? writeLocalJSONFileAtomically
 	const root = resolvePath(dataRoot.toString())
 	const paths = catalogPaths(root)
 
@@ -531,7 +519,7 @@ export interface SelectionWriteOptions {
 	/**
 	 * Writes one record atomically.
 	 *
-	 * Defaults to {@link writeRecordAtomically}.
+	 * Defaults to {@link writeLocalJSONFileAtomically}.
 	 * A test passes a writer that fails on `active.json` to check that the previous generation survives.
 	 */
 	writeRecord?: (record: unknown, destination: PathBuilderLike) => Promise<void>

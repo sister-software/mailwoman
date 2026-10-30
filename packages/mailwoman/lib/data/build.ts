@@ -25,7 +25,12 @@ import type { APIClient } from "@mailwoman/core/api"
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories, movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import {
+	makeDirectories,
+	movePath,
+	removePathIfPresent,
+	writeLocalJSONFileAtomically,
+} from "@mailwoman/core/fs/writers"
 import { md5File, sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import {
@@ -59,7 +64,6 @@ import {
 	readInstalledManifest,
 	replaceActiveSelection,
 	writeInstallation,
-	writeRecordAtomically,
 } from "#data/catalog"
 import { placeArtifact, readerCompatibility } from "#data/install"
 import { ProblemKind } from "#data/plan"
@@ -385,8 +389,8 @@ async function acquireInput(
 		acquiredAt: (options.now?.() ?? new Date()).toISOString(),
 	}
 
-	await writeRecordAtomically(receipt, directory("receipt.json"))
-	await writeRecordAtomically(acquired.receipt, directory("transfer.json"))
+	await writeLocalJSONFileAtomically(receipt, directory("receipt.json"))
+	await writeLocalJSONFileAtomically(acquired.receipt, directory("transfer.json"))
 	await removePathIfPresent(acquisitionDirectory(dataRoot, url))
 
 	return {
@@ -619,7 +623,7 @@ export async function executeBuild(
 			builtAt: createdAt,
 		}
 
-		await writeRecordAtomically(record, directory("build.json"))
+		await writeLocalJSONFileAtomically(record, directory("build.json"))
 	}
 
 	const members = outputs.map((built) => ({

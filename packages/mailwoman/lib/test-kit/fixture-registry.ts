@@ -11,7 +11,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import type { AddressInfo } from "node:net"
 
-import { writeLocalBuffer, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalBuffer, writeLocalJSONFileAtomically, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5Hex, sha256Hex } from "@mailwoman/core/hash"
 import {
 	type ArtifactManifest,
@@ -39,7 +39,7 @@ import {
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilderLike, relative } from "path-ts"
 
-import { catalogPaths, writeInstallation, writeRecordAtomically } from "#data/catalog"
+import { catalogPaths, writeInstallation } from "#data/catalog"
 
 /**
  * A static object store with HEAD, ranged GET, per-object ETags and injected failures.
@@ -252,7 +252,7 @@ export async function installFixtureArtifact(
 	}
 
 	await (typeof bytes === "string" ? writeLocalTextFile(bytes, path) : writeLocalBuffer(bytes, path))
-	await writeRecordAtomically(manifest, directory("manifest.json"))
+	await writeLocalJSONFileAtomically(manifest, directory("manifest.json"))
 
 	const set = artifactSetID([{ artifactID: id, role, schemaVersion: 1 }])
 	const origin = { kind: "published" as const, entry: role, release: fileName }

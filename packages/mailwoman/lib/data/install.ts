@@ -19,7 +19,12 @@ import type { APIClient } from "@mailwoman/core/api"
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { readFileHead } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories, movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import {
+	makeDirectories,
+	movePath,
+	removePathIfPresent,
+	writeLocalJSONFileAtomically,
+} from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import {
 	type ActiveSelection,
@@ -56,13 +61,7 @@ import {
 	readRemoteIdentity,
 	type RemoteIdentity,
 } from "#data/acquire"
-import {
-	catalogPaths,
-	readInstalledManifest,
-	replaceActiveSelection,
-	writeInstallation,
-	writeRecordAtomically,
-} from "#data/catalog"
+import { catalogPaths, readInstalledManifest, replaceActiveSelection, writeInstallation } from "#data/catalog"
 import { probeManifest } from "#data/inventory"
 import { licensedArtifactName, requestGrantedDownload } from "#data/licensed"
 import {
@@ -304,8 +303,8 @@ export async function placeArtifact(
 	await removePathIfPresent(staging)
 	await makeDirectories(staging)
 	await movePath(stagedPath, resolvePath(staging, fileName))
-	await writeRecordAtomically(manifest, resolvePath(staging, "manifest.json"))
-	await writeRecordAtomically(receipt, resolvePath(staging, "receipt.json"))
+	await writeLocalJSONFileAtomically(manifest, resolvePath(staging, "manifest.json"))
+	await writeLocalJSONFileAtomically(receipt, resolvePath(staging, "receipt.json"))
 
 	if (!existing) {
 		await movePath(staging, destination)

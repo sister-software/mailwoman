@@ -24,20 +24,14 @@ import { acquireDirectoryLock, processExists } from "@mailwoman/core/fs/lock"
 import type { Dirent } from "@mailwoman/core/fs/readers"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { removePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { removePath, removePathIfPresent, writeLocalJSONFileAtomically } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { ActiveSelection, ArtifactID, LayerInstallationID } from "@mailwoman/core/layers"
 import { hostName } from "@mailwoman/core/utils/system"
 import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import {
-	catalogPaths,
-	LayerCatalog,
-	readActiveSelection,
-	readInstallations,
-	writeRecordAtomically,
-} from "#data/catalog"
+import { catalogPaths, LayerCatalog, readActiveSelection, readInstallations } from "#data/catalog"
 import { readInstalledCopies } from "#data/plan"
 
 /**
@@ -69,7 +63,7 @@ export async function holdSelectionLease(
 	const lease: SelectionLease = { pid: process.pid, host: hostName(), generation, startedAt: new Date().toISOString() }
 
 	try {
-		await writeRecordAtomically(lease, path)
+		await writeLocalJSONFileAtomically(lease, path)
 	} catch {
 		return { path: null, [Symbol.dispose]: () => {} }
 	}
