@@ -324,21 +324,21 @@ describe("readConfiguredCorpusVersion", () => {
 			"data:\n  corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl\n"
 		)
 
-		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBe("0.27.0-house-venue-intl")
+		await expect(readConfiguredCorpusVersion(scratch.configPath)).resolves.toBe("0.27.0-house-venue-intl")
 	})
 
 	it("returns undefined rather than a guess when the config states no corpus_dir", async () => {
 				// "Cannot check" is not "they match", so a plausible default would manufacture agreement.
 				await using scratch = await config("data:\n  max_length: 128\n")
 
-		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBeNull()
-		expect(await readConfiguredCorpusVersion("/nonexistent-config.yaml")).toBeNull()
+		await expect(readConfiguredCorpusVersion(scratch.configPath)).resolves.toBeNull()
+		await expect(readConfiguredCorpusVersion("/nonexistent-config.yaml")).resolves.toBeNull()
 	})
 
 	it("falls back to the trailing directory when the path is not /versioned/-shaped", async () => {
 		await using scratch = await config("data:\n  corpus_dir: /data/corpus/corpus-v0.5.0\n")
 
-		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBe("0.5.0")
+		await expect(readConfiguredCorpusVersion(scratch.configPath)).resolves.toBe("0.5.0")
 	})
 })
 
@@ -426,7 +426,7 @@ describe("scope.config.json's registered training configs", () => {
 		for (const entry of registered) {
 			const path = repoRootPath(...entry.config.split("/"))
 
-			expect(await pathExists(path)).toBe(true)
+			await expect(pathExists(path)).resolves.toBe(true)
 		}
 	})
 })

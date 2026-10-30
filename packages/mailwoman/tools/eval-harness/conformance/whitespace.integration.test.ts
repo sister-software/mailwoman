@@ -54,7 +54,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 		})
 
 		it("holds on every enforcing row, and prints the tracked ones", async () => {
-			expect(await runConformanceCommand({ suite: WHITESPACE_SUITE_PATH })).toBe(0)
+			await expect(runConformanceCommand({ suite: WHITESPACE_SUITE_PATH })).resolves.toBe(0)
 		}, 600_000)
 	}
 )

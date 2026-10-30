@@ -238,7 +238,7 @@ describe("bdcLayerReadings", () => {
 	it("reads a block whose res-6 cell has no coverage row as unknown", async () => {
 		using db = openBuild(j22)
 
-		expect(await readLayerCoverage(db, blockCentroidCells(CENTROIDS[GEOID_FAR]!).coverageCell)).toBeNull()
+		await expect(readLayerCoverage(db, blockCentroidCells(CENTROIDS[GEOID_FAR]!).coverageCell)).resolves.toBeNull()
 
 		const readings = await bdcLayerReadings(db, {
 			subject: BUILDING,

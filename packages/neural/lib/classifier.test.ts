@@ -67,7 +67,7 @@ describe.each([
 		const trace = await classifier.traceParse(address)
 
 		expect(buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry })).toEqual(tree)
-		expect(await classifier.parse(address)).toEqual(tree)
+		await expect(classifier.parse(address)).resolves.toEqual(tree)
 	})
 
 	it.each(ADDRESSES)("explains %s with terms that sum to the decoder's score and margins", async (address) => {

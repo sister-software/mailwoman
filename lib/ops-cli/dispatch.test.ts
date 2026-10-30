@@ -29,7 +29,7 @@ describe("mwops dispatch", () => {
 	it("prints usage and exits 2 without a verb, naming both registries", async () => {
 		const h = io()
 
-		expect(await dispatch([], h.io)).toBe(2)
+		await expect(dispatch([], h.io)).resolves.toBe(2)
 		expect(h.err.join("")).toContain("release operations:")
 		expect(h.err.join("")).toContain("shop operations:")
 		expect(h.err.join("")).toContain("health checks:")
@@ -38,7 +38,7 @@ describe("mwops dispatch", () => {
 	it("routes shop operations through the license worker registry", async () => {
 		const h = io()
 
-		expect(await dispatch(["shop", "nope"], h.io)).toBe(2)
+		await expect(dispatch(["shop", "nope"], h.io)).resolves.toBe(2)
 		expect(h.err.join("")).toContain('mwops shop: no operation "nope"')
 		expect(h.err.join("")).toContain("shop.status")
 	})
@@ -46,27 +46,27 @@ describe("mwops dispatch", () => {
 	it("refuses an unregistered release operation with the registered list", async () => {
 		const h = io()
 
-		expect(await dispatch(["release", "nope"], h.io)).toBe(2)
+		await expect(dispatch(["release", "nope"], h.io)).resolves.toBe(2)
 		expect(h.err.join("")).toContain('no operation "nope"')
 	})
 
 	it("refuses an unknown health check", async () => {
 		const h = io()
 
-		expect(await dispatch(["health", "nope"], h.io)).toBe(2)
+		await expect(dispatch(["health", "nope"], h.io)).resolves.toBe(2)
 	})
 
 	it("refuses a baseline target other than debt without writing anything", async () => {
 		const h = io()
 
-		expect(await dispatch(["health", "baseline", "nope"], h.io)).toBe(2)
+		await expect(dispatch(["health", "baseline", "nope"], h.io)).resolves.toBe(2)
 		expect(h.err.join("")).toContain('no baseline "nope"')
 	})
 
 	it("refuses a fix for a check that has none, naming the ones that do", async () => {
 		const h = io()
 
-		expect(await dispatch(["health", "fix", "nope"], h.io)).toBe(2)
+		await expect(dispatch(["health", "fix", "nope"], h.io)).resolves.toBe(2)
 		expect(h.err.join("")).toContain('no fix for "nope"')
 		expect(h.err.join("")).toContain("prefix-directories")
 	})
@@ -78,7 +78,7 @@ describe("mwops dispatch", () => {
 		// The tracked-file list stays empty, so there is no repeated prefix and the fix plans no move.
 		const withRealRoot = { ...h.io, repoRoot: repoRootPath() }
 
-		expect(await dispatch(["health", "fix", "prefix-directories"], withRealRoot)).toBe(0)
+		await expect(dispatch(["health", "fix", "prefix-directories"], withRealRoot)).resolves.toBe(0)
 		expect(h.out.join("")).toContain("nothing to move")
 	})
 
@@ -93,7 +93,7 @@ describe("mwops dispatch", () => {
 		const h = io()
 		const withRealRoot = { ...h.io, repoRoot: repoRootPath() }
 
-		expect(await dispatch(["release", "clean", "--dry-run"], withRealRoot)).toBe(0)
+		await expect(dispatch(["release", "clean", "--dry-run"], withRealRoot)).resolves.toBe(0)
 		expect(h.out).toHaveLength(1)
 		expect(h.out[0]).toMatch(/^Would clean \d+ directories; \d+ build metadata files\.\n$/u)
 		expect(h.out[0]).not.toContain("{")

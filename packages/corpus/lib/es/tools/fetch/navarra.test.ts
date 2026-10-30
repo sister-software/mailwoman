@@ -292,7 +292,7 @@ describe("harvestESNavarra", () => {
 		const summary = await harvestESNavarra(client, { outputDir: scratch.path })
 
 		expect(summary).toMatchObject({ fetched: 1, failed: 1, failedCodes: ["1"] })
-		expect(await tryStat(scratch.path("AD_Navarra_1.gml.zip"))).toBeNull()
+		await expect(tryStat(scratch.path("AD_Navarra_1.gml.zip"))).resolves.toBeNull()
 
 		// The partition that answered an archive is still recorded, so one failure does not lose the run.
 		const manifest = await readManifest<ESNavarraHarvestManifest>(scratch.path("MANIFEST.json"))

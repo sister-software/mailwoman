@@ -237,7 +237,7 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 		// The inventory must report that stale path even when the database has a manifest.
 		const root = await dataRoot()
 
-		expect(await buildCommandGaps("node osm/out/scripts/build-rooftop-database.js", root)).toEqual([
+		await expect(buildCommandGaps("node osm/out/scripts/build-rooftop-database.js", root)).resolves.toEqual([
 			"osm/out/scripts/build-rooftop-database.js",
 		])
 	})
@@ -245,7 +245,7 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 	it("treats a bare CLI verb as runnable rather than guessing", async () => {
 		// The check runs `mailwoman gazetteer build poi` through the CLI.
 		// A gap report would include artifacts that already have the best coverage.
-		expect(await buildCommandGaps("mailwoman gazetteer build poi", await dataRoot())).toEqual([])
+		await expect(buildCommandGaps("mailwoman gazetteer build poi", await dataRoot())).resolves.toEqual([])
 	})
 
 	it("passes a path that does exist", async () => {
@@ -254,6 +254,6 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 		await makeDirectories(root("scripts"))
 		await writeLocalTextFile("", root("scripts", "build.ts"))
 
-		expect(await buildCommandGaps("node scripts/build.ts", root)).toEqual([])
+		await expect(buildCommandGaps("node scripts/build.ts", root)).resolves.toEqual([])
 	})
 })

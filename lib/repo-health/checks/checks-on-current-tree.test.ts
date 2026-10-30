@@ -14,7 +14,7 @@ describe("The node_modules reach-around condition", () => {
 
 		expect(context.trackedFiles.length).toBeGreaterThan(0)
 
-		expect(await nodeModulesReacharoundCheck.run(context)).toEqual([])
+		await expect(nodeModulesReacharoundCheck.run(context)).resolves.toEqual([])
 	})
 })
 
@@ -22,7 +22,7 @@ describe("the runtime-flag register", () => {
 	test("every registered flag is touched by at least one test, and the allowlist carries no stale entry", async () => {
 		const context = await collectRepoContext()
 
-		expect(await runtimeFlagsCheck.run(context)).toEqual([])
+		await expect(runtimeFlagsCheck.run(context)).resolves.toEqual([])
 	})
 })
 
@@ -30,7 +30,7 @@ describe("the root scripts/ directory", () => {
 	test("Does not exist without code builds a path into it, and no CI target runs scripts/… or a bare lib/*.ts path", async () => {
 		const context = await collectRepoContext()
 
-		expect(await noRootScriptsCheck.run(context)).toEqual([])
+		await expect(noRootScriptsCheck.run(context)).resolves.toEqual([])
 	})
 
 	test("reports a tracked file under scripts/ and a workflow step that runs one", async () => {
@@ -46,13 +46,13 @@ describe("the locale registers", () => {
 	test("Scope.config.json names the same countries per tier as SCOPE.mdx, and places every shipping locale", async () => {
 		const context = await collectRepoContext()
 
-		expect(await localeScopeCheck.run(context)).toEqual([])
+		await expect(localeScopeCheck.run(context)).resolves.toEqual([])
 	})
 
 	test("Every country→locale table agrees with the locales release.config.json ships", async () => {
 		const context = await collectRepoContext()
 
-		expect(await localeTablesCheck.run(context)).toEqual([])
+		await expect(localeTablesCheck.run(context)).resolves.toEqual([])
 	})
 })
 
@@ -60,6 +60,6 @@ describe("the stylesheet interface", () => {
 	test("the design system's resets are present and no rule leaves an interactive surface uncolored", async () => {
 		const context = await collectRepoContext()
 
-		expect(await stylesheetCheck.run(context)).toEqual([])
+		await expect(stylesheetCheck.run(context)).resolves.toEqual([])
 	})
 })

@@ -176,7 +176,7 @@ describe("auditRights", () => {
 		expect(audit.trainingRights.unrecorded).toEqual([])
 		expect(audit.trainingRights.stale).toEqual([])
 		expect(trainingRightsRefusals(audit)).toEqual([])
-		expect(await readKnownTrainingRightsViolations(repoRootPath())).toEqual([])
+		await expect(readKnownTrainingRightsViolations(repoRootPath())).resolves.toEqual([])
 	})
 
 	it("stops a release on a violation the list does not record, and on an entry no violation matches", async () => {

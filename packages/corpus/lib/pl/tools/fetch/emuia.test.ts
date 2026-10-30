@@ -152,7 +152,7 @@ describe("harvestEMUiAPL", () => {
 		expect(written).not.toContain("timeStamp")
 
 		// The reader the adapter uses finds every member of the assembled document.
-		expect(await membersIn(written)).toBe(2)
+		await expect(membersIn(written)).resolves.toBe(2)
 	})
 
 	it("refuses the service's page cap as a count, so the harvest runs past 1,000 features", async () => {
@@ -270,7 +270,7 @@ describe("fetchEMUiAPL", () => {
 
 		const written = await readLocalTextFile(outRoot("emuia", PL_EMUIA_HARVEST_FILE))
 
-		expect(await membersIn(written)).toBe(4)
+		await expect(membersIn(written)).resolves.toBe(4)
 		expect(written.match(/<\?xml/gu)).toHaveLength(1)
 		expect(written.endsWith("</wfs:FeatureCollection>\n")).toBe(true)
 

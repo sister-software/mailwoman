@@ -29,13 +29,16 @@ describe("webhook verification", () => {
 	it("refuses a one-byte mutation of the body", async () => {
 		const { body, signature } = await signedWebhook(invoicePaidEvent(), worker.STRIPE_WEBHOOK_SECRET)
 
-		expect(await verifyStripeEvent(`${body} `, signature, worker)).toMatchObject({ ok: false, kind: "signature" })
+		await expect(verifyStripeEvent(`${body} `, signature, worker)).resolves.toMatchObject({
+			ok: false,
+			kind: "signature",
+		})
 	})
 
 	it("refuses a missing header and a stale timestamp", async () => {
 		const { body } = await signedWebhook(invoicePaidEvent(), worker.STRIPE_WEBHOOK_SECRET)
 
-		expect(await verifyStripeEvent(body, null, worker)).toMatchObject({ ok: false, kind: "signature" })
+		await expect(verifyStripeEvent(body, null, worker)).resolves.toMatchObject({ ok: false, kind: "signature" })
 
 		const stale = await signedWebhook(
 			invoicePaidEvent(),
@@ -43,13 +46,16 @@ describe("webhook verification", () => {
 			Math.floor(Date.now() / 1000) - 3600
 		)
 
-		expect(await verifyStripeEvent(stale.body, stale.signature, worker)).toMatchObject({ ok: false, kind: "signature" })
+		await expect(verifyStripeEvent(stale.body, stale.signature, worker)).resolves.toMatchObject({
+			ok: false,
+			kind: "signature",
+		})
 	})
 
 	it("ignores, rather than refuses, an event type outside the allowlist and an event from the other Stripe mode", async () => {
 		const other = await signedWebhook({ ...invoicePaidEvent(), type: "customer.created" }, worker.STRIPE_WEBHOOK_SECRET)
 
-		expect(await verifyStripeEvent(other.body, other.signature, worker)).toMatchObject({
+		await expect(verifyStripeEvent(other.body, other.signature, worker)).resolves.toMatchObject({
 			ok: false,
 			kind: "ignored",
 			reason: expect.stringContaining("customer.created"),
@@ -57,7 +63,7 @@ describe("webhook verification", () => {
 
 		const live = await signedWebhook(invoicePaidEvent({ livemode: true }), worker.STRIPE_WEBHOOK_SECRET)
 
-		expect(await verifyStripeEvent(live.body, live.signature, worker)).toMatchObject({
+		await expect(verifyStripeEvent(live.body, live.signature, worker)).resolves.toMatchObject({
 			ok: false,
 			kind: "ignored",
 			reason: expect.stringContaining("livemode"),

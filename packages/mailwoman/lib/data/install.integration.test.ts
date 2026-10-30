@@ -172,8 +172,8 @@ describe("the published installation path", () => {
 		expect(plan.basedOnGeneration).toBeNull()
 		expect(plan.transfer.basis).toBe("estimated")
 		expect(registry.requests).toEqual([])
-		expect(await pathExists(scratch.path("active.json"))).toBe(false)
-		expect(await pathExists(scratch.path("db"))).toBe(false)
+		await expect(pathExists(scratch.path("active.json"))).resolves.toBe(false)
+		await expect(pathExists(scratch.path("db"))).resolves.toBe(false)
 
 		const result = await pull(["candidate"])
 
@@ -189,7 +189,7 @@ describe("the published installation path", () => {
 		expect(db.prepare("SELECT name FROM fixture_candidate").get()).toEqual({ name: "Washington" })
 		// The conventional path stays empty.
 		// The file's location is recorded in the selection.
-		expect(await pathExists(scratch.path("db", "wof", "candidate.db"))).toBe(false)
+		await expect(pathExists(scratch.path("db", "wof", "candidate.db"))).resolves.toBe(false)
 	})
 
 	it("adds the District of Columbia without transferring another state, and the street reader resolves it", async () => {
@@ -406,8 +406,12 @@ describe("the published installation path", () => {
 		const catalog = await LayerCatalog.read(scratch.path)
 
 		expect(catalog.generation).toBe(2)
-		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "US", subdivision: "US-DC" })).toBeTruthy()
-		expect(await pathExists(catalogPaths(scratch.path).lock)).toBe(false)
-		expect(await pathExists(catalogPaths(scratch.path).installLock)).toBe(false)
+
+		await expect(
+			catalog.firstPath(ServingRole.AddressPoints, { country: "US", subdivision: "US-DC" })
+		).resolves.toBeTruthy()
+
+		await expect(pathExists(catalogPaths(scratch.path).lock)).resolves.toBe(false)
+		await expect(pathExists(catalogPaths(scratch.path).installLock)).resolves.toBe(false)
 	})
 })

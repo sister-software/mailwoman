@@ -34,7 +34,7 @@ describe("user-defined symbols", () => {
 
 		await writeLocalTextFile(["# comment", "75008", "10001", "", "SW1A 1AA", "  ", "100-0005"], path)
 
-		expect(await readUserDefinedSymbolsFile(path)).toEqual(["75008", "10001", "SW1A 1AA", "100-0005"])
+		await expect(readUserDefinedSymbolsFile(path)).resolves.toEqual(["75008", "10001", "SW1A 1AA", "100-0005"])
 	})
 
 	it("passes a space as the whitespace placeholder", () => {

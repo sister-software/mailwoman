@@ -470,7 +470,7 @@ describe("harvestESCatastro", () => {
 		const summary = await harvestESCatastro(client, { outputDir: scratch.path })
 
 		expect(summary).toMatchObject({ fetched: 0, failed: 1, failedCodes: ["55101"] })
-		expect(await tryStat(scratch.path("A.ES.SDGC.AD.55101.zip"))).toBeNull()
+		await expect(tryStat(scratch.path("A.ES.SDGC.AD.55101.zip"))).resolves.toBeNull()
 	})
 
 	it("harvests a bounded subset, which is how the mechanism is proved without a national harvest", async () => {

@@ -270,11 +270,11 @@ describe("the conjunction's other half — the artifact", () => {
 		if (poiResult.type !== "intent" || poiResult.intent.subject.kind !== "category") throw new Error("unreachable")
 
 		// The same cell and answer, with the second class added to the search.
-		expect(await route.observe(poiResult)).toMatchObject({ fired: true })
+		await expect(route.observe(poiResult)).resolves.toMatchObject({ fired: true })
 
 		poiResult.intent.subject.categoryIDs = ["drugstore", "pharmacy"]
 
-		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "category_not_surveyed" })
+		await expect(route.observe(poiResult)).resolves.toEqual({ fired: false, refusal: "category_not_surveyed" })
 	})
 })
 
@@ -282,9 +282,9 @@ describe("the silences that are about the answer rather than the world", () => {
 	it("refuses an answer the executor never produced", async () => {
 		const route = await routeOver()
 
-		expect(await route.observe(null)).toEqual({ fired: false, refusal: "no_poi_answer" })
+		await expect(route.observe(null)).resolves.toEqual({ fired: false, refusal: "no_poi_answer" })
 
-		expect(await route.observe({ type: "abstain", reason: "anchor_required" })).toEqual({
+		await expect(route.observe({ type: "abstain", reason: "anchor_required" })).resolves.toEqual({
 			fired: false,
 			refusal: "no_poi_answer",
 		})
@@ -300,7 +300,7 @@ describe("the silences that are about the answer rather than the world", () => {
 			results: null,
 		}
 
-		expect(await route.observe(unexecuted)).toEqual({ fired: false, refusal: "executor_did_not_run" })
+		await expect(route.observe(unexecuted)).resolves.toEqual({ fired: false, refusal: "executor_did_not_run" })
 	})
 
 	it("refuses a non-category subject", async () => {
@@ -312,7 +312,7 @@ describe("the silences that are about the answer rather than the world", () => {
 			results: [],
 		}
 
-		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "subject_not_a_category" })
+		await expect(route.observe(poiResult)).resolves.toEqual({ fired: false, refusal: "subject_not_a_category" })
 	})
 
 	it("refuses an un-anchored search — there is no cell to qualify", async () => {
@@ -329,7 +329,7 @@ describe("the silences that are about the answer rather than the world", () => {
 			results: [],
 		}
 
-		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "no_search_center" })
+		await expect(route.observe(poiResult)).resolves.toEqual({ fired: false, refusal: "no_search_center" })
 	})
 
 	it("refuses when the answer returns a row inside the cell the coverage row calls empty", async () => {
@@ -339,7 +339,10 @@ describe("the silences that are about the answer rather than the world", () => {
 			poiRow(POINTS.surveyedEmpty.latitude, POINTS.surveyedEmpty.longitude),
 		])
 
-		expect(await route.observe(poiResult)).toEqual({ fired: false, refusal: "coverage_contradicted_by_answer" })
+		await expect(route.observe(poiResult)).resolves.toEqual({
+			fired: false,
+			refusal: "coverage_contradicted_by_answer",
+		})
 	})
 
 	it("still fires when the answer returns rows from OTHER cells — the claim is about the queried cell", async () => {

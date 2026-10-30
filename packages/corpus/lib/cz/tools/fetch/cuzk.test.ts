@@ -338,7 +338,7 @@ describe("harvestCzCuzk", () => {
 		const summary = await harvestCzCuzk(client, { outputDir: scratch.path })
 
 		expect(summary).toMatchObject({ fetched: 1, failed: 1, failedCodes: ["584061"] })
-		expect(await tryStat(scratch.path("584061.zip"))).toBeNull()
+		await expect(tryStat(scratch.path("584061.zip"))).resolves.toBeNull()
 
 		// The municipality that answered an archive is still recorded, so one failure does not lose the run.
 		const manifest = await readManifest<CzCuzkHarvestManifest>(scratch.path("MANIFEST.json"))

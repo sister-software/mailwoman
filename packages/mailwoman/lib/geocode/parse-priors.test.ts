@@ -124,10 +124,10 @@ describe("postcodePrefixIndexPaths", () => {
 	it("reads the weights package's own indexes before the data-root directory", async () => {
 		await using directory = await temporaryDirectory("parse-priors-")
 
-		expect(
-			await postcodePrefixIndexPaths({ postcodePrefixPaths: ["/pkg/postcode-prefix-us.bin"] }, directory.path)
-		).toEqual(["/pkg/postcode-prefix-us.bin"])
+		await expect(
+			postcodePrefixIndexPaths({ postcodePrefixPaths: ["/pkg/postcode-prefix-us.bin"] }, directory.path)
+		).resolves.toEqual(["/pkg/postcode-prefix-us.bin"])
 
-		expect(await postcodePrefixIndexPaths({}, directory.path)).toEqual([])
+		await expect(postcodePrefixIndexPaths({}, directory.path)).resolves.toEqual([])
 	})
 })

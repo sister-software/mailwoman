@@ -89,7 +89,7 @@ describe("stageWeightsCache", () => {
 
 		expect(report.linked).toBe(2)
 		expect((await statLink(report.packageDir("model.onnx"))).isSymbolicLink()).toBe(false)
-		expect(await readLocalTextFile(report.packageDir("model.onnx"))).toBe("graph-bytes")
+		await expect(readLocalTextFile(report.packageDir("model.onnx"))).resolves.toBe("graph-bytes")
 	})
 
 	it("leaves an omitted artifact out of the staged package", async () => {
@@ -134,6 +134,6 @@ describe("stageWeightsCache", () => {
 			log: () => {},
 		})
 
-		expect(await readLocalTextFile(report.packageDir("model.onnx"))).toBe("candidate-bytes")
+		await expect(readLocalTextFile(report.packageDir("model.onnx"))).resolves.toBe("candidate-bytes")
 	})
 })

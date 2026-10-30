@@ -57,7 +57,7 @@ describe("weightsReconciliationCheck", () => {
 		])
 
 		try {
-			expect(await run(tree.root)).toEqual([])
+			await expect(run(tree.root)).resolves.toEqual([])
 		} finally {
 			await tree.dispose()
 		}
@@ -122,7 +122,7 @@ describe("weightsReconciliationCheck", () => {
 		])
 
 		try {
-			expect(await run(tree.root)).toEqual([])
+			await expect(run(tree.root)).resolves.toEqual([])
 		} finally {
 			await tree.dispose()
 		}

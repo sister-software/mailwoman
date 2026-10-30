@@ -61,7 +61,7 @@ describe("fetchWithRetry", () => {
 
 		const answer = await settle(fetchWithRetry("https://example.test/model.onnx"))
 
-		expect(await answer.text()).toBe("ok")
+		await expect(answer.text()).resolves.toBe("ok")
 		expect(impl).toHaveBeenCalledTimes(2)
 	})
 
@@ -72,7 +72,7 @@ describe("fetchWithRetry", () => {
 
 		const answer = await settle(fetchWithRetry("https://example.test/model.onnx"))
 
-		expect(await answer.text()).toBe("ok")
+		await expect(answer.text()).resolves.toBe("ok")
 		expect(impl).toHaveBeenCalledTimes(2)
 	})
 

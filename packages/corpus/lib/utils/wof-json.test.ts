@@ -46,7 +46,11 @@ test("a record at latitude 0, longitude 0 keeps its name and drops its parent an
 
 	await writeLocalJSONFile(postcodeFeature(0, 0), path)
 
-	expect(await readFeatureRecord(path.toString())).toMatchObject({ name: "42002", parent_id: null, ancestors: [] })
+	await expect(readFeatureRecord(path.toString())).resolves.toMatchObject({
+		name: "42002",
+		parent_id: null,
+		ancestors: [],
+	})
 })
 
 test("a located record keeps its parent and ancestors", async () => {

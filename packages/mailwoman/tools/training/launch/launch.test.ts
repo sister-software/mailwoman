@@ -146,7 +146,7 @@ describe("the training launch lifecycle", () => {
 		expect(sandbox.spec.files.map((file) => file.path.split("/").at(-1))).toEqual(["config", "resolved.json", "ready"])
 		expect(Object.values(sandbox.spec.env).every((value) => value.length < 4096)).toBe(true)
 		expect(records.get(runKey)?.sandboxes).toEqual([record.sandboxes[0]])
-		expect(await launchStatus(runKey, deps)).toMatchObject({ state: LaunchState.Running })
+		await expect(launchStatus(runKey, deps)).resolves.toMatchObject({ state: LaunchState.Running })
 	})
 
 	it("starts a GPU sandbox on the CUDA image with the requested card", async () => {
@@ -182,7 +182,7 @@ describe("the training launch lifecycle", () => {
 		const first = await startLaunch(CONFIG, { ...OPTIONS, failAtStep: 150 }, deps)
 
 		sandboxes.get(first.sandboxes[0]!)!.exitCode = 1
-		expect(await launchStatus(runKey, deps)).toMatchObject({ state: LaunchState.Stopped })
+		await expect(launchStatus(runKey, deps)).resolves.toMatchObject({ state: LaunchState.Stopped })
 
 		const second = await restartLaunch(runKey, deps)
 		const spec = sandboxes.get(second.sandboxes[1]!)!.spec
@@ -202,14 +202,14 @@ describe("the training launch lifecycle", () => {
 
 		await cancelLaunch(runKey, deps)
 		expect(terminated).toEqual([record.sandboxes[0]])
-		expect(await launchStatus(runKey, deps)).toMatchObject({ state: LaunchState.Stopped })
+		await expect(launchStatus(runKey, deps)).resolves.toMatchObject({ state: LaunchState.Stopped })
 	})
 
 	it("fetches a run's output directory, or one checkpoint of it, from the volume", async () => {
 		const { deps, fetches } = harness()
 		const record = await startLaunch(CONFIG, OPTIONS, deps)
 
-		expect(await fetchRun(runKey, "step-000200", "/tmp/out", deps)).toEqual(["model.safetensors"])
+		await expect(fetchRun(runKey, "step-000200", "/tmp/out", deps)).resolves.toEqual(["model.safetensors"])
 		await fetchRun(runKey, null, "/tmp/out", deps)
 
 		expect(fetches.map((fetch) => fetch.remoteDir)).toEqual([

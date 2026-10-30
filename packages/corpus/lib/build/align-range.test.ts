@@ -48,7 +48,7 @@ describe("planAlignRanges", () => {
 			}
 
 			// Planned twice, the same file divides at the same offsets.
-			expect(await planAlignRanges(path, count)).toEqual(plans)
+			await expect(planAlignRanges(path, count)).resolves.toEqual(plans)
 		}
 	})
 
@@ -64,7 +64,9 @@ describe("planAlignRanges", () => {
 			[8, 16],
 		])
 
-		expect(await planAlignRanges(empty, 3)).toEqual([{ index: 0, count: 1, canonicalBytes: 0, start: 0, end: 0 }])
+		await expect(planAlignRanges(empty, 3)).resolves.toEqual([
+			{ index: 0, count: 1, canonicalBytes: 0, start: 0, end: 0 },
+		])
 	})
 })
 

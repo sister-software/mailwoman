@@ -58,7 +58,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 		})
 
 		it("holds on every blocking row, and prints the tracked and unmeasured ones", async () => {
-			expect(await runConformanceCommand({ suite: REFINEMENT_MONOTONICITY_SUITE_PATH })).toBe(0)
+			await expect(runConformanceCommand({ suite: REFINEMENT_MONOTONICITY_SUITE_PATH })).resolves.toBe(0)
 		}, 900_000)
 	}
 )

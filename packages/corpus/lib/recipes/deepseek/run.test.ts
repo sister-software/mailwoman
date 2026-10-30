@@ -79,7 +79,7 @@ describe("runBatches", () => {
 			)
 		).rejects.toThrow("defect in the worker")
 
-		expect(await readLocalJSONFile(checkpointPath)).toEqual({ done: ["a"] })
+		await expect(readLocalJSONFile(checkpointPath)).resolves.toEqual({ done: ["a"] })
 	})
 })
 
@@ -88,7 +88,7 @@ describe("loadCheckpoint", () => {
 		await using scratch = await temporaryDirectory("mailwoman-deepseek-run-")
 		const path = scratch.path("checkpoint.json").toString()
 
-		expect(await loadCheckpoint(path, quiet)).toEqual(new Set())
+		await expect(loadCheckpoint(path, quiet)).resolves.toEqual(new Set())
 
 		await writeLocalTextFile('{"completed": ["a"]}', path)
 

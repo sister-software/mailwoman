@@ -59,19 +59,19 @@ describe("tile worker routes", () => {
 		const probe = routeProbe()
 		const routeOf = async (path: string) => (await probe(path))?.index ?? null
 
-		expect(await routeOf("/db/candidate.db")).toBe(0)
-		expect(await routeOf("/tiger/06/blocks.json")).toBe(1)
-		expect(await routeOf("/tiger/06/blocks/12/655/1582.mvt")).toBe(2)
-		expect(await routeOf("/terrain/terrarium/10/909/403.png")).toBe(3)
-		expect(await routeOf("/planet.v4.json")).toBe(4)
-		expect(await routeOf("/coverage-v5.json")).toBe(4)
-		expect(await routeOf("/planet.v4/15/29103/12905.mvt")).toBe(5)
-		expect(await routeOf("/providers/130317/06/coverage/12/655/1582.mvt")).toBe(6)
-		expect(await routeOf("/providers/130317/06/coverage.json")).toBe(7)
-		expect(await routeOf("/geolocate")).toBe(8)
-		expect(await routeOf("/")).toBe(9)
-		expect(await routeOf("/heartbeat")).toBe(10)
-		expect(await routeOf("/planet.v4/15/29103")).toBeNull()
+		await expect(routeOf("/db/candidate.db")).resolves.toBe(0)
+		await expect(routeOf("/tiger/06/blocks.json")).resolves.toBe(1)
+		await expect(routeOf("/tiger/06/blocks/12/655/1582.mvt")).resolves.toBe(2)
+		await expect(routeOf("/terrain/terrarium/10/909/403.png")).resolves.toBe(3)
+		await expect(routeOf("/planet.v4.json")).resolves.toBe(4)
+		await expect(routeOf("/coverage-v5.json")).resolves.toBe(4)
+		await expect(routeOf("/planet.v4/15/29103/12905.mvt")).resolves.toBe(5)
+		await expect(routeOf("/providers/130317/06/coverage/12/655/1582.mvt")).resolves.toBe(6)
+		await expect(routeOf("/providers/130317/06/coverage.json")).resolves.toBe(7)
+		await expect(routeOf("/geolocate")).resolves.toBe(8)
+		await expect(routeOf("/")).resolves.toBe(9)
+		await expect(routeOf("/heartbeat")).resolves.toBe(10)
+		await expect(routeOf("/planet.v4/15/29103")).resolves.toBeNull()
 	})
 
 	it("captures a dotted tile set name and the tile file whole", async () => {
@@ -95,12 +95,12 @@ describe("createTileWorkerApp", () => {
 		const heartbeat = await app.request("/heartbeat", {}, {}, executionContext)
 
 		expect(heartbeat.status).toBe(200)
-		expect(await heartbeat.text()).toBe("OK")
+		await expect(heartbeat.text()).resolves.toBe("OK")
 
 		const missing = await app.request("/nothing/here/at/all/x", {}, {}, executionContext)
 
 		expect(missing.status).toBe(404)
-		expect(await missing.text()).toBe("URL path /nothing/here/at/all/x does not match any known route")
+		await expect(missing.text()).resolves.toBe("URL path /nothing/here/at/all/x does not match any known route")
 	})
 
 	it("renders a route's ResourceError as its JSON with its status", async () => {
@@ -109,12 +109,16 @@ describe("createTileWorkerApp", () => {
 		const terrarium = await app.request("/terrain/terrarium/2/9/1.png", {}, {}, executionContext)
 
 		expect(terrarium.status).toBe(400)
-		expect(await terrarium.json()).toMatchObject({ status: 400, message: "Invalid terrarium tile coordinates" })
+
+		await expect(terrarium.json()).resolves.toMatchObject({
+			status: 400,
+			message: "Invalid terrarium tile coordinates",
+		})
 
 		const database = await app.request("/db/candidate.db", {}, {}, executionContext)
 
 		expect(database.status).toBe(400)
-		expect(await database.json()).toMatchObject({ message: "Missing Range header" })
+		await expect(database.json()).resolves.toMatchObject({ message: "Missing Range header" })
 
 		const geolocation = await app.request("/geolocate", {}, {}, executionContext)
 
@@ -138,12 +142,12 @@ describe("createTileWorkerApp", () => {
 				"access-control-allow-origin"
 			)
 
-		expect(await originHeader("https://earth.mailwoman.ai")).toBe("https://earth.mailwoman.ai")
-		expect(await originHeader("https://moon.mailwoman.ai")).toBe("https://moon.mailwoman.ai")
-		expect(await originHeader("https://maplibre.org")).toBe("https://maplibre.org")
-		expect(await originHeader("vscode-webview://abc123")).toBe("vscode-webview://abc123")
-		expect(await originHeader("http://localhost:7781")).toBe("http://localhost:7781")
-		expect(await originHeader("https://example.com")).toBeNull()
+		await expect(originHeader("https://earth.mailwoman.ai")).resolves.toBe("https://earth.mailwoman.ai")
+		await expect(originHeader("https://moon.mailwoman.ai")).resolves.toBe("https://moon.mailwoman.ai")
+		await expect(originHeader("https://maplibre.org")).resolves.toBe("https://maplibre.org")
+		await expect(originHeader("vscode-webview://abc123")).resolves.toBe("vscode-webview://abc123")
+		await expect(originHeader("http://localhost:7781")).resolves.toBe("http://localhost:7781")
+		await expect(originHeader("https://example.com")).resolves.toBeNull()
 
 		const preflight = await app.request(
 			"/db/candidate.db",
@@ -177,7 +181,7 @@ describe("createTileWorkerApp", () => {
 			executionContext
 		)
 
-		expect(await response.json()).toEqual({ cached: true })
+		await expect(response.json()).resolves.toEqual({ cached: true })
 		expect(response.headers.get("access-control-allow-origin")).toBe("https://earth.mailwoman.ai")
 	})
 })

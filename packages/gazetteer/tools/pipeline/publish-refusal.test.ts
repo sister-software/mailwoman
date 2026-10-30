@@ -62,7 +62,7 @@ test("a build-local candidate is refused by name before staging", async () => {
 	)
 
 	// Refused before the staging link existed.
-	expect(await pathExists(stageDir("gazetteer", "2026-09-27a", "candidate.db"))).toBe(false)
+	await expect(pathExists(stageDir("gazetteer", "2026-09-27a", "candidate.db"))).resolves.toBe(false)
 })
 
 test("a candidate with no layer_manifest is refused, because it states no tier", async () => {

@@ -94,11 +94,11 @@ describe("license declare and license evaluate", () => {
 			"https://github.com/example/project",
 		])
 
-		expect(await declareAction(parsed, { client: { axios: transport.axios }, trustedKeys })).toBe(0)
+		await expect(declareAction(parsed, { client: { axios: transport.axios }, trustedKeys })).resolves.toBe(0)
 		expect(transport.calls).toEqual(["/v1/declarations"])
-		expect(await readConfiguredLicenseToken()).toEqual({ token, source: "file" })
-		expect(await readRefreshCredentials()).toEqual({ lid: LID, secret: SECRET })
-		expect(await readInstallationID()).toMatch(/^[0-9a-f-]{36}$/u)
+		await expect(readConfiguredLicenseToken()).resolves.toEqual({ token, source: "file" })
+		await expect(readRefreshCredentials()).resolves.toEqual({ lid: LID, secret: SECRET })
+		await expect(readInstallationID()).resolves.toMatch(/^[0-9a-f-]{36}$/u)
 		expect(stdout.join("")).toContain("expires:          2027-03-11")
 	})
 
@@ -118,13 +118,15 @@ describe("license declare and license evaluate", () => {
 
 		const parsed = parseCommand(spec, ["evaluate", "--email", "trial@example.com", "--name", "Trial Ltd"])
 
-		expect(await evaluateAction(parsed, { client: { axios: transport.axios }, trustedKeys, pollIntervalMs: 0 })).toBe(0)
+		await expect(
+			evaluateAction(parsed, { client: { axios: transport.axios }, trustedKeys, pollIntervalMs: 0 })
+		).resolves.toBe(0)
 
 		expect(transport.calls).toEqual(["/v1/evaluations", `/v1/declarations/${CLAIM}`, `/v1/declarations/${CLAIM}`])
 		// The key travels only by email.
 		// The key and credential files stay absent until the adopt command from the message runs.
-		expect(await readConfiguredLicenseToken()).toBeNull()
-		expect(await readRefreshCredentials()).toBeNull()
+		await expect(readConfiguredLicenseToken()).resolves.toBeNull()
+		await expect(readRefreshCredentials()).resolves.toBeNull()
 		expect(stdout.join("")).toContain("sent to trial@example.com")
 		expect(stdout.join("")).toContain("mailwoman license adopt")
 	})
@@ -160,7 +162,7 @@ describe("license declare and license evaluate", () => {
 			"https://github.com/example/project",
 		])
 
-		expect(await declareAction(parsed, { client: { axios: transport.axios }, trustedKeys })).toBe(2)
+		await expect(declareAction(parsed, { client: { axios: transport.axios }, trustedKeys })).resolves.toBe(2)
 		expect(stderr.join("")).toContain("did not answer")
 	})
 })

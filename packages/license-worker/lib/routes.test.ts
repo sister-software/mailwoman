@@ -133,7 +133,7 @@ describe("the routes", () => {
 		const again = await a.webhook(invoicePaidEvent({ id: "evt_w", invoiceID: "in_w" }))
 
 		expect(again.status).toBe(200)
-		expect(await again.json()).toEqual({ received: true, duplicate: true })
+		await expect(again.json()).resolves.toEqual({ received: true, duplicate: true })
 
 		const bad = await a.hono.request("/v1/webhooks/stripe", {
 			method: "POST",
@@ -146,7 +146,11 @@ describe("the routes", () => {
 		const stray = await a.webhook({ ...invoicePaidEvent({ id: "evt_w_stray" }), type: "customer.created" })
 
 		expect(stray.status).toBe(200)
-		expect(await stray.json()).toMatchObject({ received: true, ignored: expect.stringContaining("customer.created") })
+
+		await expect(stray.json()).resolves.toMatchObject({
+			received: true,
+			ignored: expect.stringContaining("customer.created"),
+		})
 	})
 
 	it("claim: pending before the invoice is paid, then the token, the lid and the refresh secret exactly once, with no-store and exact-origin CORS", async () => {
@@ -154,7 +158,7 @@ describe("the routes", () => {
 		const before = await a.claim()
 
 		expect(before.status).toBe(200)
-		expect(await before.json()).toEqual({ status: "pending" })
+		await expect(before.json()).resolves.toEqual({ status: "pending" })
 
 		await a.webhook(invoicePaidEvent({ id: "evt_c", invoiceID: "in_c" }))
 
@@ -187,14 +191,14 @@ describe("the routes", () => {
 		const ok = await a.post("/v1/licenses/refresh", { lid: claim.lid, secret: claim.refresh_secret })
 
 		expect(ok.status).toBe(200)
-		expect(await ok.json()).toMatchObject({ status: "active", token: claim.token })
+		await expect(ok.json()).resolves.toMatchObject({ status: "active", token: claim.token })
 
 		const wrong = await a.post("/v1/licenses/refresh", { lid: claim.lid, secret: "x".repeat(43) })
 		const unknown = await a.post("/v1/licenses/refresh", { lid: `lic_${"x".repeat(22)}`, secret: "x".repeat(43) })
 
 		expect(wrong.status).toBe(404)
 		expect(unknown.status).toBe(404)
-		expect(await wrong.text()).toBe(await unknown.text())
+		await expect(wrong.text()).resolves.toBe(await unknown.text())
 	})
 
 	it("status: active, revoked after a full refund, unknown for a lid nobody minted; never a reason or a name", async () => {
@@ -204,9 +208,9 @@ describe("the routes", () => {
 
 		const claim = (await (await a.claim()).json()) as ClaimBody
 
-		expect(await (await a.post("/v1/license-status", { lid: claim.lid })).json()).toEqual({ status: "active" })
+		await expect((await a.post("/v1/license-status", { lid: claim.lid })).json()).resolves.toEqual({ status: "active" })
 
-		expect(await (await a.post("/v1/license-status", { lid: `lic_${"x".repeat(22)}` })).json()).toEqual({
+		await expect((await a.post("/v1/license-status", { lid: `lic_${"x".repeat(22)}` })).json()).resolves.toEqual({
 			status: "unknown",
 		})
 
@@ -220,12 +224,15 @@ describe("the routes", () => {
 			})
 		)
 
-		expect(await (await a.post("/v1/license-status", { lid: claim.lid })).json()).toEqual({ status: "revoked" })
-		expect(await (await a.claim()).json()).toEqual({ status: "revoked" })
+		await expect((await a.post("/v1/license-status", { lid: claim.lid })).json()).resolves.toEqual({
+			status: "revoked",
+		})
 
-		expect(
-			await (await a.post("/v1/licenses/refresh", { lid: claim.lid, secret: claim.refresh_secret })).json()
-		).toEqual({ status: "revoked" })
+		await expect((await a.claim()).json()).resolves.toEqual({ status: "revoked" })
+
+		await expect(
+			(await a.post("/v1/licenses/refresh", { lid: claim.lid, secret: claim.refresh_secret })).json()
+		).resolves.toEqual({ status: "revoked" })
 	})
 
 	it("kill switch: with issuance disabled the webhook still answers 200 and records the event, an unminted claim stays pending, and a minted token is still served to its claim and its refresh", async () => {
@@ -238,18 +245,18 @@ describe("the routes", () => {
 		const later = await disabled.webhook(invoicePaidEvent({ id: "evt_k2", invoiceID: "in_k" }))
 
 		expect(later.status).toBe(200)
-		expect(await later.json()).toEqual({ received: true, handled: "refused: issuance is disabled" })
+		await expect(later.json()).resolves.toEqual({ received: true, handled: "refused: issuance is disabled" })
 
 		const refresh = await disabled.post("/v1/licenses/refresh", { lid: claim.lid, secret: claim.refresh_secret })
 
 		expect(refresh.status).toBe(200)
-		expect(await (await disabled.claim()).json()).toMatchObject({ status: "issued", token: claim.token })
+		await expect((await disabled.claim()).json()).resolves.toMatchObject({ status: "issued", token: claim.token })
 
 		const fresh = await app("k0", { issuance: false })
 
 		await fresh.webhook(invoicePaidEvent({ id: "evt_k0", invoiceID: "in_k0" }))
 
-		expect(await (await fresh.claim()).json()).toEqual({ status: "pending" })
+		await expect((await fresh.claim()).json()).resolves.toEqual({ status: "pending" })
 	})
 
 	it("signing mismatch: every /v1 route answers 503 and /health stays up", async () => {

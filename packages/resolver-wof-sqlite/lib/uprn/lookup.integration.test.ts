@@ -165,6 +165,6 @@ describe("layer interface", () => {
 		const surveyed = await readLayerCoverage(kdb, 1)
 
 		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
-		expect(await readLayerCoverage(kdb, 2)).toBeNull()
+		await expect(readLayerCoverage(kdb, 2)).resolves.toBeNull()
 	})
 })

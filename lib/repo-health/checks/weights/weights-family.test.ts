@@ -74,11 +74,11 @@ function completeTree(): Record<string, unknown> {
 }
 
 test("weights-family: the current tree maps every shipping package to one family", async () => {
-	expect(await weightsFamilyCheck.run(await collectRepoContext())).toEqual([])
+	await expect(weightsFamilyCheck.run(await collectRepoContext())).resolves.toEqual([])
 })
 
 test("weights-family: a fixture matching the registry reports nothing", async () => {
-	expect(await weightsFamilyCheck.run(await fixtureContext(completeTree()))).toEqual([])
+	await expect(weightsFamilyCheck.run(await fixtureContext(completeTree()))).resolves.toEqual([])
 })
 
 test("weights-family: a graph package declaring no model.onnx is reported", async () => {
@@ -128,7 +128,7 @@ test("weights-family: a private package no family names is admitted", async () =
 		files: ["model.onnx", "tokenizer.model"],
 	}
 
-	expect(await weightsFamilyCheck.run(await fixtureContext(tree))).toEqual([])
+	await expect(weightsFamilyCheck.run(await fixtureContext(tree))).resolves.toEqual([])
 })
 
 test("weights-family: an overlay inheriting a graph its family does not name is reported", async () => {

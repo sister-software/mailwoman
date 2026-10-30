@@ -147,6 +147,6 @@ describe("readTuples", () => {
 
 		const tuples = readTuples(path)
 
-		expect(await tuples.take(2).toArray()).toEqual([{ locality: "Paris" }, { postcode: "75001" }])
+		await expect(tuples.take(2).toArray()).resolves.toEqual([{ locality: "Paris" }, { postcode: "75001" }])
 	})
 })

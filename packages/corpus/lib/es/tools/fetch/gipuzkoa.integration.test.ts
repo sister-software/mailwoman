@@ -62,7 +62,10 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("downloadGipuzkoa against b5m.gipuzkoa.eus"
 			await using scratch = await temporaryDirectory("mailwoman-gipuzkoa-live-")
 			await using client = liveClient()
 
-			expect(await downloadGipuzkoa(client, { outputDir: scratch.path })).toMatchObject({ fetched: 1, failed: 0 })
+			await expect(downloadGipuzkoa(client, { outputDir: scratch.path })).resolves.toMatchObject({
+				fetched: 1,
+				failed: 0,
+			})
 
 			const manifest = await readManifest<GipuzkoaManifest>(scratch.path("MANIFEST.json"))
 
@@ -76,7 +79,10 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("downloadGipuzkoa against b5m.gipuzkoa.eus"
 
 			expect(gml).toHaveLength(1)
 
-			expect(await downloadGipuzkoa(client, { outputDir: scratch.path })).toMatchObject({ fetched: 0, skipped: 1 })
+			await expect(downloadGipuzkoa(client, { outputDir: scratch.path })).resolves.toMatchObject({
+				fetched: 0,
+				skipped: 1,
+			})
 		},
 		TIMEOUT_MS
 	)

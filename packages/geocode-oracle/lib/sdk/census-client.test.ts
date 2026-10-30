@@ -261,7 +261,7 @@ describe("createCensusGeocoderClient", () => {
 
 		await client.lookupAddress("anywhere").catch(() => undefined)
 
-		expect(await Globerator.files("json", { cwd: cacheDir, recursive: false }).toArray()).toHaveLength(0)
+		await expect(Globerator.files("json", { cwd: cacheDir, recursive: false }).toArray()).resolves.toHaveLength(0)
 	})
 
 	it("retries a 500 on the injected clock", async () => {

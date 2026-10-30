@@ -125,7 +125,7 @@ describe("readMatrikkelenPublication", () => {
 	it("reads the service's last-modified and content-length for one area", async () => {
 		const client = stubClient([{ headers: { "last-modified": LAST_MODIFIED, "content-length": "58079" } }])
 
-		expect(await readMatrikkelenPublication(client, SVALBARD)).toEqual({
+		await expect(readMatrikkelenPublication(client, SVALBARD)).resolves.toEqual({
 			lastModified: LAST_MODIFIED,
 			reportedBytes: 58_079,
 		})
@@ -136,7 +136,10 @@ describe("readMatrikkelenPublication", () => {
 	it("reads an absent header as null rather than as an empty string or zero", async () => {
 		const client = stubClient([{ headers: {} }])
 
-		expect(await readMatrikkelenPublication(client, MAINLAND)).toEqual({ lastModified: null, reportedBytes: null })
+		await expect(readMatrikkelenPublication(client, MAINLAND)).resolves.toEqual({
+			lastModified: null,
+			reportedBytes: null,
+		})
 	})
 })
 

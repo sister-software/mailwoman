@@ -18,7 +18,7 @@ describe("readReleaseManifest", () => {
 	it("answers null when the data root has no releases.json", async () => {
 		await using root = await temporaryDirectory("mw-release-absent-")
 
-		expect(await readReleaseManifest(root.path)).toBeNull()
+		await expect(readReleaseManifest(root.path)).resolves.toBeNull()
 	})
 
 	it("reads every pinned family", async () => {
@@ -29,7 +29,7 @@ describe("readReleaseManifest", () => {
 			root.path("releases.json")
 		)
 
-		expect(await readReleaseManifest(root.path)).toEqual({
+		await expect(readReleaseManifest(root.path)).resolves.toEqual({
 			"address-points": "2026-05-20.0",
 			interpolation: "TIGER2023",
 		})

@@ -48,7 +48,7 @@ describe("TileSource", async () => {
 	})
 
 	it("returns null for a tile outside the archive", async () => {
-		expect(await source.getTile(14, 0, 0)).toBeNull()
+		await expect(source.getTile(14, 0, 0)).resolves.toBeNull()
 	})
 })
 

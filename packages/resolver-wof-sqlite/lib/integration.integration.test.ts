@@ -98,9 +98,9 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 		})
 
 		test("empty / non-token text returns []", async () => {
-			expect(await lookup.findPlace({ text: "" })).toEqual([])
-			expect(await lookup.findPlace({ text: "   " })).toEqual([])
-			expect(await lookup.findPlace({ text: "()" })).toEqual([])
+			await expect(lookup.findPlace({ text: "" })).resolves.toEqual([])
+			await expect(lookup.findPlace({ text: "   " })).resolves.toEqual([])
+			await expect(lookup.findPlace({ text: "()" })).resolves.toEqual([])
 		})
 
 		test("query with FTS5-special characters doesn't crash", async () => {

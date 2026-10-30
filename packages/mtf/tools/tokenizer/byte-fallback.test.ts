@@ -19,7 +19,7 @@ describe("readFixtureLines", () => {
 		await writeLocalTextFile('{"raw": "foo"}\n{"text": "bar"}\n{"input": "baz"}\n\n{"raw": "qux"}\n', jsonl)
 		await writeLocalTextFile("hello\n\nworld\n", text)
 
-		expect(await readFixtureLines(jsonl)).toEqual(["foo", "bar", "baz", "qux"])
-		expect(await readFixtureLines(text)).toEqual(["hello", "world"])
+		await expect(readFixtureLines(jsonl)).resolves.toEqual(["foo", "bar", "baz", "qux"])
+		await expect(readFixtureLines(text)).resolves.toEqual(["hello", "world"])
 	})
 })

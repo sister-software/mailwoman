@@ -118,26 +118,26 @@ describe("resolveThresholdSpecPath", () => {
 	it("resolves a bare spec NAME — what the help advertises and what people type", async () => {
 		const path = await resolveThresholdSpecPath("v5.3.0-family")
 
-		expect(await pathExists(path)).toBe(true)
+		await expect(pathExists(path)).resolves.toBe(true)
 		expect(path).toContain("v5.3.0-family.json")
 	})
 
 	it("resolves a spec name that already carries .json", async () => {
 		const path = await resolveThresholdSpecPath("v5.3.0-family.json")
 
-		expect(await pathExists(path)).toBe(true)
+		await expect(pathExists(path)).resolves.toBe(true)
 	})
 
 	it("resolves by basename, so legacy scripts/eval/checks/<spec>.json invocations keep working", async () => {
 		const path = await resolveThresholdSpecPath("scripts/eval/checks/v5.3.0-family.json")
 
-		expect(await pathExists(path)).toBe(true)
+		await expect(pathExists(path)).resolves.toBe(true)
 	})
 
 	it("prefers a real path verbatim", async () => {
 		const real = "packages/mailwoman/tools/eval-harness/specs/v5.3.0-family.json"
 
-		expect(await resolveThresholdSpecPath(real)).toBe(real)
+		await expect(resolveThresholdSpecPath(real)).resolves.toBe(real)
 	})
 
 	it("throws a USEFUL error naming the known specs, not a bare ENOENT", async () => {
@@ -193,16 +193,16 @@ describe("paired weights-caches (#47)", () => {
 	it("refuses --int8-weights-cache without --weights-cache", async () => {
 		const int8 = await stageFakeCache("int8", "a")
 
-		expect(await runPromotionEval({ check: "v9.0.0-base", int8WeightsCache: int8 })).toBe(2)
+		await expect(runPromotionEval({ check: "v9.0.0-base", int8WeightsCache: int8 })).resolves.toBe(2)
 	})
 
 	it("refuses --int8-weights-cache alongside the --model/--int8 flow", async () => {
 		const wc = await stageFakeCache("fp32", "b")
 		const int8 = await stageFakeCache("int8", "c")
 
-		expect(
-			await runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, model: "x.onnx" })
-		).toBe(2)
+		await expect(
+			runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, model: "x.onnx" })
+		).resolves.toBe(2)
 	})
 
 	it("refuses a paired fp32 arm that carries quant nodes — the arms are swapped or mislabeled", async () => {
@@ -211,7 +211,9 @@ describe("paired weights-caches (#47)", () => {
 		await using outDirDirectory = await temporaryDirectory("check-pair-out-")
 		const outDir = outDirDirectory.path
 
-		expect(await runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })).toBe(2)
+		await expect(
+			runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })
+		).resolves.toBe(2)
 	})
 
 	it("refuses a paired int8 arm with no quant nodes", async () => {
@@ -220,7 +222,9 @@ describe("paired weights-caches (#47)", () => {
 		await using outDirDirectory = await temporaryDirectory("check-pair-out-")
 		const outDir = outDirDirectory.path
 
-		expect(await runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })).toBe(2)
+		await expect(
+			runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })
+		).resolves.toBe(2)
 	})
 
 	it("refuses byte-identical paired arms", async () => {

@@ -77,7 +77,7 @@ describe("readOpenNamesPostcodeCounties", () => {
 
 		const stats = createOpenNamesReadStats()
 
-		expect(await Array.fromAsync(readOpenNamesPostcodeCounties(csv.toString(), stats))).toEqual([
+		await expect(Array.fromAsync(readOpenNamesPostcodeCounties(csv.toString(), stats))).resolves.toEqual([
 			{ postcode: "ME14 1JH", countyUnitary: "Kent" },
 			{ postcode: "ME1 1AA", countyUnitary: "Medway" },
 		])

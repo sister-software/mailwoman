@@ -118,7 +118,7 @@ function recount(
 
 describe.skipIf(!BDUK_INPUTS_PRESENT)("the London BDUK counts against the extracted London files and nsul.db", () => {
 	test("the archive on disk is the one the BDUK record cites", async () => {
-		expect(await sha256File(BDUK_ARCHIVE)).toBe(BDUK_LONDON_ARCHIVE.sha256)
+		await expect(sha256File(BDUK_ARCHIVE)).resolves.toBe(BDUK_LONDON_ARCHIVE.sha256)
 	})
 
 	test("each building postcode's counts recompute from every London file and NSUL's points", async () => {

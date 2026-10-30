@@ -40,7 +40,7 @@ test("GET /health answers issuance, the environment's mode, a reachable ledger, 
 	expect(res.status).toBe(200)
 	expect(res.headers.get("cache-control")).toBe("no-store")
 
-	expect(await res.json()).toEqual({
+	await expect(res.json()).resolves.toEqual({
 		issuance: false,
 		liveMode: false,
 		signing: "unchecked",
@@ -79,13 +79,13 @@ test("the email word turns failing on a failed email older than an hour, and sta
 
 	await insertTokenIfAbsent(ledger, token("in_fresh", 10))
 
-	expect(await (await app().request("/health")).json()).toMatchObject({ email: "ok" })
+	await expect((await app().request("/health")).json()).resolves.toMatchObject({ email: "ok" })
 
 	await insertTokenIfAbsent(ledger, token("in_stale", 90))
 
-	expect(await (await app().request("/health")).json()).toMatchObject({ email: "failing" })
+	await expect((await app().request("/health")).json()).resolves.toMatchObject({ email: "failing" })
 
 	// The same ledger read two hours later shows that the fresh one has aged into the alert too.
 	// One is enough either way.
-	expect(await (await app(() => NOW + 2 * HOUR).request("/health")).json()).toMatchObject({ email: "failing" })
+	await expect((await app(() => NOW + 2 * HOUR).request("/health")).json()).resolves.toMatchObject({ email: "failing" })
 })

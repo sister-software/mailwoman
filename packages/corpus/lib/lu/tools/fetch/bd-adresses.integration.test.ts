@@ -84,10 +84,10 @@ describe.runIf(LIVE_PUBLISHER_TESTS && FULL_FETCH)("fetchBDAdresses against data
 			expect(manifest?.columns).toEqual(expect.arrayContaining([...BD_ADRESSES_REQUIRED_COLUMNS]))
 
 			// The module accepted the transfer on this comparison, and this repeats it on disk.
-			expect(await md5File(bdAdressesInputPath(scratch.path))).toBe(manifest?.publisher_md5)
+			await expect(md5File(bdAdressesInputPath(scratch.path))).resolves.toBe(manifest?.publisher_md5)
 
 			// A second run finds the manifest's md5 unchanged and transfers no bytes.
-			expect(await fetchBDAdresses({ outRoot: scratch.path })).toMatchObject({ fetched: 0, skipped: 1 })
+			await expect(fetchBDAdresses({ outRoot: scratch.path })).resolves.toMatchObject({ fetched: 0, skipped: 1 })
 		},
 		FULL_FETCH_TIMEOUT_MS
 	)

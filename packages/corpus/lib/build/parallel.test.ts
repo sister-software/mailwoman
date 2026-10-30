@@ -158,8 +158,8 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 
 			await buildCorpus(baseOptions(outDir, { jobs }))
 
-			expect(await snapshot(outDir)).toEqual(serial)
-			expect(await pathExists(outDir(BUILD_LOCK_DIRECTORY))).toBe(false)
+			await expect(snapshot(outDir)).resolves.toEqual(serial)
+			await expect(pathExists(outDir(BUILD_LOCK_DIRECTORY))).resolves.toBe(false)
 		}
 	})
 
@@ -198,7 +198,7 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		// Small enough that every fixture's canonical file divides into several ranges.
 		await buildCorpus(baseOptions(outDir, { jobs: 3, alignRangeBytes: 2048 }))
 
-		expect(await snapshot(outDir)).toEqual(serial)
+		await expect(snapshot(outDir)).resolves.toEqual(serial)
 
 		const runs = await readLocalJSONFile<{ task: string }[]>(outDir("intermediate", "workers", "WORKERS.json"))
 
@@ -233,7 +233,7 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 			"ban/finish",
 		])
 
-		expect(await snapshot(outDir)).toEqual(serial)
+		await expect(snapshot(outDir)).resolves.toEqual(serial)
 	})
 
 	it("resumes a build cancelled while a source was writing parquet and lands on the serial bytes", async () => {
@@ -254,11 +254,11 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 			)
 		).rejects.toThrow(/did not finish.*--resume/s)
 
-		expect(await pathExists(outDir("corpus-v0.1.0", "MANIFEST.json"))).toBe(false)
+		await expect(pathExists(outDir("corpus-v0.1.0", "MANIFEST.json"))).resolves.toBe(false)
 
 		await buildCorpus(baseOptions(outDir, { jobs: 2, priorOutput: PriorOutput.Resume }))
 
-		expect(await snapshot(outDir)).toEqual(serial)
+		await expect(snapshot(outDir)).resolves.toEqual(serial)
 	})
 
 	it("continues at the next part after an interruption between conversions", async () => {
@@ -304,7 +304,7 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 
 		expect(messages.some((message) => message.startsWith("[wof-admin] reused the complete source"))).toBe(true)
 		expect(messages.some((message) => message.startsWith("[ban] not complete:"))).toBe(true)
-		expect(await snapshot(outDir)).toEqual(serial)
+		await expect(snapshot(outDir)).resolves.toEqual(serial)
 	})
 
 	it("treats neither a directory of parts nor a record over a missing part as a complete source", async () => {
@@ -334,7 +334,7 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		expect(messages.find((message) => message.startsWith("[ban] not complete:"))).toMatch(/absent or unreadable/u)
 		expect(messages.find((message) => message.startsWith("[usgov-hrsa-fqhc] not complete:"))).toMatch(/is missing/u)
 		expect(messages.some((message) => message.startsWith("[wof-admin] reused the complete source"))).toBe(true)
-		expect(await snapshot(outDir)).toEqual(serial)
+		await expect(snapshot(outDir)).resolves.toEqual(serial)
 	})
 
 	it("fails a source whose worker fails, finishes the others and resumes to the serial bytes", async () => {
@@ -352,14 +352,20 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 			/1 of 3 sources did not finish.*ban: corpus build worker ban\/adapter .* exited with code 1\. Its log is /s
 		)
 
-		expect(await pathExists(sourceStateDirectory(outDir("intermediate"), "wof-admin")(SOURCE_RECORD_FILE))).toBe(true)
-		expect(await pathExists(sourceStateDirectory(outDir("intermediate"), "ban")(SOURCE_RECORD_FILE))).toBe(false)
-		expect(await pathExists(outDir("MANIFEST.json"))).toBe(false)
-		expect(await pathExists(outDir(BUILD_LOCK_DIRECTORY))).toBe(false)
+		await expect(
+			pathExists(sourceStateDirectory(outDir("intermediate"), "wof-admin")(SOURCE_RECORD_FILE))
+		).resolves.toBe(true)
+
+		await expect(pathExists(sourceStateDirectory(outDir("intermediate"), "ban")(SOURCE_RECORD_FILE))).resolves.toBe(
+			false
+		)
+
+		await expect(pathExists(outDir("MANIFEST.json"))).resolves.toBe(false)
+		await expect(pathExists(outDir(BUILD_LOCK_DIRECTORY))).resolves.toBe(false)
 
 		await buildCorpus(baseOptions(outDir, { jobs: 2, priorOutput: PriorOutput.Resume }))
 
-		expect(await snapshot(outDir)).toEqual(serial)
+		await expect(snapshot(outDir)).resolves.toEqual(serial)
 	})
 
 	it("refuses a second build into an output directory a live build holds, and takes over a dead one's lock", async () => {
@@ -384,7 +390,7 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 
 		await buildCorpus(baseOptions(outDir, { jobs: 2 }))
 
-		expect(await snapshot(outDir)).toEqual(serial)
+		await expect(snapshot(outDir)).resolves.toEqual(serial)
 	})
 })
 
@@ -421,7 +427,7 @@ describe("parallel build concatenation", () => {
 		}
 
 		expect(warnings.map((warning) => warning.message)).toEqual([])
-		expect(await readLocalTextFile(dir.path("joined.jsonl"))).toBe(expected.join(""))
+		await expect(readLocalTextFile(dir.path("joined.jsonl"))).resolves.toBe(expected.join(""))
 	})
 })
 
@@ -451,6 +457,6 @@ describe("parallel build budget", () => {
 			/corpus build refused: --jobs 4 needs/u
 		)
 
-		expect(await pathExists(dir.path("out"))).toBe(false)
+		await expect(pathExists(dir.path("out"))).resolves.toBe(false)
 	})
 })

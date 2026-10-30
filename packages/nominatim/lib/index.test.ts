@@ -174,7 +174,7 @@ test("/status without an engine method answers 200 OK, not 501 (the one non-501 
 	const app = createNominatimApp({})
 	const res = await app.request("/status")
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual({ status: 0, message: "OK" })
+	await expect(res.json()).resolves.toEqual({ status: 0, message: "OK" })
 })
 
 test("absent engine methods answer a 501 naming the unimplemented operation", async () => {
@@ -187,7 +187,7 @@ test("absent engine methods answer a 501 naming the unimplemented operation", as
 	] as const) {
 		const res = await app.request(path)
 		expect(res.status).toBe(501)
-		expect(await res.json()).toEqual({ error: message })
+		await expect(res.json()).resolves.toEqual({ error: message })
 	}
 })
 
@@ -195,7 +195,7 @@ test("unknown format falls back to jsonv2 (raw results array)", async () => {
 	const app = createNominatimApp({ search: async () => [] })
 	const res = await app.request("/search?q=berlin&format=xml")
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual([])
+	await expect(res.json()).resolves.toEqual([])
 })
 
 test("format=jsonld forces addressdetails on search and reverse, but plain parseBool governs lookup", async () => {
@@ -230,10 +230,10 @@ test("reverse with a null engine result serializes null (jsonv2) and an empty Fe
 
 	const plain = await app.request("/reverse?lat=52.5&lon=13.4")
 	expect(plain.status).toBe(200)
-	expect(await plain.json()).toBeNull()
+	await expect(plain.json()).resolves.toBeNull()
 
 	const geo = await app.request("/reverse?lat=52.5&lon=13.4&format=geojson")
-	expect(await geo.json()).toEqual({ type: "FeatureCollection", features: [] })
+	await expect(geo.json()).resolves.toEqual({ type: "FeatureCollection", features: [] })
 })
 
 test("/reverse 400 bodies are the exact legacy envelopes (missing and out-of-range)", async () => {
@@ -241,18 +241,18 @@ test("/reverse 400 bodies are the exact legacy envelopes (missing and out-of-ran
 
 	const missing = await app.request("/reverse")
 	expect(missing.status).toBe(400)
-	expect(await missing.json()).toEqual({ error: "lat and lon are required" })
+	await expect(missing.json()).resolves.toEqual({ error: "lat and lon are required" })
 
 	const outOfRange = await app.request("/reverse?lat=91&lon=0")
 	expect(outOfRange.status).toBe(400)
-	expect(await outOfRange.json()).toEqual({ error: "lat must be in [-90, 90] and lon in [-180, 180]" })
+	await expect(outOfRange.json()).resolves.toEqual({ error: "lat must be in [-90, 90] and lon in [-180, 180]" })
 })
 
 test("lookup has no jsonld branch — format=jsonld returns the raw results (legacy quirk preserved)", async () => {
 	const results = [{ place_id: 1, licence: "L", lat: "1", lon: "2", display_name: "X" }]
 	const app = createNominatimApp({ lookup: async () => results })
 	const res = await app.request("/lookup?osm_ids=N1&format=jsonld")
-	expect(await res.json()).toEqual(results)
+	await expect(res.json()).resolves.toEqual(results)
 })
 
 test("repeated single-valued params are treated as absent (asString(array) → undefined; never a 400)", async () => {
@@ -307,7 +307,7 @@ test("an engine fault answers the clean legacy 500 envelope", async () => {
 
 	const res = await app.request("/search?q=x")
 	expect(res.status).toBe(500)
-	expect(await res.json()).toEqual({ error: "internal error" })
+	await expect(res.json()).resolves.toEqual({ error: "internal error" })
 })
 
 test("GET /openapi.json serves the emitted 3.1 document with all five paths", async () => {

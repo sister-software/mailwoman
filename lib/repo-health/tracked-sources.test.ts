@@ -48,25 +48,30 @@ describe("trackedSourcePaths", () => {
 	}
 
 	it("defaults to every .ts/.tsx, dropping declarations and anything under out/", async () => {
-		expect(await trackedSourcePaths(context)).toEqual(["/repo/packages/core/lib/index.ts", "/repo/docs/src/page.tsx"])
+		await expect(trackedSourcePaths(context)).resolves.toEqual([
+			"/repo/packages/core/lib/index.ts",
+			"/repo/docs/src/page.tsx",
+		])
 	})
 
 	it("honors prefix, excludePrefixes and includeDeclarations", async () => {
-		expect(await trackedSourcePaths(context, { prefix: "packages/", includeDeclarations: true })).toEqual([
+		await expect(trackedSourcePaths(context, { prefix: "packages/", includeDeclarations: true })).resolves.toEqual([
 			"/repo/packages/core/lib/index.ts",
 			"/repo/packages/core/lib/types.d.ts",
 		])
 
-		expect(await trackedSourcePaths(context, { excludePrefixes: ["packages/"] })).toEqual(["/repo/docs/src/page.tsx"])
+		await expect(trackedSourcePaths(context, { excludePrefixes: ["packages/"] })).resolves.toEqual([
+			"/repo/docs/src/page.tsx",
+		])
 	})
 
 	it("takes the wire pathspecs the debt counter passes", async () => {
-		expect(await trackedSourcePaths(context, { globs: [".github/workflows/*", ".husky/*"] })).toEqual([
+		await expect(trackedSourcePaths(context, { globs: [".github/workflows/*", ".husky/*"] })).resolves.toEqual([
 			"/repo/.github/workflows/test.yml",
 		])
 
 		// `*` reaches every tracked file.
 		// The two under out/ and the declaration are still dropped.
-		expect(await trackedSourcePaths(context, { globs: ["*"] })).toHaveLength(4)
+		await expect(trackedSourcePaths(context, { globs: ["*"] })).resolves.toHaveLength(4)
 	})
 })

@@ -128,6 +128,6 @@ describe("writeColumnParquetFile", () => {
 		])
 
 		// DuckDB reads a BIGINT as a bigint.
-		expect(await readParquetRows(path)).toEqual([{ raw: "a b", span_starts: [0n, 2n], tags: ["x", "y"] }])
+		await expect(readParquetRows(path)).resolves.toEqual([{ raw: "a b", span_starts: [0n, 2n], tags: ["x", "y"] }])
 	})
 })

@@ -48,7 +48,7 @@ describe("readOSDownloads", () => {
 	it("reads the product's downloads endpoint", async () => {
 		const client = stubClient([{ body: [download("GML", "GB")] }])
 
-		expect(await readOSDownloads(client, roads)).toEqual([download("GML", "GB")])
+		await expect(readOSDownloads(client, roads)).resolves.toEqual([download("GML", "GB")])
 		expect(client.calls[0]).toContain("/products/OpenRoads/downloads")
 	})
 

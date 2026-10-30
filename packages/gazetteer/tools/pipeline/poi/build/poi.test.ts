@@ -160,7 +160,7 @@ describe("buildPOIDatabase", () => {
 		const totalObserved = coverageRows.reduce((sum, c) => sum + c.observed_rows, 0)
 		expect(totalObserved).toBe(30)
 		// Meaning-of-zero: an unsurveyed cell is unknown, never present with completeness 0.
-		expect(await readLayerCoverage(kdb, 999_999_999)).toBeNull()
+		await expect(readLayerCoverage(kdb, 999_999_999)).resolves.toBeNull()
 
 		using lookup = new POILookup({ databasePath: out })
 		const cafeHits = lookup.search({ categoryIDs: ["cafe"], center: SPRINGFIELD, limit: 5 })

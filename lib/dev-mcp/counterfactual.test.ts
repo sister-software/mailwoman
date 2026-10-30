@@ -49,11 +49,11 @@ describe("enumerateFlips — one setting at a time", () => {
 	})
 
 	it("flips a base-locale row TO its country's overlay", async () => {
-		expect(await flipFor("locale", BASE_LOCALE, "GB")).toMatchObject({ from: BASE_LOCALE, to: "en-GB" })
+		await expect(flipFor("locale", BASE_LOCALE, "GB")).resolves.toMatchObject({ from: BASE_LOCALE, to: "en-GB" })
 	})
 
 	it("flips a row already under its overlay BACK to the base — the only way to price the overlay", async () => {
-		expect(await flipFor("locale", "de-DE", "DE")).toMatchObject({ from: "de-DE", to: BASE_LOCALE })
+		await expect(flipFor("locale", "de-DE", "DE")).resolves.toMatchObject({ from: "de-DE", to: BASE_LOCALE })
 	})
 
 	it("skips the locale setting with a stated reason rather than omitting it", async () => {

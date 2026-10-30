@@ -58,6 +58,6 @@ test("emitterCLIPath resolves every surface to the compiled bin its manifest dec
 		expect(cli.split(sep)).toContain("packages")
 		expect(cli.split(sep)).toContain(surface)
 
-		expect(await pathExists(cli), `${surface}: ${cli} does not exist — run \`yarn compile\``).toBe(true)
+		await expect(pathExists(cli), `${surface}: ${cli} does not exist — run \`yarn compile\``).resolves.toBe(true)
 	}
 })

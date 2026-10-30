@@ -139,6 +139,6 @@ describe("autocomplete index build", () => {
 		})
 
 		expect((await index.query("東"))[0]).toMatchObject({ name: "Tokyo", country: "JP" })
-		expect(await index.query("Paris")).toEqual([])
+		await expect(index.query("Paris")).resolves.toEqual([])
 	})
 })

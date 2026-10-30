@@ -132,11 +132,11 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("(a) builds a sealed file at `out`", async () => {
-		expect(await pathExists(out)).toBe(true)
+		await expect(pathExists(out)).resolves.toBe(true)
 		expect((await statPath(out)).mode & 0o222).toBe(0)
 		// The swap removes the `.building` temp path and any aside copy.
-		expect(await pathExists(`${out}.building`)).toBe(false)
-		expect(await pathExists(`${out}.prev`)).toBe(false)
+		await expect(pathExists(`${out}.building`)).resolves.toBe(false)
+		await expect(pathExists(`${out}.prev`)).resolves.toBe(false)
 	})
 
 	it("(b) dedupes an exact-duplicate row on the natural key", () => {
@@ -227,7 +227,7 @@ describe("buildBDCDatabase", () => {
 		const totalObserved = coverageRows.reduce((sum, c) => sum + c.observed_rows, 0)
 		expect(totalObserved).toBe(result.rows)
 		// Meaning-of-zero: an unsurveyed cell is unknown, never present with completeness 0.
-		expect(await readLayerCoverage(kdb, 999_999_999)).toBeNull()
+		await expect(readLayerCoverage(kdb, 999_999_999)).resolves.toBeNull()
 	})
 
 	it("(f) leaves bdc_provider empty and providersPopulated at 0 when `providers` is omitted (3a decision 6)", async () => {
@@ -264,7 +264,7 @@ describe("buildBDCDatabase", () => {
 				blockCentroids,
 			})
 
-			expect(await readLocalBuffer(firstOut)).toEqual(await readLocalBuffer(secondOut))
+			await expect(readLocalBuffer(firstOut)).resolves.toEqual(await readLocalBuffer(secondOut))
 		} finally {
 			vi.useRealTimers()
 		}
@@ -295,7 +295,7 @@ describe("buildBDCDatabase", () => {
 		})
 
 		expect(second.rows).toBe(3)
-		expect(await pathExists(`${out}.prev`)).toBe(false)
+		await expect(pathExists(`${out}.prev`)).resolves.toBe(false)
 
 		using kdb = new DatabaseClient<layerschemadatabase>(out, { readOnly: true })
 		const manifest = await readLayerManifest(kdb)
@@ -637,7 +637,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		).rejects.toThrow(/700001/)
 
 		// A build that cannot resolve a required primary FRN leaves no sealed artifact.
-		expect(await pathExists(providerOut)).toBe(false)
+		await expect(pathExists(providerOut)).resolves.toBe(false)
 	})
 
 	it("inserts frn: NULL when a multi-FRN provider's FRNs carry no 499 filing to rank by, rather than guessing", async () => {
@@ -743,7 +743,7 @@ describe("buildBDCDatabase — malformed provider_id via csvPaths (the productio
 		expect((caught as Error).message).toContain(malformedCSVPath)
 
 		// A file whose rows were all rejected leaves no sealed artifact.
-		expect(await pathExists(out)).toBe(false)
+		await expect(pathExists(out)).resolves.toBe(false)
 	})
 })
 

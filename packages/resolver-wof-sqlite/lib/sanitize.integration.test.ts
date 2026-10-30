@@ -71,7 +71,7 @@ describe("sanitizeFTSQuery — trailing-* prefix support", () => {
 	})
 
 	test("prefix that matches nothing returns empty", async () => {
-		expect(await lookup.findPlace({ text: "999*", placetype: "postalcode" })).toEqual([])
+		await expect(lookup.findPlace({ text: "999*", placetype: "postalcode" })).resolves.toEqual([])
 	})
 
 	test('phrase + prefix in one query (mixed): `Pari* TX` is `Pari* AND "TX"`', async () => {
@@ -91,7 +91,7 @@ describe("sanitizeFTSQuery — punctuation stripping (existing behavior, regress
 	})
 
 	test("lone `*` is dropped (no body — no tokens emitted)", async () => {
-		expect(await lookup.findPlace({ text: "*", placetype: "postalcode" })).toEqual([])
+		await expect(lookup.findPlace({ text: "*", placetype: "postalcode" })).resolves.toEqual([])
 	})
 
 	test("`abc*xyz*` strips embedded * and keeps trailing → prefix `abcxyz*`", async () => {

@@ -362,7 +362,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 		const first = await digests(firstDir)
 
-		expect(await digests(secondDir)).toEqual(first)
+		await expect(digests(secondDir)).resolves.toEqual(first)
 		// A run that wrote no labeled rows would pass a digest comparison of two empty files.
 		expect(first["labeled-train.jsonl"]).not.toBe("absent")
 	})
@@ -421,7 +421,7 @@ describe("buildCorpus resume", () => {
 		const secondParquet = await parquetManifest(outDir)
 
 		expect(secondParquet.files.map((file) => file.sha256)).toEqual(firstParquet.files.map((s) => s.sha256))
-		expect(await alignDigests(outDir)).toEqual(firstDigests)
+		await expect(alignDigests(outDir)).resolves.toEqual(firstDigests)
 	})
 
 	it("sorts the ids align recorded into the split files a parse of the labeled rows writes", async () => {
@@ -449,7 +449,7 @@ describe("buildCorpus resume", () => {
 		})
 
 		for (const name of ["train.txt", "val.txt", "test.txt"]) {
-			expect(await sha256File(outDir("splits", name))).toBe(await sha256File(reparsed(name)))
+			await expect(sha256File(outDir("splits", name))).resolves.toBe(await sha256File(reparsed(name)))
 		}
 
 		expect((await statPath(outDir("splits", "train.txt"))).size).toBeGreaterThan(0)
@@ -473,8 +473,8 @@ describe("buildCorpus resume", () => {
 		await removePath(outDir("splits"))
 		await buildCorpus({ ...options, outputDir: outDir, priorOutput: PriorOutput.Resume })
 
-		expect(await sha256File(outDir("splits", "train.txt"))).toBe(before)
-		expect(await pathExists(outDir("intermediate", "source-ids-train.txt"))).toBe(false)
+		await expect(sha256File(outDir("splits", "train.txt"))).resolves.toBe(before)
+		await expect(pathExists(outDir("intermediate", "source-ids-train.txt"))).resolves.toBe(false)
 	})
 
 	it("discards bytes written past the checkpoint rather than appending after them", async () => {
@@ -490,11 +490,11 @@ describe("buildCorpus resume", () => {
 		// report fewer rows than the file holds and every later reader would accept that count.
 		await appendLocalTextFile(`${stringifyJSON({ raw: "partial row from an interrupted run" })}\n`, trainPath)
 
-		expect(await sha256File(trainPath)).not.toBe(before)
+		await expect(sha256File(trainPath)).resolves.not.toBe(before)
 
 		await buildCorpus({ ...options, outputDir: outDir, priorOutput: PriorOutput.Resume })
 
-		expect(await sha256File(trainPath)).toBe(before)
+		await expect(sha256File(trainPath)).resolves.toBe(before)
 	})
 
 	it("refuses to resume under align settings the checkpoint was not written under", async () => {
@@ -556,8 +556,8 @@ describe("buildCorpus resume", () => {
 			/corpus build refused.*align-checkpoint\.json records 1 aligned adapters: wof-admin.*labeled-train\.jsonl: [\d,]+ bytes.*--resume.*--fresh/s
 		)
 
-		expect(await intermediateSizes(outDir)).toEqual(before)
-		expect(await sha256File(outDir("intermediate", "labeled-train.jsonl"))).toBe(trainDigest)
+		await expect(intermediateSizes(outDir)).resolves.toEqual(before)
+		await expect(sha256File(outDir("intermediate", "labeled-train.jsonl"))).resolves.toBe(trainDigest)
 	})
 
 	it("refuses a rerun when only a finished adapter run is present", async () => {
@@ -574,7 +574,7 @@ describe("buildCorpus resume", () => {
 		const before = await intermediateSizes(outDir)
 
 		await expect(buildCorpus({ ...options, outputDir: outDir })).rejects.toThrow(/adapter run wof-admin/)
-		expect(await intermediateSizes(outDir)).toEqual(before)
+		await expect(intermediateSizes(outDir)).resolves.toEqual(before)
 	})
 
 	it("continues from the checkpoint on a resume rather than aligning a completed adapter again", async () => {
@@ -623,7 +623,7 @@ describe("buildCorpus resume", () => {
 		expect(stages.some((message) => message.startsWith("aligning wof-admin"))).toBe(true)
 		expect(stages.some((message) => message.startsWith("resumed"))).toBe(false)
 		expect(second.total_aligned_rows).toBe(first.total_aligned_rows)
-		expect(await sha256File(trainPath)).toBe(digest)
+		await expect(sha256File(trainPath)).resolves.toBe(digest)
 	})
 })
 
@@ -688,8 +688,8 @@ describe("buildCorpus source rights", () => {
 			/corpus source wof-admin reads register source us-geodata-aggregate-2 .*refused.*transform and train/s
 		)
 
-		expect(await pathExists(outDir("intermediate", "labeled-train.jsonl"))).toBe(false)
-		expect(await pathExists(outDir("MANIFEST.json"))).toBe(false)
+		await expect(pathExists(outDir("intermediate", "labeled-train.jsonl"))).resolves.toBe(false)
+		await expect(pathExists(outDir("MANIFEST.json"))).resolves.toBe(false)
 	})
 
 	it("records the corpus as not shippable when the override admits the source", async () => {

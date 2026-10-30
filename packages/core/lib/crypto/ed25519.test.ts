@@ -47,19 +47,19 @@ const SPKI_ED25519_DER_LENGTH = 44
 describe("Ed25519 on WebCrypto", () => {
 	it("verifies the signature the node:crypto signer produced over the fixture token", async () => {
 		expect(legacySignature).toHaveLength(64)
-		expect(await verifyEd25519(signedBytes, fixture.publicKeyPEM, legacySignature)).toBe(true)
+		await expect(verifyEd25519(signedBytes, fixture.publicKeyPEM, legacySignature)).resolves.toBe(true)
 	})
 
 	it("produces the signature node:crypto produced for the same key and bytes", async () => {
-		expect(await signEd25519(signedBytes, fixture.privateKeyPEM)).toEqual(legacySignature)
+		await expect(signEd25519(signedBytes, fixture.privateKeyPEM)).resolves.toEqual(legacySignature)
 	})
 
 	it("refuses the same signature over other bytes and a signature of the wrong length, without throwing", async () => {
-		expect(await verifyEd25519(utf8Bytes(`${prefix}.x${payloadPart}`), fixture.publicKeyPEM, legacySignature)).toBe(
-			false
-		)
+		await expect(
+			verifyEd25519(utf8Bytes(`${prefix}.x${payloadPart}`), fixture.publicKeyPEM, legacySignature)
+		).resolves.toBe(false)
 
-		expect(await verifyEd25519(signedBytes, fixture.publicKeyPEM, new Uint8Array(3))).toBe(false)
+		await expect(verifyEd25519(signedBytes, fixture.publicKeyPEM, new Uint8Array(3))).resolves.toBe(false)
 	})
 
 	it("decodes the fixture's SPKI DER and digests it to the fixture's key id", async () => {
@@ -84,8 +84,8 @@ describe("Ed25519 on WebCrypto", () => {
 
 		const signature = await signEd25519(signedBytes, pair.privateKeyPEM)
 
-		expect(await verifyEd25519(signedBytes, pair.publicKeyPEM, signature)).toBe(true)
-		expect(await verifyEd25519(signedBytes, fixture.publicKeyPEM, signature)).toBe(false)
+		await expect(verifyEd25519(signedBytes, pair.publicKeyPEM, signature)).resolves.toBe(true)
+		await expect(verifyEd25519(signedBytes, fixture.publicKeyPEM, signature)).resolves.toBe(false)
 	})
 
 	it("derives the public key from the private one, byte for byte in DER, for the fixture and a fresh pair", async () => {

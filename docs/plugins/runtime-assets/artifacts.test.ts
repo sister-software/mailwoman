@@ -29,7 +29,7 @@ describe("runtime-assets MapLibre worker staging", () => {
 		for (const file of staged) {
 			const stagedPath = scratch.path(file)
 
-			expect(await pathExists(stagedPath), `${file} was reported staged but is absent`).toBe(true)
+			await expect(pathExists(stagedPath), `${file} was reported staged but is absent`).resolves.toBe(true)
 
 			for (const specifier of relativeImportSpecifiers(await readLocalTextFile(stagedPath))) {
 				expect(staged, `${file} imports ${specifier}, which is not staged beside it`).toContain(basename(specifier))

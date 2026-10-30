@@ -39,7 +39,7 @@ describe("readWorkspaceDirectories", () => {
 			["packages/README.md", "packages/empty/.keep"]
 		)
 
-		expect(await readWorkspaceDirectories(scratch.path)).toEqual(["docs", "packages/a", "packages/b"])
+		await expect(readWorkspaceDirectories(scratch.path)).resolves.toEqual(["docs", "packages/a", "packages/b"])
 	})
 
 	test("a literal entry without a manifest is an error, not an absence", async () => {
@@ -67,7 +67,7 @@ describe("readWorkspaceDirectories", () => {
 		expect(directories).toContain("packages/core")
 		expect(directories).toContain("packages/earth")
 		expect(directories.length).toBeGreaterThanOrEqual(70)
-		expect(await isRegisteredWorkspace(repoRootPath(), "packages/core")).toBe(true)
-		expect(await isRegisteredWorkspace(repoRootPath(), "packages/nowhere")).toBe(false)
+		await expect(isRegisteredWorkspace(repoRootPath(), "packages/core")).resolves.toBe(true)
+		await expect(isRegisteredWorkspace(repoRootPath(), "packages/nowhere")).resolves.toBe(false)
 	})
 })

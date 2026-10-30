@@ -66,7 +66,7 @@ describe("computeSurfaceCountryCounts memoization", () => {
 		const path = scratch.path("a.db")
 		buildFixture(path)
 
-		expect(await computeSurfaceCountryCounts(path)).toBe(await computeSurfaceCountryCounts(path))
+		await expect(computeSurfaceCountryCounts(path)).resolves.toBe(await computeSurfaceCountryCounts(path))
 	})
 
 	it("re-scans when the file is REPLACED — the sealed-artifact rebuild case", async () => {
@@ -91,7 +91,7 @@ describe("computeSurfaceCountryCounts memoization", () => {
 		buildFixture(a)
 		buildFixture(b, "Roazhon")
 
-		expect(await computeSurfaceCountryCounts(a)).not.toBe(await computeSurfaceCountryCounts(b))
+		await expect(computeSurfaceCountryCounts(a)).resolves.not.toBe(await computeSurfaceCountryCounts(b))
 		expect((await computeSurfaceCountryCounts(b)).get("roazhon")).toBe(1)
 	})
 })

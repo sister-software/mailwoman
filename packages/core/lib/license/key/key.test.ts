@@ -54,12 +54,12 @@ describe("license key", () => {
 	it("verifies the token the node:crypto implementation signed, and re-signs it byte for byte", async () => {
 		const trusted = { [legacy.kid]: legacy.publicKeyPEM }
 
-		expect(
-			await verifyLicenseKey(legacy.token, { trustedKeys: trusted, now: new Date("2027-01-01T00:00:00Z") })
-		).toEqual({ status: "valid", kid: legacy.kid, payload: legacy.payload })
+		await expect(
+			verifyLicenseKey(legacy.token, { trustedKeys: trusted, now: new Date("2027-01-01T00:00:00Z") })
+		).resolves.toEqual({ status: "valid", kid: legacy.kid, payload: legacy.payload })
 
-		expect(await licenseKeyID(legacy.publicKeyPEM, 9)).toBe(legacy.kid)
-		expect(await encodeLicenseKey(legacy.payload, legacy.privateKeyPEM)).toBe(legacy.token)
+		await expect(licenseKeyID(legacy.publicKeyPEM, 9)).resolves.toBe(legacy.kid)
+		await expect(encodeLicenseKey(legacy.payload, legacy.privateKeyPEM)).resolves.toBe(legacy.token)
 	})
 
 	it("round-trips a signed payload and reads valid before its expiry", async () => {
@@ -67,7 +67,7 @@ describe("license key", () => {
 
 		expect(token.startsWith(`${LICENSE_KEY_PREFIX}.`)).toBe(true)
 
-		expect(await verifyLicenseKey(token, { trustedKeys, now: new Date("2027-01-01T00:00:00Z") })).toEqual({
+		await expect(verifyLicenseKey(token, { trustedKeys, now: new Date("2027-01-01T00:00:00Z") })).resolves.toEqual({
 			status: "valid",
 			kid,
 			payload,
@@ -89,7 +89,7 @@ describe("license key", () => {
 		const [prefix, , signature] = token.split(".") as [string, string, string]
 		const forged = Buffer.from(stringifyJSON({ ...payload, licensee: "Someone Else" })).toString("base64url")
 
-		expect(await verifyLicenseKey(`${prefix}.${forged}.${signature}`, { trustedKeys })).toMatchObject({
+		await expect(verifyLicenseKey(`${prefix}.${forged}.${signature}`, { trustedKeys })).resolves.toMatchObject({
 			status: "invalid",
 			reason: expect.stringContaining("signature does not verify"),
 		})
@@ -100,21 +100,24 @@ describe("license key", () => {
 		const otherKid = await licenseKeyID(other.publicKeyPEM, 9)
 		const token = await encodeLicenseKey({ ...payload, kid: otherKid }, other.privateKeyPEM)
 
-		expect(await verifyLicenseKey(token, { trustedKeys })).toMatchObject({ status: "unknown_key", kid: otherKid })
+		await expect(verifyLicenseKey(token, { trustedKeys })).resolves.toMatchObject({
+			status: "unknown_key",
+			kid: otherKid,
+		})
 	})
 
 	it("refuses a token under another prefix or with an unreadable payload", async () => {
 		expect((await verifyLicenseKey("mwl2.abc.def", { trustedKeys })).status).toBe("invalid")
 
-		expect(
-			await verifyLicenseKey(`${LICENSE_KEY_PREFIX}.${Buffer.from("{}").toString("base64url")}.x`, { trustedKeys })
-		).toMatchObject({ status: "invalid", reason: expect.stringContaining("payload unreadable") })
+		await expect(
+			verifyLicenseKey(`${LICENSE_KEY_PREFIX}.${Buffer.from("{}").toString("base64url")}.x`, { trustedKeys })
+		).resolves.toMatchObject({ status: "invalid", reason: expect.stringContaining("payload unreadable") })
 	})
 
 	it("derives a key id from the major version and the public key's digest", async () => {
 		expect(kid).toMatch(/^v9-[0-9a-f]{8}$/u)
-		expect(await licenseKeyID(pair.publicKeyPEM, 10)).toMatch(/^v10-[0-9a-f]{8}$/u)
-		expect(await licenseKeyID((await generateLicenseSigningKeyPair()).publicKeyPEM, 9)).not.toBe(kid)
+		await expect(licenseKeyID(pair.publicKeyPEM, 10)).resolves.toMatch(/^v10-[0-9a-f]{8}$/u)
+		await expect(licenseKeyID((await generateLicenseSigningKeyPair()).publicKeyPEM, 9)).resolves.not.toBe(kid)
 	})
 
 	it("carries lid and agreement when a self-service issuer sets them; a hand-issued payload reads as not self-service", async () => {

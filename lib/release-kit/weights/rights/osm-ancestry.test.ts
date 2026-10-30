@@ -128,7 +128,7 @@ describe("openStreetMapAttributionRefusals", () => {
 			readme: OSM_README,
 		})
 
-		expect(await refusalsFor(BASE, OVERLAY)).toEqual([
+		await expect(refusalsFor(BASE, OVERLAY)).resolves.toEqual([
 			"@fixture/neural-weights-overlay: it decodes through @fixture/neural-weights-base, and its model card " +
 				"attributes OpenStreetMap, and its model card's attribution has no OpenStreetMap entry naming ODbL.",
 		])
@@ -144,7 +144,7 @@ describe("openStreetMapAttributionRefusals", () => {
 			card: { version: "1.0.0", training: { corpus_version: "fixture-rendered", data_attribution: [] } },
 		})
 
-		expect(await refusalsFor(BASE)).toEqual([
+		await expect(refusalsFor(BASE)).resolves.toEqual([
 			"@fixture/neural-weights-base: its effective training manifest records rendered-pk-register, and its " +
 				"model card's attribution has no OpenStreetMap entry naming ODbL.",
 		])
@@ -162,7 +162,7 @@ describe("openStreetMapAttributionRefusals", () => {
 			readme: OSM_README,
 		})
 
-		expect(await refusalsFor(BASE, OVERLAY)).toEqual([])
+		await expect(refusalsFor(BASE, OVERLAY)).resolves.toEqual([])
 	})
 
 	it("asks nothing of a package whose lineage records no OpenStreetMap source", async () => {
@@ -186,7 +186,7 @@ describe("openStreetMapAttributionRefusals", () => {
 			readme: "# Overlay\n",
 		})
 
-		expect(await refusalsFor(BASE, OVERLAY)).toEqual([])
+		await expect(refusalsFor(BASE, OVERLAY)).resolves.toEqual([])
 	})
 })
 

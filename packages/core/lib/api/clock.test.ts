@@ -15,7 +15,7 @@ describe("systemClock.sleep", () => {
 
 		expect(vi.getTimerCount()).toBe(1)
 		controller.abort(reason)
-		expect(await rejected).toBe(reason)
+		await expect(rejected).resolves.toBe(reason)
 		expect(vi.getTimerCount()).toBe(0)
 	})
 

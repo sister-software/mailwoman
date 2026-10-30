@@ -80,9 +80,9 @@ describe("HTTPVFSAddressPointLookup", () => {
 
 	test("returns null on a miss and on a tableless extract", async () => {
 		const lk = new HTTPVFSAddressPointLookup(stubRangeDatabase(situsDB()))
-		expect(await lk.find({ street: "Main St", number: "999", postcode: "10001" })).toBeNull()
+		await expect(lk.find({ street: "Main St", number: "999", postcode: "10001" })).resolves.toBeNull()
 		const empty = new HTTPVFSAddressPointLookup(stubRangeDatabase(db((d) => d.exec("CREATE TABLE _x(a)"))))
-		expect(await empty.find({ street: "Main St", number: "100", postcode: "10001" })).toBeNull()
+		await expect(empty.find({ street: "Main St", number: "100", postcode: "10001" })).resolves.toBeNull()
 	})
 })
 
@@ -101,9 +101,9 @@ describe("HTTPVFSInterpolator", () => {
 
 	test("rejects non-numeric house numbers and tableless extracts", async () => {
 		const lk = new HTTPVFSInterpolator(stubRangeDatabase(interpDB()))
-		expect(await lk.find({ street: "Main St", number: "12B", postcode: "10001" })).toBeNull()
+		await expect(lk.find({ street: "Main St", number: "12B", postcode: "10001" })).resolves.toBeNull()
 		const empty = new HTTPVFSInterpolator(stubRangeDatabase(db((d) => d.exec("CREATE TABLE _x(a)"))))
-		expect(await empty.find({ street: "Main St", number: "150", postcode: "10001" })).toBeNull()
+		await expect(empty.find({ street: "Main St", number: "150", postcode: "10001" })).resolves.toBeNull()
 	})
 })
 
@@ -124,8 +124,8 @@ describe("resolveStreet", () => {
 	})
 
 	test("returns null when both tiers miss, or when there's no street/number", async () => {
-		expect(await resolveStreet("Main St", "150", "10001", "NYC", situsMiss, interpMiss)).toBeNull()
-		expect(await resolveStreet(null, "150", "10001", "NYC", situsHit, interpHit)).toBeNull()
-		expect(await resolveStreet("Main St", "", "10001", "NYC", situsHit, interpHit)).toBeNull()
+		await expect(resolveStreet("Main St", "150", "10001", "NYC", situsMiss, interpMiss)).resolves.toBeNull()
+		await expect(resolveStreet(null, "150", "10001", "NYC", situsHit, interpHit)).resolves.toBeNull()
+		await expect(resolveStreet("Main St", "", "10001", "NYC", situsHit, interpHit)).resolves.toBeNull()
 	})
 })

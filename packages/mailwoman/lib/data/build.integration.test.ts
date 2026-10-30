@@ -278,7 +278,9 @@ describe("data build osm-address-points", () => {
 		// The OpenStreetMap tier reads the build, and the national tier keeps its own source.
 		const catalog = await LayerCatalog.read(root)
 
-		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "NL", subdivision: null })).toBe(national.path)
+		await expect(catalog.firstPath(ServingRole.AddressPoints, { country: "NL", subdivision: null })).resolves.toBe(
+			national.path
+		)
 	})
 
 	it("refuses before any transfer when a prerequisite is missing", async () => {

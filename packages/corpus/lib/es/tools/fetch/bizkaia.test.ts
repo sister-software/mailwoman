@@ -215,8 +215,8 @@ describe("fetchBizkaiaComponentDocument", () => {
 		expect(entry.feature_count).toBe(3)
 		expect(entry.features_returned).toBe(3)
 		expect(entry.filename).toBe("ad-ThoroughfareName.xml")
-		expect(await pathExists(dest)).toBe(true)
-		expect(await readLocalTextFile(dest)).toContain('gml:id="adComponent.3"')
+		await expect(pathExists(dest)).resolves.toBe(true)
+		await expect(readLocalTextFile(dest)).resolves.toContain('gml:id="adComponent.3"')
 
 		// One hits request and one feature request: this service advertises
 		// ImplementsResultPaging=FALSE, so there is no second page to ask for.
@@ -276,11 +276,11 @@ describe("harvestESBizkaia", () => {
 			failedCodes: [],
 		})
 
-		expect(await pathExists(temporary.path("ES.BFA.AD.001.zip"))).toBe(true)
-		expect(await pathExists(temporary.path("ES.BFA.AD.915.zip"))).toBe(true)
+		await expect(pathExists(temporary.path("ES.BFA.AD.001.zip"))).resolves.toBe(true)
+		await expect(pathExists(temporary.path("ES.BFA.AD.915.zip"))).resolves.toBe(true)
 
 		for (const type of ES_BIZKAIA_COMPONENT_TYPES) {
-			expect(await pathExists(temporary.path(bizkaiaComponentFilename(type)))).toBe(true)
+			await expect(pathExists(temporary.path(bizkaiaComponentFilename(type)))).resolves.toBe(true)
 		}
 
 		const manifest = await readManifest<ESBizkaiaHarvestManifest>(temporary.path("MANIFEST.json"))
@@ -340,7 +340,7 @@ describe("harvestESBizkaia", () => {
 		})
 
 		expect(summary).toStrictEqual({ fetched: 1, skipped: 0, failed: 0, failedCodes: [] })
-		expect(await pathExists(temporary.path(bizkaiaComponentFilename("ad:ThoroughfareName")))).toBe(false)
+		await expect(pathExists(temporary.path(bizkaiaComponentFilename("ad:ThoroughfareName")))).resolves.toBe(false)
 	})
 
 	it("reports an html error page served under http 200 rather than writing it under a .zip name", async () => {
@@ -355,7 +355,7 @@ describe("harvestESBizkaia", () => {
 		const summary = await harvestESBizkaia(client, { outputDir: temporary.path, limit: 1 })
 
 		expect(summary.failedCodes).toStrictEqual(["48001"])
-		expect(await pathExists(temporary.path("ES.BFA.AD.001.zip"))).toBe(false)
+		await expect(pathExists(temporary.path("ES.BFA.AD.001.zip"))).resolves.toBe(false)
 	})
 
 	it("refuses a service exception report rather than reading it as a feed", async () => {

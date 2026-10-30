@@ -145,9 +145,9 @@ describe("runDeepSeekGeneration", () => {
 			[hang!.batchID, "length"],
 		])
 
-		expect(await readLocalJSONFile(paths.checkpoint)).toEqual({ done: [cyrl!.batchID] })
+		await expect(readLocalJSONFile(paths.checkpoint)).resolves.toEqual({ done: [cyrl!.batchID] })
 
-		expect(await readLocalJSONFile(scratch.path("out", "SOURCE_RIGHTS.json"))).toMatchObject({
+		await expect(readLocalJSONFile(scratch.path("out", "SOURCE_RIGHTS.json"))).resolves.toMatchObject({
 			shippable: false,
 			unshippable_reason: "generator test",
 			sources_checked: ["deepseek-translit-cyrl", "deepseek-translit-hang"],
@@ -225,7 +225,7 @@ describe("runDeepSeekGeneration", () => {
 
 		await expect(run).rejects.toThrow(SourceRightsError)
 		await expect(run).rejects.toThrow("deepseek-kryptonite reads register source cn-generated-text-1")
-		expect(await pathExists(outDir)).toBe(false)
+		await expect(pathExists(outDir)).resolves.toBe(false)
 	})
 
 	it("refuses transliteration without seed files before admitting anything", async () => {

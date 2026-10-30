@@ -287,7 +287,7 @@ describe("foldSourceLicenses", () => {
 		// `etalab-2.0` is the id itself, so only the ODbL statement differs from it.
 		expect(record.licenseStatements).toEqual({ "ODbL-1.0": 3 })
 
-		expect(await readSourceLicenseTally([banFile.path])).toEqual(
+		await expect(readSourceLicenseTally([banFile.path])).resolves.toEqual(
 			new Map([["ban", new Map([[licenses.licenseOf("ban")!, 7]])]])
 		)
 	})
@@ -343,8 +343,8 @@ describe("writeParquetFile", () => {
 			)
 		).rejects.toThrow(/"synthetic-secondary" have no license id/u)
 
-		expect(await pathExists(path)).toBe(false)
-		expect(await pathExists(recordPathFor(path))).toBe(false)
+		await expect(pathExists(path)).resolves.toBe(false)
+		await expect(pathExists(recordPathFor(path))).resolves.toBe(false)
 	})
 
 	it("writes the register's license id in place of the producer's prose", async () => {
@@ -394,12 +394,14 @@ describe("inputCheckouts", () => {
 
 		await writeLocalJSONFile({ id: 2 }, scratch.path("whosonfirst-data-admin-us"), "data/2.geojson")
 
-		expect(await inputCheckouts(scratch.path)).toEqual({
+		await expect(inputCheckouts(scratch.path)).resolves.toEqual({
 			inputRevisions: heads,
 			inputUncommittedFiles: { "whosonfirst-data-admin-us": 1, "whosonfirst-data/whosonfirst-data-admin-gb": 0 },
 		})
 
-		expect(await inputCheckouts(scratch.path("whosonfirst-data-admin-us", "data", "1.geojson"))).toBeUndefined()
+		await expect(
+			inputCheckouts(scratch.path("whosonfirst-data-admin-us", "data", "1.geojson"))
+		).resolves.toBeUndefined()
 	})
 })
 

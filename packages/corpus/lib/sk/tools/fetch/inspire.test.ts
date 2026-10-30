@@ -211,7 +211,7 @@ describe("harvestSKInspireType", () => {
 		expect(document).not.toContain("numberReturned=")
 		expect(document).not.toContain("timeStamp=")
 
-		expect(await featuresIn(document, "ad:PostalDescriptor")).toBe(10)
+		await expect(featuresIn(document, "ad:PostalDescriptor")).resolves.toBe(10)
 
 		// The first three requests are the count check: `resultType=hits`, a one-feature page
 		// that proves the count against real output, and a page at `startIndex = reported` whose

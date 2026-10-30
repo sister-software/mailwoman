@@ -180,7 +180,7 @@ describe("readers", () => {
 	it("readParquetRows returns every row, and honors a projection", async () => {
 		const path = await written([labeled({ source_id: "r-1" }), labeled({ source_id: "r-2" })])
 
-		expect(await readParquetRows<ParquetRow>(path)).toHaveLength(2)
+		await expect(readParquetRows<ParquetRow>(path)).resolves.toHaveLength(2)
 
 		const projected = await readParquetRows<Pick<ParquetRow, "country">>(path, { columns: ["country"] })
 		expect(projected.map((row) => row.country)).toEqual(["FR", "FR"])
@@ -193,7 +193,7 @@ describe("readers", () => {
 		const absent = scratch.path("nothing-here.parquet")
 
 		await expect(readParquetRows(absent)).rejects.toThrow(/No parquet file at/)
-		expect(await tryReadParquetRows(absent)).toBeNull()
+		await expect(tryReadParquetRows(absent)).resolves.toBeNull()
 	})
 
 	it("tryReadParquetRows forgives ONLY the missing file — a bad projection still raises", async () => {
@@ -208,15 +208,17 @@ describe("readers", () => {
 		// A missing file and a file with no rows represent different states.
 		// A count is a measurement.
 		// The reader raises on missing input instead of returning a data-looking zero.
-		expect(await countParquetRows(await written([labeled({ source_id: "r-4" }), labeled({ source_id: "r-5" })]))).toBe(
-			2
-		)
+		await expect(
+			countParquetRows(await written([labeled({ source_id: "r-4" }), labeled({ source_id: "r-5" })]))
+		).resolves.toBe(2)
 
 		await expect(countParquetRows(scratch.path("nothing-here.parquet"))).rejects.toThrow(/No parquet file at/)
 	})
 
 	it("parquetColumnNames answers the file's own schema, in PARQUET_COLUMNS order", async () => {
-		expect(await parquetColumnNames(await written([labeled({ source_id: "r-6" })]))).toEqual([...PARQUET_COLUMNS])
+		await expect(parquetColumnNames(await written([labeled({ source_id: "r-6" })]))).resolves.toEqual([
+			...PARQUET_COLUMNS,
+		])
 	})
 })
 

@@ -449,7 +449,7 @@ describe("openSealedArtifact", () => {
 	})
 
 	it("reports an unresolved path distinctly from a missing one", async () => {
-		expect(await openSealedArtifact(null)).toEqual({
+		await expect(openSealedArtifact(null)).resolves.toEqual({
 			unavailable: "No artifact path was resolved for this source.",
 		})
 	})

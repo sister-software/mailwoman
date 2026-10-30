@@ -296,7 +296,7 @@ test("a selection links to each building's dossier part and to its cost and valu
 
 		expect(own[0]?.text).toBe(`## ${label}`)
 
-		expect(await page.locator(`#${dossierAnchor(building)} pre`).textContent()).toBe(
+		await expect(page.locator(`#${dossierAnchor(building)} pre`).textContent()).resolves.toBe(
 			own.map((entry) => entry.text).join("\n")
 		)
 	}
@@ -310,6 +310,6 @@ test("a selection links to each building's dossier part and to its cost and valu
 		scenarioReport(dossier, { ...DISTRICT_SCENARIO, selected: SELECTION }, REPORT_OPTIONS)
 	)
 
-	expect(await page.locator(`#${COST_AND_VALUE_ANCHOR} pre`).textContent()).toBe(report)
+	await expect(page.locator(`#${COST_AND_VALUE_ANCHOR} pre`).textContent()).resolves.toBe(report)
 	expect(report).toContain("Every input in this section is synthetic.")
 })

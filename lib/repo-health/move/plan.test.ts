@@ -202,11 +202,11 @@ describe("planModuleMoves with a replaced manifest", () => {
 		const result = await applyModuleMoves(context, await planModuleMoves(context, [], { manifests: [replacement] }))
 
 		expect(result.verified).toBe(1)
-		expect(await readLocalTextFile(resolvePath(context.repoRoot, replacement.file))).toBe(replacement.text)
+		await expect(readLocalTextFile(resolvePath(context.repoRoot, replacement.file))).resolves.toBe(replacement.text)
 
-		expect(await readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/test/fr-fragment.test.ts`))).toContain(
-			`from "@fixture/recipes/kitchen/fr-fragment"`
-		)
+		await expect(
+			readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/test/fr-fragment.test.ts`))
+		).resolves.toContain(`from "@fixture/recipes/kitchen/fr-fragment"`)
 	})
 })
 
@@ -219,17 +219,17 @@ describe("applyModuleMoves", () => {
 
 		expect(result.verified).toBe(plan.rewrites.length)
 
-		expect(await readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/lib/recipes/index.ts`))).toContain(
-			`from "#recipes/fr/order"`
-		)
+		await expect(
+			readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/lib/recipes/index.ts`))
+		).resolves.toContain(`from "#recipes/fr/order"`)
 
-		expect(await readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/test/fr-fragment.test.ts`))).toContain(
-			`from "@fixture/recipes/recipes/fr/fragment"`
-		)
+		await expect(
+			readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/test/fr-fragment.test.ts`))
+		).resolves.toContain(`from "@fixture/recipes/recipes/fr/fragment"`)
 
-		expect(await readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/lib/recipes/fr/order.ts`))).toContain(
-			`from "../../scaffold.ts"`
-		)
+		await expect(
+			readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/lib/recipes/fr/order.ts`))
+		).resolves.toContain(`from "../../scaffold.ts"`)
 
 		const stdout = await git(["status", "--porcelain"], context.repoRoot)
 
@@ -260,8 +260,8 @@ describe("applyModuleMoves", () => {
 
 		expect((await applyModuleMoves(context, plan, { dryRun: true })).dryRun).toBe(true)
 
-		expect(await readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/lib/recipes/index.ts`))).toContain(
-			`from "#recipes/fr-order"`
-		)
+		await expect(
+			readLocalTextFile(resolvePath(context.repoRoot, `${PACKAGE}/lib/recipes/index.ts`))
+		).resolves.toContain(`from "#recipes/fr-order"`)
 	})
 })

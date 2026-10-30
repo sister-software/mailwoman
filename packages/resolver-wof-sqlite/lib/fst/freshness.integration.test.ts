@@ -97,7 +97,7 @@ const SOURCE_IDENTITY = { md5: await md5File(SOURCE), bytes: (await statPath(SOU
 
 describe("md5File", () => {
 	it("matches the digest of the same bytes hashed in one pass", async () => {
-		expect(await md5File(SOURCE)).toBe(md5Hex("source bytes"))
+		await expect(md5File(SOURCE)).resolves.toBe(md5Hex("source bytes"))
 	})
 
 	it("hashes a file LARGER than one read chunk identically", async () => {
@@ -108,7 +108,7 @@ describe("md5File", () => {
 		const big = TMP.path("big.bin")
 		await writeLocalFile(bytes, big)
 
-		expect(await md5File(big)).toBe(md5Hex(bytes))
+		await expect(md5File(big)).resolves.toBe(md5Hex(bytes))
 	})
 })
 
@@ -121,7 +121,7 @@ describe("readWOFSourceIdentity", () => {
 		expect(identity.md5).toBe(await md5File(path))
 		expect(identity.bytes).toBe(3)
 		// md5sum(1) format: "<hash> <basename>".
-		expect(await readLocalTextFile(`${path}.md5`)).toBe(`${identity.md5}  sidecar-source.db\n`)
+		await expect(readLocalTextFile(`${path}.md5`)).resolves.toBe(`${identity.md5}  sidecar-source.db\n`)
 	})
 
 	it("recomputes when the sidecar is OLDER than the source", async () => {
@@ -166,13 +166,13 @@ describe("peekFSTStampFields", () => {
 	it("returns null for a non-FST file, a stub, and an absent path", async () => {
 		const notFST = TMP.path("not-an-fst.bin")
 		await writeLocalBuffer(Buffer.alloc(64, 0x7f), notFST)
-		expect(await peekFSTStampFields(notFST)).toBeNull()
+		await expect(peekFSTStampFields(notFST)).resolves.toBeNull()
 
 		const tooSmall = TMP.path("tiny.bin")
 		await writeLocalBuffer(Buffer.from("FST\0"), tooSmall)
-		expect(await peekFSTStampFields(tooSmall)).toBeNull()
+		await expect(peekFSTStampFields(tooSmall)).resolves.toBeNull()
 
-		expect(await peekFSTStampFields(TMP.path("nope.bin"))).toBeNull()
+		await expect(peekFSTStampFields(TMP.path("nope.bin"))).resolves.toBeNull()
 	})
 
 	it("survives a truncated trailer instead of throwing", async () => {
@@ -288,20 +288,20 @@ describe("fstFreshnessWarning", () => {
 			provenanceOf({ sourceDBMD5: SOURCE_IDENTITY.md5, sourceDBBytes: SOURCE_IDENTITY.bytes })
 		)
 
-		expect(await fstFreshnessWarning({ fstPath: path, sourceDBPath: SOURCE, rebuildCommand: "x" })).toBeNull()
+		await expect(fstFreshnessWarning({ fstPath: path, sourceDBPath: SOURCE, rebuildCommand: "x" })).resolves.toBeNull()
 	})
 
 	it("is silent when either side is absent — a missing file is a different report", async () => {
-		expect(
-			await fstFreshnessWarning({ fstPath: TMP.path("gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
-		).toBeNull()
+		await expect(
+			fstFreshnessWarning({ fstPath: TMP.path("gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
+		).resolves.toBeNull()
 
-		expect(
-			await fstFreshnessWarning({
+		await expect(
+			fstFreshnessWarning({
 				fstPath: await writeFST("orphan.bin", provenanceOf()),
 				sourceDBPath: TMP.path("gone.db"),
 				rebuildCommand: "x",
 			})
-		).toBeNull()
+		).resolves.toBeNull()
 	})
 })

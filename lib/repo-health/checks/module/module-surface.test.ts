@@ -64,6 +64,6 @@ describe("module-surface", () => {
 	it("does not inspect co-located test files", async () => {
 		const context = await plant("packages/fixture/lib/large.test.ts", "const onlyTest = true\n")
 
-		expect(await moduleSurfaceCheck.run(context)).toEqual([])
+		await expect(moduleSurfaceCheck.run(context)).resolves.toEqual([])
 	})
 })

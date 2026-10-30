@@ -29,14 +29,14 @@ test("resolveCandidateDBPath: returns an explicit/env path only when it exists o
 	// A data root with no candidate.db under it, so the convention fallback stays out of the way.
 	setEnv("MAILWOMAN_DATA_ROOT", "/no/such/root")
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
-	expect(await resolveCandidateDBPath()).toBeNull() // no env var set and no file at the convention path
-	expect(await resolveCandidateDBPath("/no/such/candidate.db")).toBeNull() // explicit but missing
-	expect(await resolveCandidateDBPath(THIS_FILE)).toBe(THIS_FILE) // explicit + exists
+	await expect(resolveCandidateDBPath()).resolves.toBeNull() // no env var set and no file at the convention path
+	await expect(resolveCandidateDBPath("/no/such/candidate.db")).resolves.toBeNull() // explicit but missing
+	await expect(resolveCandidateDBPath(THIS_FILE)).resolves.toBe(THIS_FILE) // explicit + exists
 
 	setEnv("MAILWOMAN_CANDIDATE_DB", THIS_FILE)
-	expect(await resolveCandidateDBPath()).toBe(THIS_FILE) // from env + exists
+	await expect(resolveCandidateDBPath()).resolves.toBe(THIS_FILE) // from env + exists
 	setEnv("MAILWOMAN_CANDIDATE_DB", "/no/such/candidate.db")
-	expect(await resolveCandidateDBPath()).toBeNull() // env path missing
+	await expect(resolveCandidateDBPath()).resolves.toBeNull() // env path missing
 })
 
 test("resolveCandidateDBPath: falls back to the convention path under the data root, and 'none' pins the FTS backend", async () => {
@@ -48,15 +48,15 @@ test("resolveCandidateDBPath: falls back to the convention path under the data r
 	setEnv("MAILWOMAN_DATA_ROOT", root)
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
 	expect(conventionCandidateDBPath()).toBe(conventionPath)
-	expect(await resolveCandidateDBPath()).toBe(conventionPath)
+	await expect(resolveCandidateDBPath()).resolves.toBe(conventionPath)
 
-	expect(await resolveCandidateDBPath(THIS_FILE)).toBe(THIS_FILE)
+	await expect(resolveCandidateDBPath(THIS_FILE)).resolves.toBe(THIS_FILE)
 
 	// `none` must beat the convention path, or there is no way back to the FTS
 	// backend on a machine that has pulled the gazetteer.
-	expect(await resolveCandidateDBPath("none")).toBeNull()
+	await expect(resolveCandidateDBPath("none")).resolves.toBeNull()
 	setEnv("MAILWOMAN_CANDIDATE_DB", "none")
-	expect(await resolveCandidateDBPath()).toBeNull()
+	await expect(resolveCandidateDBPath()).resolves.toBeNull()
 })
 
 test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN_DATA_ROOT", async () => {
@@ -65,7 +65,7 @@ test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN
 	setEnv("MAILWOMAN_DATA_ROOT", "/no/such/root")
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
 
-	expect(await resolveCandidateDBPath(undefined, root)).toBe(wofDatabaseRoot(root)("candidate.db").toString())
+	await expect(resolveCandidateDBPath(undefined, root)).resolves.toBe(wofDatabaseRoot(root)("candidate.db").toString())
 })
 
 test("loadCapitalIndex prefers the artifact's capital table, falls back to the repo file, and throws with neither (#1880)", async () => {
@@ -113,7 +113,9 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	await expect(loadCapitalIndex({ candidateDB: barePath, path: dir("missing.json") })).rejects.toThrow(/capital_tier/)
 
 	// The default-on path degrades on the same absence instead of failing session construction.
-	expect(await loadCapitalIndex({ candidateDB: barePath, path: dir("missing.json"), missing: "degrade" })).toBeNull()
+	await expect(
+		loadCapitalIndex({ candidateDB: barePath, path: dir("missing.json"), missing: "degrade" })
+	).resolves.toBeNull()
 
 	// A reference that exists but is malformed throws under both modes — corruption is a defect, never an absence.
 	const corruptPath = dir("corrupt.json")

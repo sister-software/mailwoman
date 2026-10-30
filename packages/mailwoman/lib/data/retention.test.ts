@@ -54,18 +54,18 @@ describe("planPrune and executePrune", () => {
 		expect(plan.candidates.map((candidate) => candidate.artifactID)).toEqual([a.entry.order[0]!.artifactID])
 		expect(plan.reclaimableBytes).toBe("release a".length)
 		// The dry run keeps every file.
-		expect(await pathExists(a.path)).toBe(true)
+		await expect(pathExists(a.path)).resolves.toBe(true)
 
 		const result = await executePrune(plan)
 
 		expect(result.deleted).toHaveLength(1)
-		expect(await pathExists(a.path)).toBe(false)
-		expect(await pathExists(b.path)).toBe(true)
-		expect(await pathExists(c.path)).toBe(true)
+		await expect(pathExists(a.path)).resolves.toBe(false)
+		await expect(pathExists(b.path)).resolves.toBe(true)
+		await expect(pathExists(c.path)).resolves.toBe(true)
 
 		const catalog = await LayerCatalog.read(scratch.path)
 
-		expect(await catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })).toBe(c.path)
+		await expect(catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })).resolves.toBe(c.path)
 	})
 
 	it("deletes the installed file, its manifest and its receipt, and keeps a file prune did not install", async () => {
@@ -77,10 +77,10 @@ describe("planPrune and executePrune", () => {
 		await writeLocalTextFile("kept", foreign)
 		const result = await executePrune(plan)
 
-		expect(await pathExists(a.path)).toBe(false)
-		expect(await pathExists(resolvePath(directory, "manifest.json"))).toBe(false)
-		expect(await pathExists(resolvePath(directory, "receipt.json"))).toBe(false)
-		expect(await readLocalTextFile(foreign)).toBe("kept")
+		await expect(pathExists(a.path)).resolves.toBe(false)
+		await expect(pathExists(resolvePath(directory, "manifest.json"))).resolves.toBe(false)
+		await expect(pathExists(resolvePath(directory, "receipt.json"))).resolves.toBe(false)
+		await expect(readLocalTextFile(foreign)).resolves.toBe("kept")
 
 		// The directory that kept a file is reported, its bytes are not counted, and its record stays for a later prune.
 		expect(result.deleted).toEqual([])
@@ -89,7 +89,7 @@ describe("planPrune and executePrune", () => {
 
 		const record = resolvePath(catalogPaths(scratch.path).installations, `${a.installationID}.json`)
 
-		expect(await pathExists(record)).toBe(true)
+		await expect(pathExists(record)).resolves.toBe(true)
 	})
 
 	it("removes the SQLite sidecars of the deleted database with it", async () => {
@@ -103,7 +103,7 @@ describe("planPrune and executePrune", () => {
 		const result = await executePrune(plan)
 
 		expect(result.deleted).toHaveLength(1)
-		expect(await pathExists(plan.candidates[0]!.directory)).toBe(false)
+		await expect(pathExists(plan.candidates[0]!.directory)).resolves.toBe(false)
 	})
 
 	it("refuses a candidate whose file is outside its directory or is one of its records", async () => {
@@ -117,8 +117,8 @@ describe("planPrune and executePrune", () => {
 			await expect(executePrune(wrong)).rejects.toThrow(/is not a file directly inside/u)
 		}
 
-		expect(await pathExists(a.path)).toBe(true)
-		expect(await pathExists(c.path)).toBe(true)
+		await expect(pathExists(a.path)).resolves.toBe(true)
+		await expect(pathExists(c.path)).resolves.toBe(true)
 	})
 
 	it("removes the artifact's directory once its three files are gone", async () => {
@@ -127,7 +127,7 @@ describe("planPrune and executePrune", () => {
 
 		await executePrune(plan)
 
-		expect(await pathExists(plan.candidates[0]!.directory)).toBe(false)
+		await expect(pathExists(plan.candidates[0]!.directory)).resolves.toBe(false)
 	})
 
 	it("refuses a candidate whose directory is a conventional layer path rather than db/<role>/<hex>", async () => {
@@ -141,7 +141,7 @@ describe("planPrune and executePrune", () => {
 		}
 
 		await expect(executePrune(conventional)).rejects.toThrow(/is not db\/<role>\/[0-9a-f]{64}/u)
-		expect(await pathExists(a.path)).toBe(true)
+		await expect(pathExists(a.path)).resolves.toBe(true)
 
 		// The planned candidates themselves sit at content-addressed paths.
 		expect(plan.candidates.map((c) => c.directory.split("/").at(-1))).toEqual([
@@ -160,7 +160,7 @@ describe("planPrune and executePrune", () => {
 
 		expect(plan.retainedGenerations).toEqual([1, 2, 3])
 		expect(plan.candidates).toEqual([])
-		expect(await pathExists(a.path)).toBe(true)
+		await expect(pathExists(a.path)).resolves.toBe(true)
 	})
 
 	it("refuses to delete when an activation moved the selection after planning", async () => {
@@ -170,8 +170,8 @@ describe("planPrune and executePrune", () => {
 		await replaceActiveSelection(scratch.path, { basedOn: 3, set: [a.entry] })
 
 		await expect(executePrune(plan)).rejects.toThrow(/selection moved from generation 3 to 4 after planning/u)
-		expect(await pathExists(a.path)).toBe(true)
-		expect(await pathExists(c.path)).toBe(true)
+		await expect(pathExists(a.path)).resolves.toBe(true)
+		await expect(pathExists(c.path)).resolves.toBe(true)
 	})
 
 	it("leases the active generation with the snapshot it read", async () => {
@@ -191,7 +191,7 @@ describe("planPrune and executePrune", () => {
 		using _lease = await holdSelectionLease(scratch.path, 1)
 
 		await expect(executePrune(plan)).rejects.toThrow(/sessions holding generations changed/u)
-		expect(await pathExists(a.path)).toBe(true)
+		await expect(pathExists(a.path)).resolves.toBe(true)
 	})
 })
 
@@ -202,9 +202,9 @@ describe("planPrune's retain count", () => {
 			const { a, b, c } = await threeGenerations()
 
 			await expect(planPrune(scratch.path, { retain })).rejects.toThrow(/retain must be a positive whole number/u)
-			expect(await pathExists(a.path)).toBe(true)
-			expect(await pathExists(b.path)).toBe(true)
-			expect(await pathExists(c.path)).toBe(true)
+			await expect(pathExists(a.path)).resolves.toBe(true)
+			await expect(pathExists(b.path)).resolves.toBe(true)
+			await expect(pathExists(c.path)).resolves.toBe(true)
 		}
 	)
 
@@ -244,8 +244,8 @@ describe("planPrune's reading of retained history", () => {
 			new RegExp(`generation 1 is retained, but its record ${escapeRegExp(history.toString())} is missing`, "u")
 		)
 
-		expect(await pathExists(a.path)).toBe(true)
-		expect(await pathExists(b.path)).toBe(true)
+		await expect(pathExists(a.path)).resolves.toBe(true)
+		await expect(pathExists(b.path)).resolves.toBe(true)
 	})
 
 	it("refuses when a leased generation's history record is missing", async () => {
@@ -256,7 +256,7 @@ describe("planPrune's reading of retained history", () => {
 		using _lease = await holdSelectionLease(scratch.path, 1)
 
 		await expect(planPrune(scratch.path)).rejects.toThrow(/generation 1 is retained, but its record .* is missing/u)
-		expect(await pathExists(a.path)).toBe(true)
+		await expect(pathExists(a.path)).resolves.toBe(true)
 	})
 
 	it("refuses when a retained generation's history record cannot be parsed, naming its path", async () => {
@@ -297,7 +297,7 @@ describe("planPrune's reading of session leases", () => {
 		)
 
 		await expect(readLiveLeases(scratch.path)).rejects.toThrow(lease.toString())
-		expect(await pathExists(a.path)).toBe(true)
+		await expect(pathExists(a.path)).resolves.toBe(true)
 	})
 
 	it("plans when a lease file disappears between listing and reading", async () => {
@@ -342,7 +342,7 @@ describe("executePrune's active-generation check", () => {
 		}
 
 		await expect(executePrune(corrupted)).rejects.toThrow(/active generation 3 selects/u)
-		expect(await pathExists(c.path)).toBe(true)
-		expect(await readLocalTextFile(c.path)).toBe("release c")
+		await expect(pathExists(c.path)).resolves.toBe(true)
+		await expect(readLocalTextFile(c.path)).resolves.toBe("release c")
 	})
 })

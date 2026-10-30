@@ -42,8 +42,8 @@ describe("shuffleWithinWindow", () => {
 	it("yields the input unchanged when the window is 1 or 0", async () => {
 		const input = Array.from({ length: 200 }, (_, index) => index)
 
-		expect(await collect(shuffleWithinWindow(from(input), makeMulberry32(7), 1))).toEqual(input)
-		expect(await collect(shuffleWithinWindow(from(input), makeMulberry32(7), 0))).toEqual(input)
+		await expect(collect(shuffleWithinWindow(from(input), makeMulberry32(7), 1))).resolves.toEqual(input)
+		await expect(collect(shuffleWithinWindow(from(input), makeMulberry32(7), 0))).resolves.toEqual(input)
 	})
 
 	it("is reproducible for one seed and differs between two", async () => {

@@ -121,7 +121,7 @@ describe("exploreWOFRecord", () => {
 	it("throws when no repo holds the record", async () => {
 		await writeTree()
 
-		expect(await findWOFFeaturePath(1, scratch.path)).toBeNull()
+		await expect(findWOFFeaturePath(1, scratch.path)).resolves.toBeNull()
 		await expect(exploreWOFRecord(1, { reposRoot: scratch.path })).rejects.toThrow(/no repo/)
 	})
 })

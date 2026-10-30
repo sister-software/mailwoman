@@ -151,7 +151,7 @@ describe("readGipuzkoaPublication", () => {
 			{ body: "", headers: { "last-modified": "Sat, 08 Aug 2026 03:48:12 GMT", "content-length": "7959103" } },
 		])
 
-		expect(await readGipuzkoaPublication(client, ARCHIVE_URL)).toStrictEqual({
+		await expect(readGipuzkoaPublication(client, ARCHIVE_URL)).resolves.toStrictEqual({
 			lastModified: "Sat, 08 Aug 2026 03:48:12 GMT",
 			reportedBytes: 7_959_103,
 		})
@@ -160,7 +160,7 @@ describe("readGipuzkoaPublication", () => {
 	it("reads an absent header as null rather than as an empty string or a zero", async () => {
 		const client = stubClient([{ body: "", headers: {} }])
 
-		expect(await readGipuzkoaPublication(client, ARCHIVE_URL)).toStrictEqual({
+		await expect(readGipuzkoaPublication(client, ARCHIVE_URL)).resolves.toStrictEqual({
 			lastModified: null,
 			reportedBytes: null,
 		})

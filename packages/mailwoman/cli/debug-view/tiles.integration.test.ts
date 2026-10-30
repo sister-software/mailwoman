@@ -10,7 +10,7 @@ import { resolveTilesPath } from "#cli/debug-view/tiles"
 
 describe("resolveTilesPath", () => {
 	it("prefers the explicit flag", async () => {
-		expect(await resolveTilesPath("/somewhere/planet.pmtiles")).toBe("/somewhere/planet.pmtiles")
+		await expect(resolveTilesPath("/somewhere/planet.pmtiles")).resolves.toBe("/somewhere/planet.pmtiles")
 	})
 
 	// oxlint-disable-next-line vitest/expect-expect -- the conditional assertion documents an environment-dependent default path

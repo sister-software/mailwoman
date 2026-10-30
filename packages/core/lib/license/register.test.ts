@@ -21,7 +21,7 @@ describe("the license key register", () => {
 		expect(LICENSE_SIGNING_KEYS.length).toBeGreaterThan(0)
 
 		for (const key of LICENSE_SIGNING_KEYS) {
-			expect(await licenseKeyID(key.publicKeyPEM, key.majorVersions[0]!)).toBe(key.kid)
+			await expect(licenseKeyID(key.publicKeyPEM, key.majorVersions[0]!)).resolves.toBe(key.kid)
 		}
 	})
 

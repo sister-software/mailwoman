@@ -267,7 +267,7 @@ describe("WOFCandidateTableLookup", () => {
 	test("an unknown country (not in the table) returns no candidates", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		expect(await lk.findPlace({ text: "Moscow", placetype: "locality", country: "ZZ" })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "Moscow", placetype: "locality", country: "ZZ" })).resolves.toHaveLength(0)
 	})
 
 	test("resolves an alias row to the primary place", async () => {
@@ -360,20 +360,20 @@ describe("WOFCandidateTableLookup", () => {
 		expect(zip?.placetype).toBe("postalcode")
 		expect(zip?.lat).toBeCloseTo(41.885, 3)
 
-		expect(await lk.findPlace({ text: "20500", placetype: "postalcode" })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "20500", placetype: "postalcode" })).resolves.toHaveLength(0)
 	})
 
 	test("a placetype that doesn't match the row's type yields nothing (Moscow is not a postalcode)", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		expect(await lk.findPlace({ text: "Moscow", placetype: "postalcode" })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "Moscow", placetype: "postalcode" })).resolves.toHaveLength(0)
 	})
 
 	test("an unknown name + an empty query return no candidates", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		expect(await lk.findPlace({ text: "Nowhereville" })).toHaveLength(0)
-		expect(await lk.findPlace({ text: "   " })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "Nowhereville" })).resolves.toHaveLength(0)
+		await expect(lk.findPlace({ text: "   " })).resolves.toHaveLength(0)
 	})
 
 	test("FTS5-trigram fuzzy fallback recovers a misspelled locality on an exact miss", async () => {
@@ -382,7 +382,7 @@ describe("WOFCandidateTableLookup", () => {
 		expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
 		expect((await lk.findPlace({ text: "Moscw", placetype: "locality", country: "RU" }))[0]?.name).toBe("Moscow")
 
-		expect(await lk.findPlace({ text: "Zzzqqx", placetype: "locality", country: "US" })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "Zzzqqx", placetype: "locality", country: "US" })).resolves.toHaveLength(0)
 	})
 
 	test("A typo-corrected row is NOT an exact match", async () => {
@@ -409,7 +409,7 @@ describe("WOFCandidateTableLookup", () => {
 	test("the fuzzy fallback NEVER fires for postcodes — an unknown code abstains, it does not become a different code", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		expect(await lk.findPlace({ text: "B0601", placetype: "postalcode" })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "B0601", placetype: "postalcode" })).resolves.toHaveLength(0)
 
 		expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
 	})

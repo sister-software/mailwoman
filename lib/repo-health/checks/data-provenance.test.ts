@@ -37,7 +37,7 @@ describe("dataProvenanceCheck", () => {
 			"packages/example/data/table.json": "{}\n",
 		})
 
-		expect(await dataProvenanceCheck.run(context)).toEqual([])
+		await expect(dataProvenanceCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("reports an artifact the record does not name", async () => {
@@ -61,7 +61,7 @@ describe("dataProvenanceCheck", () => {
 			"packages/example/data/LICENSE": "AGPL-3.0\n",
 		})
 
-		expect(await dataProvenanceCheck.run(context)).toEqual([])
+		await expect(dataProvenanceCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("reports a subdirectory the record does not name", async () => {
@@ -85,7 +85,7 @@ describe("dataProvenanceCheck", () => {
 			"packages/example/data/libpostal/fr/street_types.txt": "rue\n",
 		})
 
-		expect(await dataProvenanceCheck.run(context)).toEqual([])
+		await expect(dataProvenanceCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("leaves an untracked subdirectory out, so a build's scratch output is not reported", async () => {
@@ -97,14 +97,14 @@ describe("dataProvenanceCheck", () => {
 
 		const context = { repoRoot: root.toString(), trackedFiles: ["packages/example/data/PROVENANCE.md"] }
 
-		expect(await dataProvenanceCheck.run(context)).toEqual([])
+		await expect(dataProvenanceCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("leaves a data directory with no record alone", async () => {
 		// Deliberately does not require a `PROVENANCE.md` in every `data/` directory.
 		const context = await plant({ "packages/example/data/table.json": "{}\n" })
 
-		expect(await dataProvenanceCheck.run(context)).toEqual([])
+		await expect(dataProvenanceCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("reads each package's record against its own directory rather than against every artifact", async () => {

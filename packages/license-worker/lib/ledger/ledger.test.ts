@@ -42,15 +42,20 @@ function license(suffix: string) {
 test("an event id records once; the second write is a duplicate with no effect", async () => {
 	const ledger = openLedger(env.LICENSE_LEDGER)
 
-	expect(await recordEventOnce(ledger, { id: "evt_1", type: "invoice.paid", objectID: "in_1" })).toBe("recorded")
-	expect(await recordEventOnce(ledger, { id: "evt_1", type: "invoice.paid", objectID: "in_1" })).toBe("duplicate")
+	await expect(recordEventOnce(ledger, { id: "evt_1", type: "invoice.paid", objectID: "in_1" })).resolves.toBe(
+		"recorded"
+	)
+
+	await expect(recordEventOnce(ledger, { id: "evt_1", type: "invoice.paid", objectID: "in_1" })).resolves.toBe(
+		"duplicate"
+	)
 })
 
 test("a license is found by subscription; the current token is the one with the latest expiry", async () => {
 	const ledger = openLedger(env.LICENSE_LEDGER)
 	const row = license("a")
 
-	expect(await createLicenseIfAbsent(ledger, row)).toBe("inserted")
+	await expect(createLicenseIfAbsent(ledger, row)).resolves.toBe("inserted")
 	expect((await findLicenseBySubscription(ledger, row.subscription_id))?.license_state).toBe(LicenseState.Active)
 
 	await insertTokenIfAbsent(ledger, {
@@ -80,16 +85,16 @@ test("a second token for one invoice is answered as present and the first stands
 
 	await createLicenseIfAbsent(ledger, row)
 
-	expect(
-		await createLicenseIfAbsent(ledger, { ...row, lid: `lic_test0000000000000000b2`, checkout_session_id: "cs_b2" })
-	).toBe("present")
+	await expect(
+		createLicenseIfAbsent(ledger, { ...row, lid: `lic_test0000000000000000b2`, checkout_session_id: "cs_b2" })
+	).resolves.toBe("present")
 
 	expect((await findLicenseBySubscription(ledger, row.subscription_id))?.lid).toBe(row.lid)
 
 	const token = { invoice_id: "in_b1", lid: row.lid, issued: "2026-10-01", expires: "2026-11-15", payload_json: "{}" }
 
-	expect(await insertTokenIfAbsent(ledger, { ...token, token: "mwl1.a.a" })).toBe("inserted")
-	expect(await insertTokenIfAbsent(ledger, { ...token, token: "mwl1.c.c" })).toBe("present")
+	await expect(insertTokenIfAbsent(ledger, { ...token, token: "mwl1.a.a" })).resolves.toBe("inserted")
+	await expect(insertTokenIfAbsent(ledger, { ...token, token: "mwl1.c.c" })).resolves.toBe("present")
 	expect((await currentToken(ledger, row.lid))?.token).toBe("mwl1.a.a")
 
 	// Only a unique conflict is forgiven: a row that breaks another constraint still throws.
@@ -109,7 +114,7 @@ test("state transitions write the license, subscription and payment states", asy
 		paymentState: "refunded",
 	})
 
-	expect(await findLicenseBySubscription(ledger, row.subscription_id)).toMatchObject({
+	await expect(findLicenseBySubscription(ledger, row.subscription_id)).resolves.toMatchObject({
 		license_state: "revoked",
 		subscription_state: "canceled",
 		payment_state: "refunded",
@@ -122,10 +127,10 @@ test("the pending refresh secret is answered to exactly one taker, and the store
 
 	await createLicenseIfAbsent(ledger, row)
 
-	expect(await takePendingRefreshSecret(ledger, row.lid)).toBe("secret")
-	expect(await takePendingRefreshSecret(ledger, row.lid)).toBeNull()
+	await expect(takePendingRefreshSecret(ledger, row.lid)).resolves.toBe("secret")
+	await expect(takePendingRefreshSecret(ledger, row.lid)).resolves.toBeNull()
 
-	expect(await findLicenseBySubscription(ledger, row.subscription_id)).toMatchObject({
+	await expect(findLicenseBySubscription(ledger, row.subscription_id)).resolves.toMatchObject({
 		refresh_secret_pending: null,
 		refresh_secret_sha256: "0".repeat(64),
 	})

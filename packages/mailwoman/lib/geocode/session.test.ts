@@ -37,5 +37,5 @@ test("a session that fails to start releases the lease it took on the active gen
 		await sleep(20)
 	}
 
-	expect(await readLiveLeases(scratch.path)).toEqual([])
+	await expect(readLiveLeases(scratch.path)).resolves.toEqual([])
 })

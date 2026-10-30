@@ -12,5 +12,5 @@ import { collectRepoContext } from "#repo-health/index"
 test("license-register: the committed well-known file equals the register's derivation", async () => {
 	const context = await collectRepoContext()
 
-	expect(await licenseRegisterCheck.run(context)).toEqual([])
+	await expect(licenseRegisterCheck.run(context)).resolves.toEqual([])
 })

@@ -93,7 +93,7 @@ describe("renderAttributionReport", () => {
 		vi.stubEnv("MAILWOMAN_DATA_ROOT", empty.path.toString())
 
 		try {
-			expect(await attributionReport("AGPL-3.0-only")).toStrictEqual(before)
+			await expect(attributionReport("AGPL-3.0-only")).resolves.toStrictEqual(before)
 		} finally {
 			vi.unstubAllEnvs()
 		}

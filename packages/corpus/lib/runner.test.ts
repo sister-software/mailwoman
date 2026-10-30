@@ -350,7 +350,7 @@ describe("runAdapter", () => {
 		).rejects.toThrow(/abort/i)
 
 		// And it left no manifest for a resume to find.
-		expect(await pathExists(scratch.path("syn", "MANIFEST.json"))).toBe(false)
+		await expect(pathExists(scratch.path("syn", "MANIFEST.json"))).resolves.toBe(false)
 	})
 
 	it("two runs over the same fixture produce byte-identical JSONL", async () => {

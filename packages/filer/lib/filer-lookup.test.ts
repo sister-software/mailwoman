@@ -249,7 +249,7 @@ describe("§7-3a criteria", () => {
 				})
 			).rejects.toThrow(/malformed.*lastFiledAt/i)
 
-			expect(await pathExists(out)).toBe(false)
+			await expect(pathExists(out)).resolves.toBe(false)
 		})
 
 		it("guards reject an empty lastFiledAt via buildFilerDatabase", async () => {
@@ -265,7 +265,7 @@ describe("§7-3a criteria", () => {
 				})
 			).rejects.toThrow(/malformed.*lastFiledAt/i)
 
-			expect(await pathExists(out)).toBe(false)
+			await expect(pathExists(out)).resolves.toBe(false)
 		})
 
 		it("guards reject a whitespace-only form499ID (not just empty) via buildFilerDatabase", async () => {
@@ -281,7 +281,7 @@ describe("§7-3a criteria", () => {
 				})
 			).rejects.toThrow(/malformed.*empty form499ID/i)
 
-			expect(await pathExists(out)).toBe(false)
+			await expect(pathExists(out)).resolves.toBe(false)
 		})
 
 		it("guards reject a whitespace-only provider-list frn (not just empty) via buildFilerDatabase", async () => {
@@ -302,7 +302,7 @@ describe("§7-3a criteria", () => {
 				})
 			).rejects.toThrow(/malformed.*empty frn/i)
 
-			expect(await pathExists(out)).toBe(false)
+			await expect(pathExists(out)).resolves.toBe(false)
 		})
 	})
 

@@ -24,7 +24,7 @@ const CLAIM = [["RU", "streetless-premise-identity"]] as const
 
 describe("exposure release check", () => {
 	test("the committed floors are empty until a curve sets one", async () => {
-		expect(await loadFloors()).toEqual({})
+		await expect(loadFloors()).resolves.toEqual({})
 	})
 
 	test("the preflight refuses zero expected draws and reports an unmeasured stage", () => {

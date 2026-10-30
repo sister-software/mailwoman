@@ -31,7 +31,7 @@ describe("readDeclaredArtifactFile", () => {
 	it("reports a declared artifact that is present", async () => {
 		const dir = packageDir({ files: { postcode_anchor: "postcode-us.bin" } }, ["postcode-us.bin"])
 
-		expect(await readDeclaredArtifactFile(await dir)).toMatchObject({
+		await expect(readDeclaredArtifactFile(await dir)).resolves.toMatchObject({
 			key: "postcode_anchor",
 			file: "postcode-us.bin",
 			present: true,
@@ -41,7 +41,10 @@ describe("readDeclaredArtifactFile", () => {
 	it("Reports a declared artifact that is absent — the case the whole condition exists for", async () => {
 		const dir = packageDir({ files: { postcode_anchor: "postcode-us.bin" } })
 
-		expect(await readDeclaredArtifactFile(await dir)).toMatchObject({ file: "postcode-us.bin", present: false })
+		await expect(readDeclaredArtifactFile(await dir)).resolves.toMatchObject({
+			file: "postcode-us.bin",
+			present: false,
+		})
 	})
 
 	it("reports a declared artifact present when the package directory is a symbolic link, as a staged cache holds it", async () => {
@@ -51,8 +54,8 @@ describe("readDeclaredArtifactFile", () => {
 
 		await createSymbolicLink(real, linked, "dir")
 
-		expect(await readDeclaredArtifactFile(linked)).toMatchObject({ file: "postcode-us.bin", present: true })
-		expect(await unfedAnchorDetail(linked)).toMatch(/parsed EMPTY/)
+		await expect(readDeclaredArtifactFile(linked)).resolves.toMatchObject({ file: "postcode-us.bin", present: true })
+		await expect(unfedAnchorDetail(linked)).resolves.toMatch(/parsed EMPTY/)
 	})
 
 	it("Prefers the PCB1 binary over the legacy JSON lookup when a card names both", async () => {
@@ -64,7 +67,7 @@ describe("readDeclaredArtifactFile", () => {
 	it("Falls back to the legacy JSON lookup when that is all the card names", async () => {
 		const dir = packageDir({ files: { anchor_lookup: "anchor-lookup.json" } }, ["anchor-lookup.json"])
 
-		expect(await readDeclaredArtifactFile(await dir)).toMatchObject({ key: "anchor_lookup", present: true })
+		await expect(readDeclaredArtifactFile(await dir)).resolves.toMatchObject({ key: "anchor_lookup", present: true })
 	})
 
 	it("does NOT read a $comment_ sibling as a declaration (en-gb's documented absence)", async () => {
@@ -73,37 +76,39 @@ describe("readDeclaredArtifactFile", () => {
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-gb.bin (deliberate)" },
 		})
 
-		expect(await readDeclaredArtifactFile(await dir)).toBeNull()
+		await expect(readDeclaredArtifactFile(await dir)).resolves.toBeNull()
 	})
 
 	it("Returns null for a card with neither files block nor card without dir, and a corrupt card", async () => {
-		expect(await readDeclaredArtifactFile(await packageDir({ requires: { anchor: { required: true } } }))).toBeNull()
+		await expect(
+			readDeclaredArtifactFile(await packageDir({ requires: { anchor: { required: true } } }))
+		).resolves.toBeNull()
 
-		expect(await readDeclaredArtifactFile(await packageDir())).toBeNull()
-		expect(await readDeclaredArtifactFile(null)).toBeNull()
-		expect(await readDeclaredArtifactFile(await packageDir("{not json"))).toBeNull()
+		await expect(readDeclaredArtifactFile(await packageDir())).resolves.toBeNull()
+		await expect(readDeclaredArtifactFile(null)).resolves.toBeNull()
+		await expect(readDeclaredArtifactFile(await packageDir("{not json"))).resolves.toBeNull()
 	})
 
 	it("ignores a files entry that is not a filename", async () => {
-		expect(await readDeclaredArtifactFile(await packageDir({ files: { postcode_anchor: "" } }))).toBeNull()
-		expect(await readDeclaredArtifactFile(await packageDir({ files: { postcode_anchor: 3 } }))).toBeNull()
-		expect(await readDeclaredArtifactFile(await packageDir({ files: ["postcode-us.bin"] }))).toBeNull()
+		await expect(readDeclaredArtifactFile(await packageDir({ files: { postcode_anchor: "" } }))).resolves.toBeNull()
+		await expect(readDeclaredArtifactFile(await packageDir({ files: { postcode_anchor: 3 } }))).resolves.toBeNull()
+		await expect(readDeclaredArtifactFile(await packageDir({ files: ["postcode-us.bin"] }))).resolves.toBeNull()
 	})
 
 	it("reads the SHIPPED cards: en-us/fr-fr/en-gb declare their binaries, en-nz declares none", async () => {
-		expect(await readDeclaredArtifactFile(workspacePath("neural-weights-en-us"))).toMatchObject({
+		await expect(readDeclaredArtifactFile(workspacePath("neural-weights-en-us"))).resolves.toMatchObject({
 			file: "postcode-us.bin",
 		})
 
-		expect(await readDeclaredArtifactFile(workspacePath("neural-weights-fr-fr"))).toMatchObject({
+		await expect(readDeclaredArtifactFile(workspacePath("neural-weights-fr-fr"))).resolves.toMatchObject({
 			file: "postcode-fr.bin",
 		})
 
-		expect(await readDeclaredArtifactFile(workspacePath("neural-weights-en-gb"))).toMatchObject({
+		await expect(readDeclaredArtifactFile(workspacePath("neural-weights-en-gb"))).resolves.toMatchObject({
 			file: "postcode-gb.bin",
 		})
 
-		expect(await readDeclaredArtifactFile(workspacePath("neural-weights-en-nz"))).toBeNull()
+		await expect(readDeclaredArtifactFile(workspacePath("neural-weights-en-nz"))).resolves.toBeNull()
 	})
 })
 
@@ -111,7 +116,7 @@ describe("unfedAnchorDetail — whether an unfed anchor channel is worth a warni
 	it("speaks when the package declares a binary it does not have", async () => {
 		const dir = packageDir({ files: { postcode_anchor: "postcode-us.bin" } })
 
-		expect(await unfedAnchorDetail(await dir)).toMatch(
+		await expect(unfedAnchorDetail(await dir)).resolves.toMatch(
 			/declares files\.postcode_anchor = postcode-us\.bin, which is NOT in/
 		)
 	})
@@ -119,7 +124,7 @@ describe("unfedAnchorDetail — whether an unfed anchor channel is worth a warni
 	it("speaks when the declared binary is present but parsed empty — the other broken-package shape", async () => {
 		const dir = packageDir({ files: { postcode_anchor: "postcode-us.bin" } }, ["postcode-us.bin"])
 
-		expect(await unfedAnchorDetail(await dir)).toMatch(/parsed EMPTY/)
+		await expect(unfedAnchorDetail(await dir)).resolves.toMatch(/parsed EMPTY/)
 	})
 
 	it("Stays SILENT for a package that declares no binary — the false alarm", async () => {
@@ -128,7 +133,7 @@ describe("unfedAnchorDetail — whether an unfed anchor channel is worth a warni
 			files: { $comment_postcode_anchor: "NONE — deliberate" },
 		})
 
-		expect(await unfedAnchorDetail(await dir)).toBeNull()
-		expect(await unfedAnchorDetail(null)).toBeNull()
+		await expect(unfedAnchorDetail(await dir)).resolves.toBeNull()
+		await expect(unfedAnchorDetail(null)).resolves.toBeNull()
 	})
 })

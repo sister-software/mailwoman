@@ -80,14 +80,14 @@ async function stage(layout: "nested" | "wrapped" | "absent", withManifest = tru
 
 describe("the corpus staging script", () => {
 	it.each(["nested", "wrapped"] as const)("stages a %s entry at the corpus_dir path and commits", async (layout) => {
-		expect(await stage(layout)).toEqual({ code: 0, manifest: true, part: true, committed: true })
+		await expect(stage(layout)).resolves.toEqual({ code: 0, manifest: true, part: true, committed: true })
 	})
 
 	it("refuses an entry the bucket does not hold", async () => {
-		expect(await stage("absent")).toMatchObject({ code: 1, committed: false })
+		await expect(stage("absent")).resolves.toMatchObject({ code: 1, committed: false })
 	})
 
 	it("refuses a copy without a MANIFEST and commits nothing", async () => {
-		expect(await stage("wrapped", false)).toMatchObject({ code: 1, manifest: false, committed: false })
+		await expect(stage("wrapped", false)).resolves.toMatchObject({ code: 1, manifest: false, committed: false })
 	})
 })

@@ -100,7 +100,7 @@ describe("the OpenStreetMap suites", () => {
 		const pk = await writeExtract("pk", PK_ROWS)
 		const us = await writeExtract("us", US_ROWS)
 
-		expect(await countExtractLines(pk)).toBe(3)
+		await expect(countExtractLines(pk)).resolves.toBe(3)
 
 		const trained = renderOSMExtractRecord(PK_ROWS[0]!, "PK", {})!
 		const training = await writeTraining(trained.source_id!)

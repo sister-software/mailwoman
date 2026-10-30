@@ -21,7 +21,7 @@ describe("identifiers", () => {
 		const secret = newRefreshSecret()
 
 		expect(secret).toMatch(/^[A-Za-z0-9_-]{43}$/u)
-		expect(await secretDigest(secret)).toMatch(/^[0-9a-f]{64}$/u)
-		expect(await secretDigest("abc")).toBe("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+		await expect(secretDigest(secret)).resolves.toMatch(/^[0-9a-f]{64}$/u)
+		await expect(secretDigest("abc")).resolves.toBe("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
 	})
 })

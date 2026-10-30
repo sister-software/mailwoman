@@ -104,7 +104,7 @@ function collapsedComponents(labels: readonly string[]): string[] {
 
 describe("reviewed Venezuela postcode tuples", () => {
 	it("holds no tuple in the committed file, because no citation reaches a row permitting training", async () => {
-		expect(await readReviewedPostcodeTuples()).toEqual([])
+		await expect(readReviewedPostcodeTuples()).resolves.toEqual([])
 	})
 
 	it("refuses to run over the committed file rather than write an empty output", async () => {
@@ -114,7 +114,7 @@ describe("reviewed Venezuela postcode tuples", () => {
 	})
 
 	it("reads the expected count from the file and refuses a file whose tuples disagree with it", async () => {
-		expect(await readReviewedPostcodeTuples(await writeFixture(FIXTURE_TUPLES))).toHaveLength(4)
+		await expect(readReviewedPostcodeTuples(await writeFixture(FIXTURE_TUPLES))).resolves.toHaveLength(4)
 		await expect(readReviewedPostcodeTuples(await writeFixture(FIXTURE_TUPLES, 5))).rejects.toThrow("tupleCount")
 	})
 

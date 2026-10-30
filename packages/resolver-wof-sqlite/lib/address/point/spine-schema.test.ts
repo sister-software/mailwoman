@@ -64,7 +64,7 @@ describe("address-point spine schema", () => {
 
 		const manifest = await readLayerManifest(db)
 		expect(manifest.spineKeys).toEqual({ h3: { column: "h3_cell", resolution: 9 } })
-		expect(await readLayerCoverage(db, 123_456)).toBeNull()
+		await expect(readLayerCoverage(db, 123_456)).resolves.toBeNull()
 
 		const columns = db.prepare("PRAGMA table_info(address_point)").all() as Array<{ name: string; notnull: number }>
 		expect(columns.find((column) => column.name === "h3_cell")?.notnull).toBe(1)

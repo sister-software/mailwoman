@@ -130,7 +130,7 @@ describe("resolveFSTPath", () => {
 	const emptyRoot = tempRootPath(`mailwoman-fst-root-${Date.now()}`)
 
 	it("returns the explicit path when given one", async () => {
-		expect(await resolveFSTPath("/explicit/path.bin", emptyRoot)).toBe("/explicit/path.bin")
+		await expect(resolveFSTPath("/explicit/path.bin", emptyRoot)).resolves.toBe("/explicit/path.bin")
 	})
 
 	it("falls back to the application data directory when no explicit path, env var or selection", async () => {
@@ -149,7 +149,7 @@ describe("resolveFSTPath", () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", "/env/path.bin")
 
 		try {
-			expect(await resolveFSTPath(undefined, emptyRoot)).toBe("/env/path.bin")
+			await expect(resolveFSTPath(undefined, emptyRoot)).resolves.toBe("/env/path.bin")
 		} finally {
 			vi.unstubAllEnvs()
 		}
@@ -159,7 +159,7 @@ describe("resolveFSTPath", () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", "/env/path.bin")
 
 		try {
-			expect(await resolveFSTPath("/explicit/path.bin", emptyRoot)).toBe("/explicit/path.bin")
+			await expect(resolveFSTPath("/explicit/path.bin", emptyRoot)).resolves.toBe("/explicit/path.bin")
 		} finally {
 			vi.unstubAllEnvs()
 		}

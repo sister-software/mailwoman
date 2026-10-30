@@ -68,21 +68,21 @@ describe("resolveDatabasePath", () => {
 		const apDir = await dirEnsure(addressPointDatabaseRoot(await root))
 		await writeLocalTextFile("", apDir("address-points-us-tx.db"))
 
-		expect(await resolveDatabasePath(await root, "address-points", "tx", null)).toBe(
+		await expect(resolveDatabasePath(await root, "address-points", "tx", null)).resolves.toBe(
 			apDir("address-points-us-tx.db").toString()
 		)
 
 		await writeLocalTextFile("", apDir("address-points-us-tx-v2.db"))
 
-		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v2" })).toBe(
+		await expect(resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v2" })).resolves.toBe(
 			apDir("address-points-us-tx-v2.db").toString()
 		)
 
-		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v9" })).toBe(
+		await expect(resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v9" })).resolves.toBe(
 			apDir("address-points-us-tx.db").toString()
 		)
 
-		expect(await resolveDatabasePath(await root, "address-points", "zz", null)).toBeNull()
+		await expect(resolveDatabasePath(await root, "address-points", "zz", null)).resolves.toBeNull()
 	})
 })
 
@@ -100,7 +100,7 @@ describe("RegionDatabaseProvider atomic switchover", () => {
 
 		await writeLocalTextFile("", apDir("address-points-us-tx-v2.db"))
 		await writeLocalJSONFile({ "address-points": "v2" }, (await root)("releases.json"))
-		expect(await provider.reload()).toEqual({ "address-points": "v2" })
+		await expect(provider.reload()).resolves.toEqual({ "address-points": "v2" })
 
 		const v2 = provider.for("tx").addressPoints as FakeAddressPoints
 		expect(v2.dbPath).toContain("address-points-us-tx-v2.db")

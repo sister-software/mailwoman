@@ -70,7 +70,7 @@ test("a declaration round-trips with the active state and an unverified source",
 		verified_at: null,
 	})
 
-	expect(await findDeclaration(ledger, "lic_missing000000000000000")).toBeNull()
+	await expect(findDeclaration(ledger, "lic_missing000000000000000")).resolves.toBeNull()
 })
 
 test("an issuance inserts once per (lid, seq), and the current issuance is the highest seq", async () => {
@@ -79,13 +79,13 @@ test("an issuance inserts once per (lid, seq), and the current issuance is the h
 
 	await createDeclaration(ledger, row)
 
-	expect(await insertIssuance(ledger, issuance(row.lid, 1, "2027-03-11"))).toBe("inserted")
+	await expect(insertIssuance(ledger, issuance(row.lid, 1, "2027-03-11"))).resolves.toBe("inserted")
 
-	expect(await insertIssuance(ledger, { ...issuance(row.lid, 1, "2027-03-11"), issuance_id: "iss_dup" })).toBe(
+	await expect(insertIssuance(ledger, { ...issuance(row.lid, 1, "2027-03-11"), issuance_id: "iss_dup" })).resolves.toBe(
 		"present"
 	)
 
-	expect(await insertIssuance(ledger, issuance(row.lid, 2, "2027-06-10"))).toBe("inserted")
+	await expect(insertIssuance(ledger, issuance(row.lid, 2, "2027-06-10"))).resolves.toBe("inserted")
 
 	const current = await currentIssuance(ledger, row.lid)
 
@@ -93,7 +93,10 @@ test("an issuance inserts once per (lid, seq), and the current issuance is the h
 
 	await setIssuanceEmailState(ledger, current!.issuance_id, "sent", "msg_1")
 
-	expect(await currentIssuance(ledger, row.lid)).toMatchObject({ email_state: "sent", email_message_id: "msg_1" })
+	await expect(currentIssuance(ledger, row.lid)).resolves.toMatchObject({
+		email_state: "sent",
+		email_message_id: "msg_1",
+	})
 })
 
 test("one evaluation per email address, found by that address", async () => {
@@ -103,7 +106,7 @@ test("one evaluation per email address, found by that address", async () => {
 	await createDeclaration(ledger, first)
 
 	expect((await findEvaluationByEmail(ledger, "eval@example.com"))?.lid).toBe(first.lid)
-	expect(await findEvaluationByEmail(ledger, "nobody@example.com")).toBeNull()
+	await expect(findEvaluationByEmail(ledger, "nobody@example.com")).resolves.toBeNull()
 
 	await expect(createDeclaration(ledger, { ...first, lid: `lic_decl0000000000000000d` })).rejects.toThrow(/UNIQUE/u)
 })
@@ -121,7 +124,7 @@ test("a non-profit declaration with the same email is admitted beside an evaluat
 	})
 
 	expect((await findDeclarationByClaim(ledger, "clm_e"))?.intent).toBe("non-profit")
-	expect(await findDeclarationByClaim(ledger, "clm_missing")).toBeNull()
+	await expect(findDeclarationByClaim(ledger, "clm_missing")).resolves.toBeNull()
 })
 
 test("source verification is recorded with its time", async () => {
@@ -131,7 +134,7 @@ test("source verification is recorded with its time", async () => {
 	await createDeclaration(ledger, row)
 	await setDeclarationVerification(ledger, row.lid, "verified", "2027-03-01T00:00:00.000Z")
 
-	expect(await findDeclaration(ledger, row.lid)).toMatchObject({
+	await expect(findDeclaration(ledger, row.lid)).resolves.toMatchObject({
 		verification: "verified",
 		verified_at: "2027-03-01T00:00:00.000Z",
 	})

@@ -303,8 +303,8 @@ describe("WOFWasmPlaceLookup", () => {
 		const lookup = new WOFWasmPlaceLookup({ db })
 
 		try {
-			expect(await lookup.findPlace({ text: "" })).toEqual([])
-			expect(await lookup.findPlace({ text: "   " })).toEqual([])
+			await expect(lookup.findPlace({ text: "" })).resolves.toEqual([])
+			await expect(lookup.findPlace({ text: "   " })).resolves.toEqual([])
 		} finally {
 			lookup[Symbol.dispose]()
 		}

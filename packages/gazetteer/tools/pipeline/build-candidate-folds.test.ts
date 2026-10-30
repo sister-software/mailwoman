@@ -60,7 +60,7 @@ test("buildCandidate refuses a build-local fold before building, and names it", 
 	).rejects.toThrow(new RegExp(`${ni.toString()} \\(postalcode-ni-osm\\) tier build-local, recorded in meta`))
 
 	// Refused before any output existed.
-	expect(await pathExists(out)).toBe(false)
+	await expect(pathExists(out)).resolves.toBe(false)
 })
 
 test("buildCandidate folds a build-local database when asked, and says so before the build", async () => {

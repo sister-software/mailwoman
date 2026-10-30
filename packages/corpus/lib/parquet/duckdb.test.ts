@@ -43,8 +43,11 @@ describe("openDuckDB", () => {
 	it("runs a stated share of the host's threads rather than DuckDB's every-core default", async () => {
 		using db = await openDuckDB()
 
-		expect(await setting(db, "threads")).toBe(String(await defaultDuckDBThreads()))
-		expect(await defaultDuckDBThreads()).toBe(Math.max(1, Math.floor(availableParallelism() * DUCKDB_THREAD_SHARE)))
+		await expect(setting(db, "threads")).resolves.toBe(String(await defaultDuckDBThreads()))
+
+		await expect(defaultDuckDBThreads()).resolves.toBe(
+			Math.max(1, Math.floor(availableParallelism() * DUCKDB_THREAD_SHARE))
+		)
 	})
 
 	it("takes an explicit limit and thread count for a caller that knows what else is running", async () => {
@@ -52,8 +55,8 @@ describe("openDuckDB", () => {
 
 		// DuckDB reads the binary unit `formatIEC` writes and reports the same quantity back.
 		// `formatSI`'s `MB` would arrive as decimal megabytes and report 488.2 MiB instead.
-		expect(await setting(db, "memory_limit")).toBe("512.0 MiB")
-		expect(await setting(db, "threads")).toBe("2")
+		await expect(setting(db, "memory_limit")).resolves.toBe("512.0 MiB")
+		await expect(setting(db, "threads")).resolves.toBe("2")
 	})
 
 	it("points a spill at a directory that exists, so a spill is not a failed query", async () => {
@@ -65,6 +68,6 @@ describe("openDuckDB", () => {
 
 		const { pathExists } = await import("@mailwoman/core/fs/readers/stat")
 
-		expect(await pathExists(directory)).toBe(true)
+		await expect(pathExists(directory)).resolves.toBe(true)
 	})
 })

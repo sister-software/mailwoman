@@ -191,7 +191,7 @@ describe("buildCJKOverlay", () => {
 			(report.get("char_vocab") as Map<string, number>).get("jp")!
 		)
 
-		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/cn-board.jsonl`))).toHaveLength(2)
+		await expect(Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/cn-board.jsonl`))).resolves.toHaveLength(2)
 
 		const vocab = await readLocalJSONFile<Record<string, number>>(`${outDir}/char-vocab-cjk.json`)
 

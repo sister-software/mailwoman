@@ -40,7 +40,7 @@ test("discoverAdminDataRoots: finds nested + flat whosonfirst data roots, skips 
 })
 
 test("discoverAdminDataRoots: missing root.path yields empty list, never throws", async () => {
-	expect(await discoverAdminDataRoots(root.path("does-not-exist"))).toEqual([])
+	await expect(discoverAdminDataRoots(root.path("does-not-exist"))).resolves.toEqual([])
 })
 
 test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-self places, idempotent", async () => {

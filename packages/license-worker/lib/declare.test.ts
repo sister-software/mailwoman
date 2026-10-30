@@ -98,7 +98,7 @@ test("an open-source declaration answers the token and the secret and mints seq 
 	expect(outcome.secret).toMatch(/^[A-Za-z0-9_-]{43}$/u)
 	expect(h.email.sent).toHaveLength(0)
 
-	expect(await findDeclaration(h.ledger, outcome.lid)).toMatchObject({
+	await expect(findDeclaration(h.ledger, outcome.lid)).resolves.toMatchObject({
 		source_url: "https://github.com/example/project",
 		first_install: INSTALL,
 		refresh_secret_pending: null,
@@ -136,7 +136,7 @@ test("an academic declaration answers a claim and emails the token with the secr
 
 	expect(message.refreshSecret).toMatch(/^[A-Za-z0-9_-]{43}$/u)
 	expect(key).toBe((await currentIssuance(h.ledger, outcome.lid))?.issuance_id)
-	expect(await currentIssuance(h.ledger, outcome.lid)).toMatchObject({ seq: 1, email_state: "sent" })
+	await expect(currentIssuance(h.ledger, outcome.lid)).resolves.toMatchObject({ seq: 1, email_state: "sent" })
 })
 
 test("a second evaluation for one address is refused and mints no token", async () => {
@@ -145,7 +145,7 @@ test("a second evaluation for one address is refused and mints no token", async 
 
 	expect((await issueDeclaration(h.signing.env, h.deps, request)).outcome).toBe("pending")
 
-	expect(await issueDeclaration(h.signing.env, h.deps, request)).toEqual({
+	await expect(issueDeclaration(h.signing.env, h.deps, request)).resolves.toEqual({
 		outcome: "refused",
 		reason: "evaluation_exists",
 	})
@@ -156,12 +156,12 @@ test("a second evaluation for one address is refused and mints no token", async 
 test("a declaration without its required field is refused", async () => {
 	const h = await harness()
 
-	expect(await issueDeclaration(h.signing.env, h.deps, { intent: "open-source", name: "X" })).toEqual({
+	await expect(issueDeclaration(h.signing.env, h.deps, { intent: "open-source", name: "X" })).resolves.toEqual({
 		outcome: "refused",
 		reason: "missing_source_url",
 	})
 
-	expect(await issueDeclaration(h.signing.env, h.deps, { intent: "student", name: "X" })).toEqual({
+	await expect(issueDeclaration(h.signing.env, h.deps, { intent: "student", name: "X" })).resolves.toEqual({
 		outcome: "refused",
 		reason: "missing_email",
 	})
@@ -170,13 +170,13 @@ test("a declaration without its required field is refused", async () => {
 test("the kill switch refuses a declaration", async () => {
 	const h = await harness({ issuance: false })
 
-	expect(
-		await issueDeclaration(h.signing.env, h.deps, {
+	await expect(
+		issueDeclaration(h.signing.env, h.deps, {
 			intent: "open-source",
 			name: "X",
 			sourceURL: "https://github.com/example/project",
 		})
-	).toEqual({ outcome: "refused", reason: "issuance_disabled" })
+	).resolves.toEqual({ outcome: "refused", reason: "issuance_disabled" })
 })
 
 test("re-issue keeps the current token with 100 days left, and mints seq 2 and verifies the source within 28 days", async () => {
@@ -204,7 +204,7 @@ test("re-issue keeps the current token with 100 days left, and mints seq 2 and v
 
 	expect(late.seq).toBe(2)
 	expect(decodeLicenseKeyPayload(late.token)).toMatchObject({ seq: 2, issued: "2027-03-01", expires: "2027-06-10" })
-	expect(await findDeclaration(h.ledger, issued.lid)).toMatchObject({ verification: "verified" })
+	await expect(findDeclaration(h.ledger, issued.lid)).resolves.toMatchObject({ verification: "verified" })
 	expect(h.email.sent).toHaveLength(0)
 })
 
@@ -231,7 +231,7 @@ test("an evaluation is never re-issued: the current token is answered while it l
 	const after = await reissueDeclaration(h.signing.env, { ...h.deps, now: () => Date.UTC(2026, 10, 21) }, declaration)
 
 	expect(after).toBeNull()
-	expect(await currentIssuance(h.ledger, pending.lid)).toMatchObject({ seq: 1 })
+	await expect(currentIssuance(h.ledger, pending.lid)).resolves.toMatchObject({ seq: 1 })
 	expect(h.email.sent).toHaveLength(1)
 })
 
@@ -254,7 +254,7 @@ test("with issuance disabled a re-issue answers the current token and mints noth
 	const answer = await reissueDeclaration(closed.signing.env, closed.deps, declaration)
 
 	expect(answer).toMatchObject({ seq: 1, token: issued.token })
-	expect(await currentIssuance(open.ledger, issued.lid)).toMatchObject({ seq: 1 })
+	await expect(currentIssuance(open.ledger, issued.lid)).resolves.toMatchObject({ seq: 1 })
 })
 
 test("an evaluation address is one address whatever its case or surrounding space", async () => {
@@ -265,9 +265,9 @@ test("an evaluation address is one address whatever its case or surrounding spac
 			.outcome
 	).toBe("pending")
 
-	expect(
-		await issueDeclaration(h.signing.env, h.deps, { intent: "evaluation", name: "B", email: " case@example.com " })
-	).toEqual({ outcome: "refused", reason: "evaluation_exists" })
+	await expect(
+		issueDeclaration(h.signing.env, h.deps, { intent: "evaluation", name: "B", email: " case@example.com " })
+	).resolves.toEqual({ outcome: "refused", reason: "evaluation_exists" })
 
 	expect(h.email.sent[0]?.message.to).toBe("case@example.com")
 })

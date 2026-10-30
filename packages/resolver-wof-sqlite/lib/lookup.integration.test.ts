@@ -384,9 +384,9 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("empty/whitespace-only text returns an empty array (not an FTS syntax error)", async () => {
-		expect(await lookup.findPlace({ text: "" })).toEqual([])
-		expect(await lookup.findPlace({ text: "   " })).toEqual([])
-		expect(await lookup.findPlace({ text: "!!!" })).toEqual([])
+		await expect(lookup.findPlace({ text: "" })).resolves.toEqual([])
+		await expect(lookup.findPlace({ text: "   " })).resolves.toEqual([])
+		await expect(lookup.findPlace({ text: "!!!" })).resolves.toEqual([])
 	})
 
 	test("query with special characters is sanitized — `St. (Petersburg)` does not throw", async () => {

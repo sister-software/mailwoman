@@ -99,9 +99,9 @@ describe("buildFilerDatabase", () => {
 			buildSHA: "deadbeef",
 		})
 
-		expect(await pathExists(out)).toBe(true)
-		expect(await pathExists(`${out}.building`)).toBe(false)
-		expect(await pathExists(`${out}.prev`)).toBe(false)
+		await expect(pathExists(out)).resolves.toBe(true)
+		await expect(pathExists(`${out}.building`)).resolves.toBe(false)
+		await expect(pathExists(`${out}.prev`)).resolves.toBe(false)
 	})
 
 	it("emits FRN↔form499ID, FRN↔holdingCompanyName, and FRN↔managementCompanyName (both) for a filed 499 row", async () => {
@@ -350,7 +350,7 @@ describe("buildFilerDatabase", () => {
 			})
 		).rejects.toThrow(/malformed.*form499ID/i)
 
-		expect(await pathExists(out)).toBe(false)
+		await expect(pathExists(out)).resolves.toBe(false)
 	})
 
 	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / criterion 1)", async () => {
@@ -373,7 +373,7 @@ describe("buildFilerDatabase", () => {
 			})
 		).rejects.toThrow(/malformed.*lastFiledAt/i)
 
-		expect(await pathExists(out)).toBe(false)
+		await expect(pathExists(out)).resolves.toBe(false)
 	})
 
 	it("a blank provider-list frn is loud — never mints a shared degenerate FRN node", async () => {
@@ -395,7 +395,7 @@ describe("buildFilerDatabase", () => {
 			})
 		).rejects.toThrow(/malformed.*empty frn/i)
 
-		expect(await pathExists(out)).toBe(false)
+		await expect(pathExists(out)).resolves.toBe(false)
 	})
 
 	it("throws when neither a 499 nor a provider-list source is supplied", async () => {
@@ -497,7 +497,7 @@ describe("buildFilerDatabase", () => {
 			expect(first.edges).toBe(2)
 			expect(first.attributes).toBe(2)
 
-			expect(await pathExists(`${out}.prev`)).toBe(false)
+			await expect(pathExists(`${out}.prev`)).resolves.toBe(false)
 		})
 
 		it("two DIFFERENT classification values under the same key/source/vintage both survive (not collapsed by the stage PK)", async () => {
@@ -1034,15 +1034,15 @@ describe("buildFilerDatabase", () => {
 			}
 
 			it("byte-identical raw names score the ceiling — and the ceiling is below 1, because a shared name is evidence of identity, never proof", async () => {
-				expect(await scoreFor("Trailhead Broadband LLC", "Trailhead Broadband LLC")).toBe(0.9)
+				await expect(scoreFor("Trailhead Broadband LLC", "Trailhead Broadband LLC")).resolves.toBe(0.9)
 			})
 
 			it("raw names differing only in case/punctuation, same legal designation, score lower than byte-identical", async () => {
-				expect(await scoreFor("TRAILHEAD BROADBAND, LLC", "Trailhead Broadband LLC")).toBe(0.75)
+				await expect(scoreFor("TRAILHEAD BROADBAND, LLC", "Trailhead Broadband LLC")).resolves.toBe(0.75)
 			})
 
 			it("raw names differing in LEGAL DESIGNATION score weakest — canonicalization erased the only distinguishing part, and the abstention never sees this case", async () => {
-				expect(await scoreFor("American Broadband LLC", "American Broadband, Inc.")).toBe(0.5)
+				await expect(scoreFor("American Broadband LLC", "American Broadband, Inc.")).resolves.toBe(0.5)
 			})
 
 			it("the three cases are strictly ordered — a constant would collapse them", async () => {

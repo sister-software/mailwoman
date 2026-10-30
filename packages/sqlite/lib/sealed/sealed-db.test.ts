@@ -34,7 +34,7 @@ describe("sealDatabase", () => {
 		const path = await makeDB()
 		await sealDatabase(path)
 		expect((await statPath(path)).mode & 0o777).toBe(0o444)
-		expect(await isSealed(path)).toBe(true)
+		await expect(isSealed(path)).resolves.toBe(true)
 		using db = new DatabaseSync(path.toString(), { readOnly: true })
 		expect((db.prepare("PRAGMA journal_mode").get() as { journal_mode: string }).journal_mode).toBe("delete")
 	})
@@ -43,7 +43,7 @@ describe("sealDatabase", () => {
 		const path = await makeDB()
 		await sealDatabase(path)
 		await sealDatabase(path)
-		expect(await isSealed(path)).toBe(true)
+		await expect(isSealed(path)).resolves.toBe(true)
 	})
 })
 
@@ -85,7 +85,7 @@ describe("swapDatabaseIntoPlace", () => {
 		const swapped = new DatabaseSync(final.toString(), { readOnly: true })
 		expect((swapped.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("replacement")
 		swapped[Symbol.dispose]()
-		expect(await pathExists(`${final}.old-${process.pid}`)).toBe(false)
+		await expect(pathExists(`${final}.old-${process.pid}`)).resolves.toBe(false)
 	})
 
 	it("restores the prior version when the forward rename fails — the slot is never left empty", async () => {
@@ -96,7 +96,7 @@ describe("swapDatabaseIntoPlace", () => {
 		// moved aside — the exact crash window the restore closes.
 		await expect(swapDatabaseIntoPlace(missingTmp, final)).rejects.toThrow(/ENOENT/)
 
-		expect(await pathExists(final)).toBe(true)
+		await expect(pathExists(final)).resolves.toBe(true)
 		using restored = new DatabaseSync(final.toString(), { readOnly: true })
 		expect((restored.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("x")
 	})

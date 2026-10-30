@@ -152,9 +152,9 @@ describe("extractZipEntries", () => {
 		const written = await extractZipEntries(archive, destination)
 
 		expect(written.toSorted()).toEqual(["data/OSOpenRoads_HP.gml", "doc/licence.txt", "readme.txt"])
-		expect(await readLocalTextFile(destination("readme.txt"))).toBe("readme")
-		expect(await readLocalTextFile(destination("doc", "licence.txt"))).toBe("ogl")
-		expect(await readLocalTextFile(destination("data", "OSOpenRoads_HP.gml"))).toBe("<gml/>")
+		await expect(readLocalTextFile(destination("readme.txt"))).resolves.toBe("readme")
+		await expect(readLocalTextFile(destination("doc", "licence.txt"))).resolves.toBe("ogl")
+		await expect(readLocalTextFile(destination("data", "OSOpenRoads_HP.gml"))).resolves.toBe("<gml/>")
 	})
 
 	it("refuses a member with a .. segment and writes nothing outside the destination", async () => {

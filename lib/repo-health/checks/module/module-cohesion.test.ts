@@ -65,12 +65,12 @@ describe("module-cohesion", () => {
 	it("leaves a facade alone when each community reads a single specifier", async () => {
 		const context = await plant("packages/fixture/lib/facade.ts", ONE_SPECIFIER_EACH)
 
-		expect(await moduleCohesionCheck.run(context)).toEqual([])
+		await expect(moduleCohesionCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("does not inspect co-located test files", async () => {
 		const context = await plant("packages/fixture/lib/two.test.ts", TWO_RESPONSIBILITIES)
 
-		expect(await moduleCohesionCheck.run(context)).toEqual([])
+		await expect(moduleCohesionCheck.run(context)).resolves.toEqual([])
 	})
 })

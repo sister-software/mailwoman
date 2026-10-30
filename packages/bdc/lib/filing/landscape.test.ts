@@ -248,7 +248,7 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 6) as H3Cell
 		)
 
-		expect(await readLayerCoverage(schemadb, neverSurveyedRes6)).toBeNull()
+		await expect(readLayerCoverage(schemadb, neverSurveyedRes6)).resolves.toBeNull()
 
 		const knownOnly = await filingLandscape(db, { geoids: [GEOID_SF, GEOID_NY] })
 		const withUnknown = await filingLandscape(db, { geoids: [GEOID_SF, GEOID_NY, GEOID_UNKNOWN] })
@@ -298,10 +298,10 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 		const schemadb = writable
 		// Sanity: the builder did write this coverage row, at the cell the reader derives,
 		// so deleting it below is deliberate corruption rather than a pre-existing gap.
-		expect(await readLayerCoverage(schemadb, sfCoverageCell)).toBeDefined()
+		await expect(readLayerCoverage(schemadb, sfCoverageCell)).resolves.toBeDefined()
 
 		await schemadb.deleteFrom("layer_coverage").where("h3_cell", "=", sfCoverageCell).execute()
-		expect(await readLayerCoverage(schemadb, sfCoverageCell)).toBeNull()
+		await expect(readLayerCoverage(schemadb, sfCoverageCell)).resolves.toBeNull()
 
 		const result = await filingLandscape(writable, { geoids: [GEOID_SF, GEOID_NY] })
 
@@ -414,8 +414,8 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 
 		// The builder must write coverage under the unified derivation.
 		// The directly indexed res-6 cell is absent.
-		expect(await readLayerCoverage(schemadb, unifiedDerivation)).toBeDefined()
-		expect(await readLayerCoverage(schemadb, oldBuggyDerivation)).toBeNull()
+		await expect(readLayerCoverage(schemadb, unifiedDerivation)).resolves.toBeDefined()
+		await expect(readLayerCoverage(schemadb, oldBuggyDerivation)).resolves.toBeNull()
 
 		// End-to-end: this block must read back as surveyed with its own filing intact,
 		// so the surveyed count and the filings list agree.
@@ -444,7 +444,7 @@ describe("blockCentroidCells", () => {
 
 			expect(cells.h3Cell).toBe(row.h3_cell)
 			expect(cells.coverageCell).toBe(res9ShortCellToRes6Parent(row.h3_cell))
-			expect(await readLayerCoverage(db, cells.coverageCell)).toBeDefined()
+			await expect(readLayerCoverage(db, cells.coverageCell)).resolves.toBeDefined()
 		}
 	})
 
@@ -592,7 +592,7 @@ describe("filingLandscape — Check 4: vintage-or-throw", () => {
 		// `buildBDCDatabase` seals (chmod 0444), so unseal before deleting the manifest row:
 		// `openBuiltClient`'s `write: true` throws `SealedArtifactError` while still sealed.
 		await changeMode(corruptOut, 0o644)
-		expect(await pathExists(corruptOut)).toBe(true)
+		await expect(pathExists(corruptOut)).resolves.toBe(true)
 
 		using writable = await openBuiltClient<BDCDatabase>(corruptOut, { write: true })
 		await writable.deleteFrom("layer_manifest").execute()

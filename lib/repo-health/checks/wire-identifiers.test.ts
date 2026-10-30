@@ -93,6 +93,6 @@ describe("the wire-identifiers check", () => {
 	test("reports nothing on the current tree", async () => {
 		const context = await collectRepoContext()
 
-		expect(await wireIdentifiersCheck.run(context)).toEqual([])
+		await expect(wireIdentifiersCheck.run(context)).resolves.toEqual([])
 	})
 })

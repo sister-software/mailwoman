@@ -119,14 +119,14 @@ describe("assertBaselines", () => {
 
 describe("profiles", () => {
 	it("registers the arc's two models", async () => {
-		expect(await listProfiles()).toEqual(expect.arrayContaining(["v264", "v301"]))
+		await expect(listProfiles()).resolves.toEqual(expect.arrayContaining(["v264", "v301"]))
 	})
 
 	it("maps every profile metric to a baseline that exists", async () => {
 		// A profile pointing at a missing row would check no baseline while looking like it checked.
 		for (const name of await listProfiles()) {
 			for (const [metricKey, id] of Object.entries((await resolveProfile(name)).observe)) {
-				expect(await findBaseline(id), `profile ${name}.${metricKey} -> unknown baseline ${id}`).toBeDefined()
+				await expect(findBaseline(id), `profile ${name}.${metricKey} -> unknown baseline ${id}`).resolves.toBeDefined()
 			}
 		}
 	})

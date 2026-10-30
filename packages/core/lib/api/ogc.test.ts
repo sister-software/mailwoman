@@ -26,11 +26,13 @@ describe("readWFSFeatureCount", () => {
 	it("reads the count off the root element", async () => {
 		const body = '<wfs:FeatureCollection numberMatched="1274" numberReturned="0"/>'
 
-		expect(await readWFSFeatureCount(stubFetchingBodies(body), options)).toBe(1274)
+		await expect(readWFSFeatureCount(stubFetchingBodies(body), options)).resolves.toBe(1274)
 	})
 
 	it("reads a count of zero as a count, not as a missing attribute", async () => {
-		expect(await readWFSFeatureCount(stubFetchingBodies('<wfs:FeatureCollection numberMatched="0"/>'), options)).toBe(0)
+		await expect(
+			readWFSFeatureCount(stubFetchingBodies('<wfs:FeatureCollection numberMatched="0"/>'), options)
+		).resolves.toBe(0)
 	})
 
 	it('refuses numberMatched="unknown" by naming it, since declining to count is not a count of none', async () => {

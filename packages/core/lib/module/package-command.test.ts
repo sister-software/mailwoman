@@ -44,9 +44,9 @@ describe("resolvePackageCommand", () => {
 		await writeLocalTextFile("", directory("lib", "index.js"))
 		await writeLocalTextFile("", directory("bin", "tool.js"))
 
-		expect(
-			await resolvePackageCommand(pathToFileURL(scratch.path("caller.ts")).href, "@fixture/nested", "tool")
-		).toEqual({
+		await expect(
+			resolvePackageCommand(pathToFileURL(scratch.path("caller.ts")).href, "@fixture/nested", "tool")
+		).resolves.toEqual({
 			file: process.execPath,
 			argv: [directory("bin", "tool.js").toString()],
 		})
@@ -66,7 +66,7 @@ describe("resolvePackageCommand", () => {
 
 		const base = pathToFileURL(project("src", "caller.ts")).href
 
-		expect(await resolvePackageCommand(base, "@fixture/tool", "tool")).toEqual({
+		await expect(resolvePackageCommand(base, "@fixture/tool", "tool")).resolves.toEqual({
 			file: process.execPath,
 			argv: [`${nested}/bin/nested launcher.cjs`],
 		})
@@ -83,7 +83,7 @@ describe("resolvePackageCommand", () => {
 
 		const base = pathToFileURL(scratch.path("caller.ts")).href
 
-		expect(await resolvePackageCommand(base, "@fixture/tool", "tool")).toEqual({
+		await expect(resolvePackageCommand(base, "@fixture/tool", "tool")).resolves.toEqual({
 			file: process.execPath,
 			argv: [`${packageRoot}/bin/tool`],
 		})
@@ -94,7 +94,7 @@ describe("resolvePackageCommand", () => {
 		const packageRoot = await installFixture(scratch.path, "bin/tool.js", { "bin/tool.js": "// launcher\n" })
 		const base = pathToFileURL(scratch.path("caller.ts")).href
 
-		expect(await resolvePackageCommand(base, "@fixture/tool", "tool")).toEqual({
+		await expect(resolvePackageCommand(base, "@fixture/tool", "tool")).resolves.toEqual({
 			file: process.execPath,
 			argv: [`${packageRoot}/bin/tool.js`],
 		})
@@ -109,7 +109,7 @@ describe("resolvePackageCommand", () => {
 		const packageRoot = await installFixture(scratch.path, { tool: "bin/tool" }, { "bin/tool": "#!/bin/sh\n" })
 		const base = pathToFileURL(scratch.path("caller.ts")).href
 
-		expect(await resolvePackageCommand(base, "@fixture/tool", "tool")).toEqual({
+		await expect(resolvePackageCommand(base, "@fixture/tool", "tool")).resolves.toEqual({
 			file: `${packageRoot}/bin/tool`,
 			argv: [],
 		})

@@ -65,7 +65,7 @@ describe("GitClient", () => {
 		expect(result.exitCode).toBe(0)
 		expect(steps.length).toBeGreaterThan(0)
 		expect(steps[0]!.command).toContain("clone")
-		expect(await new GitClient({ cwd: scratch.path("copy") }).head()).toBe(await originRepo.head())
+		await expect(new GitClient({ cwd: scratch.path("copy") }).head()).resolves.toBe(await originRepo.head())
 	})
 
 	it("keeps the leading status column of the first porcelain line", async () => {
@@ -79,7 +79,7 @@ describe("GitClient", () => {
 		await client.read([...IDENTITY, "commit", "--quiet", "-m", "seed"])
 		await writeLocalTextFile("b\n", scratch.path("tracked"))
 
-		expect(await client.status([], { untracked: false })).toEqual([" M tracked"])
+		await expect(client.status([], { untracked: false })).resolves.toEqual([" M tracked"])
 	})
 
 	it("rejects a read after disposal", async () => {

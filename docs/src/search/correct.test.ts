@@ -27,12 +27,12 @@ describe("damerauLevenshtein", () => {
 
 describe("correctTokens", () => {
 	test("replaces a transposed token with the vocabulary term", async () => {
-		expect(await correctTokens(db, ["vitrebi"])).toEqual(["viterbi"])
+		await expect(correctTokens(db, ["vitrebi"])).resolves.toEqual(["viterbi"])
 	})
 
 	test("corrects only the tokens that need it", async () => {
 		// The vocabulary holds stemmed terms, so `grammer` corrects to `grammar` and `viterbi` stays.
-		expect(await correctTokens(db, ["viterbi", "grammer"])).toEqual(["viterbi", "grammar"])
+		await expect(correctTokens(db, ["viterbi", "grammer"])).resolves.toEqual(["viterbi", "grammar"])
 	})
 
 	test("accepts one edit only for a token under six characters", async () => {
@@ -45,16 +45,16 @@ describe("correctTokens", () => {
 		)
 
 		expect(proposed.map((row) => row.term)).toContain("tier")
-		expect(await correctTokens(db, ["tiexx"])).toBeNull()
-		expect(await correctTokens(db, ["tierr"])).toEqual(["tier"])
-		expect(await correctTokens(db, ["tierxx"])).toEqual(["tier"])
+		await expect(correctTokens(db, ["tiexx"])).resolves.toBeNull()
+		await expect(correctTokens(db, ["tierr"])).resolves.toEqual(["tier"])
+		await expect(correctTokens(db, ["tierxx"])).resolves.toEqual(["tier"])
 	})
 
 	test("returns null when no token has a close term", async () => {
-		expect(await correctTokens(db, ["zzzzzzz"])).toBeNull()
+		await expect(correctTokens(db, ["zzzzzzz"])).resolves.toBeNull()
 	})
 
 	test("leaves a token under three characters as typed", async () => {
-		expect(await correctTokens(db, ["ab"])).toBeNull()
+		await expect(correctTokens(db, ["ab"])).resolves.toBeNull()
 	})
 })

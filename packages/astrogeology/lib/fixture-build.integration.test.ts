@@ -58,7 +58,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 	expect(features[0]?.bbox?.minLon).toBeCloseTo(-0.8023, 4)
 	expect(features[0]?.bbox?.maxLon).toBeCloseTo(0.1643, 4)
 
-	expect(await writeNomenclatureNDJSON(features, ndjson)).toBe(5)
+	await expect(writeNomenclatureNDJSON(features, ndjson)).resolves.toBe(5)
 
 	const { command } = await buildNomenclaturePMTiles({ body: "moon", ndjsonPath: ndjson, outPath: out })
 
@@ -81,7 +81,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 	// (Provides-Ballot H → Provides Ballot H).
 	const index = resolvePath(scratch.path, "moon-search.ancestrie")
 
-	expect(await buildSearchIndex(features, index)).toBe(6)
+	await expect(buildSearchIndex(features, index)).resolves.toBe(6)
 
 	const trie = Ancestrie.from(await readLocalBuffer(index))
 	const { suggestions } = autocomplete(trie, nomenclatureTokens("tych"))

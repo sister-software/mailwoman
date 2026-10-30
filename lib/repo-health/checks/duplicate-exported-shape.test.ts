@@ -103,7 +103,7 @@ describe("findDuplicateShapes", () => {
 			"packages/c/lib/x.test.ts": "export interface Pair { a: string; b: string }\n",
 		})
 
-		expect(await findDuplicateShapes(context)).toEqual([])
+		await expect(findDuplicateShapes(context)).resolves.toEqual([])
 	})
 
 	it("keeps a generic apart from its plain twin", async () => {
@@ -112,7 +112,7 @@ describe("findDuplicateShapes", () => {
 			"packages/b/lib/y.ts": "export interface Box { value: T; label: string }\n",
 		})
 
-		expect(await findDuplicateShapes(context)).toEqual([])
+		await expect(findDuplicateShapes(context)).resolves.toEqual([])
 	})
 
 	it("gives the check one diagnostic per shape, carrying the first site and listing the rest", async () => {

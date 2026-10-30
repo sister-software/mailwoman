@@ -136,7 +136,9 @@ describe("the header check over the publisher's semicolons", () => {
 
 		await writeLocalFile(`${BYTE_ORDER_MARK}rue;numero;localite;code_postal;id_caclr_rue;id_geoportail\n`, path)
 
-		expect(await readDelimitedHeader(path)).toEqual(["rue;numero;localite;code_postal;id_caclr_rue;id_geoportail"])
+		await expect(readDelimitedHeader(path)).resolves.toEqual([
+			"rue;numero;localite;code_postal;id_caclr_rue;id_geoportail",
+		])
 	})
 })
 

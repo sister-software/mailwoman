@@ -102,14 +102,14 @@ describe("the declaration routes", () => {
 		const credentials = { lid: sent.lid, secret: sent.refreshSecret }
 		const near = await app({ now: Date.UTC(2026, 10, 10) })
 
-		expect(await (await near.post("/v1/licenses/refresh", credentials)).json()).toMatchObject({
+		await expect((await near.post("/v1/licenses/refresh", credentials)).json()).resolves.toMatchObject({
 			status: "active",
 			token: sent.token,
 		})
 
 		const after = await app({ now: Date.UTC(2026, 10, 21) })
 
-		expect(await (await after.post("/v1/licenses/refresh", credentials)).json()).toEqual({ status: "lapsed" })
+		await expect((await after.post("/v1/licenses/refresh", credentials)).json()).resolves.toEqual({ status: "lapsed" })
 	})
 
 	it("declare: an academic declaration answers a claim, and the claim route reports delivery without the token", async () => {
@@ -150,12 +150,12 @@ describe("the declaration routes", () => {
 		const first = await a.post("/v1/evaluations", body)
 
 		expect(first.status).toBe(200)
-		expect(await first.json()).toMatchObject({ status: "pending" })
+		await expect(first.json()).resolves.toMatchObject({ status: "pending" })
 
 		const second = await a.post("/v1/evaluations", body)
 
 		expect(second.status).toBe(409)
-		expect(await second.json()).toEqual({ error: "evaluation exists" })
+		await expect(second.json()).resolves.toEqual({ error: "evaluation exists" })
 		expect(a.sent).toHaveLength(1)
 		expect(a.sent[0]).toMatchObject({ intent: "evaluation", expires: "2026-11-20" })
 	})
@@ -174,9 +174,11 @@ describe("the declaration routes", () => {
 		const early = await a.post("/v1/licenses/refresh", { lid: issued.lid, secret: issued.secret })
 
 		expect(early.status).toBe(200)
-		expect(await early.json()).toMatchObject({ status: "active", token: issued.token })
+		await expect(early.json()).resolves.toMatchObject({ status: "active", token: issued.token })
 
-		expect(await (await a.post("/v1/license-status", { lid: issued.lid })).json()).toEqual({ status: "active" })
+		await expect((await a.post("/v1/license-status", { lid: issued.lid })).json()).resolves.toEqual({
+			status: "active",
+		})
 
 		const wrong = await a.post("/v1/licenses/refresh", { lid: issued.lid, secret: "x".repeat(43) })
 

@@ -48,7 +48,7 @@ describe.skipIf(!assets)("NeuralAddressClassifier trace on the packaged weights"
 		const { localeCountry: _localeCountry, ...built } = tree
 
 		expect(buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry })).toEqual(built)
-		expect(await cls.parse(address)).toEqual(tree)
+		await expect(cls.parse(address)).resolves.toEqual(tree)
 	})
 
 	it.each(ADDRESSES)("explains %s with terms that sum to the decoder's score and each margin", async (address) => {

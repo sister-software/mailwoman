@@ -214,7 +214,9 @@ describe("GitHub MCP tools", () => {
 			{ run }
 		)
 
-		expect(await tool.handler({ action: "complete", issue_number: 2365, pull_request_number: 2400 })).toMatchObject({
+		await expect(
+			tool.handler({ action: "complete", issue_number: 2365, pull_request_number: 2400 })
+		).resolves.toMatchObject({
 			handoff_ready: true,
 		})
 
@@ -260,7 +262,7 @@ describe("GitHub MCP tools", () => {
 		expect(calls[0]).toContain("--body")
 		expect(calls[0]).not.toContain("--body-file")
 		expect(createdBody).toContain("<!-- todo-sync:begin -->\n- [ ] The test passes.\n<!-- todo-sync:end -->")
-		expect(await readLocalTextFile(cwd(".claude", "state", "linked-issue"))).toBe("2365\n")
+		await expect(readLocalTextFile(cwd(".claude", "state", "linked-issue"))).resolves.toBe("2365\n")
 	})
 
 	it("refuses PR creation while the linked issue has an incomplete task", async () => {
@@ -410,7 +412,7 @@ describe("GitHub MCP tools", () => {
 
 		await expect(resolveCheckout(repo, other)).rejects.toThrow(/is not a checkout of the repository/)
 		await expect(resolveCheckout(repo, "relative/path")).rejects.toThrow(/absolute path/)
-		expect(await resolveCheckout(repo)).toBe(repo)
+		await expect(resolveCheckout(repo)).resolves.toBe(repo)
 	})
 })
 

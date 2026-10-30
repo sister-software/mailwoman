@@ -71,13 +71,13 @@ describe.skipIf(!classifier)("venue-structure confound board", () => {
 
 	for (const row of rows.filter((r) => !r.xfail)) {
 		test(`[${row.class}] emits no ${row.must_not}: ${row.raw}`, async () => {
-			expect(await emitted(row)).toBeNull()
+			await expect(emitted(row)).resolves.toBeNull()
 		})
 	}
 
 	for (const row of rows.filter((r) => r.xfail)) {
 		test.fails(`[${row.class}] XFAIL (${row.xfail}): ${row.raw}`, async () => {
-			expect(await emitted(row)).toBeNull()
+			await expect(emitted(row)).resolves.toBeNull()
 		})
 	}
 })

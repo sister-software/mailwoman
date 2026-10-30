@@ -104,7 +104,7 @@ describe("buildDEFragmentBoard", () => {
 		expect(board[1]!.id).toBe("ovt-de-bare-locality-00000")
 		expect(counts.get("admin-street-homonym")).toBe(0)
 
-		expect(await readLocalTextFile(scratch.path("board", "overture-fragments-de.surfaces.txt"))).toBe(
+		await expect(readLocalTextFile(scratch.path("board", "overture-fragments-de.surfaces.txt"))).resolves.toBe(
 			"an der isar\nbad homburger weg\nfrankfurt\nmünchen\nstraße des 17 juni\n"
 		)
 	})

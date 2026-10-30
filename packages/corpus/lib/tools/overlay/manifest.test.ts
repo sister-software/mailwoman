@@ -310,7 +310,7 @@ describe("assembleOverlayManifest", () => {
 			})
 		).rejects.toThrow(/corpus source rendered-gb reads register source gb-property-building-1 .*refused/s)
 
-		expect(await pathExists(scratch.path(OVERLAY_PLAN_FILE))).toBe(false)
+		await expect(pathExists(scratch.path(OVERLAY_PLAN_FILE))).resolves.toBe(false)
 	})
 
 	it("refuses a base whose files name no source when its manifest carries no rights record", async () => {

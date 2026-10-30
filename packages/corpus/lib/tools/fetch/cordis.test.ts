@@ -60,7 +60,7 @@ describe("readCORDISArchiveHead", () => {
 	it("reads the two headers the re-run check compares", async () => {
 		await using client = stubClient([{ headers: H2020_HEAD }])
 
-		expect(await readCORDISArchiveHead(client, "h2020")).toEqual({
+		await expect(readCORDISArchiveHead(client, "h2020")).resolves.toEqual({
 			lastModified: "Tue, 22 Sep 2026 07:46:58 GMT",
 			contentLength: 55_219_250,
 		})
@@ -69,7 +69,7 @@ describe("readCORDISArchiveHead", () => {
 	it("reports a header the host does not send as null", async () => {
 		await using client = stubClient([{ headers: {} }])
 
-		expect(await readCORDISArchiveHead(client, "fp7")).toEqual({ lastModified: null, contentLength: null })
+		await expect(readCORDISArchiveHead(client, "fp7")).resolves.toEqual({ lastModified: null, contentLength: null })
 	})
 })
 
@@ -105,8 +105,8 @@ describe("isCORDISArchiveCurrent", () => {
 		const { recorded, path } = await recordRun(scratch.path, "PK archive")
 		const head = { lastModified: recorded.last_modified, contentLength: recorded.bytes }
 
-		expect(await isCORDISArchiveCurrent(recorded, head, path, false)).toBe(true)
-		expect(await isCORDISArchiveCurrent(recorded, head, path, true)).toBe(true)
+		await expect(isCORDISArchiveCurrent(recorded, head, path, false)).resolves.toBe(true)
+		await expect(isCORDISArchiveCurrent(recorded, head, path, true)).resolves.toBe(true)
 	})
 
 	it("refuses an archive the host republished, by either header", async () => {
@@ -114,18 +114,18 @@ describe("isCORDISArchiveCurrent", () => {
 
 		const { recorded, path } = await recordRun(scratch.path, "PK archive")
 
-		expect(
-			await isCORDISArchiveCurrent(
+		await expect(
+			isCORDISArchiveCurrent(
 				recorded,
 				{ lastModified: "Thu, 01 Oct 2026 07:46:58 GMT", contentLength: recorded.bytes },
 				path,
 				false
 			)
-		).toBe(false)
+		).resolves.toBe(false)
 
-		expect(
-			await isCORDISArchiveCurrent(recorded, { lastModified: recorded.last_modified, contentLength: 1 }, path, false)
-		).toBe(false)
+		await expect(
+			isCORDISArchiveCurrent(recorded, { lastModified: recorded.last_modified, contentLength: 1 }, path, false)
+		).resolves.toBe(false)
 	})
 
 	it("refuses when the host states neither header, or the manifest records nothing", async () => {
@@ -133,11 +133,13 @@ describe("isCORDISArchiveCurrent", () => {
 
 		const { recorded, path } = await recordRun(scratch.path, "PK archive")
 
-		expect(await isCORDISArchiveCurrent(recorded, { lastModified: null, contentLength: null }, path, false)).toBe(false)
+		await expect(
+			isCORDISArchiveCurrent(recorded, { lastModified: null, contentLength: null }, path, false)
+		).resolves.toBe(false)
 
-		expect(
-			await isCORDISArchiveCurrent(null, { lastModified: recorded.last_modified, contentLength: 10 }, path, false)
-		).toBe(false)
+		await expect(
+			isCORDISArchiveCurrent(null, { lastModified: recorded.last_modified, contentLength: 10 }, path, false)
+		).resolves.toBe(false)
 	})
 
 	it("refuses an archive whose file on disk is not the recorded length", async () => {
@@ -147,14 +149,14 @@ describe("isCORDISArchiveCurrent", () => {
 
 		await writeLocalFile("PK", path)
 
-		expect(
-			await isCORDISArchiveCurrent(
+		await expect(
+			isCORDISArchiveCurrent(
 				recorded,
 				{ lastModified: recorded.last_modified, contentLength: recorded.bytes },
 				path,
 				false
 			)
-		).toBe(false)
+		).resolves.toBe(false)
 	})
 })
 
@@ -182,7 +184,7 @@ describe("downloadCORDIS", () => {
 		expect(summary).toMatchObject({ fetched: 0, skipped: 1, failed: 0 })
 		// Only the HEAD.
 		expect(client.calls).toHaveLength(1)
-		expect(await readLocalTextFile(path)).toBe("PK archive")
+		await expect(readLocalTextFile(path)).resolves.toBe("PK archive")
 	})
 
 	it("reports a programme whose HEAD fails and writes the manifest it already holds", async () => {
@@ -193,6 +195,6 @@ describe("downloadCORDIS", () => {
 		const summary = await downloadCORDIS(client, { outputDir: scratch.path, programmes: ["fp7"] })
 
 		expect(summary).toMatchObject({ fetched: 0, skipped: 0, failed: 1, failedCodes: ["fp7"] })
-		expect(await readLocalTextFile(scratch.path("MANIFEST.json"))).toContain('"license": "CC-BY-4.0"')
+		await expect(readLocalTextFile(scratch.path("MANIFEST.json"))).resolves.toContain('"license": "CC-BY-4.0"')
 	})
 })

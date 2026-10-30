@@ -53,7 +53,7 @@ describe("putRun / getRun", () => {
 	})
 
 	it("returns null for a run that is not there", async () => {
-		expect(await getRun("missing", await store())).toBeNull()
+		await expect(getRun("missing", await store())).resolves.toBeNull()
 	})
 
 	it("returns null rather than throwing on a corrupt file", async () => {
@@ -61,7 +61,7 @@ describe("putRun / getRun", () => {
 
 		await writeLocalTextFile('{"run_id":"half"', dir("half.json"))
 
-		expect(await getRun("half", dir)).toBeNull()
+		await expect(getRun("half", dir)).resolves.toBeNull()
 	})
 })
 
@@ -100,7 +100,7 @@ describe("listRuns", () => {
 		await putRun(run("good"), dir)
 		await writeLocalTextFile("notes", dir("README.txt"))
 
-		expect(await listRuns(dir)).toHaveLength(1)
+		await expect(listRuns(dir)).resolves.toHaveLength(1)
 	})
 })
 
@@ -125,7 +125,7 @@ describe("pruneRuns — the retention rule", () => {
 		await putRun(run("undated", { created_at: "whenever" }), dir)
 
 		expect((await pruneRuns(NOW, dir)).pruned_by_age).toEqual(["undated"])
-		expect(await listRuns(dir)).toHaveLength(0)
+		await expect(listRuns(dir)).resolves.toHaveLength(0)
 	})
 
 	it("applies the count ceiling to runs the age rule kept", async () => {
@@ -159,7 +159,7 @@ describe("pruneRuns — the retention rule", () => {
 		await putRun(run("stale", { created_at: daysAgo(RETENTION_DAYS + 1) }), dir)
 		await pruneRuns(NOW, dir)
 
-		expect(await Globerator.from("*", { cwd: dir }).toArray()).toEqual([])
+		await expect(Globerator.from("*", { cwd: dir }).toArray()).resolves.toEqual([])
 	})
 
 	it("does NOT prune on a fingerprint mismatch", async () => {
@@ -178,7 +178,7 @@ describe("pruneRuns — the retention rule", () => {
 	})
 
 	it("is a no-op on a store that does not exist yet", async () => {
-		expect(await pruneRuns(NOW, (await store())("never-created"))).toEqual({
+		await expect(pruneRuns(NOW, (await store())("never-created"))).resolves.toEqual({
 			pruned_by_age: [],
 			pruned_by_count: [],
 			kept: 0,

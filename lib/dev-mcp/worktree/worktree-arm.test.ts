@@ -135,7 +135,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 
 		await runWorktreeArm({ repoRoot: root, ref: WORKING_TREE_REF, inputs: ["x"], options: OPTIONS })
 
-		expect(await pathExists(root(".mwdev-arm-runner.ts"))).toBe(false)
+		await expect(pathExists(root(".mwdev-arm-runner.ts"))).resolves.toBe(false)
 	})
 
 	it("removes the runner even when the child throws", async () => {
@@ -150,7 +150,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 			runWorktreeArm({ repoRoot: root, ref: WORKING_TREE_REF, inputs: ["x"], options: OPTIONS })
 		).rejects.toThrow(/boom|Command failed/)
 
-		expect(await pathExists(root(".mwdev-arm-runner.ts"))).toBe(false)
+		await expect(pathExists(root(".mwdev-arm-runner.ts"))).resolves.toBe(false)
 	})
 })
 
@@ -176,9 +176,12 @@ describe("runWorktreeArm — cleanup", () => {
 
 		expect(gitSync(["status", "--porcelain"], { cwd: root })).toBe(before)
 		expect(gitSync(["rev-parse", "HEAD"], { cwd: root })).toBe(head)
+
 		// A stash-based arm would have moved these.
 		// Worktree creation leaves these entries unchanged.
-		expect(await Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false }).toArray()).toContain("packages")
+		await expect(Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false }).toArray()).resolves.toContain(
+			"packages"
+		)
 	})
 })
 

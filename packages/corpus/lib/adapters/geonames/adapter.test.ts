@@ -130,7 +130,7 @@ describe("geonames adapter", () => {
 		])
 
 		expect((await collect(p, { country: "US" })).every((r) => r.country === "US")).toBe(true)
-		expect(await collect(p, { limit: 1 })).toHaveLength(1)
+		await expect(collect(p, { limit: 1 })).resolves.toHaveLength(1)
 	})
 
 	it("degrades gracefully when the region/country name files are absent (locality only)", async () => {

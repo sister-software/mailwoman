@@ -160,7 +160,7 @@ describe("ancestorIdentity — the four states", () => {
 
 		manifested(root("admin.db"), "admin-global-priority", "2026-08-17.0")
 
-		expect(await ancestorIdentity(root("admin.db"))).toBe("admin-global-priority@2026-08-17.0")
+		await expect(ancestorIdentity(root("admin.db"))).resolves.toBe("admin-global-priority@2026-08-17.0")
 	})
 
 	it("says the ancestor PREDATES the interface, which is the live state today", async () => {
@@ -171,12 +171,12 @@ describe("ancestorIdentity — the four states", () => {
 
 		db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY)")
 
-		expect(await ancestorIdentity(root("admin.db"))).toContain("predates the layer interface")
+		await expect(ancestorIdentity(root("admin.db"))).resolves.toContain("predates the layer interface")
 	})
 
 	it("distinguishes a MISSING ancestor from an unmanifested one", async () => {
 		// Different repairs: one needs a rebuild of the ancestor, the other needs the ancestor.
-		expect(await ancestorIdentity((await scratchDirectory())("nope.db"))).toContain("not found")
+		await expect(ancestorIdentity((await scratchDirectory())("nope.db"))).resolves.toContain("not found")
 	})
 
 	it("reports an unreadable ancestor rather than throwing mid-build", async () => {
@@ -184,7 +184,7 @@ describe("ancestorIdentity — the four states", () => {
 
 		await writeLocalTextFile("not a database", root("admin.db"))
 
-		expect(await ancestorIdentity(root("admin.db"))).toMatch(/^unknown \(/)
+		await expect(ancestorIdentity(root("admin.db"))).resolves.toMatch(/^unknown \(/)
 	})
 
 	it("never returns a bare filename, which would look like provenance", async () => {

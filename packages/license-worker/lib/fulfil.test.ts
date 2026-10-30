@@ -134,8 +134,12 @@ describe("fulfillment", () => {
 	it("mints one token for a paid invoice on an allowlisted Price, with expires = period end + 14 days, and emails it once", async () => {
 		const { env: worker, publicKeyPEM, kid, deps } = await fixture("1")
 
-		expect(await fulfilInvoice(worker, deps, "in_1")).toMatchObject({ result: "minted", invoiceID: "in_1" })
-		expect(await fulfilInvoice(worker, deps, "in_1")).toMatchObject({ result: "already_minted", invoiceID: "in_1" })
+		await expect(fulfilInvoice(worker, deps, "in_1")).resolves.toMatchObject({ result: "minted", invoiceID: "in_1" })
+
+		await expect(fulfilInvoice(worker, deps, "in_1")).resolves.toMatchObject({
+			result: "already_minted",
+			invoiceID: "in_1",
+		})
 
 		const row = await findToken(deps.ledger, "in_1")
 
@@ -159,23 +163,25 @@ describe("fulfillment", () => {
 	it("refuses an invoice whose Price is not in the catalog, and mints nothing", async () => {
 		const { env: worker, deps } = await fixture("2", { priceID: "price_other" })
 
-		expect(await fulfilInvoice(worker, deps, "in_2")).toMatchObject({
+		await expect(fulfilInvoice(worker, deps, "in_2")).resolves.toMatchObject({
 			result: "refused",
 			reason: expect.stringContaining("price_other"),
 		})
 
-		expect(await findToken(deps.ledger, "in_2")).toBeNull()
+		await expect(findToken(deps.ledger, "in_2")).resolves.toBeNull()
 	})
 
 	it("refuses to mint when issuance is disabled and when the invoice is not paid", async () => {
 		const disabled = await fixture("3", { issuance: false, status: "open" })
 
-		expect(await fulfilInvoice(disabled.env, disabled.deps, "in_3")).toMatchObject({
+		await expect(fulfilInvoice(disabled.env, disabled.deps, "in_3")).resolves.toMatchObject({
 			result: "refused",
 			reason: expect.stringContaining("disabled"),
 		})
 
-		expect(await fulfilInvoice({ ...disabled.env, issuanceEnabled: true }, disabled.deps, "in_3")).toMatchObject({
+		await expect(
+			fulfilInvoice({ ...disabled.env, issuanceEnabled: true }, disabled.deps, "in_3")
+		).resolves.toMatchObject({
 			result: "refused",
 			reason: expect.stringContaining("open"),
 		})
@@ -200,7 +206,7 @@ describe("fulfillment", () => {
 		const license = await findLicenseBySubscription(deps.ledger, "sub_4")
 
 		expect(license?.licensee).toBe("Late Checkout Ltd")
-		expect(await countTokens(deps.ledger, license!.lid)).toBe(1)
+		await expect(countTokens(deps.ledger, license!.lid)).resolves.toBe(1)
 		expect(sent).toHaveLength(1)
 	})
 
@@ -222,7 +228,7 @@ describe("fulfillment", () => {
 		)
 
 		expect((await findLicenseBySubscription(deps.ledger, "sub_5"))?.license_state).toBe("revoked")
-		expect(await findToken(deps.ledger, "in_5")).toBeDefined()
+		await expect(findToken(deps.ledger, "in_5")).resolves.toBeDefined()
 	})
 
 	it("a retry that finds the token with its email still pending sends it, once, under the invoice id", async () => {
@@ -231,7 +237,7 @@ describe("fulfillment", () => {
 		await fulfilInvoice(worker, deps, "in_6")
 		await setEmailState(deps.ledger, "in_6", "pending")
 
-		expect(await fulfilInvoice(worker, deps, "in_6")).toMatchObject({ result: "already_minted" })
+		await expect(fulfilInvoice(worker, deps, "in_6")).resolves.toMatchObject({ result: "already_minted" })
 		expect((await findToken(deps.ledger, "in_6"))?.email_state).toBe("sent")
 		expect(sent.map((entry) => entry.idempotencyKey)).toEqual(["in_6", "in_6"])
 	})
@@ -258,7 +264,7 @@ describe("fulfillment", () => {
 		const bare = await fixture("7n", { agreementVersion: null })
 
 		await expect(fulfilInvoice(bare.env, bare.deps, "in_7n")).rejects.toThrow(/agreement_version/u)
-		expect(await findToken(bare.deps.ledger, "in_7n")).toBeNull()
+		await expect(findToken(bare.deps.ledger, "in_7n")).resolves.toBeNull()
 	})
 
 	it("two mints racing for one invoice leave one token and both answer; two checkouts racing for one subscription leave one row", async () => {
@@ -270,7 +276,7 @@ describe("fulfillment", () => {
 
 		const license = await findLicenseBySubscription(deps.ledger, "sub_9")
 
-		expect(await countTokens(deps.ledger, license!.lid)).toBe(1)
+		await expect(countTokens(deps.ledger, license!.lid)).resolves.toBe(1)
 		expect(sent.length).toBeGreaterThanOrEqual(1)
 
 		const racing = await fixture("9r")
@@ -300,7 +306,7 @@ describe("fulfillment", () => {
 
 		await handleStripeEvent(worker, during, subscriptionDeletedEvent({ id: "evt_8d", subscriptionID: "sub_8" }))
 
-		expect(await findLicenseBySubscription(deps.ledger, "sub_8")).toMatchObject({
+		await expect(findLicenseBySubscription(deps.ledger, "sub_8")).resolves.toMatchObject({
 			license_state: "active",
 			subscription_state: "canceled",
 		})

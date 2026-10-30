@@ -455,7 +455,7 @@ describe("findRescoreCandidate", () => {
 			node({ tag: "street_suffix", value: "Ave", start: 8, end: 11, confidence: 0.95 }),
 		]
 
-		expect(await findRescoreCandidate(raw, roots, await makeBackend(), { thresholdKm: 0 })).toBeNull()
+		await expect(findRescoreCandidate(raw, roots, await makeBackend(), { thresholdKm: 0 })).resolves.toBeNull()
 	})
 
 	it(": a span CONTAINING a confident street suffix is probed — the suffix is one token of a longer name", async () => {

@@ -82,7 +82,7 @@ describe("readVlaanderenFeatureCount", () => {
 	it("asks past index 0, because a bare hits request answers the service's cap", async () => {
 		const client = stubClient([collection('numberMatched="4563062" numberReturned="0"')])
 
-		expect(await readVlaanderenFeatureCount(client, "ad:Address")).toBe(4_563_062)
+		await expect(readVlaanderenFeatureCount(client, "ad:Address")).resolves.toBe(4_563_062)
 		expect(client.asked[0]).toMatchObject({ resultType: "hits", startIndex: "1" })
 	})
 

@@ -56,7 +56,7 @@ describe("readGLEIFLatestPublish", () => {
 	it("reads the Level 1 CSV file the API names", async () => {
 		await using client = stubClient([{ body: PUBLISH_BODY }])
 
-		expect(await readGLEIFLatestPublish(client)).toEqual({
+		await expect(readGLEIFLatestPublish(client)).resolves.toEqual({
 			publishDate: "2026-10-03 08:00:00",
 			url: ARCHIVE_URL,
 			bytes: 507_006_221,
@@ -124,16 +124,16 @@ describe("isGLEIFArchiveCurrent", () => {
 			attribution: "",
 		}
 
-		expect(await isGLEIFArchiveCurrent(recorded, PUBLISHED, path, true)).toBe(true)
+		await expect(isGLEIFArchiveCurrent(recorded, PUBLISHED, path, true)).resolves.toBe(true)
 
-		expect(
-			await isGLEIFArchiveCurrent(recorded, { ...PUBLISHED, publishDate: "2026-10-03 16:00:00" }, path, false)
-		).toBe(false)
+		await expect(
+			isGLEIFArchiveCurrent(recorded, { ...PUBLISHED, publishDate: "2026-10-03 16:00:00" }, path, false)
+		).resolves.toBe(false)
 
-		expect(await isGLEIFArchiveCurrent(null, PUBLISHED, path, false)).toBe(false)
+		await expect(isGLEIFArchiveCurrent(null, PUBLISHED, path, false)).resolves.toBe(false)
 
 		await writeLocalFile("", path)
 
-		expect(await isGLEIFArchiveCurrent(recorded, PUBLISHED, path, false)).toBe(false)
+		await expect(isGLEIFArchiveCurrent(recorded, PUBLISHED, path, false)).resolves.toBe(false)
 	})
 })

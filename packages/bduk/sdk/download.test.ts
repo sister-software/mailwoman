@@ -75,8 +75,14 @@ describe("downloadBDUKRegion", () => {
 		})
 
 		expect(sha256Hex(await readLocalBuffer(report.archive))).toBe(report.sha256)
-		expect(await readLocalTextFile(scratch.path("2026-05", "test", BDUK_EXTRACTED_DIRECTORY, MEMBER))).toBe(text)
-		expect(await pathExists(scratch.path("2026-05", "test", BDUK_EXTRACTED_DIRECTORY, "notes.txt"))).toBe(false)
+
+		await expect(readLocalTextFile(scratch.path("2026-05", "test", BDUK_EXTRACTED_DIRECTORY, MEMBER))).resolves.toBe(
+			text
+		)
+
+		await expect(pathExists(scratch.path("2026-05", "test", BDUK_EXTRACTED_DIRECTORY, "notes.txt"))).resolves.toBe(
+			false
+		)
 	})
 
 	test("reuses an archive already on disk without a transfer and hashes the bytes it holds", async () => {
@@ -115,7 +121,9 @@ describe("downloadBDUKRegion", () => {
 			`bduk download: ${URL_OF_ARCHIVE} gave ${archive.length} bytes where the content item states ${archive.length + 1}; the archive was removed.`
 		)
 
-		expect(await pathExists(scratch.path("2026-05", "test", "2026-09-10_zipped_files_release_test.zip"))).toBe(false)
+		await expect(pathExists(scratch.path("2026-05", "test", "2026-09-10_zipped_files_release_test.zip"))).resolves.toBe(
+			false
+		)
 	})
 
 	test("a refused request and an archive without a CSV file throw", async () => {

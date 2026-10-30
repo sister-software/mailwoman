@@ -28,7 +28,7 @@ describe("DatabaseClient construction", () => {
 		await createFixtureTable(db)
 		await db.insertInto("fixture").values({ id: 1 }).execute()
 
-		expect(await db.selectFrom("fixture").selectAll().execute()).toEqual([{ id: 1 }])
+		await expect(db.selectFrom("fixture").selectAll().execute()).resolves.toEqual([{ id: 1 }])
 	})
 
 	it("forwards native options from the path form", async () => {
@@ -44,7 +44,7 @@ describe("DatabaseClient construction", () => {
 		await createFixtureTable(db)
 		handle.exec("INSERT INTO fixture (id) VALUES (2)")
 
-		expect(await db.selectFrom("fixture").selectAll().execute()).toEqual([{ id: 2 }])
+		await expect(db.selectFrom("fixture").selectAll().execute()).resolves.toEqual([{ id: 2 }])
 	})
 
 	it("still accepts a full dialect config", async () => {
@@ -52,6 +52,6 @@ describe("DatabaseClient construction", () => {
 
 		await createFixtureTable(db)
 
-		expect(await db.selectFrom("fixture").selectAll().execute()).toEqual([])
+		await expect(db.selectFrom("fixture").selectAll().execute()).resolves.toEqual([])
 	})
 })

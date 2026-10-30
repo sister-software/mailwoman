@@ -169,7 +169,7 @@ describe("ScriptRoutedClassifier", () => {
 		expect(japanese.raw).toBe("cjk:富山県中新川郡上市町大岩148-7")
 		expect(loadFamily).toHaveBeenCalledTimes(1)
 		expect(loadFamily).toHaveBeenCalledWith("cjk")
-		expect(await routed.forInput("서울특별시 종로구 자하문로 104")).toBe(family)
+		await expect(routed.forInput("서울특별시 종로구 자하문로 104")).resolves.toBe(family)
 		expect(primary.parse).not.toHaveBeenCalled()
 	})
 
@@ -183,8 +183,8 @@ describe("ScriptRoutedClassifier", () => {
 		const onFamilyUnavailable = vi.fn()
 		const routed = new ScriptRoutedClassifier({ primary, loadFamily, onFamilyUnavailable })
 
-		expect(await routed.forInput("부산광역시 해운대구 반송로 910-1")).toBe(primary)
-		expect(await routed.forInput("富山県中新川郡上市町大岩148-7")).toBe(primary)
+		await expect(routed.forInput("부산광역시 해운대구 반송로 910-1")).resolves.toBe(primary)
+		await expect(routed.forInput("富山県中新川郡上市町大岩148-7")).resolves.toBe(primary)
 
 		expect(loadFamily).toHaveBeenCalledTimes(1)
 		expect(onFamilyUnavailable).toHaveBeenCalledTimes(1)
@@ -196,8 +196,8 @@ describe("ScriptRoutedClassifier", () => {
 		const loadFamily = vi.fn(async () => stubClassifier("cjk", "char"))
 		const routed = new ScriptRoutedClassifier({ primary, loadFamily })
 
-		expect(await routed.forInput("富山県中新川郡上市町大岩148-7")).toBe(primary)
-		expect(await routed.forInput("1 Riverlight Quay, Nine Elms Lane, London SW11 8AY")).toBe(primary)
+		await expect(routed.forInput("富山県中新川郡上市町大岩148-7")).resolves.toBe(primary)
+		await expect(routed.forInput("1 Riverlight Quay, Nine Elms Lane, London SW11 8AY")).resolves.toBe(primary)
 		expect(loadFamily).not.toHaveBeenCalled()
 	})
 

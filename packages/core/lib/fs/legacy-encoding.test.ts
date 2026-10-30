@@ -47,7 +47,7 @@ describe("decodeByteStream", () => {
 			yield THE_SHARP.slice(3)
 		}
 
-		expect(await readAll(decodeByteStream(halves(), "cp949"))).toBe("더샾오피스텔")
+		await expect(readAll(decodeByteStream(halves(), "cp949"))).resolves.toBe("더샾오피스텔")
 	})
 
 	it("emits UTF-8 bytes, which is what the line splitters read", async () => {

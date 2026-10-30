@@ -24,7 +24,7 @@ async function tmp(): Promise<PathBuilder> {
 
 describe("registry command — loadMapping", () => {
 	test("no --mapping returns the built-in default", async () => {
-		expect(await loadMapping(null, null)).toEqual(DEFAULT_MAPPING)
+		await expect(loadMapping(null, null)).resolves.toEqual(DEFAULT_MAPPING)
 	})
 
 	test("inline JSON merges over the default (override just one field)", async () => {

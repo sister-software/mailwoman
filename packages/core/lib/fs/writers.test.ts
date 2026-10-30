@@ -58,8 +58,8 @@ test("replaceFileAtomically replaces a symlink at the destination instead of wri
 	await createSymbolicLink(linked, dest)
 	await replaceFileAtomically(source, dest)
 
-	expect(await readLocalTextFile(linked)).toBe("original")
-	expect(await readLocalTextFile(dest)).toBe("replacement")
+	await expect(readLocalTextFile(linked)).resolves.toBe("original")
+	await expect(readLocalTextFile(dest)).resolves.toBe("replacement")
 	await expect(readlink(dest.toString())).rejects.toThrow("EINVAL")
 })
 
@@ -74,5 +74,5 @@ test("writeLocalTextFile streams async lines with one terminating newline per li
 	const output = scratch.path("lines.txt")
 	await writeLocalTextFile(lines(), output)
 
-	expect(await readLocalTextFile(output)).toBe("first\nsecond\n")
+	await expect(readLocalTextFile(output)).resolves.toBe("first\nsecond\n")
 })

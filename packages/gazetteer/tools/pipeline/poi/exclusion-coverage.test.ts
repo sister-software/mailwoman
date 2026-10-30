@@ -174,7 +174,7 @@ describe("the layer interface's read of these cells", () => {
 		const outside = shortCellToInt(latLngToCell(35.68, 139.76, RESOLUTION) as H3Cell)
 
 		expect(cells.some((cell) => cell.h3Cell === outside)).toBe(false)
-		expect(await readLayerCoverage(db, outside)).toBeNull()
+		await expect(readLayerCoverage(db, outside)).resolves.toBeNull()
 	})
 
 	it("answers supportsExclusion false for the source-present cells the rest of the pipeline writes", async () => {

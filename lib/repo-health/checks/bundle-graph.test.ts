@@ -16,7 +16,7 @@ describe("the bundle-graph check", () => {
 	test("reports nothing on the current tree", async () => {
 		const context = await collectRepoContext()
 
-		expect(await bundleGraphCheck.run(context)).toEqual([])
+		await expect(bundleGraphCheck.run(context)).resolves.toEqual([])
 	})
 
 	test("reports a static builtin edge, named by the file that makes it", async () => {

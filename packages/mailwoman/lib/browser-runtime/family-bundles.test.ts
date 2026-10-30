@@ -48,14 +48,14 @@ describe("FamilyBundles", () => {
 		expect(fetchManifest).toHaveBeenCalledTimes(1)
 		expect(load).toHaveBeenCalledTimes(1)
 		expect(load).toHaveBeenCalledWith("cjk", CJK_RELEASE)
-		expect(await bundles.forInput("Shibuya Station, Tokyo")).toBeNull()
+		await expect(bundles.forInput("Shibuya Station, Tokyo")).resolves.toBeNull()
 	})
 
 	it("answers null for a family without a published manifest and loads no bundle", async () => {
 		const load = vi.fn(async () => "bundle")
 		const bundles = new FamilyBundles<string>({ fetchManifest: async () => null, load })
 
-		expect(await bundles.ensure("cjk")).toBeNull()
+		await expect(bundles.ensure("cjk")).resolves.toBeNull()
 		expect(load).not.toHaveBeenCalled()
 	})
 
@@ -74,7 +74,7 @@ describe("FamilyBundles", () => {
 		const bundles = new FamilyBundles<string>({ fetchManifest: async () => CJK_MANIFEST, load, dispose })
 
 		await expect(bundles.ensure("cjk")).rejects.toThrow("network")
-		expect(await bundles.ensure("cjk")).toBe("bundle")
+		await expect(bundles.ensure("cjk")).resolves.toBe("bundle")
 		expect(load).toHaveBeenCalledTimes(2)
 
 		await bundles.dispose()
@@ -82,7 +82,7 @@ describe("FamilyBundles", () => {
 		expect(dispose).toHaveBeenCalledWith("bundle")
 		expect(load).toHaveBeenCalledTimes(2)
 
-		expect(await bundles.ensure("cjk")).toBe("bundle")
+		await expect(bundles.ensure("cjk")).resolves.toBe("bundle")
 		expect(load).toHaveBeenCalledTimes(3)
 	})
 })

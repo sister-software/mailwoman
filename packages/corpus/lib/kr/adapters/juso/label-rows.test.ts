@@ -51,7 +51,7 @@ test("joins the archive's four files into one row per address and recodes the me
 	expect(renderKRRow(jongno!, { register: "official" }).raw).toBe("서울특별시 종로구 자하문로 94 (청운동)")
 
 	// The smoke-build cap is per region: one row from each 시도.
-	expect(await Array.fromAsync(readJusoLabelRows(jusoZip, { maxRowsPerRegion: 1 }))).toHaveLength(
+	await expect(Array.fromAsync(readJusoLabelRows(jusoZip, { maxRowsPerRegion: 1 }))).resolves.toHaveLength(
 		new Set(rows.map((row) => row.region)).size
 	)
 })

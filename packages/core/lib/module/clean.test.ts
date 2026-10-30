@@ -43,7 +43,7 @@ describe("clean", () => {
 		await cleanDirectory(output, { allowedRoots: [output], dryRun: true })
 		await cleanFile(artifact, { allowedRoots: [output], dryRun: true })
 
-		expect(await pathExists(artifact)).toBe(true)
+		await expect(pathExists(artifact)).resolves.toBe(true)
 	})
 
 	test("cleans existing artifacts and creates an allowed missing directory", async () => {
@@ -55,24 +55,24 @@ describe("clean", () => {
 		await writeLocalTextFile("stale", artifact)
 		await cleanDirectory(output, { allowedRoots: [output] })
 
-		expect(await pathExists(output)).toBe(true)
-		expect(await pathExists(artifact)).toBe(false)
+		await expect(pathExists(output)).resolves.toBe(true)
+		await expect(pathExists(artifact)).resolves.toBe(false)
 
 		const cachedAbsence = scratch.path("packages/core/out/cached-absence.js")
 
 		await writeLocalTextFile("stale", cachedAbsence)
 		await cleanFile(cachedAbsence, { allowedRoots: [output], cachedStats: null })
-		expect(await pathExists(cachedAbsence)).toBe(true)
+		await expect(pathExists(cachedAbsence)).resolves.toBe(true)
 
 		const missing = scratch.path("packages/core/dist")
 
 		await cleanDirectory(missing, { allowedRoots: [missing] })
-		expect(await pathExists(missing)).toBe(true)
+		await expect(pathExists(missing)).resolves.toBe(true)
 
 		const buildMetadata = scratch.path("packages/core/tsconfig.tsbuildinfo")
 
 		await writeLocalTextFile("metadata", buildMetadata)
 		await cleanFile(buildMetadata, { allowedRoots: [buildMetadata] })
-		expect(await pathExists(buildMetadata)).toBe(false)
+		await expect(pathExists(buildMetadata)).resolves.toBe(false)
 	})
 })

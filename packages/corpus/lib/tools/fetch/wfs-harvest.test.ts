@@ -258,7 +258,7 @@ describe("harvestPagedWFS", () => {
 		await harvestPagedWFS(harvestOptions(scratch.path, resumed))
 
 		expect(resumed.asked).toEqual([4, 5])
-		expect(await readLocalTextFile(dataPath)).toBe("feature-0\nfeature-1\nfeature-2\nfeature-3\nfeature-4\n")
+		await expect(readLocalTextFile(dataPath)).resolves.toBe("feature-0\nfeature-1\nfeature-2\nfeature-3\nfeature-4\n")
 	})
 
 	it("refuses a service that answers a new startIndex with the previous page", async () => {
@@ -304,7 +304,7 @@ describe("harvestPagedWFS", () => {
 		expect(second.asked).toEqual([0, 4])
 		expect(manifest.pages).toHaveLength(1)
 
-		expect(await readLocalTextFile(PathBuilder.from(scratch.path)("address.jsonl"))).toBe(
+		await expect(readLocalTextFile(PathBuilder.from(scratch.path)("address.jsonl"))).resolves.toBe(
 			"feature-0\nfeature-1\nfeature-2\nfeature-3\n"
 		)
 	})

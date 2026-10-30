@@ -48,22 +48,22 @@ async function proposerApplied(
 
 describe("span proposer selection", () => {
 	it("runs the default proposer when neither the config nor the parse chooses", async () => {
-		expect(await proposerApplied(classifierWith())).toBe(true)
+		await expect(proposerApplied(classifierWith())).resolves.toBe(true)
 	})
 
 	it("inherits a config that disabled the proposer", async () => {
 		const classifier = classifierWith({ spanProposer: "none" })
 
-		expect(await proposerApplied(classifier)).toBe(false)
-		expect(await proposerApplied(classifier, "inherit")).toBe(false)
+		await expect(proposerApplied(classifier)).resolves.toBe(false)
+		await expect(proposerApplied(classifier, "inherit")).resolves.toBe(false)
 	})
 
 	it('re-enables the default proposer per parse with "auto"', async () => {
-		expect(await proposerApplied(classifierWith({ spanProposer: "none" }), "auto")).toBe(true)
+		await expect(proposerApplied(classifierWith({ spanProposer: "none" }), "auto")).resolves.toBe(true)
 	})
 
 	it('disables the proposer per parse with "none"', async () => {
-		expect(await proposerApplied(classifierWith(), "none")).toBe(false)
+		await expect(proposerApplied(classifierWith(), "none")).resolves.toBe(false)
 	})
 })
 

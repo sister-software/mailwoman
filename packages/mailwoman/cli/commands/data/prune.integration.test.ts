@@ -74,7 +74,7 @@ describe("mailwoman data prune without --yes", () => {
 		expect(result.stdout).toContain("would delete")
 		expect(result.stdout).toContain("run with --yes to delete them")
 		// Generation 1's artifact is the one candidate, and it is still in place.
-		expect(await readLocalTextFile(activePath)).toBe("active release")
+		await expect(readLocalTextFile(activePath)).resolves.toBe("active release")
 	})
 })
 
@@ -84,6 +84,6 @@ describe("mailwoman data prune --retain", () => {
 
 		expect(result.status).not.toBe(0)
 		expect(`${result.stdout}\n${result.stderr}`).toContain("--retain must be a positive whole number")
-		expect(await readLocalTextFile(activePath)).toBe("active release")
+		await expect(readLocalTextFile(activePath)).resolves.toBe("active release")
 	})
 })

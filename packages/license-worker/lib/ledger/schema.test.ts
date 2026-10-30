@@ -53,5 +53,5 @@ test("the migrations create exactly the tables the ledger schema declares", asyn
 })
 
 test.each(Object.keys(LEDGER_COLUMNS))("the %s columns match the ledger schema", async (table) => {
-	expect(await migratedColumns(table)).toEqual(LEDGER_COLUMNS[table as keyof typeof LEDGER_COLUMNS])
+	await expect(migratedColumns(table)).resolves.toEqual(LEDGER_COLUMNS[table as keyof typeof LEDGER_COLUMNS])
 })

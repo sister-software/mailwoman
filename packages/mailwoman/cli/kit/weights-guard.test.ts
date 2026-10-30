@@ -58,7 +58,7 @@ describe("probeWeights", () => {
 		await writeLocalTextFile("stub", packageDir("model.onnx"))
 		await writeLocalTextFile("stub", packageDir("tokenizer.model"))
 
-		expect(await probeWeights(LOCALE, cacheRoot.path.toString())).toEqual({ ok: true })
+		await expect(probeWeights(LOCALE, cacheRoot.path.toString())).resolves.toEqual({ ok: true })
 	})
 
 	test("ok=false against a metadata-only cache install (the code-only-release tarball)", async () => {

@@ -98,7 +98,7 @@ describe("publishToPublicBucket", () => {
 		expect(result.objects).toBe(4)
 		expect(manifest).toMatchObject({ contentType: "application/json", cacheControl: IMMUTABLE_CACHE_CONTROL })
 
-		expect(await readLocalJSONFile(directory.path("pair-index", "2026-10-17", "index.json"))).toEqual({
+		await expect(readLocalJSONFile(directory.path("pair-index", "2026-10-17", "index.json"))).resolves.toEqual({
 			version: "2026-10-17",
 			countries: ["gb", "nz", "us"],
 		})
@@ -113,7 +113,7 @@ describe("publishToPublicBucket", () => {
 			directory.path("pair-index", "2026-10-17", "index.json")
 		)
 
-		expect(await writePairIndexManifests(directory.path)).toEqual([])
+		await expect(writePairIndexManifests(directory.path)).resolves.toEqual([])
 
 		const uploads = await planPublicBucketUploads(directory.path, "mailwoman")
 

@@ -53,7 +53,7 @@ test("fetchStateHISchools retains and validates the source workbook, then skips 
 	const reports: string[] = []
 	const options = { outRoot: scratch.path, sourceURL }
 
-	expect(await fetchStateHISchools(options, (line) => reports.push(line))).toEqual({
+	await expect(fetchStateHISchools(options, (line) => reports.push(line))).resolves.toEqual({
 		fetched: 1,
 		skipped: 0,
 		failed: 0,
@@ -64,13 +64,13 @@ test("fetchStateHISchools retains and validates the source workbook, then skips 
 	const workbookPath = sourceDir("HI_Public_Schools_List.xlsx")
 	const manifest = await readLocalJSONFile<Record<string, unknown>>(sourceDir("MANIFEST.json"))
 
-	expect(await pathExists(workbookPath)).toBe(true)
-	expect(await pathExists(sourceDir("HI_Public_Schools_List.csv"))).toBe(false)
+	await expect(pathExists(workbookPath)).resolves.toBe(true)
+	await expect(pathExists(sourceDir("HI_Public_Schools_List.csv"))).resolves.toBe(false)
 	expect(manifest.filename).toBe("HI_Public_Schools_List.xlsx")
 	expect(manifest.source_url).toBe(sourceURL)
 	expect(reports.some((line) => line.includes("HIDOE + PCS validated"))).toBe(true)
 
-	expect(await fetchStateHISchools(options)).toEqual({
+	await expect(fetchStateHISchools(options)).resolves.toEqual({
 		fetched: 0,
 		skipped: 1,
 		failed: 0,

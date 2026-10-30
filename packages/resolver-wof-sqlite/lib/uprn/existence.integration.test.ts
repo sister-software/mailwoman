@@ -117,24 +117,24 @@ describe("uprnAbsenceAt", () => {
 	it("a point within the radius yields null — presence is not this probe's business", async () => {
 		const deps = await open("present.db", CoverageBasis.Designated)
 
-		expect(await uprnAbsenceAt({ ...deps, ...WESTMINSTER, radiusM: 250 })).toBeNull()
+		await expect(uprnAbsenceAt({ ...deps, ...WESTMINSTER, radiusM: 250 })).resolves.toBeNull()
 	})
 
 	it("an empty SOURCE_PRESENT cell yields null — the check refuses regardless of emptiness", async () => {
 		const deps = await open("sourcepresent.db", CoverageBasis.SourcePresent)
 
-		expect(await uprnAbsenceAt({ ...deps, ...EDINBURGH, radiusM: 250 })).toBeNull()
+		await expect(uprnAbsenceAt({ ...deps, ...EDINBURGH, radiusM: 250 })).resolves.toBeNull()
 	})
 
 	it("a point outside any covered cell yields null — unsurveyed is unknown, not absence", async () => {
 		const deps = await open("outside.db", CoverageBasis.Designated)
 
-		expect(await uprnAbsenceAt({ ...deps, ...NEW_YORK, radiusM: 250 })).toBeNull()
+		await expect(uprnAbsenceAt({ ...deps, ...NEW_YORK, radiusM: 250 })).resolves.toBeNull()
 	})
 
 	it("a non-GB country yields null even inside a covered cell", async () => {
 		const deps = await open("scoped.db", CoverageBasis.Designated)
 
-		expect(await uprnAbsenceAt({ ...deps, ...EDINBURGH, radiusM: 250, country: "FR" })).toBeNull()
+		await expect(uprnAbsenceAt({ ...deps, ...EDINBURGH, radiusM: 250, country: "FR" })).resolves.toBeNull()
 	})
 })

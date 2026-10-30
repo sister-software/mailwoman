@@ -33,12 +33,12 @@ async function configFile(contents: string): Promise<PathBuilder> {
 
 describe("readOracleConfig", () => {
 	it("treats an absent config as off", async () => {
-		expect(await readOracleConfig("/nonexistent/oracle-config.json")).toEqual({})
+		await expect(readOracleConfig("/nonexistent/oracle-config.json")).resolves.toEqual({})
 	})
 
 	it("treats a MALFORMED config as off, never as enabled", async () => {
 		// The failure that matters: a truncated or half-written file must not read as an opt-in to spend money.
-		expect(await readOracleConfig(await configFile("{ not json"))).toEqual({})
+		await expect(readOracleConfig(await configFile("{ not json"))).resolves.toEqual({})
 	})
 
 	it("reads a well-formed opt-in", async () => {

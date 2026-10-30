@@ -295,8 +295,8 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 		}, 60_000)
 
 		test("--jsonld and --text are byte-identical shorthands for the --format values (#1577)", async () => {
-			expect(await geocodeTX("--jsonld")).toBe(await geocodeTX("--format=jsonld"))
-			expect(await geocodeTX("--text")).toBe(await geocodeTX("--format=text"))
+			await expect(geocodeTX("--jsonld")).resolves.toBe(await geocodeTX("--format=jsonld"))
+			await expect(geocodeTX("--text")).resolves.toBe(await geocodeTX("--format=text"))
 		}, 240_000)
 	}
 )

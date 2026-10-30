@@ -109,6 +109,6 @@ describe("geonames-postal adapter", () => {
 	it("honors the country filter and the row limit", async () => {
 		const p = await writeFixture(row("DE", "80331", "München", "Bayern"), row("FR", "75001", "Paris", "Île-de-France"))
 		expect((await collect(p, { country: "DE" })).every((r) => r.country === "DE")).toBe(true)
-		expect(await collect(p, { limit: 1 })).toHaveLength(1)
+		await expect(collect(p, { limit: 1 })).resolves.toHaveLength(1)
 	})
 })

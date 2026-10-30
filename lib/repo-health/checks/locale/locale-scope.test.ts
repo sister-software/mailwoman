@@ -83,7 +83,7 @@ describe("localeScopeCheck", () => {
 	it("passes when the register and the declaration name the same countries", async () => {
 		const context = await plant({ scope: REGISTER_MATCHING_THE_ROWS })
 
-		expect(await localeScopeCheck.run(context)).toEqual([])
+		await expect(localeScopeCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("reports a country the declaration tiers and the register does not", async () => {
@@ -140,7 +140,7 @@ describe("localeScopeCheck", () => {
 			locales: ["en-us", "fr-fr", "en-gb"],
 		})
 
-		expect(await localeScopeCheck.run(context)).toEqual([])
+		await expect(localeScopeCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("reports a reason that has gone stale because the country was tiered", async () => {

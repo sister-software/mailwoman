@@ -102,7 +102,7 @@ describe("localeTablesCheck", () => {
 			],
 		})
 
-		expect(await localeTablesCheck.run(context)).toEqual([])
+		await expect(localeTablesCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("reports a country key that disagrees with its locale's region, in any table", async () => {
@@ -139,7 +139,7 @@ describe("localeTablesCheck", () => {
 			},
 		})
 
-		expect(await localeTablesCheck.run(context)).toEqual([])
+		await expect(localeTablesCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("admits a table naming a locale that does not ship yet", async () => {
@@ -154,7 +154,7 @@ describe("localeTablesCheck", () => {
 			},
 		})
 
-		expect(await localeTablesCheck.run(context)).toEqual([])
+		await expect(localeTablesCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("passes a tree with no census table, because it no longer binds one", async () => {
@@ -163,6 +163,6 @@ describe("localeTablesCheck", () => {
 			extra: { [CENSUS]: "export const SOMETHING_ELSE = buildIt()\n" },
 		})
 
-		expect(await localeTablesCheck.run(context)).toEqual([])
+		await expect(localeTablesCheck.run(context)).resolves.toEqual([])
 	})
 })

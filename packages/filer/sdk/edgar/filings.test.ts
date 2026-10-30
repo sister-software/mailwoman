@@ -80,7 +80,9 @@ describe("fetchCompanyTickers", () => {
 			get: async <T>() => tickerFile([{ cik: 789_019, ticker: "MSFT", title: "MICROSOFT CORP" }]) as T,
 		}
 
-		expect(await fetchCompanyTickers(client)).toEqual([{ cik: "0000789019", ticker: "MSFT", title: "MICROSOFT CORP" }])
+		await expect(fetchCompanyTickers(client)).resolves.toEqual([
+			{ cik: "0000789019", ticker: "MSFT", title: "MICROSOFT CORP" },
+		])
 	})
 })
 
@@ -398,7 +400,7 @@ describe("Exhibit 21 document discovery", () => {
 				primaryDocument: "lumn-20251231.htm",
 			}
 
-			expect(await fetchExhibit21Documents(client, filing)).toEqual([])
+			await expect(fetchExhibit21Documents(client, filing)).resolves.toEqual([])
 		})
 	})
 })

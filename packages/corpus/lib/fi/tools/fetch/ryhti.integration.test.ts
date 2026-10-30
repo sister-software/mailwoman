@@ -101,7 +101,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("fetchRyhti against paikkatiedot.ymparisto.
 			// The path the adapter is given is the file this run wrote.
 			expect(ryhtiInputPath(scratch.path).toString()).toBe(scratch.path("ryhti", manifest?.filename ?? "").toString())
 
-			expect(await fetchRyhti({ outRoot: scratch.path })).toMatchObject({ fetched: 0, skipped: 1 })
+			await expect(fetchRyhti({ outRoot: scratch.path })).resolves.toMatchObject({ fetched: 0, skipped: 1 })
 		},
 		FULL_FETCH_TIMEOUT_MS
 	)

@@ -33,18 +33,18 @@ const LISTING = `<?xml version="1.0" encoding="UTF-8"?>
 
 describe("listOvertureReleases", () => {
 	it("reads the release names out of the bucket listing, trailing slash stripped", async () => {
-		expect(await listOvertureReleases(clientReturning(LISTING))).toEqual(["2026-07-22.0", "2026-08-19.0"])
+		await expect(listOvertureReleases(clientReturning(LISTING))).resolves.toEqual(["2026-07-22.0", "2026-08-19.0"])
 	})
 
 	it("returns an empty list for a listing with no prefixes rather than throwing", async () => {
-		expect(await listOvertureReleases(clientReturning("<ListBucketResult></ListBucketResult>"))).toEqual([])
+		await expect(listOvertureReleases(clientReturning("<ListBucketResult></ListBucketResult>"))).resolves.toEqual([])
 	})
 
 	it("ignores the request's own echoed prefix, which is not a release", async () => {
 		const echoed = `<ListBucketResult><Prefix>release/</Prefix>
 			<CommonPrefixes><Prefix>release/2026-08-19.0/</Prefix></CommonPrefixes></ListBucketResult>`
 
-		expect(await listOvertureReleases(clientReturning(echoed))).toEqual(["2026-08-19.0"])
+		await expect(listOvertureReleases(clientReturning(echoed))).resolves.toEqual(["2026-08-19.0"])
 	})
 
 	it("follows the continuation token, so a bucket past S3's 1,000-key page reports every release", async () => {
@@ -65,7 +65,7 @@ describe("listOvertureReleases", () => {
 			},
 		} satisfies OvertureListingClient
 
-		expect(await listOvertureReleases(paging)).toEqual(["2026-07-22.0", "2026-08-19.0"])
+		await expect(listOvertureReleases(paging)).resolves.toEqual(["2026-07-22.0", "2026-08-19.0"])
 		expect(seen).toEqual([undefined, "page-2"])
 	})
 

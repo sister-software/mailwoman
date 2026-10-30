@@ -61,8 +61,8 @@ describe.skipIf(!available)("native spm_train in the wheel's form (requires a bu
 		await using scratch = await temporaryDirectory("spm-recipe-")
 		const trained = await train(recipe, scratch.path.toString())
 
-		expect(await sha256File(trained.model)).toBe(recipe.model_sha256)
-		expect(await sha256File(trained.vocab)).toBe(recipe.vocab_sha256)
+		await expect(sha256File(trained.model)).resolves.toBe(recipe.model_sha256)
+		await expect(sha256File(trained.vocab)).resolves.toBe(recipe.vocab_sha256)
 	})
 
 	it("keeps a user-defined symbol whole, including a comma", async () => {

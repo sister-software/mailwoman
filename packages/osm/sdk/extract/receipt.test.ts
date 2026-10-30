@@ -33,7 +33,7 @@ describe("readExtractProvenance", () => {
 		await writeLocalTextFile(BYTES, pbf)
 		await writeLocalJSONFile(receiptFor(BYTES), extractReceiptPath(pbf))
 
-		expect(await readExtractProvenance(pbf)).toEqual({
+		await expect(readExtractProvenance(pbf)).resolves.toEqual({
 			sourceURL: URL,
 			sourceSHA256: sha256Hex(BYTES),
 			snapshotDate: "2026-08-06",
@@ -68,7 +68,7 @@ describe("readExtractProvenance", () => {
 
 		await writeLocalTextFile(BYTES, pbf)
 
-		expect(await readExtractProvenance(pbf, { sourceURL: URL })).toEqual({
+		await expect(readExtractProvenance(pbf, { sourceURL: URL })).resolves.toEqual({
 			sourceURL: URL,
 			sourceSHA256: sha256Hex(BYTES),
 			snapshotDate: null,

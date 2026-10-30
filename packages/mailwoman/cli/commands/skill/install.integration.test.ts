@@ -73,8 +73,8 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 
 		const skillPath = cwd(".claude", "skills", "mailwoman", "SKILL.md")
 
-		expect(await pathExists(skillPath)).toBe(true)
-		expect(await readLocalTextFile(skillPath)).toMatch(/^---\nname: mailwoman\n/)
+		await expect(pathExists(skillPath)).resolves.toBe(true)
+		await expect(readLocalTextFile(skillPath)).resolves.toMatch(/^---\nname: mailwoman\n/)
 	})
 
 	test("second run is idempotent — overwrites cleanly with no error", async () => {
@@ -98,7 +98,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 
 		const skillPath = cwd(".claude", "skills", "mailwoman", "SKILL.md")
 
-		expect(await pathExists(skillPath)).toBe(true)
+		await expect(pathExists(skillPath)).resolves.toBe(true)
 	})
 
 	test("--dest <dir> installs there instead of cwd", async () => {
@@ -113,8 +113,8 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 			})
 		)
 
-		expect(await pathExists(dest(".claude", "skills", "mailwoman", "SKILL.md"))).toBe(true)
-		expect(await pathExists(cwd(".claude"))).toBe(false)
+		await expect(pathExists(dest(".claude", "skills", "mailwoman", "SKILL.md"))).resolves.toBe(true)
+		await expect(pathExists(cwd(".claude"))).resolves.toBe(false)
 	})
 
 	test("a stale file left over from an older shipped skill is removed, not merged", async () => {
@@ -136,7 +136,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 			})
 		)
 
-		expect(await pathExists(staleFile)).toBe(false)
-		expect(await pathExists(skillDir("SKILL.md"))).toBe(true)
+		await expect(pathExists(staleFile)).resolves.toBe(false)
+		await expect(pathExists(skillDir("SKILL.md"))).resolves.toBe(true)
 	})
 })

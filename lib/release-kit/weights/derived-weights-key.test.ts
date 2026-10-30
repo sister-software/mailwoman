@@ -53,7 +53,7 @@ describe("derivedWeightsKeyFrom", () => {
 		const a = scratch.path("a.json")
 		await writeLocalTextFile('{"x":1}', a)
 
-		expect(await derivedWeightsKeyFrom([at(a)])).toBe(await derivedWeightsKeyFrom([at(a)]))
+		await expect(derivedWeightsKeyFrom([at(a)])).resolves.toBe(await derivedWeightsKeyFrom([at(a)]))
 	})
 
 	it("changes when a hashed input's CONTENT changes", async () => {
@@ -63,7 +63,7 @@ describe("derivedWeightsKeyFrom", () => {
 
 		await writeLocalTextFile('{"x":2}', a)
 
-		expect(await derivedWeightsKeyFrom([at(a)])).not.toBe(before)
+		await expect(derivedWeightsKeyFrom([at(a)])).resolves.not.toBe(before)
 	})
 
 	it("changes when a GENERATING MODULE changes — the currency-filter regression", async () => {
@@ -77,7 +77,7 @@ describe("derivedWeightsKeyFrom", () => {
 		// Only the code that produces the binaries changed.
 		await writeLocalTextFile("export const delta = 2", generator)
 
-		expect(await derivedWeightsKeyFrom([at(config), at(generator)])).not.toBe(before)
+		await expect(derivedWeightsKeyFrom([at(config), at(generator)])).resolves.not.toBe(before)
 	})
 
 	it("is order-independent across the input list", async () => {
@@ -86,7 +86,7 @@ describe("derivedWeightsKeyFrom", () => {
 		await writeLocalTextFile("1", a)
 		await writeLocalTextFile("2", b)
 
-		expect(await derivedWeightsKeyFrom([at(a), at(b)])).toBe(await derivedWeightsKeyFrom([at(b), at(a)]))
+		await expect(derivedWeightsKeyFrom([at(a), at(b)])).resolves.toBe(await derivedWeightsKeyFrom([at(b), at(a)]))
 	})
 
 	it("treats a MISSING input as a distinct state, not as empty", async () => {
@@ -112,7 +112,7 @@ describe("derivedWeightsKeyFrom", () => {
 		await writeLocalTextFile("same", b)
 
 		// An input rename is a change, even when the bytes are identical.
-		expect(await derivedWeightsKeyFrom([at(a)])).not.toBe(await derivedWeightsKeyFrom([at(b)]))
+		await expect(derivedWeightsKeyFrom([at(a)])).resolves.not.toBe(await derivedWeightsKeyFrom([at(b)]))
 	})
 
 	it("is INVARIANT to checkout location — the whole point of a shared store", async () => {
@@ -134,17 +134,19 @@ describe("derivedWeightsKeyFrom", () => {
 			at(root("pair-index.tsx"), "packages/mailwoman/cli/commands/gazetteer/pair-index.tsx"),
 		]
 
-		expect(await derivedWeightsKeyFrom(inputsFor(checkoutA))).toBe(await derivedWeightsKeyFrom(inputsFor(checkoutB)))
+		await expect(derivedWeightsKeyFrom(inputsFor(checkoutA))).resolves.toBe(
+			await derivedWeightsKeyFrom(inputsFor(checkoutB))
+		)
 	})
 
 	it("returns a 16-hex-char key", async () => {
-		expect(await derivedWeightsKeyFrom([])).toMatch(/^[0-9a-f]{16}$/)
+		await expect(derivedWeightsKeyFrom([])).resolves.toMatch(/^[0-9a-f]{16}$/)
 	})
 })
 
 describe("derivedWeightsKey", () => {
 	it("resolves against the real repo and returns a well-formed key", async () => {
-		expect(await derivedWeightsKey()).toMatch(/^[0-9a-f]{16}$/)
+		await expect(derivedWeightsKey()).resolves.toMatch(/^[0-9a-f]{16}$/)
 	})
 
 	it("names the generating CLI modules, not just the config and data", () => {
@@ -182,34 +184,34 @@ describe("derivedStoreServeViolation — the serve-time floor (#1528)", () => {
 		const path = dir("postcode-gb.bin")
 		await writeLocalFile(pcb1(0), path)
 
-		expect(await derivedStoreServeViolation("postcode-gb.bin", path)).toMatch(/below the GB floor/)
+		await expect(derivedStoreServeViolation("postcode-gb.bin", path)).resolves.toMatch(/below the GB floor/)
 	})
 
 	it("refuses a collapsed FR binary below its calibrated floor", async () => {
 		const path = dir("postcode-fr.bin")
 		await writeLocalFile(pcb1(500), path)
 
-		expect(await derivedStoreServeViolation("postcode-fr.bin", path)).toMatch(/below the FR floor of 13,000/)
+		await expect(derivedStoreServeViolation("postcode-fr.bin", path)).resolves.toMatch(/below the FR floor of 13,000/)
 	})
 
 	it("serves a GB binary at outward granularity — the LOWEST GB floor is the serve check", async () => {
 		const path = dir("postcode-gb.bin")
 		await writeLocalFile(pcb1(1500), path)
 
-		expect(await derivedStoreServeViolation("postcode-gb.bin", path)).toBeNull()
+		await expect(derivedStoreServeViolation("postcode-gb.bin", path)).resolves.toBeNull()
 	})
 
 	it("refuses bytes that are not a PCB1 at all", async () => {
 		const path = dir("postcode-de.bin")
 		await writeLocalBuffer(Buffer.from("not a binary"), path)
 
-		expect(await derivedStoreServeViolation("postcode-de.bin", path)).toMatch(/not a PCB1/)
+		await expect(derivedStoreServeViolation("postcode-de.bin", path)).resolves.toMatch(/not a PCB1/)
 	})
 
 	it("passes non-postcode entries untouched — pair indexes validate their own header on load", async () => {
 		const path = dir("pair-index-gb.bin")
 		await writeLocalBuffer(Buffer.from("anything"), path)
 
-		expect(await derivedStoreServeViolation("pair-index-gb.bin", path)).toBeNull()
+		await expect(derivedStoreServeViolation("pair-index-gb.bin", path)).resolves.toBeNull()
 	})
 })

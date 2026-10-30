@@ -120,21 +120,21 @@ describe("RunPipeline — artifact-manifest safelist precedence (survey candidat
 	}
 
 	it("uses the artifact's safelist when the resolver carries one (FI hard-filters once its artifact says so)", async () => {
-		expect(await run({ placed: "FI", artifact: artifactWith(["FI"]) })).toBe("FI")
+		await expect(run({ placed: "FI", artifact: artifactWith(["FI"]) })).resolves.toBe("FI")
 	})
 
 	it("artifact safelist REPLACES the constant — a constant member absent from the artifact stays soft", async () => {
-		expect(await run({ placed: "ES", artifact: artifactWith(["FI"]) })).toBeNull()
+		await expect(run({ placed: "ES", artifact: artifactWith(["FI"]) })).resolves.toBeNull()
 	})
 
 	it("No artifact → the code-constant fallback, byte-identical (ES hard, FI soft)", async () => {
-		expect(await run({ placed: "ES" })).toBe("ES")
-		expect(await run({ placed: "FI" })).toBeNull()
+		await expect(run({ placed: "ES" })).resolves.toBe("ES")
+		await expect(run({ placed: "FI" })).resolves.toBeNull()
 	})
 
 	it("the per-call override (the eval instrument) outranks the artifact", async () => {
-		expect(await run({ placed: "FI", artifact: artifactWith(["FI"]), override: new Set(["ES"]) })).toBeNull()
-		expect(await run({ placed: "ES", artifact: artifactWith(["FI"]), override: new Set(["ES"]) })).toBe("ES")
+		await expect(run({ placed: "FI", artifact: artifactWith(["FI"]), override: new Set(["ES"]) })).resolves.toBeNull()
+		await expect(run({ placed: "ES", artifact: artifactWith(["FI"]), override: new Set(["ES"]) })).resolves.toBe("ES")
 	})
 })
 

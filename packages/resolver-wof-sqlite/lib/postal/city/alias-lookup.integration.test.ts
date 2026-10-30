@@ -84,15 +84,15 @@ describe("WOFPostalCityAliasLookup (#475 reader)", () => {
 	})
 
 	it("excludes non-divergent rows (postal name == geo name)", async () => {
-		expect(await reader.getDivergentAliases("90210")).toHaveLength(0)
+		await expect(reader.getDivergentAliases("90210")).resolves.toHaveLength(0)
 	})
 
 	it("returns [] for a postcode not in the table", async () => {
-		expect(await reader.getDivergentAliases("00000")).toEqual([])
+		await expect(reader.getDivergentAliases("00000")).resolves.toEqual([])
 	})
 
 	it("trims the queried postcode", async () => {
-		expect(await reader.getDivergentAliases("  22191 ")).toHaveLength(1)
+		await expect(reader.getDivergentAliases("  22191 ")).resolves.toHaveLength(1)
 	})
 })
 

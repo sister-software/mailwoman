@@ -143,7 +143,7 @@ describe("streamMarkupElements", () => {
 	})
 
 	it("yields the elements a whole document contains when nothing matches", async () => {
-		expect(await collect(once(GML), "ad:Parcel")).toEqual([])
+		await expect(collect(once(GML), "ad:Parcel")).resolves.toEqual([])
 	})
 
 	it("stops at a chunk boundary when the caller aborts", async () => {

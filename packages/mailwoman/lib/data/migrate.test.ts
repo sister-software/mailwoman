@@ -38,7 +38,7 @@ describe("planMigration", () => {
 		const before = await listTree(root.path.toString())
 		const plan = await planMigration(root.path)
 
-		expect(await listTree(root.path.toString())).toEqual(before)
+		await expect(listTree(root.path.toString())).resolves.toEqual(before)
 		expect(plan.basedOnGeneration).toBeNull()
 		expect(plan.bytesToCopy).toBe(0)
 

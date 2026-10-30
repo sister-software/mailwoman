@@ -52,7 +52,7 @@ describe("search", () => {
 	})
 
 	test("returns zero hits when nothing matches and no correction is close", async () => {
-		expect(await search(db, "zzzzzzz")).toEqual({ query: "zzzzzzz", corrected: null, hits: [] })
+		await expect(search(db, "zzzzzzz")).resolves.toEqual({ query: "zzzzzzz", corrected: null, hits: [] })
 	})
 })
 

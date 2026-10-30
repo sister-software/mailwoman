@@ -119,7 +119,7 @@ describe("manifest-targets", () => {
 		const context = await collectRepoContext()
 
 		expect(context.trackedFiles.length).toBeGreaterThan(0)
-		expect(await manifestTargetsCheck.run(context)).toEqual([])
+		await expect(manifestTargetsCheck.run(context)).resolves.toEqual([])
 	})
 
 	test("reports a target whose source is gone", async () => {

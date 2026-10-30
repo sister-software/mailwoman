@@ -171,6 +171,6 @@ describe("layer interface", () => {
 		using kdb = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
 
 		expect((await readLayerCoverage(kdb, 1))?.basis).toBe(CoverageBasis.Designated)
-		expect(await readLayerCoverage(kdb, 2)).toBeNull()
+		await expect(readLayerCoverage(kdb, 2)).resolves.toBeNull()
 	})
 })

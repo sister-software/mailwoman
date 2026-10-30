@@ -58,7 +58,7 @@ describe("streamToDisk", () => {
 		const body = CHUNKS.join("")
 
 		expect(bytes).toBe(body.length)
-		expect(await readLocalTextFile(destination)).toBe(body)
+		await expect(readLocalTextFile(destination)).resolves.toBe(body)
 		expect(hash.digest("hex")).toBe(createHash("sha256").update(body).digest("hex"))
 		expect(modified).toBe(LAST_MODIFIED)
 	})
@@ -72,8 +72,8 @@ describe("streamToDisk", () => {
 			/HTTP 404/u
 		)
 
-		expect(await pathExists(destination)).toBe(false)
-		expect(await pathExists(`${destination}.part`)).toBe(false)
+		await expect(pathExists(destination)).resolves.toBe(false)
+		await expect(pathExists(`${destination}.part`)).resolves.toBe(false)
 	})
 
 	it("resumes after the partial bytes when the host answers the requested range", async () => {
@@ -106,7 +106,7 @@ describe("streamToDisk", () => {
 
 		expect(requested).toBe(`bytes=${offset}-`)
 		expect(bytes).toBe(body.length)
-		expect(await readLocalTextFile(destination)).toBe(body)
+		await expect(readLocalTextFile(destination)).resolves.toBe(body)
 	})
 
 	it("refuses a resume the host answers with the whole object and keeps the partial bytes", async () => {
@@ -121,7 +121,7 @@ describe("streamToDisk", () => {
 			streamToDisk({ url: "https://example.test/file", destination, context: "test", partialPath, resumeFrom: 6 })
 		).rejects.toBeInstanceOf(ResumeRefusedError)
 
-		expect(await readLocalTextFile(partialPath)).toBe("first ")
-		expect(await pathExists(destination)).toBe(false)
+		await expect(readLocalTextFile(partialPath)).resolves.toBe("first ")
+		await expect(pathExists(destination)).resolves.toBe(false)
 	})
 })

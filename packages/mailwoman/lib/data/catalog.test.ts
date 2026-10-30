@@ -51,9 +51,17 @@ describe("replaceActiveSelection", () => {
 
 		const catalog = await LayerCatalog.read(scratch.path)
 
-		expect(await catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })).toBe(candidate.path)
-		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "US", subdivision: "US-DC" })).toBe(dc.path)
-		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "US", subdivision: "US-AL" })).toBeNull()
+		await expect(catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })).resolves.toBe(
+			candidate.path
+		)
+
+		await expect(catalog.firstPath(ServingRole.AddressPoints, { country: "US", subdivision: "US-DC" })).resolves.toBe(
+			dc.path
+		)
+
+		await expect(
+			catalog.firstPath(ServingRole.AddressPoints, { country: "US", subdivision: "US-AL" })
+		).resolves.toBeNull()
 
 		const history = await tryReadLocalJSONFile<ActiveSelection>(catalogPaths(scratch.path).selectionHistory("1.json"))
 
@@ -167,7 +175,7 @@ describe("LayerCatalog", () => {
 		const catalog = await LayerCatalog.read(scratch.path)
 
 		expect(catalog.generation).toBeNull()
-		expect(await catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })).toBeNull()
+		await expect(catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })).resolves.toBeNull()
 	})
 
 	it("reports a selected artifact whose size no longer matches its manifest as unreadable, naming its path", async () => {
@@ -229,7 +237,7 @@ describe("LayerCatalog", () => {
 
 		const catalog = await LayerCatalog.read(scratch.path)
 
-		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "US", subdivision: "DC" })).toBeNull()
+		await expect(catalog.firstPath(ServingRole.AddressPoints, { country: "US", subdivision: "DC" })).resolves.toBeNull()
 	})
 
 	it("reports an active.json that is not JSON as unreadable rather than as no selection", async () => {

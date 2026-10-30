@@ -30,8 +30,8 @@ describe("collectSampleCodepoints", () => {
 		await using scratch = await temporaryDirectory("splice-")
 		const { fr, us } = await samples(scratch)
 
-		expect(await collectSampleCodepoints(us)).toEqual(new Set())
-		expect(await collectSampleCodepoints(fr)).toContain("è")
+		await expect(collectSampleCodepoints(us)).resolves.toEqual(new Set())
+		await expect(collectSampleCodepoints(fr)).resolves.toContain("è")
 	})
 
 	it("drops a character split by the byte cap", async () => {
@@ -40,7 +40,7 @@ describe("collectSampleCodepoints", () => {
 
 		await writeLocalBuffer(Buffer.from("aé", "utf8"), path)
 
-		expect(await collectSampleCodepoints(path, 2)).toEqual(new Set())
+		await expect(collectSampleCodepoints(path, 2)).resolves.toEqual(new Set())
 	})
 })
 
@@ -49,7 +49,7 @@ describe("checkCodepointOverlap", () => {
 		await using scratch = await temporaryDirectory("splice-")
 		const report = scratch.path("report.json").toString()
 
-		expect(await checkCodepointOverlap(["▁Grudzi", "ądz", "ż"], await samples(scratch), report)).toEqual({
+		await expect(checkCodepointOverlap(["▁Grudzi", "ądz", "ż"], await samples(scratch), report)).resolves.toEqual({
 			fr: [],
 			us: [],
 		})

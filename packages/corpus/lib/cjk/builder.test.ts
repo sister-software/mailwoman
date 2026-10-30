@@ -136,7 +136,7 @@ describe("the CJK builder helpers", async () => {
 
 		await saveCharVocab(buildCharVocab(["abc𠮷", "ab0", "9a"]), path)
 
-		expect(await readLocalTextFile(path)).toBe(record.char_vocab_text)
+		await expect(readLocalTextFile(path)).resolves.toBe(record.char_vocab_text)
 	})
 
 	it("report coverage with the Python counts, ordering per_tag_rows by first appearance", () => {
@@ -255,7 +255,7 @@ describe("writeCJKSplit", () => {
 			).rejects.toThrow(/rowsPerPart must be a positive integer/)
 		}
 
-		expect(await directoryHasEntries(scratch.path)).toBe(false)
+		await expect(directoryHasEntries(scratch.path)).resolves.toBe(false)
 	})
 })
 
@@ -263,10 +263,10 @@ describe("directoryHasEntries", () => {
 	it("counts a directory holding only a dot-file as holding an entry", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-cjk-out-")
 
-		expect(await directoryHasEntries(scratch.path)).toBe(false)
+		await expect(directoryHasEntries(scratch.path)).resolves.toBe(false)
 
 		await makeDirectories(scratch.path(".corpus-build.lock"))
 
-		expect(await directoryHasEntries(scratch.path)).toBe(true)
+		await expect(directoryHasEntries(scratch.path)).resolves.toBe(true)
 	})
 })

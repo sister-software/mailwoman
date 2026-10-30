@@ -36,7 +36,7 @@ describe("md5FileWithSidecar (#1734)", () => {
 		const hash = await md5FileWithSidecar(path)
 
 		expect(hash).toBe(await md5File(path))
-		expect(await readLocalTextFile(`${path}.md5`)).toBe(`${hash}  source.bin\n`)
+		await expect(readLocalTextFile(`${path}.md5`)).resolves.toBe(`${hash}  source.bin\n`)
 	})
 
 	it("TRUSTS a sidecar at least as new as the source — no re-hash", async () => {
@@ -45,7 +45,7 @@ describe("md5FileWithSidecar (#1734)", () => {
 
 		await writeLocalTextFile(`${fake}  source.bin\n`, `${path}.md5`)
 
-		expect(await md5FileWithSidecar(path)).toBe(fake)
+		await expect(md5FileWithSidecar(path)).resolves.toBe(fake)
 	})
 
 	it("recomputes and heals when the sidecar is older than the source", async () => {
@@ -59,7 +59,7 @@ describe("md5FileWithSidecar (#1734)", () => {
 		const hash = await md5FileWithSidecar(path)
 
 		expect(hash).toBe(await md5File(path))
-		expect(await readLocalTextFile(`${path}.md5`)).toContain(hash)
+		await expect(readLocalTextFile(`${path}.md5`)).resolves.toContain(hash)
 	})
 
 	it("recomputes past a malformed sidecar rather than returning garbage", async () => {
@@ -67,6 +67,6 @@ describe("md5FileWithSidecar (#1734)", () => {
 
 		await writeLocalTextFile("not-a-hash\n", `${path}.md5`)
 
-		expect(await md5FileWithSidecar(path)).toBe(await md5File(path))
+		await expect(md5FileWithSidecar(path)).resolves.toBe(await md5File(path))
 	})
 })

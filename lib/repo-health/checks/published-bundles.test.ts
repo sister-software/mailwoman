@@ -58,7 +58,7 @@ describe("publishedBundlesCheck", () => {
 	it("reports nothing on the current tree", async () => {
 		const context = await collectRepoContext()
 
-		expect(await publishedBundlesCheck.run(context)).toEqual([])
+		await expect(publishedBundlesCheck.run(context)).resolves.toEqual([])
 	})
 
 	it("accepts a registry whose approxBytes equals the served content-length", () => {

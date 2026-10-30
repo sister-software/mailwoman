@@ -133,8 +133,8 @@ describe("autocomplete index", () => {
 			}
 		)
 
-		expect(await index.query("Paris")).toEqual([])
-		expect(await index.query("   ")).toEqual([])
+		await expect(index.query("Paris")).resolves.toEqual([])
+		await expect(index.query("   ")).resolves.toEqual([])
 		expect(loads).toEqual([])
 	})
 })

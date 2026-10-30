@@ -114,7 +114,7 @@ describe("the download route", () => {
 		const response = await a.post("/v1/downloads", { token, artifact: "tier:us-streets/tiers/us-ca.db" })
 
 		expect(response.status).toBe(200)
-		expect(await response.json()).toMatchObject({ status: "granted", bytes: 2 })
+		await expect(response.json()).resolves.toMatchObject({ status: "granted", bytes: 2 })
 
 		expect(
 			new URL(((await response.json().catch(() => null)) as Granted | null)?.url ?? "https://x/").pathname
@@ -127,7 +127,7 @@ describe("the download route", () => {
 		const response = await a.post("/v1/downloads", { token, artifact: "tier:gb-streets" })
 
 		expect(response.status).toBe(403)
-		expect(await response.json()).toEqual({ error: "scope" })
+		await expect(response.json()).resolves.toEqual({ error: "scope" })
 	})
 
 	it("refuses an expired token and a token this worker does not trust", async () => {
@@ -139,12 +139,12 @@ describe("the download route", () => {
 		})
 
 		expect(expired.status).toBe(403)
-		expect(await expired.json()).toEqual({ error: "expired" })
+		await expect(expired.json()).resolves.toEqual({ error: "expired" })
 
 		const forged = await a.post("/v1/downloads", { token: "mwl1.not.real", artifact: "tier:gb-streets" })
 
 		expect(forged.status).toBe(403)
-		expect(await forged.json()).toEqual({ error: "invalid" })
+		await expect(forged.json()).resolves.toEqual({ error: "invalid" })
 	})
 
 	it("refuses a declared lid whose ledger state is lapsed, and grants it while active", async () => {
@@ -171,7 +171,7 @@ describe("the download route", () => {
 		const refused = await a.post("/v1/downloads", { token: declared.token, artifact: "tier:gb-streets" })
 
 		expect(refused.status).toBe(403)
-		expect(await refused.json()).toEqual({ error: "lapsed" })
+		await expect(refused.json()).resolves.toEqual({ error: "lapsed" })
 	})
 
 	it("answers 400 for an artifact outside the catalog", async () => {
@@ -179,7 +179,7 @@ describe("the download route", () => {
 		const response = await a.post("/v1/downloads", { token: await a.token(), artifact: "tier:nowhere" })
 
 		expect(response.status).toBe(400)
-		expect(await response.json()).toEqual({ error: "unknown artifact" })
+		await expect(response.json()).resolves.toEqual({ error: "unknown artifact" })
 	})
 
 	it("answers 503 before the bucket is provisioned", async () => {
@@ -187,6 +187,6 @@ describe("the download route", () => {
 		const response = await a.post("/v1/downloads", { token: await a.token(), artifact: "tier:gb-streets" })
 
 		expect(response.status).toBe(503)
-		expect(await response.json()).toEqual({ error: "downloads unavailable" })
+		await expect(response.json()).resolves.toEqual({ error: "downloads unavailable" })
 	})
 })

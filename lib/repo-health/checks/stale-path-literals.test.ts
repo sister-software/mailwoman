@@ -115,7 +115,7 @@ describe("findStalePathLiterals", () => {
 			"packages/thing/lib/reader.ts": 'export const SOURCE = "packages/thing/lib/new-name.ts"\n',
 		})
 
-		expect(await findStalePathLiterals(context)).toEqual([])
+		await expect(findStalePathLiterals(context)).resolves.toEqual([])
 	})
 
 	it("says nothing about a path that never existed, which is a write target or a fixture", async () => {
@@ -130,7 +130,7 @@ describe("findStalePathLiterals", () => {
 			].join("\n"),
 		})
 
-		expect(await findStalePathLiterals(context)).toEqual([])
+		await expect(findStalePathLiterals(context)).resolves.toEqual([])
 	})
 
 	it("leaves test sources alone, because a test plants trees", async () => {
@@ -138,6 +138,6 @@ describe("findStalePathLiterals", () => {
 			"packages/thing/lib/reader.test.ts": 'const moved = "packages/thing/lib/old-name.ts"\n',
 		})
 
-		expect(await findStalePathLiterals(context)).toEqual([])
+		await expect(findStalePathLiterals(context)).resolves.toEqual([])
 	})
 })

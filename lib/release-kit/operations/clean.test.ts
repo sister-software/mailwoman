@@ -45,8 +45,8 @@ describe("release.clean", () => {
 		})
 
 		expect(log).toContain("Would clean packages/core/out")
-		expect(await pathExists(scratch.path("packages/core/out/stale.js"))).toBe(true)
-		expect(await pathExists(scratch.path("packages/core/tsconfig.tsbuildinfo"))).toBe(true)
+		await expect(pathExists(scratch.path("packages/core/out/stale.js"))).resolves.toBe(true)
+		await expect(pathExists(scratch.path("packages/core/tsconfig.tsbuildinfo"))).resolves.toBe(true)
 	})
 
 	test("removes stale outputs, recreates output directories, and removes build metadata", async () => {
@@ -54,9 +54,9 @@ describe("release.clean", () => {
 		const result = await cleanOperation.run({}, { repoRoot: scratch.path.toString(), dryRun: false, log: () => {} })
 
 		expect(result).toMatchObject({ dryRun: false })
-		expect(await pathExists(scratch.path("packages/core/out"))).toBe(true)
-		expect(await pathExists(scratch.path("packages/core/out/stale.js"))).toBe(false)
-		expect(await pathExists(scratch.path("packages/core/tsconfig.tsbuildinfo"))).toBe(false)
-		expect(await pathExists(scratch.path("docker/out/stale.js"))).toBe(false)
+		await expect(pathExists(scratch.path("packages/core/out"))).resolves.toBe(true)
+		await expect(pathExists(scratch.path("packages/core/out/stale.js"))).resolves.toBe(false)
+		await expect(pathExists(scratch.path("packages/core/tsconfig.tsbuildinfo"))).resolves.toBe(false)
+		await expect(pathExists(scratch.path("docker/out/stale.js"))).resolves.toBe(false)
 	})
 })

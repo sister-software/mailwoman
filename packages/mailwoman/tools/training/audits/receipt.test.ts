@@ -51,14 +51,14 @@ test("the key ignores manifest order and formatting and moves with a digest or t
 		2
 	)
 
-	expect(await preflightKey(a.config, a.corpusDir)).toBe(await preflightKey(b.config, b.corpusDir))
+	await expect(preflightKey(a.config, a.corpusDir)).resolves.toBe(await preflightKey(b.config, b.corpusDir))
 
 	await writeLocalTextFile(
 		stringifyJSON({ files: [{ path: "a.parquet", sha256: "ab" }] }),
 		`${b.corpusDir}/MANIFEST.json`
 	)
 
-	expect(await preflightKey(a.config, a.corpusDir)).not.toBe(await preflightKey(b.config, b.corpusDir))
+	await expect(preflightKey(a.config, a.corpusDir)).resolves.not.toBe(await preflightKey(b.config, b.corpusDir))
 })
 
 test("an entry without a digest cannot be bound", async () => {

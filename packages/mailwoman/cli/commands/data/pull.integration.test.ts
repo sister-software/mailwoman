@@ -156,12 +156,12 @@ describe("mailwoman data pull from an empty data root", () => {
 
 		expect(dry.status).toBe(0)
 		expect(registry.requests).toEqual([])
-		expect(await pathExists(root.path("active.json"))).toBe(false)
+		await expect(pathExists(root.path("active.json"))).resolves.toBe(false)
 
 		const candidate = await cli("data", "pull", "candidate", ...host)
 
 		expect(candidate.status).toBe(0)
-		expect(await pathExists(root.path("active.json"))).toBe(true)
+		await expect(pathExists(root.path("active.json"))).resolves.toBe(true)
 
 		const dcDry = await cli("data", "pull", "us", "--only", "dc", "--dry-run", ...host)
 

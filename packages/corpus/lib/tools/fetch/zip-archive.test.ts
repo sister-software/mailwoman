@@ -74,6 +74,6 @@ describe("downloadZipArchive", () => {
 			/do not begin with a zip signature/u
 		)
 
-		expect(await tryStat(scratch.path("AD.zip"))).toBeNull()
+		await expect(tryStat(scratch.path("AD.zip"))).resolves.toBeNull()
 	})
 })

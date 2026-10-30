@@ -380,8 +380,8 @@ describe("createBDCClient: the on-disk response cache", () => {
 		const transport = bdcTransport([{ body: { data: [1] } }])
 		const client = clientFor(transport)
 
-		expect(await client.get(path)).toEqual({ data: [1] })
-		expect(await client.get(path)).toEqual({ data: [1] })
+		await expect(client.get(path)).resolves.toEqual({ data: [1] })
+		await expect(client.get(path)).resolves.toEqual({ data: [1] })
 		expect(transport.calls).toHaveLength(1)
 	})
 
@@ -390,7 +390,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 
 		const second = bdcTransport([{ body: { data: ["SHOULD-NOT-BE-FETCHED"] } }])
 
-		expect(await clientFor(second).get(path)).toEqual({ data: [1] })
+		await expect(clientFor(second).get(path)).resolves.toEqual({ data: [1] })
 		expect(second.calls).toHaveLength(0)
 	})
 
@@ -403,11 +403,11 @@ describe("createBDCClient: the on-disk response cache", () => {
 		const transport = bdcTransport([{ body: { data: [1] } }, { body: { data: [2] } }])
 		const client = clientFor(transport, { cacheTTLMs: 1000 })
 
-		expect(await client.get(path)).toEqual({ data: [1] })
+		await expect(client.get(path)).resolves.toEqual({ data: [1] })
 
 		vi.setSystemTime(new Date("2026-01-01T00:00:01.001Z"))
 
-		expect(await client.get(path)).toEqual({ data: [2] })
+		await expect(client.get(path)).resolves.toEqual({ data: [2] })
 		expect(transport.calls).toHaveLength(2)
 	})
 
@@ -422,12 +422,12 @@ describe("createBDCClient: the on-disk response cache", () => {
 
 		const client = clientFor(transport)
 
-		expect(await client.get(path)).toEqual({ data: [1] })
+		await expect(client.get(path)).resolves.toEqual({ data: [1] })
 
 		// Well past the header's 1 s max-age, far inside the configured TTL.
 		vi.setSystemTime(new Date("2026-01-01T00:05:00Z"))
 
-		expect(await client.get(path)).toEqual({ data: [1] })
+		await expect(client.get(path)).resolves.toEqual({ data: [1] })
 		expect(transport.calls).toHaveLength(1)
 	})
 
@@ -435,11 +435,11 @@ describe("createBDCClient: the on-disk response cache", () => {
 		const transport = bdcTransport([{ body: { data: ["ca"] } }, { body: { data: ["ny"] } }])
 		const client = clientFor(transport)
 
-		expect(await client.get("/map/downloads/listAvailabilityData/2024-12-31", { state: "06" })).toEqual({
+		await expect(client.get("/map/downloads/listAvailabilityData/2024-12-31", { state: "06" })).resolves.toEqual({
 			data: ["ca"],
 		})
 
-		expect(await client.get("/map/downloads/listAvailabilityData/2024-12-31", { state: "36" })).toEqual({
+		await expect(client.get("/map/downloads/listAvailabilityData/2024-12-31", { state: "36" })).resolves.toEqual({
 			data: ["ny"],
 		})
 
@@ -450,7 +450,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		const failing = bdcTransport([{ status: 500, statusText: "Internal Server Error" }])
 
 		await expect(clientFor(failing, { maxAttempts: 1 }).get("/map/error")).rejects.toBeInstanceOf(ResourceError)
-		expect(await Globerator.from("*", { cwd: cacheDir }).toArray()).toHaveLength(0)
+		await expect(Globerator.from("*", { cwd: cacheDir }).toArray()).resolves.toHaveLength(0)
 	})
 
 	it("refuses to cache a 200 whose body is not a BDC `{ data: … }` envelope, and self-heals", async () => {
@@ -459,12 +459,12 @@ describe("createBDCClient: the on-disk response cache", () => {
 		// Its caller would destructure `.data` into `undefined`.
 		const bad = bdcTransport([{ body: { error: "nope" } }])
 
-		expect(await clientFor(bad).get("/map/not-an-envelope")).toEqual({ error: "nope" })
-		expect(await Globerator.from("*", { cwd: cacheDir }).toArray()).toHaveLength(0)
+		await expect(clientFor(bad).get("/map/not-an-envelope")).resolves.toEqual({ error: "nope" })
+		await expect(Globerator.from("*", { cwd: cacheDir }).toArray()).resolves.toHaveLength(0)
 
 		const fixed = bdcTransport([{ body: { data: [1] } }])
 
-		expect(await clientFor(fixed).get("/map/not-an-envelope")).toEqual({ data: [1] })
+		await expect(clientFor(fixed).get("/map/not-an-envelope")).resolves.toEqual({ data: [1] })
 		expect(fixed.calls).toHaveLength(1)
 	})
 
@@ -472,11 +472,11 @@ describe("createBDCClient: the on-disk response cache", () => {
 		const transport = bdcTransport([{ body: { data: [1] } }, { body: { data: [2] } }])
 		const client = clientFor(transport)
 
-		expect(await client.get(path, undefined, { skipCache: true })).toEqual({ data: [1] })
-		expect(await client.get(path, undefined, { skipCache: true })).toEqual({ data: [2] })
+		await expect(client.get(path, undefined, { skipCache: true })).resolves.toEqual({ data: [1] })
+		await expect(client.get(path, undefined, { skipCache: true })).resolves.toEqual({ data: [2] })
 
 		expect(transport.calls).toHaveLength(2)
-		expect(await Globerator.from("*", { cwd: cacheDir }).toArray()).toHaveLength(0)
+		await expect(Globerator.from("*", { cwd: cacheDir }).toArray()).resolves.toHaveLength(0)
 	})
 
 	it("de-dupes concurrent misses for the SAME url onto a single in-flight request", async () => {
@@ -520,7 +520,7 @@ describe("createBDCClient: the binary download path", () => {
 		expect(Buffer.from(await client.getArrayBuffer(path)).toString()).toBe("second")
 
 		expect(transport.calls).toHaveLength(2)
-		expect(await Globerator.from("*", { cwd: cacheDir }).toArray()).toHaveLength(0)
+		await expect(Globerator.from("*", { cwd: cacheDir }).toArray()).resolves.toHaveLength(0)
 		expect(warn.mock.calls.flat().join(" ")).not.toMatch(/refusing to cache/i)
 
 		warn.mockRestore()
@@ -576,7 +576,7 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 		const written = await downloadBDCFile(client, file, destination)
 
 		expect(written).toBe(destination("bdc_06_Cable_D24_31dec2024.csv").toString())
-		expect(await readLocalTextFile(written)).toBe(csv)
+		await expect(readLocalTextFile(written)).resolves.toBe(csv)
 		expect(transport.calls).toEqual([`${BDC_API_BASE_URL}/map/downloads/downloadFile/availability/42`])
 	})
 
@@ -681,7 +681,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 		// A test with a long backoff would pass with the throttle deleted.
 		const client = clientFor(transport, { clock, maxAttempts: 3, baseRetryDelayMs: 500 })
 
-		expect(await client.get("/map/retry")).toEqual({ data: [1] })
+		await expect(client.get("/map/retry")).resolves.toEqual({ data: [1] })
 		expect(transport.calls).toHaveLength(2)
 		expect(clock.sleepCalls[0]).toBe(500)
 		// Every attempt re-enters the throttle, so a retry burst cannot outrun the rate budget.
@@ -725,8 +725,8 @@ describe("the SDK callers, over the migrated client", () => {
 		const transport = bdcTransport([{ body: { data: raw } }])
 		const client = clientFor(transport)
 
-		expect(await retrieveFilingDates(client, { filingType: BDCFilingDataType.Availability })).toHaveLength(1)
-		expect(await retrieveFilingDates(client, { filingType: BDCFilingDataType.Challenge })).toHaveLength(1)
+		await expect(retrieveFilingDates(client, { filingType: BDCFilingDataType.Availability })).resolves.toHaveLength(1)
+		await expect(retrieveFilingDates(client, { filingType: BDCFilingDataType.Challenge })).resolves.toHaveLength(1)
 
 		expect(transport.calls).toHaveLength(1)
 	})

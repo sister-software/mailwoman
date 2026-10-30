@@ -66,11 +66,11 @@ async function poiFixtureFile(name: string): Promise<PathBuilder> {
 
 describe("openBDCDatabaseIfPresent", () => {
 	it("returns null when databasePath is undefined", async () => {
-		expect(await openBDCDatabaseIfPresent(undefined)).toBeNull()
+		await expect(openBDCDatabaseIfPresent(undefined)).resolves.toBeNull()
 	})
 
 	it("returns null when the file is missing", async () => {
-		expect(await openBDCDatabaseIfPresent("/nonexistent/path/bdc.db")).toBeNull()
+		await expect(openBDCDatabaseIfPresent("/nonexistent/path/bdc.db")).resolves.toBeNull()
 	})
 
 	it("opens the database when the file is present", async () => {
@@ -83,11 +83,11 @@ describe("openBDCDatabaseIfPresent", () => {
 
 describe("openPlausibilityPOIDeps", () => {
 	it("returns undefined when databasePath is undefined", async () => {
-		expect(await openPlausibilityPOIDeps(undefined)).toBeUndefined()
+		await expect(openPlausibilityPOIDeps(undefined)).resolves.toBeUndefined()
 	})
 
 	it("returns undefined when the file is missing", async () => {
-		expect(await openPlausibilityPOIDeps("/nonexistent/path/poi.db")).toBeUndefined()
+		await expect(openPlausibilityPOIDeps("/nonexistent/path/poi.db")).resolves.toBeUndefined()
 	})
 
 	it("opens a lookup + schemadb pair sharing one handle when the file is present", async () => {
@@ -118,11 +118,11 @@ describe("assertBDCDatabaseExists", () => {
 
 describe("openFilerDatabaseIfPresent", () => {
 	it("returns null when databasePath is undefined", async () => {
-		expect(await openFilerDatabaseIfPresent(undefined)).toBeNull()
+		await expect(openFilerDatabaseIfPresent(undefined)).resolves.toBeNull()
 	})
 
 	it("returns null when the file is missing", async () => {
-		expect(await openFilerDatabaseIfPresent("/nonexistent/path/filer.db")).toBeNull()
+		await expect(openFilerDatabaseIfPresent("/nonexistent/path/filer.db")).resolves.toBeNull()
 	})
 
 	it("opens the database when the file is present", async () => {

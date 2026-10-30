@@ -19,11 +19,11 @@ describe("syncArtifact", () => {
 		const dest = resolvePath(scratch.path, "dest.js")
 
 		await writeLocalTextFile("const LIMIT = 1", source)
-		expect(await syncArtifact(source, dest, "test")).toBe(true)
-		expect(await syncArtifact(source, dest, "test")).toBe(false)
+		await expect(syncArtifact(source, dest, "test")).resolves.toBe(true)
+		await expect(syncArtifact(source, dest, "test")).resolves.toBe(false)
 
 		await writeLocalTextFile("const LIMIT = 2", source)
-		expect(await syncArtifact(source, dest, "test")).toBe(true)
-		expect(await readLocalTextFile(dest)).toBe("const LIMIT = 2")
+		await expect(syncArtifact(source, dest, "test")).resolves.toBe(true)
+		await expect(readLocalTextFile(dest)).resolves.toBe("const LIMIT = 2")
 	})
 })

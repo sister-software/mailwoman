@@ -107,11 +107,11 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestESBizkaia against apli.bizkaia.eus"
 
 			const options = { outputDir: scratch.path, municipalities: [MUNICIPALITY], components: false }
 
-			expect(await harvestESBizkaia(client, options)).toMatchObject({ fetched: 1, skipped: 0, failed: 0 })
-			expect(await harvestESBizkaia(client, options)).toMatchObject({ fetched: 0, skipped: 1, failed: 0 })
+			await expect(harvestESBizkaia(client, options)).resolves.toMatchObject({ fetched: 1, skipped: 0, failed: 0 })
+			await expect(harvestESBizkaia(client, options)).resolves.toMatchObject({ fetched: 0, skipped: 1, failed: 0 })
 
 			// The digest check reaches the same conclusion through the file's bytes rather than its length.
-			expect(await harvestESBizkaia(client, { ...options, verifyDigests: true })).toMatchObject({
+			await expect(harvestESBizkaia(client, { ...options, verifyDigests: true })).resolves.toMatchObject({
 				fetched: 0,
 				skipped: 1,
 			})
@@ -149,9 +149,9 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestESBizkaia against apli.bizkaia.eus"
 			await using scratch = await temporaryDirectory("mailwoman-bizkaia-live-adapter-")
 			await using client = liveClient()
 
-			expect(await harvestESBizkaia(client, { outputDir: scratch.path, municipalities: [MUNICIPALITY] })).toMatchObject(
-				{ failed: 0 }
-			)
+			await expect(
+				harvestESBizkaia(client, { outputDir: scratch.path, municipalities: [MUNICIPALITY] })
+			).resolves.toMatchObject({ failed: 0 })
 
 			// The harvest's whole purpose: the adapter's `inputPath` is this directory,
 			// and the streets it joins against come from the saved WFS documents in it.

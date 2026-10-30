@@ -80,8 +80,8 @@ describe("readServedMD5", () => {
 			{ headers: { etag: '"abc-123"' } },
 		])
 
-		expect(await readServedMD5(client, DATASET.resources[1]!.url)).toBe("1300241c36f1e7706a72191e05f2148e")
-		expect(await readServedMD5(client, DATASET.resources[1]!.url)).toBeNull()
+		await expect(readServedMD5(client, DATASET.resources[1]!.url)).resolves.toBe("1300241c36f1e7706a72191e05f2148e")
+		await expect(readServedMD5(client, DATASET.resources[1]!.url)).resolves.toBeNull()
 	})
 })
 

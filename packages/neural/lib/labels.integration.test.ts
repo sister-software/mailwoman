@@ -53,17 +53,17 @@ describe("readLabelsFromModelCard", () => {
 	})
 
 	test("returns undefined when the path is undefined", async () => {
-		expect(await readLabelsFromModelCard(null)).toBeNull()
+		await expect(readLabelsFromModelCard(null)).resolves.toBeNull()
 	})
 
 	test("returns undefined when the file does not exist", async () => {
-		expect(await readLabelsFromModelCard(dir.path("missing.json"))).toBeNull()
+		await expect(readLabelsFromModelCard(dir.path("missing.json"))).resolves.toBeNull()
 	})
 
 	test("returns undefined when the file is not valid JSON", async () => {
 		const p = dir.path("model-card.json")
 		await writeLocalTextFile("{ not: json,", p)
-		expect(await readLabelsFromModelCard(p)).toBeNull()
+		await expect(readLabelsFromModelCard(p)).resolves.toBeNull()
 	})
 
 	test("throws when labels is present but the wrong type (number instead of array)", async () => {

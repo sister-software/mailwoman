@@ -70,9 +70,9 @@ describe("countJSONLines", () => {
 			return countJSONLines(scratch.path("export.jsonl"))
 		}
 
-		expect(await count('{"a":1}\n{"a":2}\n')).toBe(2)
-		expect(await count('{"a":1}\n\n{"a":2}')).toBe(2)
-		expect(await count("")).toBe(0)
+		await expect(count('{"a":1}\n{"a":2}\n')).resolves.toBe(2)
+		await expect(count('{"a":1}\n\n{"a":2}')).resolves.toBe(2)
+		await expect(count("")).resolves.toBe(0)
 	})
 })
 
@@ -80,7 +80,7 @@ describe("readAnnuaireCatalog", () => {
 	it("reads the modification date and the license", async () => {
 		await using client = stubClient([{ body: CATALOG }])
 
-		expect(await readAnnuaireCatalog(client)).toEqual({
+		await expect(readAnnuaireCatalog(client)).resolves.toEqual({
 			modified: "2026-10-03T05:01:16.662000+00:00",
 			license: "Licence Ouverte v2.0 (Etalab)",
 			licenseURL: "http://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf",

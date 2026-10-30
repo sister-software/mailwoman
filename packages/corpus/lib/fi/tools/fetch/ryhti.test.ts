@@ -86,7 +86,7 @@ describe("readRyhtiColumns", () => {
 
 		await writeLocalFile(`${HEADER}\n${ROW}\n`, path)
 
-		expect(await readRyhtiColumns(path)).toEqual(FI_RYHTI_REQUIRED_COLUMNS)
+		await expect(readRyhtiColumns(path)).resolves.toEqual(FI_RYHTI_REQUIRED_COLUMNS)
 	})
 
 	it("strips the quotes a publisher puts on a header cell rather than keeping them in the name", async () => {
@@ -97,7 +97,7 @@ describe("readRyhtiColumns", () => {
 		// quotes its header must read as the same column names.
 		await writeLocalFile(`"address_key","municipality_number"\n"0001","091"\n`, path)
 
-		expect(await readRyhtiColumns(path)).toEqual(["address_key", "municipality_number"])
+		await expect(readRyhtiColumns(path)).resolves.toEqual(["address_key", "municipality_number"])
 	})
 
 	it("raises on a file holding no row rather than answering no columns", async () => {
@@ -138,7 +138,7 @@ describe("readRyhtiHead", () => {
 			{ headers: { "content-length": "351290196", "last-modified": "Fri, 2 Oct 2026 05:20:14 GMT" } },
 		])
 
-		expect(await readRyhtiHead(client)).toEqual({
+		await expect(readRyhtiHead(client)).resolves.toEqual({
 			contentLength: 351_290_196,
 			lastModified: "Fri, 2 Oct 2026 05:20:14 GMT",
 			contentType: null,
@@ -151,7 +151,7 @@ describe("readRyhtiHead", () => {
 		await using client = stubClient([{ headers: {} }])
 
 		// A missing length is not a length of zero: the caller downloads rather than comparing.
-		expect(await readRyhtiHead(client)).toMatchObject({ contentLength: null, lastModified: null })
+		await expect(readRyhtiHead(client)).resolves.toMatchObject({ contentLength: null, lastModified: null })
 	})
 
 	it("reports a non-numeric content-length as null", async () => {
@@ -288,6 +288,6 @@ describe("decompressToCSV", () => {
 		await expect(decompressToCSV(source, destination)).rejects.toThrow(TypeError)
 
 		// What matters is that the page's own bytes are not written through as though they were the CSV.
-		expect(await readLocalTextFile(destination)).toBe("")
+		await expect(readLocalTextFile(destination)).resolves.toBe("")
 	})
 })

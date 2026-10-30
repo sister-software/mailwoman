@@ -150,8 +150,8 @@ describe("mailwoman license", () => {
 
 		expect(result.exitCode).toBe(1)
 		expect(result.stderr).toContain(`does not trust key id ${kid}`)
-		expect(await pathExists(resolvePath(scratch.path, "license", "key"))).toBe(false)
-		expect(await pathExists(resolvePath(scratch.path, "license", "refresh.json"))).toBe(false)
+		await expect(pathExists(resolvePath(scratch.path, "license", "key"))).resolves.toBe(false)
+		await expect(pathExists(resolvePath(scratch.path, "license", "refresh.json"))).resolves.toBe(false)
 	})
 
 	test("refresh reads the credentials file, asks the worker, and refuses to write a token this build does not trust; lapsed and a wrong secret are reported by word", async () => {
@@ -169,7 +169,7 @@ describe("mailwoman license", () => {
 
 		expect(untrusted.exitCode).toBe(1)
 		expect(untrusted.stderr).toContain(`does not trust key id ${kid}`)
-		expect(await pathExists(resolvePath(scratch.path, "license", "key"))).toBe(false)
+		await expect(pathExists(resolvePath(scratch.path, "license", "key"))).resolves.toBe(false)
 
 		const lapsed = await cli(["refresh", "--lid", LAPSED_LID, "--secret", SECRET, "--json"], env)
 

@@ -33,7 +33,7 @@ describe("the config-root license files", () => {
 	})
 
 	it("answers nothing when neither the variable nor the file is set", async () => {
-		expect(await readConfiguredLicenseToken()).toBeNull()
+		await expect(readConfiguredLicenseToken()).resolves.toBeNull()
 	})
 
 	it("reads the file when the variable is unset, and the variable first when both are set", async () => {

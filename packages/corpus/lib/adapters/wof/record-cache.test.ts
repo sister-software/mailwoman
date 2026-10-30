@@ -48,7 +48,7 @@ test("walkFeaturesCached yields the walk's records, then the same records from t
 	const cacheFile = await wofRecordCachePath(repo, cache)
 
 	expect(first).toEqual(walked)
-	expect(await pathExists(cacheFile)).toBe(true)
+	await expect(pathExists(cacheFile)).resolves.toBe(true)
 
 	const second = await Array.fromAsync(walkFeaturesCached(repo, { cacheDir: cache }))
 
@@ -60,6 +60,6 @@ test("walkFeaturesCached yields the walk's records, then the same records from t
 	// extractFingerprint computes a path's digest once per process, so the edited repo is read through another spelling.
 	const edited = `${repo.toString()}/.`
 
-	expect(await wofRecordCachePath(edited, cache)).not.toBe(cacheFile)
+	await expect(wofRecordCachePath(edited, cache)).resolves.not.toBe(cacheFile)
 	expect((await Array.fromAsync(walkFeaturesCached(edited, { cacheDir: cache })))[1]!.name).toBe("Queens County")
 })

@@ -64,7 +64,7 @@ describe("admittedSitusSources", () => {
 			table
 		)
 
-		expect(await admittedSitusSources(REGISTER, table)).toEqual(
+		await expect(admittedSitusSources(REGISTER, table)).resolves.toEqual(
 			new Set(["overture:NAD", "overture:OpenAddresses/XX/Open County"])
 		)
 	})

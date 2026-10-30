@@ -33,7 +33,7 @@ describe("verifySourceURL", () => {
 			"https://raw.githubusercontent.com/example/project/HEAD/LICENSE.md": { status: 200, body: "MIT License\n\n…" },
 		})
 
-		expect(await verifySourceURL(script.fetch, "https://github.com/example/project")).toBe("verified")
+		await expect(verifySourceURL(script.fetch, "https://github.com/example/project")).resolves.toBe("verified")
 
 		expect(script.requested).toEqual([
 			"https://raw.githubusercontent.com/example/project/HEAD/LICENSE",
@@ -46,23 +46,25 @@ describe("verifySourceURL", () => {
 			"https://example.org/project/LICENSE": { status: 200, body: "Apache License\nVersion 2.0" },
 		})
 
-		expect(await verifySourceURL(script.fetch, "https://example.org/project/")).toBe("verified")
+		await expect(verifySourceURL(script.fetch, "https://example.org/project/")).resolves.toBe("verified")
 		expect(script.requested).toEqual(["https://example.org/project/LICENSE"])
 	})
 
 	it("is unverified for a 404 and for a body that names no compatible license", async () => {
-		expect(await verifySourceURL(fetchScript({}).fetch, "https://github.com/example/absent")).toBe("unverified")
+		await expect(verifySourceURL(fetchScript({}).fetch, "https://github.com/example/absent")).resolves.toBe(
+			"unverified"
+		)
 
 		const proprietary = fetchScript({
 			"https://raw.githubusercontent.com/example/closed/HEAD/LICENSE": { status: 200, body: "All rights reserved." },
 		})
 
-		expect(await verifySourceURL(proprietary.fetch, "https://github.com/example/closed")).toBe("unverified")
+		await expect(verifySourceURL(proprietary.fetch, "https://github.com/example/closed")).resolves.toBe("unverified")
 	})
 
 	it("is unverified when the fetch itself fails", async () => {
 		const failing = (() => Promise.reject(new TypeError("fetch failed"))) as typeof fetch
 
-		expect(await verifySourceURL(failing, "https://github.com/example/project")).toBe("unverified")
+		await expect(verifySourceURL(failing, "https://github.com/example/project")).resolves.toBe("unverified")
 	})
 })

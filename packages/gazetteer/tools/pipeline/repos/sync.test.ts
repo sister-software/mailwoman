@@ -217,7 +217,7 @@ describe("applyRepoSyncPlan", () => {
 
 		client.on("progress", (step) => steps.push(step))
 
-		expect(await applyRepoSyncPlan(plan, { client })).toBe(`cloned ${REPO} from fork`)
+		await expect(applyRepoSyncPlan(plan, { client })).resolves.toBe(`cloned ${REPO} from fork`)
 		expect(steps.length).toBeGreaterThan(0)
 		expect((await inspectClone(directory)).shallow).toBe(true)
 	})
@@ -249,15 +249,15 @@ describe("applyRepoSyncPlan", () => {
 
 		await using client = new GitClient({ cwd: scratch.path })
 
-		expect(await applyRepoSyncPlan(planRepoSync(origin, directory, await inspectClone(directory)), { client })).toBe(
-			`cloned ${REPO} from upstream; added the fork remote of ${REPO} at ${repoURL(FORK_ORG, REPO)}`
-		)
+		await expect(
+			applyRepoSyncPlan(planRepoSync(origin, directory, await inspectClone(directory)), { client })
+		).resolves.toBe(`cloned ${REPO} from upstream; added the fork remote of ${REPO} at ${repoURL(FORK_ORG, REPO)}`)
 
-		expect(await client.read(["-C", directory, "remote", "get-url", "fork"])).toBe(repoURL(FORK_ORG, REPO))
+		await expect(client.read(["-C", directory, "remote", "get-url", "fork"])).resolves.toBe(repoURL(FORK_ORG, REPO))
 
 		const again = planRepoSync(origin, directory, await inspectClone(directory))
 
 		expect(again.action).toBe(SyncAction.UpToDate)
-		expect(await applyRepoSyncPlan(again, { client })).toBeNull()
+		await expect(applyRepoSyncPlan(again, { client })).resolves.toBeNull()
 	})
 })

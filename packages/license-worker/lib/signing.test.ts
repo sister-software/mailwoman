@@ -21,15 +21,15 @@ describe("the signing self-test", () => {
 		// In a sandbox the worker vouches for itself, so an end-to-end run can mint.
 		const { env: worker, kid } = await envWithSigningKey(base)
 
-		expect(await signingSelfTest(worker)).toEqual({ status: "ok", kid, trust: "sandbox", reason: null })
+		await expect(signingSelfTest(worker)).resolves.toEqual({ status: "ok", kid, trust: "sandbox", reason: null })
 
-		expect(await signingSelfTest({ ...worker, liveMode: true })).toMatchObject({
+		await expect(signingSelfTest({ ...worker, liveMode: true })).resolves.toMatchObject({
 			status: "mismatch",
 			kid,
 			reason: expect.stringContaining("register"),
 		})
 
-		expect(await signingSelfTest({ ...worker, LICENSE_SIGNING_KID: "v9-00000000" })).toMatchObject({
+		await expect(signingSelfTest({ ...worker, LICENSE_SIGNING_KID: "v9-00000000" })).resolves.toMatchObject({
 			status: "mismatch",
 			kid: "v9-00000000",
 			reason: expect.stringContaining(`signs for ${kid}`),
@@ -39,7 +39,7 @@ describe("the signing self-test", () => {
 	it("reads mismatch for a registered kid whose private key does not sign for it", async () => {
 		const { env: worker } = await envWithSigningKey(base)
 
-		expect(await signingSelfTest({ ...worker, LICENSE_SIGNING_KID: "v9-ecec29be" })).toMatchObject({
+		await expect(signingSelfTest({ ...worker, LICENSE_SIGNING_KID: "v9-ecec29be" })).resolves.toMatchObject({
 			status: "mismatch",
 			kid: "v9-ecec29be",
 			reason: expect.stringContaining("does not sign"),
@@ -47,8 +47,8 @@ describe("the signing self-test", () => {
 	})
 
 	it("reads mismatch for an unreadable key", async () => {
-		expect(
-			await signingSelfTest({ ...base, LICENSE_SIGNING_KID: "v9-ecec29be", LICENSE_SIGNING_KEY_PEM: "not a key" })
-		).toMatchObject({ status: "mismatch" })
+		await expect(
+			signingSelfTest({ ...base, LICENSE_SIGNING_KID: "v9-ecec29be", LICENSE_SIGNING_KEY_PEM: "not a key" })
+		).resolves.toMatchObject({ status: "mismatch" })
 	})
 })

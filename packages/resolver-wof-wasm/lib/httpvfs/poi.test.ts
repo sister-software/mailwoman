@@ -129,7 +129,7 @@ describe("searchPOICategory", () => {
 	test("returns an empty list for a category the database does not carry", async () => {
 		const { database, queries } = fixture([{ ring: 0, category: 1, rank: -1, name: "Cafe" }])
 
-		expect(await searchPOICategory(database, { categoryIDs: ["absent"], center: CENTER })).toEqual([])
+		await expect(searchPOICategory(database, { categoryIDs: ["absent"], center: CENTER })).resolves.toEqual([])
 		expect(queries).toHaveLength(0)
 	})
 })

@@ -33,6 +33,6 @@ describe("canonicalRows", () => {
 
 		await writeLocalTextFile(`${line("deepseek-kryptonite", "k-1")}\n${line("deepseek-kryptonite", "k-2")}\n`, jsonl)
 
-		expect(await Array.fromAsync(canonicalRows(jsonl))).toHaveLength(2)
+		await expect(Array.fromAsync(canonicalRows(jsonl))).resolves.toHaveLength(2)
 	})
 })

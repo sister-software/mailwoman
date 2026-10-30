@@ -110,7 +110,7 @@ describe("mailwoman data build osm-address-points", () => {
 		expect(dry.stdout).toContain("prerequisite ogr2ogr")
 		expect(dry.stdout).toMatch(/output DE/u)
 		expect(registry.requests).toEqual([])
-		expect(await pathExists(root.path("active.json"))).toBe(false)
+		await expect(pathExists(root.path("active.json"))).resolves.toBe(false)
 
 		const built = await cli(...request, "--activate", "--json")
 

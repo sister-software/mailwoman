@@ -64,27 +64,27 @@ describe("a compressed corpus part", () => {
 	})
 
 	it("streams text rows from a compressed source too", async () => {
-		expect(await TextSpliterator.countAsync(compressed)).toBe(ROWS.length)
+		await expect(TextSpliterator.countAsync(compressed)).resolves.toBe(ROWS.length)
 	})
 
 	// A two-pass reader such as `readUnquotedTSVChecked` counts a file and then reads it.
 	// Each pass reopens the path, so a compressed file reads in full both times.
 	it("survives two sequential passes", async () => {
-		expect(await TextSpliterator.countAsync(compressed)).toBe(ROWS.length)
-		expect(await readRows(compressed)).toHaveLength(ROWS.length)
+		await expect(TextSpliterator.countAsync(compressed)).resolves.toBe(ROWS.length)
+		await expect(readRows(compressed)).resolves.toHaveLength(ROWS.length)
 	})
 })
 
 describe("the compressed-sibling lookup", () => {
 	it("reads the .zst sibling of a plain name that has not been written", async () => {
-		expect(await readRows(onlyCompressed)).toEqual(ROWS)
+		await expect(readRows(onlyCompressed)).resolves.toEqual(ROWS)
 	})
 
 	it("prefers the .zst sibling over the plain file", async () => {
 		// Both copies hold the same rows here, so the read cannot tell them apart.
 		// The opt-out proves the plain file is readable on its own and the default does not depend on it.
-		expect(await readRows(plain)).toEqual(ROWS)
-		expect(await readRows(plain, { preferCompressed: false })).toEqual(ROWS)
+		await expect(readRows(plain)).resolves.toEqual(ROWS)
+		await expect(readRows(plain, { preferCompressed: false })).resolves.toEqual(ROWS)
 	})
 })
 

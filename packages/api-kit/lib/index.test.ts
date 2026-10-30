@@ -91,5 +91,5 @@ test("serveNode: binds, answers over real HTTP, closes cleanly", async () => {
 
 	expect(server.port).toBeGreaterThan(0)
 	const res = await fetch(`http://127.0.0.1:${server.port}/ping`)
-	expect(await res.json()).toEqual({ ok: true })
+	await expect(res.json()).resolves.toEqual({ ok: true })
 })

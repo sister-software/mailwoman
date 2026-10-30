@@ -83,10 +83,10 @@ describe("createAPIWorkerApp", () => {
 		expect(response.status).toBe(400)
 		expect(response.headers.get("server")).toBe("mailwoman/10.7.0")
 		expect(response.headers.get("link")).toBe("<https://mailwoman.ai/license>; rel=license")
-		expect(await response.json()).toEqual({ error: "invalid request body", detail: "address: required" })
+		await expect(response.json()).resolves.toEqual({ error: "invalid request body", detail: "address: required" })
 		expect(received[0]?.url).toBe("http://engine.internal/v1/geocode")
 		expect(received[0]?.headers.get("cookie")).toBeNull()
-		expect(await received[0]?.text()).toBe('{"address":"1600 Pennsylvania Avenue NW, Washington, DC 20500"}')
+		await expect(received[0]?.text()).resolves.toBe('{"address":"1600 Pennsylvania Avenue NW, Washington, DC 20500"}')
 	})
 
 	it("does not expose backend administration and reports backend failure", async () => {
@@ -105,7 +105,7 @@ describe("createAPIWorkerApp", () => {
 		const response = await app.request(path, init)
 
 		expect(response.status).toBe(502)
-		expect(await response.json()).toEqual({ error: "backend unavailable" })
+		await expect(response.json()).resolves.toEqual({ error: "backend unavailable" })
 	})
 
 	it("replaces the backend's CORS policy with the Worker's origin list", async () => {
@@ -133,7 +133,7 @@ describe("createAPIWorkerApp", () => {
 		const response = await app.request(path, init)
 
 		expect(response.status).toBe(504)
-		expect(await response.json()).toEqual({ error: "backend timeout" })
+		await expect(response.json()).resolves.toEqual({ error: "backend timeout" })
 	})
 })
 
@@ -147,7 +147,7 @@ describe("admission", () => {
 			const response = await app.request(path, init)
 
 			expect(response.status).toBe(403)
-			expect(await response.json()).toEqual({ error: "origin not allowed" })
+			await expect(response.json()).resolves.toEqual({ error: "origin not allowed" })
 		}
 
 		expect(backend.received).toHaveLength(0)
@@ -224,7 +224,7 @@ describe("request-location bias", () => {
 		await located.request(malformed.path, malformed.init)
 		await unlocated.request(plain.path, plain.init)
 
-		expect(await Promise.all(backend.received.map((request) => request.text()))).toEqual([
+		await expect(Promise.all(backend.received.map((request) => request.text()))).resolves.toEqual([
 			'{"address":"Springfield"}',
 			"not json",
 			'{"address":"Springfield"}',

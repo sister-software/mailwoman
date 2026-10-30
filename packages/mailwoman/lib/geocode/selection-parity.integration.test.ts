@@ -185,9 +185,9 @@ describe("POI on the active selection", () => {
 
 		await replaceActiveSelection(selected, { basedOn: null, set: [installed.entry] })
 
-		expect(await resolveLayerDatabasePath(legacy, "poi")).toBe(conventional)
-		expect(await resolveLayerDatabasePath(selected, "poi")).toBe(installed.path)
-		expect(await sha256File(installed.path)).toBe(await sha256File(conventional))
+		await expect(resolveLayerDatabasePath(legacy, "poi")).resolves.toBe(conventional)
+		await expect(resolveLayerDatabasePath(selected, "poi")).resolves.toBe(installed.path)
+		await expect(sha256File(installed.path)).resolves.toBe(await sha256File(conventional))
 	})
 })
 
@@ -272,7 +272,9 @@ describe("a multi-country source", () => {
 		const catalog = await LayerCatalog.read(root)
 
 		for (const country of countries) {
-			expect(await catalog.firstPath(ServingRole.AddressPoints, { country, subdivision: null })).toBe(installed.path)
+			await expect(catalog.firstPath(ServingRole.AddressPoints, { country, subdivision: null })).resolves.toBe(
+				installed.path
+			)
 		}
 
 		using lookup = new AddressPointSqliteLookup(installed.path, { streetLocale: "de" })
@@ -309,11 +311,12 @@ describe("a multi-country source", () => {
 
 		const catalog = await LayerCatalog.read(root)
 
-		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "DE", subdivision: null })).toBe(
+		await expect(catalog.firstPath(ServingRole.AddressPoints, { country: "DE", subdivision: null })).resolves.toBe(
 			installed.path
 		)
+
 		// An unscoped entry would answer every country's lookup, France's included.
-		expect(await catalog.firstPath(ServingRole.AddressPoints, { country: "FR", subdivision: null })).toBeNull()
+		await expect(catalog.firstPath(ServingRole.AddressPoints, { country: "FR", subdivision: null })).resolves.toBeNull()
 	})
 })
 
@@ -430,9 +433,9 @@ describe("each overlay on its own role", () => {
 
 			await replaceActiveSelection(selected, { basedOn: null, set: [installed.entry] })
 
-			expect(await resolveLayerDatabasePath(legacy, id)).toBe(conventional)
-			expect(await resolveLayerDatabasePath(selected, id)).toBe(installed.path)
-			expect(await sha256File(installed.path)).toBe(await sha256File(conventional))
+			await expect(resolveLayerDatabasePath(legacy, id)).resolves.toBe(conventional)
+			await expect(resolveLayerDatabasePath(selected, id)).resolves.toBe(installed.path)
+			await expect(sha256File(installed.path)).resolves.toBe(await sha256File(conventional))
 
 			// The doctor lists the path the session reads.
 			expect((await layerDatabases(selected)).find((layer) => layer.id === id)?.path).toBe(installed.path)
@@ -662,7 +665,7 @@ describe("the WOF extract set on the active selection, against the conventional 
 		// The lookup names each attached schema after its file, so an installed extract keeps its file name.
 		expect(selectedPaths.map((path) => path.split("/").at(-1))).toEqual([adminName, postcodeName])
 
-		expect(await Promise.all(selectedPaths.map((path) => sha256File(path)))).toEqual(
+		await expect(Promise.all(selectedPaths.map((path) => sha256File(path)))).resolves.toEqual(
 			await Promise.all(legacyPaths.map((path) => sha256File(path)))
 		)
 
@@ -767,7 +770,7 @@ describe("the FSTs on the active selection, against the files beside the weights
 		const empty = scratch.path("fst-priors-empty")
 
 		// No selection: the weights' own files, unchanged.
-		expect(await selectedParsePriorArtifacts(weights, "en-US", empty)).toEqual(weights)
+		await expect(selectedParsePriorArtifacts(weights, "en-US", empty)).resolves.toEqual(weights)
 
 		const chosen = await selectedParsePriorArtifacts(weights, "en-US", selected)
 

@@ -30,7 +30,7 @@ describe("packageHasBinaries", () => {
 	it("accepts a Latin package on its tokenizer alone", async () => {
 		await using pkg = await weightsPackage({ "model.onnx": "onnx", "tokenizer.model": "sp" })
 
-		expect(await packageHasBinaries(pkg.directory)).toBe(true)
+		await expect(packageHasBinaries(pkg.directory)).resolves.toBe(true)
 	})
 
 	it("accepts a char package whose card declares the vocabulary it ships", async () => {
@@ -39,7 +39,7 @@ describe("packageHasBinaries", () => {
 			{ encoder: "char", char_vocab: "char-vocab.json", max_units: 64, max_unit_width: 4, char_ctx: 8 }
 		)
 
-		expect(await packageHasBinaries(pkg.directory)).toBe(true)
+		await expect(packageHasBinaries(pkg.directory)).resolves.toBe(true)
 	})
 
 	it("refuses a character vocabulary whose card does not declare a char encoder", async () => {
@@ -55,6 +55,6 @@ describe("packageHasBinaries", () => {
 	it("answers false for a directory carrying neither tokenizer nor vocabulary", async () => {
 		await using pkg = await weightsPackage({ "model.onnx": "onnx" })
 
-		expect(await packageHasBinaries(pkg.directory)).toBe(false)
+		await expect(packageHasBinaries(pkg.directory)).resolves.toBe(false)
 	})
 })

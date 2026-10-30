@@ -141,7 +141,7 @@ test('POST /v1/parse: missing address body key -> 400 { error: "address is requi
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required", detail: null })
+	await expect(res.json()).resolves.toEqual({ error: "address is required", detail: null })
 })
 
 test('POST /v1/parse: empty-string address -> 400 { error: "address is required" }', async () => {
@@ -154,7 +154,7 @@ test('POST /v1/parse: empty-string address -> 400 { error: "address is required"
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required", detail: null })
+	await expect(res.json()).resolves.toEqual({ error: "address is required", detail: null })
 })
 
 test('GET /v1/parse: absent address -> 400 { error: "address is required" }', async () => {
@@ -162,7 +162,7 @@ test('GET /v1/parse: absent address -> 400 { error: "address is required" }', as
 
 	const res = await app.request("/v1/parse")
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required", detail: null })
+	await expect(res.json()).resolves.toEqual({ error: "address is required", detail: null })
 })
 
 test("POST /v1/parse: engine.parse absent -> 501", async () => {
@@ -175,7 +175,7 @@ test("POST /v1/parse: engine.parse absent -> 501", async () => {
 	})
 
 	expect(res.status).toBe(501)
-	expect(await res.json()).toEqual({ error: "parse not implemented", detail: null })
+	await expect(res.json()).resolves.toEqual({ error: "parse not implemented", detail: null })
 })
 
 test("GET /v1/parse: engine.parse absent -> 501", async () => {
@@ -183,7 +183,7 @@ test("GET /v1/parse: engine.parse absent -> 501", async () => {
 
 	const res = await app.request("/v1/parse?address=x")
 	expect(res.status).toBe(501)
-	expect(await res.json()).toEqual({ error: "parse not implemented", detail: null })
+	await expect(res.json()).resolves.toEqual({ error: "parse not implemented", detail: null })
 })
 
 // MARK: /v1/geocode
@@ -198,7 +198,7 @@ test("POST /v1/geocode: happy path passes the GeocodeResult through verbatim", a
 	})
 
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual({ ...fixtureGeocodeResult("1600 Pennsylvania Ave NW"), tree: null })
+	await expect(res.json()).resolves.toEqual({ ...fixtureGeocodeResult("1600 Pennsylvania Ave NW"), tree: null })
 })
 
 test("POST /v1/geocode: the bias points and the tree option reach the engine, and the tree comes back", async () => {
@@ -289,7 +289,7 @@ test('POST /v1/geocode: missing address -> 400 { error: "address is required" }'
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "address is required", detail: null })
+	await expect(res.json()).resolves.toEqual({ error: "address is required", detail: null })
 })
 
 test("POST /v1/geocode: engine.geocode absent -> 503 (deps missing in production)", async () => {
@@ -302,7 +302,7 @@ test("POST /v1/geocode: engine.geocode absent -> 503 (deps missing in production
 	})
 
 	expect(res.status).toBe(503)
-	expect(await res.json()).toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
+	await expect(res.json()).resolves.toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
 test("POST /v1/geocode: a thrown engine error is recorded as an error tier, then rethrown into the 500 net", async () => {
@@ -319,7 +319,7 @@ test("POST /v1/geocode: a thrown engine error is recorded as an error tier, then
 	})
 
 	expect(res.status).toBe(500)
-	expect(await res.json()).toEqual({ error: "internal error", detail: "resolver exploded" })
+	await expect(res.json()).resolves.toEqual({ error: "internal error", detail: "resolver exploded" })
 
 	const metricsRes = await app.request("/metrics")
 	const snapshot = (await metricsRes.json()) as { timings: { errors: number } }
@@ -352,7 +352,7 @@ test("POST /v1/batch: empty addresses array -> 200 { results: [] }, even with no
 	})
 
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual({ results: [] })
+	await expect(res.json()).resolves.toEqual({ results: [] })
 })
 
 test('POST /v1/batch: wrong body shape -> 400 { error: "body must be { addresses: string[] } " }', async () => {
@@ -365,7 +365,7 @@ test('POST /v1/batch: wrong body shape -> 400 { error: "body must be { addresses
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "body must be { addresses: string[] }", detail: null })
+	await expect(res.json()).resolves.toEqual({ error: "body must be { addresses: string[] }", detail: null })
 })
 
 test("POST /v1/batch: over batchMax -> 413", async () => {
@@ -378,7 +378,7 @@ test("POST /v1/batch: over batchMax -> 413", async () => {
 	})
 
 	expect(res.status).toBe(413)
-	expect(await res.json()).toEqual({ error: "batch too large: 3 > 2", detail: null })
+	await expect(res.json()).resolves.toEqual({ error: "batch too large: 3 > 2", detail: null })
 })
 
 test("POST /v1/batch: engine.batch absent -> 503", async () => {
@@ -391,7 +391,7 @@ test("POST /v1/batch: engine.batch absent -> 503", async () => {
 	})
 
 	expect(res.status).toBe(503)
-	expect(await res.json()).toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
+	await expect(res.json()).resolves.toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
 test("/v1/batch records whole-call latency under the batch tier", async () => {
@@ -421,7 +421,7 @@ test("POST /v1/resolve: happy path returns { tree } passed through the engine", 
 	})
 
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual({ tree })
+	await expect(res.json()).resolves.toEqual({ tree })
 })
 
 test('POST /v1/resolve: wrong body shape -> 400 { error: "body must be { tree: AddressTree, opts? } " }', async () => {
@@ -434,7 +434,7 @@ test('POST /v1/resolve: wrong body shape -> 400 { error: "body must be { tree: A
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "body must be { tree: AddressTree, opts? }", detail: null })
+	await expect(res.json()).resolves.toEqual({ error: "body must be { tree: AddressTree, opts? }", detail: null })
 })
 
 test("POST /v1/resolve: engine.resolveTree absent -> 503", async () => {
@@ -447,7 +447,7 @@ test("POST /v1/resolve: engine.resolveTree absent -> 503", async () => {
 	})
 
 	expect(res.status).toBe(503)
-	expect(await res.json()).toEqual({ error: "resolver not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
+	await expect(res.json()).resolves.toEqual({ error: "resolver not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
 // MARK: /v1/reload
@@ -457,7 +457,7 @@ test("POST /v1/reload: happy path passes { reloaded, versions } through", async 
 
 	const res = await app.request("/v1/reload", { method: "POST" })
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual({ reloaded: true, versions: { wof: "v1" } })
+	await expect(res.json()).resolves.toEqual({ reloaded: true, versions: { wof: "v1" } })
 })
 
 test("POST /v1/reload: engine.reload absent -> 503", async () => {
@@ -465,7 +465,7 @@ test("POST /v1/reload: engine.reload absent -> 503", async () => {
 
 	const res = await app.request("/v1/reload", { method: "POST" })
 	expect(res.status).toBe(503)
-	expect(await res.json()).toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
+	await expect(res.json()).resolves.toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
 })
 
 // MARK: /v1/format — always available
@@ -656,7 +656,7 @@ test("bodyLimitBytes: an oversized /v1/* POST answers 413, not a buffered crash"
 	})
 
 	expect(res.status).toBe(413)
-	expect(await res.json()).toEqual({ error: "request body too large", detail: null })
+	await expect(res.json()).resolves.toEqual({ error: "request body too large", detail: null })
 })
 
 test("an engine fault answers the native 500 envelope with a helpful detail, never a crash", async () => {
@@ -668,7 +668,7 @@ test("an engine fault answers the native 500 envelope with a helpful detail, nev
 
 	const res = await app.request("/v1/parse?address=x")
 	expect(res.status).toBe(500)
-	expect(await res.json()).toEqual({ error: "internal error", detail: "model exploded" })
+	await expect(res.json()).resolves.toEqual({ error: "internal error", detail: "model exploded" })
 })
 
 test("malformed JSON answers a 400 envelope, not a 500", async () => {
@@ -681,7 +681,7 @@ test("malformed JSON answers a 400 envelope, not a 500", async () => {
 	})
 
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "invalid request body", detail: "malformed JSON" })
+	await expect(res.json()).resolves.toEqual({ error: "invalid request body", detail: "malformed JSON" })
 })
 
 test(`POST /v1/parse: an address past ${MAX_ADDRESS_LENGTH} chars -> 400`, async () => {
