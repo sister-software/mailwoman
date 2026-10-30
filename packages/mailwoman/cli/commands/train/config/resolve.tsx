@@ -27,7 +27,7 @@ export const spec = {
 
 const TrainConfigResolve: CommandComponent<typeof spec, [string]> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { writeResolvedTrainingConfig } = await import("@mailwoman/corpus/training/config/load")
+		const { writeResolvedTrainingConfig } = await import("@mailwoman/corpus/training/config/resolved")
 
 		return writeResolvedTrainingConfig(args[0], options.out)
 	})

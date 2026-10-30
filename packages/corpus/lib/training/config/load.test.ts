@@ -18,10 +18,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { readCorpusSourceInputs, SourceRightsError } from "#source-register/corpus-inputs"
 import { readAddressSourceRegister } from "#source-register/register"
+import { admitTrainingConfig, admittedTrainingSources, type TrainingAdmissionInputs } from "#training/config/admission"
 import {
-	admitTrainingConfig,
-	admittedTrainingSources,
-	buildResolvedTrainingConfig,
 	ConfigErrorKind,
 	defaultConfigInstance,
 	mergeIntoConfig,
@@ -31,10 +29,9 @@ import {
 	trainingCorpusVersion,
 	trainingCSVLogPath,
 	typedTrainingConfig,
-	writeResolvedTrainingConfig,
-	type TrainingAdmissionInputs,
 } from "#training/config/load"
 import { parsePythonYAML, type PythonMapping } from "#training/config/python-yaml"
+import { buildResolvedTrainingConfig, writeResolvedTrainingConfig } from "#training/config/resolved"
 import { RESOLVED_TRAINING_CONFIG_VERSION, type TrainingConfig } from "#training/config/schema"
 
 const CONFIG_DIR = repoRootPath("corpus-python", "src", "mailwoman_train", "configs")

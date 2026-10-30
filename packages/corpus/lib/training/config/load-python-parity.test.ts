@@ -27,16 +27,14 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { readCorpusSourceInputs, SourceRightsError } from "#source-register/corpus-inputs"
 import { readAddressSourceRegister } from "#source-register/register"
+import { admitTrainingConfig, admittedTrainingSources, type TrainingAdmissionInputs } from "#training/config/admission"
 import {
-	admitTrainingConfig,
-	admittedTrainingSources,
 	readTrainingConfigText,
 	trainingCorpusVersion,
 	trainingCSVLogPath,
 	TrainingConfigError,
 	typedTrainingConfig,
 	type ConfigValue,
-	type TrainingAdmissionInputs,
 } from "#training/config/load"
 import { pythonRepr } from "#training/config/python-yaml"
 
