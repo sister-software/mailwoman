@@ -15,7 +15,7 @@ import {
 } from "#tools/eval-harness/osm-suites/replay"
 
 describe("the suite replay's stage attribution", () => {
-	const raw = "Friggs alle 6"
+	const raw = "Friggs road 6"
 
 	const pieces = [
 		{ start: 0, end: 6 },

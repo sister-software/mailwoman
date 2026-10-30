@@ -44,7 +44,7 @@ test("whitespace splits and line splits", () => {
 })
 
 test("capitalize upper-cases the first character and lower-cases the rest", () => {
-	expect(capitalize("rUE")).toBe("Rue")
+	expect(capitalize("RUE")).toBe("Rue")
 	expect(capitalize("éCOLE")).toBe("École")
 	expect(capitalize("")).toBe("")
 })
