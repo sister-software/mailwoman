@@ -11,7 +11,7 @@
  *       [--max-field-chars 64] [--max-row-groups <n>] [--seed 42] [--force] [--unshippable-reason <why>]
  */
 
-import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { integerArgument, parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 
 import { openSourceRightsAdmission, writeSourceRightsRecord } from "#source-register/corpus-inputs"
 import { buildTWCorpus, TW_CORPUS_DEFAULTS } from "#tw/corpus/assemble"
@@ -38,14 +38,6 @@ const { values } = parseArguments({
 	},
 })
 
-const integer = (name: string, value: string): number => {
-	const parsed = Number(value)
-
-	if (!Number.isSafeInteger(parsed)) throw new Error(`--${name} must be an integer, got ${value}`)
-
-	return parsed
-}
-
 const outDir = requiredArgument("tw-corpus", "--out-dir", values["out-dir"])
 
 const admission = await openSourceRightsAdmission({
@@ -58,16 +50,16 @@ admission.admitAll([TW_CORPUS_SOURCE])
 await buildTWCorpus({
 	parquet: values.parquet ?? twOvertureParquetPath(),
 	outDir,
-	trainRows: integer("train-rows", values["train-rows"]),
-	valRows: integer("val-rows", values["val-rows"]),
-	boardRows: integer("board-rows", values["board-rows"]),
-	boardBucketMin: integer("board-bucket-min", values["board-bucket-min"]),
-	rowsPerPart: integer("rows-per-part", values["rows-per-part"]),
-	statsSamplePerPart: integer("stats-sample-per-part", values["stats-sample-per-part"]),
+	trainRows: integerArgument("train-rows", values["train-rows"]),
+	valRows: integerArgument("val-rows", values["val-rows"]),
+	boardRows: integerArgument("board-rows", values["board-rows"]),
+	boardBucketMin: integerArgument("board-bucket-min", values["board-bucket-min"]),
+	rowsPerPart: integerArgument("rows-per-part", values["rows-per-part"]),
+	statsSamplePerPart: integerArgument("stats-sample-per-part", values["stats-sample-per-part"]),
 	countryFraction: Number(values["country-fraction"]),
-	maxFieldChars: integer("max-field-chars", values["max-field-chars"]),
-	maxRowGroups: values["max-row-groups"] ? integer("max-row-groups", values["max-row-groups"]) : undefined,
-	seed: integer("seed", values.seed),
+	maxFieldChars: integerArgument("max-field-chars", values["max-field-chars"]),
+	maxRowGroups: values["max-row-groups"] ? integerArgument("max-row-groups", values["max-row-groups"]) : undefined,
+	seed: integerArgument("seed", values.seed),
 	force: values.force,
 })
 

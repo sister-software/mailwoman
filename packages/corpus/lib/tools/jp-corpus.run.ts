@@ -13,7 +13,7 @@
  *       [--seed 42] [--force] [--unshippable-reason <why>]
  */
 
-import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { integerArgument, parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 
 import { buildJPCorpus, JP_CORPUS_DEFAULTS } from "#jp/corpus/assemble"
 import { JP_CORPUS_SOURCE } from "#jp/corpus/rows"
@@ -46,14 +46,6 @@ const { values } = parseArguments({
 	},
 })
 
-const integer = (name: string, value: string): number => {
-	const parsed = Number(value)
-
-	if (!Number.isSafeInteger(parsed)) throw new Error(`--${name} must be an integer, got ${value}`)
-
-	return parsed
-}
-
 const outDir = requiredArgument("jp-corpus", "--out-dir", values["out-dir"])
 
 const admission = await openSourceRightsAdmission({
@@ -69,19 +61,19 @@ await buildJPCorpus({
 	// An explicit empty string declines the kana register, so only an absent flag means the default.
 	adminDB: values["admin-db"] === undefined ? jpAdminDBPath() : values["admin-db"] || null,
 	outDir,
-	trainRows: integer("train-rows", values["train-rows"]),
-	valRows: integer("val-rows", values["val-rows"]),
-	boardRows: integer("board-rows", values["board-rows"]),
-	rowsPerPart: integer("rows-per-part", values["rows-per-part"]),
-	statsSamplePerPart: integer("stats-sample-per-part", values["stats-sample-per-part"]),
+	trainRows: integerArgument("train-rows", values["train-rows"]),
+	valRows: integerArgument("val-rows", values["val-rows"]),
+	boardRows: integerArgument("board-rows", values["board-rows"]),
+	rowsPerPart: integerArgument("rows-per-part", values["rows-per-part"]),
+	statsSamplePerPart: integerArgument("stats-sample-per-part", values["stats-sample-per-part"]),
 	postcodeFraction: Number(values["postcode-fraction"]),
 	countryFraction: Number(values["country-fraction"]),
 	spacedFraction: Number(values["spaced-fraction"]),
 	variantHyphenFraction: Number(values["variant-hyphen-fraction"]),
-	maxFieldChars: integer("max-field-chars", values["max-field-chars"]),
-	maxRowGroups: values["max-row-groups"] ? integer("max-row-groups", values["max-row-groups"]) : undefined,
+	maxFieldChars: integerArgument("max-field-chars", values["max-field-chars"]),
+	maxRowGroups: values["max-row-groups"] ? integerArgument("max-row-groups", values["max-row-groups"]) : undefined,
 	upweightPattern: values["upweight-pattern"] ?? null,
-	seed: integer("seed", values.seed),
+	seed: integerArgument("seed", values.seed),
 	force: values.force,
 })
 

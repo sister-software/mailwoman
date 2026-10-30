@@ -12,7 +12,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { integerArgument, parseArguments } from "@mailwoman/core/scripting/arguments"
 import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 
 import { buildJPProbeCorpus, JP_PROBE_DEFAULTS, JP_PROBE_SOURCE } from "#jp/corpus/probe"
@@ -35,14 +35,6 @@ const { values } = parseArguments({
 	},
 })
 
-const integer = (name: string, value: string): number => {
-	const parsed = Number(value)
-
-	if (!Number.isSafeInteger(parsed)) throw new Error(`--${name} must be an integer, got ${value}`)
-
-	return parsed
-}
-
 const outDir = values["out-dir"] ?? dataRootPath("corpus", "versioned", "v8-jp-probe").toString()
 
 const admission = await openSourceRightsAdmission({
@@ -56,11 +48,11 @@ const report = await buildJPProbeCorpus({
 	parquet: values.parquet ?? jpOvertureParquetPath().toString(),
 	kenAll: values.kenall ?? kenAllPath().toString(),
 	outDir,
-	trainRows: integer("train-rows", values["train-rows"]),
-	valRows: integer("val-rows", values["val-rows"]),
-	boardRows: integer("board-rows", values["board-rows"]),
+	trainRows: integerArgument("train-rows", values["train-rows"]),
+	valRows: integerArgument("val-rows", values["val-rows"]),
+	boardRows: integerArgument("board-rows", values["board-rows"]),
 	postcodeFraction: Number(values["postcode-fraction"]),
-	seed: integer("seed", values.seed),
+	seed: integerArgument("seed", values.seed),
 })
 
 await writeSourceRightsRecord(admission.record(), outDir)

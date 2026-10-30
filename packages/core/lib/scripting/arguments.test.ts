@@ -55,4 +55,15 @@ describe("optionPropertyName", () => {
 	])("capitalizes the whole acronym: --%s to options.%s", (flag, property) => {
 		expect(scriptingUtils.optionPropertyName(flag)).toBe(property)
 	})
+
+	it("reads an integer flag and refuses a value that is not a safe integer, naming the flag", () => {
+		expect(scriptingUtils.integerArgument("train-rows", "20000")).toBe(20_000)
+		expect(scriptingUtils.integerArgument("seed", "-3")).toBe(-3)
+
+		for (const value of ["1.5", "abc", "9007199254740993"]) {
+			expect(() => scriptingUtils.integerArgument("train-rows", value)).toThrow(
+				`--train-rows must be an integer, got ${value}`
+			)
+		}
+	})
 })

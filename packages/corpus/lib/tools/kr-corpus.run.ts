@@ -13,7 +13,7 @@
  *       [--unshippable-reason <why>]
  */
 
-import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { integerArgument, parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 
 import { buildKRCorpus, jusoZipPath, KR_CORPUS_DEFAULTS, permitDirectoryPath } from "#kr/corpus/assemble"
 import { KR_CORPUS_SOURCE, KR_REGISTRY_SOURCE } from "#kr/corpus/rows"
@@ -46,14 +46,6 @@ const { values } = parseArguments({
 	},
 })
 
-const integer = (name: string, value: string): number => {
-	const parsed = Number(value)
-
-	if (!Number.isSafeInteger(parsed)) throw new Error(`--${name} must be an integer, got ${value}`)
-
-	return parsed
-}
-
 const outDir = requiredArgument("kr-corpus", "--out-dir", values["out-dir"])
 const registryOutDir = requiredArgument("kr-corpus", "--registry-out-dir", values["registry-out-dir"])
 const unshippableReason = values["unshippable-reason"] ?? null
@@ -68,22 +60,22 @@ await buildKRCorpus({
 	permitDir: values["permit-dir"] ?? permitDirectoryPath(),
 	outDir,
 	registryOutDir,
-	trainRows: integer("train-rows", values["train-rows"]),
-	valRows: integer("val-rows", values["val-rows"]),
-	boardRows: integer("board-rows", values["board-rows"]),
-	registryRows: integer("registry-rows", values["registry-rows"]),
+	trainRows: integerArgument("train-rows", values["train-rows"]),
+	valRows: integerArgument("val-rows", values["val-rows"]),
+	boardRows: integerArgument("board-rows", values["board-rows"]),
+	registryRows: integerArgument("registry-rows", values["registry-rows"]),
 	registryValFraction: Number(values["registry-val-fraction"]),
-	registryBoardRows: integer("registry-board-rows", values["registry-board-rows"]),
-	boardBucketMin: integer("board-bucket-min", values["board-bucket-min"]),
-	rowsPerPart: integer("rows-per-part", values["rows-per-part"]),
-	statsSamplePerPart: integer("stats-sample-per-part", values["stats-sample-per-part"]),
+	registryBoardRows: integerArgument("registry-board-rows", values["registry-board-rows"]),
+	boardBucketMin: integerArgument("board-bucket-min", values["board-bucket-min"]),
+	rowsPerPart: integerArgument("rows-per-part", values["rows-per-part"]),
+	statsSamplePerPart: integerArgument("stats-sample-per-part", values["stats-sample-per-part"]),
 	countryFraction: Number(values["country-fraction"]),
-	maxFieldChars: integer("max-field-chars", values["max-field-chars"]),
+	maxFieldChars: integerArgument("max-field-chars", values["max-field-chars"]),
 	maxRowsPerRegion: values["max-rows-per-region"]
-		? integer("max-rows-per-region", values["max-rows-per-region"])
+		? integerArgument("max-rows-per-region", values["max-rows-per-region"])
 		: undefined,
 	permitGlob: values["permit-glob"],
-	seed: integer("seed", values.seed),
+	seed: integerArgument("seed", values.seed),
 	force: values.force,
 })
 
