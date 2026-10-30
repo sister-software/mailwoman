@@ -349,6 +349,12 @@ tokenizer. Every tenth probe is also run trimmed to its real length, so the `seq
 | Browser SLO suite on the Rust int8 (wasm arm), 11 tests | pass. P50 43.5 ms, p95 45.6 ms | pass. P50 43.7 ms, p95 45.4 ms | the suite        |
 | WebGPU on a real iOS device                             | not run                        | not run                        | before promotion |
 
+The initializer row was re-measured on 2026-10-30 and recorded in
+`$MAILWOMAN_DATA_ROOT/audits/trainer-parity/quantizer-initializers/` (`record.json`, `FINDINGS.md`, one diff report
+per arm). en-us reproduces at 189 of 189. Arm B's reference fp32 graph is not on disk: the `model-fp32.onnx` beside
+its int8 was written later and its float initializers differ, so arm B's 189 of 189 rests on the 2026-10-29 run
+alone.
+
 The shipped en-us int8 measured 43.7 ms p50 and 46.1 ms p95 on the same host in the same session. The SLO suite
 has no WebGPU arm, so the WebGPU constraint is untested. The quantizer's unit tests cover the stale `value_info`
 case: an annotation that contradicts the graph is dropped and the output is identical to the one without it. The
@@ -1015,7 +1021,8 @@ coverage 0.99 and ids 0 to 3 always kept, the Python and Rust outputs are equal 
 written as `json.dumps(indent=2)` writes them, through `pythonJSONDumps`. Over three packages from two input sets
 (no eval report and 40 address systems. An eval report with float fields, non-ASCII notes and hardware, a
 trailing-slash checkpoint path, `--smoke`, and no address systems), all 15 files equal the Python packager's output
-byte for byte, with `completed_at` given to both. Differences, by decision:
+byte for byte, with `completed_at` given to both (`$MAILWOMAN_DATA_ROOT/audits/trainer-parity/phase6-reference/package/compare.txt`:
+`15 files, 0 differ`). Differences, by decision:
 
 1. The eval report is an input (`--eval-report`). The Python command ran the golden-set eval on the torch model
    itself. That eval moves with `evaluation/`.
