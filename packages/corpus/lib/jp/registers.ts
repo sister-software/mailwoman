@@ -18,11 +18,12 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { pythonIsDigit, pythonSplitWhitespace, pythonStrip } from "@mailwoman/core/strings/python-text"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
-import { addToKeySet, type CJKRecord, codePointLength, labelTokensByFirstSpan, unitKey } from "#cjk/builder"
+import { addToKeySet, type CJKRecord, labelTokensByFirstSpan, unitKey } from "#cjk/builder"
 import { JP_PREFECTURE_NAMES, normalizeJPName, splitJPStreet } from "#jp/text"
 import { parquetRowGroupRows } from "#parquet/readers"
 import { openParquetRowStream } from "#parquet/streams"

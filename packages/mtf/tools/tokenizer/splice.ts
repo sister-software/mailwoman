@@ -17,6 +17,7 @@ import { isDirectory, isFile } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { pythonSplitLines, pythonStrip } from "@mailwoman/core/strings/python-text"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -70,19 +71,6 @@ function isNonASCII(c: string): boolean {
 
 function isASCII(text: string): boolean {
 	return ![...text].some(isNonASCII)
-}
-
-/**
- * The number of code points, which is what Python's `len` counts.
- */
-function codePointLength(text: string): number {
-	let n = 0
-
-	for (const _ of text) {
-		n++
-	}
-
-	return n
 }
 
 export interface SlavicCorpusOptions {

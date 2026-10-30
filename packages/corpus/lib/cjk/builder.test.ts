@@ -6,7 +6,7 @@
  *   `fixtures/builders/cjk-helpers.json`.
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { directoryHasEntries, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -16,7 +16,6 @@ import {
 	buildCharVocab,
 	charLabelArrayFromSpans,
 	coverageStats,
-	directoryHasEntries,
 	MAX_RENDERED_CHARS,
 	muniBucket,
 	readLabelSetTags,

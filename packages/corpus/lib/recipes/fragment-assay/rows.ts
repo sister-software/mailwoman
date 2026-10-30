@@ -10,9 +10,8 @@
  */
 
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "@mailwoman/codex/country"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
-
-import { codePointLength } from "#cjk/builder"
 
 /**
  * One rendered fragment row before its provenance columns.

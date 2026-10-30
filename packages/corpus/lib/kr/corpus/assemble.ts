@@ -12,6 +12,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { isDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pySum } from "@mailwoman/core/numeric"
@@ -25,7 +26,6 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import {
 	type CJKRecord,
 	coverageStats,
-	directoryHasEntries,
 	MAX_FIELD_CHARS,
 	muniBucket,
 	nextSelection,

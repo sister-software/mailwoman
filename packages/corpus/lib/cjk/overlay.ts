@@ -16,6 +16,7 @@
  *   and in character mode the space is its own unit.
  */
 
+import { directoryHasEntries, sortedGlob } from "@mailwoman/core/fs/readers"
 import { isDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
@@ -26,12 +27,10 @@ import { JSONSpliterator } from "spliterator"
 import {
 	CJK_LABEL_SET_NAME,
 	type CJKRecord,
-	directoryHasEntries,
 	loadCharVocab,
 	readLabelSetTags,
 	saveCharVocab,
 	sealCharacters,
-	sortedGlob,
 	verifyCJKRecord,
 	writeCJKCorpusParquet,
 } from "#cjk/builder"

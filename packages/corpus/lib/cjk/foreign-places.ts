@@ -13,7 +13,7 @@
  *   and test rows stay out.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { directoryHasEntries, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
@@ -25,7 +25,6 @@ import {
 	buildCharVocab,
 	CJK_LABEL_SET_NAME,
 	type CJKRecord,
-	directoryHasEntries,
 	readLabelSetTags,
 	RecordCheckError,
 	saveCharVocab,

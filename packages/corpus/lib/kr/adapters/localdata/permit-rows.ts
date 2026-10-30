@@ -11,13 +11,14 @@
  * aligning so the alignment rate per file can be measured before any row enters a corpus.
  */
 
+import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { decodeByteStream, openReadStream } from "@mailwoman/core/fs/streams"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, extname, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CJKRecord, labelTokensByFirstSpan, sortedGlob } from "#cjk/builder"
+import { type CJKRecord, labelTokensByFirstSpan } from "#cjk/builder"
 import type { Aligned } from "#kr/adapters/localdata/align"
 
 /**

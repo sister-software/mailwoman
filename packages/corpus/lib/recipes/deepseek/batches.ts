@@ -14,11 +14,11 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { pyRound, pySum } from "@mailwoman/core/numeric"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { pythonSplitLines, pythonStrip } from "@mailwoman/core/strings/python-text"
 import { JSONSpliterator } from "spliterator"
 
-import { codePointLength } from "#cjk/builder"
 import {
 	KRYPTONITE_CATEGORIES,
 	type KryptoniteCategory,

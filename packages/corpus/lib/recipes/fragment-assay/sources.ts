@@ -12,12 +12,12 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { pythonIsDigit, pythonStrip } from "@mailwoman/core/strings/python-text"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { codePointLength } from "#cjk/builder"
 import { openParquetRowStream } from "#parquet/streams"
 import { PyRandom } from "#training/pyrandom"
 

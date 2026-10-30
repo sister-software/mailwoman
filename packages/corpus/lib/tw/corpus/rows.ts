@@ -14,16 +14,10 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { countInto } from "@mailwoman/core/stats"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import type { PathBuilderLike } from "path-ts"
 
-import {
-	type CJKRecord,
-	codePointLength,
-	labelTokensByFirstSpan,
-	MAX_FIELD_CHARS,
-	RowRenderer,
-	verifyRecord,
-} from "#cjk/builder"
+import { type CJKRecord, labelTokensByFirstSpan, MAX_FIELD_CHARS, RowRenderer, verifyRecord } from "#cjk/builder"
 import { asciiDigits, fullwidthDigits, normalizeCJKText } from "#cjk/text"
 import { parquetRowGroupRows } from "#parquet/readers"
 import { openParquetRowStream } from "#parquet/streams"

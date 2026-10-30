@@ -12,6 +12,7 @@
  *   Ported from the Python builders' `countries/jp/corpora/assemble.py`, draw for draw.
  */
 
+import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
@@ -22,7 +23,6 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import {
 	type CJKRecord,
 	coverageStats,
-	directoryHasEntries,
 	MAX_FIELD_CHARS,
 	muniBucket,
 	nextSelection,

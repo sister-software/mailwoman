@@ -11,9 +11,10 @@
  *   Ported from the Python builders' `countries/kr/corpora/rows.py`.
  */
 
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 
-import { type CJKRecord, codePointLength, labelTokensByFirstSpan, MAX_RENDERED_CHARS, RowRenderer } from "#cjk/builder"
+import { type CJKRecord, labelTokensByFirstSpan, MAX_RENDERED_CHARS, RowRenderer } from "#cjk/builder"
 import { normalizeCJKText } from "#cjk/text"
 import { type JusoLabelRow, parenthetical, REGION_ALIASES } from "#kr/adapters/juso/label-rows"
 import { type Aligned, alignLotAddress, alignRoadAddress } from "#kr/adapters/localdata/align"

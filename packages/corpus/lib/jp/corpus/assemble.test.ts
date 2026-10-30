@@ -7,14 +7,13 @@
  *   order of the rows is the assertion: one moved draw re-renders the corpus.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-import { sortedGlob } from "#cjk/builder"
 import { buildJPCorpus } from "#jp/corpus/assemble"
 import { iterJPSourceRows, loadKenAllPostcodes } from "#jp/corpus/sources"
 import { municipalityKanaFromAdminDB } from "#jp/kana"

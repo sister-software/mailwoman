@@ -15,6 +15,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
@@ -24,7 +25,6 @@ import {
 	CJK_LABEL_SET_NAME,
 	type CJKRecord,
 	coverageStats,
-	directoryHasEntries,
 	muniBucket,
 	nextSelection,
 	readLabelSetTags,

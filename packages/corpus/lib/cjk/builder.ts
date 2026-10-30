@@ -10,19 +10,18 @@
  *   the Basic Multilingual Plane, which JavaScript counts as two code units.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { isDirectory } from "@mailwoman/core/fs/readers/stat"
+import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { pyRound, pySum } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { asPythonFloat, type PythonFloat } from "@mailwoman/core/strings/python-json"
 import { pythonIsSpace, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import { type PathBuilderLike, resolvePath } from "path-ts"
-import { Globerator } from "spliterator/node/fs"
 
 import { normalizeCJKText } from "#cjk/text"
 import { readParquetRows } from "#parquet/readers"
@@ -85,19 +84,6 @@ export const MAX_FIELD_CHARS = 64
  * The longest rendered row, in code points, the character model reads without truncation.
  */
 export const MAX_RENDERED_CHARS = 96
-
-/**
- * The number of code points in `text`.
- */
-export const codePointLength = (text: string): number => {
-	let length = 0
-
-	for (const _ of text) {
-		length++
-	}
-
-	return length
-}
 
 /**
  * Builds a row's raw text and its spans, one tagged field or untagged glue at a time.
@@ -167,35 +153,6 @@ export function labelTokensByFirstSpan(
 	}
 
 	return { tokens, labels }
-}
-
-/**
- * Whether `directory` exists and holds any entry, the test a builder runs
- * before refusing to overwrite a corpus.
- */
-export async function directoryHasEntries(directory: PathBuilderLike): Promise<boolean> {
-	if (!(await isDirectory(directory))) return false
-
-	// `*` skips dot-files, so a directory holding only a `.corpus-build.lock`
-	// would read as empty and be overwritten.
-	// Python's `iterdir()` lists them, so the `.*` pattern is read as well.
-	for (const pattern of ["*", ".*"]) {
-		const entries = await Globerator.from(pattern, { cwd: directory.toString(), onlyFiles: false }).toArray()
-
-		if (entries.length) return true
-	}
-
-	return false
-}
-
-/**
- * The absolute paths `pattern` matches in `directory`, in code-point order,
- * as Python's `sorted(Path.glob())` lists one directory's files.
- */
-export async function sortedGlob(directory: PathBuilderLike, pattern: string): Promise<string[]> {
-	const paths: string[] = await Globerator.from(pattern, { cwd: directory.toString(), absolute: true }).toArray()
-
-	return paths.toSorted(compareByScalarValue)
 }
 
 /**

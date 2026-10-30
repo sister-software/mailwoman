@@ -13,11 +13,10 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { sql } from "kysely"
 import type { PathBuilderLike } from "path-ts"
-
-import { codePointLength } from "#cjk/builder"
 
 const MUNICIPALITY_GENERICS = ["市", "町", "村", "区"] as const
 

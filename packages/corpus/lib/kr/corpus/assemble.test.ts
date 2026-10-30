@@ -7,7 +7,7 @@
  *   `fixtures/builders/kr/kr-build-reference.json`. `gdaltransform` is replaced by the Python test's stub.
  */
 
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile, sortedGlob } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -15,7 +15,6 @@ import { pyRound } from "@mailwoman/core/numeric"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-import { sortedGlob } from "#cjk/builder"
 import { buildKRCorpus } from "#kr/corpus/assemble"
 import { readParquetRows } from "#parquet/readers"
 import { expectSpanInvariants } from "#test-kit"

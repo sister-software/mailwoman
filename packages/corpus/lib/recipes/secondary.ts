@@ -17,6 +17,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { pythonSplitWhitespace, pythonStrip } from "@mailwoman/core/strings/python-text"
 
 import { PyRandom } from "#training/pyrandom"
@@ -116,8 +117,6 @@ export interface SecondaryRow {
 	source: string
 }
 
-const codePoints = (text: string): number => [...text].length
-
 /**
  * A row from ordered groups.
  *
@@ -141,7 +140,7 @@ function rowFromGroups(groups: ReadonlyArray<readonly Part[]>, separator: string
 
 	for (const [groupIndex, group] of groups.entries()) {
 		if (groupIndex > 0) {
-			cursor += codePoints(separator)
+			cursor += codePointLength(separator)
 		}
 
 		const parts: string[] = []
@@ -156,10 +155,10 @@ function rowFromGroups(groups: ReadonlyArray<readonly Part[]>, separator: string
 			row.tokens.push(...tokens)
 			row.labels.push(`B-${tag}`, ...tokens.slice(1).map(() => `I-${tag}`))
 			row.span_starts.push(cursor)
-			row.span_ends.push(cursor + codePoints(text))
+			row.span_ends.push(cursor + codePointLength(text))
 			row.span_tags.push(tag)
 			parts.push(text)
-			cursor += codePoints(text)
+			cursor += codePointLength(text)
 		}
 
 		surfaces.push(parts.join(" "))

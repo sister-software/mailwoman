@@ -8,12 +8,14 @@
  *   Ported from the Python builders' `countries/tw/registers.py`. Offsets are code points.
  */
 
+import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { isDirectory } from "@mailwoman/core/fs/readers/stat"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
-import { addToKeySet, type CJKRecord, codePointLength, sortedGlob, unitKey } from "#cjk/builder"
+import { addToKeySet, type CJKRecord, unitKey } from "#cjk/builder"
 import { asciiDigits, normalizeCJKText } from "#cjk/text"
 import { parquetRowGroupRows } from "#parquet/readers"
 import { openParquetRowStream } from "#parquet/streams"

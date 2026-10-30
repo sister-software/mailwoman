@@ -20,12 +20,12 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import { basename, dirname } from "path-ts"
 
-import { codePointLength } from "#cjk/builder"
 import { openParquetRowStream } from "#parquet/streams"
 import { PyRandom } from "#training/pyrandom"
 
