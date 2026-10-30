@@ -236,6 +236,14 @@ export interface NeuralParseTrace {
 	repairs: TraceRepair[]
 
 	/**
+	 * The cardinality filter's choice when the parse ran with `cardinalityFilter`:
+	 * the rank of the path it took among the 20 best, and whether every path repeated
+	 * a singleton tag so the best path was kept.
+	 * Absent when the filter was off.
+	 */
+	cardinalityFilter?: { rank: number; fellBack: boolean }
+
+	/**
 	 * The final tokens, matching those `parse()` builds its tree from.
 	 */
 	tokens: DecoderToken[]

@@ -17,7 +17,7 @@
  *   2026-10-28 suite report wrote.
  */
 
-import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
+import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -33,6 +33,7 @@ import {
 	scoreHeldoutRow,
 } from "#tools/eval-harness/heldout/per/country"
 import type { OSMSuiteRow } from "#tools/eval-harness/osm-suites/extract"
+import { failureFamilies, readFailureList } from "#tools/eval-harness/osm-suites/failure-families"
 import {
 	decidingStage,
 	goldPieceLabels,
@@ -57,7 +58,6 @@ if (!values.suites || !values.arm || !values["second-arm"] || !values.out) {
 }
 
 const K_VALUES = [1, 5, 20] as const
-const SINGLETON_TAGS = new Set(["street", "house_number", "locality", "postcode", "venue", "region"])
 const packages = await readHeldoutLocalePackages()
 
 function classifiers(cacheRoot: string) {
@@ -187,81 +187,6 @@ await writeLocalTextFile(
 	resolvePath(values.out, "rows.jsonl")
 )
 
-// The mechanism families, by the rules of the myopia report's classifier over the failure list's strings.
-interface FailureRecord {
-	input: string
-	expected: string
-	shipped: string
-}
-
-const pairs = (text: string) =>
-	text
-		.split(" · ")
-		.filter((part) => part.includes("="))
-		.map((part) => [part.slice(0, part.indexOf("=")), part.slice(part.indexOf("=") + 1)] as const)
-
-const strip = (value: string) => value.replaceAll(/[()'’".]/g, "")
-
-function families(record: FailureRecord, country: string): string[] {
-	const expected = pairs(record.expected)
-	const shipped = pairs(record.shipped)
-	const expectedTags = new Set(expected.map(([tag]) => tag))
-	const shippedTags = new Set(shipped.map(([tag]) => tag))
-	const expectedByTag = new Map(expected)
-	const shippedByTag = new Map(shipped)
-	const out: string[] = []
-
-	if (country === "HK") {
-		out.push("set-aside:hk")
-	}
-
-	if (/^[a-z]{2}-/.test(expectedByTag.get("postcode") ?? "")) {
-		out.push("set-aside:postcode-prefix")
-	}
-
-	if (expectedTags.has("venue") && !shippedTags.has("venue")) {
-		out.push("venue-lost")
-	}
-
-	if (expectedTags.has("unit") && !shippedTags.has("unit")) {
-		const unit = expectedByTag.get("unit")!
-
-		if (shipped.some(([tag, value]) => tag !== "unit" && value.includes(unit))) {
-			out.push("unit-absorbed")
-		}
-	}
-
-	if (expectedTags.has("dependent_locality") && !shippedTags.has("dependent_locality")) {
-		const street = shippedByTag.get("street")
-
-		if (street && street.includes(expectedByTag.get("dependent_locality")!)) {
-			out.push("dependent-locality-as-street")
-		}
-	}
-
-	const shippedCounts = new Map<string, number>()
-
-	for (const [tag] of shipped) {
-		countInto(shippedCounts, tag)
-	}
-
-	if ([...shippedCounts].some(([tag, count]) => SINGLETON_TAGS.has(tag) && count > 1)) {
-		out.push("singleton-repeated")
-	}
-
-	for (const [tag, value] of expected) {
-		const got = shippedByTag.get(tag)
-
-		if (got && got !== value && strip(got) === strip(value)) {
-			out.push("punctuation-lost")
-
-			break
-		}
-	}
-
-	return out
-}
-
 const byKey = new Map(records.map((record) => [`${record.suite}\u0000${record.raw}`, record]))
 
 interface FamilyRow {
@@ -317,22 +242,10 @@ function tallyFamily(family: string, raw: string, record: RowRecord | undefined)
 }
 
 if (values.failures) {
-	const failure = await readLocalJSONFile<{ groups: Record<string, Record<string, Record<string, FailureRecord>>> }>(
-		values.failures
-	)
-
-	const entries = Object.entries(failure.groups).flatMap(([suite, countries]) =>
-		Object.entries(countries).flatMap(([country, byID]) =>
-			Object.values(byID)
-				.filter((entry) => entry.input !== "Input")
-				.map((entry) => ({ suite, country, entry, raw: entry.input.replaceAll(/^`|`$/g, "") }))
-		)
-	)
-
-	for (const { suite, country, entry, raw } of entries) {
+	for (const { suite, country, entry, raw } of await readFailureList(values.failures)) {
 		const record = byKey.get(`${suite}\u0000${raw}`)
 
-		for (const family of families(entry, country)) {
+		for (const family of failureFamilies(entry, country)) {
 			tallyFamily(family, raw, record)
 		}
 	}

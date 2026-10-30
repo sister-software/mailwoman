@@ -34,6 +34,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { confidentLocaleCountry, localeHintID, resolveSystemVerdict } from "#address-system"
 import { anchoredRegionIDs } from "#anchor-inference"
+import { countedPieces, decodeViterbi } from "#cardinality-filter"
 import { encodeCharUnits } from "#char-encoder"
 import type {
 	AddressSystemConventions,
@@ -77,7 +78,6 @@ import {
 	buildBIOTransitionMask,
 	pathMargins,
 	softmax,
-	viterbi,
 } from "#viterbi"
 import type { UnfedChannelReport } from "#weights/channels"
 import { enforceWordConsistency } from "#word-consistency"
@@ -445,6 +445,7 @@ export class NeuralAddressClassifier {
 			decode: this.decodeMode,
 			explanation: trace.explanation,
 			repairs: trace.repairs,
+			...(trace.cardinalityFilter ? { cardinalityFilter: trace.cardinalityFilter } : {}),
 			tokens: tokens.map((t) => ({ ...t })),
 		}
 	}
@@ -487,6 +488,7 @@ export class NeuralAddressClassifier {
 			margins: number[]
 			explanation: DecodeExplanation
 			repairs: TraceRepair[]
+			cardinalityFilter: { rank: number; fellBack: boolean } | null
 		}
 	}> {
 		const encoded = this.encode(text)
@@ -781,18 +783,22 @@ export class NeuralAddressClassifier {
 
 		tracePriors?.push(untracedPrior("conventionsMask", conventionsMaskApplied))
 
-		const viterbiResult =
+		const { result: viterbiResult, cardinality } =
 			this.decodeMode === "viterbi"
-				? viterbi({
-						emissions,
-						transitions: this.transitions,
-						startTransitions: this.startTransitions,
-						endTransitions: this.endTransitions,
-						// Argmax decoding has no transitions, so it ignores the placetype-pair
-						// prior's per-position transition bonuses.
-						...(pairTransitionAdjustments ? { transitionAdjustments: pairTransitionAdjustments } : {}),
-					})
-				: null
+				? decodeViterbi(
+						{
+							emissions,
+							transitions: this.transitions,
+							startTransitions: this.startTransitions,
+							endTransitions: this.endTransitions,
+							// Argmax decoding has no transitions, so it ignores the placetype-pair
+							// prior's per-position transition bonuses.
+							...(pairTransitionAdjustments ? { transitionAdjustments: pairTransitionAdjustments } : {}),
+						},
+						this.labels,
+						opts?.cardinalityFilter ? countedPieces(text, pieces) : null
+					)
+				: { result: null, cardinality: null }
 
 		let labelIndices = viterbiResult ? viterbiResult.path : emissions.map((row) => argmaxWithConfidence(row).idx)
 
@@ -941,6 +947,7 @@ export class NeuralAddressClassifier {
 							margins: pathMargins(emissions, decodedPath!),
 							explanation: explanation!,
 							repairs: traceRepairs!,
+							cardinalityFilter: cardinality ? { rank: cardinality.rank, fellBack: cardinality.fellBack } : null,
 						},
 					}
 				: {}),
