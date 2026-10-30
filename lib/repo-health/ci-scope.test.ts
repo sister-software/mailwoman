@@ -70,7 +70,7 @@ describe("selectCIScope", () => {
 			worker: false,
 			docs: true,
 			smoke: true,
-			python: false,
+			rust: false,
 		})
 	})
 
@@ -114,7 +114,7 @@ describe("selectCIScope", () => {
 			fast: true,
 			slow: true,
 			earth: true,
-			python: true,
+			rust: true,
 			lexicon: true,
 		})
 	})
@@ -126,66 +126,32 @@ describe("selectCIScope", () => {
 		expect(scope.affected).toContain("packages/corpus")
 	})
 
-	it("selects Python independently and includes Python fixtures in workspace changes", () => {
-		expect(selectCIScope(workspaces, files, ["corpus-python/src/reader.py"], [])).toMatchObject({
-			python: true,
-			fast: false,
-			slow: false,
-			earth: false,
-		})
-
-		expect(selectCIScope(workspaces, files, ["packages/corpus/fixtures/generate.py"], []).python).toBe(true)
-	})
-
 	const withMTF = [...workspaces, { name: "@mailwoman/mtf", directory: "packages/mtf", dependencies: [] }]
 
-	it.each([
-		"packages/mtf/crates/mtf-channels/src/anchor.rs",
-		"packages/mtf/crates/mtf-py/pyproject.toml",
-		"packages/mtf/Cargo.toml",
-		"packages/mtf/Cargo.lock",
-	])("selects Python for %s, an input of the extension the loader imports", (file) => {
-		expect(selectCIScope(withMTF, files, [file], [])).toMatchObject({ full: false, python: true })
-	})
+	it.each(["packages/mtf/crates/mtf-channels/src/anchor.rs", "packages/mtf/Cargo.toml", "packages/mtf/Cargo.lock"])(
+		"selects the rust job for %s, an mtf crate input",
+		(file) => {
+			expect(selectCIScope(withMTF, files, [file], [])).toMatchObject({ full: false, rust: true })
+		}
+	)
 
 	it.each(["packages/trainer/crates/trainer-export/src/quantize.rs", "packages/trainer/Cargo.lock"])(
 		"selects only the job that tests the trainer crates for %s",
 		(file) => {
 			expect(selectCIScope(workspaces, files, [file], [])).toMatchObject({
 				full: false,
-				python: true,
+				rust: true,
 				fast: false,
 				slow: false,
 			})
 		}
 	)
 
-	it.each(["packages/corpus/lib/training/config/resolve.ts", "packages/corpus/fixtures/training-config/minimal.yaml"])(
-		"selects Python for %s, which the config-parity test compares with the Python loader",
-		(file) => {
-			expect(selectCIScope(workspaces, files, [file], []).python).toBe(true)
-		}
-	)
-
-	it("leaves Python unselected for an mtf change outside the extension's inputs", () => {
+	it("leaves the rust job unselected for an mtf change outside the crates", () => {
 		expect(selectCIScope(withMTF, files, ["packages/mtf/lib/index.ts"], [])).toMatchObject({
 			full: false,
-			python: false,
+			rust: false,
 		})
-	})
-
-	it("selects JavaScript consumers of a Python script or fixture", () => {
-		const consumers = workspaces.map((workspace) =>
-			workspace.name === "@mailwoman/corpus"
-				? { ...workspace, externalInputs: ["corpus-python/scripts/reader.py"] }
-				: workspace
-		)
-
-		expect(selectCIScope(consumers, files, ["corpus-python/scripts/reader.py"], []).fastFiles).toEqual([
-			"packages/corpus/lib/adapter.test.ts",
-		])
-
-		expect(selectCIScope(consumers, files, ["corpus-python/src/unrelated.py"], []).fast).toBe(false)
 	})
 
 	it("selects every suite for main and dispatched runs, including empty test populations", () => {
@@ -194,7 +160,7 @@ describe("selectCIScope", () => {
 			fast: true,
 			slow: true,
 			earth: true,
-			python: true,
+			rust: true,
 		})
 	})
 })
@@ -209,20 +175,13 @@ describe("readCIWorkspaces", () => {
 		await writeLocalJSONFile({ name: "b" }, root("packages/b/package.json"))
 		await writeLocalJSONFile({ name: "c" }, root("packages/c/package.json"))
 
-		await writeLocalTextFile(
-			'import "c/value";\nawait import("c/other");\nrepoRootPath("corpus-python", "scripts", "reader.py");\n',
-			root("packages/a/lib/value.test.ts")
-		)
+		await writeLocalTextFile('import "c/value";\nawait import("c/other");\n', root("packages/a/lib/value.test.ts"))
 
 		await writeLocalTextFile('export { value } from "../../c/lib/value.ts";\n', root("packages/b/lib/value.ts"))
 
 		const graph = await readCIWorkspaces(root.toString(), ["packages/a/lib/value.test.ts", "packages/b/lib/value.ts"])
 
 		expect(graph.find((workspace) => workspace.name === "a")?.dependencies).toEqual(["b", "c"])
-
-		expect(graph.find((workspace) => workspace.name === "a")?.externalInputs).toEqual([
-			"corpus-python/scripts/reader.py",
-		])
 
 		expect(graph.find((workspace) => workspace.name === "b")?.dependencies).toEqual(["c"])
 	})

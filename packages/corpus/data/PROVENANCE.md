@@ -624,7 +624,7 @@ augmentation, and the reason an excluded source was excluded. `emittedButUnrecor
 epoch emitted that the frozen manifest does not name, with their row counts.
 
 `v0.7.0-de-holdout.effective.json` reads the corpus through
-`corpus-python/src/mailwoman_train/configs/v7.0.0-de-holdout-60k.yaml` at seed 43 over 1,000,000 draws. Of
+`packages/corpus/data/training-configs/v7.0.0-de-holdout-60k.yaml` at seed 43 over 1,000,000 draws. Of
 the eleven sources the frozen manifest names, nine drew rows and two have weight 0.0. Thirty-nine further
 sources were emitted under no frozen-manifest entry, 886,620 of the 1,000,000 rows, because the overlays
 that contain them were merged after that manifest was written.

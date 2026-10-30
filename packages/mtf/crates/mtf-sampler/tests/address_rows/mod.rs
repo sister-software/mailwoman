@@ -166,8 +166,7 @@ pub fn make_row(raw: &str, spans: &[(&str, &str)], country: &str, tokens: Option
 
 /// `postcode-layouts.json`, the layout table the Python augmentation reads.
 pub fn layouts_path() -> PathBuf {
-	PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-		.join("../../../../corpus-python/src/mailwoman_train/data/augment/postcode-layouts.json")
+	PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../packages/trainer/data/postcode-layouts.json")
 }
 
 /// The layout table read from `postcode-layouts.json`.

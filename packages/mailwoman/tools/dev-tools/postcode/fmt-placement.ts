@@ -33,14 +33,7 @@ export function placementInFormat(fmt: string | undefined): PostcodeLocalityPlac
  * The generated JSON the training-time `postcode_move` augmentation reads.
  * The segments run from the repository root.
  */
-export const POSTCODE_LAYOUTS_PATH = [
-	"corpus-python",
-	"src",
-	"mailwoman_train",
-	"data",
-	"augment",
-	"postcode-layouts.json",
-] as const
+export const POSTCODE_LAYOUTS_PATH = ["packages", "trainer", "data", "postcode-layouts.json"] as const
 
 /**
  * Where a layout prints the postcode relative to the block its locality and region fields form.

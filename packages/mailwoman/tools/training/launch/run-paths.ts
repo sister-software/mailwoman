@@ -42,13 +42,15 @@ export function resolveRunPaths(outputDir: string, csvLogPath: string, mount: st
 }
 
 /**
- * The volume's top-level directories that hold shared assets rather than one run.
- */
-/**
  * The path depth of an older config's run directory, `models/checkpoints/<run>`.
  */
 const LEGACY_RUN_DEPTH = 3
 
+/**
+ * The volume's top-level directories that hold shared assets rather than one run.
+ *
+ * `corpus-python` is the directory the retired code upload wrote on the volume, which still holds it.
+ */
 const SHARED_ROOTS = new Set(["corpus", "corpus-python", "models", "audits", "gazetteer", "eval", "launch"])
 
 /**

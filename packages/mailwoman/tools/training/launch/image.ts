@@ -77,16 +77,12 @@ export const TRAINER_BASE_IMAGES: Readonly<Record<TrainerVariant, string>> = {
 export const TRAINER_REPO_ROOT = "/repo"
 
 /**
- * The repository data files `DataFiles::in_repository` (`trainer-loop/src/config.rs`)
- * reads, relative to the root.
+ * The data file `DataFiles::in_repository` (`trainer-loop/src/config.rs`) reads
+ * outside `packages/trainer`, relative to the root.
+ *
+ * The others sit under `packages/trainer/data`, which the bundle already holds.
  */
-export const TRAINER_DATA_FILES = [
-	"corpus-python/src/mailwoman_train/data/augment/postcode-layouts.json",
-	"corpus-python/src/mailwoman_train/features/postcode-shapes.json",
-	"corpus-python/src/mailwoman_train/data/postcode-syntax.json",
-	"corpus-python/src/mailwoman_train/address_systems.json",
-	"packages/neural/data/label-schema.v1.json",
-] as const
+export const TRAINER_DATA_FILES = ["packages/neural/data/label-schema.v1.json"] as const
 
 /**
  * The channel `packages/trainer/rust-toolchain.toml` pins.

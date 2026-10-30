@@ -1,6 +1,6 @@
 //! The runtime a Rust parity record was measured on: the counterpart of the Python reference's `runtime` block.
 //!
-//! The Python side records `python`, `torch`, `threads` and `cpu_capability`. The Rust side records the `tch` crate
+//! The Python side recorded the interpreter version, `torch`, `threads` and `cpu_capability`. The Rust side records the `tch` crate
 //! version compiled into the binary, the version of the libtorch the process loaded, that library's path, libtorch's
 //! thread count and ATen's CPU capability. Everything except the `tch` version is read from the loaded library when
 //! the record is written, because a binary can run against a libtorch other than the one it was built beside.

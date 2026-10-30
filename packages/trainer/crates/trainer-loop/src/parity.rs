@@ -1,4 +1,4 @@
-//! The staged comparison of plan §3.3 against the records `mailwoman_train.audits.trainer_parity` writes.
+//! The staged comparison of plan §3.3 against the records the Python trainer's `audits.trainer_parity` wrote.
 
 pub mod f1;
 pub mod stages;

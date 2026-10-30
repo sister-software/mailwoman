@@ -1,6 +1,6 @@
 [package]
 name = "trainer-model"
-description = "The Mailwoman coarse encoder in Rust over libtorch: the modules, losses and checkpoint format of corpus-python's nn/, with the same parameter names and the same operations."
+description = "The Mailwoman coarse encoder in Rust over libtorch: the modules, losses and checkpoint format of the Python trainer's nn/, with the same parameter names and the same operations."
 version.workspace = true
 edition.workspace = true
 license.workspace = true

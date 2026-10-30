@@ -26,7 +26,6 @@ Rules:
   - assets
   - local config
 - Computed imports fall back to manifest dependencies.
-- Literal paths under `corpus-python/` can also select JS workspaces that read those files.
 - Calls to `repoRootPath`, `resolvePath`, and `join` with consecutive literal segments are tracked as joined paths.
 - A reference to a directory means any change under that directory can select tests.
 
@@ -73,13 +72,11 @@ Notes:
 - Selected by changes affecting `mailwoman` or `@mailwoman/codex`.
 - This is broader than the old gazetteer-path list.
 
-## Python job
+## Rust job
 
-Runs separate hosted Python checks (lint, type, security, tests) and the Rust checks (`cargo test`
-and `cargo clippy -D warnings` for the `packages/mtf` and `packages/trainer` cargo workspaces) when:
+Runs the Rust checks (`cargo fmt --check`, `cargo test` and `cargo clippy -D warnings` for the `packages/mtf` and
+`packages/trainer` cargo workspaces) when:
 
-- any Python file changes, or
-- anything under `corpus-python/` changes, or
 - a crate source, manifest, lockfile or toolchain file under `packages/mtf/` changes, or
 - anything under `packages/trainer/` changes, or
 - a global/full-run trigger happens
@@ -93,9 +90,8 @@ The training audit and exposure tests load the `mtf-node` addon, which Cargo bui
 `unit-fast` installs the toolchain `packages/mtf/rust-toolchain.toml` names before its tests start,
 and caches the `packages/mtf` build.
 
-Cache keys:
-
-- uv download cache key uses root `uv.lock` and `pyproject.toml`.
+The `rust` job caches its cargo builds with `Swatinem/rust-cache` and the libtorch archive under a key on its
+pinned version.
 
 ## Always-on checks
 

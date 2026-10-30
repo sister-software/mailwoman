@@ -18,13 +18,13 @@ import { readTrainingConfigText, typedTrainingConfig } from "@mailwoman/corpus/t
 import { parsePythonYAML } from "@mailwoman/corpus/training/config/python-yaml"
 import { CONFIG_SECTION } from "@mailwoman/corpus/training/config/schema"
 
-import { trainingPackagePath } from "../sampler.ts"
+import { trainingConfigPath } from "../config.ts"
 import { unknownConfigKeys } from "./config-keys.ts"
 
-const directory = trainingPackagePath("configs")
+const directory = trainingConfigPath()
 
 // The committed configs, as the Python audit's `glob("*.yaml")` over the package directory read them.
-const files = (await workingTreeFiles(["corpus-python/src/mailwoman_train/configs/*.yaml"]))
+const files = (await workingTreeFiles(["packages/corpus/data/training-configs/*.yaml"]))
 	.map((path) => path.split("/").at(-1)!)
 	.toSorted()
 

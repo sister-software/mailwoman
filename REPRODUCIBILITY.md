@@ -9,13 +9,13 @@ version. Rows appended from 2026-10-24 also record `tokenizer_md5`, read from th
 
 ## The five inputs
 
-| Input               | v4.2.0 value                                                               | Where it lives                                                                                                                                                                                |
-| ------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Model training code | `corpus-python/src/mailwoman_train/` @ the release tag                     | this repo                                                                                                                                                                                     |
-| Config              | `corpus-python/src/mailwoman_train/configs/v1.0.2-consolidation-runB.yaml` | this repo                                                                                                                                                                                     |
-| Corpus              | `corpus-v0.4.12-consolidation` (Parquet files + MANIFEST)                  | R2 `mailwoman-assets` bucket → Modal volume `mailwoman-training` at `/data/corpus/versioned/`                                                                                                 |
-| Tokenizer           | `v0.6.0-a0/tokenizer.model` (md5 `b6137e8c…`)                              | same volume, `/data/models/tokenizer/`                                                                                                                                                        |
-| Aux lookups         | `pilot-anchor-lookup.json` + `anchor-lexicon-v1.json`                      | volume `/data/anchor/`, `/data/gazetteer/` — rebuildable from source: `scripts/build-pilot-anchor-lookup.ts`, `scripts/build-gazetteer-anchor-lexicon.mjs` (needs the custom WOF DBs + codex) |
+| Input               | v4.2.0 value                                                           | Where it lives                                                                                                                                                                                |
+| ------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model training code | `packages/trainer/` (the Python trainer at the release tag for v4.2.0) | this repo                                                                                                                                                                                     |
+| Config              | `packages/corpus/data/training-configs/v1.0.2-consolidation-runB.yaml` | this repo                                                                                                                                                                                     |
+| Corpus              | `corpus-v0.4.12-consolidation` (Parquet files + MANIFEST)              | R2 `mailwoman-assets` bucket → Modal volume `mailwoman-training` at `/data/corpus/versioned/`                                                                                                 |
+| Tokenizer           | `v0.6.0-a0/tokenizer.model` (md5 `b6137e8c…`)                          | same volume, `/data/models/tokenizer/`                                                                                                                                                        |
+| Aux lookups         | `pilot-anchor-lookup.json` + `anchor-lexicon-v1.json`                  | volume `/data/anchor/`, `/data/gazetteer/` — rebuildable from source: `scripts/build-pilot-anchor-lookup.ts`, `scripts/build-gazetteer-anchor-lexicon.mjs` (needs the custom WOF DBs + codex) |
 
 > **Known gaps (the #480 gaps, still open):** the corpus + tokenizer are snapshots on
 > R2/Modal rather than derivable offline from the repo (adapters fetch from live sources that age);
@@ -25,60 +25,45 @@ version. Rows appended from 2026-10-24 also record `tokenizer_md5`, read from th
 
 ## The commands
 
-```bash
-# 1. Train (Modal A100, ~35 min for a 20k continue; ~$2-3). The launcher is a package: run it with
-#    `-m` from corpus-python/, because a file path puts `launch/` itself on sys.path and its
-#    relative imports then fail.
-cd corpus-python
-modal run -d -m launch.train_remote --config v1.0.2-consolidation-runB.yaml --resume auto
+The trainer and the exporter are the Rust crates in `packages/trainer`. A release before the Python trainer's removal
+(#2874) was trained by the Python trainer at its release tag; the Rust trainer reproduces that trainer's draws and
+updates within the tolerances in `docs/engineering/reference/training-row-encoder.mdx`, so a retrain today matches the
+recorded scores rather than the recorded bytes.
 
-# 2. Fetch the checkpoint (config.json, pytorch_model.bin) through launch.train_remote::push_artifact_r2,
-#    then export ONNX on the host. A span-scorer checkpoint also gets semi-crf-transitions.json.
-cargo run --release --manifest-path ../packages/trainer/Cargo.toml -p trainer-export -- \
+```bash
+# 1. Train (Modal A100). `start` resolves the config, runs the preflight on the host copy of the volume and starts one
+#    detached sandbox; `status <run key>` and `logs <run key>` follow it.
+node packages/mailwoman/tools/training/launch/launch.run.ts start --config v1.0.2-consolidation-runB --fresh
+
+# 2. Copy the checkpoint directory (config.json and the weights) from the volume to the host, then export ONNX.
+#    A span-scorer checkpoint also gets semi-crf-transitions.json.
+cargo run --release --manifest-path packages/trainer/Cargo.toml -p trainer-export -- \
   export-onnx --checkpoint ./step-020000 --output ./model-fp32.onnx
 
 # 3. Quantize int8 on the host
-cargo run --release --manifest-path ../packages/trainer/Cargo.toml -p trainer-export -- \
+cargo run --release --manifest-path packages/trainer/Cargo.toml -p trainer-export -- \
   quantize --input ./model-fp32.onnx --output ./model-int8.onnx
 
 # 4. Check (one command — the check spec is the interface)
 node mailwoman/out/cli.js eval check --model ./model-fp32.onnx --int8 ./model-int8.onnx --spec mailwoman/eval-harness/specs/v4.2.0-ship.json
 ```
 
-Expected: `eval promote` `PASS` 12/12. The int8 md5 `9eb4a99f6db06cccff57939f657c09f9` is v4.2.0's
-shipped bytes under the toolchain of its day, and the `onnxscript` 0.7.0 → 0.7.2 bump since then
-changes the graph's bytes without changing what it computes — so a rebuild today differs from that
-md5 and is correct. A digest is no longer the drift test on its own: read the pinned-toolchain
-section below, and compare graphs and outputs before concluding anything from a mismatch.
+Expected: `eval promote` `PASS` 12/12. The int8 md5 `9eb4a99f6db06cccff57939f657c09f9` is v4.2.0's shipped bytes under
+the toolchain of its day. The Rust exporter writes a graph that computes the same logits under different bytes, so a
+rebuild today differs from that md5 and is correct. Compare graphs and outputs before concluding anything from a
+digest mismatch.
 
-## The pinned export/quant toolchain
+## The export and quantization toolchain
 
-`torch==2.12.0 · transformers==5.9.0 · onnx==1.22.0 · onnxruntime==1.29.0 · onnxscript==0.7.2`
-(the authoritative list is `corpus-python/launch/app.py`'s training image).
-**This set is essential**: opset ≤17 + the `value_info` strip in `quantize.py` are what
-keep the int8 graph Safari-WebGPU-safe.
+`trainer-export` writes opset 17 with the `value_info` annotations onnxruntime's `quantize_dynamic` produced, and its
+quantizer applies onnxruntime's `MatMulInteger` and `ConvInteger` rules. Those two properties keep the int8 graph
+Safari-WebGPU-safe. Its parity records against the pinned onnxruntime 1.30.0 quantizer are under
+`/mnt/mw/audits/port-parity/export/`.
 
-`onnxruntime` matches the `onnxruntime-web` the browser runs, and `verify_toolchain.py` refuses a
-gap between them. The gap is not cosmetic: 1.26.0 and 1.29.0 executing the same int8 bytes disagree
-by up to ~1e-1 on a logit. That changed no decision over a real-address probe — 0 argmax flips over
-172 real tokens across ten addresses — but a graph validated by one runtime and served by another
-is being checked by an instrument that is not the one in the user's hands.
-
-Two of these pins moved without moving the shipped graph, and one moved it. `onnx` 1.21.0 → 1.22.0
-and `onnxruntime` 1.26.0 → 1.29.0 are byte-neutral: each produces an int8 artifact identical to the
-one before it, verified digest-for-digest. `onnxscript` 0.7.0 → 0.7.2 is not — its optimizer
-constant-folds twelve shape-plumbing nodes (1 Mul, 9 Concat, 2 Reshape) into six initializers, so
-fp32 grows 2,576 bytes and int8 seven, while opset, `ir_version`, inputs, outputs and every weight
-tensor stay identical and both graphs answer bit-for-bit equal logits at sequence 8, 64 and 128.
-**A rebuild of an artifact exported before that pin will differ in md5 and be correct.** When a
-rebuild's digest does not match, compare the graphs and the outputs before concluding drift. The
-md5 below is the v4.2.0 artifact's and predates the `onnxscript` bump.
-
-Check your local env against the set:
-
-```bash
-node packages/mailwoman/tools/dev-tools/verify-export-quant-versions.run.ts   # exits nonzero on any mismatch
-```
+The browser runs the `onnxruntime-web` version `packages/neural/package.json` pins. The training image's libtorch and
+Rust toolchain pins are in `packages/mailwoman/tools/training/launch/image.ts`. Two runtimes executing the same int8 bytes can disagree: 1.26.0 and 1.29.0 differed by
+up to ~1e-1 on a logit with 0 argmax flips over 172 real tokens across ten addresses. A graph is validated on the runtime
+version the browser serves.
 
 ## Eval procedure invariants
 

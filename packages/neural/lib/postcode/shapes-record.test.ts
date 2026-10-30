@@ -17,7 +17,7 @@ import { POSTCODE_SHAPES, POSTCODE_SHAPES_VERSION } from "@mailwoman/postcode/sh
 import { describe, expect, it } from "vitest"
 
 const AUTHORED = repoRootPath("packages", "postcode", "lib", "shapes.json")
-const VENDORED = repoRootPath("corpus-python", "src", "mailwoman_train", "features", "postcode-shapes.json")
+const VENDORED = repoRootPath("packages", "trainer", "data", "postcode-shapes.json")
 
 describe("the postcode shape record", () => {
 	it("is vendored into the Python package byte for byte", async () => {

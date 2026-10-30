@@ -10,7 +10,6 @@
 /// <reference types="node" />
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { GitClient, workingTreeFiles } from "@mailwoman/core/git"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { isProcessError, type ProcessOutput, runFile } from "@mailwoman/core/process"
@@ -21,7 +20,6 @@ import { type ValeCommand, valeCommand } from "@mailwoman/core/vale"
 import { chunks } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import { writePythonDocstringProjections } from "#config/vale/python-docstrings"
 import {
 	narrowTo,
 	loadValeIgnore,
@@ -35,7 +33,7 @@ async function pathspecsFor(value: Surface): Promise<string[]> {
 	const ignoreFileName = value === "code" ? "code" : "docs"
 	const ignorePatterns = await loadValeIgnore(repoRootPathBuilder("config", "vale", `${ignoreFileName}.valeignore`))
 
-	const filePatterns = value === "code" ? ["*.ts", "*.tsx", "*.py", "*.yaml", "*.yml"] : ["*.md", "*.mdx"]
+	const filePatterns = value === "code" ? ["*.ts", "*.tsx", "*.yaml", "*.yml"] : ["*.md", "*.mdx"]
 
 	return [...filePatterns, ...ignorePatterns]
 }
@@ -105,36 +103,26 @@ function chunkFiles(files: readonly string[], chunkCount: number): string[][] {
 interface ValeCheck {
 	configPath: string
 	files: string[]
-	displayPathPrefix?: string
 }
 
 interface ValeRun extends ProcessOutput {
 	exitCode: number
 }
 
-async function runVale(
-	vale: ValeCommand,
-	configPath: string,
-	files: readonly string[],
-	displayPathPrefix?: string
-): Promise<ValeRun> {
-	function display(value: string): string {
-		return displayPathPrefix ? value.replaceAll(`${displayPathPrefix}/`, "") : value
-	}
-
+async function runVale(vale: ValeCommand, configPath: string, files: readonly string[]): Promise<ValeRun> {
 	try {
 		const result = await runFile(vale.file, [...vale.argv, "--config", configPath, ...files], {
 			cwd: repoRootPathBuilder,
 			maxBuffer: 50 * 1024 * 1024,
 		})
 
-		return { ...result, stdout: display(result.stdout), stderr: display(result.stderr), exitCode: 0 }
+		return { ...result, exitCode: 0 }
 	} catch (error: unknown) {
 		if (!isProcessError(error)) throw error
 
 		return {
-			stdout: display(error.stdout),
-			stderr: display(error.stderr),
+			stdout: error.stdout,
+			stderr: error.stderr,
 			exitCode: typeof error.code === "number" ? error.code : 1,
 		}
 	}
@@ -172,12 +160,10 @@ function splitSummary(stdout: string): { body: string; counts: [number, number, 
 async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promise<number> {
 	const parallelism = availableParallelism()
 
-	const runs = checks.map(({ configPath, files, displayPathPrefix }) => {
+	const runs = checks.map(({ configPath, files }) => {
 		console.log(`Running Vale check with config: ${configPath}`)
 
-		return Promise.all(
-			chunkFiles(files, parallelism).map((chunk) => runVale(vale, configPath, chunk, displayPathPrefix))
-		)
+		return Promise.all(chunkFiles(files, parallelism).map((chunk) => runVale(vale, configPath, chunk)))
 	})
 
 	let exitCode = 0
@@ -251,27 +237,10 @@ async function lint(surface: Surface, narrowing: readonly string[], staged: bool
 	const checks: ValeCheck[] = [{ configPath: configFor(surface).toString(), files: filteredSurfaceFiles }]
 
 	if (surface === "code") {
-		const sourceFiles = filteredSurfaceFiles.filter((file) => /\.(?:ts|tsx|py)$/u.test(file))
+		const sourceFiles = filteredSurfaceFiles.filter((file) => /\.(?:ts|tsx)$/u.test(file))
 
 		if (sourceFiles.length) {
 			checks.push({ configPath: configFor("code-terms").toString(), files: sourceFiles })
-		}
-
-		const pythonFiles = sourceFiles.filter((file) => file.endsWith(".py"))
-
-		if (pythonFiles.length) {
-			await using scratch = await temporaryDirectory("vale-python-docstrings-")
-			const projections = await writePythonDocstringProjections(pythonFiles, repoRootPathBuilder, scratch.path)
-
-			if (projections.files.length) {
-				checks.push({
-					configPath: repoRootPathBuilder("config", "vale", ".vale-python-docstrings.ini").toString(),
-					files: projections.files,
-					displayPathPrefix: projections.displayPathPrefix,
-				})
-			}
-
-			return await runChecks(vale, checks)
 		}
 	}
 

@@ -19,7 +19,7 @@
  *   rigid template.
  *
  *   The seeded shuffle matches the Python original in distribution. It is not bit-identical to CPython
- *   (see `python-random.ts`), so a set rebuilt here will not match one built by the retired script
+ *   (see `@mailwoman/core/random`), so a set rebuilt here will not match one built by the retired script
  *   row for row.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/build/oa-coord-golden.run.ts --country IT

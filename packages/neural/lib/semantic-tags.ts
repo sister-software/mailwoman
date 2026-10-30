@@ -22,8 +22,8 @@
  *   - {@linkcode SEMANTIC_TAG_REGISTRY_VERSION} increments whenever `SEMANTIC_TAGS` or `REFINES` changes, and every
  *       model card records it beside `label_set` and `head_mapping`.
  *
- *   `corpus-python/src/mailwoman_train/semantic_tags.py` reads the same registry until the trainer moves, and its test
- *   pins it to the `semantic_tags` section of `data/label-schema.v1.json`.
+ *   `emit-label-schema.run.ts` writes the registry into the `semantic_tags` section of `data/label-schema.v1.json`,
+ *   which the trainer reads.
  */
 
 import { CN_FINE_TAGS, JP_FINE_TAGS, LABEL_SETS, type LabelSetName, STAGE3_TAGS, STAGE4_FINE_TAGS } from "./labels.ts"

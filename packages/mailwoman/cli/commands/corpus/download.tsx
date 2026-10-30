@@ -5,7 +5,7 @@
  *
  *   `mailwoman corpus download` — pull corpus + tokenizer from Cloudflare R2 via rclone.
  *
- *   Intended for GPU provider instances. Pulls the versioned corpus, tokenizer and training code
+ *   Intended for GPU provider instances. Pulls the versioned corpus and tokenizer
  *   from R2 at datacenter speed (~1-10 Gbps depending on provider locality). It also works locally for
  *   syncing a fresh checkout.
  *
@@ -45,7 +45,6 @@ const CorpusDownload: CommandComponent<typeof spec> = ({ options }) => {
 		{ label: "Download corpus v0.3.0", status: "pending" },
 		{ label: "Download corpus v0.4.0", status: "pending" },
 		{ label: "Download tokenizer", status: "pending" },
-		{ label: "Download training code", status: "pending" },
 	])
 
 	const updateStep = (idx: number, update: Partial<Step>) => {
@@ -119,19 +118,6 @@ const CorpusDownload: CommandComponent<typeof spec> = ({ options }) => {
 		} catch (error: unknown) {
 			const e = error as Record<string, unknown>
 			updateStep(2, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
-
-			return
-		}
-
-		// Step 3: Download training code
-		updateStep(3, { status: "running" })
-
-		try {
-			await runProcess("rclone", ["sync", `${rcloneBase}/corpus-python/`, "./corpus-python/", "--progress", ...dryFlag])
-			updateStep(3, { status: "done" })
-		} catch (error: unknown) {
-			const e = error as Record<string, unknown>
-			updateStep(3, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
 		}
 	})
 

@@ -234,7 +234,7 @@ fn env_path(name: &str) -> Option<PathBuf> {
 }
 
 /// Where the trainer finds its repository data files: the postcode layouts, shapes and syntax, and the
-/// address-system registry, which today live in `corpus-python`'s package data.
+/// address-system registry, which live in `packages/trainer/data/`.
 #[derive(Clone, Debug)]
 pub struct DataFiles {
 	pub postcode_layouts: PathBuf,
@@ -247,12 +247,12 @@ pub struct DataFiles {
 impl DataFiles {
 	/// The files under a repository checkout at `root`.
 	pub fn in_repository(root: &Path) -> Self {
-		let package = root.join("corpus-python/src/mailwoman_train");
+		let data = root.join("packages/trainer/data");
 		Self {
-			postcode_layouts: package.join("data/augment/postcode-layouts.json"),
-			postcode_shapes: package.join("features/postcode-shapes.json"),
-			postcode_syntax: package.join("data/postcode-syntax.json"),
-			address_systems: package.join("address_systems.json"),
+			postcode_layouts: data.join("postcode-layouts.json"),
+			postcode_shapes: data.join("postcode-shapes.json"),
+			postcode_syntax: data.join("postcode-syntax.json"),
+			address_systems: data.join("address_systems.json"),
 			label_schema: root.join("packages/neural/data/label-schema.v1.json"),
 		}
 	}

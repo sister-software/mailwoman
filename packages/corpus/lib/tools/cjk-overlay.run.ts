@@ -22,7 +22,7 @@ import { buildCJKOverlay, CN_UNITS_SOURCE, OVERLAY_JP_SOURCE, OVERLAY_JP_VERSION
 import { openSourceRightsAdmission, writeSourceRightsRecord } from "#source-register/corpus-inputs"
 
 /**
- * The training volume's mount, as `mailwoman_train.env.volume_mount` reads it.
+ * The training volume's mount, as `MAILWOMAN_VOLUME_MOUNT` sets it for the trainer.
  */
 const VOLUME_ROOT = "/data/corpus/versioned"
 

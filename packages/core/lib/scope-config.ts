@@ -55,7 +55,7 @@ export interface ScopeConfig {
  */
 export interface ShippedTrainingConfig {
 	/**
-	 * The repo-relative path to a config under `corpus-python/src/mailwoman_train/configs`.
+	 * The repo-relative path to a config under `packages/corpus/data/training-configs`.
 	 */
 	config: string
 	/**

@@ -5,9 +5,8 @@
  * @file Tests the training config resolver: the strict merge, the floor-list validations, the Norway refusal, the
  *   source admission and the resolved document.
  *
- *   The cases port `corpus-python/tests/mailwoman_train/config/test_config_strict.py`,
- *   `test_country_weights_norway.py` and the config-loader cases of `test_source_rights.py`, so they run where
- *   Python does not. `load-python-parity.test.ts` compares the two loaders directly.
+ *   The cases port the deleted Python loader's strict-config tests,
+ *   `test_country_weights_norway.py` and the config-loader cases of `test_source_rights.py`.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -34,7 +33,7 @@ import { parsePythonYAML, type PythonMapping } from "#training/config/python-yam
 import { buildResolvedTrainingConfig, writeResolvedTrainingConfig } from "#training/config/resolved"
 import { RESOLVED_TRAINING_CONFIG_VERSION, type TrainingConfig } from "#training/config/schema"
 
-const CONFIG_DIR = repoRootPath("corpus-python", "src", "mailwoman_train", "configs")
+const CONFIG_DIR = repoRootPath("packages", "corpus", "data", "training-configs")
 
 const load = (text: string, strict = true) => readTrainingConfigText(text, "probe.yaml", { strict })
 const typedOf = (text: string): TrainingConfig => typedTrainingConfig(load(text), "probe.yaml")

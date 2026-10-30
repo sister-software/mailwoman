@@ -24,7 +24,7 @@ import { trackedSourcePaths } from "#repo-health/tracked-sources"
 /**
  * The first segments that mark a literal as a repository path instead of a package specifier.
  */
-const REPOSITORY_ROOTS = ["packages/", "docs/", "data/", "evals/", "corpus-python/", "docker/", "hf-publish/"]
+const REPOSITORY_ROOTS = ["packages/", "docs/", "data/", "evals/", "docker/", "hf-publish/"]
 
 /**
  * Path prefixes that the check skips.

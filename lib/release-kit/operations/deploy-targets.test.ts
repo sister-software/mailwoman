@@ -39,7 +39,7 @@ describe("workspaceOfPath", () => {
 		expect(workspaceOfPath(DIRS, "packages/core/lib/git.ts")).toBe("@mailwoman/core")
 		expect(workspaceOfPath(DIRS, "docs/src/pages/index.tsx")).toBe("@mailwoman/docs")
 		expect(workspaceOfPath(DIRS, "packages/corelike/lib/x.ts")).toBeNull()
-		expect(workspaceOfPath(DIRS, "corpus-python/src/train.py")).toBeNull()
+		expect(workspaceOfPath(DIRS, "hf-publish/README.md")).toBeNull()
 		expect(workspaceOfPath(DIRS, "README.md")).toBeNull()
 	})
 })
@@ -68,8 +68,8 @@ describe("selectDeployTargets", () => {
 		expect(selections[0]?.reasons).toEqual(["yarn.lock"])
 	})
 
-	it("a docs, python or record change reaches nothing", () => {
-		expect(ids(["docs/src/pages/index.tsx", "corpus-python/src/train.py", "AGENTS.md"])).toEqual([])
+	it("a docs, non-workspace or record change reaches nothing", () => {
+		expect(ids(["docs/src/pages/index.tsx", "hf-publish/README.md", "AGENTS.md"])).toEqual([])
 	})
 
 	it("reasons name the changed workspaces in the closure, not the changed files", () => {

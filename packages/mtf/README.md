@@ -93,7 +93,7 @@ toolchain. A repository check will rebuild it and compare hashes.
 - **Model loading.** The loader validates lengths, counts and versions before allocating, and bounds input
   length and token count.
 - **Downstream consumers.** `packages/neural/lib/tokenizer.ts` converts byte offsets to UTF-16 ranges and
-  trims leading whitespace. `corpus-python/src/mailwoman_train/tokenizer/` converts them to Python
+  trims leading whitespace. The deleted Python tokenizer converted them to Python
   character positions for label projection. A change to `▁` or to word boundaries changes both.
 
 ## Stage 1 baseline

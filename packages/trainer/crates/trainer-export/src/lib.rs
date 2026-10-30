@@ -2,7 +2,7 @@
 //!
 //! The export reads a checkpoint directory as `MailwomanCoarseEncoder.save_pretrained` writes it, `config.json`
 //! beside `pytorch_model.bin`, and writes the opset-17 graph that
-//! `corpus-python/src/mailwoman_train/export/onnx.py` writes through `torch.onnx.export(dynamo=True)` with
+//! The Python exporter (`export/onnx.py`, deleted in #2874) writes through `torch.onnx.export(dynamo=True)` with
 //! torch 2.12.0 and onnxscript 0.7.2. The graph's inputs, outputs, declared dimensions and computation follow that
 //! exporter's. Node names and file bytes do not.
 //!
@@ -13,7 +13,7 @@
 //!
 //! The quantizer reproduces `onnxruntime.quantization.quantize_dynamic(weight_type=QuantType.QInt8)` from
 //! onnxruntime 1.30.0 with that function's defaults, after the stale-`value_info` strip that
-//! `corpus-python/src/mailwoman_train/export/quantize.py` applies first.
+//! the Python quantizer (`export/quantize.py`) applies first.
 
 pub mod checkpoint;
 pub mod config;

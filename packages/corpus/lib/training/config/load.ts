@@ -7,7 +7,7 @@
  *   corpus sources a typed config admits, and `#training/config/resolved` writes the versioned resolved config the
  *   Rust trainer and sampler read.
  *
- *   The merge and coercion reproduce `corpus-python/src/mailwoman_train/config/load.py`. A known key replaces the
+ *   The merge and coercion reproduce those of the deleted Python loader (`config/load.py`). A known key replaces the
  *   default and an unknown key is refused with its dotted path and file. A numeric string converts only under a
  *   field annotated exactly `int` or `float`. The three held-out floor lists are validated with the Python
  *   loader's messages.

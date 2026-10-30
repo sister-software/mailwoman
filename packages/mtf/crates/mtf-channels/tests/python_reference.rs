@@ -33,8 +33,8 @@ struct Fixture {
 }
 
 fn fixture() -> Fixture {
-	let shapes_path = "../../../../corpus-python/src/mailwoman_train/features/postcode-shapes.json";
-	let syntax_path = "../../../../corpus-python/src/mailwoman_train/data/postcode-syntax.json";
+	let shapes_path = "../../../../packages/trainer/data/postcode-shapes.json";
+	let syntax_path = "../../../../packages/trainer/data/postcode-syntax.json";
 	Fixture {
 		doc: serde_json::from_str(&read("tests/fixtures/python-reference.json")).expect("the fixture is JSON"),
 		shapes: PostcodeShapes::from_record(&read(shapes_path), shapes_path).expect("the shapes compile"),
@@ -66,7 +66,7 @@ fn the_fixture_was_recorded_under_the_tables_unicode_version() {
 }
 
 #[test]
-fn every_adversarial_text_matches_python() {
+fn every_adversarial_text_matches_the_record() {
 	let f = fixture();
 	for case in f.doc["texts"].as_array().expect("texts") {
 		let text = case["text"].as_str().expect("text");
@@ -114,7 +114,7 @@ fn check_templates(select: impl Fn(u32, u32) -> Vec<u32>) {
 }
 
 #[test]
-fn template_range_ends_and_a_stride_match_python() {
+fn template_range_ends_and_a_stride_match_the_record() {
 	check_templates(|a, b| {
 		let mut codes: Vec<u32> = (a..=b).step_by(997).collect();
 		codes.push(b);

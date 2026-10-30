@@ -1,4 +1,4 @@
-//! The checkpoint's `config.json`, as `mailwoman_train/nn/serialization.py::to_config_dict` writes it.
+//! The checkpoint's `config.json`, as the trainer writes it (the format the Python trainer's `to_config_dict` defined).
 //!
 //! A key the file omits takes the default `serialization._constructor_kwargs` gives it, so a config written by an
 //! older trainer reads the way `MailwomanCoarseEncoder.from_pretrained` reads it. Keys the export does not use are

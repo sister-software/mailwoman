@@ -148,18 +148,7 @@ fn reinit_label_rows(model: &CoarseEncoder, labels: &[String]) -> Result<()> {
 /// `apply_freezes`.
 pub fn apply_freezes(run: &RunConfig, model: &CoarseEncoder) -> Result<()> {
 	let params = model.store.parameters();
-	let freeze_encoder = run.train_bool("freeze_encoder")?;
 	let freeze_tokens = run.train_bool("freeze_token_embeddings")?;
-	if freeze_encoder {
-		for (n, p) in &params {
-			let _ = p.set_requires_grad(n.starts_with("affix_head"));
-		}
-		if !params.iter().any(|(_, p)| p.requires_grad()) {
-			return Err(fail!(
-				"freeze_encoder=True but no affix_head params found — set model.use_affix_head: true"
-			));
-		}
-	}
 	if freeze_tokens {
 		let mut frozen = 0;
 		for (n, p) in &params {
@@ -176,9 +165,9 @@ pub fn apply_freezes(run: &RunConfig, model: &CoarseEncoder) -> Result<()> {
 	}
 	let prefixes = run.train_strings("trainable_only_prefixes")?;
 	if !prefixes.is_empty() {
-		if freeze_encoder || freeze_tokens {
+		if freeze_tokens {
 			return Err(fail!(
-				"train.trainable_only_prefixes is mutually exclusive with freeze_encoder/freeze_token_embeddings — \
+				"train.trainable_only_prefixes is mutually exclusive with freeze_token_embeddings — \
 				 combining them makes setting attribution ambiguous"
 			));
 		}

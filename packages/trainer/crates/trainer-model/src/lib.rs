@@ -1,6 +1,6 @@
 //! The Mailwoman coarse encoder over libtorch, through `tch`.
 //!
-//! The model is `corpus-python/src/mailwoman_train/nn/`'s `MailwomanCoarseEncoder`, with the same parameter and
+//! The model is the Python trainer's `MailwomanCoarseEncoder`, with the same parameter and
 //! buffer names, the same registration order, and the same libtorch operations in the same order. Three things
 //! follow from issuing the same operations to the same libtorch:
 //!

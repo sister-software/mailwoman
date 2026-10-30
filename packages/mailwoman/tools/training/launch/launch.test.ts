@@ -77,6 +77,7 @@ function harness() {
 			terminated.push(id)
 			sandboxes.get(id)!.exitCode = 137
 		},
+		runToCompletion: async () => ({ exitCode: 0, output: "" }),
 	}
 
 	const deps: LaunchDependencies = {

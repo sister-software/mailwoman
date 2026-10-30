@@ -5,7 +5,6 @@ extend-exclude = [
 	"/.git/",
 	"/.yarn/",
 	"yarn.lock",
-	"corpus-python/uv.lock",
 	"docs/static/sbom/",
 	"docs/static/maps/",
 	"docs/static/mailwoman/",
@@ -394,7 +393,6 @@ extend-glob = [
 	"input.pty.integration.test.ts",
 	"QueryInput.integration.test.ts",
 	"demo-cascade-rows.test.ts",
-	"test_config_strict.py",
 	"correct.test.ts",
 	"2026-10-02-docs-search.md",
 ]

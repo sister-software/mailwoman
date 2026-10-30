@@ -45,14 +45,11 @@
  *   loudly instead of silently drifting.
  */
 
-import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { runProcess } from "@mailwoman/core/process"
 import { failScript } from "@mailwoman/core/scripting/utils"
 import { valeCommand } from "@mailwoman/core/vale"
-
-import { writePythonDocstringProjections } from "#config/vale/python-docstrings"
 
 /**
  * One Vale alert, as emitted by `--output=JSON`.
@@ -342,38 +339,5 @@ if (cleanCodeTerms.alerts.length) {
 }
 
 process.stdout.write("OK: fixtures/clean.ts — 0 code-term alerts\n")
-
-process.stdout.write("== Python docstrings: expect a warning in the dirty fixture and none in the clean fixture ==\n")
-
-await using scratch = await temporaryDirectory("vale-python-docstring-fixtures-")
-
-const dirtyPython = await writePythonDocstringProjections(
-	["config/vale/fixtures/dirty.py"],
-	repoRootPathBuilder,
-	scratch.path("dirty")
-)
-
-const cleanPython = await writePythonDocstringProjections(
-	["config/vale/fixtures/clean.py"],
-	repoRootPathBuilder,
-	scratch.path("clean")
-)
-
-const dirtyDocstrings = await runVale(".vale-python-docstrings.ini", dirtyPython.files)
-const cleanDocstrings = await runVale(".vale-python-docstrings.ini", cleanPython.files)
-
-if (!dirtyDocstrings.alerts.some((alert) => alert.Check === "styles.CommaAndClausePile")) {
-	failScript("FAIL: Python docstring rule did not fire on fixtures/dirty.py")
-}
-
-if (cleanDocstrings.alerts.length) {
-	for (const alert of cleanDocstrings.alerts) {
-		process.stderr.write(`  fixtures/clean.py:${alert.Line}  ${alert.Check}  ${alert.Message}\n`)
-	}
-
-	failScript(`FAIL: Python docstring rule tripped ${cleanDocstrings.alerts.length} alert(s) on fixtures/clean.py`)
-}
-
-process.stdout.write("OK: Python docstrings — dirty fixture warned; clean fixture produced 0 alerts\n")
 
 process.stdout.write("All Vale rule fixture checks passed.\n")

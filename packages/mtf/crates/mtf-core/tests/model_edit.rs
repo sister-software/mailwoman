@@ -33,7 +33,7 @@ fn keep_ids(rule: &str, n: usize) -> Vec<usize> {
 }
 
 #[test]
-fn every_recorded_edit_matches_python() {
+fn every_recorded_edit_matches_the_record() {
 	let reference: Value = serde_json::from_str(
 		&std::fs::read_to_string(manifest("tests/fixtures/model-edit-reference.json")).expect("reference"),
 	)
@@ -78,7 +78,11 @@ fn the_shipped_tokenizers_round_trip() {
 		assert_eq!(editor.to_bytes(), model, "{}", path.display());
 		read += 1;
 	}
-	assert!(read > 0, "read none of the shipped tokenizers under {}", Path::new(&root).display());
+	assert!(
+		read > 0,
+		"read none of the shipped tokenizers under {}",
+		Path::new(&root).display()
+	);
 }
 
 #[test]

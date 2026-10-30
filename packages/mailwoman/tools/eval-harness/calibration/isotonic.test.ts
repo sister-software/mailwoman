@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The two digests below are the SHA-256 of the table and the report the Python fitter
- *   (`mailwoman_train.calibration.isotonic`, NumPy 2.5.3, CPython 3.12.3) wrote for
+ *   (the deleted Python `calibration.isotonic`, NumPy 2.5.3, CPython 3.12.3) wrote for
  *   `data/eval/calibration/confidences-v413.jsonl` at seed 20260607 and model version 4.13.0, at revision `ae90ae7a2`.
  *   A digest rather than a copy is pinned, because a formatter rewrites a committed JSON copy's whitespace.
  */

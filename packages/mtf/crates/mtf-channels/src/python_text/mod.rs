@@ -4,8 +4,8 @@
 
 //! Python 3.12's string semantics for the operations the encoder performs.
 //!
-//! The predicates and mappings read `tables.rs`, generated from the reference interpreter's Unicode database by
-//! `python -m mailwoman_train.text.python_text_tables`. Rust's `char::is_whitespace`, `char::is_alphanumeric` and
+//! The predicates and mappings read `tables.rs`, generated from the reference interpreter's Unicode database by the
+//! Python trainer's table script before its deletion (#2874). Rust's `char::is_whitespace`, `char::is_alphanumeric` and
 //! `str::to_lowercase` follow a different Unicode version and different definitions: `is_alphanumeric` admits
 //! `Other_Alphabetic` marks that Python's `isalnum` rejects, and Python's `isspace` admits U+001C..U+001F.
 

@@ -70,18 +70,6 @@ struct Channel {
 	dim: i64,
 }
 
-struct Head2 {
-	first: Linear,
-	second: Linear,
-}
-
-impl Head2 {
-	fn forward(&self, x: &Tensor, mode: Mode) -> Tensor {
-		self.second
-			.forward(&dropout(&self.first.forward(x).gelu("none"), 0.1, mode))
-	}
-}
-
 /// The encoder.
 pub struct CoarseEncoder {
 	pub spec: EncoderSpec,
@@ -98,11 +86,6 @@ pub struct CoarseEncoder {
 	blocks: Vec<EncoderBlock>,
 	final_ln: LayerNorm,
 	classifier: Linear,
-	affix_head: Option<Head2>,
-	affix_label_ids: Option<Tensor>,
-	affix_target_lut: Option<Tensor>,
-	deploc_head: Option<Head2>,
-	deploc_label_ids: Option<Tensor>,
 	span_boundary_head: Option<Linear>,
 	bio_is_begin: Option<Tensor>,
 	bio_is_inside: Option<Tensor>,
@@ -118,14 +101,6 @@ pub struct CoarseEncoder {
 	address_system_head: Option<Linear>,
 	locale_hint_embedding: Option<Embedding>,
 	device: Device,
-}
-
-fn label_index(labels: &[String], label: &str) -> Result<i64> {
-	labels
-		.iter()
-		.position(|l| l == label)
-		.map(|i| i as i64)
-		.ok_or_else(|| fail!("the label set has no {label}"))
 }
 
 impl CoarseEncoder {
@@ -223,41 +198,6 @@ impl CoarseEncoder {
 		} else {
 			None
 		};
-		let (mut affix_head, mut affix_label_ids, mut affix_target_lut) = (None, None, None);
-		if spec.use_affix_head {
-			let affix_in = h + if dims[1] > 0 { dims[1] } else { 5 };
-			affix_head = Some(Head2 {
-				first: Linear::new(&mut s, "affix_head.0", affix_in, 256, true),
-				second: Linear::new(&mut s, "affix_head.3", 256, 5, true),
-			});
-			let ids = [
-				"B-street_prefix",
-				"I-street_prefix",
-				"B-street_suffix",
-				"I-street_suffix",
-			]
-			.iter()
-			.map(|l| label_index(&labels, l))
-			.collect::<Result<Vec<i64>>>()?;
-			let mut lut = vec![0i64; n_labels as usize];
-			for (k, &id) in ids.iter().enumerate() {
-				lut[id as usize] = k as i64 + 1;
-			}
-			affix_label_ids = Some(s.buffer("affix_label_ids", Tensor::from_slice(&ids), false));
-			affix_target_lut = Some(s.buffer("affix_target_lut", Tensor::from_slice(&lut), false));
-		}
-		let (mut deploc_head, mut deploc_label_ids) = (None, None);
-		if spec.use_deploc_head {
-			deploc_head = Some(Head2 {
-				first: Linear::new(&mut s, "deploc_head.0", h, 256, true),
-				second: Linear::new(&mut s, "deploc_head.3", 256, 3, true),
-			});
-			let ids = [
-				label_index(&labels, "B-dependent_locality")?,
-				label_index(&labels, "I-dependent_locality")?,
-			];
-			deploc_label_ids = Some(s.buffer("deploc_label_ids", Tensor::from_slice(&ids), false));
-		}
 		// `_build_structured_heads`.
 		let (mut span_boundary_head, mut bio_is_begin, mut bio_is_inside) = (None, None, None);
 		if spec.use_span_boundary_head {
@@ -305,11 +245,6 @@ impl CoarseEncoder {
 			blocks,
 			final_ln,
 			classifier,
-			affix_head,
-			affix_label_ids,
-			affix_target_lut,
-			deploc_head,
-			deploc_label_ids,
 			span_boundary_head,
 			bio_is_begin,
 			bio_is_inside,
@@ -502,21 +437,6 @@ impl CoarseEncoder {
 			}
 			let vector = channel.projection.forward(&projected) + &channel.cue;
 			h = &h + confidence.to_kind(h.kind()).unsqueeze(-1) * &vector;
-			if *name == "anchor" && self.spec.inject_first_token && self.spec.use_postcode_anchor {
-				let conf = match &input.confidence {
-					Some(c) if input.features.is_some() => c.to_kind(h.kind()),
-					_ => self.zeros(&[bsz, seq], h.kind()),
-				};
-				let (max_conf, max_idx) = conf.max_dim(1, false);
-				let idx = max_idx.view([bsz, 1, 1]).expand([bsz, 1, h.size()[2]], false);
-				let pooled = vector.gather(1, &idx, false).squeeze_dim(1);
-				let pos0 = (max_conf.unsqueeze(-1) * pooled).unsqueeze(1);
-				let indicator = Tensor::arange(seq, (Kind::Int64, self.device))
-					.eq(0)
-					.to_kind(h.kind())
-					.view([1, seq, 1]);
-				h = &h + pos0 * indicator;
-			}
 		}
 		Ok(h)
 	}
@@ -577,42 +497,9 @@ impl CoarseEncoder {
 			let beta = film.narrow(-1, hs, hs);
 			h = (gamma + 1.0).unsqueeze(1) * &h + beta.unsqueeze(1);
 		}
-		let mut logits = self.classifier.forward(&h);
-		let mut affix_logits = None;
-		if let (Some(head), Some(ids)) = (&self.affix_head, &self.affix_label_ids) {
-			let (bsz, seq) = (h.size()[0], h.size()[1]);
-			let gaz = match &inputs.channels[1].features {
-				Some(g) => g.shallow_clone(),
-				None => {
-					let d = if self.spec.use_gazetteer_anchor {
-						self.spec.gazetteer_feature_dim
-					} else {
-						5
-					};
-					self.zeros(&[bsz, seq, d], h.kind())
-				}
-			};
-			let a = head.forward(&Tensor::cat(&[&h, &gaz.to_kind(h.kind())], -1), self.mode);
-			let mut merged = logits.copy();
-			let _ = merged.index_put_(&[None, None, Some(ids)], &a.narrow(-1, 1, 4), false);
-			logits = merged;
-			affix_logits = Some(a);
-		}
-		if let (Some(head), Some(ids)) = (&self.deploc_head, &self.deploc_label_ids) {
-			let d = head.forward(&h, self.mode);
-			let mut merged = logits.copy();
-			let _ = merged.index_put_(&[None, None, Some(ids)], &d.narrow(-1, 1, 2), false);
-			logits = merged;
-		}
+		let logits = self.classifier.forward(&h);
 		let mut terms = Vec::new();
-		let (loss, span_scores) = self.compute_losses(
-			&h,
-			&logits,
-			inputs,
-			locale_logits.as_ref(),
-			affix_logits.as_ref(),
-			&mut terms,
-		)?;
+		let (loss, span_scores) = self.compute_losses(&h, &logits, inputs, locale_logits.as_ref(), &mut terms)?;
 		let loss = self.address_system_loss(loss, address_system_logits.as_ref(), inputs, &mut terms);
 		Ok(EncoderOutput {
 			logits,
@@ -631,7 +518,6 @@ impl CoarseEncoder {
 		logits: &Tensor,
 		inputs: &EncoderInputs,
 		locale_logits: Option<&Tensor>,
-		affix_logits: Option<&Tensor>,
 		terms: &mut Vec<(&'static str, Tensor)>,
 	) -> Result<(Option<Tensor>, Option<Tensor>)> {
 		let n = self.spec.num_labels();
@@ -646,7 +532,7 @@ impl CoarseEncoder {
 				}
 				_ => logits.shallow_clone(),
 			};
-			let mut ce = ce_logits.view([-1, n]).cross_entropy_loss(
+			let ce = ce_logits.view([-1, n]).cross_entropy_loss(
 				&labels.view([-1]),
 				self.class_weights.as_ref(),
 				tch::Reduction::Mean,
@@ -654,22 +540,6 @@ impl CoarseEncoder {
 				self.spec.label_smoothing,
 			);
 			terms.push(("ce", ce.shallow_clone()));
-			if let (Some(a), Some(lut)) = (affix_logits, &self.affix_target_lut) {
-				let safe = labels.clamp_min(0);
-				let targets = lut.index(&[Some(&safe)]);
-				let targets = targets
-					.full_like(IGNORE_INDEX)
-					.where_self(&labels.eq(IGNORE_INDEX), &targets);
-				let affix = a.view([-1, 5]).cross_entropy_loss::<Tensor>(
-					&targets.view([-1]),
-					None,
-					tch::Reduction::Mean,
-					IGNORE_INDEX,
-					0.0,
-				);
-				terms.push(("affix", affix.shallow_clone()));
-				ce = ce + affix;
-			}
 			loss = Some(match (&self.crf, &inputs.attention_mask) {
 				(Some(crf), Some(mask)) if self.spec.crf_loss_weight > 0.0 => {
 					let reduction = if self.spec.crf_normalization == "per_token" {

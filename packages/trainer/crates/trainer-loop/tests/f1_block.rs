@@ -1,7 +1,7 @@
 //! F1 against torch 2.13.0: one pre-norm block, AdamW, clipping and the cosine `LambdaLR`.
 //!
 //! `tests/fixtures/f1-block` was written by
-//! `python -m mailwoman_train.audits.trainer_parity f1 --out <dir> --hidden 32 --heads 4 --ff 64 --seq 12` under torch
+//! The Python trainer's `audits.trainer_parity f1 --out <dir> --hidden 32 --heads 4 --ff 64 --seq 12` under torch
 //! 2.13.0+cpu with 4 threads and `ATEN_CPU_CAPABILITY=default`. The tolerances are plan §3.3's.
 //!
 //! ATen picks its vectorized kernels from the host CPU, and the AVX2 and AVX-512 kernels round differently: under

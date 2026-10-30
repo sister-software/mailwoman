@@ -11,6 +11,7 @@ import { type App, type Image, ModalClient, NotFoundError, type Secret, type Vol
 
 import type {
 	ModalBoundary,
+	OneShotSandboxSpec,
 	SandboxState,
 	TrainerImageBuild,
 	TrainingSandboxSpec,
@@ -181,5 +182,33 @@ export class SDKModalBoundary implements ModalBoundary {
 
 	async terminate(id: string): Promise<void> {
 		await (await this.#client.sandboxes.fromId(id)).terminate()
+	}
+
+	async runToCompletion(spec: OneShotSandboxSpec): Promise<{ exitCode: number; output: string }> {
+		const app = await this.#appHandle()
+
+		this.#secret ??= this.#options.secretName ? this.#client.secrets.fromName(this.#options.secretName) : null
+
+		if (spec.withSecret && !this.#secret) {
+			throw new Error("this sandbox needs the named Modal secret; set MAILWOMAN_MODAL_R2_SECRET")
+		}
+
+		const sandbox = await this.#client.sandboxes.create(app, this.#client.images.fromRegistry(spec.registryImage), {
+			command: spec.command,
+			env: spec.env,
+			cpu: spec.cpu,
+			memoryMiB: spec.memoryMiB,
+			timeoutMs: spec.timeoutMs,
+			volumes: { [this.#options.mount]: await this.#volumeHandle() },
+			...(spec.withSecret && this.#secret ? { secrets: [await this.#secret] } : {}),
+		})
+
+		const [stdout, stderr, exitCode] = await Promise.all([
+			sandbox.stdout.readText(),
+			sandbox.stderr.readText(),
+			sandbox.wait(),
+		])
+
+		return { exitCode, output: `${stdout}${stderr}` }
 	}
 }

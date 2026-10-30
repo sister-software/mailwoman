@@ -13,7 +13,7 @@
  *   lines, the shape `fr-order --golden` writes, so they never reach a training corpus.
  *
  *   Training rows with the postcode on the non-native side come from the `postcode_move` augmentation in
- *   `corpus-python` (#2750), which moves the postcode at training time. A corpus-time renderer of the same
+ *   the trainer (#2750), which moves the postcode at training time. A corpus-time renderer of the same
  *   order would mix it a second time at an unmeasured share.
  */
 

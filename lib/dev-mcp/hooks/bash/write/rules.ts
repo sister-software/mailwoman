@@ -108,8 +108,6 @@ const ADMITTED = new Set([
 	"ogrinfo",
 	"oxfmt",
 	"oxlint",
-	"python",
-	"python3",
 	"rclone",
 	"sqlite3",
 	"tar",
@@ -186,13 +184,10 @@ const WRAPPER_ARGUMENT = /^(?:-|\d)/u
  * The advice for the two Modal launch refusals.
  */
 const DETACHED_LAUNCH_GUIDANCE =
-	"Launch it through `node packages/mailwoman/tools/dev-tools/launch-detached.run.ts --log <file> --cwd corpus-python " +
-	"-- uv run --extra dev modal run …`, " +
-	"which spawns the client in its own session and exits, so no signal aimed at this shell can reach it. Modal's `-d` " +
-	"does not make the client disposable during the CPU preflight, which the entry point waits on: a client that dies there " +
-	"cancels it. Once the entry point prints `function_call_id=…` the GPU call is spawned and no longer depends on the client. " +
-	"Read its state with `python -m launch.call_status <id>` or by polling the volume for its next checkpoint. A relaunch " +
-	"without `--fresh` resumes from the run's last save."
+	"Launch training with `node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml>`, which " +
+	"runs the preflight on the host, starts a detached sandbox and exits, so no signal aimed at this shell can reach the " +
+	"run. Read it with `launch.run.ts status <run key>` or `logs <run key>`, and resume a stopped run with " +
+	"`restart <run key>`, which continues from the run's last save."
 
 /**
  * The advice for a {@link REMOVER} refusal.
@@ -238,20 +233,6 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 		// The head skips the `timeout` wrapper, but the segment still starts with it.
 		// Every timed Modal command is refused, because the expiry kills the client.
 		pattern: /^\s*timeout\b/u,
-		because: "a shell `timeout` kills the `modal` client when it expires, which cancels whatever it was running",
-		guidance: DETACHED_LAUNCH_GUIDANCE,
-	},
-	{
-		head: "uv",
-		// Launches run the Modal client from the venv as `uv run --extra dev modal run …`, so the segment's head is `uv`.
-		pattern: /(?:^|\s)run\b[^\n]*\smodal\s+run\b[^\n]*(?:\s-d\b|\s--detach\b)/u,
-		because:
-			"`uv run modal run -d` from Bash leaves the client in this shell's process group, and killing the client cancels the remote run",
-		guidance: DETACHED_LAUNCH_GUIDANCE,
-	},
-	{
-		head: "uv",
-		pattern: /^\s*timeout\b[^\n]*\smodal\s/u,
 		because: "a shell `timeout` kills the `modal` client when it expires, which cancels whatever it was running",
 		guidance: DETACHED_LAUNCH_GUIDANCE,
 	},
@@ -502,7 +483,7 @@ export function judgeCommand(command: string, repoRoot: string, sessionCwd: stri
 
 	// Inline scripts and heredoc bodies were stripped above, so these checks read the raw command.
 	// They apply only when an interpreter runs, so `grep -rn writeFile packages` stays admitted.
-	if (segments.some(({ head }) => head === "node" || head.startsWith("python"))) {
+	if (segments.some(({ head }) => head === "node")) {
 		if (INTERPRETER_HEREDOC.test(command)) {
 			return refuse("This runs a script from a heredoc, which rewrites a file whole.")
 		}

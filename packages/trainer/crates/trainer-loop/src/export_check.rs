@@ -1,7 +1,7 @@
 //! The export's check against the model: the Rust forward pass on recorded batches, written as ONNX feeds with
 //! their expected outputs.
 //!
-//! `corpus-python`'s `verify_parity` runs the torch model and the exported graph on the same inputs. Here the Rust
+//! The Python trainer's `verify_parity` runs the torch model and the exported graph on the same inputs. Here the Rust
 //! encoder computes the expected outputs, one row per probe in eval mode, and
 //! `packages/neural/tools/onnx-model-check.run.ts` runs the feeds through the graph `trainer-export` wrote and compares
 //! every element. Every other probe passes the row's own address system as `locale_hint`, the rest the "no hint" id.

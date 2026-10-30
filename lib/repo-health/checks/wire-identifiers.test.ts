@@ -67,7 +67,7 @@ describe("configSourceNames", () => {
 describe("the wire-identifiers check", () => {
 	test("reports the swept adapter id and the invented receipt source, and passes both spellings of a recipe source", async () => {
 		const root = PathBuilder.from(fixtures.use(await temporaryDirectory("wire-identifiers-")).path)
-		const config = "corpus-python/src/mailwoman_train/configs/planted.yaml"
+		const config = "packages/corpus/data/training-configs/planted.yaml"
 
 		await writeLocalTextFile(CONFIG, root(config))
 

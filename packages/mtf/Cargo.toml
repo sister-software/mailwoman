@@ -5,7 +5,6 @@ members = [
 	"crates/mtf-wasm",
 	"crates/mtf-channels",
 	"crates/mtf-sampler",
-	"crates/mtf-py",
 	"crates/mtf-node",
 	"crates/mtf-tools",
 ]
@@ -23,13 +22,6 @@ opt-level = "s"
 lto = true
 codegen-units = 1
 panic = "abort"
-
-# The profile the `mailwoman_mtf` Python extension is built with. A panic must unwind so PyO3 raises it as a Python
-# exception: under the release profile's `panic = "abort"` a Rust panic would end the training process.
-[profile.py]
-inherits = "release"
-opt-level = 3
-panic = "unwind"
 
 # The profile the `mtf-node` addon is built with. A panic must unwind, and each export carries `#[napi(catch_unwind)]`,
 # so napi-rs throws it as a JavaScript exception. Without the attribute an unwinding panic still aborts Node with

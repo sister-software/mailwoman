@@ -11,11 +11,12 @@ import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPlainObject } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { readTrainingConfig, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
 import { parsePythonYAML, type PythonValue } from "@mailwoman/corpus/training/config/python-yaml"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 
-import { hostPath, trainingPackagePath } from "./sampler.ts"
+import { hostPath } from "./sampler.ts"
 
 /**
  * Every `data` field naming a file or directory the encoding reads.
@@ -32,10 +33,11 @@ export const INPUT_FIELDS = [
 ] as const
 
 /**
- * The committed training config named `name`.
+ * The committed training config named `name` under `packages/corpus/data/training-configs`,
+ * or that directory when `name` is omitted.
  */
-export function trainingConfigPath(name: string): string {
-	return trainingPackagePath("configs", name)
+export function trainingConfigPath(name = ""): string {
+	return repoRootPath("packages", "corpus", "data", "training-configs", ...(name ? [name] : []))
 }
 
 /**

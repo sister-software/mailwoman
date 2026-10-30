@@ -152,15 +152,14 @@ fn char_front(config: &ModelConfig, state: &StateDict, options: &ExportOptions) 
 
 /// Reads the interface and refuses a combination the Python exporter refuses or this writer does not build.
 pub fn interface(config: &ModelConfig, state: &StateDict, options: &ExportOptions) -> Result<Interface> {
-	let unsupported = [
+	// Retired features. A checkpoint written before the retirement may still record one.
+	let retired = [
 		(config.use_affix_head, "use_affix_head"),
 		(config.use_deploc_head, "use_deploc_head"),
 		(config.inject_first_token, "inject_first_token"),
 	];
-	if let Some((_, what)) = unsupported.iter().find(|(on, _)| *on) {
-		return Err(fail!(
-			"the Rust exporter does not build {what} yet; export it with corpus-python's exporter"
-		));
+	if let Some((_, what)) = retired.iter().find(|(on, _)| *on) {
+		return Err(fail!("{what} is a retired feature; no exporter builds it"));
 	}
 
 	let hidden = config.hidden_size;

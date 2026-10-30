@@ -15,8 +15,8 @@ A workspace may add up to three more source roots, `sdk/`, `tools/` and `cli/`, 
 workspace conventions.
 `test/` holds fixtures, shared test helpers and Playwright suites. `docs/` keeps Docusaurus
 source under `src/`. The complete workspace catalog is
-`docs/engineering/reference/workspaces.mdx`. The non-workspace directories `corpus-python/`,
-`hf-publish/`, `data/`, `evals/`, and `docker/` have their purposes documented in that catalog and their
+`docs/engineering/reference/workspaces.mdx`. The non-workspace directories `packages/trainer/`
+(a cargo workspace), `hf-publish/`, `data/`, `evals/`, and `docker/` have their purposes documented in that catalog and their
 local READMEs.
 
 ## Instruction routing
@@ -32,13 +32,13 @@ repository root must read the applicable file explicitly.
 - `packages/corpus/AGENTS.md` covers OpenAddresses acquisition, source timestamps, CSV structure, and
   corpus recipe outputs. Each `packages/corpus/lib/<cc>/AGENTS.md` states that country's legal
   position on electing address data.
-- `corpus-python/launch/AGENTS.md` covers Modal training launches and artifact recovery.
+- `packages/mailwoman/tools/training/AGENTS.md` covers Modal training launches and the host audits a launch requires.
 - `lib/release-kit/AGENTS.md` covers publish artifacts, workspace registration, CI releases, and
   partial-release recovery.
 - `packages/sqlite/AGENTS.md` covers database construction and the SQL that deliberately remains raw.
 - `docs/engineering/reference/training-row-encoder.mdx` covers the training loader's Rust encoder in
-  `packages/mtf/crates/mtf-channels`, its `mailwoman_mtf` binding in `crates/mtf-py`, and the parity
-  records a change to either must verify.
+  `packages/mtf/crates/mtf-channels`, its sampler in `crates/mtf-sampler`, and the parity records a change to
+  either must verify.
 
 Use repository skills for procedures rather than copying their steps into this file:
 

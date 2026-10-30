@@ -35,7 +35,7 @@ fn spec() -> EncoderSpec {
 		"hidden_size": 16, "num_hidden_layers": 2, "num_attention_heads": 2, "intermediate_size": 32,
 		"max_position_embeddings": 12, "hidden_dropout_prob": 0.1, "use_crf": true, "crf_loss_weight": 0.1,
 		"use_locale_conditioning": true, "locale_loss_weight": 0.3, "use_postcode_anchor": true,
-		"use_span_boundary_head": true, "span_boundary_loss_weight": 0.5, "use_affix_head": true,
+		"use_span_boundary_head": true, "span_boundary_loss_weight": 0.5,
 		"use_address_system_head": true, "address_system_loss_weight": 0.3, "use_locale_hint": true,
 		"use_span_scorer": true, "span_loss_weight": 0.5, "span_dim": 8, "max_span": 3,
 		"use_conventions_loss_mask": true, "class_weights": {"O": 0.5}
@@ -52,6 +52,30 @@ fn spec() -> EncoderSpec {
 		&conventions(),
 	)
 	.unwrap()
+}
+
+#[test]
+fn a_model_section_enabling_a_retired_head_is_refused() {
+	for key in ["use_affix_head", "use_deploc_head", "inject_first_token"] {
+		let model = serde_json::json!({
+			"hidden_size": 16, "num_hidden_layers": 2, "num_attention_heads": 2, "intermediate_size": 32,
+			"max_position_embeddings": 12, "hidden_dropout_prob": 0.1, key: true
+		});
+		let error = EncoderSpec::from_model_section(
+			model.as_object().unwrap(),
+			50,
+			0,
+			0,
+			&labels(),
+			"stage3",
+			9,
+			4,
+			&conventions(),
+		)
+		.err()
+		.expect("a retired key set true is refused");
+		assert!(error.to_string().contains(key), "{error}");
+	}
 }
 
 /// Locale 1 forbids `street_suffix`, as the schema's FR row does; the other eight forbid nothing.
@@ -133,7 +157,7 @@ fn metrics_skip_unsupported_tags_and_write_gaps() {
 }
 
 #[test]
-fn construction_is_deterministic_and_named_as_in_python() {
+fn construction_is_deterministic_and_named_as_the_checkpoint_format() {
 	let guard = seeded(3);
 	let a = CoarseEncoder::new(spec()).unwrap();
 	tch::manual_seed(3);
@@ -277,21 +301,12 @@ fn every_loss_term_fires_and_backward_reaches_the_heads() {
 	let names: Vec<&str> = out.terms.iter().map(|(n, _)| *n).collect();
 	assert_eq!(
 		names,
-		vec![
-			"ce",
-			"affix",
-			"crf",
-			"locale",
-			"span_boundary",
-			"span",
-			"address_system"
-		]
+		vec!["ce", "crf", "locale", "span_boundary", "span", "address_system"]
 	);
 	assert_eq!(out.span_scores.as_ref().unwrap().size(), vec![2, 6, 3, 6]);
 	out.loss.unwrap().backward();
 	for name in [
 		"span_boundary_head.weight",
-		"affix_head.0.weight",
 		"address_system_head.weight",
 		"crf.transitions",
 		"span_scorer.start_proj.weight",

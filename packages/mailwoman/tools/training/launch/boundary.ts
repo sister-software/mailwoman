@@ -61,6 +61,17 @@ export interface TrainerImageBuild {
 }
 
 /**
+ * A sandbox the launcher waits on: a registry image, the training volume mounted,
+ * and the named secret when `withSecret`.
+ */
+export interface OneShotSandboxSpec extends SandboxResources {
+	registryImage: string
+	command: string[]
+	env: Record<string, string>
+	withSecret: boolean
+}
+
+/**
  * Modal, as the launcher uses it.
  */
 export interface ModalBoundary {
@@ -80,4 +91,8 @@ export interface ModalBoundary {
 	 */
 	logs(id: string, lines: number): Promise<string>
 	terminate(id: string): Promise<void>
+	/**
+	 * Runs a sandbox to its exit and returns its exit code and combined output.
+	 */
+	runToCompletion(spec: OneShotSandboxSpec): Promise<{ exitCode: number; output: string }>
 }

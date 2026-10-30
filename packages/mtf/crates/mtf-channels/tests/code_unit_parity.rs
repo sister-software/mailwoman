@@ -24,8 +24,8 @@ fn read(relative: &str) -> String {
 
 #[test]
 fn every_parity_case_matches_from_segmentation_to_features() {
-	let shapes = "../../../../corpus-python/src/mailwoman_train/features/postcode-shapes.json";
-	let syntax = "../../../../corpus-python/src/mailwoman_train/data/postcode-syntax.json";
+	let shapes = "../../../../packages/trainer/data/postcode-shapes.json";
+	let syntax = "../../../../packages/trainer/data/postcode-syntax.json";
 	let finders = RegexFinders {
 		shapes: PostcodeShapes::from_record(&read(shapes), shapes).unwrap(),
 		syntax: PostcodeSyntax::from_json(&read(syntax), syntax).unwrap(),
@@ -70,7 +70,7 @@ fn every_parity_case_matches_from_segmentation_to_features() {
 
 #[test]
 fn acceptance_counts_match_known_postcodes() {
-	let syntax = "../../../../corpus-python/src/mailwoman_train/data/postcode-syntax.json";
+	let syntax = "../../../../packages/trainer/data/postcode-syntax.json";
 	let syntax = PostcodeSyntax::from_json(&read(syntax), syntax).unwrap();
 	let count = |s: &str| syntax.accepting(&s.chars().collect::<Vec<_>>()).unwrap();
 	assert_eq!(count("SW1A"), 1);

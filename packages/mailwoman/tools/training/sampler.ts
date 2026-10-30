@@ -6,10 +6,10 @@
  *   The training sampler for TypeScript tools: a resolved training config turned into the sampler's JSON
  *   configuration, the row and batch streams of the `mtf-node` addon, and the model inputs one batch encodes to.
  *
- *   `samplerConfigJSON` writes the document `sampler_config` in `corpus-python/src/mailwoman_train/data/loader/encode.py`
- *   writes, except that it hands the sampler `source_reps` with the run length rather than weights folded in
- *   beforehand: `mtf-sampler` folds them with the same row counts and the same derivation. `encodeBatch` adds each
- *   row's locale and address-system ids to the row encoder's arrays, as `encode_rows` in `data/loader/batch.py` does.
+ *   `samplerConfigJSON` writes the sampler's configuration document with `source_reps` and the run length rather than
+ *   weights folded in beforehand: `mtf-sampler` folds them with the same row counts and the same derivation the
+ *   trainer uses. `encodeBatch` adds each row's locale and address-system ids to the row encoder's arrays, as the
+ *   trainer's batch does.
  */
 
 import { isLatinScriptText } from "@mailwoman/codex/address/format"
@@ -33,27 +33,26 @@ import { IGNORE_INDEX, LOCALE_COUNTRIES, STAGE3_TAGS } from "@mailwoman/neural/l
 import { readAddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
 
 /**
- * A file under the Python training package's data, which the sampler
- * and encoder read until the package moves.
+ * A data file the Rust trainer and the sampler read, under `packages/trainer/data`.
  */
-export function trainingPackagePath(...segments: string[]): string {
-	return repoRootPath("corpus-python", "src", "mailwoman_train", ...segments)
+export function trainerDataPath(name: string): string {
+	return repoRootPath("packages", "trainer", "data", name)
 }
 
 /**
  * The postcode-shape record the shaped anchor and the postcode finders compile.
  */
-export const POSTCODE_SHAPES_PATH = trainingPackagePath("features", "postcode-shapes.json")
+export const POSTCODE_SHAPES_PATH = trainerDataPath("postcode-shapes.json")
 
 /**
  * Each country's postcode syntax, which the postcode finders accept a value against.
  */
-export const POSTCODE_SYNTAX_PATH = trainingPackagePath("data", "postcode-syntax.json")
+export const POSTCODE_SYNTAX_PATH = trainerDataPath("postcode-syntax.json")
 
 /**
  * Each country's postcode side relative to its locality-and-region block, which the postcode move reads.
  */
-export const POSTCODE_LAYOUTS_PATH = trainingPackagePath("data", "augment", "postcode-layouts.json")
+export const POSTCODE_LAYOUTS_PATH = trainerDataPath("postcode-layouts.json")
 
 /**
  * The label schema `packages/neural/tools/emit-label-schema.run.ts` writes from the TypeScript label sets.

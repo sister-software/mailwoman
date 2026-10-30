@@ -13,14 +13,17 @@
  *     node packages/mailwoman/tools/training/launch/launch.run.ts logs <run key> [--lines <n>]
  *     node packages/mailwoman/tools/training/launch/launch.run.ts cancel <run key>
  *     node packages/mailwoman/tools/training/launch/launch.run.ts restart <run key>
+ *     node packages/mailwoman/tools/training/launch/launch.run.ts sync --corpus <entry>
  *
  *   `start` resolves the config, which is also the source-rights admission, runs the preflight against the host copy
  *   of the volume under `MAILWOMAN_DATA_ROOT`, and starts one detached sandbox. `--dry-run` runs everything up to the
  *   sandbox and prints what it would start, without contacting Modal. `restart` resumes a stopped run from its newest
- *   complete checkpoint in a fresh sandbox. Every command prints the run key the others take.
+ *   complete checkpoint in a fresh sandbox. Every command prints the run key the others take. `sync` stages the bucket's
+ *   `corpus/<entry>/` onto the volume (`sync.ts`) and waits for it.
  */
 
 import { readLocalBuffer, tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -30,6 +33,7 @@ import { integerArgument, parseArguments } from "@mailwoman/core/scripting/argum
 import { buildResolvedTrainingConfig } from "@mailwoman/corpus/training/config/resolved"
 import { resolvePath } from "path-ts"
 
+import { trainingConfigPath } from "#tools/training/config"
 import type { ModalBoundary, TrainerImageBuild } from "#tools/training/launch/boundary"
 import {
 	trainerBaseCommands,
@@ -50,6 +54,7 @@ import {
 } from "#tools/training/launch/launch"
 import { hostPreflight } from "#tools/training/launch/preflight"
 import { launchSettings } from "#tools/training/launch/settings"
+import { RCLONE_IMAGE, SYNC_SCRIPT } from "#tools/training/launch/sync"
 import { TRAIN_TIMEOUT_SECONDS } from "#tools/training/launch/wall-clock"
 
 const { values, positionals } = parseArguments({
@@ -66,8 +71,14 @@ const { values, positionals } = parseArguments({
 		"fail-at-step": { type: "string", default: "0" },
 		"dry-run": { type: "boolean", default: false },
 		lines: { type: "string", default: "100" },
+		corpus: { type: "string" },
 	},
 })
+
+/**
+ * How long a staging sandbox may copy: a base corpus is about 30 GB.
+ */
+const SYNC_TIMEOUT_MS = 4 * 60 * 60 * 1000
 
 const [command, runKey] = positionals
 const settings = launchSettings
@@ -152,7 +163,11 @@ switch (command) {
 	case "start": {
 		if (!values.config) throw new Error("start needs --config <yaml>")
 
-		const configPath = resolvePath(values.config).toString()
+		// A bare name reads the committed config of that name.
+		const configPath = (await isFile(values.config))
+			? resolvePath(values.config).toString()
+			: trainingConfigPath(values.config)
+
 		const document = await buildResolvedTrainingConfig(configPath, { log })
 		const train = document.config.train
 
@@ -222,6 +237,34 @@ switch (command) {
 		break
 	}
 
+	case "sync": {
+		if (!values.corpus) throw new Error("sync needs --corpus <entry>, the bucket's corpus/<entry>/")
+
+		const { exitCode, output } = await (
+			await modal()
+		).runToCompletion({
+			registryImage: RCLONE_IMAGE,
+			command: ["sh", "-c", SYNC_SCRIPT],
+			env: {
+				MW_BUCKET: settings.MAILWOMAN_R2_BUCKET,
+				MW_ENTRY: values.corpus,
+				MW_MOUNT: settings.MAILWOMAN_VOLUME_MOUNT,
+				MW_RCLONE: "rclone",
+				MW_SYNC: "sync",
+			},
+			withSecret: true,
+			cpu: 4,
+			memoryMiB: 8192,
+			timeoutMs: SYNC_TIMEOUT_MS,
+		})
+
+		log(output.trimEnd())
+
+		if (exitCode !== 0) throw new Error(`the staging sandbox exited ${exitCode}`)
+
+		break
+	}
+
 	default:
-		throw new Error("the first argument is one of start, status, logs, cancel or restart")
+		throw new Error("the first argument is one of start, status, logs, cancel, restart or sync")
 }
