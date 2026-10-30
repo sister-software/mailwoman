@@ -12,8 +12,9 @@ groups, batch preparation, checkpoint format and data loader. The only new model
 state dict this writes is key-identical to a supervised model's and loads through
 ``from_pretrained`` without special handling.
 
-Mirrors the supervised loop's conventions: bf16 via explicit model cast (no autocast — the gfx1103
-fast-path hang documented in train.py), AdamW, grad-clip, crash-and-resume via optimizer.pt /
+Mirrors the supervised loop's conventions. Precision comes from ``resolve_precision`` in setup.py: bf16 on an NVIDIA
+device keeps fp32 parameters and runs the forward and backward passes under ``torch.autocast``, and fp16, or bf16 on
+a ROCm device, casts the model instead. AdamW, grad-clip, crash-and-resume via optimizer.pt /
 scheduler.pt / training_state.json, Trackio mirror of metrics. Activated by
 ``cfg.train.objective == "mlm"`` (train.train() routes here); the CLI ``train`` subcommand is reused.
 """
