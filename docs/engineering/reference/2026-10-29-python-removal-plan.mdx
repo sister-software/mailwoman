@@ -1377,6 +1377,33 @@ still runs the Python preflight and receipt in the training image. The launcher 
   `docs/records/evals/` report: behavior comparisons, cold initialization, peak and steady memory, per-batch costs,
   and measured training performance. Any unmeasured speedup stays labeled as an estimate.
 
+### Final measurements (#2879 T42)
+
+The host side of a training step, measured with `sampler-parity.run.ts profile` on 2026-10-30 at revision
+`3988395a0`. Host: the lab machine, AMD Ryzen 9 8945HS, 16 threads. Config: `v8.3.0-base-c6-90k-mixed-s42.yaml`
+with the encoder-parity records' host lexicon overrides, the train split, seed 43. Each run times 40 batches of 128
+rows after the first batch: sampling through the `mtf-node` sampler, then encoding through its row encoder and the
+TypeScript locale and address-system ids. Records: `/mnt/mw/audits/trainer-parity/t42/profile-run{1,2}.json`.
+
+| Run, path                  | Load (1 min) before | Init s | Encoder build s | Sampler init s | Sampling ms per batch | Encoding ms per batch | Host ms per batch | RSS after init MB | Peak RSS MB |
+| -------------------------- | ------------------: | -----: | --------------: | -------------: | --------------------: | --------------------: | ----------------: | ----------------: | ----------: |
+| 1, Rust through `mtf-node` |                4.75 |   59.7 |             4.1 |           55.6 |                  1.35 |                 10.51 |             11.86 |             2,355 |       2,441 |
+| 2, Rust through `mtf-node` |               11.65 |   40.3 |             2.4 |           37.8 |                  1.25 |                 10.10 |             11.34 |             2,364 |       2,450 |
+
+Run 1 read the corpus files cold and run 2 warm from the page cache, so the initialization difference is the cache.
+"Sampler init" covers the corpus listing, the sha256 check against the sidecar cache, the source index, the
+131,072-row buffer fill and the first batch.
+
+The Python arm cannot be re-measured, because the Python sampler and encoder are deleted. Its figures stand as recorded
+in `training-row-encoder.mdx` (Phase 3: sampler init 220.3 s and sampling 8.09 ms per batch at load 18, through the
+Python loader). Those were measured through the Python binding under a different harness, so no ratio is taken
+between them and the rows above.
+
+| Measurement                                   | Value                                                                   |
+| --------------------------------------------- | ----------------------------------------------------------------------- |
+| Rust trainer steps per second on an A100-40GB | not measured: T36 (the stage 8 run) records it from its `train_log.csv` |
+| 2,000-step probe, Rust loader on an A100-40GB | 6.50 s per 100 steps (measured 2026-10-29, `training-row-encoder.mdx`)  |
+
 ## 6. Milestones
 
 Hour estimates from the earlier draft are withdrawn. Milestones are concrete deliverables, and the ones that depend
