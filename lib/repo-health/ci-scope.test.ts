@@ -154,6 +154,13 @@ describe("selectCIScope", () => {
 		}
 	)
 
+	it("selects every suite for a trainer data table, which the JavaScript tests read too", () => {
+		expect(selectCIScope(workspaces, files, ["packages/trainer/data/postcode-shapes.json"], [])).toMatchObject({
+			full: true,
+			rust: true,
+		})
+	})
+
 	it("leaves the rust job unselected for an mtf change outside the crates", () => {
 		expect(selectCIScope(withMTF, files, ["packages/mtf/lib/index.ts"], [])).toMatchObject({
 			full: false,

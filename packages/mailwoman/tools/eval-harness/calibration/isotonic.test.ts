@@ -23,9 +23,25 @@ import {
 	pava,
 	recordedPermutation,
 	renderCalibrationReport,
+	ROBUST_MCE_MIN_SAMPLES,
+	robustMCE,
 	type SpanConfidence,
 } from "./isotonic.ts"
 import { numpyInterp, numpyLinspace, pairwiseSum } from "./numpy.ts"
+
+describe("robustMCE", () => {
+	test("counts a full bin whose mean confidence is exactly 0, and skips an empty one", () => {
+		const n = ROBUST_MCE_MIN_SAMPLES
+
+		expect(
+			robustMCE([
+				{ lo: 0, hi: 0.1, n, conf: 0, acc: 0.4 },
+				{ lo: 0.9, hi: 1, n, conf: 0.95, acc: 0.9 },
+				{ lo: 0.5, hi: 0.6, n: 0, conf: null, acc: null },
+			])
+		).toBeCloseTo(0.4, 12)
+	})
+})
 
 describe("the NumPy operations", () => {
 	test("the pairwise sum adds in NumPy's order, which differs from a running sum", () => {

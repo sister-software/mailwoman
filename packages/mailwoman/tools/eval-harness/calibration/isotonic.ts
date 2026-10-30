@@ -204,7 +204,10 @@ export function ece(
  * The maximum calibration error over bins holding at least {@linkcode ROBUST_MCE_MIN_SAMPLES} samples.
  */
 export function robustMCE(rows: readonly ReliabilityBin[]): number {
-	const gaps = rows.filter((r) => r.n >= ROBUST_MCE_MIN_SAMPLES && r.conf).map((r) => Math.abs(r.conf! - r.acc!))
+	// A bin's mean confidence can be exactly 0 after calibration, and that bin still counts.
+	const gaps = rows
+		.filter((r) => r.n >= ROBUST_MCE_MIN_SAMPLES && typeof r.conf === "number" && typeof r.acc === "number")
+		.map((r) => Math.abs(r.conf! - r.acc!))
 
 	return gaps.length ? Math.max(...gaps) : 0
 }
@@ -344,7 +347,6 @@ export function fitAndMeasure(
 
 	const oa = bySource("oa")
 	const corpus = bySource("corpus")
-	const float = (value: number) => value
 
 	return {
 		nTotal: records.length,
@@ -352,18 +354,18 @@ export function fitAndMeasure(
 		nEval: evalIndex.length,
 		table: lookupTable(xs, g, bins),
 		metrics: {
-			ece_raw_eval: float(raw.e),
-			ece_cal_eval: float(cal.e),
-			mce_raw_eval: float(robustMCE(raw.rows)),
-			mce_cal_eval: float(robustMCE(cal.rows)),
-			mce_raw_eval_allbins: float(raw.mce),
-			mce_cal_eval_allbins: float(cal.mce),
-			brier_raw_eval: float(brier(evConf, evCorrect)),
-			brier_cal_eval: float(brier(evCal, evCorrect)),
-			ece_raw_oa_eval: oa.raw === null ? null : float(oa.raw),
-			ece_cal_oa_eval: oa.cal === null ? null : float(oa.cal),
-			ece_raw_corpus_eval: corpus.raw === null ? null : float(corpus.raw),
-			ece_cal_corpus_eval: corpus.cal === null ? null : float(corpus.cal),
+			ece_raw_eval: raw.e,
+			ece_cal_eval: cal.e,
+			mce_raw_eval: robustMCE(raw.rows),
+			mce_cal_eval: robustMCE(cal.rows),
+			mce_raw_eval_allbins: raw.mce,
+			mce_cal_eval_allbins: cal.mce,
+			brier_raw_eval: brier(evConf, evCorrect),
+			brier_cal_eval: brier(evCal, evCorrect),
+			ece_raw_oa_eval: oa.raw,
+			ece_cal_oa_eval: oa.cal,
+			ece_raw_corpus_eval: corpus.raw,
+			ece_cal_corpus_eval: corpus.cal,
 		},
 		perTag: subgroupECE(
 			atIndexes(
