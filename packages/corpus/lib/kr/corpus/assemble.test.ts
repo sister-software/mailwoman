@@ -17,7 +17,7 @@ import { describe, expect, it } from "vitest"
 
 import { buildKRCorpus } from "#kr/corpus/assemble"
 import { readParquetRows } from "#parquet/readers"
-import { expectSpanInvariants } from "#test-kit"
+import { expectReportBytes, expectSpanInvariants } from "#test-kit"
 
 const fixture = (name: string) => resolvePackagePath("@mailwoman/corpus", "fixtures", "builders", "kr", name)
 
@@ -116,7 +116,7 @@ describe("the Korea corpus assembler", async () => {
 		delete report["juso_zip"]
 		delete report["permit_dir"]
 
-		expect(report).toEqual(reference.report)
+		expectReportBytes(report, reference.report)
 	})
 
 	it("names a missing register archive", async () => {

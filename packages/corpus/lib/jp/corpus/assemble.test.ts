@@ -19,7 +19,7 @@ import { iterJPSourceRows, loadKenAllPostcodes } from "#jp/corpus/sources"
 import { municipalityKanaFromAdminDB } from "#jp/kana"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { readParquetRows } from "#parquet/readers"
-import { expectSpanInvariants } from "#test-kit"
+import { expectReportBytes, expectSpanInvariants } from "#test-kit"
 
 const REFERENCE = resolvePackagePath("@mailwoman/corpus", "fixtures", "builders", "jp", "jp-build-reference.json")
 
@@ -157,7 +157,7 @@ describe("the Japan corpus assembler", async () => {
 		delete report["source_parquet"]
 		delete report["kenall"]
 
-		expect(report).toEqual(reference.report)
+		expectReportBytes(report, reference.report)
 	})
 
 	it("names each missing input", async () => {

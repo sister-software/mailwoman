@@ -19,13 +19,15 @@ import { pySum } from "@mailwoman/core/numeric"
 import { runFileSync } from "@mailwoman/core/process"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
+import { asPythonFloat, type PythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { pythonSplitLines, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	type CJKRecord,
+	type CJKSplitReport,
 	CJKStatsSample,
+	type CoverageStats,
 	coverageStats,
 	MAX_FIELD_CHARS,
 	muniBucket,
@@ -316,13 +318,56 @@ async function surveyPermits(
 }
 
 /**
+ * The KR registry corpus's build report, which its `build-report.json` serializes in this key order.
+ */
+export interface KRRegistryReport {
+	alignment_census: {
+		per_form: ReadonlyMap<string, number>
+		per_category: ReadonlyMap<string, ReadonlyMap<string, number>>
+	}
+	pool: { aligned: number; held_out: number; unaligned: number }
+	registers: ReadonlyMap<string, number>
+	splits: ReadonlyMap<string, CJKSplitReport>
+	board_rows: number
+	char_vocab_size: number
+}
+
+/**
+ * The KR label corpus's build report, which `build-report.json` serializes in this key order.
+ */
+export interface KRCorpusReport {
+	seed: number
+	juso_zip: string
+	permit_dir: string
+	label_set: string
+	source: string
+	registry_source: string
+	eligible_rows_scanned: number
+	dropped_at_source: ReadonlyMap<string, number>
+	per_region_cap: number
+	regions_train: number
+	board_bucket_min: number
+	board_sigungu: number
+	board_rows: number
+	board_rows_without_centroid: number
+	registers: ReadonlyMap<string, number>
+	char_vocab_size: number
+	centroid_units: number
+	fractions: { country: PythonFloat }
+	register_weights: ReadonlyMap<string, PythonFloat>
+	splits: ReadonlyMap<string, CJKSplitReport>
+	board_coverage: CoverageStats
+	registry: KRRegistryReport
+}
+
+/**
  * Builds both corpora and returns the label corpus's build report,
  * which holds the registry's under `registry`.
  *
  * @throws When an output directory holds files and `force` is unset, an input is missing,
  * the register drop rate exceeds 2%, or a board 시군구 reaches train or val.
  */
-export async function buildKRCorpus(options: KRCorpusOptions): Promise<Map<string, unknown>> {
+export async function buildKRCorpus(options: KRCorpusOptions): Promise<KRCorpusReport> {
 	const rng = new PyRandom(options.seed)
 	const tagSet = await readLabelSetTags(KR_LABEL_SET_NAME)
 	const transform = options.transform ?? transformKRCoordinates
@@ -392,7 +437,7 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<Map<strin
 		return record
 	}
 
-	const splits = new Map<string, unknown>()
+	const splits = new Map<string, CJKSplitReport>()
 
 	for (const [split, sourceRows] of [
 		["train", train],
@@ -524,7 +569,7 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<Map<strin
 	rng.shuffle(registryRows)
 
 	const registryVal = Math.max(1, Math.trunc(registryRows.length * options.registryValFraction))
-	const registrySplits = new Map<string, unknown>()
+	const registrySplits = new Map<string, CJKSplitReport>()
 
 	for (const [split, splitRows] of [
 		["train", registryRows.slice(registryVal)],
@@ -564,52 +609,39 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<Map<strin
 	const vocab = await sealCharVocab(outDir, "char-vocab-kr.json")
 	const registryVocab = await sealCharVocab(registryDir, "char-vocab-kr-registry.json")
 
-	const registry = new Map<string, unknown>([
-		[
-			"alignment_census",
-			new Map<string, unknown>([
-				["per_form", permits.censusForm],
-				["per_category", permits.censusCategory],
-			]),
-		],
-		[
-			"pool",
-			new Map([
-				["aligned", registryPool],
-				["held_out", registryBoardPool],
-				["unaligned", unalignedPool],
-			]),
-		],
-		["registers", new Map(mostCommon(registryRegisters))],
-		["splits", registrySplits],
-		["board_rows", registryBoard.length],
-		["char_vocab_size", registryVocab.size],
-	])
+	const registry: KRRegistryReport = {
+		alignment_census: { per_form: permits.censusForm, per_category: permits.censusCategory },
+		pool: { aligned: registryPool, held_out: registryBoardPool, unaligned: unalignedPool },
+		registers: new Map(mostCommon(registryRegisters)),
+		splits: registrySplits,
+		board_rows: registryBoard.length,
+		char_vocab_size: registryVocab.size,
+	}
 
-	const report = new Map<string, unknown>([
-		["seed", options.seed],
-		["juso_zip", options.jusoZip.toString()],
-		["permit_dir", options.permitDir.toString()],
-		["label_set", KR_LABEL_SET_NAME],
-		["source", KR_CORPUS_SOURCE],
-		["registry_source", KR_REGISTRY_SOURCE],
-		["eligible_rows_scanned", scanned],
-		["dropped_at_source", new Map(mostCommon(dropped))],
-		["per_region_cap", cap],
-		["regions_train", new Set(train.map((row) => row.region)).size],
-		["board_bucket_min", options.boardBucketMin],
-		["board_sigungu", boardUnits.size],
-		["board_rows", boardRecords.length],
-		["board_rows_without_centroid", withoutCentroid],
-		["registers", new Map(mostCommon(registerCounts))],
-		["char_vocab_size", vocab.size],
-		["centroid_units", centroids.size],
-		["fractions", new Map([["country", asPythonFloat(options.countryFraction)]])],
-		["register_weights", new Map([...KR_REGISTER_WEIGHTS].map(([name, weight]) => [name, asPythonFloat(weight)]))],
-		["splits", splits],
-		["board_coverage", coverageStats(boardRecords)],
-		["registry", registry],
-	])
+	const report: KRCorpusReport = {
+		seed: options.seed,
+		juso_zip: options.jusoZip.toString(),
+		permit_dir: options.permitDir.toString(),
+		label_set: KR_LABEL_SET_NAME,
+		source: KR_CORPUS_SOURCE,
+		registry_source: KR_REGISTRY_SOURCE,
+		eligible_rows_scanned: scanned,
+		dropped_at_source: new Map(mostCommon(dropped)),
+		per_region_cap: cap,
+		regions_train: new Set(train.map((row) => row.region)).size,
+		board_bucket_min: options.boardBucketMin,
+		board_sigungu: boardUnits.size,
+		board_rows: boardRecords.length,
+		board_rows_without_centroid: withoutCentroid,
+		registers: new Map(mostCommon(registerCounts)),
+		char_vocab_size: vocab.size,
+		centroid_units: centroids.size,
+		fractions: { country: asPythonFloat(options.countryFraction) },
+		register_weights: new Map([...KR_REGISTER_WEIGHTS].map(([name, weight]) => [name, asPythonFloat(weight)])),
+		splits,
+		board_coverage: coverageStats(boardRecords),
+		registry,
+	}
 
 	await writeLocalTextFile(
 		pythonJSONDumps(report, { indent: 2, ensureASCII: false }) + "\n",

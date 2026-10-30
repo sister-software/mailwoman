@@ -11,6 +11,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, expect } from "vitest"
@@ -177,4 +178,34 @@ export function expectSpanInvariants(rows: readonly unknown[]): void {
 			}
 		}
 	}
+}
+
+/**
+ * Asserts that a parsed build report matches its reference in every value and every key's position.
+ *
+ * `toEqual` alone ignores key order, which a report's bytes carry.
+ * The comparison sorts the tags that tie within each `per_tag_rows` count on both sides first,
+ * because the Python reference counted tags from a set and its tie order followed `PYTHONHASHSEED`.
+ */
+export function expectReportBytes(report: unknown, reference: unknown): void {
+	expect(report).toEqual(reference)
+	expect(stringifyJSON(sortTagRowTies(report))).toBe(stringifyJSON(sortTagRowTies(reference)))
+}
+
+function sortTagRowTies(value: unknown, key?: string): unknown {
+	if (Array.isArray(value)) return value.map((item) => sortTagRowTies(item))
+
+	if (typeof value !== "object" || value === null) return value
+
+	const entries = Object.entries(value)
+
+	if (key === "per_tag_rows") {
+		return Object.fromEntries(
+			(entries as Array<[string, number]>).toSorted(
+				([leftTag, left], [rightTag, right]) => right - left || (leftTag < rightTag ? -1 : 1)
+			)
+		)
+	}
+
+	return Object.fromEntries(entries.map(([name, item]) => [name, sortTagRowTies(item, name)]))
 }

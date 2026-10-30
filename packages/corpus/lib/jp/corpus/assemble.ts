@@ -17,12 +17,14 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
+import { asPythonFloat, type PythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	type CJKRecord,
+	type CJKSplitReport,
 	CJKStatsSample,
+	type CoverageStats,
 	coverageStats,
 	MAX_FIELD_CHARS,
 	muniBucket,
@@ -333,12 +335,41 @@ class JPRowEncoder {
 const pythonNumber = (value: number | null) => (value === null ? null : asPythonFloat(value))
 
 /**
+ * The JP build report, which `build-report.json` serializes in this key order.
+ */
+export interface JPCorpusReport {
+	seed: number
+	source_parquet: string
+	kenall: string
+	label_set: string
+	source: string
+	eligible_rows_scanned: number
+	/**
+	 * Rows dropped before selection, by reason, most common first.
+	 */
+	dropped_at_source: ReadonlyMap<string, number>
+	max_field_chars: number
+	per_prefecture_cap: number
+	prefectures_train: number
+	board_municipalities: number
+	board_rows: number
+	kenall_join_tiers: ReadonlyMap<string, number>
+	register_availability: ReadonlyMap<string, number>
+	char_vocab_size: number
+	fractions: { postcode: PythonFloat; country: PythonFloat; spaced: PythonFloat; variant_hyphen: PythonFloat }
+	register_weights: ReadonlyMap<string, PythonFloat>
+	upweight: { pattern: string | null; copies_appended: number }
+	splits: ReadonlyMap<string, CJKSplitReport>
+	board_coverage: CoverageStats
+}
+
+/**
  * Builds the corpus, its board and its character vocabulary under `outDir`, and returns the build report.
  *
  * @throws When `outDir` holds files and `force` is unset, an input is missing, the drop rate exceeds 2%,
  * a full build's train split misses a prefecture, or a board municipality reaches train or val.
  */
-export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<string, unknown>> {
+export async function buildJPCorpus(options: JPCorpusOptions): Promise<JPCorpusReport> {
 	const rng = new PyRandom(options.seed)
 	const tagSet = await readLabelSetTags(JP_LABEL_SET_NAME)
 	const kenall = await loadKenAllPostcodes(options.kenall)
@@ -357,7 +388,7 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<strin
 		)
 	}
 
-	const splits = new Map<string, unknown>()
+	const splits = new Map<string, CJKSplitReport>()
 
 	for (const [split, sourceRows] of [
 		["train", selection.train],
@@ -428,42 +459,33 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<Map<strin
 
 	const vocab = await sealCharVocab(outDir, "char-vocab-jp-full.json")
 
-	const report = new Map<string, unknown>([
-		["seed", options.seed],
-		["source_parquet", options.parquet.toString()],
-		["kenall", options.kenall.toString()],
-		["label_set", JP_LABEL_SET_NAME],
-		["source", JP_CORPUS_SOURCE],
-		["eligible_rows_scanned", survey.scanned],
-		["dropped_at_source", new Map(mostCommon(survey.dropped))],
-		["max_field_chars", options.maxFieldChars],
-		["per_prefecture_cap", survey.cap],
-		["prefectures_train", trainPrefectures.size],
-		["board_municipalities", boardMunicipalities.size],
-		["board_rows", boardRecords.length],
-		["kenall_join_tiers", new Map(mostCommon(encoder.kenallTiers))],
-		["register_availability", encoder.registerAvailability],
-		["char_vocab_size", vocab.size],
-		[
-			"fractions",
-			new Map([
-				["postcode", asPythonFloat(options.postcodeFraction)],
-				["country", asPythonFloat(options.countryFraction)],
-				["spaced", asPythonFloat(options.spacedFraction)],
-				["variant_hyphen", asPythonFloat(options.variantHyphenFraction)],
-			]),
-		],
-		["register_weights", new Map([...JP_REGISTER_WEIGHTS].map(([name, weight]) => [name, asPythonFloat(weight)]))],
-		[
-			"upweight",
-			new Map<string, unknown>([
-				["pattern", options.upweightPattern ?? null],
-				["copies_appended", selection.upweighted],
-			]),
-		],
-		["splits", splits],
-		["board_coverage", coverageStats(boardRecords)],
-	])
+	const report: JPCorpusReport = {
+		seed: options.seed,
+		source_parquet: options.parquet.toString(),
+		kenall: options.kenall.toString(),
+		label_set: JP_LABEL_SET_NAME,
+		source: JP_CORPUS_SOURCE,
+		eligible_rows_scanned: survey.scanned,
+		dropped_at_source: new Map(mostCommon(survey.dropped)),
+		max_field_chars: options.maxFieldChars,
+		per_prefecture_cap: survey.cap,
+		prefectures_train: trainPrefectures.size,
+		board_municipalities: boardMunicipalities.size,
+		board_rows: boardRecords.length,
+		kenall_join_tiers: new Map(mostCommon(encoder.kenallTiers)),
+		register_availability: encoder.registerAvailability,
+		char_vocab_size: vocab.size,
+		fractions: {
+			postcode: asPythonFloat(options.postcodeFraction),
+			country: asPythonFloat(options.countryFraction),
+			spaced: asPythonFloat(options.spacedFraction),
+			variant_hyphen: asPythonFloat(options.variantHyphenFraction),
+		},
+		register_weights: new Map([...JP_REGISTER_WEIGHTS].map(([name, weight]) => [name, asPythonFloat(weight)])),
+		upweight: { pattern: options.upweightPattern ?? null, copies_appended: selection.upweighted },
+		splits,
+		board_coverage: coverageStats(boardRecords),
+	}
 
 	const text = pythonJSONDumps(report, { indent: 2, ensureASCII: false })
 

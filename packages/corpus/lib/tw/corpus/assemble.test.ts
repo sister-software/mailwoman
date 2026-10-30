@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { readParquetRows } from "#parquet/readers"
-import { expectSpanInvariants } from "#test-kit"
+import { expectReportBytes, expectSpanInvariants } from "#test-kit"
 import { buildTWCorpus } from "#tw/corpus/assemble"
 import { iterTWSourceRows, splitNumberUnit } from "#tw/corpus/rows"
 
@@ -130,7 +130,7 @@ describe("the Taiwan corpus assembler", async () => {
 
 		delete report["parquet"]
 
-		expect(report).toEqual(reference.report)
+		expectReportBytes(report, reference.report)
 	})
 
 	it("moves a sub-number from the unit onto the number", () => {
