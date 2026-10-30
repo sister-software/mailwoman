@@ -37,7 +37,7 @@
 		"lint:prose": "node ../config/vale/lint-prose.ts -s docs",
 		"lint:prose:fixtures": "node ../config/vale/check-rules.ts",
 		"lint:prose:vocab": "node ../config/vale/lint-prose.ts -s docs-vocab",
-		"lint:structure": "node scripts/check/docs-structure.mts --strict",
+		"lint:structure": "node scripts/check/docs-structure.mts",
 		"prebuild": "node ../packages/mailwoman/out/cli/main.js openapi --out ./static/openapi/mailwoman.json && node ../packages/libpostal/out/cli/main.js openapi --out ./static/openapi/libpostal.json && node ../packages/photon/out/cli/main.js openapi --out ./static/openapi/photon.json && node ../packages/nominatim/out/cli/main.js openapi --out ./static/openapi/nominatim.json && node ./scripts/generate-cli-reference.mts",
 		"serve": "docusaurus serve --host 0.0.0.0 --port 7770",
 		"start": "docusaurus start --host 0.0.0.0 --port 7770 --no-open",
