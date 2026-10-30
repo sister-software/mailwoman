@@ -15,12 +15,12 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { SeededRandom } from "@mailwoman/core/random"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { GB_OS_OPEN_ADAPTER_ID, gbOSOpenCanonicalRowsPath } from "#gb/adapters/os-open/adapter"
 import type { HouseVenueTuple } from "#recipes/house-venue-tuples"
-import type { PyRandom } from "#training/pyrandom"
 
 /**
  * The license every accepted row records: the adapter's OGL v3.0 SPDX id.
@@ -54,7 +54,7 @@ const field = (components: Record<string, unknown>, key: string): string => Stri
  */
 export async function sampleGBHouseVenueTuples(
 	count: number,
-	rng: PyRandom,
+	rng: SeededRandom,
 	path: PathBuilderLike = gbOSOpenCanonicalRowsPath()
 ): Promise<HouseVenueTuple[]> {
 	const location = path.toString()

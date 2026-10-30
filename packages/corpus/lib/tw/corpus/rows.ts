@@ -13,6 +13,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import type { SeededRandom } from "@mailwoman/core/random"
 import { countInto } from "@mailwoman/core/stats"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import type { PathBuilderLike } from "path-ts"
@@ -21,7 +22,6 @@ import { type CJKRecord, labelTokensByFirstSpan, MAX_FIELD_CHARS, RowRenderer, v
 import { asciiDigits, fullwidthDigits, normalizeCJKText } from "#cjk/text"
 import { parquetRowGroupRows } from "#parquet/readers"
 import { openParquetRowStream } from "#parquet/streams"
-import type { PyRandom } from "#training/pyrandom"
 import { TW_ADMIN_LEVELS } from "#tw/registers"
 
 /**
@@ -167,10 +167,13 @@ export function availableTWRegisters(village: string, unit: string): string[] {
  * One of `options`, drawn by {@linkcode TW_REGISTER_WEIGHTS}.
  * A single option is returned without a draw.
  */
-export function chooseTWRegister(rng: PyRandom, options: readonly string[]): string {
+export function chooseTWRegister(rng: SeededRandom, options: readonly string[]): string {
 	if (options.length === 1) return options[0]!
 
-	return rng.choices(options, { weights: options.map((name) => TW_REGISTER_WEIGHTS.get(name)!) })[0]!
+	return rng.weightedChoice(
+		options,
+		options.map((name) => TW_REGISTER_WEIGHTS.get(name)!)
+	)
 }
 
 /**

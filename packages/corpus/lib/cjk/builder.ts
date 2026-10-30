@@ -16,6 +16,7 @@ import { md5Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { pyRound, pySum } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
+import type { SeededRandom } from "@mailwoman/core/random"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
@@ -27,7 +28,6 @@ import { readParquetRows } from "#parquet/readers"
 import { ParquetColumnKind, type ParquetColumns, writeColumnParquetFile } from "#parquet/writers"
 import { stampRowLicenses } from "#source-register/row-license"
 import { pythonRepr } from "#training/config/python-yaml"
-import type { PyRandom } from "#training/pyrandom"
 
 /**
  * The columns of a CJK corpus parquet file, in file order.
@@ -280,7 +280,7 @@ export function muniBucket(unit: string): number {
  * Each item is taken with probability `remaining quota / remaining items`, drawn from `rng`.
  * No draw is made once the quota is filled, so the draw count depends on where the quota fills.
  */
-export function* selectExact(count: number, quota: number, rng: PyRandom): Generator<boolean, void, undefined> {
+export function* selectExact(count: number, quota: number, rng: SeededRandom): Generator<boolean, void, undefined> {
 	let remainingQuota = Math.min(quota, count)
 	let remaining = count
 

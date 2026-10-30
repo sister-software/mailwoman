@@ -9,12 +9,12 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { repoRootPath } from "@mailwoman/core/paths"
+import type { SeededRandom } from "@mailwoman/core/random"
 import { capitalize, splitLines, splitWhitespace } from "@mailwoman/core/strings/unicode"
 import type { PathBuilderLike } from "path-ts"
 
 import { sampleAddressPoints } from "#recipes/address-points"
 import type { HouseVenueTuple } from "#recipes/house-venue-tuples"
-import type { PyRandom } from "#training/pyrandom"
 
 /**
  * The BAN address-point database.
@@ -83,7 +83,7 @@ export async function readFRReservedSurfaces(path: PathBuilderLike = frReservedS
  */
 export async function sampleFRHouseVenueTuples(
 	count: number,
-	rng: PyRandom,
+	rng: SeededRandom,
 	reserved: ReadonlySet<string>,
 	path: PathBuilderLike = banAddressPointsPath()
 ): Promise<HouseVenueTuple[]> {

@@ -13,7 +13,7 @@
  *   board excludes Berlin (`BE`) and Saxony (`SN`). Street vocabulary such as `Hauptstraße` still repeats across
  *   states, so the board measures class behavior over shared vocabulary with held-out compositions.
  *
- *   One seeded `PyRandom` fills every class's reservoir in row order, and each class keeps one row per surface.
+ *   One seeded `SeededRandom` fills every class's reservoir in row order, and each class keeps one row per surface.
  *   The patterns use Unicode word and digit classes, because Python's `re` reads `\w`, `\d` and `\b` that way.
  */
 
@@ -21,13 +21,13 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
+import { SeededRandom } from "@mailwoman/core/random"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { basename, dirname } from "path-ts"
 
 import { openParquetRowStream } from "#parquet/streams"
-import { PyRandom } from "#training/pyrandom"
 
 /**
  * The states whose OpenAddresses files the training feed reads, left out of the board.
@@ -157,7 +157,7 @@ export async function buildDEFragmentBoard(options: DEFragmentBoardOptions): Pro
 		Object.keys((await readLocalJSONFile<{ entries: Record<string, unknown> }>(options.lexicon)).entries)
 	)
 
-	const rng = new PyRandom(options.seed)
+	const rng = new SeededRandom(options.seed)
 	const reservoirs = new Map(DE_BOARD_CLASSES.map((klass) => [klass, [] as DEBoardRow[]]))
 	const seen = new Map(DE_BOARD_CLASSES.map((klass) => [klass, 0]))
 	const keys = new Map(DE_BOARD_CLASSES.map((klass) => [klass, new Set<string>()]))

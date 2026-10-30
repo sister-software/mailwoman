@@ -4,18 +4,19 @@
  * @author Teffen Ellis, et al.
  * @file Assembles the Japan corpus through survey, selection, rendering, writing and reporting.
  *
- *   One {@linkcode PyRandom} runs through every stage: the exact-selection masks, the shuffles, the register draw
+ *   One {@linkcode SeededRandom} runs through every stage: the exact-selection masks, the shuffles, the register draw
  *   and each per-row fraction. The order of the stages and of the draws inside them decides what the corpus holds,
  *   and `jp-build-reference.json` pins the emitted rows. Pass 1 counts eligible rows so the per-prefecture cap can
  *   be water-filled against the target, and pass 2 streams the selection under that cap.
  *
- *   Ported from the Python builders' `countries/jp/corpora/assemble.py`, draw for draw.
+ *   Ported from the Python builders' `countries/jp/corpora/assemble.py`, in its draw order.
  */
 
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
+import { SeededRandom } from "@mailwoman/core/random"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -49,7 +50,6 @@ import { iterJPSourceRows, type JPSourceRow, type KenAllIndex, loadKenAllPostcod
 import { municipalityKanaFromAdminDB, municipalityKanaLookup } from "#jp/kana"
 import { JP_BOARD_BUCKET_MIN } from "#jp/registers"
 import { splitJPStreet, VARIANT_HYPHENS } from "#jp/text"
-import { PyRandom } from "#training/pyrandom"
 
 /**
  * The prefectures a full build's train split must cover.
@@ -170,7 +170,7 @@ async function surveySource(options: JPCorpusOptions): Promise<SourceSurvey> {
 	return { scanned, dropped, poolCounts, boardCount, cap, quotas }
 }
 
-async function selectRows(options: JPCorpusOptions, rng: PyRandom, survey: SourceSurvey): Promise<Selection> {
+async function selectRows(options: JPCorpusOptions, rng: SeededRandom, survey: SourceSurvey): Promise<Selection> {
 	const selectors = new Map(
 		[...survey.poolCounts].map(([prefecture, count]) => [
 			prefecture,
@@ -234,14 +234,14 @@ class JPRowEncoder {
 	readonly kenallTiers = new Map<string, number>()
 	readonly registerAvailability = new Map<string, number>()
 	readonly #options: JPCorpusOptions
-	readonly #rng: PyRandom
+	readonly #rng: SeededRandom
 	readonly #kenall: KenAllIndex
 	readonly #tagSet: ReadonlySet<string>
 	readonly #kana: ReadonlyMap<string, string>
 
 	constructor(
 		options: JPCorpusOptions,
-		rng: PyRandom,
+		rng: SeededRandom,
 		kenall: KenAllIndex,
 		tagSet: ReadonlySet<string>,
 		kana: ReadonlyMap<string, string>
@@ -368,7 +368,7 @@ export interface JPCorpusReport {
  * a full build's train split misses a prefecture, or a board municipality reaches train or val.
  */
 export async function buildJPCorpus(options: JPCorpusOptions): Promise<JPCorpusReport> {
-	const rng = new PyRandom(options.seed)
+	const rng = new SeededRandom(options.seed)
 	const tagSet = await readLabelSetTags(JP_LABEL_SET_NAME)
 	const kenall = await loadKenAllPostcodes(options.kenall)
 	const survey = await surveySource(options)

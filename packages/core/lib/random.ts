@@ -9,6 +9,8 @@
  *   A different generator changes those outputs. New code should use `mulberry32`.
  */
 
+import { hashFNV1a } from "#coarse-placer/fnv-hash"
+
 /**
  * Creates a Mulberry32 generator that returns values in `[0, 1)`.
  */
@@ -105,9 +107,13 @@ export function makeLcg(seed: number): () => number {
 export class SeededRandom {
 	readonly #next: () => number
 
-	constructor(seed: number) {
+	/**
+	 * A string seed is reduced to 32 bits by FNV-1a over its UTF-16 code units,
+	 * so `"${seed}-postcode"` and a numeric seed both name a stream.
+	 */
+	constructor(seed: number | string) {
 		// Seed zero maps to one.
-		this.#next = mulberry32(seed >>> 0 || 1)
+		this.#next = mulberry32((typeof seed === "string" ? hashFNV1a(seed) : seed) >>> 0 || 1)
 	}
 
 	/**
@@ -125,10 +131,50 @@ export class SeededRandom {
 	}
 
 	/**
+	 * Returns an integer in `[0, stop)`, or in `[start, stop)` given both.
+	 *
+	 * @throws When the range is empty.
+	 */
+	randrange(startOrStop: number, stop?: number): number {
+		const [start, end] = stop === undefined ? [0, startOrStop] : [startOrStop, stop]
+
+		if (end <= start) throw new RangeError(`randrange: the range [${start}, ${end}) is empty`)
+
+		return this.randint(start, end - 1)
+	}
+
+	/**
 	 * Picks one element uniformly.
+	 *
+	 * @throws When the sequence is empty.
 	 */
 	choice<T>(seq: readonly T[]): T {
+		if (!seq.length) throw new RangeError("choice: the sequence is empty")
+
 		return seq[Math.floor(this.random() * seq.length)]!
+	}
+
+	/**
+	 * Picks one element with probability proportional to its weight.
+	 *
+	 * @throws When the lengths differ or no weight is positive.
+	 */
+	weightedChoice<T>(seq: readonly T[], weights: readonly number[]): T {
+		if (seq.length !== weights.length) throw new RangeError("weightedChoice: the weights do not match the sequence")
+
+		const total = weights.reduce((sum, weight) => sum + weight, 0)
+
+		if (!(total > 0)) throw new RangeError("weightedChoice: no weight is positive")
+
+		let target = this.random() * total
+
+		for (const [index, weight] of weights.entries()) {
+			target -= weight
+
+			if (target < 0) return seq[index]!
+		}
+
+		return seq.at(-1)!
 	}
 
 	/**

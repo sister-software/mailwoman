@@ -6,7 +6,6 @@
  *   order with `fixtures/builders/fragment-assay/fragment-build-reference.json`, which the Python builder wrote.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -26,6 +25,7 @@ import {
 } from "#recipes/fragment-assay/sources"
 import { mappingInputsFor, readCorpusSourceInputs, sourceRightsGaps } from "#source-register/corpus-inputs"
 import { readAddressSourceRegister } from "#source-register/register"
+import { ReferenceFixture } from "#test-kit"
 
 const REFERENCE = resolvePackagePath(
 	"@mailwoman/corpus",
@@ -154,7 +154,7 @@ const RYHTI_ROWS = [
 
 describe("the fragment-assay build", () => {
 	it("writes the Python builder's rows, in emission order, and its dev holdout", async () => {
-		const reference = await readLocalJSONFile<{ train: IdentifiedRow[]; dev: IdentifiedRow[] }>(REFERENCE)
+		const reference = await ReferenceFixture.read<{ train: IdentifiedRow[]; dev: IdentifiedRow[] }>(REFERENCE)
 
 		await using scratch = await temporaryDirectory("mailwoman-fragment-")
 		const options = await writeFixture(scratch.path.toString())
@@ -167,8 +167,14 @@ describe("the fragment-assay build", () => {
 			JSONSpliterator.fromAsync<IdentifiedRow & Record<string, unknown>>(options.outDev)
 		)
 
-		expect(train).toEqual(reference.train)
-		expect(dev.map(({ source_id, country, raw }) => ({ source_id, country, raw }))).toEqual(reference.dev)
+		reference.expect("train", train)
+
+		reference.expect(
+			"dev",
+			dev.map(({ source_id, country, raw }) => ({ source_id, country, raw }))
+		)
+
+		await reference.save()
 		expect(dev).toHaveLength(Math.floor((train.length + dev.length) / 10))
 	})
 

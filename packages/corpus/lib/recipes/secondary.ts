@@ -12,15 +12,14 @@
  *
  *   The STAGE4 tags these rows emit collapse to `O` until a STAGE4 label set is active.
  *
- *   The draws follow the Python builder's, from {@linkcode PyRandom} seeded with {@linkcode SECONDARY_SEED}, so the
- *   output rows equal the rows `corpora/secondary.py` wrote.
+ *   The draws come from {@linkcode SeededRandom} seeded with {@linkcode SECONDARY_SEED}, in the order of the Python
+ *   builder (`corpora/secondary.py`), and `fixtures/builders/secondary/record.json` pins the rows.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { SeededRandom } from "@mailwoman/core/random"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { splitWhitespace } from "@mailwoman/core/strings/unicode"
-
-import { PyRandom } from "#training/pyrandom"
 
 /**
  * The corpus source of every row.
@@ -172,7 +171,7 @@ function rowFromGroups(groups: ReadonlyArray<readonly Part[]>, separator: string
 /**
  * The secondary forms to set into one base address, drawn in the Python builder's order.
  */
-function secondaryForms(rng: PyRandom): Part[][] {
+function secondaryForms(rng: SeededRandom): Part[][] {
 	return [
 		[
 			["unit_designator", rng.choice(US_UNIT_DESIGNATORS)],
@@ -198,7 +197,7 @@ function secondaryForms(rng: PyRandom): Part[][] {
  * The rows are fixed by `cap` and {@linkcode SECONDARY_SEED}.
  */
 export function generateSecondaryRows(cap: number): SecondaryRow[] {
-	const rng = new PyRandom(SECONDARY_SEED)
+	const rng = new SeededRandom(SECONDARY_SEED)
 	const rows: SecondaryRow[] = []
 
 	for (let repeat = 0; repeat < cap; repeat++) {

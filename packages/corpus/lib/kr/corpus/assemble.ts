@@ -7,7 +7,7 @@
  *
  *   Pass 1 counts eligible register rows per 시도 and builds the key index. Pass 2 measures permit alignment and
  *   averages each 시군구's permit points into a centroid. Pass 3 selects register rows and pass 4 aligned permit
- *   rows, both drawing from one {@linkcode PyRandom} in the Python assembler's order
+ *   rows, both drawing from one {@linkcode SeededRandom} in the Python assembler's order
  *   (`countries/kr/corpora/assemble.py`), so hoisting one draw above another re-renders both corpora.
  */
 
@@ -18,6 +18,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
 import { runFileSync } from "@mailwoman/core/process"
+import { SeededRandom } from "@mailwoman/core/random"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { splitLines, splitWhitespace } from "@mailwoman/core/strings/unicode"
@@ -56,7 +57,6 @@ import {
 	krRegistryRecord,
 	renderKRRow,
 } from "#kr/corpus/rows"
-import { PyRandom } from "#training/pyrandom"
 
 /**
  * The hold-out bucket from which a 시군구 is a board unit: buckets 90 to 99 of 100.
@@ -368,7 +368,7 @@ export interface KRCorpusReport {
  * the register drop rate exceeds 2%, or a board 시군구 reaches train or val.
  */
 export async function buildKRCorpus(options: KRCorpusOptions): Promise<KRCorpusReport> {
-	const rng = new PyRandom(options.seed)
+	const rng = new SeededRandom(options.seed)
 	const tagSet = await readLabelSetTags(KR_LABEL_SET_NAME)
 	const transform = options.transform ?? transformKRCoordinates
 	const outDir = resolvePath(options.outDir)

@@ -5,17 +5,17 @@
  * @file Samples rows of an `address_point` table by random rowid probe.
  *
  *   France's BAN extract and each US state's situs database share the table, so the sampler is shared and each
- *   country's tuple module supplies the path and the rendering. The draws are the Python sampler's
- *   (`corpora/address_points.py`): one `randrange(1, MAX(rowid) + 1)` per probe from the caller's generator.
+ *   country's tuple module supplies the path and the rendering. Each probe draws one
+ *   `randrange(1, MAX(rowid) + 1)` from the caller's generator, in the order of the Python sampler
+ *   (`corpora/address_points.py`).
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import type { SeededRandom } from "@mailwoman/core/random"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address/point/schema"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { sql } from "kysely"
 import type { PathBuilderLike } from "path-ts"
-
-import type { PyRandom } from "#training/pyrandom"
 
 /**
  * A row as the table stores it: street, number, postcode, locality.
@@ -63,7 +63,7 @@ interface ProbedRow {
 export async function sampleAddressPoints(
 	path: PathBuilderLike,
 	count: number,
-	rng: PyRandom,
+	rng: SeededRandom,
 	options: SampleAddressPointsOptions = {}
 ): Promise<AddressPoint[]> {
 	if (!(await pathExists(path))) throw new Error(`No address-point database at ${path.toString()}`)

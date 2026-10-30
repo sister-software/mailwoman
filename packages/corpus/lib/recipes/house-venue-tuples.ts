@@ -9,19 +9,19 @@
  *   `lib/<cc>/recipes/house-venue-tuples.ts`. This module knows the order the samplers run in, the budget per
  *   country and the output, so adding a country adds a sampler and an entry in {@linkcode HOUSE_VENUE_SAMPLERS}.
  *
- *   The samplers draw from one shared {@linkcode PyRandom}, in {@linkcode HOUSE_VENUE_SAMPLERS} order, as the
- *   Python assembler (`corpora/house_venue_tuples.py`) drew them. A country copied from an earlier file leaves the
+ *   The samplers draw from one shared {@linkcode SeededRandom}, in {@linkcode HOUSE_VENUE_SAMPLERS} order, the order
+ *   of the Python assembler (`corpora/house_venue_tuples.py`). A country copied from an earlier file leaves the
  *   generator where it was, so the countries after it draw what they drew when it was sampled.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { SeededRandom } from "@mailwoman/core/random"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { readFRReservedSurfaces, sampleFRHouseVenueTuples } from "#fr/recipes/house-venue-tuples"
 import { sampleGBHouseVenueTuples } from "#gb/recipes/house-venue-tuples"
-import { PyRandom } from "#training/pyrandom"
 import { sampleUSHouseVenueTuples } from "#us/recipes/house-venue-tuples"
 
 /**
@@ -43,7 +43,7 @@ export interface HouseVenueTuple {
 /**
  * Draws up to `count` tuples for one country from the shared generator.
  */
-export type HouseVenueSampler = (count: number, rng: PyRandom) => Promise<HouseVenueTuple[]>
+export type HouseVenueSampler = (count: number, rng: SeededRandom) => Promise<HouseVenueTuple[]>
 
 /**
  * Each country's sampler, in output and draw order.
@@ -131,7 +131,7 @@ export async function assembleHouseVenueTuples(
 
 	if (carry.size && !options.carryFrom) throw new Error("--carry needs --carry-from")
 
-	const rng = new PyRandom(options.seed ?? HOUSE_VENUE_DEFAULT_SEED)
+	const rng = new SeededRandom(options.seed ?? HOUSE_VENUE_DEFAULT_SEED)
 	const parts: Array<readonly [string, HouseVenueTuple[]]> = []
 
 	for (const [code, sample] of options.samplers ?? HOUSE_VENUE_SAMPLERS) {

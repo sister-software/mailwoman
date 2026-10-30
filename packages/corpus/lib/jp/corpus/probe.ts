@@ -11,7 +11,7 @@
  *   row per prefecture per pass. Municipalities whose bucket reaches the board range go to the board and
  *   never to train or val.
  *
- *   One seeded `PyRandom` feeds every draw, in the Python builder's order: the two reservoirs as the rows
+ *   One seeded `SeededRandom` feeds every draw, in the Python builder's order: the two reservoirs as the rows
  *   arrive, the per-prefecture shuffles, the draw shuffle, the postcode coins of train then val, and the
  *   board's coins.
  */
@@ -19,6 +19,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
+import { SeededRandom } from "@mailwoman/core/random"
 import { countInto } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { resolvePath } from "path-ts"
@@ -40,7 +41,6 @@ import { openParquetRowStream } from "#parquet/streams"
 import { writeColumnParquetFile } from "#parquet/writers"
 import { stampRowLicenses } from "#source-register/row-license"
 import { pythonRepr } from "#training/config/python-yaml"
-import { PyRandom } from "#training/pyrandom"
 
 /**
  * The corpus source of every probe row.
@@ -161,7 +161,7 @@ export const JP_PROBE_DEFAULTS = {
 /**
  * One reservoir step: append while below `cap`, else replace a uniformly drawn slot.
  */
-function offer<T>(reservoir: T[], cap: number, seen: number, item: T, rng: PyRandom): void {
+function offer<T>(reservoir: T[], cap: number, seen: number, item: T, rng: SeededRandom): void {
 	if (reservoir.length < cap) {
 		reservoir.push(item)
 
@@ -175,7 +175,7 @@ function offer<T>(reservoir: T[], cap: number, seen: number, item: T, rng: PyRan
 	}
 }
 
-async function fillReservoirs(options: JPProbeOptions, rng: PyRandom) {
+async function fillReservoirs(options: JPProbeOptions, rng: SeededRandom) {
 	if (!(await pathExists(options.parquet))) throw new Error(`No Overture-JP parquet at ${options.parquet}`)
 
 	const cap = RESERVOIR_SHARE_MULTIPLE * Math.floor((options.trainRows + options.valRows) / PREFECTURE_COUNT)
@@ -243,7 +243,7 @@ async function fillReservoirs(options: JPProbeOptions, rng: PyRandom) {
  * code-point order of the prefecture names until the target fills or the pools run out,
  * shuffles the draw, and splits train from val.
  */
-function drawSplits(options: JPProbeOptions, pool: ReadonlyMap<string, JPProbeSource[]>, rng: PyRandom) {
+function drawSplits(options: JPProbeOptions, pool: ReadonlyMap<string, JPProbeSource[]>, rng: SeededRandom) {
 	for (const reservoir of pool.values()) {
 		rng.shuffle(reservoir)
 	}
@@ -314,7 +314,7 @@ export function checkStratification(
  * @throws When an input is missing, a split holds an all-O row, or {@linkcode checkStratification} refuses.
  */
 export async function buildJPProbeCorpus(options: JPProbeOptions): Promise<Map<string, unknown>> {
-	const rng = new PyRandom(options.seed)
+	const rng = new SeededRandom(options.seed)
 	const kenAll = (await loadKenAllPostcodes(options.kenAll)).municipality
 
 	console.log(`KEN_ALL municipalities: ${kenAll.size}`)

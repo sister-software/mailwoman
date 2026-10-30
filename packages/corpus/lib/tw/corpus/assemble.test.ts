@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { readParquetRows } from "#parquet/readers"
-import { expectReportBytes, expectSpanInvariants } from "#test-kit"
+import { ReferenceFixture, expectSpanInvariants } from "#test-kit"
 import { buildTWCorpus } from "#tw/corpus/assemble"
 import { iterTWSourceRows, splitNumberUnit } from "#tw/corpus/rows"
 
@@ -95,7 +95,7 @@ async function rendered(directory: string): Promise<unknown[]> {
 }
 
 describe("the Taiwan corpus assembler", async () => {
-	const reference = await readLocalJSONFile<Reference>(REFERENCE)
+	const reference = await ReferenceFixture.read<Reference>(REFERENCE)
 
 	it("writes the Python assembler's rows, board, centroids and report from the same fixture and seed", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-tw-corpus-")
@@ -120,17 +120,18 @@ describe("the Taiwan corpus assembler", async () => {
 			force: true,
 		})
 
-		expect(await rendered(`${outDir}/train`)).toEqual(reference.train)
-		expect(await rendered(`${outDir}/val`)).toEqual(reference.val)
+		reference.expect("train", await rendered(`${outDir}/train`))
+		reference.expect("val", await rendered(`${outDir}/val`))
 		expectSpanInvariants([...(await rendered(`${outDir}/train`)), ...(await rendered(`${outDir}/val`))])
-		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/tw-board.jsonl`))).toEqual(reference.board)
-		expect(await readLocalJSONFile(`${outDir}/tw-district-centroids.json`)).toEqual(reference.centroids)
+		reference.expect("board", await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/tw-board.jsonl`)))
+		reference.expect("centroids", await readLocalJSONFile(`${outDir}/tw-district-centroids.json`))
 
 		const report = await readLocalJSONFile<Record<string, unknown>>(`${outDir}/build-report.json`)
 
 		delete report["parquet"]
 
-		expectReportBytes(report, reference.report)
+		reference.expectReport("report", report)
+		await reference.save()
 	})
 
 	it("moves a sub-number from the unit onto the number", () => {

@@ -9,11 +9,11 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { SeededRandom } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
 import { GB_OS_OPEN_ADAPTER_ID } from "#gb/adapters/os-open/adapter"
 import { GB_TUPLE_LICENSE, RefusedGBTupleSourceError, sampleGBHouseVenueTuples } from "#gb/recipes/house-venue-tuples"
-import { PyRandom } from "#training/pyrandom"
 
 function osOpenRow(postcode: string, street = "Wellington Street", overrides: Record<string, unknown> = {}) {
 	return {
@@ -35,7 +35,7 @@ describe("sampleGBHouseVenueTuples", () => {
 
 		await writeLocalTextFile("NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE\n9,High Street,,Leeds,,LS1 1BA\n", path)
 
-		await expect(sampleGBHouseVenueTuples(10, new PyRandom(0), path)).rejects.toThrow(/Price Paid Data/)
+		await expect(sampleGBHouseVenueTuples(10, new SeededRandom(0), path)).rejects.toThrow(/Price Paid Data/)
 	})
 
 	it("refuses a row from another source and a row without the OGL license", async () => {
@@ -52,16 +52,16 @@ describe("sampleGBHouseVenueTuples", () => {
 
 		await writeLocalTextFile([stringifyJSON(osOpenRow("LS1 1BA", undefined, { license: "" }))], unlicensed)
 
-		await expect(sampleGBHouseVenueTuples(10, new PyRandom(0), other)).rejects.toThrow(RefusedGBTupleSourceError)
-		await expect(sampleGBHouseVenueTuples(10, new PyRandom(0), other)).rejects.toThrow(/synth-gb/)
-		await expect(sampleGBHouseVenueTuples(10, new PyRandom(0), unlicensed)).rejects.toThrow(/OGL-UK-3\.0/)
+		await expect(sampleGBHouseVenueTuples(10, new SeededRandom(0), other)).rejects.toThrow(RefusedGBTupleSourceError)
+		await expect(sampleGBHouseVenueTuples(10, new SeededRandom(0), other)).rejects.toThrow(/synth-gb/)
+		await expect(sampleGBHouseVenueTuples(10, new SeededRandom(0), unlicensed)).rejects.toThrow(/OGL-UK-3\.0/)
 	})
 
 	it("names the path of a missing file rather than answering no tuples", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-gb-tuples-")
 		const path = scratch.path("canonical.jsonl").toString()
 
-		await expect(sampleGBHouseVenueTuples(10, new PyRandom(0), path)).rejects.toThrow(path)
+		await expect(sampleGBHouseVenueTuples(10, new SeededRandom(0), path)).rejects.toThrow(path)
 	})
 
 	it("reads adapter rows into tuples stamped with their source", async () => {
@@ -73,7 +73,7 @@ describe("sampleGBHouseVenueTuples", () => {
 			path
 		)
 
-		const tuples = (await sampleGBHouseVenueTuples(10, new PyRandom(0), path)).toSorted((a, b) =>
+		const tuples = (await sampleGBHouseVenueTuples(10, new SeededRandom(0), path)).toSorted((a, b) =>
 			a.postcode.localeCompare(b.postcode)
 		)
 

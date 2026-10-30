@@ -17,7 +17,7 @@ import { describe, expect, it } from "vitest"
 
 import { buildKRCorpus } from "#kr/corpus/assemble"
 import { readParquetRows } from "#parquet/readers"
-import { expectReportBytes, expectSpanInvariants } from "#test-kit"
+import { ReferenceFixture, expectSpanInvariants } from "#test-kit"
 
 const fixture = (name: string) => resolvePackagePath("@mailwoman/corpus", "fixtures", "builders", "kr", name)
 
@@ -58,7 +58,7 @@ async function rendered(directory: string): Promise<unknown[]> {
 }
 
 describe("the Korea corpus assembler", async () => {
-	const reference = await readLocalJSONFile<Reference>(fixture("kr-build-reference.json"))
+	const reference = await ReferenceFixture.read<Reference>(fixture("kr-build-reference.json"))
 
 	it("writes the Python assembler's corpora, boards, centroids and report from the same fixture and seed", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-kr-corpus-")
@@ -99,24 +99,26 @@ describe("the Korea corpus assembler", async () => {
 			transform: stubTransform,
 		})
 
-		expect(await rendered(outDir)).toEqual(reference.label)
+		reference.expect("label", await rendered(outDir))
 		expectSpanInvariants(await rendered(outDir))
 		expectSpanInvariants(await rendered(registryOutDir))
-		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/kr-board.jsonl`))).toEqual(reference.board)
-		expect(await rendered(registryOutDir)).toEqual(reference.registry)
+		reference.expect("board", await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/kr-board.jsonl`)))
+		reference.expect("registry", await rendered(registryOutDir))
 
-		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${registryOutDir}/kr-registry-board.jsonl`))).toEqual(
-			reference.registry_board
+		reference.expect(
+			"registry_board",
+			await Array.fromAsync(JSONSpliterator.fromAsync(`${registryOutDir}/kr-registry-board.jsonl`))
 		)
 
-		expect(await readLocalJSONFile(`${outDir}/kr-sigungu-centroids.json`)).toEqual(reference.centroids)
+		reference.expect("centroids", await readLocalJSONFile(`${outDir}/kr-sigungu-centroids.json`))
 
 		const report = await readLocalJSONFile<Record<string, unknown>>(`${outDir}/build-report.json`)
 
 		delete report["juso_zip"]
 		delete report["permit_dir"]
 
-		expectReportBytes(report, reference.report)
+		reference.expectReport("report", report)
+		await reference.save()
 	})
 
 	it("names a missing register archive", async () => {

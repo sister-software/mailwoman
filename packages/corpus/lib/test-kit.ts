@@ -10,7 +10,9 @@
  *   `mailwoman/test-kit/index.ts` uses the same packaging boundary.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
@@ -116,6 +118,77 @@ export async function writeDelimitedFixture<P extends PathBuilderLike>(
 export const LIVE_PUBLISHER_TESTS =
 	// oxlint-disable-next-line sister-software/no-process-globals -- stated in the block above.
 	process.env.MAILWOMAN_LIVE_PUBLISHER_TESTS === "1"
+
+/**
+ * Whether a {@linkcode ReferenceFixture} records the values it is given instead of asserting them.
+ *
+ * Set `MAILWOMAN_REFREEZE_FIXTURES=1` for one run after a change that moves a builder's output
+ * on purpose, such as a new generator, then read the fixture's diff before committing it.
+ * Like the switch above, it reads `process.env` directly.
+ */
+export const REFREEZE_FIXTURES =
+	// oxlint-disable-next-line sister-software/no-process-globals -- stated in the block above.
+	process.env.MAILWOMAN_REFREEZE_FIXTURES === "1"
+
+function expectEqualField(actual: unknown, expected: unknown): void {
+	expect(actual).toEqual(expected)
+}
+
+/**
+ * A committed reference a builder test compares its output against, field by field.
+ *
+ * Each {@linkcode ReferenceFixture.expect} asserts one field.
+ * Under {@linkcode REFREEZE_FIXTURES} it records the actual value instead,
+ * and {@linkcode ReferenceFixture.save} writes the fixture with every recorded field.
+ */
+export class ReferenceFixture<T extends object> {
+	readonly path: string
+	readonly values: T
+
+	constructor(path: string, values: T) {
+		this.path = path
+		this.values = values
+	}
+
+	static async read<T extends object>(path: PathBuilderLike): Promise<ReferenceFixture<T>> {
+		return new ReferenceFixture(path.toString(), await readLocalJSONFile<T>(path))
+	}
+
+	/**
+	 * Asserts that `actual` equals the field, or records it under a re-freeze.
+	 */
+	expect(field: keyof T & string, actual: unknown): void {
+		if (REFREEZE_FIXTURES) {
+			;(this.values as Record<string, unknown>)[field] = actual
+
+			return
+		}
+
+		expectEqualField(actual, this.values[field])
+	}
+
+	/**
+	 * {@linkcode expectReportBytes} against the field, or records it under a re-freeze.
+	 */
+	expectReport(field: keyof T & string, actual: unknown): void {
+		if (REFREEZE_FIXTURES) {
+			;(this.values as Record<string, unknown>)[field] = actual
+
+			return
+		}
+
+		expectReportBytes(actual, this.values[field])
+	}
+
+	/**
+	 * Writes the fixture under a re-freeze, and leaves it unchanged otherwise.
+	 */
+	async save(): Promise<void> {
+		if (REFREEZE_FIXTURES) {
+			await writeLocalJSONFile(this.values, this.path)
+		}
+	}
+}
 
 /**
  * One GB parquet row whose postcode sits at the end of `raw`, the shape `rendered-gb-os-open` renders.

@@ -1,7 +1,7 @@
 {
 	"README": [
 		"Pins one seeded fragment build across a refactor.",
-		"Regenerate: uv run python -m tests.mailwoman_train.corpora.test_fragment_build_parity",
+		"Re-frozen 2026-10-30 (#2879 T62) when the builders moved to SeededRandom. Regenerate: MAILWOMAN_REFREEZE_FIXTURES=1 yarn vitest run <the test beside this file>",
 		"Fixture: write_fixture() in the test beside this file — two OpenAddresses locales and a",
 		"  span-schema corpus parquet, at the shapes the collectors read.",
 		"",
@@ -11,64 +11,9 @@
 	],
 	"train": [
 		{
-			"source_id": "fragment-assay-AU-4",
-			"country": "AU",
-			"raw": "Melbourne"
-		},
-		{
-			"source_id": "fragment-assay-US-44",
-			"country": "US",
-			"raw": "3081 N Hartland Rd White River Junction United States"
-		},
-		{
-			"source_id": "fragment-assay-CZ-26",
-			"country": "CZ",
-			"raw": "3 12 Hauptstrasse"
-		},
-		{
-			"source_id": "fragment-assay-AU-9",
-			"country": "AU",
-			"raw": "45 George Street Sydney Australia"
-		},
-		{
-			"source_id": "fragment-assay-CZ-29",
-			"country": "CZ",
-			"raw": "Ringstrasse 7, Graz, Czech Republic"
-		},
-		{
-			"source_id": "fragment-assay-CZ-16",
-			"country": "CZ",
-			"raw": "Ringstrasse 7"
-		},
-		{
-			"source_id": "fragment-assay-CZ-31",
-			"country": "CZ",
-			"raw": "Bahnhofplatz 21, Linz, Czech Republic"
-		},
-		{
-			"source_id": "fragment-assay-CZ-21",
-			"country": "CZ",
-			"raw": "Graz"
-		},
-		{
-			"source_id": "fragment-assay-AU-12",
-			"country": "AU",
-			"raw": "45 George Street Sydney Australia"
-		},
-		{
-			"source_id": "fragment-assay-AU-3",
-			"country": "AU",
-			"raw": "Sydney"
-		},
-		{
-			"source_id": "fragment-assay-US-36",
-			"country": "US",
-			"raw": "White River Junction VT"
-		},
-		{
-			"source_id": "fragment-assay-FR-38",
-			"country": "FR",
-			"raw": "Paris"
+			"source_id": "fragment-assay-NO-39",
+			"country": "NO",
+			"raw": "Oslo"
 		},
 		{
 			"source_id": "fragment-assay-AU-10",
@@ -76,84 +21,24 @@
 			"raw": "139 Bouverie Street Melbourne"
 		},
 		{
-			"source_id": "fragment-assay-CZ-24",
-			"country": "CZ",
-			"raw": "Wien 1010"
-		},
-		{
-			"source_id": "fragment-assay-US-48",
-			"country": "US",
-			"raw": "United States of America, NY, White River Junction"
-		},
-		{
-			"source_id": "fragment-assay-AU-0",
-			"country": "AU",
-			"raw": "Adelaide Terrace"
-		},
-		{
-			"source_id": "fragment-assay-US-42",
-			"country": "US",
-			"raw": "5th Ave"
-		},
-		{
-			"source_id": "fragment-assay-CZ-18",
-			"country": "CZ",
-			"raw": "Hauptstrasse 12"
-		},
-		{
-			"source_id": "fragment-assay-CZ-32",
-			"country": "CZ",
-			"raw": "Bahnhofplatz 21 Linz Czech Republic"
-		},
-		{
-			"source_id": "fragment-assay-US-47",
-			"country": "US",
-			"raw": "United States, VT, White River Junction"
-		},
-		{
-			"source_id": "fragment-assay-ZZ-33",
-			"country": "ZZ",
-			"raw": "Dublin"
-		},
-		{
-			"source_id": "fragment-assay-CZ-30",
-			"country": "CZ",
-			"raw": "Ringstrasse 7 Graz Czech Republic"
-		},
-		{
-			"source_id": "fragment-assay-CZ-28",
-			"country": "CZ",
-			"raw": "Bahnhofplatz 21 Linz"
-		},
-		{
-			"source_id": "fragment-assay-CZ-20",
-			"country": "CZ",
-			"raw": "Bahnhofplatz 21"
-		},
-		{
-			"source_id": "fragment-assay-CZ-22",
-			"country": "CZ",
-			"raw": "Wien"
-		},
-		{
-			"source_id": "fragment-assay-US-41",
-			"country": "US",
-			"raw": "N Hartland Rd"
-		},
-		{
-			"source_id": "fragment-assay-US-45",
-			"country": "US",
-			"raw": "2242 5th Ave, New York, USA"
-		},
-		{
-			"source_id": "fragment-assay-ZZ-35",
-			"country": "ZZ",
-			"raw": "Casablanca"
-		},
-		{
 			"source_id": "fragment-assay-US-43",
 			"country": "US",
-			"raw": "3081 N Hartland Rd, White River Junction, United States"
+			"raw": "2736 N Hartland Rd, White River Junction, United States"
+		},
+		{
+			"source_id": "fragment-assay-FR-38",
+			"country": "FR",
+			"raw": "Paris"
+		},
+		{
+			"source_id": "fragment-assay-AU-2",
+			"country": "AU",
+			"raw": "Bouverie Street"
+		},
+		{
+			"source_id": "fragment-assay-AU-5",
+			"country": "AU",
+			"raw": "Perth 6000"
 		},
 		{
 			"source_id": "fragment-assay-AU-13",
@@ -161,44 +46,29 @@
 			"raw": "139 Bouverie Street, Melbourne, AUS"
 		},
 		{
-			"source_id": "fragment-assay-NO-39",
-			"country": "NO",
-			"raw": "Oslo"
-		},
-		{
-			"source_id": "fragment-assay-US-46",
+			"source_id": "fragment-assay-US-47",
 			"country": "US",
-			"raw": "2242 5th Ave New York USA"
+			"raw": "United States, VT, White River Junction"
 		},
 		{
-			"source_id": "fragment-assay-AU-2",
-			"country": "AU",
-			"raw": "George Street"
-		},
-		{
-			"source_id": "fragment-assay-CZ-27",
+			"source_id": "fragment-assay-CZ-31",
 			"country": "CZ",
-			"raw": "Ringstrasse 7 Graz Czech Republic"
+			"raw": "Hauptstrasse 12, Wien, Czech Republic"
 		},
 		{
-			"source_id": "fragment-assay-US-37",
-			"country": "US",
-			"raw": "New York NY"
+			"source_id": "fragment-assay-CZ-28",
+			"country": "CZ",
+			"raw": "Hauptstrasse 12 Wien"
 		},
 		{
-			"source_id": "fragment-assay-AU-5",
+			"source_id": "fragment-assay-CZ-32",
+			"country": "CZ",
+			"raw": "Hauptstrasse 12 Wien Czech Republic"
+		},
+		{
+			"source_id": "fragment-assay-AU-12",
 			"country": "AU",
-			"raw": "Melbourne 3000"
-		},
-		{
-			"source_id": "fragment-assay-ZZ-34",
-			"country": "ZZ",
-			"raw": "Melbourne"
-		},
-		{
-			"source_id": "fragment-assay-AU-6",
-			"country": "AU",
-			"raw": "Perth 6000"
+			"raw": "45 George Street Sydney Australia"
 		},
 		{
 			"source_id": "fragment-assay-AU-8",
@@ -206,24 +76,139 @@
 			"raw": "711 139 Bouverie Street"
 		},
 		{
+			"source_id": "fragment-assay-US-41",
+			"country": "US",
+			"raw": "N Hartland Rd"
+		},
+		{
+			"source_id": "fragment-assay-AU-3",
+			"country": "AU",
+			"raw": "Melbourne"
+		},
+		{
+			"source_id": "fragment-assay-CZ-25",
+			"country": "CZ",
+			"raw": "2 21 Bahnhofplatz"
+		},
+		{
+			"source_id": "fragment-assay-US-46",
+			"country": "US",
+			"raw": "1792 5th Ave New York USA"
+		},
+		{
+			"source_id": "fragment-assay-US-37",
+			"country": "US",
+			"raw": "New York NY"
+		},
+		{
+			"source_id": "fragment-assay-AU-4",
+			"country": "AU",
+			"raw": "Perth"
+		},
+		{
+			"source_id": "fragment-assay-US-36",
+			"country": "US",
+			"raw": "White River Junction VT"
+		},
+		{
+			"source_id": "fragment-assay-ZZ-34",
+			"country": "ZZ",
+			"raw": "Melbourne"
+		},
+		{
+			"source_id": "fragment-assay-US-45",
+			"country": "US",
+			"raw": "1792 5th Ave, New York, USA"
+		},
+		{
+			"source_id": "fragment-assay-CZ-15",
+			"country": "CZ",
+			"raw": "Bahnhofplatz"
+		},
+		{
+			"source_id": "fragment-assay-AU-1",
+			"country": "AU",
+			"raw": "Adelaide Terrace"
+		},
+		{
+			"source_id": "fragment-assay-CZ-24",
+			"country": "CZ",
+			"raw": "Linz 4020"
+		},
+		{
 			"source_id": "fragment-assay-AU-14",
 			"country": "AU",
 			"raw": "139 Bouverie Street Melbourne AUS"
 		},
 		{
-			"source_id": "fragment-assay-CZ-15",
-			"country": "CZ",
-			"raw": "Ringstrasse"
+			"source_id": "fragment-assay-AU-0",
+			"country": "AU",
+			"raw": "George Street"
 		},
 		{
-			"source_id": "fragment-assay-CZ-17",
+			"source_id": "fragment-assay-CZ-19",
 			"country": "CZ",
 			"raw": "Hauptstrasse"
 		},
 		{
-			"source_id": "fragment-assay-AU-1",
+			"source_id": "fragment-assay-CZ-22",
+			"country": "CZ",
+			"raw": "Graz"
+		},
+		{
+			"source_id": "fragment-assay-CZ-17",
+			"country": "CZ",
+			"raw": "Ringstrasse"
+		},
+		{
+			"source_id": "fragment-assay-AU-6",
 			"country": "AU",
-			"raw": "Bouverie Street"
+			"raw": "Melbourne 3000"
+		},
+		{
+			"source_id": "fragment-assay-US-42",
+			"country": "US",
+			"raw": "5th Ave"
+		},
+		{
+			"source_id": "fragment-assay-CZ-27",
+			"country": "CZ",
+			"raw": "Bahnhofplatz 21 Linz Czech Republic"
+		},
+		{
+			"source_id": "fragment-assay-ZZ-33",
+			"country": "ZZ",
+			"raw": "Dublin"
+		},
+		{
+			"source_id": "fragment-assay-AU-9",
+			"country": "AU",
+			"raw": "45 George Street Sydney Australia"
+		},
+		{
+			"source_id": "fragment-assay-CZ-18",
+			"country": "CZ",
+			"raw": "Ringstrasse 7"
+		},
+		{
+			"source_id": "fragment-assay-ZZ-35",
+			"country": "ZZ",
+			"raw": "Casablanca"
+		},
+		{
+			"source_id": "fragment-assay-CZ-26",
+			"country": "CZ",
+			"raw": "3 12 Hauptstrasse"
+		},
+		{
+			"source_id": "fragment-assay-AU-11",
+			"country": "AU",
+			"raw": "45 George Street, Sydney, Australia"
+		},
+		{
+			"source_id": "fragment-assay-CZ-23",
+			"country": "CZ",
+			"raw": "Wien 1010"
 		},
 		{
 			"source_id": "fragment-assay-AU-7",
@@ -231,31 +216,46 @@
 			"raw": "4 88 Adelaide Terrace"
 		},
 		{
+			"source_id": "fragment-assay-CZ-30",
+			"country": "CZ",
+			"raw": "Bahnhofplatz 21 Linz Czech Republic"
+		},
+		{
 			"source_id": "fragment-assay-US-40",
 			"country": "US",
 			"raw": "White River Junction"
+		},
+		{
+			"source_id": "fragment-assay-CZ-21",
+			"country": "CZ",
+			"raw": "Linz"
+		},
+		{
+			"source_id": "fragment-assay-CZ-29",
+			"country": "CZ",
+			"raw": "Bahnhofplatz 21, Linz, Czech Republic"
 		}
 	],
 	"dev": [
 		{
-			"source_id": "fragment-assay-CZ-25",
+			"source_id": "fragment-assay-CZ-16",
 			"country": "CZ",
-			"raw": "2 21 Bahnhofplatz"
+			"raw": "Bahnhofplatz 21"
 		},
 		{
-			"source_id": "fragment-assay-CZ-23",
+			"source_id": "fragment-assay-CZ-20",
 			"country": "CZ",
-			"raw": "Linz 4020"
+			"raw": "Hauptstrasse 12"
 		},
 		{
-			"source_id": "fragment-assay-CZ-19",
-			"country": "CZ",
-			"raw": "Bahnhofplatz"
+			"source_id": "fragment-assay-US-44",
+			"country": "US",
+			"raw": "2736 N Hartland Rd White River Junction United States"
 		},
 		{
-			"source_id": "fragment-assay-AU-11",
-			"country": "AU",
-			"raw": "45 George Street, Sydney, Australia"
+			"source_id": "fragment-assay-US-48",
+			"country": "US",
+			"raw": "United States of America, NY, White River Junction"
 		}
 	]
 }

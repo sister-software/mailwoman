@@ -24,6 +24,7 @@ import { JP_BOARD_BUCKET_MIN } from "#jp/registers"
 import { JP_PREFECTURE_NAMES } from "#jp/text"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { readParquetRows } from "#parquet/readers"
+import { ReferenceFixture } from "#test-kit"
 
 const REFERENCE = resolvePackagePath("@mailwoman/corpus", "fixtures", "builders", "jp", "jp-probe-reference.json")
 
@@ -124,7 +125,7 @@ async function writeFixture(parquet: string, kenAll: string): Promise<void> {
 }
 
 describe("the JP probe corpus", async () => {
-	const reference = await readLocalJSONFile<Reference>(REFERENCE)
+	const reference = await ReferenceFixture.read<Reference>(REFERENCE)
 
 	it("writes the Python builder's rows, board, report and vocabulary from the same fixture and seed", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-jp-probe-")
@@ -146,22 +147,23 @@ describe("the JP probe corpus", async () => {
 		})
 
 		for (const split of ["train", "val"] as const) {
-			expect(
+			reference.expect(
+				split,
 				await readParquetRows(`${outDir}/${split}/part-0000.parquet`, {
 					columns: ["raw", "span_tags", "span_starts"],
-				}),
-				split
-			).toEqual(reference[split])
+				})
+			)
 		}
 
-		expect(await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/jp-probe-board.jsonl`))).toEqual(reference.board)
+		reference.expect("board", await Array.fromAsync(JSONSpliterator.fromAsync(`${outDir}/jp-probe-board.jsonl`)))
 
 		const written = await readLocalJSONFile<Record<string, unknown>>(`${outDir}/build-report.json`)
 
 		delete written["source_parquet"]
-		expect(written).toEqual(reference.report)
+		reference.expect("report", written)
 		expect(report.get("source_parquet")).toBe(parquet)
-		expect(await readLocalJSONFile(`${outDir}/char-vocab-jp-v1.json`)).toEqual(reference.vocab)
+		reference.expect("vocab", await readLocalJSONFile(`${outDir}/char-vocab-jp-v1.json`))
+		await reference.save()
 	})
 
 	it("refuses a missing parquet file, naming its path", async () => {

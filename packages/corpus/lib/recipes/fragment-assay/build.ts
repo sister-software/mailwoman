@@ -14,6 +14,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
+import { SeededRandom } from "@mailwoman/core/random"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { splitWhitespace } from "@mailwoman/core/strings/unicode"
 import { TextSpliterator } from "spliterator"
@@ -41,7 +42,6 @@ import {
 	spanSurfacesFromCorpus,
 } from "#recipes/fragment-assay/sources"
 import { stampRowLicenses } from "#source-register/row-license"
-import { PyRandom } from "#training/pyrandom"
 
 /**
  * The columns of the recipe output, in the order and with the types pyarrow
@@ -288,8 +288,8 @@ const NUMBER_FIRST = new Set(["US", "GB", "CA", "FR"])
 /**
  * The country rows: a tail-position block over US streets and localities, and a leading-position block.
  *
- * Their house numbers come from their own `PyRandom`, so a block before them
- * that changes size leaves them unchanged.
+ * Their house numbers come from their own `SeededRandom`, so a block
+ * before them that changes size leaves them unchanged.
  */
 async function pushCountryCounterweight(
 	options: FragmentAssayOptions,
@@ -310,7 +310,7 @@ async function pushCountryCounterweight(
 		40
 	)
 
-	const rng = new PyRandom(`${FRAGMENT_SEED}:countryrows`)
+	const rng = new SeededRandom(`${FRAGMENT_SEED}:countryrows`)
 	const countryLocalities = new Map([["US", adminPairs.map(([locality]) => locality)]])
 	let tailRows = 0
 
@@ -369,7 +369,7 @@ async function pushCountryCounterweight(
  */
 export async function buildFragmentAssay(options: FragmentAssayOptions): Promise<{ train: number; dev: number }> {
 	const surfaces = options.countrySurfaces ?? codexCountrySurfaces()
-	const shuffle = new PyRandom(FRAGMENT_SEED)
+	const shuffle = new SeededRandom(FRAGMENT_SEED)
 	const rows: FragmentAssayRow[] = []
 
 	const pusher =

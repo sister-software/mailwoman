@@ -10,9 +10,10 @@
  *   Ported from the Python builders' `countries/jp/corpora/rows.py`.
  */
 
+import type { SeededRandom } from "@mailwoman/core/random"
+
 import { type CJKRecord, labelTokensByFirstSpan, RowRenderer, verifyRecord } from "#cjk/builder"
 import { intToKanji } from "#cjk/text"
-import type { PyRandom } from "#training/pyrandom"
 
 /**
  * The label set the Japanese corpus is tagged against.
@@ -168,10 +169,13 @@ export function availableJPRegisters(chome: number | null, number: string, kana 
  * One of `options`, drawn by {@linkcode JP_REGISTER_WEIGHTS}.
  * A single option is returned without a draw.
  */
-export function chooseJPRegister(rng: PyRandom, options: readonly string[]): string {
+export function chooseJPRegister(rng: SeededRandom, options: readonly string[]): string {
 	if (options.length === 1) return options[0]!
 
-	return rng.choices(options, { weights: options.map((name) => JP_REGISTER_WEIGHTS.get(name)!) })[0]!
+	return rng.weightedChoice(
+		options,
+		options.map((name) => JP_REGISTER_WEIGHTS.get(name)!)
+	)
 }
 
 /**

@@ -5,8 +5,8 @@
  * @file The two passes that turn eligible Overture-TW rows into a corpus.
  *
  *   Pass 1 counts eligible rows per 縣市, sums each district's coordinates and lists the source agencies, without a
- *   draw. Pass 2 selects under the quotas pass 1 set. One {@linkcode PyRandom} feeds the selectors, then the
- *   shuffle, then each row's register and country prefix, in that order, as the Python assembler drew them
+ *   draw. Pass 2 selects under the quotas pass 1 set. One {@linkcode SeededRandom} feeds the selectors, then the
+ *   shuffle, then each row's register and country prefix, in that order, the order of the Python assembler
  *   (`countries/tw/corpora/assemble.py`). The Taiwanese license voids its grant on a missing attribution, so the
  *   report lists the datasets the rows came from.
  */
@@ -15,6 +15,7 @@ import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
+import { SeededRandom } from "@mailwoman/core/random"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -35,7 +36,6 @@ import {
 	writeCJKSplit,
 } from "#cjk/builder"
 import { normalizeCJKText } from "#cjk/text"
-import { PyRandom } from "#training/pyrandom"
 import {
 	availableTWRegisters,
 	chooseTWRegister,
@@ -133,7 +133,7 @@ export interface TWCorpusReport {
  * the drop rate exceeds 2%, or a board district reaches train or val.
  */
 export async function buildTWCorpus(options: TWCorpusOptions): Promise<TWCorpusReport> {
-	const rng = new PyRandom(options.seed)
+	const rng = new SeededRandom(options.seed)
 	const tagSet = await readLabelSetTags(TW_LABEL_SET_NAME)
 	const rowOptions = { maxRowGroups: options.maxRowGroups, maxFieldChars: options.maxFieldChars }
 

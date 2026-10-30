@@ -6,6 +6,7 @@
  *   Each register's rendered form of one 주소DB row, ported from the deleted `test_kr_corpus.py`.
  */
 
+import { SeededRandom } from "@mailwoman/core/random"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { CJK_LABEL_SET_NAME, readLabelSetTags, verifyCJKRecord, type CJKRecord } from "#cjk/builder"
@@ -17,7 +18,6 @@ import {
 	krIneligibility,
 	renderKRRow,
 } from "#kr/corpus/rows"
-import { PyRandom } from "#training/pyrandom"
 
 /**
  * The Jongno-gu row of the census: a 동 area, so the parenthetical is the 법정동.
@@ -164,6 +164,7 @@ describe("renderKRRow", () => {
 			road: "영동고속도로",
 			number: "31",
 		})
+
 		const record = render(row, "no_dong")
 
 		expect(record.raw).toBe("경기도 수원시 장안구 영동고속도로 31")
@@ -184,6 +185,7 @@ describe("renderKRRow", () => {
 			road: "한누리대로",
 			number: "1843-10",
 		})
+
 		const record = render(row, "official")
 
 		expect(record.raw).toBe("세종특별자치시 한누리대로 1843-10 (반곡동)")
@@ -213,7 +215,7 @@ describe("availableKRRegisters", () => {
 
 	it("has a short form for each of the four regions Python's table named", () => {
 		for (const region of ["서울특별시", "경기도", "제주특별자치도", "세종특별자치시"]) {
-			expect(chooseShortRegion(new PyRandom(1), region), region).not.toBeNull()
+			expect(chooseShortRegion(new SeededRandom(1), region), region).not.toBeNull()
 		}
 	})
 })
