@@ -75,12 +75,50 @@ describe("planPrune and executePrune", () => {
 		const foreign = resolvePath(directory, "notes.txt")
 
 		await writeLocalTextFile("kept", foreign)
-		await executePrune(plan)
+		const result = await executePrune(plan)
 
 		expect(await pathExists(a.path)).toBe(false)
 		expect(await pathExists(resolvePath(directory, "manifest.json"))).toBe(false)
 		expect(await pathExists(resolvePath(directory, "receipt.json"))).toBe(false)
 		expect(await readLocalTextFile(foreign)).toBe("kept")
+
+		// The directory that kept a file is reported, its bytes are not counted, and its record stays for a later prune.
+		expect(result.deleted).toEqual([])
+		expect(result.kept.map((candidate) => candidate.directory)).toEqual([directory])
+		expect(result.reclaimedBytes).toBe(0)
+
+		const record = resolvePath(catalogPaths(scratch.path).installations, `${a.installationID}.json`)
+
+		expect(await pathExists(record)).toBe(true)
+	})
+
+	it("removes the SQLite sidecars of the deleted database with it", async () => {
+		const { a } = await threeGenerations()
+		const plan = await planPrune(scratch.path)
+
+		for (const suffix of ["-wal", "-shm", "-journal"]) {
+			await writeLocalTextFile("sidecar", `${a.path}${suffix}`)
+		}
+
+		const result = await executePrune(plan)
+
+		expect(result.deleted).toHaveLength(1)
+		expect(await pathExists(plan.candidates[0]!.directory)).toBe(false)
+	})
+
+	it("refuses a candidate whose file is outside its directory or is one of its records", async () => {
+		const { a, c } = await threeGenerations()
+		const plan = await planPrune(scratch.path)
+		const directory = plan.candidates[0]!.directory
+
+		for (const path of [c.path, resolvePath(directory, "manifest.json").toString(), directory]) {
+			const wrong = { ...plan, candidates: plan.candidates.map((candidate) => ({ ...candidate, path })) }
+
+			await expect(executePrune(wrong)).rejects.toThrow(/is not a file directly inside/u)
+		}
+
+		expect(await pathExists(a.path)).toBe(true)
+		expect(await pathExists(c.path)).toBe(true)
 	})
 
 	it("removes the artifact's directory once its three files are gone", async () => {

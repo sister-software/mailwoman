@@ -418,19 +418,44 @@ export function assertContentAddressedCandidates(dataRoot: string, candidates: r
 					`${dataRoot}, so deleting it could remove files another installation or a conventional layer path holds`
 			)
 		}
+
+		const path = typeof candidate.path === "string" ? resolvePath(candidate.path).toString() : null
+		const name = path?.startsWith(`${directory}/`) ? path.slice(directory.length + 1) : null
+
+		if (!name || name.includes("/") || INSTALLATION_RECORDS.includes(name)) {
+			throw new Error(
+				`prune refused: ${candidate.installationID}'s file ${String(candidate.path)} is not a file directly inside ` +
+					`${directory}, so deleting it could remove a file outside the artifact's directory`
+			)
+		}
 	}
 }
+
+/**
+ * The two records an installation writes beside its artifact.
+ */
+const INSTALLATION_RECORDS = ["manifest.json", "receipt.json"]
+
+/**
+ * The files SQLite writes beside a database while it is open, removed with the database they belong to.
+ */
+const SQLITE_SIDECAR_SUFFIXES = ["-wal", "-shm", "-journal"]
 
 /**
  * Delete what a plan lists, after checking that the selection and the leases it read have not changed.
  *
  * An installation record whose every artifact is deleted is removed with them.
+ * `kept` lists the candidates whose directory still held a file prune did not install,
+ * and their bytes are not counted.
  *
- * @throws When another installer holds a lock, when the selection generation or the live leases
- * differ from the plan's, when the plan lists an artifact the active generation selects,
- * or when a candidate's directory is not content-addressed, before any file is deleted.
+ * @throws When another installer holds a lock, when the selection generation
+ * or the live leases differ from the plan's, when the plan lists an artifact the
+ * active generation selects, or when a candidate's directory is not content-addressed
+ * or its file is not directly inside it, before any file is deleted.
  */
-export async function executePrune(plan: PrunePlan): Promise<{ deleted: PruneCandidate[]; reclaimedBytes: number }> {
+export async function executePrune(
+	plan: PrunePlan
+): Promise<{ deleted: PruneCandidate[]; kept: PruneCandidate[]; reclaimedBytes: number }> {
 	assertContentAddressedCandidates(plan.dataRoot, plan.candidates)
 
 	const paths = catalogPaths(plan.dataRoot)
@@ -466,22 +491,29 @@ export async function executePrune(plan: PrunePlan): Promise<{ deleted: PruneCan
 	}
 
 	const deleted: PruneCandidate[] = []
+	const kept: PruneCandidate[] = []
 
-	// Prune deletes the three files an installation writes and then the directory only
-	// when that left it empty, so a file it did not install is never removed with them.
+	// The records go first, so an interrupted prune leaves a directory without a manifest,
+	// which readers treat as no artifact, rather than a manifest that describes a deleted file.
+	// The directory is removed only when that left it empty.
+	// A directory still holding a file prune did not install is kept, and so is the
+	// installation record that references it, so a later prune finds it again.
 	for (const candidate of plan.candidates) {
 		if (!(await tryStat(candidate.directory))) continue
 
 		for (const file of [
+			...INSTALLATION_RECORDS.map((name) => resolvePath(candidate.directory, name)),
 			candidate.path,
-			resolvePath(candidate.directory, "manifest.json"),
-			resolvePath(candidate.directory, "receipt.json"),
+			...SQLITE_SIDECAR_SUFFIXES.map((suffix) => `${candidate.path}${suffix}`),
 		]) {
 			await removePathIfPresent(file)
 		}
 
-		await removeEmptyDirectory(candidate.directory)
-		deleted.push(candidate)
+		if (await removeEmptyDirectory(candidate.directory)) {
+			deleted.push(candidate)
+		} else {
+			kept.push(candidate)
+		}
 	}
 
 	const gone = new Set(deleted.map((candidate) => artifactKey(candidate.installationID, candidate.artifactID)))
@@ -492,5 +524,5 @@ export async function executePrune(plan: PrunePlan): Promise<{ deleted: PruneCan
 		}
 	}
 
-	return { deleted, reclaimedBytes: deleted.reduce((sum, candidate) => sum + candidate.bytes, 0) }
+	return { deleted, kept, reclaimedBytes: deleted.reduce((sum, candidate) => sum + candidate.bytes, 0) }
 }

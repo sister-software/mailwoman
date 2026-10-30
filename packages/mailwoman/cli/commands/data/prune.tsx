@@ -82,7 +82,10 @@ const DataPrune: CommandComponent<typeof spec> = ({ options }) => {
 			writeRawStdout(
 				options.json
 					? result
-					: `deleted ${result.deleted.length} artifact(s), ${ByteFormatter.formatSI(result.reclaimedBytes)} reclaimed`
+					: [
+							`deleted ${result.deleted.length} artifact(s), ${ByteFormatter.formatSI(result.reclaimedBytes)} reclaimed`,
+							...result.kept.map((candidate) => `  kept ${candidate.directory}: it holds a file prune did not install`),
+						].join("\n")
 			)
 
 			return { ok: true }
