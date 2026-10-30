@@ -22,6 +22,11 @@ use trainer_model::CoarseEncoder;
 
 pub const TRAINING_STATE: &str = "training_state.json";
 
+/// Written into a run's output directory once its end-of-run writes have all succeeded: the final checkpoint, the
+/// Fisher artifact and the realized draws. A periodic checkpoint at `max_steps` is written before them, so only this
+/// file shows the run finished.
+pub const TRAINING_COMPLETE: &str = "training-complete.json";
+
 /// The step and the stamped `training_state.json` of a checkpoint a run resumes from.
 ///
 /// A resume continues a run, so `optimizer.json` and an integer `step` are required. A weights-only checkpoint is a

@@ -7,7 +7,7 @@ use crate::batch::{RunEncoder, TensorBatch};
 use crate::callbacks::{Callback, Checkpointer, Console, CsvMetrics, StepView};
 use crate::checkpoint::{
 	checkpoint_extras, find_latest_checkpoint, read_resume_state, restore_generators, resume_drift, save_checkpoint,
-	RNG_STATE,
+	RNG_STATE, TRAINING_COMPLETE,
 };
 use crate::config::{sampler_config, DataFiles, RunConfig};
 use crate::fisher::{EwcPenalty, FisherAccumulator};
@@ -496,9 +496,18 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 		None => 0,
 	};
 	let max_steps = run.train_i64("max_steps")?;
-	// A launch on a finished run resumes at its last step: it has no step left to train, and its final checkpoint and
-	// Fisher artifact are already written.
+	// A launch on a finished run resumes at its last step and has no step left to train. The periodic checkpoint at
+	// `max_steps` precedes the end-of-run writes, so the run is finished only when its completion record exists. Without
+	// it those writes failed, and a resume cannot redo them: the Fisher window's gradients are gone.
 	if let Some(dir) = resume_from.as_deref().filter(|_| resume_step >= max_steps) {
+		if !output_dir.join(TRAINING_COMPLETE).is_file() {
+			return Err(fail!(
+				"{} is at step {resume_step} of max_steps {max_steps}, but {} holds no {TRAINING_COMPLETE}: the final \
+				 checkpoint, Fisher artifact or realized draws were not all written; rerun from an earlier checkpoint",
+				dir.display(),
+				output_dir.display()
+			));
+		}
 		println!(
 			"[resume] {} is at step {resume_step} of max_steps {max_steps}: the run is complete",
 			dir.display()
@@ -654,5 +663,9 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	for c in &mut callbacks {
 		c.on_train_end()?;
 	}
+	std::fs::write(
+		output_dir.join(TRAINING_COMPLETE),
+		serde_json::to_string_pretty(&json!({"step": step, "final_checkpoint": final_ck}))? + "\n",
+	)?;
 	Ok(())
 }
