@@ -41,7 +41,7 @@ import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 import { formatFailureGroups, groupBatteryFailures } from "#tools/eval-harness/battery/failure-groups"
 import { parseBatteryRows } from "#tools/eval-harness/battery/parse-rows"
 import {
-	BATTERY_SUITE_DIR,
+	batterySuiteDirectory,
 	BATTERY_SUITES,
 	type BatterySuiteRow,
 	type BatterySuiteSpec,
@@ -97,7 +97,7 @@ async function parsesFor(arm: BatteryArm, spec: BatterySuiteSpec): Promise<strin
 
 	console.error(`parsing ${spec.id} with ${arm.name}`)
 
-	await parseBatteryRows(`${BATTERY_SUITE_DIR}/${spec.id}-${spec.rows}.rows.jsonl`, cached.toString(), {
+	await parseBatteryRows(batterySuiteDirectory()(`${spec.id}-${spec.rows}.rows.jsonl`).toString(), cached.toString(), {
 		cacheRoot: arm.cache,
 		workers: Number(values.workers),
 		threads: Number(values.threads),
@@ -152,7 +152,7 @@ async function runBattery(): Promise<void> {
 		const rows: BatteryRowResult[] = []
 
 		for await (const row of JSONSpliterator.fromAsync<BatterySuiteRow>(
-			`${BATTERY_SUITE_DIR}/${spec.id}-${spec.rows}.rows.jsonl`
+			batterySuiteDirectory()(`${spec.id}-${spec.rows}.rows.jsonl`)
 		)) {
 			rows.push(scoreBatteryRow(spec, row, names, (arm, id) => parses.get(arm)!.get(id)))
 		}

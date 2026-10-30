@@ -6,7 +6,7 @@
  *   The frozen suites the comparison battery scores, which of their rows measure our labeling rather than a model, and
  *   which expected answers are corrected before scoring.
  *
- *   Each suite is a dataset manifest beside its rows file in {@linkcode BATTERY_SUITE_DIR}. A row is "label
+ *   Each suite is a dataset manifest beside its rows file in {@linkcode batterySuiteDirectory}. A row is "label
  *   convention" when the expected labels follow a choice of ours that a writer of the address would not make, so a
  *   model's score there says how well it learned that choice. Those rows are reported by group and kept out of the
  *   decision totals.
@@ -16,12 +16,17 @@
  *   order (`15 明安街 Ming On Street, Hung Hom, Kowloon` where `v1` had `Hong KongKowloonHung Hom明安街 Ming On Street15`).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
+
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 
 /**
- * Where the frozen suites' manifests and rows files sit.
+ * Where the frozen suites' manifests and rows files sit:
+ * `$MAILWOMAN_DATA_ROOT/corpus/heldout/osm-suites`, read when the path is requested.
  */
-export const BATTERY_SUITE_DIR = "/mnt/mw/corpus/heldout/osm-suites"
+export function batterySuiteDirectory() {
+	return dataRootPath("corpus", "heldout", "osm-suites")
+}
 
 /**
  * One suite row, in the corpus parquet schema.
@@ -67,8 +72,9 @@ const decisionRow = () => null
 /**
  * The ten frozen suites, five built from the OSM corpus extracts and five from the Photon planet index.
  *
- * Every row was checked absent from both training corpora's OSM files by id
- * and text when the suites were built.
+ * Every row was checked absent from both training corpora's OSM files by id and group
+ * when the suites were built, through the overlap audit in `heldout/dataset/overlap.ts`.
+ * That audit compares no text, so a training row holding the same address under another id is not detected.
  */
 export const BATTERY_SUITES: readonly BatterySuiteSpec[] = [
 	{
