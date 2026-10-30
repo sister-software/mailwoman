@@ -16,7 +16,16 @@ import { describe, expect, it } from "vitest"
 import { readParquetRows } from "#parquet/readers"
 import { ParquetColumnKind, writeColumnParquetFile } from "#parquet/writers"
 import { buildFragmentAssay, type FragmentAssayOptions } from "#recipes/fragment-assay/build"
-import { collectOAParts, collectRyhtiParts, OA_FILES } from "#recipes/fragment-assay/sources"
+import {
+	collectOAParts,
+	collectRyhtiParts,
+	FRAGMENT_SOURCE,
+	OA_FILES,
+	OA_LOCALES,
+	RYHTI_REGISTER_ROW,
+} from "#recipes/fragment-assay/sources"
+import { mappingInputsFor, readCorpusSourceInputs, sourceRightsGaps } from "#source-register/corpus-inputs"
+import { readAddressSourceRegister } from "#source-register/register"
 
 const REFERENCE = resolvePackagePath(
 	"@mailwoman/corpus",
@@ -153,6 +162,7 @@ describe("the fragment-assay build", () => {
 		await buildFragmentAssay(options)
 
 		const train = await readParquetRows<IdentifiedRow>(options.outParquet, { columns: ["source_id", "country", "raw"] })
+
 		const dev = await Array.fromAsync(
 			JSONSpliterator.fromAsync<IdentifiedRow & Record<string, unknown>>(options.outDev)
 		)
@@ -202,5 +212,23 @@ describe("the fragment-assay build", () => {
 		const path = scratch.path("open_address.csv").toString()
 
 		await expect(collectRyhtiParts(path, 4)).rejects.toThrow(path)
+	})
+
+	it("reads only files whose register row the source's input table maps, and the source has no rights gap", async () => {
+		const register = await readAddressSourceRegister()
+		const inputs = await readCorpusSourceInputs(register)
+
+		const mapped = new Set(
+			mappingInputsFor(inputs.resolve(FRAGMENT_SOURCE)!.mapping).map((input) => input.registerSource)
+		)
+
+		const named = new Set([
+			...Object.values(OA_FILES).flatMap((files) => files.map(([, row]) => row)),
+			RYHTI_REGISTER_ROW,
+		])
+
+		expect(Object.keys(OA_FILES).toSorted()).toEqual(Object.keys(OA_LOCALES).toSorted())
+		expect([...named].filter((row) => !mapped.has(row))).toEqual([])
+		expect(sourceRightsGaps(FRAGMENT_SOURCE, inputs, register)).toEqual([])
 	})
 })
