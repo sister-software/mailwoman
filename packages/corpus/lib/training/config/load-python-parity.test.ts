@@ -2,8 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Reads a subset of the training configs through the Python loader and through this resolver, and requires
- *   the two to agree field by field (#2874, F7).
+ * @file Reads every committed training config through the Python loader and through this resolver, and requires
+ *   the two to agree field by field (#2874, F7). A subset is also compared one config at a time, so a failure there
+ *   prints its difference.
  *
  *   The Python side is `python -m mailwoman_train.config.dump`, run under uv with PyYAML 6.0.3 and no project build.
  *   Each scalar carries its Python type, so an int read as a float, a float repr, a mapping's key order and a key's
@@ -21,6 +22,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { Globerator } from "spliterator/node/fs"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { readCorpusSourceInputs, SourceRightsError } from "#source-register/corpus-inputs"
@@ -238,6 +240,26 @@ describe.skipIf(!(await hasUV()))("the training config resolver against the Pyth
 			})
 		}
 	}, 60_000)
+
+	it("reads every committed config as the Python loader does, a refusal included", async () => {
+		const names = (await Globerator.from("*.yaml", { cwd: CONFIG_DIR.toString() }).toArray()).toSorted()
+		const python = await dumpPython(CONFIG_DIR, names)
+		const differing: string[] = []
+
+		for (const name of names) {
+			const ours = await dumpTypeScript(await readLocalTextFile(CONFIG_DIR, name), name, rights)
+			const theirs = python.get(name)
+
+			try {
+				expect(ours).toEqual({ ...theirs, admission: camelGaps(theirs?.admission) })
+			} catch {
+				differing.push(name)
+			}
+		}
+
+		expect(names.length).toBeGreaterThan(CONFIG_SUBSET.length)
+		expect(differing).toEqual([])
+	}, 600_000)
 
 	it("resolves PyYAML's scalars as PyYAML does", async () => {
 		const names = ["pyyaml-scalars.yaml", "strings-under-numeric-fields.yaml"]
