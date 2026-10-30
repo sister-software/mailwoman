@@ -1,6 +1,6 @@
 # Data installation, layer selection, and package ownership
 
-Date: 2026-10-28. Status: proposed design; no implementation or data migration performed.
+Date: 2026-10-28. Status: proposed design. No implementation or data migration performed.
 
 This iteration supplements `layer-paths-plan.md`. It replaces that plan's proposed package boundaries,
 customer workflow, activation mechanism, and migration order. Its host inventory remains a historical
@@ -25,7 +25,7 @@ Observed precedents:
   commands. `cli/commands/setup.tsx` deliberately delegates downloads to `data pull`.
 
 These documents contain historical versions, paths, and publication claims. They establish the intended
-progression, not current remote availability. Implementation must verify published artifacts separately.
+progression. They describe planned remote availability. Implementation must verify published artifacts separately.
 
 Keep these existing commands as the starting experience:
 
@@ -42,7 +42,7 @@ mailwoman geocode "1275 Pennsylvania Ave NW, Washington, DC 20004" --format text
 Extend `setup` to explain what works now, which requested capabilities are unavailable, and the next
 smallest installation. Do not recommend every global bundle merely because it has global scope.
 Separate parser dependencies, place resolution, rooftop lookup, interpolation, and optional overlays.
-Report an unreadable installation as an error with its path; the existing catch that treats an inventory
+Report an unreadable installation as an error with its path. The existing catch that treats an inventory
 failure as an empty installation must not survive the new workflow.
 
 `data pull` remains an installation command for published artifacts. It must never silently launch a
@@ -89,7 +89,7 @@ packages/osm/
 
 An extraction policy can select boundary levels and clipping inputs. It cannot assert that every
 address in the country exists in OSM. The Geofabrik region registry records publisher regions and
-their relationship to countries; country policy references those identities rather than copying URLs.
+their relationship to countries. Country policy references those identities rather than copying URLs.
 One region may supply several countries. Acquire it once and record each derived country's clipping
 operation separately. Never force a multi-country input into a fabricated single-country source identity.
 
@@ -111,7 +111,7 @@ Use three records:
    schema version, source lineage, normalization version, observed countries, and coverage evidence.
 3. The active selection records which installed artifacts the resolver uses and their explicit order.
 
-A manifest validates an artifact; it cannot decide whether a customer selected that artifact. An
+A manifest validates an artifact. It cannot decide whether a customer selected that artifact. An
 installed file also must not activate itself merely because a directory scan discovered it.
 
 Prefer one versioned active-selection document with an atomic replacement over independently changing
@@ -122,7 +122,7 @@ Concurrent activations must use a lock or compare the generation they started fr
 
 The catalog takes a data root and a selection generation. It resolves artifact IDs to validated paths
 and reports missing, corrupt, unsupported, or refused artifacts distinctly. Generic catalog code does
-not open role-specific lookup handles; each provider owns their opening and disposal.
+not open role-specific lookup handles. Each provider owns their opening and disposal.
 
 Allow multiple installed sources for the same role and scope. Preserve the current selection order
 in the first migration. Do not collapse BAN and OSM into a single pointer and call that equivalent:
@@ -131,7 +131,7 @@ Likewise, a subdivision miss falling through to a national source is a behavior 
 
 Country coverage, geographic extent, and completeness remain separate. A list of observed countries
 does not establish exhaustive coverage. Missing coverage evidence cannot support a negative answer.
-Define normalization requirements per role; a postcode layer must not acquire a street-locale
+Define normalization requirements per role. A postcode layer must not acquire a street-locale
 requirement merely because address-point layers need one.
 
 ## 4. Keep storage an implementation detail
@@ -146,12 +146,12 @@ Retain the original separation of acquired inputs, derived intermediates, and se
   active.json
 ```
 
-This is a proposed layout, not a command interface. Source inputs follow publisher identity; derived
-outputs follow the recipe; serving artifacts follow reader role. Country remains manifest metadata
+This is a proposed layout. The command interface is specified separately. Source inputs follow publisher identity. Derived
+outputs follow the recipe. Serving artifacts follow reader role. Country remains manifest metadata
 and an installation selector. No filename parsing supplies missing manifest fields.
 
 Support artifact sets, including FST files, rather than assuming every served resource is SQLite.
-SQLite artifacts embed the shared manifest; non-SQLite artifacts need an equivalent validated manifest.
+SQLite artifacts embed the shared manifest. Non-SQLite artifacts need an equivalent validated manifest.
 An artifact-set manifest binds related files by digest and schema compatibility.
 
 Stage installation on the destination filesystem before the final rename. A temporary directory on
@@ -160,7 +160,7 @@ intermediates where relevant, and retained active version. Report unknown estima
 
 ## 5. Extend the CLI without creating a competing layer command family
 
-The following commands are proposed additions, not currently available syntax:
+The following commands are proposed additions that the CLI does not yet accept:
 
 | Command                                          | Responsibility                                                              |
 | ------------------------------------------------ | --------------------------------------------------------------------------- |
@@ -171,14 +171,14 @@ The following commands are proposed additions, not currently available syntax:
 
 Extend existing `data sources`, `data coverage`, `data inventory`, `data bom`, and `data status` rather
 than duplicating them under `layer list`. Add country and capability filtering to the shared planner.
-Preserve existing bundle names and `--only` behavior initially; introduce exact jurisdiction selectors
-explicitly rather than quietly changing substring matching.
+Preserve existing bundle names and `--only` behavior initially. Introduce exact jurisdiction selectors
+explicitly, and substring matching stays as it is.
 
 The pull and build paths share this operation sequence:
 
 1. Resolve the request and dependencies into a concrete plan.
 2. Report source, capability, scope, access requirements, download bytes, disk requirements, and
-   whether activation would replace a selected source. Dry-run performs no data writes; document
+   whether activation would replace a selected source. Dry-run performs no data writes. Document
    separately whether registry refresh needs network access.
 3. Acquire inputs with progress, checksums, cancellation, and resumable state where supported.
 4. Build if explicitly requested, preserving input receipts and derivation lineage.
@@ -188,10 +188,10 @@ The pull and build paths share this operation sequence:
 
 Re-running the same request reuses verified completed work. A partial transfer is never reported as
 installed. A failed upgrade leaves the previous selection usable. A local build may stop before
-activation for evaluation. Build dependencies are checked before large downloads; explain missing
+activation for evaluation. Build dependencies are checked before large downloads. Explain missing
 tools through the CLI rather than exposing package-internal script paths.
 
-Installing an npm integration package enables code, not data selection. Selecting a published bundle
+Installing an npm integration package enables code. Data selection is a separate step. Selecting a published bundle
 or explicitly activating a local build selects data. Both paths enforce the same configured obligation
 refusals and keep access entitlements separate from source-license metadata.
 
@@ -200,36 +200,36 @@ refusals and keep access entitlements separate from source-license metadata.
 | Stage | Work                                                                           | Acceptance evidence                                                                                                                 |
 | ----- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | A     | Specify identities, role requirements, active selection, and installation plan | Fixtures represent national, subdivision, multi-country, overlapping-source, and non-SQLite artifacts                               |
-| B     | Implement published candidate installation through the existing CLI            | An empty data root reaches a working geocode; interruption and retry leave valid state                                              |
-| C     | Add one regional precision bundle                                              | Pulling DC changes available precision without downloading all US regions; repeat pull reuses verified files                        |
+| B     | Implement published candidate installation through the existing CLI            | An empty data root reaches a working geocode. Interruption and retry leave valid state                                              |
+| C     | Add one regional precision bundle                                              | Pulling DC changes available precision without downloading all US regions. Repeat pull reuses verified files                        |
 | D     | Move shared schema ownership and introduce the catalog behind existing readers | Dependency audit, typecheck, affected workspace tests, and fixed-artifact output comparison                                         |
-| E     | Add the OSM source-build recipe and country policies                           | One small extract reaches a validated local installation using only public CLI commands; a multi-country fixture reuses acquisition |
-| F     | Add legacy migration and change reader defaults                                | Dry-run identifies every selected artifact; migration preserves selected sources and enables rollback                               |
+| E     | Add the OSM source-build recipe and country policies                           | One small extract reaches a validated local installation using only public CLI commands. A multi-country fixture reuses acquisition |
+| F     | Add legacy migration and change reader defaults                                | Dry-run identifies every selected artifact. Migration preserves selected sources and enables rollback                               |
 | G     | Update tutorials and remove obsolete internal entry points                     | Published-package installation tests execute documented commands without a checkout                                                 |
 | H     | Expand data availability and evaluate new source policies                      | Separate per-country evidence and the repository's applicable release evaluation                                                    |
 
 Do not begin with bulk host moves. Inventory the files the actual readers select, distinguish those
 from dormant files, and preserve input receipts before migration. Unknown source metadata remains
-unknown; stamping a new manifest must not manufacture vintage, license, or checksum evidence.
+unknown. Stamping a new manifest must not manufacture vintage, license, or checksum evidence.
 
 Migration may register validated legacy files temporarily without renaming them. Remove legacy
 reader branches after migration is supported and documented. Preserve released receipts and historical
-paths as records; a repository-wide zero-match search is not an appropriate acceptance criterion.
+paths as records. A repository-wide zero-match search is not an appropriate acceptance criterion.
 
-Pruning is separate from migration. It protects active generations, rollback generations, in-use
+Pruning is separate from migration. It never deletes active generations, rollback generations, in-use
 artifacts, and inputs referenced by retained derivations. No file is deleted merely because its name
 looks older. Retention defaults need a documented policy before deletion is enabled.
 
 ## 7. Keep source-quality experiments separate
 
-The original plan's missing-street buckets describe source observations, not an established threshold
+The original plan's missing-street buckets describe source observations. They establish no threshold
 for choosing PBF versus Photon. Do not make 10% or 30% a production selector without evidence that
 the threshold predicts the intended result across the relevant population.
 
 Keep the Photon comparison as a separate experiment. Its result must identify exact inputs and
 versions, matching evaluation addresses, added and lost matches, and the distinction between mapped
 tags and inferred street associations. A Photon derivation must retain Photon in its lineage even
-when the underlying source is OSM. Record MD5 and SHA-256 in separate typed fields; the original
+when the underlying source is OSM. Record MD5 and SHA-256 in separate typed fields. The original
 plan's 32-character MD5 cannot populate a SHA-256 field.
 
 A generic normalization strategy is also a separate behavior decision. Record its algorithm version
@@ -241,7 +241,7 @@ served countries. More installed rows alone do not establish better geocoding.
 Test clean installation, incremental installation, interrupted transfer, corrupted input, unavailable
 artifact, unsupported schema, refused obligations, failed activation, concurrent activation, rollback,
 and non-default data roots. A snapshot test of printed commands alone does not establish installation.
-Use a small local registry and fixture artifacts for repeatable integration tests; run the documented
+Use a small local registry and fixture artifacts for repeatable integration tests. Run the documented
 published-artifact path separately before release.
 
 For selection changes, compare identical input addresses and identical artifact bytes before and
@@ -262,7 +262,7 @@ that customer path and its failure recovery have been tested.
 
 ## 9. Implementation plan and working checklist
 
-All items below are pending. This section plans implementation; it does not authorize downloads,
+All items below are pending. This section plans implementation. It does not authorize downloads,
 large builds, publication, or changes to the active host data. When implementation begins, use the
 `task-intake` skill to create the tracking issue and mirror these tasks. Keep this document as the
 design reference and record implementation status in that issue. Before release, move the accepted
@@ -283,7 +283,7 @@ This work precedes changes to readers or installation destinations.
 - [ ] Define ordered source selection and the exact meaning of an absent layer, an unsuccessful
       lookup, an unreadable artifact, and an obligation refusal. Preserve existing behavior initially.
 - [ ] Specify the active-selection document, atomic replacement, concurrent update handling, reload,
-      and rollback. Decide how running sessions protect artifacts from pruning.
+      and rollback. Decide how running sessions keep pruning from deleting their artifacts.
 - [ ] Add fixtures for candidate data, DC address points and interpolation, overlapping national
       sources, a multi-country source, and a non-SQLite artifact set. Fixtures must exercise actual readers.
 - [ ] Measure runtime dependencies and shipped bytes before choosing the shared schema's final home.
@@ -295,14 +295,14 @@ and tests reject missing required metadata, incompatible artifact sets, and inva
 ### 9.2 Deliver published installation through the existing CLI
 
 This work depends on the interfaces in §9.1. Keep the current published registry format readable
-while producers and consumers migrate; document when compatibility can be removed.
+while producers and consumers migrate. Document when compatibility can be removed.
 
 - [ ] Extract or extend the shared installation planner under `mailwoman/lib/data/`. Make `setup`,
       `data pull --dry-run`, and execution consume the same concrete plan.
 - [ ] Include dependencies, expected bytes, destination, available disk estimate, access requirements,
       and activation changes. Distinguish estimates from verified sizes and unknown sizes.
 - [ ] Implement receipt-backed acquisition and validation using existing download helpers. Resume
-      only when the remote identity and local partial state still match; otherwise explain the restart.
+      only when the remote identity and local partial state still match. Otherwise explain the restart.
 - [ ] Install candidate data into an immutable artifact location and activate it only after validation.
 - [ ] Add the regional US installation using exact artifact dependencies while preserving existing
       bundle names and `--only` matching semantics.
@@ -311,7 +311,7 @@ while producers and consumers migrate; document when compatibility can be remove
 - [ ] Test failure before activation, failure during selection replacement, and concurrent installers.
       The previous active generation must remain readable in each failed-upgrade case.
 - [ ] Run the clean candidate installation and DC increment through a temporary data root using a
-      local fixture registry. Verify geocoding through the installed selection, not just file existence.
+      local fixture registry. Verify geocoding through the installed selection as well as file existence.
 
 Completion criterion: the stage B and C workflows in §6 run through public commands, recover from an
 interrupted installation, and require no hand-written paths or environment overrides beyond an
@@ -331,7 +331,7 @@ This work depends on the shared planner and catalog. It can be reviewed separate
 - [ ] Distinguish unavailable data, insufficient access, refused obligations, missing dependencies,
       unsupported schemas, and corruption in both human output and structured command results.
 - [ ] Test interactive and non-interactive setup against identical installation states. Check the
-      documented next command actually executes against the fixture registry.
+      documented next command executes against the fixture registry.
 
 Completion criterion: setup, status, BOM, doctor, and the resolver agree on the active generation and
 its artifacts. Each reports uncertainty or failure without translating it into an empty installation.
@@ -340,8 +340,8 @@ its artifacts. Each reports uncertainty or failure without translating it into a
 
 This work depends on §9.1–9.3. Capture the current selection and outputs before changing providers.
 
-- [ ] Move the generic address-point schema to the owner selected in §9.1. Rewrite imports directly;
-      do not add cross-package forwarding exports.
+- [ ] Move the generic address-point schema to the owner selected in §9.1. Rewrite imports directly.
+      Add no cross-package forwarding exports.
 - [ ] Separate the source-independent catalog from role-specific lookup providers and their handles.
 - [ ] Migrate candidate and address-point readers first, then interpolation, street centroids, WOF
       extracts, overlays, and non-SQLite resources. Record the remaining legacy readers explicitly.
@@ -361,7 +361,7 @@ and measured output differences are either absent or explicitly reviewed as beha
 ### 9.5 Add source acquisition and OSM builds through the CLI
 
 This work depends on the installer and shared reader interfaces. Begin with a small reproducible
-extract; planetary acquisition is outside this implementation step.
+extract. Planetary acquisition is outside this implementation step.
 
 - [ ] Register an OSM build recipe with required tools, source inputs, outputs, and supported scopes.
 - [ ] Place publisher region mappings in the Geofabrik acquisition code and country-specific extraction
@@ -375,7 +375,7 @@ extract; planetary acquisition is outside this implementation step.
 - [ ] Test cancellation and restart at acquisition and build boundaries. A completed extraction must
       not be reused after its inputs or policy change.
 - [ ] Test the packaged CLI with the optional OSM integration both present and absent. Report missing
-      build support before downloading inputs; published-layer installation must not require GDAL.
+      build support before downloading inputs. Published-layer installation must not require GDAL.
 
 Completion criterion: a customer can build and inspect a small OSM layer entirely through public CLI
 commands. Activation uses the same validation and selection mechanism as a published download.
@@ -383,7 +383,7 @@ commands. Activation uses the same validation and selection mechanism as a publi
 ### 9.6 Migrate existing installations and add retention
 
 This work depends on migrated readers and tested rollback. Run the migration planner before making
-host changes; the historical inventory in the original plan is not a current migration receipt.
+host changes. The historical inventory in the original plan is not a current migration receipt.
 
 - [ ] Implement read-only migration discovery using the readers that currently select files. Include
       explicit overrides, external paths, hard links, symlinks, and WAL state.
@@ -396,7 +396,7 @@ host changes; the historical inventory in the original plan is not a current mig
 - [ ] Re-inventory the host immediately before an approved migration and verify its preconditions,
       including active jobs and open database files.
 - [ ] Define retained generations and source-input retention before implementing deletion. Prune must
-      protect in-use artifacts and inputs referenced by retained derivations.
+      keep in-use artifacts and inputs referenced by retained derivations.
 - [ ] Test prune dry-run and execution against the same selection snapshot, including a concurrent
       activation. Reject deletion when the referenced state changed during planning.
 
@@ -406,20 +406,20 @@ rollback, and reports every unresolved artifact. Destructive cleanup remains a s
 ## 10. Documentation changes
 
 Documentation ships with the implementation it describes. Examples for unreleased commands remain
-labelled as proposals; historical receipts retain their original text.
+labeled as proposals. Historical receipts retain their original text.
 
 | Document                                                           | Required change                                                                                             | Verification                                                       |
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `docs/articles/developers/get-started/install-and-first-parse.mdx` | Separate parser installation from optional geographic data; link to setup                                   | Run from a clean published-package installation                    |
+| `docs/articles/developers/get-started/install-and-first-parse.mdx` | Separate parser installation from optional geographic data. Link to setup                                   | Run from a clean published-package installation                    |
 | `docs/articles/developers/get-started/ten-minute-trial.mdx`        | Show setup, candidate installation, current status, and the next scoped upgrade                             | Execute every command in a temporary data root                     |
-| `docs/articles/developers/tutorials/improve-geocode-precision.mdx` | Retain the one-region progression; explain availability and fallback from actual installed artifacts        | Repeat the full-address examples before and after installation     |
-| `docs/articles/developers/tutorials/full-planet-build.mdx`         | Replace internal OSM scripts with public source-build commands; distinguish downloads from builds           | Run the small-extract route from packaged code                     |
+| `docs/articles/developers/tutorials/improve-geocode-precision.mdx` | Retain the one-region progression. Explain availability and fallback from actual installed artifacts        | Repeat the full-address examples before and after installation     |
+| `docs/articles/developers/tutorials/full-planet-build.mdx`         | Replace internal OSM scripts with public source-build commands. Distinguish downloads from builds           | Run the small-extract route from packaged code                     |
 | `docs/articles/developers/tutorials/build-the-us-dataset.mdx`      | Align source-build outputs, installation, and activation with the shared lifecycle                          | Build a fixture and load it through the shared reader              |
 | `docs/articles/developers/how-to/keep-data-fresh.mdx`              | Explain upgrade planning, interruption recovery, retained versions, rollback, and pruning                   | Exercise upgrade failure and rollback examples                     |
 | `docs/articles/developers/status.mdx`                              | Separate published availability, local-build support, installed capability, and evaluated coverage          | Check against the registry and cited evaluation evidence           |
 | `docs/engineering/reference/layer-interface.mdx`                   | Specify artifact identity, role requirements, normalization versions, artifact sets, and coverage semantics | Match schema tests and reader validation                           |
 | `docs/engineering/reference/workspaces.mdx`                        | Record final package ownership and any workspace changes                                                    | Regenerate or validate through the repository's existing mechanism |
-| `packages/osm` and affected package READMEs                        | Describe source integration ownership and public CLI usage; remove obsolete operational paths               | Check exports and packaged CLI examples                            |
+| `packages/osm` and affected package READMEs                        | Describe source integration ownership and public CLI usage. Remove obsolete operational paths               | Check exports and packaged CLI examples                            |
 
 - [ ] Add a durable engineering design document for the catalog, active-selection format, installation
       lifecycle, and migration. Link it from the layer interface reference.
@@ -443,7 +443,7 @@ or source-build work.
       to the ordinary published-download path.
 - [ ] Runtime readers and diagnostics agree on the active generation, including non-default roots.
 - [ ] Failed transfers, invalid artifacts, failed upgrades, and concurrent activation preserve a usable
-      previous installation; rollback has been exercised.
+      previous installation. Rollback has been exercised.
 - [ ] Country rules, source extraction, corpus transformations, and generic readers have the owners
       defined in the accepted design, with no new library imports from `sdk/` or `tools/`.
 - [ ] Legacy migration has a tested dry-run, resumable execution, and explicit unresolved cases.

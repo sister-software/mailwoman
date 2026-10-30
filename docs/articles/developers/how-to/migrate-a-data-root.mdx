@@ -58,7 +58,7 @@ and the `hashes` line gives the total.
 ## 4. Know the rollback
 
 The plan's `rollback` line states how to undo it. With no earlier selection, the undo is to remove
-`active.json` and the `installations/` directory; the registered files are neither moved nor changed.
+`active.json` and the `installations/` directory. The registered files are neither moved nor changed.
 With an earlier selection, `mailwoman data activate --rollback` restores the generation the migration
 replaced.
 

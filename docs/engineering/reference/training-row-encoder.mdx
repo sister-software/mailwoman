@@ -240,11 +240,11 @@ was shared with other jobs: the load average was 26 to 30 during the first pair 
 | Python, load 18 |  265.5 |            45.2 |          220.3 |        8.09 |       26.52 |          0.23 |             34.83 |             3,585 |       3,431 |
 | Rust, load 19   |   47.5 |            26.5 |           21.0 |        1.75 |       13.12 |          0.17 |             15.03 |             2,918 |       2,783 |
 
-Init is process start to the first converted batch; the sampler's share covers the listing, the sha256 check
+Init is process start to the first converted batch. The sampler's share covers the listing, the sha256 check
 against the cache, the source index and the 131,072-row buffer fill. The milliseconds are per batch. RSS after
 init is read from `/proc/self/statm`, and peak RSS from `ru_maxrss`. On the second pair the Rust sampler reduced
 sampling from 8.09 to 1.75 ms per batch and sampler initialization from 220.3 to 21.0 s. Encoding is the same
-Rust code in both arms; its spread follows the host load rather than the sampler.
+Rust code in both arms. Its spread follows the host load rather than the sampler.
 
 Parquet reads cannot be separated inside that window, because the 40 batches draw almost every row from row groups
 the buffer fill already read. `examples/read_profile.rs` times the read alone: 60 row groups drawn from the C6
@@ -252,7 +252,7 @@ corpus's files with seed 7 (2,375,564 rows) over the nine columns the sampler re
 `read_row_group` on the same list, alternating, at load 16. pyarrow took 36.12 and 38.97 ms per row group and the
 `parquet` crate 23.43 and 26.92 ms. The parity verifies give the end-to-end cost: a 5,000-row train record verifies
 in 22 to 33 s at a peak of 2.5 to 3.1 GB, where its Python capture took 225 to 335 s at 4.5 to 5.4 GB, and the
-36,864-row validation draw verifies in 131 s. These figures are the lab host's only; the Modal measurement waits
+36,864-row validation draw verifies in 131 s. These figures are the lab host's only. The Modal measurement waits
 for the next image build, since no Modal job ran for this change. Initialization is dominated by the sampler's stream
 setup: building the Rust encoder with the 2,286,339-key anchor table takes 2.04 s, against 5.46 s for the
 Python `json.load` of the same table.
