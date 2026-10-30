@@ -79,8 +79,8 @@ describe("the CJK builder helpers", async () => {
 		const first = [...selectExact(10, 3, rng)]
 		const second = [...selectExact(5, 9, rng)]
 
-		expect(first.filter(Boolean)).toHaveLength(3)
-		expect(second.filter(Boolean)).toHaveLength(5)
+		expect(first.filter((picked) => picked === true)).toHaveLength(3)
+		expect(second.filter((picked) => picked === true)).toHaveLength(5)
 		reference.expect("select_exact", [first, second, rng.random()])
 		await reference.save()
 	})

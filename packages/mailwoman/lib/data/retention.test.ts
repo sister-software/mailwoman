@@ -296,7 +296,8 @@ describe("executePrune's active-generation check", () => {
 				{
 					installationID: active.installationID,
 					artifactID: active.artifactID,
-					directory: resolvePath(c.path, ".."),
+					directory: resolvePath(c.path, "..").toString(),
+					path: c.path.toString(),
 					bytes: "release c".length,
 				},
 			],
