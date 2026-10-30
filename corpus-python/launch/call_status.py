@@ -37,12 +37,16 @@ def main(argv: list[str] | None = None) -> int:
         print("cancelled")
         return 0
     try:
-        call.get(timeout=args.wait)
+        result = call.get(timeout=args.wait)
     # The client raises the builtin while the call has no result. `modal.exception.TimeoutError` is not that signal:
     # its subclass `FunctionTimeoutError` is the outcome of a call that hit its timeout, and re-raises as the verdict.
     except TimeoutError:
         print("running")
         return 0
+    # A Rust training call returns its refusal rather than raising it, so Modal does not retry it.
+    if isinstance(result, dict) and result.get("refused"):
+        print(f"refused: {result['refused']}")
+        return 1
     print("finished")
     return 0
 

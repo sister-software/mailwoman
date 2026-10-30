@@ -3,11 +3,109 @@
 from __future__ import annotations
 
 import hashlib
+import json
+from types import SimpleNamespace
 
+import launch.train
+import launch.train_rust as train_rust
+import pytest
 from launch.app import LIBTORCH_ARCHIVES, LIBTORCH_VERSION, TRAINER_DATA_FILES
+from launch.run_lock import DuplicateLaunchError
 from launch.settings import repository_root
-from launch.train_rust import DEVICE_LINE, SAVE_LINE, STEP_LINE, staged_paths, trainer_command
+from launch.train_rust import (
+    DEVICE_LINE,
+    SAVE_LINE,
+    STEP_LINE,
+    LaunchRefusal,
+    attempt,
+    check_staged_launch,
+    staged_paths,
+    trainer_command,
+)
 from launch.wall_clock import estimate_wall_clock
+
+LAUNCH = {"config_sha256": "abc", "output_dir": "/data/output-a/checkpoints", "audits": "", "run_base": "/data/a"}
+RESOLVED = {"config_sha256": "abc", "config": {"train": {"output_dir": "/data/output-a/checkpoints"}}}
+
+
+def test_a_staged_launch_that_matches_passes() -> None:
+    check_staged_launch(RESOLVED, LAUNCH, "/r.json", "/c.yaml")
+
+
+@pytest.mark.parametrize(
+    ("resolved", "launch", "message"),
+    [
+        (RESOLVED, {"refused": "no preflight receipt"}, "no preflight receipt"),
+        ({**RESOLVED, "config_sha256": "other"}, LAUNCH, "does not describe /c.yaml"),
+        ({**RESOLVED, "config": {"train": {"output_dir": "/mnt/x"}}}, LAUNCH, "resolved output_dir /mnt/x"),
+    ],
+)
+def test_a_host_detectable_mismatch_is_a_launch_refusal(
+    resolved: dict[str, object], launch: dict[str, str], message: str
+) -> None:
+    with pytest.raises(LaunchRefusal, match=message):
+        check_staged_launch(resolved, launch, "/r.json", "/c.yaml")
+
+
+class _Function:
+    """A stub of a Modal function: `remote` answers ``result`` and `spawn` counts its calls."""
+
+    def __init__(self, result: object = None) -> None:
+        self.result = result
+        self.spawned = 0
+
+    def remote(self, *args: object, **kwargs: object) -> object:
+        return self.result
+
+    def with_options(self, **kwargs: object) -> _Function:
+        return self
+
+    def spawn(self, *args: object) -> SimpleNamespace:
+        self.spawned += 1
+        return SimpleNamespace(object_id="fc-stub", get_dashboard_url=lambda: "")
+
+
+def test_a_stale_receipt_spawns_no_training_call(monkeypatch: pytest.MonkeyPatch) -> None:
+    gpu = _Function()
+    monkeypatch.setattr(train_rust, "resolve_on_host", lambda config: ("c.yaml", b"", json.dumps(RESOLVED)))
+    monkeypatch.setattr(train_rust, "stage_launch_inputs", _Function({"config_path": "/c", "resolved_path": "/r"}))
+    monkeypatch.setattr(launch.train, "preflight", _Function("token"))
+    monkeypatch.setattr(train_rust, "verify_launch", _Function({"refused": "the receipt is stale"}))
+    monkeypatch.setattr(train_rust, "_train_rust_gpu", gpu)
+    with pytest.raises(LaunchRefusal, match="the receipt is stale"):
+        train_rust.launch_rust("c.yaml", False, "", "A100-80GB", False, 0, 0, 0, -1)
+    assert gpu.spawned == 0
+
+
+@pytest.mark.parametrize("error", [LaunchRefusal("wrong device"), DuplicateLaunchError("fc-1 holds the lock")])
+def test_a_deterministic_refusal_returns_instead_of_raising(monkeypatch: pytest.MonkeyPatch, error: Exception) -> None:
+    def refuse(*args: object) -> None:
+        raise error
+
+    monkeypatch.setattr(train_rust, "_run_trainer", refuse)
+    assert attempt("/c", "/r", "t", "", 0, 0, "Cuda") == {"refused": str(error)}
+
+
+def test_a_device_the_container_lacks_is_a_launch_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[list[str]] = []
+
+    def run(command: list[str], **kwargs: object) -> SimpleNamespace:
+        calls.append(command)
+        return SimpleNamespace(returncode=2, stdout="device=Cpu has_cuda=false\n", stderr="the run expects device cuda")
+
+    monkeypatch.setattr(train_rust.subprocess, "run", run)
+    with pytest.raises(LaunchRefusal, match="the run expects device cuda"):
+        train_rust.check_device("Cuda")
+    assert calls == [["trainer", "device", "--device", "cuda"]]
+
+
+def test_a_transient_failure_raises_so_modal_retries_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fail(*args: object) -> None:
+        raise RuntimeError("trainer train exited -9")
+
+    monkeypatch.setattr(train_rust, "_run_trainer", fail)
+    with pytest.raises(RuntimeError, match="exited -9"):
+        attempt("/c", "/r", "t", "", 0, 0, "Cuda")
 
 
 def test_the_image_copies_every_data_file_the_trainer_reads() -> None:

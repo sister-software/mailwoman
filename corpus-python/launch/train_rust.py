@@ -17,8 +17,14 @@ Python GPU function gives:
 - The attempt runs `trainer train <resolved.json> --resume auto`, or `--resume <branch_from>` while the output
   directory holds no checkpoint. It commits the volume after every checkpoint the trainer saves, and it leaves every
   file on the volume in place.
+- The entry point runs `verify_launch` and `check_staged_launch` on the host side before it spawns anything, so a
+  stale receipt or a resolved config for another YAML or output directory starts no training container. The attempt
+  repeats both checks, then checks the device with `trainer device` before it takes the lock. The host-side check is
+  advisory for the lock, which only the container holds.
 - The functions run under `modal.Retries` with `single_use_containers=True`, so a failed or preempted attempt is
-  retried in a fresh container and resumes from the newest complete checkpoint.
+  retried in a fresh container and resumes from the newest complete checkpoint. A refusal every attempt would repeat
+  (`LaunchRefusal`, or the lock's `DuplicateLaunchError`) is returned as the call's result instead of raised, so it
+  runs once.
 
 `_train_rust_cpu` runs the same body on the CPU libtorch image. It exists for the lifecycle checks (plan F4) and takes
 the two dev-only controls those checks need: ``fail_at_step``, which kills the trainer once per call after it logs
@@ -55,6 +61,41 @@ DEVICE_LINE = re.compile(r"^device=(\w+)")
 
 #: The wall-clock row the CPU function's preflight reads (`DEV_OBSERVED_SECONDS_PER_100_STEPS`).
 CPU_DEVICE = "cpu"
+
+
+class LaunchRefusal(RuntimeError):
+    """A refusal every attempt would repeat on the same inputs: a missing receipt, a resolved config that describes
+    another YAML or output directory, or a device other than the function's. An attempt returns it rather than
+    raising, so Modal's retries never run it again."""
+
+
+def check_staged_launch(
+    resolved: dict[str, object], launch: dict[str, str], resolved_path: str, config_path: str
+) -> None:
+    """Raise `LaunchRefusal` unless ``launch`` (from `verify_launch`) verified the receipt and ``resolved`` describes
+    the same YAML and output directory."""
+    if launch.get("refused"):
+        raise LaunchRefusal(launch["refused"])
+    if resolved.get("config_sha256") != launch["config_sha256"]:
+        raise LaunchRefusal(f"{resolved_path} does not describe {config_path}; re-stage the launch")
+    config = resolved.get("config")
+    train = config.get("train") if isinstance(config, dict) else None
+    output_dir = train.get("output_dir") if isinstance(train, dict) else None
+    if output_dir != launch["output_dir"]:
+        raise LaunchRefusal(
+            f"the resolved output_dir {output_dir} is not the launcher's {launch['output_dir']}; a Rust run's "
+            f"output_dir must sit under {VOL_MOUNT}"
+        )
+
+
+def check_device(expect_device: str) -> None:
+    """Raise `LaunchRefusal` unless `trainer device` reports ``expect_device`` (`Cuda` or `Cpu`) in this container."""
+    result = subprocess.run(
+        ["trainer", "device", "--device", expect_device.lower()], capture_output=True, text=True, check=False
+    )
+    print(result.stdout, end="", flush=True)
+    if result.returncode != 0:
+        raise LaunchRefusal(f"trainer device refused {expect_device}: {(result.stdout + result.stderr).strip()}")
 
 
 def config_source_path(config: str) -> Path:
@@ -135,14 +176,15 @@ def verify_launch(config_path: str, preflight_token: str, branch_from: str = "")
     """Verify the preflight receipt and decide where an attempt starts, with the Python launcher's own helpers.
 
     It runs in the training image because `verify_receipt` and `find_latest_checkpoint` import the training package.
-    The trainer image does not hold that package. It raises `PreflightReceiptError` without a matching receipt.
+    The trainer image does not hold that package. Without a matching receipt it returns ``{"refused": <reason>}``,
+    which `check_staged_launch` raises as a `LaunchRefusal`.
     """
     import sys
 
     vol.reload()
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
-    from mailwoman_train.audits.preflight import config_sha256, verify_receipt
+    from mailwoman_train.audits.preflight import PreflightReceiptError, config_sha256, verify_receipt
     from mailwoman_train.config import load_config
     from mailwoman_train.train.checkpoint import find_latest_checkpoint
 
@@ -151,7 +193,13 @@ def verify_launch(config_path: str, preflight_token: str, branch_from: str = "")
 
     cfg = load_config(Path(config_path))
     audits = required_audits(cfg)
-    verify_receipt(Path(f"{VOL_MOUNT}/audits"), Path(config_path), Path(cfg.data.corpus_dir), preflight_token, audits)
+    try:
+        verify_receipt(
+            Path(f"{VOL_MOUNT}/audits"), Path(config_path), Path(cfg.data.corpus_dir), preflight_token, audits
+        )
+    except PreflightReceiptError as error:
+        # Returned, so a caller in the trainer image, which cannot import the class, reads it as a refusal.
+        return {"refused": str(error)}
     paths = resolve_run_paths(cfg.train.output_dir, cfg.train.csv_log_path, VOL_MOUNT)
     latest = find_latest_checkpoint(Path(paths.output_dir))
     start = resume_point(str(latest) if latest is not None else None, branch_from)
@@ -185,17 +233,13 @@ def _run_trainer(
     vol.reload()
 
     launch = verify_launch.remote(config_path, preflight_token, branch_from)
-    print(f"Preflight receipt: verified ({launch['audits']})")
-
     resolved = json.loads(Path(resolved_path).read_text(encoding="utf-8"))
-    if resolved.get("config_sha256") != launch["config_sha256"]:
-        raise RuntimeError(f"{resolved_path} does not describe {config_path}; re-stage the launch")
-    output_dir = resolved["config"]["train"]["output_dir"]
-    if output_dir != launch["output_dir"]:
-        raise RuntimeError(
-            f"the resolved output_dir {output_dir} is not the launcher's {launch['output_dir']}; a Rust run's "
-            f"output_dir must sit under {VOL_MOUNT}"
-        )
+    check_staged_launch(resolved, launch, resolved_path, config_path)
+    print(f"Preflight receipt: verified ({launch['audits']})")
+    output_dir = launch["output_dir"]
+
+    # The device is checked before the lock is taken and before the trainer opens the corpus.
+    check_device(expect_device)
 
     run_base = Path(launch["run_base"])
     decision = acquire(run_base, call_id, launch["config_sha256"], call_is_running)
@@ -226,7 +270,7 @@ def _run_trainer(
                 # `trainer` takes the first CUDA device when there is one, so a CUDA failure would train on the CPU.
                 process.kill()
                 process.wait()
-                raise RuntimeError(f"trainer chose device {device.group(1)}, this function runs on {expect_device}")
+                raise LaunchRefusal(f"trainer chose device {device.group(1)}, this function runs on {expect_device}")
             if SAVE_LINE.search(line):
                 vol.commit()
             step = STEP_LINE.match(line)
@@ -251,6 +295,30 @@ def _run_trainer(
             print(f"  {os.path.relpath(path, run_base)}: {os.path.getsize(path) / 1e6:.1f} MB")
 
 
+def attempt(
+    config_path: str,
+    resolved_path: str,
+    preflight_token: str,
+    branch_from: str,
+    threads: int,
+    fail_at_step: int,
+    expect_device: str,
+) -> dict[str, str]:
+    """One attempt, returning ``{"refused": <reason>}`` for a refusal every retry would repeat and raising otherwise.
+
+    A raised error is retried by `modal.Retries`; a `LaunchRefusal` or a `DuplicateLaunchError` (the run's lock
+    holder is still running) is returned, so the call finishes once with the reason as its result.
+    """
+    from .run_lock import DuplicateLaunchError
+
+    try:
+        _run_trainer(config_path, resolved_path, preflight_token, branch_from, threads, fail_at_step, expect_device)
+    except (LaunchRefusal, DuplicateLaunchError) as error:
+        print(f"Refused without a retry: {error}", flush=True)
+        return {"refused": str(error)}
+    return {"refused": ""}
+
+
 _RETRIES = modal.Retries(max_retries=settings().train_retries, initial_delay=10.0, backoff_coefficient=2.0)
 
 
@@ -266,9 +334,9 @@ _RETRIES = modal.Retries(max_retries=settings().train_retries, initial_delay=10.
 )
 def _train_rust_gpu(
     config_path: str, resolved_path: str, preflight_token: str, branch_from: str = "", threads: int = 0
-) -> None:
+) -> dict[str, str]:
     """Train one staged config with the Rust trainer on CUDA libtorch, after verifying its preflight receipt."""
-    _run_trainer(config_path, resolved_path, preflight_token, branch_from, threads, 0, expect_device="Cuda")
+    return attempt(config_path, resolved_path, preflight_token, branch_from, threads, 0, expect_device="Cuda")
 
 
 @app.function(
@@ -287,9 +355,9 @@ def _train_rust_cpu(
     branch_from: str = "",
     threads: int = 0,
     fail_at_step: int = 0,
-) -> None:
+) -> dict[str, str]:
     """The same run on CPU libtorch, for the lifecycle checks. ``fail_at_step`` kills the trainer once per call."""
-    _run_trainer(config_path, resolved_path, preflight_token, branch_from, threads, fail_at_step, expect_device="Cpu")
+    return attempt(config_path, resolved_path, preflight_token, branch_from, threads, fail_at_step, expect_device="Cpu")
 
 
 def launch_rust(
@@ -313,6 +381,9 @@ def launch_rust(
     device = CPU_DEVICE if cpu else (gpu or settings().train_gpu)
     print(f"Preflighting {staged['config_path']} for {device}{' (fresh start)' if fresh else ''}...")
     token = preflight.remote(config_name=staged["config_path"], gpu=device, fresh=fresh)
+    # Every check the host can run happens here, on CPU containers, so a refusal spawns no training call.
+    launch = verify_launch.remote(staged["config_path"], token, branch_from)
+    check_staged_launch(json.loads(resolved), launch, staged["resolved_path"], staged["config_path"])
 
     # `with_options` leaves an option that is passed as `None` at the function's own value.
     override_gpu = gpu if gpu and not cpu else None
