@@ -82,6 +82,14 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 	it("names the command it did not admit", () => {
 		expect(refusalFor(`curl -sS https://example.com`)).toContain("`curl`")
 	})
+
+	it("reads a removal's derived status below the repository root, for a checkout under a scratchpad directory", () => {
+		const root = "/tmp/session/scratchpad/clone"
+
+		expect(judgeCommand(`rm -rf packages/core/lib`, root, root)).not.toBeNull()
+		expect(judgeCommand(`rm -rf packages/core/out`, root, root)).toBeNull()
+		expect(judgeCommand(`rm -rf scratchpad/notes`, root, root)).toBeNull()
+	})
 })
 
 describe("bash-write-guard: a Modal launch this shell could kill", () => {

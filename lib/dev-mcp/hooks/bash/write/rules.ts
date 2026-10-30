@@ -451,14 +451,20 @@ function insideRepository(raw: string, repoRoot: string, cwd: string): boolean {
 }
 
 /**
- * Returns true when a path matches {@link DERIVED_PATH}.
+ * Returns true when a path's part below the repository root matches {@link DERIVED_PATH}.
  *
+ * The match reads the path relative to the root, so a checkout that itself sits under
+ * a `scratchpad/` or `out/` directory does not make every file in it derived.
  * An unreadable target never counts as derived.
  */
-function isDerivedPath(raw: string, cwd: string): boolean {
+function isDerivedPath(raw: string, repoRoot: string, cwd: string): boolean {
 	const resolved = resolveTarget(raw, cwd)
 
-	return resolved !== null && DERIVED_PATH.test(resolved)
+	if (resolved === null) return false
+
+	const relative = resolved.startsWith(`${repoRoot}/`) ? resolved.slice(repoRoot.length + 1) : resolved
+
+	return DERIVED_PATH.test(relative)
 }
 
 /**
@@ -507,7 +513,7 @@ export function judgeCommand(command: string, repoRoot: string, sessionCwd: stri
 				.filter((word) => word.length > 0 && !word.startsWith("-"))
 
 			const targets = writes === "last" ? operands.slice(-1) : operands
-			const guarded = head === REMOVER ? targets.filter((target) => !isDerivedPath(target, cwd)) : targets
+			const guarded = head === REMOVER ? targets.filter((target) => !isDerivedPath(target, repoRoot, cwd)) : targets
 
 			if (guarded.some((target) => insideRepository(target, repoRoot, cwd))) {
 				return head === REMOVER
