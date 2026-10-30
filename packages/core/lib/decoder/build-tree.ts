@@ -14,7 +14,9 @@
  *        keeps them distinct. Span `value` is taken from `raw` by [start, end), not concatenated
  *        from `piece` — this avoids SentencePiece's synthetic leading-space markers in the output.
  *   2. Parent attachment — for each span, find the nearest labeled span whose tag is the
- *        highest-priority entry in this span's `PARENT_OF` list. Distance is the tiebreaker only.
+ *        highest-priority entry in this span's list in the containment map `containmentFor` returns
+ *        for the address system (`WESTERN_PARENT_OF` or `SETTLEMENT_PARENT_OF`). Distance is the
+ *        tiebreaker only.
  *        Spans with no found parent become roots.
  *
  *   The "nearest" rule (vs "most-recent-prior") is intentional: it makes the decoder independent of
