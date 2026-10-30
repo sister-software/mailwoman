@@ -232,9 +232,9 @@ The commands in this section ship with the release after 10.7.0. The
 - **Roll back.** `mailwoman data activate --rollback` restores the generation the active one replaced.
   `mailwoman data status --json` lists the installation identity of each installed and unselected
   artifact, and `mailwoman data activate <installation-id>` selects it.
-- **Prune separately.** `mailwoman data prune --dry-run` lists installed artifacts that neither the active
+- **Prune separately.** `mailwoman data prune` lists installed artifacts that neither the active
   generation, the one before it, nor a running session references, with the bytes reclaimable. Run it
-  without `--dry-run` to delete them. It refuses when the selection or the running sessions changed after
+  with `--yes` to delete them. It refuses when the selection or the running sessions changed after
   it planned, and it never deletes a file at a conventional path or a partial transfer.
 
 ## Limits

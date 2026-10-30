@@ -396,15 +396,41 @@ export async function planPrune(dataRoot: PathBuilderLike, options: { retain?: n
 }
 
 /**
+ * Raise unless every candidate's directory is `<dataRoot>/db/<role>/<hex>`,
+ * with `<hex>` its own artifact's digest.
+ *
+ * Prune deletes whole directories, so a candidate whose file sits at a conventional path, such as
+ * a `legacy` installation registered in place under `db/wof/`, would take its neighbors with it.
+ */
+export function assertContentAddressedCandidates(dataRoot: string, candidates: readonly PruneCandidate[]): void {
+	const root = `${resolvePath(dataRoot).toString()}/db/`
+
+	for (const candidate of candidates) {
+		const hex = candidate.artifactID.slice("sha256:".length)
+		const directory = resolvePath(candidate.directory).toString()
+		const relative = directory.startsWith(root) ? directory.slice(root.length).split("/") : []
+
+		if (relative.length !== 2 || relative[1] !== hex || !/^[0-9a-f]{64}$/u.test(hex)) {
+			throw new Error(
+				`prune refused: ${candidate.installationID}'s directory ${directory} is not db/<role>/${hex || "<hex>"} under ` +
+					`${dataRoot}, so deleting it could remove files another installation or a conventional layer path holds`
+			)
+		}
+	}
+}
+
+/**
  * Delete what a plan lists, after checking that the selection and the leases it read have not changed.
  *
  * An installation record whose every artifact is deleted is removed with them.
  *
- * @throws When another installer holds a lock, when the selection generation
- * or the live leases differ from the plan's, or when the plan lists an artifact the
- * active generation selects, before any file is deleted.
+ * @throws When another installer holds a lock, when the selection generation or the live leases
+ * differ from the plan's, when the plan lists an artifact the active generation selects,
+ * or when a candidate's directory is not content-addressed, before any file is deleted.
  */
 export async function executePrune(plan: PrunePlan): Promise<{ deleted: PruneCandidate[]; reclaimedBytes: number }> {
+	assertContentAddressedCandidates(plan.dataRoot, plan.candidates)
+
 	const paths = catalogPaths(plan.dataRoot)
 
 	await using _installer = await acquireDirectoryLock(

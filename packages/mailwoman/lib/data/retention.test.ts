@@ -68,6 +68,25 @@ describe("planPrune and executePrune", () => {
 		expect(await catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })).toBe(c.path)
 	})
 
+	it("refuses a candidate whose directory is a conventional layer path rather than db/<role>/<hex>", async () => {
+		const { a } = await threeGenerations()
+		const plan = await planPrune(scratch.path)
+
+		// A `legacy` installation registered in place: its file's parent is the role directory every layer shares.
+		const conventional = {
+			...plan,
+			candidates: plan.candidates.map((c) => ({ ...c, directory: scratch.path("db", "wof").toString() })),
+		}
+
+		await expect(executePrune(conventional)).rejects.toThrow(/is not db\/<role>\/[0-9a-f]{64}/u)
+		expect(await pathExists(a.path)).toBe(true)
+
+		// The planned candidates themselves sit at content-addressed paths.
+		expect(plan.candidates.map((c) => c.directory.split("/").at(-1))).toEqual([
+			a.entry.order[0]!.artifactID.slice("sha256:".length),
+		])
+	})
+
 	it("keeps an artifact a running session's generation selects", async () => {
 		const { a } = await threeGenerations()
 

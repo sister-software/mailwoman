@@ -64,9 +64,9 @@ replaced.
 
 ## Cleanup is a separate step
 
-Migration deletes no file. `mailwoman data prune --dry-run` lists installed artifacts that no
+Migration deletes no file. `mailwoman data prune` lists installed artifacts that no
 retained generation and no running session references. It keeps the active generation, the one before
-it and every generation a running session holds. Run `mailwoman data prune` without `--dry-run` to
+it and every generation a running session holds. Run `mailwoman data prune --yes` to
 delete what it listed. The command refuses when the selection changed after it planned. The
 [layer installation reference](../../../engineering/reference/layer-installation.mdx) states the
 retention policy in full.

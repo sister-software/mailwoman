@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman data prune`: list, then delete, installed artifacts no retained generation and no live session
- *   references. `--dry-run` prints the plan and keeps every file. The retention policy is in
+ *   `mailwoman data prune`: list installed artifacts no retained generation and no live session references, and
+ *   delete them under `--yes`. Without `--yes` it prints the plan and keeps every file. The retention policy is in
  *   `lib/data/retention.ts`.
  */
 
@@ -23,10 +23,10 @@ export const spec = {
 	name: "prune",
 	description: "Delete installed artifacts that no retained generation or running session references",
 	options: {
-		"dry-run": {
+		yes: {
 			type: "boolean",
 			default: false,
-			description: "List the artifacts a prune would delete and delete none",
+			description: "Delete the planned artifacts. Without it the command prints the plan and deletes none",
 		},
 		retain: {
 			type: "string",
@@ -57,7 +57,7 @@ const DataPrune: CommandComponent<typeof spec> = ({ options }) => {
 			const retain = options.retain != null ? { retain: parseRetainOption(options.retain) } : {}
 			const plan = await planPrune(dataRoot, retain)
 
-			if (options.dryRun) {
+			if (!options.yes) {
 				if (options.json) {
 					writeRawStdout(plan)
 				} else {
@@ -69,7 +69,7 @@ const DataPrune: CommandComponent<typeof spec> = ({ options }) => {
 								(candidate) =>
 									`  would delete ${ByteFormatter.formatSI(candidate.bytes).padStart(9)}  ${candidate.directory}`
 							),
-							`${plan.candidates.length} artifact(s), ${ByteFormatter.formatSI(plan.reclaimableBytes)} reclaimable; run without --dry-run to delete them`,
+							`${plan.candidates.length} artifact(s), ${ByteFormatter.formatSI(plan.reclaimableBytes)} reclaimable; run with --yes to delete them`,
 						].join("\n")
 					)
 				}

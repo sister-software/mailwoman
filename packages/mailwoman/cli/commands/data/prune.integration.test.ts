@@ -60,6 +60,24 @@ async function cli(...args: string[]): Promise<{ status: number; stdout: string;
 	)
 }
 
+describe("mailwoman data prune without --yes", () => {
+	test("prints the plan, exits 0 and deletes no file", async () => {
+		const second = await installFixtureArtifact(root.path, ServingRole.Candidate, "candidate.db", "second release")
+		const third = await installFixtureArtifact(root.path, ServingRole.Candidate, "candidate.db", "third release")
+
+		await replaceActiveSelection(root.path, { basedOn: 1, set: [second.entry] })
+		await replaceActiveSelection(root.path, { basedOn: 2, set: [third.entry] })
+
+		const result = await cli("data", "prune", "--data-root", root.path.toString())
+
+		expect(result.status).toBe(0)
+		expect(result.stdout).toContain("would delete")
+		expect(result.stdout).toContain("run with --yes to delete them")
+		// Generation 1's artifact is the one candidate, and it is still in place.
+		expect(await readLocalTextFile(activePath)).toBe("active release")
+	})
+})
+
 describe("mailwoman data prune --retain", () => {
 	test.each(["not-a-number", "0", "-1", "0.5", "Infinity"])("refuses %s and names the option", async (value) => {
 		const result = await cli("data", "prune", "--retain", value, "--data-root", root.path.toString())
