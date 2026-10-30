@@ -61,7 +61,7 @@ const audit = suffixFeedAudit(await mtfNode(), config, {
 const report = { ...audit, meta: { ...audit.meta, config: configPath } }
 
 if (values.json) {
-	await writeAuditReport(values.json, report, { ensureASCII: false, trailingNewline: true })
+	await writeAuditReport(values.json, report, { trailingNewline: true })
 }
 
 const { terminal_only: only, terminal_contrast: contrast } = report

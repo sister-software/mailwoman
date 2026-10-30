@@ -15,7 +15,6 @@
  */
 
 import { countInto } from "@mailwoman/core/stats"
-import { asPythonFloat } from "@mailwoman/core/strings/python-json"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode, PythonText, SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 
@@ -94,7 +93,7 @@ function finalizeCounts(counts: ReadonlyMap<string, number>): Map<string, unknow
 	const out = new Map<string, unknown>(sortedByKey(counts))
 	const scripted = counts.get("scripted_components") ?? 0
 
-	out.set("mixed_rate", asPythonFloat(scripted ? (counts.get("mixed_components") ?? 0) / scripted : 0))
+	out.set("mixed_rate", scripted ? (counts.get("mixed_components") ?? 0) / scripted : 0)
 
 	return out
 }

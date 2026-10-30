@@ -61,7 +61,7 @@ if (config.data.required_corpus_receipts.length) {
 }
 
 if (values.json) {
-	await writeAuditReport(values.json, report, { ensureASCII: false, trailingNewline: true })
+	await writeAuditReport(values.json, report, { trailingNewline: true })
 }
 
 const count = (n: number) => n.toLocaleString("en-US")

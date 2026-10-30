@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
+import { orderedJSON } from "@mailwoman/core/json"
 import { mtfNode, type SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 import { describe, expect, test } from "vitest"
 
@@ -46,27 +46,27 @@ const ROWS: SampledRow[] = [
 describe("mixed-script audit", () => {
 	test("gives the answers the Python audit gave on the same rows", () => {
 		const report = auditMixedScriptRows(pythonText, ROWS, 1)
-		const text = (key: string) => pythonJSONDumps(report.get(key))
+		const text = (key: string) => orderedJSON(report.get(key))
 
 		expect(text("totals")).toBe(
-			'{"components": 6, "legacy_bio_rows": 1, "mixed_components": 1, "rows": 3, "rows_cross_component_only": 1, ' +
-				'"rows_with_mixed_component": 1, "rows_with_multiple_scripts": 2, "script_transitions": 1, ' +
-				'"scripted_components": 6, "span_truth_rows": 2, "mixed_rate": 0.16666666666666666}'
+			'{"components":6,"legacy_bio_rows":1,"mixed_components":1,"rows":3,"rows_cross_component_only":1,' +
+				'"rows_with_mixed_component":1,"rows_with_multiple_scripts":2,"script_transitions":1,' +
+				'"scripted_components":6,"span_truth_rows":2,"mixed_rate":0.16666666666666666}'
 		)
 
-		expect(pythonJSONDumps((report.get("by_tag") as Map<string, unknown>).get("venue"))).toBe(
-			'{"components": 2, "mixed_components": 1, "script:Han": 1, "script:Latin": 2, "script_transitions": 1, ' +
-				'"scripted_components": 2, "transition:Latin->Han": 1, "mixed_rate": 0.5}'
+		expect(orderedJSON((report.get("by_tag") as Map<string, unknown>).get("venue"))).toBe(
+			'{"components":2,"mixed_components":1,"script:Han":1,"script:Latin":2,"script_transitions":1,' +
+				'"scripted_components":2,"transition:Latin->Han":1,"mixed_rate":0.5}'
 		)
 
 		expect(text("by_country")).toBe(
-			'{"ES": {"scripted_components": 2, "mixed_rate": 0.0}, ' +
-				'"JP": {"mixed_components": 1, "scripted_components": 4, "mixed_rate": 0.25}}'
+			'{"ES":{"scripted_components":2,"mixed_rate":0},' +
+				'"JP":{"mixed_components":1,"scripted_components":4,"mixed_rate":0.25}}'
 		)
 
-		expect(pythonJSONDumps(report.get("examples"), { ensureASCII: false })).toBe(
-			'{"venue": [{"raw": "Four Seasons Inn四季酒家, 𦑃町", "surface": "Four Seasons Inn四季酒家", ' +
-				'"scripts": ["Latin", "Han"], "country": "JP", "source": "osm"}]}'
+		expect(orderedJSON(report.get("examples"))).toBe(
+			'{"venue":[{"raw":"Four Seasons Inn四季酒家, 𦑃町","surface":"Four Seasons Inn四季酒家",' +
+				'"scripts":["Latin","Han"],"country":"JP","source":"osm"}]}'
 		)
 	})
 

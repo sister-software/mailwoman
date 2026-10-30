@@ -12,7 +12,6 @@
  *   compares counts of different populations. The sampling is the epoch-mixture audit's: the same stream, seed convention and budget.
  */
 
-import { asPythonFloat, type PythonFloat } from "@mailwoman/core/strings/python-json"
 import { pythonIsDigit } from "@mailwoman/core/strings/python-text"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode } from "@mailwoman/mtf/tools/sampler/native"
@@ -89,8 +88,8 @@ function zeroCounts(): OpeningCounts {
 	return Object.fromEntries(OPENING_NAMES.map((name) => [name, 0])) as OpeningCounts
 }
 
-function ratio(counts: OpeningCounts, house: OpeningName, postcode: OpeningName): PythonFloat | null {
-	return counts[postcode] ? asPythonFloat(counts[house] / counts[postcode]) : null
+function ratio(counts: OpeningCounts, house: OpeningName, postcode: OpeningName): number | null {
+	return counts[postcode] ? counts[house] / counts[postcode] : null
 }
 
 function level(counts: OpeningCounts, bySource: Map<string, OpeningCounts>) {

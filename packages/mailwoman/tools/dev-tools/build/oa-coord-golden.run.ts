@@ -32,10 +32,10 @@
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
+import { orderedJSON } from "@mailwoman/core/json"
 import { pyFloat } from "@mailwoman/core/numeric"
 import { SeededRandom } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { pyJSONDumps } from "@mailwoman/core/utils"
 import { dirname } from "path-ts"
 import { titleCaseIfUpper, CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -271,6 +271,6 @@ rng.shuffle(rows)
 const trimmed = rows.slice(0, n)
 
 await makeDirectories(dirname(out))
-await writeLocalTextFile(trimmed.map((row) => pyJSONDumps(row, { ensureASCII: false }) + "\n").join(""), out)
+await writeLocalTextFile(trimmed.map((row) => orderedJSON(row) + "\n").join(""), out)
 
 process.stderr.write(`wrote ${trimmed.length} ${country.toUpperCase()} rows across ${buckets.size} buckets -> ${out}\n`)

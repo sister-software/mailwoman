@@ -18,7 +18,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON, orderedJSON } from "@mailwoman/core/json"
 import {
 	LicenseReviewState,
 	OperationPermission,
@@ -26,7 +26,6 @@ import {
 	type LicenseDecision,
 } from "@mailwoman/core/license/decision"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readAddressSourceRegister } from "#source-register/register"
@@ -581,7 +580,7 @@ export const SOURCE_RIGHTS_FILE_NAME = "SOURCE_RIGHTS.json"
 export async function writeSourceRightsRecord(record: SourceRightsRecord, outDir: PathBuilderLike): Promise<string> {
 	const path = resolvePath(outDir, SOURCE_RIGHTS_FILE_NAME)
 
-	await writeLocalTextFile(pythonJSONDumps(record, { indent: 2, ensureASCII: false }) + "\n", path)
+	await writeLocalTextFile(orderedJSON(record, { indent: "\t" }) + "\n", path)
 
 	return path
 }

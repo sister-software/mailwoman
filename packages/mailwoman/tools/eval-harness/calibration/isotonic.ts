@@ -23,7 +23,6 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pyFixed } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { mulberry32, shuffleWith } from "@mailwoman/core/random"
-import { asPythonFloat, type PythonFloat } from "@mailwoman/core/strings/python-json"
 
 import { numpyInterp, numpyLinspace, numpyMean, stableArgsort } from "./numpy.ts"
 
@@ -146,11 +145,11 @@ export function fitIsotonic(conf: readonly number[], correct: readonly number[])
  * One reliability bin.
  */
 export interface ReliabilityBin {
-	lo: PythonFloat
-	hi: PythonFloat
+	lo: number
+	hi: number
 	n: number
-	conf: PythonFloat | null
-	acc: PythonFloat | null
+	conf: number | null
+	acc: number | null
 }
 
 /**
@@ -184,7 +183,7 @@ export function ece(
 		const nb = selectedConf.length
 
 		if (!nb) {
-			rows.push({ lo: asPythonFloat(lo), hi: asPythonFloat(hi), n: 0, conf: null, acc: null })
+			rows.push({ lo, hi, n: 0, conf: null, acc: null })
 
 			continue
 		}
@@ -195,7 +194,7 @@ export function ece(
 
 		e += (nb / n) * gap
 		mce = Math.max(mce, gap)
-		rows.push({ lo: asPythonFloat(lo), hi: asPythonFloat(hi), n: nb, conf: asPythonFloat(cb), acc: asPythonFloat(ab) })
+		rows.push({ lo, hi, n: nb, conf: cb, acc: ab })
 	}
 
 	return { e, mce, rows }
@@ -205,9 +204,7 @@ export function ece(
  * The maximum calibration error over bins holding at least {@linkcode ROBUST_MCE_MIN_SAMPLES} samples.
  */
 export function robustMCE(rows: readonly ReliabilityBin[]): number {
-	const gaps = rows
-		.filter((r) => r.n >= ROBUST_MCE_MIN_SAMPLES && r.conf)
-		.map((r) => Math.abs(r.conf!.value - r.acc!.value))
+	const gaps = rows.filter((r) => r.n >= ROBUST_MCE_MIN_SAMPLES && r.conf).map((r) => Math.abs(r.conf! - r.acc!))
 
 	return gaps.length ? Math.max(...gaps) : 0
 }
@@ -237,7 +234,7 @@ function subgroupECE(
 	correct: readonly number[],
 	eceBins: number
 ) {
-	const out: Record<string, { n: number; acc: PythonFloat; ece_raw: PythonFloat; ece_cal: PythonFloat }> = {}
+	const out: Record<string, { n: number; acc: number; ece_raw: number; ece_cal: number }> = {}
 
 	for (const key of [...new Set(keys)].toSorted()) {
 		const members = keys.flatMap((k, i) => (k === key ? [i] : []))
@@ -246,9 +243,9 @@ function subgroupECE(
 
 		out[key] = {
 			n: members.length,
-			acc: asPythonFloat(numpyMean(atIndexes(correct, members))),
-			ece_raw: asPythonFloat(ece(atIndexes(conf, members), atIndexes(correct, members), eceBins).e),
-			ece_cal: asPythonFloat(ece(atIndexes(cal, members), atIndexes(correct, members), eceBins).e),
+			acc: numpyMean(atIndexes(correct, members)),
+			ece_raw: ece(atIndexes(conf, members), atIndexes(correct, members), eceBins).e,
+			ece_cal: ece(atIndexes(cal, members), atIndexes(correct, members), eceBins).e,
 		}
 	}
 
@@ -261,10 +258,10 @@ function abstentionCurve(cal: readonly number[], correct: readonly number[]) {
 		const coverage = accepted.length / cal.length
 
 		return {
-			threshold: asPythonFloat(threshold),
-			coverage: asPythonFloat(coverage),
-			precision: asPythonFloat(accepted.length ? numpyMean(atIndexes(correct, accepted)) : 0),
-			reviewed: asPythonFloat(1 - coverage),
+			threshold,
+			coverage,
+			precision: accepted.length ? numpyMean(atIndexes(correct, accepted)) : 0,
+			reviewed: 1 - coverage,
 		}
 	})
 }
@@ -279,10 +276,10 @@ export function lookupTable(xs: readonly number[], g: readonly number[], bins: n
 		const center = (edges[i]! + edges[i + 1]!) / 2
 
 		return {
-			lo: asPythonFloat(edges[i]!),
-			hi: asPythonFloat(edges[i + 1]!),
-			center: asPythonFloat(center),
-			calibrated: asPythonFloat(numpyInterp(center, xs, g)),
+			lo: edges[i]!,
+			hi: edges[i + 1]!,
+			center,
+			calibrated: numpyInterp(center, xs, g),
 		}
 	})
 }
@@ -347,7 +344,7 @@ export function fitAndMeasure(
 
 	const oa = bySource("oa")
 	const corpus = bySource("corpus")
-	const float = asPythonFloat
+	const float = (value: number) => value
 
 	return {
 		nTotal: records.length,
@@ -429,8 +426,7 @@ export function buildPayload(options: IsotonicRunOptions, fit: IsotonicFit) {
 	}
 }
 
-const f = (value: PythonFloat | number | null, digits: number) =>
-	value == null ? "—" : pyFixed(typeof value === "number" ? value : value.value, digits)
+const f = (value: number | null, digits: number) => (value == null ? "—" : pyFixed(value, digits))
 
 function headlineLines(options: IsotonicRunOptions, fit: IsotonicFit): string[] {
 	const m = fit.metrics
@@ -480,7 +476,7 @@ function reliabilityLines(title: string, rows: readonly ReliabilityBin[], label:
 	for (const r of rows) {
 		if (!r.n) continue
 
-		const gap = Math.abs(r.conf!.value - r.acc!.value)
+		const gap = Math.abs(r.conf! - r.acc!)
 
 		lines.push(`| [${f(r.lo, 2)}, ${f(r.hi, 2)}) | ${r.n} | ${f(r.conf, 3)} | ${f(r.acc, 3)} | ${f(gap, 3)} |`)
 	}
@@ -498,7 +494,7 @@ function subgroupLines(title: string, groups: IsotonicFit["perTag"]): string[] {
 		"| --- | ---: | ---: | ---: | ---: |",
 	]
 
-	for (const [key, v] of Object.entries(groups).toSorted((a, b) => b[1].ece_raw.value - a[1].ece_raw.value)) {
+	for (const [key, v] of Object.entries(groups).toSorted((a, b) => b[1].ece_raw - a[1].ece_raw)) {
 		lines.push(`| ${key} | ${v.n} | ${f(v.acc, 3)} | ${f(v.ece_raw, 4)} | ${f(v.ece_cal, 4)} |`)
 	}
 
@@ -519,7 +515,7 @@ function abstentionLines(fit: IsotonicFit): string[] {
 
 	for (const a of fit.abstention) {
 		lines.push(
-			`| ${f(a.threshold, 2)} | ${f(100 * a.coverage.value, 1)}% | ${f(100 * a.precision.value, 2)}% | ${f(100 * a.reviewed.value, 1)}% |`
+			`| ${f(a.threshold, 2)} | ${f(100 * a.coverage, 1)}% | ${f(100 * a.precision, 2)}% | ${f(100 * a.reviewed, 1)}% |`
 		)
 	}
 

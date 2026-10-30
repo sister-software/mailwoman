@@ -16,8 +16,8 @@
 import { directoryHasEntries, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { pythonIsAlphaCharacter } from "@mailwoman/core/strings/python-text"
 import { basename, resolvePath } from "path-ts"
 
@@ -334,10 +334,7 @@ export async function buildForeignPlaces(options: ForeignPlacesOptions): Promise
 		],
 	])
 
-	await writeLocalTextFile(
-		pythonJSONDumps(manifest, { indent: 2, ensureASCII: false }) + "\n",
-		resolvePath(outDir, "MANIFEST.json")
-	)
+	await writeLocalTextFile(orderedJSON(manifest, { indent: "\t" }) + "\n", resolvePath(outDir, "MANIFEST.json"))
 
 	const report = new Map<string, unknown>([
 		["parquet", parquet],
@@ -354,10 +351,7 @@ export async function buildForeignPlaces(options: ForeignPlacesOptions): Promise
 		["countries", new Map(mostCommon(countries))],
 	])
 
-	await writeLocalTextFile(
-		pythonJSONDumps(report, { indent: 2, ensureASCII: false }) + "\n",
-		resolvePath(outDir, "build-report.json")
-	)
+	await writeLocalTextFile(orderedJSON(report, { indent: "\t" }) + "\n", resolvePath(outDir, "build-report.json"))
 
 	return report
 }

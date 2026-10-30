@@ -3,11 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What every training audit writes: its report, byte for byte as the Python audit's `json.dumps` wrote it, and the
+ *   What every training audit writes: its report, as tab-indented JSON with each `Map` in its insertion order, and the
  *   preflight receipt the GPU run checks before it trains.
- *
- *   A report is a Python `json.dumps(report, indent=2)`, so a reader of an earlier report and of a new one reads the
- *   same bytes. A plain `number` in a report is an `int` and {@linkcode PythonFloat} marks a `float`.
  *
  *   The preflight receipt is written only after every audit a config declares has passed, so its presence is the
  *   pass. Its key binds it to the config's bytes and the set of file sha256s the corpus manifest lists, so the GPU
@@ -18,21 +15,12 @@ import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
+import { orderedJSON } from "@mailwoman/core/json"
 
 /**
  * How a report is serialized, as the Python audit that wrote it serialized it.
  */
 export interface AuditReportOptions {
-	/**
-	 * `ensure_ascii`.
-	 *
-	 * The census audits kept Python's default, and `epoch_mixture`, `suffix_feed`
-	 * and `mixed_script` turned it off.
-	 *
-	 * @default true
-	 */
-	ensureASCII?: boolean
 	/**
 	 * Whether the file ends with a newline after the JSON.
 	 *
@@ -42,13 +30,10 @@ export interface AuditReportOptions {
 }
 
 /**
- * A report's text: `json.dumps(report, indent=2)` with the audit's `ensure_ascii`.
+ * A report's text: tab-indented JSON with each `Map` in its insertion order.
  */
 export function auditReportText(report: unknown, options: AuditReportOptions = {}): string {
-	return (
-		pythonJSONDumps(report, { indent: 2, ensureASCII: options.ensureASCII ?? true }) +
-		(options.trailingNewline ? "\n" : "")
-	)
+	return orderedJSON(report, { indent: "\t" }) + (options.trailingNewline ? "\n" : "")
 }
 
 /**
@@ -190,7 +175,7 @@ export async function writePreflightReceipt(
 	}
 
 	await writeLocalTextFile(
-		pythonJSONDumps(body, { indent: 2, sortKeys: true }) + "\n",
+		orderedJSON(body, { indent: "\t", sortKeys: true }) + "\n",
 		preflightReceiptPath(auditRoot, key)
 	)
 

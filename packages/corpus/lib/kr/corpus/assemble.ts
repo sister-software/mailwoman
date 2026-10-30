@@ -15,11 +15,11 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { isDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
 import { runFileSync } from "@mailwoman/core/process"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { asPythonFloat, type PythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { pythonSplitLines, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -353,8 +353,8 @@ export interface KRCorpusReport {
 	registers: ReadonlyMap<string, number>
 	char_vocab_size: number
 	centroid_units: number
-	fractions: { country: PythonFloat }
-	register_weights: ReadonlyMap<string, PythonFloat>
+	fractions: { country: number }
+	register_weights: ReadonlyMap<string, number>
 	splits: ReadonlyMap<string, CJKSplitReport>
 	board_coverage: CoverageStats
 	registry: KRRegistryReport
@@ -474,34 +474,28 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<KRCorpusR
 		boardRecords.push(record)
 
 		boardLines.push(
-			pythonJSONDumps(
-				{
-					raw: record.raw,
-					span_starts: record.span_starts,
-					span_ends: record.span_ends,
-					span_tags: record.span_tags,
-					register: record.register,
-					region: row.region,
-					city: row.sigungu,
-					district: parenthetical(row),
-					street: row.road,
-					number: row.number,
-					postcode: row.postcode,
-					lon: asPythonFloat(centroid[0]),
-					lat: asPythonFloat(centroid[1]),
-				},
-				{ ensureASCII: false }
-			)
+			orderedJSON({
+				raw: record.raw,
+				span_starts: record.span_starts,
+				span_ends: record.span_ends,
+				span_tags: record.span_tags,
+				register: record.register,
+				region: row.region,
+				city: row.sigungu,
+				district: parenthetical(row),
+				street: row.road,
+				number: row.number,
+				postcode: row.postcode,
+				lon: centroid[0],
+				lat: centroid[1],
+			})
 		)
 	}
 
 	await writeLocalTextFile(boardLines, resolvePath(outDir, "kr-board.jsonl"))
 
 	await writeLocalTextFile(
-		pythonJSONDumps(
-			new Map([...centroids].map(([key, [lon, lat]]) => [key, [asPythonFloat(lon), asPythonFloat(lat)]])),
-			{ ensureASCII: false }
-		) + "\n",
+		orderedJSON(new Map([...centroids].map(([key, [lon, lat]]) => [key, [lon, lat]]))) + "\n",
 		resolvePath(outDir, "kr-sigungu-centroids.json")
 	)
 
@@ -597,12 +591,12 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<KRCorpusR
 
 		const point = projected[cursor++]
 
-		entry.set("lon", point ? asPythonFloat(point[0]) : null)
-		entry.set("lat", point ? asPythonFloat(point[1]) : null)
+		entry.set("lon", point ? point[0] : null)
+		entry.set("lat", point ? point[1] : null)
 	}
 
 	await writeLocalTextFile(
-		registryBoard.map((entry) => pythonJSONDumps(entry, { ensureASCII: false })),
+		registryBoard.map((entry) => orderedJSON(entry)),
 		resolvePath(registryDir, "kr-registry-board.jsonl")
 	)
 
@@ -636,20 +630,17 @@ export async function buildKRCorpus(options: KRCorpusOptions): Promise<KRCorpusR
 		registers: new Map(mostCommon(registerCounts)),
 		char_vocab_size: vocab.size,
 		centroid_units: centroids.size,
-		fractions: { country: asPythonFloat(options.countryFraction) },
-		register_weights: new Map([...KR_REGISTER_WEIGHTS].map(([name, weight]) => [name, asPythonFloat(weight)])),
+		fractions: { country: options.countryFraction },
+		register_weights: new Map([...KR_REGISTER_WEIGHTS].map(([name, weight]) => [name, weight])),
 		splits,
 		board_coverage: coverageStats(boardRecords),
 		registry,
 	}
 
-	await writeLocalTextFile(
-		pythonJSONDumps(report, { indent: 2, ensureASCII: false }) + "\n",
-		resolvePath(outDir, "build-report.json")
-	)
+	await writeLocalTextFile(orderedJSON(report, { indent: "\t" }) + "\n", resolvePath(outDir, "build-report.json"))
 
 	await writeLocalTextFile(
-		pythonJSONDumps(registry, { indent: 2, ensureASCII: false }) + "\n",
+		orderedJSON(registry, { indent: "\t" }) + "\n",
 		resolvePath(registryDir, "build-report.json")
 	)
 

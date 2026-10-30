@@ -11,8 +11,8 @@
  *       [--stats-sample 50000] [--max-row-groups <n>] [--seed 42] [--force] [--unshippable-reason <why>]
  */
 
+import { orderedJSON } from "@mailwoman/core/json"
 import { integerArgument, parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 
 import { buildRegistryCorpus, REGISTRY_LOCALES, type RegistryLocale } from "#cjk/registry"
 import { openSourceRightsAdmission, writeSourceRightsRecord } from "#source-register/corpus-inputs"
@@ -64,6 +64,4 @@ const report = await buildRegistryCorpus({
 
 await writeSourceRightsRecord(admission.record(), outDir)
 
-console.log(
-	pythonJSONDumps(new Map([...report].filter(([key]) => key !== "splits")), { indent: 2, ensureASCII: false })
-)
+console.log(orderedJSON(new Map([...report].filter(([key]) => key !== "splits")), { indent: "\t" }))

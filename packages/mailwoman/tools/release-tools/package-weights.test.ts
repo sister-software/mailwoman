@@ -21,7 +21,7 @@ import {
 	noEvalReport,
 	parseEvalReport,
 	phaseLabel,
-	pythonJSONFileText,
+	packageFileText,
 	pythonPathString,
 	pythonUTCTimestamp,
 	renderReadme,
@@ -92,19 +92,19 @@ describe("model card", () => {
 		expect(() => buildModelCard(inputs({ addressSystemCount: 2 }))).toThrow(/registry/u)
 	})
 
-	test("writes floats the way json.dumps writes them", () => {
-		const text = pythonJSONFileText(buildModelCard(inputs({ evalReport: noEvalReport() })))
+	test("writes the card tab-indented with a trailing newline", () => {
+		const text = packageFileText(buildModelCard(inputs({ evalReport: noEvalReport() })))
 
-		expect(text).toContain('"duration_seconds": 0.0,')
-		expect(text).toContain('"full_parse_exact_match": 0.0,')
+		expect(text).toContain('\t\t"duration_seconds": 0,')
+		expect(text).toContain('"full_parse_exact_match": 0,')
 		expect(text).toContain('"started_at": null,')
 		expect(text.endsWith("}\n")).toBe(true)
 	})
 
-	test("keeps a report's float-written numbers as floats", () => {
-		const text = pythonJSONFileText(parseEvalReport('{"a": 1.0, "b": 1, "c": 1e-05, "d": [0.5]}'))
+	test("reads a report's numbers as numbers", () => {
+		const text = packageFileText(parseEvalReport('{"a": 1.0, "b": 1, "c": 1e-05, "d": [0.5]}'))
 
-		expect(text).toBe('{\n  "a": 1.0,\n  "b": 1,\n  "c": 1e-05,\n  "d": [\n    0.5\n  ]\n}\n')
+		expect(text).toBe('{\n\t"a": 1,\n\t"b": 1,\n\t"c": 0.00001,\n\t"d": [\n\t\t0.5\n\t]\n}\n')
 	})
 })
 

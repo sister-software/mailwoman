@@ -13,10 +13,10 @@
 
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { asPythonFloat, type PythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
@@ -119,8 +119,8 @@ export interface TWCorpusReport {
 	registers: ReadonlyMap<string, number>
 	char_vocab_size: number
 	centroid_units: number
-	fractions: { country: PythonFloat }
-	register_weights: ReadonlyMap<string, PythonFloat>
+	fractions: { country: number }
+	register_weights: ReadonlyMap<string, number>
 	splits: ReadonlyMap<string, CJKSplitReport>
 	board_coverage: CoverageStats
 }
@@ -257,24 +257,21 @@ export async function buildTWCorpus(options: TWCorpusOptions): Promise<TWCorpusR
 		boardRecords.push(record)
 
 		boardLines.push(
-			pythonJSONDumps(
-				{
-					raw: record.raw,
-					span_starts: record.span_starts,
-					span_ends: record.span_ends,
-					span_tags: record.span_tags,
-					register: record.register,
-					region,
-					city: district,
-					district: village,
-					street,
-					number: houseNumber,
-					unit,
-					lon: asPythonFloat(lon),
-					lat: asPythonFloat(lat),
-				},
-				{ ensureASCII: false }
-			)
+			orderedJSON({
+				raw: record.raw,
+				span_starts: record.span_starts,
+				span_ends: record.span_ends,
+				span_tags: record.span_tags,
+				register: record.register,
+				region,
+				city: district,
+				district: village,
+				street,
+				number: houseNumber,
+				unit,
+				lon,
+				lat,
+			})
 		)
 	}
 
@@ -287,15 +284,10 @@ export async function buildTWCorpus(options: TWCorpusOptions): Promise<TWCorpusR
 	if (overlap.length) throw new Error(`board 鄉鎮市區 leak into train/val: ${overlap.slice(0, 5).join(", ")}`)
 
 	const centroids = new Map(
-		[...centroidSums]
-			.filter(([, sums]) => sums[2])
-			.map(([key, [lon, lat, n]]) => [key, [asPythonFloat(lon / n), asPythonFloat(lat / n)]])
+		[...centroidSums].filter(([, sums]) => sums[2]).map(([key, [lon, lat, n]]) => [key, [lon / n, lat / n]])
 	)
 
-	await writeLocalTextFile(
-		pythonJSONDumps(centroids, { ensureASCII: false }) + "\n",
-		resolvePath(outDir, "tw-district-centroids.json")
-	)
+	await writeLocalTextFile(orderedJSON(centroids) + "\n", resolvePath(outDir, "tw-district-centroids.json"))
 
 	const vocab = await sealCharVocab(outDir, "char-vocab-tw.json")
 
@@ -316,16 +308,13 @@ export async function buildTWCorpus(options: TWCorpusOptions): Promise<TWCorpusR
 		registers: new Map(mostCommon(registerCounts)),
 		char_vocab_size: vocab.size,
 		centroid_units: centroids.size,
-		fractions: { country: asPythonFloat(options.countryFraction) },
-		register_weights: new Map([...TW_REGISTER_WEIGHTS].map(([name, weight]) => [name, asPythonFloat(weight)])),
+		fractions: { country: options.countryFraction },
+		register_weights: new Map([...TW_REGISTER_WEIGHTS].map(([name, weight]) => [name, weight])),
 		splits,
 		board_coverage: coverageStats(boardRecords),
 	}
 
-	await writeLocalTextFile(
-		pythonJSONDumps(report, { indent: 2, ensureASCII: false }) + "\n",
-		resolvePath(outDir, "build-report.json")
-	)
+	await writeLocalTextFile(orderedJSON(report, { indent: "\t" }) + "\n", resolvePath(outDir, "build-report.json"))
 
 	return report
 }

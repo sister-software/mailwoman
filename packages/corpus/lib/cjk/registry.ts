@@ -17,8 +17,8 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
-import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
@@ -286,7 +286,7 @@ export async function buildRegistryCorpus(options: RegistryCorpusOptions): Promi
 	}
 
 	await writeLocalTextFile(
-		board.map((entry) => pythonJSONDumps(entry, { ensureASCII: false })),
+		board.map((entry) => orderedJSON(entry)),
 		resolvePath(outDir, locale.board)
 	)
 
@@ -298,7 +298,7 @@ export async function buildRegistryCorpus(options: RegistryCorpusOptions): Promi
 		["label_set", CJK_LABEL_SET_NAME],
 		["seed", options.seed],
 		["alignment_census", counts],
-		["alignment_rate", asPythonFloat(alignmentRate)],
+		["alignment_rate", alignmentRate],
 		["board_bucket_min", locale.bucketMin],
 		["span_tags", new Map(mostCommon(tags))],
 		["splits", splits],
@@ -306,10 +306,7 @@ export async function buildRegistryCorpus(options: RegistryCorpusOptions): Promi
 		["char_vocab_size", vocab.size],
 	])
 
-	await writeLocalTextFile(
-		pythonJSONDumps(report, { indent: 2, ensureASCII: false }) + "\n",
-		resolvePath(outDir, "build-report.json")
-	)
+	await writeLocalTextFile(orderedJSON(report, { indent: "\t" }) + "\n", resolvePath(outDir, "build-report.json"))
 
 	return report
 }

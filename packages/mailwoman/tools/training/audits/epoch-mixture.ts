@@ -18,7 +18,6 @@
 
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
-import { asPythonFloat, type PythonFloat } from "@mailwoman/core/strings/python-json"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode } from "@mailwoman/mtf/tools/sampler/native"
 
@@ -225,7 +224,7 @@ export function auditEpochMixture(mtf: MTFNode, config: TrainingConfig, options:
 	)
 
 	const drawShare = new Map<string, number>()
-	const perSource: Record<string, Record<string, number | PythonFloat | null>> = {}
+	const perSource: Record<string, Record<string, number | null>> = {}
 
 	for (const source of [...new Set([...totals.keys(), ...requested.keys()])].toSorted()) {
 		const req = requested.get(source)
@@ -237,12 +236,12 @@ export function auditEpochMixture(mtf: MTFNode, config: TrainingConfig, options:
 		drawShare.set(source, share)
 
 		perSource[source] = {
-			requested_share: req == null ? null : asPythonFloat(req),
+			requested_share: req == null ? null : req,
 			draws: drawn,
-			draw_share: asPythonFloat(share),
-			max_window_relative_deviation: asPythonFloat(deviations.length ? Math.max(...deviations) : 0),
+			draw_share: share,
+			max_window_relative_deviation: deviations.length ? Math.max(...deviations) : 0,
 			rows: rows ?? null,
-			reps_per_row: rows ? asPythonFloat(drawn / rows) : null,
+			reps_per_row: rows ? drawn / rows : null,
 		}
 	}
 
@@ -263,7 +262,7 @@ export function auditEpochMixture(mtf: MTFNode, config: TrainingConfig, options:
 		emitted++
 	}
 
-	const emittedPerSource: Record<string, Record<string, number | PythonFloat | null>> = {}
+	const emittedPerSource: Record<string, Record<string, number | null>> = {}
 
 	for (const source of [...new Set([...emittedTotals.keys(), ...requested.keys()])].toSorted()) {
 		const share = emitted ? (emittedTotals.get(source) ?? 0) / emitted : 0
@@ -271,8 +270,8 @@ export function auditEpochMixture(mtf: MTFNode, config: TrainingConfig, options:
 
 		emittedPerSource[source] = {
 			emitted: emittedTotals.get(source) ?? 0,
-			emitted_share: asPythonFloat(share),
-			distortion_vs_draw_share: drawnShare ? asPythonFloat(share / drawnShare) : null,
+			emitted_share: share,
+			distortion_vs_draw_share: drawnShare ? share / drawnShare : null,
 		}
 	}
 
@@ -289,7 +288,7 @@ export function auditEpochMixture(mtf: MTFNode, config: TrainingConfig, options:
 	const countryCodes = Object.keys(config.data.country_weights).toSorted()
 
 	const report = {
-		requested: Object.fromEntries([...requested].map(([source, share]) => [source, asPythonFloat(share)])),
+		requested: Object.fromEntries([...requested].map(([source, share]) => [source, share])),
 		draw_level: {
 			totals: dictOf(totals),
 			windows: windows.map(dictOf),
@@ -305,7 +304,7 @@ export function auditEpochMixture(mtf: MTFNode, config: TrainingConfig, options:
 			totals: dictOf(emittedTotals),
 			per_source: emittedPerSource,
 			by_country: Object.fromEntries(mostCommon(emittedCountries)),
-			augmented_share: asPythonFloat(emitted ? augmentedRows / emitted : 0),
+			augmented_share: emitted ? augmentedRows / emitted : 0,
 		},
 		meta: {
 			seed: options.seed,

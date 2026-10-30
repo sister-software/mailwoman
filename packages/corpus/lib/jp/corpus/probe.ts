@@ -18,9 +18,9 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { countInto } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { resolvePath } from "path-ts"
 
 import {
@@ -368,7 +368,7 @@ export async function buildJPProbeCorpus(options: JPProbeOptions): Promise<Map<s
 				rng.random() < options.postcodeFraction ? postcode : null
 			)
 
-			return pythonJSONDumps(
+			return orderedJSON(
 				new Map<string, unknown>([
 					["raw", rendered.raw],
 					["span_starts", rendered.span_starts],
@@ -378,10 +378,9 @@ export async function buildJPProbeCorpus(options: JPProbeOptions): Promise<Map<s
 					["muni", row.muni],
 					["street", row.street],
 					["number", row.number],
-					["lon", asPythonFloat(row.lon)],
-					["lat", asPythonFloat(row.lat)],
-				]),
-				{ ensureASCII: false }
+					["lon", row.lon],
+					["lat", row.lat],
+				])
 			)
 		}),
 		resolvePath(options.outDir, "jp-probe-board.jsonl")
@@ -417,12 +416,12 @@ export async function buildJPProbeCorpus(options: JPProbeOptions): Promise<Map<s
 			]),
 		],
 		["char_vocab_size", vocab.size],
-		["postcode_fraction", asPythonFloat(options.postcodeFraction)],
+		["postcode_fraction", options.postcodeFraction],
 		["source_parquet", options.parquet],
 	])
 
 	await writeLocalTextFile(
-		pythonJSONDumps(report, { indent: 2 }) + "\n",
+		orderedJSON(report, { indent: "\t" }) + "\n",
 		resolvePath(options.outDir, "build-report.json")
 	)
 

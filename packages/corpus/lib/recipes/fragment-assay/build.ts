@@ -12,9 +12,9 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { pythonSplitWhitespace, pythonStrip } from "@mailwoman/core/strings/python-text"
 import { TextSpliterator } from "spliterator"
 
@@ -429,7 +429,7 @@ export async function buildFragmentAssay(options: FragmentAssayOptions): Promise
 	await writeColumnParquetFile(train, FRAGMENT_COLUMNS, options.outParquet)
 
 	await writeLocalTextFile(
-		dev.map((row) => pythonJSONDumps(row, { ensureASCII: false })),
+		dev.map((row) => orderedJSON(row)),
 		options.outDev
 	)
 

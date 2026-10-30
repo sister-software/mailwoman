@@ -10,8 +10,8 @@
  *       --out-dir $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-cjk-foreign-places-<date> [--force]
  */
 
+import { orderedJSON } from "@mailwoman/core/json"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 
 import { buildForeignPlaces } from "#cjk/foreign-places"
 
@@ -33,4 +33,4 @@ const report = await buildForeignPlaces({
 	force: values.force,
 })
 
-console.log(pythonJSONDumps(report, { indent: 2, ensureASCII: false }))
+console.log(orderedJSON(report, { indent: "\t" }))

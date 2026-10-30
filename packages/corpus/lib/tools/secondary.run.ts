@@ -12,8 +12,8 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { dirname, resolvePath } from "path-ts"
 
 import { ParquetColumnKind, type ParquetColumns, writeColumnParquetFile } from "#parquet/writers"
@@ -76,7 +76,7 @@ await writeColumnParquetFile(await stampRowLicenses(rows, CONTEXT), SECONDARY_CO
 await writeLocalTextFile(
 	rows
 		.slice(0, DEV_ROWS)
-		.map((row) => pythonJSONDumps(row, { ensureASCII: false }) + "\n")
+		.map((row) => orderedJSON(row) + "\n")
 		.join(""),
 	outDev
 )

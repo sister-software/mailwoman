@@ -10,9 +10,8 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { stringifyJSON, orderedJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { asPythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -58,8 +57,7 @@ interface Reference {
 	emitted: string[][]
 }
 
-const digest = (value: unknown) =>
-	sha256Hex(typeof value === "string" ? value : pythonJSONDumps(value, { ensureASCII: false }))
+const digest = (value: unknown) => sha256Hex(typeof value === "string" ? value : orderedJSON(value))
 
 const SEEDS: TranslitSeed[] = [
 	{
@@ -120,7 +118,7 @@ describe("the DeepSeek generator's deterministic halves", async () => {
 							["category", category.category],
 							["description", category.description],
 							["examples", category.examples],
-							["weight", asPythonFloat(category.weight)],
+							["weight", category.weight],
 						])
 				)
 			)

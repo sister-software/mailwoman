@@ -14,10 +14,10 @@
 
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { pySum } from "@mailwoman/core/numeric"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { asPythonFloat, type PythonFloat, pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
@@ -332,8 +332,6 @@ class JPRowEncoder {
 	}
 }
 
-const pythonNumber = (value: number | null) => (value === null ? null : asPythonFloat(value))
-
 /**
  * The JP build report, which `build-report.json` serializes in this key order.
  */
@@ -356,8 +354,8 @@ export interface JPCorpusReport {
 	kenall_join_tiers: ReadonlyMap<string, number>
 	register_availability: ReadonlyMap<string, number>
 	char_vocab_size: number
-	fractions: { postcode: PythonFloat; country: PythonFloat; spaced: PythonFloat; variant_hyphen: PythonFloat }
-	register_weights: ReadonlyMap<string, PythonFloat>
+	fractions: { postcode: number; country: number; spaced: number; variant_hyphen: number }
+	register_weights: ReadonlyMap<string, number>
 	upweight: { pattern: string | null; copies_appended: number }
 	splits: ReadonlyMap<string, CJKSplitReport>
 	board_coverage: CoverageStats
@@ -407,7 +405,7 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<JPCorpusR
 		splits.set(split, report)
 
 		console.log(
-			`${split}: ${report.rows.toLocaleString("en-US")} rows in ${report.parts} parts; BIO char coverage ${report.coverage.bio_char_coverage_significant.value.toFixed(4)}`
+			`${split}: ${report.rows.toLocaleString("en-US")} rows in ${report.parts} parts; BIO char coverage ${report.coverage.bio_char_coverage_significant.toFixed(4)}`
 		)
 	}
 
@@ -421,22 +419,19 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<JPCorpusR
 		boardRecords.push(record)
 
 		boardLines.push(
-			pythonJSONDumps(
-				{
-					raw: record.raw,
-					span_starts: record.span_starts,
-					span_ends: record.span_ends,
-					span_tags: record.span_tags,
-					register: record.register,
-					pref: prefecture,
-					muni: municipality,
-					street,
-					number,
-					lon: pythonNumber(lon),
-					lat: pythonNumber(lat),
-				},
-				{ ensureASCII: false }
-			)
+			orderedJSON({
+				raw: record.raw,
+				span_starts: record.span_starts,
+				span_ends: record.span_ends,
+				span_tags: record.span_tags,
+				register: record.register,
+				pref: prefecture,
+				muni: municipality,
+				street,
+				number,
+				lon,
+				lat,
+			})
 		)
 	}
 
@@ -476,18 +471,18 @@ export async function buildJPCorpus(options: JPCorpusOptions): Promise<JPCorpusR
 		register_availability: encoder.registerAvailability,
 		char_vocab_size: vocab.size,
 		fractions: {
-			postcode: asPythonFloat(options.postcodeFraction),
-			country: asPythonFloat(options.countryFraction),
-			spaced: asPythonFloat(options.spacedFraction),
-			variant_hyphen: asPythonFloat(options.variantHyphenFraction),
+			postcode: options.postcodeFraction,
+			country: options.countryFraction,
+			spaced: options.spacedFraction,
+			variant_hyphen: options.variantHyphenFraction,
 		},
-		register_weights: new Map([...JP_REGISTER_WEIGHTS].map(([name, weight]) => [name, asPythonFloat(weight)])),
+		register_weights: new Map([...JP_REGISTER_WEIGHTS].map(([name, weight]) => [name, weight])),
 		upweight: { pattern: options.upweightPattern ?? null, copies_appended: selection.upweighted },
 		splits,
 		board_coverage: coverageStats(boardRecords),
 	}
 
-	const text = pythonJSONDumps(report, { indent: 2, ensureASCII: false })
+	const text = orderedJSON(report, { indent: "\t" })
 
 	await writeLocalTextFile(text + "\n", resolvePath(outDir, "build-report.json"))
 

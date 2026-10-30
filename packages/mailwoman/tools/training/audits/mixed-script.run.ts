@@ -57,7 +57,7 @@ report.set(
 )
 
 if (values.json) {
-	await writeAuditReport(values.json, report, { ensureASCII: false, trailingNewline: true })
+	await writeAuditReport(values.json, report, { trailingNewline: true })
 }
 
 const totals = report.get("totals") as Map<string, number | { value: number }>

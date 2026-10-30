@@ -16,8 +16,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 
 import { claimFromArgument, completedRun, type ExposureForms, loadFloors, preflight, refused } from "./release-check.ts"
 
@@ -49,6 +49,6 @@ const findings =
 		? preflight(report, claims, epochs)
 		: completedRun(report, claims, await loadFloors(), values["contrast-failure"])
 
-console.log(pythonJSONDumps(findings, { indent: 2, ensureASCII: false }))
+console.log(orderedJSON(findings, { indent: "\t" }))
 
 process.exitCode = refused(findings) ? 1 : 0

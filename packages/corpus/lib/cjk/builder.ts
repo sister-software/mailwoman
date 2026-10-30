@@ -19,7 +19,6 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { countInto, mostCommon } from "@mailwoman/core/stats"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { asPythonFloat, type PythonFloat } from "@mailwoman/core/strings/python-json"
 import { pythonIsSpace, pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -533,8 +532,8 @@ const ranked = (counts: ReadonlyMap<string, number>): Map<string, number> => new
  */
 export interface CoverageStats {
 	rows: number
-	bio_char_coverage_all: PythonFloat
-	bio_char_coverage_significant: PythonFloat
+	bio_char_coverage_all: number
+	bio_char_coverage_significant: number
 	raw_len_min_median_max: [number, number, number] | null
 	registers: Map<string, number>
 	per_tag_rows: Map<string, number>
@@ -596,8 +595,8 @@ export function coverageStats(
 
 	return {
 		rows,
-		bio_char_coverage_all: asPythonFloat(total ? pyRound(labeled / total, COVERAGE_DIGITS) : 0),
-		bio_char_coverage_significant: asPythonFloat(significant ? pyRound(labeled / significant, COVERAGE_DIGITS) : 0),
+		bio_char_coverage_all: total ? pyRound(labeled / total, COVERAGE_DIGITS) : 0,
+		bio_char_coverage_significant: significant ? pyRound(labeled / significant, COVERAGE_DIGITS) : 0,
 		raw_len_min_median_max: lengths.length
 			? [lengths[0]!, lengths[Math.floor(lengths.length / 2)]!, lengths.at(-1)!]
 			: null,

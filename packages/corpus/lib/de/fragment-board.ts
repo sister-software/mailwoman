@@ -20,9 +20,9 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { orderedJSON } from "@mailwoman/core/json"
 import { codePointLength } from "@mailwoman/core/strings/code-points"
 import { compareByScalarValue } from "@mailwoman/core/strings/compare"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 import { pythonSplitWhitespace } from "@mailwoman/core/strings/python-text"
 import { basename, dirname } from "path-ts"
 
@@ -233,10 +233,7 @@ export async function buildDEFragmentBoard(options: DEFragmentBoardOptions): Pro
 
 		for (const [index, row] of rows.entries()) {
 			lines.push(
-				pythonJSONDumps(
-					{ klass, ...row, source: "overture:de", id: `ovt-de-${klass}-${String(index).padStart(5, "0")}` },
-					{ ensureASCII: false }
-				)
+				orderedJSON({ klass, ...row, source: "overture:de", id: `ovt-de-${klass}-${String(index).padStart(5, "0")}` })
 			)
 
 			surfaces.add(row.surface)

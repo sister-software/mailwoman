@@ -12,8 +12,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { orderedJSON } from "@mailwoman/core/json"
 import { integerArgument, parseArguments } from "@mailwoman/core/scripting/arguments"
-import { pythonJSONDumps } from "@mailwoman/core/strings/python-json"
 
 import { buildJPProbeCorpus, JP_PROBE_DEFAULTS, JP_PROBE_SOURCE } from "#jp/corpus/probe"
 import { jpOvertureParquetPath, kenAllPath } from "#jp/corpus/sources"
@@ -57,4 +57,4 @@ const report = await buildJPProbeCorpus({
 
 await writeSourceRightsRecord(admission.record(), outDir)
 
-console.log(pythonJSONDumps(report, { indent: 2 }))
+console.log(orderedJSON(report, { indent: "\t" }))
