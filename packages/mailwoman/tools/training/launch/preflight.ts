@@ -42,32 +42,45 @@ export type PreflightAudit = (typeof PreflightAudit)[keyof typeof PreflightAudit
 
 /**
  * The audit command each declared audit runs, and how it takes the config.
+ *
+ * `script` is the command's path under `audits/`, and `report` the stem of the report file it writes.
+ * The report stems are the names earlier receipts recorded.
  */
 const AUDIT_COMMANDS: ReadonlyArray<{
 	audit: PreflightAudit
 	declared: (data: TrainingConfig["data"]) => boolean
 	script: string
+	report: string
 	args: (config: string, json: string) => string[]
 }> = [
 	{
 		audit: PreflightAudit.CorpusReceipts,
 		declared: (data) => data.required_corpus_receipts.length > 0,
-		script: "epoch-mixture.run.ts",
+		script: "epoch/mixture.run.ts",
+		report: "epoch-mixture",
 		args: (config, json) => ["--config", config, "--json", json],
 	},
 	{
 		audit: PreflightAudit.ValidationCoverage,
 		declared: (data) => data.required_validation_coverage.length > 0,
-		script: "validation-coverage.run.ts",
+		script: "validation/coverage.run.ts",
+		report: "validation-coverage",
 		args: (config, json) => [config, "--json", json],
 	},
 	{
 		audit: PreflightAudit.ValidationLabelSupport,
 		declared: (data) => data.required_validation_label_support.length > 0,
-		script: "label-support.run.ts",
+		script: "label/support.run.ts",
+		report: "label-support",
 		args: (config, json) => [config, "--json", json],
 	},
 ]
+
+/**
+ * The audit scripts the preflight runs, as paths relative to `audits/`,
+ * for the test that checks each exists.
+ */
+export const AUDIT_SCRIPTS = AUDIT_COMMANDS.map((command) => command.script)
 
 export interface HostPreflightOptions {
 	/**
@@ -122,7 +135,7 @@ export async function hostPreflight(
 	for (const command of AUDIT_COMMANDS) {
 		if (!command.declared(typed.data)) continue
 
-		const json = `${auditRoot}/${command.script.replace(/\.run\.ts$/, "")}-${stem}.json`
+		const json = `${auditRoot}/${command.report}-${stem}.json`
 		const script = repoRootPath("packages", "mailwoman", "tools", "training", "audits", command.script).toString()
 
 		await runFile(process.execPath, [script, ...command.args(rerooted, json)], { maxBuffer: 64 * 1024 * 1024 })
