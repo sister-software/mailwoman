@@ -167,6 +167,9 @@ nightshift
 ### Never commit shell scripts. Use `.ts` or `.tsx`.
 .sh
 
+### Never commit Python. Use TypeScript or Rust
+.py
+
 # TypeScript incremental build state
 *.tsbuildinfo
 
