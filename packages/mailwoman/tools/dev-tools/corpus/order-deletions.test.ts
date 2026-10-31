@@ -99,8 +99,8 @@ describe("findReversedRows and writeSourceIDSidecar", () => {
 		using db = await openDuckDB()
 
 		await db.run(
-			`COPY (SELECT raw, string_split(raw, ' ') AS tokens, list_transform(string_split(raw, ' '), t -> 'O') AS labels,
-				span_starts, list_transform(span_starts, s -> s + 1) AS span_ends, span_tags, country, 'es-ES' AS locale,
+			`COPY (SELECT raw, string_split(raw, ' ') AS tokens, list_transform(string_split(raw, ' '), lambda t: 'O') AS labels,
+				span_starts, list_transform(span_starts, lambda s: s + 1) AS span_ends, span_tags, country, 'es-ES' AS locale,
 				'overture' AS source, source_id, 'x' AS license, NULL::VARCHAR AS register, 'address' AS surface,
 				NULL::VARCHAR AS augmentation, NULL::VARCHAR AS base_source_id
 			FROM (VALUES
