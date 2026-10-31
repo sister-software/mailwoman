@@ -36,7 +36,9 @@ import { LayerTier } from "@mailwoman/core/layers"
 import { pyRound } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { isoDate, isoSecondsUTC } from "@mailwoman/core/utils"
-import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
+import type { ParsedGeometry } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
+import { geometryContains } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
@@ -154,7 +156,7 @@ export class ProximityGrid<Entry> {
 			for (const dy of [-1, 0, 1]) {
 				for (const entry of this.#cells.get(`${cx + dx}|${cy + dy}`) ?? []) {
 					const [entryLat, entryLon] = this.#positionOf(entry)
-					const d = haversineKm(latitude, longitude, entryLat, entryLon)
+					const d = haversine(latitude, longitude, entryLat, entryLon)
 
 					if (d <= radiusKM) {
 						out.push({ d, entry })

@@ -30,7 +30,7 @@
  */
 
 import type { InterpolationLookup } from "@mailwoman/core/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { AddressPointDatabase } from "#address/point/schema"
@@ -185,7 +185,7 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 
 	if (below && above) {
 		const t = (n - below.n) / (above.n - below.n)
-		const spanM = haversineKm(below.lat, below.lon, above.lat, above.lon) * 1000
+		const spanM = haversine(below.lat, below.lon, above.lat, above.lon) * 1000
 
 		return {
 			lat: below.lat + (above.lat - below.lat) * t,
@@ -212,8 +212,8 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 
 	const lat = far.lat + (near.lat - far.lat) * t
 	const lon = far.lon + (near.lon - far.lon) * t
-	const pairM = haversineKm(near.lat, near.lon, far.lat, far.lon) * 1000
-	const overshootM = haversineKm(lat, lon, near.lat, near.lon) * 1000
+	const pairM = haversine(near.lat, near.lon, far.lat, far.lon) * 1000
+	const overshootM = haversine(lat, lon, near.lat, near.lon) * 1000
 
 	return {
 		lat,

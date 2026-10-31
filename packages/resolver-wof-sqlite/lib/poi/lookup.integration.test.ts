@@ -14,7 +14,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { haversine, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
@@ -254,7 +254,7 @@ describe("POILookup", () => {
 
 		// Sanity: the app-level distance matches a plain haversine of the same pair.
 		expect(hits[0]!.distanceM).toBeCloseTo(
-			haversineKm(SPRINGFIELD.latitude, SPRINGFIELD.longitude, CAFE_ALPHA.latitude, CAFE_ALPHA.longitude) * 1000,
+			haversine(SPRINGFIELD.latitude, SPRINGFIELD.longitude, CAFE_ALPHA.latitude, CAFE_ALPHA.longitude) * 1000,
 			0
 		)
 	})

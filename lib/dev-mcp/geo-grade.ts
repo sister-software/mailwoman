@@ -12,7 +12,8 @@
  *   "not equivalent and not different", the answer an underpowered run should give.
  */
 
-import { haversineKm, type NullableLatLon } from "@mailwoman/spatial"
+import type { NullableLatLon } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { normalCDF, type RowGrade } from "#dev-mcp/grade"
 import { wilsonInterval } from "#dev-mcp/power"
@@ -49,7 +50,7 @@ const PERCENT = 100
 export function distanceKm(answer: NullableLatLon, truthLat: number, truthLon: number): number | null {
 	if (answer.lat === null || answer.lon === null) return null
 
-	return haversineKm(answer.lat, answer.lon, truthLat, truthLon)
+	return haversine(answer.lat, answer.lon, truthLat, truthLon)
 }
 
 /**

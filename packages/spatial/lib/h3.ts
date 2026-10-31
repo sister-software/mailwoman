@@ -6,7 +6,8 @@
 
 import { cellToLatLng } from "h3-js"
 
-import { GeoPoint, type PointLiteral } from "#geometries/point"
+import { GeoPoint } from "#geometries/point"
+import type { PointLiteral } from "#geometries/point/coordinates"
 import { type H3Cell, type H3CellShort, expandH3Cell } from "#h3/cell"
 
 export * from "#h3/cell"

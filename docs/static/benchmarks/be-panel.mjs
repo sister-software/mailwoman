@@ -48,7 +48,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { geocodeAddress } from "mailwoman/geocode-core"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -275,7 +275,7 @@ async function runArm(arm, panel) {
 			comparable,
 			// `null` here means "not measured because a side returned no coordinate",
 			// which is a different fact from "measured, and the two sides disagree by 0 km".
-			km: comparable ? Number(haversineKm(a.lat, a.lon, b.lat, b.lon).toFixed(4)) : null,
+			km: comparable ? Number(haversine(a.lat, a.lon, b.lat, b.lon).toFixed(4)) : null,
 			sameTier: bucket.length === 2 ? a.tier === b.tier : null,
 		}
 	})

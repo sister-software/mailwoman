@@ -21,7 +21,7 @@ import {
 	type ResolveSwitches,
 } from "@mailwoman/core/resolver"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { decorateNode, isResolvedWithCoord } from "#decorate-node"
 import type { CoordinateOptionalPlace } from "#postcode/prefix"
@@ -511,7 +511,7 @@ async function reconcileLocalitiesToAnchor(
 	const nearest = (places: readonly ResolvedPlace[]) =>
 		places
 			.filter((a) => a.lat !== 0 || a.lon !== 0)
-			.map((a) => ({ a, d: haversineKm(anchor.lat, anchor.lon, a.lat, a.lon) }))
+			.map((a) => ({ a, d: haversine(anchor.lat, anchor.lon, a.lat, a.lon) }))
 			.filter((x) => x.d <= thresholdKm)
 			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 			.sort((x, y) => x.d - y.d)[0]
@@ -519,7 +519,7 @@ async function reconcileLocalitiesToAnchor(
 	for (const node of walkNodes(roots)) {
 		if ((node.tag !== "locality" && node.tag !== "dependent_locality") || !isResolvedWithCoord(node)) continue
 
-		const gapKm = haversineKm(anchor.lat, anchor.lon, node.lat!, node.lon!)
+		const gapKm = haversine(anchor.lat, anchor.lon, node.lat!, node.lon!)
 
 		if (gapKm <= thresholdKm) continue
 

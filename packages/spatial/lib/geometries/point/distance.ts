@@ -2,14 +2,19 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Great-circle distances between `GeoPointInput` values.
+ * @file Great-circle distances between `GeoPointInput` values or plain coordinates.
  *
- *   These take the object form, so they import `GeoPoint`, and through it h3-js. A caller with plain coordinates uses
- *   `haversineKm` or `centralAngle` from `#distance`, which import neither.
+ *   This module imports no runtime geometry class. `GeoPoint` imports h3-js, and a distance must not pay for that.
+ *   Points are read through `#geometries/point/coordinates` instead.
  */
 
 import { BODY_RADII_KM, centralAngle, EARTH_RADII, type EarthRadiusUnit, type GreatCircleOptions } from "#distance"
-import { GeoPoint, type GeoPointInput } from "#geometries/point"
+import { type GeoPointInput, readPointCoordinates } from "#geometries/point/coordinates"
+
+/**
+ * A coordinate component that may be absent, such as a geocoder's `lat` and `lon` when it returned no point.
+ */
+type MaybeCoordinate = number | null | undefined
 
 /**
  * Calculate the distance between two points on the Earth's surface.
@@ -23,13 +28,70 @@ import { GeoPoint, type GeoPointInput } from "#geometries/point"
  *
  * @returns The distance between the two points in the specified unit.
  */
-export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: EarthRadiusUnit = "km"): number {
-	const p1 = GeoPoint.from(point1)
-	const p2 = GeoPoint.from(point2)
+export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit?: EarthRadiusUnit): number
 
-	if (!p1 || !p2) return Number.NaN
+/**
+ * Calculate the distance between two coordinates in decimal degrees on the Earth's surface.
+ *
+ * Unlike the object form, this is pure math with no Null-Island sentinel: `(0, 0)` is
+ * the Gulf of Guinea — a real point rather than a "missing coordinate".
+ *
+ * @category Position
+ * @returns The distance between the two coordinates in the specified unit.
+ */
+export function haversine(aLat: number, aLon: number, bLat: number, bLon: number, unit?: EarthRadiusUnit): number
 
-	return EARTH_RADII[unit] * centralAngle(p1.latitude, p1.longitude, p2.latitude, p2.longitude)
+/**
+ * Calculate the distance between two coordinates, either of which may be absent.
+ *
+ * Answers `null` when any component is `null` or `undefined`, so a geocoder's
+ * `{ lat: number | null, lon: number | null }` pair needs no guard or non-null assertion.
+ *
+ * @category Position
+ * @returns The distance in the specified unit, or `null` when a component is absent.
+ */
+export function haversine(
+	aLat: MaybeCoordinate,
+	aLon: MaybeCoordinate,
+	bLat: MaybeCoordinate,
+	bLon: MaybeCoordinate,
+	unit?: EarthRadiusUnit
+): number | null
+
+export function haversine(
+	...args:
+		| [point1: GeoPointInput, point2: GeoPointInput, unit?: EarthRadiusUnit]
+		| [
+				aLat: MaybeCoordinate,
+				aLon: MaybeCoordinate,
+				bLat: MaybeCoordinate,
+				bLon: MaybeCoordinate,
+				unit?: EarthRadiusUnit,
+		  ]
+): number | null {
+	const [first] = args
+
+	if (typeof first === "object" && first !== null) {
+		const [point1, point2, unit = "km"] = args as [GeoPointInput, GeoPointInput, EarthRadiusUnit?]
+		const p1 = readPointCoordinates(point1)
+		const p2 = readPointCoordinates(point2)
+
+		if (!p1 || !p2) return Number.NaN
+
+		return EARTH_RADII[unit] * centralAngle(p1[1], p1[0], p2[1], p2[0])
+	}
+
+	const [aLat, aLon, bLat, bLon, unit = "km"] = args as [
+		MaybeCoordinate,
+		MaybeCoordinate,
+		MaybeCoordinate,
+		MaybeCoordinate,
+		EarthRadiusUnit?,
+	]
+
+	if (aLat == null || aLon == null || bLat == null || bLon == null) return null
+
+	return EARTH_RADII[unit] * centralAngle(aLat, aLon, bLat, bLon)
 }
 
 /**

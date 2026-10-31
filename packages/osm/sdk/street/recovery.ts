@@ -6,7 +6,7 @@
  *   Recovers a missing `addr:street` from the nearest highway with a name within a bounded radius.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr/stream"
 
 /**
@@ -70,7 +70,7 @@ export class StreetRecoveryIndex {
 				if (!cell) continue
 
 				for (const v of cell) {
-					const km = haversineKm(lat, lon, v.lat, v.lon)
+					const km = haversine(lat, lon, v.lat, v.lon)
 
 					if (km <= maxKm && (!best || km < best.km)) {
 						best = { name: v.name, km }
@@ -94,7 +94,7 @@ function* densify(coords: number[][]): Generator<[number, number]> {
 
 		if (i + 1 < coords.length) {
 			const [lon2, lat2] = coords[i + 1] as [number, number]
-			const km = haversineKm(lat, lon, lat2, lon2)
+			const km = haversine(lat, lon, lat2, lon2)
 			const steps = Math.floor(km / DENSIFY_KM)
 
 			for (let s = 1; s < steps; s++) {

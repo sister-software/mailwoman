@@ -155,7 +155,7 @@ test("prefer-home matches the chain as a suffix of a longer call chain", () => {
 
 test("prefer-home names the home for a re-typed constant and ignores other numbers", () => {
 	expect(reportsFor("prefer-home", numeric(6371))[0]).toContain("`@mailwoman/spatial`")
-	expect(reportsFor("prefer-home", numeric(6_371_000))[0]).toContain("haversineKm")
+	expect(reportsFor("prefer-home", numeric(6_371_000))[0]).toContain("haversine")
 	expect(reportsFor("prefer-home", numeric(0x6d_2b_79_f5))[0]).toContain("`mulberry32`")
 	expect(reportsFor("prefer-home", numeric(1_013_904_223))[0]).toContain("`makeLcg`")
 	expect(reportsFor("prefer-home", numeric(6372))).toEqual([])

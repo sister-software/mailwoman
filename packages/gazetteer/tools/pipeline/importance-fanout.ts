@@ -15,7 +15,7 @@
  * does not include.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 /**
  * A WOF place one Wikidata id claims to name.
@@ -71,7 +71,7 @@ export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[])
 		for (let j = i + 1; j < candidates.length; j++) {
 			const a = candidates[i]!
 			const b = candidates[j]!
-			maxSpread = Math.max(maxSpread, haversineKm(a.lat, a.lon, b.lat, b.lon))
+			maxSpread = Math.max(maxSpread, haversine(a.lat, a.lon, b.lat, b.lon))
 
 			if (maxSpread > FANOUT_SPREAD_EPSILON_KM) break
 		}

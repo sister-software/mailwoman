@@ -17,12 +17,12 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { percentile } from "@mailwoman/core/stats"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * Meters per kilometer — {@link haversineKm} returns km and every figure here is reported in meters.
+ * Meters per kilometer — {@link haversine} returns km and every figure here is reported in meters.
  */
 const M_PER_KM = 1000
 
@@ -280,7 +280,7 @@ export function runCodePointCheck(options: RunCodePointCheckOptions): CodePointC
 				continue
 			}
 
-			const meters = haversineKm(row.latitude, row.longitude, match.latitude, match.longitude) * M_PER_KM
+			const meters = haversine(row.latitude, row.longitude, match.latitude, match.longitude) * M_PER_KM
 
 			deltas.push(meters)
 			deltaSum += meters
@@ -375,14 +375,14 @@ export function runCodePointCheck(options: RunCodePointCheckOptions): CodePointC
 					? {
 							...cp,
 							metersFromExpected:
-								haversineKm(cp.latitude, cp.longitude, expected.latitude, expected.longitude) * M_PER_KM,
+								haversine(cp.latitude, cp.longitude, expected.latitude, expected.longitude) * M_PER_KM,
 						}
 					: null,
 				incumbent: inc
 					? {
 							...inc,
 							metersFromExpected:
-								haversineKm(inc.latitude, inc.longitude, expected.latitude, expected.longitude) * M_PER_KM,
+								haversine(inc.latitude, inc.longitude, expected.latitude, expected.longitude) * M_PER_KM,
 						}
 					: null,
 			}

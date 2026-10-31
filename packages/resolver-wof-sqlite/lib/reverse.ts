@@ -24,7 +24,10 @@
 
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { allRows } from "@mailwoman/core/utils"
-import { bboxAround, geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
+import type { ParsedGeometry } from "@mailwoman/spatial"
+import { bboxAround } from "@mailwoman/spatial/bbox"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
+import { geometryContains } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 import type { PathBuilderLike } from "path-ts"
@@ -311,7 +314,7 @@ export class WOFReverseGeocoder implements Disposable {
 			let bestKm = Infinity
 
 			for (const c of pointOnly) {
-				const km = haversineKm(lat, lon, c.lat, c.lon)
+				const km = haversine(lat, lon, c.lat, c.lon)
 
 				if (km < bestKm) {
 					bestKm = km
@@ -325,7 +328,7 @@ export class WOFReverseGeocoder implements Disposable {
 		// Approximate descent into finer tiers than the winner.
 		let current = winner
 		let currentConfirmed = winnerConfirmed
-		let currentDistanceKm = currentConfirmed ? null : haversineKm(lat, lon, current.lat, current.lon)
+		let currentDistanceKm = currentConfirmed ? null : haversine(lat, lon, current.lat, current.lon)
 
 		for (const tier of DESCENT_TIERS) {
 			if (placetypeDepth(tier) <= placetypeDepth(current.placetype)) continue
@@ -349,7 +352,7 @@ export class WOFReverseGeocoder implements Disposable {
 				}
 
 				if (contains === false) continue // known not-here, polygon rejected
-				const km = haversineKm(lat, lon, k.lat, k.lon)
+				const km = haversine(lat, lon, k.lat, k.lon)
 
 				if (km <= maxApproximateKm && km < bestKm) {
 					bestKm = km

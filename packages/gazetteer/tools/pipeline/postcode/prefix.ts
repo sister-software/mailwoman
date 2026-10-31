@@ -22,7 +22,7 @@ import { isZipCode } from "@mailwoman/codex/us"
 import type { PostcodePrefixAncestor, PostcodePrefixNode } from "@mailwoman/core/resolver"
 import { percentile } from "@mailwoman/core/stats"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
@@ -332,7 +332,7 @@ export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): B
 
 			const lat = sumLat / members.length
 			const lon = sumLon / members.length
-			const distances = members.map(([mLat, mLon]) => haversineKm(lat, lon, mLat, mLon))
+			const distances = members.map(([mLat, mLon]) => haversine(lat, lon, mLat, mLon))
 			const radiusP95Km = percentile(distances, 95)!
 
 			node.lat = lat
@@ -386,7 +386,7 @@ function centroidWithRadius(members: ReadonlyArray<readonly [number, number]>): 
 		lat,
 		lon,
 		radiusP95Km: percentile(
-			members.map(([mLat, mLon]) => haversineKm(lat, lon, mLat, mLon)),
+			members.map(([mLat, mLon]) => haversine(lat, lon, mLat, mLon)),
 			95
 		)!,
 	}

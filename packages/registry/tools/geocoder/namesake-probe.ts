@@ -12,7 +12,7 @@
  *   Run: `mailwoman registry scorer-eval namesake-probe`
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
 import { inTXBBOX } from "#tools/shared"
@@ -70,7 +70,7 @@ export async function geocoderNamesakeProbe(
 			}
 
 			const ok = inTXBBOX(g.lat, g.lon)
-			const km = haversineKm(c.tx[0], c.tx[1], g.lat, g.lon)
+			const km = haversine(c.tx[0], c.tx[1], g.lat, g.lon)
 
 			if (!ok) {
 				wrongRegion++

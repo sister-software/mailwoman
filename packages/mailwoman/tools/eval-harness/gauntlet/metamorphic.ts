@@ -5,7 +5,7 @@
  */
 
 import { abbreviationDictionary } from "@mailwoman/codex/abbreviations"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { buildGauntletDeps, runOne } from "#tools/eval-harness/gauntlet/harness"
 import { type GauntletLayerOptions, layerDepsOptions } from "#tools/eval-harness/gauntlet/regression"
@@ -268,7 +268,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 			const moved =
 				r.tier !== canon.tier ||
-				(canon.lat != null && r.lat != null && haversineKm(canon.lat, canon.lon!, r.lat, r.lon!) > INV_EPSILON_KM) ||
+				(canon.lat != null && r.lat != null && haversine(canon.lat, canon.lon!, r.lat, r.lon!) > INV_EPSILON_KM) ||
 				(canon.lat == null) !== (r.lat == null)
 
 			if (!moved) {
@@ -299,7 +299,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			const ok =
 				dropped.lat != null &&
 				canon.lat != null &&
-				haversineKm(canon.lat, canon.lon!, dropped.lat, dropped.lon!) <= DIR_NEAR_KM
+				haversine(canon.lat, canon.lon!, dropped.lat, dropped.lon!) <= DIR_NEAR_KM
 
 			if (!ok) {
 				dirFails++
@@ -320,7 +320,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			bandChecks++
 			bump(bandTally, p.name, "checks")
 			const r = await runOne(perturbed, deps)
-			const dist = r.lat != null ? haversineKm(canon.lat, canon.lon!, r.lat, r.lon!) : null
+			const dist = haversine(canon.lat, canon.lon, r.lat, r.lon)
 			const ok = dist != null && dist <= BAND_NEAR_KM
 
 			if (ok) {

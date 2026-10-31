@@ -6,7 +6,7 @@
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { LocalityMatcher } from "#tools/eval-harness/oa/resolver/admin-match"
 import { regionMatches } from "#tools/eval-harness/oa/resolver/admin-match"
@@ -52,7 +52,7 @@ export function scoreResolvedRow(row: OARow, resolved: Resolved[], localityMatch
 		locMatch: localityMatches(row.expected.locality ?? null, locNode ?? null),
 		regMatch: regionMatches(regResolved?.name ?? null, row.expected.region ?? null),
 		resolved: !!best,
-		err: best ? haversineKm(best.lat, best.lon, row.lat, row.lon) : null,
+		err: best ? haversine(best.lat, best.lon, row.lat, row.lon) : null,
 		resolvedLoc: locRaw ?? null,
 		resolvedLocID: locNode?.id ?? null,
 		resolvedReg: regResolved?.name ?? null,

@@ -38,7 +38,7 @@
 
 import type { CoincidentLocality } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
@@ -190,8 +190,8 @@ export function buildCoincidentRoles(
 
 	try {
 		for (const c of candidates) {
-			const dist = haversineKm(c.rlat, c.rlon, c.llat, c.llon)
-			const diag = haversineKm(c.min_latitude, c.min_longitude, c.max_latitude, c.max_longitude)
+			const dist = haversine(c.rlat, c.rlon, c.llat, c.llon)
+			const diag = haversine(c.min_latitude, c.min_longitude, c.max_latitude, c.max_longitude)
 			const tolerance = Math.max(toleranceFraction * diag, minToleranceKm)
 
 			if (dist > tolerance) continue

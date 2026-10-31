@@ -7,7 +7,7 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { buildGauntletDeps } from "#tools/eval-harness/gauntlet/harness"
 
@@ -53,7 +53,7 @@ for (const row of UNIT_ROWS) {
 	const metres =
 		result.lat == null || result.lon == null
 			? null
-			: haversineKm(result.lat, result.lon, ROOFTOP.lat, ROOFTOP.lon) * METRES_PER_KM
+			: haversine(result.lat, result.lon, ROOFTOP.lat, ROOFTOP.lon) * METRES_PER_KM
 
 	unitReport.push({
 		...row,

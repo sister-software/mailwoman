@@ -13,7 +13,9 @@ import { movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
-import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
+import type { ParsedGeometry } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
+import { geometryContains } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { JSONSpliterator } from "spliterator"
@@ -465,7 +467,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 					if (p.lo < minLon || p.lo > maxLon || p.la < minLat || p.la > maxLat) continue
 
 					if (geometryContains(polygon.geometry, p.lo, p.la) !== true) continue
-					inside.push({ d: haversineKm(d.lat, d.lon, p.la, p.lo), place: p })
+					inside.push({ d: haversine(d.lat, d.lon, p.la, p.lo), place: p })
 				}
 
 				inside.sort((a, b) => a.d - b.d || a.place.pid - b.place.pid)
@@ -483,7 +485,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 					tierCounts.polygon++
 				} else if (polygon.wikidata) {
 					const concordant = (placesByQID.get(polygon.wikidata) ?? [])
-						.map((place) => ({ d: haversineKm(d.lat, d.lon, place.la, place.lo), place }))
+						.map((place) => ({ d: haversine(d.lat, d.lon, place.la, place.lo), place }))
 						.toSorted(
 							(a, b) =>
 								Number(!DISTRICT_TIER.has(a.place.placetype)) - Number(!DISTRICT_TIER.has(b.place.placetype)) ||
@@ -532,7 +534,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 					if (region) {
 						tierCounts.region_fallback++
-						const dist = haversineKm(d.lat, d.lon, region.la, region.lo)
+						const dist = haversine(d.lat, d.lon, region.la, region.lo)
 						rows.push([d.postcode, "TW", region.pid, region.nm, aliases, Math.round(dist * 1000) / 1000, 1])
 					}
 

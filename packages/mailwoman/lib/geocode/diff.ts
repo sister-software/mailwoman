@@ -11,14 +11,14 @@
  *   missed and the same components fell through to a coarser rung).
  *
  *   It lives in `mailwoman` rather than beside the parse diff in `core` because it needs
- *   `haversineKm`. `@mailwoman/spatial` depends on `@mailwoman/core`, so putting this module in core would
+ *   `haversine`. `@mailwoman/spatial` depends on `@mailwoman/core`, so putting this module in core would
  *   close a cycle.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
 import { diffParse, isChange, type ParseDiff, type SpanDelta } from "@mailwoman/core/decoder/parse-diff"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 /**
  * The resolver's answer for one span, on one arm.
@@ -143,9 +143,7 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 
 		if (!right) continue
 
-		const bothPlaced = left.lat !== null && left.lon !== null && right.lat !== null && right.lon !== null
-
-		const movedKm = bothPlaced ? haversineKm(left.lat!, left.lon!, right.lat!, right.lon!) : null
+		const movedKm = haversine(left.lat, left.lon, right.lat, right.lon)
 		const repointed = left.placeID !== right.placeID
 
 		const kind: SpanGeoDelta["kind"] = repointed
@@ -169,7 +167,7 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 	}
 
 	const bothPlaced = before.lat !== null && before.lat && after.lat !== null && after.lat
-	const movedKm = bothPlaced ? haversineKm(before.lat!, before.lon!, after.lat!, after.lon!) : null
+	const movedKm = bothPlaced ? haversine(before.lat!, before.lon!, after.lat!, after.lon!) : null
 	const tierChanged = before.tier !== after.tier
 	const anyRepoint = spanGeo.some((s) => s.kind !== "unchanged")
 

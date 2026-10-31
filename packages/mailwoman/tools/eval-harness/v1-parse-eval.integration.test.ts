@@ -25,7 +25,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, finestResolvedCoordinate, isImplausibleResolution } from "@mailwoman/resolver"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, test } from "vitest"
@@ -196,7 +196,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 					streetFail: expect_.street ? agree.street === false : false,
 					kind: kindOf(fx.input),
 					both,
-					delta: both ? haversineKm(rulesCoord!.lat, rulesCoord!.lon, neuralCoord!.lat, neuralCoord!.lon) : null,
+					delta: both ? haversine(rulesCoord!.lat, rulesCoord!.lon, neuralCoord!.lat, neuralCoord!.lon) : null,
 					implausible,
 					agree,
 				})

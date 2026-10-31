@@ -7,7 +7,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { createGeocodeCommandOptions, createGeocodeSession } from "#geocode"
@@ -42,7 +42,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — a bare kanji line unde
 		})
 
 		expect(run.result.lat).not.toBeNull()
-		expect(haversineKm(run.result.lat!, run.result.lon!, KAMIICHI.lat, KAMIICHI.lon)).toBeLessThan(15)
+		expect(haversine(run.result.lat!, run.result.lon!, KAMIICHI.lat, KAMIICHI.lon)).toBeLessThan(15)
 	})
 
 	it("keeps a Latin line on the primary with the locale scope in force", async () => {

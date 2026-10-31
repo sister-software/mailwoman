@@ -8,7 +8,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { accountRefinement } from "#tools/eval-harness/conformance/candidate-admissibility"
 import type {
@@ -167,7 +167,7 @@ function compareAssembledCoordinate(
 	const b = variant.result
 	const aResolved = a.lat != null && a.lon != null
 	const bResolved = b.lat != null && b.lon != null
-	const distanceM = aResolved && bResolved ? haversineKm(a.lat!, a.lon!, b.lat!, b.lon!) * 1000 : null
+	const distanceM = aResolved && bResolved ? haversine(a.lat!, a.lon!, b.lat!, b.lon!) * 1000 : null
 
 	const basis =
 		`base ${aResolved ? `(${a.lat}, ${a.lon}) tier ${a.tier}` : `abstained, tier ${a.tier}`} · ` +

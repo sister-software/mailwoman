@@ -11,7 +11,7 @@
 
 import { foldName } from "@mailwoman/codex/normalize"
 import { nameSimilarity } from "@mailwoman/match/comparators"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 /**
  * The fields of an inventory row that the match protocol reads.
@@ -64,7 +64,7 @@ function foldPOIName(name: string | null): string {
  * Returns the distance between two rows in meters.
  */
 function metresBetween(a: CaptureRow, b: CaptureRow): number {
-	return haversineKm(a.latitude, a.longitude, b.latitude, b.longitude) * 1000
+	return haversine(a.latitude, a.longitude, b.latitude, b.longitude) * 1000
 }
 
 /**

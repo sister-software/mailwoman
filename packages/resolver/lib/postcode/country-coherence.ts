@@ -7,7 +7,7 @@
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { candidateSystemsForPostcode } from "@mailwoman/postcode/systems"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 /**
  * The default maximum distance, in kilometers, between a postcode and a locality
@@ -225,7 +225,7 @@ async function coherenceIn(
 
 	for (const candidate of localityHits) {
 		if (!candidate.exactMatch || !hasCoord(candidate)) continue
-		const distanceKm = haversineKm(postcodePlace.lat, postcodePlace.lon, candidate.lat, candidate.lon)
+		const distanceKm = haversine(postcodePlace.lat, postcodePlace.lon, candidate.lat, candidate.lon)
 
 		if (distanceKm > thresholdKm) continue
 
@@ -324,7 +324,7 @@ export async function findPostcodeCountryScope(
 
 		const contradicted =
 			ownPostcode != null &&
-			haversineKm(ownPostcode.lat, ownPostcode.lon, localityPlace.lat, localityPlace.lon) > thresholdKm
+			haversine(ownPostcode.lat, ownPostcode.lon, localityPlace.lat, localityPlace.lon) > thresholdKm
 
 		if (country !== defaultCountry && !contradicted && !verdicts.has(country)) {
 			verdicts.set(country, {

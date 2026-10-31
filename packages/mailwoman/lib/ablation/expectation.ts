@@ -6,7 +6,7 @@
  */
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { AblationGrade } from "#ablation/grades"
 
@@ -204,7 +204,7 @@ export function bboxRadiusKm(place: Pick<AblationPlace, "lat" | "lon" | "bbox">)
 		[b.maxLat, b.maxLon],
 	]
 
-	const km = Math.max(...corners.map(([lat, lon]) => haversineKm(place.lat, place.lon, lat, lon)))
+	const km = Math.max(...corners.map(([lat, lon]) => haversine(place.lat, place.lon, lat, lon)))
 
 	return km < BBOX_NOISE_FLOOR_KM ? null : km
 }
@@ -379,7 +379,7 @@ export function deriveExpectedRung(
 
 	const withinRegion = (places: readonly AblationPlace[]): AblationPlace[] =>
 		regionPlace && regionRadiusKm != null
-			? places.filter((p) => haversineKm(regionPlace.lat, regionPlace.lon, p.lat, p.lon) <= regionRadiusKm)
+			? places.filter((p) => haversine(regionPlace.lat, regionPlace.lon, p.lat, p.lon) <= regionRadiusKm)
 			: [...places]
 
 	// 1) Unique postcode is the strongest surviving pin.
@@ -431,7 +431,7 @@ export function deriveExpectedRung(
 			const near = localityPlaces
 				.map((p) => ({
 					p,
-					km: Math.min(...postcodePlaces.map((q) => haversineKm(p.lat, p.lon, q.lat, q.lon))),
+					km: Math.min(...postcodePlaces.map((q) => haversine(p.lat, p.lon, q.lat, q.lon))),
 				}))
 				.toSorted((a, b) => a.km - b.km)[0]
 
@@ -543,7 +543,7 @@ export function matchRung(pinned: AblationPlace, ladder: AblationLadder): Ablati
 
 		if (containmentDepth(rung.kind) > pinDepth) continue
 
-		if (haversineKm(rung.lat, rung.lon, pinned.lat, pinned.lon) <= rung.radiusKM) return rung
+		if (haversine(rung.lat, rung.lon, pinned.lat, pinned.lon) <= rung.radiusKM) return rung
 	}
 
 	return null
@@ -554,7 +554,7 @@ export function matchRung(pinned: AblationPlace, ladder: AblationLadder): Ablati
  */
 export function achievedRung(lat: number, lon: number, ladder: AblationLadder): AblationRung | null {
 	for (const rung of ladder.rungs) {
-		if (haversineKm(rung.lat, rung.lon, lat, lon) <= rung.radiusKM) return rung
+		if (haversine(rung.lat, rung.lon, lat, lon) <= rung.radiusKM) return rung
 	}
 
 	return null
@@ -810,7 +810,7 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
 	const kept: AblationPlace[] = []
 
 	for (const p of places) {
-		if (kept.some((k) => haversineKm(k.lat, k.lon, p.lat, p.lon) <= COINCIDENT_PLACE_KM)) continue
+		if (kept.some((k) => haversine(k.lat, k.lon, p.lat, p.lon) <= COINCIDENT_PLACE_KM)) continue
 
 		kept.push(p)
 	}

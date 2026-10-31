@@ -29,7 +29,7 @@
  *   population assigned it.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
@@ -144,7 +144,7 @@ export class ImportanceIndex {
 		let bestKm = Infinity
 
 		for (const place of group) {
-			const km = haversineKm(lat, lon, place.lat, place.lon)
+			const km = haversine(lat, lon, place.lat, place.lon)
 
 			if (km < bestKm) {
 				bestKm = km

@@ -23,7 +23,7 @@
 import { collectNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { ResolveNodeTrace, ResolveOpts } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { ADMIN_TAG_DEPTH, selectBaseline } from "#tools/eval-harness/same-data/baseline"
 import {
@@ -185,7 +185,7 @@ function gradeSelection(
 		return { correct, wrongArea: null, distanceKm: null }
 	}
 
-	const distanceKm = haversineKm(selectedCoord.lat, selectedCoord.lon, panel.gold.lat, panel.gold.lon)
+	const distanceKm = haversine(selectedCoord.lat, selectedCoord.lon, panel.gold.lat, panel.gold.lon)
 
 	return { correct, wrongArea: distanceKm > WRONG_AREA_KM, distanceKm }
 }

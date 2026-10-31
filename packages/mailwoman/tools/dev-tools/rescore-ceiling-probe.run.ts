@@ -23,7 +23,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -128,7 +128,7 @@ async function main() {
 					// findPlace candidates have lat/lon fields, unlike a ResolvedPlace's latitude/longitude.
 					const dists = dis
 						.filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon) && (c.lat !== 0 || c.lon !== 0))
-						.map((c) => haversineKm(tLat, tLon, c.lat, c.lon))
+						.map((c) => haversine(tLat, tLon, c.lat, c.lon))
 
 					if (dists.length) {
 						sT1.push(dists[0]!)

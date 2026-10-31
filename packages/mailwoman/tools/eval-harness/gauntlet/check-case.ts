@@ -8,7 +8,7 @@
 
 import { COMPONENT_TAGS } from "@mailwoman/codex/component"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { GauntletResult } from "#tools/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "#tools/eval-harness/gauntlet/schema"
@@ -203,7 +203,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 
 	if (c.expect_lat != null && c.expect_lon != null) {
 		const tolKm = (c.expect_tolerance_m ?? DEFAULT_TOL_M) / 1000
-		const km = r.lat != null && r.lon != null ? haversineKm(r.lat, r.lon, c.expect_lat, c.expect_lon) : Infinity
+		const km = r.lat != null && r.lon != null ? haversine(r.lat, r.lon, c.expect_lat, c.expect_lon) : Infinity
 
 		if (km > tolKm) {
 			issues.push(

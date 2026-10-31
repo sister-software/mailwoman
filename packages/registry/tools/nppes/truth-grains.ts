@@ -7,8 +7,9 @@
  */
 
 import { createUnionFind, type UnionFind } from "@mailwoman/core/utils"
-import { haversineKm, jaccard } from "@mailwoman/match"
+import { jaccard } from "@mailwoman/match"
 import type { GeoCoordinate } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { latLngToCell } from "h3-js"
 
 import type { SourceRecord } from "#index"
@@ -132,7 +133,10 @@ export function buildOrgNameCoordGrain(
 			const a = coLocated[i]!
 			const b = coLocated[j]!
 
-			if (haversineKm(npiCoord.get(a)!, npiCoord.get(b)!) > COLOCATION_KM) continue
+			const coordA = npiCoord.get(a)!
+			const coordB = npiCoord.get(b)!
+
+			if (haversine(coordA.latitude, coordA.longitude, coordB.latitude, coordB.longitude) > COLOCATION_KM) continue
 
 			if (jaccard(npiPrimary.get(a)!.tokens, npiPrimary.get(b)!.tokens) >= ORG_TAU) {
 				uf.union(a, b)

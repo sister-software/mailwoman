@@ -17,7 +17,8 @@
  *   every later point. Only points in a cell an edge crosses take the exact ray cast.
  */
 
-import { geometryContains, type ParsedGeometry } from "@mailwoman/spatial"
+import type { ParsedGeometry } from "@mailwoman/spatial"
+import { geometryContains } from "@mailwoman/spatial/geometries/polygon"
 
 /**
  * Grid cell size in degrees.

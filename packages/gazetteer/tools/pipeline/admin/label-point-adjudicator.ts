@@ -10,7 +10,8 @@
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { haversineKm, type GeoCoordinate } from "@mailwoman/spatial"
+import type { GeoCoordinate } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 /**
@@ -52,14 +53,14 @@ export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => P
  * Every other case keeps the label point.
  */
 export function choosePoint(geom: GeoCoordinate, lbl: GeoCoordinate, anchor: GeoCoordinate | null): AdjudicatedPoint {
-	const disagreement = haversineKm(geom.latitude, geom.longitude, lbl.latitude, lbl.longitude)
+	const disagreement = haversine(geom.latitude, geom.longitude, lbl.latitude, lbl.longitude)
 
 	if (disagreement <= LABEL_GEOM_DISAGREEMENT_KM || !anchor) {
 		return { ...lbl, choice: "lbl" }
 	}
 
-	const geomToAnchor = haversineKm(geom.latitude, geom.longitude, anchor.latitude, anchor.longitude)
-	const lblToAnchor = haversineKm(lbl.latitude, lbl.longitude, anchor.latitude, anchor.longitude)
+	const geomToAnchor = haversine(geom.latitude, geom.longitude, anchor.latitude, anchor.longitude)
+	const lblToAnchor = haversine(lbl.latitude, lbl.longitude, anchor.latitude, anchor.longitude)
 
 	if (geomToAnchor * ANCHOR_DECISIVE_RATIO < lblToAnchor) {
 		return { ...geom, choice: "geom-by-anchor" }

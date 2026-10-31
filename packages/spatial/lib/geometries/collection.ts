@@ -7,7 +7,8 @@
  */
 
 import type { LineStringLiteral, MultiLineStringLiteral } from "#geometries/line-string"
-import type { MultiPointLiteral, PointLiteral } from "#geometries/point"
+import type { MultiPointLiteral } from "#geometries/point"
+import type { PointLiteral } from "#geometries/point/coordinates"
 import type { MultiPolygonLiteral, PolygonLiteral } from "#geometries/polygon"
 import type { GeoObjectLiteral } from "#objects"
 

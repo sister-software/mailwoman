@@ -14,7 +14,8 @@ import { pyFixed } from "@mailwoman/core/numeric"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { readWOFFeature } from "@mailwoman/gazetteer/whosonfirst"
-import { geometryContains, type GeometryLiteral } from "@mailwoman/spatial"
+import type { GeometryLiteral } from "@mailwoman/spatial"
+import { geometryContains } from "@mailwoman/spatial/geometries/polygon"
 import { Globerator } from "spliterator/node/fs"
 
 /**

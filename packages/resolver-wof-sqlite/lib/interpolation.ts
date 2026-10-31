@@ -8,7 +8,8 @@
 
 import { parseJSONStrict } from "@mailwoman/core/json"
 import type { InterpolationLookup } from "@mailwoman/core/resolver"
-import { clampFraction, haversineKm, pointAlong } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
+import { clampFraction, pointAlong } from "@mailwoman/spatial/polyline"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
@@ -100,7 +101,7 @@ function nearestPostcodeGroup(pool: readonly SegmentRow[], near: { lat: number; 
 			const [firstVertex] = parseJSONStrict<[number, number][]>(row.geometry)
 
 			if (firstVertex) {
-				km = haversineKm(near.lat, near.lon, firstVertex[1], firstVertex[0])
+				km = haversine(near.lat, near.lon, firstVertex[1], firstVertex[0])
 			}
 		} catch {
 			// Unparseable geometry: this row cannot be sited, so it cannot win the tie-break.

@@ -10,7 +10,7 @@ import { collectNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { AdminCoherenceReport } from "@mailwoman/core/geocode"
 import { isUnitGradePostcodeHit } from "@mailwoman/postcode/systems"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
 import { epistemicStatusFor } from "#geocode/epistemic-status"
@@ -173,7 +173,7 @@ export interface ForkEntityProbeOpts {
  * Returns the great-circle distance in meters.
  */
 function distanceM(latA: number, lonA: number, latB: number, lonB: number): number {
-	return haversineKm(latA, lonA, latB, lonB) * 1000
+	return haversine(latA, lonA, latB, lonB) * 1000
 }
 
 /**

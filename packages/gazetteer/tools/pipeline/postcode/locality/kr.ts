@@ -31,7 +31,7 @@
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-kr.db
  *
  *   With no polygons there is no point-in-polygon step. The matcher uses point-nearest distance through
- *   `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python), with
+ *   `@mailwoman/spatial`'s `haversine` (asin form, matching Python), with
  *   proximity-constrained Hangul name confirmation. The output is written directly to
  *   `--output` as a full single-country rebuild.
  */

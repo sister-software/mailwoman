@@ -10,7 +10,8 @@ import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decod
 import type { AddressPointLookup, Ancestor, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
 import { WOFPrefix } from "@mailwoman/gazetteer/whosonfirst/placetypes/definition"
 import { SETTLEMENT_PLACETYPES } from "@mailwoman/gazetteer/whosonfirst/placetypes/specificity"
-import { isLatLonBounds, latLonBoundsContain, type LatLonBounds } from "@mailwoman/spatial"
+import type { LatLonBounds } from "@mailwoman/spatial"
+import { isLatLonBounds, latLonBoundsContain } from "@mailwoman/spatial/bbox"
 import { TextSpliterator } from "spliterator"
 
 import { foldName } from "#fold-name"

@@ -8,7 +8,8 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { geometryContains, pointInPolygon, pointInRing, type LineStringPath } from "@mailwoman/spatial"
+import type { LineStringPath } from "@mailwoman/spatial"
+import { geometryContains, pointInPolygon, pointInRing } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 

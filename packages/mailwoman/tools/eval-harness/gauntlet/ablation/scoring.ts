@@ -6,7 +6,7 @@
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { percentile } from "@mailwoman/core/stats"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { tierRank, UNCONSTRAINED_RUNG } from "#ablation/expectation"
 import { emptyGrades, PASSING_GRADES } from "#ablation/grades"
@@ -64,7 +64,7 @@ export function scoreAblation(
 	const ablatedResolved = ablated.lat != null && ablated.lon != null
 
 	const displacementKm =
-		anchorResolved && ablatedResolved ? haversineKm(anchor.lat!, anchor.lon!, ablated.lat!, ablated.lon!) : null
+		anchorResolved && ablatedResolved ? haversine(anchor.lat!, anchor.lon!, ablated.lat!, ablated.lon!) : null
 
 	const emitted = componentOf(ablated, component)
 

@@ -7,7 +7,7 @@
  */
 
 import { allRows } from "@mailwoman/core/utils"
-import { haversineKm, shortCellToInt, type GeoCoordinate, type H3Cell } from "@mailwoman/spatial"
+import { haversine, shortCellToInt, type GeoCoordinate, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { gridDisk } from "h3-js"
 import type { PathBuilderLike } from "path-ts"
@@ -148,7 +148,7 @@ export class UPRNLookup implements Disposable {
 				)
 
 				for (const row of rows) {
-					const distanceM = haversineKm(latitude, longitude, row.lat, row.lon) * 1000
+					const distanceM = haversine(latitude, longitude, row.lat, row.lon) * 1000
 
 					if (distanceM <= radiusM && (!best || distanceM < best.distanceM)) {
 						best = { uprn: row.uprn, latitude: row.lat, longitude: row.lon, distanceM }

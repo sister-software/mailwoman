@@ -56,7 +56,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { median } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversine } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.

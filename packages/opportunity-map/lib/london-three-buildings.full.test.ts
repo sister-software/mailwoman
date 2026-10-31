@@ -17,7 +17,7 @@ import { floodLayerReading } from "@mailwoman/flood/layer-readings"
 import { floodDatabasePath } from "@mailwoman/flood/paths"
 import { NSULLookup } from "@mailwoman/resolver-wof-sqlite/nsul/lookup"
 import { nsulDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversineKm } from "@mailwoman/spatial/distance"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { describe, expect, test } from "vitest"
 
 import {
@@ -100,7 +100,7 @@ function recount(
 	const within = listed.filter((row) => {
 		const point = points.get(row.uprn)!
 
-		return haversineKm(latitude, longitude, point.latitude, point.longitude) * 1000 <= BDUK_SITE_RADIUS_METERS
+		return haversine(latitude, longitude, point.latitude, point.longitude) * 1000 <= BDUK_SITE_RADIUS_METERS
 	})
 
 	const count = (predicate: (row: BDUKCountedRow) => boolean) => within.filter(predicate).length

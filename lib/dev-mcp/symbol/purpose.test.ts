@@ -71,7 +71,7 @@ describe("searchPurpose", () => {
 	})
 
 	it("finds a distance helper from the behavior rather than the spelling", () => {
-		expect(namesFor("distance between two coordinates on Earth")).toContain("haversineKm")
+		expect(namesFor("distance between two coordinates on Earth")).toContain("haversine")
 	})
 
 	it("says nothing for a phrase nothing in the tree describes", () => {

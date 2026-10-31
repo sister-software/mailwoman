@@ -8,7 +8,8 @@ import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
 import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
-import { haversineKm, isLatLonBounds } from "@mailwoman/spatial"
+import { isLatLonBounds } from "@mailwoman/spatial/bbox"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { adminCoherenceField } from "#admin-coherence"
 import { epistemicStatusFor } from "#geocode/epistemic-status"
@@ -98,7 +99,7 @@ function halfDiagonalM(bbox: unknown): number | null {
 
 	const { minLat, minLon, maxLat, maxLon } = bbox
 
-	return Math.round((haversineKm(minLat, minLon, maxLat, maxLon) * 1000) / 2)
+	return Math.round((haversine(minLat, minLon, maxLat, maxLon) * 1000) / 2)
 }
 
 /**

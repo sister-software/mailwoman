@@ -21,7 +21,7 @@ import {
 	type layerschemadatabase,
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
@@ -123,7 +123,7 @@ describe("nearestUPRN", () => {
 		expect(hit).not.toBeNull()
 		expect(hit!.uprn).toBe(POINT_B.uprn)
 
-		const expectedM = haversineKm(query.lat, query.lon, POINT_B.lat, POINT_B.lon) * 1000
+		const expectedM = haversine(query.lat, query.lon, POINT_B.lat, POINT_B.lon) * 1000
 
 		expect(hit!.distanceM).toBeCloseTo(expectedM, 6)
 	})

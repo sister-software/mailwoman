@@ -31,7 +31,8 @@
  *   `assessDatumTransformation` in `ingest.ts` for the guard that now refuses the build instead.
  */
 
-import { geometryContains, nearestRingEdgeMetres } from "@mailwoman/spatial"
+import { nearestRingEdgeMetres } from "@mailwoman/spatial/distance"
+import { geometryContains } from "@mailwoman/spatial/geometries/polygon"
 import type { PathBuilderLike } from "path-ts"
 
 import { FloodReadingKind, FloodZoneLookup, type FloodZoneReading } from "#index"

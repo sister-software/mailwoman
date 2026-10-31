@@ -36,7 +36,7 @@ import { allRows, mean } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 
@@ -131,8 +131,8 @@ async function resolveState(c: Commune, state: State): Promise<{ km: number; res
 	const best = mostSpecific(collectResolved(decorated))
 
 	return best
-		? { km: haversineKm(best.lat, best.lon, c.lat, c.lon), resolved: true }
-		: { km: haversineKm(FR_CENTROID.lat, FR_CENTROID.lon, c.lat, c.lon), resolved: false }
+		? { km: haversine(best.lat, best.lon, c.lat, c.lon), resolved: true }
+		: { km: haversine(FR_CENTROID.lat, FR_CENTROID.lon, c.lat, c.lon), resolved: false }
 }
 
 interface StratumAgg {

@@ -1,4 +1,5 @@
-import { bboxAround, haversineKm } from "@mailwoman/spatial"
+import { bboxAround } from "@mailwoman/spatial/bbox"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
@@ -114,21 +115,21 @@ afterEach(() => {
 	lookup[Symbol.dispose]()
 })
 
-describe("haversineKm (sanity)", () => {
+describe("haversine (sanity)", () => {
 	test("Paris,FR → London,GB is ~344 km", () => {
-		const d = haversineKm(48.85, 2.34, 51.51, -0.13)
+		const d = haversine(48.85, 2.34, 51.51, -0.13)
 		expect(d).toBeGreaterThan(330)
 		expect(d).toBeLessThan(360)
 	})
 
 	test("Paris,FR → Paris,TX is ~7800 km", () => {
-		const d = haversineKm(48.85, 2.34, 33.66, -95.55)
+		const d = haversine(48.85, 2.34, 33.66, -95.55)
 		expect(d).toBeGreaterThan(7700)
 		expect(d).toBeLessThan(7900)
 	})
 
 	test("identity is exactly 0", () => {
-		expect(haversineKm(48.85, 2.34, 48.85, 2.34)).toBe(0)
+		expect(haversine(48.85, 2.34, 48.85, 2.34)).toBe(0)
 	})
 })
 

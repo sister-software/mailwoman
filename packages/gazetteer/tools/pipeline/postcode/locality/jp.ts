@@ -28,7 +28,7 @@
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-jp.db
  *
  *   With no polygons there is no point-in-polygon step, so matching is name plus haversine
- *   proximity through `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python). The
+ *   proximity through `@mailwoman/spatial`'s `haversine` (asin form, matching Python). The
  *   output is written directly to `--output` as a full single-country rebuild.
  */
 

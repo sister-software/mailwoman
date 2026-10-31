@@ -31,7 +31,7 @@ import { mean } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
 import { stripCombiningMarks } from "@mailwoman/normalize"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { PathBuilder } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 
@@ -335,12 +335,12 @@ async function main() {
 
 		if (best) {
 			resolved++
-			const e = haversineKm(best.lat, best.lon, row.lat, row.lon)
+			const e = haversine(best.lat, best.lon, row.lat, row.lon)
 			errs.push(e)
 			resolvedErrs.push(e)
 			rowRecords.push({ i: rowIdx, resolved: true, err_km: e })
 		} else {
-			errs.push(haversineKm(FR_CENTROID.lat, FR_CENTROID.lon, row.lat, row.lon))
+			errs.push(haversine(FR_CENTROID.lat, FR_CENTROID.lon, row.lat, row.lon))
 			rowRecords.push({ i: rowIdx, resolved: false, err_km: null })
 		}
 	}

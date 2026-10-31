@@ -10,7 +10,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { GeocodeSessionOptions } from "mailwoman/geocode"
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
@@ -219,8 +219,7 @@ export function measureMove(base: CounterfactualAnswer, flipped: CounterfactualA
 	const flippedAbstained = flipped.lat === null || flipped.lon === null
 	const changedAbstention = baseAbstained !== flippedAbstained
 
-	const movedKm =
-		baseAbstained || flippedAbstained ? null : haversineKm(base.lat!, base.lon!, flipped.lat!, flipped.lon!)
+	const movedKm = haversine(base.lat, base.lon, flipped.lat, flipped.lon)
 
 	if (!changedAbstention && !(movedKm !== null && movedKm > COUNTERFACTUAL_MOVED_KM)) return null
 

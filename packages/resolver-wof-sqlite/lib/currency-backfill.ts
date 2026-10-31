@@ -8,7 +8,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { isStrictlyFiner } from "@mailwoman/gazetteer/whosonfirst"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 import { TSVSpliterator } from "spliterator"
@@ -208,7 +208,7 @@ export async function resurrectCurrencyHoles(ctx: {
 			// A live row blocks unless it is strictly finer than the dead one.
 			// An unranked placetype also blocks because the failure mode is inventing a place.
 			const liveNear = liveStmt.all(cc, name).some((row) => {
-				if (haversineKm(dLat, dLon, Number(row.latitude), Number(row.longitude)) > CURRENCY_BACKFILL_RADIUS_KM) {
+				if (haversine(dLat, dLon, Number(row.latitude), Number(row.longitude)) > CURRENCY_BACKFILL_RADIUS_KM) {
 					return false
 				}
 
@@ -222,7 +222,7 @@ export async function resurrectCurrencyHoles(ctx: {
 			}
 
 			const near = (attestors.get(pkey) ?? []).filter(
-				(g) => haversineKm(dLat, dLon, g.lat, g.lon) <= CURRENCY_BACKFILL_RADIUS_KM
+				(g) => haversine(dLat, dLon, g.lat, g.lon) <= CURRENCY_BACKFILL_RADIUS_KM
 			)
 
 			if (!near.length) {

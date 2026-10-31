@@ -8,7 +8,8 @@
  *   This census classifies rows but makes no decision about changing checks or behavior.
  */
 
-import { haversineKm, type LatLon } from "@mailwoman/spatial"
+import type { LatLon } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { DEFAULT_TOL_M } from "#tools/eval-harness/gauntlet/check-case"
 
@@ -82,7 +83,7 @@ export interface RescueRowReport {
 function within(lat: number, lon: number, row: RescueRowInput): boolean {
 	const tolKm = (row.expectToleranceM ?? DEFAULT_TOL_M) / 1000
 
-	return haversineKm(lat, lon, row.expectLat!, row.expectLon!) <= tolKm
+	return haversine(lat, lon, row.expectLat!, row.expectLon!) <= tolKm
 }
 
 /**
@@ -99,7 +100,7 @@ export function classifyRescueRow(row: RescueRowInput): {
 	}
 
 	const deliveredKm =
-		row.lat !== null && row.lon !== null ? haversineKm(row.lat, row.lon, row.expectLat, row.expectLon) : null
+		row.lat !== null && row.lon !== null ? haversine(row.lat, row.lon, row.expectLat, row.expectLon) : null
 
 	const deliveredCorrect = row.lat !== null && row.lon !== null && within(row.lat, row.lon, row)
 

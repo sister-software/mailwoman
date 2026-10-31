@@ -9,7 +9,7 @@
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import type { Ancestor, CoincidentLocality } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 import { SQLiteLookup } from "@mailwoman/sqlite/lookup"
 import type { PathBuilderLike } from "path-ts"
@@ -671,7 +671,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			if (
 				anchor &&
 				(top.id as number) !== anchorRow!.id &&
-				haversineKm(top.lat, top.lon, anchor.lat, anchor.lon) > CF_MISMATCH_KM
+				haversine(top.lat, top.lon, anchor.lat, anchor.lon) > CF_MISMATCH_KM
 			) {
 				top.mismatch = true
 			}

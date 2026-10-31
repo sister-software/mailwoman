@@ -11,7 +11,7 @@
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend, WeakResolutionReading } from "@mailwoman/core/resolver"
 import { isRegionAbbreviationToken } from "@mailwoman/query-shape/region-abbreviations"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { partitionByContainment } from "#admin/containment"
 import { foldName } from "#fold-name"
@@ -476,7 +476,7 @@ export async function findRescoreCandidate(
 			: ranked
 
 		const withinThreshold = (p: ResolvedPlace): boolean =>
-			!anchor || thresholdKm <= 0 || haversineKm(anchor.lat, anchor.lon, p.lat, p.lon) <= thresholdKm
+			!anchor || thresholdKm <= 0 || haversine(anchor.lat, anchor.lon, p.lat, p.lon) <= thresholdKm
 
 		for (const h of exact) {
 			if (!withinThreshold(h)) continue
@@ -521,7 +521,7 @@ export async function findRescoreCandidate(
 
 				const verified = pcHits.find((p) => p.lat !== 0 || p.lon !== 0)
 
-				if (verified && haversineKm(verified.lat, verified.lon, h.lat, h.lon) <= thresholdKm) {
+				if (verified && haversine(verified.lat, verified.lon, h.lat, h.lon) <= thresholdKm) {
 					// Admission uses per-candidate postcode verification.
 					// The postcode already picked the country, so this pass has no remaining
 					// country ambiguity to report.

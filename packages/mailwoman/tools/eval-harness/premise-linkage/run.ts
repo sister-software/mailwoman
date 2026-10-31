@@ -15,7 +15,7 @@
 
 import type { AuthoritativeAssertion, GeocodeResult } from "@mailwoman/core/geocode"
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { geocodeAddress, type GeocodeDeps } from "#geocode/core"
 import type { PremiseLinkageAdapter } from "#tools/eval-harness/premise-linkage/adapter"
@@ -176,7 +176,7 @@ function coordinateErrorFor(
 
 	if (!answered) return null
 
-	return haversineKm(row.expectedLat, row.expectedLon, answered.lat, answered.lon) * METERS_PER_KM
+	return haversine(row.expectedLat, row.expectedLon, answered.lat, answered.lon) * METERS_PER_KM
 }
 
 function gradeRow(

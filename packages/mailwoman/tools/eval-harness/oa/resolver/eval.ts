@@ -7,7 +7,7 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { TextSpliterator } from "spliterator"
 
 import { $public } from "#env"
@@ -179,7 +179,7 @@ export async function oaResolverEval(
 
 		if (runAddrPt) {
 			const hit = nDecorated ? findAddressPointHit(nDecorated) : null
-			const apErr = hit ? haversineKm(hit.lat, hit.lon, row.lat, row.lon) : ns.err
+			const apErr = hit ? haversine(hit.lat, hit.lon, row.lat, row.lon) : ns.err
 
 			if (hit) {
 				addressPointHits++
@@ -192,7 +192,7 @@ export async function oaResolverEval(
 			const exact = nDecorated ? findAddressPointHit(nDecorated) : null
 			const interp = nDecorated ? findInterpolatedHit(nDecorated) : null
 			const coord = exact ?? interp
-			const ipErr = coord ? haversineKm(coord.lat, coord.lon, row.lat, row.lon) : ns.err
+			const ipErr = coord ? haversine(coord.lat, coord.lon, row.lat, row.lon) : ns.err
 
 			if (interp) {
 				interpHits++
@@ -220,7 +220,7 @@ export async function oaResolverEval(
 
 		if (useAnchor) {
 			const ac = anchorCoordinateFor(row.input, anchorSources)
-			const fusedErr = ac ? haversineKm(ac.lat, ac.lon, row.lat, row.lon) : ns.err
+			const fusedErr = ac ? haversine(ac.lat, ac.lon, row.lat, row.lon) : ns.err
 			recordInto(neuralAnchorAgg, row.state, { ...ns, err: fusedErr })
 		}
 

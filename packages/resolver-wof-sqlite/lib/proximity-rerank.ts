@@ -23,7 +23,7 @@
  *      ordering silently discarded downstream.
  */
 
-import { haversineKm } from "@mailwoman/spatial/distance"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 /**
  * Full magnitude of the nearness term at distance 0, before decay.
@@ -92,7 +92,7 @@ export function combinedProminence(candidate: ProximityRerankable, bias: readonl
 	// A 0,0 pair interpreted as a real coordinate would receive an enormous score.
 	if (!(candidate.lat === 0 && candidate.lon === 0)) {
 		for (const b of bias) {
-			const d = haversineKm(b.lat, b.lon, candidate.lat, candidate.lon)
+			const d = haversine(b.lat, b.lon, candidate.lat, candidate.lon)
 			const term = (BIAS_BOOST * (b.weight ?? 1)) / (1 + d / PROX_SCALE_KM)
 
 			if (term > proxTerm) {

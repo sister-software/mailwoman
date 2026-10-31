@@ -10,7 +10,7 @@ import { type Ancestor, type GazetteerArtifactCoverage, referentialFromPopulatio
 import { allRows } from "@mailwoman/core/utils"
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
 import { partitionByContainment } from "@mailwoman/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
@@ -618,7 +618,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 				const outsideThreshold: RankedRow<CandidateRow>[] = []
 
 				for (const row of rows) {
-					const distanceKm = haversineKm(anchor.lat, anchor.lon, Number(row.latitude), Number(row.longitude))
+					const distanceKm = haversine(anchor.lat, anchor.lon, Number(row.latitude), Number(row.longitude))
 
 					if (distanceKm <= POSTCODE_CONTAINMENT_THRESHOLD_KM) {
 						insideThreshold.push({ row, distanceKm })

@@ -5,7 +5,7 @@
  */
 
 import type { POIDistanceHit } from "@mailwoman/core/resolver"
-import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { haversine, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "h3-js"
 
 import { memoizeResettable, type RangeDatabase } from "#httpvfs/database"
@@ -137,7 +137,7 @@ export async function searchPOICategory(database: RangeDatabase, opts: POISearch
 			lon: row.longitude,
 			country: row.country ?? "",
 			confidence: row.confidence,
-			distanceM: haversineKm(opts.center.lat, opts.center.lon, row.latitude, row.longitude) * 1000,
+			distanceM: haversine(opts.center.lat, opts.center.lon, row.latitude, row.longitude) * 1000,
 		}))
 		.toSorted((a, b) => a.distanceM - b.distanceM)
 		.slice(0, limit)

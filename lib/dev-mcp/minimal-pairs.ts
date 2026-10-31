@@ -16,7 +16,7 @@
  */
 
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { EngineConfig, EngineRegistryLike } from "#dev-mcp/engine/registry"
 
@@ -123,7 +123,7 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 	// A null coordinate on either side is not distance zero: abstention is its own result and the tier fields record it.
 	const moved =
 		previous.lat !== null && previous.lon !== null && current.lat !== null && current.lon !== null
-			? haversineKm(previous.lat, previous.lon, current.lat, current.lon)
+			? haversine(previous.lat, previous.lon, current.lat, current.lon)
 			: null
 
 	return {

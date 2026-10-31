@@ -12,7 +12,7 @@
  */
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import type { PathBuilderLike } from "path-ts"
@@ -191,7 +191,7 @@ export async function readGoldSets(databasePath: PathBuilderLike, subjects: read
 			continue
 		}
 
-		if (tier.some((row) => haversineKm(row.latitude, row.longitude, subject.lat, subject.lon) > GOLD_COHERENCE_KM)) {
+		if (tier.some((row) => haversine(row.latitude, row.longitude, subject.lat, subject.lon) > GOLD_COHERENCE_KM)) {
 			census.tooFarApart++
 
 			continue

@@ -5,7 +5,8 @@
  * @file The gridded containment test agrees with the exact ray cast, inside, outside and along the border.
  */
 
-import { geometryContains, type ParsedGeometry } from "@mailwoman/spatial"
+import type { ParsedGeometry } from "@mailwoman/spatial"
+import { geometryContains } from "@mailwoman/spatial/geometries/polygon"
 import { describe, expect, it } from "vitest"
 
 import { createOutlineContainment } from "#sdk/country-outline"

@@ -5,13 +5,20 @@
  */
 
 import type google from "@googlemaps/google-maps-services-js"
-import type { LatLng, LatLngLiteral } from "@googlemaps/google-maps-services-js"
+import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { convert as convertCoords } from "geo-coordinates-parser"
 import { latLngToCell } from "h3-js"
 
 import { type BBox2DLiteral, type BBox3DLiteral, GeoBoundingBox, isBBox } from "#bbox"
 import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
+import {
+	type GeoPointInput,
+	type GeolocationCoordinatesLike,
+	type PointLiteral,
+	isPointLiteral,
+	pointInputCoordinates,
+} from "#geometries/point/coordinates"
 import { type H3Cell, shortenH3Cell } from "#h3/cell"
 import { type GeoObjectLiteral, GeometryType } from "#objects"
 import {
@@ -19,89 +26,8 @@ import {
 	type Coordinates2D as Point2DCoordinates,
 	type Coordinates3D as Point3DCoordinates,
 	clampLatitude,
-	isCoordPairLiteral,
-	isGoogleMapsLatLngLiteral,
-	isInterpolatedCoordinates,
 	wrapLongitude,
 } from "#position"
-
-/**
- * A JSON-serializable single point geometry, such as a specific location,
- * address, or longitude, latitude pair.
- *
- * ```js
- * {
- * 	"type": "Point",
- * 	"coordinates": [100, 0]
- * }
- * ```
- *
- * @title Point Geometry
- * @public
- */
-export interface PointLiteral extends GeoObjectLiteral {
-	/**
-	 * Declares the type of GeoJSON object as a `Point` geometry.
-	 */
-	type: "Point"
-	/**
-	 * A pair of coordinates in the form of [longitude, latitude].
-	 *
-	 * @see {@linkcode Point2DCoordinates} for more information.
-	 */
-	coordinates: Point2DCoordinates | Point3DCoordinates
-}
-
-/**
- * Type-predicate to determine if the given input is a GeoJSON Point geometry.
- */
-export function isPointLiteral(input: PointLiteral | null | undefined | unknown): input is PointLiteral {
-	if (!input || typeof input !== "object") return false
-
-	if (!("type" in input)) return false
-
-	if (!("coordinates" in input)) return false
-
-	if (input.type !== GeometryType.Point) return false
-
-	return isCoordPairLiteral(input.coordinates)
-}
-
-/**
- * Common interface for Browser Geolocation API coordinates.
- *
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GeolocationCoordinates MDN Web Docs}
- */
-export interface GeolocationCoordinatesLike {
-	latitude: number
-	longitude: number
-	altitude: number
-}
-
-/**
- * Type-predicate to determine if the given input appears to be a {@linkcode GeolocationCoordinatesLike}
- * object — the shape the browser's `GeolocationCoordinates` presents, without depending on the DOM type.
- */
-export function isGeolocationCoordinatesLike(input: unknown): input is GeolocationCoordinatesLike {
-	if (!input || typeof input !== "object") return false
-
-	if (!("latitude" in input)) return false
-
-	if (!("longitude" in input)) return false
-
-	if (!("altitude" in input)) return false
-
-	return true
-}
-
-export type GeoPointInput =
-	| PointLiteral
-	| Point2DCoordinates
-	| Point3DCoordinates
-	| GeolocationCoordinatesLike
-	| InternalPointCoordinates
-	| LatLngLiteral
-	| LatLng
 
 // #region GeoPoint
 
@@ -265,22 +191,12 @@ export class GeoPoint implements PointLiteral {
 	 */
 	constructor(input: GeoPointInput, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 	constructor(input?: GeoPointInput, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox) {
-		if (isCoordPairLiteral(input)) {
-			this.coordinates = input
-		} else if (isPointLiteral(input)) {
-			this.coordinates = [...input.coordinates]
+		const coordinates = pointInputCoordinates(input)
 
-			if (isBBox(input.bbox)) {
-				this.bbox = [...input.bbox]
-			}
-		} else if (isGoogleMapsLatLngLiteral(input)) {
-			this.coordinates = [input.lng, input.lat]
-		} else if (isGeolocationCoordinatesLike(input)) {
-			this.coordinates = [input.longitude, input.latitude, input.altitude || 0]
-		} else if (isInterpolatedCoordinates(input)) {
-			this.coordinates = [input.x, input.y]
-		} else {
-			this.coordinates = [0, 0]
+		this.coordinates = coordinates ? [...coordinates] : [0, 0]
+
+		if (isPointLiteral(input) && isBBox(input.bbox)) {
+			this.bbox = [...input.bbox]
 		}
 
 		if (isBBox(bbox)) {

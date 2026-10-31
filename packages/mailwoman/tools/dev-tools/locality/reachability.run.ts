@@ -17,7 +17,7 @@ import { formatPercent } from "@mailwoman/core/stats"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { type NameKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { type PanelLocality, readCoordPanel, renderAdmin, suffixTail } from "#tools/dev-tools/coord-panel"
@@ -84,7 +84,7 @@ async function goldPlace(place: PanelLocality): Promise<number | null> {
 	for (const row of candidates) {
 		if (row.latitude == null || row.longitude == null) continue
 
-		const km = haversineKm(place.lat, place.lon, row.latitude, row.longitude)
+		const km = haversine(place.lat, place.lon, row.latitude, row.longitude)
 
 		if (!best || km < best.km) {
 			best = { id: Number(row.spr_id), km }

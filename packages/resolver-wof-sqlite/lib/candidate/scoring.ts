@@ -5,7 +5,7 @@
  */
 
 import { compareReferential, referentialFromPopulation } from "@mailwoman/core/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { exactMatchIDs, officialNameIDs } from "#exact-match"
@@ -74,7 +74,7 @@ export function candidateFromSearchRow(
 		let scoreTerm = 0
 
 		for (const h of hints) {
-			const d = haversineKm(h.lat, h.lon, row.lat, row.lon)
+			const d = haversine(h.lat, h.lon, row.lat, row.lon)
 			const decay = h.weight / (1 + d / weights.proximityScaleKm)
 			const prom = decay * weights.biasBoost
 

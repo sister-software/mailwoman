@@ -7,7 +7,7 @@
  * Its handler runs the measurement in the package root.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { z } from "zod"
 
 import type { EngineConfig } from "#dev-mcp/engine/registry"
@@ -112,7 +112,7 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 					km:
 						item.truthLat === null || item.truthLon === null || run.result.lat === null || run.result.lon === null
 							? null
-							: haversineKm(run.result.lat, run.result.lon, item.truthLat, item.truthLon),
+							: haversine(run.result.lat, run.result.lon, item.truthLat, item.truthLon),
 					tier: run.result.resolution_tier,
 					admin_coherence: run.result.admin_coherence ?? null,
 					// The resolved winner identities (name + placeID per rung), which coordinate

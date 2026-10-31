@@ -43,7 +43,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { haversineKm } from "@mailwoman/spatial/distance"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr/stream"
 
 import { representativePoint } from "#sdk/representative-point"
@@ -194,7 +194,7 @@ export function mergeStationComplexes(rows: readonly POISourceRow[]): POISourceR
 	const merged: POISourceRow[] = []
 
 	const meters = (a: POISourceRow, b: POISourceRow) =>
-		haversineKm(a.latitude, a.longitude, b.latitude, b.longitude) * 1000
+		haversine(a.latitude, a.longitude, b.latitude, b.longitude) * 1000
 
 	for (const group of groups.values()) {
 		const seen = new Set<number>()

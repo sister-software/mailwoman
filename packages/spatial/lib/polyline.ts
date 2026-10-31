@@ -12,7 +12,7 @@
  *   only the I/O around it does.
  */
 
-import { haversineKm } from "#distance"
+import { centralAngle, EARTH_RADII } from "#distance"
 
 /**
  * Clamp a fraction into `[0, 1]`.
@@ -42,7 +42,7 @@ export function pointAlong(
 	for (let i = 1; i < polyline.length; i++) {
 		const [aLon, aLat] = polyline[i - 1]!
 		const [bLon, bLat] = polyline[i]!
-		const d = haversineKm(aLat, aLon, bLat, bLon)
+		const d = EARTH_RADII.km * centralAngle(aLat, aLon, bLat, bLon)
 		legs.push(d)
 		total += d
 	}

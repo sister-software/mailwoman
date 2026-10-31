@@ -16,7 +16,8 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { mulberry32 } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { haversineKm, osgb36ToWGS84 } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
+import { osgb36ToWGS84 } from "@mailwoman/spatial/osgb36"
 import { basename, type PathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -160,7 +161,7 @@ for (const locale of ["en-US", "en-GB"]) {
 				leg,
 				locale,
 				resolved,
-				km: resolved && leg !== "typo" ? haversineKm(row.lat, row.lon, lat, lon) : null,
+				km: resolved && leg !== "typo" ? haversine(row.lat, row.lon, lat, lon) : null,
 			})
 		}
 	}

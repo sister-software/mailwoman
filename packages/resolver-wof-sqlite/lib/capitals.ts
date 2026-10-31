@@ -15,7 +15,7 @@
  *   radius a centroid-drift allowance rather than a catchment.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { normalizeLocalityForKey } from "#street/normalize"
 
@@ -129,7 +129,7 @@ export class CapitalIndex {
 			if (
 				point.level > best &&
 				point.keys.has(key) &&
-				haversineKm(latitude, longitude, point.latitude, point.longitude) <= CAPITAL_MATCH_RADIUS_KM
+				haversine(latitude, longitude, point.latitude, point.longitude) <= CAPITAL_MATCH_RADIUS_KM
 			) {
 				best = point.level
 			}

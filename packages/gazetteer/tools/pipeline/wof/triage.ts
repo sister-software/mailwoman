@@ -7,7 +7,7 @@
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
@@ -184,7 +184,7 @@ function judgeCoverage(
 	let crossBand: { record: LiveRecord; distanceKm: number } | null = null
 
 	for (const live of neighbours) {
-		const distanceKm = haversineKm(dead.lat, dead.lon, live.lat, live.lon)
+		const distanceKm = haversine(dead.lat, dead.lon, live.lat, live.lon)
 
 		if (distanceKm > COVERAGE_RADIUS_KM) continue
 
@@ -363,7 +363,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 
 			if (attestors) {
 				const near = (attestors.get(key) ?? [])
-					.map((g) => ({ ...g, distanceKm: haversineKm(lat, lon, g.lat, g.lon) }))
+					.map((g) => ({ ...g, distanceKm: haversine(lat, lon, g.lat, g.lon) }))
 					.filter((g) => g.distanceKm <= COVERAGE_RADIUS_KM)
 					.toSorted((a, b) => b.pop - a.pop)
 

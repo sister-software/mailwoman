@@ -8,7 +8,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { PipelineOpts, PipelineResult, POIQueryResult } from "@mailwoman/core/pipeline"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { JSONSpliterator } from "spliterator"
 
 import type { POIBoardExpect } from "#tools/eval-harness/poi/board/expectations"
@@ -259,7 +259,7 @@ export function gradeCase(fixture: POIBoardFixture, boardResult: POIBoardResult)
 	}
 
 	const nearestKm = Math.min(
-		...results.map((r) => haversineKm(r.latitude, r.longitude, expect.anchorGold.latitude, expect.anchorGold.longitude))
+		...results.map((r) => haversine(r.latitude, r.longitude, expect.anchorGold.latitude, expect.anchorGold.longitude))
 	)
 
 	const withinRange = nearestKm <= expect.maxNearestKm

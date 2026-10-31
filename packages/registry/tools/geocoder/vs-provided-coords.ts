@@ -20,7 +20,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { percentile } from "@mailwoman/core/stats"
-import { haversineKm } from "@mailwoman/match"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { TextSpliterator } from "spliterator"
 
 import { streamRows } from "#index"
@@ -153,7 +153,7 @@ export async function geocoderVsProvidedCoords(
 			continue
 		}
 
-		const deltaM = haversineKm(provided, { latitude: g.lat, longitude: g.lon }) * 1000
+		const deltaM = haversine(provided.latitude, provided.longitude, g.lat, g.lon) * 1000
 		results.push({ deltaM, tier: g.resolution_tier ?? "unknown" })
 	}
 

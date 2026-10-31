@@ -8,7 +8,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -92,7 +92,7 @@ async function main(): Promise<void> {
 		}
 
 		placed++
-		distances.push(haversineKm(lat, lon, placedHit.lat, placedHit.lon))
+		distances.push(haversine(lat, lon, placedHit.lat, placedHit.lon))
 	}
 
 	distances.sort((a, b) => a - b)

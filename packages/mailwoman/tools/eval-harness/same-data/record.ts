@@ -20,7 +20,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import type { ResolvedPlace, ResolveOpts, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import {
 	candidatePool,
@@ -187,7 +187,7 @@ function withholdPredicate(
 		if (!place.name || settlementKey(place.name) !== goldKey) return false
 
 		// Both halves are required: `Batāla` (IN) and `Batala` (IN) fold equal and sit 1,421 km apart.
-		return haversineKm(place.lat, place.lon, row.gold.lat, row.gold.lon) <= SAME_SETTLEMENT_KM
+		return haversine(place.lat, place.lon, row.gold.lat, row.gold.lon) <= SAME_SETTLEMENT_KM
 	}
 }
 
