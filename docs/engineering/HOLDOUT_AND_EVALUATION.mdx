@@ -67,10 +67,10 @@ hold in this corpus family.
 the recipe is measured on the CPU before it ships, and the measurement is an allocation report (section 4.5) a
 reader can inspect. A from-scratch training run is never the first measurement of a corpus change.
 
-**P5. One variable per run, a single control first, and two seeds before a corpus change is judged.** On a new
+**P5. One variable per run, a single control first, and three runs per arm before a change is judged.** On a new
 corpus, one unchanged-recipe control is trained and graded before any sweep. That control is a first
-measurement. Replication comes from the second seed under section 7.2, where a corpus change is judged on two
-runs of the same recipe that differ by seed only.
+measurement. Replication comes from further runs under section 7.2, where a corpus or recipe change is judged on
+three runs of the candidate against three runs of the control.
 
 Motivation for the seed rule: v8.1.0 trained with seed 42 against seed 43 flipped 87 regression-board rows of
 1,277 and 28 blocking cases of 643, a 25-pass gap. The corpus change under test, v8.2.0 against v8.1.0 at seed 42,
@@ -253,7 +253,7 @@ confirmation. Every confirmation read is recorded in the next specification's ra
 confirmation and failed retires that set for recipe selection, and its successor is drawn and frozen before the
 next release-directed run.
 
-## 7. What a candidate is graded on, and the two-seed rule
+## 7. What a candidate is graded on, and the three-run rule
 
 ### 7.1 The grading
 
@@ -268,15 +268,45 @@ next release-directed run.
    is a finding and never a verdict, because it sits inside seed noise.
 5. **Provenance split** of every held-out rate.
 
-### 7.2 Two seeds before a corpus change is judged
+### 7.2 Three runs per arm before a corpus or recipe change is judged
 
-A corpus change is judged on two runs of the unchanged recipe on the new corpus that differ by seed only, graded
-beside the control pair on the previous corpus. The change is read as an improvement when both seeds clear the
-release objective's lower confidence bound against the comparator and the smaller of the two gains exceeds the
-control pair's own spread. A board flip count is a finding to read, never the verdict. The rule costs a second
-run per corpus change, about $17 to $23 and 6 to 8 hours on an A100 at 60,000 steps (section 9). The caveat stands in the
-specification: one seed pair measured once gives a floor whose own variance is unknown, so a result inside twice
-the measured spread is reported as unestablished rather than as a loss.
+A corpus or recipe change is judged on three runs of the candidate, graded beside three runs of the control on the
+previous corpus or recipe, with every run on the same trainer. A run is a seed, or a repeat of one seed: on the
+A100, two runs of one config and one seed disagreed on 5.1% of battery rows, and two seeds on 6.5% to 7.6%. The comparison is
+read with `battery/groups.run.ts` over a battery report that holds all six runs.
+
+- A suite or the battery total counts as changed when the tool's two-sided p is below 0.05. Its standard error adds
+  the between-run variance of the two group means to the row-sampling variance of their difference, with
+  `k_a + k_b - 2` degrees of freedom.
+- A country counts as changed when its Holm-adjusted p, over every country with at least 200 decision rows, is
+  below 0.05.
+- A difference that does not meet the bar is reported as unestablished, in place of a gain or a loss. A difference
+  smaller than the cell's smallest detectable difference for the runs used is unestablished by construction.
+- The tool lists the rows that move under the all-but-one agreement rule, and the difference of every regrouping
+  of the pooled runs. A shape that moves in the observed split and also in splits that mix the two arms is noise.
+- A board flip count is a finding to read, never the verdict.
+
+The rule comes from #2869's Phase 2 and Phase 3, measured 2026-10-31 on the Rust trainer at 90,000 steps
+(int8, 26,743 battery decision rows). Three control seeds on `v0.8.7-overlay` scored 73.6%, 72.7% and 72.3%. Three
+runs on `v0.8.8-nppes-overlay`, seeds 42, 42 again and 43, scored 70.6%, 71.8% and 72.4%. The two seed 42 runs
+disagree on 1,368 rows (5.1%), and pairs of control seeds on 1,750 to 2,031 (6.5% to 7.6%). The pooled standard
+deviation of the run rates is 0.81 points on the total and 1.35 on `osm-venue-with-address`. With it, the smallest
+difference a comparison detects (two-sided, alpha 0.05, power 0.8) is:
+
+| Cell                        | 2 runs per arm | 3 runs | 4 runs | 5 runs |
+| --------------------------- | -------------: | -----: | -----: | -----: |
+| all suites                  |            4.4 |    2.5 |    2.0 |    1.7 |
+| `osm-venue-with-address`    |            7.3 |    4.2 |    3.3 |    2.8 |
+| `osm-district-before-city`  |            1.9 |    1.1 |    0.9 |    0.8 |
+| `osm-region-after-locality` |           30.2 |   17.1 |   13.4 |   11.4 |
+
+Two runs per arm therefore cannot resolve the 1.3-point difference the Phase 2 corpus change produced (p = 0.13 with
+three runs per arm). The earlier two-seed rule could not have either. `osm-region-after-locality` swings by more
+than 10 points between control seeds (95.2%, 83.7% and 92.2%), so a single comparison cannot read that suite.
+
+A run on the Rust trainer costs about $4.30 on an A100-40GB (#2887). A comparison against a control whose three
+runs already exist costs three candidate runs, about $13. A comparison that needs new control runs too costs six,
+about $26.
 
 ### 7.3 When a screen run decides
 
@@ -360,24 +390,20 @@ completed learning-rate schedule requires an explicit new-run decision.
 
 ## 9. Costs, as measured in October 2026
 
-| Operation                                | Cost                                   |
-| ---------------------------------------- | -------------------------------------- |
-| Full corpus build, parallel              | 4 h 04 min CPU                         |
-| Re-split, 853 files                      | 76 min CPU, 8 workers                  |
-| Held-out span check                      | 22 to 50 min CPU, now inside the build |
-| Held-out freeze and overlap audit        | about 3 and 2.5 min per set            |
-| 90,000-step from-scratch run             | about 2 h on an A100, about $7.40      |
-| One candidate graded                     | about 1 h CPU                          |
-| A corpus change judged under section 7.2 | one further run, the same cost again   |
+| Operation                         | Cost                                   |
+| --------------------------------- | -------------------------------------- |
+| Full corpus build, parallel       | 4 h 04 min CPU                         |
+| Re-split, 853 files               | 76 min CPU, 8 workers                  |
+| Held-out span check               | 22 to 50 min CPU, now inside the build |
+| Held-out freeze and overlap audit | about 3 and 2.5 min per set            |
+| 90,000-step from-scratch run      | about 1.4 h on an A100, about $4.30    |
+| One candidate graded              | about 1 h CPU                          |
+| A change judged under section 7.2 | three candidate runs, about $13        |
 
-The run figures come from the #2871 pair, `v8.3.0-base-c6-90k-fp32master-s42` and `-s43` (2026-10-29), on an
-A100-40GB with fp32 master weights and the Rust row encoder. The pair cost $14.74 of Modal, CPU and memory
-included, with one restart each. Between validation passes the step ran at a median 7.2 and 7.0 s per 100 steps,
-read from each run's `train_log.csv`. Each attempt's first validation pass encodes the draw and took 140 to 146 s.
-Each later pass replays it and took a median 7.6 s. The two logs record 2.17 and at least 1.90 h of wall clock from
-step 100 to step 90,000, restarts included. The seed 43 log lacks the rows from step 44,000 to 50,000 written
-before its restart. `OBSERVED_SECONDS_PER_100_STEPS` and `EVALUATION_SECONDS` in `launch/wall_clock.py` hold these
-rates.
+The run figures come from #2887's run of `v8.3.0-base-c6-90k-mixed-s42` on the Rust trainer (2026-10-31), on an
+A100-40GB in a sandbox of 4 CPUs and 16 GiB. It trained 90,000 steps in 4,831 s, a cumulative 18.63 steps/s,
+and billed 1.41 GPU-hours, about $4.30 of Modal with CPU and memory included. `launch/wall-clock.ts` holds the
+step rates the preflight reads. The Python trainer's fp32-master pair (#2871) cost $14.74 for two runs.
 
 ## 10. Current state against this specification
 
@@ -394,7 +420,7 @@ rates.
 | Floors and receipts re-derived per corpus        | Done by hand for v0.8.1. Automation open                                 |
 | Evaluation rows from unsampled source rows (6.3) | Specified. The first draw waits on the support index for the corpus      |
 | Fresh US evaluation source (6.4)                 | Deferred by the operator                                                 |
-| Two-seed rule (7.2)                              | Adopted. First applied to the next corpus change                         |
+| Three-run rule (7.2)                             | Adopted 2026-10-31, replacing the two-seed rule. Applied first in #2869  |
 | Pre-launch evaluator rule (P3)                   | An agent rule. Launcher enforcement open                                 |
 | Automatic resume by default                      | Open                                                                     |
 
@@ -412,5 +438,6 @@ rates.
 | 8. State the deferred acquisition's consequence | Section 6.4's last two sentences                                                                                                        |
 | 9. Confirmation access, reads and retirement    | Section 6.5                                                                                                                             |
 
-The operator's four decisions of 2026-10-23 sit in P5 and 7.2 (two seeds), 6.2 (the comparator), 6.3 (unsampled
-rows with the variety and supply guards) and 4.3 (the population-sized cap).
+The operator's four decisions of 2026-10-23 sit in P5 and 7.2 (two seeds, raised to three runs per arm on
+2026-10-31 from #2869's measurements), 6.2 (the comparator), 6.3 (unsampled rows with the variety and supply
+guards) and 4.3 (the population-sized cap).

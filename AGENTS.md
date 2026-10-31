@@ -72,8 +72,8 @@ Use repository skills for procedures rather than copying their steps into this f
   specification registers no threshold, so every verdict is insufficient evidence and the earlier
   promotion checks still decide until replacements are registered.
 - `docs/engineering/HOLDOUT_AND_EVALUATION.mdx` is the held-out data and evaluation specification: how
-  rows are split, the checks that admit a corpus manifest, the comparator, the two-seed rule for a corpus
-  change, and the checks a training run passes before launch. Read it before changing the split policy, a
+  rows are split, the checks that admit a corpus manifest, the comparator, the three-run rule for a corpus
+  or recipe change, and the checks a training run passes before launch. Read it before changing the split policy, a
   holdout table, an evaluation draw, or a training launch.
 - `docs/engineering/reference/decoder-grammar.mdx` defines the decoder objective and constraint
   taxonomy. Read it before changing the decoder, a prior, or phrase cohesion.
