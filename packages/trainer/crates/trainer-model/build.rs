@@ -13,6 +13,8 @@ fn main() {
 	println!("cargo:rustc-env=TRAINER_TCH_VERSION={}", locked_version("tch"));
 	let lib =
 		PathBuf::from(std::env::var("DEP_TCH_LIBTORCH_LIB").expect("torch-sys reports the libtorch library directory"));
+	// The crate's tests find libtorch's shared libraries through an rpath, with no LD_LIBRARY_PATH.
+	println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib.display());
 	let root = lib
 		.parent()
 		.expect("the libtorch library directory has a parent")

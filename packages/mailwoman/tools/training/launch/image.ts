@@ -110,15 +110,21 @@ export const TRAINER_IMAGE_ENV: Readonly<Record<string, string>> = {
 }
 
 /**
+ * The download URL of the `libtorch-shared-with-deps` archive of {@linkcode LIBTORCH_VERSION} for a variant,
+ * whose sha256 {@linkcode LIBTORCH_ARCHIVE_SHA256} pins.
+ */
+export function libtorchArchiveURL(variant: TrainerVariant): string {
+	return `https://download.pytorch.org/libtorch/${variant}/libtorch-shared-with-deps-${LIBTORCH_VERSION}%2B${variant}.zip`
+}
+
+/**
  * The base layers of a trainer image: build tools, libtorch at its pinned digest,
  * the CUDA wheels for the CUDA variant, and the Rust toolchain.
  */
 export function trainerBaseCommands(variant: TrainerVariant, toolchain: string): string[] {
-	const archive = `libtorch-shared-with-deps-${LIBTORCH_VERSION}%2B${variant}.zip`
-
 	const commands = [
 		"RUN apt-get update && apt-get install -y --no-install-recommends build-essential binutils ca-certificates curl unzip && rm -rf /var/lib/apt/lists/*",
-		`RUN curl -fsSL -o /tmp/libtorch.zip https://download.pytorch.org/libtorch/${variant}/${archive}`,
+		`RUN curl -fsSL -o /tmp/libtorch.zip ${libtorchArchiveURL(variant)}`,
 		`RUN echo '${LIBTORCH_ARCHIVE_SHA256[variant]}  /tmp/libtorch.zip' | sha256sum -c - && unzip -q /tmp/libtorch.zip -d /opt && rm /tmp/libtorch.zip`,
 	]
 
@@ -170,15 +176,31 @@ export function trainerBuildScript(variant: TrainerVariant): string {
 /**
  * The repository files a trainer image holds, relative to the repository root and sorted.
  *
- * Every file Git includes under `packages/trainer` except its Markdown, the mtf crates the trainer
- * depends on, the root workspace's manifest, lockfile and toolchain file, and the data files.
+ * Every file Git includes under `packages/trainer`, the mtf crates the trainer depends on, the root
+ * workspace's manifest, lockfile and toolchain file, and the data files, except Markdown and each crate's
+ * tests, benches and examples.
+ *
+ * `cargo build -p trainer-cli` reads none of the excluded files, and the list is what the image's
+ * digest covers, so a change to a test keeps the published image.
  */
 export async function trainerSourceFiles(): Promise<string[]> {
 	const trainer = await workingTreeFiles(["packages/trainer"])
 
 	const mtf = await workingTreeFiles(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "packages/mtf/crates"])
 
-	return [...new Set([...trainer.filter((path) => !path.endsWith(".md")), ...mtf, ...TRAINER_DATA_FILES])].toSorted()
+	return [...new Set([...[...trainer, ...mtf].filter(isBuildInput), ...TRAINER_DATA_FILES])].toSorted()
+}
+
+/**
+ * Whether the trainer's release build reads a file: Markdown, a crate's `tests/`, `benches/` and
+ * `examples/` directories, and TypeScript tests are left out.
+ */
+function isBuildInput(path: string): boolean {
+	return (
+		!path.endsWith(".md") &&
+		!/\.test\.tsx?$/u.test(path) &&
+		!/\/crates\/[^/]+\/(?:tests|benches|examples)\//u.test(path)
+	)
 }
 
 /**

@@ -26,8 +26,10 @@ These cases select every suite:
 - unrecognized path
 - removed workspace
 - workspace manifest change
-- push to `main`
 - manual workflow dispatch
+- a push to `main` whose previous head the clone lacks, such as a new branch or a force-push
+
+Any other push to `main` selects the suites its commits change, from the branch's previous head, as a pull request does.
 
 Notes:
 

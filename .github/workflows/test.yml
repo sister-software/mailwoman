@@ -78,8 +78,9 @@ jobs:
       - name: Select affected workspaces and suites
         id: select
         env:
-          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          CI_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # A push passes the branch's previous head as its base, so it runs the suites its commits select.
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: yarn mwops ci-scope
 
   # This job reports whether a `mailwoman-data` runner is online. A job that targets an offline

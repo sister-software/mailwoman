@@ -162,6 +162,9 @@ threads=()
 attempt=0
 fifo=$(mktemp -u)
 marker="$MW_RUN_BASE/fault-injected-$MW_LAUNCH_ID"
+# The previous failed attempt's exit code and the newest complete checkpoint after it.
+previous_code=""
+previous_newest=""
 
 while :; do
 	# A complete checkpoint is a step directory with its training state, the file a save writes last.
@@ -224,6 +227,16 @@ while :; do
 		log "trainer train exited $code after $attempt retries"
 		exit "$code"
 	fi
+
+	# Two attempts that exit with the same code and leave the newest complete checkpoint where it was
+	# failed the same way from the same state, so a further retry repeats them.
+	newest=$(compgen -G "$MW_OUTPUT_DIR/step-*/training_state.json" | sort | tail -n 1)
+	if [ "$attempt" -gt 0 ] && [ "$code" = "$previous_code" ] && [ "$newest" = "$previous_newest" ]; then
+		log "trainer train exited $code on two attempts with no new checkpoint between them; stopping without retrying again"
+		exit "$code"
+	fi
+	previous_code=$code
+	previous_newest=$newest
 
 	attempt=$((attempt + 1))
 	log "trainer train exited $code; retrying in $MW_RETRY_DELAY_SECONDS s"

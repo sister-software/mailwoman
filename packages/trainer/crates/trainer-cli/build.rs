@@ -16,6 +16,8 @@ fn main() {
 		return;
 	};
 	let lib = PathBuf::from(root).join("lib");
+	// The binary and the crate's tests find libtorch's shared libraries through an rpath, with no LD_LIBRARY_PATH.
+	println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib.display());
 	if !lib.join("libtorch_cuda.so").is_file() {
 		return;
 	}

@@ -4,8 +4,8 @@ resolver = "2"
 # `packages/mtf`, the trainer crates under `packages/trainer`.
 members = ["packages/*/crates/*"]
 # A bare `cargo build` or `cargo test` builds the crates that need no libtorch. `trainer-model`, `trainer-loop` and
-# `trainer-cli` link libtorch through `torch-sys`, whose build script refuses without `LIBTORCH`: build them with
-# `-p <crate>` or `--workspace` once it is set.
+# `trainer-cli` link libtorch through `torch-sys`: build them with `-p <crate>` or `--workspace` after
+# `node packages/mailwoman/tools/training/libtorch.run.ts` installs it where `.cargo/config.toml` points `LIBTORCH`.
 default-members = ["packages/mtf/crates/*", "packages/trainer/crates/trainer-export"]
 
 [workspace.package]

@@ -152,7 +152,7 @@ describe("the training sandbox supervisor", () => {
 
 	it("logs the GPU's use and the trainer's peak resident memory while the trainer runs", async () => {
 		const run = await runSupervisor("slow", { MW_USAGE_INTERVAL_SECONDS: "0.2" })
-		const samples = run.stdout.split("\n").filter((line) => line.startsWith("[launch] usage: "))
+		const samples = run.stdout.match(/^\[launch\] usage: .*$/gmu) ?? []
 
 		expect(run.code).toBe(0)
 		// The host running the test may have no GPU, so the GPU field is whatever nvidia-smi reports or `none`.
@@ -189,11 +189,20 @@ describe("the training sandbox supervisor", () => {
 	})
 
 	it("stops with the trainer's code once the retries are spent", async () => {
-		const run = await runSupervisor("fail fail fail")
+		// Each attempt fails differently, so every retry runs.
+		const run = await runSupervisor("fail crash crash")
+
+		expect(run.code).toBe(1)
+		expect(run.calls).toHaveLength(3)
+		expect(run.stdout).toContain("trainer train exited 1 after 2 retries")
+	})
+
+	it("stops retrying after two identical failures with no new checkpoint between them", async () => {
+		const run = await runSupervisor("fail fail fail", { MW_RETRIES: "3" })
 
 		expect(run.code).toBe(2)
-		expect(run.calls).toHaveLength(3)
-		expect(run.stdout).toContain("trainer train exited 2 after 2 retries")
+		expect(run.calls).toHaveLength(2)
+		expect(run.stdout).toContain("exited 2 on two attempts with no new checkpoint between them")
 	})
 
 	it("refuses without a retry when the trainer chooses another device", async () => {

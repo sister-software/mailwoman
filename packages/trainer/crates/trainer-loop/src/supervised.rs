@@ -585,61 +585,84 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 			(resume_step * accum) as u64,
 			CancelToken::default(),
 		);
-		while step < max_steps {
-			let rows = batches.next_batch()?;
-			realized.add(&rows)?;
-			model.mode = Mode::Train;
-			let mut batch = encoder.encode(&rows)?.to_device(device);
-			apply_curricula(&curricula, &mut batch, step)?;
-			let boundary = (micro_step + 1) % accum == 0;
-			if micro_step % accum == 0 {
-				optim.zero_grad();
-			}
-			let out = {
-				let _guard = precision.autocast.map(|k| Autocast::enter(device, k)).transpose()?;
-				model.forward(&batch.inputs())?
-			};
-			let mut loss_total = out.loss.ok_or_else(|| fail!("the training forward returned no loss"))?;
-			if let Some(e) = &ewc {
-				loss_total = loss_total + e.penalty(&params)?;
-			}
-			let loss = loss_total / accum as f64;
-			loss.backward();
-			micro_step += 1;
-			if !boundary {
-				continue;
-			}
-			if let (Some(f), Some(start)) = (fisher.as_mut(), fisher_window_start) {
-				if step >= start {
-					f.accumulate(&params);
+		// A second thread samples and encodes the next batch while this one trains on the current one, so the host's
+		// batch preparation overlaps the device's step. The channel holds two batches in the sampler's order, so the
+		// batches a step reads, and every value the run logs, are the ones a serial loop produces.
+		let encoder = &encoder;
+		std::thread::scope(|scope| -> Result<()> {
+			let (sender, receiver) = std::sync::mpsc::sync_channel(2);
+			scope.spawn(move || loop {
+				let next = (|| -> Result<_> {
+					let rows = batches.next_batch()?;
+					let encoded = encoder.encode(&rows)?;
+					Ok((rows, encoded))
+				})();
+				let failed = next.is_err();
+				// The receiver is dropped once the run reaches max_steps, which ends this thread.
+				if sender.send(next).is_err() || failed {
+					break;
 				}
-			}
-			if grad_clip > 0.0 {
-				let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
-				clip_grad_norm(&refs, grad_clip)?;
-			}
-			optim.step();
-			scheduler.step(&mut optim);
-			step += 1;
-			running += loss.double_value(&[]) * accum as f64;
-			if step % log_every == 0 {
-				train_loss = running / log_every as f64;
-				running = 0.0;
-			}
-			learning_rate = scheduler.get_last_lr()[0];
-			let view = step_view!(started.elapsed().as_secs_f64());
-			for c in &mut callbacks {
-				c.on_step_end(&view, step)?;
-			}
-			if step % eval_every == 0 {
-				let draw = validation.batches(&sampler, &encoder, i128::from(seed + 1), val_rows, eval_batch)?;
-				let metrics = evaluate(&mut model, draw, &labels, &locales)?;
+			});
+			while step < max_steps {
+				let (rows, encoded) = receiver
+					.recv()
+					.map_err(|_| fail!("the batch thread stopped without an error"))??;
+				realized.add(&rows)?;
+				model.mode = Mode::Train;
+				let mut batch = encoded.to_device(device);
+				apply_curricula(&curricula, &mut batch, step)?;
+				let boundary = (micro_step + 1) % accum == 0;
+				if micro_step % accum == 0 {
+					optim.zero_grad();
+				}
+				let out = {
+					let _guard = precision.autocast.map(|k| Autocast::enter(device, k)).transpose()?;
+					model.forward(&batch.inputs())?
+				};
+				let mut loss_total = out.loss.ok_or_else(|| fail!("the training forward returned no loss"))?;
+				if let Some(e) = &ewc {
+					loss_total = loss_total + e.penalty(&params)?;
+				}
+				let loss = loss_total / accum as f64;
+				loss.backward();
+				micro_step += 1;
+				if !boundary {
+					continue;
+				}
+				if let (Some(f), Some(start)) = (fisher.as_mut(), fisher_window_start) {
+					if step >= start {
+						f.accumulate(&params);
+					}
+				}
+				if grad_clip > 0.0 {
+					let refs: Vec<&Tensor> = params.iter().map(|(_, p)| p).collect();
+					clip_grad_norm(&refs, grad_clip)?;
+				}
+				optim.step();
+				scheduler.step(&mut optim);
+				step += 1;
+				running += loss.double_value(&[]) * accum as f64;
+				if step % log_every == 0 {
+					train_loss = running / log_every as f64;
+					running = 0.0;
+				}
+				learning_rate = scheduler.get_last_lr()[0];
 				let view = step_view!(started.elapsed().as_secs_f64());
 				for c in &mut callbacks {
-					c.on_eval_end(&view, step, &metrics)?;
+					c.on_step_end(&view, step)?;
+				}
+				if step % eval_every == 0 {
+					let draw = validation.batches(&sampler, encoder, i128::from(seed + 1), val_rows, eval_batch)?;
+					let metrics = evaluate(&mut model, draw, &labels, &locales)?;
+					let view = step_view!(started.elapsed().as_secs_f64());
+					for c in &mut callbacks {
+						c.on_eval_end(&view, step, &metrics)?;
+					}
 				}
 			}
-		}
+			drop(receiver);
+			Ok(())
+		})?;
 	}
 	let _ = learning_rate;
 	let final_ck = save_checkpoint(

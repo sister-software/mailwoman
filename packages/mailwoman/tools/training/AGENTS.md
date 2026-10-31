@@ -82,6 +82,13 @@ steps/s on it, 9.95 on an A10 and 6.96 on an L4. With the sandbox's 8 CPUs and 3
 A100-40GB and the A10 cost about the same per step, and the A100 finishes sooner. The A100-80GB costs $0.40 per hour
 more for memory this model does not use. `launch/wall-clock.ts` records each rate.
 
+## Building the trainer on the host
+
+`node packages/mailwoman/tools/training/libtorch.run.ts` installs the libtorch archive `launch/image.ts` pins into the
+git-ignored `.cache/libtorch`, after checking its sha256. The root `.cargo/config.toml` points `LIBTORCH` there, and the
+trainer crates' build scripts give their binaries and tests an rpath to its `lib/`, so `cargo test -p trainer-loop` runs
+with no variable set. CI downloads the same archive in its `rust` job and sets `LIBTORCH` itself.
+
 ## Host audits
 
 The audits under `audits/` read the corpus through the `mtf-node` addon on a host that mirrors the volume at

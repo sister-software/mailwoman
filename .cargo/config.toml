@@ -1,0 +1,6 @@
+# The libtorch the trainer crates link, installed by `node packages/mailwoman/tools/training/libtorch.run.ts` into the
+# git-ignored `.cache/libtorch`. A `LIBTORCH` or `LD_LIBRARY_PATH` already in the environment, as CI sets, takes
+# precedence over these.
+[env]
+LIBTORCH = { value = ".cache/libtorch", relative = true }
+LD_LIBRARY_PATH = { value = ".cache/libtorch/lib", relative = true }
