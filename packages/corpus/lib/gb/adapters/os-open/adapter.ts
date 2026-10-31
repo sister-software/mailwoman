@@ -7,21 +7,20 @@
  * the Open Government Licence v3.0.
  *
  * - **Code-Point Open** gives every unit postcode in England, Scotland and Wales a grid point.
- * - **OS Open Roads** gives each named road link a centreline and the roadNameTOID of its name.
+ * - **OS Open Roads** gives each road link with a name a centreline and its roadNameTOID.
  * - **OS Open Names** gives each roadNameTOID its `NAME1`, `POSTCODE_DISTRICT` and `POPULATED_PLACE`.
  *
- * Each postcode is joined to the nearest named road link within 100 m, measured point-to-segment in
- * EPSG:27700 meters. The street is the Open Names `NAME1` of that link's TOID, the locality is its
- * `POPULATED_PLACE`. A row carries no region, because the GB layout prints none. Every
- * component is OS data except `house_number`, which no open GB product publishes and which this
- * adapter **draws** from local bands seeded by the postcode and TOID, so each row carries a number the
- * source never stated.
+ * Each postcode is joined to the nearest road link with a name within 100 m, measured point-to-segment
+ * in EPSG:27700 meters. The street is the Open Names `NAME1` for that link's TOID. The locality is its
+ * `POPULATED_PLACE`. The GB layout has no region field, so each row omits a region. OS supplies every
+ * component except `house_number`. No open GB product publishes a house number. This adapter draws the
+ * number from local bands seeded by the postcode and TOID. The generated number does not come from the source.
  *
  * A postcode is dropped when:
  *
  * - its Code-Point coordinate has no position, `Positional_quality_indicator` 90;
  * - its coordinate is shared with another postcode, so the point does not locate this postcode's street;
- * - no named link lies within 100 m;
+ * - no road link with a name lies within 100 m;
  * - the joined road's `POSTCODE_DISTRICT` differs from the postcode's own outward code.
  *
  * `inputPath` is a directory holding the three products unzipped, each in its own subdirectory:
@@ -70,7 +69,7 @@ export const GB_OS_OPEN_LICENSE = "OGL-UK-3.0"
 /**
  * The jurisdictions the adapter emits.
  *
- * Code-Point Open covers Great Britain and carries no `BT` postcode.
+ * Code-Point Open covers Great Britain and includes no `BT` postcodes.
  */
 export const GB_OS_OPEN_COUNTRIES: readonly string[] = ["GB"]
 
@@ -130,7 +129,7 @@ export interface GBOSOpenSummary {
 	 */
 	postcodesWithCoordinate: number
 	/**
-	 * Postcodes with a named link within the radius, counted before any drop.
+	 * Postcodes with a road link with a name within the radius, counted before any drop.
 	 */
 	joined: number
 	dropped: {
@@ -143,7 +142,7 @@ export interface GBOSOpenSummary {
 		 */
 		sharedCoordinate: number
 		/**
-		 * No named link within the radius.
+		 * No road link with a name lies within the radius.
 		 */
 		noLinkWithinRadius: number
 		/**
@@ -301,7 +300,7 @@ export function createGBOSOpenAdapter(options: GBOSOpenAdapterOptions = {}): Cor
 				names: createOpenNamesReadStats(),
 			}
 
-			// Code-Point: every postcode with a coordinate, and how many postcodes share each coordinate.
+			// Code-Point: count postcodes with coordinates and the postcodes that share each coordinate.
 			const codePointStats = createCodePointParseStats()
 			const postcodes: string[] = []
 			const xs: number[] = []
@@ -330,7 +329,7 @@ export function createGBOSOpenAdapter(options: GBOSOpenAdapterOptions = {}): Cor
 				summary.pqi[PQI_NO_COORDINATE] = codePointStats.skippedNoCoordinate
 			}
 
-			// Open Roads: stream every named link past the postcodes once.
+			// Open Roads: stream every road link with a name past the postcodes once.
 			const join = new NearestLinkJoin<JoinedLink>(
 				{ xs: Float64Array.from(xs), ys: Float64Array.from(ys) },
 				GB_OS_OPEN_JOIN_RADIUS_M

@@ -5,7 +5,7 @@
  *
  *   The `osm-address-points` build recipe: one address-point database per requested country, derived from
  *   a Geofabrik extract. `mailwoman data build osm-address-points --countries <cc>` runs it through the
- *   installer, which acquires the inputs, validates each output and activates it.
+ *   installer. The installer acquires the inputs, validates each output and activates it.
  *
  *   Countries that share a region read one acquired extract. A country derived from a region that holds
  *   other countries is clipped to its outline, and the outline's digest is recorded in that country's
@@ -46,7 +46,8 @@ import { streetLocaleForCountry, supportedOSMCountries } from "#street-locale"
 import { buildRooftopDatabase } from "#tools/rooftop-database"
 
 /**
- * The base URL of the geoBoundaries API, whose per-country metadata names each outline's download URL.
+ * The base URL of the geoBoundaries API.
+ * Its per-country metadata lists each outline's download URL.
  */
 export const GEOBOUNDARIES_BASE_URL = "https://www.geoboundaries.org/"
 

@@ -2,7 +2,7 @@
 # (v8.3.0-probe-c4-split-digits-2k.yaml) with the code-unit channel turned on, so the two differ only in that channel.
 #
 # The channel gives every piece of a digit run or alphanumeric code (`10118`, `SW1A`, `1-9-1`) five features of the
-# whole code: membership, length, letter share, a hyphen, and how many countries' postcode syntax accepts it. The
+# whole code: membership, length, letter share, a hyphen, and the count of countries whose postcode syntax accepts it. The
 # features come from mtf-channels' `code_units` in training and @mailwoman/neural/code-unit-features at
 # inference, held equal by test/fixtures/code-unit-parity.json. On 394,097 v0.8.2 rows, a majority-label rule over
 # the code's pattern separates 95.07% of 640,156 single-unit house numbers and postcodes.

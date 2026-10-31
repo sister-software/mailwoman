@@ -215,7 +215,8 @@ export function robustMCE(rows: readonly ReliabilityBin[]): number {
 /**
  * The Brier score: the mean squared gap between confidence and correctness.
  *
- * @throws For no records, whose mean NumPy reports as NaN.
+ * @throws When the input has no records.
+ * NumPy reports NaN for the mean of an empty array.
  */
 export function brier(conf: readonly number[], correct: readonly number[]): number {
 	if (!conf.length) throw new Error("the Brier score needs at least one record")
@@ -288,7 +289,8 @@ export function lookupTable(xs: readonly number[], g: readonly number[], bins: n
 }
 
 /**
- * One isotonic fit and every figure measured from it, which the table and the report both read.
+ * One isotonic fit and every figure measured from it.
+ * The table and report both read these values.
  */
 export type IsotonicFit = ReturnType<typeof fitAndMeasure>
 

@@ -216,7 +216,8 @@ function inventoryComponent(entry: InventoryEntry): DataBOMComponent {
 			// The count cannot be recovered from the input afterwards.
 			// A zero would assert that a publisher supplied 0 records to this build.
 			...property("mailwoman:sourceRecords", manifest.source_records),
-			// The input file the build read, which a share-alike license's database-access terms point a recipient at.
+			// The build reads this input file.
+			// A share-alike license's database-access terms direct recipients to it.
 			...property("mailwoman:sourceURL", manifest.source_url),
 			...property("mailwoman:sourceSHA256", manifest.source_sha256),
 			...property("mailwoman:bytes", entry.bytes),

@@ -60,7 +60,7 @@ export const SourceRegister = {
 	 */
 	UruguayIDEDirecciones: "uy-ide-direcciones",
 	/**
-	 * The `Verzeichnis der Gebäudeadressen`, Liechtenstein's official building-address index,
+	 * Liechtenstein's official building-address index, the `Verzeichnis der Gebäudeadressen`,
 	 * which the Landesverwaltung publishes on service.geo.llv.li under its ABI/OGD license.
 	 */
 	LiechtensteinGebaeudeadressen: "li-llv-gebaeudeadressen",

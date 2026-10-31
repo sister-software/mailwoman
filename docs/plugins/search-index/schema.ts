@@ -34,8 +34,10 @@ export interface SearchIndexDatabase {
  * The extractor's hash id serves the duplicate check at build time and is not stored,
  * because 32 random hex characters per row compress poorly.
  *
- * `detail=column` keeps a term's count per column, which `bm25` ranks by,
- * and drops its positions, which only phrase and NEAR queries read.
+ * `detail=column` keeps a term's count per column for `bm25` ranking.
+ * It drops term positions.
+ *
+ * Phrase and NEAR queries are the only queries that read them.
  * The query code issues neither.
  */
 export const SCHEMA_SQL = `

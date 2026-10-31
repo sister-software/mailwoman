@@ -135,7 +135,7 @@ const CAMERA_SEGMENT = /\/(?:@|%40)(-?[\d.]+)(?:,|%2C)(-?[\d.]+)(?:(?:,|%2C)([\d
 /**
  * Decimal places written for a coordinate.
  *
- * Seven places resolve about 1 cm, which matches Google Maps' links.
+ * Seven places resolve within about 1 cm of Google Maps' links.
  */
 const COORDINATE_DECIMALS = 7
 
@@ -186,7 +186,8 @@ export function pathWithCamera(url: URL, center: readonly [lon: number, lat: num
 
 	next.pathname = `${route}/@${decimalText(lat, COORDINATE_DECIMALS)},${decimalText(wrapLongitude(lon), COORDINATE_DECIMALS)},${decimalText(zoom, ZOOM_DECIMALS)}z`
 
-	// Deleting a parameter reserializes the whole query, which percent-encodes a URL value such as `?basemap=`.
+	// The code removes a parameter and reserializes the query.
+	// This percent-encodes a URL value such as `?basemap=`.
 	if (next.searchParams.has("center") || next.searchParams.has("zoom")) {
 		next.searchParams.delete("center")
 		next.searchParams.delete("zoom")

@@ -129,7 +129,8 @@ export class StyleSpecificationComposer {
 			...spec.sources,
 			// [TerrainTileSetID]: createTerrainDEMSource(),
 			...(hillshadeSource ? { [HillshadeTileSetID]: hillshadeSource } : {}),
-			// The default base layers include the ocean layers, which read the bathymetry and land underlay sources.
+			// The default base layers include the ocean layers.
+			// Those layers read the bathymetry and land-underlay sources.
 			...(spec.baseLayers
 				? {}
 				: {

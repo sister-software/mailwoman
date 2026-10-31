@@ -56,7 +56,7 @@ export interface ProvenanceDocument {
 		attribution: Array<{ text: string; license_named: string | null }>
 		/**
 		 * The attributions the base's effective training manifest records as owed,
-		 * repeated for a consumer who installs this overlay alone.
+		 * repeated for a consumer who installs only this overlay.
 		 * Empty when the base has no such manifest.
 		 */
 		required_attributions: RequiredAttributionEntry[]
@@ -142,7 +142,7 @@ export interface ProvenanceDocument {
 		total_emitted_rows: number
 	} | null
 	/**
-	 * The attributions the audited epoch's sources owe, grouped by the license label their rows carry.
+	 * The attributions owed by the audited epoch's sources, grouped by each row's license label.
 	 *
 	 * A recorded `statement` is the text to reproduce.
 	 * A `null` statement means the label requires attribution and the text is written
@@ -430,8 +430,8 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
  * An overlay reads its base's, because the rows a consumer decodes through
  * the overlay pass through that graph.
  *
- * A package with neither says so, so the absence of a statement reads as an
- * absence of a record rather than of an obligation.
+ * A package with neither source records that fact.
+ * The missing statement then indicates a missing record rather than a missing obligation.
  */
 function renderAttributionSection(record: WeightsRightsRecord): string {
 	const own = record.effectiveTraining
@@ -501,10 +501,10 @@ function renderAttributionLists(attributions: readonly RequiredAttribution[]): s
 }
 
 /**
- * The section naming where the training data a license requires be offered is published,
- * or an empty string when neither the card nor the base's card records an offer.
+ * The section identifying where the required training data is published, or an empty string
+ * when neither the card nor the base's card records an offer.
  *
- * An overlay repeats its base's offers, because a consumer of the overlay alone
+ * An overlay repeats its base's offers, because a consumer who installs only the overlay
  * receives rows decoded through the graph those databases trained.
  */
 function renderDataAccessSection(record: WeightsRightsRecord): string {

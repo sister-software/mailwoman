@@ -165,7 +165,7 @@ current specification moved to `specs/release-requirements.v2.json` (schema 2). 
   zero-event bound q / G, with q = 1 - tail^(1/G), in its place, so a degenerate sample never has zero width
   and decides only once its group count makes that bound narrow. A bound that still has zero width is
   insufficient evidence.
-- **Grouping.** Schema 2 requires `statistics.rowsIndependent` with no default. When it is `false`, a check
+- **Group handling.** Schema 2 requires `statistics.rowsIndependent` with no default. When it is `false`, a check
   that reads a row without a group reports no bounds and is insufficient evidence. v2 sets it to `false`. The
   simulation's synthetic specification also sets it to `false`, so the `row_identity` scenarios now measure
   the refusal: their checks have no bounds, which the coverage columns count as not covering.
@@ -206,7 +206,7 @@ Against the targets (observed):
   R = 200 cannot tell 94% from 95%. The 40-row countries of `unequal-sizes-meets` now reach at least 99.0%
   [96.4, 99.7] per check against a nominal 99.5%. Every scenario other than the ungrouped and same-set
   selection ones has joint coverage whose interval includes 95%.
-- Missing groups no longer decide: both `row_identity` scenarios are 100% insufficient evidence and report no
+- When the dataset omits groups, the check does not decide: both `row_identity` scenarios are 100% insufficient evidence and report no
   bounds.
 - `boundary-minimum` erroneous fail is 2.5% [1.1, 5.7] with the truth exactly at the minimum in four
   countries. The bound allows up to 4 x 0.005 = 2% there (four per-side tails of 0.05/5/2); the interval

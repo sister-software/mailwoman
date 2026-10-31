@@ -73,7 +73,8 @@ export interface CorpusSourceMapping {
 	 */
 	inputs: readonly CorpusSourceInput[]
 	/**
-	 * Inputs written in this repository, which need no register row: a hand-written word list, a template.
+	 * Inputs written in this repository need no register row.
+	 * Examples include a hand-written word list and a template.
 	 */
 	authored?: readonly string[]
 	note?: string
@@ -91,7 +92,7 @@ export interface CorpusSourceMapping {
 }
 
 /**
- * The inputs one source read in the corpora named.
+ * The inputs one source read in the listed corpora.
  */
 export interface CorpusSourceHistory {
 	corpora: readonly string[]
@@ -239,7 +240,7 @@ export async function readCorpusSourceInputs(
  */
 export interface SourceRightsGap {
 	/**
-	 * The corpus source id as the caller named it.
+	 * The corpus source id the caller supplied.
 	 */
 	source: string
 	/**
@@ -263,7 +264,7 @@ export interface SourceRightsGap {
  *
  * An empty array is the only answer a caller may read as permission.
  * A source the table does not map answers one gap whose `registerSource` is `null`,
- * because an unmapped source is one nobody has traced to its publishers.
+ * because no mapping identifies that source's publishers.
  *
  * `corpusVersion` names a corpus already built, so a source whose inputs changed under
  * the same id is read against what that corpus's rows were built from.
@@ -408,8 +409,8 @@ export class SourceRightsError extends Error {
 /**
  * What a checked output records about the sources it admitted.
  *
- * Its field names are snake_case because it is written into corpus manifests,
- * which a Python reader also reads.
+ * Its field names use snake_case.
+ * The record is written into corpus manifests and read by Python tools.
  */
 export interface SourceRightsRecord {
 	/**
@@ -424,7 +425,7 @@ export interface SourceRightsRecord {
 	gaps: SourceRightsGap[]
 	/**
 	 * Inputs whose corpus sources could not be read, so the check could not judge them,
-	 * such as a base corpus whose files name no source and whose manifest carries no record.
+	 * such as a base corpus whose files name no source and whose manifest has no record.
 	 */
 	unverified: string[]
 }
@@ -463,7 +464,7 @@ export interface SourceRightsAdmissionOptions {
 	/**
 	 * Why a local experiment admits sources lacking the permission.
 	 *
-	 * Setting it marks the output unshippable rather than relaxing the rule.
+	 * A caller that sets it marks the output unshippable rather than relaxing the rule.
 	 */
 	unshippableReason?: string | null
 	/**

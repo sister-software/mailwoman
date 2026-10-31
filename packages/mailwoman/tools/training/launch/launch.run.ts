@@ -16,7 +16,7 @@
  *     node packages/mailwoman/tools/training/launch/launch.run.ts fetch <run key> --out <dir> [--checkpoint <step-NNNNNN>]
  *     node packages/mailwoman/tools/training/launch/launch.run.ts sync --corpus <entry>
  *
- *   `start` resolves the config, which is also the source-rights admission, runs the preflight against the host copy
+ *   `start` resolves the config and admits its source rights. It runs the preflight against the host copy
  *   of the volume under `MAILWOMAN_DATA_ROOT`, and starts one detached sandbox. `--dry-run` runs everything up to the
  *   sandbox and prints what it would start, without contacting Modal. `restart` resumes a stopped run from its newest
  *   complete checkpoint in a fresh sandbox. `fetch` copies the run's output directory, or one checkpoint of it, from

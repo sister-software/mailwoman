@@ -8,7 +8,7 @@
  *   `--resume auto`, and compares the two runs:
  *
  *   - every `train_log.csv` cell except `wall_seconds`, keeping the resumed log's last row per step and kind;
- *   - the realized rows the resumed attempt consumed against the same rows of the uninterrupted run, which are the
+ *   - the rows consumed by the resumed attempt against the same rows from the uninterrupted run. These are the
  *     batch identities;
  *   - the final checkpoints' `rng_state.safetensors` bytes.
  *

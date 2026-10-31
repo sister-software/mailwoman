@@ -418,7 +418,7 @@ interface EmitContext {
 }
 
 /**
- * The distinct sources of a row's pooled names, sorted, or an empty list for a row that carries none.
+ * Returns the distinct sources of a row's pooled names, sorted, or an empty list when the row has no source.
  */
 function rowNameSources(...sources: Array<NameSource | null>): NameSource[] {
 	return [...new Set(sources.filter((source) => source != null))].toSorted()
@@ -583,7 +583,7 @@ function emitNegatives(
 		const negativeClass = sample(available, random)
 		const register = sampleRegister(random)
 		let groups: Group[]
-		// A street negative carries no pooled name.
+		// A street negative has no pooled name.
 		let nameSource: NameSource | null = null
 
 		if (negativeClass === NegativeClass.DesignatorStreet) {

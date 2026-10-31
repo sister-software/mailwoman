@@ -204,7 +204,8 @@ export interface TWSourceRowOptions {
 	maxFieldChars?: number
 	dropped?: Map<string, number>
 	/**
-	 * Counts each row's source datasets, which the build report lists for attribution.
+	 * Counts each row's source datasets.
+	 * The build report lists them for attribution.
 	 */
 	agencies?: Map<string, number>
 }

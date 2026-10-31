@@ -256,8 +256,8 @@ describe("defaultHoldouts", () => {
 
 	it("declares a holdout for every OSM country the decoder-exposure config admits, or leaves it to the hashed one", () => {
 		// A country admitted to train with no holdout would have zero val and zero test rows.
-		// CN and IN reach val and test through the hashed place holdout, because their
-		// locality spans are too many and too small to list.
+		// CN and IN reach val and test through the hashed place holdout, because their Each
+		// locality span is short, so the test does not list the spans individually.
 		expect(defaultHoldouts()["CN"]).toBeUndefined()
 		expect(defaultHoldouts()["IN"]).toBeUndefined()
 

@@ -21,7 +21,8 @@ import { intToKanji } from "#cjk/text"
 export const JP_LABEL_SET_NAME = "stage3-jp"
 
 /**
- * The corpus source of the rows, the probe corpus's source string, which configs weight.
+ * The corpus source string for these rows.
+ * Configs use this value as the source weight key.
  */
 export const JP_CORPUS_SOURCE = "overture-jp"
 

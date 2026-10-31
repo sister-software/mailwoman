@@ -7,7 +7,7 @@
  *   Each row is rendered large to small, `[〒NNN-NNNN ]{prefecture}{municipality}{street}{number}`, with
  *   the spans recorded as the fields are concatenated. The 〒 mark stays outside the postcode span. A
  *   postcode is joined on a fraction of rows from KEN_ALL's first code for the municipality, because
- *   Overture-JP carries none. Each prefecture fills its own reservoir, and a round-robin draw takes one
+ *   Overture-JP has no postcode. Each prefecture fills its own reservoir, and a round-robin draw takes one
  *   row per prefecture per pass. Municipalities whose bucket reaches the board range go to the board and
  *   never to train or val.
  *
@@ -55,7 +55,7 @@ export const JP_PROBE_COLUMNS = CJK_CORPUS_COLUMNS.filter(([name]) => name !== "
 const PREFECTURE_COUNT = 47
 
 /**
- * The reservoir holds this many times a prefecture's even share of the target.
+ * The reservoir holds multiple times a prefecture's even share of the target.
  */
 const RESERVOIR_SHARE_MULTIPLE = 3
 

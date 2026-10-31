@@ -182,7 +182,7 @@ const LEVEL_CODE_CONCEPT: Readonly<Record<string, DesignatorConcept>> = {
  * so a country table reads its floors from the one floor lexicon rather than repeating them.
  *
  * A row's concept follows its level kind.
- * Penthouse and roof rows, whose kind is `special`, map to `penthouse` and `rooftop`,
+ * Penthouse and roof rows have kind `special` and map to `penthouse` and `rooftop`.
  * and every other `special` row, such as the German Dachgeschoss, maps to `floor`.
  */
 export function designatorRowsFromLevels(

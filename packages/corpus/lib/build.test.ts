@@ -35,8 +35,9 @@ import { defaultHoldouts, writeSplitManifestsFromLabeledFiles } from "#utils/spl
 const fixtureRoot = workspacePath("corpus", "fixtures", "wof-admin-json")
 
 /**
- * The fixture is Who's On First data, whose register row reads unchecked,
- * so every build here passes the override.
+ * The fixture is Who's On First data.
+ *
+ * Its register row reads unchecked, so every build here passes the override.
  * The rights tests below drive the refusal itself.
  */
 const FIXTURE_RIGHTS = "test fixture: Who's On First rows read for build mechanics"
@@ -150,7 +151,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 			readVermontRows(outDir("intermediate", "labeled-test.jsonl")),
 		])
 
-		// The fixture's Vermont rows carry no postcode, so no declared US district holds them out.
+		// The fixture's Vermont rows contain no postcode, so no declared US district holds them out.
 		expect([...valVermont, ...testVermont]).toEqual([])
 		expect(trainVermont.length).toBeGreaterThan(0)
 
@@ -629,7 +630,7 @@ describe("buildCorpus resume", () => {
 
 // Who's On First's committed decision is elected, so these tests refuse its
 // register row in a copy of the register.
-// They measure how a build treats a refused row, whatever the committed decision says.
+// They measure how a build treats a refused row, regardless of the committed decision.
 vi.mock("#source-register/register", async (importOriginal) => {
 	const original = await importOriginal<typeof import("#source-register/register")>()
 
@@ -658,7 +659,7 @@ const refuseWhosOnFirst = vi.hoisted(() => ({ active: false }))
 describe("buildCorpus source rights", () => {
 	// The suite runs with `isolate: false`, so a file earlier in the worker may
 	// already have loaded `#build` over the real register.
-	// Reloading it here makes it read the register through the mock above.
+	// The test reloads it here so the module reads the register through the mock above.
 	let buildWithMockedRegister: typeof buildCorpus
 
 	beforeAll(async () => {

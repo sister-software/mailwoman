@@ -63,8 +63,8 @@ export interface ModelEdit {
 	/**
 	 * The flag names of the training call that wrote the model.
 	 *
-	 * The trainer and normalizer spec fields no flag named are dropped, which turns a
-	 * native `spm_train` model into the bytes the Python wheel writes.
+	 * The trainer and normalizer spec fields without a corresponding flag are dropped.
+	 * This turns a native `spm_train` model into the bytes the Python wheel writes.
 	 */
 	wheelFlags?: readonly string[]
 }

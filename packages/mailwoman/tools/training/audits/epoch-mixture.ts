@@ -31,7 +31,7 @@ type ReceiptConfig = TrainingConfig["data"]["required_corpus_receipts"][number]
  * A source whose per-row exposure exceeds this multiple of the median is almost certainly a mistake.
  *
  * The #1677 case was 33 times the sources weighted six times higher,
- * so a guard for that case alone would be too tight.
+ * A guard that checks only that case would be too tight.
  */
 export const REPS_OUTLIER_MULTIPLE = 8
 

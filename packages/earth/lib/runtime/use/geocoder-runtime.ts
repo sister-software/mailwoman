@@ -160,7 +160,7 @@ export function prefetchReleasesManifest(): void {
 }
 
 /**
- * Returns true when the page URL carries `?no-model`.
+ * Returns true when the page URL contains `?no-model`.
  *
  * Map-style work needs the basemap only, and the model download is tens of megabytes per load.
  * With the flag the runtime receives no manifest, so it loads no release and the geocoder stays idle.
@@ -170,7 +170,7 @@ function modelDisabled(): boolean {
 }
 
 /**
- * Returns the basemap source URL: a `pmtiles://` URL when the page URL carries
+ * Returns the basemap source URL: a `pmtiles://` URL when the page URL contains
  * `?basemap=<PMTiles URL>`, and the configured TileJSON otherwise.
  *
  * The parameter loads a candidate basemap build straight from its PMTiles file,

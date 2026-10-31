@@ -11,7 +11,7 @@
  *     --arm <weights cache> --replay-rows <V54 rows.jsonl> --failures <failure-list.json> \
  *     --transitions <crf-transitions.json> --out <directory>
  *
- *   Each row is parsed once with the trace on. Its post-prior emissions are decoded under the BIO masks alone (the
+ *   Each row is parsed once with the trace on. Its post-prior emissions are decoded using only the BIO masks (the
  *   shipped decode), under the masks plus the fitted transitions at temperatures 0.5, 1 and 2, and by the cardinality
  *   filter over the 20 best masked paths. Each path is compared with the gold labels as `replay.ts` compares them. The
  *   cardinality arm is also parsed in full with `cardinalityFilter` and graded exactly. A row's population (both

@@ -17,7 +17,8 @@ export { DefaultMailwomanPaths } from "#env/paths"
  * `process.loadEnvFile` is the runtime's own reader: synchronous, so the views below can expose
  * synchronous getters without a top-level `await` (which the Docusaurus config loader cannot evaluate).
  * `resolveEnvFile` picks the working directory's `.env`, or the main checkout's
- * when the working directory is a git worktree, which carries no `.env` of its own.
+ * when the working directory is a git worktree.
+ * A worktree has no `.env` of its own.
  *
  * A variable already in `process.env` wins over the file.
  * The views have always used this precedence.

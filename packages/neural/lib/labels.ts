@@ -195,7 +195,7 @@ export const DEFAULT_LABEL_SET: LabelSetName = "stage3"
 /**
  * The label id cross-entropy ignores.
  *
- * A token without supervision, and a row whose country has no locale-head class, carry it.
+ * A token without supervision and a row whose country has no locale-head class use this value.
  */
 export const IGNORE_INDEX = -100
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The register row behind a coordinate reaches the geocode result under its own stamp. The street
- *   tier writes the row's `source` onto the street node, and the extractor carries it into
+ *   tier writes the row's `source` onto the street node, and the extractor copies that value into
  *   `coordinate_source` unchanged, so an OpenStreetMap row keeps `openstreetmap:<cc>` and no other row
  *   gains it.
  */

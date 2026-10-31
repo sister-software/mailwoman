@@ -292,7 +292,7 @@ export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
  * so the line itself is the only place the value is certain.
  * The check caches each answer, so the cost after the first line of a source is one parse.
  *
- * @throws From the returned writer, when a line carries no string `source` or its source is refused.
+ * @throws From the returned writer, when a line has no string `source` or its source is refused.
  */
 export function admittingRecipeLineWriter(write: WriteRecipeLine, rights: SourceRightsAdmission): WriteRecipeLine {
 	return (line) => {
@@ -510,9 +510,9 @@ export interface RecipeOptions {
 	/**
 	 * `sub-venue`: GB/US/FR address-context tuples jsonl.
 	 *
-	 * @defaultValue the house-venue v7 tuples (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v7.jsonl`),
-	 * whose FR rows hold out the FR board's streets, whose GB rows come from OS OpenData and whose US rows come from
-	 * NAD and from the bodies whose own decisions permit training. DE and ES read OpenAddresses directly.
+	 * @defaultValue the house-venue v7 tuples (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v7.jsonl`).
+	 * The FR rows hold out the FR board's streets. GB rows come from OS OpenData. US rows come from NAD and from
+	 * bodies whose own decisions permit training. DE and ES read OpenAddresses directly.
 	 */
 	subVenueTuples?: string
 	/**

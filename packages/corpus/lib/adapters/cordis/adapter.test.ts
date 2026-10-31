@@ -137,8 +137,8 @@ describe("cordis adapter over published participation rows", () => {
 		expect(rows.map((row) => row.raw).toSorted()).toEqual([
 			"EREVNITIKO PANEPISTIMIAKO INSTITOUTO SYSTIMATON EPIKOINONION KAI YPOLOGISTON, PATISION 42, 106 82 ATHINA",
 			// Ghana's layout is read from UPU's description.
-			// The participant typed its private mail bag into the postcode column,
-			// which this adapter keeps because the value holds a digit.
+			// The participant entered a private mail bag in the postcode column.
+			// The adapter keeps it because it contains a digit.
 			"FORUM FOR AGRICULTURAL RESEARCH IN AFRICA, GHANA, 12 ANMEDA STREET, ROMAN RIDGE, Accra PMB CT173",
 			// Switzerland's layout prints the `CH-` prefix itself.
 			"LUDWIG INSTITUT FUR KREBSFORSCHUNG AG, STADELHOFERSTRASSE 22, CH-8001 Zurich",

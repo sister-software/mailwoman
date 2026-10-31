@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Every corpus source the checkout can emit is mapped to the register sources its rows are built from.
  *
- *   The corpus build and the training launch refuse an unmapped source when they run, which can be hours after the
+ *   The corpus build and training launch refuse an unmapped source when they run. That check can happen hours after the
  *   change that added it. This check reports the same omission at lint time: each adapter id, each Python builder's
  *   `SOURCE` constant and each spelling in `RECIPE_SOURCES` and `CARRIED_SOURCES` must resolve to an entry in
  *   `packages/corpus/data/corpus-source-inputs.json`, whose own reader checks each entry against the register.

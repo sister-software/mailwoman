@@ -25,7 +25,7 @@ const POP_START = 11
 const POP_END = 12
 
 /**
- * Building opacity by zoom, starting with the first zoom the tiles carry buildings.
+ * Building opacity by zoom, starting at the first zoom where the tiles show buildings.
  *
  * Blocks stay translucent while they are small, so streets read through them,
  * and become nearly opaque by z15.

@@ -504,7 +504,8 @@ describe("the OpenStreetMap extract provider on the active selection, against it
 
 		expect(differences).toEqual([])
 		expect(DE_QUERIES.filter((query) => after.for("de").addressPoints?.find(query))).toHaveLength(3)
-		// A country the selection does not list keeps its conventional path, which holds no file here.
+		// A country omitted from the selection uses its conventional path.
+		// That path has no file here.
 		expect(after.for("nl")).toEqual({})
 	})
 
@@ -546,8 +547,8 @@ describe("the OpenStreetMap extract provider on the active selection, against it
 
 		await removePath(resolveDirectory(ban.path))
 
-		// With the selected BAN artifact gone, the national tier has no named source to read.
-		// Reading its conventional path would answer from a layer the selection did not choose,
+		// The national tier cannot read a source after the selected BAN artifact is removed.
+		// Its conventional path would return a layer outside the selection,
 		// so opening the providers refuses and names BAN's file.
 		await expect(openServingRooftopProviders(root)).rejects.toThrow(ban.path)
 	})

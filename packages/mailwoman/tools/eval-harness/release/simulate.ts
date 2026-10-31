@@ -8,7 +8,7 @@
  *   derived variants, and the discordance between the arms. The harness draws paired outcomes from that truth,
  *   evaluates a synthetic specification through `evaluateReleaseSpec`, and repeats with distinct seeds.
  *
- *   Every threshold a scenario carries is a simulation parameter. None is a registered release requirement.
+ *   Every threshold a scenario uses is a simulation parameter. The release specification registers none of them as requirements.
  *
  *   Generative model, per country:
  *

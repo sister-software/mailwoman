@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A cardinality filter over the decoder's k best label paths: an address carries at most one street, house number,
+ *   A cardinality filter over the decoder's k best label paths: an address has at most one street, house number,
  *   locality, postcode, venue and region, so a path that opens a second span of one of them is passed over for the
  *   next path that does not.
  */
@@ -13,7 +13,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { type ViterbiInput, type ViterbiResult, viterbi, viterbiKBest } from "#viterbi"
 
 /**
- * The tags an address carries at most once.
+ * The tags an address may contain at most once.
  */
 export const SINGLETON_TAGS: ReadonlySet<ComponentTag> = new Set([
 	"street",
@@ -25,7 +25,7 @@ export const SINGLETON_TAGS: ReadonlySet<ComponentTag> = new Set([
 ])
 
 /**
- * How many paths the filter reads before it falls back to the best one.
+ * The maximum number of label paths the filter checks before falling back to the best path.
  */
 export const CARDINALITY_FILTER_DEPTH = 20
 
@@ -43,8 +43,9 @@ export function countedPieces(text: string, pieces: ReadonlyArray<{ start: numbe
  * Whether a label path opens more than one span of a singleton tag.
  *
  * A span opens where the tag changes between counted pieces.
- * Adjacent labels of one tag are one span whether the later one is `B-` or `I-`, because the model
- * often opens each word of a span with `B-` and `buildAddressTree` merges adjacent spans of one tag.
+ * Adjacent labels of one tag are one span whether the later one is `B-` or `I-`.
+ *
+ * The model may open each word of a span with `B-`, and `buildAddressTree` merges adjacent spans of one tag.
  * An uncounted piece neither opens nor ends a span.
  */
 export function repeatsSingletonTag(

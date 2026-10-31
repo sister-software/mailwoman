@@ -56,7 +56,7 @@ interface GradedNode {
 /**
  * Whether `nodes` match one expectation.
  *
- * Every named tag must carry exactly the expected text, and a tag listed empty must be absent.
+ * Every expected tag must have exactly the expected text, and a tag listed empty must be absent.
  * In strict mode no other tag may appear.
  */
 function matchesExpectation(expect: Record<string, string[]>, nodes: readonly GradedNode[], strict: boolean): boolean {

@@ -37,7 +37,7 @@ const compiled = new Map<string, PostcodeSyntax | null>()
  * People type `m113aa`, `BN1  1AA` and `GX111AA`, and spacing is an observation
  * rather than an admission test.
  *
- * A space inside a character class, as in the ZIP+4 separator `[ \-]`, is left alone
+ * A space inside a character class, as in the ZIP+4 separator `[ \-]`, remains unchanged
  * because rewriting it would change the class.
  */
 export function tolerateSpacing(pattern: string): string {
@@ -122,8 +122,8 @@ export function postcodePlacement(countryCode: string): PostcodeLocalityPlacemen
 /**
  * Every country whose stated postcode format the whole of `value` matches, in ISO 3166-1 alpha-2 order.
  *
- * A bare five-digit value matches dozens of countries and `SW1A 1AA` matches GB alone,
- * so the list's size is the shape's own ambiguity.
+ * A bare five-digit value may match multiple countries, while `SW1A 1AA` matches only GB.
+ * The list's size measures the shape's ambiguity.
  */
 export function countriesAcceptingPostcode(value: string): string[] {
 	return postcodeSyntaxCountries().filter((code) => acceptPostcode(value, code) !== null)

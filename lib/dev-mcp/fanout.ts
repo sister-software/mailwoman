@@ -273,7 +273,7 @@ function coordinateSpreadKm(arms: readonly FanoutArmReading[]): number | null {
 /**
  * Reads how one row's readings agree across the arms.
  *
- * The kind is read from the graded marks alone.
+ * Only graded marks determine the kind.
  * An arm that errored or an ungraded row contributes no mark to the kind, and an errored
  * arm makes `stable_decode` false because its decode is unknown rather than equal.
  */

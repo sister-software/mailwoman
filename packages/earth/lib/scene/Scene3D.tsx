@@ -78,8 +78,8 @@ const Landmarks = [
 /**
  * The zoom below which the overlay clears its trees.
  *
- * The tiles carry tree points at z15.
- * Keeping the cached trees down to z14 lets them fade with distance when the camera zooms out across z15.
+ * Tiles supply tree points at z15.
+ * The cached trees remain visible through z14 and fade with distance as the camera zooms out across z15.
  */
 const TREE_MIN_ZOOM = 14
 
@@ -155,7 +155,9 @@ interface CityModelTilesetOptions {
  * Tile requests each tileset keeps in flight.
  *
  * Tileset3D defaults to 64.
- * Several wards load at once, and PLATEAU's host drops connections under that many parallel requests.
+ * Tileset3D defaults to 64 parallel requests.
+ *
+ * PLATEAU's host drops connections at that concurrency when several wards load.
  */
 const CITY_MODEL_MAX_REQUESTS = 12
 
@@ -197,8 +199,9 @@ const CITY_MODEL_KEEP_ZOOM = 14
 /**
  * The city models to keep as layers, updating `kept`, the URLs kept so far.
  *
- * Removing a Tile3DLayer destroys its tileset, and a tile still loading
- * then fails with `assert failed: gltf`.
+ * The app destroys a tileset when it removes a Tile3DLayer.
+ * A tile still loading then fails with `assert failed: gltf`.
+ *
  * A tileset joins when it enters the view at `CITY_MODEL_MIN_ZOOM`.
  *
  * It leaves only when the view zooms out past `CITY_MODEL_KEEP_ZOOM` or moves a full view away from it.
@@ -474,7 +477,7 @@ export const Scene3D: React.FC = () => {
 			}
 
 			// Interleaved deck.gl layers join the end of MapLibre's layer list unless they name a `beforeId`.
-			// Inserting them before the first symbol layer keeps every label drawn above the meshes.
+			// Place them before the first symbol layer to keep every label drawn above the meshes.
 			// `@deck.gl/mapbox` reads the prop from every layer and declares it in an
 			// internal type, so each layer spreads it in from this object.
 			const placement = { beforeId: map.getStyle().layers.find((layer) => layer.type === "symbol")?.id }
@@ -558,7 +561,8 @@ export const Scene3D: React.FC = () => {
 			})
 		}
 
-		// A tile load fires `sourcedata` many times per frame, so updates run at most once per animation frame.
+		// A tile load can fire `sourcedata` more than once per frame.
+		// Updates therefore run at most once per animation frame.
 		let frame = 0
 
 		const schedule = () => {

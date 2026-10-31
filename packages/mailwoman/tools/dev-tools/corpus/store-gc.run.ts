@@ -5,7 +5,7 @@
  *
  *   Report, and with `--delete` remove, corpus store directories no root reaches.
  *
- *   The roots are the version manifests named by a frozen training manifest under
+ *   The roots are the version manifests listed by a frozen training manifest under
  *   `packages/corpus/data/training-manifests/` or by a model card (`packages/neural-weights-*\/model-card.json`).
  *   `store-gc.ts` defines reachability. Without `--delete` the tool only reports. With it, it removes an
  *   unreachable directory whose newest file is older than `--retain-days`, and it refuses to delete anything

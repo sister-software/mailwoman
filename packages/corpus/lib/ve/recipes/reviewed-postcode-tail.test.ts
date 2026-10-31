@@ -32,7 +32,8 @@ interface EmittedRow {
 /**
  * Invented facts in the committed file's shape.
  *
- * Two carry an accent, so the accent-folded variant renders twice.
+ * Two strings contain accents.
+ * The accent-folded variant renders each string twice.
  */
 function fixtureTuple(id: string, locality: string, postcode: string, region: string): ReviewedPostcodeTuple {
 	return {

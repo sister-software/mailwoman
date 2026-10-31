@@ -19,14 +19,14 @@ import { inputDecisions } from "#source-register/row-license"
 import type { SourceOperation } from "#source-register/types"
 
 /**
- * The license label recorded for a source whose rows carry no label.
+ * The license label recorded for a source whose rows have no label.
  *
  * A recipe in a corpus built before #2741 could write rows with an empty `license` column.
  * A current writer stamps the register's id and refuses a source that has none,
  * so only an older file reaches this label.
  *
- * An empty string in the record would read as a source that carries no terms,
- * and `summarizeLicense` would find no identifier in it and report no obligation.
+ * An empty string in the record would read as a source with no terms, and `summarizeLicense`
+ * would find no identifier in it and report no obligation.
  *
  * This label is unrecognized by design, so every reader reports the source's
  * terms as unknown rather than as none.
@@ -49,14 +49,15 @@ export interface TrainingSourceRecord {
 	 */
 	rows: number
 	/**
-	 * The license label the source's rows carry.
+	 * The license label assigned to the source's rows.
 	 *
-	 * When the rows carry more than one label, this is the label on most of them
+	 * When the rows have more than one label, this is the label assigned to most of them
 	 * and {@linkcode licenseValues} lists every label with its rows.
 	 */
 	license: string
 	/**
-	 * Every license label the source's rows carry, with the rows under each, when there is more than one.
+	 * Every license label assigned to the source's rows, with a row count for each label
+	 * when there is more than one.
 	 *
 	 * A recipe stamps a description of its own output into the column, and one recipe can stamp
 	 * several, so a synthetic source reads several labels where an adapter's source reads one.

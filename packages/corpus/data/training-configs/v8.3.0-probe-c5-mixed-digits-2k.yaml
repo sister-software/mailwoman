@@ -9,7 +9,7 @@
 #
 # The differences from v8.2.0-base-60k.yaml are:
 #
-# 1. `data.corpus_dir` is the v0.8.4-overlay corpus overlay over v0.8.2, which replaces wof-admin,
+# 1. `data.corpus_dir` is the v0.8.4-overlay corpus overlay over v0.8.2. It replaces wof-admin,
 #    wof-postalcode and usgov-nppes with their rebuilt files (732 files, 701,766,159 rows).
 # 2. `data.tokenizer_dir` is this arm's vocabulary, tokenizer.model md5 8c2bb7b4ed554a397f8fa3c1ff7d811d.
 # 3. `train.max_steps` is 2,000 with a 200-step warmup, an evaluation every 500 steps and a save at the end.

@@ -28,7 +28,8 @@ export const SAVE_LINE_MARKER = "[save] checkpoint"
  */
 export interface SupervisorEnvironment {
 	/**
-	 * One launch's id, which the fault-injection marker's file name carries.
+	 * One launch's id.
+	 * The fault-injection marker file name includes it.
 	 *
 	 * The marker stays in the run directory, so a marker keyed on the run would turn
 	 * off `--fail-at-step` for every later launch of the run.
@@ -41,8 +42,8 @@ export interface SupervisorEnvironment {
 	 * The container directory the host writes the launch inputs into after the sandbox
 	 * starts: `config`, `resolved.json`, then `ready`.
 	 *
-	 * A sandbox's environment is a Modal secret, which holds at most 32 KiB per value,
-	 * and a resolved config can be larger.
+	 * A sandbox's environment is a Modal secret.
+	 * Each value can hold at most 32 KiB, and a resolved config can be larger.
 	 */
 	MW_INPUTS_DIR: string
 	/**
@@ -56,7 +57,8 @@ export interface SupervisorEnvironment {
 	MW_MANIFEST_PATH: string
 	MW_MANIFEST_SHA256: string
 	/**
-	 * The directory beside the checkpoint directory, which holds the fault-injection marker.
+	 * The directory beside the checkpoint directory.
+	 * It holds the fault-injection marker.
 	 */
 	MW_RUN_BASE: string
 	/**
@@ -89,7 +91,8 @@ export interface SupervisorEnvironment {
 	 */
 	MW_FAIL_AT_STEP: string
 	/**
-	 * The commands the supervisor runs, which a test replaces.
+	 * The commands the supervisor runs.
+	 * A test replaces them.
 	 */
 	MW_TRAINER: string
 	MW_SYNC: string

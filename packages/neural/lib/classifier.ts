@@ -607,7 +607,8 @@ export class NeuralAddressClassifier {
 		tracePriors?.push(untracedPrior("queryShape", Boolean(queryShapePrior && matrixHasBias(queryShapePrior))))
 
 		// The anchor-region prior reads the postcodes the anchor channel fired on,
-		// so it is off on the character path, which feeds no channel.
+		// so it is off on the character path.
+		// That path feeds no channel.
 		const anchorRegionIDs =
 			opts?.fst && opts.anchorRegions && this.cfg.postcodeAnchorLookup && !encoded.charIDs
 				? anchoredRegionIDs(text, this.cfg.postcodeAnchorLookup, this.cfg.postcodeAnchorSpanMode, opts.anchorRegions)

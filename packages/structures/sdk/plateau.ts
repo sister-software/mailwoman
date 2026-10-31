@@ -24,7 +24,8 @@ const CKAN_PACKAGE_SHOW = "https://www.geospatial.jp/ckan/api/3/action/package_s
 /**
  * Bytes read from the start of a `tileset.json`.
  *
- * The root bounding volume follows the `properties` summary, which runs past 4 KB in most PLATEAU tilesets.
+ * The root bounding volume follows the `properties` summary.
+ * That summary exceeds 4 KB in most PLATEAU tilesets.
  */
 const TILESET_HEAD_BYTES = 65_536
 
@@ -121,7 +122,8 @@ async function readLicenseTitle(client: PlateauClient, dataset: string): Promise
 export async function readGeoidHeight(client: PlateauClient, longitude: number, latitude: number): Promise<number> {
 	const url = `${GSI_GEOID_CALC}?outputType=json&latitude=${latitude}&longitude=${longitude}`
 
-	// The service answers a busy server with `ExportData.ErrMsg` and HTTP 200, which the client's own retry never sees.
+	// A busy server returns `ExportData.ErrMsg` with HTTP 200.
+	// The client retry does not see this response as an error.
 	for (let attempt = 1; ; attempt++) {
 		const response = await client.getJSON<GeoidCalcResponse>(url)
 		const height = Number.parseFloat(response.OutputData?.geoidHeight ?? "")

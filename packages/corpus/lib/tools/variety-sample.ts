@@ -131,7 +131,8 @@ export async function loadStreetTypeLexicon(country: string): Promise<StreetType
 }
 
 /**
- * The canonical street type a street name carries, read from its first or last one or two words, or null.
+ * Returns the canonical street type encoded in the first or last one
+ * or two words of a street name, or `null`.
  */
 export function streetTypeOf(street: string, lexicon: StreetTypeLexicon): string | null {
 	const words = street
@@ -187,8 +188,9 @@ export interface RowVariety {
 /**
  * Reads one canonical row's variety keys.
  *
- * The locality is the row's `locality`, else its `dependent_locality`, else its `region`,
- * so a streetless premise in a named place is stratified by that place.
+ * The locality is the row's `locality`, else its `dependent_locality`, else its `region`.
+ * A streetless premise in a place with a name is stratified by that place.
+ *
  * The place a row is stratified by joins the dependent locality to it, so an Estonian village is
  * its own place rather than one of its municipality's, and a city's districts are each their own.
  */
@@ -573,7 +575,7 @@ export async function writeVarietySample(options: {
 			place: placeID(variety.place),
 			// A streetless premise numbered within a place repeats that place as a street's
 			// houses repeat the street, so the place is its street.
-			// A named site (an Estonian farm) is its own name, as a street is.
+			// A site with its own name (an Estonian farm) is its own name, as a street is.
 			street: streetID(`${variety.place}\u0001${variety.street ?? row.components.venue ?? ""}`),
 			form: formID(variety.form),
 			postcode: postcodeID(variety.postcode ?? ""),

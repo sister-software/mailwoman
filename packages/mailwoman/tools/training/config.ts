@@ -38,7 +38,7 @@ export const INPUT_FIELDS = [
 ] as const
 
 /**
- * The committed training config named `name` under `packages/corpus/data/training-configs`,
+ * The committed training config stored as `name` under `packages/corpus/data/training-configs`,
  * or that directory when `name` is omitted.
  */
 export function trainingConfigPath(name = ""): string {

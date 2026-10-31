@@ -151,8 +151,8 @@ async function readTuples(source: CountrySource, limit: number): Promise<Country
 }
 
 /**
- * Reads the tuple pool for `count` rows: a threefold read of the target,
- * which leaves room for skipped rows.
+ * Reads three times the target from the tuple pool to produce `count` rows.
+ * The extra rows leave room for skipped rows.
  *
  * Each group takes an equal share of that read, split evenly between its sources.
  */

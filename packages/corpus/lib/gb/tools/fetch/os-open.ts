@@ -32,8 +32,8 @@ import { downloadToFile, writeManifest } from "#tools/fetch/download"
 export const GB_OS_OPEN_LICENSE_NAME = "Open Government Licence v3.0"
 
 /**
- * The attribution OGL v3 requires, in the wording OS asks for on Code-Point Open,
- * which also carries Royal Mail and ONS data.
+ * The attribution OGL v3 requires, in the wording OS asks for on Code-Point Open.
+ * That product also includes Royal Mail and ONS data.
  */
 export const GB_OS_OPEN_ATTRIBUTION =
 	"Contains OS data © Crown copyright and database right. Contains Royal Mail data © Royal Mail copyright and database right. Contains National Statistics data © Crown copyright and database right."

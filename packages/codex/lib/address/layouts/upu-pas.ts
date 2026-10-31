@@ -7,13 +7,13 @@
  *
  * A description is a few pages UPU collects from the designated postal operator: the postcode, where
  * the address sits on the envelope, and printed examples with each line labeled (`thoroughfare +
- * premises`, `post office + postcode`). It is not an S42 template, so it holds no approved crosswalk, and
- * it states what the operator prints.
+ * premises`, `post office + postcode`). It is not an S42 template and specifies no approved crosswalk.
+ * It states what the operator prints.
  *
- * This table holds a country only where libaddressinput states no `fmt`, or where its `fmt` omits the
- * locality line the operator's own examples print (the United Arab Emirates, whose `fmt` is
- * `%N%n%O%n%A%n%S`). Each layout transcribes the examples' line order. The dependent-locality line follows
- * the generated tables' convention: it renders a district where a row holds one, and an address without
+ * This table includes a country only where libaddressinput states no `fmt`, or where its `fmt` omits the
+ * locality line in the operator's own examples. The United Arab Emirates uses `%N%n%O%n%A%n%S`.
+ * Each layout transcribes the examples' line order. The dependent-locality line follows
+ * the generated tables' convention: it renders a district where a row has one, and an address without
  * one prints the same lines the examples print.
  *
  * Bonaire, Sint Eustatius and Saba and Sint Maarten are absent: their descriptions (`besEn.pdf` 05/2014 and

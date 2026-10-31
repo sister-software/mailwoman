@@ -6,8 +6,8 @@
  *   corpus schema and writer, the row renderer, the hold-out bucket, the exact selector, the water-fill quota, the
  *   record check, the coverage report and the character vocabulary.
  *
- *   Every offset is a code-point offset, as the Python builders wrote them. A CJK row can hold a character outside
- *   the Basic Multilingual Plane, which JavaScript counts as two code units.
+ *   Every offset is a code-point offset, matching the Python builders. A CJK row can contain a character outside
+ *   the Basic Multilingual Plane. JavaScript counts that character as two code units.
  */
 
 import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
@@ -112,7 +112,7 @@ export interface WriteCJKSplitOptions<T> {
 	 */
 	partPrefix: string
 	/**
-	 * The context named in a refused license stamp.
+	 * The context string used in a refused license stamp.
 	 */
 	context: string
 	statsSample: { kind: CJKStatsSample; rows: number }
@@ -342,8 +342,9 @@ export function waterFill(counts: ReadonlyMap<string, number>, target: number): 
 }
 
 /**
- * Each group's quota under a water-filled cap, with the remainder up to `target` granted to the groups
- * with the most headroom first, so the quotas total `target` whenever the pool holds that many.
+ * Each group's quota under a water-filled cap, with the remainder up to `target`
+ * granted to the groups with the most headroom first, so the quotas total `target`
+ * whenever the pool has at least `target` rows.
  */
 export function waterFillQuotas(
 	poolCounts: ReadonlyMap<string, number>,

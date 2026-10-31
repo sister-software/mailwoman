@@ -243,7 +243,7 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
  *
  * @throws If the manifest lists train files but no row could be read.
  */
-// repo-health-ignore export-name-affix -- counts rows of a built corpus, which @mailwoman/corpus's buildCorpus builds
+// repo-health-ignore export-name-affix -- counts rows in a built corpus. @mailwoman/corpus's buildCorpus creates it
 export async function buildCorpusCensus(manifestPath: PathBuilderLike): Promise<CorpusCensus> {
 	const manifest = await readLocalJSONFile<{ corpus_version?: string; files?: unknown } & Record<string, unknown>>(
 		manifestPath

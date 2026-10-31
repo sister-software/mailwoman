@@ -211,7 +211,7 @@ export async function createLayerManifestTable(db: layerschemahandle): Promise<v
 		// Those artifacts read NULL, and `readLayerManifest` returns `sourceRecords: null`.
 		// A build that counted records and found no publishers writes `{}`.
 		.addColumn("source_records", "text")
-		// Nullable for the same reason: artifacts built before these columns read NULL, which states
+		// Older artifacts read NULL from these columns. NULL states
 		// that the input file was not recorded rather than that it had no URL or digest.
 		.addColumn("source_url", "text")
 		.addColumn("source_sha256", "text")

@@ -36,7 +36,7 @@ export interface ModalBoundaryOptions {
 	volumeName: string
 	mount: string
 	/**
-	 * A named secret passed to every training sandbox, absent for none.
+	 * A secret identifier passed to every training sandbox when configured.
 	 */
 	secretName?: string
 	log: (line: string) => void

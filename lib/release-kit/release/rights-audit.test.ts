@@ -125,7 +125,7 @@ describe("auditRights", () => {
 	})
 
 	it("stops a release for a package with OpenStreetMap ancestry whose card omits the OpenStreetMap entry", () => {
-		// en-us trained on OpenStreetMap extracts and says so, and every overlay over it repeats the entry.
+		// The en-us card identifies OpenStreetMap training, and every overlay over it repeats that entry.
 		expect(packagesMissingOpenStreetMapAttribution(audit)).toEqual([])
 		expect(audit.unresolved.join("\n")).toMatch(/No model card records the checkpoint its model was initialized from/u)
 
@@ -180,8 +180,9 @@ describe("auditRights", () => {
 	})
 
 	it("stops a release on a violation the list does not record, and on an entry no violation matches", async () => {
-		// Model 10.1.0 trained on corpus v0.7.2-address-systems, whose effective manifest stays committed.
-		// Replaying en-us against that corpus measures its Price Paid Data violations again.
+		// Model 10.1.0 trained on corpus v0.7.2-address-systems.
+		// Its effective manifest remains committed.
+		// The audit replays en-us against that corpus and measures its Price Paid Data violations again.
 		const as101 = audit.training.map((row) =>
 			row.package === "@mailwoman/neural-weights-en-us" ? { ...row, corpusNamed: "v0.7.2-address-systems" } : row
 		)

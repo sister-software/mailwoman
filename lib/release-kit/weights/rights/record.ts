@@ -187,7 +187,7 @@ export interface AttributionRecord {
  */
 export interface DataAccessOffer {
 	/**
-	 * The license of the offered data, as the rows it describes carry it.
+	 * The offered data's license applies to the rows it describes.
 	 */
 	license: string
 	/**
@@ -261,10 +261,11 @@ interface InheritedLineage {
 	attribution: AttributionRecord[]
 	/**
 	 * The attributions the base's effective training manifest records as owed, repeated here
-	 * because a consumer of the overlay alone receives rows decoded through that graph.
+	 * because a consumer who installs only the overlay receives rows decoded through that graph.
 	 *
-	 * Empty when the base has no effective training manifest, which is a statement
-	 * about the checkout rather than about the graph's inputs.
+	 * This field is empty when the base has no effective training manifest.
+	 * The manifest's availability describes the checkout.
+	 * The graph's inputs are a separate fact.
 	 */
 	requiredAttributions: RequiredAttribution[]
 	/**

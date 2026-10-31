@@ -33,7 +33,7 @@ export interface ProviderRate {
 	 */
 	freePerMonth: number
 	/**
-	 * Ascending bands, or `null` for a provider that publishes no figure.
+	 * Rate bands in ascending order, or `null` when a provider publishes no figure.
 	 */
 	bands: readonly RateBand[] | null
 }
@@ -115,7 +115,8 @@ export function monthlyCost(rate: ProviderRate, requests: number): number | null
 }
 
 /**
- * The oldest `retrievedOn` across every rate, which the page prints beside the table.
+ * The oldest `retrievedOn` value across all rates.
+ * The page prints it beside the table.
  */
 export function oldestReading(rates: readonly ProviderRate[] = ProviderRates): string {
 	return rates.map((rate) => rate.retrievedOn).toSorted()[0] ?? ""

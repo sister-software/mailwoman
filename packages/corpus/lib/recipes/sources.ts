@@ -335,7 +335,7 @@ export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	"osm-ci",
 	// The 2026-10-16 to 2026-10-18 extracts for the second set of countries under 1,000 street rows,
 	// where no national address register with an electable grant was downloadable (country-gap-v2).
-	// The Bahamas, Azerbaijan and French Polynesia also carry a national source that covers part
+	// The Bahamas, Azerbaijan and French Polynesia also use a national source that covers part
 	// of the country (`gbpa-bs` Freeport, `opendata-az` three cities, `ban-pf` three communes).
 	"osm-al",
 	"osm-ao",

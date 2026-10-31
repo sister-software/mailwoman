@@ -95,9 +95,10 @@ export function placetypeToTag(placetype: WhosOnFirstPlacetype | string): Compon
 /**
  * The most localized hierarchies one record renders.
  *
- * New York City carries a preferred name in over 200 languages, and each localized
- * hierarchy adds two rows per record, so an uncapped run multiplies the rows of
- * the best-covered places by the number of languages.
+ * New York City has a preferred name in over 200 languages.
+ * Each localized hierarchy adds two rows per record, so an uncapped run multiplies
+ * the rows of the best-covered places by the number of languages.
+ *
  * The record's country's official languages and `SERVED_NAME_LANGUAGES` always keep their
  * hierarchies, and the rest, by language code, fill whatever of the cap those leave.
  */
@@ -119,8 +120,8 @@ const SERVED_NAME_LANGUAGES: readonly string[] = ["jpn", "kor", "zho", "eng", "f
  * more than half of them write, and the first such country in table order is returned.
  * Korean resolves in both Koreas.
  *
- * Chinese resolves to China's unseparated largest-first layout, which China,
- * Taiwan and Hong Kong write in Chinese script.
+ * Chinese resolves to China's unseparated largest-first layout.
+ * China, Taiwan and Hong Kong write in Chinese script.
  *
  * A language whose countries have no majority layout resolves to `null`,
  * and its hierarchies take the record's own country's layout.
@@ -169,12 +170,11 @@ const LANGUAGE_LAYOUTS = new Map<string, string | null>()
  * (locality, region, country, subregion or dependent locality).
  * The canonical `wof:name` fills the `"default"` slot and a `name:*` value fills the others.
  *
- * A slot that carries a language renders only chains written in that
- * language ({@linkcode localizedVariants}).
+ * A slot with a language renders only chains written in that language ({@linkcode localizedVariants}).
  * Every other slot takes its ancestor names from each ancestor's canonical `wof:name`.
  *
- * A dependent locality also renders with its parent locality (`Brooklyn, New York`),
- * which is how such a place is written in an address.
+ * A dependent locality also renders with its parent locality (`Brooklyn, New York`).
+ * Addresses write the place this way.
  *
  * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the
  * OpenCage template produces the canonicalized form (`"United States of America"`),
@@ -297,7 +297,7 @@ type ChainLevel = "locality" | "subregion" | "region" | "country"
  *
  * A dependent locality such as Brooklyn is written inside its locality, county,
  * region and country (`Brooklyn, Kings County, New York, USA`).
- * A country is written alone.
+ * An address writes a country without its ancestors.
  */
 const CHAIN_LEVELS: Partial<Record<ComponentTag, readonly ChainLevel[]>> = {
 	dependent_locality: ["locality", "subregion", "region", "country"],
@@ -310,8 +310,9 @@ const CHAIN_LEVELS: Partial<Record<ComponentTag, readonly ChainLevel[]>> = {
  * Whether a slot renders every structural chain.
  *
  * The canonical name and each colloquial name (`NYC`, `Big Apple`) do.
- * Every other name renders the three chains a localized or variant name needs,
- * which keeps a record with names in two hundred languages to a few hundred rows.
+ * Every other name renders the three chains needed for a localized or variant name.
+ *
+ * This keeps records with names in two hundred languages to a few hundred rows.
  */
 function isStructuralSlot(slot: NameSlot): boolean {
 	return slot.key === "default" || slot.key.includes("_x_colloquial")
@@ -370,8 +371,8 @@ function levelForms(level: ChainLevel, ancestor: WOFRecord, country: string): st
 }
 
 /**
- * Every chain a record's name can be written in: the name alone, then the name
- * with each ordered subset of its ancestor levels.
+ * Every chain a record's name can be written in: the name without ancestors,
+ * then the name with each ordered subset of its ancestor levels.
  *
  * Each chain is rendered once in every level's canonical form.
  * A chain with a level that has other forms is rendered once more, each such level taking
@@ -379,8 +380,8 @@ function levelForms(level: ChainLevel, ancestor: WOFRecord, country: string): st
  *
  * Across all the records of a country every form appears, while each record adds at most two rows per chain.
  *
- * A county is left out of a chain when it carries the record's own name or its locality's,
- * because `Paris, Paris` repeats one place rather than naming two levels.
+ * A chain omits a county when its name matches the record or its locality.
+ * `Paris, Paris` repeats one place instead of identifying two levels.
  *
  * With a `language`, every level is written in its ancestor's preferred name in that
  * language, in one form, and a level whose ancestor has no such name is left out,
@@ -461,8 +462,9 @@ function structuralVariants(
  *
  * A language official in the record's country renders every ordered subset of the levels,
  * in the country's own order and join: `Zürich, Zürich, Schweiz` in German.
- * Any other language renders the name alone, with every level but the country, and with every
- * level, in the order and join of the countries that write that language: `日本東京` in Japanese.
+ * Any other language renders the name without ancestor levels, with every level
+ * but the country, and with every level, in the order and join of the countries
+ * that write that language: `日本東京` in Japanese.
  */
 function localizedVariants(
 	row: WOFRecord,

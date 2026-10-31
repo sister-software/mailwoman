@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Samples National Address Database rows into OpenAddresses-layout CSV skeletons, measures the address
- *   shapes each state's rows carry, and tallies county ZIP-to-city tables.
+ *   shapes each state's rows contain, and tallies county ZIP-to-city tables.
  *
  *   The OA-skeleton recipes read a zipped CSV with OpenAddresses' columns, so a NAD sample written in that
  *   layout reaches them through the same reader as the OpenAddresses extracts they also read.
@@ -24,7 +24,7 @@ import { composeNADLocality, decomposeNADStreet, nadHouseNumber, type NADRecord 
 import { nadSkeletonFile, nadZipCityPath, type NADZipCityCounty } from "#us/recipes/skeleton-sources"
 
 /**
- * The OpenAddresses columns a skeleton CSV carries, in OpenAddresses' order.
+ * The OpenAddresses columns a skeleton CSV contains, in OpenAddresses' order.
  */
 export const NAD_SKELETON_COLUMNS = [
 	"NUMBER",

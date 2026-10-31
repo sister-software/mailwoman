@@ -11,7 +11,9 @@ import { createAPIWorkerApp, createOriginBackend, type APIBackend } from "#app"
 
 interface APIWorkerEnv {
 	/**
-	 * A service binding to the engine, which takes precedence over {@link APIWorkerEnv.ENGINE_ORIGIN}.
+	 * A service binding to the engine.
+	 *
+	 * It takes precedence over {@link APIWorkerEnv.ENGINE_ORIGIN}.
 	 */
 	API_BACKEND?: APIBackend
 	/**

@@ -13,7 +13,7 @@
  *
  *   The dataset version is derived from what decides membership: the drawn-from corpus manifest's sha256, the
  *   sampling rule and the source set. A changed rule or source set therefore yields a new version, and two
- *   manifests with one version hold the same rows unless a corpus manifest was rewritten in place, which the
+ *   manifests with one version hold the same rows unless a corpus manifest was rewritten in place. The
  *   rows hash then exposes. {@linkcode compareHeldoutDatasets} reports what changed between two versions.
  */
 

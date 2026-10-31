@@ -40,7 +40,9 @@ if (!(await pathExists(modelPath))) {
 }
 
 /**
- * The card exported with the candidate graph, which carries the address-system table the graph trained with.
+ * The tool exports a card with the candidate graph.
+ *
+ * The card records the address-system table used to train the graph.
  *
  * The installed card describes the shipped graph instead, and its table can be a different width.
  * `--card` names it, and otherwise the export's own `model-card.json` beside `--model` is used.

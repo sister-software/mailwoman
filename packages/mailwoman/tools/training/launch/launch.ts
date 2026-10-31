@@ -6,7 +6,7 @@
  *   The training launch lifecycle: preflight on the host, one detached sandbox per attempt run, and the status, log,
  *   cancel and restart operations on it.
  *
- *   A launch resolves its config on the host, which is also the source-rights admission, and runs the preflight audits
+ *   A launch resolves its config on the host and admits its source rights. It then runs the preflight audits
  *   against the host mirror of the volume. The receipt's key binds the YAML and the corpus MANIFEST, and the sandbox
  *   refuses a volume whose MANIFEST differs from the one the host hashed. The sandbox runs the supervisor
  *   (`supervisor.ts`), which restarts the trainer in the same container after a failed exit. A sandbox that Modal
@@ -32,7 +32,8 @@ import {
 } from "#tools/training/launch/supervisor"
 
 /**
- * The tag every training sandbox carries, keying it to one run directory.
+ * The tag attached to every training sandbox.
+ * It identifies one run directory.
  */
 export const RUN_TAG = "mailwoman-run"
 
@@ -122,8 +123,9 @@ export interface LaunchRecord {
 	resources: SandboxResources
 	environment: SupervisorEnvironment
 	/**
-	 * The YAML's bytes in base64, and the resolved config, which each sandbox of
-	 * the run receives in {@linkcode LAUNCH_INPUTS_DIR}.
+	 * The YAML's bytes in base64 and the resolved config.
+	 *
+	 * Each sandbox of the run receives in {@linkcode LAUNCH_INPUTS_DIR}.
 	 */
 	inputs: { configBase64: string; resolved: string }
 	sandboxes: string[]
@@ -270,9 +272,9 @@ async function startSandbox(record: LaunchRecord, deps: LaunchDependencies): Pro
 		throw new TypeError(`the record of run ${record.runKey} holds no launch inputs; start the run again with start`)
 	}
 
-	// Every sandbox of a run carries one name, so Modal refuses a second one
-	// while the first runs: the refusal holds between the host's check for a running sandbox
-	// and this start, which the check alone leaves open.
+	// Every sandbox of a run uses one name, so Modal refuses a second sandbox while the first runs:
+	// the refusal holds between the host's check for a running sandbox and this start.
+	// The name check does not prevent this race.
 	const sandbox = await deps.boundary
 		.start({
 			...record.resources,

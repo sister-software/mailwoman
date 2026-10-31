@@ -8,7 +8,7 @@
  *   `macro_f1` averages every label with nonzero support as one equal term, so a label three validation rows hold
  *   moves it as much as one two thousand rows hold, and swings with each of its three rows: `po_box` entered
  *   v7.2.0's macro score from 3 rows of 4,096 (#2438). The count reads the draw the trainer scores: the same split,
- *   row limit and seed, encoded as the trainer encodes it. A row holds a label when one of its pieces carries the
+ *   row limit and seed, encoded as the trainer encodes it. A row has a label when one of its pieces contains the
  *   label's `B-` tag.
  */
 

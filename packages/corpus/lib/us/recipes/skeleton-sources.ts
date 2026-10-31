@@ -44,8 +44,8 @@ export const NAD_SKELETON_DIRECTORY = "nad-skeletons"
  * The states sampled from NAD, chosen for address shapes the OpenAddresses files lack
  * rather than for row count.
  *
- * Distinct tuples of those six files carry a unit on 0.6% of rows, and none has
- * a hyphenated or direction-prefixed house number.
+ * Distinct tuples of those six files include a unit on 0.6% of rows.
+ * No tuple has a hyphenated or direction-prefixed house number.
  *
  * Each comment states the shape measured over the usable rows of the FeatureServer
  * pages fetched on 2026-05-18.
@@ -55,7 +55,7 @@ export const NAD_SKELETON_DIRECTORY = "nad-skeletons"
  * No state's rows match a rural-route street pattern, so NAD adds no rural-route form.
  */
 export const NAD_SKELETON_STATES = [
-	// Chicago's city grid, which `us/il/cook` supplied before it was withdrawn: 8.9% unit, 1,268 ZIPs.
+	// `us/il/cook` supplied Chicago's city grid before withdrawal: 8.9% of rows have a unit, across 1,268 ZIPs.
 	"IL",
 	// 36.6% unit, the most of any state with over a million rows, and 154 street types.
 	"MA",

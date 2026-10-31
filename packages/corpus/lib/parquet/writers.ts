@@ -5,8 +5,8 @@
  * @file Writes Parquet files and the manifest that describes their contents.
  *
  *   This module exposes two writers. {@linkcode writeParquetFile} writes one file from rows already in memory.
- *   {@linkcode writeParquetSplits} streams per-split row iterables into one set of files per source, as many as the
- *   row cap requires. It returns the manifest. Both writers create their parent directory and write a record beside
+ *   {@linkcode writeParquetSplits} streams per-split row iterables into one set of files per source, creating files
+ *   as needed to meet the row cap. It returns the manifest. Both writers create their parent directory and write a record beside
  *   every file (`#parquet/record`).
  *
  *   Layout under `<outputDir>`:
@@ -21,10 +21,10 @@
  *         data.RECORD.json
  *   ```
  *
- *   A file holds the rows of one source in one split. Its directory is named by its derivation hash, over that
+ *   A file holds the rows of one source in one split. Its directory uses its derivation hash, over that
  *   source's extract hash and code hash, the build config with the file's source, split and part, and the builder
  *   version, so two builds that would write different bytes never share a path. The manifest names each
- *   file's split, which is how the per-split routing survives without a split directory.
+ *   file's split. The manifest preserves per-split routing without a split directory.
  *
  *   Each file caps at `rowsPerFile` (default 1,000,000). Within a file DuckDB writes a row group every
  *   {@linkcode ROW_GROUP_SIZE} rows. The manifest captures every file's path, source, row count, byte size and
@@ -337,7 +337,9 @@ export interface ParquetFileDescriptor {
 	 */
 	source?: string
 	/**
-	 * The file's derivation hash, which names its store directory.
+	 * The file's derivation hash.
+	 *
+	 * This value identifies its store directory.
 	 * Absent from manifests written before the store.
 	 */
 	derivation_hash?: string
@@ -680,7 +682,7 @@ export async function writeParquetSplits(
 			const fileDir = storeDir(opened.source, hash)
 			// A string, because the manifest records it.
 			const path = fileDir("data.parquet").toString()
-			// Named for this writer, so two builds converting the same derivation never write one file.
+			// The writer-specific temporary path keeps concurrent builds from writing the same file.
 			const pending = fileDir(`data.parquet.partial.${process.pid}.${crypto.randomUUID().slice(0, 8)}`).toString()
 
 			await makeDirectories(fileDir)
@@ -700,7 +702,7 @@ export async function writeParquetSplits(
 
 			// The converter's connection closed when `writeStagedParquet` returned,
 			// so no reader holds the staged part open.
-			// Removing it here bounds staging to the parts still open.
+			// This removes the staged part and bounds staging to parts that remain open.
 			await removePath(opened.stagePath)
 
 			const sha256 = await sha256File(pending)
@@ -778,7 +780,7 @@ export async function writeParquetSplits(
 			}
 		}
 
-		// `closePart` deletes the entry being visited, which a Map iterator permits.
+		// The Map iterator permits `closePart` to delete the entry currently being visited.
 		for (const opened of open.values()) {
 			await closePart(opened)
 		}

@@ -17,11 +17,11 @@ Every value below applies to the Latin graph alone.
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Required countries (exact parse, address rows)               | US 0.60, FR 0.90, GB 0.80, DE 0.85, IN 0.50, ES 0.80, IT 0.80, AU 0.80, NZ 0.80                                                                      |
 | Required capabilities (exact parse on named sources)         | `po_box_cedex` 0.85 with max loss 0.05; `venue_unit` 0.85; `country_token` 0.85                                                                      |
-| Objective set C                                              | {US, FR, GB, DE, IN, ES, IT, AU, NZ}, address rows, equal weight                                                                                     |
+| Objective set C                                              | `{US, FR, GB, DE, IN, ES, IT, AU, NZ}`, address rows, equal weight                                                                                   |
 | Required Q improvement                                       | 0 (lower bound and estimate of `Q_candidate - Q_published` both at least 0)                                                                          |
 | Confidence level                                             | 0.95 simultaneous                                                                                                                                    |
 | Multiple comparison                                          | Bonferroni over every check the specification declares (14 in v3: 9 + 3 + 1 max-loss + objective)                                                    |
-| Sampling unit                                                | `group`; `rowsIndependent: false`                                                                                                                    |
+| Unit used for sampling                                       | `group`; `rowsIndependent: false`                                                                                                                    |
 | Required precision                                           | 0.08 half-width per deciding bound at the registered dataset quota                                                                                   |
 | Admitted provenance                                          | `verified_unseen` only                                                                                                                               |
 | Dataset quota (in the dataset manifest rather than the spec) | 1,000 address rows per country, or every available row when fewer                                                                                    |
@@ -81,11 +81,11 @@ Decided: C = the nine required countries, address rows only, equal weight.
 
 Reasons. Q is the product's primary score, and the nine countries are the product's claimed coverage, so Q
 measures the claim. Experimental countries stay out of C because the policy reports them separately and
-because equal weighting would let a 200-row OSM country move Q as much as US. C is fixed for v3. Adding the
-tier-2 countries when they hold rows is a v4 change with its own rationale.
+because equal weighting would let a 200-row OSM country move Q as much as US. C is fixed for v3. A v4 change
+would include tier-2 countries when they hold rows, with its own rationale.
 
 Cost of this choice (inferred): Q cannot be computed until every member has admitted rows, so the same four
-countries that block the minima block the objective. A C of {US, FR, GB, DE, IN} would be computable from the
+countries that block the minima block the objective. A C of `{US, FR, GB, DE, IN}` would be computable from the
 current split and would have made the first decision possible, at the price of a Q that ignores four shipped
 overlays. I judged that the wrong trade because the policy's reason for the objective is that losses are
 accepted only against a gain the product claims.
@@ -180,7 +180,7 @@ that reason.
 | `int8_vs_fp32_max_delta_pp` 1.5                                                             | retired                                                                              | The verdict is tied to the int8 artifact's sha256 and every minimum is measured on it, so a quantization collapse fails the minima directly. fp32-to-fp32 comparison stays the development rule (iron rule 3).                                                                                                                                                                    |
 | Mask-regression lock (#718, 2 pp per tag under the conventions mask)                        | retained as a configuration check, outside the spec                                  | It compares the candidate with and without the ship config's conventions mask and leaves the published model out of the comparison. It is a measurement-validity refusal of the same kind as the tokenizer-comparability refusal. It does not read the published model's answers, so the migration table's description of it is inaccurate and should be corrected when v3 lands. |
 
-## 7. Missing evidence and the smallest work
+## 7. Evidence gaps and the smallest work
 
 Everything below blocks a `pass` under v3 today (observed unless marked).
 
@@ -264,7 +264,7 @@ Readings (observed from the table, inferred where stated):
   usable, and the thresholds alone do not, which is why 1,000 rows is registered with the dataset.
 - The trade-off scenario (inferred mechanism) is blocked by the IN minimum: a country 1 pp above its
   minimum needs about 21,700 rows to show it. A loss that takes a country to within the sample's resolution of
-  its minimum blocks the release even when the policy would accept it. Adding rows for that country resolves it,
+  its minimum blocks the release even when the policy would accept it. New rows for that country resolve it,
   and IN has those rows (3,071 available).
 - Grouped variants (3 per group, correlation 0.6) lowered the +2 pp pass rate from 48.0% to 9.5%. The effective
   count is what the quota must deliver, so the freeze should count groups rather than rows against 1,000.

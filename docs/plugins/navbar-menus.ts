@@ -75,8 +75,8 @@ const firstSentence = (text: string) => {
 /**
  * The scalar `key: value` lines of a page's frontmatter block.
  *
- * Docusaurus loads this file through jiti, which rejects the `import.meta` in
- * the docs scripts' fuller parser.
+ * Docusaurus loads this file through jiti. jiti rejects `import.meta`,
+ * which the fuller parser uses in the docs scripts.
  */
 const frontmatter = (source: string) => {
 	const fields = new Map<string, string>()
@@ -127,7 +127,9 @@ const itemLink = (articlesDir: string, item: SidebarItemConfig): MenuLink | null
 
 /**
  * Returns the builder for one sidebar's mega menu, as a `custom-megaMenu` navbar item.
- * `siteDir` is the docs workspace, which holds `articles/`.
+ *
+ * `siteDir` is the docs workspace.
+ * It contains `articles/`.
  */
 export const createSidebarMegaMenu = (siteDir: string) => (sidebarID: string, options: SidebarMenuOptions) => {
 	const articlesDir = resolvePath(siteDir, "articles").toString()

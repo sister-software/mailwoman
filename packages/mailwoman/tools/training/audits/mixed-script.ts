@@ -34,8 +34,9 @@ function isBoundary(text: string, offset: number): boolean {
 }
 
 /**
- * Each gold component of a row as `[tag, surface]`: from its span triple,
- * whose offsets are UTF-16 code units, or else from its BIO token runs.
+ * This function returns each gold component of a row as `[tag, surface]`.
+ *
+ * It derives the components from span triples with UTF-16 offsets or from BIO token runs.
  *
  * @throws When a span offset does not fall on a character boundary.
  */
@@ -234,7 +235,8 @@ export interface MixedScriptOptions {
  * relabel, as the audit reads them.
  */
 export function* relabeledDraws(mtf: MTFNode, config: TrainingConfig, options: MixedScriptOptions) {
-	// With every augmentation off, the emit step runs only the relabel, which draws no value from the generator.
+	// With every augmentation off, the emit step runs only the relabel.
+	// The relabel draws no value from the generator.
 	const stream = openRawRows(mtf, config, "train", options.seed, {
 		corpusDir: options.corpusDir,
 		augment: {},

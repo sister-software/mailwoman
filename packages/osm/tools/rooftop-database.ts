@@ -7,7 +7,7 @@
  *   shared situs schema (`@mailwoman/resolver-wof-sqlite/address/point/spine-schema`). The existing
  *   `AddressPointSqliteLookup` reads it with zero changes.
  *
- *   The output is an OpenStreetMap Derivative Database under ODbL 1.0, whose rows record
+ *   The output is an OpenStreetMap Derivative Database under ODbL 1.0. Its rows record
  *   `source = openstreetmap:<cc>`. The build records the extract's URL and SHA-256 in the database's
  *   `layer_manifest`. `README.md` states the licensing boundary.
  *

@@ -23,7 +23,7 @@ import { isFileSync } from "#fs/readers/stat"
  * That directory's `commondir` file holds the path of the shared git directory.
  * The main checkout is the shared directory's parent.
  *
- * A `.env` beside the working directory wins over the main checkout's, so a worktree can carry its own.
+ * A `.env` beside the working directory wins over the main checkout's, so a worktree can have its own file.
  *
  * The reads are synchronous because the env module folds the file into `process.env`
  * at import time, ahead of any `await`.

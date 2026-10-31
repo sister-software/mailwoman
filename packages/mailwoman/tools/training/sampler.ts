@@ -46,12 +46,14 @@ export function trainerDataPath(name: string): string {
 export const POSTCODE_SHAPES_PATH = trainerDataPath("postcode-shapes.json")
 
 /**
- * Each country's postcode syntax, which the postcode finders accept a value against.
+ * Each country's postcode syntax.
+ * The postcode finders use it to validate values.
  */
 export const POSTCODE_SYNTAX_PATH = trainerDataPath("postcode-syntax.json")
 
 /**
- * Each country's postcode side relative to its locality-and-region block, which the postcode move reads.
+ * Each country's postcode position relative to its locality-and-region block.
+ * The postcode move reads this value.
  */
 export const POSTCODE_LAYOUTS_PATH = trainerDataPath("postcode-layouts.json")
 

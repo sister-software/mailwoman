@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Japanese address text: the prefecture set, the field normalizers and the chōme split, which the corpus
+ * @file Japanese address text: the prefecture set, field normalizers, and the chōme split. The corpus
  *   assembler renders with and the corporate-register reader matches with.
  *
  *   Ported from the Python builders' `countries/jp/text.py`.

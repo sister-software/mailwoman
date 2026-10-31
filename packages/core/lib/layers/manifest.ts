@@ -77,8 +77,9 @@ export interface LayerManifest {
 	 * The SHA-256 of the build's input file as lowercase hex.
 	 *
 	 * `null` or absent means the build did not record it.
-	 * With {@link LayerManifest.sourceURL} it identifies the bytes the artifact was built from,
-	 * which the URL alone does not when the publisher replaces the file at the same address.
+	 * With {@link LayerManifest.sourceURL}, it identifies the artifact's input bytes.
+	 *
+	 * The URL cannot identify those bytes if the publisher replaces the file at the same address.
 	 */
 	sourceSHA256?: string | null
 }
@@ -335,7 +336,7 @@ export function polygonLayerManifest(
 /**
  * Insert one validated manifest row.
  *
- * The input-file columns are written only when the manifest carries them.
+ * The input-file columns are written only when the manifest includes them.
  * A row stamped into a `layer_manifest` table created before those columns existed then still inserts.
  */
 export async function writeLayerManifest(db: layerschemahandle, manifest: LayerManifest): Promise<void> {

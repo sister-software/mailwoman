@@ -6,7 +6,7 @@
  *   The identity of the Geofabrik extract a build reads: the URL it came from, the SHA-256 of its bytes,
  *   and the date of the OpenStreetMap snapshot inside it.
  *
- *   A Geofabrik `-latest` URL serves a new file every day, so the URL alone never identifies the input.
+ *   A Geofabrik `-latest` URL serves a new file every day, so the URL does not identify the input by itself.
  *   The digest does. `tools/fetch/extract.ts` writes a receipt beside each download, and this module reads
  *   it back and checks the file still has the bytes the receipt recorded.
  */
@@ -32,7 +32,8 @@ export interface ExtractProvenance {
 	 */
 	sourceSHA256: string
 	/**
-	 * The `YYYY-MM-DD` date of the server's `Last-Modified` header, which dates the snapshot.
+	 * The `YYYY-MM-DD` date in the server's `Last-Modified` header.
+	 * This date identifies the snapshot.
 	 *
 	 * `null` when the extract has no receipt or the server sent no such header.
 	 */

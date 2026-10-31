@@ -119,8 +119,7 @@ async function mintIssuance(
 /**
  * Send an issuance to the declaration's address and record the result.
  *
- * A declaration without an address, which is every open-source one,
- * was answered in the response and skips the send.
+ * Every open-source declaration lacks an address. was answered in the response and skips the send.
  */
 async function emailIssuance(
 	deps: DeclarationDependencies,

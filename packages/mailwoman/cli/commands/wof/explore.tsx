@@ -67,7 +67,8 @@ const ExploreWOF: CommandComponent<typeof spec, [string]> = ({ options, args }) 
 			using db = await openBuiltClient<Database>(options.candidateDB ?? wofDatabasePath("candidate.db"))
 
 			// One row per place.
-			// A place carries a row per name and alias, and the list keeps the first.
+			// A place has one row per name and alias.
+			// The list keeps the first row.
 			const matches = await db
 				.selectFrom("candidate")
 				.innerJoin("placetype_codes", "placetype_codes.id", "candidate.placetype_id")
@@ -92,7 +93,8 @@ const ExploreWOF: CommandComponent<typeof spec, [string]> = ({ options, args }) 
 
 			if (!unique.length) throw new Error(`No candidate.db row has the name "${query}"`)
 
-			// candidate.db also holds places from other gazetteers, whose ids have no Who's On First file to read.
+			// candidate.db also holds places from other gazetteers.
+			// Their ids have no Who's On First file to read.
 			const reposRoot = options.reposRoot ?? undefined
 			const repos = await listWOFRepos(reposRoot)
 			const backed = await Promise.all(unique.map((match) => findWOFFeaturePath(match.id, reposRoot, repos)))

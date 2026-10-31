@@ -13,7 +13,7 @@
  *   be read. Every row record (`rows.jsonl`) holds the gold labels, the four traced label sequences, the stage that
  *   decided the row (`replay.ts`), and the rank of the gold labels among the decoder's 20 best paths over the
  *   post-prior emissions under the BIO masks. `summary.json` holds each arm's exact count per suite, the deciding stage
- *   and the k-best availability per mechanism family of the failure list, which `--failures` supplies in the shape the
+ *   and k-best availability per mechanism family for the failure list. `--failures` supplies the list in the shape the
  *   2026-10-28 suite report wrote.
  */
 

@@ -68,7 +68,8 @@ describe("cjkShare", () => {
 		expect(cjkShare("ニューヨーク州ブルックリン区")).toBe(1)
 		expect(cjkShare("フェアモント, WV")).toBeLessThan(0.9)
 		expect(cjkShare("12345")).toBe(0)
-		// A halfwidth katakana letter is named HALFWIDTH KATAKANA, so it is a letter outside the CJK set.
+		// Unicode calls a halfwidth katakana letter HALFWIDTH KATAKANA.
+		// It is outside the CJK set.
 		expect(cjkShare("ｶﾀ")).toBe(0)
 		expect(cjkShare("𠮷野")).toBe(1)
 	})

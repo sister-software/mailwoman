@@ -34,7 +34,7 @@ describe("attributionReport", () => {
 		// en-au contributed none of these rows.
 		// These rows belong to its base package.
 		// The field records that source.
-		// Its own card carries only the OpenStreetMap credit it owes through that base graph.
+		// Its own card includes only the OpenStreetMap credit required by that base graph.
 		expect(overlay.own.map((entry) => stringifyJSON(entry))).toEqual([
 			expect.stringContaining("OpenStreetMap contributors (ODbL-1.0)"),
 		])

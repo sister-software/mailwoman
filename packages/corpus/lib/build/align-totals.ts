@@ -5,7 +5,7 @@
  * @file The align phase's accumulators as a record a worker writes and a coordinator merges.
  *
  *   A serial build fills one set of accumulators by visiting every source's rows in adapter order. A parallel build
- *   fills one set per align range. Merging those sets in adapter order, then range order, visits the same rows
+ *   fills one set per align range. The coordinator merges those sets in adapter order, then range order, and visits the same rows
  *   in the same order, so every sum is equal and every map lists its keys in the order the serial build first saw
  *   them. The build manifest serializes those maps, and a key order that followed worker scheduling would change
  *   its bytes.

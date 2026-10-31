@@ -176,8 +176,9 @@ export interface NameSlotOptions {
 	/**
 	 * Ranks a preferred-name language for one record, lower first.
 	 *
-	 * Keys are visited in rank order, and a value two keys share goes to the first,
-	 * so the rank decides which language a shared name renders under.
+	 * The adapter visits keys in rank order.
+	 * If two keys share a value, the first key's rank decides which language renders the name.
+	 *
 	 * Brooklyn's `name:wuu_x_preferred` and `name:zho_x_preferred` both hold 布鲁克林区,
 	 * and in source order `wuu` would claim it.
 	 *
@@ -199,8 +200,8 @@ export interface NameSlot {
 	key: string
 	value: string
 	/**
-	 * The ISO 639-3 language of a `name:<language>_x_preferred` slot, which the
-	 * admin adapter renders a localized hierarchy for.
+	 * The ISO 639-3 language of a `name:<language>_x_preferred` slot.
+	 * The admin adapter uses it to render a localized hierarchy.
 	 */
 	language?: string
 }
@@ -261,7 +262,7 @@ interface EmitWOFJSONRowsOptions<A extends object> {
 	nameSlotsFor: (record: WOFRecord) => NameSlot[]
 	variantsFor: (record: WOFRecord, ancestry: A, slot: NameSlot) => WOFVariantSpec[]
 	/**
-	 * Chooses the rows to emit when the adapter options carry a sample.
+	 * Chooses the rows to emit when the adapter options include a sample.
 	 *
 	 * The emitter renders every row once into it, then emits the rows it keeps, in WOF-id order.
 	 * The caller reads its cell counts afterwards.

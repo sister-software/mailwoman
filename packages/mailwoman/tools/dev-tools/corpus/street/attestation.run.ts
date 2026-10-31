@@ -13,7 +13,7 @@
  *
  *   The registers read here are the ones the corpus adapters already read. GB comes from the `gb-os-open`
  *   adapter's canonical rows (Code-Point Open, OS Open Names and OS Open Roads, OGL v3.0). It read HM Land
- *   Registry Price Paid Data until 2026-10-17, whose address fields Royal Mail and Ordnance Survey license
+ *   Registry Price Paid Data until 2026-10-17. Royal Mail and Ordnance Survey license its address fields
  *   only for personal or non-commercial use (#2635). The OS rows' locality is OS Open Names' populated
  *   place rather than a post town: every Great Portland Street row reads `City of Westminster`, so a London
  *   row's with-locality count reads zero. Every other country comes from its Overture addresses extract. That extract keeps the locality in

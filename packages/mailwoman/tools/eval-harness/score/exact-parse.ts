@@ -7,7 +7,7 @@
  *
  *   A row is exactly parsed when the multiset of predicted `(tag, start, end)` spans equals the multiset of
  *   annotated spans. Every annotated span must be predicted with its tag and boundaries, and no other span may
- *   be predicted. This differs from the recovered-span diagnostic, which accepts additional predictions.
+ *   be predicted. The recovered-span diagnostic also accepts additional predictions.
  *
  *   Normalization. Offsets index the row's `raw` string in UTF-16 code units, the unit both the corpus and
  *   the decoder use. Each span, annotated or predicted, has the whitespace at its edges trimmed before
@@ -31,8 +31,8 @@
  *   Ignored labels. No component tag is ignored. The parse tree's nodes, parents and children alike, all
  *   count as predicted spans. Unlabeled text, the `O` label, is not a span on either side.
  *
- *   Validity. {@linkcode validateAnnotatedSpans} refuses a row whose span columns differ in length, whose
- *   offsets are not integers inside `raw` with `start < end`, whose span is only whitespace, whose tag is not
+ *   Validity. {@linkcode validateAnnotatedSpans} refuses a row when its span columns differ in length or its
+ *   offsets are not integers inside `raw` with `start < end`. It also refuses spans containing only whitespace and tags that are not
  *   a {@linkcode ComponentTag}, or whose spans overlap. The scorer throws for such a row instead of scoring
  *   it.
  */

@@ -50,8 +50,8 @@ interface OSMCorpusRow {
 	province?: string | null
 	country?: string | null
 	/**
-	 * The containing administrative area's name, which `emit-corpus-jsonl --locality-level`
-	 * writes for a record without `addr:city`.
+	 * `emit-corpus-jsonl --locality-level` uses the containing administrative area's
+	 * name writes for a record without `addr:city`.
 	 */
 	boundary_locality?: string | null
 	/**

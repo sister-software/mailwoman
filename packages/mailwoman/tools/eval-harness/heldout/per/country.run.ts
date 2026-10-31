@@ -13,7 +13,7 @@
  *
  *   `--dataset <dataset manifest .json>` scores a frozen, versioned sample (`heldout/dataset/freeze.run.ts`) in
  *   place of drawing one from `--manifest`; the rows file's sha256 is checked against the manifest. Every
- *   outcome carries the row's `group`, which `release/evaluate.ts` resamples by.
+ *   outcome includes the row's `group`. `release/evaluate.ts` uses that group for resampling.
  *
  *   The optional provenance file is `{ "rows": { "<rowID>": { "provenance": "verified_unseen" |
  *   "unseen_by_candidate" | "known_overlap", "evidence": "<where the history was recorded>" } } }`. A row it does
@@ -274,7 +274,8 @@ async function scoreAndReport(): Promise<void> {
 		})
 
 	// A sampled cell's `sampled` counts every row drawn into it.
-	// Its arm scores leave out the capability-probe rows, which take their own `<country>/capability` entry.
+	// Its arm scores leave out capability-probe rows.
+	// Those rows use their own `<country>/capability` entry.
 	const capabilityCountries = [
 		...new Set(
 			[...scored[0]!.cells.keys()]

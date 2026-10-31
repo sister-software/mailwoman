@@ -223,10 +223,11 @@ export interface RowAlignerOptions {
 /**
  * The align phase's work on one canonical row: refusals, synthesis, alignment and the split route.
  *
- * Each row's output depends on that row alone.
- * The aligner keeps only caches and sums between rows, and a later row writes the same
- * lines whatever they hold, so a source's rows can be aligned in contiguous ranges
- * and the ranges' outputs joined in order.
+ * Each row's output depends only on that row's data.
+ * The aligner keeps caches and sums between rows.
+ *
+ * Every later row writes the same lines regardless of those values.
+ * A source's rows can therefore be aligned in contiguous ranges and the range outputs joined in order.
  */
 export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) => void {
 	const { result, tally, sinks, licenses, ineligibility } = opts

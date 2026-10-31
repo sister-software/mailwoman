@@ -180,15 +180,17 @@ const ATTRIBUTION_STATEMENTS: Readonly<Record<string, string>> = {
 }
 
 /**
- * Recognized licenses carried by contents of a source whose rows state one free-text
- * license, keyed by the source's current spelling.
+ * Recognized licenses for content in a source whose rows state one free-text license,
+ * keyed by the source's current spelling.
  *
  * The derivation groups sources by the license their rows state.
  * The `sub-venue` recipe states one license over three publications.
  *
- * That license is free text, and the OpenStreetMap venue names it carries are under ODbL 1.0.
- * Grouping by that text alone leaves the source out of the ODbL group,
- * the group that carries the recorded OpenStreetMap statement.
+ * That license is free text.
+ * The OpenStreetMap venue names in the source are under ODbL 1.0.
+ *
+ * The free-text license does not identify the source in the ODbL group.
+ * The ODbL group records the OpenStreetMap statement.
  *
  * The source keeps its own group as well, because that text also credits the
  * publishers of the address skeletons.
@@ -198,7 +200,8 @@ const CONTENT_LICENSES: Readonly<Record<string, readonly string[]>> = {
 }
 
 /**
- * The licenses a source owes attribution under: the one its rows state and those its contents carry.
+ * The licenses a source owes attribution under: the license its rows state
+ * and licenses that apply to its contents.
  */
 function attributedLicenses(record: EffectiveSourceRecord): string[] {
 	const current = currentSourceName(record.source) ?? record.source

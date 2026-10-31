@@ -77,7 +77,8 @@ async function runSupervisor(
 	await changeMode(trainer, 0o755)
 	await changeMode(sync, 0o755)
 
-	// A checkpoint an earlier run left, which only a fresh start removes.
+	// An earlier run left this checkpoint.
+	// Only a fresh start removes it.
 	const earlier = scratch.path("volume", "output", "checkpoints", "step-000100", "model.safetensors")
 
 	if (seedCheckpoint) {

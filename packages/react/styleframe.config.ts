@@ -25,7 +25,7 @@ import {
 import { createSisterSoftwareStyleframe, SisterSoftwareStyleframeOptions } from "@sister.software/theme/styleframe"
 
 /**
- * Mailwoman's tokens are named `mw.<token>` and compile to `--mw-<token>`; the shared tokens keep `--ss-*`.
+ * Mailwoman's tokens use the `mw.<token>` names and compile to `--mw-<token>`; shared tokens keep `--ss-*`.
  */
 const s = createSisterSoftwareStyleframe({
 	...SisterSoftwareStyleframeOptions,

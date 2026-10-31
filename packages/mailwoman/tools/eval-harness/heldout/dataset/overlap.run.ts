@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Audits a held-out dataset for overlap with the named training corpora and writes the `--provenance` file
+ *   Audits a held-out dataset for overlap with the listed training corpora and writes the `--provenance` file
  *   `heldout/per/country.run.ts` reads.
  *
  *   Usage:

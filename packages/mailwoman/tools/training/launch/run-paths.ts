@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Where a training run writes on the volume, which of those directories a fresh start may clear, and how a config's
- *   volume paths map onto the host copy the preflight audits read.
+ *   This module defines where a training run writes on the volume and which directories a fresh start may clear.
+ *   It also maps config volume paths onto the host copy read by preflight audits.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -29,7 +29,8 @@ const parentOf = (path: string) => path.slice(0, path.lastIndexOf("/")) || "/"
  * The log follows `{output_dir}` when the config names it, and otherwise sits
  * beside the checkpoint directory.
  *
- * @throws When an `output_dir` under the mount holds a `.` or `..` segment, which would
+ * @throws When an `output_dir` under the mount contains a `.` or `..` segment.
+ * Such a segment would
  * let it name a shared directory that {@link checkClearable} compares by its segments.
  */
 export function resolveRunPaths(outputDir: string, csvLogPath: string, mount: string): RunPaths {
@@ -50,7 +51,8 @@ export function resolveRunPaths(outputDir: string, csvLogPath: string, mount: st
 }
 
 /**
- * Refuses a path with a `.` or `..` segment, whose segments do not name the directory it resolves to.
+ * Refuses a path with a `.` or `..` segment because those segments do not
+ * identify the directory it resolves to.
  */
 function refuseDotSegments(outputDir: string): void {
 	if (outputDir.split("/").some((segment) => segment === "." || segment === "..")) {
@@ -66,7 +68,8 @@ const LEGACY_RUN_DEPTH = 3
 /**
  * The volume's top-level directories that hold shared assets rather than one run.
  *
- * `corpus-python` is the directory the retired code upload wrote on the volume, which still holds it.
+ * `corpus-python` is the directory written by the retired code upload.
+ * The volume still contains it.
  */
 const SHARED_ROOTS = new Set(["corpus", "corpus-python", "models", "audits", "gazetteer", "eval", "launch"])
 

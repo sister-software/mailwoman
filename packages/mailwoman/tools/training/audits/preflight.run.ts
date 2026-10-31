@@ -6,7 +6,7 @@
  *   Writes and checks the preflight receipt: the file a CPU preflight leaves once every audit a config declares has
  *   passed, and which a GPU run requires before it trains.
  *
- *   `key` prints the receipt key for a config and corpus. `write` writes the receipt for the audits named with
+ *   `key` prints the receipt key for a config and corpus. `write` writes the receipt for the audits selected with
  *   `--audit <name>=<report path>` and prints its key, the token the GPU run presents. `verify` refuses unless the
  *   token is this config and corpus's key and the receipt records a pass for each `--require <name>`.
  *

@@ -102,7 +102,7 @@ export function buildBoundarySQL(query: OSMBoundaryQuery): string {
 }
 
 /**
- * One named administrative area at one `admin_level`, with its geometry.
+ * One administrative area with a `name` value at one `admin_level`, with its geometry.
  */
 export interface OSMAdminArea {
 	name: string
@@ -115,7 +115,7 @@ export interface OSMAdminArea {
 }
 
 /**
- * Build the ogrsql select+where for every named boundary at the given admin levels.
+ * Build the ogrsql select+where for every boundary with a `name` value at the given admin levels.
  *
  * Exported for unit testing — no `ogr2ogr` involved.
  *
@@ -140,7 +140,7 @@ export function adminAreasQuery(adminLevels: readonly string[]): string {
 }
 
 /**
- * Read every named administrative area at `adminLevels` out of `pbfPath`.
+ * Read every administrative area with a `name` value at `adminLevels` from `pbfPath`.
  *
  * A boundary the driver returns without an areal geometry (an unclosed relation in the extract) is skipped.
  */

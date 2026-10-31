@@ -5,7 +5,7 @@
  * @file Tests the join from corpus source ids to register rows, and the refusal every build and launch runs.
  *
  *   Two failures here are silent in opposite directions. A table that maps a source to a row whose decision is elected
- *   when the source reads another publication admits rows nobody read the terms of. A table that misses a source
+ *   when the source reads another publication admits rows whose terms the project has not reviewed. A table that misses a source
  *   leaves it to the build to discover hours later. Both pass a type check, so the committed table is pinned here.
  */
 

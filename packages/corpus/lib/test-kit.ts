@@ -256,7 +256,9 @@ export function expectSpanInvariants(rows: readonly unknown[]): void {
 /**
  * Asserts that a parsed build report matches its reference in every value and every key's position.
  *
- * `toEqual` alone ignores key order, which a report's bytes carry.
+ * The byte comparison checks key order.
+ * `toEqual` ignores key order.
+ *
  * The comparison sorts the tags that tie within each `per_tag_rows` count on both sides first,
  * because the Python reference counted tags from a set and its tie order followed `PYTHONHASHSEED`.
  */

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Assigns a cause to a row a model parses wrong, from the expected and predicted spans alone.
+ *   Assigns a cause to a row a model parses incorrectly by comparing expected and predicted spans.
  *
  *   Causes are tested in order and the first that holds wins:
  *

@@ -80,7 +80,7 @@ export interface TrainerImageBuild {
 
 /**
  * A sandbox the launcher waits on: a registry image, the training volume mounted,
- * and the named secret when `withSecret`.
+ * and the secret identified by `withSecret` when that option is set.
  */
 export interface OneShotSandboxSpec extends SandboxResources {
 	registryImage: string

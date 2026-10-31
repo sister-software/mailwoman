@@ -43,7 +43,7 @@ export interface MergeSourceOptions {
 	 */
 	windowSize?: number
 	/**
-	 * Keep at most this many rows of each country, chosen by a hash of each row's `source_id`,
+	 * Keep at most `rowsPerCountry` rows of each country, chosen by a hash of each row's `source_id`,
 	 * and write the kept rows of every input in one hash order rather than through the window.
 	 *
 	 * A build writes a source's rows in record order, so the 250,000-row window mixes a few thousand
@@ -53,11 +53,11 @@ export interface MergeSourceOptions {
 	rowsPerCountry?: number
 	/**
 	 * Keep the first rows of every cell before the per-country fill, so a rare structure
-	 * reaches the sample however many rows its country has.
+	 * reaches the sample regardless of the row count for its country.
 	 *
 	 * With a floor, `rowsPerCountry` is exact: each country keeps its floor rows,
 	 * then the rest of its rows in hash order up to `rowsPerCountry`.
-	 * Without `rowsPerCountry`, each country keeps its floor rows alone.
+	 * Without `rowsPerCountry`, each country keeps only its floor rows.
 	 */
 	cellFloor?: CellFloor
 	/**
@@ -97,7 +97,7 @@ export interface CellFloor {
 /**
  * The components a row's `B-` labels open, in order, such as `locality region country`.
  *
- * The order carries the rendered record's placetype, the levels beside it and their order.
+ * The order represents the rendered record's placetype, its neighboring levels and their order.
  */
 export const LABEL_ORDER_SQL = `array_to_string(list_transform(list_filter(labels, x -> x LIKE 'B-%'), x -> substr(x, 3)), ' ')`
 
@@ -105,7 +105,7 @@ const STRUCTURE_SQL = `${LABEL_ORDER_SQL} || '|' || coalesce(augmentation, '')`
 const WOF_SLOT = wofNameSlotSQL()
 
 /**
- * The named cell keys a {@link CellFloor} can be built from.
+ * The cell keys a {@link CellFloor} can reference.
  *
  * `structure` is the label order and the surface augmentation, for any source.
  * `wof-name-slot` adds the WOF name slot's kind to that structure,
@@ -237,9 +237,11 @@ async function* readInOrder(
 /**
  * Merges the inputs through a windowed shuffle into one or more parquet files and reports their contents.
  *
- * Each written file gets a record beside it, whose extract hash covers every input's sha256 in order.
- * The record keeps the checkout commits its inputs' records share, and records none
- * when any input lacks them.
+ * Each written file gets a record beside it.
+ * Its extract hash covers every input's sha256 in order.
+ *
+ * The record keeps the checkout commits shared by its inputs' records.
+ * It records none when any input lacks them.
  *
  * @throws When the inputs contain more than one `source`, because a manifest
  * entry records one source per file.

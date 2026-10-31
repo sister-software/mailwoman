@@ -23,7 +23,7 @@ import { AuditFloorError } from "./receipt.ts"
 
 /**
  * Tags whose presence makes a row street-level.
- * A row with neither measures the admin hierarchy alone.
+ * A row with neither measures only the admin hierarchy.
  */
 export const STREET_TAGS: ReadonlySet<string> = new Set(["street", "house_number"])
 

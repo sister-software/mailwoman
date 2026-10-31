@@ -6,7 +6,9 @@
  *
  *   Usage:
  *     node packages/corpus/lib/tools/house-venue-tuples.run.ts [--fr 60000] [--us 60000] [--gb 60000] [--seed 42]
- *       [--out <tuples.jsonl>] [--carry gb --carry-from <earlier tuples.jsonl>]
+ *       [--out <tuples.jsonl>]
+ *
+ *   Pass a country and an earlier tuples-file path to reuse that country's rows.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"

@@ -38,7 +38,7 @@ export interface PhotonProperties {
 	/**
 	 * Mailwoman's extension to upstream Photon, present when a register row supplied the coordinate.
 	 *
-	 * A Photon client reads named properties and passes over an unknown one.
+	 * A Photon client reads properties it recognizes and skips unknown properties.
 	 */
 	mailwoman?: PhotonPropertiesExtension
 	[key: string]: unknown

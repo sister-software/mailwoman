@@ -7,7 +7,7 @@
  *
  *   Sources are independent from the adapter through the parquet write. A source's rows come from its own adapter
  *   (the runner refuses any other `source`), its files are derived from its own extract and code, its shuffle draws
- *   from a generator seeded by its own id, and its part boundaries count its own rows. A source built alone
+ *   from a generator seeded by its own id, and its part boundaries count its own rows. A build of one source by itself
  *   therefore writes the bytes it writes in a serial build. What the serial build shares across sources (the split
  *   files, the corpus parquet manifest, the license tallies, the quarantine file, the frozen source record and the
  *   top-level manifest) the coordinator assembles from the records in adapter order.
@@ -18,10 +18,10 @@
  *   fit in the host budget, runs one resident-record adapter at a time, and prefers the largest source's next task,
  *   because the largest source's chain of tasks bounds the build's wall time.
  *
- *   A failed task fails its source alone. The other sources run to completion and keep their records, the build
- *   rejects naming each failed task and its log, and no corpus manifest is written. `--resume` then reuses every
+ *   A failed task fails its source. The other sources run to completion and keep their records.
+ *   The build rejects with each failed task and its log, and writes no corpus manifest. `--resume` reuses every
  *   complete source and continues each incomplete one from its adapter run, finished ranges and finished parts.
- *   Cancelling through `signal` stops every worker with SIGTERM and rejects the same way.
+ *   The signal handler stops every worker with SIGTERM and rejects the same way.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -290,7 +290,8 @@ class WorkerPool {
 
 			const child = forkProcess(workerModulePath(), [taskPath.toString()], {
 				execArgv: [`--max-old-space-size=${Math.floor(resources.heapBytes / 1024 ** 2)}`],
-				// The parent's NODE_OPTIONS may carry its own heap ceiling, which would contend with this one.
+				// The parent process's NODE_OPTIONS may set its own heap ceiling.
+				// That ceiling would contend with this worker's explicit limit.
 				env: childEnv({ MAILWOMAN_TEMP_ROOT: task.temporaryRoot, NODE_OPTIONS: null }),
 				stdio: ["ignore", "pipe", "pipe", "ipc"],
 			})
@@ -451,7 +452,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 		const options = opts.adapterInputs[source]!
 		const temporaryRoot = (task: string): string => workRoot.path(source, task).toString()
 
-		// Resolved lazily: the extract fingerprint hashes the source's input, which a large file makes slow.
+		// The build resolves this lazily because hashing a large extract for its fingerprint can take time.
 		let derivation: ReturnType<typeof derivationFor> | null = null
 		const sourceDerivation = (): ReturnType<typeof derivationFor> => (derivation ??= derivationFor(source))
 
@@ -575,7 +576,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 	const totals = mergeAlignTotals(records.map((record) => record.totals))
 
 	// A row's `source` is its adapter's id, so this admits only sources the first check admitted.
-	// It stays because the serial build checks the sources its rows carried,
+	// It stays because the serial build checks the source ids in its rows,
 	// and both builds record the same admission.
 	ctx.rights.admitAll(totals.rowsBySource.keys())
 

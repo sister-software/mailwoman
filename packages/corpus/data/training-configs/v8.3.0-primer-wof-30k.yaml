@@ -1,19 +1,19 @@
-# v8.3.0-primer-wof-30k is the address-structure primer (#2854): a from-scratch run on the Who's On First sources alone,
-# whose final checkpoint v8.3.0-base-c6-60k.yaml starts from. It teaches how an address's admin levels nest, the
+# v8.3.0-primer-wof-30k is the address-structure primer (#2854): a from-scratch run using only Who's On First sources.
+# The final checkpoint, v8.3.0-base-c6-60k.yaml, starts from this run. The run teaches how an address's admin levels nest, the
 # order each country and language writes them in, and each level's written forms, before the corpus teaches the rest.
 #
 # It is v8.3.0-base-c6-60k.yaml with these differences:
 #
-# 1. `data.corpus_dir` is the v0.8.7-overlay, whose wof-admin and wof-postalcode are sampled by structure cell before
+# 1. `data.corpus_dir` is the v0.8.7-overlay. Its wof-admin and wof-postalcode sources are sampled by structure cell before
 #    rendering, with the 30 tag orders of the held-out structure board kept out (#2857). Its wof-admin renders every structural chain of a record's canonical
 #    and colloquial names (v0.8.5-wof-structure).
 # 2. `data.source_weights` gives wof-admin 2.0 and wof-postalcode 1.0, and every other overlay source 0.0, so the run
 #    reads these two.
-# 3. The corpus receipts, validation coverage floors and label support floors are left out: they require street,
-#    venue and address-system rows, which the two sources do not hold. `source_reps` is left out with them.
+# 3. The two sources lack street, venue and address-system rows. The config therefore omits the corpus receipts,
+#    validation coverage floors, label support floors and `source_reps`.
 # 4. `train.max_steps` is 30,000 with a 500-step warmup, an evaluation every 1,000 steps and a save every 5,000.
 #    At 128 rows a step the run reads 3,840,000 rows. The overlay's wof-admin and wof-postalcode files are
-#    country-capped samples of their builds in hash order, so each row group the loader reads is a sample of the whole
+#    country-capped samples of their builds in hash order. Each row group the loader reads samples the whole
 #    file rather than a run of neighboring records.
 # 5. `train.output_dir` and `train.trackio_run_name` name the run.
 #

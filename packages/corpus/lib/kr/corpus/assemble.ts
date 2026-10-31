@@ -130,7 +130,7 @@ export function transformKRCoordinates(
 }
 
 /**
- * Options for {@linkcode buildKRCorpus}, named as the Python assembler's flags.
+ * Options for {@linkcode buildKRCorpus}, corresponding to the Python assembler's flags.
  */
 export interface KRCorpusOptions {
 	jusoZip: PathBuilderLike
@@ -318,7 +318,8 @@ async function surveyPermits(
 }
 
 /**
- * The KR registry corpus's build report, which its `build-report.json` serializes in this key order.
+ * The KR registry corpus's build report.
+ * `build-report.json` serializes this interface in key order.
  */
 export interface KRRegistryReport {
 	alignment_census: {
@@ -333,7 +334,8 @@ export interface KRRegistryReport {
 }
 
 /**
- * The KR label corpus's build report, which `build-report.json` serializes in this key order.
+ * The KR label corpus's build report.
+ * `build-report.json` serializes this interface in key order.
  */
 export interface KRCorpusReport {
 	seed: number
@@ -361,8 +363,8 @@ export interface KRCorpusReport {
 }
 
 /**
- * Builds both corpora and returns the label corpus's build report,
- * which holds the registry's under `registry`.
+ * Builds both corpora and returns the label corpus's build report.
+ * Its `registry` field holds the registry report.
  *
  * @throws When an output directory holds files and `force` is unset, an input is missing,
  * the register drop rate exceeds 2%, or a board 시군구 reaches train or val.

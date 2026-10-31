@@ -48,7 +48,8 @@ export interface CIScope {
 }
 
 /**
- * The mtf crates and the root cargo workspace's files, which the `rust` job tests.
+ * The mtf crates and root cargo workspace files.
+ * The `rust` job tests them.
  *
  * `@mailwoman/mtf` also builds its WebAssembly and Node addon from them, so a change to a crate still
  * selects that workspace's suites, and a change to a root workspace file selects every suite.

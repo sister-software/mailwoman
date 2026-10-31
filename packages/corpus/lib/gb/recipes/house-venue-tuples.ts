@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  * @file Great Britain's house-venue tuples, sampled from the `gb-os-open` adapter's OS OpenData rows.
  *
- *   The adapter joins each Code-Point Open postcode to its nearest named OS Open Roads link and takes the street and
+ *   The adapter joins each Code-Point Open postcode to its nearest OS Open Roads link with a name and takes the street and
  *   locality from OS Open Names, all under the Open Government Licence v3.0. The house number is one the adapter
  *   drew, because no open GB product publishes one.
  *
- *   The tuples used to come from HM Land Registry Price Paid Data, whose address fields are licensed for personal or
- *   non-commercial use only (#2635). This reader refuses any row whose source and license are not the adapter's,
+ *   The tuples used to come from HM Land Registry Price Paid Data. Royal Mail and Ordnance Survey license its address
+ *   fields for personal or non-commercial use only (#2635). This reader refuses any row whose source and license are not the adapter's,
  *   and any input that is not JSONL.
  */
 
@@ -35,7 +35,7 @@ interface CanonicalRow {
 }
 
 /**
- * The input is not the `gb-os-open` adapter's rows, so it may carry Price Paid Data address fields.
+ * The input is not the `gb-os-open` adapter's rows, so it may contain Price Paid Data address fields.
  */
 export class RefusedGBTupleSourceError extends Error {
 	override name = "RefusedGBTupleSourceError"

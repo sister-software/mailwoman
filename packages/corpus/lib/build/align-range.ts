@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  * @file One source's align work over a contiguous byte range of its canonical rows, for a parallel build.
  *
- *   The align phase's output for a row depends on that row alone (`createRowAligner`), so a source's
+ *   The align phase's output for a row depends only on that row's data (`createRowAligner`), so a source's
  *   `canonical.jsonl` can be divided at line boundaries and each range aligned by its own process. The ranges'
  *   labeled files read in range order hold the bytes one serial pass writes, and their tallies merged in range order
- *   equal that pass's tallies. The boundaries depend only on the file's size and bytes, never on how many workers ran.
+ *   equal that pass's tallies. File size and bytes determine the boundaries, regardless of worker count.
  *
  *   Each range's task writes its outputs under its own directory and a `RANGE_COMPLETE.json` after every output has
  *   been flushed and closed. A resumed build reuses a range whose record states the same offsets and settings and
@@ -127,7 +127,7 @@ async function nextLineStart(path: PathBuilderLike, offset: number, size: number
  * Divide a canonical file into at most `count` ranges that each begin at a line start.
  *
  * The boundaries sit at the first line start at or after each `i / count` of the file,
- * so they are a function of the file alone.
+ * The file determines those boundaries.
  * A file with fewer lines than `count` yields fewer ranges, and an empty file yields one empty range.
  */
 export async function planAlignRanges(path: PathBuilderLike, count: number): Promise<AlignRangePlan[]> {

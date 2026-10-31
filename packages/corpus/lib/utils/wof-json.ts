@@ -56,8 +56,8 @@ export interface WOFRecord {
 	 * maps to all of them in source order: New York City's `name:eng_x_colloquial` lists
 	 * Big Apple, Gotham and NYC. {@linkcode nameValues} reads either shape.
 	 *
-	 * The single-value case stays a string because an admin run holds over 13 million
-	 * records resident, and almost every key carries one value.
+	 * The single-value case stays a string because an admin run holds over 13 million records resident.
+	 * This representation avoids allocating an array when a key has one value.
 	 *
 	 * The canonical `wof:name` is not included — adapters add a synthetic `"default"` slot for it.
 	 */
@@ -282,8 +282,9 @@ export function readRefutedParentIDs(): Promise<ReadonlySet<number>> {
  * Whether a WOF record's representative point is exactly latitude 0, longitude 0,
  * the value WOF writes for a record that has no geometry.
  *
- * The parent of such a record was not found by location, and it is often wrong: WOF parents 347 Spanish
- * postcodes from every province, Soria's `42002` among them, to the one village of Melgar de Yuso.
+ * The parent of such a record was not found by location.
+ * WOF assigns 347 Spanish postcodes from every province, including Soria's `42002`,
+ * to the village of Melgar de Yuso.
  */
 export function isAtOrigin(props: Record<string, unknown>): boolean {
 	return props["geom:latitude"] === 0 && props["geom:longitude"] === 0
@@ -300,9 +301,10 @@ export function isAtOrigin(props: Record<string, unknown>): boolean {
  * Per-file errors (unreadable files, malformed JSON, or missing properties) are swallowed
  * so one bad file does not poison a multi-gigabyte walk.
  *
- * Files are read as many at a time as libuv's threadpool services
- * (spliterator's default for parallelMap, 4 unless UV_THREADPOOL_SIZE says otherwise),
- * and records are yielded in glob order.
+ * The libuv threadpool has four workers by default; `UV_THREADPOOL_SIZE` can change that count.
+ * `parallelMap` reads files concurrently up to the threadpool capacity.
+ *
+ * Records are yielded in glob order.
  * The adapters deduplicate surface strings first-come, so a completion-order walk would change
  * which record claims a shared name from one build to the next.
  */

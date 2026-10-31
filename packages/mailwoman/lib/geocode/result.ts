@@ -78,10 +78,10 @@ interface RegisterRowPoint {
 }
 
 /**
- * The register row's own provenance stamp and release, or `null` when the tree carries no stamp.
+ * The register row's own provenance stamp and release, or `null` when the tree has no stamp.
  *
- * The stamp is copied rather than derived, so a row is reported as the source it names and a
- * coordinate whose row named none is reported as unstamped rather than given a guessed source.
+ * The stamp is copied rather than derived, so a row is reported as its recorded source.
+ * A coordinate with no recorded source is reported as unstamped rather than given a guessed source.
  */
 function coordinateSourceOf(point: RegisterRowPoint): CoordinateSource | null {
 	if (typeof point.source !== "string" || !point.source) return null

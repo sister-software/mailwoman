@@ -11,7 +11,7 @@ import { countriesAcceptingPostcode } from "@mailwoman/postcode/country-formats"
 import type { InferChannel } from "#ort-feeds"
 
 /**
- * The features each piece of a code unit carries.
+ * The five features computed for each code-unit piece.
  *
  * `packages/mtf/crates/mtf-channels/src/code_units.rs` computes the same five for training,
  * and `test/fixtures/code-unit-parity.json` holds the two equal.
@@ -50,8 +50,8 @@ export function codeUnitFeatures(unit: string): number[] {
 /**
  * Per-piece features and confidences for the pieces at `pieceSpans`, `[start, end)` offsets into `text`.
  *
- * A piece overlapping a unit carries that unit's features with confidence 1.
- * Any other piece carries zeros with confidence 0.
+ * A piece that overlaps a unit receives that unit's features with confidence 1.
+ * Every other piece receives zero features with confidence 0.
  */
 export function codeUnitChannel(text: string, pieceSpans: ReadonlyArray<readonly [number, number]>): InferChannel {
 	const units = segmentCodeUnits(text)

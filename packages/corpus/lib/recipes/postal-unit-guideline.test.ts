@@ -24,7 +24,7 @@ const NAMES = SYLLABLES.flatMap((first) =>
 	)
 )
 
-// Title-cased single words, which the NZ leg renders as a town.
+// The NZ leg renders title-cased single words as a town.
 const NZ_HELD_LOCALITIES = (holdoutPolicyFor(defaultHoldouts().NZ ?? null).localities ?? [])
 	.filter((name) => /^[a-z]+$/u.test(name))
 	.map((name) => `${name[0]!.toUpperCase()}${name.slice(1)}`)

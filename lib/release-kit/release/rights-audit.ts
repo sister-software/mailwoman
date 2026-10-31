@@ -306,7 +306,8 @@ export interface TrainingRightsAudit {
 	/**
 	 * Recorded entries that match no measured violation.
 	 *
-	 * Each one stops a release until it is removed, which is how a retrained model clears an entry.
+	 * Each one stops a release until it is removed.
+	 * A retrained model can clear a stale entry.
 	 */
 	stale: KnownTrainingRightsViolation[]
 	/**
@@ -695,8 +696,10 @@ export function trainingRightsRefusals(audit: RightsAudit): string[] {
  * The graph packages whose model card records a corpus that has no frozen
  * training manifest in the repository.
  *
- * A card that records a corpus makes a claim about what trained the model, and the frozen record
- * is what lets a release check that claim, so a release refuses to proceed while one is missing.
+ * A card that records a corpus identifies the model's training data.
+ * The frozen manifest lets a release check that entry.
+ *
+ * A release refuses to proceed while the manifest is missing.
  * A card that records no corpus makes no claim and stays in the unresolved list instead,
  * because failing on it would stop every release until that card is rewritten.
  *
@@ -714,12 +717,12 @@ export function packagesWithoutFrozenManifest(audit: RightsAudit): string[] {
 }
 
 /**
- * Why a package whose model descends from OpenStreetMap data fails to say so,
+ * Why a package whose model descends from OpenStreetMap data omits that attribution,
  * one sentence per missing notice.
  *
  * A package has that ancestry when its own effective training manifest records an OpenStreetMap-derived
  * source, or when its `mailwoman.baseWeights` chain reaches a package that has it.
- * Such a package must carry the OpenStreetMap entry in its own card's attribution
+ * Such a package must include the OpenStreetMap entry in its own card's attribution
  * and the statement in its README, so a card declaring no OpenStreetMap entry
  * over an OpenStreetMap-trained base is refused.
  */

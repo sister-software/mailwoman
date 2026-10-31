@@ -142,7 +142,8 @@ describe("the training launch lifecycle", () => {
 		expect(preflightTimeouts).toEqual([3600])
 		expect(sandbox.spec.gpu).toBeUndefined()
 		expect(sandbox.spec.env).toMatchObject({ MW_FRESH: "1", MW_EXPECT_DEVICE: "cpu", MW_MANIFEST_SHA256: "m" })
-		// The inputs travel as files, `ready` last, so no environment value carries a config.
+		// The inputs travel as files, with `ready` written last.
+		// The sandbox receives the config as a file.
 		expect(sandbox.spec.files.map((file) => file.path.split("/").at(-1))).toEqual(["config", "resolved.json", "ready"])
 		expect(Object.values(sandbox.spec.env).every((value) => value.length < 4096)).toBe(true)
 		expect(records.get(runKey)?.sandboxes).toEqual([record.sandboxes[0]])

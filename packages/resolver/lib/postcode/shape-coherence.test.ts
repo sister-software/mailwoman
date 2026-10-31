@@ -179,7 +179,8 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 			["2001", "CA"],
 			["3003", "TX"],
 			["4004", "FL"],
-			// `WA` also names Western Australia, whose syntax accepts four digits, so this row uses a US-only code.
+			// `WA` also identifies Western Australia.
+			// Its syntax accepts four digits, so this row uses a US-only code.
 			["5005", "NJ"],
 			["6006", "CO"],
 			["7007", "OR"],

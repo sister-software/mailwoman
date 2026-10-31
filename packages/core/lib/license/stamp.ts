@@ -73,8 +73,8 @@ function declaredPayload(key: LicenseKeyVerification | undefined): LicenseKeyPay
 /**
  * The stamp's statement of a declaration.
  *
- * It carries the intent and the expiry date and never the licensee,
- * because the stamp travels in every API response.
+ * It includes the declared intent and expiry date.
+ * It omits the licensee because the stamp travels in every API response.
  */
 function declaredNoticeSentence(payload: LicenseKeyPayload): string {
 	const intent = payload.intent ?? "open-source"
@@ -91,8 +91,8 @@ function declaredNoticeSentence(payload: LicenseKeyPayload): string {
 const EVALUATION_ROUTES = "declare an open-source, non-profit, academic or student use, or buy a license"
 
 /**
- * The stderr statement of a declaration, which may name the licensee
- * because it stays on the operator's machine.
+ * The stderr statement of a declaration may include the licensee.
+ * The statement stays on the operator's machine.
  *
  * Within `EXPIRY_NOTICE_DAYS` of the expiry it states the days left
  * and the command that re-issues the token.

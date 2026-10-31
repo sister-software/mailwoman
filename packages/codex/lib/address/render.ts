@@ -156,8 +156,8 @@ function evaluateLines(layout: AddressLayout, components: ComponentDict): readon
  * Folds a line-leading connector written against the postcode, such as `FO` in `FO600`
  * or `CH-` in `CH-8001`, into the postcode piece.
  *
- * The prefix belongs to the written code, so a label that stops at `600` marks
- * a span the reader never wrote alone.
+ * The prefix belongs to the written code, so a label that stops at `600` marks a
+ * span that does not appear in the reader's input.
  * A connector that holds whitespace separates two values and stays a connector.
  */
 function absorbPostcodePrefixes(pieces: readonly AddressPiece[]): readonly AddressPiece[] {

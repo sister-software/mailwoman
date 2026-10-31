@@ -216,8 +216,8 @@ export async function readStandardInputJSON<T = Record<string, unknown>>(): Prom
 /**
  * Whether `directory` exists and holds any entry, dot-files included.
  *
- * `*` alone skips dot-files, so a directory holding only a `.corpus-build.lock`
- * would read as empty and a builder would overwrite it.
+ * The `*` pattern skips dot-files.
+ * A directory that contains only `.corpus-build.lock` would read as empty and a builder would overwrite it.
  * The `.*` pattern is read as well.
  */
 export async function directoryHasEntries(directory: PathBuilderLike): Promise<boolean> {

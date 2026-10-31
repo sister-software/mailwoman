@@ -5,7 +5,7 @@
  *
  *   Canadian designators in English and French: postal box, rural route, general delivery, station and unit
  *   designators, and the relation words. Canada Post writes the same delivery types with different
- *   abbreviations in each language (`PO BOX` and `CP`, `GD` and `PR`, `STN` and `SUCC`), so every row carries
+ *   abbreviations in each language (`PO BOX` and `CP`, `GD` and `PR`, `STN` and `SUCC`), so every row lists
  *   its language.
  *
  * @see {@link https://www.canadapost-postescanada.ca/cpc/doc/en/support/addressing-guidelines.pdf Canada Post addressing guidelines (June 14, 2021)}

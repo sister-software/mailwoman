@@ -184,8 +184,8 @@ export const CoordinateSourceSchema = z
 		 */
 		source: z.string(),
 		/**
-		 * The data release the row came from, as the row records it, or null when the resolved
-		 * tree carries none, as a tree a client sent to `/v1/resolve` may not.
+		 * The data release the row came from, as the row records it, or null when the resolved tree
+		 * records no release value, as may happen with a tree a client sends to `/v1/resolve`.
 		 */
 		release: z.string().nullable(),
 	})
@@ -283,7 +283,9 @@ export const GeocodeResultSchema = z
 		/**
 		 * The register row that supplied the coordinate, with its provenance stamp and release.
 		 *
-		 * Set on the `address_point` and `interpolated` tiers, whose coordinate comes from one register row.
+		 * Set on the `address_point` and `interpolated` tiers.
+		 * Their coordinates come from one register row.
+		 *
 		 * It is null on every other tier, including a coordinate a later pass moved to a venue
 		 * or a plus code, because that coordinate no longer comes from the row.
 		 */

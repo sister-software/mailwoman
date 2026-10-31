@@ -8,7 +8,7 @@
  *   A GB address commonly ends its locality with a county, as in `King's Lynn, Norfolk` or
  *   `38 High Street, Maidstone, Kent ME14 1JH`. The rows a corpus renders from `gb-os-open` take their
  *   region from {@link openConstituentCountryReader}, which answers England, Scotland or Wales, so a model
- *   trained on them alone sees no county in the region position and reads `Norfolk` as a locality.
+ *   A model trained only on these rows sees no county in the region position and reads `Norfolk` as a locality.
  *   OS Open Names publishes one entry per unit postcode with its `COUNTY_UNITARY`, under the same
  *   Open Government Licence as the other two products the adapter reads.
  */

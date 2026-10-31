@@ -60,9 +60,10 @@ export interface PruneOptions {
 }
 
 /**
- * The pieces to keep: every piece the training corpus or the evaluation surface used, every piece that
- * is not a normal piece (control, unknown, user-defined, unused and byte pieces), and every piece
- * of at most one code point once a leading `▁` is removed, which keeps every character reachable.
+ * The pieces to keep: every piece the training corpus or the evaluation surface used, every
+ * piece that is not a normal piece (control, unknown, user-defined, unused and byte pieces),
+ * and every piece of at most one code point once a leading `▁` is removed.
+ * This keeps every character reachable.
  */
 export function keepSet(
 	vocabulary: readonly (readonly [string, number, number])[],

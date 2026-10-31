@@ -92,8 +92,8 @@ class FieldRow {
 	/**
 	 * Appends a field.
 	 *
-	 * A `whole` field is one token however many words it holds, as the Python
-	 * renderers appended a house number or postcode.
+	 * A `whole` field is one token for any word count.
+	 * The Python renderers appended a house number or postcode.
 	 */
 	field(tag: string, text: string, whole = false): void {
 		const words = whole ? [text] : splitWhitespace(text)

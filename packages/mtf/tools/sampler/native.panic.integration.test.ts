@@ -10,11 +10,12 @@ import { expect, test } from "vitest"
 
 /**
  * A Rust panic inside an export reaches Node as a thrown `Error` only
- * because every export carries `catch_unwind`.
+ * because every export uses `catch_unwind`.
  *
  * Without it the panic cannot unwind out of the napi callback and the runtime
  * aborts the process with `SIGABRT`.
- * The child process loads an addon built with the `panic-probe` feature, which adds an export that panics.
+ * The child process loads an addon built with the `panic-probe` feature.
+ * That feature adds an export that panics.
  */
 test("a panic in an mtf-node export throws in JavaScript and leaves the process running", async () => {
 	const targetDir = workspacePath("mtf", "target", "panic-probe")

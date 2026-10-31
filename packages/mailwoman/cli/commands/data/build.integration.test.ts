@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file `mailwoman data build osm-address-points` on the compiled CLI, against a local PBF served as a mirror.
  *
- *   An empty data root takes a dry run, which makes no request and writes no selection, then a build of
+ *   An empty data root runs a dry run. The dry run makes no request and writes no selection. The test then builds
  *   Germany from `europe/dach`, which clips Germany to its outline, installs the database and activates it.
  *   A repeated build transfers neither file again. Run `yarn compile` before this suite.
  */

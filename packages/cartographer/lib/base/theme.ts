@@ -101,7 +101,7 @@ export const GuideMapPalette = {
 	 */
 	road: "#ffffff",
 	/**
-	 * The thin gray edge every road carries.
+	 * The thin gray edge on every road.
 	 */
 	roadEdge: "#a9a9a9",
 	/**
@@ -295,7 +295,8 @@ export const MailwomanBaseFlavor: Flavor = {
 	minor_b: GuideMapPalette.road,
 	link: GuideMapPalette.nationalRoad,
 	// At city zoom a road is one or two pixels wide, so a gray edge would outweigh its fill.
-	// The early casings are darker tints of the fills, which keeps the road class readable.
+	// The early casings use darker tints of the fills.
+	// This keeps the road class readable.
 	major_casing_early: "#d9c983",
 	major: GuideMapPalette.prefecturalRoad,
 	highway_casing_early: "#5f72ad",

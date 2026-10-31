@@ -28,7 +28,7 @@ import {
 import { pythonRepr } from "#training/config/python-yaml"
 
 /**
- * The license note each generated row carries until a writer stamps the register's license id.
+ * The license note each generated row includes until a writer stamps the register's license id.
  */
 export const DEEPSEEK_LICENSE_LABEL = "Synthetic (DeepSeek-v4-flash, AGPL-compatible)"
 
@@ -96,7 +96,8 @@ export function validateComponents(raw: string, components: unknown): readonly [
 }
 
 /**
- * @throws When a batch size is not a positive whole number, which would plan no batch or loop without end.
+ * @throws When a batch size is not a positive whole number.
+ * Such a size would plan no batch or loop without end.
  */
 function assertBatchSize(batchSize: number): void {
 	if (!Number.isSafeInteger(batchSize) || batchSize < 1) {

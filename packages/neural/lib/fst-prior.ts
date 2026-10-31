@@ -646,7 +646,7 @@ interface BiasTuning {
 /**
  * Whether the matched groups spell the entry's own gazetteer name, in FST-normalized form.
  *
- * An entry without a name is never its own surface, so a matcher that carries
+ * An entry without a name is never its own surface, so a matcher that stores
  * no names gives no anchor-region boost.
  */
 function surfaceIsEntryName(groups: readonly WordGroup[], entry: FSTPlaceEntryLike): boolean {

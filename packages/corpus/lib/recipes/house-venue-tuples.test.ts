@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The house-venue tuples assembler runs the samplers in order on one generator and carries a country from an
+ * @file The house-venue tuples assembler runs the samplers in order on one generator and copies a country from an
  *   earlier file without drawing.
  */
 
@@ -61,7 +61,7 @@ describe("assembleHouseVenueTuples", () => {
 		})
 
 		expect(carried[0]![1].map((entry) => entry.street)).toEqual(["carried"])
-		// With XA carried, XB draws what XA drew when both were sampled.
+		// When XA is copied rather than sampled, XB draws the same streets it drew when both samplers ran.
 		expect(carried[1]![1].map((entry) => entry.street)).toEqual(sampled[0]![1].map((entry) => entry.street))
 	})
 

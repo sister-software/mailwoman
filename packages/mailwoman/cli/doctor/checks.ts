@@ -101,7 +101,7 @@ export interface LicensePosture {
 	lid: string | null
 	lidStatus: LicenseStatusAnswer | null
 	/**
-	 * The UUID this installation minted into its config root, reported for Mailwoman's own license alone.
+	 * The UUID this installation minted into its config root, reported only for Mailwoman's own license.
 	 */
 	installationID?: string | null
 }
@@ -728,12 +728,13 @@ export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
 }
 
 /**
- * The notice the doctor prints under a layer whose license carries share-alike.
+ * The notice the doctor prints under a layer licensed with share-alike terms.
  *
  * It states the credit the manifest records and what the license asks when the layer,
  * or a database derived from it, is publicly used.
- * Reading results from the layer for the operator's own use is not public use,
- * so the notice states the condition rather than an obligation already owed.
+ * The operator's own use of results from the layer is not public use.
+ *
+ * The notice states that condition without asserting that an obligation is already owed.
  */
 function shareAlikeNotice(manifest: LayerIdentity): string {
 	return (

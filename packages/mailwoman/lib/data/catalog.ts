@@ -232,8 +232,8 @@ export class LayerCatalog {
 	}
 
 	/**
-	 * A snapshot with no selection, which resolves every role to its conventional path,
-	 * as a data root read before the selection existed does.
+	 * A snapshot without an active selection resolves every role to its conventional path.
+	 * Data roots use this behavior when no selection file exists.
 	 */
 	static empty(dataRoot: PathBuilderLike): LayerCatalog {
 		return new LayerCatalog(resolvePath(dataRoot.toString()), null, [])
@@ -249,14 +249,16 @@ export class LayerCatalog {
 	/**
 	 * The selected sources for a role and scope, in order, each resolved to its file.
 	 *
-	 * A source whose installation record or file is missing is skipped,
-	 * so the next source the selection names answers.
-	 * When every named source is missing, the call raises rather than answering with none, because an
-	 * empty answer would send the caller to its conventional path, a layer the selection did not choose.
+	 * A selected source with a missing installation record or file is skipped,
+	 * so the next selected source can answer.
+	 * When every selected source is missing, the call raises instead of returning an empty list.
+	 *
+	 * The selection did not choose the caller's conventional path.
+	 * An empty list would make the caller use it.
 	 *
 	 * A file whose size differs from its manifest, or a manifest that cannot be read, always raises.
 	 *
-	 * @throws {@link UnreadableArtifactError} naming the artifact's path.
+	 * @throws {@link UnreadableArtifactError} with the artifact's path.
 	 */
 	async resolve(role: ServingRole, scope: SelectionScope): Promise<ResolvedSource[]> {
 		if (!this.selection) return []
@@ -286,11 +288,11 @@ export class LayerCatalog {
 	 * providers of one role, such as a national register and an OpenStreetMap build,
 	 * each read their own sources in the entry's order.
 	 * Absent, every source is read.
-	 * A named source whose record or file is missing is skipped.
-	 * `null` means no named source was missing and none was accepted,
-	 * which leaves the caller its conventional path.
-	 * @throws {@link UnreadableArtifactError} when a named source before the answer is unreadable,
-	 * or when no source answered and one was missing, since the missing source may have been the answer.
+	 * A selected source whose record or file is missing is skipped.
+	 * `null` means no selected source was missing and none passed `accept`.
+	 * The caller then uses its conventional path.
+	 * @throws {@link UnreadableArtifactError} when a selected source before the answer is unreadable, or
+	 * when no source answered and one was missing, since the missing source may have been the answer.
 	 */
 	async firstPath(
 		role: ServingRole,
@@ -315,7 +317,7 @@ export class LayerCatalog {
 	}
 
 	/**
-	 * Resolves a source the selection names, or returns the error that describes its absence.
+	 * Resolves a source in the selection, or returns the error that describes its absence.
 	 *
 	 * A missing installation record or file is returned rather than thrown, so the caller
 	 * can try the selection's next source and raise only when none answers.

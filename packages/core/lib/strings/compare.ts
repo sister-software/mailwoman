@@ -12,9 +12,10 @@
  * sorted with it is not reproducible across machines.
  * This order is reproducible.
  *
- * It compares UTF-16 code units, which agrees with code-point order except where a character
- * outside the Basic Multilingual Plane meets one from U+E000 to U+FFFF: `"𨦻" < "＆"` here,
- * and U+FF06 sorts first by code point. {@linkcode compareByScalarValue} is the code-point order.
+ * It compares UTF-16 code units.
+ * That order matches code-point order except where a character outside the Basic
+ * Multilingual Plane meets one from U+E000 to U+FFFF: `"𨦻" < "＆"` here, and U+FF06 sorts
+ * first by code point. {@linkcode compareByScalarValue} is the code-point order.
  */
 export function compareByCodePoint(left: string, right: string): number {
 	if (left < right) return -1

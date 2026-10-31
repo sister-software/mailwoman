@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Count how often each tokenizer piece occurs over a corpus's train split, the input `prune.run.ts` reads.
+ *   Count each tokenizer piece's occurrences in the corpus train split that `prune.run.ts` reads.
  *
  *   The manifest's train paths are listed as built, so a path under the training volume (`/data/...`) is rewritten
  *   onto this host by `--data-root-remap <from>:<to>`, which defaults to `/data` onto the data root. Every file must

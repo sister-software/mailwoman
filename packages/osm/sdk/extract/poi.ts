@@ -121,7 +121,7 @@ export const TELECOM_TAG_RULES: OSMPOITagRule[] = [
  * so a layer built from either source reads the same.
  *
  * The subway and light-rail rules come before the plain station rule, because a feature
- * matches the first rule it satisfies and a subway station also carries `railway=station`.
+ * matches the first rule it satisfies and a subway station also has `railway=station`.
  */
 export const STATION_TAG_RULES: OSMPOITagRule[] = [
 	{
@@ -205,7 +205,8 @@ export function mergeStationComplexes(rows: readonly POISourceRow[]): POISourceR
 			const cluster = [i]
 			seen.add(i)
 
-			// The loop visits every index pushed during it, which is the single-link closure.
+			// The loop visits every index pushed during it.
+			// This computes the single-link closure.
 			for (const member of cluster) {
 				for (let j = 0; j < group.length; j++) {
 					if (!seen.has(j) && meters(group[member]!, group[j]!) <= STATION_COMPLEX_M) {

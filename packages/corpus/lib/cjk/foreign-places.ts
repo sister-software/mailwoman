@@ -54,7 +54,7 @@ export const MIN_CJK_SHARE = 0.9
 export const FOREIGN_PLACES_SOURCE = "wof-admin"
 
 /**
- * The register every routed row carries.
+ * Every routed row uses this register.
  */
 export const FOREIGN_PLACES_REGISTER = "wof-foreign-cjk"
 
@@ -65,7 +65,8 @@ export const FOREIGN_PLACES_REGISTER = "wof-foreign-cjk"
  * JavaScript exposes no character names, so the table was listed from CPython 3.12's
  * `unicodedata` (Unicode 15.0), and CJK Unified Ideographs Extensions I (Unicode 15.1)
  * and J (Unicode 17.0) were added from the Unicode charts.
- * Halfwidth katakana and halfwidth Hangul are named `HALFWIDTH …` and are not in it.
+ * Unicode labels halfwidth katakana and halfwidth Hangul `HALFWIDTH …`.
+ * Those letters are not in the table.
  */
 const CJK_LETTER_RANGES: ReadonlyArray<readonly [number, number]> = [
 	[0x11_00, 0x11_ff],

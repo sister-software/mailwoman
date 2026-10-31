@@ -18,7 +18,7 @@ const text = (fallback: string, description: string) =>
 /**
  * The launcher's variables.
  *
- * Credentials stay in the named Modal secrets, which the operator creates.
+ * Credentials stay in Modal secrets that the operator creates by name.
  */
 export const LaunchEnvSchema = z.object({
 	MAILWOMAN_MODAL_APP: text("mailwoman-training", "The Modal app the training sandboxes run under."),
@@ -34,7 +34,8 @@ export const LaunchEnvSchema = z.object({
 })
 
 /**
- * The launcher's live settings over the corpus package's public view, which holds
- * `MAILWOMAN_DATA_ROOT` and `MAILWOMAN_VOLUME_MOUNT`.
+ * The launcher's live settings override the corpus package's public view.
+ *
+ * That view holds `MAILWOMAN_DATA_ROOT` and `MAILWOMAN_VOLUME_MOUNT`.
  */
 export const launchSettings = liveEnv(LaunchEnvSchema, corpusPublic)

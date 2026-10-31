@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which named administrative area contains a point, for the address points of an extract whose mappers
+ *   The administrative area containing a point for extract address points whose mappers
  *   left `addr:city` off.
  *
- *   In Serbia's extract most address points carry no `addr:city`, while the settlement each one stands in
+ *   In Serbia's extract most address points have no `addr:city`, while the settlement each one stands in
  *   is drawn as an `admin_level=9` boundary in the same file. A lookup over those boundaries reads the
  *   settlement from the point's position rather than from a tag.
  *

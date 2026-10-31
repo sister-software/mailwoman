@@ -11,7 +11,7 @@
  *
  *   The coordinator writes each task as JSON and forks this module with an explicit `--max-old-space-size` and a
  *   `MAILWOMAN_TEMP_ROOT` of the task's own. The worker reports progress over IPC and states its result by its
- *   exit code and the records it leaves on disk, which outlive it.
+ *   exit code and the records it leaves on disk. Those records outlive the worker process.
  */
 
 import { readLocalJSONFile, tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -52,7 +52,7 @@ import type { LicensePolicy } from "#utils/license"
 import { SPLIT_NAMES, sortLines, type CountryHoldout, type SplitName } from "#utils/split"
 
 /**
- * The align settings a task carries, with each license pattern as its source and flags.
+ * The align settings a task contains, with each license pattern as its source and flags.
  */
 export interface AlignTaskSettings {
 	corpusVersion: string
@@ -71,7 +71,8 @@ interface TaskBase {
 	source: string
 	resources: WorkerResources
 	/**
-	 * The task's own temporary root, which also holds DuckDB's spill directory.
+	 * The task's own temporary root.
+	 * DuckDB uses it for the spill directory too.
 	 */
 	temporaryRoot: string
 }

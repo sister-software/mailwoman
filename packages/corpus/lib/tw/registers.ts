@@ -45,7 +45,7 @@ const SECTION = new RegExp(`([${DIGITS}]+)段`, "gu")
 const KANJI_SECTION = "〇一二三四五六七八九十"
 
 /**
- * The admin levels an Overture-TW row must carry: 縣市, 鄉鎮市區 and 村里.
+ * The admin levels required in an Overture-TW row are 縣市, 鄉鎮市區 and 村里.
  */
 export const TW_ADMIN_LEVELS = 3
 

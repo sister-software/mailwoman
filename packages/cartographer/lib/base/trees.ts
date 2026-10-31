@@ -26,7 +26,7 @@ const TreeLayerID = LayerID.bind(null, MailwomanBaseTileSetID)
  * Trees from the `trees` source layer of the mailwoman/basemaps build.
  *
  * Each tree is a trunk and a crown polygon with `min_height` and `height` in meters.
- * The tiles carry them at z15, and the map overzooms them above that.
+ * The tiles show them at z15, and the map overzooms them above that.
  *
  * They fade in over z15–16, where a crown first covers a few pixels.
  */
@@ -63,7 +63,7 @@ export const TreeLayers: LayerSpecification[] = [
 			"fill-extrusion-height": ["get", "height"],
 			"fill-extrusion-base": ["get", "min_height"],
 			"fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], 15, 0, 16, 0.9],
-			// The gradient darkens the lower crown, which reads as shading under the leaves.
+			// The gradient darkens the lower crown to represent shading under the leaves.
 			"fill-extrusion-vertical-gradient": true,
 		},
 	},

@@ -7,7 +7,7 @@
  *
  *   The symbol precheck hook runs only on the Write and Edit tools, so this guard steers file edits
  *   away from Bash. It also refuses Modal launches that a shell signal could cancel. The guard is an
- *   allowlist because the shell has too many ways to spell a write for a denylist to cover. It does
+ *   allowlist because the shell accepts aliases, quoting, redirection, and heredocs. A denylist cannot cover every form. It does
  *   not sandbox anything: an admitted program such as `node script.js` can still write any file.
  *
  *   Quoted text and heredoc bodies are removed before any decision, because their words are data.

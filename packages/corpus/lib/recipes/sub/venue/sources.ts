@@ -381,8 +381,9 @@ export function sampleIdentifier(model: IdentifierModel, designatorID: string, r
 /**
  * The publication a pooled name was read from.
  *
- * Each row records the sources of the names it carries, because the two publications are
- * licensed differently: OpenStreetMap under ODbL 1.0, Overture Places under CDLA-Permissive-2.0.
+ * Each row records the sources of its names.
+ * The two publications are licensed differently: OpenStreetMap under ODbL 1.0,
+ * Overture Places under CDLA-Permissive-2.0.
  */
 export const NameSource = {
 	OpenStreetMap: SourceRegister.OpenStreetMap,

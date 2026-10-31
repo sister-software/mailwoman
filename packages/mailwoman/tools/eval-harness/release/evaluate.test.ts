@@ -483,7 +483,8 @@ describe("pairOutcomes", () => {
 	})
 
 	it("refuses an unreadable outcome", () => {
-		// An outcome read off disk holds whatever the file held, which the row type cannot express.
+		// An outcome read from disk preserves the file's value.
+		// The row type cannot express every such value.
 		const unreadable = row("a", true)
 
 		Reflect.set(unreadable, "exact", "yes")

@@ -103,7 +103,8 @@ function pythonStr(value: PythonValue): string {
 }
 
 /**
- * Python's truth value, which `yaml.safe_load(fh) or {}` reads.
+ * Python's truth value.
+ * `yaml.safe_load(fh) or {}` applies that rule.
  */
 function pythonTruthy(value: PythonValue): boolean {
 	if (value === null || value === false || value === 0 || value === 0n || value === "") return false

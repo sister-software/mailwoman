@@ -586,7 +586,7 @@ export interface AnchorRegionAncestor {
 	placetype: string
 	wofID: number
 	/**
-	 * The place's name in the gazetteer, which the prior compares with the written surface.
+	 * The gazetteer name that the prior compares with the written surface.
 	 */
 	name: string
 }

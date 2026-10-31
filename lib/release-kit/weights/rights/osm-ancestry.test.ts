@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file A package whose model descends from OpenStreetMap data must say so in its own card and README. The
  *   fixtures build a base whose effective training manifest records an OpenStreetMap source and an overlay over
- *   it that declares no OpenStreetMap entry, which the audit refuses even though the overlay sampled no
- *   OpenStreetMap row. The committed tree's en-us card, which trained on OpenStreetMap extracts, passes.
+ *   it that declares no OpenStreetMap entry. The audit refuses the card even when the overlay sampled no
+ *   OpenStreetMap row. The committed tree's en-us card passes because it trained on OpenStreetMap extracts.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

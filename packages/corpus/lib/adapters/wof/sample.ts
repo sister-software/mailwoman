@@ -19,7 +19,7 @@ import { parseWOFSlotKey } from "#utils/wof-json"
  * The `count` lowest numbers seen, held in a max-heap so each new number costs
  * one comparison once the heap is full.
  *
- * A number added with a `text` that a held number already carries is skipped,
+ * A number added with a `text` value that a held number already contains is skipped,
  * so the held numbers stand for `count` distinct texts.
  * The build drops a row whose text repeats an emitted row, and a floor counted over
  * repeated texts would lose those rows after sampling.
@@ -134,9 +134,9 @@ export class LowestValues {
  * The tags of a rendered row in the order the aligner places them, such as `locality region country`,
  * or `null` when the aligner cannot place a component and would quarantine the row.
  *
- * The order comes from {@linkcode locateComponentSpans}, the aligner's own span search,
- * so a region named inside its locality's name (`ہیرسبرک، شمالی کیرولائنا` before `شمالی کیرولائنا`)
- * is ordered by its own span, the way the training row's spans order it.
+ * {@linkcode locateComponentSpans}, the aligner's own span search, determines the order.
+ * It orders a region that appears inside its locality's name (`ہیرسبرک، شمالی کیرولائنا`
+ * before `شمالی کیرولائنا`) by its own span, matching the training row's span order.
  */
 export function renderedTagOrder(raw: string, components: Partial<Record<ComponentTag, string>>): string | null {
 	const normalized = Object.fromEntries(
@@ -169,7 +169,9 @@ interface Candidate<T> {
 	language: string
 	country: string
 	/**
-	 * Hash of the row's case-folded text, which the held-out and comparison sets check against the kept rows.
+	 * Hash of the row's case-folded text.
+	 *
+	 * The held-out and comparison sets check it against the retained rows.
 	 */
 	raw: number
 	/**
@@ -219,8 +221,8 @@ export class RowSampler<T = SampledRow> {
 	}
 
 	/**
-	 * The row's hash and cells, or `null` for a row the aligner would quarantine,
-	 * which the sampler neither counts nor keeps.
+	 * The row's hash and cells, or `null` when the aligner would quarantine the row.
+	 * The sampler neither counts nor keeps quarantined rows.
 	 */
 	#keys(row: SampledRow): { hash: number; structure: string; order: string; language: string; cell: string } | null {
 		const { kind, language } = parseWOFSlotKey(row.slotKey)

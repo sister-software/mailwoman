@@ -4,19 +4,19 @@
  * @author Teffen Ellis, et al.
  *
  *   Emit the per-country corpus jsonl the `@mailwoman/corpus` `osm` adapter reads, from a Geofabrik `.osm.pbf` extract.
- *   The heavy half (gdal over the PBF) runs here. the adapter streams the result. See `sdk/corpus-jsonl.ts` for the row
+ *   The heavy half (gdal over the PBF) runs here. The adapter streams the result. See `sdk/corpus-jsonl.ts` for the row
  *   shape and the ODbL note.
  *
  *   `--within` names a country outline (`tools/fetch/country-outline.ts` writes them). A Geofabrik extract
  *   holds addresses across the country's land borders, and a record whose point lies outside the outline
- *   is counted and left out. `--without`, which repeats, takes a neighbor's outline. A record inside one
+ *   is counted and left out. `--without` may appear more than once. Each occurrence takes a neighbor's outline. A record inside one
  *   is left out too. That settles a border where the country's own outline is coarser than its neighbor's.
  *
  *   `--locality-level` takes an `admin_level` whose `boundary=administrative` areas in the same extract
- *   supply the locality of a record that carries no `addr:city` (Serbia's settlements are level 9). It repeats,
+ *   supply the locality of a record without `addr:city` (Serbia's settlements are level 9). It repeats,
  *   in priority order. `--dependent-locality-level` does the same for a record without `addr:suburb`. The
  *   names land in `boundary_locality` and `boundary_dependent_locality` rather than in the tag fields, so a
- *   row still says which value a mapper tagged.
+ *   row still records which value a mapper tagged.
  *
  *   Usage:
  *     node packages/osm/tools/emit-corpus-jsonl.ts \

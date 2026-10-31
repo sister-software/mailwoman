@@ -93,9 +93,9 @@ export interface ComponentSpan {
  *
  * `raw` and the component values must already be NFC-normalized.
  *
- * {@linkcode alignRow} labels a row from these spans, and the WOF sampler keys a
- * row's structure cell by their order, so both read a component that occurs inside
- * another (a region named inside its locality's name) the same way.
+ * {@linkcode alignRow} labels a row from these spans, and the WOF sampler keys a row's
+ * structure cell by their order, so both read a component that occurs inside another
+ * (a region whose name appears inside its locality's name) the same way.
  */
 export function locateComponentSpans(
 	raw: string,

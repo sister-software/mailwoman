@@ -1,17 +1,17 @@
 # v8.3.0-base-c6-90k-fp32master-s43 is v8.3.0-base-c6-90k-mixed-s43.yaml (arm B of #2857) relaunched on the trainer
-# at e4f61a70b or later, which keeps fp32 parameters and AdamW state under bf16 autocast on CUDA (#2871). Every key and
-# value is arm B's except `train.output_dir` and `train.trackio_run_name`, which name the run.
+# at e4f61a70b or later. That revision keeps fp32 parameters and AdamW state under bf16 autocast on CUDA (#2871).
+# Every key and value matches arm B except `train.output_dir` and `train.trackio_run_name`. Those keys name the run.
 #
 # Run shape: from scratch, with no `train.init_from`. Why: #2871's last task compares a two-seed pair with fp32 master
 # weights against arm B's two seeds on the battery and the regression board. Control: v8.3.0-base-c6-90k-mixed-s42 and
-# v8.3.0-base-c6-90k-mixed-s43, which stored weights and both AdamW moments in bf16.
+# v8.3.0-base-c6-90k-mixed-s43. Both runs stored weights and both AdamW moments in bf16.
 #
 # Prediction: arm B changed 2.65% of its bf16 weight elements between step 80,000 and step 90,000, and an estimated
 # 99.95% of its AdamW updates over those steps rounded away. With fp32 master weights the last 10,000 steps move the
-# weights, so each seed's final validation loss is below arm B's same-seed value at step 90,000. No direction is
+# weights. Each seed's final validation loss is below arm B's same-seed value at step 90,000. No direction is
 # predicted for the battery or the regression board.
 #
-# Two other differences from arm B, which this comparison cannot separate from precision:
+# Precision is confounded with two other differences from arm B:
 # 1. A preempted attempt now resumes at the batch after its checkpoint (a86455742). Arm B's seeds each restarted twice
 #    and reread epoch 1 from its start.
 # 2. The training code is the launch revision's, with torch still 2.12.0.
@@ -24,7 +24,7 @@
 #
 # 1. `train.init_from` is removed: the run starts from random weights (arm B).
 # 2. `train.max_steps` is 90,000, arm A's 30,000 primer steps plus its 60,000 base steps.
-# 3. `source_weights` for wof-admin and wof-postalcode are 115.0 and 57.5, which draw WOF at about 38.3% of
+# 3. `source_weights` for wof-admin and wof-postalcode are 115.0 and 57.5. Those values draw WOF at about 38.3% of
 #    rows against 7.5% at 15.0 and 7.5. Over 90,000 steps at 128 rows that is 4.42 M WOF rows and 7.10 M others,
 #    the rows arm A reads (3.84 M in the primer, then 0.58 M WOF and 7.10 M others in the base), so the arms
 #    differ in when WOF is read and not in how much of each source is read.
@@ -49,7 +49,7 @@
 #    pieces, `split_digits` on, and every punctuation and symbol character as a single-character piece, so no gold edge
 #    at a character-class change falls inside a piece (0 of 317,878 over heldout-dev-v0.8.0).
 # 3. `data.val_rows` is 24,576, the validation draw the label floors below need, as in the v8.3.0 probes.
-# 4. `source_weights` for wof-admin and wof-postalcode are 15.0 and 7.5, which sample them at about 5% and 2.5% of the
+# 4. `source_weights` for wof-admin and wof-postalcode are 15.0 and 7.5. Those weights sample them at about 5% and 2.5% of the
 #    epoch. At weight 2.0 each drew about 0.72% (7,059 and 7,297 of the probe audit's 1,000,000 draws). Together they
 #    lower every other source's share by about 7%, which keeps the address-system receipts, set at 90% of each source's
 #    expected draws, satisfied.

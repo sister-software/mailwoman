@@ -15,7 +15,7 @@ scratchpad.
    `--align-range-mib`, default 2048, at most `2K` ranges), and each range aligns in its own worker.
 4. The parquet conversion runs DuckDB at one thread in both modes (see the finding below).
 
-## Finding: multi-threaded parquet conversion is not deterministic
+## Result: multi-threaded parquet conversion is not deterministic
 
 Observed. One 1,000,000-row `ban` train part was exported to NDJSON and converted with the build's own
 `COPY … (FORMAT PARQUET, ROW_GROUP_SIZE 50000)` and `preserve_insertion_order=true`, three runs at each thread

@@ -61,7 +61,9 @@ function resolveMapPlace(candidate: ResolvedPlaceView): ResolvedMapPlace {
  * Suggestions for the search box's typed prefix.
  *
  * TODO: The hosted API has no completion route yet, so this answers no suggestions.
- * A `/v1/autocomplete` route, which another lane owns, would answer them, and this function would call it.
+ * Another lane owns the `/v1/autocomplete` route.
+ *
+ * That route would answer them, and this function would call it.
  */
 async function noRemoteSuggestions(): Promise<Suggestion[]> {
 	return []

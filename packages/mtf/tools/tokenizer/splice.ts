@@ -8,7 +8,7 @@
  *
  *   An appended piece contains a code point outside ASCII, so it cannot match any span of an ASCII string, and ASCII
  *   text tokenizes exactly as before. `verifySourceIdentical` checks that on a probe rather than assuming it. A
- *   trained locale that shares a code point with the new pieces can re-tokenize, which `checkCodepointOverlap`
+ *   trained locale that shares a code point with the new pieces can re-tokenize. `checkCodepointOverlap`
  *   reports and refuses unless the locale is accepted. The method does not scale to CJK.
  */
 
@@ -61,7 +61,8 @@ const NON_ASCII = 0x80
 const MAX_LINE_CODE_POINTS = 80
 
 /**
- * The int8 check accepts at most one mismatched value per this many in the reconstructed row.
+ * The int8 check accepts at most one mismatched value for each configured group
+ * of values in the reconstructed row.
  */
 const QUANTIZE_MISMATCH_DIVISOR = 20
 
@@ -88,8 +89,9 @@ export interface SlavicCorpusOptions {
 	 */
 	extraText?: string | null
 	/**
-	 * How many times the extra lines repeat, so a list of single names has enough
-	 * unigram mass to win vocabulary slots.
+	 * The repetition count for the extra lines.
+	 *
+	 * A list of single names needs enough unigram mass to win vocabulary slots.
 	 */
 	extraRepeat?: number
 }
@@ -284,7 +286,7 @@ export interface OverlapReport {
  * Report the code points outside ASCII that the new pieces share with each trained locale's
  * sample, write the report, and raise when an overlapping locale is not in `acceptedOverlap`.
  *
- * Accepting a locale commits the evaluation to a registered per-locale non-inferiority
+ * The evaluation for an accepted locale must meet a registered per-locale non-inferiority
  * comparison for it before the first measurement.
  */
 export async function checkCodepointOverlap(
@@ -420,8 +422,9 @@ async function writeInitializer(
 }
 
 /**
- * The mean, in `float32`, of the rows of `table` at `rows`: each column summed row by row in
- * `float32`, then divided by the row count, which is how NumPy reduces `table[rows].mean(0)`.
+ * The mean, in `float32`, of the rows of `table` at `rows`: each column summed row
+ * by row in `float32`, then divided by the row count.
+ * NumPy reduces `table[rows].mean(0)` the same way.
  */
 function meanRow(table: Float32Array, hidden: number, rows: readonly number[]): Float32Array {
 	const out = new Float32Array(hidden)

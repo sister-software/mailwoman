@@ -62,8 +62,7 @@ function codesFor(country: string): ReadonlyMap<string, string> {
 }
 
 /**
- * The code `country`'s addresses write for the region named `regionName`,
- * or `null` when they write the name.
+ * The code `country`'s addresses use for the region `regionName`, or `null` when they write the name.
  */
 export function regionCodeFor(country: string, regionName: string): string | null {
 	return codesFor(country.toUpperCase()).get(regionName.toLowerCase()) ?? null

@@ -8,7 +8,7 @@
  *   A traced parse exposes four label sequences over the same pieces: the argmax of the model's logits, the argmax of
  *   the emissions after every prior and mask, the decoder's path, and the final labels after the repair passes. Each
  *   is compared with the gold labels aligned to those pieces, by tag. The comparison ignores B against I, because the
- *   model often opens each word of a span with B and `buildAddressTree` merges adjacent spans of one tag. Street affix
+ *   the model opens multiple words of a span with B, and `buildAddressTree` merges adjacent spans of one tag. Street affix
  *   tags fold into `street` on both sides, so a whole-street gold span and a split-street prediction compare equal. A
  *   piece with no letter, mark or digit is ungraded, because the tree trims it from a span's edge. A row whose final
  *   labels match yet fails the exact grade is decided at tree construction or by the grade's convention.

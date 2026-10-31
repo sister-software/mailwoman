@@ -77,7 +77,8 @@ export interface HostPreflightOptions {
 	mount: string
 	dataRoot: string
 	/**
-	 * The timeout the sandbox will run under, which the wall-clock estimate must fit.
+	 * The sandbox timeout.
+	 * The wall-clock estimate must fit within this limit.
 	 */
 	timeoutSeconds: number
 	log: (line: string) => void

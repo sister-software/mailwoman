@@ -25,7 +25,8 @@ describe("readOpenRoadsLinks", () => {
 		])
 
 		expect([...links[0]!.vertices]).toEqual([428_900, 433_010, 429_000, 433_010, 429_100, 433_010])
-		// The unnamed link and the A61 link, which carries a road number but no name.
+		// One link is unnamed.
+		// The A61 link has a road number but no name.
 		expect(stats).toEqual({ links: 6, named: 4, unnamed: 2, malformedGeometry: 0 })
 	})
 })

@@ -39,7 +39,7 @@ export interface ConfigFieldSpec<Output extends z.ZodType = z.ZodType> {
 }
 
 /**
- * One dataclass, named as the Python loader's unknown-key message names it.
+ * One dataclass, using the name in the Python loader's unknown-key message.
  */
 export interface ConfigSectionSpec<Fields extends Record<string, ConfigFieldSpec> = Record<string, ConfigFieldSpec>> {
 	className: string

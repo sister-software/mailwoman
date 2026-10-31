@@ -64,7 +64,7 @@ const OVERTURE_RELEASE = "2026-06-17.0"
 type Candidate = readonly [aligned: readonly [record: CJKRecord, unit: string] | null, text: string]
 
 /**
- * Options for {@linkcode buildRegistryCorpus}, named as the Python builder's flags.
+ * Options for {@linkcode buildRegistryCorpus}, matching the Python builder's flags.
  */
 export interface RegistryCorpusOptions {
 	locale: RegistryLocale
@@ -79,7 +79,7 @@ export interface RegistryCorpusOptions {
 	rowsPerPart: number
 	statsSample: number
 	/**
-	 * A smoke build's key index reads only this many row groups.
+	 * A smoke build's key index reads up to `maxRowGroups` row groups.
 	 */
 	maxRowGroups?: number
 	seed: number

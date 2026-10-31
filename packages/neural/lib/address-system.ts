@@ -24,7 +24,9 @@ import { softmax } from "#viterbi"
 export interface AddressSystemTable {
 	noHint: number
 	/**
-	 * The number of systems the model trained with, which is the width of its `address_system_logits` output.
+	 * The number of systems used to train the model.
+	 *
+	 * This is the width of its `address_system_logits` output.
 	 * A card written before the field existed omits it.
 	 */
 	count?: number

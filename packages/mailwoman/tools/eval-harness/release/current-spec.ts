@@ -8,7 +8,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 /**
  * The committed release-requirement specification that release eligibility
- * and the coverage funnel read when no other is named.
+ * and the coverage funnel read when no other specification is listed.
  *
  * A new specification version moves this path in the same change.
  *

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `gazetteer pair-index` refuses a Great Britain tuple CSV. The only one it has read is HM Land
- *   Registry Price Paid Data, whose address fields the license register refuses, so a GB build
- *   reads the secondary sources alone and a `--source` for GB stops before any file is opened.
+ *   Registry Price Paid Data. The license register refuses its address fields, so a GB build
+ *   reads only the secondary sources. A `--source` for GB stops before opening any file.
  */
 
 import { runFile } from "@mailwoman/core/process"

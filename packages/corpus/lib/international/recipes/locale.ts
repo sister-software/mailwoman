@@ -44,11 +44,11 @@ export interface LocalePart {
 	 * An adapter's `canonical.jsonl`, read in place of a CSV.
 	 *
 	 * Each row's `components` supplies the house number, street, locality and postcode.
-	 * Every row must carry {@linkcode LocalePart.canonicalSource} as its `source`.
+	 * Every row's `source` must equal {@linkcode LocalePart.canonicalSource}.
 	 */
 	canonicalRows?: PathBuilderLike
 	/**
-	 * The `source` every row of {@linkcode LocalePart.canonicalRows} must carry.
+	 * The `source` value every row of {@linkcode LocalePart.canonicalRows} must use.
 	 *
 	 * A row from any other source throws, so a file another adapter wrote is never read as this one.
 	 */
@@ -78,15 +78,15 @@ export interface LocalePart {
 /**
  * The share of GB postcodes whose rows label the county `region`, out of five.
  *
- * The other postcodes' rows label the constituent country, which Who's On First
- * records as a `macroregion` under the United Kingdom.
+ * Rows for the other postcodes label the constituent country.
+ * Who's On First records that country as a `macroregion` under the United Kingdom.
  */
 const GB_COUNTY_REGION_FIFTHS = 4
 
 /**
  * Whether a GB postcode's rows label the county rather than the constituent country.
  *
- * The choice is a function of the postcode alone, so a rebuild makes the same choice for every row.
+ * The postcode determines the choice, so a rebuild makes the same choice for every row.
  */
 function gbPostcodeTakesCounty(postcode: string): boolean {
 	let sum = 0
@@ -207,10 +207,11 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
 	},
 	GB: {
-		// The `gb-os-open` adapter's rows: Code-Point Open postcodes joined to OS Open Roads and OS Open Names.
-		// `rendered-gb` read HM Land Registry Price Paid Data, whose address fields
-		// Royal Mail and Ordnance Survey license for non-commercial use only (#2635),
-		// so GB rows carry a source name of their own.
+		// The `gb-os-open` adapter supplies the rows.
+		// It joins Code-Point Open postcodes to OS Open Roads and OS Open Names.
+		// `rendered-gb` read HM Land Registry Price Paid Data.
+		// Royal Mail and Ordnance Survey license these fields for non-commercial use only (#2635).
+		// GB rows therefore use their own source name.
 		source: defaultRecipeSource("synth-gb-os-open"),
 		register: SourceRegister.OrdnanceSurveyOpenData,
 		license: "OS OpenData GB tuples (OGL-UK-3.0)",
@@ -221,7 +222,7 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// OS Open Names writes a Welsh county as `<Welsh> - <English>`, as in `Caerdydd - Cardiff`
 		// or `Gwynedd - Gwynedd`, and an address writes one of the two.
 		regionPairSeparator: " - ",
-		// The adapter's rows carry no region.
+		// The adapter does not set a region on its rows.
 		// The county comes from OS Open Names and the constituent country from NSUL, both by postcode.
 		parts: [
 			{

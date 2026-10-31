@@ -113,7 +113,7 @@ export const MAILWOMAN_LICENCE = "Data © Who's On First, Overture Maps, OpenAdd
  * so it is where a Nominatim client already looks.
  * For a coordinate from an OpenStreetMap row, the OpenStreetMap credit follows the gazetteer credit.
  *
- * For a coordinate from any other source, the field holds the gazetteer credit alone.
+ * For a coordinate from another source, the field contains only the gazetteer credit.
  */
 export function nominatimCreditFor(coordinateSource: CoordinateSource | null | undefined): string {
 	return isOpenStreetMapSource(coordinateSource?.source)

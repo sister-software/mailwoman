@@ -61,7 +61,7 @@ const TW_LICENSE_STATEMENT =
 	"CDLA-Permissive-2.0 (Overture) over CC BY 4.0 per civil-affairs bureau; 政府資料開放授權條款 attribution required"
 
 /**
- * Options for {@linkcode buildTWCorpus}, named as the Python assembler's flags.
+ * Options for {@linkcode buildTWCorpus}, using the Python assembler's flag names.
  */
 export interface TWCorpusOptions {
 	parquet: PathBuilderLike
@@ -97,7 +97,7 @@ export const TW_CORPUS_DEFAULTS = {
 const unitOf = (row: TWSourceRow) => `${row[0]}|${row[1]}`
 
 /**
- * The TW build report, which `build-report.json` serializes in this key order.
+ * `build-report.json` serializes the TW build report in this key order.
  */
 export interface TWCorpusReport {
 	seed: number

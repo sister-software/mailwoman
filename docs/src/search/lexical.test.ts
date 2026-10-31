@@ -16,7 +16,8 @@ const db = fixtureDatabase(FIXTURE_RECORDS)
 /**
  * The fixture id of each row.
  *
- * The index identifies a record by its rowid, which follows the insertion order of the fixtures.
+ * The index identifies a record by its rowid.
+ * The rowid follows the fixtures' insertion order.
  */
 async function fixtureIDs(tokens: readonly string[]): Promise<string[]> {
 	return (await lexicalRows(db, tokens)).map((row) => FIXTURE_RECORDS[Number(row.id) - 1]?.id ?? row.id)

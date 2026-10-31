@@ -36,7 +36,7 @@ are the model's inputs, so these changes move no model behavior and need no rele
 | Label projection                                                | Rust: `mtf-channels/src/labels.rs`                      |
 | Channel painting                                                | Rust: `anchor.rs`, `gazetteer.rs`, `code_units.rs`      |
 | Postcode-shape and postcode-syntax finders                      | Rust, the `finders` feature: `finders.rs`               |
-| Packing into arrays                                             | Rust: `encoder.rs`                                      |
+| Array packing                                                   | Rust: `encoder.rs`                                      |
 | The character path (`char_mode != "off"`)                       | Rust: `mtf-sampler/src/char_path.rs`                    |
 | `locale_ids`, `address_system_ids`                              | Rust: `trainer-loop/src/batch.rs`, in row order         |
 | Tensor conversion                                               | Rust: `trainer-loop/src/batch.rs`, `Tensor::from_slice` |
@@ -219,12 +219,12 @@ Both read the sha256 sidecar cache, so neither hashes the 68.7 GB corpus. Each a
 was shared with other jobs: the load average was 26 to 30 during the first pair and 18 to 19 during the second, on
 16 threads, so the first pair is slower in every column and the second pair is the comparison.
 
-| Run             | Init s | Encoder build s | Sampler init s | Sampling ms | Encoding ms | Conversion ms | Host ms per batch | RSS after init MB | Peak RSS MB |
-| --------------- | -----: | --------------: | -------------: | ----------: | ----------: | ------------: | ----------------: | ----------------: | ----------: |
-| Python, load 30 |  395.1 |            34.1 |          361.1 |       16.77 |       82.38 |          0.31 |             99.45 |             3,159 |       3,028 |
-| Rust, load 26   |   81.2 |            48.4 |           32.9 |        2.37 |       19.28 |          0.20 |             21.85 |             2,920 |       2,785 |
-| Python, load 18 |  265.5 |            45.2 |          220.3 |        8.09 |       26.52 |          0.23 |             34.83 |             3,585 |       3,431 |
-| Rust, load 19   |   47.5 |            26.5 |           21.0 |        1.75 |       13.12 |          0.17 |             15.03 |             2,918 |       2,783 |
+| Run             | Init s | Encoder build s | Sampler init s | Sample ms | Encode ms | Conversion ms | Host ms per batch | RSS after init MB | Peak RSS MB |
+| --------------- | -----: | --------------: | -------------: | --------: | --------: | ------------: | ----------------: | ----------------: | ----------: |
+| Python, load 30 |  395.1 |            34.1 |          361.1 |     16.77 |     82.38 |          0.31 |             99.45 |             3,159 |       3,028 |
+| Rust, load 26   |   81.2 |            48.4 |           32.9 |      2.37 |     19.28 |          0.20 |             21.85 |             2,920 |       2,785 |
+| Python, load 18 |  265.5 |            45.2 |          220.3 |      8.09 |     26.52 |          0.23 |             34.83 |             3,585 |       3,431 |
+| Rust, load 19   |   47.5 |            26.5 |           21.0 |      1.75 |     13.12 |          0.17 |             15.03 |             2,918 |       2,783 |
 
 Init is process start to the first converted batch. The sampler's share covers the listing, the sha256 check
 against the cache, the source index and the 131,072-row buffer fill. The milliseconds are per batch. RSS after
@@ -247,7 +247,7 @@ A 2,000-step training probe measured the effect on an A100-40GB on 2026-10-29
 (`v8.3.0-probe-rust-loader-2k.yaml`, call `fc-01M62R4Y9MDJW0WMAHRR5KVGQ6`). Over steps 300 to 2,000 its median
 wall time per 100 steps was 6.50 s (17 windows, range 6.10 to 7.70). The control is the same config's seed 42
 run on the Python encoder, `v8.3.0-base-c6-90k-mixed-s42`, over the same steps on the same GPU type: 16.10 s
-(17 windows, range 14.10 to 16.90). The Rust path therefore runs 2.48 times as many steps per second
+(17 windows, range 14.10 to 16.90). The Rust path therefore runs 2.48 times the Python path's steps per second
 (16.10 / 6.50). The probe differs from the control in three settings that do not run in the compared window:
 validation passes, Fisher capture and the run length. Its `source_reps` targets are scaled by 2,000 / 90,000,
 so it draws different rows in the same source proportions.

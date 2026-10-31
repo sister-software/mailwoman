@@ -9,7 +9,7 @@
  *
  *   The database is ODbL 1.0. No npm tarball ships it. The candidate gazetteer folds its rows in
  *   as an independent part of a collective database: they keep their own id range, and no other
- *   row is matched against them. The published fold carries the ODbL offer at
+ *   row is matched against them. The published fold includes the ODbL offer at
  *   https://huggingface.co/datasets/sister-software/mailwoman-osm-ni-postcode-fold, and a
  *   gazetteer that folds in a new build must publish that build's rows beside it.
  */

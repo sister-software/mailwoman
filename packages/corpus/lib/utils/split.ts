@@ -84,7 +84,7 @@ export interface SplitManifest {
 	test: string[]
 	holdouts: Record<string, CountryHoldout>
 	/**
-	 * The corpus version the caller named.
+	 * The corpus version the caller supplied.
 	 */
 	corpus_version: string
 	counts: { train: number; val: number; test: number; total: number }
@@ -100,15 +100,16 @@ export interface SplitManifest {
  * region out removes it as a label from training, and the model then relabels it
  * (#2777: v0.8.0 train held 0 region spans for VT, ND, WY, Asturias, Kerala and Cornwall).
  *
- * Holding out places inside regions takes a small part of each region it touches
- * and leaves the test split measuring unseen places under labels the model has seen.
+ * The split holds out places inside regions.
+ * It removes a small share of each affected region and leaves the test split
+ * measuring unseen places under labels the model has seen.
  *
  * A selection script chose the district and locality lists below from the v0.8.0 rows of each country:
- * - Candidates are postcode districts of a fixed length (US 3, AU 3, RO 4, LV and the French
- *   overseas jurisdictions the full postcode), or, where most rows carry no postcode,
+ * - Candidates are postcode districts of a fixed length (US 3, AU 3, RO 4, LV and the
+ *   French overseas jurisdictions the full postcode), or, where most rows have no postcode,
  *   localities grouped by spelling with accents and punctuation removed.
  *   A locality whose spelling matches a region surface is not a candidate.
- *   Each candidate carries at least 1% of the country's v0.8.0 held-out rows.
+ *   Each candidate accounts for at least 1% of the country's v0.8.0 held-out rows.
  * - They are walked in the order of `hashBucket(\`${country}|${candidate}\`, 2 ** 32)`
  *   and taken while the country's held-out rows stay at or under its v0.8.0 held-out rows,
  *   because a borderline row goes to training.
@@ -285,7 +286,7 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 				"9272",
 			],
 		},
-		// Each French overseas jurisdiction's BAN rows carry a commune postcode, so these hold out communes.
+		// Each French overseas jurisdiction's BAN rows include a commune postcode, so these hold out communes.
 		// Saint-Barthélemy and Saint-Martin are each one commune under one postcode,
 		// and Saint-Pierre-et-Miquelon's Saint-Pierre holds 2,706 of its 3,084 rows,
 		// so those three are left to the hashed holdout.
@@ -298,7 +299,7 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 		YT: { postcodePrefixes: ["97625", "97660"] },
 		PF: { postcodePrefixes: ["98713", "98716"] },
 		NC: { postcodePrefixes: ["98817", "98820", "98859"] },
-		// The countries below carry a postcode on few rows (ES 13%, IT 6%, RU 20% and under 40% for the rest),
+		// The countries below have a postcode on few rows (ES 13%, IT 6%, RU 20% and under 40% for the rest),
 		// so their holdouts are localities.
 		// ID's `<different>` and NG's `edo state` and `imo`, a placeholder and two state
 		// names written as localities, were dropped from the selection.
@@ -612,8 +613,9 @@ export const HASHED_PLACE_HOLDOUT_DIVISOR = 50
 export const HASHED_PLACE_HOLDOUT_SHARE = 1 / HASHED_PLACE_HOLDOUT_DIVISOR
 
 /**
- * A region, or a country whose rows carry no region, is checked against
- * {@link heldOutRegionCap} only when it has at least this many rows.
+ * {@link heldOutRegionCap} applies to a region with at least {@link HOLDOUT_CAP_MIN_ROWS} rows.
+ *
+ * The same minimum applies to a country when its rows have no region.
  */
 export const HOLDOUT_CAP_MIN_ROWS = 100
 
@@ -629,8 +631,8 @@ export function heldOutRegionCap(share: number): number {
 }
 
 /**
- * The rows one hash-selected place carries inside one region, or inside its country
- * when the rows carry no region.
+ * The rows one hash-selected place contributes inside one region, or inside its country
+ * when those rows have no region.
  */
 export interface HashedPlaceRegionCount {
 	country: string

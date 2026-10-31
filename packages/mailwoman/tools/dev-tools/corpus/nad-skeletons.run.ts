@@ -6,7 +6,7 @@
  *   Writes the National Address Database skeletons the OA-skeleton recipes read: one OpenAddresses-layout
  *   zipped CSV per state in `NAD_SKELETON_STATES`, sampled uniformly and capped so no state dominates, and the
  *   ZIP-to-city tables for the `intersection` recipe's TIGER counties. It prints every state's address-shape
- *   measures, which is the table the state choice is made from.
+ *   measures. The table determines the state choice.
  *
  *   Usage:
  *   node --max-old-space-size=8192 packages/mailwoman/tools/dev-tools/corpus/nad-skeletons.run.ts \

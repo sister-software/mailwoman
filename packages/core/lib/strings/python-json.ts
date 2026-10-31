@@ -14,7 +14,7 @@ import { stringifyJSON } from "#json"
  */
 
 /**
- * Options for {@linkcode pythonJSONDumps}, named as `json.dumps` names them.
+ * Options for {@linkcode pythonJSONDumps} use the field names from `json.dumps`.
  */
 export interface PythonJSONOptions {
 	sortKeys?: boolean

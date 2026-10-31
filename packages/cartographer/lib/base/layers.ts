@@ -47,7 +47,7 @@ const labelLayerIDs = new Set(labelLayers.map((layer) => layer.id))
 const isPrefecturalRoad: ExpressionSpecification = [
 	"any",
 	["==", ["get", "kind_detail"], "secondary"],
-	// A `tertiary` road is a prefectural road only when it carries a route number.
+	// A `tertiary` road is a prefectural road only when it includes a route number.
 	// Unnumbered `tertiary` roads are municipal and draw as white streets.
 	["all", ["==", ["get", "kind_detail"], "tertiary"], ["has", "ref"]],
 ]
@@ -110,7 +110,9 @@ const MINOR_EDGE_LAYER_IDS = new Set([
 ])
 
 /**
- * Footpaths and narrow lanes, which a street map leaves out until the blocks are large enough to hold them.
+ * Footpaths and narrow lanes.
+ *
+ * The street map omits them until the blocks are large enough to show them.
  */
 const PATH_LAYER_IDS = new Set(["roads_other", "roads_bridges_other", "roads_tunnels_other"])
 
@@ -157,7 +159,8 @@ function toGuideMapLayers(source: LayerSpecification): LayerSpecification[] {
 
 	if (source.type !== "line") return [source]
 
-	// Protomaps leaves the join at the miter default, which draws road corners and bends as sharp points.
+	// Protomaps defaults to miter joins.
+	// They draw road corners and bends as sharp points.
 	const layer: typeof source = source.id.startsWith("roads_")
 		? { ...source, layout: { ...source.layout, "line-join": "round", "line-cap": "round" } }
 		: source
@@ -253,8 +256,8 @@ const nonLabelLayers = allBaseLayers.filter((layer) => !labelLayerIDs.has(layer.
  */
 function toGuideMapLabel(layer: LayerSpecification): LayerSpecification {
 	if (layer.id === "pois" && layer.type === "symbol") {
-		// The POI icon is named by the feature's kind, and the sprite has no icon
-		// for some kinds, such as `townhall`.
+		// The feature's kind selects the POI icon.
+		// The sprite has no icon for kinds such as `townhall`.
 		// Those kinds take the sprite's generic marker instead of an empty icon and a console warning.
 		return {
 			...layer,
@@ -276,7 +279,7 @@ function toGuideMapLabel(layer: LayerSpecification): LayerSpecification {
 		minzoom: 16,
 		layout: {
 			...layer.layout,
-			// A Japanese address point often carries only its block number (番地).
+			// A Japanese address point may have a block number (番地) without a house number.
 			"text-field": ["coalesce", ["get", "addr_housenumber"], ["get", "addr_block_number"]],
 			"text-font": [MAP_FONT_REGULAR],
 			"text-size": ["interpolate", ["linear"], ["zoom"], 16, 9, 18, 12],
@@ -312,12 +315,14 @@ const OneWayArrowLayer: LayerSpecification = {
 }
 
 /**
- * The Protomaps land fill, which the ocean floor layers precede.
+ * The Protomaps land fill.
+ * The ocean floor layers precede it.
  */
 const EARTH_FILL_LAYER_ID = "earth"
 
 /**
- * The Protomaps water fill, which the coast glow follows.
+ * The Protomaps water fill.
+ * The coast glow follows it.
  */
 const WATER_FILL_LAYER_ID = "water"
 

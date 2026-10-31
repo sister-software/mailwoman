@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A Photon feature states the register row behind its coordinate under `properties.mailwoman`, and carries
+ * @file A Photon feature states the register row behind its coordinate under `properties.mailwoman` and includes
  *   the OpenStreetMap credit there exactly when that row came from an OpenStreetMap layer.
  */
 

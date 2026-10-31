@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reads the named road links of an OS Open Roads GML tile.
+ *   Reads road links with names from an OS Open Roads GML tile.
  *
  *   The GML product is one file per 100 km National Grid square. A tile holds `road:RoadLink`,
  *   `road:RoadNode` and `road:MotorwayJunction` features. Only the links hold a centreline and a
- *   name. A named link has a `road:name1` and a `road:roadNameTOID` whose `xlink:href` is `#` plus
- *   the roadNameTOID that OS Open Names uses as its `ID`. A link with only a road number carries a
- *   `road:roadNumberTOID` instead, and an unnamed link carries neither.
+ *   name. A link with a name has a `road:name1` and a `road:roadNameTOID`. Its `xlink:href` is `#`
+ *   followed by the roadNameTOID that OS Open Names uses as its `ID`. A link with only a road number
+ *   includes `road:roadNumberTOID`; a link without a name or road number has neither field.
  *
  *   The centreline is a `gml:LineString` in EPSG:27700, written as a `gml:posList` of easting and
  *   northing pairs. The reader honors the line's `srsDimension` so a 3D tile would still read its
@@ -21,12 +21,12 @@ import { elementAtPath, streamMarkupElements, textAtPath, type MarkupElement } f
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * The feature element that carries a centreline.
+ * The feature element that contains a centreline.
  */
 export const OPEN_ROADS_LINK_ELEMENT = "road:RoadLink"
 
 /**
- * One named road link.
+ * One road link with a name.
  */
 export interface OpenRoadsLink {
 	/**
@@ -56,7 +56,7 @@ export interface OpenRoadsReadStats {
 	 */
 	links: number
 	/**
-	 * Named links yielded.
+	 * Road links with names that the reader yielded.
 	 */
 	named: number
 	/**
@@ -64,7 +64,7 @@ export interface OpenRoadsReadStats {
 	 */
 	unnamed: number
 	/**
-	 * Named links whose centreline held fewer than two vertices or a non-numeric ordinate.
+	 * Road links whose centreline has fewer than two vertices or a non-numeric ordinate.
 	 */
 	malformedGeometry: number
 }
@@ -79,7 +79,7 @@ export function createOpenRoadsReadStats(): OpenRoadsReadStats {
 const LINE_PATH = ["net:centrelineGeometry", "gml:LineString"] as const
 
 /**
- * The named link a `road:RoadLink` element describes, or a reason it describes none.
+ * Reads a link described by a `road:RoadLink` element or returns the reason it could not read one.
  */
 export function readOpenRoadsLink(element: MarkupElement): OpenRoadsLink | "unnamed" | "malformed-geometry" {
 	const name1 = (textAtPath(element, "road:name1") ?? "").trim()
@@ -111,7 +111,7 @@ export function readOpenRoadsLink(element: MarkupElement): OpenRoadsLink | "unna
 }
 
 /**
- * Streams the named links of one Open Roads GML tile.
+ * Streams links with names from one Open Roads GML tile.
  */
 export async function* readOpenRoadsLinks(
 	gmlPath: PathBuilderLike,

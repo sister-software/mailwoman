@@ -8,13 +8,13 @@
  *   Open Government Licence v3.0.
  *
  *   It replaced `gb-golden.jsonl` on 2026-10-17. That board's rows were HM Land Registry Price Paid Data
- *   address fields, which Royal Mail and Ordnance Survey license only for personal or non-commercial use
+ *   address fields. Royal Mail and Ordnance Survey license those fields only for personal or non-commercial use
  *   and for displaying residential property price information (#2635).
  *
  *   One row per postcode area: the area's row with the lowest `source_id`, which is a content hash, so the
  *   pick is deterministic and unrelated to the file's order. The adapter draws each row's house number at
  *   random, so the board keeps the street, the locality and the postcode and drops the number. The rows
- *   carry no `dependent_locality`, because OS OpenData records none, so a board consumer that grades that
+ *   have no `dependent_locality`, because OS OpenData records none. A board consumer that grades that
  *   tag reads zero rows for it.
  *
  *   Usage:
@@ -53,7 +53,7 @@ const input = values.input ?? gbOSOpenCanonicalRowsPath().toString()
 const out = values.out ?? workspacePath("mailwoman", "tools", "eval-harness", "fixtures", "gb", "os-open-golden.jsonl")
 
 /**
- * The letters that open a postcode, which name its postcode area.
+ * The initial letters identify a postcode's area.
  */
 const POSTCODE_AREA = /^[A-Z]{1,2}/
 

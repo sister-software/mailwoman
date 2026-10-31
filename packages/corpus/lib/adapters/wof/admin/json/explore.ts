@@ -6,9 +6,9 @@
  *   `mailwoman wof explore`: render every row the `wof-admin` adapter would emit for one Who's On First record.
  *
  *   The build indexes the whole 121 GB tree before it renders anything.
- *   This reads only the record and the ancestors its `wof:hierarchy` and `wof:parent_id` chain name,
- *   builds the index from those alone, and calls the adapter's own functions on it,
- *   so the rows are what a build would emit for the record.
+ *   This reads only the record and the ancestors identified by its `wof:hierarchy` and `wof:parent_id` chain.
+ *   It builds an index from those records and calls the adapter's own functions on that index.
+ *   The resulting rows match what a build would emit for the record.
  */
 
 import { wofReposPath } from "@mailwoman/core/data-root"
@@ -131,7 +131,7 @@ export interface WOFExploration {
 	/**
 	 * Ancestor ids the record names whose file was not found or was skipped.
 	 *
-	 * Listing them keeps a missing ancestor visible.
+	 * This list keeps each missing ancestor visible.
 	 */
 	unresolvedAncestors: number[]
 	slots: ExploredSlot[]

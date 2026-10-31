@@ -647,7 +647,7 @@ describe("buildFSTEmissionPriors — anchor-region boost", () => {
 		})
 
 		expect(matrix[2]![labelCol("B-region")]).toBeCloseTo(3, 5)
-		// No locality named Vermont lies inside Vermont, so the locality reading is suppressed.
+		// The gazetteer has no locality called Vermont inside Vermont, so the locality reading is suppressed.
 		expect(matrix[2]![labelCol("B-locality")]).toBeCloseTo(-3, 5)
 		// The street labels are suppressed at full scale rather than the one-word scale.
 		expect(matrix[2]![labelCol("B-street")]).toBeCloseTo(-1.5, 5)

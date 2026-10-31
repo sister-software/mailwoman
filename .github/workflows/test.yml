@@ -273,7 +273,7 @@ jobs:
       - name: Test the mtf-node addon's panic handling
         run: yarn vitest run --config vitest.slow.config.ts packages/mtf/tools/sampler/native.panic.integration.test.ts
 
-      # The Rust trainer links libtorch through `tch` 0.26.0, which pins libtorch 2.13.0 (`torch-sys`'s TORCH_VERSION).
+      # The Rust trainer links libtorch through `tch` 0.26.0. That version pins libtorch 2.13.0 (`torch-sys`'s TORCH_VERSION).
       - name: Restore libtorch
         id: libtorch
         uses: actions/cache@v6

@@ -62,7 +62,7 @@ const PREFECTURE_COUNT = 47
 const MAX_DROP_RATE = 0.02
 
 /**
- * Options for {@linkcode buildJPCorpus}, named as the Python assembler's flags.
+ * Options for {@linkcode buildJPCorpus}, corresponding to the Python assembler's flags.
  */
 export interface JPCorpusOptions {
 	parquet: PathBuilderLike
@@ -83,7 +83,7 @@ export interface JPCorpusOptions {
 	variantHyphenFraction: number
 	maxFieldChars: number
 	/**
-	 * A smoke build reads only this many row groups and skips the 47-prefecture check.
+	 * A smoke build reads a limited number of row groups and skips the 47-prefecture check.
 	 */
 	maxRowGroups?: number
 	/**
@@ -333,7 +333,7 @@ class JPRowEncoder {
 }
 
 /**
- * The JP build report, which `build-report.json` serializes in this key order.
+ * `build-report.json` serializes the JP build report in this key order.
  */
 export interface JPCorpusReport {
 	seed: number

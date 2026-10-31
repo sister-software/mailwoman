@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The graded arc keeps two answers apart. Training attribution asks whether the change, rather than the rig or
+ *   The graded arc keeps two answers separate. Training attribution asks whether the change, rather than the rig or
  *   the cost of fine-tuning, moved the board: the self-control leg must be quiet and the placebo (null) leg is
  *   subtracted from the candidate. Release eligibility asks whether the exact candidate artifact meets the
- *   registered release requirements, and it is read from the verdict `release/evaluate.run.ts` writes for that
+ *   registered release requirements. The verdict `release/evaluate.run.ts` writes its result for that
  *   artifact and that specification version. The board's changed rows are reported as findings with their
- *   addresses. Release eligibility is decided by the verdict alone.
+ *   addresses. The verdict decides release eligibility.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -37,7 +37,8 @@ export interface BoardFinding {
 	 */
 	candidate: unknown
 	/**
-	 * The checker's issues with the candidate's output, which state the expected value.
+	 * The checker's issues with the candidate's output.
+	 * Each issue states the expected value.
 	 */
 	issues: string[]
 }

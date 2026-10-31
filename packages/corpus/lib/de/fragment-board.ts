@@ -7,7 +7,7 @@
  *
  *   The classes are the preposition-led street (`Am`, `An der`, `Zur` …), the date street (`Straße des 17. Juni`),
  *   the street whose folded word n-gram is a locality-lexicon entry, the street with a house number after it and
- *   with an alphanumeric one, the bare street, and the bare municipality, which expects no street.
+ *   with an alphanumeric one, the bare street, and the bare municipality. The last case expects no street.
  *
  *   The training feed's only DE street data is the `rendered-de` source (OpenAddresses Berlin and Saxony), so the
  *   board excludes Berlin (`BE`) and Saxony (`SN`). Street vocabulary such as `Hauptstraße` still repeats across

@@ -71,7 +71,8 @@ export interface LabelSchemaAddressSystems {
 }
 
 /**
- * One label set: its tags in order and their BIO expansion, whose indices are the model's output indices.
+ * One label set: its tags in order and the BIO expansion.
+ * The expansion indices are the model's output indices.
  */
 export interface LabelSchemaSet {
 	tags: readonly string[]

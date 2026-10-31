@@ -26,7 +26,7 @@ const DEEPEST_DISCOUNT = 5_000_000
 
 const toRequests = (step: number) => {
 	const raw = 10 ** (MIN_EXPONENT + (step / STEPS) * (MAX_EXPONENT - MIN_EXPONENT))
-	// Two significant figures, so the slider lands on numbers a person would type.
+	// The slider rounds to two digits so users can enter the values by hand.
 	const magnitude = 10 ** Math.max(0, Math.floor(Math.log10(raw)) - 1)
 
 	return Math.round(raw / magnitude) * magnitude

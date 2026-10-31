@@ -8,8 +8,8 @@
  *
  *   Both passes open the mixture at the same seed. The draw pass reads it straight. The emit pass runs each drawn
  *   row through augmentation, with the config's per-source exclusions, on the same generator, and stops once the
- *   row budget is filled. Neither pass runs the shuffle buffer, which reorders rows without changing counts, or
- *   the affix relabel, which rewrites labels without adding or removing rows. The grouping augmentation is left
+ *   row budget is filled. Neither pass runs the shuffle buffer. The buffer reorders rows without changing counts.
+ *   Neither pass runs the affix relabel. That pass rewrites labels without adding or removing rows. The grouping augmentation is left
  *   off, as the Python audits' emit policy left it.
  */
 

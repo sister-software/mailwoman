@@ -6,7 +6,7 @@
  *   `POST /v1/downloads` answers a presigned URL for a paid artifact to a token that admits it. The token is verified
  *   offline against the register and this worker's own key, its scope must admit the artifact, and a token with a lid
  *   must stand `active` in the ledger. A hand-issued token has no lid and is admitted on the offline verification
- *   alone, so an enterprise licensee downloads without a ledger row. Every grant is a `downloads` row.
+ *   so an enterprise licensee downloads without a ledger row. Every grant is a `downloads` row.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -82,7 +82,7 @@ const downloadRoute = createRoute({
 })
 
 /**
- * The keys a token may be signed by: the shipped register plus this worker's own key,
+ * A token may use a key from the shipped register or the worker's own key.
  * which in a sandbox is outside the register.
  */
 async function trustedKeys(env: LicenseWorkerEnv): Promise<Readonly<Record<string, string>>> {

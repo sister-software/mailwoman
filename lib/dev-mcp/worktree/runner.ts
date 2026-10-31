@@ -84,8 +84,8 @@ export async function worktreeArmRunner(
 				}
 			}
 
-			// A row the child threw on is a failed query, which the scorer counts in `n_errored`.
-			// Returning it as an empty answer would grade an exception as the pipeline declining to answer.
+			// The scorer counts a row that the child throws on as a failed query in `n_errored`.
+			// If the runner returned an empty answer, the scorer would treat the exception as a declined query.
 			if (answer.error) throw new Error(answer.error)
 
 			return {

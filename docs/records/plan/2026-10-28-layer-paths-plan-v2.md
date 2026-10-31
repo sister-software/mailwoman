@@ -52,24 +52,24 @@ requirements. A customer who declines it retains the capabilities already instal
 ## 2. Organize code by responsibility and country-specific policy by country
 
 A source can span the planet while its interpretation varies by jurisdiction. These are separate
-dimensions. Reusing one OSM extractor does not require centralizing every country's rules in it.
+dimensions. One OSM extractor can serve every country without centralizing country-specific rules.
 
-| Owner                          | Responsibility                                                                   | Excluded responsibility                                   |
-| ------------------------------ | -------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `codex/lib/<cc>/`              | Postal conventions, country-specific normalization choices, reference data       | Download URLs, OSM extract selection, installed datasets  |
-| `corpus/lib/<cc>/`             | National-source adapters and country-specific training transformations           | Serving database selection                                |
-| `corpus/lib/adapters/osm/`     | Shared conversion of OSM observations into corpus rows                           | Downloading PBFs or selecting the active geocoding source |
-| `osm/lib/`                     | OSM-specific types and reusable interpretation code                              | Generic address-point schema ownership                    |
-| `osm/sdk/`                     | OSM acquisition and extraction                                                   | Corpus admission policy or customer workflow              |
-| `osm/tools/`                   | Builds and maintenance using OSM inputs                                          | Runtime geocode imports                                   |
-| `core/layers/`                 | Shared manifest and artifact identity declarations and validation                | Source registry, download UI, reader selection policy     |
-| `resolver-wof-sqlite/lib/`     | Existing SQLite readers, shared address-point schema and role-specific providers | Source acquisition                                        |
-| `mailwoman/lib/data/`          | Installation planning, catalog, activation, status, migration                    | OSM tag interpretation                                    |
-| `mailwoman/cli/commands/data/` | Arguments, progress, diagnostics, and presentation                               | A second implementation of installation or selection      |
+| Owner                          | Responsibility                                                                  | Excluded responsibility                                  |
+| ------------------------------ | ------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `codex/lib/<cc>/`              | Postal conventions, country-specific normalization choices, reference data      | Download URLs, OSM extract selection, installed datasets |
+| `corpus/lib/<cc>/`             | National-source adapters and country-specific training transformations          | Database selection for serving                           |
+| `corpus/lib/adapters/osm/`     | Shared conversion of OSM observations into corpus rows                          | PBF acquisition or active geocoding-source selection     |
+| `osm/lib/`                     | OSM-specific types and reusable interpretation code                             | Generic address-point schema ownership                   |
+| `osm/sdk/`                     | OSM acquisition and extraction                                                  | Corpus admission policy or customer workflow             |
+| `osm/tools/`                   | Builds and maintenance using OSM inputs                                         | Runtime geocode imports                                  |
+| `core/layers/`                 | Shared manifest and artifact identity declarations and validation               | Source registry, download UI, reader selection policy    |
+| `resolver-wof-sqlite/lib/`     | Current SQLite readers, shared address-point schema and role-specific providers | Source acquisition                                       |
+| `mailwoman/lib/data/`          | Installation planning, catalog, activation, status, migration                   | OSM tag interpretation                                   |
+| `mailwoman/cli/commands/data/` | Arguments, progress, diagnostics, and presentation                              | A second implementation of installation or selection     |
 
 The resolver package is the proposed initial home for the schema because it already owns the common
 address-point reader. Before moving it, measure added runtime dependencies and shipped bytes for its
-builders. If importing it adds unrelated resolver machinery, propose a narrowly scoped schema owner
+builders. If importing it adds unrelated resolver code, propose a narrowly scoped schema owner
 with that measurement. Do not create a general utilities package to avoid making this decision.
 
 Keep `@mailwoman/osm` as a source integration package. Remove its generic schema and serving selection
@@ -130,7 +130,7 @@ source ordering and fallback after an unsuccessful lookup require an explicit po
 Likewise, a subdivision miss falling through to a national source is a behavior change to evaluate.
 
 Country coverage, geographic extent, and completeness remain separate. A list of observed countries
-does not establish exhaustive coverage. Missing coverage evidence cannot support a negative answer.
+does not establish exhaustive coverage. The absence of coverage evidence cannot support a negative answer.
 Define normalization requirements per role. A postcode layer must not acquire a street-locale
 requirement merely because address-point layers need one.
 
@@ -147,7 +147,7 @@ Retain the original separation of acquired inputs, derived intermediates, and se
 ```
 
 This is a proposed layout. The command interface is specified separately. Source inputs follow publisher identity. Derived
-outputs follow the recipe. Serving artifacts follow reader role. Country remains manifest metadata
+outputs follow the recipe. Artifacts used at runtime follow reader role. Country remains manifest metadata
 and an installation selector. No filename parsing supplies missing manifest fields.
 
 Support artifact sets, including FST files, rather than assuming every served resource is SQLite.
@@ -191,8 +191,8 @@ installed. A failed upgrade leaves the previous selection usable. A local build 
 activation for evaluation. Build dependencies are checked before large downloads. Explain missing
 tools through the CLI rather than exposing package-internal script paths.
 
-Installing an npm integration package enables code. Data selection is a separate step. Selecting a published bundle
-or explicitly activating a local build selects data. Both paths enforce the same configured obligation
+An npm integration package enables code. Data selection is a separate step. A published bundle or an
+explicitly activated local build selects data. Both paths enforce the same configured obligation
 refusals and keep access entitlements separate from source-license metadata.
 
 ## 6. Migrate one complete customer path before moving the host inventory
@@ -201,7 +201,7 @@ refusals and keep access entitlements separate from source-license metadata.
 | ----- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | A     | Specify identities, role requirements, active selection, and installation plan | Fixtures represent national, subdivision, multi-country, overlapping-source, and non-SQLite artifacts                               |
 | B     | Implement published candidate installation through the existing CLI            | An empty data root reaches a working geocode. Interruption and retry leave valid state                                              |
-| C     | Add one regional precision bundle                                              | Pulling DC changes available precision without downloading all US regions. Repeat pull reuses verified files                        |
+| C     | Add one regional precision bundle                                              | A DC pull changes available precision without downloading all US regions. A repeated pull reuses verified files                     |
 | D     | Move shared schema ownership and introduce the catalog behind existing readers | Dependency audit, typecheck, affected workspace tests, and fixed-artifact output comparison                                         |
 | E     | Add the OSM source-build recipe and country policies                           | One small extract reaches a validated local installation using only public CLI commands. A multi-country fixture reuses acquisition |
 | F     | Add legacy migration and change reader defaults                                | Dry-run identifies every selected artifact. Migration preserves selected sources and enables rollback                               |
@@ -210,13 +210,13 @@ refusals and keep access entitlements separate from source-license metadata.
 
 Do not begin with bulk host moves. Inventory the files the actual readers select, distinguish those
 from dormant files, and preserve input receipts before migration. Unknown source metadata remains
-unknown. Stamping a new manifest must not manufacture vintage, license, or checksum evidence.
+unknown. A new manifest must not manufacture vintage, license, or checksum evidence.
 
 Migration may register validated legacy files temporarily without renaming them. Remove legacy
 reader branches after migration is supported and documented. Preserve released receipts and historical
 paths as records. A repository-wide zero-match search is not an appropriate acceptance criterion.
 
-Pruning is separate from migration. It never deletes active generations, rollback generations, in-use
+The cleanup operation is separate from migration. It never deletes active generations, rollback generations, in-use
 artifacts, and inputs referenced by retained derivations. No file is deleted merely because its name
 looks older. Retention defaults need a documented policy before deletion is enabled.
 
@@ -434,7 +434,7 @@ labeled as proposals. Historical receipts retain their original text.
 ## 11. Implementation completion criteria
 
 The implementation is complete only when all applicable checks below have evidence linked from the
-tracking issue. Completing the first published-installation increment does not complete the migration
+tracking issue. The first published-installation increment does not complete the migration
 or source-build work.
 
 - [ ] Clean setup, published candidate installation, and one regional precision upgrade work through

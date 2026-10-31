@@ -62,7 +62,8 @@ function subregionsOf(countryCode: string): readonly CompiledSubregion[] {
  * in libaddressinput's order.
  *
  * The match ignores case and spacing in the same way `acceptPostcode` does.
- * The answer is empty for a country that states no subregion prefixes, which is every country but 24.
+ * The answer is empty when a country declares no subregion prefixes.
+ * Twenty-four countries declare prefixes.
  */
 export function subregionsForPostcode(value: string, countryCode: string): PostcodeSubregion[] {
 	const trimmed = value.trim()

@@ -53,7 +53,7 @@ export const OceanPalette = {
 /**
  * The ocean's depth shading, drawn under the land fill.
  *
- * The terrain tiles carry bathymetry from ETOPO1, so elevation below zero is the sea floor.
+ * The terrain tiles include ETOPO1 bathymetry, so elevation below zero is the sea floor.
  * The bathymetry ends at z10 and is stretched beyond it, so its coastline misses reclaimed land.
  *
  * The land fill drawn over these layers decides the coast instead.

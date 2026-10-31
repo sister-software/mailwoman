@@ -53,8 +53,9 @@ interface ReviewedPostcodeTupleFile {
 	version: string
 	reviewedAt: string
 	/**
-	 * How many tuples the file declares, so a tuple lost in an edit fails the read
-	 * rather than shrinking the output.
+	 * The tuple count the file declares.
+	 *
+	 * A tuple lost in an edit makes the read fail rather than shrinking the output.
 	 */
 	tupleCount: number
 	tuples: ReviewedPostcodeTuple[]
@@ -86,8 +87,8 @@ export function defaultReviewedPostcodeTuplePath(): string {
 /**
  * Reads and validates the reviewed tuples.
  *
- * @throws When the file does not hold as many complete, unique, reviewed
- * tuples as its `tupleCount` declares.
+ * @throws When the file does not hold the expected number of complete, unique,
+ * reviewed tuples as its `tupleCount` declares.
  */
 export async function readReviewedPostcodeTuples(
 	path: PathBuilderLike = defaultReviewedPostcodeTuplePath()

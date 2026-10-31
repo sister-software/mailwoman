@@ -1399,10 +1399,10 @@ with the encoder-parity records' host lexicon overrides, the train split, seed 4
 rows after the first batch: sampling through the `mtf-node` sampler, then encoding through its row encoder and the
 TypeScript locale and address-system ids. Records: `/mnt/mw/audits/trainer-parity/t42/profile-run{1,2}.json`.
 
-| Run, path                  | Load (1 min) before | Init s | Encoder build s | Sampler init s | Sampling ms per batch | Encoding ms per batch | Host ms per batch | RSS after init MB | Peak RSS MB |
-| -------------------------- | ------------------: | -----: | --------------: | -------------: | --------------------: | --------------------: | ----------------: | ----------------: | ----------: |
-| 1, Rust through `mtf-node` |                4.75 |   59.7 |             4.1 |           55.6 |                  1.35 |                 10.51 |             11.86 |             2,355 |       2,441 |
-| 2, Rust through `mtf-node` |               11.65 |   40.3 |             2.4 |           37.8 |                  1.25 |                 10.10 |             11.34 |             2,364 |       2,450 |
+| Run, path                  | Load (1 min) before | Init s | Encoder build s | Sampler init s | Sample ms per batch | Encode ms per batch | Host ms per batch | RSS after init MB | Peak RSS MB |
+| -------------------------- | ------------------: | -----: | --------------: | -------------: | ------------------: | ------------------: | ----------------: | ----------------: | ----------: |
+| 1, Rust through `mtf-node` |                4.75 |   59.7 |             4.1 |           55.6 |                1.35 |               10.51 |             11.86 |             2,355 |       2,441 |
+| 2, Rust through `mtf-node` |               11.65 |   40.3 |             2.4 |           37.8 |                1.25 |               10.10 |             11.34 |             2,364 |       2,450 |
 
 Run 1 read the corpus files cold and run 2 warm from the page cache, so the initialization difference is the cache.
 "Sampler init" covers the corpus listing, the sha256 check against the sidecar cache, the source index, the

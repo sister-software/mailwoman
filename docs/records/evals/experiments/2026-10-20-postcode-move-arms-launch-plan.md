@@ -140,8 +140,8 @@ What can be asserted before a GPU is allocated:
 2. `emitted_level.augmented_share` rises from p000 to p005 to p015. The difference is the move's copies plus the
    effect of the shifted random stream, so it checks direction only. The rate comes from step 3.
 3. The moved share itself is unmeasured until the loader's outcome log of the first epoch. Read it from the p005 and
-   p015 training logs and record `moved` against each skip reason. Exposing the counter in the audit report is the
-   change that would make it measurable on CPU.
+   p015 training logs and record `moved` against each skip reason. The audit report can expose the counter
+   so the CPU run can measure it.
 
 ## Volume upload
 
@@ -182,7 +182,7 @@ on a failure. Check that `train_loss` falls on the CE scale in the first 300 ste
 Spend: the training-arc skill gives about 4.3 hours and $9 per 60,000-step run on an A100-40GB, so $27 of the
 $27 authorized for the three arms. The CPU audits run in 16 GB CPU containers and are not counted in that figure.
 
-## Grading
+## Evaluation
 
 For each arm: `export_onnx --step 60000`, `quantize_onnx`, fetch the int8 file, and stage a package-shaped weights
 directory by dereferencing symlinks. Its md5 must differ from `5356ecba83e3774a5d9717277c051ac2`.

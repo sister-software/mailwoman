@@ -25,7 +25,7 @@ resolution was not altered to work around this. The scoring and evaluation steps
 | Dataset id and version | `heldout-dev-v0.7.10-gb-county`, version `4eba39056032f5a1`                                   |
 | Rows file sha256       | `b5edbd1f19150f394bbcc3bb1eeacb5707fd51fe08dfdd9e89d2f2373f3d19bc` (26,610 rows, 103 sources) |
 | Drawn from             | `corpus-v0.7.10-gb-county/MANIFEST.json`, sha256 `c499a9af…89fe1f`, 104 test files            |
-| Sampling               | `per-record-country-kind-hash-order`, 1,000 per country and kind, seed 2763, DuckDB v1.5.6    |
+| Sample method          | `per-record-country-kind-hash-order`, 1,000 per country and kind, seed 2763, DuckDB v1.5.6    |
 
 Observed: two freezes with the same arguments wrote the same rows sha256. The manifest's own sha256 changes on every
 freeze because it records `createdAt`. Freeze command, run with `MAILWOMAN_DATA_ROOT=/mnt/mw` and a 4 GiB Node heap:

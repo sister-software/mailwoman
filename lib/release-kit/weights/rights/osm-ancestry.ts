@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Whether a weights package's model descends from OpenStreetMap data, and whether the package
- *   says so where a reader looks.
+ *   identifies that ancestry where a reader looks.
  *
  *   A package has OpenStreetMap ancestry when its own effective training manifest records a source
  *   derived from OpenStreetMap that reached the trainer, or when a package its `mailwoman.baseWeights`
  *   chain reaches does. An overlay that sampled no OpenStreetMap row still decodes through its base's
- *   graph, so it inherits that graph's ancestry. A package with ancestry must carry the
+ *   graph, so it inherits that graph's ancestry. A package with ancestry must include the
  *   OpenStreetMap entry in its own model card's attribution and the OpenStreetMap statement in its
  *   README, because a consumer who installs that package reads those two files and none of its base's.
  *
@@ -26,7 +26,7 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import type { AttributionRecord, WeightsRightsRecord } from "#release-kit/weights/rights/record"
 
 /**
- * The statement a README carries when the package has OpenStreetMap ancestry, matched as a substring.
+ * The README statement required when the package has OpenStreetMap ancestry, matched as a substring.
  */
 const README_NOTICE = "© OpenStreetMap contributors"
 
@@ -43,8 +43,9 @@ export const INITIALIZATION_ANCESTRY_UNREAD =
  * Whether one effective-manifest source is derived from OpenStreetMap and reached the trainer.
  *
  * An `osm` or `osm-<cc>` source id is an extract, and a license naming ODbL
- * or OpenStreetMap covers the registers rendered from OpenStreetMap tuples and the
- * synthetic rows that splice OpenStreetMap names, whose ids do not say so.
+ * or OpenStreetMap covers the registers rendered from OpenStreetMap tuples
+ * and the synthetic rows that splice OpenStreetMap names.
+ * Their ids do not identify that source.
  */
 function isOpenStreetMapDerived(source: EffectiveSourceRecord): boolean {
 	if (source.emittedRows <= 0) return false
@@ -166,9 +167,9 @@ export async function readOpenStreetMapAncestry(
 }
 
 /**
- * Why each package with OpenStreetMap ancestry fails to say so, one sentence per missing notice.
+ * Why each package with OpenStreetMap ancestry omits the required notice, one sentence per notice.
  *
- * Empty when every package with ancestry carries both notices, or no package has ancestry.
+ * Empty when every package with ancestry includes both notices, or when no package has ancestry.
  */
 export function openStreetMapAttributionRefusals(rows: readonly OpenStreetMapAncestry[]): string[] {
 	const refusals: string[] = []

@@ -345,7 +345,8 @@ ${country}`,
  * Where a country writes the region when an address includes one and the postal layout prints none.
  *
  * Royal Mail and Deutsche Post need no county or Bundesland, so the GB and DE layouts above omit it.
- * Addresses written by people often add it, and a corpus row that labels the region needs a position for it.
+ * Address writers may add the region.
+ * A corpus row that labels it needs a position for it.
  *
  * Great Britain writes the county on its own line between the post town and the
  * postcode (`16 Holstein Street, Preston, Lancashire, PR1 1UN`).

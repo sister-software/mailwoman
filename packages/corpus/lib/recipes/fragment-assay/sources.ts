@@ -65,7 +65,7 @@ const POLISH_VOIVODESHIPS = [
  * each with the register row of the body that publishes it.
  *
  * `corpus-source-inputs.json` lists every one of these rows under `fragment-assay`,
- * and each carries an elected decision permitting transform and train.
+ * and each has an elected decision permitting transform and train.
  * A file whose publisher has no such row is left out: Austria's BEV files, Finland's
  * 2021 DVV extract and Sweden's municipal files, the Australian state and council files,
  * the New Zealand council files, and the two `countrywide-cityfilled.csv` files under `dk/`
@@ -378,7 +378,8 @@ interface SpanRow {
 }
 
 /**
- * The batch length the Python harvest read, which decides where its stop condition was checked.
+ * The batch length that the Python harvest read.
+ * This value determines where its stop condition was checked.
  */
 const HARVEST_BATCH_ROWS = 8192
 

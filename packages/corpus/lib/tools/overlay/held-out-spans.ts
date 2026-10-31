@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Count, per declared-holdout country, the train and held-out rows that carry each region and locality as that
- *   component's span, and the train rows that still carry a held-out key.
+ * @file Count, per declared-holdout country, train and held-out rows that have each region and locality as that
+ *   component's span, and train rows that still have a held-out key.
  *
  *   A holdout keyed on a region removes the region as a label: a region's name appears as a region span only in rows
  *   from that region, so holding the region out leaves training with no region span for it, whatever other rows write
@@ -28,13 +28,13 @@ import { readSplitAttribute } from "#tools/overlay/split-attribute"
 import { type CountryHoldout, holdoutPolicyFor } from "#utils/split"
 
 /**
- * The span tags a place is named by.
+ * The span tags that identify a place.
  */
 export type HoldoutSpanTag = "region" | "locality"
 
 /**
- * One folded surface of one country carried as a `tag` span, and the rows carrying it
- * on each side of the split, in all and among rows with no postcode span.
+ * One folded country surface stored as a `tag` span, with the rows that have it on
+ * each side of the split, in all and among rows with no postcode span.
  */
 export interface HoldoutSpanCount {
 	country: string
@@ -64,9 +64,11 @@ export interface HoldoutSpanCountResult {
 const SEPARATOR = "\u0000"
 
 /**
- * Count the rows of every country `holdouts` declares that carry each region surface,
- * and each declared locality, as that span, split into train rows and held-out
- * (val or test) rows, and the train rows carrying each declared postcode prefix.
+ * Count the rows of every country `holdouts` declares that have each region surface
+ * and locality as that span.
+ *
+ * Split the counts into train and held-out (val or test) rows.
+ * Also count train rows that have each declared postcode prefix.
  * A row carrying one surface twice counts once.
  *
  * @throws When a manifest file records neither a split nor a split attribute,
@@ -213,7 +215,7 @@ export async function countHoldoutSpans(
 }
 
 /**
- * The fewest rows a region surface must carry, across every split, before
+ * The minimum rows a region surface must have across every split before
  * {@linkcode holdoutSpanFindings} checks its train supply.
  *
  * A surface below this is a misspelling or a stray label rather than a region.
@@ -223,8 +225,8 @@ export const REGION_SURFACE_MIN_ROWS = 100
 /**
  * The lowest train share a region may keep, as a fraction of its country's median region train share.
  *
- * Holding out a place below the region takes a small part of every region it touches,
- * so each region's train share stays near the median.
+ * A holdout of a place below the region removes a small part of every region it touches.
+ * Each region's train share therefore stays near the median.
  * A region held out whole falls to 0.
  */
 export const REGION_TRAIN_SHARE_FLOOR = 0.5
@@ -236,8 +238,8 @@ export interface HoldoutSpanFinding {
 	country: string
 	/**
 	 * - `region-key`: the policy lists a region, a closed-vocabulary label, as a key.
-	 * - `locality-in-train`: a declared locality still carried by train rows.
-	 * - `postcode-in-train`: a declared postcode prefix still carried by train rows.
+	 * - `locality-in-train`: train rows still have a declared locality.
+	 * - `postcode-in-train`: train rows still have a declared postcode prefix.
 	 * - `region-supply`: a region surface whose train share falls below
 	 *   {@linkcode REGION_TRAIN_SHARE_FLOOR} of its country's median.
 	 * - `region-supply-without-postcode`: the same among rows with no postcode.

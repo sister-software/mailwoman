@@ -5,8 +5,8 @@
  * @file The record written once beside each parquet file the corpus build and the overlay tools produce.
  *
  *   A record states what one file holds and what produced it: the source its rows belong to, the derivation hash
- *   over the inputs that decide its bytes, the file's sha256, its row count, the license labels its rows carry
- *   with the rows under each, and the register inputs `corpus-source-inputs.json` maps its source to.
+ *   over the inputs that decide its bytes, the file's sha256, its row count, the license labels assigned to
+ *   rows with each label, and the register inputs `corpus-source-inputs.json` maps its source to.
  *
  *   A frozen training manifest folds these records rather than re-reading every row, so a record is written
  *   from the same tally a re-read would compute: one `(source, license)` count per row, with an empty license
@@ -122,15 +122,15 @@ export interface ParquetFileRecord {
 	sha256: string
 	rows: number
 	/**
-	 * Every license label the rows carry, with the rows under each.
+	 * Each license label assigned to rows in the file, with a row count for each label.
 	 *
-	 * A file written since #2741 carries one label, the SPDX or `LicenseRef-*`
+	 * A file written since #2741 records one label, the SPDX or `LicenseRef-*`
 	 * id of its source's register inputs.
 	 */
 	licenseValues: LicenseTally
 	/**
-	 * The producers' own statements of the rows' terms, with the rows under each,
-	 * which the `license` column no longer carries.
+	 * The producers' own statements of the rows' terms, with a row count for each statement.
+	 * The `license` column does not retain these statements.
 	 *
 	 * Absent from a record written before #2741.
 	 */
@@ -187,14 +187,17 @@ export async function resolveDerivation(derivation: FileDerivation): Promise<Der
  * A digest of an extract on disk.
  *
  * A file is hashed whole.
- * A git checkout in the directory is described by its relative path, its HEAD commit and its
- * `git status --porcelain` lines, which change with a commit, an edit, a new file or a deletion.
+ * A git checkout in the directory is described by its relative path, its HEAD commit
+ * and its `git status --porcelain` lines.
  *
- * Every other file is described by a `relative path, size, mtime` line, which changes
- * when the file is added, removed, resized or rewritten.
+ * Those lines change when a commit, edit, new file or deletion changes the checkout.
  *
- * Hashing content would add hours to a build: Who's On First's 273 checkouts hold over 100 GB,
- * and listing and stat'ing their files took over 28 minutes before running out of a 4 GB heap.
+ * Every other file is described by a `relative path, size, mtime` line.
+ * That line changes when the file is added, removed, resized or rewritten.
+ *
+ * The reader skips content hashing because it would add hours to a build:
+ * Who's On First's 273 checkouts hold over 100 GB, and listing and stat'ing their
+ * files took over 28 minutes before running out of a 4 GB heap.
  * A directory with no checkout gives the same digest as a listing read file by file.
  *
  * A process computes each path's digest once: the WOF record cache
@@ -518,7 +521,7 @@ export function readParquetRecord(parquetPath: PathBuilderLike): Promise<Parquet
 /**
  * Count rows per `(source, license)` by reading the files' rows.
  *
- * @throws When a row carries no source, because no record could attribute it.
+ * @throws When a row has no source, because no record could attribute it.
  */
 export async function readSourceLicenseTally(paths: readonly string[]): Promise<SourceLicenseTally> {
 	const tally: SourceLicenseTally = new Map()
@@ -631,8 +634,9 @@ export async function foldSourceLicenses(files: readonly ListedParquetFile[]): P
 /**
  * Shape a tally into the per-source entries a frozen training manifest records.
  *
- * A source whose rows carry several labels records the majority label as its license and keeps
- * every label with its rows, so the record states the whole set rather than one row's reading.
+ * A source with several row labels records the majority label as its license
+ * and keeps the count for each label.
+ * The record therefore preserves the full label distribution.
  */
 export function rowsBySourceFromTally(
 	tally: SourceLicenseTally

@@ -427,7 +427,7 @@ const noRelativeDynamicImportRule: Rule = {
 }
 
 /**
- * The `@mailwoman/core/process` entry points that start a command named by their first argument.
+ * The `@mailwoman/core/process` entry points that use their first argument as the command name.
  */
 const PROCESS_SPAWNERS = new Set([
 	"runFile",

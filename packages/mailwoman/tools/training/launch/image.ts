@@ -47,8 +47,9 @@ export const LIBTORCH_ARCHIVE_SHA256: Readonly<Record<TrainerVariant, string>> =
 }
 
 /**
- * The CUDA libraries libtorch 2.13.0+cu130 loads, which its archive does not hold:
- * the `Requires-Dist` set of the `torch-2.13.0+cu130` manylinux wheel.
+ * libtorch 2.13.0+cu130 loads the CUDA libraries.
+ *
+ * Its archive does not hold them: the `Requires-Dist` set of the `torch-2.13.0+cu130` manylinux wheel.
  *
  * The CUDA image installs them with pip into the base image's interpreter,
  * the install the Python launcher's image ran on Modal.

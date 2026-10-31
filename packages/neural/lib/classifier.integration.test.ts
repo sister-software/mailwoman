@@ -44,7 +44,8 @@ describe.skipIf(!assets)("NeuralAddressClassifier trace on the packaged weights"
 		const cls = await classifier()
 		const tree = await cls.parse(address)
 		const trace = await cls.traceParse(address)
-		// `parse` also attaches the locale head's prediction, which the token-built tree has no field for.
+		// `parse` also attaches the locale head's prediction.
+		// The token-built tree has no field for it.
 		const { localeCountry: _localeCountry, ...built } = tree
 
 		expect(buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry })).toEqual(built)

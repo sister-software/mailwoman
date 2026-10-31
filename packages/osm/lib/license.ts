@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The license, credit and notice every OpenStreetMap database this package builds carries.
+ *   The license, credit and notice that apply to every OpenStreetMap database this package builds.
  *
  *   This package's code is licensed under Mailwoman's own terms. ODbL section 2.3(a) excludes the
  *   programs used to make or operate a database from the license. The databases the code builds are
@@ -35,9 +35,8 @@ export const ODBL_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
 /**
  * The lines the builder prints before and after it writes an OpenStreetMap database.
  *
- * They state the license the built file carries, the credit it requires,
- * and the share-alike and database-access terms that apply when the operator
- * publicly uses the file or a database derived from it.
+ * They identify the built file's license and required credit, and the share-alike and database-access
+ * terms that apply when the operator publicly uses the file or a database derived from it.
  * They state what the license asks.
  *
  * Whether a given use is public is the operator's determination.

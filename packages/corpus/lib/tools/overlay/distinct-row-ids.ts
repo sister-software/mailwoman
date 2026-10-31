@@ -9,9 +9,9 @@
  *   of one record can fall in different splits, and an attribute keyed by `source_id` states only one
  *   split per id (#2765).
  *
- *   Each id that more than one row carries becomes `<id>#<first 12 hex of sha256(raw)>`. The part before
+ *   Each id that appears in more than one row becomes `<id>#<first 12 hex of sha256(raw)>`. The part before
  *   `#` is the record's id, so a reader grouping the rendered variants of one record splits at the last
- *   `#`. An id one row carries is left unchanged, so the overlap audit still joins those rows by their
+ *   `#`. An id that appears in one row is left unchanged, so the overlap audit still joins that row by its
  *   original identity.
  */
 
@@ -35,7 +35,7 @@ export interface DistinctRowIDsOptions {
 export interface DistinctRowIDsResult {
 	rows: number
 	/**
-	 * The ids more than one row carried in `input`.
+	 * The ids that appeared in more than one row of `input`.
 	 */
 	sharedIDs: number
 	/**

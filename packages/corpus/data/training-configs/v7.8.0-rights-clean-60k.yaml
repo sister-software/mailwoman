@@ -36,7 +36,7 @@
 #    openaddresses/extracted/ch/countrywide.csv, is the 2021 extract of the BFS building and dwelling register
 #    (ch-property-building-2), whose level A data the BFS states may be used without restriction. rendered-ch reads
 #    the same file, and its input row now names that publisher instead of swisstopo's directory. v0.7.2's 4,765 ZZ rows,
-#    famous localities from the Who's On First candidate gazetteer, are carried as part-fragment-zz-v072.parquet.
+#    famous localities from the Who's On First candidate gazetteer, are stored in part-fragment-zz-v072.parquet.
 #    Austria and Sweden stay out: no Austrian address row is elected, and Sweden's rows are refused or unchecked.
 #
 #    invented-house-venue keeps v0.7.2's 18,000 IN, PT and MX rows, the file part-house-venue-intl-v27.train.parquet,
@@ -71,8 +71,8 @@
 #     invented-house-venue-intl-v27.parquet
 #   node packages/corpus/lib/tools/fragment-assay.run.ts --oa-root $MAILWOMAN_DATA_ROOT/openaddresses/extracted \
 #     --corpus-parquet-glob '$MAILWOMAN_DATA_ROOT/corpus/versioned/v0.5.0/**/train/part-000*.parquet' \
-#     --out-parquet <dir>/part-fragment.parquet --out-dev <dir>/fragment-dev.jsonl, whose --locality-parquet-glob and
-#     --ryhti-file defaults name LOCALITY_PARQUET_GLOB and RYHTI_FILE
+#     --out-parquet <dir>/part-fragment.parquet --out-dev <dir>/fragment-dev.jsonl. The --locality-parquet-glob and
+#     --ryhti-file defaults refer to LOCALITY_PARQUET_GLOB and RYHTI_FILE.
 #   rewrite that part-fragment.parquet to the schema and 50,000-row groups of v0.7.2's part-fragment.train.parquet
 #     (int32 spans, a string base_source_id), as part-fragment-v078.parquet in train, and write v0.7.2's ZZ rows of that
 #     file as part-fragment-zz-v072.parquet. fragment-assay is train-only, as in v0.7.2, because the builder's held-out

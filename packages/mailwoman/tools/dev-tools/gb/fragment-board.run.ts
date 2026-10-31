@@ -19,7 +19,7 @@
  *   - `place`: `dependent_locality, locality`. This is the locality-surface channel's register.
  *     The shipped bundle's homonym wins were measured in this register. The default board,
  *     `fixtures/gb/os-open-golden.jsonl`, comes from OS OpenData. OS OpenData records no dependent locality.
- *     This shape therefore needs a `--fixtures` board that carries one.
+ *     This shape therefore needs a `--fixtures` board that includes one.
  *
  *   Rows whose fragment does not classify as `fragmented` are skipped and counted rather than silently
  *   graded in the wrong register.

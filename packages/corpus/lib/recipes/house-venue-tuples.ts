@@ -27,7 +27,8 @@ import { sampleUSHouseVenueTuples } from "#us/recipes/house-venue-tuples"
 /**
  * One house-venue tuple, in the key order the tuples file stores.
  *
- * A GB tuple also records the adapter it came from, which the sub-venue recipe requires.
+ * A GB tuple also records its source adapter.
+ * The sub-venue recipe requires that identifier.
  */
 export interface HouseVenueTuple {
 	locality: string
@@ -57,11 +58,13 @@ export const HOUSE_VENUE_SAMPLERS: ReadonlyArray<readonly [code: string, sampler
 /**
  * The tuples file the sub-venue recipe reads.
  *
- * v7 holds out the FR fragment board's street surfaces, which v6's FR rows did not:
- * 59,725 FR tuples where v6 held 60,000, 275 of them on 132 board streets.
- * Its US and GB rows are v6's, byte for byte (`--carry us --carry gb --carry-from <v6>`).
- * v6 kept NAD rows and the rows of each US body whose own register decision
- * permits training, and carried its GB rows from v4.
+ * v7 holds out the FR fragment board's street surfaces.
+ * It has 59,725 FR tuples, down from v6's 60,000.
+ *
+ * Of those tuples, 275 fall on 132 board streets.
+ * The recipe copies its US and GB rows byte for byte from v6. v6 kept NAD rows
+ * and the rows of each US body whose own register decision permits training.
+ * It reused its GB rows from v4.
  */
 export function houseVenueTuplesPath() {
 	return dataRootPath("corpus", "intermediate", "house-venue-tuples-v7.jsonl")
@@ -81,7 +84,7 @@ export const HOUSE_VENUE_DEFAULT_SEED = 42
  * One country's tuples from an earlier tuples file, in file order.
  *
  * @throws When the file does not exist, or holds no tuple for the country,
- * so a carry never writes an empty part.
+ * so copying never writes an empty part.
  */
 export async function readCarriedTuples(path: PathBuilderLike, code: string): Promise<HouseVenueTuple[]> {
 	if (!(await pathExists(path))) throw new Error(`No tuples file to carry from at ${path.toString()}`)
@@ -120,9 +123,9 @@ export interface AssembleHouseVenueTuplesOptions {
 }
 
 /**
- * Every country's tuples, in sampler order, each from its sampler or carried from an earlier file.
+ * Every country's tuples in sampler order, sampled or copied from an earlier file.
  *
- * @throws When a carry names no file to carry from.
+ * @throws When the options list a country to copy but provide no input file.
  */
 export async function assembleHouseVenueTuples(
 	options: AssembleHouseVenueTuplesOptions = {}

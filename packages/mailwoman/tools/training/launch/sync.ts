@@ -27,8 +27,8 @@ const RCLONE_FLAGS = "--s3-no-check-bucket --s3-no-head --low-level-retries 30 -
  * The supervisor of a staging sandbox: pick the entry's layout, copy it,
  * check its MANIFEST, and commit the volume.
  *
- * It reads `MW_BUCKET`, `MW_ENTRY`, `MW_MOUNT` and the `RCLONE_S3_*` credentials from its
- * environment, and `MW_RCLONE` and `MW_SYNC` name the commands, which a test replaces.
+ * It reads `MW_BUCKET`, `MW_ENTRY`, `MW_MOUNT` and the `RCLONE_S3_*` credentials from its environment.
+ * `MW_RCLONE` and `MW_SYNC` identify the commands that a test replaces.
  *
  * @returns Exit 0 once the MANIFEST is on the volume, 1 when the bucket holds
  * no such entry or the copy lacks one.

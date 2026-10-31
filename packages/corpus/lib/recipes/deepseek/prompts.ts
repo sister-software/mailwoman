@@ -11,7 +11,7 @@
 
 /**
  * One transliteration target: the label the prompt names, the BCP 47 language subtag of the rendering
- * convention (with no region), the ISO 15924 script code, and the slug batch ids and source ids carry.
+ * convention (with no region), the ISO 15924 script code, and the slug used in batch and source ids.
  */
 export type TranslitScript = readonly [label: string, language: string, script: string, slug: string]
 
@@ -98,7 +98,7 @@ Constraints:
 `
 
 /**
- * One adversarial category: its name, the description the prompt carries,
+ * One adversarial category: its name and the description included in the prompt,
  * the example lines that steer the model, and its weight in the row budget.
  */
 export interface KryptoniteCategory {

@@ -10,9 +10,9 @@
  *   on commas and a user-defined symbol may itself be a comma. `minloglevel` sets only the wheel's log level and has
  *   no CLI flag, so it is left off the command line.
  *
- *   `spm_train` sets every trainer flag on the spec it trains with, so its model records each default the caller did
- *   not name. The wheel's spec holds only the named fields. After training, the trainer and normalizer spec fields no
- *   flag named are dropped, which makes the model the wheel's bytes for the same call.
+ *   `spm_train` sets every trainer flag on its spec, so the model records defaults the caller did not supply.
+ *   The wheel's spec holds only fields supplied in the call. After training, the rewrite drops trainer and normalizer
+ *   fields absent from the flags. This produces the same bytes the wheel produces for that call.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -46,7 +46,8 @@ const FILE_LIST_FLAGS: Readonly<Record<string, string>> = {
 const WHEEL_ONLY_FLAGS = new Set(["minloglevel"])
 
 /**
- * A list as Python's `csv.writer` writes one row, which is how the wheel passes a list flag.
+ * This function serializes a list as one CSV row, matching the format Python's
+ * `csv.writer` produces for a list flag.
  */
 export function csvRow(values: readonly string[]): string {
 	return values
@@ -85,7 +86,9 @@ export interface TrainOptions {
 	 */
 	workDirectory: string
 	/**
-	 * The directory `spm_train` runs in, which a relative `input` or `model_prefix` is read against.
+	 * The directory where `spm_train` runs.
+	 *
+	 * Relative `input` and `model_prefix` values resolve from this directory.
 	 *
 	 * The model records both paths as given, so a recipe written with relative paths
 	 * trains to the same bytes in any directory.
@@ -94,7 +97,7 @@ export interface TrainOptions {
 }
 
 /**
- * Train with `flags`, which must name `model_prefix`, and rewrite `<model_prefix>.model` in the wheel's form.
+ * Train with `flags` containing `model_prefix`, then rewrite `<model_prefix>.model` in the wheel's form.
  */
 export async function trainSentencePiece(flags: TrainerFlags, options: TrainOptions): Promise<TrainedModel> {
 	const prefix = flags["model_prefix"]

@@ -53,7 +53,8 @@ export interface SelectionLease {
  * Record that this process reads `generation`, so a prune keeps its artifacts until the lease is disposed.
  *
  * A data root this process cannot write, such as a read-only mount, takes no lease.
- * Prune then cannot see this reader, and the result says so.
+ * Prune cannot see this reader.
+ * The returned lease has `path: null`.
  */
 export async function holdSelectionLease(
 	dataRoot: PathBuilderLike,
@@ -72,15 +73,16 @@ export async function holdSelectionLease(
 		path,
 		[Symbol.dispose]: () => {
 			// Synchronous teardown runs at session disposal.
-			// The removal is started and not awaited, and a lease file left behind belongs
-			// to a pid that no longer exists, which prune ignores.
+			// The removal is started and not awaited.
+			// A lease file left behind belongs to an exited process, and prune ignores
+			// leases for pids that no longer exist.
 			void removePathIfPresent(path).catch(() => {})
 		},
 	}
 }
 
 /**
- * How many times {@linkcode holdActiveSelection} reads the selection and leases it before refusing.
+ * Maximum read-and-lease attempts {@linkcode holdActiveSelection} makes before refusing.
  *
  * A retry is needed only when an activation lands between the read and the lease, so a third
  * consecutive miss means the selection is being rewritten continuously rather than once.
@@ -219,7 +221,9 @@ export interface PruneCandidate {
 	 */
 	directory: string
 	/**
-	 * The installed file, which prune deletes with the directory's `manifest.json` and `receipt.json`.
+	 * The installed file.
+	 *
+	 * Prune deletes it with the directory's `manifest.json` and `receipt.json`.
 	 */
 	path: string
 	bytes: number
@@ -493,11 +497,12 @@ export async function executePrune(
 	const deleted: PruneCandidate[] = []
 	const kept: PruneCandidate[] = []
 
-	// The records go first, so an interrupted prune leaves a directory without a manifest,
-	// which readers treat as no artifact, rather than a manifest that describes a deleted file.
+	// Prune removes the records first.
+	// If interrupted, it leaves a directory without a manifest.
+	// Readers treat that directory as no artifact, rather than finding a manifest for a deleted file.
 	// The directory is removed only when that left it empty.
-	// A directory still holding a file prune did not install is kept, and so is the
-	// installation record that references it, so a later prune finds it again.
+	// Prune keeps a directory that still contains a file it did not install.
+	// It also keeps the installation record, so a later prune can inspect the directory again.
 	for (const candidate of plan.candidates) {
 		if (!(await tryStat(candidate.directory))) continue
 

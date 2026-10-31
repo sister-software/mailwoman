@@ -181,8 +181,8 @@ export interface SuffixFeedOptions {
 export function suffixFeedAudit(mtf: MTFNode, config: TrainingConfig, options: SuffixFeedOptions) {
 	const corpusDir = options.corpusDir ?? config.data.corpus_dir
 
-	// The emit step with every augmentation off runs the relabel alone, and the
-	// generator's state stays where the mixture left it.
+	// The emit step runs only the relabel when every augmentation is off,
+	// and the generator's state stays where the mixture left it.
 	const stream = openRawRows(mtf, config, "train", options.seed, {
 		corpusDir,
 		augment: {},
@@ -234,7 +234,8 @@ export function suffixFeedAudit(mtf: MTFNode, config: TrainingConfig, options: S
 		return { carriers: n, correct: k, rate: n ? k / n : null }
 	}
 
-	// Python sorts the `(class, source)` pairs as tuples, which orders by class and then by source.
+	// Python sorts the `(class, source)` pairs as tuples.
+	// It orders by class, then by source.
 	const pairs = [...perSourceCarriers.keys()]
 		.map((key) => key.split("\u0000") as [string, string])
 		.toSorted(([a1, a2], [b1, b2]) => (a1 < b1 ? -1 : a1 > b1 ? 1 : a2 < b2 ? -1 : a2 > b2 ? 1 : 0))

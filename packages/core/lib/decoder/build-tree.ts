@@ -144,8 +144,8 @@ function trimBoundary(raw: string, start: number, end: number): { start: number;
 
 		if (opener && raw.slice(s, e - 1).includes(opener)) break
 
-		// A possessive apostrophe after a word character belongs to the name (`Bojangles'`),
-		// unless the same quote opens the span, which makes it a wrapping quote.
+		// A possessive apostrophe after a word character belongs to the name (`Bojangles'`).
+		// A matching quote at the span's start marks a wrapping quote instead.
 		if (APOSTROPHES.has(last) && e - 2 >= s && isWordChar(e - 2) && raw[s - 1] !== last) break
 
 		e--

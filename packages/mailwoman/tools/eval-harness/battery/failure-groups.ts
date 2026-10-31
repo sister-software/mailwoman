@@ -10,9 +10,9 @@
  *   rows are counted per suite, per suite and country cell, and per suite and cause, where the cause is the one every
  *   arm shares or `mixed`. Fixes are filed under the baseline's cause and breaks under the first seed's cause.
  *
- *   Two readers classify a wrong parse further. The venue shape says how an arm handled the expected venue: right,
+ *   Two readers classify a wrong parse further. The venue shape reports how an arm handled the expected venue: right,
  *   read as another field (`venue→street`), missing with its text merged into another field, or with its text wrong.
- *   The number shape says what became of the expected house number: read as the postcode, joined to the street, moved
+ *   The number shape reports what became of the expected house number: read as the postcode, joined to the street, moved
  *   to another number, or lost. Field values here are the battery's joined fields, so two street spans count as one
  *   street. The address-list reader of 2026-10-28 kept spans apart and counted the same row as `venue→street`.
  */

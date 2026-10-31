@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Counts bare numbers alone in a comma segment over one epoch, at the draw and emitted levels.
+ *   Counts bare numbers in comma segments over one epoch, at both the draw and emitted levels.
  *
  *   Usage: node packages/mailwoman/tools/training/audits/comma-segment-number.run.ts <config> [--json <path>] [--draws <n>]
  */

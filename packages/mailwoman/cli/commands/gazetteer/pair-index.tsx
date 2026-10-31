@@ -130,11 +130,11 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 		const country = options.country.toLowerCase()
 
-		// country-branch: the only Great Britain tuple CSV this command has read is HM Land Registry
-		// Price Paid Data, whose address fields packages/corpus/data/license-decisions.json
-		// refuses (`unchecked-access-free-gb-gb-property-building-1`).
-		// Great Britain builds from the secondary sources alone, and a per-source
-		// license check would replace this branch.
+		// country-branch: the only Great Britain tuple CSV this command has read is HM Land
+		// Registry Price Paid Data. packages/corpus/data/license-decisions.json refuses its
+		// address fields refuses (`unchecked-access-free-gb-gb-property-building-1`).
+		// Great Britain builds from the secondary sources only.
+		// A per-source license check would replace this branch.
 		if (options.source && country === "gb") {
 			throw new Error(
 				`pair-index: a Great Britain build reads no tuple CSV (--source ${options.source}). ` +

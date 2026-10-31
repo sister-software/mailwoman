@@ -32,7 +32,7 @@
  *   bootstrap and over Wilson because it is exact (never below nominal) on independent binomial counts,
  *   discrete samples included, and its bound away from 0 or 1 never collapses: ten exact rows of ten give a
  *   lower bound well below 1, where every bootstrap resample of them is 1 and the percentile interval was
- *   [1, 1]. Its conservatism costs power at small samples, which the policy accepts: a small sample that
+ *   [1, 1]. This conservative interval reduces power at small sample sizes. The policy accepts that cost because a small sample that
  *   cannot show a minimum is met is insufficient evidence.
  *
  *   A difference check (a capability's loss against its permitted loss, and the equal-country objective's Q
@@ -183,7 +183,7 @@ export interface ReleaseVerdict {
 	provenance: ProvenanceClassReport[]
 	/**
 	 * The inference rule that produced the outcomes, as the held-out report records it,
-	 * and how many rows each weights locale package parsed.
+	 * and the number of rows parsed by each weights locale package.
 	 */
 	inference: {
 		rule: string | null

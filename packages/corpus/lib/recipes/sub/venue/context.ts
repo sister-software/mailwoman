@@ -39,21 +39,23 @@ const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 }
 
 /**
- * The `source` a Great Britain house-venue tuple must carry.
+ * The `source` value a Great Britain house-venue tuple must include.
  *
- * The v3 tuples took their GB rows from HM Land Registry Price Paid Data, whose address
- * fields Royal Mail and Ordnance Survey license for non-commercial use only (#2635).
- * Their GB rows carry no `source`.
+ * The v3 tuples took their GB rows from HM Land Registry Price Paid Data.
+ * Royal Mail and Ordnance Survey license its address fields for non-commercial use only (#2635).
+ * Those GB rows have no `source` value.
  */
 export const GB_CONTEXT_TUPLE_SOURCE = "gb-os-open"
 
 /**
- * Load the address skeletons every leg renders onto: GB / US / FR from the house-venue tuples
- * (`#recipes/house-venue-tuples`, whose GB rows come from the `gb-os-open` adapter's OS OpenData rows),
+ * Load the address skeletons every leg renders onto: GB / US / FR from the
+ * house-venue tuples (`#recipes/house-venue-tuples`).
+ *
+ * Its GB rows come from the `gb-os-open` adapter's OS OpenData rows.
  * DE and ES streamed out of OpenAddresses.
  *
- * @throws When a GB tuple does not carry {@linkcode GB_CONTEXT_TUPLE_SOURCE},
- * so a tuples file built from Price Paid Data is refused rather than rendered.
+ * @throws When a GB tuple lacks {@linkcode GB_CONTEXT_TUPLE_SOURCE}, so a tuples file
+ * built from Price Paid Data is refused rather than rendered.
  */
 export async function loadContextTuples(
 	tuplesPath: PathBuilderLike,

@@ -74,7 +74,7 @@ export interface SourceCompletionRecord {
 	 */
 	parts: ParquetFileDescriptor[]
 	/**
-	 * Each split's sorted source-id list, which the coordinator merges into the split files.
+	 * The coordinator merges each split's sorted source-id list into the split files.
 	 */
 	sourceIDs: Record<SplitName, RecordedFile>
 	/**

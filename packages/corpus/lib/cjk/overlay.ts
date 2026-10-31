@@ -41,7 +41,7 @@ import {
 export const CN_UNITS_SOURCE = "coarse-placer-cn-units"
 
 /**
- * The register every Chinese organizational-unit row carries.
+ * Every Chinese organizational-unit row uses this register.
  */
 export const CN_UNITS_REGISTER = "cn-units"
 

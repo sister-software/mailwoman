@@ -49,8 +49,8 @@ export interface KryptoniteOverlayOptions {
  * Read the jsonl's rows.
  *
  * @throws When the rows name more than one source.
- * The files' extract hash covers the whole jsonl, which is exact only while every
- * row belongs to the one source those files hold.
+ * The files' extract hash covers the whole jsonl.
+ * The hash remains exact only while every row belongs to the one source those files hold.
  */
 export async function* canonicalRows(jsonl: string): AsyncIterable<CanonicalRow> {
 	let first: string | null = null

@@ -44,13 +44,13 @@ export interface OSMCorpusRow {
 	lon: number
 	/**
 	 * The name of the administrative area containing the point, at the levels
-	 * `--locality-level` names, written only where the record carries no `addr:city`.
-	 * Absent when no level was named.
+	 * `--locality-level` values, written only when the record has no `addr:city`.
+	 * Absent when the caller supplies no locality level.
 	 */
 	boundary_locality?: string | null
 	/**
-	 * The same, at the levels `--dependent-locality-level` names, written only
-	 * where the record carries no `addr:suburb`.
+	 * The same, at the `--dependent-locality-level` values, written only
+	 * when the record has no `addr:suburb`.
 	 */
 	boundary_dependent_locality?: string | null
 }
@@ -79,11 +79,12 @@ export interface OSMCorpusJSONLStats {
 	 */
 	noStreet: number
 	/**
-	 * Rows written with a `boundary_locality`, or `null` when no locality level was named.
+	 * Rows written with a `boundary_locality`, or `null` when the caller supplies no locality level.
 	 */
 	localityFromBoundary: number | null
 	/**
-	 * Rows written with a `boundary_dependent_locality`, or `null` when no level was named.
+	 * Rows written with a `boundary_dependent_locality`, or `null` when the caller
+	 * supplies no dependent-locality level.
 	 */
 	dependentLocalityFromBoundary: number | null
 	/**

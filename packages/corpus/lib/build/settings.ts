@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file The settings a corpus build resolves from its options, and the derivation of each source's files.
  *
- *   The serial build and the parallel coordinator both read these, so a source's files carry one derivation
- *   whichever path wrote them.
+ *   The serial build and the parallel coordinator both read these. Both paths assign a source's files
+ *   the same derivation identity.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"

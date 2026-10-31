@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The frozen suites the comparison battery scores, which of their rows measure our labeling rather than a model, and
- *   which expected answers are corrected before scoring.
+ *   The comparison battery scores frozen suites. Some rows measure our labeling rather than a model, and some expected
+ *   answers are corrected before scoring.
  *
  *   Each suite is a dataset manifest beside its rows file in {@linkcode batterySuiteDirectory}. A row is "label
  *   convention" when the expected labels follow a choice of ours that a writer of the address would not make, so a
- *   model's score there says how well it learned that choice. Those rows are reported by group and kept out of the
+ *   the model's score measures how well it learned that choice. The report groups those rows and excludes them from the
  *   decision totals.
  *
  *   The five `osm-` suites are read at `v2`: `v1`'s rows with Hong Kong and Macau re-rendered by `formatAddressRow` at

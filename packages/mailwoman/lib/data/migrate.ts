@@ -41,8 +41,9 @@ export const MigrationClass = {
 	 */
 	Importable: "importable",
 	/**
-	 * It records no `layer_manifest` and is a published registry artifact: register it in place
-	 * with a manifest written from the registry's record, which states its role, scope and terms.
+	 * It records no `layer_manifest` and is a published registry artifact: register it
+	 * in place with a manifest written from the registry's record.
+	 * The record states its role, scope and terms.
 	 */
 	RegistryManifest: "registry-manifest",
 	/**
