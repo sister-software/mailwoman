@@ -3,6 +3,10 @@ resolver = "2"
 # Each crate sits beside the npm package that builds or ships it: the tokenizer, encoder and sampler crates under
 # `packages/mtf`, the trainer crates under `packages/trainer`.
 members = ["packages/*/crates/*"]
+# A bare `cargo build` or `cargo test` builds the crates that need no libtorch. `trainer-model`, `trainer-loop` and
+# `trainer-cli` link libtorch through `torch-sys`, whose build script refuses without `LIBTORCH`: build them with
+# `-p <crate>` or `--workspace` once it is set.
+default-members = ["packages/mtf/crates/*", "packages/trainer/crates/trainer-export"]
 
 [workspace.package]
 version = "0.1.0"
