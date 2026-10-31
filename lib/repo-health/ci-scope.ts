@@ -20,6 +20,12 @@ export interface CIWorkspace {
 	name: string
 	directory: string
 	dependencies: string[]
+	/**
+	 * Files detected as runtime input readers.
+	 *
+	 * Tests in this list retain the workspace's transitive inputs in addition to their imports.
+	 */
+	runtimeInputs?: string[]
 }
 
 /**
@@ -133,6 +139,12 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 
 	if (names.size !== workspaces.length) throw new Error("Workspace names are not unique")
 
+	const toolDirectories = new Set(files.flatMap((file) => /^lib\/[^/]+\//u.exec(file)?.[0].slice(0, -1) ?? []))
+
+	for (const directory of toolDirectories) {
+		workspaces.push({ name: `@mailwoman/universe/${directory.slice(4)}`, directory, dependencies: [] })
+	}
+
 	const queue = files.filter((file) => /\.[cm]?[jt]sx?$/u.test(file) && workspaceForFile(file, workspaces))
 
 	await Promise.all(
@@ -146,6 +158,14 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 					ts.ScriptTarget.Latest,
 					true
 				)
+
+				if (
+					/(?:@mailwoman\/core\/(?:fs|module|paths|data-root)|node:(?:fs|child_process|sqlite)|JSONSpliterator|\b(?:execFile|spawn|readFile|readLocal|repoRootPath|workspacePath|resolvePackagePath)\b)/u.test(
+						source.text
+					)
+				) {
+					;(owner.runtimeInputs ??= []).push(file)
+				}
 
 				const addImport = (specifier: string): void => {
 					const dependency = specifier.startsWith(".")
@@ -205,6 +225,8 @@ export function selectCIScope(
 	let rust = forceFull
 
 	for (const file of changed) {
+		if (file.endsWith(".md") || file.startsWith(".agents/") || file === "typos.toml") continue
+
 		const owner = workspaceForFile(file, workspaces)
 
 		if (MTF_CRATE_INPUTS.some((input) => file === input || (input.endsWith("/") && file.startsWith(input)))) {
@@ -258,14 +280,16 @@ export function selectCIScope(
 
 			if (!file.includes("/")) return true
 
-			if (!/^(?:packages\/[^/]+|docs)\//u.test(file) || !/\.test\.tsx?$/u.test(file)) return false
+			if (!/^(?:packages\/[^/]+|lib\/[^/]+|docs)\//u.test(file) || !/\.test\.tsx?$/u.test(file)) return false
 
 			return !excludedFromRootTests(file)
 		})
 		.toSorted()
 
 	const slowFiles = selected
-		.filter((file) => /^packages\/[^/]+\/.*\.integration\.test\.tsx?$/u.test(file) && !excludedFromRootTests(file))
+		.filter(
+			(file) => /^(?:packages|lib)\/[^/]+\/.*\.integration\.test\.tsx?$/u.test(file) && !excludedFromRootTests(file)
+		)
 		.toSorted()
 
 	const has = (name: string): boolean => full || affected.has(name)

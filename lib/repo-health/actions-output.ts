@@ -10,6 +10,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 
+import { readRelatedCITests, selectRelatedCIScope } from "#repo-health/ci-related"
 import { readCIWorkspaces, selectCIScope, type CIScope } from "#repo-health/ci-scope"
 
 const ciEnvironment = liveEnv(
@@ -48,12 +49,20 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 		plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
 	}>(resolvePath(root, ".release-it.json"))
 
-	const scope = selectCIScope(
-		await readCIWorkspaces(root, files),
-		files,
+	const workspaces = await readCIWorkspaces(root, files)
+
+	const scope = await selectRelatedCIScope(
+		selectCIScope(
+			workspaces,
+			files,
+			changed,
+			release.plugins["@release-it-plugins/workspaces"].workspaces,
+			event !== "pull_request"
+		),
+		workspaces,
 		changed,
-		release.plugins["@release-it-plugins/workspaces"].workspaces,
-		event !== "pull_request"
+		(inputs) => readRelatedCITests(root, inputs, "vitest.fast.config.ts"),
+		(inputs) => readRelatedCITests(root, inputs, "vitest.slow.config.ts")
 	)
 
 	const outputs = {

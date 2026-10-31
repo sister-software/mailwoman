@@ -40,6 +40,36 @@ const files = [
 ]
 
 describe("selectCIScope", () => {
+	it.each([
+		"README.md",
+		"packages/core/README.md",
+		"AGENTS.md",
+		"packages/core/AGENTS.md",
+		".agents/skills/example/SKILL.md",
+		".agents/settings.json",
+		"typos.toml",
+	])("leaves test jobs unselected for prose or lint-only input %s", (file) => {
+		const scope = selectCIScope(workspaces, files, [file], [])
+
+		expect(scope).toMatchObject({
+			full: false,
+			affected: [],
+			fastFiles: [],
+			slowFiles: [],
+			fast: false,
+			slow: false,
+			earth: false,
+			react: false,
+			planetary: false,
+			opportunity: false,
+			worker: false,
+			smoke: false,
+			lexicon: false,
+			docs: false,
+			rust: false,
+		})
+	})
+
 	it("selects transitive consumers and their browser suites", () => {
 		const scope = selectCIScope(workspaces, files, ["packages/core/lib/path.ts"], ["packages/core"])
 
@@ -180,6 +210,39 @@ describe("selectCIScope", () => {
 })
 
 describe("readCIWorkspaces", () => {
+	it("records runtime-reader tests so their workspace inputs remain selected", async () => {
+		await using directory = await temporaryDirectory("ci-runtime-inputs-")
+		const root = directory.path
+		await writeLocalJSONFile({ workspaces: ["packages/*"] }, root("package.json"))
+		await writeLocalJSONFile({ name: "reader" }, root("packages/reader/package.json"))
+		const readerFile = "packages/reader/lib/fixture.test.ts"
+		await writeLocalTextFile('import { readLocalJSONFile } from "@mailwoman/core/fs/readers"', root(readerFile))
+		const graph = await readCIWorkspaces(root.toString(), [readerFile])
+		expect(graph.find((workspace) => workspace.name === "reader")?.runtimeInputs).toEqual([readerFile])
+	})
+
+	it("gives each root tool tree its own test selection", async () => {
+		await using directory = await temporaryDirectory("ci-tools-")
+		const root = directory.path
+		await writeLocalJSONFile({ workspaces: ["packages/*"] }, root("package.json"))
+		await writeLocalJSONFile({ name: "a" }, root("packages/a/package.json"))
+		await writeLocalTextFile("export const value = 1", root("lib/first/value.ts"))
+		await writeLocalTextFile("export const value = 2", root("lib/second/value.ts"))
+		const toolFiles = ["lib/first/value.ts", "lib/second/value.ts"]
+		const graph = await readCIWorkspaces(root.toString(), toolFiles)
+
+		const scope = selectCIScope(
+			graph,
+			[...toolFiles, "lib/first/value.test.ts", "lib/second/value.test.ts"],
+			[toolFiles[0]!],
+			[]
+		)
+
+		expect(scope.full).toBe(false)
+		expect(scope.fastFiles).toEqual(["lib/first/value.test.ts"])
+		expect(scope.rust).toBe(false)
+	})
+
 	it("adds literal test imports, dynamic imports, and relative imports to manifest dependencies", async () => {
 		await using directory = await temporaryDirectory("ci-workspaces-")
 		const root = directory.path
