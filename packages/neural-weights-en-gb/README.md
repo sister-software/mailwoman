@@ -137,8 +137,8 @@ output is byte-stable when calibration is omitted.
 
 ## Attribution
 
-This overlay decodes through the `@mailwoman/neural-weights-en-us` model graph, which trained on
-address rows derived from OpenStreetMap. A consumer of this package alone receives rows that graph was
+This overlay decodes through the `@mailwoman/neural-weights-en-us` model graph. That graph trained on
+address rows derived from OpenStreetMap. A consumer who installs only this package receives rows that graph was
 trained to read, so the notice applies here too:
 
 > © OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0
@@ -159,7 +159,7 @@ names from the ONS Postcode Directory. Their attributions read:
 
 The ONS grant covers the directory's rows outside Northern Ireland, and the ward names are English wards.
 
-Versions of this package published before the 2026-10-17 rebuild carry an index that also read HM Land
+Versions of this package published before the 2026-10-17 rebuild include an index that also read HM Land
 Registry Price Paid Data. Price Paid Data's download page excludes its address fields from the
 Open Government Licence, so the index no longer reads them. The base model's card states where its
 training rows used them.

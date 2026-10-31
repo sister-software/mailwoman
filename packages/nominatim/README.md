@@ -103,13 +103,13 @@ the same extension key, verbatim:
 
 `serve` opens the OpenStreetMap address-point layers an operator built under
 `$MAILWOMAN_DATA_ROOT/db/osm/` when `@mailwoman/osm` is installed. A result placed by one of those rows
-carries `openstreetmap:<cc>` and appends the credit
+has `openstreetmap:<cc>` and appends the credit
 "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright" to its `licence`,
-the field upstream Nominatim uses for its own credit. A result from any other register carries that
-register's stamp and the gazetteer credit alone. A deployment without an OpenStreetMap layer serves no
+the field upstream Nominatim uses for its own credit. A result from any other register has that
+register's stamp and the gazetteer credit only. A deployment without an OpenStreetMap layer serves no
 OpenStreetMap data and never emits either. The OpenStreetMap Foundation's Geocoding Guideline asks a
 public geocoder serving its data for a service-level credit, so a public deployment with a layer
-attached also states the credit in its own documentation or interface. `format=jsonld` carries neither
+attached also states the credit in its own documentation or interface. `format=jsonld` includes neither
 field. See the [HTTP APIs reference](https://mailwoman.ai/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit).
 
 ## Status

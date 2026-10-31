@@ -40,7 +40,7 @@ export:
 
 ## Three kinds of evidence
 
-The package answers three different questions about a postcode, and each answer carries its own kind of evidence:
+The package answers three different questions about a postcode, and each answer rests on its own kind of evidence:
 
 - **Syntax:** does a country's postcode grammar accept this text? `acceptPostcode` answers from libaddressinput's
   patterns plus `lib/country-formats/written-forms.ts`. That file holds the written forms the generated data leaves

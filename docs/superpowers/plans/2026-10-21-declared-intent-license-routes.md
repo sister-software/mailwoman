@@ -32,7 +32,7 @@ Cloudflare Workers through Wrangler and `@cloudflare/vitest-pool-workers`, Ink w
 - The `license` field of every public package stays `AGPL-3.0-only OR LicenseRef-Commercial`.
 - No runtime path consults the token: an artifact on disk is read as a free one is.
 - The worker's new vars are optional in `readEnv`, so a deploy before the operator provisions the bucket keeps every
-  existing route up and answers 503 on downloads alone.
+  existing route up and answers 503 on downloads only.
 - `yarn.lock` changes only through `yarn install` after a manifest edit, and the diff is committed with that edit.
 
 ## Review Focus
@@ -71,7 +71,7 @@ Cloudflare Workers through Wrangler and `@cloudflare/vitest-pool-workers`, Ink w
   - `LicenseIntent = { OpenSource: "open-source", NonProfit: "non-profit", Academic: "academic", Student: "student", Evaluation: "evaluation", Commercial: "commercial" } as const` and type `LicenseIntent`.
   - `LicenseKeyPayloadSchema` with `terms: z.enum([...])`, `intent: z.enum([...]).optional()`, `seq: z.number().int().min(1).optional()`, `install: z.uuid().optional()`.
   - `TIER_SCOPE_PREFIX = "tier:"` and `scopeAdmits(scope: LicenseKeyPayload["scope"], artifact: string): boolean`.
-  - `isSelfServicePayload(payload): payload is LicenseKeyPayload & { lid: string }` testing `lid` alone, and `SelfServiceLicenseKeyPayload = LicenseKeyPayload & { lid: string }`.
+  - `isSelfServicePayload(payload): payload is LicenseKeyPayload & { lid: string }` testing `lid` only, and `SelfServiceLicenseKeyPayload = LicenseKeyPayload & { lid: string }`.
   - `grantsCommercialTerms(key: LicenseKeyVerification | null | undefined): boolean`, true for `status === "valid"` and `payload.terms === LicenseTerms.Commercial`.
 
 - [ ] **Step 1: Write the failing tests**

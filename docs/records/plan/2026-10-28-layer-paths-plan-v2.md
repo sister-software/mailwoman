@@ -39,7 +39,7 @@ mailwoman data status
 mailwoman geocode "1275 Pennsylvania Ave NW, Washington, DC 20004" --format text
 ```
 
-Extend `setup` to explain what works now, which requested capabilities are unavailable, and the next
+Extend `setup` to explain what works now, the requested capabilities that are unavailable, and the next
 smallest installation. Do not recommend every global bundle merely because it has global scope.
 Separate parser dependencies, place resolution, rooftop lookup, interpolation, and optional overlays.
 Report an unreadable installation as an error with its path. The existing catch that treats an inventory
@@ -234,13 +234,13 @@ plan's 32-character MD5 cannot populate a SHA-256 field.
 
 A generic normalization strategy is also a separate behavior decision. Record its algorithm version
 and measure query/build agreement and coordinate outcomes before making it the default for newly
-served countries. More installed rows alone do not establish better geocoding.
+served countries. More installed rows by themselves do not establish better geocoding.
 
 ## 8. Verification and documentation requirements
 
 Test clean installation, incremental installation, interrupted transfer, corrupted input, unavailable
 artifact, unsupported schema, refused obligations, failed activation, concurrent activation, rollback,
-and non-default data roots. A snapshot test of printed commands alone does not establish installation.
+and non-default data roots. A snapshot test of printed commands by itself does not establish installation.
 Use a small local registry and fixture artifacts for repeatable integration tests. Run the documented
 published-artifact path separately before release.
 

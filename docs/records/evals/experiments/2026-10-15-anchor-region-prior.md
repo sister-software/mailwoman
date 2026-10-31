@@ -1,6 +1,6 @@
 ---
 title: "The anchor-region prior — the postcode the anchor channel fired on confirms the state name beside it"
-description: What the shipped postcode anchor and the data root hold for a US ZIP, why a 3-logit region boost alone cannot move the space-separated rows, the rule that confirms a region name from the postcode-prefix index's ancestry while suppressing a locality reading the gazetteer holds no evidence for, and the grades on the golden dev split, the board and the battery.
+description: What the shipped postcode anchor and the data root hold for a US ZIP, why a 3-logit region boost by itself cannot move the space-separated rows, the rule that confirms a region name from the postcode-prefix index's ancestry while suppressing a locality reading the gazetteer holds no evidence for, and the grades on the golden dev split, the board and the battery.
 ---
 
 # The anchor-region prior — the postcode the anchor channel fired on confirms the state name beside it
@@ -43,11 +43,11 @@ A region's bounding box is no substitute: New York's box covers every Vermont po
 Montana's covers Sheridan County. The issue's distance leg, every region within reach of the point,
 needs the polygon pass the index builder already runs, and stays open.
 
-## Why a boost alone is not enough
+## Why a boost by itself is not enough
 
 On `05448 New St Vermont` the model's logits on `Vermont` read `B-locality` 6.92 against `B-region`
 1.20, a margin of 5.72. The street-context check scales the FST's locality bias to zero beside `St`,
-so the first version of the prior, which raised the anchored region to the FST's 3-logit cap, left
+so the first version of the prior raised the anchored region to the FST's 3-logit cap and left
 the row at 6.92 against 4.20. On `05851 Lily Pond Rd Vermont` the same version left `B-street` 5.23
 against `B-region` 4.20, because the one-word street suppression is 0.375 logits. One of the five rows,
 `82801 Cresent Pl Wyoming`, flipped under that version.
@@ -67,7 +67,7 @@ whose region entry is one of those ancestors and whose gazetteer name is the wri
 
 The name test keeps an alias out: the FST reaches the District of Columbia under `washington`, and
 the prior gives it no boost. The locality test asks for positive evidence: under `wyoming` the FST
-holds an alias row for Albany and a locality named Wyoming with a referential of 0 inside Wyoming,
+holds an alias row for Albany and a locality called Wyoming with a referential of 0 inside Wyoming,
 and neither keeps the locality reading of `82637 N Seventh St Wyoming`.
 
 ## Traced rows
@@ -115,7 +115,7 @@ under a thousandth of it.
 
 ## What stays open
 
-The prior reads the data root's indexes, so the browser runtime, which loads only package artifacts,
+The prior reads the data root's indexes and the browser runtime loads only package artifacts, so the runtime
 parses without it. The next step for the demo is to ship the index in the weights package. The
 distance leg of #2582 stays open.
 

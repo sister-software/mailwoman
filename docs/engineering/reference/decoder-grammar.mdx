@@ -60,7 +60,7 @@ The shipped model emits per-token scores over a BIO vocabulary (Begin/Inside/Out
 reports the highest-scoring reading that labels the span differently, and the margin to that reading
 split into the logits, each emission prior, the placetype-pair transition bonus, the conventions
 mask and the transitions. For each applied prior it reports what the prior added to the decoded
-reading and which labels change when the prior alone is removed. The terms are the matrices the
+reading and which labels change when only the prior is removed. The terms are the matrices the
 decoder summed, and the explanation refuses to report when they do not reproduce the decoder's
 emission matrix and path.
 
@@ -196,8 +196,8 @@ multi-word names, such as `Өтеген батыр`. Neither detector binds the 
 data, either the admin FST parent chain or the exported locale and address-system head, and the
 per-system table in `packages/codex/lib/address/system/conventions.ts` supplies the mask. Four
 alternatives are rejected. A multi-hot locale flag is too coarse, because one country holds urban,
-rural and PO-only grammars. Speculative parsing, which tries JP then US and compares, multiplies
-latency by the candidate count. Hierarchy data in `PlaceEntry` makes the FST carry two ontologies. A
+rural and PO-only grammars. Speculative parsing (trying JP then US and comparing) multiplies
+latency by the candidate count. Hierarchy data in `PlaceEntry` makes the FST hold two ontologies. A
 WOF role attribute is viable only under the schema-emulation strategy that
 [`SCHEMA.mdx`](./SCHEMA.mdx#typescript-representation) rejects. Within-country variation, such as
 the US urban form beside the rural route, is the known gap.
@@ -273,11 +273,11 @@ evidence can then raise the scores of parses it should rule out.
 4. **Schema decision**: admit or reject the venue→venue containment edge for the POI-under-POI
    production, with a board row as its acceptance test.
 5. **A cardinality term and fitted transitions (#2879 T58, measured 2026-10-30).** Two global terms the current Viterbi
-   can carry, replayed over the 32,805 held-out suite rows on the seed-42 artifact
+   can express, replayed over the 32,805 held-out suite rows on the seed-42 artifact
    (`osm-suites/decoder-arms.run.ts`, record `/mnt/mw/audits/decoder/t58/FINDINGS.md`):
    - The cardinality filter decodes the 20 best label paths and takes the first that opens at most one span of
      `street`, `house_number`, `locality`, `postcode`, `venue` or `region`. A span opens where the tag changes between
-     pieces that hold a letter, mark or digit, which is how the tree counts spans. Graded exactly, it moves 20,115
+     pieces that hold a letter, mark or digit, the way the tree counts spans. Graded exactly, it moves 20,115
      exact rows to 20,259 with none broken. The 18,517 rows both seeds pass are unchanged, and 65 of the 11,259 rows
      both fail now pass (52 of them in the repeated-singleton family). It is off by default:
      `ParseOpts.cardinalityFilter: true` turns it on under Viterbi decoding, and the trace records the rank it took as

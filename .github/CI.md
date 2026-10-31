@@ -62,8 +62,8 @@ Notes:
 
 ## Rust job
 
-Runs the Rust checks (`cargo fmt --check`, `cargo test` and `cargo clippy -D warnings` over the root cargo workspace,
-whose members are `packages/mtf/crates/*` and `packages/trainer/crates/*`) when:
+Runs the Rust checks (`cargo fmt --check`, `cargo test` and `cargo clippy -D warnings` over the root cargo workspace
+with members `packages/mtf/crates/*` and `packages/trainer/crates/*`) when:
 
 - a crate under `packages/mtf/crates/` or the root `Cargo.toml`, `Cargo.lock` or `rust-toolchain.toml` changes, or
 - anything under `packages/trainer/` changes, or
@@ -74,7 +74,7 @@ does not run it.
 
 ## Rust in the fast leg
 
-The training audit and exposure tests load the `mtf-node` addon, which Cargo builds on first use.
+The training audit and exposure tests load the `mtf-node` addon. Cargo builds it on first use.
 `unit-fast` installs the toolchain the root `rust-toolchain.toml` names before its tests start,
 and caches the root workspace's build.
 

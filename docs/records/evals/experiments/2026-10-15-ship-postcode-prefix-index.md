@@ -1,6 +1,6 @@
 ---
 title: "The postcode-prefix index ships in the weights packages — the browser parse runs the anchor-region prior"
-description: How the PFX1 postcode-prefix index travels from the data root into the en-US and en-GB weights packages, the dev overlay, the Hugging Face release directory and the browser loader, which scope stays out and why, what each runtime reads first, and the checks that ran.
+description: How the PFX1 postcode-prefix index travels from the data root into the en-US and en-GB weights packages, the dev overlay, the Hugging Face release directory and the browser loader, the scope that stays out and why, what each runtime reads first, and the checks that ran.
 ---
 
 # The postcode-prefix index ships in the weights packages — the browser parse runs the anchor-region prior
@@ -22,7 +22,7 @@ A package ships a scope's index under the scope's own name, `postcode-prefix-us.
 `postcode-prefix-gb-esw.bin`, and the data root keeps the dated builds. `release.config.json` lists
 the scopes per country under `softFeed.postcodePrefixByCountry`. `mwops release copy-weights` copies
 the newest dated file of each scope by modification time and refuses one whose PFX1 header records
-tier `build-local`, so the Northern Ireland index cannot reach a package by a config edit alone. The
+tier `build-local`, so the Northern Ireland index cannot reach a package by a config edit by itself. The
 dev overlay linker links the same newest file under the shipped name, and `postcode-prefix-files.ts`
 in `@mailwoman/core` is the one listing all of them read.
 
@@ -35,7 +35,7 @@ open.
 The Node weights resolver lists `postcode-prefix-*.bin` in the resolved package directory as
 `postcodePrefixPaths`, the classifier exposes them, and `loadParsePriors` reads those before the
 data-root directory. A checkout whose package directory holds no index still reads the data root,
-and that fallback also reads the `gb-ni` build-local file, which is the dev posture the resolver's
+and that fallback also reads the `gb-ni` build-local file. That is the dev posture the resolver's
 own prefix prior has.
 
 The browser loader takes `postcodePrefixURLs`, fetches each index beside the postcode binaries,
@@ -53,8 +53,8 @@ so the browser needs no resolver package to build it.
 `mwops release copy-weights` ran on 2026-10-15 and wrote `postcode-prefix-us.bin` (25,773 bytes,
 built 2026-08-22) into the en-US package and `postcode-prefix-gb-esw.bin` (77,301 bytes, built
 2026-08-05) into the en-GB package, both from the data root's newest dated file. The weights
-resolver then lists each as a package artifact, and the parse priors loader reads the package file
-alone where it read the three data-root files before. The French overlay ships no index and still
+resolver then lists each as a package artifact, and the parse priors loader reads only the package file
+where it read the three data-root files before. The French overlay ships no index and still
 reads the data-root directory.
 
 Through the geocode session on that package file, the five rows of the #2582 record read the state

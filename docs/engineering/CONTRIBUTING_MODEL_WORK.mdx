@@ -180,7 +180,7 @@ Four mechanisms specialize a locale, from least to most parameter isolation:
    and never the posterior, so the graph holds no in-graph delegate and zero parameters per locale.
 2. **A data-only weights overlay** that declares `mailwoman.baseWeights` and ships no `model.onnx`.
 3. **The script-routed second graph**, the `cjk` family in
-   `packages/neural/lib/weights/families.ts`. The Latin family declares no routing predicate, which
+   `packages/neural/lib/weights/families.ts`. The Latin family declares no routing predicate. That
    is what keeps every Latin request on `en-us`.
 4. **A second Latin graph.** This rung is empty: `base-latn` is a parked deduplication package
    that symlinks the `en-us` card rather than a trained base.
@@ -188,7 +188,7 @@ Four mechanisms specialize a locale, from least to most parameter isolation:
 Exactly three packages ship a model: `en-us`, `cjk` and `base-latn`. FR, US, DE and GB therefore
 share one weight matrix, and a default-on change for one of them moves the others. Its release
 verdict and report must cover every required country and list each measured loss. Before proposing a per-locale graph, measure that locale's labeled supply (a
-per-script CN model was refused on 126 rows) and fix #2313 and #2318, which any split inherits.
+per-script CN model was refused on 126 rows) and fix #2313 and #2318, because any split inherits them.
 
 ## The standard eval battery
 
@@ -378,7 +378,7 @@ meant to attribute an effect.
 
 1. **A withheld-gold stratum is complete only under the identity relation the data has.** A
    negative-control stratum removes the gold candidate so that a correct answer is graded as an
-   invention. `candidate.db` carries about a tenth of its populated localities twice, as a
+   invention. `candidate.db` holds about a tenth of its populated localities twice, as a
    `locality` and a `localadmin` of the same folded name within 5 km, so removing the
    concordance-linked ids leaves the twin answerable, and the join's identity relation is narrower
    than the data's. Before trusting a stratum that claims no correct candidate exists, check three
@@ -406,7 +406,7 @@ meant to attribute an effect.
    breakdown of a score is no evidence that the per-country path ran. Verify the route, the
    resolved artifacts per row, rather than the grouping key.
 6. **An eval that grades a resolver tier grades the population production sends to that tier.**
-   Without the cascade every row lands at the admin tier, which is right for studying a mechanism
+   Without the cascade every row lands at the admin tier. That is right for studying a mechanism
    and wrong for sizing its effect. The US ladder reads postcode-first over 10,000 panel rows but
    decides only the roughly 577 rows the rooftop cascade cannot place, and on that population
    locality-first wins. Before promoting a per-country tier, split the population on whatever the

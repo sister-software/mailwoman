@@ -39,7 +39,7 @@ The sandbox runs the supervisor (`launch/supervisor.ts`), a bash script:
 
 1. It waits up to 300 s for the host to write the YAML, the resolved JSON and a `ready` marker into the container,
    copies the two under `<mount>/launch/<YAML sha256 prefix>/`, and refuses a resolved config that describes another
-   YAML. The inputs travel as files because a sandbox's environment is a Modal secret, which holds at most 32 KiB per
+   YAML. The inputs travel as files because a sandbox's environment is a Modal secret. A Modal secret holds at most 32 KiB per
    value.
 2. It checks the device with `trainer device` and refuses another one. Under `--fresh` it then clears the output
    directory once.
@@ -50,8 +50,8 @@ The sandbox runs the supervisor (`launch/supervisor.ts`), a bash script:
    checkpoint, and a `--branch-from` run resumes from its branch checkpoint until then.
 
 The sandbox exits 0 when training completes and 3 on a refusal. `status` reads that code: `completed`, `refused`,
-`running`, or `stopped` for any other exit, which covers a spent retry count, the timeout and a preemption. `restart`
-starts a fresh sandbox for a stopped run, which resumes from the newest complete checkpoint and keeps every file the run wrote.
+`running`, or `stopped` for any other exit. That covers a spent retry count, the timeout and a preemption. `restart`
+starts a fresh sandbox for a stopped run. The new sandbox resumes from the newest complete checkpoint and keeps every file the run wrote.
 `cancel` terminates the running sandbox, and the checkpoints it committed stay.
 
 ### The trainer image
@@ -74,7 +74,7 @@ launch. `launch/*.test.ts` checks each lifecycle step against a stub boundary an
 
 `launch/settings.ts` reads `MAILWOMAN_MODAL_APP`, `MAILWOMAN_MODAL_VOLUME`, `MAILWOMAN_MODAL_TRAIN_GPU`,
 `MAILWOMAN_MODAL_TRAIN_RETRIES` and `MAILWOMAN_MODAL_R2_SECRET` with the Python launcher's defaults, over the corpus
-package's view, which holds `MAILWOMAN_DATA_ROOT` and `MAILWOMAN_VOLUME_MOUNT`. Modal credentials come from
+package's view. That view holds `MAILWOMAN_DATA_ROOT` and `MAILWOMAN_VOLUME_MOUNT`. Modal credentials come from
 `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` or `~/.modal.toml`.
 
 ## Host audits

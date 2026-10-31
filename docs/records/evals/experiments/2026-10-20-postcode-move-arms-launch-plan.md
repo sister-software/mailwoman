@@ -59,7 +59,7 @@ Decided 2026-10-20: the p000 arm reads no corpus-time order mix. Four v0.7.x ove
 | --------------------- | -------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------- |
 | `rendered-gb-os-open` | `v0.7.10-gb-county/…/rendered-gb-os-open.*.parquet`                        | 786,626 / 6,706 / 6,668 | rendered with `--intl-fraction 0.0664`                |
 | `rendered-de`         | `v0.7.0-de-holdout/…/part-synth-german-00000.*.parquet`                    | 187,485 / 8,260 / 8,255 | rendered with `--intl-fraction 0.4`                   |
-| `rendered-fr-order`   | `v0.7.0-de-holdout/…/part-synth-fr-order-train.train.parquet`              | 50,000 train            | includes variant C, which #2750 removed               |
+| `rendered-fr-order`   | `v0.7.0-de-holdout/…/part-synth-fr-order-train.train.parquet`              | 50,000 train            | includes variant C, removed by #2750                  |
 | `overture`            | `v0.7.0-de-holdout/…/part-overture-multilocale-3order-train.train.parquet` | 2,400,000 train         | reversed rows in 12 countries from a retired producer |
 
 In the first row group of the v0.7.10 train files (observed, 20,000 rows each), `[postcode, locality]` is contiguous in

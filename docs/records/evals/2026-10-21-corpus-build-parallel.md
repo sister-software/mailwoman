@@ -35,14 +35,14 @@ converts one staged part of 151,234 rows at instance limits 1, 2 and 4, twice ea
 the `SET threads` line removed, the same test fails with two digests.
 
 Consequence (decided). A branch build's train parts differ in bytes from a `main` build's. Every part with more
-than one row group differs, which here was 16 of 18 parts. Rows, row order, row counts, the first and last
+than one row group differs. Here that was 16 of 18 parts. Rows, row order, row counts, the first and last
 source id of each part, the split files and every manifest field agree. Checked row by row on three parts
 (`ban` train 0, `usgov-nppes` train 5, `state-tx-notaries` train 3): 0 rows differ in position or content.
 
 ## Measurement
 
 Input: `state-tx-notaries` in full, `usgov-nppes` and `ban` at `limit: 1000000`, which gives 14,596,079 aligned
-rows and 18 parquet parts. Host: lab, 16 cores, 29.2 GiB. The CI runners were idle. Each arm ran alone with
+rows and 18 parquet parts. Host: lab, 16 cores, 29.2 GiB. The CI runners were idle. Each arm ran by itself with
 `--fresh` and `--max-old-space-size=12288`, with no profiler. The `main` arm ran the main checkout at 3e632daac
 through its compiled CLI. The branch arms ran this worktree at its final code. The harness sampled the process
 tree's RSS once a second, and the temporary root and DuckDB spill every three seconds.
@@ -60,7 +60,7 @@ At `--jobs 3`, a parallel build also holds each source's sorted list and its own
 Before the single-thread conversion, at DuckDB's default threads, the same arms took `--jobs 1` 503 s,
 `--jobs 3` 311 s and `--jobs 3` with ranges 266 s. Those builds wrote run-dependent bytes, so their timings
 are kept only to show the cost of the fix. On this input the single-thread conversion costs about 15 s
-serially and about 100 s at `--jobs 3`. There the `finish` tasks, which are the parquet writers, are the critical path
+serially and about 100 s at `--jobs 3`. There the `finish` tasks (the parquet writers) are the critical path
 (`usgov-nppes/finish` 178 s, `ban/finish` 167 s).
 
 Per-worker peaks at `--jobs 3` (from `WORKERS.json`, `process.resourceUsage().maxRSS`): adapters 1.45 to 2.02 GiB,
@@ -101,7 +101,7 @@ Covered by `packages/corpus/lib/build/parallel.test.ts`, all passing. The fixtur
 - an interruption between conversions, with a stray `data.parquet.partial.*` file present;
 - a removed completion record, and a record over a missing part, each rebuilt from its source;
 - a failed worker, where the other sources finish and `--resume` completes the build;
-- a live lock, which is refused, and a dead owner's lock, which is taken over;
+- a live lock (refused) and a dead owner's lock (taken over);
 - `--jobs` over budget and a resident adapter that does not fit, both refused.
 
 Every resumed build reaches the serial snapshot.
@@ -114,7 +114,7 @@ Scaled from the profile's serial phases (adapters 1 h 52 min, align 2 h 22 min, 
 - Serial with step 1: about 8 h. The split phase drops to the sort, about 8 min.
 - The single-thread conversion adds an unmeasured share at full scale. On this input it added 3% serially.
 - `--jobs 3` with align ranges: the critical path is `usgov-nad`, about 355 M rows. At this input's `finish`
-  rate under contention (1 M rows in 18 to 24 s), its parquet write alone takes 1 h 50 min to 2 h 20 min.
+  rate under contention (1 M rows in 18 to 24 s), its parquet write by itself takes 1 h 50 min to 2 h 20 min.
   Its adapter adds about 50 min (scaled from the v0.7.0 manifest, unmeasured), and its ranged align about 25 min.
   Predicted wall time: **3 h 15 min to 4 h**, against about 8 h serial. The profile's earlier estimate of 3 h
   assumed a multi-threaded conversion.

@@ -200,8 +200,8 @@ npm install @mailwoman/osm
 npx mailwoman data build osm-address-points --countries FR --region europe/france/corse --dry-run
 ```
 
-Corsica is a part of France, so the build clips the 34 MB extract to France's geoBoundaries outline, which
-it downloads beside the extract. Then build it, install it, and select it:
+Corsica is a part of France, so the build clips the 34 MB extract to France's geoBoundaries outline and
+downloads it beside the extract. Then build it, install it, and select it:
 
 ```bash
 npx mailwoman data build osm-address-points --countries FR --region europe/france/corse --activate

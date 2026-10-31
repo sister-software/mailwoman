@@ -12,7 +12,7 @@ the registry and are never registered in it: `lib/baseline.ts` writes the debt b
 knip reports it.
 
 Every check enumerates `RepoContext.trackedFiles` from git, so an untracked file is invisible: `git add` a new file
-before running a check on it, or a green local run says only that git has not been told about the file. The
+before running a check on it, or a green local run means only that git has not been told about the file. The
 tracked-only walk is deliberate, so a scratchpad or an agent worktree never fails a run.
 
 ## Source-comment triage

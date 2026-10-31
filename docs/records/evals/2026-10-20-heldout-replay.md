@@ -10,8 +10,8 @@ Observed: the development dataset froze, and on a second pass all three arms wer
 origin/main 3e632daac. Every spec v6 verdict reads insufficient evidence, because no provenance file exists and every
 row is `unknown`, a class v6 admits to no check. The replay results are under "Replay from the main checkout" below.
 
-First attempt (superseded): observed, the worktree resolves every `@mailwoman/*` package through the main checkout,
-which was at d136b0052. That checkout's `@mailwoman/neural` has no `NeuralAddressClassifier.unfedChannels`, which
+First attempt (superseded): observed, the worktree resolves every `@mailwoman/*` package through the main checkout.
+The main checkout was at d136b0052. That checkout's `@mailwoman/neural` has no `NeuralAddressClassifier.unfedChannels`, which
 26ff00be4 added. `scoreHeldoutWeights` reads it (`heldout/per/country.ts`), and the first arm failed with
 `TypeError: undefined is not iterable` at `const [unfed, ...more] = classifier.unfedChannels`. Decided: module
 resolution was not altered to work around this. The scoring and evaluation steps need a checkout whose installed
@@ -78,9 +78,9 @@ the data root lacks them. Observed model hashes:
 
 The v7100 sha256 equals spec v6's published identity, `e90aeab4…d9aca9`. Each older graph was given the en-us card it
 shipped with, taken from git at 321d2bf76~~1 and fa328896e~~1. Every overlay file (FST, pair indexes, postcode tables,
-lexicons) comes from the current data root, which is the 10.7.0 set. A score for an older arm would therefore
+lexicons) comes from the current data root. That root is the 10.7.0 set. A score for an older arm would therefore
 measure that graph with 10.7.0 overlays rather than the package as it shipped (inferred confound). The 10.4.0 package
-carries the v720 graph, so it adds no third graph.
+contains the v720 graph, so it adds no third graph.
 
 ## Replay from the main checkout
 
@@ -107,7 +107,7 @@ exactly. The evaluator reported no bound, because no row was admitted. The bound
 `report.json` by `clopperPearson` (`release/bounds.ts`) at v6's per-tail level, `adjustedPercentile(0.95, 15,
 bonferroni)` = 0.001667, the same functions and level the evaluator would use. The computation is
 `scratchpad/2026/10/20/replay/table.ts`. Inferred: this computation is outside the evaluator, so it describes the
-data and carries no verdict. Its IT, AU and NZ upper limits at 100% equal the record's best-possible values above
+data and contains no verdict. Its IT, AU and NZ upper limits at 100% equal the record's best-possible values above
 (0.119, 0.819, 0.796), which checks the level.
 
 | Country |  Min | Groups | v7100 (10.7.0) exact [lower, upper] | v720 (10.1.0–10.6.0) exact [lower, upper] | v440 (9.1.0–10.0.0) exact [lower, upper] |
@@ -164,7 +164,7 @@ Inferred: the candidate identity reason would block a pass on its own even with 
 
 ## Not run
 
-- Overlap audit: not requested. Observed estimate: the manifest's 859 train files total 78.8 GB, which is under the
+- Overlap audit: not requested. Observed estimate: the manifest's 859 train files total 78.8 GB. That is under the
   100 GB ceiling. Test and val files add 0.36 GB each.
 
 ## Problems found in the tools and the corpus
@@ -185,12 +185,12 @@ Inferred: the candidate identity reason would block a pass on its own even with 
    rename the method by hand, or the version will not change.
 4. Observed: `freeze.run.ts` opened DuckDB at its default memory share of host memory. Fixed: it now takes
    `--duckdb-memory-gib` and `--duckdb-threads`.
-5. Observed: spec v6's grouping assumption says the dataset quota counts groups against 1,000 per country, but
+5. Observed: spec v6's grouping assumption is that the dataset quota counts groups against 1,000 per country, but
    the sampler counts rows. US and FR sampled 1,000 rows over 999 groups. Unfixed.
 6. Observed: `stage-candidate-cache.run.ts` only links files and has no copy mode. It also reports `calibration.json`
    and `calibration-per-locale.json` as absent from the data root, so a staged cache lacks files that the published
-   package carries. Unfixed.
-7. Observed: the two tools disagree about what an arm is. `per/country.run.ts` takes a cache root, which holds
+   package contains. Unfixed.
+7. Observed: the two tools disagree about what an arm is. `per/country.run.ts` takes a cache root that holds
    `node_modules/@mailwoman/neural-weights-*`, and writes that root as the report's arm. `evaluate.run.ts` must name
    the same arm string and hashes `<arm>/model.onnx`, which a cache root lacks. Worked around in the cache with the
    tools left unchanged: each cache root got a hard link to its `neural-weights-en-us/model.onnx`

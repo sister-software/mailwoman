@@ -37,7 +37,7 @@ Per scenario, over R evaluations:
   only when the truth meets them.
 - **Insufficient evidence:** the share of verdicts that are insufficient evidence.
 
-Every rate carries a 95% Wilson interval over R.
+Every rate has a 95% Wilson interval over R.
 
 Run: `node packages/mailwoman/tools/eval-harness/release/simulate.run.ts --scenarios
 packages/mailwoman/tools/eval-harness/release/simulation-scenarios.json --repetitions 200 --seed 2763 --out
@@ -113,7 +113,7 @@ both):
    are [1, 1], and the evaluator's rule (lower bound and estimate at least the minimum) passes. The same
    mechanism explains the 63 to 70% per-country coverage in `small-10-rows`, where 10/10 samples are common at
    a true rate of 0.90. The nominal per-check coverage there is 99%. The percentile bootstrap gives no width on
-   a discrete score at 0 or 1 successes or failures. The module's comment says the rounding of the percentile
+   a discrete score at 0 or 1 successes or failures. The module's comment claims the rounding of the percentile
    index "widens rather than narrows an interval on discrete scores", but rounding cannot widen an interval
    whose resamples are all identical. This is a defect in `evaluate.ts` against the policy sentence "A measured
    score below a requirement cannot pass because its interval is wide": a small sample passes here because its
@@ -168,7 +168,7 @@ current specification moved to `specs/release-requirements.v2.json` (schema 2). 
 - **Group handling.** Schema 2 requires `statistics.rowsIndependent` with no default. When it is `false`, a check
   that reads a row without a group reports no bounds and is insufficient evidence. v2 sets it to `false`. The
   simulation's synthetic specification also sets it to `false`, so the `row_identity` scenarios now measure
-  the refusal: their checks have no bounds, which the coverage columns count as not covering.
+  the refusal: their checks have no bounds, and the coverage columns count such checks as not covering.
 - The bootstrap is gone, so schema 2 refuses `resamples` and `seed`, and the verdict reports
   `rowsIndependent`, each check's `method`, `effectiveRows`, `degreesOfFreedom` and `degenerateStrata` in
   place of `failedResamples`.

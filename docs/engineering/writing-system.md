@@ -192,7 +192,7 @@ rather than by reordering the negation.
 9. **Public prose names no individual and no community call-out.** An organization appears only in a
    neutral, dated, factual comparison. A competitor's customers are never quoted, and a public-service
    benchmark such as BAN or Addok is framed as complementary. Aim an edge at the reader's frustration and
-   never at a named project.
+   never at one particular project.
 10. **Committed text attributes no design to another vendor's product.** A code comment, a doc page, a
     recipe header, a config comment or a model card cites the paper rather than the product's source
     (Nominatim, Pelias, …). A public data download URL is a data dependency rather than an attribution.

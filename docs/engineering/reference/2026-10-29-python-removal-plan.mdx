@@ -28,7 +28,7 @@ the correction and the source that confirms it.
 runs a `rust` job in place of `python` (T40). The affix and dependent-locality heads and `inject_first_token` are
 retired rather than exported (T34). The 2,000-step CUDA probe ran on the Rust trainer (T37), and the 90,000-step run
 is deferred (T36, decision D1). Each phase section below records the tree as of that phase's work, so a sentence there
-that says a Python file is kept, or that a step is unrun, describes that date. The notes marked "2026-10-30" point to
+that reports a Python file is kept, or that a step is unrun, describes that date. The notes marked "2026-10-30" point to
 what replaced it.
 
 ## 1. Inventory
@@ -321,7 +321,7 @@ run. None runs as part of this plan's commit.
 Observed on 2026-10-29 on the lab host. The exporter is `packages/trainer/crates/trainer-export` in the new cargo
 workspace `packages/trainer`, which has no npm package because no JavaScript module imports it. It reads
 `pytorch_model.bin` directly with a zip reader and a pickle machine that records `REDUCE` calls without running
-them, so no converter to safetensors was needed. Both checkpoints store bfloat16 tensors, which the reader widens to
+them, so no converter to safetensors was needed. Both checkpoints store bfloat16 tensors. The reader widens them to
 float32 exactly, as `load_state_dict` does. It writes the graph with prost types generated from `onnx.proto` of onnx
 1.22.0. The quantizer follows onnxruntime 1.30.0's `quantization/` source for `quantize_dynamic(QInt8)` with its
 defaults: the `Gemm` to `MatMul` rewrite, `MatMulInteger` with `DynamicQuantizeLinear`, uint8 `Gather` tables, and
@@ -360,8 +360,7 @@ tokenizer. Every tenth probe is also run trimmed to its real length, so the `seq
 The initializer row was re-measured on 2026-10-30 and recorded in
 `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/quantizer-initializers/` (`record.json`, `FINDINGS.md`, one diff report
 per arm). en-us reproduces at 189 of 189. Arm B's reference fp32 graph is not on disk: the `model-fp32.onnx` beside
-its int8 was written later and its float initializers differ, so arm B's 189 of 189 rests on the 2026-10-29 run
-alone.
+its int8 was written later and its float initializers differ, so arm B's 189 of 189 rests on the 2026-10-29 run only.
 
 The shipped en-us int8 measured 43.7 ms p50 and 46.1 ms p95 on the same host in the same session. The SLO suite
 has no WebGPU arm, so the WebGPU constraint is untested. The quantizer's unit tests cover the stale `value_info`
@@ -370,7 +369,7 @@ dynamo graph's 514 annotations pass through the same path.
 
 What does not match, and why:
 
-1. **Graph bytes, node names and initializer names** differ, which §3 permits. The Rust fp32 graph has 105
+1. **Graph bytes, node names and initializer names** differ, as §3 permits. The Rust fp32 graph has 105
    initializers and 18 `Reshape` nodes, against 115 and 72.
 2. **The fp32 logits differ by up to 4e-5.** onnxruntime's optimizer fuses `input_ln` and `final_ln` into
    `SkipLayerNormalization` in the reference fp32 graph and only `final_ln` in the Rust one (observed in each
@@ -386,7 +385,7 @@ What does not match, and why:
    at `node_add_440`); the Rust graph computes it. The runtime feeds one row per run, so no served output changes.
 5. **Not built yet:** the char path's CharCNN, the span scorer's `span_scores`, the affix and dependent-locality
    heads, and `inject_first_token`. The exporter refuses each by name. The quantizer refuses `Conv`, `Attention`,
-   `LSTM`, `EmbedLayerNormalization` and subgraphs, which onnxruntime would quantize. (2026-10-30: the CharCNN, the
+   `LSTM`, `EmbedLayerNormalization` and subgraphs, though onnxruntime would quantize them. (2026-10-30: the CharCNN, the
    span scores and the `Conv` rule are built. The heads and `inject_first_token` are retired, #2879 T34.)
 
 The Rust export took 0.49 s and 0.57 s with peak RSS 246 MB and 322 MB, and quantization 0.48 s and 0.64 s. The Python
@@ -442,7 +441,7 @@ library other than the driver's `libcuda.so.1`, which a build container lacks an
 download.pytorch.org serves 2.13.0 for `cu126`, `cu129`, `cu130` and `cu132`, and not `cu118` to `cu128` or `cu131`
 (observed). **Decided: `cu130`.** The Python trainer runs `torch 2.12.0+cu130` (the `versions` function's output), so
 a Rust run read against a Python control changes libtorch and not the CUDA major. Modal's host driver serves CUDA 13 to
-an A100 (`guide/cuda.md`: driver 610.57.04, CUDA 13.3). Neither CUDA archive carries the CUDA runtime: the zip's
+an A100 (`guide/cuda.md`: driver 610.57.04, CUDA 13.3). Neither CUDA archive contains the CUDA runtime: the zip's
 central directory lists only the 11 torch libraries, and `ldd` on the first build found `libcudart.so.13` and
 `libcupti.so.13` (then `.so.12` for `cu129`) unresolved. The image therefore installs the `Requires-Dist` set of the
 `torch-2.13.0+cu130` cp312 wheel, `CUDA_RUNTIME_WHEELS`: `cuda-toolkit[…]==13.0.3`, `nvidia-cudnn-cu13==9.20.0.48`,
@@ -647,7 +646,7 @@ source_weights`. Its `main` given `resolve_config_reps`'s weights (200,000 rows,
   the Python fitter writes today from the same inputs, in both the Python and the TypeScript refit.
 - The standalone audit Modal functions in `launch/audits.py` are deleted. The audits run on a host that mirrors the
   volume, as `launch/AGENTS.md` describes. The preflight in `launch/train.py` still runs the Python
-  `epoch_mixture`, `validation_coverage`, `label_support` and `preflight` modules inside the training image, which
+  `epoch_mixture`, `validation_coverage`, `label_support` and `preflight` modules inside the training image, since it
   has no Node runtime. Those four modules and their tests are deleted when the launcher moves (Phase 7).
 
 Deleted: `launch/audits.py`, `audits/{opening_token,region_code_token,comma_segment_number,suffix_feed,config_keys}.py`,
@@ -688,7 +687,7 @@ record under `$MAILWOMAN_DATA_ROOT/audits/port-parity/<builder>/` holds both out
 | `fragment-assay`              | 216,570 rows (schema equal) and 24,063 dev lines. 2,000 differ (1,803 and 197), each an NZ row ending `Aotearoa` where Python wrote `New Zealand` (`FINDINGS.md`) |
 
 The TW and JP registry counts (25,006 and 176,544 aligned) were not re-measured: that run read a scratch data root
-assembled by hand, which no longer exists, and the record states its inputs only by name.
+assembled by hand. That root no longer exists, and the record states its inputs only by name.
 
 Classified differences (**decided**):
 
@@ -697,7 +696,7 @@ Classified differences (**decided**):
   equal, as with `label_support`.
 - `synthetic-secondary` maps only to authored inputs, so it has no license id, and both builders refuse its rows at the
   stamp on `main`. The port keeps the refusal.
-- The Python FR tuple sampler named the board's reserved surfaces by a working-directory path that resolves from no
+- The Python FR tuple sampler located the board's reserved surfaces by a working-directory path that resolves from no
   directory of the checkout, so the reserved set was empty: `house-venue-tuples-v6.jsonl` holds 275 FR tuples on 132 reserved
   streets. The port reads the list from the repository and refuses when it is missing. Python as committed keeps 10 more
   FR tuples out of 2,000. The US and GB tuples are unchanged, because the filter runs after the draws. On 2026-10-30
@@ -747,9 +746,9 @@ Classified differences (**decided**):
   Multilingual Plane sorted before U+FF06 and the first overlay vocabulary differed at `𨦻`. The CJK builders now sort
   with `compareByScalarValue`, the code-point order Python's `sorted` gives, and the comparator's comment states its
   order. Its other callers are unchanged.
-- `cjk_share` named a CJK letter by `unicodedata.name`. JavaScript has no character names, so the port freezes the 32
+- `cjk_share` identified a CJK letter by `unicodedata.name`. JavaScript has no character names, so the port freezes the 32
   code-point ranges CPython 3.12 (Unicode 15.0) names, and counts letters by general category `L`. Node's tables are
-  Unicode 17.0, which has 9,568 letters Python's `isalpha` refuses. A row holding one has a larger denominator here.
+  Unicode 17.0 and hold 9,568 letters Python's `isalpha` refuses. A row holding one has a larger denominator here.
 - The overlay's `--volume-root` defaults to `/data/corpus/versioned`, and `MAILWOMAN_VOLUME_MOUNT` is not read. A caller
   on another mount passes the flag.
 - The overlay takes the first `char-vocab-*.json` in code-point order where Python took the first the directory listed.
@@ -801,7 +800,7 @@ The Python package `corpora/` and its tests are deleted. The differences are dec
 5. `int(rec["i"])` is reproduced by `pythonInt`. Node's Unicode tables are newer than CPython 3.12's, so a decimal
    digit assigned after Unicode 15.0 is read in TypeScript and refused in Python.
 
-Python's `json.loads` accepts `NaN` and `Infinity` in a completion line, which `JSON.parse` drops.
+Python's `json.loads` accepts `NaN` and `Infinity` in a completion line, but `JSON.parse` drops them.
 
 After the deletion, `source_rights.py` has no importer outside the config loader (`config/load.py` and
 `config/dump.py`) and the tests. `add_unshippable_flag` and `write_rights_record` had no other caller, so they are
@@ -947,7 +946,7 @@ with the Python loader's. Each entry is the largest absolute difference over eve
 | supervised, all channels, CRF built, CRF weight 0 | 0   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
 | supervised, CRF loss weight 0.1                   | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
 | supervised without the CRF                        | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
-| each channel alone (6 cells)                      | 0   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
+| each channel by itself (6 cells)                  | 0   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
 | supervised, bf16 CPU autocast                     | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
 | CRF loss weight 0.1, bf16 autocast                | —   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
 | `grad_accum_steps` 4                              | 0   | 0            | 0   | 0, 0              | 0, 0            | 0   | 0   |
@@ -959,9 +958,9 @@ with the Python loader's. Each entry is the largest absolute difference over eve
 The plan's tolerances (1e-5 relative forward and loss, 1e-4 relative gradients, 1e-6 absolute updates) are met with
 no difference at all. Two findings on the way, both in the comparison rather than the trainer: the first Rust pass ran
 at libtorch's default 8 threads against the reference's 4. That moved the char path's logits by up to 2.4e-5 relative
-and its convolution gradients by up to 3.8e-6 absolute, and one LayerNorm bias gradient by 1.46e-4 relative, which
+and its convolution gradients by up to 3.8e-6 absolute, and one LayerNorm bias gradient by 1.46e-4 relative. Together these
 failed 3 of the 16 cells on gradients (the other 13 stayed inside the tolerances). At 4 threads every cell is equal, so the thread count is part of a record. And
-the first MLM capture applied the supervised curricula in its train-mode pass, which the MLM loop does not. The
+the first MLM capture applied the supervised curricula in its train-mode pass, and the MLM loop does not. The
 corrected capture is the one above. Stage 6 also checks that `find_latest_checkpoint` passes over a later
 `step-*` directory without `training_state.json`.
 
@@ -981,7 +980,7 @@ system as `locale_hint`. Largest absolute difference from the Rust forward: `log
 to 0.102 on `logits`, which is the quantization and not a parity bar.
 
 **What remains.** Stage 8, one GPU run of a current recipe on the CUDA libtorch, graded by `training-arc` and
-`eval-model`, needs spend approval. It also checks the CUDA autocast path, which this CPU work exercises only through
+`eval-model`, needs spend approval. It also checks the CUDA autocast path. This CPU work exercises it only through
 the same shim on the CPU device. The torch 2.12 → 2.13 upgrade of the Python export pin. The items listed under "Not
 built". The launcher (Phase 7) calling `trainer train` in place of the Python entry point. The Python trainer stays
 until stage 8 and the launcher land. (2026-10-30: the launcher landed, the export pin went with the Python tree, and
@@ -1000,7 +999,7 @@ Caller checklist: `export/*` ← `cli/commands/{export,quantize,package,split_em
 - Preservation: §3 row "ONNX export and quantization".
 - Verification: the reference checkpoint and the shipped `en-us` checkpoint re-exported and quantized, the Node and
   browser checks, and the iOS WebGPU check recorded before any promotion. `onnx-export-parity.run.ts` compares
-  against the pinned exporter's graphs as in §4.1. The export's own check against the model, which `verify_parity`
+  against the pinned exporter's graphs as in §4.1. The export's own check against the model, the one `verify_parity`
   runs against torch today, needs the Rust trainer's forward pass from Phase 5.
 - Deletion: `export/`, `cli/`, `__main__.py`, `env.py`, `paths.py`, `protocols.py`, `types.py`,
   `packages/neural/test/fixtures/generate-split-embeddings.py`, and their tests. After this phase
@@ -1045,7 +1044,7 @@ status" section below ports it and moves both.
 **Split embeddings.** `trainer-export split-embeddings --input <int8> --out-dir <dir> [--counts <.npy|.json>]
 [--coverage 0.99] [--always 0,1,2,3]` writes `encoder.onnx`, `embeddings.rows` and `embeddings-hot.bin`. On the
 committed fixture (`packages/neural/test/fixtures/split-embeddings/`) the three files equal the Python output byte for
-byte, which `cargo test -p trainer-export` checks. On the shipped en-us int8 (73,143 × 384 table) with seeded counts,
+byte, as `cargo test -p trainer-export` checks. On the shipped en-us int8 (73,143 × 384 table) with seeded counts,
 coverage 0.99 and ids 0 to 3 always kept, the Python and Rust outputs are equal byte for byte: `encoder.onnx`
 11,347,342 B, `embeddings.rows` 28,086,944 B, `embeddings-hot.bin` 15,479,292 B (39,895 rows). The Rust split took
 0.11 s. The printed summary's `scale` is the float32 scale widened to float64, as Python prints it.
@@ -1062,13 +1061,13 @@ byte for byte, with `completed_at` given to both (`$MAILWOMAN_DATA_ROOT/audits/t
    itself. That eval moves with `evaluation/`.
 2. The tool refuses a checkpoint whose `num_labels` differs from the active label set's BIO count. The Python command
    wrote the stage 3 labels for any head.
-3. `--completed-at` fixes the card's timestamp, which the Python command took from the clock.
+3. `--completed-at` fixes the card's timestamp. The Python command took it from the clock.
 4. Neither writes `crf-transitions.json`: the Python command called `export_crf_transitions` with its default loss
-   weight 0, which returns `None`.
+   weight 0. That call returns `None`.
 
 **Stale `value_info`, shapes, ids and labels.** The quantizer's stale-annotation test stands. The split drops every
 `value_info` entry, including one that contradicts the table, and still writes the fixture's bytes. The exporter
-annotates `Conv`, `Relu` and `ReduceMax` outputs, so the char front-end carries shapes. The `sequence` axis is
+annotates `Conv`, `Relu` and `ReduceMax` outputs, so the char front-end has shapes. The `sequence` axis is
 checked by the trimmed probes and the batch axis by the stacked ones. The pad character id 0 is masked to `-1e4`
 before the window maximum, as `CharCNNEmbedding` masks it. The control pieces 0 to 3 are in every hot subset. The
 exporter refuses an `id2label` shorter than the head. The token-path graph is unchanged: re-exporting the Phase 5
@@ -1094,7 +1093,7 @@ procedure now quantizes on the host with `trainer-export quantize`. Kept, with t
 - `export/package_weights.py`: `cli/commands/smoke.py` (the smoke card) and `launch/artifacts.py`
   (`export_semi_crf_transitions`).
 - `cli/` (`train`, `eval`, `smoke`), `__main__.py`, `env.py`, `paths.py`, `protocols.py` and `types.py`: the Python
-  trainer, which stays until stage 8 and the launcher land.
+  trainer. It stays until stage 8 and the launcher land.
 
 `verify-export-quant-versions.run.ts` still reads `corpus-python/launch/app.py`, because the TS image definition is
 Phase 7 work.
@@ -1185,22 +1184,22 @@ for. `tests/units.rs` covers the refusal and the CUDA bf16 autocast path.
 
 **Trackio: retired (decided).** No committed config enables it (0 of 264), and the launcher's `--trackio` flag is the
 only path that does. `train_log.csv` records the loss, rate, validation loss, macro F1, and per-tag F1 and support that
-the mirror sent. The mirror also sent the cross-pollution rates and the locale accuracy, which the console prints and
-the CSV omits. `trainer train` refuses `train.trackio_enabled: true` by name. The CSV-to-HF uploader in the Phase 5
+the mirror sent. The mirror also sent the cross-pollution rates and the locale accuracy. The console prints them and
+the CSV omits them. `trainer train` refuses `train.trackio_enabled: true` by name. The CSV-to-HF uploader in the Phase 5
 item list is unbuilt. It is optional Phase 7 work.
 
 **Python moved and deleted.** Deleted: the `export_onnx` Modal function in `launch/artifacts.py`,
 `export/package_weights.py::export_semi_crf_transitions`, and its two tests in `test_span_export.py`. The launcher's
 procedure in `launch/AGENTS.md` and `REPRODUCIBILITY.md` now fetches the checkpoint through `push_artifact_r2` and runs
-`trainer-export export-onnx` on the host. Kept, each for the Python trainer, which stays until stage 8 and the
+`trainer-export export-onnx` on the host. Kept, each for the Python trainer that stays until stage 8 and the
 launcher land: `export/onnx.py`, `graph.py` and `wrappers.py` (`cli/commands/smoke.py`, `scripts/verify_toolchain.py`),
 `exposure/report.py` (`train/loop.py`), `data/loader/verify.py` (`train/setup.py`), `features/conventions.py`
 (`nn/encoder/heads.py`), and `observability/` (the Python Trackio mirror).
 
-**Not done.** Stage 8 on CUDA libtorch, which also exercises CUDA autocast for the span and mask paths: startup on
+**Not done.** Stage 8 on CUDA libtorch, including CUDA autocast for the span and mask paths: startup on
 CUDA is observed, and the 2,000-step probe and the 90,000-step run are unrun. A browser and
 iOS WebGPU check of a span-scorer graph. The launcher step that runs `realized.run.ts`. The affix and
-dependent-locality heads and `inject_first_token` in the exporter, which it still refuses by name. (2026-10-30:
+dependent-locality heads and `inject_first_token` in the exporter, each still refused by name. (2026-10-30:
 retired, #2879 T34.)
 
 ### Phase 7 — TypeScript launcher
@@ -1232,17 +1231,17 @@ T38, T39.) **Built.** `corpus-python/launch/train_rust.py` holds `stage_launch_i
 in `launch/train.py` takes `--trainer rust`, and `--cpu`, `--threads`, `--fail-at-step`, `--timeout-seconds` and
 `--retries` for the lifecycle checks. `launch.call_status` gains `--logs <n>` and `--cancel`. Each attempt:
 
-1. calls `verify_launch` in the training image, which runs `verify_receipt`, `resolve_run_paths` and
+1. calls `verify_launch` in the training image, a function that runs `verify_receipt`, `resolve_run_paths` and
    `find_latest_checkpoint` from the Python launcher and refuses without the preflight receipt;
 2. refuses a resolved config whose `config_sha256` or `output_dir` differs from the staged YAML's;
 3. takes the run lock;
 4. runs `trainer train <resolved.json> --resume auto` (`--resume <branch_from>` only while the output directory holds
    no checkpoint), refuses a `device=` line other than the function's device, commits the volume after every
-   `[save]` line, and raises on a non-zero exit. No attempt deletes anything. `--fresh` still clears in the preflight,
-   which now refuses while a running call holds the lock.
+   `[save]` line, and raises on a non-zero exit. No attempt deletes anything. `--fresh` still clears in the preflight.
+   The preflight now refuses while a running call holds the lock.
 
 **Decided: the resolved config is made on the host and travels as a function argument.** The entry point runs
-`mailwoman train config resolve` from the compiled CLI, which is also the Rust launch's source-rights admission, and
+`mailwoman train config resolve` from the compiled CLI (also the Rust launch's source-rights admission), and
 sends the YAML bytes and the resolved JSON (20 KB for the parity config) to `stage_launch_inputs`. That function
 writes both to `/data/launch/<first 16 hex of the YAML sha256>/` from inside a container and commits, because
 `modal volume put` files are invisible to a mounted container. The preflight runs on that staged YAML, so the receipt
@@ -1257,17 +1256,17 @@ or changed. Modal's 4-CPU container ran the same steps at 0.66 to 1.08 steps per
 `f4-{lifecycle,reference,cancel,timeout}-cpu.yaml` from `configs/probe-code-unit-cpu.yaml` with every host path moved
 to `/data`. They differ only in `train.output_dir`. All ran with `--trainer rust --cpu --threads 4`.
 
-| Behavior                              | How                                                                              | Result                                                                                                                                                                                             | Call                            |
-| ------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| Uninterrupted reference               | `f4-reference-cpu.yaml --fresh`                                                  | finished; `train_log.csv` equal to the lab `rust-smoke` run on all 814 compared cells (22 rows × 37 columns, `wall_seconds` excluded)                                                              | `fc-01M64QHMBT5RCP7XMAF5V2SM5P` |
-| Controlled failure, retry, resume     | `f4-lifecycle-cpu.yaml --fresh --fail-at-step 150`                               | attempt 1 saved `step-000100`, was killed after step 150 and raised. Modal retried 15 s later in a new container, which re-entered the lock, logged `resumed at step=100` and finished at step 200 | `fc-01M64QKZGFQ6RXZPPNVKAN77G9` |
-| Checkpoints persisted, read elsewhere | the retry container, then `modal volume ls` and `modal volume get` from the host | the retry read the killed attempt's `step-000100`; the host listed `step-000100` and `step-000200` and fetched `train_log.csv` and `LAUNCH_LOCK.json`                                              | —                               |
-| Status, logs, identifiers             | `call_status <id>`, `--logs`, `--wait`, the call graph                           | each call's verdict and log tail read from the host with no container. Exit status 1 for a failed call                                                                                             | all                             |
-| Duplicate launch                      | `f4-lifecycle-cpu.yaml --retries 0` while B ran                                  | refused: `DuplicateLaunchError: the run is held by function call fc-01M64QKZGFQ6RXZPPNVKAN77G9, which is still running`                                                                            | `fc-01M64QPDSQV5C73E8J78ZDPB93` |
-| Duplicate `--fresh` launch            | `f4-lifecycle-cpu.yaml --fresh` while B ran                                      | refused in the preflight before any deletion, so the entry point spawned no call                                                                                                                   | app `ap-vCWqGUOksq4GuSWfk9qZJZ` |
-| Cancellation                          | `call_status <id> --cancel` after step 10                                        | `cancelled`; the container logged the cancellation signal. No retry. The call's verdict is `RemoteError: Function call was cancelled`, call-graph status `TERMINATED`                              | `fc-01M64QTG963CCYFN3522EBX83V` |
-| Timeout                               | `f4-timeout-cpu.yaml --fresh --timeout-seconds 150 --retries 1`                  | attempt 1 timed out at 150 s. The retry started in a new container, saved `step-000100` (still on the volume), and timed out. Verdict `FunctionTimeoutError`, status `TIMEOUT`                     | `fc-01M64QTK2N11DSXFN97GJZ6Z8J` |
-| Lock takeover after a finished holder | `f4-cancel-cpu.yaml --fresh` after D was cancelled                               | `Run lock: take_over`; finished                                                                                                                                                                    | `fc-01M64RGB9HC9V9P854Y11N2HHW` |
+| Behavior                              | How                                                                              | Result                                                                                                                                                                                           | Call                            |
+| ------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| Uninterrupted reference               | `f4-reference-cpu.yaml --fresh`                                                  | finished; `train_log.csv` equal to the lab `rust-smoke` run on all 814 compared cells (22 rows × 37 columns, `wall_seconds` excluded)                                                            | `fc-01M64QHMBT5RCP7XMAF5V2SM5P` |
+| Controlled failure, retry, resume     | `f4-lifecycle-cpu.yaml --fresh --fail-at-step 150`                               | attempt 1 saved `step-000100`, was killed after step 150 and raised. Modal retried 15 s later in a new container that re-entered the lock, logged `resumed at step=100` and finished at step 200 | `fc-01M64QKZGFQ6RXZPPNVKAN77G9` |
+| Checkpoints persisted, read elsewhere | the retry container, then `modal volume ls` and `modal volume get` from the host | the retry read the killed attempt's `step-000100`; the host listed `step-000100` and `step-000200` and fetched `train_log.csv` and `LAUNCH_LOCK.json`                                            | —                               |
+| Status, logs, identifiers             | `call_status <id>`, `--logs`, `--wait`, the call graph                           | each call's verdict and log tail read from the host with no container. Exit status 1 for a failed call                                                                                           | all                             |
+| Duplicate launch                      | `f4-lifecycle-cpu.yaml --retries 0` while B ran                                  | refused: `DuplicateLaunchError: the run is held by function call fc-01M64QKZGFQ6RXZPPNVKAN77G9, which is still running`                                                                          | `fc-01M64QPDSQV5C73E8J78ZDPB93` |
+| Duplicate `--fresh` launch            | `f4-lifecycle-cpu.yaml --fresh` while B ran                                      | refused in the preflight before any deletion, so the entry point spawned no call                                                                                                                 | app `ap-vCWqGUOksq4GuSWfk9qZJZ` |
+| Cancellation                          | `call_status <id> --cancel` after step 10                                        | `cancelled`; the container logged the cancellation signal. No retry. The call's verdict is `RemoteError: Function call was cancelled`, call-graph status `TERMINATED`                            | `fc-01M64QTG963CCYFN3522EBX83V` |
+| Timeout                               | `f4-timeout-cpu.yaml --fresh --timeout-seconds 150 --retries 1`                  | attempt 1 timed out at 150 s. The retry started in a new container, saved `step-000100` (still on the volume), and timed out. Verdict `FunctionTimeoutError`, status `TIMEOUT`                   | `fc-01M64QTK2N11DSXFN97GJZ6Z8J` |
+| Lock takeover after a finished holder | `f4-cancel-cpu.yaml --fresh` after D was cancelled                               | `Run lock: take_over`; finished                                                                                                                                                                  | `fc-01M64RGB9HC9V9P854Y11N2HHW` |
 
 **Resume does not reproduce the uninterrupted run after the checkpoint.** Compared with the reference
 (`compare-train-logs.json`), the resumed run's effective log (the last row of each step, since the CSV is appended on a
@@ -1288,7 +1287,7 @@ confirm the generator.
 restore every generator a run draws from, a deliberate change from the Python trainer. Each checkpoint now holds
 `rng_state.safetensors`: libtorch's default CPU generator, the default generator of the CUDA device the model trains
 on, and the MLM loop's mask generator. A resume restores them after the optimizer and scheduler. A checkpoint written
-before the change holds no such file, so its resume reseeds from `train.seed` as before and says so. The experiment
+before the change holds no such file, so its resume reseeds from `train.seed` as before and reports the reseed. The experiment
 ran the generator test directly instead of zeroing the noise. On the lab CPU, the 200-step parity config
 (`probe-code-unit-cpu.resolved.json`, dropout and every curriculum noise on) ran uninterrupted, then again with the
 trainer killed after step 110, then resumed from step 100. `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/t18/compare.json`
@@ -1305,8 +1304,8 @@ With the reseed, the same comparison differed on 20 of 814 cells from step 110 o
 generator restore as the change, because the data stream was already identical. `resume-parity.run.ts` in
 `packages/mailwoman/tools/training/` repeats the experiment for any resolved config and exits 1 on a difference. The
 comparison ran on the CPU device only. A CUDA run's nondeterministic kernels can still differ between attempts, and no
-CUDA resume has been compared. Every future two-seed comparison inherits the restored generators, which the Python
-trainer's runs did not have.
+CUDA resume has been compared. Every future two-seed comparison inherits the restored generators. The Python
+trainer's runs did not have them.
 
 **Stage 8's first run.** `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/stage8/v8.3.0-probe-rust-trainer-2k.yaml`
 (SHA-256 `59035f19…308f5a`) is `v8.3.0-probe-rust-loader-2k.yaml` with `train.output_dir` and `train.trackio_run_name`

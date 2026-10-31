@@ -94,7 +94,7 @@ The operation exits non-zero when a graph package's card records a corpus with n
 under `packages/corpus/data/training-manifests/`, and both `publish.yml` jobs run it. An overlay corpus gets
 its record from `freeze-overlay-manifest.run.ts`, which reads every parquet file the corpus manifest lists,
 because `freezeTrainingManifest` runs only inside `buildCorpus` and counts the adapter rows the build
-aligned rather than the rows its files hold. The effective manifest derived from that record carries the
+aligned rather than the rows its files hold. The effective manifest derived from that record contains the
 attributions the audited epoch's sources owe, and `write-rights-files` prints them in each `LICENSE.md`;
 an overlay repeats its base's.
 
@@ -116,7 +116,7 @@ still runs `yarn lint`.
 
 A corpus's frozen `TRAINING_SOURCES.json` states what the corpus holds rather than what trained a model: overlays
 merge after `freezeTrainingManifest`, so the effective manifest
-(`packages/corpus/data/training-manifests/<corpus>.effective.json`, `unrecordedSourceStages`) can carry sources the
+(`packages/corpus/data/training-manifests/<corpus>.effective.json`, `unrecordedSourceStages`) can contain sources the
 frozen manifest never names. `PROVENANCE.json`'s `effective_training_sources` reads `null` when a card names no
 `training.corpus_version`, and `provenanceRefusals` reports that gap rather than inventing a join. Read the effective
 manifest before quoting a model's training sources.

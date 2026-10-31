@@ -11,12 +11,12 @@ Each claim is marked observed (measured here or read from the tree), inferred, d
 
 Artifact scope (decided): the Latin graph, `@mailwoman/neural-weights-en-us` `model.onnx`, with its data-only
 overlays. The CJK graph (`neural-weights-cjk`) is a separate artifact and needs its own specification version.
-Every value below applies to the Latin graph alone.
+Every value below applies only to the Latin graph.
 
 | Item                                                         | Value                                                                                                                                                |
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Required countries (exact parse, address rows)               | US 0.60, FR 0.90, GB 0.80, DE 0.85, IN 0.50, ES 0.80, IT 0.80, AU 0.80, NZ 0.80                                                                      |
-| Required capabilities (exact parse on named sources)         | `po_box_cedex` 0.85 with max loss 0.05; `venue_unit` 0.85; `country_token` 0.85                                                                      |
+| Required capabilities (exact parse on declared sources)      | `po_box_cedex` 0.85 with max loss 0.05; `venue_unit` 0.85; `country_token` 0.85                                                                      |
 | Objective set C                                              | `{US, FR, GB, DE, IN, ES, IT, AU, NZ}`, address rows, equal weight                                                                                   |
 | Required Q improvement                                       | 0 (lower bound and estimate of `Q_candidate - Q_published` both at least 0)                                                                          |
 | Confidence level                                             | 0.95 simultaneous                                                                                                                                    |
@@ -64,11 +64,11 @@ Capabilities (decided). A capability is registered only where the corpus test sp
 isolates the task, because the evaluator selects rows by source. The fixtures under `data/eval/external/` are
 component-keyed rather than span-annotated, and cannot be read by the exact-parse scorer without an alignment step.
 
-| id              | Task                                                                                        | Selector                                                                                              | Minimum              | Reason                                                                                                                                                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `po_box_cedex`  | A PO Box, locked bag or CEDEX designator read as its own component beside the locality line | `sources: ["invented-po-box-cedex"]`, address rows (test split: FR 78, CA 37, AU 32, NZ 28, observed) | 0.85, `maxLoss` 0.05 | PO Box is closed-vocabulary. It replaces the former `us.po_box_real` and `fr.cedex_real` floors. The max loss is registered because a closed-vocabulary slot that moves 5 pp has lost a surface form, which the country minima would absorb. |
-| `venue_unit`    | A venue name and its unit designator recovered ahead of the street line                     | `sources: ["spliced-sub-venue"]` (DE 657, US 750, GB 235, ES 180, FR 114)                             | 0.85                 | The former `us.unit_real` floor (n=34) and the #1486 sub-venue structure. It is the one held-out source with a `unit` span in a controlled position.                                                                                         |
-| `country_token` | A trailing country name tagged `country` rather than absorbed into the locality             | `sources: ["spliced-country"]` (DE 1,157, IT 1)                                                       | 0.85                 | The former `us.country_homograph_f1` floor (n=54) checked the country slot. The held-out source tests the slot without the homograph confound, which stays a diagnostic.                                                                     |
+| id              | Task                                                                                        | Selector                                                                                              | Minimum              | Reason                                                                                                                                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `po_box_cedex`  | A PO Box, locked bag or CEDEX designator read as its own component beside the locality line | `sources: ["invented-po-box-cedex"]`, address rows (test split: FR 78, CA 37, AU 32, NZ 28, observed) | 0.85, `maxLoss` 0.05 | PO Box is closed-vocabulary. It replaces the former `us.po_box_real` and `fr.cedex_real` floors. The max loss is registered because a closed-vocabulary slot that moves 5 pp has lost a surface form. The country minima would absorb that loss. |
+| `venue_unit`    | A venue name and its unit designator recovered ahead of the street line                     | `sources: ["spliced-sub-venue"]` (DE 657, US 750, GB 235, ES 180, FR 114)                             | 0.85                 | The former `us.unit_real` floor (n=34) and the #1486 sub-venue structure. It is the one held-out source with a `unit` span in a controlled position.                                                                                             |
+| `country_token` | A trailing country name tagged `country` rather than absorbed into the locality             | `sources: ["spliced-country"]` (DE 1,157, IT 1)                                                       | 0.85                 | The former `us.country_homograph_f1` floor (n=54) checked the country slot. The held-out source tests the slot without the homograph confound. That confound stays a diagnostic.                                                                 |
 
 Limitation (observed): these three sources are synthetic recipes whose templates also feed training. The
 overlap audit classes rows by identity and group, so a test row from the same generator as a training row is
@@ -114,7 +114,7 @@ The GB fail at n=11 is a reading of 10 rendered rows under the en-us package wit
 postcode binary and pair index (section 9). It describes the base graph and leaves the served GB parse unmeasured. The next dataset
 draws 1,000 of the 7,096 available GB address rows (observed availability).
 
-The US value is at the published level. The policy says the published model's answers do not define the
+The US value is at the published level. The policy holds that the published model's answers do not define the
 minimum. This value sits at that level because every product reading of exact parse is at or below it, and
 deference plays no part: the US rows are dominated by the corpus's street/suffix split convention, and the
 missing/additional counts on NAD rows (0.71 missing and 0.38 additional per row, observed) are the signature
@@ -137,7 +137,7 @@ candidates differ less at this size), and it disappears entirely on fresh confir
 defense against selection is procedural (a confirmation collection the development loop never reads), so the
 margin should not be spent on it.
 
-Why not a negative tolerance. A non-inferiority margin would let a candidate at parity ship, which contradicts
+Why not a negative tolerance. A non-inferiority margin would let a candidate at parity ship. That contradicts
 "improves the declared objective". The cost of 0 is real: a candidate at exact parity never passes (0.0% in
 `v3-200-rows-parity` and `v3-heldout-sizes-parity`), and a release whose purpose is not quality (a rights
 cleanup like 10.7.0) needs either a measurable gain somewhere in C or a v4 that registers a tolerance with
@@ -176,7 +176,7 @@ that reason.
 | `us.po_box_real` 94.3 (n=2000), `fr.cedex_real` 92.4 (n=430)                                | replaced by `po_box_cedex` 0.85 with max loss 0.05                                   | The fixtures are component-keyed and outside the collection. The held-out source has 175 rows. The max loss keeps the ratchet these two floors applied. The fixtures stay diagnostics until aligned (section 7).                                                                                                                                                                  |
 | `us.intersection_real` 80.7 (n=36)                                                          | retired as a decider, kept as a diagnostic                                           | No `intersection_a`/`intersection_b` span exists in the held-out collection (observed tag census), and n=36 cannot bound a rate.                                                                                                                                                                                                                                                  |
 | `arena.perturb` 59.9 (n=398)                                                                | retired as a decider, kept as a diagnostic                                           | Whole-parse-strict on perturbed golden rows. The corpus's augmentation variants (`+double-space` and the like, observed in test `source_id`s) are already inside every country check through their groups. A perturbation capability needs a selector the evaluator lacks (by augmentation class rather than source).                                                             |
-| `fr.bare_street_intact` 75.0 (designed, #949)                                               | retired as a decider, diagnostic leg kept                                            | A designed tolerance on a probe the collection does not hold (BAN rows all carry a number). The promotion battery keeps the leg and reports it as a diagnostic.                                                                                                                                                                                                                   |
+| `fr.bare_street_intact` 75.0 (designed, #949)                                               | retired as a decider, diagnostic leg kept                                            | A designed tolerance on a probe the collection does not hold (BAN rows all have a number). The promotion battery keeps the leg and reports it as a diagnostic.                                                                                                                                                                                                                    |
 | `int8_vs_fp32_max_delta_pp` 1.5                                                             | retired                                                                              | The verdict is tied to the int8 artifact's sha256 and every minimum is measured on it, so a quantization collapse fails the minima directly. fp32-to-fp32 comparison stays the development rule (iron rule 3).                                                                                                                                                                    |
 | Mask-regression lock (#718, 2 pp per tag under the conventions mask)                        | retained as a configuration check, outside the spec                                  | It compares the candidate with and without the ship config's conventions mask and leaves the published model out of the comparison. It is a measurement-validity refusal of the same kind as the tokenizer-comparability refusal. It does not read the published model's answers, so the migration table's description of it is inaccurate and should be corrected when v3 lands. |
 
@@ -190,7 +190,7 @@ Everything below blocks a `pass` under v3 today (observed unless marked).
    where the split holds 7,096 and 13,006, and it holds 0 `invented-house-venue` rows where the split holds
    2,223). Work: run `freeze.run.ts` against the v0.7.10 manifest with `--per-country 1000` (the sampler
    draws per country and kind, and the scoring pass here ran at 120 rows/s, so a 30,000-row set costs about four
-   minutes per arm). Every test row carries `source_id` and 2,465,713 of 3,180,659 carry `base_source_id`
+   minutes per arm). Every test row has `source_id` and 2,465,713 of 3,180,659 have `base_source_id`
    (observed), so groups exist.
 2. The overlap audit has not run. Every row is therefore `unknown`, and no class is admitted. Work: `overlap.run.ts` over
    `v0.7.10-gb-county` and the candidate's corpus, naming both model cards. Rows the v0.8.0 split repair moved
@@ -207,7 +207,7 @@ Everything below blocks a `pass` under v3 today (observed unless marked).
      checks need rows unseen by both. That is a one-field change in `requirements.ts` (`provenance.admitted`
      becomes `{ minimum: [...], comparative: [...] }`) and a filter in `evaluate.ts`.
    - Or an evaluation-only source for each (a publisher no training corpus reads, built through the corpus
-     aligner so the spans carry `corpus-alignment` provenance, declared `split: test`). It is admissible for
+     aligner so the spans have `corpus-alignment` provenance, declared `split: test`). It is admissible for
      both models at once and needs no evaluator change, but it needs four new source recipes.
      The first path also serves the tier-2 countries for v4's C.
 4. No confirmation collection. Work: freeze two datasets from disjoint seeds (`heldoutSampleOrder(seed)`), name
@@ -219,11 +219,11 @@ Everything below blocks a `pass` under v3 today (observed unless marked).
    dependent-locality readings are of the base graph rather than the product. Work: the scorer loads the locale
    package for the row's country when one ships, falling back to `en-US`, and the spec's
    `identities.inference` names that rule. Until then the GB minimum is measured on a weaker configuration
-   than the one shipped, which can only block, never admit.
+   than the one shipped, so it can only block, never admit.
 6. The scorer degrades silently. The pass made here printed `running anchor-OFF for THIS package, parses
    degraded` and continued (observed). The policy requires refusing a missing required artifact. Work:
    `scoreHeldoutWeights` throws when the loader reports an unfed required channel.
-7. `rowsIndependent` is `false` and the held-out rows carry groups once frozen, so no check is blocked by
+7. `rowsIndependent` is `false` and the held-out rows have groups once frozen, so no check is blocked by
    grouping. Item 1 is the only work this needs.
 
 2026-10-20: items 5 and 6 and the evaluator half of item 3 landed on branch `release-quality-scorer`. `scoreHeldoutWeights` parses each row with its country's shipped locale package (`HELDOUT_INFERENCE_RULE`), records the package per row, and refuses a package whose loader reports an unfed required channel. Specification v4 (schema 3) admits `verified_unseen` and `unseen_by_candidate` rows for minimum checks and only `verified_unseen` rows for comparative checks.
@@ -236,7 +236,7 @@ Command: `node packages/mailwoman/tools/eval-harness/release/simulate.run.ts --s
 from the `origin/main` worktree. R = 400, seeds 2763 to 3162, 110.3 s on the lab host beside the corpus
 build. Every rate in the file is a simulation parameter. The published rates are the anchor-OFF readings of
 section 3 where one exists and the minimum plus 0.10 where none does. Four pseudo-countries CP1 to CP4
-outside C carry the three capability minima and a stand-in for the max-loss check so that m = 14 as in v3.
+outside C hold the three capability minima and a stand-in for the max-loss check so that m = 14 as in v3.
 
 | Scenario                                                                                                          | Rows  | Truth meets all | Pass              | Joint coverage    | Erroneous approval | Erroneous fail | Insufficient        |
 | ----------------------------------------------------------------------------------------------------------------- | ----- | --------------- | ----------------- | ----------------- | ------------------ | -------------- | ------------------- |
@@ -261,7 +261,7 @@ Readings (observed from the table, inferred where stated):
   never passes.
 - At the held-out sample's current sizes the pass rate is 0: GB (n=11), IT (4), AU (32) and NZ (28) cannot show a
   0.80 minimum. At 200 rows per country a true +2 pp candidate passes 0.8% of the time. The quota is what makes v3
-  usable, and the thresholds alone do not, which is why 1,000 rows is registered with the dataset.
+  usable, and the thresholds do not, so 1,000 rows is registered with the dataset.
 - The trade-off scenario (inferred mechanism) is blocked by the IN minimum: a country 1 pp above its
   minimum needs about 21,700 rows to show it. A loss that takes a country to within the sample's resolution of
   its minimum blocks the release even when the policy would accept it. New rows for that country resolve it,
@@ -291,7 +291,7 @@ Readings (observed from the table, inferred where stated):
   Address rows exact: 5,909 of 7,429 (79.5%). Gold-recovered equals exact on every country but ID, so
   additional spans without a missing span are rare. Per-country rates are in section 3 and in
   `scratchpad/heldout-10.7.0-exact.json`. Notable experimental readings: CN 0/199 (Han script through the
-  Latin graph, while the served path routes it to the CJK graph, which is why CN is outside this spec), UY 20.5%,
+  Latin graph, while the served path routes it to the CJK graph, so CN is outside this spec), UY 20.5%,
   TT 6.5%, IM 40.0%, VN 62.0%, EG 70.5%, PF 57.0%, and LV, MD, RS, AR, NC at 100%.
 - Bounds (observed from `bounds.ts`, m = 14): section 3's table and the row counts needed per (rate, minimum).
 
@@ -301,7 +301,7 @@ Readings (observed from the table, inferred where stated):
   materially higher, 0.60 is loose. If the affix split is the whole gap, a v4 that measures the split as a
   capability should raise it. Unknown until the first registered run.
 - GB and DE evidence is renderings of registers rather than postal records. ES, IT, AU and NZ have 0 register
-  rows. A minimum met on renderings says the model reads the register's canonical form, and leaves what users
+  rows. A minimum met on renderings shows the model reads the register's canonical form, and leaves what users
   type unmeasured.
 - Synthetic capability sources share templates with training, so `verified_unseen` is true by identity and
   weaker in substance.

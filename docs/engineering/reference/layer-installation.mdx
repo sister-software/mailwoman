@@ -30,7 +30,7 @@ The installation keeps three records apart, because each answers a different que
 | Active selection        | Which installed artifacts each role reads, in what order | `packages/core/lib/layers/selection.ts`   |
 
 The registry entry is read from the published bundle list, `BUNDLES` in
-`packages/mailwoman/lib/data/bundles.ts`, by `availableDataEntry`. Each artifact carries its serving
+`packages/mailwoman/lib/data/bundles.ts`, by `availableDataEntry`. Each artifact records its serving
 role, its scope (a country, or an ISO 3166-2 subdivision such as `US-DC`), its role schema version
 and, for a street-keyed role, the street-key normalization it was keyed with
 (`STREET_KEY_NORMALIZATION` in `packages/resolver-wof-sqlite/lib/street/normalize.ts`, version `1`).
@@ -69,7 +69,7 @@ Country is manifest metadata and an installation selector. No field is parsed fr
 ## Installation lifecycle
 
 `planInstallation` (`packages/mailwoman/lib/data/plan.ts`) and `executeInstallation`
-(`packages/mailwoman/lib/data/install.ts`) implement one sequence, which `setup`, `data pull --dry-run`
+(`packages/mailwoman/lib/data/install.ts`) implement one sequence that `setup`, `data pull --dry-run`
 and `data pull` share:
 
 1. Resolve the request into artifacts. Each is `download`, `reuse` (installed and selected),
@@ -190,7 +190,7 @@ and refuses when either changed since planning.
 
 `planMigration` (`packages/mailwoman/lib/data/migrate.ts`) discovers what the readers select today and
 classifies each file: `importable` (records a `layer_manifest`), `registry-manifest` (a published
-artifact with no manifest, whose registry record supplies one), `source-rebuild` (a local build with
+artifact with no manifest, with a registry record that supplies one), `source-rebuild` (a local build with
 no manifest), `unknown-provenance`, or `blocked-wal` (a WAL sidecar is present). It reports symlink
 targets, hard links and paths outside the data root. The plan registers files in place as `legacy`
 installations, copies 0 bytes, and states its rollback. This release plans only: `mailwoman data
@@ -248,7 +248,7 @@ selection entry may list sources of more than one of them. A national provider r
 source that the OpenStreetMap recipe did not build (`isNationalAddressPointArtifact`), and the
 OpenStreetMap tier reads the first one it did build (`isOSMBuiltArtifact`, the manifest's `recipe`). The
 session still consults the national tier first and the OpenStreetMap tier only when the national tier has
-no database for the country, which is the order the two had when each read its own file.
+no database for the country. That is the order the two had when each read its own file.
 
 The WOF lookup names each attached schema after its file and routes placetypes by that name, so an
 installed WOF extract keeps its conventional file name (`admin-global-priority.db`, `postalcode-us.db`).
@@ -260,7 +260,7 @@ generation (`LayerCatalog.read`) and pass it to every reader they open.
 
 Still on their conventional paths, with the reason:
 
-- The rail-station database stays beside the conventional `poi.db` path. No published bundle carries it,
+- The rail-station database stays beside the conventional `poi.db` path. No published bundle contains it,
   so no installation can select it, and the fork-entity probe opens it where the station build writes it.
 - The placetype-pair index (`pair-index-<cc>.bin`) is read inside the weights loader in
   `@mailwoman/neural`, which reads no data-root records.

@@ -371,7 +371,7 @@ node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts --src 
 #    gone): mailwoman gazetteer polygons --admin <admin.db> [--countries US,DE,FR] --out wof-polygons.db
 ```
 
-The map's place outline is a two-database split. The resolver database carries points and bboxes only, and
+The map's place outline is a two-database split. The resolver database holds points and bboxes only, and
 `wof-polygons.db` (`polygons(id INTEGER PRIMARY KEY, geom TEXT)`, Douglas-Peucker-simplified admin rings
 keyed by the same WOF id) loads lazily when `ReleaseInfo.hasPolygons` is set. An id absent from it falls
 back to the bbox. Build it with `mailwoman gazetteer polygons` from the same resolver database so that the
@@ -608,11 +608,11 @@ Stage them under a generation segment:
 - `publish-public-bucket.run.ts` refuses a `--src` that puts a pair-index binary at the flat key, so the
   script enforces this rule.
 - Never upload over an existing generation either. On 2026-10-08 new bytes went to the `2026-08-05` keys, and
-  Cloudflare kept serving the August bytes from cache. The `2026-10-17` generation carries the Great Britain
+  Cloudflare kept serving the August bytes from cache. The `2026-10-17` generation holds the Great Britain
   index built without HM Land Registry Price Paid Data (#2635). On 2026-10-17 the `2026-08-05` GB object and the
   flat `mailwoman/pair-index/pair-index-gb.bin` key, both built from Price Paid Data, were deleted from the
   bucket. Cloudflare does not evict a cached copy when an object is deleted. A removal also needs a Cloudflare cache purge of
-  each URL, which requires an API token with the Cache Purge permission.
+  each URL, and the purge requires an API token with the Cache Purge permission.
 
 ### Step 4 — publish npm from CI (two-phase, PR-based), then verify registry-direct + a clean install
 

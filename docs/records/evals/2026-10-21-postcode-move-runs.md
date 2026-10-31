@@ -19,7 +19,7 @@ is the in-batch control for the copy rate.
 p005 and p015 stopped near steps 22,700 and 22,600 with `ValueError: spans overlap: postcode@[34, 39) overlaps [23, 40)`.
 The move's offset shift treated a span ending exactly where the moved block began as inside the block. In
 `THERESA TEBBETT 99 MAIN ST HEPSTEAD NY 11550`, the street span grew over the moved postcode
-(`…MAIN ST11550  HEPSTEAD NY`). Commit 434aad7e0 fixes the shift and refuses three shapes with named outcomes. A sweep of
+(`…MAIN ST11550  HEPSTEAD NY`). Commit 434aad7e0 fixes the shift and refuses three shapes with explicit outcomes. A sweep of
 10,336,567 v0.8.0 train rows moved 5,772,255. Before the fix, 24 of the moved rows failed span validation, and after it,
 0 did. The new refusals remove 100 moves, 0.0017% of all moves. Both runs resumed from `step-020000` on the fixed code.
 Modal preempted p015 after step 30,000, and the run resumed from `step-030000` by itself.
@@ -46,8 +46,8 @@ at 92.4, 91.2 and 91.3) and `us.region` (floor 89.4, at 87.8, 87.9 and 88.1). Al
 
 ### Release requirements v7 on `heldout-dev-v0.8.0`
 
-The development set holds 55,794 rows. Its overlap audit admits 16,173 `verified_unseen` rows, which no model trained
-on, and 27,621 `unseen_by_candidate` rows, which only 10.7.0 trained on. Every run's verdict is `fail`. 10.7.0 graded
+The development set holds 55,794 rows. Its overlap audit admits 16,173 `verified_unseen` rows that no model trained
+on, and 27,621 `unseen_by_candidate` rows that only 10.7.0 trained on. Every run's verdict is `fail`. 10.7.0 graded
 against itself also reads `fail`, on IT, AU, NZ, `po_box_cedex` and `postal_unit`.
 
 The pooled exact-parse rates hide a provenance split. The table separates the two row classes. A cell under 30 groups is

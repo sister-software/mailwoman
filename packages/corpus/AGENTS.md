@@ -105,11 +105,11 @@ spelling, because the loader reads the corpus rather than the table.
 rows, with the `licenseID` each one points at. A derived or synthetic source lists every input, and a
 publication with no register row gets one in `data/source-additions.json` under an `unchecked` decision, so
 the gap shows in the register rather than hiding as an absence. Add both entries in the change that adds the
-adapter, recipe, carried overlay or generator, before any build reads the source. The
+adapter, recipe, inherited overlay or generator, before any build reads the source. The
 `corpus-source-inputs` repository check reports an emitted source the table does not map.
 
 `buildCorpus`, `corpus overlay-manifest`, `corpus recipe`, every `lib/tools/*.run.ts` builder, the `train` command
-and the Modal launcher's local entry point refuse a source unless each register source it reads carries an
+and the Modal launcher's local entry point refuse a source unless each register source it reads has an
 elected decision whose `operations` permit both `transform` and `train`. The refusal message states the
 source, the register row and the missing permission. `--unshippable-reason <why>` (in a training config,
 `data.unshippable_reason`) admits the source for a local experiment and records the output as not shippable
@@ -126,7 +126,7 @@ split every US CSV adapter uses. Call it rather than splitting the line again in
 
 ## Country-implicit sources
 
-Overture address rows carry no country token, so training on them at real weight dilutes country
+Overture address rows contain no country token, so training on them at real weight dilutes country
 emission on rows that do name one (measured at −1.6 pp with 456k CA/MX rows, and −5.3 pp with 666k BR
 rows added). A country-implicit source needs a fraction of its rows rendered with a trailing country
 surface (`components.country` set and aligned), using surfaces of three or more characters because a
@@ -158,7 +158,7 @@ deletes that work and builds from the start. A build without one of the two flag
 the timestamp fields differ. Each worker has its own heap, DuckDB limits and temporary root, and
 `planWorkerBudget` in `lib/build/budget.ts` refuses a K whose workers do not fit in host memory.
 A source is reused under `--resume` only through its `intermediate/sources/<id>/SOURCE_COMPLETE.json`,
-re-hashed file by file, and `--fresh-sources a,b` rebuilds those sources alone. A parallel build
+re-hashed file by file, and `--fresh-sources a,b` rebuilds those sources only. A parallel build
 writes no top-level `labeled-*.jsonl`: each source's labeled rows stay under its own state directory.
 A lock directory, `.corpus-build.lock` under `--out`, refuses a second build of the same output in
 either mode.
@@ -195,12 +195,12 @@ such as Bootstrap's MIT notice, and a publisher's terms may sit in a linked PDF 
 page.
 
 When a publisher's own download page states no license, query the national open-data portal's CKAN
-API and match on `organization` rather than `title`; a third party's copy may carry the matching title
-with `license_id: notspecified` while the publisher's entry carries the grant under another name.
+API and match on `organization` rather than `title`; a third party's copy may have the matching title
+with `license_id: notspecified` while the publisher's entry holds the grant under another name.
 Compare the entry's `resources` against the file to be fetched to prove the two records describe one
 artifact. A portal also returns third parties' datasets about a country, and a third party's license
 is not the publisher's. Record an unstated license version as unstated: leave `spdx` out and let
-`electedTerms` carry the publisher's words, because `electedTermsLabel` feeds the share-alike
+`electedTerms` hold the publisher's words, because `electedTermsLabel` feeds the share-alike
 filter.
 
 Whether address data can be elected without a publisher's grant depends on the country's law, so each
@@ -217,7 +217,7 @@ calling the service rather than the data. Member states fill them with their own
 (`puudub`, `NONE`). The grant over the data is in the ISO 19139 dataset record reached from
 `inspire_dls:ExtendedCapabilities` through `SpatialDataSetIdentifier` to `metadataURL`; read
 `otherConstraints`, `useLimitation`, `accessConstraints` and `useConstraints` there, and tie the
-record to the service by `fileIdentifier` and theme before electing. A named instrument whose text
+record to the service by `fileIdentifier` and theme before electing. A referenced instrument whose text
 cannot be retrieved stays `unchecked` and is never a refusal. In an ISO 19139 record the first
 `<gmd:title>` is commonly a thesaurus citation (`GEMET - INSPIRE themes`); the resource title sits
 under `identificationInfo` before the first `descriptiveKeywords`.

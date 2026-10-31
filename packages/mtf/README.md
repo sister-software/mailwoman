@@ -200,7 +200,7 @@ repository root with `node`:
 
 Training runs native `spm_train`, built from google/sentencepiece `v0.2.2` under the cache root on first use. It
 reproduces the Python wheel's model byte for byte: the CLI records every trainer default it set, and the tool drops
-the spec fields the training call did not name, which is the form the wheel writes. `tools/tokenizer/sentencepiece.integration.test.ts`
+the spec fields the training call did not name. That is the form the wheel writes. `tools/tokenizer/sentencepiece.integration.test.ts`
 checks five recorded wheel trainings against `test/fixtures/spm-recipes/`.
 
 The proto edits, parquet reads, CPython-compatible sampling, the byte-fallback count and the ONNX initializer
@@ -219,4 +219,4 @@ copyright notice in its header and states how it was modified. `third-party/` ho
 unchanged, and `THIRD_PARTY_NOTICES.md` maps each ported file to its upstream source. A later port from
 either project follows the same three steps: keep the upstream notice in the file header, state the
 modification, and add the file to `THIRD_PARTY_NOTICES.md`. Code written here without an upstream
-source carries only the AGPL header.
+source has only the AGPL header.

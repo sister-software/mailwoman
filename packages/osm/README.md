@@ -24,7 +24,7 @@ OpenStreetMap data is published under the [Open Database License 1.0](https://op
   Mailwoman publishes no prebuilt OpenStreetMap database.
 - **Mailwoman's own gazetteer contains no OpenStreetMap data.** The OpenStreetMap points stay in their own
   per-country databases beside the gazetteer. Every row records `source = openstreetmap:<cc>`, so a result
-  that resolved through one carries that source.
+  that resolved through one has that source.
 
 ### What a built database records and what it asks of you
 
@@ -130,7 +130,7 @@ adding one is two edits in lockstep, never a silent fold with the wrong rules.
 
 ### Clip the extract to its own country
 
-A Geofabrik country extract carries a margin past the border, so its address records include every land
+A Geofabrik country extract includes a margin past the border, so its address records include every land
 neighbor's border towns, and the `osm` adapter stamps every row with the `--country` value.
 `addr:country` is set on too few records to filter on. Fetch ADM0 outlines from geoBoundaries with
 `node packages/osm/tools/fetch/country-outline.ts --iso3 <code>`, which writes a receipt beside each

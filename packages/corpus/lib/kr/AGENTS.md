@@ -8,4 +8,4 @@ The road-name address database is such a database, so it is elected on the minis
 
 This repository has adopted no factual-data reading for South Korea. Its rows are elected only on the publisher's own grant, read as `../../AGENTS.md` "License election" describes.
 
-The shared rules for reading a publisher's terms are in `packages/corpus/AGENTS.md` under "License election". This file states only the country's legal position on address data, which those rules defer to.
+The shared rules for reading a publisher's terms are in `packages/corpus/AGENTS.md` under "License election". This file states only the country's legal position on address data. Those rules defer to it.

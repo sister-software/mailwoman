@@ -6,4 +6,4 @@ Guam takes the United States position in `../us/AGENTS.md`. Guam is an organized
 
 A Government of Guam body's address file published without terms restricting its use is therefore elected with basis `other-documented`, citing Feist. Terms that spell out a restricted use remain a refusal.
 
-The shared rules for reading a publisher's terms are in `packages/corpus/AGENTS.md` under "License election". This file states only the jurisdiction's legal position on address data, which those rules defer to.
+The shared rules for reading a publisher's terms are in `packages/corpus/AGENTS.md` under "License election". This file states only the jurisdiction's legal position on address data. Those rules defer to it.

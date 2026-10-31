@@ -15,7 +15,7 @@ The operator decided the following, and each stands until the operator revisits 
 - A license is a yearly or monthly subscription.
 - The mint trigger is `invoice.paid`, on the first payment and on every renewal.
 - A token follows the billing period: `expires` is the period end plus fourteen days of grace. Each
-  renewal mints a new token, which `mailwoman license refresh` fetches.
+  renewal mints a new token. `mailwoman license refresh` fetches it.
 - The Stripe Customer Portal handles billing. The first version has no Mailwoman login, uses a
   Payment Link rather than a checkout endpoint, and has no queue, because Stripe's three-day webhook
   retry is the queue.

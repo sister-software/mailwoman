@@ -69,7 +69,7 @@ the pattern and the text. A `▁` piece's range includes the space before its wo
 `mtf_sampler::Sampler::open(config, split, seed, row_limit)` opens a split with a generator seeded as
 `random.Random(seed)`. `config` is the sampler document: the corpus directory, country and source weights, the coarse
 filter's tags, the augmentation probabilities and exclusions, the affix lexicon, the postcode layouts, and the data
-root, volume mount and sha256 cache the corpus listing reads. Each row carries `raw`, `tokens`, `labels`, `country`,
+root, volume mount and sha256 cache the corpus listing reads. Each row has `raw`, `tokens`, `labels`, `country`,
 `source` and, for a span-schema file, `span_starts`, `span_ends` and `span_tags`. `rows()` and `batches(batch_size)`
 iterate it, and a returned `None` is exhaustion. `row_limit` counts rows before the astral skip. A missing,
 unresolvable or unverified file is an error naming its path, and a corrupt row an error naming the file, the row group
@@ -84,7 +84,7 @@ In Node, `packages/mtf/crates/mtf-node` exposes the same streams through napi-rs
 `nextRows(n)` at a time, `TrainingBatches` returns the train split's batches, and `RawRows` returns the mixture's rows
 before the shuffle buffer, with `nextEmitted(n)` running the emit step on the same generator for the audits. Each call
 hands out one chunk, so a consumer holds one chunk at a time. `takeEvents()` drains the observer events of the kinds
-named in `events`, and `cancel()` stops a stream, which then fails with the `Cancelled` status. `createRowEncoder` and
+listed in `events`, and `cancel()` stops a stream and makes it fail with the `Cancelled` status. `createRowEncoder` and
 `createCharEncoder` return the arrays as `BigInt64Array` and `Float32Array`. `packages/mailwoman/tools/training/sampler.ts`
 writes the sampler document from a training config resolved by `packages/corpus/lib/training/config/`, and adds each
 row's locale and address-system ids to an encoded batch.
@@ -164,7 +164,7 @@ row's tokens are `114`, `СНТ` and `Пчёлка`, so its closing guillemet en
 `wrap_row` skips a row whose text does not begin and end on a token edge, in both samplers, and the stream runs on.
 The skip takes no draw, so every row before the first such row is unchanged, and both grouping records still
 verify at 0 differing rows. No training config sets `augment_grouping_prob`. The two grouping records were captured by replacing `iter_batch_rows` with
-the composition the Python loader ran, `random.Random(seed)` over `stream.iter_rows` with the astral skip, which
+the composition the Python loader ran, `random.Random(seed)` over `stream.iter_rows` with the astral skip. That composition
 reproduced `c6-train-2k`'s row identities and tensor digests exactly before it captured them.
 
 The crate's own tests cover what a sample may miss: `encode_row_reference.rs` against the Python
@@ -205,7 +205,7 @@ at revision `1115bbe3f`, the Rust figures at the revision that deleted the Pytho
 | Modal cpu=8, Python          |             56.27 |                37.84 |             94.11 |            122.5 |             9,482 |      12,827 |
 | Modal cpu=8, Rust            |             21.41 |                 0.10 |             21.51 |            134.2 |             8,820 |      12,216 |
 
-The sampler alone costs 2.7 to 3.1 ms per batch on the lab host and 6.8 to 7.2 ms on Modal, so it is about a
+The sampler by itself costs 2.7 to 3.1 ms per batch on the lab host and 6.8 to 7.2 ms on Modal, so it is about a
 third of the Rust path's remaining `iter_batches` time.
 
 ### The Rust sampler
@@ -233,7 +233,7 @@ sampling from 8.09 to 1.75 ms per batch and sampler initialization from 220.3 to
 Rust code in both arms. Its spread follows the host load rather than the sampler.
 
 Parquet reads cannot be separated inside that window, because the 40 batches draw almost every row from row groups
-the buffer fill already read. `examples/read_profile.rs` times the read alone: 60 row groups drawn from the C6
+the buffer fill already read. `examples/read_profile.rs` times only the read: 60 row groups drawn from the C6
 corpus's files with seed 7 (2,375,564 rows) over the nine columns the sampler reads, against pyarrow's
 `read_row_group` on the same list, alternating, at load 16. pyarrow took 36.12 and 38.97 ms per row group and the
 `parquet` crate 23.43 and 26.92 ms. The parity verifies give the end-to-end cost: a 5,000-row train record verifies
@@ -269,7 +269,7 @@ The root `rust-toolchain.toml` pins the toolchain, and every crate is a member o
 - The Node addon `mtf-node` builds from source on first use, with
   `cargo build --profile node --locked -p mtf-node`. The `node` profile is `opt-level = 3` and
   `panic = "unwind"`, so napi-rs raises a Rust panic as a JavaScript exception. The addon builds on Linux and
-  macOS. It is never part of `wasm/mtf.wasm`, whose dependency tree is `mtf-wasm` → `mtf-core` alone. The
+  macOS. It is never part of `wasm/mtf.wasm`. That module's dependency tree is only `mtf-wasm` → `mtf-core`. The
   wasm build with the addon in the workspace gives the same SHA-256 as a build without it.
 - The CI `rust` job installs the pinned toolchain and runs `cargo fmt --check`, `cargo test` and `cargo clippy` over
   the root workspace. `lib/repo-health/ci/scope.ts` selects that job for a change
