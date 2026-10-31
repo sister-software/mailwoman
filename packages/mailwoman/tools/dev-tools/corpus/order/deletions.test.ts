@@ -11,13 +11,7 @@ import { readDeletionIDs } from "@mailwoman/corpus/tools/overlay/deletions"
 import { postcodePlacement } from "@mailwoman/postcode/country-formats"
 import { afterAll, describe, expect, test } from "vitest"
 
-import {
-	findReversedRows,
-	postcodeSide,
-	rowPostcodeOrder,
-	writeNativeRows,
-	writeSourceIDSidecar,
-} from "./order/deletions.ts"
+import { findReversedRows, postcodeSide, rowPostcodeOrder, writeNativeRows, writeSourceIDSidecar } from "./deletions.ts"
 
 const directory = await temporaryDirectory("mw-order-deletions-")
 

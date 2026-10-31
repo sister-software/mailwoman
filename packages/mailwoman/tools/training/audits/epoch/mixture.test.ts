@@ -6,7 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { componentSequence, containsContiguous, matchesReceipt, requestedShares } from "./epoch/mixture.ts"
+import { componentSequence, containsContiguous, matchesReceipt, requestedShares } from "./mixture.ts"
 
 const receipt = (fields: { source?: string | null; country?: string | null; component_sequence?: string[] }) => ({
 	name: "r",

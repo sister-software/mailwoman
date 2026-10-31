@@ -7,7 +7,7 @@
 import { IGNORE_INDEX } from "@mailwoman/neural/labels"
 import { expect, test } from "vitest"
 
-import { failingLabelFloors, headLabels } from "./label/support.ts"
+import { failingLabelFloors, headLabels } from "./support.ts"
 
 const BIO = ["O", "B-street", "I-street", "B-po_box", "I-po_box"]
 const floor = (label: string, minRows: number, split = "val") => ({ label, split, min_rows: minRows })

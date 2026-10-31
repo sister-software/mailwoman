@@ -17,7 +17,7 @@ import {
 	trainingManifestRoots,
 	unreachableDirectories,
 	versionManifestPath,
-} from "./store/gc.ts"
+} from "./gc.ts"
 
 const root = await temporaryDirectory("mw-store-gc-")
 

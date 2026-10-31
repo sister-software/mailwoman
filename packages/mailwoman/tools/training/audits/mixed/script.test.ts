@@ -8,7 +8,7 @@ import { orderedJSON } from "@mailwoman/core/json"
 import { mtfNode, type SampledRow } from "@mailwoman/mtf/tools/sampler/native"
 import { describe, expect, test } from "vitest"
 
-import { auditMixedScriptRows, goldComponents } from "./mixed/script.ts"
+import { auditMixedScriptRows, goldComponents } from "./script.ts"
 
 const { pythonText } = await mtfNode()
 

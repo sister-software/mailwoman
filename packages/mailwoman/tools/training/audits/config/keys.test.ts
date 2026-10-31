@@ -8,7 +8,7 @@ import { parsePythonYAML } from "@mailwoman/corpus/training/config/python-yaml"
 import { CONFIG_SECTION } from "@mailwoman/corpus/training/config/schema"
 import { describe, expect, it } from "vitest"
 
-import { unknownConfigKeys } from "./config/keys.ts"
+import { unknownConfigKeys } from "./keys.ts"
 
 describe("unknownConfigKeys", () => {
 	it("reports every unknown key with its dotted path, where the strict loader stops at the first", () => {

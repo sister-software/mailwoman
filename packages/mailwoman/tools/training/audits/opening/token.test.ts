@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { openingCounts } from "./opening/token.ts"
+import { openingCounts } from "./token.ts"
 
 describe("openingCounts", () => {
 	it("nests the openings of a Czech postcode row: any digits, three digits, NNN NN, and the whole row", () => {

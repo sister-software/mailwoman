@@ -6,7 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { classifyStreetGroup, evaluateRow, streetFamilyGroups, type AffixLexicon } from "./suffix/feed.ts"
+import { classifyStreetGroup, evaluateRow, streetFamilyGroups, type AffixLexicon } from "./feed.ts"
 
 const LEXICON: AffixLexicon = {
 	version: "test-v2",

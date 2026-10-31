@@ -6,7 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { commaSegmentCounts, isolatedPositions } from "./comma/segment/number.ts"
+import { commaSegmentCounts, isolatedPositions } from "./number.ts"
 
 const row = (tokens: string[], labels: string[]) => ({ tokens, labels })
 
