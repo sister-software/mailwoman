@@ -206,7 +206,7 @@ clock past the period end, and replay the renewal's `invoice.paid`. The launch p
 
 ## Tests
 
-`yarn test:license-worker` runs the workspace's suite under `@cloudflare/vitest-pool-workers`. The suite uses
+`yarn test:license-worker` runs the workspace's suite under `@cloudflare/vitest-plugin`. The suite uses
 Miniflare's D1 with the migrations applied per file, a Stripe client over a fetch stub that answers by method and path,
 and a signing pair minted per run. The root Vitest sweep excludes these files, and CI runs them as a separate step. Run
 `yarn compile` first, because the worker imports `@mailwoman/core` through its `default` export condition. That condition points

@@ -220,8 +220,8 @@ reorder siblings. **It never removes a candidate.**
 The companion plan's prohibitions permit removal under an explicitly complete coverage scope. This
 spec declines that power for the first reduce because of a hazard the plan itself describes. Today the
 resolver fails at 10,000 km, and a user notices. An inference engine that fails at 2 km is the failure
-mode the plan called worse. Demote-only limits the worst case to the model's own ranking and preserves
-the anti-Pelias rule (`street-evidence.ts`, `rerank.ts`): one bit of evidence, never a blended score.
+mode the plan called worse. Demote-only limits the worst case to the model's own ranking and uses
+the approach in (`street-evidence.ts`, `rerank.ts`): one bit of evidence, never a blended score.
 
 Removal power can be reconsidered once §6's falsifier has a number, and not before.
 

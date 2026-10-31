@@ -166,8 +166,7 @@ precedent.
   the only legal path to rooftop KR. That path is the product.
 
 **The counsel question is now narrower.** It was "clear the juso export pledge". It is now (a)
-confirm the KOGL type on the specific localdata datasets and (b) confirm that the address-register
-rule does not cover business-permit addresses. Phase-6 sequencing is an ordinary product call
+confirm the KOGL type on the specific localdata datasets and (b) check whether business-permit addresses are outside the address-register restrictions. Phase-6 sequencing is an ordinary product call
 again. TW is the full-stack second CJK locale. KR parse capability can be built now from the
 alternative source, and KR rooftop remains conditional.
 

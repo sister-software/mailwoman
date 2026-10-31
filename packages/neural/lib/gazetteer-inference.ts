@@ -242,9 +242,10 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 }
 
 /**
- * Returns a copy of the gazetteer features with the clue zeroed on pieces within
- * `window` of any piece with `anchorConfidence > 0`, because a region clue just
- * before a US postcode otherwise strengthens `B-region` enough to cost the postcode its tag.
+ * Returns a copy of the gazetteer features with nearby clues zeroed.
+ *
+ * Pieces within `window` of any piece with `anchorConfidence > 0` lose their clues.
+ * A region clue before a US postcode otherwise strengthens `B-region` enough to change the postcode tag.
  */
 export function suppressGazetteerNearPostcode(
 	gazetteer: { features: number[][]; confidence: number[] },

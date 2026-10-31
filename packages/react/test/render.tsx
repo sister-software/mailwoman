@@ -15,11 +15,10 @@ import { createRoot, type Root } from "react-dom/client"
 /**
  * How long `cleanup` drains pending async work — inside act() — before unmounting.
  *
- * Catches the trailing `setState` a test leaves in flight: an autocomplete debounce
- * (10 ms) scheduled by the final pick, a secondary parse/runtime promise that lands just
- * after the last assertion resolved.
- * These callbacks must run in an act scope to avoid logging "not wrapped in act(...)" in the window
- * between a test returning and this `afterEach` running. 25 ms clears the 10 ms debounce with margin.
+ * It catches a trailing `setState` from an autocomplete debounce or a secondary parse/runtime promise.
+ * These callbacks must run in an act scope to avoid logging "not wrapped in
+ * act(...)" after the test returns.
+ * The 25 ms interval clears the 10 ms debounce with margin.
  *
  * The clipboard reset (1500 ms) is instead cleared by `useClipboard`'s unmount effect,
  * so it needs no drain here.

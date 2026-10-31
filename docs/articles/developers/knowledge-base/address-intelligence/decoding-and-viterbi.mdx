@@ -108,8 +108,7 @@ transition matrix would be, and it is the thing that does not ship.
 
 The one-sentence history: a trainable transition matrix was built and trained jointly with the
 per-piece loss, the two losses fought rather than cooperating, and after repeated attempts the
-sequence-level term was set to zero and has stayed there. What survives is the part that was earning
-its keep — the legality table — without the part that was not.
+sequence-level term was set to zero and has stayed there. The decoder retains the legality table and no longer uses the sequence-level loss.
 
 ## What it costs
 

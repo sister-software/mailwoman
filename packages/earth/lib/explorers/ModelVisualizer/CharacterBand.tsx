@@ -58,7 +58,8 @@ export function CharacterBand({ text, tokens, labels }: CharacterBandProps): Rea
 						data-family={labelFamily(token.label)}
 						title={`${token.label} ${(token.confidence * 100).toFixed(0)}%`}
 						style={{
-							// The hue is the family; the confidence sets how much of the family's color shows.
+							// The hue is the family.
+							// The confidence sets how much of the family's color shows.
 							backgroundColor: `hsl(${hue} 70% 50% / ${(0.2 + 0.6 * token.confidence).toFixed(2)})`,
 						}}
 					>

@@ -86,7 +86,7 @@ Properties:
 8. **The per-piece channels** (consult keeper): `realign_anchor_to_pieces` and the gazetteer
    clue painting both key off `whitespace_spans` — the migration touches their foundation, so
    each needs its own invariance assertion (identical channel tensors on converted rows) rather than
-   just the label-stream check.
+   the label-stream check.
 
 ## Open questions (→ consult, then operator)
 

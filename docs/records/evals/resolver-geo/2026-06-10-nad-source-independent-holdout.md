@@ -17,8 +17,7 @@ included. This is the _memorization_ axis, orthogonal to the VT/WY/ND _geographi
 
 ## Result 1 — no memorization cliff
 
-v4.2.0 vs v4.1.0 on never-seen-lineage data: locality −0.8, region +0.1 — the same
-within-noise story as the lineage-shared evals. The consolidation's gains are not riding
+v4.2.0 vs v4.1.0 on never-seen-lineage data: locality −0.8, region +0.1 — these differences are within noise, as in the lineage-shared evals. The consolidation's gains are not riding
 memorized OpenAddresses rows. This was the question this holdout exists to answer, and the
 answer is clean.
 

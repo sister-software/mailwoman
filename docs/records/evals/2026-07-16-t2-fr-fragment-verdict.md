@@ -85,8 +85,7 @@ correct about different questions.
 
 Two things survive from it:
 
-- **street dipped and re-converged** (0.798 → 0.811) _while training on the fragment mass_ — the same
-  story the boards tell.
+- **street dipped and re-converged** (0.798 → 0.811) _while training on the fragment mass_ — the boards show the same pattern.
 - **region found a new lower equilibrium at ~0.830 (−1.0pp) and plateaued** across four evals. It
   looked like the open item — **#1102** is titled _"fragment/twin training mass erodes US
   region+locality recall (~2.5pp) — the promote blocker"_, the same failure shape at a larger

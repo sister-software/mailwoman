@@ -24,8 +24,8 @@ and where it was posted. The body of the report keeps its 2026-10-28 text, excep
 - **The headline split** (F5). On `heldout-dev-v0.8.2`, address rows move −0.10 and +0.22 points. The 7,027
   `verified_unseen` address rows move +2.22 and +2.50 points weighted by row. Weighted equally by country, the
   same rows score 85.83% for shipped against 84.20% and 85.43%, so per country the candidate trails. Three generated
-  sources (`rendered-de`, `rendered-gb-os-open`, `invented-postal-unit-guideline`) hold most of the row-weighted
-  gain. The register sets have no unseen rows by record: NPPES has 7 of 197,963, the rebuilt NPPES has 0 of
+  sources (`rendered-de`, `rendered-gb-os-open`, `invented-postal-unit-guideline`) account for most of the improvement in row-weighted
+  accuracy. The register sets have no unseen rows by record: NPPES has 7 of 197,963, the rebuilt NPPES has 0 of
   206,973, and notaries, NAD and HRSA have 0. Every register comparison stays inadmissible.
 - **The thin-system cause** (F4, section 2). `thin-system-v1` holds 1,800 unseen OSM addresses of AL, AM, AE, CI,
   CR and EC with the country written last. No BF extract exists on the host. The seeds read the locality as a

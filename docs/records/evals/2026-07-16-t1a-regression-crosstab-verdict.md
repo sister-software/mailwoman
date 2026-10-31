@@ -111,8 +111,7 @@ street is arguable). Both partitions get worse: pure +6/−3, venue +5/−1.
 
 **Not a grammar defect.** The exported grammar defines explicit `start_transitions`, `end_transitions`,
 and an `O` segment type at index 0. An all-`O` parse is representable and cheap to express. The decode
-chooses street anyway. This is **learned miscalibration** rather than a structural hole. (Checked, because the
-structural story was the attractive one.)
+chooses street anyway. This is **learned miscalibration** rather than a structural hole. (The structural explanation was checked explicitly.)
 
 ### 4.1 What n=54 can and cannot support
 

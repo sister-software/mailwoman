@@ -455,7 +455,7 @@ CC BY-SA 4.0, ČÚZK, the Slovak Ministerstvo vnútra and Poland's GUGiK state t
 value for an absence of conditions, each in its own language, IGN grants Licence Ouverte 2.0 over the
 Base Adresse Nationale, Catastro and Bizkaia grant their own
 access-and-use terms, and Flanders grants its own model license for no-charge re-use. Article 4 of that
-license makes attribution the sole condition. Article 5 leaves the licensee holding the intellectual
+license makes attribution the sole condition. Article 5 leaves the licensee with the intellectual
 property in works created from the data. The Directive mandates the data rather than its license.
 
 **A publisher may state a license that covers part of what it publishes.** SYKE's record reads
