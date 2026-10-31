@@ -550,7 +550,7 @@ function tableLines(fit: IsotonicFit): string[] {
 			"`(raw)=>calibrated` function by the OPT-IN decoder calibrator (`core/decoder/calibration.ts` → " +
 			"`createCalibrator`). Default parse output is unchanged (byte-stable); pass the calibrator via " +
 			"`ParseOpts.calibrate` / `BuildTreeOpts.calibrate` to emit calibrated `conf=`. Regenerate with " +
-			"`scripts/eval/{build-calibration-set.py,collect-span-confidences.ts,fit-isotonic-calibration.py}`.",
+			"`packages/mailwoman/tools/eval-harness/calibration/isotonic.run.ts`.",
 		""
 	)
 

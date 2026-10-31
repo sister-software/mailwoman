@@ -8,7 +8,7 @@ import { selectCIScope } from "#repo-health/ci-scope"
 it("retains the workspace tests of runtime readers while narrowing other consumers", async () => {
 	const workspaces = [
 		{ name: "a", directory: "packages/a", dependencies: [] },
-		{ name: "b", directory: "packages/b", dependencies: ["a"], runtimeInputs: ["packages/b/lib/read.test.ts"] },
+		{ name: "b", directory: "packages/b", dependencies: ["a"], runtimeTests: ["packages/b/lib/read.test.ts"] },
 		{ name: "c", directory: "packages/c", dependencies: ["a"] },
 	]
 
@@ -19,8 +19,7 @@ it("retains the workspace tests of runtime readers while narrowing other consume
 		selectCIScope(workspaces, files, changed, []),
 		workspaces,
 		changed,
-		async () => [files[0]!],
-		async () => []
+		async (_inputs, config) => (config === "vitest.fast.config.ts" ? [files[0]!] : [])
 	)
 
 	expect(scope.fastFiles).toEqual(files.slice(0, 2))

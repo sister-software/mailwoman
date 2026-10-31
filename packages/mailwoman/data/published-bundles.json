@@ -1,5 +1,5 @@
 {
-	"measuredAt": "2026-09-27T05:22:37Z",
+	"measuredAt": "2026-10-31T01:52:57Z",
 	"bucket": "https://public.mailwoman.ai/mailwoman/",
 	"bundles": [
 		{
@@ -93,14 +93,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ak/interp.db",
+					"remotePath": "street/us/ak/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 26771456
+						"contentLength": 27258880
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ak.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ak.db is 26771456 bytes and the published artifact is 27258880 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -115,14 +115,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/al/interp.db",
+					"remotePath": "street/us/al/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 256548864
+						"contentLength": 260829184
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-al.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-al.db is 256548864 bytes and the published artifact is 260829184 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -137,14 +137,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ar/interp.db",
+					"remotePath": "street/us/ar/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 201338880
+						"contentLength": 204488704
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ar.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ar.db is 201338880 bytes and the published artifact is 204488704 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -159,14 +159,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/az/interp.db",
+					"remotePath": "street/us/az/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 207245312
+						"contentLength": 211460096
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-az.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-az.db is 207245312 bytes and the published artifact is 211460096 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -181,14 +181,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ca/interp.db",
+					"remotePath": "street/us/ca/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 779272192
+						"contentLength": 794341376
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ca.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ca.db is 779272192 bytes and the published artifact is 794341376 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -203,14 +203,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/co/interp.db",
+					"remotePath": "street/us/co/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 216334336
+						"contentLength": 220385280
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-co.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-co.db is 216334336 bytes and the published artifact is 220385280 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -225,14 +225,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ct/interp.db",
+					"remotePath": "street/us/ct/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 94732288
+						"contentLength": 96006144
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ct.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ct.db is 94732288 bytes and the published artifact is 96006144 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -247,14 +247,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/dc/interp.db",
+					"remotePath": "street/us/dc/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 7426048
+						"contentLength": 7565312
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-dc.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-dc.db is 7426048 bytes and the published artifact is 7565312 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -269,14 +269,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/de/interp.db",
+					"remotePath": "street/us/de/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 29114368
+						"contentLength": 29622272
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-de.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-de.db is 29114368 bytes and the published artifact is 29622272 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -291,14 +291,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/fl/interp.db",
+					"remotePath": "street/us/fl/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 511512576
+						"contentLength": 522002432
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-fl.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-fl.db is 511512576 bytes and the published artifact is 522002432 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -313,14 +313,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ga/interp.db",
+					"remotePath": "street/us/ga/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 365641728
+						"contentLength": 371814400
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ga.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ga.db is 365641728 bytes and the published artifact is 371814400 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -335,14 +335,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/hi/interp.db",
+					"remotePath": "street/us/hi/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 13205504
+						"contentLength": 13447168
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-hi.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-hi.db is 13205504 bytes and the published artifact is 13447168 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -357,14 +357,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ia/interp.db",
+					"remotePath": "street/us/ia/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 193032192
+						"contentLength": 197267456
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ia.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ia.db is 193032192 bytes and the published artifact is 197267456 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -379,14 +379,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/id/interp.db",
+					"remotePath": "street/us/id/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 82628608
+						"contentLength": 84283392
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-id.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-id.db is 82628608 bytes and the published artifact is 84283392 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -401,14 +401,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/il/interp.db",
+					"remotePath": "street/us/il/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 373002240
+						"contentLength": 380829696
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-il.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-il.db is 373002240 bytes and the published artifact is 380829696 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -423,14 +423,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/in/interp.db",
+					"remotePath": "street/us/in/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 301297664
+						"contentLength": 307281920
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-in.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-in.db is 301297664 bytes and the published artifact is 307281920 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -445,14 +445,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ks/interp.db",
+					"remotePath": "street/us/ks/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 147968000
+						"contentLength": 151560192
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ks.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ks.db is 147968000 bytes and the published artifact is 151560192 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -467,14 +467,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ky/interp.db",
+					"remotePath": "street/us/ky/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 292974592
+						"contentLength": 296521728
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ky.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ky.db is 292974592 bytes and the published artifact is 296521728 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -489,14 +489,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/la/interp.db",
+					"remotePath": "street/us/la/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 165015552
+						"contentLength": 168333312
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-la.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-la.db is 165015552 bytes and the published artifact is 168333312 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -511,14 +511,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ma/interp.db",
+					"remotePath": "street/us/ma/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 163999744
+						"contentLength": 166559744
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ma.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ma.db is 163999744 bytes and the published artifact is 166559744 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -533,14 +533,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/md/interp.db",
+					"remotePath": "street/us/md/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 147357696
+						"contentLength": 150126592
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-md.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-md.db is 147357696 bytes and the published artifact is 150126592 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -555,14 +555,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/me/interp.db",
+					"remotePath": "street/us/me/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 86224896
+						"contentLength": 87293952
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-me.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-me.db is 86224896 bytes and the published artifact is 87293952 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -577,14 +577,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/mi/interp.db",
+					"remotePath": "street/us/mi/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 305459200
+						"contentLength": 312545280
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-mi.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mi.db is 305459200 bytes and the published artifact is 312545280 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -599,14 +599,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/mn/interp.db",
+					"remotePath": "street/us/mn/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 269025280
+						"contentLength": 274706432
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-mn.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mn.db is 269025280 bytes and the published artifact is 274706432 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -621,14 +621,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/mo/interp.db",
+					"remotePath": "street/us/mo/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 305311744
+						"contentLength": 311136256
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-mo.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mo.db is 305311744 bytes and the published artifact is 311136256 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -643,14 +643,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ms/interp.db",
+					"remotePath": "street/us/ms/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 175767552
+						"contentLength": 178659328
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ms.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ms.db is 175767552 bytes and the published artifact is 178659328 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -665,14 +665,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/mt/interp.db",
+					"remotePath": "street/us/mt/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 88612864
+						"contentLength": 89899008
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-mt.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-mt.db is 88612864 bytes and the published artifact is 89899008 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -687,14 +687,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/nc/interp.db",
+					"remotePath": "street/us/nc/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 512188416
+						"contentLength": 520089600
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-nc.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nc.db is 512188416 bytes and the published artifact is 520089600 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -709,14 +709,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/nd/interp.db",
+					"remotePath": "street/us/nd/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 76918784
+						"contentLength": 78532608
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-nd.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nd.db is 76918784 bytes and the published artifact is 78532608 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -731,14 +731,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ne/interp.db",
+					"remotePath": "street/us/ne/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 103297024
+						"contentLength": 105988096
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ne.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ne.db is 103297024 bytes and the published artifact is 105988096 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -753,14 +753,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/nh/interp.db",
+					"remotePath": "street/us/nh/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 57618432
+						"contentLength": 58322944
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-nh.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nh.db is 57618432 bytes and the published artifact is 58322944 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -775,14 +775,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/nj/interp.db",
+					"remotePath": "street/us/nj/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 166936576
+						"contentLength": 169963520
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-nj.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nj.db is 166936576 bytes and the published artifact is 169963520 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -797,14 +797,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/nm/interp.db",
+					"remotePath": "street/us/nm/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 83804160
+						"contentLength": 85282816
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-nm.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nm.db is 83804160 bytes and the published artifact is 85282816 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -819,14 +819,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/nv/interp.db",
+					"remotePath": "street/us/nv/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 69890048
+						"contentLength": 71282688
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-nv.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-nv.db is 69890048 bytes and the published artifact is 71282688 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -841,14 +841,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ny/interp.db",
+					"remotePath": "street/us/ny/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 317833216
+						"contentLength": 323432448
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ny.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ny.db is 317833216 bytes and the published artifact is 323432448 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -863,14 +863,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/oh/interp.db",
+					"remotePath": "street/us/oh/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 404860928
+						"contentLength": 412696576
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-oh.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-oh.db is 404860928 bytes and the published artifact is 412696576 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -885,14 +885,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ok/interp.db",
+					"remotePath": "street/us/ok/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 162582528
+						"contentLength": 166379520
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ok.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ok.db is 162582528 bytes and the published artifact is 166379520 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -907,14 +907,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/or/interp.db",
+					"remotePath": "street/us/or/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 173268992
+						"contentLength": 176451584
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-or.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-or.db is 173268992 bytes and the published artifact is 176451584 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -929,14 +929,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/pa/interp.db",
+					"remotePath": "street/us/pa/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 482373632
+						"contentLength": 490303488
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-pa.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-pa.db is 482373632 bytes and the published artifact is 490303488 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -951,14 +951,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ri/interp.db",
+					"remotePath": "street/us/ri/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 28938240
+						"contentLength": 29446144
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ri.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ri.db is 28938240 bytes and the published artifact is 29446144 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -973,14 +973,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/sc/interp.db",
+					"remotePath": "street/us/sc/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 255586304
+						"contentLength": 259309568
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-sc.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-sc.db is 255586304 bytes and the published artifact is 259309568 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -995,14 +995,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/sd/interp.db",
+					"remotePath": "street/us/sd/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 71929856
+						"contentLength": 73175040
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-sd.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-sd.db is 71929856 bytes and the published artifact is 73175040 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1017,14 +1017,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/tn/interp.db",
+					"remotePath": "street/us/tn/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 365576192
+						"contentLength": 370663424
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-tn.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-tn.db is 365576192 bytes and the published artifact is 370663424 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1039,14 +1039,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/tx/interp.db",
+					"remotePath": "street/us/tx/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 721600512
+						"contentLength": 736587776
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-tx.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-tx.db is 721600512 bytes and the published artifact is 736587776 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1061,14 +1061,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/ut/interp.db",
+					"remotePath": "street/us/ut/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 86228992
+						"contentLength": 87908352
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-ut.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-ut.db is 86228992 bytes and the published artifact is 87908352 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1083,14 +1083,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/va/interp.db",
+					"remotePath": "street/us/va/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 371740672
+						"contentLength": 377995264
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-va.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-va.db is 371740672 bytes and the published artifact is 377995264 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1116,14 +1116,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/vt/interp.db",
+					"remotePath": "street/us/vt/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 58507264
+						"contentLength": 59269120
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-vt.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-vt.db is 58507264 bytes and the published artifact is 59269120 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1138,14 +1138,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/wa/interp.db",
+					"remotePath": "street/us/wa/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 267419648
+						"contentLength": 272322560
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-wa.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wa.db is 267419648 bytes and the published artifact is 272322560 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1160,14 +1160,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/wi/interp.db",
+					"remotePath": "street/us/wi/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 184680448
+						"contentLength": 188428288
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-wi.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wi.db is 184680448 bytes and the published artifact is 188428288 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1182,14 +1182,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/wv/interp.db",
+					"remotePath": "street/us/wv/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 120385536
+						"contentLength": 121982976
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-wv.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wv.db is 120385536 bytes and the published artifact is 121982976 bytes, so its manifest describes a different build"
 					}
 				},
 				{
@@ -1204,14 +1204,14 @@
 					}
 				},
 				{
-					"remotePath": "street/us/wy/interp.db",
+					"remotePath": "street/us/wy/2026-10-02/interp.db",
 					"size": {
 						"status": "measured",
-						"contentLength": 37691392
+						"contentLength": 38330368
 					},
 					"manifest": {
 						"status": "unmeasured",
-						"reason": "/mnt/mw/db/interpolation/interpolation-us-wy.db holds no layer_manifest table"
+						"reason": "local copy at /mnt/mw/db/interpolation/interpolation-us-wy.db is 37691392 bytes and the published artifact is 38330368 bytes, so its manifest describes a different build"
 					}
 				}
 			]

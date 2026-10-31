@@ -242,7 +242,7 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 }
 
 /**
- * Returns a copy of the gazetteer features with nearby clues zeroed.
+ * Returns a copy of the gazetteer features with clues in the suppression window zeroed.
  *
  * Pieces within `window` of any piece with `anchorConfidence > 0` lose their clues.
  * A region clue before a US postcode otherwise strengthens `B-region` enough to change the postcode tag.

@@ -105,6 +105,10 @@ const ALLOWED: Record<string, string> = {
 	"packages/core/lib/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
 	"packages/core/lib/module/package-command.test.ts":
 		"builds nested fixture installs independently of package executable resolution",
+	"packages/corpus/lib/build/code-hash.ts": "resolves installed package directories for dependency graph hashing",
+	"packages/corpus/lib/build/code-hash.test.ts": "builds a scratch install layout for the package resolver under test",
+	"packages/neural/lib/weights/declared-artifact.test.ts":
+		"builds a staged package symlink independently of the artifact reader under test",
 	"lib/repo-health/checks/node-modules-reacharound.test.ts":
 		"records source snippets containing install paths as inputs to the checker",
 	"lib/dev-mcp/routed-mailwoman-arm.test.ts":

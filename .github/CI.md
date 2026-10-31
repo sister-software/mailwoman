@@ -11,23 +11,11 @@
 
 ## How selection is computed
 
-The graph uses:
+The workspace graph uses dependencies from all four manifest dependency fields and literal imports in tracked JS/TS files. It selects changed workspaces and their transitive consumers.
 
-- workspace dependencies from all 4 manifest dependency fields
-- literal `import`/`export` usage in tracked JS/TS files
-- tests and literal dynamic imports
+For a source-only change, Vitest then narrows fast and slow test files to those whose module graph reaches a changed module. Tests that import filesystem, module-path, SQLite, or subprocess access also retain their workspace-level selection because they can read inputs without importing them.
 
-Rules:
-
-- Changed workspaces are selected.
-- Their transitive consumers are also selected.
-- Any change inside a workspace selects that workspace’s tests:
-  - fixtures
-  - assets
-  - local config
-- Computed imports fall back to manifest dependencies.
-- Calls to `repoRootPath`, `resolvePath`, and `join` with consecutive literal segments are tracked as joined paths.
-- A reference to a directory means any change under that directory can select tests.
+Fixture, asset, and local configuration changes retain workspace-level selection. A prose or lint-only change (`*.md`, `.agents/`, or `typos.toml`) selects no test suite; the static job still checks it. Each root `lib/<dir>` tool tree owns its tests as a separate selection unit.
 
 ## When everything runs (full run)
 
@@ -129,9 +117,4 @@ Data-fleet exception:
 
 ## Why selection can be broad
 
-- Workspace dependency chains can fan out.
-- Example:
-  - `mailwoman` depends on `@mailwoman/corpus`
-  - Earth depends on `mailwoman`
-  - so a corpus change selects Earth
-- Narrower selection would require measured per-source-root or per-job dependencies.
+Workspace dependency chains can fan out. For example, `mailwoman` depends on `@mailwoman/corpus`, and Earth depends on `mailwoman`, so a corpus change selects Earth. Browser and packaging jobs retain this workspace-level selection when module-level selection narrows the Vitest file lists.

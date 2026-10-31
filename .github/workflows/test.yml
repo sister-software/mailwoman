@@ -392,14 +392,7 @@ jobs:
         env:
           TEST_FILES: ${{ needs.scope.outputs.fast_files }}
           FULL_SCOPE: ${{ needs.scope.outputs.full }}
-        run: |
-          node --input-type=module <<'JS'
-          import { execFileSync } from 'node:child_process';
-          const files = JSON.parse(process.env.TEST_FILES);
-          if (!Array.isArray(files) || files.some(file => typeof file !== 'string')) throw new Error('fast_files must be a JSON array of paths');
-          if (process.env.FULL_SCOPE !== 'true' && files.length === 0) throw new Error('A scoped fast job requires selected test files');
-          execFileSync('yarn', ['ci:test:fast', ...files], { stdio: 'inherit' });
-          JS
+        run: yarn mwops ci-test fast
 
       # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
       - name: Upload test results
@@ -468,14 +461,7 @@ jobs:
         env:
           TEST_FILES: ${{ needs.scope.outputs.slow_files }}
           FULL_SCOPE: ${{ needs.scope.outputs.full }}
-        run: |
-          node --input-type=module <<'JS'
-          import { execFileSync } from 'node:child_process';
-          const files = JSON.parse(process.env.TEST_FILES);
-          if (!Array.isArray(files) || files.some(file => typeof file !== 'string')) throw new Error('slow_files must be a JSON array of paths');
-          if (process.env.FULL_SCOPE !== 'true' && files.length === 0) throw new Error('A scoped slow job requires selected test files');
-          execFileSync('yarn', ['ci:test:slow', ...files], { stdio: 'inherit' });
-          JS
+        run: yarn mwops ci-test slow
 
       - name: Upload test results
         if: always()

@@ -5,6 +5,7 @@
  *
  *   `mwops` routes release, shop, storage, and health operations through their registries.
  *   The `ci-scope` command selects CI suites and writes GitHub Actions outputs.
+ *   The `ci-test` command runs a selected suite.
  *   Dispatch receives its output streams and checkout path from the entry point.
  *
  *   `health` also performs two mutations outside the check registry. Its type admits no writer:
@@ -37,6 +38,7 @@ import {
 	writeBaseline,
 } from "#repo-health"
 import { writeCIScope } from "#repo-health/actions-output"
+import { isCITestSuite, runCITests } from "#repo-health/ci-test"
 import { planPathLiteralRewrites } from "#repo-health/move/literals"
 import { storageOperations, type StorageContext } from "#storage-kit"
 
@@ -98,6 +100,7 @@ function usage(io: DispatchIO): number {
 			"  mwops shop <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops health <check>|all [--json]",
 			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
+			"  mwops ci-test <fast|slow>        (run a root Vitest suite with ci-scope's selected files)",
 			"  mwops health baseline debt        (rewrite lib/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
 			"  mwops health move <from> <to> [<from> <to> …] [--dry-run]   (or --moves <file.json> listing {from, to})",
@@ -550,6 +553,19 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 		case "ci-scope":
 			io.stdout(prettyJSON(await writeCIScope(io.repoRoot)))
 			return 0
+		case "ci-test": {
+			const [suite] = rest
+
+			if (!isCITestSuite(suite) || rest.length !== 1) {
+				io.stderr("mwops ci-test requires exactly one suite: fast or slow\n")
+
+				return 2
+			}
+
+			await runCITests(suite)
+
+			return 0
+		}
 		case "release":
 			return runOperation(releaseView, rest, io)
 		case "shop":

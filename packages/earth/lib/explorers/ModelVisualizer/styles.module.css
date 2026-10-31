@@ -328,6 +328,7 @@
 	align-items: center;
 	gap: 0.15rem;
 	padding: 0.2rem 0.3rem;
+	color: var(--ss-color-content);
 	background: var(--ss-color-emphasis-100);
 	border: 1px solid var(--ss-color-emphasis-300);
 	border-radius: var(--ss-radius-global);
@@ -360,7 +361,7 @@
 .tileCount {
 	font-size: 0.65rem;
 	padding: 0 0.3rem;
-	border-radius: 999px;
+	border-radius: var(--ss-radius-tag);
 	background: var(--ss-color-emphasis-300);
 }
 
@@ -421,7 +422,7 @@
 	display: inline-block;
 	min-width: 0.65em;
 	text-align: center;
-	border-radius: 2px;
+	border-radius: var(--ss-radius-global);
 }
 
 .char[data-o] {

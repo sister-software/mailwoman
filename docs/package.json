@@ -7,14 +7,12 @@
 	"imports": {
 		"#glossary-plugin": "./plugins/glossary/plugin.ts",
 		"#components/*": "./src/components/*.tsx",
-		"#contexts/*": "./src/contexts/*.tsx",
 		"#hooks/*": "./src/hooks/*.ts",
 		"#shared/*": "./src/shared/*.ts"
 	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./components/*": "./src/components/*.tsx",
-		"./contexts/*": "./src/contexts/*.tsx",
 		"./hooks/*": "./src/hooks/*.ts",
 		"./shared/*": "./src/shared/*.ts",
 		"./plugins/*": {

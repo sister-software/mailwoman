@@ -117,6 +117,6 @@ test("the fit reproduces the Python fitter's table and report on the committed v
 	)
 
 	expect(sha256Hex(renderCalibrationReport(options, fit))).toBe(
-		"2a0d275f5791d835ff1f7685bdbdd2b689e5998502fd19fae2ad4b244694216c"
+		"bd789dc2e935aa9a1ccc89e85bbda4ed406bd5ae6922faaf9f9f8b2d170bba09"
 	)
 })

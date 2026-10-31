@@ -218,7 +218,20 @@ describe("readCIWorkspaces", () => {
 		const readerFile = "packages/reader/lib/fixture.test.ts"
 		await writeLocalTextFile('import { readLocalJSONFile } from "@mailwoman/core/fs/readers"', root(readerFile))
 		const graph = await readCIWorkspaces(root.toString(), [readerFile])
-		expect(graph.find((workspace) => workspace.name === "reader")?.runtimeInputs).toEqual([readerFile])
+		expect(graph.find((workspace) => workspace.name === "reader")?.runtimeTests).toEqual([readerFile])
+	})
+
+	it("ignores runtime-access text in comments and non-test sources", async () => {
+		await using directory = await temporaryDirectory("ci-runtime-inputs-")
+		const root = directory.path
+		await writeLocalJSONFile({ workspaces: ["packages/*"] }, root("package.json"))
+		await writeLocalJSONFile({ name: "reader" }, root("packages/reader/package.json"))
+		const sourceFile = "packages/reader/lib/fixture.ts"
+		const testFile = "packages/reader/lib/fixture.test.ts"
+		await writeLocalTextFile('import { readLocalJSONFile } from "@mailwoman/core/fs/readers"', root(sourceFile))
+		await writeLocalTextFile("// readLocalJSONFile from @mailwoman/core/fs/readers", root(testFile))
+		const graph = await readCIWorkspaces(root.toString(), [sourceFile, testFile])
+		expect(graph.find((workspace) => workspace.name === "reader")?.runtimeTests).toBeUndefined()
 	})
 
 	it("gives each root tool tree its own test selection", async () => {

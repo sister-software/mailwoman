@@ -32,20 +32,28 @@ export async function selectRelatedCIScope(
 	scope: CIScope,
 	workspaces: readonly CIWorkspace[],
 	changed: readonly string[],
-	readFast: (changed: readonly string[]) => Promise<string[]>,
-	readSlow: (changed: readonly string[]) => Promise<string[]>
+	readRelated: (changed: readonly string[], config: string) => Promise<string[]>
 ): Promise<CIScope> {
 	const modules = changed.filter(
 		(file) => !file.endsWith(".md") && !file.startsWith(".agents/") && file !== "typos.toml"
 	)
 
-	if (scope.full || !modules.every((file) => /\.[cm]?[jt]sx?$/u.test(file)) || (!scope.fast && !scope.slow))
+	if (scope.full || !modules.every((file) => /\.[cm]?[jt]sx?$/u.test(file)) || (!scope.fast && !scope.slow)) {
 		return scope
+	}
 
-	const [fast, slow] = await Promise.all([readFast(modules), readSlow(modules)])
-	const runtimeTests = new Set(workspaces.flatMap((workspace) => workspace.runtimeInputs ?? []))
-	const fastFiles = [...new Set([...fast, ...scope.fastFiles.filter((file) => runtimeTests.has(file))])].toSorted()
-	const slowFiles = [...new Set([...slow, ...scope.slowFiles.filter((file) => runtimeTests.has(file))])].toSorted()
+	const [fast, slow] = await Promise.all([
+		readRelated(modules, "vitest.fast.config.ts"),
+		readRelated(modules, "vitest.slow.config.ts"),
+	])
+
+	const runtimeTests = new Set(workspaces.flatMap((workspace) => workspace.runtimeTests ?? []))
+
+	const mergeRuntimeTests = (related: readonly string[], selected: readonly string[]): string[] =>
+		[...new Set([...related, ...selected.filter((file) => runtimeTests.has(file))])].toSorted()
+
+	const fastFiles = mergeRuntimeTests(fast, scope.fastFiles)
+	const slowFiles = mergeRuntimeTests(slow, scope.slowFiles)
 
 	return { ...scope, fastFiles, slowFiles, fast: fastFiles.length > 0, slow: slowFiles.length > 0 }
 }

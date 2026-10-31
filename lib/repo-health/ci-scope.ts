@@ -21,11 +21,11 @@ export interface CIWorkspace {
 	directory: string
 	dependencies: string[]
 	/**
-	 * Files detected as runtime input readers.
+	 * Tests whose syntax imports runtime-input access.
 	 *
-	 * Tests in this list retain the workspace's transitive inputs in addition to their imports.
+	 * These retain the workspace's transitive inputs in addition to their module imports.
 	 */
-	runtimeInputs?: string[]
+	runtimeTests?: string[]
 }
 
 /**
@@ -110,6 +110,56 @@ function excludedFromRootTests(file: string): boolean {
 	)
 }
 
+const RUNTIME_INPUT_MODULE =
+	/^(?:@mailwoman\/core\/(?:fs|module|paths|data-root)(?:\/|$)|node:(?:fs|child_process|sqlite)(?:\/|$))/u
+
+function hasRuntimeInputAccess(source: ts.SourceFile): boolean {
+	let found = false
+
+	const visit = (node: ts.Node): void => {
+		if (found) return
+
+		if (ts.isIdentifier(node) && node.text === "JSONSpliterator") {
+			found = true
+
+			return
+		}
+
+		if (
+			(ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+			node.moduleSpecifier &&
+			ts.isStringLiteral(node.moduleSpecifier) &&
+			RUNTIME_INPUT_MODULE.test(node.moduleSpecifier.text)
+		) {
+			found = true
+
+			return
+		}
+
+		if (ts.isCallExpression(node)) {
+			const argument = node.arguments[0]
+
+			if (
+				(node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+					(ts.isIdentifier(node.expression) && node.expression.text === "require")) &&
+				argument &&
+				ts.isStringLiteral(argument) &&
+				RUNTIME_INPUT_MODULE.test(argument.text)
+			) {
+				found = true
+
+				return
+			}
+		}
+
+		ts.forEachChild(node, visit)
+	}
+
+	visit(source)
+
+	return found
+}
+
 /**
  * Reads manifest dependencies and literal source imports, including imports in tests.
  */
@@ -159,12 +209,8 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 					true
 				)
 
-				if (
-					/(?:@mailwoman\/core\/(?:fs|module|paths|data-root)|node:(?:fs|child_process|sqlite)|JSONSpliterator|\b(?:execFile|spawn|readFile|readLocal|repoRootPath|workspacePath|resolvePackagePath)\b)/u.test(
-						source.text
-					)
-				) {
-					;(owner.runtimeInputs ??= []).push(file)
+				if (/\.(?:test|spec)\.[cm]?[jt]sx?$/u.test(file) && hasRuntimeInputAccess(source)) {
+					;(owner.runtimeTests ??= []).push(file)
 				}
 
 				const addImport = (specifier: string): void => {
