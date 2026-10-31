@@ -24,6 +24,7 @@
  *   `corpus/<entry>/` onto the volume (`sync.ts`) and waits for it.
  */
 
+import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { readLocalBuffer, tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isFile } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -32,6 +33,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { integerArgument, parseArguments } from "@mailwoman/core/scripting/arguments"
+import { sleep } from "@mailwoman/core/utils/sleep"
 import { buildResolvedTrainingConfig } from "@mailwoman/corpus/training/config/resolved"
 import { resolvePath } from "path-ts"
 
@@ -155,6 +157,14 @@ function dependencies(configPath: string | null, dryRun: boolean): LaunchDepende
 		imageBuild,
 		readRecord: (key) => tryReadLocalJSONFile<LaunchRecord>(recordPath(key)),
 		writeRecord: (record) => writeLocalJSONFile(record, recordPath(record.runKey)),
+		lockRun: (key) =>
+			acquireDirectoryLock(
+				resolvePath(settings.MAILWOMAN_DATA_ROOT, "launch", "runs", `${key}.lock`),
+				(held) =>
+					`another start or restart of run ${key} holds its lock` +
+					(held ? ` (pid ${held.pid} on ${held.host}, since ${held.started_at})` : "")
+			),
+		sleep: (milliseconds) => sleep(milliseconds),
 		log,
 	}
 }

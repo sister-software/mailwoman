@@ -68,6 +68,29 @@ export class DuplicateLaunchError extends Error {
 }
 
 /**
+ * A start whose sandbox name Modal still reserves for a sandbox of the run that already exited.
+ *
+ * Modal releases a terminated sandbox's name some time after its exit code is readable,
+ * so a restart right after a cancel or a preemption can find the name held by no running sandbox.
+ */
+export class SandboxNameHeldError extends Error {
+	constructor(runKey: string, sandboxName: string, attempts: number) {
+		super(
+			`Modal still reserves ${sandboxName} after ${attempts} starts, and no sandbox of run ${runKey} is running; ` +
+				"the previous sandbox is still releasing it, so start the run again in a minute"
+		)
+
+		this.name = "SandboxNameHeldError"
+	}
+}
+
+/**
+ * How many times a start retries a sandbox name that no running sandbox of the
+ * run holds, and how long it waits between them.
+ */
+export const NAME_RELEASE_RETRY = { attempts: 6, delayMs: 10_000 } as const
+
+/**
  * What the host preflight hands the launch: the receipt key and the MANIFEST it was written over.
  */
 export interface PreflightResult {
@@ -109,6 +132,13 @@ export interface LaunchDependencies {
 	imageBuild(variant: "cpu" | "cu130"): Promise<TrainerImageBuild>
 	readRecord(runKey: string): Promise<LaunchRecord | null>
 	writeRecord(record: LaunchRecord): Promise<void>
+	/**
+	 * Takes the host's lock on a run for one `start`, from before its preflight to after its sandbox starts.
+	 *
+	 * @throws When another `start` on this host holds it.
+	 */
+	lockRun(runKey: string): Promise<AsyncDisposable>
+	sleep(milliseconds: number): Promise<void>
 	log(line: string): void
 }
 
@@ -202,9 +232,14 @@ export function supervisorEnvironment(
 /**
  * Preflights a config and starts its sandbox.
  *
+ * The host's run lock is taken before the preflight, so a second `start` of the run on
+ * this host is refused before it audits the corpus, writes a receipt or builds an image.
+ * A start from another host is refused by Modal's sandbox name when it starts its sandbox.
+ *
  * @throws {DuplicateLaunchError} When a sandbox of the same run is still running.
- * @throws When `--fail-at-step` is given for a GPU device, a fresh start would
- * clear a shared directory, or the preflight refuses.
+ * @throws {SandboxNameHeldError} When Modal keeps the name reserved after the run's last sandbox exited.
+ * @throws When `--fail-at-step` is given for a GPU device, a fresh start would clear a
+ * shared directory, another start of the run holds the host lock, or the preflight refuses.
  */
 export async function startLaunch(
 	config: ResolvedLaunchConfig,
@@ -226,6 +261,9 @@ export async function startLaunch(
 	}
 
 	const runKey = runKeyOf(paths.outputDir)
+
+	await using _lock = await deps.lockRun(runKey)
+
 	const [holder] = await deps.boundary.list({ [RUN_TAG]: runKey })
 
 	if (holder) throw new DuplicateLaunchError(runKey, holder.id)
@@ -264,7 +302,8 @@ export async function startLaunch(
 
 	record.imageID = await deps.boundary.ensureTrainerImage(await deps.imageBuild(variant))
 
-	return startSandbox(record, deps)
+	// Awaited inside the lock's scope, so the lock is held until the sandbox has started.
+	return await startSandbox(record, deps)
 }
 
 async function startSandbox(record: LaunchRecord, deps: LaunchDependencies): Promise<LaunchRecord> {
@@ -272,36 +311,59 @@ async function startSandbox(record: LaunchRecord, deps: LaunchDependencies): Pro
 		throw new TypeError(`the record of run ${record.runKey} holds no launch inputs; start the run again with start`)
 	}
 
-	// Every sandbox of a run uses one name, so Modal refuses a second sandbox while the first runs:
-	// the refusal holds between the host's check for a running sandbox and this start.
-	// The name check does not prevent this race.
-	const sandbox = await deps.boundary
-		.start({
-			...record.resources,
-			name: `train-${record.runKey}`,
-			imageID: record.imageID,
-			command: ["bash", "-c", SUPERVISOR_SCRIPT],
-			env: { ...record.environment },
-			// `ready` comes last: the supervisor reads the other two once it exists.
-			files: [
-				{ path: `${LAUNCH_INPUTS_DIR}/config`, contents: Buffer.from(record.inputs.configBase64, "base64") },
-				{ path: `${LAUNCH_INPUTS_DIR}/resolved.json`, contents: Buffer.from(record.inputs.resolved) },
-				{ path: `${LAUNCH_INPUTS_DIR}/ready`, contents: new Uint8Array() },
-			],
-			tags: { [RUN_TAG]: record.runKey, config: record.config },
-		})
-		.catch((error: unknown) => {
-			throw error instanceof SandboxNameTakenError
-				? new DuplicateLaunchError(record.runKey, `named ${error.sandboxName}`)
-				: error
-		})
-
+	const sandbox = await startNamedSandbox(record, deps)
 	const next = { ...record, sandboxes: [...record.sandboxes, sandbox.id] }
 
 	await deps.writeRecord(next)
 	deps.log(`Started sandbox ${sandbox.id} for run ${record.runKey} on ${record.device}`)
 
 	return next
+}
+
+/**
+ * Starts the run's sandbox under the run's one name.
+ *
+ * Modal refuses a second sandbox while one holds the name, which covers the gap
+ * between the host's check for a running sandbox and this start.
+ * A refused name held by a running sandbox of the run is a duplicate launch.
+ *
+ * A refused name with no running sandbox is one Modal has not yet released,
+ * so the start waits and tries again.
+ */
+async function startNamedSandbox(record: LaunchRecord, deps: LaunchDependencies) {
+	const name = `train-${record.runKey}`
+
+	for (let attempt = 1; ; attempt++) {
+		try {
+			return await deps.boundary.start({
+				...record.resources,
+				name,
+				imageID: record.imageID,
+				command: ["bash", "-c", SUPERVISOR_SCRIPT],
+				env: { ...record.environment },
+				// `ready` comes last: the supervisor reads the other two once it exists.
+				files: [
+					{ path: `${LAUNCH_INPUTS_DIR}/config`, contents: Buffer.from(record.inputs.configBase64, "base64") },
+					{ path: `${LAUNCH_INPUTS_DIR}/resolved.json`, contents: Buffer.from(record.inputs.resolved) },
+					{ path: `${LAUNCH_INPUTS_DIR}/ready`, contents: new Uint8Array() },
+				],
+				tags: { [RUN_TAG]: record.runKey, config: record.config },
+			})
+		} catch (error) {
+			if (!(error instanceof SandboxNameTakenError)) throw error
+
+			const [holder] = await deps.boundary.list({ [RUN_TAG]: record.runKey })
+
+			if (holder) throw new DuplicateLaunchError(record.runKey, holder.id)
+
+			if (attempt >= NAME_RELEASE_RETRY.attempts) {
+				throw new SandboxNameHeldError(record.runKey, name, attempt)
+			}
+
+			deps.log(`Modal still reserves ${name}, and no sandbox of the run is running; starting again shortly`)
+			await deps.sleep(NAME_RELEASE_RETRY.delayMs)
+		}
+	}
 }
 
 /**
@@ -339,11 +401,13 @@ export function launchStateOf(sandbox: SandboxState): LaunchState {
  * @throws When the run is still running, completed, or was refused.
  */
 export async function restartLaunch(runKey: string, deps: LaunchDependencies): Promise<LaunchRecord> {
+	await using _lock = await deps.lockRun(runKey)
+
 	const { record, state } = await launchStatus(runKey, deps)
 
 	if (state !== LaunchState.Stopped) throw new Error(`run ${runKey} is ${state}; only a stopped run restarts`)
 
-	return startSandbox(
+	return await startSandbox(
 		{
 			...record,
 			environment: {
