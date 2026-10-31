@@ -7,6 +7,7 @@
  *   after a stop, cancellation and the timeout.
  */
 
+import { sleep } from "@mailwoman/core/utils/sleep"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -24,10 +25,12 @@ import {
 	type LaunchDependencies,
 	type LaunchOptions,
 	type LaunchRecord,
+	NAME_RELEASE_RETRY,
 	type ResolvedLaunchConfig,
 	restartLaunch,
 	RUN_TAG,
 	runKeyOf,
+	SandboxNameHeldError,
 	startLaunch,
 } from "#tools/training/launch/launch"
 import { SUPERVISOR_REFUSED_EXIT } from "#tools/training/launch/supervisor"
@@ -63,12 +66,22 @@ function harness() {
 	const fetches: Array<{ remoteDir: string; localDir: string }> = []
 	let preflights = 0
 	const preflightTimeouts: number[] = []
+	const sleeps: number[] = []
+	const locked = new Set<string>()
+	// How many more starts Modal refuses for a name an exited sandbox has not yet released.
+	const releasing = { refusals: 0 }
 
 	const boundary: ModalBoundary = {
 		ensureTrainerImage: async (build) => `im-${build.name}`,
 		start: async (spec) => {
 			// Modal refuses a name a running sandbox of the app holds.
 			if ([...sandboxes.values()].some((sandbox) => sandbox.exitCode === null && sandbox.spec.name === spec.name)) {
+				throw new SandboxNameTakenError(spec.name)
+			}
+
+			if (releasing.refusals > 0) {
+				releasing.refusals--
+
 				throw new SandboxNameTakenError(spec.name)
 			}
 
@@ -122,10 +135,29 @@ function harness() {
 		writeRecord: async (record) => {
 			records.set(record.runKey, record)
 		},
+		lockRun: async (key) => {
+			if (locked.has(key)) throw new Error(`another start or restart of run ${key} holds its lock`)
+
+			locked.add(key)
+
+			return { [Symbol.asyncDispose]: async () => void locked.delete(key) }
+		},
+		sleep: async (milliseconds) => void sleeps.push(milliseconds),
 		log: (line) => logs.push(line),
 	}
 
-	return { deps, sandboxes, records, terminated, logs, fetches, preflights: () => preflights, preflightTimeouts }
+	return {
+		deps,
+		sandboxes,
+		records,
+		terminated,
+		logs,
+		fetches,
+		preflights: () => preflights,
+		preflightTimeouts,
+		sleeps,
+		releasing,
+	}
 }
 
 describe("the training launch lifecycle", () => {
@@ -170,12 +202,72 @@ describe("the training launch lifecycle", () => {
 	it("refuses a second launch that passes the host check while the first sandbox runs, by the sandbox name", async () => {
 		const { deps } = harness()
 		const record = await startLaunch(CONFIG, OPTIONS, deps)
-		// The race: the second launch's check ran before the first sandbox was listed.
-		const racing = { ...deps, boundary: { ...deps.boundary, list: async () => [] } }
+		// The race: the second launch's host check ran before the first sandbox was listed.
+		let checks = 0
+
+		const list: ModalBoundary["list"] = async (tags, includeFinished) =>
+			checks++ === 0 ? [] : deps.boundary.list(tags, includeFinished)
+
+		const racing = { ...deps, boundary: { ...deps.boundary, list } }
 
 		await expect(startLaunch(CONFIG, OPTIONS, racing)).rejects.toThrow(
-			new DuplicateLaunchError(record.runKey, `named train-${record.runKey}`)
+			new DuplicateLaunchError(record.runKey, record.sandboxes[0]!)
 		)
+	})
+
+	it("refuses a second start of the run while the first holds the host lock, before its preflight", async () => {
+		const { deps, preflights } = harness()
+
+		await using _held = await deps.lockRun(runKeyOf(CONFIG.outputDir))
+
+		await expect(startLaunch(CONFIG, OPTIONS, deps)).rejects.toThrow(/holds its lock/)
+		expect(preflights()).toBe(0)
+	})
+
+	it("holds the host lock until the sandbox has started", async () => {
+		const { deps } = harness()
+		let lockedAtStart = false
+
+		const start: ModalBoundary["start"] = async (spec) => {
+			// A Modal call yields to the event loop before the sandbox exists.
+			await sleep(0)
+
+			// A second lock attempt fails while the first start still holds it.
+			lockedAtStart = await deps.lockRun(runKey).then(
+				async (lock) => {
+					await lock[Symbol.asyncDispose]()
+
+					return false
+				},
+				() => true
+			)
+
+			return deps.boundary.start(spec)
+		}
+
+		await startLaunch(CONFIG, OPTIONS, { ...deps, boundary: { ...deps.boundary, start } })
+		expect(lockedAtStart).toBe(true)
+	})
+
+	it("starts again when Modal still reserves the name of the run's exited sandbox", async () => {
+		const { deps, sleeps, releasing, logs } = harness()
+
+		releasing.refusals = 2
+
+		const record = await startLaunch(CONFIG, OPTIONS, deps)
+
+		expect(record.sandboxes).toHaveLength(1)
+		expect(sleeps).toEqual([NAME_RELEASE_RETRY.delayMs, NAME_RELEASE_RETRY.delayMs])
+		expect(logs.filter((line) => line.includes("still reserves"))).toHaveLength(2)
+	})
+
+	it("reports a held name, not a duplicate launch, when Modal keeps it after every retry", async () => {
+		const { deps, sleeps, releasing } = harness()
+
+		releasing.refusals = Number.POSITIVE_INFINITY
+
+		await expect(startLaunch(CONFIG, OPTIONS, deps)).rejects.toBeInstanceOf(SandboxNameHeldError)
+		expect(sleeps).toHaveLength(NAME_RELEASE_RETRY.attempts - 1)
 	})
 
 	it("restarts a stopped run in a fresh sandbox without clearing it, and refuses to restart a refusal", async () => {

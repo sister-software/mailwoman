@@ -24,6 +24,10 @@
 #     --config v4.3.3-cooldown46k.yaml \
 #     --branch-from /data/output-v433-suffix-boundary-base-s42/checkpoints/step-040000
 #
+# The Python trainer wrote that step-040000 checkpoint, with `optimizer.pt` and no `optimizer.json`. The Rust
+# trainer refuses to resume it, and this branch needs the parent's optimizer and scheduler state, so a fresh
+# optimizer would change the experiment. A rerun first retrains v4.3.3 to step 40000 on the Rust trainer.
+#
 # checks (fp32, unchanged): B1 >=116/128, B2 >=34/48, B4 tokens >=3/7. B3 only after all three.
 # Grade the final 46k checkpoint (decay complete); 42k/44k saves are curve receipts only.
 # If 46k still sits in the 72-85 B1 band, the plateau was not a schedule artifact and the
