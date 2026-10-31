@@ -69,7 +69,7 @@ const REASON_LENGTH = 200
 export function failureReason(error: unknown): string {
 	const text = error instanceof Error ? error.message : String(error)
 
-	return text.replace(EMAIL_ADDRESS, "<email>").replace(LONG_OPAQUE_VALUE, "<redacted>").slice(0, REASON_LENGTH)
+	return text.replaceAll(EMAIL_ADDRESS, "<email>").replaceAll(LONG_OPAQUE_VALUE, "<redacted>").slice(0, REASON_LENGTH)
 }
 
 export async function reconcileLedger(

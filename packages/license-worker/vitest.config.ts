@@ -9,7 +9,7 @@
  *   The root Vitest sweep excludes this workspace. CI runs it as its own step.
  */
 
-import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-pool-workers"
+import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-plugin"
 import { defineConfig } from "vitest/config"
 
 // Node reads the migrations here and passes them to the runtime as a binding that tests apply.

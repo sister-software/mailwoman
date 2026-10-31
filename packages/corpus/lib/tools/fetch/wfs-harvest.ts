@@ -169,7 +169,7 @@ const PAGE_ATTRIBUTES = /\s(?:[\w.-]+:)?(?:numberMatched|numberReturned|timeStam
  * dropped, so it can open a file holding every page.
  */
 export function collectionOpeningTag(root: MarkupRoot): string {
-	return `<${root.name}${root.attributes.replace(PAGE_ATTRIBUTES, "")}>`
+	return `<${root.name}${root.attributes.replaceAll(PAGE_ATTRIBUTES, "")}>`
 }
 
 /**

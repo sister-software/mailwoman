@@ -77,7 +77,7 @@ const EDGE_NON_WORD = new RegExp(String.raw`^(?:(?!${WORD}).)+|(?:(?!${WORD}).)+
  */
 export function foldBoardWords(surface: string): string[] {
 	return splitWhitespace(surface)
-		.map((word) => word.replace(EDGE_NON_WORD, ""))
+		.map((word) => word.replaceAll(EDGE_NON_WORD, ""))
 		.filter((word) => word)
 		.map((word) => word.toLowerCase())
 }

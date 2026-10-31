@@ -605,7 +605,7 @@ export const particleStrip: Augmentation = (row) => {
 	const re = new RegExp(`\\s+${escapeRegExp(particle)}\\s+`, "g")
 
 	if (!re.test(row.raw)) return null
-	const newRaw = row.raw.replace(re, " ").replaceAll(/\s+/g, " ").trim()
+	const newRaw = row.raw.replaceAll(re, " ").replaceAll(/\s+/g, " ").trim()
 
 	return withAugmentation(row, "particle-strip", newRaw, newComponents)
 }

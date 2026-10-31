@@ -88,7 +88,7 @@ const EDGE_MARKS = /^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu
  * The written form keeps its separators and loses only the marks at its edges.
  */
 export function centroidLookupKey(written: string): string | null {
-	const key = written.trim().replace(EDGE_MARKS, "").toUpperCase()
+	const key = written.trim().replaceAll(EDGE_MARKS, "").toUpperCase()
 
 	return key || null
 }

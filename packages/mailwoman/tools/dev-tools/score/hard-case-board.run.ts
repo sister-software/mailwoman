@@ -104,12 +104,7 @@ interface CaseScore {
 
 // Match the board's place-name grading.
 // It folds case and compatibility forms plus strips accents.
-const norm = (s: string): string =>
-	s
-		.toLowerCase()
-		.normalize("NFKD")
-		.replaceAll(/[̀-ͯ]/gu, "")
-		.trim()
+const norm = (s: string): string => s.toLowerCase().normalize("NFKD").replaceAll(/[̀-ͯ]/gu, "").trim()
 
 function score(c: HardCase, resolved: Resolved[]): CaseScore {
 	const best = mostSpecific(resolved)

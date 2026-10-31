@@ -133,7 +133,7 @@ export async function loadKenAllPostcodes(path: PathBuilderLike): Promise<KenAll
 			municipality.set(head, cells[0]!)
 		}
 
-		const name = cells[3]!.replace(KENALL_PAREN, "").trim()
+		const name = cells[3]!.replaceAll(KENALL_PAREN, "").trim()
 
 		if (!name || name === KENALL_CATCH_ALL) continue
 
