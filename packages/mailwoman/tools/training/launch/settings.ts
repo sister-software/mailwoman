@@ -23,7 +23,7 @@ const text = (fallback: string, description: string) =>
 export const LaunchEnvSchema = z.object({
 	MAILWOMAN_MODAL_APP: text("mailwoman-training", "The Modal app the training sandboxes run under."),
 	MAILWOMAN_MODAL_VOLUME: text("mailwoman-training", "The Modal volume that holds corpora, configs and run outputs."),
-	MAILWOMAN_MODAL_TRAIN_GPU: text("A100-80GB", "The training GPU; `--device` overrides it per launch."),
+	MAILWOMAN_MODAL_TRAIN_GPU: text("A100-40GB", "The training GPU; `--device` overrides it per launch."),
 	MAILWOMAN_R2_BUCKET: text("mailwoman-assets", "The R2 bucket `sync` stages corpora from."),
 	MAILWOMAN_MODAL_TRAIN_RETRIES: blankAsAbsent(z.coerce.number().int().min(0).default(3)).meta({
 		description: "How often a sandbox restarts `trainer train` after a failed exit.",

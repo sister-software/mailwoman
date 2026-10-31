@@ -77,6 +77,10 @@ export interface SupervisorEnvironment {
 	MW_RETRIES: string
 	MW_RETRY_DELAY_SECONDS: string
 	/**
+	 * Seconds between the usage samples the supervisor logs while the trainer runs, 60 when unset.
+	 */
+	MW_USAGE_INTERVAL_SECONDS?: string
+	/**
 	 * `1` clears {@linkcode SupervisorEnvironment.MW_OUTPUT_DIR} once, after the input
 	 * and device checks and before the first attempt.
 	 *
@@ -105,6 +109,24 @@ export const SUPERVISOR_SCRIPT = String.raw`set -u
 log() { printf '[launch] %s\n' "$*"; }
 refuse() { log "refused: $*"; exit ${SUPERVISOR_REFUSED_EXIT}; }
 commit() { "$MW_SYNC" "$MW_VOLUME"; }
+
+# Logs the GPU's utilization and memory and the trainer's peak resident memory, then repeats every
+# MW_USAGE_INTERVAL_SECONDS (60 by default) while the trainer runs. These are the numbers the card and the
+# sandbox's CPU and memory request are sized from. A CPU sandbox has no nvidia-smi and logs "none".
+sample_usage() {
+	while :; do
+		gpu=none
+		if command -v nvidia-smi > /dev/null 2>&1; then
+			gpu=$(nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits 2> /dev/null | head -n 1 | tr -d ' ')
+		fi
+		rss=$(awk '/^VmHWM/ {print $2}' "/proc/$1/status" 2> /dev/null)
+		log "usage: gpu_util_pct,gpu_mem_mib=${"$"}{gpu:-none} trainer_peak_rss_kib=${"$"}{rss:-gone}"
+		kill -0 "$1" 2> /dev/null || return 0
+		# The sleep holds no output stream: killing the sampler leaves it orphaned, and an orphan holding the
+		# supervisor's stdout would keep the sandbox's output open until the sleep ends.
+		sleep "${"$"}{MW_USAGE_INTERVAL_SECONDS:-60}" > /dev/null 2>&1 < /dev/null
+	done
+}
 
 waited=0
 while [ ! -f "$MW_INPUTS_DIR/ready" ]; do
@@ -153,6 +175,8 @@ while :; do
 	mkfifo "$fifo"
 	MAILWOMAN_EXPECT_DEVICE="$MW_EXPECT_DEVICE" "$MW_TRAINER" train "$MW_RESOLVED_PATH" --resume "$resume" "${"$"}{threads[@]}" > "$fifo" 2>&1 &
 	pid=$!
+	sample_usage "$pid" &
+	sampler=$!
 	outcome=""
 
 	while IFS= read -r line; do
@@ -181,6 +205,8 @@ while :; do
 
 	wait "$pid"
 	code=$?
+	kill "$sampler" 2> /dev/null
+	wait "$sampler" 2> /dev/null
 	rm -f "$fifo"
 	commit
 

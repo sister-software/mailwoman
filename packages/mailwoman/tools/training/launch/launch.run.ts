@@ -6,7 +6,7 @@
  *   Launches the Rust trainer on Modal and operates on a launched run.
  *
  *   Usage:
- *     node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> [--device A100-80GB | --cpu] \
+ *     node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> [--device <Modal GPU> | --cpu] \
  *       [--fresh] [--branch-from <checkpoint>] [--threads <n>] [--retries <n>] [--timeout-seconds <s>] \
  *       [--fail-at-step <n>] [--dry-run]
  *     node packages/mailwoman/tools/training/launch/launch.run.ts status <run key>

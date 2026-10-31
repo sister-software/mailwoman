@@ -37,6 +37,7 @@ mode=${"$"}{plan[$count]:-ok}
 [ "$mode" = fail ] && { echo "error: no corpus"; exit 2; }
 echo "device=Cpu param_count=10"
 [ "$mode" = die ] && exit 1
+[ "$mode" = slow ] && sleep 1
 for step in 10 20 30; do
 	echo "step $step/30  train_loss=1.0"
 	mkdir -p "$MW_OUTPUT_DIR/step-0000$step"
@@ -147,6 +148,15 @@ describe("the training sandbox supervisor", () => {
 		// One commit for the staged inputs, three for the checkpoints, one after the trainer exits.
 		expect(run.syncs).toHaveLength(5)
 		expect(run.stdout).toContain("[launch] training complete")
+	})
+
+	it("logs the GPU's use and the trainer's peak resident memory while the trainer runs", async () => {
+		const run = await runSupervisor("slow", { MW_USAGE_INTERVAL_SECONDS: "0.2" })
+		const samples = run.stdout.split("\n").filter((line) => line.startsWith("[launch] usage: "))
+
+		expect(run.code).toBe(0)
+		// The host running the test may have no GPU, so the GPU field is whatever nvidia-smi reports or `none`.
+		expect(samples.some((line) => /trainer_peak_rss_kib=\d+$/u.test(line))).toBe(true)
 	})
 
 	it("retries a failed exit with --resume auto after committing its checkpoint", async () => {

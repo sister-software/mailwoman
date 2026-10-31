@@ -8,7 +8,7 @@ trainer on Modal and the host audits a launch requires.
 `launch/launch.run.ts` runs `trainer train` in a Modal sandbox. It needs no Python and starts no Modal Function.
 
 ```bash
-node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> --fresh [--device A100-80GB]
+node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> --fresh [--device <Modal GPU>]
 node packages/mailwoman/tools/training/launch/launch.run.ts status <run key>
 node packages/mailwoman/tools/training/launch/launch.run.ts logs <run key> [--lines 200]
 node packages/mailwoman/tools/training/launch/launch.run.ts cancel <run key>
@@ -76,6 +76,11 @@ launch. `launch/*.test.ts` checks each lifecycle step against a stub boundary an
 `MAILWOMAN_MODAL_TRAIN_RETRIES` and `MAILWOMAN_MODAL_R2_SECRET` with the Python launcher's defaults, over the corpus
 package's view. That view holds `MAILWOMAN_DATA_ROOT` and `MAILWOMAN_VOLUME_MOUNT`. Modal credentials come from
 `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` or `~/.modal.toml`.
+
+The default GPU is the A100-40GB. On the 29.6 M-parameter model at batch 128 in bf16, the Rust trainer ran 15.46
+steps/s on it, 9.95 on an A10 and 6.96 on an L4. With the sandbox's 8 CPUs and 32 GiB at $0.63 per hour added, the
+A100-40GB and the A10 cost about the same per step, and the A100 finishes sooner. The A100-80GB costs $0.40 per hour
+more for memory this model does not use. `launch/wall-clock.ts` records each rate.
 
 ## Host audits
 
