@@ -252,7 +252,7 @@ pub fn write_corpus_record(corpus_dir: &str, out: &Path) -> Result<()> {
 		let parsed: Value = serde_json::from_slice(&bytes)?;
 		json!({
 			"corpus_dir": corpus_dir,
-			"manifest_sha256": format!("{:x}", Sha256::digest(&bytes)),
+			"manifest_sha256": Sha256::digest(&bytes).iter().map(|b| format!("{b:02x}")).collect::<String>(),
 			"corpus_version": parsed.get("corpus_version").cloned().unwrap_or(Value::Null),
 		})
 	} else {

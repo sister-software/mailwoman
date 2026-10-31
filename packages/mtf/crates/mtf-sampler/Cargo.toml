@@ -11,7 +11,7 @@ mtf-core = { path = "../mtf-core" }
 mtf-channels = { path = "../mtf-channels" }
 # CPython seeds a generator from a string through the string's SHA-512 digest, and the loader verifies each corpus
 # file against its manifest's SHA-256.
-sha2 = "0.10"
+sha2 = "0.11"
 serde = { version = "1", features = ["derive"] }
 # `float_roundtrip` parses every decimal to the double Python's `json` produces, so a configured weight is the same
 # double in both languages.
