@@ -16,7 +16,7 @@ import { JSONSpliterator, parallelMapWorkers } from "spliterator"
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 
 const PARSE_WORKER_URL = new URL(
-	import.meta.url.endsWith(".ts") ? "./parse-worker.ts" : "./parse-worker.js",
+	import.meta.url.endsWith(".ts") ? "./worker.ts" : "./worker.js",
 	import.meta.url
 )
 

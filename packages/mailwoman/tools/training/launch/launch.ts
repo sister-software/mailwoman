@@ -196,11 +196,19 @@ const CPU_RESOURCES = { cpu: 4, memoryMiB: 16_384 }
 /**
  * A GPU training sandbox's CPU and memory request.
  *
- * The trainer held 7.1 GiB resident at step 22,000 of the 90,000-step run on the A100-40GB, read from the container
- * on 2026-10-31, so 16 GiB leaves it twice that. Its host work is the sampler's fill thread and the encoder.
+ * The trainer held 7.1 GiB resident at step 22,000 of the 90,000-step run on the A100-40GB,
+ * read from the container on 2026-10-31, so 16 GiB leaves it twice that.
+ * Its host work is the sampler's fill thread and the encoder.
+ *
  * The batch prefetch runs that work during the GPU step, and 4 CPUs cover it.
+ *
+ * Modal bills CPU and memory at `max(request, use)`, and an unlimited sandbox
+ * may use 16 cores above its request.
+ * In
+ * #2884's run, 8 requested CPUs billed as 24, the request plus that burst allowance. The limits hold the bill near
+ * the request, and the trainer's libtorch threads default to the request.
  */
-const GPU_RESOURCES = { cpu: 4, memoryMiB: 16_384 }
+const GPU_RESOURCES = { cpu: 4, cpuLimit: 6, memoryMiB: 16_384, memoryLimitMiB: 32_768 }
 
 /**
  * The supervisor's environment for a launch.
@@ -226,7 +234,7 @@ export function supervisorEnvironment(
 		MW_RUN_BASE: paths.runBase,
 		MW_EXPECT_DEVICE: options.device === "cpu" ? "cpu" : "cuda",
 		MW_BRANCH_FROM: options.branchFrom ?? "",
-		MW_THREADS: String(options.threads),
+		MW_THREADS: String(options.threads > 0 || options.device === "cpu" ? options.threads : GPU_RESOURCES.cpu),
 		MW_RETRIES: String(options.retries),
 		MW_RETRY_DELAY_SECONDS: "10",
 		MW_FRESH: options.fresh ? "1" : "0",

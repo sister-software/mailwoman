@@ -83,6 +83,11 @@ hour added, the A100-40GB and the A10 cost about the same per step, and the A100
 $0.40 per hour more for memory this model does not use. `launch/wall-clock.ts` records each rate. A GPU sandbox now
 requests 4 CPUs and 16 GiB, $0.32 per hour less: the trainer held 7.1 GiB resident in the 90,000-step run of #2884.
 
+Modal bills CPU and memory at the larger of the request and the use, and a sandbox without a limit may use 16 cores
+above its request. #2884's run requested 8 CPUs and billed 24, $1.14 per hour against the $0.38 requested. A GPU
+sandbox therefore sets `cpuLimit` to 6 and `memoryLimitMiB` to 32,768, and its trainer runs with `--threads 4` unless
+`--threads` says otherwise.
+
 ## Building the trainer on the host
 
 `node packages/mailwoman/tools/training/libtorch.run.ts` installs the libtorch archive `launch/image.ts` pins into the

@@ -187,7 +187,16 @@ describe("the training launch lifecycle", () => {
 		const record = await startLaunch(CONFIG, { ...OPTIONS, device: "A100-80GB" }, deps)
 
 		expect(record.imageID).toBe("im-mailwoman-trainer-cu130")
-		expect(sandboxes.get(record.sandboxes[0]!)!.spec).toMatchObject({ gpu: "A100-80GB", cpu: 4, memoryMiB: 16_384 })
+
+		expect(sandboxes.get(record.sandboxes[0]!)!.spec).toMatchObject({
+			gpu: "A100-80GB",
+			cpu: 4,
+			cpuLimit: 6,
+			memoryMiB: 16_384,
+			memoryLimitMiB: 32_768,
+			env: { MW_THREADS: "4" },
+		})
+
 		expect(record.environment.MW_EXPECT_DEVICE).toBe("cuda")
 	})
 
