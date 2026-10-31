@@ -78,9 +78,10 @@ package's view. That view holds `MAILWOMAN_DATA_ROOT` and `MAILWOMAN_VOLUME_MOUN
 `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` or `~/.modal.toml`.
 
 The default GPU is the A100-40GB. On the 29.6 M-parameter model at batch 128 in bf16, the Rust trainer ran 15.46
-steps/s on it, 9.95 on an A10 and 6.96 on an L4. With the sandbox's 8 CPUs and 32 GiB at $0.63 per hour added, the
-A100-40GB and the A10 cost about the same per step, and the A100 finishes sooner. The A100-80GB costs $0.40 per hour
-more for memory this model does not use. `launch/wall-clock.ts` records each rate.
+steps/s on it, 9.95 on an A10 and 6.96 on an L4, in sandboxes of 8 CPUs and 32 GiB. With that request's $0.63 per
+hour added, the A100-40GB and the A10 cost about the same per step, and the A100 finishes sooner. The A100-80GB costs
+$0.40 per hour more for memory this model does not use. `launch/wall-clock.ts` records each rate. A GPU sandbox now
+requests 4 CPUs and 16 GiB, $0.32 per hour less: the trainer held 7.1 GiB resident in the 90,000-step run of #2884.
 
 ## Building the trainer on the host
 

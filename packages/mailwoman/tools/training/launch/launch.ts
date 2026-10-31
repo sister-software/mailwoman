@@ -192,7 +192,15 @@ export function runKeyOf(outputDir: string): string {
 }
 
 const CPU_RESOURCES = { cpu: 4, memoryMiB: 16_384 }
-const GPU_RESOURCES = { cpu: 8, memoryMiB: 32_768 }
+
+/**
+ * A GPU training sandbox's CPU and memory request.
+ *
+ * The trainer held 7.1 GiB resident at step 22,000 of the 90,000-step run on the A100-40GB, read from the container
+ * on 2026-10-31, so 16 GiB leaves it twice that. Its host work is the sampler's fill thread and the encoder.
+ * The batch prefetch runs that work during the GPU step, and 4 CPUs cover it.
+ */
+const GPU_RESOURCES = { cpu: 4, memoryMiB: 16_384 }
 
 /**
  * The supervisor's environment for a launch.
