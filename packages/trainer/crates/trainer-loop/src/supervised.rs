@@ -451,6 +451,41 @@ fn save_fisher(
 }
 
 /// `train`: the supervised run, or the MLM run when `train.objective` is `mlm`.
+/// The mean training loss over one logging window, summed on the loss's device.
+///
+/// A step adds its final micro-batch's loss, scaled back up by `accum`, and only `take` reads the device. A step
+/// between logging steps therefore waits on no device result. The sum runs in f64 with the same operations a host
+/// sum of `double_value` reads would, so the logged value is the host sum's.
+pub struct LossWindow {
+	sum: Tensor,
+	accum: i64,
+	log_every: i64,
+}
+
+impl LossWindow {
+	pub fn new(device: Device, accum: i64, log_every: i64) -> Self {
+		Self {
+			sum: Tensor::zeros([], (Kind::Double, device)),
+			accum,
+			log_every,
+		}
+	}
+
+	/// Adds one optimizer step's loss, which is the micro-batch loss divided by `accum`.
+	pub fn add(&mut self, loss: &Tensor) {
+		let _ = self
+			.sum
+			.g_add_(&(loss.detach().to_kind(Kind::Double) * self.accum as f64));
+	}
+
+	/// Reads the window's mean and starts the next window.
+	pub fn take(&mut self) -> f64 {
+		let mean = self.sum.double_value(&[]) / self.log_every as f64;
+		let _ = self.sum.zero_();
+		mean
+	}
+}
+
 pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	crate::callbacks::refuse_trackio(run)?;
 	let seed = run.train_i64("seed")?;
@@ -555,7 +590,7 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 
 	let mut step = resume_step;
 	let mut micro_step = 0i64;
-	let mut running = 0.0f64;
+	let mut running = LossWindow::new(device, accum, log_every);
 	let (mut train_loss, mut learning_rate) = (0.0f64, 0.0f64);
 	// Every row a consumed batch held: the realized draws the exposure report counts.
 	let mut realized = RealizedRows::create(&output_dir, resume_step)?;
@@ -641,10 +676,9 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 				optim.step();
 				scheduler.step(&mut optim);
 				step += 1;
-				running += loss.double_value(&[]) * accum as f64;
+				running.add(&loss);
 				if step % log_every == 0 {
-					train_loss = running / log_every as f64;
-					running = 0.0;
+					train_loss = running.take();
 				}
 				learning_rate = scheduler.get_last_lr()[0];
 				let view = step_view!(started.elapsed().as_secs_f64());

@@ -7,6 +7,7 @@ use trainer_loop::checkpoint::{checkpoint_dir_name, find_latest_checkpoint, rest
 use trainer_loop::metrics::{eval_csv_row, token_f1, Metrics};
 use trainer_loop::optim::{build_groups, AdamW};
 use trainer_loop::schedules::{LambdaLr, Schedule};
+use trainer_loop::supervised::LossWindow;
 use trainer_model::autocast::Generator;
 use trainer_model::layers::Mode;
 use trainer_model::{CoarseEncoder, EncoderInputs, EncoderSpec, SchemaDefaults};
@@ -273,6 +274,32 @@ fn the_conventions_mask_reaches_the_cross_entropy_only() {
 			out.logits.double_value(&[0, 0, 9]).abs() < 1e8,
 			"the returned logits are unmasked"
 		);
+	}
+}
+
+#[test]
+fn the_loss_window_logs_the_host_sum_of_each_window() {
+	let (accum, log_every) = (2i64, 3i64);
+	let weight = Tensor::from_slice(&[0.37f32, -1.9, 2.25]).set_requires_grad(true);
+	let scales = [0.731f32, 1.0e-3, 4.5, 0.29, 7.0, 0.013];
+	let mut window = LossWindow::new(Device::Cpu, accum, log_every);
+	let mut host = 0.0f64;
+	let mut logged = Vec::new();
+
+	for (step, scale) in (1..).zip(scales) {
+		// A float loss that carries a graph, divided by `accum` as the training step divides it.
+		let loss = (&weight * f64::from(scale)).square().sum(Kind::Float) / accum as f64;
+		window.add(&loss);
+		host += loss.double_value(&[]) * accum as f64;
+		if step % log_every == 0 {
+			logged.push((window.take(), host / log_every as f64));
+			host = 0.0;
+		}
+	}
+
+	assert_eq!(logged.len(), 2);
+	for (device, expected) in logged {
+		assert_eq!(device.to_bits(), expected.to_bits(), "{device} against {expected}");
 	}
 }
 
