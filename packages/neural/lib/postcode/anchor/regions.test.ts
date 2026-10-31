@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } from "@mailwoman/postcode/prefix-index"
+import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } from "@mailwoman/postcode/prefix/index"
 import { describe, expect, it } from "vitest"
 
 import { createAnchorRegionLookup, prefixForLevel } from "#postcode/anchor/regions"

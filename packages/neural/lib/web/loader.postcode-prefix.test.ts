@@ -41,7 +41,7 @@ vi.resetModules()
 
 afterAll(() => vi.resetModules())
 
-const { serializePostcodePrefixIndex } = await import("@mailwoman/postcode/prefix-index")
+const { serializePostcodePrefixIndex } = await import("@mailwoman/postcode/prefix/index")
 const { loadNeuralClassifierFromURLs } = await import("#web/loader")
 
 const SEQ = 128

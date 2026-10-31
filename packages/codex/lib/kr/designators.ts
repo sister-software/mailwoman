@@ -20,7 +20,7 @@
  * @see {@link https://en.wiktionary.org/wiki/내 Wiktionary 내}
  */
 
-import type { PostalDesignatorTable } from "#postal-designator"
+import type { PostalDesignatorTable } from "#postal/designator"
 
 const UPU_KOREA = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/korEn.pdf"
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"

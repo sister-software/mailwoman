@@ -27,7 +27,7 @@ import { labelSetContract } from "@mailwoman/neural/semantic-tags"
 import { readAddressSystemRegistry } from "@mailwoman/neural/tools/address-system-registry"
 
 import { drawnRows } from "../audits/census.ts"
-import { resolveSourceWeights } from "../audits/epoch-mixture.ts"
+import { resolveSourceWeights } from "../audits/epoch/mixture.ts"
 import { writeAuditReport } from "../audits/receipt.ts"
 import { loadTrainingConfig } from "../config.ts"
 import { samplerConfigJSON } from "../sampler.ts"

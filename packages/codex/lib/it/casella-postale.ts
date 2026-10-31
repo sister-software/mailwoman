@@ -10,7 +10,7 @@
  * @see {@link https://business.poste.it/business/files/1476488640071/posta-registrata-caratteristiche-standard-invii.pdf Poste Italiane, Caratteristiche standard degli invii – Posta Registrata (PRS.INDES.STA.1)}
  */
 
-import type { PoBoxGuidelineRule, PostalGuidelineCitation } from "#postal-guideline"
+import type { PoBoxGuidelineRule, PostalGuidelineCitation } from "#postal/guideline"
 
 /**
  * The Posta Registrata document's citation fields, shared by every Poste Italiane rule table.

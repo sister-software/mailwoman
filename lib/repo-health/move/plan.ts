@@ -56,7 +56,9 @@ const SOURCE_STEM = /\.(?:m|c)?[jt]sx?$/u
  * and it is the only form available here anyway, since the set is discovered at runtime.
  */
 export async function readPackageManifests(context: RepoContext): Promise<PackageManifest[]> {
-	const files = context.trackedFiles.filter((file) => file.endsWith("/package.json") && !file.includes("node_modules/"))
+	const files = context.trackedFiles.filter(
+		(file) => (file === "package.json" || file.endsWith("/package.json")) && !file.includes("node_modules/")
+	)
 
 	const manifests = await Promise.all(
 		files.map(async (file) => {
@@ -88,7 +90,7 @@ function owningManifest(manifests: readonly PackageManifest[], file: string): Pa
 	let owner: PackageManifest | null = null
 
 	for (const manifest of manifests) {
-		if (!file.startsWith(`${manifest.dir}/`)) continue
+		if (manifest.dir !== "." && !file.startsWith(`${manifest.dir}/`)) continue
 
 		if (!owner || manifest.dir.length > owner.dir.length) {
 			owner = manifest

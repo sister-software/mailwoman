@@ -18,7 +18,7 @@
  * @see {@link https://en.wiktionary.org/wiki/我 Wiktionary 我}
  */
 
-import type { PostalDesignatorTable } from "#postal-designator"
+import type { PostalDesignatorTable } from "#postal/designator"
 
 const UPU_HONG_KONG = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/hkgEn.pdf"
 const LAND_REGISTRY_FLOOR_CODES = "https://www1.iris.gov.hk/eservices/help/topic02.jsp"

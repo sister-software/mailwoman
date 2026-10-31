@@ -31,7 +31,7 @@ import {
 	SPLIT_ATTRIBUTE,
 	type SplitAttributeFile,
 	splitOfSourceID,
-} from "#tools/overlay/split-attribute"
+} from "#tools/overlay/split/attribute"
 import type { SplitName } from "#utils/split"
 
 /**

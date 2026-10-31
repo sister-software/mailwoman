@@ -1759,7 +1759,7 @@
 			"authored": [
 				"DE_POSTFACH_RULES in packages/codex/lib/de/postfach.ts, following Deutsche Post's page Briefumschlag beschriften & Brief richtig adressieren (undated, fetched 2026-10-20, sha256 9de9f916817e415dd3829e72f9212934ff348ff80612432422c3aa29dd0ceaa5)",
 				"IT_CASELLA_POSTALE_RULES in packages/codex/lib/it/casella-postale.ts, following Poste Italiane's Caratteristiche standard degli invii – Posta Registrata, PRS.INDES.STA.1 Versione 3, Ed. 14/10/2025 (sha256 3d77a1f795ccf658f66c9e98544b450a2f34cee931d5b0f5f9855020172543eb)",
-				"AU_DELIVERY_GUIDELINE_RULES in packages/codex/lib/au/delivery-guideline.ts, following Australia Post's Correct addressing brochure, SAP 8833878 Nov 2022 (sha256 d0925a8acb31ab7e5bb2503f61626831d51cf3f606f9971266e7b5af1506e21d), and its barcode Hints & Tips booklet, print stamp 9/7/03 (sha256 380bd7f458568e6ad5e500f62f2166c89816d5aab4daaa01abf2cf32b7e525a1)"
+				"AU_DELIVERY_GUIDELINE_RULES in packages/codex/lib/au/delivery/guideline.ts, following Australia Post's Correct addressing brochure, SAP 8833878 Nov 2022 (sha256 d0925a8acb31ab7e5bb2503f61626831d51cf3f606f9971266e7b5af1506e21d), and its barcode Hints & Tips booklet, print stamp 9/7/03 (sha256 380bd7f458568e6ad5e500f62f2166c89816d5aab4daaa01abf2cf32b7e525a1)"
 			],
 			"note": "Issue #2764. Each row takes the split of its place; the release capabilities read the test rows. The box numbers are drawn."
 		},
@@ -3475,7 +3475,7 @@
 				{
 					"registerSource": "us-geodata-aggregate-2",
 					"license": "unchecked-corpus-input-us-who-s-on-first",
-					"reads": "the three most populous localities and one postcode per US state whose code is also a country code, generated into packages/corpus/lib/us/abbrev-region-samples.ts"
+					"reads": "the three most populous localities and one postcode per US state whose code is also a country code, generated into packages/corpus/lib/us/abbrev/region-samples.ts"
 				}
 			],
 			"authored": [

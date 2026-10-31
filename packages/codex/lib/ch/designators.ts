@@ -32,7 +32,7 @@
  */
 
 import { DE_LEVEL_DESIGNATORS, FR_LEVEL_DESIGNATORS, IT_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal-designator"
+import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal/designator"
 
 const UPU_SWITZERLAND = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/cheEn.pdf"
 

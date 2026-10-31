@@ -30,7 +30,7 @@ import {
 	type DesignatorConcept,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal-designator"
+} from "#postal/designator"
 
 const EN_GUIDELINES = "https://www.canadapost-postescanada.ca/cpc/doc/en/support/addressing-guidelines.pdf"
 const FR_GUIDELINES = "https://www.canadapost-postescanada.ca/scp/doc/fr/soutien/directives-dadressage.pdf"

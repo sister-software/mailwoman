@@ -6,7 +6,7 @@ import {
 	designatorRowsFromLevels,
 	foldDesignatorSpelling,
 	type PostalDesignatorTable,
-} from "#postal-designator"
+} from "#postal/designator"
 
 describe("designatorRowsFromLevels", () => {
 	it("reads French floors from the floor lexicon with their concepts", () => {

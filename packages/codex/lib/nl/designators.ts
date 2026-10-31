@@ -15,7 +15,7 @@
  */
 
 import { NL_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal-designator"
+import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal/designator"
 
 const UPU_NETHERLANDS = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/nldEn.pdf"
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"

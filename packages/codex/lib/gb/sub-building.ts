@@ -14,7 +14,7 @@
  * @see {@link https://www.poweredbypaf.com/wp-content/uploads/2017/07/Latest-Programmers_guide_Edition-7-Version-6.pdf Royal Mail, PAF Programmers' Guide, Edition 7 Version 6}
  */
 
-import type { PostalGuidelineCitation, PostalUnitGuidelineRule } from "#postal-guideline"
+import type { PostalGuidelineCitation, PostalUnitGuidelineRule } from "#postal/guideline"
 
 const PAF_GUIDE = {
 	document: "Programmers' Guide",

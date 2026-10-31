@@ -21,7 +21,7 @@
  */
 
 import { DE_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal-designator"
+import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal/designator"
 
 const UPU_AUSTRIA = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/autEn.pdf"
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"

@@ -52,7 +52,7 @@ import {
 	type DesignatorConcept,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal-designator"
+} from "#postal/designator"
 
 const UPU = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/nicEn.pdf"
 const KUNC = "https://www.kunc.org/2014-08-16/navigating-nicaragua-a-lesson-in-getting-lost"

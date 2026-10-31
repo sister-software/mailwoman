@@ -13,7 +13,7 @@
  */
 
 import { DA_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal-designator"
+import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal/designator"
 
 /**
  * The designator rows for Denmark, each carrying the published list it was read from.

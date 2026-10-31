@@ -21,7 +21,7 @@
  * @see {@link https://en.wiktionary.org/wiki/obok Wiktionary: obok}
  */
 
-import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal-designator"
+import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
 
 const UPU_SOURCE = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/polEn.pdf"
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"

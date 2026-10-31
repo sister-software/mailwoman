@@ -7,7 +7,7 @@
 import { expect, test } from "vitest"
 
 import { haversineKm } from "#distance"
-import { greatCircleDistance, haversine } from "#geometries/point-distance"
+import { greatCircleDistance, haversine } from "#geometries/point/distance"
 
 // `[longitude, latitude]` tuples.
 // The object form keeps the `(0, 0)` sentinel, so the equator pair starts ten degrees east of (0, 0).

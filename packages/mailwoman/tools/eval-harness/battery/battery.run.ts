@@ -39,7 +39,7 @@ import {
 } from "#tools/eval-harness/battery/battery"
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 import { formatFailureGroups, groupBatteryFailures } from "#tools/eval-harness/battery/failure-groups"
-import { parseBatteryRows } from "#tools/eval-harness/battery/parse-rows"
+import { parseBatteryRows } from "#tools/eval-harness/battery/parse/rows"
 import {
 	batterySuiteDirectory,
 	BATTERY_SUITES,

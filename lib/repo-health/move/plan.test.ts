@@ -22,7 +22,7 @@ import { describe, expect, test } from "vitest"
 
 import type { RepoContext } from "#repo-health/index"
 import { applyModuleMoves } from "#repo-health/move/apply"
-import { planModuleMoves } from "#repo-health/move/plan"
+import { planModuleMoves, readPackageManifests } from "#repo-health/move/plan"
 
 const PACKAGE = "packages/recipes"
 
@@ -104,6 +104,13 @@ const MOVES = [
 ]
 
 describe("planModuleMoves", () => {
+	test("reads the root package manifest", async () => {
+		await using fixtureDirectory = await fixture()
+		const manifests = await readPackageManifests(fixtureDirectory.context)
+
+		expect(manifests.map((manifest) => manifest.dir)).toContain(".")
+	})
+
 	test("rewrites every family in the family it was written in", async () => {
 		await using fixtureDirectory = await fixture()
 		const plan = await planModuleMoves(fixtureDirectory.context, MOVES)

@@ -10,7 +10,7 @@
  *     node packages/mailwoman/tools/dev-tools/coverage-funnel.run.ts [--config <path>] [--mixture-audit <path>] [--rows] [--out-json <path>]
  */
 
-import { POSTAL_REGIMES } from "@mailwoman/codex/postal-regimes"
+import { POSTAL_REGIMES } from "@mailwoman/codex/postal/regimes"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -115,7 +115,7 @@ const mixtureAuditPresent = await pathExists(mixtureAuditPath)
 if (!mixtureAuditPresent) {
 	console.error(
 		`sampled stage: no audit at ${mixtureAuditPath}. Produce one with\n` +
-			`  node packages/mailwoman/tools/training/audits/epoch-mixture.run.ts \\\n` +
+			`  node packages/mailwoman/tools/training/audits/epoch/mixture.run.ts \\\n` +
 			`    --config ${configPath} --corpus-dir <corpus> --json ${mixtureAuditPath}\n` +
 			`The stage reads \`unknown\` until then, which states what this checkout holds rather than what a ` +
 			`jurisdiction has.\n`

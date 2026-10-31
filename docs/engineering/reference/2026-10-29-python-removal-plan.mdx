@@ -330,7 +330,7 @@ the scale and zero point arithmetic in the same float32 and float64 steps.
 ```bash
 cargo run --release --manifest-path packages/trainer/Cargo.toml -- export-onnx --checkpoint <dir> --output fp32.onnx
 cargo run --release --manifest-path packages/trainer/Cargo.toml -- quantize --input fp32.onnx --output int8.onnx
-node packages/neural/tools/onnx-export-parity.run.ts --weights-overlay <root> --reference <a.onnx> \
+node packages/neural/tools/onnx/export-parity.run.ts --weights-overlay <root> --reference <a.onnx> \
   --candidate <b.onnx> --rows <heldout rows.jsonl> --count 1000 --tolerance 1e-3 --out receipt.json
 ```
 
@@ -541,7 +541,7 @@ TypeScript port wrote its report from the same config, seed and row count. The d
 
 | Python module                           | TypeScript port                                                     | Result                                                                                |
 | --------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `audits/epoch_mixture/` (200k, failing) | `packages/mailwoman/tools/training/audits/epoch-mixture.run.ts`     | byte-equal (137,562 bytes), same refusal message                                      |
+| `audits/epoch_mixture/` (200k, failing) | `packages/mailwoman/tools/training/audits/epoch/mixture.run.ts`     | byte-equal (137,562 bytes), same refusal message                                      |
 | `audits/epoch_mixture/` (1M epoch)      | the same                                                            | byte-equal (167,345 bytes); Python 399.8 s, TypeScript 60.7 s                         |
 | `audits/validation_coverage.py`         | `validation-coverage.run.ts`                                        | byte-equal (75,124 bytes)                                                             |
 | `audits/label_support.py`               | `label-support.run.ts`                                              | values equal; `rows_with_label` key order differs, see below                          |
@@ -558,7 +558,7 @@ TypeScript port wrote its report from the same config, seed and row count. The d
 | `exposure/cli.py`, eligible rows        | the same, `--countries LU,MD,NZ,JP,SG,EG`                           | byte-equal (34,931 bytes) but `measured_at`; Python 408 s, TypeScript 179 s           |
 | `exposure/cli.py`, canonical rows       | the same, three OSM `canonical.jsonl.zst` files and two stats files | byte-equal but `measured_at` (153,968 rows, 745 unreadable)                           |
 | `exposure/release_check.py`             | `release-check.run.ts`                                              | `preflight` and `completed` findings byte-equal, exit status equal                    |
-| `audits/mixed_script.py`                | `packages/mailwoman/tools/training/audits/mixed-script.run.ts`      | byte-equal (67,532 bytes) against `audit_rows` given the folded weights, see below    |
+| `audits/mixed_script.py`                | `packages/mailwoman/tools/training/audits/mixed/script.run.ts`      | byte-equal (67,532 bytes) against `audit_rows` given the folded weights, see below    |
 
 **Records (observed 2026-10-30, lab host).** Each comparison above was rerun on both sides and recorded under
 `$MAILWOMAN_DATA_ROOT/audits/phase2-ports/<audit>/`. The Python side ran in a temporary `git worktree` at `ae90ae7a2`
@@ -975,7 +975,7 @@ including sampler initialization and the two evaluations.
 
 **The export's check against the model.** The 200-step Rust checkpoint exported through `trainer-export`
 (`model.safetensors` is now read beside `pytorch_model.bin`) and ran through onnxruntime-node 1.30.0 on 16 recorded rows
-(`trainer export-feeds`, then `packages/neural/tools/onnx-model-check.run.ts`), every other one with its own address
+(`trainer export-feeds`, then `packages/neural/tools/onnx/model-check.run.ts`), every other one with its own address
 system as `locale_hint`. Largest absolute difference from the Rust forward: `logits` 4.8e-6, `locale_logits` 3.8e-6,
 `address_system_logits` 4.8e-6, against 1e-4. The int8 graph from the Rust quantizer differs from the fp32 forward by up
 to 0.102 on `logits`, which is the quantization and not a parity bar.
@@ -1050,7 +1050,7 @@ coverage 0.99 and ids 0 to 3 always kept, the Python and Rust outputs are equal 
 11,347,342 B, `embeddings.rows` 28,086,944 B, `embeddings-hot.bin` 15,479,292 B (39,895 rows). The Rust split took
 0.11 s. The printed summary's `scale` is the float32 scale widened to float64, as Python prints it.
 
-**Weights package.** `packages/mailwoman/tools/release-tools/package-weights.run.ts` writes the package directory:
+**Weights package.** `packages/mailwoman/tools/release-tools/package/weights.run.ts` writes the package directory:
 `model.onnx`, `tokenizer.model`, `model-card.json`, `package.json` and `README.md`. The cards and `package.json` are
 written as `json.dumps(indent=2)` writes them, through `pythonJSONDumps`. Over three packages from two input sets
 (no eval report and 40 address systems. An eval report with float fields, non-ASCII notes and hardware, a
@@ -1372,7 +1372,7 @@ still runs the Python preflight and receipt in the training image. The launcher 
 
 - `.github/workflows/test.yml`: replace the `python` job (lines 230–277, **observed**) with a `rust` job running
   `cargo test --locked`, `cargo clippy -D warnings` and `cargo fmt --check` for `packages/mtf` and `packages/trainer`.
-  `lib/repo-health/ci-scope.ts` renames `python` to `rust` keyed on `packages/mtf/**`, `packages/trainer/**` and
+  `lib/repo-health/ci/scope.ts` renames `python` to `rust` keyed on `packages/mtf/**`, `packages/trainer/**` and
   `Cargo.lock`. The `summary` job's scope list drops `python`. `.github/dependabot.yml` replaces the
   `python-dependencies` group with `cargo` entries. `package.json` drops `lint:python*`, `python:*`, `fix:python`.
   `.husky/pre-commit` drops its Python block. `knip.json` and `typos.toml` drop their `corpus-python` entries.

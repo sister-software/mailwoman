@@ -17,7 +17,7 @@
  *   `goldRecovered` permits additional predictions, so it differs from exact parse accuracy.
  */
 
-import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/codex/street-convention"
+import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/codex/street/convention"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { groupTuplesByTag, walkNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -29,7 +29,7 @@ import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpu
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
-import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split-attribute"
+import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import type { PathBuilderLike } from "path-ts"

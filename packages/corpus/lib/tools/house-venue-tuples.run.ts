@@ -22,7 +22,7 @@ import {
 	HOUSE_VENUE_DEFAULT_SEED,
 	HOUSE_VENUE_SAMPLERS,
 	houseVenueTuplesPath,
-} from "#recipes/house-venue-tuples"
+} from "#recipes/house/venue/tuples"
 
 const codes = HOUSE_VENUE_SAMPLERS.map(([code]) => code)
 

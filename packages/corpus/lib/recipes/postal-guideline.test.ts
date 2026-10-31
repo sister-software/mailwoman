@@ -1,10 +1,10 @@
-import { assertPostalGuidelineCitation } from "@mailwoman/codex/postal-guideline"
+import { assertPostalGuidelineCitation } from "@mailwoman/codex/postal/guideline"
 import { describe, expect, it } from "vitest"
 
 import { DE_POSTFACH_GUIDELINE_LEG } from "#de/recipes/postfach-guideline"
 import * as trainingLeaders from "#recipes/po/box/cedex/vocabulary"
-import { generatePostalGuidelineRows, partitionPlaces, POSTAL_GUIDELINE_LEGS } from "#recipes/postal-guideline"
-import type { PostalGuidelinePlace } from "#recipes/postal-guideline/leg"
+import { generatePostalGuidelineRows, partitionPlaces, POSTAL_GUIDELINE_LEGS } from "#recipes/postal/guideline"
+import type { PostalGuidelinePlace } from "#recipes/postal/guideline/leg"
 import { defaultRecipeSource } from "#recipes/sources"
 import { PO_BOX_LOCALE_TEMPLATES } from "#synthesizers/po-box"
 import { defaultHoldouts, holdoutPolicyFor, splitForRow } from "#utils/split"

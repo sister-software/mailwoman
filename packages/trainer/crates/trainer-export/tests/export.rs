@@ -6,7 +6,7 @@
 //! the Python exporter's `export_to_onnx(opset=17, max_length=16)` with torch 2.12.0 and onnxscript 0.7.2.
 //! `fixtures/storages.bin` is `torch.save` of one 2x3 float32 tensor in float32, bfloat16 and float16, its
 //! transpose, and a view at storage offset 2. The fixtures were written once with the pinned Python stack; the numeric
-//! comparison of full checkpoints is `packages/neural/tools/onnx-export-parity.run.ts`.
+//! comparison of full checkpoints is `packages/neural/tools/onnx/export-parity.run.ts`.
 
 use std::path::{Path, PathBuf};
 

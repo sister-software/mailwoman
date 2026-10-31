@@ -26,7 +26,7 @@ import {
 	isRenderablePlaceName,
 	joinGuidelineLines,
 	type PostalGuidelineLeg,
-} from "#recipes/postal-guideline/leg"
+} from "#recipes/postal/guideline/leg"
 
 const DESIGNATOR = "Flat"
 const RULES = GB_SUB_BUILDING_RULES.filter((rule) => rule.designator === DESIGNATOR)

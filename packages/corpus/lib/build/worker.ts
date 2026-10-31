@@ -30,8 +30,8 @@ import {
 	runAlignRange,
 	type AlignRangePlan,
 	type AlignRangeRecord,
-} from "#build/align-range"
-import { mergeAlignTotals, serializeAlignTotals } from "#build/align-totals"
+} from "#build/align/range"
+import { mergeAlignTotals, serializeAlignTotals } from "#build/align/totals"
 import type { WorkerResources } from "#build/budget"
 import { loadAdapterFromModule } from "#build/code-hash"
 import { readSourceEligibility } from "#build/eligibility"

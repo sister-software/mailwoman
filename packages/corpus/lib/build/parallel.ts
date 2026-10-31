@@ -37,8 +37,8 @@ import { TextSpliterator } from "spliterator"
 
 import { reusableRun } from "#build/adapters"
 import { alignSettings } from "#build/align"
-import { planAlignRanges, reusableAlignRange, type AlignRangePlan } from "#build/align-range"
-import { mergeAlignTotals } from "#build/align-totals"
+import { planAlignRanges, reusableAlignRange, type AlignRangePlan } from "#build/align/range"
+import { mergeAlignTotals } from "#build/align/totals"
 import {
 	adapterWorkerClass,
 	WORKER_CLASSES,

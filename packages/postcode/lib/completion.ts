@@ -14,8 +14,8 @@
 
 import { acceptPostcode, postcodeSyntax } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
-import { PrefixAutomaton } from "#prefix-automaton"
-import type { PostcodePrefixIndexResolver } from "#prefix-index"
+import { PrefixAutomaton } from "#prefix/automaton"
+import type { PostcodePrefixIndexResolver } from "#prefix/index"
 
 /**
  * One country whose syntax the partial text can still complete to.

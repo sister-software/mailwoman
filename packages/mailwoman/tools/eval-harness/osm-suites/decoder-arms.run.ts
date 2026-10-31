@@ -36,7 +36,7 @@ import {
 import type { OSMSuiteRow } from "#tools/eval-harness/osm-suites/extract"
 import { failureFamilies, readFailureList } from "#tools/eval-harness/osm-suites/failure-families"
 import { goldPieceLabels, labelsMatchGold } from "#tools/eval-harness/osm-suites/replay"
-import type { FittedTransitions } from "#tools/training/fit-transitions"
+import type { FittedTransitions } from "#tools/training/fit/transitions"
 
 const { values } = parseArguments({
 	options: {

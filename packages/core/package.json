@@ -567,14 +567,14 @@
 			"default": "./out/data-root.js"
 		},
 		"./asset-names": {
-			"types": "./out/asset-names.d.ts",
-			"node": "./lib/asset-names.ts",
-			"default": "./out/asset-names.js"
+			"types": "./out/asset/names.d.ts",
+			"node": "./lib/asset/names.ts",
+			"default": "./out/asset/names.js"
 		},
 		"./asset-paths": {
-			"types": "./out/asset-paths.d.ts",
-			"node": "./lib/asset-paths.ts",
-			"default": "./out/asset-paths.js"
+			"types": "./out/asset/paths.d.ts",
+			"node": "./lib/asset/paths.ts",
+			"default": "./out/asset/paths.js"
 		},
 		"./postcode-prefix-files": {
 			"types": "./out/postcode-prefix-files.d.ts",

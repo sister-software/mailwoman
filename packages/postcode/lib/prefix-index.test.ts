@@ -2,7 +2,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import type { PostcodePrefixNode } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix-index"
+import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix/index"
 
 const header: PostcodePrefixHeader = {
 	country: "gb",

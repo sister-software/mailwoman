@@ -11,7 +11,7 @@
  */
 
 import { isCountryToken } from "@mailwoman/codex/country"
-import { streetTypeWordTestFor } from "@mailwoman/codex/street-type"
+import { streetTypeWordTestFor } from "@mailwoman/codex/street/type"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
 	type AnchorRegionLookupLike,
@@ -25,7 +25,7 @@ import { newestPostcodePrefixFiles, POSTCODE_PREFIX_DIRECTORY } from "@mailwoman
 import { isStreetAffix } from "@mailwoman/neural/fst-prior"
 import { createAnchorRegionLookup } from "@mailwoman/neural/postcode/anchor/regions"
 import { venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
-import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix-index"
+import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix/index"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 import type { PathBuilderLike } from "path-ts"

@@ -20,7 +20,7 @@
  */
 
 import { JA_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorRow, type PostalDesignatorTable } from "#postal-designator"
+import { designatorRowsFromLevels, type PostalDesignatorRow, type PostalDesignatorTable } from "#postal/designator"
 
 import { JP_BLOCK_MARKERS } from "./address-unit.ts"
 

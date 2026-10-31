@@ -19,7 +19,7 @@ import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import type { PostcodePrefixLevel } from "@mailwoman/gazetteer/tools/pipeline/postcode/prefix"
-import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/postcode/prefix-index"
+import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/postcode/prefix/index"
 import { PathBuilder } from "path-ts"
 
 import {
@@ -116,7 +116,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		const { md5File, median } = await import("@mailwoman/core/utils")
 
 		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } =
-			await import("@mailwoman/postcode/prefix-index")
+			await import("@mailwoman/postcode/prefix/index")
 
 		const { buildPostcodePrefixIndex } = await import("@mailwoman/gazetteer/tools/pipeline/postcode/prefix")
 

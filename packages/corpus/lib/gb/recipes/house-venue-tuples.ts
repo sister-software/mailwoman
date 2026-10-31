@@ -20,7 +20,7 @@ import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { GB_OS_OPEN_ADAPTER_ID, gbOSOpenCanonicalRowsPath } from "#gb/adapters/os-open/adapter"
-import type { HouseVenueTuple } from "#recipes/house-venue-tuples"
+import type { HouseVenueTuple } from "#recipes/house/venue/tuples"
 
 /**
  * The license every accepted row records: the adapter's OGL v3.0 SPDX id.

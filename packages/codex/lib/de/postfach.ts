@@ -9,7 +9,7 @@
  * @see {@link https://www.deutschepost.de/de/b/briefumschlag-richtig-beschriften.html Deutsche Post, Briefumschlag richtig adressieren}
  */
 
-import type { PoBoxGuidelineRule, PostalGuidelineCitation } from "#postal-guideline"
+import type { PoBoxGuidelineRule, PostalGuidelineCitation } from "#postal/guideline"
 
 const BRIEFUMSCHLAG_PAGE = {
 	document: "Briefumschlag beschriften & Brief richtig adressieren",

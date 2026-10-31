@@ -11,7 +11,7 @@ import {
 	emptyTransitionCounts,
 	fitTransitions,
 	scaleTransitions,
-} from "#tools/training/fit-transitions"
+} from "#tools/training/fit/transitions"
 
 const LABELS = ["O", "B-street", "I-street"]
 

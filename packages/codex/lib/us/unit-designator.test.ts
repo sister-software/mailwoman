@@ -16,7 +16,7 @@ import {
 	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
 	US_UNIT_DESIGNATOR_REQUIRES_RANGE,
 	US_UNIT_DESIGNATOR_VARIANTS,
-} from "#us/unit-designator"
+} from "#us/unit/designator"
 
 describe("US_UNIT_DESIGNATOR_LOOKUP", () => {
 	it("maps canonical, full-word, and abbreviated variants to the canonical key", () => {

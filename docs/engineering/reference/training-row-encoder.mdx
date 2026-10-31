@@ -175,7 +175,7 @@ Each record verified with 0 differing rows against the Rust encoder (113,920 emi
 sample requested 86,864 rows and emitted 81,940: 49,989 of 50,000 train rows after the astral skip, and 31,951
 validation rows, where the validation draw exhausts below its 36,864-row limit.
 
-`node packages/mailwoman/tools/training/sampler-parity.run.ts verify --name <record>` re-draws a record through the
+`node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name <record>` re-draws a record through the
 Node binding and compares the same fields from `record.json`, without reading `arrays.npz`. On 2026-10-29 it verified
 `c6-train-2k`, `aug-postcode-move-5k`, `c6-gold-tokens-5k` and `code-unit-train-5k` with 0 differing rows. The binding
 reproduced every row identity and every tensor digest, including the `locale_ids` and `address_system_ids` that
@@ -254,7 +254,7 @@ so it draws different rows in the same source proportions.
 
 ### After the Python removal
 
-`node packages/mailwoman/tools/training/sampler-parity.run.ts profile --config <yaml> [--set data.key=value]` times
+`node packages/mailwoman/tools/training/sampler/parity.run.ts profile --config <yaml> [--set data.key=value]` times
 the same host step through `mtf-node`: the encoder build and the first batch, then sampling and encoding per batch
 over 40 batches of 128 rows. On 2026-10-30 at `3988395a0`, on the lab host at load 4.8 and then 11.7, with the C6
 config and the parity records' host overrides, two runs gave 1.35 and 1.25 ms of sampling and 10.51 and 10.10 ms of
@@ -272,7 +272,7 @@ The root `rust-toolchain.toml` pins the toolchain, and every crate is a member o
   macOS. It is never part of `wasm/mtf.wasm`, whose dependency tree is `mtf-wasm` → `mtf-core` alone. The
   wasm build with the addon in the workspace gives the same SHA-256 as a build without it.
 - The CI `rust` job installs the pinned toolchain and runs `cargo fmt --check`, `cargo test` and `cargo clippy` over
-  the root workspace. `lib/repo-health/ci-scope.ts` selects that job for a change
+  the root workspace. `lib/repo-health/ci/scope.ts` selects that job for a change
   to the crates' inputs.
 - The Modal training image builds `trainer-cli`, which links these crates
   (`packages/mailwoman/tools/training/launch/image.ts`).

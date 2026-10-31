@@ -83,7 +83,7 @@ The audits under `audits/` read the corpus through the `mtf-node` addon on a hos
 `MAILWOMAN_DATA_ROOT`. Each writes the report the preflight records:
 
 ```bash
-node packages/mailwoman/tools/training/audits/epoch-mixture.run.ts --config <yaml> --json <path>
-node packages/mailwoman/tools/training/audits/validation-coverage.run.ts <yaml> --json <path>
-node packages/mailwoman/tools/training/audits/label-support.run.ts <yaml> --json <path>
+node packages/mailwoman/tools/training/audits/epoch/mixture.run.ts --config <yaml> --json <path>
+node packages/mailwoman/tools/training/audits/validation/coverage.run.ts <yaml> --json <path>
+node packages/mailwoman/tools/training/audits/label/support.run.ts <yaml> --json <path>
 ```

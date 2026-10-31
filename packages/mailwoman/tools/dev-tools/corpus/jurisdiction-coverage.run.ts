@@ -20,7 +20,7 @@
  */
 
 import { ISO2_TO_NAME, CountryISO2 } from "@mailwoman/codex/country"
-import { POSTAL_REGIMES } from "@mailwoman/codex/postal-regimes"
+import { POSTAL_REGIMES } from "@mailwoman/codex/postal/regimes"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { readScopeConfig } from "@mailwoman/core/scope-config"

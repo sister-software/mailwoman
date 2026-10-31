@@ -207,7 +207,7 @@ export default {
 				"packages/mailwoman/tools/eval-harness/osm-suites/parse-worker.ts",
 				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
 				"packages/mailwoman/lib/test-kit/fixture-registry.ts",
-				"packages/mailwoman/tools/eval-harness/battery/parse-worker.ts",
+				"packages/mailwoman/tools/eval-harness/battery/parse/worker.ts",
 				"docs/static/examples/mailwoman-server.mjs",
 				"docs/plugins/runtime-assets/workspace/resolution.ts",
 				"packages/map-tui/lib/tile-source.test.ts",

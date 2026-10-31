@@ -19,7 +19,7 @@ import {
 	isRenderablePlaceName,
 	renderGuidelineLine,
 	type PostalGuidelineLeg,
-} from "#recipes/postal-guideline/leg"
+} from "#recipes/postal/guideline/leg"
 
 /**
  * The GeoNames postal accuracy column, empty on a large customer's company-name row.

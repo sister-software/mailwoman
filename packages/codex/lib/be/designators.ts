@@ -30,7 +30,7 @@
  */
 
 import { DE_LEVEL_DESIGNATORS, FR_LEVEL_DESIGNATORS, NL_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal-designator"
+import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal/designator"
 
 const UPU_BELGIUM = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/belEn.pdf"
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"

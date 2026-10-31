@@ -16,7 +16,7 @@
  * @see {@link https://lastation.laposte.fr/sites/p8_u1/files/2026-07/SP8855-Volume%202_V1.14%20-%20Adressage%20des%20plis.pdf La Poste, SP 8855 Volume 2, Adressage des plis (v1.14)}
  */
 
-import type { PostalGuidelineCitation, PostalUnitGuidelineRule, PostalUnitKind } from "#postal-guideline"
+import type { PostalGuidelineCitation, PostalUnitGuidelineRule, PostalUnitKind } from "#postal/guideline"
 
 const SP_8855 = {
 	document: "Adressage des plis SP 8855 – Volume 2",

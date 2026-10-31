@@ -38,7 +38,7 @@ import {
 	writeBaseline,
 } from "#repo-health"
 import { writeCIScope } from "#repo-health/actions-output"
-import { isCITestSuite, runCITests } from "#repo-health/ci-test"
+import { isCITestSuite, runCITests } from "#repo-health/ci/test"
 import { planPathLiteralRewrites } from "#repo-health/move/literals"
 import { storageOperations, type StorageContext } from "#storage-kit"
 

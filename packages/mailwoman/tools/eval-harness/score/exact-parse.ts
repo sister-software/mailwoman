@@ -38,7 +38,7 @@
  */
 
 import { COMPONENT_TAGS, type ComponentTag, STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
-import type { StreetSpanConvention } from "@mailwoman/codex/street-convention"
+import type { StreetSpanConvention } from "@mailwoman/codex/street/convention"
 import { stringifyJSON } from "@mailwoman/core/json"
 
 /**

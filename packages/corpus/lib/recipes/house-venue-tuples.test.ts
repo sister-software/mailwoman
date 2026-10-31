@@ -16,7 +16,7 @@ import {
 	type HouseVenueSampler,
 	type HouseVenueTuple,
 	readCarriedTuples,
-} from "#recipes/house-venue-tuples"
+} from "#recipes/house/venue/tuples"
 
 const tuple = (country: string, street: string): HouseVenueTuple => ({
 	locality: "L",

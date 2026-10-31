@@ -21,10 +21,10 @@
  * @see {@link https://en.wiktionary.org/wiki/next_to Wiktionary, next to}
  */
 
-import type { DesignatorConcept, PostalDesignatorRow, PostalDesignatorTable } from "#postal-designator"
+import type { DesignatorConcept, PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
 import { US_FLOOR_DESIGNATORS } from "#us/floor-designator"
 import { US_PO_BOX_DESIGNATORS } from "#us/po-box"
-import { US_UNIT_DESIGNATOR_VARIANTS, type USUnitDesignator } from "#us/unit-designator"
+import { US_UNIT_DESIGNATOR_VARIANTS, type USUnitDesignator } from "#us/unit/designator"
 
 const UNIT_SOURCE = "https://pe.usps.com/text/pub28/28apc_003.htm"
 const PO_BOX_SOURCE = "https://pe.usps.com/text/pub28/28c2_036.htm"

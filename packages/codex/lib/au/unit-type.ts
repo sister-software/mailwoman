@@ -14,8 +14,8 @@
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf Australia Post barcode addressing booklet (FLAT/UNIT TYPE table)}
  */
 
-import { AU_HINTS_AND_TIPS_CITATION } from "#au/delivery-guideline"
-import type { PostalUnitGuidelineRule } from "#postal-guideline"
+import { AU_HINTS_AND_TIPS_CITATION } from "#au/delivery/guideline"
+import type { PostalUnitGuidelineRule } from "#postal/guideline"
 
 const SUB_UNIT_SECTION = "Undertaking analysis of unmatched addresses, Sub-unit (Flat/Unit Type)"
 

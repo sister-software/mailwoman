@@ -16,8 +16,8 @@ import { afterAll, describe, expect, it } from "vitest"
 import type { ParquetRow } from "#parquet/schema"
 import { writeParquetFile } from "#parquet/writers"
 import { gbOverlayRow } from "#test-kit"
-import { readSplitAttribute, splitOfSourceID } from "#tools/overlay/split-attribute"
-import { holdoutComponents, splitOverlaySlice } from "#tools/overlay/split-overlay"
+import { readSplitAttribute, splitOfSourceID } from "#tools/overlay/split/attribute"
+import { holdoutComponents, splitOverlaySlice } from "#tools/overlay/split/overlay"
 import { defaultHoldouts, type SplitName, splitForRow } from "#utils/split"
 
 const root = await temporaryDirectory("mw-split-overlay-")

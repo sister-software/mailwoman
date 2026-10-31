@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { designatorsInText, designatorTableFor, POSTAL_DESIGNATOR_TABLES } from "#designator-tables"
-import { DESIGNATOR_CLASS, designatorClass, designatorCollisions, DesignatorConcept } from "#postal-designator"
+import { DESIGNATOR_CLASS, designatorClass, designatorCollisions, DesignatorConcept } from "#postal/designator"
 
 describe("POSTAL_DESIGNATOR_TABLES", () => {
 	it("holds one table per country, each row well formed", () => {

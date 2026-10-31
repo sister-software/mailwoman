@@ -34,7 +34,7 @@ import {
 	type DesignatorConcept,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal-designator"
+} from "#postal/designator"
 
 const UPU = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/argEn.pdf"
 

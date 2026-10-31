@@ -14,7 +14,7 @@
  * @see {@link https://en.wiktionary.org/wiki/מול Wiktionary: מול}
  */
 
-import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal-designator"
+import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
 
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"
 

@@ -5,7 +5,7 @@ import {
 	endsInLocalityCountry,
 	firstByTextHash,
 	trailingCountryRow,
-} from "#tools/eval-harness/heldout/dataset/trailing-country"
+} from "#tools/eval-harness/heldout/dataset/trailing/country"
 
 describe("trailingCountryRow", () => {
 	it("renders the address with its country last and labels every component", () => {

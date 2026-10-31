@@ -12,8 +12,8 @@ import { describe, expect, test } from "vitest"
 import { canComplete } from "#completion"
 import { acceptPostcode, postcodeSyntax } from "#country-formats"
 import { COUNTRY_POSTCODE_FORMAT_SOURCES } from "#country-formats/data"
-import { PrefixAutomaton } from "#prefix-automaton"
-import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix-index"
+import { PrefixAutomaton } from "#prefix/automaton"
+import { PostcodePrefixIndexResolver, serializePostcodePrefixIndex, type PostcodePrefixHeader } from "#prefix/index"
 
 const COUNTRIES = Object.keys(COUNTRY_POSTCODE_FORMAT_SOURCES)
 

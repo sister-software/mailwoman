@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { codeShaped, contestedCodes, regionCodeCounts } from "./region-code-token.ts"
+import { codeShaped, contestedCodes, regionCodeCounts } from "./region/code/token.ts"
 
 const row = (tokens: string[], labels: string[]) => ({ tokens, labels })
 

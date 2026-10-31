@@ -21,7 +21,7 @@ import {
 	OVERLAY_PLAN_FILE,
 	rerootBaseFilePath,
 } from "#tools/overlay/manifest"
-import { splitOverlaySlice } from "#tools/overlay/split-overlay"
+import { splitOverlaySlice } from "#tools/overlay/split/overlay"
 
 /**
  * The `memory_limit` and `threads` each DuckDB connection reports back as it opens.

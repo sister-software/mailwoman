@@ -9,7 +9,7 @@
  * @see {@link https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/s42/zafFr.pdf UPU S42 South Africa standardized address format description (POSBUS and PRIVAATSAK examples)}
  */
 
-import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal-designator"
+import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
 
 const SOURCE = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/zafEn.pdf"
 

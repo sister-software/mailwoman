@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { POSTAL_REGIMES, postalRegimeByID, postalRegimesForCountry, RegimeCoverage, RegimeKind } from "#postal-regimes"
+import { POSTAL_REGIMES, postalRegimeByID, postalRegimesForCountry, RegimeCoverage, RegimeKind } from "#postal/regimes"
 
 describe("POSTAL_REGIMES", () => {
 	it("names the seven families the corpus specification lists", () => {

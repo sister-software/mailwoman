@@ -9,7 +9,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import type { AnchorRegionLookupLike, StageSource } from "@mailwoman/core/pipeline"
 import { startEarly } from "@mailwoman/core/promises"
 import { PostcodeBinaryResolver } from "@mailwoman/postcode/binary-resolver"
-import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix-index"
+import { PostcodePrefixIndexResolver } from "@mailwoman/postcode/prefix/index"
 
 import { parseAddressSystemTable } from "#address-system"
 import { type AnchorLookup, BinaryAnchorLookup } from "#anchor-inference"

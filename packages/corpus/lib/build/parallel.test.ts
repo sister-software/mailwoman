@@ -22,7 +22,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { wofAdminAdapter } from "#adapters/wof/admin/json/adapter"
 import { buildCorpus, PriorOutput, type BuildCorpusOptions } from "#build"
-import { ALIGN_RANGE_RECORD_FILE, alignRangeDirectory } from "#build/align-range"
+import { ALIGN_RANGE_RECORD_FILE, alignRangeDirectory } from "#build/align/range"
 import { planWorkerBudget, workerReservationBytes } from "#build/budget"
 import { acquireBuildLock, BUILD_LOCK_DIRECTORY } from "#build/lock"
 import { concatenateFiles } from "#build/parallel"

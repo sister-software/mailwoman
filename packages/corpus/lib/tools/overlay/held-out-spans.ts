@@ -24,7 +24,7 @@ import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 
 import { escapeSQLString, openDuckDB, type DuckDBLimits } from "#parquet/duckdb"
 import { baseManifestFiles, localManifestFilePath } from "#tools/overlay/manifest"
-import { readSplitAttribute } from "#tools/overlay/split-attribute"
+import { readSplitAttribute } from "#tools/overlay/split/attribute"
 import { type CountryHoldout, holdoutPolicyFor } from "#utils/split"
 
 /**

@@ -14,7 +14,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { upperFirst } from "@mailwoman/normalize/case"
 import type { PathBuilderLike } from "path-ts"
 
-import { houseVenueTuplesPath } from "#recipes/house-venue-tuples"
+import { houseVenueTuplesPath } from "#recipes/house/venue/tuples"
 import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import { defaultRecipeSource } from "#recipes/sources"
 import { buildStreetNegatives, loadContextTuples, type StreetNegatives } from "#recipes/sub/venue/context"

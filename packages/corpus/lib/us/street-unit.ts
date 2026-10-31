@@ -6,7 +6,7 @@
  */
 
 import { matchPOBox } from "@mailwoman/codex/us/po-box"
-import { isUnitDesignatorToken, matchLeadingDesignator } from "@mailwoman/codex/us/unit-designator"
+import { isUnitDesignatorToken, matchLeadingDesignator } from "@mailwoman/codex/us/unit/designator"
 
 import { splitStreetLine } from "#adapters/street-line"
 

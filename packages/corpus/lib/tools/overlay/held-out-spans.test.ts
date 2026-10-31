@@ -17,7 +17,7 @@ import {
 	holdoutSpanFindings,
 	REGION_SURFACE_MIN_ROWS,
 } from "#tools/overlay/held-out-spans"
-import { splitOverlaySlice } from "#tools/overlay/split-overlay"
+import { splitOverlaySlice } from "#tools/overlay/split/overlay"
 import type { CountryHoldout } from "#utils/split"
 
 const root = await temporaryDirectory("mw-held-out-spans-")

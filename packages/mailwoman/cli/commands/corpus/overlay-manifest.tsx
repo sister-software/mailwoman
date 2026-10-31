@@ -107,7 +107,7 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 
 		const parquets = extractDelimited(options.parquet)
 		const sources = extractDelimited(options.source)
-		const { readSplitAttribute } = await import("@mailwoman/corpus/tools/overlay/split-attribute")
+		const { readSplitAttribute } = await import("@mailwoman/corpus/tools/overlay/split/attribute")
 		const { resolvePath } = await import("path-ts")
 
 		if (parquets.length !== sources.length) {

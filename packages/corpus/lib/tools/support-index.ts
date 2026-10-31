@@ -25,7 +25,7 @@ import { dirname, resolvePath } from "path-ts"
 import { type DisposableDuckDB, type DuckDBLimits, escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { type CorpusDeletion, deletionTargets, readDeletionIDs } from "#tools/overlay/deletions"
 import { baseManifestFiles, localManifestFilePath } from "#tools/overlay/manifest"
-import { readSplitAttribute } from "#tools/overlay/split-attribute"
+import { readSplitAttribute } from "#tools/overlay/split/attribute"
 
 /**
  * The directory beside a manifest that holds its support index.

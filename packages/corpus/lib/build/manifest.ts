@@ -11,7 +11,7 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { PathBuilder } from "path-ts"
 
-import type { AlignTotals } from "#build/align-totals"
+import type { AlignTotals } from "#build/align/totals"
 import type { HoldoutCheckRecord } from "#build/holdout-check"
 import { TRAINING_MANIFEST_FILE, type BuildCorpusManifest, type BuildProfile, type BuildStage } from "#build/types"
 import type { ParquetManifest } from "#parquet/writers"

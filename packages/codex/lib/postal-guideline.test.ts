@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { AU_DELIVERY_GUIDELINE_RULES, AU_LOCALITY_LINE_RULE } from "#au/delivery-guideline"
+import { AU_DELIVERY_GUIDELINE_RULES, AU_LOCALITY_LINE_RULE } from "#au/delivery/guideline"
 import { AU_UNIT_PLACEMENT_RULES, AU_UNIT_TYPE_RULES } from "#au/unit-type"
 import { DE_POSTFACH_RULES } from "#de/postfach"
 import { FR_UNIT_LINE_RULES, FR_UNIT_PLACEMENT_RULES } from "#fr/unit-line"
@@ -8,9 +8,9 @@ import { GB_SUB_BUILDING_PLACEMENT_RULES, GB_SUB_BUILDING_RULES } from "#gb/sub-
 import { IT_CASELLA_POSTALE_RULES } from "#it/casella-postale"
 import { IT_UNIT_LINE_RULES } from "#it/unit-line"
 import { NZ_UNIT_PLACEMENT_RULES, NZ_UNIT_TYPE_RULES } from "#nz/unit-type"
-import { assertPostalGuidelineCitation, type PoBoxGuidelineRule, type PostalGuidelineRule } from "#postal-guideline"
-import { US_UNIT_DESIGNATOR_PREFERRED_ABBR } from "#us/unit-designator"
-import { US_UNIT_GUIDELINE_RULES, US_UNIT_PLACEMENT_RULES } from "#us/unit-guideline"
+import { assertPostalGuidelineCitation, type PoBoxGuidelineRule, type PostalGuidelineRule } from "#postal/guideline"
+import { US_UNIT_DESIGNATOR_PREFERRED_ABBR } from "#us/unit/designator"
+import { US_UNIT_GUIDELINE_RULES, US_UNIT_PLACEMENT_RULES } from "#us/unit/guideline"
 
 const TABLES: Record<string, readonly PoBoxGuidelineRule[]> = {
 	AU: AU_DELIVERY_GUIDELINE_RULES,

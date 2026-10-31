@@ -21,7 +21,7 @@ import {
 	isRenderablePlaceName,
 	renderGuidelineLine,
 	type PostalGuidelineLeg,
-} from "#recipes/postal-guideline/leg"
+} from "#recipes/postal/guideline/leg"
 
 /**
  * The GeoNames postal column holding the state abbreviation (admin1 code), such as `NSW`.

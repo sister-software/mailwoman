@@ -29,7 +29,7 @@ import {
 	isRenderablePlaceName,
 	joinGuidelineLines,
 	type PostalGuidelineLeg,
-} from "#recipes/postal-guideline/leg"
+} from "#recipes/postal/guideline/leg"
 
 /**
  * The surface forms the leg writes, keyed by the Unit Type they write.

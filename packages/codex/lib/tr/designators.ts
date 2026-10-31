@@ -15,7 +15,7 @@
  * @see {@link https://en.wiktionary.org/wiki/yakın Wiktionary: yakın}
  */
 
-import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal-designator"
+import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
 
 const UPU_SOURCE = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/turEn.pdf"
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"

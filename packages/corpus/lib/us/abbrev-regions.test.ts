@@ -1,7 +1,7 @@
 import { isZipCode, StateAbbreviationZipCodePrefixRecord, US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import { describe, expect, it } from "vitest"
 
-import { usAbbrevRegions } from "#us/abbrev-regions"
+import { usAbbrevRegions } from "#us/abbrev/regions"
 import { US_STATE_CODES_READ_AS_COUNTRIES } from "#us/state-country-codes"
 
 describe("usAbbrevRegions (#2769)", () => {

@@ -17,7 +17,7 @@ import {
 	rowPostcodeOrder,
 	writeNativeRows,
 	writeSourceIDSidecar,
-} from "./order-deletions.ts"
+} from "./order/deletions.ts"
 
 const directory = await temporaryDirectory("mw-order-deletions-")
 

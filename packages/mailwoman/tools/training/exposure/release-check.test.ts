@@ -14,7 +14,7 @@ import {
 	preflight,
 	refused,
 	Verdict,
-} from "./release-check.ts"
+} from "./release/check.ts"
 
 const report = (stage: string, forms: Record<string, number> | null): ExposureForms => ({
 	jurisdictions: { RU: { phenomena: { "streetless-premise-identity": { [stage]: forms } } } },

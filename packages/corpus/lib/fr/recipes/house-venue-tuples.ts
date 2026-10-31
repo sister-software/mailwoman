@@ -14,7 +14,7 @@ import { capitalize, splitLines, splitWhitespace } from "@mailwoman/core/strings
 import type { PathBuilderLike } from "path-ts"
 
 import { sampleAddressPoints } from "#recipes/address-points"
-import type { HouseVenueTuple } from "#recipes/house-venue-tuples"
+import type { HouseVenueTuple } from "#recipes/house/venue/tuples"
 
 /**
  * The BAN address-point database.

@@ -18,7 +18,7 @@ import { PathBuilder } from "path-ts"
 import { defaultAdapterRegistry } from "#adapters/registry"
 import { runAdapterPhase } from "#build/adapters"
 import { runAlignPhase } from "#build/align"
-import { alignTotalsOf } from "#build/align-totals"
+import { alignTotalsOf } from "#build/align/totals"
 import { planWorkerBudget } from "#build/budget"
 import { readSourceDecisionTable, readSourceEligibility } from "#build/eligibility"
 import {

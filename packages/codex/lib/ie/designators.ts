@@ -20,7 +20,7 @@
  */
 
 import { EN_LEVEL_DESIGNATORS } from "#level-semantics"
-import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal-designator"
+import { designatorRowsFromLevels, type PostalDesignatorTable } from "#postal/designator"
 
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"
 const AN_POST_PO_BOX = "https://www.anpost.com/Post-Parcels/Receiving/Rent-a-PO-Box"

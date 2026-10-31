@@ -9,7 +9,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { planAlignRanges } from "#build/align-range"
+import { planAlignRanges } from "#build/align/range"
 import { alignRangeCount } from "#build/parallel"
 
 let scratch: TemporaryDirectory

@@ -26,7 +26,7 @@ import {
 	designatorRowsFromLevels,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal-designator"
+} from "#postal/designator"
 
 const LA_POSTE_ABBREVIATIONS = "https://www.laposte.fr/envoyer/abreviation-adresses-postales"
 const UPU_FRANCE = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/fraEn.pdf"

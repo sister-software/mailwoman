@@ -17,7 +17,7 @@
  * @see {@link https://en.wikipedia.org/wiki/Numero_sign Wikipedia: Numero sign}
  */
 
-import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal-designator"
+import type { PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
 
 const UPU_SOURCE = "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/ukrEn.pdf"
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"

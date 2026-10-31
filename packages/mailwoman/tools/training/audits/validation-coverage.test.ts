@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { blindCountries, expandRequirements, failingRequirements, type SplitScan } from "./validation-coverage.ts"
+import { blindCountries, expandRequirements, failingRequirements, type SplitScan } from "./validation/coverage.ts"
 
 function scan(byCountry: Record<string, [number, number]>): SplitScan {
 	return {

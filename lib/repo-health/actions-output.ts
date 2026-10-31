@@ -10,8 +10,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 
-import { readRelatedCITests, selectRelatedCIScope } from "#repo-health/ci-related"
-import { readCIWorkspaces, selectCIScope, type CIScope } from "#repo-health/ci-scope"
+import { readRelatedCITests, selectRelatedCIScope } from "#repo-health/ci/related"
+import { readCIWorkspaces, selectCIScope, type CIScope } from "#repo-health/ci/scope"
 
 const ciEnvironment = liveEnv(
 	z.object({

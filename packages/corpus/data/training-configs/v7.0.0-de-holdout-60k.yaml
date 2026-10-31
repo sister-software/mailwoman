@@ -5,7 +5,7 @@
 #
 # 1. `data.corpus_dir` moves to v0.7.0-de-holdout. A run on v0.6.0-register-surface stopped at the CPU
 #    preflight because its DE test split held no street row. Measured on the assembled corpus with
-#    the validation-coverage audit (`packages/mailwoman/tools/training/audits/validation-coverage.run.ts`): DE val holds 49,831 rows of which 12,537
+#    the validation-coverage audit (`packages/mailwoman/tools/training/audits/validation/coverage.run.ts`): DE val holds 49,831 rows of which 12,537
 #    contain a street or a house number, and DE test holds 49,511 rows of which 12,583 do. All four
 #    declared floors are met.
 #

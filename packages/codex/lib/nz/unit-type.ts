@@ -13,7 +13,7 @@
  * @see {@link https://www.nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf NZ Post Address Standards (ADV358, June 2011)}
  */
 
-import type { PostalGuidelineCitation, PostalUnitGuidelineRule } from "#postal-guideline"
+import type { PostalGuidelineCitation, PostalUnitGuidelineRule } from "#postal/guideline"
 
 const ADV_358 = {
 	document: "Address Standards",

@@ -14,7 +14,7 @@
  */
 
 import { IT_POSTA_REGISTRATA_CITATION, IT_POSTA_REGISTRATA_COLUMN_TRANSCRIPTION } from "#it/casella-postale"
-import type { PostalUnitGuidelineRule, PostalUnitKind } from "#postal-guideline"
+import type { PostalUnitGuidelineRule, PostalUnitKind } from "#postal/guideline"
 
 const LINE_THREE_QUOTE = "3° riga: facoltativa per informazioni aggiuntive sull’edificio (scala, piano, interno)"
 

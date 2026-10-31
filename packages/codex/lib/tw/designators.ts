@@ -24,7 +24,7 @@
  * @see {@link https://en.wiktionary.org/wiki/我 Wiktionary 我}
  */
 
-import type { PostalDesignatorTable } from "#postal-designator"
+import type { PostalDesignatorTable } from "#postal/designator"
 
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"
 

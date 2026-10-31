@@ -16,7 +16,7 @@ import { basename, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { sampleAddressPoints } from "#recipes/address-points"
-import type { HouseVenueTuple } from "#recipes/house-venue-tuples"
+import type { HouseVenueTuple } from "#recipes/house/venue/tuples"
 import { type RegisterDecisions, registerSourcePermitsTraining } from "#source-register/corpus-inputs"
 import { readAddressSourceRegister } from "#source-register/register"
 

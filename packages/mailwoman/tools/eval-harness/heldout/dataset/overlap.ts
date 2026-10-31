@@ -37,7 +37,7 @@ import { recordIDOf, recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
-import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split-attribute"
+import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { readTrainingConfig, trainingCorpusVersion, typedTrainingConfig } from "@mailwoman/corpus/training/config/load"
 
 import type { HeldoutDatasetManifest } from "#tools/eval-harness/heldout/dataset/manifest"

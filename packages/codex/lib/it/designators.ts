@@ -28,7 +28,7 @@ import {
 	designatorRowsFromLevels,
 	type PostalDesignatorRow,
 	type PostalDesignatorTable,
-} from "#postal-designator"
+} from "#postal/designator"
 
 const WIKTIONARY = "https://en.wiktionary.org/wiki/"
 

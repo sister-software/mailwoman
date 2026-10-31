@@ -24,7 +24,7 @@ import {
 	drawUnitIdentifier,
 	joinGuidelineLines,
 	type PostalGuidelineLeg,
-} from "#recipes/postal-guideline/leg"
+} from "#recipes/postal/guideline/leg"
 
 /**
  * The chance that a row writes each of the three words, drawn independently.

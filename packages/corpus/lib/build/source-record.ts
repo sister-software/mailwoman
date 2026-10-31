@@ -16,7 +16,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { AlignTotalsRecord } from "#build/align-totals"
+import type { AlignTotalsRecord } from "#build/align/totals"
 import type { AlignSettings } from "#build/checkpoint"
 import { readParquetRecord, type DerivationInputs } from "#parquet/record"
 import type { ParquetFileDescriptor } from "#parquet/writers"

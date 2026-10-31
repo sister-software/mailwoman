@@ -28,7 +28,7 @@ import {
 	drawUnitIdentifier,
 	joinGuidelineLines,
 	type PostalGuidelineLeg,
-} from "#recipes/postal-guideline/leg"
+} from "#recipes/postal/guideline/leg"
 
 /**
  * The surface forms the leg writes, keyed by the sub-unit type they write.
