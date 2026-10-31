@@ -669,7 +669,7 @@
 		"dom-serializer": "^3.1.1",
 		"domhandler": "^6.0.1",
 		"domutils": "^4.0.2",
-		"entities": "^8.1.0",
+		"entities": "^9.0.0",
 		"env-paths": "^4.0.0",
 		"htmlparser2": "^12.0.0",
 		"http-status-codes": "^2.3.0",
@@ -686,7 +686,7 @@
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {
-		"@duckdb/node-api": "1.5.6-r.1",
+		"@duckdb/node-api": "^2.0.0-r.1",
 		"@types/trusted-types": "^2.0.7",
 		"@types/yauzl-promise": "^4.0.1"
 	}

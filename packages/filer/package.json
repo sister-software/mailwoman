@@ -94,7 +94,7 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"kysely": "^0.29.7",
 		"path-ts": "^2.5.0",
-		"read-excel-file": "^9.3.13",
+		"read-excel-file": "^9.3.14",
 		"spliterator": "^10.1.1",
 		"type-fest": "^5.10.0",
 		"zod": "^4.6.7"
