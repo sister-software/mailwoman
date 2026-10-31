@@ -22,11 +22,11 @@ export const TRAIN_TIMEOUT_SECONDS = 32_400
 /**
  * Seconds per 100 optimizer steps between validation passes, by device and then by batch size.
  *
- * `A100-40GB` is the median of the two 90,000-step `v8.3.0-base-c6-90k-fp32master`
- * runs (7.2 and 7.0 s over 932 and 837 windows).
- * The Rust trainer's 2,000-step probe on that card measured 6.5 s at batch 128 in bf16,
- * startup included (#2879 T37, `/mnt/mw/audits/trainer-parity/stage8/T37-FINDINGS.md`),
- * so 7.2 stays the slower bound.
+ * `A100-40GB` is the Rust trainer's slowest window between validation passes in #2887's
+ * 90,000-step `v8.3.0-base-c6-90k-mixed-s42` run at batch 128 in bf16, with batch
+ * prefetch and the per-window loss readback: 19.84 steps/s at steps 70,100–71,900,
+ * where the evidence-noise curriculum runs at full strength.
+ * Its other windows measured 20.2–23.0 steps/s.
  *
  * `A100-80GB` reuses it as an upper bound that no run has measured.
  *
@@ -37,8 +37,8 @@ export const TRAIN_TIMEOUT_SECONDS = 32_400
  * the only job that device runs.
  */
 export const OBSERVED_SECONDS_PER_100_STEPS: Readonly<Record<string, Readonly<Record<number, number>>>> = {
-	"A100-40GB": { 128: 7.2 },
-	"A100-80GB": { 128: 7.2 },
+	"A100-40GB": { 128: 5 },
+	"A100-80GB": { 128: 5 },
 	L4: { 128: 14.4 },
 	A10: { 128: 10.1 },
 	cpu: { 8: 43.3 },

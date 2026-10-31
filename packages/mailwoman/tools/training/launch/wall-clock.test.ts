@@ -16,9 +16,9 @@ describe("the launch wall-clock check", () => {
 			TRAIN_TIMEOUT_SECONDS
 		)
 
-		// 90,000 × 7.2 / 100 × 1.15 is 7,451.999… in floating point, truncated to 7,451 s as
-		// Python's `int()` truncated it. 46 passes × 15 s add 690 s, and the allowance adds 1,800 s.
-		expect(estimate).toMatchObject({ device: "A100-40GB", trainSeconds: 7451, evaluations: 46, totalSeconds: 9941 })
+		// 90,000 × 5.0 / 100 × 1.15 is 5,175 s of steps, truncated to whole seconds.
+		// The validation passes add 46 × 15 = 690 s, and the allowance adds 1,800 s.
+		expect(estimate).toMatchObject({ device: "A100-40GB", trainSeconds: 5175, evaluations: 46, totalSeconds: 7665 })
 	})
 
 	it("refuses a device or batch size with no observed rate", () => {
