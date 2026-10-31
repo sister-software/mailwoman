@@ -78,15 +78,15 @@ package's view. That view holds `MAILWOMAN_DATA_ROOT` and `MAILWOMAN_VOLUME_MOUN
 `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` or `~/.modal.toml`.
 
 The default GPU is the A100-40GB. On the 29.6 M-parameter model at batch 128 in bf16, the Rust trainer ran 15.46
-steps/s on it, 9.95 on an A10 and 6.96 on an L4, in sandboxes of 8 CPUs and 32 GiB. With that request's $0.63 per
-hour added, the A100-40GB and the A10 cost about the same per step, and the A100 finishes sooner. The A100-80GB costs
-$0.40 per hour more for memory this model does not use. `launch/wall-clock.ts` records each rate. A GPU sandbox now
-requests 4 CPUs and 16 GiB, $0.32 per hour less: the trainer held 7.1 GiB resident in the 90,000-step run of #2884.
+steps/s on it, 9.95 on an A10 and 6.96 on an L4, in sandboxes of 8 CPUs and 32 GiB. The A100-80GB costs $0.40 per
+hour more for memory this model does not use. `launch/wall-clock.ts` records each rate.
 
-Modal bills CPU and memory at the larger of the request and the use, and a sandbox without a limit may use 16 cores
-above its request. #2884's run requested 8 CPUs and billed 24, $1.14 per hour against the $0.38 requested. A GPU
-sandbox therefore sets `cpuLimit` to 6 and `memoryLimitMiB` to 32,768, and its trainer runs with `--threads 4` unless
-`--threads` says otherwise.
+Modal billed a GPU training sandbox's CPU and memory on the request: $0.142 per requested CPU-hour and $0.024 per
+GiB-hour on 2026-10-31, three times the per-core and per-GiB rates on Modal's pricing page. An hour of #2884's
+8-CPU, 32 GiB run billed $1.14 of CPU and $0.77 of memory beside $2.10 of A100-40GB, and an hour of #2887's 4-CPU,
+16 GiB run billed exactly half that. At 8 CPUs and 32 GiB the A100-40GB costs $0.072 per 1,000 steps and the A10
+$0.084. A GPU sandbox requests 4 CPUs and 16 GiB: the trainer's resident peak was 7.29 GiB over #2887's
+90,000-step run, and its trainer runs with `--threads 4` unless `--threads` says otherwise.
 
 ## Building the trainer on the host
 

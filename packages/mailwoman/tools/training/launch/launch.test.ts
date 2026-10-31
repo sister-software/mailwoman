@@ -191,9 +191,7 @@ describe("the training launch lifecycle", () => {
 		expect(sandboxes.get(record.sandboxes[0]!)!.spec).toMatchObject({
 			gpu: "A100-80GB",
 			cpu: 4,
-			cpuLimit: 6,
 			memoryMiB: 16_384,
-			memoryLimitMiB: 32_768,
 			env: { MW_THREADS: "4" },
 		})
 

@@ -15,17 +15,7 @@ export interface SandboxResources {
 	 */
 	gpu?: string
 	cpu: number
-	/**
-	 * A hard CPU limit in physical cores.
-	 *
-	 * Modal bills `max(request, use)`, and without a limit a sandbox may use 16 cores above its request.
-	 */
-	cpuLimit?: number
 	memoryMiB: number
-	/**
-	 * A hard memory limit in MiB, billed the same way as `cpuLimit`.
-	 */
-	memoryLimitMiB?: number
 	timeoutMs: number
 }
 
