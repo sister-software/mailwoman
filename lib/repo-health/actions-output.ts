@@ -26,10 +26,13 @@ const ciEnvironment = liveEnv(
 const isCommitSHA = (sha: string | undefined): sha is string => typeof sha === "string" && /^[a-f0-9]{40}$/u.test(sha)
 
 /**
- * Whether a run selects its suites from the diff between `base` and `head`, rather than running every suite.
+ * Whether a run selects its suites from the diff between `base` and `head`,
+ * rather than running every suite.
  *
- * A pull request always does. A push does when it passes the branch's previous head and the clone holds that
- * commit. A new branch reports an all-zero previous head, and a force-push passes one the clone lacks.
+ * A pull request always does.
+ * A push does when it passes the branch's previous head and the clone holds that commit.
+ *
+ * A new branch reports an all-zero previous head, and a force-push passes one the clone lacks.
  * A dispatched run runs every suite.
  *
  * @throws When a pull request does not name both commits.

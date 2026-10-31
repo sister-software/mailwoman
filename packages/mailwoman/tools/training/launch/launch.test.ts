@@ -68,7 +68,7 @@ function harness() {
 	const preflightTimeouts: number[] = []
 	const sleeps: number[] = []
 	const locked = new Set<string>()
-	// How many more starts Modal refuses for a name an exited sandbox has not yet released.
+	// The count of further starts Modal refuses for a name an exited sandbox has not yet released.
 	const releasing = { refusals: 0 }
 
 	const boundary: ModalBoundary = {

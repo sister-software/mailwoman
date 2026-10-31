@@ -110,8 +110,9 @@ export const TRAINER_IMAGE_ENV: Readonly<Record<string, string>> = {
 }
 
 /**
- * The download URL of the `libtorch-shared-with-deps` archive of {@linkcode LIBTORCH_VERSION} for a variant,
- * whose sha256 {@linkcode LIBTORCH_ARCHIVE_SHA256} pins.
+ * The download URL of the `libtorch-shared-with-deps` archive of {@linkcode LIBTORCH_VERSION} for a variant.
+ *
+ * {@linkcode LIBTORCH_ARCHIVE_SHA256} pins each archive's sha256.
  */
 export function libtorchArchiveURL(variant: TrainerVariant): string {
 	return `https://download.pytorch.org/libtorch/${variant}/libtorch-shared-with-deps-${LIBTORCH_VERSION}%2B${variant}.zip`
@@ -176,12 +177,12 @@ export function trainerBuildScript(variant: TrainerVariant): string {
 /**
  * The repository files a trainer image holds, relative to the repository root and sorted.
  *
- * Every file Git includes under `packages/trainer`, the mtf crates the trainer depends on, the root
- * workspace's manifest, lockfile and toolchain file, and the data files, except Markdown and each crate's
- * tests, benches and examples.
+ * Every file Git includes under `packages/trainer`, the mtf crates the trainer depends on,
+ * the root workspace's manifest, lockfile and toolchain file, and the data files,
+ * except Markdown and each crate's tests, benches and examples.
  *
- * `cargo build -p trainer-cli` reads none of the excluded files, and the list is what the image's
- * digest covers, so a change to a test keeps the published image.
+ * `cargo build -p trainer-cli` reads none of the excluded files, and the list is what
+ * the image's digest covers, so a change to a test keeps the published image.
  */
 export async function trainerSourceFiles(): Promise<string[]> {
 	const trainer = await workingTreeFiles(["packages/trainer"])
@@ -192,8 +193,8 @@ export async function trainerSourceFiles(): Promise<string[]> {
 }
 
 /**
- * Whether the trainer's release build reads a file: Markdown, a crate's `tests/`, `benches/` and
- * `examples/` directories, and TypeScript tests are left out.
+ * Whether the trainer's release build reads a file: Markdown, a crate's `tests/`,
+ * `benches/` and `examples/` directories, and TypeScript tests are left out.
  */
 function isBuildInput(path: string): boolean {
 	return (

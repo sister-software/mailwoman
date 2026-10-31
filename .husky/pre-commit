@@ -49,7 +49,7 @@ if [ -n "$STAGED" ]; then
 	CODE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx)$' || true)
 	# - oxlint exits non-zero when ignore rules exclude every path passed, such as a generated `.mjs` alone.
 	if [ -n "$CODE" ]; then
-		LINT_OUT=$(printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix 2>&1) || {
+		LINT_OUT=$(printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix --deny-warnings 2>&1) || {
 			if printf '%s' "$LINT_OUT" | grep -q "No files found to lint"; then
 				echo "pre-commit: all staged code paths are oxlint-excluded — skipping lint"
 			else
@@ -79,7 +79,7 @@ if [ -n "$STAGED" ]; then
 	printf '%s\n' "$STAGED" | tr '\n' '\0' | xargs -0 git add --force --
 
 	# Prose lint (Vale), staged-scoped.
-	node config/vale/lint-prose.ts --staged -s docs-vocab -s code
+	node config/vale/lint-prose.ts --staged --deny-warnings -s docs-vocab -s code
 fi
 
 # CLI reference + man-page drift prevention:

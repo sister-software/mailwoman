@@ -10,7 +10,7 @@ import { describe, expect, test } from "vitest"
 import { temporaryDirectory } from "#fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "#fs/writers"
 import { repoRootPath } from "#paths"
-import { isRegisteredWorkspace, readWorkspaceDirectories } from "#workspaces"
+import { isRegisteredWorkspace, readWorkspaceDirectories, retiredWorkspaceDirectories } from "#workspaces"
 
 async function scaffold(workspaces: string[], directories: string[], files: string[] = []) {
 	const scratch = await temporaryDirectory("mw-workspaces-")
@@ -60,6 +60,23 @@ describe("readWorkspaceDirectories", () => {
 		await expect(readWorkspaceDirectories(scratch.path)).rejects.toThrow(/matched no directory/u)
 	})
 
+	test("a `!` entry excludes a directory from the expansion and from the retired list", async () => {
+		await using scratch = await scaffold(
+			["packages/*", "!packages/cargo", "!packages/a"],
+			["packages/a", "packages/b"],
+			["packages/cargo/Cargo.toml", "packages/gone/out/index.js"]
+		)
+
+		await expect(readWorkspaceDirectories(scratch.path)).resolves.toEqual(["packages/b"])
+		await expect(retiredWorkspaceDirectories(scratch.path)).resolves.toEqual(["packages/gone"])
+	})
+
+	test("an exclusion with a wildcard is refused", async () => {
+		await using scratch = await scaffold(["packages/*", "!packages/x*"], ["packages/a"])
+
+		await expect(readWorkspaceDirectories(scratch.path)).rejects.toThrow(/not a literal directory/u)
+	})
+
 	test("the repository's own field expands to the packages plus docs", async () => {
 		const directories = await readWorkspaceDirectories(repoRootPath())
 
@@ -69,5 +86,6 @@ describe("readWorkspaceDirectories", () => {
 		expect(directories.length).toBeGreaterThanOrEqual(70)
 		await expect(isRegisteredWorkspace(repoRootPath(), "packages/core")).resolves.toBe(true)
 		await expect(isRegisteredWorkspace(repoRootPath(), "packages/nowhere")).resolves.toBe(false)
+		await expect(retiredWorkspaceDirectories(repoRootPath())).resolves.not.toContain("packages/trainer")
 	})
 })

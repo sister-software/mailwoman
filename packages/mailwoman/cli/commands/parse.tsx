@@ -386,14 +386,43 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
  * The caller prints the degraded notice.
  */
 async function runStructuralPipeline(input: string, options: ParseOptions): Promise<string> {
-	const { createRuntimePipeline } = await import("#index")
-	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi ? "extract" : "none" })
-	const result = await pipeline(input, { locale: options.locale })
+	const result = await structuralResult(input, options)
 	emitFaultWarnings(result)
 
+	return serializeStructural(result, options)
+}
+
+async function structuralResult(input: string, options: ParseOptions) {
+	const { createRuntimePipeline } = await import("#index")
+	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi ? "extract" : "none" })
+
+	return pipeline(input, { locale: options.locale })
+}
+
+async function serializeStructural(
+	result: Awaited<ReturnType<typeof structuralResult>>,
+	options: ParseOptions
+): Promise<string> {
 	return options.debug
 		? prettyJSON(await serializeResult(result, options.format))
 		: serializeTree(result.tree, options.format, { includeAlternatives: false })
+}
+
+/**
+ * Parses an input that takes a structural fast path, or returns `null` for one that needs the encoder.
+ *
+ * The fast-path decision reads the query kind and shape.
+ * The structural pipeline computes both the same way the full pipeline does.
+ *
+ * A postcode or bare locality therefore never loads the encoder, its lexicons or the FST.
+ */
+async function tryFastPath(input: string, options: ParseOptions): Promise<string | null> {
+	const result = await structuralResult(input, options)
+
+	if (result.path !== "fast-path") return null
+	emitFaultWarnings(result)
+
+	return serializeStructural(result, options)
 }
 
 /**
@@ -411,6 +440,13 @@ async function runDegraded(input: string, options: ParseOptions): Promise<string
  * A plain parse falls back to the structural pipeline when the encoder does not load.
  */
 async function runPipeline(input: string, options: ParseOptions): Promise<string> {
+	// `--resolve` resolves a fast-path tree too, so it keeps the full pipeline with its resolver.
+	if (!options.resolve) {
+		const fastPath = await tryFastPath(input, options)
+
+		if (fastPath !== null) return fastPath
+	}
+
 	// `tryLoadNeural` prints its own warning when the load fails, so this path skips the degraded banner.
 	const classifier = await tryLoadNeural(options)
 

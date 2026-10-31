@@ -21,7 +21,8 @@
 	},
 	"workspaces": [
 		"docs",
-		"packages/*"
+		"packages/*",
+		"!packages/trainer"
 	],
 	"type": "module",
 	"imports": {

@@ -157,7 +157,7 @@ function splitSummary(stdout: string): { body: string; counts: [number, number, 
  * Two checks never interleave.
  * Each check closes with one summary that sums its chunks.
  */
-async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promise<number> {
+async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[], denyWarnings: boolean): Promise<number> {
 	const parallelism = availableParallelism()
 
 	const runs = checks.map(({ configPath, files }) => {
@@ -188,6 +188,12 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 		const mark = errors ? "✖" : warnings || suggestions ? "⚠" : "✔"
 
 		console.log(`${mark} ${errors} errors, ${warnings} warnings and ${suggestions} suggestions in ${files} files.`)
+
+		if (denyWarnings && warnings) {
+			console.log("--deny-warnings: a warning in these files fails the check.")
+
+			exitCode = Math.max(exitCode, 1)
+		}
 	}
 
 	return exitCode
@@ -197,7 +203,7 @@ async function stagedPaths(): Promise<string[]> {
 	return new GitClient().readNulDelimited(["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"])
 }
 
-async function lint(surface: Surface, narrowing: readonly string[], staged: boolean) {
+async function lint(surface: Surface, narrowing: readonly string[], staged: boolean, denyWarnings: boolean) {
 	const resolvedPathSpecs = await pathspecsFor(surface)
 	const tracked = await workingTreeFiles(resolvedPathSpecs)
 
@@ -244,7 +250,7 @@ async function lint(surface: Surface, narrowing: readonly string[], staged: bool
 		}
 	}
 
-	return runChecks(vale, checks)
+	return runChecks(vale, checks, denyWarnings)
 }
 
 async function main(): Promise<number> {
@@ -260,6 +266,7 @@ async function main(): Promise<number> {
 				multiple: true,
 			},
 			staged: { type: "boolean" },
+			"deny-warnings": { type: "boolean" },
 		},
 		allowPositionals: true,
 	})
@@ -288,7 +295,7 @@ async function main(): Promise<number> {
 	let exitCode = 0
 
 	for (const surface of surfaces) {
-		exitCode = await lint(surface, selectedPaths, options.staged === true)
+		exitCode = await lint(surface, selectedPaths, options.staged === true, options["deny-warnings"] === true)
 
 		if (exitCode !== 0) {
 			return exitCode

@@ -85,8 +85,8 @@ export class SandboxNameHeldError extends Error {
 }
 
 /**
- * How many times a start retries a sandbox name that no running sandbox of the
- * run holds, and how long it waits between them.
+ * The attempts a start makes on a sandbox name that no running sandbox of the
+ * run holds, and the wait between them.
  */
 export const NAME_RELEASE_RETRY = { attempts: 6, delayMs: 10_000 } as const
 
@@ -339,8 +339,9 @@ async function startSandbox(record: LaunchRecord, deps: LaunchDependencies): Pro
 /**
  * Starts the run's sandbox under the run's one name.
  *
- * Modal refuses a second sandbox while one holds the name, which covers the gap
- * between the host's check for a running sandbox and this start.
+ * Modal refuses a second sandbox while one holds the name.
+ * That refusal covers the gap between the host's check for a running sandbox and this start.
+ *
  * A refused name held by a running sandbox of the run is a duplicate launch.
  *
  * A refused name with no running sandbox is one Modal has not yet released,

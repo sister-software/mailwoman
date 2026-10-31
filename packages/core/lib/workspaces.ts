@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   This function expands the root manifest's `workspaces` field to the directories it names.
- *   It supports only a single trailing `*` segment.
+ *   It supports only a single trailing `*` segment, and a `!directory` entry excludes one literal directory.
  *   A literal entry without a manifest is an error instead of an empty result.
  *   The function refuses patterns it cannot expand instead of reporting no matches.
  */
@@ -20,6 +20,23 @@ const TRAILING_STAR = /^(?<parent>[^*]+)\/\*$/u
 
 async function isWorkspaceDirectory(repoRoot: PathBuilderLike, directory: string): Promise<boolean> {
 	return (await tryStat(resolvePath(repoRoot, directory, "package.json"))) !== null
+}
+
+/**
+ * The field's include patterns and the literal directories its `!` entries exclude.
+ *
+ * Yarn's object form nests the same patterns under `packages`.
+ */
+async function readWorkspaceEntries(repoRoot: PathBuilderLike) {
+	const manifest = await readPackageJSON(resolvePath(repoRoot, "package.json"))
+	const entries = Array.isArray(manifest.workspaces) ? manifest.workspaces : (manifest.workspaces?.packages ?? [])
+	const excluded = new Set(entries.filter((entry) => entry.startsWith("!")).map((entry) => entry.slice(1)))
+
+	for (const directory of excluded) {
+		if (directory.includes("*")) throw new Error(`workspace exclusion !${directory} is not a literal directory`)
+	}
+
+	return { patterns: entries.filter((entry) => !entry.startsWith("!")), excluded }
 }
 
 export interface ReadWorkspaceDirectoriesOptions {
@@ -42,10 +59,7 @@ export async function readWorkspaceDirectories(
 	repoRoot: PathBuilderLike,
 	options: ReadWorkspaceDirectoriesOptions = {}
 ): Promise<string[]> {
-	const manifest = await readPackageJSON(resolvePath(repoRoot, "package.json"))
-	// The field is either the pattern array or Yarn's object form.
-	// Yarn's object form nests the same patterns under `packages`.
-	const entries = Array.isArray(manifest.workspaces) ? manifest.workspaces : (manifest.workspaces?.packages ?? [])
+	const { patterns: entries, excluded } = await readWorkspaceEntries(repoRoot)
 
 	if (!entries.length) throw new Error(`${resolvePath(repoRoot, "package.json")} declares no workspaces`)
 
@@ -86,7 +100,7 @@ export async function readWorkspaceDirectories(
 		for (const child of children) {
 			const directory = `${parent}/${child}`
 
-			if (await isWorkspaceDirectory(repoRoot, directory)) {
+			if (!excluded.has(directory) && (await isWorkspaceDirectory(repoRoot, directory))) {
 				matched.push(directory)
 			}
 		}
@@ -114,8 +128,7 @@ export async function isRegisteredWorkspace(repoRoot: PathBuilderLike, directory
  */
 // repo-health-ignore export-name-affix -- answers the complement of the shared reader's filter.
 export async function retiredWorkspaceDirectories(repoRoot: PathBuilderLike): Promise<string[]> {
-	const manifest = await readPackageJSON(resolvePath(repoRoot, "package.json"))
-	const entries = Array.isArray(manifest.workspaces) ? manifest.workspaces : (manifest.workspaces?.packages ?? [])
+	const { patterns: entries, excluded } = await readWorkspaceEntries(repoRoot)
 	const retired: string[] = []
 
 	for (const entry of entries) {
@@ -137,7 +150,7 @@ export async function retiredWorkspaceDirectories(repoRoot: PathBuilderLike): Pr
 		for (const child of children) {
 			const directory = `${parent}/${child}`
 
-			if (!(await isWorkspaceDirectory(repoRoot, directory))) {
+			if (!excluded.has(directory) && !(await isWorkspaceDirectory(repoRoot, directory))) {
 				retired.push(directory)
 			}
 		}
