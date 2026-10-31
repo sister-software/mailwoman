@@ -12,6 +12,9 @@
 #
 # Launch it with:
 #   node packages/mailwoman/tools/training/launch/launch.run.ts start --config v1.9.3a2-anchor-absorption.yaml --branch-from <v192-ckpt>
+#
+# The Python trainer wrote the v1.9.2 checkpoints, with `optimizer.pt` and no `optimizer.json`. The Rust trainer
+# refuses to resume one. A rerun first retrains v1.9.2 to step 40000 on the Rust trainer and branches from that.
 data:
   corpus_dir: /data/corpus/versioned/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
