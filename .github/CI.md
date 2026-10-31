@@ -15,7 +15,7 @@ The workspace graph uses dependencies from all four manifest dependency fields a
 
 For a source-only change, Vitest then narrows fast and slow test files to those whose module graph reaches a changed module. Tests that import filesystem, module-path, SQLite, or subprocess access also retain their workspace-level selection because they can read inputs without importing them.
 
-Fixture, asset, and local configuration changes retain workspace-level selection. A prose or lint-only change (`*.md`, `.agents/`, or `typos.toml`) selects no test suite; the static job still checks it. Each root `lib/<dir>` tool tree owns its tests as a separate selection unit.
+Fixture, asset, and local configuration changes retain workspace-level selection. A prose or lint-only change (`*.md`, `.agents/`, or `typos.toml`) selects no test suite, but the static job still checks it. Each root `lib/<dir>` tool tree owns its tests as a separate selection unit.
 
 ## When everything runs (full run)
 
