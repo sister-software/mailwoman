@@ -147,13 +147,57 @@ test("remembers an opened hit, newest first, five at most", async () => {
 	await vi.waitFor(() => expect(container.querySelector('[role="option"][href^="/x"]')).not.toBeNull())
 	await userEvent.keyboard("{Enter}")
 
-	expect(onNavigate).toHaveBeenCalledWith("/x")
+	// The `/x` on screen can answer "si" while "six" is still debouncing, and the Enter then waits for "six".
+	await vi.waitFor(() => expect(onNavigate).toHaveBeenCalledWith("/x"))
 
 	const remembered = parseJSONStrict<{ url: string }[]>(localStorage.getItem(key)!)
 
 	expect(remembered.map((hit) => hit.url)).toEqual(["/x", "/one", "/two", "/three", "/four"])
 	expect(remembered[0]).not.toHaveProperty("snippet")
 	localStorage.removeItem(key)
+})
+
+/**
+ * A search whose responses the test releases by hand, so an Enter can land before a query's results.
+ */
+function heldSearch() {
+	const held = new Map<string, () => void>()
+
+	const search = (q: string) =>
+		new Promise<SearchResponse>((resolve) => {
+			held.set(q, () => resolve(response(q, [`/${q}`])))
+		})
+
+	return { search, release: (q: string) => held.get(q)?.(), has: (q: string) => held.has(q) }
+}
+
+test("an Enter pressed before the query's results arrive opens the first hit once they settle", async () => {
+	const { search, release, has } = heldSearch()
+	const { input, onNavigate } = mount(search)
+
+	await userEvent.type(input, "six")
+	await userEvent.keyboard("{Enter}")
+
+	expect(onNavigate).not.toHaveBeenCalled()
+	await vi.waitFor(() => expect(has("six")).toBe(true))
+	release("six")
+	await vi.waitFor(() => expect(onNavigate).toHaveBeenCalledWith("/six"))
+	expect(onNavigate).toHaveBeenCalledTimes(1)
+})
+
+test("a keystroke after a pending Enter cancels it", async () => {
+	const { search, release, has } = heldSearch()
+	const { input, onNavigate } = mount(search)
+
+	await userEvent.type(input, "six")
+	await userEvent.keyboard("{Enter}")
+	await userEvent.type(input, "t")
+	await vi.waitFor(() => expect(has("sixt")).toBe(true))
+	release("six")
+	release("sixt")
+	await vi.waitFor(() => expect(input.getAttribute("aria-activedescendant")).toBeTruthy())
+
+	expect(onNavigate).not.toHaveBeenCalled()
 })
 
 test("emphasizes each word of a hyphenated query in the title", async () => {

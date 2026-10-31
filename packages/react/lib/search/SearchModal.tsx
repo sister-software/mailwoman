@@ -12,7 +12,17 @@
  */
 
 import { stringifyJSON, tryParsingJSON } from "@mailwoman/core/json"
-import { type KeyboardEvent, type MouseEvent, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react"
+import {
+	type KeyboardEvent,
+	type MouseEvent,
+	type ReactNode,
+	useEffect,
+	useEffectEvent,
+	useId,
+	useMemo,
+	useRef,
+	useState,
+} from "react"
 
 import { useDebouncedValue } from "#common/useDebouncedValue"
 
@@ -197,6 +207,11 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 	const listboxID = `${baseID}-listbox`
 	const [query, setQuery] = useState("")
 	const [settled, setSettled] = useState<Status>({ kind: "idle" })
+	// The query whose request settled `settled`, so a hit on screen can be matched to the query in the field.
+	const [answered, setAnswered] = useState("")
+	// The query of an Enter pressed while the hits on screen answered an earlier query.
+	// The response to that query opens its first hit.
+	const pendingEnter = useRef<string | null>(null)
 	const [selected, setSelected] = useState(0)
 	const [loading, setLoading] = useState(false)
 	const [recent, setRecent] = useState<RecentHit[]>([])
@@ -217,6 +232,9 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 		}
 	}, [open, recentKey])
 
+	// The search effect opens a hit for a pending Enter with the render's current recent hits and callbacks.
+	const openHit = useEffectEvent((hit: RecentHit) => go(hit))
+
 	useEffect(() => {
 		if (debounced === "") return
 
@@ -231,7 +249,18 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 				clearTimeout(loadingTimer)
 				setLoading(false)
 				setSettled({ kind: "results", response })
+				setAnswered(debounced)
 				setSelected(0)
+
+				if (pendingEnter.current === debounced) {
+					pendingEnter.current = null
+					// The first option in display order is the first hit, because its category's group comes first.
+					const first = response.hits[0]
+
+					if (first) {
+						openHit(first)
+					}
+				}
 			},
 			() => {
 				if (controller.signal.aborted) return
@@ -239,6 +268,11 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 				clearTimeout(loadingTimer)
 				setLoading(false)
 				setSettled({ kind: "failed" })
+				setAnswered(debounced)
+
+				if (pendingEnter.current === debounced) {
+					pendingEnter.current = null
+				}
 			}
 		)
 
@@ -281,6 +315,9 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 		? recent.map((hit, order) => ({ hit, order }))
 		: groups.flatMap((group) => group.entries)
 
+	// The options on screen answer the field's query once the debounce has settled and that query's request has returned.
+	const answersField = showRecent || (trimmed === debounced && answered === debounced)
+
 	const optionID = (order: number) => `${baseID}-option-${order}`
 	const emphasis = response?.corrected ?? debounced
 
@@ -316,6 +353,14 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 	function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
 		// A key that commits or edits an IME composition is not a command.
 		if (event.nativeEvent.isComposing) return
+
+		// The options on screen, if any, answer an earlier query, so the Enter waits for the field's query to settle.
+		if (event.key === "Enter" && !answersField) {
+			event.preventDefault()
+			pendingEnter.current = trimmed
+
+			return
+		}
 
 		if (!ordered.length) return
 
@@ -355,9 +400,6 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 			document.getElementById(optionID(next))?.scrollIntoView({ block: "nearest" })
 		} else if (event.key === "Enter") {
 			event.preventDefault()
-
-			// The hits on screen answer an earlier query until the debounce settles.
-			if (trimmed !== debounced) return
 
 			const entry = ordered[selected]
 
@@ -412,6 +454,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 				// The next open starts on the recent hits rather than the last query.
 				setQuery("")
 				setSelected(0)
+				pendingEnter.current = null
 				onClose()
 			}}
 			onClick={onDialogClick}
@@ -434,7 +477,11 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 						maxLength={MAX_QUERY_LENGTH}
 						placeholder="Search the documentation"
 						value={query}
-						onChange={(event) => setQuery(event.target.value)}
+						onChange={(event) => {
+							// A further keystroke replaces the query an earlier Enter waited for.
+							pendingEnter.current = null
+							setQuery(event.target.value)
+						}}
 						onKeyDown={onKeyDown}
 					/>
 				</label>

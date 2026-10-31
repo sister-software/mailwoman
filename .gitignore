@@ -84,6 +84,8 @@ playwright-traces
 test-results
 *.lcov
 .vitest-attachments
+# Vitest 4's browser mode writes failure screenshots under `.vitest/attachments/`.
+.vitest/
 __screenshots__
 
 # Python artifacts
