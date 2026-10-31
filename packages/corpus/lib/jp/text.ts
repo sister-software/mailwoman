@@ -53,7 +53,7 @@ export function normalizeJPName(text: string): string {
  * A number field: NFC, half-width kana folded, and every hyphen equivalent folded to `-`.
  */
 export function normalizeJPNumber(text: string): string {
-	return foldHalfwidthKana(text.normalize("NFC")).replace(HYPHEN_CLASS, "-").trim()
+	return foldHalfwidthKana(text.normalize("NFC")).replaceAll(HYPHEN_CLASS, "-").trim()
 }
 
 /**

@@ -24,8 +24,8 @@ and where it was posted. The body of the report keeps its 2026-10-28 text, excep
 - **The headline split** (F5). On `heldout-dev-v0.8.2`, address rows move −0.10 and +0.22 points. The 7,027
   `verified_unseen` address rows move +2.22 and +2.50 points weighted by row. Weighted equally by country, the
   same rows score 85.83% for shipped against 84.20% and 85.43%, so per country the candidate trails. Three generated
-  sources (`rendered-de`, `rendered-gb-os-open`, `invented-postal-unit-guideline`) hold most of the row-weighted
-  gain. The register sets have no unseen rows by record: NPPES has 7 of 197,963, the rebuilt NPPES has 0 of
+  sources (`rendered-de`, `rendered-gb-os-open`, `invented-postal-unit-guideline`) account for most of the improvement in row-weighted
+  accuracy. The register sets have no unseen rows by record: NPPES has 7 of 197,963, the rebuilt NPPES has 0 of
   206,973, and notaries, NAD and HRSA have 0. Every register comparison stays inadmissible.
 - **The thin-system cause** (F4, section 2). `thin-system-v1` holds 1,800 unseen OSM addresses of AL, AM, AE, CI,
   CR and EC with the country written last. No BF extract exists on the host. The seeds read the locality as a
@@ -322,7 +322,7 @@ The encoder's step cost stays the same, so the rate stands for timing only (infe
 | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Modal A100 (observed)                      | 8.9 to 11.9 h (2.1 to 2.8 steps/s)                                                                                   | about $26 to $35                                                                         | derived above from `model-overview.md`                                                                                      |
 | Lab host, 8 cores                          | about 119 to 132 h, 5 to 5.5 days (90,000 ÷ 0.19 to 0.21 steps/s), before evaluation every 2,000 steps               | electricity only. At an assumed 80 W and $0.30/kWh, about 10 kWh, about $3 (an estimate) | measured rate                                                                                                               |
-| AWS `c7a.8xlarge`, 32 cores, about $1.64/h | about 40 to 60 h if the step rate scales 2 to 3 times from 8 to 32 cores (estimate; the rate increase is unmeasured) | about $66 to $98 on demand. Spot roughly a third to a half of that                       | [DevZero](https://www.devzero.io/instances/aws/c7a.8xlarge), [Holori](https://calculator.holori.com/aws/ec2/c7i.8xlarge)    |
+| AWS `c7a.8xlarge`, 32 cores, about $1.64/h | about 40 to 60 h if the step rate scales 2 to 3 times from 8 to 32 cores (estimate. The rate increase is unmeasured) | about $66 to $98 on demand. Spot roughly a third to a half of that                       | [DevZero](https://www.devzero.io/instances/aws/c7a.8xlarge), [Holori](https://calculator.holori.com/aws/ec2/c7i.8xlarge)    |
 | AWS `c7i.8xlarge`, 32 cores, about $1.43/h | same scaling assumption, about 40 to 60 h                                                                            | about $57 to $86 on demand                                                               | [Holori](https://calculator.holori.com/aws/ec2/c7i.8xlarge), [DoiT](https://www.doit.com/compute/spot/us-east-1/c7i.xlarge) |
 
 Training this model on CPU is about 12 times slower on the lab host than on Modal's A100, and on AWS CPU instances it

@@ -303,7 +303,7 @@ const ANSI_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;?]*[A-Za-z]`,
  * Removes ANSI escape sequences from child-process output.
  */
 export function stripAnsi(value: string): string {
-	return value.replace(ANSI_PATTERN, "")
+	return value.replaceAll(ANSI_PATTERN, "")
 }
 
 /**

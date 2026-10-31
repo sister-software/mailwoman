@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file The refused set and admitted set define this interface. The admitted set determines whether the guard
- *   remains usable, since a guard that refuses ordinary work gets switched off. The first version refused
+ * @file The refused set and admitted set define this interface. The admitted set determines whether ordinary commands remain usable, since a guard that refuses ordinary work gets switched off. The first version refused
  *   55 of 56 commands from a working session.
  */
 

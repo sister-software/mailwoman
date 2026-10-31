@@ -42,8 +42,8 @@
  * 2. **The participant register's `SURNAME Given` casing.** `BUCKENHUSKES Herbert Johannes`: an
  *    upper-case run followed by title-case words that are all personal names, one of them a given
  *    name, for a surname the dictionary lacks. 5 records.
- * 3. **A sole-trader legal form.** German `e.K.`, `e.Kfm.` and `e.Kfr.`, and `Inh.` (owner), in the
- *    name or the short name, as in `Melina Bucher e.Kfr.`. 3 records.
+ * 3. **A sole-trader legal form.** German `e.K.`, `e.Kfm.` and `e.Kfr.`, and `Inh.` (owner), in either
+ *    the name or the short name, as in `Melina Bucher e.Kfr.`. 3 records.
  *
  * Neither name rule fires on a name holding a word that is a country's name, so `ERICSSON FRANCE` and
  * `IDEMIA Public Security France` are admitted.

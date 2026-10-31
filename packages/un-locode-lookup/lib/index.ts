@@ -20,12 +20,7 @@ import type { UNLocodeDatabase } from "#schema"
  * Fold a place name to its match key: strip diacritics, lowercase, collapse whitespace.
  */
 export function foldName(name: string): string {
-	return name
-		.normalize("NFD")
-		.replaceAll(/[̀-ͯ]/g, "")
-		.toLowerCase()
-		.trim()
-		.replaceAll(/\s+/g, " ")
+	return name.normalize("NFD").replaceAll(/[̀-ͯ]/g, "").toLowerCase().trim().replaceAll(/\s+/g, " ")
 }
 
 /**

@@ -56,12 +56,7 @@ const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
 // The reserved-surface list is stored in this folded form: accents stripped, lowercase, single spaces.
 const norm = (value: string): string =>
-	value
-		.normalize("NFD")
-		.replaceAll(/[̀-ͯ]/g, "")
-		.toLowerCase()
-		.replaceAll(/\s+/g, " ")
-		.trim()
+	value.normalize("NFD").replaceAll(/[̀-ͯ]/g, "").toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 /**
  * Matches common French particles in a street name.

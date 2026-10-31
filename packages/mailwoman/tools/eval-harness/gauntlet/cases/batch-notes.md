@@ -469,7 +469,7 @@ Country dirs are lowercase ISO-3166 alpha-2. A row lives at `cases/<cc>/regressi
 53 rows · `cases/bm/`, `cases/ca/`, `cases/cr/`, `cases/es/`, `cases/fr/`, `cases/gb/`, `cases/mx/`, `cases/ni/`, `cases/pr/`, `cases/us/`, `cases/vg/`, `cases/vi/`
 
 > ── Operator probe set 3 (2026-08-05): 53 rows, verbatim from the operator's list. The batch is deliberately
-> NOT another London/Paris venue sweep — it walks the places the corpus had no row for at all: Northern
+> not another London/Paris venue sweep — it walks the places the corpus had no row for at all: Northern
 > Ireland, the Balearics, Puerto Rico, the US and British Virgin Islands, Bermuda, Costa Rica, Nicaragua,
 > Mexican supermanzana addressing, Atlantic Canada, and small-town US.
 >

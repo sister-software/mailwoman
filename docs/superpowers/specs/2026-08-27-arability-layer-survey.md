@@ -1029,8 +1029,7 @@ Five reasons support this choice, in order of weight.
 4. **It answers the capability question rather than the observed-cover question.** #1683 lists land
    arability. Arability describes what the land affords, and a soil survey records that. What was
    planted last season is a different signal that would need its own coverage semantics.
-5. **It tests the two-consumer design and the meaning-of-zero rule as hard as any source could, and that
-   is intended.** The source has four distinct absences, 84 % of its map units are mixtures, and its own
+5. **It tests the two-consumer design and the meaning-of-zero rule as hard as any source could by design.** The source has four distinct absences, 84 % of its map units are mixtures, and its own
    dominant-condition share drops to 2 %. A schema that handles SSURGO will handle the simpler layers.
 
 The Cropland Data Layer stays in the inventory as the natural second layer. It is CC0, measured, and

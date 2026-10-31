@@ -173,12 +173,7 @@ interface LiveRecord {
 }
 
 function fold(value: string): string {
-	return value
-		.normalize("NFKD")
-		.replaceAll(/[̀-ͯ]/g, "")
-		.toLowerCase()
-		.replaceAll(/\s+/g, " ")
-		.trim()
+	return value.normalize("NFKD").replaceAll(/[̀-ͯ]/g, "").toLowerCase().replaceAll(/\s+/g, " ").trim()
 }
 
 function judgeCoverage(

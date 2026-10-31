@@ -99,7 +99,7 @@ export interface CellFloor {
  *
  * The order represents the rendered record's placetype, its neighboring levels and their order.
  */
-export const LABEL_ORDER_SQL = `array_to_string(list_transform(list_filter(labels, x -> x LIKE 'B-%'), x -> substr(x, 3)), ' ')`
+export const LABEL_ORDER_SQL = `array_to_string(list_transform(list_filter(labels, lambda x: x LIKE 'B-%'), lambda x: substr(x, 3)), ' ')`
 
 const STRUCTURE_SQL = `${LABEL_ORDER_SQL} || '|' || coalesce(augmentation, '')`
 const WOF_SLOT = wofNameSlotSQL()

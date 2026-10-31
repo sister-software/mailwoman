@@ -56,7 +56,7 @@ export const TW_ADMIN_LEVELS = 3
 export function twFoldKey(text: string): string {
 	const folded = asciiDigits(normalizeCJKText(text.normalize("NFC"))).replaceAll("台", "臺")
 
-	return folded.replace(SECTION, (_whole, digits: string) => {
+	return folded.replaceAll(SECTION, (_whole, digits: string) => {
 		const value = Number(asciiDigits(digits))
 
 		return (KANJI_SECTION[value] ?? digits) + "段"

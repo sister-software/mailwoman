@@ -70,8 +70,8 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1152.0",
-		"@aws-sdk/lib-storage": "^3.1152.0",
+		"@aws-sdk/client-s3": "^3.1160.0",
+		"@aws-sdk/lib-storage": "^3.1160.0",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
@@ -90,7 +90,7 @@
 		"d3-color": "^3.1.0",
 		"d3-scale-chromatic": "^3.1.0",
 		"h3-js": "^4.5.0",
-		"kysely": "^0.29.6",
+		"kysely": "^0.29.7",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",
 		"spliterator": "^10.1.1"

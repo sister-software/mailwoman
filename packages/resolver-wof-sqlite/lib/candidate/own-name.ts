@@ -114,11 +114,7 @@ export function romanizeNameKey(key: string): string | null {
 		out += CYRILLIC_TO_LATIN[ch] ?? ch
 	}
 
-	out = out
-		.normalize("NFD")
-		.replaceAll(/[̀-ͯ]/g, "")
-		.replaceAll(/\s+/g, " ")
-		.trim()
+	out = out.normalize("NFD").replaceAll(/[̀-ͯ]/g, "").replaceAll(/\s+/g, " ").trim()
 
 	return /^[a-z0-9 ]*$/.test(out) ? out : null
 }

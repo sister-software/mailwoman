@@ -530,7 +530,7 @@ and US are separate decisions with separate evidence, because their radius profi
   unit resolver abstains on. Bar: **≥95% receive a country scope of GB with a `NIR`
   constituent-country ancestry and the correct BT district identified, and 0% receive a coordinate.** The
   second condition decides the mechanism. Here the correct output is ancestry without a point. A
-  mechanism that invents a BT centroid reproduces the `BT3 9QQ` → Sheffield defect that #1480 just
+  mechanism that invents a BT centroid reproduces the `BT3 9QQ` → Sheffield defect that #1480
   fixed. Report the district-level accuracy against the 80/80 census, and separately report the number
   of inputs the prior fired on.
 - **B3-4 (the US tier is not oversold).** Build `postcode-prefix-us.bin` at 3 digits from ZCTA and
@@ -574,8 +574,8 @@ the anchor channel (mechanism 3's second consumer). That requires a channel that
 values during training, and the GB hole shows the cost of shipping it untrained. If a batch is
 being prepared anyway, a cheap addition would extend `pilot-anchor-lookup.json` beyond its 67,708
 US/DE/FR keys, none of which contain letters, so the letter-containing systems get a gradient at
-all. That is a corpus decision with its own preregistration, and adding it to this arc would break
-the one-variable-per-run rule.
+all. That is a corpus decision with its own preregistration, and adding it to this arc would change
+more than one variable per run.
 
 ## Explicitly out of scope
 

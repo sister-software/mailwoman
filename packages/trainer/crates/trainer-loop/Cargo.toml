@@ -15,7 +15,7 @@ mtf-channels = { workspace = true, features = ["finders"] }
 mtf-sampler.workspace = true
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip", "preserve_order"] }
-sha2 = "0.10"
+sha2 = "0.11"
 # `fisher-diag-v1.npz` is a deflated zip of `.npy` arrays, as `numpy.savez_compressed` writes it.
 zip = { version = "9", default-features = false, features = ["deflate"] }
 # The realized-draws stream is zstd-compressed JSON lines, which `spliterator` reads.

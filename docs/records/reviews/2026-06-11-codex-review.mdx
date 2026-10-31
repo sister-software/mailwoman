@@ -126,7 +126,7 @@ zero false fires. The floor is conservative at 50.
 po_box is more delicate. The v4.4.0 config records that the rebuilt extract passed cedex but the po_box probe
 was still 57.5 because of punctuation truncation, and the complete v4.4.0 training run is expected to answer that with
 more exposure. That is a reasonable experiment, but it should be treated as an experiment. If
-po_box misses the 70 floor, do not reinterpret it as "close enough" just because cedex passed. A miss
+po_box misses the 70 floor, do not reinterpret it as "close enough" because cedex passed. A miss
 means the punctuation class needs its own corrective.
 
 ### 7. The v4.3.0 arena dip is now properly tracked, so keep it as a hard v4.4.0 constraint
@@ -135,8 +135,7 @@ The v4.3.0 ship check and 2026-06-11 scorecard characterize the perturb drop wel
 region+postcode tokens dominate the regression, with post-directional and unit-junction boundary
 wobbles behind it. #513 captures the right fix direction: data rather than a conventions mask.
 
-The v4.4.0 check now floors `arena.perturb` at 71, restoring the v4.2.0 mark. That is exactly the
-right move. If this floor fails, shipping v4.4.0 would convert a documented v4.3.0 tradeoff into a
+The v4.4.0 check now floors `arena.perturb` at 71, restoring the v4.2.0 mark. This requires the candidate to match the earlier perturbation score. If this floor fails, shipping v4.4.0 would convert a documented v4.3.0 tradeoff into a
 known unfixed regression.
 
 ## Night Shift Watch List

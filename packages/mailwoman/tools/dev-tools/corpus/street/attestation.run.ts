@@ -201,7 +201,7 @@ for (const seed of rows) {
 			register = parquet.toString()
 			source = `read_parquet('${escapeSQLString(register)}')`
 			// Overture keeps the locality in `address_levels`, and `postal_city` is empty on whole countries.
-			localityExpression = "list_transform(address_levels, level -> level.value)"
+			localityExpression = "list_transform(address_levels, lambda level: level.value)"
 		}
 	}
 
@@ -245,7 +245,7 @@ for (const seed of rows) {
 		localityLiteral && localityExpression
 			? country === "GB"
 				? `lower(trim("${localityExpression}")) = lower(trim(${localityLiteral}))`
-				: `list_contains(list_transform(${localityExpression}, value -> lower(trim(value))), lower(trim(${localityLiteral})))`
+				: `list_contains(list_transform(${localityExpression}, lambda value: lower(trim(value))), lower(trim(${localityLiteral})))`
 			: null
 
 	const candidates = (
