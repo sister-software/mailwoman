@@ -114,13 +114,16 @@ commit() { "$MW_SYNC" "$MW_VOLUME"; }
 # MW_USAGE_INTERVAL_SECONDS (60 by default) while the trainer runs. These are the numbers the card and the
 # sandbox's CPU and memory request are sized from. A CPU sandbox has no nvidia-smi and logs "none".
 sample_usage() {
+	# Modal's sandbox reports no VmHWM, so the peak is the largest VmRSS this sampler has read.
+	peak=0
 	while :; do
 		gpu=none
 		if command -v nvidia-smi > /dev/null 2>&1; then
 			gpu=$(nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader,nounits 2> /dev/null | head -n 1 | tr -d ' ')
 		fi
-		rss=$(awk '/^VmHWM/ {print $2}' "/proc/$1/status" 2> /dev/null)
-		log "usage: gpu_util_pct,gpu_mem_mib=${"$"}{gpu:-none} trainer_peak_rss_kib=${"$"}{rss:-gone}"
+		rss=$(awk '/^VmRSS/ {print $2}' "/proc/$1/status" 2> /dev/null)
+		[ -n "$rss" ] && [ "$rss" -gt "$peak" ] && peak=$rss
+		log "usage: gpu_util_pct,gpu_mem_mib=${"$"}{gpu:-none} trainer_rss_kib=${"$"}{rss:-gone} trainer_peak_rss_kib=$peak"
 		kill -0 "$1" 2> /dev/null || return 0
 		# The sleep holds no output stream: killing the sampler leaves it orphaned, and an orphan holding the
 		# supervisor's stdout would keep the sandbox's output open until the sleep ends.

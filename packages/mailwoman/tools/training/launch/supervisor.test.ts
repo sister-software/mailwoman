@@ -156,7 +156,7 @@ describe("the training sandbox supervisor", () => {
 
 		expect(run.code).toBe(0)
 		// The host running the test may have no GPU, so the GPU field is whatever nvidia-smi reports or `none`.
-		expect(samples.some((line) => /trainer_peak_rss_kib=\d+$/u.test(line))).toBe(true)
+		expect(samples.some((line) => /trainer_rss_kib=\d+ trainer_peak_rss_kib=[1-9]\d*$/u.test(line))).toBe(true)
 	})
 
 	it("retries a failed exit with --resume auto after committing its checkpoint", async () => {
