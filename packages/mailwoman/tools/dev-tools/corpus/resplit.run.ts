@@ -46,7 +46,7 @@ interface ManifestFile {
 	first_source_id: string
 	last_source_id: string
 	source: string
-	derivation_hash: string
+	derivation_hash?: string
 	split_attribute?: { path: string; sha256?: string; policy_hash?: string; counts?: Record<string, number> }
 }
 
@@ -108,7 +108,11 @@ const started = Date.now()
 const items: ResplitItem[] = []
 
 for (const [index, file] of files.entries()) {
-	const attributeDir = resolvePathBuilder(outDir, "attributes", file.source, file.derivation_hash)
+	// A file written by a build that predates derivation hashes (every v0.8.0 file, among others) has none.
+	// Its directory is keyed by the parquet's own sha256.
+	// Every manifest entry records that hash.
+	const attributeKey = file.derivation_hash ?? `sha256-${file.sha256}`
+	const attributeDir = resolvePathBuilder(outDir, "attributes", file.source, attributeKey)
 
 	await makeDirectories(attributeDir)
 
