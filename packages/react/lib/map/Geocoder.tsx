@@ -176,6 +176,7 @@ function GeocoderInner({
 						zoom: runtime.initialZoom ?? 3,
 					}}
 					style={{ width: "100%", height: "100%" }}
+					starfield
 					// The attribution is compact.
 					// The MapLibre logo is hidden.
 					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
