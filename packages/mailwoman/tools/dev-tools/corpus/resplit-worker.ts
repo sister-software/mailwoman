@@ -8,6 +8,7 @@
  *   instance held to the threads and memory the coordinator gave each worker.
  */
 
+import { sha256File } from "@mailwoman/core/hash"
 import { workerUserData } from "@mailwoman/core/workers"
 import { readSplitRetention } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { splitOverlaySlice } from "@mailwoman/corpus/tools/overlay/split/overlay"
@@ -38,6 +39,11 @@ export interface ResplitItem {
 export interface ResplitResult {
 	index: number
 	attribute: string
+	/**
+	 * The attribute file's sha256.
+	 * A corpus manifest records it beside the attribute's path.
+	 */
+	attributeSHA256: string
 	policyHash: string
 	rows: number
 	counts: Record<string, number>
@@ -63,6 +69,7 @@ export async function handleItem(item: ResplitItem): Promise<ResplitResult> {
 	return {
 		index: item.index,
 		attribute: result.attribute.toString(),
+		attributeSHA256: await sha256File(result.attribute),
 		policyHash: result.policyHash,
 		rows: result.rows,
 		counts: result.counts,

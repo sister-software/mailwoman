@@ -8,6 +8,10 @@
  *   corpus. Only attributes and the manifest are new. With `--retention`, every row of a
  *   covered country–shape combination stays in training (section 5.1).
  *
+ *   The manifest is the base corpus's own, with its paths under the training volume's `/data`. Each file is read
+ *   from the same path under the local data root, and the new manifest writes its attribute paths under `/data`,
+ *   so it describes the corpus as the volume holds it once the attributes are synced.
+ *
  *   Files are independent, so each is split on a worker thread (`resplit-worker.ts`), `--jobs` at a time, largest
  *   first: the largest file bounds the wall time, and starting it first lets the others run beside it. Each worker's
  *   DuckDB instance gets `--duckdb-threads` threads and an equal share of `--duckdb-memory-gb`.
@@ -23,6 +27,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { localManifestFilePath, rerootBaseFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import { readSplitRetention } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { resolvePathBuilder } from "path-ts"
 import { parallelMapWorkers } from "spliterator"
@@ -116,7 +121,7 @@ for (const [index, file] of files.entries()) {
 
 	await makeDirectories(attributeDir)
 
-	items.push({ index, input: file.path, outputDir: attributeDir.toString() })
+	items.push({ index, input: localManifestFilePath(file.path), outputDir: attributeDir.toString() })
 }
 
 items.sort((a, b) => files[b.index]!.rows - files[a.index]!.rows)
@@ -162,7 +167,9 @@ const outManifest: CorpusManifest = {
 		return {
 			...file,
 			split_attribute: {
-				path: decision.attribute,
+				// In the form the base manifest writes paths, so the manifest reads the same on the volume.
+				path: rerootBaseFilePath(decision.attribute, args.manifest!),
+				sha256: decision.attributeSHA256,
 				policy_hash: decision.policyHash,
 				counts: decision.counts,
 			},
