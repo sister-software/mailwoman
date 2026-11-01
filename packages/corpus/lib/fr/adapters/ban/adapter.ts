@@ -160,7 +160,12 @@ export function createBanAdapter(): CorpusAdapter {
 
 				const { raw, components: aligned } = rendered
 
-				const sourceID = record.id ? `${BAN_ADAPTER_ID}-${record.id}` : stableSourceID(BAN_ADAPTER_ID, aligned)
+				// BAN repeats an `id` across the postcodes of a merged commune: `27213_0028_00001` is
+				// `1 Grande Rue` in each of Vexin-sur-Epte's 27420, 27510 and 27630 villages (#2894).
+				// The postcode in the id keeps those addresses apart.
+				const sourceID = record.id
+					? `${BAN_ADAPTER_ID}-${record.id}${postcode ? `-${postcode}` : ""}`
+					: stableSourceID(BAN_ADAPTER_ID, aligned)
 
 				yield {
 					raw,

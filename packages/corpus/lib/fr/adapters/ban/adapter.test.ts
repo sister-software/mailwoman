@@ -144,7 +144,7 @@ describe("ban adapter against fixture sample.csv", () => {
 
 		const rows = await readCanonicalRows(scratch.path, BAN_ADAPTER_ID)
 
-		expect(rows[0]!.source_id).toBe("ban-75108_0001_00001")
+		expect(rows[0]!.source_id).toBe("ban-75108_0001_00001-75001")
 	})
 
 	it("two runs over the same CSV produce identical sha256", async () => {

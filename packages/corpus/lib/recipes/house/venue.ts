@@ -87,6 +87,9 @@ export const houseVenueRecipe: CorpusRecipe = {
 						country: tuple.country,
 						locale: synth.locale,
 						source,
+						// The id covers the generated house number, street and venue as well as the admin tail.
+						// Two rows generated in one postcode differ only in those, and an id without them
+						// names every row of a postcode, template and variant as one record (#2894).
 						source_id: recipeSourceID(source, {
 							locality: tuple.locality,
 							region: tuple.region,
@@ -94,6 +97,9 @@ export const houseVenueRecipe: CorpusRecipe = {
 							country: tuple.country,
 							template: synth.template,
 							v: String(v),
+							house_number: synth.components.house_number ?? undefined,
+							street: synth.components.street ?? undefined,
+							venue: synth.components.venue ?? undefined,
 						}),
 						license: LICENSE,
 					},

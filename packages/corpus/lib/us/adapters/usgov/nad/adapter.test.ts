@@ -4,18 +4,29 @@
  * @author Teffen Ellis, et al.
  */
 
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
+import type { PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"
 
+import { recordIDOf } from "#adapters/record-id"
+import { useScratchDir } from "#test-kit"
 import type { CanonicalRow } from "#types"
 import { createUsgovNADAdapter, USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE } from "#us/adapters/usgov/nad/adapter"
 
 const FIXTURE_DIR = workspacePath("corpus", "lib", "us", "adapters", "usgov", "nad", "fixtures")
 
-async function collect(adapter = createUsgovNADAdapter(), opts: { country?: string; limit?: number } = {}) {
+const scratch = useScratchDir("usgov-nad")
+
+async function collect(
+	adapter = createUsgovNADAdapter(),
+	opts: { country?: string; limit?: number } = {},
+	inputPath: PathBuilderLike = FIXTURE_DIR
+) {
 	const out: CanonicalRow[] = []
 
-	for await (const row of adapter.rows({ inputPath: FIXTURE_DIR, ...opts })) {
+	for await (const row of adapter.rows({ inputPath, ...opts })) {
 		out.push(row)
 	}
 
@@ -124,6 +135,45 @@ describe("usgov-nad adapter", () => {
 			expect(r.license).toBe(USGOV_NAD_DEFAULT_LICENSE)
 			expect(r.source_id).toMatch(/^usgov-nad-/)
 		}
+	})
+
+	it("keeps two addresses apart when NAD repeats a UUID or publishes the all-zero placeholder", async () => {
+		const breed = {
+			Add_Number: 6804,
+			AddNo_Full: "6804",
+			St_Name: "Breed",
+			St_PosTyp: "Street",
+			StNam_Full: "Breed Street",
+			Post_City: "CHILTON",
+			State: "WI",
+			Zip_Code: "53014",
+		}
+
+		// Two records from NAD's own pages under UUID 79461b5e-…, and two under the placeholder.
+		const records = [
+			{ ...breed, OBJECTID: 39_590_132, UUID: "79461b5e-7d9f-4fb2-baad-310a014e4bda" },
+			{
+				...breed,
+				OBJECTID: 70_311_605,
+				UUID: "79461b5e-7d9f-4fb2-baad-310a014e4bda",
+				Add_Number: 704,
+				AddNo_Full: "704",
+				St_PreDir: "West",
+				StNam_Full: "West Breed Street",
+			},
+			{ ...breed, OBJECTID: 1, UUID: "00000000-0000-0000-0000-000000000000", Add_Number: 10, AddNo_Full: "10" },
+			{ ...breed, OBJECTID: 2, UUID: "00000000-0000-0000-0000-000000000000", Add_Number: 12, AddNo_Full: "12" },
+		]
+
+		await writeLocalTextFile(records.map((r) => stringifyJSON(r)).join("\n") + "\n", scratch.path("pages.ndjson"))
+
+		const rows = await collect(createUsgovNADAdapter(), {}, scratch.path)
+		const recordIDs = new Set(rows.map((row) => recordIDOf(row.source_id)))
+
+		expect(rows).toHaveLength(records.length)
+		expect(recordIDs.size).toBe(records.length)
+		expect(rows[0]!.source_id).toMatch(/^usgov-nad-79461b5e-7d9f-4fb2-baad-310a014e4bda-[0-9a-f]{12}$/u)
+		expect(rows[2]!.source_id).toMatch(/^usgov-nad-1-[0-9a-f]{12}$/u)
 	})
 
 	it("honors opts.limit (soft cap)", async () => {
