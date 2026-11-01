@@ -468,6 +468,11 @@ function isDerivedPath(raw: string, repoRoot: string, cwd: string): boolean {
 }
 
 /**
+ * A command word that starts a Python interpreter or its package installer, such as `python3.12` or `pip`.
+ */
+const PYTHON_HEAD = /^(?:python[\d.]*|pip[\d.]*)$/u
+
+/**
  * A refusal with its reason and the advice on what to do instead.
  */
 export interface CommandRefusal {
@@ -486,6 +491,12 @@ export function judgeCommand(command: string, repoRoot: string, sessionCwd: stri
 	const stripped = withoutQuotedText(command)
 	const cwd = workingDirectory(stripped, sessionCwd)
 	const segments = commandSegments(stripped)
+
+	// Python is not part of this toolchain, whatever it would do.
+	// This runs first so its message is the one shown.
+	if (segments.some(({ head }) => PYTHON_HEAD.test(head))) {
+		return { reason: "Python is not allowed.", guidance: "Use TypeScript via Node" }
+	}
 
 	// Inline scripts and heredoc bodies were stripped above, so these checks read the raw command.
 	// They apply only when an interpreter runs, so `grep -rn writeFile packages` stays admitted.
