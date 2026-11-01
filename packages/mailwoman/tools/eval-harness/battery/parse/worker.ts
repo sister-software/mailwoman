@@ -8,16 +8,14 @@
  *   options (`HELDOUT_INFERENCE_RULE`) and returns each row's id with every parsed span in input order.
  */
 
-import { workerData } from "node:worker_threads"
-
 import { walkNodes } from "@mailwoman/core/decoder"
+import { workerUserData } from "@mailwoman/core/workers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 import { heldoutWeightsLocale, readHeldoutLocalePackages } from "#tools/eval-harness/heldout/per/country"
 
-const { cacheRoot, intraOpNumThreads } = (workerData as { userData: { cacheRoot: string; intraOpNumThreads: number } })
-	.userData
+const { cacheRoot, intraOpNumThreads } = workerUserData<{ cacheRoot: string; intraOpNumThreads: number }>()
 
 const packages = await readHeldoutLocalePackages()
 const classifiers = new Map<string, Promise<NeuralAddressClassifier>>()

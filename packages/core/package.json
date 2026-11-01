@@ -221,6 +221,11 @@
 			"node": "./lib/utils/sleep.ts",
 			"default": "./out/utils/sleep.js"
 		},
+		"./workers": {
+			"types": "./out/workers.d.ts",
+			"node": "./lib/workers.ts",
+			"default": "./out/workers.js"
+		},
 		"./utils/events": {
 			"types": "./out/utils/events.d.ts",
 			"node": "./lib/utils/events.ts",

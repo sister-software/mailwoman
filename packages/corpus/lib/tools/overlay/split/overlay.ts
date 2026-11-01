@@ -14,6 +14,8 @@ import { sha256File } from "@mailwoman/core/hash"
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { openCorpusRowStream } from "#parquet/corpus-rows"
+import type { DuckDBLimits } from "#parquet/duckdb"
+import type { ParquetRow } from "#parquet/schema"
 import {
 	SPLIT_ATTRIBUTE,
 	type SplitAttributeFile,
@@ -89,7 +91,26 @@ export interface SplitSliceOptions {
 	 * Covered by the policy hash.
 	 */
 	retention?: SplitRetention
+	/**
+	 * The DuckDB instance's threads and memory, for a caller that splits several files at once.
+	 * @defaultValue the shares `openDuckDB` gives an instance whose caller names none.
+	 */
+	limits?: DuckDBLimits
 }
+
+/**
+ * The columns a split decision reads: the span triple over `raw`, the id the attribute
+ * is keyed by, and the country the holdout and retention tables are keyed by.
+ *
+ * The projection leaves out the token and label lists.
+ * Those lists dominate the cost of turning a row into a JavaScript object.
+ */
+const SPLIT_COLUMNS = ["raw", "source_id", "country", "span_starts", "span_ends", "span_tags"] as const
+
+/**
+ * A corpus row read through {@linkcode SPLIT_COLUMNS}.
+ */
+type SplitColumnRow = Pick<ParquetRow, (typeof SPLIT_COLUMNS)[number]>
 
 export interface SplitSliceResult {
 	input: string
@@ -163,7 +184,10 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 	let index = 0
 
-	for await (const row of openCorpusRowStream(input)) {
+	for await (const row of openCorpusRowStream<SplitColumnRow>(input, {
+		columns: SPLIT_COLUMNS,
+		...(options.limits ? { limits: options.limits } : {}),
+	})) {
 		const components = holdoutComponents(row, index, input)
 
 		const split = splitForRow(

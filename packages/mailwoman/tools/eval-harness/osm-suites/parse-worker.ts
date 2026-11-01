@@ -8,7 +8,7 @@
  *   handed as the held-out grader scores it: exact parse correctness under the country's street convention.
  */
 
-import { workerData } from "node:worker_threads"
+import { workerUserData } from "@mailwoman/core/workers"
 
 import {
 	type HeldoutClassifier,
@@ -36,9 +36,8 @@ export interface SuiteParseWorkerData {
 	intraOpNumThreads: number
 }
 
-const { cacheRoot, packages, intraOpNumThreads } = (workerData?.userData ?? {}) as SuiteParseWorkerData
-// A worker started without `userData` has no packages, and every row then reads the base locale.
-const localePackages = packages ? new Map(packages) : new Map<string, string>()
+const { cacheRoot, packages, intraOpNumThreads } = workerUserData<SuiteParseWorkerData>()
+const localePackages = new Map(packages)
 const classifiers = new Map<string, Promise<HeldoutClassifier>>()
 
 async function classifierFor(locale: string): Promise<HeldoutClassifier> {
