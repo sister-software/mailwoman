@@ -109,6 +109,32 @@ describe("splitOverlaySlice", () => {
 		expect(widened.policyHash).not.toBe(policy.policyHash)
 		expect(widened.counts.train).toBe(0)
 	})
+
+	it("trains every row of a protected combination and records the table in the attribute (#2893)", async () => {
+		const input = root.path("part-retained.parquet")
+		const rows = fixtureRows()
+
+		await writeParquetFile(rows, input, FIXTURE_DERIVATION)
+
+		const unprotected = await splitOverlaySlice({ input, outputDir: root.path })
+		const protectedKeys = new Set<string>()
+
+		for (const row of rows) {
+			protectedKeys.add(`${row.country}|${row.span_tags.join(" -> ")}`)
+		}
+
+		const retained = await splitOverlaySlice({
+			input,
+			outputDir: root.path,
+			retention: { floor: 10, protectedShapes: protectedKeys },
+		})
+
+		const attribute = await readSplitAttribute(retained.attribute)
+
+		expect(retained.policyHash).not.toBe(unprotected.policyHash)
+		expect(retained.counts).toEqual({ train: rows.length, val: 0, test: 0 })
+		expect(attribute.retention).toEqual({ floor: 10, protectedShapes: protectedKeys.size })
+	})
 })
 
 describe("holdoutComponents", () => {

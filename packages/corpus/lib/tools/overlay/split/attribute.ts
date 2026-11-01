@@ -18,6 +18,7 @@ import { canonicalJSON } from "@mailwoman/core/json"
 
 import { moduleGraphHash } from "#build/code-hash"
 import type { CountryHoldout, SplitName } from "#utils/split"
+import type { ShapeSupplyEntry, SplitRetention } from "#utils/split-retention"
 
 /**
  * The module whose `splitForRow` the policy hash covers, repository-relative.
@@ -47,17 +48,33 @@ export interface SplitAttributeFile {
 	 */
 	val: string[]
 	test: string[]
+	/**
+	 * The retention table applied, when one was registered (section 5.1).
+	 */
+	retention?: { floor: number; protectedShapes: number }
 }
 
 /**
  * The hash of one holdout policy: the holdout table and the code that applies it.
+ *
+ * A registered retention table joins the hashed payload, so a table change writes
+ * a new attribute file rather than relabeling the old one.
  */
 export async function splitPolicyHash(
-	holdouts: Record<string, CountryHoldout>
+	holdouts: Record<string, CountryHoldout>,
+	retention?: SplitRetention
 ): Promise<{ policyHash: string; codeHash: string }> {
 	const codeHash = await moduleGraphHash([SPLIT_POLICY_MODULE])
 
-	return { policyHash: sha256Hex(canonicalJSON({ holdouts, codeHash })), codeHash }
+	const payload = {
+		holdouts,
+		codeHash,
+		...(retention
+			? { retention: { floor: retention.floor, protectedShapes: [...retention.protectedShapes].toSorted() } }
+			: {}),
+	}
+
+	return { policyHash: sha256Hex(canonicalJSON(payload)), codeHash }
 }
 
 /**
@@ -91,4 +108,52 @@ export async function readSplitAttribute(path: string): Promise<SplitAttributeFi
 	}
 
 	return attribute
+}
+
+/**
+ * The attribute name a retention artifact declares.
+ */
+export const SPLIT_RETENTION_ATTRIBUTE = "split-retention"
+
+/**
+ * The retention artifact a supply pass writes beside a corpus manifest (section 5.1): the full
+ * per-combination supply for the allocation report, and the combinations the split then keeps in training.
+ */
+export interface SplitRetentionFile {
+	attribute: typeof SPLIT_RETENTION_ATTRIBUTE
+	/**
+	 * The minimum independent training groups a combination keeps after the holdout.
+	 */
+	floor: number
+	/**
+	 * The corpus the supply was measured on.
+	 */
+	corpusVersion: string
+	/**
+	 * The full country–shape supply table, sorted by country then shape.
+	 */
+	supply: ShapeSupplyEntry[]
+	/**
+	 * Keys of `shapeKeyOf` whose training remainder falls below `floor`, sorted.
+	 */
+	protectedShapes: string[]
+}
+
+/**
+ * Read a retention artifact into the lookup the split applies.
+ *
+ * @throws When the file declares a different attribute or its floor or lists are missing.
+ */
+export async function readSplitRetention(path: string): Promise<SplitRetention> {
+	const artifact = await readLocalJSONFile<SplitRetentionFile>(path)
+
+	if (artifact.attribute !== SPLIT_RETENTION_ATTRIBUTE) {
+		throw new Error(`${path} is not a split retention file`)
+	}
+
+	if (!(Number.isInteger(artifact.floor) && artifact.floor >= 1) || !Array.isArray(artifact.protectedShapes)) {
+		throw new Error(`${path} records no usable retention floor or protected list`)
+	}
+
+	return { floor: artifact.floor, protectedShapes: new Set(artifact.protectedShapes) }
 }

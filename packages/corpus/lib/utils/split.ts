@@ -23,6 +23,7 @@ import { JSONSpliterator } from "spliterator"
 
 import { recordIDOf } from "#adapters/record-id"
 import type { CanonicalRow, LabeledRow } from "#types"
+import { shapeKeyOf, type SplitRetention } from "#utils/split-retention"
 
 /**
  * The name of one corpus split.
@@ -73,6 +74,10 @@ export interface SplitOptions {
 	 * @defaultValue `""`
 	 */
 	corpusVersion?: string
+	/**
+	 * The retention table applied to every row, when one was registered.
+	 */
+	retention?: SplitRetention
 }
 
 /**
@@ -83,6 +88,10 @@ export interface SplitManifest {
 	val: string[]
 	test: string[]
 	holdouts: Record<string, CountryHoldout>
+	/**
+	 * The retention table applied, when one was registered.
+	 */
+	retention?: { floor: number; protectedShapes: number }
 	/**
 	 * The corpus version the caller supplied.
 	 */
@@ -802,19 +811,36 @@ function foldedNamesFor(declared: CountryHoldout, policy: HoldoutPolicy): Folded
 	return names
 }
 
-type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components">
+type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "components"> & {
+	/**
+	 * The row's ordered span tags, when the caller holds a labeled row.
+	 *
+	 * Retention keys on them.
+	 * A caller without them gets no retention lookup.
+	 */
+	span_tags?: readonly string[] | null
+}
 
 /**
  * Returns the split for one row.
  *
  * Both `splitRows` and the streaming `buildCorpus` loop call this, so every
  * caller assigns a row to the same split.
+ *
+ * A row of a combination the retention table covers below the floor returns `train`
+ * before the holdout is consulted (HOLDOUT_AND_EVALUATION section 5.1: training
+ * retention takes precedence over geographic integrity).
  */
 export function splitForRow(
-	row: Pick<SplitInputRow, "source_id" | "country" | "components">,
+	row: Pick<SplitInputRow, "source_id" | "country" | "components" | "span_tags">,
 	holdouts: Record<string, CountryHoldout> = defaultHoldouts(),
-	trainedPlaces: Record<string, readonly string[]> = hashedHoldoutTrainedPlaces()
+	trainedPlaces: Record<string, readonly string[]> = hashedHoldoutTrainedPlaces(),
+	retention?: SplitRetention
 ): SplitName {
+	if (retention && row.span_tags && retention.protectedShapes.has(shapeKeyOf(row.country, row.span_tags))) {
+		return "train"
+	}
+
 	const declared = holdouts[row.country]
 	const { region, postcode, locality } = row.components
 	let isHeldOut: boolean
@@ -856,7 +882,7 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 	const test: string[] = []
 
 	for (const row of rows) {
-		const split = splitForRow(row, holdouts)
+		const split = splitForRow(row, holdouts, undefined, opts.retention)
 
 		if (split === "train") {
 			train.push(row.source_id)
@@ -874,6 +900,9 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 		val,
 		test,
 		holdouts,
+		...(opts.retention
+			? { retention: { floor: opts.retention.floor, protectedShapes: opts.retention.protectedShapes.size } }
+			: {}),
 		corpus_version: opts.corpusVersion ?? "",
 		counts: { train: train.length, val: val.length, test: test.length, total },
 	}
@@ -906,6 +935,7 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: Pa
 	const summary = {
 		corpus_version: manifest.corpus_version,
 		holdouts: manifest.holdouts,
+		...(manifest.retention ? { retention: manifest.retention } : {}),
 		counts: manifest.counts,
 	}
 
@@ -942,6 +972,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 	corpusVersion: string
 	counts: Record<SplitName, number>
 	holdouts?: Record<string, CountryHoldout>
+	retention?: SplitRetention
 }): Promise<SplitManifest["counts"]> {
 	await makeDirectories(opts.outputDir)
 	const holdouts = opts.holdouts ?? defaultHoldouts()
@@ -965,6 +996,9 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 	const summary = {
 		corpus_version: opts.corpusVersion,
 		holdouts,
+		...(opts.retention
+			? { retention: { floor: opts.retention.floor, protectedShapes: opts.retention.protectedShapes.size } }
+			: {}),
 		counts: { ...opts.counts, total },
 	}
 

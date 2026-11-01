@@ -22,6 +22,7 @@ import {
 } from "#tools/overlay/split/attribute"
 import type { CanonicalRow } from "#types"
 import { type CountryHoldout, defaultHoldouts, HOLDOUT_COMPONENT_TAGS, type SplitName, splitForRow } from "#utils/split"
+import type { SplitRetention } from "#utils/split-retention"
 
 /**
  * The fields {@linkcode holdoutComponents} reads, with the span triple optional
@@ -83,6 +84,11 @@ export interface SplitSliceOptions {
 	 * @defaultValue `defaultHoldouts()`, which is the policy the base build applies.
 	 */
 	holdouts?: Record<string, CountryHoldout>
+	/**
+	 * The retention table applied to every row, when one was registered (HOLDOUT_AND_EVALUATION section 5.1).
+	 * Covered by the policy hash.
+	 */
+	retention?: SplitRetention
 }
 
 export interface SplitSliceResult {
@@ -159,7 +165,14 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 
 	for await (const row of openCorpusRowStream(input)) {
 		const components = holdoutComponents(row, index, input)
-		const split = splitForRow({ source_id: row.source_id, country: row.country, components }, holdouts)
+
+		const split = splitForRow(
+			{ source_id: row.source_id, country: row.country, components, span_tags: row.span_tags },
+			holdouts,
+			undefined,
+			options.retention
+		)
+
 		const earlier = decided.get(row.source_id)
 
 		if (earlier && earlier !== split) {
@@ -177,7 +190,7 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 		index++
 	}
 
-	const { policyHash, codeHash } = await splitPolicyHash(holdouts)
+	const { policyHash, codeHash } = await splitPolicyHash(holdouts, options.retention)
 
 	const name = basename(input)
 
@@ -189,6 +202,9 @@ export async function splitOverlaySlice(options: SplitSliceOptions): Promise<Spl
 		counts,
 		val: decided.idsIn("val"),
 		test: decided.idsIn("test"),
+		...(options.retention
+			? { retention: { floor: options.retention.floor, protectedShapes: options.retention.protectedShapes.size } }
+			: {}),
 	}
 
 	const output = resolvePath(options.outputDir, splitAttributeFilename(name, policyHash))

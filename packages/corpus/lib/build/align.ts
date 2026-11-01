@@ -37,6 +37,7 @@ import {
 	type LicenseVerdictCache,
 } from "#utils/license"
 import { SPLIT_NAMES, splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
+import type { SplitRetention } from "#utils/split-retention"
 
 export interface AlignPhaseOptions {
 	/**
@@ -50,6 +51,12 @@ export interface AlignPhaseOptions {
 	licensePolicy: LicensePolicy
 	excludeLicenses: readonly RegExp[]
 	holdouts: Record<string, CountryHoldout>
+
+	/**
+	 * The retention table applied to every aligned row, when one was registered
+	 * (HOLDOUT_AND_EVALUATION section 5.1).
+	 */
+	retention?: SplitRetention
 
 	/**
 	 * Each register source's ingest-eligibility reasons, or `null` under the exploratory profile.
@@ -210,6 +217,11 @@ export interface RowAlignerSinks {
 export interface RowAlignerOptions {
 	synthesize: boolean
 	holdouts: Record<string, CountryHoldout>
+	/**
+	 * The retention table applied to every aligned row, when one was registered
+	 * (HOLDOUT_AND_EVALUATION section 5.1).
+	 */
+	retention?: SplitRetention
 	licenses: LicenseVerdictCache
 	ineligibility: ReturnType<typeof createIneligibilityReader>
 	/**
@@ -305,7 +317,7 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 			}
 
 			if (aligned.kind === "labeled") {
-				const split = splitForRow(aligned.row, opts.holdouts)
+				const split = splitForRow(aligned.row, opts.holdouts, undefined, opts.retention)
 
 				// The split phase used to parse every labeled row back for its `source_id`.
 				// The same guard it applied keeps the list identical to what that parse produced.
@@ -442,6 +454,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 	const alignOne = createRowAligner({
 		synthesize: opts.synthesize,
 		holdouts: opts.holdouts,
+		retention: opts.retention,
 		licenses,
 		ineligibility,
 		result,
