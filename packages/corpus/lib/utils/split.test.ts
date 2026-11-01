@@ -7,6 +7,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
+import { computeShapeSupply, splitRetentionFromSupply } from "#utils/shape-supply"
 import {
 	type CountryHoldout,
 	defaultHoldouts,
@@ -253,8 +254,8 @@ describe("defaultHoldouts", () => {
 
 	it("declares a holdout for every OSM country the decoder-exposure config admits, or leaves it to the hashed one", () => {
 		// A country admitted to train with no holdout would have zero val and zero test rows.
-		// CN and IN reach val and test through the hashed place holdout, because their
-		// locality spans are too many and too small to list.
+		// CN and IN reach val and test through the hashed place holdout, because their Each
+		// locality span is short, so the test does not list the spans individually.
 		expect(defaultHoldouts()["CN"]).toBeUndefined()
 		expect(defaultHoldouts()["IN"]).toBeUndefined()
 
@@ -654,5 +655,92 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 		expect((await readLocalTextFile(scratch.path("val.txt"))).trim()).toBe("")
 		expect((await readLocalTextFile(scratch.path("test.txt"))).trim()).toBe("")
 		expect((await readLocalTextFile(scratch.path("train.txt"))).trim()).toBe("only-train")
+	})
+})
+
+describe("shape retention (HOLDOUT_AND_EVALUATION 5.1)", () => {
+	const heldOutUS = { postcode: "08401" }
+	const tags = ["house_number", "street", "locality", "region", "postcode"]
+
+	it("computeShapeSupply counts distinct groups per split, coalescing augmentation variants", () => {
+		const supply = computeShapeSupply([
+			{ source_id: "heldrec#1", country: "US", components: heldOutUS, span_tags: tags, base_source_id: null },
+			{
+				source_id: "heldrec#1+case-lower",
+				country: "US",
+				components: heldOutUS,
+				span_tags: tags,
+				base_source_id: "heldrec#1",
+			},
+			{ source_id: "a-2", country: "US", components: { postcode: "10001" }, span_tags: tags, base_source_id: null },
+			{ source_id: "b-1", country: "US", components: { postcode: "10001" }, span_tags: tags, base_source_id: null },
+			{ source_id: "b-2", country: "US", components: { postcode: "10001" }, span_tags: tags, base_source_id: null },
+		])
+
+		expect(supply).toHaveLength(1)
+		const [entry] = supply
+
+		expect(entry).toMatchObject({ country: "US", shape: tags.join(" -> "), groups: 4, trainGroups: 3 })
+		expect(entry!.valGroups + entry!.testGroups).toBe(1)
+	})
+
+	it("splitRetentionFromSupply protects combinations whose train remainder falls below the floor", () => {
+		const retention = splitRetentionFromSupply(
+			[
+				{ country: "US", shape: "a", groups: 5, trainGroups: 2, valGroups: 2, testGroups: 1 },
+				{ country: "US", shape: "b", groups: 50, trainGroups: 49, valGroups: 1, testGroups: 0 },
+			],
+			3
+		)
+
+		expect(retention.protectedShapes.has("US|a")).toBe(true)
+		expect(retention.protectedShapes.has("US|b")).toBe(false)
+		expect(() => splitRetentionFromSupply([], 0)).toThrow(/positive integer/)
+	})
+
+	it("splitForRow trains a protected row before consulting the holdout", () => {
+		const retention = splitRetentionFromSupply(
+			[{ country: "US", shape: tags.join(" -> "), groups: 1, trainGroups: 0, valGroups: 1, testGroups: 0 }],
+			1
+		)
+
+		const heldRow = { source_id: "a-1", country: "US", components: heldOutUS, span_tags: tags }
+
+		expect(splitForRow(heldRow, defaultHoldouts(), undefined, retention)).toBe("train")
+		expect(splitForRow(heldRow, defaultHoldouts())).not.toBe("train")
+	})
+
+	it("retention leaves unprotected and unspanned rows to the holdout", () => {
+		const retention = splitRetentionFromSupply(
+			[{ country: "US", shape: "other -> shape", groups: 1, trainGroups: 0, valGroups: 1, testGroups: 0 }],
+			1
+		)
+
+		expect(
+			splitForRow(
+				{ source_id: "a-1", country: "US", components: heldOutUS, span_tags: tags },
+				defaultHoldouts(),
+				undefined,
+				retention
+			)
+		).not.toBe("train")
+
+		expect(
+			splitForRow({ source_id: "a-1", country: "US", components: heldOutUS }, defaultHoldouts(), undefined, retention)
+		).not.toBe("train")
+	})
+
+	it("splitRows records the retention table in the manifest", () => {
+		const retention = splitRetentionFromSupply(
+			[{ country: "US", shape: tags.join(" -> "), groups: 1, trainGroups: 0, valGroups: 1, testGroups: 0 }],
+			1
+		)
+
+		const manifest = splitRows([{ source_id: "a-1", country: "US", components: heldOutUS, span_tags: tags }], {
+			retention,
+		})
+
+		expect(manifest.retention).toEqual({ floor: 1, protectedShapes: 1 })
+		expect(manifest.train).toEqual(["a-1"])
 	})
 })

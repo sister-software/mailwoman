@@ -56,7 +56,7 @@ describe("findAffixPairs", () => {
 			"packages/a/lib/jp.ts": "export function buildPostcodeLocalityJP(cc: string): string { return cc }\n",
 		})
 
-		expect(await findAffixPairs(context)).toEqual([])
+		await expect(findAffixPairs(context)).resolves.toEqual([])
 	})
 
 	it("respects the ignore marker with its reason", async () => {
@@ -66,7 +66,7 @@ describe("findAffixPairs", () => {
 				"// repo-health-ignore export-name-affix -- this workspace carries no dependency on a.\nexport function listTrackedFiles(root: string): string[] { return [root] }\n",
 		})
 
-		expect(await findAffixPairs(context)).toEqual([])
+		await expect(findAffixPairs(context)).resolves.toEqual([])
 	})
 
 	it("needs two shared components, so a single shared word is not a pair", async () => {
@@ -75,7 +75,7 @@ describe("findAffixPairs", () => {
 			"packages/b/lib/two.ts": "export function readOther(x: string): string { return x }\n",
 		})
 
-		expect(await findAffixPairs(context)).toEqual([])
+		await expect(findAffixPairs(context)).resolves.toEqual([])
 	})
 
 	it("gives the check one diagnostic per pair, carrying its file and line", async () => {
@@ -123,7 +123,7 @@ describe("findDanglingLinks", () => {
 				"/**\n * {@link readPackageJSON} and {@link Object.entries} both resolve.\n */\nexport function use(): void {}\n",
 		})
 
-		expect(await findDanglingLinks(context)).toEqual([])
+		await expect(findDanglingLinks(context)).resolves.toEqual([])
 	})
 
 	it("reads a declaration-shaped backticked name in a doc comment, and leaves a word alone", async () => {
@@ -138,7 +138,7 @@ describe("findDanglingLinks", () => {
 			].join("\n"),
 		})
 
-		expect(await findDanglingLinks(context)).toEqual([
+		await expect(findDanglingLinks(context)).resolves.toEqual([
 			{ file: "packages/a/lib/reader.ts", line: 2, target: "readPackageJSONFile" },
 			{ file: "packages/a/lib/reader.ts", line: 2, target: "wrapLegacy" },
 		])
@@ -156,7 +156,7 @@ describe("findDanglingLinks", () => {
 			"packages/a/lib/use.test.ts": "const resolveJsonModule = true\n",
 		})
 
-		expect(await findDanglingLinks(context)).toEqual([])
+		await expect(findDanglingLinks(context)).resolves.toEqual([])
 	})
 
 	it("leaves a URL target alone", async () => {
@@ -164,7 +164,7 @@ describe("findDanglingLinks", () => {
 			"packages/a/lib/x.ts": "/**\n * {@link https://example.com/spec}\n */\nexport function use(): void {}\n",
 		})
 
-		expect(await findDanglingLinks(context)).toEqual([])
+		await expect(findDanglingLinks(context)).resolves.toEqual([])
 	})
 
 	it("gives the check one diagnostic per dangling link, carrying its file and line", async () => {

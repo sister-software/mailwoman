@@ -11,7 +11,7 @@ test.describe("Demo — place autocomplete typeahead (#587)", () => {
 		const suggestions = await demo.readSuggestions("New Yor")
 		expect(suggestions.join(" | "), `suggestions for "New Yor": ${suggestions.join(", ")}`).toContain("New York")
 		await demo.pickSuggestion("New York")
-		expect(await demo.addressValue()).toBe("New York")
+		await expect(demo.addressValue()).resolves.toBe("New York")
 		demo.console.assertNoFailEvents()
 	})
 
@@ -22,7 +22,7 @@ test.describe("Demo — place autocomplete typeahead (#587)", () => {
 		const suggestions = await demo.readSuggestions("123 Main St, Chic")
 		expect(suggestions.join(" | "), `suggestions for "Chic": ${suggestions.join(", ")}`).toContain("Chicago")
 		await demo.pickSuggestion("Chicago")
-		expect(await demo.addressValue()).toBe("123 Main St, Chicago")
+		await expect(demo.addressValue()).resolves.toBe("123 Main St, Chicago")
 		demo.console.assertNoFailEvents()
 	})
 })

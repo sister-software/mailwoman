@@ -1,0 +1,270 @@
+---
+title: Layer installation — the catalog, the active selection and the installation lifecycle
+role: reference
+audience: maintainer
+owner: operations
+source-of-truth: packages/mailwoman/lib/data/catalog.ts
+tags:
+  - operations
+  - data
+---
+
+# Layer installation
+
+This page specifies how `mailwoman data pull` installs a published artifact, how the geocoder chooses
+which installed artifact to read, and how an installation is upgraded, rolled back, pruned and
+migrated. It is the accepted form of the design tracked in
+[#2868](https://github.com/sister-software/mailwoman/issues/2868). The proposal it came from is kept
+as a dated record, [the 2026-10-28 layer paths plan](../../records/plan/2026-10-28-layer-paths-plan-v2.md). Its
+sentences were split and reworded on 2026-10-30 to pass the prose rules, with each proposal's content unchanged.
+The artifact shape every layer database embeds is in the [spatial-layer interface](./layer-interface.mdx).
+
+## Three records
+
+The installation keeps three records apart, because each answers a different question.
+
+| Record                  | Question it answers                                      | Declared in                               |
+| ----------------------- | -------------------------------------------------------- | ----------------------------------------- |
+| Available-data registry | What can be downloaded or built, and what it needs       | `packages/mailwoman/lib/data/registry.ts` |
+| Artifact manifest       | What one immutable file contains                         | `packages/core/lib/layers/artifact.ts`    |
+| Active selection        | Which installed artifacts each role reads, in what order | `packages/core/lib/layers/selection.ts`   |
+
+The registry entry is read from the published bundle list, `BUNDLES` in
+`packages/mailwoman/lib/data/bundles.ts`, by `availableDataEntry`. Each artifact records its serving
+role, its scope (a country, or an ISO 3166-2 subdivision such as `US-DC`), its role schema version
+and, for a street-keyed role, the street-key normalization it was keyed with
+(`STREET_KEY_NORMALIZATION` in `packages/resolver-wof-sqlite/lib/street/normalize.ts`, version `1`).
+A registry size is an estimate until a transfer measures it.
+
+A manifest validates an artifact and never selects it. A file activates only when `active.json`
+lists it, whatever a directory scan finds.
+
+## Layout under the data root
+
+```text
+<data-root>/
+  active.json                       the active selection, replaced whole
+  selections/<generation>.json      every generation written, for rollback
+  installations/<inst-id>.json      one record per installation: artifact set and origin
+  db/<role>/<sha256>/<file>         one immutable artifact
+  db/<role>/<sha256>/manifest.json  its artifact manifest
+  db/<role>/<sha256>/receipt.json   how it was acquired: URL, ETag, Last-Modified, length, verification
+  tmp/acquire/<key>/                partial bytes and the receipt of a transfer in progress
+  leases/<pid>-<gen>-<ms>.json      a running session's hold on a generation
+  .install.lock/  .active.lock/     the installer lock and the selection lock
+```
+
+Country is manifest metadata and an installation selector. No field is parsed from a filename.
+
+## Identity
+
+- An artifact is identified by `sha256:<hex>` of its sealed bytes.
+- An artifact set is identified by `set-sha256:<hex>` of its sorted members (artifact, role, schema
+  version), so two sets with the same members are one set.
+- An installation is `inst-<16 hex>` of its set and origin. The origin is `published` (registry entry
+  and the published object keys), `built` (recipe and build identifier) or `legacy` (a path registered
+  in place).
+- A generation is a positive integer. Each `active.json` records the generation it replaced.
+
+## Installation lifecycle
+
+`planInstallation` (`packages/mailwoman/lib/data/plan.ts`) and `executeInstallation`
+(`packages/mailwoman/lib/data/install.ts`) implement one sequence that `setup`, `data pull --dry-run`
+and `data pull` share:
+
+1. Resolve the request into artifacts. Each is `download`, `reuse` (installed and selected),
+   `activate` (installed and not selected) or `present` (a file at the conventional path a reader
+   resolves today).
+2. Report the registry's terms, the obligation refusals, the license decision, missing dependencies,
+   each artifact's size and how it is known, the destination, the free space on the data root's
+   filesystem, and the selected sources an activation would replace. The dry run makes no network
+   request and writes no file.
+3. Acquire each download into `tmp/acquire/<key>/` with a receipt. A partial transfer resumes with a
+   range request only when the remote ETag, Last-Modified and length still match. Otherwise it
+   restarts and prints the reason. A cancelled or failed transfer keeps its partial bytes.
+4. Verify the bytes against the published `.md5` sidecar, else the reported length. A transfer that
+   neither can verify is refused.
+5. Seal the database, hash it, write its manifest, and check the manifest's role, schema version and
+   normalization against the readers in this release (`readerCompatibility`). An unsupported
+   normalization is refused, never replaced by a default.
+6. Move the artifact, its manifest and its receipt into `db/<role>/<sha256>/` with one directory
+   rename on the data root's filesystem.
+7. Record the installation, then select every bundle of the request with one replacement of
+   `active.json`.
+8. Print the installed result and the next command.
+
+A bundle activates only when every one of its artifacts installed, so related artifacts are selected
+together. The installed artifacts of a bundle that failed are recorded and stay unselected, and the
+next pull verifies and selects them without transferring them again. A repeated pull verifies each
+installed copy by its SHA-256 and transfers no bytes.
+
+All four published bundles, `candidate`, `us`, `fr` and `poi`, install through the selection. The BAN
+provider takes the selected address-point and street-centroid paths per country through
+`BANSelectedPaths`, and `resolveLayerDatabasePath` returns the selected POI database.
+`lib/geocode/selection-parity.integration.test.ts` reads the same BAN bytes from the conventional path
+and from the selection with eight queries and records an empty difference list.
+
+## Source builds
+
+`mailwoman data build <recipe> --countries <cc>` runs a build recipe through the same installer.
+`planBuild` and `executeBuild` (`packages/mailwoman/lib/data/build.ts`) implement it, and the recipe
+interface is `BuildRecipe` in `packages/core/lib/layers/recipe.ts`. The one registered recipe is
+`osm-address-points` (`packages/osm/tools/address-points-recipe.ts`), which ships in the optional
+`@mailwoman/osm` package. Without that package the command names it and stops before any request.
+
+1. Plan. The recipe resolves each country's extraction policy (`packages/osm/lib/<cc>/extraction-policy.ts`)
+   to a Geofabrik region (`packages/osm/sdk/geofabrik/regions.ts`), and lists one input per region and
+   one outline per country it clips. `--region` names one region for every requested country. The plan
+   reads no network and writes no file, and `--dry-run` stops after it.
+2. Check prerequisites. The build reads the extract with GDAL's OSM driver, so `ogr2ogr` must run. A
+   missing tool refuses the build before any transfer.
+3. Acquire. Each input stages under `tmp/acquire/` with the receipt-backed transfer `data pull` uses,
+   and the verified file is kept at `src/<source>/<name>/<release>/` with its receipt. A kept input with
+   the same remote identity and SHA-256 is reused, so two countries derived from one region read one file.
+4. Build into `derived/<recipe>/<build id>/`. The build id digests the recipe, the builder, each output's
+   policy version and its inputs' SHA-256, so a changed input or policy builds again. A completed build
+   whose outputs are installed is reused.
+5. Validate and install each output like a download: manifest fields, reader compatibility, then one
+   rename into `db/<role>/<sha256>/`. The installation's origin is `built` with the recipe and build id.
+6. Activate with `--activate`. Each artifact joins its country's entry after the sources that entry
+   already lists from other providers, and replaces only sources of the same recipe, so a selected
+   national register stays first.
+
+Each output's manifest records `recipe: "osm-address-points"`, the extract as `sources[0]` with its
+SHA-256, and a `derivation`: the policy name and version, the outline's SHA-256 when the build clipped,
+the row filter, and the counts (rows read, kept, outside the outline, without a street). A country is
+clipped when its region holds another country or only part of it. A country built from its own extract
+is not clipped, as the command-line builder has never clipped one.
+
+`lib/data/build.integration.test.ts` builds Germany and the Netherlands from one fixture region through
+a local registry: the extract transfers once, each country keeps only its own points, a repeated build
+transfers neither the extract nor an outline, and an activation keeps a national source first.
+`cli/commands/data/build.integration.test.ts` runs the compiled CLI from an empty data root.
+
+## Replacement, concurrency and rollback
+
+`replaceActiveSelection` (`packages/mailwoman/lib/data/catalog.ts`) holds `.active.lock/`, reads the
+generation on disk, and refuses when it differs from the generation the plan read. It then validates
+the replacement completely, including every selected file's size against its manifest, writes the
+generation to `selections/`, and renames the new `active.json` into place. A failure at any step
+leaves the previous `active.json` readable. `executeInstallation` holds `.install.lock/` for its whole
+run, so a second installer under the same data root refuses before any transfer.
+
+`mailwoman data activate --rollback` (`rollbackActiveSelection`) restores the entries of the
+generation the active one replaced, as a new generation. `mailwoman data activate <inst-id>`
+(`activateInstallation`) selects an installed installation.
+
+A session reads one generation (`LayerCatalog.read`) and keeps it until it reloads. The per-state
+provider reads `active.json` once per warm, so every state resolves from the same generation.
+
+## Source order and the meaning of an outcome
+
+Order within a selection entry means that the first installed and readable source answers. A
+subdivision entry is consulted before its country's entry, and a country entry before an unscoped
+one. The outcomes are fixed in `packages/core/lib/layers/outcome.ts`: only an absent layer moves on to
+the next source. An unsuccessful lookup is the answer of the first readable source. An unreadable
+artifact and an obligation refusal are errors that include the artifact's path.
+
+The readers consult the selection after any explicit option or environment pin and before the
+conventional paths and `releases.json`:
+
+- `resolveCandidateDBPath` in `packages/mailwoman/lib/resolver-backend.ts`, which the geocode session,
+  `serve`, the MCP server, the drop-in servers and the evaluation harness call;
+- `resolveDatabasePath` in `packages/mailwoman/lib/data/release.ts`, which the per-state address-point
+  and interpolation provider calls.
+
+A data root without `active.json` resolves exactly as it did before the selection existed. No source
+precedence or fallback changed.
+
+## Retention
+
+`packages/mailwoman/lib/data/retention.ts` defines the policy. Prune keeps every artifact the active
+generation, the generation before it (two in all by default, `--retain` changes it), or a
+generation a live session holds references. A geocode session that reads a selection writes a lease
+and removes it on disposal. A data root that cannot be written takes no lease. Prune deletes only
+installed artifacts under `db/<role>/<sha256>/`. A file at a conventional path, a partial transfer
+and a source input are kept. Execution reads the generation and the leases again under both locks
+and refuses when either changed since planning.
+
+## Migration
+
+`planMigration` (`packages/mailwoman/lib/data/migrate.ts`) discovers what the readers select today and
+classifies each file: `importable` (records a `layer_manifest`), `registry-manifest` (a published
+artifact with no manifest, with a registry record that supplies one), `source-rebuild` (a local build with
+no manifest), `unknown-provenance`, or `blocked-wal` (a WAL sidecar is present). It reports symlink
+targets, hard links and paths outside the data root. The plan registers files in place as `legacy`
+installations, copies 0 bytes, and states its rollback. This release plans only: `mailwoman data
+migrate` runs with `--dry-run` and refuses without it. The [migration guide](../../articles/developers/how-to/migrate-a-data-root.mdx)
+explains how to read the plan.
+
+## Diagnostics
+
+`readInstallationState` (`packages/mailwoman/lib/data/state.ts`) reads three lists: artifacts the
+active generation selects, installed artifacts it does not select, and transfers that stopped with
+partial bytes. `data status`, `data inventory`, `data bom` and `doctor` read it, so they report the
+same generation the geocoder reads. `ProblemKind` in `plan.ts` names each reason a request did not
+complete (unavailable, insufficient access, refused obligation, missing dependency, unsupported,
+corrupt, transfer, cancelled, sibling failed, activation, insufficient disk), in human output and in
+`--json`.
+
+## Interfaces extended and retired
+
+Traced from `data pull`, `data status`, `setup`, the BOM, `doctor` and the geocode session to their
+shared readers, on 2026-10-29.
+
+| Interface                                    | Change                                                                        |
+| -------------------------------------------- | ----------------------------------------------------------------------------- |
+| `existingLocalPath`, `resolveDatabasePath`   | Extended: consult the active selection first                                  |
+| `resolveCandidateDBPath`                     | Extended: consults the active selection after the pins                        |
+| `installedBundleNames`                       | Extended: counts selected artifacts as installed                              |
+| `streamToDisk` (`@mailwoman/core/utils`)     | Extended: `partialPath`, `resumeFrom`, `retainPartial`, `signal`              |
+| `APIClient.fetch`                            | Extended: accepts the cache interceptor's per-request `cache: false`          |
+| `acquireBuildLock` (corpus)                  | Reimplemented on `acquireDirectoryLock` in `@mailwoman/core/fs/lock`          |
+| `takeInventory`                              | Extended: `installation` marks catalog artifacts active or inactive           |
+| `readInstalledTiers` (setup)                 | Retired: `readInstallationPlan` reads the shared plan                         |
+| `observeArtifactTerms`, `probeRemote` (pull) | Retired: moved into the planner and `readRemoteIdentity`                      |
+| `@mailwoman/osm/address-point-schema`        | Retired: moved to `@mailwoman/resolver-wof-sqlite/address/point/spine-schema` |
+
+## Every reader on the selection
+
+Each reader below consults the selection after its explicit pins and before its conventional path. A
+reader whose role has no selection entry reads exactly the file it read before.
+`lib/geocode/selection-parity.integration.test.ts` reads the same bytes from the conventional path and
+from an installed, selected artifact, and every difference list it records is empty.
+
+| Reader                                       | Role and scope                                                                                | Compared on fixed bytes                                         |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| BAN (`ban-layers.ts`)                        | `address-points`, `street-centroids`, per country                                             | 8 queries, 3 answered                                           |
+| National Overture (`national-overture.ts`)   | `address-points`, per country (`it`, `es`, `tw`)                                              | 5 queries                                                       |
+| OpenStreetMap extracts (`osm-layers.ts`)     | `address-points`, per country, built by the OSM recipe                                        | 5 queries, 3 answered                                           |
+| Nominatim and Photon (`serving-layers.ts`)   | BAN, then the OpenStreetMap tier, from one generation                                         | 8 BAN and 5 OpenStreetMap queries                               |
+| WOF extract set (`existingWOFDatabasePaths`) | `wof-extract`, unscoped, every installed source in order                                      | the attached paths and their SHA-256, and 5 lookups, 3 answered |
+| Autocomplete (`resolveFSTPath`)              | `gazetteer-fst`, `US`                                                                         | 6 prefixes, 5 answered                                          |
+| Parse priors (`fst-layers.ts`)               | `gazetteer-fst` per locale country, `street-morphology`                                       | 4 walks of each FST                                             |
+| POI and the four overlays (`layer-paths.ts`) | `poi`, `flood-overlay`, `soil-overlay`, `coastal-erosion-overlay`, `zoning-overlay`, unscoped | the selected file's path and SHA-256                            |
+
+Three providers serve the address-point role: BAN, national Overture and the OpenStreetMap tier. One
+selection entry may list sources of more than one of them. A national provider reads the entry's first
+source that the OpenStreetMap recipe did not build (`isNationalAddressPointArtifact`), and the
+OpenStreetMap tier reads the first one it did build (`isOSMBuiltArtifact`, the manifest's `recipe`). The
+session still consults the national tier first and the OpenStreetMap tier only when the national tier has
+no database for the country. That is the order the two had when each read its own file.
+
+The WOF lookup names each attached schema after its file and routes placetypes by that name, so an
+installed WOF extract keeps its conventional file name (`admin-global-priority.db`, `postalcode-us.db`).
+Unlike the other roles, every installed source of the WOF entry is attached, because the conventional
+set was attached whole.
+
+The geocode session, the gauntlet harness, and the Nominatim and Photon servers each read one
+generation (`LayerCatalog.read`) and pass it to every reader they open.
+
+Still on their conventional paths, with the reason:
+
+- The rail-station database stays beside the conventional `poi.db` path. No published bundle contains it,
+  so no installation can select it, and the fork-entity probe opens it where the station build writes it.
+- The placetype-pair index (`pair-index-<cc>.bin`) is read inside the weights loader in
+  `@mailwoman/neural`, which reads no data-root records.
+- The promotion battery's priors (`tools/eval-harness/production-priors.ts`) take a classifier without a
+  data root, and read the files beside its weights.
+- A country with two locales, such as `CA`, has one `gazetteer-fst` entry per country. A second locale's FST
+  for that country needs a locale scope the selection does not have.

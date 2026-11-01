@@ -17,7 +17,7 @@ import {
 	holdoutSpanFindings,
 	REGION_SURFACE_MIN_ROWS,
 } from "#tools/overlay/held-out-spans"
-import { splitOverlaySlice } from "#tools/overlay/split-overlay"
+import { splitOverlaySlice } from "#tools/overlay/split/overlay"
 import type { CountryHoldout } from "#utils/split"
 
 const root = await temporaryDirectory("mw-held-out-spans-")
@@ -84,7 +84,7 @@ describe("countHoldoutSpans", () => {
 		const mixedFile = root.path("mixed.parquet")
 
 		// "Asturias" is written in train only inside a street.
-		// As a region it is carried by held-out rows only.
+		// Held-out rows use it only as a region.
 		// The train row in Oviedo is a held-out locality left in train, and the 07001 row a held-out postcode.
 		await writeParquetFile(
 			[

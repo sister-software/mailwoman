@@ -66,7 +66,6 @@ scorePair(a: SourceRecord, b: SourceRecord, opts: ScoreOpts): ScoreResult
 cluster(records: SourceRecord[], links: ScoredLink[], opts: ClusterOpts): Entity[]
 
 // Distance — great-circle comparison levels
-haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number
 distanceComparison(distKm: number): ComparisonLevel
 
 // Learned scorer — GBT for single-dataset dedup

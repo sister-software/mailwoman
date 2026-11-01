@@ -15,7 +15,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
  *
  * A bare `渋谷` otherwise reaches only the places whose full name is `渋谷`, a Hyogo
  * and a Chiba locality with no recorded population, and never Tokyo's `渋谷区`.
- * The alias row carries the ward's own population, so the candidate ordering
+ * The alias row includes the ward's own population, so the candidate ordering
  * ranks it above the unmeasured exact matches.
  *
  * @returns The number of alias rows staged.

@@ -64,7 +64,7 @@ describe("buildDiskStorage: round trip", () => {
 		await storage.set("GET|https://example.invalid/x?cik=1", cachedValue({ cik: 1 }))
 		await storage.set("GET|https://example.invalid/x?cik=2", cachedValue({ cik: 2 }))
 
-		expect(await directoryNames(directory.path)).toHaveLength(2)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(2)
 
 		expect(((await storage.get("GET|https://example.invalid/x?cik=1")) as CachedStorageValue).data.data).toEqual({
 			cik: 1,
@@ -76,10 +76,10 @@ describe("buildDiskStorage: round trip", () => {
 		const expired: CachedStorageValue = { ...cachedValue({ stale: true }, 1), createdAt: Date.now() - 10_000 }
 
 		await storage.set("expired", expired)
-		expect(await directoryNames(directory.path)).toHaveLength(1)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(1)
 
 		expect((await storage.get("expired")).state).toBe("empty")
-		expect(await directoryNames(directory.path)).toHaveLength(0)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(0)
 	})
 
 	it("removes an entry on request, and clears the whole directory.path", async () => {
@@ -89,13 +89,13 @@ describe("buildDiskStorage: round trip", () => {
 		await storage.set("b", cachedValue({ b: 2 }))
 
 		await storage.remove("a")
-		expect(await directoryNames(directory.path)).toHaveLength(1)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(1)
 
 		await storage.clear?.()
 
-		expect(
-			await Globerator.from("*", { cwd: directory.path, withFileTypes: true, onlyFiles: false }).toArray()
-		).toHaveLength(0)
+		await expect(
+			Globerator.from("*", { cwd: directory.path, withFileTypes: true, onlyFiles: false }).toArray()
+		).resolves.toHaveLength(0)
 	})
 
 	it("holds `loading` markers in memory only — never a file per in-flight request", async () => {
@@ -103,7 +103,7 @@ describe("buildDiskStorage: round trip", () => {
 
 		await storage.set("in-flight", { state: "loading", previous: "empty" })
 
-		expect(await directoryNames(directory.path)).toHaveLength(0)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(0)
 		expect((await storage.get("in-flight")).state).toBe("loading")
 
 		// A separate instance (a separate process, in production) must see a clean miss
@@ -139,7 +139,7 @@ describe("buildDiskStorage: round trip", () => {
 		await writeLocalTextFile("{ not json", directory.path(fileName!))
 
 		expect((await storage.get("corrupt")).state).toBe("empty")
-		expect(await directoryNames(directory.path)).toHaveLength(0)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(0)
 	})
 })
 
@@ -152,11 +152,11 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 
 		await storage.set("poisoned", cachedValue("<html>not json</html>"))
 
-		expect(await directoryNames(directory.path)).toHaveLength(0)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(0)
 		expect((await storage.get("poisoned")).state).toBe("empty")
 
 		await storage.set("poisoned", cachedValue({ ok: true }))
-		expect(await directoryNames(directory.path)).toHaveLength(1)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(1)
 	})
 
 	it("drops a superseded entry rather than leaving the older body behind", async () => {
@@ -168,12 +168,12 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 		})
 
 		await storage.set("k", cachedValue({ generation: 1 }))
-		expect(await directoryNames(directory.path)).toHaveLength(1)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(1)
 
 		accept = false
 		await storage.set("k", cachedValue({ generation: 2 }))
 
-		expect(await directoryNames(directory.path)).toHaveLength(0)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(0)
 		expect((await storage.get("k")).state).toBe("empty")
 	})
 
@@ -184,7 +184,7 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 
 		await storage.set("forever", cachedValue({ immutable: true }, Number.POSITIVE_INFINITY))
 
-		expect(await directoryNames(directory.path)).toHaveLength(0)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(0)
 	})
 
 	it("refuses an unserializable body instead of throwing out of set()", async () => {
@@ -194,7 +194,7 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 		circular.self = circular
 
 		await expect(storage.set("circular", cachedValue(circular))).resolves.toBeUndefined()
-		expect(await directoryNames(directory.path)).toHaveLength(0)
+		await expect(directoryNames(directory.path)).resolves.toHaveLength(0)
 	})
 })
 

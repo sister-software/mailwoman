@@ -1,8 +1,8 @@
 /**
  * Cross-language parity for the country-lexicon matcher.
  *
- * These assertions mirror corpus-python's test_country_lexicon.py, so a drift in the TS
- * matcher would show the model different clues at inference than it trained on.
+ * These assertions mirror the deleted Python trainer's country-lexicon tests, so a drift
+ * in the TS matcher would show the model different clues at inference than it trained on.
  * The inline lexicon matches the Python fixture exactly.
  *
  * The critical properties: the long leading form ("united states of america") paints every word

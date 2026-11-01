@@ -13,7 +13,9 @@
  *        keeps them distinct. Span `value` is taken from `raw` by [start, end), not concatenated
  *        from `piece` — this avoids SentencePiece's synthetic leading-space markers in the output.
  *   2. Parent attachment — for each span, find the nearest labeled span whose tag is the
- *        highest-priority entry in this span's `PARENT_OF` list. Distance is the tiebreaker only.
+ *        highest-priority entry in this span's list in the containment map `containmentFor` returns
+ *        for the address system (`WESTERN_PARENT_OF` or `SETTLEMENT_PARENT_OF`). Distance is the
+ *        tiebreaker only.
  *        Spans with no found parent become roots.
  *
  *   The "nearest" rule (vs "most-recent-prior") is intentional: it makes the decoder independent of
@@ -46,6 +48,12 @@ export interface BuildTreeOpts {
 	 * Omit for the default Western hierarchy.
 	 */
 	system?: AddressSystem
+	/**
+	 * The ISO 3166-1 alpha-2 country of the address, when the caller knows it.
+	 *
+	 * It selects the country's containment through `containmentFor` and is stamped onto `AddressTree.country`.
+	 */
+	country?: string | null
 	/**
 	 * Optional confidence calibrator.
 	 *
@@ -86,6 +94,22 @@ function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 // We preserve the period when it is immediately preceded by \p{L}\p{N} and not separated by whitespace.
 // The slip pattern we guard against is ", 22220" / "Paris 75004," / wrapping quotes,
 // where the punctuation is isolated from the word body.
+/**
+ * The opening character of each closing bracket or quote a span may end on.
+ */
+const CLOSER_OPENERS: Readonly<Record<string, string>> = {
+	")": "(",
+	"]": "[",
+	'"': '"',
+	"”": "“",
+	"»": "«",
+}
+
+/**
+ * The apostrophes a possessive name ends on.
+ */
+const APOSTROPHES = new Set(["'", "’"])
+
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
 	let s = start
 	let e = end
@@ -106,10 +130,22 @@ function trimBoundary(raw: string, start: number, end: number): { start: number;
 
 	// The end trim skips punctuation but preserves a final abbreviation period.
 	while (e > s && !isWordChar(e - 1)) {
-		if (raw[e - 1] === "." && e - 2 >= s && isWordChar(e - 2)) {
+		const last = raw[e - 1]!
+
+		if (last === "." && e - 2 >= s && isWordChar(e - 2)) {
 			// Abbreviation-dot suffix: "Str." / "Ave." — adjacent to the last word char, preserve.
 			break
 		}
+
+		// A closer whose opener sits inside the span belongs to it: `Lübben (Spreewald)`, `микрорайон "Восход"`.
+		// A span wrapped in quotes has lost its opener to the start trim, so its closer is trimmed.
+		const opener = CLOSER_OPENERS[last]
+
+		if (opener && raw.slice(s, e - 1).includes(opener)) break
+
+		// A possessive apostrophe after a word character belongs to the name (`Bojangles'`).
+		// A matching quote at the span's start marks a wrapping quote instead.
+		if (APOSTROPHES.has(last) && e - 2 >= s && isWordChar(e - 2) && raw[s - 1] !== last) break
 
 		e--
 	}
@@ -248,7 +284,7 @@ function sortByStart(nodes: AddressNode[]): void {
 export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: BuildTreeOpts = {}): AddressTree {
 	const spans = emitSpans(raw, tokens, opts)
 	const roots: AddressNode[] = []
-	const parentOf = containmentFor(opts.system)
+	const parentOf = containmentFor(opts.system, opts.country)
 
 	for (const span of spans) {
 		const parent = findParent(span, spans, parentOf)
@@ -265,6 +301,10 @@ export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: Buil
 
 	if (opts.system) {
 		tree.system = opts.system
+	}
+
+	if (opts.country) {
+		tree.country = opts.country
 	}
 
 	return tree

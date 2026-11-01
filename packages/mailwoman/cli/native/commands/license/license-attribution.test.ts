@@ -34,7 +34,7 @@ describe("attributionReport", () => {
 		// en-au contributed none of these rows.
 		// These rows belong to its base package.
 		// The field records that source.
-		// Its own card carries only the OpenStreetMap credit it owes through that base graph.
+		// Its own card includes only the OpenStreetMap credit required by that base graph.
 		expect(overlay.own.map((entry) => stringifyJSON(entry))).toEqual([
 			expect.stringContaining("OpenStreetMap contributors (ODbL-1.0)"),
 		])
@@ -93,7 +93,7 @@ describe("renderAttributionReport", () => {
 		vi.stubEnv("MAILWOMAN_DATA_ROOT", empty.path.toString())
 
 		try {
-			expect(await attributionReport("AGPL-3.0-only")).toStrictEqual(before)
+			await expect(attributionReport("AGPL-3.0-only")).resolves.toStrictEqual(before)
 		} finally {
 			vi.unstubAllEnvs()
 		}

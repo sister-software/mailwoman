@@ -33,6 +33,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { confidentLocaleCountry, localeHintID, resolveSystemVerdict } from "#address-system"
 import { anchoredRegionIDs } from "#anchor-inference"
+import { countedPieces, decodeViterbi } from "#cardinality-filter"
 import { encodeCharUnits } from "#char-encoder"
 import type {
 	AddressSystemConventions,
@@ -44,6 +45,12 @@ import type {
 import { DEFAULT_TOGGLE } from "#classifier/options"
 import type { ScriptRoutedClassifier } from "#classifier/script-router"
 import { codeUnitChannel } from "#code-unit-features"
+import {
+	explainDecode,
+	type DecodeExplanation,
+	type DecodeObjective,
+	type EmissionPriorTerm,
+} from "#decode-explanation"
 import { buildFSTEmissionPriors, isStreetAffix } from "#fst-prior"
 import { LOCALE_COUNTRIES, STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction, InferCharsFunction } from "#ort-feeds"
@@ -70,7 +77,6 @@ import {
 	buildBIOTransitionMask,
 	pathMargins,
 	softmax,
-	viterbi,
 } from "#viterbi"
 import type { UnfedChannelReport } from "#weights/channels"
 import { enforceWordConsistency } from "#word-consistency"
@@ -125,13 +131,30 @@ export interface NeuralRunner {
 	inferChars?: InferCharsFunction
 }
 
+/**
+ * The country a parse's tree resolves containment for: the caller's locale hint,
+ * or the locale classifier's confident country when no hint was given.
+ */
+function containmentCountry(
+	localeCountry: { country: string; confidence: number } | null,
+	localeHint: string | null | undefined
+): string | null {
+	return localeHint?.trim().toUpperCase() || localeCountry?.country || null
+}
+
+/**
+ * The tree for a decode, built under its {@linkcode containmentCountry}.
+ */
 function treeWithLocaleCountry(
 	text: string,
 	tokens: DecoderToken[],
 	calibrate: { calibrate: NonNullable<ParseOpts["calibrate"]> } | null,
-	localeCountry: { country: string; confidence: number } | null
+	localeCountry: { country: string; confidence: number } | null,
+	localeHint: string | null | undefined
 ): AddressTree {
-	return Object.assign(buildAddressTree(text, tokens, calibrate ?? undefined), localeCountry ? { localeCountry } : {})
+	const tree = buildAddressTree(text, tokens, { ...calibrate, country: containmentCountry(localeCountry, localeHint) })
+
+	return Object.assign(tree, localeCountry ? { localeCountry } : {})
 }
 
 /**
@@ -313,7 +336,8 @@ export class NeuralAddressClassifier {
 			modelText,
 			tokens,
 			opts?.calibrate ? { calibrate: opts.calibrate } : null,
-			localeCountry
+			localeCountry,
+			opts?.localeHint
 		)
 	}
 
@@ -336,7 +360,8 @@ export class NeuralAddressClassifier {
 				modelText,
 				tokens,
 				opts?.calibrate ? { calibrate: opts.calibrate } : null,
-				localeCountry
+				localeCountry,
+				opts?.localeHint
 			),
 			logits,
 			pieces: pieces.map((p) => ({ start: p.start, end: p.end })),
@@ -346,7 +371,8 @@ export class NeuralAddressClassifier {
 	/**
 	 * Parses text and returns the serializable decode trace instead of a tree.
 	 *
-	 * `buildAddressTree(trace.text, trace.tokens)` reproduces the tree returned by `parse`.
+	 * `buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry })`
+	 * reproduces the tree returned by `parse`.
 	 * The trace omits `opts.calibrate`.
 	 */
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
@@ -358,6 +384,7 @@ export class NeuralAddressClassifier {
 				text,
 				caseNormalized: false,
 				pieces: [],
+				containmentCountry: null,
 				anchor: null,
 				gazetteer: null,
 				country: null,
@@ -377,6 +404,7 @@ export class NeuralAddressClassifier {
 				path: [],
 				margins: [],
 				decode: this.decodeMode,
+				explanation: null,
 				repairs: [],
 				tokens: [],
 			}
@@ -385,7 +413,7 @@ export class NeuralAddressClassifier {
 		const modelText =
 			(opts?.caseNormalization ?? DEFAULT_CASE_NORMALIZATION) === "title-case" ? normalizeInputCase(text) : text
 
-		const { tokens, logits, pieces, trace } = await this.#decode(modelText, opts, true)
+		const { tokens, logits, pieces, localeCountry, trace } = await this.#decode(modelText, opts, true)
 
 		if (!trace) throw new Error("traceParse: #decode returned no trace despite trace=true (invariant)")
 
@@ -393,6 +421,7 @@ export class NeuralAddressClassifier {
 			text: modelText,
 			caseNormalized: modelText !== text,
 			pieces: pieces.map((p) => ({ piece: p.piece, id: p.id, start: p.start, end: p.end })),
+			containmentCountry: containmentCountry(localeCountry, opts?.localeHint),
 			anchor: trace.anchor,
 			gazetteer: trace.gazetteer,
 			country: trace.country,
@@ -413,7 +442,9 @@ export class NeuralAddressClassifier {
 			path: trace.path,
 			margins: trace.margins,
 			decode: this.decodeMode,
+			explanation: trace.explanation,
 			repairs: trace.repairs,
+			...(trace.cardinalityFilter ? { cardinalityFilter: trace.cardinalityFilter } : {}),
 			tokens: tokens.map((t) => ({ ...t })),
 		}
 	}
@@ -454,7 +485,9 @@ export class NeuralAddressClassifier {
 			emissions: number[][]
 			path: number[]
 			margins: number[]
+			explanation: DecodeExplanation
 			repairs: TraceRepair[]
+			cardinalityFilter: { rank: number; fellBack: boolean } | null
 		}
 	}> {
 		const encoded = this.encode(text)
@@ -519,6 +552,8 @@ export class NeuralAddressClassifier {
 		// These lists are null when not tracing so a plain parse allocates no trace arrays.
 		const tracePriors: TracePrior[] | null = trace ? [] : null
 		const traceRepairs: TraceRepair[] | null = trace ? [] : null
+		// The emission priors in the order they are added, kept only when tracing for the decode explanation.
+		const traceEmissionPriors: DecodeObjective["emissionPriors"][number][] | null = trace ? [] : null
 
 		const recordRepair = (pass: TraceRepairPass, before: string[], after: string[]): void => {
 			if (!traceRepairs) return
@@ -556,12 +591,23 @@ export class NeuralAddressClassifier {
 				})
 			: null
 
-		let emissions = queryShapePrior ? addEmissionMatrix(logits, queryShapePrior) : logits
+		let emissions = logits
+
+		// Each emission prior is added in this order, and a traced parse also keeps the matrix for the decode explanation.
+		const addPrior = (term: EmissionPriorTerm, matrix: number[][]): void => {
+			emissions = addEmissionMatrix(emissions, matrix)
+			traceEmissionPriors?.push({ term, matrix })
+		}
+
+		if (queryShapePrior) {
+			addPrior("queryShape", queryShapePrior)
+		}
 
 		tracePriors?.push(untracedPrior("queryShape", Boolean(queryShapePrior && matrixHasBias(queryShapePrior))))
 
 		// The anchor-region prior reads the postcodes the anchor channel fired on,
-		// so it is off on the character path, which feeds no channel.
+		// so it is off on the character path.
+		// That path feeds no channel.
 		const anchorRegionIDs =
 			opts?.fst && opts.anchorRegions && this.cfg.postcodeAnchorLookup && !encoded.charIDs
 				? anchoredRegionIDs(text, this.cfg.postcodeAnchorLookup, this.cfg.postcodeAnchorSpanMode, opts.anchorRegions)
@@ -589,7 +635,7 @@ export class NeuralAddressClassifier {
 			: null
 
 		if (fstPrior) {
-			emissions = addEmissionMatrix(emissions, fstPrior)
+			addPrior("fst", fstPrior)
 		}
 
 		tracePriors?.push(untracedPrior("fst", Boolean(fstPrior && matrixHasBias(fstPrior))))
@@ -605,7 +651,7 @@ export class NeuralAddressClassifier {
 			: null
 
 		if (morphologyPrior) {
-			emissions = addEmissionMatrix(emissions, morphologyPrior)
+			addPrior("streetMorphology", morphologyPrior)
 		}
 
 		tracePriors?.push(untracedPrior("streetMorphology", Boolean(morphologyPrior && matrixHasBias(morphologyPrior))))
@@ -615,7 +661,7 @@ export class NeuralAddressClassifier {
 		const spanProposals: ProposedSpan[] = proposerCfg ? proposeSpans(text, proposerCfg.lexicon) : []
 
 		if (proposerCfg && spanProposals.length) {
-			emissions = addEmissionMatrix(emissions, buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
+			addPrior("spanProposer", buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
 		}
 
 		tracePriors?.push(untracedPrior("spanProposer", spanProposals.length > 0))
@@ -630,7 +676,7 @@ export class NeuralAddressClassifier {
 			: null
 
 		if (venueHeadPrior) {
-			emissions = addEmissionMatrix(emissions, venueHeadPrior)
+			addPrior("venueHead", venueHeadPrior)
 		}
 
 		tracePriors?.push(untracedPrior("venueHead", Boolean(venueHeadPrior && matrixHasBias(venueHeadPrior))))
@@ -674,7 +720,7 @@ export class NeuralAddressClassifier {
 		const placetypePairPrior = placetypePairResult?.matrix
 
 		if (placetypePairPrior) {
-			emissions = addEmissionMatrix(emissions, placetypePairPrior)
+			addPrior("placetypePair", placetypePairPrior)
 		}
 
 		// Transition adjustments are converted from label names to label indices,
@@ -710,6 +756,7 @@ export class NeuralAddressClassifier {
 		// Forbidden tags get an emission of -1e9 (log 0), and the mask copies the matrix
 		// because `emissions` may alias `logits`.
 		let conventionsMaskApplied = false
+		let maskedLabels: Set<number> | null = null
 
 		if (conventions?.forbiddenTags?.length) {
 			const forbidden = new Set<number>()
@@ -729,27 +776,57 @@ export class NeuralAddressClassifier {
 
 			if (forbidden.size) {
 				conventionsMaskApplied = true
+				maskedLabels = forbidden
 				emissions = emissions.map((row) => row.map((v, idx) => (forbidden.has(idx) ? -1e9 : v)))
 			}
 		}
 
 		tracePriors?.push(untracedPrior("conventionsMask", conventionsMaskApplied))
 
-		let labelIndices =
+		const { result: viterbiResult, cardinality } =
 			this.decodeMode === "viterbi"
-				? viterbi({
-						emissions,
-						transitions: this.transitions,
-						startTransitions: this.startTransitions,
-						endTransitions: this.endTransitions,
-						// Argmax decoding has no transitions, so it ignores the placetype-pair
-						// prior's per-position transition bonuses.
-						...(pairTransitionAdjustments ? { transitionAdjustments: pairTransitionAdjustments } : {}),
-					}).path
-				: emissions.map((row) => argmaxWithConfidence(row).idx)
+				? decodeViterbi(
+						{
+							emissions,
+							transitions: this.transitions,
+							startTransitions: this.startTransitions,
+							endTransitions: this.endTransitions,
+							// Argmax decoding has no transitions, so it ignores the placetype-pair
+							// prior's per-position transition bonuses.
+							...(pairTransitionAdjustments ? { transitionAdjustments: pairTransitionAdjustments } : {}),
+						},
+						this.labels,
+						opts?.cardinalityFilter ? countedPieces(text, pieces) : null
+					)
+				: { result: null, cardinality: null }
+
+		let labelIndices = viterbiResult ? viterbiResult.path : emissions.map((row) => argmaxWithConfidence(row).idx)
 
 		// The trace records the decoder's path before the word-consistency repair changes it.
 		const decodedPath = trace ? [...labelIndices] : null
+
+		// The explanation reads the quantities this decode summed, and only a traced parse computes it.
+		const explanation =
+			traceEmissionPriors && decodedPath
+				? explainDecode({
+						objective: {
+							decode: this.decodeMode,
+							logits,
+							emissionPriors: traceEmissionPriors,
+							maskedLabels,
+							transitions: this.transitions,
+							startTransitions: this.startTransitions,
+							endTransitions: this.endTransitions,
+							transitionAdjustments: pairTransitionAdjustments,
+						},
+						emissions,
+						path: decodedPath,
+						viterbiScore: viterbiResult?.score ?? null,
+						labels: this.labels,
+						pieces,
+						text,
+					})
+				: null
 
 		// The word-consistency repair gives all pieces of one whitespace-delimited word the
 		// same tag, chosen by a confidence-weighted vote over the emissions.
@@ -868,7 +945,9 @@ export class NeuralAddressClassifier {
 							path: decodedPath!,
 							// The margin reads the decoder's own path against the emissions it decoded.
 							margins: pathMargins(emissions, decodedPath!),
+							explanation: explanation!,
 							repairs: traceRepairs!,
+							cardinalityFilter: cardinality ? { rank: cardinality.rank, fellBack: cardinality.fellBack } : null,
 						},
 					}
 				: {}),

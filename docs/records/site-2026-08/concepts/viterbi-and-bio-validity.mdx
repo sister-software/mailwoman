@@ -160,10 +160,9 @@ over. The recipe first went CE-only (`crf_loss_weight: 0.0`) at v0.5.0,
 and apart from those labeled diagnostic reactivations (the v0.6.2 fp32
 probe), every config from v0.6.3 on has stayed at `0.0` — the current
 one included. [Dual-loss curvature
-conflict](./dual-loss-curvature-conflict.mdx) has the full diagnostic
-story of why the two losses fought instead of cooperating. There's no
-active plan to revisit it. The structural mask by itself already provides the
-concrete win (no orphan-I), and the encoder's attention covers most of
+conflict](./dual-loss-curvature-conflict.mdx) explains why the two losses fought instead of cooperating. There's no
+active plan to revisit it. The structural mask by itself already prevents
+orphan-I tags, and the encoder's attention covers most of
 the rest.
 
 ## What a learned CRF would provide (if one ever ships)

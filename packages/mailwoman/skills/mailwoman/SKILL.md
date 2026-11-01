@@ -66,8 +66,10 @@ npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 
 The file lands at `<data-root>/db/wof/candidate.db`, and since `8.7.0` every entry point looks there —
 `geocode`, `parse --resolve`, `serve`, `registry`, the MCP server and the drop-in servers alike. The
-`export MAILWOMAN_CANDIDATE_DB=...` line the pull prints is a leftover from when that was required.
-Ignore it. Set the variable only for a gazetteer outside the data root, or to the literal `none` to
+`export MAILWOMAN_CANDIDATE_DB=...` line older releases print is a leftover from when that was required.
+Ignore it. From the release after 10.7.0, the pull installs the gazetteer under
+`<data-root>/db/candidate/<sha256>/`, selects it in `<data-root>/active.json`, prints no `export`
+line, and every entry point reads the selected file before the conventional path. Set the variable only for a gazetteer outside the data root, or to the literal `none` to
 pin the older FTS admin backend.
 
 `registry run` is the one exception, and it is a boot check rather than a backend choice: it refuses to

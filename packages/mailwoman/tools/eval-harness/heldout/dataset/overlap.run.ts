@@ -2,15 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Audits a held-out dataset for overlap with the named training corpora and writes the `--provenance` file
+ *   Audits a held-out dataset for overlap with the listed training corpora and writes the `--provenance` file
  *   `heldout/per/country.run.ts` reads.
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/heldout/dataset/overlap.run.ts \
  *     --dataset <dataset manifest .json> --corpora <corpus MANIFEST.json>,<corpus MANIFEST.json> \
  *     --model-cards <published model-card.json>,<candidate model-card.json> \
+ *     [--training-configs <config .yaml>,…] \
  *     [--candidate-model-card <candidate model-card.json>] --out <provenance .json> \
  *     [--path-root /mnt/mw] [--verify-file-sha256]
+ *
+ *   Name a model by `--training-configs` when its card's `training.corpus_version` is stale: the config's
+ *   `data.corpus_dir` then names its corpus.
  *
  *   Name the candidate's corpus, the published model's corpus, and every earlier corpus either was trained on.
  *   Each training file is read through DuckDB projecting only the id columns. A partial read is refused.
@@ -33,9 +37,13 @@ const { values } = parseArguments({
 			type: "string",
 			description: "Model cards of the compared models, comma-separated",
 		},
+		"training-configs": {
+			type: "string",
+			description: "Training configs of compared models whose cards record no corpus, comma-separated",
+		},
 		"candidate-model-card": {
 			type: "string",
-			description: "Which of --model-cards is the candidate's, for the unseen_by_candidate class",
+			description: "Which of --model-cards or --training-configs is the candidate's, for the unseen_by_candidate class",
 		},
 		"path-root": {
 			type: "string",
@@ -64,6 +72,7 @@ const result = await auditHeldoutOverlap({
 	dataset: await readHeldoutDatasetManifest(values.dataset),
 	corpora: split(values.corpora),
 	modelCards: split(values["model-cards"]),
+	trainingConfigs: split(values["training-configs"]),
 	...(values["candidate-model-card"] ? { candidateModelCard: values["candidate-model-card"] } : {}),
 	pathRoot: values["path-root"],
 	verifyFileSHA256: values["verify-file-sha256"] === true,
@@ -85,7 +94,9 @@ for (const corpus of result.audit.corpora) {
 }
 
 for (const card of result.audit.modelCards) {
-	console.log(`card ${card.path}: ${card.corpusVersion ?? "no corpus"} ${card.matched ? "matched" : card.problem}`)
+	console.log(
+		`${card.source} ${card.path}:${card.corpusVersion ?? "no corpus"} ${card.matched ? "matched" : card.problem}`
+	)
 }
 
 console.log(

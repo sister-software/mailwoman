@@ -9,6 +9,7 @@
 import { coastalDatabaseRoot } from "@mailwoman/coastal/paths"
 import { databaseRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { ServingRole } from "@mailwoman/core/layers"
 import { floodDatabaseRoot } from "@mailwoman/flood/paths"
 import { poiDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { soilDatabaseRoot } from "@mailwoman/soil/paths"
@@ -16,19 +17,41 @@ import { zoningDatabaseRoot } from "@mailwoman/zoning/paths"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
+import { LayerCatalog } from "#data/catalog"
+
 /**
  * The layer databases the session attaches when present, keyed by the layer's short id
  * and each naming its directory through the owning package's `paths` export.
  */
 const LAYER_DATABASES = {
-	flood: { label: "Flood zones (EA England)", directory: floodDatabaseRoot, filename: "flood.db" },
-	soil: { label: "Soil capability (NRCS SSURGO)", directory: soilDatabaseRoot, filename: "soil.db" },
-	coastal: { label: "Coastal erosion (EA NCERM)", directory: coastalDatabaseRoot, filename: "coastal-england.db" },
-	zoning: { label: "Zoning (Ireland)", directory: zoningDatabaseRoot, filename: "zoning-ireland.db" },
-	poi: { label: "POI layer", directory: poiDatabaseRoot, filename: "poi.db" },
+	flood: {
+		label: "Flood zones (EA England)",
+		directory: floodDatabaseRoot,
+		filename: "flood.db",
+		role: ServingRole.FloodOverlay,
+	},
+	soil: {
+		label: "Soil capability (NRCS SSURGO)",
+		directory: soilDatabaseRoot,
+		filename: "soil.db",
+		role: ServingRole.SoilOverlay,
+	},
+	coastal: {
+		label: "Coastal erosion (EA NCERM)",
+		directory: coastalDatabaseRoot,
+		filename: "coastal-england.db",
+		role: ServingRole.CoastalErosionOverlay,
+	},
+	zoning: {
+		label: "Zoning (Ireland)",
+		directory: zoningDatabaseRoot,
+		filename: "zoning-ireland.db",
+		role: ServingRole.ZoningOverlay,
+	},
+	poi: { label: "POI layer", directory: poiDatabaseRoot, filename: "poi.db", role: ServingRole.POI },
 } as const satisfies Record<
 	string,
-	{ label: string; directory: (dataRoot: PathBuilderLike) => PathBuilder; filename: string }
+	{ label: string; directory: (dataRoot: PathBuilderLike) => PathBuilder; filename: string; role: ServingRole }
 >
 
 export type LayerID = keyof typeof LAYER_DATABASES
@@ -52,14 +75,40 @@ export function layerDatabasePath(dataRoot: PathBuilderLike, id: LayerID): strin
 }
 
 /**
- * Every layer database the session would attach, in a stable order.
+ * The layer database a reader opens: the one the active selection lists for the
+ * layer's role, else its conventional path.
+ *
+ * Each layer has a serving role of its own, read unscoped.
+ * A data root without a selection entry for the role reads the conventional path, as before.
+ *
+ * @throws {@link UnreadableArtifactError} when the selection or the selected file cannot be read.
  */
-export function layerDatabases(dataRoot: PathBuilderLike): LayerDatabaseRef[] {
-	return (Object.keys(LAYER_DATABASES) as LayerID[]).map((id) => ({
-		id,
-		label: LAYER_DATABASES[id].label,
-		path: layerDatabasePath(dataRoot, id),
-	}))
+export async function resolveLayerDatabasePath(
+	dataRoot: PathBuilderLike,
+	id: LayerID,
+	catalog?: LayerCatalog
+): Promise<string> {
+	const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
+	const selected = await snapshot.firstPath(LAYER_DATABASES[id].role, { country: null, subdivision: null })
+
+	return selected ?? layerDatabasePath(dataRoot, id)
+}
+
+/**
+ * Every layer database the session would attach, in a stable order, at the path the session
+ * reads: the selected file when the active selection lists one, else the conventional path.
+ */
+export async function layerDatabases(dataRoot: PathBuilderLike): Promise<LayerDatabaseRef[]> {
+	const catalog = await LayerCatalog.read(dataRoot)
+	const ids = Object.keys(LAYER_DATABASES) as LayerID[]
+
+	return Promise.all(
+		ids.map(async (id) => ({
+			id,
+			label: LAYER_DATABASES[id].label,
+			path: await resolveLayerDatabasePath(dataRoot, id, catalog),
+		}))
+	)
 }
 
 /**

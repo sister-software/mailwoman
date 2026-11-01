@@ -141,7 +141,7 @@ An augment copies the frozen live admin DB, backfills a country list from Overtu
 
 - An alias reaches the candidate table only through `place_search.alt_names`. Rebuild the FTS with
   `buildPlaceSearchFts(db, {drop: true})`, and write each Latin common name into `names`.
-- An Overture division carries no population. Apply the GeoNames population to each ingested row, or
+- An Overture division has no population. Apply the GeoNames population to each ingested row, or
   a small namesake outranks the real city.
 - `ingestOvertureDivisions` numbers ids from `OVERTURE_ID_BASE + 0` on every run. An incremental
   augment passes `idBase = max(spr.id) + 1`, or the run replaces the rows a prior run inserted.

@@ -1,0 +1,278 @@
+---
+title: Training-row encoder — the Rust encoder the training loader calls, and how its parity is checked
+role: reference
+audience: maintainer
+owner: model
+source-of-truth: packages/mtf/crates/mtf-channels/src/encoder.rs
+tags:
+  - model
+  - training
+---
+
+# Training-row encoder
+
+The training loader turns each sampled corpus row into the tensors one step reads: piece ids, an attention
+mask, label ids, and the soft-feed channels. The channels are the postcode anchor, gazetteer, country,
+street type, locality surface and code unit. The encoder is `packages/mtf/crates/mtf-channels` (#2870) and the
+sampler `packages/mtf/crates/mtf-sampler` (#2874 Phase 3). The Rust trainer (`packages/trainer/crates/trainer-loop`)
+links both crates, and the TypeScript tools reach them through the `mtf-node` addon. Every sampling stage draws from
+one generator, `mtf-sampler/src/pyrandom.rs`, which reproduces CPython 3.12's `random.Random`, and each stage draws
+where the stage of the deleted Python loader drew, so a seed selects the rows that loader selected.
+
+The Rust encoder and the Rust sampler each reproduce the Python code they replaced byte for byte. The encoded tensors
+are the model's inputs, so these changes move no model behavior and need no release verdict.
+
+## What runs where
+
+| Stage                                                           | Implementation                                          |
+| --------------------------------------------------------------- | ------------------------------------------------------- |
+| Corpus listing, sha256 verification, split attribute, deletions | Rust: `mtf-sampler/src/corpus_files.rs`                 |
+| Row-group reads, row filters, country acceptance, coarse filter | Rust: `file_rows.rs` over the `parquet` crate           |
+| Source mixture, source restarts, held-out quotas                | Rust: `mixture.rs`                                      |
+| Shuffle buffer, astral skip, observer events, `seed + epoch`    | Rust: `sampler.rs`                                      |
+| Augmentation and the affix relabel                              | Rust: `augment/`, `relabel.rs`, `emit.rs`               |
+| `source_reps` weights                                           | Rust: `source_reps.rs`                                  |
+| Tokenization                                                    | Rust: `mtf-core`                                        |
+| Label projection                                                | Rust: `mtf-channels/src/labels.rs`                      |
+| Channel painting                                                | Rust: `anchor.rs`, `gazetteer.rs`, `code_units.rs`      |
+| Postcode-shape and postcode-syntax finders                      | Rust, the `finders` feature: `finders.rs`               |
+| Array packing                                                   | Rust: `encoder.rs`                                      |
+| The character path (`char_mode != "off"`)                       | Rust: `mtf-sampler/src/char_path.rs`                    |
+| `locale_ids`, `address_system_ids`                              | Rust: `trainer-loop/src/batch.rs`, in row order         |
+| Tensor conversion                                               | Rust: `trainer-loop/src/batch.rs`, `Tensor::from_slice` |
+
+The painters and the label projection compile without a regex engine. The serving side can therefore
+adopt them later through `mtf-wasm`. That adoption is a separate change, because the serving painters
+differ from the training painters in three places:
+
+- `anchoredPostcodeSpans` upper-cases the text before matching, and training matches the raw case;
+- `buildSoftFeatures` builds the locality-surface channel only when the street-type channel matched a
+  piece, and training always paints it;
+- `tokenizer.ts` trims the leading space from a `▁` piece's range, and training keeps it.
+
+Training uses the Rust encoder while serving continues to use the TypeScript painters.
+
+## Interfaces
+
+`mtf_channels::resources` (the `finders` feature) reads an encoder's files once: `EncoderResources::load` takes the
+label schema, the postcode finders, the anchor table and the lexicons a run configures, and `read_processor` the
+tokenizer model. Each file it cannot read or parse is refused with its path. The trainer and the Node addon only
+convert their options and errors around it. `mtf_channels::Encoder` encodes a batch of rows into an `EncodedBatch`:
+
+- `input_ids`, `attention_mask`, `labels`: int64 `[B, L]`;
+- per configured channel, `<name>_features` float32 `[B, L, D]` and `<name>_confidence` float32 `[B, L]`.
+
+A row with a partial span triple, unsorted, overlapping or out-of-bounds spans, mismatched token and label counts, or a
+token absent from its text is an error naming the row's batch index and text. A failed finder match is an error naming
+the pattern and the text. A `▁` piece's range includes the space before its word.
+
+`mtf_sampler::Sampler::open(config, split, seed, row_limit)` opens a split with a generator seeded as
+`random.Random(seed)`. `config` is the sampler document: the corpus directory, country and source weights, the coarse
+filter's tags, the augmentation probabilities and exclusions, the affix lexicon, the postcode layouts, and the data
+root, volume mount and sha256 cache the corpus listing reads. Each row has `raw`, `tokens`, `labels`, `country`,
+`source` and, for a span-schema file, `span_starts`, `span_ends` and `span_tags`. `rows()` and `batches(batch_size)`
+iterate it, and a returned `None` is exhaustion. `row_limit` counts rows before the astral skip. A missing,
+unresolvable or unverified file is an error naming its path, and a corrupt row an error naming the file, the row group
+and the text. `open_with` adds a `CancelToken` and an `Observer` that receives `RowEmitted`, `RowSkipped(reason)`,
+`SourceRestarted` and `EpochComplete`, and `batch::encode_rows` encodes a batch through `mtf-channels`. The trainer
+reopens the train split with `seed + epoch` for epochs 1, 2, … and skips the batches a resumed run already took. The
+character path encodes `char_ids` int64 `[B, S, W]`, and `attention_mask`, `labels` and an all-zero `input_ids` int64
+`[B, S]`.
+
+In Node, `packages/mtf/crates/mtf-node` exposes the same streams through napi-rs, and
+`packages/mtf/tools/sampler/native.ts` loads it. `Sampler(config, split, seed, { rowLimit, events })` returns rows
+`nextRows(n)` at a time, `TrainingBatches` returns the train split's batches, and `RawRows` returns the mixture's rows
+before the shuffle buffer, with `nextEmitted(n)` running the emit step on the same generator for the audits. Each call
+hands out one chunk, so a consumer holds one chunk at a time. `takeEvents()` drains the observer events of the kinds
+listed in `events`, and `cancel()` stops a stream and makes it fail with the `Cancelled` status. `createRowEncoder` and
+`createCharEncoder` return the arrays as `BigInt64Array` and `Float32Array`. `packages/mailwoman/tools/training/sampler.ts`
+writes the sampler document from a training config resolved by `packages/corpus/lib/training/config/`, and adds each
+row's locale and address-system ids to an encoded batch.
+
+## Python semantics
+
+The Rust code reproduces the reference interpreter's string semantics rather than Rust's.
+
+- `str.isspace`, `str.isalnum` and `str.isdecimal`, the cased and case-ignorable properties, and the full
+  `str.lower` and `str.upper` mappings come from `src/python_text/tables.rs`. The tables were generated
+  over every scalar value by the Python trainer's table script (Python 3.12, Unicode 15.0.0), which was deleted
+  with that trainer (#2874), so the committed tables are the record. Rust's `char::is_alphanumeric` admits marks such as U+0940
+  that Python's `isalnum` rejects, and its `is_whitespace` rejects U+001C..U+001F.
+- `str.lower` applies CPython's final-sigma rule.
+- The finders rewrite `\d`, `\s`, `\w` and `\b` into explicit classes built from those tables before
+  `fancy-regex` compiles a pattern, because the Rust engines define `\w` to include marks and connector
+  punctuation.
+- The code-unit segmenter is written out by hand. It reproduces
+  `(?<![A-Za-z0-9])(?=[A-Za-z0-9-]*\d)[A-Za-z0-9]+(?:-(?=\d)[A-Za-z0-9]+)*(?![A-Za-z0-9])`, including the
+  lookahead that accepts a non-ASCII digit after the ASCII run.
+- Channel values are computed in `f64` and converted to `f32` once, as `torch.tensor(..., float32)`
+  converted the Python floats. The anchor posterior is renormalized in the file's key order, with
+  serde_json's `float_roundtrip` parsing so every decimal becomes the double Python's `json` produces.
+
+## Parity procedure
+
+The Python trainer's `audits.encoder_parity capture` drew batches through its loader and wrote each record under
+`$MAILWOMAN_DATA_ROOT/audits/encoder-parity/<name>/`:
+
+- `record.json` holds the source revision, the config and its overrides, the SHA-256 of every input
+  (tokenizer, each lexicon, the shape and syntax records, the corpus manifest), the runtime versions, the
+  requested and emitted row counts, the batch sizes, each row's identity hash, its country, per-channel
+  nonzero counts with their denominators, and a SHA-256 per row of every model-input tensor over its
+  little-endian bytes;
+- `arrays.npz` holds every tensor, so `verify` can report the first differing row, tensor and element with
+  both values.
+
+`sampler-parity.run.ts verify --name <name>` (below) re-draws the sample through the current sampler and encoder. It fails on a changed emitted count,
+row identity, batch boundary, tensor set, dtype or shape before it compares digests. A char-path config
+builds no SentencePiece tokenizer: the record hashes its `char_vocab_path` in place of `tokenizer_dir` and
+adds `char_ids` to the tensors. The first nine records were captured from the Python encoder at revision
+`47495cabf` or `1115bbe3f`, and the six #2874 records from the Python sampler with the Rust encoder at
+`553606715`. No record is regenerated from the code it checks. `docs/engineering/reference/encoder-parity-records.json`
+lists every record with its verification against the Rust encoder (`verified`) and the Rust sampler
+(`verified_rust_sampler`).
+
+The recorded configuration matrix:
+
+| Record                  | Config and change                                      | Covers                                                                       |
+| ----------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `c6-train-50k`          | `v8.3.0-base-c6-90k-mixed-s42`, train, seed 43         | the C6 run's channels on its train draw                                      |
+| `c6-val-36864`          | the same config, val, seed 43                          | the run's whole validation draw                                              |
+| `c6-train-2k`           | the same config, train, 2,000 rows                     | the short check                                                              |
+| `code-unit-train-5k`    | `v8.3.0-probe-code-unit-2k`                            | the code-unit channel and the C4 vocabulary                                  |
+| `c6-gold-spans-5k`      | `anchor_paint_mode=gold`                               | the gold anchor from spans                                                   |
+| `c6-gold-tokens-5k`     | gold, with each row's span triple removed              | token labels and the gold anchor from tokens                                 |
+| `c6-no-choreography-5k` | `gazetteer_choreography=false`                         | the gazetteer without suppression                                            |
+| `c6-channel-free-5k`    | every channel path unset                               | channel-free encoding                                                        |
+| `c6-max-length-16-5k`   | `max_length=16`                                        | exact width and truncation                                                   |
+| `aug-splice-5k`         | `augment_case_prob=0.3`, `augment_upper_case_prob=0.3` | lowercase and all-caps copies beside C6's splices, glue and punctuation drop |
+| `aug-postcode-move-5k`  | `augment_postcode_move_prob=0.5`                       | the postcode move and its skip reasons                                       |
+| `aug-grouping-2k`       | `augment_grouping_prob=0.05`, 1,990 rows               | grouping characters                                                          |
+| `aug-grouping-p50-250`  | `augment_grouping_prob=0.5`, 250 rows                  | grouping at a rate where most rows draw it                                   |
+| `relabel-5k`            | every C6 augmentation probability at 0                 | the affix relabel without augmentation                                       |
+| `char-v8-cjk-regs-5k`   | `v8-cjk-regs`, the sealed corpus below                 | the character path, `char` mode, `stage3-cjk`                                |
+
+The C6 overrides re-root the lexicons to their host copies. Every CJK char-path corpus on the lab host lists
+its files without a sha256, and the loader refuses such a manifest. `char-v8-cjk-regs-5k` therefore reads
+`$MAILWOMAN_DATA_ROOT/audits/port-parity/corpora/v8-cjk-regs-2026-09-08-sealed/MANIFEST.json`: the
+original manifest's entries, unchanged, with each file's sha256 measured on 2026-10-29.
+
+The grouping records stop short of 5,000 rows because, when they were captured, the grouping augmentation raised
+on C6 rows whose tokens do not reach the end of `raw`, in the Python sampler and the Rust sampler alike. At
+probability 0.5, seed 43, the stream raised after 250 rows on `insert position 18 is not a token edge
+(raw='{114, СНТ «Пчёлка»')`; at 0.05 it raised after 1,994 rows on `'(22 Whampoa East S(338527)'`. The `osm-ru`
+row's tokens are `114`, `СНТ` and `Пчёлка`, so its closing guillemet ends `raw` past the last token. Since #2878,
+`wrap_row` skips a row whose text does not begin and end on a token edge, in both samplers, and the stream runs on.
+The skip takes no draw, so every row before the first such row is unchanged, and both grouping records still
+verify at 0 differing rows. No training config sets `augment_grouping_prob`. The two grouping records were captured by replacing `iter_batch_rows` with
+the composition the Python loader ran, `random.Random(seed)` over `stream.iter_rows` with the astral skip. That composition
+reproduced `c6-train-2k`'s row identities and tensor digests exactly before it captured them.
+
+The crate's own tests cover what a sample may miss: `encode_row_reference.rs` against the Python
+`encode_row` fixture, `python_reference.rs` against the Python finders and string operations for every
+scalar value in 17 templates, and `code_unit_parity.rs` from segmentation through acceptance counts.
+
+Each record verified with 0 differing rows against the Rust encoder (113,920 emitted rows in total). The broad
+sample requested 86,864 rows and emitted 81,940: 49,989 of 50,000 train rows after the astral skip, and 31,951
+validation rows, where the validation draw exhausts below its 36,864-row limit.
+
+`node packages/mailwoman/tools/training/sampler/parity.run.ts verify --name <record>` re-draws a record through the
+Node binding and compares the same fields from `record.json`, without reading `arrays.npz`. On 2026-10-29 it verified
+`c6-train-2k`, `aug-postcode-move-5k`, `c6-gold-tokens-5k` and `code-unit-train-5k` with 0 differing rows. The binding
+reproduced every row identity and every tensor digest, including the `locale_ids` and `address_system_ids` that
+TypeScript computes.
+
+Every record, the nine and the six, verified with 0 differing rows against the Rust sampler on 2026-10-29
+(136,174 emitted rows in total, the sum of the 15 records' `emitted_rows`; each `verified_rust_sampler` entry records
+its date, revision and host): no emitted count, row identity, batch boundary, tensor set, shape or digest
+moved. `mtf-sampler`'s tests cover what a sample may miss: `loader_split_reference.rs` replays the Python
+loader's recorded fixture in order (train, validation, the char path and source counts), `sampler_stream.rs`
+covers row limits, exhaustion, the astral skip, source restarts, held-out quotas, observer events,
+cancellation, `seed + epoch` and resume, and the remaining files hold the invariants of the Python data
+tests.
+
+## Measured cost
+
+The Python trainer's `audits.loader_profile` measured the host side of a training step: `iter_batches` and
+`to_tensor_batch` over 40 batches of 128 rows of the C6 config's train stream after the first batch, on the lab host
+and in a Modal container with 8 CPUs. The Python figures were measured
+at revision `1115bbe3f`, the Rust figures at the revision that deleted the Python encoder, on 2026-10-28 and
+2026-10-29.
+
+| Host, path                   | `iter_batches` ms | `to_tensor_batch` ms | Host ms per batch | Initialization s | RSS after init MB | Peak RSS MB |
+| ---------------------------- | ----------------: | -------------------: | ----------------: | ---------------: | ----------------: | ----------: |
+| Lab (Ryzen 9 8945HS), Python |             51.12 |                24.18 |             75.30 |             94.9 |             6,158 |       9,157 |
+| Lab, Rust                    |             13.29 |                 0.11 |             13.40 |            112.1 |             5,516 |       8,569 |
+| Modal cpu=8, Python          |             56.27 |                37.84 |             94.11 |            122.5 |             9,482 |      12,827 |
+| Modal cpu=8, Rust            |             21.41 |                 0.10 |             21.51 |            134.2 |             8,820 |      12,216 |
+
+The sampler by itself costs 2.7 to 3.1 ms per batch on the lab host and 6.8 to 7.2 ms on Modal, so it is about a
+third of the Rust path's remaining `iter_batches` time.
+
+### The Rust sampler
+
+Measured on the lab host on 2026-10-29, between 11:52 and 12:06 UTC, with the C6 config, the host lexicon
+overrides of the parity records, seed 43, and 40 batches of 128 rows after the first batch. Both arms encode with
+the Rust row encoder and convert with `to_tensor_batch`, so they differ only in the sampler: the Python arm runs
+`stream.iter_rows` from the parent revision with the astral skip, and the Rust arm runs `mtf-sampler` through the
+Python binding of that revision.
+Both read the sha256 sidecar cache, so neither hashes the 68.7 GB corpus. Each arm ran twice, alternating. The host
+was shared with other jobs: the load average was 26 to 30 during the first pair and 18 to 19 during the second, on
+16 threads, so the first pair is slower in every column and the second pair is the comparison.
+
+| Run             | Init s | Encoder build s | Sampler init s | Sample ms | Encode ms | Conversion ms | Host ms per batch | RSS after init MB | Peak RSS MB |
+| --------------- | -----: | --------------: | -------------: | --------: | --------: | ------------: | ----------------: | ----------------: | ----------: |
+| Python, load 30 |  395.1 |            34.1 |          361.1 |     16.77 |     82.38 |          0.31 |             99.45 |             3,159 |       3,028 |
+| Rust, load 26   |   81.2 |            48.4 |           32.9 |      2.37 |     19.28 |          0.20 |             21.85 |             2,920 |       2,785 |
+| Python, load 18 |  265.5 |            45.2 |          220.3 |      8.09 |     26.52 |          0.23 |             34.83 |             3,585 |       3,431 |
+| Rust, load 19   |   47.5 |            26.5 |           21.0 |      1.75 |     13.12 |          0.17 |             15.03 |             2,918 |       2,783 |
+
+Init is process start to the first converted batch. The sampler's share covers the listing, the sha256 check
+against the cache, the source index and the 131,072-row buffer fill. The milliseconds are per batch. RSS after
+init is read from `/proc/self/statm`, and peak RSS from `ru_maxrss`. On the second pair the Rust sampler reduced
+sampling from 8.09 to 1.75 ms per batch and sampler initialization from 220.3 to 21.0 s. Encoding is the same
+Rust code in both arms. Its spread follows the host load rather than the sampler.
+
+Parquet reads cannot be separated inside that window, because the 40 batches draw almost every row from row groups
+the buffer fill already read. `examples/read_profile.rs` times only the read: 60 row groups drawn from the C6
+corpus's files with seed 7 (2,375,564 rows) over the nine columns the sampler reads, against pyarrow's
+`read_row_group` on the same list, alternating, at load 16. pyarrow took 36.12 and 38.97 ms per row group and the
+`parquet` crate 23.43 and 26.92 ms. The parity verifies give the end-to-end cost: a 5,000-row train record verifies
+in 22 to 33 s at a peak of 2.5 to 3.1 GB, where its Python capture took 225 to 335 s at 4.5 to 5.4 GB, and the
+36,864-row validation draw verifies in 131 s. These figures are the lab host's only. The Modal measurement waits
+for the next image build, since no Modal job ran for this change. Initialization is dominated by the sampler's stream
+setup: building the Rust encoder with the 2,286,339-key anchor table takes 2.04 s, against 5.46 s for the
+Python `json.load` of the same table.
+
+A 2,000-step training probe measured the effect on an A100-40GB on 2026-10-29
+(`v8.3.0-probe-rust-loader-2k.yaml`, call `fc-01M62R4Y9MDJW0WMAHRR5KVGQ6`). Over steps 300 to 2,000 its median
+wall time per 100 steps was 6.50 s (17 windows, range 6.10 to 7.70). The control is the same config's seed 42
+run on the Python encoder, `v8.3.0-base-c6-90k-mixed-s42`, over the same steps on the same GPU type: 16.10 s
+(17 windows, range 14.10 to 16.90). The Rust path therefore runs 2.48 times the Python path's steps per second
+(16.10 / 6.50). The probe differs from the control in three settings that do not run in the compared window:
+validation passes, Fisher capture and the run length. Its `source_reps` targets are scaled by 2,000 / 90,000,
+so it draws different rows in the same source proportions.
+
+### After the Python removal
+
+`node packages/mailwoman/tools/training/sampler/parity.run.ts profile --config <yaml> [--set data.key=value]` times
+the same host step through `mtf-node`: the encoder build and the first batch, then sampling and encoding per batch
+over 40 batches of 128 rows. On 2026-10-30 at `3988395a0`, on the lab host at load 4.8 and then 11.7, with the C6
+config and the parity records' host overrides, two runs gave 1.35 and 1.25 ms of sampling and 10.51 and 10.10 ms of
+encoding per batch, a sampler initialization of 55.6 s cold and 37.8 s warm, and a peak resident set of 2,441 and
+2,450 MB. The plan's final measurement table (`2026-10-29-python-removal-plan.mdx`) holds the rows.
+
+## Builds
+
+The root `rust-toolchain.toml` pins the toolchain, and every crate is a member of the root cargo workspace.
+
+- The Rust trainer links the crates directly, and `trainer-cli` builds them with the trainer workspace.
+- The Node addon `mtf-node` builds from source on first use, with
+  `cargo build --profile node --locked -p mtf-node`. The `node` profile is `opt-level = 3` and
+  `panic = "unwind"`, so napi-rs raises a Rust panic as a JavaScript exception. The addon builds on Linux and
+  macOS. It is never part of `wasm/mtf.wasm`. That module's dependency tree is only `mtf-wasm` → `mtf-core`. The
+  wasm build with the addon in the workspace gives the same SHA-256 as a build without it.
+- The CI `rust` job installs the pinned toolchain and runs `cargo fmt --check`, `cargo test` and `cargo clippy` over
+  the root workspace. `lib/repo-health/ci/scope.ts` selects that job for a change
+  to the crates' inputs.
+- The Modal training image builds `trainer-cli`, which links these crates
+  (`packages/mailwoman/tools/training/launch/image.ts`).

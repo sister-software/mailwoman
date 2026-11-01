@@ -18,9 +18,9 @@ import { PathBuilder } from "path-ts"
 import { defaultAdapterRegistry } from "#adapters/registry"
 import { runAdapterPhase } from "#build/adapters"
 import { runAlignPhase } from "#build/align"
-import { alignTotalsOf } from "#build/align-totals"
+import { alignTotalsOf } from "#build/align/totals"
 import { planWorkerBudget } from "#build/budget"
-import { readRegisterDecisions, readSourceEligibility } from "#build/eligibility"
+import { readSourceDecisionTable, readSourceEligibility } from "#build/eligibility"
 import {
 	admitParquetManifest,
 	stageAdmittedManifestForResume,
@@ -73,7 +73,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	// An adapter stamps its own id into each row's `source`, so the configured
 	// adapters are the sources this build will emit.
-	// Checking them here refuses before hours of adapter work rather than after.
+	// This check refuses an unmapped source before hours of adapter work.
 	const rights = await openSourceRightsAdmission({
 		context: `corpus build ${opts.corpusVersion}`,
 		unshippableReason: opts.unshippableReason ?? null,
@@ -148,7 +148,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	})
 
 	const holdouts = defaultHoldouts()
-	const registerDecisions = await readRegisterDecisions()
+	const decisionTable = await readSourceDecisionTable()
 
 	const align = await runAlignPhase({
 		adapterRuns,
@@ -241,7 +241,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		holdoutCheck,
 		totals: alignTotalsOf(align),
 		rights,
-		registerDecisions,
+		decisionTable,
 		onProgress: opts.onProgress,
 	})
 }

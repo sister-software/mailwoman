@@ -58,6 +58,8 @@ pids
 # Build output
 out
 dist
+# The cargo workspace's target directory, and any per-package one an older checkout built.
+target/
 
 # Storybook build output
 storybook-static
@@ -82,6 +84,8 @@ playwright-traces
 test-results
 *.lcov
 .vitest-attachments
+# Vitest 4's browser mode writes failure screenshots under `.vitest/attachments/`.
+.vitest/
 __screenshots__
 
 # Python artifacts
@@ -164,6 +168,9 @@ nightshift
 
 ### Never commit shell scripts. Use `.ts` or `.tsx`.
 .sh
+
+### Never commit Python. Use TypeScript or Rust
+.py
 
 # TypeScript incremental build state
 *.tsbuildinfo

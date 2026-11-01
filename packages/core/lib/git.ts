@@ -7,7 +7,7 @@
  *   A `GitClient` is bound to one directory. Short reads such as `rev-parse` answer their stdout.
  *   Long transfers such as `clone` and `fetch` run as a {@linkcode ProcessTask} with `--progress`,
  *   and the client re-dispatches each parsed progress line, so a command renders one stream for every repository it touches.
- *   Disposing the client stops every git process it started.
+ *   The client stops every git process it started when callers dispose it.
  *
  *   The free functions below are the same readers for a caller that needs one answer about the working tree.
  */
@@ -82,7 +82,7 @@ export interface GitClientOptions {
 	cwd?: PathBuilderLike
 	logger?: IRuntimeLogger
 	/**
-	 * Aborting the signal stops every git process the client started.
+	 * The caller's signal stops every git process the client started when it aborts.
 	 */
 	signal?: AbortSignal
 }
@@ -264,7 +264,8 @@ export class GitClient extends TypedEventTarget<GitClientEventMap> implements As
 		const untracked = options.untracked === false ? ["--untracked-files=no"] : []
 		const output = await this.read(["status", "--porcelain", ...untracked, ...scope], { trim: false })
 
-		// `trim: false` keeps the status column, whose first character is a space for an unstaged change.
+		// `trim: false` preserves the status column.
+		// An unstaged change starts with a space in that column.
 		return TextSpliterator.from(output, { trim: false })
 			.map((line) => line.trimEnd())
 			.filter((line) => line.length)
@@ -327,7 +328,8 @@ export interface GitSyncOptions {
  * Run git synchronously and answer stdout, for a slot whose caller is synchronous.
  *
  * Git's stderr is captured rather than written to the terminal.
- * A non-zero exit throws the builtin's error, which carries that stderr.
+ * A non-zero exit throws the builtin's error.
+ * The error includes that stderr.
  */
 export function gitSync(args: readonly string[], options: GitSyncOptions = {}): string {
 	const stdout = runFileSync("git", args, {

@@ -13,13 +13,16 @@
  *   Example `releases.json`: { "address-points": "2026-05-20.0", "interpolation": "TIGER2023" }
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { tryParsingJSON } from "@mailwoman/core/json"
+import { JSONParseError, stringifyJSON } from "@mailwoman/core/json"
+import { UnreadableArtifactError, UnreadableReason } from "@mailwoman/core/layers"
 import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
-import type { PathBuilder, PathBuilderLike } from "path-ts"
+import { resolvePathBuilder, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { BundleArtifact } from "#data/bundles"
+import type { BundleArtifact, DataBundle } from "#data/bundles"
+import { LayerCatalog } from "#data/catalog"
+import { availableDataEntry, selectionScopeOf } from "#data/registry"
 
 /**
  * Family (database subdir + filename prefix, e.g. `"address-points"`) → current version string.
@@ -29,25 +32,47 @@ export type DataReleaseManifest = Record<string, string>
 /**
  * Read `<dataRoot>/releases.json`.
  *
- * @returns Null (legacy mode) when absent or malformed.
+ * A manifest that exists and cannot be read, parsed, or interpreted is an error naming its path.
+ * Legacy mode in its place would serve the unversioned databases while the
+ * operator believes a pin is in force.
+ *
+ * @returns Null (legacy mode) when the file is absent or pins no family.
+ * @throws {@link UnreadableArtifactError} when the file exists and cannot be read,
+ * or holds anything but an object of family names to non-empty version strings.
  */
 export async function readReleaseManifest(dataRoot: PathBuilderLike): Promise<DataReleaseManifest | null> {
+	const path = resolvePathBuilder(dataRoot, "releases.json").toString()
+	let raw: unknown
+
 	try {
-		const raw = tryParsingJSON(await readLocalTextFile(dataRoot, "releases.json"))
+		raw = await tryReadLocalJSONFile<unknown>(path)
+	} catch (error) {
+		const reason = error instanceof JSONParseError ? UnreadableReason.Corrupt : UnreadableReason.Unopenable
 
-		if (!raw || typeof raw !== "object") return null
-		const out: DataReleaseManifest = {}
+		throw new UnreadableArtifactError(path, reason, (error as Error).message, { cause: error })
+	}
 
-		for (const [family, version] of Object.entries(raw as Record<string, unknown>)) {
-			if (typeof version === "string" && version) {
-				out[family] = version
-			}
+	if (raw == null) return null
+
+	if (typeof raw !== "object" || Array.isArray(raw)) {
+		throw new UnreadableArtifactError(path, UnreadableReason.Corrupt, "expected an object of family to version")
+	}
+
+	const out: DataReleaseManifest = {}
+
+	for (const [family, version] of Object.entries(raw)) {
+		if (typeof version !== "string" || !version) {
+			throw new UnreadableArtifactError(
+				path,
+				UnreadableReason.Corrupt,
+				`family ${family} pins ${stringifyJSON(version)}, not a version string`
+			)
 		}
 
-		return Object.keys(out).length ? out : null
-	} catch {
-		return null
+		out[family] = version
 	}
+
+	return Object.keys(out).length ? out : null
 }
 
 /**
@@ -64,15 +89,31 @@ const FAMILY_DIRECTORIES = {
 } as const satisfies Record<DatabaseFamily, (dataRoot: PathBuilderLike) => PathBuilder>
 
 /**
- * Resolve a database's on-disk path: the manifest-pinned `<family>-us-<slug>-<version>.db`
- * when present, else the legacy unversioned `<family>-us-<slug>.db`, else null if neither exists.
+ * Resolve a database's on-disk path: the artifact the active selection names for the family's role
+ * and the state, else the manifest-pinned `<family>-us-<slug>-<version>.db` when present,
+ * else the legacy unversioned `<family>-us-<slug>.db`, else null if none exists.
+ *
+ * A data root without `active.json` resolves as it did before the selection existed.
+ *
+ * @param catalog One reading of the catalog, so a caller resolving every state
+ * and territory slug reads `active.json` once.
+ * Read here when omitted.
+ * @throws {@link UnreadableArtifactError} when the selection or a selected
+ * artifact exists and cannot be read.
  */
 export async function resolveDatabasePath(
 	dataRoot: PathBuilderLike,
 	family: DatabaseFamily,
 	slug: string,
-	manifest: DataReleaseManifest | null
+	manifest: DataReleaseManifest | null,
+	catalog?: LayerCatalog
 ): Promise<string | null> {
+	const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
+	// country-branch: the per-state street databases are the US bundle's, and the slug is the ISO 3166-2 suffix.
+	const selected = await snapshot.firstPath(family, { country: "US", subdivision: `US-${slug.toUpperCase()}` })
+
+	if (selected) return selected
+
 	const directory = FAMILY_DIRECTORIES[family](dataRoot)
 	const version = manifest?.[family]
 
@@ -97,10 +138,20 @@ export async function existingLocalPath(
 	dataRoot: PathBuilderLike,
 	manifest: DataReleaseManifest | null,
 	artifact: BundleArtifact,
-	resolvedAbsPath: string
+	resolvedAbsPath: string,
+	bundle?: DataBundle,
+	catalog?: LayerCatalog
 ): Promise<string | null> {
 	if (artifact.family && artifact.stateSlug) {
-		return resolveDatabasePath(dataRoot, artifact.family, artifact.stateSlug, manifest)
+		return resolveDatabasePath(dataRoot, artifact.family, artifact.stateSlug, manifest, catalog)
+	}
+
+	if (bundle?.activation === "selection") {
+		const [available] = availableDataEntry({ ...bundle, artifacts: [artifact] }).artifacts
+		const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
+		const selected = available ? await snapshot.firstPath(available.role, selectionScopeOf(available)) : null
+
+		if (selected) return selected
 	}
 
 	return (await pathExists(resolvedAbsPath)) ? resolvedAbsPath : null

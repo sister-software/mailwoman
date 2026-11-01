@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The outlets of one library system get distinct `source_id`s under the system's record id.
+ * @file Each outlet of a library system is its own record, with the system's FSCSKEY in its id.
  */
 
 import { describe, expect, it } from "vitest"
@@ -23,19 +23,20 @@ const OUTLETS = [
 ]
 
 describe("usgov-imls-pls source_id", () => {
-	it("gives each outlet its own id and keeps the system as the record", async () => {
+	it("makes each outlet its own record", async () => {
 		const input = await writeDelimitedFixture(scratch.path("outlets.csv"), HEADER, OUTLETS)
 		const rows = await Array.fromAsync(createUSGovIMLSPLSAdapter().rows({ inputPath: input }))
 
 		expect(rows.map((row) => row.source_id)).toEqual([
-			"usgov-imls-pls-WY0008#002",
-			"usgov-imls-pls-WY0008#003",
-			"usgov-imls-pls-WY0008#004",
-			"usgov-imls-pls-WY0011#002",
+			"usgov-imls-pls-WY0008-002",
+			"usgov-imls-pls-WY0008-003",
+			"usgov-imls-pls-WY0008-004",
+			"usgov-imls-pls-WY0011-002",
 		])
 
+		// Three branches in three towns are three addresses, so no two outlets share a record.
 		const records = new Set(rows.map((row) => recordIDOf(row.source_id)))
 
-		expect(records).toEqual(new Set(["usgov-imls-pls-WY0008", "usgov-imls-pls-WY0011"]))
+		expect(records.size).toBe(OUTLETS.length)
 	})
 })

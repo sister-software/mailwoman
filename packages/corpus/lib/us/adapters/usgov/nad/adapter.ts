@@ -13,6 +13,7 @@ import { resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
+import { rawTextDiscriminator } from "#adapters/record-id"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
@@ -24,6 +25,11 @@ export const USGOV_NAD_ADAPTER_ID = "usgov-nad"
  * The license label on every emitted row, because US federal works are public domain under 17 U.S.C. § 105.
  */
 export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"
+
+/**
+ * The all-zero UUID some NAD contributors publish in place of an identifier.
+ */
+const NAD_PLACEHOLDER_UUID = /^0{8}-0{4}-0{4}-0{4}-0{12}$/u
 
 /**
  * One NAD address point as the FeatureServer pages publish it, limited to the fields a reader here uses.
@@ -263,9 +269,14 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 
 					if (Object.keys(aligned).length <= 2) continue
 
-					const sourceID = record.UUID
-						? `${USGOV_NAD_ADAPTER_ID}-${record.UUID}`
-						: `${USGOV_NAD_ADAPTER_ID}-${record.OBJECTID ?? `${file}:${emitted}`}`
+					// NAD repeats a UUID across distinct addresses
+					// (6804 Breed Street and 704 West Breed Street, CHILTON, WI share 79461b5e-…),
+					// and 82 addresses share the all-zero placeholder UUID (#2894).
+					// The id therefore adds a digest of the rendered address to the UUID.
+					// Two points of one address stay one record, and two addresses under one UUID become two.
+					const key = record.UUID && !NAD_PLACEHOLDER_UUID.test(record.UUID) ? record.UUID : record.OBJECTID
+
+					const sourceID = `${USGOV_NAD_ADAPTER_ID}-${key ?? `${file}:${emitted}`}-${rawTextDiscriminator(raw)}`
 
 					yield {
 						raw,

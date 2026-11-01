@@ -47,9 +47,9 @@
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"spliterator": "^9.3.0"
+		"spliterator": "^10.1.1"
 	},
 	"devDependencies": {
-		"@types/node": "^26.6.5"
+		"@types/node": "^26.6.6"
 	}
 }

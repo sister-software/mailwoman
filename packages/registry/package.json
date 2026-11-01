@@ -70,11 +70,11 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"h3-js": "^4.5.0",
-		"spliterator": "^9.3.0"
+		"spliterator": "^10.1.1"
 	},
 	"devDependencies": {
 		"@mailwoman/browser": "workspace:*",
-		"@types/node": "^26.6.5",
+		"@types/node": "^26.6.6",
 		"path-ts": "^2.5.0",
 		"playwright": "^1.64.1"
 	}

@@ -113,7 +113,7 @@ const config: Config = {
 			{
 				redirects: [
 					{ from: "/docs", to: "/docs/developers/get-started/what-mailwoman-is" },
-					// Pricing moved out of the docs to a page of its own.
+					// The pricing page moved out of the docs to its own route.
 					{ from: "/docs/pricing", to: "/pricing" },
 					// The license page is the only route that can take money.
 					{ from: ["/licensing", "/licenses"], to: "/license" },

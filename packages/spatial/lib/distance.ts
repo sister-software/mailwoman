@@ -6,7 +6,7 @@
  *
  *   This module imports no runtime geometry class. `GeoPoint` imports h3-js. The h3-js module allocates a 32 MiB heap when
  *   it is first evaluated, and a caller that only measures a distance must not pay for that. The object-form distances
- *   that take a `GeoPointInput` live in `#geometries/point-distance`.
+ *   that take a `GeoPointInput` live in `#geometries/point/distance`.
  */
 
 import { arealPolygons } from "#geometries/polygon"
@@ -83,23 +83,6 @@ export function centralAngle(lat1: number, lon1: number, lat2: number, lon2: num
 			Math.pow(Math.sin(dLon / 2), 2)
 
 	return 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-/**
- * Returns the great-circle distance in kilometers between two coordinates on Earth.
- *
- * The formula's one true home — every resolver + eval consumer of the
- * `(aLat, aLon, bLat, bLon)` shape imports this instead of re-declaring it.
- *
- * Unlike `haversine` in `#geometries/point-distance`, this is pure math with no Null-Island
- * sentinel: `(0, 0)` is the Gulf of Guinea — a real point rather than "missing coordinate".
- * That sentinel convention belongs to the `GeoPointInput` object form,
- * where a 0/0 input means "no coordinate".
- *
- * @category Position
- */
-export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
-	return EARTH_RADII.km * centralAngle(aLat, aLon, bLat, bLon)
 }
 
 /**

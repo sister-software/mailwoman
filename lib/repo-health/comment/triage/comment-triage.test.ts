@@ -1,7 +1,6 @@
-import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { heuristicLeads, pythonSourceComments, sourceComments } from "#repo-health/comment/triage"
+import { heuristicLeads, sourceComments } from "#repo-health/comment/triage"
 
 describe("sourceComments", () => {
 	it("keeps every TypeScript scanner comment with its source range", () => {
@@ -24,12 +23,5 @@ describe("sourceComments", () => {
 			{ category: "sensational", confidence: "low", source: "heuristic" },
 			{ category: "unclear", confidence: "low", source: "heuristic" },
 		])
-	})
-
-	it("reads Python module docstrings and line comments through the tokenizer adapter", async () => {
-		const comments = await pythonSourceComments(repoRootPath(), ["lib/repo-health/test/fixtures/comments.py"])
-
-		expect(comments.some((comment) => comment.kind === "docstring")).toBe(true)
-		expect(comments.some((comment) => comment.kind === "line")).toBe(true)
 	})
 })

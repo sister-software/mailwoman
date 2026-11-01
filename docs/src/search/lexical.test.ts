@@ -13,7 +13,8 @@ const db = fixtureDatabase(FIXTURE_RECORDS)
 /**
  * The fixture id of each row.
  *
- * The index identifies a record by its rowid, which follows the insertion order of the fixtures.
+ * The index identifies a record by its rowid.
+ * The rowid follows the fixtures' insertion order.
  */
 async function fixtureIDs(tokens: readonly string[]): Promise<string[]> {
 	return (await lexicalRows(db, tokens)).map((row) => FIXTURE_RECORDS[Number(row.id) - 1]?.id ?? row.id)
@@ -35,23 +36,23 @@ describe("matchExpression", () => {
 
 describe("lexicalRows", () => {
 	test("ranks a heading match above a content match", async () => {
-		expect(await fixtureIDs(["viterbi"])).toEqual(["viterbi-top", "viterbi-section"])
+		await expect(fixtureIDs(["viterbi"])).resolves.toEqual(["viterbi-top", "viterbi-section"])
 	})
 
 	test("ranks a page whose heading matches above a table row whose name matches", async () => {
-		expect(await fixtureIDs(["norway"])).toEqual(["norway-page", "row"])
+		await expect(fixtureIDs(["norway"])).resolves.toEqual(["norway-page", "row"])
 	})
 
 	test("matches the last token as a prefix", async () => {
-		expect(await fixtureIDs(["decoder", "gram"])).toContain("viterbi-section")
+		await expect(fixtureIDs(["decoder", "gram"])).resolves.toContain("viterbi-section")
 	})
 
 	test("matches a singular query against a plural word", async () => {
-		expect(await fixtureIDs(["parser"])).toEqual(["parsers"])
+		await expect(fixtureIDs(["parser"])).resolves.toEqual(["parsers"])
 	})
 
 	test("returns an empty list for zero tokens", async () => {
-		expect(await lexicalRows(db, [])).toEqual([])
+		await expect(lexicalRows(db, [])).resolves.toEqual([])
 	})
 
 	test.each(['"', "a AND", "NEAR(a b)", "col:value", "a* OR", "(", "a - b", "^a", "-"])(

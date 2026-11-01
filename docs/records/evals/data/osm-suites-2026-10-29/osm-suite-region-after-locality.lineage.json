@@ -1,0 +1,2171 @@
+{
+	"shape": "region-after-locality",
+	"filter": "a region span starts after the locality span",
+	"sampling": {
+		"method": "per-record-id-country-kind-hash-order",
+		"perCountry": 200,
+		"seed": 2868,
+		"order": "sha256(`<seed>:<row id>`) ascending, one row per record, per country and shape",
+		"engine": "mailwoman osm-suites"
+	},
+	"extracts": [
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ae-261016.corpus.jsonl",
+				"sha256": "0a14c9829c1d329f015d1fbdab37bf3dfce5e9568f887e3a34d2055ed9ee9d83",
+				"lines": 145957
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/gcc-states-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf",
+				"sha256": "fafaddcddcd60fad74d9296472847cee10f1770218e4b6a2c21ae1b7f9f1a84f",
+				"lastModified": "Fri, 16 Oct 2026 23:15:46 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ae-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "6b1eb43f88076d8bdf7a75d7203828de2f43622a1030ed3e93f759c512e02a11",
+				"outline": "/mnt/mw/db/osm/outlines/ARE-ADM0.geojson",
+				"outlineSHA256": "fd01cfc50d37a939a22f1c3bd6fd7a47bc96f14a01256ccd626a823839c8cf79",
+				"excludedOutlines": [
+					"/mnt/mw/db/osm/outlines/OMN-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/SAU-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/QAT-ADM0.geojson"
+				],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-al-261017.corpus.jsonl",
+				"sha256": "7e9db079b5cc955fd1650901f48741409c87442d46f0bed76a11c2225b5e99c7",
+				"lines": 30641
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/albania-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/albania-latest.osm.pbf",
+				"sha256": "99cf137c20498d38ac28117c6c8395a8c7b74d3ba9d430062340c3969531b47c",
+				"lastModified": "Sat, 17 Oct 2026 23:08:32 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-al-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "3dbff3d958172a30f2ef497ef76bbd5498b31c3860a071248a63af27e2c1d1d9",
+				"outline": "/mnt/mw/db/osm/outlines/ALB-ADM0.geojson",
+				"outlineSHA256": "9564408f188c755326f84ea40a8bd9be41225c26e8c877a0232c7c14269a5fc3",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-am-261016.corpus.jsonl",
+				"sha256": "84fe605d1de7cba3592d8ae91361d342e146319fc9d931bbefd6fe21a7221fd6",
+				"lines": 122645
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/armenia-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/armenia-latest.osm.pbf",
+				"sha256": "2573d83eeef3e4937ceae71c68eceeedded72cc63c45be97888c76b45583cff1",
+				"lastModified": "Fri, 16 Oct 2026 23:15:52 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-am-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "f6c15a2021bf615975e9d664ebe043f6c6b8ca783f59ce852a37da805d70b8dc",
+				"outline": "/mnt/mw/db/osm/outlines/ARM-ADM0.geojson",
+				"outlineSHA256": "3a0d673dc347a5ae2eb5622b4dcaf65090c50f8a7ce8cf2c750ec37464260f2b",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ao-261017.corpus.jsonl",
+				"sha256": "ef5a9c53c515233929756880dd4decb46264b66309ad683fc0d5ab22fc75d554",
+				"lines": 4518
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/angola-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/angola-latest.osm.pbf",
+				"sha256": "79fc27218393102222bf57a63604dd9673737cd9b4f70041c84360ac9592f5dc",
+				"lastModified": "Sat, 17 Oct 2026 22:56:19 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ao-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "ec2b2325e95441e66025fd8f83033df3d00dd2da8698ed0d77f6e8eb79c2d74f",
+				"outline": "/mnt/mw/db/osm/outlines/AGO-ADM0.geojson",
+				"outlineSHA256": "d8f0170bbbf8057c1bb0e2cff71bf57200060c3183bf08ce6bb13c77c1bd2413",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ar-261016.corpus.jsonl",
+				"sha256": "fcba79ba1fd3cdd75ba65209266ea00a74a5ae83cd50af5299c9b6ea701faabf",
+				"lines": 2099466
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/argentina-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/south-america/argentina-latest.osm.pbf",
+				"sha256": "5111b0a10f1f5aa69ee44d8046064ce959a93c0f58a22686f72878b9c84a8035",
+				"lastModified": "Fri, 16 Oct 2026 23:30:45 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ar-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "70095314349f9cb00abaf38c12ea65120aa6d17d48efea165498fdd1aa2e7c5e",
+				"outline": "/mnt/mw/db/osm/outlines/ARG-ADM0.geojson",
+				"outlineSHA256": "31cb21a9ff0d1928290838f9ae826a6f6eff70f3a0af4905ffeca0db9e0e3ce1",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-aw-261017.corpus.jsonl",
+				"sha256": "e6b369f1ed5aad3a77ed366b97813e90bd5224b523e12d39ca2e438e33b4ad76",
+				"lines": 37575
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/central-america-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america-latest.osm.pbf",
+				"sha256": "1465072b524008baf85a2f4e33cfcf9468729e1f36d1e15cd26c6ebf34b32ac6",
+				"lastModified": "Sat, 17 Oct 2026 22:14:19 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-aw-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "07dfa7a2cacb2f38ab3bb9f02f657010d4445a47114dfbb99b088c4a4676f594",
+				"outline": "/mnt/mw/db/osm/outlines/ABW-ADM0.geojson",
+				"outlineSHA256": "6d09b2aa3891065cb63b6cb4d8232325504a617d91f28c17c60a51647955f0a6",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-az-261017.corpus.jsonl",
+				"sha256": "b42a44918cdcac57717af96b7407e426cb962c805ecd2d5744126ad5ee63d614",
+				"lines": 21827
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/azerbaijan-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/azerbaijan-latest.osm.pbf",
+				"sha256": "3aa7f01db6a12c4c1a9fc487a5c35ae61ef14722e031ac10a473f16afa03961c",
+				"lastModified": "Sat, 17 Oct 2026 23:01:28 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-az-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "54cfa655cc98dfd08878b2beb80d09bb7aa54fc821b720e287ac2de0b65e3a12",
+				"outline": "/mnt/mw/db/osm/outlines/AZE-ADM0.geojson",
+				"outlineSHA256": "4deeecd07b6edd6f5acb45fd05cf017cc0294a2266da84cea99dbf592ac9c6eb",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ba-261016.corpus.jsonl",
+				"sha256": "94c50b032074e7172c7fc52ea4dcbede23ebcab1ec440578f06807284bb6fa5c",
+				"lines": 179852
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/bosnia-herzegovina-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/bosnia-herzegovina-latest.osm.pbf",
+				"sha256": "43aece92eaa3e1a42519886228c0e0167374c4d0677231202ab9a9cff42ab370",
+				"lastModified": "Fri, 16 Oct 2026 23:40:24 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ba-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "15801e33ceac7237123bdce1576ecebfcf22b569024112e7a297faff13159544",
+				"outline": "/mnt/mw/db/osm/outlines/BIH-ADM0.geojson",
+				"outlineSHA256": "3fe0135768dd2fcf2650b884e761fa04fdad70fda0d7df5a2d9a3ed257d0bd80",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-bb-261017.corpus.jsonl",
+				"sha256": "f42f1f0d3f0a0ea2229bb40526508e776fb49274211c0d3a450305725126c05f",
+				"lines": 5022
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/central-america-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america-latest.osm.pbf",
+				"sha256": "1465072b524008baf85a2f4e33cfcf9468729e1f36d1e15cd26c6ebf34b32ac6",
+				"lastModified": "Sat, 17 Oct 2026 22:14:19 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-bb-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "fe4731ba53d2fa8994f736115a7876fb1ad6df95492d88fccb559d668a5036dd",
+				"outline": "/mnt/mw/db/osm/outlines/BRB-ADM0.geojson",
+				"outlineSHA256": "ba0b05fa020e9c41c863e12536408edfbb362877f8fe52f8dd6235c7ee150419",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-bh-261016.corpus.jsonl",
+				"sha256": "571b8314737290325326fcc36c7ffa0ab5066f002fed07f8add9cebed7ba539c",
+				"lines": 1783
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/gcc-states-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf",
+				"sha256": "fafaddcddcd60fad74d9296472847cee10f1770218e4b6a2c21ae1b7f9f1a84f",
+				"lastModified": "Fri, 16 Oct 2026 23:15:46 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-bh-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "7463be08728cbe9abd13ee951e2a8b37ffa6e51d9429e8a78a18f9a47407cbe0",
+				"outline": "/mnt/mw/db/osm/outlines/BHR-ADM0.geojson",
+				"outlineSHA256": "cc75e86fb0075be1635a7e46b502ce055b023a9c05fb71715704e5a8ec123d28",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/SAU-ADM0.geojson", "/mnt/mw/db/osm/outlines/QAT-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-bm-261017.corpus.jsonl",
+				"sha256": "f61a17b016796ef9fcabf926af3ff614e76e422a3d1be7074079811c44ee95f8",
+				"lines": 2922
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/bermuda-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/united-kingdom/bermuda-latest.osm.pbf",
+				"sha256": "19b671c30937abe14e4dea8259619c8da3a47cba30a837a587fb38a4140e444b",
+				"lastModified": "Sat, 17 Oct 2026 22:34:20 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-bm-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "84e19755f390f17fafa900b488229862d50ccda15adbf4cef3a966091cd42750",
+				"outline": "/mnt/mw/db/osm/outlines/BMU-ADM0.geojson",
+				"outlineSHA256": "9ebb77a75466545b591e493b66c44bb82830069df2b2c375d9a17e679be601fe",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-bn-261016.corpus.jsonl",
+				"sha256": "28535264c3e7e718de550ef9940e3809bc5662b398be342f56595e8ec89ab8b0",
+				"lines": 12853
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/malaysia-singapore-brunei-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf",
+				"sha256": "c637d4a385d75d5898fe3ba1316426983f817927921f2a5de679281961771dea",
+				"lastModified": "Fri, 16 Oct 2026 23:20:31 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-bn-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "507155778547e964eb607439806d278067f456ce791499e6eb5c6dce7efcb85b",
+				"outline": "/mnt/mw/db/osm/outlines/BRN-ADM0.geojson",
+				"outlineSHA256": "544e8a3b70531614f1fc0441d0a9ebf5777fe03fbfb1b9d8bc4fd07d81131bfa",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/MYS-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-bs-261017.corpus.jsonl",
+				"sha256": "febf76e3252787e97c0f2d5dbcc9872e31a7794a0f5541ff31765724c31d3ff3",
+				"lines": 6683
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/bahamas-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america/bahamas-latest.osm.pbf",
+				"sha256": "f899543e07e44d6ebcf7aab5b8b005520870438739ae4e90b79b530b2d14800c",
+				"lastModified": "Sat, 17 Oct 2026 22:20:01 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-bs-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "9b2013f5d36b56f0fba4e5f2a56a9cfccbfcfb7c23e1a90ae22a622252d109f3",
+				"outline": null,
+				"outlineSHA256": null,
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-bt-261017.corpus.jsonl",
+				"sha256": "fc433dc97b88344b87afce57996c3d899ecf72f415fdf1137c39f3143310a008",
+				"lines": 6181
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/bhutan-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/bhutan-latest.osm.pbf",
+				"sha256": "92d8ceba86a494b77a5fb189b51c9882b201bf4f16006c57389f6380c926ed34",
+				"lastModified": "Sat, 17 Oct 2026 22:58:24 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-bt-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "3a647fdd86efd6c0ce85e2cf87d2188748fd1142b63b8ee9a56e582907d97d21",
+				"outline": "/mnt/mw/db/osm/outlines/BTN-ADM0.geojson",
+				"outlineSHA256": "035550a8428684b14230fc04bcd48e3b25375f567c654cc1555f7a5eec942eb7",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-bw-261017.corpus.jsonl",
+				"sha256": "bfe73d0bfb20135ce2ade759f04918b96419ef313a8d7d17d4876ca325b6fd3c",
+				"lines": 13650
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/botswana-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/botswana-latest.osm.pbf",
+				"sha256": "ef99d4ebd6f5b3bb2ea2640280a45e66c011b919ee538927fc5da0f2adee59f3",
+				"lastModified": "Sat, 17 Oct 2026 22:55:56 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-bw-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "fac6e8d8ac08ec0b5da2e6a651982b62d09223f24e2ceba5e7897e6b4aac20e1",
+				"outline": "/mnt/mw/db/osm/outlines/BWA-ADM0.geojson",
+				"outlineSHA256": "5c8a003d343caec42c49e9ac79b91db1fb60abedbea3cbf9c22414e6656f3976",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-by-261016.corpus.jsonl",
+				"sha256": "060f0c263e3e9c0c325e9e263941373c1476930e10573962ca149f01097c3e84",
+				"lines": 1149213
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/belarus-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/belarus-latest.osm.pbf",
+				"sha256": "0c87514a41c580e27fca36016f27216e98f69bffd3f09ef60adc4e24300ac5c4",
+				"lastModified": "Fri, 16 Oct 2026 23:42:17 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-by-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "6d039c0aba50be9665ea556577b6ab0ee78bbc014ff205255923cce15a80f928",
+				"outline": "/mnt/mw/db/osm/outlines/BLR-ADM0.geojson",
+				"outlineSHA256": "3e6dc1c38264d87bae4a36d9ec7f4f9d05cb97a22bd1990a684ad937e276e376",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-bz-261017.corpus.jsonl",
+				"sha256": "a8bf8c9d8bccdcc81152ee326e7f83fa48fa43917c792856b1ae9a803aa6623f",
+				"lines": 5666
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/belize-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america/belize-latest.osm.pbf",
+				"sha256": "6aec0d4156f9f6e8259dc8f02b3b27b4cce18f62c8c34e77c158c6484059b07e",
+				"lastModified": "Sat, 17 Oct 2026 22:19:30 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-bz-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "0fd443dfe6f3ad5772b842d2981201e541711fc8a4ea8eb46c960aeee4465e8b",
+				"outline": "/mnt/mw/db/osm/outlines/BLZ-ADM0.geojson",
+				"outlineSHA256": "28c4db1b42b3430600b2692ccf0ebe90dceeb8704a759c6611de3f6c03ffc7af",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-cd-261017.corpus.jsonl",
+				"sha256": "9d694e28c0569850318aaef45fb340966b8395881f01612771779eeec8bdd13e",
+				"lines": 9668
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/congo-democratic-republic-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/congo-democratic-republic-latest.osm.pbf",
+				"sha256": "ec97cb13a8cacbcbc924dbcf4b7fe10e1501345b9af1977a6b9f7c9f77d661d2",
+				"lastModified": "Sat, 17 Oct 2026 22:53:59 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-cd-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "1e86947edc3e19cda7e6f5999314ec21aa84b5f0f7dd32dfc59b8aa1ae1b69f9",
+				"outline": "/mnt/mw/db/osm/outlines/COD-ADM0.geojson",
+				"outlineSHA256": "0fc6c437df9f4b8408a5e20bd0643ba486a75e50db4084493139d4964953d79d",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ci-261016.corpus.jsonl",
+				"sha256": "ff56cc754162db8450cb23800b187eff750c6a868308b9f2a341847285cbeb5f",
+				"lines": 69877
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/ivory-coast-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/ivory-coast-latest.osm.pbf",
+				"sha256": "a609b995e22baad0e768384d14d6774ad13f1f8a89a896db6a9b38395f8d8301",
+				"lastModified": "Fri, 16 Oct 2026 23:04:56 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ci-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "ca57ff8998eb3221dd91c521fc7c06f2bc4b0aa969fd2c4537df8f4b8e03ccb6",
+				"outline": "/mnt/mw/db/osm/outlines/CIV-ADM0.geojson",
+				"outlineSHA256": "423151fa6f9ab251bf97e6beff43a0c5ce6c0ba3163ba4004bdb94711b3ed108",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-cl-261016.corpus.jsonl",
+				"sha256": "d04918c337e08d95721fdac3031cc07761fcd368c3dc2dae139d008fe0b6129a",
+				"lines": 563674
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/chile-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/south-america/chile-latest.osm.pbf",
+				"sha256": "6053796c2d0396d9cc12fbf06c21522e107b476d1303b92e9205e2d35b4277f3",
+				"lastModified": "Fri, 16 Oct 2026 23:34:22 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-cl-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "363cf98f19cbb5f4068c013cca275bcad7b4321d011da98e4dad85a5fa94cfa3",
+				"outline": "/mnt/mw/db/osm/outlines/CHL-ADM0.geojson",
+				"outlineSHA256": "44e1d401a771c6258ab85f9679ab6ca0bc3933a7ba65bb4bde6545d090a83d37",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-co-261017.corpus.jsonl",
+				"sha256": "59ebaf0a76436d2826a853500967334dc5e3798516b9e66e0f22e47eb377ec50",
+				"lines": 45535
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/colombia-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/south-america/colombia-latest.osm.pbf",
+				"sha256": "2c9b0043aa17fd9adfcfc58fdb19411240036a93b0822eaa5e07bdce77bff658",
+				"lastModified": "Sat, 17 Oct 2026 22:32:32 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-co-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "b772fc93c475367c41502bba44262ebcd61181eed61aa902c25bdf16c310e741",
+				"outline": "/mnt/mw/db/osm/outlines/COL-ADM0.geojson",
+				"outlineSHA256": "2e9951c9139bee3de8c81545fd3a767a8b28bbebcd037533fa82a0b16e40b81a",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-cr-261017.corpus.jsonl",
+				"sha256": "4e26a7377bc3be0eb8d18aa8fbe1a45c8e811967bd8a194c15c673497dec464a",
+				"lines": 11737
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/costa-rica-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america/costa-rica-latest.osm.pbf",
+				"sha256": "c78eab0e5967d5dd894e94719e3760c2bfe8a208035219b134b6dacef0344c65",
+				"lastModified": "Sat, 17 Oct 2026 22:19:45 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-cr-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "60fef865b01bf225fc934aa15e78002c4943311523a1430c3b1130d7473eac2b",
+				"outline": "/mnt/mw/db/osm/outlines/CRI-ADM0.geojson",
+				"outlineSHA256": "66db98477fd7c070587696b09d92c322ae2e53e3f4859764da1787a8eb90b521",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-cu-261017.corpus.jsonl",
+				"sha256": "40ae839fd542b429fbb0297bd4faed07847c0a47c83c94f83acc2cd36bce2e9b",
+				"lines": 22431
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/cuba-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america/cuba-latest.osm.pbf",
+				"sha256": "95160bd4076c802c48f2731dd5d51a2bc3eb1f3a24f3998779a911023d43646e",
+				"lastModified": "Sat, 17 Oct 2026 22:19:40 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-cu-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "298b4039b02e7c577264c5cd4fb537e501fc03a3fa0c5f69b57715a88ee38c4f",
+				"outline": "/mnt/mw/db/osm/outlines/CUB-ADM0.geojson",
+				"outlineSHA256": "cc5a3bc1a39e2f5395a129f7adbce7d2b290459ddb3fc1b213e07619052612f0",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-cw-261017.corpus.jsonl",
+				"sha256": "efb0c3633bf2c85f647fd8df778a948ad5135526b950ae8a15cfb89b8ae46486",
+				"lines": 10169
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/central-america-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america-latest.osm.pbf",
+				"sha256": "1465072b524008baf85a2f4e33cfcf9468729e1f36d1e15cd26c6ebf34b32ac6",
+				"lastModified": "Sat, 17 Oct 2026 22:14:19 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-cw-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "e80b74c5609267ed143ae20ca49232363761036a79136f9709abb29daabbe8ec",
+				"outline": "/mnt/mw/db/osm/outlines/CUW-ADM0.geojson",
+				"outlineSHA256": "1ecf3b51b28891da666adc6e85706d5dcc71a081162559d2c5474be1ee07efaa",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-do-261017.corpus.jsonl",
+				"sha256": "28a79ccd968a7286552678fe50477a285be190e986994a152c10a18051683521",
+				"lines": 7390
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/haiti-and-domrep-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america/haiti-and-domrep-latest.osm.pbf",
+				"sha256": "74e1e9565a7df6f8b94e5c02780d79eda9ae155a06fc8a16bfed9cfc50adf8bd",
+				"lastModified": "Sat, 17 Oct 2026 22:19:55 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-do-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "c60b6aa57c0e8854d5ae5eaf6482a006332aac36c17a1021c451d50bf5130e5f",
+				"outline": "/mnt/mw/db/osm/outlines/DOM-ADM0.geojson",
+				"outlineSHA256": "271b81fe9dc134beb53f921969ac2f75cd04acfabc97e00b8955107812a78db9",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/HTI-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-dz-261017.corpus.jsonl",
+				"sha256": "4a8617fb018b2fa418294356614ea3b7c336f6f6cf1d44389e7b2edb46619ec7",
+				"lines": 41141
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/algeria-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/algeria-latest.osm.pbf",
+				"sha256": "94e550ae82120cd21428726e76055c627b96694788ef61b947e6b5713c6bacd8",
+				"lastModified": "Sat, 17 Oct 2026 22:51:13 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-dz-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "a4a10f7393302265ce663c6200ef59e1f79a2cd6b9143cc5b317464fccf82418",
+				"outline": "/mnt/mw/db/osm/outlines/DZA-ADM0.geojson",
+				"outlineSHA256": "f4b58d728a5cad5e147f92fc477eb43c4cd1cd5ab90080b9fec7538c03458c15",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ec-261017.corpus.jsonl",
+				"sha256": "f13671558549c551672ed44619711a3f9ec4dbb5ae2668b8a5137609f7ed5ae8",
+				"lines": 17886
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/ecuador-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/south-america/ecuador-latest.osm.pbf",
+				"sha256": "7f2d6cd864cc6d8990d931b7f66c274946b9eb4ee144999b7ac4548ccfeadbc2",
+				"lastModified": "Sat, 17 Oct 2026 22:31:54 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ec-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "037588d6328707b857baf243384a330fe40b79adaef55bb0c9ec3f4e902c5bb6",
+				"outline": "/mnt/mw/db/osm/outlines/ECU-ADM0.geojson",
+				"outlineSHA256": "523cf48366449bb98d562f61e05ef0a3de9afb82f8c3be7b7409a29d508b1fbf",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-eg-261016.corpus.jsonl",
+				"sha256": "e53b3292a4b13514046c5ecb57e8f99c89165f399a353bb022ab68d64db1906e",
+				"lines": 2621967
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/egypt-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/egypt-latest.osm.pbf",
+				"sha256": "8707cf61c7e5ccc604828aaffded9b8ed571ca1a229f51808b897fd2320f1a7e",
+				"lastModified": "Fri, 16 Oct 2026 22:59:23 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-eg-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "f6857758cc5184d00223984620f9fdfc81087dbabfac094b4001a8f85e7471df",
+				"outline": "/mnt/mw/db/osm/outlines/EGY-ADM0.geojson",
+				"outlineSHA256": "ff68e5e1d78b1e18a2b5e43b4cfde69231da56b556c602e4ee04568db63b1b61",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ge-261016.corpus.jsonl",
+				"sha256": "03e9a1c0c4ca77bec1fbcbcb9231856030d5f5e86fc67f8d0b80ae36b7838d77",
+				"lines": 133787
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/georgia-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/georgia-latest.osm.pbf",
+				"sha256": "b717e5c9bb150a0856f33fc265d418bc61397106f41c8cd3139591175253763e",
+				"lastModified": "Fri, 16 Oct 2026 23:56:31 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ge-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "3256b2d3a928ae2dd63ad6d64e2ce6c45fabb447c59ec6e2fc506995961e0c93",
+				"outline": "/mnt/mw/db/osm/outlines/GEO-ADM0.geojson",
+				"outlineSHA256": "dde0bc1946730be54fcf9e0e72c552953eb1b5848b805583e87fe8ef4c6b6375",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-gg-261017.corpus.jsonl",
+				"sha256": "c413a5f71087262ac8e380efc2a72521c81eb16d7efb6b5bf7772d2c25639933",
+				"lines": 1964
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/guernsey-jersey-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/guernsey-jersey-latest.osm.pbf",
+				"sha256": "be826af79a181b554370b2b739f78f283d3a3144a606252131bc48a33af4034b",
+				"lastModified": "Sat, 17 Oct 2026 23:27:17 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-gg-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "8c6c81d4eaf3dde78d21d772775dabc8e2992d02eba2db0364319af7e8987cd1",
+				"outline": "/mnt/mw/db/osm/outlines/GGY-ADM0.geojson",
+				"outlineSHA256": "a05a097b9ae50942270600237ceb20d62a782707b25cd4ca91af6ae9d6397bda",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/JEY-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-gh-261017.corpus.jsonl",
+				"sha256": "5e66b5e32efdff348c1f43e5b8fabf764fa465b7706a0a829ba2362f80002c3a",
+				"lines": 10887
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/ghana-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/ghana-latest.osm.pbf",
+				"sha256": "f6eb3abac9aa959c255338c5f5e957217ad97d4950c8a5ac838d2554f81af47d",
+				"lastModified": "Sat, 17 Oct 2026 22:56:12 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-gh-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "cce00a606a270f24e2fc38908a552d5cfe749ad2a44df67722fa7a05bf46a6b0",
+				"outline": "/mnt/mw/db/osm/outlines/GHA-ADM0.geojson",
+				"outlineSHA256": "7a7c33572d10aa6652c24abb78a0d5df2fa420376680678d67788aa12b971358",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-gl-261017.corpus.jsonl",
+				"sha256": "b6015780bb4c8a23a4690365acc173c3b9be748abf72d60e70f66aa500d3668d",
+				"lines": 8628
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/greenland-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/north-america/greenland-latest.osm.pbf",
+				"sha256": "a2a6836ca86829af2dd08a99dd0c1c5a70ae5a23f65d99930d627bb8e1ad7d72",
+				"lastModified": "Sat, 17 Oct 2026 22:39:45 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-gl-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "9ffdc7a50c068f6aab6f2f06b08bb92556a55aae7f21cdfd0876496ca9b532f1",
+				"outline": null,
+				"outlineSHA256": null,
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-gt-261017.corpus.jsonl",
+				"sha256": "d649d2e035ef754a4144deec502a812dd0ce5ae5149ad12640ca8672bc725f34",
+				"lines": 15770
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/guatemala-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america/guatemala-latest.osm.pbf",
+				"sha256": "0143d24c3b5d10833b62ae71a3149f014e06d3ad85b6abb98b043dc7e58051ac",
+				"lastModified": "Sat, 17 Oct 2026 22:20:00 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-gt-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "64fca47a321d6be496009186779d67dedca9a0ffd70fb19a7b00611ca8db6b3a",
+				"outline": "/mnt/mw/db/osm/outlines/GTM-ADM0.geojson",
+				"outlineSHA256": "8b0d78e7644ff8919e1b478260b71bb1f15af29e4eeba758be3346cd018e1d32",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-hk-261017.corpus.jsonl",
+				"sha256": "caaf7e806dff18cf42676fca681ebe5223804ff287870dfcca29da95bd35c94b",
+				"lines": 63725
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/hong-kong-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/china/hong-kong-latest.osm.pbf",
+				"sha256": "14e3595c0a1862f5fb6e59eb2809b48b61832e59a1a8935dda643dfbabde3b96",
+				"lastModified": "Sat, 17 Oct 2026 22:29:26 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-hk-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "865c68f69b7c72d8de87aa456f0543f9eebf80f0e5381c22fe9d3765c8d686ce",
+				"outline": null,
+				"outlineSHA256": null,
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ht-261017.corpus.jsonl",
+				"sha256": "17b6b4015c67a01b62a5e5993e199be2253ffc17bbf14819fc103756c938ba5b",
+				"lines": 9116
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/haiti-and-domrep-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america/haiti-and-domrep-latest.osm.pbf",
+				"sha256": "74e1e9565a7df6f8b94e5c02780d79eda9ae155a06fc8a16bfed9cfc50adf8bd",
+				"lastModified": "Sat, 17 Oct 2026 22:19:55 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ht-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "1bb92bc0d37da1b9f0aa46024ca9fbca4b96d292b276471202a14f5b8e02dd2a",
+				"outline": "/mnt/mw/db/osm/outlines/HTI-ADM0.geojson",
+				"outlineSHA256": "6029d87d264af82b36b54ba2b611d0edd6da56a33fc78fee50b580fd1bfd3010",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/DOM-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-iq-261017.corpus.jsonl",
+				"sha256": "53bc106cf5f9789bf2c8bbcddb687a82ba6cedabd275d391e09d1614fee43444",
+				"lines": 17653
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/iraq-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/iraq-latest.osm.pbf",
+				"sha256": "6efe6d86a905226294a4525e95886fef4c0f346bcb752d36bcfd3132dc60d9a4",
+				"lastModified": "Sat, 17 Oct 2026 23:01:37 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-iq-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "e2e13949a5a709d4b94e0f34e57e04e08f2b9867348e24d6e289b232f1e1c743",
+				"outline": "/mnt/mw/db/osm/outlines/IRQ-ADM0.geojson",
+				"outlineSHA256": "fd6bea9e566a234d85ff59efd9cb17e411df7ea5dd469923a1461d6cd975fd0c",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ir-261017.corpus.jsonl",
+				"sha256": "186e4595a036429cab5d54e21122123025bcacec5169d7981f339adae5d259f6",
+				"lines": 19637
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/iran-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/iran-latest.osm.pbf",
+				"sha256": "7060fbb5b6ae23acb20b3a376df8404ebec43c81fbc3b71b78f7cbf9c312198f",
+				"lastModified": "Sat, 17 Oct 2026 22:59:26 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ir-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "88eefaf378a32ae66c77ac224812accbecec70fcd9738d780081a527a809dd6d",
+				"outline": "/mnt/mw/db/osm/outlines/IRN-ADM0.geojson",
+				"outlineSHA256": "f8eceb5bd6d43ed01f57b37fb946625a39e0756a8d35a884cd95130ceba6fc1e",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-je-261017.corpus.jsonl",
+				"sha256": "eabb02e57bdbdfa518fe9bb9178a4831e0422e774ae8ac13ef962abf5f1197d9",
+				"lines": 1717
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/guernsey-jersey-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/guernsey-jersey-latest.osm.pbf",
+				"sha256": "be826af79a181b554370b2b739f78f283d3a3144a606252131bc48a33af4034b",
+				"lastModified": "Sat, 17 Oct 2026 23:27:17 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-je-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "866d97a805390ed48e6843ced1b08e1cdcb6c9acd6019caa125fc4c68512348f",
+				"outline": "/mnt/mw/db/osm/outlines/JEY-ADM0.geojson",
+				"outlineSHA256": "7d7468b4084305e8e2a5e67697d35e6d12c928e780eff884577b6058a92642fc",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/GGY-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-jm-261017.corpus.jsonl",
+				"sha256": "26727554cdc67f63c3e2555ec53dea83bf8ce7d90f01eb27c1f235fdd203ac69",
+				"lines": 4471
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/jamaica-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america/jamaica-latest.osm.pbf",
+				"sha256": "ecffc063bc9aa7bb5eea371f115bfad567a1ffae85afd130fd121d5f21637ebb",
+				"lastModified": "Sat, 17 Oct 2026 22:19:22 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-jm-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "90039d6f783263127ebfbc3ae82b097c4268d9d55fa6cc4cd90459b33082bf0a",
+				"outline": "/mnt/mw/db/osm/outlines/JAM-ADM0.geojson",
+				"outlineSHA256": "50f195907246be126dceff209cb954b0d542b057134aad5df82dd05dfe246655",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-jo-261017.corpus.jsonl",
+				"sha256": "157e1eb1951ad4d2983e9a6f3b668b135c027f876c3b1e370a858350c33b3fab",
+				"lines": 20781
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/jordan-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/jordan-latest.osm.pbf",
+				"sha256": "b253d2b024c7d101bc677755745faf55e88bd4a67e7a9d9b79e69a24254fad2d",
+				"lastModified": "Sat, 17 Oct 2026 22:58:06 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-jo-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "ed96ac4f5f3bd22477ab3f8de24125e12fdb6ebc89f4be7fe7380c442a895be1",
+				"outline": "/mnt/mw/db/osm/outlines/JOR-ADM0.geojson",
+				"outlineSHA256": "9234e16ba454e5f5ffc43d34a5941c2f98c7727f2d559c4195006f7d86b72c7d",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ke-261017.corpus.jsonl",
+				"sha256": "1546f1317416e772b90c747220902cc5f84ef883a9fc7b75b6a974e70e054e8b",
+				"lines": 2157
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/kenya-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/kenya-latest.osm.pbf",
+				"sha256": "6d880aa988168b00cc0e81ef756d0796f7ae005bc7df9180fab0db3cb4f5035e",
+				"lastModified": "Sat, 17 Oct 2026 22:54:42 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ke-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "3fce43db357ade3c4009ad704c91f9b5fad6f49308edb825e7d1270660341092",
+				"outline": "/mnt/mw/db/osm/outlines/KEN-ADM0.geojson",
+				"outlineSHA256": "89248c71d10e86d76a2ca336aa2444aac9901651c9cdb974a83f29fbb72c55fa",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-kg-261016.corpus.jsonl",
+				"sha256": "e7da06c7ff4c00317f69d80124b2129ae6106a183f37c0d463f6997ec720c999",
+				"lines": 99388
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/kyrgyzstan-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/kyrgyzstan-latest.osm.pbf",
+				"sha256": "6f57ac7c277d62ea919ef39d03468db9a2fef35a7f3855496044f68ea39b6245",
+				"lastModified": "Fri, 16 Oct 2026 23:19:05 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-kg-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "10cfeaf3feffcb2bcabd420ca48c905c9ae5e7af649c4231f9b954a77b97f7ae",
+				"outline": "/mnt/mw/db/osm/outlines/KGZ-ADM0.geojson",
+				"outlineSHA256": "a351671d0b922acca947522284384f3e29c4039e738e60b5d71cd31321c1d8f3",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-kh-261017.corpus.jsonl",
+				"sha256": "67f75939a5afecc2c99c01141199cde99b839a02660a3481db1c56976a197338",
+				"lines": 2342
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/cambodia-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/cambodia-latest.osm.pbf",
+				"sha256": "3e775ff12e5ebb13583fa24d417780e11b2de2402baccf28416eb4cbfde5e330",
+				"lastModified": "Sat, 17 Oct 2026 22:23:02 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-kh-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "5cb4f226b26dbbe1f441e01515b8d583fa55698e8526ddbd280b4bdbb40f3ae7",
+				"outline": "/mnt/mw/db/osm/outlines/KHM-ADM0.geojson",
+				"outlineSHA256": "a44140ae62a1dbe8d7cb176bc9b8afc38a65df66c05f84edba2b8b86a8fb4649",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-kw-261016.corpus.jsonl",
+				"sha256": "50ded674d79c3a8be30807621077e7923999a4744c198e134ddc53f6f319a7b1",
+				"lines": 147467
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/gcc-states-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf",
+				"sha256": "fafaddcddcd60fad74d9296472847cee10f1770218e4b6a2c21ae1b7f9f1a84f",
+				"lastModified": "Fri, 16 Oct 2026 23:15:46 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-kw-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "fb2c9b83cab9af7ff0e38eafbfe6b3cf04ef010c0fa01114426be58d2d73c801",
+				"outline": "/mnt/mw/db/osm/outlines/KWT-ADM0.geojson",
+				"outlineSHA256": "ee9a6ab896afa735109d5bde836abfbde79c3413a358d4a2a62392dec929e100",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/SAU-ADM0.geojson", "/mnt/mw/db/osm/outlines/IRQ-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-kz-261016.corpus.jsonl",
+				"sha256": "807ec5a38d225dd215dbc937f838d3b164f813be8e53c6eb283e2ca1dc2c8f7b",
+				"lines": 1295806
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/kazakhstan-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/kazakhstan-latest.osm.pbf",
+				"sha256": "e9f4c3a39c744d734d5d590f3697d08804e4a3ccbe51977cc475aa78cae91e1d",
+				"lastModified": "Fri, 16 Oct 2026 23:18:59 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-kz-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "b8383a9b36de0d95dc29b76940e6201a8fcb2c6cd1aaef35ccb82c628c409f2f",
+				"outline": "/mnt/mw/db/osm/outlines/KAZ-ADM0.geojson",
+				"outlineSHA256": "244f11881bcbfcfc58f74e53db89f844f033d090a9d087b888a90688561a7107",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-lb-261017.corpus.jsonl",
+				"sha256": "05fdfe656a23b2238aa40c33c1d20c956cc643c1d445b9cd56e13d743c8611de",
+				"lines": 1480
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/lebanon-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/lebanon-latest.osm.pbf",
+				"sha256": "7063508c38cadf89a68a2f652edbb67e170e9fb5c01a5e71898290fcdf6562ee",
+				"lastModified": "Sat, 17 Oct 2026 23:01:44 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-lb-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "ed0b13fa2a9fe4c4b401572c48192d1b2dee6a50d93a318e2b4ea37bea0f67b9",
+				"outline": "/mnt/mw/db/osm/outlines/LBN-ADM0.geojson",
+				"outlineSHA256": "e72382a086c0aed8fb19c6895a1bdf212264f180f4439143b759f24a3ad395f2",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-lk-261017.corpus.jsonl",
+				"sha256": "281ea286ccd4a8c72751b84b2dfe2b4439eb4d35404bb5097e0d26a678ceee16",
+				"lines": 5942
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/sri-lanka-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/sri-lanka-latest.osm.pbf",
+				"sha256": "5b923c1e27c2cf536a042c2514461b3fbca05797913c8c3d1a783b03f122f149",
+				"lastModified": "Sat, 17 Oct 2026 23:00:53 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-lk-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "ec366151358e3374af44d0e5f41f23f82364eb205dbe6969ca1c8c44dcad5e05",
+				"outline": "/mnt/mw/db/osm/outlines/LKA-ADM0.geojson",
+				"outlineSHA256": "8f4eb476e3861d778ab1e7fa8f691ff1e16a449e1ca2b762f7d4af1ac7a94875",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-lr-261017.corpus.jsonl",
+				"sha256": "5b1debc21bb875cfe70dc016362d2fec537f253043e6a16dd2e9f4a1cf2ac9e4",
+				"lines": 1098
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/liberia-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/liberia-latest.osm.pbf",
+				"sha256": "0c0c46b416b3627b20219ad8a3482792e5ebe09b9d82af91d569e5b4323f5fa0",
+				"lastModified": "Sat, 17 Oct 2026 22:51:02 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-lr-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "5515b4f5dc59e5b2905fd4a6455ffa768d15f62bb5cfc86d67121f38c2a3408c",
+				"outline": "/mnt/mw/db/osm/outlines/LBR-ADM0.geojson",
+				"outlineSHA256": "006ce8b7440a5b2dae12bf5f7bebe90b34d4c53c22cd23ff84757d92dcae1093",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ma-261017.corpus.jsonl",
+				"sha256": "c3523e9e3ee6161a1a5dda09b940bb8bcf9aa3590f13506e088bc97fb2e0a42b",
+				"lines": 16313
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/morocco-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/morocco-latest.osm.pbf",
+				"sha256": "ff97a9301824be53e58402e6758b1077635c28261a20eb12c8618b342113ba78",
+				"lastModified": "Sat, 17 Oct 2026 22:51:58 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ma-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "11caa5010146160451be5449894a5c7778b82fd97ff47db4c9d9b88a1c1f0e45",
+				"outline": "/mnt/mw/db/osm/outlines/MAR-ADM0.geojson",
+				"outlineSHA256": "02b24d4b9540e2760584d9a89fe0c1f4c6393b2adeb8e69d226c4fd90e9ff3ce",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-md-261017.corpus.jsonl",
+				"sha256": "3693f0ae200a4aecec2fe6ea12c5823349d63ad15f4bacc0e78dc7ad2ea272d5",
+				"lines": 1016889
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/moldova-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/moldova-latest.osm.pbf",
+				"sha256": "045811689ee812137ee83665747ee719708ee141182282a0d1a2d90d07cc4c1c",
+				"lastModified": "Sat, 17 Oct 2026 00:06:11 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-md-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "a1483ed4ce9116619fa97b7fa482c5067eabdabcaffc3780119540ef74443c79",
+				"outline": "/mnt/mw/db/osm/outlines/MDA-ADM0.geojson",
+				"outlineSHA256": "0721c988a6faf135d4915ee466fb7fe461bc110d98a5881f23846548b3b9709d",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-me-261017.corpus.jsonl",
+				"sha256": "3e487798bddd20e49f929a3b49af512c4fd5e7f57640137672e1bc3b63a2c71d",
+				"lines": 7936
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/montenegro-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/montenegro-latest.osm.pbf",
+				"sha256": "574423f1685e7b0a82a14166ba492376fc824294680ea0c576426ff408230397",
+				"lastModified": "Sat, 17 Oct 2026 23:28:44 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-me-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "4cd2a6b1cacddeb5850edd4f2453d9d2e9cb6fcab5347474faeb31a7af33f1d2",
+				"outline": "/mnt/mw/db/osm/outlines/MNE-ADM0.geojson",
+				"outlineSHA256": "b3991446cfdd7a5101ee0d227007269ab9f4cb83e971ef16ad2335058a967fe3",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-mg-261017.corpus.jsonl",
+				"sha256": "bcf03b1c42ccd397b618c57865eb6f1a64b4f0a3776555039d3fa3651594fcd6",
+				"lines": 6124
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/madagascar-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/madagascar-latest.osm.pbf",
+				"sha256": "928b21d03f685d27efec6889dbff1996a145a4839e1061189e5c14b7fbcfef19",
+				"lastModified": "Sat, 17 Oct 2026 22:53:17 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-mg-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "aca4554144445db62ed9fcc3707245ec91ee7fd4c8e7f8b782fc5b8be1480fe3",
+				"outline": "/mnt/mw/db/osm/outlines/MDG-ADM0.geojson",
+				"outlineSHA256": "64b4009b68516f7bbf01e0dbc1a6c7b2d539db24320bf6002f3ee4d34c23a651",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-mk-261017.corpus.jsonl",
+				"sha256": "23a7be3ba58bb74dda68288e79a542a02cec4e134c87e537252e3ce1c0e9db2c",
+				"lines": 14813
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/macedonia-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/macedonia-latest.osm.pbf",
+				"sha256": "4ef50ae1bc75bf8e6d1db9e9b90f8642d735f9c245e0ebc415f1cb92d0fee27e",
+				"lastModified": "Sat, 17 Oct 2026 23:29:58 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-mk-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "36bae9923d10403c3de652012b8df34097ce4a70f6149345c63a6316447e79a3",
+				"outline": "/mnt/mw/db/osm/outlines/MKD-ADM0.geojson",
+				"outlineSHA256": "958bca8dbec85a1d64e2454a40e48f169477234082fcfb189cf1a0b6ef3088b3",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-mm-261017.corpus.jsonl",
+				"sha256": "7568d55eadcfd64b7d7260cdb5d64b2cadb271be26519f489bb373d1115993bc",
+				"lines": 5490
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/myanmar-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/myanmar-latest.osm.pbf",
+				"sha256": "77a13408d6115b7baea670ef75e36519d5ea346c6e04d709c2a11bd48db05323",
+				"lastModified": "Sat, 17 Oct 2026 22:58:16 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-mm-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "4006b9a2b30308cdaa0fade7b36612356c82e153a763988b9ddba9e7335b4aca",
+				"outline": "/mnt/mw/db/osm/outlines/MMR-ADM0.geojson",
+				"outlineSHA256": "5857a9a0d091b68c2b8e07fd9e8edb1fa0cd7e8b6cad87651dcd1419e4103874",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-mn-261017.corpus.jsonl",
+				"sha256": "a15acbc75cf08ba04bbae5d5db42565b4fcc26ffe69a72234c6ef0f764bbaa52",
+				"lines": 5703
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/mongolia-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/mongolia-latest.osm.pbf",
+				"sha256": "3e4c05182863c442220af816ed45d7b9b63316783ad600fa4c3ba87079d23410",
+				"lastModified": "Sat, 17 Oct 2026 22:59:51 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-mn-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "152b4630fa65fc4754029873835cf3d944ff4289c501e7c186d2fcbda0d5612d",
+				"outline": "/mnt/mw/db/osm/outlines/MNG-ADM0.geojson",
+				"outlineSHA256": "c96bc3bedb2ad081b1afe5192522da91265c68a4cae96e79caf8996b2026349a",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-mo-261017.corpus.jsonl",
+				"sha256": "90b9a2067113bb7a43051ec784716faeb9ae0f49ade89019cfd6a78cf21153df",
+				"lines": 12975
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/macau-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/china/macau-latest.osm.pbf",
+				"sha256": "99cc0dcd843cb162b03cf3f147aea11a35791914efcdae47684a4d971cddf1c5",
+				"lastModified": "Sat, 17 Oct 2026 22:29:45 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-mo-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "6905d3c7fcc7abfa3554d35d49a04eaae74d6871ef529649b2bf39b94e0b1ade",
+				"outline": null,
+				"outlineSHA256": null,
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-mt-261017.corpus.jsonl",
+				"sha256": "4a0f552d7bf7f0f47881a977938e8adba6b79a580df10c9b79b2968eb113eb63",
+				"lines": 4488
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/malta-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/malta-latest.osm.pbf",
+				"sha256": "f67dc3fe128a53a55d173f7340170f00b577108b8384f688613550678b5d142a",
+				"lastModified": "Sat, 17 Oct 2026 23:10:30 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-mt-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "cb42a2e772e7d2afdc83114d84e844433eae611cc186b795430cf7009eacdaaf",
+				"outline": "/mnt/mw/db/osm/outlines/MLT-ADM0.geojson",
+				"outlineSHA256": "6fdd6eac31cb0c76f29a119731f0705c7e4cc46459ba8ad11e7d85539e0bcb5b",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-mv-261017.corpus.jsonl",
+				"sha256": "b4d7103f769c2de5fd07f12ba5d2f29487545edf86c38fa8f992191c0a3dcf9b",
+				"lines": 2507
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/maldives-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/maldives-latest.osm.pbf",
+				"sha256": "27e20973e256e99588e37501d459e682e6c1a794d1e68d25eac02462154eeb26",
+				"lastModified": "Sat, 17 Oct 2026 22:24:50 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-mv-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "4db1a8854fc093ee86d910af096150025804308e6828549e5f514692381353a6",
+				"outline": null,
+				"outlineSHA256": null,
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-my-261016.corpus.jsonl",
+				"sha256": "ce620852c48f0d43169af755d2f80e6df436c2ee9a975c72e54852c30fe8949a",
+				"lines": 189406
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/malaysia-singapore-brunei-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf",
+				"sha256": "c637d4a385d75d5898fe3ba1316426983f817927921f2a5de679281961771dea",
+				"lastModified": "Fri, 16 Oct 2026 23:20:31 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-my-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "b623294af0c0233deed6d13eb9a1977e407aa35908ff11d4042ecf251e54e4b5",
+				"outline": "/mnt/mw/db/osm/outlines/MYS-ADM0.geojson",
+				"outlineSHA256": "20ffa28d8b7980060d43418a6a4a250ffdbcd805c514189accec9f799a181d77",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/SGP-ADM0.geojson", "/mnt/mw/db/osm/outlines/BRN-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-mz-261017.corpus.jsonl",
+				"sha256": "4622c57b6b496d8eb8ba7ee8024000563dd2965dbb3e290e346dc90be06746b9",
+				"lines": 2163
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/mozambique-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/mozambique-latest.osm.pbf",
+				"sha256": "343e93edb11628905d8031250ff87c3434f7ed758cbcb9f1ec0338fad50ad940",
+				"lastModified": "Sat, 17 Oct 2026 22:52:27 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-mz-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "a47ca7ecc79997269fca1c66286aa33876c26119957e6e0cd7ba9537413d4f08",
+				"outline": "/mnt/mw/db/osm/outlines/MOZ-ADM0.geojson",
+				"outlineSHA256": "54a782b09144b9715c1a2cbc251e72f904ec60ab98fe522daf5e200f34167960",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-na-261017.corpus.jsonl",
+				"sha256": "61090ecf489356fca738f57cd96a9ead886f6ddb63d3c33471442dd3b3596dca",
+				"lines": 3058
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/namibia-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/namibia-latest.osm.pbf",
+				"sha256": "e642c0526456751245ea10040804c3378f8d69081d4e5b25cabc3a15ea57794d",
+				"lastModified": "Sat, 17 Oct 2026 22:54:31 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-na-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "f105a467c2daa77b6f759362333c4aa6623d02135db154880a18f8322aaa542e",
+				"outline": null,
+				"outlineSHA256": null,
+				"excludedOutlines": [
+					"/mnt/mw/db/osm/outlines/ZAF-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/BWA-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/AGO-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/ZMB-ADM0.geojson"
+				],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-np-261017.corpus.jsonl",
+				"sha256": "f29421bec94dc1df9c538c165f7266decb2c46d50478e3311912f839b1dcda22",
+				"lines": 10040
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/nepal-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/nepal-latest.osm.pbf",
+				"sha256": "285ba788510e9dd35509aef13a263f09fc36d4e992b80e977d58355478355cd0",
+				"lastModified": "Sat, 17 Oct 2026 23:02:30 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-np-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "03f0fcc84c41d8a66aa577fcc9a483f5dcb46a2680e3176c8fb7c89f472aa83e",
+				"outline": "/mnt/mw/db/osm/outlines/NPL-ADM0.geojson",
+				"outlineSHA256": "fc0f32802e64cb5e9c95a11af4ad2d3589df8406476707c974c4f8bb9ee07004",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-om-261016.corpus.jsonl",
+				"sha256": "fb616c4955004bc207478e7492f6740884fffb4dc31dabd8b29e2fa7763e3ff9",
+				"lines": 1321
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/gcc-states-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf",
+				"sha256": "fafaddcddcd60fad74d9296472847cee10f1770218e4b6a2c21ae1b7f9f1a84f",
+				"lastModified": "Fri, 16 Oct 2026 23:15:46 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-om-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "89557439e7c505617695abf9c3e9f8bab433ba9a494510cd1be3abbf813e326d",
+				"outline": "/mnt/mw/db/osm/outlines/OMN-ADM0.geojson",
+				"outlineSHA256": "b0a867aca1ebfe9428f32bca63417d726683fd87249f998466b369f2a83ef4f2",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/ARE-ADM0.geojson", "/mnt/mw/db/osm/outlines/SAU-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-pa-261017.corpus.jsonl",
+				"sha256": "44c224af1341c1c57e345ce5d106f904796bc47a791c822fb23ab2e545d54adc",
+				"lines": 11947
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/panama-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america/panama-latest.osm.pbf",
+				"sha256": "d5cdd83e690029dd2e005ac99c43cc97255e3ea9a28699438098707b8906fd12",
+				"lastModified": "Sat, 17 Oct 2026 22:19:38 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-pa-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "68f15c4afbe91c6863ec5c884205ed8454c4975d85826a29953183645a6e66b3",
+				"outline": "/mnt/mw/db/osm/outlines/PAN-ADM0.geojson",
+				"outlineSHA256": "bcd13a0fb945586315b8501513a89d44ac66bd9f51a2b77bc3167371da2f7f46",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-pe-261016.corpus.jsonl",
+				"sha256": "57b8add1b004fc2d58531a2177517becf923268bd04d2394ba93d9bae888ed63",
+				"lines": 357374
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/peru-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/south-america/peru-latest.osm.pbf",
+				"sha256": "d9375cd7a5ff27ddd60a9311cb14e405df1d0d247b0bd3b4d6d68a8bb1ee787a",
+				"lastModified": "Fri, 16 Oct 2026 23:33:18 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-pe-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "d6c086abd4da4ebce008a1449cef2c2f6f5cdc19171521441fb8dfd03f3ce3d0",
+				"outline": "/mnt/mw/db/osm/outlines/PER-ADM0.geojson",
+				"outlineSHA256": "d83dcbb7b9bdc23afac26eebb5eee2806914279cc6b5802d83f79025223595da",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-pf-261017.corpus.jsonl",
+				"sha256": "1aa55fd2b6276ccd8f3a8113d48360da7090309c4677a06d6374d8b06e1c2315",
+				"lines": 4619
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/polynesie-francaise-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/australia-oceania/polynesie-francaise-latest.osm.pbf",
+				"sha256": "774229fefb21be33e5eb7bc4eb03608d4f040ac2048a43a97c8680830c25314a",
+				"lastModified": "Sat, 17 Oct 2026 22:21:14 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-pf-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "e8f5fb37bd2bc72066650bb2b0674cfc3d42b4d58f6c84742691ff72a792efab",
+				"outline": "/mnt/mw/db/osm/outlines/PYF-ADM0.geojson",
+				"outlineSHA256": "fa5ca0f40b281e9aba3848f3fe7459d751e3e35e0f8dd53a0435bb46ad320bc3",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ph-261016.corpus.jsonl",
+				"sha256": "6c88660856ed1b7e0e1280fee14c0f1115a7ab052106d7dc1a3a69d5934e7a16",
+				"lines": 88772
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/philippines-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/philippines-latest.osm.pbf",
+				"sha256": "54b2bbf01d99353f8eb1762cdbc073629d8617f754871461817cbb88fefb0466",
+				"lastModified": "Fri, 16 Oct 2026 23:16:16 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ph-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "59e64f581adc3e30222648953de83b1b477afdcbd08545203882d7456a96d13a",
+				"outline": "/mnt/mw/db/osm/outlines/PHL-ADM0.geojson",
+				"outlineSHA256": "7c3a7a39dacb5fb0c14d150061306fa5839455fbf93231854af3c6d74a1fa24f",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-pr-261017.corpus.jsonl",
+				"sha256": "ac4d2f150cf86e30e28b92632307cba6882b45a3e541a8e42cf9aff20566ad03",
+				"lines": 114537
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/puerto-rico-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/north-america/us/puerto-rico-latest.osm.pbf",
+				"sha256": "1b53dd6ef7d64085b6d7a9995ff73f7b143d84556a650e40831990e1fde53b9e",
+				"lastModified": "Sat, 17 Oct 2026 01:05:39 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-pr-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "5dd1a6599ffee1fd833e0bbf2b5144182771018aa0892f7015af9c923e7b3aee",
+				"outline": null,
+				"outlineSHA256": null,
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-py-261017.corpus.jsonl",
+				"sha256": "6c3fc0efa089b5b7d9cda841ba8e030e8b6445d3075bf4b745e33db79186cb8d",
+				"lines": 5635
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/paraguay-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/south-america/paraguay-latest.osm.pbf",
+				"sha256": "d1f1adcf37a621890206724d73c226ff35e5bb388db509ac4d67cf138a48ae07",
+				"lastModified": "Sat, 17 Oct 2026 22:32:05 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-py-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "ab7a31d8fffb7c957aa5c3acd91102764fa7d68f7a6c3b1c1559cc740f96cf8c",
+				"outline": "/mnt/mw/db/osm/outlines/PRY-ADM0.geojson",
+				"outlineSHA256": "bd59339058c2d8a7acb31119076899723709d874b051cc06a2a8e88dfa99b265",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-qa-261016.corpus.jsonl",
+				"sha256": "7fa076b73f63301addba8e0934b4c4531cdd1e282802866562fa05c0b57947a3",
+				"lines": 1561
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/gcc-states-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf",
+				"sha256": "fafaddcddcd60fad74d9296472847cee10f1770218e4b6a2c21ae1b7f9f1a84f",
+				"lastModified": "Fri, 16 Oct 2026 23:15:46 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-qa-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "110eb0c2c0c1ea4148a4144c2beaa35c58c7a75ab8a7d92c91511f43edf487e0",
+				"outline": "/mnt/mw/db/osm/outlines/QAT-ADM0.geojson",
+				"outlineSHA256": "2a14d3068d2fc131ed411d9db187a1579f6d207d4c577bd453920213b8193ee9",
+				"excludedOutlines": [
+					"/mnt/mw/db/osm/outlines/SAU-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/ARE-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/BHR-ADM0.geojson"
+				],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-rs-261017.corpus.jsonl",
+				"sha256": "1790a366b518973f6e1b986f9fba7320d84d734c1985082d4629116e8102aa17",
+				"lines": 2502837
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/serbia-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/serbia-latest.osm.pbf",
+				"sha256": "475f6a6f25ded49249fe71e81f0e145debecf0c73cb1cd074183a55be0f37113",
+				"lastModified": "Sat, 17 Oct 2026 00:02:31 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-rs-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "80733f41c3fdb0fde0abb83b3511e3bb3e077772a0986a4225fd659acde96bd0",
+				"outline": "/mnt/mw/db/osm/outlines/SRB-ADM0.geojson",
+				"outlineSHA256": "e3f63f5b8f1a8259f671ff504436cd99e490ae099fe6c57511cc16f55ceddfde",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-rw-261017.corpus.jsonl",
+				"sha256": "ae93687434d83eefcfef4edf212e4893fac10f4b67609e5c533ef0dc6bff9b24",
+				"lines": 3267
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/rwanda-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/rwanda-latest.osm.pbf",
+				"sha256": "246fcb5bbe664ee58dbaa609121d74d9e12b09a8dbe1090db21e05e6917e8cfa",
+				"lastModified": "Sat, 17 Oct 2026 22:52:52 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-rw-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "324ec7bb9f7eece426a9029d3235e1dcc2dc544c9280d72de25782bac5307a28",
+				"outline": "/mnt/mw/db/osm/outlines/RWA-ADM0.geojson",
+				"outlineSHA256": "4aff3394463aaa84d8c0592260aa0f04009a7d555781c2530b65b533e18bb507",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-sa-261016.corpus.jsonl",
+				"sha256": "0abac450bf7f8dbda1e34fcff230b4eaf4b0a3c99cd9bafcb70375ea1c87b5d1",
+				"lines": 10300
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/gcc-states-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf",
+				"sha256": "fafaddcddcd60fad74d9296472847cee10f1770218e4b6a2c21ae1b7f9f1a84f",
+				"lastModified": "Fri, 16 Oct 2026 23:15:46 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-sa-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "0d65ec02c1d10ec300c9edafe1ec0bef4679f61e13ed93da78518e297b8775d0",
+				"outline": "/mnt/mw/db/osm/outlines/SAU-ADM0.geojson",
+				"outlineSHA256": "665890080c978f7acdf4b10b814436cc305a5c37d5c7ad406856714a9a3843c5",
+				"excludedOutlines": [
+					"/mnt/mw/db/osm/outlines/ARE-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/OMN-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/QAT-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/KWT-ADM0.geojson",
+					"/mnt/mw/db/osm/outlines/BHR-ADM0.geojson"
+				],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-sm-261018.corpus.jsonl",
+				"sha256": "04b14197957c3f35da62e4e25f4a7e4c3a65f7fb85f583e97bbd69069a49585e",
+				"lines": 11558
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/italy-261018.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/italy-latest.osm.pbf",
+				"sha256": "d6274130e33b3de6f2e756dd9fe5ad9c4e2d2fb4c377789aeaf10405cdc2d590",
+				"lastModified": "Sun, 18 Oct 2026 00:28:12 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-sm-261018.corpus.jsonl.stats.json",
+				"statsSHA256": "a0043bf897f2c82f8b159140dd026776a2a1c17362b80b7cdd75d0b3435edfad",
+				"outline": "/mnt/mw/db/osm/outlines/SMR-ADM0.geojson",
+				"outlineSHA256": "2109c65de0bcba5bc61e6d227e1c5669f8244c436fbb433f8a7405c3e8031bed",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/ITA-ADM0.geojson", "/mnt/mw/db/osm/outlines/VAT-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-sn-261017.corpus.jsonl",
+				"sha256": "e862622c5fafc0ee40d1aec26746da076f448cc8ec578c3472cda61670fae833",
+				"lines": 2357
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/senegal-and-gambia-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/senegal-and-gambia-latest.osm.pbf",
+				"sha256": "257c2b01648f9519f2bcbd222d7c51b6c3c40ce4dcd1a83fefc20e924ed14219",
+				"lastModified": "Sat, 17 Oct 2026 22:52:00 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-sn-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "96509137cf8f8fe8aa57b86b24c4241f2e5ee5229f72d956fe16f3f1485cbb39",
+				"outline": "/mnt/mw/db/osm/outlines/SEN-ADM0.geojson",
+				"outlineSHA256": "5981c7c9f55d4d58d42c37ddab83717046584ffdcd9489cef818fd3db59ec765",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/GMB-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-sr-261017.corpus.jsonl",
+				"sha256": "fd23d8ab13ac84068fea993dd539733c7edf0f4a749f247be5fe3ffe5b658abd",
+				"lines": 7903
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/suriname-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/south-america/suriname-latest.osm.pbf",
+				"sha256": "4042f210e126174cee6496d537f70bd1ff7407750b937d565bcc164597441023",
+				"lastModified": "Sat, 17 Oct 2026 22:32:01 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-sr-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "d97f058f79a030c4defa2ee43ee6fcd9bb79b7b3af57714ef5ad94f346ccbe97",
+				"outline": "/mnt/mw/db/osm/outlines/SUR-ADM0.geojson",
+				"outlineSHA256": "76a366acc169c28c9a921e6fa125db0682eadeec13fd952874f015bc91e4ad6d",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-sv-261017.corpus.jsonl",
+				"sha256": "024869c7b89ff29c5d721d290a4fdbb8063536854599f684d8488088eef8e7f2",
+				"lines": 5452
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/el-salvador-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america/el-salvador-latest.osm.pbf",
+				"sha256": "6ef537ffe0fd567cd13afc838fe1ed4428c0fb9886b4399359c2c64ad8d3ea18",
+				"lastModified": "Sat, 17 Oct 2026 22:19:18 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-sv-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "e675d8762a5f32d3960125e2d880730128f5dff5af4ce28fcebae6c1143d36ab",
+				"outline": "/mnt/mw/db/osm/outlines/SLV-ADM0.geojson",
+				"outlineSHA256": "c864925e93e1851af10062792881683189771be4a04c111a9f276a6c6de547c4",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-th-261017.corpus.jsonl",
+				"sha256": "5350c2811a2fa837b4bedb2a5bb8b3600bc315f35d1bca714939e4607821f354",
+				"lines": 69469
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/thailand-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/thailand-latest.osm.pbf",
+				"sha256": "b54dfb319eff1eac6f91309483da63b4108b58483bbde42ab796da3167d028c6",
+				"lastModified": "Sat, 17 Oct 2026 22:58:59 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-th-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "2a35a0a4c937ee5611f60aab2c645e1a9576e08a7973a74d01992e08bb60fa8c",
+				"outline": "/mnt/mw/db/osm/outlines/THA-ADM0.geojson",
+				"outlineSHA256": "226eeef03694dc708201f142c992a819798841c0302c89e78cac8579b5058cde",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-tj-261017.corpus.jsonl",
+				"sha256": "473a76d77c4884be5901a0f361312a721045d87913c52d1ca91908e22fe73386",
+				"lines": 20198
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/tajikistan-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/tajikistan-latest.osm.pbf",
+				"sha256": "1a0aa3e67503abf23e36c309b146040a8322e3c9bbf0958e7e0d42d797984845",
+				"lastModified": "Sat, 17 Oct 2026 22:59:04 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-tj-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "3fb1f78e3cf05ecdba220308786c074abc882edabdfcc1674e7764dc81a5b86e",
+				"outline": "/mnt/mw/db/osm/outlines/TJK-ADM0.geojson",
+				"outlineSHA256": "fe4eed1352b47d8e6ce163568a9b144cbc0a8b3dc971af49f2fd055e035aa633",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-tm-261017.corpus.jsonl",
+				"sha256": "eebf0c49ad19a79efe8c9d739d2f54eda219c59d0cb9e79faf04a6039c26a6e7",
+				"lines": 7972
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/turkmenistan-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/turkmenistan-latest.osm.pbf",
+				"sha256": "c37537fc5c0a5c4302f19b08ea7b619fed3e53a47cf30415303c4fef738d0bc2",
+				"lastModified": "Sat, 17 Oct 2026 23:02:49 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-tm-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "7066b6e70f2dafb475ee82df2eb73757ef6861fa057d1b1c1a3f6f5ca14f6be0",
+				"outline": "/mnt/mw/db/osm/outlines/TKM-ADM0.geojson",
+				"outlineSHA256": "cebbc390c14b0948f32f9ce3426bed5983a0d51ebc9e4e6482ea2ac08d0b12d0",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-tn-261017.corpus.jsonl",
+				"sha256": "35a565992b1b65c25083780ee2c4e0abbd3385011542e7acd6a10fecbf0a6231",
+				"lines": 6384
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/tunisia-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/tunisia-latest.osm.pbf",
+				"sha256": "1b50d3d10c5b31133db22e7cf035c43e77732f4f1ad97dd68a297d9b20f449dd",
+				"lastModified": "Sat, 17 Oct 2026 22:51:50 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-tn-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "5eb59586b6506057d90ce22af44ababb5adde09dd103a2014572e2ea518fa1b6",
+				"outline": "/mnt/mw/db/osm/outlines/TUN-ADM0.geojson",
+				"outlineSHA256": "558c96e0f5e42b8603d9e2a06b9d7ab2ed24ea202428988907658882011093a8",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-tt-261017.corpus.jsonl",
+				"sha256": "09046de770a6a5ef412c08796c4c8f4f3ed175d5e2173f1156153e962431d6ad",
+				"lines": 254660
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/central-america-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/central-america-latest.osm.pbf",
+				"sha256": "1465072b524008baf85a2f4e33cfcf9468729e1f36d1e15cd26c6ebf34b32ac6",
+				"lastModified": "Sat, 17 Oct 2026 22:14:19 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-tt-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "b1e202fd17ec246b3745794df8c852bd7896b0f9a45200ca5ba09780bd2a5bae",
+				"outline": "/mnt/mw/db/osm/outlines/TTO-ADM0.geojson",
+				"outlineSHA256": "898660f34135bb61e8f31d547f88800a5ed646656ce5c13a93e0dfb23b878a2a",
+				"excludedOutlines": ["/mnt/mw/db/osm/outlines/VEN-ADM0.geojson"],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-tz-261017.corpus.jsonl",
+				"sha256": "f734df9bc066d020eac3246f3359322e902c211fbfab1fc0289b5adbe4a31fe5",
+				"lines": 20928
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/tanzania-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/tanzania-latest.osm.pbf",
+				"sha256": "5396479e0cacc72206b88de6eaacc57df8bebcce5c84a490cf3a3e6c701825f2",
+				"lastModified": "Sat, 17 Oct 2026 22:53:15 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-tz-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "301c20ca4f21d0c0cdd21565dd78b263eeeab2c317a80f9cff32aa23d8dbcb96",
+				"outline": "/mnt/mw/db/osm/outlines/TZA-ADM0.geojson",
+				"outlineSHA256": "41ab6299edd6147e6868d34d5255aa2d6dc4a192dda578d9d8dc8ca20a42bf20",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ua-261017.corpus.jsonl",
+				"sha256": "c5800c4139f5e893710c574840f64051d9b1c8b65de82c326ec7de8253fa4af1",
+				"lines": 1697305
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/ukraine-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/europe/ukraine-latest.osm.pbf",
+				"sha256": "acc6649b68014ab71a3cadd470af6b6ce8f4bd03cb835228e02da75c0bcadbe6",
+				"lastModified": "Sat, 17 Oct 2026 00:08:00 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ua-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "4cf89643e5c096708afd8dcf5deb45cf6d5af5473d5b550cb83e45dd75d066d7",
+				"outline": "/mnt/mw/db/osm/outlines/UKR-ADM0.geojson",
+				"outlineSHA256": "a24186ba62303d653efdbb2d91eddbac263619899d85a5802ac845e0a93e480a",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ug-261017.corpus.jsonl",
+				"sha256": "55303d1285fe03079b8e9c9ef813dcabdbb5da982aee7e54fed6c1c70e89eeaa",
+				"lines": 2950
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/uganda-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/uganda-latest.osm.pbf",
+				"sha256": "0e1c5d2bb23a0da1ce3270403d4b328d9daf6157fae989ba5fa94045c1be99fe",
+				"lastModified": "Sat, 17 Oct 2026 22:54:23 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ug-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "80ce18aeb3bf6f73be0c9928249319e67cf57952c3159efba4b58b5cad6cb03e",
+				"outline": "/mnt/mw/db/osm/outlines/UGA-ADM0.geojson",
+				"outlineSHA256": "5a4c6c87ff2dce91fb6ef7e7aab1e73a9ac15eae684b35580a30b3cac4b21a8a",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-uz-261016.corpus.jsonl",
+				"sha256": "0da621d869de678f0f08b9b4ad030f7955ee6d633e891b428d793ca2af69878c",
+				"lines": 400980
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/uzbekistan-261016.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/asia/uzbekistan-latest.osm.pbf",
+				"sha256": "df907043dfeb28f1f632e9e1b54102c96f2c03f0e65dc7a2e2bbdac0d106744f",
+				"lastModified": "Fri, 16 Oct 2026 23:15:48 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-uz-261016.corpus.jsonl.stats.json",
+				"statsSHA256": "c36f613e1966192f8d479ef39e07d0f78d6db7c0909f2c25a613498ca02ed081",
+				"outline": "/mnt/mw/db/osm/outlines/UZB-ADM0.geojson",
+				"outlineSHA256": "e1cc8f402fdd345eb44f9602bf18c225bf618511f7a9901b5f8a879758805386",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-ve-261017.corpus.jsonl",
+				"sha256": "25c879bdcb5d24d8e728368cb3875a04f3347bd0bff537e4d2c9c7983c667202",
+				"lines": 4165
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/venezuela-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/south-america/venezuela-latest.osm.pbf",
+				"sha256": "891e695fc16c9d81a3b4ea8444e8b500f36eb3a907f262329507fd8d53644723",
+				"lastModified": "Sat, 17 Oct 2026 22:32:00 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-ve-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "8795ca9e4e9e9d7e16fa0c36050f3694a67e324b4282f88adcbaa764a8b8c202",
+				"outline": "/mnt/mw/db/osm/outlines/VEN-ADM0.geojson",
+				"outlineSHA256": "a17f2deaf887cd65dd25ef1b777c8b9e49ec47c1035e9430527bddd92ed85dcd",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-vi-261017.corpus.jsonl",
+				"sha256": "388210b3ebe08baafcaf88561a48029d70edaba181048c585de98587d2b653fe",
+				"lines": 1073
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/us-virgin-islands-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/north-america/us/us-virgin-islands-latest.osm.pbf",
+				"sha256": "9438e4e587b70ce2acb95069baea7eba2cc7882534bc5ae46718b03459a605d5",
+				"lastModified": "Sat, 17 Oct 2026 22:40:29 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-vi-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "e4965cf600fb82904654e4bde3f7f71f2397f29c1e8b0f3441e0b8dd2b545a3f",
+				"outline": null,
+				"outlineSHA256": null,
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-zm-261017.corpus.jsonl",
+				"sha256": "9f62baa9116bae17bfc373ea6ff0d15ebf8cfddf85d3522b83cddfe5c0a977b8",
+				"lines": 20810
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/zambia-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/zambia-latest.osm.pbf",
+				"sha256": "b5189f8f3102135dd167a67dc37c64c93ce58426b425a631dae02062b7a84f92",
+				"lastModified": "Sat, 17 Oct 2026 22:55:14 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-zm-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "cabecbfb7a1d9f56cc2ddfc3823e6b88a72c55962f12f58d6b4458eef51c23dc",
+				"outline": "/mnt/mw/db/osm/outlines/ZMB-ADM0.geojson",
+				"outlineSHA256": "04ed7d1e23ab7044306a9348f8935e4491f556f85113bd2f3044611c44ae1928",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		},
+		{
+			"extract": {
+				"path": "/mnt/mw/db/osm/corpus/osm-zw-261017.corpus.jsonl",
+				"sha256": "2d19bc6bec52dd38791ee47759f502ab455076e725168ca7025e9a661fdc34cb",
+				"lines": 45114
+			},
+			"pbf": {
+				"path": "/mnt/mw/db/osm/geofabrik/zimbabwe-261017.osm.pbf",
+				"sourceURL": "https://download.geofabrik.de/africa/zimbabwe-latest.osm.pbf",
+				"sha256": "6d7112f50131773d9389ccef56db24d48c6e2c7d94f2323f9451211ad321a294",
+				"lastModified": "Sat, 17 Oct 2026 22:55:35 GMT"
+			},
+			"extraction": {
+				"statsPath": "/mnt/mw/db/osm/corpus/osm-zw-261017.corpus.jsonl.stats.json",
+				"statsSHA256": "bdc103eb608353e1f03953700ac3390eb945e665093fa23facbfcb034db061cb",
+				"outline": "/mnt/mw/db/osm/outlines/ZWE-ADM0.geojson",
+				"outlineSHA256": "dd5c7bbee97029c84287471839bdee1e68b841d1c2977a5ce633eb7d4c271359",
+				"excludedOutlines": [],
+				"localityLevels": [],
+				"dependentLocalityLevels": []
+			}
+		}
+	],
+	"policies": {
+		"AE": null,
+		"AL": null,
+		"AM": null,
+		"AO": null,
+		"AR": null,
+		"AW": null,
+		"AZ": null,
+		"BA": null,
+		"BB": null,
+		"BH": null,
+		"BM": null,
+		"BN": null,
+		"BS": null,
+		"BT": null,
+		"BW": null,
+		"BY": null,
+		"BZ": null,
+		"CD": null,
+		"CI": null,
+		"CL": null,
+		"CO": null,
+		"CR": null,
+		"CU": null,
+		"CW": null,
+		"DO": null,
+		"DZ": null,
+		"EC": null,
+		"EG": null,
+		"GE": null,
+		"GG": null,
+		"GH": null,
+		"GL": null,
+		"GT": null,
+		"HK": null,
+		"HT": null,
+		"IQ": null,
+		"IR": null,
+		"JE": null,
+		"JM": null,
+		"JO": null,
+		"KE": null,
+		"KG": null,
+		"KH": null,
+		"KW": null,
+		"KZ": null,
+		"LB": null,
+		"LK": null,
+		"LR": null,
+		"MA": null,
+		"MD": null,
+		"ME": null,
+		"MG": null,
+		"MK": null,
+		"MM": null,
+		"MN": null,
+		"MO": null,
+		"MT": null,
+		"MV": null,
+		"MY": null,
+		"MZ": null,
+		"NA": null,
+		"NP": null,
+		"OM": null,
+		"PA": null,
+		"PE": null,
+		"PF": null,
+		"PH": null,
+		"PR": null,
+		"PY": null,
+		"QA": null,
+		"RS": null,
+		"RW": null,
+		"SA": null,
+		"SM": null,
+		"SN": null,
+		"SR": null,
+		"SV": null,
+		"TH": null,
+		"TJ": null,
+		"TM": null,
+		"TN": null,
+		"TT": null,
+		"TZ": null,
+		"UA": null,
+		"UG": null,
+		"UZ": null,
+		"VE": null,
+		"VI": null,
+		"ZM": null,
+		"ZW": null
+	},
+	"overlap": {
+		"rule": "keep only rows the overlap audit classes verified_unseen",
+		"auditSHA256": "1aa064da8edbe6ce08f7a8c355846adbfcf7667e6c5d5a0500d259e6c884293a",
+		"counts": {
+			"verified_unseen": 1388,
+			"unseen_by_candidate": 0,
+			"known_overlap": 702,
+			"unknown": 0
+		},
+		"audit": {
+			"path": "osm-suites.audit.json",
+			"sha256": "9e5d0da2b03d43eeeeba780a6f67ad4ec666bf7cc1ead7a8fe1121438ef91f2f",
+			"auditSHA256": "1aa064da8edbe6ce08f7a8c355846adbfcf7667e6c5d5a0500d259e6c884293a",
+			"dataset": {
+				"datasetID": "osm-suites-sample",
+				"version": "6a6128b319dfa4e2",
+				"rowsSHA256": "e48b927f678727ac7af4af7aa1481fcd0f01cef8fa255a95fd73a3fca201ff67"
+			},
+			"models": [
+				{
+					"path": "/mnt/mw/models/arms/shipped-10.7.0/full-cache/node_modules/@mailwoman/neural-weights-en-us/model-card.json",
+					"source": "model-card",
+					"corpusVersion": "v0.7.10-gb-county",
+					"matched": true,
+					"problem": null
+				},
+				{
+					"path": "corpus-python/src/mailwoman_train/configs/v8.3.0-base-c6-90k-mixed-s42.yaml",
+					"source": "training-config",
+					"corpusVersion": "v0.8.7-overlay",
+					"matched": true,
+					"problem": null
+				}
+			],
+			"corpora": [
+				{
+					"manifest": "/mnt/mw/corpus/versioned/v0.7.10-gb-county/corpus-v0.7.10-gb-county/MANIFEST.json",
+					"sha256": "c499a9af134678826b2a506dbb77718390c7eff945714d81d42fbb613789fe1f",
+					"corpusVersion": "0.7.10-gb-county",
+					"filesRead": 965,
+					"rowsRead": 706364298,
+					"testFilesSkipped": 104,
+					"matches": 5678
+				},
+				{
+					"manifest": "/mnt/mw/corpus/versioned/v0.8.7-overlay/corpus-v0.8.7-overlay/MANIFEST.json",
+					"sha256": "486dcd2a8ae31c62c0b28d99b541592cb6b76b54bd8022a89d836b294c78501d",
+					"corpusVersion": "0.8.7-overlay",
+					"filesRead": 735,
+					"rowsRead": 616969335,
+					"testFilesSkipped": 0,
+					"matches": 5641
+				}
+			],
+			"verifiedUnseenAdmitted": true,
+			"reasons": [],
+			"counts": {
+				"verified_unseen": 15588,
+				"unseen_by_candidate": 0,
+				"known_overlap": 5660,
+				"unknown": 0
+			}
+		}
+	},
+	"sampled": 2090,
+	"crossCountryDuplicates": 0,
+	"kept": 1388
+}

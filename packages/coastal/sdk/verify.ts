@@ -28,7 +28,8 @@
  */
 
 import type { OutsideCoverageRow } from "@mailwoman/core/layers"
-import { geometryContains, nearestRingEdgeMetres } from "@mailwoman/spatial"
+import { nearestRingEdgeMetres } from "@mailwoman/spatial/distance"
+import { geometryContains } from "@mailwoman/spatial/geometries/polygon"
 import type { PathBuilderLike } from "path-ts"
 
 import { CoastalErosionLookup, CoastalReadingKind, type CoastalErosionReading } from "#index"

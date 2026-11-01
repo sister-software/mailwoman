@@ -370,6 +370,15 @@ export interface AdapterOptions {
 	seed?: number | null
 
 	/**
+	 * Rows to keep, chosen by structure cell before rendering, for an adapter
+	 * that can enumerate its rows twice.
+	 *
+	 * The WOF adapters read it.
+	 * Every other adapter renders all of its rows.
+	 */
+	sample?: RowSample | null
+
+	/**
 	 * A cancellation signal that adapters should check at each iteration.
 	 */
 	signal?: AbortSignal
@@ -389,6 +398,73 @@ export interface AdapterOptions {
 	 * The manifest records that as an empty object rather than as zero drops of a specific kind.
 	 */
 	dropped?: Map<string, number>
+}
+
+/**
+ * The rows an adapter keeps out of everything it could render.
+ *
+ * A row is kept when its hash is among the `cellFloor` lowest of its structure cell
+ * or of its language cell, or among the `rowsPerCountry` lowest of its country.
+ * The adapter defines the cells.
+ */
+export interface RowSample {
+	/**
+	 * Rows each cell keeps.
+	 * A cell with fewer rows keeps them all.
+	 */
+	cellFloor: number
+	/**
+	 * Rows each country keeps in hash order, beside its floor rows.
+	 */
+	rowsPerCountry: number
+	/**
+	 * The hash seed.
+	 *
+	 * Two builds with the same seed and inputs keep the same rows.
+	 */
+	seed?: number
+	/**
+	 * A JSON file to write every cell's renderable row count to, keyed by the adapter's cell key.
+	 *
+	 * The coverage of a sample is read against these counts, so the full set of rows never has to be built.
+	 * Relative paths resolve against the data root.
+	 */
+	countsFile?: string
+	/**
+	 * Cells kept out of the emitted rows, for a held-out test of whether a model learned structure.
+	 *
+	 * An entry is a structure cell in the adapter's cell-key form (`country|tag order|kind`),
+	 * or `country|tag order`, which holds that order out under every name-slot kind.
+	 * Their rows are never emitted.
+	 *
+	 * Up to `heldOutPerCell` of each entry's lowest-hash rows are written to `heldOutFile`
+	 * instead, leaving out a row whose case-folded text matches an emitted row's.
+	 */
+	holdOutCells?: readonly string[]
+	/**
+	 * Cells, in the same forms as `holdOutCells`, that stay in training and also supply a
+	 * comparison set: up to `heldOutPerCell` rows per entry that the sample does not emit,
+	 * and whose case-folded text matches no emitted row's, written to `comparisonFile`.
+	 *
+	 * A model's score on these rows is its score on a trained structure with unseen rows.
+	 */
+	compareCells?: readonly string[]
+	/**
+	 * A JSONL file the comparison rows are written to.
+	 * Relative paths resolve against the data root.
+	 */
+	comparisonFile?: string
+	/**
+	 * A JSONL file the held-out cells' rows are written to.
+	 * Relative paths resolve against the data root.
+	 */
+	heldOutFile?: string
+	/**
+	 * Rows written per held-out cell.
+	 *
+	 * @defaultValue 20
+	 */
+	heldOutPerCell?: number
 }
 
 /**

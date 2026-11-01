@@ -16,7 +16,7 @@ import { floodLayerReading } from "@mailwoman/flood/layer-readings"
 import { floodDatabasePath } from "@mailwoman/flood/paths"
 import { NSULLookup } from "@mailwoman/resolver-wof-sqlite/nsul/lookup"
 import { nsulDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversineKm } from "@mailwoman/spatial/distance"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { describe, expect, test } from "vitest"
 
 import {
@@ -99,7 +99,7 @@ function recount(
 	const within = listed.filter((row) => {
 		const point = points.get(row.uprn)!
 
-		return haversineKm(latitude, longitude, point.latitude, point.longitude) * 1000 <= BDUK_SITE_RADIUS_METERS
+		return haversine(latitude, longitude, point.latitude, point.longitude) * 1000 <= BDUK_SITE_RADIUS_METERS
 	})
 
 	const count = (predicate: (row: BDUKCountedRow) => boolean) => within.filter(predicate).length
@@ -117,7 +117,7 @@ function recount(
 
 describe.skipIf(!BDUK_INPUTS_PRESENT)("the London BDUK counts against the extracted London files and nsul.db", () => {
 	test("the archive on disk is the one the BDUK record cites", async () => {
-		expect(await sha256File(BDUK_ARCHIVE)).toBe(BDUK_LONDON_ARCHIVE.sha256)
+		await expect(sha256File(BDUK_ARCHIVE)).resolves.toBe(BDUK_LONDON_ARCHIVE.sha256)
 	})
 
 	test("each building postcode's counts recompute from every London file and NSUL's points", async () => {

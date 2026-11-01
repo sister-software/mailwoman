@@ -1,0 +1,118 @@
+# v0.5.4 classifier — revert to v0.5.1 recipe + new multi-script tokenizer.
+#
+# Two changes from the original v0.5.4 plan:
+#   1. Tokenizer: v0.5.0-a1 → v0.6.0-a0 (trained on 2.19M multi-script WOF
+#      names from 7 countries: US/FR/JP/CN/KR/DE/GB). Same 48K vocab, but 0%
+#      byte-fallback on CJK/Korean/Thai/Arabic (was 37-75% on v0.5.0-a1).
+#   2. New tokenizer = new embedding table = full retrain from scratch.
+#
+# Recipe is the v0.5.1 proven settings:
+#   - wof-admin: 2.0 (restored from v0.5.3's 0.3)
+#   - label_smoothing: 0.0 (no smoothing)
+#   - lr_schedule: constant
+#   - max_steps: 100000
+#   - dependent_locality/subregion class_weight: 0.3 (suppress hallucination)
+#
+# v0.5.3 observability kept:
+#   - golden eval wired (per-tag F1 at every eval step)
+#   - eval_every_steps: 2000
+#   - kryptonite + transliteration sources
+#   - address augmentation
+#
+# Expected: val_macro_f1 ≥ 0.638 on US/FR. CJK/Korean should now produce
+# meaningful BIO labels instead of byte-fallback noise.
+#
+# Launch:
+#   node packages/mailwoman/tools/training/launch/launch.run.ts start --config v0_5_4-revert-recipe.yaml --detach
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    deepseek-translit-armn: 0.5
+    deepseek-translit-cyrl: 0.5
+    deepseek-translit-hang: 0.5
+    deepseek-translit-hans: 0.5
+    deepseek-translit-jpan: 0.5
+  train_rows_per_epoch: 1000000
+  val_rows: 2048
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  label_smoothing: 0.0
+  crf_normalization: per_sequence
+  crf_loss_weight: 0.0
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v054/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 100000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

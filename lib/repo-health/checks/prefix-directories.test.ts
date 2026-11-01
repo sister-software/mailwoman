@@ -186,6 +186,6 @@ describe("prefixDirectoriesCheck", () => {
 	test("reports nothing on the current tree", async () => {
 		const context = await collectRepoContext()
 
-		expect(await prefixDirectoriesCheck.run(context)).toEqual([])
+		await expect(prefixDirectoriesCheck.run(context)).resolves.toEqual([])
 	})
 })

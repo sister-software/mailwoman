@@ -9,7 +9,7 @@
  *   `source_id` values it removes from that target, either inline or in a sidecar parquet with one `source_id`
  *   column. It also states why the rows leave and the issue that records the decision.
  *
- *   The trainer's loader (`corpus-python/.../data/loader/parquet.py`) applies the list as a set-membership test
+ *   The trainer's loader (`mtf-sampler`) applies the list as a set-membership test
  *   on each row's `source_id`, and the assembler counts the rows each deletion removes with the same test, so the
  *   manifest's split counts state what the loader reads.
  */

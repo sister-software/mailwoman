@@ -63,8 +63,9 @@ export interface ParquetRow {
 	source: string
 	source_id: string
 	/**
-	 * The SPDX identifier or `LicenseRef-*` id of the source's register inputs,
-	 * which every writer stamps from `#source-register/row-license`.
+	 * The SPDX identifier or `LicenseRef-*` id of the source's register inputs.
+	 *
+	 * Every writer stamps this value from `#source-register/row-license`.
 	 *
 	 * A file written before the column had this meaning holds the producer's prose here,
 	 * and {@linkcode corpusRowFromParquet} passes it through unchanged.
@@ -210,7 +211,8 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 		locale: row.locale ?? null,
 		source: row.source,
 		source_id: row.source_id,
-		// The producer's statement, which the writer replaces with the register's id (`stampRowLicense`).
+		// The producer's statement.
+		// The writer replaces it with the register's id (`stampRowLicense`).
 		license: row.license,
 		register: row.register ?? null,
 		surface: row.surface,
@@ -220,7 +222,7 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 }
 
 /**
- * The columns a corpus parquet file written before #2741 carries in place of `augmentation`.
+ * The columns a corpus parquet file written before #2741 has in place of `augmentation`.
  */
 export const RETIRED_PARQUET_COLUMNS = ["corpus_version", "recipe"] as const
 
@@ -228,9 +230,10 @@ export const RETIRED_PARQUET_COLUMNS = ["corpus_version", "recipe"] as const
  * Read one row of a corpus parquet file of either schema as a {@linkcode ParquetRow}.
  *
  * This is the one place an older file's columns map to the current ones.
- * A v0.7.x file carries `corpus_version`, the run of whichever recipe or build wrote the row,
- * and `recipe`, which held an augmentation name on a row derived from a base row
- * and the producer's own name or template on every other row.
+ * A v0.7.x file has `corpus_version`, the run of whichever recipe or build wrote the row, and `recipe`.
+ *
+ * On a row derived from a base row, `recipe` held an augmentation name.
+ * On every other row, it held the producer's name or template.
  *
  * Measured over the 1,069 files of `v0.7.10-gb-county`, a `recipe` value is an
  * augmentation exactly where `base_source_id` is set, so that value becomes `augmentation`
@@ -238,8 +241,10 @@ export const RETIRED_PARQUET_COLUMNS = ["corpus_version", "recipe"] as const
  * `corpus_version` is dropped, because the file's record and the manifest name the corpus.
  *
  * `license` passes through unchanged.
- * An older file holds the producer's prose there, which is what the file says,
- * and a writer re-stamps the register's id when the row is written again.
+ * An older file holds the producer's prose there.
+ *
+ * That text records the producer's statement, and a writer re-stamps the register's id
+ * when the row is written again.
  *
  * Every other column passes through, so a projection of current columns reads the same from both schemas.
  */

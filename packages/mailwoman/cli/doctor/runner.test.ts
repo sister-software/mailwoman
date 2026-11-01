@@ -24,8 +24,8 @@ function healthyDeps(): DoctorDeps {
 		dataRoot: () => ({ path: "/data", fromEnv: true }),
 		envCandidatePath: async () => "/data/wof/candidate.db",
 		conventionCandidatePath: async () => "/data/wof/candidate.db",
-		wofExtractPaths: () => ["/data/wof/admin.db"],
-		poiPath: () => "/data/poi/poi.db",
+		wofExtractPaths: async () => ["/data/wof/admin.db"],
+		poiPath: async () => "/data/poi/poi.db",
 		readLayerIdentity: async () => ({
 			name: "poi",
 			version: "2026-07-20a",
@@ -33,7 +33,7 @@ function healthyDeps(): DoctorDeps {
 			license: "CDLA-Permissive-2.0",
 			attribution: "Overture Maps Foundation",
 		}),
-		layerDatabases: () => [{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" }],
+		layerDatabases: async () => [{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" }],
 		layerAlternates: async () => [],
 		addressPointDatabases: async () => [],
 		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
@@ -410,7 +410,7 @@ describe("runDoctor (injected boundaries)", () => {
 	it("license posture: an absent layer gets no license line; a layer recording NOASSERTION is degraded, not guessed", async () => {
 		const absent = await runDoctor({
 			...healthyDeps(),
-			layerDatabases: () => [
+			layerDatabases: async () => [
 				{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" },
 				{ id: "zoning", label: "Zoning (Ireland)", path: "/data/zoning/zoning-ireland.db" },
 			],

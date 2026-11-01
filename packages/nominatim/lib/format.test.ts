@@ -3,7 +3,7 @@
 
 /**
  * @file A Nominatim result states the register row behind its coordinate under its `mailwoman` block, and its
- *   `licence` carries the OpenStreetMap credit exactly when that row came from an OpenStreetMap layer.
+ *   `licence` contains the OpenStreetMap credit exactly when that row came from an OpenStreetMap layer.
  */
 
 import { OPENSTREETMAP_CREDIT } from "@mailwoman/core/geocode"

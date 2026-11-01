@@ -16,7 +16,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { AlignTotalsRecord } from "#build/align-totals"
+import type { AlignTotalsRecord } from "#build/align/totals"
 import type { AlignSettings } from "#build/checkpoint"
 import { readParquetRecord, type DerivationInputs } from "#parquet/record"
 import type { ParquetFileDescriptor } from "#parquet/writers"
@@ -74,7 +74,7 @@ export interface SourceCompletionRecord {
 	 */
 	parts: ParquetFileDescriptor[]
 	/**
-	 * Each split's sorted source-id list, which the coordinator merges into the split files.
+	 * The coordinator merges each split's sorted source-id list into the split files.
 	 */
 	sourceIDs: Record<SplitName, RecordedFile>
 	/**

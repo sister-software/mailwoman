@@ -16,7 +16,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON, orderedJSON } from "@mailwoman/core/json"
 import {
 	LicenseReviewState,
 	OperationPermission,
@@ -24,10 +25,10 @@ import {
 	type LicenseDecision,
 } from "@mailwoman/core/license/decision"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import type { PathBuilderLike } from "path-ts"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readAddressSourceRegister } from "#source-register/register"
-import { SourceOperation, type AddressSourceRegister } from "#source-register/types"
+import { SourceOperation, type AddressSourceRecord, type AddressSourceRegister } from "#source-register/types"
 
 /**
  * The operations a register decision must permit before a source's rows may
@@ -71,7 +72,8 @@ export interface CorpusSourceMapping {
 	 */
 	inputs: readonly CorpusSourceInput[]
 	/**
-	 * Inputs written in this repository, which need no register row: a hand-written word list, a template.
+	 * Inputs written in this repository need no register row.
+	 * Examples include a hand-written word list and a template.
 	 */
 	authored?: readonly string[]
 	note?: string
@@ -89,7 +91,7 @@ export interface CorpusSourceMapping {
 }
 
 /**
- * The inputs one source read in the corpora named.
+ * The inputs one source read in the listed corpora.
  */
 export interface CorpusSourceHistory {
 	corpora: readonly string[]
@@ -201,6 +203,18 @@ export function auditCorpusSourceInputs(file: CorpusSourceInputsFile, register: 
 }
 
 /**
+ * The register inputs a source's rows were built from in `corpusVersion`.
+ *
+ * A `history` entry naming the corpus wins over `inputs`, which describes what a build reads today.
+ * Without `corpusVersion` the function reads today's inputs.
+ */
+export function mappingInputsFor(mapping: CorpusSourceMapping, corpusVersion?: string): readonly CorpusSourceInput[] {
+	const former = corpusVersion ? mapping.history?.find((entry) => entry.corpora.includes(corpusVersion)) : null
+
+	return former?.inputs ?? mapping.inputs
+}
+
+/**
  * Reads the committed table and checks it against the register.
  *
  * @throws When the file does not parse or the audit reports a problem.
@@ -225,7 +239,7 @@ export async function readCorpusSourceInputs(
  */
 export interface SourceRightsGap {
 	/**
-	 * The corpus source id as the caller named it.
+	 * The corpus source id the caller supplied.
 	 */
 	source: string
 	/**
@@ -249,7 +263,7 @@ export interface SourceRightsGap {
  *
  * An empty array is the only answer a caller may read as permission.
  * A source the table does not map answers one gap whose `registerSource` is `null`,
- * because an unmapped source is one nobody has traced to its publishers.
+ * because no mapping identifies that source's publishers.
  *
  * `corpusVersion` names a corpus already built, so a source whose inputs changed under
  * the same id is read against what that corpus's rows were built from.
@@ -282,9 +296,7 @@ export function sourceRightsGaps(
 	const rows = new Map(register.sources.map((row) => [row.sourceID, row]))
 	const gaps: SourceRightsGap[] = []
 
-	const former = corpusVersion ? resolved.mapping.history?.find((entry) => entry.corpora.includes(corpusVersion)) : null
-
-	for (const input of former?.inputs ?? resolved.mapping.inputs) {
+	for (const input of mappingInputsFor(resolved.mapping, corpusVersion)) {
 		const row = rows.get(input.registerSource)
 		const decision = row ? decisions.get(row.license) : null
 
@@ -329,6 +341,30 @@ export function sourceRightsGaps(
 }
 
 /**
+ * The register fields a permission check reads: each row's license and each license's decision.
+ */
+export interface RegisterDecisions {
+	sources: ReadonlyArray<Pick<AddressSourceRecord, "sourceID" | "license">>
+	licenses: readonly LicenseDecision<SourceOperation>[]
+}
+
+/**
+ * Whether one register row holds a decision that permits every operation in {@linkcode TRAINING_OPERATIONS}.
+ *
+ * A row the register lacks, or whose license has no decision, does not.
+ */
+export function registerSourcePermitsTraining(register: RegisterDecisions, registerSource: string): boolean {
+	const row = register.sources.find((entry) => entry.sourceID === registerSource)
+	const decision = row ? register.licenses.find((entry) => entry.licenseID === row.license) : undefined
+
+	if (!decision) return false
+
+	return TRAINING_OPERATIONS.every(
+		(operation) => permissionFor(decision, operation).permission === OperationPermission.Permitted
+	)
+}
+
+/**
  * One line naming the corpus source, the register row and the missing permission.
  */
 export function describeSourceRightsGap(gap: SourceRightsGap): string {
@@ -350,13 +386,17 @@ export function describeSourceRightsGap(gap: SourceRightsGap): string {
 export class SourceRightsError extends Error {
 	readonly gaps: readonly SourceRightsGap[]
 
-	constructor(context: string, gaps: readonly SourceRightsGap[]) {
+	/**
+	 * @param overrideHint Follows the flag in the message, naming where else the caller
+	 * sets the override, as a training config's `data.unshippable_reason`.
+	 */
+	constructor(context: string, gaps: readonly SourceRightsGap[], overrideHint?: string) {
 		super(
 			`${context} refuses ${new Set(gaps.map((gap) => gap.source)).size} corpus source(s) whose register rows ` +
 				`lack an elected decision permitting ${TRAINING_OPERATIONS.join(" and ")}:\n  ` +
 				gaps.map(describeSourceRightsGap).join("\n  ") +
 				"\nRecord the decision in packages/corpus/data/license-decisions.json, map the source in " +
-				"packages/corpus/data/corpus-source-inputs.json, or pass --unshippable-reason <why> for a local " +
+				`packages/corpus/data/corpus-source-inputs.json, or pass --unshippable-reason <why>${overrideHint ? ` (${overrideHint})` : ""} for a local ` +
 				"experiment, which marks the output as not shippable."
 		)
 
@@ -368,8 +408,8 @@ export class SourceRightsError extends Error {
 /**
  * What a checked output records about the sources it admitted.
  *
- * Its field names are snake_case because it is written into corpus manifests,
- * which a Python reader also reads.
+ * Its field names use snake_case.
+ * The record is written into corpus manifests and read by Python tools.
  */
 export interface SourceRightsRecord {
 	/**
@@ -384,7 +424,7 @@ export interface SourceRightsRecord {
 	gaps: SourceRightsGap[]
 	/**
 	 * Inputs whose corpus sources could not be read, so the check could not judge them,
-	 * such as a base corpus whose files name no source and whose manifest carries no record.
+	 * such as a base corpus whose files name no source and whose manifest has no record.
 	 */
 	unverified: string[]
 }
@@ -423,9 +463,20 @@ export interface SourceRightsAdmissionOptions {
 	/**
 	 * Why a local experiment admits sources lacking the permission.
 	 *
-	 * Setting it marks the output unshippable rather than relaxing the rule.
+	 * A caller that sets it marks the output unshippable rather than relaxing the rule.
 	 */
 	unshippableReason?: string | null
+	/**
+	 * The built corpus the output reads, so a source whose inputs changed under the same id is
+	 * judged by the inputs that built that corpus, as {@linkcode sourceRightsGaps} reads it.
+	 *
+	 * A build omits it and is judged by today's inputs.
+	 */
+	corpusVersion?: string
+	/**
+	 * Names where else the caller sets the override, in the refusal's message.
+	 */
+	overrideHint?: string
 	log?: (line: string) => void
 }
 
@@ -461,7 +512,7 @@ export function createSourceRightsAdmission(
 				continue
 			}
 
-			const gaps = sourceRightsGaps(source, inputs, register)
+			const gaps = sourceRightsGaps(source, inputs, register, options.corpusVersion)
 
 			fresh.push(...gaps)
 			all.push(...gaps)
@@ -473,7 +524,7 @@ export function createSourceRightsAdmission(
 
 		if (!fresh.length) return all
 
-		if (reason === null) throw new SourceRightsError(options.context, fresh)
+		if (reason === null) throw new SourceRightsError(options.context, fresh, options.overrideHint)
 
 		for (const gap of fresh) {
 			log(`UNSHIPPABLE ${options.context}: ${describeSourceRightsGap(gap)} (override: ${reason})`)
@@ -512,6 +563,26 @@ export function createSourceRightsAdmission(
 			}
 		},
 	}
+}
+
+/**
+ * The file name of the record a corpus builder writes beside its output.
+ */
+export const SOURCE_RIGHTS_FILE_NAME = "SOURCE_RIGHTS.json"
+
+/**
+ * Writes `record` beside an output as {@linkcode SOURCE_RIGHTS_FILE_NAME},
+ * two-space indented with a trailing newline, the bytes the Python builders'
+ * `write_rights_record` wrote for a record with no gaps.
+ *
+ * @returns The path written.
+ */
+export async function writeSourceRightsRecord(record: SourceRightsRecord, outDir: PathBuilderLike): Promise<string> {
+	const path = resolvePath(outDir, SOURCE_RIGHTS_FILE_NAME)
+
+	await writeLocalTextFile(orderedJSON(record, { indent: "\t" }) + "\n", path)
+
+	return path
 }
 
 /**

@@ -104,7 +104,7 @@ describe("APIClient: disposal", () => {
 
 		await drainMicrotasks()
 		await client[Symbol.asyncDispose]()
-		expect(await rejected).toMatchObject({ message: expect.stringContaining("API client is disposed") })
+		await expect(rejected).resolves.toMatchObject({ message: expect.stringContaining("API client is disposed") })
 		expect(calls).toEqual(["/first"])
 		expect(clock.now()).toBe(0)
 		await expect(client.fetch(get("/after-disposal"))).rejects.toThrow("API client is disposed")
@@ -121,7 +121,7 @@ describe("APIClient: disposal", () => {
 		await drainMicrotasks()
 		expect(clock.sleepCalls).toHaveLength(1)
 		await client[Symbol.asyncDispose]()
-		expect(await rejected).toMatchObject({ message: expect.stringContaining("API client is disposed") })
+		await expect(rejected).resolves.toMatchObject({ message: expect.stringContaining("API client is disposed") })
 		expect(calls).toEqual(["/retry"])
 		expect(clock.now()).toBe(0)
 	})

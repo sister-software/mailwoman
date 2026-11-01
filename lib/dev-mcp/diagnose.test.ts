@@ -37,6 +37,7 @@ function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 	return {
 		text: "x y",
 		caseNormalized: false,
+		containmentCountry: null,
 		pieces: [
 			{ piece: "x", id: 1, start: 0, end: 1 },
 			{ piece: "y", id: 2, start: 2, end: 3 },
@@ -66,6 +67,7 @@ function trace(overrides: Partial<NeuralParseTrace> = {}): NeuralParseTrace {
 		path: [0, 1],
 		margins: [1, 1],
 		decode: "viterbi",
+		explanation: null,
 		repairs: [],
 		tokens: [],
 		...overrides,

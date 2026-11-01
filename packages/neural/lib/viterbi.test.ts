@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { mulberry32 } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -11,6 +12,8 @@ import {
 	perTokenArgmax,
 	softmax,
 	viterbi,
+	viterbiKBest,
+	viterbiPathTerms,
 } from "#viterbi"
 
 const NEG_INF = -1e9
@@ -277,6 +280,59 @@ describe("viterbi — position-scoped transition adjustments (TRANSITION-BETA)",
 	})
 })
 
+describe("viterbiKBest", () => {
+	const random = mulberry32(2879)
+	const transitions = buildBIOTransitionMask(LABELS)
+	const startTransitions = buildBIOStartMask(LABELS)
+
+	const scoresFor = (length: number) =>
+		Array.from({ length }, () => Array.from({ length: LABELS.length }, () => Math.round(random() * 40) / 10 - 2))
+
+	const pathScore = (path: number[], emissions: number[][]) =>
+		path.reduce(
+			(sum, label, t) =>
+				sum + emissions[t]![label]! + (t ? transitions[path[t - 1]!]![label]! : startTransitions[label]!),
+			0
+		)
+
+	it("returns viterbi's path and score at k = 1, adjustments included", () => {
+		for (let trial = 0; trial < 50; trial++) {
+			const emissions = scoresFor(1 + (trial % 7))
+			const transitionAdjustments = [{ timestep: trial % 3, toLabel: trial % LABELS.length, bonus: 1.5 }]
+			const input = { emissions, transitions, startTransitions, transitionAdjustments }
+
+			expect(viterbiKBest(input, 1)).toEqual([viterbi(input)])
+		}
+	})
+
+	it("returns distinct paths in score order, equal to the brute-force top k", () => {
+		for (let trial = 0; trial < 20; trial++) {
+			const emissions = scoresFor(4)
+			const best = viterbiKBest({ emissions, transitions, startTransitions }, 20)
+			const all: number[] = []
+
+			for (let code = 0; code < LABELS.length ** 4; code++) {
+				const path = [0, 1, 2, 3].map((t) => Math.floor(code / LABELS.length ** t) % LABELS.length)
+				const score = pathScore(path, emissions)
+
+				if (score > NEG_INF / 2) {
+					all.push(score)
+				}
+			}
+
+			const expected = all.toSorted((a, b) => b - a).slice(0, 20)
+
+			expect(new Set(best.map((result) => result.path.join(","))).size).toBe(best.length)
+			expect(best.map((result) => result.score)).toEqual(best.map((result) => result.score).toSorted((a, b) => b - a))
+
+			for (const [index, result] of best.entries()) {
+				expect(result.score).toBeCloseTo(expected[index]!, 9)
+				expect(pathScore(result.path, emissions)).toBeCloseTo(result.score, 9)
+			}
+		}
+	})
+})
+
 describe("perTokenArgmax", () => {
 	it("picks the max per row", () => {
 		expect(perTokenArgmax([[0.1, 0.5, 0.4]])).toEqual([1])
@@ -339,5 +395,39 @@ describe("pathMargins", () => {
 
 		expect(path).toEqual([1, 2])
 		expect(pathMargins(emissions, path)).toEqual([2, 3.5])
+	})
+})
+
+describe("viterbiPathTerms", () => {
+	it("splits the decoded path's score into parts that sum to the score viterbi returns", () => {
+		const input = {
+			emissions: [
+				[1, 2, 0.5, 0, 0.25],
+				[0.5, 0.1, 3, 1, 0],
+				[2, 0, 0, 1.5, 1],
+			],
+			transitions: buildBIOTransitionMask(LABELS),
+			startTransitions: [0.1, 0.2, NEG_INF, 0.3, NEG_INF],
+			endTransitions: [0.5, 0, 0.25, 0, 0],
+			transitionAdjustments: [
+				{ timestep: 2, toLabel: 3, bonus: 0.5 },
+				// The larger of two bonuses on one cell applies, as in viterbi.
+				{ timestep: 2, toLabel: 3, bonus: 2 },
+			],
+		}
+
+		const { path, score } = viterbi(input)
+		const parts = viterbiPathTerms(input, path)
+
+		expect(LABELS[path[2]!]).toBe("B-region")
+		expect(parts.adjustments).toBe(2)
+		expect(parts.emissions + parts.transitions + parts.adjustments).toBeCloseTo(score, 12)
+	})
+
+	it("scores a path viterbi did not choose", () => {
+		const input = { emissions: [[1, 0, 0, 0, 0]], transitions: buildBIOTransitionMask(LABELS) }
+
+		expect(viterbiPathTerms(input, [3])).toEqual({ emissions: 0, transitions: 0, adjustments: 0 })
+		expect(viterbiPathTerms(input, [])).toEqual({ emissions: 0, transitions: 0, adjustments: 0 })
 	})
 })

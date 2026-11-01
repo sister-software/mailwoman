@@ -9,7 +9,7 @@
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
@@ -19,12 +19,7 @@ import type { UNLocodeDatabase } from "#schema"
  * Fold a place name to its match key: strip diacritics, lowercase, collapse whitespace.
  */
 export function foldName(name: string): string {
-	return name
-		.normalize("NFD")
-		.replaceAll(/[̀-ͯ]/g, "")
-		.toLowerCase()
-		.trim()
-		.replaceAll(/\s+/g, " ")
+	return name.normalize("NFD").replaceAll(/[̀-ͯ]/g, "").toLowerCase().trim().replaceAll(/\s+/g, " ")
 }
 
 /**
@@ -92,7 +87,7 @@ export class UNLocodeLookup extends SQLiteLookup<UNLocodeDatabase> {
 		let best: { code: string; km: number } | null = null
 
 		for (const r of rows) {
-			const km = haversineKm(lat, lon, r.lat, r.lon)
+			const km = haversine(lat, lon, r.lat, r.lon)
 
 			if (km <= maxKm && (!best || km < best.km)) {
 				best = { code: `${r.country} ${r.location}`, km }

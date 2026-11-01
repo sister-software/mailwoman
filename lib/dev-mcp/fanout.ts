@@ -13,7 +13,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { type GauntletResult, toGauntletResult } from "mailwoman/tools/eval-harness/gauntlet/harness"
 import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -262,7 +262,7 @@ function coordinateSpreadKm(arms: readonly FanoutArmReading[]): number | null {
 
 	for (const [index, point] of points.entries()) {
 		for (const other of points.slice(index + 1)) {
-			spread = Math.max(spread, haversineKm(point.lat, point.lon, other.lat, other.lon))
+			spread = Math.max(spread, haversine(point.lat, point.lon, other.lat, other.lon))
 		}
 	}
 
@@ -272,7 +272,7 @@ function coordinateSpreadKm(arms: readonly FanoutArmReading[]): number | null {
 /**
  * Reads how one row's readings agree across the arms.
  *
- * The kind is read from the graded marks alone.
+ * Only graded marks determine the kind.
  * An arm that errored or an ungraded row contributes no mark to the kind, and an errored
  * arm makes `stable_decode` false because its decode is unknown rather than equal.
  */

@@ -77,7 +77,7 @@ function agreeingTree(overrides: Record<string, string> = {}) {
 
 describe("thirdPartyNoticesCheck", () => {
 	it("accepts three copies that name the same module, whose header records the derivation", async () => {
-		expect(await thirdPartyNoticesCheck.run(await plant(agreeingTree()))).toEqual([])
+		await expect(thirdPartyNoticesCheck.run(await plant(agreeingTree()))).resolves.toEqual([])
 	})
 
 	it("reports a copy that omits a module the others name", async () => {

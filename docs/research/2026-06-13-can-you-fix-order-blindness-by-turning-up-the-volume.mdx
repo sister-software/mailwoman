@@ -13,7 +13,7 @@ wall at 87%, and did the obvious thing and turned the training signal up, fully 
 the last few points to fall out. They didn't. The model got _worse_, and this post explains
 how it got worse. The questions on the table: can a pile of reordered examples
 teach a model where a house number lives? When that pile gets you 80% of the way, can you
-just add more? And what does the failure tell you about the thing you were
+add more? And what does the failure tell you about the thing you were
 training?
 
 {/* truncate */}
@@ -56,7 +56,7 @@ If an extract at weight 3 gets you to 87, an extract at weight 6 gets you the re
 That was the bet, and it's the same weight the German extract runs at, so we had
 precedent. We doubled it and retrained.
 
-It came back at **84.7%**. Lower. And when we dumped the misses, the model wasn't just
+It came back at **84.7%**. Lower. And when we dumped the misses, the model wasn't
 making the old mistake more frequently. It had invented a new one. On `47110
 Sainte-Livrade-sur-Lot, 69 Allée du Bugatel`, instead of grabbing the whole postcode, it
 now split `47110` into a house number `4` and a postcode `7110`. Sometimes it glued the

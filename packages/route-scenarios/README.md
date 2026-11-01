@@ -14,7 +14,7 @@ attached to either. Calibrated bounds need a frozen population of comparable job
 
 A scenario states its as-of date, currency, month zero, horizon, price basis, tax treatment, effective annual discount
 rate and NPV target. It selects buildings by their dossier identifiers and plans each one: the route segments its
-connection is assumed to need, its own works, its first service month and its occupancy. A versioned rate card prices
+connection is assumed to need, its own works, its first service month and its occupancy. A versioned rate card assigns a monetary price to
 every quantity. The operating assumptions set the price, the promotion, uptake, churn, service, maintenance, working
 capital and replacements. Each rate, quantity and assumption records its basis. The basis is a source record the dossier
 admitted or an operator's stated assumption.

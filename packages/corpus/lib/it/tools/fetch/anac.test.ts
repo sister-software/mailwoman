@@ -83,7 +83,7 @@ describe("readANACEditionHead", () => {
 			{ headers: { "content-length": "3963957", "last-modified": "Sat, 19 Sep 2026 03:31:23 GMT" } },
 		])
 
-		expect(await readANACEditionHead(client, "2025")).toEqual({
+		await expect(readANACEditionHead(client, "2025")).resolves.toEqual({
 			lastModified: "Sat, 19 Sep 2026 03:31:23 GMT",
 			contentLength: 3_963_957,
 			contentType: null,
@@ -93,7 +93,7 @@ describe("readANACEditionHead", () => {
 	it("reports a header the host does not send as null rather than as a value", async () => {
 		await using client = stubClient([{ headers: {} }])
 
-		expect(await readANACEditionHead(client, "full")).toEqual({
+		await expect(readANACEditionHead(client, "full")).resolves.toEqual({
 			lastModified: null,
 			contentLength: null,
 			contentType: null,
@@ -158,8 +158,8 @@ describe("isANACEditionCurrent", () => {
 
 		const { recorded, path } = await recordRun(scratch.path)
 
-		expect(await isANACEditionCurrent(recorded, HEAD, path, false)).toBe(true)
-		expect(await isANACEditionCurrent(recorded, HEAD, path, true)).toBe(true)
+		await expect(isANACEditionCurrent(recorded, HEAD, path, false)).resolves.toBe(true)
+		await expect(isANACEditionCurrent(recorded, HEAD, path, true)).resolves.toBe(true)
 	})
 
 	it("refuses an edition the host republished, by either header", async () => {
@@ -167,11 +167,13 @@ describe("isANACEditionCurrent", () => {
 
 		const { recorded, path } = await recordRun(scratch.path)
 
-		expect(
-			await isANACEditionCurrent(recorded, { ...HEAD, lastModified: "Fri, 2 Oct 2026 03:31:23 GMT" }, path, false)
-		).toBe(false)
+		await expect(
+			isANACEditionCurrent(recorded, { ...HEAD, lastModified: "Fri, 2 Oct 2026 03:31:23 GMT" }, path, false)
+		).resolves.toBe(false)
 
-		expect(await isANACEditionCurrent(recorded, { ...HEAD, contentLength: 4_000_000 }, path, false)).toBe(false)
+		await expect(isANACEditionCurrent(recorded, { ...HEAD, contentLength: 4_000_000 }, path, false)).resolves.toBe(
+			false
+		)
 	})
 
 	it("refuses an edition whose file on disk is not the recorded length", async () => {
@@ -181,7 +183,7 @@ describe("isANACEditionCurrent", () => {
 
 		await writeLocalFile("", path)
 
-		expect(await isANACEditionCurrent(recorded, HEAD, path, false)).toBe(false)
+		await expect(isANACEditionCurrent(recorded, HEAD, path, false)).resolves.toBe(false)
 	})
 
 	it("refuses when the host states neither header, rather than reading the absence as a match", async () => {
@@ -189,9 +191,9 @@ describe("isANACEditionCurrent", () => {
 
 		const { recorded, path } = await recordRun(scratch.path)
 
-		expect(
-			await isANACEditionCurrent(recorded, { lastModified: null, contentLength: null, contentType: null }, path, false)
-		).toBe(false)
+		await expect(
+			isANACEditionCurrent(recorded, { lastModified: null, contentLength: null, contentType: null }, path, false)
+		).resolves.toBe(false)
 	})
 
 	it("refuses an edition the manifest does not record", async () => {
@@ -199,7 +201,7 @@ describe("isANACEditionCurrent", () => {
 
 		const { path } = await recordRun(scratch.path)
 
-		expect(await isANACEditionCurrent(null, HEAD, path, false)).toBe(false)
+		await expect(isANACEditionCurrent(null, HEAD, path, false)).resolves.toBe(false)
 	})
 })
 
@@ -242,7 +244,7 @@ describe("downloadITANAC", () => {
 		// No request for the body was dispatched.
 		expect(client.calls).toHaveLength(1)
 		// The edition on disk is untouched, and the adapter still reads it.
-		expect(await readLocalTextFile(editionPath)).toBe(text)
+		await expect(readLocalTextFile(editionPath)).resolves.toBe(text)
 	})
 
 	it("reports a failed edition and keeps the others' manifest entries", async () => {

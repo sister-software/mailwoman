@@ -2,8 +2,8 @@
 
 **The foundation of the Mailwoman address parser** — types, tokenization,
 classification primitives, solver, decoder, and the staged pipeline coordinator.
-Ships ~9 MB of provenance-tracked reference dictionaries (libpostal, Who's On
-First, chromium-i18n) consumed by the resolver and classifiers.
+Ships ~9 MB of provenance-tracked reference dictionaries (libpostal, Who's On First
+, chromium-i18n) consumed by the resolver and classifiers.
 
 ```ts
 import { createRuntimePipeline, AddressParser, ComponentTag, Classification, Span } from "@mailwoman/core"

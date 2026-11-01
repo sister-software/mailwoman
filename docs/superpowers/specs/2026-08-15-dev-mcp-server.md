@@ -262,8 +262,7 @@ The per-call options are `GauntletGeocodeOpts` (`defaultCountry`, `caseCountry`,
 `harness.ts:110-127`), and the change pins are spread into each `geocodeAddress` call
 (`harness.ts:392-403`). `postcodeCountryCoherence` is a _dep_ rather than a construction parameter.
 
-The tool surface should document the practical consequence. **Two flag settings differ by nearly
-free** (one resident engine, two calls per input). **A comparison between two models or two gazetteers is
+The tool surface should document the practical consequence. **Two flag settings share one resident engine and require two calls per input.** **A comparison between two models or two gazetteers is
 expensive** (two resident engines, two multi-GB footprints). An agent should know which kind of
 comparison it asked for before it waits.
 

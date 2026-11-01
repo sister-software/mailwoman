@@ -455,7 +455,7 @@ CC BY-SA 4.0, ČÚZK, the Slovak Ministerstvo vnútra and Poland's GUGiK state t
 value for an absence of conditions, each in its own language, IGN grants Licence Ouverte 2.0 over the
 Base Adresse Nationale, Catastro and Bizkaia grant their own
 access-and-use terms, and Flanders grants its own model license for no-charge re-use. Article 4 of that
-license makes attribution the sole condition. Article 5 leaves the licensee holding the intellectual
+license makes attribution the sole condition. Article 5 leaves the licensee with the intellectual
 property in works created from the data. The Directive mandates the data rather than its license.
 
 **A publisher may state a license that covers part of what it publishes.** SYKE's record reads
@@ -560,6 +560,15 @@ corpus `MANIFEST.json` records the same digest as `training_manifest_digest`, so
 drifted from the build it claims is detectable. `auditTrainingManifest` recomputes the digest and compares
 the source rows against `totalRows`.
 
+Each source's decision is found through the register inputs `corpus-source-inputs.json` maps it to, and
+combined by `combineSourceDecisions` when there are several. A source with no decision records a
+`decisionGap` naming why. Every record committed here through `v0.8.2.json` was frozen while the lookup
+keyed the row's `license` label against `licenseID`, two values that never coincide, so each records
+`decision: null` for every source and no `decisionGap`. Those files state what their builds recorded and
+are not regenerated. The current freeze, rerun over `v0.8.2.json`'s sources against the register and
+table as committed in `31b6d6e88`, resolves 177 of its 178 sources, all elected. The remaining one,
+`invented-po-box-military`, maps to authored inputs only.
+
 `mwops release rights-audit` looks a manifest up by the `training.corpus_version` a package's
 `model-card.json` names. Observed 2026-09-28: of the twelve `neural-weights-*` cards, ten have no
 `training.corpus_version` at all and the two that do hold prose rather than a version, so no card yet
@@ -615,7 +624,7 @@ augmentation, and the reason an excluded source was excluded. `emittedButUnrecor
 epoch emitted that the frozen manifest does not name, with their row counts.
 
 `v0.7.0-de-holdout.effective.json` reads the corpus through
-`corpus-python/src/mailwoman_train/configs/v7.0.0-de-holdout-60k.yaml` at seed 43 over 1,000,000 draws. Of
+`packages/corpus/data/training-configs/v7.0.0-de-holdout-60k.yaml` at seed 43 over 1,000,000 draws. Of
 the eleven sources the frozen manifest names, nine drew rows and two have weight 0.0. Thirty-nine further
 sources were emitted under no frozen-manifest entry, 886,620 of the 1,000,000 rows, because the overlays
 that contain them were merged after that manifest was written.
@@ -658,6 +667,19 @@ Only factual fields are stored. No source prose is copied, and the corpus rows d
 source published the facts under CC0 or another open-data license. The recipe creates bounded synthetic
 case, punctuation, accent, country-tail, and left-context forms while keeping each reviewed
 postcode-to-place join unchanged.
+
+## `wof-refuted-parents.json` — WOF records whose point lies in another parent's polygon (#2857)
+
+The list comes from a point-in-polygon check of every live WOF admin record in the local GeoJSON
+checkouts of 2026-10-26: 5,292,951 records were tested and 3,639 have a point outside their parent's
+polygon. The file keeps the 425 whose point lies over 1 km outside the parent polygon and inside another
+polygon of the parent's placetype. The 2,676 within 1 km of the parent and the 538 inside no polygon of
+that placetype are coastline and boundary simplification and stay as published. `readFeatureRecord`
+gives a listed record no parent and no ancestors, as it does a record at latitude 0, longitude 0.
+
+The check's scripts and its full failure table are not committed. A rerun walks every
+`whosonfirst-data-admin-*` checkout, takes each record's `lbl:*` point (else `geom:*`), and tests it
+against the parent's polygon by even-odd ray casting.
 
 ## `sub-venue-lexicon.json` — the sub-venue designator lexicon (#35, waves 1–2)
 

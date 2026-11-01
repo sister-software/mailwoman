@@ -54,7 +54,10 @@ function isValidTransition(from: string, to: string): boolean {
 	return true
 }
 
-interface ViterbiTransitionAdjustment {
+/**
+ * A bonus added to the transition into label `toLabel` at timestep `timestep`.
+ */
+export interface ViterbiTransitionAdjustment {
 	timestep: number
 
 	toLabel: number
@@ -125,25 +128,9 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	const startTrans = input.startTransitions ?? new Array<number>(numLabels).fill(0)
 	const endTrans = input.endTransitions ?? new Array<number>(numLabels).fill(0)
 
-	let adjustAt: Map<number, Map<number, number>> | null = null
-
-	if (input.transitionAdjustments?.length) {
-		adjustAt = new Map()
-
-		for (const adj of input.transitionAdjustments) {
-			let byLabel = adjustAt.get(adj.timestep)
-
-			if (!byLabel) {
-				byLabel = new Map()
-				adjustAt.set(adj.timestep, byLabel)
-			}
-
-			byLabel.set(adj.toLabel, Math.max(byLabel.get(adj.toLabel) ?? NEG_INF, adj.bonus))
-		}
-	}
-
 	const dp: number[][] = []
 	const back: number[][] = []
+	const adjustAt = adjustmentLookup(input.transitionAdjustments)
 
 	const firstAdjust = adjustAt?.get(0)
 	const first = new Array<number>(numLabels)
@@ -201,6 +188,170 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	}
 
 	return { path, score: bestEndScore }
+}
+
+/**
+ * The `k` highest-scoring label sequences under the same scores {@linkcode viterbi}
+ * decodes, best first, each with its total score.
+ *
+ * Each cell keeps its `k` best partial paths in O(seqLen × numLabels² × k) time.
+ * Ties order by the lower previous label and then the lower rank.
+ *
+ * `viterbi` resolves ties in that order, so the first path equals `viterbi`'s.
+ *
+ * A path that crosses a forbidden transition (a score at or below half the mask's `-1e9`)
+ * is left out, so fewer than `k` paths can return.
+ */
+export function viterbiKBest(input: ViterbiInput, k: number): ViterbiResult[] {
+	const { emissions, transitions } = input
+	const T = emissions.length
+
+	if (T === 0) return [{ path: [], score: 0 }]
+
+	const numLabels = emissions[0]!.length
+	const startTrans = input.startTransitions ?? new Array<number>(numLabels).fill(0)
+	const endTrans = input.endTransitions ?? new Array<number>(numLabels).fill(0)
+	const adjustAt = adjustmentLookup(input.transitionAdjustments)
+
+	interface Entry {
+		score: number
+		previous: number
+		rank: number
+	}
+
+	const byScore = (a: Entry, b: Entry) =>
+		(a.score === b.score ? 0 : a.score > b.score ? -1 : 1) || a.previous - b.previous || a.rank - b.rank
+
+	const cells: Entry[][][] = []
+	const firstAdjust = adjustAt?.get(0)
+
+	cells.push(
+		Array.from({ length: numLabels }, (_, label) => [
+			{ score: startTrans[label]! + (firstAdjust?.get(label) ?? 0) + emissions[0]![label]!, previous: -1, rank: -1 },
+		])
+	)
+
+	for (let t = 1; t < T; t++) {
+		const tAdjust = adjustAt?.get(t)
+		const row: Entry[][] = []
+
+		for (let label = 0; label < numLabels; label++) {
+			const candidates: Entry[] = []
+			const add = (tAdjust?.get(label) ?? 0) + emissions[t]![label]!
+
+			for (let previous = 0; previous < numLabels; previous++) {
+				for (const [rank, entry] of cells[t - 1]![previous]!.entries()) {
+					candidates.push({ score: entry.score + transitions[previous]![label]! + add, previous, rank })
+				}
+			}
+
+			row.push(candidates.toSorted(byScore).slice(0, k))
+		}
+
+		cells.push(row)
+	}
+
+	const ends: Entry[] = []
+
+	for (let label = 0; label < numLabels; label++) {
+		for (const [rank, entry] of cells[T - 1]![label]!.entries()) {
+			ends.push({ score: entry.score + endTrans[label]!, previous: label, rank })
+		}
+	}
+
+	return ends
+		.toSorted(byScore)
+		.slice(0, k)
+		.filter((end) => end.score > NEG_INF / 2)
+		.map((end) => {
+			const path = new Array<number>(T)
+			let label = end.previous
+			let rank = end.rank
+
+			for (let t = T - 1; t >= 0; t--) {
+				path[t] = label
+				const entry = cells[t]![label]![rank]!
+
+				label = entry.previous
+				rank = entry.rank
+			}
+
+			return { path, score: end.score }
+		})
+}
+
+/**
+ * Indexes transition adjustments by timestep and label, keeping the largest bonus
+ * where several target the same cell, or returns `null` when there are none.
+ */
+function adjustmentLookup(adjustments: ViterbiInput["transitionAdjustments"]): Map<number, Map<number, number>> | null {
+	if (!adjustments?.length) return null
+
+	const adjustAt = new Map<number, Map<number, number>>()
+
+	for (const adj of adjustments) {
+		let byLabel = adjustAt.get(adj.timestep)
+
+		if (!byLabel) {
+			byLabel = new Map()
+			adjustAt.set(adj.timestep, byLabel)
+		}
+
+		byLabel.set(adj.toLabel, Math.max(byLabel.get(adj.toLabel) ?? NEG_INF, adj.bonus))
+	}
+
+	return adjustAt
+}
+
+/**
+ * The three parts of a path's score under one {@link ViterbiInput}.
+ */
+export interface ViterbiPathTerms {
+	/**
+	 * The sum of `emissions[t][path[t]]`.
+	 */
+	emissions: number
+
+	/**
+	 * The start transition into the first label, every pairwise transition,
+	 * and the end transition out of the last label.
+	 */
+	transitions: number
+
+	/**
+	 * The sum of the transition adjustments the path collects, under the
+	 * largest-bonus rule {@link viterbi} applies.
+	 */
+	adjustments: number
+}
+
+/**
+ * Scores any label path under the objective {@link viterbi} maximizes,
+ * split into its emission, transition and adjustment parts.
+ *
+ * For the path {@link viterbi} returns, the three parts sum to its `score`.
+ */
+export function viterbiPathTerms(input: ViterbiInput, path: readonly number[]): ViterbiPathTerms {
+	const T = path.length
+
+	if (T === 0) return { emissions: 0, transitions: 0, adjustments: 0 }
+
+	const adjustAt = adjustmentLookup(input.transitionAdjustments)
+	let emissions = 0
+	let transitions = (input.startTransitions?.[path[0]!] ?? 0) + (input.endTransitions?.[path[T - 1]!] ?? 0)
+	let adjustments = 0
+
+	for (let t = 0; t < T; t++) {
+		const label = path[t]!
+		emissions += input.emissions[t]![label]!
+		adjustments += adjustAt?.get(t)?.get(label) ?? 0
+
+		if (t > 0) {
+			transitions += input.transitions[path[t - 1]!]![label]!
+		}
+	}
+
+	return { emissions, transitions, adjustments }
 }
 
 /**

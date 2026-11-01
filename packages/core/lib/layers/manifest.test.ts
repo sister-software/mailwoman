@@ -62,7 +62,7 @@ describe("layer manifest IO", () => {
 
 		await writeLayerManifest(db, counted)
 
-		expect(await readLayerManifest(db)).toEqual(counted)
+		await expect(readLayerManifest(db)).resolves.toEqual(counted)
 	})
 
 	it("round-trips the input file's URL and SHA-256", async () => {
@@ -76,7 +76,7 @@ describe("layer manifest IO", () => {
 
 		await writeLayerManifest(db, pinned)
 
-		expect(await readLayerManifest(db)).toEqual(pinned)
+		await expect(readLayerManifest(db)).resolves.toEqual(pinned)
 	})
 
 	it("refuses an input digest that is not 64 lowercase hex characters", async () => {
@@ -111,7 +111,7 @@ describe("layer manifest IO", () => {
 		using absent = await openschemadb()
 		await writeLayerManifest(absent, MANIFEST)
 
-		expect(await readLayerManifest(absent)).toHaveProperty("sourceRecords", null)
+		await expect(readLayerManifest(absent)).resolves.toHaveProperty("sourceRecords", null)
 
 		using empty = await openschemadb()
 		await writeLayerManifest(empty, { ...MANIFEST, sourceRecords: {} })
@@ -155,7 +155,7 @@ describe("layer coverage IO", () => {
 			{ h3Cell: 1002, completeness: 0.1, observedRows: 3 },
 		])
 
-		expect(await readLayerCoverage(db, 1001)).toEqual({
+		await expect(readLayerCoverage(db, 1001)).resolves.toEqual({
 			h3Cell: 1001,
 			completeness: 0.9,
 			basis: CoverageBasis.SourcePresent,
@@ -163,14 +163,14 @@ describe("layer coverage IO", () => {
 		})
 
 		// An unsurveyed cell reads as `undefined`, which means unknown coverage.
-		expect(await readLayerCoverage(db, 9999)).toBeNull()
+		await expect(readLayerCoverage(db, 9999)).resolves.toBeNull()
 	})
 
 	it("distinguishes a surveyed-and-empty cell from an unsurveyed one", async () => {
 		using db = await openschemadb()
 		await writeLayerCoverage(db, [{ h3Cell: 1003, completeness: 0, observedRows: 0 }])
 
-		expect(await readLayerCoverage(db, 1003)).toEqual({
+		await expect(readLayerCoverage(db, 1003)).resolves.toEqual({
 			h3Cell: 1003,
 			completeness: 0,
 			basis: CoverageBasis.SourcePresent,
@@ -191,7 +191,7 @@ describe("layer coverage IO", () => {
 
 		await writeLayerCoverage(db, cells)
 
-		expect(await readLayerCoverage(db, 0)).toEqual({
+		await expect(readLayerCoverage(db, 0)).resolves.toEqual({
 			h3Cell: 0,
 			completeness: 0,
 			basis: CoverageBasis.SourcePresent,
@@ -200,7 +200,7 @@ describe("layer coverage IO", () => {
 
 		const midSecondBatch = COVERAGE_INSERT_BATCH + Math.floor(COVERAGE_INSERT_BATCH / 2)
 
-		expect(await readLayerCoverage(db, midSecondBatch)).toEqual({
+		await expect(readLayerCoverage(db, midSecondBatch)).resolves.toEqual({
 			h3Cell: midSecondBatch,
 			completeness: midSecondBatch / cellCount,
 			basis: CoverageBasis.SourcePresent,
@@ -209,14 +209,14 @@ describe("layer coverage IO", () => {
 
 		const lastCell = cellCount - 1
 
-		expect(await readLayerCoverage(db, lastCell)).toEqual({
+		await expect(readLayerCoverage(db, lastCell)).resolves.toEqual({
 			h3Cell: lastCell,
 			completeness: lastCell / cellCount,
 			basis: CoverageBasis.SourcePresent,
 			observedRows: lastCell,
 		})
 
-		expect(await readLayerCoverage(db, cellCount + 1000)).toBeNull()
+		await expect(readLayerCoverage(db, cellCount + 1000)).resolves.toBeNull()
 	})
 })
 
@@ -286,7 +286,7 @@ describe("coverage cell invariants", () => {
 			])
 		).rejects.toThrow(/completeness/)
 
-		expect(await readLayerCoverage(db, 1)).toBeNull()
+		await expect(readLayerCoverage(db, 1)).resolves.toBeNull()
 	})
 
 	it("refuses a corrupted row at READ time too", async () => {

@@ -17,6 +17,7 @@ export interface FlatNode {
 	tag: string
 	value: string
 	start: number
+	confidence?: number
 	children?: readonly FlatNode[]
 }
 

@@ -23,7 +23,7 @@ A trained model is **not the same artifact as the OpenStreetMap address dataset 
 
 For models that have OSM in their effective training ancestry, we include attribution in the model's rights and provenance documentation. We also maintain the records needed to identify the relevant training inputs and satisfy applicable access/reconstruction requirements for derivative databases.
 
-**Not enabling the optional OSM retrieval layer does not erase a model's training history.** A model can carry OSM attribution even when your application never installs an OSM address-point database.
+**Not enabling the optional OSM retrieval layer does not erase a model's training history.** A model can require OSM attribution even when your application never installs an OSM address-point database.
 
 Ordinary predictions or parsed address components are **not automatically licensed under ODbL** because the model was trained on OSM-derived data. Systematically extracting or reproducing substantial portions of OSM data is a different use case.
 
@@ -39,19 +39,19 @@ The intended workflow is to download an OSM extract from a provider such as [Geo
 
 | Situation                                                                                     | What to expect                                                                                                                                                         |
 | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| You use Mailwoman without an OSM retrieval layer                                              | Mailwoman by itself fetches and queries no OSM address-point layer. A model may still carry OSM training attribution.                                                  |
+| You use Mailwoman without an OSM retrieval layer                                              | Mailwoman by itself fetches and queries no OSM address-point layer. A model may still require OSM training attribution.                                                |
 | You build and use an OSM-derived layer internally                                             | Keep its ODbL license, attribution and provenance. Internal use generally does not by itself trigger the ODbL public-use share-alike requirements.                     |
 | You expose an OSM-backed geocoder or application publicly                                     | Credit OpenStreetMap in a place users can reasonably find. Additional database-access duties may apply if you use a modified OSM-derived database.                     |
 | You save an ordinary individual address match alongside a customer record                     | This does **not automatically** make the customer database ODbL. The OSMF's geocoding guidance distinguishes ordinary insubstantial results from derivative databases. |
 | You systematically incorporate, alter or reconstruct substantial OSM data in another database | The resulting database may be a **Derivative Database** subject to ODbL share-alike and database-access obligations.                                                   |
 
-These distinctions depend on what your system does with the data. How databases are named or stored decides none of them.
+These distinctions depend on what your system does with the data. How you label or store databases decides none of them.
 
 ## Your data and OSM data remain distinguishable
 
 Our retrieval design keeps source provenance attached to the datasets and results that use them. An OSM-derived SQLite layer is treated as OSM-derived data. Another independently sourced layer retains its own license.
 
-The [OSMF Geocoding Guideline](https://osmfoundation.org/wiki/Licence/Community_Guidelines/Geocoding_-_Guideline) expressly discusses ordinary geocoding results stored with proprietary records. It says those results generally do not trigger share-alike for the surrounding database when they are insubstantial and are not aggregated to reproduce a substantial portion of OSM.
+The [OSMF Geocoding Guideline](https://osmfoundation.org/wiki/Licence/Community_Guidelines/Geocoding_-_Guideline) expressly discusses ordinary geocoding results stored with proprietary records. It states that those results generally do not trigger share-alike for the surrounding database when they are insubstantial and are not aggregated to reproduce a substantial portion of OSM.
 
 **This is not a blanket exemption for every enrichment workflow.** If you use OSM to populate, correct or systematically assemble a larger database, the nature and scale of those changes matter. Independent data and OSM-derived data remain distinguishable when each has clear provenance.
 
@@ -63,7 +63,7 @@ If your service exposes OSM-backed lookups, include a visible or conventionally 
 
 This may appear in the application, API documentation, service credits or another location users would ordinarily expect. Preserve provenance in your application where practical. **A source field inside an individual API response should not be your only attribution mechanism** for a public OSM-backed service.
 
-Each Mailwoman HTTP surface keeps a result's `openstreetmap:<cc>` source stamp when an OSM layer you attached supplied its coordinate, and the Nominatim and Photon surfaces add the credit "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright" to that result. A result from any other source never carries the stamp or the credit, and a deployment without an OSM layer serves no OSM data. [HTTP APIs](../../developers/reference/http-apis.mdx#coordinate-provenance-and-the-openstreetmap-credit) lists the field each surface uses.
+Each Mailwoman HTTP surface keeps a result's `openstreetmap:<cc>` source stamp when an OSM layer you attached supplied its coordinate, and the Nominatim and Photon surfaces add the credit "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright" to that result. A result from any other source never has the stamp or the credit, and a deployment without an OSM layer serves no OSM data. [HTTP APIs](../../developers/reference/http-apis.mdx#coordinate-provenance-and-the-openstreetmap-credit) lists the field each surface uses.
 
 ## Distribution of an OSM-derived database
 
@@ -77,7 +77,7 @@ OpenStreetMap data retains its license requirements when you use it. Mailwoman's
 
 ## How to inspect your sources
 
-For a generated OSM layer, look for its **data layer manifest**, which records the license, the credit, the Geofabrik URL and SHA-256 of the extract it was built from, and the code revision that built it. `mailwoman doctor` lists each address-point database under `$MAILWOMAN_DATA_ROOT/db/osm` with the license and credit its manifest records, and `mailwoman data bom` reports each one as its own component. To decline share-alike data, set `MAILWOMAN_REFUSE_OBLIGATIONS=share-alike`: `mailwoman data pull` then refuses share-alike bundles, and the geocode session refuses to start while an OpenStreetMap database is on disk, naming the database and its recorded provenance.
+For a generated OSM layer, look for its **data layer manifest**. It records the license, the credit, the Geofabrik URL and SHA-256 of the extract it was built from, and the code revision that built it. `mailwoman doctor` lists each address-point database under `$MAILWOMAN_DATA_ROOT/db/osm` with the license and credit its manifest records, and `mailwoman data bom` reports each one as its own component. To decline share-alike data, set `MAILWOMAN_REFUSE_OBLIGATIONS=share-alike`: `mailwoman data pull` then refuses share-alike bundles, and the geocode session refuses to start while an OpenStreetMap database is on disk, naming the database and its recorded provenance.
 
 Model rights files and model cards are separate from the retrieval-layer manifest. They report the training lineage and notices associated with that model's weights.
 
@@ -96,7 +96,7 @@ without an OpenStreetMap notice in their `LICENSE.md`, `PROVENANCE.json`, `READM
 this page is the notice for them. Release 10.5.0, published 2026-10-17, is the first whose rights files
 derive the attribution from the training record: each weights package's `LICENSE.md` prints the
 OpenStreetMap statement over the sources that reached the trainer, `PROVENANCE.json` records the
-effective training sources with their row counts, and the `en-us` README and model card carry the
+effective training sources with their row counts, and the `en-us` README and model card contain the
 notice in prose. The frozen training record and the effective training manifest are committed in the
 repository under `packages/corpus/data/training-manifests/`.
 
@@ -116,18 +116,18 @@ extract dates and the repository revision that produced the files. The `en-us` p
 The `spliced-sub-venue` recipe splices venue and sub-venue names onto address skeletons. Its rows record no
 name source, so each row was matched against the name lists its locale drew from. The en-GB, de-DE, es-ES
 and ca-ES rows drew only from OpenStreetMap extracts, en-US only from Overture Places, and fr-FR from both.
-Of the corpus's 120,000 rows, 73,039 carry an OpenStreetMap name: 71,598 an OpenStreetMap venue name, 547
+Of the corpus's 120,000 rows, 73,039 have an OpenStreetMap name: 71,598 an OpenStreetMap venue name, 547
 an OpenStreetMap sub-venue string beside an Overture venue name, and 894 a name both lists hold. The other
-32,658 rows carry an Overture Places name and 14,303 carry no pooled name.
+32,658 rows have an Overture Places name and 14,303 have no pooled name.
 
 The dataset publishes 46,292 of those 73,039 rows, every one outside the en-GB locale. The 26,747 en-GB
 rows were withdrawn on 2026-10-17. Their address skeletons (house number, street, locality, region and
-postcode) were fields of HM Land Registry Price Paid Data, whose download page excludes those Address
+postcode) were fields of HM Land Registry Price Paid Data. Its download page excludes those Address
 Data fields from the Open Government Licence. Royal Mail and Ordnance Survey permit them only for personal
 or non-commercial use and for displaying residential property price information. The earlier revisions of
 the dataset that held those rows were removed from its history. The Great Britain extract file stays
 published. It holds the whole OpenStreetMap name list that locale drew from, including every name the
-en-GB rows carried.
+en-GB rows had.
 
 The published rows' skeletons come from the Base Adresse Nationale (fr-FR, Licence Ouverte 2.0), the
 Berlin and Sachsen address registers through OpenAddresses (de-DE, Datenlizenz Deutschland Zero 2.0 and

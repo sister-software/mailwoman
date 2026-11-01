@@ -63,7 +63,7 @@ describe("readEncoderFromModelCard", () => {
 	it("reads a char card's vocabulary sibling and interface, and defaults an absent block to SentencePiece", async () => {
 		const dir = await charPackage()
 
-		expect(await readEncoderFromModelCard(dir("model-card.json"))).toEqual({
+		await expect(readEncoderFromModelCard(dir("model-card.json"))).resolves.toEqual({
 			kind: "char",
 			charVocab: "char-vocab.json",
 			maxUnits: 16,
@@ -71,7 +71,7 @@ describe("readEncoderFromModelCard", () => {
 			ctxChars: 2,
 		})
 
-		expect(await readEncoderFromModelCard(null)).toEqual({ kind: "sentencepiece" })
+		await expect(readEncoderFromModelCard(null)).resolves.toEqual({ kind: "sentencepiece" })
 	})
 
 	it("refuses a char card missing part of the interface rather than guessing a window", async () => {

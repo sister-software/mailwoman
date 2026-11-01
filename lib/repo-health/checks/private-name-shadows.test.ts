@@ -59,6 +59,6 @@ describe("findPrivateNameShadows", () => {
 		const shadows = await findPrivateNameShadows(context)
 
 		expect(Array.isArray(shadows)).toBe(true)
-		expect(await privateNameShadowsCheck.run(context)).toHaveLength(shadows.length)
+		await expect(privateNameShadowsCheck.run(context)).resolves.toHaveLength(shadows.length)
 	}, 60_000)
 })

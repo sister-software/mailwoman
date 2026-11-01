@@ -1,5 +1,5 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -268,7 +268,56 @@ describe("auditHeldoutOverlap", () => {
 				candidateModelCard: candidateCard,
 				pathRoot: root,
 			})
-		).rejects.toThrow(/not among the model cards named/u)
+		).rejects.toThrow(/not among the model cards or training configs named/u)
+	})
+
+	it("reads a model's corpus from its training config's data.corpus_dir, held to a card's rules", async () => {
+		const corpus = await writeCorpus("from-config", "0.9.2-config")
+		const published = await writeCard("from-config-published", "v0.9.2-config")
+		const config = `${root}/configs/arm.yaml`
+		const ancestor = `${root}/configs/fine-tune.yaml`
+
+		await writeLocalTextFile("data:\n  corpus_dir: /data/corpus/versioned/v0.9.2-config/corpus-v0.9.2-config\n", config)
+
+		await writeLocalTextFile(
+			"data:\n  corpus_dir: /data/corpus/versioned/v0.9.2-config/corpus-v0.9.2-config\n" +
+				"train:\n  init_from: /data/models/primer/best.pt\n",
+			ancestor
+		)
+
+		const result = await auditHeldoutOverlap({
+			dataset,
+			corpora: [corpus],
+			modelCards: [published],
+			trainingConfigs: [config],
+			candidateModelCard: config,
+			pathRoot: root,
+		})
+
+		expect(result.audit.verifiedUnseenAdmitted).toBe(true)
+
+		expect(result.audit.modelCards).toEqual([
+			{ path: published, source: "model-card", corpusVersion: "v0.9.2-config", matched: true, problem: null },
+			{ path: config, source: "training-config", corpusVersion: "v0.9.2-config", matched: true, problem: null },
+		])
+
+		expect(result.audit.counts).toEqual({ verified_unseen: 2, unseen_by_candidate: 0, known_overlap: 2, unknown: 0 })
+
+		const refused = await auditHeldoutOverlap({
+			dataset,
+			corpora: [corpus],
+			modelCards: [published],
+			trainingConfigs: [ancestor],
+			pathRoot: root,
+		})
+
+		expect(refused.audit.verifiedUnseenAdmitted).toBe(false)
+
+		expect(refused.audit.reasons.join("\n")).toMatch(
+			/training config .*fine-tune\.yaml: the config's train\.init_from/u
+		)
+
+		expect(refused.audit.counts.verified_unseen).toBe(0)
 	})
 
 	it("refuses verified_unseen when no model card is named", async () => {

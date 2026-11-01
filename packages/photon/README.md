@@ -49,7 +49,7 @@ Map widgets (`leaflet-control-geocoder`, `@openrunner/photon-geocoder`) call thi
 ## Coordinate provenance and the OpenStreetMap credit
 
 A primary feature whose coordinate came from an address-point or interpolation register names that
-row in a `mailwoman` property, verbatim. A row from an OpenStreetMap layer also carries the credit, so a
+row in a `mailwoman` property, verbatim. A row from an OpenStreetMap layer also includes the credit, so a
 client that draws an attribution control can show it:
 
 ```jsonc
@@ -63,11 +63,11 @@ client that draws an attribution control can show it:
 
 `serve` opens the OpenStreetMap address-point layers an operator built under
 `$MAILWOMAN_DATA_ROOT/db/osm/` when `@mailwoman/osm` is installed. A feature from any other register
-carries that register's stamp and no `attribution`, and a deployment without an OpenStreetMap layer
+has that register's stamp and no `attribution`, and a deployment without an OpenStreetMap layer
 serves no OpenStreetMap data and never emits either. The OpenStreetMap Foundation's Geocoding Guideline
 asks a public geocoder serving its data for a service-level credit, so a public deployment with a layer
 attached also states "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright"
-in its own documentation or map attribution. `format=jsonld` carries neither field. See the
+in its own documentation or map attribution. `format=jsonld` includes neither field. See the
 [HTTP APIs reference](https://mailwoman.ai/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit).
 
 ## Status

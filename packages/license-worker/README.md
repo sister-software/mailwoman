@@ -15,7 +15,7 @@ The operator decided the following, and each stands until the operator revisits 
 - A license is a yearly or monthly subscription.
 - The mint trigger is `invoice.paid`, on the first payment and on every renewal.
 - A token follows the billing period: `expires` is the period end plus fourteen days of grace. Each
-  renewal mints a new token, which `mailwoman license refresh` fetches.
+  renewal mints a new token. `mailwoman license refresh` fetches it.
 - The Stripe Customer Portal handles billing. The first version has no Mailwoman login, uses a
   Payment Link rather than a checkout endpoint, and has no queue, because Stripe's three-day webhook
   retry is the queue.
@@ -206,7 +206,7 @@ clock past the period end, and replay the renewal's `invoice.paid`. The launch p
 
 ## Tests
 
-`yarn test:license-worker` runs the workspace's suite under `@cloudflare/vitest-pool-workers`. The suite uses
+`yarn test:license-worker` runs the workspace's suite under `@cloudflare/vitest-plugin`. The suite uses
 Miniflare's D1 with the migrations applied per file, a Stripe client over a fetch stub that answers by method and path,
 and a signing pair minted per run. The root Vitest sweep excludes these files, and CI runs them as a separate step. Run
 `yarn compile` first, because the worker imports `@mailwoman/core` through its `default` export condition. That condition points

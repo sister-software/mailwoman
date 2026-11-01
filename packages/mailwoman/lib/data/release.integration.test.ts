@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Versioned data switchover: manifest read and path resolution. It also tests the `USStateDatabaseProvider`'s zero-downtime atomic reload with a one-generation grace on old handles.
+ *   Versioned data switchover: path resolution. It also tests the `USStateDatabaseProvider`'s zero-downtime atomic reload with a one-generation grace on old handles.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -11,7 +11,7 @@ import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
-import { readReleaseManifest, resolveDatabasePath } from "#data"
+import { resolveDatabasePath } from "#data"
 import { USStateDatabaseProvider } from "#geocode"
 
 const fixtures = new AsyncDisposableStack()
@@ -61,47 +61,27 @@ async function dirEnsure(d: PathBuilder): Promise<PathBuilder> {
 	return d
 }
 
-describe("readReleaseManifest", () => {
-	test("reads a valid manifest; null for absent or malformed", async () => {
-		const root = tmp()
-		expect(await readReleaseManifest(await root)).toBeNull()
-
-		await writeLocalJSONFile(
-			{ "address-points": "2026-05-20.0", interpolation: "TIGER2023" },
-			(await root)("releases.json")
-		)
-
-		expect(await readReleaseManifest(await root)).toEqual({
-			"address-points": "2026-05-20.0",
-			interpolation: "TIGER2023",
-		})
-
-		await writeLocalTextFile("{ not json", (await root)("releases.json"))
-		expect(await readReleaseManifest(await root)).toBeNull()
-	})
-})
-
 describe("resolveDatabasePath", () => {
 	test("prefers the versioned name; falls back to legacy; null if neither", async () => {
 		const root = tmp()
 		const apDir = await dirEnsure(addressPointDatabaseRoot(await root))
 		await writeLocalTextFile("", apDir("address-points-us-tx.db"))
 
-		expect(await resolveDatabasePath(await root, "address-points", "tx", null)).toBe(
+		await expect(resolveDatabasePath(await root, "address-points", "tx", null)).resolves.toBe(
 			apDir("address-points-us-tx.db").toString()
 		)
 
 		await writeLocalTextFile("", apDir("address-points-us-tx-v2.db"))
 
-		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v2" })).toBe(
+		await expect(resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v2" })).resolves.toBe(
 			apDir("address-points-us-tx-v2.db").toString()
 		)
 
-		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v9" })).toBe(
+		await expect(resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v9" })).resolves.toBe(
 			apDir("address-points-us-tx.db").toString()
 		)
 
-		expect(await resolveDatabasePath(await root, "address-points", "zz", null)).toBeNull()
+		await expect(resolveDatabasePath(await root, "address-points", "zz", null)).resolves.toBeNull()
 	})
 })
 
@@ -119,7 +99,7 @@ describe("RegionDatabaseProvider atomic switchover", () => {
 
 		await writeLocalTextFile("", apDir("address-points-us-tx-v2.db"))
 		await writeLocalJSONFile({ "address-points": "v2" }, (await root)("releases.json"))
-		expect(await provider.reload()).toEqual({ "address-points": "v2" })
+		await expect(provider.reload()).resolves.toEqual({ "address-points": "v2" })
 
 		const v2 = provider.for("tx").addressPoints as FakeAddressPoints
 		expect(v2.dbPath).toContain("address-points-us-tx-v2.db")

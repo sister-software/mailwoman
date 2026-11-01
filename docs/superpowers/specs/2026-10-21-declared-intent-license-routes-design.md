@@ -36,7 +36,7 @@ artifact and leaves the tier boundaries to the atlas work.
 - Hardware or machine identifiers. A browser, workerd and most containers have none.
 - Seat or activation counting. The pricing page sells one subscription per legal entity across every environment.
 - Price amounts and a non-profit discount. Those are operator decisions and change no code here.
-- Tier boundaries, artifact sizes and the ODbL publication question, which the atlas and layer-tier work own.
+- Tier boundaries, artifact sizes and the ODbL publication question, owned by the atlas and layer-tier work.
 
 ## Anti-goals
 
@@ -45,7 +45,7 @@ The work has failed, even when every test passes, if any of these holds:
 - A first install requires an account, an email address or a network call before the first parse.
 - An installed deployment degrades when its token expires.
 - The `license` field of a package on public npm changes away from `AGPL-3.0-only OR LicenseRef-Commercial`.
-- An API response carries the licensee's name or key id.
+- An API response contains the licensee's name or key id.
 
 ## Decisions
 
@@ -60,7 +60,7 @@ and the credentials per environment as the prerequisites below list. An artifact
 paths as a free one, and no runtime path consults the token.
 
 A paid weights overlay is delivered the same way, into the data-root weights overlay that `resolveWeights` already
-reads after the package directory. The alternative is a private npm registry in the Font Awesome shape, which needs a
+reads after the package directory. The alternative is a private npm registry in the Font Awesome shape. It needs a
 registry service, a token exchange in `.npmrc`, and a second delivery path to test. The data-root path exists and is
 the one chosen. A weights overlay that becomes paid is removed from public npm at the release that first withholds
 it, and the releases already published stay published.
@@ -84,12 +84,12 @@ strips unknown keys, so a token with the new claims verifies on a release that p
 token.
 
 `isSelfServicePayload` requires `lid` and `agreement` today. A declared token has a `lid` and no agreement, so the
-online status check applies to any token with a `lid`, and `agreement` stays a claim of the commercial route alone.
+online status check applies to any token with a `lid`, and `agreement` stays a claim of the commercial route only.
 
 ### The installation id
 
 On its first license or data-pull action, the CLI mints a UUID and writes it to `$MAILWOMAN_CONFIG_ROOT/license/install`
-beside the key file. `mailwoman doctor` prints it. Every declare, evaluate, refresh and download request carries it, and
+beside the key file. `mailwoman doctor` prints it. Every declare, evaluate, refresh and download request includes it, and
 the ledger records it with the request. The token is never bound to it, so a token refreshed on a build machine works
 in production. One license with hundreds of installation ids is information for the operator and never a refusal.
 
@@ -99,24 +99,24 @@ The worker gains three routes beside claim, refresh and status.
 
 `POST /v1/declare` takes an intent other than `evaluation` and `commercial`, a name, and for `open-source` a public
 source URL or for the other intents an organization or institution and an email address at it. It writes a license row
-and an issuance row and mints a token with `terms: "AGPL-3.0-only"`. For `open-source`, the response carries the token
+and an issuance row and mints a token with `terms: "AGPL-3.0-only"`. For `open-source`, the response contains the token
 and the refresh credentials, and the source URL identifies the license. For `non-profit`, `academic` and `student`, the
-token goes only to the stated email address through the sender the shop uses, the response carries a claim id, and the
+token goes only to the stated email address through the sender the shop uses, the response contains a claim id, and the
 CLI polls the existing claim route until the message is delivered, so the address is a possession proof. A repeat
 issuance for any declared license presents the refresh credentials, as a renewal does, and increments `seq`. A
 declaration without them creates a new license. On re-issuance of an `open-source`
 declaration the worker fetches the declared URL and records `verified` when it resolves to a public repository whose
-license file carries an AGPL-compatible identifier, and `unverified` otherwise. Both stay valid.
+license file contains an AGPL-compatible identifier, and `unverified` otherwise. Both stay valid.
 
 `POST /v1/evaluate` takes an email address and a name, issues a token with `intent: "evaluation"` and a thirty-day
-expiry, and refuses a second evaluation for the same address. The token carries `terms: "AGPL-3.0-only"`, so an
+expiry, and refuses a second evaluation for the same address. The token includes `terms: "AGPL-3.0-only"`, so an
 evaluation grants artifact access under the AGPL, releases no obligation, and collects no agreement version. The token
 goes only to the address, through the claim route as above, so the worker refuses a second evaluation for an address
 only after that address has received the first. Renewal is a declaration or a purchase.
 
 `POST /v1/download` takes a token and an artifact name, verifies the token offline against the register, and checks
 that `scope` admits the artifact. A token with a `lid` must also have an `active` ledger state. A token without one, as
-`mailwoman license issue` mints for a negotiated agreement, is admitted on offline verification and expiry alone, so an
+`mailwoman license issue` mints for a negotiated agreement, is admitted on offline verification and expiry only, so an
 enterprise licensee receives paid artifacts without a ledger row. The route answers a presigned URL that expires within
 the hour. Each download is a ledger row keyed on the `lid` when present, and otherwise on the key id, the licensee and
 the installation id.
@@ -176,13 +176,13 @@ the thirty-day evaluation, appear as rows under the open-source column. The amou
 The `/license` page lists the routes with their commands and links the terms. The getting-started articles under
 `docs/articles/developers/get-started/` are revised around `mailwoman setup`. A research page documents the
 academic and student routes, the citation, and the data-terms caveats. A `CITATION.cff` is added at the repository
-root. It cites the software with its authors, repository URL and version, and carries no DOI, because the repository
+root. It cites the software with its authors, repository URL and version, and has no DOI, because the repository
 has none.
 
 ### Placement
 
 No new package is created. The key format and the worker client stay in `@mailwoman/core/license/*`, which already
-carries export conditions for workerd and browsers. The commands and the wizard live in `packages/mailwoman/cli/`. The
+declares export conditions for workerd and browsers. The commands and the wizard live in `packages/mailwoman/cli/`. The
 routes, the catalog and the ledger live in `@mailwoman/license-worker`.
 
 ### Release ordering

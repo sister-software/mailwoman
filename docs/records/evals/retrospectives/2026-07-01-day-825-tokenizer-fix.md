@@ -27,7 +27,7 @@ coordinate.
 
 **The coverage detour, and the eyeball that overturned our own aggregate.** The operator asked us to scope
 whether CZ/PL was coverage-bound before deciding. The resolved-p50 aggregate (CZ 5.24km) _looked_ like "right
-city, just coarse — needs rooftop data." The eyeball said otherwise: ~40% of Czech addresses were landing in
+city, coarse — needs rooftop data." The eyeball said otherwise: ~40% of Czech addresses were landing in
 the **wrong city entirely** (80–280km off), because the diacritic parse was broken — `Vysoká` read as
 `Vysok`, `Čistá` as `istá`, localities truncated. The p50 had hidden a bimodal distribution. This is
 verify-before-verdict firing on our own summary statistic: the aggregate wasn't the verdict, the evidence
@@ -43,7 +43,7 @@ universal). The fix was tokenizer-side, and the extract was the wrong change.
 **The 80k check confirmed it — and then some.** v196 at full convergence: US held (p50 3.31, zero dilution),
 PL flat, but **CZ regressed** — resolved-p50 5.24 → 82.89km, wrong-city 44 → 58%. At 40k CZ was flat. The
 extra 40k steps at constant LR overfit the extract and broke the Czech parses. NO-PROMOTE. The retrain didn't
-just fail to help — at scale it did harm. We only know because we graded the assembled coordinate. On
+fail to help — at scale it did harm. We only know because we graded the assembled coordinate. On
 label-F1 the content-gap went 100→17% and the model looked fixed.
 
 **The tokenizer splice fixed it at nearly zero cost.** We trained a Czech/Polish SentencePiece unigram, kept
@@ -135,12 +135,12 @@ parallel and is parked as the CJK-forward path (the one place vocab-splice won't
 
 ## Ledger
 
-|                     |                                                                                                           |
-| ------------------- | --------------------------------------------------------------------------------------------------------- |
-| Shift               | Day, 2026-07-01, ~15:00–19:45 UTC                                                                         |
-| Models trained      | 2 (v196 ship candidate 80k, v1.9.7-bsplice fine-tune 2k) + the v193 probe finishing                       |
-| Total Modal GPU     | ~$25–30 (retrain dominates, and the winning fix — splice + mean-init — needed 0 training, just an export) |
-| Promotions          | 0 shipped — v4.15.0 remains default, B is a candidate pending the checklist                               |
-| Regressions shipped | 0                                                                                                         |
-| NaN / divergence    | 0                                                                                                         |
-| Net result          | #825-as-retrain falsified, an English-safe CZ/PL fix found and validated                                  |
+|                     |                                                                                                      |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| Shift               | Day, 2026-07-01, ~15:00–19:45 UTC                                                                    |
+| Models trained      | 2 (v196 ship candidate 80k, v1.9.7-bsplice fine-tune 2k) + the v193 probe finishing                  |
+| Total Modal GPU     | ~$25–30 (retrain dominates, and the winning fix — splice + mean-init — needed 0 training, an export) |
+| Promotions          | 0 shipped — v4.15.0 remains default, B is a candidate pending the checklist                          |
+| Regressions shipped | 0                                                                                                    |
+| NaN / divergence    | 0                                                                                                    |
+| Net result          | #825-as-retrain falsified, an English-safe CZ/PL fix found and validated                             |

@@ -5,7 +5,7 @@
  * @file Tests the join from corpus source ids to register rows, and the refusal every build and launch runs.
  *
  *   Two failures here are silent in opposite directions. A table that maps a source to a row whose decision is elected
- *   when the source reads another publication admits rows nobody read the terms of. A table that misses a source
+ *   when the source reads another publication admits rows whose terms the project has not reviewed. A table that misses a source
  *   leaves it to the build to discover hours later. Both pass a type check, so the committed table is pinned here.
  */
 
@@ -170,6 +170,22 @@ describe("createSourceRightsAdmission", () => {
 		expect(record.unshippable_reason).toBe("local experiment")
 		expect(lines.filter((line) => line.includes("gb-property-building-1"))).toHaveLength(1)
 		expect(lines[0]).toMatch(/^UNSHIPPABLE test build: .*override: local experiment/)
+	})
+
+	it("judges a source by the inputs of the corpus version it is given, and names the override hint", () => {
+		const today = createSourceRightsAdmission(register, inputs, { context: "test run" })
+
+		expect(today.admit("spliced-sub-venue").map((gap) => gap.registerSource)).not.toContain("gb-property-building-1")
+
+		const built = createSourceRightsAdmission(register, inputs, {
+			context: "test run",
+			corpusVersion: "v0.7.2-address-systems",
+			overrideHint: "a config's data.unshippable_reason for a training run",
+		})
+
+		expect(() => built.admit("spliced-sub-venue")).toThrow(
+			/gb-property-building-1.*--unshippable-reason <why> \(a config's data.unshippable_reason for a training run\)/s
+		)
 	})
 
 	it("refuses a blank override, which says nothing about why", () => {

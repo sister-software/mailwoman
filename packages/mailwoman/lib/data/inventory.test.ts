@@ -9,7 +9,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { createSymbolicLink, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { changeMode, createSymbolicLink, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
@@ -143,6 +143,28 @@ describe("takeInventory — the four states stay distinct", () => {
 		expect(report.entries.map((entry) => entry.path)).toEqual(["db/wof/candidate.db"])
 		expect(report.maxDepth).toBeGreaterThanOrEqual(3)
 	})
+
+	it("reports a data root that does not exist as holding no databases", async () => {
+		const root = await dataRoot()
+
+		expect((await takeInventory({ dataRoot: root("absent") })).entries).toEqual([])
+	})
+
+	// A process running as root reads a mode-000 directory, so the case cannot fail there.
+	it.skipIf(process.getuid?.() === 0)("names a directory it cannot read instead of omitting it", async () => {
+		const root = await dataRoot()
+		const locked = root("db", "wof")
+
+		await makeDirectories(locked)
+		bare(locked("candidate.db"))
+		await changeMode(locked, 0o000)
+
+		try {
+			await expect(takeInventory({ dataRoot: root })).rejects.toThrow(`EACCES: permission denied, opendir '${locked}'`)
+		} finally {
+			await changeMode(locked, 0o755)
+		}
+	})
 })
 
 describe("probeManifest", () => {
@@ -214,7 +236,7 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 		// The inventory must report that stale path even when the database has a manifest.
 		const root = await dataRoot()
 
-		expect(await buildCommandGaps("node osm/out/scripts/build-rooftop-database.js", root)).toEqual([
+		await expect(buildCommandGaps("node osm/out/scripts/build-rooftop-database.js", root)).resolves.toEqual([
 			"osm/out/scripts/build-rooftop-database.js",
 		])
 	})
@@ -222,7 +244,7 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 	it("treats a bare CLI verb as runnable rather than guessing", async () => {
 		// The check runs `mailwoman gazetteer build poi` through the CLI.
 		// A gap report would include artifacts that already have the best coverage.
-		expect(await buildCommandGaps("mailwoman gazetteer build poi", await dataRoot())).toEqual([])
+		await expect(buildCommandGaps("mailwoman gazetteer build poi", await dataRoot())).resolves.toEqual([])
 	})
 
 	it("passes a path that does exist", async () => {
@@ -231,6 +253,6 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 		await makeDirectories(root("scripts"))
 		await writeLocalTextFile("", root("scripts", "build.ts"))
 
-		expect(await buildCommandGaps("node scripts/build.ts", root)).toEqual([])
+		await expect(buildCommandGaps("node scripts/build.ts", root)).resolves.toEqual([])
 	})
 })

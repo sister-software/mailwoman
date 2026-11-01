@@ -173,8 +173,7 @@ or a match key, run the stage first.
   `normalize` returns an `offsetMap` that maps normalized positions back to raw positions. If you
   normalize and then parse, map offsets through it instead of assuming the indexes line up.
 - **Case normalization applies to pure-ASCII input only.** Accented and non-Latin input keeps
-  its case, because changing its case can change its length (`ß` becomes `SS`) and break the offset
-  guarantee described above. An all-caps French address does not get the all-caps fix.
+  its case, because changing its case can change its length (`ß` becomes `SS`) and invalidate the offsets described above. An all-caps French address does not get the all-caps fix.
 - **Abbreviation expansion uses a small safe set at `locale: "und"`.** A real locale widens
   the set. It is not a general address-standardization pass, and it does not implement USPS
   Publication 28.

@@ -1,5 +1,5 @@
 import type { PathBuilder } from "path-ts"
-import { TSVSpliterator } from "spliterator"
+import { TSVSpliterator, UnterminatedQuoteError } from "spliterator"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import {
@@ -64,21 +64,21 @@ describe("reading an unquoted delimited file", () => {
 	})
 
 	/**
-	 * The defect this module exists for, pinned as the behavior it must not have.
+	 * The defect this module was written for, pinned at its source.
 	 *
-	 * A quote-aware reader over this input returns two rows.
-	 * Neither row is Türkmenabat.
-	 * Every later boundary sees the same count as a two-row file.
+	 * Before spliterator 10, the TSV default was quote-aware: this input read as two rows,
+	 * neither of them Türkmenabat, and every later boundary saw the count of a two-row file.
+	 * The default now reads the quote as data, so it agrees with the unquoted reader.
 	 */
-	it("differs from the default, which swallows the rows between one quote and the next", async () => {
+	it("agrees with the TSV default, which no longer swallows rows after a quote", async () => {
 		const rows: string[][] = []
 
 		for await (const row of TSVSpliterator.fromAsync(file, { header: false })) {
 			rows.push(row as string[])
 		}
 
-		expect(rows.length).toBeLessThan(3)
-		expect(rows.some((row) => row[1] === "Türkmenabat")).toBe(false)
+		expect(rows).toHaveLength(3)
+		expect(rows[1]?.[1]).toBe(`Ovrag Kyzylak"on`)
 	})
 })
 
@@ -87,23 +87,18 @@ describe("the checked read", () => {
 		await expect(readUnquotedTSVChecked(file)).resolves.toHaveLength(3)
 	})
 
-	it("recovers the full count on an input where the default answers short", async () => {
-		// An unterminated quote is the worst case: the default reader runs to the end of the
-		// file holding one open region and answers fewer records than the file has lines.
+	it("reads every row of an input whose quote never closes", async () => {
+		// An unterminated quote was the worst case: a quote-aware reader runs to the end of the file holding one open
+		// region. It now throws there instead of answering short, and a reader with quotes off reads the quote as data.
 		const truncating = dir.path("open-quote.txt")
 
 		await writeLocalTextFile(`1\tAshgabat\t37.95\t58.38\n2\tOvrag "on\t38.23\t55.11\n3\tMary\t37.6\t61.8`, truncating)
 
-		const viaDefault: string[][] = []
-
-		for await (const row of TSVSpliterator.fromAsync(truncating, { header: false })) {
-			viaDefault.push(row as string[])
-		}
-
-		// The comparison is only meaningful where the default loses rows.
-		// Assert that first.
-		expect(viaDefault.length).toBeLessThan(3)
 		await expect(readUnquotedTSVChecked(truncating)).resolves.toHaveLength(3)
+
+		await expect(
+			TSVSpliterator.fromAsync(truncating, { header: false, enableQuoteHandling: true }).toArray()
+		).rejects.toThrow(UnterminatedQuoteError)
 	})
 
 	/**

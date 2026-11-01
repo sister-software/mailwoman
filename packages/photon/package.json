@@ -59,7 +59,6 @@
 		"@hono/zod-openapi": "^1.6.3",
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",
-		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/gazetteer": "workspace:*",
@@ -68,7 +67,7 @@
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"hono": "^4.13.13",
+		"hono": "^4.13.14",
 		"mailwoman": "workspace:*",
 		"zod": "^4.6.7"
 	}

@@ -34,8 +34,8 @@ need building. At this stage the package ships only the two lexicon files.
 
 ## Attribution
 
-This overlay decodes through the `@mailwoman/neural-weights-en-us` model graph, which trained on
-address rows derived from OpenStreetMap. A consumer of this package alone receives rows that graph was
+This overlay decodes through the `@mailwoman/neural-weights-en-us` model graph. That graph trained on
+address rows derived from OpenStreetMap. A consumer who installs only this package receives rows that graph was
 trained to read, so the notice applies here too:
 
 > © OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0

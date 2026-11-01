@@ -11,7 +11,6 @@ import {
 	createUsgovNPPESAdapter,
 	USGOV_NPPES_ADAPTER_ID,
 	USGOV_NPPES_DEFAULT_LICENSE,
-	unitLine,
 } from "#us/adapters/usgov/nppes/adapter"
 
 const fixtures = new AsyncDisposableStack()
@@ -92,17 +91,25 @@ describe("usgov-nppes adapter", () => {
 		expect(r.raw).toContain("1234 MAIN ST SUITE 200")
 	})
 
-	it("labels a designator or number-sign second line as the unit and leaves any other second line out", () => {
-		expect(unitLine("SUITE 200")).toBe("SUITE 200")
-		expect(unitLine("STE. 4")).toBe("STE. 4")
-		expect(unitLine("APT 2B")).toBe("APT 2B")
-		expect(unitLine("#200")).toBe("#200")
-		// Publication 28 lists DEPARTMENT among the secondary unit designators.
-		expect(unitLine("DEPARTMENT OF SURGERY")).toBe("DEPARTMENT OF SURGERY")
-		expect(unitLine("ATTN: BILLING")).toBeNull()
-		expect(unitLine("C/O MERCY HOSPITAL")).toBeNull()
-		expect(unitLine("MEDICAL OFFICE BUILDING")).toBeNull()
-		expect(unitLine("")).toBeNull()
+	it("labels a unit written on the first line as the unit, ahead of a second-line unit", async () => {
+		const p = await writeCSV(
+			"1000000002,1,,MCEWAN,JENNIFER,2560 HUNTINGTON AVE STE 302,,ALEXANDRIA,VA,223031448",
+			"1000000003,2,METRO HEALTH SYSTEM,,,1650 KING ST STE 300,BLDG 4,ALEXANDRIA,VA,22314"
+		)
+
+		const rows = []
+
+		for await (const r of createUsgovNPPESAdapter().rows({ inputPath: p })) {
+			rows.push(r)
+		}
+
+		expect(rows.map((r) => [r.components.street, r.components.unit])).toEqual([
+			["HUNTINGTON AVE", "STE 302"],
+			["KING ST", "STE 300 BLDG 4"],
+		])
+
+		expect(rows[0]!.raw).toContain("2560 HUNTINGTON AVE STE 302")
+		expect(rows[1]!.raw).toContain("1650 KING ST STE 300 BLDG 4")
 	})
 
 	it("trims a padded organization name so the venue span ends on its last letter", async () => {

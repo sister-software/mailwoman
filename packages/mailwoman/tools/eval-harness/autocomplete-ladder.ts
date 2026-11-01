@@ -12,7 +12,7 @@ import { percentile } from "@mailwoman/core/stats"
 import { autocomplete, deserializeFST, type FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
@@ -349,7 +349,7 @@ export async function runAutocompleteLadder(
 		const toleranceM = row.expectToleranceM ?? DEFAULT_TOL_M
 		const tolKm = toleranceM / 1000
 
-		const within = (lat: number, lon: number) => haversineKm(lat, lon, row.expectLat!, row.expectLon!) <= tolKm
+		const within = (lat: number, lon: number) => haversine(lat, lon, row.expectLat!, row.expectLon!) <= tolKm
 
 		const geoOpts: GauntletGeocodeOpts = {
 			caseCountry: overlayCountry,

@@ -5,8 +5,8 @@
  * @file The record written once beside each parquet file the corpus build and the overlay tools produce.
  *
  *   A record states what one file holds and what produced it: the source its rows belong to, the derivation hash
- *   over the inputs that decide its bytes, the file's sha256, its row count, the license labels its rows carry
- *   with the rows under each, and the register inputs `corpus-source-inputs.json` maps its source to.
+ *   over the inputs that decide its bytes, the file's sha256, its row count, the license labels assigned to
+ *   rows with each label, and the register inputs `corpus-source-inputs.json` maps its source to.
  *
  *   A frozen training manifest folds these records rather than re-reading every row, so a record is written
  *   from the same tally a re-read would compute: one `(source, license)` count per row, with an empty license
@@ -23,10 +23,13 @@
 import { readLocalJSONFile, tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isFile, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { gitHead, workingTreeStatus } from "@mailwoman/core/git"
 import { createHash, sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { isPresent } from "@mailwoman/core/objects"
 import { basename, dirname, type PathBuilderLike, resolvePath } from "path-ts"
+import { AsyncSequence } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
@@ -66,6 +69,18 @@ export interface DerivationInputs {
 	 * The `@mailwoman/corpus` version that wrote the file.
 	 */
 	builderVersion: string
+	/**
+	 * The HEAD commit of each git checkout the input directory holds, keyed by its path relative to the input.
+	 *
+	 * `extractHash` already changes with any input file, so the derivation hash leaves these out.
+	 * They tell a reader which commits the rows were built from.
+	 */
+	inputRevisions?: Record<string, string>
+	/**
+	 * The `git status --porcelain` line count of each checkout in {@linkcode inputRevisions}:
+	 * the files whose state at build time no commit records.
+	 */
+	inputUncommittedFiles?: Record<string, number>
 }
 
 /**
@@ -79,6 +94,14 @@ export interface FileDerivation {
 	 */
 	codeHash: string
 	config: Record<string, unknown>
+	/**
+	 * See {@linkcode DerivationInputs.inputRevisions}.
+	 */
+	inputRevisions?: Record<string, string>
+	/**
+	 * See {@linkcode DerivationInputs.inputUncommittedFiles}.
+	 */
+	inputUncommittedFiles?: Record<string, number>
 }
 
 /**
@@ -99,15 +122,15 @@ export interface ParquetFileRecord {
 	sha256: string
 	rows: number
 	/**
-	 * Every license label the rows carry, with the rows under each.
+	 * Each license label assigned to rows in the file, with a row count for each label.
 	 *
-	 * A file written since #2741 carries one label, the SPDX or `LicenseRef-*`
+	 * A file written since #2741 records one label, the SPDX or `LicenseRef-*`
 	 * id of its source's register inputs.
 	 */
 	licenseValues: LicenseTally
 	/**
-	 * The producers' own statements of the rows' terms, with the rows under each,
-	 * which the `license` column no longer carries.
+	 * The producers' own statements of the rows' terms, with a row count for each statement.
+	 * The `license` column does not retain these statements.
 	 *
 	 * Absent from a record written before #2741.
 	 */
@@ -155,6 +178,8 @@ export async function resolveDerivation(derivation: FileDerivation): Promise<Der
 		codeHash: derivation.codeHash,
 		config: derivation.config,
 		builderVersion: await corpusBuilderVersion(),
+		...(derivation.inputRevisions ? { inputRevisions: derivation.inputRevisions } : {}),
+		...(derivation.inputUncommittedFiles ? { inputUncommittedFiles: derivation.inputUncommittedFiles } : {}),
 	}
 }
 
@@ -162,27 +187,202 @@ export async function resolveDerivation(derivation: FileDerivation): Promise<Der
  * A digest of an extract on disk.
  *
  * A file is hashed whole.
- * A directory is described by its listing, one `relative path, size, mtime` line per file,
- * because an adapter directory such as Who's On First's repositories holds over 100 GB
- * and hashing it would add hours to a build.
+ * A git checkout in the directory is described by its relative path, its HEAD commit
+ * and its `git status --porcelain` lines.
  *
- * The listing changes when a file is added, removed, resized or rewritten.
+ * Those lines change when a commit, edit, new file or deletion changes the checkout.
+ *
+ * Every other file is described by a `relative path, size, mtime` line.
+ * That line changes when the file is added, removed, resized or rewritten.
+ *
+ * The reader skips content hashing because it would add hours to a build:
+ * Who's On First's 273 checkouts hold over 100 GB, and listing and stat'ing their
+ * files took over 28 minutes before running out of a 4 GB heap.
+ * A directory with no checkout gives the same digest as a listing read file by file.
+ *
+ * A process computes each path's digest once: the WOF record cache
+ * and the build's extract hash both read it.
  */
-export async function extractFingerprint(path: PathBuilderLike): Promise<string> {
+export function extractFingerprint(path: PathBuilderLike): Promise<string> {
+	const key = path.toString()
+	let digest = fingerprints.get(key)
+
+	if (!digest) {
+		fingerprints.set(key, (digest = computeFingerprint(path)))
+		digest.catch(() => fingerprints.delete(key))
+	}
+
+	return digest
+}
+
+/**
+ * The git and stat calls {@linkcode extractFingerprint} keeps in flight.
+ *
+ * `git status` on one WOF checkout takes about 5 s and spends most of it waiting on the drive.
+ */
+const FINGERPRINT_CONCURRENCY = 16
+
+const fingerprints = new Map<string, Promise<string>>()
+
+/**
+ * One git checkout's state: its path relative to the input, its HEAD commit
+ * and its `git status --porcelain` lines.
+ */
+export interface CheckoutState {
+	checkout: string
+	head: string
+	status: string[]
+}
+
+const checkoutStatesByPath = new Map<string, Promise<CheckoutState[]>>()
+
+/**
+ * The state of each git checkout in `path` and its immediate subdirectories, sorted by relative path.
+ *
+ * A process reads each path once, so the fingerprint and the record's {@linkcode inputCheckouts} agree.
+ */
+export function inputCheckoutStates(path: PathBuilderLike): Promise<CheckoutState[]> {
+	const key = path.toString()
+	let states = checkoutStatesByPath.get(key)
+
+	if (!states) {
+		states = gitCheckouts(path).then((checkouts) =>
+			AsyncSequence.from<string>(checkouts)
+				.parallelMap(
+					async (checkout) => {
+						const dir = resolvePath(path, checkout)
+
+						return { checkout, head: await gitHead(dir), status: await workingTreeStatus(dir) }
+					},
+					{ concurrency: FINGERPRINT_CONCURRENCY, ordered: true }
+				)
+				.toArray()
+		)
+
+		checkoutStatesByPath.set(key, states)
+		states.catch(() => checkoutStatesByPath.delete(key))
+	}
+
+	return states
+}
+
+async function computeFingerprint(path: PathBuilderLike): Promise<string> {
 	if (await isFile(path)) return sha256File(path)
 
-	const names = await Globerator.from("**/*", { cwd: path.toString(), absolute: false }).toArray()
+	const states = await inputCheckoutStates(path)
 	const hash = createHash("sha256")
 
-	for (const name of names.toSorted()) {
-		const stat = await statPath(resolvePath(path, name))
+	for (const { checkout, head, status } of states) {
+		hash.update(`${checkout}\t${head}\n${status.join("\n")}\n`)
+	}
 
-		if (!stat.isFile()) continue
+	const checkouts = states.map((state) => state.checkout)
 
-		hash.update(`${name}\t${stat.size}\t${stat.mtimeMs}\n`)
+	if (checkouts.includes(".")) return hash.digest("hex")
+
+	const exclude = checkouts.flatMap((checkout) => [checkout, `${checkout}/**`])
+
+	const lines = await Globerator.from("**/*", { cwd: path.toString(), absolute: false, exclude })
+		.parallelMap(
+			async (name) => {
+				const stat = await statPath(resolvePath(path, name))
+
+				return stat.isFile() ? ([name, `${name}\t${stat.size}\t${stat.mtimeMs}\n`] as const) : null
+			},
+			{ concurrency: FINGERPRINT_CONCURRENCY }
+		)
+		.toArray()
+
+	const files = lines.filter(isPresent).toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+
+	for (const [, line] of files) {
+		hash.update(line)
 	}
 
 	return hash.digest("hex")
+}
+
+/**
+ * The git checkouts in `path` and its immediate subdirectories, as sorted paths
+ * relative to `path`, with `.` for `path` itself.
+ *
+ * The WOF input holds its checkouts one or two levels down: `whosonfirst-data-admin-us`
+ * and `whosonfirst-data/whosonfirst-data-admin-gb`.
+ */
+async function gitCheckouts(path: PathBuilderLike): Promise<string[]> {
+	const markers = await Globerator.from(["*/.git", "*/*/.git", ".git"], {
+		cwd: path.toString(),
+		absolute: false,
+		onlyFiles: false,
+	}).toArray()
+
+	return markers.map((marker) => dirname(marker)).toSorted()
+}
+
+/**
+ * The derivation fields that record the git checkouts an input directory holds.
+ */
+export type InputCheckouts = Required<Pick<FileDerivation, "inputRevisions" | "inputUncommittedFiles">>
+
+/**
+ * The HEAD commit and uncommitted-file count of each git checkout in `path`
+ * and its immediate subdirectories, keyed by the checkout's path relative to `path`,
+ * or `undefined` for a file or a directory holding no checkout.
+ */
+export async function inputCheckouts(path: PathBuilderLike): Promise<InputCheckouts | undefined> {
+	if (await isFile(path)) return undefined
+
+	const states = await inputCheckoutStates(path)
+
+	if (!states.length) return undefined
+
+	return {
+		inputRevisions: Object.fromEntries(states.map((state) => [state.checkout, state.head])),
+		inputUncommittedFiles: Object.fromEntries(states.map((state) => [state.checkout, state.status.length])),
+	}
+}
+
+/**
+ * The checkout fields shared by every input record, so a file merged from them
+ * records the commits its rows came from.
+ *
+ * @returns `undefined` when any input record lacks the commits, since the merged
+ * file's rows would then come partly from unrecorded commits.
+ * @throws When two inputs record different commits or uncommitted counts for one checkout.
+ */
+export function mergeInputCheckouts(
+	records: ReadonlyArray<Pick<DerivationInputs, "inputRevisions" | "inputUncommittedFiles"> | null>
+): InputCheckouts | undefined {
+	const merged: InputCheckouts = { inputRevisions: {}, inputUncommittedFiles: {} }
+
+	for (const record of records) {
+		if (!record?.inputRevisions) return undefined
+
+		for (const [checkout, head] of Object.entries(record.inputRevisions)) {
+			const uncommitted = record.inputUncommittedFiles?.[checkout]
+			const seen = merged.inputRevisions[checkout]
+
+			if (typeof seen === "string" && seen !== head) {
+				throw new Error(`mergeInputCheckouts: inputs record ${checkout} at both ${seen} and ${head}`)
+			}
+
+			const seenUncommitted = merged.inputUncommittedFiles[checkout]
+
+			if (typeof seenUncommitted === "number" && typeof uncommitted === "number" && seenUncommitted !== uncommitted) {
+				throw new Error(
+					`mergeInputCheckouts: inputs record ${checkout} with ${seenUncommitted} and ${uncommitted} uncommitted files`
+				)
+			}
+
+			merged.inputRevisions[checkout] = head
+
+			if (typeof uncommitted === "number") {
+				merged.inputUncommittedFiles[checkout] = uncommitted
+			}
+		}
+	}
+
+	return Object.keys(merged.inputRevisions).length ? merged : undefined
 }
 
 /**
@@ -321,7 +521,7 @@ export function readParquetRecord(parquetPath: PathBuilderLike): Promise<Parquet
 /**
  * Count rows per `(source, license)` by reading the files' rows.
  *
- * @throws When a row carries no source, because no record could attribute it.
+ * @throws When a row has no source, because no record could attribute it.
  */
 export async function readSourceLicenseTally(paths: readonly string[]): Promise<SourceLicenseTally> {
 	const tally: SourceLicenseTally = new Map()
@@ -434,8 +634,9 @@ export async function foldSourceLicenses(files: readonly ListedParquetFile[]): P
 /**
  * Shape a tally into the per-source entries a frozen training manifest records.
  *
- * A source whose rows carry several labels records the majority label as its license and keeps
- * every label with its rows, so the record states the whole set rather than one row's reading.
+ * A source with several row labels records the majority label as its license
+ * and keeps the count for each label.
+ * The record therefore preserves the full label distribution.
  */
 export function rowsBySourceFromTally(
 	tally: SourceLicenseTally

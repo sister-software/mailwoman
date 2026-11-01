@@ -150,8 +150,8 @@ describe("createSECClient: host allowlist", () => {
 		const transport = stubTransport([{ body: { a: 1 } }, { body: { b: 2 } }])
 		const client = clientFor(transport)
 
-		expect(await client.get("https://sec.gov/index.json")).toEqual({ a: 1 })
-		expect(await client.get("https://efts.sec.gov/LATEST/search-index?q=test")).toEqual({ b: 2 })
+		await expect(client.get("https://sec.gov/index.json")).resolves.toEqual({ a: 1 })
+		await expect(client.get("https://efts.sec.gov/LATEST/search-index?q=test")).resolves.toEqual({ b: 2 })
 	})
 
 	it.each([
@@ -165,7 +165,7 @@ describe("createSECClient: host allowlist", () => {
 	])("admits a %s allowed host", async (_label, url) => {
 		const transport = stubTransport([{ body: { ok: true } }])
 
-		expect(await clientFor(transport).get(url)).toEqual({ ok: true })
+		await expect(clientFor(transport).get(url)).resolves.toEqual({ ok: true })
 		expect(transport.calls).toHaveLength(1)
 	})
 
@@ -218,8 +218,8 @@ describe("createSECClient: on-disk cache", () => {
 			...transport,
 		})
 
-		expect(await client.get(url)).toEqual({ cik: "0000320193" })
-		expect(await client.get(url)).toEqual({ cik: "0000320193" })
+		await expect(client.get(url)).resolves.toEqual({ cik: "0000320193" })
+		await expect(client.get(url)).resolves.toEqual({ cik: "0000320193" })
 		expect(transport.calls).toHaveLength(1)
 	})
 
@@ -242,7 +242,7 @@ describe("createSECClient: on-disk cache", () => {
 			...second,
 		})
 
-		expect(await client.get(url)).toEqual({ cik: "0000320193" })
+		await expect(client.get(url)).resolves.toEqual({ cik: "0000320193" })
 		expect(second.calls).toHaveLength(0)
 	})
 
@@ -262,12 +262,12 @@ describe("createSECClient: on-disk cache", () => {
 			...transport,
 		})
 
-		expect(await client.get(url)).toEqual({ v: 1 })
+		await expect(client.get(url)).resolves.toEqual({ v: 1 })
 		expect(transport.calls).toHaveLength(1)
 
 		vi.setSystemTime(new Date("2026-01-01T00:00:01.001Z"))
 
-		expect(await client.get(url)).toEqual({ v: 2 })
+		await expect(client.get(url)).resolves.toEqual({ v: 2 })
 		expect(transport.calls).toHaveLength(2)
 	})
 
@@ -285,11 +285,11 @@ describe("createSECClient: on-disk cache", () => {
 			...transport,
 		})
 
-		expect(await client.get(archiveURL)).toEqual({ v: 1 })
+		await expect(client.get(archiveURL)).resolves.toEqual({ v: 1 })
 
 		vi.setSystemTime(new Date("2027-01-01T00:00:00Z"))
 
-		expect(await client.get(archiveURL)).toEqual({ v: 1 })
+		await expect(client.get(archiveURL)).resolves.toEqual({ v: 1 })
 		expect(transport.calls).toHaveLength(1)
 	})
 
@@ -311,12 +311,12 @@ describe("createSECClient: on-disk cache", () => {
 			...transport,
 		})
 
-		expect(await client.get(archiveURL)).toEqual({ v: 1 })
+		await expect(client.get(archiveURL)).resolves.toEqual({ v: 1 })
 		expect(transport.calls).toHaveLength(1)
 
 		vi.setSystemTime(new Date("2026-01-01T00:00:30Z"))
 
-		expect(await client.get(archiveURL)).toEqual({ v: 1 })
+		await expect(client.get(archiveURL)).resolves.toEqual({ v: 1 })
 		expect(transport.calls).toHaveLength(1)
 	})
 
@@ -332,11 +332,15 @@ describe("createSECClient: on-disk cache", () => {
 			...transport,
 		})
 
-		expect(await client.get("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193")).toEqual({
+		await expect(
+			client.get("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193")
+		).resolves.toEqual({
 			cik: "0000320193",
 		})
 
-		expect(await client.get("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000789019")).toEqual({
+		await expect(
+			client.get("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000789019")
+		).resolves.toEqual({
 			cik: "0000789019",
 		})
 
@@ -356,7 +360,7 @@ describe("createSECClient: on-disk cache", () => {
 		})
 
 		await expect(failingClient.get(errorURL)).rejects.toThrow(/500/)
-		expect(await Globerator.from("*", { cwd: cacheDir.path }).toArray()).toHaveLength(0)
+		await expect(Globerator.from("*", { cwd: cacheDir.path }).toArray()).resolves.toHaveLength(0)
 
 		const succeeding = stubTransport([{ body: { ok: true } }])
 
@@ -367,7 +371,7 @@ describe("createSECClient: on-disk cache", () => {
 			...succeeding,
 		})
 
-		expect(await succeedingClient.get(errorURL)).toEqual({ ok: true })
+		await expect(succeedingClient.get(errorURL)).resolves.toEqual({ ok: true })
 		expect(succeeding.calls).toHaveLength(1)
 	})
 
@@ -387,7 +391,7 @@ describe("createSECClient: on-disk cache", () => {
 		expect(caught).toBeInstanceOf(ResourceError)
 		expect((caught as Error).message).toContain(archiveURL)
 		expect(isTransientResourceError(caught)).toBe(false)
-		expect(await Globerator.from("*", { cwd: cacheDir.path }).toArray()).toHaveLength(0)
+		await expect(Globerator.from("*", { cwd: cacheDir.path }).toArray()).resolves.toHaveLength(0)
 
 		const fixed = stubTransport([{ body: { ok: true } }])
 
@@ -398,7 +402,7 @@ describe("createSECClient: on-disk cache", () => {
 			...fixed,
 		})
 
-		expect(await fixedClient.get(archiveURL)).toEqual({ ok: true })
+		await expect(fixedClient.get(archiveURL)).resolves.toEqual({ ok: true })
 		expect(fixed.calls).toHaveLength(1)
 	})
 })
@@ -416,7 +420,7 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 			...transport,
 		})
 
-		expect(await client.getDocument(archiveURL)).toBe("<html><body>Exhibit 21</body></html>")
+		await expect(client.getDocument(archiveURL)).resolves.toBe("<html><body>Exhibit 21</body></html>")
 	})
 
 	it("shares the host allowlist with get() — refuses a non-SEC host before touching the network", async () => {
@@ -463,8 +467,8 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 			...transport,
 		})
 
-		expect(await client.getDocument(archiveURL)).toBe("<html>filing text</html>")
-		expect(await client.getDocument(archiveURL)).toBe("<html>filing text</html>")
+		await expect(client.getDocument(archiveURL)).resolves.toBe("<html>filing text</html>")
+		await expect(client.getDocument(archiveURL)).resolves.toBe("<html>filing text</html>")
 		expect(transport.calls).toHaveLength(1)
 	})
 
@@ -479,10 +483,10 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 			...bad,
 		})
 
-		expect(await client.getDocument(archiveURL)).toBe("")
-		expect(await Globerator.from("*", { cwd: cacheDir.path }).toArray()).toHaveLength(0)
+		await expect(client.getDocument(archiveURL)).resolves.toBe("")
+		await expect(Globerator.from("*", { cwd: cacheDir.path }).toArray()).resolves.toHaveLength(0)
 
-		expect(await client.getDocument(archiveURL)).toBe("<html>filing text</html>")
+		await expect(client.getDocument(archiveURL)).resolves.toBe("<html>filing text</html>")
 		expect(bad.calls).toHaveLength(2)
 	})
 
@@ -505,7 +509,7 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 			...second,
 		})
 
-		expect(await client.getDocument(archiveURL)).toBe("<html>persisted</html>")
+		await expect(client.getDocument(archiveURL)).resolves.toBe("<html>persisted</html>")
 		expect(second.calls).toHaveLength(0)
 	})
 })
@@ -602,7 +606,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 			...transport,
 		})
 
-		expect(await client.get("https://data.sec.gov/retry-test.json")).toEqual({ ok: true })
+		await expect(client.get("https://data.sec.gov/retry-test.json")).resolves.toEqual({ ok: true })
 		expect(transport.calls).toHaveLength(3)
 		expect(clock.sleepCalls).toEqual([500, 1000])
 	})
@@ -682,7 +686,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 			...transport,
 		})
 
-		expect(await client.get("https://data.sec.gov/network-error-test.json")).toEqual({ ok: true })
+		await expect(client.get("https://data.sec.gov/network-error-test.json")).resolves.toEqual({ ok: true })
 		expect(transport.calls).toHaveLength(2)
 		expect(clock.sleepCalls).toEqual([500])
 	})

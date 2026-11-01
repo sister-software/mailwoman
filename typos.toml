@@ -5,7 +5,6 @@ extend-exclude = [
 	"/.git/",
 	"/.yarn/",
 	"yarn.lock",
-	"corpus-python/uv.lock",
 	"docs/static/sbom/",
 	"docs/static/maps/",
 	"docs/static/mailwoman/",
@@ -14,6 +13,8 @@ extend-exclude = [
 	"packages/mailwoman/tools/eval-harness/conformance/*.jsonl",
 	"packages/mailwoman/tools/eval-harness/activity-lexicon/collision-census.json",
 	"packages/codex/lib/us/street-suffix.json",
+	# Postal designators spelled as each country's operator writes them: `Blok`, `lok.`, `Chambre`.
+	"packages/codex/lib/*/designators.ts",
 	"packages/poi-taxonomy/data/",
 	"THIRD_PARTY_NOTICES.md",
 	# Address datasets, frozen evaluations, and published provenance retain source spelling.
@@ -92,6 +93,8 @@ extend-ignore-re = [
 	'''Church of the Holy Sepulchre''',
 	'''Viet Nam|Valles Marineris''',
 	'''Courrier d'Entreprise''',
+	# A quoted SentencePiece piece, which carries the `▁` word marker and is tokenizer output rather than a word.
+	'''"▁[^"]*"''',
 	# Postal-guideline citations in the codex: La Poste's division name, Poste Italiane's document code, and
 	# sentences quoted from the La Poste and Deutsche Post guidelines.
 	'''Branche Services-Courrier-Colis''',
@@ -201,6 +204,14 @@ axe = "axe"
 fo = "fo"
 adress = "adress"
 universite = "universite"
+# Cantonese romanization in Hong Kong street names (`祐民街 Yau Man Street`).
+yau = "yau"
+# Hong Kong's `Hung Hom` and the retailer `Clas Ohlson` in battery address examples, and the attribution method
+# TRAK and the journal iJIST cited in the 2026-10-28 training report.
+hom = "hom"
+clas = "clas"
+trak = "trak"
+jist = "jist"
 
 [default.extend-identifiers]
 # Standard codes, dependency names, and existing API identifiers retain their spelling.
@@ -209,6 +220,8 @@ universite = "universite"
 STATUSS = "STATUSS"
 organisationID = "organisationID"
 ND = "ND"
+# libtorch's `constant_pad_nd`, which `tch` exposes and `F.pad` issues for a constant pad.
+constant_pad_nd = "constant_pad_nd"
 PNGs = "PNGs"
 OTPs = "OTPs"
 BA = "BA"
@@ -336,7 +349,7 @@ extend-glob = ["voie-type.ts", "voie-type.test.ts", "postal-lines.ts", "postal-l
 extend-words = { centre = "centre", espace = "espace", objets = "objets", aout = "aout", decembre = "decembre" }
 
 [type.german-board]
-extend-glob = ["fragment_board.py"]
+extend-glob = ["fragment-board.ts", "fragment-board.test.ts"]
 extend-words = { januar = "januar", februar = "februar", juni = "juni", juli = "juli", oktober = "oktober", dezember = "dezember" }
 
 [type.fcc-notes]
@@ -380,7 +393,6 @@ extend-glob = [
 	"input.pty.integration.test.ts",
 	"QueryInput.integration.test.ts",
 	"demo-cascade-rows.test.ts",
-	"test_config_strict.py",
 	"correct.test.ts",
 	"2026-10-02-docs-search.md",
 ]

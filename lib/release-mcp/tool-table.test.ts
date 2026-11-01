@@ -80,7 +80,7 @@ describe("buildReleaseToolTable", () => {
 	it("runs the operation with the adapter's context and answers a receipt", async () => {
 		const [verify, copy] = buildReleaseToolTable(registry, { repoRoot: "/repo" })
 
-		expect(await verify!.handler({ strict: true })).toEqual({
+		await expect(verify!.handler({ strict: true })).resolves.toEqual({
 			operation: "release.verify-metadata",
 			effect: "read",
 			dry_run: false,
@@ -88,12 +88,12 @@ describe("buildReleaseToolTable", () => {
 			log: ["verifying in /repo"],
 		})
 
-		expect(await copy!.handler({ locale: "en-us", dry_run: true })).toMatchObject({
+		await expect(copy!.handler({ locale: "en-us", dry_run: true })).resolves.toMatchObject({
 			dry_run: true,
 			output: { wrote: 0, dryRun: true },
 		})
 
-		expect(await copy!.handler({ locale: "en-us" })).toMatchObject({ dry_run: false, output: { wrote: 1 } })
+		await expect(copy!.handler({ locale: "en-us" })).resolves.toMatchObject({ dry_run: false, output: { wrote: 1 } })
 	})
 
 	it("refuses an operation's input the schema refuses, by the operation's own message", async () => {

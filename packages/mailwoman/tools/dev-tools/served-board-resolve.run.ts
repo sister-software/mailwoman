@@ -15,7 +15,7 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { JSONSpliterator } from "spliterator"
 
 import { geocodeAddress } from "#geocode/core"
@@ -111,7 +111,7 @@ async function main(): Promise<void> {
 		})) as { lat: number | null; lon: number | null; resolution_tier?: string | null }
 
 		const distanceKm =
-			result.lat != null && result.lon != null ? haversineKm(row.lat, row.lon, result.lat, result.lon) : null
+			result.lat != null && result.lon != null ? haversine(row.lat, row.lon, result.lat, result.lon) : null
 
 		if (index < traceRows) {
 			console.log(`TRACE ${row.raw}`)

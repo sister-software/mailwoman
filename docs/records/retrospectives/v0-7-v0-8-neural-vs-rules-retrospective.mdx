@@ -139,7 +139,7 @@ from ~2 historically) are the leading edge of the same effect.
 ## The MLM detour — a clean negative result
 
 We spent part of this window testing whether **masked-language-model pre-training** of the
-encoder would lift the model (attacking the overconfidence + format-reliance pathologies).
+encoder would improve model accuracy (attacking the overconfidence + format-reliance pathologies).
 A 40k-step fine-tune from a pre-trained encoder _looked_ like a win (+4.8pp harness, a
 calibration edge). But running the
 [A/B at the full v0.7.2 recipe](../evals/model-versions/2026-05-31-v0.8.1-mlm-decisive.mdx) — both

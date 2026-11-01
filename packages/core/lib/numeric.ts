@@ -13,8 +13,7 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 /**
- *   Python-parity numeric helpers — the third member of the `python-*` family in this directory,
- *   beside `python-json.ts` (CPython `json.dumps` spacing) and `python-random.ts` (`random.Random`).
+ *   Python-parity numeric helpers.
  *
  *   These exist because the gazetteer pipeline was ported from Python and its outputs have to match
  *   the originals bit for bit. A postcode centroid that rounds differently is a different centroid.
@@ -53,6 +52,24 @@ export function incDecimalString(s: string): string {
 	}
 
 	return a.join("")
+}
+
+/**
+ * Python 3.12's `sum()` of floats: Neumaier's compensated summation,
+ * so it differs from a running `+=` in the last bits.
+ */
+export function pySum(values: Iterable<number>): number {
+	let total = 0
+	let compensation = 0
+
+	for (const x of values) {
+		const t = total + x
+
+		compensation += Math.abs(total) >= Math.abs(x) ? total - t + x : x - t + total
+		total = t
+	}
+
+	return compensation && Number.isFinite(compensation) ? total + compensation : total
 }
 
 /**

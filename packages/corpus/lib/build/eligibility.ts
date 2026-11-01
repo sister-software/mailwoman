@@ -6,9 +6,9 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { LicenseDecision } from "@mailwoman/core/license/decision"
 
-import { ingestEligibilityProblems, readAddressSourceRegister, type SourceOperation } from "#source-register"
+import { ingestEligibilityProblems, readAddressSourceRegister, type SourceDecisionTable } from "#source-register"
+import { readCorpusSourceInputs } from "#source-register/corpus-inputs"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -46,14 +46,18 @@ export async function readSourceEligibility(): Promise<ReadonlyMap<string, reado
 }
 
 /**
- * The register's license decisions keyed by the label in a row.
+ * The register's license decisions keyed by `licenseID`, with the audited `corpus-source-inputs.json`
+ * a frozen training manifest resolves each source's decisions through.
  *
- * An unmatched adapter label records a `null` decision rather than inventing one.
+ * @throws When the source table fails its audit against the register.
  */
-export async function readRegisterDecisions(): Promise<ReadonlyMap<string, LicenseDecision<SourceOperation>>> {
+export async function readSourceDecisionTable(): Promise<SourceDecisionTable> {
 	const register = await readAddressSourceRegister()
 
-	return new Map(register.licenses.map((decision) => [decision.licenseID, decision]))
+	return {
+		decisions: new Map(register.licenses.map((decision) => [decision.licenseID, decision])),
+		inputs: await readCorpusSourceInputs(register),
+	}
 }
 
 /**

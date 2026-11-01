@@ -62,7 +62,7 @@ The measured tradeoff (OA-retrained model, `docs/articles/evals/2026-06-14-coars
 |    0.95 |           87.8% |                  87.6% |
 
 The in-map "cost" of a high threshold is a **false abstention** — but in the soft design a false abstention
-just means "no country hint this time," which degrades gracefully (the resolver ranks unconstrained, still
+means "no country hint this time," which degrades gracefully (the resolver ranks unconstrained, still
 correct). The harmful error is the opposite: a **confident wrong placement** on an off-map address (→ wrong
 country search). So the asymmetry favors a high threshold, and **~0.9** sits where off-map catch is high
 (~85%) while the only thing we "lose" on in-map is some boosts we'd have applied — not correctness. (A

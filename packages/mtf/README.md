@@ -52,12 +52,16 @@ The work proceeds in two phases.
 ### Layout
 
 ```text
-packages/mtf/
-  Cargo.toml            Cargo workspace for the crates below
+packages/mtf/           (the crates are members of the repository root's cargo workspace)
   crates/mtf-core/      Model representation, normalization, unigram encode, decode, errors
   crates/mtf-wasm/      Thin wasm-bindgen adapter around mtf-core
-  crates/mtf-tools/     Offline model importer and compiler
+  crates/mtf-channels/  The training-row encoder: label projection, channel painters, packing
+  crates/mtf-sampler/   The training-row sampler: corpus listing, source mixture, augmentation, relabel, char path
+  crates/mtf-node/      The Node addon over mtf-sampler and mtf-channels, for the TypeScript audits and tools
+  crates/mtf-tools/     The `mtf-tokenizer` binary behind tools/tokenizer: model edits, corpus sampling, ONNX surgery
   lib/                  TypeScript loader and result conversion
+  tools/tokenizer/      Tokenizer training, splicing, pruning and checks
+  tools/sampler/        The loader for the mtf-node addon, built from source on first use
   wasm/                 Committed WASM binary and its build metadata
   test/fixtures/        Reference outputs from the deployed runtime
 ```
@@ -87,7 +91,7 @@ toolchain. A repository check will rebuild it and compare hashes.
 - **Model loading.** The loader validates lengths, counts and versions before allocating, and bounds input
   length and token count.
 - **Downstream consumers.** `packages/neural/lib/tokenizer.ts` converts byte offsets to UTF-16 ranges and
-  trims leading whitespace. `corpus-python/src/mailwoman_train/tokenizer/` converts them to Python
+  trims leading whitespace. The deleted Python tokenizer converted them to Python
   character positions for label projection. A change to `▁` or to word boundaries changes both.
 
 ## Stage 1 baseline
@@ -178,6 +182,32 @@ Run the parity test from this directory with
 `MTF_REFERENCE_MODEL=<path to the shipped tokenizer.model> cargo test --release`. Without the variable it
 reads `../neural-weights-en-us/tokenizer.model` and fails if that file is absent.
 
+## Tokenizer tools
+
+`tools/tokenizer/` trains, splices, prunes and checks tokenizers. Each entry point is a `.run.ts` file, run from the
+repository root with `node`:
+
+| Tool                            | What it does                                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `train.run.ts`                  | Samples a corpus's train split per country, trains with `spm_train`, writes the model card    |
+| `train-text.run.ts`             | Trains the 16,000-piece first-generation recipe on a text file                                |
+| `splice.run.ts build-tokenizer` | Appends a locale model's diacritic pieces to a frozen tokenizer and checks code point overlap |
+| `splice.run.ts onnx-mean-init`  | Grows an exported model's embedding table, and its int8 twin's, onto a spliced tokenizer      |
+| `utilization.run.ts`            | Counts each piece's use over a corpus's train split                                           |
+| `prune.run.ts`                  | Drops unused pieces from a tokenizer and the matching rows from the int8 model                |
+| `verify.run.ts prune`           | Checks a pruned tokenizer and model for segmentation identity and bit-equal logits            |
+| `verify.run.ts byte-fallback`   | Reports a tokenizer's byte-fallback rate on a fixture, overall and per script                 |
+
+Training runs native `spm_train`, built from google/sentencepiece `v0.2.2` under the cache root on first use. It
+reproduces the Python wheel's model byte for byte: the CLI records every trainer default it set, and the tool drops
+the spec fields the training call did not name. That is the form the wheel writes. `tools/tokenizer/sentencepiece.integration.test.ts`
+checks five recorded wheel trainings against `test/fixtures/spm-recipes/`.
+
+The proto edits, parquet reads, CPython-compatible sampling, the byte-fallback count and the ONNX initializer
+rewrite run in `mtf-tokenizer`, which Cargo builds under the `tools` profile on first use. It is a binary rather
+than a Node addon: each tool calls it a few times over files, and a binary needs no addon toolchain or
+per-platform artifact.
+
 ## License
 
 `@mailwoman/mtf` is licensed AGPL-3.0-only, with a commercial license available, like the rest of
@@ -189,4 +219,4 @@ copyright notice in its header and states how it was modified. `third-party/` ho
 unchanged, and `THIRD_PARTY_NOTICES.md` maps each ported file to its upstream source. A later port from
 either project follows the same three steps: keep the upstream notice in the file header, state the
 modification, and add the file to `THIRD_PARTY_NOTICES.md`. Code written here without an upstream
-source carries only the AGPL header.
+source has only the AGPL header.

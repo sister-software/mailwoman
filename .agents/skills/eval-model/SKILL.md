@@ -85,12 +85,12 @@ tipped a coin rather than broke an answer.
 
 A decoder prior is graded with the geocode-path options, `geocodeParseInputs`, never with bare
 `classifier.parse`. Run the golden dev split through both the geocode session and the runtime
-pipeline. The board alone can hide a component cost in the tens of rows that the parse-level grade
+pipeline. The board by itself can hide a component cost in the tens of rows that the parse-level grade
 shows.
 
 Two instruments read a prior differently from the board. `mwdev_compare` grades a golden row by its
 coordinates only, and it flags `dataRoot` as an undeclared difference on every two-arm run even when
-both arms read `/mnt/mw`. The structural-validity sweep parses with the classifier alone, so a row a
+both arms read `/mnt/mw`. The structural-validity sweep parses with only the classifier, so a row a
 prior fixes stays listed in `KNOWN_INVALID` until the sweep reads the geocode path.
 
 ## Smoke check — tag collapse only

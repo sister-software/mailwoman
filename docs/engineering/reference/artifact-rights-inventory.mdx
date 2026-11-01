@@ -212,8 +212,8 @@ require, so both readings are wrong and the record stores the split instead.
 Entry 10 states no use at all. It is recorded as `unstated` rather than assumed to be training.
 
 **Entry 1's license was wrong (#2635).** HM Land Registry's download page grants OGL v3.0 for Price
-Paid Data and excludes its address fields, which Royal Mail and Ordnance Survey
-permit only for personal or non-commercial use and for displaying residential property price
+Paid Data and excludes its address fields. Royal Mail and Ordnance Survey
+permit those fields only for personal or non-commercial use and for displaying residential property price
 information. The `synth-gb-v1` rows the base model trained on are built from those fields. The en-us
 card now states that the model was trained on them under no license that permits the use, and the GB
 pair index was rebuilt on 2026-10-17 without them. Its entry now sits in `neural-weights-en-gb`'s own
@@ -361,9 +361,10 @@ source the register never names. The check runs before augmentation, so a refuse
 re-enter as the ancestor of a synthetic row.
 
 A build freezes what contributed. `TRAINING_SOURCES.json` records per source the rows that survived
-both refusals, the license stamped on them, and the register's decision as the build read it,
-under a digest over itself. `sourcesNotPermitting` is what a publish path asks, and it separates the
-three ways a source fails to permit an act. No released model was built from a corpus carrying one.
+both refusals, the license stamped on them, and the register's decisions over the source's mapped
+inputs as the build read them, under a digest over itself. `sourcesNotPermitting` is what a publish
+path asks, and it separates the ways a source fails to permit an act: an unmapped source, a missing
+decision, an unelected decision and an elected grant that omits the act. No released model was built from a corpus carrying one.
 
 ## Runtime datasets, and what they oblige
 

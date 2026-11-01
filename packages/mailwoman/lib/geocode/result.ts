@@ -5,7 +5,8 @@ import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
 import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
-import { haversineKm, isLatLonBounds } from "@mailwoman/spatial"
+import { isLatLonBounds } from "@mailwoman/spatial/bbox"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { adminCoherenceField } from "#admin-coherence"
 import { epistemicStatusFor } from "#geocode/epistemic-status"
@@ -75,10 +76,10 @@ interface RegisterRowPoint {
 }
 
 /**
- * The register row's own provenance stamp and release, or `null` when the tree carries no stamp.
+ * The register row's own provenance stamp and release, or `null` when the tree has no stamp.
  *
- * The stamp is copied rather than derived, so a row is reported as the source it names and a
- * coordinate whose row named none is reported as unstamped rather than given a guessed source.
+ * The stamp is copied rather than derived, so a row is reported as its recorded source.
+ * A coordinate with no recorded source is reported as unstamped rather than given a guessed source.
  */
 function coordinateSourceOf(point: RegisterRowPoint): CoordinateSource | null {
 	if (typeof point.source !== "string" || !point.source) return null
@@ -95,7 +96,7 @@ function halfDiagonalM(bbox: unknown): number | null {
 
 	const { minLat, minLon, maxLat, maxLon } = bbox
 
-	return Math.round((haversineKm(minLat, minLon, maxLat, maxLon) * 1000) / 2)
+	return Math.round((haversine(minLat, minLon, maxLat, maxLon) * 1000) / 2)
 }
 
 /**

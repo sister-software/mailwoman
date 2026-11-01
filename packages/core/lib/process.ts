@@ -284,7 +284,7 @@ export interface ProcessTaskEventMap {
 export interface ProcessTaskOptions extends Omit<SpawnOptions, "cwd" | "stdio" | "signal"> {
 	cwd?: PathBuilderLike
 	/**
-	 * Aborting the signal stops the process as disposal does.
+	 * When the signal aborts, the process stops as if the task were disposed.
 	 */
 	signal?: AbortSignal
 	/**
@@ -480,7 +480,7 @@ export class ProcessTask extends TypedEventTarget<ProcessTaskEventMap> implement
 		})
 
 		// A task that is only disposed, never awaited, must not raise an unhandled rejection.
-		// Awaiting callers still receive the rejection through `result`.
+		// Callers that await `result` still receive the rejection.
 		this.result.catch(() => undefined)
 
 		signal?.addEventListener("abort", this.#onAbort, { once: true })
@@ -489,7 +489,7 @@ export class ProcessTask extends TypedEventTarget<ProcessTaskEventMap> implement
 	/**
 	 * Disposal sends SIGTERM to a running process, sends SIGKILL if it has not exited
 	 * after `killGraceMs`, and resolves once it has exited.
-	 * A process that already exited is left alone.
+	 * If the process has exited, disposal sends no signal.
 	 *
 	 * Disposal never rejects.
 	 * The `result` promise still reports how the process ended.

@@ -82,7 +82,7 @@ describe("downloadToFile", () => {
 		const dest = scratch.path("ok.txt")
 		const { bytes } = await downloadToFile({ url: `${base}/ok`, dest })
 		expect(bytes).toBe(7)
-		expect(await readLocalTextFile(dest)).toBe("payload")
+		await expect(readLocalTextFile(dest)).resolves.toBe("payload")
 	})
 
 	it("retries transient statuses until success", async () => {
@@ -115,13 +115,13 @@ describe("manifest helpers", () => {
 		]
 
 		await writeManifest(path, entries)
-		expect(await readManifest(path)).toEqual(entries)
+		await expect(readManifest(path)).resolves.toEqual(entries)
 
 		const keyed = await loadManifestEntries<{ id: string; sha256: string }>(path, (e) => e.id)
 		expect(keyed.get("b")?.sha256).toBe("y")
 
 		await writeManifest(path, undefined).catch(() => {})
-		expect(await readManifest("/nonexistent/MANIFEST.json")).toBeNull()
+		await expect(readManifest("/nonexistent/MANIFEST.json")).resolves.toBeNull()
 	})
 
 	it("isTransientStatus covers 429 + 5xx only", () => {
@@ -164,8 +164,8 @@ describe("streamBodyToFile", () => {
 		const dest = scratch.path("ok.txt")
 		const bytes = await streamBodyToFile(await fetch(`${base}/ok`), dest)
 		expect(bytes).toBe(7)
-		expect(await readLocalTextFile(dest)).toBe("payload")
-		expect(await pathExists(dest + ".tmp")).toBe(false)
+		await expect(readLocalTextFile(dest)).resolves.toBe("payload")
+		await expect(pathExists(dest + ".tmp")).resolves.toBe(false)
 	})
 })
 
@@ -220,8 +220,8 @@ describe("resumableDownload", () => {
 		})
 
 		expect(bytes).toBe(RANGE_BODY.length)
-		expect(await readLocalTextFile(dest)).toBe(RANGE_BODY.toString())
-		expect(await pathExists(dest + ".tmp")).toBe(false)
+		await expect(readLocalTextFile(dest)).resolves.toBe(RANGE_BODY.toString())
+		await expect(pathExists(dest + ".tmp")).resolves.toBe(false)
 
 		expect(rangeConnections).toBe(3)
 		expect(lines).toHaveLength(3)
@@ -235,7 +235,7 @@ describe("resumableDownload", () => {
 		const bytes = await resumableDownload({ url: `${base}/range`, dest, retryDelayMs: 1 })
 		expect(bytes).toBe(RANGE_BODY.length)
 		expect(rangeConnections).toBe(1)
-		expect(await readLocalTextFile(dest)).toBe(RANGE_BODY.toString())
+		await expect(readLocalTextFile(dest)).resolves.toBe(RANGE_BODY.toString())
 	})
 
 	it("throws when the host answers a range request with anything but 206", async () => {

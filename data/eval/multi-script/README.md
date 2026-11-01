@@ -1,8 +1,9 @@
 # Multi-script tokenizer eval fixtures
 
 Held-out lines used to measure SentencePiece **byte-fallback rate** per script. Consumed
-by `python -m mailwoman_train tokenizer --eval-fixture …`, which records the rate (overall
-and per-script) in the trained tokenizer's `model_card.json`.
+by `node packages/mtf/tools/tokenizer/train.run.ts --eval-fixture …`, which records the rate (overall
+and per-script) in the trained tokenizer's `model_card.json`, and by
+`node packages/mtf/tools/tokenizer/verify.run.ts byte-fallback --fixture …`.
 
 These are **not** parser-output gold (no `components` field) — they exercise the tokenizer
 only. Lines are hand-curated rather than corpus-sampled so the per-script sets stay

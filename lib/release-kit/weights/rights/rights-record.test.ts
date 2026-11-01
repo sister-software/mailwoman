@@ -232,7 +232,7 @@ describe("readWeightsRightsRecords", () => {
 			])
 
 			// The overlay has no manifest of its own, so its own field stays null while the
-			// base's attributions reach a consumer who installs the overlay alone.
+			// the base's attributions reach a consumer who installs only the overlay.
 			const overlayDocument = renderProvenance(overlay!)
 
 			expect(overlayDocument.required_attributions).toBeNull()

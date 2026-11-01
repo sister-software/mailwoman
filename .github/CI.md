@@ -11,24 +11,11 @@
 
 ## How selection is computed
 
-The graph uses:
+The workspace graph uses dependencies from all four manifest dependency fields and literal imports in tracked JS/TS files. It selects changed workspaces and their transitive consumers.
 
-- workspace dependencies from all 4 manifest dependency fields
-- literal `import`/`export` usage in tracked JS/TS files
-- tests and literal dynamic imports
+For a source-only change, Vitest then narrows fast and slow test files to those whose module graph reaches a changed module. Tests that import filesystem, module-path, SQLite, or subprocess access also retain their workspace-level selection because they can read inputs without importing them.
 
-Rules:
-
-- Changed workspaces are selected.
-- Their transitive consumers are also selected.
-- Any change inside a workspace selects that workspace’s tests:
-  - fixtures
-  - assets
-  - local config
-- Computed imports fall back to manifest dependencies.
-- Literal paths under `corpus-python/` can also select JS workspaces that read those files.
-- Calls to `repoRootPath`, `resolvePath`, and `join` with consecutive literal segments are tracked as joined paths.
-- A reference to a directory means any change under that directory can select tests.
+Fixture, asset, and local configuration changes retain workspace-level selection. A prose or lint-only change (`*.md`, `.agents/`, or `typos.toml`) selects no test suite, but the static job still checks it. Each root `lib/<dir>` tool tree owns its tests as a separate selection unit.
 
 ## When everything runs (full run)
 
@@ -39,8 +26,10 @@ These cases select every suite:
 - unrecognized path
 - removed workspace
 - workspace manifest change
-- push to `main`
 - manual workflow dispatch
+- a push to `main` whose previous head the clone lacks, such as a new branch or a force-push
+
+Any other push to `main` selects the suites its commits change, from the branch's previous head, as a pull request does.
 
 Notes:
 
@@ -73,17 +62,26 @@ Notes:
 - Selected by changes affecting `mailwoman` or `@mailwoman/codex`.
 - This is broader than the old gazetteer-path list.
 
-## Python job
+## Rust job
 
-Runs separate hosted Python checks (lint, type, security, tests) when:
+Runs the Rust checks (`cargo fmt --check`, `cargo test` and `cargo clippy -D warnings` over the root cargo workspace
+with members `packages/mtf/crates/*` and `packages/trainer/crates/*`) when:
 
-- any Python file changes, or
-- anything under `corpus-python/` changes, or
+- a crate under `packages/mtf/crates/` or the root `Cargo.toml`, `Cargo.lock` or `rust-toolchain.toml` changes, or
+- anything under `packages/trainer/` changes, or
 - a global/full-run trigger happens
 
-Cache keys:
+`mtf-core`'s `board_reference` test reads the uncommitted en-us `tokenizer.model`, so this hosted job
+does not run it.
 
-- uv download cache key uses root `uv.lock` and `pyproject.toml`.
+## Rust in the fast leg
+
+The training audit and exposure tests load the `mtf-node` addon. Cargo builds it on first use.
+`unit-fast` installs the toolchain the root `rust-toolchain.toml` names before its tests start,
+and caches the root workspace's build.
+
+The `rust` job caches its cargo builds with `Swatinem/rust-cache` and the libtorch archive under a key on its
+pinned version.
 
 ## Always-on checks
 
@@ -121,9 +119,4 @@ Data-fleet exception:
 
 ## Why selection can be broad
 
-- Workspace dependency chains can fan out.
-- Example:
-  - `mailwoman` depends on `@mailwoman/corpus`
-  - Earth depends on `mailwoman`
-  - so a corpus change selects Earth
-- Narrower selection would require measured per-source-root or per-job dependencies.
+Workspace dependency chains can fan out. For example, `mailwoman` depends on `@mailwoman/corpus`, and Earth depends on `mailwoman`, so a corpus change selects Earth. Browser and packaging jobs retain this workspace-level selection when module-level selection narrows the Vitest file lists.

@@ -1,0 +1,55 @@
+# v8-jp-probe trains a bare character-level encoder on Japanese addresses from scratch.
+#
+# The model has 384 hidden units and 4 layers, embeds one unit per character with 3 neighbors on each
+# side, and uses the stage3 label head. It runs without gazetteer or anchor channels, a CRF or
+# locale conditioning.
+#
+# The corpus holds 200k train and 4k val rows that `packages/corpus/lib/jp/corpus/probe.ts` renders from
+# Overture JP. A board of held-out municipalities never appears in train or val.
+#
+# The run passes when JP coordinate acceptability on the held-out board reaches 0.70.
+#
+# Launch: node packages/mailwoman/tools/training/launch/launch.run.ts start --config v8-jp-probe.yaml --fresh
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-jp-probe
+  # Char mode skips SentencePiece. The production tokenizer path stays so that config audits read
+  # the same keys in every recipe.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 1.0
+  coarse_filter: false
+  val_rows: 4096
+  # Each unit is one character with up to 3 neighbors on each side, so a unit is at most 7 characters wide.
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-jp-probe/char-vocab-jp-v1.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-jp-probe-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  warmup_steps: 1000
+  max_steps: 8000
+  eval_every_steps: 1000
+  save_every_steps: 2000
+  log_every_steps: 100
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0

@@ -15,7 +15,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
@@ -103,17 +103,12 @@ interface CaseScore {
 
 // Match the board's place-name grading.
 // It folds case and compatibility forms plus strips accents.
-const norm = (s: string): string =>
-	s
-		.toLowerCase()
-		.normalize("NFKD")
-		.replaceAll(/[̀-ͯ]/gu, "")
-		.trim()
+const norm = (s: string): string => s.toLowerCase().normalize("NFKD").replaceAll(/[̀-ͯ]/gu, "").trim()
 
 function score(c: HardCase, resolved: Resolved[]): CaseScore {
 	const best = mostSpecific(resolved)
 
-	const errKm = best && c.expectLat && c.expectLon ? haversineKm(best.lat, best.lon, c.expectLat, c.expectLon) : null
+	const errKm = best && c.expectLat && c.expectLon ? haversine(best.lat, best.lon, c.expectLat, c.expectLon) : null
 
 	const coordOK = !c.expectLat || !c.expectToleranceM ? null : errKm !== null && errKm <= c.expectToleranceM / 1000
 

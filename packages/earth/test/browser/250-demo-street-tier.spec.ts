@@ -2,7 +2,7 @@
  * @file Tests the client-side street geocoder against the production R2 situs extract. Run it locally.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { expect, test } from "../e2e/index.ts"
 
@@ -26,7 +26,7 @@ test.describe("Demo — street tier (#377)", () => {
 
 		const pin = await demo.readCoords()
 		expect(Number.isFinite(pin.lat) && Number.isFinite(pin.lon)).toBe(true)
-		expect(haversineKm(pin.lat, pin.lon, WHITE_HOUSE.lat, WHITE_HOUSE.lon) * 1000).toBeLessThan(50)
+		expect(haversine(pin.lat, pin.lon, WHITE_HOUSE.lat, WHITE_HOUSE.lon) * 1000).toBeLessThan(50)
 
 		demo.console.assertNoFailEvents()
 	})

@@ -1,16 +1,93 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { expect, test } from "vitest"
 
-import type { WOFRecord } from "#utils/wof-json"
+import { openDuckDB } from "#parquet/duckdb"
+import { useScratchDir } from "#test-kit"
+import type { WOFFeature, WOFRecord } from "#utils/wof-json"
 import {
 	buildAncestorNameIndex,
 	extractNameVariants,
+	isAtOrigin,
 	isCurrentFeature,
 	normalizeNameKey,
+	parseWOFSlotKey,
+	readFeatureRecord,
+	readRefutedParentIDs,
+	recordFromFeature,
 	stripAttestation,
+	wofNameSlotSQL,
 } from "#utils/wof-json"
+
+const scratch = useScratchDir("wof-json")
+
+const postcodeFeature = (latitude: number, longitude: number) => ({
+	type: "Feature",
+	id: 554_853_827,
+	properties: {
+		"wof:id": 554_853_827,
+		"wof:name": "42002",
+		"wof:placetype": "postalcode",
+		"wof:country": "ES",
+		"wof:parent_id": "101904227",
+		"wof:hierarchy": [{ locality_id: 101_904_227, region_id: 85_682_715, country_id: 85_633_129 }],
+		"geom:latitude": latitude,
+		"geom:longitude": longitude,
+	},
+})
+
+test("a record at latitude 0, longitude 0 keeps its name and drops its parent and ancestors", async () => {
+	const path = scratch.path("554853827.geojson")
+
+	await writeLocalJSONFile(postcodeFeature(0, 0), path)
+
+	await expect(readFeatureRecord(path.toString())).resolves.toMatchObject({
+		name: "42002",
+		parent_id: null,
+		ancestors: [],
+	})
+})
+
+test("a located record keeps its parent and ancestors", async () => {
+	const path = scratch.path("554853827.geojson")
+
+	await writeLocalJSONFile(postcodeFeature(41.76, -2.47), path)
+
+	const record = await readFeatureRecord(path.toString())
+
+	expect(record?.parent_id).toBe(101_904_227)
+	expect(record?.ancestors).toContain(85_682_715)
+})
+
+test("isAtOrigin is true only when both coordinates are exactly 0", () => {
+	expect(isAtOrigin({ "geom:latitude": 0, "geom:longitude": 0 })).toBe(true)
+	expect(isAtOrigin({ "geom:latitude": 0, "geom:longitude": 9.2 })).toBe(false)
+	expect(isAtOrigin({})).toBe(false)
+})
+
+test("recordFromFeature gives a refuted record no parent and no ancestors and keeps its name", async () => {
+	const refuted = await readRefutedParentIDs()
+	const [id] = refuted
+
+	const feature: WOFFeature = {
+		type: "Feature",
+		id,
+		properties: {
+			"wof:name": "Somewhere",
+			"wof:placetype": "locality",
+			"wof:country": "XY",
+			"wof:parent_id": 7,
+			"wof:hierarchy": [{ locality_id: id, region_id: 7, country_id: 8 }],
+			"geom:latitude": 1,
+			"geom:longitude": 1,
+		},
+	}
+
+	expect(recordFromFeature(feature, refuted)).toMatchObject({ id, name: "Somewhere", parent_id: null, ancestors: [] })
+	expect(recordFromFeature(feature, new Set())?.parent_id).toBe(7)
+})
 
 test("stripAttestation removes a historical attestation and keeps other brackets", () => {
 	expect(stripAttestation("Ellessem  [a.  1240]")).toBe("Ellessem")
@@ -197,15 +274,66 @@ test("buildAncestorNameIndex: a cycle is broken rather than looping forever", ()
 	expect(index.get(2)).toEqual({ region: "Oregon" })
 })
 
-test("buildAncestorNameIndex: a placetype outside the three tags contributes no name", () => {
-	// 3 → 2 (county maps to `subregion`) → 1 (region).
+test("buildAncestorNameIndex: a county names the subregion, and a placetype outside the tags contributes no name", () => {
+	// 4 → 3 (campus maps to no tag) → 2 (county maps to `subregion`) → 1 (region).
 	const byID = new Map<number, WOFRecord>([
 		[1, rec(1, null, "Oregon", "region")],
 		[2, rec(2, 1, "Multnomah County", "county")],
-		[3, rec(3, 2, "Portland", "locality")],
+		[3, rec(3, 2, "Reed College", "campus")],
+		[4, rec(4, 3, "Portland", "locality")],
 	])
 
-	expect(
-		buildAncestorNameIndex(byID, (placetype) => (placetype === "county" ? "subregion" : placetype)).get(3)
-	).toEqual({ region: "Oregon" })
+	const countyAndCampusTag = (placetype: string) =>
+		placetype === "county" ? "subregion" : placetype === "campus" ? null : placetype
+
+	expect(buildAncestorNameIndex(byID, countyAndCampusTag).get(4)).toEqual({
+		subregion: "Multnomah County",
+		region: "Oregon",
+	})
+})
+
+test("wofNameSlotSQL reads the slot kind and language back out of a WOF source_id", async () => {
+	using db = await openDuckDB()
+	const slot = wofNameSlotSQL("id")
+
+	const ids = [
+		"wof-admin-1276372421-name-rus-x-preferred-with-region-country+case-lower",
+		"wof-admin-1327470253-name-und-x-variant-2-with-region+drop-commas",
+		"wof-admin-1729836481-default-with-locality-region-form+drop-commas",
+		`wof-admin-85887851-${normalizeNameKey("name:zho_hant_x_colloquial")}-self`,
+	]
+
+	const values = ids.map((id) => `('${id}')`).join(", ")
+
+	const result = await db.runAndReadAll(
+		`SELECT ${slot.kind} AS kind, ${slot.language} AS language FROM (VALUES ${values}) t(id)`
+	)
+
+	expect(result.getRowObjects()).toEqual([
+		{ kind: "preferred", language: "rus" },
+		{ kind: "variant", language: "und" },
+		{ kind: "default", language: "default" },
+		{ kind: "colloquial", language: "zho" },
+	])
+})
+
+test("parseWOFSlotKey reads a slot key the way wofNameSlotSQL reads it from a source_id", async () => {
+	using db = await openDuckDB()
+	const slot = wofNameSlotSQL("id")
+
+	const keys = [
+		"default",
+		"name-rus-x-preferred",
+		"name-und-x-variant-2",
+		normalizeNameKey("name:zho_hant_x_colloquial"),
+		"name-eng",
+	]
+
+	const values = keys.map((key) => `('wof-admin-85887851-${key}-self')`).join(", ")
+
+	const result = await db.runAndReadAll(
+		`SELECT ${slot.kind} AS kind, ${slot.language} AS language FROM (VALUES ${values}) t(id)`
+	)
+
+	expect(keys.map(parseWOFSlotKey)).toEqual(result.getRowObjects())
 })

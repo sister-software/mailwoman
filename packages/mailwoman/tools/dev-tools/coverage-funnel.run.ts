@@ -10,7 +10,7 @@
  *     node packages/mailwoman/tools/dev-tools/coverage-funnel.run.ts [--config <path>] [--mixture-audit <path>] [--rows] [--out-json <path>]
  */
 
-import { POSTAL_REGIMES } from "@mailwoman/codex/postal-regimes"
+import { POSTAL_REGIMES } from "@mailwoman/codex/postal/regimes"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -46,7 +46,7 @@ const { values } = parseArguments({
 })
 
 /**
- * The fields this tool reads from `mailwoman_train.audits.epoch_mixture --json` output;
+ * The fields this tool reads from `training/audits/epoch-mixture.run.ts --json` output;
  * `emitted_level` counts the rows that survive augmentation and reach the trainer,
  * so it answers the `sampled` stage.
  */
@@ -115,7 +115,7 @@ const mixtureAuditPresent = await pathExists(mixtureAuditPath)
 if (!mixtureAuditPresent) {
 	console.error(
 		`sampled stage: no audit at ${mixtureAuditPath}. Produce one with\n` +
-			`  uv run --extra dev --extra train python -m mailwoman_train.audits.epoch_mixture \\\n` +
+			`  node packages/mailwoman/tools/training/audits/epoch/mixture.run.ts \\\n` +
 			`    --config ${configPath} --corpus-dir <corpus> --json ${mixtureAuditPath}\n` +
 			`The stage reads \`unknown\` until then, which states what this checkout holds rather than what a ` +
 			`jurisdiction has.\n`

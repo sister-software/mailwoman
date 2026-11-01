@@ -19,8 +19,21 @@ node packages/mailwoman/tools/dev-tools/collect-span-confidences.run.ts \
   --out data/eval/calibration/confidences.jsonl
 
 # 3. Fit isotonic (PAVA), emit the 20-bin lookup table + ECE report.
-python3 corpus-python/scripts/fit-isotonic-calibration.py
+node packages/mailwoman/tools/eval-harness/calibration/isotonic.run.ts \
+  --conf data/eval/calibration/confidences.jsonl --out data/eval/calibration/isotonic-en-us-<version>.json \
+  --report <report.md> --model-version <version>
+
+# 4. Check a committed table still matches its confidences.
+node packages/mailwoman/tools/eval-harness/calibration/drift-guard.run.ts \
+  --table data/eval/calibration/isotonic-en-us-<version>.json --conf data/eval/calibration/confidences.jsonl
 ```
+
+The held-out split is a permutation of the records. `permutations.json` holds NumPy's
+`default_rng(20260607).permutation(n)` for the committed inputs (13,457 and 35,600 records) and the
+2,000-span test fixture, so a refit of a committed table splits the records as the NumPy fitter did.
+On 2026-10-29 the TypeScript fitter wrote tables and reports byte-equal to the NumPy fitter's for
+`confidences-v413.jsonl` and `confidences-v530.jsonl`. A seed and size the file does not hold is split
+by `mulberry32`, a different generator, so that fit is a new fit with its own report.
 
 ## What's committed vs regenerated
 

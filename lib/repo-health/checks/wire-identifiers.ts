@@ -28,9 +28,8 @@ import { relative } from "path-ts"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#repo-health/check"
 import { trackedSourcePaths } from "#repo-health/tracked-sources"
 
-const CONFIGS = "corpus-python/src/mailwoman_train/configs/*.yaml"
+const CONFIGS = "packages/corpus/data/training-configs/*.yaml"
 const ADAPTERS = "packages/corpus/lib/*adapter.ts"
-const PYTHON_BUILDERS = "corpus-python/src/mailwoman_train/*.py"
 
 /**
  * The config fields whose mapping keys are source ids.
@@ -121,29 +120,19 @@ export function configSourceNames(text: string): ConfigSourceName[] {
 }
 
 const ADAPTER_ID = /_ADAPTER_ID\s*=\s*"([a-z0-9-]+)"/g
-const PYTHON_SOURCE = /^[A-Z_]*SOURCE\s*=\s*"([a-z0-9-]+)"/gm
 
 /**
- * All source ids declared in the checkout.
- *
- * This includes adapter ids and Python builders' `SOURCE` constants.
- * It also includes spellings from `RECIPE_SOURCES` and `CARRIED_SOURCES`.
+ * All source ids declared in the checkout: the adapter ids and the spellings
+ * from `RECIPE_SOURCES` and `CARRIED_SOURCES`.
  */
 export async function declaredSourceNames(context: Parameters<RepoCheck["run"]>[0]): Promise<Set<string>> {
 	const declared = new Set(knownOverlaySourceNames())
-	const adapters = await trackedSourcePaths(context, { globs: [ADAPTERS], existingOnly: true })
-	const builders = await trackedSourcePaths(context, { globs: [PYTHON_BUILDERS], existingOnly: true })
 
-	for (const [paths, pattern] of [
-		[adapters, ADAPTER_ID],
-		[builders, PYTHON_SOURCE],
-	] as const) {
-		for (const path of paths) {
-			const text = await readLocalTextFile(path)
+	for (const path of await trackedSourcePaths(context, { globs: [ADAPTERS], existingOnly: true })) {
+		const text = await readLocalTextFile(path)
 
-			for (const match of text.matchAll(pattern)) {
-				declared.add(match[1]!)
-			}
+		for (const match of text.matchAll(ADAPTER_ID)) {
+			declared.add(match[1]!)
 		}
 	}
 

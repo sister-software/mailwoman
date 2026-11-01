@@ -5,10 +5,10 @@ ecosystem. Provides coordinate math, H3 hexagonal grid indexing, WKB geometry
 parsing, and coordinate-string parsing.
 
 ```ts
-import { haversineKm, latLngToCell, parseCoordinateString } from "@mailwoman/spatial"
+import { haversine, latLngToCell, parseCoordinateString } from "@mailwoman/spatial"
 
 // Great-circle distance
-const km = haversineKm(37.7749, -122.4194, 34.0522, -118.2437) // SF → LA
+const km = haversine(37.7749, -122.4194, 34.0522, -118.2437) // SF → LA
 
 // H3 grid cell
 const cell = latLngToCell(37.7749, -122.4194, 9) // resolution-9 H3 index

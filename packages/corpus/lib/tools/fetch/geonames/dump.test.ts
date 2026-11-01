@@ -154,7 +154,7 @@ describe("fetchGeonamesDumps", () => {
 
 		// The wrong-format file is reported, never clobbered.
 		// This tool does not overwrite data it did not fetch.
-		expect(await readLocalTextFile(outRoot("BB.txt"))).toContain("Be City")
+		await expect(readLocalTextFile(outRoot("BB.txt"))).resolves.toContain("Be City")
 	})
 })
 

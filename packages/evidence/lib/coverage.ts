@@ -11,7 +11,7 @@
  * A mismatch causes refusal rather than exclusion.
  */
 
-import { z } from "zod"
+import * as z from "zod"
 
 /**
  * What a `completeness` value rests on.

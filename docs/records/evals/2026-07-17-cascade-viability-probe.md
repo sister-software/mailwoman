@@ -54,8 +54,8 @@ the shape is ambiguous, and the ambiguous cases are the ones that matter.**
   the postcode binary already serves it downstream — no architecture change needed.
 - **Atlas-verified fronting** — absorb a bare name only after a candidate-table hit confirms it is a
   known locality — is the one direct form left. But that front tier is a gazetteer lookup, i.e. the
-  resolver. The model + atlas channel already perform that arbitration with learned weighting (M1 priced
-  the channel at +10.4). A bypass provides ~0.5 ms and adds a second code path to maintain.
+  resolver. The model + atlas channel already perform that arbitration with learned weighting (M1 measured a +10.4 improvement from
+  the channel). A bypass provides ~0.5 ms and adds a second code path to maintain.
 - The scoped doubleton bias (PR #1148, four-line guard on a soft prior) remains the template for where
   shape knowledge helps: small, priced, scoped — inside the model's decode rather than in front of it.
 

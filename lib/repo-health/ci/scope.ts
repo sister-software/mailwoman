@@ -1,0 +1,371 @@
+/**
+ * Selects CI suites from changed workspaces and their transitive consumers.
+ *
+ * Workspace files include fixtures, assets, and configuration.
+ * Global changes select every suite.
+ *
+ * Manifest changes also select every suite because the current graph cannot describe removed edges.
+ */
+
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
+import { dirname, isAbsolute, join, relative, resolvePath } from "path-ts"
+import ts from "typescript"
+
+/**
+ * A workspace records the dependencies used to select its consumers.
+ */
+export interface CIWorkspace {
+	name: string
+	directory: string
+	dependencies: string[]
+	/**
+	 * Tests whose syntax imports runtime-input access.
+	 *
+	 * These retain the workspace's transitive inputs in addition to their module imports.
+	 */
+	runtimeTests?: string[]
+}
+
+/**
+ * A selection records the tests and jobs required by a change.
+ */
+export interface CIScope {
+	full: boolean
+	reasons: string[]
+	affected: string[]
+	fastFiles: string[]
+	slowFiles: string[]
+	fast: boolean
+	slow: boolean
+	earth: boolean
+	react: boolean
+	planetary: boolean
+	/**
+	 * The browser tests of the private opportunity map application.
+	 */
+	opportunity: boolean
+	worker: boolean
+	smoke: boolean
+	lexicon: boolean
+	docs: boolean
+	rust: boolean
+}
+
+/**
+ * The mtf crates and root cargo workspace files.
+ * The `rust` job tests them.
+ *
+ * `@mailwoman/mtf` also builds its WebAssembly and Node addon from them, so a change to a crate still
+ * selects that workspace's suites, and a change to a root workspace file selects every suite.
+ */
+const MTF_CRATE_INPUTS = [
+	"packages/mtf/crates/",
+	"packages/mtf/rustfmt.toml",
+	"Cargo.toml",
+	"Cargo.lock",
+	"rust-toolchain.toml",
+]
+
+/**
+ * The cargo workspace of the Rust trainer crates.
+ *
+ * It has no npm package.
+ * The `rust` job runs its crate tests beside the mtf crates'.
+ * A change under it selects that job and no JavaScript suite.
+ */
+const TRAINER_CRATES = join("packages", "trainer")
+
+/**
+ * The trainer's data tables.
+ *
+ * The neural, mailwoman and mtf JavaScript tests read them through `trainerDataPath`.
+ * A change to one therefore selects every suite.
+ */
+const TRAINER_DATA = join(TRAINER_CRATES, "data")
+
+/**
+ * Whether a repository-relative path lies inside a repository-relative directory.
+ */
+function isInside(file: string, directory: string): boolean {
+	const path = relative(directory, file)
+
+	return path.length > 0 && !path.startsWith("..") && !isAbsolute(path)
+}
+
+/**
+ * Finds the workspace containing a repository-relative path.
+ */
+function workspaceForFile(file: string, workspaces: readonly CIWorkspace[]): CIWorkspace | null {
+	return workspaces.find((workspace) => file.startsWith(`${workspace.directory}/`)) ?? null
+}
+
+/**
+ * Identifies tests excluded by the root Vitest configuration.
+ */
+function excludedFromRootTests(file: string): boolean {
+	return /(?:^|\/)(?:react|license-worker)\/|\/(?:examples|cypress|out|dist)\/|\/(?:test\/browser|test\/e2e)\/|^docs\/test\/build\//u.test(
+		file
+	)
+}
+
+const RUNTIME_INPUT_MODULE =
+	/^(?:@mailwoman\/core\/(?:fs|module|paths|data-root)(?:\/|$)|node:(?:fs|child_process|sqlite)(?:\/|$))/u
+
+function hasRuntimeInputAccess(source: ts.SourceFile): boolean {
+	let found = false
+
+	const visit = (node: ts.Node): void => {
+		if (found) return
+
+		if (ts.isIdentifier(node) && node.text === "JSONSpliterator") {
+			found = true
+
+			return
+		}
+
+		if (
+			(ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+			node.moduleSpecifier &&
+			ts.isStringLiteral(node.moduleSpecifier) &&
+			RUNTIME_INPUT_MODULE.test(node.moduleSpecifier.text)
+		) {
+			found = true
+
+			return
+		}
+
+		if (ts.isCallExpression(node)) {
+			const argument = node.arguments[0]
+
+			if (
+				(node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+					(ts.isIdentifier(node.expression) && node.expression.text === "require")) &&
+				argument &&
+				ts.isStringLiteral(argument) &&
+				RUNTIME_INPUT_MODULE.test(argument.text)
+			) {
+				found = true
+
+				return
+			}
+		}
+
+		ts.forEachChild(node, visit)
+	}
+
+	visit(source)
+
+	return found
+}
+
+/**
+ * Reads manifest dependencies and literal source imports, including imports in tests.
+ */
+export async function readCIWorkspaces(repoRoot: string, files: readonly string[]): Promise<CIWorkspace[]> {
+	const directories = await readWorkspaceDirectories(repoRoot)
+
+	const workspaces = await Promise.all(
+		directories.map(async (directory): Promise<CIWorkspace> => {
+			const manifest = await readPackageJSON(resolvePath(repoRoot, directory, "package.json"))
+
+			if (!manifest.name) throw new Error(`Workspace ${directory} has no name`)
+
+			return {
+				name: manifest.name,
+				directory,
+				dependencies: Object.keys({
+					...manifest.dependencies,
+					...manifest.devDependencies,
+					...manifest.peerDependencies,
+					...manifest.optionalDependencies,
+				}),
+			}
+		})
+	)
+
+	const names = new Set(workspaces.map((workspace) => workspace.name))
+
+	if (names.size !== workspaces.length) throw new Error("Workspace names are not unique")
+
+	const toolDirectories = new Set(files.flatMap((file) => /^lib\/[^/]+\//u.exec(file)?.[0].slice(0, -1) ?? []))
+
+	for (const directory of toolDirectories) {
+		workspaces.push({ name: `@mailwoman/universe/${directory.slice(4)}`, directory, dependencies: [] })
+	}
+
+	const queue = files.filter((file) => /\.[cm]?[jt]sx?$/u.test(file) && workspaceForFile(file, workspaces))
+
+	await Promise.all(
+		Array.from({ length: 8 }, async () => {
+			for (let file = queue.shift(); file; file = queue.shift()) {
+				const owner = workspaceForFile(file, workspaces)!
+
+				const source = ts.createSourceFile(
+					file,
+					await readLocalTextFile(resolvePath(repoRoot, file)),
+					ts.ScriptTarget.Latest,
+					true
+				)
+
+				if (/\.(?:test|spec)\.[cm]?[jt]sx?$/u.test(file) && hasRuntimeInputAccess(source)) {
+					;(owner.runtimeTests ??= []).push(file)
+				}
+
+				const addImport = (specifier: string): void => {
+					const dependency = specifier.startsWith(".")
+						? workspaceForFile(relative(repoRoot, resolvePath(repoRoot, dirname(file), specifier)), workspaces)?.name
+						: workspaces.find((workspace) => specifier === workspace.name || specifier.startsWith(`${workspace.name}/`))
+								?.name
+
+					if (dependency && dependency !== owner.name && !owner.dependencies.includes(dependency)) {
+						owner.dependencies.push(dependency)
+					}
+				}
+
+				const visit = (node: ts.Node): void => {
+					if (
+						(ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+						node.moduleSpecifier &&
+						ts.isStringLiteral(node.moduleSpecifier)
+					) {
+						addImport(node.moduleSpecifier.text)
+					}
+
+					if (
+						ts.isCallExpression(node) &&
+						(node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+							(ts.isIdentifier(node.expression) && node.expression.text === "require"))
+					) {
+						const argument = node.arguments[0]
+
+						if (argument && ts.isStringLiteral(argument)) {
+							addImport(argument.text)
+						}
+					}
+
+					ts.forEachChild(node, visit)
+				}
+
+				visit(source)
+			}
+		})
+	)
+
+	return workspaces
+}
+
+/**
+ * Computes the suites affected by a diff without executing tests.
+ */
+export function selectCIScope(
+	workspaces: readonly CIWorkspace[],
+	files: readonly string[],
+	changed: readonly string[],
+	published: readonly string[],
+	forceFull = false
+): CIScope {
+	const reasons: string[] = forceFull ? ["The event requires every suite."] : []
+	const affected = new Set<string>()
+	let rust = forceFull
+
+	for (const file of changed) {
+		if (file.endsWith(".md") || file.startsWith(".agents/") || file === "typos.toml") continue
+
+		const owner = workspaceForFile(file, workspaces)
+
+		if (MTF_CRATE_INPUTS.some((input) => file === input || (input.endsWith("/") && file.startsWith(input)))) {
+			rust = true
+		}
+
+		if (isInside(file, TRAINER_CRATES)) {
+			rust = true
+
+			// The data tables beside the crates are read by the JavaScript suites too,
+			// so they fall through to the rule for a file no workspace owns.
+			if (!isInside(file, TRAINER_DATA)) continue
+		}
+
+		if (!owner || file === `${owner.directory}/package.json` || file === `${owner.directory}/AGENTS.md`) {
+			reasons.push(`The change to ${file} requires every suite.`)
+
+			continue
+		}
+
+		affected.add(owner.name)
+	}
+
+	const full = reasons.length > 0
+
+	if (full) {
+		for (const workspace of workspaces) {
+			affected.add(workspace.name)
+		}
+
+		rust = true
+	} else {
+		// The queue terminates when every consumer has been visited, including dependency cycles.
+		const queue = [...affected]
+
+		for (let dependency = queue.shift(); dependency; dependency = queue.shift()) {
+			for (const workspace of workspaces) {
+				if (workspace.dependencies.includes(dependency) && !affected.has(workspace.name)) {
+					affected.add(workspace.name)
+					queue.push(workspace.name)
+				}
+			}
+		}
+	}
+
+	const selected = files.filter((file) => full || affected.has(workspaceForFile(file, workspaces)?.name ?? ""))
+
+	const fastFiles = selected
+		.filter((file) => {
+			if (!/\.(?:test|spec)\.tsx?$/u.test(file) || /\.(?:integration|full)\.test\.tsx?$/u.test(file)) return false
+
+			if (!file.includes("/")) return true
+
+			if (!/^(?:packages\/[^/]+|lib\/[^/]+|docs)\//u.test(file) || !/\.test\.tsx?$/u.test(file)) return false
+
+			return !excludedFromRootTests(file)
+		})
+		.toSorted()
+
+	const slowFiles = selected
+		.filter(
+			(file) => /^(?:packages|lib)\/[^/]+\/.*\.integration\.test\.tsx?$/u.test(file) && !excludedFromRootTests(file)
+		)
+		.toSorted()
+
+	const has = (name: string): boolean => full || affected.has(name)
+
+	const affectedDirectories = workspaces
+		.filter((workspace) => affected.has(workspace.name))
+		.map((workspace) => workspace.directory)
+		.toSorted()
+
+	return {
+		full,
+		reasons,
+		affected: affectedDirectories,
+		fastFiles,
+		slowFiles,
+		fast: full || fastFiles.length > 0,
+		slow: full || slowFiles.length > 0,
+		earth: has("@mailwoman/earth"),
+		react: has("@mailwoman/react"),
+		planetary: has("@mailwoman/planetary"),
+		opportunity: has("@mailwoman/opportunity-app"),
+		worker: has("@mailwoman/license-worker"),
+		smoke:
+			full ||
+			affectedDirectories.some((directory) => published.includes(directory)) ||
+			has("@mailwoman/universe/release-kit") ||
+			has("@mailwoman/universe/ops-cli") ||
+			has("@mailwoman/universe/release-mcp"),
+		lexicon: has("mailwoman") || has("@mailwoman/codex"),
+		docs: has("@mailwoman/docs"),
+		rust,
+	}
+}

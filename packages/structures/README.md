@@ -71,7 +71,7 @@ policy title.
 Regenerate the catalog from the repository root when refreshing its sources:
 
 ```bash
-node packages/structures/sdk/plateau-tilesets.run.ts
+node packages/structures/sdk/plateau/tilesets.run.ts
 yarn exec oxfmt packages/structures/data/plateau-tilesets.json
 ```
 

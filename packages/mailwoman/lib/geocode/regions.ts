@@ -18,6 +18,7 @@ import type {
 import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
+import { LayerCatalog } from "#data/catalog"
 import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } from "#data/release"
 
 /**
@@ -141,8 +142,8 @@ export interface RegionDatabaseCacheEntry extends RegionDatabases {
  * Opens and caches per-state address-point and interpolation lookups,
  * so each state's databases open once per batch.
  *
- * Paths resolve through the `releases.json` manifest when one exists. {@link reload}
- * swaps in a newly published version. {@link close} releases every cached handle.
+ * Paths resolve through the active selection, then the `releases.json` manifest when one exists.
+ * {@link reload} swaps in a newly published version. {@link close} releases every cached handle.
  *
  * Because `for` is synchronous, {@linkcode warm} probes every US state and territory path up front.
  * Construct instances with {@linkcode USStateDatabaseProvider.create}.
@@ -173,11 +174,20 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 	 * Constructs a provider.
 	 * It reads the release manifest and warms the path map.
 	 */
-	static async create(factory: RegionDatabaseFactory, dataRoot: PathBuilderLike): Promise<USStateDatabaseProvider> {
+	/**
+	 * @param catalog The snapshot a session already read, so the provider resolves
+	 * from the session's generation.
+	 * Absent, the provider reads the active selection itself.
+	 */
+	static async create(
+		factory: RegionDatabaseFactory,
+		dataRoot: PathBuilderLike,
+		catalog?: LayerCatalog
+	): Promise<USStateDatabaseProvider> {
 		const root = resolvePath(dataRoot)
 		const provider = new USStateDatabaseProvider(factory, root, await readReleaseManifest(root))
 
-		await provider.warm()
+		await provider.warm(catalog)
 
 		return provider
 	}
@@ -185,17 +195,20 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 	/**
 	 * Resolves the address-point and interpolation paths for every US state and territory slug.
 	 *
-	 * Each call replaces the path map. {@linkcode reload} calls it to re-read the disk.
+	 * Each call replaces the path map. {@linkcode reload} calls it without a snapshot to re-read the disk.
 	 */
-	async warm(): Promise<void> {
+	async warm(snapshot?: LayerCatalog): Promise<void> {
 		this.#paths.clear()
+
+		// One reading of the active selection serves every state, so every path comes from one generation.
+		const catalog = snapshot ?? (await LayerCatalog.read(this.#dataRoot))
 
 		for (const abbreviation of Object.keys(US_STATE_BY_ABBREVIATION)) {
 			const slug = abbreviation.toLowerCase()
 
 			const [apPath, ipPath] = await Promise.all([
-				resolveDatabasePath(this.#dataRoot, "address-points", slug, this.#manifest),
-				resolveDatabasePath(this.#dataRoot, "interpolation", slug, this.#manifest),
+				resolveDatabasePath(this.#dataRoot, "address-points", slug, this.#manifest, catalog),
+				resolveDatabasePath(this.#dataRoot, "interpolation", slug, this.#manifest, catalog),
 			])
 
 			this.#paths.set(slug, { apPath, ipPath })

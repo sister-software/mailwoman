@@ -62,6 +62,7 @@ const sidebars: SidebarsConfig = {
 				"developers/how-to/reverse-geocode",
 				"developers/how-to/use-annotations",
 				"developers/how-to/keep-data-fresh",
+				"developers/how-to/migrate-a-data-root",
 				"developers/how-to/deploy-docker",
 				"developers/how-to/deploy-serverless",
 				"developers/how-to/use-the-mcp-server",

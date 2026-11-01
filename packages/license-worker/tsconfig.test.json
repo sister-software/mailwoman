@@ -3,7 +3,7 @@
 	// The pool's `cloudflare:test` module types join the workers types here, where the tests that import it live.
 	"extends": ["./tsconfig.json", "../../tsconfig.test-base.json"],
 	"compilerOptions": {
-		"types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers/types"]
+		"types": ["@cloudflare/workers-types", "@cloudflare/vitest-plugin/types"]
 	},
 	"include": ["./**/*.test.ts", "./test/**/*"],
 	"exclude": ["./out/**/*"],

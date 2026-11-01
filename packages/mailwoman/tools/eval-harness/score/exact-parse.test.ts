@@ -1,4 +1,4 @@
-import { streetSpanConventionFor } from "@mailwoman/codex/street-convention"
+import { streetSpanConventionFor } from "@mailwoman/codex/street/convention"
 import { describe, expect, it } from "vitest"
 
 import {

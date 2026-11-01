@@ -1,0 +1,21 @@
+[package]
+name = "mtf-channels"
+description = "Mailwoman's training-row encoder: label projection, the soft-feed channel painters and row packing."
+version.workspace = true
+edition.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0 AND BSD-2-Clause"
+repository.workspace = true
+
+[features]
+# The regex-backed span finders (postcode shapes and postcode syntax) and the reading of an encoder's files
+# (`resources`). Only the training side needs them; the painters and the label projection build without a regex
+# engine or a file system.
+finders = ["dep:fancy-regex", "dep:mtf-core"]
+
+[dependencies]
+serde = "1"
+# `float_roundtrip` parses every decimal to the nearest double, as Python's `json` does; the default parser can be
+# one unit in the last place away, which would move an anchor centroid's bytes.
+serde_json = { version = "1", features = ["float_roundtrip"] }
+fancy-regex = { version = "0.20", optional = true }
+mtf-core = { workspace = true, optional = true }

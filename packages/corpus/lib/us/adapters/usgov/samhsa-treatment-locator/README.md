@@ -24,9 +24,11 @@ adds a distinctive feature: **two-line addresses**. The `street1` /
   (`"Suite C, behind main building"`, `"2nd Floor"`, `"Adjacent to
   pharmacy"`).
 
-The adapter joins them with `", "` into a single `street` component so
-the model sees the natural envelope-style surface form humans type into
-geocoders.
+The adapter splits `street1` with `splitUSStreetLine`
+(`lib/us/street-unit.ts`), and `unitLine` labels `street2` as the `unit`
+when it opens with a USPS designator (`Suite C, behind main building`).
+A second line without one (`2nd Floor`, `Adjacent to pharmacy`) is left
+out of the row, as the `usgov-nppes` adapter leaves out its own.
 
 ## Source availability (deferral)
 

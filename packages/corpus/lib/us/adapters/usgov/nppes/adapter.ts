@@ -6,8 +6,8 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
-import { matchLeadingDesignator } from "@mailwoman/codex/us/unit-designator"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
 import { formatPersonName } from "@mailwoman/record/name"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
@@ -17,6 +17,7 @@ import { splitStreetLine } from "#adapters/street-line"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
+import { splitTrailingUnit, unitLine } from "#us/street-unit"
 
 /**
  * The adapter stamps this id on every emitted row.
@@ -71,26 +72,6 @@ function assertPracticeLocationColumns(record: NPPESRow, inputPath: PathBuilderL
 			`Every row would be dropped and the run would report zero rows read from a file it read in full. ` +
 			`Check the publisher's own spelling against this adapter's column names.`
 	)
-}
-
-/**
- * The second practice-location line as a unit, or `null` when it holds something else.
- *
- * Most filled second lines open with a USPS secondary unit designator
- * (`SUITE 200`, `STE. 4`, `APT 2B`, `DEPARTMENT OF SURGERY`) or a bare number sign (`#200`).
- * The rest name a recipient, a building or a mail stop (`ATTN: BILLING`, `C/O …`, `MEDICAL OFFICE BUILDING`).
- *
- * Those are not part of the street or the unit, so the row leaves them out
- * rather than joining them to the street span.
- */
-export function unitLine(line: string): string | null {
-	if (!line) return null
-
-	if (/^#\s*\w/.test(line)) return line
-
-	const [first = ""] = line.split(/\s+/)
-
-	return matchLeadingDesignator(first.replace(/\.$/, "")) ? line : null
 }
 
 /**
@@ -157,14 +138,18 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 
 				if (!split) continue
 
-				const unit = unitLine(address2)
+				// A unit written on the first line (`2560 HUNTINGTON AVE STE 302`) is split off the street,
+				// and one on the second line follows it, so the rendered row keeps the publisher's order.
+				const trailing = splitTrailingUnit(split.street)
+				const street = trailing?.street ?? split.street
+				const unit = [trailing?.unit, unitLine(address2)].filter(isPresent).join(" ")
 
 				const venue = orgName || formatPersonName({ given: firstName, family: lastName }, "short") || undefined
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),
 					...(split.house_number ? { house_number: split.house_number } : {}),
-					street: split.street,
+					street,
 					...(unit ? { unit } : {}),
 					locality: city,
 					region: state.abbreviation,

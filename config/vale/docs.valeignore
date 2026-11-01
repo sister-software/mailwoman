@@ -8,3 +8,6 @@ THIRD_PARTY_NOTICES.md
 CODE_OF_CONDUCT.md
 docs/src/pages/license/terms/commercial-*.mdx
 packages/structures/data/licenses/**
+# License instruments and vendored upstream prose preserve their publishers' wording.
+packages/corpus/data/licenses/**
+packages/dictionaries/data/**

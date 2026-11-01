@@ -20,9 +20,13 @@
  *   composed `Geocoder` will in a later phase.
  */
 
+import { useState } from "react"
 import type { CSSProperties, ReactNode, Ref } from "react"
 import { Map } from "react-map-gl/maplibre"
 import type { MapProps, MapRef, ViewStateChangeEvent } from "react-map-gl/maplibre"
+
+import type { StarfieldOptions } from "#map/starfield"
+import { StarfieldLayer } from "#map/StarfieldLayer"
 
 /**
  * The style a `<MapCanvas>` renders — a style URL or an inline/composed `StyleSpecification`.
@@ -88,9 +92,24 @@ export interface MapCanvasProps {
 	 * Other `<Map>` props that MapCanvas does not surface explicitly.
 	 */
 	mapProps?: MapCanvasExtraProps
+	/**
+	 * Draw a procedural star sky around the globe.
+	 *
+	 * `true` uses the default sky, and an options object shapes it.
+	 * The sky draws only while the projection is globe.
+	 *
+	 * @defaultValue `false`
+	 */
+	starfield?: boolean | StarfieldOptions
 }
 
 const FILL: CSSProperties = { width: "100%", height: "100%" }
+
+// The sky canvas fills `.mw-demo-map`, which is positioned.
+// The map follows it in document order, so it stacks above the sky,
+// and its canvas stays transparent outside the globe.
+const SKY: CSSProperties = { position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }
+const FILL_ABOVE_SKY: CSSProperties = { ...FILL, position: "relative" }
 
 /**
  * The controlled-viewport map shell.
@@ -110,11 +129,15 @@ export function MapCanvas({
 	className,
 	style,
 	mapProps,
+	starfield = false,
 }: MapCanvasProps): ReactNode {
 	const wrapperClassName = className ? `mw-demo-map ${className}` : "mw-demo-map"
+	const [skyCanvas, setSkyCanvas] = useState<HTMLCanvasElement | null>(null)
+	const starfieldOptions = starfield === true ? {} : starfield || null
 
 	return (
 		<div className={wrapperClassName} style={style}>
+			{starfieldOptions ? <canvas ref={setSkyCanvas} style={SKY} aria-hidden="true" /> : null}
 			<Map
 				{...mapProps}
 				ref={mapRef}
@@ -123,8 +146,9 @@ export function MapCanvas({
 				viewState={viewState}
 				onMove={onMove}
 				projection={projection}
-				style={FILL}
+				style={starfieldOptions ? FILL_ABOVE_SKY : FILL}
 			>
+				{starfieldOptions ? <StarfieldLayer {...starfieldOptions} canvas={skyCanvas} /> : null}
 				{children}
 			</Map>
 		</div>

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The test renders the progress feed in a subprocess against real Ink, which writes its final frame at unmount.
+ *   The test renders the progress feed in a subprocess against real Ink. Ink writes its final frame at unmount.
  *   It strips ANSI codes before matching stdout.
  */
 

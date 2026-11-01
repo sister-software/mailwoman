@@ -1,16 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { haversineKm as greatCircleKm, type GeoCoordinate } from "@mailwoman/spatial"
+import type { GeoCoordinate } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { Comparison, ComparisonLevel } from "#fellegi-sunter"
-
-/**
- * Computes the great-circle distance in kilometers between two `GeoCoordinate` records.
- * It delegates to the scalar helper in `@mailwoman/spatial`.
- */
-export const haversineKm = (a: GeoCoordinate, b: GeoCoordinate): number =>
-	greatCircleKm(a.latitude, a.longitude, b.latitude, b.longitude)
 
 /**
  * Creates a comparison that buckets the great-circle distance between two records into
@@ -35,7 +29,7 @@ export function distanceComparison<R>(config: {
 
 			if (!valid(ca) || !valid(cb)) return -1
 
-			const km = haversineKm(ca, cb)
+			const km = haversine(ca.latitude, ca.longitude, cb.latitude, cb.longitude)
 
 			for (let i = 0; i < config.levels.length; i++) {
 				if (km <= (config.levels[i]!.maxKm ?? Infinity)) return i
@@ -87,7 +81,7 @@ export function spatialComparison<R>(config: {
 
 			if (!valid(ca) || !valid(cb)) return -1
 
-			const km = haversineKm(ca, cb)
+			const km = haversine(ca.latitude, ca.longitude, cb.latitude, cb.longitude)
 
 			for (let i = 1; i < config.levels.length; i++) {
 				if (km <= (config.levels[i]!.maxKm ?? Infinity)) return i

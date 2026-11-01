@@ -35,7 +35,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { geocodeAddress } from "mailwoman/geocode"
 import { basename, PathBuilder, resolvePath } from "path-ts"
@@ -340,11 +340,11 @@ async function run() {
 			const answer =
 				typeof result.lat === "number" && typeof result.lon === "number" ? { lat: result.lat, lon: result.lon } : null
 
-			const km = answer ? haversineKm(answer.lat, answer.lon, row.lat, row.lon) : null
+			const km = answer ? haversine(answer.lat, answer.lon, row.lat, row.lon) : null
 
 			const routed =
 				answer !== null &&
-				haversineKm(answer.lat, answer.lon, row.postcodeCentroid.lat, row.postcodeCentroid.lon) <= ROUTING_KM
+				haversine(answer.lat, answer.lon, row.postcodeCentroid.lat, row.postcodeCentroid.lon) <= ROUTING_KM
 
 			records.push({
 				input,

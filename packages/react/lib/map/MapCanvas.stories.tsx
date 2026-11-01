@@ -45,6 +45,18 @@ type Story = StoryObj<typeof MapCanvas>
 export const StubStyle: Story = {}
 
 /**
+ * The procedural star sky around a zoomed-out globe.
+ * Drag or rotate the map to turn the sky with the camera.
+ */
+export const Starfield: Story = {
+	args: {
+		starfield: true,
+		initialViewState: { longitude: -30, latitude: 20, zoom: 1.5, pitch: 40 },
+		style: { width: "100%", height: "640px" },
+	},
+}
+
+/**
  * A child slot demo — later phases fill this with `<Source>`/`<Layer>`/`<Marker>` overlays.
  */
 export const WithChildrenSlot: Story = {

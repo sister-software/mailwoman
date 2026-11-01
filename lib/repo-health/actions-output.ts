@@ -10,7 +10,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 
-import { readCIWorkspaces, selectCIScope, type CIScope } from "#repo-health/ci-scope"
+import { readRelatedCITests, selectRelatedCIScope } from "#repo-health/ci/related"
+import { readCIWorkspaces, selectCIScope, type CIScope } from "#repo-health/ci/scope"
 
 const ciEnvironment = liveEnv(
 	z.object({
@@ -22,6 +23,39 @@ const ciEnvironment = liveEnv(
 	})
 )
 
+const isCommitSHA = (sha: string | undefined): sha is string => typeof sha === "string" && /^[a-f0-9]{40}$/u.test(sha)
+
+/**
+ * Whether a run selects its suites from the diff between `base` and `head`,
+ * rather than running every suite.
+ *
+ * A pull request always does.
+ * A push does when it passes the branch's previous head and the clone holds that commit.
+ *
+ * A new branch reports an all-zero previous head, and a force-push passes one the clone lacks.
+ * A dispatched run runs every suite.
+ *
+ * @throws When a pull request does not name both commits.
+ */
+export async function scopesByDiff(
+	event: string | undefined,
+	base: string | undefined,
+	head: string | undefined,
+	hasCommit: (sha: string) => Promise<boolean>
+): Promise<boolean> {
+	if (event === "pull_request") {
+		if (!isCommitSHA(base) || !isCommitSHA(head)) {
+			throw new Error("A pull request requires valid CI_BASE_SHA and CI_HEAD_SHA commits")
+		}
+
+		return true
+	}
+
+	if (event !== "push" || !isCommitSHA(base) || !isCommitSHA(head) || /^0+$/u.test(base)) return false
+
+	return hasCommit(base)
+}
+
 /**
  * Writes the selected suites to GitHub Actions outputs and returns the selection.
  */
@@ -30,17 +64,19 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 	const base = ciEnvironment.CI_BASE_SHA
 	const head = ciEnvironment.CI_HEAD_SHA
 
-	if (event === "pull_request" && (!base || !head || !/^[a-f0-9]{40}$/u.test(base) || !/^[a-f0-9]{40}$/u.test(head))) {
-		throw new Error("A pull request requires valid CI_BASE_SHA and CI_HEAD_SHA commits")
-	}
+	const scoped = await scopesByDiff(event, base, head, (sha) =>
+		git(["cat-file", "-t", sha], root).then(
+			(type) => type.trim() === "commit",
+			() => false
+		)
+	)
 
 	// A diff without rename detection includes both paths of a move, so both workspaces are selected.
-	const changed =
-		event === "pull_request"
-			? (await git(["diff", "--name-only", "--no-renames", "-z", `${base}...${head}`, "--"], root, 64 * 1024 * 1024))
-					.split("\0")
-					.filter((path) => path.length > 0)
-			: []
+	const changed = scoped
+		? (await git(["diff", "--name-only", "--no-renames", "-z", `${base}...${head}`, "--"], root, 64 * 1024 * 1024))
+				.split("\0")
+				.filter((path) => path.length > 0)
+		: []
 
 	const files = await trackedFiles(root)
 
@@ -48,12 +84,18 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 		plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
 	}>(resolvePath(root, ".release-it.json"))
 
-	const scope = selectCIScope(
-		await readCIWorkspaces(root, files),
+	const workspaces = await readCIWorkspaces(root, files)
+
+	const workspaceScope = selectCIScope(
+		workspaces,
 		files,
 		changed,
 		release.plugins["@release-it-plugins/workspaces"].workspaces,
-		event !== "pull_request"
+		!scoped
+	)
+
+	const scope = await selectRelatedCIScope(workspaceScope, workspaces, changed, (inputs, config) =>
+		readRelatedCITests(root, inputs, config)
 	)
 
 	const outputs = {

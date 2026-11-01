@@ -19,7 +19,7 @@
  *   import.
  *
  *   The hash reads the checkout: its config, its `yarn.lock` and its workspace sources. `dependency-cruiser` and
- *   `yaml` are development dependencies of this package, imported only here, so a published install does not carry
+ *   `yaml` are development dependencies of this package, imported only here. A published install does not include
  *   them. A corpus build runs from the checkout.
  */
 
@@ -283,7 +283,7 @@ async function hashReach(
 }
 
 /**
- * The code hash of each named root set, from one cruise over every root.
+ * The code hash for each root set, identified by its key, from one cruise over every root.
  *
  * @param rootSets Each key's roots are repository-relative or absolute module paths.
  */
@@ -328,8 +328,8 @@ function isAdapter(value: unknown): value is CorpusAdapter {
 /**
  * Import the adapter with `adapterID` from its module, as {@linkcode adapterModules} found it.
  *
- * A parallel build's worker loads its one adapter this way rather than through the
- * registration module, which imports every adapter.
+ * A parallel build's worker loads its one adapter this way rather than through the registration module.
+ * The registration module imports every adapter.
  *
  * @throws When the module exports no adapter with that id.
  */

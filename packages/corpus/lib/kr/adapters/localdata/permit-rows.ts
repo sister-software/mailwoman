@@ -10,11 +10,14 @@
  * aligning so the alignment rate per file can be measured before any row enters a corpus.
  */
 
+import { sortedGlob } from "@mailwoman/core/fs/readers"
 import { decodeByteStream, openReadStream } from "@mailwoman/core/fs/streams"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, extname, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
+import { type CJKRecord, labelTokensByFirstSpan } from "#cjk/builder"
 import type { Aligned } from "#kr/adapters/localdata/align"
 
 /**
@@ -78,12 +81,22 @@ function firstColumn(row: Record<string, string | undefined>, ...names: readonly
 	return ""
 }
 
-function toNumber(value: string): number | null {
+/**
+ * A coordinate field as a number, or `null` when the field is empty.
+ *
+ * A non-empty field that is not a number, such as `198,000`, raises: Python's `float` did,
+ * and reading it as absent would drop the row from its district's centroid without a count.
+ *
+ * @throws Naming the value and the field.
+ */
+function toNumber(value: string, field: string): number | null {
 	if (!value.trim()) return null
 
 	const parsed = Number(value)
 
-	return Number.isFinite(parsed) ? parsed : null
+	if (!Number.isFinite(parsed)) throw new Error(`a permit row's ${field} is ${stringifyJSON(value)}, not a number`)
+
+	return parsed
 }
 
 export interface ReadPermitOptions {
@@ -93,6 +106,12 @@ export interface ReadPermitOptions {
 	 * Empty admits every status.
 	 */
 	statuses?: readonly string[]
+	/**
+	 * A directory read takes only the category files this glob matches, for a smoke run.
+	 *
+	 * @defaultValue every `.csv` file
+	 */
+	pattern?: string
 }
 
 /**
@@ -125,8 +144,8 @@ export async function* readPermitFile(
 			lotAddress,
 			roadPostcode: firstColumn(row, "도로명우편번호"),
 			lotPostcode: firstColumn(row, "소재지우편번호"),
-			x: toNumber(firstColumn(row, "좌표정보(X)", "좌표정보(x)")),
-			y: toNumber(firstColumn(row, "좌표정보(Y)", "좌표정보(y)")),
+			x: toNumber(firstColumn(row, "좌표정보(X)", "좌표정보(x)"), `좌표정보(X) in ${file}`),
+			y: toNumber(firstColumn(row, "좌표정보(Y)", "좌표정보(y)"), `좌표정보(Y) in ${file}`),
 		}
 	}
 }
@@ -138,7 +157,9 @@ export async function* readPermitDirectory(
 	directory: PathBuilderLike,
 	options: ReadPermitOptions = {}
 ): AsyncGenerator<PermitRow> {
-	const files = await Globerator.files("csv", { cwd: directory, absolute: false, recursive: false }).toSorted()
+	const files = options.pattern
+		? await sortedGlob(directory, options.pattern)
+		: await Globerator.files("csv", { cwd: directory, absolute: false, recursive: false }).toSorted()
 
 	for (const name of files) {
 		yield* readPermitFile(resolvePathBuilder(directory, name), options)
@@ -153,35 +174,12 @@ export async function* readPermitDirectory(
  * A span covering several tokens labels only the token where it starts.
  * The char-path trainer reads this label from each span.
  */
-export function alignedToCJKRow(aligned: Aligned): Record<string, unknown> {
+export function alignedToCJKRow(aligned: Aligned): CJKRecord {
 	const raw = aligned.raw
-	const tokens: string[] = []
-	const labels: string[] = []
-	let cursor = 0
-
-	for (const token of raw.split(/\s+/u).filter((piece) => piece.length)) {
-		const index = raw.indexOf(token, cursor)
-
-		cursor = index + token.length
-
-		let label = "O"
-
-		for (let span = 0; span < aligned.spanStarts.length; span += 1) {
-			if (aligned.spanStarts[span]! <= index && index < aligned.spanEnds[span]!) {
-				label = `B-${aligned.spanTags[span]}`
-
-				break
-			}
-		}
-
-		tokens.push(token)
-		labels.push(label)
-	}
 
 	return {
 		raw,
-		tokens,
-		labels,
+		...labelTokensByFirstSpan(raw, aligned.spanStarts, aligned.spanEnds, aligned.spanTags),
 		span_starts: [...aligned.spanStarts],
 		span_ends: [...aligned.spanEnds],
 		span_tags: [...aligned.spanTags],

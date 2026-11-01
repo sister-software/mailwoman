@@ -67,10 +67,10 @@ hold in this corpus family.
 the recipe is measured on the CPU before it ships, and the measurement is an allocation report (section 4.5) a
 reader can inspect. A from-scratch training run is never the first measurement of a corpus change.
 
-**P5. One variable per run, a single control first, and two seeds before a corpus change is judged.** On a new
+**P5. One variable per run, a single control first, and three runs per arm before a change is judged.** On a new
 corpus, one unchanged-recipe control is trained and graded before any sweep. That control is a first
-measurement. Replication comes from the second seed under section 7.2, where a corpus change is judged on two
-runs of the same recipe that differ by seed only.
+measurement. Replication comes from further runs under section 7.2, where a corpus or recipe change is judged on
+three runs of the candidate against three runs of the control.
 
 Motivation for the seed rule: v8.1.0 trained with seed 42 against seed 43 flipped 87 regression-board rows of
 1,277 and 28 blocking cases of 643, a 25-pass gap. The corpus change under test, v8.2.0 against v8.1.0 at seed 42,
@@ -197,6 +197,48 @@ last full rebuild. The loader applies the attribute files as row filters at no m
 configuration, 21.2 batches per second on v0.8.1 against 20.6 on v0.8.0. That benchmark covers one loader and
 storage setup and does not establish equivalence under others.
 
+### 5.1 Ordered shapes, closure supply, and the retention floor
+
+The split and every allocation report count addresses by ordered shape, under four definitions versioned here
+(#2893).
+
+1. **Independent group.** One real address record: `coalesce(base_source_id, source_id)`. Every rendered
+   variant of a record shares the group, and the group shares one split assignment. A real-world address present
+   in two sources is two groups until a cross-source dedup exists, and the allocation report lists them.
+2. **Ordered shape.** A row's rendered shape is its exact `span_tags` sequence, consecutive duplicates kept.
+3. **Shape closure.** A group's closure is every order-preserving subset of every rendered sequence the group
+   holds. A sequence of k components reaches 2^k − 1 shapes: `28 Hershberger Ln, Grantsville, MD 21536-1004`
+   reaches its full shape, the same shape without the postcode, and `locality → region`.
+4. **Eligible population and closure supply.** Per country, all groups in the corpus build, collated across
+   sources. A shape's closure supply is the count of groups whose closure contains it. Supply is counted on the
+   closure rather than on rendered rows, because recipes render few permutations: on v0.8.8-nppes-overlay,
+   0.19% of 112,125,570 groups render more than one sequence.
+
+**Retention.** A holdout allocates a country's held-out groups across shapes in proportion to closure supply,
+subject to three rules in this precedence: the retention floor, geographic integrity, proportionality.
+
+1. **Retention floor.** A country×shape whose post-holdout training remainder would fall below the floor keeps
+   every group in training, and its held-out accuracy is reported as unmeasured until independent evaluation
+   data exists. The floor is registered at **10 independent groups** (2026-11-01, #2893). The allocation report
+   over v0.8.8-nppes-overlay (`/mnt/mw/audits/2893/supply/allocation-report-floor-10.md`, with
+   `SPLIT_RETENTION.floor-10.json`) measured the registration: 3,975 of 10,345 combinations sit below the floor,
+   retention keeps 997 rendered rows in training that the split held out, and all 24 combinations with zero
+   training groups return to training. A floor of 100 would have left 1,223 combinations that currently hold
+   evaluation rows without any. A floor of 10 limits that loss to 274 combinations. The registration followed the census rather than
+   the failures: the candidate table was priced over every country before the value was chosen.
+2. **Launch check.** A country×shape whose total closure supply is under the floor fails the pre-launch audit of
+   section 8. Training starts on a corpus that can teach every shape it is asked to learn.
+3. **Proportionality and shortfall.** Where geography prevents the proportional allocation, the allocation
+   report states the target share, the actual share and the cause per combo, as section 4.5 already requires of
+   returned places. The census of 2026-11-01 measured the failure the rule prevents: 24 combos held 115 val and
+   test rows with zero training rows, the largest French Polynesia's 69 `street → dependent_locality → postcode
+→ locality` rows, all in Pirae under held-out postcode 98716.
+
+The same definitions cover the Who's On First language permutations: a language rendering is a member of the
+group's closure, so a per-country language shape enters the census, the allocation and the floor like any other
+shape. The census also counts groups whose variants straddle two splits — 1,025,841 on v0.8.8-nppes-overlay,
+against the record-ancestry audit of section 4.4 — so the re-split that applies this section repairs them.
+
 ## 6. Evaluation
 
 ### 6.1 Provenance classes
@@ -253,7 +295,7 @@ confirmation. Every confirmation read is recorded in the next specification's ra
 confirmation and failed retires that set for recipe selection, and its successor is drawn and frozen before the
 next release-directed run.
 
-## 7. What a candidate is graded on, and the two-seed rule
+## 7. What a candidate is graded on, and the three-run rule
 
 ### 7.1 The grading
 
@@ -268,15 +310,107 @@ next release-directed run.
    is a finding and never a verdict, because it sits inside seed noise.
 5. **Provenance split** of every held-out rate.
 
-### 7.2 Two seeds before a corpus change is judged
+### 7.2 Three runs per arm before a corpus or recipe change is judged
 
-A corpus change is judged on two runs of the unchanged recipe on the new corpus that differ by seed only, graded
-beside the control pair on the previous corpus. The change is read as an improvement when both seeds clear the
-release objective's lower confidence bound against the comparator and the smaller of the two gains exceeds the
-control pair's own spread. A board flip count is a finding to read, never the verdict. The rule costs a second
-run per corpus change, about $9 to $12 and 3 to 5 hours on an A100 at 60,000 steps. The caveat stands in the
-specification: one seed pair measured once gives a floor whose own variance is unknown, so a result inside twice
-the measured spread is reported as unestablished rather than as a loss.
+A corpus or recipe change is judged on three runs of the candidate, graded beside three runs of the control on the
+previous corpus or recipe, with every run on the same trainer. A run is a seed, or a repeat of one seed: on the
+A100, two runs of one config and one seed disagreed on 5.1% of battery rows, and two seeds on 6.5% to 7.6%. The comparison is
+read with `battery/groups.run.ts` over a battery report that holds all six runs.
+
+- A suite or the battery total counts as changed when the tool's two-sided p is below 0.05. Its standard error adds
+  the between-run variance of the two group means to the row-sampling variance of their difference, with
+  `k_a + k_b - 2` degrees of freedom.
+- A country counts as changed when its Holm-adjusted p, over every country with at least 200 decision rows, is
+  below 0.05.
+- A difference that does not meet the bar is reported as unestablished, in place of a gain or a loss. A difference
+  smaller than the cell's smallest detectable difference for the runs used is unestablished by construction.
+- The tool lists the rows that move under the all-but-one agreement rule, and the difference of every regrouping
+  of the pooled runs. A shape that moves in the observed split and also in splits that mix the two arms is noise.
+- A board flip count is a finding to read, never the verdict.
+
+The rule comes from #2869's Phase 2 and Phase 3, measured 2026-10-31 on the Rust trainer at 90,000 steps
+(int8, 26,743 battery decision rows). Three control seeds on `v0.8.7-overlay` scored 73.6%, 72.7% and 72.3%. Three
+runs on `v0.8.8-nppes-overlay`, seeds 42, 42 again and 43, scored 70.6%, 71.8% and 72.4%. The two seed 42 runs
+disagree on 1,368 rows (5.1%), and pairs of control seeds on 1,750 to 2,031 (6.5% to 7.6%). The pooled standard
+deviation of the run rates is 0.81 points on the total and 1.35 on `osm-venue-with-address`. With it, the smallest
+difference a comparison detects (two-sided, alpha 0.05, power 0.8) is:
+
+| Cell                        | 2 runs per arm | 3 runs | 4 runs | 5 runs |
+| --------------------------- | -------------: | -----: | -----: | -----: |
+| all suites                  |            4.4 |    2.5 |    2.0 |    1.7 |
+| `osm-venue-with-address`    |            7.3 |    4.2 |    3.3 |    2.8 |
+| `osm-district-before-city`  |            1.9 |    1.1 |    0.9 |    0.8 |
+| `osm-region-after-locality` |           30.2 |   17.1 |   13.4 |   11.4 |
+
+Two runs per arm therefore cannot resolve the 1.3-point difference the Phase 2 corpus change produced (p = 0.13 with
+three runs per arm). The earlier two-seed rule could not have either. `osm-region-after-locality` swings by more
+than 10 points between control seeds (95.2%, 83.7% and 92.2%), so a single comparison cannot read that suite.
+
+A run on the Rust trainer costs about $4.30 on an A100-40GB (#2887). A comparison against a control whose three
+runs already exist costs three candidate runs, about $13. A comparison that needs new control runs too costs six,
+about $26.
+
+### 7.3 When a screen run decides
+
+A screen run reads an arm at an intermediate checkpoint of one seed in place of the arm's final two-seed result.
+A screen decides a comparison between two arms only when all three of these hold:
+
+1. **The two arms share their stage structure up to the screen step.** Neither arm changes its data or its
+   schedule after the screen step. A primer stage followed by a second stage fails this, because the second stage
+   changes what the first stage taught.
+2. **The screen gap exceeds the registered margin** `m = max(0.05, 2s)`, where `s` is the larger seed difference of
+   the two arms on the measure, on every seed screened.
+3. **A second seed's screen agrees in sign.**
+
+Otherwise the comparison runs both arms in full on two seeds.
+
+The rule comes from the 30,000-step checkpoints of the three #2857 arms, exported locally from the Modal volume's
+checkpoints and graded in fp32 on the held-out structure board (measured 2026-10-29). H is the
+`wof-heldout-order` rate on 556 rows:
+
+| Arm                        | Screen checkpoint                | H at the screen, s42 / s43 | H at the final step, s42 / s43 |
+| -------------------------- | -------------------------------- | -------------------------- | ------------------------------ |
+| B, one stage, 90,000 steps | step 30,000                      | 0.642 / 0.626              | 0.656 / 0.653                  |
+| A, primer then base        | base step 30,000 (60,000 in all) | 0.610 / 0.613              | 0.601 / 0.613                  |
+| A, primer then base        | primer step 30,000               | 0.683 / 0.673              | 0.601 / 0.613                  |
+| C, one stage, 60,000 steps | step 30,000                      | 0.426 / 0.396              | 0.439 / 0.424                  |
+
+The final two-seed order is B, then A, then C. Against it:
+
+- The screen of B against C clears the margin on both seeds (gaps 0.216 and 0.230) and agrees with the final order.
+- The screen of B against A, each at its own step 30,000, gives the final order's sign on both seeds. Its gaps
+  of 0.032 and 0.013 are inside the margin, so under rule 2 the comparison needs the full arms. The final gap is 0.055 and 0.040.
+- The screen of A at its primer's step 30,000, the same number of total steps as B's screen, ranks A first on both
+  seeds by 0.041 and 0.047. The final order ranks A second. Rule 1 excludes that screen.
+
+The comparison battery (`battery/battery.run.ts`, 26,743 decision rows, percent right) reads the same checkpoints
+differently:
+
+| Arm                   | At the screen, s42 / s43 | At the final step, s42 / s43 |
+| --------------------- | ------------------------ | ---------------------------- |
+| B, step 30,000        | 66.7 / 68.7              | 69.7 / 69.2                  |
+| A, base step 30,000   | 69.9 / 70.9              | 70.1 / 69.6                  |
+| A, primer step 30,000 | 0.0 / 0.0                | 70.1 / 69.6                  |
+| C, step 30,000        | 67.4 / 67.4              | 67.9 / 67.9                  |
+
+The battery registers no margin, so `m` is twice the largest final seed difference of the two arms, 1.0 point.
+
+- A against B: the screen gaps (3.2 and 2.2 points) clear `m` and agree in sign. The final gaps (0.4 and 0.4) agree
+  in sign but sit inside the seed spread. The screen decides the order correctly and overstates its size.
+- B against C: the screen gaps are −0.7 and +1.3, opposite in sign, so under rule 3 the comparison runs both arms
+  in full. The final order puts B ahead by 1.8 and 1.3.
+- The WOF-only primer parses no battery row right. Rule 1 excludes its screen.
+
+Arms A, B and C cast their parameters to bf16. A run that keeps fp32 master weights (#2871) follows a different
+optimization path, so whether its step-30,000 checkpoint ranks arms the way its final step does is unknown. The
+rule is unverified for that lineage. The first comparison inside it, the Phase 2 pair of #2869 against the
+fp32-master control, can check it: grade both arms' step-30,000 checkpoints beside their final steps before the
+screen decides any fp32-master comparison.
+
+The two measures disagree on the final order of A and B: the structure board puts B ahead by 0.040 to 0.055, and
+the battery puts A ahead by 0.4 points. A screen inherits whichever measure it is read on, so a screen decision
+names its measure. These are three arm pairs, each with two seeds, so the rule rests on 12 screen readings and
+stays provisional until another arm family is measured.
 
 ## 8. When a training run launches
 
@@ -298,15 +432,20 @@ completed learning-rate schedule requires an explicit new-run decision.
 
 ## 9. Costs, as measured in October 2026
 
-| Operation                                | Cost                                     |
-| ---------------------------------------- | ---------------------------------------- |
-| Full corpus build, parallel              | 4 h 04 min CPU                           |
-| Re-split, 853 files                      | 76 min CPU, 8 workers                    |
-| Held-out span check                      | 22 to 50 min CPU, now inside the build   |
-| Held-out freeze and overlap audit        | about 3 and 2.5 min per set              |
-| 60,000-step from-scratch run             | 2.9 to 4.6 h on an A100, about $9 to $12 |
-| One candidate graded                     | about 1 h CPU                            |
-| A corpus change judged under section 7.2 | one further run, the same cost again     |
+| Operation                         | Cost                                   |
+| --------------------------------- | -------------------------------------- |
+| Full corpus build, parallel       | 4 h 04 min CPU                         |
+| Re-split, 853 files               | 76 min CPU, 8 workers                  |
+| Held-out span check               | 22 to 50 min CPU, now inside the build |
+| Held-out freeze and overlap audit | about 3 and 2.5 min per set            |
+| 90,000-step from-scratch run      | about 1.4 h on an A100, about $4.30    |
+| One candidate graded              | about 1 h CPU                          |
+| A change judged under section 7.2 | three candidate runs, about $13        |
+
+The run figures come from #2887's run of `v8.3.0-base-c6-90k-mixed-s42` on the Rust trainer (2026-10-31), on an
+A100-40GB in a sandbox of 4 CPUs and 16 GiB. It trained 90,000 steps in 4,831 s, a cumulative 18.63 steps/s,
+and billed 1.41 GPU-hours, about $4.30 of Modal with CPU and memory included. `launch/wall-clock.ts` holds the
+step rates the preflight reads. The Python trainer's fp32-master pair (#2871) cost $14.74 for two runs.
 
 ## 10. Current state against this specification
 
@@ -323,9 +462,11 @@ completed learning-rate schedule requires an explicit new-run decision.
 | Floors and receipts re-derived per corpus        | Done by hand for v0.8.1. Automation open                                 |
 | Evaluation rows from unsampled source rows (6.3) | Specified. The first draw waits on the support index for the corpus      |
 | Fresh US evaluation source (6.4)                 | Deferred by the operator                                                 |
-| Two-seed rule (7.2)                              | Adopted. First applied to the next corpus change                         |
+| Three-run rule (7.2)                             | Adopted 2026-10-31, replacing the two-seed rule. Applied first in #2869  |
 | Pre-launch evaluator rule (P3)                   | An agent rule. Launcher enforcement open                                 |
 | Automatic resume by default                      | Open                                                                     |
+| Shape definitions and closure supply (5.1)       | Specified. Census measured on v0.8.8-nppes-overlay 2026-11-01 (#2893)    |
+| Retention floor and launch check (5.1)           | Floor registered at 10 groups (2026-11-01). First split under it is open |
 
 ## 11. What the nine acceptance criteria changed
 
@@ -341,5 +482,6 @@ completed learning-rate schedule requires an explicit new-run decision.
 | 8. State the deferred acquisition's consequence | Section 6.4's last two sentences                                                                                                        |
 | 9. Confirmation access, reads and retirement    | Section 6.5                                                                                                                             |
 
-The operator's four decisions of 2026-10-23 sit in P5 and 7.2 (two seeds), 6.2 (the comparator), 6.3 (unsampled
-rows with the variety and supply guards) and 4.3 (the population-sized cap).
+The operator's four decisions of 2026-10-23 sit in P5 and 7.2 (two seeds, raised to three runs per arm on
+2026-10-31 from #2869's measurements), 6.2 (the comparator), 6.3 (unsampled rows with the variety and supply
+guards) and 4.3 (the population-sized cap).

@@ -63,8 +63,9 @@ export async function* shuffleWithinWindow<T>(
  * One split's rows as the corpus build writes them to parquet: shuffled within each source's run,
  * each source drawing from a generator seeded by the build's seed, the split's salt and the source id.
  *
- * Each split and source gets its own generator, so a file's row order depends only on its
- * own source's rows and not on how many rows other splits or sources happened to contain.
+ * Each split and source gets its own generator.
+ * A file's row order depends only on that source's rows. row counts in other splits
+ * or sources do not affect it.
  */
 export function shuffleSplitRows<T extends { source: string }>(
 	rows: AsyncIterable<T>,
@@ -92,7 +93,7 @@ export function sourceShuffleSeed(seed: number, source: string): number {
 /**
  * Yield rows shuffled within a sliding window per source, each source drawing from its own generator.
  *
- * A source's row order then depends on its own rows alone, so a file holding one
+ * A source's row order then depends only on its own rows, so a file holding one
  * source has bytes that no other source's rows can change.
  * The corpus build writes a source's rows contiguously, so the window is flushed
  * when the source changes and memory stays bounded by one window.

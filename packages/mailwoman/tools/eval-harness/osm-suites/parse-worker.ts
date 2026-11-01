@@ -1,0 +1,67 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   The worker module `gradeOSMSuite` runs under `parallelMapWorkers`. Each worker loads the classifier of a
+ *   row's weights locale once, from the weights cache `workerData.userData` names, and scores every row it is
+ *   handed as the held-out grader scores it: exact parse correctness under the country's street convention.
+ */
+
+import { workerUserData } from "@mailwoman/core/workers"
+
+import {
+	type HeldoutClassifier,
+	type HeldoutRowOutcome,
+	heldoutWeightsLocale,
+	scoreHeldoutRow,
+} from "#tools/eval-harness/heldout/per/country"
+import type { OSMSuiteRow } from "#tools/eval-harness/osm-suites/extract"
+
+/**
+ * What every worker receives.
+ */
+export interface SuiteParseWorkerData {
+	/**
+	 * A package-shaped weights cache, as `mwdev_arc` writes one, or `null` for the installed weights packages.
+	 */
+	cacheRoot: string | null
+	/**
+	 * Country to weights locale, as `readHeldoutLocalePackages` reads the release configuration.
+	 */
+	packages: ReadonlyArray<[string, string]>
+	/**
+	 * ONNX intra-op threads per worker, so the pool's threads stay within the cores it is given.
+	 */
+	intraOpNumThreads: number
+}
+
+const { cacheRoot, packages, intraOpNumThreads } = workerUserData<SuiteParseWorkerData>()
+const localePackages = new Map(packages)
+const classifiers = new Map<string, Promise<HeldoutClassifier>>()
+
+async function classifierFor(locale: string): Promise<HeldoutClassifier> {
+	let pending = classifiers.get(locale)
+
+	if (!pending) {
+		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+
+		pending = NeuralAddressClassifier.loadFromWeights({ locale, cacheRoot, intraOpNumThreads })
+		classifiers.set(locale, pending)
+	}
+
+	return pending
+}
+
+/**
+ * Parse one suite row with its country's locale and score it.
+ */
+export async function handleItem(row: OSMSuiteRow): Promise<HeldoutRowOutcome> {
+	const classifier = await classifierFor(heldoutWeightsLocale(row.country, localePackages))
+
+	const tree = await classifier.parse(row.raw, {
+		postcodeRepair: true,
+		...(row.country ? { localeHint: row.country } : {}),
+	})
+
+	return scoreHeldoutRow(row, tree)
+}

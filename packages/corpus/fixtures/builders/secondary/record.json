@@ -1,0 +1,327 @@
+{
+	"README": [
+		"The rows corpora/secondary.py generate() wrote before the module moved to packages/corpus/lib/recipes/secondary.ts.",
+		"rows: every row for cap 1, in emission order. full_rows_sha256: SHA-256 of the canonical JSON lines for cap 400,",
+		"each line keys-sorted, compact and newline-terminated. A cap-1 run is the first 24 rows of a cap-400 run."
+	],
+	"source_revision": "a3530ac73efc108dc9754413b69e2804f22251b5",
+	"source_revision_note": "a3530ac73 is a branch commit outside origin/main's history. Its main counterpart, 1edee244c (same subject), holds corpora/secondary.py as the same blob, 08a7d9f3bd7b0f0a43103dd8a65475ed490eeada.",
+	"python": "3.12.3",
+	"offset_unit": "code_point",
+	"seed": 20260714,
+	"cap": 1,
+	"rows": [
+		{
+			"raw": "139 Bouverie Street, STE 17, Melbourne, VIC 3000",
+			"tokens": ["139", "Bouverie", "Street", "STE", "17", "Melbourne", "VIC", "3000"],
+			"labels": [
+				"B-house_number",
+				"B-street",
+				"I-street",
+				"B-unit_designator",
+				"B-unit",
+				"B-locality",
+				"B-region",
+				"B-postcode"
+			],
+			"span_starts": [0, 4, 21, 25, 29, 40, 44],
+			"span_ends": [3, 19, 24, 27, 38, 43, 48],
+			"span_tags": ["house_number", "street", "unit_designator", "unit", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Rue de Rivoli 24, STE 17, Paris",
+			"tokens": ["Rue", "de", "Rivoli", "24", "STE", "17", "Paris"],
+			"labels": ["B-street", "I-street", "I-street", "B-house_number", "B-unit_designator", "B-unit", "B-locality"],
+			"span_starts": [0, 14, 18, 22, 26],
+			"span_ends": [13, 16, 21, 24, 31],
+			"span_tags": ["street", "house_number", "unit_designator", "unit", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "1600 5th Ave, FLR 5, New York, NY 10019",
+			"tokens": ["1600", "5th", "Ave", "FLR", "5", "New", "York", "NY", "10019"],
+			"labels": [
+				"B-house_number",
+				"B-street",
+				"I-street",
+				"B-level_designator",
+				"B-level_id",
+				"B-locality",
+				"I-locality",
+				"B-region",
+				"B-postcode"
+			],
+			"span_starts": [0, 5, 14, 18, 21, 31, 34],
+			"span_ends": [4, 12, 17, 19, 29, 33, 39],
+			"span_tags": ["house_number", "street", "level_designator", "level_id", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Gran Vía 31, FLR 5, Madrid",
+			"tokens": ["Gran", "Vía", "31", "FLR", "5", "Madrid"],
+			"labels": ["B-street", "I-street", "B-house_number", "B-level_designator", "B-level_id", "B-locality"],
+			"span_starts": [0, 9, 13, 17, 20],
+			"span_ends": [8, 11, 16, 18, 26],
+			"span_tags": ["street", "house_number", "level_designator", "level_id", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "600 Congress Ave, 2F, Austin, TX 78701",
+			"tokens": ["600", "Congress", "Ave", "2F", "Austin", "TX", "78701"],
+			"labels": ["B-house_number", "B-street", "I-street", "B-level_id", "B-locality", "B-region", "B-postcode"],
+			"span_starts": [0, 4, 18, 22, 30, 33],
+			"span_ends": [3, 16, 20, 28, 32, 38],
+			"span_tags": ["house_number", "street", "level_id", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Gran Vía 31, 2F, Madrid",
+			"tokens": ["Gran", "Vía", "31", "2F", "Madrid"],
+			"labels": ["B-street", "I-street", "B-house_number", "B-level_id", "B-locality"],
+			"span_starts": [0, 9, 13, 17],
+			"span_ends": [8, 11, 15, 23],
+			"span_tags": ["street", "house_number", "level_id", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "1355 Market Street, TWR A, San Francisco, CA 94103",
+			"tokens": ["1355", "Market", "Street", "TWR", "A", "San", "Francisco", "CA", "94103"],
+			"labels": [
+				"B-house_number",
+				"B-street",
+				"I-street",
+				"B-building_designator",
+				"B-building_id",
+				"B-locality",
+				"I-locality",
+				"B-region",
+				"B-postcode"
+			],
+			"span_starts": [0, 5, 20, 24, 27, 42, 45],
+			"span_ends": [4, 18, 23, 25, 40, 44, 50],
+			"span_tags": ["house_number", "street", "building_designator", "building_id", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Mariahilfer Straße 88, TWR A, Wien",
+			"tokens": ["Mariahilfer", "Straße", "88", "TWR", "A", "Wien"],
+			"labels": ["B-street", "I-street", "B-house_number", "B-building_designator", "B-building_id", "B-locality"],
+			"span_starts": [0, 19, 23, 27, 30],
+			"span_ends": [18, 21, 26, 28, 34],
+			"span_tags": ["street", "house_number", "building_designator", "building_id", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "139 Bouverie Street, Eingang 2, Melbourne, VIC 3000",
+			"tokens": ["139", "Bouverie", "Street", "Eingang", "2", "Melbourne", "VIC", "3000"],
+			"labels": [
+				"B-house_number",
+				"B-street",
+				"I-street",
+				"B-entrance",
+				"I-entrance",
+				"B-locality",
+				"B-region",
+				"B-postcode"
+			],
+			"span_starts": [0, 4, 21, 32, 43, 47],
+			"span_ends": [3, 19, 30, 41, 46, 51],
+			"span_tags": ["house_number", "street", "entrance", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Rue de Rivoli 24, Eingang 2, Paris",
+			"tokens": ["Rue", "de", "Rivoli", "24", "Eingang", "2", "Paris"],
+			"labels": ["B-street", "I-street", "I-street", "B-house_number", "B-entrance", "I-entrance", "B-locality"],
+			"span_starts": [0, 14, 18, 29],
+			"span_ends": [13, 16, 27, 34],
+			"span_tags": ["street", "house_number", "entrance", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "42 Pine Road, Cage B, Austin, TX 78701",
+			"tokens": ["42", "Pine", "Road", "Cage", "B", "Austin", "TX", "78701"],
+			"labels": [
+				"B-house_number",
+				"B-street",
+				"I-street",
+				"B-staircase",
+				"I-staircase",
+				"B-locality",
+				"B-region",
+				"B-postcode"
+			],
+			"span_starts": [0, 3, 14, 22, 30, 33],
+			"span_ends": [2, 12, 20, 28, 32, 38],
+			"span_tags": ["house_number", "street", "staircase", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Rue de Rivoli 24, Cage B, Paris",
+			"tokens": ["Rue", "de", "Rivoli", "24", "Cage", "B", "Paris"],
+			"labels": ["B-street", "I-street", "I-street", "B-house_number", "B-staircase", "I-staircase", "B-locality"],
+			"span_starts": [0, 14, 18, 26],
+			"span_ends": [13, 16, 24, 31],
+			"span_tags": ["street", "house_number", "staircase", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "42 Pine Road DEPT 4B Austin TX 78701",
+			"tokens": ["42", "Pine", "Road", "DEPT", "4B", "Austin", "TX", "78701"],
+			"labels": [
+				"B-house_number",
+				"B-street",
+				"I-street",
+				"B-unit_designator",
+				"B-unit",
+				"B-locality",
+				"B-region",
+				"B-postcode"
+			],
+			"span_starts": [0, 3, 13, 18, 21, 28, 31],
+			"span_ends": [2, 12, 17, 20, 27, 30, 36],
+			"span_tags": ["house_number", "street", "unit_designator", "unit", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Hauptstraße 12 DEPT 4B Berlin",
+			"tokens": ["Hauptstraße", "12", "DEPT", "4B", "Berlin"],
+			"labels": ["B-street", "B-house_number", "B-unit_designator", "B-unit", "B-locality"],
+			"span_starts": [0, 12, 15, 20, 23],
+			"span_ends": [11, 14, 19, 22, 29],
+			"span_tags": ["street", "house_number", "unit_designator", "unit", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "600 Congress Ave FL 2 Austin TX 78701",
+			"tokens": ["600", "Congress", "Ave", "FL", "2", "Austin", "TX", "78701"],
+			"labels": [
+				"B-house_number",
+				"B-street",
+				"I-street",
+				"B-level_designator",
+				"B-level_id",
+				"B-locality",
+				"B-region",
+				"B-postcode"
+			],
+			"span_starts": [0, 4, 17, 20, 22, 29, 32],
+			"span_ends": [3, 16, 19, 21, 28, 31, 37],
+			"span_tags": ["house_number", "street", "level_designator", "level_id", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Gran Vía 31 FL 2 Madrid",
+			"tokens": ["Gran", "Vía", "31", "FL", "2", "Madrid"],
+			"labels": ["B-street", "I-street", "B-house_number", "B-level_designator", "B-level_id", "B-locality"],
+			"span_starts": [0, 9, 12, 15, 17],
+			"span_ends": [8, 11, 14, 16, 23],
+			"span_tags": ["street", "house_number", "level_designator", "level_id", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "456 Oak Avenue 2F Chicago IL 60614",
+			"tokens": ["456", "Oak", "Avenue", "2F", "Chicago", "IL", "60614"],
+			"labels": ["B-house_number", "B-street", "I-street", "B-level_id", "B-locality", "B-region", "B-postcode"],
+			"span_starts": [0, 4, 15, 18, 26, 29],
+			"span_ends": [3, 14, 17, 25, 28, 34],
+			"span_tags": ["house_number", "street", "level_id", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Damrak 1 2F Amsterdam",
+			"tokens": ["Damrak", "1", "2F", "Amsterdam"],
+			"labels": ["B-street", "B-house_number", "B-level_id", "B-locality"],
+			"span_starts": [0, 7, 9, 12],
+			"span_ends": [6, 8, 11, 21],
+			"span_tags": ["street", "house_number", "level_id", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "1355 Market Street TWR West San Francisco CA 94103",
+			"tokens": ["1355", "Market", "Street", "TWR", "West", "San", "Francisco", "CA", "94103"],
+			"labels": [
+				"B-house_number",
+				"B-street",
+				"I-street",
+				"B-building_designator",
+				"B-building_id",
+				"B-locality",
+				"I-locality",
+				"B-region",
+				"B-postcode"
+			],
+			"span_starts": [0, 5, 19, 23, 28, 42, 45],
+			"span_ends": [4, 18, 22, 27, 41, 44, 50],
+			"span_tags": ["house_number", "street", "building_designator", "building_id", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Damrak 1 TWR West Amsterdam",
+			"tokens": ["Damrak", "1", "TWR", "West", "Amsterdam"],
+			"labels": ["B-street", "B-house_number", "B-building_designator", "B-building_id", "B-locality"],
+			"span_starts": [0, 7, 9, 13, 18],
+			"span_ends": [6, 8, 12, 17, 27],
+			"span_tags": ["street", "house_number", "building_designator", "building_id", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "456 Oak Avenue Escalier 4 Chicago IL 60614",
+			"tokens": ["456", "Oak", "Avenue", "Escalier", "4", "Chicago", "IL", "60614"],
+			"labels": [
+				"B-house_number",
+				"B-street",
+				"I-street",
+				"B-entrance",
+				"I-entrance",
+				"B-locality",
+				"B-region",
+				"B-postcode"
+			],
+			"span_starts": [0, 4, 15, 26, 34, 37],
+			"span_ends": [3, 14, 25, 33, 36, 42],
+			"span_tags": ["house_number", "street", "entrance", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Rue de Rivoli 24 Escalier 4 Paris",
+			"tokens": ["Rue", "de", "Rivoli", "24", "Escalier", "4", "Paris"],
+			"labels": ["B-street", "I-street", "I-street", "B-house_number", "B-entrance", "I-entrance", "B-locality"],
+			"span_starts": [0, 14, 17, 28],
+			"span_ends": [13, 16, 27, 33],
+			"span_tags": ["street", "house_number", "entrance", "locality"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "456 Oak Avenue Stiege 4 Chicago IL 60614",
+			"tokens": ["456", "Oak", "Avenue", "Stiege", "4", "Chicago", "IL", "60614"],
+			"labels": [
+				"B-house_number",
+				"B-street",
+				"I-street",
+				"B-staircase",
+				"I-staircase",
+				"B-locality",
+				"B-region",
+				"B-postcode"
+			],
+			"span_starts": [0, 4, 15, 24, 32, 35],
+			"span_ends": [3, 14, 23, 31, 34, 40],
+			"span_tags": ["house_number", "street", "staircase", "locality", "region", "postcode"],
+			"source": "synthetic-secondary"
+		},
+		{
+			"raw": "Mariahilfer Straße 88 Stiege 4 Wien",
+			"tokens": ["Mariahilfer", "Straße", "88", "Stiege", "4", "Wien"],
+			"labels": ["B-street", "I-street", "B-house_number", "B-staircase", "I-staircase", "B-locality"],
+			"span_starts": [0, 19, 22, 31],
+			"span_ends": [18, 21, 30, 35],
+			"span_tags": ["street", "house_number", "staircase", "locality"],
+			"source": "synthetic-secondary"
+		}
+	],
+	"full_cap": 400,
+	"full_rows": 9600,
+	"full_rows_sha256": "99eb9322cdfc6d779e79fa367ed1e8c1b5eee16cf749effea3b415f0e560f4fb"
+}

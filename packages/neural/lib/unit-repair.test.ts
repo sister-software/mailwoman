@@ -93,6 +93,26 @@ describe("repairUnitLabels", () => {
 		expect(unitValue(text, out)).toBe("#104")
 	})
 
+	it("ADDs Singapore's floor-unit form whole, floor and unit together", () => {
+		const text = "Blk 35 Brighton Avenue #09-71 Singapore 559280"
+
+		const tokens = [
+			tok("Blk", 0, 3, "O"),
+			tok("35", 4, 6, "B-house_number"),
+			tok("Brighton", 7, 15, "B-street"),
+			tok("Avenue", 16, 22, "I-street"),
+			tok("#", 23, 24, "O"),
+			tok("09", 24, 26, "O"),
+			tok("-", 26, 27, "O"),
+			tok("71", 27, 29, "O"),
+			tok("Singapore", 30, 39, "B-locality"),
+			tok("559280", 40, 46, "B-postcode"),
+		]
+
+		const { tokens: out } = repairUnitLabels(text, tokens)
+		expect(unitValue(text, out)).toBe("#09-71")
+	})
+
 	it("Reclaims a bare unit the model mislabeled as locality (Flat 2 → unit)", () => {
 		const text = "Flat 2  14 Smith St"
 

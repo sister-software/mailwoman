@@ -67,7 +67,7 @@ test("GET /parse?query= returns ordered libpostal components", async () => {
 	const res = await app.request("/parse?query=1600+pennsylvania+ave")
 	expect(res.status).toBe(200)
 
-	expect(await res.json()).toEqual([
+	await expect(res.json()).resolves.toEqual([
 		{ label: "house_number", value: "1600" },
 		{ label: "road", value: "pennsylvania ave" },
 	])
@@ -104,7 +104,7 @@ test("parse without a query answers the exact legacy 400 body", async () => {
 		}),
 	]) {
 		expect(res.status).toBe(400)
-		expect(await res.json()).toEqual({ error: "query is required" })
+		await expect(res.json()).resolves.toEqual({ error: "query is required" })
 	}
 })
 
@@ -113,7 +113,7 @@ test("an empty higher-precedence query param wins precedence and 400s (legacy pa
 
 	const viaQuery = await app.request("/parse?query=&address=1600+pennsylvania+ave")
 	expect(viaQuery.status).toBe(400)
-	expect(await viaQuery.json()).toEqual({ error: "query is required" })
+	await expect(viaQuery.json()).resolves.toEqual({ error: "query is required" })
 
 	const viaBody = await app.request("/parse?address=1600+pennsylvania+ave", {
 		method: "POST",
@@ -122,7 +122,7 @@ test("an empty higher-precedence query param wins precedence and 400s (legacy pa
 	})
 
 	expect(viaBody.status).toBe(400)
-	expect(await viaBody.json()).toEqual({ error: "query is required" })
+	await expect(viaBody.json()).resolves.toEqual({ error: "query is required" })
 })
 
 test("POST /parse with malformed JSON is tolerated like the served legacy endpoint (falls through to query params)", async () => {
@@ -143,14 +143,14 @@ test("POST /parse with malformed JSON is tolerated like the served legacy endpoi
 	})
 
 	expect(without.status).toBe(400)
-	expect(await without.json()).toEqual({ error: "query is required" })
+	await expect(without.json()).resolves.toEqual({ error: "query is required" })
 })
 
 test("expand without an engine method answers the exact legacy 501 body", async () => {
 	const app = createLibpostalApp(fixtureEngine)
 	const res = await app.request("/expand?address=x")
 	expect(res.status).toBe(501)
-	expect(await res.json()).toEqual({ error: "expand not implemented" })
+	await expect(res.json()).resolves.toEqual({ error: "expand not implemented" })
 })
 
 test("expand with an engine: 200 with expansions; missing address is the legacy 400", async () => {
@@ -158,11 +158,11 @@ test("expand with an engine: 200 with expansions; missing address is the legacy 
 
 	const ok = await app.request("/expand?address=1600+penn")
 	expect(ok.status).toBe(200)
-	expect(await ok.json()).toEqual({ expansions: ["1600 penn", "1600 penn expanded"] })
+	await expect(ok.json()).resolves.toEqual({ expansions: ["1600 penn", "1600 penn expanded"] })
 
 	const missing = await app.request("/expand")
 	expect(missing.status).toBe(400)
-	expect(await missing.json()).toEqual({ error: "address is required" })
+	await expect(missing.json()).resolves.toEqual({ error: "address is required" })
 })
 
 test("POST /expand accepts a JSON body", async () => {
@@ -175,7 +175,7 @@ test("POST /expand accepts a JSON body", async () => {
 	})
 
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual({ expansions: ["1600 penn", "1600 penn expanded"] })
+	await expect(res.json()).resolves.toEqual({ expansions: ["1600 penn", "1600 penn expanded"] })
 })
 
 test("POST /expand: a `query` field is inert (expand has no query alias) — `address` still wins", async () => {
@@ -188,7 +188,7 @@ test("POST /expand: a `query` field is inert (expand has no query alias) — `ad
 	})
 
 	expect(res.status).toBe(200)
-	expect(await res.json()).toEqual({ expansions: ["1600 penn", "1600 penn expanded"] })
+	await expect(res.json()).resolves.toEqual({ expansions: ["1600 penn", "1600 penn expanded"] })
 })
 
 test("POST with a body over the 100 KiB cap answers 413, not a buffered crash", async () => {
@@ -202,7 +202,7 @@ test("POST with a body over the 100 KiB cap answers 413, not a buffered crash", 
 	})
 
 	expect(res.status).toBe(413)
-	expect(await res.json()).toEqual({ error: "request body too large" })
+	await expect(res.json()).resolves.toEqual({ error: "request body too large" })
 })
 
 test("an engine fault answers the clean legacy 500, never a crash", async () => {
@@ -214,7 +214,7 @@ test("an engine fault answers the clean legacy 500, never a crash", async () => 
 
 	const res = await app.request("/parse?query=x")
 	expect(res.status).toBe(500)
-	expect(await res.json()).toEqual({ error: "internal error" })
+	await expect(res.json()).resolves.toEqual({ error: "internal error" })
 })
 
 test("CORS: permissive Access-Control-Allow-Origin on responses (browser clients)", async () => {
@@ -285,7 +285,7 @@ test("POST with a non-string body field is treated as absent (never-interface: o
 	})
 
 	expect(alone.status).toBe(400)
-	expect(await alone.json()).toEqual({ error: "query is required" })
+	await expect(alone.json()).resolves.toEqual({ error: "query is required" })
 
 	const withFallback = await app.request("/parse?address=1600+pennsylvania+ave", {
 		method: "POST",
@@ -314,14 +314,14 @@ test("POST with a form-encoded body leaves the body inert like the served legacy
 	})
 
 	expect(without.status).toBe(400)
-	expect(await without.json()).toEqual({ error: "query is required" })
+	await expect(without.json()).resolves.toEqual({ error: "query is required" })
 })
 
 test("bodyless POST with a JSON content-type answers the legacy 400, not a validator 500", async () => {
 	const app = createLibpostalApp(fixtureEngine)
 	const res = await app.request("/parse", { method: "POST", headers: { "content-type": "application/json" } })
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ error: "query is required" })
+	await expect(res.json()).resolves.toEqual({ error: "query is required" })
 })
 
 test("duplicate query params use the first value (never-interface: old code crashed to 500)", async () => {
@@ -381,5 +381,5 @@ test("engine option: headers only — the /parse body is byte-identical with and
 	expect(stamped.headers.get("server")).toBe("mailwoman/9.2.0 (AGPL-3.0-only)")
 	expect(stamped.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
 	expect(plain.headers.get("server")).toBeNull()
-	expect(await stamped.text()).toBe(await plain.text())
+	await expect(stamped.text()).resolves.toBe(await plain.text())
 })

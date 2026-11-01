@@ -86,12 +86,12 @@ const PATTERN_SPECIALS = /[.+^${}()|[\]\\]/g
  */
 export function pathspecPattern(pathspec: string): RegExp {
 	if (!/[*?]/.test(pathspec)) {
-		return new RegExp(`^${pathspec.replace(PATTERN_SPECIALS, "\\$&")}(?:/|$)`)
+		return new RegExp(`^${pathspec.replaceAll(PATTERN_SPECIALS, "\\$&")}(?:/|$)`)
 	}
 
 	const body = pathspec
 		.split(/(\*+|\?)/)
-		.map((part) => (part.startsWith("*") ? ".*" : part === "?" ? "." : part.replace(PATTERN_SPECIALS, "\\$&")))
+		.map((part) => (part.startsWith("*") ? ".*" : part === "?" ? "." : part.replaceAll(PATTERN_SPECIALS, "\\$&")))
 		.join("")
 
 	return new RegExp(`^${body}$`)

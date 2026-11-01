@@ -14,7 +14,7 @@ export default mergeConfig(
 	baseConfig,
 	defineConfig({
 		test: {
-			include: ["*.{test,spec}.{ts,tsx}", "{packages/*,docs}/**/*.test.{ts,tsx}", "docs/**/*.test.mts"],
+			include: ["*.{test,spec}.{ts,tsx}", "{packages/*,lib/*,docs}/**/*.test.{ts,tsx}", "docs/**/*.test.mts"],
 			exclude: ["**/*.integration.test.{ts,tsx}", "**/*.full.test.{ts,tsx}"],
 		},
 	})

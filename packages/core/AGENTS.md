@@ -120,8 +120,9 @@ Check these homes before adding a helper:
 - `@mailwoman/core/utils/time`: `isoDate`, `isoSeconds`, and `isoSecondsUTC`.
 - `@mailwoman/core/git`: `gitHead`, `currentBranch`, `dirtyTrackedFiles`, and `trackedFiles`.
 - `@mailwoman/core/fs/writers`: `changeMode` and `writePrivateTextFile`.
-- `@mailwoman/core/utils/sealed-db`: `swapDatabaseIntoPlace`, `sealDatabase`, and
-  `openBuiltDatabase`.
+- `@mailwoman/sqlite/sealed/db`: `swapDatabaseIntoPlace` and `sealDatabase`.
+  `@mailwoman/sqlite/sealed` holds `openBuiltClient`, and `@mailwoman/sqlite/sealed/build` holds
+  `buildSealedArtifact`.
 - `@mailwoman/core/release-config`: the typed `release.config.json` reader.
 - `@mailwoman/spatial`: geographic distance, polygon containment, and bounding-box helpers.
 - `packages/match/lib/comparators.ts`: string similarity functions.
@@ -140,7 +141,7 @@ documented local implementation when the dependency cost is larger than the dupl
 
 ## Platform conditions
 
-A subpath that must run in workerd or a browser carries `workerd` and `browser` export conditions
+A subpath that must run in workerd or a browser declares `workerd` and `browser` export conditions
 beside `node` in the owning package rather than moving to a leaf package. A platform-neutral
 implementation such as WebCrypto needs no condition. Prove worker safety with an esbuild bundle test
 under `--conditions=workerd,worker,browser`, in the shape of

@@ -5,8 +5,8 @@
  * @file Writes Parquet files and the manifest that describes their contents.
  *
  *   This module exposes two writers. {@linkcode writeParquetFile} writes one file from rows already in memory.
- *   {@linkcode writeParquetSplits} streams per-split row iterables into one set of files per source, as many as the
- *   row cap requires. It returns the manifest. Both writers create their parent directory and write a record beside
+ *   {@linkcode writeParquetSplits} streams per-split row iterables into one set of files per source, creating files
+ *   as needed to meet the row cap. It returns the manifest. Both writers create their parent directory and write a record beside
  *   every file (`#parquet/record`).
  *
  *   Layout under `<outputDir>`:
@@ -21,10 +21,10 @@
  *         data.RECORD.json
  *   ```
  *
- *   A file holds the rows of one source in one split. Its directory is named by its derivation hash, over that
+ *   A file holds the rows of one source in one split. Its directory uses its derivation hash, over that
  *   source's extract hash and code hash, the build config with the file's source, split and part, and the builder
  *   version, so two builds that would write different bytes never share a path. The manifest names each
- *   file's split, which is how the per-split routing survives without a split directory.
+ *   file's split. The manifest preserves per-split routing without a split directory.
  *
  *   Each file caps at `rowsPerFile` (default 1,000,000). Within a file DuckDB writes a row group every
  *   {@linkcode ROW_GROUP_SIZE} rows. The manifest captures every file's path, source, row count, byte size and
@@ -46,7 +46,7 @@ import {
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
-import { Field, Int32, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
+import { Field, Int32, Int64, List, Null, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
@@ -145,6 +145,96 @@ function parquetTable(rows: readonly ParquetRow[]) {
 }
 
 /**
+ * Writes an Arrow table as one SNAPPY parquet file with a row group every {@linkcode ROW_GROUP_SIZE} rows.
+ */
+async function writeArrowParquet(arrow: ArrowTable, path: PathBuilderLike): Promise<void> {
+	const wasmTable = WasmTable.fromIPCStream(tableToIPC(arrow, "stream"))
+
+	const properties = new WriterPropertiesBuilder()
+		.setCompression(Compression.SNAPPY)
+		.setCreatedBy("mailwoman")
+		.setMaxRowGroupSize(ROW_GROUP_SIZE)
+		.build()
+
+	// parquet-wasm serializes key-value metadata through a hash map.
+	// Its order can change between writes.
+	// File identity and provenance live in manifest.json, so omitting file
+	// metadata preserves deterministic bytes.
+	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
+}
+
+/**
+ * The logical type of one column {@linkcode writeColumnParquetFile} writes.
+ */
+export const ParquetColumnKind = {
+	String: "string",
+	StringList: "string[]",
+	Int32List: "int32[]",
+	Int64List: "int64[]",
+	/**
+	 * A column whose every value is null, the type pyarrow infers for one.
+	 */
+	Null: "null",
+} as const
+
+export type ParquetColumnKind = (typeof ParquetColumnKind)[keyof typeof ParquetColumnKind]
+
+/**
+ * A file's columns in file order, each with its logical type.
+ */
+export type ParquetColumns = ReadonlyArray<readonly [name: string, kind: ParquetColumnKind]>
+
+const int64ListType = new List(new Field("item", new Int64(), true))
+
+function columnVector(values: unknown[], kind: ParquetColumnKind) {
+	switch (kind) {
+		case ParquetColumnKind.String:
+			return vectorFromArray(values as Array<string | null>, new Utf8())
+		case ParquetColumnKind.StringList:
+			return vectorFromArray(values as Array<string[] | null>, stringListType)
+		case ParquetColumnKind.Int32List:
+			return vectorFromArray(values as Array<number[] | null>, int32ListType)
+		case ParquetColumnKind.Int64List:
+			return vectorFromArray(
+				values.map((list) => (list == null ? null : (list as number[]).map((value) => BigInt(value)))),
+				int64ListType
+			)
+		case ParquetColumnKind.Null:
+			if (values.some((value) => value != null)) throw new Error("a null column holds a value")
+
+			return vectorFromArray(values as null[], new Null())
+	}
+}
+
+/**
+ * Writes rows held in memory as one parquet file with exactly `columns`, in their order.
+ *
+ * It is the writer for an output whose schema is fixed by an earlier writer
+ * rather than by {@linkcode LABELED_ROW_SCHEMA}, such as a CJK corpus.
+ * A row missing a column writes `null` there.
+ *
+ * It stamps no license and writes no record.
+ * The caller stamps each row first.
+ */
+export async function writeColumnParquetFile(
+	rows: readonly object[],
+	columns: ParquetColumns,
+	path: PathBuilderLike
+): Promise<void> {
+	const vectors = Object.fromEntries(
+		columns.map(([name, kind]) => [
+			name,
+			columnVector(
+				rows.map((row) => (row as Readonly<Record<string, unknown>>)[name] ?? null),
+				kind
+			),
+		])
+	)
+
+	await writeArrowParquet(new ArrowTable(vectors), path)
+}
+
+/**
  * Replace a row's `license` with its source's register license id, counting the statement it replaced.
  *
  * Every parquet writer calls it before a row reaches a file, so the column holds an SPDX
@@ -209,20 +299,7 @@ export async function writeParquetFile(
 
 	addToTally(tally, rows[0]!.source, rows[0]!.license, rows.length)
 
-	const arrow = parquetTable(rows)
-	const wasmTable = WasmTable.fromIPCStream(tableToIPC(arrow, "stream"))
-
-	const properties = new WriterPropertiesBuilder()
-		.setCompression(Compression.SNAPPY)
-		.setCreatedBy("mailwoman")
-		.setMaxRowGroupSize(ROW_GROUP_SIZE)
-		.build()
-
-	// parquet-wasm serializes key-value metadata through a hash map.
-	// Its order can change between writes.
-	// File identity and provenance live in manifest.json, so omitting file
-	// metadata preserves deterministic bytes.
-	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
+	await writeArrowParquet(parquetTable(rows), path)
 
 	return writeParquetRecord({
 		path,
@@ -260,7 +337,9 @@ export interface ParquetFileDescriptor {
 	 */
 	source?: string
 	/**
-	 * The file's derivation hash, which names its store directory.
+	 * The file's derivation hash.
+	 *
+	 * This value identifies its store directory.
 	 * Absent from manifests written before the store.
 	 */
 	derivation_hash?: string
@@ -603,7 +682,7 @@ export async function writeParquetSplits(
 			const fileDir = storeDir(opened.source, hash)
 			// A string, because the manifest records it.
 			const path = fileDir("data.parquet").toString()
-			// Named for this writer, so two builds converting the same derivation never write one file.
+			// The writer-specific temporary path keeps concurrent builds from writing the same file.
 			const pending = fileDir(`data.parquet.partial.${process.pid}.${crypto.randomUUID().slice(0, 8)}`).toString()
 
 			await makeDirectories(fileDir)
@@ -623,7 +702,7 @@ export async function writeParquetSplits(
 
 			// The converter's connection closed when `writeStagedParquet` returned,
 			// so no reader holds the staged part open.
-			// Removing it here bounds staging to the parts still open.
+			// This removes the staged part and bounds staging to parts that remain open.
 			await removePath(opened.stagePath)
 
 			const sha256 = await sha256File(pending)
@@ -701,7 +780,7 @@ export async function writeParquetSplits(
 			}
 		}
 
-		// `closePart` deletes the entry being visited, which a Map iterator permits.
+		// The Map iterator permits `closePart` to delete the entry currently being visited.
 		for (const opened of open.values()) {
 			await closePart(opened)
 		}

@@ -8,6 +8,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, removeFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { gitSync } from "@mailwoman/core/git"
 import { sha256File } from "@mailwoman/core/hash"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -17,7 +18,10 @@ import {
 	addToTally,
 	derivationHash,
 	type DerivationInputs,
+	extractFingerprint,
 	foldSourceLicenses,
+	inputCheckouts,
+	mergeInputCheckouts,
 	readParquetRecord,
 	readSourceLicenseTally,
 	recordPathFor,
@@ -49,7 +53,10 @@ describe("derivationHash", () => {
 	it("changes when any one of its four inputs changes", () => {
 		const base = derivationHash(BASE)
 
-		const changed: Record<keyof DerivationInputs, DerivationInputs> = {
+		const changed: Record<
+			Exclude<keyof DerivationInputs, "inputRevisions" | "inputUncommittedFiles">,
+			DerivationInputs
+		> = {
 			extractHash: { ...BASE, extractHash: "c".repeat(64) },
 			codeHash: { ...BASE, codeHash: "d".repeat(64) },
 			config: { ...BASE, config: { ...(BASE.config as object), shuffleSeed: 2 } },
@@ -59,6 +66,12 @@ describe("derivationHash", () => {
 		for (const [input, inputs] of Object.entries(changed)) {
 			expect(derivationHash(inputs), input).not.toBe(base)
 		}
+	})
+
+	it("leaves the input revisions out, since the extract hash already covers the input's content", () => {
+		expect(derivationHash({ ...BASE, inputRevisions: { "whosonfirst-data-admin-us": "6596d83ab02" } })).toBe(
+			derivationHash(BASE)
+		)
 	})
 
 	it("changes with each per-file config field the writer adds", () => {
@@ -274,7 +287,7 @@ describe("foldSourceLicenses", () => {
 		// `etalab-2.0` is the id itself, so only the ODbL statement differs from it.
 		expect(record.licenseStatements).toEqual({ "ODbL-1.0": 3 })
 
-		expect(await readSourceLicenseTally([banFile.path])).toEqual(
+		await expect(readSourceLicenseTally([banFile.path])).resolves.toEqual(
 			new Map([["ban", new Map([[licenses.licenseOf("ban")!, 7]])]])
 		)
 	})
@@ -330,8 +343,8 @@ describe("writeParquetFile", () => {
 			)
 		).rejects.toThrow(/"synthetic-secondary" have no license id/u)
 
-		expect(await pathExists(path)).toBe(false)
-		expect(await pathExists(recordPathFor(path))).toBe(false)
+		await expect(pathExists(path)).resolves.toBe(false)
+		await expect(pathExists(recordPathFor(path))).resolves.toBe(false)
 	})
 
 	it("writes the register's license id in place of the producer's prose", async () => {
@@ -363,3 +376,90 @@ describe("writeParquetSplits", () => {
 		).rejects.toThrow(/"synthetic-secondary" have no license id/u)
 	})
 })
+
+describe("inputCheckouts", () => {
+	it("records the HEAD and uncommitted-file count of each checkout one or two levels below the input", async () => {
+		const identity = ["-c", "user.name=t", "-c", "user.email=t@example.com"]
+		const heads: Record<string, string> = {}
+
+		for (const checkout of ["whosonfirst-data-admin-us", "whosonfirst-data/whosonfirst-data-admin-gb"]) {
+			const cwd = scratch.path(checkout)
+
+			await writeLocalJSONFile({ id: 1 }, cwd, "data/1.geojson")
+			gitSync(["init", "--quiet"], { cwd })
+			gitSync(["add", "."], { cwd })
+			gitSync([...identity, "commit", "--quiet", "--no-gpg-sign", "-m", "fixture"], { cwd })
+			heads[checkout] = gitSync(["rev-parse", "HEAD"], { cwd })
+		}
+
+		await writeLocalJSONFile({ id: 2 }, scratch.path("whosonfirst-data-admin-us"), "data/2.geojson")
+
+		await expect(inputCheckouts(scratch.path)).resolves.toEqual({
+			inputRevisions: heads,
+			inputUncommittedFiles: { "whosonfirst-data-admin-us": 1, "whosonfirst-data/whosonfirst-data-admin-gb": 0 },
+		})
+
+		await expect(
+			inputCheckouts(scratch.path("whosonfirst-data-admin-us", "data", "1.geojson"))
+		).resolves.toBeUndefined()
+	})
+})
+
+describe("mergeInputCheckouts", () => {
+	const record = (head: string, uncommitted = 0) => ({
+		inputRevisions: { "whosonfirst-data-admin-us": head },
+		inputUncommittedFiles: { "whosonfirst-data-admin-us": uncommitted },
+	})
+
+	it("keeps the commits every input records", () => {
+		expect(mergeInputCheckouts([record("a1"), record("a1")])).toEqual(record("a1"))
+	})
+
+	it("records no commits when one input lacks them", () => {
+		expect(mergeInputCheckouts([record("a1"), null])).toBeUndefined()
+		expect(mergeInputCheckouts([record("a1"), {}])).toBeUndefined()
+	})
+
+	it("refuses inputs built from different commits of one checkout", () => {
+		expect(() => mergeInputCheckouts([record("a1"), record("b2")])).toThrow(/at both a1 and b2/u)
+		expect(() => mergeInputCheckouts([record("a1", 0), record("a1", 3)])).toThrow(/0 and 3 uncommitted/u)
+	})
+})
+
+describe("extractFingerprint over git checkouts", () => {
+	it("changes with an untracked file and again with its commit", async () => {
+		const identity = ["-c", "user.name=t", "-c", "user.email=t@example.com"]
+		const root = scratch.path("wof-repos")
+		const cwd = scratch.path("wof-repos", "whosonfirst-data-admin-us")
+
+		await writeLocalJSONFile({ id: 1 }, cwd, "data/1.geojson")
+		gitSync(["init", "--quiet"], { cwd })
+		gitSync(["add", "."], { cwd })
+		gitSync([...identity, "commit", "--quiet", "--no-gpg-sign", "-m", "fixture"], { cwd })
+
+		const clean = await computeFingerprintFresh(root)
+
+		await writeLocalJSONFile({ id: 2 }, cwd, "data/2.geojson")
+
+		const untracked = await computeFingerprintFresh(root)
+
+		gitSync(["add", "."], { cwd })
+		gitSync([...identity, "commit", "--quiet", "--no-gpg-sign", "-m", "second"], { cwd })
+
+		const committed = await computeFingerprintFresh(root)
+
+		expect(new Set([clean, untracked, committed]).size).toBe(3)
+	})
+})
+
+/**
+ * {@linkcode extractFingerprint} memoizes by path, so each reading here uses a
+ * fresh path string for the same directory.
+ */
+let freshCount = 0
+
+async function computeFingerprintFresh(root: { toString(): string }): Promise<string> {
+	freshCount++
+
+	return extractFingerprint(`${root.toString()}${"/.".repeat(freshCount)}`)
+}

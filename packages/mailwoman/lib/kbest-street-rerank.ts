@@ -9,7 +9,7 @@
  * measured on. The winning segmentation's street tokens are spliced into the argmax tree rather than replacing
  * it, because the span head decodes locality/region/postcode far worse than the BIO argmax head. And the splice
  * fires only for a street the atlas confirms exists, so an unconfirmed street never overrides the model. A model
- * with no span scores returns exactly `buildAddressTree(trace.text, trace.tokens)`, byte-stable.
+ * with no span scores returns exactly `buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry })`, byte-stable.
  *
  * The evidence backend is injected, so this stays engine-agnostic.
  */
@@ -142,7 +142,7 @@ function spliceStreetTree(
 	const streetSegs = hyp.segments.filter((s) => STREET_SEGMENT_TYPES.has(grammar.segmentTypes[s.typeID] ?? ""))
 
 	if (!streetSegs.length) {
-		return buildAddressTree(trace.text, tokens)
+		return buildAddressTree(trace.text, tokens, { country: trace.containmentCountry })
 	}
 
 	for (const seg of streetSegs) {
@@ -165,7 +165,7 @@ function spliceStreetTree(
 		tokens[idx]!.label = "O"
 	}
 
-	return buildAddressTree(trace.text, tokens)
+	return buildAddressTree(trace.text, tokens, { country: trace.containmentCountry })
 }
 
 /**
@@ -190,7 +190,7 @@ export async function rerankByStreetEvidence(
 
 	if (!trace.spanScores) {
 		return {
-			tree: buildAddressTree(trace.text, trace.tokens),
+			tree: buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry }),
 			moved: false,
 			rank: 0,
 			streetSurface: "",
@@ -202,13 +202,23 @@ export async function rerankByStreetEvidence(
 	// and a name-index collision steals a correct token.
 	// Postcode is not an anchor, because treating a 4-digit year as one kills the date-name board.
 	if (trace.tokens.some((t) => ANCHOR_TAGS.has(bareBIOTag(t.label)))) {
-		return { tree: buildAddressTree(trace.text, trace.tokens), moved: false, rank: 0, streetSurface: "" }
+		return {
+			tree: buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry }),
+			moved: false,
+			rank: 0,
+			streetSurface: "",
+		}
 	}
 
 	const hyps = decodeSegmentationsKBest(trace.spanScores, trace.tokens.length, grammar, opts.k ?? 5)
 
 	if (!hyps.length) {
-		return { tree: buildAddressTree(trace.text, trace.tokens), moved: false, rank: 0, streetSurface: "" }
+		return {
+			tree: buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry }),
+			moved: false,
+			rank: 0,
+			streetSurface: "",
+		}
 	}
 
 	const candidates: Array<StreetCandidate<SegmentationHypothesis>> = hyps.map((h) => ({
@@ -230,7 +240,7 @@ export async function rerankByStreetEvidence(
 
 	const tree = confirmed
 		? spliceStreetTree(pick.candidate.payload!, trace, grammar)
-		: buildAddressTree(trace.text, trace.tokens)
+		: buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry })
 
 	return { tree, moved: pick.moved, rank: pick.index, streetSurface: pick.candidate.streetSurface }
 }

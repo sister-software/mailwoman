@@ -9,18 +9,16 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import type { LicenseDecision } from "@mailwoman/core/license/decision"
 import type { PathBuilder } from "path-ts"
 
-import type { AlignTotals } from "#build/align-totals"
+import type { AlignTotals } from "#build/align/totals"
 import type { HoldoutCheckRecord } from "#build/holdout-check"
 import { TRAINING_MANIFEST_FILE, type BuildCorpusManifest, type BuildProfile, type BuildStage } from "#build/types"
 import type { ParquetManifest } from "#parquet/writers"
 import type { AdapterRunManifest } from "#runner"
 import type { SourceRightsAdmission } from "#source-register/corpus-inputs"
 import { committedRowLicenses } from "#source-register/row-license"
-import { freezeTrainingManifest } from "#source-register/training-manifest"
-import type { SourceOperation } from "#source-register/types"
+import { freezeTrainingManifest, type SourceDecisionTable } from "#source-register/training-manifest"
 import type { LicensePolicy } from "#utils/license"
 import type { CountryHoldout, SplitManifest } from "#utils/split"
 
@@ -41,7 +39,7 @@ export interface BuildManifestInputs {
 	holdoutCheck: HoldoutCheckRecord
 	totals: AlignTotals
 	rights: SourceRightsAdmission
-	registerDecisions: ReadonlyMap<string, LicenseDecision<SourceOperation>>
+	decisionTable: SourceDecisionTable
 	onProgress?: (stage: BuildStage, message: string) => void
 }
 
@@ -84,7 +82,7 @@ export async function writeBuildManifests(inputs: BuildManifestInputs): Promise<
 		builtAt: inputs.builtAt,
 		profile: inputs.profile,
 		rowsBySource,
-		decisionsByLicense: inputs.registerDecisions,
+		decisionTable: inputs.decisionTable,
 		refused: totals.ineligibleSources,
 	})
 

@@ -40,7 +40,7 @@ In the Overture place-names file for release 2026-09-23.1 (30,919,122 names):
 | HK      |    42,973 |  22,134 (51.51%) |        4,010 (9.33%) |
 
 A CJK name inside a Latin-script country is rare. A Latin or mixed name inside a CJK-script country is common: one
-place name in five in Japan carries Latin letters.
+place name in five in Japan contains Latin letters.
 
 ## How the shipped families parse them
 
@@ -76,13 +76,13 @@ Three options were considered.
 
 1. **Route by the script of the address body.** Split the input at commas and script boundaries, find the run that
    holds the address structure (a house number, a postcode shape, an admin suffix such as `都`, `区`, `市`), and send
-   the input to that run's family. The other-script runs reach the chosen family as a name it already handles,
-   which works for the Latin family today (`Four Seasons Inn 四季酒家`).
+   the input to that run's family. The other-script runs reach the chosen family as a name it already handles.
+   This works for the Latin family today (`Four Seasons Inn 四季酒家`).
 2. **Run both families and keep the more confident parse.** This needs the two families' confidences on one scale.
    They are calibrated separately, so the comparison is unknown without a calibration study, and it doubles the
    inference cost of every mixed input.
-3. **One model for both scripts.** This is the from-scratch merge of the character graph and the Latin graph,
-   which the vocabulary audit (2026-10-09) rejected on cost.
+3. **One model for both scripts.** This is the from-scratch merge of the character graph and the Latin graph.
+   The vocabulary audit (2026-10-09) rejected it on cost.
 
 Decided: option 1, in two steps. The router first chooses the family from the address body's script rather than
 from the whole input's script dominance. The CJK family's training mix then gains rows with a Latin name before or
@@ -101,7 +101,7 @@ stated syntax accepts a unit. `packages/mailwoman/tools/dev-tools/tokenizer/code
 - 764,395 units. The modal row holds 2 (243,399 rows), and 28,571 rows hold none.
 - A house-number span is exactly one unit in 316,164 of 327,040 cases (96.7%), a postcode span in 323,992 of 335,124
   (96.7%).
-- On the 640,156 single-unit house numbers and postcodes, a majority-label rule over the pattern alone labels 95.07%
+- On the 640,156 single-unit house numbers and postcodes, a majority-label rule over the pattern by itself labels 95.07%
   correctly. Acceptance based on the row country's postcode syntax and the count of accepting countries labels
   95.93%.
 - The residual sits in two patterns: `99999` (24,289 house numbers, 263,811 postcodes) and `9999` (101,338 house

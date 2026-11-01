@@ -156,7 +156,7 @@ describe("buildSupportIndex and querySupport", () => {
 		expect(record.files_held_out).toBe(1)
 		expect(record.train_rows).toBe(5)
 		expect(record.corpus_version).toBe("fixture")
-		expect(await readSupportIndexRecord(indexDir)).toEqual(record)
+		await expect(readSupportIndexRecord(indexDir)).resolves.toEqual(record)
 
 		const [lake, arrowhead, unknownCountry, absent] = await querySupport(indexDir, [
 			{

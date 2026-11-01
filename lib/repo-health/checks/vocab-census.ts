@@ -203,7 +203,7 @@ function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
 /**
  * The tracked source files that the census covers.
  */
-const TRACKED_GLOBS = ["*.ts", "*.tsx", "corpus-python/*.py"] as const
+const TRACKED_GLOBS = ["*.ts", "*.tsx"] as const
 
 /**
  * Runs Vale over every tracked source file and returns its `--output line` records,

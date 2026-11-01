@@ -76,6 +76,12 @@ describe("packageSpecifiersFor", () => {
 		expect(packageSpecifiersFor(CORPUS, "packages/corpus/lib/index.ts").bare).toContain("@mailwoman/corpus")
 	})
 
+	test("derives internal specifiers for the root package", () => {
+		const root: PackageManifest = { dir: ".", name: "root", imports: { "#*": "./lib/*.ts" } }
+
+		expect(packageSpecifiersFor(root, "lib/ci/scope.ts").internal).toEqual(["#ci/scope"])
+	})
+
 	test("answers nothing for a file outside the package", () => {
 		expect(packageSpecifiersFor(CORPUS, "packages/core/lib/index.ts")).toEqual({ internal: [], bare: [] })
 	})

@@ -3,7 +3,7 @@
 
 /**
  *   The non-Latin country surfaces this module exists to supply. These cases pin the specific strings rather than
- *   just the mechanism.
+ *   the mechanism.
  */
 
 import { describe, expect, it } from "vitest"

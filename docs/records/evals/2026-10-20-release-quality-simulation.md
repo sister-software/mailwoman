@@ -37,7 +37,7 @@ Per scenario, over R evaluations:
   only when the truth meets them.
 - **Insufficient evidence:** the share of verdicts that are insufficient evidence.
 
-Every rate carries a 95% Wilson interval over R.
+Every rate has a 95% Wilson interval over R.
 
 Run: `node packages/mailwoman/tools/eval-harness/release/simulate.run.ts --scenarios
 packages/mailwoman/tools/eval-harness/release/simulation-scenarios.json --repetitions 200 --seed 2763 --out
@@ -113,7 +113,7 @@ both):
    are [1, 1], and the evaluator's rule (lower bound and estimate at least the minimum) passes. The same
    mechanism explains the 63 to 70% per-country coverage in `small-10-rows`, where 10/10 samples are common at
    a true rate of 0.90. The nominal per-check coverage there is 99%. The percentile bootstrap gives no width on
-   a discrete score at 0 or 1 successes or failures. The module's comment says the rounding of the percentile
+   a discrete score at 0 or 1 successes or failures. The module's comment claims the rounding of the percentile
    index "widens rather than narrows an interval on discrete scores", but rounding cannot widen an interval
    whose resamples are all identical. This is a defect in `evaluate.ts` against the policy sentence "A measured
    score below a requirement cannot pass because its interval is wide": a small sample passes here because its
@@ -165,10 +165,10 @@ current specification moved to `specs/release-requirements.v2.json` (schema 2). 
   zero-event bound q / G, with q = 1 - tail^(1/G), in its place, so a degenerate sample never has zero width
   and decides only once its group count makes that bound narrow. A bound that still has zero width is
   insufficient evidence.
-- **Grouping.** Schema 2 requires `statistics.rowsIndependent` with no default. When it is `false`, a check
+- **Group handling.** Schema 2 requires `statistics.rowsIndependent` with no default. When it is `false`, a check
   that reads a row without a group reports no bounds and is insufficient evidence. v2 sets it to `false`. The
   simulation's synthetic specification also sets it to `false`, so the `row_identity` scenarios now measure
-  the refusal: their checks have no bounds, which the coverage columns count as not covering.
+  the refusal: their checks have no bounds, and the coverage columns count such checks as not covering.
 - The bootstrap is gone, so schema 2 refuses `resamples` and `seed`, and the verdict reports
   `rowsIndependent`, each check's `method`, `effectiveRows`, `degreesOfFreedom` and `degenerateStrata` in
   place of `failedResamples`.
@@ -206,7 +206,7 @@ Against the targets (observed):
   R = 200 cannot tell 94% from 95%. The 40-row countries of `unequal-sizes-meets` now reach at least 99.0%
   [96.4, 99.7] per check against a nominal 99.5%. Every scenario other than the ungrouped and same-set
   selection ones has joint coverage whose interval includes 95%.
-- Missing groups no longer decide: both `row_identity` scenarios are 100% insufficient evidence and report no
+- When the dataset omits groups, the check does not decide: both `row_identity` scenarios are 100% insufficient evidence and report no
   bounds.
 - `boundary-minimum` erroneous fail is 2.5% [1.1, 5.7] with the truth exactly at the minimum in four
   countries. The bound allows up to 4 x 0.005 = 2% there (four per-side tails of 0.05/5/2); the interval

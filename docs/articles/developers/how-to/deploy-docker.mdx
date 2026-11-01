@@ -181,8 +181,7 @@ listening on http://0.0.0.0:13782 (geocoder: off)
 parse status 200
 ```
 
-The process stays up, parsing returns 200, and geocoding reports 503. This output demonstrates the
-claim from step 1 that parsing works without a volume.
+The process stays up, parsing returns 200, and geocoding reports 503. This output shows, as described in step 1, that parsing works without a volume.
 
 One behavior contradicts what the fallback suggests. If `$MAILWOMAN_CANDIDATE_DB` points to a file that
 does not exist, discovery does **not** fall through to the default path. It stops at the first position

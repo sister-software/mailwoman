@@ -85,11 +85,11 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestCzCuzk against atom.cuzk.gov.cz", (
 
 			const options = { outputDir: scratch.path, municipalities: ["584061"] }
 
-			expect(await harvestCzCuzk(client, options)).toMatchObject({ fetched: 1, skipped: 0 })
-			expect(await harvestCzCuzk(client, options)).toMatchObject({ fetched: 0, skipped: 1 })
+			await expect(harvestCzCuzk(client, options)).resolves.toMatchObject({ fetched: 1, skipped: 0 })
+			await expect(harvestCzCuzk(client, options)).resolves.toMatchObject({ fetched: 0, skipped: 1 })
 
 			// The digest check reaches the same conclusion through the file's bytes rather than its length.
-			expect(await harvestCzCuzk(client, { ...options, verifyDigests: true })).toMatchObject({
+			await expect(harvestCzCuzk(client, { ...options, verifyDigests: true })).resolves.toMatchObject({
 				fetched: 0,
 				skipped: 1,
 			})
@@ -143,7 +143,9 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestCzCuzk against atom.cuzk.gov.cz", (
 				retry: true,
 			})
 
-			expect(await harvestCzCuzk(client, { outputDir: scratch.path, municipalities: ["584061"] })).toMatchObject({
+			await expect(
+				harvestCzCuzk(client, { outputDir: scratch.path, municipalities: ["584061"] })
+			).resolves.toMatchObject({
 				failed: 0,
 			})
 

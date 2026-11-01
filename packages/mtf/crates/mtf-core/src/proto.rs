@@ -25,6 +25,19 @@ pub enum PieceType {
 }
 
 impl PieceType {
+	/// The value this type is serialized as.
+	#[cfg(feature = "edit")]
+	pub fn wire(self) -> u64 {
+		match self {
+			Self::Normal => 1,
+			Self::Unknown => 2,
+			Self::Control => 3,
+			Self::UserDefined => 4,
+			Self::Unused => 5,
+			Self::Byte => 6,
+		}
+	}
+
 	fn from_wire(value: u64) -> Result<Self, Error> {
 		Ok(match value {
 			1 => Self::Normal,
@@ -51,6 +64,11 @@ pub struct TrainerSpecProto {
 	pub treat_whitespace_as_suffix: bool,
 	pub byte_fallback: bool,
 	pub unk_surface: String,
+	/// The texts `unk_id`, `bos_id`, `eos_id` and `pad_id` look up.
+	pub unk_piece: String,
+	pub bos_piece: String,
+	pub eos_piece: String,
+	pub pad_piece: String,
 }
 
 pub struct NormalizerSpecProto {
@@ -73,12 +91,12 @@ const WIRE_FIXED64: u64 = 1;
 const WIRE_LEN: u64 = 2;
 const WIRE_FIXED32: u64 = 5;
 
-struct Reader<'a> {
+pub(crate) struct Reader<'a> {
 	buf: &'a [u8],
-	pos: usize,
+	pub(crate) pos: usize,
 }
 
-enum Value<'a> {
+pub(crate) enum Value<'a> {
 	Varint(u64),
 	Fixed32(u32),
 	Len(&'a [u8]),
@@ -86,7 +104,7 @@ enum Value<'a> {
 }
 
 impl<'a> Reader<'a> {
-	fn new(buf: &'a [u8]) -> Self {
+	pub(crate) fn new(buf: &'a [u8]) -> Self {
 		Self { buf, pos: 0 }
 	}
 
@@ -115,7 +133,7 @@ impl<'a> Reader<'a> {
 	}
 
 	/// Reads the next `(field number, value)`, or `None` at the end of the message.
-	fn next(&mut self) -> Result<Option<(u64, Value<'a>)>, Error> {
+	pub(crate) fn next(&mut self) -> Result<Option<(u64, Value<'a>)>, Error> {
 		if self.pos >= self.buf.len() {
 			return Ok(None);
 		}
@@ -149,7 +167,7 @@ fn utf8(bytes: &[u8], what: &str) -> Result<String, Error> {
 	String::from_utf8(bytes.to_vec()).map_err(|_| Error::MalformedModel(format!("{what} is not UTF-8")))
 }
 
-fn parse_piece(buf: &[u8]) -> Result<PieceProto<'_>, Error> {
+pub(crate) fn parse_piece(buf: &[u8]) -> Result<PieceProto<'_>, Error> {
 	let mut piece = PieceProto {
 		piece: "",
 		score: 0.0,
@@ -177,6 +195,10 @@ fn parse_trainer_spec(buf: &[u8], spec: &mut TrainerSpecProto) -> Result<(), Err
 			(24, Value::Varint(v)) => spec.treat_whitespace_as_suffix = v != 0,
 			(35, Value::Varint(v)) => spec.byte_fallback = v != 0,
 			(44, Value::Len(b)) => spec.unk_surface = utf8(b, "unk_surface")?,
+			(45, Value::Len(b)) => spec.unk_piece = utf8(b, "unk_piece")?,
+			(46, Value::Len(b)) => spec.bos_piece = utf8(b, "bos_piece")?,
+			(47, Value::Len(b)) => spec.eos_piece = utf8(b, "eos_piece")?,
+			(48, Value::Len(b)) => spec.pad_piece = utf8(b, "pad_piece")?,
 			_ => {}
 		}
 	}
@@ -215,6 +237,10 @@ pub fn parse_model(buf: &[u8]) -> Result<ModelProto<'_>, Error> {
 			treat_whitespace_as_suffix: false,
 			byte_fallback: false,
 			unk_surface: " \u{2047} ".into(),
+			unk_piece: "<unk>".into(),
+			bos_piece: "<s>".into(),
+			eos_piece: "</s>".into(),
+			pad_piece: "<pad>".into(),
 		},
 		normalizer_spec: default_normalizer_spec(),
 		has_denormalizer_charsmap: false,

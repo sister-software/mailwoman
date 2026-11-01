@@ -384,7 +384,9 @@ describe("findPostcodeCountryScope", () => {
 
 		tree.roots.push(node({ tag: "country", value: "Portugal" }))
 
-		expect(await findPostcodeCountryScope(tree.roots, backend, { postcode: "75001", defaultCountry: "US" })).toBeNull()
+		await expect(
+			findPostcodeCountryScope(tree.roots, backend, { postcode: "75001", defaultCountry: "US" })
+		).resolves.toBeNull()
 	})
 
 	it(": an EMPTY country token is not a named country — the pass still runs", async () => {
@@ -459,9 +461,9 @@ describe("findPostcodeCountryScope", () => {
 		const backend = await makeBackend(RIVOLI_POOL)
 		const roots = addressTree("75001", "Paris").roots
 
-		expect(
-			await findPostcodeCountryScope(roots, backend, { postcode: "75001", defaultCountry: "US", thresholdKm: 25 })
-		).not.toBeNull()
+		await expect(
+			findPostcodeCountryScope(roots, backend, { postcode: "75001", defaultCountry: "US", thresholdKm: 25 })
+		).resolves.not.toBeNull()
 
 		const tight = await findPostcodeCountryScope(roots, backend, {
 			postcode: "75001",

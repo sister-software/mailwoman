@@ -24,7 +24,7 @@ import {
 	isRenderablePlaceName,
 	joinGuidelineLines,
 	type PostalGuidelineLeg,
-} from "#recipes/postal-guideline/leg"
+} from "#recipes/postal/guideline/leg"
 
 /**
  * The designators a training recipe already writes.

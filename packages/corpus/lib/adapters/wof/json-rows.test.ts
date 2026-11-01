@@ -7,19 +7,23 @@ describe("renderHierarchy", () => {
 		expect(renderHierarchy({ locality: "石河村", region: "湖南", country: "中国" }, "CN")?.raw).toBe("中国湖南石河村")
 	})
 
-	it("separates romanized names in a CJK-script country", () => {
-		expect(renderHierarchy({ locality: "Chaozhitun", region: "Hebei" }, "CN")?.raw).toBe("Hebei, Chaozhitun")
-		expect(renderHierarchy({ locality: "Tainan", country: "Taiwan" }, "TW")?.raw).toBe("Taiwan, Tainan")
+	it("writes romanized names in a CJK-script country smallest first, as its Latin-script layout does", () => {
+		expect(renderHierarchy({ locality: "Chaozhitun", region: "Hebei" }, "CN")?.raw).toBe("Chaozhitun, Hebei")
+		expect(renderHierarchy({ locality: "Tainan", country: "Taiwan" }, "TW")?.raw).toBe("Tainan, Taiwan")
+
+		expect(renderHierarchy({ locality: "Shibuya", region: "Tokyo", country: "Japan" }, "JP")?.raw).toBe(
+			"Shibuya, Tokyo, Japan"
+		)
 	})
 
 	it("separates a hierarchy that mixes a romanized ancestor with a Han name", () => {
 		expect(renderHierarchy({ locality: "炉冲口", region: "hunan", country: "china" }, "CN")?.raw).toBe(
-			"china, hunan, 炉冲口"
+			"炉冲口, hunan, china"
 		)
 	})
 
 	it("separates names in another non-CJK script", () => {
-		expect(renderHierarchy({ locality: "Пекин", country: "Китай" }, "CN")?.raw).toBe("Китай, Пекин")
+		expect(renderHierarchy({ locality: "Пекин", country: "Китай" }, "CN")?.raw).toBe("Пекин, Китай")
 	})
 
 	it("keeps the comma join in a Latin-script country", () => {

@@ -183,10 +183,10 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		retired: "synth-fragment",
 		current: "fragment-assay",
 		operation: SourceOperation.Fragment,
-		producer: "corpus-python/src/mailwoman_train/corpora/fragment/build.py",
+		producer: "recipes/fragment-assay/build.ts",
 		note:
-			"The rows carry `recipe: fragment-assay`, and no registered recipe emits this source: the producer " +
-			"named above is out of the tree, so the rows cannot be rebuilt. 4,765 of the 200,348 on disk carry " +
+			"The rows carry `recipe: fragment-assay`, and no registered recipe emits this source: " +
+			"`lib/tools/fragment-assay.run.ts` runs the producer named above. 4,765 of the 200,348 on disk carry " +
 			"`country: ZZ`, of which the candidate gazetteer resolves 3,115 to one country and 1,650 to none or " +
 			"several (measured 2026-09-28). The source survives that decision, so the name is settled (#2358).",
 	},
@@ -335,7 +335,7 @@ export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	"osm-ci",
 	// The 2026-10-16 to 2026-10-18 extracts for the second set of countries under 1,000 street rows,
 	// where no national address register with an electable grant was downloadable (country-gap-v2).
-	// The Bahamas, Azerbaijan and French Polynesia also carry a national source that covers part
+	// The Bahamas, Azerbaijan and French Polynesia also use a national source that covers part
 	// of the country (`gbpa-bs` Freeport, `opendata-az` three cities, `ban-pf` three communes).
 	"osm-al",
 	"osm-ao",

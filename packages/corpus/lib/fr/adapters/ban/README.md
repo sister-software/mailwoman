@@ -47,7 +47,7 @@ taken from it.
 | `code_postal` | `postcode`                                         |
 | `code_insee`  | the row's country, read from the department prefix |
 | `nom_commune` | `locality`                                         |
-| `id`          | `source_id`, as `ban-<id>`                         |
+| `id`          | `source_id`, as `ban-<id>-<code_postal>`           |
 
 The other sixteen columns of the 23 the header declares are read by no part of this adapter:
 `id_fantoir`, `code_insee_ancienne_commune`, `nom_ancienne_commune`, `x`, `y`, `lon`, `lat`,
@@ -68,7 +68,9 @@ One `CanonicalRow` per BAN record:
 - `license`: `"Licence Ouverte 2.0"`. BAN is dual-licensed under Licence Ouverte 2.0 or ODbL and
   this adapter elects Licence Ouverte. Its terms permit training with attribution. The model
   card must attribute BAN.
-- `source_id`: `"ban-<csv-id>"`, since BAN's own `id` column is stable
+- `source_id`: `"ban-<csv-id>-<code_postal>"`. BAN's own `id` column is stable, but it repeats across the
+  postcodes of a merged commune: `27213_0028_00001` is `1 Grande Rue` in each of Vexin-sur-Epte's 27420,
+  27510 and 27630 villages. The postcode keeps those addresses apart (#2894).
 - `source`: `ban`. This is a wire identifier: it is the literal `source` value on every row of
   every corpus built from it, and `ban: 3.0` and similar appear as `source_weights` keys across
   the training configs. A rename of it is a data migration rather than an edit.

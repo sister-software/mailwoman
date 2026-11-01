@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "d1909066617b8535f875a046508f2a493e0e2b13cc1424eaa96e07e242475b84",
+	"contentDigest": "e1958a46737e73e042500a72c70aaa4efc69a71ac9c473f319cfbf8997283663",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -2781,7 +2781,7 @@
 			"termsVersion": "unstated",
 			"retrievedCopy": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/",
 			"retrievedAt": "2026-10-17",
-			"electedBecause": "CMS compiles and publishes the NPPES downloadable file, so it is a work of the United States Government in which 17 U.S.C. § 105 denies copyright. The download index, `https://download.cms.gov/nppes/NPI_Files.html`, 6,817 bytes, sha256 `f00a6c37989e58ad6f227a89a102ae9c176cdebe5ea15e71eb07bdc356b15bdc`, lists `NPPES Data Dissemination V.2 (October 12, 2026) - ZIP format (1,106.00 MB)` and states no use condition. The instrument under which HHS releases it is `HIPAA Administrative Simplification: National Plan and Provider Enumeration System Data Dissemination`, `https://www.federalregister.gov/documents/full_text/html/2007/05/30/07-2651.html`, 34,894 bytes, sha256 `68f8af35106b73088e799fe00fa66cad0f502bdaf9d1e8c37807c9e0886ca0d4`, which states that HHS reviewed the data elements under FOIA and the Privacy Act, withholds SSNs, IRS ITINs and dates of birth as `not disclosable under FOIA`, and `will make the FOIA-disclosable NPPES health care provider data available in downloadable files`. The notice imposes no use restriction on the released elements. The ZIP's own `Data Dissemination File - Readme` was not opened because it sits inside the 1,106 MB archive. Type 1 records name individual providers with practice and mailing addresses; HHS's FOIA determination makes them public, and whether the corpus takes them is a matter for this source's personal-data review, which `source-resolutions.json` does not yet hold. The basis below is the statute rather than a grant.",
+			"electedBecause": "CMS compiles and publishes the NPPES downloadable file, so it is a work of the United States Government in which 17 U.S.C. § 105 denies copyright. The download index, `https://download.cms.gov/nppes/NPI_Files.html`, 6,817 bytes, sha256 `f00a6c37989e58ad6f227a89a102ae9c176cdebe5ea15e71eb07bdc356b15bdc`, lists `NPPES Data Dissemination V.2 (October 12, 2026) - ZIP format (1,106.00 MB)` and states no use condition. The instrument under which HHS releases it is `HIPAA Administrative Simplification: National Plan and Provider Enumeration System Data Dissemination`, `https://www.federalregister.gov/documents/full_text/html/2007/05/30/07-2651.html`, 34,894 bytes, sha256 `68f8af35106b73088e799fe00fa66cad0f502bdaf9d1e8c37807c9e0886ca0d4`, which states that HHS reviewed the data elements under FOIA and the Privacy Act, withholds SSNs, IRS ITINs and dates of birth as `not disclosable under FOIA`, and `will make the FOIA-disclosable NPPES health care provider data available in downloadable files`. The notice imposes no use restriction on the released elements. The ZIP's own `Data Dissemination File - Readme` was not opened because it sits inside the 1,106 MB archive. Type 1 records name individual providers with practice and mailing addresses; HHS's FOIA determination makes them public, and whether the corpus takes them is decided by this source's personal-data review, recorded under `us-health-1` in `source-resolutions.json`: on 2026-10-29 the operator decided to keep those rows as they are. The basis below is the statute rather than a grant.",
 			"operations": {
 				"fetch": {
 					"permission": "permitted",
@@ -14693,7 +14693,12 @@
 			"license": "unchecked-access-free-us-us-health-1",
 			"researchPass": "original-memo",
 			"access": "CSV bulk",
-			"note": "NPI registry; ~8M records; self-reported | mess=High"
+			"note": "NPI registry; ~8M records; self-reported | mess=High",
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "NPPES Type 1 records name individual providers with their practice and mailing addresses, so the file carries records about identifiable natural persons. On 2026-10-29 the operator decided that the corpus keeps those rows as they are. The basis is HHS's FOIA determination in `HIPAA Administrative Simplification: National Plan and Provider Enumeration System Data Dissemination` (72 FR, document 07-2651, 2007-05-30): HHS reviewed the NPPES data elements under FOIA and the Privacy Act, withholds SSNs, IRS ITINs and dates of birth as `not disclosable under FOIA`, and publishes the remaining elements, the provider's name and addresses among them, in downloadable files. The rows carry only what HHS has determined to publish, and none of the withheld elements.",
+				"record": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/"
+			}
 		},
 		{
 			"sourceID": "us-health-2",

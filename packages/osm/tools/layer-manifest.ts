@@ -4,15 +4,15 @@
 /**
  *   The `layer_manifest` row of an OpenStreetMap address-point database.
  *
- *   The row records the license and credit the database carries, the Geofabrik URL and SHA-256 of the
+ *   The row records the database license and credit, the Geofabrik URL and SHA-256 of the
  *   extract it was built from, the snapshot date, and the repository revision of the code that built it.
- *   Together those identify the database's inputs and the program that transformed them, which is what a
+ *   Together those identify the database's inputs and the program that transformed them. A
  *   recipient needs to find the data the database derives from.
  */
 
 import { assertTierMatchesLicense, LayerFreshnessPolicy, LayerTier, type LayerManifest } from "@mailwoman/core/layers"
+import { ADDRESS_POINT_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
 
-import { OSM_ADDRESS_H3_RESOLUTION } from "#address-point-schema"
 import { OSM_ATTRIBUTION, OSM_LICENSE } from "#license"
 import type { ExtractProvenance } from "#sdk/extract/receipt"
 
@@ -60,7 +60,7 @@ export function osmAddressPointLayerManifest(build: OSMAddressPointBuild): Layer
 		buildCmd: build.buildCmd,
 		buildSHA: build.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
-		spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
+		spineKeys: { h3: { column: "h3_cell", resolution: ADDRESS_POINT_H3_RESOLUTION } },
 		createdAt: build.createdAt,
 		sourceRecords: null,
 		sourceURL: build.provenance.sourceURL,

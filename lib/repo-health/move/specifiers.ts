@@ -99,6 +99,8 @@ function subpathKeyFor(key: string, target: string, packageRelative: string): st
 }
 
 function packageRelativeTarget(manifest: PackageManifest, file: string): string | null {
+	if (manifest.dir === ".") return `./${file}`
+
 	if (!file.startsWith(`${manifest.dir}/`)) return null
 
 	return `./${file.slice(manifest.dir.length + 1)}`

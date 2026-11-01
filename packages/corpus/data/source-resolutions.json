@@ -932,6 +932,13 @@
 				"because": "The sixteen columns were read in full. Apart from the address and place-type columns, `NAME` and `NAME_AZ` hold the place's name: shops, cafes, pharmacies, ATMs, schools, police stations and monuments (`Store`, `Pharmacy`, `Cafe Beyzade`, `Monument Rahimov`). A surname-ending pattern matched three names in the whole file, each a category word beside a name rather than a person. Single given names used as shop names (`Nicat`, `Aynur`) name the business. The adapter refuses names without a three-letter run as codes. No column names an owner, occupant or contact.",
 				"record": "internal/strategy/rights-receipts/training-sources-2026-10-18/H/README.md"
 			}
+		},
+		"us-health-1": {
+			"personalDataReview": {
+				"reading": "assessed",
+				"because": "NPPES Type 1 records name individual providers with their practice and mailing addresses, so the file carries records about identifiable natural persons. On 2026-10-29 the operator decided that the corpus keeps those rows as they are. The basis is HHS's FOIA determination in `HIPAA Administrative Simplification: National Plan and Provider Enumeration System Data Dissemination` (72 FR, document 07-2651, 2007-05-30): HHS reviewed the NPPES data elements under FOIA and the Privacy Act, withholds SSNs, IRS ITINs and dates of birth as `not disclosable under FOIA`, and publishes the remaining elements, the provider's name and addresses among them, in downloadable files. The rows carry only what HHS has determined to publish, and none of the withheld elements.",
+				"record": "internal/strategy/rights-receipts/training-sources-2026-10-17/D/"
+			}
 		}
 	}
 }

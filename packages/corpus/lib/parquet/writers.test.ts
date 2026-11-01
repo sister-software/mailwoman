@@ -134,7 +134,7 @@ describe("writeParquetSplits staging", () => {
 		expect(manifest.files.map((file) => file.rows).toSorted((a, b) => b - a)).toEqual([10, 10, 5])
 
 		for (const file of manifest.files) {
-			expect(await pathExists(file.path)).toBe(true)
+			await expect(pathExists(file.path)).resolves.toBe(true)
 		}
 	})
 

@@ -288,6 +288,18 @@ than on `uncertainty_m` being small, and treat an `admin` answer in France as a 
 than as a coarse hit. The French address model requires a separate download,
 `@mailwoman/neural-weights-fr-fr`; [What ships today](../status.mdx) has the per-locale picture.
 
+:::note[Unreleased change]
+
+From the release after 10.7.0, `data pull us --only dc` installs the District of Columbia's two databases
+under `<data-root>/db/address-points/<sha256>/` and `<data-root>/db/interpolation/<sha256>/` and selects
+both together in `<data-root>/active.json`. The per-state reader looks there first and falls back to the
+conventional names, so a state pulled by an earlier release keeps working. Fallback between sources is
+unchanged: a miss in a selected database is the answer for that state. `mailwoman setup` reports the
+rooftop tier as partial and lists the installed states, such as `installed for 1 of 52 published scopes
+(US-DC)`.
+
+:::
+
 ## What you have now
 
 You have a data root that answers rooftop coordinates for one jurisdiction and city centroids

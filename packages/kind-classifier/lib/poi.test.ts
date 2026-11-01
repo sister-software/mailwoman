@@ -135,6 +135,41 @@ describe("matchPOISubject", () => {
 		expect(matchPOISubject("Empire State Building", "en-US", LOOKUP)).toBeNull()
 	})
 
+	it("splits on 'by' and 'on'", () => {
+		expect(matchPOISubject("hospital by the station", "en-US", LOOKUP)).toMatchObject({
+			relation: "by",
+			remainder: "the station",
+		})
+
+		expect(matchPOISubject("hospital on Main St", "en-US", LOOKUP)).toMatchObject({
+			relation: "on",
+			remainder: "Main St",
+		})
+	})
+
+	it("takes a short-label hit only as a subject followed by an anchor", () => {
+		const shortLabel: POIPhraseLookup = (phrase) =>
+			phrase.trim().toLowerCase() === "rice"
+				? [
+						{
+							kind: "category",
+							categoryID: "rice_shop",
+							matchedPhrase: "rice",
+							confidence: 1,
+							mechanism: "short_label",
+							inputPhrase: phrase,
+							wikidata: null,
+							reading: "preference",
+							countryScope: null,
+						},
+					]
+				: []
+
+		// `Rice` is also a WOF place name, so the whole input stays a place query.
+		expect(matchPOISubject("Rice", "en-US", shortLabel)).toBeNull()
+		expect(matchPOISubject("rice near Houston", "en-US", shortLabel)?.remainder).toBe("Houston")
+	})
+
 	it("scans past separator words inside the subject phrase", () => {
 		const m = matchPOISubject("walk in clinic near Boston MA", "en-US", LOOKUP)
 		expect(m?.match.categoryID).toBe("clinic")

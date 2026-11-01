@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures the code-unit arm (#2845) on a corpus split: how many code units an address holds, how often a
+ *   Measures the code-unit arm (#2845) on a corpus split: code units per address and the share where a
  *   house-number or postcode span is exactly one unit, and how well a unit's shape separates the two.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/tokenizer/code-units.run.ts --manifest <MANIFEST.json>

@@ -6,7 +6,7 @@
  */
 
 import type { StreetCentroidHit, StreetCentroidLookup } from "@mailwoman/core/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
@@ -51,7 +51,7 @@ const AGG_SELECT =
  * Half the bounding-box diagonal in meters, used as a coarse uncertainty radius for a street centroid.
  */
 function extentRadiusM(minLat: number, maxLat: number, minLon: number, maxLon: number): number {
-	return Math.round(haversineKm(minLat, minLon, maxLat, maxLon) * 500)
+	return Math.round(haversine(minLat, minLon, maxLat, maxLon) * 500)
 }
 
 /**

@@ -104,6 +104,38 @@ export const LINE_JOINS: Readonly<Record<string, string>> = {
 }
 
 /**
+ * The order a country prints a value that pairs a local-script name with its Latin name.
+ *
+ * Hong Kong and Macau name streets and places in two official languages.
+ * OpenStreetMap writes both names in one value there: `明安街 Ming On Street`, `林茂巷 Travessa de Lam Mau`.
+ *
+ * In the 2026-10-17 extract, 60,874 of 63,725 Hong Kong rows and 12,933 of
+ * 12,975 Macau rows hold such a pair.
+ * In Thailand, the other two-order country in that extract, 284 of about 45,000 rows do.
+ *
+ * The local order prints its lines, and a street and its number, with no separator.
+ * That join is right between Han characters.
+ *
+ * Next to a Latin name it glues two words (`Quarry Bay祐民街`, `Yau Man Street6`).
+ * The Latin order separates every value and puts the number where the Latin register
+ * writes it: `6 祐民街 Yau Man Street, 鰂魚涌 Quarry Bay, 香港 Hong Kong`.
+ *
+ * A country absent from this table prints a paired value in its local order.
+ */
+export const NAME_PAIR_SCRIPTS: Readonly<Record<string, AddressScript>> = {
+	HK: "latin",
+	MO: "latin",
+}
+
+/**
+ * Returns the order `countryCode` prints a value that pairs a local-script name
+ * with its Latin name, or `null` when the country has none.
+ */
+export function namePairScriptForCountry(countryCode: string): AddressScript | null {
+	return NAME_PAIR_SCRIPTS[countryCode.trim().toUpperCase()] ?? null
+}
+
+/**
  * Whether the country selected by `countryCode` prints the largest unit first, in `script`.
  *
  * Every country carrying a distinct Latin order writes it smallest-first,
@@ -312,7 +344,8 @@ ${country}`,
  * Where a country writes the region when an address includes one and the postal layout prints none.
  *
  * Royal Mail and Deutsche Post need no county or Bundesland, so the GB and DE layouts above omit it.
- * Addresses written by people often add it, and a corpus row that labels the region needs a position for it.
+ * Address writers may add the region.
+ * A corpus row that labels it needs a position for it.
  *
  * Great Britain writes the county on its own line between the post town and the
  * postcode (`16 Holstein Street, Preston, Lancashire, PR1 1UN`).

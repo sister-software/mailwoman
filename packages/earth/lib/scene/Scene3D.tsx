@@ -23,7 +23,15 @@ import type React from "react"
 import { useEffect, useMemo } from "react"
 import { useControl, useMap } from "react-map-gl/maplibre"
 
-import { broadleafTreeMesh, coniferTreeMesh, tokyoSkytreeMesh, tokyoTowerMesh } from "./meshes.ts"
+import {
+	broadleafTreeMesh,
+	coniferTreeMesh,
+	directionHeading,
+	StreetProp,
+	streetPropMeshes,
+	tokyoSkytreeMesh,
+	tokyoTowerMesh,
+} from "./meshes.ts"
 
 /**
  * A tree point from the `trees` source layer, in meters.
@@ -34,6 +42,27 @@ interface TreeInstance {
 	crownDiameter: number
 	conifer: boolean
 }
+
+/**
+ * A street-furniture point from the `infrastructure` source layer.
+ */
+interface PropInstance {
+	position: [number, number]
+	prop: StreetProp
+	/**
+	 * The heading the prop faces, in degrees clockwise from north.
+	 */
+	heading: number
+}
+
+const STREET_PROPS = new Set<unknown>(Object.values(StreetProp))
+
+/**
+ * The zoom below which the overlay clears its street props.
+ *
+ * A prop is about a meter across, a pixel or two below z16.
+ */
+const PROP_MIN_ZOOM = 16
 
 /**
  * Landmarks the basemap leaves out of its building layer so these meshes can draw them.
@@ -48,8 +77,8 @@ const Landmarks = [
 /**
  * The zoom below which the overlay clears its trees.
  *
- * The tiles carry tree points at z15.
- * Keeping the cached trees down to z14 lets them fade with distance when the camera zooms out across z15.
+ * Tiles supply tree points at z15.
+ * The cached trees remain visible through z14 and fade with distance as the camera zooms out across z15.
  */
 const TREE_MIN_ZOOM = 14
 
@@ -125,7 +154,9 @@ interface CityModelTilesetOptions {
  * Tile requests each tileset keeps in flight.
  *
  * Tileset3D defaults to 64.
- * Several wards load at once, and PLATEAU's host drops connections under that many parallel requests.
+ * Tileset3D defaults to 64 parallel requests.
+ *
+ * PLATEAU's host drops connections at that concurrency when several wards load.
  */
 const CITY_MODEL_MAX_REQUESTS = 12
 
@@ -167,8 +198,9 @@ const CITY_MODEL_KEEP_ZOOM = 14
 /**
  * The city models to keep as layers, updating `kept`, the URLs kept so far.
  *
- * Removing a Tile3DLayer destroys its tileset, and a tile still loading
- * then fails with `assert failed: gltf`.
+ * The app destroys a tileset when it removes a Tile3DLayer.
+ * A tile still loading then fails with `assert failed: gltf`.
+ *
  * A tileset joins when it enters the view at `CITY_MODEL_MIN_ZOOM`.
  *
  * It leaves only when the view zooms out past `CITY_MODEL_KEEP_ZOOM` or moves a full view away from it.
@@ -295,11 +327,50 @@ function addLoadedTrees(map: MapInstance, cache: Map<string, TreeInstance>): boo
 }
 
 /**
- * Removes the trees outside twice the visible bounds, keeping a margin so a short pan reuses them.
+ * Adds the street-furniture points of the loaded tiles to `cache`,
+ * keyed by position like {@link addLoadedTrees}.
  *
- * Returns whether the cache lost a tree.
+ * A point whose `prop` this overlay has no mesh for is skipped.
+ * A point without a stated heading faces north, as do points from tiles built
+ * before the basemap wrote `direction`.
+ *
+ * Returns whether the cache gained a prop.
  */
-function pruneDistantTrees(map: MapInstance, cache: Map<string, TreeInstance>): boolean {
+function addLoadedProps(map: MapInstance, cache: Map<string, PropInstance>): boolean {
+	let added = false
+
+	for (const feature of map.querySourceFeatures(MailwomanBaseTileSetID, {
+		sourceLayer: "infrastructure",
+		filter: ["has", "prop"],
+	})) {
+		if (feature.geometry.type !== "Point") continue
+		const prop = feature.properties["prop"]
+
+		if (!STREET_PROPS.has(prop)) continue
+		const [lon, lat] = feature.geometry.coordinates as [number, number]
+		const key = `${lon.toFixed(6)},${lat.toFixed(6)}`
+
+		if (cache.has(key)) continue
+
+		cache.set(key, {
+			position: [lon, lat],
+			prop: prop as StreetProp,
+			heading: directionHeading(feature.properties["direction"]) ?? 0,
+		})
+
+		added = true
+	}
+
+	return added
+}
+
+/**
+ * Removes the cached instances outside twice the visible bounds, keeping a margin
+ * so a short pan reuses them.
+ *
+ * Returns whether the cache lost an instance.
+ */
+function pruneDistant(map: MapInstance, cache: Map<string, { position: [number, number] }>): boolean {
 	const bounds = map.getBounds()
 	const lonMargin = (bounds.getEast() - bounds.getWest()) / 2
 	const latMargin = (bounds.getNorth() - bounds.getSouth()) / 2
@@ -327,6 +398,7 @@ function pruneDistantTrees(map: MapInstance, cache: Map<string, TreeInstance>): 
  *
  * The overlay draws a tree mesh at each `kind=tree` point in the loaded tiles
  * and hides the extruded tree layers.
+ * From z16 it also draws a street-furniture mesh at each `infrastructure` point that has a `prop`.
  */
 export const Scene3D: React.FC = () => {
 	const { current: mapRef } = useMap()
@@ -343,6 +415,7 @@ export const Scene3D: React.FC = () => {
 			broadleaf: broadleafTreeMesh(TreePalette.trunk, TreePalette.crown),
 			conifer: coniferTreeMesh(TreePalette.trunk, TreePalette.needleCrown),
 			landmarks: Landmarks.map((landmark) => ({ ...landmark, mesh: landmark.mesh() })),
+			props: streetPropMeshes(),
 		}),
 		[]
 	)
@@ -354,9 +427,11 @@ export const Scene3D: React.FC = () => {
 		// so a pan or a tile reload keeps the trees already drawn.
 		// The overlay redraws only when the cache changes.
 		const trees = new Map<string, TreeInstance>()
+		const props = new Map<string, PropInstance>()
 		const modeledFootprints = new Set<string | number>()
 		const keptCityModels = new Set<string>()
 		let drawnSize = -1
+		let drawnProps = -1
 		let drawnCityModels: string | null = null
 		let changed = true
 
@@ -369,7 +444,15 @@ export const Scene3D: React.FC = () => {
 				trees.clear()
 			} else {
 				changed = addLoadedTrees(map, trees) || changed
-				changed = pruneDistantTrees(map, trees) || changed
+				changed = pruneDistant(map, trees) || changed
+			}
+
+			if (map.getZoom() < PROP_MIN_ZOOM) {
+				changed ||= props.size > 0
+				props.clear()
+			} else {
+				changed = addLoadedProps(map, props) || changed
+				changed = pruneDistant(map, props) || changed
 			}
 
 			const cityModels = cityModelsToKeep(map, keptCityModels)
@@ -379,9 +462,10 @@ export const Scene3D: React.FC = () => {
 			// While the models fade in, the footprints under them stay drawn, so the two cross-fade.
 			markModeledFootprints(map, opacity === 1 ? cityModels : [], modeledFootprints)
 
-			if (!changed && drawnSize === trees.size && drawnCityModels === cityModelKey) return
+			if (!changed && drawnSize === trees.size && drawnProps === props.size && drawnCityModels === cityModelKey) return
 			changed = false
 			drawnSize = trees.size
+			drawnProps = props.size
 			drawnCityModels = cityModelKey
 
 			// The overlay draws every tree, so the extruded tree layers stay hidden while it is mounted.
@@ -392,7 +476,7 @@ export const Scene3D: React.FC = () => {
 			}
 
 			// Interleaved deck.gl layers join the end of MapLibre's layer list unless they name a `beforeId`.
-			// Inserting them before the first symbol layer keeps every label drawn above the meshes.
+			// Place them before the first symbol layer to keep every label drawn above the meshes.
 			// `@deck.gl/mapbox` reads the prop from every layer and declares it in an
 			// internal type, so each layer spreads it in from this object.
 			const placement = { beforeId: map.getStyle().layers.find((layer) => layer.type === "symbol")?.id }
@@ -430,8 +514,26 @@ export const Scene3D: React.FC = () => {
 					})
 			)
 
+			const cachedProps = [...props.values()]
+
+			const propLayers = Object.values(StreetProp).map(
+				(prop) =>
+					new SimpleMeshLayer<PropInstance>({
+						id: `street-prop-${prop}`,
+						...placement,
+						data: cachedProps.filter((instance) => instance.prop === prop),
+						mesh: meshes.props[prop],
+						getPosition: (d) => d.position,
+						// deck.gl's yaw turns counterclockwise seen from above, and an OSM heading turns clockwise.
+						getOrientation: (d) => [0, -d.heading, 0],
+						getColor: [255, 255, 255],
+						material: { ambient: 0.6, diffuse: 0.55, shininess: 16, specularColor: [30, 30, 30] },
+					})
+			)
+
 			overlay.setProps({
 				layers: [
+					...propLayers,
 					treeLayer(
 						"trees-broadleaf",
 						cached.filter((tree) => !tree.conifer),
@@ -458,7 +560,8 @@ export const Scene3D: React.FC = () => {
 			})
 		}
 
-		// A tile load fires `sourcedata` many times per frame, so updates run at most once per animation frame.
+		// A tile load can fire `sourcedata` more than once per frame.
+		// Updates therefore run at most once per animation frame.
 		let frame = 0
 
 		const schedule = () => {

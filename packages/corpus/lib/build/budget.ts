@@ -35,8 +35,9 @@ export interface WorkerResources {
 	/**
 	 * DuckDB's `threads`.
 	 *
-	 * The parquet conversion runs at `CONVERSION_THREADS` whatever this says, because a multi-threaded
-	 * conversion's bytes vary between runs, so one thread is the whole of a worker's DuckDB work.
+	 * The parquet conversion uses `CONVERSION_THREADS` regardless of this value.
+	 * A multi-threaded conversion produces different bytes across runs,
+	 * so each worker uses one thread for all other DuckDB work.
 	 */
 	duckdbThreads: number
 }
@@ -63,8 +64,8 @@ export const WORKER_NATIVE_ALLOWANCE_BYTES = 0.5 * GiB
 
 /**
  * Host memory the budget leaves out: 4 GiB for the operating system, the page cache floor
- * and the CI runners that share the lab host, and 0.5 GiB for the coordinator,
- * which holds the merged tallies and no rows.
+ * and the CI runners that share the lab host, plus 0.5 GiB for the coordinator.
+ * The coordinator stores merged tallies and no rows.
  */
 export const HOST_RESERVE_BYTES = 4.5 * GiB
 
@@ -99,8 +100,8 @@ const gib = (bytes: number): string => `${(bytes / GiB).toFixed(1)} GiB`
  * The `--jobs` a build takes when none is given: the most standard workers the
  * host's budget holds, capped at the host's CPU count.
  *
- * Returns 1, a serial build, when fewer than two workers fit or when a configured resident
- * adapter would not fit in a worker alone, which {@linkcode planWorkerBudget} refuses.
+ * Returns 1 for a serial build when fewer than two workers fit or when a configured resident
+ * adapter cannot fit in the budget. {@linkcode planWorkerBudget} refuses that configuration.
  */
 export function defaultBuildJobs(opts: { adapterIDs: readonly string[]; hostMemoryBytes?: number }): number {
 	const hostMemoryBytes = opts.hostMemoryBytes ?? totalMemoryBytes()
@@ -115,13 +116,15 @@ export function defaultBuildJobs(opts: { adapterIDs: readonly string[]; hostMemo
 }
 
 /**
- * Check that `jobs` standard workers fit in the host's budget, and that a resident adapter fits alone.
+ * Check that `jobs` standard workers fit in the host budget and that a resident
+ * adapter fits when it runs by itself.
  *
- * A resident adapter runs one at a time and beside as many standard workers as still fit,
+ * A resident adapter runs one at a time and beside the standard workers that fit,
  * so it lowers the build's concurrency while it runs rather than raising its demand.
  *
- * @throws When `jobs` standard workers exceed the budget, or a configured resident adapter
- * exceeds it alone, naming each reservation and the largest `--jobs` that fits.
+ * @throws When `jobs` standard workers exceed the budget, or a configured resident
+ * adapter exceeds the budget when it runs by itself.
+ * The error names each reservation and the largest `--jobs` that fits.
  */
 export function planWorkerBudget(opts: {
 	jobs: number

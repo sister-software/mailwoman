@@ -5,7 +5,7 @@
  * @file Small, pure helpers shared by the two comparison paths.
  */
 
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import type { GradeRequest } from "#dev-mcp/compare"
 import type { ConfoundReading } from "#dev-mcp/confound"
@@ -91,7 +91,7 @@ export function armsDiffered(
 
 	if (!answeredA) return false
 
-	return haversineKm(a.lat!, a.lon!, b.lat!, b.lon!) > ARM_SEPARATION_THRESHOLD_KM
+	return haversine(a.lat!, a.lon!, b.lat!, b.lon!) > ARM_SEPARATION_THRESHOLD_KM
 }
 
 export function resolveGradeMode(request: GradeRequest, hasTruth: boolean, absence: string): "truth" | "diff-only" {

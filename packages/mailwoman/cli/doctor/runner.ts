@@ -9,7 +9,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
-import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
+import { readLayerManifest, type layerschemadatabase, ServingRole } from "@mailwoman/core/layers"
 import {
 	isSelfServicePayload,
 	type LicenseKeyVerification,
@@ -43,19 +43,25 @@ import {
 	type POIObservation,
 	type WeightsObservation,
 } from "#cli/doctor/checks"
+import { LayerCatalog } from "#data/catalog"
 import { type ObligationRefusal, parseObligationRefusals } from "#data/obligations"
 import { $public } from "#env"
 import {
 	addressPointDatabases,
 	layerDatabaseAlternates,
-	layerDatabasePath,
 	layerDatabases,
+	resolveLayerDatabasePath,
 	type AddressPointDatabaseRef,
 	type LayerDatabaseRef,
 	type LayerID,
 } from "#geocode/layer-paths"
 import { readMailwomanManifest } from "#metadata"
-import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFDatabasePaths } from "#resolver-backend"
+import {
+	conventionCandidateDBPath,
+	resolveCandidateDBPath,
+	resolveWOFDatabasePaths,
+	selectedWOFExtracts,
+} from "#resolver-backend"
 
 /**
  * The resolved-weights shape the runner needs: a structural subset of
@@ -91,11 +97,15 @@ export interface DoctorDeps {
 	 * used to detect the env-unset trap.
 	 */
 	conventionCandidatePath(): Promise<string | null>
-	wofExtractPaths(): string[]
 	/**
-	 * The default POI layer path, matching `gazetteer build poi`'s own default.
+	 * The WOF extracts the session would attach before it checks which exist: a pinned list,
+	 * else the selected extracts, else the conventional set.
 	 */
-	poiPath(): string
+	wofExtractPaths(): Promise<string[]>
+	/**
+	 * The POI layer path the session opens: the selected one, else `gazetteer build poi`'s own default.
+	 */
+	poiPath(): Promise<string>
 	/**
 	 * Reads the identity fields of a layer manifest, throwing on a missing or invalid manifest.
 	 */
@@ -103,7 +113,7 @@ export interface DoctorDeps {
 	/**
 	 * Every layer database the geocode session would attach, present or not.
 	 */
-	layerDatabases(): LayerDatabaseRef[]
+	layerDatabases(): Promise<LayerDatabaseRef[]>
 	/**
 	 * `.db` files in a layer's directory other than the one the session attaches, a build under another name.
 	 */
@@ -161,8 +171,18 @@ async function readEnginesFloor(): Promise<string> {
 	}
 }
 
+/**
+ * The candidate gazetteer the data root provides without a pin: the one the active
+ * selection lists, else the file at the conventional path.
+ * The geocoder reads them in the same order.
+ */
 async function defaultConventionCandidatePath(dataRoot: PathBuilderLike): Promise<string | null> {
 	if ($public.MAILWOMAN_CANDIDATE_DB === "none") return null
+
+	const catalog = await LayerCatalog.read(dataRoot)
+	const selected = await catalog.firstPath(ServingRole.Candidate, { country: null, subdivision: null })
+
+	if (selected) return selected
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
@@ -208,8 +228,10 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		envCandidatePath: async () =>
 			$public.MAILWOMAN_CANDIDATE_DB ? ((await resolveCandidateDBPath(undefined, dataRoot)) ?? null) : null,
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
-		wofExtractPaths: () => resolveWOFDatabasePaths(undefined, dataRoot),
-		poiPath: () => layerDatabasePath(dataRoot, "poi"),
+		wofExtractPaths: async () =>
+			($public.MAILWOMAN_WOF_DB ? null : await selectedWOFExtracts(dataRoot)) ??
+			resolveWOFDatabasePaths(undefined, dataRoot),
+		poiPath: () => resolveLayerDatabasePath(dataRoot, "poi"),
 		readLayerIdentity,
 		layerDatabases: () => layerDatabases(dataRoot),
 		layerAlternates: (id) => layerDatabaseAlternates(dataRoot, id),
@@ -264,7 +286,7 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 	}
 
 	const convention = await deps.conventionCandidatePath()
-	const databases = deps.wofExtractPaths()
+	const databases = await deps.wofExtractPaths()
 
 	if (convention) {
 		return {
@@ -298,7 +320,7 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 }
 
 async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
-	const path = deps.poiPath()
+	const path = await deps.poiPath()
 
 	if (!(await deps.exists(path))) return { path, exists: false, manifest: null, error: null }
 
@@ -416,7 +438,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	})
 
 	const fixedLayerObservations = (
-		await Promise.all(deps.layerDatabases().map((layer) => gatherLayerLicense(deps, layer)))
+		await Promise.all((await deps.layerDatabases()).map((layer) => gatherLayerLicense(deps, layer)))
 	).filter((o): o is LayerLicenseObservation => o !== null)
 
 	const addressPointObservations = await Promise.all(
@@ -531,11 +553,11 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 		{ key: "MAILWOMAN_CANDIDATE_DB", value: $public.MAILWOMAN_CANDIDATE_DB ?? null, source: "env" },
 		{ key: "candidate.db (convention)", value: await deps.conventionCandidatePath(), source: "derived" },
 		{ key: "MAILWOMAN_WOF_DB", value: $public.MAILWOMAN_WOF_DB ?? null, source: "env" },
-		{ key: "POI layer", value: deps.poiPath(), source: "derived" },
+		{ key: "POI layer", value: await deps.poiPath(), source: "derived" },
 		{ key: "MAILWOMAN_REFUSE_OBLIGATIONS", value: $public.MAILWOMAN_REFUSE_OBLIGATIONS ?? null, source: "env" },
 	]
 
-	for (const [index, database] of deps.wofExtractPaths().entries()) {
+	for (const [index, database] of (await deps.wofExtractPaths()).entries()) {
 		entries.push({
 			key: `WOF database [${index}]`,
 			value: database,

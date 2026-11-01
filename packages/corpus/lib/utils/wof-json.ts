@@ -12,8 +12,9 @@
  * active"), so an `is_current = 1` filter silently emits zero rows from the real corpus.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { agreedHierarchyAncestors } from "@mailwoman/gazetteer/whosonfirst/hierarchy"
 import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -54,8 +55,8 @@ export interface WOFRecord {
 	 * maps to all of them in source order: New York City's `name:eng_x_colloquial` lists
 	 * Big Apple, Gotham and NYC. {@linkcode nameValues} reads either shape.
 	 *
-	 * The single-value case stays a string because an admin run holds over 13 million
-	 * records resident, and almost every key carries one value.
+	 * The single-value case stays a string because an admin run holds over 13 million records resident.
+	 * This representation avoids allocating an array when a key has one value.
 	 *
 	 * The canonical `wof:name` is not included — adapters add a synthetic `"default"` slot for it.
 	 */
@@ -166,10 +167,48 @@ export function normalizeNameKey(rawKey: string): string {
 	return rawKey.replaceAll(/[:_]/g, "-")
 }
 
+const SLOT_KEY = /^name-([a-z]+)(?:-[A-Za-z0-9]+)*?(?:-x-([a-z]+))?(?:-[0-9]+)?$/
+
+/**
+ * The kind and language of a WOF name-slot key, the TypeScript twin of {@linkcode wofNameSlotSQL}.
+ *
+ * `default` reads as kind and language `default`; `name-rus-x-preferred-2` as `preferred`
+ * and `rus`; a `name-<language>` key without `-x-` as kind `unmarked`.
+ */
+export function parseWOFSlotKey(key: string): { kind: string; language: string } {
+	const match = SLOT_KEY.exec(key)
+
+	if (!match) return { kind: "default", language: "default" }
+
+	return { kind: match[2] ?? "unmarked", language: match[1]! }
+}
+
+/**
+ * DuckDB expressions that read a WOF row's name slot back out of its `source_id`.
+ *
+ * A WOF `source_id` is `<adapter>-<record id>-<slot key>-<variant suffix>`.
+ * The slot key is `default` or a {@linkcode normalizeNameKey} form such as
+ * `name-rus-x-preferred` or `name-und-x-variant-2`.
+ *
+ * `kind` is `default` or the part after `-x-` (`preferred`, `variant`, `colloquial`…),
+ * and `unmarked` for a `name-<language>` key without one.
+ * `language` is `default` or the key's ISO 639 code.
+ */
+export function wofNameSlotSQL(sourceID = "source_id"): { kind: string; language: string } {
+	const named = `regexp_matches(${sourceID}, '-[0-9]+-name-')`
+
+	return {
+		kind:
+			`CASE WHEN ${named} THEN coalesce(nullif(regexp_extract(${sourceID}, ` +
+			`'-[0-9]+-name-[a-z]+(?:-[A-Za-z0-9]+)*?-x-([a-z]+)', 1), ''), 'unmarked') ELSE 'default' END`,
+		language: `CASE WHEN ${named} THEN regexp_extract(${sourceID}, '-[0-9]+-name-([a-z]+)', 1) ELSE 'default' END`,
+	}
+}
+
 /**
  * Parse a single GeoJSON feature; `null` means skip this row for any reason.
  */
-function recordFromFeature(feature: WOFFeature): WOFRecord | null {
+export function recordFromFeature(feature: WOFFeature, refutedParents: ReadonlySet<number>): WOFRecord | null {
 	if (!feature || feature.type !== "Feature" || !feature.properties) return null
 	const props = feature.properties
 
@@ -204,15 +243,50 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 				? Number(parentRaw)
 				: null
 
+	// A record with no location, or whose point lies in another parent's polygon,
+	// keeps its own name and none of its ancestors.
+	const placed = !isAtOrigin(props) && !refutedParents.has(id)
+
 	return {
 		id,
-		parent_id: Number.isFinite(parent_id as number) ? (parent_id as number) : null,
+		parent_id: placed && Number.isFinite(parent_id as number) ? (parent_id as number) : null,
 		name,
 		placetype,
 		country,
 		nameVariants: extractNameVariants(props),
-		ancestors: agreedHierarchyAncestors(id, props["wof:hierarchy"]),
+		ancestors: placed ? agreedHierarchyAncestors(id, props["wof:hierarchy"]) : [],
 	}
+}
+
+/**
+ * The committed list of WOF records whose point lies over 1 km outside their parent's
+ * polygon and inside another polygon of the parent's placetype.
+ */
+export const REFUTED_PARENTS_PATH = resolveModulePath("@mailwoman/corpus/data/wof-refuted-parents.json")
+
+let refutedParentIDs: Promise<ReadonlySet<number>> | undefined
+
+/**
+ * The ids in {@linkcode REFUTED_PARENTS_PATH}, read once per process.
+ */
+export function readRefutedParentIDs(): Promise<ReadonlySet<number>> {
+	refutedParentIDs ??= readLocalJSONFile<{ records: Array<{ id: number }> }>(REFUTED_PARENTS_PATH).then(
+		(file) => new Set(file.records.map((record) => record.id))
+	)
+
+	return refutedParentIDs
+}
+
+/**
+ * Whether a WOF record's representative point is exactly latitude 0, longitude 0,
+ * the value WOF writes for a record that has no geometry.
+ *
+ * The parent of such a record was not found by location.
+ * WOF assigns 347 Spanish postcodes from every province, including Soria's `42002`,
+ * to the village of Melgar de Yuso.
+ */
+export function isAtOrigin(props: Record<string, unknown>): boolean {
+	return props["geom:latitude"] === 0 && props["geom:longitude"] === 0
 }
 
 /**
@@ -226,9 +300,10 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
  * Per-file errors (unreadable files, malformed JSON, or missing properties) are swallowed
  * so one bad file does not poison a multi-gigabyte walk.
  *
- * Files are read as many at a time as libuv's threadpool services
- * (spliterator's default for parallelMap, 4 unless UV_THREADPOOL_SIZE says otherwise),
- * and records are yielded in glob order.
+ * The libuv threadpool has four workers by default; `UV_THREADPOOL_SIZE` can change that count.
+ * `parallelMap` reads files concurrently up to the threadpool capacity.
+ *
+ * Records are yielded in glob order.
  * The adapters deduplicate surface strings first-come, so a completion-order walk would change
  * which record claims a shared name from one build to the next.
  */
@@ -256,8 +331,10 @@ export async function* walkFeatures(
 
 /**
  * The record one GeoJSON file holds, or `null` when the file is unreadable, malformed or skipped.
+ *
+ * {@linkcode walkFeatures} reads every file through this, and so does the single-record explorer.
  */
-async function readFeatureRecord(filePath: string): Promise<WOFRecord | null> {
+export async function readFeatureRecord(filePath: string): Promise<WOFRecord | null> {
 	let text: string
 
 	try {
@@ -268,18 +345,17 @@ async function readFeatureRecord(filePath: string): Promise<WOFRecord | null> {
 
 	const parsed = tryParsingJSON<WOFFeature>(text)
 
-	return parsed ? recordFromFeature(parsed) : null
+	return parsed ? recordFromFeature(parsed, await readRefutedParentIDs()) : null
 }
 
 /**
  * The component tags a variant builder looks an ancestor up by.
  *
- * Measured over both adapters on 2026-09-28: `variantsFor` reads the nearest `region`
- * and `country` ancestor, `postcodeVariantsFor` reads the nearest `locality`, `region` and `country`,
- * and each one reads the ancestor's `placetype` to classify it and its `name` to use it.
- * No caller reads an ancestor's `nameVariants`, `id`, `parent_id` or `country`.
+ * `variantsFor` reads the nearest `locality`, `subregion` (county), `region`
+ * and `country` ancestor, with its localized and colloquial names.
+ * `postcodeVariantsFor` reads the nearest `locality`, `region` and `country`.
  */
-export const ANCESTOR_NAME_TAGS = ["locality", "region", "country"] as const
+export const ANCESTOR_NAME_TAGS = ["locality", "subregion", "region", "country"] as const
 
 /**
  * The nearest ancestor's `wof:name` per tag in {@linkcode ANCESTOR_NAME_TAGS}.
@@ -294,7 +370,7 @@ export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], 
  *
  * The predecessor index held one array of record references per record, so a run over the 13,274,691
  * admin records of `v0.7.0-de-holdout` allocated 13.3 million arrays alongside the record index.
- * This holds at most three strings per record instead.
+ * This holds at most four strings per record instead.
  *
  * Each string is the same object the ancestor already holds, so the index costs
  * one small object per record without copying a name.

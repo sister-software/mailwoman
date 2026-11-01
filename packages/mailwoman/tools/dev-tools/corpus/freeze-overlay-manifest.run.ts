@@ -4,22 +4,23 @@
 /**
  *   Write the frozen source record of an overlay corpus by reading its parquet files.
  *
- *   `buildCorpus` writes `TRAINING_SOURCES.json` from the rows it aligned. An overlay corpus is assembled afterwards
- *   from that base plus parquet files a recipe or adapter run produced, and the assembly reads no row, so the
+ *   `buildCorpus` writes `TRAINING_SOURCES.json` from the rows it aligned. The tool then assembles an overlay corpus
+ *   from that base plus parquet files produced by a recipe or adapter run. The assembly reads no rows, so the
  *   overlay corpus has no record of its own. Without one, `effective-manifest.run.ts` can give a license only to the
  *   base build's sources and every overlay source stays unrecorded.
  *
  *   The base record cannot be composed with the added files, because it counts the adapter rows the build
  *   aligned and the build's files also hold the rows it synthesized from them. Measured over
  *   `v0.7.0-de-holdout`: the record counts 118,938,779 rows and the build's own `part-NNNN.parquet` files hold
- *   692,848,471. This tallies every file the overlay manifest lists by its rows' `source` and `license` columns,
+ *   692,848,471. It tallies every file listed in the overlay manifest by the rows' `source` and `license` columns.
  *   which the trainer's loader reads. A file with a `<stem>.RECORD.json` beside it contributes the tally its writer
  *   recorded. Only a file without one is re-read. The record therefore states what the corpus holds rather than
  *   what one stage of its assembly observed.
  *
  *   The profile and the refused set are the base record's, because an overlay file enters by a recipe or an
- *   adapter run that applies no eligibility reading of its own. The license decisions are read from the register
- *   as it stands when this runs, and `builtAt` is when the overlay was applied.
+ *   adapter run that applies no eligibility reading of its own. Each source's license decisions are read from the
+ *   register as it stands when this runs, through the register inputs `corpus-source-inputs.json` maps the source
+ *   to, and `builtAt` is when the corpus overlay was applied.
  *
  *   Usage:
  *   node packages/mailwoman/tools/dev-tools/corpus/freeze-overlay-manifest.run.ts \
@@ -32,7 +33,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { readRegisterDecisions } from "@mailwoman/corpus/build/eligibility"
+import { readSourceDecisionTable } from "@mailwoman/corpus/build/eligibility"
 import { foldSourceLicenses, rowsBySourceFromTally } from "@mailwoman/corpus/parquet/record"
 import { freezeTrainingManifest, type TrainingManifest } from "@mailwoman/corpus/source-register"
 import { baseManifestFiles, localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
@@ -109,7 +110,7 @@ const frozen = freezeTrainingManifest({
 	builtAt: plan.appliedAt,
 	profile: base.profile,
 	rowsBySource: rowsBySourceFromTally(tally),
-	decisionsByLicense: await readRegisterDecisions(),
+	decisionTable: await readSourceDecisionTable(),
 	refused: new Map(Object.entries(base.refused)),
 })
 

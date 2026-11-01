@@ -11,7 +11,7 @@
  * proposition a source asserts in a given field, live here because each is defined against this axis.
  */
 
-import { z } from "zod"
+import * as z from "zod"
 
 /**
  * The five claims the evidence can license about a value, ordered from the strongest authority

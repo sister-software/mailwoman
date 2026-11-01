@@ -21,7 +21,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 
@@ -114,7 +114,7 @@ async function postcodeNearest(code: string, seat: { lat: number; lon: number })
 		)
 
 		for (const row of rows.rows) {
-			const km = haversineKm(seat.lat, seat.lon, row.latitude, row.longitude)
+			const km = haversine(seat.lat, seat.lon, row.latitude, row.longitude)
 
 			if (!best || km < best.km) {
 				best = { postcode: `${row.name.slice(0, 3)} ${row.name.slice(3)}`, km }

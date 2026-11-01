@@ -398,14 +398,19 @@ test("Repeated q answers the legacy 400 envelope (express array shape preserved)
 	const app = createPhotonApp(searchEngine)
 	const res = await app.request("/api?q=berlin&q=paris")
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ type: "FeatureCollection", features: [], message: "q is required" })
+	await expect(res.json()).resolves.toEqual({ type: "FeatureCollection", features: [], message: "q is required" })
 })
 
 test("Repeated lat on /reverse answers the legacy 400 (Number(array) is NaN)", async () => {
 	const app = createPhotonApp(reverseEngine)
 	const res = await app.request("/reverse?lat=52.5&lat=52.6&lon=13.4")
 	expect(res.status).toBe(400)
-	expect(await res.json()).toEqual({ type: "FeatureCollection", features: [], message: "lat and lon are required" })
+
+	await expect(res.json()).resolves.toEqual({
+		type: "FeatureCollection",
+		features: [],
+		message: "lat and lon are required",
+	})
 })
 
 test("Repeated osm_tag and layer reach the engine as arrays (contractual repeatable params)", async () => {
@@ -464,7 +469,7 @@ test("out-of-range /reverse coordinates answer the exact range 400", async () =>
 	const res = await app.request("/reverse?lat=91&lon=13.4")
 	expect(res.status).toBe(400)
 
-	expect(await res.json()).toEqual({
+	await expect(res.json()).resolves.toEqual({
 		type: "FeatureCollection",
 		features: [],
 		message: "lat must be in [-90, 90] and lon in [-180, 180]",
@@ -489,7 +494,7 @@ test("An engine fault answers the clean legacy 500 envelope, never a crash", asy
 
 	const res = await app.request("/api?q=berlin")
 	expect(res.status).toBe(500)
-	expect(await res.json()).toEqual({ type: "FeatureCollection", features: [], message: "internal error" })
+	await expect(res.json()).resolves.toEqual({ type: "FeatureCollection", features: [], message: "internal error" })
 })
 
 test("Absent engine methods answer the exact legacy 501 envelopes", async () => {
@@ -497,12 +502,17 @@ test("Absent engine methods answer the exact legacy 501 envelopes", async () => 
 
 	const search = await app.request("/api?q=berlin")
 	expect(search.status).toBe(501)
-	expect(await search.json()).toEqual({ type: "FeatureCollection", features: [], message: "search not implemented" })
+
+	await expect(search.json()).resolves.toEqual({
+		type: "FeatureCollection",
+		features: [],
+		message: "search not implemented",
+	})
 
 	const reverse = await app.request("/reverse?lat=52.5&lon=13.4")
 	expect(reverse.status).toBe(501)
 
-	expect(await reverse.json()).toEqual({
+	await expect(reverse.json()).resolves.toEqual({
 		type: "FeatureCollection",
 		features: [],
 		message: "reverse not implemented",

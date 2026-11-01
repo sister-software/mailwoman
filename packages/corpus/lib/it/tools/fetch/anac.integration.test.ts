@@ -93,11 +93,11 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("it-anac against data.open-contracting.org"
 
 			const options = { outputDir: scratch.path, editions: [SMALL_EDITION] }
 
-			expect(await downloadITANAC(client, options)).toMatchObject({ fetched: 1, skipped: 0 })
-			expect(await downloadITANAC(client, options)).toMatchObject({ fetched: 0, skipped: 1 })
+			await expect(downloadITANAC(client, options)).resolves.toMatchObject({ fetched: 1, skipped: 0 })
+			await expect(downloadITANAC(client, options)).resolves.toMatchObject({ fetched: 0, skipped: 1 })
 
 			// The digest check reaches the same conclusion through the file's bytes rather than its length.
-			expect(await downloadITANAC(client, { ...options, verifyDigest: true })).toMatchObject({
+			await expect(downloadITANAC(client, { ...options, verifyDigest: true })).resolves.toMatchObject({
 				fetched: 0,
 				skipped: 1,
 			})
@@ -111,7 +111,9 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("it-anac against data.open-contracting.org"
 			await using scratch = await temporaryDirectory("mailwoman-it-anac-live-roles-")
 			await using client = new APIClient({ displayName: "it-anac integration", retry: true })
 
-			expect(await downloadITANAC(client, { outputDir: scratch.path, editions: [MEASURED_EDITION] })).toMatchObject({
+			await expect(
+				downloadITANAC(client, { outputDir: scratch.path, editions: [MEASURED_EDITION] })
+			).resolves.toMatchObject({
 				failed: 0,
 			})
 

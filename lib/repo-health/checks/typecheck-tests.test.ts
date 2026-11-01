@@ -27,7 +27,7 @@ describe("typecheckTestsCheck", () => {
 	it("resolves the compiler from the target checkout and passes paths as individual arguments", async () => {
 		const { typecheckTestsCheck } = await import("#repo-health/checks/typecheck-tests")
 
-		expect(await typecheckTestsCheck.run(context)).toEqual([])
+		await expect(typecheckTestsCheck.run(context)).resolves.toEqual([])
 
 		expect(mocks.resolveCommand).toHaveBeenCalledWith(
 			"file:///checkout%20with%20spaces/package.json",
@@ -69,7 +69,7 @@ describe("typecheckTestsCheck", () => {
 		mocks.run.mockRejectedValue(Object.assign(new Error("exit 2"), { code: 2, stdout: "", stderr: line }))
 		const { typecheckTestsCheck } = await import("#repo-health/checks/typecheck-tests")
 
-		expect(await typecheckTestsCheck.run(context)).toEqual([
+		await expect(typecheckTestsCheck.run(context)).resolves.toEqual([
 			{ severity: "error", message: line, file: "packages/a", line: null, details: null },
 		])
 	})

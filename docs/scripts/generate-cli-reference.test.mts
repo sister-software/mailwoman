@@ -7,8 +7,11 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	collectCLISurface,
+	compiledCommandsWithoutSource,
 	COMMANDS_DIRECTORY,
 	escapeCell,
 	OUTPUT_PATH,
@@ -63,6 +66,8 @@ describe("generate-cli-reference", () => {
 		expect(sectionFor(page, "data pull")).toMatchInlineSnapshot(`
 			"### \`mailwoman data pull\`
 
+			Install published data bundles
+
 			\`\`\`
 			mailwoman data pull [options] <bundle...>
 			\`\`\`
@@ -73,12 +78,13 @@ describe("generate-cli-reference", () => {
 
 			| Flag                      | Type                          | Default | Description                                                                                                                                                 |
 			| ------------------------- | ----------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-			| \`--dry-run\`               | boolean                       | \`false\` | Print the download plan without network access or data writes                                                                                               |
+			| \`--dry-run\`               | boolean                       | \`false\` | Print the installation plan without network access or data writes                                                                                           |
 			| \`--only [only]\`           | string                        | —       | Only pull artifacts whose remote/local path or state slug contains this substring (e.g. --only nh)                                                          |
 			| \`--force\`                 | boolean                       | \`false\` | Re-download even when a local copy already appears present                                                                                                  |
 			| \`--data-root [data-root]\` | string                        | —       | Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)                                                                |
 			| \`--host [host]\`           | string                        | —       | Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket. |
-			| \`--refuse [refuse...]\`    | \`share-alike\` \\| \`unresolved\` | —       | Decline a bundle whose recorded expression has this class of obligation (share-alike, unresolved). Repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS       |"
+			| \`--refuse [refuse...]\`    | \`share-alike\` \\| \`unresolved\` | —       | Decline a bundle whose recorded expression has this class of obligation (share-alike, unresolved). Repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS       |
+			| \`--json\`                  | boolean                       | \`false\` | Emit the plan, its problems by kind and each artifact's outcome as JSON                                                                                     |"
 		`)
 	})
 
@@ -144,5 +150,18 @@ describe("renderTable", () => {
 		expect(renderTable(["A", "Long header"], [["x", "y"]])).toBe(
 			["| A   | Long header |", "| --- | ----------- |", "| x   | y           |"].join("\n")
 		)
+	})
+
+	it("names a compiled command whose source was moved or deleted", async () => {
+		await using scratch = await temporaryDirectory("cli-orphans-")
+
+		await writeLocalTextFile("", scratch.path("out", "corpus", "recipe.js"))
+		await writeLocalTextFile("", scratch.path("out", "corpus", "slice", "index.js"))
+		await writeLocalTextFile("", scratch.path("out", "corpus", "recipe.d.js"))
+		await writeLocalTextFile("", scratch.path("src", "corpus", "recipe.tsx"))
+
+		expect(await compiledCommandsWithoutSource(scratch.path("out"), scratch.path("src"))).toEqual([
+			"corpus/slice/index",
+		])
 	})
 })

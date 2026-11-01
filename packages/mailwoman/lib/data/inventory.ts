@@ -15,6 +15,8 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 import { basename, PathBuilder, type PathBuilderLike, relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
+import type { InstallationState } from "#data/state"
+
 /**
  * Whether an artifact can say how it was made.
  */
@@ -132,6 +134,12 @@ export interface InventoryEntry {
 	 * Absent otherwise.
 	 */
 	note?: string
+	/**
+	 * `active` when the active selection lists the artifact, `inactive` when it is installed and unselected.
+	 *
+	 * Absent for a file the catalog does not hold, such as one at a conventional path.
+	 */
+	selection?: "active" | "inactive"
 }
 
 export interface InventoryReport {
@@ -184,6 +192,8 @@ export function probeManifest(path: PathBuilderLike): { manifest?: LayerManifest
  * Foreign roots are not descended into at all.
  *
  * The inventory records each row and its name at lower cost.
+ *
+ * @throws The system error, naming the directory, when a directory exists and cannot be read.
  */
 async function findDatabases(
 	dataRoot: PathBuilder,
@@ -199,10 +209,13 @@ async function findDatabases(
 
 		try {
 			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
-		} catch {
-			// An unreadable directory is not a finding about provenance.
-			// Skip it rather than fail the report.
-			return
+		} catch (error) {
+			// A directory that does not exist holds no databases.
+			// Any other failure leaves the walk unable to say what the directory holds,
+			// and the system error names it.
+			if ((error as { code?: unknown } | null)?.code === "ENOENT") return
+
+			throw error
 		}
 
 		for (const entry of entries) {
@@ -270,6 +283,13 @@ async function inventoryEntry(dataRoot: string, path: string): Promise<Inventory
 export async function takeInventory(options: {
 	dataRoot: PathBuilderLike
 	maxDepth?: number
+	/**
+	 * The catalog's lists.
+	 *
+	 * Each installed artifact is reported whatever the walk's depth, and every entry
+	 * the catalog holds is marked active or inactive.
+	 */
+	installation?: InstallationState
 }): Promise<InventoryReport> {
 	const root = PathBuilder.from(options.dataRoot)
 	// The report records the root and each entry's path as strings.
@@ -279,7 +299,29 @@ export async function takeInventory(options: {
 	// The report then describes a data root holding zero databases.
 	const maxDepth = options.maxDepth ?? 3
 	const { paths, skippedForeign } = await findDatabases(root, maxDepth)
-	const entries = await Promise.all(paths.map((path) => inventoryEntry(dataRoot, path)))
+	const installed = new Map<string, "active" | "inactive">()
+
+	for (const copy of options.installation?.active ?? []) {
+		installed.set(copy.path, "active")
+	}
+
+	for (const copy of options.installation?.inactive ?? []) {
+		if (!installed.has(copy.path)) {
+			installed.set(copy.path, "inactive")
+		}
+	}
+
+	const walked = new Set(paths)
+	const allPaths = [...paths, ...[...installed.keys()].filter((path) => !walked.has(path))]
+
+	const entries = await Promise.all(
+		allPaths.map(async (path) => {
+			const entry = await inventoryEntry(dataRoot, path)
+			const selection = installed.get(path)
+
+			return selection ? { ...entry, selection } : entry
+		})
+	)
 
 	const counts: Record<Provenance, number> = {
 		[Provenance.Manifested]: 0,

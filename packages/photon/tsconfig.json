@@ -12,7 +12,6 @@
 	"references": [
 		{ "path": "../gazetteer" },
 		{ "path": "../api-kit" },
-		{ "path": "../ban" },
 		{ "path": "../codex" },
 		{ "path": "../neural" },
 		{ "path": "../resolver" },

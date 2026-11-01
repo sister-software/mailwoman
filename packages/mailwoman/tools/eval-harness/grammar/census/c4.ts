@@ -5,8 +5,10 @@
  * The census retains overlaps verbatim.
  * It never treats their presence as a binary violation.
  *
- * It records every adjacent decoded span boundary and the structural evidence available at that boundary
- * so a census can measure which combinations distinguish wrong splits from legal component edges.
+ * It records every adjacent decoded span boundary and the structural evidence available
+ * at that boundary so a census can measure which combinations distinguish wrong splits
+ * from legal component edges. {@linkcode classifyC4Boundary} applies §5's predicate
+ * to a receipt as written and leaves the receipt unchanged.
  */
 
 /* oxlint-disable sister-software/multiline-statement-padding -- feature-vector records stay adjacent as one receipt */
@@ -15,7 +17,7 @@ import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import type { FSTAcceptedMatch } from "@mailwoman/neural/fst-prior"
 import type { CharRange, QueryShape } from "@mailwoman/query-shape"
 
-import type { CensusSpan } from "#tools/eval-harness/grammar/census"
+import { adjacentSpanPairs, type CensusSpan } from "#tools/eval-harness/grammar/census"
 
 export interface PhraseBoundaryReceipt {
 	kind: PhraseProposal["kindHypothesis"]
@@ -65,12 +67,13 @@ export interface C4BoundaryReceipt {
 
 function fstEdgesAtBoundary(
 	matches: ReadonlyArray<FSTAcceptedMatch> | null,
-	boundary: number
+	leftEnd: number,
+	rightStart: number
 ): FSTEdgeReceipt[] | null {
 	if (!matches) return null
 
 	return matches.flatMap((match) => {
-		const edge = match.startPiece === boundary ? "start" : match.endPiece === boundary ? "end" : null
+		const edge = match.startPiece === rightStart ? "start" : match.endPiece === leftEnd ? "end" : null
 
 		if (!edge) return []
 
@@ -96,6 +99,8 @@ function tokenClassAt(shape: QueryShape, character: number) {
 /**
  * Record every boundary between adjacent decoded, non-O spans.
  *
+ * Spans separated only by `blankPieces` count as adjacent, and the boundary is the right span's first piece.
+ *
  * `undefined` FST matches mean the corresponding license source was unavailable.
  * An empty array means it was available and had no edge at this boundary.
  *
@@ -107,20 +112,15 @@ export function observeC4Boundaries(
 	phraseProposals: ReadonlyArray<PhraseProposal>,
 	shape: QueryShape,
 	registryMatches?: ReadonlyArray<FSTAcceptedMatch> | null,
-	streetAffixMatches?: ReadonlyArray<FSTAcceptedMatch> | null
+	streetAffixMatches?: ReadonlyArray<FSTAcceptedMatch> | null,
+	blankPieces: ReadonlySet<number> = new Set()
 ): C4BoundaryReceipt[] {
-	const ordered = spans.toSorted((a, b) => a.start - b.start || a.end - b.end)
 	const receipts: C4BoundaryReceipt[] = []
 
-	for (let index = 1; index < ordered.length; index++) {
-		const left = ordered[index - 1]!
-		const right = ordered[index]!
-
-		if (left.end !== right.start) continue
-
-		const boundaryPiece = left.end
-		const leftPiece = pieces[boundaryPiece - 1]
-		const rightPiece = pieces[boundaryPiece]
+	for (const [left, right] of adjacentSpanPairs(spans, blankPieces)) {
+		const boundaryPiece = right.start
+		const leftPiece = pieces[left.end - 1]
+		const rightPiece = pieces[right.start]
 
 		if (!leftPiece || !rightPiece) continue
 
@@ -179,12 +179,96 @@ export function observeC4Boundaries(
 			delimiterSegmentEdges,
 			characterClassChange,
 			knownFormatEdges,
-			streetAffixEdges: fstEdgesAtBoundary(streetAffixMatches ?? null, boundaryPiece),
-			registryFSTEdges: fstEdgesAtBoundary(registryMatches ?? null, boundaryPiece),
+			streetAffixEdges: fstEdgesAtBoundary(streetAffixMatches ?? null, left.end, right.start),
+			registryFSTEdges: fstEdgesAtBoundary(registryMatches ?? null, left.end, right.start),
 		})
 	}
 
 	return receipts
+}
+
+/**
+ * The four licenses `decoder-grammar.mdx` §5 names for a C4 boundary.
+ */
+export const C4_LICENSES = ["delimiter", "affix_lexeme", "character_class", "registry_edge"] as const
+
+/**
+ * One license from {@linkcode C4_LICENSES}.
+ */
+export type C4License = (typeof C4_LICENSES)[number]
+
+/**
+ * The C4 reading of one boundary receipt.
+ *
+ * - `outside_phrase`: no phrase proposal holds the boundary strictly inside it, so C4 does not apply.
+ * - `licensed`: at least one §5 license holds at the boundary.
+ * - `violation`: the boundary is inside a phrase proposal and no license holds.
+ * - `unmeasured`: no license holds among the sources read, and an affix or registry source was not read.
+ */
+export type C4Verdict = "outside_phrase" | "licensed" | "violation" | "unmeasured"
+
+export interface C4BoundaryClassification {
+	/**
+	 * The verdict with a phrase-grouper proposal as the phrase, the input §5 names.
+	 */
+	verdict: C4Verdict
+	/**
+	 * The verdict with the comma-free query-shape segment as the phrase.
+	 *
+	 * Every boundary that is not on a delimiter lies inside one, so this verdict is never `outside_phrase`.
+	 * It differs from {@link verdict} where the grouper proposes no phrase across the boundary.
+	 */
+	segmentVerdict: Exclude<C4Verdict, "outside_phrase">
+	licenses: C4License[]
+	unreadSources: Array<"street_affix" | "registry_fst">
+}
+
+/**
+ * Apply §5's C4 predicate to one boundary receipt: a span boundary interior to a delimiter-free phrase
+ * is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge.
+ *
+ * A phrase is a phrase-grouper proposal holding the boundary strictly inside it.
+ * A delimiter is a query-shape segment edge at the boundary.
+ *
+ * An affix lexeme is a street-affix match starting or ending there.
+ * A character-class change compares the query-shape token classes on either side.
+ *
+ * A registry match edge is a gazetteer FST match starting or ending there.
+ * A known-format edge is outside the four, so it grants no license.
+ */
+export function classifyC4Boundary(receipt: C4BoundaryReceipt): C4BoundaryClassification {
+	const licenses: C4License[] = []
+
+	if (receipt.delimiterSegmentEdges.length) {
+		licenses.push("delimiter")
+	}
+
+	if (receipt.streetAffixEdges?.length) {
+		licenses.push("affix_lexeme")
+	}
+
+	if (receipt.characterClassChange) {
+		licenses.push("character_class")
+	}
+
+	if (receipt.registryFSTEdges?.length) {
+		licenses.push("registry_edge")
+	}
+
+	const unreadSources: C4BoundaryClassification["unreadSources"] = []
+
+	if (!receipt.streetAffixEdges) {
+		unreadSources.push("street_affix")
+	}
+
+	if (!receipt.registryFSTEdges) {
+		unreadSources.push("registry_fst")
+	}
+
+	const segmentVerdict = licenses.length ? "licensed" : unreadSources.length ? "unmeasured" : "violation"
+	const verdict: C4Verdict = receipt.insidePhraseProposals.length ? segmentVerdict : "outside_phrase"
+
+	return { verdict, segmentVerdict, licenses, unreadSources }
 }
 
 export type C4TruthPosition = "inside_expected_component" | "expected_component_edge" | "unclassified"

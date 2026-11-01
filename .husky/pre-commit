@@ -49,7 +49,7 @@ if [ -n "$STAGED" ]; then
 	CODE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx)$' || true)
 	# - oxlint exits non-zero when ignore rules exclude every path passed, such as a generated `.mjs` alone.
 	if [ -n "$CODE" ]; then
-		LINT_OUT=$(printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix 2>&1) || {
+		LINT_OUT=$(printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix --deny-warnings 2>&1) || {
 			if printf '%s' "$LINT_OUT" | grep -q "No files found to lint"; then
 				echo "pre-commit: all staged code paths are oxlint-excluded — skipping lint"
 			else
@@ -74,25 +74,12 @@ if [ -n "$STAGED" ]; then
 		}
 	fi
 
-	# Python checks:
-	# - Run ruff check+format on staged `corpus-python/**/*.py`.
-	# - Run toolchain pin-consistency check when:
-	#   - anything under `corpus-python/` is staged, or
-	#   - `pyproject.toml` or `uv.lock` is staged.
-	PY=$(printf '%s\n' "$STAGED" | grep -E '^corpus-python/.*\.py$' || true)
-	if [ -n "$PY" ]; then
-		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uv run --extra dev ruff check --fix
-		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uv run --extra dev ruff format
-	fi
-	if printf '%s\n' "$STAGED" | grep -qE '^corpus-python/|^pyproject\.toml$|^uv\.lock$'; then
-		uv run --extra dev --extra train python corpus-python/scripts/verify_toolchain.py
-	fi
-
-	# Re-stage any files modified by auto-fixers.
-	printf '%s\n' "$STAGED" | tr '\n' '\0' | xargs -0 git add
+	# Re-stage any files modified by auto-fixers. Every path is already staged, and `--force` re-stages one that is
+	# tracked under an ignored directory such as `.agents/skills/`.
+	printf '%s\n' "$STAGED" | tr '\n' '\0' | xargs -0 git add --force --
 
 	# Prose lint (Vale), staged-scoped.
-	node config/vale/lint-prose.ts --staged -s docs-vocab -s code
+	node config/vale/lint-prose.ts --staged --deny-warnings -s docs-vocab -s code
 fi
 
 # CLI reference + man-page drift prevention:

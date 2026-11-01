@@ -2,7 +2,7 @@ import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/d
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
@@ -267,7 +267,7 @@ describe("WOFCandidateTableLookup", () => {
 	test("an unknown country (not in the table) returns no candidates", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		expect(await lk.findPlace({ text: "Moscow", placetype: "locality", country: "ZZ" })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "Moscow", placetype: "locality", country: "ZZ" })).resolves.toHaveLength(0)
 	})
 
 	test("resolves an alias row to the primary place", async () => {
@@ -360,20 +360,20 @@ describe("WOFCandidateTableLookup", () => {
 		expect(zip?.placetype).toBe("postalcode")
 		expect(zip?.lat).toBeCloseTo(41.885, 3)
 
-		expect(await lk.findPlace({ text: "20500", placetype: "postalcode" })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "20500", placetype: "postalcode" })).resolves.toHaveLength(0)
 	})
 
 	test("a placetype that doesn't match the row's type yields nothing (Moscow is not a postalcode)", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		expect(await lk.findPlace({ text: "Moscow", placetype: "postalcode" })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "Moscow", placetype: "postalcode" })).resolves.toHaveLength(0)
 	})
 
 	test("an unknown name + an empty query return no candidates", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		expect(await lk.findPlace({ text: "Nowhereville" })).toHaveLength(0)
-		expect(await lk.findPlace({ text: "   " })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "Nowhereville" })).resolves.toHaveLength(0)
+		await expect(lk.findPlace({ text: "   " })).resolves.toHaveLength(0)
 	})
 
 	test("FTS5-trigram fuzzy fallback recovers a misspelled locality on an exact miss", async () => {
@@ -382,7 +382,7 @@ describe("WOFCandidateTableLookup", () => {
 		expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
 		expect((await lk.findPlace({ text: "Moscw", placetype: "locality", country: "RU" }))[0]?.name).toBe("Moscow")
 
-		expect(await lk.findPlace({ text: "Zzzqqx", placetype: "locality", country: "US" })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "Zzzqqx", placetype: "locality", country: "US" })).resolves.toHaveLength(0)
 	})
 
 	test("A typo-corrected row is NOT an exact match", async () => {
@@ -409,7 +409,7 @@ describe("WOFCandidateTableLookup", () => {
 	test("the fuzzy fallback NEVER fires for postcodes — an unknown code abstains, it does not become a different code", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		expect(await lk.findPlace({ text: "B0601", placetype: "postalcode" })).toHaveLength(0)
+		await expect(lk.findPlace({ text: "B0601", placetype: "postalcode" })).resolves.toHaveLength(0)
 
 		expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
 	})
@@ -760,7 +760,7 @@ describe("Postcode-containment coherence (Mechanism 2)", () => {
 
 		expect(hits.map((c) => c.id)).toEqual([SANSOME_SMALL, SANSOME_BIG, SANSOME_MID])
 
-		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, hits[0]!.lat, hits[0]!.lon)).toBeLessThanOrEqual(5)
+		expect(haversine(ANCHOR.lat, ANCHOR.lon, hits[0]!.lat, hits[0]!.lon)).toBeLessThanOrEqual(5)
 	})
 
 	test("B2-2: the postcode-removed arm is unchanged — and the gap the bar claims is real", async () => {
@@ -772,7 +772,7 @@ describe("Postcode-containment coherence (Mechanism 2)", () => {
 		const flagless = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
 		expect(flagless.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
-		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, bare[0]!.lat, bare[0]!.lon)).toBeGreaterThan(25)
+		expect(haversine(ANCHOR.lat, ANCHOR.lon, bare[0]!.lat, bare[0]!.lon)).toBeGreaterThan(25)
 	})
 
 	test("B2-2: an anchor miss abstains — a postcode the table doesn't carry leaves the order untouched", async () => {
@@ -813,8 +813,8 @@ describe("Postcode-containment coherence (Mechanism 2)", () => {
 
 		expect(near.placeID).toBe("wof:722")
 		expect(far.placeID).toBe("wof:720")
-		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, near.lat!, near.lon!)).toBeLessThanOrEqual(5)
-		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, far.lat!, far.lon!)).toBeGreaterThan(25)
+		expect(haversine(ANCHOR.lat, ANCHOR.lon, near.lat!, near.lon!)).toBeLessThanOrEqual(5)
+		expect(haversine(ANCHOR.lat, ANCHOR.lon, far.lat!, far.lon!)).toBeGreaterThan(25)
 	})
 
 	test("B2-3: the double-repair arms agree — postcodeConsistency ON vs OFF pick the same locality", async () => {

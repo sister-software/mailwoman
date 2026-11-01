@@ -83,7 +83,7 @@ describe("readTriplesFromGeonames", () => {
 			["PT", "1000-002", "Alvalade", "Lisboa", "Lisboa"],
 		])
 
-		expect(await readTriplesFromGeonames("PT", path, "Portugal", acceptAll)).toHaveLength(1)
+		await expect(readTriplesFromGeonames("PT", path, "Portugal", acceptAll)).resolves.toHaveLength(1)
 	})
 
 	it("drops a place the gazetteer does not know as a locality", async () => {
@@ -145,7 +145,7 @@ describe("readTriplesFromGeonames", () => {
 		// An empty result is expected, because a guessed placement could be wrong.
 		const path = await writeExport("au.txt", [["AU", "2000", "The Rocks", "New South Wales", "Sydney"]])
 
-		expect(await readTriplesFromGeonames("AU", path, "Australia", acceptAll)).toEqual([])
+		await expect(readTriplesFromGeonames("AU", path, "Australia", acceptAll)).resolves.toEqual([])
 	})
 })
 

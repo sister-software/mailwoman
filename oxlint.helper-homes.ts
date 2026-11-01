@@ -54,7 +54,7 @@ export const HELPER_HOMES: readonly HelperHome[] = [
 		id: "earth-radius",
 		signature: { kind: "numeric-literal", values: new Set([6371, 6_371_000]) },
 		specifier: "@mailwoman/spatial",
-		symbol: "haversineKm (with EARTH_RADIUS beside it)",
+		symbol: "haversine (with EARTH_RADII beside it)",
 		reason: "Earth's mean radius, and with it the great-circle distance",
 	},
 	{

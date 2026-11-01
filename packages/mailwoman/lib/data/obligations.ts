@@ -112,7 +112,7 @@ export function obligationFindings(expression: string, refuse: readonly Obligati
 }
 
 /**
- * Throws when a layer's recorded license carries a refused obligation class.
+ * Throws when a layer's recorded license includes a refused obligation class.
  *
  * The message repeats the layer's provenance as its manifest records it: name,
  * license, credit, source, input URL and digest.

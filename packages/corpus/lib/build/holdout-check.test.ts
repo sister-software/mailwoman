@@ -97,8 +97,8 @@ describe("admitParquetManifest", () => {
 		expect(record.files_read).toBe(2)
 		expect(record.findings).toEqual([])
 
-		expect(await pathExists(corpusDir(PARQUET_MANIFEST_FILE))).toBe(true)
-		expect(await pathExists(corpusDir(UNCHECKED_PARQUET_MANIFEST_FILE))).toBe(false)
+		await expect(pathExists(corpusDir(PARQUET_MANIFEST_FILE))).resolves.toBe(true)
+		await expect(pathExists(corpusDir(UNCHECKED_PARQUET_MANIFEST_FILE))).resolves.toBe(false)
 
 		const receipt = await readLocalJSONFile<HoldoutCheckRecord>(corpusDir(HOLDOUT_CHECK_FILE))
 
@@ -116,8 +116,8 @@ describe("admitParquetManifest", () => {
 			/held-out span check refused the corpus.*ES locality-in-train oviedo: 1 train rows, 1 held out/su
 		)
 
-		expect(await pathExists(corpusDir(PARQUET_MANIFEST_FILE))).toBe(false)
-		expect(await pathExists(corpusDir(UNCHECKED_PARQUET_MANIFEST_FILE))).toBe(true)
+		await expect(pathExists(corpusDir(PARQUET_MANIFEST_FILE))).resolves.toBe(false)
+		await expect(pathExists(corpusDir(UNCHECKED_PARQUET_MANIFEST_FILE))).resolves.toBe(true)
 
 		const receipt = await readLocalJSONFile<HoldoutCheckRecord>(corpusDir(HOLDOUT_CHECK_FILE))
 
@@ -140,6 +140,6 @@ describe("admitParquetManifest", () => {
 		const again = await admitParquetManifest({ corpusDir, holdouts: HOLDOUTS })
 
 		expect(again.admitted).toBe(true)
-		expect(await pathExists(corpusDir(PARQUET_MANIFEST_FILE))).toBe(true)
+		await expect(pathExists(corpusDir(PARQUET_MANIFEST_FILE))).resolves.toBe(true)
 	})
 })

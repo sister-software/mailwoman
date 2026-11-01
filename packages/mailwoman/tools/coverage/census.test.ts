@@ -324,21 +324,21 @@ describe("readConfiguredCorpusVersion", () => {
 			"data:\n  corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl\n"
 		)
 
-		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBe("0.27.0-house-venue-intl")
+		await expect(readConfiguredCorpusVersion(scratch.configPath)).resolves.toBe("0.27.0-house-venue-intl")
 	})
 
 	it("returns undefined rather than a guess when the config states no corpus_dir", async () => {
 				// "Cannot check" is not "they match", so a plausible default would manufacture agreement.
 				await using scratch = await config("data:\n  max_length: 128\n")
 
-		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBeNull()
-		expect(await readConfiguredCorpusVersion("/nonexistent-config.yaml")).toBeNull()
+		await expect(readConfiguredCorpusVersion(scratch.configPath)).resolves.toBeNull()
+		await expect(readConfiguredCorpusVersion("/nonexistent-config.yaml")).resolves.toBeNull()
 	})
 
 	it("falls back to the trailing directory when the path is not /versioned/-shaped", async () => {
 		await using scratch = await config("data:\n  corpus_dir: /data/corpus/corpus-v0.5.0\n")
 
-		expect(await readConfiguredCorpusVersion(scratch.configPath)).toBe("0.5.0")
+		await expect(readConfiguredCorpusVersion(scratch.configPath)).resolves.toBe("0.5.0")
 	})
 })
 
@@ -378,12 +378,12 @@ describe("resolveTrainingConfig", () => {
 		untieredShippingLocales: {},
 		trainingConfigs: {
 			"en-us": {
-				config: "corpus-python/src/mailwoman_train/configs/fixture-latin.yaml",
+				config: "packages/corpus/data/training-configs/fixture-latin.yaml",
 				graphPackage: "@mailwoman/neural-weights-en-us",
 				readFrom: "model_lineage",
 			},
 			cjk: {
-				config: "corpus-python/src/mailwoman_train/configs/fixture-char.yaml",
+				config: "packages/corpus/data/training-configs/fixture-char.yaml",
 				graphPackage: "@mailwoman/neural-weights-cjk",
 				readFrom: "training.run",
 			},
@@ -426,7 +426,7 @@ describe("scope.config.json's registered training configs", () => {
 		for (const entry of registered) {
 			const path = repoRootPath(...entry.config.split("/"))
 
-			expect(await pathExists(path)).toBe(true)
+			await expect(pathExists(path)).resolves.toBe(true)
 		}
 	})
 })

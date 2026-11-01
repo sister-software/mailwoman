@@ -16,7 +16,7 @@
  *   `goldRecovered` permits additional predictions, so it differs from exact parse accuracy.
  */
 
-import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/codex/street-convention"
+import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/codex/street/convention"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { groupTuplesByTag, walkNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -28,7 +28,7 @@ import { type DuckDBLimits, escapeSQLString, openDuckDB } from "@mailwoman/corpu
 import { parquetColumnNames } from "@mailwoman/corpus/parquet/readers"
 import { normalizeDuckDBValue } from "@mailwoman/corpus/parquet/streams"
 import { baseManifestFiles } from "@mailwoman/corpus/tools/overlay/manifest"
-import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split-attribute"
+import { readSplitAttribute } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import type { PathBuilderLike } from "path-ts"
@@ -117,7 +117,7 @@ export interface HeldoutRowOutcome {
 	provenance: HeldoutProvenance
 	/**
 	 * The weights locale package that parsed the row, under {@linkcode HELDOUT_INFERENCE_RULE}.
-	 * Absent when the parse function named no package.
+	 * Absent when the parse function used no weights package.
 	 */
 	weightsLocale?: string
 	/**
@@ -220,21 +220,24 @@ export const HELDOUT_GROUP_COLUMNS = ["source_id", "base_source_id"] as const
  *
  * Either id is read up to its last `#` (`recordIDOf`), so the rendered rows of one record share its group.
  *
- * A derived row records the `source_id` of the row it came from, so a base row
- * and every augmentation of it (case, typo, reorder variants) share one group,
- * and the paired bootstrap resamples them together.
+ * A derived row's `source_id` identifies the base row.
+ * Every augmentation of it (case, typo or reorder variants) shares that key.
+ * The paired bootstrap resamples these rows together.
  *
- * The key is not prefixed with the source.
- * A base row may sit in a different source from its derivatives, and a
- * recipe may name a base by a register key such as `<register>:<csv>:<key>`,
- * so a source prefix would split groups that belong together.
+ * The key omits the source prefix.
+ * A base row may sit in a different source from its derivatives.
  *
- * Two unrelated sources that happen to share an id string are merged into one group,
- * which widens an interval rather than narrowing it.
+ * A recipe may identify a base with a register key such as `<register>:<csv>:<key>`.
+ * A source prefix would then split groups that belong together.
+ *
+ * Unrelated sources with the same id string are merged into one group.
+ * This widens an interval rather than narrowing it.
  *
  * Limits: the group joins only rows linked through `base_source_id`.
- * Two distinct rows describing the same address from different publishers,
- * or many addresses on one street or in one small place, remain separate groups.
+ * Distinct rows describing the same address from different publishers remain separate groups.
+ *
+ * Addresses on one street or in one small place also remain separate groups
+ * unless `base_source_id` links them.
  *
  * A larger unit for that shared place or source structure needs a key the corpus does not yet record.
  *
@@ -264,7 +267,7 @@ export function heldoutRowGroup(row: { source_id?: unknown; base_source_id?: unk
 }
 
 /**
- * Throws unless every file carries the grouping columns.
+ * Throws unless every file includes the grouping columns.
  *
  * `read_parquet(..., union_by_name = true)` fills a column a file lacks with `NULL`,
  * which would read as "not derived" on every row of that file.
@@ -291,15 +294,19 @@ export interface HeldoutSamplingRule {
 	 * A record is `<source>` plus the part of `source_id` before the last `#`.
 	 * It replaced `per-record-country-kind-hash-order`, which read one row per whole `source_id`.
 	 *
+	 * `per-group-text-hash-order`: rows ordered by the sha256 of their text, then the
+	 * first row of each group up to the quota, as `firstByTextHash` keeps them.
+	 * The trailing-country sample draws this way.
+	 *
 	 * The method enters the dataset version, so a change to which rows a sample reads changes the method name.
 	 */
-	method: "per-record-id-country-kind-hash-order"
+	method: "per-record-id-country-kind-hash-order" | "per-group-text-hash-order"
 	/**
 	 * Rows drawn per country and row kind.
 	 */
 	perCountry: number
 	/**
-	 * Mixed into the order hash; `null` orders by `hash(raw)` alone.
+	 * Mixed into the order hash; `null` orders by the raw text hash without a seed.
 	 */
 	seed: number | null
 	/**
@@ -465,8 +472,8 @@ export async function sampleHeldoutRows(
 			`QUALIFY row_number() OVER (PARTITION BY coalesce(country, 'ZZ'), starts_with(source, 'wof-') ORDER BY ${heldoutSampleOrder(seed)}) <= ` +
 			Math.trunc(perCountry).toString() +
 			// Without an ORDER BY, DuckDB returns the window's rows in a run-dependent order,
-			// and the rows file's sha256, which a dataset manifest records, would differ between
-			// two freezes of one sample.
+			// The dataset manifest records the rows file's sha256. Unordered results would make that hash
+			// differ between two freezes of one sample.
 			` ORDER BY coalesce(country, 'ZZ'), starts_with(source, 'wof-'), ${heldoutSampleOrder(seed)}`
 	)
 
@@ -592,8 +599,9 @@ export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: Pr
 /**
  * Scores one arm over every row, given a parse function.
  *
- * A row whose source is in `capabilitySources` keeps its outcome, which the capability
- * checks read, and is totaled in its country's capability cell rather than its address cell.
+ * A row whose source is in `capabilitySources` keeps its outcome for the capability checks.
+ * The scorer totals that outcome in its country's capability cell rather than its address cell.
+ *
  * A release specification names those sources through `capabilityProbeSources`.
  *
  * Refuses rows that share an identity, because paired outcomes are joined by identity.
@@ -603,7 +611,8 @@ export async function scoreHeldoutArm(
 	parse: (row: HeldoutRow) => Promise<AddressTree>,
 	history?: ProvenanceHistory,
 	weightsLocaleFor?: (row: HeldoutRow) => string,
-	capabilitySources: ReadonlySet<string> = new Set()
+	capabilitySources: ReadonlySet<string> = new Set(),
+	onRow?: (scored: number, total: number) => void
 ): Promise<HeldoutArmResult> {
 	const outcomes: HeldoutRowOutcome[] = []
 	const cells = new Map<string, CountryScore>()
@@ -611,6 +620,8 @@ export async function scoreHeldoutArm(
 
 	for (const row of rows) {
 		const outcome = scoreHeldoutRow(row, await parse(row), history)
+
+		onRow?.(outcomes.length + 1, rows.length)
 
 		if (weightsLocaleFor) {
 			outcome.weightsLocale = weightsLocaleFor(row)
@@ -743,6 +754,10 @@ export async function scoreHeldoutWeights(
 		 * Sources totaled in a country's capability cell, as {@linkcode scoreHeldoutArm} takes them.
 		 */
 		capabilitySources?: ReadonlySet<string>
+		/**
+		 * Called after each row with the rows scored so far and the total, for progress reporting.
+		 */
+		onRow?: (scored: number, total: number) => void
 	} = {}
 ): Promise<HeldoutArmResult> {
 	const packages = options.packages ?? (await readHeldoutLocalePackages())
@@ -784,6 +799,7 @@ export async function scoreHeldoutWeights(
 			}),
 		history,
 		localeFor,
-		options.capabilitySources
+		options.capabilitySources,
+		options.onRow
 	)
 }

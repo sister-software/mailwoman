@@ -22,7 +22,7 @@ describe("the installation id", () => {
 	})
 
 	it("reads null before the first mint", async () => {
-		expect(await readInstallationID()).toBeNull()
+		await expect(readInstallationID()).resolves.toBeNull()
 	})
 
 	it("mints a UUID once under the config root and reads the same id after", async () => {
@@ -30,7 +30,7 @@ describe("the installation id", () => {
 
 		expect(first).toMatch(UUID)
 		expect(installationIDFilePath().toString().startsWith(scratch.path.toString())).toBe(true)
-		expect(await readOrMintInstallationID()).toBe(first)
-		expect(await readInstallationID()).toBe(first)
+		await expect(readOrMintInstallationID()).resolves.toBe(first)
+		await expect(readInstallationID()).resolves.toBe(first)
 	})
 })

@@ -12,7 +12,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { resolveWeights } from "@mailwoman/neural"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
@@ -200,7 +200,7 @@ async function score(deps: GauntletDeps, sample: Sample[]): Promise<{ hits: numb
 		if (g.lat == null || g.lon == null) continue
 
 		resolved++
-		const km = haversineKm(g.lat, g.lon, s.lat, s.lon)
+		const km = haversine(g.lat, g.lon, s.lat, s.lon)
 
 		TOLS.forEach((t, i) => {
 			if (km <= t) {

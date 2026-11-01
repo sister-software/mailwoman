@@ -221,6 +221,11 @@
 			"node": "./lib/utils/sleep.ts",
 			"default": "./out/utils/sleep.js"
 		},
+		"./workers": {
+			"types": "./out/workers.d.ts",
+			"node": "./lib/workers.ts",
+			"default": "./out/workers.js"
+		},
 		"./utils/events": {
 			"types": "./out/utils/events.d.ts",
 			"node": "./lib/utils/events.ts",
@@ -431,11 +436,6 @@
 			"node": "./lib/decoder/serialize/xml.ts",
 			"default": "./out/decoder/serialize/xml.js"
 		},
-		"./decoder/resolve-proposal-overlaps": {
-			"types": "./out/decoder/resolve-proposal-overlaps.d.ts",
-			"node": "./lib/decoder/resolve-proposal-overlaps.ts",
-			"default": "./out/decoder/resolve-proposal-overlaps.js"
-		},
 		"./decoder/containment": {
 			"types": "./out/decoder/containment.d.ts",
 			"node": "./lib/decoder/containment.ts",
@@ -572,14 +572,14 @@
 			"default": "./out/data-root.js"
 		},
 		"./asset-names": {
-			"types": "./out/asset-names.d.ts",
-			"node": "./lib/asset-names.ts",
-			"default": "./out/asset-names.js"
+			"types": "./out/asset/names.d.ts",
+			"node": "./lib/asset/names.ts",
+			"default": "./out/asset/names.js"
 		},
 		"./asset-paths": {
-			"types": "./out/asset-paths.d.ts",
-			"node": "./lib/asset-paths.ts",
-			"default": "./out/asset-paths.js"
+			"types": "./out/asset/paths.d.ts",
+			"node": "./lib/asset/paths.ts",
+			"default": "./out/asset/paths.js"
 		},
 		"./postcode-prefix-files": {
 			"types": "./out/postcode-prefix-files.d.ts",
@@ -668,30 +668,30 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"adm-zip": "^0.6.1",
 		"async-init": "^1.0.0",
-		"axios": "^1.20.0",
+		"axios": "^1.21.0",
 		"axios-cache-interceptor": "^1.13.0",
 		"change-case": "^5.4.4",
 		"dom-serializer": "^3.1.1",
 		"domhandler": "^6.0.1",
 		"domutils": "^4.0.2",
-		"entities": "^8.1.0",
+		"entities": "^9.0.0",
 		"env-paths": "^4.0.0",
 		"htmlparser2": "^12.0.0",
 		"http-status-codes": "^2.3.0",
 		"iconv-lite": "^0.7.3",
 		"isomorphic-dompurify": "^4.6.0",
-		"kysely": "^0.29.6",
+		"kysely": "^0.29.7",
 		"path-ts": "^2.5.0",
 		"pino": "^10.4.0",
 		"regenerate": "^1.5.0",
-		"spliterator": "^9.3.0",
+		"spliterator": "^10.1.1",
 		"trusted-types": "^2.0.0",
 		"type-fest": "^5.10.0",
 		"yauzl-promise": "^4.0.0",
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {
-		"@duckdb/node-api": "1.5.6-r.1",
+		"@duckdb/node-api": "^2.0.0-r.1",
 		"@types/trusted-types": "^2.0.7",
 		"@types/yauzl-promise": "^4.0.1"
 	}

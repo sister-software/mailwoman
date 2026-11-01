@@ -4,104 +4,81 @@
 import { stringifyJSON } from "#json"
 
 /**
- *   A faithful reimplementation of Python's `json.dumps` single-line serialization, used by the
- *   ported `scripts/eval/*.ts` golden/eval builders so their jsonl output is byte-identical to the
- *   Python originals (the committed `data/eval/**` files were written by `json.dumps`).
+ *   Python's one-line `json.dumps`, kept for the two hashes whose recorded values were computed over its bytes.
  *
- *   Two things `JSON.stringify` gets "wrong" relative to Python and that this fixes:
- *
- *   1. **Separators.** Python's default is `(", ", ": ")` — a space after every comma and colon.
- *        `JSON.stringify` is compact (`","` / `":"`). The committed files are spaced, so we match.
- *   2. **`ensure_ascii`.** Python defaults to escaping every non-ascii codepoint as `\uXXXX` (surrogate
- *        pairs for astral chars). `JSON.stringify` emits raw UTF-8. We replicate Python's default
- *        (`ensureASCII: true`) and allow `ensure_ascii=False` (`ensureASCII: false`).
- *
- *   ASCII string escaping (quote, backslash, `\n`/`\t`/`\r`/`\b`/`\f`, other control -> `\u00xx`)
- *   is identical between `JSON.stringify` and Python's json, so we delegate per-string base
- *   escaping to `JSON.stringify` and only post-escape the non-ascii range when `ensureASCII` is
- *   on.
- *
- *   Caveat: JS has a single number type, so a whole-valued float (e.g. an exact `5.0` coordinate)
- *   serializes as `5`, whereas Python's `float(5.0)` -> `"5.0"`. Real-world lat/lon land on exact
- *   integers vanishingly rarely. the builders that emit coordinates accept this edge.
+ *   `rowIdentity` in `packages/mailwoman/tools/training/sampler.ts` hashes a sampled row as the encoder-parity records
+ *   store it, so a sampler change verifies against the 15 records. The DeepSeek transliteration batch id in
+ *   `packages/corpus/lib/recipes/deepseek/batches.ts` hashes the seed ids as the first requested batches did, so a
+ *   resumed run skips the batches already requested. New output uses `orderedJSON` from `@mailwoman/core/json`.
  */
 
 /**
- * Serialize one string the way Python's json does (then optionally `ensure_ascii`-escape it).
+ * Options for {@linkcode pythonJSONDumps} use the field names from `json.dumps`.
  */
-function serializeString(value: string, ensureASCII: boolean): string {
-	// JSON.stringify handles the quote/backslash/control escaping identically to Python's json.
+export interface PythonJSONOptions {
+	sortKeys?: boolean
+	/**
+	 * @default true
+	 */
+	ensureASCII?: boolean
+}
+
+function pythonString(value: string, ensureASCII: boolean): string {
+	// JSON.stringify escapes the quote, the backslash and the C0 controls as Python's json does.
+	// Python's `ensure_ascii` also escapes DEL and every code unit above it, one `\uXXXX` per UTF-16 unit.
 	const out = stringifyJSON(value)
 
 	if (!ensureASCII) return out
-	// ensure_ascii: escape every code unit >= 0x80 as \uXXXX
-	// (surrogate halves handled per-unit, exactly as CPython emits astral codepoints as a \u-pair).
+
 	let escaped = ""
 
 	for (let i = 0; i < out.length; i++) {
 		const code = out.charCodeAt(i)
-		escaped += code > 0x7f ? "\\u" + code.toString(16).padStart(4, "0") : out[i]
+
+		escaped += code >= 0x7f ? "\\u" + code.toString(16).padStart(4, "0") : out[i]
 	}
 
 	return escaped
 }
 
-/**
- * Serialize one finite/non-finite number the way Python's json does.
- */
-function serializeNumber(value: number): string {
-	if (Number.isFinite(value)) return stringifyJSON(value)
+function pythonValue(value: unknown, options: Required<PythonJSONOptions>): string {
+	if (value == null) return "null"
 
-	// Python json renders these literally (not RFC-valid, but it's what json.dumps does by default).
-	if (Number.isNaN(value)) return "NaN"
+	if (typeof value === "boolean") return value ? "true" : "false"
 
-	return value > 0 ? "Infinity" : "-Infinity"
-}
+	if (typeof value === "number") {
+		// Python writes a float as `2.0` and an int as `2`, and neither hashed document holds a float.
+		if (!Number.isInteger(value)) throw new TypeError(`pythonJSONDumps: ${value} is not an integer`)
 
-function serialize(value: unknown, ensureASCII: boolean): string {
-	if (value === null || !value) return "null"
-	const t = typeof value
-
-	if (t === "boolean") return value ? "true" : "false"
-
-	if (t === "number") return serializeNumber(value as number)
-
-	if (t === "string") return serializeString(value as string, ensureASCII)
-
-	if (Array.isArray(value)) {
-		return "[" + value.map((v) => serialize(v, ensureASCII)).join(", ") + "]"
+		return Object.is(value, -0) ? "0" : String(value)
 	}
 
-	if (t === "object") {
-		const parts: string[] = []
+	if (typeof value === "string") return pythonString(value, options.ensureASCII)
 
-		for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-			if (!v) continue // a key Python would never have produced
-			parts.push(serializeString(k, ensureASCII) + ": " + serialize(v, ensureASCII))
+	if (Array.isArray(value)) return `[${value.map((item) => pythonValue(item, options)).join(", ")}]`
+
+	if (typeof value === "object") {
+		const entries = Object.entries(value as Record<string, unknown>)
+
+		if (options.sortKeys) {
+			entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
 		}
 
-		return "{" + parts.join(", ") + "}"
+		const items = entries.map(
+			([key, item]) => `${pythonString(key, options.ensureASCII)}: ${pythonValue(item, options)}`
+		)
+
+		return `{${items.join(", ")}}`
 	}
 
-	throw new TypeError(`pyJSONDumps: unsupported value of type ${t}`)
+	throw new TypeError(`pythonJSONDumps: unsupported value of type ${typeof value}`)
 }
 
 /**
- * `json.dumps(value)` — single line, `(", ", ": ")` separators, `ensure_ascii` per options.
+ * `json.dumps(value, sort_keys=…, ensure_ascii=…)` on one line, byte for byte.
+ *
+ * @throws When a number is not an integer.
  */
-export interface PyJSONDumpOptions {
-	ensureASCII?: boolean
+export function pythonJSONDumps(value: unknown, options: PythonJSONOptions = {}): string {
+	return pythonValue(value, { sortKeys: options.sortKeys ?? false, ensureASCII: options.ensureASCII ?? true })
 }
-
-/**
- * Serialize a value the way Python's json.dumps does.
- */
-export function pyJSONDumps(value: unknown, options: PyJSONDumpOptions = {}): string {
-	return serialize(value, options.ensureASCII ?? true)
-}
-
-/**
- * Render a string->number map the way Python prints `dict(...)` / `dict(Counter(...))` —
- * single-quoted keys, `, ` / `: ` separators (e.g. `{'US': 1840, 'FR': 950}`).
- * Insertion order is preserved.
- */

@@ -14,6 +14,7 @@
 	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		{ "path": "../../mtf" },
+		{ "path": "../../mtf/tools" },
 		{ "path": "../../gazetteer" },
 		{ "path": "../../gazetteer/tools" },
 		{ "path": ".." },
@@ -32,6 +33,7 @@
 		{ "path": "../../locale-hint" },
 		{ "path": "../../match" },
 		{ "path": "../../neural" },
+		{ "path": "../../neural/tools" },
 		{ "path": "../../normalize" },
 		{ "path": "../../osm" },
 		{ "path": "../../osm/sdk" },

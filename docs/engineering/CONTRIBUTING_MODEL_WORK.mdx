@@ -13,6 +13,15 @@ touches the model. The concepts behind it are documented elsewhere
 [Negative space](../records/site-2026-08/concepts/negative-space-coverage.mdx)). This page lists the
 steps to follow.
 
+[Training diagnosis and explainable decoding](../records/research/2026-10-28-training-diagnosis-and-explainable-decoding.md)
+attributes the October 2026 candidates' mixed results to training-process causes and sets the plan of #2869. Read it
+before comparing two training arms. A comparison uses three instruments from it:
+
+- the comparison battery, `packages/mailwoman/tools/eval-harness/battery/battery.run.ts`;
+- the [label convention](./reference/label-convention.mdx) its rows are scored against;
+- the rule for when a shorter screen run decides, in
+  [`HOLDOUT_AND_EVALUATION.mdx` §7.3](./HOLDOUT_AND_EVALUATION.mdx#73-when-a-screen-run-decides).
+
 ## The iron rules
 
 1. **Build a real-OOD eval before training.** Build (or find) the held-out real-world eval for your
@@ -171,7 +180,7 @@ Four mechanisms specialize a locale, from least to most parameter isolation:
    and never the posterior, so the graph holds no in-graph delegate and zero parameters per locale.
 2. **A data-only weights overlay** that declares `mailwoman.baseWeights` and ships no `model.onnx`.
 3. **The script-routed second graph**, the `cjk` family in
-   `packages/neural/lib/weights/families.ts`. The Latin family declares no routing predicate, which
+   `packages/neural/lib/weights/families.ts`. The Latin family declares no routing predicate. That
    is what keeps every Latin request on `en-us`.
 4. **A second Latin graph.** This rung is empty: `base-latn` is a parked deduplication package
    that symlinks the `en-us` card rather than a trained base.
@@ -179,7 +188,7 @@ Four mechanisms specialize a locale, from least to most parameter isolation:
 Exactly three packages ship a model: `en-us`, `cjk` and `base-latn`. FR, US, DE and GB therefore
 share one weight matrix, and a default-on change for one of them moves the others. Its release
 verdict and report must cover every required country and list each measured loss. Before proposing a per-locale graph, measure that locale's labeled supply (a
-per-script CN model was refused on 126 rows) and fix #2313 and #2318, which any split inherits.
+per-script CN model was refused on 126 rows) and fix #2313 and #2318, because any split inherits them.
 
 ## The standard eval battery
 
@@ -340,7 +349,7 @@ When a golden version changes a convention:
 ### Splice safety check — codepoint overlap is pre-registered rather than post-measured ([#900](https://github.com/sister-software/mailwoman/issues/900))
 
 Any tokenizer vocab splice must run the overlap check **before grading begins**
-(`mailwoman_train/tokenizer/splice.py build-tokenizer --trained-samples <locale=sample,…>`). The check computes the
+(`packages/mtf/tools/tokenizer/splice.run.ts build-tokenizer --trained-samples <locale=sample,…>`). The check computes the
 non-ASCII codepoints shared between the new pieces and every trained locale's character inventory,
 writes the per-locale report artifact next to the spliced tokenizer, and fails with an error on any
 overlapping locale that was not explicitly accepted. Locale acceptance (`--accept-overlap fr,de`)
@@ -369,7 +378,7 @@ meant to attribute an effect.
 
 1. **A withheld-gold stratum is complete only under the identity relation the data has.** A
    negative-control stratum removes the gold candidate so that a correct answer is graded as an
-   invention. `candidate.db` carries about a tenth of its populated localities twice, as a
+   invention. `candidate.db` holds about a tenth of its populated localities twice, as a
    `locality` and a `localadmin` of the same folded name within 5 km, so removing the
    concordance-linked ids leaves the twin answerable, and the join's identity relation is narrower
    than the data's. Before trusting a stratum that claims no correct candidate exists, check three
@@ -397,7 +406,7 @@ meant to attribute an effect.
    breakdown of a score is no evidence that the per-country path ran. Verify the route, the
    resolved artifacts per row, rather than the grouping key.
 6. **An eval that grades a resolver tier grades the population production sends to that tier.**
-   Without the cascade every row lands at the admin tier, which is right for studying a mechanism
+   Without the cascade every row lands at the admin tier. That is right for studying a mechanism
    and wrong for sizing its effect. The US ladder reads postcode-first over 10,000 panel rows but
    decides only the roughly 577 rows the rooftop cascade cannot place, and on that population
    locality-first wins. Before promoting a per-country tier, split the population on whatever the
@@ -424,8 +433,8 @@ meant to attribute an effect.
    test split therefore held 36,595 rows and zero street rows, and 770 of the 3,987 `source_id`s in
    its val file are also in train. The eight overlays routed through `split-overlay` in the same corpus
    each have a `.val.parquet` and a `.test.parquet`, and `part-gb` leaks 37 of 4,453.
-5. Train with `modal run -d corpus-python/launch/train_remote.py --config <yaml> --resume auto`
-   (~1h A100). Configs live in `corpus-python/src/mailwoman_train/configs/`. Copy the latest,
+5. Train with `node packages/mailwoman/tools/training/launch/launch.run.ts start --config <yaml> --fresh`
+   (~1h A100); `restart <run key>` resumes a stopped run. Configs live in `packages/corpus/data/training-configs/`. Copy the latest,
    change one variable, and write the acceptance-bar comment.
 
 ## The character path (Japanese and Chinese)
@@ -435,17 +444,19 @@ channels, and it has its own label set and its own board. The same practices sti
 pre-register in the config header, grade the assembled coordinate, and read the Latin board before a
 resolver mechanism ships.
 
-- **Model.** A from-scratch character encoder (`corpus-python/src/mailwoman_train/configs/v8-cjk-*.yaml`), label set
-  `stage3-cjk` (`labels.py`: the Latin `stage3` tags, the seven JP tiers, `locality_unit`), served as one fp32 ONNX
-  graph behind `char_ids` + `attention_mask` (`mailwoman_train/export/onnx.py`, checked by `verify_char_parity` over 256 board rows).
+- **Model.** A from-scratch character encoder (`packages/corpus/data/training-configs/v8-cjk-*.yaml`), label set
+  `stage3-cjk` (`packages/neural/data/label-schema.v1.json`: the Latin `stage3` tags, the seven JP tiers,
+  `locality_unit`), served as one fp32 ONNX graph behind `char_ids` + `attention_mask`. `trainer-export export-onnx
+--char-window 7` writes the graph, and `trainer-export quantize` writes its int8 form.
   One package for the family, `@mailwoman/neural-weights-cjk`; `release.config.json` `charWeights.<family>` names the
   graph and the sealed vocabulary, and the package's `scripts/link-dev-weights.ts` links them into the data-root
   overlay for a dev checkout.
-- **Corpus.** `countries/jp/corpora/` renders the Overture-JP rows in registers (the postal form, Arabic chōme, the
+- **Corpus.** `packages/corpus/lib/jp/corpus/` renders the Overture-JP rows in registers (the postal form, Arabic chōme, the
   compact folded number, the designator form, the municipality's kana reading) and holds out whole municipalities;
-  `countries/cjk/overlay.py` adds the Chinese organizational-unit rows and re-seals the vocabulary over the union. A new
+  `packages/corpus/lib/cjk/overlay.ts` adds the Chinese organizational-unit rows and re-seals the vocabulary over the union. A new
   register is a renderer entry with a weight and a build report that states the row count it landed on.
-- **The board read.** `python -m mailwoman_train.evaluation.jp_probe_board --label-set stage3-cjk` over the 20,000-row JP board: the check
+- **The board read.** `node packages/mailwoman/tools/eval-harness/cjk/board/board.run.ts --weights <package> --board <jp-board.jsonl.zst>`
+  over the 20,000-row JP board, reading the package's `model.onnx`: the check
   is coordinate-acceptability at 15 km through the municipality centroid table. Beside it are the municipality macro, the
   per-register table, and `--all-municipalities` for every held-out name. A row-weighted number moves 2 pp on one
   held-out municipality, so the pre-registration lists the municipalities it targets. `gold-exact` counts rows the

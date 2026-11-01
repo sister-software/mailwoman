@@ -133,7 +133,7 @@ export const spec = {
 		"postcode-shape-coherence": {
 			type: "boolean",
 			default: true,
-			description: "Exclude a postcode span whose shape no named country's syntax accepts.",
+			description: "Exclude a postcode span whose shape fits no postcode syntax of a country the address mentions.",
 		},
 		"postcode-containment-coherence": {
 			type: "boolean",

@@ -7,9 +7,9 @@
  *
  * The register decides whether the decoder is fed `streetTypeLexicon` and `localitySurfaceLexicon`
  * (`packages/neural/lib/classifier.ts`): `fragmented` feeds both, `formatted` withholds both.
- * The training data feeds them on every row — `corpus-python/src/mailwoman_train/` contains
- * no dropout for either channel — so the share of input that classifies into `formatted`
- * is the share served without evidence the model always had while learning.
+ * The training data feeds them on every row, because the trainer applies no dropout
+ * to either channel, so the share of input that classifies into `formatted` is the
+ * share served without evidence the model always had while learning.
  *
  * That share is the quantity a dropout curriculum would serve.
  * It has never been counted.

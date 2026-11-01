@@ -18,7 +18,7 @@ import {
 	OVERLAY_PLAN_FILE,
 	rerootBaseFilePath,
 } from "#tools/overlay/manifest"
-import { splitOverlaySlice } from "#tools/overlay/split-overlay"
+import { splitOverlaySlice } from "#tools/overlay/split/overlay"
 
 /**
  * The `memory_limit` and `threads` each DuckDB connection reports back as it opens.
@@ -307,7 +307,7 @@ describe("assembleOverlayManifest", () => {
 			})
 		).rejects.toThrow(/corpus source rendered-gb reads register source gb-property-building-1 .*refused/s)
 
-		expect(await pathExists(scratch.path(OVERLAY_PLAN_FILE))).toBe(false)
+		await expect(pathExists(scratch.path(OVERLAY_PLAN_FILE))).resolves.toBe(false)
 	})
 
 	it("refuses a base whose files name no source when its manifest carries no rights record", async () => {
@@ -422,7 +422,14 @@ describe("assembleOverlayManifest", () => {
 
 			opened.length = 0
 
-			await assembleOverlayManifest({
+			// The suite shares each worker's module cache, so a file earlier in the worker
+			// may have loaded the overlay modules over the real `#parquet/duckdb`.
+			// The test reloads them here to make them open connections through the mock.
+			vi.resetModules()
+
+			const { assembleOverlayManifest: assembleThroughMock } = await import("#tools/overlay/manifest")
+
+			await assembleThroughMock({
 				...overlay(name),
 				base,
 				files: [{ parquet: name, source: "rendered-de" }],

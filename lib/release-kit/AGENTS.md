@@ -53,7 +53,7 @@ node --input-type=module -e "import { readWorkspaceDirectories } from '@mailwoma
 
 Every name it prints needs a reason you can state. `mwops release scaffold-weights-overlay` registers a new overlay in both lists for exactly this reason — a locale added by hand skips that step.
 
-A new workspace joins SIX registers, and only the first one fails loudly. The root `workspaces` array is what `yarn install` reads, so missing it breaks immediately. The others do not: the release list above, or — when the workspace is held out — `SANCTIONED_RELEASE_ABSENCES` in `lib/release-kit/release/stage.ts`, which is where "a reason you can state" stops being prose and starts being data (`checkReleaseListIdentity` refuses an absence that is in neither, and its `publishCount` pin in `lib/release-kit/release-stage.integration.test.ts` moves with either edit); both root `tsconfig.json` reference entries — `./packages/<name>` and `./packages/<name>/tsconfig.test.json`; and, for a brand-new npm name, the `bless-package` first publish before the name may enter the release list at all (an unblessed name fails the whole release at that workspace with a bare `E404`). `mwops release smoke-clean-install` derives its pack set from the release list (`lib/release-kit/release/smoke/clean-install.ts`), so it is not a register of its own. Skip the tsconfig pair and `tsc -b` never builds the workspace, so `out/` stays empty and every test-project reference to it fails with `TS6305: Output file has not been built from source file` — which reads as a broken test rather than an unregistered project.
+A new workspace joins SIX registers, and only the first one fails loudly. The root `workspaces` array is what `yarn install` reads, so missing it breaks immediately. The others do not: the release list above, or — when the workspace is held out — `SANCTIONED_RELEASE_ABSENCES` in `lib/release-kit/release/stage.ts`, which is where "a reason you can state" stops being prose and starts being data (`checkReleaseListIdentity` refuses an absence that is in neither, and its `publishCount` pin in `lib/release-kit/release/stage.integration.test.ts` moves with either edit); both root `tsconfig.json` reference entries — `./packages/<name>` and `./packages/<name>/tsconfig.test.json`; and, for a brand-new npm name, the `bless-package` first publish before the name may enter the release list at all (an unblessed name fails the whole release at that workspace with a bare `E404`). `mwops release smoke-clean-install` derives its pack set from the release list (`lib/release-kit/release/smoke/clean-install.ts`), so it is not a register of its own. Skip the tsconfig pair and `tsc -b` never builds the workspace, so `out/` stays empty and every test-project reference to it fails with `TS6305: Output file has not been built from source file` — which reads as a broken test rather than an unregistered project.
 
 ## Every published weights workspace ships two generated rights files
 
@@ -94,7 +94,7 @@ The operation exits non-zero when a graph package's card records a corpus with n
 under `packages/corpus/data/training-manifests/`, and both `publish.yml` jobs run it. An overlay corpus gets
 its record from `freeze-overlay-manifest.run.ts`, which reads every parquet file the corpus manifest lists,
 because `freezeTrainingManifest` runs only inside `buildCorpus` and counts the adapter rows the build
-aligned rather than the rows its files hold. The effective manifest derived from that record carries the
+aligned rather than the rows its files hold. The effective manifest derived from that record contains the
 attributions the audited epoch's sources owe, and `write-rights-files` prints them in each `LICENSE.md`;
 an overlay repeats its base's.
 
@@ -116,7 +116,7 @@ still runs `yarn lint`.
 
 A corpus's frozen `TRAINING_SOURCES.json` states what the corpus holds rather than what trained a model: overlays
 merge after `freezeTrainingManifest`, so the effective manifest
-(`packages/corpus/data/training-manifests/<corpus>.effective.json`, `unrecordedSourceStages`) can carry sources the
+(`packages/corpus/data/training-manifests/<corpus>.effective.json`, `unrecordedSourceStages`) can contain sources the
 frozen manifest never names. `PROVENANCE.json`'s `effective_training_sources` reads `null` when a card names no
 `training.corpus_version`, and `provenanceRefusals` reports that gap rather than inventing a join. Read the effective
 manifest before quoting a model's training sources.

@@ -434,6 +434,11 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 			"`gate` is Norwegian for street, so `Karl Johans gate` is the most ordinary address Norway has",
 	],
 	[
+		"packages/codex/lib/gb/designators.ts",
+		"an airport gate is a numbered unit an address states: `Gate 12, Terminal 2, Manchester Airport`",
+	],
+	["packages/codex/lib/designator-tables.test.ts", "the test quotes that board address verbatim"],
+	[
 		"packages/corpus/lib/no/adapters/matrikkelen/adapter.test.ts",
 		"the assertions quote the rendered form of those fixture rows, so they carry the same street types",
 	],
@@ -482,6 +487,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/neural/lib/span/proposal-prior.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.ts", "span proposals name the physical gate"],
 	["packages/core/lib/pipeline/span-proposer.test.ts", "span proposal tests name the physical gate"],
+	[
+		"packages/neural/lib/span/proposer-lexicon.test.ts",
+		"the tests quote a Norwegian street (`Friggs gate 6`) beside an airport gate (`Gate 6, Heathrow Airport`)",
+	],
 	["packages/core/lib/decoder/containment.ts", "containment names the physical gate"],
 	["packages/mailwoman/lib/geocode/result.ts", "the result shape names the physical gate"],
 	[
@@ -527,6 +536,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/mailwoman/data/county-population-ranked.json", "Gates County is a real North Carolina county"],
 	["packages/osm/fixtures/", "OSM fixtures carry tags verbatim, such as aeroway=gate"],
 	[".yarn/", "vendored third-party release"],
+	[
+		"packages/trainer/crates/trainer-export/proto/",
+		"the ONNX project's onnx.proto, whose sharding messages keep their upstream names",
+	],
 ]
 
 /**

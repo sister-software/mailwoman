@@ -24,7 +24,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so the bridge finds
   true regression is **−8.1pp** (97.7 → 89.6). Bridge-INDEPENDENT (89.6 both ways), so an actual
   char-offset-format regression isolated to FR house_number rather than a bridge-off cost. The floor comparison
   floor first understated it — the actual-vs-actual read is what matters. Model held experimental rather than promoted. **Hold promotion** until the FR house_number cause is understood (#560). The
-  bridge-retirement win is real and independent of this.
+  bridge retirement remains independent of this regression.
 
 ## What shipped
 
@@ -44,8 +44,8 @@ a confirmed NO-OP for this model (it never fragments po_box, so the bridge finds
 
 ## What went well
 
-- **Verify-before-assert paid off repeatedly.** The "overlay gap" alarm was real, but I confirmed the
-  mechanism (loader buckets extracts by parquet `source`; an unweighted source's rows train but at the
+- **Verify-before-assert paid off repeatedly.** The "overlay gap" alarm was real, but I checked the loader behavior
+  (it buckets extracts by parquet `source`; an unweighted source's rows train but at the
   wrong sampling weight) before crying wolf. The "2 base adapters missing" alarm was a FALSE alarm.
   They were packed into mixed tail extracts, present and training, same as v4.4.0. Both checks took
   minutes and prevented wrong conclusions.
