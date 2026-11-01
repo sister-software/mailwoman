@@ -30,7 +30,7 @@ import {
 	SPLIT_RETENTION_ATTRIBUTE,
 	type SplitRetentionFile,
 } from "@mailwoman/corpus/tools/overlay/split/attribute"
-import type { ShapeSupplyEntry } from "@mailwoman/corpus/utils/split-retention"
+import type { ShapeSupplyEntry } from "@mailwoman/corpus/utils/retention"
 
 interface ManifestFile {
 	path: string
@@ -49,6 +49,8 @@ const { values: args } = parseArguments({
 		floor: { type: "string" },
 		out: { type: "string" },
 		"limit-files": { type: "string" },
+		"memory-gb": { type: "string" },
+		"temp-dir": { type: "string" },
 	},
 })
 
@@ -102,7 +104,16 @@ const splitsJSONL = scratch.path("splits.jsonl").toString()
 	})
 }
 
-using db = await openDuckDB()
+const memoryLimitBytes = args["memory-gb"] ? Number(args["memory-gb"]) * 1024 ** 3 : undefined
+
+if (memoryLimitBytes !== undefined && !(memoryLimitBytes > 0)) {
+	throw new Error(`--memory-gb takes a positive number; received ${stringifyJSON(args["memory-gb"])}`)
+}
+
+using db = await openDuckDB({
+	...(memoryLimitBytes ? { memoryLimitBytes } : {}),
+	...(args["temp-dir"] ? { temporaryDirectory: args["temp-dir"] } : {}),
+})
 
 await db.run(
 	`CREATE TEMP TABLE splits AS SELECT DISTINCT source_id, split FROM read_json('${escapeSQLString(splitsJSONL)}', format='newline_delimited')`
@@ -110,21 +121,41 @@ await db.run(
 
 const paths = files.map((file) => `'${escapeSQLString(file.path)}'`).join(", ")
 
-const supply = (
+const groupHash = `hash(coalesce(nullif(p.base_source_id, ''), ${recordIDSQL("p.source_id")}))`
+
+// The inner pass emits one row per distinct group per combination per split,
+// so the outer aggregation reads that relation rather than re-hashing 620M rows per CASE.
+const supplyRows = (
 	await db.runAndReadAll(`
-		SELECT
-			p.country AS country,
-			array_to_string(p.span_tags, ' -> ') AS shape,
-			count(DISTINCT hash(coalesce(nullif(p.base_source_id, ''), ${recordIDSQL("p.source_id")})))::BIGINT AS groups,
-			count(DISTINCT CASE WHEN s.split IS NULL THEN hash(coalesce(nullif(p.base_source_id, ''), ${recordIDSQL("p.source_id")})) END)::BIGINT AS trainGroups,
-			count(DISTINCT CASE WHEN s.split = 'val' THEN hash(coalesce(nullif(p.base_source_id, ''), ${recordIDSQL("p.source_id")})) END)::BIGINT AS valGroups,
-			count(DISTINCT CASE WHEN s.split = 'test' THEN hash(coalesce(nullif(p.base_source_id, ''), ${recordIDSQL("p.source_id")})) END)::BIGINT AS testGroups
-		FROM read_parquet([${paths}], union_by_name=true) p
-		LEFT JOIN splits s ON s.source_id = p.source_id
+		WITH per_split AS (
+			SELECT
+				p.country AS country,
+				array_to_string(p.span_tags, ' -> ') AS shape,
+				coalesce(s.split, 'train') AS split,
+				${groupHash} AS group_hash
+			FROM read_parquet([${paths}], union_by_name=true) p
+			LEFT JOIN splits s ON s.source_id = p.source_id
+			GROUP BY ALL
+		)
+		SELECT country, shape,
+			count(DISTINCT group_hash)::BIGINT AS groups,
+			count(DISTINCT CASE WHEN split = 'train' THEN group_hash END)::BIGINT AS trainGroups,
+			count(DISTINCT CASE WHEN split = 'val' THEN group_hash END)::BIGINT AS valGroups,
+			count(DISTINCT CASE WHEN split = 'test' THEN group_hash END)::BIGINT AS testGroups
+		FROM per_split
 		GROUP BY ALL
 		ORDER BY country, shape
 	`)
-).getRowObjectsJson() as unknown as ShapeSupplyEntry[]
+).getRowObjectsJson() as Array<Record<string, unknown>>
+
+const supply: ShapeSupplyEntry[] = supplyRows.map((row) => ({
+	country: String(row["country"]),
+	shape: String(row["shape"]),
+	groups: Number(row["groups"]),
+	trainGroups: Number(row["trainGroups"]),
+	valGroups: Number(row["valGroups"]),
+	testGroups: Number(row["testGroups"]),
+}))
 
 const protectedShapes = supply
 	.filter((entry) => Number(entry.trainGroups) < floor)

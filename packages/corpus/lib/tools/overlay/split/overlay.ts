@@ -21,8 +21,8 @@ import {
 	splitPolicyHash,
 } from "#tools/overlay/split/attribute"
 import type { CanonicalRow } from "#types"
+import type { SplitRetention } from "#utils/retention"
 import { type CountryHoldout, defaultHoldouts, HOLDOUT_COMPONENT_TAGS, type SplitName, splitForRow } from "#utils/split"
-import type { SplitRetention } from "#utils/split-retention"
 
 /**
  * The fields {@linkcode holdoutComponents} reads, with the span triple optional

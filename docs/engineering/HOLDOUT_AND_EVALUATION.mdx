@@ -219,12 +219,13 @@ subject to three rules in this precedence: the retention floor, geographic integ
 
 1. **Retention floor.** A country×shape whose post-holdout training remainder would fall below the floor keeps
    every group in training, and its held-out accuracy is reported as unmeasured until independent evaluation
-   data exists. The floor is registered only after the allocation report of section 4.5 exists over every
-   country, with the newly retained combos inspected; a floor fitted to today's failures would measure the
-   split's defect rather than the distribution. The census of 2026-11-01 measured the candidates: at a floor of
-   10 groups the rule binds on 1,339 country×shape combos; 5 of the 24 combos the v0.8.8-nppes-overlay split
-   removed from training entirely are closure zeros that no training group can render, and the other 19 are
-   render gaps the recipes can close.
+   data exists. The floor is registered at **10 independent groups** (2026-11-01, #2893). The allocation report
+   over v0.8.8-nppes-overlay (`/mnt/mw/audits/2893/supply/allocation-report-floor-10.md`, with
+   `SPLIT_RETENTION.floor-10.json`) measured the registration: 3,975 of 10,345 combinations sit below the floor,
+   retention keeps 997 rendered rows in training that the split held out, and all 24 combinations with zero
+   training groups return to training. A floor of 100 would have unmeasured 1,223 combinations that currently
+   hold evaluation rows; 10 keeps that evaluation loss at 274. The registration followed the census rather than
+   the failures: the candidate table was priced over every country before the value was chosen.
 2. **Launch check.** A country×shape whose total closure supply is under the floor fails the pre-launch audit of
    section 8. Training starts on a corpus that can teach every shape it is asked to learn.
 3. **Proportionality and shortfall.** Where geography prevents the proportional allocation, the allocation
@@ -465,7 +466,7 @@ step rates the preflight reads. The Python trainer's fp32-master pair (#2871) co
 | Pre-launch evaluator rule (P3)                   | An agent rule. Launcher enforcement open                                 |
 | Automatic resume by default                      | Open                                                                     |
 | Shape definitions and closure supply (5.1)       | Specified. Census measured on v0.8.8-nppes-overlay 2026-11-01 (#2893)    |
-| Retention floor and launch check (5.1)           | Specified. The floor's value waits on the allocation report              |
+| Retention floor and launch check (5.1)           | Floor registered at 10 groups (2026-11-01). First split under it is open |
 
 ## 11. What the nine acceptance criteria changed
 

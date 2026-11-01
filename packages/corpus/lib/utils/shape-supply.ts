@@ -9,19 +9,19 @@
  */
 
 import {
+	groupIDOf,
+	SHAPE_SEPARATOR,
+	type ShapeSupplyEntry,
+	type ShapeSupplyRow,
+	type SplitRetention,
+} from "#utils/retention"
+import {
 	type CountryHoldout,
 	defaultHoldouts,
 	hashedHoldoutTrainedPlaces,
 	type SplitName,
 	splitForRow,
 } from "#utils/split"
-import {
-	groupIDOf,
-	SHAPE_SEPARATOR,
-	type ShapeSupplyEntry,
-	type ShapeSupplyRow,
-	type SplitRetention,
-} from "#utils/split-retention"
 
 /**
  * Count every country–shape combination's distinct groups per split under the

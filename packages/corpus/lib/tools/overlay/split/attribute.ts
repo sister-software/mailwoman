@@ -17,8 +17,8 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 
 import { moduleGraphHash } from "#build/code-hash"
+import type { ShapeSupplyEntry, SplitRetention } from "#utils/retention"
 import type { CountryHoldout, SplitName } from "#utils/split"
-import type { ShapeSupplyEntry, SplitRetention } from "#utils/split-retention"
 
 /**
  * The module whose `splitForRow` the policy hash covers, repository-relative.

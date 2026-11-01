@@ -36,8 +36,8 @@ import {
 	type LicenseRefusalKind,
 	type LicenseVerdictCache,
 } from "#utils/license"
+import type { SplitRetention } from "#utils/retention"
 import { SPLIT_NAMES, splitForRow, type CountryHoldout, type SplitName } from "#utils/split"
-import type { SplitRetention } from "#utils/split-retention"
 
 export interface AlignPhaseOptions {
 	/**

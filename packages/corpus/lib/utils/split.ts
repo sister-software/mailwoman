@@ -23,7 +23,7 @@ import { JSONSpliterator } from "spliterator"
 
 import { recordIDOf } from "#adapters/record-id"
 import type { CanonicalRow, LabeledRow } from "#types"
-import { shapeKeyOf, type SplitRetention } from "#utils/split-retention"
+import { shapeKeyOf, type SplitRetention } from "#utils/retention"
 
 /**
  * The name of one corpus split.
