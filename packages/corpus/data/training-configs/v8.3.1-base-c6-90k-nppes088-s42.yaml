@@ -17,12 +17,12 @@
 # Run shape: from scratch, with no `train.init_from`, as arm B. Why: Phase 2 tests one labeled cause, the NPPES unit
 # convention, with the corpus as the only variable.
 #
-# Control: v8.3.0-base-c6-90k-fp32master-s42 and -s43 (#2871), arm B's recipe on v0.8.7-overlay launched on the same
-# trainer. HOLDOUT_AND_EVALUATION.mdx §7.2 judges a corpus change against a control pair on the previous corpus under the
-# same conditions. Arm B is not the control: its seeds stored bf16 weights on torch 2.12.0 and each restarted twice and
-# reread epoch 1, and the trainer at e4f61a70b and a86455742 or later does neither. Launch this pair on the Python
-# trainer, as the control pair. A run of either pair on the Rust trainer (`--trainer rust`) changes the trainer for that
-# pair, and the comparison then needs a control pair on the Rust trainer.
+# Control: arm B's recipe on v0.8.7-overlay, trained by the Rust trainer (`packages/trainer`), seeds 42 and 43. Seed 42
+# is #2887's run 5a0e7d317c73a79e (main at 7483e8adf). Seed 43 is v8.3.0-base-c6-90k-rust-s43, the fp32-master seed 43
+# config with its own output directory. HOLDOUT_AND_EVALUATION.mdx §7.2 judges a corpus change against a control pair
+# on the previous corpus under the same conditions, so this pair also launches on the Rust trainer. The Python
+# fp32-master pair (#2871) is no longer the control: `0466b00d7` deleted the Python trainer. Arm B is no control
+# either: its seeds stored bf16 weights and each restarted twice and reread epoch 1.
 #
 # Prediction (#2869, research record item 9): on the v0.8.8-nppes test split's unit rows, the rate at which a unit
 # designator is split from its number (`huntington ave 302`, unit `ste`) falls from arm B's 24.7 to 28.1 percent toward

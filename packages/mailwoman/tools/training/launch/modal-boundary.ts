@@ -210,7 +210,12 @@ export class SDKModalBoundary implements ModalBoundary {
 			throw new Error("this sandbox needs the named Modal secret; set MAILWOMAN_MODAL_R2_SECRET")
 		}
 
-		const sandbox = await this.#client.sandboxes.create(app, this.#client.images.fromRegistry(spec.registryImage), {
+		// A sandbox's command runs as arguments to the image's entrypoint.
+		// `rclone/rclone` sets its entrypoint to `rclone`, so the image clears it
+		// and `spec.command` runs as the whole command.
+		const image = this.#client.images.fromRegistry(spec.registryImage).dockerfileCommands(["ENTRYPOINT []"])
+
+		const sandbox = await this.#client.sandboxes.create(app, image, {
 			command: spec.command,
 			env: spec.env,
 			cpu: spec.cpu,
