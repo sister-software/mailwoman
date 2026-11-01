@@ -9,7 +9,7 @@ import type { ExpressionSpecification, LayerSpecification } from "maplibre-gl"
 
 import { BuildingLayers } from "#base/buildings"
 import { InfrastructureLayers } from "#base/infrastructure"
-import { OceanCoastLayers, OceanFloorLayers } from "#base/ocean"
+import { LandUnderlayLayers, OceanCoastLayers, OceanLayers } from "#base/ocean"
 import { HillshadeTileSetID } from "#base/terrain"
 import { GuideMapPalette, MailwomanBaseFlavor, MailwomanBaseTileSetID } from "#base/theme"
 import { TreeLayers } from "#base/trees"
@@ -316,41 +316,68 @@ const OneWayArrowLayer: LayerSpecification = {
 
 /**
  * The Protomaps land fill.
- * The ocean floor layers precede it.
+ * The land underlay precedes it.
  */
 const EARTH_FILL_LAYER_ID = "earth"
 
 /**
  * The Protomaps water fill.
- * The coast glow follows it.
+ * The ocean layers precede it and the coast glow follows it.
  */
 const WATER_FILL_LAYER_ID = "water"
 
 /**
+ * The municipal and regional boundary layers, drawn under the ocean fill.
+ */
+const SUB_NATIONAL_BOUNDARY_LAYER_IDS = new Set(["boundaries_band", "boundaries"])
+
+/**
+ * The land fill's color by zoom.
+ *
+ * Up to z7 the generalized land cover draws over the land fill, and its polygons stop short of the coast.
+ * The land fill shows in that gap, so it takes the lawn color there and fades to the
+ * ground color as the land cover fades out between z5 and z7.
+ */
+const earthFillColor: ExpressionSpecification = [
+	"interpolate",
+	["linear"],
+	["zoom"],
+	5,
+	GuideMapPalette.lawn,
+	7,
+	GuideMapPalette.ground,
+]
+
+const subNationalBoundaryLayers = nonLabelLayers.filter((layer) => SUB_NATIONAL_BOUNDARY_LAYER_IDS.has(layer.id))
+
+/**
  * Places the ocean layers around the Protomaps fills.
  *
- * The sea floor draws under the land fill, and the water fill leaves the ocean clear
- * so the depth shading shows.
- * Lakes and rivers keep the water fill.
+ * The ocean fill draws opaque over the land layers, with the depth shading over it.
+ * Municipal and regional boundaries move under the ocean fill, so a city limit drawn out to sea is hidden.
+ * Lakes and rivers keep the Protomaps water fill.
  */
 function withOceanLayers(layer: LayerSpecification): LayerSpecification[] {
-	if (layer.id === EARTH_FILL_LAYER_ID) return [...OceanFloorLayers, layer]
+	if (SUB_NATIONAL_BOUNDARY_LAYER_IDS.has(layer.id)) return []
+
+	if (layer.id === EARTH_FILL_LAYER_ID && layer.type === "fill") {
+		return [...LandUnderlayLayers, { ...layer, paint: { ...layer.paint, "fill-color": earthFillColor } }]
+	}
 
 	if (layer.id !== WATER_FILL_LAYER_ID || layer.type !== "fill") return [layer]
 
-	const oceanClear: LayerSpecification = {
+	const inlandWater: LayerSpecification = {
 		...layer,
-		paint: {
-			...layer.paint,
-			"fill-color": ["case", ["==", ["get", "kind"], "ocean"], "rgba(0, 0, 0, 0)", GuideMapPalette.water],
-		},
+		filter: ["all", ["==", ["geometry-type"], "Polygon"], ["!=", ["get", "kind"], "ocean"]],
+		paint: { ...layer.paint, "fill-color": GuideMapPalette.water },
 	}
 
-	return [oceanClear, ...OceanCoastLayers]
+	return [...subNationalBoundaryLayers, ...OceanLayers, inlandWater, ...OceanCoastLayers]
 }
 
 /**
- * The base map's layer stack, in draw order — terrain, then land cover, then water, then boundaries.
+ * The base map's layer stack, in draw order: land, then the boundaries
+ * and the ocean over them, then roads, buildings and labels.
  */
 export const BaseLayers: LayerSpecification[] = [
 	...nonLabelLayers.flatMap(withOceanLayers),

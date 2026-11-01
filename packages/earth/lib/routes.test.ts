@@ -43,6 +43,23 @@ describe("cameraFromPath", () => {
 		expect(pathWithReadableCamera(new URL("https://earth.mailwoman.ai/@48.4,130.9,3.47z"))).toBeNull()
 	})
 
+	test("reads a negative zoom and replaces it rather than appending a second segment", () => {
+		expect(cameraFromPath("/%4079.3627874%2C-61.1865767%2C-0.08z")).toEqual({
+			center: [-61.1865767, 79.3627874],
+			zoom: -0.08,
+		})
+
+		expect(pathWithCamera(new URL("https://earth.mailwoman.ai/@79.36,-61.18,-0.08z"), [1, 2], 3)).toBe("/@2,1,3z")
+	})
+
+	test("removes both segments of an address that already holds two", () => {
+		const doubled = "/%4079.3627874%2C-61.1865767%2C-0.08z/@33.7342059,138.6297777,8z"
+
+		expect(routeForPath(doubled)).toBe(Route.Geocoder)
+		expect(cameraFromPath(doubled)).toEqual({ center: [138.6297777, 33.7342059], zoom: 8 })
+		expect(pathWithCamera(new URL(`https://earth.mailwoman.ai${doubled}?q=x`), [1, 2], 3)).toBe("/@2,1,3z?q=x")
+	})
+
 	test("refuses a path without a segment or with an out-of-range latitude", () => {
 		expect(cameraFromPath("/")).toBeNull()
 		expect(cameraFromPath("/@139.764,35.6812,16z")).toBeNull()
