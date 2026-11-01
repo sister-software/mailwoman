@@ -156,6 +156,42 @@ describe("US augmentations", () => {
 		expect(out.raw).toBe("2348 GA HIGHWAY 32 E, WRAY, Georgia 317983503")
 	})
 
+	it("stateExpand skips when the expanded name already occurs in the raw (#2893)", () => {
+		// usgov-nad-e5a8f7f2: the street is North Dakota Street.
+		// The expansion leaves align claiming the street's text for the region.
+		const out = stateExpand(
+			baseRow({
+				raw: "109 North DAKOTA Street, TIOGA, ND 58852",
+				components: {
+					house_number: "109",
+					street_prefix: "North",
+					street: "DAKOTA",
+					street_suffix: "Street",
+					locality: "TIOGA",
+					region: "ND",
+					postcode: "58852",
+				},
+			})
+		)
+
+		expect(out).toBeNull()
+	})
+
+	it("stateExpand replaces only the region's occurrence when the street holds the state code", () => {
+		// usgov-nad-413b8f26: the street is KY 6.
+		// Corpora built before the last-occurrence replacement (2026-10-25) rewrote both
+		// and displaced every span.
+		const out = stateExpand(
+			baseRow({
+				raw: "2628 KY 6, BARBOURVILLE, KY 40906",
+				components: { house_number: "2628", street: "KY 6", locality: "BARBOURVILLE", region: "KY", postcode: "40906" },
+			})
+		)!
+
+		expect(out.raw).toBe("2628 KY 6, BARBOURVILLE, Kentucky 40906")
+		expect(out.components.street).toBe("KY 6")
+	})
+
 	it("stateAbbreviate Oregon → OR", () => {
 		const out = stateAbbreviate(
 			baseRow({
@@ -194,6 +230,47 @@ describe("US augmentations", () => {
 		)!
 
 		expect(out.raw).toBe("6220 Salmon St SE")
+	})
+
+	it("directionalExpand leaves a component whose text a sibling holds (#2893)", () => {
+		// usgov-nppes-1952388621: the venue is "U.S.
+		// COAST GUARD" and the street is "U.S.".
+		// The S → South expansion rewrote the venue too, and align moved the tags.
+		const out = directionalExpand(
+			baseRow({
+				raw: "U.S. COAST GUARD, U.S. COAST GUARD, WASHINGTON, DC 205930001",
+				components: {
+					venue: "U.S. COAST GUARD",
+					street: "U.S.",
+					locality: "WASHINGTON",
+					region: "DC",
+					postcode: "205930001",
+				},
+			})
+		)
+
+		expect(out).toBeNull()
+	})
+
+	it("directionalExpand leaves a street whose text the unit shares (#2893)", () => {
+		// usgov-nad-e58481b2: the street is "E" and the trailing unit is "E".
+		const out = directionalExpand(
+			baseRow({
+				raw: "E STREET FLAT CONDOMINIUM, 1124 E Street Northeast E, WASHINGTON, DC 20002",
+				components: {
+					venue: "E STREET FLAT CONDOMINIUM",
+					house_number: "1124",
+					street: "E",
+					street_suffix: "Street Northeast",
+					unit: "E",
+					locality: "WASHINGTON",
+					region: "DC",
+					postcode: "20002",
+				},
+			})
+		)
+
+		expect(out).toBeNull()
 	})
 
 	it("zipPlus4DashDrop 12345-6789 → 123456789", () => {
@@ -364,6 +441,85 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 		expect(AUGMENTATIONS["us-street-suffix-expand"]).toBe(streetSuffixExpand)
 	})
 
+	it("streetSuffixExpand skips when the venue shares the street's text (#2893)", () => {
+		// usgov-hrsa-fqhc-2b8d368528b1: a clinic that shares its street's name.
+		// The rewrite of both occurrences left venue="Hagen St" inside an expanded
+		// "Hagen Street", and align swapped the tags.
+		const out = streetSuffixExpand(
+			baseRow({
+				raw: "Hagen St, 411 Hagen St, Cashton, WI 54619-8031",
+				components: {
+					venue: "Hagen St",
+					house_number: "411",
+					street: "Hagen St",
+					locality: "Cashton",
+					region: "WI",
+					postcode: "54619-8031",
+				},
+			})
+		)
+
+		expect(out).toBeNull()
+	})
+
+	it("streetSuffixAbbreviate skips when the unit shares the street's text (#2893)", () => {
+		// usgov-nad-4ae42d0f: "Daube Ranch" is the street name and repeats as the unit.
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "1300 South DAUBE RANCH Road DAUBE RANCH, JOHNSTON COUNTY, OK 73447",
+				components: {
+					house_number: "1300",
+					street_prefix: "South",
+					street: "DAUBE RANCH",
+					street_suffix: "Road",
+					unit: "DAUBE RANCH",
+					locality: "JOHNSTON COUNTY",
+					region: "OK",
+					postcode: "73447",
+				},
+			})
+		)
+
+		expect(out).toBeNull()
+	})
+
+	it("streetSuffixAbbreviate still fires when no sibling holds the street's text", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "1300 South DAUBE RANCH Road, JOHNSTON COUNTY, OK 73447",
+				components: {
+					house_number: "1300",
+					street_prefix: "South",
+					street: "DAUBE RANCH",
+					street_suffix: "Road",
+					locality: "JOHNSTON COUNTY",
+					region: "OK",
+					postcode: "73447",
+				},
+			})
+		)!
+
+		expect(out.components.street).toBe("DAUBE RNCH")
+	})
+
+	it("streetSuffixAbbreviate skips when a sibling merely contains the street's text", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "1 Park Avenue, Park Avenue Plaza, NY 10001",
+				components: {
+					house_number: "1",
+					street: "Park Avenue",
+					venue: "Park Avenue Plaza",
+					locality: "New York",
+					region: "NY",
+					postcode: "10001",
+				},
+			})
+		)
+
+		expect(out).toBeNull()
+	})
+
 	it("defaultAugmentationsForCountry('US') includes both suffix augmentations", () => {
 		const us = defaultAugmentationsForCountry("US")
 		expect(us).toContain(streetSuffixAbbreviate)
@@ -457,6 +613,46 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 		expect(
 			unitDesignatorExpand(baseRow({ raw: "123 Main St", components: { house_number: "123", street: "Main St" } }))
 		).toBeNull()
+	})
+
+	it("unitDesignatorExpand skips when the venue shares the unit's text (#2893)", () => {
+		// usgov-nad-2e53da72: "RM ENERGY" repeats as the venue.
+		// The expansion rewrote both occurrences, leaving the venue's value inside
+		// the unit's text, and align swapped the tags.
+		const out = unitDesignatorExpand(
+			baseRow({
+				raw: "RM ENERGY, 11196 STATE HIGHWAY 7 RM ENERGY, Ratliff City, OK 73481",
+				components: {
+					venue: "RM ENERGY",
+					house_number: "11196",
+					street: "STATE HIGHWAY 7",
+					unit: "RM ENERGY",
+					locality: "Ratliff City",
+					region: "OK",
+					postcode: "73481",
+				},
+			})
+		)
+
+		expect(out).toBeNull()
+	})
+
+	it("unitDesignatorExpand still fires when no sibling holds the unit's text", () => {
+		const out = unitDesignatorExpand(
+			baseRow({
+				raw: "11196 STATE HIGHWAY 7 RM 7, Ratliff City, OK 73481",
+				components: {
+					house_number: "11196",
+					street: "STATE HIGHWAY 7",
+					unit: "RM 7",
+					locality: "Ratliff City",
+					region: "OK",
+					postcode: "73481",
+				},
+			})
+		)!
+
+		expect(out.components.unit).toBe("ROOM 7")
 	})
 
 	it("AUGMENTATIONS + defaultAugmentationsForCountry('US') include both unit augmentations", () => {

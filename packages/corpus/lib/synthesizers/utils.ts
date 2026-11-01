@@ -347,6 +347,11 @@ export const stateExpand: Augmentation = (row) => {
 	const full = STATE_ABBR_TO_NAME[region]
 
 	if (!full) return null
+
+	// The expanded name already in the raw belongs to another component
+	// (`109 North DAKOTA Street, TIOGA, ND`): align would claim that earlier,
+	// longer occurrence for the region and displace the street's spans (#2893).
+	if (row.raw.toLowerCase().includes(full.toLowerCase())) return null
 	const newRaw = replaceRegionWord(row.raw, region, full)
 
 	if (!newRaw) return null
@@ -405,6 +410,8 @@ export const directionalExpand: Augmentation = (row) => {
 		const v = newComponents[tag]
 
 		if (!v) continue
+
+		if (siblingHoldsValue(newComponents, tag, v)) continue
 		const replaced = v.replaceAll(/\b(N|S|E|W|NE|NW|SE|SW)\b/g, (m) => DIRECTIONAL_ABBR_TO_FULL[m] ?? m)
 
 		if (replaced !== v) {
@@ -435,6 +442,8 @@ export const directionalAbbreviate: Augmentation = (row) => {
 
 		if (!v) continue
 
+		if (siblingHoldsValue(newComponents, tag, v)) continue
+
 		const replaced = v.replaceAll(
 			/\b(North|South|East|West|Northeast|Northwest|Southeast|Southwest)\b/g,
 			(m) => DIRECTIONAL_FULL_TO_ABBR[m] ?? m
@@ -453,6 +462,33 @@ export const directionalAbbreviate: Augmentation = (row) => {
 }
 
 /**
+ * An augmentation rewrites one component's text in `raw`.
+ *
+ * The other component values stay untouched.
+ * When a sibling component holds the same text, such as a venue that repeats its street name
+ * or a unit that repeats it, the rewrite hits the sibling's occurrence too, and `alignRow`
+ * then rebinds the untouched component inside the edited text: `Hagen St, 411 Hagen St` came back with
+ * street and venue swapped, and `RM ENERGY` with the unit claiming the venue's phrase (#2893).
+ *
+ * Returns true when any other component's value equals or contains `value`
+ * (case-insensitive), so the caller skips the augmentation.
+ * The row keeps its other variants.
+ * The colliding variant is never produced.
+ */
+function siblingHoldsValue(components: ComponentDict, editedTag: ComponentTag, value: string): boolean {
+	const folded = value.toLowerCase()
+
+	for (const [tag, v] of Object.entries(components)) {
+		if (tag === editedTag || !v) continue
+		const sibling = v.toLowerCase()
+
+		if (sibling === folded || sibling.includes(folded)) return true
+	}
+
+	return false
+}
+
+/**
  * Abbreviate trailing US street suffix.
  */
 export const streetSuffixAbbreviate: Augmentation = (row) => {
@@ -461,6 +497,8 @@ export const streetSuffixAbbreviate: Augmentation = (row) => {
 	const street = row.components.street
 
 	if (!street) return null
+
+	if (siblingHoldsValue(row.components, "street", street)) return null
 	const match = matchTrailingSuffix(street)
 
 	if (!match) return null
@@ -491,6 +529,8 @@ export const streetSuffixExpand: Augmentation = (row) => {
 	const street = row.components.street
 
 	if (!street) return null
+
+	if (siblingHoldsValue(row.components, "street", street)) return null
 	const match = matchTrailingSuffix(street)
 
 	if (!match) return null
@@ -520,6 +560,8 @@ export const unitDesignatorAbbreviate: Augmentation = (row) => {
 	const unit = row.components.unit
 
 	if (!unit) return null
+
+	if (siblingHoldsValue(row.components, "unit", unit)) return null
 	const match = matchLeadingDesignator(unit)
 
 	if (!match) return null
@@ -550,6 +592,8 @@ export const unitDesignatorExpand: Augmentation = (row) => {
 	const unit = row.components.unit
 
 	if (!unit) return null
+
+	if (siblingHoldsValue(row.components, "unit", unit)) return null
 	const match = matchLeadingDesignator(unit)
 
 	if (!match) return null
