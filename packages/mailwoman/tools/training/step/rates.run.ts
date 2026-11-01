@@ -7,13 +7,13 @@
  *   restart count. Copy a run's logs to the host with `launch.run.ts fetch` first. The seconds-per-100-steps column
  *   is the value `OBSERVED_SECONDS_PER_100_STEPS` records for the run's device and batch size.
  *
- *   Usage: node packages/mailwoman/tools/training/step-rates.run.ts <train_log.csv>...
+ *   Usage: node packages/mailwoman/tools/training/step/rates.run.ts <train_log.csv>...
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { measureTrainLog } from "./step-rates.ts"
+import { measureTrainLog } from "./rates.ts"
 
 const { positionals } = parseArguments({ options: {}, allowPositionals: true })
 

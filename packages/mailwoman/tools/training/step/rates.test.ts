@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { measureTrainLog } from "./step-rates.ts"
+import { measureTrainLog } from "./rates.ts"
 
 describe("measureTrainLog", () => {
 	it("measures an uninterrupted run", () => {

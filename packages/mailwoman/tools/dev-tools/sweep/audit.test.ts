@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { classifyDataDiff, extensionOf, numstatDestination } from "./sweep-data-audit.ts"
+import { classifyDataDiff, extensionOf, numstatDestination } from "./audit.ts"
 
 describe("sweep data audit", () => {
 	it("separates YAML comments from changed keys and values", () => {

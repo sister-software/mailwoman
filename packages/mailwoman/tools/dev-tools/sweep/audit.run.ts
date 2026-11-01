@@ -7,20 +7,14 @@
  *   rewrote a stored string such as a corpus `source` id or a `source_weights` key. The tool reports and does not
  *   judge: a rewritten prose field in a JSON document can be correct.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/sweep-data-audit.run.ts --commit <rev> [--lines 6]
+ *   Usage: node packages/mailwoman/tools/dev-tools/sweep/audit.run.ts --commit <rev> [--lines 6]
  */
 
 import { git } from "@mailwoman/core/git"
 import { integerArgument, parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 import { TextSpliterator } from "spliterator"
 
-import {
-	classifyDataDiff,
-	DATA_EXTENSIONS,
-	type DataDiffReport,
-	extensionOf,
-	numstatDestination,
-} from "./sweep-data-audit.ts"
+import { classifyDataDiff, DATA_EXTENSIONS, type DataDiffReport, extensionOf, numstatDestination } from "./audit.ts"
 
 const { values } = parseArguments({
 	options: {
@@ -29,7 +23,7 @@ const { values } = parseArguments({
 	},
 })
 
-const commit = requiredArgument("sweep-data-audit", "commit", values.commit)
+const commit = requiredArgument("sweep/audit", "commit", values.commit)
 const shownLines = integerArgument("lines", values.lines)
 
 /**

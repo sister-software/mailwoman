@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   This module measures a training run's step rate from its `train_log.csv`. The measured seconds per 100 steps is
- *   the unit `OBSERVED_SECONDS_PER_100_STEPS` in `launch/wall-clock.ts` records.
+ *   the unit `OBSERVED_SECONDS_PER_100_STEPS` in `tools/training/launch/wall-clock.ts` records.
  */
 
 import { TextSpliterator } from "spliterator"
