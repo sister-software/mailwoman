@@ -113,6 +113,7 @@
 		{ "path": "./packages/tile-worker" },
 		{ "path": "./packages/earth" },
 		{ "path": "./packages/earth/tsconfig.test.json" },
+		{ "path": "./packages/earth/tools" },
 		{ "path": "./packages/planetary" },
 		{ "path": "./packages/planetary/tsconfig.test.json" },
 		{ "path": "./packages/opportunity-app" },

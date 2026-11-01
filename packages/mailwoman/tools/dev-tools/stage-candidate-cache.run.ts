@@ -9,7 +9,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
-import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
+import { copyFileTo, createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -24,8 +24,19 @@ const { values } = parseArguments({
 		out: { type: "string" },
 		locales: { type: "string", default: "" },
 		"dry-run": { type: "boolean", default: false },
+		copy: { type: "boolean", default: false },
 	},
 })
+
+/**
+ * Places one file in the cache.
+ *
+ * A symlink is the default.
+ * `--copy` writes a regular file instead, so two staged arms never share an inode: an edit to one
+ * arm's `model-card.json` through a symlink would change every arm linked to the same target.
+ */
+const place = (source: PathBuilder, destination: PathBuilder) =>
+	values.copy ? copyFileTo(source, destination) : createSymbolicLink(source, destination)
 
 const outRoot = values.out
 
@@ -107,7 +118,7 @@ for (const locale of locales) {
 
 	if (!values["dry-run"]) {
 		await makeDirectories(packageDirectory)
-		await createSymbolicLink(manifestPath, packageDirectory("package.json"))
+		await place(manifestPath, packageDirectory("package.json"))
 	}
 
 	for (const name of declared) {
@@ -127,7 +138,7 @@ for (const locale of locales) {
 		linked += 1
 
 		if (!values["dry-run"]) {
-			await createSymbolicLink(source, packageDirectory(name))
+			await place(source, packageDirectory(name))
 		}
 	}
 
@@ -136,7 +147,9 @@ for (const locale of locales) {
 	}
 }
 
-console.log(`${values["dry-run"] ? "would link" : "linked"} ${linked} file(s) across ${locales.length} package(s)`)
+const [verb, pastTense] = values.copy ? ["copy", "copied"] : ["link", "linked"]
+
+console.log(`${values["dry-run"] ? `would ${verb}` : pastTense} ${linked} file(s) across ${locales.length} package(s)`)
 console.log(`  base model: ${modelPath}`)
 console.log(`  base card:  ${cardPath}`)
 console.log(`  cache root: ${outRoot}`)
