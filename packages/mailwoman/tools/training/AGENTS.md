@@ -86,7 +86,7 @@ GiB-hour on 2026-10-31, three times the per-core and per-GiB rates on Modal's pr
 8-CPU, 32 GiB run billed $1.14 of CPU and $0.77 of memory beside $2.10 of A100-40GB, and an hour of #2887's 4-CPU,
 16 GiB run billed exactly half that. At 8 CPUs and 32 GiB the A100-40GB costs $0.072 per 1,000 steps and the A10
 $0.084. A GPU sandbox requests 4 CPUs and 16 GiB: the trainer's resident peak was 7.29 GiB over #2887's
-90,000-step run, and its trainer runs with `--threads 4` unless `--threads` says otherwise.
+90,000-step run, and its trainer runs with `--threads 4` unless the launch passes another `--threads` value.
 
 ## Building the trainer on the host
 

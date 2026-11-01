@@ -223,8 +223,8 @@ subject to three rules in this precedence: the retention floor, geographic integ
    over v0.8.8-nppes-overlay (`/mnt/mw/audits/2893/supply/allocation-report-floor-10.md`, with
    `SPLIT_RETENTION.floor-10.json`) measured the registration: 3,975 of 10,345 combinations sit below the floor,
    retention keeps 997 rendered rows in training that the split held out, and all 24 combinations with zero
-   training groups return to training. A floor of 100 would have unmeasured 1,223 combinations that currently
-   hold evaluation rows; 10 keeps that evaluation loss at 274. The registration followed the census rather than
+   training groups return to training. A floor of 100 would have left 1,223 combinations that currently hold
+   evaluation rows without any. A floor of 10 limits that loss to 274 combinations. The registration followed the census rather than
    the failures: the candidate table was priced over every country before the value was chosen.
 2. **Launch check.** A country×shape whose total closure supply is under the floor fails the pre-launch audit of
    section 8. Training starts on a corpus that can teach every shape it is asked to learn.

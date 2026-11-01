@@ -142,8 +142,9 @@ Options:
                                               a wrong country scope. (default: true)
   \-\-[no\-]fork\-entity                          Probe POI data for exact entities when a fork parse
                                               does not resolve. (default: true)
-  \-\-[no\-]postcode\-shape\-coherence             Exclude a postcode span whose shape no named country's
-                                              syntax accepts. (default: true)
+  \-\-[no\-]postcode\-shape\-coherence             Exclude a postcode span whose shape fits no postcode
+                                              syntax of a country the address mentions. (default:
+                                              true)
   \-\-postcode\-containment\-coherence            Opt into postcode\-centroid locality reranking.
                                               (default: false)
   \-\-[no\-]admin\-containment\-rerank             Region\-qualifier containment reranking of locality
