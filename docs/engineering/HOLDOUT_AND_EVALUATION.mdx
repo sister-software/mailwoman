@@ -197,6 +197,47 @@ last full rebuild. The loader applies the attribute files as row filters at no m
 configuration, 21.2 batches per second on v0.8.1 against 20.6 on v0.8.0. That benchmark covers one loader and
 storage setup and does not establish equivalence under others.
 
+### 5.1 Ordered shapes, closure supply, and the retention floor
+
+The split and every allocation report count addresses by ordered shape, under four definitions versioned here
+(#2893).
+
+1. **Independent group.** One real address record: `coalesce(base_source_id, source_id)`. Every rendered
+   variant of a record shares the group, and the group shares one split assignment. A real-world address present
+   in two sources is two groups until a cross-source dedup exists, and the allocation report lists them.
+2. **Ordered shape.** A row's rendered shape is its exact `span_tags` sequence, consecutive duplicates kept.
+3. **Shape closure.** A group's closure is every order-preserving subset of every rendered sequence the group
+   holds. A sequence of k components reaches 2^k − 1 shapes: `28 Hershberger Ln, Grantsville, MD 21536-1004`
+   reaches its full shape, the same shape without the postcode, and `locality → region`.
+4. **Eligible population and closure supply.** Per country, all groups in the corpus build, collated across
+   sources. A shape's closure supply is the count of groups whose closure contains it. Supply is counted on the
+   closure rather than on rendered rows, because recipes render few permutations: on v0.8.8-nppes-overlay,
+   0.19% of 112,125,570 groups render more than one sequence.
+
+**Retention.** A holdout allocates a country's held-out groups across shapes in proportion to closure supply,
+subject to three rules in this precedence: the retention floor, geographic integrity, proportionality.
+
+1. **Retention floor.** A country×shape whose post-holdout training remainder would fall below the floor keeps
+   every group in training, and its held-out accuracy is reported as unmeasured until independent evaluation
+   data exists. The floor is registered only after the allocation report of section 4.5 exists over every
+   country, with the newly retained combos inspected; a floor fitted to today's failures would measure the
+   split's defect rather than the distribution. The census of 2026-11-01 measured the candidates: at a floor of
+   10 groups the rule binds on 1,339 country×shape combos; 5 of the 24 combos the v0.8.8-nppes-overlay split
+   removed from training entirely are closure zeros that no training group can render, and the other 19 are
+   render gaps the recipes can close.
+2. **Launch check.** A country×shape whose total closure supply is under the floor fails the pre-launch audit of
+   section 8. Training starts on a corpus that can teach every shape it is asked to learn.
+3. **Proportionality and shortfall.** Where geography prevents the proportional allocation, the allocation
+   report states the target share, the actual share and the cause per combo, as section 4.5 already requires of
+   returned places. The census of 2026-11-01 measured the failure the rule prevents: 24 combos held 115 val and
+   test rows with zero training rows, the largest French Polynesia's 69 `street → dependent_locality → postcode
+→ locality` rows, all in Pirae under held-out postcode 98716.
+
+The same definitions cover the Who's On First language permutations: a language rendering is a member of the
+group's closure, so a per-country language shape enters the census, the allocation and the floor like any other
+shape. The census also counts groups whose variants straddle two splits — 1,025,841 on v0.8.8-nppes-overlay,
+against the record-ancestry audit of section 4.4 — so the re-split that applies this section repairs them.
+
 ## 6. Evaluation
 
 ### 6.1 Provenance classes
@@ -423,6 +464,8 @@ step rates the preflight reads. The Python trainer's fp32-master pair (#2871) co
 | Three-run rule (7.2)                             | Adopted 2026-10-31, replacing the two-seed rule. Applied first in #2869  |
 | Pre-launch evaluator rule (P3)                   | An agent rule. Launcher enforcement open                                 |
 | Automatic resume by default                      | Open                                                                     |
+| Shape definitions and closure supply (5.1)       | Specified. Census measured on v0.8.8-nppes-overlay 2026-11-01 (#2893)    |
+| Retention floor and launch check (5.1)           | Specified. The floor's value waits on the allocation report              |
 
 ## 11. What the nine acceptance criteria changed
 
