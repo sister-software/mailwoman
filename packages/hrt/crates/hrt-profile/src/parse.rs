@@ -144,6 +144,11 @@ fn java_parse_double(text: &str) -> Option<f64> {
 	body.parse::<f64>().ok().map(signed)
 }
 
+/// Java's `Double.parseDouble`, with `None` where Java throws `NumberFormatException`.
+pub fn parse_double(text: &str) -> Option<f64> {
+	java_parse_double(text)
+}
+
 /// `Parse.parseDoubleOrNull`: Java's `Double.parseDouble`, else the leading number, else `None`.
 pub fn parse_double_or_null(text: Option<&str>) -> Option<f64> {
 	let text = text?;

@@ -271,7 +271,13 @@ fn compare_layer(features_a: &[DecodedFeature], features_b: &[DecodedFeature]) -
 			.or_else(|| groups_b.keys().find(|key| !groups_a.contains_key(*key)));
 		let a = key.and_then(|key| groups_a.get(key)).map(|group| &group[0].0);
 		let b = key.and_then(|key| groups_b.get(key)).map(|group| &group[0].0);
-		return LayerComparison::Different(first_difference(a, b));
+		let ids = |sorted: &[(Canonical, &DecodedFeature)]| sorted.iter().map(|(c, _)| c.id).collect::<Vec<_>>();
+		return LayerComparison::Different(format!(
+			"{}\n    ids in a: {:?}\n    ids in b: {:?}",
+			first_difference(a, b),
+			ids(&sorted_a),
+			ids(&sorted_b)
+		));
 	}
 	let mut within = 0;
 	for (key, group_a) in &groups_a {

@@ -345,7 +345,7 @@ pub fn process_osm(
 
 /// `Water.postProcess`: lines merged end to end, then nearby polygons unioned.
 pub fn post_process(features: Vec<TileFeature>, counts: &mut SnapCounts) -> Vec<TileFeature> {
-	let features = merge_line_strings(features, 0.5, PIXEL_TOLERANCE, 4.0);
+	let features = merge_line_strings(features, 0.5, PIXEL_TOLERANCE, 4.0, false);
 	merge_nearby_polygons(features, MIN_AREA, MIN_AREA, 0.5, BUFFER, counts)
 }
 

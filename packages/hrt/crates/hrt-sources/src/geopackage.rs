@@ -6,11 +6,10 @@
 
 //! Reading a GeoPackage, possibly zipped, as Planetiler's `GeoPackageReader` reads it.
 //!
-//! Feature tables are read in `gpkg_contents` order. With map bounds, a table with an R-tree index is read through the
-//! same query geopackage-java runs, `minx <= east AND miny <= north AND maxx >= west AND maxy >= south` on the R-tree
-//! table, and each feature is fetched by the id in the order the R-tree returns it; that order decides the running
-//! feature numbers. Other tables are read in row order. Geometry is assumed to be longitude and latitude, as Natural
-//! Earth's is.
+//! Feature tables are read in `gpkg_contents` order. With map bounds, a table with an R-tree index keeps the rows whose
+//! R-tree box meets the bounds, `minx <= east AND miny <= north AND maxx >= west AND maxy >= south`, read in ascending
+//! key order as Planetiler receives them; that order decides the running feature numbers. Other tables are read in row
+//! order. Geometry is assumed to be longitude and latitude, as Natural Earth's is.
 
 use std::io;
 use std::path::{Path, PathBuf};
@@ -123,21 +122,8 @@ pub fn read(path: &Path, source_bounds: Option<[f64; 4]>, mut each: impl FnMut(R
 		let quoted = format!("\"{}\"", table.name);
 		let geometry_index = table.columns.iter().position(|column| *column == table.geometry_column);
 		let select = format!("SELECT * FROM {quoted}");
-		let ids: Option<Vec<i64>> = match (source_bounds, table.indexed) {
-			(Some([west, south, east, north]), true) => {
-				let rtree = format!("\"rtree_{}_{}\"", table.name, table.geometry_column);
-				let mut statement = connection
-					.prepare(&format!(
-						"SELECT id FROM {rtree} WHERE minx <= ?1 AND miny <= ?2 AND maxx >= ?3 AND maxy >= ?4"
-					))
-					.map_err(sql_error)?;
-				let rows = statement
-					.query_map([east, north, west, south], |row| row.get(0))
-					.map_err(sql_error)?
-					.collect::<Result<Vec<i64>, _>>()
-					.map_err(sql_error)?;
-				Some(rows)
-			}
+		let bounded = match (source_bounds, table.indexed) {
+			(Some(bounds), true) => Some(bounds),
 			_ => None,
 		};
 		let mut handle = |row: &rusqlite::Row<'_>| -> io::Result<()> {
@@ -170,18 +156,21 @@ pub fn read(path: &Path, source_bounds: Option<[f64; 4]>, mut each: impl FnMut(R
 			});
 			Ok(())
 		};
-		match ids {
-			Some(ids) => {
-				// geopackage-java fetches each R-tree hit by the table's primary key.
+		match bounded {
+			Some([west, south, east, north]) => {
+				// The rows come back in ascending key order, the order Planetiler numbers them in: on Luxembourg's
+				// bounds its reader yields ne_10m_admin_0_boundary_lines_land fids 67, 69, 70, 76, 77, 147, 207.
 				let key = table.columns.first().cloned().unwrap_or_else(|| "fid".into());
+				let rtree = format!("\"rtree_{}_{}\"", table.name, table.geometry_column);
 				let mut statement = connection
-					.prepare(&format!("{select} WHERE \"{key}\" = ?1"))
+					.prepare(&format!(
+						"{select} WHERE \"{key}\" IN (SELECT id FROM {rtree} \
+						 WHERE minx <= ?1 AND miny <= ?2 AND maxx >= ?3 AND maxy >= ?4) ORDER BY \"{key}\""
+					))
 					.map_err(sql_error)?;
-				for feature_id in ids {
-					let mut rows = statement.query([feature_id]).map_err(sql_error)?;
-					if let Some(row) = rows.next().map_err(sql_error)? {
-						handle(row)?;
-					}
+				let mut rows = statement.query([east, north, west, south]).map_err(sql_error)?;
+				while let Some(row) = rows.next().map_err(sql_error)? {
+					handle(row)?;
 				}
 			}
 			None => {

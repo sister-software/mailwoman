@@ -365,12 +365,17 @@ impl<'a> Collector<'a> {
 		self.input.source.polygon().ok().map(|geometry| Geom::from(&geometry))
 	}
 
+	/// The source as a line: an OSM way's line, or a non-OSM source's own lineal geometry, multi-lines included, as
+	/// Planetiler's `SimpleFeature.line()` returns it.
 	fn line_geometry(&self) -> Option<Geom> {
-		self.input
-			.source
-			.line()
-			.ok()
-			.map(|line| Geom::from(&hrt_osm::Geometry::LineString(line)))
+		let source = self.input.source;
+		match source.line() {
+			Ok(line) => Some(Geom::from(&hrt_osm::Geometry::LineString(line))),
+			Err(_) => match source.world_geometry().ok()? {
+				geometry @ hrt_osm::Geometry::MultiLineString(_) if source.can_be_line() => Some(Geom::from(&geometry)),
+				_ => None,
+			},
+		}
 	}
 
 	/// A feature with an explicit geometry in world coordinates, as Planetiler's `FeatureCollector.geometry`.

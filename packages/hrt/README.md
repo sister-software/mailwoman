@@ -24,9 +24,9 @@ crates as default members, because none of them links libtorch.
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.  |
 
-`hrt-profile` holds eight ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
-polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; and `roads`, `landuse`,
-`infrastructure`, `facilities`, `trees` and `transit`, from OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
+`hrt-profile` holds nine ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
+polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; `boundaries`, from OpenStreetMap
+and Natural Earth; and `roads`, `landuse`, `infrastructure`, `facilities`, `trees` and `transit`, from OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
 the basemap profile the comparisons below use.
 
 `hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
@@ -228,20 +228,27 @@ fork's HEAD, 8bb24b2, because the earlier jar predates the facilities layer.
 
 On 2026-11-02, every tile was equal without a vertex tolerance, and most were byte-identical:
 
-| Layer            | Input                       |  Tiles | Features |  Equal | Byte-identical |
-| ---------------- | --------------------------- | -----: | -------: | -----: | -------------: |
-| `earth`          | `monaco-latest.osm.pbf`     |     48 |       71 |     48 |             25 |
-| `earth`          | `luxembourg-latest.osm.pbf` | 10,585 |   80,468 | 10,585 |         10,579 |
-| `infrastructure` | `monaco-latest.osm.pbf`     |     15 |    1,881 |     15 |             15 |
-| `infrastructure` | `luxembourg-latest.osm.pbf` |  5,856 |  150,462 |  5,856 |          5,851 |
-| `facilities`     | `monaco-latest.osm.pbf`     |      0 |        0 |      0 |              0 |
-| `facilities`     | `luxembourg-latest.osm.pbf` |    220 |      404 |    220 |            220 |
-| `trees`          | `monaco-latest.osm.pbf`     |      9 |    2,192 |      9 |              9 |
-| `trees`          | `luxembourg-latest.osm.pbf` |  3,811 |  621,777 |  3,811 |          3,797 |
-| `roads`          | `monaco-latest.osm.pbf`     |     28 |    2,248 |     28 |             28 |
-| `roads`          | `luxembourg-latest.osm.pbf` |  6,350 |  131,136 |  6,350 |          6,350 |
-| `landuse`        | `monaco-latest.osm.pbf`     |     25 |      547 |     25 |             14 |
-| `landuse`        | `luxembourg-latest.osm.pbf` |  6,757 |  635,928 |  6,757 |            738 |
+| Layer            | Input                       |  Tiles |    Features |  Equal | Byte-identical |
+| ---------------- | --------------------------- | -----: | ----------: | -----: | -------------: |
+| `earth`          | `monaco-latest.osm.pbf`     |     48 |          71 |     48 |             25 |
+| `earth`          | `luxembourg-latest.osm.pbf` | 10,585 |      80,468 | 10,585 |         10,579 |
+| `infrastructure` | `monaco-latest.osm.pbf`     |     15 |       1,881 |     15 |             15 |
+| `infrastructure` | `luxembourg-latest.osm.pbf` |  5,856 |     150,462 |  5,856 |          5,851 |
+| `facilities`     | `monaco-latest.osm.pbf`     |      0 |           0 |      0 |              0 |
+| `facilities`     | `luxembourg-latest.osm.pbf` |    220 |         404 |    220 |            220 |
+| `trees`          | `monaco-latest.osm.pbf`     |      9 |       2,192 |      9 |              9 |
+| `trees`          | `luxembourg-latest.osm.pbf` |  3,811 |     621,777 |  3,811 |          3,797 |
+| `roads`          | `monaco-latest.osm.pbf`     |     28 |       2,248 |     28 |             28 |
+| `roads`          | `luxembourg-latest.osm.pbf` |  6,350 |     131,136 |  6,350 |          6,350 |
+| `landuse`        | `monaco-latest.osm.pbf`     |     25 |         547 |     25 |             14 |
+| `landuse`        | `luxembourg-latest.osm.pbf` |  6,757 |     635,928 |  6,757 |            738 |
+| `boundaries`     | `monaco-latest.osm.pbf`     |     30 | not counted |     30 |             30 |
+| `boundaries`     | `luxembourg-latest.osm.pbf` |  3,782 | not counted |  3,782 |          3,782 |
+
+The boundaries rows read Natural Earth through `ne=` as well. Natural Earth's admin boundary lines are multi-lines, and
+a non-OSM source's multi-line is a line, as Planetiler's `SimpleFeature` treats it. Within map bounds the GeoPackage
+reader returns each table's rows in ascending key order, the order geopackage-java hands Planetiler; all 558 Natural
+Earth records inside Luxembourg's bounds then carry the same running number in both readers.
 
 A tile equal in content but not in bytes holds a polygon whose ring starts at another vertex. Some polygons turn invalid
 when their vertices round to the tile grid, and both builds repair them with a precision reducer: JTS's in Planetiler, GEOS's port in

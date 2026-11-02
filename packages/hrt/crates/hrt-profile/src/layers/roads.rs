@@ -652,7 +652,7 @@ pub fn post_process(zoom: u8, mut features: Vec<TileFeature>, _counts: &mut Snap
 	for feature in &mut features {
 		feature.attributes.retain(|(key, _)| key != "pm:highway");
 	}
-	merge_line_strings(features, 0.5, 0.1, 4.0)
+	merge_line_strings(features, 0.5, 0.1, 4.0, false)
 }
 
 #[cfg(test)]
