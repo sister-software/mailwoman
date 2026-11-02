@@ -13,7 +13,7 @@ import {
 	createGeonamesFeaturesAdapter,
 	GEONAMES_FEATURES_ADAPTER_ID,
 	GEONAMES_FEATURES_PER_CELL,
-} from "#adapters/geonames/features"
+} from "#adapters/geonames/features/adapter"
 import type { CanonicalRow } from "#types"
 
 const fixtures = new AsyncDisposableStack()
