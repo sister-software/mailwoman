@@ -53,5 +53,5 @@ export const PRODUCTION_CONFIG: EarthConfig = {
 	sqliteRuntimeBaseURL: "/sqlite",
 	// The API Worker has no production route yet.
 	geocoderAPIURL: null,
-	underseaFeaturesURL: new URL("https://public.mailwoman.ai/undersea/gebco-2026-11-02/undersea-features.geojson"),
+	underseaFeaturesURL: new URL("https://public.mailwoman.ai/undersea/gebco-2026-11-02/v2/undersea-features.geojson"),
 }

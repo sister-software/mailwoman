@@ -51,6 +51,15 @@ export interface UnderseaFeatureTable {
 	 * The publisher's geometry as GeoJSON text, in WGS 84.
 	 */
 	geometry: string
+	/**
+	 * The depth as a negative elevation in meters, read from the ETOPO1 grid in the terrain tiles, or null.
+	 */
+	depth_m: number | null
+	/**
+	 * `deepest` or `shallowest`: which sample `depth_m` reports.
+	 * Null alongside a null depth.
+	 */
+	depth_kind: string | null
 }
 
 export interface UnderseaDatabase extends layerschemadatabase {
@@ -77,6 +86,8 @@ export async function createUnderseaTables(db: Kysely<UnderseaDatabase>): Promis
 		.addColumn("max_lon", "real", (column) => column.notNull())
 		.addColumn("max_lat", "real", (column) => column.notNull())
 		.addColumn("geometry", "text", (column) => column.notNull())
+		.addColumn("depth_m", "integer")
+		.addColumn("depth_kind", "text")
 		.addPrimaryKeyConstraint("undersea_feature_pk", ["feature_id", "kind"])
 		.execute()
 

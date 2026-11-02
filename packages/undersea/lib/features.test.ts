@@ -27,6 +27,8 @@ const feature = (
 		kind,
 		labelPoint,
 		bbox: [labelPoint[0], labelPoint[1], labelPoint[0], labelPoint[1]],
+		depthM: null,
+		depthKind: null,
 	},
 })
 

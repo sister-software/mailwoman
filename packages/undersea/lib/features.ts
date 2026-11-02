@@ -21,6 +21,12 @@ import type { UnderseaGeometryKind } from "#vocabulary"
 export type UnderseaBBox = [west: number, south: number, east: number, north: number]
 
 /**
+ * Which depth stands for a feature: the deepest sample for a depression such as a deep
+ * or trench, the shallowest for a rise such as a seamount or bank.
+ */
+export type UnderseaDepthKind = "deepest" | "shallowest"
+
+/**
  * The properties of one feature in the browser asset.
  */
 export interface UnderseaFeatureProperties {
@@ -53,6 +59,17 @@ export interface UnderseaFeatureProperties {
 	 */
 	labelPoint: [lon: number, lat: number]
 	bbox: UnderseaBBox
+	/**
+	 * The feature's depth as a negative elevation in meters, read from the ETOPO1 grid in the terrain tiles.
+	 *
+	 * `null` when the generic term has no single depth, such as a fracture zone,
+	 * or no sample lies below sea level.
+	 */
+	depthM: number | null
+	/**
+	 * Which extreme {@link UnderseaFeatureProperties.depthM} reports, or `null` alongside a `null` depth.
+	 */
+	depthKind: UnderseaDepthKind | null
 }
 
 /**

@@ -74,7 +74,21 @@ export const UnderseaLabelLayers: LayerSpecification[] = [
 		minzoom: 5,
 		filter: ["==", ["geometry-type"], "Point"],
 		layout: {
-			"text-field": ["get", "displayName"],
+			// A deep or basin shows its depth on a second, smaller line, such as `-10,763 m`.
+			"text-field": [
+				"case",
+				["!=", ["get", "depthM"], null],
+				[
+					"format",
+					["get", "displayName"],
+					{},
+					"\n",
+					{},
+					["concat", ["number-format", ["get", "depthM"], { locale: "en-US" }], " m"],
+					{ "font-scale": 0.85 },
+				],
+				["get", "displayName"],
+			],
 			"text-font": [MAP_FONT_ITALIC],
 			"text-size": ["interpolate", ["linear"], ["zoom"], 5, 11, 10, 13],
 			"text-max-width": 8,

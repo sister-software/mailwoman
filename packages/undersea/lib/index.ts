@@ -11,6 +11,7 @@ export {
 	type UnderseaAsset,
 	type UnderseaAssetFeature,
 	type UnderseaBBox,
+	type UnderseaDepthKind,
 	type UnderseaFeatureProperties,
 	UnderseaIndex,
 	underseaNameKey,

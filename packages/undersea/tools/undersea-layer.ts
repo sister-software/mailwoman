@@ -37,6 +37,7 @@ import type { UnderseaAsset, UnderseaAssetFeature, UnderseaBBox } from "#feature
 import { underseaNameKey } from "#features"
 import { createUnderseaTables, UNDERSEA_H3_RESOLUTION, type UnderseaDatabase } from "#schema"
 import type { UnderseaDownloadReceipt, UnderseaSourceFeature } from "#sdk/download"
+import { type DepthSampleRequest, depthKindOf } from "#tools/depth"
 import type { UnderseaGeometryKind } from "#vocabulary"
 import {
 	UNDERSEA_ATTRIBUTION,
@@ -77,6 +78,12 @@ export interface UnderseaBuildOptions {
 	createdAt: string
 	buildSHA: string
 	buildCmd: string
+	/**
+	 * Reads each feature's depth from the terrain tiles.
+	 *
+	 * Absent, every depth is `null`, which a test uses to build without the network.
+	 */
+	readDepths?: (requests: ReadonlyArray<DepthSampleRequest | null>) => Promise<Array<number | null>>
 	log?: (line: string) => void
 }
 
@@ -100,6 +107,10 @@ export interface UnderseaBuildResult {
 	 */
 	skipped: Record<UnderseaGeometryKind, number>
 	coverageCells: number
+	/**
+	 * Rows given a depth, out of the rows whose generic term has one.
+	 */
+	depths: { read: number; eligible: number }
 }
 
 /**
@@ -118,6 +129,52 @@ export interface UnderseaReducedRecord {
 	 */
 	assetGeometry: UnderseaAssetFeature["geometry"]
 	sourceGeometry: string
+	/**
+	 * Where the build reads the feature's depth: a point's label point, a line's vertices,
+	 * or a grid of points inside a polygon with its label point.
+	 */
+	depthSamples: Position[]
+}
+
+/**
+ * The most vertices of one line the depth read samples.
+ * A longer line is sampled at even steps.
+ */
+const MAX_LINE_DEPTH_SAMPLES = 120
+
+/**
+ * The grid laid over a polygon's bounding box for its depth samples, per side.
+ */
+const POLYGON_DEPTH_GRID = 6
+
+/**
+ * Up to {@link MAX_LINE_DEPTH_SAMPLES} vertices of a line, at even steps.
+ */
+function lineDepthSamples(line: readonly Position[]): Position[] {
+	const step = Math.max(1, Math.ceil(line.length / MAX_LINE_DEPTH_SAMPLES))
+
+	return line.filter((_, index) => index % step === 0)
+}
+
+/**
+ * The points of a {@link POLYGON_DEPTH_GRID} grid that lie inside the polygon, with its label point.
+ */
+function polygonDepthSamples(rings: Position[][], labelPoint: Position): Position[] {
+	const [west, south, east, north] = bboxOf(rings[0]!)
+	const samples: Position[] = [labelPoint]
+
+	for (let row = 0; row < POLYGON_DEPTH_GRID; row++) {
+		for (let column = 0; column < POLYGON_DEPTH_GRID; column++) {
+			const lon = west + ((column + 0.5) / POLYGON_DEPTH_GRID) * (east - west)
+			const lat = south + ((row + 0.5) / POLYGON_DEPTH_GRID) * (north - south)
+
+			if (pointInPolygon(lon, lat, rings)) {
+				samples.push([lon, lat])
+			}
+		}
+	}
+
+	return samples
 }
 
 const round = (value: number) => Number(value.toFixed(ASSET_COORDINATE_DECIMALS))
@@ -250,6 +307,7 @@ export function reduceUnderseaRecord(
 			labelPoint,
 			bbox: bboxOf(points),
 			assetGeometry: { type: "Point", coordinates: roundPosition(labelPoint) },
+			depthSamples: points,
 		}
 	}
 
@@ -266,6 +324,7 @@ export function reduceUnderseaRecord(
 			labelPoint,
 			bbox: bboxOf(parts.flat()),
 			assetGeometry: { type: "LineString", coordinates: longest.map(roundPosition) },
+			depthSamples: parts.flatMap(lineDepthSamples),
 		}
 	}
 
@@ -282,6 +341,7 @@ export function reduceUnderseaRecord(
 			labelPoint,
 			bbox: bboxOf(polygons.flatMap((polygon) => polygon[0] ?? [])),
 			assetGeometry: { type: "Point", coordinates: roundPosition(labelPoint) },
+			depthSamples: polygonDepthSamples(largest, labelPoint),
 		}
 	}
 
@@ -333,6 +393,38 @@ export async function buildUnderseaLayer(options: UnderseaBuildOptions): Promise
 		}
 	}
 
+	// The service can list one record twice in a layer.
+	// The build keeps the first copy.
+	const unique: UnderseaReducedRecord[] = []
+	const keys = new Set<string>()
+
+	for (const record of records) {
+		const key = `${record.featureID}:${record.kind}`
+
+		if (keys.has(key)) {
+			skipped[record.kind]++
+
+			continue
+		}
+
+		keys.add(key)
+		unique.push(record)
+	}
+
+	const depthKinds = unique.map((record) => depthKindOf(record.genericTerm))
+
+	const requests = unique.map((record, index): DepthSampleRequest | null => {
+		const kind = depthKinds[index]
+
+		return kind ? { positions: record.depthSamples, window: record.kind !== "polygon", kind } : null
+	})
+
+	const depths = options.readDepths ? await options.readDepths(requests) : requests.map(() => null)
+
+	if (depths.length !== unique.length) {
+		throw new Error(`undersea build: the depth read returned ${depths.length} depths for ${unique.length} records`)
+	}
+
 	const tmp = `${options.out}.tmp-${process.pid}`
 
 	await makeDirectories(dirname(options.out))
@@ -342,7 +434,6 @@ export async function buildUnderseaLayer(options: UnderseaBuildOptions): Promise
 	}
 
 	const observed = new Map<number, number>()
-	const keys = new Set<string>()
 
 	try {
 		using db = new DatabaseClient<UnderseaDatabase>(tmp)
@@ -353,24 +444,14 @@ export async function buildUnderseaLayer(options: UnderseaBuildOptions): Promise
 
 		const insert = db.prepare(
 			"INSERT INTO undersea_feature (feature_id, kind, name, generic_term, display_name, name_key, label_lon, " +
-				"label_lat, h3_cell, min_lon, min_lat, max_lon, max_lat, geometry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+				"label_lat, h3_cell, min_lon, min_lat, max_lon, max_lat, geometry, depth_m, depth_kind) " +
+				"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 		)
 
 		db.exec("BEGIN")
 
-		for (const record of records) {
-			const key = `${record.featureID}:${record.kind}`
-
-			// The service can list one record twice in a layer.
-			// The build keeps the first copy.
-			if (keys.has(key)) {
-				skipped[record.kind]++
-
-				continue
-			}
-
-			keys.add(key)
-
+		for (const [index, record] of unique.entries()) {
+			const depth = depths[index] ?? null
 			const [lon, lat] = record.labelPoint
 			const cell = latLngToCell(lat, lon, UNDERSEA_H3_RESOLUTION) as H3Cell
 			const coverageCell = shortCellToInt(cellToParent(cell, UNDERSEA_COVERAGE_RESOLUTION) as H3Cell)
@@ -388,7 +469,9 @@ export async function buildUnderseaLayer(options: UnderseaBuildOptions): Promise
 				lat,
 				shortCellToInt(cell),
 				...record.bbox,
-				record.sourceGeometry
+				record.sourceGeometry,
+				depth,
+				depth === null ? null : (depthKinds[index] ?? null)
 			)
 
 			written[record.kind]++
@@ -427,35 +510,29 @@ export async function buildUnderseaLayer(options: UnderseaBuildOptions): Promise
 	await swapDatabaseIntoPlace(tmp, options.out)
 	await sealDatabase(options.out)
 
-	const seenKeys = new Set<string>()
-
 	const asset: UnderseaAsset = {
 		type: "FeatureCollection",
 		attribution: UNDERSEA_ATTRIBUTION,
 		sourceVintage: receipt.sourceVintage,
-		features: records.flatMap((record) => {
-			const key = `${record.featureID}:${record.kind}`
+		features: unique.map((record, index) => {
+			const depth = depths[index] ?? null
 
-			if (seenKeys.has(key)) return []
-
-			seenKeys.add(key)
-
-			return [
-				{
-					type: "Feature" as const,
-					id: record.featureID,
-					geometry: record.assetGeometry,
-					properties: {
-						featureID: record.featureID,
-						name: record.name,
-						genericTerm: record.genericTerm,
-						displayName: record.displayName,
-						kind: record.kind,
-						labelPoint: roundPosition(record.labelPoint),
-						bbox: record.bbox.map(round) as UnderseaBBox,
-					},
+			return {
+				type: "Feature" as const,
+				id: record.featureID,
+				geometry: record.assetGeometry,
+				properties: {
+					featureID: record.featureID,
+					name: record.name,
+					genericTerm: record.genericTerm,
+					displayName: record.displayName,
+					kind: record.kind,
+					labelPoint: roundPosition(record.labelPoint),
+					bbox: record.bbox.map(round) as UnderseaBBox,
+					depthM: depth,
+					depthKind: depth === null ? null : (depthKinds[index] ?? null),
 				},
-			]
+			}
 		}),
 	}
 
@@ -475,5 +552,9 @@ export async function buildUnderseaLayer(options: UnderseaBuildOptions): Promise
 		written,
 		skipped,
 		coverageCells: observed.size,
+		depths: {
+			read: depths.filter((depth) => depth !== null).length,
+			eligible: depthKinds.filter((kind) => kind !== null).length,
+		},
 	}
 }

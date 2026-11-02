@@ -7765,6 +7765,7 @@ __metadata:
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
+    sharp: "npm:0.35.5"
   languageName: unknown
   linkType: soft
 
