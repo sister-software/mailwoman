@@ -24,9 +24,9 @@ crates as default members, because none of them links libtorch.
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.  |
 
-`hrt-profile` holds eleven ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
+`hrt-profile` holds twelve ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
 polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; `boundaries`, from OpenStreetMap
-and Natural Earth; and `roads`, `buildings`, `places`, `landuse`, `infrastructure`, `facilities`, `trees` and
+and Natural Earth; and `roads`, `buildings`, `places`, `pois`, `landuse`, `infrastructure`, `facilities`, `trees` and
 `transit`, from OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
 the basemap profile the comparisons below use.
 
@@ -248,8 +248,13 @@ On 2026-11-02, every tile was equal without a vertex tolerance, and most were by
 | `places`         | `monaco-latest.osm.pbf`     |     24 | not counted |     24 |             24 |
 | `places`         | `luxembourg-latest.osm.pbf` |  3,434 | not counted |  3,434 |          3,434 |
 
+| `pois` | `monaco-latest.osm.pbf` | 26 | not counted | 26 | 26 |
+| `pois` | `luxembourg-latest.osm.pbf` | 5,853 | not counted | 5,853 | 5,853 |
+
 The places rows read the curated label zooms from the fork's `tiles/src/main/resources/places.csv` through
-`places=`, as the fork reads them from its jar.
+`places=`, as the fork reads them from its jar. The pois rows run with an empty QRank table on both sides, so no POI
+takes a zoom from its page-view rank; `LayerDump.java` passes the empty table because the fork's `Pois` throws on a
+`wikidata` tag when it has none. A production build reads the gzipped `qrank.csv`, which `basemap-test` takes through `qrank=`.
 
 For `buildings`, the counts below include tiles equal within the polygon tolerance:
 

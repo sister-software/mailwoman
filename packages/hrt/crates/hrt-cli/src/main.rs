@@ -7,7 +7,7 @@
 //! Commands:
 //! - `hrt render-test <input.osm.pbf> <output.pmtiles>` builds an archive with the parity profile.
 //! - `hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<borders.json>] [raw]
-//!   [places=<places.csv>] [ne=<gpkg or zip>] [osm-water=<zip>] [osm-land=<zip>]` builds ported layers of the basemap
+//!   [places=<places.csv>] [qrank=<qrank.csv.gz>] [ne=<gpkg or zip>] [osm-water=<zip>] [osm-land=<zip>]` builds ported layers of the basemap
 //!   profile as
 //!   `packages/hrt/parity/LayerDump.java` builds the fork's own. `raw` skips post-processing.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
@@ -55,7 +55,7 @@ fn build(input: &str, extra: &[pipeline::ExtraSource], output: &str, profile: &i
 fn usage() -> ExitCode {
 	eprintln!("usage: hrt render-test <input.osm.pbf> <output.pmtiles>");
 	eprintln!(
-		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>]"
+		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>]"
 	);
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
@@ -93,9 +93,18 @@ fn main() -> ExitCode {
 			let mut layers: Vec<String> = Vec::new();
 			let mut countries = None;
 			let mut wikidata = None;
+			let mut qrank = None;
 			let mut extra = Vec::new();
 			for option in &args[3..] {
-				if let Some(path) = option.strip_prefix("places=") {
+				if let Some(path) = option.strip_prefix("qrank=") {
+					match hrt_profile::layers::pois::QrankDb::from_gzip_csv(&PathBuf::from(path)) {
+						Ok(db) => qrank = Some(db),
+						Err(error) => {
+							eprintln!("could not read {path}: {error}");
+							return ExitCode::FAILURE;
+						}
+					}
+				} else if let Some(path) = option.strip_prefix("places=") {
 					match hrt_profile::layers::places::WikidataConfigs::from_path(&PathBuf::from(path)) {
 						Ok(configs) => wikidata = Some(configs),
 						Err(error) => {
@@ -145,6 +154,9 @@ fn main() -> ExitCode {
 			profile.raw = raw;
 			if let Some(wikidata) = wikidata {
 				profile.wikidata = wikidata;
+			}
+			if let Some(qrank) = qrank {
+				profile.qrank = qrank;
 			}
 			let code = build(&args[1], &extra, &args[2], &profile);
 			eprintln!("merge snapping: {:?}", profile.merge_counts.lock().unwrap());

@@ -84,6 +84,8 @@ extend-ignore-re = [
 	'''viewport-centre''',
 	# The buffer join-style constants of JTS (`BufferParameters.JOIN_MITRE`) and the geos crate (`JoinStyle::Mitre`).
 	'''\bJOIN_MITRE\b|JoinStyle::Mitre\b''',
+	# OpenStreetMap tag values the basemap layers match verbatim (`shop=garden_centre`, `leisure=sports_centre`).
+	'''\b(?:adult_gaming|garden|sports)_centre\b''',
 	'''Licence Ouverte''',
 	'''Open (?:Government |Data )?Licence''',
 	'''Norwegian Licence for Open Government Data''',

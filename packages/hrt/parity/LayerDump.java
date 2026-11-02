@@ -7,7 +7,8 @@
 //
 // Basemap is constructed for the one layer, so its own source routing, relation preprocessing and per-layer
 // post-processing run, at maxzoom 15 as the production build uses. The country coder is the jar's borders.json. No
-// pgf-encoding.zip and no QRank file are registered, so no pgf: name attributes are written and POI ranking is off.
+// pgf-encoding.zip is registered, so no pgf: name attributes are written, and the QRank table is empty, so POI ranking
+// by QRank is off.
 //
 // Run with the basemaps fork's shaded jar on the class path:
 //   java -cp protomaps-basemap-HEAD-with-deps.jar LayerDump.java <layer> <input.osm.pbf> <scratch dir> [threads] \
@@ -16,11 +17,13 @@
 // The archive is written to <scratch dir>/<layer>.pmtiles. With "raw", per-layer post-processing is skipped, so the
 // archive holds the features as rendered, before any merging.
 
+import com.carrotsearch.hppc.LongLongHashMap;
 import com.onthegomap.planetiler.Planetiler;
 import com.onthegomap.planetiler.VectorTile;
 import com.onthegomap.planetiler.config.Arguments;
 import com.protomaps.basemap.Basemap;
 import com.protomaps.basemap.feature.CountryCoder;
+import com.protomaps.basemap.feature.QrankDb;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -47,12 +50,15 @@ public class LayerDump {
     }
 
     var countryCoder = CountryCoder.fromJarResource();
-    Basemap profile = raw ? new Basemap(null, countryCoder, null, layer) {
+    // An empty QRank table: every lookup returns 0, so no POI takes a QRank zoom. A null table would throw on each POI
+    // with a wikidata tag and drop it.
+    var qrank = new QrankDb(new LongLongHashMap());
+    Basemap profile = raw ? new Basemap(qrank, countryCoder, null, layer) {
       @Override
       public List<VectorTile.Feature> postProcessLayerFeatures(String name, int zoom, List<VectorTile.Feature> items) {
         return items;
       }
-    } : new Basemap(null, countryCoder, null, layer);
+    } : new Basemap(qrank, countryCoder, null, layer);
     var planetiler = Planetiler
       .create(Arguments.of("tmpdir", scratch.resolve("tmp").toString(), "threads", threads, "maxzoom", "15"))
       .setProfile(profile)
