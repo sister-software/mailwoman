@@ -1,6 +1,7 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
 import { gitSync } from "@mailwoman/core/git"
+import { FontFamilies } from "@sister.software/theme"
 import { themes as prismThemes } from "prism-react-renderer"
 
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
@@ -227,7 +228,7 @@ const config: Config = {
 		mermaid: {
 			theme: { light: "base", dark: "base" },
 			options: {
-				fontFamily: '"Go Mono Web", "Go Mono Fallback", monospace',
+				fontFamily: FontFamilies.mono,
 				flowchart: { htmlLabels: false, curve: "basis", padding: 18 },
 				themeVariables: { primaryColor: "#ffffff", lineColor: "#373d40" },
 			},

@@ -32,7 +32,8 @@ The stylesheet ships as a standalone file (`@mailwoman/react/styles.css`). It is
 prefix. It reads the Sister Software brand tokens (`--ss-*`, from `@sister.software/theme`) plus
 Mailwoman's own (`--mw-*`), and pulls `tokens.css` in itself, so it renders the same inside Docusaurus
 and standalone. Set `data-theme="dark"` on `<html>` for the dark theme. Load `@mailwoman/react/fonts.css`
-for the Go faces. No component imports CSS, so the bare package import stays safe to load in Node.
+for Archivo display, Go Musubi reading and small caps, Fira Code, and the M PLUS U Japanese companion. Font binaries
+load from `public.sister.software`. No component imports CSS, so the bare package import stays safe to load in Node.
 
 ## Development
 

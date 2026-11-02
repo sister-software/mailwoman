@@ -6788,9 +6788,9 @@ __metadata:
     "@mdx-js/react": "npm:^3.1.1"
     "@playwright/test": "npm:^1.64.1"
     "@protomaps/basemaps": "npm:^5.7.2"
-    "@sister.software/docusaurus-theme": "npm:^14.7.0"
-    "@sister.software/fonts": "npm:^14.7.0"
-    "@sister.software/theme": "npm:^14.7.0"
+    "@sister.software/docusaurus-theme": "npm:^14.8.0"
+    "@sister.software/fonts": "npm:^14.8.0"
+    "@sister.software/theme": "npm:^14.8.0"
     "@storybook/addon-docs": "npm:^10.6.5"
     "@storybook/react-vite": "npm:^10.6.5"
     "@types/node": "npm:^26.6.6"
@@ -7496,8 +7496,8 @@ __metadata:
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
-    "@sister.software/fonts": "npm:^14.7.0"
-    "@sister.software/theme": "npm:^14.7.0"
+    "@sister.software/fonts": "npm:^14.8.0"
+    "@sister.software/theme": "npm:^14.8.0"
     "@storybook/addon-docs": "npm:^10.6.5"
     "@storybook/react-vite": "npm:^10.6.5"
     "@styleframe/core": "npm:^3.7.0"
@@ -7778,9 +7778,9 @@ __metadata:
     "@oxlint/plugins": "npm:1.90.0"
     "@playwright/test": "npm:^1.64.1"
     "@release-it-plugins/workspaces": "npm:^6.0.0"
-    "@sister.software/oxfmt-config": "npm:^14.7.0"
-    "@sister.software/oxlint-config": "npm:^14.7.0"
-    "@sister.software/tsconfig": "npm:^14.7.0"
+    "@sister.software/oxfmt-config": "npm:^14.8.0"
+    "@sister.software/oxlint-config": "npm:^14.8.0"
+    "@sister.software/tsconfig": "npm:^14.8.0"
     "@types/node": "npm:^26.6.6"
     "@types/react": "npm:^19.3.0"
     "@types/regenerate": "npm:^1.4.3"
@@ -10660,65 +10660,65 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/docusaurus-theme@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/docusaurus-theme@npm:14.7.0"
+"@sister.software/docusaurus-theme@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/docusaurus-theme@npm:14.8.0"
   dependencies:
-    "@sister.software/fonts": "npm:^14.7.0"
-    "@sister.software/theme": "npm:^14.7.0"
+    "@sister.software/fonts": "npm:^14.8.0"
+    "@sister.software/theme": "npm:^14.8.0"
     clsx: "npm:^2.1.1"
   peerDependencies:
     "@docusaurus/core": ^3.10.0
     "@docusaurus/theme-classic": ^3.10.0
     "@docusaurus/theme-common": ^3.10.0
     react: ^19.0.0
-  checksum: 10/81f5516e493c41e9e15f4202c2c7df46143fe3e6f366cc4527b9b9ec858d00030e1641bda325c1bb6af70dccb868d60c64ef07053b9ca896c8652a3007259698
+  checksum: 10/ce180a59012d7b53dd82d5abc2fa375d655accefc233c220c5115960149e15439b1431e1dbd4d129349168549611df5958ee10711b2ab6619f1acbb6bd287449
   languageName: node
   linkType: hard
 
-"@sister.software/fonts@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/fonts@npm:14.7.0"
-  checksum: 10/5ec0cdc77a5936594c9a07b1afe9917700dabc08cda85ebff3e01df11f9c83858b7a15064421a0117afca297f899988102f242b0ed8caadb85078886f1c81a94
+"@sister.software/fonts@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/fonts@npm:14.8.0"
+  checksum: 10/8dae27a00431358364225471bf51ff50a61900563b127c54df18473e7c797506db9c1561a5d0726a147de4f76277e1ded6381b61799a09b3ea7a6ba4a0f11b62
   languageName: node
   linkType: hard
 
-"@sister.software/oxfmt-config@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/oxfmt-config@npm:14.7.0"
+"@sister.software/oxfmt-config@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/oxfmt-config@npm:14.8.0"
   peerDependencies:
     oxfmt: ">=0.60.0 <1"
-  checksum: 10/c2497cca3d47b53d61797af30fe78cffa82dbc4fba9fb2dabd8db40b577342c84b8d4510a19489d25eaec19e133eea76554081816025d1f3640ad1e654c4d383
+  checksum: 10/7e69f5b7db727ffbe3a53db4fd846129d5e4249d51c69164232d594d43aa5a31c878d7deb9a079f606a8f33df5f841b7cf47c78a3d287d1dd834f31751e94f7d
   languageName: node
   linkType: hard
 
-"@sister.software/oxlint-config@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/oxlint-config@npm:14.7.0"
+"@sister.software/oxlint-config@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/oxlint-config@npm:14.8.0"
   peerDependencies:
     oxlint: ">=1.75.0 <2"
     oxlint-tsgolint: ">=7.0.2003 <8"
   peerDependenciesMeta:
     oxlint-tsgolint:
       optional: true
-  checksum: 10/183107d8ef17c264cd20c005c795d2436fbb56f2c9d1b8d3040ce3ba1751e116b15ff25d269fc93aa9b2fd538374d74ed09bb1e6088e5dba85df27d895bed451
+  checksum: 10/5ef21a00fbb4de518e4dce199bac0aa9563df5c4b1332ce9dba83886caa460c73e7eb87d90f9448ce6440d2d51672a695d2444e0a9fff93442a193301829df26
   languageName: node
   linkType: hard
 
-"@sister.software/theme@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/theme@npm:14.7.0"
+"@sister.software/theme@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/theme@npm:14.8.0"
   dependencies:
-    "@sister.software/fonts": "npm:^14.7.0"
+    "@sister.software/fonts": "npm:^14.8.0"
     styleframe: "npm:^3.9.1"
-  checksum: 10/3ae091a2ea84479400772c4c1199fe6cfa6e7ee07e9ca5d129ed676f35f804ca22892dc42106ca26a09ba82be673499a5a9ce578202f24e85f352140d4fe5ac8
+  checksum: 10/39cdcd8ec9a2c8095dc399d61dbc5d72e2f05a28afdbd8c265b39602194f383ed018ec32a9b68ee5d1163cb2e8da6add80abdfbf4def63758cd3f1c2982d657f
   languageName: node
   linkType: hard
 
-"@sister.software/tsconfig@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/tsconfig@npm:14.7.0"
-  checksum: 10/3ef0d8dc27930c0bb804d4faa6acb54ac8cf323fbf16f0e4b8e5f5e07b8a884013b475f99d4b0048c80c969bf2dafa4587e00619814e7a4ad5cf8a1c94bd61fb
+"@sister.software/tsconfig@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/tsconfig@npm:14.8.0"
+  checksum: 10/153e1050051d642e4c24999e6754194c681692d9c8ce75c95e29519234d8e8b31fdd688e04667e257e44d7e4faee1d70ca94f9da97f9a0c3596feaa25b3e19e1
   languageName: node
   linkType: hard
 
