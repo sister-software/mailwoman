@@ -20,6 +20,7 @@ use std::collections::{BinaryHeap, HashMap};
 use std::f64::consts::PI;
 
 use hrt_render::geom::java_round;
+use hrt_render::java_math;
 
 type Xy = [f64; 2];
 
@@ -105,8 +106,9 @@ pub struct LineMergerSettings {
 	pub merge_strokes: bool,
 }
 
+/// JTS's `Coordinate.distance`, through Java's `Math.hypot`, so edge lengths compare and order as they do in Java.
 fn distance(a: Xy, b: Xy) -> f64 {
-	(a[0] - b[0]).hypot(a[1] - b[1])
+	java_math::hypot(a[0] - b[0], a[1] - b[1])
 }
 
 fn snap(value: f64) -> f64 {
@@ -242,8 +244,8 @@ impl Graph {
 	fn angle_to(&self, edge: usize, other: usize) -> f64 {
 		let a = &self.edges[edge].coordinates;
 		let b = &self.edges[other].coordinates;
-		let angle = (a[1][1] - a[0][1]).atan2(a[1][0] - a[0][0]);
-		let angle_other = (b[1][1] - b[0][1]).atan2(b[1][0] - b[0][0]);
+		let angle = java_math::atan2(a[1][1] - a[0][1], a[1][0] - a[0][0]);
+		let angle_other = java_math::atan2(b[1][1] - b[0][1], b[1][0] - b[0][0]);
 		normalize(angle - angle_other).abs()
 	}
 

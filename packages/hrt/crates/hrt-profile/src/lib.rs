@@ -9,13 +9,16 @@
 //! `mailwoman/basemaps` fork.
 
 pub mod builder;
+pub mod country;
 pub mod expr;
 pub mod input;
 pub mod layers;
 pub mod line_merger;
+pub mod locales;
 pub mod merge;
 pub mod names;
 pub mod parse;
+pub mod smoothing;
 
 pub use builder::{Attribute, Builder, Collector, CollectorConfig, Emitted};
 pub use input::Input;

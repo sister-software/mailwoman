@@ -6,9 +6,9 @@
 //!
 //! Commands:
 //! - `hrt render-test <input.osm.pbf> <output.pmtiles>` builds an archive with the parity profile.
-//! - `hrt water-test <input.osm.pbf> <output.pmtiles> [raw] [ne=<gpkg or zip>] [osm-water=<zip>]` builds the water
-//!   layer as `packages/hrt/parity/WaterDump.java` does: OpenStreetMap, plus Natural Earth and the prepared ocean
-//!   polygons when given. `raw` skips post-processing.
+//! - `hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<borders.json>] [raw]
+//!   [ne=<gpkg or zip>] [osm-water=<zip>]` builds ported layers of the basemap profile as
+//!   `packages/hrt/parity/LayerDump.java` builds the fork's own. `raw` skips post-processing.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
 //!   `packages/hrt/parity/RenderDump.java`.
 //! - `hrt clock <a.pmtiles> <b.pmtiles> [max details]` compares two archives tile by tile and exits 1 when any tile
@@ -16,13 +16,13 @@
 //! - `hrt record <archive.pmtiles> <out.jsonl>` writes the per-tile parity record: each layer's feature count and the
 //!   digest of its features in the form `clock` compares.
 
+mod basemap_profile;
 mod clock;
 mod merge_probe;
 mod parity_profile;
 mod pipeline;
 mod record;
 mod render_dump;
-mod water_profile;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -53,7 +53,9 @@ fn build(input: &str, extra: &[pipeline::ExtraSource], output: &str, profile: &i
 
 fn usage() -> ExitCode {
 	eprintln!("usage: hrt render-test <input.osm.pbf> <output.pmtiles>");
-	eprintln!("       hrt water-test <input.osm.pbf> <output.pmtiles> [raw] [ne=<path>] [osm-water=<path>]");
+	eprintln!(
+		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [raw] [ne=<path>] [osm-water=<path>]"
+	);
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
 	eprintln!("       hrt record <archive.pmtiles> <out.jsonl>");
@@ -85,12 +87,24 @@ fn main() -> ExitCode {
 				}
 			}
 		}
-		Some("water-test") if args.len() >= 3 => {
+		Some("basemap-test") if args.len() >= 4 => {
 			let mut raw = false;
+			let mut layers: Vec<String> = Vec::new();
+			let mut countries = None;
 			let mut extra = Vec::new();
 			for option in &args[3..] {
 				if option == "raw" {
 					raw = true;
+				} else if let Some(names) = option.strip_prefix("layer=") {
+					layers.extend(names.split(',').map(str::to_owned));
+				} else if let Some(path) = option.strip_prefix("borders=") {
+					match hrt_profile::country::CountryCoder::from_path(&PathBuf::from(path)) {
+						Ok(coder) => countries = Some(coder),
+						Err(error) => {
+							eprintln!("could not read {path}: {error}");
+							return ExitCode::FAILURE;
+						}
+					}
 				} else if let Some(path) = option.strip_prefix("ne=") {
 					extra.push(pipeline::ExtraSource {
 						name: "ne".into(),
@@ -107,10 +121,12 @@ fn main() -> ExitCode {
 					return usage();
 				}
 			}
-			let profile = water_profile::WaterProfile {
-				raw,
-				..water_profile::WaterProfile::default()
+			let names: Vec<&str> = layers.iter().map(String::as_str).collect();
+			let Some(mut profile) = basemap_profile::BasemapProfile::new(&names, countries) else {
+				eprintln!("ported layers: {}", basemap_profile::PORTED_LAYERS.join(", "));
+				return usage();
 			};
+			profile.raw = raw;
 			let code = build(&args[1], &extra, &args[2], &profile);
 			eprintln!("merge snapping: {:?}", profile.merge_counts.lock().unwrap());
 			code

@@ -90,6 +90,42 @@ pub fn parse_long(text: Option<&str>) -> i64 {
 	}
 }
 
+static DISTANCE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+	regex::Regex::new(
+		r#"(?i)(?<value>-?[\d.]+)\s*((?<mi>mi)|(?<m>m|$)|(?<km>km|kilom)|(?<ft>ft|')|(?<in>in|")|(?<nmi>nmi|international nautical mile|nautical))"#,
+	)
+	.unwrap()
+});
+
+/// `Parse.meters`: a length with an optional unit (m, km, mi, nmi, ft or ', in or "), in meters; a bare number is
+/// meters, and a value such as 15'3" adds the inches.
+pub fn meters(text: Option<&str>) -> Option<f64> {
+	let text = text?;
+	let mut matches = DISTANCE.captures_iter(text);
+	let first = matches.next()?;
+	let mut value: f64 = first.name("value")?.as_str().parse().ok()?;
+	if first.name("m").is_some() {
+	} else if first.name("km").is_some() {
+		value *= 1000.0;
+	} else if first.name("mi").is_some() {
+		value *= 1609.344;
+	} else if first.name("nmi").is_some() {
+		value *= 1852.0;
+	} else if first.name("ft").is_some() {
+		value *= 12.0 * 0.0254;
+		if let Some(next) = matches.next() {
+			if next.name("in").is_some() {
+				value += next.name("value")?.as_str().parse::<f64>().ok()? * 0.0254;
+			}
+		}
+	} else if first.name("in").is_some() {
+		value *= 0.0254;
+	} else {
+		return None;
+	}
+	Some(value)
+}
+
 /// `Parse.bool`: false for a missing value, "", "0", "false" or "no", true otherwise.
 pub fn bool(text: Option<&str>) -> bool {
 	!matches!(text, None | Some("" | "0" | "false" | "no"))
@@ -110,5 +146,15 @@ mod tests {
 		assert_eq!(parse_int_or_null(None), None);
 		assert_eq!(parse_long(Some("12m")), 12);
 		assert!(bool(Some("yes")) && !bool(Some("no")) && !bool(Some("")) && !bool(None));
+	}
+
+	#[test]
+	fn lengths_convert_to_meters() {
+		assert_eq!(meters(Some("3.5")), Some(3.5));
+		assert_eq!(meters(Some("2 km")), Some(2000.0));
+		// Java's `value *= 12 * 0.0254` multiplies by the product, which rounds differently from multiplying left to right.
+		assert_eq!(meters(Some("10 ft")), Some(10.0 * (12.0 * 0.0254)));
+		assert_eq!(meters(Some("5'6\"")), Some(5.0 * (12.0 * 0.0254) + 6.0 * 0.0254));
+		assert_eq!(meters(Some("wide")), None);
 	}
 }

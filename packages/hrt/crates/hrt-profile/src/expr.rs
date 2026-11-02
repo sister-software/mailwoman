@@ -30,6 +30,7 @@ pub enum Expr {
 	},
 	Not(Box<Expr>),
 	And(Vec<Expr>),
+	Or(Vec<Expr>),
 	Point,
 	Line,
 	Polygon,
@@ -75,6 +76,7 @@ impl Expr {
 			},
 			Expr::Not(inner) => !inner.evaluate(input),
 			Expr::And(conditions) => conditions.iter().all(|condition| condition.evaluate(input)),
+			Expr::Or(conditions) => conditions.iter().any(|condition| condition.evaluate(input)),
 			Expr::Point => input.is_point(),
 			Expr::Line => input.can_be_line(),
 			Expr::Polygon => input.can_be_polygon(),
@@ -182,9 +184,37 @@ pub struct Index {
 /// The rules that matched a feature, in rule order.
 pub type Matches<'a> = Vec<&'a [(&'static str, Value)]>;
 
+fn same_uses(a: &[(&'static str, Value)], b: &[(&'static str, Value)]) -> bool {
+	a.len() == b.len() && a.iter().all(|entry| b.contains(entry))
+}
+
 impl Index {
+	/// Planetiler's `MultiExpression.ofOrdered`: every rule stays a separate entry in its position.
 	pub fn new(rules: Vec<Rule>) -> Self {
 		Index { rules }
+	}
+
+	/// Planetiler's `MultiExpression.of`: rules whose value maps are equal merge into one entry at the first one's
+	/// position, matching when any of their conditions holds. This moves later rules earlier, which changes which match
+	/// a getter reads last.
+	pub fn of(rules: Vec<Rule>) -> Self {
+		let mut merged: Vec<Rule> = Vec::with_capacity(rules.len());
+		for rule in rules {
+			match merged.iter_mut().find(|existing| same_uses(&existing.uses, &rule.uses)) {
+				Some(existing) => {
+					let previous = std::mem::replace(&mut existing.condition, Expr::True);
+					existing.condition = match previous {
+						Expr::Or(mut conditions) => {
+							conditions.push(rule.condition);
+							Expr::Or(conditions)
+						}
+						other => Expr::Or(vec![other, rule.condition]),
+					};
+				}
+				None => merged.push(rule),
+			}
+		}
+		Index { rules: merged }
 	}
 
 	pub fn matches(&self, input: &Input<'_>) -> Matches<'_> {

@@ -367,6 +367,11 @@ impl<'a> Collector<'a> {
 			.map(|line| Geom::from(&hrt_osm::Geometry::LineString(line)))
 	}
 
+	/// A feature with an explicit geometry in world coordinates, as Planetiler's `FeatureCollector.geometry`.
+	pub fn geometry(&mut self, layer: u32, geometry: Geom) -> &mut Builder {
+		self.start(layer, Some(geometry))
+	}
+
 	/// The source as a polygon, or an empty feature when it cannot be one.
 	pub fn polygon(&mut self, layer: u32) -> &mut Builder {
 		let geometry = self.polygon_geometry();

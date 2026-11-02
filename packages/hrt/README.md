@@ -22,10 +22,17 @@ crates as default members, because none of them links libtorch.
 | `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids. |
 | `hrt-profile` | The basemap profile: the fork's `Matcher` rules, a `FeatureCollector`-style builder, OSM names, merges, and layers.   |
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
-| `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `water-test`, `clock` (the archive comparison) and `record`.    |
+| `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.  |
 
-`hrt-profile` holds one ported layer so far, `water`, from OpenStreetMap, Natural Earth and the prepared ocean polygons.
-`hrt-cli` carries the parity profile and the water-only profile the comparisons below use.
+`hrt-profile` holds two ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean polygons,
+and `roads`, from OpenStreetMap. `hrt-cli` carries the parity profile and the basemap profile the comparisons below use.
+
+`hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
+`atan2`. On 200,000 inputs, Rust's own `hypot` differed from Java's in the last bit for 26,528 (13%). JTS measures
+lengths with `Math.hypot`, and the road smoothing places points with it. A last-bit difference in a smoothed point
+changed which vertex Douglas-Peucker kept in 63 of 6,350 Luxembourg road tiles. With the translations, every probe
+input matched Java's bits. `Math.cos` remains the platform's, because HotSpot replaces it with an intrinsic. Its result
+differed for 456 of the 200,000 inputs; it sets only the smoothing's 6-meter cap, and no tile differed.
 
 `hrt-render` links GEOS, built from source by the `geos` crate's `static` feature, so building it needs cmake and a C++
 compiler. GEOS ports the JTS validity test and precision reducer Planetiler calls when a polygon's rounded form is
@@ -146,16 +153,17 @@ single runs on a shared host; the Phase 0 baseline and `hrt titrate` repeat them
 
 ## Water layer parity
 
-`parity/WaterDump.java` builds an archive of the fork's own `Water` layer class: OpenStreetMap features go through
-`Water.processOsm`, Natural Earth features through `Water.processNe`, the prepared ocean polygons through
-`Water.processPreparedOsm`, and every tile through `Water.postProcess`, at maxzoom 15. `hrt water-test` builds the same
-layer from `hrt-profile`'s port, reading the GeoPackage and the zipped shapefile with `hrt-sources`. With `raw`, both
-skip post-processing, which isolates the line and polygon merges.
+`parity/LayerDump.java` builds an archive of one layer of the fork's own `Basemap` profile at maxzoom 15, so the fork's
+source routing, relation preprocessing and per-layer post-processing all run. For water, OpenStreetMap features go
+through `Water.processOsm`, Natural Earth features through `Water.processNe`, the prepared ocean polygons through
+`Water.processPreparedOsm`, and every tile through `Water.postProcess`. `hrt basemap-test` builds the same layers from
+`hrt-profile`'s port, reading the GeoPackage and the zipped shapefile with `hrt-sources`. With `raw`, both skip
+post-processing, which isolates the line and polygon merges.
 
 ```sh
-java -cp protomaps-basemap-HEAD-with-deps.jar packages/hrt/parity/WaterDump.java input.osm.pbf scratch/ 4 \
+java -cp protomaps-basemap-HEAD-with-deps.jar packages/hrt/parity/LayerDump.java water input.osm.pbf scratch/ 4 \
   ne=natural_earth_vector.gpkg.zip osm-water=water-polygons-split-3857.zip
-cargo run --release -p hrt-cli -- water-test input.osm.pbf water.pmtiles \
+cargo run --release -p hrt-cli -- basemap-test input.osm.pbf water.pmtiles layer=water \
   ne=natural_earth_vector.gpkg.zip osm-water=water-polygons-split-3857.zip
 cargo run --release -p hrt-cli -- clock scratch/water.pmtiles water.pmtiles
 ```
@@ -186,3 +194,26 @@ polygons cover about 93 square pixels once a duplicated input is counted once, s
 inferred to be the JTS buffer fault Planetiler's own comment cites, locationtech/jts#1183, whose fallback Planetiler
 applies only when an input exceeds 100 square pixels. The other two tiles differ in merged polygon vertices, with
 intersection over union 0.9926 and 0.9989.
+
+## Roads layer parity
+
+The roads layer looks up each highway's country in the country-coder border polygons the fork bundles as
+`tiles/src/main/resources/borders.json`, and `basemap-test` reads the same file through `borders=`. `LayerDump.java`
+uses the jar's copy.
+
+```sh
+java -cp protomaps-basemap-HEAD-with-deps.jar packages/hrt/parity/LayerDump.java roads input.osm.pbf scratch/ 4
+cargo run --release -p hrt-cli -- basemap-test input.osm.pbf roads.pmtiles layer=roads borders=borders.json
+cargo run --release -p hrt-cli -- clock scratch/roads.pmtiles roads.pmtiles
+```
+
+On 2026-11-02, every tile was equal without a vertex tolerance:
+
+| Input                       | Tiles | Features | Equal |
+| --------------------------- | ----: | -------: | ----: |
+| `monaco-latest.osm.pbf`     |    28 |    2,248 |    28 |
+| `sf-downtown.osm.pbf`       |    43 |    4,599 |    43 |
+| `luxembourg-latest.osm.pbf` | 6,350 |  131,136 | 6,350 |
+
+Without post-processing, the 6,350 Luxembourg tiles and their 649,223 features were also equal. The Overture
+transportation source of the Java layer is not ported.

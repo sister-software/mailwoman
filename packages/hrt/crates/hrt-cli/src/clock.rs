@@ -255,6 +255,23 @@ fn compare_layer(features_a: &[DecodedFeature], features_b: &[DecodedFeature]) -
 				continue;
 			}
 			let mut text = first_difference(Some(canonical_a), Some(canonical_b));
+			if let Some((part, index)) = canonical_a
+				.parts
+				.iter()
+				.zip(&canonical_b.parts)
+				.enumerate()
+				.find_map(|(part, (pa, pb))| pa.iter().zip(pb).position(|(x, y)| x != y).map(|index| (part, index)))
+			{
+				let window =
+					|points: &[[i32; 2]]| points[index.saturating_sub(2)..(index + 3).min(points.len())].to_vec();
+				let _ = write!(
+					text,
+					"\n    part {part} from vertex {}: {:?}\n                     vs {:?}",
+					index.saturating_sub(2),
+					window(&canonical_a.parts[part]),
+					window(&canonical_b.parts[part])
+				);
+			}
 			if canonical_a.geom_type == 3 {
 				if let Some(m) = measure_polygons(feature_a, feature_b) {
 					let _ = write!(

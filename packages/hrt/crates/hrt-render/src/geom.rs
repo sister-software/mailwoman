@@ -205,10 +205,10 @@ fn polygon_area(polygon: &Polygon) -> f64 {
 	area
 }
 
-/// Returns JTS's `Length.ofLine`: the sum of `hypot` over consecutive points.
+/// Returns JTS's `Length.ofLine`: the sum of Java's `Math.hypot` over consecutive points.
 pub fn line_length(seq: &[Xy]) -> f64 {
 	seq.windows(2)
-		.map(|pair| (pair[1][0] - pair[0][0]).hypot(pair[1][1] - pair[0][1]))
+		.map(|pair| crate::java_math::hypot(pair[1][0] - pair[0][0], pair[1][1] - pair[0][1]))
 		.sum()
 }
 
