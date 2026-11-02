@@ -12,18 +12,20 @@ use hrt_profile::country::CountryCoder;
 use hrt_profile::layers::places::WikidataConfigs;
 use hrt_profile::layers::pois::QrankDb;
 use hrt_profile::layers::{
-	boundaries, buildings, earth, facilities, infrastructure, landuse, places, pois, roads, transit, trees, water,
+	boundaries, buildings, earth, facilities, infrastructure, landcover, landuse, places, pois, roads, transit, trees,
+	water,
 };
 use hrt_profile::{CollectorConfig, Emitted, Input, Profile, TileFeature};
 use hrt_render::snap::SnapCounts;
 
 /// The layers this profile can build, in name order.
-pub const PORTED_LAYERS: [&str; 12] = [
+pub const PORTED_LAYERS: [&str; 13] = [
 	boundaries::LAYER_NAME,
 	buildings::LAYER_NAME,
 	earth::LAYER_NAME,
 	facilities::LAYER_NAME,
 	infrastructure::LAYER_NAME,
+	landcover::LAYER_NAME,
 	landuse::LAYER_NAME,
 	places::LAYER_NAME,
 	pois::LAYER_NAME,
@@ -151,6 +153,14 @@ impl Profile for BasemapProfile {
 				_ => {}
 			}
 		}
+		if let Some(layer) = self.layer_id(landcover::LAYER_NAME) {
+			let input = Input::new(source);
+			match source.source {
+				"landcover" => landcover::process_daylight(&input, layer, &mut out, config),
+				"ne" => landcover::process_ne(&input, layer, &mut out, config),
+				_ => {}
+			}
+		}
 		out
 	}
 
@@ -163,6 +173,7 @@ impl Profile for BasemapProfile {
 			roads::LAYER_NAME => roads::post_process(zoom, features, &mut counts),
 			water::LAYER_NAME => water::post_process(features, &mut counts),
 			earth::LAYER_NAME => earth::post_process(features, &mut counts),
+			landcover::LAYER_NAME => landcover::post_process(features, &mut counts),
 			landuse::LAYER_NAME => landuse::post_process(zoom, features, &mut counts),
 			boundaries::LAYER_NAME => boundaries::post_process(zoom, features, &mut counts),
 			buildings::LAYER_NAME => buildings::post_process(zoom, features, &mut counts),

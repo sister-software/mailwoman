@@ -9,6 +9,7 @@ pub mod buildings;
 pub mod earth;
 pub mod facilities;
 pub mod infrastructure;
+pub mod landcover;
 pub mod landuse;
 pub mod places;
 pub mod pois;

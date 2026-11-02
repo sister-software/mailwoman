@@ -7,8 +7,8 @@
 //! Commands:
 //! - `hrt render-test <input.osm.pbf> <output.pmtiles>` builds an archive with the parity profile.
 //! - `hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<borders.json>] [raw]
-//!   [places=<places.csv>] [qrank=<qrank.csv.gz>] [ne=<gpkg or zip>] [osm-water=<zip>] [osm-land=<zip>]` builds ported layers of the basemap
-//!   profile as
+//!   [places=<places.csv>] [qrank=<qrank.csv.gz>] [ne=<gpkg or zip>] [osm-water=<zip>] [osm-land=<zip>]
+//!   [landcover=<daylight-landcover.gpkg>]` builds ported layers of the basemap profile as
 //!   `packages/hrt/parity/LayerDump.java` builds the fork's own. `raw` skips post-processing.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
 //!   `packages/hrt/parity/RenderDump.java`.
@@ -55,7 +55,7 @@ fn build(input: &str, extra: &[pipeline::ExtraSource], output: &str, profile: &i
 fn usage() -> ExitCode {
 	eprintln!("usage: hrt render-test <input.osm.pbf> <output.pmtiles>");
 	eprintln!(
-		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>]"
+		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>] [landcover=<path>]"
 	);
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
@@ -127,6 +127,12 @@ fn main() -> ExitCode {
 				} else if let Some(path) = option.strip_prefix("ne=") {
 					extra.push(pipeline::ExtraSource {
 						name: "ne".into(),
+						path: path.into(),
+						format: pipeline::SourceFormat::GeoPackage,
+					});
+				} else if let Some(path) = option.strip_prefix("landcover=") {
+					extra.push(pipeline::ExtraSource {
+						name: "landcover".into(),
 						path: path.into(),
 						format: pipeline::SourceFormat::GeoPackage,
 					});

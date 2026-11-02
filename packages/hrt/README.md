@@ -24,10 +24,11 @@ crates as default members, because none of them links libtorch.
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.  |
 
-`hrt-profile` holds twelve ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
-polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; `boundaries`, from OpenStreetMap
-and Natural Earth; and `roads`, `buildings`, `places`, `pois`, `landuse`, `infrastructure`, `facilities`, `trees` and
-`transit`, from OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
+`hrt-profile` holds thirteen of the fork's fourteen layers: `water`, from OpenStreetMap, Natural Earth and the
+prepared ocean polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; `boundaries`, from
+OpenStreetMap and Natural Earth; `landcover`, from the Daylight landcover GeoPackage and Natural Earth; and `roads`,
+`buildings`, `places`, `pois`, `landuse`, `infrastructure`, `facilities`, `trees` and `transit`, from OpenStreetMap.
+The Overture sources, the canopy-raster treetops and the Overture-only `districts` layer are not ported. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
 the basemap profile the comparisons below use.
 
 `hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
@@ -255,6 +256,11 @@ The places rows read the curated label zooms from the fork's `tiles/src/main/res
 `places=`, as the fork reads them from its jar. The pois rows run with an empty QRank table on both sides, so no POI
 takes a zoom from its page-view rank; `LayerDump.java` passes the empty table because the fork's `Pois` throws on a
 `wikidata` tag when it has none. A production build reads the gzipped `qrank.csv`, which `basemap-test` takes through `qrank=`.
+
+The `landcover` layer comes from the Daylight landcover GeoPackage through `landcover=`, plus Natural Earth's
+Antarctic glaciers. Monaco and Luxembourg lie outside both: with Natural Earth only, both builds write an empty
+archive for each. The Daylight path has unit tests and no parity run yet; the GeoPackage is a large download, which
+belongs on the AWS build host.
 
 For `buildings`, the counts below include tiles equal within the polygon tolerance:
 

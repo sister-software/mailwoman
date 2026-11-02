@@ -13,7 +13,7 @@
 // Run with the basemaps fork's shaded jar on the class path:
 //   java -cp protomaps-basemap-HEAD-with-deps.jar LayerDump.java <layer> <input.osm.pbf> <scratch dir> [threads] \
 //     [ne=<natural_earth_vector.gpkg.zip>] [osm-water=<water-polygons-split-3857.zip>] \
-//     [osm-land=<land-polygons-split-3857.zip>] [raw]
+//     [osm-land=<land-polygons-split-3857.zip>] [landcover=<daylight-landcover.gpkg>] [raw]
 // The archive is written to <scratch dir>/<layer>.pmtiles. With "raw", per-layer post-processing is skipped, so the
 // archive holds the features as rendered, before any merging.
 
@@ -36,6 +36,7 @@ public class LayerDump {
     String naturalEarth = null;
     String osmWater = null;
     String osmLand = null;
+    String landcover = null;
     boolean raw = false;
     for (int i = 4; i < args.length; i++) {
       if (args[i].equals("raw")) {
@@ -46,6 +47,8 @@ public class LayerDump {
         osmWater = args[i].substring(10);
       } else if (args[i].startsWith("osm-land=")) {
         osmLand = args[i].substring(9);
+      } else if (args[i].startsWith("landcover=")) {
+        landcover = args[i].substring(10);
       }
     }
 
@@ -71,6 +74,9 @@ public class LayerDump {
     }
     if (osmLand != null) {
       planetiler.addShapefileSource("osm_land", Path.of(osmLand));
+    }
+    if (landcover != null) {
+      planetiler.addGeoPackageSource("landcover", Path.of(landcover), null);
     }
     planetiler.overwriteOutput(scratch.resolve(layer + ".pmtiles")).run();
   }
