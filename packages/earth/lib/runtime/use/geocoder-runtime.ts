@@ -210,14 +210,6 @@ function basemapTileJSONURL(config: EarthConfig): URL {
 }
 
 /**
- * Whether the page loads a `mailwoman/basemaps` build through `?basemap=`
- * rather than the configured basemap.
- */
-export function loadsBasemapBuild(): boolean {
-	return requestedBasemap() !== null
-}
-
-/**
  * Source layers only a `mailwoman/basemaps` build holds.
  *
  * The configured Protomaps tiles lack them, and MapLibre logs an error for every style layer that reads one.
