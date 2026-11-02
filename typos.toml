@@ -85,7 +85,7 @@ extend-ignore-re = [
 	'''Norwegian Licence for Open Government Data''',
 	'''Singapore Open Data Licence''',
 	'''\bINSERTs\b|\bUPDATEs\b|\bATTACHed\b''',
-	'''\b(?:\d+nd(?:Order)?|\d+PN|\d+BA)\b''',
+	'''\b(?:\d+(?:nd|ND)(?:Order)?|\d+PN|\d+BA)\b''',
 	'''\b[0-9a-f]{7,40}\b''',
 	'''St Mary Axe|st mary axe''',
 	'''Generalised Zoning(?: Types)?|generalised-zoning-types|Standardised Zoning Objective''',
