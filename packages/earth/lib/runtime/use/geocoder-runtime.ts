@@ -24,6 +24,7 @@ import {
 	JurisdictionLayers,
 	JurisdictionTileSetID,
 } from "@mailwoman/cartographer/jurisdictions"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import { startEarly } from "@mailwoman/core/promises"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
@@ -68,12 +69,10 @@ import {
 	streetExtractURL,
 } from "mailwoman/browser-runtime/resources"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
-import { addProtocol } from "maplibre-gl"
 // The binary that `onnxruntime-web/wasm` instantiates.
 // Vite emits one file for this import and for the bundle's own reference.
 // The loader's early download is therefore the file the session would request.
 import ortWASMURL from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
-import { Protocol } from "pmtiles"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
@@ -176,41 +175,78 @@ function modelDisabled(): boolean {
 }
 
 /**
- * Returns the basemap source URL: a `pmtiles://` URL when the page URL contains
- * `?basemap=<PMTiles URL>`, and the configured TileJSON otherwise.
- *
- * The parameter loads a candidate basemap build straight from its PMTiles file,
- * before it is published through the tile worker.
+ * A tileset name on the tile worker, as `?basemap=` takes it, such as `tokyo-2026-10-25`.
  */
-function basemapSourceURL(configured: URL): string {
-	const candidate = pageSearchParam("basemap")
+const TILESET_NAME = /^[a-z0-9][a-z0-9._-]*$/u
 
-	if (!candidate) return String(configured)
+/**
+ * The tileset `?basemap=` asks for, or `null` when the page has no such parameter
+ * or its value is not a tileset name.
+ *
+ * A build is served only as XYZ tiles through the tile worker, so the parameter takes a tileset name.
+ * A URL to an archive is refused.
+ */
+function requestedBasemap(): string | null {
+	const name = pageSearchParam("basemap")
 
-	if (!pmtilesProtocolRegistered) {
-		addProtocol("pmtiles", new Protocol().tile)
-		pmtilesProtocolRegistered = true
+	if (name === null) return null
+
+	if (!TILESET_NAME.test(name)) {
+		console.warn(`[mailwoman earth] ?basemap= takes a tile-worker tileset name; ignoring ${stringifyJSON(name)}`)
+
+		return null
 	}
 
-	return `pmtiles://${candidate}`
+	return name
 }
 
-let pmtilesProtocolRegistered = false
+/**
+ * The basemap's TileJSON: the tileset `?basemap=` asks for on the tile worker, or the configured basemap.
+ */
+function basemapTileJSONURL(config: EarthConfig): URL {
+	const name = requestedBasemap()
+
+	return name ? new URL(`${name}.json`, config.tileWorkerURL) : config.basemapTileJSONURL
+}
 
 /**
  * Whether the page loads a `mailwoman/basemaps` build through `?basemap=`
  * rather than the configured basemap.
  */
 export function loadsBasemapBuild(): boolean {
-	return pageSearchParam("basemap") !== null
+	return requestedBasemap() !== null
 }
 
 /**
  * Source layers only a `mailwoman/basemaps` build holds.
  *
  * The configured Protomaps tiles lack them, and MapLibre logs an error for every style layer that reads one.
+ * Their style layers are kept only when the loaded tileset's TileJSON lists
+ * the source layer in `vector_layers`.
  */
 const BUILD_ONLY_SOURCE_LAYERS = new Set(["trees", "infrastructure"])
+
+/**
+ * The source layers a TileJSON lists in `vector_layers`.
+ *
+ * An unreadable TileJSON answers an empty set and logs the failure.
+ * The style then drops the build-only layers.
+ */
+async function readVectorLayers(tileJSONURL: string): Promise<ReadonlySet<string>> {
+	try {
+		const response = await fetch(tileJSONURL)
+
+		if (!response.ok) throw new Error(`${tileJSONURL} answered ${response.status}`)
+
+		const tileJSON = (await response.json()) as { vector_layers?: Array<{ id: string }> }
+
+		return new Set((tileJSON.vector_layers ?? []).map((layer) => layer.id))
+	} catch (error) {
+		console.warn("[mailwoman earth] basemap TileJSON unreadable; drawing without the build-only layers", error)
+
+		return new Set()
+	}
+}
 
 function takeReleasesManifest(): Promise<ReleasesManifest | null> {
 	if (modelDisabled()) return Promise.resolve(null)
@@ -226,10 +262,30 @@ function takeReleasesManifest(): Promise<ReleasesManifest | null> {
  * The composed basemap style both geocoder runtimes render.
  */
 export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
+	const tileJSONURL = useMemo(() => basemapTileJSONURL(config).href, [config])
+
+	// `null` until the TileJSON is read.
+	// The style draws without the build-only layers until then.
+	const [vectorLayers, setVectorLayers] = useState<ReadonlySet<string> | null>(null)
+
+	useEffect(() => {
+		let current = true
+
+		void readVectorLayers(tileJSONURL).then((layers) => {
+			if (current) {
+				setVectorLayers(layers)
+			}
+		})
+
+		return () => {
+			current = false
+		}
+	}, [tileJSONURL])
+
 	return useMemo<MapCanvasStyle>(() => {
 		const style = new StyleSpecificationComposer({
 			sources: {
-				[MailwomanBaseTileSetID]: { type: "vector", url: basemapSourceURL(config.basemapTileJSONURL) },
+				[MailwomanBaseTileSetID]: { type: "vector", url: tileJSONURL },
 				[UnderseaTileSetID]: createUnderseaLabelSource(config.underseaFeaturesURL.href),
 			},
 			// Undersea names draw under the ocean and island labels, so a sea's name wins a collision with a seamount's.
@@ -238,15 +294,17 @@ export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
 			sky: GuideMapSky,
 		}).toJSON()
 
-		if (loadsBasemapBuild()) return style
-
 		return {
 			...style,
-			layers: style.layers.filter(
-				(layer) => !("source-layer" in layer && BUILD_ONLY_SOURCE_LAYERS.has(String(layer["source-layer"])))
-			),
+			layers: style.layers.filter((layer) => {
+				if (!("source-layer" in layer)) return true
+
+				const sourceLayer = String(layer["source-layer"])
+
+				return !BUILD_ONLY_SOURCE_LAYERS.has(sourceLayer) || (vectorLayers?.has(sourceLayer) ?? false)
+			}),
 		}
-	}, [config.basemapTileJSONURL, config.underseaFeaturesURL])
+	}, [tileJSONURL, vectorLayers, config.underseaFeaturesURL])
 }
 
 /**

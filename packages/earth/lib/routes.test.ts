@@ -91,10 +91,10 @@ describe("pathWithCamera", () => {
 		expect(routeForPath(path)).toBe(Route.Geocoder)
 	})
 
-	test("leaves a URL-valued parameter as written", () => {
-		const url = new URL("https://earth.mailwoman.ai/@1,2,3z?basemap=https://public.mailwoman.ai/a.pmtiles")
+	test("leaves the other parameters as written, an encoded slash included", () => {
+		const url = new URL("https://earth.mailwoman.ai/@1,2,3z?basemap=tokyo-2026-10-25&q=a%2Fb")
 
-		expect(pathWithCamera(url, [2, 1], 4)).toBe("/@1,2,4z?basemap=https://public.mailwoman.ai/a.pmtiles")
+		expect(pathWithCamera(url, [2, 1], 4)).toBe("/@1,2,4z?basemap=tokyo-2026-10-25&q=a%2Fb")
 	})
 
 	test("writes a center near zero in fixed-point notation and wraps longitude, as a zoomed-out globe reports", () => {

@@ -20,7 +20,8 @@ export const Basemap = {
 	 */
 	ProtomapsV4: "protomaps-v4",
 	/**
-	 * A `mailwoman/basemaps` regional build, such as `protomaps/builds/japan-2026-10-22.pmtiles`.
+	 * A `mailwoman/basemaps` build, served by the tile worker from `tiles/<name>.pmtiles`
+	 * in `mailwoman-tiles` and loaded by Earth with `?basemap=<name>`.
 	 */
 	MailwomanBuild: "mailwoman-build",
 } as const
