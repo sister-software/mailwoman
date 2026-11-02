@@ -15,7 +15,7 @@ use hrt_e::{encode_tile, LayerBuilder, Value, DEFAULT_EXTENT};
 use hrt_osm::coords::{world_x, world_y};
 use hrt_osm::{header_bounds, pass1, pass2};
 use hrt_pmtiles::{tile_id, ArchiveSummary, Writer, WriterOptions};
-use hrt_profile::{Emitted, Profile, TileFeature};
+use hrt_profile::{Emitted, Profile, TileFeature, TileLayers};
 use hrt_render::commands::unscale;
 use hrt_render::{GeometryType, RenderConfig, RenderCounts, Renderer};
 use hrt_sort::key::{layer_of, tile_of};
@@ -48,9 +48,9 @@ fn encode(entries: &[(u64, Vec<u8>)], profile: &impl Profile) -> io::Result<Opti
 	let Some(&(first_key, _)) = entries.first() else {
 		return Ok(None);
 	};
-	let (zoom, _, _) = hrt_pmtiles::tile_id_to_zxy(tile_of(first_key));
+	let (zoom, tile_x, tile_y) = hrt_pmtiles::tile_id_to_zxy(tile_of(first_key));
 	let layer_names = profile.layers();
-	let mut by_layer: Vec<(&str, Vec<TileFeature>)> = Vec::new();
+	let mut by_layer: TileLayers = Vec::new();
 	for (key, value) in entries {
 		let name = layer_names[layer_of(*key) as usize];
 		let record =
@@ -66,6 +66,7 @@ fn encode(entries: &[(u64, Vec<u8>)], profile: &impl Profile) -> io::Result<Opti
 		}
 	}
 	by_layer.sort_by(|a, b| a.0.cmp(b.0));
+	let by_layer = profile.post_process_tile(zoom, tile_x, tile_y, by_layer);
 
 	let mut layers = Vec::with_capacity(by_layer.len());
 	for (name, features) in by_layer {

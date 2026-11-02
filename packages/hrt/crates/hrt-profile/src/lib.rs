@@ -9,6 +9,7 @@
 //! `mailwoman/basemaps` fork.
 
 pub mod builder;
+pub mod clip;
 pub mod country;
 pub mod expr;
 pub mod input;
@@ -37,6 +38,9 @@ pub struct TileFeature {
 	pub attributes: Vec<(String, Value)>,
 }
 
+/// One tile's features by layer name.
+pub type TileLayers = Vec<(&'static str, Vec<TileFeature>)>;
+
 /// What a build needs from a profile.
 pub trait Profile: Sync {
 	/// The layer names, indexed by the layer ids features carry; tiles write layers in name order regardless.
@@ -49,6 +53,11 @@ pub trait Profile: Sync {
 	}
 	/// Maps one source feature to the features it emits.
 	fn process(&self, source: &SourceFeature<'_>) -> Vec<Emitted>;
+	/// Rewrites a whole tile's layers, in name order, as Planetiler's `postProcessTileFeatures` does. It runs before
+	/// [`Profile::post_process`], and a layer it leaves without features is dropped.
+	fn post_process_tile(&self, _z: u8, _x: u32, _y: u32, layers: TileLayers) -> TileLayers {
+		layers
+	}
 	/// Rewrites one layer's features in one tile, as Planetiler's `postProcessLayerFeatures` does.
 	fn post_process(&self, _layer: &str, _zoom: u8, features: Vec<TileFeature>) -> Vec<TileFeature> {
 		features

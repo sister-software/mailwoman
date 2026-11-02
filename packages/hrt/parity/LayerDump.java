@@ -13,17 +13,21 @@
 // Run with the basemaps fork's shaded jar on the class path:
 //   java -cp protomaps-basemap-HEAD-with-deps.jar LayerDump.java <layer> <input.osm.pbf> <scratch dir> [threads] \
 //     [ne=<natural_earth_vector.gpkg.zip>] [osm-water=<water-polygons-split-3857.zip>] \
-//     [osm-land=<land-polygons-split-3857.zip>] [landcover=<daylight-landcover.gpkg>] [raw]
+//     [osm-land=<land-polygons-split-3857.zip>] [landcover=<daylight-landcover.gpkg>] [clip=<polygon.geojson>] \
+//     [clip-buffer=<pixels>] [raw]
 // The archive is written to <scratch dir>/<layer>.pmtiles. With "raw", per-layer post-processing is skipped, so the
-// archive holds the features as rendered, before any merging.
+// archive holds the features as rendered, before any merging. With "clip", the fork's Clip clips every tile to the
+// polygon, as Basemap's --clip and --clip-buffer do.
 
 import com.carrotsearch.hppc.LongLongHashMap;
 import com.onthegomap.planetiler.Planetiler;
 import com.onthegomap.planetiler.VectorTile;
 import com.onthegomap.planetiler.config.Arguments;
+import com.onthegomap.planetiler.stats.Stats;
 import com.protomaps.basemap.Basemap;
 import com.protomaps.basemap.feature.CountryCoder;
 import com.protomaps.basemap.feature.QrankDb;
+import com.protomaps.basemap.postprocess.Clip;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -37,6 +41,8 @@ public class LayerDump {
     String osmWater = null;
     String osmLand = null;
     String landcover = null;
+    String clipPath = null;
+    double clipBuffer = Clip.DEFAULT_BUFFER;
     boolean raw = false;
     for (int i = 4; i < args.length; i++) {
       if (args[i].equals("raw")) {
@@ -49,6 +55,10 @@ public class LayerDump {
         osmLand = args[i].substring(9);
       } else if (args[i].startsWith("landcover=")) {
         landcover = args[i].substring(10);
+      } else if (args[i].startsWith("clip=")) {
+        clipPath = args[i].substring(5);
+      } else if (args[i].startsWith("clip-buffer=")) {
+        clipBuffer = Double.parseDouble(args[i].substring(12));
       }
     }
 
@@ -56,12 +66,15 @@ public class LayerDump {
     // An empty QRank table: every lookup returns 0, so no POI takes a QRank zoom. A null table would throw on each POI
     // with a wikidata tag and drop it.
     var qrank = new QrankDb(new LongLongHashMap());
-    Basemap profile = raw ? new Basemap(qrank, countryCoder, null, layer) {
+    // As Basemap's main builds it: zooms 0 through the build's maxzoom, buffered.
+    Clip clip = clipPath == null ? null :
+      Clip.fromGeoJSONFile(Stats.inMemory(), 0, 15, true, clipBuffer, Path.of(clipPath));
+    Basemap profile = raw ? new Basemap(qrank, countryCoder, clip, layer) {
       @Override
       public List<VectorTile.Feature> postProcessLayerFeatures(String name, int zoom, List<VectorTile.Feature> items) {
         return items;
       }
-    } : new Basemap(qrank, countryCoder, null, layer);
+    } : new Basemap(qrank, countryCoder, clip, layer);
     var planetiler = Planetiler
       .create(Arguments.of("tmpdir", scratch.resolve("tmp").toString(), "threads", threads, "maxzoom", "15"))
       .setProfile(profile)

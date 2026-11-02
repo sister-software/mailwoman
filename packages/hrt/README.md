@@ -303,3 +303,43 @@ between the two implementations on islands is unmeasured.
 
 Both builds write a header zoom range of 0 to 15 whichever zooms hold tiles. The header center differs: Planetiler
 writes the middle of the bounds at a zoom fitted to them, and `hrt` writes zoom 0 at 0, 0.
+
+## Clip parity
+
+`hrt-profile`'s `clip` module ports the fork's `Clip` tile post-processor, which Basemap's `--clip` and
+`--clip-buffer` register. `basemap-test` and `LayerDump.java` take `clip=<polygon.geojson>` and `clip-buffer=<pixels>`.
+As in Planetiler, the clip runs on a whole tile before each layer's post-processing. The rows below clip to a
+pentagon with a rectangular hole across Luxembourg, and to a quadrilateral across Monaco, both with the default
+4-pixel buffer:
+
+| Input      | Layer          | Tiles | Equal | Byte-identical | Lines joined differently | Other differences |
+| ---------- | -------------- | ----: | ----: | -------------: | -----------------------: | ----------------: |
+| Monaco     | roads          |    23 |    19 |             19 |                        4 |                 0 |
+| Monaco     | earth          |    10 |    10 |             10 |                        0 |                 0 |
+| Monaco     | pois           |    18 |    18 |             18 |                        0 |                 0 |
+| Monaco     | buildings      |    19 |    19 |              0 |                        0 |                 0 |
+| Luxembourg | roads          | 4,123 | 4,114 |          4,114 |                        9 |                 0 |
+| Luxembourg | infrastructure | 3,799 | 3,717 |          3,654 |                       82 |                 0 |
+| Luxembourg | buildings      | 3,392 | 3,388 |          2,720 |                        0 |                 4 |
+| Luxembourg | landuse        | 4,213 | 4,212 |            304 |                        0 |                 1 |
+| Luxembourg | pois           | 3,852 | 3,852 |          3,852 |                        0 |                 0 |
+| Luxembourg | places         | 2,237 | 2,237 |          2,237 |                        0 |                 0 |
+| Luxembourg | trees          | 2,504 | 2,504 |          2,339 |                        0 |                 0 |
+| Luxembourg | facilities     |   151 |   151 |            151 |                        0 |                 0 |
+
+A line clipped by a polygon comes back from OverlayNG in pieces in JTS 1.20, whose `LineBuilder` writes each noded
+edge as its own line, and as maximal lines in GEOS, whose `LineBuilder` joins edges through nodes where only two meet.
+`Clip` writes each piece as a feature, so a road can reach the roads line merger as two features in Java and one in
+`hrt`, and the merged line then keeps another piece's id. `hrt clock` counts a differing tile whose line features
+with each attribute map cover the same segments as joined differently. `hrt` keeps GEOS's maximal lines.
+
+The four other building differences are the zoom-12 block merges of the unclipped run. The landuse difference is a
+Planetiler defect. Its `TileArchiveWriter` reuses the previous tile's encoded bytes when a tile's features before
+post-processing equal the previous tile's, which skips `Clip` for the second tile. Tiles 15/16962/11129 and
+15/16962/11130 each hold the same forest filling the whole tile, and Java wrote the first tile's clipped forest into
+both. Planetiler's own slicer, run on the buffered clip with the fork's jar, gives 15/16962/11130 the same clip piece
+as `hrt`, and `hrt`'s tile holds the forest clipped to that piece.
+
+Four equal landuse tiles hold the same features in another order. In the three `hrt clock` printed, the first feature
+out of order is a forest relation that the clip split into several polygons, which suggests GEOS's overlay lists a
+multipolygon's members in a different order from JTS's; that cause is not yet tested.

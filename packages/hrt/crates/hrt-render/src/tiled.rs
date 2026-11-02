@@ -84,6 +84,11 @@ pub struct Tiled {
 }
 
 impl Tiled {
+	/// Returns whether the geometry touches or fills tile (`x`, `y`), as Planetiler's `getCoveredTiles` admits it.
+	pub fn covers(&self, x: i32, y: i32) -> bool {
+		self.tiles.contains_key(&(x, y)) || self.filled.get(&x).is_some_and(|rows| rows.contains(y))
+	}
+
 	/// Returns the tiles that lie wholly inside the polygon and carry no clipped geometry, by x then y.
 	pub fn filled_tiles(&self) -> Vec<(i32, i32)> {
 		let Some(extents) = self.extents else {

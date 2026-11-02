@@ -8,8 +8,10 @@
 //! - `hrt render-test <input.osm.pbf> <output.pmtiles>` builds an archive with the parity profile.
 //! - `hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<borders.json>] [raw]
 //!   [places=<places.csv>] [qrank=<qrank.csv.gz>] [ne=<gpkg or zip>] [osm-water=<zip>] [osm-land=<zip>]
-//!   [landcover=<daylight-landcover.gpkg>]` builds ported layers of the basemap profile as
-//!   `packages/hrt/parity/LayerDump.java` builds the fork's own. `raw` skips post-processing.
+//!   [landcover=<daylight-landcover.gpkg>] [clip=<polygon.geojson>] [clip-buffer=<pixels>]` builds ported layers of
+//!   the basemap profile as `packages/hrt/parity/LayerDump.java` builds the fork's own. `raw` skips post-processing,
+//!   and `clip` clips every tile to the polygon, buffered by `clip-buffer` (default 4) pixels of a 256-pixel tile as a
+//!   fraction of the polygon's larger side.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
 //!   `packages/hrt/parity/RenderDump.java`.
 //! - `hrt clock <a.pmtiles> <b.pmtiles> [max details]` compares two archives tile by tile and exits 1 when any tile
@@ -55,7 +57,7 @@ fn build(input: &str, extra: &[pipeline::ExtraSource], output: &str, profile: &i
 fn usage() -> ExitCode {
 	eprintln!("usage: hrt render-test <input.osm.pbf> <output.pmtiles>");
 	eprintln!(
-		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>] [landcover=<path>]"
+		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>] [landcover=<path>] [clip=<path>] [clip-buffer=<pixels>]"
 	);
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
@@ -95,8 +97,20 @@ fn main() -> ExitCode {
 			let mut wikidata = None;
 			let mut qrank = None;
 			let mut extra = Vec::new();
+			let mut clip_path = None;
+			let mut clip_buffer = hrt_profile::clip::DEFAULT_BUFFER;
 			for option in &args[3..] {
-				if let Some(path) = option.strip_prefix("qrank=") {
+				if let Some(path) = option.strip_prefix("clip=") {
+					clip_path = Some(PathBuf::from(path));
+				} else if let Some(text) = option.strip_prefix("clip-buffer=") {
+					match text.parse::<f64>() {
+						Ok(value) if value >= 0.0 => clip_buffer = value,
+						_ => {
+							eprintln!("clip-buffer must be a number >= 0, but was {text}");
+							return ExitCode::FAILURE;
+						}
+					}
+				} else if let Some(path) = option.strip_prefix("qrank=") {
 					match hrt_profile::layers::pois::QrankDb::from_gzip_csv(&PathBuf::from(path)) {
 						Ok(db) => qrank = Some(db),
 						Err(error) => {
@@ -158,6 +172,15 @@ fn main() -> ExitCode {
 				return usage();
 			};
 			profile.raw = raw;
+			if let Some(path) = clip_path {
+				match hrt_profile::clip::Clip::from_geojson_file(0, basemap_profile::MAX_ZOOM, clip_buffer, &path) {
+					Ok(clip) => profile.clip = Some(clip),
+					Err(error) => {
+						eprintln!("could not build the clip from {}: {error}", path.display());
+						return ExitCode::FAILURE;
+					}
+				}
+			}
 			if let Some(wikidata) = wikidata {
 				profile.wikidata = wikidata;
 			}
@@ -166,6 +189,9 @@ fn main() -> ExitCode {
 			}
 			let code = build(&args[1], &extra, &args[2], &profile);
 			eprintln!("merge snapping: {:?}", profile.merge_counts.lock().unwrap());
+			if let Some(clip) = &profile.clip {
+				eprintln!("clip failures: {:?}", clip.failures);
+			}
 			code
 		}
 		Some("render-dump") if args.len() == 2 => {
@@ -213,6 +239,12 @@ fn main() -> ExitCode {
 						report.different,
 						report.features_compared
 					);
+					if report.lines_joined_differently > 0 {
+						println!(
+							"different tiles whose layers differ only in how line pieces are joined: {}",
+							report.lines_joined_differently
+						);
+					}
 					for text in report.first_byte_difference.values() {
 						println!("first equal tile at its zoom whose bytes differ: {text}");
 					}

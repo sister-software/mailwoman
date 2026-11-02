@@ -124,6 +124,8 @@ pub struct ClockReport {
 	/// Polygons that differed in their rings and agreed within the polygon tolerance.
 	pub polygons_within_tolerance: usize,
 	pub different: usize,
+	/// Tiles counted in `different` whose layers differ only in how line pieces are joined into features.
+	pub lines_joined_differently: usize,
 	pub order_only: usize,
 	pub features_compared: usize,
 	pub details: Vec<String>,
@@ -330,6 +332,38 @@ fn compare_layer(features_a: &[DecodedFeature], features_b: &[DecodedFeature]) -
 	LayerComparison::WithinTolerance(within)
 }
 
+type Segment = ([i32; 2], [i32; 2]);
+
+/// Returns whether two layers differ only in how line pieces are joined: their other features are equal, and the line
+/// features with each attribute map cover the same segments, each counted once per occurrence and taken in either
+/// direction.
+///
+/// Feature ids are left out of the line comparison, because a line merge keeps the id of the first piece in its group,
+/// and pieces joined differently start groups with different pieces.
+fn lines_join_differently(features_a: &[DecodedFeature], features_b: &[DecodedFeature]) -> bool {
+	let split = |features: &[DecodedFeature]| {
+		let mut others: Vec<Canonical> = Vec::new();
+		let mut segments: BTreeMap<Vec<(String, String)>, Vec<Segment>> = BTreeMap::new();
+		for feature in features {
+			let canonical = canonical(feature);
+			if canonical.geom_type != 2 {
+				others.push(canonical);
+				continue;
+			}
+			let entry = segments.entry(canonical.attributes).or_default();
+			for part in &canonical.parts {
+				for pair in part.windows(2) {
+					entry.push((pair[0].min(pair[1]), pair[0].max(pair[1])));
+				}
+			}
+		}
+		others.sort();
+		segments.values_mut().for_each(|list| list.sort_unstable());
+		(others, segments)
+	};
+	split(features_a) == split(features_b)
+}
+
 fn describe(feature: Option<&Canonical>) -> String {
 	match feature {
 		None => "(none)".to_owned(),
@@ -387,6 +421,7 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 		let named_a = by_name(&layers_a);
 		let named_b = by_name(&layers_b);
 		let mut equal = named_a.keys().eq(named_b.keys());
+		let mut lines_only = equal;
 		let mut ordered = true;
 		let mut within = 0;
 		let mut detail = None;
@@ -416,6 +451,7 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 				LayerComparison::WithinTolerance(count) => within += count,
 				LayerComparison::Different(text) => {
 					equal = false;
+					lines_only &= lines_join_differently(features_a, features_b);
 					detail.get_or_insert_with(|| format!("{} layer {name}: {text}", tile_name(id)));
 				}
 			}
@@ -440,6 +476,9 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 			}
 		} else {
 			report.different += 1;
+			if lines_only {
+				report.lines_joined_differently += 1;
+			}
 			let text = detail.unwrap_or_else(|| format!("{} layer names differ", tile_name(id)));
 			note(&mut report, text);
 		}
@@ -456,6 +495,22 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn line_pieces_joined_differently_are_recognized() {
+		// One line from (0, 0) through (5, 0) to (5, 5), against the same path in two pieces taken in reverse.
+		let line = |commands: Vec<u32>| DecodedFeature {
+			id: Some(1),
+			geom_type: 2,
+			attributes: vec![("kind".into(), Value::String("road".into()))],
+			commands,
+		};
+		let whole = line(vec![9, 0, 0, 18, 10, 0, 0, 10]);
+		let pieces = vec![line(vec![9, 10, 10, 10, 0, 9]), line(vec![9, 10, 0, 10, 9, 0])];
+		assert!(lines_join_differently(std::slice::from_ref(&whole), &pieces));
+		let shorter = line(vec![9, 0, 0, 10, 10, 0]);
+		assert!(!lines_join_differently(&[whole], &[shorter]));
+	}
 
 	#[test]
 	fn rotated_rings_compare_equal() {

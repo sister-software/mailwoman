@@ -8,6 +8,7 @@
 use std::sync::Mutex;
 
 use hrt_osm::{Relation, SourceFeature};
+use hrt_profile::clip::Clip;
 use hrt_profile::country::CountryCoder;
 use hrt_profile::layers::places::WikidataConfigs;
 use hrt_profile::layers::pois::QrankDb;
@@ -15,7 +16,7 @@ use hrt_profile::layers::{
 	boundaries, buildings, earth, facilities, infrastructure, landcover, landuse, places, pois, roads, transit, trees,
 	water,
 };
-use hrt_profile::{CollectorConfig, Emitted, Input, Profile, TileFeature};
+use hrt_profile::{CollectorConfig, Emitted, Input, Profile, TileFeature, TileLayers};
 use hrt_render::snap::SnapCounts;
 
 /// The layers this profile can build, in name order.
@@ -34,7 +35,7 @@ pub const PORTED_LAYERS: [&str; 13] = [
 	trees::LAYER_NAME,
 	water::LAYER_NAME,
 ];
-const MAX_ZOOM: u8 = 15;
+pub const MAX_ZOOM: u8 = 15;
 
 /// The basemap profile over a chosen set of ported layers.
 pub struct BasemapProfile {
@@ -46,6 +47,8 @@ pub struct BasemapProfile {
 	pub qrank: QrankDb,
 	/// Skips post-processing, leaving the features as rendered, to compare the merges' inputs.
 	pub raw: bool,
+	/// Clips every tile to a polygon before the per-layer post-processing, as the fork's `--clip` does.
+	pub clip: Option<Clip>,
 	pub merge_counts: Mutex<SnapCounts>,
 }
 
@@ -63,6 +66,7 @@ impl BasemapProfile {
 			wikidata: WikidataConfigs::default(),
 			qrank: QrankDb::default(),
 			raw: false,
+			clip: None,
 			merge_counts: Mutex::new(SnapCounts::default()),
 		})
 	}
@@ -162,6 +166,13 @@ impl Profile for BasemapProfile {
 			}
 		}
 		out
+	}
+
+	fn post_process_tile(&self, z: u8, x: u32, y: u32, layers: TileLayers) -> TileLayers {
+		match &self.clip {
+			Some(clip) => clip.post_process_tile(z, x, y, layers),
+			None => layers,
+		}
 	}
 
 	fn post_process(&self, layer: &str, zoom: u8, features: Vec<TileFeature>) -> Vec<TileFeature> {
