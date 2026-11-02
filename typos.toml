@@ -78,6 +78,8 @@ extend-ignore-re = [
 	'''["'`]metre["'`]''',
 	'''["'`]modelled["'`]''',
 	'''\blicence\s*:|\.licence\b''',
+	# An ordinal street number in capitals, as US registers write it (`SW 92ND AVE`, `3RD ST`).
+	'''\b\d+(?:ST|ND|RD|TH)\b''',
 	'''#fulfil\b|`fulfil`''',
 	'''viewport-centre''',
 	'''Licence Ouverte''',
