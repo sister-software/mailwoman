@@ -94,6 +94,11 @@ export const StructureDetail = {
 	 * Small-scale cartographic data, such as coastlines and boundaries for low zooms.
 	 */
 	Cartographic: "cartographic",
+	/**
+	 * Sub-municipal district polygons with their names, such as Japan's 町丁目 (chōme),
+	 * drawn as boundaries and labels.
+	 */
+	District: "district",
 } as const
 
 /**
