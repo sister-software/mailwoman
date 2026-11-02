@@ -1,0 +1,56 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` and `streetIndex` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch.",
+	"$overlay-note": "The sources this build rebuilds replace their v0.8.9-retention-overlay files in an overlay on that corpus. Each picks up the fixes since v0.8.9: the shared unit splitter (#2901), the augmentation sibling guards (d0b04a048, 38678ac0b), the record-id fixes (#2894), the aligner's exact-case binding (79314815b) and the component check (#2898). `geonames-features` is new (#2897). `ban` reads mainland France only: the v0.8.9 `ban` source held every row of RE, GP, MQ, GF and YT a second time beside `ban-re`, `ban-gp`, `ban-mq`, `ban-gf` and `ban-yt` (764,193 base rows), and those ten overseas sources are carried unchanged. `invented-house-venue` is carried unchanged because neither of its files records the tuples, seed or limit it was built from.",
+	"$street-index-note": "Every adapter that splits a trailing unit reads the street index built from v0.8.9-retention-overlay's premise-register rows, so no row attests itself.",
+	"corpusVersion": "v0.8.10-rebuild",
+	"adapters": {
+		"usgov-nad": {
+			"inputPath": "corpus/sources/usgov-nad/featureserver",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"tiger": {
+			"inputPath": "corpus/sources/tiger/tiger.db",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"usgov-nppes": {
+			"inputPath": "corpus/sources/usgov-nppes/npidata_pfile_20050523-20260510.csv",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"state-tx-notaries": {
+			"inputPath": "corpus/sources/state-tx-notaries/TX_Notary_Public_Commissions.csv",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"state-ny-notaries": {
+			"inputPath": "corpus/sources/state-ny-notaries/NY_Commissioned_Notaries.csv",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"usgov-hrsa-fqhc": {
+			"inputPath": "corpus/sources/usgov-hrsa-fqhc/Health_Center_Service_Delivery_and_LookAlike_Sites.csv",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"usgov-imls-pls": {
+			"inputPath": "corpus/sources/usgov-imls-pls/pls_fy23_outlet_pud23i.csv",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"state-ia-contractors": {
+			"inputPath": "corpus/sources/state-ia-contractors/IA_Active_Construction_Contractor_Registrations.csv",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"ban": {
+			"inputPath": "corpus/staging/ban-france.csv",
+			"country": "FR",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"cordis": {
+			"inputPath": "corpus/sources/cordis",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"gleif-lei": {
+			"inputPath": "corpus/sources/gleif/20261003-0800-gleif-goldencopy-lei2-golden-copy.csv.zip",
+			"streetIndex": "corpus/street-index/v0.8.9-retention-overlay/street-index.db"
+		},
+		"geonames-features": {
+			"inputPath": "geonames"
+		}
+	}
+}
