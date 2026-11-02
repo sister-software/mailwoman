@@ -1,0 +1,13 @@
+[package]
+name = "hrt-osm"
+description = "The Hilbert Rust Tiler's OpenStreetMap reader: PBF elements, Planetiler's quantised node locations, way geometry and multipolygon assembly."
+version.workspace = true
+edition.workspace = true
+# Multipolygon assembly ports Planetiler's OsmMultipolygon (Apache-2.0), itself a port of imposm3's ring builder.
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0"
+repository.workspace = true
+
+[dependencies]
+geo = "0.29"
+osmpbf = "0.3.8"
+rayon = "1"
