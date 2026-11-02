@@ -148,6 +148,13 @@ export interface PostalDesignatorRow {
 	 * The published list the row was checked against, as a URL or a document title.
 	 */
 	source: string
+	/**
+	 * True where the country's addressing writes this designator and its identifier as
+	 * part of the street line, so a unit splitter keeps them in the street.
+	 *
+	 * Brazil's `Quadra` and Mexico's `Lote` are block and lot words of that kind.
+	 */
+	partOfStreetLine?: boolean
 }
 
 /**

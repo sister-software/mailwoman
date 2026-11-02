@@ -26,7 +26,9 @@ import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 import { splitUSStreetLine } from "#us/street-unit"
@@ -72,6 +74,8 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 			"Iowa Active Construction Contractor Registrations — business name + full street address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
+			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
+
 			if (opts.country && opts.country !== "US") {
 				throw new Error(`state-ia-contractors adapter: only US supported, got country=${opts.country}`)
 			}
@@ -99,7 +103,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
-				const line = splitUSStreetLine(address1)
+				const line = splitUSStreetLine(address1, units)
 
 				if (!line) continue
 

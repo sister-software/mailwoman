@@ -32,7 +32,9 @@ import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 import { splitUSStreetLine } from "#us/street-unit"
@@ -88,6 +90,8 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 			"HRSA Federally Qualified Health Center site locations (public-domain). Adversarial source: venue + address co-occurrence, hand-entered.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
+			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
+
 			if (opts.country && opts.country !== "US") {
 				throw new Error(`usgov-hrsa-fqhc adapter: only US supported, got country=${opts.country}`)
 			}
@@ -104,7 +108,7 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const venue = record["Site Name"] ?? ""
-				const line = splitUSStreetLine(record["Site Address"] ?? "")
+				const line = splitUSStreetLine(record["Site Address"] ?? "", units)
 				const city = record["Site City"] ?? ""
 				const stateAbbr = record["Site State Abbreviation"] ?? ""
 				const postcode = record["Site Postal Code"] ?? ""

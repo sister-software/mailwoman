@@ -6730,6 +6730,7 @@ __metadata:
     "@mailwoman/postcode": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/record": "workspace:*"
+    "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"

@@ -20,10 +20,12 @@ import {
 	readGLEIFAddress,
 	readGLEIFEntity,
 } from "#adapters/gleif/adapter"
+import { createUnitSplitter } from "#adapters/street/unit"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("gleif-lei")
+const units = await createUnitSplitter()
 
 const ADDRESS_FIELDS = [
 	"FirstAddressLine",
@@ -147,8 +149,28 @@ describe("readGLEIFEntity", () => {
 })
 
 describe("readGLEIFAddress", () => {
+	it("labels a unit at the end of the street line as the unit before splitting the number", () => {
+		const row = admitted(
+			readGLEIFAddress(
+				record({
+					name: "EXAMPLE SPA",
+					legal: {
+						FirstAddressLine: "VIA REGINA MARGHERITA 12 SCALA C",
+						City: "Roma",
+						Country: "IT",
+						PostalCode: "00198",
+					},
+				}),
+				GLEIFAddressBlock.Legal,
+				units
+			)
+		)
+
+		expect(row.components).toMatchObject({ street: "VIA REGINA MARGHERITA", house_number: "12", unit: "SCALA C" })
+	})
+
 	it("splits a number-last street line and renders the Slovak order", () => {
-		const row = admitted(readGLEIFAddress(SLADOVNA, GLEIFAddressBlock.Legal))
+		const row = admitted(readGLEIFAddress(SLADOVNA, GLEIFAddressBlock.Legal, units))
 
 		expect(row.components).toEqual({
 			venue: "SLADOVŇA, a.s. Michalovce",
@@ -164,7 +186,7 @@ describe("readGLEIFAddress", () => {
 	})
 
 	it("splits a number-first line and keeps a US state whose code is its written form", () => {
-		const row = admitted(readGLEIFAddress(TWO_SIGMA, GLEIFAddressBlock.Headquarters))
+		const row = admitted(readGLEIFAddress(TWO_SIGMA, GLEIFAddressBlock.Headquarters, units))
 
 		expect(row.components.house_number).toBe("100")
 		expect(row.components.street).toBe("AVENUE OF THE AMERICAS")
@@ -173,7 +195,7 @@ describe("readGLEIFAddress", () => {
 	})
 
 	it("leaves out a region whose ISO 3166-2 code is not how an address writes it", () => {
-		expect(admitted(readGLEIFAddress(SLADOVNA, GLEIFAddressBlock.Legal)).components.region).toBeUndefined()
+		expect(admitted(readGLEIFAddress(SLADOVNA, GLEIFAddressBlock.Legal, units)).components.region).toBeUndefined()
 	})
 
 	it("reads Namibia's code as a country rather than as a placeholder", () => {
@@ -182,7 +204,9 @@ describe("readGLEIFAddress", () => {
 			legal: { FirstAddressLine: "16 Amasoniet Street", City: "Windhoek", Country: "NA", PostalCode: "10005" },
 		})
 
-		expect(readGLEIFAddress(namibia, GLEIFAddressBlock.Legal)).not.toEqual({ refused: GLEIFRefusal.CountryAbsent })
+		expect(readGLEIFAddress(namibia, GLEIFAddressBlock.Legal, units)).not.toEqual({
+			refused: GLEIFRefusal.CountryAbsent,
+		})
 	})
 
 	it("refuses a care-of line, which can name a natural person", () => {
@@ -191,7 +215,7 @@ describe("readGLEIFAddress", () => {
 			legal: { FirstAddressLine: "c/o: Karianne Løkken", City: "JAR", Country: "NO", PostalCode: "1358" },
 		})
 
-		expect(readGLEIFAddress(careOf, GLEIFAddressBlock.Legal)).toEqual({ refused: GLEIFRefusal.CareOfLine })
+		expect(readGLEIFAddress(careOf, GLEIFAddressBlock.Legal, units)).toEqual({ refused: GLEIFRefusal.CareOfLine })
 	})
 
 	it("refuses a digitless first line, which may be a building rather than a street", () => {
@@ -200,7 +224,7 @@ describe("readGLEIFAddress", () => {
 			legal: { FirstAddressLine: "KYDD BUILDING", City: "DUNDEE", Country: "GB", PostalCode: "DD1 1HG" },
 		})
 
-		expect(readGLEIFAddress(building, GLEIFAddressBlock.Legal)).toEqual({
+		expect(readGLEIFAddress(building, GLEIFAddressBlock.Legal, units)).toEqual({
 			refused: GLEIFRefusal.StreetLineWithoutNumber,
 		})
 	})
@@ -216,7 +240,9 @@ describe("readGLEIFAddress", () => {
 			},
 		})
 
-		expect(readGLEIFAddress(floor, GLEIFAddressBlock.Legal)).toEqual({ refused: GLEIFRefusal.StreetNumberUnplaced })
+		expect(readGLEIFAddress(floor, GLEIFAddressBlock.Legal, units)).toEqual({
+			refused: GLEIFRefusal.StreetNumberUnplaced,
+		})
 	})
 
 	it("refuses a number that numbers a room or a building rather than a premise on a street", () => {
@@ -235,13 +261,17 @@ describe("readGLEIFAddress", () => {
 			legal: { FirstAddressLine: "910 Street", City: "Doha", Country: "QA" },
 		})
 
-		expect(readGLEIFAddress(tower, GLEIFAddressBlock.Legal)).toEqual({ refused: GLEIFRefusal.StreetHoldsPremiseWord })
+		expect(readGLEIFAddress(tower, GLEIFAddressBlock.Legal, units)).toEqual({
+			refused: GLEIFRefusal.StreetHoldsPremiseWord,
+		})
 
-		expect(readGLEIFAddress(segmented, GLEIFAddressBlock.Legal)).toEqual({
+		expect(readGLEIFAddress(segmented, GLEIFAddressBlock.Legal, units)).toEqual({
 			refused: GLEIFRefusal.StreetLineSegmented,
 		})
 
-		expect(readGLEIFAddress(generic, GLEIFAddressBlock.Legal)).toEqual({ refused: GLEIFRefusal.StreetNameGenericOnly })
+		expect(readGLEIFAddress(generic, GLEIFAddressBlock.Legal, units)).toEqual({
+			refused: GLEIFRefusal.StreetNameGenericOnly,
+		})
 	})
 
 	it("reads an AddressNumber of 0 as no number", () => {
@@ -255,7 +285,7 @@ describe("readGLEIFAddress", () => {
 			},
 		})
 
-		expect(readGLEIFAddress(zero, GLEIFAddressBlock.Legal)).toEqual({
+		expect(readGLEIFAddress(zero, GLEIFAddressBlock.Legal, units)).toEqual({
 			refused: GLEIFRefusal.StreetLineWithoutNumber,
 		})
 	})
@@ -266,7 +296,7 @@ describe("readGLEIFAddress", () => {
 			legal: { FirstAddressLine: "12 SHEIKH ZAYED ROAD", City: "DUBAI", Country: "AE" },
 		})
 
-		expect(readGLEIFAddress(dubai, GLEIFAddressBlock.Legal)).toEqual({ refused: GLEIFRefusal.CountryUnreviewed })
+		expect(readGLEIFAddress(dubai, GLEIFAddressBlock.Legal, units)).toEqual({ refused: GLEIFRefusal.CountryUnreviewed })
 	})
 
 	it("refuses a split that disagrees with the publisher's own AddressNumber", () => {
@@ -281,7 +311,7 @@ describe("readGLEIFAddress", () => {
 			},
 		})
 
-		expect(readGLEIFAddress(disagree, GLEIFAddressBlock.Legal)).toEqual({
+		expect(readGLEIFAddress(disagree, GLEIFAddressBlock.Legal, units)).toEqual({
 			refused: GLEIFRefusal.StreetNumberDisagrees,
 		})
 	})
@@ -292,7 +322,7 @@ describe("readGLEIFAddress", () => {
 			legal: { FirstAddressLine: "PO BOX 309", City: "George Town", Country: "KY", PostalCode: "KY1-1104" },
 		})
 
-		const reading = readGLEIFAddress(box, GLEIFAddressBlock.Legal)
+		const reading = readGLEIFAddress(box, GLEIFAddressBlock.Legal, units)
 
 		if ("admitted" in reading) {
 			expect(reading.admitted.components.po_box).toBe("PO BOX 309")
@@ -308,7 +338,9 @@ describe("readGLEIFAddress", () => {
 			legal: { FirstAddressLine: "25 Rue du Commerce", City: "Cotonou", Country: "BJ" },
 		})
 
-		expect(readGLEIFAddress(benin, GLEIFAddressBlock.Legal)).toEqual({ refused: GLEIFRefusal.CountryWithoutLayout })
+		expect(readGLEIFAddress(benin, GLEIFAddressBlock.Legal, units)).toEqual({
+			refused: GLEIFRefusal.CountryWithoutLayout,
+		})
 	})
 
 	it("refuses a region code naming another country", () => {
@@ -317,7 +349,7 @@ describe("readGLEIFAddress", () => {
 			legal: { FirstAddressLine: "Nadistraße 35", City: "München", Region: "AT-9", Country: "DE", PostalCode: "80809" },
 		})
 
-		expect(readGLEIFAddress(contradicted, GLEIFAddressBlock.Legal)).toEqual({
+		expect(readGLEIFAddress(contradicted, GLEIFAddressBlock.Legal, units)).toEqual({
 			refused: GLEIFRefusal.RegionContradictsCountry,
 		})
 	})

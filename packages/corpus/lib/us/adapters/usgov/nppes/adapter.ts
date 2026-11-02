@@ -14,11 +14,13 @@ import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
-import { splitStreetLine } from "#adapters/street-line"
+import { splitStreetLine } from "#adapters/street/line"
+import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
-import { splitTrailingUnit, unitLine } from "#us/street-unit"
+import { unitLine } from "#us/street-unit"
 
 /**
  * The adapter stamps this id on every emitted row.
@@ -97,6 +99,8 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 				throw new Error(`usgov-nppes adapter: only US supported, got country=${opts.country}`)
 			}
 
+			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
+
 			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
 				normalizeKeys: false,
 			})
@@ -141,7 +145,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 
 				// A unit written on the first line (`2560 HUNTINGTON AVE STE 302`) is split off the street,
 				// and one on the second line follows it, so the rendered row keeps the publisher's order.
-				const trailing = splitTrailingUnit(split.street)
+				const trailing = units.split(split.street, { country: "US", locality: city, postcode })
 				const street = trailing?.street ?? split.street
 				const unit = [trailing?.unit, unitLine(address2)].filter(isPresent).join(" ")
 

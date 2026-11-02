@@ -20,7 +20,9 @@ import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 import { splitUSStreetLine } from "#us/street-unit"
@@ -60,6 +62,8 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 			"Texas Notary Public Commissions — name + mailing address with embedded city/state/zip (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
+			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
+
 			if (opts.country && opts.country !== "US") {
 				throw new Error(`state-tx-notaries adapter: only US supported, got country=${opts.country}`)
 			}
@@ -105,7 +109,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 				if (!streetPortion) continue
 
-				const line = splitUSStreetLine(streetPortion)
+				const line = splitUSStreetLine(streetPortion, units)
 
 				if (!line) continue
 
