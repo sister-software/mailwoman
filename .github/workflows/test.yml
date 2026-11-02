@@ -272,8 +272,8 @@ jobs:
 
       - name: Test the basemap tiler's crates
         run: |
-          cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm --all-targets --locked -- -D warnings
-          cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm --locked
+          cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render --all-targets --locked -- -D warnings
+          cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render --locked
 
       # A panic inside an `mtf-node` export must reach Node as a thrown error rather than abort the process.
       - name: Test the mtf-node addon's panic handling

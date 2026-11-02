@@ -18,14 +18,19 @@ crates as default members, because none of them links libtorch.
 | `hrt-pmtiles` | PMTiles v3 writing: Hilbert tile ids, the header, directory encoding with leaf directories, and tile deduplication. |
 | `hrt-e`       | Mapbox Vector Tile encoding: layers with interned keys and values, and zig-zag delta geometry commands.             |
 | `hrt-osm`     | OpenStreetMap reading in Planetiler's two passes: packed node locations, way geometry and multipolygon assembly.    |
+| `hrt-render`  | Planetiler's renderer: simplification, stripe clipping into tiles, polygon snapping, and MVT command encoding.      |
 
-The other crates the specification names (`hrt-render`, `hrt-sort`, `hrt-profile`, `hrt-cli`) are not written yet.
+The other crates the specification names (`hrt-sort`, `hrt-profile`, `hrt-cli`) are not written yet.
+
+`hrt-render` links GEOS, built from source by the `geos` crate's `static` feature, so building it needs cmake and a C++
+compiler. GEOS ports the JTS validity test and precision reducer Planetiler calls when a polygon's rounded form is
+invalid.
 
 ## Checks
 
 ```sh
-cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm
-cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm --all-targets -- -D warnings
+cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render
+cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render --all-targets -- -D warnings
 ```
 
 The unit tests encode the vector tile specification's own examples and read written archives back through their
@@ -67,3 +72,27 @@ sort for two inputs:
 Two differences from Planetiler leave the output unchanged on these inputs. `hrt-osm` skips untagged nodes, which no
 profile rule matches. geo's `relate` returns a result on invalid rings where JTS raises a topology exception, so
 `hrt-osm` has no counterpart to Planetiler's retry after `buffer(0)`; neither input exercised that retry.
+
+## Renderer parity with Planetiler
+
+`parity/RenderDump.java` runs a fixed profile through Planetiler's `FeatureRenderer` and prints every tile piece: the
+tile, layer, feature id, geometry type, scale, sort key, label-grid group and the MVT command integers. The profile
+sends tagged nodes to a point layer, ways and multipolygons that can be polygons to a polygon layer, and other ways to a
+line layer, with Planetiler's default sizes, tolerances and buffers at zooms 0 to 14. `hrt-render`'s `render-dump`
+example runs the same profile over `hrt-osm`:
+
+```sh
+java -cp protomaps-basemap-HEAD-with-deps.jar packages/hrt/parity/RenderDump.java input.osm.pbf scratch/ > java.txt
+cargo run --release -p hrt-render --example render-dump -- input.osm.pbf > rust.txt
+```
+
+On 2026-11-02 the sorted outputs compared as follows:
+
+| Input                   | Tile pieces | Identical | Ring start rotated | Polygons sent to the precision reducer |
+| ----------------------- | ----------: | --------: | -----------------: | -------------------------------------: |
+| `monaco-latest.osm.pbf` |      80,483 |    80,441 |                 42 |                                     42 |
+| `sf-downtown.osm.pbf`   |     338,329 |   338,075 |                254 |                                    256 |
+
+Every differing piece has the same rings, the same vertices and the same signed ring areas as Planetiler's. The
+precision reducer in GEOS starts some rings at a different vertex from the JTS one, which encodes the same polygon with
+different commands. The archive comparison tool therefore compares polygon rings up to rotation.
