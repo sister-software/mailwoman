@@ -7,7 +7,7 @@
  *   `without rowid` B-tree `poi-schema.ts` builds. Category, brand and name searches share one
  *   artifact. Each path has a method that returns its details.
  *
- *   `latLngToCell` and `gridDisk` come from `h3-js`. The 48-bit short-cell packing that turns a raw
+ *   `latLngToCell` and `gridDisk` come from `@sister.software/h3`. The 48-bit short-cell packing that turns a raw
  *   H3 cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt`, and
  *   that math is never reimplemented here.
  */
@@ -16,7 +16,7 @@ import { allRows } from "@mailwoman/core/utils"
 import { haversine, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
-import { gridDisk, latLngToCell } from "h3-js"
+import { gridDisk, latLngToCell } from "@sister.software/h3"
 
 import type { POICategoryCodeTable, POIDatabase, POITable } from "#poi/schema"
 /**

@@ -30,7 +30,7 @@ import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { pointInPolygon } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { cellToParent, latLngToCell } from "h3-js"
+import { cellToParent, latLngToCell } from "@sister.software/h3"
 import { dirname, type PathBuilder } from "path-ts"
 
 import type { UnderseaAsset, UnderseaAssetFeature, UnderseaBBox } from "#features"

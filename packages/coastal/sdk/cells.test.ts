@@ -9,7 +9,7 @@
  */
 
 import { type MultiPolygonRings, classifyFeatureCells, rectangleRing, featureCellRows } from "@mailwoman/spatial"
-import { getResolution } from "h3-js"
+import { getResolution } from "@sister.software/h3"
 import { describe, expect, it } from "vitest"
 
 import { CoastalCellIndex } from "#sdk/cells"

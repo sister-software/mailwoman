@@ -8,7 +8,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { cellToBoundary, gridDisk, polygonToCells } from "h3-js"
+import { cellToBoundary, gridDisk, polygonToCells } from "@sister.software/h3"
 
 import { arealPolygons, geometryContains, type ParsedGeometry, type PolygonRings } from "#geometries/polygon"
 import { shortCellToInt, type H3Cell } from "#h3/cell"

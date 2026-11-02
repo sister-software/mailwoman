@@ -18,7 +18,7 @@ import { us } from "@mailwoman/codex"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { normalize } from "@mailwoman/normalize"
 import type { GeoCoordinate } from "@mailwoman/spatial"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 
 /**
  * H3 resolution for the location cell (~174 m edge).

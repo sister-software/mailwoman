@@ -14,7 +14,7 @@
 import type { CoverageCell } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import { type H3Cell, shortCellToInt } from "@mailwoman/spatial/h3/cell"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 /**
  * The resolution `layer_coverage` is written at, matching the OSM and BDC address layers
  * so a consumer's probe walks one cell size across register-backed layers.

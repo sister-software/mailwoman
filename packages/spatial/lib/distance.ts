@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Great-circle and segment distance math over plain numbers.
  *
- *   This module imports no runtime geometry class. `GeoPoint` imports h3-js. The h3-js module allocates a 32 MiB heap when
- *   it is first evaluated, and a caller that only measures a distance must not pay for that. The object-form distances
+ *   This module imports no runtime geometry class. `GeoPoint` imports `@sister.software/h3`, which embeds its WebAssembly
+ *   binary, and a caller that only measures a distance must not load that. The object-form distances
  *   that take a `GeoPointInput` live in `#geometries/point/distance`.
  */
 

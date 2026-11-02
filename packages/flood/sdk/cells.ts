@@ -8,7 +8,7 @@
  *
  *   the classifier itself lives IN `@mailwoman/spatial`, re-exported below so this package's call sites and
  *   its `@mailwoman/flood/sdk/cells` subpath keep reading the same. `classifyFeatureCells` and the
- *   allocator-avoiding shortcuts around it are properties of h3-js rather than of this product — the layer
+ *   allocator-avoiding shortcuts around it are properties of H3 rather than of this product — the layer
  *   interface's polygon-builder section states them as requirements on every polygon builder — and a second
  *   copy of the zero-cell guard is a second place for it to stop guarding.
  *
@@ -20,7 +20,7 @@
  */
 
 import { compactAcrossResolutions, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
-import { getResolution } from "h3-js"
+import { getResolution } from "@sister.software/h3"
 
 /**
  * A zone's accumulated cell sets across every feature carrying that zone code.
@@ -78,7 +78,7 @@ export interface CellIndexMeasurement {
  * Accumulate one resolution's cell index over a stream of features.
  *
  * Held as short-cell strings rather than the integers the tables store, because `compactCells`
- * and `cellToParent` are h3-js functions over full indexes and round-tripping through
+ * and `cellToParent` are H3 functions over full indexes and round-tripping through
  * the integer form at every step would cost more than the strings do.
  */
 export class FloodCellIndex {

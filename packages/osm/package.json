@@ -88,7 +88,7 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"h3-js": "^4.5.0",
+		"@sister.software/h3": "^1.0.0",
 		"path-ts": "^2.5.0",
 		"spliterator": "^10.1.1"
 	},

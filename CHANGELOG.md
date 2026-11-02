@@ -19,7 +19,31 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
-_No unreleased changes._
+### Changed — H3 indexing moves from `h3-js` to `@sister.software/h3`
+
+Every workspace that indexed with `h3-js` 4.5.0 now depends on `@sister.software/h3` 1.0.0, a Rust port of
+the H3 C library compiled to WebAssembly with the same function names, argument order and cell strings. The
+import lines are the only change: initialization is implicit, so every call stays synchronous.
+
+h3-js allocated a 32 MiB heap when its module was first evaluated, which was the largest single part of a
+Worker isolate's 128 MB. The new package instantiates a module of about 174 KB on the first H3 call
+instead.
+
+Both libraries recomputed the stored res-9 `h3_cell` columns of two shipped layers:
+
+- `uprn.db`: all 41,629,393 rows match.
+- `poi.db`: 1,490 of 14,664,001 rows (0.010%) get the neighboring cell.
+
+Every one of those 1,490 points lies within about 3e-16 rad of a cell edge, closer than the two libraries'
+floating-point math agree. Most share one Overture confidence score, which points to a single upstream source that places POIs on
+res-9 edges. Lookups
+search a ring of cells, so such a place is still found. A rebuild of the layer realigns the column with the
+runtime library.
+
+Error behavior differs on invalid input. An out-of-range resolution or a non-finite coordinate now
+throws `RangeError`, and `polygonToCells([], res)` throws rather than returning `[]`. The package's
+`docs/api-decisions.md` lists every difference. `@deck.gl/geo-layers` still brings in `h3-js` as its own
+dependency.
 
 ## 10.0.0 — 2026-09-12
 

@@ -6,7 +6,7 @@
 
 import type { POIDistanceHit } from "@mailwoman/core/resolver"
 import { haversine, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
-import { gridDisk, latLngToCell } from "h3-js"
+import { gridDisk, latLngToCell } from "@sister.software/h3"
 
 import { memoizeResettable, type RangeDatabase } from "#httpvfs/database"
 

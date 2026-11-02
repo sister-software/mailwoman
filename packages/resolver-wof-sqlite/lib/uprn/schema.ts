@@ -8,7 +8,7 @@
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 import type { Kysely } from "kysely"
 
 /**

@@ -12,7 +12,7 @@
  */
 
 import { toCoverageCell, type CoverageCell, type CoverageRow } from "@mailwoman/core/layers"
-import { cellToParent } from "h3-js"
+import { cellToParent } from "@sister.software/h3"
 
 import { shortCellToInt, type H3Cell } from "#h3/cell"
 

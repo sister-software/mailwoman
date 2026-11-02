@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-import { getBaseCellNumber, latLngToCell } from "h3-js"
+import { getBaseCellNumber, latLngToCell } from "@sister.software/h3"
 import { expect, test } from "vitest"
 
 import { expandH3Cell, isH3Cell, shortCellToInt, shortenH3Cell, type H3Cell, type H3CellShort } from "#h3/cell"
 
-// A real resolution-9 cell (White House, 38.8977, -77.0365) from h3-js itself
+// A real resolution-9 cell (White House, 38.8977, -77.0365) from the H3 library itself
 // rather than a synthetic hex string.
 // This exercises the actual encoding shortCellToInt is packing.
 const CELL = latLngToCell(38.8977, -77.0365, 9) as H3Cell

@@ -29,7 +29,7 @@ import { NSUL_COVERAGE_H3_RESOLUTION, NSULLookup } from "@mailwoman/resolver-wof
 import { createUPRNTable, uprnFullCell, uprnH3Cell, type UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToParent } from "h3-js"
+import { cellToParent } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"

@@ -55,7 +55,7 @@ import {
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
+import { cellToLatLng, gridRingUnsafe, latLngToCell } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -79,7 +79,7 @@ const REMOTE = { latitude: 41.8781, longitude: -87.6298 }
 
 // Exactly gridDistance 20 from the Springfield origin cell — inside the 32-ring default
 // (covers ≤ 31), outside POILookup's own internal default of 16 rings (covers ≤ 15).
-// Derived from h3-js, never hardcoded, matching poi-lookup.test.ts's TRAIL_SPARSE discipline.
+// Derived from H3, never hardcoded, matching poi-lookup.test.ts's TRAIL_SPARSE discipline.
 const MID_RING_GRID_DISTANCE = 20
 const [MID_RING_LAT, MID_RING_LNG] = cellToLatLng(gridRingUnsafe(SPRINGFIELD_ORIGIN, MID_RING_GRID_DISTANCE)[0]!)
 

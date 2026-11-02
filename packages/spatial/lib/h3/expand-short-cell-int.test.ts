@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 import { describe, expect, it } from "vitest"
 
 import { expandShortCellInt, type H3Cell, shortCellToInt } from "#h3/cell"

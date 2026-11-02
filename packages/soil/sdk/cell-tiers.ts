@@ -9,7 +9,7 @@
 import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { beginBatched } from "@mailwoman/sqlite/batched"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { compactCells, getResolution } from "h3-js"
+import { compactCells, getResolution } from "@sister.software/h3"
 
 import { SoilCellContainment, type SoilCapabilityCellTable, type SoilDatabase } from "#schema"
 import { mapUnitProfile, reduceCell, type CellCandidate, type MapUnitProfile } from "#sdk/reduce"

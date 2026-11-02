@@ -6,7 +6,7 @@
 
  */
 
-import { cellToParent, isValidCell } from "h3-js"
+import { cellToParent, isValidCell } from "@sister.software/h3"
 import type { Tagged } from "type-fest"
 
 /**
@@ -21,8 +21,8 @@ export const H3_MAX_RESOLUTION = 15
 export type H3Cell = Tagged<string, "H3Cell">
 
 /**
- * Is `value` a real H3 cell index, delegating to h3-js because the hex surface
- * shape is necessary but not sufficient.
+ * Is `value` a real H3 cell index, delegating to the H3 library because the hex
+ * surface shape is necessary but not sufficient.
  */
 export function isH3Cell(value: string): value is H3Cell {
 	return isValidCell(value)

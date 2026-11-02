@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { cellToLatLng } from "h3-js"
+import { cellToLatLng } from "@sister.software/h3"
 
 import { GeoPoint } from "#geometries/point"
 import type { PointLiteral } from "#geometries/point/coordinates"

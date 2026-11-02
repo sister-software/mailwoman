@@ -17,7 +17,7 @@ import type { Evidence } from "@mailwoman/evidence"
 import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type H3Cell, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 
 import {
 	BDC_SPEED_BUCKET_100_1000,

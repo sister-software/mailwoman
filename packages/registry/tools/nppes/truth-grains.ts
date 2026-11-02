@@ -10,7 +10,7 @@ import { createUnionFind, type UnionFind } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 import type { GeoCoordinate } from "@mailwoman/spatial"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 
 import type { SourceRecord } from "#index"
 import { ORG_TAU, type NPIPrimary } from "#tools/nppes/org-name"

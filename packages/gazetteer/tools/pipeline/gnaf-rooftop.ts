@@ -49,7 +49,7 @@ import {
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 import { PathBuilder } from "path-ts"
 import { TextSpliterator, titleCase } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
