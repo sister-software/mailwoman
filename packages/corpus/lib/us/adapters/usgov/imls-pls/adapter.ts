@@ -23,7 +23,9 @@ import { CSVSpliterator } from "spliterator"
 
 import { rawTextDiscriminator } from "#adapters/record-id"
 import { stableSourceID } from "#adapters/source-id"
+import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 import { splitUSStreetLine } from "#us/street-unit"
@@ -61,6 +63,8 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 		description: "IMLS Public Libraries Survey — ~17K library outlets with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
+			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
+
 			if (opts.country && opts.country !== "US") {
 				throw new Error(`usgov-imls-pls adapter: only US supported, got country=${opts.country}`)
 			}
@@ -88,7 +92,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
-				const line = splitUSStreetLine(address)
+				const line = splitUSStreetLine(address, units)
 
 				if (!line) continue
 

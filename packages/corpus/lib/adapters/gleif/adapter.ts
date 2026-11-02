@@ -103,11 +103,12 @@ import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
-import { splitStreetLine, splitTrailingStreetLine } from "#adapters/street-line"
-import { splitCountryTrailingUnit } from "#adapters/street-unit"
+import { splitStreetLine, splitTrailingStreetLine } from "#adapters/street/line"
+import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import { FingerprintSet } from "#fingerprints"
 import { isPlaceholderValue } from "#it/adapters/anac/adapter"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import {
 	AddressRole,
 	type AdapterOptions,
@@ -510,7 +511,11 @@ export function normalizeGLEIFStreetLine(line: string, city: string): string {
  * Exported because the refusal reasons are the measurement the adapter is checked by.
  * The entity-level refusals of {@linkcode readGLEIFEntity} are the caller's to apply first.
  */
-export function readGLEIFAddress(record: GLEIFRecord, block: GLEIFAddressBlock): GLEIFAddressReading {
+export function readGLEIFAddress(
+	record: GLEIFRecord,
+	block: GLEIFAddressBlock,
+	units: UnitSplitter
+): GLEIFAddressReading {
 	// Read without the placeholder filter, because `NA` is Namibia's code rather than an absent value.
 	const country = (record[`Entity.${block}.Country`] ?? "").trim().toUpperCase()
 
@@ -555,7 +560,7 @@ export function readGLEIFAddress(record: GLEIFRecord, block: GLEIFAddressBlock):
 	} else {
 		// A unit at the end of the line (`Mayland Dr Ste A`, `VIA REGINA MARGHERITA SCALA C`)
 		// comes off first, so its identifier is never read as the house number.
-		const lineUnit = splitCountryTrailingUnit(line, country)
+		const lineUnit = units.split(line, { country, locality: city })
 
 		const placed = placeStreetNumber(
 			lineUnit?.street ?? line,
@@ -732,6 +737,7 @@ export function createGLEIFAdapter(): CorpusAdapter {
 			}
 
 			const emitted = new FingerprintSet(ADDRESS_KEY_SLOTS_LOG2)
+			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
 			let count = 0
 			let checkedHeader = false
 
@@ -764,7 +770,7 @@ export function createGLEIFAdapter(): CorpusAdapter {
 				for (const block of blocks) {
 					if (typeof opts.limit === "number" && count >= opts.limit) break
 
-					const reading = readGLEIFAddress(record, block)
+					const reading = readGLEIFAddress(record, block, units)
 
 					if ("refused" in reading) {
 						countDropped(opts, `row:${reading.refused}`)

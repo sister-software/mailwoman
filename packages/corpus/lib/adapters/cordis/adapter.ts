@@ -135,9 +135,10 @@ import { Globerator } from "spliterator/node/fs"
 
 import { loadLibpostalDictionary } from "#adapters/libpostal-dictionary"
 import { stableSourceID } from "#adapters/source-id"
-import { splitStreetLine, splitTrailingStreetLine, type SplitStreetLine } from "#adapters/street-line"
-import { splitCountryTrailingUnit } from "#adapters/street-unit"
+import { splitStreetLine, splitTrailingStreetLine, type SplitStreetLine } from "#adapters/street/line"
+import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import {
 	AddressRole,
 	type AdapterOptions,
@@ -533,7 +534,11 @@ export function cordisCountryCode(value: string | null | undefined): string | nu
  *
  * Exported because the refusal reasons are the measurement this adapter is checked by.
  */
-export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: PersonNameLexicon): CORDISReading {
+export function readCORDISRecord(
+	record: CORDISOrganizationRecord,
+	lexicon: PersonNameLexicon,
+	units: UnitSplitter
+): CORDISReading {
 	const country = cordisCountryCode(record.country)
 
 	if (!country) return { refused: CORDISRefusal.CountryNotISO, country: null }
@@ -561,7 +566,7 @@ export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: Pers
 	if (streetLine) {
 		// A unit at the end of the line (`BD SAINT-JACQUES BATIMENT B`) comes off first,
 		// so its identifier is never read as the house number.
-		const lineUnit = splitCountryTrailingUnit(streetLine, country)
+		const lineUnit = units.split(streetLine, { country, locality, postcode: fieldValue(record.postCode) })
 		const split = splitCORDISStreetLine(lineUnit?.street ?? streetLine, streetOrderForCountry(country))
 
 		if (split && "refused" in split) return { refused: split.refused, country }
@@ -650,9 +655,10 @@ export interface CORDISRecordReading {
 export async function* readCORDISRecords(
 	inputPath: PathBuilderLike,
 	lexicon: PersonNameLexicon,
-	options: { signal?: AbortSignal; onDuplicate?: () => void } = {}
+	options: { signal?: AbortSignal; onDuplicate?: () => void; streetIndex?: PathBuilderLike | null } = {}
 ): AsyncGenerator<CORDISRecordReading> {
 	const seen = new Set<string>()
+	const units = await createUnitSplitter({ streetIndex: streetIndexOpener(options.streetIndex) })
 
 	for (const source of await cordisSources(inputPath)) {
 		if (options.signal?.aborted) return
@@ -684,7 +690,7 @@ export async function* readCORDISRecords(
 
 			seen.add(key)
 
-			yield { record, reading: readCORDISRecord(record, lexicon) }
+			yield { record, reading: readCORDISRecord(record, lexicon, units) }
 		}
 	}
 }
@@ -751,6 +757,7 @@ export function createCORDISAdapter(): CorpusAdapter {
 			const readings = readCORDISRecords(opts.inputPath, lexicon, {
 				signal: opts.signal,
 				onDuplicate: () => countDropped(opts, "row:duplicate-record"),
+				streetIndex: opts.streetIndex ?? null,
 			})
 
 			for await (const { reading } of readings) {

@@ -1,0 +1,114 @@
+// @copyright Sister Software
+// @license AGPL-3.0
+// @author Teffen Ellis, et al.
+
+//! The ported layers of the fork's `Basemap` profile, routed by source as `Basemap.java` routes them, for one or more
+//! chosen layers at the production maxzoom of 15.
+
+use std::sync::Mutex;
+
+use hrt_osm::{Relation, SourceFeature};
+use hrt_profile::country::CountryCoder;
+use hrt_profile::layers::{roads, water};
+use hrt_profile::{CollectorConfig, Emitted, Input, Profile, TileFeature};
+use hrt_render::snap::SnapCounts;
+
+/// The layers this profile can build, in name order.
+pub const PORTED_LAYERS: [&str; 2] = [roads::LAYER_NAME, water::LAYER_NAME];
+const MAX_ZOOM: u8 = 15;
+
+/// The basemap profile over a chosen set of ported layers.
+pub struct BasemapProfile {
+	layers: Vec<&'static str>,
+	countries: Option<CountryCoder>,
+	/// Skips post-processing, leaving the features as rendered, to compare the merges' inputs.
+	pub raw: bool,
+	pub merge_counts: Mutex<SnapCounts>,
+}
+
+impl BasemapProfile {
+	/// Builds the profile for `layers`, which must be names in [`PORTED_LAYERS`].
+	pub fn new(layers: &[&str], countries: Option<CountryCoder>) -> Option<Self> {
+		let mut chosen: Vec<&'static str> = Vec::new();
+		for layer in layers {
+			chosen.push(*PORTED_LAYERS.iter().find(|candidate| *candidate == layer)?);
+		}
+		chosen.sort_unstable();
+		Some(BasemapProfile {
+			layers: chosen,
+			countries,
+			raw: false,
+			merge_counts: Mutex::new(SnapCounts::default()),
+		})
+	}
+
+	fn layer_id(&self, name: &str) -> Option<u32> {
+		self.layers
+			.iter()
+			.position(|layer| *layer == name)
+			.map(|index| index as u32)
+	}
+}
+
+impl Profile for BasemapProfile {
+	fn layers(&self) -> &[&'static str] {
+		&self.layers
+	}
+
+	fn max_zoom(&self) -> u8 {
+		MAX_ZOOM
+	}
+
+	fn keep_relation(&self, relation: &Relation) -> bool {
+		self.layer_id(roads::LAYER_NAME).is_some() && roads::keep_relation(relation)
+	}
+
+	fn process(&self, source: &SourceFeature<'_>) -> Vec<Emitted> {
+		let config = CollectorConfig::new(MAX_ZOOM);
+		let mut out = Vec::new();
+		if let Some(layer) = self.layer_id(roads::LAYER_NAME) {
+			if source.source == "osm" {
+				let mut input = Input::new(source);
+				roads::process_osm(&mut input, layer, self.countries.as_ref(), &mut out, config);
+			}
+		}
+		if let Some(layer) = self.layer_id(water::LAYER_NAME) {
+			let mut input = Input::new(source);
+			match source.source {
+				"osm" => water::process_osm(&mut input, layer, &mut out, config),
+				"ne" => water::process_ne(&mut input, layer, &mut out, config),
+				"osm_water" => water::process_prepared_osm(&input, layer, &mut out, config),
+				_ => {}
+			}
+		}
+		out
+	}
+
+	fn post_process(&self, layer: &str, zoom: u8, features: Vec<TileFeature>) -> Vec<TileFeature> {
+		if self.raw {
+			return features;
+		}
+		let mut counts = SnapCounts::default();
+		let out = match layer {
+			roads::LAYER_NAME => roads::post_process(zoom, features, &mut counts),
+			water::LAYER_NAME => water::post_process(features, &mut counts),
+			_ => features,
+		};
+		let mut total = self.merge_counts.lock().unwrap();
+		total.reduced += counts.reduced;
+		total.fix_input += counts.fix_input;
+		out
+	}
+
+	fn metadata(&self) -> String {
+		let layers: Vec<String> = self
+			.layers
+			.iter()
+			.map(|layer| format!(r#"{{"id":"{layer}","fields":{{}}}}"#))
+			.collect();
+		format!(
+			r#"{{"name":"hrt basemap","format":"pbf","vector_layers":[{}]}}"#,
+			layers.join(",")
+		)
+	}
+}

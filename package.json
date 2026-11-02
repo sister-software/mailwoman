@@ -22,7 +22,8 @@
 	"workspaces": [
 		"docs",
 		"packages/*",
-		"!packages/trainer"
+		"!packages/trainer",
+		"!packages/hrt"
 	],
 	"type": "module",
 	"imports": {

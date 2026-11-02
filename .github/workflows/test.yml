@@ -270,6 +270,11 @@ jobs:
           cargo test -p mtf-core --features edit --test model_edit --locked
           cargo test -p mtf-tools --locked
 
+      - name: Test the basemap tiler's crates
+        run: |
+          cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli --all-targets --locked -- -D warnings
+          cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli --locked
+
       # A panic inside an `mtf-node` export must reach Node as a thrown error rather than abort the process.
       - name: Test the mtf-node addon's panic handling
         run: yarn vitest run --config vitest.slow.config.ts packages/mtf/tools/sampler/native.panic.integration.test.ts

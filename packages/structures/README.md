@@ -9,7 +9,7 @@ This workspace is private and is used from the Mailwoman repository.
 ```ts
 import { BASEMAP_INPUTS, Basemap, creditsFor } from "@mailwoman/structures"
 
-const credits = creditsFor(BASEMAP_INPUTS[Basemap.ProtomapsV4])
+const credits = creditsFor(BASEMAP_INPUTS[Basemap.MailwomanBuild])
 
 for (const credit of credits) {
 	console.log(credit.text, credit.url)

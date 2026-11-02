@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest"
 
 import { BAN_ADAPTER_ID, createBanAdapter } from "#fr/adapters/ban/adapter"
 import { runAdapter } from "#runner"
+import { writeStreetIndex } from "#street-index/write"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("ban")
@@ -111,7 +112,7 @@ describe("ban adapter against fixture sample.csv", () => {
 		expect(champs?.components.house_number).toBe("1 bis")
 	})
 
-	it("labels a building written at the end of the street as the unit", async () => {
+	it("labels a building written at the end of the street as the unit when the street index holds the street", async () => {
 		const csv = scratch.path("bat.csv")
 
 		await writeLocalTextFile(
@@ -122,9 +123,16 @@ describe("ban adapter against fixture sample.csv", () => {
 			csv
 		)
 
+		const streetIndex = scratch.path("street-index.db")
+
+		await writeStreetIndex(
+			[{ country: "FR", street: "Rue du Général Charles de Gaulle", locality: "Propriano" }],
+			streetIndex
+		)
+
 		await runAdapter({
 			adapter: createBanAdapter(),
-			adapterOptions: { inputPath: csv },
+			adapterOptions: { inputPath: csv, streetIndex },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})

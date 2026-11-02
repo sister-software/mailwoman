@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { composeHouseNumber, splitStreetLine, splitTrailingStreetLine } from "#adapters/street-line"
+import { composeHouseNumber, splitStreetLine, splitTrailingStreetLine } from "#adapters/street/line"
 
 describe("splitStreetLine", () => {
 	it("splits a standard urban address into house_number + street", () => {

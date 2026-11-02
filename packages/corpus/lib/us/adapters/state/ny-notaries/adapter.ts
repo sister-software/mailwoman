@@ -19,7 +19,9 @@ import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 import { splitUSStreetLine } from "#us/street-unit"
@@ -46,6 +48,8 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 		description: "New York Commissioned Notaries — name + optional business address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
+			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
+
 			if (opts.country && opts.country !== "US") {
 				throw new Error(`state-ny-notaries adapter: only US supported, got country=${opts.country}`)
 			}
@@ -79,7 +83,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 				if (!state) continue
 
 				const fullAddress = [address1, address2].filter(isPresent).join(" ")
-				const line = splitUSStreetLine(fullAddress)
+				const line = splitUSStreetLine(fullAddress, units)
 
 				if (!line) continue
 

@@ -19,6 +19,7 @@ import { PathBuilder } from "path-ts"
 
 import { underseaDatabasePath, underseaSourcePath } from "#paths"
 import { downloadUnderseaGazetteer } from "#sdk/download"
+import { readDepths } from "#tools/depth"
 import { buildUnderseaLayer } from "#tools/undersea-layer"
 
 const { values } = parseArguments({
@@ -46,6 +47,7 @@ const result = await buildUnderseaLayer({
 	createdAt: new Date().toISOString(),
 	buildSHA: await gitHead(),
 	buildCmd: scriptBuildCommand(import.meta.url),
+	readDepths: (requests) => readDepths(requests, undefined, (line) => console.error(line)),
 	log: (line) => console.error(line),
 })
 

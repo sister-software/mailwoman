@@ -75,7 +75,7 @@ import { PathBuilder } from "path-ts"
 
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
-import { composeHouseNumber } from "#adapters/street-line"
+import { composeHouseNumber } from "#adapters/street/line"
 import {
 	adminUnitLevel,
 	componentHrefs,

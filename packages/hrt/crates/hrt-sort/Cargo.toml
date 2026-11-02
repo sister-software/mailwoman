@@ -1,0 +1,15 @@
+[package]
+name = "hrt-sort"
+description = "The Hilbert Rust Tiler's feature sort: Planetiler's 64-bit tile, layer and sort-key ordering, an external merge sort, and grouping into tiles with label-grid limits."
+version.workspace = true
+edition.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0"
+repository.workspace = true
+
+[dependencies]
+hrt-e = { path = "../hrt-e" }
+hrt-render = { path = "../hrt-render" }
+rayon = "1"
+
+[dev-dependencies]
+tempfile = "3"

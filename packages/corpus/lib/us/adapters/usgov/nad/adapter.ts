@@ -100,7 +100,7 @@ function nonEmpty(...values: Array<string | null | undefined>): string | null {
  *
  * NAD publishes `AddNo_Full` already assembled and the parts beside it, so this prefers the
  * assembled column and falls back to joining `AddNum_Pre`, `Add_Number` and `AddNum_Suf`.
- * The shared `composeHouseNumber` in `#adapters/street-line` joins exactly two columns with
+ * The shared `composeHouseNumber` in `#adapters/street/line` joins exactly two columns with
  * one separator, so it fits a publisher that splits the number in two rather than in four.
  */
 export function nadHouseNumber(r: NADRecord): string | null {

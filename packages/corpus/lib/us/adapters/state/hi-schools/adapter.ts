@@ -33,7 +33,9 @@ import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator, XLSXSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { type HiSchoolRow, schoolCellText, STATE_HI_SCHOOL_SHEETS } from "#us/adapters/state/hi-schools/workbook"
 import { lookupStateAbbreviation } from "#us/fips-state"
@@ -97,6 +99,8 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 		description: "Hawaii DOE School Directory — ~300 K-12 public + charter schools with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
+			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
+
 			if (opts.country && opts.country !== "US") {
 				throw new Error(`state-hi-schools adapter: only US supported, got country=${opts.country}`)
 			}
@@ -121,7 +125,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 
 				if (!name || !address || !city || !zip) continue
 
-				const line = splitUSStreetLine(address)
+				const line = splitUSStreetLine(address, units)
 
 				if (!line) continue
 

@@ -426,13 +426,21 @@ the obligations table (`packages/core/lib/license/obligations.ts`, which `mailwo
 data. Without this check, a vendor-suffixed identifier such as `PDDL-1.0-USGov-NRCS` would ship and read as
 unrecognized on every machine that opens it.
 
-| `LicenseRef`                     | Meaning                                                                                                                                                                                    | Obligations |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
-| `LicenseRef-Commercial`          | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                 | attribution |
-| `LicenseRef-USGov-Public-Domain` | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                       | none        |
-| `LicenseRef-WhosOnFirst-Mixed`   | the Who's On First records. They are subject to 102 upstream sources' terms. Its own text grants CC0 over "the format and structure", in those words, and states no grant over the records | unknown     |
-| `LicenseRef-Undeclared-Input`    | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                                     | unknown     |
-| `LicenseRef-INEGI-Terms`         | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                    | attribution |
+| `LicenseRef`                         | Meaning                                                                                                                                                                                    | Obligations |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
+| `LicenseRef-Commercial`              | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                                                                                                 | attribution |
+| `LicenseRef-USGov-Public-Domain`     | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings. SPDX has no identifier for it                                                                       | none        |
+| `LicenseRef-WhosOnFirst-Mixed`       | the Who's On First records. They are subject to 102 upstream sources' terms. Its own text grants CC0 over "the format and structure", in those words, and states no grant over the records | unknown     |
+| `LicenseRef-Undeclared-Input`        | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                                     | unknown     |
+| `LicenseRef-INEGI-Terms`             | Mexico's `Términos de Libre Uso de la Información del INEGI`, a text that cites no Creative Commons license and states no version. Retrieved 2026-09-27                                    | attribution |
+| `LicenseRef-GEBCO-Operator-Election` | the IHO-IOC GEBCO Gazetteer of Undersea Feature Names, used under the operator's own election of 2026-11-02 (#2896)                                                                        | attribution |
+
+`LicenseRef-GEBCO-Operator-Election` records an election made without a written grant. GEBCO and NOAA NCEI
+publish the gazetteer with a citation request and state no restriction. GEBCO's disclaimer excludes only
+use for navigation or for safety at sea. The records are names, generic terms and coordinates, and the
+undersea layer uses them as map labels and search names. The layer credits "IHO-IOC GEBCO Gazetteer of
+Undersea Feature Names, www.gebco.net". A request for written confirmation has gone to GEBCO. If GEBCO's reply
+restricts reuse, the layer moves to GeoNames class `U` under CC BY 4.0.
 
 `LicenseRef-WhosOnFirst-Mixed` and `LicenseRef-Undeclared-Input` are deliberately absent from the
 obligations table, so `summarizeLicense` reports them as unrecognized and `refusalsForPublication` refuses

@@ -86,7 +86,7 @@ import { Globerator } from "spliterator/node/fs"
 
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
-import { composeHouseNumber } from "#adapters/street-line"
+import { composeHouseNumber } from "#adapters/street/line"
 import {
 	adminUnitLevel,
 	componentHrefs,
