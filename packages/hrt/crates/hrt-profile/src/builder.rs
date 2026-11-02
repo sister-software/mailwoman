@@ -78,6 +78,7 @@ pub struct Builder {
 	sort_key: i32,
 	buffer_pixels: f64,
 	min_pixel_size: f64,
+	min_pixel_size_override: Option<(u8, f64)>,
 	min_pixel_size_at_max_zoom: f64,
 	pixel_tolerance: f64,
 	pixel_tolerance_at_max_zoom: f64,
@@ -149,6 +150,7 @@ impl Builder {
 			sort_key: 0,
 			buffer_pixels: 4.0,
 			min_pixel_size: if point { 0.0 } else { 1.0 },
+			min_pixel_size_override: None,
 			min_pixel_size_at_max_zoom: if point { 0.0 } else { 256.0 / 4096.0 },
 			pixel_tolerance: 0.1,
 			pixel_tolerance_at_max_zoom: 256.0 / 4096.0,
@@ -222,6 +224,13 @@ impl Builder {
 		self
 	}
 
+	/// `setMinPixelSizeOverrides(ZoomFunction.maxZoom(max_zoom, pixels))`: below the render maximum zoom, zooms at or
+	/// under `max_zoom` use `pixels` and the others keep [`Builder::set_min_pixel_size`]'s value.
+	pub fn set_min_pixel_size_overrides(&mut self, max_zoom: u8, pixels: f64) -> &mut Self {
+		self.min_pixel_size_override = Some((max_zoom, pixels));
+		self
+	}
+
 	/// Sets the simplification tolerance below the rendering maximum zoom.
 	pub fn set_pixel_tolerance(&mut self, pixels: f64) -> &mut Self {
 		self.pixel_tolerance = pixels;
@@ -245,10 +254,10 @@ impl Builder {
 		let at_max = zoom == self.config.render_max_zoom;
 		ZoomSettings {
 			buffer_pixels: self.buffer_pixels,
-			min_pixel_size: if at_max {
-				self.min_pixel_size_at_max_zoom
-			} else {
-				self.min_pixel_size
+			min_pixel_size: match self.min_pixel_size_override {
+				_ if at_max => self.min_pixel_size_at_max_zoom,
+				Some((max_zoom, pixels)) if zoom <= max_zoom => pixels,
+				_ => self.min_pixel_size,
 			},
 			pixel_tolerance: if at_max {
 				self.pixel_tolerance_at_max_zoom

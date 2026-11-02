@@ -24,9 +24,10 @@ crates as default members, because none of them links libtorch.
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.  |
 
-`hrt-profile` holds nine ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
+`hrt-profile` holds ten ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
 polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; `boundaries`, from OpenStreetMap
-and Natural Earth; and `roads`, `landuse`, `infrastructure`, `facilities`, `trees` and `transit`, from OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
+and Natural Earth; and `roads`, `buildings`, `landuse`, `infrastructure`, `facilities`, `trees` and `transit`, from
+OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
 the basemap profile the comparisons below use.
 
 `hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
@@ -244,6 +245,18 @@ On 2026-11-02, every tile was equal without a vertex tolerance, and most were by
 | `landuse`        | `luxembourg-latest.osm.pbf` |  6,757 |     635,928 |  6,757 |            738 |
 | `boundaries`     | `monaco-latest.osm.pbf`     |     30 | not counted |     30 |             30 |
 | `boundaries`     | `luxembourg-latest.osm.pbf` |  3,782 | not counted |  3,782 |          3,782 |
+
+For `buildings`, the counts below include tiles equal within the polygon tolerance:
+
+| Input                       | Tiles | Features | Equal | Within tolerance | Byte-identical | Different |
+| --------------------------- | ----: | -------: | ----: | ---------------: | -------------: | --------: |
+| `monaco-latest.osm.pbf`     |    24 |    5,609 |    24 |                2 |              6 |         0 |
+| `luxembourg-latest.osm.pbf` | 5,073 |  261,784 | 5,069 |               24 |          4,580 |         4 |
+
+The four differing Luxembourg tiles are at zoom 12, where footprints merge into blocks through a buffer and union,
+GEOS's in `hrt` and JTS's in Planetiler. Their first differing polygons have intersection over union 0.917277,
+0.996032, 0.998764 and 0.996073. In the first, tile 12/2115/1390, Java's polygon has 10 rings and 54.4 square pixels
+against `hrt`'s 9 rings and 49.9.
 
 The boundaries rows read Natural Earth through `ne=` as well. Natural Earth's admin boundary lines are multi-lines, and
 a non-OSM source's multi-line is a line, as Planetiler's `SimpleFeature` treats it. Within map bounds the GeoPackage
