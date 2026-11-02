@@ -297,9 +297,13 @@ order across worker threads, so ties between features with different key sets or
 
 The `trees` layer's canopy-raster source, `pm:treetops`, is a Parquet file `hrt` does not read yet.
 
-Island labels sit at the center of each island's maximum inscribed circle, which GEOS computes with its port of the
-JTS algorithm Planetiler calls. These runs do not establish whether either area holds an island polygon, so agreement
-between the two implementations on islands is unmeasured.
+Island labels sit at the center of each island's maximum inscribed circle. `hrt-render`'s `inscribed` module ports
+the JTS 1.20 search Planetiler calls, seeded at GEOS's interior point. GEOS's own port of the search placed one Kii
+Peninsula island's label 98 tile units from Java's, because GEOS measures distances with `sqrt(dx*dx + dy*dy)` where
+JTS uses `Math.hypot`, orders its cell queue differently, and solves triangles and convex quadrilaterals exactly. The
+port measures with Java's `hypot` and orders cells as `java.util.PriorityQueue` does. With it, the earth layers of
+Geofabrik's Chūgoku (791 tiles) and Kansai (709 tiles) extracts, built from OpenStreetMap alone so that their islands
+and cliffs are the only features, were byte-identical to Java's.
 
 Both builds write a header zoom range of 0 to 15 whichever zooms hold tiles. The header center differs: Planetiler
 writes the middle of the bounds at a zoom fitted to them, and `hrt` writes zoom 0 at 0, 0.
@@ -382,3 +386,88 @@ The attributes are `pgf:name:hi`, `pgf:name:mr` and `pgf:name:ne`. No feature in
 fork's metadata keys `pgf:devanagari:name` and `pgf:devanagari:version`. Earth and water were built too. Monaco's earth and
 water and Luxembourg's 2,926 earth tiles were byte-identical, and Luxembourg's water differed in the 3 tiles of the
 water layer's polygon merges recorded above.
+
+## Japan build
+
+On 2026-11-02 both builds ran on one AWS r7gd.8xlarge (32 Graviton3 vCPUs, 256 GB, instance-store scratch) from
+Geofabrik's `japan-latest.osm.pbf` (2,566,575,684 bytes) with every source the fork reads except Overture and the
+canopy raster: Natural Earth, the osmdata water and land polygons, the Daylight landcover GeoPackage and the pgf
+encoding. The Java build was `LayerDump.java` with an empty layer name, so Basemap built all of its layers, on the fork
+at 8bb24b2 with `-Xmx64g`. The `hrt` build was `hrt basemap-test` with the thirteen ported layers at e0c830c6b, before
+the relation-order change below. Both used 32 threads.
+
+| Build              | Wall clock | User CPU | System CPU | Peak resident memory | Archive bytes |
+| ------------------ | ---------: | -------: | ---------: | -------------------: | ------------: |
+| Java, `-Xmx64g`    |    5:33.92 |  6,192 s |       72 s |              69.1 GB |  not recorded |
+| `hrt basemap-test` |    5:28.25 |  5,418 s |       35 s |              15.8 GB | 4,098,754,482 |
+
+Both archives hold 10,997,053 tiles. `hrt clock` compared 114,454,085 features. 10,996,236 tiles were equal: 10,666,498
+byte-identical after gunzip, one with the same features in another order, and 5,732 whose 6,235 differing polygons
+were equal within the polygon tolerance. 817 tiles differed. By layer, counting tiles whose layer digest differed and
+tiles whose layer feature count differed:
+
+| Layer       | Digest differs | Count differs |
+| ----------- | -------------: | ------------: |
+| `water`     |          5,537 |             0 |
+| `buildings` |          1,034 |             2 |
+| `earth`     |            246 |             1 |
+| `roads`     |            187 |           132 |
+| `landuse`   |             16 |             0 |
+| `landcover` |              2 |             0 |
+
+The digest counts include tiles equal within tolerance. `boundaries`, `facilities`, `infrastructure`, `places`, `pois`
+and `trees` matched in every tile.
+
+The `roads` differences came from the order of a way's relation memberships. The fork orders road shields by network
+rank and text, and keeps shields that sort equal in the order Planetiler returns the way's relations. Planetiler stores
+memberships in `SparseUnorderedBinarySearchMultimap`, whose lookup binary-searches all keys and collects a key's values
+forward from where the search lands, then backward, so the order depends on every other key in the table. `hrt-osm`'s
+`BinarySearchMultimap` reproduces that lookup. On Geofabrik's `chugoku-latest.osm.pbf`, the roads layer differed in 65
+of 48,849 tiles before the change and was byte-identical in all 48,849 after it. A Japan build with this change and
+the two changes below has not run.
+
+The differing polygons in `water`, `buildings`, `landuse` and `landcover` are the polygon merges recorded for
+Luxembourg: GEOS's buffer, union and precision reducer in `hrt`, JTS's in Planetiler. In the 200 tiles `clock`
+detailed, the first differing polygon had intersection over union between 0.96 and 0.9999. The bundled GEOS is 3.15.1dev,
+which its version file records as a port of JTS 1.20.0, the JTS Planetiler 0.10.2 uses; the two still return different
+rings for the same input. During merges, Planetiler snapped and repaired 66 polygons and `hrt` 70. During rendering,
+both repaired 581,396.
+
+Three tiles outside `roads` held different feature counts. Each was rebuilt on the lab host from a small Geofabrik
+extract around it:
+
+- `earth` 15/28705/13122 (Java 1, `hrt` 2): GEOS placed the label of island way 719082768 98 tile units from Java's,
+  inside this tile's buffer. The ported inscribed-circle search above places it where Java does.
+- `buildings` 12/3577/1635 (Java 2, `hrt` 1): way 313671577 is tagged `building:levels=２（店舗スペース）`.
+  Planetiler's fallback number parser, `NumberFormat`, reads every decimal digit Java's `Character.digit` knows,
+  including the fullwidth `２`, and gave a height of 8 meters. `hrt` read ASCII digits only and gave no height, so the
+  footprint joined another merge group. `hrt-profile`'s parser now reads the same 370 digits as JDK 21. Five of the six
+  differing building tiles in the Shikoku extract around this tile were this footprint, at zooms 11 to 15.
+- `buildings` 12/3578/1635 (Java 2, `hrt` 3): a pair of footprints of height 40 merges to 3.09375 square pixels in
+  JTS and 3.1348 in GEOS, whose ring keeps one more vertex. The merge's minimum area is 3.125 square pixels, so Java
+  drops the pair and `hrt` keeps it. This is a polygon merge difference.
+
+### Java profile
+
+A second run on the same instance type recorded the Java build with the JDK's Flight Recorder
+(`-XX:StartFlightRecording=settings=profile`) and its GC log. async-profiler 4.0 crashed this arm64 Corretto 21.0.13
+JVM in `vframeStreamForte::forte_next`. The profiled build took 5:31.04 with 6,071 s of user CPU and 69.1 GB peak
+resident memory. Planetiler's stage table:
+
+| Stage       | Wall clock |     CPU | Cores busy on average |
+| ----------- | ---------: | ------: | --------------------: |
+| `osm_pass1` |       26 s |   2m47s |                   6.4 |
+| `osm_pass2` |      2m18s | 1h7m58s |                  29.5 |
+| `ne`        |      1m14s |   1m22s |                   1.1 |
+| `osm_water` |       14 s |    58 s |                   4.1 |
+| `osm_land`  |       14 s |    37 s |                   2.6 |
+| `sort`      |       10 s |   3m39s |                  21.9 |
+| `archive`   |       50 s |  24m39s |                  29.6 |
+
+The Natural Earth stage read on about one core for 1m14s, 23% of the 5m28s Planetiler reported for the whole build.
+Garbage collection paused the build 927 times for 9.09 s in total (median 4.44 ms, 99th percentile 111 ms), and its
+threads used 2m56s of user CPU, about 3% of the build's. Of 89,456 CPU samples, the most frequent methods were
+`Arrays.copyOf(Object[])` (6.13%), Planetiler's `DouglasPeuckerSimplifier.subsimplify` (4.39%, and 1.58% in its
+second overload), hppc's `DoubleArrayList.ensureBufferSpace` (2.79%), `HashMap.getNode` (2.61%) and JTS's
+`MonotoneChain.computeIntersections` (2.46%). The largest allocation sites were `Arrays.copyOf(double[])` (12.58%),
+JTS's `SimpleMCSweepLineIntersector.addEdge` (8.10%), `Arrays.copyOf(Object[])` (5.91%) and `ArrayList.grow` (5.45%).

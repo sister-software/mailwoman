@@ -8,6 +8,7 @@
 
 use geos::Geom as _;
 use hrt_e::Value;
+use hrt_render::inscribed::maximum_inscribed_circle_center;
 use hrt_render::snap::{from_geos, to_geos};
 use hrt_render::{Feature, Geom, ZoomSettings};
 
@@ -483,15 +484,23 @@ impl<'a> Collector<'a> {
 	}
 
 	/// Planetiler's `innermostPoint(layer, tolerance)` for a source that can be a polygon: the center of its maximum
-	/// inscribed circle, found to within `sqrt(area) * tolerance`. GEOS ports the JTS `MaximumInscribedCircle` that
-	/// Planetiler calls. A source that cannot be a polygon gives an empty feature; Planetiler would use a line's
-	/// midpoint or a point on its surface, which no ported layer reaches.
+	/// inscribed circle, found to within `sqrt(area) * tolerance` by `hrt-render`'s port of the JTS search Planetiler
+	/// calls, seeded at GEOS's interior point. A source that cannot be a polygon gives an empty feature; Planetiler
+	/// would use a line's midpoint or a point on its surface, which no ported layer reaches.
 	pub fn innermost_point(&mut self, layer: u32, tolerance: f64) -> &mut Builder {
 		let geometry = if self.input.can_be_polygon() {
 			self.polygon_geometry().and_then(|polygon| {
 				let precision = polygon.area().abs().sqrt() * tolerance;
-				let circle = to_geos(&polygon).ok()?.maximum_inscribed_circle(precision).ok()?;
-				from_geos(&circle.get_start_point().ok()?).ok()
+				let seed = match interior_point(&polygon)? {
+					Geom::Point(point) => point,
+					_ => return None,
+				};
+				let polygons = match polygon {
+					Geom::Polygon(polygon) => vec![polygon],
+					Geom::MultiPolygon(polygons) => polygons,
+					_ => return None,
+				};
+				maximum_inscribed_circle_center(&polygons, seed, precision).map(Geom::Point)
 			})
 		} else {
 			None

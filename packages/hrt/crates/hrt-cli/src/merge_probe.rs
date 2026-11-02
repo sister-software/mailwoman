@@ -23,6 +23,7 @@ fn value_text(value: &Value) -> String {
 	match value {
 		Value::String(text) => format!("s:{text}"),
 		Value::Int(number) => format!("i:{number}"),
+		Value::Double(number) => format!("d:{number}"),
 		other => format!("{other:?}"),
 	}
 }

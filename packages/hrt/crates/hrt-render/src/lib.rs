@@ -11,6 +11,7 @@
 pub mod commands;
 pub mod geom;
 pub mod groups;
+pub mod inscribed;
 pub mod java_math;
 pub mod range_set;
 pub mod render;

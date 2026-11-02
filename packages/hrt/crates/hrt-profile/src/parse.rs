@@ -13,33 +13,51 @@ enum Parsed {
 	Double(f64),
 }
 
+/// The first code point of each run of ten that Java's `Character.digit(c, 10)` reads as 0 to 9, from JDK 21.
+/// `DecimalFormat` reads text one UTF-16 code unit at a time, so digits outside the Basic Multilingual Plane, whose
+/// code units are surrogates, are not digits to it.
+const DIGIT_ZEROS: [u32; 37] = [
+	0x0030, 0x0660, 0x06F0, 0x07C0, 0x0966, 0x09E6, 0x0A66, 0x0AE6, 0x0B66, 0x0BE6, 0x0C66, 0x0CE6, 0x0D66, 0x0DE6,
+	0x0E50, 0x0ED0, 0x0F20, 0x1040, 0x1090, 0x17E0, 0x1810, 0x1946, 0x19D0, 0x1A80, 0x1A90, 0x1B50, 0x1BB0, 0x1C40,
+	0x1C50, 0xA620, 0xA8D0, 0xA900, 0xA9D0, 0xA9F0, 0xAA50, 0xABF0, 0xFF10,
+];
+
+/// The value `DecimalFormat` gives `c` as a digit: an ASCII digit, or a decimal digit of another script, such as the
+/// fullwidth `２` Japanese tags use.
+fn java_digit(c: char) -> Option<char> {
+	let code = c as u32;
+	DIGIT_ZEROS
+		.iter()
+		.find(|&&zero| (zero..zero + 10).contains(&code))
+		.and_then(|&zero| char::from_digit(code - zero, 10))
+}
+
 /// `NumberFormat.getNumberInstance(Locale.ROOT).parse`: the longest leading run of an optional minus sign, digits
 /// with optional comma grouping, and an optional decimal part. Returns `None` when no digit leads the text.
 fn number_prefix(text: &str) -> Option<Parsed> {
-	let bytes = text.as_bytes();
+	let chars: Vec<char> = text.chars().collect();
+	let is_digit = |index: usize| chars.get(index).is_some_and(|&c| java_digit(c).is_some());
 	let mut index = 0;
-	let negative = bytes.first() == Some(&b'-');
+	let negative = chars.first() == Some(&'-');
 	if negative {
 		index += 1;
 	}
 	let mut digits = String::new();
 	let mut seen_digit = false;
-	while index < bytes.len() {
-		match bytes[index] {
-			b'0'..=b'9' => {
-				digits.push(bytes[index] as char);
-				seen_digit = true;
-			}
-			b',' if seen_digit && bytes.get(index + 1).is_some_and(u8::is_ascii_digit) => {}
-			_ => break,
+	while index < chars.len() {
+		if let Some(digit) = java_digit(chars[index]) {
+			digits.push(digit);
+			seen_digit = true;
+		} else if !(chars[index] == ',' && seen_digit && is_digit(index + 1)) {
+			break;
 		}
 		index += 1;
 	}
 	let mut fraction = String::new();
-	if bytes.get(index) == Some(&b'.') && bytes.get(index + 1).is_some_and(u8::is_ascii_digit) {
+	if chars.get(index) == Some(&'.') && is_digit(index + 1) {
 		index += 1;
-		while index < bytes.len() && bytes[index].is_ascii_digit() {
-			fraction.push(bytes[index] as char);
+		while let Some(digit) = chars.get(index).and_then(|&c| java_digit(c)) {
+			fraction.push(digit);
 			index += 1;
 		}
 	}
@@ -146,27 +164,25 @@ fn java_parse_double(text: &str) -> Option<f64> {
 
 /// How far Java's `NumberFormat.getInstance().parse(text, position)` advances, in UTF-16 code units, for an
 /// English-locale format: an optional minus sign, digits with `,` grouping between digits, one `.` decimal separator,
-/// and an exponent of `E`, an optional sign and digits. Text that starts with no digit leaves the position at 0. Java also
-/// reads digits of other scripts; this reads ASCII digits only.
+/// and an exponent of `E`, an optional sign and digits. Digits are those `java_digit` reads. Text that starts with no
+/// digit leaves the position at 0.
 pub fn number_format_parse_length(text: &str) -> usize {
-	let bytes = text.as_bytes();
-	let mut index = usize::from(bytes.first() == Some(&b'-'));
+	let chars: Vec<char> = text.chars().collect();
+	let is_digit = |index: usize| chars.get(index).is_some_and(|&c| java_digit(c).is_some());
+	let mut index = usize::from(chars.first() == Some(&'-'));
 	let mut saw_digit = false;
 	let mut saw_decimal = false;
-	while index < bytes.len() {
-		match bytes[index] {
-			b'0'..=b'9' => saw_digit = true,
-			b',' if !saw_decimal && saw_digit && bytes.get(index + 1).is_some_and(u8::is_ascii_digit) => {}
-			b'.' if !saw_decimal => saw_decimal = true,
-			b'E' if saw_digit => {
+	while index < chars.len() {
+		match chars[index] {
+			c if java_digit(c).is_some() => saw_digit = true,
+			',' if !saw_decimal && saw_digit && is_digit(index + 1) => {}
+			'.' if !saw_decimal => saw_decimal = true,
+			'E' if saw_digit => {
 				let mut exponent = index + 1;
-				if matches!(bytes.get(exponent), Some(b'+' | b'-')) {
+				if matches!(chars.get(exponent), Some('+' | '-')) {
 					exponent += 1;
 				}
-				let digits = bytes[exponent.min(bytes.len())..]
-					.iter()
-					.take_while(|b| b.is_ascii_digit())
-					.count();
+				let digits = (exponent..chars.len()).take_while(|&i| is_digit(i)).count();
 				if digits > 0 {
 					index = exponent + digits;
 				}
@@ -177,7 +193,7 @@ pub fn number_format_parse_length(text: &str) -> usize {
 		index += 1;
 	}
 	if saw_digit {
-		// Everything consumed is ASCII, so the byte count is the UTF-16 count.
+		// Every character consumed is in the Basic Multilingual Plane, so the character count is the UTF-16 count.
 		index
 	} else {
 		0
@@ -268,6 +284,20 @@ mod tests {
 		assert!(parse_double_or_null(Some("NaN")).is_some_and(f64::is_nan));
 		assert_eq!(parse_double_or_null(Some("inf")), None);
 		assert_eq!(parse_double_or_null(Some("about")), None);
+	}
+
+	#[test]
+	fn the_leading_number_reads_digits_of_every_script_java_does() {
+		// JDK 21's NumberFormat.getNumberInstance(Locale.ROOT) parses these to 2, 12, 12, 1200, -3.5 and an error.
+		assert_eq!(parse_double_or_null(Some("２（店舗スペース）")), Some(2.0));
+		assert_eq!(parse_int_or_null(Some("１２")), Some(12));
+		assert_eq!(parse_double_or_null(Some("١٢٫٥")), Some(12.0));
+		assert_eq!(parse_long(Some("1,２00")), 1200);
+		assert_eq!(parse_double_or_null(Some("-３.５x")), Some(-3.5));
+		assert_eq!(parse_double_or_null(Some("Ⅻ")), None);
+		assert_eq!(number_format_parse_length("１２Ｆ"), 2);
+		// A digit outside the Basic Multilingual Plane is two UTF-16 code units Java does not read as a digit.
+		assert_eq!(number_format_parse_length("\u{1D7CE}"), 0);
 	}
 
 	#[test]

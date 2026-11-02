@@ -375,6 +375,24 @@ fn describe(feature: Option<&Canonical>) -> String {
 			for part in feature.parts.iter().take(3) {
 				let _ = write!(text, "[{} points from {:?}]", part.len(), part.first());
 			}
+			if feature.geom_type == 3 {
+				// Shells and holes wind opposite ways, so the signed ring areas sum to the polygon's area. An encoded ring
+				// leaves out its closing point, so each ring's last vertex pairs with its first.
+				let signed: f64 = feature
+					.parts
+					.iter()
+					.map(|ring| {
+						(0..ring.len())
+							.map(|i| {
+								let (p, q) = (ring[i], ring[(i + 1) % ring.len()]);
+								f64::from(p[0]) * f64::from(q[1]) - f64::from(q[0]) * f64::from(p[1])
+							})
+							.sum::<f64>() / 2.0
+					})
+					.sum();
+				// 4,096 tile units span 256 pixels, so a square pixel is 256 square units.
+				let _ = write!(text, " area {:.4} square pixels", signed.abs() / 256.0);
+			}
 			text
 		}
 	}
