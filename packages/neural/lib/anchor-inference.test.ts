@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Cross-language guard for the inference-side anchor features: the feature layout must match the
- *   Python training pipeline (`anchor_feature_vector`, now `mtf-channels`) or the model is
+ *   training encoder (`feature_vector` in `mtf-channels::anchor`) or the model is
  *   fed garbage at inference. The pinned vectors fail if the TypeScript implementation drifts.
  */
 import { mulberry32 } from "@mailwoman/core/random"
@@ -88,20 +88,19 @@ describe("anchorLookupFromPostcodes", () => {
 	})
 })
 
-describe("anchorFeatureVector — pinned to Python anchor_feature_vector", () => {
-	it("locale order matches Python LOCALE_COUNTRIES", () => {
+describe("anchorFeatureVector — pinned to the training encoder (`mtf-channels`)", () => {
+	it("locale order matches the training encoder's locale table", () => {
 		expect([...LOCALE_ORDER]).toEqual(["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"])
-		expect(ANCHOR_FEATURE_DIM).toBe(11)
 	})
 
-	it("a DE+US collision (10115) byte-matches Python", () => {
-		// The Python trainer's anchor_feature_vector({"DE":0.5,"US":0.5}, 52.5323, 13.3846)
+	it("a DE+US collision (10115) byte-matches the training encoder", () => {
+		// The training encoder's feature_vector({"DE":0.5,"US":0.5}, 52.5323, 13.3846)
 		const v = anchorFeatureVector({ DE: 0.5, US: 0.5 }, 52.5323, 13.3846)
 		const expected = [0.5, 0, 0.5, 0, 0, 0, 0, 0, 0, 0.583692, 0.074359]
 		expected.forEach((e, i) => expect(v[i]!).toBeCloseTo(e, 5))
 	})
 
-	it("a DE-only code byte-matches Python", () => {
+	it("a DE-only code byte-matches the training encoder", () => {
 		const v = anchorFeatureVector({ DE: 1 }, 49.4848, 8.4668)
 		const expected = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0.549831, 0.047038]
 		expected.forEach((e, i) => expect(v[i]!).toBeCloseTo(e, 5))

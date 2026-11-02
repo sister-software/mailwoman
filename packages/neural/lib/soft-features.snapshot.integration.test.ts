@@ -19,7 +19,7 @@ import type { TokenizedPiece } from "#tokenizer"
 
 const piece = (p: string, start: number, end: number): TokenizedPiece => ({ piece: p, id: 0, start, end })
 
-// Small homograph-style lexicon (2 entries + 2 codes), mirroring the Python fixture's bit layout.
+// Small homograph-style lexicon (2 entries + 2 codes), mirroring the reference fixture's bit layout.
 const BITS = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
 
 const LEXICON = parseGazetteerLexicon({

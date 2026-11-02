@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The TypeScript character encoder matches Python `encode_row_units` for 56 rows encoded under the v8-cjk interface (S 96, W 7, ctx 3). The set contains 50 JP board rows, 4 CN board rows with a Latin tail, one row past S and one row with an astral code point.
+ * @file The TypeScript character encoder matches the training encoder's row encoding (`mtf-channels`) for 56 rows encoded under the v8-cjk interface (S 96, W 7, ctx 3). The set contains 50 JP board rows, 4 CN board rows with a Latin tail, one row past S and one row with an astral code point.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -30,7 +30,7 @@ const encoderInterface = {
 }
 
 describe("encodeCharUnits", () => {
-	it("agrees with the Python encoder on every fixture row", () => {
+	it("agrees with the training encoder on every fixture row", () => {
 		expect(fixture.interface.pad_id).toBe(PAD_CHAR_ID)
 		expect(fixture.interface.unk_id).toBe(UNK_CHAR_ID)
 		expect(fixture.rows).toHaveLength(56)

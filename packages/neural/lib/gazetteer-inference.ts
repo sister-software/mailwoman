@@ -146,7 +146,7 @@ interface NormWord {
 }
 
 /**
- * Scan the raw surface and paint each char with its candidate-tag bitmask (mirrors Python).
+ * Scan the raw surface and paint each char with its candidate-tag bitmask (mirrors the training encoder).
  */
 export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): number[] {
 	const charBits = new Array<number>(text.length).fill(0)

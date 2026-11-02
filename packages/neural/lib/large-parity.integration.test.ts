@@ -45,7 +45,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 
 		if (divergences > 0) {
 			throw new Error(
-				`${divergences} of ${fixture.length} entries diverged from Python.\nFirst ${failures.length}:\n${failures.join("\n---\n")}`
+				`${divergences} of ${fixture.length} entries diverged from the reference fixture.\nFirst ${failures.length}:\n${failures.join("\n---\n")}`
 			)
 		}
 
