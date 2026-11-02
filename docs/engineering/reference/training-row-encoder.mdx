@@ -167,8 +167,8 @@ verify at 0 differing rows. No training config sets `augment_grouping_prob`. The
 the composition the Python loader ran, `random.Random(seed)` over `stream.iter_rows` with the astral skip. That composition
 reproduced `c6-train-2k`'s row identities and tensor digests exactly before it captured them.
 
-The crate's own tests cover what a sample may miss: `encode_row_reference.rs` against the Python
-`encode_row` fixture, `python_reference.rs` against the Python finders and string operations for every
+The crate's own tests cover what a sample may miss: `encode_row_reference.rs` against the recorded
+`encode_row` fixture, `text_reference.rs` against the recorded finder and string-operation answers for every
 scalar value in 17 templates, and `code_unit_parity.rs` from segmentation through acceptance counts.
 
 Each record verified with 0 differing rows against the Rust encoder (113,920 emitted rows in total). The broad

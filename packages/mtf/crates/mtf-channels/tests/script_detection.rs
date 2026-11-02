@@ -36,7 +36,7 @@ const CASES: &[(&str, &[&str], &str, bool, &str)] = &[
 ];
 
 #[test]
-fn every_operation_gives_the_recorded_python_answer() {
+fn every_operation_gives_the_recorded_cpython_answer() {
 	for &(text, runs, script, latin, folded) in CASES {
 		assert_eq!(script_runs(text), runs, "script_runs({text:?})");
 		assert_eq!(detect_script(text), script, "detect_script({text:?})");

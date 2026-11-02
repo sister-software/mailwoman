@@ -2,9 +2,9 @@
 // @license AGPL-3.0
 // @author Teffen Ellis, et al.
 
-//! Compares the finders and the string operations with the answers the Python implementations recorded.
+//! Compares the finders and the string operations with the recorded reference answers.
 //!
-//! `fixtures/python-reference.json` holds, for a list of adversarial texts, the Python postcode shapes, code units
+//! `fixtures/text-reference.json` holds, for a list of adversarial texts, the postcode shapes, code units
 //! with acceptance counts, and `lower`, `upper` and `strip`. For each template it also holds every scalar value
 //! grouped by the answer it gives when placed in the template. The default test checks each group's range ends and
 //! a stride through each range; `every_scalar_value_in_every_template` checks all of them and is run in release
@@ -36,7 +36,7 @@ fn fixture() -> Fixture {
 	let shapes_path = "../../../../packages/trainer/data/postcode-shapes.json";
 	let syntax_path = "../../../../packages/trainer/data/postcode-syntax.json";
 	Fixture {
-		doc: serde_json::from_str(&read("tests/fixtures/python-reference.json")).expect("the fixture is JSON"),
+		doc: serde_json::from_str(&read("tests/fixtures/text-reference.json")).expect("the fixture is JSON"),
 		shapes: PostcodeShapes::from_record(&read(shapes_path), shapes_path).expect("the shapes compile"),
 		syntax: PostcodeSyntax::from_json(&read(syntax_path), syntax_path).expect("the syntax compiles"),
 	}
