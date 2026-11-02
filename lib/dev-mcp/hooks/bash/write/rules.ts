@@ -106,6 +106,7 @@ const ADMITTED = new Set([
 	"npm",
 	"npx",
 	"ogrinfo",
+	"osmium",
 	"oxfmt",
 	"oxlint",
 	"rclone",
