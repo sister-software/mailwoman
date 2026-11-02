@@ -983,6 +983,7 @@ dependencies = [
  "hrt-e",
  "hrt-osm",
  "hrt-render",
+ "hrt-sort",
  "regex",
  "serde_json",
  "unicode-script",

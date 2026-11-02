@@ -144,6 +144,46 @@ fn java_parse_double(text: &str) -> Option<f64> {
 	body.parse::<f64>().ok().map(signed)
 }
 
+/// How far Java's `NumberFormat.getInstance().parse(text, position)` advances, in UTF-16 code units, for an
+/// English-locale format: an optional minus sign, digits with `,` grouping between digits, one `.` decimal separator,
+/// and an exponent of `E`, an optional sign and digits. Text that starts with no digit leaves the position at 0. Java also
+/// reads digits of other scripts; this reads ASCII digits only.
+pub fn number_format_parse_length(text: &str) -> usize {
+	let bytes = text.as_bytes();
+	let mut index = usize::from(bytes.first() == Some(&b'-'));
+	let mut saw_digit = false;
+	let mut saw_decimal = false;
+	while index < bytes.len() {
+		match bytes[index] {
+			b'0'..=b'9' => saw_digit = true,
+			b',' if !saw_decimal && saw_digit && bytes.get(index + 1).is_some_and(u8::is_ascii_digit) => {}
+			b'.' if !saw_decimal => saw_decimal = true,
+			b'E' if saw_digit => {
+				let mut exponent = index + 1;
+				if matches!(bytes.get(exponent), Some(b'+' | b'-')) {
+					exponent += 1;
+				}
+				let digits = bytes[exponent.min(bytes.len())..]
+					.iter()
+					.take_while(|b| b.is_ascii_digit())
+					.count();
+				if digits > 0 {
+					index = exponent + digits;
+				}
+				break;
+			}
+			_ => break,
+		}
+		index += 1;
+	}
+	if saw_digit {
+		// Everything consumed is ASCII, so the byte count is the UTF-16 count.
+		index
+	} else {
+		0
+	}
+}
+
 /// Java's `Double.parseDouble`, with `None` where Java throws `NumberFormatException`.
 pub fn parse_double(text: &str) -> Option<f64> {
 	java_parse_double(text)

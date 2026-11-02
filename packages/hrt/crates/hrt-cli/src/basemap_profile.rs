@@ -9,20 +9,22 @@ use std::sync::Mutex;
 
 use hrt_osm::{Relation, SourceFeature};
 use hrt_profile::country::CountryCoder;
+use hrt_profile::layers::places::WikidataConfigs;
 use hrt_profile::layers::{
-	boundaries, buildings, earth, facilities, infrastructure, landuse, roads, transit, trees, water,
+	boundaries, buildings, earth, facilities, infrastructure, landuse, places, roads, transit, trees, water,
 };
 use hrt_profile::{CollectorConfig, Emitted, Input, Profile, TileFeature};
 use hrt_render::snap::SnapCounts;
 
 /// The layers this profile can build, in name order.
-pub const PORTED_LAYERS: [&str; 10] = [
+pub const PORTED_LAYERS: [&str; 11] = [
 	boundaries::LAYER_NAME,
 	buildings::LAYER_NAME,
 	earth::LAYER_NAME,
 	facilities::LAYER_NAME,
 	infrastructure::LAYER_NAME,
 	landuse::LAYER_NAME,
+	places::LAYER_NAME,
 	roads::LAYER_NAME,
 	transit::LAYER_NAME,
 	trees::LAYER_NAME,
@@ -34,6 +36,8 @@ const MAX_ZOOM: u8 = 15;
 pub struct BasemapProfile {
 	layers: Vec<&'static str>,
 	countries: Option<CountryCoder>,
+	/// The curated place zooms from the fork's `places.csv`; empty when none was given.
+	pub wikidata: WikidataConfigs,
 	/// Skips post-processing, leaving the features as rendered, to compare the merges' inputs.
 	pub raw: bool,
 	pub merge_counts: Mutex<SnapCounts>,
@@ -50,6 +54,7 @@ impl BasemapProfile {
 		Some(BasemapProfile {
 			layers: chosen,
 			countries,
+			wikidata: WikidataConfigs::default(),
 			raw: false,
 			merge_counts: Mutex::new(SnapCounts::default()),
 		})
@@ -95,6 +100,17 @@ impl Profile for BasemapProfile {
 		}
 		if let Some(layer) = self.layer_id(buildings::LAYER_NAME).filter(|_| osm) {
 			buildings::process_osm(&Input::new(source), layer, &mut out, config);
+		}
+		if let Some(layer) = self.layer_id(places::LAYER_NAME).filter(|_| osm) {
+			let mut input = Input::new(source);
+			places::process_osm(
+				&mut input,
+				layer,
+				self.countries.as_ref(),
+				&self.wikidata,
+				&mut out,
+				config,
+			);
 		}
 		if let Some(layer) = self.layer_id(boundaries::LAYER_NAME) {
 			match source.source {

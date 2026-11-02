@@ -10,6 +10,7 @@ pub mod earth;
 pub mod facilities;
 pub mod infrastructure;
 pub mod landuse;
+pub mod places;
 pub mod roads;
 pub mod transit;
 pub mod trees;

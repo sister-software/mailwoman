@@ -7,7 +7,8 @@
 //! Commands:
 //! - `hrt render-test <input.osm.pbf> <output.pmtiles>` builds an archive with the parity profile.
 //! - `hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<borders.json>] [raw]
-//!   [ne=<gpkg or zip>] [osm-water=<zip>] [osm-land=<zip>]` builds ported layers of the basemap profile as
+//!   [places=<places.csv>] [ne=<gpkg or zip>] [osm-water=<zip>] [osm-land=<zip>]` builds ported layers of the basemap
+//!   profile as
 //!   `packages/hrt/parity/LayerDump.java` builds the fork's own. `raw` skips post-processing.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
 //!   `packages/hrt/parity/RenderDump.java`.
@@ -54,7 +55,7 @@ fn build(input: &str, extra: &[pipeline::ExtraSource], output: &str, profile: &i
 fn usage() -> ExitCode {
 	eprintln!("usage: hrt render-test <input.osm.pbf> <output.pmtiles>");
 	eprintln!(
-		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>]"
+		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>]"
 	);
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
@@ -91,9 +92,18 @@ fn main() -> ExitCode {
 			let mut raw = false;
 			let mut layers: Vec<String> = Vec::new();
 			let mut countries = None;
+			let mut wikidata = None;
 			let mut extra = Vec::new();
 			for option in &args[3..] {
-				if option == "raw" {
+				if let Some(path) = option.strip_prefix("places=") {
+					match hrt_profile::layers::places::WikidataConfigs::from_path(&PathBuf::from(path)) {
+						Ok(configs) => wikidata = Some(configs),
+						Err(error) => {
+							eprintln!("could not read {path}: {error}");
+							return ExitCode::FAILURE;
+						}
+					}
+				} else if option == "raw" {
 					raw = true;
 				} else if let Some(names) = option.strip_prefix("layer=") {
 					layers.extend(names.split(',').map(str::to_owned));
@@ -133,6 +143,9 @@ fn main() -> ExitCode {
 				return usage();
 			};
 			profile.raw = raw;
+			if let Some(wikidata) = wikidata {
+				profile.wikidata = wikidata;
+			}
 			let code = build(&args[1], &extra, &args[2], &profile);
 			eprintln!("merge snapping: {:?}", profile.merge_counts.lock().unwrap());
 			code

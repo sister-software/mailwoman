@@ -19,6 +19,7 @@ pub mod merge;
 pub mod names;
 pub mod parse;
 pub mod smoothing;
+pub mod sort_key;
 
 pub use builder::{Attribute, Builder, Collector, CollectorConfig, Emitted};
 pub use input::Input;

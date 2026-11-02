@@ -31,6 +31,12 @@ pub enum Expr {
 	Not(Box<Expr>),
 	And(Vec<Expr>),
 	Or(Vec<Expr>),
+	/// The fork's `atLeast`: the tag parses as a long of at least `bound`. A value that parses as 0 counts only when it
+	/// is the text `0`, because `getLong` also returns 0 for text that is no number.
+	AtLeast {
+		field: String,
+		bound: i64,
+	},
 	Point,
 	Line,
 	Polygon,
@@ -77,6 +83,13 @@ impl Expr {
 			Expr::Not(inner) => !inner.evaluate(input),
 			Expr::And(conditions) => conditions.iter().all(|condition| condition.evaluate(input)),
 			Expr::Or(conditions) => conditions.iter().any(|condition| condition.evaluate(input)),
+			Expr::AtLeast { field, bound } => match input.tag(field) {
+				None => false,
+				Some(text) => {
+					let value = crate::parse::parse_long(Some(text));
+					!(value == 0 && text != "0") && value >= *bound
+				}
+			},
 			Expr::Point => input.is_point(),
 			Expr::Line => input.can_be_line(),
 			Expr::Polygon => input.can_be_polygon(),
@@ -122,6 +135,14 @@ pub fn with(arguments: &[&str]) -> Expr {
 }
 
 /// The fork's `without`: the negation of [`with`].
+/// The fork's `atLeast(tag, bound)`.
+pub fn at_least(field: &str, bound: i64) -> Expr {
+	Expr::AtLeast {
+		field: field.to_owned(),
+		bound,
+	}
+}
+
 pub fn without(arguments: &[&str]) -> Expr {
 	Expr::Not(Box::new(with(arguments)))
 }

@@ -24,10 +24,10 @@ crates as default members, because none of them links libtorch.
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.  |
 
-`hrt-profile` holds ten ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
+`hrt-profile` holds eleven ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
 polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; `boundaries`, from OpenStreetMap
-and Natural Earth; and `roads`, `buildings`, `landuse`, `infrastructure`, `facilities`, `trees` and `transit`, from
-OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
+and Natural Earth; and `roads`, `buildings`, `places`, `landuse`, `infrastructure`, `facilities`, `trees` and
+`transit`, from OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
 the basemap profile the comparisons below use.
 
 `hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
@@ -245,6 +245,11 @@ On 2026-11-02, every tile was equal without a vertex tolerance, and most were by
 | `landuse`        | `luxembourg-latest.osm.pbf` |  6,757 |     635,928 |  6,757 |            738 |
 | `boundaries`     | `monaco-latest.osm.pbf`     |     30 | not counted |     30 |             30 |
 | `boundaries`     | `luxembourg-latest.osm.pbf` |  3,782 | not counted |  3,782 |          3,782 |
+| `places`         | `monaco-latest.osm.pbf`     |     24 | not counted |     24 |             24 |
+| `places`         | `luxembourg-latest.osm.pbf` |  3,434 | not counted |  3,434 |          3,434 |
+
+The places rows read the curated label zooms from the fork's `tiles/src/main/resources/places.csv` through
+`places=`, as the fork reads them from its jar.
 
 For `buildings`, the counts below include tiles equal within the polygon tolerance:
 

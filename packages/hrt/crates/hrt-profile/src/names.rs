@@ -251,6 +251,20 @@ pub fn set_osm_names(feature: &mut Builder, input: &Input<'_>, min_zoom: i32) {
 	}
 }
 
+/// The fork's `OsmNames.setOsmRefs`: each `ref` and `ref:*` tag shorter than five UTF-16 units that is not wholly a
+/// number, such as a state's `CA`, present from `min_zoom`.
+pub fn set_osm_refs(feature: &mut Builder, input: &Input<'_>, min_zoom: i32) {
+	for (key, value) in input.tags() {
+		if key != "ref" && !key.starts_with("ref:") {
+			continue;
+		}
+		let length = value.encode_utf16().count();
+		if length < 5 && crate::parse::number_format_parse_length(value) != length {
+			feature.set_attr_with_min_zoom(key, value, min_zoom);
+		}
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;

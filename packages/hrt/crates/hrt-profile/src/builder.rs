@@ -65,6 +65,35 @@ impl Emitted {
 	}
 }
 
+/// A number by zoom, as Planetiler's `ZoomFunction.fromMaxZoomThresholds` gives it: the value of the lowest threshold
+/// at or above the zoom, else the default.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ZoomThresholds {
+	/// `(maximum zoom, value)` pairs in ascending zoom order.
+	thresholds: Vec<(u8, f64)>,
+	default: f64,
+}
+
+impl ZoomThresholds {
+	pub fn from_max_zoom_thresholds(thresholds: &[(u8, f64)], default: f64) -> Self {
+		let mut thresholds = thresholds.to_vec();
+		thresholds.sort_by_key(|(zoom, _)| *zoom);
+		ZoomThresholds { thresholds, default }
+	}
+
+	/// `ZoomFunction.maxZoom(max_zoom, value)`: the value at or below `max_zoom`, and none above it.
+	pub fn max_zoom(max_zoom: u8, value: f64) -> Self {
+		Self::from_max_zoom_thresholds(&[(max_zoom, value)], 0.0)
+	}
+
+	pub fn at(&self, zoom: u8) -> f64 {
+		self.thresholds
+			.iter()
+			.find(|(max, _)| zoom <= *max)
+			.map_or(self.default, |(_, value)| *value)
+	}
+}
+
 /// A feature being built, mirroring `FeatureCollector.Feature`.
 #[derive(Clone, Debug)]
 pub struct Builder {
@@ -82,8 +111,9 @@ pub struct Builder {
 	min_pixel_size_at_max_zoom: f64,
 	pixel_tolerance: f64,
 	pixel_tolerance_at_max_zoom: f64,
-	label_grid_size: Option<(u8, f64)>,
-	label_grid_limit: Option<(u8, i32)>,
+	buffer_pixels_override: Option<(u8, f64)>,
+	label_grid_size: Option<ZoomThresholds>,
+	label_grid_limit: Option<ZoomThresholds>,
 	source_size: f64,
 	config: CollectorConfig,
 }
@@ -154,6 +184,7 @@ impl Builder {
 			min_pixel_size_at_max_zoom: if point { 0.0 } else { 256.0 / 4096.0 },
 			pixel_tolerance: 0.1,
 			pixel_tolerance_at_max_zoom: 256.0 / 4096.0,
+			buffer_pixels_override: None,
 			label_grid_size: None,
 			label_grid_limit: None,
 			source_size,
@@ -245,15 +276,37 @@ impl Builder {
 
 	/// Planetiler's `setPointLabelGridSizeAndLimit`: the grid applies at zooms up to `max_zoom`.
 	pub fn set_point_label_grid_size_and_limit(&mut self, max_zoom: u8, size: f64, limit: i32) -> &mut Self {
-		self.label_grid_size = Some((max_zoom, size));
-		self.label_grid_limit = Some((max_zoom, limit));
+		self.label_grid_size = Some(ZoomThresholds::max_zoom(max_zoom, size));
+		self.label_grid_limit = Some(ZoomThresholds::max_zoom(max_zoom, f64::from(limit)));
+		self
+	}
+
+	/// `setPointLabelGridPixelSize(ZoomFunction)`: the label grid's cell size in pixels by zoom.
+	pub fn set_point_label_grid_pixel_size(&mut self, size: ZoomThresholds) -> &mut Self {
+		self.label_grid_size = Some(size);
+		self
+	}
+
+	/// `setPointLabelGridLimit(ZoomFunction)`: how many points each label grid cell keeps, by zoom.
+	pub fn set_point_label_grid_limit(&mut self, limit: ZoomThresholds) -> &mut Self {
+		self.label_grid_limit = Some(limit);
+		self
+	}
+
+	/// `setBufferPixelOverrides(ZoomFunction.maxZoom(max_zoom, pixels))`: zooms at or under `max_zoom` use `pixels`,
+	/// the others [`Builder::set_buffer_pixels`]'s value.
+	pub fn set_buffer_pixel_overrides(&mut self, max_zoom: u8, pixels: f64) -> &mut Self {
+		self.buffer_pixels_override = Some((max_zoom, pixels));
 		self
 	}
 
 	fn zoom_settings(&self, zoom: u8) -> ZoomSettings {
 		let at_max = zoom == self.config.render_max_zoom;
 		ZoomSettings {
-			buffer_pixels: self.buffer_pixels,
+			buffer_pixels: match self.buffer_pixels_override {
+				Some((max_zoom, pixels)) if zoom <= max_zoom => pixels,
+				_ => self.buffer_pixels,
+			},
 			min_pixel_size: match self.min_pixel_size_override {
 				_ if at_max => self.min_pixel_size_at_max_zoom,
 				Some((max_zoom, pixels)) if zoom <= max_zoom => pixels,
@@ -264,14 +317,8 @@ impl Builder {
 			} else {
 				self.pixel_tolerance
 			},
-			label_grid_pixel_size: self
-				.label_grid_size
-				.filter(|(max, _)| zoom <= *max)
-				.map_or(0.0, |(_, size)| size),
-			label_grid_limit: self
-				.label_grid_limit
-				.filter(|(max, _)| zoom <= *max)
-				.map_or(0, |(_, limit)| limit),
+			label_grid_pixel_size: self.label_grid_size.as_ref().map_or(0.0, |size| size.at(zoom)),
+			label_grid_limit: self.label_grid_limit.as_ref().map_or(0, |limit| limit.at(zoom) as i32),
 		}
 	}
 
