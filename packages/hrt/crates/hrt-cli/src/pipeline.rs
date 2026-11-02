@@ -276,7 +276,10 @@ pub fn build(
 		records: sorter.records(),
 		..BuildReport::default()
 	};
-	let mut options = WriterOptions::default();
+	let mut options = WriterOptions {
+		zoom_range: Some((0, profile.max_zoom())),
+		..WriterOptions::default()
+	};
 	if let Some(bounds) = bounds {
 		options.bounds = bounds;
 	}

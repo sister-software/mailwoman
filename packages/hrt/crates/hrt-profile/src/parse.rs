@@ -90,6 +90,72 @@ pub fn parse_long(text: Option<&str>) -> i64 {
 	}
 }
 
+/// Java's `Double.parseDouble` for decimal text: characters up to U+0020 trimmed from both ends, an optional sign,
+/// `NaN` or `Infinity` exactly, or digits with an optional fraction and exponent and an optional `d` or `f` suffix.
+/// Java also reads hexadecimal floats; this returns `None` for them, and the caller's prefix parse then reads the
+/// leading `0`.
+fn java_parse_double(text: &str) -> Option<f64> {
+	let text = text.trim_matches(|c: char| c <= ' ');
+	let (negative, body) = match text.as_bytes().first() {
+		Some(b'-') => (true, &text[1..]),
+		Some(b'+') => (false, &text[1..]),
+		_ => (false, text),
+	};
+	let signed = |value: f64| if negative { -value } else { value };
+	match body {
+		"NaN" => return Some(f64::NAN),
+		"Infinity" => return Some(signed(f64::INFINITY)),
+		_ => {}
+	}
+	let body = body.strip_suffix(['d', 'D', 'f', 'F']).unwrap_or(body);
+	let bytes = body.as_bytes();
+	let mut index = 0;
+	let mut digits = 0;
+	while index < bytes.len() && bytes[index].is_ascii_digit() {
+		index += 1;
+		digits += 1;
+	}
+	if bytes.get(index) == Some(&b'.') {
+		index += 1;
+		while index < bytes.len() && bytes[index].is_ascii_digit() {
+			index += 1;
+			digits += 1;
+		}
+	}
+	if digits == 0 {
+		return None;
+	}
+	if matches!(bytes.get(index), Some(b'e' | b'E')) {
+		index += 1;
+		if matches!(bytes.get(index), Some(b'+' | b'-')) {
+			index += 1;
+		}
+		let start = index;
+		while index < bytes.len() && bytes[index].is_ascii_digit() {
+			index += 1;
+		}
+		if index == start {
+			return None;
+		}
+	}
+	if index != bytes.len() {
+		return None;
+	}
+	body.parse::<f64>().ok().map(signed)
+}
+
+/// `Parse.parseDoubleOrNull`: Java's `Double.parseDouble`, else the leading number, else `None`.
+pub fn parse_double_or_null(text: Option<&str>) -> Option<f64> {
+	let text = text?;
+	if let Some(value) = java_parse_double(text) {
+		return Some(value);
+	}
+	match number_prefix(text)? {
+		Parsed::Long(value) => Some(value as f64),
+		Parsed::Double(value) => Some(value),
+	}
+}
+
 static DISTANCE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
 	regex::Regex::new(
 		r#"(?i)(?<value>-?[\d.]+)\s*((?<mi>mi)|(?<m>m|$)|(?<km>km|kilom)|(?<ft>ft|')|(?<in>in|")|(?<nmi>nmi|international nautical mile|nautical))"#,
@@ -146,6 +212,17 @@ mod tests {
 		assert_eq!(parse_int_or_null(None), None);
 		assert_eq!(parse_long(Some("12m")), 12);
 		assert!(bool(Some("yes")) && !bool(Some("no")) && !bool(Some("")) && !bool(None));
+	}
+
+	#[test]
+	fn doubles_follow_java_then_the_leading_number() {
+		assert_eq!(parse_double_or_null(Some(" 1.5e3 ")), Some(1500.0));
+		assert_eq!(parse_double_or_null(Some("-2d")), Some(-2.0));
+		assert_eq!(parse_double_or_null(Some(".5")), Some(0.5));
+		assert_eq!(parse_double_or_null(Some("12 MW")), Some(12.0));
+		assert!(parse_double_or_null(Some("NaN")).is_some_and(f64::is_nan));
+		assert_eq!(parse_double_or_null(Some("inf")), None);
+		assert_eq!(parse_double_or_null(Some("about")), None);
 	}
 
 	#[test]

@@ -35,6 +35,11 @@ impl<'a> Input<'a> {
 		self.tag(key).is_some()
 	}
 
+	/// Returns whether the tag's value is one of `values`, as Planetiler's `hasTag(key, values...)` does.
+	pub fn has_tag_in(&self, key: &str, values: &[&str]) -> bool {
+		self.tag(key).is_some_and(|value| values.contains(&value))
+	}
+
 	/// Sets a tag for the rest of this feature's processing, as Planetiler's `SourceFeature.setTag` does.
 	pub fn set_tag(&mut self, key: &str, value: Option<String>) {
 		self.overlay.push((key.to_owned(), value));

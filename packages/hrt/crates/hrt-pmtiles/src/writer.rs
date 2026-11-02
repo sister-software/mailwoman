@@ -38,6 +38,9 @@ pub struct WriterOptions {
 	pub bounds: [f64; 4],
 	/// `(zoom, longitude, latitude)`.
 	pub center: (u8, f64, f64),
+	/// The `(minimum, maximum)` zoom the header records. Planetiler records its configured zoom range, whichever zooms
+	/// hold tiles. Unset, the header records the range of the tiles added, or 0 and 0 when none were.
+	pub zoom_range: Option<(u8, u8)>,
 	/// Tile bodies at or below this length are stored once, however many tiles share them. A longer body is written
 	/// each time it arrives unless it repeats the previous tile, because a hash table over every planet tile would hold
 	/// hundreds of millions of entries for bodies that rarely repeat.
@@ -51,6 +54,7 @@ impl Default for WriterOptions {
 			tile_compression: Compression::Gzip,
 			bounds: [-180.0, -85.051_128_78, 180.0, 85.051_128_78],
 			center: (0, 0.0, 0.0),
+			zoom_range: None,
 			dedupe_max_length: 4_096,
 		}
 	}
@@ -224,15 +228,9 @@ impl Writer {
 	///
 	/// # Errors
 	///
-	/// Fails when no tile was added, or when the scratch file or `out` fails.
+	/// Fails when the scratch file or `out` fails. An archive with no tiles has an empty root directory, as Planetiler
+	/// writes for a build whose sources produce no features.
 	pub fn finish(mut self, metadata: &[u8], out: &mut impl Write) -> io::Result<ArchiveSummary> {
-		if self.entries.is_empty() {
-			return Err(io::Error::new(
-				io::ErrorKind::InvalidInput,
-				"an archive needs at least one tile",
-			));
-		}
-
 		let (root, leaves, leaf_directories) = self.directories()?;
 		let metadata = gzip(metadata)?;
 
@@ -241,6 +239,11 @@ impl Writer {
 		let leaves_offset = metadata_offset + metadata.len() as u64;
 		let data_offset = leaves_offset + leaves.len() as u64;
 		let [min_lon, min_lat, max_lon, max_lat] = self.options.bounds;
+		let (min_zoom, max_zoom) = match self.options.zoom_range {
+			Some(range) => range,
+			None if self.entries.is_empty() => (0, 0),
+			None => (self.min_zoom, self.max_zoom),
+		};
 
 		let header = Header {
 			root_directory_offset: root_offset,
@@ -258,8 +261,8 @@ impl Writer {
 			internal_compression: Compression::Gzip,
 			tile_compression: self.options.tile_compression,
 			tile_type: self.options.tile_type,
-			min_zoom: self.min_zoom,
-			max_zoom: self.max_zoom,
+			min_zoom,
+			max_zoom,
 			min_lon,
 			min_lat,
 			max_lon,

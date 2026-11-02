@@ -9,12 +9,19 @@ use std::sync::Mutex;
 
 use hrt_osm::{Relation, SourceFeature};
 use hrt_profile::country::CountryCoder;
-use hrt_profile::layers::{roads, water};
+use hrt_profile::layers::{earth, facilities, infrastructure, roads, transit, water};
 use hrt_profile::{CollectorConfig, Emitted, Input, Profile, TileFeature};
 use hrt_render::snap::SnapCounts;
 
 /// The layers this profile can build, in name order.
-pub const PORTED_LAYERS: [&str; 2] = [roads::LAYER_NAME, water::LAYER_NAME];
+pub const PORTED_LAYERS: [&str; 6] = [
+	earth::LAYER_NAME,
+	facilities::LAYER_NAME,
+	infrastructure::LAYER_NAME,
+	roads::LAYER_NAME,
+	transit::LAYER_NAME,
+	water::LAYER_NAME,
+];
 const MAX_ZOOM: u8 = 15;
 
 /// The basemap profile over a chosen set of ported layers.
@@ -66,6 +73,13 @@ impl Profile for BasemapProfile {
 	fn process(&self, source: &SourceFeature<'_>) -> Vec<Emitted> {
 		let config = CollectorConfig::new(MAX_ZOOM);
 		let mut out = Vec::new();
+		let osm = source.source == "osm";
+		if let Some(layer) = self.layer_id(infrastructure::LAYER_NAME).filter(|_| osm) {
+			infrastructure::process_osm(&Input::new(source), layer, &mut out, config);
+		}
+		if let Some(layer) = self.layer_id(facilities::LAYER_NAME).filter(|_| osm) {
+			facilities::process_osm(&Input::new(source), layer, &mut out, config);
+		}
 		if let Some(layer) = self.layer_id(roads::LAYER_NAME) {
 			if source.source == "osm" {
 				let mut input = Input::new(source);
@@ -81,6 +95,15 @@ impl Profile for BasemapProfile {
 				_ => {}
 			}
 		}
+		if let Some(layer) = self.layer_id(earth::LAYER_NAME) {
+			let input = Input::new(source);
+			match source.source {
+				"osm" => earth::process_osm(&input, layer, &mut out, config),
+				"ne" => earth::process_ne(&input, layer, &mut out, config),
+				"osm_land" => earth::process_prepared_osm(&input, layer, &mut out, config),
+				_ => {}
+			}
+		}
 		out
 	}
 
@@ -92,6 +115,7 @@ impl Profile for BasemapProfile {
 		let out = match layer {
 			roads::LAYER_NAME => roads::post_process(zoom, features, &mut counts),
 			water::LAYER_NAME => water::post_process(features, &mut counts),
+			earth::LAYER_NAME => earth::post_process(features, &mut counts),
 			_ => features,
 		};
 		let mut total = self.merge_counts.lock().unwrap();

@@ -7,7 +7,7 @@
 //! Commands:
 //! - `hrt render-test <input.osm.pbf> <output.pmtiles>` builds an archive with the parity profile.
 //! - `hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<borders.json>] [raw]
-//!   [ne=<gpkg or zip>] [osm-water=<zip>]` builds ported layers of the basemap profile as
+//!   [ne=<gpkg or zip>] [osm-water=<zip>] [osm-land=<zip>]` builds ported layers of the basemap profile as
 //!   `packages/hrt/parity/LayerDump.java` builds the fork's own. `raw` skips post-processing.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
 //!   `packages/hrt/parity/RenderDump.java`.
@@ -54,7 +54,7 @@ fn build(input: &str, extra: &[pipeline::ExtraSource], output: &str, profile: &i
 fn usage() -> ExitCode {
 	eprintln!("usage: hrt render-test <input.osm.pbf> <output.pmtiles>");
 	eprintln!(
-		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [raw] [ne=<path>] [osm-water=<path>]"
+		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>]"
 	);
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
@@ -110,6 +110,12 @@ fn main() -> ExitCode {
 						name: "ne".into(),
 						path: path.into(),
 						format: pipeline::SourceFormat::GeoPackage,
+					});
+				} else if let Some(path) = option.strip_prefix("osm-land=") {
+					extra.push(pipeline::ExtraSource {
+						name: "osm_land".into(),
+						path: path.into(),
+						format: pipeline::SourceFormat::ShapefileZip,
 					});
 				} else if let Some(path) = option.strip_prefix("osm-water=") {
 					extra.push(pipeline::ExtraSource {

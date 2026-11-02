@@ -4,5 +4,9 @@
 
 //! The basemap layers ported from the fork's `layers/` package.
 
+pub mod earth;
+pub mod facilities;
+pub mod infrastructure;
 pub mod roads;
+pub mod transit;
 pub mod water;

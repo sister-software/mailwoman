@@ -415,6 +415,23 @@ impl<'a> Collector<'a> {
 		self.start(layer, geometry)
 	}
 
+	/// Planetiler's `innermostPoint(layer, tolerance)` for a source that can be a polygon: the center of its maximum
+	/// inscribed circle, found to within `sqrt(area) * tolerance`. GEOS ports the JTS `MaximumInscribedCircle` that
+	/// Planetiler calls. A source that cannot be a polygon gives an empty feature; Planetiler would use a line's
+	/// midpoint or a point on its surface, which no ported layer reaches.
+	pub fn innermost_point(&mut self, layer: u32, tolerance: f64) -> &mut Builder {
+		let geometry = if self.input.can_be_polygon() {
+			self.polygon_geometry().and_then(|polygon| {
+				let precision = polygon.area().abs().sqrt() * tolerance;
+				let circle = to_geos(&polygon).ok()?.maximum_inscribed_circle(precision).ok()?;
+				from_geos(&circle.get_start_point().ok()?).ok()
+			})
+		} else {
+			None
+		};
+		self.start(layer, geometry)
+	}
+
 	/// The polygon's, else the line's, else the point's centroid.
 	pub fn centroid(&mut self, layer: u32) -> &mut Builder {
 		let base = if self.input.can_be_polygon() {
@@ -430,6 +447,11 @@ impl<'a> Collector<'a> {
 		};
 		let geometry = base.as_ref().and_then(centroid);
 		self.start(layer, geometry)
+	}
+
+	/// Returns the `index`th feature this collector started, in start order.
+	pub fn feature_mut(&mut self, index: usize) -> &mut Builder {
+		&mut self.features[index]
 	}
 
 	/// Returns the features built, dropping those with empty geometry.
