@@ -16,6 +16,7 @@ use hrt_profile::layers::{
 	boundaries, buildings, earth, facilities, infrastructure, landcover, landuse, places, pois, roads, transit, trees,
 	water,
 };
+use hrt_profile::pgf::FontRegistry;
 use hrt_profile::{CollectorConfig, Emitted, Input, Profile, TileFeature, TileLayers};
 use hrt_render::snap::SnapCounts;
 
@@ -49,6 +50,8 @@ pub struct BasemapProfile {
 	pub raw: bool,
 	/// Clips every tile to a polygon before the per-layer post-processing, as the fork's `--clip` does.
 	pub clip: Option<Clip>,
+	/// The fonts from `pgf-encoding.zip` whose scripts' names get `pgf:` attributes; `None` writes none.
+	pub fonts: Option<FontRegistry>,
 	pub merge_counts: Mutex<SnapCounts>,
 }
 
@@ -67,8 +70,13 @@ impl BasemapProfile {
 			qrank: QrankDb::default(),
 			raw: false,
 			clip: None,
+			fonts: None,
 			merge_counts: Mutex::new(SnapCounts::default()),
 		})
+	}
+
+	fn input<'a>(&'a self, source: &'a SourceFeature<'a>) -> Input<'a> {
+		Input::new(source).with_fonts(self.fonts.as_ref())
 	}
 
 	fn layer_id(&self, name: &str) -> Option<u32> {
@@ -98,22 +106,22 @@ impl Profile for BasemapProfile {
 		let mut out = Vec::new();
 		let osm = source.source == "osm";
 		if let Some(layer) = self.layer_id(infrastructure::LAYER_NAME).filter(|_| osm) {
-			infrastructure::process_osm(&Input::new(source), layer, &mut out, config);
+			infrastructure::process_osm(&self.input(source), layer, &mut out, config);
 		}
 		if let Some(layer) = self.layer_id(facilities::LAYER_NAME).filter(|_| osm) {
-			facilities::process_osm(&Input::new(source), layer, &mut out, config);
+			facilities::process_osm(&self.input(source), layer, &mut out, config);
 		}
 		if let Some(layer) = self.layer_id(trees::LAYER_NAME).filter(|_| osm) {
-			trees::process_osm(&Input::new(source), layer, &mut out, config);
+			trees::process_osm(&self.input(source), layer, &mut out, config);
 		}
 		if let Some(layer) = self.layer_id(landuse::LAYER_NAME).filter(|_| osm) {
-			landuse::process_osm(&Input::new(source), layer, &mut out, config);
+			landuse::process_osm(&self.input(source), layer, &mut out, config);
 		}
 		if let Some(layer) = self.layer_id(buildings::LAYER_NAME).filter(|_| osm) {
-			buildings::process_osm(&Input::new(source), layer, &mut out, config);
+			buildings::process_osm(&self.input(source), layer, &mut out, config);
 		}
 		if let Some(layer) = self.layer_id(places::LAYER_NAME).filter(|_| osm) {
-			let mut input = Input::new(source);
+			let mut input = self.input(source);
 			places::process_osm(
 				&mut input,
 				layer,
@@ -124,23 +132,23 @@ impl Profile for BasemapProfile {
 			);
 		}
 		if let Some(layer) = self.layer_id(pois::LAYER_NAME).filter(|_| osm) {
-			pois::process_osm(&mut Input::new(source), layer, &self.qrank, &mut out, config);
+			pois::process_osm(&mut self.input(source), layer, &self.qrank, &mut out, config);
 		}
 		if let Some(layer) = self.layer_id(boundaries::LAYER_NAME) {
 			match source.source {
-				"osm" => boundaries::process_osm(&Input::new(source), layer, &mut out, config),
-				"ne" => boundaries::process_ne(&Input::new(source), layer, &mut out, config),
+				"osm" => boundaries::process_osm(&self.input(source), layer, &mut out, config),
+				"ne" => boundaries::process_ne(&self.input(source), layer, &mut out, config),
 				_ => {}
 			}
 		}
 		if let Some(layer) = self.layer_id(roads::LAYER_NAME) {
 			if source.source == "osm" {
-				let mut input = Input::new(source);
+				let mut input = self.input(source);
 				roads::process_osm(&mut input, layer, self.countries.as_ref(), &mut out, config);
 			}
 		}
 		if let Some(layer) = self.layer_id(water::LAYER_NAME) {
-			let mut input = Input::new(source);
+			let mut input = self.input(source);
 			match source.source {
 				"osm" => water::process_osm(&mut input, layer, &mut out, config),
 				"ne" => water::process_ne(&mut input, layer, &mut out, config),
@@ -149,7 +157,7 @@ impl Profile for BasemapProfile {
 			}
 		}
 		if let Some(layer) = self.layer_id(earth::LAYER_NAME) {
-			let input = Input::new(source);
+			let input = self.input(source);
 			match source.source {
 				"osm" => earth::process_osm(&input, layer, &mut out, config),
 				"ne" => earth::process_ne(&input, layer, &mut out, config),
@@ -158,7 +166,7 @@ impl Profile for BasemapProfile {
 			}
 		}
 		if let Some(layer) = self.layer_id(landcover::LAYER_NAME) {
-			let input = Input::new(source);
+			let input = self.input(source);
 			match source.source {
 				"landcover" => landcover::process_daylight(&input, layer, &mut out, config),
 				"ne" => landcover::process_ne(&input, layer, &mut out, config),
@@ -202,8 +210,22 @@ impl Profile for BasemapProfile {
 			.iter()
 			.map(|layer| format!(r#"{{"id":"{layer}","fields":{{}}}}"#))
 			.collect();
+		// The fork's extraArchiveMetadata: each registered font's name and encoding version, which a style needs to
+		// pick the fontstack the `pgf:` codepoints were encoded for.
+		let fonts: String = self
+			.fonts
+			.iter()
+			.flat_map(|fonts| fonts.bundles())
+			.map(|bundle| {
+				let script = bundle.script.to_lowercase();
+				format!(
+					r#","pgf:{script}:name":"{}","pgf:{script}:version":"{}""#,
+					bundle.name, bundle.version
+				)
+			})
+			.collect();
 		format!(
-			r#"{{"name":"hrt basemap","format":"pbf","vector_layers":[{}]}}"#,
+			r#"{{"name":"hrt basemap","format":"pbf","vector_layers":[{}]{fonts}}}"#,
 			layers.join(",")
 		)
 	}

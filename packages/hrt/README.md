@@ -13,16 +13,16 @@ crates as default members, because none of them links libtorch.
 
 ## Crates
 
-| Crate         | What it does                                                                                                          |
-| ------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `hrt-pmtiles` | PMTiles v3 reading and writing: Hilbert tile ids, the header, directories with leaf directories, and deduplication.   |
-| `hrt-e`       | Mapbox Vector Tile encoding and decoding: layers with interned keys and values, and zig-zag delta geometry commands.  |
-| `hrt-osm`     | OpenStreetMap reading in Planetiler's two passes: packed node locations, way geometry and multipolygon assembly.      |
-| `hrt-render`  | Planetiler's renderer: simplification, stripe clipping into tiles, polygon snapping, and MVT command encoding.        |
-| `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids. |
-| `hrt-profile` | The basemap profile: the fork's `Matcher` rules, a `FeatureCollector`-style builder, OSM names, merges, and layers.   |
-| `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
-| `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.  |
+| Crate         | What it does                                                                                                                                    |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hrt-pmtiles` | PMTiles v3 reading and writing: Hilbert tile ids, the header, directories with leaf directories, and deduplication.                             |
+| `hrt-e`       | Mapbox Vector Tile encoding and decoding: layers with interned keys and values, and zig-zag delta geometry commands.                            |
+| `hrt-osm`     | OpenStreetMap reading in Planetiler's two passes: packed node locations, way geometry and multipolygon assembly.                                |
+| `hrt-render`  | Planetiler's renderer: simplification, stripe clipping into tiles, polygon snapping, and MVT command encoding.                                  |
+| `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids.                           |
+| `hrt-profile` | The basemap profile: the fork's `Matcher` rules, a `FeatureCollector`-style builder, OSM names with their `pgf:` encodings, merges, and layers. |
+| `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.                               |
+| `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.                            |
 
 `hrt-profile` holds thirteen of the fork's fourteen layers: `water`, from OpenStreetMap, Natural Earth and the
 prepared ocean polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; `boundaries`, from
@@ -343,3 +343,42 @@ as `hrt`, and `hrt`'s tile holds the forest clipped to that piece.
 Four equal landuse tiles hold the same features in another order. In the three `hrt clock` printed, the first feature
 out of order is a forest relation that the clip split into several polygons, which suggests GEOS's overlay lists a
 multipolygon's members in a different order from JTS's; that cause is not yet tested.
+
+## Devanagari name encoding parity
+
+MapLibre places glyphs one codepoint at a time, so it cannot draw Devanagari's conjuncts and vowel signs. The fork
+works around this with Wipfli's positioned-glyph-font (pgf) encoding. It shapes each name in a registered script with
+that script's font, looks each positioned glyph up in an encoding table, and writes the result as a `pgf:` attribute
+of Private Use Area codepoints. The label layers of `@protomaps/basemaps`, which `packages/cartographer` builds its
+styles from, read `pgf:name` and switch Devanagari labels to the `Noto Sans Devanagari Regular v1` fontstack, which
+the glyph bucket serves.
+
+`hrt-profile`'s `pgf` module ports the fork's `FontRegistry` and `TextEngine`. `basemap-test` and `LayerDump.java`
+take `pgf=<pgf-encoding.zip>` and register the fonts Basemap's main registers, which is only Noto Sans Devanagari with
+encoding version 1. The archive Basemap downloads holds the same font and table files as the fork's test fixture.
+
+The table key is a glyph id with its offset and advance in 1/64ths of a 1000-unit em, as the JDK computes them for a
+1-point font. The JDK shapes with HarfBuzz at a scale of 65,536 per point. HarfBuzz takes each glyph's advance from
+FreeType's linear advance, `round(advance × round(64 × 65,536 / 1000) / 64)` in 16.16. The key offset is the glyph's
+float position less the float sum of the metric advances before it. `hrt` shapes with HarfRust 0.15, which follows
+HarfBuzz 15.0.0, at the same scale with the same advance callback, kerning and standard ligatures off, and no language.
+The FreeType formula matched the JDK's advance bits for all 257 glyphs the corpus below uses.
+
+`hrt pgf-probe` and `parity/PgfProbe.java` encode a list of names. Run on the 15,867 distinct Natural Earth name
+values that contain a Devanagari character, Java and `hrt` wrote the same codepoints for every name, and neither
+found a glyph missing from the table. The tile builds below register the fonts:
+
+| Input      | Layer  | Tiles | Byte-identical | Features with `pgf:` attributes |
+| ---------- | ------ | ----: | -------------: | ------------------------------: |
+| Monaco     | pois   |    26 |             26 |                              12 |
+| Monaco     | places |    24 |             24 |                               0 |
+| Monaco     | roads  |    28 |             28 |                               0 |
+| Luxembourg | places | 3,434 |          3,434 |                              29 |
+| Luxembourg | pois   | 5,853 |          5,853 |                               6 |
+| Luxembourg | roads  | 6,350 |          6,350 |                               0 |
+
+The attributes are `pgf:name:hi`, `pgf:name:mr` and `pgf:name:ne`. No feature in either area has a Devanagari
+`name`, so `pgf:name`, `pgf:name2` and `pgf:name3` are compared only through the name corpus. Both archives carry the
+fork's metadata keys `pgf:devanagari:name` and `pgf:devanagari:version`. Earth and water were built too. Monaco's earth and
+water and Luxembourg's 2,926 earth tiles were byte-identical, and Luxembourg's water differed in the 3 tiles of the
+water layer's polygon merges recorded above.

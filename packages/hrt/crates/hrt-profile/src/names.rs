@@ -10,8 +10,8 @@
 //! two units of no script. This module does the same. Script names follow Java's `Character.UnicodeScript` enum: the
 //! Unicode long name in capitals, shown with only its first letter capitalized, such as "Latin" or "Old_italic".
 //!
-//! The fork also writes `pgf:` attributes for scripts whose fonts are registered from `pgf-encoding.zip`. This port
-//! registers no fonts yet, which matches a Java build without that archive.
+//! The fork also writes `pgf:` attributes for scripts whose fonts are registered from `pgf-encoding.zip`; see
+//! [`crate::pgf`]. An [`Input`] without fonts writes none, which matches a Java build without that archive.
 
 use unicode_script::{Script, UnicodeScript};
 
@@ -203,15 +203,14 @@ pub fn segment_by_script(input: &str) -> Vec<String> {
 	segments
 }
 
-/// The fork's `TextEngine.encodeRegisteredScripts` with no fonts registered: the text unchanged.
-fn encode_registered_scripts(text: &str) -> String {
-	text.to_owned()
-}
-
 /// The fork's `OsmNames.setOsmNames`: `name`, `name2` and `name3` from the script segments of `name` with their
-/// non-Latin scripts, the allowed `name:<language>` tags, and `name:zh` copied to the Han variants when they are
-/// missing, each present from `min_zoom`.
+/// non-Latin scripts, the allowed `name:<language>` tags, `pgf:` encodings of those in a registered font's script,
+/// and `name:zh` copied to the Han variants when they are missing, each present from `min_zoom`.
 pub fn set_osm_names(feature: &mut Builder, input: &Input<'_>, min_zoom: i32) {
+	let encode_registered_scripts = |text: &str| match input.fonts {
+		Some(fonts) => fonts.encode_registered_scripts(text),
+		None => text.to_owned(),
+	};
 	for (key, value) in input.tags() {
 		if key == "name" {
 			let segments = segment_by_script(value);
@@ -239,6 +238,12 @@ pub fn set_osm_names(feature: &mut Builder, input: &Input<'_>, min_zoom: i32) {
 		}
 		if is_allowed(key) {
 			feature.set_attr_with_min_zoom(key, value, min_zoom);
+			if input.fonts.is_some_and(|fonts| fonts.has_script(&get_script(value))) {
+				let encoded = encode_registered_scripts(value);
+				if encoded != value {
+					feature.set_attr_with_min_zoom(&format!("pgf:{key}"), encoded, min_zoom);
+				}
+			}
 		}
 	}
 	if let Some(chinese) = input.tag("name:zh") {

@@ -6,11 +6,16 @@
 
 use hrt_osm::{ElementKind, SourceFeature};
 
+use crate::pgf::FontRegistry;
+
 /// A source feature with a writable tag overlay, standing in for Planetiler's mutable `SourceFeature` tags.
 pub struct Input<'a> {
 	pub source: &'a SourceFeature<'a>,
 	/// The source layer of a non-OSM source, such as `ne_10m_lakes`; empty for OpenStreetMap.
 	pub source_layer: &'a str,
+	/// The fonts whose scripts' names are written as `pgf:` attributes; `None` writes none, as the fork does without
+	/// `pgf-encoding.zip`.
+	pub fonts: Option<&'a FontRegistry>,
 	overlay: Vec<(String, Option<String>)>,
 }
 
@@ -19,8 +24,15 @@ impl<'a> Input<'a> {
 		Input {
 			source,
 			source_layer: "",
+			fonts: None,
 			overlay: Vec::new(),
 		}
+	}
+
+	/// Sets the fonts the names of this feature are encoded with.
+	pub fn with_fonts(mut self, fonts: Option<&'a FontRegistry>) -> Self {
+		self.fonts = fonts;
+		self
 	}
 
 	/// Returns the tag's value, or `None` when the feature lacks it.

@@ -19,6 +19,7 @@ pub mod locales;
 pub mod merge;
 pub mod names;
 pub mod parse;
+pub mod pgf;
 pub mod smoothing;
 pub mod sort_key;
 

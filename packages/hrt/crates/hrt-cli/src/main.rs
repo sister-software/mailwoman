@@ -8,10 +8,13 @@
 //! - `hrt render-test <input.osm.pbf> <output.pmtiles>` builds an archive with the parity profile.
 //! - `hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<borders.json>] [raw]
 //!   [places=<places.csv>] [qrank=<qrank.csv.gz>] [ne=<gpkg or zip>] [osm-water=<zip>] [osm-land=<zip>]
-//!   [landcover=<daylight-landcover.gpkg>] [clip=<polygon.geojson>] [clip-buffer=<pixels>]` builds ported layers of
-//!   the basemap profile as `packages/hrt/parity/LayerDump.java` builds the fork's own. `raw` skips post-processing,
-//!   and `clip` clips every tile to the polygon, buffered by `clip-buffer` (default 4) pixels of a 256-pixel tile as a
-//!   fraction of the polygon's larger side.
+//!   [landcover=<daylight-landcover.gpkg>] [clip=<polygon.geojson>] [clip-buffer=<pixels>] [pgf=<pgf-encoding.zip>]`
+//!   builds ported layers of the basemap profile as `packages/hrt/parity/LayerDump.java` builds the fork's own. `raw`
+//!   skips post-processing, `clip` clips every tile to the polygon, buffered by `clip-buffer` (default 4) pixels of a
+//!   256-pixel tile as a fraction of the polygon's larger side, and `pgf` registers the fork's fonts so names in their
+//!   scripts get `pgf:` attributes.
+//! - `hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>` writes each name beside its `pgf:` encoding, for
+//!   comparison with `packages/hrt/parity/PgfProbe.java`.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
 //!   `packages/hrt/parity/RenderDump.java`.
 //! - `hrt clock <a.pmtiles> <b.pmtiles> [max details]` compares two archives tile by tile and exits 1 when any tile
@@ -23,6 +26,7 @@ mod basemap_profile;
 mod clock;
 mod merge_probe;
 mod parity_profile;
+mod pgf_probe;
 mod pipeline;
 mod record;
 mod render_dump;
@@ -57,8 +61,9 @@ fn build(input: &str, extra: &[pipeline::ExtraSource], output: &str, profile: &i
 fn usage() -> ExitCode {
 	eprintln!("usage: hrt render-test <input.osm.pbf> <output.pmtiles>");
 	eprintln!(
-		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>] [landcover=<path>] [clip=<path>] [clip-buffer=<pixels>]"
+		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>] [landcover=<path>] [clip=<path>] [clip-buffer=<pixels>] [pgf=<path>]"
 	);
+	eprintln!("       hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>");
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
 	eprintln!("       hrt record <archive.pmtiles> <out.jsonl>");
@@ -90,6 +95,22 @@ fn main() -> ExitCode {
 				}
 			}
 		}
+		Some("pgf-probe") if args.len() == 4 => {
+			match pgf_probe::probe(
+				&PathBuf::from(&args[1]),
+				&PathBuf::from(&args[2]),
+				&PathBuf::from(&args[3]),
+			) {
+				Ok((lines, missing)) => {
+					eprintln!("encoded {lines} names; {missing} glyphs missing from the table");
+					ExitCode::SUCCESS
+				}
+				Err(error) => {
+					eprintln!("pgf-probe failed: {error}");
+					ExitCode::FAILURE
+				}
+			}
+		}
 		Some("basemap-test") if args.len() >= 4 => {
 			let mut raw = false;
 			let mut layers: Vec<String> = Vec::new();
@@ -99,8 +120,18 @@ fn main() -> ExitCode {
 			let mut extra = Vec::new();
 			let mut clip_path = None;
 			let mut clip_buffer = hrt_profile::clip::DEFAULT_BUFFER;
+			let mut fonts = None;
 			for option in &args[3..] {
-				if let Some(path) = option.strip_prefix("clip=") {
+				if let Some(path) = option.strip_prefix("pgf=") {
+					let path = PathBuf::from(path);
+					match hrt_profile::pgf::FontRegistry::from_zip(&path, &hrt_profile::pgf::FORK_FONTS) {
+						Ok(registry) => fonts = Some(registry),
+						Err(error) => {
+							eprintln!("could not read the fonts in {}: {error}", path.display());
+							return ExitCode::FAILURE;
+						}
+					}
+				} else if let Some(path) = option.strip_prefix("clip=") {
 					clip_path = Some(PathBuf::from(path));
 				} else if let Some(text) = option.strip_prefix("clip-buffer=") {
 					match text.parse::<f64>() {
@@ -172,6 +203,7 @@ fn main() -> ExitCode {
 				return usage();
 			};
 			profile.raw = raw;
+			profile.fonts = fonts;
 			if let Some(path) = clip_path {
 				match hrt_profile::clip::Clip::from_geojson_file(0, basemap_profile::MAX_ZOOM, clip_buffer, &path) {
 					Ok(clip) => profile.clip = Some(clip),
@@ -191,6 +223,9 @@ fn main() -> ExitCode {
 			eprintln!("merge snapping: {:?}", profile.merge_counts.lock().unwrap());
 			if let Some(clip) = &profile.clip {
 				eprintln!("clip failures: {:?}", clip.failures);
+			}
+			if let Some(fonts) = &profile.fonts {
+				eprintln!("pgf glyphs missing from the table: {:?}", fonts.missing_glyphs);
 			}
 			code
 		}
