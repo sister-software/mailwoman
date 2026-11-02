@@ -70,6 +70,7 @@ fn token_row(tokens: &[&str], labels: &[&str]) -> Row {
 		labels: strings(labels),
 		country: Some("US".to_owned()),
 		source: "test".to_owned(),
+		source_id: None,
 		spans: None,
 	}
 }
