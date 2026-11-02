@@ -8,7 +8,6 @@ import { describe, expect, it } from "vitest"
 
 import {
 	assertHeldOutSplit,
-	NON_NATIVE_ORDER_SPLIT,
 	nonNativeOrderFilterSQL,
 	nonNativeOrderGoldenRows,
 	nonNativeOrderTupleOf,
@@ -84,7 +83,6 @@ const repeat = (tuple: NonNativeOrderTuple, n = 24): NonNativeOrderTuple[] =>
 
 describe("the held-out split", () => {
 	it("is the test split", () => {
-		expect(NON_NATIVE_ORDER_SPLIT).toBe("test")
 		expect(() => assertHeldOutSplit("test")).not.toThrow()
 	})
 

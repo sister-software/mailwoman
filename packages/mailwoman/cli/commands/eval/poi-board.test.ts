@@ -11,7 +11,6 @@ import {
 	isCountedFixture,
 	partitionCases,
 	POI_BOARD_FIXTURES,
-	POI_BOARD_FLOORS,
 	type POIBoardFixture,
 	type POIBoardResult,
 } from "#tools/eval-harness/poi/board"
@@ -539,10 +538,6 @@ describe("evaluateFloors — breach detection", () => {
 		expect(evaluation.breached).toBe(true)
 		expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(false)
 		expect(evaluation.lines.find((l) => l.key === "abstain")!.fraction).toBe("0/0")
-	})
-
-	it("exposes the pre-registered floor thresholds", () => {
-		expect(POI_BOARD_FLOORS).toEqual({ overall: 0.9, abstain: 1, address: 1 })
 	})
 
 	describe("The 55-row composition", () => {

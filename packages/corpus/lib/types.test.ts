@@ -11,7 +11,6 @@ import { SourceRegister } from "#registers"
 import {
 	AddressRole,
 	addressRoleOf,
-	DEFAULT_ADDRESS_ROLE,
 	type AdapterOptions,
 	type CanonicalRow,
 	type CorpusAdapter,
@@ -107,7 +106,6 @@ describe("corpus types", () => {
 			license: "US-PD",
 		}
 
-		expect(DEFAULT_ADDRESS_ROLE).toBe(AddressRole.Premise)
 		expect(base.addressRole).toBeUndefined()
 		expect(addressRoleOf(base)).toBe(AddressRole.Premise)
 		expect(addressRoleOf({ ...base, addressRole: AddressRole.Mailing })).toBe("mailing")

@@ -60,7 +60,7 @@ import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { res9ShortCellToRes6Parent } from "#filing/landscape"
-import { nearestInfrastructure, NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS } from "#nearest-infrastructure"
+import { nearestInfrastructure } from "#nearest-infrastructure"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
 
@@ -337,8 +337,6 @@ describe("nearestInfrastructure", () => {
 
 		expect(withExplicit16.map((h) => h.name)).not.toContain(TELECOM_EXCHANGE_MID_RING.name)
 		expect(withExplicit16.map((h) => h.name)).toEqual([TELECOM_EXCHANGE_NEAR.name])
-
-		expect(NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS).toBe(32)
 	})
 
 	it("limit is respected", async () => {

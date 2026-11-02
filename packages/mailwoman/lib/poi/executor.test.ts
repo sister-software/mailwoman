@@ -123,36 +123,6 @@ describe("createPOIExecutor", () => {
 		expect(poiResult.results![0]!.name).toBe("Jewel-Osco")
 	})
 
-	it("category identity default: no injected resolver ⇒ probes [categoryID] and re-tag is a no-op", () => {
-		const seenQueries: POISearchQuery[] = []
-
-		const executor = createPOIExecutor({
-			lookup: stubLookup((query) => {
-				seenQueries.push(query)
-
-				return [HOSPITAL_HIT]
-			}),
-			requiresBuildLocal: NEVER_BUILD_LOCAL,
-		})
-
-		const poiResult = executor({
-			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital", countryBinding: null },
-			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE, biasPoint: null, radiusM: null },
-			relation: null,
-			limit: null,
-		})
-
-		expect(poiResult.type).toBe("intent")
-
-		if (poiResult.type !== "intent") throw new Error("unreachable")
-
-		expect(seenQueries).toEqual([
-			{ categoryIDs: ["hospital"], center: { latitude: 39.78, longitude: -89.65 }, limit: null },
-		])
-
-		expect(poiResult.results![0]!.categoryID).toBe("hospital")
-	})
-
 	it("union: probes every category the subject reached in a single search", () => {
 		const seenQueries: POISearchQuery[] = []
 

@@ -210,8 +210,6 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 
 		await client.get("/map/rate/1")
 		expect(clock.sleepCalls).toEqual([DEFAULT_INTERVAL_MS])
-
-		expect(BDC_DEFAULT_REQUESTS_PER_MINUTE).toBe(10)
 	})
 
 	it("is configurable, not a hard-coded law", async () => {

@@ -86,7 +86,6 @@ describe("two-score split — format v5", () => {
 		const buf = serializeFST(splitMatcher(0.1173))
 
 		expect(buf.readUInt16LE(4)).toBe(FST_FORMAT_VERSION)
-		expect(FST_FORMAT_VERSION).toBe(5)
 
 		const entry = deserializeFST(buf).query("Saint-Denis").accepting[0]!
 

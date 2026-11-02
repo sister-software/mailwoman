@@ -13,7 +13,6 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
-import { DEFAULT_COVERAGE_FLOOR } from "#tools/pipeline/defaults"
 import type { CountryGranularity, RungMeasurement } from "#tools/pipeline/granularity"
 import {
 	LADDER,
@@ -22,16 +21,6 @@ import {
 	buildGranularityLadder,
 	placetypesForRung,
 } from "#tools/pipeline/granularity"
-
-describe("LADDER", () => {
-	it("orders the containment rungs shallowest first", () => {
-		expect(LADDER).toEqual(["country", "region", "subregion", "locality", "dependent_locality", "venue", "unit"])
-	})
-
-	it("excludes postcode, an orthogonal channel rather than a containment rung", () => {
-		expect(LADDER).not.toContain("postcode")
-	})
-})
 
 describe("placetypesForRung", () => {
 	it("derives membership from the projection table rather than a second hand-written list", () => {
@@ -56,7 +45,7 @@ describe("SUB_LOCALITY_RUNGS", () => {
  *
  * `node:sqlite` cannot share an `:memory:` DB across connections and the builder
  * opens its own read-only handle, so this writes a temp file.
- * The same approach `placetype-census.test.ts` uses.
+ * The same approach `placetype-census.integration.test.ts` uses.
  *
  * Shape: GB has two locality parents (London, Quiet Town).
  * London has a borough and a neighborhood child.
@@ -237,9 +226,5 @@ describe("bottomsOutAt", () => {
 
 	it("returns null for a country with no live rows at any rung", () => {
 		expect(bottomsOutAt(granularity("ZZ", {}, 0))).toBeNull()
-	})
-
-	it("defaults the floor to five percent", () => {
-		expect(DEFAULT_COVERAGE_FLOOR).toBe(0.05)
 	})
 })

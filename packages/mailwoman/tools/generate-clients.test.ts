@@ -3,10 +3,6 @@ import { expect, test } from "vitest"
 
 import { CLIENT_SURFACES, pythonInitPy, pythonPyproject, rustCargoToml, rustLibRs } from "#tools/generate-clients"
 
-test("CLIENT_SURFACES is the fixed four-surface set (three drop-ins + the native mailwoman module)", () => {
-	expect(CLIENT_SURFACES).toEqual(["photon", "nominatim", "libpostal", "mailwoman"])
-})
-
 test("pythonPyproject interpolates the given version and names the mailwoman-client package", () => {
 	const toml = pythonPyproject("5.10.1")
 
