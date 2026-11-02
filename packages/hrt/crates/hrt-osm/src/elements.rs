@@ -12,17 +12,20 @@ pub enum ElementKind {
 	Node,
 	Way,
 	Relation,
+	/// A feature from a source other than OpenStreetMap, such as a shapefile or GeoPackage.
+	Other,
 }
 
 impl ElementKind {
 	/// Returns the vector tile feature id Planetiler assigns: the element id times `multiplier`, plus 1 for a node, 2
-	/// for a way and 3 for a relation.
+	/// for a way, 3 for a relation and 0 for another source.
 	pub fn feature_id(self, id: i64, multiplier: i64) -> i64 {
 		id * multiplier
 			+ match self {
 				ElementKind::Node => 1,
 				ElementKind::Way => 2,
 				ElementKind::Relation => 3,
+				ElementKind::Other => 0,
 			}
 	}
 }

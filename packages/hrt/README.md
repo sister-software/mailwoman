@@ -20,9 +20,11 @@ crates as default members, because none of them links libtorch.
 | `hrt-osm`     | OpenStreetMap reading in Planetiler's two passes: packed node locations, way geometry and multipolygon assembly.      |
 | `hrt-render`  | Planetiler's renderer: simplification, stripe clipping into tiles, polygon snapping, and MVT command encoding.        |
 | `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids. |
-| `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `clock` (the archive comparison) and `record`.                  |
+| `hrt-profile` | The basemap profile: the fork's `Matcher` rules, a `FeatureCollector`-style builder, OSM names, merges, and layers.   |
+| `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `water-test`, `clock` (the archive comparison) and `record`.    |
 
-The profile crate the specification names, `hrt-profile`, is not written yet; `hrt-cli` carries the parity profile.
+`hrt-profile` holds one ported layer so far, `water`, from OpenStreetMap; its Natural Earth and prepared ocean polygon
+sources are not read yet. `hrt-cli` carries the parity profile and the water-only profile the comparisons below use.
 
 `hrt-render` links GEOS, built from source by the `geos` crate's `static` feature, so building it needs cmake and a C++
 compiler. GEOS ports the JTS validity test and precision reducer Planetiler calls when a polygon's rounded form is
@@ -31,8 +33,8 @@ invalid.
 ## Checks
 
 ```sh
-cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-cli
-cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-cli --all-targets -- -D warnings
+cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-cli
+cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-cli --all-targets -- -D warnings
 ```
 
 The unit tests encode the vector tile specification's own examples and read written archives back through their
@@ -139,3 +141,33 @@ The Planetiler figures are its own stage table and exclude JVM start-up; its sta
 second encodes each batch of tiles on rayon's threads and writes them in tile order; it used 285% CPU, and the host's
 load average had risen to 18.5 from other jobs by the time it finished, so its CPU time includes contention. These are
 single runs on a shared host; the Phase 0 baseline and `hrt titrate` repeat them under controlled load.
+
+## Water layer parity
+
+`parity/WaterDump.java` builds an archive of the fork's own `Water` layer class from OpenStreetMap alone: every feature
+goes through `Water.processOsm` and every tile through `Water.postProcess`, at maxzoom 15. `hrt water-test` builds the
+same layer from `hrt-profile`'s port. With a fourth argument, `raw`, both skip post-processing, which isolates the line
+and polygon merges.
+
+```sh
+java -cp protomaps-basemap-HEAD-with-deps.jar packages/hrt/parity/WaterDump.java input.osm.pbf scratch/ 4
+cargo run --release -p hrt-cli -- water-test input.osm.pbf water.pmtiles
+cargo run --release -p hrt-cli -- clock scratch/water.pmtiles water.pmtiles
+```
+
+On 2026-11-02:
+
+| Input                       | Tiles | Equal | Equal within the polygon tolerance | Different |
+| --------------------------- | ----: | ----: | ---------------------------------: | --------: |
+| `monaco-latest.osm.pbf`     |    21 |    21 |                                  0 |         0 |
+| `sf-downtown.osm.pbf`       |    28 |    28 |                                  0 |         0 |
+| `luxembourg-latest.osm.pbf` | 6,009 | 6,006 |                                  4 |         3 |
+
+Without post-processing, all 6,015 Luxembourg tiles and their 75,794 features were identical, so the three remaining
+differences come from `mergeNearbyPolygons`. `hrt merge-probe` and `parity/MergeProbe.java` run that merge step by step
+on one tile's input. For tile 10/529/348 the buffered union has the same area in both, 170.2070 square pixels, and
+shrinking it back by the 0.0625 pixel buffer gives 68.0000 square pixels in JTS and 93.2207 in GEOS. The twelve input
+polygons cover about 93 square pixels once a duplicated input is counted once, so the JTS result lost area. This is
+inferred to be the JTS buffer fault Planetiler's own comment cites, locationtech/jts#1183, whose fallback Planetiler
+applies only when an input exceeds 100 square pixels. The other two tiles differ in merged polygon vertices, with
+intersection over union 0.9926 and 0.9989.

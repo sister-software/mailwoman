@@ -13,35 +13,14 @@ use std::sync::Mutex;
 use flate2::write::GzEncoder;
 use hrt_e::{encode_tile, LayerBuilder, Value, DEFAULT_EXTENT};
 use hrt_osm::coords::{world_x, world_y};
-use hrt_osm::{header_bounds, pass1, pass2, Relation, SourceFeature};
+use hrt_osm::{header_bounds, pass1, pass2};
 use hrt_pmtiles::{tile_id, ArchiveSummary, Writer, WriterOptions};
+use hrt_profile::{Profile, TileFeature};
 use hrt_render::commands::unscale;
-use hrt_render::{Feature, GeometryType, RenderConfig, RenderCounts, Renderer};
-use hrt_sort::key::layer_of;
+use hrt_render::{GeometryType, RenderConfig, RenderCounts, Renderer};
+use hrt_sort::key::{layer_of, tile_of};
 use hrt_sort::{encode_key, FeatureRecord, Sorter, Tiles};
 use rayon::prelude::*;
-
-/// A profile feature with the attributes it writes to its layer.
-pub struct Emitted {
-	pub feature: Feature,
-	pub attributes: Vec<(String, Value)>,
-}
-
-/// What a build needs from a profile.
-pub trait Profile: Sync {
-	/// The layer names, in the order their ids are assigned; tiles write layers in name order regardless.
-	fn layers(&self) -> &[&'static str];
-	/// The highest zoom the build renders.
-	fn max_zoom(&self) -> u8;
-	/// Returns whether pass 1 keeps a relation for membership lookups.
-	fn keep_relation(&self, _relation: &Relation) -> bool {
-		false
-	}
-	/// Maps one source feature to the features it emits.
-	fn process(&self, source: &SourceFeature<'_>) -> Vec<Emitted>;
-	/// The archive metadata JSON.
-	fn metadata(&self) -> String;
-}
 
 /// Counts from a build.
 #[derive(Debug, Default)]
@@ -62,37 +41,54 @@ fn type_code(geom_type: GeometryType) -> u64 {
 }
 
 /// Encodes one tile's sorted records, layers in name order, or `None` when the tile has no layer lists.
-fn encode(entries: &[(u64, Vec<u8>)], layer_names: &[&str]) -> io::Result<Option<Vec<u8>>> {
-	if entries.is_empty() {
+///
+/// Each layer's features go through the profile's post-processing first, at the precision they were rendered with,
+/// and lines are reduced to the tile extent afterwards, as in Planetiler's `FeatureGroup`.
+fn encode(entries: &[(u64, Vec<u8>)], profile: &impl Profile) -> io::Result<Option<Vec<u8>>> {
+	let Some(&(first_key, _)) = entries.first() else {
 		return Ok(None);
-	}
-	let mut by_layer: Vec<(&str, Vec<FeatureRecord>)> = Vec::new();
+	};
+	let (zoom, _, _) = hrt_pmtiles::tile_id_to_zxy(tile_of(first_key));
+	let layer_names = profile.layers();
+	let mut by_layer: Vec<(&str, Vec<TileFeature>)> = Vec::new();
 	for (key, value) in entries {
 		let name = layer_names[layer_of(*key) as usize];
 		let record =
 			FeatureRecord::decode(value, hrt_sort::key::has_group(*key)).map_err(|error| io::Error::other(error.0))?;
+		let feature = TileFeature {
+			id: record.id,
+			geometry: record.geometry,
+			attributes: record.attributes,
+		};
 		match by_layer.last_mut() {
-			Some((current, records)) if *current == name => records.push(record),
-			_ => by_layer.push((name, vec![record])),
+			Some((current, features)) if *current == name => features.push(feature),
+			_ => by_layer.push((name, vec![feature])),
 		}
 	}
 	by_layer.sort_by(|a, b| a.0.cmp(b.0));
 
 	let mut layers = Vec::with_capacity(by_layer.len());
-	for (name, records) in by_layer {
+	for (name, features) in by_layer {
+		let processed = profile.post_process(name, zoom, features);
+		// Planetiler adds a layer only when post-processing left it a feature, and skips a tile left with no layers.
+		if processed.is_empty() {
+			continue;
+		}
 		let mut layer = LayerBuilder::new(name, DEFAULT_EXTENT);
-		for record in records {
-			// Lines were stored at extra precision for merging and are reduced to the tile extent here.
-			let geometry = unscale(&record.geometry);
-			let attributes: Vec<(&str, Value)> = record
+		for feature in processed {
+			let geometry = unscale(&feature.geometry);
+			let attributes: Vec<(&str, Value)> = feature
 				.attributes
 				.iter()
 				.map(|(key, value)| (key.as_str(), value.clone()))
 				.collect();
-			let id = (record.id != 0).then_some(record.id as u64);
+			let id = (feature.id != 0).then_some(feature.id as u64);
 			layer.add_encoded_feature(id, type_code(geometry.geom_type), &geometry.commands, &attributes);
 		}
 		layers.push(layer);
+	}
+	if layers.is_empty() {
+		return Ok(None);
 	}
 	Ok(Some(encode_tile(&layers)))
 }
@@ -139,8 +135,14 @@ pub fn build(input: &Path, output: &Path, scratch: &Path, profile: &impl Profile
 		let slot = rayon::current_thread_index().map_or(threads, |index| index.min(threads));
 		let mut writer = writers[slot].lock().unwrap();
 		let mut bytes = Vec::new();
-		for Emitted { feature, attributes } in &emitted {
+		for emitted in &emitted {
+			let mut zoom_attributes: Option<(u8, Vec<(String, Value)>)> = None;
 			let mut sink = |rendered: hrt_render::RenderedFeature| {
+				// The renderer works from the highest zoom down, so the attributes are computed once per zoom.
+				if zoom_attributes.as_ref().is_none_or(|(zoom, _)| *zoom != rendered.z) {
+					zoom_attributes = Some((rendered.z, emitted.attributes_at(rendered.z)));
+				}
+				let attributes = &zoom_attributes.as_ref().unwrap().1;
 				let key = encode_key(
 					tile_id(rendered.z, rendered.x as u32, rendered.y as u32),
 					rendered.layer as u8,
@@ -160,7 +162,7 @@ pub fn build(input: &Path, output: &Path, scratch: &Path, profile: &impl Profile
 				}
 			};
 			let mut renderer = Renderer::new(config, &mut sink);
-			renderer.render(feature);
+			renderer.render(&emitted.feature);
 			let counts = renderer.counts;
 			render_counts.lock().unwrap().add(&counts);
 		}
@@ -193,11 +195,7 @@ pub fn build(input: &Path, output: &Path, scratch: &Path, profile: &impl Profile
 		}
 		let bodies = batch
 			.par_iter()
-			.map(|tile| {
-				encode(&tile.entries, profile.layers())?
-					.map(|bytes| gzip(&bytes))
-					.transpose()
-			})
+			.map(|tile| encode(&tile.entries, profile)?.map(|bytes| gzip(&bytes)).transpose())
 			.collect::<io::Result<Vec<_>>>()?;
 		for (tile, body) in batch.iter().zip(bodies) {
 			if let Some(body) = body {

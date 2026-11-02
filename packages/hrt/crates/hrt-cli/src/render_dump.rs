@@ -15,7 +15,7 @@ use std::sync::Mutex;
 use hrt_osm::{pass1, pass2};
 use hrt_render::{GeometryType, RenderConfig, RenderCounts, RenderedFeature, Renderer};
 
-use crate::pipeline::Profile;
+use hrt_profile::Profile;
 
 fn type_name(geom_type: GeometryType) -> &'static str {
 	match geom_type {

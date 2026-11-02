@@ -6,17 +6,29 @@
 //!
 //! Two archives agree on a tile when both have it and, for every layer, the two layers hold the same multiset of
 //! features. A feature is compared by id, geometry type, attribute map, and geometry decoded to absolute coordinates.
-//! A polygon ring is rotated to start at its smallest vertex first, because GEOS's precision reducer can start a ring
-//! at a different vertex from JTS's while describing the same polygon. Feature order within a layer is reported
-//! separately, since equal sort keys leave it open.
+//! A polygon's rings are rotated to start at their smallest vertex and then sorted, because GEOS's precision reducer
+//! and union can start a ring at a different vertex from JTS's, which also reorders merged parts sorted by first
+//! vertex, while describing the same polygon.
+//!
+//! A polygon whose rings still differ counts as equal within tolerance when its area and its overlap with the other
+//! archive's polygon agree within 1e-3, the contract's allowance for merged polygons, where JTS's and GEOS's overlay
+//! place vertices differently. Feature order within a layer is reported separately, since equal sort keys leave it
+//! open.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::io;
 use std::path::Path;
 
+use geos::Geom as _;
 use hrt_e::{decode_tile, DecodedFeature, Value};
 use hrt_pmtiles::{tile_id_to_zxy, Entry, Reader};
+use hrt_profile::merge::decode;
+use hrt_render::snap::to_geos;
+use hrt_render::{GeometryType, VectorGeometry};
+
+/// The relative area difference and the shortfall of intersection over union that merged polygons may show.
+const POLYGON_TOLERANCE: f64 = 1e-3;
 
 /// A feature in comparable form.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -88,6 +100,7 @@ pub fn canonical(feature: &DecodedFeature) -> Canonical {
 				ring.rotate_left(start);
 			}
 		}
+		parts.sort();
 	}
 	Canonical {
 		id: feature.id,
@@ -106,6 +119,10 @@ pub struct ClockReport {
 	pub only_in_b: usize,
 	pub identical_bytes: usize,
 	pub equal_contents: usize,
+	/// Tiles counted in `equal_contents` that needed the polygon tolerance.
+	pub equal_within_tolerance: usize,
+	/// Polygons that differed in their rings and agreed within the polygon tolerance.
+	pub polygons_within_tolerance: usize,
 	pub different: usize,
 	pub order_only: usize,
 	pub features_compared: usize,
@@ -125,6 +142,136 @@ fn expand(reader: &Reader) -> io::Result<BTreeMap<u64, Entry>> {
 fn tile_name(id: u64) -> String {
 	let (z, x, y) = tile_id_to_zxy(id);
 	format!("{z}/{x}/{y}")
+}
+
+/// Two polygon features measured against each other: each one's area, in squared tile units, and their intersection
+/// over union.
+struct PolygonMeasure {
+	area_a: f64,
+	area_b: f64,
+	iou: f64,
+}
+
+fn measure_polygons(a: &DecodedFeature, b: &DecodedFeature) -> Option<PolygonMeasure> {
+	let geometry = |feature: &DecodedFeature| {
+		let geom = decode(&VectorGeometry {
+			commands: feature.commands.clone(),
+			geom_type: GeometryType::Polygon,
+			scale: 0,
+		});
+		to_geos(&geom).ok().and_then(|g| {
+			if g.is_valid().unwrap_or(false) {
+				Some(g)
+			} else {
+				g.make_valid().ok()
+			}
+		})
+	};
+	let (a, b) = (geometry(a)?, geometry(b)?);
+	let (area_a, area_b) = (a.area().ok()?, b.area().ok()?);
+	let intersection = a.intersection(&b).and_then(|g| g.area()).ok()?;
+	let union = area_a + area_b - intersection;
+	let iou = if union <= 0.0 {
+		if area_a == area_b {
+			1.0
+		} else {
+			0.0
+		}
+	} else {
+		intersection / union
+	};
+	Some(PolygonMeasure { area_a, area_b, iou })
+}
+
+/// Returns whether two polygon features have areas within the tolerance of each other and an intersection over union
+/// within the tolerance of 1.
+fn polygons_close(a: &DecodedFeature, b: &DecodedFeature) -> bool {
+	measure_polygons(a, b).is_some_and(|m| {
+		(m.area_a - m.area_b).abs() <= POLYGON_TOLERANCE * m.area_a.max(m.area_b) && m.iou >= 1.0 - POLYGON_TOLERANCE
+	})
+}
+
+type FeatureKey = (Option<u64>, u64, Vec<(String, String)>);
+
+/// The outcome of comparing one layer's features in two archives.
+enum LayerComparison {
+	Equal,
+	WithinTolerance(usize),
+	Different(String),
+}
+
+fn compare_layer(features_a: &[DecodedFeature], features_b: &[DecodedFeature]) -> LayerComparison {
+	let mut sorted_a: Vec<(Canonical, &DecodedFeature)> = features_a.iter().map(|f| (canonical(f), f)).collect();
+	let mut sorted_b: Vec<(Canonical, &DecodedFeature)> = features_b.iter().map(|f| (canonical(f), f)).collect();
+	sorted_a.sort_by(|x, y| x.0.cmp(&y.0));
+	sorted_b.sort_by(|x, y| x.0.cmp(&y.0));
+	if sorted_a.iter().map(|x| &x.0).eq(sorted_b.iter().map(|x| &x.0)) {
+		return LayerComparison::Equal;
+	}
+
+	let group = |features: &[(Canonical, &DecodedFeature)]| {
+		let mut groups: BTreeMap<FeatureKey, Vec<(Canonical, DecodedFeature)>> = BTreeMap::new();
+		for (canonical, feature) in features {
+			let key = (canonical.id, canonical.geom_type, canonical.attributes.clone());
+			groups
+				.entry(key)
+				.or_default()
+				.push((canonical.clone(), (*feature).clone()));
+		}
+		groups
+	};
+	let groups_a = group(&sorted_a);
+	let groups_b = group(&sorted_b);
+	let first_difference = |a: Option<&Canonical>, b: Option<&Canonical>| {
+		format!(
+			"{} vs {} features; first difference\n    a: {}\n    b: {}",
+			sorted_a.len(),
+			sorted_b.len(),
+			describe(a),
+			describe(b)
+		)
+	};
+	if !groups_a.keys().eq(groups_b.keys()) {
+		let key = groups_a
+			.keys()
+			.find(|key| !groups_b.contains_key(*key))
+			.or_else(|| groups_b.keys().find(|key| !groups_a.contains_key(*key)));
+		let a = key.and_then(|key| groups_a.get(key)).map(|group| &group[0].0);
+		let b = key.and_then(|key| groups_b.get(key)).map(|group| &group[0].0);
+		return LayerComparison::Different(first_difference(a, b));
+	}
+	let mut within = 0;
+	for (key, group_a) in &groups_a {
+		let group_b = &groups_b[key];
+		if group_a.len() != group_b.len() {
+			return LayerComparison::Different(first_difference(Some(&group_a[0].0), Some(&group_b[0].0)));
+		}
+		for ((canonical_a, feature_a), (canonical_b, feature_b)) in group_a.iter().zip(group_b) {
+			if canonical_a == canonical_b {
+				continue;
+			}
+			if canonical_a.geom_type == 3 && polygons_close(feature_a, feature_b) {
+				within += 1;
+				continue;
+			}
+			let mut text = first_difference(Some(canonical_a), Some(canonical_b));
+			if canonical_a.geom_type == 3 {
+				if let Some(m) = measure_polygons(feature_a, feature_b) {
+					let _ = write!(
+						text,
+						"\n    rings {} vs {}; area {:.1} vs {:.1}; intersection over union {:.6}",
+						canonical_a.parts.len(),
+						canonical_b.parts.len(),
+						m.area_a,
+						m.area_b,
+						m.iou
+					);
+				}
+			}
+			return LayerComparison::Different(text);
+		}
+	}
+	LayerComparison::WithinTolerance(within)
 }
 
 fn describe(feature: Option<&Canonical>) -> String {
@@ -178,18 +325,14 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 		let by_name = |layers: &[hrt_e::DecodedLayer]| {
 			layers
 				.iter()
-				.map(|layer| {
-					(
-						layer.name.clone(),
-						layer.features.iter().map(canonical).collect::<Vec<_>>(),
-					)
-				})
+				.map(|layer| (layer.name.clone(), layer.features.clone()))
 				.collect::<BTreeMap<_, _>>()
 		};
 		let named_a = by_name(&layers_a);
 		let named_b = by_name(&layers_b);
 		let mut equal = named_a.keys().eq(named_b.keys());
 		let mut ordered = true;
+		let mut within = 0;
 		let mut detail = None;
 		for (name, features_a) in &named_a {
 			let Some(features_b) = named_b.get(name) else {
@@ -197,33 +340,24 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 				continue;
 			};
 			report.features_compared += features_a.len();
-			if features_a != features_b {
+			if features_a.iter().map(canonical).ne(features_b.iter().map(canonical)) {
 				ordered = false;
 			}
-			let mut sorted_a = features_a.clone();
-			let mut sorted_b = features_b.clone();
-			sorted_a.sort();
-			sorted_b.sort();
-			if sorted_a != sorted_b {
-				equal = false;
-				let index = (0..sorted_a.len().max(sorted_b.len()))
-					.find(|&index| sorted_a.get(index) != sorted_b.get(index))
-					.unwrap_or(0);
-				detail.get_or_insert_with(|| {
-					format!(
-						"{} layer {name}: {} vs {} features; first difference\n    a: {}\n    b: {}",
-						tile_name(id),
-						sorted_a.len(),
-						sorted_b.len(),
-						describe(sorted_a.get(index)),
-						describe(sorted_b.get(index))
-					)
-				});
+			match compare_layer(features_a, features_b) {
+				LayerComparison::Equal => {}
+				LayerComparison::WithinTolerance(count) => within += count,
+				LayerComparison::Different(text) => {
+					equal = false;
+					detail.get_or_insert_with(|| format!("{} layer {name}: {text}", tile_name(id)));
+				}
 			}
 		}
 		if equal {
 			report.equal_contents += 1;
-			if !ordered {
+			if within > 0 {
+				report.equal_within_tolerance += 1;
+				report.polygons_within_tolerance += within;
+			} else if !ordered {
 				report.order_only += 1;
 			}
 		} else {

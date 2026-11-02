@@ -905,9 +905,11 @@ name = "hrt-cli"
 version = "0.1.0"
 dependencies = [
  "flate2",
+ "geos",
  "hrt-e",
  "hrt-osm",
  "hrt-pmtiles",
+ "hrt-profile",
  "hrt-render",
  "hrt-sort",
  "rayon",
@@ -938,6 +940,18 @@ version = "0.1.0"
 dependencies = [
  "flate2",
  "tempfile",
+]
+
+[[package]]
+name = "hrt-profile"
+version = "0.1.0"
+dependencies = [
+ "geo",
+ "geos",
+ "hrt-e",
+ "hrt-osm",
+ "hrt-render",
+ "unicode-script",
 ]
 
 [[package]]
@@ -2308,6 +2322,12 @@ name = "unicode-ident"
 version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
+
+[[package]]
+name = "unicode-script"
+version = "0.5.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "383ad40bb927465ec0ce7720e033cb4ca06912855fc35db31b5755d0de75b1ee"
 
 [[package]]
 name = "unicode-segmentation"

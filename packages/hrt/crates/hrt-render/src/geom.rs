@@ -395,13 +395,12 @@ impl From<&geo_types::Geometry> for Geom {
 }
 
 /// Rounds half toward positive infinity, as Java's `Math.round` does.
+///
+/// Java returns a `long`, which has no negative zero, so the result is normalized to positive zero.
 pub fn java_round(value: f64) -> f64 {
 	let floor = value.floor();
-	if value - floor >= 0.5 {
-		floor + 1.0
-	} else {
-		floor
-	}
+	let rounded = if value - floor >= 0.5 { floor + 1.0 } else { floor };
+	rounded + 0.0
 }
 
 #[cfg(test)]

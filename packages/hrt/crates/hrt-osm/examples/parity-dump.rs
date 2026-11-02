@@ -49,6 +49,7 @@ fn line(feature: &SourceFeature<'_>) -> String {
 		ElementKind::Node => 'n',
 		ElementKind::Way => 'w',
 		ElementKind::Relation => 'r',
+		ElementKind::Other => 'o',
 	};
 	let rels = feature
 		.relations

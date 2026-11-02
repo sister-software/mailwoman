@@ -129,7 +129,7 @@ pub fn pass1(path: &Path, keep_relation: impl Fn(&Relation) -> bool + Sync) -> i
 					match member.kind {
 						ElementKind::Way => state.way_to_relations.entry(member.id).or_default().push(entry),
 						ElementKind::Relation => state.relation_to_parents.entry(member.id).or_default().push(entry),
-						ElementKind::Node => {}
+						ElementKind::Node | ElementKind::Other => {}
 					}
 				}
 				state.relations.insert(relation.id, relation);
@@ -207,6 +207,8 @@ enum Shape<'a> {
 	Point(u64),
 	Way(&'a [i64]),
 	Multipolygon(Vec<&'a [i64]>),
+	/// A geometry already in world coordinates, from a source other than OpenStreetMap or a test.
+	Fixed(Geometry),
 }
 
 /// A geometry that could not be built, with Planetiler's error-statistic name for it.
@@ -242,9 +244,30 @@ pub fn can_be_polygon(closed: bool, area: Option<&str>, points: usize) -> bool {
 	closed && area != Some("no") && points >= 4
 }
 
-impl SourceFeature<'_> {
+impl<'a> SourceFeature<'a> {
+	/// A feature with a fixed geometry in world coordinates, as Planetiler's `SimpleFeature`: it is a point, a line or a
+	/// polygon by its geometry's type.
+	pub fn fixed(id: i64, kind: ElementKind, tags: &'a Tags, geometry: Geometry, nodes: &'a NodeStore) -> Self {
+		let lineal = matches!(geometry, Geometry::LineString(_) | Geometry::MultiLineString(_));
+		let polygonal = matches!(geometry, Geometry::Polygon(_) | Geometry::MultiPolygon(_));
+		SourceFeature {
+			id,
+			kind,
+			tags,
+			relations: Vec::new(),
+			can_be_line: lineal,
+			can_be_polygon: polygonal,
+			shape: Shape::Fixed(geometry),
+			nodes,
+		}
+	}
+
 	pub fn is_point(&self) -> bool {
-		matches!(self.shape, Shape::Point(_))
+		match &self.shape {
+			Shape::Point(_) => true,
+			Shape::Fixed(geometry) => matches!(geometry, Geometry::Point(_) | Geometry::MultiPoint(_)),
+			_ => false,
+		}
 	}
 
 	pub fn can_be_line(&self) -> bool {
@@ -266,8 +289,9 @@ impl SourceFeature<'_> {
 
 	/// Returns the feature as a line in world coordinates.
 	pub fn line(&self) -> Result<LineString, GeometryError> {
-		match self.shape {
+		match &self.shape {
 			Shape::Way(ids) if self.can_be_line => Ok(LineString::from(self.way_coordinates(ids)?)),
+			Shape::Fixed(Geometry::LineString(line)) => Ok(line.clone()),
 			_ => Err(GeometryError::WrongType),
 		}
 	}
@@ -287,6 +311,7 @@ impl SourceFeature<'_> {
 					Geometry::MultiPolygon(multipolygon)
 				})
 			}
+			Shape::Fixed(geometry @ (Geometry::Polygon(_) | Geometry::MultiPolygon(_))) => Ok(geometry.clone()),
 			_ => Err(GeometryError::WrongType),
 		}
 	}
@@ -294,14 +319,15 @@ impl SourceFeature<'_> {
 	/// Returns the feature's default geometry in world coordinates: the point, the polygon when the way can be one,
 	/// else the line.
 	pub fn world_geometry(&self) -> Result<Geometry, GeometryError> {
-		match self.shape {
+		match &self.shape {
 			Shape::Point(location) => {
-				let [x, y] = decode_world(location);
+				let [x, y] = decode_world(*location);
 				Ok(Geometry::Point(Point::new(x, y)))
 			}
 			Shape::Way(_) if self.can_be_polygon => self.polygon(),
 			Shape::Way(_) => self.line().map(Geometry::LineString),
 			Shape::Multipolygon(_) => self.polygon(),
+			Shape::Fixed(geometry) => Ok(geometry.clone()),
 		}
 	}
 }

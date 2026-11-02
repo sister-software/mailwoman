@@ -11,7 +11,7 @@
 use hrt_osm::SourceFeature;
 use hrt_render::{Feature, Geom, ZoomSettings, MAX_ZOOM};
 
-use crate::pipeline::{Emitted, Profile};
+use hrt_profile::{Emitted, Profile};
 
 /// The parity profile.
 pub struct ParityProfile;
