@@ -24,9 +24,9 @@ crates as default members, because none of them links libtorch.
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.  |
 
-`hrt-profile` holds six ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean polygons;
-`earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; and `roads`, `infrastructure`, `facilities`
-and `transit`, from OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
+`hrt-profile` holds seven ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
+polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; and `roads`, `infrastructure`,
+`facilities`, `trees` and `transit`, from OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
 the basemap profile the comparisons below use.
 
 `hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
@@ -220,22 +220,35 @@ On 2026-11-02, every tile was equal without a vertex tolerance:
 Without post-processing, the 6,350 Luxembourg tiles and their 649,223 features were also equal. The Overture
 transportation source of the Java layer is not ported.
 
-## Earth, infrastructure and facilities parity
+## Earth, infrastructure, facilities and trees parity
 
 The Earth layer reads osmdata's `land-polygons-split-3857.zip` (952,775,197 bytes, downloaded on 2026-11-02) through
 `osm-land=` in both builds, besides Natural Earth through `ne=`. The comparison jar was rebuilt on 2026-11-02 at the
 fork's HEAD, 8bb24b2, because the earlier jar predates the facilities layer.
 
-On 2026-11-02, every tile was equal without a vertex tolerance:
+On 2026-11-02, every tile was equal without a vertex tolerance, and most were byte-identical:
 
-| Layer            | Input                       |  Tiles | Features |  Equal |
-| ---------------- | --------------------------- | -----: | -------: | -----: |
-| `earth`          | `monaco-latest.osm.pbf`     |     48 |       71 |     48 |
-| `earth`          | `luxembourg-latest.osm.pbf` | 10,585 |   80,468 | 10,585 |
-| `infrastructure` | `monaco-latest.osm.pbf`     |     15 |    1,881 |     15 |
-| `infrastructure` | `luxembourg-latest.osm.pbf` |  5,856 |  150,462 |  5,856 |
-| `facilities`     | `monaco-latest.osm.pbf`     |      0 |        0 |      0 |
-| `facilities`     | `luxembourg-latest.osm.pbf` |    220 |      404 |    220 |
+| Layer            | Input                       |  Tiles | Features |  Equal | Byte-identical |
+| ---------------- | --------------------------- | -----: | -------: | -----: | -------------: |
+| `earth`          | `monaco-latest.osm.pbf`     |     48 |       71 |     48 |             25 |
+| `earth`          | `luxembourg-latest.osm.pbf` | 10,585 |   80,468 | 10,585 |         10,579 |
+| `infrastructure` | `monaco-latest.osm.pbf`     |     15 |    1,881 |     15 |             15 |
+| `infrastructure` | `luxembourg-latest.osm.pbf` |  5,856 |  150,462 |  5,856 |          5,851 |
+| `facilities`     | `monaco-latest.osm.pbf`     |      0 |        0 |      0 |              0 |
+| `facilities`     | `luxembourg-latest.osm.pbf` |    220 |      404 |    220 |            220 |
+| `trees`          | `monaco-latest.osm.pbf`     |      9 |    2,192 |      9 |              9 |
+| `trees`          | `luxembourg-latest.osm.pbf` |  3,811 |  621,777 |  3,811 |          3,797 |
+| `roads`          | `monaco-latest.osm.pbf`     |     28 |    2,248 |     28 |             28 |
+| `roads`          | `luxembourg-latest.osm.pbf` |  6,350 |  131,136 |  6,350 |          6,350 |
+
+Two orders decide the bytes. Features that tie on tile, layer and sort key are ordered by their sort records, which
+`hrt-sort` writes as the MessagePack value Planetiler's `FeatureGroup` writes, attributes in key order. Before this
+encoding, a tree's crown sorted ahead of its trunk in 3,121 Luxembourg tiles, because a little-endian 8.0 compared below
+3.3. A feature's tags are written in the iteration order of the Java `HashMap` Planetiler decodes them into, which the
+record decoder reproduces. One difference stays: Planetiler writes attribute keys as numbers assigned in first-use
+order across worker threads, so ties between features with different key sets order by thread scheduling in Java.
+
+The `trees` layer's canopy-raster source, `pm:treetops`, is a Parquet file `hrt` does not read yet.
 
 Island labels sit at the center of each island's maximum inscribed circle, which GEOS computes with its port of the
 JTS algorithm Planetiler calls. These runs do not establish whether either area holds an island polygon, so agreement

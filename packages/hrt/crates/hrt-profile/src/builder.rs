@@ -159,10 +159,16 @@ impl Builder {
 		}
 	}
 
+	/// Sets a key's attribute, keeping the keys in Java's `String.compareTo` order, as Planetiler's attribute `TreeMap`
+	/// does. The sort records encode attributes in this order, so features that tie on their sort key order as in
+	/// Planetiler.
 	fn put(&mut self, key: &str, attr: Attr) {
-		match self.attrs.iter_mut().find(|(existing, _)| existing == key) {
-			Some((_, slot)) => *slot = attr,
-			None => self.attrs.push((key.to_owned(), attr)),
+		match self
+			.attrs
+			.binary_search_by(|(existing, _)| existing.encode_utf16().cmp(key.encode_utf16()))
+		{
+			Ok(index) => self.attrs[index].1 = attr,
+			Err(index) => self.attrs.insert(index, (key.to_owned(), attr)),
 		}
 	}
 

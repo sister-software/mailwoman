@@ -9,17 +9,18 @@ use std::sync::Mutex;
 
 use hrt_osm::{Relation, SourceFeature};
 use hrt_profile::country::CountryCoder;
-use hrt_profile::layers::{earth, facilities, infrastructure, roads, transit, water};
+use hrt_profile::layers::{earth, facilities, infrastructure, roads, transit, trees, water};
 use hrt_profile::{CollectorConfig, Emitted, Input, Profile, TileFeature};
 use hrt_render::snap::SnapCounts;
 
 /// The layers this profile can build, in name order.
-pub const PORTED_LAYERS: [&str; 6] = [
+pub const PORTED_LAYERS: [&str; 7] = [
 	earth::LAYER_NAME,
 	facilities::LAYER_NAME,
 	infrastructure::LAYER_NAME,
 	roads::LAYER_NAME,
 	transit::LAYER_NAME,
+	trees::LAYER_NAME,
 	water::LAYER_NAME,
 ];
 const MAX_ZOOM: u8 = 15;
@@ -79,6 +80,9 @@ impl Profile for BasemapProfile {
 		}
 		if let Some(layer) = self.layer_id(facilities::LAYER_NAME).filter(|_| osm) {
 			facilities::process_osm(&Input::new(source), layer, &mut out, config);
+		}
+		if let Some(layer) = self.layer_id(trees::LAYER_NAME).filter(|_| osm) {
+			trees::process_osm(&Input::new(source), layer, &mut out, config);
 		}
 		if let Some(layer) = self.layer_id(roads::LAYER_NAME) {
 			if source.source == "osm" {

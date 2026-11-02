@@ -351,14 +351,26 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 		let mut ordered = true;
 		let mut within = 0;
 		let mut detail = None;
+		let mut order_detail = None;
 		for (name, features_a) in &named_a {
 			let Some(features_b) = named_b.get(name) else {
 				detail.get_or_insert_with(|| format!("{} layer {name} only in the first archive", tile_name(id)));
 				continue;
 			};
 			report.features_compared += features_a.len();
-			if features_a.iter().map(canonical).ne(features_b.iter().map(canonical)) {
-				ordered = false;
+			if ordered {
+				let order_a: Vec<Canonical> = features_a.iter().map(canonical).collect();
+				let order_b: Vec<Canonical> = features_b.iter().map(canonical).collect();
+				if let Some(index) = order_a.iter().zip(&order_b).position(|(a, b)| a != b) {
+					ordered = false;
+					order_detail = Some(format!(
+						"{} layer {name}: same features, first out of order at position {index} of {}\n    a: {}\n    b: {}",
+						tile_name(id),
+						order_a.len(),
+						describe(order_a.get(index)),
+						describe(order_b.get(index))
+					));
+				}
 			}
 			match compare_layer(features_a, features_b) {
 				LayerComparison::Equal => {}
@@ -376,6 +388,9 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 				report.polygons_within_tolerance += within;
 			} else if !ordered {
 				report.order_only += 1;
+				if let Some(text) = order_detail {
+					note(&mut report, text);
+				}
 			}
 		} else {
 			report.different += 1;

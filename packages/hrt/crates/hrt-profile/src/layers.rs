@@ -9,4 +9,5 @@ pub mod facilities;
 pub mod infrastructure;
 pub mod roads;
 pub mod transit;
+pub mod trees;
 pub mod water;
