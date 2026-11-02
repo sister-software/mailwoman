@@ -41,6 +41,7 @@
 
 import { cordisAdapter } from "#adapters/cordis/adapter"
 import { geonamesAdapter } from "#adapters/geonames/adapter"
+import { geonamesFeaturesAdapter } from "#adapters/geonames/features"
 import { geonamesPostalAdapter } from "#adapters/geonames/postal/adapter"
 import { gleifAdapter } from "#adapters/gleif/adapter"
 import { openaddressesAdapter } from "#adapters/openaddresses/adapter"
@@ -110,6 +111,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	wofAdminAdapter,
 	wofPostalcodeAdapter,
 	geonamesAdapter,
+	geonamesFeaturesAdapter,
 	geonamesPostalAdapter,
 	banAdapter,
 	matrikkelenAdapter,
@@ -177,6 +179,7 @@ export {
 } from "#adapters/geonames/postal/adapter"
 
 export { GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE, geonamesAdapter } from "#adapters/geonames/adapter"
+export { GEONAMES_FEATURES_ADAPTER_ID, geonamesFeaturesAdapter } from "#adapters/geonames/features"
 
 export {
 	OPENADDRESSES_ADAPTER_ID,

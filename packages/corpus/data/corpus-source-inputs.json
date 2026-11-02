@@ -861,6 +861,15 @@
 				}
 			]
 		},
+		"geonames-features": {
+			"inputs": [
+				{
+					"registerSource": "ch-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-ch-geonames",
+					"reads": "the physical-feature classes U, H, T, L and V of the country dumps, with admin1CodesASCII.txt and countryInfo.txt"
+				}
+			]
+		},
 		"geonames-postal": {
 			"inputs": [
 				{
