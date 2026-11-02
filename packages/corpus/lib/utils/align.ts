@@ -120,7 +120,12 @@ export function locateComponentSpans(
 		if (!value) continue
 
 		const needle = caseInsensitive ? value.toLowerCase() : value
-		const span = locateSpan({ haystack, needle, raw, claimed, maxEditDistance })
+
+		// A raw rendered from its components writes each value in its own case at its own slot,
+		// so a word-aligned occurrence in the value's own case is preferred over an earlier case-folded
+		// one (`119 West UNION Street, WEST UNION, IL`: the locality is the second `WEST UNION`).
+		const exact = caseInsensitive ? locateVerbatimBoundary(raw, value, claimed) : null
+		const span = exact ?? locateSpan({ haystack, needle, raw, claimed, maxEditDistance })
 
 		if (!span) return { reason: `component-not-found:${tag}` }
 
@@ -287,6 +292,25 @@ function locateSpan(args: {
 		const d = levenshteinDistance(window, needle)
 
 		if (d <= maxEditDistance) return { start: i, end: i + len }
+	}
+
+	return null
+}
+
+/**
+ * The first unclaimed, word-aligned occurrence of `needle` in `raw`, in `needle`'s own case.
+ */
+function locateVerbatimBoundary(
+	raw: string,
+	needle: string,
+	claimed: Array<[number, number]>
+): { start: number; end: number } | null {
+	if (!needle) return null
+
+	for (let idx = raw.indexOf(needle); idx !== -1; idx = raw.indexOf(needle, idx + 1)) {
+		const end = idx + needle.length
+
+		if (!overlapsClaimed(idx, end, claimed) && isBoundaryAligned(raw, idx, end)) return { start: idx, end }
 	}
 
 	return null
