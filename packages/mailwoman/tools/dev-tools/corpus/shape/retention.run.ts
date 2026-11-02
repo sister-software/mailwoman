@@ -25,6 +25,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { recordIDSQL } from "@mailwoman/corpus/adapters/record-id"
 import { openDuckDB, escapeSQLString } from "@mailwoman/corpus/parquet/duckdb"
+import { localManifestFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
 import {
 	readSplitRetention,
 	SPLIT_RETENTION_ATTRIBUTE,
@@ -82,7 +83,9 @@ const splitsJSONL = scratch.path("splits.jsonl").toString()
 	for (const file of files) {
 		if (!file.split_attribute) throw new Error(`manifest file ${file.path} records no split attribute`)
 
-		const attribute = await readLocalJSONFile<{ val: string[]; test: string[] }>(file.split_attribute.path)
+		const attribute = await readLocalJSONFile<{ val: string[]; test: string[] }>(
+			localManifestFilePath(file.split_attribute.path)
+		)
 
 		for (const id of attribute.val) {
 			out.write(stringifyJSON({ source_id: id, split: "val" }) + "\n")
@@ -119,7 +122,7 @@ await db.run(
 	`CREATE TEMP TABLE splits AS SELECT DISTINCT source_id, split FROM read_json('${escapeSQLString(splitsJSONL)}', format='newline_delimited')`
 )
 
-const paths = files.map((file) => `'${escapeSQLString(file.path)}'`).join(", ")
+const paths = files.map((file) => `'${escapeSQLString(localManifestFilePath(file.path))}'`).join(", ")
 
 const groupHash = `hash(coalesce(nullif(p.base_source_id, ''), ${recordIDSQL("p.source_id")}))`
 
