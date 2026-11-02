@@ -7,7 +7,6 @@
 //! The `water` layer: OpenStreetMap water areas, waterway lines, water points and label points for named water areas;
 //! Natural Earth oceans and lakes at zooms 0 to 5; and the prepared OpenStreetMap ocean polygons from zoom 6.
 
-use std::f64::consts::PI;
 use std::sync::LazyLock;
 
 use hrt_render::snap::SnapCounts;
@@ -27,11 +26,8 @@ pub const MIN_AREA: f64 = 1.0;
 /// The Earth layer's merge buffer, in tile pixels.
 pub const BUFFER: f64 = 0.0625;
 
-/// The world-coordinate area of a 70,000 square meter square at the equator, as Java computes it.
 fn world_area_for_70k_square_meters() -> f64 {
-	let circumference = PI * 2.0 * 6_378_137.0;
-	let meters_per_pixel = circumference / 2f64.powf(8.0);
-	(70_000f64.sqrt() / meters_per_pixel / 256.0).powi(2)
+	super::world_area_for_square_meters(70_000.0)
 }
 
 fn s(text: &str) -> Value {
@@ -345,7 +341,7 @@ pub fn process_osm(
 
 /// `Water.postProcess`: lines merged end to end, then nearby polygons unioned.
 pub fn post_process(features: Vec<TileFeature>, counts: &mut SnapCounts) -> Vec<TileFeature> {
-	let features = merge_line_strings(features, 0.5, PIXEL_TOLERANCE, 4.0);
+	let features = merge_line_strings(features, 0.5, PIXEL_TOLERANCE, 4.0, false);
 	merge_nearby_polygons(features, MIN_AREA, MIN_AREA, 0.5, BUFFER, counts)
 }
 

@@ -130,7 +130,7 @@ import { CountryISO2 } from "@mailwoman/codex/country/codes"
 import { matchCountry } from "@mailwoman/codex/country/country"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
-import { CSVSpliterator } from "spliterator"
+import { CSVSpliterator, TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { loadLibpostalDictionary } from "#adapters/libpostal-dictionary"
@@ -655,7 +655,12 @@ export interface CORDISRecordReading {
 export async function* readCORDISRecords(
 	inputPath: PathBuilderLike,
 	lexicon: PersonNameLexicon,
-	options: { signal?: AbortSignal; onDuplicate?: () => void; streetIndex?: PathBuilderLike | null } = {}
+	options: {
+		signal?: AbortSignal
+		onDuplicate?: () => void
+		onUnbalancedQuote?: () => void
+		streetIndex?: PathBuilderLike | null
+	} = {}
 ): AsyncGenerator<CORDISRecordReading> {
 	const seen = new Set<string>()
 	const units = await createUnitSplitter({ streetIndex: streetIndexOpener(options.streetIndex) })
@@ -664,7 +669,10 @@ export async function* readCORDISRecords(
 		if (options.signal?.aborted) return
 
 		const records = CSVSpliterator.fromAsync<CORDISOrganizationRecord>(
-			source.archive ? readZipEntry(source.path, CORDIS_ORGANIZATION_MEMBER) : source.path,
+			balancedQuoteLines(
+				source.archive ? readZipEntry(source.path, CORDIS_ORGANIZATION_MEMBER) : source.path,
+				options.onUnbalancedQuote
+			),
 			{ normalizeKeys: false, columnDelimiter: ";" }
 		)
 
@@ -692,6 +700,34 @@ export async function* readCORDISRecords(
 
 			yield { record, reading: readCORDISRecord(record, lexicon, units) }
 		}
+	}
+}
+
+/**
+ * The lines of one CORDIS file, without each line that holds an odd number of `"`,
+ * re-encoded for the CSV reader.
+ *
+ * Every CORDIS field is quoted, and every record fits on one line.
+ * A line with an odd quote count therefore holds an undoubled quote inside a value, as FP7's `HOLIDES`
+ * participant `AIRBUS DS LIMITED` does (`"http://www.eads.com/eads/int/en.html#/story-2"";`).
+ *
+ * The CSV reader would read every later record of the file as part of that one open value.
+ * This reader leaves the one line out and calls `onUnbalanced` for it.
+ */
+async function* balancedQuoteLines(
+	source: AsyncIterable<Uint8Array> | PathBuilderLike,
+	onUnbalanced?: () => void
+): AsyncGenerator<Uint8Array> {
+	const encoder = new TextEncoder()
+
+	for await (const line of TextSpliterator.fromAsync(source)) {
+		if ((line.match(/"/gu)?.length ?? 0) % 2 === 1) {
+			onUnbalanced?.()
+
+			continue
+		}
+
+		yield encoder.encode(`${line}\n`)
 	}
 }
 
@@ -757,6 +793,7 @@ export function createCORDISAdapter(): CorpusAdapter {
 			const readings = readCORDISRecords(opts.inputPath, lexicon, {
 				signal: opts.signal,
 				onDuplicate: () => countDropped(opts, "row:duplicate-record"),
+				onUnbalancedQuote: () => countDropped(opts, "row:unbalanced-quote"),
 				streetIndex: opts.streetIndex ?? null,
 			})
 

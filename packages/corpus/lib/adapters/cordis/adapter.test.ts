@@ -192,6 +192,23 @@ describe("cordis adapter over published participation rows", () => {
 		expect(rows.map((row) => row.country).toSorted()).toEqual(["CH", "GR"])
 	})
 
+	it("leaves out a line with an undoubled quote and reads every record after it", async () => {
+		await using input = await temporaryDirectory("mailwoman-cordis-quote-")
+
+		// Line 95,875 of `cordis-fp7projects-csv.zip`'s `organization.csv` (`886ee479…`),
+		// verbatim: the URL ends in an undoubled `"`, so the field never closes.
+		const fp7Holides =
+			'"332933";"HOLIDES";"974056444";"";"AIRBUS DS LIMITED";"CAS-UK";"";"PRC";"CELTIC SPRINGS QUADRANT HOUSE";"NP10 8FZ";"NEWPORT GWENT";"UK";"";"";"http://www.eads.com/eads/int/en.html#/story-2"";"https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/contact-form/project/974056444/332933";"2016-10-03 10:22:42";"1949291";"6";"participant";"23893.85";"";"";"false";""'
+
+		await writeLocalFile(zipOf(organizationCSV([fp7Holides, H2020_LICR])), input.path("cordis-fp7projects-csv.zip"))
+
+		const dropped = new Map<string, number>()
+		const rows = await Array.fromAsync(createCORDISAdapter().rows({ inputPath: input.path, dropped }))
+
+		expect(rows.map((row) => row.components.locality)).toEqual(["Zurich"])
+		expect(dropped.get("row:unbalanced-quote")).toBe(1)
+	})
+
 	it("raises on a directory holding no archive, rather than reading as a publisher with none", async () => {
 		await using input = await temporaryDirectory("mailwoman-cordis-empty-")
 

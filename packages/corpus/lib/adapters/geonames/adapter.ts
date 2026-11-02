@@ -55,7 +55,7 @@ const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
  * Loads region names keyed by `<CC>.<admin1>`.
  * Returns an empty map when the file is missing.
  */
-async function loadAdmin1(dir: PathBuilder): Promise<Map<string, string>> {
+export async function loadAdmin1(dir: PathBuilder): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
 	const fp = dir("admin1CodesASCII.txt")
 
@@ -74,7 +74,7 @@ async function loadAdmin1(dir: PathBuilder): Promise<Map<string, string>> {
  * Loads country names keyed by ISO code.
  * Returns an empty map when the file is missing.
  */
-async function loadCountries(dir: PathBuilder): Promise<Map<string, string>> {
+export async function loadCountries(dir: PathBuilder): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
 	const fp = dir("countryInfo.txt")
 

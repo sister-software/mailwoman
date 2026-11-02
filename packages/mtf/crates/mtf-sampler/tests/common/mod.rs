@@ -98,6 +98,7 @@ pub fn tagged_row(raw: &str, pairs: &[(String, &str)], country: &str, source: &s
 		labels,
 		country: Some(country.to_owned()),
 		source: source.to_owned(),
+		source_id: None,
 		spans: Some(SpanTriple { starts, ends, tags }),
 	}
 }

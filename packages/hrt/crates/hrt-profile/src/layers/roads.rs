@@ -308,10 +308,6 @@ fn sidewalk_sides(input: &Input<'_>) -> Option<&'static str> {
 	(input.has_tag("sidewalk:left") || input.has_tag("sidewalk:right")).then_some("no")
 }
 
-fn has_any(input: &Input<'_>, key: &str, values: &[&str]) -> bool {
-	input.tag(key).is_some_and(|value| values.contains(&value))
-}
-
 /// Converts a world-coordinate geometry to longitude and latitude, as Planetiler's `worldToLatLonCoords`.
 fn world_to_lon_lat(geometry: &Geom) -> Geom {
 	let point = |[x, y]: [f64; 2]| [x * 360.0 - 180.0, hrt_osm::coords::world_lat(y)];
@@ -350,8 +346,7 @@ fn process_highways(
 	let Some(highway) = input.tag("highway").map(str::to_owned) else {
 		return;
 	};
-	if has_any(
-		input,
+	if input.has_tag_in(
 		"highway",
 		&[
 			"proposed",
@@ -418,7 +413,7 @@ fn process_highways(
 	input.set_tag("pm:kind", None);
 	input.set_tag("pm:kindDetail", None);
 	input.set_tag("pm:highway", None);
-	if has_any(input, "access", &["private", "no"]) {
+	if input.has_tag_in("access", &["private", "no"]) {
 		min_zoom = min_zoom.max(15);
 	}
 
@@ -469,8 +464,7 @@ fn process_highways(
 	if kind == "other" && input.has_tag("service") {
 		feature.set_attr("service", input.tag("service"));
 	}
-	if has_any(
-		input,
+	if input.has_tag_in(
 		"highway",
 		&[
 			"motorway_link",
@@ -512,8 +506,7 @@ fn process_non_highways(input: &Input<'_>, layer: u32, features: &mut Vec<Emitte
 	if input.has_tag("building") {
 		return;
 	}
-	if has_any(
-		input,
+	if input.has_tag_in(
 		"railway",
 		&[
 			"abandoned",
@@ -659,7 +652,7 @@ pub fn post_process(zoom: u8, mut features: Vec<TileFeature>, _counts: &mut Snap
 	for feature in &mut features {
 		feature.attributes.retain(|(key, _)| key != "pm:highway");
 	}
-	merge_line_strings(features, 0.5, 0.1, 4.0)
+	merge_line_strings(features, 0.5, 0.1, 4.0, false)
 }
 
 #[cfg(test)]

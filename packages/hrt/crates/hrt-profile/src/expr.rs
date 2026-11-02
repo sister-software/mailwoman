@@ -31,6 +31,14 @@ pub enum Expr {
 	Not(Box<Expr>),
 	And(Vec<Expr>),
 	Or(Vec<Expr>),
+	/// The fork's `WithinRangeExpression`: the tag parses as a long of at least `lower` and, when given, under `upper`. A
+	/// value that parses as 0 counts only when it is the text `0`, because `getLong` also returns 0 for text that is no
+	/// number.
+	WithinRange {
+		field: String,
+		lower: i64,
+		upper: Option<i64>,
+	},
 	Point,
 	Line,
 	Polygon,
@@ -77,6 +85,13 @@ impl Expr {
 			Expr::Not(inner) => !inner.evaluate(input),
 			Expr::And(conditions) => conditions.iter().all(|condition| condition.evaluate(input)),
 			Expr::Or(conditions) => conditions.iter().any(|condition| condition.evaluate(input)),
+			Expr::WithinRange { field, lower, upper } => match input.tag(field) {
+				None => false,
+				Some(text) => {
+					let value = crate::parse::parse_long(Some(text));
+					!(value == 0 && text != "0") && value >= *lower && upper.is_none_or(|upper| value < upper)
+				}
+			},
 			Expr::Point => input.is_point(),
 			Expr::Line => input.can_be_line(),
 			Expr::Polygon => input.can_be_polygon(),
@@ -122,6 +137,33 @@ pub fn with(arguments: &[&str]) -> Expr {
 }
 
 /// The fork's `without`: the negation of [`with`].
+/// The fork's `atLeast(tag, bound)`; a double bound is truncated, as its `longValue()` is.
+pub fn at_least(field: &str, bound: i64) -> Expr {
+	Expr::WithinRange {
+		field: field.to_owned(),
+		lower: bound,
+		upper: None,
+	}
+}
+
+/// The fork's `withinRange(tag, lower, upper)`: at least `lower` and under `upper`.
+pub fn within_range(field: &str, lower: i64, upper: i64) -> Expr {
+	Expr::WithinRange {
+		field: field.to_owned(),
+		lower,
+		upper: Some(upper),
+	}
+}
+
+/// The text a computed `Double` tag needs so the range expressions treat it as Java does: Java reads the number's
+/// `longValue()`, and a value that truncates to 0 matches nothing, its text being `0.0` rather than `0`.
+pub fn computed_double_tag(value: f64) -> String {
+	match value as i64 {
+		0 => "0.0".to_owned(),
+		truncated => truncated.to_string(),
+	}
+}
+
 pub fn without(arguments: &[&str]) -> Expr {
 	Expr::Not(Box::new(with(arguments)))
 }

@@ -13,19 +13,23 @@ crates as default members, because none of them links libtorch.
 
 ## Crates
 
-| Crate         | What it does                                                                                                          |
-| ------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `hrt-pmtiles` | PMTiles v3 reading and writing: Hilbert tile ids, the header, directories with leaf directories, and deduplication.   |
-| `hrt-e`       | Mapbox Vector Tile encoding and decoding: layers with interned keys and values, and zig-zag delta geometry commands.  |
-| `hrt-osm`     | OpenStreetMap reading in Planetiler's two passes: packed node locations, way geometry and multipolygon assembly.      |
-| `hrt-render`  | Planetiler's renderer: simplification, stripe clipping into tiles, polygon snapping, and MVT command encoding.        |
-| `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids. |
-| `hrt-profile` | The basemap profile: the fork's `Matcher` rules, a `FeatureCollector`-style builder, OSM names, merges, and layers.   |
-| `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
-| `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.  |
+| Crate         | What it does                                                                                                                                    |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hrt-pmtiles` | PMTiles v3 reading and writing: Hilbert tile ids, the header, directories with leaf directories, and deduplication.                             |
+| `hrt-e`       | Mapbox Vector Tile encoding and decoding: layers with interned keys and values, and zig-zag delta geometry commands.                            |
+| `hrt-osm`     | OpenStreetMap reading in Planetiler's two passes: packed node locations, way geometry and multipolygon assembly.                                |
+| `hrt-render`  | Planetiler's renderer: simplification, stripe clipping into tiles, polygon snapping, and MVT command encoding.                                  |
+| `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids.                           |
+| `hrt-profile` | The basemap profile: the fork's `Matcher` rules, a `FeatureCollector`-style builder, OSM names with their `pgf:` encodings, merges, and layers. |
+| `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.                               |
+| `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.                            |
 
-`hrt-profile` holds two ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean polygons,
-and `roads`, from OpenStreetMap. `hrt-cli` carries the parity profile and the basemap profile the comparisons below use.
+`hrt-profile` holds thirteen of the fork's fourteen layers: `water`, from OpenStreetMap, Natural Earth and the
+prepared ocean polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; `boundaries`, from
+OpenStreetMap and Natural Earth; `landcover`, from the Daylight landcover GeoPackage and Natural Earth; and `roads`,
+`buildings`, `places`, `pois`, `landuse`, `infrastructure`, `facilities`, `trees` and `transit`, from OpenStreetMap.
+The Overture sources, the canopy-raster treetops and the Overture-only `districts` layer are not ported. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
+the basemap profile the comparisons below use.
 
 `hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
 `atan2`. On 200,000 inputs, Rust's own `hypot` differed from Java's in the last bit for 26,528 (13%). JTS measures
@@ -217,3 +221,253 @@ On 2026-11-02, every tile was equal without a vertex tolerance:
 
 Without post-processing, the 6,350 Luxembourg tiles and their 649,223 features were also equal. The Overture
 transportation source of the Java layer is not ported.
+
+## Earth, infrastructure, facilities and trees parity
+
+The Earth layer reads osmdata's `land-polygons-split-3857.zip` (952,775,197 bytes, downloaded on 2026-11-02) through
+`osm-land=` in both builds, besides Natural Earth through `ne=`. The comparison jar was rebuilt on 2026-11-02 at the
+fork's HEAD, 8bb24b2, because the earlier jar predates the facilities layer.
+
+On 2026-11-02, every tile was equal without a vertex tolerance, and most were byte-identical:
+
+| Layer            | Input                       |  Tiles |    Features |  Equal | Byte-identical |
+| ---------------- | --------------------------- | -----: | ----------: | -----: | -------------: |
+| `earth`          | `monaco-latest.osm.pbf`     |     48 |          71 |     48 |             25 |
+| `earth`          | `luxembourg-latest.osm.pbf` | 10,585 |      80,468 | 10,585 |         10,579 |
+| `infrastructure` | `monaco-latest.osm.pbf`     |     15 |       1,881 |     15 |             15 |
+| `infrastructure` | `luxembourg-latest.osm.pbf` |  5,856 |     150,462 |  5,856 |          5,851 |
+| `facilities`     | `monaco-latest.osm.pbf`     |      0 |           0 |      0 |              0 |
+| `facilities`     | `luxembourg-latest.osm.pbf` |    220 |         404 |    220 |            220 |
+| `trees`          | `monaco-latest.osm.pbf`     |      9 |       2,192 |      9 |              9 |
+| `trees`          | `luxembourg-latest.osm.pbf` |  3,811 |     621,777 |  3,811 |          3,797 |
+| `roads`          | `monaco-latest.osm.pbf`     |     28 |       2,248 |     28 |             28 |
+| `roads`          | `luxembourg-latest.osm.pbf` |  6,350 |     131,136 |  6,350 |          6,350 |
+| `landuse`        | `monaco-latest.osm.pbf`     |     25 |         547 |     25 |             14 |
+| `landuse`        | `luxembourg-latest.osm.pbf` |  6,757 |     635,928 |  6,757 |            738 |
+| `boundaries`     | `monaco-latest.osm.pbf`     |     30 | not counted |     30 |             30 |
+| `boundaries`     | `luxembourg-latest.osm.pbf` |  3,782 | not counted |  3,782 |          3,782 |
+| `places`         | `monaco-latest.osm.pbf`     |     24 | not counted |     24 |             24 |
+| `places`         | `luxembourg-latest.osm.pbf` |  3,434 | not counted |  3,434 |          3,434 |
+
+| `pois` | `monaco-latest.osm.pbf` | 26 | not counted | 26 | 26 |
+| `pois` | `luxembourg-latest.osm.pbf` | 5,853 | not counted | 5,853 | 5,853 |
+
+The places rows read the curated label zooms from the fork's `tiles/src/main/resources/places.csv` through
+`places=`, as the fork reads them from its jar. The pois rows run with an empty QRank table on both sides, so no POI
+takes a zoom from its page-view rank; `LayerDump.java` passes the empty table because the fork's `Pois` throws on a
+`wikidata` tag when it has none. A production build reads the gzipped `qrank.csv`, which `basemap-test` takes through `qrank=`.
+
+The `landcover` layer comes from the Daylight landcover GeoPackage through `landcover=`, plus Natural Earth's
+Antarctic glaciers. Monaco and Luxembourg lie outside both: with Natural Earth only, both builds write an empty
+archive for each. The Daylight path has unit tests and no parity run yet; the GeoPackage is a large download, which
+belongs on the AWS build host.
+
+For `buildings`, the counts below include tiles equal within the polygon tolerance:
+
+| Input                       | Tiles | Features | Equal | Within tolerance | Byte-identical | Different |
+| --------------------------- | ----: | -------: | ----: | ---------------: | -------------: | --------: |
+| `monaco-latest.osm.pbf`     |    24 |    5,609 |    24 |                2 |              6 |         0 |
+| `luxembourg-latest.osm.pbf` | 5,073 |  261,784 | 5,069 |               24 |          4,580 |         4 |
+
+The four differing Luxembourg tiles are at zoom 12, where footprints merge into blocks through a buffer and union,
+GEOS's in `hrt` and JTS's in Planetiler. Their first differing polygons have intersection over union 0.917277,
+0.996032, 0.998764 and 0.996073. In the first, tile 12/2115/1390, Java's polygon has 10 rings and 54.4 square pixels
+against `hrt`'s 9 rings and 49.9.
+
+The boundaries rows read Natural Earth through `ne=` as well. Natural Earth's admin boundary lines are multi-lines, and
+a non-OSM source's multi-line is a line, as Planetiler's `SimpleFeature` treats it. Within map bounds the GeoPackage
+reader returns each table's rows in ascending key order, the order geopackage-java hands Planetiler; all 558 Natural
+Earth records inside Luxembourg's bounds then carry the same running number in both readers.
+
+A tile equal in content but not in bytes holds a polygon whose ring starts at another vertex. Some polygons turn invalid
+when their vertices round to the tile grid, and both builds repair them with a precision reducer: JTS's in Planetiler, GEOS's port in
+`hrt`. The two start the repaired rings at different vertices. In Luxembourg, 25,175 landuse polygon renderings took
+that path. `hrt clock` prints, for each zoom, the first such feature.
+
+The fork's paddy rule never applies to `landuse=farmland` with `crop=rice`: the fork's `getString` returns the last
+matching rule, and the general `landuse` rule follows the paddy rule. Both builds therefore give `farmland`, and only
+`landuse=paddy` gets `paddy`.
+
+Two orders decide the bytes. Features that tie on tile, layer and sort key are ordered by their sort records, which
+`hrt-sort` writes as the MessagePack value Planetiler's `FeatureGroup` writes, attributes in key order. Before this
+encoding, a tree's crown sorted ahead of its trunk in 3,121 Luxembourg tiles, because a little-endian 8.0 compared below
+3.3. A feature's tags are written in the iteration order of the Java `HashMap` Planetiler decodes them into, which the
+record decoder reproduces. One difference stays: Planetiler writes attribute keys as numbers assigned in first-use
+order across worker threads, so ties between features with different key sets order by thread scheduling in Java.
+
+The `trees` layer's canopy-raster source, `pm:treetops`, is a Parquet file `hrt` does not read yet.
+
+Island labels sit at the center of each island's maximum inscribed circle. `hrt-render`'s `inscribed` module ports
+the JTS 1.20 search Planetiler calls, seeded at GEOS's interior point. GEOS's own port of the search placed one Kii
+Peninsula island's label 98 tile units from Java's, because GEOS measures distances with `sqrt(dx*dx + dy*dy)` where
+JTS uses `Math.hypot`, orders its cell queue differently, and solves triangles and convex quadrilaterals exactly. The
+port measures with Java's `hypot` and orders cells as `java.util.PriorityQueue` does. With it, the earth layers of
+Geofabrik's Chūgoku (791 tiles) and Kansai (709 tiles) extracts, built from OpenStreetMap alone so that their islands
+and cliffs are the only features, were byte-identical to Java's.
+
+Both builds write a header zoom range of 0 to 15 whichever zooms hold tiles. The header center differs: Planetiler
+writes the middle of the bounds at a zoom fitted to them, and `hrt` writes zoom 0 at 0, 0.
+
+## Clip parity
+
+`hrt-profile`'s `clip` module ports the fork's `Clip` tile post-processor, which Basemap's `--clip` and
+`--clip-buffer` register. `basemap-test` and `LayerDump.java` take `clip=<polygon.geojson>` and `clip-buffer=<pixels>`.
+As in Planetiler, the clip runs on a whole tile before each layer's post-processing. The rows below clip to a
+pentagon with a rectangular hole across Luxembourg, and to a quadrilateral across Monaco, both with the default
+4-pixel buffer:
+
+| Input      | Layer          | Tiles | Equal | Byte-identical | Lines joined differently | Other differences |
+| ---------- | -------------- | ----: | ----: | -------------: | -----------------------: | ----------------: |
+| Monaco     | roads          |    23 |    19 |             19 |                        4 |                 0 |
+| Monaco     | earth          |    10 |    10 |             10 |                        0 |                 0 |
+| Monaco     | pois           |    18 |    18 |             18 |                        0 |                 0 |
+| Monaco     | buildings      |    19 |    19 |              0 |                        0 |                 0 |
+| Luxembourg | roads          | 4,123 | 4,114 |          4,114 |                        9 |                 0 |
+| Luxembourg | infrastructure | 3,799 | 3,717 |          3,654 |                       82 |                 0 |
+| Luxembourg | buildings      | 3,392 | 3,388 |          2,720 |                        0 |                 4 |
+| Luxembourg | landuse        | 4,213 | 4,212 |            304 |                        0 |                 1 |
+| Luxembourg | pois           | 3,852 | 3,852 |          3,852 |                        0 |                 0 |
+| Luxembourg | places         | 2,237 | 2,237 |          2,237 |                        0 |                 0 |
+| Luxembourg | trees          | 2,504 | 2,504 |          2,339 |                        0 |                 0 |
+| Luxembourg | facilities     |   151 |   151 |            151 |                        0 |                 0 |
+
+A line clipped by a polygon comes back from OverlayNG in pieces in JTS 1.20, whose `LineBuilder` writes each noded
+edge as its own line, and as maximal lines in GEOS, whose `LineBuilder` joins edges through nodes where only two meet.
+`Clip` writes each piece as a feature, so a road can reach the roads line merger as two features in Java and one in
+`hrt`, and the merged line then keeps another piece's id. `hrt clock` counts a differing tile whose line features
+with each attribute map cover the same segments as joined differently. `hrt` keeps GEOS's maximal lines.
+
+The four other building differences are the zoom-12 block merges of the unclipped run. The landuse difference is a
+Planetiler defect. Its `TileArchiveWriter` reuses the previous tile's encoded bytes when a tile's features before
+post-processing equal the previous tile's, which skips `Clip` for the second tile. Tiles 15/16962/11129 and
+15/16962/11130 each hold the same forest filling the whole tile, and Java wrote the first tile's clipped forest into
+both. Planetiler's own slicer, run on the buffered clip with the fork's jar, gives 15/16962/11130 the same clip piece
+as `hrt`, and `hrt`'s tile holds the forest clipped to that piece.
+
+Four equal landuse tiles hold the same features in another order. In the three `hrt clock` printed, the first feature
+out of order is a forest relation that the clip split into several polygons, which suggests GEOS's overlay lists a
+multipolygon's members in a different order from JTS's; that cause is not yet tested.
+
+## Devanagari name encoding parity
+
+MapLibre places glyphs one codepoint at a time, so it cannot draw Devanagari's conjuncts and vowel signs. The fork
+works around this with Wipfli's positioned-glyph-font (pgf) encoding. It shapes each name in a registered script with
+that script's font, looks each positioned glyph up in an encoding table, and writes the result as a `pgf:` attribute
+of Private Use Area codepoints. The label layers of `@protomaps/basemaps`, which `packages/cartographer` builds its
+styles from, read `pgf:name` and switch Devanagari labels to the `Noto Sans Devanagari Regular v1` fontstack, which
+the glyph bucket serves.
+
+`hrt-profile`'s `pgf` module ports the fork's `FontRegistry` and `TextEngine`. `basemap-test` and `LayerDump.java`
+take `pgf=<pgf-encoding.zip>` and register the fonts Basemap's main registers, which is only Noto Sans Devanagari with
+encoding version 1. The archive Basemap downloads holds the same font and table files as the fork's test fixture.
+
+The table key is a glyph id with its offset and advance in 1/64ths of a 1000-unit em, as the JDK computes them for a
+1-point font. The JDK shapes with HarfBuzz at a scale of 65,536 per point. HarfBuzz takes each glyph's advance from
+FreeType's linear advance, `round(advance × round(64 × 65,536 / 1000) / 64)` in 16.16. The key offset is the glyph's
+float position less the float sum of the metric advances before it. `hrt` shapes with HarfRust 0.15, which follows
+HarfBuzz 15.0.0, at the same scale with the same advance callback, kerning and standard ligatures off, and no language.
+The FreeType formula matched the JDK's advance bits for all 257 glyphs the corpus below uses.
+
+`hrt pgf-probe` and `parity/PgfProbe.java` encode a list of names. Run on the 15,867 distinct Natural Earth name
+values that contain a Devanagari character, Java and `hrt` wrote the same codepoints for every name, and neither
+found a glyph missing from the table. The tile builds below register the fonts:
+
+| Input      | Layer  | Tiles | Byte-identical | Features with `pgf:` attributes |
+| ---------- | ------ | ----: | -------------: | ------------------------------: |
+| Monaco     | pois   |    26 |             26 |                              12 |
+| Monaco     | places |    24 |             24 |                               0 |
+| Monaco     | roads  |    28 |             28 |                               0 |
+| Luxembourg | places | 3,434 |          3,434 |                              29 |
+| Luxembourg | pois   | 5,853 |          5,853 |                               6 |
+| Luxembourg | roads  | 6,350 |          6,350 |                               0 |
+
+The attributes are `pgf:name:hi`, `pgf:name:mr` and `pgf:name:ne`. No feature in either area has a Devanagari
+`name`, so `pgf:name`, `pgf:name2` and `pgf:name3` are compared only through the name corpus. Both archives carry the
+fork's metadata keys `pgf:devanagari:name` and `pgf:devanagari:version`. Earth and water were built too. Monaco's earth and
+water and Luxembourg's 2,926 earth tiles were byte-identical, and Luxembourg's water differed in the 3 tiles of the
+water layer's polygon merges recorded above.
+
+## Japan build
+
+On 2026-11-02 both builds ran on one AWS r7gd.8xlarge (32 Graviton3 vCPUs, 256 GB, instance-store scratch) from
+Geofabrik's `japan-latest.osm.pbf` (2,566,575,684 bytes) with every source the fork reads except Overture and the
+canopy raster: Natural Earth, the osmdata water and land polygons, the Daylight landcover GeoPackage and the pgf
+encoding. The Java build was `LayerDump.java` with an empty layer name, so Basemap built all of its layers, on the fork
+at 8bb24b2 with `-Xmx64g`. The `hrt` build was `hrt basemap-test` with the thirteen ported layers at e0c830c6b, before
+the relation-order change below. Both used 32 threads.
+
+| Build              | Wall clock | User CPU | System CPU | Peak resident memory | Archive bytes |
+| ------------------ | ---------: | -------: | ---------: | -------------------: | ------------: |
+| Java, `-Xmx64g`    |    5:33.92 |  6,192 s |       72 s |              69.1 GB |  not recorded |
+| `hrt basemap-test` |    5:28.25 |  5,418 s |       35 s |              15.8 GB | 4,098,754,482 |
+
+Both archives hold 10,997,053 tiles. `hrt clock` compared 114,454,085 features. 10,996,236 tiles were equal: 10,666,498
+byte-identical after gunzip, one with the same features in another order, and 5,732 whose 6,235 differing polygons
+were equal within the polygon tolerance. 817 tiles differed. By layer, counting tiles whose layer digest differed and
+tiles whose layer feature count differed:
+
+| Layer       | Digest differs | Count differs |
+| ----------- | -------------: | ------------: |
+| `water`     |          5,537 |             0 |
+| `buildings` |          1,034 |             2 |
+| `earth`     |            246 |             1 |
+| `roads`     |            187 |           132 |
+| `landuse`   |             16 |             0 |
+| `landcover` |              2 |             0 |
+
+The digest counts include tiles equal within tolerance. `boundaries`, `facilities`, `infrastructure`, `places`, `pois`
+and `trees` matched in every tile.
+
+The `roads` differences came from the order of a way's relation memberships. The fork orders road shields by network
+rank and text, and keeps shields that sort equal in the order Planetiler returns the way's relations. Planetiler stores
+memberships in `SparseUnorderedBinarySearchMultimap`, whose lookup binary-searches all keys and collects a key's values
+forward from where the search lands, then backward, so the order depends on every other key in the table. `hrt-osm`'s
+`BinarySearchMultimap` reproduces that lookup. On Geofabrik's `chugoku-latest.osm.pbf`, the roads layer differed in 65
+of 48,849 tiles before the change and was byte-identical in all 48,849 after it. A Japan build with this change and
+the two changes below has not run.
+
+The differing polygons in `water`, `buildings`, `landuse` and `landcover` are the polygon merges recorded for
+Luxembourg: GEOS's buffer, union and precision reducer in `hrt`, JTS's in Planetiler. In the 200 tiles `clock`
+detailed, the first differing polygon had intersection over union between 0.96 and 0.9999. The bundled GEOS is 3.15.1dev,
+which its version file records as a port of JTS 1.20.0, the JTS Planetiler 0.10.2 uses; the two still return different
+rings for the same input. During merges, Planetiler snapped and repaired 66 polygons and `hrt` 70. During rendering,
+both repaired 581,396.
+
+Three tiles outside `roads` held different feature counts. Each was rebuilt on the lab host from a small Geofabrik
+extract around it:
+
+- `earth` 15/28705/13122 (Java 1, `hrt` 2): GEOS placed the label of island way 719082768 98 tile units from Java's,
+  inside this tile's buffer. The ported inscribed-circle search above places it where Java does.
+- `buildings` 12/3577/1635 (Java 2, `hrt` 1): way 313671577 is tagged `building:levels=２（店舗スペース）`.
+  Planetiler's fallback number parser, `NumberFormat`, reads every decimal digit Java's `Character.digit` knows,
+  including the fullwidth `２`, and gave a height of 8 meters. `hrt` read ASCII digits only and gave no height, so the
+  footprint joined another merge group. `hrt-profile`'s parser now reads the same 370 digits as JDK 21. Five of the six
+  differing building tiles in the Shikoku extract around this tile were this footprint, at zooms 11 to 15.
+- `buildings` 12/3578/1635 (Java 2, `hrt` 3): a pair of footprints of height 40 merges to 3.09375 square pixels in
+  JTS and 3.1348 in GEOS, whose ring keeps one more vertex. The merge's minimum area is 3.125 square pixels, so Java
+  drops the pair and `hrt` keeps it. This is a polygon merge difference.
+
+### Java profile
+
+A second run on the same instance type recorded the Java build with the JDK's Flight Recorder
+(`-XX:StartFlightRecording=settings=profile`) and its GC log. async-profiler 4.0 crashed this arm64 Corretto 21.0.13
+JVM in `vframeStreamForte::forte_next`. The profiled build took 5:31.04 with 6,071 s of user CPU and 69.1 GB peak
+resident memory. Planetiler's stage table:
+
+| Stage       | Wall clock |     CPU | Cores busy on average |
+| ----------- | ---------: | ------: | --------------------: |
+| `osm_pass1` |       26 s |   2m47s |                   6.4 |
+| `osm_pass2` |      2m18s | 1h7m58s |                  29.5 |
+| `ne`        |      1m14s |   1m22s |                   1.1 |
+| `osm_water` |       14 s |    58 s |                   4.1 |
+| `osm_land`  |       14 s |    37 s |                   2.6 |
+| `sort`      |       10 s |   3m39s |                  21.9 |
+| `archive`   |       50 s |  24m39s |                  29.6 |
+
+The Natural Earth stage read on about one core for 1m14s, 23% of the 5m28s Planetiler reported for the whole build.
+Garbage collection paused the build 927 times for 9.09 s in total (median 4.44 ms, 99th percentile 111 ms), and its
+threads used 2m56s of user CPU, about 3% of the build's. Of 89,456 CPU samples, the most frequent methods were
+`Arrays.copyOf(Object[])` (6.13%), Planetiler's `DouglasPeuckerSimplifier.subsimplify` (4.39%, and 1.58% in its
+second overload), hppc's `DoubleArrayList.ensureBufferSpace` (2.79%), `HashMap.getNode` (2.61%) and JTS's
+`MonotoneChain.computeIntersections` (2.46%). The largest allocation sites were `Arrays.copyOf(double[])` (12.58%),
+JTS's `SimpleMCSweepLineIntersector.addEdge` (8.10%), `Arrays.copyOf(Object[])` (5.91%) and `ArrayList.grow` (5.45%).

@@ -338,6 +338,7 @@ fn notary_row(starts: &[i64], ends: &[i64]) -> Row {
 		tokens,
 		country: Some("US".to_owned()),
 		source: "state-ny-notaries".to_owned(),
+		source_id: None,
 		spans: Some(SpanTriple {
 			starts: starts.to_vec(),
 			ends: ends.to_vec(),
@@ -377,6 +378,7 @@ fn a_span_ending_at_the_block_start_stays_put() {
 		tokens,
 		country: Some("US".to_owned()),
 		source: "openaddresses".to_owned(),
+		source_id: None,
 		spans: Some(SpanTriple { starts, ends, tags }),
 	};
 	let moved = moved(&row).expect("moved");

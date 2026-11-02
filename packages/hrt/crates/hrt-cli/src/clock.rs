@@ -124,9 +124,44 @@ pub struct ClockReport {
 	/// Polygons that differed in their rings and agreed within the polygon tolerance.
 	pub polygons_within_tolerance: usize,
 	pub different: usize,
+	/// Tiles counted in `different` whose layers differ only in how line pieces are joined into features.
+	pub lines_joined_differently: usize,
 	pub order_only: usize,
 	pub features_compared: usize,
 	pub details: Vec<String>,
+	/// For the first tile at each zoom equal in content but not in bytes, the first feature whose stored commands or tag
+	/// order differ.
+	pub first_byte_difference: BTreeMap<u8, String>,
+}
+
+/// Finds the first feature whose raw commands or tag order differ between two layer maps equal in content.
+fn first_raw_difference(
+	a: &BTreeMap<String, Vec<DecodedFeature>>,
+	b: &BTreeMap<String, Vec<DecodedFeature>>,
+) -> Option<String> {
+	for (name, features_a) in a {
+		let features_b = b.get(name)?;
+		for (index, (fa, fb)) in features_a.iter().zip(features_b).enumerate() {
+			if fa.commands != fb.commands {
+				return Some(format!(
+					"layer {name} feature {index} (id {:?}): commands differ\n    a: {:?}\n    b: {:?}",
+					fa.id,
+					&fa.commands[..fa.commands.len().min(24)],
+					&fb.commands[..fb.commands.len().min(24)]
+				));
+			}
+			let keys = |f: &DecodedFeature| f.attributes.iter().map(|(key, _)| key.clone()).collect::<Vec<_>>();
+			if keys(fa) != keys(fb) {
+				return Some(format!(
+					"layer {name} feature {index} (id {:?}): tag order differs\n    a: {:?}\n    b: {:?}",
+					fa.id,
+					keys(fa),
+					keys(fb)
+				));
+			}
+		}
+	}
+	Some("layers' key or value tables differ".to_owned())
 }
 
 fn expand(reader: &Reader) -> io::Result<BTreeMap<u64, Entry>> {
@@ -238,7 +273,13 @@ fn compare_layer(features_a: &[DecodedFeature], features_b: &[DecodedFeature]) -
 			.or_else(|| groups_b.keys().find(|key| !groups_a.contains_key(*key)));
 		let a = key.and_then(|key| groups_a.get(key)).map(|group| &group[0].0);
 		let b = key.and_then(|key| groups_b.get(key)).map(|group| &group[0].0);
-		return LayerComparison::Different(first_difference(a, b));
+		let ids = |sorted: &[(Canonical, &DecodedFeature)]| sorted.iter().map(|(c, _)| c.id).collect::<Vec<_>>();
+		return LayerComparison::Different(format!(
+			"{}\n    ids in a: {:?}\n    ids in b: {:?}",
+			first_difference(a, b),
+			ids(&sorted_a),
+			ids(&sorted_b)
+		));
 	}
 	let mut within = 0;
 	for (key, group_a) in &groups_a {
@@ -291,6 +332,38 @@ fn compare_layer(features_a: &[DecodedFeature], features_b: &[DecodedFeature]) -
 	LayerComparison::WithinTolerance(within)
 }
 
+type Segment = ([i32; 2], [i32; 2]);
+
+/// Returns whether two layers differ only in how line pieces are joined: their other features are equal, and the line
+/// features with each attribute map cover the same segments, each counted once per occurrence and taken in either
+/// direction.
+///
+/// Feature ids are left out of the line comparison, because a line merge keeps the id of the first piece in its group,
+/// and pieces joined differently start groups with different pieces.
+fn lines_join_differently(features_a: &[DecodedFeature], features_b: &[DecodedFeature]) -> bool {
+	let split = |features: &[DecodedFeature]| {
+		let mut others: Vec<Canonical> = Vec::new();
+		let mut segments: BTreeMap<Vec<(String, String)>, Vec<Segment>> = BTreeMap::new();
+		for feature in features {
+			let canonical = canonical(feature);
+			if canonical.geom_type != 2 {
+				others.push(canonical);
+				continue;
+			}
+			let entry = segments.entry(canonical.attributes).or_default();
+			for part in &canonical.parts {
+				for pair in part.windows(2) {
+					entry.push((pair[0].min(pair[1]), pair[0].max(pair[1])));
+				}
+			}
+		}
+		others.sort();
+		segments.values_mut().for_each(|list| list.sort_unstable());
+		(others, segments)
+	};
+	split(features_a) == split(features_b)
+}
+
 fn describe(feature: Option<&Canonical>) -> String {
 	match feature {
 		None => "(none)".to_owned(),
@@ -301,6 +374,24 @@ fn describe(feature: Option<&Canonical>) -> String {
 			);
 			for part in feature.parts.iter().take(3) {
 				let _ = write!(text, "[{} points from {:?}]", part.len(), part.first());
+			}
+			if feature.geom_type == 3 {
+				// Shells and holes wind opposite ways, so the signed ring areas sum to the polygon's area. An encoded ring
+				// leaves out its closing point, so each ring's last vertex pairs with its first.
+				let signed: f64 = feature
+					.parts
+					.iter()
+					.map(|ring| {
+						(0..ring.len())
+							.map(|i| {
+								let (p, q) = (ring[i], ring[(i + 1) % ring.len()]);
+								f64::from(p[0]) * f64::from(q[1]) - f64::from(q[0]) * f64::from(p[1])
+							})
+							.sum::<f64>() / 2.0
+					})
+					.sum();
+				// 4,096 tile units span 256 pixels, so a square pixel is 256 square units.
+				let _ = write!(text, " area {:.4} square pixels", signed.abs() / 256.0);
 			}
 			text
 		}
@@ -348,23 +439,37 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 		let named_a = by_name(&layers_a);
 		let named_b = by_name(&layers_b);
 		let mut equal = named_a.keys().eq(named_b.keys());
+		let mut lines_only = equal;
 		let mut ordered = true;
 		let mut within = 0;
 		let mut detail = None;
+		let mut order_detail = None;
 		for (name, features_a) in &named_a {
 			let Some(features_b) = named_b.get(name) else {
 				detail.get_or_insert_with(|| format!("{} layer {name} only in the first archive", tile_name(id)));
 				continue;
 			};
 			report.features_compared += features_a.len();
-			if features_a.iter().map(canonical).ne(features_b.iter().map(canonical)) {
-				ordered = false;
+			if ordered {
+				let order_a: Vec<Canonical> = features_a.iter().map(canonical).collect();
+				let order_b: Vec<Canonical> = features_b.iter().map(canonical).collect();
+				if let Some(index) = order_a.iter().zip(&order_b).position(|(a, b)| a != b) {
+					ordered = false;
+					order_detail = Some(format!(
+						"{} layer {name}: same features, first out of order at position {index} of {}\n    a: {}\n    b: {}",
+						tile_name(id),
+						order_a.len(),
+						describe(order_a.get(index)),
+						describe(order_b.get(index))
+					));
+				}
 			}
 			match compare_layer(features_a, features_b) {
 				LayerComparison::Equal => {}
 				LayerComparison::WithinTolerance(count) => within += count,
 				LayerComparison::Different(text) => {
 					equal = false;
+					lines_only &= lines_join_differently(features_a, features_b);
 					detail.get_or_insert_with(|| format!("{} layer {name}: {text}", tile_name(id)));
 				}
 			}
@@ -376,9 +481,22 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 				report.polygons_within_tolerance += within;
 			} else if !ordered {
 				report.order_only += 1;
+				if let Some(text) = order_detail {
+					note(&mut report, text);
+				}
+			} else {
+				let (zoom, _, _) = tile_id_to_zxy(id);
+				if let std::collections::btree_map::Entry::Vacant(slot) = report.first_byte_difference.entry(zoom) {
+					if let Some(text) = first_raw_difference(&named_a, &named_b) {
+						slot.insert(format!("{} {text}", tile_name(id)));
+					}
+				}
 			}
 		} else {
 			report.different += 1;
+			if lines_only {
+				report.lines_joined_differently += 1;
+			}
 			let text = detail.unwrap_or_else(|| format!("{} layer names differ", tile_name(id)));
 			note(&mut report, text);
 		}
@@ -395,6 +513,22 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn line_pieces_joined_differently_are_recognized() {
+		// One line from (0, 0) through (5, 0) to (5, 5), against the same path in two pieces taken in reverse.
+		let line = |commands: Vec<u32>| DecodedFeature {
+			id: Some(1),
+			geom_type: 2,
+			attributes: vec![("kind".into(), Value::String("road".into()))],
+			commands,
+		};
+		let whole = line(vec![9, 0, 0, 18, 10, 0, 0, 10]);
+		let pieces = vec![line(vec![9, 10, 10, 10, 0, 9]), line(vec![9, 10, 0, 10, 9, 0])];
+		assert!(lines_join_differently(std::slice::from_ref(&whole), &pieces));
+		let shorter = line(vec![9, 0, 0, 10, 10, 0]);
+		assert!(!lines_join_differently(&[whole], &[shorter]));
+	}
 
 	#[test]
 	fn rotated_rings_compare_equal() {

@@ -539,6 +539,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["docs/static/benchmarks/", "benchmark panels hold real addresses such as Hobsons Gate"],
 	["packages/mailwoman/data/county-population-ranked.json", "Gates County is a real North Carolina county"],
 	["packages/osm/fixtures/", "OSM fixtures carry tags verbatim, such as aeroway=gate"],
+	[
+		"packages/hrt/crates/hrt-profile/src/layers/",
+		"the basemap layers match OSM tags verbatim, such as barrier=gate and seamark:type=cable_submarine",
+	],
 	[".yarn/", "vendored third-party release"],
 	[
 		"packages/trainer/crates/trainer-export/proto/",

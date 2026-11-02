@@ -57,6 +57,66 @@ fn smooth(line: &[Xy]) -> Vec<Xy> {
 	coords
 }
 
+/// Rounds every corner of a closed ring, its first vertex included, and closes it again.
+fn round_ring(closed: &[Xy], max_inset: f64, passes: usize) -> Vec<Xy> {
+	if closed.len() < 4 {
+		return closed.to_vec();
+	}
+	let mut ring = closed[..closed.len() - 1].to_vec();
+	for _ in 0..passes {
+		let n = ring.len();
+		let mut out = Vec::with_capacity(n * 2);
+		for i in 0..n {
+			let previous = ring[(i + n - 1) % n];
+			let next = ring[(i + 1) % n];
+			out.push(towards(ring[i], previous, max_inset));
+			out.push(towards(ring[i], next, max_inset));
+		}
+		ring = out;
+	}
+	ring.push(ring[0]);
+	ring
+}
+
+/// The fork's `roundWorldPolygon`: rounds every corner of a polygon in world coordinates by `passes` capped passes,
+/// moving each corner at most `max_inset_meters`. Any geometry other than one polygon, and a result GEOS finds invalid,
+/// comes back unchanged.
+pub fn round_world_polygon(geometry: &Geom, max_inset_meters: f64, passes: usize) -> Geom {
+	use geos::Geom as _;
+	let Geom::Polygon(polygon) = geometry else {
+		return geometry.clone();
+	};
+	if polygon.shell.is_empty() {
+		return geometry.clone();
+	}
+	let Some(centroid_y) = hrt_render::snap::to_geos(geometry)
+		.ok()
+		.and_then(|shape| shape.get_centroid().ok())
+		.and_then(|centroid| centroid.get_y().ok())
+	else {
+		return geometry.clone();
+	};
+	// The 6-meter cap in world units, scaled to this call's cap, multiplied and divided in the Java order.
+	let max_inset = max_inset_world_units(centroid_y) * max_inset_meters / MAX_INSET_METERS;
+	let rounded = Geom::Polygon(hrt_render::Polygon {
+		shell: round_ring(&polygon.shell, max_inset, passes),
+		holes: polygon
+			.holes
+			.iter()
+			.map(|hole| round_ring(hole, max_inset, passes))
+			.collect(),
+	});
+	let valid = hrt_render::snap::to_geos(&rounded)
+		.ok()
+		.and_then(|shape| shape.is_valid().ok())
+		.unwrap_or(false);
+	if valid {
+		rounded
+	} else {
+		geometry.clone()
+	}
+}
+
 /// The fork's `smoothWorldLine`: rounds the corners of a line or multi-line in world coordinates.
 pub fn smooth_world_line(geometry: &Geom) -> Geom {
 	match geometry {

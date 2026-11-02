@@ -282,18 +282,21 @@ fn sort_by_hilbert<T>(items: Vec<T>, geom: impl Fn(&T) -> Geom) -> Vec<T> {
 	indexed.into_iter().map(|(_, item)| item).collect()
 }
 
-/// `FeatureMerge.mergeLineStrings(features, minLength, tolerance, buffer)` with `resimplify` false.
+/// `FeatureMerge.mergeLineStrings(features, minLength, tolerance, buffer, resimplify)`. With `resimplify` false, the
+/// four-argument Java overload, a lone line that needs no clipping or length filter passes through unsimplified.
 pub fn merge_line_strings(
 	features: Vec<TileFeature>,
 	min_length: f64,
 	tolerance: f64,
 	buffer: f64,
+	resimplify: bool,
 ) -> Vec<TileFeature> {
 	let mut result = Vec::new();
 	let groups = group_by_attributes(features, GeometryType::Line, &mut result);
 	for group in groups {
 		let first = &group[0];
-		if group.len() == 1 && buffer <= 0.0 && min_length <= 0.0 {
+		// A lone line skips the merger when it needs no clipping, length filter or resimplification.
+		if group.len() == 1 && buffer <= 0.0 && min_length <= 0.0 && (!resimplify || tolerance <= 0.0) {
 			result.push(first.clone());
 			continue;
 		}
@@ -341,29 +344,10 @@ fn miter_params() -> geos::GResult<BufferParams> {
 	Ok(params)
 }
 
+/// The area of a geometry's bounding box, JTS's `getEnvelopeInternal().getArea()`; 0 for an empty geometry.
 fn envelope_area(geom: &Geom) -> f64 {
-	let mut bounds = [f64::INFINITY, f64::INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY];
-	let mut visit = |seq: &Seq| {
-		for &[x, y] in seq {
-			bounds = [bounds[0].min(x), bounds[1].min(y), bounds[2].max(x), bounds[3].max(y)];
-		}
-	};
-	fn walk(geom: &Geom, visit: &mut dyn FnMut(&Seq)) {
-		match geom {
-			Geom::Polygon(polygon) => visit(&polygon.shell),
-			Geom::MultiPolygon(polygons) => polygons.iter().for_each(|polygon| visit(&polygon.shell)),
-			Geom::Collection(parts) => parts.iter().for_each(|part| walk(part, visit)),
-			Geom::LineString(seq) | Geom::LinearRing(seq) => visit(seq),
-			Geom::MultiLineString(lines) => lines.iter().for_each(|line| visit(&line.seq)),
-			Geom::Point(point) => visit(&vec![*point]),
-			Geom::MultiPoint(points) => visit(points),
-		}
-	}
-	walk(geom, &mut visit);
-	if bounds[0] > bounds[2] {
-		return 0.0;
-	}
-	(bounds[2] - bounds[0]) * (bounds[3] - bounds[1])
+	geom.envelope()
+		.map_or(0.0, |[min_x, min_y, max_x, max_y]| (max_x - min_x) * (max_y - min_y))
 }
 
 /// `FeatureMerge.bufferUnionUnbuffer`: each polygon grown by `buffer` with miter joins, the union shrunk back.
@@ -597,6 +581,7 @@ mod tests {
 			0.5,
 			0.2,
 			4.0,
+			false,
 		);
 		assert_eq!(merged.len(), 1);
 		assert_eq!(merged[0].id, 10);

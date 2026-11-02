@@ -7,7 +7,8 @@
 //
 //   java -cp protomaps-basemap-HEAD-with-deps.jar MergeProbe.java <features.txt> <kind_detail>
 //
-// Each input line is <id>\t<key=s:value;key=i:value>\t<comma-separated commands>.
+// Each input line is <id>\t<key=s:value;key=i:value;key=d:value>\t<comma-separated commands>, where s: marks a
+// string, i: an integer and d: a double.
 
 import com.onthegomap.planetiler.FeatureMerge;
 import com.onthegomap.planetiler.VectorTile;
@@ -36,7 +37,8 @@ public class MergeProbe {
         }
         String key = pair.substring(0, pair.indexOf('='));
         String value = pair.substring(pair.indexOf('=') + 1);
-        attrs.put(key, value.startsWith("i:") ? (Object) Long.parseLong(value.substring(2)) : value.substring(2));
+        attrs.put(key, value.startsWith("i:") ? (Object) Long.parseLong(value.substring(2)) :
+          value.startsWith("d:") ? (Object) Double.parseDouble(value.substring(2)) : value.substring(2));
       }
       String[] parts = fields[2].split(",");
       int[] commands = new int[parts.length];

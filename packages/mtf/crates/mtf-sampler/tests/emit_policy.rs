@@ -18,6 +18,7 @@ fn quiet_lane(source: &str) -> Row {
 		labels: vec!["O".into(); 4],
 		country: Some("US".into()),
 		source: source.into(),
+		source_id: None,
 		spans: None,
 	}
 }

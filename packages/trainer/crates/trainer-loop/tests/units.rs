@@ -178,6 +178,7 @@ fn the_realized_stream_holds_every_row_and_is_described_last() {
 		labels: vec![],
 		country: country.map(str::to_owned),
 		source: "s".into(),
+		source_id: spans.then(|| format!("s-{raw}")),
 		spans: spans.then(|| mtf_sampler::SpanTriple {
 			starts: vec![0],
 			ends: vec![2],
@@ -190,11 +191,19 @@ fn the_realized_stream_holds_every_row_and_is_described_last() {
 		.unwrap();
 	let (rows_path, meta_path) = realized_paths(dir.path(), 7);
 	assert!(!meta_path.exists(), "the description is written when the stream closes");
+	// A checkpoint writes the consumed count of each retention-table key, `<country>|<tag> -> …`.
+	let shapes_path = stream.write_shape_counts(dir.path(), 8).unwrap();
+	let shapes: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&shapes_path).unwrap()).unwrap();
+	assert_eq!(shapes["shapes"], serde_json::json!({"FR|street": 1}));
+	assert_eq!(shapes["counted_to_step"], 8);
 	let meta = stream.finish(dir.path(), "/corpus", "stage3", 9).unwrap();
 	assert_eq!(meta, meta_path);
 	let text = String::from_utf8(zstd::decode_all(std::fs::File::open(&rows_path).unwrap()).unwrap()).unwrap();
 	let lines: Vec<serde_json::Value> = text.lines().map(|l| serde_json::from_str(l).unwrap()).collect();
 	assert_eq!(lines[0]["span_tags"], serde_json::json!(["street"]));
+	assert_eq!(lines[0]["source"], "s");
+	assert_eq!(lines[0]["source_id"], "s-Rue");
+	assert_eq!(lines[1]["source_id"], serde_json::Value::Null);
 	assert_eq!(lines[1]["country"], serde_json::Value::Null);
 	assert_eq!(lines[1]["span_starts"], serde_json::Value::Null);
 	let described: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&meta_path).unwrap()).unwrap();

@@ -20,6 +20,7 @@ use rayon::prelude::*;
 
 use crate::coords::{decode_world, encode_flat_location, nano_to_degrees};
 use crate::elements::{ElementKind, Relation, Tags};
+use crate::multimap::BinarySearchMultimap;
 use crate::multipolygon::{self, MultipolygonError};
 use crate::nodes::NodeStore;
 
@@ -51,10 +52,10 @@ pub struct Pass1 {
 	pub nodes: NodeStore,
 	multipolygon_ways: HashSet<i64>,
 	relations: HashMap<i64, Relation>,
-	/// Way id to `(role, relation id)` for each kept relation that lists the way, in file order.
-	way_to_relations: HashMap<i64, Vec<(String, i64)>>,
+	/// Way id to `(role, relation id)` for each kept relation that lists the way.
+	way_to_relations: BinarySearchMultimap<(String, i64)>,
 	/// Relation id to `(role, parent relation id)` for each kept relation that lists the relation.
-	relation_to_parents: HashMap<i64, Vec<(String, i64)>>,
+	relation_to_parents: BinarySearchMultimap<(String, i64)>,
 	pub max_way_id: i64,
 }
 
@@ -68,6 +69,8 @@ pub fn pass1(path: &Path, keep_relation: impl Fn(&Relation) -> bool + Sync) -> i
 		..Pass1::default()
 	};
 	let mut negative = None;
+	let mut way_pairs = Vec::new();
+	let mut parent_pairs = Vec::new();
 
 	crate::pbf::for_each_block(
 		path,
@@ -128,10 +131,10 @@ pub fn pass1(path: &Path, keep_relation: impl Fn(&Relation) -> bool + Sync) -> i
 			state.max_way_id = state.max_way_id.max(summary.max_way_id);
 			for relation in summary.relations {
 				for member in &relation.members {
-					let entry = (member.role.clone(), relation.id);
+					let entry = (member.id, (member.role.clone(), relation.id));
 					match member.kind {
-						ElementKind::Way => state.way_to_relations.entry(member.id).or_default().push(entry),
-						ElementKind::Relation => state.relation_to_parents.entry(member.id).or_default().push(entry),
+						ElementKind::Way => way_pairs.push(entry),
+						ElementKind::Relation => parent_pairs.push(entry),
 						ElementKind::Node | ElementKind::Other => {}
 					}
 				}
@@ -139,6 +142,8 @@ pub fn pass1(path: &Path, keep_relation: impl Fn(&Relation) -> bool + Sync) -> i
 			}
 		},
 	)?;
+	state.way_to_relations = BinarySearchMultimap::from_pairs(way_pairs);
+	state.relation_to_parents = BinarySearchMultimap::from_pairs(parent_pairs);
 
 	if let Some(id) = negative {
 		return Err(io::Error::new(
@@ -155,10 +160,7 @@ impl Pass1 {
 	/// order Planetiler's `getRelationMembershipForWay` returns them.
 	pub fn memberships(&self, id: i64) -> Vec<RelationMember<'_>> {
 		let mut members = Vec::new();
-		let Some(direct) = self.way_to_relations.get(&id) else {
-			return members;
-		};
-		for (role, relation_id) in direct {
+		for (role, relation_id) in self.way_to_relations.get(id) {
 			if let Some(relation) = self.relations.get(relation_id) {
 				members.push(RelationMember {
 					role,
@@ -166,9 +168,10 @@ impl Pass1 {
 					parent_path: Vec::new(),
 				});
 			}
-			let Some(parents) = self.relation_to_parents.get(relation_id) else {
+			let parents = self.relation_to_parents.get(*relation_id);
+			if parents.is_empty() {
 				continue;
-			};
+			}
 			let mut visited = HashSet::from([*relation_id]);
 			for parent in parents {
 				self.parent_memberships(parent, &mut visited, vec![*relation_id], &mut members);
@@ -194,7 +197,8 @@ impl Pass1 {
 				parent_path: path.clone(),
 			});
 		}
-		if let Some(parents) = self.relation_to_parents.get(relation_id) {
+		let parents = self.relation_to_parents.get(*relation_id);
+		if !parents.is_empty() {
 			let mut next_path = path;
 			next_path.push(*relation_id);
 			for parent in parents {

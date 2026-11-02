@@ -561,13 +561,12 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 	let ewc = ewc_penalty(run, device)?;
 
 	let log_every = run.train_i64("log_every_steps")?.max(1);
+	let save_every = run.train_i64("save_every_steps")?.max(1);
 	let tags = encoder.schema.set(&encoder.label_set)?.tags.clone();
 	let mut callbacks: Vec<Box<dyn Callback>> = vec![
 		Box::new(Console { log_every, max_steps }),
 		Box::new(CsvMetrics::open(&run.csv_log_path, log_every, tags, resume_step)?),
-		Box::new(Checkpointer {
-			save_every: run.train_i64("save_every_steps")?.max(1),
-		}),
+		Box::new(Checkpointer { save_every }),
 	];
 	let labels = encoder.labels()?;
 	let locales = encoder.schema.locale_countries.clone();
@@ -684,6 +683,11 @@ pub fn train(run: &RunConfig, options: &TrainOptions) -> Result<()> {
 				let view = step_view!(started.elapsed().as_secs_f64());
 				for c in &mut callbacks {
 					c.on_step_end(&view, step)?;
+				}
+				// Each checkpoint writes the exposure so far, so a retained form the sampler starves shows before the
+				// run spends its remaining steps.
+				if step % save_every == 0 {
+					realized.write_shape_counts(&output_dir, step)?;
 				}
 				if step % eval_every == 0 {
 					let draw = validation.batches(&sampler, encoder, i128::from(seed + 1), val_rows, eval_batch)?;
