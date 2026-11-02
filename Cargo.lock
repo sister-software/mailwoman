@@ -747,6 +747,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "hrt-e"
+version = "0.1.0"
+dependencies = [
+ "flate2",
+ "hrt-pmtiles",
+ "tempfile",
+]
+
+[[package]]
+name = "hrt-pmtiles"
+version = "0.1.0"
+dependencies = [
+ "flate2",
+ "tempfile",
+]
+
+[[package]]
 name = "hybrid-array"
 version = "0.4.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"

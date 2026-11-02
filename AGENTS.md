@@ -16,7 +16,7 @@ workspace conventions.
 `test/` holds fixtures, shared test helpers and Playwright suites. `docs/` keeps Docusaurus
 source under `src/`. The complete workspace catalog is
 `docs/engineering/reference/workspaces.mdx`. The non-workspace directories `packages/trainer/`
-(a cargo workspace), `hf-publish/`, `data/`, `evals/`, and `docker/` have their purposes documented in that catalog and their
+and `packages/hrt/` (cargo crates), `hf-publish/`, `data/`, `evals/`, and `docker/` have their purposes documented in that catalog and their
 local READMEs.
 
 ## Instruction routing
