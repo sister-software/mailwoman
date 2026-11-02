@@ -74,6 +74,26 @@ describe("splitTrailingUnit", () => {
 		expect(splitTrailingUnit("SEMINARY RD #120")).toEqual({ street: "SEMINARY RD", unit: "#120" })
 	})
 
+	it("splits a number sign written apart from its identifier", () => {
+		expect(splitTrailingUnit("LAWRENCE EXPY # 190")).toEqual({ street: "LAWRENCE EXPY", unit: "# 190" })
+		expect(splitTrailingUnit("PENNSYLVANIA AVE # A")).toEqual({ street: "PENNSYLVANIA AVE", unit: "# A" })
+		expect(splitTrailingUnit("GROVEDALE CT, # 200")).toEqual({ street: "GROVEDALE CT", unit: "# 200" })
+	})
+
+	it("splits a designator joined to a numeric identifier", () => {
+		expect(splitTrailingUnit("MAIN ST. RM203")).toEqual({ street: "MAIN ST.", unit: "RM203" })
+		expect(splitTrailingUnit("HAYDEN RD SUITE26")).toEqual({ street: "HAYDEN RD", unit: "SUITE26" })
+		expect(splitTrailingUnit("ROSS AVE. BLDG2 SUITE207B")).toEqual({ street: "ROSS AVE.", unit: "BLDG2 SUITE207B" })
+	})
+
+	it("keeps a joined token whose letters are no designator, or that opens the street", () => {
+		expect(splitTrailingUnit("INTERSTATE I95")).toBeNull()
+		expect(splitTrailingUnit("STE206")).toBeNull()
+		expect(splitTrailingUnit("MAIN ST SUITEB")).toBeNull()
+		expect(splitTrailingUnit("SW 92ND AVE BAY FL33157")).toBeNull()
+		expect(splitTrailingUnit("PERRYSVILLE AVE FL2")).toEqual({ street: "PERRYSVILLE AVE", unit: "FL2" })
+	})
+
 	it("splits two trailing units as one, in the order written", () => {
 		expect(splitTrailingUnit("KING ST STE 300 BLDG 4")).toEqual({ street: "KING ST", unit: "STE 300 BLDG 4" })
 	})

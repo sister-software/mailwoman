@@ -86,10 +86,27 @@ const isIdentifier = (token: string) => UNIT_IDENTIFIER.test(token.replace(/^#/u
 const isDesignator = (token: string) => isUnitDesignatorToken(token.replace(/\.$/u, ""))
 
 /**
+ * A designator joined to an identifier that starts with a digit: `RM203`, `SUITE26`, `SUITE207B`.
+ *
+ * The identifier must start with a digit, so `SUITEB` stays one word.
+ * `FL` before five digits is Florida and a ZIP Code (`BAY FL33157`), which is not a floor.
+ */
+const isJoinedUnit = (token: string) => {
+	const match = /^(\p{L}+)(\d\S*)$/u.exec(token)
+
+	if (match == null || !isDesignator(match[1]!)) return false
+
+	return !(match[1]!.toUpperCase() === "FL" && /^\d{5}$/u.test(match[2]!))
+}
+
+/**
  * Splits a USPS secondary unit off the end of a street line, after the house number is removed.
  *
  * The unit is a Publication 28 designator followed by an identifier
- * (`STE 300`, `APT. 2B`, `SUITE # 200`, `BUILDING #500`), or a number sign joined to one (`#120`).
+ * (`STE 300`, `APT. 2B`, `SUITE # 200`, `BUILDING #500`).
+ * It may also be a designator joined to a numeric identifier (`RM203`), or a number sign
+ * before an identifier, joined or apart (`#120`, `# 190`).
+ *
  * The designator is never the street's first word, so `SUITE B WESTGATE DRIVE`
  * and `PIER 39` keep their street.
  *
@@ -137,8 +154,18 @@ function splitLastUnit(line: string): StreetWithUnit | null {
 		return at(tokens.length - 2)
 	}
 
+	// `# 190`: a number sign written apart from the identifier, with no designator before it.
+	if (startsAfterStreet(tokens.length - 2) && sign === "#" && isIdentifier(identifier)) {
+		return at(tokens.length - 2)
+	}
+
 	// `#120`: a number sign joined to the identifier.
 	if (startsAfterStreet(tokens.length - 1) && /^#\S/u.test(identifier) && isIdentifier(identifier)) {
+		return at(tokens.length - 1)
+	}
+
+	// `RM203`: a designator joined to the identifier.
+	if (startsAfterStreet(tokens.length - 1) && isJoinedUnit(identifier)) {
 		return at(tokens.length - 1)
 	}
 
