@@ -9,15 +9,16 @@ use std::sync::Mutex;
 
 use hrt_osm::{Relation, SourceFeature};
 use hrt_profile::country::CountryCoder;
-use hrt_profile::layers::{earth, facilities, infrastructure, roads, transit, trees, water};
+use hrt_profile::layers::{earth, facilities, infrastructure, landuse, roads, transit, trees, water};
 use hrt_profile::{CollectorConfig, Emitted, Input, Profile, TileFeature};
 use hrt_render::snap::SnapCounts;
 
 /// The layers this profile can build, in name order.
-pub const PORTED_LAYERS: [&str; 7] = [
+pub const PORTED_LAYERS: [&str; 8] = [
 	earth::LAYER_NAME,
 	facilities::LAYER_NAME,
 	infrastructure::LAYER_NAME,
+	landuse::LAYER_NAME,
 	roads::LAYER_NAME,
 	transit::LAYER_NAME,
 	trees::LAYER_NAME,
@@ -84,6 +85,9 @@ impl Profile for BasemapProfile {
 		if let Some(layer) = self.layer_id(trees::LAYER_NAME).filter(|_| osm) {
 			trees::process_osm(&Input::new(source), layer, &mut out, config);
 		}
+		if let Some(layer) = self.layer_id(landuse::LAYER_NAME).filter(|_| osm) {
+			landuse::process_osm(&Input::new(source), layer, &mut out, config);
+		}
 		if let Some(layer) = self.layer_id(roads::LAYER_NAME) {
 			if source.source == "osm" {
 				let mut input = Input::new(source);
@@ -120,6 +124,7 @@ impl Profile for BasemapProfile {
 			roads::LAYER_NAME => roads::post_process(zoom, features, &mut counts),
 			water::LAYER_NAME => water::post_process(features, &mut counts),
 			earth::LAYER_NAME => earth::post_process(features, &mut counts),
+			landuse::LAYER_NAME => landuse::post_process(zoom, features, &mut counts),
 			_ => features,
 		};
 		let mut total = self.merge_counts.lock().unwrap();

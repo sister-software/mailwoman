@@ -182,6 +182,9 @@ fn main() -> ExitCode {
 						report.different,
 						report.features_compared
 					);
+					for text in report.first_byte_difference.values() {
+						println!("first equal tile at its zoom whose bytes differ: {text}");
+					}
 					if report.different + report.only_in_a + report.only_in_b == 0 {
 						ExitCode::SUCCESS
 					} else {

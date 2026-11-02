@@ -127,6 +127,39 @@ pub struct ClockReport {
 	pub order_only: usize,
 	pub features_compared: usize,
 	pub details: Vec<String>,
+	/// For the first tile at each zoom equal in content but not in bytes, the first feature whose stored commands or tag
+	/// order differ.
+	pub first_byte_difference: BTreeMap<u8, String>,
+}
+
+/// Finds the first feature whose raw commands or tag order differ between two layer maps equal in content.
+fn first_raw_difference(
+	a: &BTreeMap<String, Vec<DecodedFeature>>,
+	b: &BTreeMap<String, Vec<DecodedFeature>>,
+) -> Option<String> {
+	for (name, features_a) in a {
+		let features_b = b.get(name)?;
+		for (index, (fa, fb)) in features_a.iter().zip(features_b).enumerate() {
+			if fa.commands != fb.commands {
+				return Some(format!(
+					"layer {name} feature {index} (id {:?}): commands differ\n    a: {:?}\n    b: {:?}",
+					fa.id,
+					&fa.commands[..fa.commands.len().min(24)],
+					&fb.commands[..fb.commands.len().min(24)]
+				));
+			}
+			let keys = |f: &DecodedFeature| f.attributes.iter().map(|(key, _)| key.clone()).collect::<Vec<_>>();
+			if keys(fa) != keys(fb) {
+				return Some(format!(
+					"layer {name} feature {index} (id {:?}): tag order differs\n    a: {:?}\n    b: {:?}",
+					fa.id,
+					keys(fa),
+					keys(fb)
+				));
+			}
+		}
+	}
+	Some("layers' key or value tables differ".to_owned())
 }
 
 fn expand(reader: &Reader) -> io::Result<BTreeMap<u64, Entry>> {
@@ -390,6 +423,13 @@ pub fn compare(a: &Path, b: &Path, max_details: usize) -> io::Result<ClockReport
 				report.order_only += 1;
 				if let Some(text) = order_detail {
 					note(&mut report, text);
+				}
+			} else {
+				let (zoom, _, _) = tile_id_to_zxy(id);
+				if let std::collections::btree_map::Entry::Vacant(slot) = report.first_byte_difference.entry(zoom) {
+					if let Some(text) = first_raw_difference(&named_a, &named_b) {
+						slot.insert(format!("{} {text}", tile_name(id)));
+					}
 				}
 			}
 		} else {

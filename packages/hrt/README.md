@@ -24,9 +24,9 @@ crates as default members, because none of them links libtorch.
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.  |
 
-`hrt-profile` holds seven ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
-polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; and `roads`, `infrastructure`,
-`facilities`, `trees` and `transit`, from OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
+`hrt-profile` holds eight ported layers so far: `water`, from OpenStreetMap, Natural Earth and the prepared ocean
+polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; and `roads`, `landuse`,
+`infrastructure`, `facilities`, `trees` and `transit`, from OpenStreetMap. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
 the basemap profile the comparisons below use.
 
 `hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
@@ -240,6 +240,17 @@ On 2026-11-02, every tile was equal without a vertex tolerance, and most were by
 | `trees`          | `luxembourg-latest.osm.pbf` |  3,811 |  621,777 |  3,811 |          3,797 |
 | `roads`          | `monaco-latest.osm.pbf`     |     28 |    2,248 |     28 |             28 |
 | `roads`          | `luxembourg-latest.osm.pbf` |  6,350 |  131,136 |  6,350 |          6,350 |
+| `landuse`        | `monaco-latest.osm.pbf`     |     25 |      547 |     25 |             14 |
+| `landuse`        | `luxembourg-latest.osm.pbf` |  6,757 |  635,928 |  6,757 |            738 |
+
+A tile equal in content but not in bytes holds a polygon whose ring starts at another vertex. Some polygons turn invalid
+when their vertices round to the tile grid, and both builds repair them with a precision reducer: JTS's in Planetiler, GEOS's port in
+`hrt`. The two start the repaired rings at different vertices. In Luxembourg, 25,175 landuse polygon renderings took
+that path. `hrt clock` prints, for each zoom, the first such feature.
+
+The fork's paddy rule never applies to `landuse=farmland` with `crop=rice`: the fork's `getString` returns the last
+matching rule, and the general `landuse` rule follows the paddy rule. Both builds therefore give `farmland`, and only
+`landuse=paddy` gets `paddy`.
 
 Two orders decide the bytes. Features that tie on tile, layer and sort key are ordered by their sort records, which
 `hrt-sort` writes as the MessagePack value Planetiler's `FeatureGroup` writes, attributes in key order. Before this

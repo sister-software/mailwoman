@@ -153,6 +153,30 @@ impl Geom {
 		}
 	}
 
+	/// Returns `[min_x, min_y, max_x, max_y]` over every coordinate, as JTS's `getEnvelopeInternal` computes it, or
+	/// `None` for an empty geometry. A polygon's holes lie inside its shell, so the shell alone bounds it.
+	pub fn envelope(&self) -> Option<[f64; 4]> {
+		fn visit(geom: &Geom, bounds: &mut [f64; 4]) {
+			let mut add = |seq: &[Xy]| {
+				for &[x, y] in seq {
+					*bounds = [bounds[0].min(x), bounds[1].min(y), bounds[2].max(x), bounds[3].max(y)];
+				}
+			};
+			match geom {
+				Geom::Point(point) => add(std::slice::from_ref(point)),
+				Geom::MultiPoint(points) => add(points),
+				Geom::LineString(seq) | Geom::LinearRing(seq) => add(seq),
+				Geom::MultiLineString(lines) => lines.iter().for_each(|line| add(&line.seq)),
+				Geom::Polygon(polygon) => add(&polygon.shell),
+				Geom::MultiPolygon(polygons) => polygons.iter().for_each(|polygon| add(&polygon.shell)),
+				Geom::Collection(parts) => parts.iter().for_each(|part| visit(part, bounds)),
+			}
+		}
+		let mut bounds = [f64::INFINITY, f64::INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY];
+		visit(self, &mut bounds);
+		(bounds[0] <= bounds[2]).then_some(bounds)
+	}
+
 	/// Returns the total length of every line and ring, as JTS's `getLength` measures it.
 	pub fn length(&self) -> f64 {
 		match self {

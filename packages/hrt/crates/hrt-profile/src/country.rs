@@ -102,7 +102,7 @@ impl CountryCoder {
 
 	/// Returns the country code of the first border polygon containing `geometry`, in longitude and latitude.
 	pub fn country_code(&self, geometry: &Geom) -> Option<&str> {
-		let [min_x, min_y, max_x, max_y] = geom_bounds(geometry)?;
+		let [min_x, min_y, max_x, max_y] = geometry.envelope()?;
 		let candidates: Vec<&Border> = self
 			.borders
 			.iter()
@@ -122,28 +122,6 @@ impl CountryCoder {
 			.find(|border| border.shape.contains(&shape).unwrap_or(false))
 			.map(|border| border.country.as_str())
 	}
-}
-
-fn geom_bounds(geometry: &Geom) -> Option<[f64; 4]> {
-	let mut bounds = [f64::INFINITY, f64::INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY];
-	let mut visit = |seq: &[[f64; 2]]| {
-		for &[x, y] in seq {
-			bounds = [bounds[0].min(x), bounds[1].min(y), bounds[2].max(x), bounds[3].max(y)];
-		}
-	};
-	fn walk(geometry: &Geom, visit: &mut dyn FnMut(&[[f64; 2]])) {
-		match geometry {
-			Geom::Point(point) => visit(std::slice::from_ref(point)),
-			Geom::MultiPoint(points) => visit(points),
-			Geom::LineString(seq) | Geom::LinearRing(seq) => visit(seq),
-			Geom::MultiLineString(lines) => lines.iter().for_each(|line| visit(&line.seq)),
-			Geom::Polygon(polygon) => visit(&polygon.shell),
-			Geom::MultiPolygon(polygons) => polygons.iter().for_each(|polygon| visit(&polygon.shell)),
-			Geom::Collection(parts) => parts.iter().for_each(|part| walk(part, visit)),
-		}
-	}
-	walk(geometry, &mut visit);
-	(bounds[0] <= bounds[2]).then_some(bounds)
 }
 
 #[cfg(test)]
