@@ -6,8 +6,9 @@
 //!
 //! Commands:
 //! - `hrt render-test <input.osm.pbf> <output.pmtiles>` builds an archive with the parity profile.
-//! - `hrt water-test <input.osm.pbf> <output.pmtiles>` builds the water layer from OpenStreetMap alone, as
-//!   `packages/hrt/parity/WaterDump.java` does.
+//! - `hrt water-test <input.osm.pbf> <output.pmtiles> [raw] [ne=<gpkg or zip>] [osm-water=<zip>]` builds the water
+//!   layer as `packages/hrt/parity/WaterDump.java` does: OpenStreetMap, plus Natural Earth and the prepared ocean
+//!   polygons when given. `raw` skips post-processing.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
 //!   `packages/hrt/parity/RenderDump.java`.
 //! - `hrt clock <a.pmtiles> <b.pmtiles> [max details]` compares two archives tile by tile and exits 1 when any tile
@@ -29,11 +30,11 @@ use std::time::Instant;
 
 use hrt_profile::Profile;
 
-fn build(input: &str, output: &str, profile: &impl Profile) -> ExitCode {
+fn build(input: &str, extra: &[pipeline::ExtraSource], output: &str, profile: &impl Profile) -> ExitCode {
 	let started = Instant::now();
 	let output = PathBuf::from(output);
 	let scratch = tempfile::tempdir().expect("a scratch directory");
-	match pipeline::build(&PathBuf::from(input), &output, scratch.path(), profile) {
+	match pipeline::build(&PathBuf::from(input), extra, &output, scratch.path(), profile) {
 		Ok(report) => {
 			eprintln!("render: {:?}", report.render);
 			eprintln!("sorted {} records into {} tiles", report.records, report.tiles);
@@ -52,7 +53,7 @@ fn build(input: &str, output: &str, profile: &impl Profile) -> ExitCode {
 
 fn usage() -> ExitCode {
 	eprintln!("usage: hrt render-test <input.osm.pbf> <output.pmtiles>");
-	eprintln!("       hrt water-test <input.osm.pbf> <output.pmtiles>");
+	eprintln!("       hrt water-test <input.osm.pbf> <output.pmtiles> [raw] [ne=<path>] [osm-water=<path>]");
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
 	eprintln!("       hrt record <archive.pmtiles> <out.jsonl>");
@@ -62,7 +63,7 @@ fn usage() -> ExitCode {
 fn main() -> ExitCode {
 	let args: Vec<String> = std::env::args().skip(1).collect();
 	match args.first().map(String::as_str) {
-		Some("render-test") if args.len() == 3 => build(&args[1], &args[2], &parity_profile::ParityProfile),
+		Some("render-test") if args.len() == 3 => build(&args[1], &[], &args[2], &parity_profile::ParityProfile),
 		Some("merge-probe") if args.len() == 6 => {
 			let tile: Vec<u32> = args[2].split('/').filter_map(|part| part.parse().ok()).collect();
 			if tile.len() != 3 {
@@ -84,12 +85,33 @@ fn main() -> ExitCode {
 				}
 			}
 		}
-		Some("water-test") if args.len() == 3 || (args.len() == 4 && args[3] == "raw") => {
+		Some("water-test") if args.len() >= 3 => {
+			let mut raw = false;
+			let mut extra = Vec::new();
+			for option in &args[3..] {
+				if option == "raw" {
+					raw = true;
+				} else if let Some(path) = option.strip_prefix("ne=") {
+					extra.push(pipeline::ExtraSource {
+						name: "ne".into(),
+						path: path.into(),
+						format: pipeline::SourceFormat::GeoPackage,
+					});
+				} else if let Some(path) = option.strip_prefix("osm-water=") {
+					extra.push(pipeline::ExtraSource {
+						name: "osm_water".into(),
+						path: path.into(),
+						format: pipeline::SourceFormat::ShapefileZip,
+					});
+				} else {
+					return usage();
+				}
+			}
 			let profile = water_profile::WaterProfile {
-				raw: args.len() == 4,
+				raw,
 				..water_profile::WaterProfile::default()
 			};
-			let code = build(&args[1], &args[2], &profile);
+			let code = build(&args[1], &extra, &args[2], &profile);
 			eprintln!("merge snapping: {:?}", profile.merge_counts.lock().unwrap());
 			code
 		}

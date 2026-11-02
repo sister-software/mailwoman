@@ -4,10 +4,8 @@
 //
 // Ported from the basemaps fork's layers/Water.java (BSD-3-Clause, Protomaps).
 
-//! The `water` layer from OpenStreetMap: water areas, waterway lines, water points, and label points for named water
-//! areas.
-//!
-//! The Natural Earth and prepared ocean polygon sources of the Java layer are separate inputs and are not ported here.
+//! The `water` layer: OpenStreetMap water areas, waterway lines, water points and label points for named water areas;
+//! Natural Earth oceans and lakes at zooms 0 to 5; and the prepared OpenStreetMap ocean polygons from zoom 6.
 
 use std::f64::consts::PI;
 use std::sync::LazyLock;
@@ -162,6 +160,96 @@ static OSM_INDEX: LazyLock<Index> = LazyLock::new(|| {
 	])
 });
 
+static NE_INDEX: LazyLock<Index> = LazyLock::new(|| {
+	let from_min_zoom = || ("minZoom", from_tag("min_zoom"));
+	Index::new(vec![
+		rule(
+			vec![with(&["featurecla", "Ocean"])],
+			vec![from_min_zoom(), ("kind", s("ocean"))],
+		),
+		rule(
+			vec![with(&["featurecla", "Playa"])],
+			vec![from_min_zoom(), ("kind", s("playa"))],
+		),
+		rule(
+			vec![with(&["featurecla", "Reservoir"])],
+			vec![from_min_zoom(), ("kind", s("lake"))],
+		),
+		rule(
+			vec![with(&["featurecla", "Lake"])],
+			vec![from_min_zoom(), ("kind", s("lake"))],
+		),
+		rule(
+			vec![with(&["featurecla", "Alkaline Lake"])],
+			vec![from_min_zoom(), ("kind", s("lake"))],
+		),
+		rule(
+			vec![crate::expr::without(&[
+				"_source_layer\nne_50m_ocean\nne_50m_lakes\nne_10m_ocean\nne_10m_lakes",
+			])],
+			vec![("kind", Value::Null)],
+		),
+	])
+});
+
+/// `Water.processPreparedOsm`: an ocean polygon from the prepared OpenStreetMap water polygons, from zoom 6.
+pub fn process_prepared_osm(
+	input: &Input<'_>,
+	layer: u32,
+	features: &mut Vec<crate::Emitted>,
+	config: crate::CollectorConfig,
+) {
+	let mut collector = Collector::new(input, config);
+	collector
+		.polygon(layer)
+		.set_id(1)
+		.set_attr("kind", "ocean")
+		.set_attr("sort_rank", 200)
+		.set_pixel_tolerance(PIXEL_TOLERANCE)
+		.set_min_zoom(6)
+		.set_buffer_pixels(8.0);
+	features.extend(collector.finish());
+}
+
+/// `Water.processNe`: Natural Earth oceans and lakes, the 50m themes at zooms 0 to 4 and the 10m themes at zoom 5.
+pub fn process_ne(
+	input: &mut Input<'_>,
+	layer: u32,
+	features: &mut Vec<crate::Emitted>,
+	config: crate::CollectorConfig,
+) {
+	let source_layer = input.source.source_layer;
+	input.set_tag("_source_layer", Some(source_layer.to_owned()));
+	let matches = NE_INDEX.matches(input);
+	if matches.is_empty() {
+		return;
+	}
+	let Some(kind) = get_string(input, &matches, "kind", None) else {
+		return;
+	};
+	let min_zoom_text = get_string(input, &matches, "minZoom", None);
+	let Some(min_zoom_text) = min_zoom_text.filter(|_| input.can_be_polygon()) else {
+		return;
+	};
+	let Ok(min_zoom) = min_zoom_text.trim().parse::<f64>() else {
+		return;
+	};
+	let min_zoom = hrt_render::geom::java_round(min_zoom) as i32;
+	let fifty = source_layer.contains("_50m_");
+	let (theme_min, theme_max) = if fifty { (0, 4) } else { (5, 5) };
+	let input = &*input;
+	let mut collector = Collector::new(input, config);
+	collector
+		.polygon(layer)
+		.set_attr("kind", kind.as_str())
+		.set_attr("sort_rank", 200)
+		.set_pixel_tolerance(PIXEL_TOLERANCE)
+		.set_zoom_range(theme_min.max(min_zoom), theme_max)
+		.set_min_pixel_size(1.0)
+		.set_buffer_pixels(8.0);
+	features.extend(collector.finish());
+}
+
 /// `Water.processOsm`: emits the layer's features for one OpenStreetMap feature into `features`.
 pub fn process_osm(
 	input: &mut Input<'_>,
@@ -273,7 +361,7 @@ mod tests {
 	fn process(geometry: Geometry, tags: &[(&str, &str)]) -> Vec<Emitted> {
 		let tags = Tags(tags.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect());
 		let nodes = NodeStore::default();
-		let source = SourceFeature::fixed(0, ElementKind::Other, &tags, geometry, &nodes);
+		let source = SourceFeature::fixed(0, ElementKind::Other, ("osm", ""), &tags, geometry, &nodes);
 		let mut input = Input::new(&source);
 		let mut out = Vec::new();
 		process_osm(&mut input, 0, &mut out, CollectorConfig::new(15));
@@ -296,6 +384,25 @@ mod tests {
 				"expected kind {kind} at z{zoom}, got {attributes:?}"
 			);
 		}
+	}
+
+	#[test]
+	fn prepared_osm() {
+		let tags = Tags::default();
+		let nodes = NodeStore::default();
+		let source = SourceFeature::fixed(
+			1,
+			ElementKind::Other,
+			("osm_water", "water_polygons"),
+			&tags,
+			square(),
+			&nodes,
+		);
+		let input = Input::new(&source);
+		let mut out = Vec::new();
+		process_prepared_osm(&input, 0, &mut out, CollectorConfig::new(15));
+		assert_kinds(15, &["ocean"], &out);
+		assert_eq!(out[0].feature.id, 1);
 	}
 
 	#[test]

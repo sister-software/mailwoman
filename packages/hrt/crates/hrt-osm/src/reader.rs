@@ -23,6 +23,9 @@ use crate::elements::{ElementKind, Relation, Tags};
 use crate::multipolygon::{self, MultipolygonError};
 use crate::nodes::NodeStore;
 
+/// The source name OpenStreetMap features carry, as the basemap build registers it.
+pub const OSM_SOURCE: &str = "osm";
+
 /// The relation a feature belongs to, directly or through a chain of parent relations.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RelationMember<'a> {
@@ -226,6 +229,10 @@ pub enum GeometryError {
 pub struct SourceFeature<'a> {
 	pub id: i64,
 	pub kind: ElementKind,
+	/// The name the build gives the input this feature came from, such as `osm` or `ne`.
+	pub source: &'a str,
+	/// The layer within the source, such as a GeoPackage table or shapefile name; empty for OpenStreetMap.
+	pub source_layer: &'a str,
 	pub tags: &'a Tags,
 	pub relations: Vec<RelationMember<'a>>,
 	can_be_line: bool,
@@ -247,12 +254,21 @@ pub fn can_be_polygon(closed: bool, area: Option<&str>, points: usize) -> bool {
 impl<'a> SourceFeature<'a> {
 	/// A feature with a fixed geometry in world coordinates, as Planetiler's `SimpleFeature`: it is a point, a line or a
 	/// polygon by its geometry's type.
-	pub fn fixed(id: i64, kind: ElementKind, tags: &'a Tags, geometry: Geometry, nodes: &'a NodeStore) -> Self {
+	pub fn fixed(
+		id: i64,
+		kind: ElementKind,
+		(source, source_layer): (&'a str, &'a str),
+		tags: &'a Tags,
+		geometry: Geometry,
+		nodes: &'a NodeStore,
+	) -> Self {
 		let lineal = matches!(geometry, Geometry::LineString(_) | Geometry::MultiLineString(_));
 		let polygonal = matches!(geometry, Geometry::Polygon(_) | Geometry::MultiPolygon(_));
 		SourceFeature {
 			id,
 			kind,
+			source,
+			source_layer,
 			tags,
 			relations: Vec::new(),
 			can_be_line: lineal,
@@ -393,6 +409,8 @@ pub fn pass2(path: &Path, state: &Pass1, emit: impl Fn(&SourceFeature<'_>) + Syn
 						let feature = SourceFeature {
 							id: way.id(),
 							kind: ElementKind::Way,
+							source: OSM_SOURCE,
+							source_layer: "",
 							tags: &tags,
 							relations: state.memberships(way.id()),
 							can_be_line: can_be_line(closed, area, refs.len()),
@@ -434,6 +452,8 @@ pub fn pass2(path: &Path, state: &Pass1, emit: impl Fn(&SourceFeature<'_>) + Syn
 		let feature = SourceFeature {
 			id: relation.id,
 			kind: ElementKind::Relation,
+			source: OSM_SOURCE,
+			source_layer: "",
 			tags: &relation.tags,
 			// Planetiler looks a multipolygon's parents up in its way-membership table by the relation's own id.
 			relations: state.memberships(relation.id),
@@ -456,6 +476,8 @@ fn point_feature<'a>(id: i64, tags: &'a Tags, location: u64, nodes: &'a NodeStor
 	SourceFeature {
 		id,
 		kind: ElementKind::Node,
+		source: OSM_SOURCE,
+		source_layer: "",
 		tags,
 		relations: Vec::new(),
 		can_be_line: false,

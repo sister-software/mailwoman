@@ -2,7 +2,8 @@
 // @license AGPL-3.0
 // @author Teffen Ellis, et al.
 
-//! The water layer alone, from OpenStreetMap, as `packages/hrt/parity/WaterDump.java` builds it.
+//! The water layer alone, as `packages/hrt/parity/WaterDump.java` builds it: OpenStreetMap features, and Natural
+//! Earth and the prepared ocean polygons when the build reads them.
 
 use std::sync::Mutex;
 
@@ -34,7 +35,13 @@ impl Profile for WaterProfile {
 	fn process(&self, source: &SourceFeature<'_>) -> Vec<Emitted> {
 		let mut input = Input::new(source);
 		let mut out = Vec::new();
-		water::process_osm(&mut input, 0, &mut out, CollectorConfig::new(MAX_ZOOM));
+		let config = CollectorConfig::new(MAX_ZOOM);
+		match source.source {
+			"osm" => water::process_osm(&mut input, 0, &mut out, config),
+			"ne" => water::process_ne(&mut input, 0, &mut out, config),
+			"osm_water" => water::process_prepared_osm(&input, 0, &mut out, config),
+			_ => {}
+		}
 		out
 	}
 

@@ -21,10 +21,11 @@ crates as default members, because none of them links libtorch.
 | `hrt-render`  | Planetiler's renderer: simplification, stripe clipping into tiles, polygon snapping, and MVT command encoding.        |
 | `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids. |
 | `hrt-profile` | The basemap profile: the fork's `Matcher` rules, a `FeatureCollector`-style builder, OSM names, merges, and layers.   |
+| `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.     |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `water-test`, `clock` (the archive comparison) and `record`.    |
 
-`hrt-profile` holds one ported layer so far, `water`, from OpenStreetMap; its Natural Earth and prepared ocean polygon
-sources are not read yet. `hrt-cli` carries the parity profile and the water-only profile the comparisons below use.
+`hrt-profile` holds one ported layer so far, `water`, from OpenStreetMap, Natural Earth and the prepared ocean polygons.
+`hrt-cli` carries the parity profile and the water-only profile the comparisons below use.
 
 `hrt-render` links GEOS, built from source by the `geos` crate's `static` feature, so building it needs cmake and a C++
 compiler. GEOS ports the JTS validity test and precision reducer Planetiler calls when a polygon's rounded form is
@@ -33,8 +34,9 @@ invalid.
 ## Checks
 
 ```sh
-cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-cli
-cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-cli --all-targets -- -D warnings
+cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli
+cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli \
+  --all-targets -- -D warnings
 ```
 
 The unit tests encode the vector tile specification's own examples and read written archives back through their
@@ -144,24 +146,37 @@ single runs on a shared host; the Phase 0 baseline and `hrt titrate` repeat them
 
 ## Water layer parity
 
-`parity/WaterDump.java` builds an archive of the fork's own `Water` layer class from OpenStreetMap alone: every feature
-goes through `Water.processOsm` and every tile through `Water.postProcess`, at maxzoom 15. `hrt water-test` builds the
-same layer from `hrt-profile`'s port. With a fourth argument, `raw`, both skip post-processing, which isolates the line
-and polygon merges.
+`parity/WaterDump.java` builds an archive of the fork's own `Water` layer class: OpenStreetMap features go through
+`Water.processOsm`, Natural Earth features through `Water.processNe`, the prepared ocean polygons through
+`Water.processPreparedOsm`, and every tile through `Water.postProcess`, at maxzoom 15. `hrt water-test` builds the same
+layer from `hrt-profile`'s port, reading the GeoPackage and the zipped shapefile with `hrt-sources`. With `raw`, both
+skip post-processing, which isolates the line and polygon merges.
 
 ```sh
-java -cp protomaps-basemap-HEAD-with-deps.jar packages/hrt/parity/WaterDump.java input.osm.pbf scratch/ 4
-cargo run --release -p hrt-cli -- water-test input.osm.pbf water.pmtiles
+java -cp protomaps-basemap-HEAD-with-deps.jar packages/hrt/parity/WaterDump.java input.osm.pbf scratch/ 4 \
+  ne=natural_earth_vector.gpkg.zip osm-water=water-polygons-split-3857.zip
+cargo run --release -p hrt-cli -- water-test input.osm.pbf water.pmtiles \
+  ne=natural_earth_vector.gpkg.zip osm-water=water-polygons-split-3857.zip
 cargo run --release -p hrt-cli -- clock scratch/water.pmtiles water.pmtiles
 ```
 
+The two inputs are Natural Earth's `natural_earth_vector.gpkg.zip` (446,353,155 bytes) and osmdata's
+`water-polygons-split-3857.zip` (931,892,733 bytes), as downloaded on 2026-11-02. `hrt` extracts each beside the
+archive, in a `.hrt-unzipped` directory, and reuses the extraction.
+
 On 2026-11-02:
 
-| Input                       | Tiles | Equal | Equal within the polygon tolerance | Different |
-| --------------------------- | ----: | ----: | ---------------------------------: | --------: |
-| `monaco-latest.osm.pbf`     |    21 |    21 |                                  0 |         0 |
-| `sf-downtown.osm.pbf`       |    28 |    28 |                                  0 |         0 |
-| `luxembourg-latest.osm.pbf` | 6,009 | 6,006 |                                  4 |         3 |
+| Input and sources                               | Tiles | Equal | Equal within the polygon tolerance | Different |
+| ----------------------------------------------- | ----: | ----: | ---------------------------------: | --------: |
+| `monaco-latest.osm.pbf`, all three              |   873 |   873 |                                  0 |         0 |
+| `sf-downtown.osm.pbf`, all three                |    46 |    46 |                                  0 |         0 |
+| `monaco-latest.osm.pbf`, OpenStreetMap only     |    21 |    21 |                                  0 |         0 |
+| `sf-downtown.osm.pbf`, OpenStreetMap only       |    28 |    28 |                                  0 |         0 |
+| `luxembourg-latest.osm.pbf`, OpenStreetMap only | 6,009 | 6,006 |                                  4 |         3 |
+
+The prepared ocean polygons are in EPSG:3857. Planetiler converts them to longitude and latitude through GeoTools and
+then to world coordinates, and `hrt` applies the same two formulas; every Monaco and San Francisco tile was equal without
+a vertex tolerance.
 
 Without post-processing, all 6,015 Luxembourg tiles and their 75,794 features were identical, so the three remaining
 differences come from `mergeNearbyPolygons`. `hrt merge-probe` and `parity/MergeProbe.java` run that merge step by step

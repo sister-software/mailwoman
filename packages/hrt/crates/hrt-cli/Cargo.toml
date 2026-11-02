@@ -19,5 +19,6 @@ hrt-pmtiles = { path = "../hrt-pmtiles" }
 hrt-profile = { path = "../hrt-profile" }
 hrt-render = { path = "../hrt-render" }
 hrt-sort = { path = "../hrt-sort" }
+hrt-sources = { path = "../hrt-sources" }
 rayon = "1"
 tempfile = "3"

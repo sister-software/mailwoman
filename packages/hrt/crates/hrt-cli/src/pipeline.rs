@@ -15,7 +15,7 @@ use hrt_e::{encode_tile, LayerBuilder, Value, DEFAULT_EXTENT};
 use hrt_osm::coords::{world_x, world_y};
 use hrt_osm::{header_bounds, pass1, pass2};
 use hrt_pmtiles::{tile_id, ArchiveSummary, Writer, WriterOptions};
-use hrt_profile::{Profile, TileFeature};
+use hrt_profile::{Emitted, Profile, TileFeature};
 use hrt_render::commands::unscale;
 use hrt_render::{GeometryType, RenderConfig, RenderCounts, Renderer};
 use hrt_sort::key::{layer_of, tile_of};
@@ -117,25 +117,41 @@ fn gzip(bytes: &[u8]) -> io::Result<Vec<u8>> {
 }
 
 /// Builds `output` from the OpenStreetMap file `input` with `profile`, sorting in `scratch`.
-pub fn build(input: &Path, output: &Path, scratch: &Path, profile: &impl Profile) -> io::Result<BuildReport> {
-	let state = pass1(input, |relation| profile.keep_relation(relation))?;
-	let sorter = Sorter::new(scratch, 64 << 20);
-	let threads = rayon::current_num_threads();
-	let writers: Vec<Mutex<_>> = (0..=threads).map(|_| Mutex::new(sorter.writer())).collect();
-	let render_counts = Mutex::new(RenderCounts::default());
-	let failure: Mutex<Option<io::Error>> = Mutex::new(None);
-	let bounds = input_bounds(input)?;
-	let config = render_config(profile.max_zoom(), bounds);
+/// The format of an input other than the OpenStreetMap file.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SourceFormat {
+	/// A GeoPackage, possibly zipped.
+	GeoPackage,
+	/// A zip archive holding one or more shapefiles.
+	ShapefileZip,
+}
 
-	pass2(input, &state, |source| {
-		let emitted = profile.process(source);
+/// An input other than the OpenStreetMap file, under the source name the profile routes on.
+#[derive(Clone, Debug)]
+pub struct ExtraSource {
+	pub name: String,
+	pub path: std::path::PathBuf,
+	pub format: SourceFormat,
+}
+
+/// Renders a profile's features into the per-thread sort writers.
+struct Emitter<'a, 's> {
+	writers: &'a [Mutex<hrt_sort::ChunkWriter<'s>>],
+	threads: usize,
+	config: RenderConfig,
+	render_counts: &'a Mutex<RenderCounts>,
+	failure: &'a Mutex<Option<io::Error>>,
+}
+
+impl Emitter<'_, '_> {
+	fn emit(&self, emitted: &[Emitted]) {
 		if emitted.is_empty() {
 			return;
 		}
-		let slot = rayon::current_thread_index().map_or(threads, |index| index.min(threads));
-		let mut writer = writers[slot].lock().unwrap();
+		let slot = rayon::current_thread_index().map_or(self.threads, |index| index.min(self.threads));
+		let mut writer = self.writers[slot].lock().unwrap();
 		let mut bytes = Vec::new();
-		for emitted in &emitted {
+		for emitted in emitted {
 			let mut zoom_attributes: Option<(u8, Vec<(String, Value)>)> = None;
 			let mut sink = |rendered: hrt_render::RenderedFeature| {
 				// The renderer works from the highest zoom down, so the attributes are computed once per zoom.
@@ -158,15 +174,96 @@ pub fn build(input: &Path, output: &Path, scratch: &Path, profile: &impl Profile
 				}
 				.encode(&mut bytes);
 				if let Err(error) = writer.add(key, &bytes) {
-					failure.lock().unwrap().get_or_insert(error);
+					self.failure.lock().unwrap().get_or_insert(error);
 				}
 			};
-			let mut renderer = Renderer::new(config, &mut sink);
+			let mut renderer = Renderer::new(self.config, &mut sink);
 			renderer.render(&emitted.feature);
 			let counts = renderer.counts;
-			render_counts.lock().unwrap().add(&counts);
+			self.render_counts.lock().unwrap().add(&counts);
 		}
-	})?;
+	}
+}
+
+/// Reads an extra source within `bounds` and renders its features, a batch at a time on rayon's threads.
+fn process_extra_source(
+	source: &ExtraSource,
+	bounds: Option<[f64; 4]>,
+	profile: &impl Profile,
+	emitter: &Emitter<'_, '_>,
+) -> io::Result<u64> {
+	// Extractions are kept beside the archive, so a later build reuses them.
+	let cache = source.path.with_extension("hrt-unzipped");
+	std::fs::create_dir_all(&cache)?;
+	let empty_nodes = hrt_osm::NodeStore::default();
+	let mut batch: Vec<hrt_sources::Record> = Vec::with_capacity(1024);
+	let flush = |batch: &mut Vec<hrt_sources::Record>| {
+		batch.par_iter().for_each(|record| {
+			let feature = hrt_osm::SourceFeature::fixed(
+				record.id,
+				hrt_osm::ElementKind::Other,
+				(source.name.as_str(), record.layer.as_str()),
+				&record.tags,
+				record.geometry.clone(),
+				&empty_nodes,
+			);
+			emitter.emit(&profile.process(&feature));
+		});
+		batch.clear();
+	};
+	let mut each = |record: hrt_sources::Record| {
+		batch.push(record);
+		if batch.len() == batch.capacity() {
+			flush(&mut batch);
+		}
+	};
+	let mut count = 0;
+	match source.format {
+		SourceFormat::GeoPackage => {
+			let path = if source.path.extension().is_some_and(|ext| ext == "zip") {
+				hrt_sources::geopackage::unzip_geopackage(&source.path, &cache)?
+			} else {
+				source.path.clone()
+			};
+			count += hrt_sources::geopackage::read(&path, bounds, &mut each)?;
+		}
+		SourceFormat::ShapefileZip => {
+			for shapefile in hrt_sources::shapefile_zip::unzip_shapefiles(&source.path, &cache)? {
+				count += hrt_sources::shapefile_zip::read(&shapefile, bounds, &mut each)?;
+			}
+		}
+	}
+	flush(&mut batch);
+	Ok(count)
+}
+
+pub fn build(
+	input: &Path,
+	extra_sources: &[ExtraSource],
+	output: &Path,
+	scratch: &Path,
+	profile: &impl Profile,
+) -> io::Result<BuildReport> {
+	let state = pass1(input, |relation| profile.keep_relation(relation))?;
+	let sorter = Sorter::new(scratch, 64 << 20);
+	let threads = rayon::current_num_threads();
+	let writers: Vec<Mutex<_>> = (0..=threads).map(|_| Mutex::new(sorter.writer())).collect();
+	let render_counts = Mutex::new(RenderCounts::default());
+	let failure: Mutex<Option<io::Error>> = Mutex::new(None);
+	let bounds = input_bounds(input)?;
+	let config = render_config(profile.max_zoom(), bounds);
+	let emitter = Emitter {
+		writers: &writers,
+		threads,
+		config,
+		render_counts: &render_counts,
+		failure: &failure,
+	};
+
+	pass2(input, &state, |source| emitter.emit(&profile.process(source)))?;
+	for source in extra_sources {
+		process_extra_source(source, bounds, profile, &emitter)?;
+	}
 	for writer in writers {
 		writer.into_inner().unwrap().finish()?;
 	}
