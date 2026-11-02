@@ -15,6 +15,12 @@ describe("trainerSourceFiles", () => {
 		expect(files).toContain("Cargo.lock")
 		expect(files).toContain("packages/trainer/crates/trainer-cli/src/main.rs")
 		expect(files).toContain("packages/mtf/crates/mtf-sampler/Cargo.toml")
+
+		// Cargo loads every member the root manifest declares, so a crate the trainer never builds still ships.
+		expect(files.filter((path) => /^packages\/[^/]+\/crates\/[^/]+\/Cargo\.toml$/u.test(path)).length).toBeGreaterThan(
+			files.filter((path) => /^packages\/(?:mtf|trainer)\/crates\/[^/]+\/Cargo\.toml$/u.test(path)).length
+		)
+
 		expect(files).toEqual(expect.arrayContaining([...TRAINER_DATA_FILES]))
 
 		// A change to any of these keeps the published image, because the release build reads none of them.
