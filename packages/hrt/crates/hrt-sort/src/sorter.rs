@@ -4,8 +4,7 @@
 
 //! An external merge sort of `(key, value)` records, ordered by key and then by value bytes.
 //!
-//! Each writer collects records until it holds `chunk_bytes`, sorts them on rayon's threads and writes them to a
-//! chunk file. Reading merges every chunk with a heap. A chunk file is a run of records, each an 8-byte little-endian
+//! Each writer collects records until it holds `chunk_bytes`, sorts them and writes them to a chunk file. Reading merges every chunk with a heap. A chunk file is a run of records, each an 8-byte little-endian
 //! key, a 4-byte little-endian value length and the value.
 
 use std::cmp::{Ordering, Reverse};
@@ -82,23 +81,33 @@ impl Sorter {
 
 impl ChunkWriter<'_> {
 	/// Adds a record, writing a chunk when the buffer is full.
+	///
+	/// The full buffer is sorted on the calling thread. A caller adds records while holding the writer's lock on a
+	/// rayon worker, and a sort that waited on rayon's pool would let that worker take another job that asks for the
+	/// same lock.
 	pub fn add(&mut self, key: u64, value: &[u8]) -> io::Result<()> {
 		self.entries.push((key, self.data.len() as u32, value.len() as u32));
 		self.data.extend_from_slice(value);
 		if self.data.len() >= self.sorter.chunk_bytes {
-			self.flush()?;
+			self.flush(false)?;
 		}
 		Ok(())
 	}
 
-	fn flush(&mut self) -> io::Result<()> {
+	/// Sorts the buffer and writes it to a chunk. Records that compare equal have equal bytes, so the sequential and
+	/// parallel sorts write the same chunk.
+	fn flush(&mut self, parallel: bool) -> io::Result<()> {
 		if self.entries.is_empty() {
 			return Ok(());
 		}
 		let data = &self.data;
 		let value = |&(_, offset, length): &(u64, u32, u32)| &data[offset as usize..(offset + length) as usize];
-		self.entries
-			.par_sort_unstable_by(|a, b| a.0.cmp(&b.0).then_with(|| value(a).cmp(value(b))));
+		let order = |a: &(u64, u32, u32), b: &(u64, u32, u32)| a.0.cmp(&b.0).then_with(|| value(a).cmp(value(b)));
+		if parallel {
+			self.entries.par_sort_unstable_by(order);
+		} else {
+			self.entries.sort_unstable_by(order);
+		}
 
 		let index = self.sorter.next_chunk.fetch_add(1, AtomicOrdering::Relaxed);
 		let path = self.sorter.dir.join(format!("chunk-{index:06}.bin"));
@@ -119,9 +128,11 @@ impl ChunkWriter<'_> {
 		Ok(())
 	}
 
-	/// Writes the remaining records to a final chunk.
+	/// Writes the remaining records to a final chunk, sorting them on rayon's threads.
+	///
+	/// The caller must not hold a lock that a rayon job may ask for.
 	pub fn finish(mut self) -> io::Result<()> {
-		self.flush()
+		self.flush(true)
 	}
 }
 
@@ -224,5 +235,40 @@ mod tests {
 			0,
 			"chunk files are removed after merging"
 		);
+	}
+
+	/// The pipeline holds a writer's lock while it adds records from a rayon worker. A flush that waited on rayon's
+	/// pool would let the worker take another job that locks the same writer, and the worker would wait on itself.
+	#[test]
+	fn writers_locked_from_rayon_workers_flush_without_waiting_on_the_pool() {
+		let dir = tempfile::tempdir().unwrap();
+		let (done, finished) = std::sync::mpsc::channel();
+		let path = dir.path().to_path_buf();
+		std::thread::spawn(move || {
+			// rayon sorts a slice of 2,000 or fewer elements on the calling thread, so each flush holds about 8,000
+			// one-byte records.
+			let sorter = Sorter::new(path, 8_192);
+			let pool = rayon::ThreadPoolBuilder::new().num_threads(8).build().unwrap();
+			let threads = pool.current_num_threads();
+			let writers: Vec<Mutex<ChunkWriter<'_>>> = (0..=threads).map(|_| Mutex::new(sorter.writer())).collect();
+			pool.install(|| {
+				// One job per item leaves work in every queue for a waiting thread to steal, as pass 2's blocks do.
+				(0..100_000u32).into_par_iter().with_max_len(1).for_each(|i| {
+					let slot = rayon::current_thread_index().map_or(threads, |index| index.min(threads));
+					let mut writer = writers[slot].lock().unwrap();
+					for j in 0..8u64 {
+						writer.add((u64::from(i) * 31 + j) % 997, &[j as u8]).unwrap();
+					}
+				});
+			});
+			for writer in writers {
+				writer.into_inner().unwrap().finish().unwrap();
+			}
+			done.send(sorter.records()).unwrap();
+		});
+		let records = finished
+			.recv_timeout(std::time::Duration::from_secs(60))
+			.expect("the writers finished within 60 s");
+		assert_eq!(records, 800_000);
 	}
 }
