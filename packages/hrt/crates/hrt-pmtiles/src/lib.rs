@@ -2,7 +2,7 @@
 // @license AGPL-3.0
 // @author Teffen Ellis, et al.
 
-//! The Hilbert Rust Tiler's PMTiles v3 writer.
+//! The Hilbert Rust Tiler's PMTiles v3 writer and reader.
 //!
 //! A PMTiles archive is one file: a 127-byte header, a root directory, JSON metadata, leaf directories, and the tile
 //! data. Tiles are addressed by a Hilbert tile id that orders every tile of every zoom along one curve, which this
@@ -14,10 +14,12 @@
 
 mod directory;
 mod header;
+mod reader;
 mod tile_id;
 mod writer;
 
 pub use directory::{deserialize_directory, serialize_directory, Entry};
 pub use header::{Compression, Header, TileType, HEADER_LENGTH};
+pub use reader::{decompress, Reader};
 pub use tile_id::{tile_id, tile_id_to_zxy, MAX_ZOOM};
 pub use writer::{ArchiveSummary, Writer, WriterOptions};

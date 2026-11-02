@@ -76,6 +76,22 @@ pub struct RenderedFeature {
 #[derive(Clone, Copy, Debug)]
 pub struct RenderConfig {
 	pub max_zoom: u8,
+	/// The build's bounds in world coordinates, `[min x, min y, max x, max y]`; tiles outside them are not emitted.
+	pub world_bounds: [f64; 4],
+}
+
+impl RenderConfig {
+	/// A configuration covering the whole world.
+	pub fn world(max_zoom: u8) -> Self {
+		RenderConfig {
+			max_zoom,
+			world_bounds: [0.0, 0.0, 1.0, 1.0],
+		}
+	}
+
+	fn extents(&self, zoom: u8) -> TileExtents {
+		TileExtents::from_world_bounds(zoom, self.world_bounds)
+	}
 }
 
 /// Counts of the failures Planetiler logs as data errors while rendering.
@@ -199,7 +215,7 @@ impl<'a> Renderer<'a> {
 				});
 			}
 		}
-		let tiled = slice_points(TileExtents::world(zoom), settings.buffer_pixels / 256.0, zoom, points);
+		let tiled = slice_points(self.config.extents(zoom), settings.buffer_pixels / 256.0, zoom, points);
 		for (&(x, y), groups) in &tiled.tiles {
 			let geom = reassemble_points(groups);
 			(self.emit)(RenderedFeature {
@@ -222,7 +238,7 @@ impl<'a> Renderer<'a> {
 			min_size *= min_size;
 		}
 		let buffer = settings.buffer_pixels / 256.0;
-		let extents = TileExtents::world(zoom);
+		let extents = self.config.extents(zoom);
 		let sliced = match slice_into_tiles(&extract_groups(geom, min_size), buffer, area, zoom, extents) {
 			Ok(sliced) => sliced,
 			Err(_) => {

@@ -348,6 +348,52 @@ pub fn build_geometry(mut parts: Vec<Geom>) -> Geom {
 	}
 }
 
+fn from_line(line: &geo_types::LineString) -> Seq {
+	line.0.iter().map(|c| [c.x, c.y]).collect()
+}
+
+fn from_polygon(polygon: &geo_types::Polygon) -> Polygon {
+	Polygon {
+		shell: from_line(polygon.exterior()),
+		holes: polygon.interiors().iter().map(from_line).collect(),
+	}
+}
+
+impl From<&geo_types::Geometry> for Geom {
+	/// Converts a `geo` geometry, such as a source feature's from `hrt-osm`, keeping coordinates and ring order.
+	fn from(geometry: &geo_types::Geometry) -> Geom {
+		match geometry {
+			geo_types::Geometry::Point(point) => Geom::Point([point.x(), point.y()]),
+			geo_types::Geometry::MultiPoint(points) => {
+				Geom::MultiPoint(points.0.iter().map(|p| [p.x(), p.y()]).collect())
+			}
+			geo_types::Geometry::LineString(line) => Geom::LineString(from_line(line)),
+			geo_types::Geometry::MultiLineString(lines) => Geom::MultiLineString(
+				lines
+					.0
+					.iter()
+					.map(|line| Line {
+						seq: from_line(line),
+						ring: false,
+					})
+					.collect(),
+			),
+			geo_types::Geometry::Polygon(polygon) => Geom::Polygon(from_polygon(polygon)),
+			geo_types::Geometry::MultiPolygon(polygons) => {
+				Geom::MultiPolygon(polygons.0.iter().map(from_polygon).collect())
+			}
+			geo_types::Geometry::GeometryCollection(parts) => {
+				Geom::Collection(parts.0.iter().map(Geom::from).collect())
+			}
+			geo_types::Geometry::Line(line) => {
+				Geom::LineString(vec![[line.start.x, line.start.y], [line.end.x, line.end.y]])
+			}
+			geo_types::Geometry::Rect(rect) => Geom::from(&geo_types::Geometry::Polygon(rect.to_polygon())),
+			geo_types::Geometry::Triangle(triangle) => Geom::from(&geo_types::Geometry::Polygon(triangle.to_polygon())),
+		}
+	}
+}
+
 /// Rounds half toward positive infinity, as Java's `Math.round` does.
 pub fn java_round(value: f64) -> f64 {
 	let floor = value.floor();

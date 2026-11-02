@@ -901,6 +901,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "hrt-cli"
+version = "0.1.0"
+dependencies = [
+ "flate2",
+ "hrt-e",
+ "hrt-osm",
+ "hrt-pmtiles",
+ "hrt-render",
+ "hrt-sort",
+ "rayon",
+ "tempfile",
+]
+
+[[package]]
 name = "hrt-e"
 version = "0.1.0"
 dependencies = [
@@ -930,10 +944,19 @@ dependencies = [
 name = "hrt-render"
 version = "0.1.0"
 dependencies = [
- "geo",
+ "geo-types",
  "geos",
- "hrt-osm",
  "robust",
+]
+
+[[package]]
+name = "hrt-sort"
+version = "0.1.0"
+dependencies = [
+ "hrt-e",
+ "hrt-render",
+ "rayon",
+ "tempfile",
 ]
 
 [[package]]

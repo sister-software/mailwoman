@@ -44,7 +44,11 @@ public class RenderDump {
   public static void main(String[] args) throws Exception {
     Path input = Path.of(args[0]);
     Path scratch = Path.of(args[1]);
-    Arguments arguments = Arguments.of("tmpdir", scratch.resolve("tmp").toString(), "threads", "2");
+    // An optional third argument sets the thread count; a fourth, "quiet", builds the archive without the dump, for
+    // timing the build alone.
+    String threads = args.length > 2 ? args[2] : "2";
+    boolean quiet = args.length > 3 && args[3].equals("quiet");
+    Arguments arguments = Arguments.of("tmpdir", scratch.resolve("tmp").toString(), "threads", threads);
     PlanetilerConfig config = PlanetilerConfig.from(arguments);
     Stats stats = Stats.inMemory();
 
@@ -60,6 +64,9 @@ public class RenderDump {
           features.polygon("a");
         } else if (source.canBeLine()) {
           features.line("l");
+        }
+        if (quiet) {
+          return;
         }
         StringBuilder out = new StringBuilder();
         var renderer = new FeatureRenderer(config, rendered -> out.append(line(rendered)).append('\n'), stats);

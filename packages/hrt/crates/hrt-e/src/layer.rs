@@ -138,8 +138,18 @@ impl LayerBuilder {
 	/// Adds a feature and returns whether it was kept. A feature whose geometry encodes to no commands, such as a
 	/// collapsed ring, is left out.
 	pub fn add_feature(&mut self, id: Option<u64>, geometry: &Geometry, attributes: &[(&str, Value)]) -> bool {
-		let commands = encode(geometry);
+		self.add_encoded_feature(id, geometry.type_code(), &encode(geometry), attributes)
+	}
 
+	/// Adds a feature whose geometry is already encoded as commands, with its geometry type code: 1 for points, 2 for
+	/// lines, 3 for polygons. A feature with no commands is left out, and the return value says whether it was kept.
+	pub fn add_encoded_feature(
+		&mut self,
+		id: Option<u64>,
+		type_code: u64,
+		commands: &[u32],
+		attributes: &[(&str, Value)],
+	) -> bool {
 		if commands.is_empty() {
 			return false;
 		}
@@ -157,8 +167,8 @@ impl LayerBuilder {
 			varint_field(&mut feature, 1, id);
 		}
 		packed_field(&mut feature, 2, &tags);
-		varint_field(&mut feature, 3, geometry.type_code());
-		packed_field(&mut feature, 4, &commands);
+		varint_field(&mut feature, 3, type_code);
+		packed_field(&mut feature, 4, commands);
 
 		bytes_field(&mut self.features, 2, &feature);
 		self.feature_count += 1;
@@ -166,11 +176,13 @@ impl LayerBuilder {
 		true
 	}
 
-	/// The layer message: version 2, name, features, keys, values and extent.
+	/// The layer message: name, features, keys, values, extent and version 2.
+	///
+	/// Fields go in ascending field number, the order Java's protobuf serializer writes them in, so a tile with the same
+	/// content as Planetiler's encodes to the same bytes.
 	pub fn encode(&self) -> Vec<u8> {
 		let mut buffer = Vec::with_capacity(self.features.len() + self.keys.len() * 8 + self.values.len() * 8 + 32);
 
-		varint_field(&mut buffer, 15, 2);
 		bytes_field(&mut buffer, 1, self.name.as_bytes());
 		buffer.extend_from_slice(&self.features);
 
@@ -183,6 +195,7 @@ impl LayerBuilder {
 		}
 
 		varint_field(&mut buffer, 5, u64::from(self.extent));
+		varint_field(&mut buffer, 15, 2);
 
 		buffer
 	}

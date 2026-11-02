@@ -11,9 +11,11 @@
 //!
 //! The encoder writes protocol buffer bytes directly, with no intermediate message objects.
 
+mod decode;
 mod geometry;
 mod layer;
 mod proto;
 
+pub use decode::{decode_tile, DecodeError, DecodedFeature, DecodedLayer};
 pub use geometry::Geometry;
 pub use layer::{encode_tile, LayerBuilder, Value, DEFAULT_EXTENT};

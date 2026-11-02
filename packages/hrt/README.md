@@ -13,14 +13,16 @@ crates as default members, because none of them links libtorch.
 
 ## Crates
 
-| Crate         | What it does                                                                                                        |
-| ------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `hrt-pmtiles` | PMTiles v3 writing: Hilbert tile ids, the header, directory encoding with leaf directories, and tile deduplication. |
-| `hrt-e`       | Mapbox Vector Tile encoding: layers with interned keys and values, and zig-zag delta geometry commands.             |
-| `hrt-osm`     | OpenStreetMap reading in Planetiler's two passes: packed node locations, way geometry and multipolygon assembly.    |
-| `hrt-render`  | Planetiler's renderer: simplification, stripe clipping into tiles, polygon snapping, and MVT command encoding.      |
+| Crate         | What it does                                                                                                          |
+| ------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `hrt-pmtiles` | PMTiles v3 reading and writing: Hilbert tile ids, the header, directories with leaf directories, and deduplication.   |
+| `hrt-e`       | Mapbox Vector Tile encoding and decoding: layers with interned keys and values, and zig-zag delta geometry commands.  |
+| `hrt-osm`     | OpenStreetMap reading in Planetiler's two passes: packed node locations, way geometry and multipolygon assembly.      |
+| `hrt-render`  | Planetiler's renderer: simplification, stripe clipping into tiles, polygon snapping, and MVT command encoding.        |
+| `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids. |
+| `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `clock` (the archive comparison) and `record`.                  |
 
-The other crates the specification names (`hrt-sort`, `hrt-profile`, `hrt-cli`) are not written yet.
+The profile crate the specification names, `hrt-profile`, is not written yet; `hrt-cli` carries the parity profile.
 
 `hrt-render` links GEOS, built from source by the `geos` crate's `static` feature, so building it needs cmake and a C++
 compiler. GEOS ports the JTS validity test and precision reducer Planetiler calls when a polygon's rounded form is
@@ -29,8 +31,8 @@ invalid.
 ## Checks
 
 ```sh
-cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render
-cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render --all-targets -- -D warnings
+cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-cli
+cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-cli --all-targets -- -D warnings
 ```
 
 The unit tests encode the vector tile specification's own examples and read written archives back through their
@@ -78,12 +80,12 @@ profile rule matches. geo's `relate` returns a result on invalid rings where JTS
 `parity/RenderDump.java` runs a fixed profile through Planetiler's `FeatureRenderer` and prints every tile piece: the
 tile, layer, feature id, geometry type, scale, sort key, label-grid group and the MVT command integers. The profile
 sends tagged nodes to a point layer, ways and multipolygons that can be polygons to a polygon layer, and other ways to a
-line layer, with Planetiler's default sizes, tolerances and buffers at zooms 0 to 14. `hrt-render`'s `render-dump`
-example runs the same profile over `hrt-osm`:
+line layer, with Planetiler's default sizes, tolerances and buffers at zooms 0 to 14. `hrt render-dump` runs the same
+profile over `hrt-osm`. Both dumps render whole-world tile extents:
 
 ```sh
 java -cp protomaps-basemap-HEAD-with-deps.jar packages/hrt/parity/RenderDump.java input.osm.pbf scratch/ > java.txt
-cargo run --release -p hrt-render --example render-dump -- input.osm.pbf > rust.txt
+cargo run --release -p hrt-cli -- render-dump input.osm.pbf > rust.txt
 ```
 
 On 2026-11-02 the sorted outputs compared as follows:
@@ -96,3 +98,44 @@ On 2026-11-02 the sorted outputs compared as follows:
 Every differing piece has the same rings, the same vertices and the same signed ring areas as Planetiler's. The
 precision reducer in GEOS starts some rings at a different vertex from the JTS one, which encodes the same polygon with
 different commands. The archive comparison tool therefore compares polygon rings up to rotation.
+
+## Archive parity and timing
+
+The Java run of `RenderDump.java` also writes Planetiler's archive for the profile, to `scratch/out.pmtiles`, with the
+map bounds taken from the input file's header. `hrt render-test` builds the same profile into an archive with the same
+bounds, and `hrt clock` compares the two:
+
+```sh
+java -cp protomaps-basemap-HEAD-with-deps.jar packages/hrt/parity/RenderDump.java input.osm.pbf scratch/ 4 quiet
+cargo run --release -p hrt-cli -- render-test input.osm.pbf rust.pmtiles
+cargo run --release -p hrt-cli -- clock scratch/out.pmtiles rust.pmtiles
+cargo run --release -p hrt-cli -- record rust.pmtiles rust.jsonl
+```
+
+`clock` exits 0 when every tile is in both archives and every shared tile holds equal layers. `record` writes one JSON
+line per tile with each layer's feature count and a digest of its features in the form `clock` compares; two archives
+that `clock` calls equal give the same record. On 2026-11-02 the Java and `hrt` archives were equal on every tile:
+
+| Input                                          | Tiles | Equal | Byte-identical after gunzip | Features compared |
+| ---------------------------------------------- | ----: | ----: | --------------------------: | ----------------: |
+| `monaco-latest.osm.pbf`                        |   119 |   119 |                         108 |            35,154 |
+| `sf-downtown.osm.pbf`                          |    27 |    27 |                           8 |           203,527 |
+| Geofabrik `luxembourg-latest.osm.pbf`, 47.9 MB | 2,079 | 2,079 |                         329 |         4,643,613 |
+
+The tiles that are not byte-identical hold polygons whose rings start at a different vertex, as described above.
+
+Luxembourg also gave a first timing on the lab host (16 cores, load average 1.45 at the start), both builds limited to
+four threads. The parity profile writes no attributes and runs no post-processing, so these figures measure reading,
+rendering, sorting and encoding; the basemap profile's attribute and merge work adds to both builds:
+
+| Build                                                                 | Wall clock | CPU time | Peak resident memory |
+| --------------------------------------------------------------------- | ---------: | -------: | -------------------: |
+| Planetiler 0.10.2, `--threads=4`                                      |       30 s |    113 s |         not measured |
+| `hrt render-test`, `RAYON_NUM_THREADS=4`, tiles encoded on one thread |     11.6 s |     23 s |               395 MB |
+| `hrt render-test`, `RAYON_NUM_THREADS=4`, tiles encoded in parallel   |     10.1 s |     29 s |               534 MB |
+
+The Planetiler figures are its own stage table and exclude JVM start-up; its stages were pass 1 2 s, pass 2 17 s, sort
+4 s and archive 7 s. The first `hrt` run used 199% CPU of the four threads because it encoded tiles on one thread. The
+second encodes each batch of tiles on rayon's threads and writes them in tile order; it used 285% CPU, and the host's
+load average had risen to 18.5 from other jobs by the time it finished, so its CPU time includes contention. These are
+single runs on a shared host; the Phase 0 baseline and `hrt titrate` repeat them under controlled load.

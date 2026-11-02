@@ -10,6 +10,30 @@ use std::path::Path;
 use osmpbf::{BlobDecode, BlobReader, PrimitiveBlock};
 use rayon::prelude::*;
 
+/// Returns the file header's bounding box as `[west, south, east, north]` degrees, or `None` when it has none.
+///
+/// The header stores nanodegrees. osmpbf multiplies by 1e-9, and Planetiler divides by 1e9, which can differ in the last
+/// bit, so the integer is recovered and divided as Planetiler divides it.
+pub fn header_bounds(path: &Path) -> io::Result<Option<[f64; 4]>> {
+	let mut blobs = BlobReader::from_path(path).map_err(io::Error::other)?;
+	let Some(blob) = blobs.next() else {
+		return Ok(None);
+	};
+	let header = match blob.map_err(io::Error::other)?.decode().map_err(io::Error::other)? {
+		BlobDecode::OsmHeader(header) => header,
+		_ => return Ok(None),
+	};
+	let degrees = |value: f64| (value / 1e-9).round() / 1e9;
+	Ok(header.bbox().map(|bbox| {
+		[
+			degrees(bbox.left),
+			degrees(bbox.bottom),
+			degrees(bbox.right),
+			degrees(bbox.top),
+		]
+	}))
+}
+
 /// Decodes every data block of a PBF file in parallel and hands each result to `sink` in file order.
 ///
 /// The reader takes compressed blobs from the file a batch at a time. `decode` runs on rayon's threads, one call per

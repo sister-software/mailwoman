@@ -43,6 +43,20 @@ impl TileExtents {
 		}
 	}
 
+	/// Returns the tiles at zoom `z` that a `[min x, min y, max x, max y]` box in world coordinates touches, as
+	/// Planetiler's `TileExtents.computeFromWorldBounds` quantizes it.
+	pub fn from_world_bounds(z: u8, [min_x, min_y, max_x, max_y]: [f64; 4]) -> Self {
+		let levels = 1i32 << z;
+		let down = |value: f64| ((value * f64::from(levels)).floor() as i32).clamp(0, levels);
+		let up = |value: f64| ((value * f64::from(levels)).ceil() as i32).clamp(0, levels);
+		TileExtents {
+			min_x: down(min_x),
+			max_x: up(max_x),
+			min_y: down(min_y),
+			max_y: up(max_y),
+		}
+	}
+
 	pub fn test_x(&self, x: i32) -> bool {
 		x >= self.min_x && x < self.max_x
 	}

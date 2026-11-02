@@ -1,0 +1,21 @@
+[package]
+name = "hrt-cli"
+description = "The Hilbert Rust Tiler's command-line program: the build pipeline and hrt clock, the archive comparison tool."
+version.workspace = true
+edition.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0"
+repository.workspace = true
+
+[[bin]]
+name = "hrt"
+path = "src/main.rs"
+
+[dependencies]
+flate2 = "1"
+hrt-e = { path = "../hrt-e" }
+hrt-osm = { path = "../hrt-osm" }
+hrt-pmtiles = { path = "../hrt-pmtiles" }
+hrt-render = { path = "../hrt-render" }
+hrt-sort = { path = "../hrt-sort" }
+rayon = "1"
+tempfile = "3"

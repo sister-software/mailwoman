@@ -16,5 +16,8 @@ pub mod pbf;
 pub mod reader;
 
 pub use elements::{ElementKind, Member, Relation, Tags};
+/// The `geo` geometry types source features are built in.
+pub use geo::{Geometry, LineString};
 pub use nodes::NodeStore;
+pub use pbf::header_bounds;
 pub use reader::{pass1, pass2, GeometryError, Pass1, Pass2Counts, RelationMember, SourceFeature};

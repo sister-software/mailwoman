@@ -107,6 +107,55 @@ impl Header {
 
 		bytes
 	}
+
+	/// Parses a header, or returns `None` when the bytes do not start with the PMTiles v3 magic.
+	pub fn from_bytes(bytes: &[u8]) -> Option<Header> {
+		if bytes.len() < HEADER_LENGTH || &bytes[0..7] != b"PMTiles" || bytes[7] != 3 {
+			return None;
+		}
+		let word = |index: usize| u64::from_le_bytes(bytes[8 + index * 8..16 + index * 8].try_into().unwrap());
+		let degrees = |start: usize| f64::from(i32::from_le_bytes(bytes[start..start + 4].try_into().unwrap())) / 1e7;
+		let compression = |byte: u8| match byte {
+			1 => Compression::None,
+			2 => Compression::Gzip,
+			3 => Compression::Brotli,
+			4 => Compression::Zstd,
+			_ => Compression::Unknown,
+		};
+		Some(Header {
+			root_directory_offset: word(0),
+			root_directory_length: word(1),
+			metadata_offset: word(2),
+			metadata_length: word(3),
+			leaf_directories_offset: word(4),
+			leaf_directories_length: word(5),
+			tile_data_offset: word(6),
+			tile_data_length: word(7),
+			addressed_tiles: word(8),
+			tile_entries: word(9),
+			tile_contents: word(10),
+			clustered: bytes[96] == 1,
+			internal_compression: compression(bytes[97]),
+			tile_compression: compression(bytes[98]),
+			tile_type: match bytes[99] {
+				1 => TileType::Mvt,
+				2 => TileType::Png,
+				3 => TileType::Jpeg,
+				4 => TileType::Webp,
+				5 => TileType::Avif,
+				_ => TileType::Unknown,
+			},
+			min_zoom: bytes[100],
+			max_zoom: bytes[101],
+			min_lon: degrees(102),
+			min_lat: degrees(106),
+			max_lon: degrees(110),
+			max_lat: degrees(114),
+			center_zoom: bytes[118],
+			center_lon: degrees(119),
+			center_lat: degrees(123),
+		})
+	}
 }
 
 #[cfg(test)]

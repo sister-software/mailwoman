@@ -140,6 +140,92 @@ pub fn encode_geometry(geom: &Geom, scale: u32) -> VectorGeometry {
 	}
 }
 
+fn zig_zag_decode(value: u32) -> i32 {
+	((value >> 1) as i32) ^ -((value & 1) as i32)
+}
+
+/// Reduces a geometry encoded at `2^scale` times the extent back to the plain extent, as Planetiler's
+/// `VectorTile.unscale` does before a line is written to a tile.
+///
+/// A point that rounds onto the previous one in a `LineTo` run is dropped by lowering the run's count, and a run that
+/// loses every point is removed. A part left with fewer points than its type needs is removed when the next `MoveTo`
+/// arrives or the geometry ends.
+pub fn unscale(geometry: &VectorGeometry) -> VectorGeometry {
+	if geometry.scale == 0 {
+		return geometry.clone();
+	}
+	let commands = &geometry.commands;
+	let min_points = geometry.geom_type.min_points();
+	let factor = 2f64.powi(-(geometry.scale as i32));
+	let mut out: Vec<u32> = Vec::with_capacity(commands.len());
+	let (mut length, mut command, mut i) = (0i64, 0u32, 0usize);
+	let (mut in_x, mut in_y, mut out_x, mut out_y, mut start_x, mut start_y) = (0i32, 0i32, 0i32, 0i32, 0i32, 0i32);
+	let (mut length_index, mut move_to_index, mut points_in_shape) = (0usize, 0usize, 0usize);
+	let mut first = true;
+
+	while i < commands.len() {
+		if length <= 0 {
+			let header = commands[i];
+			i += 1;
+			length_index = out.len();
+			out.push(header);
+			command = header & 7;
+			length = i64::from(header >> 3);
+		}
+		if length > 0 {
+			if command == MOVE_TO {
+				if !first && points_in_shape < min_points {
+					let header = out[length_index];
+					out.truncate(move_to_index);
+					out.push(header);
+					out_x = start_x;
+					out_y = start_y;
+				}
+				points_in_shape = 0;
+				start_x = out_x;
+				start_y = out_y;
+				move_to_index = out.len() - 1;
+			}
+			first = false;
+			if command == CLOSE_PATH {
+				points_in_shape += 1;
+				length -= 1;
+				continue;
+			}
+			let dx = zig_zag_decode(commands[i]);
+			let dy = zig_zag_decode(commands[i + 1]);
+			i += 2;
+			length -= 1;
+			in_x = in_x.wrapping_add(dx);
+			in_y = in_y.wrapping_add(dy);
+			let next_x = java_round(f64::from(in_x) * factor) as i32;
+			let next_y = java_round(f64::from(in_y) * factor) as i32;
+			if next_x == out_x && next_y == out_y && command == LINE_TO {
+				let lowered = out[length_index] as i64 - 8;
+				if lowered < 8 {
+					out.truncate(length_index);
+				} else {
+					out[length_index] = lowered as u32;
+				}
+			} else {
+				points_in_shape += 1;
+				out.push(zig_zag(next_x - out_x));
+				out.push(zig_zag(next_y - out_y));
+				out_x = next_x;
+				out_y = next_y;
+			}
+		}
+	}
+	if points_in_shape < min_points {
+		out.truncate(move_to_index);
+	}
+	VectorGeometry {
+		commands: out,
+		geom_type: geometry.geom_type,
+		scale: 0,
+	}
+}
+
 /// Returns the square that covers a whole tile plus `buffer_pixels` on each side.
 pub fn encode_fill(buffer_pixels: f64) -> VectorGeometry {
 	let min = java_round(f64::from(EXTENT) * buffer_pixels / 256.0) as i32;
@@ -182,6 +268,18 @@ mod tests {
 	fn a_line_collapsing_to_one_point_is_dropped() {
 		let line = Geom::LineString(vec![[0.0, 0.0], [0.001, 0.001]]);
 		assert!(encode_geometry(&line, 0).commands.is_empty());
+	}
+
+	#[test]
+	fn unscaling_rounds_and_drops_points_that_meet() {
+		// A line encoded at scale 2: (0,0) -> (1,0) -> (8,0) in the plain extent's quarter units.
+		let line = Geom::LineString(vec![[0.0, 0.0], [1.0 / 64.0, 0.0], [8.0 / 64.0, 0.0]]);
+		let scaled = encode_geometry(&line, 2);
+		assert_eq!(scaled.commands, vec![9, 0, 0, 18, 2, 0, 14, 0]);
+		let plain = unscale(&scaled);
+		// (1,0) rounds to (0,0) and is dropped; (8,0) becomes (2,0).
+		assert_eq!(plain.commands, vec![9, 0, 0, 10, 4, 0]);
+		assert_eq!(plain.scale, 0);
 	}
 
 	#[test]
