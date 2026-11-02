@@ -15,6 +15,7 @@ import {
 	creditsFor,
 	HILLSHADE_INPUTS,
 } from "@mailwoman/structures/basemaps"
+import { UNDERSEA_ATTRIBUTION } from "@mailwoman/undersea"
 import { commitURL } from "@mailwoman/universe/site-kit/build-info"
 import { DATA_CREDITS } from "mailwoman/browser-runtime/resources"
 import type { ReactNode } from "react"
@@ -41,6 +42,11 @@ const BASEMAP_ATTRIBUTION = [
 			{credit.text}
 		</a>
 	)),
+	// The undersea labels and search read the GEBCO gazetteer.
+	// GEBCO asks for this citation.
+	<a key="gebco" href="https://www.gebco.net" target="_blank" rel="noreferrer">
+		{UNDERSEA_ATTRIBUTION}
+	</a>,
 	<a key="protomaps" href="https://protomaps.com" target="_blank" rel="noreferrer">
 		Protomaps
 	</a>,

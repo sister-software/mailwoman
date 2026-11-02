@@ -13,6 +13,11 @@
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
 import { GuideMapLight, GuideMapSky } from "@mailwoman/cartographer/base/theme"
+import {
+	createUnderseaLabelSource,
+	UnderseaLabelLayers,
+	UnderseaTileSetID,
+} from "@mailwoman/cartographer/base/undersea"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
 import {
 	createJurisdictionSource,
@@ -75,6 +80,7 @@ import type { EarthConfig } from "#config"
 import { pageSearchParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
 import { pruneDBRangeCache } from "#runtime/range-cache"
+import { loadUnderseaIndex, underseaPlaceView } from "#runtime/undersea"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 
 /**
@@ -222,7 +228,12 @@ function takeReleasesManifest(): Promise<ReleasesManifest | null> {
 export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
 	return useMemo<MapCanvasStyle>(() => {
 		const style = new StyleSpecificationComposer({
-			sources: { [MailwomanBaseTileSetID]: { type: "vector", url: basemapSourceURL(config.basemapTileJSONURL) } },
+			sources: {
+				[MailwomanBaseTileSetID]: { type: "vector", url: basemapSourceURL(config.basemapTileJSONURL) },
+				[UnderseaTileSetID]: createUnderseaLabelSource(config.underseaFeaturesURL.href),
+			},
+			// Undersea names draw under the ocean and island labels, so a sea's name wins a collision with a seamount's.
+			layers: UnderseaLabelLayers.map((layer) => ({ ...layer, beforeID: UNDERSEA_LABELS_BEFORE })),
 			light: GuideMapLight,
 			sky: GuideMapSky,
 		}).toJSON()
@@ -235,8 +246,18 @@ export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
 				(layer) => !("source-layer" in layer && BUILD_ONLY_SOURCE_LAYERS.has(String(layer["source-layer"])))
 			),
 		}
-	}, [config.basemapTileJSONURL])
+	}, [config.basemapTileJSONURL, config.underseaFeaturesURL])
 }
+
+/**
+ * The most suggestions the search field lists.
+ */
+const AUTOCOMPLETE_LIMIT = 6
+
+/**
+ * The Protomaps label layer the undersea labels draw beneath: the ocean and sea names.
+ */
+const UNDERSEA_LABELS_BEFORE = "water_label_ocean"
 
 /**
  * The coverage and jurisdiction overlays both geocoder runtimes offer, hidden until toggled.
@@ -379,6 +400,24 @@ export function useGeocoderRuntime({
 			if (!assets) throw new Error("Classifier not ready")
 			hooks.onStage(0)
 
+			// The undersea index loads while the parse runs.
+			// When the load fails, the search reads only the admin gazetteer.
+			const underseaLoad = loadUnderseaIndex(config.underseaFeaturesURL).catch((error: unknown) => {
+				console.warn("[mailwoman earth] undersea names unavailable", error)
+
+				return null
+			})
+
+			const underseaPlaces = async (): Promise<ResolvedPlaceView[]> => {
+				const places = ((await underseaLoad)?.match(input) ?? []).map(underseaPlaceView)
+
+				for (const place of places) {
+					extrasRef.current.set(place, { bbox: place.bbox, tier: null, uncertaintyM: null })
+				}
+
+				return places
+			}
+
 			// An input in a character family's script is read by that family's bundle, loaded on its first input.
 			// A family whose load fails leaves the input with the base release for this parse.
 			const reader = (await familyBundles.forInput(input).catch(() => null)) ?? assets
@@ -454,12 +493,14 @@ export function useGeocoderRuntime({
 			const wofLookup = assets?.lookup ?? null
 
 			if (!wofLookup) {
+				const undersea = await underseaPlaces()
+
 				return {
 					input,
 					tree,
 					nodes: asView(nodes),
-					resolved: null,
-					candidates: [],
+					resolved: undersea[0] ?? null,
+					candidates: undersea,
 					kindResult,
 					fstActive: assets?.fstMatcher != null,
 					fstProvenance: assets?.fstProvenance ?? null,
@@ -552,6 +593,10 @@ export function useGeocoderRuntime({
 				candidates.unshift(streetCandidate)
 			}
 
+			// An input that equals an undersea feature's whole name answers that feature
+			// ahead of the admin matches, after a street-level coordinate.
+			candidates.splice(streetResolution ? 1 : 0, 0, ...(await underseaPlaces()))
+
 			// Whether the resolved place doubles as another admin tier.
 			// This is best-effort.
 			// The helper skips a synthesized street/anchor pin (`id === 0`).
@@ -571,6 +616,7 @@ export function useGeocoderRuntime({
 			}
 		},
 		[
+			config.underseaFeaturesURL,
 			ensureStreetLookups,
 			familyBundles,
 			geoBias.locationRef,
@@ -589,23 +635,34 @@ export function useGeocoderRuntime({
 	const autocomplete = useCallback(
 		async (query: string): Promise<Suggestion[]> => {
 			const fst = rt.assets?.fstMatcher
+			const undersea = loadUnderseaIndex(config.underseaFeaturesURL).catch(() => null)
+			let places: Suggestion[] = []
 
-			if (!fst) return []
+			if (fst) {
+				try {
+					const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst/autocomplete")
 
-			try {
-				const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst/autocomplete")
+					const res = fstAutocomplete(fst as Parameters<typeof fstAutocomplete>[0], query, {
+						maxSuggestions: AUTOCOMPLETE_LIMIT,
+						dedupeByName: true,
+					})
 
-				const res = fstAutocomplete(fst as Parameters<typeof fstAutocomplete>[0], query, {
-					maxSuggestions: 6,
-					dedupeByName: true,
-				})
-
-				return res.suggestions.map((s) => ({ value: s.name, placetype: s.placetype }))
-			} catch {
-				return []
+					places = res.suggestions.map((s) => ({ value: s.name, placetype: s.placetype }))
+				} catch {
+					places = []
+				}
 			}
+
+			// Undersea names fill the places the admin suggestions leave, so an admin place keeps its rank.
+			const names = new Set(places.map((place) => place.value))
+
+			const features = ((await undersea)?.suggest(query, AUTOCOMPLETE_LIMIT) ?? [])
+				.filter((feature) => !names.has(feature.displayName))
+				.map((feature) => ({ value: feature.displayName, placetype: feature.genericTerm.toLowerCase() }))
+
+			return [...places, ...features].slice(0, AUTOCOMPLETE_LIMIT)
 		},
-		[rt.assets]
+		[rt.assets, config.underseaFeaturesURL]
 	)
 
 	const resolveMapPlace = useCallback(

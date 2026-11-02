@@ -33,6 +33,11 @@ export interface EarthConfig {
 	 * `?geocoder-api=<URL>` overrides it, and `?geocoder=local` selects the browser runtime.
 	 */
 	geocoderAPIURL: URL | null
+	/**
+	 * The GEBCO undersea gazetteer's browser asset, built by `@mailwoman/undersea`.
+	 * The map draws its labels, and the search reads its names.
+	 */
+	underseaFeaturesURL: URL
 }
 
 /**
@@ -48,4 +53,5 @@ export const PRODUCTION_CONFIG: EarthConfig = {
 	sqliteRuntimeBaseURL: "/sqlite",
 	// The API Worker has no production route yet.
 	geocoderAPIURL: null,
+	underseaFeaturesURL: new URL("https://public.mailwoman.ai/undersea/gebco-2026-11-02/undersea-features.geojson"),
 }
