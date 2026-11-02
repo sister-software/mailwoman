@@ -147,6 +147,25 @@ describe("readGLEIFEntity", () => {
 })
 
 describe("readGLEIFAddress", () => {
+	it("labels a unit at the end of the street line as the unit before splitting the number", () => {
+		const row = admitted(
+			readGLEIFAddress(
+				record({
+					name: "EXAMPLE SPA",
+					legal: {
+						FirstAddressLine: "VIA REGINA MARGHERITA 12 SCALA C",
+						City: "Roma",
+						Country: "IT",
+						PostalCode: "00198",
+					},
+				}),
+				GLEIFAddressBlock.Legal
+			)
+		)
+
+		expect(row.components).toMatchObject({ street: "VIA REGINA MARGHERITA", house_number: "12", unit: "SCALA C" })
+	})
+
 	it("splits a number-last street line and renders the Slovak order", () => {
 		const row = admitted(readGLEIFAddress(SLADOVNA, GLEIFAddressBlock.Legal))
 

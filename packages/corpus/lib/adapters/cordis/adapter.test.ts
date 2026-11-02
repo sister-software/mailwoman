@@ -311,6 +311,19 @@ describe("naturalPersonForm", () => {
 })
 
 describe("readCORDISRecord", () => {
+	it("labels a building at the end of the street line as the unit", () => {
+		const reading = readCORDISRecord(
+			{ name: "EXAMPLE SA", street: "12 BD SAINT-JACQUES BATIMENT B", postCode: "75014", city: "Paris", country: "FR" },
+			lexicon
+		)
+
+		expect("admitted" in reading && reading.admitted.components).toMatchObject({
+			house_number: "12",
+			street: "BD SAINT-JACQUES",
+			unit: "BATIMENT B",
+		})
+	})
+
 	it("drops a postcode with no digit and keeps the row", () => {
 		const reading = readCORDISRecord(
 			{ name: "UNIVERSITY COLLEGE CORK", street: "WESTERN ROAD", postCode: "EIRE", city: "Cork", country: "IE" },

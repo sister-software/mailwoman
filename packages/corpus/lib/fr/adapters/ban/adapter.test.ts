@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
@@ -109,6 +109,38 @@ describe("ban adapter against fixture sample.csv", () => {
 		const champs = rows.find((r) => r.raw.includes("Champs"))
 		expect(champs?.raw).toBe("1 bis Avenue des Champs-Élysées, 75008 Paris")
 		expect(champs?.components.house_number).toBe("1 bis")
+	})
+
+	it("labels a building written at the end of the street as the unit", async () => {
+		const csv = scratch.path("bat.csv")
+
+		await writeLocalTextFile(
+			[
+				"id;id_fantoir;numero;rep;nom_voie;code_postal;code_insee;nom_commune",
+				"2A249_0010_00002;2A2490010;2;;Rue du General Charles de Gaulle Bat B;20110;2A249;Propriano",
+			].join("\n") + "\n",
+			csv
+		)
+
+		await runAdapter({
+			adapter: createBanAdapter(),
+			adapterOptions: { inputPath: csv },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const [row] = await readCanonicalRows(scratch.path, BAN_ADAPTER_ID)
+
+		expect(row?.raw).toBe("2 Rue du General Charles de Gaulle Bat B, 20110 Propriano")
+
+		expect(row?.components).toEqual({
+			house_number: "2",
+			street_prefix: "Rue",
+			street: "du General Charles de Gaulle",
+			unit: "Bat B",
+			postcode: "20110",
+			locality: "Propriano",
+		})
 	})
 
 	it("rejects a jurisdiction BAN does not publish", async () => {

@@ -136,6 +136,7 @@ import { Globerator } from "spliterator/node/fs"
 import { loadLibpostalDictionary } from "#adapters/libpostal-dictionary"
 import { stableSourceID } from "#adapters/source-id"
 import { splitStreetLine, splitTrailingStreetLine, type SplitStreetLine } from "#adapters/street-line"
+import { splitCountryTrailingUnit } from "#adapters/street-unit"
 import { SourceRegister } from "#registers"
 import {
 	AddressRole,
@@ -558,7 +559,10 @@ export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: Pers
 	const streetLine = fieldValue(record.street)
 
 	if (streetLine) {
-		const split = splitCORDISStreetLine(streetLine, streetOrderForCountry(country))
+		// A unit at the end of the line (`BD SAINT-JACQUES BATIMENT B`) comes off first,
+		// so its identifier is never read as the house number.
+		const lineUnit = splitCountryTrailingUnit(streetLine, country)
+		const split = splitCORDISStreetLine(lineUnit?.street ?? streetLine, streetOrderForCountry(country))
 
 		if (split && "refused" in split) return { refused: split.refused, country }
 
@@ -568,6 +572,10 @@ export function readCORDISRecord(record: CORDISOrganizationRecord, lexicon: Pers
 
 		if (split) {
 			components.street = split.street
+		}
+
+		if (split && lineUnit) {
+			components.unit = lineUnit.unit
 		}
 	}
 

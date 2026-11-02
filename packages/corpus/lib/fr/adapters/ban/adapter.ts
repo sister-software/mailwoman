@@ -30,6 +30,7 @@ import { CSVSpliterator } from "spliterator"
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
 import { composeHouseNumber } from "#adapters/street-line"
+import { splitCountryTrailingUnit } from "#adapters/street-unit"
 import { countryOfInseeCode, INSEE_COUNTRIES } from "#fr/insee-country"
 import { decomposeFrStreet } from "#fr/street-decompose"
 import { SourceRegister } from "#registers"
@@ -126,12 +127,19 @@ export function createBanAdapter(): CorpusAdapter {
 					continue
 				}
 
-				const decomposed = decomposeFrStreet(street)
+				// A few streets end in the building they name (`Rue du General Charles de Gaulle Bat B`):
+				// the building becomes the unit and the street keeps the rest.
+				const withUnit = splitCountryTrailingUnit(street, country)
+				const decomposed = decomposeFrStreet(withUnit?.street ?? street)
 
 				const components: CanonicalRow["components"] = {}
 
 				if (house) {
 					components.house_number = house
+				}
+
+				if (withUnit) {
+					components.unit = withUnit.unit
 				}
 
 				if (decomposed.prefix) {

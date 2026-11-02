@@ -104,6 +104,7 @@ import { Globerator } from "spliterator/node/fs"
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
 import { splitStreetLine, splitTrailingStreetLine } from "#adapters/street-line"
+import { splitCountryTrailingUnit } from "#adapters/street-unit"
 import { FingerprintSet } from "#fingerprints"
 import { isPlaceholderValue } from "#it/adapters/anac/adapter"
 import { SourceRegister } from "#registers"
@@ -552,7 +553,16 @@ export function readGLEIFAddress(record: GLEIFRecord, block: GLEIFAddressBlock):
 	if (PO_BOX_LINE.test(line)) {
 		components.po_box = line
 	} else {
-		const placed = placeStreetNumber(line, addressField(record, block, "AddressNumber"), country, script)
+		// A unit at the end of the line (`Mayland Dr Ste A`, `VIA REGINA MARGHERITA SCALA C`)
+		// comes off first, so its identifier is never read as the house number.
+		const lineUnit = splitCountryTrailingUnit(line, country)
+
+		const placed = placeStreetNumber(
+			lineUnit?.street ?? line,
+			addressField(record, block, "AddressNumber"),
+			country,
+			script
+		)
 
 		if ("refused" in placed) return placed
 
@@ -564,7 +574,9 @@ export function readGLEIFAddress(record: GLEIFRecord, block: GLEIFAddressBlock):
 
 		const unit = addressField(record, block, "AddressNumberWithinBuilding")
 
-		if (unit && /\p{L}/u.test(unit) && !unit.includes(",") && !line.includes(unit)) {
+		if (lineUnit) {
+			components.unit = lineUnit.unit
+		} else if (unit && /\p{L}/u.test(unit) && !unit.includes(",") && !line.includes(unit)) {
 			components.unit = unit
 		}
 	}
