@@ -10,6 +10,7 @@
 
 pub mod coords;
 pub mod elements;
+pub mod multimap;
 pub mod multipolygon;
 pub mod nodes;
 pub mod pbf;

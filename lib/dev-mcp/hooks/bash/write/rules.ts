@@ -106,6 +106,9 @@ const ADMITTED = new Set([
 	"npm",
 	"npx",
 	"ogrinfo",
+	// `osmium` reads OpenStreetMap files for checking a basemap build's input,
+	// and writes only the output path its `-o` option gives.
+	"osmium",
 	"oxfmt",
 	"oxlint",
 	"rclone",
