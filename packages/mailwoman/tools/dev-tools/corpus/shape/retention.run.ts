@@ -13,8 +13,8 @@
  *   training.
  *
  *   Usage:
- *     node packages/mailwoman/tools/dev-tools/corpus/shape-retention.run.ts --manifest <MANIFEST.json> --floor 10 --out <SPLIT_RETENTION.json>
- *     node packages/mailwoman/tools/dev-tools/corpus/shape-retention.run.ts --manifest <MANIFEST.json> --floor 10 --out <path> --limit-files 2
+ *     node packages/mailwoman/tools/dev-tools/corpus/shape/retention.run.ts --manifest <MANIFEST.json> --floor 10 --out <SPLIT_RETENTION.json>
+ *     node packages/mailwoman/tools/dev-tools/corpus/shape/retention.run.ts --manifest <MANIFEST.json> --floor 10 --out <path> --limit-files 2
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

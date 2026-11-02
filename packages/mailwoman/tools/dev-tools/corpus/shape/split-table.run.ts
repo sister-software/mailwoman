@@ -7,10 +7,10 @@
  *   country's split policy, and whether the retention floor holds (HOLDOUT_AND_EVALUATION section 5.1, #2893).
  *
  *   An eligible address is a base row (no `base_source_id`). An independent group is a record,
- *   `coalesce(base_source_id, record id of source_id)`, as `shape-retention.run.ts` counts it. A row's split is the one
+ *   `coalesce(base_source_id, record id of source_id)`, as `retention.run.ts` counts it. A row's split is the one
  *   its file's split attribute records. Every combination is a row of the table, including one with no training group.
  *   Usage:
- *     node packages/mailwoman/tools/dev-tools/corpus/shape-split-table.run.ts --manifest <MANIFEST.json> \
+ *     node packages/mailwoman/tools/dev-tools/corpus/shape/split-table.run.ts --manifest <MANIFEST.json> \
  *       --retention <SPLIT_RETENTION.json> --floor 10 --json <table.json> --markdown <table.md> [--memory-gb 12]
  */
 
