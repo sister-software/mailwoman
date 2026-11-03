@@ -101,7 +101,7 @@ export async function scoreFamousPlaces(
 	const file = options.file || FAMOUS_PLACES_FIXTURE
 	const fixture = await JSONSpliterator.fromAsync<FamousPlaceRow>(file).toArray()
 	const rows = fixture.map((row) => ({ ...row, raw: row.input }))
-	const countryOf = new Map(rows.map((row) => [row.raw, row.country]))
+	const byInput = new Map(rows.map((row) => [row.raw, row]))
 
 	const neural = await createUnfoldedEvalClassifier({
 		model: options.model || "",
@@ -111,6 +111,7 @@ export async function scoreFamousPlaces(
 		conventions: "off",
 		bridgePunctuationGaps: "off",
 	})
+
 	const priors = await productionPriorOptions(neural)
 	const exactByKindForm: Record<string, { pass: number; n: number }> = {}
 	let pass = 0
@@ -118,9 +119,10 @@ export async function scoreFamousPlaces(
 	const counts = await scorePerTagCounts(
 		rows,
 		FAMOUS_PLACES_TAGS,
-		async (raw) => decodeAsJSON(await neural.parse(raw, priors(countryOf.get(raw) ?? null))) as Record<string, string>,
+		async (raw) =>
+			decodeAsJSON(await neural.parse(raw, priors(byInput.get(raw)?.country ?? null))) as Record<string, string>,
 		(row, predicted) => {
-			const fixtureRow = row as unknown as FamousPlaceRow
+			const fixtureRow = byInput.get(row.raw)!
 			const key = `${fixtureRow.kind}/${fixtureRow.form}`
 			const cell = (exactByKindForm[key] ??= { pass: 0, n: 0 })
 			const ok = parseMatches(fixtureRow.components, predicted)
@@ -129,6 +131,7 @@ export async function scoreFamousPlaces(
 
 			if (ok) {
 				cell.pass++
+
 				pass++
 			}
 		}
@@ -150,11 +153,15 @@ export async function scoreFamousPlaces(
 
 	report("| tag | P | R | F1 |\n| --- | --: | --: | --: |")
 
-	for (const [tag, rate] of Object.entries(tags)) report(`| ${tag} | ${rate.p} | ${rate.r} | ${rate.f1} |`)
+	for (const [tag, rate] of Object.entries(tags)) {
+		report(`| ${tag} | ${rate.p} | ${rate.r} | ${rate.f1} |`)
+	}
 
 	const result: FamousPlacesResult = { n: rows.length, file, exact: { pass, n: rows.length }, exactByKindForm, tags }
 
-	if (options.json) await writeLocalJSONFile(result, options.json)
+	if (options.json) {
+		await writeLocalJSONFile(result, options.json)
+	}
 
 	return result
 }

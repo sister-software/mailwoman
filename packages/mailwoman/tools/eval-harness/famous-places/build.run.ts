@@ -17,8 +17,11 @@
  *   The output is a frozen fixture: it is rebuilt deliberately and committed, because Wikidata changes daily.
  */
 
+import { setTimeout as sleep } from "node:timers/promises"
+
 import { countrySurfaceForms } from "@mailwoman/codex/country/country"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { FAMOUS_PLACES_FIXTURE, type FamousPlaceRow } from "#tools/eval-harness/famous-places/score"
@@ -32,7 +35,8 @@ const USER_AGENT = "mailwoman-famous-places/0.1 (https://github.com/sister-softw
 const LANGUAGES = ["en", "fr", "es", "de", "it", "pt", "ru", "ja", "zh", "ar"]
 
 /**
- * The language a country's own speakers write a place in, for the local-name row. A country absent here gets none.
+ * The language a country's own speakers write a place in, for the local-name row.
+ * A country absent here gets none.
  */
 const LOCAL_LANGUAGE: Record<string, string> = {
 	FR: "fr",
@@ -85,14 +89,17 @@ const LOCAL_LANGUAGE: Record<string, string> = {
 }
 
 /**
- * The distance within which a geocode counts as the place, per kind. A natural feature covers a wide area, so its
- * Wikidata point stands for the whole feature and the tolerance is wider.
+ * The distance within which a geocode counts as the place, per kind.
+ *
+ * A natural feature covers a wide area, so its Wikidata point stands for the
+ * whole feature and the tolerance is wider.
  */
-const TOLERANCE_M: Record<string, number> = { capital: 15_000, landmark: 5_000 }
+const TOLERANCE_M: Record<string, number> = { capital: 15_000, landmark: 5000 }
 const NATURAL_TOLERANCE_M = 50_000
 
 /**
- * English Wikipedia article titles of landmarks. A title that resolves to no item is reported and skipped.
+ * English Wikipedia article titles of landmarks.
+ * A title that resolves to no item is reported and skipped.
  */
 const LANDMARK_TITLES = [
 	"Statue of Liberty",
@@ -223,8 +230,9 @@ const LANDMARK_TITLES = [
 ]
 
 /**
- * The natural-feature groups ranked by language-edition count. A large class times out when walked by subclass, so
- * each names its classes directly.
+ * The natural-feature groups ranked by language-edition count.
+ *
+ * A large class times out when walked by subclass, so each names its classes directly.
  */
 const NATURAL_GROUPS: Array<{ kind: string; selection: string; limit: number }> = [
 	{ kind: "national-park", selection: "?item wdt:P31 wd:Q46169.", limit: 30 },
@@ -238,7 +246,8 @@ interface Entity {
 	kind: string
 	country: string | null
 	/**
-	 * The English name of the state a capital belongs to, from Wikidata, for a country the codex lists no name for.
+	 * The English name of the state a capital belongs to, from Wikidata,
+	 * for a country the codex lists no name for.
 	 */
 	countryName?: string
 	lat: number
@@ -249,6 +258,7 @@ interface Entity {
 type Binding = Record<string, { value: string } | undefined>
 
 const labelColumns = LANGUAGES.map((language) => `?label_${language}`).join(" ")
+
 const labelOptionals = LANGUAGES.map(
 	(language) => `OPTIONAL { ?item rdfs:label ?label_${language} FILTER(LANG(?label_${language}) = "${language}") }`
 ).join("\n")
@@ -262,7 +272,7 @@ async function select(query: string): Promise<Binding[]> {
 	const body = (await response.json()) as { results: { bindings: Binding[] } }
 
 	// The query service asks clients to space their requests.
-	await new Promise((resolve) => setTimeout(resolve, 2000))
+	await sleep(2000)
 
 	return body.results.bindings
 }
@@ -295,7 +305,9 @@ for (const binding of await select(`SELECT ?item ?coord ?countryCode ?stateName 
 }`)) {
 	const entity = entityOf(binding, "capital")
 
-	if (entity && binding.stateName) entity.countryName = binding.stateName.value
+	if (entity && binding.stateName) {
+		entity.countryName = binding.stateName.value
+	}
 	keep(entity)
 }
 
@@ -331,6 +343,7 @@ for (const entity of entities.values()) {
 
 	if (!english) continue
 	const tag = entity.kind === "capital" ? "locality" : "venue"
+
 	const base = {
 		qid: entity.qid,
 		kind: entity.kind,
@@ -355,14 +368,16 @@ for (const entity of entities.values()) {
 
 	const local = entity.country ? entity.labels[LOCAL_LANGUAGE[entity.country] ?? ""] : undefined
 
-	if (local && local !== english) rows.push({ ...base, form: "local", input: local, components: { [tag]: local } })
+	if (local && local !== english) {
+		rows.push({ ...base, form: "local", input: local, components: { [tag]: local } })
+	}
 }
 
 rows.sort((a, b) => a.kind.localeCompare(b.kind) || a.qid.localeCompare(b.qid) || a.form.localeCompare(b.form))
 
 const out = values.out ?? FAMOUS_PLACES_FIXTURE
 
-await writeLocalTextFile(rows.map((row) => JSON.stringify(row)).join("\n") + "\n", out)
+await writeLocalTextFile(rows.map((row) => stringifyJSON(row)).join("\n") + "\n", out)
 
 console.log(`entities ${entities.size}, rows ${rows.length}, written to ${out}`)
 console.log(

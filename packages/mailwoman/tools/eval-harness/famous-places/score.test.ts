@@ -33,7 +33,9 @@ describe("the famous-places fixture", async () => {
 
 	it("expects every name to be one span the input contains", () => {
 		for (const row of rows) {
-			for (const value of Object.values(row.components)) expect(row.input).toContain(value)
+			for (const value of Object.values(row.components)) {
+				expect(row.input).toContain(value)
+			}
 		}
 	})
 
