@@ -46,12 +46,19 @@ export const GuideMapPalette = {
 	ground: "#efede8",
 	/**
 	 * 河川・海: water.
+	 *
+	 * Rivers, lakes and the sea over the continental shelf share this color.
+	 * A river mouth or harbor then draws in one color where an inland water polygon meets the ocean.
 	 */
-	water: "#cbdbf4",
+	water: "#8fdaf7",
 	/**
 	 * The edge of water bodies.
 	 */
-	waterEdge: "#b6c5db",
+	waterEdge: "#6cc8ef",
+	/**
+	 * Ferry routes.
+	 */
+	ferry: "#2a7fc4",
 	/**
 	 * 芝生等その他緑地: lawns and parks.
 	 */

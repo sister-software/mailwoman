@@ -42,7 +42,7 @@ export const OceanPalette = {
 	/**
 	 * The ocean fill: water over the continental shelf, down to about 100 m.
 	 */
-	shelf: "#8fdaf7",
+	shelf: GuideMapPalette.water,
 	slope: "#5cc4f2",
 	deep: "#35ace8",
 	abyss: "#2396de",

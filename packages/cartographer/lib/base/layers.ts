@@ -10,6 +10,7 @@ import type { ExpressionSpecification, LayerSpecification } from "maplibre-gl"
 import { BuildingLayers } from "#base/buildings"
 import { InfrastructureLayers } from "#base/infrastructure"
 import { LandUnderlayLayers, OceanCoastLayers, OceanLayers } from "#base/ocean"
+import { withGroundWidth } from "#base/road-width"
 import { HillshadeTileSetID } from "#base/terrain"
 import { GuideMapPalette, MailwomanBaseFlavor, MailwomanBaseTileSetID } from "#base/theme"
 import { TreeLayers } from "#base/trees"
@@ -161,8 +162,9 @@ function toGuideMapLayers(source: LayerSpecification): LayerSpecification[] {
 
 	// Protomaps defaults to miter joins.
 	// They draw road corners and bends as sharp points.
+	// A road's body width follows its ground width at street zoom.
 	const layer: typeof source = source.id.startsWith("roads_")
-		? { ...source, layout: { ...source.layout, "line-join": "round", "line-cap": "round" } }
+		? withGroundWidth({ ...source, layout: { ...source.layout, "line-join": "round", "line-cap": "round" } })
 		: source
 
 	if (MAJOR_ROAD_LAYER_IDS.has(layer.id)) {
@@ -372,7 +374,27 @@ function withOceanLayers(layer: LayerSpecification): LayerSpecification[] {
 		paint: { ...layer.paint, "fill-color": GuideMapPalette.water },
 	}
 
-	return [...subNationalBoundaryLayers, ...OceanLayers, inlandWater, ...OceanCoastLayers]
+	// The coast glow draws before inland water, so where a river polygon meets the ocean
+	// polygon the river covers the glow along their shared edge.
+	return [...subNationalBoundaryLayers, ...OceanLayers, ...OceanCoastLayers, inlandWater, FerryLayer]
+}
+
+/**
+ * Ferry routes: a dashed line over the water, from the `ferry` kind the build writes into `roads` from z11.
+ */
+const FerryLayer: LayerSpecification = {
+	id: LayerID(MailwomanBaseTileSetID, "ferry"),
+	type: "line",
+	source: MailwomanBaseTileSetID,
+	"source-layer": "roads",
+	minzoom: 11,
+	filter: ["==", ["get", "kind"], "ferry"],
+	paint: {
+		"line-color": GuideMapPalette.ferry,
+		"line-width": ["interpolate", ["linear"], ["zoom"], 11, 1, 16, 2],
+		"line-dasharray": [3, 2],
+		"line-opacity": 0.8,
+	},
 }
 
 /**
