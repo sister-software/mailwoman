@@ -17,8 +17,8 @@ differ, the repository copy governs code contributions and this page will be cor
   (`@mailwoman/neural-weights-en-us`, `-fr-fr`).
 - **Try it without installing:** the in-browser demo at
   [mailwoman.ai/demo](https://mailwoman.post/demo/), or the hosted
-  Photon-compatible trial endpoint at `photon.mailwoman.ai`
-  (e.g. [`/api?q=berlin&limit=3`](https://photon.mailwoman.ai/api?q=berlin&limit=3)).
+  Photon-compatible trial endpoint at `photon.mailwoman.post`
+  (e.g. [`/api?q=berlin&limit=3`](https://photon.mailwoman.post/api?q=berlin&limit=3)).
 - Getting-started guide: [/docs/getting-started](./getting-started.mdx).
 
 ## Feedback: bugs and enhancement requests

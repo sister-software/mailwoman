@@ -293,7 +293,7 @@ Quick start against the hosted Photon trial endpoint, which needs no local serve
     from mailwoman_client import PhotonClient
     from mailwoman_client.photon.api.geocoding import search
 
-    client = PhotonClient.hosted()          # https://photon.mailwoman.ai
+    client = PhotonClient.hosted()          # https://photon.mailwoman.post
     fc = search.sync(client=client, q="berlin", limit=3)
     for feature in fc.features:
         print(feature.properties.name, feature.geometry.coordinates)
@@ -319,7 +319,7 @@ __all__ = (
 
 #: The hosted public Photon trial endpoint (conservative rate limits). Only Photon has a hosted
 #: trial; the other three surfaces are self-host only.
-PHOTON_HOSTED_BASE_URL = "https://photon.mailwoman.ai"
+PHOTON_HOSTED_BASE_URL = "https://photon.mailwoman.post"
 
 class PhotonClient(_PhotonBase):
     """Client for the Photon-compatible autocomplete / reverse geocoding API (\`/api\`, \`/reverse\`).
@@ -413,7 +413,7 @@ function pythonReadme(): string {
 		"",
 		"## Usage",
 		"",
-		"Forward-geocode against the hosted Photon trial endpoint (`https://photon.mailwoman.ai`), which",
+		"Forward-geocode against the hosted Photon trial endpoint (`https://photon.mailwoman.post`), which",
 		"needs no local server:",
 		"",
 		"```python",
@@ -589,7 +589,7 @@ export function rustLibRs(): string {
 		"",
 		"/// The hosted public Photon trial endpoint (conservative rate limits). Only Photon has a",
 		"/// hosted trial; the other three surfaces are self-host only.",
-		'pub const PHOTON_HOSTED_BASE_URL: &str = "https://photon.mailwoman.ai";',
+		'pub const PHOTON_HOSTED_BASE_URL: &str = "https://photon.mailwoman.post";',
 		"",
 		"/// Default local `npx @mailwoman/photon serve` base URL.",
 		'pub const PHOTON_LOCAL_BASE_URL: &str = "http://127.0.0.1:2322";',
@@ -677,7 +677,7 @@ function rustReadme(): string {
 		"",
 		"#[tokio::main]",
 		"async fn main() -> Result<(), Box<dyn std::error::Error>> {",
-		"    let client = mailwoman_client::photon_hosted(); // https://photon.mailwoman.ai",
+		"    let client = mailwoman_client::photon_hosted(); // https://photon.mailwoman.post",
 		"",
 		"    let response = client",
 		'        .search(None, None, None, None, Some(3), None, None, Some("berlin"))',
@@ -713,7 +713,7 @@ function rustReadme(): string {
 function rustExample(): string {
 	return `//! Forward-geocode "berlin" against the hosted Photon trial endpoint and print the top 3 hits.
 //!
-//! Run: \`cargo run --example basic\` (hits https://photon.mailwoman.ai).
+//! Run: \`cargo run --example basic\` (hits https://photon.mailwoman.post).
 
 use mailwoman_client::photon::types::PhotonResponse;
 

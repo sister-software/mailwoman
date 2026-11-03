@@ -128,7 +128,7 @@ server keeps the same wire interface and reads a SQLite file instead of a cluste
 Photon-compatible endpoint is live for evaluation:
 
 ```bash
-curl "https://photon.mailwoman.ai/api?q=berlin&limit=3"   # hosted — nothing to install
+curl "https://photon.mailwoman.post/api?q=berlin&limit=3"   # hosted — nothing to install
 npx @mailwoman/photon    serve   # Photon-compatible    /api, /reverse
 npx @mailwoman/nominatim serve   # Nominatim-compatible /search, /reverse, /status
 npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand
