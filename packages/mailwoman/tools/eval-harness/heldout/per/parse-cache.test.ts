@@ -1,5 +1,6 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONLFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { afterAll, describe, expect, it } from "vitest"
 
 import type { HeldoutRow } from "#tools/eval-harness/heldout/per/country"
@@ -32,7 +33,7 @@ describe("heldoutParseRows", () => {
 describe("weightsCacheDigest", () => {
 	it("changes when a package file changes and covers nested files", async () => {
 		const cache = directory.path("cache")
-		const usDir = cache("node_modules", "@mailwoman", "neural-weights-en-us")
+		const usDir = weightsCachePackageDir(cache, "en-us")
 
 		await makeDirectories(usDir("data"))
 		await writeLocalTextFile("model-a", usDir("model.onnx"))
