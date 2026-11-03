@@ -7,7 +7,8 @@
  *
  *   A search for `Mariana Trench` or `Lake Tahoe, California` asks for a place that has a name and no address.
  *   The corpus held no such rows before this source (#2897), so the parser had never read a bare physical-feature
- *   name. Each feature renders bare, with its own country, and with its region where GeoNames records one.
+ *   name. Each feature renders bare and with its region where GeoNames records one, and one feature in
+ *   {@linkcode GEONAMES_FEATURES_WITH_COUNTRY_DIVISOR} also renders with its own country.
  *
  *   The dump holds 5,076,239 such features in 16,318 (country, feature code) cells on 2026-11-02, and 991,667 of them
  *   are streams (feature code `STM`). A cell keeps at most {@linkcode GEONAMES_FEATURES_PER_CELL} features, chosen by the lowest hash of their
@@ -49,6 +50,21 @@ export const GEONAMES_FEATURE_CLASSES: ReadonlySet<string> = new Set(["U", "H", 
  * features at 10 and 272,765 at 50.
  */
 export const GEONAMES_FEATURES_PER_CELL = 25
+
+/**
+ * The divisor of the features that render with their country: a feature renders with it
+ * when the hash of its geonameid is divisible by this value.
+ *
+ * `<name>, <country>` is the shape of a locality query as well as a feature query, and the
+ * corpus holds far fewer locality–country rows than this source writes feature–country rows.
+ * With every feature rendered with its country, v0.8.11 held 171,416 `venue -> country`
+ * base rows against 58,892 `locality -> country`, and models trained on it read
+ * `Mount Washington, United States` as a venue.
+ *
+ * One in four brings the feature rows below the locality rows in all.
+ * The bare and region renderings are unchanged.
+ */
+export const GEONAMES_FEATURES_WITH_COUNTRY_DIVISOR = 4
 
 /**
  * One feature the cap kept.
@@ -155,7 +171,7 @@ export function createGeonamesFeaturesAdapter(): CorpusAdapter {
 						{ slot: "v", comp: { venue }, raw: venue },
 					]
 
-					if (country) {
+					if (country && hashFNV1a(`${geonameid}:vc`) % GEONAMES_FEATURES_WITH_COUNTRY_DIVISOR === 0) {
 						variants.push({ slot: "vc", comp: { venue, country }, raw: `${venue}, ${country}` })
 					}
 

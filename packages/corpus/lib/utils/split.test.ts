@@ -419,11 +419,18 @@ describe("defaultHoldouts", () => {
 		expect(splitForRow({ ...nsukka, components: { street: "Allen Avenue", locality: "Ikeja" } })).toBe("train")
 	})
 
-	it("keeps the FR, DE and GB postcode areas, so held-out rows already verified unseen stay unseen", () => {
-		// FR: Corse 20, Creuse 23, Lozère 48.
+	it("keeps the DE postcode area, and holds out FR districts inside Corsica and Creuse rather than both departments", () => {
 		// DE: Upper Lusatia 02.
-		expect(policyOf(defaultHoldouts().FR).postcodePrefixes).toEqual(["20", "23", "48"])
 		expect(policyOf(defaultHoldouts().DE).postcodePrefixes).toEqual(["02"])
+
+		const fr = (postcode: string) =>
+			splitForRow({ source_id: `fr-${postcode}`, country: "FR", components: { postcode } })
+
+		expect(fr("20000")).not.toBe("train")
+		expect(fr("23100")).not.toBe("train")
+		expect(fr("48000")).not.toBe("train")
+		expect(fr("20200")).toBe("train")
+		expect(fr("23000")).toBe("train")
 	})
 
 	it("names GB by postcode area, since a GB street row carries no region", () => {
@@ -475,9 +482,9 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		components: { postcode, locality: "Ajaccio", street: "Cours Napoléon", house_number: "12" },
 	})
 
-	it("holds out a BAN row whose postcode names a held-out department", () => {
+	it("holds out a BAN row whose postcode names a held-out district or department", () => {
 		expect(splitForRow(banRow("ban-corse", "20000"))).not.toBe("train")
-		expect(splitForRow(banRow("ban-creuse", "23000"))).not.toBe("train")
+		expect(splitForRow(banRow("ban-creuse", "23100"))).not.toBe("train")
 		expect(splitForRow(banRow("ban-lozere", "48000"))).not.toBe("train")
 	})
 

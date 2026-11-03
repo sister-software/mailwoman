@@ -1,0 +1,10 @@
+{
+	"$schema-note": "Adapter inputs for one corpus build. `corpus build --inputs <path>` reads this file. Every `inputPath` and `streetIndex` is relative to $MAILWOMAN_DATA_ROOT, resolved at launch.",
+	"$overlay-note": "The one source this build rebuilds replaces its v0.8.10-overlay files in an overlay on that corpus. `geonames-features` renders one feature in GEONAMES_FEATURES_WITH_COUNTRY_DIVISOR with its country, so its `venue -> country` rows fall below the corpus's `locality -> country` rows (#2904).",
+	"corpusVersion": "v0.8.12-geonames-features",
+	"adapters": {
+		"geonames-features": {
+			"inputPath": "geonames"
+		}
+	}
+}

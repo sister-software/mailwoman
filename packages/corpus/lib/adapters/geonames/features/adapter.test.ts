@@ -13,6 +13,7 @@ import {
 	createGeonamesFeaturesAdapter,
 	GEONAMES_FEATURES_ADAPTER_ID,
 	GEONAMES_FEATURES_PER_CELL,
+	GEONAMES_FEATURES_WITH_COUNTRY_DIVISOR,
 } from "#adapters/geonames/features/adapter"
 import type { CanonicalRow } from "#types"
 
@@ -60,25 +61,35 @@ async function run(rows: string[]): Promise<CanonicalRow[]> {
 }
 
 describe("geonames-features adapter", () => {
-	it("labels a physical feature's name as venue, bare, with its country and with its region", async () => {
+	it("labels a physical feature's name as venue, bare and with its region", async () => {
 		const rows = await run([
 			gnRow("2113272", "Mariana Trench", "U", "TRNU", "MP"),
 			gnRow("5383604", "Lake Tahoe", "H", "LK", "US", "CA"),
 		])
 
-		expect(rows.map((row) => row.raw).toSorted()).toEqual([
+		expect(rows.filter((row) => !row.source_id.endsWith("-vc")).map((row) => row.raw)).toEqual([
+			"Mariana Trench",
 			"Lake Tahoe",
 			"Lake Tahoe, California",
-			"Lake Tahoe, United States",
-			"Mariana Trench",
-			"Mariana Trench, Northern Mariana Islands",
 		])
 
-		const trench = rows.find((row) => row.raw === "Mariana Trench, Northern Mariana Islands")
+		const trench = rows.find((row) => row.raw === "Mariana Trench")
 
-		expect(trench?.components).toEqual({ venue: "Mariana Trench", country: "Northern Mariana Islands" })
-		expect(trench?.source_id).toBe(`${GEONAMES_FEATURES_ADAPTER_ID}-2113272-vc`)
+		expect(trench?.components).toEqual({ venue: "Mariana Trench" })
+		expect(trench?.source_id).toBe(`${GEONAMES_FEATURES_ADAPTER_ID}-2113272-v`)
 		expect(trench?.country).toBe("MP")
+	})
+
+	it("renders one feature in the divisor with its country, the same features every run", async () => {
+		const lakes = Array.from({ length: 400 }, (_, i) => gnRow(String(7_000_000 + i), `Lake ${i}`, "H", `LK${i}`, "US"))
+		const first = await run(lakes)
+		const withCountry = first.filter((row) => row.source_id.endsWith("-vc"))
+
+		expect(first.filter((row) => row.source_id.endsWith("-v"))).toHaveLength(400)
+		expect(withCountry.length).toBeGreaterThan(400 / GEONAMES_FEATURES_WITH_COUNTRY_DIVISOR / 2)
+		expect(withCountry.length).toBeLessThan((400 / GEONAMES_FEATURES_WITH_COUNTRY_DIVISOR) * 2)
+		expect(withCountry[0]?.components).toEqual({ venue: withCountry[0]!.raw.split(",")[0], country: "United States" })
+		expect((await run(lakes)).map((row) => row.source_id)).toEqual(first.map((row) => row.source_id))
 	})
 
 	it("reads a directory of country dumps as it reads one dump", async () => {

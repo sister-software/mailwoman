@@ -133,18 +133,20 @@ export interface SplitManifest {
  */
 export function defaultHoldouts(): Record<string, CountryHoldout> {
 	return {
-		// FR, DE and GB keep the postcode areas of earlier corpora, so the held-out
+		// DE and GB keep the postcode areas of earlier corpora, so the held-out
 		// rows already verified unseen stay unseen.
-		// Their region names, Corse, Lozère, Creuse, Saarland, Mecklenburg-Vorpommern
-		// and Cornwall, left the table.
-		// FR: Corse 20, Creuse 23 and Lozère 48.
+		// Their region names, Saarland, Mecklenburg-Vorpommern and Cornwall, left the table.
+		// FR: districts 200 (Ajaccio) and 206 in Corsica, 231 and 236 in Creuse, and Lozère 48.
+		// A two-digit FR prefix is a whole department, and with all of Creuse and Corsica held out the
+		// region labels Creuse and Corse-du-Sud kept 110 and 73 train rows. The four districts hold out
+		// 60 of Creuse's and 6 of Corsica's region-labeled rows.
 		// DE: area 02, Upper Lusatia in eastern Sachsen.
 		// GB: the Truro and Halifax areas, and ten districts of the Llandudno area.
 		// The whole LL area held 75% of the rendered rows naming Conwy, 74% of Wrecsam's and 67% of
 		// Sir Ddinbych's, so its districts were chosen by the method above, with the cap read for every
 		// region the v0.8.2 GB rows name, these Welsh counties carrying under 100 region rows each.
 		// No prefix is a prefix of another, and no district key is a prefix of another district.
-		FR: { postcodePrefixes: ["20", "23", "48"] },
+		FR: { postcodePrefixes: ["200", "206", "231", "236", "48"] },
 		DE: { postcodePrefixes: ["02"] },
 		GB: {
 			postcodePrefixes: [
