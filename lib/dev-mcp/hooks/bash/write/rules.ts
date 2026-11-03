@@ -53,6 +53,7 @@ const ADMITTED = new Set([
 	"java",
 	"journalctl",
 	"jq",
+	"kill",
 	"ls",
 	"nproc",
 	"paste",

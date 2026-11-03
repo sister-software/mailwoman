@@ -60,7 +60,8 @@ export const arcTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 			.optional()
 			.describe(
 				"The verdict JSON `release/evaluate.run.ts` wrote for this candidate. Its artifacts.candidate must equal " +
-					"the sha256 of <candidate>/model.onnx and its specVersion the release spec's. Omitted, release " +
+					"the sha256 of <candidate>/node_modules/@mailwoman/neural-weights-en-us/model.onnx and its " +
+					"specVersion the release spec's. Omitted, release " +
 					"eligibility is insufficient_evidence."
 			),
 		release_spec: z

@@ -21,11 +21,12 @@ import {
 	type layerschemadatabase,
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
+import { compactPostcode } from "@mailwoman/postcode/display-form"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-import { compactPostcode, createNSULIndexes, createUPRNPostcodeTable, NSULLookup, type NSULDatabase } from "#nsul"
+import { createNSULIndexes, createUPRNPostcodeTable, NSULLookup, type NSULDatabase } from "#nsul"
 import { uprnH3Cell } from "#uprn"
 
 const fixtures = new AsyncDisposableStack()
@@ -95,14 +96,6 @@ beforeAll(async () => {
 	])
 
 	lookup = new NSULLookup({ databasePath })
-})
-
-describe("compactPostcode", () => {
-	it("removes the space and upper-cases — Code-Point Open's spr.name form", () => {
-		expect(compactPostcode("RG40 4HR")).toBe("RG404HR")
-		expect(compactPostcode("po21 1hr")).toBe("PO211HR")
-		expect(compactPostcode("RG404HR")).toBe("RG404HR")
-	})
 })
 
 describe("postcodeForUPRN", () => {

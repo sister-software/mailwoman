@@ -25,6 +25,7 @@ import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 import { escapeSQLString, openDuckDB, type DuckDBLimits } from "#parquet/duckdb"
 import { baseManifestFiles, localManifestFilePath } from "#tools/overlay/manifest"
 import { readSplitAttribute } from "#tools/overlay/split/attribute"
+import { SHAPE_SEPARATOR, type SplitRetention } from "#utils/retention"
 import { type CountryHoldout, holdoutPolicyFor } from "#utils/split"
 
 /**
@@ -41,6 +42,10 @@ export interface HoldoutSpanCount {
 	tag: HoldoutSpanTag
 	surface: string
 	trainRows: number
+	/**
+	 * The part of `trainRows` the retention table keeps in train (HOLDOUT_AND_EVALUATION section 5.1).
+	 */
+	retainedTrainRows: number
 	heldOutRows: number
 	trainRowsWithoutPostcode: number
 	heldOutRowsWithoutPostcode: number
@@ -53,6 +58,10 @@ export interface HoldoutPostcodeCount {
 	country: string
 	prefix: string
 	trainRows: number
+	/**
+	 * The part of `trainRows` the retention table keeps in train.
+	 */
+	retainedTrainRows: number
 }
 
 export interface HoldoutSpanCountResult {
@@ -71,20 +80,28 @@ const SEPARATOR = "\u0000"
  * Also count train rows that have each declared postcode prefix.
  * A row carrying one surface twice counts once.
  *
+ * With `retention`, a train row whose country–shape combination it covers also counts as retained.
+ *
  * @throws When a manifest file records neither a split nor a split attribute,
  * since reading it as train or as held out would both misstate the count.
  */
 export async function countHoldoutSpans(
 	manifestPath: string,
 	holdouts: Record<string, CountryHoldout>,
-	limits?: DuckDBLimits
+	limits?: DuckDBLimits,
+	retention?: Pick<SplitRetention, "protectedShapes">
 ): Promise<HoldoutSpanCountResult> {
 	const files = baseManifestFiles(await readLocalJSONFile(manifestPath))
 	const countries = Object.keys(holdouts)
 	const totals = new Map<string, HoldoutSpanCount>()
 
 	const prefixes = countries.flatMap((country) =>
-		(holdoutPolicyFor(holdouts[country]!).postcodePrefixes ?? []).map((prefix) => ({ country, prefix, trainRows: 0 }))
+		(holdoutPolicyFor(holdouts[country]!).postcodePrefixes ?? []).map((prefix) => ({
+			country,
+			prefix,
+			trainRows: 0,
+			retainedTrainRows: 0,
+		}))
 	)
 
 	// Locality spans are counted for the declared localities only: a country's locality
@@ -106,14 +123,33 @@ export async function countHoldoutSpans(
 		"span_starts[list_position(span_tags, 'postcode')] + 1, " +
 		"span_ends[list_position(span_tags, 'postcode')] - span_starts[list_position(span_tags, 'postcode')]) END"
 
-	const prefixColumns = prefixes.map(
-		({ country, prefix }, index) =>
-			`count(*) FILTER (WHERE NOT held_out AND country = ${quoted(country)} AND starts_with(postcode, ${quoted(prefix)})) AS p${index}`
-	)
+	const prefixColumns = prefixes.flatMap(({ country, prefix }, index) => {
+		const inTrain = `NOT held_out AND country = ${quoted(country)} AND starts_with(postcode, ${quoted(prefix)})`
+
+		return [
+			`count(*) FILTER (WHERE ${inTrain}) AS p${index}`,
+			`count(*) FILTER (WHERE ${inTrain} AND retained) AS r${index}`,
+		]
+	})
 
 	using db = await openDuckDB(limits)
 
 	await db.run("CREATE TEMP TABLE held_out_ids (id VARCHAR)")
+	await db.run("CREATE TEMP TABLE protected_shapes (k VARCHAR)")
+
+	if (retention?.protectedShapes.size) {
+		const appender = await db.createAppender("protected_shapes")
+
+		for (const key of retention.protectedShapes) {
+			appender.appendVarchar(key)
+			appender.endRow()
+		}
+
+		appender.closeSync()
+	}
+
+	// `shapeKeyOf` in SQL: the country, then the ordered span tags joined by `SHAPE_SEPARATOR`.
+	const retainedExpression = `(country || '|' || array_to_string(span_tags, ${quoted(SHAPE_SEPARATOR)})) IN (SELECT k FROM protected_shapes)`
 
 	let filesRead = 0
 
@@ -143,7 +179,8 @@ export async function countHoldoutSpans(
 			typeof split === "string" ? (split === "train" ? "false" : "true") : "source_id IN (SELECT id FROM held_out_ids)"
 
 		await db.run(
-			`CREATE OR REPLACE TEMP TABLE r AS SELECT country, ${heldOutExpression} AS held_out, ${postcode} AS postcode, ` +
+			`CREATE OR REPLACE TEMP TABLE r AS SELECT country, ${heldOutExpression} AS held_out, ` +
+				`${retainedExpression} AS retained, ${postcode} AS postcode, ` +
 				`list_distinct([span_tags[i] || chr(0) || substring(raw, span_starts[i] + 1, span_ends[i] - span_starts[i]) ` +
 				`FOR i IN range(1, len(span_tags) + 1) IF span_tags[i] IN ('region', 'locality')]) AS spans ` +
 				`FROM read_parquet(${quoted(localManifestFilePath(file.path))}) ` +
@@ -152,12 +189,13 @@ export async function countHoldoutSpans(
 
 		const rows = (
 			await db.runAndReadAll(
-				`SELECT country, held_out, postcode IS NULL AS no_postcode, span, count(*)::BIGINT AS n ` +
+				`SELECT country, held_out, retained, postcode IS NULL AS no_postcode, span, count(*)::BIGINT AS n ` +
 					`FROM r, unnest(spans) AS t(span) GROUP BY ALL`
 			)
 		).getRowObjectsJson() as Array<{
 			country: string
 			held_out: boolean
+			retained: boolean
 			no_postcode: boolean
 			span: string
 			n: string
@@ -176,6 +214,7 @@ export async function countHoldoutSpans(
 				tag,
 				surface,
 				trainRows: 0,
+				retainedTrainRows: 0,
 				heldOutRows: 0,
 				trainRowsWithoutPostcode: 0,
 				heldOutRowsWithoutPostcode: 0,
@@ -192,6 +231,10 @@ export async function countHoldoutSpans(
 			} else {
 				count.trainRows += n
 
+				if (row.retained) {
+					count.retainedTrainRows += n
+				}
+
 				if (row.no_postcode) {
 					count.trainRowsWithoutPostcode += n
 				}
@@ -205,6 +248,7 @@ export async function countHoldoutSpans(
 
 			for (const [index, prefix] of prefixes.entries()) {
 				prefix.trainRows += Number(row[`p${index}`])
+				prefix.retainedTrainRows += Number(row[`r${index}`])
 			}
 		}
 
@@ -238,8 +282,9 @@ export interface HoldoutSpanFinding {
 	country: string
 	/**
 	 * - `region-key`: the policy lists a region, a closed-vocabulary label, as a key.
-	 * - `locality-in-train`: train rows still have a declared locality.
-	 * - `postcode-in-train`: train rows still have a declared postcode prefix.
+	 * - `locality-in-train`: train rows the retention table does not keep still have a declared locality.
+	 * - `postcode-in-train`: train rows the retention table does not keep still
+	 *   have a declared postcode prefix.
 	 * - `region-supply`: a region surface whose train share falls below
 	 *   {@linkcode REGION_TRAIN_SHARE_FLOOR} of its country's median.
 	 * - `region-supply-without-postcode`: the same among rows with no postcode.
@@ -310,14 +355,15 @@ export function holdoutSpanFindings(
 
 		for (const locality of new Set((policy.localities ?? []).map(foldNFKCWhitespace))) {
 			const count = byKey.get([country, "locality", locality].join(SEPARATOR))
+			const unretained = count ? count.trainRows - count.retainedTrainRows : 0
 
-			if (count?.trainRows) {
+			if (unretained) {
 				findings.push({
 					country,
 					reason: "locality-in-train",
 					key: locality,
-					trainRows: count.trainRows,
-					heldOutRows: count.heldOutRows,
+					trainRows: unretained,
+					heldOutRows: count!.heldOutRows,
 				})
 			}
 		}
@@ -336,13 +382,15 @@ export function holdoutSpanFindings(
 	}
 
 	for (const postcode of result.postcodes) {
-		if (!postcode.trainRows) continue
+		const unretained = postcode.trainRows - postcode.retainedTrainRows
+
+		if (!unretained) continue
 
 		findings.push({
 			country: postcode.country,
 			reason: "postcode-in-train",
 			key: postcode.prefix,
-			trainRows: postcode.trainRows,
+			trainRows: unretained,
 			heldOutRows: 0,
 		})
 	}

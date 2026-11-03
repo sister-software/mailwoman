@@ -10,6 +10,8 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
+import { defaultAugmentationsForCountry } from "#synthesizers/utils"
+import type { CanonicalRow } from "#types"
 import { computeShapeSupply, splitRetentionFromSupply } from "#utils/shape-supply"
 import {
 	type CountryHoldout,
@@ -188,6 +190,59 @@ describe("splitForRow — hashed place holdout for an undeclared country", () =>
 		).toThrow(/no row count for KE\|/)
 	})
 
+	it("splits every default augmentation of a row as it splits the row", () => {
+		const base = (country: string, index: number, components: CanonicalRow["components"]): CanonicalRow =>
+			({
+				source: "test",
+				source_id: `r-${country}-${index}`,
+				country,
+				raw: Object.values(components).join(", "),
+				components,
+			}) as CanonicalRow
+
+		const rows = Array.from({ length: 300 }, (_, i) => [
+			base("AD", i, { venue: `La Planada ${i}`, country: "Andorra" }),
+			base("KE", i, { venue: `Acme Stores East, LP ${i}`, locality: "Nairobi" }),
+			base("NL", i, { street: "Zwaardemakerstraat", house_number: "76", locality: `Nieuw Amsterdam ${i}` }),
+			base("GB", i, { street: "High Street", postcode: `LL${10 + (i % 60)} 1BZ` }),
+			base("US", i, { street: "N Main St", region: "CA", postcode: `${String(i).padStart(3, "0")}21-1234` }),
+			base("FR", i, { street: "Rue de l'Église", postcode: `${20 + (i % 30)}100`, locality: "Évry" }),
+		]).flat()
+
+		let heldOut = 0
+
+		for (const baseRow of rows) {
+			const split = splitForRow(baseRow)
+
+			heldOut += Number(split !== "train")
+
+			for (const augment of defaultAugmentationsForCountry(baseRow.country)) {
+				const variant = augment(baseRow)
+
+				if (!variant) continue
+
+				expect(splitForRow(variant) === "train", `${variant.source_id} ${variant.raw}`).toBe(split === "train")
+			}
+		}
+
+		expect(heldOut).toBeGreaterThan(0)
+	})
+
+	it("keys a double-spaced or comma-dropped name, and a lower-cased GB postcode, as their base rows", () => {
+		expect(hashedHoldoutPlace({ venue: "La  Planada" })).toBe(hashedHoldoutPlace({ venue: "La Planada" }))
+
+		expect(hashedHoldoutPlace({ venue: "Acme Stores East LP" })).toBe(
+			hashedHoldoutPlace({ venue: "Acme Stores East, LP" })
+		)
+
+		const gb = (postcode: string) =>
+			splitForRow({ source_id: "wof-postalcode-1160872690-default-self", country: "GB", components: { postcode } })
+
+		expect(gb("LL55 1BZ")).not.toBe("train")
+		expect(gb("ll55 1bz")).toBe(gb("LL55 1BZ"))
+		expect(gb("LL55  1BZ")).toBe(gb("LL55 1BZ"))
+	})
+
 	it("keeps a row with no place in train", () => {
 		expect(splitForRow({ source_id: "x", country: "KE", components: { street: "Moi Avenue" } })).toBe("train")
 	})
@@ -364,11 +419,18 @@ describe("defaultHoldouts", () => {
 		expect(splitForRow({ ...nsukka, components: { street: "Allen Avenue", locality: "Ikeja" } })).toBe("train")
 	})
 
-	it("keeps the FR, DE and GB postcode areas, so held-out rows already verified unseen stay unseen", () => {
-		// FR: Corse 20, Creuse 23, Lozère 48.
+	it("keeps the DE postcode area, and holds out FR districts inside Corsica and Creuse rather than both departments", () => {
 		// DE: Upper Lusatia 02.
-		expect(policyOf(defaultHoldouts().FR).postcodePrefixes).toEqual(["20", "23", "48"])
 		expect(policyOf(defaultHoldouts().DE).postcodePrefixes).toEqual(["02"])
+
+		const fr = (postcode: string) =>
+			splitForRow({ source_id: `fr-${postcode}`, country: "FR", components: { postcode } })
+
+		expect(fr("20000")).not.toBe("train")
+		expect(fr("23100")).not.toBe("train")
+		expect(fr("48000")).not.toBe("train")
+		expect(fr("20200")).toBe("train")
+		expect(fr("23000")).toBe("train")
 	})
 
 	it("names GB by postcode area, since a GB street row carries no region", () => {
@@ -420,9 +482,9 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		components: { postcode, locality: "Ajaccio", street: "Cours Napoléon", house_number: "12" },
 	})
 
-	it("holds out a BAN row whose postcode names a held-out department", () => {
+	it("holds out a BAN row whose postcode names a held-out district or department", () => {
 		expect(splitForRow(banRow("ban-corse", "20000"))).not.toBe("train")
-		expect(splitForRow(banRow("ban-creuse", "23000"))).not.toBe("train")
+		expect(splitForRow(banRow("ban-creuse", "23100"))).not.toBe("train")
 		expect(splitForRow(banRow("ban-lozere", "48000"))).not.toBe("train")
 	})
 

@@ -67,7 +67,9 @@ describe("assertHeapForAdapters", () => {
 	})
 })
 
-describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
+// Each test runs a whole buildCorpus over the fixture, some of them twice. On the self-hosted CI runners one
+// test takes longer than the suite's 15-second default.
+describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", { timeout: 60_000 }, () => {
 	it("produces top-level MANIFEST.json + parquet files + splits + quarantine pile", async () => {
 		const outDir = scratch.path("build")
 		const stages: BuildStage[] = []

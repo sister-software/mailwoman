@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Parses every row of a suite rows file with one model on a pool of worker threads and writes one `{id, spans}`
- *   line per row. The file is written beside its destination and moved into place once every row is parsed, so an
- *   interrupted run leaves no partial parse file under the cached name.
+ *   Parses rows with one model on a pool of worker threads and writes one `{id, spans}` line per row. The file is
+ *   written beside its destination and moved into place once every row is parsed, so an interrupted run leaves no
+ *   partial parse file under the cached name.
  */
 
 import { finished, openWriteStream } from "@mailwoman/core/fs/streams"
@@ -30,7 +30,17 @@ export interface BatteryParseOptions {
 }
 
 /**
- * Parses `rowsPath` with one arm and writes the parse file to `outPath`.
+ * One row handed to a parse worker: the identity its parse is written under, its text and its country.
+ */
+export interface ParseRow {
+	id: string
+	raw: string
+	country: string | null
+}
+
+/**
+ * Parses `rowsPath`, a suite rows file, with one arm and writes the parse file to `outPath`.
+ * Each parse is written under the row's `source_id`.
  *
  * @throws When fewer rows were parsed than the rows file holds.
  */
@@ -39,6 +49,23 @@ export async function parseBatteryRows(rowsPath: string, outPath: string, option
 		JSONSpliterator.fromAsync<{ source_id: string; raw: string; country: string | null }>(rowsPath)
 	)
 
+	await parseRowsWithWorkers(
+		rows.map((row) => ({ id: row.source_id, raw: row.raw, country: row.country })),
+		outPath,
+		options
+	)
+}
+
+/**
+ * Parses `rows` with one arm and writes the parse file to `outPath`, one line per row in completion order.
+ *
+ * @throws When fewer rows were parsed than `rows` holds.
+ */
+export async function parseRowsWithWorkers(
+	rows: readonly ParseRow[],
+	outPath: string,
+	options: BatteryParseOptions
+): Promise<void> {
 	const partial = `${outPath}.partial`
 	const out = openWriteStream(partial)
 	const started = performance.now()
@@ -48,10 +75,7 @@ export async function parseBatteryRows(rowsPath: string, outPath: string, option
 		`${rows.length} rows, ${options.workers} workers × ${options.threads} ONNX threads, ${options.cacheRoot}`
 	)
 
-	for await (const result of parallelMapWorkers<
-		{ source_id: string; raw: string; country: string | null },
-		{ id: string; spans: BatterySpan[] }
-	>(rows, {
+	for await (const result of parallelMapWorkers<ParseRow, { id: string; spans: BatterySpan[] }>(rows, {
 		worker: PARSE_WORKER_URL,
 		concurrency: options.workers,
 		batchSize: 32,
@@ -71,7 +95,7 @@ export async function parseBatteryRows(rowsPath: string, outPath: string, option
 	out.end()
 	await finished(out)
 
-	if (done !== rows.length) throw new Error(`parsed ${done} of ${rows.length} rows of ${rowsPath}`)
+	if (done !== rows.length) throw new Error(`parsed ${done} of ${rows.length} rows`)
 
 	await movePath(partial, outPath)
 }

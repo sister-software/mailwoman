@@ -784,13 +784,10 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const item = itemRaw ? tryParsingJSON<NSULItemRecord>(itemRaw) : null
 
 	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const {
-		createUPRNPostcodeTable,
-		createNSULMetaTable,
-		createNSULIndexes,
-		compactPostcode,
-		NSUL_COVERAGE_H3_RESOLUTION,
-	} = await import("@mailwoman/resolver-wof-sqlite/nsul")
+	const { createUPRNPostcodeTable, createNSULMetaTable, createNSULIndexes, NSUL_COVERAGE_H3_RESOLUTION } =
+		await import("@mailwoman/resolver-wof-sqlite/nsul")
+
+	const { compactPostcode } = await import("@mailwoman/postcode/display-form")
 
 	const { UPRN_H3_RESOLUTION } = await import("@mailwoman/resolver-wof-sqlite/uprn")
 
