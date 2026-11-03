@@ -423,8 +423,27 @@ rank and text, and keeps shields that sort equal in the order Planetiler returns
 memberships in `SparseUnorderedBinarySearchMultimap`, whose lookup binary-searches all keys and collects a key's values
 forward from where the search lands, then backward, so the order depends on every other key in the table. `hrt-osm`'s
 `BinarySearchMultimap` reproduces that lookup. On Geofabrik's `chugoku-latest.osm.pbf`, the roads layer differed in 65
-of 48,849 tiles before the change and was byte-identical in all 48,849 after it. A Japan build with this change and
-the two changes below has not run.
+of 48,849 tiles before the change and was byte-identical in all 48,849 after it.
+
+A second `hrt` build at ba10b6785, with this change and the two below, read the same extract (sha256 `34784d4e…`, the
+dated `japan-261101.osm.pbf`) and the same other inputs, whose sha256 sums matched the first run's. It ran alone on an
+m7gd.4xlarge (16 vCPUs, 64 GB) in 7:21.74 with 15.7 GB peak resident memory, sorted 189,423,246 records, the count of
+features Java wrote, and was compared with the first run's Java record:
+
+| Layer       | Count differs, first run | Count differs, second run | Digest differs, first run | Digest differs, second run |
+| ----------- | -----------------------: | ------------------------: | ------------------------: | -------------------------: |
+| `roads`     |                      132 |                         0 |                       187 |                          1 |
+| `earth`     |                        1 |                         0 |                       246 |                        234 |
+| `buildings` |                        2 |                         1 |                     1,034 |                      1,000 |
+| `water`     |                        0 |                         0 |                     5,537 |                      5,537 |
+| `landuse`   |                        0 |                         0 |                        16 |                         16 |
+| `landcover` |                        0 |                         0 |                         2 |                          2 |
+
+The remaining count difference is the building merge at 12/3578/1635 described below. The remaining `roads` tile,
+13/7208/3197, holds 42 features in both builds and matched Java in the first run, so the relation-order change moved
+it. A roads-only build of Geofabrik's `chubu-latest.osm.pbf` was byte-identical to Java's in all 93,277 tiles,
+including this one. A build of one region fills the membership table with that region's relations only, and where a
+lookup lands depends on every key in the table, so this tile's cause is not established.
 
 The differing polygons in `water`, `buildings`, `landuse` and `landcover` are the polygon merges recorded for
 Luxembourg: GEOS's buffer, union and precision reducer in `hrt`, JTS's in Planetiler. In the 200 tiles `clock`
@@ -471,3 +490,26 @@ threads used 2m56s of user CPU, about 3% of the build's. Of 89,456 CPU samples, 
 second overload), hppc's `DoubleArrayList.ensureBufferSpace` (2.79%), `HashMap.getNode` (2.61%) and JTS's
 `MonotoneChain.computeIntersections` (2.46%). The largest allocation sites were `Arrays.copyOf(double[])` (12.58%),
 JTS's `SimpleMCSweepLineIntersector.addEdge` (8.10%), `Arrays.copyOf(Object[])` (5.91%) and `ArrayList.grow` (5.45%).
+
+Planetiler names its threads after their stage, so the samples split by stage:
+
+| Thread                  | CPU samples | Most frequent methods                                                                                |
+| ----------------------- | ----------: | ---------------------------------------------------------------------------------------------------- |
+| `osm_pass2_process`     |      56,151 | `Arrays.copyOf(Object[])` 4,710; `subsimplify` 3,635; JTS `MonotoneChain.computeIntersections` 2,185 |
+| `archive_encode`        |      17,794 | `subsimplify` 1,417; `HashMap.getNode` 1,218; `ArrayList.add` 1,193; `HashMap.resize` 943            |
+| `osm_pass1_parse`       |       5,746 | `DenseNodeIterator.next` 1,394; `String.hashCode` 822; protobuf `readRawVarint32` 628                |
+| `osm_water_process`     |       2,634 |                                                                                                      |
+| `osm_pass1_process`     |       2,063 |                                                                                                      |
+| `osm_land_process`      |       1,375 |                                                                                                      |
+| `ne_read`, `ne_process` |         141 |                                                                                                      |
+
+The Natural Earth stage took 1m14s yet holds 141 CPU samples. It logged its start at 0:02:45 and its first rows read
+at 0:03:31, then read about 10,000 rows, 3% of the file, because the rest lie outside Japan's bounds. The 46 seconds
+before the first row are inferred to be the extraction of the 446 MB `natural_earth_vector.gpkg.zip`, which runs in
+I/O and native inflate, outside the Java code the Flight Recorder's execution sampler records.
+
+The unprofiled Java build's log records its temporary storage and largest tiles. It used a 2.5 GB node location cache, a
+393 MB multipolygon geometry cache and a feature database that peaked at 18 GB, and it wrote 189,423,246 features into
+10,997,053 tiles. Planetiler printed the archive size only as 4G; `hrt`'s archive was 4,098,754,482 bytes. The largest
+gzipped tile was 13/7274/3224 in Tokyo, 1.3 MB, of which buildings were 2.8 MB before compression. By zoom, the largest
+gzipped tile grew from 14 kB at z0 to 246 kB at z9 and peaked at z13.
