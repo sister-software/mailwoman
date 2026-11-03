@@ -1,6 +1,6 @@
 # @mailwoman/astrogeology
 
-The planetary data pipeline behind `moon.mailwoman.ai` and `mars.mailwoman.ai`. It turns two USGS Astrogeology products, the planetary nomenclature gazetteer and the LOLA and MOLA global elevation models, into the artifacts the planetary app serves for each body: a nomenclature PMTiles archive, a hillshade PMTiles archive, a search artifact and a build manifest with checksums.
+The planetary data pipeline behind `moon.mailwoman.post` and `mars.mailwoman.post`. It turns two USGS Astrogeology products, the planetary nomenclature gazetteer and the LOLA and MOLA global elevation models, into the artifacts the planetary app serves for each body: a nomenclature PMTiles archive, a hillshade PMTiles archive, a search artifact and a build manifest with checksums.
 
 Private: this workspace never publishes to npm. Its artifacts are published to the tile worker's bucket and the public bucket through the same `publishTiles` and `uploadToBucket` functions `mailwoman tiles publish` calls.
 

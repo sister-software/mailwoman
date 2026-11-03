@@ -250,7 +250,7 @@ export default function Pricing(): ReactNode {
 						</Heading>
 						<p>Geocode an address in your browser, or install it and parse one in ten minutes.</p>
 						<div className={styles.closingButtons}>
-							<Link className="button button--primary button--lg" href="https://earth.mailwoman.ai/">
+							<Link className="button button--primary button--lg" href="https://earth.mailwoman.post/">
 								Try the geocoder
 							</Link>
 							<Link className="button button--secondary button--lg" to="/docs/developers/get-started/ten-minute-trial">

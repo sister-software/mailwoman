@@ -11,7 +11,7 @@ import type { RequestLimiter } from "#admission"
 import { type APIBackend, createAPIWorkerApp } from "#app"
 import { REQUEST_LOCATION_WEIGHT } from "#request-bias"
 
-const EARTH = "https://earth.mailwoman.ai"
+const EARTH = "https://earth.mailwoman.post"
 
 /**
  * A backend that records each request it receives and answers `{ ok: true }`.

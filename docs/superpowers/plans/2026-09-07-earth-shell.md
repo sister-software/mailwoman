@@ -2,7 +2,7 @@
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A private workspace, `packages/earth`, that builds a React + Vite installable PWA for Cloudflare Workers Static Assets, mounts the geocoder UI from `@mailwoman/react/map` on a fake runtime, serves `/`, `/debug`, `/trace` and `/build.json`, and is ready for a Workers Builds project at `earth.mailwoman.ai`. This plan moves no real runtime. The second Earth plan does that.
+**Goal:** A private workspace, `packages/earth`, that builds a React + Vite installable PWA for Cloudflare Workers Static Assets, mounts the geocoder UI from `@mailwoman/react/map` on a fake runtime, serves `/`, `/debug`, `/trace` and `/build.json`, and is ready for a Workers Builds project at `earth.mailwoman.post`. This plan moves no real runtime. The second Earth plan does that.
 
 **Architecture:** One Vite app reads three client routes from `location.pathname` without a router. `vite-plugin-pwa` in `injectManifest` mode owns the manifest and a precache-only service worker that the runtime plan later extends with the range cache. A small Vite plugin emits `build.json` from `@mailwoman/core/git`. The plugin, the PWA identity and the Playwright preview config live in `packages/site-kit`, a private workspace the planetary app imports too, so neither app writes them twice. `wrangler.toml` declares `assets` and no `main`. The fake runtime the app mounts is the one `@mailwoman/react`'s stories and tests already use, moved from a test helper to a public subpath so no code is copied.
 
@@ -160,7 +160,7 @@ git commit -m "feat(react): the fake geocoder runtime is a public subpath, map/f
 	"name": "@mailwoman/earth",
 	"version": "1.0.0",
 	"private": true,
-	"description": "Earth — the mailwoman geocoder map at earth.mailwoman.ai: a React + Vite installable PWA on Cloudflare Workers Static Assets.",
+	"description": "Earth — the mailwoman geocoder map at earth.mailwoman.post: a React + Vite installable PWA on Cloudflare Workers Static Assets.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"contributors": [
 		{
@@ -334,7 +334,7 @@ Root `tsconfig.json`: add, next to the `tile-worker` and `license-worker` entrie
 ```markdown
 # @mailwoman/earth
 
-Earth is the mailwoman geocoder map, served at `https://earth.mailwoman.ai` as an installable PWA on Cloudflare
+Earth is the mailwoman geocoder map, served at `https://earth.mailwoman.post` as an installable PWA on Cloudflare
 Workers Static Assets. The app is static: `wrangler.toml` declares `assets` and no Worker script, so a navigation or
 an asset request never invokes compute. Model and gazetteer artifacts come from `public.mailwoman.post` at run time
 and tiles from `tiles.mailwoman.ai`.
@@ -683,7 +683,7 @@ import type { VitePWAOptions } from "vite-plugin-pwa"
 
 export interface PWAIdentity {
 	/**
-	 * The origin with a trailing slash, e.g. `https://earth.mailwoman.ai/`. It is the manifest `id`, which is what
+	 * The origin with a trailing slash, e.g. `https://earth.mailwoman.post/`. It is the manifest `id`, which is what
 	 * keeps the three sites' installations distinct.
 	 */
 	origin: string
@@ -744,7 +744,7 @@ export default defineConfig({
 		react(),
 		VitePWA(
 			installablePWA({
-				origin: "https://earth.mailwoman.ai/",
+				origin: "https://earth.mailwoman.post/",
 				name: "Mailwoman Earth",
 				shortName: "Earth",
 				themeColor: "#0b1020",
@@ -850,7 +850,7 @@ cat packages/earth/dist/build.json
 node -e "const m=require('./packages/earth/dist/manifest.webmanifest');console.log(m.id,m.start_url,m.display,m.icons.length)"
 ```
 
-Expected: `EXIT=0`; `dist/` holds `index.html`, `build.json`, `manifest.webmanifest`, `sw.js`, `icon-192.png`, `icon-512.png`, `icon.svg`, `assets/`; `build.json` contains `app`, a 7-plus-character `revision`, and a `buildTime` ending in `Z`; the manifest prints `https://earth.mailwoman.ai/ / standalone 2`.
+Expected: `EXIT=0`; `dist/` holds `index.html`, `build.json`, `manifest.webmanifest`, `sw.js`, `icon-192.png`, `icon-512.png`, `icon.svg`, `assets/`; `build.json` contains `app`, a 7-plus-character `revision`, and a `buildTime` ending in `Z`; the manifest prints `https://earth.mailwoman.post/ / standalone 2`.
 
 - [ ] **Step 4: Typecheck the config and worker**
 
@@ -1035,9 +1035,9 @@ not_found_handling = "single-page-application"
 In `packages/tile-worker/lib/cors.ts`, add to `AllowedOrigins` after `"https://mailwoman.post"`:
 
 ```ts
-	"https://earth.mailwoman.ai",
-	"https://moon.mailwoman.ai",
-	"https://mars.mailwoman.ai",
+	"https://earth.mailwoman.post",
+	"https://moon.mailwoman.post",
+	"https://mars.mailwoman.post",
 ```
 
 - [ ] **Step 3: Dry run**
@@ -1180,7 +1180,7 @@ test.describe("Mailwoman Earth shell", () => {
 
 		const manifest = await request.get("/manifest.webmanifest")
 		expect(manifest.status()).toBe(200)
-		expect(((await manifest.json()) as { id: string }).id).toBe("https://earth.mailwoman.ai/")
+		expect(((await manifest.json()) as { id: string }).id).toBe("https://earth.mailwoman.post/")
 
 		const worker = await request.get("/sw.js")
 		expect(worker.status()).toBe(200)
@@ -1256,4 +1256,4 @@ EOF
 
 - [ ] **Step 3: Record the one operator step**
 
-The Cloudflare dashboard project cannot be created from the repository. State this in the PR and in the handoff: someone must create the Workers Builds project for `mailwoman-earth` with the README's settings and the custom domain `earth.mailwoman.ai`. The first build tests the assumption that the build runs from the yarn root, and the README documents the fallback if it does not.
+The Cloudflare dashboard project cannot be created from the repository. State this in the PR and in the handoff: someone must create the Workers Builds project for `mailwoman-earth` with the README's settings and the custom domain `earth.mailwoman.post`. The first build tests the assumption that the build runs from the yarn root, and the README documents the fallback if it does not.

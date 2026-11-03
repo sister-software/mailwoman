@@ -84,7 +84,7 @@ export const DEPLOY_TARGETS: readonly DeployTarget[] = [
 		build: "yarn workspace @mailwoman/earth build",
 		body: "",
 		deployArgs: "",
-		receipt: "https://earth.mailwoman.ai/build.json",
+		receipt: "https://earth.mailwoman.post/build.json",
 	},
 	{
 		id: "moon",
@@ -94,7 +94,7 @@ export const DEPLOY_TARGETS: readonly DeployTarget[] = [
 		build: PLANETARY_BUILD,
 		body: "moon",
 		deployArgs: "--env moon",
-		receipt: "https://moon.mailwoman.ai/build.json",
+		receipt: "https://moon.mailwoman.post/build.json",
 	},
 	{
 		id: "mars",
@@ -104,7 +104,7 @@ export const DEPLOY_TARGETS: readonly DeployTarget[] = [
 		build: PLANETARY_BUILD,
 		body: "mars",
 		deployArgs: "--env mars",
-		receipt: "https://mars.mailwoman.ai/build.json",
+		receipt: "https://mars.mailwoman.post/build.json",
 	},
 ]
 

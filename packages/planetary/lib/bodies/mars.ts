@@ -9,14 +9,14 @@ import type { PlanetaryMapConfig } from "#bodies/config"
 const VERSION = "20260908-e2d9f96c"
 
 /**
- * Mars at `mars.mailwoman.ai`, opening on Tharsis so Olympus Mons and the three
- * Tharsis Montes are in the first view.
+ * Mars at `mars.mailwoman.post`, opening on Tharsis so Olympus Mons
+ * and the three Tharsis Montes are in the first view.
  */
 export const MARS: PlanetaryMapConfig = {
 	body: "mars",
 	title: "Mailwoman Mars",
 	displayName: "Mars",
-	hostname: "mars.mailwoman.ai",
+	hostname: "mars.mailwoman.post",
 	initialView: { longitude: -110, latitude: 10, zoom: 2 },
 	latitudeType: "planetocentric",
 	terrainCredit: "NASA MGS MOLA",
@@ -33,7 +33,7 @@ export const MARS: PlanetaryMapConfig = {
 		manifestURL: `https://public.mailwoman.post/planetary/mars/${VERSION}/manifest.json`,
 	},
 	identity: {
-		origin: "https://mars.mailwoman.ai/",
+		origin: "https://mars.mailwoman.post/",
 		name: "Mailwoman Mars",
 		shortName: "Mars",
 		themeColor: "#0a0604",

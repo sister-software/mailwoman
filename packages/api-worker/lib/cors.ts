@@ -18,9 +18,9 @@ import { cors } from "hono/cors"
  */
 export const MAILWOMAN_SITE_ORIGINS: ReadonlySet<string> = new Set([
 	"https://mailwoman.post",
-	"https://earth.mailwoman.ai",
-	"https://moon.mailwoman.ai",
-	"https://mars.mailwoman.ai",
+	"https://earth.mailwoman.post",
+	"https://moon.mailwoman.post",
+	"https://mars.mailwoman.post",
 	"https://mailwoman.sister.software",
 	"https://sister.software",
 	"https://dev.mailwoman.ai",

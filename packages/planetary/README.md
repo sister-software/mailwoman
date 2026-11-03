@@ -1,6 +1,6 @@
 # @mailwoman/planetary
 
-Planetary is one app built twice, as `https://moon.mailwoman.ai` and `https://mars.mailwoman.ai`. Each build is an
+Planetary is one app built twice, as `https://moon.mailwoman.post` and `https://mars.mailwoman.post`. Each build is an
 installable PWA on Cloudflare Workers Static Assets. The app is static. `wrangler.toml` declares `assets` and no Worker
 script, so a navigation or an asset request never invokes compute. The globe draws the body's nomenclature and hillshade
 archives from `tiles.mailwoman.ai`, and search runs in the browser over the ancestrie artifact the astrogeology

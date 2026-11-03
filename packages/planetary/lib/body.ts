@@ -29,8 +29,8 @@ export function currentBody(): PlanetaryBody {
 }
 
 const PRODUCTION_HOSTS: Record<PlanetaryBody, string> = {
-	moon: "moon.mailwoman.ai",
-	mars: "mars.mailwoman.ai",
+	moon: "moon.mailwoman.post",
+	mars: "mars.mailwoman.post",
 }
 
 /**

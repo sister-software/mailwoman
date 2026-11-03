@@ -12,8 +12,8 @@ not_found_handling = "single-page-application"
 
 [env.moon]
 name = "mailwoman-moon"
-routes = [{ pattern = "moon.mailwoman.ai", custom_domain = true }]
+routes = [{ pattern = "moon.mailwoman.post", custom_domain = true }]
 
 [env.mars]
 name = "mailwoman-mars"
-routes = [{ pattern = "mars.mailwoman.ai", custom_domain = true }]
+routes = [{ pattern = "mars.mailwoman.post", custom_domain = true }]

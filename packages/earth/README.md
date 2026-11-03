@@ -1,6 +1,6 @@
 # @mailwoman/earth
 
-Earth is the mailwoman geocoder map, served at `https://earth.mailwoman.ai` as an installable PWA on Cloudflare
+Earth is the mailwoman geocoder map, served at `https://earth.mailwoman.post` as an installable PWA on Cloudflare
 Workers Static Assets. The app is static: `wrangler.toml` declares `assets` and no Worker script, so a navigation or
 an asset request never invokes compute. Model and gazetteer artifacts come from `public.mailwoman.post` at run time
 and tiles from `tiles.mailwoman.ai`; the range worker and sqlite-wasm runtime files are staged under `public/sqlite/` by the build.
@@ -68,5 +68,5 @@ when one of them lies in its dependency closure, walked from the manifests, or a
 table the workflow deploys from is `lib/release-kit/deploy/targets.ts`.
 
 Two rules outside the repository decide whether a deployment works: the public bucket's CORS rule must admit the
-origin the app is served from (`https://earth.mailwoman.ai` is admitted, but a `*.workers.dev` preview origin is not), and
+origin the app is served from (`https://earth.mailwoman.post` is admitted, but a `*.workers.dev` preview origin is not), and
 the tile worker's CORS list in `packages/tile-worker/lib/cors.ts` must name the same origin.

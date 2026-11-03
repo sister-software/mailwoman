@@ -9,13 +9,13 @@ import type { PlanetaryMapConfig } from "#bodies/config"
 const VERSION = "20260908-a2c92ed2"
 
 /**
- * The Moon at `moon.mailwoman.ai`, opening on the near side at the sub-Earth point.
+ * The Moon at `moon.mailwoman.post`, opening on the near side at the sub-Earth point.
  */
 export const MOON: PlanetaryMapConfig = {
 	body: "moon",
 	title: "Mailwoman Moon",
 	displayName: "Moon",
-	hostname: "moon.mailwoman.ai",
+	hostname: "moon.mailwoman.post",
 	initialView: { longitude: 0, latitude: 0, zoom: 1.5 },
 	latitudeType: "planetocentric",
 	terrainCredit: "NASA LRO LOLA",
@@ -32,7 +32,7 @@ export const MOON: PlanetaryMapConfig = {
 		manifestURL: `https://public.mailwoman.post/planetary/moon/${VERSION}/manifest.json`,
 	},
 	identity: {
-		origin: "https://moon.mailwoman.ai/",
+		origin: "https://moon.mailwoman.post/",
 		name: "Mailwoman Moon",
 		shortName: "Moon",
 		themeColor: "#05070d",

@@ -1,6 +1,6 @@
 # Site + Earth UX audit — 2026-09-13
 
-Scope: `mailwoman.ai` (Docusaurus docs site) and `earth.mailwoman.ai` (geocoder demo), walked live in
+Scope: `mailwoman.ai` (Docusaurus docs site) and `earth.mailwoman.post` (geocoder demo), walked live in
 Chrome plus a source sweep of `docs/` and `packages/earth` + `packages/react`. Ordered by severity.
 Every claim states the file:line or the live observation it came from.
 

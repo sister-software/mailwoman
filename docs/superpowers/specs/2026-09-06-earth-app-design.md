@@ -1,4 +1,4 @@
-# Earth: the geocoder map as a product at `earth.mailwoman.ai`
+# Earth: the geocoder map as a product at `earth.mailwoman.post`
 
 **Status:** design approved 2026-09-06. The operator decided that the word "demo" is retired, the app lives under
 `packages/`, the browser runtime moves into the packages that own it (without a `@mailwoman/browser` package), and
@@ -28,8 +28,8 @@ runtime problem that shows up in the docs build.
 
 ## Decisions taken
 
-**Earth is a product rather than a demo.** It ships at `earth.mailwoman.ai` beside `moon.mailwoman.ai` and
-`mars.mailwoman.ai`. Every identifier that contains "demo" is renamed when it moves, to a name that describes
+**Earth is a product rather than a demo.** It ships at `earth.mailwoman.post` beside `moon.mailwoman.post` and
+`mars.mailwoman.post`. Every identifier that contains "demo" is renamed when it moves, to a name that describes
 what it is. "Fake runtime" stays as the test-fixture term in stories and tests.
 
 **The app is a private workspace under `packages/`.** `packages/earth`, `@mailwoman/earth`,
@@ -117,7 +117,7 @@ Manifest identity:
 
 ```json
 {
-	"id": "https://earth.mailwoman.ai/",
+	"id": "https://earth.mailwoman.post/",
 	"name": "Mailwoman Earth",
 	"short_name": "Earth",
 	"start_url": "/",
@@ -175,7 +175,7 @@ touched: `GeocoderDemo` to `Geocoder`, `DemoMap` to `MapCanvas`, `DemoControls` 
 - `docs/package.json` loses every dependency `knip` reports unused once the page and its runtime leave.
   The list is measured at that point rather than predicted here. If an explainer needs one of the removed
   packages, that explainer moves to the Earth app under `/debug`, and a docs page links to it.
-- `/demo`, `/debug` and `/trace` become redirects to `earth.mailwoman.ai` with the same path and query,
+- `/demo`, `/debug` and `/trace` become redirects to `earth.mailwoman.post` with the same path and query,
   through `@docusaurus/plugin-client-redirects` (not yet a docs dependency) or a static page with a
   `meta refresh` and a link, whichever preserves `?q=` in the docs build.
 - `docs-build.yml` watch paths shrink to `docs/**`, `packages/react/**`, `packages/core/**`,
@@ -185,8 +185,8 @@ touched: `GeocoderDemo` to `Geocoder`, `DemoMap` to `MapCanvas`, `DemoControls` 
 
 ### Origins and CORS
 
-`packages/tile-worker/lib/cors.ts` gains `https://earth.mailwoman.ai`, `https://moon.mailwoman.ai` and
-`https://mars.mailwoman.ai`. `public.mailwoman.post` is the R2 public origin, and its CORS policy is
+`packages/tile-worker/lib/cors.ts` gains `https://earth.mailwoman.post`, `https://moon.mailwoman.post` and
+`https://mars.mailwoman.post`. `public.mailwoman.post` is the R2 public origin, and its CORS policy is
 verified for the new origin before launch. The check is a `curl` with an `Origin` header against
 `releases.json`, `wof-hot.db` (a `Range` request), and one model file, recorded in the launch PR. Range
 behavior does not change, because the browser talks to `public.mailwoman.post` directly and no Worker sits
@@ -206,7 +206,7 @@ in that path.
 
 ## Definition of done
 
-- `earth.mailwoman.ai` serves the geocoder on the real runtime with parity on: version manifest,
+- `earth.mailwoman.post` serves the geocoder on the real runtime with parity on: version manifest,
   classifier load, WOF resolver, FST autocomplete, street resolution, postcode anchors, basemap,
   polygon overlays, map bias, device-location bias, calibrator, compare mode, debug trace.
 - `?q=` links from before the move resolve on the new host through the docs redirect.
@@ -244,7 +244,7 @@ Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
   `git grep -n Demo packages/react/lib/index.ts packages/react/lib/map/index.ts` prints no matches.
 - The docs site builds under `rspackBundler` (`cd docs && yarn build`, EXIT=0).
 - Registers: unchanged since the shell PR (#2196).
-- Workers Builds: the project from the shell PR. The bucket's CORS rule admits `https://earth.mailwoman.ai` and
+- Workers Builds: the project from the shell PR. The bucket's CORS rule admits `https://earth.mailwoman.post` and
   `http://localhost:7771` and refuses a `*.workers.dev` preview origin, so the preview smoke runs on the custom domain.
 
 ## Out of scope

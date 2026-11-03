@@ -2,7 +2,7 @@
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** One private workspace, `packages/planetary`, built twice by `PLANETARY_BODY`, serving `moon.mailwoman.ai` and `mars.mailwoman.ai`: a MapLibre globe over the published nomenclature and hillshade archives, labels decluttered by scale, a click-to-inspect feature panel, search over the pipeline's ancestrie artifact, stable `/feature/<id>` links, and visible attribution from the pipeline manifest.
+**Goal:** One private workspace, `packages/planetary`, built twice by `PLANETARY_BODY`, serving `moon.mailwoman.post` and `mars.mailwoman.post`: a MapLibre globe over the published nomenclature and hillshade archives, labels decluttered by scale, a click-to-inspect feature panel, search over the pipeline's ancestrie artifact, stable `/feature/<id>` links, and visible attribution from the pipeline manifest.
 
 **Architecture:** The app copies the Earth shell's shape and imports the shared pieces from `@mailwoman/site-kit`. `@mailwoman/cartographer` gains a `planetary` module whose `createPlanetaryStyle` composes a body's sources and layers over `StyleSpecificationComposer`, which learns to take its base layers, hillshade source and sprite as inputs instead of assuming Earth's. Sources are TileJSON URLs on `tiles.mailwoman.ai`, which MapLibre resolves itself. The body is fixed at build time through the package's own `lib/env.ts` and Vite `define`, and the app checks the production host against it at startup. A feature is identified by the pipeline's stable id. The tile properties and the search payload both contain that id, so a deep link needs no tile query.
 
@@ -335,17 +335,17 @@ import { assertHostMatchesBody } from "@mailwoman/planetary/body"
 import { expect, test } from "vitest"
 
 test.each([
-	["moon.mailwoman.ai", "moon"],
-	["mars.mailwoman.ai", "mars"],
+	["moon.mailwoman.post", "moon"],
+	["mars.mailwoman.post", "mars"],
 	["localhost", "moon"],
 	["localhost", "mars"],
-	["moon.mailwoman.ai.preview.example", "moon"],
+	["moon.mailwoman.post.preview.example", "moon"],
 ] as const)("%s serves a %s build", (hostname, body) => {
 	expect(() => assertHostMatchesBody(hostname, body)).not.toThrow()
 })
 
 test("a production host serving the other body's build fails, naming both", () => {
-	expect(() => assertHostMatchesBody("mars.mailwoman.ai", "moon")).toThrow(/mars\.mailwoman\.ai.*moon/u)
+	expect(() => assertHostMatchesBody("mars.mailwoman.post", "moon")).toThrow(/mars\.mailwoman\.ai.*moon/u)
 })
 ```
 
@@ -379,7 +379,7 @@ export function currentBody(): "moon" | "mars" {
 	return __PLANETARY_BODY__
 }
 
-const PRODUCTION_HOSTS: Record<"moon" | "mars", string> = { moon: "moon.mailwoman.ai", mars: "mars.mailwoman.ai" }
+const PRODUCTION_HOSTS: Record<"moon" | "mars", string> = { moon: "moon.mailwoman.post", mars: "mars.mailwoman.post" }
 
 /**
  * A production host must serve its own body's build. Any other host (a preview, localhost) serves either, so the
@@ -400,7 +400,7 @@ export function assertHostMatchesBody(hostname: string, body: "moon" | "mars"): 
 export const MOON: PlanetaryMapConfig = {
 	body: "moon",
 	title: "Mailwoman Moon",
-	hostname: "moon.mailwoman.ai",
+	hostname: "moon.mailwoman.post",
 	initialView: { longitude: 0, latitude: 0, zoom: 1.5 },
 	tiles: {
 		nomenclature: "https://tiles.mailwoman.ai/moon.json",
@@ -411,7 +411,12 @@ export const MOON: PlanetaryMapConfig = {
 		searchIndexURL: "https://public.mailwoman.post/planetary/moon/<version>/search.ancestrie",
 		manifestURL: "https://public.mailwoman.post/planetary/moon/<version>/manifest.json",
 	},
-	identity: { origin: "https://moon.mailwoman.ai/", name: "Mailwoman Moon", shortName: "Moon", themeColor: "#05070d" },
+	identity: {
+		origin: "https://moon.mailwoman.post/",
+		name: "Mailwoman Moon",
+		shortName: "Moon",
+		themeColor: "#05070d",
+	},
 }
 ```
 
@@ -457,7 +462,7 @@ git add package.json yarn.lock tsconfig.json packages/planetary packages/release
 git commit -m "feat(planetary): the workspace, the build-time body, routes, and the two body configs"
 ```
 
-Expected: `build.json` reads `mailwoman-moon`; the Mars manifest id is `https://mars.mailwoman.ai/`.
+Expected: `build.json` reads `mailwoman-moon`; the Mars manifest id is `https://mars.mailwoman.post/`.
 
 ---
 
@@ -657,7 +662,7 @@ yarn typecheck:tests && yarn ci:test:fast
 PLANETARY_BODY=moon yarn workspace @mailwoman/planetary test:browser
 PLANETARY_BODY=mars yarn workspace @mailwoman/planetary test:browser
 git push -u origin feat/planetary
-gh pr create --title "Planetary: moon.mailwoman.ai and mars.mailwoman.ai from one app" --body-file - <<'EOF'
+gh pr create --title "Planetary: moon.mailwoman.post and mars.mailwoman.post from one app" --body-file - <<'EOF'
 Implements docs/superpowers/specs/2026-09-06-planetary-app-design.md by docs/superpowers/plans/2026-09-07-planetary-app.md.
 
 - @mailwoman/cartographer: the composer takes base layers, hillshade source and sprite as inputs (Earth by default); createPlanetaryStyle for the two bodies

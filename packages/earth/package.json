@@ -2,7 +2,7 @@
 	"name": "@mailwoman/earth",
 	"version": "1.0.0",
 	"private": true,
-	"description": "Earth — the mailwoman geocoder map at earth.mailwoman.ai: a React + Vite installable PWA on Cloudflare Workers Static Assets.",
+	"description": "Earth — the mailwoman geocoder map at earth.mailwoman.post: a React + Vite installable PWA on Cloudflare Workers Static Assets.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"contributors": [
 		{

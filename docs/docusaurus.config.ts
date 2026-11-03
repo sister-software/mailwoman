@@ -254,7 +254,7 @@ const config: Config = {
 						eyebrow: "Try it",
 						title: "Geocode an address in your browser",
 						body: "Earth runs the whole engine client-side. Nothing you type leaves the tab.",
-						to: "https://earth.mailwoman.ai/",
+						to: "https://earth.mailwoman.post/",
 						linkLabel: "Open Earth",
 					},
 				}),
@@ -314,7 +314,7 @@ const config: Config = {
 				},
 				{
 					// The call to action, styled as a button rather than a nav label.
-					href: "https://earth.mailwoman.ai/",
+					href: "https://earth.mailwoman.post/",
 					label: "Try the geocoder",
 					position: "right",
 					className: "navbar__cta",
@@ -333,7 +333,7 @@ const config: Config = {
 				{
 					title: "Try it",
 					items: [
-						{ label: "Earth", href: "https://earth.mailwoman.ai/" },
+						{ label: "Earth", href: "https://earth.mailwoman.post/" },
 						{ label: "Field notes", to: "/research" },
 						// /training is a published page with no other route into it.
 						{ label: "Training", to: "/training" },

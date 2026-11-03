@@ -1,4 +1,4 @@
-# Planetary: `moon.mailwoman.ai` and `mars.mailwoman.ai`
+# Planetary: `moon.mailwoman.post` and `mars.mailwoman.post`
 
 **Status:** design approved 2026-09-06. The operator decided on one app, `packages/planetary`, built twice. The
 name `planetary` is the conventional umbrella term in planetary cartography and covers the Moon. Separate `moon` and
@@ -134,7 +134,7 @@ the body config and the search artifact, but never a PMTiles archive. Manifest i
 
 ```json
 {
-	"id": "https://moon.mailwoman.ai/",
+	"id": "https://moon.mailwoman.post/",
 	"name": "Mailwoman Moon",
 	"short_name": "Moon",
 	"start_url": "/",
@@ -153,7 +153,7 @@ is always visible.
 
 ### Test plan
 
-- Unit: body config selection from `PLANETARY_BODY`, `moon.mailwoman.ai` and `mars.mailwoman.ai`
+- Unit: body config selection from `PLANETARY_BODY`, `moon.mailwoman.post` and `mars.mailwoman.post`
   mapping to their bodies, an unknown production host failing explicitly, and route parsing for
   `/feature/<id>`.
 - `createPlanetaryStyle` returns a valid `StyleSpecification` for each body, validated with
@@ -166,7 +166,7 @@ is always visible.
 
 ## Definition of done
 
-- `moon.mailwoman.ai` and `mars.mailwoman.ai` serve globes over their published nomenclature and
+- `moon.mailwoman.post` and `mars.mailwoman.post` serve globes over their published nomenclature and
   hillshade archives, with labels decluttered by scale, a feature panel, search, stable feature URLs,
   and visible attribution.
 - Both are separate installable PWAs built from one source, with distinct identities and caches.

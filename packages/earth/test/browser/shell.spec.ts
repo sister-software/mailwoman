@@ -79,7 +79,7 @@ test.describe("Mailwoman Earth shell", () => {
 
 		const manifest = await request.get("/manifest.webmanifest")
 		expect(manifest.status()).toBe(200)
-		expect(((await manifest.json()) as { id: string }).id).toBe("https://earth.mailwoman.ai/")
+		expect(((await manifest.json()) as { id: string }).id).toBe("https://earth.mailwoman.post/")
 
 		const worker = await request.get("/service-worker.js")
 		expect(worker.status()).toBe(200)

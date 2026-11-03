@@ -142,8 +142,8 @@ describe("createTileWorkerApp", () => {
 				"access-control-allow-origin"
 			)
 
-		await expect(originHeader("https://earth.mailwoman.ai")).resolves.toBe("https://earth.mailwoman.ai")
-		await expect(originHeader("https://moon.mailwoman.ai")).resolves.toBe("https://moon.mailwoman.ai")
+		await expect(originHeader("https://earth.mailwoman.post")).resolves.toBe("https://earth.mailwoman.post")
+		await expect(originHeader("https://moon.mailwoman.post")).resolves.toBe("https://moon.mailwoman.post")
 		await expect(originHeader("https://maplibre.org")).resolves.toBe("https://maplibre.org")
 		await expect(originHeader("vscode-webview://abc123")).resolves.toBe("vscode-webview://abc123")
 		await expect(originHeader("http://localhost:7781")).resolves.toBe("http://localhost:7781")
@@ -154,7 +154,7 @@ describe("createTileWorkerApp", () => {
 			{
 				method: "OPTIONS",
 				headers: {
-					origin: "https://earth.mailwoman.ai",
+					origin: "https://earth.mailwoman.post",
 					"access-control-request-method": "GET",
 					"access-control-request-headers": "range",
 				},
@@ -176,12 +176,12 @@ describe("createTileWorkerApp", () => {
 
 		const response = await app.request(
 			"http://localhost/planet.v4.json",
-			{ headers: { origin: "https://earth.mailwoman.ai" } },
+			{ headers: { origin: "https://earth.mailwoman.post" } },
 			{},
 			executionContext
 		)
 
 		await expect(response.json()).resolves.toEqual({ cached: true })
-		expect(response.headers.get("access-control-allow-origin")).toBe("https://earth.mailwoman.ai")
+		expect(response.headers.get("access-control-allow-origin")).toBe("https://earth.mailwoman.post")
 	})
 })
