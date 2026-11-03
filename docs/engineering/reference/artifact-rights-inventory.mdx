@@ -334,12 +334,12 @@ requests the `LicensePolicy.ShareAlikeFree` policy, and a source is dropped only
 policy.
 
 Measured 2026-09-27 against commit `dc65605f0`: `--exclude-share-alike` appeared 12 times across 8
-TypeScript files and in 7 Markdown files, and it was never a flag on `mw corpus build` or on any other
-command. `excludeLicenses` was reachable only from `buildCorpus`, whose sole caller was
-`packages/corpus/lib/build.test.ts`, so the mechanism had no operator surface. `mw corpus build` now
-has `--license-policy` and `--exclude-licenses`, and the corpus manifest records which policy ran,
-the row count for each refusal class, and the count of admitted rows whose license value resolves to
-no SPDX expression.
+TypeScript files and in 7 Markdown files, and it was never a flag on `mw corpus build` or on any
+other command. `excludeLicenses` was reachable only from `buildCorpus`, whose sole caller was its
+test file, since renamed to `packages/corpus/lib/build.integration.test.ts`, so the mechanism had no
+operator surface. `mw corpus build` now has `--license-policy` and `--exclude-licenses`, and the
+corpus manifest records which policy ran, the row count for each refusal class, and the count of
+admitted rows whose license value resolves to no SPDX expression.
 
 The flag is neither necessary nor sufficient as evidence about a released model. It does not record
 which sources contributed, and passing it does not establish that an indirectly included or
