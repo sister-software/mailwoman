@@ -10,6 +10,8 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
+import { defaultAugmentationsForCountry } from "#synthesizers/utils"
+import type { CanonicalRow } from "#types"
 import { computeShapeSupply, splitRetentionFromSupply } from "#utils/shape-supply"
 import {
 	type CountryHoldout,
@@ -186,6 +188,59 @@ describe("splitForRow — hashed place holdout for an undeclared country", () =>
 		expect(() =>
 			hashedPlacesOverCap([{ country: "KE", place: "locality:x", region: null, rows: 1 }], new Map())
 		).toThrow(/no row count for KE\|/)
+	})
+
+	it("splits every default augmentation of a row as it splits the row", () => {
+		const base = (country: string, index: number, components: CanonicalRow["components"]): CanonicalRow =>
+			({
+				source: "test",
+				source_id: `r-${country}-${index}`,
+				country,
+				raw: Object.values(components).join(", "),
+				components,
+			}) as CanonicalRow
+
+		const rows = Array.from({ length: 300 }, (_, i) => [
+			base("AD", i, { venue: `La Planada ${i}`, country: "Andorra" }),
+			base("KE", i, { venue: `Acme Stores East, LP ${i}`, locality: "Nairobi" }),
+			base("NL", i, { street: "Zwaardemakerstraat", house_number: "76", locality: `Nieuw Amsterdam ${i}` }),
+			base("GB", i, { street: "High Street", postcode: `LL${10 + (i % 60)} 1BZ` }),
+			base("US", i, { street: "N Main St", region: "CA", postcode: `${String(i).padStart(3, "0")}21-1234` }),
+			base("FR", i, { street: "Rue de l'Église", postcode: `${20 + (i % 30)}100`, locality: "Évry" }),
+		]).flat()
+
+		let heldOut = 0
+
+		for (const baseRow of rows) {
+			const split = splitForRow(baseRow)
+
+			heldOut += Number(split !== "train")
+
+			for (const augment of defaultAugmentationsForCountry(baseRow.country)) {
+				const variant = augment(baseRow)
+
+				if (!variant) continue
+
+				expect(splitForRow(variant) === "train", `${variant.source_id} ${variant.raw}`).toBe(split === "train")
+			}
+		}
+
+		expect(heldOut).toBeGreaterThan(0)
+	})
+
+	it("keys a double-spaced or comma-dropped name, and a lower-cased GB postcode, as their base rows", () => {
+		expect(hashedHoldoutPlace({ venue: "La  Planada" })).toBe(hashedHoldoutPlace({ venue: "La Planada" }))
+
+		expect(hashedHoldoutPlace({ venue: "Acme Stores East LP" })).toBe(
+			hashedHoldoutPlace({ venue: "Acme Stores East, LP" })
+		)
+
+		const gb = (postcode: string) =>
+			splitForRow({ source_id: "wof-postalcode-1160872690-default-self", country: "GB", components: { postcode } })
+
+		expect(gb("LL55 1BZ")).not.toBe("train")
+		expect(gb("ll55 1bz")).toBe(gb("LL55 1BZ"))
+		expect(gb("LL55  1BZ")).toBe(gb("LL55 1BZ"))
 	})
 
 	it("keeps a row with no place in train", () => {

@@ -7580,6 +7580,7 @@ __metadata:
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/gazetteer": "workspace:*"
     "@mailwoman/match": "workspace:*"
+    "@mailwoman/postcode": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"

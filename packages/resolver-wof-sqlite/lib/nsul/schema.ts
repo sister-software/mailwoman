@@ -70,13 +70,6 @@ export interface NSULDatabase extends layerschemadatabase {
 	nsul_meta: NSULMetaTable
 }
 
-/**
- * The compact form of a unit postcode, every space removed and upper-cased.
- */
-export function compactPostcode(pcds: string): string {
-	return pcds.replaceAll(/\s+/g, "").toUpperCase()
-}
-
 export async function createUPRNPostcodeTable(db: Kysely<NSULDatabase>): Promise<void> {
 	await db.schema
 		.createTable("uprn_postcode")
@@ -102,7 +95,8 @@ export async function createNSULMetaTable(db: Kysely<NSULDatabase>): Promise<voi
 /**
  * The `pcds_compact` index the `uprnsForPostcode` probe reads.
  *
- * There is no index on the spaced `pcds` because it is derivable through {@link compactPostcode}.
+ * There is no index on the spaced `pcds` because `compactPostcode` from
+ * `@mailwoman/postcode/display-form` derives the compact column from it.
  */
 export async function createNSULIndexes(db: Kysely<NSULDatabase>): Promise<void> {
 	await db.schema.createIndex("uprn_postcode_pcds_compact").on("uprn_postcode").column("pcds_compact").execute()

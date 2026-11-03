@@ -18,6 +18,7 @@ import { createHash } from "@mailwoman/core/hash"
 import { spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
+import { compactPostcode } from "@mailwoman/postcode/display-form"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -751,27 +752,39 @@ export function hashSelectedPlace(
  * A venue name keys before its place because the venue recipes write one name both with a locality and bare.
  * A locality key would hold out the first form and train on the second.
  *
+ * Names are compared under {@link foldHoldoutName} and postcodes under `compactPostcode`.
+ * The case, comma and spacing augmentations rewrite a row's components as well as its text,
+ * and an unfolded key sends `La  Planada` to a different place than `La Planada`.
+ *
  * Returns null for a row with none of the four.
  * That row stays in train.
  */
 export function hashedHoldoutPlace(
 	components: Partial<Record<"venue" | "locality" | "postcode" | "region", string>>
 ): string | null {
-	const venue = components.venue?.trim().toLowerCase()
+	const venue = components.venue && foldHoldoutName(components.venue)
 
 	if (venue) return `venue:${venue}`
 
-	const locality = components.locality?.trim().toLowerCase()
+	const locality = components.locality && foldHoldoutName(components.locality)
 
 	if (locality) return `locality:${locality}`
 
-	const postcode = components.postcode?.replaceAll(/\s+/g, "").toUpperCase()
+	const postcode = components.postcode && compactPostcode(components.postcode)
 
 	if (postcode && postcode.length >= 2) return `postcode:${postcode.slice(0, 2)}`
 
-	const region = components.region?.trim().toLowerCase()
+	const region = components.region && foldHoldoutName(components.region)
 
 	return region ? `region:${region}` : null
+}
+
+/**
+ * A place name as the hashed holdout compares it: `foldNFKCWhitespace` with each comma
+ * read as a space, so `drop-commas` leaves `WAL-MART STORES EAST, LP` the same place.
+ */
+function foldHoldoutName(name: string): string {
+	return foldNFKCWhitespace(name.replaceAll(",", " "))
 }
 
 /**
@@ -849,9 +862,12 @@ export function splitForRow(
 		const policy = holdoutPolicyFor(declared)
 		const folded = foldedNamesFor(declared, policy)
 
+		// A compact postcode matches `ll55 1bz` and `LL55  1BZ` to GB's `LL55` as it matches `LL55 1BZ`.
+		const compact = postcode && compactPostcode(postcode)
+
 		isHeldOut = Boolean(
 			(region && folded.regions.has(foldNFKCWhitespace(region))) ||
-			(postcode && (policy.postcodePrefixes?.some((prefix) => postcode.startsWith(prefix)) ?? false)) ||
+			(compact && (policy.postcodePrefixes?.some((prefix) => compact.startsWith(compactPostcode(prefix))) ?? false)) ||
 			(locality && folded.localities.has(foldNFKCWhitespace(locality)))
 		)
 	} else {
