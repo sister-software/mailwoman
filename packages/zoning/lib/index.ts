@@ -19,12 +19,11 @@ import {
 	bboxContains,
 	recoverShortCellResolution,
 	shortCellToInt,
-	type H3Cell,
 	pointInEncodedRings,
 } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "@sister.software/h3"
+import { latLngToCell, type H3Cell } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import type { ZoningDatabase } from "#schema"
@@ -333,7 +332,7 @@ export class ZoningLookup implements Disposable {
 	 * Returns what an adopted plan assigns at this coordinate.
 	 */
 	public lookup(latitude: number, longitude: number): ZoningReading {
-		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution) as H3Cell
+		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution)
 		const coverage = this.#readCoverage(indexCell)
 		const resolved = this.#resolveDesignations(indexCell, latitude, longitude)
 

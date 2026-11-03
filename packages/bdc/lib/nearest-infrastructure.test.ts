@@ -53,7 +53,7 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
@@ -64,7 +64,7 @@ import { nearestInfrastructure } from "#nearest-infrastructure"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
 
-const SPRINGFIELD_ORIGIN = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, POI_H3_RESOLUTION) as H3Cell
+const SPRINGFIELD_ORIGIN = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, POI_H3_RESOLUTION)
 
 const SPRINGFIELD_CENTER = {
 	type: "Point" as const,
@@ -132,7 +132,7 @@ const TELECOM_CATEGORY_IDS = ["telecom_exchange", "tower_comms"]
 const CATEGORY_IDS: Record<string, number> = { telecom_exchange: 1, tower_comms: 2, cafe: 3 }
 
 function cellFor(latitude: number, longitude: number): number {
-	const full = latLngToCell(latitude, longitude, POI_H3_RESOLUTION) as H3Cell
+	const full = latLngToCell(latitude, longitude, POI_H3_RESOLUTION)
 
 	return shortCellToInt(full)
 }

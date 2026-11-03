@@ -24,7 +24,7 @@ import {
 } from "@mailwoman/core/layers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { ingestChunkArguments, mergeCountsInto, runChunkProcess } from "@mailwoman/core/utils"
-import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { expandShortCellInt, shortCellToInt } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
 import { compactCells, getResolution } from "@sister.software/h3"
@@ -41,7 +41,6 @@ import {
 	EA_FLOOD_LICENSE,
 	EA_FLOOD_ZONE_DEFINITIONS,
 } from "#vocabulary"
-
 /**
  * Schema version of the domain tables, bumped when a column changes meaning
  * and never for an added column a reader can ignore.
@@ -425,7 +424,7 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 			const cellResolution = getResolution(cell)
 
 			resolutions.add(cellResolution)
-			insertCell.run(shortCellToInt(cell as H3Cell), cellResolution, zoneCode, FloodCellContainment.Whole)
+			insertCell.run(shortCellToInt(cell), cellResolution, zoneCode, FloodCellContainment.Whole)
 
 			wholeRows++
 		}

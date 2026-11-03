@@ -80,7 +80,7 @@
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"@sister.software/h3": "^1.0.0",
+		"@sister.software/h3": "^1.1.0",
 		"kysely": "^0.29.7",
 		"path-ts": "^2.5.0"
 	},

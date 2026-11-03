@@ -15,13 +15,7 @@ import {
 	type layerschemadatabase,
 } from "@mailwoman/core/layers"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
-import {
-	type LineStringPath,
-	type ParsedGeometry,
-	shortCellToInt,
-	type H3Cell,
-	interiorCoverageCells,
-} from "@mailwoman/spatial"
+import { type LineStringPath, type ParsedGeometry, shortCellToInt, interiorCoverageCells } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToBoundary, latLngToCell } from "@sister.software/h3"
 import { describe, expect, it } from "vitest"
@@ -78,7 +72,7 @@ describe("buildExclusionCoverage", () => {
 	})
 
 	it("never writes a cell outside the region", () => {
-		const interior = new Set(interiorCoverageCells(REGION, RESOLUTION).map((c) => shortCellToInt(c as H3Cell)))
+		const interior = new Set(interiorCoverageCells(REGION, RESOLUTION).map((c) => shortCellToInt(c)))
 		const subject = rows(6, (i) => `Pharmacie ${i}`)
 		const result = buildExclusionCoverage({ geometry: REGION, resolution: RESOLUTION, subject, reference: subject })
 
@@ -171,7 +165,7 @@ describe("the layer interface's read of these cells", () => {
 		await writeLayerCoverage(db, cells)
 
 		// A cell on the other side of the world — unsurveyed by any reading of this pilot.
-		const outside = shortCellToInt(latLngToCell(35.68, 139.76, RESOLUTION) as H3Cell)
+		const outside = shortCellToInt(latLngToCell(35.68, 139.76, RESOLUTION))
 
 		expect(cells.some((cell) => cell.h3Cell === outside)).toBe(false)
 		await expect(readLayerCoverage(db, outside)).resolves.toBeNull()

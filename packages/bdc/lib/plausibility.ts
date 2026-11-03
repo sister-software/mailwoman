@@ -15,7 +15,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, readLayerManifest, type layerschemahandle } from "@mailwoman/core/layers"
 import type { Evidence } from "@mailwoman/evidence"
 import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
-import { shortCellToInt, type H3Cell, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"
+import { shortCellToInt, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "@sister.software/h3"
 
@@ -290,7 +290,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 	const blockResolution: PlausibilityBundle["block_resolution"] = claim.geoid ? "geoid" : "h3_cell_approximation"
 
 	const pointCell = point
-		? shortCellToInt(latLngToCell(point.coordinates[1], point.coordinates[0], BDC_H3_RESOLUTION) as H3Cell)
+		? shortCellToInt(latLngToCell(point.coordinates[1], point.coordinates[0], BDC_H3_RESOLUTION))
 		: null
 
 	if (deps.bdcDB) {

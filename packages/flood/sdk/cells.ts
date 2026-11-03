@@ -19,15 +19,15 @@
  *   do not.
  */
 
-import { compactAcrossResolutions, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
-import { getResolution } from "@sister.software/h3"
+import { compactAcrossResolutions, shortCellToInt, type FeatureCells } from "@mailwoman/spatial"
+import { getResolution, type H3Cell } from "@sister.software/h3"
 
 /**
  * A zone's accumulated cell sets across every feature carrying that zone code.
  */
 interface ZoneAccumulator {
-	whole: Set<string>
-	touched: Set<string>
+	whole: Set<H3Cell>
+	touched: Set<H3Cell>
 }
 
 /**
@@ -94,7 +94,7 @@ export class FloodCellIndex {
 	 *
 	 * The index can identify those cells only after it sees every feature.
 	 */
-	readonly #candidates = new Map<string, Set<string>>()
+	readonly #candidates = new Map<H3Cell, Set<string>>()
 
 	#coarsened = 0
 
@@ -182,7 +182,7 @@ export class FloodCellIndex {
 				resolutions.add(resolution)
 
 				zoneCells.push({
-					h3Cell: shortCellToInt(cell as H3Cell),
+					h3Cell: shortCellToInt(cell),
 					resolution,
 					zoneCode,
 					containment: "whole",
@@ -202,7 +202,7 @@ export class FloodCellIndex {
 				partialForZone++
 
 				zoneCells.push({
-					h3Cell: shortCellToInt(cell as H3Cell),
+					h3Cell: shortCellToInt(cell),
 					resolution,
 					zoneCode,
 					containment: "partial",
@@ -229,7 +229,7 @@ export class FloodCellIndex {
 			// reached it, so its candidate list would never be read.
 			if (!partialCellKeys.has(cell)) continue
 
-			const h3Cell = shortCellToInt(cell as H3Cell)
+			const h3Cell = shortCellToInt(cell)
 			const resolution = getResolution(cell)
 
 			for (const areaID of areas) {

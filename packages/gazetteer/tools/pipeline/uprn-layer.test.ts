@@ -15,7 +15,7 @@ import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readLayerCoverage, readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import { UPRNLookup, UPRN_COVERAGE_H3_RESOLUTION, uprnFullCell } from "@mailwoman/resolver-wof-sqlite/uprn"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
@@ -178,7 +178,7 @@ describe("buildUPRNLayer (fixture)", () => {
 		// Coverage: the res-6 parent of a fixture point is designated-complete.
 		// An unsurveyed cell is unknown.
 		const parent = shortCellToInt(
-			cellToParent(uprnFullCell(FIXTURE_POINTS[0]!.lat, FIXTURE_POINTS[0]!.lon), UPRN_COVERAGE_H3_RESOLUTION) as H3Cell
+			cellToParent(uprnFullCell(FIXTURE_POINTS[0]!.lat, FIXTURE_POINTS[0]!.lon), UPRN_COVERAGE_H3_RESOLUTION)
 		)
 
 		const surveyed = await readLayerCoverage(kdb, parent)

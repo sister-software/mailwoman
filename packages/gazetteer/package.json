@@ -87,7 +87,7 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"@sister.software/h3": "^1.0.0",
+		"@sister.software/h3": "^1.1.0",
 		"d3-color": "^3.1.0",
 		"d3-scale-chromatic": "^3.1.0",
 		"kysely": "^0.29.7",

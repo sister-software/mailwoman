@@ -11,10 +11,9 @@ import {
 	compactAcrossResolutions,
 	shortCellToInt,
 	type FeatureCells,
-	type H3Cell,
 	type MultiPolygonRings,
 } from "@mailwoman/spatial"
-import { getResolution } from "@sister.software/h3"
+import { getResolution, type H3Cell } from "@sister.software/h3"
 
 /**
  * The label assigned to this layer's classifier failures.
@@ -193,6 +192,6 @@ export function formatSoilResolutionRows(
 /**
  * The cell integer a short-cell string stores as.
  */
-export function cellToShortInt(cell: string): number {
-	return shortCellToInt(cell as H3Cell)
+export function cellToShortInt(cell: H3Cell): number {
+	return shortCellToInt(cell)
 }

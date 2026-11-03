@@ -16,7 +16,7 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-import { shortCellToInt, type H3Cell, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"
+import { shortCellToInt, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
@@ -47,14 +47,16 @@ const SPRINGFIELD_POINT: PointLiteral = {
 	coordinates: [SPRINGFIELD.longitude, SPRINGFIELD.latitude],
 }
 
-const SPRINGFIELD_RES9_FULL = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, 9) as H3Cell
+const SPRINGFIELD_RES9_FULL = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, 9)
 const SPRINGFIELD_RES9_SHORT = shortCellToInt(SPRINGFIELD_RES9_FULL)
-const SPRINGFIELD_RES6_PARENT_FULL = cellToParent(SPRINGFIELD_RES9_FULL, 6) as H3Cell
+const SPRINGFIELD_RES6_PARENT_FULL = cellToParent(SPRINGFIELD_RES9_FULL, 6)
 const SPRINGFIELD_RES6_PARENT_SHORT = res9ShortCellToRes6Parent(SPRINGFIELD_RES9_SHORT)
 
 const SPRINGFIELD_SIBLING_RES9_FULL = cellToChildren(SPRINGFIELD_RES6_PARENT_FULL, 9).find(
 	(cell) => cell !== SPRINGFIELD_RES9_FULL
-) as H3Cell
+)
+
+if (!SPRINGFIELD_SIBLING_RES9_FULL) throw new Error("No sibling cell found for the fixture")
 
 const [SIBLING_LAT, SIBLING_LON] = cellToLatLng(SPRINGFIELD_SIBLING_RES9_FULL)
 const SIBLING_POINT: PointLiteral = { type: "Point", coordinates: [SIBLING_LON, SIBLING_LAT] }
@@ -130,7 +132,7 @@ const TELECOM_EXCHANGE_NEAR: POIFixtureRow = {
 const CATEGORY_IDS: Record<string, number> = { telecom_exchange: 1, tower_comms: 2, data_center: 3, cafe: 4 }
 
 function cellFor(latitude: number, longitude: number): number {
-	return shortCellToInt(latLngToCell(latitude, longitude, 9) as H3Cell)
+	return shortCellToInt(latLngToCell(latitude, longitude, 9))
 }
 
 type POIFixture = TemporaryDirectory & { databasePath: PathBuilder }

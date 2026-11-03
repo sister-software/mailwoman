@@ -21,7 +21,7 @@
 
 import { CoverageBasis } from "@mailwoman/evidence"
 import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi"
-import { shortCellToInt, type ParsedGeometry, type H3Cell, interiorCoverageCells } from "@mailwoman/spatial"
+import { shortCellToInt, type ParsedGeometry, interiorCoverageCells } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "@sister.software/h3"
 
 import {
@@ -92,9 +92,9 @@ export interface ExclusionCoverageResult {
  * from the cell where it was observed.
  */
 function coverageCellOf(row: CaptureRow, resolution: number): number {
-	const rowCell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
+	const rowCell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION)
 
-	return shortCellToInt(cellToParent(rowCell, resolution) as H3Cell)
+	return shortCellToInt(cellToParent(rowCell, resolution))
 }
 
 /**

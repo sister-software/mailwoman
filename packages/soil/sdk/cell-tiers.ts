@@ -6,7 +6,7 @@
  *   Turns the build's cell-touch table into the containment index and the per-cell capability reduction.
  */
 
-import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { expandShortCellInt, shortCellToInt } from "@mailwoman/spatial"
 import { beginBatched } from "@mailwoman/sqlite/batched"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { compactCells, getResolution } from "@sister.software/h3"
@@ -51,7 +51,7 @@ export function resolveCells(
 			const cellResolution = getResolution(cell)
 
 			resolutions.add(cellResolution)
-			insertCell.run(shortCellToInt(cell as H3Cell), cellResolution, areaID, SoilCellContainment.Whole)
+			insertCell.run(shortCellToInt(cell), cellResolution, areaID, SoilCellContainment.Whole)
 
 			wholeRows++
 		}

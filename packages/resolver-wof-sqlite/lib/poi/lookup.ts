@@ -13,7 +13,7 @@
  */
 
 import { allRows } from "@mailwoman/core/utils"
-import { haversine, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { haversine, shortCellToInt } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 import { gridDisk, latLngToCell } from "@sister.software/h3"
@@ -244,7 +244,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		// This is a clean miss instead of a throw.
 		if (!categoryIDs.length) return []
 
-		const origin = latLngToCell(center.latitude, center.longitude, POI_H3_RESOLUTION) as H3Cell
+		const origin = latLngToCell(center.latitude, center.longitude, POI_H3_RESOLUTION)
 		const seenCells = new Set<string>()
 		let rows: POIRow[] = []
 
@@ -252,12 +252,12 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		for (let ring = 0; ring < maxRings; ring++) {
 			// gridDisk(origin, ring) returns the whole disk out to `ring`, so diffing against
 			// the already-probed set derives only this ring's new cells.
-			const diskCells = gridDisk(origin, ring) as string[]
+			const diskCells = gridDisk(origin, ring)
 			const newCells = diskCells.filter((cell) => !seenCells.has(cell))
 
 			for (const cell of newCells) {
 				seenCells.add(cell)
-				const shortCell = shortCellToInt(cell as H3Cell)
+				const shortCell = shortCellToInt(cell)
 
 				for (const categoryID of categoryIDs) {
 					rows.push(...allRows<POIRow>(this.#categoryCellProbe, shortCell, categoryID, limit))

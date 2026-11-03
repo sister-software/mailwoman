@@ -69,7 +69,7 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
-		"@sister.software/h3": "^1.0.0",
+		"@sister.software/h3": "^1.1.0",
 		"spliterator": "^10.1.1"
 	},
 	"devDependencies": {

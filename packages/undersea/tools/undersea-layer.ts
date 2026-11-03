@@ -26,7 +26,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { pointInPolygon } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
@@ -46,7 +46,6 @@ import {
 	UNDERSEA_SCHEMA_VERSION,
 	underseaDisplayName,
 } from "#vocabulary"
-
 /**
  * The H3 resolution of the coverage rows.
  */
@@ -453,8 +452,8 @@ export async function buildUnderseaLayer(options: UnderseaBuildOptions): Promise
 		for (const [index, record] of unique.entries()) {
 			const depth = depths[index] ?? null
 			const [lon, lat] = record.labelPoint
-			const cell = latLngToCell(lat, lon, UNDERSEA_H3_RESOLUTION) as H3Cell
-			const coverageCell = shortCellToInt(cellToParent(cell, UNDERSEA_COVERAGE_RESOLUTION) as H3Cell)
+			const cell = latLngToCell(lat, lon, UNDERSEA_H3_RESOLUTION)
+			const coverageCell = shortCellToInt(cellToParent(cell, UNDERSEA_COVERAGE_RESOLUTION))
 
 			observed.set(coverageCell, (observed.get(coverageCell) ?? 0) + 1)
 

@@ -6,14 +6,8 @@
  * The cell classifier lives in `@mailwoman/spatial`, and this layer adds the candidates-per-cell and polyfill-only zero-cell measurements the resolution is chosen from.
  */
 
-import {
-	compactAcrossResolutions,
-	shortCellToInt,
-	type FeatureCells,
-	type H3Cell,
-	type MultiPolygonRings,
-} from "@mailwoman/spatial"
-import { polygonToCells } from "@sister.software/h3"
+import { compactAcrossResolutions, shortCellToInt, type FeatureCells, type MultiPolygonRings } from "@mailwoman/spatial"
+import { polygonToCells, type H3Cell } from "@sister.software/h3"
 
 /**
  * Whether a center-in-polygon polyfill would return no cell for this feature,

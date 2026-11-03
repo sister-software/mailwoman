@@ -46,7 +46,7 @@ import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 } from "@mailwoman/resolver-wof-sqlite/street"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { latLngToCell } from "@sister.software/h3"
@@ -309,7 +309,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 
 				const locality = localities.get(r["LOCALITY_PID"] ?? "")
 				const [lon, lat] = geo
-				const h3Cell = shortCellToInt(latLngToCell(lat, lon, ADDRESS_POINT_H3_RESOLUTION) as H3Cell)
+				const h3Cell = shortCellToInt(latLngToCell(lat, lon, ADDRESS_POINT_H3_RESOLUTION))
 
 				insert.run(
 					streetNorm,

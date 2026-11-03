@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { cellToLatLng } from "@sister.software/h3"
+import { cellToLatLng, type H3Cell } from "@sister.software/h3"
 
 import { GeoPoint } from "#geometries/point"
 import type { PointLiteral } from "#geometries/point/coordinates"
-import { type H3Cell, type H3CellShort, expandH3Cell } from "#h3/cell"
+import { type H3CellShort, expandH3Cell } from "#h3/cell"
 
 export * from "#h3/cell"
 export * from "#h3/interior-cells"

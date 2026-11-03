@@ -14,10 +14,10 @@ import {
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "@sister.software/h3"
+import { latLngToCell, type H3Cell } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import type { SoilDatabase } from "#schema"
@@ -225,7 +225,7 @@ export class SoilCapabilityLookup implements Disposable {
 	 * Returns what the soil survey assigns at this coordinate.
 	 */
 	public lookup(latitude: number, longitude: number): SoilCapabilityReading {
-		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution) as H3Cell
+		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution)
 		const coverage = this.#readCoverage(indexCell)
 
 		// Every answer is a per-cell summary, so a cell outside the coverage table

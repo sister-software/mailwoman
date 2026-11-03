@@ -32,12 +32,11 @@ import {
 	bboxContains,
 	recoverShortCellResolution,
 	shortCellToInt,
-	type H3Cell,
 	pointInEncodedRings,
 } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient, type StatementSync } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "@sister.software/h3"
+import { latLngToCell, type H3Cell } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import type { CoastalDatabase } from "#schema"
@@ -322,7 +321,7 @@ export class CoastalErosionLookup implements Disposable {
 			)
 		}
 
-		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution) as H3Cell
+		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution)
 		const coverage = this.#readCoverage(indexCell)
 		const resolved = this.#resolveDesignations(indexCell, latitude, longitude, scenarioKey)
 

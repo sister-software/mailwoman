@@ -19,7 +19,7 @@ import {
 	isPointLiteral,
 	pointInputCoordinates,
 } from "#geometries/point/coordinates"
-import { type H3Cell, shortenH3Cell } from "#h3/cell"
+import { shortenH3Cell } from "#h3/cell"
 import { type GeoObjectLiteral, GeometryType } from "#objects"
 import {
 	type InternalPointCoordinates,
@@ -321,7 +321,7 @@ export class GeoPoint implements PointLiteral {
 	 * Converts the GeoPoint to a H3 short cell address.
 	 */
 	public toH3Cell(resolution = 15) {
-		const cell = latLngToCell(this.#latitude, this.#longitude, resolution) as H3Cell
+		const cell = latLngToCell(this.#latitude, this.#longitude, resolution)
 
 		return cell
 	}

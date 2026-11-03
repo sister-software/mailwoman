@@ -13,7 +13,7 @@
 
 import type { CoverageCell } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
-import { type H3Cell, shortCellToInt } from "@mailwoman/spatial/h3/cell"
+import { shortCellToInt } from "@mailwoman/spatial/h3/cell"
 import { latLngToCell } from "@sister.software/h3"
 /**
  * The resolution `layer_coverage` is written at, matching the OSM and BDC address layers
@@ -61,7 +61,7 @@ export function certifiedCoverageCells(points: Iterable<CoveragePoint>, whole: R
 	const cells = new Map<number, { observedRows: number; allWhole: boolean }>()
 
 	for (const point of points) {
-		const h3Cell = shortCellToInt(latLngToCell(point.lat, point.lon, STREET_CENTROID_COVERAGE_RESOLUTION) as H3Cell)
+		const h3Cell = shortCellToInt(latLngToCell(point.lat, point.lon, STREET_CENTROID_COVERAGE_RESOLUTION))
 		const entry = cells.get(h3Cell) ?? { observedRows: 0, allWhole: true }
 
 		entry.observedRows++

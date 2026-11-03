@@ -34,7 +34,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode } from "@mailwoman/core/fs/writers"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { cellToParent, latLngToCell } from "@sister.software/h3"
@@ -229,7 +229,7 @@ describe("filingLandscape — Check 1: interface conformance", () => {
 			.where("geoid", "=", GEOID_SF)
 			.executeTakeFirstOrThrow()
 
-		const expectedCell = shortCellToInt(latLngToCell(CENTROID_SF.lat, CENTROID_SF.lon, 9) as H3Cell)
+		const expectedCell = shortCellToInt(latLngToCell(CENTROID_SF.lat, CENTROID_SF.lon, 9))
 		expect(row.h3_cell).toBe(expectedCell)
 
 		const result = await filingLandscape(db, { geoids: [GEOID_SF] })
@@ -244,9 +244,7 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 
 		// Independent honesty check on the fixture: an area never fed to the builder has no
 		// coverage row at all, proving the absence below is real rather than a query artifact.
-		const neverSurveyedRes6 = shortCellToInt(
-			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 6) as H3Cell
-		)
+		const neverSurveyedRes6 = shortCellToInt(latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 6))
 
 		await expect(readLayerCoverage(schemadb, neverSurveyedRes6)).resolves.toBeNull()
 
@@ -324,7 +322,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 		// The cell is supplied directly, so the coverage-check branch itself —
 		// not a rows-existence proxy — is the only code path that can classify it.
 		const neverSurveyedRes9Cell = shortCellToInt(
-			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 9) as H3Cell
+			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 9)
 		)
 
 		const result = await filingLandscape(db, { h3Cells: [neverSurveyedRes9Cell] })
@@ -375,8 +373,8 @@ describe("filingLandscape — every advertised speed tier on one block stays its
 
 		// Premise: the two-tier block's centroid sits in its own res-9 cell inside NY's res-6
 		// parent, so the h3Cells equivalence test over NY's cell never reads these rows.
-		const twoTierCell = shortCellToInt(latLngToCell(40.7178, -74.006, BDC_H3_RESOLUTION) as H3Cell)
-		const nyCell = shortCellToInt(latLngToCell(CENTROID_NY.lat, CENTROID_NY.lon, BDC_H3_RESOLUTION) as H3Cell)
+		const twoTierCell = shortCellToInt(latLngToCell(40.7178, -74.006, BDC_H3_RESOLUTION))
+		const nyCell = shortCellToInt(latLngToCell(CENTROID_NY.lat, CENTROID_NY.lon, BDC_H3_RESOLUTION))
 
 		expect(twoTierCell).not.toBe(nyCell)
 		expect(res9ShortCellToRes6Parent(twoTierCell)).toBe(res9ShortCellToRes6Parent(nyCell))
@@ -408,7 +406,7 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 		// `latLngToCell(centroid, 6)` derivation, taken without reference to the stored
 		// res-9 cell, disagrees with the reader's hierarchy-parent derivation here.
 		// If this assertion ever stops holding (an H3 library upgrade changing cell boundaries), re-select the point.
-		const oldBuggyDerivation = shortCellToInt(latLngToCell(CENTROID_DIVERGENT.lat, CENTROID_DIVERGENT.lon, 6) as H3Cell)
+		const oldBuggyDerivation = shortCellToInt(latLngToCell(CENTROID_DIVERGENT.lat, CENTROID_DIVERGENT.lon, 6))
 		const unifiedDerivation = res9ShortCellToRes6Parent(row.h3_cell)
 		expect(unifiedDerivation).not.toBe(oldBuggyDerivation)
 
@@ -461,14 +459,14 @@ describe("blockCentroidCells", () => {
 			const fullRes9Cell = latLngToCell(point.lat, point.lon, BDC_H3_RESOLUTION)
 
 			expect(blockCentroidCells(point)).toEqual({
-				h3Cell: shortCellToInt(fullRes9Cell as H3Cell),
-				coverageCell: shortCellToInt(cellToParent(fullRes9Cell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell),
+				h3Cell: shortCellToInt(fullRes9Cell),
+				coverageCell: shortCellToInt(cellToParent(fullRes9Cell, BDC_COVERAGE_H3_RESOLUTION)),
 			})
 		}
 
 		const directRes6 = latLngToCell(CENTROID_DIVERGENT.lat, CENTROID_DIVERGENT.lon, BDC_COVERAGE_H3_RESOLUTION)
 
-		expect(blockCentroidCells(CENTROID_DIVERGENT).coverageCell).not.toBe(shortCellToInt(directRes6 as H3Cell))
+		expect(blockCentroidCells(CENTROID_DIVERGENT).coverageCell).not.toBe(shortCellToInt(directRes6))
 	})
 })
 
@@ -548,8 +546,8 @@ describe("filingLandscape — Check 3: hand-verified census", () => {
 	it("queries equivalently by h3Cells, over the block's own stored cell", async () => {
 		using db = openFixture()
 
-		const sfCell = shortCellToInt(latLngToCell(CENTROID_SF.lat, CENTROID_SF.lon, 9) as H3Cell)
-		const nyCell = shortCellToInt(latLngToCell(CENTROID_NY.lat, CENTROID_NY.lon, 9) as H3Cell)
+		const sfCell = shortCellToInt(latLngToCell(CENTROID_SF.lat, CENTROID_SF.lon, 9))
+		const nyCell = shortCellToInt(latLngToCell(CENTROID_NY.lat, CENTROID_NY.lon, 9))
 
 		const byGeoid = await filingLandscape(db, { geoids: [GEOID_SF, GEOID_NY] })
 		const byCell = await filingLandscape(db, { h3Cells: [sfCell, nyCell] })

@@ -25,7 +25,7 @@ import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipel
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
@@ -61,7 +61,7 @@ const POINTS = {
 } as const
 
 function cellOf(point: { latitude: number; longitude: number }): number {
-	return shortCellToInt(latLngToCell(point.latitude, point.longitude, COVERAGE_RESOLUTION) as H3Cell)
+	return shortCellToInt(latLngToCell(point.latitude, point.longitude, COVERAGE_RESOLUTION))
 }
 
 const committedModel = await readCommittedModel()
@@ -428,11 +428,11 @@ describe("recovering the coverage resolution from the cells themselves", () => {
 			COVERAGE_RESOLUTION
 		)
 
-		expect(recoverCoverageResolution([shortCellToInt(latLngToCell(48.82, 1.7553, 9) as H3Cell)])).toBe(9)
+		expect(recoverCoverageResolution([shortCellToInt(latLngToCell(48.82, 1.7553, 9))])).toBe(9)
 	})
 
 	it("refuses a table that mixes resolutions rather than probing at one of them", () => {
-		const mixed = [cellOf(POINTS.surveyedEmpty), shortCellToInt(latLngToCell(48.82, 1.7553, 9) as H3Cell)]
+		const mixed = [cellOf(POINTS.surveyedEmpty), shortCellToInt(latLngToCell(48.82, 1.7553, 9))]
 
 		expect(() => recoverCoverageResolution(mixed)).toThrow(/mixes resolutions/)
 	})

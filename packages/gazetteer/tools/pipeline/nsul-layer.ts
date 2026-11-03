@@ -49,7 +49,7 @@ import { CoverageBasis } from "@mailwoman/evidence"
 import type { NSULDatabase } from "@mailwoman/resolver-wof-sqlite/nsul"
 import { nsulDatabasePath, uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
-import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { expandShortCellInt, shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
 import { cellToParent } from "@sister.software/h3"
@@ -835,7 +835,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	)
 
 	const parentCell = (h3Cell: number): number =>
-		shortCellToInt(cellToParent(expandShortCellInt(h3Cell, UPRN_H3_RESOLUTION), NSUL_COVERAGE_H3_RESOLUTION) as H3Cell)
+		shortCellToInt(cellToParent(expandShortCellInt(h3Cell, UPRN_H3_RESOLUTION), NSUL_COVERAGE_H3_RESOLUTION))
 
 	kdb.exec("BEGIN")
 
