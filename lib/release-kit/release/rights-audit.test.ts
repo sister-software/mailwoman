@@ -80,7 +80,7 @@ describe("auditRights", () => {
 		const recorded = audit.training.filter((row) => row.manifest)
 
 		expect(recorded.map((row) => row.package)).toEqual(["@mailwoman/neural-weights-en-us"])
-		expect(recorded[0]?.manifest?.corpusVersion).toBe("v0.7.10-gb-county")
+		expect(recorded[0]?.manifest?.corpusVersion).toBe("v0.8.12-retention-overlay")
 		expect(recorded[0]?.manifest?.problems).toEqual([])
 		// Every source the audited epoch emitted is in the frozen record, so the effective
 		// manifest covers the whole epoch rather than part of it.

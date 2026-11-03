@@ -1,18 +1,19 @@
 ---
 title: What ships today
-description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 10.7.0.
+description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 10.8.0.
 role: reference
 source-of-truth: package.json versions + `mailwoman doctor` + the eval ledger at evals/scores-by-version.json
 ---
 
 # What ships today
 
-:::info[Verified as of release 10.7.0, model 10.7.0]
+:::info[Verified as of release 10.8.0, model 10.8.0]
 
-The `model.onnx` size was measured on 2026-10-18 against the 10.7.0 model artifact. The package file count, the total
-and the other per-file sizes were read from the published 10.6.0 tarball on 2026-10-17, and 10.7.0 ships the same
-FSTs, pair indexes, postcode tables and lexicons. The release process refuses to publish if the model version in this
-box is older than the model the release ships.
+The `model.onnx` and `tokenizer.model` sizes were measured on 2026-11-03 against the 10.8.0 artifacts. The package
+total below is computed from the published 10.6.0 tarball's figures with those two files replaced, so it leaves out
+the size change of the model card and the rights records. 10.8.0 ships 10.7.0's FSTs, pair indexes, postcode tables
+and lexicons. The release process refuses to publish if the model version in this box is older than the model the
+release ships.
 
 :::
 
@@ -35,8 +36,8 @@ weights package version therefore follows the release instead of the model's own
 
 | Fact                | Value                                                                 |
 | ------------------- | --------------------------------------------------------------------- |
-| Release             | `10.7.0`                                                              |
-| Model version       | `10.7.0` — the Latin base, v7.10.0-gb-county seed 42 step 60,000      |
+| Release             | `10.8.0`                                                              |
+| Model version       | `10.8.0` — the Latin base, v8.4.0 seed 42 step 90,000                 |
 | Node floor          | `>=24.18.0` (the `engines` field on the `mailwoman` entry package)    |
 | Module format       | ESM only                                                              |
 | License             | `AGPL-3.0-only OR LicenseRef-Commercial`                              |
@@ -64,10 +65,10 @@ and build tooling. They are installed as dependencies of these packages.
 
 ## Model artifacts
 
-`@mailwoman/neural-weights-en-us` publishes 18 files totaling 75,223,341 bytes (75.2 MB): 10.5.0's
-published 75,220,589 bytes, plus 2,752 across the license and provenance records and the model card.
-Those files now link the published OpenStreetMap training extract. Reproduce the figure from the published
-tarball instead of the working tree:
+`@mailwoman/neural-weights-en-us` publishes 18 files. 10.7.0's published total was 75,223,341 bytes (75.2 MB). 10.8.0
+replaces `model.onnx` (39,452,876 to 29,829,842 bytes) and `tokenizer.model` (1,632,289 to 1,026,906 bytes), which
+brings the total to about 64,994,924 bytes (65.0 MB) before the card and rights records' own size change. Reproduce the
+figure from the published tarball instead of the working tree:
 
 ```bash
 npm view @mailwoman/neural-weights-en-us dist.unpackedSize dist.fileCount
@@ -77,11 +78,11 @@ Seven files account for most of the size:
 
 | File                               | Bytes      | Size    | What it is                           |
 | ---------------------------------- | ---------- | ------- | ------------------------------------ |
-| `model.onnx`                       | 39,452,876 | 39.5 MB | The int8-quantized model, opset 17   |
+| `model.onnx`                       | 29,829,842 | 29.8 MB | The int8-quantized model, opset 17   |
 | `fst-en-us.bin`                    | 21,757,160 | 21.8 MB | The gazetteer prior index            |
 | `locality-surface-lexicon-v7.json` | 8,633,963  | 8.6 MB  | Locality surface forms               |
 | `postcode-us.bin`                  | 1,904,322  | 1.9 MB  | The US postcode anchor table         |
-| `tokenizer.model`                  | 1,632,289  | 1.6 MB  | The SentencePiece model              |
+| `tokenizer.model`                  | 1,026,906  | 1.0 MB  | The SentencePiece model              |
 | `pair-index-us.bin`                | 1,341,264  | 1.3 MB  | The locality/region pair index       |
 | `fst-street-morphology.bin`        | 327,516    | 0.3 MB  | The street-morphology emission prior |
 
