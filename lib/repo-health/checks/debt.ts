@@ -443,6 +443,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	],
 	["packages/codex/lib/designator-tables.test.ts", "the test quotes that board address verbatim"],
 	[
+		"packages/mailwoman/tools/eval-harness/famous-places/",
+		"the famous-places fixture and its builder's title list carry landmarks' real names: Brandenburg Gate",
+	],
+	[
 		"packages/corpus/lib/no/adapters/matrikkelen/adapter.test.ts",
 		"the assertions quote the rendered form of those fixture rows, so they carry the same street types",
 	],
