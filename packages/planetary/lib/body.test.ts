@@ -19,7 +19,7 @@ test.each([
 })
 
 test("a production host serving the other body's build fails, naming both", () => {
-	expect(() => assertHostMatchesBody("mars.mailwoman.post", "moon")).toThrow(/mars\.mailwoman\.ai.*moon/u)
+	expect(() => assertHostMatchesBody("mars.mailwoman.post", "moon")).toThrow(/mars\.mailwoman\.post.*moon/u)
 })
 
 test("only the two production hostnames name a body", () => {

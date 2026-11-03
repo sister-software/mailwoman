@@ -145,7 +145,7 @@ describe("license declare and license evaluate", () => {
 		const parsed = parseCommand(spec, ["evaluate", "--email", "trial@example.com", "--name", "Trial Ltd"])
 
 		await expect(evaluateAction(parsed, { client: { axios: transport.axios }, trustedKeys })).rejects.toThrow(
-			/already received its evaluation.*mailwoman\.ai\/license/u
+			/already received its evaluation.*mailwoman\.post\/license/u
 		)
 	})
 
