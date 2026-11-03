@@ -72,6 +72,7 @@ const region = (surface: string, train: number, heldOut: number, trainNoPC = tra
 		tag: "region",
 		surface,
 		trainRows: train,
+		retainedTrainRows: 0,
 		heldOutRows: heldOut,
 		trainRowsWithoutPostcode: trainNoPC,
 		heldOutRowsWithoutPostcode: heldOutNoPC,
@@ -137,12 +138,28 @@ describe("countHoldoutSpans", () => {
 			region("principado", 1, 0),
 		])
 
-		expect(result.postcodes).toEqual([{ country: "ES", prefix: "070", trainRows: 1 }])
+		expect(result.postcodes).toEqual([{ country: "ES", prefix: "070", trainRows: 1, retainedTrainRows: 0 }])
 
 		expect(holdoutSpanFindings(result, HOLDOUTS)).toEqual([
 			{ country: "ES", reason: "region-key", key: "Illes Balears", trainRows: 0, heldOutRows: 1 },
 			{ country: "ES", reason: "locality-in-train", key: "oviedo", trainRows: 1, heldOutRows: 1 },
 			{ country: "ES", reason: "postcode-in-train", key: "070", trainRows: 1, heldOutRows: 0 },
+		])
+
+		// The retention table keeps both shapes in train, so the Oviedo and 07001 rows train by design.
+		const retained = await countHoldoutSpans(manifest.toString(), HOLDOUTS, undefined, {
+			protectedShapes: new Set(["ES|locality -> region", "ES|locality -> region -> postcode"]),
+		})
+
+		expect(retained.postcodes).toEqual([{ country: "ES", prefix: "070", trainRows: 1, retainedTrainRows: 1 }])
+
+		expect(retained.counts.find((count) => count.surface === "principado")).toMatchObject({
+			trainRows: 1,
+			retainedTrainRows: 1,
+		})
+
+		expect(holdoutSpanFindings(retained, HOLDOUTS)).toEqual([
+			{ country: "ES", reason: "region-key", key: "Illes Balears", trainRows: 0, heldOutRows: 1 },
 		])
 	})
 

@@ -25,10 +25,11 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { localManifestFilePath, rerootBaseFilePath } from "@mailwoman/corpus/tools/overlay/manifest"
-import { readSplitRetention } from "@mailwoman/corpus/tools/overlay/split/attribute"
+import { readSplitRetention, SPLIT_ATTRIBUTE } from "@mailwoman/corpus/tools/overlay/split/attribute"
 import { resolvePathBuilder } from "path-ts"
 import { parallelMapWorkers } from "spliterator"
 
@@ -58,6 +59,7 @@ interface ManifestFile {
 interface CorpusManifest {
 	corpus_version: string
 	files: ManifestFile[]
+	deletions?: readonly unknown[]
 	[key: string]: unknown
 }
 
@@ -154,11 +156,43 @@ for await (const result of parallelMapWorkers<ResplitItem, ResplitResult>(items,
 
 if (written.size !== files.length) throw new Error(`split ${written.size} of ${files.length} files`)
 
+// The base manifest's split counts and policy hashes describe the base's split,
+// so both are recomputed from the attributes written here.
+// A deleted row's split under the new policy is not recorded anywhere,
+// so a base with deletions is refused rather than counted.
+if (manifest.deletions?.length) {
+	throw new Error(`${args.manifest} lists ${manifest.deletions.length} deletions, whose rows' new splits are unknown`)
+}
+
+const counts = { train: 0, val: 0, test: 0 }
+
+for (const decision of written.values()) {
+	for (const split of ["train", "val", "test"] as const) {
+		counts[split] += decision.counts[split] ?? 0
+	}
+}
+
 const outManifest: CorpusManifest = {
 	...manifest,
 	corpus_version: args["corpus-version"],
 	resplit_of: manifest.corpus_version,
-	...(retention ? { retention: { floor: retention.floor, protectedShapes: retention.protectedShapes.size } } : {}),
+	counts,
+	split_decided_by: {
+		file: 0,
+		attribute: SPLIT_ATTRIBUTE,
+		policy_hashes: [...new Set([...written.values()].map((decision) => decision.policyHash))].toSorted(),
+	},
+	...(retention
+		? {
+				retention: {
+					floor: retention.floor,
+					protectedShapes: retention.protectedShapes.size,
+					// The table itself, so a check of the split reads the same rows it kept in train.
+					path: args.retention!,
+					sha256: await sha256File(args.retention!),
+				},
+			}
+		: {}),
 	files: files.map((file, index) => {
 		const decision = written.get(index)
 

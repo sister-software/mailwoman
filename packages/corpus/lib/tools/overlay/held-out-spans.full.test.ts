@@ -13,11 +13,15 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { sha256File } from "@mailwoman/core/hash"
 import { describe, expect, it } from "vitest"
 
 import { $public } from "#env"
 import { countHoldoutSpans, holdoutSpanFindings } from "#tools/overlay/held-out-spans"
+import { readSplitRetention } from "#tools/overlay/split/attribute"
+import type { SplitRetention } from "#utils/retention"
 import { defaultHoldouts } from "#utils/split"
 
 // The scan reads every row of every declared country in the corpus.
@@ -30,16 +34,43 @@ const manifest =
 		? requested
 		: dataRootPath("corpus", "versioned", "v0.8.0", "corpus-v0.8.0", "MANIFEST.json").toString()
 
+/**
+ * The retention table a re-split manifest records, or null for a corpus split without one.
+ *
+ * @throws When the manifest records retention without the table's path, or the file's sha256
+ * differs, since the check would then count rows the split kept in train as held-out places.
+ */
+async function manifestRetention(path: string): Promise<SplitRetention | null> {
+	const { retention } = await readLocalJSONFile<{ retention?: { path?: string; sha256?: string } }>(path)
+
+	if (!retention) return null
+
+	if (!retention.path || !retention.sha256) {
+		throw new Error(`${path} records a retention table without its path and sha256; re-split it with resplit.run.ts`)
+	}
+
+	const sha256 = await sha256File(retention.path)
+
+	if (sha256 !== retention.sha256) {
+		throw new Error(`${retention.path} has sha256 ${sha256}; ${path} records ${retention.sha256}`)
+	}
+
+	return readSplitRetention(retention.path)
+}
+
 describe.skipIf(!requested || !(await pathExists(manifest)))(`held-out spans in the train split of ${manifest}`, () => {
 	it(
 		"holds every declared place out of train and keeps every region's train supply",
 		async () => {
 			const holdouts = defaultHoldouts()
+			const retention = await manifestRetention(manifest)
 
-			const result = await countHoldoutSpans(manifest, holdouts, {
-				memoryLimitBytes: 3 * 1024 ** 3,
-				threads: 2,
-			})
+			const result = await countHoldoutSpans(
+				manifest,
+				holdouts,
+				{ memoryLimitBytes: 3 * 1024 ** 3, threads: 2 },
+				retention ?? undefined
+			)
 
 			expect(result.filesRead).toBeGreaterThan(0)
 
