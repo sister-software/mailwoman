@@ -182,7 +182,7 @@ The build bounds its h3 usage by running one child process per range of a survey
 WASM heap cannot be reset from JavaScript, and it reports an exhausted allocator as a successful empty
 answer. A per-part zero-cell guard rejects that answer, and the process bound makes the build
 reproducible. Both live in `@mailwoman/spatial`'s `h3/polygon-cells.ts` and are shared with
-`@mailwoman/flood`, because the failure modes belong to h3-js and not to either product.
+`@mailwoman/flood`, because the failure modes belong to the H3 library and not to either product.
 
 ## Verification
 

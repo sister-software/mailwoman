@@ -23,7 +23,7 @@ import {
 	interiorCoverageCells,
 } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToBoundary, latLngToCell } from "h3-js"
+import { cellToBoundary, latLngToCell } from "@sister.software/h3"
 import { describe, expect, it } from "vitest"
 
 import type { CaptureRow } from "#tools/pipeline/poi/capture-recapture"

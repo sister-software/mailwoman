@@ -9,7 +9,7 @@
 import { allRows } from "@mailwoman/core/utils"
 import { haversine, shortCellToInt, type GeoCoordinate, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { gridDisk } from "h3-js"
+import { gridDisk } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import type { UPRNDatabase } from "#uprn/schema"

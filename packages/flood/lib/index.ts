@@ -19,7 +19,7 @@ import {
 import { ancestorChainCells, bboxContains, shortCellToInt, type H3Cell, pointInEncodedRings } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import type { FloodDatabase } from "#schema"

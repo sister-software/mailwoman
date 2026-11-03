@@ -9,7 +9,7 @@
 
 import { type H3Cell, shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToLatLng, gridDisk, latLngToCell } from "h3-js"
+import { cellToLatLng, gridDisk, latLngToCell } from "@sister.software/h3"
 import { describe, expect, test } from "vitest"
 
 import type { RangeDatabase } from "#httpvfs/database"

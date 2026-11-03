@@ -17,7 +17,7 @@ import {
 	latLngToCell,
 	polygonToCellsExperimental,
 	POLYGON_TO_CELLS_FLAGS,
-} from "h3-js"
+} from "@sister.software/h3"
 
 import type { LatLonBounds } from "#bbox"
 import { METRES_PER_DEGREE } from "#distance"
@@ -27,7 +27,7 @@ import { shortCellToInt, type H3Cell } from "#h3/cell"
 
 /**
  * The largest bounding-box cell estimate a single polyfill may reserve, a memory ceiling
- * because h3-js allocates its output buffer from the polygon's bounding box before walking.
+ * because H3 sizes its output buffer from the polygon's bounding box before walking.
  */
 export const CELL_ESTIMATE_BUDGET = 2_000_000
 

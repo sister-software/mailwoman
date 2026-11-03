@@ -14,7 +14,7 @@ import {
 	type H3Cell,
 	type MultiPolygonRings,
 } from "@mailwoman/spatial"
-import { getResolution } from "h3-js"
+import { getResolution } from "@sister.software/h3"
 
 /**
  * The label assigned to this layer's classifier failures.
@@ -80,7 +80,7 @@ export interface SoilCellIndexMeasurement {
 
 /**
  * Accumulates one resolution's cell index over a stream of delineations,
- * held as short-cell strings because `compactCells` needs full h3-js indexes
+ * held as short-cell strings because `compactCells` needs full H3 indexes
  * and round-tripping through the integer form would cost more.
  */
 export class SoilCellIndex {

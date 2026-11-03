@@ -17,7 +17,7 @@ import {
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import type { SoilDatabase } from "#schema"

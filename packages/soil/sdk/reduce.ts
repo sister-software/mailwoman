@@ -13,7 +13,7 @@
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { pointInEncodedRings, type H3Cell } from "@mailwoman/spatial"
-import { cellToChildren, cellToLatLng } from "h3-js"
+import { cellToChildren, cellToLatLng } from "@sister.software/h3"
 
 import type { SoilCapabilityCellTable, SoilComponentTable, SoilMapUnitTable } from "#schema"
 import { SOIL_SHARE_WEIGHTING } from "#vocabulary"

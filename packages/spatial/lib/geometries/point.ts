@@ -7,8 +7,8 @@
 import type google from "@googlemaps/google-maps-services-js"
 import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { latLngToCell } from "@sister.software/h3"
 import { convert as convertCoords } from "geo-coordinates-parser"
-import { latLngToCell } from "h3-js"
 
 import { type BBox2DLiteral, type BBox3DLiteral, GeoBoundingBox, isBBox } from "#bbox"
 import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"

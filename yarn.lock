@@ -6500,8 +6500,8 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@sister.software/h3": "npm:^1.0.0"
     "@types/node": "npm:^26.6.6"
-    h3-js: "npm:^4.5.0"
   languageName: unknown
   linkType: soft
 
@@ -6587,7 +6587,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.0.0"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
   languageName: unknown
@@ -6604,7 +6604,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.0.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
@@ -6660,7 +6660,7 @@ __metadata:
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.0.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
   languageName: unknown
@@ -6943,7 +6943,7 @@ __metadata:
     "@mailwoman/dossier": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.0.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
   languageName: unknown
@@ -6970,11 +6970,11 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
+    "@sister.software/h3": "npm:^1.0.0"
     "@types/d3-color": "npm:^3.1.3"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
     d3-color: "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
-    h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.7"
     mailwoman: "workspace:*"
     path-ts: "npm:^2.5.0"
@@ -7396,7 +7396,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.0.0"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
   languageName: unknown
@@ -7561,8 +7561,8 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     "@protomaps/basemaps": "npm:^5.7.2"
+    "@sister.software/h3": "npm:^1.0.0"
     "@types/node": "npm:^26.6.6"
-    h3-js: "npm:^4.5.0"
     path-ts: "npm:^2.5.0"
     playwright: "npm:^1.64.1"
     spliterator: "npm:^10.1.1"
@@ -7583,7 +7583,7 @@ __metadata:
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.0.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
@@ -7603,8 +7603,8 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
+    "@sister.software/h3": "npm:^1.0.0"
     "@sqlite.org/sqlite-wasm": "npm:^3.54.1-build1"
-    h3-js: "npm:^4.5.0"
     path-ts: "npm:^2.5.0"
     zod: "npm:^4.6.7"
   languageName: unknown
@@ -7648,7 +7648,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.0.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
@@ -7663,9 +7663,9 @@ __metadata:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/postcode": "workspace:*"
+    "@sister.software/h3": "npm:^1.0.0"
     "@types/google.maps": "npm:^3.66.9"
     geo-coordinates-parser: "npm:^1.7.4"
-    h3-js: "npm:^4.5.0"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
     type-fest: "npm:^5.10.0"
@@ -7763,7 +7763,7 @@ __metadata:
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.0.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
     sharp: "npm:0.35.5"
@@ -7849,7 +7849,7 @@ __metadata:
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.0.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
@@ -10696,6 +10696,13 @@ __metadata:
   version: 14.8.0
   resolution: "@sister.software/fonts@npm:14.8.0"
   checksum: 10/8dae27a00431358364225471bf51ff50a61900563b127c54df18473e7c797506db9c1561a5d0726a147de4f76277e1ded6381b61799a09b3ea7a6ba4a0f11b62
+  languageName: node
+  linkType: hard
+
+"@sister.software/h3@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@sister.software/h3@npm:1.0.0"
+  checksum: 10/c1432a3986202975d4133af822b4819d4c0839ddee071709d2b4d87a9f57db306ba3075f816889d30425e5c722dd529e6bdcd1a53e4a9111b5f696b33ca977f4
   languageName: node
   linkType: hard
 
@@ -19156,7 +19163,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"h3-js@npm:^4.4.0, h3-js@npm:^4.5.0":
+"h3-js@npm:^4.4.0":
   version: 4.5.0
   resolution: "h3-js@npm:4.5.0"
   checksum: 10/87ac3ec97d686cd4c3b59b80d28e7d890419c9adf625d86a8c29f5a7e6dbbe56fabdeefdb95a47d406c232c604437364d8d89af4220dd1d86fdc29b9655ca4d6
@@ -21957,9 +21964,9 @@ __metadata:
     "@mailwoman/tiger": "workspace:*"
     "@mailwoman/variant-aliases": "workspace:*"
     "@mailwoman/zoning": "workspace:*"
+    "@sister.software/h3": "npm:^1.0.0"
     chalk: "npm:^6.0.1"
     d3-scale-chromatic: "npm:^3.1.0"
-    h3-js: "npm:^4.5.0"
     ink: "npm:^8.0.0"
     kysely: "npm:^0.29.7"
     modal: "npm:0.11.1"

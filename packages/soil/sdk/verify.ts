@@ -13,7 +13,7 @@ import {
 	type H3Cell,
 } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToParent, latLngToCell } from "h3-js"
+import { cellToParent, latLngToCell } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import { SoilCapabilityLookup, SoilReadingKind } from "#index"

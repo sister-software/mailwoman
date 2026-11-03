@@ -37,7 +37,7 @@ import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
-import { cellToParent, latLngToCell } from "h3-js"
+import { cellToParent, latLngToCell } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -407,7 +407,7 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 		// Prove this is a divergent point before trusting the rest of the test: the independent
 		// `latLngToCell(centroid, 6)` derivation, taken without reference to the stored
 		// res-9 cell, disagrees with the reader's hierarchy-parent derivation here.
-		// If this assertion ever stops holding (an h3-js upgrade changing cell boundaries), re-select the point.
+		// If this assertion ever stops holding (an H3 library upgrade changing cell boundaries), re-select the point.
 		const oldBuggyDerivation = shortCellToInt(latLngToCell(CENTROID_DIVERGENT.lat, CENTROID_DIVERGENT.lon, 6) as H3Cell)
 		const unifiedDerivation = res9ShortCellToRes6Parent(row.h3_cell)
 		expect(unifiedDerivation).not.toBe(oldBuggyDerivation)

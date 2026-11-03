@@ -34,7 +34,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell, type LatLonBounds } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
-import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
+import { cellToParent, latLngToCell, polygonToCells } from "@sister.software/h3"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
 const COVERAGE_H3_RESOLUTION = 6

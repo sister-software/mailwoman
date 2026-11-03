@@ -24,11 +24,11 @@ const id = createPostalAddressID({
 <state>.<H3-cell>.<content-hash>
 ```
 
-| Segment          | Purpose                                                                                                                                                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **State prefix** | Coarse region (`tx`, `ca`, `ny`, …) from a supplied state or from the ZIP via `@mailwoman/codex`. It is `xx` when the state is unknown. The prefix makes the key sortable by region.                    |
-| **H3 cell**      | Jitter-stable locality token from the resolved coordinate (`h3-js` `latLngToCell` at resolution 9). The cell is coarse so that two geocodes of the same place a few meters apart land in the same cell. |
-| **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN STREET` hash identically. The hash is the identity. The cell and state localize and partition it.           |
+| Segment          | Purpose                                                                                                                                                                                                               |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **State prefix** | Coarse region (`tx`, `ca`, `ny`, …) from a supplied state or from the ZIP via `@mailwoman/codex`. It is `xx` when the state is unknown. The prefix makes the key sortable by region.                                  |
+| **H3 cell**      | Jitter-stable locality token from the resolved coordinate (`@sister.software/h3` `latLngToCell` at resolution 9). The cell is coarse so that two geocodes of the same place a few meters apart land in the same cell. |
+| **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN STREET` hash identically. The hash is the identity. The cell and state localize and partition it.                         |
 
 ## API
 
@@ -43,7 +43,7 @@ parsePostalAddressID(id: string): ParsedPostalAddressID
 
 ## Design
 
-- **Self-contained.** The package depends on `h3-js` rather than
+- **Self-contained.** The package depends on `@sister.software/h3` rather than
   `@mailwoman/spatial`, which was not published when `address-id` shipped. The
   dependency footprint stays small.
 - **Content-addressed rather than assigned.** The key derives from the data

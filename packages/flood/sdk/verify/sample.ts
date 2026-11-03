@@ -7,7 +7,7 @@
 
 import { expandH3Cell, strideSampleInteriorPoints, type H3CellShort } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToLatLng } from "h3-js"
+import { cellToLatLng } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import type { FloodDatabase } from "#schema"

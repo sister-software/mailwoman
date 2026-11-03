@@ -27,7 +27,7 @@ import { ingestChunkArguments, mergeCountsInto, runChunkProcess } from "@mailwom
 import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
-import { compactCells, getResolution } from "h3-js"
+import { compactCells, getResolution } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import { createFloodTables, FloodCellContainment, type FloodDatabase } from "#schema"

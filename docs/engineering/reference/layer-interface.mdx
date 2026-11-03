@@ -120,6 +120,9 @@ success, and the reader returns an array of zeros. An exhausted allocator answer
 instead of raising an error. h3-js frees every buffer it allocates, so the problem that builds up
 over millions of calls is heap fragmentation.
 
+That mechanism was measured with h3-js 4.5.0, before the switch to `@sister.software/h3`. The two
+requirements below still hold for every polygon builder.
+
 Both consequences are requirements:
 
 1. **Refuse an empty answer for any PART.** A part with a non-degenerate bounding box touches at

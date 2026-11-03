@@ -37,7 +37,7 @@ import {
 } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient, type StatementSync } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import type { CoastalDatabase } from "#schema"

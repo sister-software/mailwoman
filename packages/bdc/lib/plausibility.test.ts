@@ -18,7 +18,7 @@ import {
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell, type NullableLatLon, type PointLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "h3-js"
+import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 

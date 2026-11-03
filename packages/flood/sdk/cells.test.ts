@@ -14,7 +14,7 @@ import {
 	reversedRing as holeRing,
 	rectangleRing,
 } from "@mailwoman/spatial"
-import { POLYGON_TO_CELLS_FLAGS, polygonToCells, polygonToCellsExperimental } from "h3-js"
+import { POLYGON_TO_CELLS_FLAGS, polygonToCells, polygonToCellsExperimental } from "@sister.software/h3"
 import { describe, expect, it } from "vitest"
 
 import { FIXTURE_ORIGIN } from "#sdk/test-kit"

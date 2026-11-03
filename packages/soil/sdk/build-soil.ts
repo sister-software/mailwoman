@@ -34,7 +34,7 @@ import {
 } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
-import { cellToLatLng } from "h3-js"
+import { cellToLatLng } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import { createSoilTables, type SoilDatabase, type SoilSurveyAreaTable } from "#schema"

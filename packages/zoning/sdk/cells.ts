@@ -13,7 +13,7 @@ import {
 	type H3Cell,
 	type MultiPolygonRings,
 } from "@mailwoman/spatial"
-import { polygonToCells } from "h3-js"
+import { polygonToCells } from "@sister.software/h3"
 
 /**
  * Whether a center-in-polygon polyfill would return no cell for this feature,
@@ -85,7 +85,7 @@ export interface CellIndexMeasurement {
 /**
  * Accumulate one resolution's cell index over a stream of features, holding
  * whole cells as short-cell strings and the candidate counter by 48-bit integer
- * because `compactCells` is an h3-js function over full indexes.
+ * because `compactCells` is an H3 function over full indexes.
  */
 export class ZoningCellIndex {
 	readonly resolution: number
