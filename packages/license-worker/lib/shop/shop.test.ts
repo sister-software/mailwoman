@@ -17,7 +17,7 @@ import { recordingStripeFetch, type StripeRoute } from "#test/support/stripe/moc
 
 const worker = readEnv(env)
 const SITE = "https://mailwoman.post"
-const WORKER = "https://license.mailwoman.ai"
+const WORKER = "https://license.mailwoman.post"
 
 function emptyAccount(): Record<string, StripeRoute> {
 	return {

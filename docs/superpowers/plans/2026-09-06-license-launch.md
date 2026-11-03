@@ -74,7 +74,7 @@ yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECR
 
 ### Task 3: the sandbox end to end
 
-- [x] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.post/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.ai`, which is still missing. Therefore, read the session id from the URL and claim it from the sandbox by hand:
+- [x] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.post/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.post`, which is still missing. Therefore, read the session id from the URL and claim it from the sandbox by hand:
 
 ```bash
 curl -s https://mailwoman-license-sandbox.<account>.workers.dev/v1/checkout-sessions/cs_test_…/license

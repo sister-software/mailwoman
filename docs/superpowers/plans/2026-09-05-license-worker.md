@@ -343,7 +343,7 @@ simple = { limit = 60, period = 60 }
 
 [env.production]
 name = "mailwoman-license"
-routes = [{ pattern = "license.mailwoman.ai", custom_domain = true }]
+routes = [{ pattern = "license.mailwoman.post", custom_domain = true }]
 [env.production.vars]
 ISSUANCE_ENABLED = "false"
 SITE_ORIGIN = "https://mailwoman.post"

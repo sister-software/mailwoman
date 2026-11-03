@@ -13,7 +13,7 @@
 name = "mailwoman-license"
 main = "./lib/index.ts"
 compatibility_date = "2026-08-22"
-routes = [{ pattern = "license.mailwoman.ai", custom_domain = true }]
+routes = [{ pattern = "license.mailwoman.post", custom_domain = true }]
 
 [triggers]
 crons = ["0 */6 * * *"]

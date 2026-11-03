@@ -10,7 +10,7 @@ import { SHOP_IDS } from "#shop/ids"
 /**
  * The license worker's origin: the claim route the issued page polls lives under it.
  */
-export const LICENSE_WORKER_URL = "https://license.mailwoman.ai"
+export const LICENSE_WORKER_URL = "https://license.mailwoman.post"
 
 /**
  * Where a buyer writes when the page cannot help.

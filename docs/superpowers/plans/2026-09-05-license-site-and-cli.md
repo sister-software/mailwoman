@@ -250,7 +250,7 @@ Update its header comment: the file is why a refreshed key applies without an en
 
 ```ts
 	/**
-	 * The license worker's origin (`https://license.mailwoman.ai`), for `mailwoman license refresh` and the online lid
+	 * The license worker's origin (`https://license.mailwoman.post`), for `mailwoman license refresh` and the online lid
 	 * status. Overridden in tests and against a sandbox deploy.
 	 */
 	MAILWOMAN_LICENSE_URL: z.string().optional(),
@@ -284,7 +284,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 ```ts
 // @mailwoman/core/license/status
-export const DEFAULT_LICENSE_URL = "https://license.mailwoman.ai"
+export const DEFAULT_LICENSE_URL = "https://license.mailwoman.post"
 export function licenseWorkerURL(override?: string): string // no trailing slash
 export type LicenseStatusAnswer = "active" | "lapsed" | "revoked" | "unknown" | "unreachable"
 export function checkLicenseStatus(
@@ -365,7 +365,7 @@ afterAll(async () => {
 describe("the license worker client", () => {
 	it("derives the worker origin with no trailing slash", () => {
 		expect(licenseWorkerURL("https://license.example/")).toBe("https://license.example")
-		expect(licenseWorkerURL(undefined)).toBe("https://license.mailwoman.ai")
+		expect(licenseWorkerURL(undefined)).toBe("https://license.mailwoman.post")
 	})
 
 	it("status answers the worker's word, and unreachable for a host that does not answer", async () => {
@@ -418,7 +418,7 @@ import { APIClient } from "#api/APIClient"
 import { $public } from "#env"
 import { silentLogger } from "#logging/index"
 
-export const DEFAULT_LICENSE_URL = "https://license.mailwoman.ai"
+export const DEFAULT_LICENSE_URL = "https://license.mailwoman.post"
 
 export function licenseWorkerURL(override: string | undefined = $public.MAILWOMAN_LICENSE_URL): string {
 	return (override ?? DEFAULT_LICENSE_URL).replace(/\/+$/u, "")
@@ -522,7 +522,7 @@ Behavior:
 
 - `license adopt <token> [--secret <s>]`: positional `token` (second positional after the action. Add a second optional positional `argument` to the spec, described as "adopt: the token"). Verify offline. `valid` → write the key file. With `--secret`, the payload must contain `lid` (refuse otherwise: "this token was not issued by the self-service worker, so it has no refresh secret") and the credentials file is written 0600. `expired` → refuse with the expiry date. `unknown_key` → refuse: "this release does not trust key id <kid>; upgrade mailwoman to a release that lists it, then adopt again"; `invalid` → refuse with the reason. Print the paths written and `mailwoman license verify --online` as the next command. `--json` prints `{ keyPath, refreshPath?, payload }`.
 - `license refresh [--lid <lid> --secret <s>]`: credentials from the flags, else `readRefreshCredentials()`, else a usage error naming `adopt`. Call `refreshLicenseKey`. `active` → verify the token offline. `valid` → write the key file and print `status: active`, `expires`, the path. `unknown_key` → do not write, print the action, exit 1. `pending` → "the first payment has not been recorded yet. The key arrives by email" exit 1. `lapsed`/`revoked` → print the word, exit 1, key file untouched. `not_found` → "no license answers to this lid and secret" exit 1. `unreachable` → print it with the URL, exit 2. `--json` prints the answer plus `keyPath` when written.
-- `license verify --online`: when the payload contains `lid`, also `checkLicenseStatus(lid)` and print `license.mailwoman.ai: <word>` beside the publication line. The exit code adds `revoked` and `lapsed` as failures. JSON gains `lid_status`.
+- `license verify --online`: when the payload contains `lid`, also `checkLicenseStatus(lid)` and print `license.mailwoman.post: <word>` beside the publication line. The exit code adds `revoked` and `lapsed` as failures. JSON gains `lid_status`.
 - Every message that includes a URL uses `licenseWorkerURL()`.
 
 - [x] **Step 1: Write the failing tests**
@@ -617,7 +617,7 @@ test("refresh reads the credentials file, asks the worker, and refuses to write 
 
 test("verify --online reports the lid status beside the publication", async () => {
 	// Token as above with a lid; the stub worker answers /v1/license-status with { status: "revoked" }.
-	// Expect stdout to contain "license.mailwoman.ai: revoked" is wrong — the line names the configured URL — so expect
+	// Expect stdout to contain "license.mailwoman.post: revoked" is wrong — the line names the configured URL — so expect
 	// `${env.MAILWOMAN_LICENSE_URL}: revoked` and exit code 1.
 })
 ```
@@ -882,7 +882,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 ```ts
 // docs/src/license/shop.ts
-export const LICENSE_WORKER_URL = "https://license.mailwoman.ai"
+export const LICENSE_WORKER_URL = "https://license.mailwoman.post"
 export const SUPPORT_EMAIL = "teffen@sister.software"
 export const AGREEMENT_VERSION = "commercial-2026-10"
 export const TERMS_PATH = `/license/terms/${AGREEMENT_VERSION}`
@@ -1204,7 +1204,7 @@ The docs site is a browser bundle, so raw `fetch` is right here (the `APIClient`
 - `waiting_too_long`: "Your payment is recorded but the key is not ready yet. It arrives by email on its own. If it has not arrived within an hour, write to <SUPPORT_EMAIL> with your session id <sessionID>."
 - `revoked`: "This license has been revoked. Write to <SUPPORT_EMAIL>."
 - `not_found`: "Stripe does not know this session. Use the link Stripe sent you, or write to <SUPPORT_EMAIL>."
-- `unreachable`: "license.mailwoman.ai did not answer. The key arrives by email on its own. Reload to try again."
+- `unreachable`: "license.mailwoman.post did not answer. The key arrives by email on its own. Reload to try again."
 - No `session_id` in the query: "This page is where Stripe sends you after payment. Purchase at /license." with a link.
 
 `docs/src/pages/license/issued.tsx`:

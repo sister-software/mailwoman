@@ -1,6 +1,6 @@
 # @mailwoman/license-worker
 
-This private package is a Cloudflare Worker at `license.mailwoman.ai` that turns a paid Stripe invoice into a signed
+This private package is a Cloudflare Worker at `license.mailwoman.post` that turns a paid Stripe invoice into a signed
 license token. The worker receives Stripe's webhooks, re-reads every entitlement from Stripe by id, mints one token per
 invoice, and records it in a D1 ledger. It delivers the token by email and through the claim route that the success
 page polls. The routes an installation calls afterwards, refresh and status, read the same ledger.
@@ -114,7 +114,7 @@ before that.
 7. Create the webhook destination against the deployed origin, and store the secret that Stripe returns once:
 
    ```bash
-   yarn mwops shop provision --mode live --apply --worker-origin https://license.mailwoman.ai
+   yarn mwops shop provision --mode live --apply --worker-origin https://license.mailwoman.post
    yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECRET
    ```
 

@@ -74,7 +74,7 @@ export const DEPLOY_TARGETS: readonly DeployTarget[] = [
 		build: "",
 		body: "",
 		deployArgs: "",
-		receipt: "https://license.mailwoman.ai/health",
+		receipt: "https://license.mailwoman.post/health",
 	},
 	{
 		id: "earth",
