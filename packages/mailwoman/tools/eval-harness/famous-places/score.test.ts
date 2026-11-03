@@ -7,21 +7,26 @@
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-import { FAMOUS_PLACES_FIXTURE, type FamousPlaceRow, parseMatches } from "./score.ts"
+import { FAMOUS_PLACES_FIXTURE, type FamousPlaceRow, matchesExpectedComponents } from "./score.ts"
 
-describe("parseMatches", () => {
+describe("matchesExpectedComponents", () => {
 	it("accepts the expected components with any case", () => {
-		expect(parseMatches({ venue: "Eiffel Tower" }, { venue: "eiffel tower" })).toBe(true)
+		expect(matchesExpectedComponents({ venue: "Eiffel Tower" }, { venue: "eiffel tower" })).toBe(true)
 	})
 
 	it("refuses a parse that splits the name or adds a component", () => {
-		expect(parseMatches({ venue: "Christ the Redeemer" }, { locality: "Christ The", region: "Redeemer" })).toBe(false)
-		expect(parseMatches({ locality: "Berlin" }, { locality: "Berlin", region: "Berlin" })).toBe(false)
+		expect(
+			matchesExpectedComponents({ venue: "Christ the Redeemer" }, { locality: "Christ The", region: "Redeemer" })
+		).toBe(false)
+		expect(matchesExpectedComponents({ locality: "Berlin" }, { locality: "Berlin", region: "Berlin" })).toBe(false)
 	})
 
 	it("refuses a parse that labels the place with another tag", () => {
 		expect(
-			parseMatches({ locality: "Zurich", country: "Switzerland" }, { region: "Zurich", country: "Switzerland" })
+			matchesExpectedComponents(
+				{ locality: "Zurich", country: "Switzerland" },
+				{ region: "Zurich", country: "Switzerland" }
+			)
 		).toBe(false)
 	})
 })

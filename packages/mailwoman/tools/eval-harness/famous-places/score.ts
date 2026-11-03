@@ -80,7 +80,10 @@ export interface FamousPlacesResult {
 /**
  * Whether a parse names exactly the expected components with the expected values, compared case-folded.
  */
-export function parseMatches(expected: Record<string, string>, predicted: Record<string, string>): boolean {
+export function matchesExpectedComponents(
+	expected: Record<string, string>,
+	predicted: Record<string, string>
+): boolean {
 	const fold = (value: string) => value.normalize("NFKC").toLowerCase().trim()
 	const keys = Object.keys(expected).toSorted()
 
@@ -125,7 +128,7 @@ export async function scoreFamousPlaces(
 			const fixtureRow = byInput.get(row.raw)!
 			const key = `${fixtureRow.kind}/${fixtureRow.form}`
 			const cell = (exactByKindForm[key] ??= { pass: 0, n: 0 })
-			const ok = parseMatches(fixtureRow.components, predicted)
+			const ok = matchesExpectedComponents(fixtureRow.components, predicted)
 
 			cell.n++
 
