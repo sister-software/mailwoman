@@ -28,6 +28,7 @@ mod merge_probe;
 mod parity_profile;
 mod pgf_probe;
 mod pipeline;
+mod progress;
 mod record;
 mod render_dump;
 

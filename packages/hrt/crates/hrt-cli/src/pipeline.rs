@@ -22,6 +22,8 @@ use hrt_sort::key::{layer_of, tile_of};
 use hrt_sort::{encode_key, FeatureRecord, Sorter, Tiles};
 use rayon::prelude::*;
 
+use crate::progress::Progress;
+
 /// Counts from a build.
 #[derive(Debug, Default)]
 pub struct BuildReport {
@@ -238,6 +240,17 @@ fn process_extra_source(
 	Ok(count)
 }
 
+/// The progress stage name of an extra source.
+fn source_stage(name: &str) -> &'static str {
+	match name {
+		"ne" => "source: Natural Earth",
+		"osm_water" => "source: OSM water polygons",
+		"osm_land" => "source: OSM land polygons",
+		"landcover" => "source: Daylight land cover",
+		_ => "source: other",
+	}
+}
+
 pub fn build(
 	input: &Path,
 	extra_sources: &[ExtraSource],
@@ -245,6 +258,8 @@ pub fn build(
 	scratch: &Path,
 	profile: &impl Profile,
 ) -> io::Result<BuildReport> {
+	let progress = Progress::start();
+	progress.stage("pass 1: relations and node locations", "");
 	let state = pass1(input, |relation| profile.keep_relation(relation))?;
 	let sorter = Sorter::new(scratch, 64 << 20);
 	let threads = rayon::current_num_threads();
@@ -261,10 +276,16 @@ pub fn build(
 		failure: &failure,
 	};
 
-	pass2(input, &state, |source| emitter.emit(&profile.process(source)))?;
+	progress.stage("pass 2: OSM features", "features");
+	pass2(input, &state, |source| {
+		emitter.emit(&profile.process(source));
+		progress.tick();
+	})?;
 	for source in extra_sources {
+		progress.stage(source_stage(&source.name), "");
 		process_extra_source(source, bounds, profile, &emitter)?;
 	}
+	progress.stage("sort: flushing chunks", "");
 	for writer in writers {
 		writer.into_inner().unwrap().finish()?;
 	}
@@ -288,6 +309,7 @@ pub fn build(
 	// Tiles encode independently, so each batch from the merge is encoded and compressed on rayon's threads and then
 	// written in tile order, which the archive writer requires.
 	let batch_size = threads * 64;
+	progress.stage("merge and encode", "tiles");
 	let mut tiles = Tiles::new(sorter.merge()?);
 	loop {
 		let batch = tiles.by_ref().take(batch_size).collect::<io::Result<Vec<_>>>()?;
@@ -304,7 +326,12 @@ pub fn build(
 				report.tiles += 1;
 			}
 		}
+		progress.add(batch.len() as u64);
+		if let Some(last) = batch.last() {
+			progress.tile(last.tile_id);
+		}
 	}
+	progress.stage("write archive", "");
 	let mut out = BufWriter::new(File::create(output)?);
 	report.archive = Some(archive.finish(profile.metadata().as_bytes(), &mut out)?);
 	out.flush()?;
