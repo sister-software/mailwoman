@@ -57,7 +57,7 @@ export interface MailwomanWellKnown {
 export const DefaultWellKnown = {
 	PublicBucket: "mailwoman-public",
 	TilesURL: "https://tiles.mailwoman.ai",
-	AssetsURL: "https://public.mailwoman.ai",
+	AssetsURL: "https://public.mailwoman.post",
 	LicenseURL: "https://license.mailwoman.ai",
 } as const satisfies MailwomanWellKnown
 

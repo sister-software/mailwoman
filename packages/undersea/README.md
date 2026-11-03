@@ -49,6 +49,6 @@ Seamount, about 11 m below the surface at its top, reads −1,206 m.
 
 The 2026-11-02 pull held 2,632 points, 1,128 lines and 1,652 polygons, and the build kept all 5,412. It read
 a depth for 1,175 of the 1,176 depressions. Earth reads the asset from
-`https://public.mailwoman.ai/undersea/gebco-2026-11-02/v2/undersea-features.geojson`. The path is served as
+`https://public.mailwoman.post/undersea/gebco-2026-11-02/v2/undersea-features.geojson`. The path is served as
 immutable, so a changed asset goes to a new path, and `PRODUCTION_CONFIG.underseaFeaturesURL` in
 `packages/earth/lib/config.ts` moves with it.

@@ -4,7 +4,7 @@ Planetary is one app built twice, as `https://moon.mailwoman.ai` and `https://ma
 installable PWA on Cloudflare Workers Static Assets. The app is static. `wrangler.toml` declares `assets` and no Worker
 script, so a navigation or an asset request never invokes compute. The globe draws the body's nomenclature and hillshade
 archives from `tiles.mailwoman.ai`, and search runs in the browser over the ancestrie artifact the astrogeology
-pipeline published to `public.mailwoman.ai`.
+pipeline published to `public.mailwoman.post`.
 
 ## The body is a build-time value
 
@@ -38,7 +38,7 @@ search artifact. `?lon=&lat=&z=` sets the opening viewport. Any other path shows
 ## The artifact pin
 
 Each body config in `lib/bodies/` pins one astrogeology publish by its build version (`YYYYMMDD-<digest>`). The
-version identifies the search artifact and the manifest under `public.mailwoman.ai/planetary/<body>/<version>/`. The
+version identifies the search artifact and the manifest under `public.mailwoman.post/planetary/<body>/<version>/`. The
 tilesets on `tiles.mailwoman.ai` are unversioned, and each publish replaces them in place. When
 `astrogeology publish` prints a new version, update the pin in a commit here. The attribution line reads the
 manifest, so the snapshot date follows the pin without a second edit.

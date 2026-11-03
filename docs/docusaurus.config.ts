@@ -67,7 +67,7 @@ const config: Config = {
 				rel: "preconnect",
 				// Map label glyphs (SDF ranges) still load from here.
 				// The page faces come from @sister.software/fonts.
-				href: "https://public.mailwoman.ai",
+				href: "https://public.mailwoman.post",
 			},
 		},
 		{

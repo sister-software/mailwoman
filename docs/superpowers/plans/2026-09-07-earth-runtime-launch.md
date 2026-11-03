@@ -123,7 +123,7 @@ yarn workspace @mailwoman/earth build > /tmp/earth-build.log 2>&1; echo "EXIT=$?
 yarn workspace @mailwoman/earth preview
 ```
 
-Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.ai`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning means a `node:` specifier is on the static graph. `yarn mwops health bundle-graph` reports which package imports it, and the fix is an export condition in that package rather than an alias here.
+Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.post`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning means a `node:` specifier is on the static graph. `yarn mwops health bundle-graph` reports which package imports it, and the fix is an export condition in that package rather than an alias here.
 
 ```bash
 git add packages/earth packages/site-kit docs
@@ -267,11 +267,11 @@ git commit -m "refactor(react,earth,docs): the geocoder surface is named for wha
 - [ ] **Step 1: CORS is already in place from the shell plan. Verify against production data**
 
 ```bash
-for u in https://public.mailwoman.ai/mailwoman/en-us/releases.json https://tiles.mailwoman.ai/basemap-v4.json; do curl -sI -H "Origin: https://earth.mailwoman.ai" "$u" | grep -i "access-control-allow-origin\|^HTTP" | tr -d '\r'; done
-curl -sI -H "Origin: https://earth.mailwoman.ai" -H "Range: bytes=0-65535" "https://public.mailwoman.ai/mailwoman/wof-hot/$(node -e "console.log(require('./packages/mailwoman/out/browser-runtime/resources.js').ADMIN_GAZETTEER_VERSION)")/wof-hot.db" | grep -i "^HTTP\|content-range\|access-control" | tr -d '\r'
+for u in https://public.mailwoman.post/mailwoman/en-us/releases.json https://tiles.mailwoman.ai/basemap-v4.json; do curl -sI -H "Origin: https://earth.mailwoman.ai" "$u" | grep -i "access-control-allow-origin\|^HTTP" | tr -d '\r'; done
+curl -sI -H "Origin: https://earth.mailwoman.ai" -H "Range: bytes=0-65535" "https://public.mailwoman.post/mailwoman/wof-hot/$(node -e "console.log(require('./packages/mailwoman/out/browser-runtime/resources.js').ADMIN_GAZETTEER_VERSION)")/wof-hot.db" | grep -i "^HTTP\|content-range\|access-control" | tr -d '\r'
 ```
 
-Expected: `200`/`206` and an `Access-Control-Allow-Origin` echoing the origin (or `*` from the public bucket). A missing header on `public.mailwoman.ai` is a bucket CORS rule the operator sets in the Cloudflare dashboard. Record it in the PR as the second dashboard step and do not proceed to Task 6 until it is in place.
+Expected: `200`/`206` and an `Access-Control-Allow-Origin` echoing the origin (or `*` from the public bucket). A missing header on `public.mailwoman.post` is a bucket CORS rule the operator sets in the Cloudflare dashboard. Record it in the PR as the second dashboard step and do not proceed to Task 6 until it is in place.
 
 - [ ] **Step 2: Deploy and smoke**
 

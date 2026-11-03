@@ -336,7 +336,7 @@ Root `tsconfig.json`: add, next to the `tile-worker` and `license-worker` entrie
 
 Earth is the mailwoman geocoder map, served at `https://earth.mailwoman.ai` as an installable PWA on Cloudflare
 Workers Static Assets. The app is static: `wrangler.toml` declares `assets` and no Worker script, so a navigation or
-an asset request never invokes compute. Model and gazetteer artifacts come from `public.mailwoman.ai` at run time
+an asset request never invokes compute. Model and gazetteer artifacts come from `public.mailwoman.post` at run time
 and tiles from `tiles.mailwoman.ai`.
 
 ## Commands
@@ -557,7 +557,7 @@ export interface EarthConfig {
 }
 
 export const PRODUCTION_CONFIG: EarthConfig = {
-	dataOriginURL: new URL("https://public.mailwoman.ai/"),
+	dataOriginURL: new URL("https://public.mailwoman.post/"),
 	tileWorkerURL: new URL("https://tiles.mailwoman.ai/"),
 	basemapTileJSONURL: new URL("https://tiles.mailwoman.ai/basemap-v4.json"),
 }
@@ -794,7 +794,7 @@ precacheAndRoute(self.__WB_MANIFEST)
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>Mailwoman Earth</title>
 		<link rel="icon" href="/icon.svg" type="image/svg+xml" />
-		<link rel="preconnect" href="https://public.mailwoman.ai" crossorigin />
+		<link rel="preconnect" href="https://public.mailwoman.post" crossorigin />
 		<link rel="preconnect" href="https://tiles.mailwoman.ai" crossorigin />
 	</head>
 	<body>

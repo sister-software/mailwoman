@@ -281,7 +281,7 @@ where the rest of this genre already lives.
 
 Measured on a cold load of `mailwoman.ai`: the six WOFF2 files all start at **~1570 ms**, and the document
 has **zero `<link rel="preload">` for fonts** (only `mailwoman-seal-magenta.svg`). The chain is
-HTML → `styles.*.css` → parse → discover `@font-face` → cross-origin fetch to `public.mailwoman.ai`. With
+HTML → `styles.*.css` → parse → discover `@font-face` → cross-origin fetch to `public.mailwoman.post`. With
 `font-display: swap` on every face (`docs/src/css/fonts/BlissPro.css`, `FiraCode.css`), every visitor
 gets a flash plus a reflow.
 
@@ -293,12 +293,12 @@ every line on the page. No rule declares
 Four fixes, in order of payoff:
 
 1. `preload` the four faces that paint above the fold (Bliss Pro Regular 400, Medium 500, Bold 700, and
-   the Fira Code variable face). Everything else can stay lazy. The `preconnect` to `public.mailwoman.ai`
+   the Fira Code variable face). Everything else can stay lazy. The `preconnect` to `public.mailwoman.post`
    (`docusaurus.config.ts:71`) saves the handshake but not the CSS-parse discovery delay.
 2. Add a metric-matched `@font-face` fallback (`local("system-ui")` + `size-adjust`) so the swap does not
    move text.
 3. Consider self-hosting the four critical faces on the docs origin and leaving the rest on
-   `public.mailwoman.ai` — removes a connection from the critical path entirely.
+   `public.mailwoman.post` — removes a connection from the critical path entirely.
 
 ---
 

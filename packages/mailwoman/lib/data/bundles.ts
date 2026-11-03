@@ -15,7 +15,7 @@ import type { DataReleaseManifest } from "#data/release"
 /**
  * Public artifact host.
  */
-export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
+export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.post/mailwoman/"
 
 /**
  * One downloadable file within a {@link DataBundle}.

@@ -18,7 +18,7 @@ import type { FSTMatcherLike } from "#browser-runtime/types"
  * Public asset origin.
  * It supports byte-range reads of the databases.
  */
-const ASSET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
+const ASSET_BASE_URL = "https://public.mailwoman.post/mailwoman/"
 
 /**
  * Returns the URL of one file in a locale's release.

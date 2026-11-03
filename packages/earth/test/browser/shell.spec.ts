@@ -27,7 +27,7 @@ test.describe("Mailwoman Earth shell", () => {
 	test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
 		// This test uses the real runtime because the fake runtime can hide a missing commit link.
 		// It blocks data downloads because the footer must render without them.
-		await page.route("https://public.mailwoman.ai/**", (route) => route.abort())
+		await page.route("https://public.mailwoman.post/**", (route) => route.abort())
 
 		await page.goto("/")
 

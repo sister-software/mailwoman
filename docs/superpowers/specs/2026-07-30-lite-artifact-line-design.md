@@ -118,7 +118,7 @@ on everything already published is irrevocable, and the pricing page publishes t
 
 ### 3.3 Mechanics
 
-Today artifacts are published to Cloudflare R2 behind `public.mailwoman.ai` without authentication. A
+Today artifacts are published to Cloudflare R2 behind `public.mailwoman.post` without authentication. A
 WAF rule blocks full-file downloads of byte-ranged `.db` objects, so the demo's range
 requests keep working without the cost of whole-file egress. The channel split uses the same
 infrastructure:

@@ -46,7 +46,7 @@ describe("toMapHTML", () => {
 		expect(html).toContain('integrity="sha384-')
 		expect(html).not.toMatch(/leaflet/i)
 		expect(html).toContain("https://tiles.mailwoman.ai/planet.v4.json")
-		expect(html).toContain("public.mailwoman.ai/protomaps/fonts")
+		expect(html).toContain("public.mailwoman.post/protomaps/fonts")
 		expect(html).toContain("Bliss Pro Regular")
 		expect(html).toContain("protomaps.github.io/basemaps-assets/sprites/v4/light")
 		expect(html).not.toMatch(/tile\.openstreetmap\.org|raster/)

@@ -31,7 +31,7 @@ const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
  * The browser runtime's own fetch path (`mailwoman/browser-runtime/manifest`,
  * mounted by docs/src/contexts/RuntimeEmbed.tsx and the Earth app).
  */
-const DEMO_MANIFEST_URL = "https://public.mailwoman.ai/mailwoman/en-us/releases.json"
+const DEMO_MANIFEST_URL = "https://public.mailwoman.post/mailwoman/en-us/releases.json"
 
 export interface ParityCheck {
 	name: string

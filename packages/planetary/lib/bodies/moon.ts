@@ -28,8 +28,8 @@ export const MOON: PlanetaryMapConfig = {
 	},
 	artifacts: {
 		version: VERSION,
-		searchIndexURL: `https://public.mailwoman.ai/planetary/moon/${VERSION}/search.ancestrie`,
-		manifestURL: `https://public.mailwoman.ai/planetary/moon/${VERSION}/manifest.json`,
+		searchIndexURL: `https://public.mailwoman.post/planetary/moon/${VERSION}/search.ancestrie`,
+		manifestURL: `https://public.mailwoman.post/planetary/moon/${VERSION}/manifest.json`,
 	},
 	identity: {
 		origin: "https://moon.mailwoman.ai/",

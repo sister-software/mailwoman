@@ -52,7 +52,7 @@ navbar that does not exist outside Docusaurus.
 ### Two shipped styles request a glyph stack the bucket does not serve
 
 `packages/cartographer/lib/planetary/layers.ts:93` and `packages/cartographer/lib/base/buildings.ts:117`
-both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mailwoman.ai/protomaps/fonts/<stack>/0-255.pbf` returned:
+both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mailwoman.post/protomaps/fonts/<stack>/0-255.pbf` returned:
 
 | Stack                                                       | Result            |
 | ----------------------------------------------------------- | ----------------- |
@@ -135,7 +135,7 @@ MapLibre's default grey ramp.
 | hairline | `--mw-line: #b9d8ec`      | absent                                        |
 | type     | Bliss Pro / Fira Code     | `system-ui`, and the UA default on `<button>` |
 
-Both typefaces are served from `public.mailwoman.ai` and declared in `docs/src/css/fonts/BlissPro.css` and
+Both typefaces are served from `public.mailwoman.post` and declared in `docs/src/css/fonts/BlissPro.css` and
 `docs/src/css/fonts/FiraCode.css`, on an origin both apps already preconnect to.
 
 ### Three font families without a type system

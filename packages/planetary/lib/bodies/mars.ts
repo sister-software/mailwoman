@@ -29,8 +29,8 @@ export const MARS: PlanetaryMapConfig = {
 	},
 	artifacts: {
 		version: VERSION,
-		searchIndexURL: `https://public.mailwoman.ai/planetary/mars/${VERSION}/search.ancestrie`,
-		manifestURL: `https://public.mailwoman.ai/planetary/mars/${VERSION}/manifest.json`,
+		searchIndexURL: `https://public.mailwoman.post/planetary/mars/${VERSION}/search.ancestrie`,
+		manifestURL: `https://public.mailwoman.post/planetary/mars/${VERSION}/manifest.json`,
 	},
 	identity: {
 		origin: "https://mars.mailwoman.ai/",

@@ -73,7 +73,7 @@ and the Hugging Face dataset card both say **CC-BY 4.0** and ask for an attribut
 
 :::
 
-**Tier:** shipped. It is published to Cloudflare R2 and served from `https://public.mailwoman.ai/mailwoman/gazetteer/<version>/candidate.db`. The docs demo loads it directly with byte-range requests, so the demo uses the same artifact you would.
+**Tier:** shipped. It is published to Cloudflare R2 and served from `https://public.mailwoman.post/mailwoman/gazetteer/<version>/candidate.db`. The docs demo loads it directly with byte-range requests, so the demo uses the same artifact you would.
 
 **Version / cadence.** The demo currently serves `2026-07-07a`. The path is dated and immutable, so every rebuild gets a new URL. There is **no fixed rebuild schedule**. The gazetteer is rebuilt when locale coverage is added or a source-ingest bug is fixed.
 
@@ -111,7 +111,7 @@ This is layer #1 on the [spatial-layer interface](https://github.com/sister-soft
 
 **Upstream source.** Overture Maps Foundation, Places theme, release 2026-05-20.0. **License:** CDLA-Permissive-2.0. **Attribution:** "Overture Maps Foundation". The attribution is recorded in the layer manifest, so the obligation travels with the file.
 
-**Tier:** `shipped`, which the builder writes into the manifest. Published to R2 at `https://public.mailwoman.ai/mailwoman/poi/<version>/poi.db`.
+**Tier:** `shipped`, which the builder writes into the manifest. Published to R2 at `https://public.mailwoman.post/mailwoman/poi/<version>/poi.db`.
 
 **Version / cadence.** Currently `2026-07-20a`. `freshness_policy = sealed` means updates are full rebuilds rather than in-place refreshes. Rebuilds are meant to follow Overture's release cadence, but no schedule is committed.
 
@@ -137,7 +137,7 @@ This is the precision tier for the United States. It returns an exact building c
 
 **Obligation.** Attribution. NAD is public domain and requires no attribution, and the listed OpenAddresses sources require credit. `mailwoman situs attribution-manifest` regenerates an `ATTRIBUTION.json` from the extracts on disk. Pass that document to your downstream users.
 
-**Tier:** shipped. The extracts are served with byte-range requests from R2 at `https://public.mailwoman.ai/mailwoman/street/us/<slug>/situs.db` for 52 slugs: all 50 states plus DC and the US Virgin Islands.
+**Tier:** shipped. The extracts are served with byte-range requests from R2 at `https://public.mailwoman.post/mailwoman/street/us/<slug>/situs.db` for 52 slugs: all 50 states plus DC and the US Virgin Islands.
 
 **Version / cadence.** Release `2026-05-20.0`, pinned per artifact family in a `releases.json` manifest at the data root. There is no fixed rebuild schedule.
 
@@ -159,7 +159,7 @@ This is the fallback below the situs tier. Where no rooftop point exists, the re
 **Obligation:** none.
 
 **Tier:** shipped. Hosted at
-`https://public.mailwoman.ai/mailwoman/street/us/<slug>/interp.db`.
+`https://public.mailwoman.post/mailwoman/street/us/<slug>/interp.db`.
 
 **Version / cadence.** Release `TIGER2023`. TIGER publishes annually, and the extracts are rebuilt when we adopt a new vintage.
 
@@ -183,7 +183,7 @@ This is France's national address register in the same situs schema as the US ex
 
 **Attribution.** "© les contributeurs de la Base Adresse Nationale (adresse.data.gouv.fr)". Each row stores it as `source = ban:fr`, and it is also recorded in `ban/ATTRIBUTION.json` with the source URL, release, row count, and md5 at build time.
 
-**Tier:** shipped. Hosted at `https://public.mailwoman.ai/mailwoman/street/fr/<version>/situs.db`, currently `2026-07-10` (the rebuild that fixed quoting and folded arrondissements).
+**Tier:** shipped. Hosted at `https://public.mailwoman.post/mailwoman/street/fr/<version>/situs.db`, currently `2026-07-10` (the rebuild that fixed quoting and folded arrondissements).
 
 **Approximate size.** 6.9 GB sealed.
 

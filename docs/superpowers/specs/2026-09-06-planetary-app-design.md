@@ -89,7 +89,7 @@ nomenclature labels, and selection highlight. Labels are styled by feature type 
 planitiae, montes, valles, craters) and decluttered by zoom against `diameterKm`, so a larger feature
 appears at a lower zoom. The Moon is dark with grayscale terrain, and Mars is dark with rust terrain.
 The design leaves `base/theme.ts` and the Earth sprite at
-`public.mailwoman.ai/protomaps/sprites/v4/light` unchanged, and planetary styles use no sprite in v1.
+`public.mailwoman.post/protomaps/sprites/v4/light` unchanged, and planetary styles use no sprite in v1.
 
 ### Tiles
 

@@ -30,7 +30,7 @@ const LAND_UNDERLAY_MAX_ZOOM = 6
  * its continents from the first frame.
  */
 export function createLandUnderlaySource(): GeoJSONSourceSpecification {
-	return { type: "geojson", data: "https://public.mailwoman.ai/natural-earth/land-110m.json" }
+	return { type: "geojson", data: "https://public.mailwoman.post/natural-earth/land-110m.json" }
 }
 
 /**

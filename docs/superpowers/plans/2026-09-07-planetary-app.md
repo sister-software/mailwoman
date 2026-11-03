@@ -408,8 +408,8 @@ export const MOON: PlanetaryMapConfig = {
 	},
 	artifacts: {
 		version: "<the version the astrogeology publish wrote>",
-		searchIndexURL: "https://public.mailwoman.ai/planetary/moon/<version>/search.ancestrie",
-		manifestURL: "https://public.mailwoman.ai/planetary/moon/<version>/manifest.json",
+		searchIndexURL: "https://public.mailwoman.post/planetary/moon/<version>/search.ancestrie",
+		manifestURL: "https://public.mailwoman.post/planetary/moon/<version>/manifest.json",
 	},
 	identity: { origin: "https://moon.mailwoman.ai/", name: "Mailwoman Moon", shortName: "Moon", themeColor: "#05070d" },
 }
@@ -630,7 +630,7 @@ test("the globe loads for the built body, search finds a known feature, selectio
 })
 ```
 
-The preview serves the real archives from `tiles.mailwoman.ai` and the search artifact from `public.mailwoman.ai`, so this smoke needs the network, as the Earth production smoke does.
+The preview serves the real archives from `tiles.mailwoman.ai` and the search artifact from `public.mailwoman.post`, so this smoke needs the network, as the Earth production smoke does.
 
 - [ ] **Step 3: CI and README**
 
