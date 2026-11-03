@@ -11,16 +11,17 @@
  *     --spec <spec .json> --report <held-out report .json> --published-arm <arm> --candidate-arm <arm> \
  *     --out <verdict .json>
  *
- *   Each arm names one of the report's `arms` entries, a package-shaped weights directory whose `model.onnx`
- *   is hashed and compared with the specification's registered identity. A missing model file is refused.
+ *   Each arm names one of the report's `arms` entries, a weights cache root. The en-us package's `model.onnx` under
+ *   it (`releaseArmModelPath`) is hashed and compared with the specification's registered identity. A missing model
+ *   file is refused.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { resolvePath } from "path-ts"
 
+import { releaseArmModelPath } from "#tools/eval-harness/release/arm"
 import {
 	evaluateReleaseSpec,
 	type OutcomeRow,
@@ -89,8 +90,8 @@ const armRows = (arm: string): OutcomeRow[] => {
 const paired = pairOutcomes(armRows(values["published-arm"]), armRows(values["candidate-arm"]))
 
 const artifacts = {
-	published: await sha256File(resolvePath(values["published-arm"], "model.onnx")),
-	candidate: await sha256File(resolvePath(values["candidate-arm"], "model.onnx")),
+	published: await sha256File(releaseArmModelPath(values["published-arm"])),
+	candidate: await sha256File(releaseArmModelPath(values["candidate-arm"])),
 }
 
 let reachability: VocabularyCensusReading | null = null
