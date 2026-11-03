@@ -1,0 +1,760 @@
+{"qid":"Q1128366","kind":"canyon","country":"GR","lat":35.271111111,"lon":23.961388888,"tolerance_m":50000,"form":"en","input":"Samariá Gorge National Park","components":{"venue":"Samariá Gorge National Park"}}
+{"qid":"Q1165879","kind":"canyon","country":"RU","lat":42.744722222,"lon":44.6225,"tolerance_m":50000,"form":"en","input":"Darial Gorge","components":{"venue":"Darial Gorge"}}
+{"qid":"Q1165879","kind":"canyon","country":"RU","lat":42.744722222,"lon":44.6225,"tolerance_m":50000,"form":"local","input":"Дарьяльское ущелье","components":{"venue":"Дарьяльское ущелье"}}
+{"qid":"Q1235610","kind":"canyon","country":"RU","lat":54.430556,"lon":160.139444,"tolerance_m":50000,"form":"en","input":"Valley of Geysers","components":{"venue":"Valley of Geysers"}}
+{"qid":"Q1235610","kind":"canyon","country":"RU","lat":54.430556,"lon":160.139444,"tolerance_m":50000,"form":"local","input":"Долина гейзеров","components":{"venue":"Долина гейзеров"}}
+{"qid":"Q2278990","kind":"canyon","country":"MK","lat":41.94,"lon":21.3,"tolerance_m":50000,"form":"en","input":"Matka Canyon","components":{"venue":"Matka Canyon"}}
+{"qid":"Q28061","kind":"canyon","country":"AR","lat":-23.199861111,"lon":-65.348861111,"tolerance_m":50000,"form":"en","input":"Quebrada de Humahuaca","components":{"venue":"Quebrada de Humahuaca"}}
+{"qid":"Q388641","kind":"canyon","country":"IS","lat":63.96662397,"lon":-18.60912691,"tolerance_m":50000,"form":"en","input":"Eldgjá","components":{"venue":"Eldgjá"}}
+{"qid":"Q627095","kind":"canyon","country":"GE","lat":42.116666666,"lon":45.266666666,"tolerance_m":50000,"form":"en","input":"Pankisi Gorge","components":{"venue":"Pankisi Gorge"}}
+{"qid":"Q647958","kind":"canyon","country":"GB","lat":52.626388888,"lon":-2.472777777,"tolerance_m":50000,"form":"en","input":"Ironbridge Gorge","components":{"venue":"Ironbridge Gorge"}}
+{"qid":"Q647958","kind":"canyon","country":"GB","lat":52.626388888,"lon":-2.472777777,"tolerance_m":50000,"form":"en-country","input":"Ironbridge Gorge, United Kingdom","components":{"venue":"Ironbridge Gorge","country":"United Kingdom"}}
+{"qid":"Q101418","kind":"capital","country":"SZ","lat":-26.44648,"lon":31.206411,"tolerance_m":15000,"form":"en","input":"Lobamba","components":{"locality":"Lobamba"}}
+{"qid":"Q101418","kind":"capital","country":"SZ","lat":-26.44648,"lon":31.206411,"tolerance_m":15000,"form":"en-country","input":"Lobamba, Eswatini","components":{"locality":"Lobamba","country":"Eswatini"}}
+{"qid":"Q10717","kind":"capital","country":"GY","lat":6.805833333,"lon":-58.150833333,"tolerance_m":15000,"form":"en","input":"Georgetown","components":{"locality":"Georgetown"}}
+{"qid":"Q10717","kind":"capital","country":"GY","lat":6.805833333,"lon":-58.150833333,"tolerance_m":15000,"form":"en-country","input":"Georgetown, Guyana","components":{"locality":"Georgetown","country":"Guyana"}}
+{"qid":"Q1085","kind":"capital","country":"CZ","lat":50.0875,"lon":14.421388888,"tolerance_m":15000,"form":"en","input":"Prague","components":{"locality":"Prague"}}
+{"qid":"Q1085","kind":"capital","country":"CZ","lat":50.0875,"lon":14.421388888,"tolerance_m":15000,"form":"en-country","input":"Prague, Czech Republic","components":{"locality":"Prague","country":"Czech Republic"}}
+{"qid":"Q11194","kind":"capital","country":"BA","lat":43.856388888,"lon":18.413055555,"tolerance_m":15000,"form":"en","input":"Sarajevo","components":{"locality":"Sarajevo"}}
+{"qid":"Q11194","kind":"capital","country":"BA","lat":43.856388888,"lon":18.413055555,"tolerance_m":15000,"form":"en-country","input":"Sarajevo, Bosnia and Herzegovina","components":{"locality":"Sarajevo","country":"Bosnia and Herzegovina"}}
+{"qid":"Q1140136","kind":"capital","country":"GQ","lat":1.591666666,"lon":10.822222222,"tolerance_m":15000,"form":"en","input":"Ciudad de la Paz","components":{"locality":"Ciudad de la Paz"}}
+{"qid":"Q1140136","kind":"capital","country":"GQ","lat":1.591666666,"lon":10.822222222,"tolerance_m":15000,"form":"en-country","input":"Ciudad de la Paz, Equatorial Guinea","components":{"locality":"Ciudad de la Paz","country":"Equatorial Guinea"}}
+{"qid":"Q1218","kind":"capital","country":"IL","lat":31.776679,"lon":35.234156,"tolerance_m":15000,"form":"en","input":"Jerusalem","components":{"locality":"Jerusalem"}}
+{"qid":"Q1218","kind":"capital","country":"IL","lat":31.776679,"lon":35.234156,"tolerance_m":15000,"form":"en-country","input":"Jerusalem, Israel","components":{"locality":"Jerusalem","country":"Israel"}}
+{"qid":"Q12919","kind":"capital","country":"MH","lat":7.0918,"lon":171.3802,"tolerance_m":15000,"form":"en","input":"Majuro","components":{"locality":"Majuro"}}
+{"qid":"Q12919","kind":"capital","country":"MH","lat":7.0918,"lon":171.3802,"tolerance_m":15000,"form":"en-country","input":"Majuro, Marshall Islands","components":{"locality":"Majuro","country":"Marshall Islands"}}
+{"qid":"Q131233","kind":"capital","country":"KI","lat":1.333333333,"lon":172.966666666,"tolerance_m":15000,"form":"en","input":"South Tarawa","components":{"locality":"South Tarawa"}}
+{"qid":"Q131233","kind":"capital","country":"KI","lat":1.333333333,"lon":172.966666666,"tolerance_m":15000,"form":"en-country","input":"South Tarawa, Kiribati","components":{"locality":"South Tarawa","country":"Kiribati"}}
+{"qid":"Q131546626","kind":"capital","country":"NI","lat":12.154680555,"lon":-86.273725,"tolerance_m":15000,"form":"en","input":"Managua","components":{"locality":"Managua"}}
+{"qid":"Q131546626","kind":"capital","country":"NI","lat":12.154680555,"lon":-86.273725,"tolerance_m":15000,"form":"en-country","input":"Managua, Nicaragua","components":{"locality":"Managua","country":"Nicaragua"}}
+{"qid":"Q131694","kind":"capital","country":"YE","lat":12.8,"lon":45.033333333,"tolerance_m":15000,"form":"en","input":"Aden","components":{"locality":"Aden"}}
+{"qid":"Q131694","kind":"capital","country":"YE","lat":12.8,"lon":45.033333333,"tolerance_m":15000,"form":"en-country","input":"Aden, Yemen","components":{"locality":"Aden","country":"Yemen"}}
+{"qid":"Q131694","kind":"capital","country":"YE","lat":12.8,"lon":45.033333333,"tolerance_m":15000,"form":"local","input":"عدن","components":{"locality":"عدن"}}
+{"qid":"Q1335","kind":"capital","country":"UY","lat":-34.905916666,"lon":-56.191311111,"tolerance_m":15000,"form":"en","input":"Montevideo","components":{"locality":"Montevideo"}}
+{"qid":"Q1335","kind":"capital","country":"UY","lat":-34.905916666,"lon":-56.191311111,"tolerance_m":15000,"form":"en-country","input":"Montevideo, Uruguay","components":{"locality":"Montevideo","country":"Uruguay"}}
+{"qid":"Q1354","kind":"capital","country":"BD","lat":23.728888888,"lon":90.394444444,"tolerance_m":15000,"form":"en","input":"Dhaka","components":{"locality":"Dhaka"}}
+{"qid":"Q1354","kind":"capital","country":"BD","lat":23.728888888,"lon":90.394444444,"tolerance_m":15000,"form":"en-country","input":"Dhaka, Bangladesh","components":{"locality":"Dhaka","country":"Bangladesh"}}
+{"qid":"Q1362","kind":"capital","country":"PK","lat":33.698888888,"lon":73.036944444,"tolerance_m":15000,"form":"en","input":"Islamabad","components":{"locality":"Islamabad"}}
+{"qid":"Q1362","kind":"capital","country":"PK","lat":33.698888888,"lon":73.036944444,"tolerance_m":15000,"form":"en-country","input":"Islamabad, Pakistan","components":{"locality":"Islamabad","country":"Pakistan"}}
+{"qid":"Q1435","kind":"capital","country":"HR","lat":45.813055555,"lon":15.977222222,"tolerance_m":15000,"form":"en","input":"Zagreb","components":{"locality":"Zagreb"}}
+{"qid":"Q1435","kind":"capital","country":"HR","lat":45.813055555,"lon":15.977222222,"tolerance_m":15000,"form":"en-country","input":"Zagreb, Croatia","components":{"locality":"Zagreb","country":"Croatia"}}
+{"qid":"Q1461","kind":"capital","country":"PH","lat":14.595833333,"lon":120.977222222,"tolerance_m":15000,"form":"en","input":"Manila","components":{"locality":"Manila"}}
+{"qid":"Q1461","kind":"capital","country":"PH","lat":14.595833333,"lon":120.977222222,"tolerance_m":15000,"form":"en-country","input":"Manila, Philippines","components":{"locality":"Manila","country":"Philippines"}}
+{"qid":"Q1486","kind":"capital","country":"AR","lat":-34.599722222,"lon":-58.381944444,"tolerance_m":15000,"form":"en","input":"Buenos Aires","components":{"locality":"Buenos Aires"}}
+{"qid":"Q1486","kind":"capital","country":"AR","lat":-34.599722222,"lon":-58.381944444,"tolerance_m":15000,"form":"en-country","input":"Buenos Aires, Argentina","components":{"locality":"Buenos Aires","country":"Argentina"}}
+{"qid":"Q1489","kind":"capital","country":"MX","lat":19.353773,"lon":-99.13589,"tolerance_m":15000,"form":"en","input":"Mexico City","components":{"locality":"Mexico City"}}
+{"qid":"Q1489","kind":"capital","country":"MX","lat":19.353773,"lon":-99.13589,"tolerance_m":15000,"form":"en-country","input":"Mexico City, Mexico","components":{"locality":"Mexico City","country":"Mexico"}}
+{"qid":"Q1489","kind":"capital","country":"MX","lat":19.353773,"lon":-99.13589,"tolerance_m":15000,"form":"local","input":"Ciudad de México","components":{"locality":"Ciudad de México"}}
+{"qid":"Q1490","kind":"capital","country":"JP","lat":35.689444444,"lon":139.691666666,"tolerance_m":15000,"form":"en","input":"Tokyo","components":{"locality":"Tokyo"}}
+{"qid":"Q1490","kind":"capital","country":"JP","lat":35.689444444,"lon":139.691666666,"tolerance_m":15000,"form":"en-country","input":"Tokyo, Japan","components":{"locality":"Tokyo","country":"Japan"}}
+{"qid":"Q1490","kind":"capital","country":"JP","lat":35.689444444,"lon":139.691666666,"tolerance_m":15000,"form":"local","input":"東京都","components":{"locality":"東京都"}}
+{"qid":"Q1491","kind":"capital","country":"BO","lat":-16.495833333,"lon":-68.133333333,"tolerance_m":15000,"form":"en","input":"La Paz","components":{"locality":"La Paz"}}
+{"qid":"Q1491","kind":"capital","country":"BO","lat":-16.495833333,"lon":-68.133333333,"tolerance_m":15000,"form":"en-country","input":"La Paz, Bolivia","components":{"locality":"La Paz","country":"Bolivia"}}
+{"qid":"Q1519","kind":"capital","country":"AE","lat":24.451111111,"lon":54.396944444,"tolerance_m":15000,"form":"en","input":"Abu Dhabi","components":{"locality":"Abu Dhabi"}}
+{"qid":"Q1519","kind":"capital","country":"AE","lat":24.451111111,"lon":54.396944444,"tolerance_m":15000,"form":"en-country","input":"Abu Dhabi, United Arab Emirates","components":{"locality":"Abu Dhabi","country":"United Arab Emirates"}}
+{"qid":"Q1519","kind":"capital","country":"AE","lat":24.451111111,"lon":54.396944444,"tolerance_m":15000,"form":"local","input":"أبو ظبي","components":{"locality":"أبو ظبي"}}
+{"qid":"Q1520","kind":"capital","country":"KZ","lat":51.133333333,"lon":71.433333333,"tolerance_m":15000,"form":"en","input":"Astana","components":{"locality":"Astana"}}
+{"qid":"Q1520","kind":"capital","country":"KZ","lat":51.133333333,"lon":71.433333333,"tolerance_m":15000,"form":"en-country","input":"Astana, Kazakhstan","components":{"locality":"Astana","country":"Kazakhstan"}}
+{"qid":"Q1520","kind":"capital","country":"KZ","lat":51.133333333,"lon":71.433333333,"tolerance_m":15000,"form":"local","input":"Астана","components":{"locality":"Астана"}}
+{"qid":"Q1524","kind":"capital","country":"GR","lat":37.984166666,"lon":23.728055555,"tolerance_m":15000,"form":"en","input":"Athens","components":{"locality":"Athens"}}
+{"qid":"Q1524","kind":"capital","country":"GR","lat":37.984166666,"lon":23.728055555,"tolerance_m":15000,"form":"en-country","input":"Athens, Greece","components":{"locality":"Athens","country":"Greece"}}
+{"qid":"Q1530","kind":"capital","country":"IQ","lat":33.315277777,"lon":44.366111111,"tolerance_m":15000,"form":"en","input":"Baghdad","components":{"locality":"Baghdad"}}
+{"qid":"Q1530","kind":"capital","country":"IQ","lat":33.315277777,"lon":44.366111111,"tolerance_m":15000,"form":"en-country","input":"Baghdad, Iraq","components":{"locality":"Baghdad","country":"Iraq"}}
+{"qid":"Q1530","kind":"capital","country":"IQ","lat":33.315277777,"lon":44.366111111,"tolerance_m":15000,"form":"local","input":"بغداد","components":{"locality":"بغداد"}}
+{"qid":"Q1533","kind":"capital","country":"VE","lat":10.506111111,"lon":-66.914444444,"tolerance_m":15000,"form":"en","input":"Caracas","components":{"locality":"Caracas"}}
+{"qid":"Q1533","kind":"capital","country":"VE","lat":10.506111111,"lon":-66.914444444,"tolerance_m":15000,"form":"en-country","input":"Caracas, Venezuela","components":{"locality":"Caracas","country":"Venezuela"}}
+{"qid":"Q1555","kind":"capital","country":"GT","lat":14.641666666,"lon":-90.513333333,"tolerance_m":15000,"form":"en","input":"Guatemala City","components":{"locality":"Guatemala City"}}
+{"qid":"Q1555","kind":"capital","country":"GT","lat":14.641666666,"lon":-90.513333333,"tolerance_m":15000,"form":"en-country","input":"Guatemala City, Guatemala","components":{"locality":"Guatemala City","country":"Guatemala"}}
+{"qid":"Q1563","kind":"capital","country":"CU","lat":23.136666666,"lon":-82.358888888,"tolerance_m":15000,"form":"en","input":"Havana","components":{"locality":"Havana"}}
+{"qid":"Q1563","kind":"capital","country":"CU","lat":23.136666666,"lon":-82.358888888,"tolerance_m":15000,"form":"en-country","input":"Havana, Cuba","components":{"locality":"Havana","country":"Cuba"}}
+{"qid":"Q1563","kind":"capital","country":"CU","lat":23.136666666,"lon":-82.358888888,"tolerance_m":15000,"form":"local","input":"La Habana","components":{"locality":"La Habana"}}
+{"qid":"Q158119","kind":"capital","country":"PS","lat":31.896944444,"lon":35.201666666,"tolerance_m":15000,"form":"en","input":"Ramallah","components":{"locality":"Ramallah"}}
+{"qid":"Q158119","kind":"capital","country":"PS","lat":31.896944444,"lon":35.201666666,"tolerance_m":15000,"form":"en-country","input":"Ramallah, Palestine","components":{"locality":"Ramallah","country":"Palestine"}}
+{"qid":"Q167551","kind":"capital","country":"BI","lat":-3.428333333,"lon":29.925,"tolerance_m":15000,"form":"en","input":"Gitega","components":{"locality":"Gitega"}}
+{"qid":"Q167551","kind":"capital","country":"BI","lat":-3.428333333,"lon":29.925,"tolerance_m":15000,"form":"en-country","input":"Gitega, Burundi","components":{"locality":"Gitega","country":"Burundi"}}
+{"qid":"Q1741","kind":"capital","country":"AT","lat":48.208333333,"lon":16.3725,"tolerance_m":15000,"form":"en","input":"Vienna","components":{"locality":"Vienna"}}
+{"qid":"Q1741","kind":"capital","country":"AT","lat":48.208333333,"lon":16.3725,"tolerance_m":15000,"form":"en-country","input":"Vienna, Austria","components":{"locality":"Vienna","country":"Austria"}}
+{"qid":"Q1741","kind":"capital","country":"AT","lat":48.208333333,"lon":16.3725,"tolerance_m":15000,"form":"local","input":"Wien","components":{"locality":"Wien"}}
+{"qid":"Q1754","kind":"capital","country":"SE","lat":59.329444444,"lon":18.068611111,"tolerance_m":15000,"form":"en","input":"Stockholm","components":{"locality":"Stockholm"}}
+{"qid":"Q1754","kind":"capital","country":"SE","lat":59.329444444,"lon":18.068611111,"tolerance_m":15000,"form":"en-country","input":"Stockholm, Sweden","components":{"locality":"Stockholm","country":"Sweden"}}
+{"qid":"Q1757","kind":"capital","country":"FI","lat":60.170833333,"lon":24.9375,"tolerance_m":15000,"form":"en","input":"Helsinki","components":{"locality":"Helsinki"}}
+{"qid":"Q1757","kind":"capital","country":"FI","lat":60.170833333,"lon":24.9375,"tolerance_m":15000,"form":"en-country","input":"Helsinki, Finland","components":{"locality":"Helsinki","country":"Finland"}}
+{"qid":"Q1761","kind":"capital","country":"IE","lat":53.349722222,"lon":-6.260277777,"tolerance_m":15000,"form":"en","input":"Dublin","components":{"locality":"Dublin"}}
+{"qid":"Q1761","kind":"capital","country":"IE","lat":53.349722222,"lon":-6.260277777,"tolerance_m":15000,"form":"en-country","input":"Dublin, Ireland","components":{"locality":"Dublin","country":"Ireland"}}
+{"qid":"Q1764","kind":"capital","country":"IS","lat":64.1475,"lon":-21.935,"tolerance_m":15000,"form":"en","input":"Reykjavík","components":{"locality":"Reykjavík"}}
+{"qid":"Q1764","kind":"capital","country":"IS","lat":64.1475,"lon":-21.935,"tolerance_m":15000,"form":"en-country","input":"Reykjavík, Iceland","components":{"locality":"Reykjavík","country":"Iceland"}}
+{"qid":"Q1770","kind":"capital","country":"EE","lat":59.437222222,"lon":24.745,"tolerance_m":15000,"form":"en","input":"Tallinn","components":{"locality":"Tallinn"}}
+{"qid":"Q1770","kind":"capital","country":"EE","lat":59.437222222,"lon":24.745,"tolerance_m":15000,"form":"en-country","input":"Tallinn, Estonia","components":{"locality":"Tallinn","country":"Estonia"}}
+{"qid":"Q1773","kind":"capital","country":"LV","lat":56.9475,"lon":24.106944444,"tolerance_m":15000,"form":"en","input":"Riga","components":{"locality":"Riga"}}
+{"qid":"Q1773","kind":"capital","country":"LV","lat":56.9475,"lon":24.106944444,"tolerance_m":15000,"form":"en-country","input":"Riga, Latvia","components":{"locality":"Riga","country":"Latvia"}}
+{"qid":"Q1780","kind":"capital","country":"SK","lat":48.1516988,"lon":17.1093063,"tolerance_m":15000,"form":"en","input":"Bratislava","components":{"locality":"Bratislava"}}
+{"qid":"Q1780","kind":"capital","country":"SK","lat":48.1516988,"lon":17.1093063,"tolerance_m":15000,"form":"en-country","input":"Bratislava, Slovakia","components":{"locality":"Bratislava","country":"Slovakia"}}
+{"qid":"Q1781","kind":"capital","country":"HU","lat":47.498333333,"lon":19.040833333,"tolerance_m":15000,"form":"en","input":"Budapest","components":{"locality":"Budapest"}}
+{"qid":"Q1781","kind":"capital","country":"HU","lat":47.498333333,"lon":19.040833333,"tolerance_m":15000,"form":"en-country","input":"Budapest, Hungary","components":{"locality":"Budapest","country":"Hungary"}}
+{"qid":"Q1842","kind":"capital","country":"LU","lat":49.611388888,"lon":6.13,"tolerance_m":15000,"form":"en","input":"Luxembourg","components":{"locality":"Luxembourg"}}
+{"qid":"Q1842","kind":"capital","country":"LU","lat":49.611388888,"lon":6.13,"tolerance_m":15000,"form":"en-country","input":"Luxembourg, Luxembourg","components":{"locality":"Luxembourg","country":"Luxembourg"}}
+{"qid":"Q1844","kind":"capital","country":"LI","lat":47.140555555,"lon":9.522222222,"tolerance_m":15000,"form":"en","input":"Vaduz","components":{"locality":"Vaduz"}}
+{"qid":"Q1844","kind":"capital","country":"LI","lat":47.140555555,"lon":9.522222222,"tolerance_m":15000,"form":"en-country","input":"Vaduz, Liechtenstein","components":{"locality":"Vaduz","country":"Liechtenstein"}}
+{"qid":"Q1848","kind":"capital","country":"SM","lat":43.932011111,"lon":12.44845,"tolerance_m":15000,"form":"en","input":"San Marino","components":{"locality":"San Marino"}}
+{"qid":"Q1848","kind":"capital","country":"SM","lat":43.932011111,"lon":12.44845,"tolerance_m":15000,"form":"en-country","input":"San Marino, San Marino","components":{"locality":"San Marino","country":"San Marino"}}
+{"qid":"Q1850","kind":"capital","country":"KH","lat":11.569583333,"lon":104.921027777,"tolerance_m":15000,"form":"en","input":"Phnom Penh","components":{"locality":"Phnom Penh"}}
+{"qid":"Q1850","kind":"capital","country":"KH","lat":11.569583333,"lon":104.921027777,"tolerance_m":15000,"form":"en-country","input":"Phnom Penh, Cambodia","components":{"locality":"Phnom Penh","country":"Cambodia"}}
+{"qid":"Q1858","kind":"capital","country":"VN","lat":21.0245,"lon":105.84117,"tolerance_m":15000,"form":"en","input":"Hanoi","components":{"locality":"Hanoi"}}
+{"qid":"Q1858","kind":"capital","country":"VN","lat":21.0245,"lon":105.84117,"tolerance_m":15000,"form":"en-country","input":"Hanoi, Vietnam","components":{"locality":"Hanoi","country":"Vietnam"}}
+{"qid":"Q1861","kind":"capital","country":"TH","lat":13.75,"lon":100.516666666,"tolerance_m":15000,"form":"en","input":"Bangkok","components":{"locality":"Bangkok"}}
+{"qid":"Q1861","kind":"capital","country":"TH","lat":13.75,"lon":100.516666666,"tolerance_m":15000,"form":"en-country","input":"Bangkok, Thailand","components":{"locality":"Bangkok","country":"Thailand"}}
+{"qid":"Q1863","kind":"capital","country":"AD","lat":42.507222222,"lon":1.522222222,"tolerance_m":15000,"form":"en","input":"Andorra la Vella","components":{"locality":"Andorra la Vella"}}
+{"qid":"Q1863","kind":"capital","country":"AD","lat":42.507222222,"lon":1.522222222,"tolerance_m":15000,"form":"en-country","input":"Andorra la Vella, Andorra","components":{"locality":"Andorra la Vella","country":"Andorra"}}
+{"qid":"Q1865","kind":"capital","country":"MY","lat":3.147777777,"lon":101.695277777,"tolerance_m":15000,"form":"en","input":"Kuala Lumpur","components":{"locality":"Kuala Lumpur"}}
+{"qid":"Q1865","kind":"capital","country":"MY","lat":3.147777777,"lon":101.695277777,"tolerance_m":15000,"form":"en-country","input":"Kuala Lumpur, Malaysia","components":{"locality":"Kuala Lumpur","country":"Malaysia"}}
+{"qid":"Q1867","kind":"capital","country":"TW","lat":25.0375,"lon":121.5625,"tolerance_m":15000,"form":"en","input":"Taipei","components":{"locality":"Taipei"}}
+{"qid":"Q1867","kind":"capital","country":"TW","lat":25.0375,"lon":121.5625,"tolerance_m":15000,"form":"en-country","input":"Taipei, Taiwan","components":{"locality":"Taipei","country":"Taiwan"}}
+{"qid":"Q1867","kind":"capital","country":"TW","lat":25.0375,"lon":121.5625,"tolerance_m":15000,"form":"local","input":"臺北市","components":{"locality":"臺北市"}}
+{"qid":"Q18808","kind":"capital","country":"KP","lat":39.016666666,"lon":125.7475,"tolerance_m":15000,"form":"en","input":"Pyongyang","components":{"locality":"Pyongyang"}}
+{"qid":"Q18808","kind":"capital","country":"KP","lat":39.016666666,"lon":125.7475,"tolerance_m":15000,"form":"en-country","input":"Pyongyang, North Korea","components":{"locality":"Pyongyang","country":"North Korea"}}
+{"qid":"Q1899","kind":"capital","country":"UA","lat":50.45,"lon":30.523611111,"tolerance_m":15000,"form":"en","input":"Kyiv","components":{"locality":"Kyiv"}}
+{"qid":"Q1899","kind":"capital","country":"UA","lat":50.45,"lon":30.523611111,"tolerance_m":15000,"form":"en-country","input":"Kyiv, Ukraine","components":{"locality":"Kyiv","country":"Ukraine"}}
+{"qid":"Q1930","kind":"capital","country":"CA","lat":45.424722222,"lon":-75.695,"tolerance_m":15000,"form":"en","input":"Ottawa","components":{"locality":"Ottawa"}}
+{"qid":"Q1930","kind":"capital","country":"CA","lat":45.424722222,"lon":-75.695,"tolerance_m":15000,"form":"en-country","input":"Ottawa, Canada","components":{"locality":"Ottawa","country":"Canada"}}
+{"qid":"Q1947","kind":"capital","country":"SS","lat":4.853888888,"lon":31.5825,"tolerance_m":15000,"form":"en","input":"Juba","components":{"locality":"Juba"}}
+{"qid":"Q1947","kind":"capital","country":"SS","lat":4.853888888,"lon":31.5825,"tolerance_m":15000,"form":"en-country","input":"Juba, South Sudan","components":{"locality":"Juba","country":"South Sudan"}}
+{"qid":"Q1953","kind":"capital","country":"AM","lat":40.181388888,"lon":44.514444444,"tolerance_m":15000,"form":"en","input":"Yerevan","components":{"locality":"Yerevan"}}
+{"qid":"Q1953","kind":"capital","country":"AM","lat":40.181388888,"lon":44.514444444,"tolerance_m":15000,"form":"en-country","input":"Yerevan, Armenia","components":{"locality":"Yerevan","country":"Armenia"}}
+{"qid":"Q1963","kind":"capital","country":"SD","lat":15.60308,"lon":32.52654,"tolerance_m":15000,"form":"en","input":"Khartoum","components":{"locality":"Khartoum"}}
+{"qid":"Q1963","kind":"capital","country":"SD","lat":15.60308,"lon":32.52654,"tolerance_m":15000,"form":"en-country","input":"Khartoum, Sudan","components":{"locality":"Khartoum","country":"Sudan"}}
+{"qid":"Q19660","kind":"capital","country":"RO","lat":44.413361111,"lon":26.097777777,"tolerance_m":15000,"form":"en","input":"Bucharest","components":{"locality":"Bucharest"}}
+{"qid":"Q19660","kind":"capital","country":"RO","lat":44.413361111,"lon":26.097777777,"tolerance_m":15000,"form":"en-country","input":"Bucharest, Romania","components":{"locality":"Bucharest","country":"Romania"}}
+{"qid":"Q19689","kind":"capital","country":"AL","lat":41.328333333,"lon":19.818055555,"tolerance_m":15000,"form":"en","input":"Tirana","components":{"locality":"Tirana"}}
+{"qid":"Q19689","kind":"capital","country":"AL","lat":41.328333333,"lon":19.818055555,"tolerance_m":15000,"form":"en-country","input":"Tirana, Albania","components":{"locality":"Tirana","country":"Albania"}}
+{"qid":"Q21197","kind":"capital","country":"MD","lat":47.022777777,"lon":28.835277777,"tolerance_m":15000,"form":"en","input":"Chișinău","components":{"locality":"Chișinău"}}
+{"qid":"Q21197","kind":"capital","country":"MD","lat":47.022777777,"lon":28.835277777,"tolerance_m":15000,"form":"en-country","input":"Chișinău, Moldova","components":{"locality":"Chișinău","country":"Moldova"}}
+{"qid":"Q212938","kind":"capital","country":"PS","lat":31.78336,"lon":35.23388,"tolerance_m":15000,"form":"en","input":"East Jerusalem","components":{"locality":"East Jerusalem"}}
+{"qid":"Q212938","kind":"capital","country":"PS","lat":31.78336,"lon":35.23388,"tolerance_m":15000,"form":"en-country","input":"East Jerusalem, Palestine","components":{"locality":"East Jerusalem","country":"Palestine"}}
+{"qid":"Q216","kind":"capital","country":"LT","lat":54.687222222,"lon":25.28,"tolerance_m":15000,"form":"en","input":"Vilnius","components":{"locality":"Vilnius"}}
+{"qid":"Q216","kind":"capital","country":"LT","lat":54.687222222,"lon":25.28,"tolerance_m":15000,"form":"en-country","input":"Vilnius, Lithuania","components":{"locality":"Vilnius","country":"Lithuania"}}
+{"qid":"Q220","kind":"capital","country":"IT","lat":41.893055555,"lon":12.482777777,"tolerance_m":15000,"form":"en","input":"Rome","components":{"locality":"Rome"}}
+{"qid":"Q220","kind":"capital","country":"IT","lat":41.893055555,"lon":12.482777777,"tolerance_m":15000,"form":"en-country","input":"Rome, Italy","components":{"locality":"Rome","country":"Italy"}}
+{"qid":"Q220","kind":"capital","country":"IT","lat":41.893055555,"lon":12.482777777,"tolerance_m":15000,"form":"local","input":"Roma","components":{"locality":"Roma"}}
+{"qid":"Q2280","kind":"capital","country":"BY","lat":53.902246,"lon":27.561837,"tolerance_m":15000,"form":"en","input":"Minsk","components":{"locality":"Minsk"}}
+{"qid":"Q2280","kind":"capital","country":"BY","lat":53.902246,"lon":27.561837,"tolerance_m":15000,"form":"en-country","input":"Minsk, Belarus","components":{"locality":"Minsk","country":"Belarus"}}
+{"qid":"Q2280","kind":"capital","country":"BY","lat":53.902246,"lon":27.561837,"tolerance_m":15000,"form":"local","input":"Минск","components":{"locality":"Минск"}}
+{"qid":"Q23430","kind":"capital","country":"MN","lat":47.921357,"lon":106.905515,"tolerance_m":15000,"form":"en","input":"Ulaanbaatar","components":{"locality":"Ulaanbaatar"}}
+{"qid":"Q23430","kind":"capital","country":"MN","lat":47.921357,"lon":106.905515,"tolerance_m":15000,"form":"en-country","input":"Ulaanbaatar, Mongolia","components":{"locality":"Ulaanbaatar","country":"Mongolia"}}
+{"qid":"Q23438","kind":"capital","country":"TM","lat":37.95,"lon":58.383333333,"tolerance_m":15000,"form":"en","input":"Ashgabat","components":{"locality":"Ashgabat"}}
+{"qid":"Q23438","kind":"capital","country":"TM","lat":37.95,"lon":58.383333333,"tolerance_m":15000,"form":"en-country","input":"Ashgabat, Turkmenistan","components":{"locality":"Ashgabat","country":"Turkmenistan"}}
+{"qid":"Q235","kind":"capital","country":"MC","lat":43.731111111,"lon":7.42,"tolerance_m":15000,"form":"en","input":"Monaco","components":{"locality":"Monaco"}}
+{"qid":"Q235","kind":"capital","country":"MC","lat":43.731111111,"lon":7.42,"tolerance_m":15000,"form":"en-country","input":"Monaco, Monaco","components":{"locality":"Monaco","country":"Monaco"}}
+{"qid":"Q23564","kind":"capital","country":"ME","lat":42.441388888,"lon":19.262777777,"tolerance_m":15000,"form":"en","input":"Podgorica","components":{"locality":"Podgorica"}}
+{"qid":"Q23564","kind":"capital","country":"ME","lat":42.441388888,"lon":19.262777777,"tolerance_m":15000,"form":"en-country","input":"Podgorica, Montenegro","components":{"locality":"Podgorica","country":"Montenegro"}}
+{"qid":"Q23661","kind":"capital","country":"NZ","lat":-41.288888888,"lon":174.777222222,"tolerance_m":15000,"form":"en","input":"Wellington","components":{"locality":"Wellington"}}
+{"qid":"Q23661","kind":"capital","country":"NZ","lat":-41.288888888,"lon":174.777222222,"tolerance_m":15000,"form":"en-country","input":"Wellington, New Zealand","components":{"locality":"Wellington","country":"New Zealand"}}
+{"qid":"Q237","kind":"capital","country":"VA","lat":41.904,"lon":12.453,"tolerance_m":15000,"form":"en","input":"Vatican City","components":{"locality":"Vatican City"}}
+{"qid":"Q237","kind":"capital","country":"VA","lat":41.904,"lon":12.453,"tolerance_m":15000,"form":"en-country","input":"Vatican City, Vatican City","components":{"locality":"Vatican City","country":"Vatican City"}}
+{"qid":"Q23800","kind":"capital","country":"MT","lat":35.897777777,"lon":14.5125,"tolerance_m":15000,"form":"en","input":"Valletta","components":{"locality":"Valletta"}}
+{"qid":"Q23800","kind":"capital","country":"MT","lat":35.897777777,"lon":14.5125,"tolerance_m":15000,"form":"en-country","input":"Valletta, Malta","components":{"locality":"Valletta","country":"Malta"}}
+{"qid":"Q239","kind":"capital","country":"BE","lat":50.846666666,"lon":4.351666666,"tolerance_m":15000,"form":"en","input":"Brussels","components":{"locality":"Brussels"}}
+{"qid":"Q239","kind":"capital","country":"BE","lat":50.846666666,"lon":4.351666666,"tolerance_m":15000,"form":"en-country","input":"Brussels, Belgium","components":{"locality":"Brussels","country":"Belgium"}}
+{"qid":"Q239","kind":"capital","country":"BE","lat":50.846666666,"lon":4.351666666,"tolerance_m":15000,"form":"local","input":"Bruxelles","components":{"locality":"Bruxelles"}}
+{"qid":"Q2449","kind":"capital","country":"SO","lat":2.039166666,"lon":45.341944444,"tolerance_m":15000,"form":"en","input":"Mogadishu","components":{"locality":"Mogadishu"}}
+{"qid":"Q2449","kind":"capital","country":"SO","lat":2.039166666,"lon":45.341944444,"tolerance_m":15000,"form":"en-country","input":"Mogadishu, Somalia","components":{"locality":"Mogadishu","country":"Somalia"}}
+{"qid":"Q2467","kind":"capital","country":"BS","lat":25.078055555,"lon":-77.338611111,"tolerance_m":15000,"form":"en","input":"Nassau","components":{"locality":"Nassau"}}
+{"qid":"Q2467","kind":"capital","country":"BS","lat":25.078055555,"lon":-77.338611111,"tolerance_m":15000,"form":"en-country","input":"Nassau, The Bahamas","components":{"locality":"Nassau","country":"The Bahamas"}}
+{"qid":"Q2471","kind":"capital","country":"YE","lat":15.35,"lon":44.2,"tolerance_m":15000,"form":"en","input":"Sanaa","components":{"locality":"Sanaa"}}
+{"qid":"Q2471","kind":"capital","country":"YE","lat":15.35,"lon":44.2,"tolerance_m":15000,"form":"en-country","input":"Sanaa, Yemen","components":{"locality":"Sanaa","country":"Yemen"}}
+{"qid":"Q2471","kind":"capital","country":"YE","lat":15.35,"lon":44.2,"tolerance_m":15000,"form":"local","input":"صنعاء","components":{"locality":"صنعاء"}}
+{"qid":"Q25270","kind":"capital","country":"XK","lat":42.666666666,"lon":21.166666666,"tolerance_m":15000,"form":"en","input":"Pristina","components":{"locality":"Pristina"}}
+{"qid":"Q25270","kind":"capital","country":"XK","lat":42.666666666,"lon":21.166666666,"tolerance_m":15000,"form":"en-country","input":"Pristina, Kosovo","components":{"locality":"Pristina","country":"Kosovo"}}
+{"qid":"Q269","kind":"capital","country":"UZ","lat":41.311111111,"lon":69.279722222,"tolerance_m":15000,"form":"en","input":"Tashkent","components":{"locality":"Tashkent"}}
+{"qid":"Q269","kind":"capital","country":"UZ","lat":41.311111111,"lon":69.279722222,"tolerance_m":15000,"form":"en-country","input":"Tashkent, Uzbekistan","components":{"locality":"Tashkent","country":"Uzbekistan"}}
+{"qid":"Q270","kind":"capital","country":"PL","lat":52.23,"lon":21.011111111,"tolerance_m":15000,"form":"en","input":"Warsaw","components":{"locality":"Warsaw"}}
+{"qid":"Q270","kind":"capital","country":"PL","lat":52.23,"lon":21.011111111,"tolerance_m":15000,"form":"en-country","input":"Warsaw, Poland","components":{"locality":"Warsaw","country":"Poland"}}
+{"qid":"Q2807","kind":"capital","country":"ES","lat":40.416944444,"lon":-3.703333333,"tolerance_m":15000,"form":"en","input":"Madrid","components":{"locality":"Madrid"}}
+{"qid":"Q2807","kind":"capital","country":"ES","lat":40.416944444,"lon":-3.703333333,"tolerance_m":15000,"form":"en-country","input":"Madrid, Spain","components":{"locality":"Madrid","country":"Spain"}}
+{"qid":"Q2841","kind":"capital","country":"CO","lat":4.60971,"lon":-74.08175,"tolerance_m":15000,"form":"en","input":"Bogotá","components":{"locality":"Bogotá"}}
+{"qid":"Q2841","kind":"capital","country":"CO","lat":4.60971,"lon":-74.08175,"tolerance_m":15000,"form":"en-country","input":"Bogotá, Colombia","components":{"locality":"Bogotá","country":"Colombia"}}
+{"qid":"Q2844","kind":"capital","country":"BR","lat":-15.793888888,"lon":-47.882777777,"tolerance_m":15000,"form":"en","input":"Brasília","components":{"locality":"Brasília"}}
+{"qid":"Q2844","kind":"capital","country":"BR","lat":-15.793888888,"lon":-47.882777777,"tolerance_m":15000,"form":"en-country","input":"Brasília, Brazil","components":{"locality":"Brasília","country":"Brazil"}}
+{"qid":"Q2868","kind":"capital","country":"PE","lat":-12.06,"lon":-77.0375,"tolerance_m":15000,"form":"en","input":"Lima","components":{"locality":"Lima"}}
+{"qid":"Q2868","kind":"capital","country":"PE","lat":-12.06,"lon":-77.0375,"tolerance_m":15000,"form":"en-country","input":"Lima, Peru","components":{"locality":"Lima","country":"Peru"}}
+{"qid":"Q2887","kind":"capital","country":"CL","lat":-33.4375,"lon":-70.65,"tolerance_m":15000,"form":"en","input":"Santiago","components":{"locality":"Santiago"}}
+{"qid":"Q2887","kind":"capital","country":"CL","lat":-33.4375,"lon":-70.65,"tolerance_m":15000,"form":"en-country","input":"Santiago, Chile","components":{"locality":"Santiago","country":"Chile"}}
+{"qid":"Q2887","kind":"capital","country":"CL","lat":-33.4375,"lon":-70.65,"tolerance_m":15000,"form":"local","input":"Santiago de Chile","components":{"locality":"Santiago de Chile"}}
+{"qid":"Q2900","kind":"capital","country":"EC","lat":-0.22,"lon":-78.5125,"tolerance_m":15000,"form":"en","input":"Quito","components":{"locality":"Quito"}}
+{"qid":"Q2900","kind":"capital","country":"EC","lat":-0.22,"lon":-78.5125,"tolerance_m":15000,"form":"en-country","input":"Quito, Ecuador","components":{"locality":"Quito","country":"Ecuador"}}
+{"qid":"Q2907","kind":"capital","country":"BO","lat":-19.0475,"lon":-65.26,"tolerance_m":15000,"form":"en","input":"Sucre","components":{"locality":"Sucre"}}
+{"qid":"Q2907","kind":"capital","country":"BO","lat":-19.0475,"lon":-65.26,"tolerance_m":15000,"form":"en-country","input":"Sucre, Bolivia","components":{"locality":"Sucre","country":"Bolivia"}}
+{"qid":"Q2933","kind":"capital","country":"PY","lat":-25.28,"lon":-57.634444444,"tolerance_m":15000,"form":"en","input":"Asunción","components":{"locality":"Asunción"}}
+{"qid":"Q2933","kind":"capital","country":"PY","lat":-25.28,"lon":-57.634444444,"tolerance_m":15000,"form":"en-country","input":"Asunción, Paraguay","components":{"locality":"Asunción","country":"Paraguay"}}
+{"qid":"Q3001","kind":"capital","country":"SR","lat":5.866666666,"lon":-55.166666666,"tolerance_m":15000,"form":"en","input":"Paramaribo","components":{"locality":"Paramaribo"}}
+{"qid":"Q3001","kind":"capital","country":"SR","lat":5.866666666,"lon":-55.166666666,"tolerance_m":15000,"form":"en-country","input":"Paramaribo, Suriname","components":{"locality":"Paramaribo","country":"Suriname"}}
+{"qid":"Q3037","kind":"capital","country":"NP","lat":27.71,"lon":85.32,"tolerance_m":15000,"form":"en","input":"Kathmandu","components":{"locality":"Kathmandu"}}
+{"qid":"Q3037","kind":"capital","country":"NP","lat":27.71,"lon":85.32,"tolerance_m":15000,"form":"en-country","input":"Kathmandu, Nepal","components":{"locality":"Kathmandu","country":"Nepal"}}
+{"qid":"Q3043","kind":"capital","country":"BZ","lat":17.25,"lon":-88.7675,"tolerance_m":15000,"form":"en","input":"Belmopan","components":{"locality":"Belmopan"}}
+{"qid":"Q3043","kind":"capital","country":"BZ","lat":17.25,"lon":-88.7675,"tolerance_m":15000,"form":"en-country","input":"Belmopan, Belize","components":{"locality":"Belmopan","country":"Belize"}}
+{"qid":"Q3070","kind":"capital","country":"CR","lat":9.932738888,"lon":-84.079613888,"tolerance_m":15000,"form":"en","input":"San José","components":{"locality":"San José"}}
+{"qid":"Q3070","kind":"capital","country":"CR","lat":9.932738888,"lon":-84.079613888,"tolerance_m":15000,"form":"en-country","input":"San José, Costa Rica","components":{"locality":"San José","country":"Costa Rica"}}
+{"qid":"Q31026","kind":"capital","country":"NR","lat":-0.5477,"lon":166.920867,"tolerance_m":15000,"form":"en","input":"Yaren District","components":{"locality":"Yaren District"}}
+{"qid":"Q31026","kind":"capital","country":"NR","lat":-0.5477,"lon":166.920867,"tolerance_m":15000,"form":"en-country","input":"Yaren District, Nauru","components":{"locality":"Yaren District","country":"Nauru"}}
+{"qid":"Q3110","kind":"capital","country":"SV","lat":13.697597222,"lon":-89.191155555,"tolerance_m":15000,"form":"en","input":"San Salvador","components":{"locality":"San Salvador"}}
+{"qid":"Q3110","kind":"capital","country":"SV","lat":13.697597222,"lon":-89.191155555,"tolerance_m":15000,"form":"en-country","input":"San Salvador, El Salvador","components":{"locality":"San Salvador","country":"El Salvador"}}
+{"qid":"Q3114","kind":"capital","country":"AU","lat":-35.293055555,"lon":149.126944444,"tolerance_m":15000,"form":"en","input":"Canberra","components":{"locality":"Canberra"}}
+{"qid":"Q3114","kind":"capital","country":"AU","lat":-35.293055555,"lon":149.126944444,"tolerance_m":15000,"form":"en-country","input":"Canberra, Australia","components":{"locality":"Canberra","country":"Australia"}}
+{"qid":"Q3238","kind":"capital","country":"HN","lat":14.105783333,"lon":-87.204705555,"tolerance_m":15000,"form":"en","input":"Tegucigalpa","components":{"locality":"Tegucigalpa"}}
+{"qid":"Q3238","kind":"capital","country":"HN","lat":14.105783333,"lon":-87.204705555,"tolerance_m":15000,"form":"en-country","input":"Tegucigalpa, Honduras","components":{"locality":"Tegucigalpa","country":"Honduras"}}
+{"qid":"Q3306","kind":"capital","country":"PA","lat":8.971111111,"lon":-79.534722222,"tolerance_m":15000,"form":"en","input":"Panama City","components":{"locality":"Panama City"}}
+{"qid":"Q3306","kind":"capital","country":"PA","lat":8.971111111,"lon":-79.534722222,"tolerance_m":15000,"form":"en-country","input":"Panama City, Panama","components":{"locality":"Panama City","country":"Panama"}}
+{"qid":"Q334","kind":"capital","country":"SG","lat":1.3,"lon":103.8,"tolerance_m":15000,"form":"en","input":"Singapore","components":{"locality":"Singapore"}}
+{"qid":"Q334","kind":"capital","country":"SG","lat":1.3,"lon":103.8,"tolerance_m":15000,"form":"en-country","input":"Singapore, Singapore","components":{"locality":"Singapore","country":"Singapore"}}
+{"qid":"Q34126","kind":"capital","country":"TV","lat":-8.504777777,"lon":179.117361111,"tolerance_m":15000,"form":"en","input":"Funafuti","components":{"locality":"Funafuti"}}
+{"qid":"Q34126","kind":"capital","country":"TV","lat":-8.504777777,"lon":179.117361111,"tolerance_m":15000,"form":"en-country","input":"Funafuti, Tuvalu","components":{"locality":"Funafuti","country":"Tuvalu"}}
+{"qid":"Q34261","kind":"capital","country":"HT","lat":18.546944444,"lon":-72.340277777,"tolerance_m":15000,"form":"en","input":"Port-au-Prince","components":{"locality":"Port-au-Prince"}}
+{"qid":"Q34261","kind":"capital","country":"HT","lat":18.546944444,"lon":-72.340277777,"tolerance_m":15000,"form":"en-country","input":"Port-au-Prince, Haiti","components":{"locality":"Port-au-Prince","country":"Haiti"}}
+{"qid":"Q34692","kind":"capital","country":"JM","lat":17.971388888,"lon":-76.793055555,"tolerance_m":15000,"form":"en","input":"Kingston","components":{"locality":"Kingston"}}
+{"qid":"Q34692","kind":"capital","country":"JM","lat":17.971388888,"lon":-76.793055555,"tolerance_m":15000,"form":"en-country","input":"Kingston, Jamaica","components":{"locality":"Kingston","country":"Jamaica"}}
+{"qid":"Q34820","kind":"capital","country":"DO","lat":18.4625,"lon":-69.936111111,"tolerance_m":15000,"form":"en","input":"Santo Domingo","components":{"locality":"Santo Domingo"}}
+{"qid":"Q34820","kind":"capital","country":"DO","lat":18.4625,"lon":-69.936111111,"tolerance_m":15000,"form":"en-country","input":"Santo Domingo, Dominican Republic","components":{"locality":"Santo Domingo","country":"Dominican Republic"}}
+{"qid":"Q35178","kind":"capital","country":"KW","lat":29.375,"lon":47.98,"tolerance_m":15000,"form":"en","input":"Kuwait City","components":{"locality":"Kuwait City"}}
+{"qid":"Q35178","kind":"capital","country":"KW","lat":29.375,"lon":47.98,"tolerance_m":15000,"form":"en-country","input":"Kuwait City, Kuwait","components":{"locality":"Kuwait City","country":"Kuwait"}}
+{"qid":"Q35178","kind":"capital","country":"KW","lat":29.375,"lon":47.98,"tolerance_m":15000,"form":"local","input":"مدينة الكويت","components":{"locality":"مدينة الكويت"}}
+{"qid":"Q35381","kind":"capital","country":"LK","lat":6.926666666,"lon":79.860555555,"tolerance_m":15000,"form":"en","input":"Colombo","components":{"locality":"Colombo"}}
+{"qid":"Q35381","kind":"capital","country":"LK","lat":6.926666666,"lon":79.860555555,"tolerance_m":15000,"form":"en-country","input":"Colombo, Sri Lanka","components":{"locality":"Colombo","country":"Sri Lanka"}}
+{"qid":"Q3551","kind":"capital","country":"MA","lat":34.021111111,"lon":-6.841388888,"tolerance_m":15000,"form":"en","input":"Rabat","components":{"locality":"Rabat"}}
+{"qid":"Q3551","kind":"capital","country":"MA","lat":34.021111111,"lon":-6.841388888,"tolerance_m":15000,"form":"en-country","input":"Rabat, Morocco","components":{"locality":"Rabat","country":"Morocco"}}
+{"qid":"Q3551","kind":"capital","country":"MA","lat":34.021111111,"lon":-6.841388888,"tolerance_m":15000,"form":"local","input":"الرباط","components":{"locality":"الرباط"}}
+{"qid":"Q3561","kind":"capital","country":"DZ","lat":36.776388888,"lon":3.058611111,"tolerance_m":15000,"form":"en","input":"Algiers","components":{"locality":"Algiers"}}
+{"qid":"Q3561","kind":"capital","country":"DZ","lat":36.776388888,"lon":3.058611111,"tolerance_m":15000,"form":"en-country","input":"Algiers, Algeria","components":{"locality":"Algiers","country":"Algeria"}}
+{"qid":"Q3561","kind":"capital","country":"DZ","lat":36.776388888,"lon":3.058611111,"tolerance_m":15000,"form":"local","input":"الجزائر العاصمة","components":{"locality":"الجزائر العاصمة"}}
+{"qid":"Q3572","kind":"capital","country":"TN","lat":36.800833333,"lon":10.18,"tolerance_m":15000,"form":"en","input":"Tunis","components":{"locality":"Tunis"}}
+{"qid":"Q3572","kind":"capital","country":"TN","lat":36.800833333,"lon":10.18,"tolerance_m":15000,"form":"en-country","input":"Tunis, Tunisia","components":{"locality":"Tunis","country":"Tunisia"}}
+{"qid":"Q3572","kind":"capital","country":"TN","lat":36.800833333,"lon":10.18,"tolerance_m":15000,"form":"local","input":"تونس","components":{"locality":"تونس"}}
+{"qid":"Q3579","kind":"capital","country":"LY","lat":32.8875,"lon":13.1875,"tolerance_m":15000,"form":"en","input":"Tripoli","components":{"locality":"Tripoli"}}
+{"qid":"Q3579","kind":"capital","country":"LY","lat":32.8875,"lon":13.1875,"tolerance_m":15000,"form":"en-country","input":"Tripoli, Libya","components":{"locality":"Tripoli","country":"Libya"}}
+{"qid":"Q3579","kind":"capital","country":"LY","lat":32.8875,"lon":13.1875,"tolerance_m":15000,"form":"local","input":"طرابلس","components":{"locality":"طرابلس"}}
+{"qid":"Q3604","kind":"capital","country":"DJ","lat":11.595,"lon":43.148055555,"tolerance_m":15000,"form":"en","input":"Djibouti","components":{"locality":"Djibouti"}}
+{"qid":"Q3604","kind":"capital","country":"DJ","lat":11.595,"lon":43.148055555,"tolerance_m":15000,"form":"en-country","input":"Djibouti, Djibouti","components":{"locality":"Djibouti","country":"Djibouti"}}
+{"qid":"Q3616","kind":"capital","country":"IR","lat":35.688888888,"lon":51.389722222,"tolerance_m":15000,"form":"en","input":"Tehran","components":{"locality":"Tehran"}}
+{"qid":"Q3616","kind":"capital","country":"IR","lat":35.688888888,"lon":51.389722222,"tolerance_m":15000,"form":"en-country","input":"Tehran, Iran","components":{"locality":"Tehran","country":"Iran"}}
+{"qid":"Q36168","kind":"capital","country":"BB","lat":13.0975,"lon":-59.616666666,"tolerance_m":15000,"form":"en","input":"Bridgetown","components":{"locality":"Bridgetown"}}
+{"qid":"Q36168","kind":"capital","country":"BB","lat":13.0975,"lon":-59.616666666,"tolerance_m":15000,"form":"en-country","input":"Bridgetown, Barbados","components":{"locality":"Bridgetown","country":"Barbados"}}
+{"qid":"Q3624","kind":"capital","country":"ET","lat":9.035833333,"lon":38.7525,"tolerance_m":15000,"form":"en","input":"Addis Ababa","components":{"locality":"Addis Ababa"}}
+{"qid":"Q3624","kind":"capital","country":"ET","lat":9.035833333,"lon":38.7525,"tolerance_m":15000,"form":"en-country","input":"Addis Ababa, Ethiopia","components":{"locality":"Addis Ababa","country":"Ethiopia"}}
+{"qid":"Q36260","kind":"capital","country":"WS","lat":-13.833333333,"lon":-171.833333333,"tolerance_m":15000,"form":"en","input":"Apia","components":{"locality":"Apia"}}
+{"qid":"Q36260","kind":"capital","country":"WS","lat":-13.833333333,"lon":-171.833333333,"tolerance_m":15000,"form":"en-country","input":"Apia, Samoa","components":{"locality":"Apia","country":"Samoa"}}
+{"qid":"Q36281","kind":"capital","country":"DM","lat":15.3,"lon":-61.383333333,"tolerance_m":15000,"form":"en","input":"Roseau","components":{"locality":"Roseau"}}
+{"qid":"Q36281","kind":"capital","country":"DM","lat":15.3,"lon":-61.383333333,"tolerance_m":15000,"form":"en-country","input":"Roseau, Dominica","components":{"locality":"Roseau","country":"Dominica"}}
+{"qid":"Q3630","kind":"capital","country":"ID","lat":-6.175277777,"lon":106.826944444,"tolerance_m":15000,"form":"en","input":"Jakarta","components":{"locality":"Jakarta"}}
+{"qid":"Q3630","kind":"capital","country":"ID","lat":-6.175277777,"lon":106.826944444,"tolerance_m":15000,"form":"en-country","input":"Jakarta, Indonesia","components":{"locality":"Jakarta","country":"Indonesia"}}
+{"qid":"Q3640","kind":"capital","country":"TR","lat":39.93576,"lon":32.83869,"tolerance_m":15000,"form":"en","input":"Ankara","components":{"locality":"Ankara"}}
+{"qid":"Q3640","kind":"capital","country":"TR","lat":39.93576,"lon":32.83869,"tolerance_m":15000,"form":"en-country","input":"Ankara, Turkey","components":{"locality":"Ankara","country":"Turkey"}}
+{"qid":"Q3642","kind":"capital","country":"ER","lat":15.333333333,"lon":38.916666666,"tolerance_m":15000,"form":"en","input":"Asmara","components":{"locality":"Asmara"}}
+{"qid":"Q3642","kind":"capital","country":"ER","lat":15.333333333,"lon":38.916666666,"tolerance_m":15000,"form":"en-country","input":"Asmara, Eritrea","components":{"locality":"Asmara","country":"Eritrea"}}
+{"qid":"Q36526","kind":"capital","country":"PG","lat":-9.478888888,"lon":147.149444444,"tolerance_m":15000,"form":"en","input":"Port Moresby","components":{"locality":"Port Moresby"}}
+{"qid":"Q36526","kind":"capital","country":"PG","lat":-9.478888888,"lon":147.149444444,"tolerance_m":15000,"form":"en-country","input":"Port Moresby, Papua New Guinea","components":{"locality":"Port Moresby","country":"Papua New Guinea"}}
+{"qid":"Q3659","kind":"capital","country":"TD","lat":12.11,"lon":15.05,"tolerance_m":15000,"form":"en","input":"N'Djamena","components":{"locality":"N'Djamena"}}
+{"qid":"Q3659","kind":"capital","country":"TD","lat":12.11,"lon":15.05,"tolerance_m":15000,"form":"en-country","input":"N'Djamena, Chad","components":{"locality":"N'Djamena","country":"Chad"}}
+{"qid":"Q3674","kind":"capital","country":"NE","lat":13.515,"lon":2.1175,"tolerance_m":15000,"form":"en","input":"Niamey","components":{"locality":"Niamey"}}
+{"qid":"Q3674","kind":"capital","country":"NE","lat":13.515,"lon":2.1175,"tolerance_m":15000,"form":"en-country","input":"Niamey, Niger","components":{"locality":"Niamey","country":"Niger"}}
+{"qid":"Q3688","kind":"capital","country":"MR","lat":18.08581,"lon":-15.9785,"tolerance_m":15000,"form":"en","input":"Nouakchott","components":{"locality":"Nouakchott"}}
+{"qid":"Q3688","kind":"capital","country":"MR","lat":18.08581,"lon":-15.9785,"tolerance_m":15000,"form":"en-country","input":"Nouakchott, Mauritania","components":{"locality":"Nouakchott","country":"Mauritania"}}
+{"qid":"Q3692","kind":"capital","country":"SA","lat":24.638333333,"lon":46.715,"tolerance_m":15000,"form":"en","input":"Riyadh","components":{"locality":"Riyadh"}}
+{"qid":"Q3692","kind":"capital","country":"SA","lat":24.638333333,"lon":46.715,"tolerance_m":15000,"form":"en-country","input":"Riyadh, Saudi Arabia","components":{"locality":"Riyadh","country":"Saudi Arabia"}}
+{"qid":"Q3692","kind":"capital","country":"SA","lat":24.638333333,"lon":46.715,"tolerance_m":15000,"form":"local","input":"الرياض","components":{"locality":"الرياض"}}
+{"qid":"Q3703","kind":"capital","country":"ML","lat":12.645833333,"lon":-7.992222222,"tolerance_m":15000,"form":"en","input":"Bamako","components":{"locality":"Bamako"}}
+{"qid":"Q3703","kind":"capital","country":"ML","lat":12.645833333,"lon":-7.992222222,"tolerance_m":15000,"form":"en-country","input":"Bamako, Mali","components":{"locality":"Bamako","country":"Mali"}}
+{"qid":"Q3711","kind":"capital","country":"RS","lat":44.817777777,"lon":20.456944444,"tolerance_m":15000,"form":"en","input":"Belgrade","components":{"locality":"Belgrade"}}
+{"qid":"Q3711","kind":"capital","country":"RS","lat":44.817777777,"lon":20.456944444,"tolerance_m":15000,"form":"en-country","input":"Belgrade, Serbia","components":{"locality":"Belgrade","country":"Serbia"}}
+{"qid":"Q3718","kind":"capital","country":"SN","lat":14.672555555,"lon":-17.432,"tolerance_m":15000,"form":"en","input":"Dakar","components":{"locality":"Dakar"}}
+{"qid":"Q3718","kind":"capital","country":"SN","lat":14.672555555,"lon":-17.432,"tolerance_m":15000,"form":"en-country","input":"Dakar, Senegal","components":{"locality":"Dakar","country":"Senegal"}}
+{"qid":"Q3726","kind":"capital","country":"GM","lat":13.453055555,"lon":-16.5775,"tolerance_m":15000,"form":"en","input":"Banjul","components":{"locality":"Banjul"}}
+{"qid":"Q3726","kind":"capital","country":"GM","lat":13.453055555,"lon":-16.5775,"tolerance_m":15000,"form":"en-country","input":"Banjul, The Gambia","components":{"locality":"Banjul","country":"The Gambia"}}
+{"qid":"Q3733","kind":"capital","country":"GN","lat":9.509166666,"lon":-13.712222222,"tolerance_m":15000,"form":"en","input":"Conakry","components":{"locality":"Conakry"}}
+{"qid":"Q3733","kind":"capital","country":"GN","lat":9.509166666,"lon":-13.712222222,"tolerance_m":15000,"form":"en-country","input":"Conakry, Guinea","components":{"locality":"Conakry","country":"Guinea"}}
+{"qid":"Q3739","kind":"capital","country":"GW","lat":11.86,"lon":-15.583333333,"tolerance_m":15000,"form":"en","input":"Bissau","components":{"locality":"Bissau"}}
+{"qid":"Q3739","kind":"capital","country":"GW","lat":11.86,"lon":-15.583333333,"tolerance_m":15000,"form":"en-country","input":"Bissau, Guinea-Bissau","components":{"locality":"Bissau","country":"Guinea-Bissau"}}
+{"qid":"Q37400","kind":"capital","country":"MM","lat":19.7475,"lon":96.115,"tolerance_m":15000,"form":"en","input":"Naypyidaw","components":{"locality":"Naypyidaw"}}
+{"qid":"Q37400","kind":"capital","country":"MM","lat":19.7475,"lon":96.115,"tolerance_m":15000,"form":"en-country","input":"Naypyidaw, Myanmar","components":{"locality":"Naypyidaw","country":"Myanmar"}}
+{"qid":"Q3748","kind":"capital","country":"LR","lat":6.310555555,"lon":-10.804722222,"tolerance_m":15000,"form":"en","input":"Monrovia","components":{"locality":"Monrovia"}}
+{"qid":"Q3748","kind":"capital","country":"LR","lat":6.310555555,"lon":-10.804722222,"tolerance_m":15000,"form":"en-country","input":"Monrovia, Liberia","components":{"locality":"Monrovia","country":"Liberia"}}
+{"qid":"Q3751","kind":"capital","country":"CV","lat":14.917719444,"lon":-23.509155555,"tolerance_m":15000,"form":"en","input":"Praia","components":{"locality":"Praia"}}
+{"qid":"Q3751","kind":"capital","country":"CV","lat":14.917719444,"lon":-23.509155555,"tolerance_m":15000,"form":"en-country","input":"Praia, Cape Verde","components":{"locality":"Praia","country":"Cape Verde"}}
+{"qid":"Q3761","kind":"capital","country":"GH","lat":5.55602,"lon":-0.1969,"tolerance_m":15000,"form":"en","input":"Accra","components":{"locality":"Accra"}}
+{"qid":"Q3761","kind":"capital","country":"GH","lat":5.55602,"lon":-0.1969,"tolerance_m":15000,"form":"en-country","input":"Accra, Ghana","components":{"locality":"Accra","country":"Ghana"}}
+{"qid":"Q3766","kind":"capital","country":"SY","lat":33.513,"lon":36.292,"tolerance_m":15000,"form":"en","input":"Damascus","components":{"locality":"Damascus"}}
+{"qid":"Q3766","kind":"capital","country":"SY","lat":33.513,"lon":36.292,"tolerance_m":15000,"form":"en-country","input":"Damascus, Syria","components":{"locality":"Damascus","country":"Syria"}}
+{"qid":"Q3766","kind":"capital","country":"SY","lat":33.513,"lon":36.292,"tolerance_m":15000,"form":"local","input":"دمشق","components":{"locality":"دمشق"}}
+{"qid":"Q3768","kind":"capital","country":"CI","lat":6.816111111,"lon":-5.274166666,"tolerance_m":15000,"form":"en","input":"Yamoussoukro","components":{"locality":"Yamoussoukro"}}
+{"qid":"Q3768","kind":"capital","country":"CI","lat":6.816111111,"lon":-5.274166666,"tolerance_m":15000,"form":"en-country","input":"Yamoussoukro, Ivory Coast","components":{"locality":"Yamoussoukro","country":"Ivory Coast"}}
+{"qid":"Q37701","kind":"capital","country":"ZA","lat":-29.1,"lon":26.216666666,"tolerance_m":15000,"form":"en","input":"Bloemfontein","components":{"locality":"Bloemfontein"}}
+{"qid":"Q37701","kind":"capital","country":"ZA","lat":-29.1,"lon":26.216666666,"tolerance_m":15000,"form":"en-country","input":"Bloemfontein, South Africa","components":{"locality":"Bloemfontein","country":"South Africa"}}
+{"qid":"Q3777","kind":"capital","country":"BF","lat":12.368611111,"lon":-1.5275,"tolerance_m":15000,"form":"en","input":"Ouagadougou","components":{"locality":"Ouagadougou"}}
+{"qid":"Q3777","kind":"capital","country":"BF","lat":12.368611111,"lon":-1.5275,"tolerance_m":15000,"form":"en-country","input":"Ouagadougou, Burkina Faso","components":{"locality":"Ouagadougou","country":"Burkina Faso"}}
+{"qid":"Q3780","kind":"capital","country":"SL","lat":8.487222222,"lon":-13.235555555,"tolerance_m":15000,"form":"en","input":"Freetown","components":{"locality":"Freetown"}}
+{"qid":"Q3780","kind":"capital","country":"SL","lat":8.487222222,"lon":-13.235555555,"tolerance_m":15000,"form":"en-country","input":"Freetown, Sierra Leone","components":{"locality":"Freetown","country":"Sierra Leone"}}
+{"qid":"Q37806","kind":"capital","country":"VU","lat":-17.73333,"lon":168.316667,"tolerance_m":15000,"form":"en","input":"Port Vila","components":{"locality":"Port Vila"}}
+{"qid":"Q37806","kind":"capital","country":"VU","lat":-17.73333,"lon":168.316667,"tolerance_m":15000,"form":"en-country","input":"Port Vila, Vanuatu","components":{"locality":"Port Vila","country":"Vanuatu"}}
+{"qid":"Q3787","kind":"capital","country":"NG","lat":9.055555555,"lon":7.491388888,"tolerance_m":15000,"form":"en","input":"Abuja","components":{"locality":"Abuja"}}
+{"qid":"Q3787","kind":"capital","country":"NG","lat":9.055555555,"lon":7.491388888,"tolerance_m":15000,"form":"en-country","input":"Abuja, Nigeria","components":{"locality":"Abuja","country":"Nigeria"}}
+{"qid":"Q3792","kind":"capital","country":"TG","lat":6.13,"lon":1.215833333,"tolerance_m":15000,"form":"en","input":"Lomé","components":{"locality":"Lomé"}}
+{"qid":"Q3792","kind":"capital","country":"TG","lat":6.13,"lon":1.215833333,"tolerance_m":15000,"form":"en-country","input":"Lomé, Togo","components":{"locality":"Lomé","country":"Togo"}}
+{"qid":"Q3799","kind":"capital","country":"BJ","lat":6.483333333,"lon":2.616666666,"tolerance_m":15000,"form":"en","input":"Porto-Novo","components":{"locality":"Porto-Novo"}}
+{"qid":"Q3799","kind":"capital","country":"BJ","lat":6.483333333,"lon":2.616666666,"tolerance_m":15000,"form":"en-country","input":"Porto-Novo, Benin","components":{"locality":"Porto-Novo","country":"Benin"}}
+{"qid":"Q3805","kind":"capital","country":"JO","lat":31.930983,"lon":35.926084,"tolerance_m":15000,"form":"en","input":"Amman","components":{"locality":"Amman"}}
+{"qid":"Q3805","kind":"capital","country":"JO","lat":31.930983,"lon":35.926084,"tolerance_m":15000,"form":"en-country","input":"Amman, Jordan","components":{"locality":"Amman","country":"Jordan"}}
+{"qid":"Q3805","kind":"capital","country":"JO","lat":31.930983,"lon":35.926084,"tolerance_m":15000,"form":"local","input":"عَمَّان","components":{"locality":"عَمَّان"}}
+{"qid":"Q3808","kind":"capital","country":"CM","lat":3.857777777,"lon":11.518055555,"tolerance_m":15000,"form":"en","input":"Yaoundé","components":{"locality":"Yaoundé"}}
+{"qid":"Q3808","kind":"capital","country":"CM","lat":3.857777777,"lon":11.518055555,"tolerance_m":15000,"form":"en-country","input":"Yaoundé, Cameroon","components":{"locality":"Yaoundé","country":"Cameroon"}}
+{"qid":"Q3820","kind":"capital","country":"LB","lat":33.886944444,"lon":35.513055555,"tolerance_m":15000,"form":"en","input":"Beirut","components":{"locality":"Beirut"}}
+{"qid":"Q3820","kind":"capital","country":"LB","lat":33.886944444,"lon":35.513055555,"tolerance_m":15000,"form":"en-country","input":"Beirut, Lebanon","components":{"locality":"Beirut","country":"Lebanon"}}
+{"qid":"Q3820","kind":"capital","country":"LB","lat":33.886944444,"lon":35.513055555,"tolerance_m":15000,"form":"local","input":"بيروت","components":{"locality":"بيروت"}}
+{"qid":"Q3825","kind":"capital","country":"GA","lat":0.407777777,"lon":9.440277777,"tolerance_m":15000,"form":"en","input":"Libreville","components":{"locality":"Libreville"}}
+{"qid":"Q3825","kind":"capital","country":"GA","lat":0.407777777,"lon":9.440277777,"tolerance_m":15000,"form":"en-country","input":"Libreville, Gabon","components":{"locality":"Libreville","country":"Gabon"}}
+{"qid":"Q3826","kind":"capital","country":"OM","lat":23.613888888,"lon":58.592222222,"tolerance_m":15000,"form":"en","input":"Muscat","components":{"locality":"Muscat"}}
+{"qid":"Q3826","kind":"capital","country":"OM","lat":23.613888888,"lon":58.592222222,"tolerance_m":15000,"form":"en-country","input":"Muscat, Oman","components":{"locality":"Muscat","country":"Oman"}}
+{"qid":"Q3826","kind":"capital","country":"OM","lat":23.613888888,"lon":58.592222222,"tolerance_m":15000,"form":"local","input":"مسقط","components":{"locality":"مسقط"}}
+{"qid":"Q3832","kind":"capital","country":"CF","lat":4.37325,"lon":18.562833333,"tolerance_m":15000,"form":"en","input":"Bangui","components":{"locality":"Bangui"}}
+{"qid":"Q3832","kind":"capital","country":"CF","lat":4.37325,"lon":18.562833333,"tolerance_m":15000,"form":"en-country","input":"Bangui, Central African Republic","components":{"locality":"Bangui","country":"Central African Republic"}}
+{"qid":"Q3838","kind":"capital","country":"CD","lat":-4.321944444,"lon":15.311944444,"tolerance_m":15000,"form":"en","input":"Kinshasa","components":{"locality":"Kinshasa"}}
+{"qid":"Q3838","kind":"capital","country":"CD","lat":-4.321944444,"lon":15.311944444,"tolerance_m":15000,"form":"en-country","input":"Kinshasa, Democratic Republic of the Congo","components":{"locality":"Kinshasa","country":"Democratic Republic of the Congo"}}
+{"qid":"Q384","kind":"capital","country":"MK","lat":41.996111111,"lon":21.431666666,"tolerance_m":15000,"form":"en","input":"Skopje","components":{"locality":"Skopje"}}
+{"qid":"Q384","kind":"capital","country":"MK","lat":41.996111111,"lon":21.431666666,"tolerance_m":15000,"form":"en-country","input":"Skopje, North Macedonia","components":{"locality":"Skopje","country":"North Macedonia"}}
+{"qid":"Q3844","kind":"capital","country":"CG","lat":-4.269444444,"lon":15.271111111,"tolerance_m":15000,"form":"en","input":"Brazzaville","components":{"locality":"Brazzaville"}}
+{"qid":"Q3844","kind":"capital","country":"CG","lat":-4.269444444,"lon":15.271111111,"tolerance_m":15000,"form":"en-country","input":"Brazzaville, Republic of the Congo","components":{"locality":"Brazzaville","country":"Republic of the Congo"}}
+{"qid":"Q3856","kind":"capital","country":"CY","lat":35.1725,"lon":33.365,"tolerance_m":15000,"form":"en","input":"Nicosia","components":{"locality":"Nicosia"}}
+{"qid":"Q3856","kind":"capital","country":"CY","lat":35.1725,"lon":33.365,"tolerance_m":15000,"form":"en-country","input":"Nicosia, Cyprus","components":{"locality":"Nicosia","country":"Cyprus"}}
+{"qid":"Q3859","kind":"capital","country":"RW","lat":-1.9525,"lon":30.115,"tolerance_m":15000,"form":"en","input":"Kigali","components":{"locality":"Kigali"}}
+{"qid":"Q3859","kind":"capital","country":"RW","lat":-1.9525,"lon":30.115,"tolerance_m":15000,"form":"en-country","input":"Kigali, Rwanda","components":{"locality":"Kigali","country":"Rwanda"}}
+{"qid":"Q3861","kind":"capital","country":"QA","lat":25.286111111,"lon":51.529444444,"tolerance_m":15000,"form":"en","input":"Doha","components":{"locality":"Doha"}}
+{"qid":"Q3861","kind":"capital","country":"QA","lat":25.286111111,"lon":51.529444444,"tolerance_m":15000,"form":"en-country","input":"Doha, Qatar","components":{"locality":"Doha","country":"Qatar"}}
+{"qid":"Q3861","kind":"capital","country":"QA","lat":25.286111111,"lon":51.529444444,"tolerance_m":15000,"form":"local","input":"الدوحة","components":{"locality":"الدوحة"}}
+{"qid":"Q3866","kind":"capital","country":"TZ","lat":-6.1835,"lon":35.746,"tolerance_m":15000,"form":"en","input":"Dodoma","components":{"locality":"Dodoma"}}
+{"qid":"Q3866","kind":"capital","country":"TZ","lat":-6.1835,"lon":35.746,"tolerance_m":15000,"form":"en-country","input":"Dodoma, Tanzania","components":{"locality":"Dodoma","country":"Tanzania"}}
+{"qid":"Q3870","kind":"capital","country":"KE","lat":-1.286388888,"lon":36.817222222,"tolerance_m":15000,"form":"en","input":"Nairobi","components":{"locality":"Nairobi"}}
+{"qid":"Q3870","kind":"capital","country":"KE","lat":-1.286388888,"lon":36.817222222,"tolerance_m":15000,"form":"en-country","input":"Nairobi, Kenya","components":{"locality":"Nairobi","country":"Kenya"}}
+{"qid":"Q3876","kind":"capital","country":"MW","lat":-13.986388888,"lon":33.768055555,"tolerance_m":15000,"form":"en","input":"Lilongwe","components":{"locality":"Lilongwe"}}
+{"qid":"Q3876","kind":"capital","country":"MW","lat":-13.986388888,"lon":33.768055555,"tolerance_m":15000,"form":"en-country","input":"Lilongwe, Malawi","components":{"locality":"Lilongwe","country":"Malawi"}}
+{"qid":"Q38807","kind":"capital","country":"FJ","lat":-18.133333333,"lon":178.433333333,"tolerance_m":15000,"form":"en","input":"Suva","components":{"locality":"Suva"}}
+{"qid":"Q38807","kind":"capital","country":"FJ","lat":-18.133333333,"lon":178.433333333,"tolerance_m":15000,"form":"en-country","input":"Suva, Fiji","components":{"locality":"Suva","country":"Fiji"}}
+{"qid":"Q3881","kind":"capital","country":"ZM","lat":-15.416666666,"lon":28.283333333,"tolerance_m":15000,"form":"en","input":"Lusaka","components":{"locality":"Lusaka"}}
+{"qid":"Q3881","kind":"capital","country":"ZM","lat":-15.416666666,"lon":28.283333333,"tolerance_m":15000,"form":"en-country","input":"Lusaka, Zambia","components":{"locality":"Lusaka","country":"Zambia"}}
+{"qid":"Q3882","kind":"capital","country":"BH","lat":26.216666666,"lon":50.583333333,"tolerance_m":15000,"form":"en","input":"Manama","components":{"locality":"Manama"}}
+{"qid":"Q3882","kind":"capital","country":"BH","lat":26.216666666,"lon":50.583333333,"tolerance_m":15000,"form":"en-country","input":"Manama, Bahrain","components":{"locality":"Manama","country":"Bahrain"}}
+{"qid":"Q3882","kind":"capital","country":"BH","lat":26.216666666,"lon":50.583333333,"tolerance_m":15000,"form":"local","input":"المنامة","components":{"locality":"المنامة"}}
+{"qid":"Q38834","kind":"capital","country":"TO","lat":-21.1343401,"lon":-175.201808,"tolerance_m":15000,"form":"en","input":"Nukuʻalofa","components":{"locality":"Nukuʻalofa"}}
+{"qid":"Q38834","kind":"capital","country":"TO","lat":-21.1343401,"lon":-175.201808,"tolerance_m":15000,"form":"en-country","input":"Nukuʻalofa, Tonga","components":{"locality":"Nukuʻalofa","country":"Tonga"}}
+{"qid":"Q3889","kind":"capital","country":"MZ","lat":-25.968888888,"lon":32.573333333,"tolerance_m":15000,"form":"en","input":"Maputo","components":{"locality":"Maputo"}}
+{"qid":"Q3889","kind":"capital","country":"MZ","lat":-25.968888888,"lon":32.573333333,"tolerance_m":15000,"form":"en-country","input":"Maputo, Mozambique","components":{"locality":"Maputo","country":"Mozambique"}}
+{"qid":"Q3894","kind":"capital","country":"UG","lat":0.313611111,"lon":32.581111111,"tolerance_m":15000,"form":"en","input":"Kampala","components":{"locality":"Kampala"}}
+{"qid":"Q3894","kind":"capital","country":"UG","lat":0.313611111,"lon":32.581111111,"tolerance_m":15000,"form":"en-country","input":"Kampala, Uganda","components":{"locality":"Kampala","country":"Uganda"}}
+{"qid":"Q3897","kind":"capital","country":"AO","lat":-8.838333333,"lon":13.234444444,"tolerance_m":15000,"form":"en","input":"Luanda","components":{"locality":"Luanda"}}
+{"qid":"Q3897","kind":"capital","country":"AO","lat":-8.838333333,"lon":13.234444444,"tolerance_m":15000,"form":"en-country","input":"Luanda, Angola","components":{"locality":"Luanda","country":"Angola"}}
+{"qid":"Q3901","kind":"capital","country":"KM","lat":-11.703611111,"lon":43.253611111,"tolerance_m":15000,"form":"en","input":"Moroni","components":{"locality":"Moroni"}}
+{"qid":"Q3901","kind":"capital","country":"KM","lat":-11.703611111,"lon":43.253611111,"tolerance_m":15000,"form":"en-country","input":"Moroni, Comoros","components":{"locality":"Moroni","country":"Comoros"}}
+{"qid":"Q3904","kind":"capital","country":"SZ","lat":-26.316666666,"lon":31.133333333,"tolerance_m":15000,"form":"en","input":"Mbabane","components":{"locality":"Mbabane"}}
+{"qid":"Q3904","kind":"capital","country":"SZ","lat":-26.316666666,"lon":31.133333333,"tolerance_m":15000,"form":"en-country","input":"Mbabane, Eswatini","components":{"locality":"Mbabane","country":"Eswatini"}}
+{"qid":"Q3909","kind":"capital","country":"LS","lat":-29.31,"lon":27.48,"tolerance_m":15000,"form":"en","input":"Maseru","components":{"locality":"Maseru"}}
+{"qid":"Q3909","kind":"capital","country":"LS","lat":-29.31,"lon":27.48,"tolerance_m":15000,"form":"en-country","input":"Maseru, Lesotho","components":{"locality":"Maseru","country":"Lesotho"}}
+{"qid":"Q3915","kind":"capital","country":"MG","lat":-18.91,"lon":47.525,"tolerance_m":15000,"form":"en","input":"Antananarivo","components":{"locality":"Antananarivo"}}
+{"qid":"Q3915","kind":"capital","country":"MG","lat":-18.91,"lon":47.525,"tolerance_m":15000,"form":"en-country","input":"Antananarivo, Madagascar","components":{"locality":"Antananarivo","country":"Madagascar"}}
+{"qid":"Q39178","kind":"capital","country":"TT","lat":10.666666666,"lon":-61.516666666,"tolerance_m":15000,"form":"en","input":"Port of Spain","components":{"locality":"Port of Spain"}}
+{"qid":"Q39178","kind":"capital","country":"TT","lat":10.666666666,"lon":-61.516666666,"tolerance_m":15000,"form":"en-country","input":"Port of Spain, Trinidad and Tobago","components":{"locality":"Port of Spain","country":"Trinidad and Tobago"}}
+{"qid":"Q3919","kind":"capital","country":"BW","lat":-24.656944444,"lon":25.908611111,"tolerance_m":15000,"form":"en","input":"Gaborone","components":{"locality":"Gaborone"}}
+{"qid":"Q3919","kind":"capital","country":"BW","lat":-24.656944444,"lon":25.908611111,"tolerance_m":15000,"form":"en-country","input":"Gaborone, Botswana","components":{"locality":"Gaborone","country":"Botswana"}}
+{"qid":"Q3921","kind":"capital","country":"ZW","lat":-17.829166666,"lon":31.052222222,"tolerance_m":15000,"form":"en","input":"Harare","components":{"locality":"Harare"}}
+{"qid":"Q3921","kind":"capital","country":"ZW","lat":-17.829166666,"lon":31.052222222,"tolerance_m":15000,"form":"en-country","input":"Harare, Zimbabwe","components":{"locality":"Harare","country":"Zimbabwe"}}
+{"qid":"Q3926","kind":"capital","country":"ZA","lat":-25.746388888,"lon":28.188055555,"tolerance_m":15000,"form":"en","input":"Pretoria","components":{"locality":"Pretoria"}}
+{"qid":"Q3926","kind":"capital","country":"ZA","lat":-25.746388888,"lon":28.188055555,"tolerance_m":15000,"form":"en-country","input":"Pretoria, South Africa","components":{"locality":"Pretoria","country":"South Africa"}}
+{"qid":"Q3929","kind":"capital","country":"MU","lat":-20.161944444,"lon":57.498888888,"tolerance_m":15000,"form":"en","input":"Port Louis","components":{"locality":"Port Louis"}}
+{"qid":"Q3929","kind":"capital","country":"MU","lat":-20.161944444,"lon":57.498888888,"tolerance_m":15000,"form":"en-country","input":"Port Louis, Mauritius","components":{"locality":"Port Louis","country":"Mauritius"}}
+{"qid":"Q3932","kind":"capital","country":"ST","lat":0.3375,"lon":6.728333333,"tolerance_m":15000,"form":"en","input":"São Tomé","components":{"locality":"São Tomé"}}
+{"qid":"Q3932","kind":"capital","country":"ST","lat":0.3375,"lon":6.728333333,"tolerance_m":15000,"form":"en-country","input":"São Tomé, São Tomé and Príncipe","components":{"locality":"São Tomé","country":"São Tomé and Príncipe"}}
+{"qid":"Q3935","kind":"capital","country":"NA","lat":-22.57,"lon":17.083611111,"tolerance_m":15000,"form":"en","input":"Windhoek","components":{"locality":"Windhoek"}}
+{"qid":"Q3935","kind":"capital","country":"NA","lat":-22.57,"lon":17.083611111,"tolerance_m":15000,"form":"en-country","input":"Windhoek, Namibia","components":{"locality":"Windhoek","country":"Namibia"}}
+{"qid":"Q3940","kind":"capital","country":"SC","lat":-4.623611111,"lon":55.454444444,"tolerance_m":15000,"form":"en","input":"Victoria","components":{"locality":"Victoria"}}
+{"qid":"Q3940","kind":"capital","country":"SC","lat":-4.623611111,"lon":55.454444444,"tolerance_m":15000,"form":"en-country","input":"Victoria, Seychelles","components":{"locality":"Victoria","country":"Seychelles"}}
+{"qid":"Q40921","kind":"capital","country":"SB","lat":-9.433333,"lon":159.95,"tolerance_m":15000,"form":"en","input":"Honiara","components":{"locality":"Honiara"}}
+{"qid":"Q40921","kind":"capital","country":"SB","lat":-9.433333,"lon":159.95,"tolerance_m":15000,"form":"en-country","input":"Honiara, Solomon Islands","components":{"locality":"Honiara","country":"Solomon Islands"}}
+{"qid":"Q41295","kind":"capital","country":"KN","lat":17.298333333,"lon":-62.734166666,"tolerance_m":15000,"form":"en","input":"Basseterre","components":{"locality":"Basseterre"}}
+{"qid":"Q41295","kind":"capital","country":"KN","lat":17.298333333,"lon":-62.734166666,"tolerance_m":15000,"form":"en-country","input":"Basseterre, Saint Kitts and Nevis","components":{"locality":"Basseterre","country":"Saint Kitts and Nevis"}}
+{"qid":"Q41474","kind":"capital","country":"VC","lat":13.15527,"lon":-61.22742,"tolerance_m":15000,"form":"en","input":"Kingstown","components":{"locality":"Kingstown"}}
+{"qid":"Q41474","kind":"capital","country":"VC","lat":13.15527,"lon":-61.22742,"tolerance_m":15000,"form":"en-country","input":"Kingstown, Saint Vincent and the Grenadines","components":{"locality":"Kingstown","country":"Saint Vincent and the Grenadines"}}
+{"qid":"Q41547","kind":"capital","country":"GD","lat":12.0525,"lon":-61.753055555,"tolerance_m":15000,"form":"en","input":"St. George's","components":{"locality":"St. George's"}}
+{"qid":"Q41547","kind":"capital","country":"GD","lat":12.0525,"lon":-61.753055555,"tolerance_m":15000,"form":"en-country","input":"St. George's, Grenada","components":{"locality":"St. George's","country":"Grenada"}}
+{"qid":"Q41699","kind":"capital","country":"LC","lat":14.010833333,"lon":-60.989444444,"tolerance_m":15000,"form":"en","input":"Castries","components":{"locality":"Castries"}}
+{"qid":"Q41699","kind":"capital","country":"LC","lat":14.010833333,"lon":-60.989444444,"tolerance_m":15000,"form":"en-country","input":"Castries, Saint Lucia","components":{"locality":"Castries","country":"Saint Lucia"}}
+{"qid":"Q41963","kind":"capital","country":"LK","lat":6.9,"lon":79.916388888,"tolerance_m":15000,"form":"en","input":"Sri Jayawardenepura Kotte","components":{"locality":"Sri Jayawardenepura Kotte"}}
+{"qid":"Q41963","kind":"capital","country":"LK","lat":6.9,"lon":79.916388888,"tolerance_m":15000,"form":"en-country","input":"Sri Jayawardenepura Kotte, Sri Lanka","components":{"locality":"Sri Jayawardenepura Kotte","country":"Sri Lanka"}}
+{"qid":"Q42751","kind":"capital","country":"FM","lat":6.917777777,"lon":158.185,"tolerance_m":15000,"form":"en","input":"Palikir","components":{"locality":"Palikir"}}
+{"qid":"Q42751","kind":"capital","country":"FM","lat":6.917777777,"lon":158.185,"tolerance_m":15000,"form":"en-country","input":"Palikir, Federated States of Micronesia","components":{"locality":"Palikir","country":"Federated States of Micronesia"}}
+{"qid":"Q437","kind":"capital","country":"SI","lat":46.051388888,"lon":14.506111111,"tolerance_m":15000,"form":"en","input":"Ljubljana","components":{"locality":"Ljubljana"}}
+{"qid":"Q437","kind":"capital","country":"SI","lat":46.051388888,"lon":14.506111111,"tolerance_m":15000,"form":"en-country","input":"Ljubljana, Slovenia","components":{"locality":"Ljubljana","country":"Slovenia"}}
+{"qid":"Q472","kind":"capital","country":"BG","lat":42.697886,"lon":23.321726,"tolerance_m":15000,"form":"en","input":"Sofia","components":{"locality":"Sofia"}}
+{"qid":"Q472","kind":"capital","country":"BG","lat":42.697886,"lon":23.321726,"tolerance_m":15000,"form":"en-country","input":"Sofia, Bulgaria","components":{"locality":"Sofia","country":"Bulgaria"}}
+{"qid":"Q515229","kind":"capital","country":"PW","lat":7.500556,"lon":134.624167,"tolerance_m":15000,"form":"en","input":"Ngerulmud","components":{"locality":"Ngerulmud"}}
+{"qid":"Q515229","kind":"capital","country":"PW","lat":7.500556,"lon":134.624167,"tolerance_m":15000,"form":"en-country","input":"Ngerulmud, Palau","components":{"locality":"Ngerulmud","country":"Palau"}}
+{"qid":"Q5465","kind":"capital","country":"ZA","lat":-33.925277777,"lon":18.423888888,"tolerance_m":15000,"form":"en","input":"Cape Town","components":{"locality":"Cape Town"}}
+{"qid":"Q5465","kind":"capital","country":"ZA","lat":-33.925277777,"lon":18.423888888,"tolerance_m":15000,"form":"en-country","input":"Cape Town, South Africa","components":{"locality":"Cape Town","country":"South Africa"}}
+{"qid":"Q5838","kind":"capital","country":"AF","lat":34.532777777,"lon":69.165833333,"tolerance_m":15000,"form":"en","input":"Kabul","components":{"locality":"Kabul"}}
+{"qid":"Q5838","kind":"capital","country":"AF","lat":34.532777777,"lon":69.165833333,"tolerance_m":15000,"form":"en-country","input":"Kabul, Afghanistan","components":{"locality":"Kabul","country":"Afghanistan"}}
+{"qid":"Q585","kind":"capital","country":"NO","lat":59.913333333,"lon":10.738888888,"tolerance_m":15000,"form":"en","input":"Oslo","components":{"locality":"Oslo"}}
+{"qid":"Q585","kind":"capital","country":"NO","lat":59.913333333,"lon":10.738888888,"tolerance_m":15000,"form":"en-country","input":"Oslo, Norway","components":{"locality":"Oslo","country":"Norway"}}
+{"qid":"Q597","kind":"capital","country":"PT","lat":38.708042,"lon":-9.139016,"tolerance_m":15000,"form":"en","input":"Lisbon","components":{"locality":"Lisbon"}}
+{"qid":"Q597","kind":"capital","country":"PT","lat":38.708042,"lon":-9.139016,"tolerance_m":15000,"form":"en-country","input":"Lisbon, Portugal","components":{"locality":"Lisbon","country":"Portugal"}}
+{"qid":"Q597","kind":"capital","country":"PT","lat":38.708042,"lon":-9.139016,"tolerance_m":15000,"form":"local","input":"Lisboa","components":{"locality":"Lisboa"}}
+{"qid":"Q61","kind":"capital","country":"US","lat":38.895,"lon":-77.036666666,"tolerance_m":15000,"form":"en","input":"Washington, D.C.","components":{"locality":"Washington, D.C."}}
+{"qid":"Q61","kind":"capital","country":"US","lat":38.895,"lon":-77.036666666,"tolerance_m":15000,"form":"en-country","input":"Washington, D.C., United States","components":{"locality":"Washington, D.C.","country":"United States"}}
+{"qid":"Q64","kind":"capital","country":"DE","lat":52.516666666,"lon":13.383333333,"tolerance_m":15000,"form":"en","input":"Berlin","components":{"locality":"Berlin"}}
+{"qid":"Q64","kind":"capital","country":"DE","lat":52.516666666,"lon":13.383333333,"tolerance_m":15000,"form":"en-country","input":"Berlin, Germany","components":{"locality":"Berlin","country":"Germany"}}
+{"qid":"Q649","kind":"capital","country":"RU","lat":55.750555555,"lon":37.6175,"tolerance_m":15000,"form":"en","input":"Moscow","components":{"locality":"Moscow"}}
+{"qid":"Q649","kind":"capital","country":"RU","lat":55.750555555,"lon":37.6175,"tolerance_m":15000,"form":"en-country","input":"Moscow, Russia","components":{"locality":"Moscow","country":"Russia"}}
+{"qid":"Q649","kind":"capital","country":"RU","lat":55.750555555,"lon":37.6175,"tolerance_m":15000,"form":"local","input":"Москва","components":{"locality":"Москва"}}
+{"qid":"Q70","kind":"capital","country":"CH","lat":46.94798,"lon":7.44743,"tolerance_m":15000,"form":"en","input":"Bern","components":{"locality":"Bern"}}
+{"qid":"Q70","kind":"capital","country":"CH","lat":46.94798,"lon":7.44743,"tolerance_m":15000,"form":"en-country","input":"Bern, Switzerland","components":{"locality":"Bern","country":"Switzerland"}}
+{"qid":"Q727","kind":"capital","country":"NL","lat":52.366666666,"lon":4.883333333,"tolerance_m":15000,"form":"en","input":"Amsterdam","components":{"locality":"Amsterdam"}}
+{"qid":"Q727","kind":"capital","country":"NL","lat":52.366666666,"lon":4.883333333,"tolerance_m":15000,"form":"en-country","input":"Amsterdam, Netherlands","components":{"locality":"Amsterdam","country":"Netherlands"}}
+{"qid":"Q84","kind":"capital","country":"GB","lat":51.507222222,"lon":-0.1275,"tolerance_m":15000,"form":"en","input":"London","components":{"locality":"London"}}
+{"qid":"Q84","kind":"capital","country":"GB","lat":51.507222222,"lon":-0.1275,"tolerance_m":15000,"form":"en-country","input":"London, United Kingdom","components":{"locality":"London","country":"United Kingdom"}}
+{"qid":"Q85","kind":"capital","country":"EG","lat":30.044444444,"lon":31.235833333,"tolerance_m":15000,"form":"en","input":"Cairo","components":{"locality":"Cairo"}}
+{"qid":"Q85","kind":"capital","country":"EG","lat":30.044444444,"lon":31.235833333,"tolerance_m":15000,"form":"en-country","input":"Cairo, Egypt","components":{"locality":"Cairo","country":"Egypt"}}
+{"qid":"Q85","kind":"capital","country":"EG","lat":30.044444444,"lon":31.235833333,"tolerance_m":15000,"form":"local","input":"القاهرة","components":{"locality":"القاهرة"}}
+{"qid":"Q8684","kind":"capital","country":"KR","lat":37.56,"lon":126.99,"tolerance_m":15000,"form":"en","input":"Seoul","components":{"locality":"Seoul"}}
+{"qid":"Q8684","kind":"capital","country":"KR","lat":37.56,"lon":126.99,"tolerance_m":15000,"form":"en-country","input":"Seoul, South Korea","components":{"locality":"Seoul","country":"South Korea"}}
+{"qid":"Q90","kind":"capital","country":"FR","lat":48.856666666,"lon":2.352222222,"tolerance_m":15000,"form":"en","input":"Paris","components":{"locality":"Paris"}}
+{"qid":"Q90","kind":"capital","country":"FR","lat":48.856666666,"lon":2.352222222,"tolerance_m":15000,"form":"en-country","input":"Paris, France","components":{"locality":"Paris","country":"France"}}
+{"qid":"Q9248","kind":"capital","country":"AZ","lat":40.366655555,"lon":49.835183333,"tolerance_m":15000,"form":"en","input":"Baku","components":{"locality":"Baku"}}
+{"qid":"Q9248","kind":"capital","country":"AZ","lat":40.366655555,"lon":49.835183333,"tolerance_m":15000,"form":"en-country","input":"Baku, Azerbaijan","components":{"locality":"Baku","country":"Azerbaijan"}}
+{"qid":"Q9270","kind":"capital","country":"BT","lat":27.47135,"lon":89.63367,"tolerance_m":15000,"form":"en","input":"Thimphu","components":{"locality":"Thimphu"}}
+{"qid":"Q9270","kind":"capital","country":"BT","lat":27.47135,"lon":89.63367,"tolerance_m":15000,"form":"en-country","input":"Thimphu, Bhutan","components":{"locality":"Thimphu","country":"Bhutan"}}
+{"qid":"Q9279","kind":"capital","country":"BN","lat":4.916666666,"lon":114.916666666,"tolerance_m":15000,"form":"en","input":"Bandar Seri Begawan","components":{"locality":"Bandar Seri Begawan"}}
+{"qid":"Q9279","kind":"capital","country":"BN","lat":4.916666666,"lon":114.916666666,"tolerance_m":15000,"form":"en-country","input":"Bandar Seri Begawan, Brunei","components":{"locality":"Bandar Seri Begawan","country":"Brunei"}}
+{"qid":"Q9310","kind":"capital","country":"TL","lat":-8.553611111,"lon":125.578333333,"tolerance_m":15000,"form":"en","input":"Dili","components":{"locality":"Dili"}}
+{"qid":"Q9310","kind":"capital","country":"TL","lat":-8.553611111,"lon":125.578333333,"tolerance_m":15000,"form":"en-country","input":"Dili, Timor-Leste","components":{"locality":"Dili","country":"Timor-Leste"}}
+{"qid":"Q9326","kind":"capital","country":"LA","lat":17.98,"lon":102.63,"tolerance_m":15000,"form":"en","input":"Vientiane","components":{"locality":"Vientiane"}}
+{"qid":"Q9326","kind":"capital","country":"LA","lat":17.98,"lon":102.63,"tolerance_m":15000,"form":"en-country","input":"Vientiane, Laos","components":{"locality":"Vientiane","country":"Laos"}}
+{"qid":"Q9347","kind":"capital","country":"MV","lat":4.175,"lon":73.508333333,"tolerance_m":15000,"form":"en","input":"Malé","components":{"locality":"Malé"}}
+{"qid":"Q9347","kind":"capital","country":"MV","lat":4.175,"lon":73.508333333,"tolerance_m":15000,"form":"en-country","input":"Malé, Maldives","components":{"locality":"Malé","country":"Maldives"}}
+{"qid":"Q9361","kind":"capital","country":"KG","lat":42.866666666,"lon":74.566666666,"tolerance_m":15000,"form":"en","input":"Bishkek","components":{"locality":"Bishkek"}}
+{"qid":"Q9361","kind":"capital","country":"KG","lat":42.866666666,"lon":74.566666666,"tolerance_m":15000,"form":"en-country","input":"Bishkek, Kyrgyzstan","components":{"locality":"Bishkek","country":"Kyrgyzstan"}}
+{"qid":"Q9365","kind":"capital","country":"TJ","lat":38.573055555,"lon":68.786388888,"tolerance_m":15000,"form":"en","input":"Dushanbe","components":{"locality":"Dushanbe"}}
+{"qid":"Q9365","kind":"capital","country":"TJ","lat":38.573055555,"lon":68.786388888,"tolerance_m":15000,"form":"en-country","input":"Dushanbe, Tajikistan","components":{"locality":"Dushanbe","country":"Tajikistan"}}
+{"qid":"Q956","kind":"capital","country":"CN","lat":39.90403,"lon":116.407526,"tolerance_m":15000,"form":"en","input":"Beijing","components":{"locality":"Beijing"}}
+{"qid":"Q956","kind":"capital","country":"CN","lat":39.90403,"lon":116.407526,"tolerance_m":15000,"form":"en-country","input":"Beijing, People's Republic of China","components":{"locality":"Beijing","country":"People's Republic of China"}}
+{"qid":"Q956","kind":"capital","country":"CN","lat":39.90403,"lon":116.407526,"tolerance_m":15000,"form":"local","input":"北京市","components":{"locality":"北京市"}}
+{"qid":"Q987","kind":"capital","country":"IN","lat":28.613888888,"lon":77.208888888,"tolerance_m":15000,"form":"en","input":"New Delhi","components":{"locality":"New Delhi"}}
+{"qid":"Q987","kind":"capital","country":"IN","lat":28.613888888,"lon":77.208888888,"tolerance_m":15000,"form":"en-country","input":"New Delhi, India","components":{"locality":"New Delhi","country":"India"}}
+{"qid":"Q994","kind":"capital","country":"GE","lat":41.7225,"lon":44.7925,"tolerance_m":15000,"form":"en","input":"Tbilisi","components":{"locality":"Tbilisi"}}
+{"qid":"Q994","kind":"capital","country":"GE","lat":41.7225,"lon":44.7925,"tolerance_m":15000,"form":"en-country","input":"Tbilisi, Georgia","components":{"locality":"Tbilisi","country":"Georgia"}}
+{"qid":"Q1049360","kind":"geyser","country":"US","lat":44.4636631,"lon":-110.8364719,"tolerance_m":50000,"form":"en","input":"Castle Geyser","components":{"venue":"Castle Geyser"}}
+{"qid":"Q1049360","kind":"geyser","country":"US","lat":44.4636631,"lon":-110.8364719,"tolerance_m":50000,"form":"en-country","input":"Castle Geyser, United States","components":{"venue":"Castle Geyser","country":"United States"}}
+{"qid":"Q1128186","kind":"geyser","country":"IS","lat":64.312679,"lon":-20.30075,"tolerance_m":50000,"form":"en","input":"Strokkur","components":{"venue":"Strokkur"}}
+{"qid":"Q1129264","kind":"geyser","country":"US","lat":44.4706415,"lon":-110.8405486,"tolerance_m":50000,"form":"en","input":"Giant Geyser","components":{"venue":"Giant Geyser"}}
+{"qid":"Q1129264","kind":"geyser","country":"US","lat":44.4706415,"lon":-110.8405486,"tolerance_m":50000,"form":"en-country","input":"Giant Geyser, United States","components":{"venue":"Giant Geyser","country":"United States"}}
+{"qid":"Q1438568","kind":"geyser","country":"US","lat":44.7234984,"lon":-110.7030252,"tolerance_m":50000,"form":"en","input":"Steamboat Geyser","components":{"venue":"Steamboat Geyser"}}
+{"qid":"Q1438568","kind":"geyser","country":"US","lat":44.7234984,"lon":-110.7030252,"tolerance_m":50000,"form":"en-country","input":"Steamboat Geyser, United States","components":{"venue":"Steamboat Geyser","country":"United States"}}
+{"qid":"Q1440831","kind":"geyser","country":"NZ","lat":-38.2833,"lon":176.4,"tolerance_m":50000,"form":"en","input":"Waimangu Geyser","components":{"venue":"Waimangu Geyser"}}
+{"qid":"Q1440831","kind":"geyser","country":"NZ","lat":-38.2833,"lon":176.4,"tolerance_m":50000,"form":"en-country","input":"Waimangu Geyser, New Zealand","components":{"venue":"Waimangu Geyser","country":"New Zealand"}}
+{"qid":"Q216846","kind":"geyser","country":"IS","lat":64.313834,"lon":-20.299494,"tolerance_m":50000,"form":"en","input":"Great Geysir","components":{"venue":"Great Geysir"}}
+{"qid":"Q2421402","kind":"geyser","country":"US","lat":40.8594,"lon":-119.332,"tolerance_m":50000,"form":"en","input":"Fly Geyser","components":{"venue":"Fly Geyser"}}
+{"qid":"Q2421402","kind":"geyser","country":"US","lat":40.8594,"lon":-119.332,"tolerance_m":50000,"form":"en-country","input":"Fly Geyser, United States","components":{"venue":"Fly Geyser","country":"United States"}}
+{"qid":"Q543451","kind":"geyser","country":"US","lat":44.4666823,"lon":-110.8369805,"tolerance_m":50000,"form":"en","input":"Grand Geyser","components":{"venue":"Grand Geyser"}}
+{"qid":"Q543451","kind":"geyser","country":"US","lat":44.4666823,"lon":-110.8369805,"tolerance_m":50000,"form":"en-country","input":"Grand Geyser, United States","components":{"venue":"Grand Geyser","country":"United States"}}
+{"qid":"Q863914","kind":"geyser","country":"NZ","lat":-38.1635344,"lon":176.2539737,"tolerance_m":50000,"form":"en","input":"Pōhutu Geyser","components":{"venue":"Pōhutu Geyser"}}
+{"qid":"Q863914","kind":"geyser","country":"NZ","lat":-38.1635344,"lon":176.2539737,"tolerance_m":50000,"form":"en-country","input":"Pōhutu Geyser, New Zealand","components":{"venue":"Pōhutu Geyser","country":"New Zealand"}}
+{"qid":"Q10285","kind":"landmark","country":"IT","lat":41.890277777,"lon":12.492222222,"tolerance_m":5000,"form":"en","input":"Colosseum","components":{"venue":"Colosseum"}}
+{"qid":"Q10285","kind":"landmark","country":"IT","lat":41.890277777,"lon":12.492222222,"tolerance_m":5000,"form":"en-country","input":"Colosseum, Italy","components":{"venue":"Colosseum","country":"Italy"}}
+{"qid":"Q10285","kind":"landmark","country":"IT","lat":41.890277777,"lon":12.492222222,"tolerance_m":5000,"form":"local","input":"Colosseo","components":{"venue":"Colosseo"}}
+{"qid":"Q10288","kind":"landmark","country":"GR","lat":37.971527,"lon":23.726601,"tolerance_m":5000,"form":"en","input":"Parthenon","components":{"venue":"Parthenon"}}
+{"qid":"Q106187","kind":"landmark","country":"GB","lat":55.240833333,"lon":-6.511666666,"tolerance_m":5000,"form":"en","input":"Giant's Causeway","components":{"venue":"Giant's Causeway"}}
+{"qid":"Q106187","kind":"landmark","country":"GB","lat":55.240833333,"lon":-6.511666666,"tolerance_m":5000,"form":"en-country","input":"Giant's Causeway, United Kingdom","components":{"venue":"Giant's Causeway","country":"United Kingdom"}}
+{"qid":"Q11259","kind":"landmark","country":"US","lat":40.7575,"lon":-73.985833333,"tolerance_m":5000,"form":"en","input":"Times Square","components":{"venue":"Times Square"}}
+{"qid":"Q11259","kind":"landmark","country":"US","lat":40.7575,"lon":-73.985833333,"tolerance_m":5000,"form":"en-country","input":"Times Square, United States","components":{"venue":"Times Square","country":"United States"}}
+{"qid":"Q118388","kind":"landmark","country":"US","lat":36.456938888,"lon":-116.865280555,"tolerance_m":5000,"form":"en","input":"Death Valley","components":{"venue":"Death Valley"}}
+{"qid":"Q118388","kind":"landmark","country":"US","lat":36.456938888,"lon":-116.865280555,"tolerance_m":5000,"form":"en-country","input":"Death Valley, United States","components":{"venue":"Death Valley","country":"United States"}}
+{"qid":"Q118841","kind":"landmark","country":"US","lat":36.0975,"lon":-112.095277777,"tolerance_m":5000,"form":"en","input":"Grand Canyon","components":{"venue":"Grand Canyon"}}
+{"qid":"Q118841","kind":"landmark","country":"US","lat":36.0975,"lon":-112.095277777,"tolerance_m":5000,"form":"en-country","input":"Grand Canyon, United States","components":{"venue":"Grand Canyon","country":"United States"}}
+{"qid":"Q12495","kind":"landmark","country":"AE","lat":25.197222222,"lon":55.274166666,"tolerance_m":5000,"form":"en","input":"Burj Khalifa","components":{"venue":"Burj Khalifa"}}
+{"qid":"Q12495","kind":"landmark","country":"AE","lat":25.197222222,"lon":55.274166666,"tolerance_m":5000,"form":"local","input":"برج خليفة","components":{"venue":"برج خليفة"}}
+{"qid":"Q12501","kind":"landmark","country":"CN","lat":40.431388888,"lon":116.564444444,"tolerance_m":5000,"form":"en","input":"Great Wall of China","components":{"venue":"Great Wall of China"}}
+{"qid":"Q12501","kind":"landmark","country":"CN","lat":40.431388888,"lon":116.564444444,"tolerance_m":5000,"form":"local","input":"长城","components":{"venue":"长城"}}
+{"qid":"Q12506","kind":"landmark","country":"TR","lat":41.008333333,"lon":28.98,"tolerance_m":5000,"form":"en","input":"Hagia Sophia","components":{"venue":"Hagia Sophia"}}
+{"qid":"Q12512","kind":"landmark","country":"VA","lat":41.902222222,"lon":12.453416666,"tolerance_m":5000,"form":"en","input":"St. Peter's Basilica","components":{"venue":"St. Peter's Basilica"}}
+{"qid":"Q129846","kind":"landmark","country":"RU","lat":55.7525,"lon":37.623055555,"tolerance_m":5000,"form":"en","input":"St. Basil's Cathedral","components":{"venue":"St. Basil's Cathedral"}}
+{"qid":"Q129846","kind":"landmark","country":"RU","lat":55.7525,"lon":37.623055555,"tolerance_m":5000,"form":"local","input":"Храм Василия Блаженного","components":{"venue":"Храм Василия Блаженного"}}
+{"qid":"Q130958","kind":"landmark","country":"EG","lat":29.97527,"lon":31.13768,"tolerance_m":5000,"form":"en","input":"The Great Sphinx","components":{"venue":"The Great Sphinx"}}
+{"qid":"Q130958","kind":"landmark","country":"EG","lat":29.97527,"lon":31.13768,"tolerance_m":5000,"form":"local","input":"أبو الهول","components":{"venue":"أبو الهول"}}
+{"qid":"Q131013","kind":"landmark","country":"GR","lat":37.971666666,"lon":23.726111111,"tolerance_m":5000,"form":"en","input":"Acropolis of Athens","components":{"venue":"Acropolis of Athens"}}
+{"qid":"Q131330","kind":"landmark","country":"AT","lat":48.18479,"lon":16.31227,"tolerance_m":5000,"form":"en","input":"Schönbrunn Palace","components":{"venue":"Schönbrunn Palace"}}
+{"qid":"Q131330","kind":"landmark","country":"AT","lat":48.18479,"lon":16.31227,"tolerance_m":5000,"form":"en-country","input":"Schönbrunn Palace, Austria","components":{"venue":"Schönbrunn Palace","country":"Austria"}}
+{"qid":"Q131330","kind":"landmark","country":"AT","lat":48.18479,"lon":16.31227,"tolerance_m":5000,"form":"local","input":"Schloss Schönbrunn","components":{"venue":"Schloss Schönbrunn"}}
+{"qid":"Q133274","kind":"landmark","country":"RU","lat":55.751666666,"lon":37.617777777,"tolerance_m":5000,"form":"en","input":"Kremlin","components":{"venue":"Kremlin"}}
+{"qid":"Q133274","kind":"landmark","country":"RU","lat":55.751666666,"lon":37.617777777,"tolerance_m":5000,"form":"local","input":"Московский Кремль","components":{"venue":"Московский Кремль"}}
+{"qid":"Q134821","kind":"landmark","country":"PS","lat":31.776947222,"lon":35.23425,"tolerance_m":5000,"form":"en","input":"Western Wall","components":{"venue":"Western Wall"}}
+{"qid":"Q134883","kind":"landmark","country":"CA","lat":43.642752777,"lon":-79.387147222,"tolerance_m":5000,"form":"en","input":"CN Tower","components":{"venue":"CN Tower"}}
+{"qid":"Q134883","kind":"landmark","country":"CA","lat":43.642752777,"lon":-79.387147222,"tolerance_m":5000,"form":"en-country","input":"CN Tower, Canada","components":{"venue":"CN Tower","country":"Canada"}}
+{"qid":"Q1374","kind":"landmark","country":"IT","lat":45.976388888,"lon":7.658611111,"tolerance_m":5000,"form":"en","input":"Matterhorn","components":{"venue":"Matterhorn"}}
+{"qid":"Q1374","kind":"landmark","country":"IT","lat":45.976388888,"lon":7.658611111,"tolerance_m":5000,"form":"en-country","input":"Matterhorn, Italy","components":{"venue":"Matterhorn","country":"Italy"}}
+{"qid":"Q1374","kind":"landmark","country":"IT","lat":45.976388888,"lon":7.658611111,"tolerance_m":5000,"form":"local","input":"Cervino","components":{"venue":"Cervino"}}
+{"qid":"Q1422831","kind":"landmark","country":"US","lat":44.525,"lon":-110.838055555,"tolerance_m":5000,"form":"en","input":"Grand Prismatic Spring","components":{"venue":"Grand Prismatic Spring"}}
+{"qid":"Q1422831","kind":"landmark","country":"US","lat":44.525,"lon":-110.838055555,"tolerance_m":5000,"form":"en-country","input":"Grand Prismatic Spring, United States","components":{"venue":"Grand Prismatic Spring","country":"United States"}}
+{"qid":"Q14452","kind":"landmark","country":"CL","lat":-27.12,"lon":-109.35,"tolerance_m":5000,"form":"en","input":"Easter Island","components":{"venue":"Easter Island"}}
+{"qid":"Q14452","kind":"landmark","country":"CL","lat":-27.12,"lon":-109.35,"tolerance_m":5000,"form":"local","input":"Isla de Pascua","components":{"venue":"Isla de Pascua"}}
+{"qid":"Q152072","kind":"landmark","country":"BE","lat":50.8449844,"lon":4.349988,"tolerance_m":5000,"form":"en","input":"Manneken Pis","components":{"venue":"Manneken Pis"}}
+{"qid":"Q152072","kind":"landmark","country":"BE","lat":50.8449844,"lon":4.349988,"tolerance_m":5000,"form":"en-country","input":"Manneken Pis, Belgium","components":{"venue":"Manneken Pis","country":"Belgium"}}
+{"qid":"Q152072","kind":"landmark","country":"BE","lat":50.8449844,"lon":4.349988,"tolerance_m":5000,"form":"local","input":"Manneken-Pis","components":{"venue":"Manneken-Pis"}}
+{"qid":"Q160409","kind":"landmark","country":"US","lat":40.7825,"lon":-73.966111111,"tolerance_m":5000,"form":"en","input":"Central Park","components":{"venue":"Central Park"}}
+{"qid":"Q160409","kind":"landmark","country":"US","lat":40.7825,"lon":-73.966111111,"tolerance_m":5000,"form":"en-country","input":"Central Park, United States","components":{"venue":"Central Park","country":"United States"}}
+{"qid":"Q164055","kind":"landmark","country":"CN","lat":39.904567,"lon":116.391392,"tolerance_m":5000,"form":"en","input":"Tiananmen Square","components":{"venue":"Tiananmen Square"}}
+{"qid":"Q164055","kind":"landmark","country":"CN","lat":39.904567,"lon":116.391392,"tolerance_m":5000,"form":"local","input":"天安門廣場","components":{"venue":"天安門廣場"}}
+{"qid":"Q16990","kind":"landmark","country":"IT","lat":37.750834514,"lon":14.993220288,"tolerance_m":5000,"form":"en","input":"Mount Etna","components":{"venue":"Mount Etna"}}
+{"qid":"Q16990","kind":"landmark","country":"IT","lat":37.750834514,"lon":14.993220288,"tolerance_m":5000,"form":"en-country","input":"Mount Etna, Italy","components":{"venue":"Mount Etna","country":"Italy"}}
+{"qid":"Q16990","kind":"landmark","country":"IT","lat":37.750834514,"lon":14.993220288,"tolerance_m":5000,"form":"local","input":"Etna","components":{"venue":"Etna"}}
+{"qid":"Q169962","kind":"landmark","country":"US","lat":39.083333333,"lon":-120.033333333,"tolerance_m":5000,"form":"en","input":"Lake Tahoe","components":{"venue":"Lake Tahoe"}}
+{"qid":"Q169962","kind":"landmark","country":"US","lat":39.083333333,"lon":-120.033333333,"tolerance_m":5000,"form":"en-country","input":"Lake Tahoe, United States","components":{"venue":"Lake Tahoe","country":"United States"}}
+{"qid":"Q172077","kind":"landmark","country":"PS","lat":31.778055555,"lon":35.235277777,"tolerance_m":5000,"form":"en","input":"Dome of the Rock","components":{"venue":"Dome of the Rock"}}
+{"qid":"Q172613","kind":"landmark","country":"MX","lat":19.6925,"lon":-98.843888888,"tolerance_m":5000,"form":"en","input":"Teotihuacan","components":{"venue":"Teotihuacan"}}
+{"qid":"Q172613","kind":"landmark","country":"MX","lat":19.6925,"lon":-98.843888888,"tolerance_m":5000,"form":"en-country","input":"Teotihuacan, Mexico","components":{"venue":"Teotihuacan","country":"Mexico"}}
+{"qid":"Q180376","kind":"landmark","country":"US","lat":34.134102777,"lon":-118.321694444,"tolerance_m":5000,"form":"en","input":"Hollywood Sign","components":{"venue":"Hollywood Sign"}}
+{"qid":"Q180376","kind":"landmark","country":"US","lat":34.134102777,"lon":-118.321694444,"tolerance_m":5000,"form":"en-country","input":"Hollywood Sign, United States","components":{"venue":"Hollywood Sign","country":"United States"}}
+{"qid":"Q180422","kind":"landmark","country":"IN","lat":31.62,"lon":74.876667,"tolerance_m":5000,"form":"en","input":"Harmandir Sahib","components":{"venue":"Harmandir Sahib"}}
+{"qid":"Q18068","kind":"landmark","country":"IT","lat":45.463968,"lon":9.190578,"tolerance_m":5000,"form":"en","input":"Milan Cathedral","components":{"venue":"Milan Cathedral"}}
+{"qid":"Q18068","kind":"landmark","country":"IT","lat":45.463968,"lon":9.190578,"tolerance_m":5000,"form":"en-country","input":"Milan Cathedral, Italy","components":{"venue":"Milan Cathedral","country":"Italy"}}
+{"qid":"Q18068","kind":"landmark","country":"IT","lat":45.463968,"lon":9.190578,"tolerance_m":5000,"form":"local","input":"Duomo di Milano","components":{"venue":"Duomo di Milano"}}
+{"qid":"Q180901","kind":"landmark","country":"BE","lat":50.895,"lon":4.341388888,"tolerance_m":5000,"form":"en","input":"Atomium","components":{"venue":"Atomium"}}
+{"qid":"Q180901","kind":"landmark","country":"BE","lat":50.895,"lon":4.341388888,"tolerance_m":5000,"form":"en-country","input":"Atomium, Belgium","components":{"venue":"Atomium","country":"Belgium"}}
+{"qid":"Q182955","kind":"landmark","country":"VA","lat":41.906388888,"lon":12.454444444,"tolerance_m":5000,"form":"en","input":"Vatican Museums","components":{"venue":"Vatican Museums"}}
+{"qid":"Q183536","kind":"landmark","country":"JP","lat":35.658611111,"lon":139.745555555,"tolerance_m":5000,"form":"en","input":"Tokyo Tower","components":{"venue":"Tokyo Tower"}}
+{"qid":"Q183536","kind":"landmark","country":"JP","lat":35.658611111,"lon":139.745555555,"tolerance_m":5000,"form":"en-country","input":"Tokyo Tower, Japan","components":{"venue":"Tokyo Tower","country":"Japan"}}
+{"qid":"Q183536","kind":"landmark","country":"JP","lat":35.658611111,"lon":139.745555555,"tolerance_m":5000,"form":"local","input":"東京タワー","components":{"venue":"東京タワー"}}
+{"qid":"Q185382","kind":"landmark","country":"IT","lat":41.900932251,"lon":12.483312638,"tolerance_m":5000,"form":"en","input":"Trevi Fountain","components":{"venue":"Trevi Fountain"}}
+{"qid":"Q185382","kind":"landmark","country":"IT","lat":41.900932251,"lon":12.483312638,"tolerance_m":5000,"form":"en-country","input":"Trevi Fountain, Italy","components":{"venue":"Trevi Fountain","country":"Italy"}}
+{"qid":"Q185382","kind":"landmark","country":"IT","lat":41.900932251,"lon":12.483312638,"tolerance_m":5000,"form":"local","input":"Fontana di Trevi","components":{"venue":"Fontana di Trevi"}}
+{"qid":"Q188698","kind":"landmark","country":"US","lat":19.421097,"lon":-155.286762,"tolerance_m":5000,"form":"en","input":"Kīlauea","components":{"venue":"Kīlauea"}}
+{"qid":"Q188698","kind":"landmark","country":"US","lat":19.421097,"lon":-155.286762,"tolerance_m":5000,"form":"en-country","input":"Kīlauea, United States","components":{"venue":"Kīlauea","country":"United States"}}
+{"qid":"Q189883","kind":"landmark","country":"IT","lat":45.433666666,"lon":12.340416666,"tolerance_m":5000,"form":"en","input":"Doge's Palace","components":{"venue":"Doge's Palace"}}
+{"qid":"Q189883","kind":"landmark","country":"IT","lat":45.433666666,"lon":12.340416666,"tolerance_m":5000,"form":"en-country","input":"Doge's Palace, Italy","components":{"venue":"Doge's Palace","country":"Italy"}}
+{"qid":"Q189883","kind":"landmark","country":"IT","lat":45.433666666,"lon":12.340416666,"tolerance_m":5000,"form":"local","input":"Palazzo Ducale","components":{"venue":"Palazzo Ducale"}}
+{"qid":"Q190128","kind":"landmark","country":"VN","lat":20.9,"lon":107.2,"tolerance_m":5000,"form":"en","input":"Ha Long Bay","components":{"venue":"Ha Long Bay"}}
+{"qid":"Q191739","kind":"landmark","country":"IT","lat":43.773055555,"lon":11.256944444,"tolerance_m":5000,"form":"en","input":"Florence Cathedral","components":{"venue":"Florence Cathedral"}}
+{"qid":"Q191739","kind":"landmark","country":"IT","lat":43.773055555,"lon":11.256944444,"tolerance_m":5000,"form":"en-country","input":"Florence Cathedral, Italy","components":{"venue":"Florence Cathedral","country":"Italy"}}
+{"qid":"Q191739","kind":"landmark","country":"IT","lat":43.773055555,"lon":11.256944444,"tolerance_m":5000,"form":"local","input":"Cattedrale di Santa Maria del Fiore","components":{"venue":"Cattedrale di Santa Maria del Fiore"}}
+{"qid":"Q192017","kind":"landmark","country":"US","lat":36.983333333,"lon":-110.1,"tolerance_m":5000,"form":"en","input":"Monument Valley","components":{"venue":"Monument Valley"}}
+{"qid":"Q192017","kind":"landmark","country":"US","lat":36.983333333,"lon":-110.1,"tolerance_m":5000,"form":"en-country","input":"Monument Valley, United States","components":{"venue":"Monument Valley","country":"United States"}}
+{"qid":"Q193369","kind":"landmark","country":"CZ","lat":50.09,"lon":14.4,"tolerance_m":5000,"form":"en","input":"Prague Castle","components":{"venue":"Prague Castle"}}
+{"qid":"Q19675","kind":"landmark","country":"FR","lat":48.861111111,"lon":2.335833333,"tolerance_m":5000,"form":"en","input":"Louvre Museum","components":{"venue":"Louvre Museum"}}
+{"qid":"Q19675","kind":"landmark","country":"FR","lat":48.861111111,"lon":2.335833333,"tolerance_m":5000,"form":"en-country","input":"Louvre Museum, France","components":{"venue":"Louvre Museum","country":"France"}}
+{"qid":"Q19675","kind":"landmark","country":"FR","lat":48.861111111,"lon":2.335833333,"tolerance_m":5000,"form":"local","input":"Musée du Louvre","components":{"venue":"Musée du Louvre"}}
+{"qid":"Q202730","kind":"landmark","country":"BR","lat":-22.967033333,"lon":-43.180697222,"tolerance_m":5000,"form":"en","input":"Copacabana","components":{"venue":"Copacabana"}}
+{"qid":"Q202730","kind":"landmark","country":"BR","lat":-22.967033333,"lon":-43.180697222,"tolerance_m":5000,"form":"en-country","input":"Copacabana, Brazil","components":{"venue":"Copacabana","country":"Brazil"}}
+{"qid":"Q204871","kind":"landmark","country":"CZ","lat":50.086388888,"lon":14.411944444,"tolerance_m":5000,"form":"en","input":"Charles Bridge","components":{"venue":"Charles Bridge"}}
+{"qid":"Q20892","kind":"landmark","country":"FR","lat":48.635833333,"lon":-1.510277777,"tolerance_m":5000,"form":"en","input":"Le Mont Saint-Michel","components":{"venue":"Le Mont Saint-Michel"}}
+{"qid":"Q20892","kind":"landmark","country":"FR","lat":48.635833333,"lon":-1.510277777,"tolerance_m":5000,"form":"en-country","input":"Le Mont Saint-Michel, France","components":{"venue":"Le Mont Saint-Michel","country":"France"}}
+{"qid":"Q20892","kind":"landmark","country":"FR","lat":48.635833333,"lon":-1.510277777,"tolerance_m":5000,"form":"local","input":"Le Mont-Saint-Michel","components":{"venue":"Le Mont-Saint-Michel"}}
+{"qid":"Q210722","kind":"landmark","country":"BR","lat":-22.949444444,"lon":-43.156666666,"tolerance_m":5000,"form":"en","input":"Sugarloaf Mountain","components":{"venue":"Sugarloaf Mountain"}}
+{"qid":"Q210722","kind":"landmark","country":"BR","lat":-22.949444444,"lon":-43.156666666,"tolerance_m":5000,"form":"en-country","input":"Sugarloaf Mountain, Brazil","components":{"venue":"Sugarloaf Mountain","country":"Brazil"}}
+{"qid":"Q210722","kind":"landmark","country":"BR","lat":-22.949444444,"lon":-43.156666666,"tolerance_m":5000,"form":"local","input":"Pão de Açúcar","components":{"venue":"Pão de Açúcar"}}
+{"qid":"Q212065","kind":"landmark","country":"GB","lat":55.9487,"lon":-3.20073,"tolerance_m":5000,"form":"en","input":"Edinburgh Castle","components":{"venue":"Edinburgh Castle"}}
+{"qid":"Q212065","kind":"landmark","country":"GB","lat":55.9487,"lon":-3.20073,"tolerance_m":5000,"form":"en-country","input":"Edinburgh Castle, United Kingdom","components":{"venue":"Edinburgh Castle","country":"United Kingdom"}}
+{"qid":"Q212867","kind":"landmark","country":"ES","lat":41.413611111,"lon":2.152777777,"tolerance_m":5000,"form":"en","input":"Park Güell","components":{"venue":"Park Güell"}}
+{"qid":"Q212867","kind":"landmark","country":"ES","lat":41.413611111,"lon":2.152777777,"tolerance_m":5000,"form":"en-country","input":"Park Güell, Spain","components":{"venue":"Park Güell","country":"Spain"}}
+{"qid":"Q213360","kind":"landmark","country":"ZA","lat":-33.96216,"lon":18.41352,"tolerance_m":5000,"form":"en","input":"Table Mountain","components":{"venue":"Table Mountain"}}
+{"qid":"Q213559","kind":"landmark","country":"US","lat":38.889277777,"lon":-77.050138888,"tolerance_m":5000,"form":"en","input":"Lincoln Memorial","components":{"venue":"Lincoln Memorial"}}
+{"qid":"Q213559","kind":"landmark","country":"US","lat":38.889277777,"lon":-77.050138888,"tolerance_m":5000,"form":"en-country","input":"Lincoln Memorial, United States","components":{"venue":"Lincoln Memorial","country":"United States"}}
+{"qid":"Q214619","kind":"landmark","country":"DK","lat":55.69286,"lon":12.59926,"tolerance_m":5000,"form":"en","input":"The Little Mermaid","components":{"venue":"The Little Mermaid"}}
+{"qid":"Q215003","kind":"landmark","country":"PT","lat":38.691388888,"lon":-9.215833333,"tolerance_m":5000,"form":"en","input":"Belém Tower","components":{"venue":"Belém Tower"}}
+{"qid":"Q215003","kind":"landmark","country":"PT","lat":38.691388888,"lon":-9.215833333,"tolerance_m":5000,"form":"local","input":"Torre de Belém","components":{"venue":"Torre de Belém"}}
+{"qid":"Q23883","kind":"landmark","country":"IL","lat":31.5207,"lon":35.4845,"tolerance_m":5000,"form":"en","input":"Dead Sea","components":{"venue":"Dead Sea"}}
+{"qid":"Q239477","kind":"landmark","country":"IE","lat":52.936111111,"lon":-9.470833333,"tolerance_m":5000,"form":"en","input":"Cliffs of Moher","components":{"venue":"Cliffs of Moher"}}
+{"qid":"Q239477","kind":"landmark","country":"IE","lat":52.936111111,"lon":-9.470833333,"tolerance_m":5000,"form":"en-country","input":"Cliffs of Moher, Ireland","components":{"venue":"Cliffs of Moher","country":"Ireland"}}
+{"qid":"Q243","kind":"landmark","country":"FR","lat":48.858296,"lon":2.294479,"tolerance_m":5000,"form":"en","input":"Eiffel Tower","components":{"venue":"Eiffel Tower"}}
+{"qid":"Q243","kind":"landmark","country":"FR","lat":48.858296,"lon":2.294479,"tolerance_m":5000,"form":"en-country","input":"Eiffel Tower, France","components":{"venue":"Eiffel Tower","country":"France"}}
+{"qid":"Q243","kind":"landmark","country":"FR","lat":48.858296,"lon":2.294479,"tolerance_m":5000,"form":"local","input":"tour Eiffel","components":{"venue":"tour Eiffel"}}
+{"qid":"Q271466","kind":"landmark","country":"IS","lat":64.141944444,"lon":-21.926944444,"tolerance_m":5000,"form":"en","input":"Hallgrímskirkja","components":{"venue":"Hallgrímskirkja"}}
+{"qid":"Q2943","kind":"landmark","country":"VA","lat":41.902956,"lon":12.454433,"tolerance_m":5000,"form":"en","input":"Sistine Chapel","components":{"venue":"Sistine Chapel"}}
+{"qid":"Q2946","kind":"landmark","country":"FR","lat":48.804722222,"lon":2.120277777,"tolerance_m":5000,"form":"en","input":"Palace of Versailles","components":{"venue":"Palace of Versailles"}}
+{"qid":"Q2946","kind":"landmark","country":"FR","lat":48.804722222,"lon":2.120277777,"tolerance_m":5000,"form":"en-country","input":"Palace of Versailles, France","components":{"venue":"Palace of Versailles","country":"France"}}
+{"qid":"Q2946","kind":"landmark","country":"FR","lat":48.804722222,"lon":2.120277777,"tolerance_m":5000,"form":"local","input":"château de Versailles","components":{"venue":"château de Versailles"}}
+{"qid":"Q29466","kind":"landmark","country":"SA","lat":21.4225,"lon":39.826166666,"tolerance_m":5000,"form":"en","input":"Kaaba","components":{"venue":"Kaaba"}}
+{"qid":"Q29466","kind":"landmark","country":"SA","lat":21.4225,"lon":39.826166666,"tolerance_m":5000,"form":"local","input":"الكعبة","components":{"venue":"الكعبة"}}
+{"qid":"Q2981","kind":"landmark","country":"FR","lat":48.853,"lon":2.3498,"tolerance_m":5000,"form":"en","input":"Notre-Dame de Paris","components":{"venue":"Notre-Dame de Paris"}}
+{"qid":"Q2981","kind":"landmark","country":"FR","lat":48.853,"lon":2.3498,"tolerance_m":5000,"form":"en-country","input":"Notre-Dame de Paris, France","components":{"venue":"Notre-Dame de Paris","country":"France"}}
+{"qid":"Q2981","kind":"landmark","country":"FR","lat":48.853,"lon":2.3498,"tolerance_m":5000,"form":"local","input":"cathédrale Notre-Dame de Paris","components":{"venue":"cathédrale Notre-Dame de Paris"}}
+{"qid":"Q33910","kind":"landmark","country":"AU","lat":-25.345,"lon":131.036111111,"tolerance_m":5000,"form":"en","input":"Uluru","components":{"venue":"Uluru"}}
+{"qid":"Q33910","kind":"landmark","country":"AU","lat":-25.345,"lon":131.036111111,"tolerance_m":5000,"form":"en-country","input":"Uluru, Australia","components":{"venue":"Uluru","country":"Australia"}}
+{"qid":"Q34221","kind":"landmark","country":"CA","lat":43.08,"lon":-79.071,"tolerance_m":5000,"form":"en","input":"Niagara Falls","components":{"venue":"Niagara Falls"}}
+{"qid":"Q34221","kind":"landmark","country":"CA","lat":43.08,"lon":-79.071,"tolerance_m":5000,"form":"en-country","input":"Niagara Falls, Canada","components":{"venue":"Niagara Falls","country":"Canada"}}
+{"qid":"Q35525","kind":"landmark","country":"US","lat":38.897777777,"lon":-77.036666666,"tolerance_m":5000,"form":"en","input":"White House","components":{"venue":"White House"}}
+{"qid":"Q35525","kind":"landmark","country":"US","lat":38.897777777,"lon":-77.036666666,"tolerance_m":5000,"form":"en-country","input":"White House, United States","components":{"venue":"White House","country":"United States"}}
+{"qid":"Q36332","kind":"landmark","country":"BR","lat":-25.695277777,"lon":-54.436666666,"tolerance_m":5000,"form":"en","input":"Iguaçu Falls","components":{"venue":"Iguaçu Falls"}}
+{"qid":"Q36332","kind":"landmark","country":"BR","lat":-25.695277777,"lon":-54.436666666,"tolerance_m":5000,"form":"en-country","input":"Iguaçu Falls, Brazil","components":{"venue":"Iguaçu Falls","country":"Brazil"}}
+{"qid":"Q36332","kind":"landmark","country":"BR","lat":-25.695277777,"lon":-54.436666666,"tolerance_m":5000,"form":"local","input":"Cataratas do Iguaçu","components":{"venue":"Cataratas do Iguaçu"}}
+{"qid":"Q367943","kind":"landmark","country":"CL","lat":-50.493219386,"lon":-73.127982449,"tolerance_m":5000,"form":"en","input":"Perito Moreno Glacier","components":{"venue":"Perito Moreno Glacier"}}
+{"qid":"Q367943","kind":"landmark","country":"CL","lat":-50.493219386,"lon":-73.127982449,"tolerance_m":5000,"form":"local","input":"Glaciar Perito Moreno","components":{"venue":"Glaciar Perito Moreno"}}
+{"qid":"Q37200","kind":"landmark","country":"EG","lat":29.97915,"lon":31.13422,"tolerance_m":5000,"form":"en","input":"Great Pyramid of Giza","components":{"venue":"Great Pyramid of Giza"}}
+{"qid":"Q37200","kind":"landmark","country":"EG","lat":29.97915,"lon":31.13422,"tolerance_m":5000,"form":"local","input":"الهرم الأكبر","components":{"venue":"الهرم الأكبر"}}
+{"qid":"Q3783","kind":"landmark","country":"BR","lat":0.707777777,"lon":-50.089444444,"tolerance_m":5000,"form":"en","input":"Amazon River","components":{"venue":"Amazon River"}}
+{"qid":"Q3783","kind":"landmark","country":"BR","lat":0.707777777,"lon":-50.089444444,"tolerance_m":5000,"form":"en-country","input":"Amazon River, Brazil","components":{"venue":"Amazon River","country":"Brazil"}}
+{"qid":"Q3783","kind":"landmark","country":"BR","lat":0.707777777,"lon":-50.089444444,"tolerance_m":5000,"form":"local","input":"rio Amazonas","components":{"venue":"rio Amazonas"}}
+{"qid":"Q38095","kind":"landmark","country":"EC","lat":-0.666666666,"lon":-90.55,"tolerance_m":5000,"form":"en","input":"Galapagos Islands","components":{"venue":"Galapagos Islands"}}
+{"qid":"Q38095","kind":"landmark","country":"EC","lat":-0.666666666,"lon":-90.55,"tolerance_m":5000,"form":"local","input":"Islas Galápagos","components":{"venue":"Islas Galápagos"}}
+{"qid":"Q39054","kind":"landmark","country":"IT","lat":43.72301,"lon":10.396624,"tolerance_m":5000,"form":"en","input":"Leaning Tower of Pisa","components":{"venue":"Leaning Tower of Pisa"}}
+{"qid":"Q39054","kind":"landmark","country":"IT","lat":43.72301,"lon":10.396624,"tolerance_m":5000,"form":"en-country","input":"Leaning Tower of Pisa, Italy","components":{"venue":"Leaning Tower of Pisa","country":"Italy"}}
+{"qid":"Q39054","kind":"landmark","country":"IT","lat":43.72301,"lon":10.396624,"tolerance_m":5000,"form":"local","input":"Torre di Pisa","components":{"venue":"Torre di Pisa"}}
+{"qid":"Q39231","kind":"landmark","country":"JP","lat":35.360555555,"lon":138.7275,"tolerance_m":5000,"form":"en","input":"Mount Fuji","components":{"venue":"Mount Fuji"}}
+{"qid":"Q39231","kind":"landmark","country":"JP","lat":35.360555555,"lon":138.7275,"tolerance_m":5000,"form":"en-country","input":"Mount Fuji, Japan","components":{"venue":"Mount Fuji","country":"Japan"}}
+{"qid":"Q39231","kind":"landmark","country":"JP","lat":35.360555555,"lon":138.7275,"tolerance_m":5000,"form":"local","input":"富士山","components":{"venue":"富士山"}}
+{"qid":"Q39671","kind":"landmark","country":"GB","lat":51.178888888,"lon":-1.826111111,"tolerance_m":5000,"form":"en","input":"Stonehenge","components":{"venue":"Stonehenge"}}
+{"qid":"Q39671","kind":"landmark","country":"GB","lat":51.178888888,"lon":-1.826111111,"tolerance_m":5000,"form":"en-country","input":"Stonehenge, United Kingdom","components":{"venue":"Stonehenge","country":"United Kingdom"}}
+{"qid":"Q41116","kind":"landmark","country":"RU","lat":55.754166666,"lon":37.62,"tolerance_m":5000,"form":"en","input":"Red Square","components":{"venue":"Red Square"}}
+{"qid":"Q41116","kind":"landmark","country":"RU","lat":55.754166666,"lon":37.62,"tolerance_m":5000,"form":"local","input":"Красная площадь","components":{"venue":"Красная площадь"}}
+{"qid":"Q41225","kind":"landmark","country":"GB","lat":51.50067,"lon":-0.12457,"tolerance_m":5000,"form":"en","input":"Big Ben","components":{"venue":"Big Ben"}}
+{"qid":"Q41225","kind":"landmark","country":"GB","lat":51.50067,"lon":-0.12457,"tolerance_m":5000,"form":"en-country","input":"Big Ben, United Kingdom","components":{"venue":"Big Ben","country":"United Kingdom"}}
+{"qid":"Q4152","kind":"landmark","country":"DE","lat":47.557488542,"lon":10.749441807,"tolerance_m":5000,"form":"en","input":"Neuschwanstein Castle","components":{"venue":"Neuschwanstein Castle"}}
+{"qid":"Q4152","kind":"landmark","country":"DE","lat":47.557488542,"lon":10.749441807,"tolerance_m":5000,"form":"en-country","input":"Neuschwanstein Castle, Germany","components":{"venue":"Neuschwanstein Castle","country":"Germany"}}
+{"qid":"Q4152","kind":"landmark","country":"DE","lat":47.557488542,"lon":10.749441807,"tolerance_m":5000,"form":"local","input":"Schloss Neuschwanstein","components":{"venue":"Schloss Neuschwanstein"}}
+{"qid":"Q4176","kind":"landmark","country":"DE","lat":50.941388888,"lon":6.958333333,"tolerance_m":5000,"form":"en","input":"Cologne Cathedral","components":{"venue":"Cologne Cathedral"}}
+{"qid":"Q4176","kind":"landmark","country":"DE","lat":50.941388888,"lon":6.958333333,"tolerance_m":5000,"form":"en-country","input":"Cologne Cathedral, Germany","components":{"venue":"Cologne Cathedral","country":"Germany"}}
+{"qid":"Q4176","kind":"landmark","country":"DE","lat":50.941388888,"lon":6.958333333,"tolerance_m":5000,"form":"local","input":"Kölner Dom","components":{"venue":"Kölner Dom"}}
+{"qid":"Q42182","kind":"landmark","country":"GB","lat":51.501,"lon":-0.142,"tolerance_m":5000,"form":"en","input":"Buckingham Palace","components":{"venue":"Buckingham Palace"}}
+{"qid":"Q42182","kind":"landmark","country":"GB","lat":51.501,"lon":-0.142,"tolerance_m":5000,"form":"en-country","input":"Buckingham Palace, United Kingdom","components":{"venue":"Buckingham Palace","country":"United Kingdom"}}
+{"qid":"Q42798","kind":"landmark","country":"ID","lat":-7.60793,"lon":110.20384,"tolerance_m":5000,"form":"en","input":"Borobudur Temple","components":{"venue":"Borobudur Temple"}}
+{"qid":"Q43278","kind":"landmark","country":"ZM","lat":-17.924777777,"lon":25.858055555,"tolerance_m":5000,"form":"en","input":"Victoria Falls","components":{"venue":"Victoria Falls"}}
+{"qid":"Q43473","kind":"landmark","country":"KH","lat":13.4125,"lon":103.866666666,"tolerance_m":5000,"form":"en","input":"Angkor Wat","components":{"venue":"Angkor Wat"}}
+{"qid":"Q44440","kind":"landmark","country":"US","lat":37.819722222,"lon":-122.478611111,"tolerance_m":5000,"form":"en","input":"Golden Gate Bridge","components":{"venue":"Golden Gate Bridge"}}
+{"qid":"Q44440","kind":"landmark","country":"US","lat":37.819722222,"lon":-122.478611111,"tolerance_m":5000,"form":"en-country","input":"Golden Gate Bridge, United States","components":{"venue":"Golden Gate Bridge","country":"United States"}}
+{"qid":"Q45178","kind":"landmark","country":"AU","lat":-33.857058,"lon":151.214897,"tolerance_m":5000,"form":"en","input":"Sydney Opera House","components":{"venue":"Sydney Opera House"}}
+{"qid":"Q45178","kind":"landmark","country":"AU","lat":-33.857058,"lon":151.214897,"tolerance_m":5000,"form":"en-country","input":"Sydney Opera House, Australia","components":{"venue":"Sydney Opera House","country":"Australia"}}
+{"qid":"Q464535","kind":"landmark","country":"MM","lat":16.79833333,"lon":96.14944444,"tolerance_m":5000,"form":"en","input":"Shwedagon Pagoda","components":{"venue":"Shwedagon Pagoda"}}
+{"qid":"Q47476","kind":"landmark","country":"ES","lat":37.17634,"lon":-3.58821,"tolerance_m":5000,"form":"en","input":"Alhambra","components":{"venue":"Alhambra"}}
+{"qid":"Q47476","kind":"landmark","country":"ES","lat":37.17634,"lon":-3.58821,"tolerance_m":5000,"form":"en-country","input":"Alhambra, Spain","components":{"venue":"Alhambra","country":"Spain"}}
+{"qid":"Q48435","kind":"landmark","country":"ES","lat":41.40369,"lon":2.17433,"tolerance_m":5000,"form":"en","input":"Basilica and Expiatory Church of the Holy Family","components":{"venue":"Basilica and Expiatory Church of the Holy Family"}}
+{"qid":"Q48435","kind":"landmark","country":"ES","lat":41.40369,"lon":2.17433,"tolerance_m":5000,"form":"en-country","input":"Basilica and Expiatory Church of the Holy Family, Spain","components":{"venue":"Basilica and Expiatory Church of the Holy Family","country":"Spain"}}
+{"qid":"Q48435","kind":"landmark","country":"ES","lat":41.40369,"lon":2.17433,"tolerance_m":5000,"form":"local","input":"Templo Expiatorio de la Sagrada Familia","components":{"venue":"Templo Expiatorio de la Sagrada Familia"}}
+{"qid":"Q510","kind":"landmark","country":"US","lat":11.35,"lon":142.2,"tolerance_m":5000,"form":"en","input":"Mariana Trench","components":{"venue":"Mariana Trench"}}
+{"qid":"Q510","kind":"landmark","country":"US","lat":11.35,"lon":142.2,"tolerance_m":5000,"form":"en-country","input":"Mariana Trench, United States","components":{"venue":"Mariana Trench","country":"United States"}}
+{"qid":"Q513","kind":"landmark","country":"CN","lat":27.988055555,"lon":86.925,"tolerance_m":5000,"form":"en","input":"Mount Everest","components":{"venue":"Mount Everest"}}
+{"qid":"Q513","kind":"landmark","country":"CN","lat":27.988055555,"lon":86.925,"tolerance_m":5000,"form":"local","input":"珠穆朗瑪峰","components":{"venue":"珠穆朗瑪峰"}}
+{"qid":"Q524","kind":"landmark","country":"IT","lat":40.82261,"lon":14.42919,"tolerance_m":5000,"form":"en","input":"Mount Vesuvius","components":{"venue":"Mount Vesuvius"}}
+{"qid":"Q524","kind":"landmark","country":"IT","lat":40.82261,"lon":14.42919,"tolerance_m":5000,"form":"en-country","input":"Mount Vesuvius, Italy","components":{"venue":"Mount Vesuvius","country":"Italy"}}
+{"qid":"Q524","kind":"landmark","country":"IT","lat":40.82261,"lon":14.42919,"tolerance_m":5000,"form":"local","input":"Vesuvio","components":{"venue":"Vesuvio"}}
+{"qid":"Q52505","kind":"landmark","country":"IT","lat":45.438008,"lon":12.335639,"tolerance_m":5000,"form":"en","input":"Rialto Bridge","components":{"venue":"Rialto Bridge"}}
+{"qid":"Q52505","kind":"landmark","country":"IT","lat":45.438008,"lon":12.335639,"tolerance_m":5000,"form":"en-country","input":"Rialto Bridge, Italy","components":{"venue":"Rialto Bridge","country":"Italy"}}
+{"qid":"Q52505","kind":"landmark","country":"IT","lat":45.438008,"lon":12.335639,"tolerance_m":5000,"form":"local","input":"ponte di Rialto","components":{"venue":"ponte di Rialto"}}
+{"qid":"Q5317","kind":"landmark","country":"US","lat":47.6204,"lon":-122.3491,"tolerance_m":5000,"form":"en","input":"Space Needle","components":{"venue":"Space Needle"}}
+{"qid":"Q5317","kind":"landmark","country":"US","lat":47.6204,"lon":-122.3491,"tolerance_m":5000,"form":"en-country","input":"Space Needle, United States","components":{"venue":"Space Needle","country":"United States"}}
+{"qid":"Q54109","kind":"landmark","country":"US","lat":38.889722222,"lon":-77.009166666,"tolerance_m":5000,"form":"en","input":"United States Capitol","components":{"venue":"United States Capitol"}}
+{"qid":"Q54109","kind":"landmark","country":"US","lat":38.889722222,"lon":-77.009166666,"tolerance_m":5000,"form":"en-country","input":"United States Capitol, United States","components":{"venue":"United States Capitol","country":"United States"}}
+{"qid":"Q548679","kind":"landmark","country":"SG","lat":1.2825,"lon":103.86,"tolerance_m":5000,"form":"en","input":"Marina Bay Sands","components":{"venue":"Marina Bay Sands"}}
+{"qid":"Q5513","kind":"landmark","country":"RU","lat":53.30277778,"lon":108.00472222,"tolerance_m":5000,"form":"en","input":"Lake Baikal","components":{"venue":"Lake Baikal"}}
+{"qid":"Q5513","kind":"landmark","country":"RU","lat":53.30277778,"lon":108.00472222,"tolerance_m":5000,"form":"local","input":"Байкал","components":{"venue":"Байкал"}}
+{"qid":"Q5788","kind":"landmark","country":"JO","lat":30.328611,"lon":35.441944,"tolerance_m":5000,"form":"en","input":"Petra","components":{"venue":"Petra"}}
+{"qid":"Q5788","kind":"landmark","country":"JO","lat":30.328611,"lon":35.441944,"tolerance_m":5000,"form":"local","input":"البتراء","components":{"venue":"البتراء"}}
+{"qid":"Q57965","kind":"landmark","country":"JP","lat":35.710055555,"lon":139.810722222,"tolerance_m":5000,"form":"en","input":"Tokyo Skytree","components":{"venue":"Tokyo Skytree"}}
+{"qid":"Q57965","kind":"landmark","country":"JP","lat":35.710055555,"lon":139.810722222,"tolerance_m":5000,"form":"en-country","input":"Tokyo Skytree, Japan","components":{"venue":"Tokyo Skytree","country":"Japan"}}
+{"qid":"Q57965","kind":"landmark","country":"JP","lat":35.710055555,"lon":139.810722222,"tolerance_m":5000,"form":"local","input":"東京スカイツリー","components":{"venue":"東京スカイツリー"}}
+{"qid":"Q583","kind":"landmark","country":"IT","lat":45.832777777,"lon":6.865,"tolerance_m":5000,"form":"en","input":"Mont Blanc","components":{"venue":"Mont Blanc"}}
+{"qid":"Q583","kind":"landmark","country":"IT","lat":45.832777777,"lon":6.865,"tolerance_m":5000,"form":"en-country","input":"Mont Blanc, Italy","components":{"venue":"Mont Blanc","country":"Italy"}}
+{"qid":"Q583","kind":"landmark","country":"IT","lat":45.832777777,"lon":6.865,"tolerance_m":5000,"form":"local","input":"Monte Bianco","components":{"venue":"Monte Bianco"}}
+{"qid":"Q5859","kind":"landmark","country":"MX","lat":20.683055555,"lon":-88.568611111,"tolerance_m":5000,"form":"en","input":"Chichen Itza","components":{"venue":"Chichen Itza"}}
+{"qid":"Q5859","kind":"landmark","country":"MX","lat":20.683055555,"lon":-88.568611111,"tolerance_m":5000,"form":"en-country","input":"Chichen Itza, Mexico","components":{"venue":"Chichen Itza","country":"Mexico"}}
+{"qid":"Q5859","kind":"landmark","country":"MX","lat":20.683055555,"lon":-88.568611111,"tolerance_m":5000,"form":"local","input":"Chichén Itzá","components":{"venue":"Chichén Itzá"}}
+{"qid":"Q62378","kind":"landmark","country":"GB","lat":51.5082,"lon":-0.076198055,"tolerance_m":5000,"form":"en","input":"Tower of London","components":{"venue":"Tower of London"}}
+{"qid":"Q62378","kind":"landmark","country":"GB","lat":51.5082,"lon":-0.076198055,"tolerance_m":5000,"form":"en-country","input":"Tower of London, United Kingdom","components":{"venue":"Tower of London","country":"United Kingdom"}}
+{"qid":"Q62939","kind":"landmark","country":"AE","lat":25.141388888,"lon":55.185277777,"tolerance_m":5000,"form":"en","input":"Burj al-Arab","components":{"venue":"Burj al-Arab"}}
+{"qid":"Q62939","kind":"landmark","country":"AE","lat":25.141388888,"lon":55.185277777,"tolerance_m":5000,"form":"local","input":"برج العرب","components":{"venue":"برج العرب"}}
+{"qid":"Q64436","kind":"landmark","country":"FR","lat":48.87378,"lon":2.29504,"tolerance_m":5000,"form":"en","input":"Arc de Triomphe","components":{"venue":"Arc de Triomphe"}}
+{"qid":"Q64436","kind":"landmark","country":"FR","lat":48.87378,"lon":2.29504,"tolerance_m":5000,"form":"en-country","input":"Arc de Triomphe, France","components":{"venue":"Arc de Triomphe","country":"France"}}
+{"qid":"Q64436","kind":"landmark","country":"FR","lat":48.87378,"lon":2.29504,"tolerance_m":5000,"form":"local","input":"arc de triomphe de l'Étoile","components":{"venue":"arc de triomphe de l'Étoile"}}
+{"qid":"Q6583","kind":"landmark","country":"EG","lat":23.079722222,"lon":12.612222222,"tolerance_m":5000,"form":"en","input":"Sahara","components":{"venue":"Sahara"}}
+{"qid":"Q6583","kind":"landmark","country":"EG","lat":23.079722222,"lon":12.612222222,"tolerance_m":5000,"form":"local","input":"الصحراء الكبرى","components":{"venue":"الصحراء الكبرى"}}
+{"qid":"Q676203","kind":"landmark","country":"PE","lat":-13.163333333,"lon":-72.545555555,"tolerance_m":5000,"form":"en","input":"Machu Picchu","components":{"venue":"Machu Picchu"}}
+{"qid":"Q695604","kind":"landmark","country":"AE","lat":24.412,"lon":54.474,"tolerance_m":5000,"form":"en","input":"Sheikh Zayed Mosque","components":{"venue":"Sheikh Zayed Mosque"}}
+{"qid":"Q695604","kind":"landmark","country":"AE","lat":24.412,"lon":54.474,"tolerance_m":5000,"form":"local","input":"جامع الشيخ زايد","components":{"venue":"جامع الشيخ زايد"}}
+{"qid":"Q71229","kind":"landmark","country":"CN","lat":29.657777777,"lon":91.116944444,"tolerance_m":5000,"form":"en","input":"Potala Palace","components":{"venue":"Potala Palace"}}
+{"qid":"Q71229","kind":"landmark","country":"CN","lat":29.657777777,"lon":91.116944444,"tolerance_m":5000,"form":"local","input":"布达拉宫","components":{"venue":"布达拉宫"}}
+{"qid":"Q714828","kind":"landmark","country":"JP","lat":34.967202,"lon":135.773386,"tolerance_m":5000,"form":"en","input":"Fushimi Inari-taisha","components":{"venue":"Fushimi Inari-taisha"}}
+{"qid":"Q714828","kind":"landmark","country":"JP","lat":34.967202,"lon":135.773386,"tolerance_m":5000,"form":"en-country","input":"Fushimi Inari-taisha, Japan","components":{"venue":"Fushimi Inari-taisha","country":"Japan"}}
+{"qid":"Q714828","kind":"landmark","country":"JP","lat":34.967202,"lon":135.773386,"tolerance_m":5000,"form":"local","input":"伏見稲荷大社","components":{"venue":"伏見稲荷大社"}}
+{"qid":"Q724970","kind":"landmark","country":"TH","lat":13.743688888,"lon":100.488919444,"tolerance_m":5000,"form":"en","input":"Wat Arun","components":{"venue":"Wat Arun"}}
+{"qid":"Q7296","kind":"landmark","country":"TZ","lat":-3.066666666,"lon":37.359166666,"tolerance_m":5000,"form":"en","input":"Mount Kilimanjaro","components":{"venue":"Mount Kilimanjaro"}}
+{"qid":"Q7343","kind":"landmark","country":"AU","lat":-16.4,"lon":145.8,"tolerance_m":5000,"form":"en","input":"Great Barrier Reef","components":{"venue":"Great Barrier Reef"}}
+{"qid":"Q7343","kind":"landmark","country":"AU","lat":-16.4,"lon":145.8,"tolerance_m":5000,"form":"en-country","input":"Great Barrier Reef, Australia","components":{"venue":"Great Barrier Reef","country":"Australia"}}
+{"qid":"Q76122","kind":"landmark","country":"BO","lat":-20.33333,"lon":-67.7,"tolerance_m":5000,"form":"en","input":"Salar de Uyuni","components":{"venue":"Salar de Uyuni"}}
+{"qid":"Q79961","kind":"landmark","country":"BR","lat":-22.951915648,"lon":-43.210464122,"tolerance_m":5000,"form":"en","input":"Christ the Redeemer","components":{"venue":"Christ the Redeemer"}}
+{"qid":"Q79961","kind":"landmark","country":"BR","lat":-22.951915648,"lon":-43.210464122,"tolerance_m":5000,"form":"en-country","input":"Christ the Redeemer, Brazil","components":{"venue":"Christ the Redeemer","country":"Brazil"}}
+{"qid":"Q79961","kind":"landmark","country":"BR","lat":-22.951915648,"lon":-43.210464122,"tolerance_m":5000,"form":"local","input":"Cristo Redentor","components":{"venue":"Cristo Redentor"}}
+{"qid":"Q80290","kind":"landmark","country":"CN","lat":39.915833333,"lon":116.390833333,"tolerance_m":5000,"form":"en","input":"Forbidden City","components":{"venue":"Forbidden City"}}
+{"qid":"Q80290","kind":"landmark","country":"CN","lat":39.915833333,"lon":116.390833333,"tolerance_m":5000,"form":"local","input":"故宫","components":{"venue":"故宫"}}
+{"qid":"Q80299","kind":"landmark","country":"VE","lat":5.970055555,"lon":-62.536222222,"tolerance_m":5000,"form":"en","input":"Angel Falls","components":{"venue":"Angel Falls"}}
+{"qid":"Q80299","kind":"landmark","country":"VE","lat":5.970055555,"lon":-62.536222222,"tolerance_m":5000,"form":"local","input":"Salto Ángel","components":{"venue":"Salto Ángel"}}
+{"qid":"Q82425","kind":"landmark","country":"DE","lat":52.516272222,"lon":13.377722222,"tolerance_m":5000,"form":"en","input":"Brandenburg Gate","components":{"venue":"Brandenburg Gate"}}
+{"qid":"Q82425","kind":"landmark","country":"DE","lat":52.516272222,"lon":13.377722222,"tolerance_m":5000,"form":"en-country","input":"Brandenburg Gate, Germany","components":{"venue":"Brandenburg Gate","country":"Germany"}}
+{"qid":"Q82425","kind":"landmark","country":"DE","lat":52.516272222,"lon":13.377722222,"tolerance_m":5000,"form":"local","input":"Brandenburger Tor","components":{"venue":"Brandenburger Tor"}}
+{"qid":"Q83063","kind":"landmark","country":"MY","lat":3.157777777,"lon":101.711666666,"tolerance_m":5000,"form":"en","input":"Petronas Towers","components":{"venue":"Petronas Towers"}}
+{"qid":"Q83125","kind":"landmark","country":"GB","lat":51.505555555,"lon":-0.075277777,"tolerance_m":5000,"form":"en","input":"Tower Bridge","components":{"venue":"Tower Bridge"}}
+{"qid":"Q83125","kind":"landmark","country":"GB","lat":51.505555555,"lon":-0.075277777,"tolerance_m":5000,"form":"en-country","input":"Tower Bridge, United Kingdom","components":{"venue":"Tower Bridge","country":"United Kingdom"}}
+{"qid":"Q83497","kind":"landmark","country":"US","lat":43.878888888,"lon":-103.459166666,"tolerance_m":5000,"form":"en","input":"Mount Rushmore","components":{"venue":"Mount Rushmore"}}
+{"qid":"Q83497","kind":"landmark","country":"US","lat":43.878888888,"lon":-103.459166666,"tolerance_m":5000,"form":"en-country","input":"Mount Rushmore, United States","components":{"venue":"Mount Rushmore","country":"United States"}}
+{"qid":"Q858794","kind":"landmark","country":"US","lat":44.460472222,"lon":-110.828138888,"tolerance_m":5000,"form":"en","input":"Old Faithful","components":{"venue":"Old Faithful"}}
+{"qid":"Q858794","kind":"landmark","country":"US","lat":44.460472222,"lon":-110.828138888,"tolerance_m":5000,"form":"en-country","input":"Old Faithful, United States","components":{"venue":"Old Faithful","country":"United States"}}
+{"qid":"Q859230","kind":"landmark","country":"US","lat":41.48,"lon":-82.6825,"tolerance_m":5000,"form":"en","input":"Cedar Point","components":{"venue":"Cedar Point"}}
+{"qid":"Q859230","kind":"landmark","country":"US","lat":41.48,"lon":-82.6825,"tolerance_m":5000,"form":"en-country","input":"Cedar Point, United States","components":{"venue":"Cedar Point","country":"United States"}}
+{"qid":"Q864862","kind":"landmark","country":"IN","lat":18.921836,"lon":72.834705,"tolerance_m":5000,"form":"en","input":"Gateway of India","components":{"venue":"Gateway of India"}}
+{"qid":"Q901646","kind":"landmark","country":"CL","lat":-50.98305556,"lon":-72.96638889,"tolerance_m":5000,"form":"en","input":"Torres del Paine National Park","components":{"venue":"Torres del Paine National Park"}}
+{"qid":"Q901646","kind":"landmark","country":"CL","lat":-50.98305556,"lon":-72.96638889,"tolerance_m":5000,"form":"local","input":"Parque Nacional Torres del Paine","components":{"venue":"Parque Nacional Torres del Paine"}}
+{"qid":"Q9141","kind":"landmark","country":"IN","lat":27.175,"lon":78.041944444,"tolerance_m":5000,"form":"en","input":"Taj Mahal","components":{"venue":"Taj Mahal"}}
+{"qid":"Q9188","kind":"landmark","country":"US","lat":40.748333333,"lon":-73.985555555,"tolerance_m":5000,"form":"en","input":"Empire State Building","components":{"venue":"Empire State Building"}}
+{"qid":"Q9188","kind":"landmark","country":"US","lat":40.748333333,"lon":-73.985555555,"tolerance_m":5000,"form":"en-country","input":"Empire State Building, United States","components":{"venue":"Empire State Building","country":"United States"}}
+{"qid":"Q9202","kind":"landmark","country":"US","lat":40.689209166,"lon":-74.044425277,"tolerance_m":5000,"form":"en","input":"Statue of Liberty","components":{"venue":"Statue of Liberty"}}
+{"qid":"Q9202","kind":"landmark","country":"US","lat":40.689209166,"lon":-74.044425277,"tolerance_m":5000,"form":"en-country","input":"Statue of Liberty, United States","components":{"venue":"Statue of Liberty","country":"United States"}}
+{"qid":"Q956018","kind":"landmark","country":"ES","lat":37.377080398,"lon":-5.98690073,"tolerance_m":5000,"form":"en","input":"Plaza de España","components":{"venue":"Plaza de España"}}
+{"qid":"Q956018","kind":"landmark","country":"ES","lat":37.377080398,"lon":-5.98690073,"tolerance_m":5000,"form":"en-country","input":"Plaza de España, Spain","components":{"venue":"Plaza de España","country":"Spain"}}
+{"qid":"Q956018","kind":"landmark","country":"ES","lat":37.377080398,"lon":-5.98690073,"tolerance_m":5000,"form":"local","input":"plaza de España","components":{"venue":"plaza de España"}}
+{"qid":"Q99309","kind":"landmark","country":"IT","lat":41.898611111,"lon":12.476944444,"tolerance_m":5000,"form":"en","input":"Pantheon","components":{"venue":"Pantheon"}}
+{"qid":"Q99309","kind":"landmark","country":"IT","lat":41.898611111,"lon":12.476944444,"tolerance_m":5000,"form":"en-country","input":"Pantheon, Italy","components":{"venue":"Pantheon","country":"Italy"}}
+{"qid":"Q1075023","kind":"national-park","country":"NP","lat":27.5,"lon":84.333333,"tolerance_m":50000,"form":"en","input":"Chitwan National Park","components":{"venue":"Chitwan National Park"}}
+{"qid":"Q11812902","kind":"national-park","country":"TZ","lat":-2.4,"lon":34.6,"tolerance_m":50000,"form":"en","input":"Serengeti National Park","components":{"venue":"Serengeti National Park"}}
+{"qid":"Q1244337","kind":"national-park","country":"VE","lat":5.3193393,"lon":-61.7953505,"tolerance_m":50000,"form":"en","input":"Canaima National Park","components":{"venue":"Canaima National Park"}}
+{"qid":"Q1244337","kind":"national-park","country":"VE","lat":5.3193393,"lon":-61.7953505,"tolerance_m":50000,"form":"local","input":"Parque Nacional Canaima","components":{"venue":"Parque Nacional Canaima"}}
+{"qid":"Q180402","kind":"national-park","country":"US","lat":37.7425,"lon":-119.5375,"tolerance_m":50000,"form":"en","input":"Yosemite National Park","components":{"venue":"Yosemite National Park"}}
+{"qid":"Q180402","kind":"national-park","country":"US","lat":37.7425,"lon":-119.5375,"tolerance_m":50000,"form":"en-country","input":"Yosemite National Park, United States","components":{"venue":"Yosemite National Park","country":"United States"}}
+{"qid":"Q192764","kind":"national-park","country":"IN","lat":26.666666666,"lon":93.35,"tolerance_m":50000,"form":"en","input":"Kaziranga National Park","components":{"venue":"Kaziranga National Park"}}
+{"qid":"Q215992","kind":"national-park","country":"AR","lat":-50.330530387,"lon":-73.234164314,"tolerance_m":50000,"form":"en","input":"Los Glaciares National Park","components":{"venue":"Los Glaciares National Park"}}
+{"qid":"Q215992","kind":"national-park","country":"AR","lat":-50.330530387,"lon":-73.234164314,"tolerance_m":50000,"form":"local","input":"Parque Nacional Los Glaciares","components":{"venue":"Parque Nacional Los Glaciares"}}
+{"qid":"Q219562","kind":"national-park","country":"US","lat":37.64,"lon":-112.17,"tolerance_m":50000,"form":"en","input":"Bryce Canyon National Park","components":{"venue":"Bryce Canyon National Park"}}
+{"qid":"Q219562","kind":"national-park","country":"US","lat":37.64,"lon":-112.17,"tolerance_m":50000,"form":"en-country","input":"Bryce Canyon National Park, United States","components":{"venue":"Bryce Canyon National Park","country":"United States"}}
+{"qid":"Q220289","kind":"national-park","country":"US","lat":36.0553,"lon":-112.122,"tolerance_m":50000,"form":"en","input":"Grand Canyon National Park","components":{"venue":"Grand Canyon National Park"}}
+{"qid":"Q220289","kind":"national-park","country":"US","lat":36.0553,"lon":-112.122,"tolerance_m":50000,"form":"en-country","input":"Grand Canyon National Park, United States","components":{"venue":"Grand Canyon National Park","country":"United States"}}
+{"qid":"Q2211959","kind":"national-park","country":"NP","lat":27.891069,"lon":86.693033,"tolerance_m":50000,"form":"en","input":"Sagarmatha National Park","components":{"venue":"Sagarmatha National Park"}}
+{"qid":"Q223589","kind":"national-park","country":"CD","lat":-0.5,"lon":29.5,"tolerance_m":50000,"form":"en","input":"Virunga National Park","components":{"venue":"Virunga National Park"}}
+{"qid":"Q235878","kind":"national-park","country":"IN","lat":27.166667,"lon":77.516667,"tolerance_m":50000,"form":"en","input":"Kevladev National Park","components":{"venue":"Kevladev National Park"}}
+{"qid":"Q237128","kind":"national-park","country":"US","lat":37.260375,"lon":-108.494444,"tolerance_m":50000,"form":"en","input":"Mesa Verde National Park","components":{"venue":"Mesa Verde National Park"}}
+{"qid":"Q237128","kind":"national-park","country":"US","lat":37.260375,"lon":-108.494444,"tolerance_m":50000,"form":"en-country","input":"Mesa Verde National Park, United States","components":{"venue":"Mesa Verde National Park","country":"United States"}}
+{"qid":"Q274131","kind":"national-park","country":"US","lat":25.3125,"lon":-80.6875,"tolerance_m":50000,"form":"en","input":"Everglades National Park","components":{"venue":"Everglades National Park"}}
+{"qid":"Q274131","kind":"national-park","country":"US","lat":25.3125,"lon":-80.6875,"tolerance_m":50000,"form":"en-country","input":"Everglades National Park, United States","components":{"venue":"Everglades National Park","country":"United States"}}
+{"qid":"Q308893","kind":"national-park","country":"CD","lat":4.19559,"lon":29.48093,"tolerance_m":50000,"form":"en","input":"Garamba National Park","components":{"venue":"Garamba National Park"}}
+{"qid":"Q309276","kind":"national-park","country":"GL","lat":77,"lon":-31,"tolerance_m":50000,"form":"en","input":"Northeast Greenland National Park","components":{"venue":"Northeast Greenland National Park"}}
+{"qid":"Q328488","kind":"national-park","country":"CD","lat":-1.76516,"lon":21.49723,"tolerance_m":50000,"form":"en","input":"Salonga National Park","components":{"venue":"Salonga National Park"}}
+{"qid":"Q351","kind":"national-park","country":"US","lat":44.6,"lon":-110.5,"tolerance_m":50000,"form":"en","input":"Yellowstone National Park","components":{"venue":"Yellowstone National Park"}}
+{"qid":"Q351","kind":"national-park","country":"US","lat":44.6,"lon":-110.5,"tolerance_m":50000,"form":"en-country","input":"Yellowstone National Park, United States","components":{"venue":"Yellowstone National Park","country":"United States"}}
+{"qid":"Q373567","kind":"national-park","country":"US","lat":48.755,"lon":-113.8,"tolerance_m":50000,"form":"en","input":"Glacier National Park","components":{"venue":"Glacier National Park"}}
+{"qid":"Q373567","kind":"national-park","country":"US","lat":48.755,"lon":-113.8,"tolerance_m":50000,"form":"en-country","input":"Glacier National Park, United States","components":{"venue":"Glacier National Park","country":"United States"}}
+{"qid":"Q4111","kind":"national-park","country":"CN","lat":33.2,"lon":103.9,"tolerance_m":50000,"form":"en","input":"Jiuzhaigou Valley","components":{"venue":"Jiuzhaigou Valley"}}
+{"qid":"Q4111","kind":"national-park","country":"CN","lat":33.2,"lon":103.9,"tolerance_m":50000,"form":"local","input":"九寨沟风景名胜区","components":{"venue":"九寨沟风景名胜区"}}
+{"qid":"Q41858","kind":"national-park","country":"CA","lat":51.166666666,"lon":-115.55,"tolerance_m":50000,"form":"en","input":"Banff National Park","components":{"venue":"Banff National Park"}}
+{"qid":"Q41858","kind":"national-park","country":"CA","lat":51.166666666,"lon":-115.55,"tolerance_m":50000,"form":"en-country","input":"Banff National Park, Canada","components":{"venue":"Banff National Park","country":"Canada"}}
+{"qid":"Q501344","kind":"national-park","country":"CI","lat":9.163611111,"lon":-3.7725,"tolerance_m":50000,"form":"en","input":"Comoé National Park","components":{"venue":"Comoé National Park"}}
+{"qid":"Q501344","kind":"national-park","country":"CI","lat":9.163611111,"lon":-3.7725,"tolerance_m":50000,"form":"local","input":"parc national de la Comoé","components":{"venue":"parc national de la Comoé"}}
+{"qid":"Q532440","kind":"national-park","country":"IN","lat":21.75,"lon":88.75,"tolerance_m":50000,"form":"en","input":"Sundarbans National Park","components":{"venue":"Sundarbans National Park"}}
+{"qid":"Q679891","kind":"national-park","country":"SN","lat":13.074166666,"lon":-12.722222222,"tolerance_m":50000,"form":"en","input":"Niokolo-Koba National Park","components":{"venue":"Niokolo-Koba National Park"}}
+{"qid":"Q679891","kind":"national-park","country":"SN","lat":13.074166666,"lon":-12.722222222,"tolerance_m":50000,"form":"local","input":"parc national du Niokolo-Koba","components":{"venue":"parc national du Niokolo-Koba"}}
+{"qid":"Q715124","kind":"national-park","country":"ES","lat":28.276455062,"lon":-16.64266919,"tolerance_m":50000,"form":"en","input":"Teide National Park","components":{"venue":"Teide National Park"}}
+{"qid":"Q715124","kind":"national-park","country":"ES","lat":28.276455062,"lon":-16.64266919,"tolerance_m":50000,"form":"en-country","input":"Teide National Park, Spain","components":{"venue":"Teide National Park","country":"Spain"}}
+{"qid":"Q715124","kind":"national-park","country":"ES","lat":28.276455062,"lon":-16.64266919,"tolerance_m":50000,"form":"local","input":"Parque Nacional del Teide","components":{"venue":"Parque Nacional del Teide"}}
+{"qid":"Q80344","kind":"national-park","country":"GR","lat":40.083333333,"lon":22.35,"tolerance_m":50000,"form":"en","input":"Mount Olympus","components":{"venue":"Mount Olympus"}}
+{"qid":"Q834893","kind":"national-park","country":"MY","lat":6.15,"lon":116.65,"tolerance_m":50000,"form":"en","input":"Kinabalu Park","components":{"venue":"Kinabalu Park"}}
+{"qid":"Q210280","kind":"waterfall","country":"IS","lat":65.821919444,"lon":-16.388169444,"tolerance_m":50000,"form":"en","input":"Dettifoss","components":{"venue":"Dettifoss"}}
+{"qid":"Q214924","kind":"waterfall","country":"CH","lat":47.677222222,"lon":8.615833333,"tolerance_m":50000,"form":"en","input":"Rhine Falls","components":{"venue":"Rhine Falls"}}
+{"qid":"Q214924","kind":"waterfall","country":"CH","lat":47.677222222,"lon":8.615833333,"tolerance_m":50000,"form":"en-country","input":"Rhine Falls, Switzerland","components":{"venue":"Rhine Falls","country":"Switzerland"}}
+{"qid":"Q223649","kind":"waterfall","country":"ZA","lat":-28.7522,"lon":28.8941,"tolerance_m":50000,"form":"en","input":"Tugela Falls","components":{"venue":"Tugela Falls"}}
+{"qid":"Q38417","kind":"waterfall","country":"CD","lat":0.491111111,"lon":25.206388888,"tolerance_m":50000,"form":"en","input":"Boyoma Falls","components":{"venue":"Boyoma Falls"}}
+{"qid":"Q38519","kind":"waterfall","country":"IS","lat":64.327330041,"lon":-20.119399731,"tolerance_m":50000,"form":"en","input":"Gullfoss","components":{"venue":"Gullfoss"}}
+{"qid":"Q672241","kind":"waterfall","country":"IN","lat":14.23,"lon":74.812777777,"tolerance_m":50000,"form":"en","input":"Jog Falls","components":{"venue":"Jog Falls"}}

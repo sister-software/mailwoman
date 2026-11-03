@@ -27,6 +27,7 @@ import { Globerator } from "spliterator/node/fs"
 import { deOrderEval } from "#tools/eval-harness/de/order-eval"
 import { demoCascadeSmoke } from "#tools/eval-harness/demo/cascade/smoke"
 import { externalArenas } from "#tools/eval-harness/external-arenas"
+import { scoreFamousPlaces } from "#tools/eval-harness/famous-places/score"
 import { frParseRecall } from "#tools/eval-harness/fr/parse-recall"
 import { maskRegressionCheck } from "#tools/eval-harness/mask-regression"
 import { perLocaleF1 } from "#tools/eval-harness/per/locale-f1"
@@ -543,6 +544,17 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 			file: "data/eval/external/intersection-real.jsonl",
 			json: `${OUT_DIR}/${tag}-intersection.json`,
 		})
+
+		// The famous-places set is recorded with a sidecar and no floor until a release specification registers one.
+		const famousLines: string[] = []
+
+		await profile.time("famous-places", tag, () =>
+			scoreFamousPlaces({ ...probeOptions, json: `${OUT_DIR}/${tag}-famous-places.json` }, (line) =>
+				famousLines.push(line)
+			)
+		)
+
+		await writeLocalFile(renderLines(famousLines), `${OUT_DIR}/${tag}-famous-places.md`)
 
 		// Watch lenses, recorded but not floored, with no JSON sidecar.
 		await runAffix(`${tag}-watch-intersection-vt.md`, { file: "data/eval/external/intersection-golden-vt.jsonl" })
