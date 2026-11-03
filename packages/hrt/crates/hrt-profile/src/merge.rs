@@ -11,6 +11,10 @@
 //! appearance; features of other geometry types pass through first, in their original order. A merged group keeps the
 //! first feature's attributes and an id ending in 0, and its parts are ordered along a Hilbert curve by first vertex.
 
+use std::collections::hash_map::DefaultHasher;
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+
 use geos::{BufferParams, Geom as _, Geometry, JoinStyle};
 use hrt_e::Value;
 use hrt_render::commands::{encode_geometry, VectorGeometry};
@@ -205,20 +209,47 @@ fn group_by_attributes(
 	passed: &mut Vec<TileFeature>,
 ) -> Vec<Vec<TileFeature>> {
 	let mut groups: Vec<Vec<TileFeature>> = Vec::new();
+	// Groups are found by a hash of their attribute map, so a tile of thousands of distinctly named roads is not compared
+	// against every earlier group. Attribute maps that `same_attributes` calls equal have the same hash.
+	let mut by_hash: HashMap<u64, Vec<usize>> = HashMap::new();
 	for feature in features {
 		if feature.geometry.geom_type != geom_type {
 			passed.push(feature);
 			continue;
 		}
-		match groups
-			.iter_mut()
-			.find(|group| same_attributes(&group[0].attributes, &feature.attributes))
+		let candidates = by_hash.entry(attributes_hash(&feature.attributes)).or_default();
+		match candidates
+			.iter()
+			.copied()
+			.find(|&group| same_attributes(&groups[group][0].attributes, &feature.attributes))
 		{
-			Some(group) => group.push(feature),
-			None => groups.push(vec![feature]),
+			Some(group) => groups[group].push(feature),
+			None => {
+				candidates.push(groups.len());
+				groups.push(vec![feature]);
+			}
 		}
 	}
 	groups
+}
+
+/// A hash of an attribute map that ignores the order of its entries: the wrapping sum of each entry's hash.
+///
+/// Floats hash by the bits of the value plus zero, so 0.0 and -0.0, which compare equal, hash alike.
+fn attributes_hash(attributes: &[(String, Value)]) -> u64 {
+	attributes.iter().fold(0u64, |sum, (key, value)| {
+		let mut hasher = DefaultHasher::new();
+		key.hash(&mut hasher);
+		match value {
+			Value::String(text) => (0u8, text).hash(&mut hasher),
+			Value::Float(number) => (1u8, (number + 0.0).to_bits()).hash(&mut hasher),
+			Value::Double(number) => (2u8, (number + 0.0).to_bits()).hash(&mut hasher),
+			Value::Int(number) => (3u8, number).hash(&mut hasher),
+			Value::UInt(number) => (4u8, number).hash(&mut hasher),
+			Value::Bool(flag) => (5u8, flag).hash(&mut hasher),
+		}
+		sum.wrapping_add(hasher.finish())
+	})
 }
 
 fn with_geometry(feature: &TileFeature, id: i64, geom: &Geom) -> TileFeature {
@@ -459,24 +490,62 @@ fn extract_polygons(geom: &Geom, out: &mut Vec<Polygon>, min_area: f64, min_hole
 	}
 }
 
-fn within_distance(a: &Geom, b: &Geom, distance: f64) -> bool {
-	match (to_geos(a), to_geos(b)) {
-		(Ok(a), Ok(b)) => a.distance(&b).is_ok_and(|d| d <= distance),
+/// Lists, for each polygon, the indexes of the polygons within `distance` of it in ascending order, itself included.
+///
+/// Each polygon is converted to GEOS once. Polygons are swept in order of their boxes' west edges, and GEOS measures
+/// the distance only for pairs whose boxes lie within `distance` of each other, because the distance between two
+/// geometries is at least the gap between their boxes. A polygon without a box, which is empty, is measured against
+/// every polygon. The lists equal those of measuring every pair.
+fn adjacency_within(geometries: &[Geom], distance: f64) -> Vec<Vec<usize>> {
+	let count = geometries.len();
+	let converted: Vec<Option<Geometry>> = geometries.iter().map(|geom| to_geos(geom).ok()).collect();
+	let within = |i: usize, j: usize| match (&converted[i], &converted[j]) {
+		(Some(a), Some(b)) => a.distance(b).is_ok_and(|d| d <= distance),
 		_ => false,
+	};
+	let boxes: Vec<Option<[f64; 4]>> = geometries.iter().map(Geom::envelope).collect();
+	let mut adjacency: Vec<Vec<usize>> = vec![Vec::new(); count];
+
+	let mut sweep: Vec<(usize, [f64; 4])> = boxes
+		.iter()
+		.enumerate()
+		.filter_map(|(index, bounds)| bounds.map(|bounds| (index, bounds)))
+		.collect();
+	sweep.sort_by(|a, b| a.1[0].total_cmp(&b.1[0]));
+	for (position, &(i, [_, min_y, max_x, max_y])) in sweep.iter().enumerate() {
+		for &(j, [other_min_x, other_min_y, _, other_max_y]) in &sweep[position..] {
+			if other_min_x > max_x + distance {
+				break;
+			}
+			if other_min_y > max_y + distance || other_max_y < min_y - distance || !within(i, j) {
+				continue;
+			}
+			adjacency[i].push(j);
+			if i != j {
+				adjacency[j].push(i);
+			}
+		}
 	}
+	for i in (0..count).filter(|&i| boxes[i].is_none()) {
+		for j in 0..count {
+			if within(i, j) {
+				adjacency[i].push(j);
+				if boxes[j].is_some() {
+					adjacency[j].push(i);
+				}
+			}
+		}
+	}
+	for neighbors in &mut adjacency {
+		neighbors.sort_unstable();
+	}
+	adjacency
 }
 
 /// Groups polygons into clusters whose members lie within `min_distance` of another member, in Planetiler's order:
 /// clusters by their lowest index, members in depth-first discovery order.
 fn group_by_proximity(geometries: &[Geom], min_distance: f64) -> Vec<Vec<usize>> {
-	let mut adjacency: Vec<Vec<usize>> = vec![Vec::new(); geometries.len()];
-	for i in 0..geometries.len() {
-		for j in 0..geometries.len() {
-			if within_distance(&geometries[i], &geometries[j], min_distance) {
-				adjacency[i].push(j);
-			}
-		}
-	}
+	let adjacency = adjacency_within(geometries, min_distance);
 	let mut visited = vec![false; geometries.len()];
 	let mut groups = Vec::new();
 	for start in 0..geometries.len() {
@@ -589,6 +658,73 @@ mod tests {
 			decode(&merged[0].geometry),
 			Geom::LineString(vec![[10.0, 10.0], [90.0, 10.0]])
 		);
+	}
+
+	#[test]
+	fn features_group_by_attribute_map_in_order_of_first_appearance_whatever_the_entry_order() {
+		let feature = |id: i64, attributes: &[(&str, Value)]| TileFeature {
+			id,
+			geometry: encode_geometry(&Geom::LineString(vec![[0.0, 0.0], [1.0, 1.0]]), 0),
+			attributes: attributes
+				.iter()
+				.map(|(key, value)| (key.to_string(), value.clone()))
+				.collect(),
+		};
+		let name = |text: &str| Value::String(text.into());
+		let mut passed = Vec::new();
+		let groups = group_by_attributes(
+			vec![
+				feature(1, &[("kind", name("road")), ("name", name("A"))]),
+				feature(2, &[("kind", name("road")), ("name", name("B"))]),
+				feature(3, &[("name", name("A")), ("kind", name("road"))]),
+				feature(4, &[("width", Value::Double(-0.0))]),
+				feature(5, &[("width", Value::Double(0.0))]),
+				feature(6, &[("width", Value::Float(0.0))]),
+			],
+			GeometryType::Line,
+			&mut passed,
+		);
+		let ids: Vec<Vec<i64>> = groups
+			.iter()
+			.map(|group| group.iter().map(|f| f.id).collect())
+			.collect();
+		assert_eq!(ids, vec![vec![1, 3], vec![2], vec![4, 5], vec![6]]);
+		assert!(passed.is_empty());
+	}
+
+	#[test]
+	fn the_box_sweep_finds_the_same_neighbors_as_measuring_every_pair() {
+		// A deterministic scatter of squares and thin bars, some touching, some within the distance, some apart, plus an
+		// empty polygon.
+		let mut geometries = Vec::new();
+		let mut seed: u64 = 7;
+		let mut next = || {
+			seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+			(seed >> 33) as f64 / f64::from(1u32 << 31)
+		};
+		for _ in 0..300 {
+			let (x, y) = (next() * 400.0, next() * 400.0);
+			let (w, h) = (0.5 + next() * 30.0, 0.5 + next() * 4.0);
+			geometries.push(Geom::Polygon(Polygon {
+				shell: vec![[x, y], [x + w, y], [x + w, y + h], [x, y + h], [x, y]],
+				holes: vec![],
+			}));
+		}
+		geometries.push(Geom::MultiPolygon(vec![]));
+		for distance in [0.0, 0.5, 3.0] {
+			let swept = adjacency_within(&geometries, distance);
+			let every_pair: Vec<Vec<usize>> = (0..geometries.len())
+				.map(|i| {
+					(0..geometries.len())
+						.filter(|&j| match (to_geos(&geometries[i]), to_geos(&geometries[j])) {
+							(Ok(a), Ok(b)) => a.distance(&b).is_ok_and(|d| d <= distance),
+							_ => false,
+						})
+						.collect()
+				})
+				.collect();
+			assert_eq!(swept, every_pair, "distance {distance}");
+		}
 	}
 
 	#[test]

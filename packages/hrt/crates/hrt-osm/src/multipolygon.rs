@@ -16,7 +16,7 @@
 use std::collections::HashMap;
 use std::f64::consts::PI;
 
-use geo::{Area, Coord, LineString, MultiPolygon, Polygon, PreparedGeometry, Relate};
+use geo::{Area, BoundingRect, Coord, LineString, MultiPolygon, Polygon, PreparedGeometry, Rect, Relate};
 
 use crate::coords::decode_world;
 use crate::nodes::NodeStore;
@@ -120,6 +120,8 @@ fn append_skip_first(chain: &mut Vec<i64>, tail: &[i64]) {
 struct Ring {
 	polygon: Polygon,
 	area: f64,
+	/// The ring's bounding box. A ring can contain another only when its box contains the other's box.
+	bounds: Option<Rect>,
 	contained_by: Option<usize>,
 	/// The insertion ordinal of this ring in its parent's holes, standing in for Java's per-ring `LinkedHashSet`.
 	hole_ordinal: Option<u64>,
@@ -162,9 +164,11 @@ pub fn build<W: AsRef<[i64]>>(ways: &[W], nodes: &NodeStore) -> Result<MultiPoly
 		if closed {
 			let polygon = Polygon::new(LineString::from(coordinates(&segment, nodes)?), vec![]);
 			let area = polygon.unsigned_area();
+			let bounds = polygon.bounding_rect();
 			rings.push(Ring {
 				polygon,
 				area,
+				bounds,
 				contained_by: None,
 				hole_ordinal: None,
 				shell_ordinal: None,
@@ -208,6 +212,19 @@ pub fn build<W: AsRef<[i64]>>(ways: &[W], nodes: &NodeStore) -> Result<MultiPoly
 	Ok(MultiPolygon(polygons))
 }
 
+/// Whether box `outer` contains box `inner`, edges included. A ring without a box contains no ring.
+fn box_contains(outer: Option<Rect>, inner: Option<Rect>) -> bool {
+	match (outer, inner) {
+		(Some(outer), Some(inner)) => {
+			outer.min().x <= inner.min().x
+				&& outer.min().y <= inner.min().y
+				&& outer.max().x >= inner.max().x
+				&& outer.max().y >= inner.max().y
+		}
+		_ => false,
+	}
+}
+
 fn is_hole(rings: &[Ring], index: usize) -> bool {
 	let mut depth = 0;
 	let mut ring = Some(index);
@@ -232,8 +249,16 @@ fn group_parent_child_shells(rings: &mut [Ring]) {
 
 	for outer in 0..count {
 		if outer < count - 1 {
-			let prepared = PreparedGeometry::from(rings[outer].polygon.clone());
+			// The outer ring is prepared on its first candidate, so a ring whose box holds no other ring's box is never
+			// prepared.
+			let mut prepared: Option<PreparedGeometry> = None;
 			for inner in outer + 1..count {
+				// The box test skips the relate call, which builds a graph of the inner ring, for each pair of rings
+				// that cannot nest. Without it a relation with tens of thousands of rings spends minutes here.
+				if !box_contains(rings[outer].bounds, rings[inner].bounds) {
+					continue;
+				}
+				let prepared = prepared.get_or_insert_with(|| PreparedGeometry::from(rings[outer].polygon.clone()));
 				if !prepared.relate(&rings[inner].polygon).is_contains() {
 					continue;
 				}

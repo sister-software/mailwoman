@@ -444,7 +444,11 @@ pub fn pass2(path: &Path, state: &Pass1, emit: impl Fn(&SourceFeature<'_>) + Syn
 		},
 	)?;
 
-	multipolygons.par_iter().for_each(|relation| {
+	// The relations with the most members start first. A relation's assembly time grows with its ring count, and in file
+	// order the largest ones can land last, running on a few threads while the rest sit idle. The renderer's output
+	// does not depend on this order: the sort orders every record by its key and then its bytes.
+	multipolygons.sort_by_key(|relation| std::cmp::Reverse(relation.members.len()));
+	multipolygons.par_iter().with_max_len(1).for_each(|relation| {
 		let mut added = HashSet::new();
 		let ways: Vec<&[i64]> = relation
 			.members

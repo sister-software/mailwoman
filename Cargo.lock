@@ -1029,6 +1029,7 @@ dependencies = [
  "hrt-render",
  "hrt-sort",
  "regex",
+ "rustc-hash",
  "serde_json",
  "unicode-script",
  "zip 9.1.3",

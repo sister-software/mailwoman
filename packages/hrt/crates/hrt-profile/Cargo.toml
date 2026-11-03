@@ -17,6 +17,7 @@ hrt-osm = { path = "../hrt-osm" }
 hrt-render = { path = "../hrt-render" }
 hrt-sort = { path = "../hrt-sort" }
 regex = "1"
+rustc-hash = "2"
 serde_json = "1"
 unicode-script = "0.5"
 zip = { version = "9", default-features = false, features = ["deflate"] }

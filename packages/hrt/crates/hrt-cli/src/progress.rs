@@ -7,7 +7,11 @@
 //! A build prints one line when each stage starts and, from a background thread, one line per interval while the
 //! stage runs. A line gives the elapsed time, the stage, the stage's count and rate, and during tile encoding the zoom
 //! being written and how far through that zoom's tile ids the encoder is.
+//!
+//! Each thread also records the feature or tile it is working on. The background thread prints a `running` line for
+//! work that has run for [`SLOW`] or longer, and the thread prints a `slow` line with the duration when such work ends.
 
+use std::fmt;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread::JoinHandle;
@@ -17,6 +21,76 @@ use hrt_pmtiles::tile_id_to_zxy;
 
 /// The interval between progress lines while a stage runs.
 const INTERVAL: Duration = Duration::from_secs(30);
+
+/// Work that runs this long or longer is reported while it runs and when it ends.
+const SLOW: Duration = Duration::from_secs(60);
+
+/// The feature or tile one thread is working on.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Work {
+	Node(i64),
+	Way(i64),
+	Relation(i64),
+	/// A feature from a source other than OpenStreetMap, by its id in that source.
+	Other(i64),
+	/// A tile being encoded, by its PMTiles tile id.
+	Tile(u64),
+}
+
+impl Work {
+	fn tag(self) -> u64 {
+		match self {
+			Work::Node(_) => 1,
+			Work::Way(_) => 2,
+			Work::Relation(_) => 3,
+			Work::Other(_) => 4,
+			Work::Tile(_) => 5,
+		}
+	}
+
+	fn bits(self) -> u64 {
+		match self {
+			Work::Node(id) | Work::Way(id) | Work::Relation(id) | Work::Other(id) => id as u64,
+			Work::Tile(id) => id,
+		}
+	}
+
+	fn from_parts(tag: u64, bits: u64) -> Option<Work> {
+		match tag {
+			1 => Some(Work::Node(bits as i64)),
+			2 => Some(Work::Way(bits as i64)),
+			3 => Some(Work::Relation(bits as i64)),
+			4 => Some(Work::Other(bits as i64)),
+			5 => Some(Work::Tile(bits)),
+			_ => None,
+		}
+	}
+}
+
+impl fmt::Display for Work {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match *self {
+			Work::Node(id) => write!(f, "node {id}"),
+			Work::Way(id) => write!(f, "way {id}"),
+			Work::Relation(id) => write!(f, "relation {id}"),
+			Work::Other(id) => write!(f, "source feature {id}"),
+			Work::Tile(id) => {
+				let (z, x, y) = tile_id_to_zxy(id);
+				write!(f, "tile {z}/{x}/{y}")
+			}
+		}
+	}
+}
+
+/// One thread's current work. `tag` is zero while the thread is idle. The fields are written separately, so a reader
+/// can see a mix of two consecutive pieces of work; the lines are diagnostics and tolerate that.
+#[derive(Default)]
+struct Slot {
+	tag: AtomicU64,
+	bits: AtomicU64,
+	/// Milliseconds from the build's start to the work's start.
+	started_ms: AtomicU64,
+}
 
 struct Stage {
 	name: &'static str,
@@ -33,9 +107,34 @@ struct Shared {
 	done: AtomicBool,
 	wake: Condvar,
 	wake_lock: Mutex<()>,
+	/// One slot per rayon thread and a last one shared by every other thread.
+	slots: Vec<Slot>,
 }
 
 impl Shared {
+	fn millis(&self) -> u64 {
+		self.started.elapsed().as_millis() as u64
+	}
+
+	/// Prints a `running` line for each piece of work that has run for [`SLOW`] or longer.
+	fn report_running(&self) {
+		let now = self.millis();
+		for slot in &self.slots {
+			let Some(work) = Work::from_parts(slot.tag.load(Ordering::Acquire), slot.bits.load(Ordering::Relaxed))
+			else {
+				continue;
+			};
+			let running = Duration::from_millis(now.saturating_sub(slot.started_ms.load(Ordering::Relaxed)));
+			if running >= SLOW {
+				eprintln!(
+					"progress {} running: {work} for {}",
+					clock(self.started.elapsed()),
+					clock(running)
+				);
+			}
+		}
+	}
+
 	fn line(&self) -> String {
 		let stage = self.stage.lock().unwrap();
 		let count = self.count.load(Ordering::Relaxed);
@@ -95,6 +194,7 @@ impl Progress {
 			done: AtomicBool::new(false),
 			wake: Condvar::new(),
 			wake_lock: Mutex::new(()),
+			slots: (0..=rayon::current_num_threads()).map(|_| Slot::default()).collect(),
 		});
 		let worker = Arc::clone(&shared);
 		let thread = std::thread::spawn(move || {
@@ -110,6 +210,7 @@ impl Progress {
 					break;
 				}
 				eprintln!("{}", worker.line());
+				worker.report_running();
 			}
 		});
 		Progress {
@@ -159,6 +260,55 @@ impl Progress {
 	/// Records the tile id the encoder last wrote.
 	pub fn tile(&self, id: u64) {
 		self.shared.tile.store(id + 1, Ordering::Relaxed);
+	}
+
+	/// Records that this thread is working on `work` until the returned guard drops.
+	///
+	/// The work is reported while it runs once it has run for [`SLOW`], and its duration is printed when it ends.
+	pub fn working(&self, work: Work) -> Working<'_> {
+		let slots = &self.shared.slots;
+		let index = rayon::current_thread_index().map_or(slots.len() - 1, |index| index.min(slots.len() - 1));
+		let slot = &slots[index];
+		let started = Instant::now();
+		slot.bits.store(work.bits(), Ordering::Relaxed);
+		slot.started_ms.store(self.shared.millis(), Ordering::Relaxed);
+		slot.tag.store(work.tag(), Ordering::Release);
+		Working {
+			shared: &self.shared,
+			slot,
+			work,
+			started,
+		}
+	}
+}
+
+/// A thread's record of its current work, cleared when dropped.
+pub struct Working<'a> {
+	shared: &'a Shared,
+	slot: &'a Slot,
+	work: Work,
+	started: Instant,
+}
+
+impl Working<'_> {
+	/// The time since the work started.
+	pub fn elapsed(&self) -> Duration {
+		self.started.elapsed()
+	}
+}
+
+impl Drop for Working<'_> {
+	fn drop(&mut self) {
+		self.slot.tag.store(0, Ordering::Release);
+		let took = self.started.elapsed();
+		if took >= SLOW {
+			eprintln!(
+				"progress {} slow: {} took {}",
+				clock(self.shared.started.elapsed()),
+				self.work,
+				clock(took)
+			);
+		}
 	}
 }
 

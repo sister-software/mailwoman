@@ -198,9 +198,12 @@ impl Profile for BasemapProfile {
 			buildings::LAYER_NAME => buildings::post_process(zoom, features, &mut counts),
 			_ => features,
 		};
-		let mut total = self.merge_counts.lock().unwrap();
-		total.reduced += counts.reduced;
-		total.fix_input += counts.fix_input;
+		// Most calls add nothing, and skipping the lock for them keeps the encoding threads from queuing on it.
+		if counts.reduced + counts.fix_input > 0 {
+			let mut total = self.merge_counts.lock().unwrap();
+			total.reduced += counts.reduced;
+			total.fix_input += counts.fix_input;
+		}
 		out
 	}
 

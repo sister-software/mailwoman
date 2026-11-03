@@ -5,10 +5,13 @@
 //! The build pipeline: OpenStreetMap features through a profile, the renderer, the sort, and the tile encoder into a
 //! PMTiles archive.
 
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{self, BufWriter, Write};
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{mpsc, Mutex};
+use std::time::{Duration, Instant};
 
 use flate2::write::GzEncoder;
 use hrt_e::{encode_tile, LayerBuilder, Value, DEFAULT_EXTENT};
@@ -22,7 +25,88 @@ use hrt_sort::key::{layer_of, tile_of};
 use hrt_sort::{encode_key, FeatureRecord, Sorter, Tiles};
 use rayon::prelude::*;
 
-use crate::progress::Progress;
+use crate::progress::{Progress, Work};
+
+/// The number of zooms [`ZoomTimes`] keeps, 0 to 15.
+const ZOOMS: usize = 16;
+
+/// The most layers [`ZoomTimes`] keeps per zoom. The basemap profile has thirteen.
+const MAX_LAYERS: usize = 32;
+
+/// A tile with more records than this post-processes its layers on several threads.
+const PARALLEL_LAYER_RECORDS: usize = 20_000;
+
+/// Thread time spent encoding each zoom's tiles: in total, per layer in post-processing, and in the slowest tile.
+struct ZoomTimes {
+	tiles: [AtomicU64; ZOOMS],
+	total_nanos: [AtomicU64; ZOOMS],
+	layer_nanos: Vec<[AtomicU64; MAX_LAYERS]>,
+	slowest: Vec<Mutex<(u64, u64)>>,
+	slowest_nanos: [AtomicU64; ZOOMS],
+}
+
+impl ZoomTimes {
+	fn new() -> ZoomTimes {
+		ZoomTimes {
+			tiles: Default::default(),
+			total_nanos: Default::default(),
+			layer_nanos: (0..ZOOMS).map(|_| Default::default()).collect(),
+			slowest: (0..ZOOMS).map(|_| Mutex::new((0, 0))).collect(),
+			slowest_nanos: Default::default(),
+		}
+	}
+
+	fn add_layer(&self, zoom: u8, layer: usize, took: Duration) {
+		if let (Some(row), true) = (self.layer_nanos.get(usize::from(zoom)), layer < MAX_LAYERS) {
+			row[layer].fetch_add(took.as_nanos() as u64, Ordering::Relaxed);
+		}
+	}
+
+	fn add_tile(&self, tile_id: u64, took: Duration) {
+		let zoom = usize::from(hrt_pmtiles::tile_id_to_zxy(tile_id).0);
+		if zoom >= ZOOMS {
+			return;
+		}
+		let nanos = took.as_nanos() as u64;
+		self.tiles[zoom].fetch_add(1, Ordering::Relaxed);
+		self.total_nanos[zoom].fetch_add(nanos, Ordering::Relaxed);
+		if nanos > self.slowest_nanos[zoom].load(Ordering::Relaxed) {
+			let mut slowest = self.slowest[zoom].lock().unwrap();
+			if nanos > slowest.1 {
+				*slowest = (tile_id, nanos);
+				self.slowest_nanos[zoom].store(nanos, Ordering::Relaxed);
+			}
+		}
+	}
+
+	/// A line giving zoom `zoom`'s tiles, thread time by layer with the largest first, and its slowest tile.
+	fn summary(&self, zoom: u8, layer_names: &[&str], wall: Duration) -> String {
+		let z = usize::from(zoom);
+		let seconds = |nanos: u64| nanos as f64 / 1e9;
+		let mut layers: Vec<(&str, u64)> = layer_names
+			.iter()
+			.enumerate()
+			.take(MAX_LAYERS)
+			.map(|(index, name)| (*name, self.layer_nanos[z][index].load(Ordering::Relaxed)))
+			.filter(|(_, nanos)| *nanos > 0)
+			.collect();
+		layers.sort_by_key(|(_, nanos)| std::cmp::Reverse(*nanos));
+		let layers: Vec<String> = layers
+			.iter()
+			.map(|(name, nanos)| format!("{name} {:.0} s", seconds(*nanos)))
+			.collect();
+		let (slowest_id, slowest_nanos) = *self.slowest[z].lock().unwrap();
+		let (_, x, y) = hrt_pmtiles::tile_id_to_zxy(slowest_id);
+		format!(
+			"z{zoom} written: {} tiles in {:.0} s; encode thread time {:.0} s; post-processing by layer: {}; slowest tile {zoom}/{x}/{y} {:.1} s",
+			self.tiles[z].load(Ordering::Relaxed),
+			wall.as_secs_f64(),
+			seconds(self.total_nanos[z].load(Ordering::Relaxed)),
+			if layers.is_empty() { "none".to_owned() } else { layers.join(", ") },
+			seconds(slowest_nanos),
+		)
+	}
+}
 
 /// Counts from a build.
 #[derive(Debug, Default)]
@@ -45,8 +129,9 @@ fn type_code(geom_type: GeometryType) -> u64 {
 /// Encodes one tile's sorted records, layers in name order, or `None` when the tile has no layer lists.
 ///
 /// Each layer's features go through the profile's post-processing first, at the precision they were rendered with,
-/// and lines are reduced to the tile extent afterwards, as in Planetiler's `FeatureGroup`.
-fn encode(entries: &[(u64, Vec<u8>)], profile: &impl Profile) -> io::Result<Option<Vec<u8>>> {
+/// and lines are reduced to the tile extent afterwards, as in Planetiler's `FeatureGroup`. A tile with more than
+/// [`PARALLEL_LAYER_RECORDS`] records post-processes its layers on several threads; the layers keep their order.
+fn encode(entries: &[(u64, Vec<u8>)], profile: &impl Profile, times: &ZoomTimes) -> io::Result<Option<Vec<u8>>> {
 	let Some(&(first_key, _)) = entries.first() else {
 		return Ok(None);
 	};
@@ -70,9 +155,22 @@ fn encode(entries: &[(u64, Vec<u8>)], profile: &impl Profile) -> io::Result<Opti
 	by_layer.sort_by(|a, b| a.0.cmp(b.0));
 	let by_layer = profile.post_process_tile(zoom, tile_x, tile_y, by_layer);
 
-	let mut layers = Vec::with_capacity(by_layer.len());
-	for (name, features) in by_layer {
+	let post_process = |(name, features): (&'static str, Vec<TileFeature>)| {
+		let started = Instant::now();
 		let processed = profile.post_process(name, zoom, features);
+		if let Some(index) = layer_names.iter().position(|layer| *layer == name) {
+			times.add_layer(zoom, index, started.elapsed());
+		}
+		(name, processed)
+	};
+	let by_layer: Vec<(&str, Vec<TileFeature>)> = if entries.len() > PARALLEL_LAYER_RECORDS {
+		by_layer.into_par_iter().map(post_process).collect()
+	} else {
+		by_layer.into_iter().map(post_process).collect()
+	};
+
+	let mut layers = Vec::with_capacity(by_layer.len());
+	for (name, processed) in by_layer {
 		// Planetiler adds a layer only when post-processing left it a feature, and skips a tile left with no layers.
 		if processed.is_empty() {
 			continue;
@@ -278,6 +376,12 @@ pub fn build(
 
 	progress.stage("pass 2: OSM features", "features");
 	pass2(input, &state, |source| {
+		let _working = progress.working(match source.kind {
+			hrt_osm::ElementKind::Node => Work::Node(source.id),
+			hrt_osm::ElementKind::Way => Work::Way(source.id),
+			hrt_osm::ElementKind::Relation => Work::Relation(source.id),
+			hrt_osm::ElementKind::Other => Work::Other(source.id),
+		});
 		emitter.emit(&profile.process(source));
 		progress.tick();
 	})?;
@@ -306,31 +410,70 @@ pub fn build(
 		options.bounds = bounds;
 	}
 	let mut archive = Writer::new(options, tempfile::tempfile_in(scratch)?);
-	// Tiles encode independently, so each batch from the merge is encoded and compressed on rayon's threads and then
-	// written in tile order, which the archive writer requires.
-	let batch_size = threads * 64;
+	// Tiles encode independently. This thread reads tiles from the merge and hands each to rayon's threads, keeping up
+	// to `window` tiles between the merge and the archive, and writes the encoded tiles in tile order, which the archive
+	// writer requires. A slow tile holds back only the writing; the other threads go on encoding the tiles after it.
+	let window = (threads * 1024) as u64;
+	let times = ZoomTimes::new();
+	let layer_names = profile.layers();
 	progress.stage("merge and encode", "tiles");
 	let mut tiles = Tiles::new(sorter.merge()?);
-	loop {
-		let batch = tiles.by_ref().take(batch_size).collect::<io::Result<Vec<_>>>()?;
-		if batch.is_empty() {
-			break;
-		}
-		let bodies = batch
-			.par_iter()
-			.map(|tile| encode(&tile.entries, profile)?.map(|bytes| gzip(&bytes)).transpose())
-			.collect::<io::Result<Vec<_>>>()?;
-		for (tile, body) in batch.iter().zip(bodies) {
-			if let Some(body) = body {
-				archive.add_tile(tile.tile_id, &body)?;
-				report.tiles += 1;
+	// A tile id and its gzipped body, or `None` for a tile left with no layers.
+	type Encoded = (u64, io::Result<Option<Vec<u8>>>);
+	let (sender, receiver) = mpsc::channel::<(u64, Encoded)>();
+	rayon::in_place_scope(|scope| -> io::Result<()> {
+		let mut pending: BTreeMap<u64, Encoded> = BTreeMap::new();
+		let (mut handed_out, mut written) = (0u64, 0u64);
+		let mut exhausted = false;
+		let mut zoom: Option<(u8, Instant)> = None;
+		loop {
+			while !exhausted && handed_out - written < window {
+				let Some(tile) = tiles.next() else {
+					exhausted = true;
+					break;
+				};
+				let tile = tile?;
+				let (sequence, sender, times, progress) = (handed_out, sender.clone(), &times, &progress);
+				handed_out += 1;
+				scope.spawn(move |_| {
+					let working = progress.working(Work::Tile(tile.tile_id));
+					let body =
+						encode(&tile.entries, profile, times).and_then(|bytes| bytes.map(|b| gzip(&b)).transpose());
+					times.add_tile(tile.tile_id, working.elapsed());
+					drop(working);
+					// The receiver is gone only after an earlier tile failed, and that error is the one reported.
+					let _ = sender.send((sequence, (tile.tile_id, body)));
+				});
+			}
+			if written == handed_out {
+				break;
+			}
+			let (sequence, encoded) = receiver.recv().map_err(io::Error::other)?;
+			pending.insert(sequence, encoded);
+			while let Some((tile_id, body)) = pending.remove(&written) {
+				let tile_zoom = hrt_pmtiles::tile_id_to_zxy(tile_id).0;
+				match zoom {
+					Some((current, _)) if current == tile_zoom => {}
+					Some((current, started)) => {
+						eprintln!("progress {}", times.summary(current, layer_names, started.elapsed()));
+						zoom = Some((tile_zoom, Instant::now()));
+					}
+					None => zoom = Some((tile_zoom, Instant::now())),
+				}
+				if let Some(body) = body? {
+					archive.add_tile(tile_id, &body)?;
+					report.tiles += 1;
+				}
+				written += 1;
+				progress.add(1);
+				progress.tile(tile_id);
 			}
 		}
-		progress.add(batch.len() as u64);
-		if let Some(last) = batch.last() {
-			progress.tile(last.tile_id);
+		if let Some((current, started)) = zoom {
+			eprintln!("progress {}", times.summary(current, layer_names, started.elapsed()));
 		}
-	}
+		Ok(())
+	})?;
 	progress.stage("write archive", "");
 	let mut out = BufWriter::new(File::create(output)?);
 	report.archive = Some(archive.finish(profile.metadata().as_bytes(), &mut out)?);

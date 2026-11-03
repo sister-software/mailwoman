@@ -574,52 +574,80 @@ pub fn process_osm(
 	process_non_highways(input, layer, features, config);
 }
 
-fn tag_is(feature: &TileFeature, key: &str, value: &str) -> bool {
-	feature
-		.attributes
-		.iter()
-		.any(|(k, v)| k == key && *v == Attr::String(value.to_owned()))
-}
+/// The main road and link classes the fork's `LinkSimplify` runs on below zoom 12, in the fork's order.
+const LINK_PAIRS: [(&str, &str); 4] = [
+	("motorway", "motorway_link"),
+	("trunk", "trunk_link"),
+	("primary", "primary_link"),
+	("secondary", "secondary_link"),
+];
 
-/// The fork's `LinkSimplify`: a link line is kept only when each end touches the main road's vertices or another link's
-/// end.
-fn link_simplify(features: Vec<TileFeature>, key: &str, main: &str, link: &str) -> Vec<TileFeature> {
-	use std::collections::HashMap;
-	let coordinates = |feature: &TileFeature| -> Vec<[f64; 2]> {
-		let mut out = Vec::new();
-		collect_coordinates(&decode(&feature.geometry), &mut out);
-		out
-	};
-	let bits = |[x, y]: [f64; 2]| ((x + 0.0).to_bits(), (y + 0.0).to_bits());
-	let mut degrees: HashMap<(u64, u64), u32> = HashMap::new();
-	for feature in &features {
+/// The fork's `LinkSimplify`, once for each `(main, link)` pair: a link line is kept only when each end touches the
+/// main road's vertices or another link's end.
+///
+/// Each pair counts and drops only lines of its own two classes, so running the pairs one after another and running
+/// them in one pass keep the same lines. The pass decodes each main or link line once.
+fn link_simplify(features: Vec<TileFeature>, key: &str, pairs: &[(&str, &str)]) -> Vec<TileFeature> {
+	// The vertex counts hash with FxHash. A low-zoom tile can hold millions of main-road vertices, and SipHash, the
+	// standard map's hasher, takes several times longer per key.
+	use rustc_hash::FxHashMap as HashMap;
+	// The pair a line belongs to and whether it is that pair's link.
+	let role = |feature: &TileFeature| -> Option<(usize, bool)> {
 		if feature.geometry.geom_type != hrt_render::GeometryType::Line {
-			continue;
+			return None;
 		}
-		if tag_is(feature, key, link) {
-			let coords = coordinates(feature);
-			if let (Some(&first), Some(&last)) = (coords.first(), coords.last()) {
-				*degrees.entry(bits(first)).or_default() += 1;
-				*degrees.entry(bits(last)).or_default() += 1;
+		feature.attributes.iter().find_map(|(k, v)| match v {
+			Attr::String(value) if k == key => pairs.iter().enumerate().find_map(|(index, (main, link))| {
+				if value == link {
+					Some((index, true))
+				} else if value == main {
+					Some((index, false))
+				} else {
+					None
+				}
+			}),
+			_ => None,
+		})
+	};
+	let bits = |pair: usize, [x, y]: [f64; 2]| (pair, (x + 0.0).to_bits(), (y + 0.0).to_bits());
+	let mut degrees: HashMap<(usize, u64, u64), u32> = HashMap::default();
+	// A link's pair and its first and last points, which are absent for a link without points.
+	type LinkEnds = (usize, Option<([f64; 2], [f64; 2])>);
+	// Each feature's link ends, or `None` for a feature that is not a link.
+	let mut link_ends: Vec<Option<LinkEnds>> = Vec::with_capacity(features.len());
+	let mut coords = Vec::new();
+	for feature in &features {
+		let Some((pair, is_link)) = role(feature) else {
+			link_ends.push(None);
+			continue;
+		};
+		coords.clear();
+		collect_coordinates(&decode(&feature.geometry), &mut coords);
+		if is_link {
+			let ends = coords.first().zip(coords.last()).map(|(&first, &last)| (first, last));
+			if let Some((first, last)) = ends {
+				*degrees.entry(bits(pair, first)).or_default() += 1;
+				*degrees.entry(bits(pair, last)).or_default() += 1;
 			}
-		} else if tag_is(feature, key, main) {
-			for point in coordinates(feature) {
-				*degrees.entry(bits(point)).or_default() += 1;
+			link_ends.push(Some((pair, ends)));
+		} else {
+			for &point in &coords {
+				*degrees.entry(bits(pair, point)).or_default() += 1;
 			}
+			link_ends.push(None);
 		}
 	}
 	features
 		.into_iter()
-		.filter(|feature| {
-			if feature.geometry.geom_type != hrt_render::GeometryType::Line || !tag_is(feature, key, link) {
-				return true;
+		.zip(link_ends)
+		.filter(|(_, ends)| match ends {
+			None => true,
+			Some((pair, Some((first, last)))) => {
+				degrees[&bits(*pair, *first)] >= 2 && degrees[&bits(*pair, *last)] >= 2
 			}
-			let coords = coordinates(feature);
-			match (coords.first(), coords.last()) {
-				(Some(&first), Some(&last)) => degrees[&bits(first)] >= 2 && degrees[&bits(last)] >= 2,
-				_ => false,
-			}
+			Some((_, None)) => false,
 		})
+		.map(|(feature, _)| feature)
 		.collect()
 }
 
@@ -644,10 +672,7 @@ fn collect_coordinates(geom: &Geom, out: &mut Vec<[f64; 2]>) {
 /// is removed, and lines with equal attributes are merged.
 pub fn post_process(zoom: u8, mut features: Vec<TileFeature>, _counts: &mut SnapCounts) -> Vec<TileFeature> {
 	if zoom < 12 {
-		features = link_simplify(features, "pm:highway", "motorway", "motorway_link");
-		features = link_simplify(features, "pm:highway", "trunk", "trunk_link");
-		features = link_simplify(features, "pm:highway", "primary", "primary_link");
-		features = link_simplify(features, "pm:highway", "secondary", "secondary_link");
+		features = link_simplify(features, "pm:highway", &LINK_PAIRS);
 	}
 	for feature in &mut features {
 		feature.attributes.retain(|(key, _)| key != "pm:highway");
