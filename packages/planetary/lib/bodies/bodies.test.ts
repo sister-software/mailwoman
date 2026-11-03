@@ -13,7 +13,7 @@ test.each([...PLANETARY_BODIES])("%s: the config names its own body, host, tiles
 	const config = BODY_CONFIGS[body]
 
 	expect(config.body).toBe(body)
-	expect(config.hostname).toBe(`${body}.mailwoman.ai`)
+	expect(config.hostname).toBe(`${body}.mailwoman.post`)
 	expect(config.tiles.nomenclature).toMatch(new RegExp(`/${body}\\.json$`, "u"))
 	// `-terrain`, not `-hillshade`: the archive stores terrarium-encoded elevation
 	// rather than a shaded picture.

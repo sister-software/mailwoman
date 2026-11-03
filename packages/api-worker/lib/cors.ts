@@ -23,11 +23,11 @@ export const MAILWOMAN_SITE_ORIGINS: ReadonlySet<string> = new Set([
 	"https://mars.mailwoman.post",
 	"https://mailwoman.sister.software",
 	"https://sister.software",
-	"https://dev.mailwoman.ai",
-	"https://dev.mailwoman.ai:7777",
-	"https://dev.mailwoman.ai:8888",
-	"http://dev.mailwoman.ai:7777",
-	"http://dev.mailwoman.ai:8888",
+	"https://dev.mailwoman.post",
+	"https://dev.mailwoman.post:7777",
+	"https://dev.mailwoman.post:8888",
+	"http://dev.mailwoman.post:7777",
+	"http://dev.mailwoman.post:8888",
 ])
 
 /**
