@@ -138,7 +138,7 @@ const unknownKey = verifyLicenseKey(token, { trustedKeys: {}, now: new Date("202
 const invalid = verifyLicenseKey("mwl1.not.real", { trustedKeys })
 
 describe("licensePageURL", () => {
-	it("defaults to mailwoman.ai and strips a trailing slash", () => {
+	it("defaults to mailwoman.post and strips a trailing slash", () => {
 		expect(licensePageURL()).toBe("https://mailwoman.post/license")
 		expect(licensePageURL("http://localhost:3000/")).toBe("http://localhost:3000/license")
 	})
@@ -1505,7 +1505,7 @@ mailwoman doctor
 ````
 
 `license verify` reports `valid`, `expired`, `unknown_key` or `invalid`, and with `--online` also whether
-mailwoman.ai still lists the key id as active. `doctor` reports the branch that applies and the
+mailwoman.post still lists the key id as active. `doctor` reports the branch that applies and the
 obligations that branch imposes. With a valid key the notice is silent and `engine.license` reads
 `LicenseRef-Commercial`.
 

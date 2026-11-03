@@ -19,7 +19,7 @@ Addresses can be personal data when they are linked to a person. Mailwoman's dep
 
 ## The surfaces we operate
 
-- **This website** (mailwoman.ai) is a static site. It sets no tracking cookies and runs no analytics.
+- **This website** (mailwoman.post) is a static site. It sets no tracking cookies and runs no analytics.
 - **The browser demo** downloads model and data artifacts from our content delivery infrastructure and then runs locally. Demo queries are processed in your browser and are not sent to us.
 - **The public trial endpoint** (photon.mailwoman.post) is provided for evaluation. Like any web server, it keeps short-lived operational access logs (IP address, request path, timestamp) for rate limiting and abuse prevention. These logs are not used for analytics, profiling, or any other purpose. They are not shared, and they are routinely discarded. The endpoint has no accounts and sets no cookies.
 

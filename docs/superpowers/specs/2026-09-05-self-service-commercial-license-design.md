@@ -83,8 +83,8 @@ These items are operator work. The first sale waits on them, and the implementat
 
 ```mermaid
 flowchart LR
-  Page[mailwoman.ai /license] -->|Payment Link| Checkout[Stripe Checkout]
-  Checkout -->|success URL| Issued[mailwoman.ai /license/issued]
+  Page[mailwoman.post /license] -->|Payment Link| Checkout[Stripe Checkout]
+  Checkout -->|success URL| Issued[mailwoman.post /license/issued]
   Stripe[Stripe] -->|signed webhooks| Worker[license.mailwoman.post]
   Worker --> D1[(D1)]
   Worker -->|encodeLicenseKey| Key[@mailwoman/core/license/key]
@@ -99,7 +99,7 @@ Three places, each with one job:
 
 | Place                                                                    | Job                                                                                                                                     |
 | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/` (GitHub Pages, `mailwoman.ai`)                                   | the `/license` page with both Payment Links and the portal link, the `/license/issued` success page, and the static well-known register |
+| `docs/` (GitHub Pages, `mailwoman.post`)                                 | the `/license` page with both Payment Links and the portal link, the `/license/issued` success page, and the static well-known register |
 | `packages/license-worker/` (Cloudflare Worker, `license.mailwoman.post`) | webhook verification, fulfillment, D1 ledger, signing, claim, refresh, status, email                                                    |
 | `@mailwoman/core/license/key`, `/register` (subpath exports)             | the key format: payload schema, `encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID`, on WebCrypto, and the typed key register        |
 

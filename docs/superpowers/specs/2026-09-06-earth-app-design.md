@@ -14,7 +14,7 @@ aliases before this app can consume them).
 
 ## The problem
 
-The geocoder map at `mailwoman.ai/demo` is a browser application that happens to be a Docusaurus page. The
+The geocoder map at `mailwoman.post/demo` is a browser application that happens to be a Docusaurus page. The
 page and its runtime are 3,976 lines under `docs/src/pages/demo/` and `docs/src/shared/`, and they own the
 model loader, the httpvfs resolvers, the range-cache service worker, the version-pin constants that
 `mailwoman gazetteer publish` tells the operator to bump, and the runtime assembly in `_runtime.ts` (701

@@ -53,7 +53,7 @@ const declaredToken = await encodeLicenseKey(declaredPayload, pair.privateKeyPEM
 const validDeclared = await verifyLicenseKey(declaredToken, { trustedKeys, now: new Date("2027-01-01T00:00:00Z") })
 
 describe("licensePageURL", () => {
-	it("defaults to mailwoman.ai and strips a trailing slash", () => {
+	it("defaults to mailwoman.post and strips a trailing slash", () => {
 		expect(licensePageURL()).toBe("https://mailwoman.post/license")
 		expect(licensePageURL("http://localhost:3000/")).toBe("http://localhost:3000/license")
 	})

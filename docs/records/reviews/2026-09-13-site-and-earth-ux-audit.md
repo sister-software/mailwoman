@@ -1,6 +1,6 @@
 # Site + Earth UX audit — 2026-09-13
 
-Scope: `mailwoman.ai` (Docusaurus docs site) and `earth.mailwoman.post` (geocoder demo), walked live in
+Scope: `mailwoman.post` (Docusaurus docs site) and `earth.mailwoman.post` (geocoder demo), walked live in
 Chrome plus a source sweep of `docs/` and `packages/earth` + `packages/react`. Ordered by severity.
 Every claim states the file:line or the live observation it came from.
 
@@ -279,7 +279,7 @@ where the rest of this genre already lives.
 
 ## P1 — the font pop-in
 
-Measured on a cold load of `mailwoman.ai`: the six WOFF2 files all start at **~1570 ms**, and the document
+Measured on a cold load of `mailwoman.post`: the six WOFF2 files all start at **~1570 ms**, and the document
 has **zero `<link rel="preload">` for fonts** (only `mailwoman-seal-magenta.svg`). The chain is
 HTML → `styles.*.css` → parse → discover `@font-face` → cross-origin fetch to `public.mailwoman.post`. With
 `font-display: swap` on every face (`docs/src/css/fonts/BlissPro.css`, `FiraCode.css`), every visitor

@@ -622,7 +622,7 @@ test("verify --online reports the lid status beside the publication", async () =
 })
 ```
 
-Write the third test in full following the second's shape (the stub gains `worker.post("/v1/license-status", (c) => c.json({ status: "revoked" }))`, the CLI is invoked with `["verify", "--key", token, "--online", "--json"]`, and the test asserts `lid_status: "revoked"` in the JSON and exit code 1). The `--online` publication check hits the real mailwoman.ai unless `MAILWOMAN_DOCS_URL` points at the stub. Set `MAILWOMAN_DOCS_URL` to the stub too and serve `/.well-known/mailwoman/license-keys.json` with `{ keys: [] }` so the publication reads `unlisted` deterministically.
+Write the third test in full following the second's shape (the stub gains `worker.post("/v1/license-status", (c) => c.json({ status: "revoked" }))`, the CLI is invoked with `["verify", "--key", token, "--online", "--json"]`, and the test asserts `lid_status: "revoked"` in the JSON and exit code 1). The `--online` publication check hits the real mailwoman.post unless `MAILWOMAN_DOCS_URL` points at the stub. Set `MAILWOMAN_DOCS_URL` to the stub too and serve `/.well-known/mailwoman/license-keys.json` with `{ keys: [] }` so the publication reads `unlisted` deterministically.
 
 Add `pathExists` (`@mailwoman/core/fs/readers`), `writePrivateTextFile` (`@mailwoman/core/fs/writers`), `resolvePath` (`path-ts`) to the test's imports. `hono` and `@mailwoman/api-kit` are already dependencies of `mailwoman`. Confirm both in `packages/mailwoman/package.json` before importing, and add either to `devDependencies` only if it is absent.
 

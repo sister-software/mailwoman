@@ -135,7 +135,7 @@ npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand
 ```
 
 OpenAPI 3.1 specifications for all three ship in each package and at
-[mailwoman.ai/openapi](https://mailwoman.post/openapi/photon.yaml).
+[mailwoman.post/openapi](https://mailwoman.post/openapi/photon.yaml).
 
 ## How it works
 

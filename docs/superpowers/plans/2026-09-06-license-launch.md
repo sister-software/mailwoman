@@ -135,7 +135,7 @@ every event itself. No event was replayed or signed by hand.
 | `mwops shop provision --mode test --apply --worker-origin …`                       | every object `exists`, webhook `we_1UCeYaANyI6tE9BzxHOYBzva` created, its secret stored with `wrangler secret put` and scrubbed from the report                                                                          |
 | Issuance on, redeploy                                                              | `/health` reads `"issuance":true`                                                                                                                                                                                        |
 | Monthly Payment Link paid, claim read ten seconds after the redirect               | `issued`, `lic_sPBnGqLDGKzPkdejQ0vhvg`, `expires 2026-10-20`, `refresh_secret` once, the second claim includes no secret, `Access-Control-Allow-Origin: https://mailwoman.post`                                          |
-| `license verify --key … --online` on the shipped register and the sandbox          | `unknown_key`; `mailwoman.ai: unlisted` from the live register; `license lic_…: active` from the sandbox                                                                                                                 |
+| `license verify --key … --online` on the shipped register and the sandbox          | `unknown_key`; `mailwoman.post: unlisted` from the live register; `license lic_…: active` from the sandbox                                                                                                               |
 | `license refresh --lid … --secret …`                                               | `Not written: this release does not trust key id v9-ac522cf3`, exit 1, and no key file written                                                                                                                           |
 | Wrong secret on the refresh route, then the status route                           | 404; `{"status":"active"}`                                                                                                                                                                                               |
 | `mwops shop rehearse`, paid, then `mwops shop rehearse-renewal --worker-origin …`  | first `expires 2026-10-20`, clock advanced to 2026-10-08, renewed `issued 2026-10-06, expires 2026-11-20`; `periodEnd 2026-11-06`, `agrees: true`                                                                        |
@@ -170,7 +170,7 @@ owns that setting, so Task 7 confirms it does not refuse the CLI.
 
 ### Task 6 (operator): the email account
 
-- [ ] A Resend account with `licenses@mailwoman.ai` as a verified sender. Its key is `EMAIL_API_KEY` in both environments.
+- [ ] A Resend account with `licenses@mailwoman.post` as a verified sender. Its key is `EMAIL_API_KEY` in both environments.
 
 ### Task 7: production
 

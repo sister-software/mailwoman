@@ -579,11 +579,11 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 	if (commercial && key.status === "valid") {
 		const freshness =
 			o.publication === "listed"
-				? "key id confirmed by mailwoman.ai"
+				? "key id confirmed by mailwoman.post"
 				: o.publication === "unreachable"
-					? "mailwoman.ai unreachable, offline verification only"
+					? "mailwoman.post unreachable, offline verification only"
 					: o.publication === "unpublished"
-						? "mailwoman.ai answers without a key register, offline verification only"
+						? "mailwoman.post answers without a key register, offline verification only"
 						: "verified offline"
 
 		const expiry = key.payload.expires ? `expires ${key.payload.expires}` : "no expiry"
@@ -619,7 +619,7 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 
 	const reason =
 		key.status === "valid"
-			? `key id ${key.kid} is no longer listed as active at mailwoman.ai, so it is treated as retired`
+			? `key id ${key.kid} is no longer listed as active at mailwoman.post, so it is treated as retired`
 			: key.status === "expired"
 				? `license key for ${key.payload.licensee} expired on ${key.payload.expires}`
 				: key.reason

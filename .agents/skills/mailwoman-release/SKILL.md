@@ -305,7 +305,7 @@ time, and let the operator decide. Keep polling the status endpoint every ten mi
 
 ## Step 5 — the demo is SEPARATE (do not conflate with the npm ship)
 
-The npm publish leaves the browser demo (mailwoman.ai/demo) on the old model.
+The npm publish leaves the browser demo (mailwoman.post/demo) on the old model.
 `mailwoman release hf` without `--set-default` leaves HF `releases.json` `defaultVersion`
 unchanged. To repoint the demo: set HF default (`--set-default` or patch `releases.json`), upload the
 model to R2 (`public.mailwoman.post/mailwoman/en-us/v<target>/`), and bump the demo version constant

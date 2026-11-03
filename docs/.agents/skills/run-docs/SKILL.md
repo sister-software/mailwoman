@@ -1,6 +1,6 @@
 ---
 name: run-docs
-description: Run, build, smoke-test, and screenshot the @mailwoman/docs Docusaurus site (the marketing + docs + /demo app published to mailwoman.ai). Use this skill when asked to "run the docs," "start docusaurus," "screenshot a docs page," "verify a doc change," "test the /demo page," or to validate any change inside docs/.
+description: Run, build, smoke-test, and screenshot the @mailwoman/docs Docusaurus site (the marketing + docs + /demo app published to mailwoman.post). Use this skill when asked to "run the docs," "start docusaurus," "screenshot a docs page," "verify a doc change," "test the /demo page," or to validate any change inside docs/.
 ---
 
 Paths below are relative to `docs/` (the workspace root). The skill directory is `docs/.claude/skills/run-docs/`.

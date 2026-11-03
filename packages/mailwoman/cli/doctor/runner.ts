@@ -137,7 +137,7 @@ export interface DoctorDeps {
 	 */
 	installationID(): Promise<string | null>
 	/**
-	 * Asks mailwoman.ai's well-known register whether a key id is still listed,
+	 * Asks mailwoman.post's well-known register whether a key id is still listed,
 	 * answering `unreachable` rather than throwing when there is no route.
 	 */
 	confirmLicenseKeyPublished(kid: string): Promise<LicenseKeyPublication>
