@@ -70,7 +70,7 @@ describe("the license message", () => {
 	}
 
 	const renewal = { ...first, refreshSecret: null, issued: "2026-11-01", expires: "2026-12-15" }
-	const site = "https://mailwoman.ai"
+	const site = "https://mailwoman.post"
 
 	it("tells an evaluator the key is not re-issued and points at the declare and buy routes", () => {
 		const evaluation = {

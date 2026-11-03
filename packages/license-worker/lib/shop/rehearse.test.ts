@@ -19,7 +19,7 @@ import { stripeClient } from "#stripe/client"
 import { recordingStripeFetch, type StripeRoute } from "#test/support/stripe/mock"
 
 const worker = readEnv(env)
-const SITE = "https://mailwoman.ai"
+const SITE = "https://mailwoman.post"
 const WORKER = "https://license-sandbox.example"
 const DAY = 86_400
 const NOW = 1_800_000_000

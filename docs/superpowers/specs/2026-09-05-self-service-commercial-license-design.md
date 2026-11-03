@@ -186,7 +186,7 @@ sandbox signing key never enters shipped trust.
 | `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY` | var    | the allowlisted Price IDs, each mapped to a plan code                                                        |
 | `AGREEMENT_VERSION`                           | var    | the terms version Checkout must have collected consent for                                                   |
 | `ISSUANCE_ENABLED`                            | var    | the kill switch: `false` refuses to mint and answers claims `pending`; verification and refresh keep working |
-| `SITE_ORIGIN`                                 | var    | `https://mailwoman.ai`, the one CORS origin the claim route admits                                           |
+| `SITE_ORIGIN`                                 | var    | `https://mailwoman.post`, the one CORS origin the claim route admits                                         |
 | `DB`                                          | D1     | the ledger                                                                                                   |
 
 At startup the worker signs a fixed probe with `LICENSE_SIGNING_KEY_PEM`, derives the key id from the matching public

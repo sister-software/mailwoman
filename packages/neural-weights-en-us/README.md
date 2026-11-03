@@ -47,7 +47,7 @@ model-index:
 # mailwoman — neural address-parser weights (en-us)
 
 The trained-model bundle (`@mailwoman/neural-weights-en-us`) for
-[Mailwoman](https://mailwoman.ai), a postal-address parser. This
+[Mailwoman](https://mailwoman.post), a postal-address parser. This
 package is **data only** — `model.onnx`, `tokenizer.model`, and metadata. It has
 no JavaScript. It is loaded at inference time by `@mailwoman/neural`.
 
@@ -137,7 +137,7 @@ per-state situs + interpolation data layer on top and resolves the actual point:
 interpolation, and under 7% fall back to the centroid — p50 0.0 km, 90.0% within
 100 m.** That data layer is the released data the geocoder consumes rather than part of
 this weights package. See the situs-cascade eval under
-[`docs/articles/evals/`](https://mailwoman.ai) for the breakdown.
+[`docs/articles/evals/`](https://mailwoman.post) for the breakdown.
 
 Two more notes on reading these:
 
@@ -158,7 +158,7 @@ Per-tag F1 (golden set, production-faithful anchor-on, indicative — these are
 diagnostic floors on a hard set rather than the headline coordinate metric): us.locality
 ≈ 77.9, us.region ≈ 90.5, us.street ≈ 80.2, us.house_number ≈ 98.3,
 us.country ≈ 68.4. See the eval reports under
-[`docs/articles/evals/`](https://mailwoman.ai) for the full per-tag
+[`docs/articles/evals/`](https://mailwoman.post) for the full per-tag
 parity tables and the config behind each number.
 
 ## Calibration
@@ -206,13 +206,13 @@ training epoch emitted 103,322 of its 1,000,000 rows from those extracts and 15,
 each one requires, and `PROVENANCE.json` records the effective training sources with their row counts.
 The training extracts are Derivative Databases under the ODbL, and they are separate artifacts from
 these weights. They are published under ODbL 1.0, with row counts and sha256 digests per file, at
-https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract. See https://mailwoman.ai/resources/osm/attribution for how Mailwoman reads the license,
+https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract. See https://mailwoman.post/resources/osm/attribution for how Mailwoman reads the license,
 including the versions published before this notice was added.
 
 ## License & links
 
 - **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html).
-- **Docs & concepts:** https://mailwoman.ai
+- **Docs & concepts:** https://mailwoman.post
 - **Loader / scorer API:** `@mailwoman/neural` (`createScorer`).
 - The functional interface for this bundle is `model-card.json` (versions,
   lineage, labels, calibration, `requires`); this `README.md` is the

@@ -4,7 +4,7 @@ Date: 2026-10-02, revised 2026-10-03 after the read-strategy probe. Status: appr
 
 ## Purpose
 
-The documentation site at `https://mailwoman.ai` searches through Algolia DocSearch. Algolia's crawler
+The documentation site at `https://mailwoman.post` searches through Algolia DocSearch. Algolia's crawler
 builds the index weekly, and its dashboard is the only way to operate it. This design replaces the
 crawler, the hosted index and the DocSearch modal with two parts this repository owns: a SQLite search
 index written by the docs build and published with the site, and a search modal in `@mailwoman/react`

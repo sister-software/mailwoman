@@ -1032,7 +1032,7 @@ not_found_handling = "single-page-application"
 
 - [ ] **Step 2: The three origins**
 
-In `packages/tile-worker/lib/cors.ts`, add to `AllowedOrigins` after `"https://mailwoman.ai"`:
+In `packages/tile-worker/lib/cors.ts`, add to `AllowedOrigins` after `"https://mailwoman.post"`:
 
 ```ts
 	"https://earth.mailwoman.ai",

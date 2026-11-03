@@ -1,6 +1,6 @@
 # @mailwoman/libpostal
 
-A **libpostal-compatible** parse/expand HTTP API over [Mailwoman](https://mailwoman.ai)'s
+A **libpostal-compatible** parse/expand HTTP API over [Mailwoman](https://mailwoman.post)'s
 neural address parser. It is the drop-in API with the fewest dependencies, because `/parse` needs only the
 model and no gazetteer.
 
@@ -62,5 +62,5 @@ libpostal's interface returns parses and expansions. It returns no coordinate an
 so this server reads no address-point layer, serves no OpenStreetMap data, and holds no row
 provenance or OpenStreetMap credit. An attached OpenStreetMap layer performs geocoding on the
 native, Nominatim and Photon surfaces. Their fields are in the
-[HTTP APIs reference](https://mailwoman.ai/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit)
+[HTTP APIs reference](https://mailwoman.post/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit)
 lists.

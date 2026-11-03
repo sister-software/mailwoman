@@ -35,7 +35,7 @@ test.describe("Mailwoman Earth shell", () => {
 
 		await expect(footer.getByRole("link", { name: "Developer Documentation" })).toHaveAttribute(
 			"href",
-			"https://mailwoman.ai/docs"
+			"https://mailwoman.post/docs"
 		)
 
 		const commit = footer.locator("a[href*='/commit/']")

@@ -17,7 +17,7 @@ tags:
 # mailwoman — neural address-parser weights (en-gb)
 
 The trained-model bundle (`@mailwoman/neural-weights-en-gb`) for
-[Mailwoman](https://mailwoman.ai), a postal-address parser. This
+[Mailwoman](https://mailwoman.post), a postal-address parser. This
 package is **data only** — a `model-card.json`, the placetype-pair retrieval
 index, and the shared gazetteer lexicons. It has no JavaScript logic of its
 own. It is loaded at inference time by `@mailwoman/neural`.
@@ -109,7 +109,7 @@ in the current probe mode).
 open ship blocker (a Gauntlet metamorphic-layer regression, unrelated to GB).
 Until that resolves, treat the numbers above as graded-but-unshipped: real
 measurements against the actual candidate artifact rather than yet the production
-default. [`docs/articles/evals/`](https://mailwoman.ai) publishes
+default. [`docs/articles/evals/`](https://mailwoman.post) publishes
 the full scorecard once promoted.
 
 ## Calibration
@@ -145,7 +145,7 @@ trained to read, so the notice applies here too:
 > (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright.
 
 `LICENSE.md` in this package repeats the base graph's required attributions, and
-https://mailwoman.ai/resources/osm/attribution explains how Mailwoman reads the license.
+https://mailwoman.post/resources/osm/attribution explains how Mailwoman reads the license.
 
 The placetype-pair index (`pair-index-gb.bin`) holds place-name pairs from Who's On First and London ward
 names from the ONS Postcode Directory. Their attributions read:
@@ -167,7 +167,7 @@ training rows used them.
 ## License & links
 
 - **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html).
-- **Docs & concepts:** https://mailwoman.ai
+- **Docs & concepts:** https://mailwoman.post
 - **Loader / scorer API:** `@mailwoman/neural` (`createScorer`).
 - The functional interface for this bundle is `model-card.json` (added
   2026-07-23, now that a GB-graded checkpoint exists); this `README.md` is the

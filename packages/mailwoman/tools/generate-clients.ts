@@ -227,8 +227,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://mailwoman.ai"
-Documentation = "https://mailwoman.ai/docs"
+Homepage = "https://mailwoman.post"
+Documentation = "https://mailwoman.post/docs"
 Repository = "https://github.com/sister-software/mailwoman"
 Issues = "https://github.com/sister-software/mailwoman/issues"
 
@@ -382,7 +382,7 @@ function pythonReadme(): string {
 	const lines = [
 		"# mailwoman-client (Python)",
 		"",
-		"Typed Python clients for [Mailwoman](https://mailwoman.ai)'s HTTP surfaces —",
+		"Typed Python clients for [Mailwoman](https://mailwoman.post)'s HTTP surfaces —",
 		"**generated from their published OpenAPI specs** and bundled under one distributable:",
 		"",
 		"| Subpackage                   | Surface           | Endpoints                                                            |",
@@ -521,7 +521,7 @@ rust-version = "1.82"
 description = "Typed Rust clients for Mailwoman's Photon / Nominatim / libpostal drop-in geocoding APIs and native /v1/* surface, generated from their OpenAPI specs."
 license = "AGPL-3.0-only OR LicenseRef-Commercial"
 repository = "https://github.com/sister-software/mailwoman"
-homepage = "https://mailwoman.ai"
+homepage = "https://mailwoman.post"
 documentation = "https://docs.rs/mailwoman-client"
 readme = "README.md"
 keywords = ["geocoding", "photon", "nominatim", "libpostal", "openapi"]
@@ -634,7 +634,7 @@ function rustReadme(): string {
 	const lines = [
 		"# mailwoman-client (Rust)",
 		"",
-		"Typed Rust clients for [Mailwoman](https://mailwoman.ai)'s HTTP surfaces,",
+		"Typed Rust clients for [Mailwoman](https://mailwoman.post)'s HTTP surfaces,",
 		"**generated at compile time** by [`progenitor`](https://github.com/oxidecomputer/progenitor)",
 		"from their OpenAPI specs, exposed as four modules of one crate:",
 		"",

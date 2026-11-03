@@ -382,7 +382,7 @@ test("engine option: headers only — the /parse body is byte-identical with and
 	const plain = await request(createLibpostalApp(fixtureEngine))
 
 	expect(stamped.headers.get("server")).toBe("mailwoman/9.2.0 (AGPL-3.0-only)")
-	expect(stamped.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+	expect(stamped.headers.get("link")).toBe('<https://mailwoman.post/license>; rel="license"')
 	expect(plain.headers.get("server")).toBeNull()
 	await expect(stamped.text()).resolves.toBe(await plain.text())
 })

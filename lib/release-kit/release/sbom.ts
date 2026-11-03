@@ -6,7 +6,7 @@
  *   Generate Software Bill of Materials (sbom) artifacts for the published `mailwoman` package in
  *   both open standards — spdx 2.3 and CycloneDX 1.5 — using the zero-dependency `npm sbom` builtin
  *   (npm >= 9.5). The files land in `docs/static/sbom/` so Docusaurus serves them at
- *   `https://mailwoman.ai/sbom/mailwoman-<version>.{spdx,cdx}.json`.
+ *   `https://mailwoman.post/sbom/mailwoman-<version>.{spdx,cdx}.json`.
  *
  *   The monorepo uses Yarn's `workspace:*` protocol. `npm sbom` cannot resolve that protocol.
  *   An SBOM documents what a consumer installs: concrete versions and the production dependency

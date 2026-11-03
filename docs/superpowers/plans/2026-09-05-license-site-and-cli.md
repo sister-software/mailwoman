@@ -33,7 +33,7 @@
 - A secret file is created `0600` through `writePrivateTextFile`; the key file is not a secret and uses `writeLocalTextFile`.
 - The CLI never writes a token this build does not trust: `refresh` and `adopt` verify offline against `trustedLicenseSigningKeys()` first and refuse `unknown_key` with the action (upgrade mailwoman).
 - Public status words are the worker's: `active`, `lapsed`, `revoked`, `unknown`; the client adds `unreachable`. No reason, name or date travels with them.
-- Site: exact-origin CORS on the worker admits `https://mailwoman.ai`, so the claim call is a plain `fetch` from the page. The page never stores the token or the secret anywhere but the DOM.
+- Site: exact-origin CORS on the worker admits `https://mailwoman.post`, so the claim call is a plain `fetch` from the page. The page never stores the token or the secret anywhere but the DOM.
 - The Payment Link, portal and terms URLs are operator-owned (spec issue A). They live in one constants module and start `undefined`; the Purchase section renders only when both Payment Links are set, so the live page never shows a dead button.
 - `docs/src/pages/license/terms/<version>.mdx` is issue A's deliverable (legal text). This plan creates no terms page.
 - Prose follows `config/vale/.vale-vocab.ini` (README, plan) and the site's `config/vale/.vale.ini` (pages). Acronyms cap as whole components, and snake_case wire keys stay.
@@ -895,7 +895,7 @@ export function shopIsOpen(): boolean
 
 - [x] **Step 1: The constants and the component**
 
-`shop.ts` as above with a header saying which values the operator fills (issue A in the spec's issue split) and that the worker's exact-origin CORS admits `https://mailwoman.ai`, which is why the page can call it directly.
+`shop.ts` as above with a header saying which values the operator fills (issue A in the spec's issue split) and that the worker's exact-origin CORS admits `https://mailwoman.post`, which is why the page can call it directly.
 
 `BuyLicense.tsx`:
 
@@ -1269,7 +1269,7 @@ writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key` and the credentials to `r
 `unreachable`. New env: `MAILWOMAN_LICENSE_URL`.
 ```
 
-- [x] **Step 2: The worker README** gains one line under "First deploy" step 7: the Payment Link's success URL is `https://mailwoman.ai/license/issued?session_id={CHECKOUT_SESSION_ID}`.
+- [x] **Step 2: The worker README** gains one line under "First deploy" step 7: the Payment Link's success URL is `https://mailwoman.post/license/issued?session_id={CHECKOUT_SESSION_ID}`.
 
 - [ ] **Step 3: Full check**
 

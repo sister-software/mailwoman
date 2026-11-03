@@ -70,7 +70,7 @@ export interface VerifyReleaseMetadataOptions {
 const PUBLISHED_DOCS_ROOT = "docs/articles/"
 
 /**
- * The page https://mailwoman.ai serves as "What ships today".
+ * The page https://mailwoman.post serves as "What ships today".
  */
 const PUBLISHED_STATUS_PAGE = `${PUBLISHED_DOCS_ROOT}developers/status.mdx`
 

@@ -1,6 +1,6 @@
 # @mailwoman/photon
 
-A **Photon-compatible autocomplete geocoding API** over the [Mailwoman](https://mailwoman.ai) engine — search-as-you-type, returning GeoJSON `FeatureCollection`s. Where [`@mailwoman/nominatim`](../nominatim) is structured lookup, this is the type-ahead front door. No Elasticsearch.
+A **Photon-compatible autocomplete geocoding API** over the [Mailwoman](https://mailwoman.post) engine — search-as-you-type, returning GeoJSON `FeatureCollection`s. Where [`@mailwoman/nominatim`](../nominatim) is structured lookup, this is the type-ahead front door. No Elasticsearch.
 
 ```bash
 # One-time data fetch (worldwide candidate gazetteer, population-first ranking, ~1.65 GB):
@@ -68,7 +68,7 @@ serves no OpenStreetMap data and never emits either. The OpenStreetMap Foundatio
 asks a public geocoder serving its data for a service-level credit, so a public deployment with a layer
 attached also states "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright"
 in its own documentation or map attribution. `format=jsonld` includes neither field. See the
-[HTTP APIs reference](https://mailwoman.ai/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit).
+[HTTP APIs reference](https://mailwoman.post/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit).
 
 ## Status
 

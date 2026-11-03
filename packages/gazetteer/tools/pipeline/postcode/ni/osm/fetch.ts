@@ -108,7 +108,7 @@ export function createOverpassClient(): APIClient {
 		axios: {
 			timeout: 600_000,
 			headers: {
-				"User-Agent": "mailwoman-gazetteer/1.0 (+https://mailwoman.ai)",
+				"User-Agent": "mailwoman-gazetteer/1.0 (+https://mailwoman.post)",
 			},
 		},
 	})

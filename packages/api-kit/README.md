@@ -1,6 +1,6 @@
 # @mailwoman/api-kit
 
-This package provides [Mailwoman](https://mailwoman.ai)'s HTTP plumbing: a node `serve` wrapper and
+This package provides [Mailwoman](https://mailwoman.post)'s HTTP plumbing: a node `serve` wrapper and
 OpenAPI emit helpers shared by the drop-in packages ([`@mailwoman/libpostal`](../libpostal),
 [`@mailwoman/photon`](../photon), [`@mailwoman/nominatim`](../nominatim)).
 

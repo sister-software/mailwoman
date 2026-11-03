@@ -17,7 +17,7 @@ import { cors } from "hono/cors"
  * The Mailwoman sites, production and development, that may call a Mailwoman Worker from a browser.
  */
 export const MAILWOMAN_SITE_ORIGINS: ReadonlySet<string> = new Set([
-	"https://mailwoman.ai",
+	"https://mailwoman.post",
 	"https://earth.mailwoman.ai",
 	"https://moon.mailwoman.ai",
 	"https://mars.mailwoman.ai",

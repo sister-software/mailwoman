@@ -54,7 +54,7 @@ const validDeclared = await verifyLicenseKey(declaredToken, { trustedKeys, now: 
 
 describe("licensePageURL", () => {
 	it("defaults to mailwoman.ai and strips a trailing slash", () => {
-		expect(licensePageURL()).toBe("https://mailwoman.ai/license")
+		expect(licensePageURL()).toBe("https://mailwoman.post/license")
 		expect(licensePageURL("http://localhost:3000/")).toBe("http://localhost:3000/license")
 	})
 })
@@ -67,7 +67,7 @@ describe("buildEngineStamp", () => {
 			name: "mailwoman",
 			version: "9.2.0",
 			license: "AGPL-3.0-only",
-			license_url: "https://mailwoman.ai/license",
+			license_url: "https://mailwoman.post/license",
 			notice:
 				"mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. A commercial license waives that obligation.",
 		})
@@ -120,7 +120,7 @@ describe("licenseNoticeLines for a declared key", () => {
 	it("keeps the obligation line and states the declaration with its holder and the URL", () => {
 		expect(licenseNoticeLines(stamp, validDeclared, new Date("2027-01-01T00:00:00Z"))).toEqual([
 			"mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source.",
-			"Declared open-source for Example Project until 2027-03-11: https://mailwoman.ai/license",
+			"Declared open-source for Example Project until 2027-03-11: https://mailwoman.post/license",
 		])
 	})
 
@@ -134,7 +134,7 @@ describe("licenseNoticeLines for a declared key", () => {
 
 		expect(licenseNoticeLines(lapsed, expiredDeclared, new Date("2027-03-12T00:00:00Z"))).toEqual([
 			"mailwoman is licensed AGPL-3.0-only (the configured license key expired on 2027-03-11): modified or network-served copies must offer their source.",
-			"Your declaration expired on 2027-03-11: run `mailwoman license refresh`, or declare again. https://mailwoman.ai/license",
+			"Your declaration expired on 2027-03-11: run `mailwoman license refresh`, or declare again. https://mailwoman.post/license",
 		])
 	})
 
@@ -155,14 +155,14 @@ describe("licenseNoticeLines for a declared key", () => {
 		const near = licenseNoticeLines(evaluatingStamp, evaluating, new Date("2026-11-10T00:00:00Z"))
 
 		expect(near?.[1]).toBe(
-			"Evaluating for Trial Ltd until 2026-11-20, which is in 10 days: declare an open-source, non-profit, academic or student use, or buy a license, before then. https://mailwoman.ai/license"
+			"Evaluating for Trial Ltd until 2026-11-20, which is in 10 days: declare an open-source, non-profit, academic or student use, or buy a license, before then. https://mailwoman.post/license"
 		)
 
 		const ended = await verifyLicenseKey(evaluationToken, { trustedKeys, now: new Date("2026-11-21T00:00:00Z") })
 		const endedStamp = buildEngineStamp({ version: "9.2.0", expression: EXPRESSION, key: ended })
 
 		expect(licenseNoticeLines(endedStamp, ended, new Date("2026-11-21T00:00:00Z"))?.[1]).toBe(
-			"Your evaluation ended on 2026-11-20: declare an open-source, non-profit, academic or student use, or buy a license. https://mailwoman.ai/license"
+			"Your evaluation ended on 2026-11-20: declare an open-source, non-profit, academic or student use, or buy a license. https://mailwoman.post/license"
 		)
 	})
 
@@ -170,7 +170,7 @@ describe("licenseNoticeLines for a declared key", () => {
 		const lines = licenseNoticeLines(stamp, validDeclared, new Date("2027-02-20T00:00:00Z"))
 
 		expect(lines?.[1]).toBe(
-			"Declared open-source for Example Project until 2027-03-11, which is in 19 days: run `mailwoman license refresh` before then. https://mailwoman.ai/license"
+			"Declared open-source for Example Project until 2027-03-11, which is in 19 days: run `mailwoman license refresh` before then. https://mailwoman.post/license"
 		)
 	})
 })
@@ -181,7 +181,7 @@ describe("licenseNoticeLines", () => {
 
 		expect(licenseNoticeLines(stamp)).toEqual([
 			"mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source.",
-			"A commercial license waives that obligation: https://mailwoman.ai/license",
+			"A commercial license waives that obligation: https://mailwoman.post/license",
 		])
 	})
 

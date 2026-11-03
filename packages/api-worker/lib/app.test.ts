@@ -66,7 +66,10 @@ describe("createAPIWorkerApp", () => {
 
 				return Response.json(
 					{ error: "invalid request body", detail: "address: required" },
-					{ status: 400, headers: { Server: "mailwoman/10.7.0", Link: "<https://mailwoman.ai/license>; rel=license" } }
+					{
+						status: 400,
+						headers: { Server: "mailwoman/10.7.0", Link: "<https://mailwoman.post/license>; rel=license" },
+					}
 				)
 			},
 		})
@@ -82,7 +85,7 @@ describe("createAPIWorkerApp", () => {
 
 		expect(response.status).toBe(400)
 		expect(response.headers.get("server")).toBe("mailwoman/10.7.0")
-		expect(response.headers.get("link")).toBe("<https://mailwoman.ai/license>; rel=license")
+		expect(response.headers.get("link")).toBe("<https://mailwoman.post/license>; rel=license")
 		await expect(response.json()).resolves.toEqual({ error: "invalid request body", detail: "address: required" })
 		expect(received[0]?.url).toBe("http://engine.internal/v1/geocode")
 		expect(received[0]?.headers.get("cookie")).toBeNull()

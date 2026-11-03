@@ -1,6 +1,6 @@
 # @mailwoman/nominatim
 
-A **Nominatim-compatible HTTP geocoding API** over the [Mailwoman](https://mailwoman.ai) engine. Point an existing Nominatim client at it and forward + reverse geocoding work — no PostgreSQL, no `osm2pgsql` import.
+A **Nominatim-compatible HTTP geocoding API** over the [Mailwoman](https://mailwoman.post) engine. Point an existing Nominatim client at it and forward + reverse geocoding work — no PostgreSQL, no `osm2pgsql` import.
 
 ```bash
 # One-time data fetch (worldwide candidate gazetteer, population-first ranking, ~1.65 GB):
@@ -110,7 +110,7 @@ register's stamp and the gazetteer credit only. A deployment without an OpenStre
 OpenStreetMap data and never emits either. The OpenStreetMap Foundation's Geocoding Guideline asks a
 public geocoder serving its data for a service-level credit, so a public deployment with a layer
 attached also states the credit in its own documentation or interface. `format=jsonld` includes neither
-field. See the [HTTP APIs reference](https://mailwoman.ai/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit).
+field. See the [HTTP APIs reference](https://mailwoman.post/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit).
 
 ## Status
 

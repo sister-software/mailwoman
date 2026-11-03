@@ -61,7 +61,7 @@ test("the footer carries the docs link and the commit the build was made from", 
 
 	await expect(footer.getByRole("link", { name: "Developer Documentation" })).toHaveAttribute(
 		"href",
-		"https://mailwoman.ai/docs"
+		"https://mailwoman.post/docs"
 	)
 
 	// The commit link resolves against `build.json`, which only a built deployment serves,

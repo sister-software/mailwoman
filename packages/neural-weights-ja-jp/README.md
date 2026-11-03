@@ -1,6 +1,6 @@
 # @mailwoman/neural-weights-ja-jp
 
-ja-JP weights overlay for [mailwoman](https://mailwoman.ai).
+ja-JP weights overlay for [mailwoman](https://mailwoman.post).
 
 **Data-only.** Declares `mailwoman.baseWeights` and shares the base model and tokenizer with
 `@mailwoman/neural-weights-en-us`; what it adds is `fst-ja-jp.bin`.

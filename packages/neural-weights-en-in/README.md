@@ -1,6 +1,6 @@
 # @mailwoman/neural-weights-en-in
 
-Indian English (`en-IN`) weights overlay for [mailwoman](https://mailwoman.ai).
+Indian English (`en-IN`) weights overlay for [mailwoman](https://mailwoman.post).
 
 **Data-only.** Declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and shares that
 package's model and tokenizer. What it adds is the Indian **placetype-pair index** — 175,744
@@ -39,4 +39,4 @@ trained to read, so the notice applies here too:
 > (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright.
 
 `LICENSE.md` in this package repeats the base graph's required attributions, and
-https://mailwoman.ai/resources/osm/attribution explains how Mailwoman reads the license.
+https://mailwoman.post/resources/osm/attribution explains how Mailwoman reads the license.

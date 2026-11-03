@@ -59,7 +59,9 @@ export function Attribution({ config }: AttributionProps) {
 	return (
 		<div className="attribution" data-manifest={state.status}>
 			<MapFooter
-				identity={<AppIdentity name={config.displayName} docsURL="https://mailwoman.ai/docs" commitHref={commitURL} />}
+				identity={
+					<AppIdentity name={config.displayName} docsURL="https://mailwoman.post/docs" commitHref={commitURL} />
+				}
 				attribution={lines}
 			/>
 		</div>

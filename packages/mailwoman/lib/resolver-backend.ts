@@ -112,7 +112,7 @@ export function buildNoGazetteerMessage(opts: { dataRoot: PathBuilder; docsPath:
 		"    --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB   (candidate gazetteer)",
 		"    $MAILWOMAN_WOF_DB / <data-root>/db/wof/*.db       (admin WOF distribution)",
 		"",
-		`  Docs: https://mailwoman.ai${opts.docsPath}`,
+		`  Docs: https://mailwoman.post${opts.docsPath}`,
 	].join("\n")
 }
 

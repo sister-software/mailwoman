@@ -1,6 +1,6 @@
 # @mailwoman/react
 
-This package provides React components and headless hooks for [mailwoman](https://mailwoman.ai). It
+This package provides React components and headless hooks for [mailwoman](https://mailwoman.post). It
 packages the parse/geocode/POI explorers from the docs site as smaller parts for use in any React app.
 
 ## What's in the box

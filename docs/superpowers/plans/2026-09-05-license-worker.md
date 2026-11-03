@@ -308,7 +308,7 @@ crons = ["0 */6 * * *"]
 
 [vars]
 ISSUANCE_ENABLED = "false"
-SITE_ORIGIN = "https://mailwoman.ai"
+SITE_ORIGIN = "https://mailwoman.post"
 AGREEMENT_VERSION = "commercial-2026-10"
 EMAIL_FROM = "licenses@mailwoman.ai"
 
@@ -316,7 +316,7 @@ EMAIL_FROM = "licenses@mailwoman.ai"
 name = "mailwoman-license-sandbox"
 [env.sandbox.vars]
 ISSUANCE_ENABLED = "false"
-SITE_ORIGIN = "https://mailwoman.ai"
+SITE_ORIGIN = "https://mailwoman.post"
 AGREEMENT_VERSION = "commercial-2026-10"
 EMAIL_FROM = "licenses@mailwoman.ai"
 STRIPE_LIVE_MODE = "false"
@@ -346,7 +346,7 @@ name = "mailwoman-license"
 routes = [{ pattern = "license.mailwoman.ai", custom_domain = true }]
 [env.production.vars]
 ISSUANCE_ENABLED = "false"
-SITE_ORIGIN = "https://mailwoman.ai"
+SITE_ORIGIN = "https://mailwoman.post"
 AGREEMENT_VERSION = "commercial-2026-10"
 EMAIL_FROM = "licenses@mailwoman.ai"
 STRIPE_LIVE_MODE = "true"

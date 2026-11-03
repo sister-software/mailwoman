@@ -74,7 +74,7 @@ node .claude/skills/run-docs/driver.mts --smoke
 node .claude/skills/run-docs/driver.mts --eval / "return document.querySelector('h1')?.innerText"
 ```
 
-Override the base URL with `MAILWOMAN_DOCS_URL=https://mailwoman.ai node .../driver.mts --check /docs/` to point the same driver at the deployed site.
+Override the base URL with `MAILWOMAN_DOCS_URL=https://mailwoman.post node .../driver.mts --check /docs/` to point the same driver at the deployed site.
 
 Screenshots default to `/tmp/mailwoman-docs/<route>.png` if you omit the output path. Always `Read` the file after taking it — a 200 OK with a blank screenshot is the most common silent failure mode here (e.g. a JS bundle that errored after hydration).
 

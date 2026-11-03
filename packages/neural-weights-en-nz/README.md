@@ -17,7 +17,7 @@ tags:
 # mailwoman — neural address-parser weights (en-nz)
 
 The trained-model bundle (`@mailwoman/neural-weights-en-nz`) for
-[Mailwoman](https://mailwoman.ai), a postal-address parser. This
+[Mailwoman](https://mailwoman.post), a postal-address parser. This
 package contains **data only**: a `model-card.json`, the NZ placetype-pair
 retrieval index, and the shared gazetteer lexicons. It has no JavaScript logic
 of its own, and `@mailwoman/neural` loads it at inference time.
@@ -97,12 +97,12 @@ trained to read, so the notice applies here too:
 > (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright.
 
 `LICENSE.md` in this package repeats the base graph's required attributions, and
-https://mailwoman.ai/resources/osm/attribution explains how Mailwoman reads the license.
+https://mailwoman.post/resources/osm/attribution explains how Mailwoman reads the license.
 
 ## License & links
 
 - **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html).
-- **Docs & concepts:** https://mailwoman.ai
+- **Docs & concepts:** https://mailwoman.post
 - **Loader / scorer API:** `@mailwoman/neural` (`createScorer`).
 - The functional interface for this bundle is `model-card.json`; this
   `README.md` is the HuggingFace-facing card.

@@ -32,10 +32,10 @@ const MAX_BODY_BYTES = 102_400
 export const LIBPOSTAL_DOC_INFO: OpenAPIDocInfo = {
 	...(await readServedDocumentInfo(import.meta.url, "@mailwoman/libpostal")),
 	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
-	contact: { name: "Sister Software", url: "https://mailwoman.ai" },
+	contact: { name: "Sister Software", url: "https://mailwoman.post" },
 	externalDocs: {
 		description: "What Mailwoman is",
-		url: "https://mailwoman.ai/docs/developers/get-started/what-mailwoman-is",
+		url: "https://mailwoman.post/docs/developers/get-started/what-mailwoman-is",
 	},
 	servers: [
 		{

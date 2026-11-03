@@ -161,7 +161,7 @@ test("a valid AGPL-3.0-only token keeps the notice and names the declaration", (
 	const stamp = buildEngineStamp({ version: "11.0.0", expression: DUAL, key: validOpenSource })
 	expect(stamp.license).toBe("AGPL-3.0-only")
 	expect(stamp.notice).toContain("Declared open-source for Example Project until 2027-03-11.")
-	expect(licenseNoticeLines(stamp, validOpenSource)?.[1]).toContain("https://mailwoman.ai/license")
+	expect(licenseNoticeLines(stamp, validOpenSource)?.[1]).toContain("https://mailwoman.post/license")
 })
 test("a valid commercial token silences the notice", () => {
 	expect(buildEngineStamp({ version: "11.0.0", expression: DUAL, key: validCommercial }).notice).toBeNull()
@@ -484,7 +484,7 @@ test("declarations refuse when ISSUANCE_ENABLED is false", …)
   - The refusal text, three lines after the header `<bundle> is a licensed artifact. Get a token by one of:`, where the bundle name is set in backticks:
     `mailwoman license declare --intent open-source --project <url> # free for an open-source project`,
     `mailwoman license evaluate --email <address> # thirty days`,
-    `https://mailwoman.ai/license # commercial`; an expired key adds `Your key expired on <date>: mailwoman license refresh`.
+    `https://mailwoman.post/license # commercial`; an expired key adds `Your key expired on <date>: mailwoman license refresh`.
   - In `pull.tsx`, a `granted` decision fetches each artifact through `requestDownload` and streams the answered URL where `artifactURL` is used today; `refused` prints the lines and exits 1 before any transfer.
 
 - [ ] **Step 1: Write the failing tests**: a bundle without `access` is `free` without a key, a licensed bundle without a key is `refused` with the three commands, an expired key adds the refresh line, and a valid key is `granted`.

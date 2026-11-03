@@ -18,9 +18,9 @@
 </p>
 
 <p align="center">
-  <a href="https://mailwoman.ai/demo"><strong>Live demo</strong></a> ·
-  <a href="https://mailwoman.ai">Docs & blog</a> ·
-  <a href="https://mailwoman.ai/docs/developers/get-started/install-and-first-parse/">Getting started</a>
+  <a href="https://mailwoman.post/demo"><strong>Live demo</strong></a> ·
+  <a href="https://mailwoman.post">Docs & blog</a> ·
+  <a href="https://mailwoman.post/docs/developers/get-started/install-and-first-parse/">Getting started</a>
 </p>
 
 <p align="center">
@@ -87,7 +87,7 @@ console.log(decodeAsJSON(tree))
 ```
 
 The [`mailwoman` package README](./packages/mailwoman/README.md) and [Getting
-started](https://mailwoman.ai/docs/developers/get-started/install-and-first-parse) document the
+started](https://mailwoman.post/docs/developers/get-started/install-and-first-parse) document the
 full library API: confidence, the per-stage pipeline result, resolution, browser loading, and
 configuration.
 
@@ -135,7 +135,7 @@ npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand
 ```
 
 OpenAPI 3.1 specifications for all three ship in each package and at
-[mailwoman.ai/openapi](https://mailwoman.ai/openapi/photon.yaml).
+[mailwoman.ai/openapi](https://mailwoman.post/openapi/photon.yaml).
 
 ## How it works
 
@@ -154,7 +154,7 @@ calibrated probabilities. When it reports `0.88`, it is right about 88%
 of the time.
 
 For the longer version, read [What Mailwoman
-Is](https://mailwoman.ai/docs/developers/get-started/what-mailwoman-is/).
+Is](https://mailwoman.post/docs/developers/get-started/what-mailwoman-is/).
 
 ## Locale coverage
 
@@ -166,7 +166,7 @@ A locale appears here only when a coordinate-graded eval backs it.
 | **2 — trained + coordinate-paneled** | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Per-locale coordinate panels (n=1000 each), resolved-p90 ≤ 10 km across the set, and NL resolved-p50 0.05 km |
 | **3 — trained, thinly measured**     | NO, SE                                                 | Coordinate panels exist, but residual misses are not yet fully characterized. Claims beyond this: unverified |
 
-The [browser demo](https://mailwoman.ai/demo) covers the same locales. Full
+The [browser demo](https://mailwoman.post/demo) covers the same locales. Full
 receipts live in the [scope declaration](./docs/engineering/SCOPE.mdx) and the [eval
 reports](./docs/records/evals/).
 
@@ -215,9 +215,9 @@ Mailwoman is dual-licensed:
   obligation. Contact `teffen@sister.software`.
 
 Release notes live on the [GitHub releases page](https://github.com/sister-software/mailwoman/releases).
-The [privacy policy](https://mailwoman.ai/privacy)
+The [privacy policy](https://mailwoman.post/privacy)
 states what we do and do not collect. Funders and sponsors can read our machine-readable
-[funding.json](https://mailwoman.ai/funding.json).
+[funding.json](https://mailwoman.post/funding.json).
 Report security vulnerabilities privately per [`SECURITY.md`](./SECURITY.md).
 
 Portions of Mailwoman derived from [Pelias Parser](https://github.com/pelias/parser) remain

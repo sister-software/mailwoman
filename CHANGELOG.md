@@ -460,10 +460,10 @@ Every JSON record the CLI emits (`geocode --json`, `reverse --json`, `autocomple
 Nominatim result, and the Photon FeatureCollection include an `engine` object: `name`, `version`, the license branch that
 applies (`AGPL-3.0-only` or `LicenseRef-Commercial`), `license_url`, and, under the open-source branch, a one-sentence
 `notice`. Every HTTP response from the four servers sends `Server: mailwoman/<version> (<license>)` and
-`Link: <https://mailwoman.ai/license>; rel="license"`. Every CLI invocation ends with the same notice on stderr, and each
+`Link: <https://mailwoman.post/license>; rel="license"`. Every CLI invocation ends with the same notice on stderr, and each
 server prints it once at listen. A valid `MAILWOMAN_LICENSE_KEY` silences the notice, and no other setting does. The stamp never
 includes the licensee or the key id. These changes leave runtime behavior unchanged. The page the stamp links to is new:
-`https://mailwoman.ai/license`.
+`https://mailwoman.post/license`.
 
 ### Changed — `mailwoman autocomplete --json` wraps its array
 

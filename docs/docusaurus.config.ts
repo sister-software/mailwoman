@@ -91,7 +91,7 @@ const config: Config = {
 		},
 	},
 
-	url: "https://mailwoman.ai",
+	url: "https://mailwoman.post",
 	baseUrl: "/",
 	trailingSlash: false,
 

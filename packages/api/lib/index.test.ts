@@ -609,7 +609,7 @@ test("GET /openapi.json: full-info document config lands (license, contact, serv
 	}
 
 	expect(doc.info.license?.name).toBe("AGPL-3.0-only OR LicenseRef-Commercial")
-	expect(doc.info.contact?.url).toBe("https://mailwoman.ai")
+	expect(doc.info.contact?.url).toBe("https://mailwoman.post")
 	expect(doc.servers?.[0]?.url).toBe("http://{host}:{port}")
 	expect(doc.security).toEqual([])
 	expect(doc.tags?.map((t) => t.name)).toContain("meta")
@@ -740,13 +740,13 @@ test("engine option: every /v1 body carries `engine` and every response carries 
 	]) {
 		expect(res.status).toBe(200)
 		expect(res.headers.get("server")).toBe("mailwoman/9.2.0 (AGPL-3.0-only)")
-		expect(res.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+		expect(res.headers.get("link")).toBe('<https://mailwoman.post/license>; rel="license"')
 		expect(((await res.json()) as { engine: EngineStamp }).engine).toEqual(stamp)
 	}
 
 	const health = await app.request("/health")
 
-	expect(health.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+	expect(health.headers.get("link")).toBe('<https://mailwoman.post/license>; rel="license"')
 	expect((await health.json()) as object).not.toHaveProperty("engine")
 })
 

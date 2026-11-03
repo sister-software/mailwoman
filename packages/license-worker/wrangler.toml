@@ -20,7 +20,7 @@ crons = ["0 */6 * * *"]
 
 [vars]
 ISSUANCE_ENABLED = "true"
-SITE_ORIGIN = "https://mailwoman.ai"
+SITE_ORIGIN = "https://mailwoman.post"
 EMAIL_FROM = "licenses@mailwoman.ai"
 STRIPE_LIVE_MODE = "true"
 LICENSE_SIGNING_KID = "v9-e3d8105a"

@@ -79,7 +79,7 @@ export interface EarthFooterProps {
 export function EarthFooter({ status }: EarthFooterProps): ReactNode {
 	return (
 		<MapFooter
-			identity={<AppIdentity name="Mailwoman Earth" docsURL="https://mailwoman.ai/docs" commitHref={commitURL} />}
+			identity={<AppIdentity name="Mailwoman Earth" docsURL="https://mailwoman.post/docs" commitHref={commitURL} />}
 			status={status}
 			attribution={ATTRIBUTION}
 		/>

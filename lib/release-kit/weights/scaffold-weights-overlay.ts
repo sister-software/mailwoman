@@ -200,7 +200,7 @@ await materializeDevOverlay({
 	)
 
 	await writeLocalTextFile(
-		`# ${packageName}\n\n${localeTag} weights overlay for [mailwoman](https://mailwoman.ai).\n\n**Data-only.** Declares \`mailwoman.baseWeights\` and shares the base model and tokenizer with\n\`@mailwoman/neural-weights-en-us\`; what it adds is \`${artifact}\`.\n\n\`\`\`sh\nnpm install ${packageName}\n\`\`\`\n`,
+		`# ${packageName}\n\n${localeTag} weights overlay for [mailwoman](https://mailwoman.post).\n\n**Data-only.** Declares \`mailwoman.baseWeights\` and shares the base model and tokenizer with\n\`@mailwoman/neural-weights-en-us\`; what it adds is \`${artifact}\`.\n\n\`\`\`sh\nnpm install ${packageName}\n\`\`\`\n`,
 		pkgDir,
 		"README.md"
 	)

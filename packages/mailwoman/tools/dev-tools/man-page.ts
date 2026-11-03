@@ -128,7 +128,7 @@ export async function renderManPage(cliPath: string = CLI_PATH): Promise<string>
 		"street extracts). Defaults to a platform data directory; `mailwoman doctor \\-\\-verbose`",
 		"prints every resolved path.",
 		".SH SEE ALSO",
-		"Project documentation: https://mailwoman.ai",
+		"Project documentation: https://mailwoman.post",
 		".br",
 		"Issues: https://github.com/sister-software/mailwoman"
 	)

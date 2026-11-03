@@ -13,7 +13,7 @@ import { withoutTrailingSlashes } from "#strings/format"
 /**
  * The docs site when `MAILWOMAN_DOCS_URL` is unset.
  */
-export const DEFAULT_DOCS_URL = "https://mailwoman.ai"
+export const DEFAULT_DOCS_URL = "https://mailwoman.post"
 
 /**
  * The docs site's base URL with no trailing slash.

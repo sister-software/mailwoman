@@ -325,7 +325,7 @@ test("engine option: each jsonv2 result carries `engine` beside an unchanged `li
 
 	const jsonv2 = await app.request("/search?q=1600+Pennsylvania&format=jsonv2")
 
-	expect(jsonv2.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+	expect(jsonv2.headers.get("link")).toBe('<https://mailwoman.post/license>; rel="license"')
 
 	const results = (await jsonv2.json()) as Array<{ licence: string; engine: EngineStamp }>
 
