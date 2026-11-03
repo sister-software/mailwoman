@@ -267,7 +267,7 @@ git commit -m "refactor(react,earth,docs): the geocoder surface is named for wha
 - [ ] **Step 1: CORS is already in place from the shell plan. Verify against production data**
 
 ```bash
-for u in https://public.mailwoman.post/mailwoman/en-us/releases.json https://tiles.mailwoman.ai/basemap-v4.json; do curl -sI -H "Origin: https://earth.mailwoman.post" "$u" | grep -i "access-control-allow-origin\|^HTTP" | tr -d '\r'; done
+for u in https://public.mailwoman.post/mailwoman/en-us/releases.json https://tiles.mailwoman.post/basemap-v4.json; do curl -sI -H "Origin: https://earth.mailwoman.post" "$u" | grep -i "access-control-allow-origin\|^HTTP" | tr -d '\r'; done
 curl -sI -H "Origin: https://earth.mailwoman.post" -H "Range: bytes=0-65535" "https://public.mailwoman.post/mailwoman/wof-hot/$(node -e "console.log(require('./packages/mailwoman/out/browser-runtime/resources.js').ADMIN_GAZETTEER_VERSION)")/wof-hot.db" | grep -i "^HTTP\|content-range\|access-control" | tr -d '\r'
 ```
 

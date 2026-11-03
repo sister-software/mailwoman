@@ -23,8 +23,8 @@ export const MOON: PlanetaryMapConfig = {
 	// a rille — five features that span the body's range, so the chips are a tour rather than a sample.
 	exampleFeatures: ["Mare Tranquillitatis", "Copernicus", "Oceanus Procellarum", "Tycho", "Vallis Alpes"],
 	tiles: {
-		nomenclature: "https://tiles.mailwoman.ai/moon.json",
-		hillshade: "https://tiles.mailwoman.ai/moon-terrain.json",
+		nomenclature: "https://tiles.mailwoman.post/moon.json",
+		hillshade: "https://tiles.mailwoman.post/moon-terrain.json",
 	},
 	artifacts: {
 		version: VERSION,

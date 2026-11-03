@@ -1029,7 +1029,7 @@ grep -n "^export" packages/mailwoman/lib/cli-kit/index.ts | head -c 4000
 
 Move the `publishTiles` function and its `Options` type from `packages/mailwoman/lib/commands/tiles/publish.tsx` into `packages/mailwoman/lib/tiles/publish.ts` (exported), import it back into the command, add `"./tiles/publish"` to `mailwoman`'s `exports`. The command's `spec` stays where it is. Inside `publish.ts`, the `rclone copyto` call becomes its own exported function, `uploadToBucket({ file, bucket, key, dryRun })`, which `publishTiles` calls with `key = ${prefix}/${tileset}.pmtiles`; the search artifact and the manifest go through the same function under a different key.
 
-The astrogeology `publish` command calls `publishTiles({ file, tileset: body, bucket: "mailwoman-tiles", prefix: "tiles", dryRun })` twice (the vector and the hillshade archive), then `uploadToBucket` for `search.ancestrie` and `manifest.json` under `planetary/<body>/<version>/` (the `version` is the manifest's `builtAt` date compacted to `YYYYMMDD` plus the first eight characters of the vector archive's SHA-256, e.g. `20260907-3f2a9c1b`, so a republish never overwrites an artifact a deployed app pins), fetches `https://tiles.mailwoman.ai/<body>.json`, the z0 tile of each archive and `https://public.mailwoman.post/planetary/<body>/<version>/manifest.json`, reports the status codes, and prints the version and the two public URLs the planetary app pins.
+The astrogeology `publish` command calls `publishTiles({ file, tileset: body, bucket: "mailwoman-tiles", prefix: "tiles", dryRun })` twice (the vector and the hillshade archive), then `uploadToBucket` for `search.ancestrie` and `manifest.json` under `planetary/<body>/<version>/` (the `version` is the manifest's `builtAt` date compacted to `YYYYMMDD` plus the first eight characters of the vector archive's SHA-256, e.g. `20260907-3f2a9c1b`, so a republish never overwrites an artifact a deployed app pins), fetches `https://tiles.mailwoman.post/<body>.json`, the z0 tile of each archive and `https://public.mailwoman.post/planetary/<body>/<version>/manifest.json`, reports the status codes, and prints the version and the two public URLs the planetary app pins.
 
 - [ ] **Step 3: The four commands**
 
@@ -1064,9 +1064,9 @@ git commit -m "feat(astrogeology): the bin — fetch, build, verify, publish; pu
 node packages/astrogeology/out/cli.js publish --body moon --dry-run
 node packages/astrogeology/out/cli.js publish --body moon
 node packages/astrogeology/out/cli.js publish --body mars
-curl -sI https://tiles.mailwoman.ai/moon.json | head -1
-curl -sI https://tiles.mailwoman.ai/moon-hillshade/0/0/0.png | head -1
-curl -s https://tiles.mailwoman.ai/mars.json | head -c 300
+curl -sI https://tiles.mailwoman.post/moon.json | head -1
+curl -sI https://tiles.mailwoman.post/moon-hillshade/0/0/0.png | head -1
+curl -s https://tiles.mailwoman.post/mars.json | head -c 300
 curl -sI "https://public.mailwoman.post/planetary/moon/<the printed version>/search.ancestrie" | head -1
 ```
 
@@ -1091,7 +1091,7 @@ Implements docs/superpowers/specs/2026-09-06-astrogeology-pipeline-design.md by 
 - @mailwoman/spatial: greatCircleDistance with a body radius; haversine unchanged
 - mailwoman/tiles/publish: publishTiles as a function the command and this pipeline both call
 
-Published: moon.pmtiles, moon-hillshade.pmtiles, mars.pmtiles, mars-hillshade.pmtiles at tiles.mailwoman.ai (sizes and build times in the build commit).
+Published: moon.pmtiles, moon-hillshade.pmtiles, mars.pmtiles, mars-hillshade.pmtiles at tiles.mailwoman.post (sizes and build times in the build commit).
 
 https://claude.ai/code/session_01ADYjzV88cHb94MRW4Dn1Aq
 EOF

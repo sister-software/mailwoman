@@ -48,8 +48,8 @@ export interface EarthConfig {
  */
 export const PRODUCTION_CONFIG: EarthConfig = {
 	dataOriginURL: new URL("https://public.mailwoman.post/"),
-	tileWorkerURL: new URL("https://tiles.mailwoman.ai/"),
-	basemapTileJSONURL: new URL("https://tiles.mailwoman.ai/planet.v4.json"),
+	tileWorkerURL: new URL("https://tiles.mailwoman.post/"),
+	basemapTileJSONURL: new URL("https://tiles.mailwoman.post/planet.v4.json"),
 	sqliteRuntimeBaseURL: "/sqlite",
 	// The API Worker has no production route yet.
 	geocoderAPIURL: null,

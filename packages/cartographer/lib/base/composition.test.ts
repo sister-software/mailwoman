@@ -144,7 +144,7 @@ test("Composer: a composition with no overrides is the Earth style: base layers,
 
 test("Composer: a composition can bring its own base layers without hillshade source and no sprite", () => {
 	const style = new StyleSpecificationComposer({
-		sources: { moon: { type: "vector", url: "https://tiles.mailwoman.ai/moon.json" } },
+		sources: { moon: { type: "vector", url: "https://tiles.mailwoman.post/moon.json" } },
 		baseLayers: [{ id: "space", type: "background", paint: { "background-color": "#000" } }],
 		hillshadeSource: null,
 		sprite: null,

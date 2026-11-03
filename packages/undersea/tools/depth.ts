@@ -18,7 +18,7 @@ import type { UnderseaDepthKind } from "#features"
 /**
  * The terrarium tiles, served by the tile worker from the AWS Terrain Tiles.
  */
-const TERRARIUM_TILE_URL = "https://tiles.mailwoman.ai/terrain/terrarium/{z}/{x}/{y}.png"
+const TERRARIUM_TILE_URL = "https://tiles.mailwoman.post/terrain/terrarium/{z}/{x}/{y}.png"
 
 /**
  * The zoom the depths are read at: about 600 m per pixel at the equator,

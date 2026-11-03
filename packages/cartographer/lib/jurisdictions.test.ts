@@ -21,7 +21,7 @@ describe("the jurisdiction layers", () => {
 		const style = {
 			version: 8 as const,
 			sources: {
-				[JurisdictionTileSetID]: createJurisdictionSource("https://tiles.mailwoman.ai/jurisdictions-v1.json"),
+				[JurisdictionTileSetID]: createJurisdictionSource("https://tiles.mailwoman.post/jurisdictions-v1.json"),
 			},
 			layers: JurisdictionLayers,
 		}

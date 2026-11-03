@@ -202,7 +202,7 @@ in that path.
   Playwright smoke over the fake runtime: shell loads, `Geocoder` renders, a fake query completes,
   `/debug` opens the visualizer, `?q=` survives.
 - Production smoke after each deploy, against real assets: `/`, `/build.json`, the manifest, the sqljs
-  WASM, a `Range` request to `public.mailwoman.post`, a tile from `tiles.mailwoman.ai`.
+  WASM, a `Range` request to `public.mailwoman.post`, a tile from `tiles.mailwoman.post`.
 
 ## Definition of done
 
@@ -263,7 +263,7 @@ This table is recorded so that no reader takes the proposal as current.
 | -------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | `apps/earth`, `apps/web-demo` status to decide           | `apps/` was removed 2026-08-21 (`9d22f6fe6`); every workspace is under `packages/`     |
 | `@mailwoman/browser` new package                         | refused in favor of owning-package export conditions                                   |
-| `tiles.sister.software`, `public.sister.software`        | `tiles.mailwoman.ai`, `public.mailwoman.post`                                          |
+| `tiles.sister.software`, `public.sister.software`        | `tiles.mailwoman.post`, `public.mailwoman.post`                                        |
 | `wrangler.jsonc`                                         | the repository's workers use `wrangler.toml`                                           |
 | `packages/react/map/DemoMap.tsx`                         | `packages/react/lib/map/DemoMap.tsx`; source is under `lib/` everywhere                |
 | `publish-demo-assets-to-r2.run.ts` publishes demo assets | `mailwoman gazetteer publish` prints the bump instruction                              |

@@ -39,7 +39,7 @@ Terrain requests support zoom levels 0 through 15.
 | `main`                   | Compiled Worker entry, `./out/_worker.js`.           |
 
 The configured Worker name is `mailwoman-tiles`, and its configured custom
-domain is `tiles.mailwoman.ai`. These values come from the checked-in
+domain is `tiles.mailwoman.post`. These values come from the checked-in
 configuration. Check the deployed service separately to establish its health.
 
 A tileset called `planet.v4` resolves to

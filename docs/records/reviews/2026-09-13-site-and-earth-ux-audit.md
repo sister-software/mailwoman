@@ -134,7 +134,7 @@ with no interaction. A scroll appeared to fix it because any interaction forces 
 that had by then arrived.
 
 **The withdrawn claim** was that MapLibre never requested a tile at all, evidenced by
-`performance.getEntriesByType("resource")` reporting three requests to `tiles.mailwoman.ai` for the
+`performance.getEntriesByType("resource")` reporting three requests to `tiles.mailwoman.post` for the
 whole page life. That measurement cannot state the claim:
 
 - Resource Timing holds **250 entries by default** and drops the rest silently. This page fetches the
@@ -143,7 +143,7 @@ whole page life. That measurement cannot state the claim:
   for, so "three entries" measures the buffer rather than the network.
 - And the tiles come from the host that was counted:
   `packages/tile-worker/lib/protomaps.ts:72` builds the template as
-  `https://tiles.mailwoman.ai/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles rendered on screen, so
+  `https://tiles.mailwoman.post/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles rendered on screen, so
   requests to that host were made and went unrecorded. The two observations cannot both be true,
   and the measurement is the one that is wrong.
 

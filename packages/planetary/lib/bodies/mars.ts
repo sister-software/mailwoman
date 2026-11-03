@@ -24,8 +24,8 @@ export const MARS: PlanetaryMapConfig = {
 	// five features that span the body's range, so the chips are a tour rather than a sample.
 	exampleFeatures: ["Olympus Mons", "Valles Marineris", "Hellas Planitia", "Gale", "Planum Boreum"],
 	tiles: {
-		nomenclature: "https://tiles.mailwoman.ai/mars.json",
-		hillshade: "https://tiles.mailwoman.ai/mars-terrain.json",
+		nomenclature: "https://tiles.mailwoman.post/mars.json",
+		hillshade: "https://tiles.mailwoman.post/mars-terrain.json",
 	},
 	artifacts: {
 		version: VERSION,

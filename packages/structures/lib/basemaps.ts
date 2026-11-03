@@ -16,7 +16,7 @@ export const Basemap = {
 	/**
 	 * A `mailwoman/basemaps` build, served by the tile worker from `tiles/<name>.pmtiles` in `mailwoman-tiles`.
 	 *
-	 * The planet at `tiles.mailwoman.ai/planet.v4.json` is one: a 323 GiB archive
+	 * The planet at `tiles.mailwoman.post/planet.v4.json` is one: a 323 GiB archive
 	 * built on 2026-10-23 with Overture buildings.
 	 * Its TileJSON still states Protomaps' default description of OpenStreetMap and Natural Earth.
 	 */

@@ -4,7 +4,7 @@
 
 **Goal:** One private workspace, `packages/planetary`, built twice by `PLANETARY_BODY`, serving `moon.mailwoman.post` and `mars.mailwoman.post`: a MapLibre globe over the published nomenclature and hillshade archives, labels decluttered by scale, a click-to-inspect feature panel, search over the pipeline's ancestrie artifact, stable `/feature/<id>` links, and visible attribution from the pipeline manifest.
 
-**Architecture:** The app copies the Earth shell's shape and imports the shared pieces from `@mailwoman/site-kit`. `@mailwoman/cartographer` gains a `planetary` module whose `createPlanetaryStyle` composes a body's sources and layers over `StyleSpecificationComposer`, which learns to take its base layers, hillshade source and sprite as inputs instead of assuming Earth's. Sources are TileJSON URLs on `tiles.mailwoman.ai`, which MapLibre resolves itself. The body is fixed at build time through the package's own `lib/env.ts` and Vite `define`, and the app checks the production host against it at startup. A feature is identified by the pipeline's stable id. The tile properties and the search payload both contain that id, so a deep link needs no tile query.
+**Architecture:** The app copies the Earth shell's shape and imports the shared pieces from `@mailwoman/site-kit`. `@mailwoman/cartographer` gains a `planetary` module whose `createPlanetaryStyle` composes a body's sources and layers over `StyleSpecificationComposer`, which learns to take its base layers, hillshade source and sprite as inputs instead of assuming Earth's. Sources are TileJSON URLs on `tiles.mailwoman.post`, which MapLibre resolves itself. The body is fixed at build time through the package's own `lib/env.ts` and Vite `define`, and the app checks the production host against it at startup. A feature is identified by the pipeline's stable id. The tile properties and the search payload both contain that id, so a deep link needs no tile query.
 
 **Tech Stack:** React 19, Vite 8, `react-map-gl` 8 over MapLibre 6 (`projection: "globe"`), `@mailwoman/ancestrie` reader, `vite-plugin-pwa`, wrangler 4, Playwright, vitest.
 
@@ -81,7 +81,7 @@ test("a composition with no overrides is today's Earth style: base layers, the t
 
 test("a composition can bring its own base layers, no hillshade source and no sprite", () => {
 	const style = new StyleSpecificationComposer({
-		sources: { moon: { type: "vector", url: "https://tiles.mailwoman.ai/moon.json" } },
+		sources: { moon: { type: "vector", url: "https://tiles.mailwoman.post/moon.json" } },
 		baseLayers: [{ id: "space", type: "background", paint: { "background-color": "#000" } }],
 		hillshadeSource: null,
 		sprite: null,
@@ -162,8 +162,8 @@ test.each(["moon", "mars"] as const)(
 	(body) => {
 		const style = createPlanetaryStyle({
 			body,
-			nomenclatureTileJSONURL: `https://tiles.mailwoman.ai/${body}.json`,
-			hillshadeTileJSONURL: `https://tiles.mailwoman.ai/${body}-hillshade.json`,
+			nomenclatureTileJSONURL: `https://tiles.mailwoman.post/${body}.json`,
+			hillshadeTileJSONURL: `https://tiles.mailwoman.post/${body}-hillshade.json`,
 		})
 
 		expect(validateStyleMin(style)).toEqual([])
@@ -403,8 +403,8 @@ export const MOON: PlanetaryMapConfig = {
 	hostname: "moon.mailwoman.post",
 	initialView: { longitude: 0, latitude: 0, zoom: 1.5 },
 	tiles: {
-		nomenclature: "https://tiles.mailwoman.ai/moon.json",
-		hillshade: "https://tiles.mailwoman.ai/moon-hillshade.json",
+		nomenclature: "https://tiles.mailwoman.post/moon.json",
+		hillshade: "https://tiles.mailwoman.post/moon-hillshade.json",
 	},
 	artifacts: {
 		version: "<the version the astrogeology publish wrote>",
@@ -635,7 +635,7 @@ test("the globe loads for the built body, search finds a known feature, selectio
 })
 ```
 
-The preview serves the real archives from `tiles.mailwoman.ai` and the search artifact from `public.mailwoman.post`, so this smoke needs the network, as the Earth production smoke does.
+The preview serves the real archives from `tiles.mailwoman.post` and the search artifact from `public.mailwoman.post`, so this smoke needs the network, as the Earth production smoke does.
 
 - [ ] **Step 3: CI and README**
 

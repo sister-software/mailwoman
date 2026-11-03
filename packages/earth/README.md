@@ -3,7 +3,7 @@
 Earth is the mailwoman geocoder map, served at `https://earth.mailwoman.post` as an installable PWA on Cloudflare
 Workers Static Assets. The app is static: `wrangler.toml` declares `assets` and no Worker script, so a navigation or
 an asset request never invokes compute. Model and gazetteer artifacts come from `public.mailwoman.post` at run time
-and tiles from `tiles.mailwoman.ai`; the range worker and sqlite-wasm runtime files are staged under `public/sqlite/` by the build.
+and tiles from `tiles.mailwoman.post`; the range worker and sqlite-wasm runtime files are staged under `public/sqlite/` by the build.
 
 ## Commands
 

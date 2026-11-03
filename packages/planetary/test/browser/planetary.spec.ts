@@ -52,7 +52,7 @@ test("an unknown path is the not-found view, not the globe", async ({ page }) =>
 test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
 	// Both archive origins are refused so the identity strip must render before,
 	// during and after a load that never finishes.
-	await page.route("https://tiles.mailwoman.ai/**", (route) => route.abort())
+	await page.route("https://tiles.mailwoman.post/**", (route) => route.abort())
 	await page.route("https://public.mailwoman.post/**", (route) => route.abort())
 
 	await page.goto("/")

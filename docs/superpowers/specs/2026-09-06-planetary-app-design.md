@@ -98,12 +98,12 @@ The app reads TileJSON from the tile worker's existing route shape:
 ```ts
 const tiles = {
 	moon: {
-		nomenclature: "https://tiles.mailwoman.ai/moon.json",
-		hillshade: "https://tiles.mailwoman.ai/moon-hillshade.json",
+		nomenclature: "https://tiles.mailwoman.post/moon.json",
+		hillshade: "https://tiles.mailwoman.post/moon-hillshade.json",
 	},
 	mars: {
-		nomenclature: "https://tiles.mailwoman.ai/mars.json",
-		hillshade: "https://tiles.mailwoman.ai/mars-hillshade.json",
+		nomenclature: "https://tiles.mailwoman.post/mars.json",
+		hillshade: "https://tiles.mailwoman.post/mars-hillshade.json",
 	},
 }
 ```

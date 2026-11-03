@@ -160,7 +160,7 @@ The manifest is the reproducibility record and the input to the app's attributio
 ### Publish process
 
 `astrogeology publish --body moon` runs `mailwoman tiles publish --tileset moon --file …` and
-`--tileset moon-hillshade`, then fetches `https://tiles.mailwoman.ai/moon.json` and one low-zoom and
+`--tileset moon-hillshade`, then fetches `https://tiles.mailwoman.post/moon.json` and one low-zoom and
 one high-zoom tile to confirm the route answers. The bucket and prefix are the tile worker's
 (`mailwoman-tiles`, `tiles/`).
 
@@ -186,7 +186,7 @@ the `RADII` table becomes the Earth entry of a per-body table exported for the t
 ## Definition of done
 
 - `moon.pmtiles`, `moon-hillshade.pmtiles`, `mars.pmtiles`, `mars-hillshade.pmtiles` are published
-  and answer at `tiles.mailwoman.ai`.
+  and answer at `tiles.mailwoman.post`.
 - Each body's `manifest.json` records source checksums, coordinate conventions, and output checksums.
 - The fixture build runs in CI in under a minute with no network.
 - `@mailwoman/spatial` takes a body radius, with the Earth default unchanged for every existing caller.
