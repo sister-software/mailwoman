@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Regenerates the committed calling-code and currency table in `codex/country/reference-data.ts`.
+ * Regenerates the committed calling-code and currency table in `codex/country/reference/data.ts`.
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
@@ -17,7 +17,7 @@ const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/count
  * Resolves the committed table from the `@mailwoman/codex` package root, so the path
  * is the same from the source tree, `out/` and a published tarball.
  */
-const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "reference-data.ts")
+const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "reference", "data.ts")
 
 /**
  * Describes the fields this tool reads from one mledoze/countries record.
@@ -43,7 +43,7 @@ export interface GenerateCountryReferenceOptions {
 	/**
 	 * Overrides the output path.
 	 *
-	 * @defaultValue the committed `codex/country/reference-data.ts`.
+	 * @defaultValue the committed `codex/country/reference/data.ts`.
 	 */
 	out?: string
 }
@@ -81,8 +81,11 @@ function callingCode(country: MledozeCountry): number | null {
 	return Number.isFinite(n) ? n : null
 }
 
+/**
+ * Prints one row on one line, as the committed table holds it once `oxfmt` spaces it.
+ */
 const serialize = (o: CountryReferenceEntry): string =>
-	prettyJSON(o)
+	stringifyJSON(o)
 		.replaceAll('"isoCode"', "isoCode")
 		.replaceAll('"callingCode"', "callingCode")
 		.replaceAll('"currency"', "currency")
@@ -151,13 +154,17 @@ export async function generateCountryReference(
  *   Regenerate with: mailwoman dev generate country-reference
  */
 
-/** Static per-country reference: calling code + currency. */
+/**
+ * Static per-country reference: calling code + currency.
+ */
 export interface CountryReference {
 	callingCode?: number
 	currency?: { isoCode: string; name?: string; symbol?: string }
 }
 
-/** ISO 3166-1 alpha-2 → reference. */
+/**
+ * ISO 3166-1 alpha-2 → reference.
+ */
 export const COUNTRY_REFERENCE: Record<string, CountryReference> = {`
 
 	await writeLocalTextFile(`${header}\n${body}\n}\n`, outPath)
