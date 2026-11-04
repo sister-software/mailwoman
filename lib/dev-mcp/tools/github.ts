@@ -24,7 +24,7 @@ import {
 	TODO_SYNC_END,
 	type RunGitHub,
 } from "#dev-mcp/github"
-import { assertCIComplete } from "#dev-mcp/hooks/ci-completion"
+import { assertCIComplete, trackedCIMarkerPaths, type TrackedCI } from "#dev-mcp/hooks/ci-completion"
 import type { DevTool, DevToolDeps } from "#dev-mcp/tool-kit"
 
 const REPO = "sister-software/mailwoman"
@@ -412,16 +412,12 @@ export function githubTools(deps: DevToolDeps, overrides: GitHubToolOverrides = 
 					throw new TypeError(`GitHub returned an unrecognized pull-request URL: ${url}`)
 				}
 
-				await writeLocalJSONFile(
-					{ repo: REPO, pullRequestNumber },
-					resolvePath(cwd, ".claude", "state", "tracked-ci.json")
-				)
+				// The server cannot see the calling session.
+				// The ci-completion PostToolUse hook records it as owner.
+				const marker: TrackedCI = { repo: REPO, pullRequestNumber, sessionID: null }
 
-				if (cwd !== deps.registry.repoRoot) {
-					await writeLocalJSONFile(
-						{ repo: REPO, pullRequestNumber },
-						resolvePath(deps.registry.repoRoot, ".claude", "state", "tracked-ci.json")
-					)
+				for (const path of trackedCIMarkerPaths(deps.registry.repoRoot, cwd)) {
+					await writeLocalJSONFile(marker, path)
 				}
 
 				const task = `Review successful CI for PR #${pullRequestNumber} on its current head.`

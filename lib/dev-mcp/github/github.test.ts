@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { git, workingTreeRoot } from "@mailwoman/core/git"
@@ -20,6 +20,7 @@ import {
 	type GitHubIssue,
 	type RunGitHub,
 } from "#dev-mcp/github"
+import { trackedCIMarkerPath } from "#dev-mcp/hooks/ci-completion"
 import { JobRegistry, type Job } from "#dev-mcp/jobs"
 import { stubEngineRegistry } from "#dev-mcp/test/stub-registry"
 import { githubTools } from "#dev-mcp/tools"
@@ -352,6 +353,7 @@ describe("GitHub MCP tools", () => {
 		expect(parseJSONStrict(await readLocalTextFile(cwd(".claude", "state", "tracked-ci.json")))).toEqual({
 			repo: "sister-software/mailwoman",
 			pullRequestNumber: 2400,
+			sessionID: null,
 		})
 	})
 
@@ -404,6 +406,12 @@ describe("GitHub MCP tools", () => {
 
 		expect(createArgs[createArgs.indexOf("--head") + 1]).toBe("feature/worktree")
 		expect(start.mock.calls[0]![3]).toBe(await workingTreeRoot(worktree))
+
+		const unowned = { repo: "sister-software/mailwoman", pullRequestNumber: 2401, sessionID: null }
+
+		for (const checkout of [await workingTreeRoot(worktree), repo]) {
+			await expect(readLocalJSONFile(trackedCIMarkerPath(checkout))).resolves.toEqual(unowned)
+		}
 	})
 
 	it("refuses a checkout that belongs to another repository", async () => {
