@@ -4770,6 +4770,16 @@
 				}
 			]
 		},
+		"wikidata-vital-places": {
+			"inputs": [
+				{
+					"registerSource": "us-geodata-aggregate-4",
+					"license": "unchecked-corpus-input-us-wikimedia-foundation",
+					"reads": "labels and aliases of place items in ten languages, with their P31 classes and P17 countries, from the query service"
+				}
+			],
+			"authored": ["COUNTRY_DISPLAY_NAME in packages/corpus/lib/adapters/wof/json-rows.ts"]
+		},
 		"wof-admin": {
 			"inputs": [
 				{
