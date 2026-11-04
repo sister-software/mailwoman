@@ -147,12 +147,44 @@ interface GeoidCalcResponse {
 	ExportData?: { ErrMsg?: string }
 }
 
+/**
+ * A tileset's directory name, such as `13100_tokyo23-ku_city_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_lod2`.
+ *
+ * The catalog serves each variant of one ward's buildings under a different asset path,
+ * so only the directory names pair them.
+ */
+function tilesetDirectory(url: string): string {
+	return url.split("/").at(-2) ?? ""
+}
+
+/**
+ * The building tilesets to draw: one LoD2 tileset per ward, textured where the
+ * catalog has a textured LoD2 tileset beside the untextured one.
+ *
+ * An untextured tileset's glTF sets no base color, vertex color or texture, so it renders as one flat gray.
+ * A textured tileset's glTF holds photographic textures or vertex colors.
+ *
+ * Each tileset appears once.
+ * The catalog can list one ward's untextured tileset twice under two asset paths,
+ * as it does Mashiki-machi's 2023 buildings, and both pair with the one textured tileset.
+ */
+export function selectBuildingTilesets<T extends Pick<CatalogEntry, "type_en" | "url">>(datasets: readonly T[]): T[] {
+	const buildings = datasets.filter((entry) => entry.type_en === "bldg")
+	const byDirectory = new Map(buildings.map((entry) => [tilesetDirectory(entry.url), entry]))
+
+	const selected = buildings
+		.filter((entry) => tilesetDirectory(entry.url).endsWith("_lod2_no_texture"))
+		.map((entry) => byDirectory.get(tilesetDirectory(entry.url).replace(/_lod2_no_texture$/u, "_lod2")) ?? entry)
+
+	return [...new Map(selected.map((entry) => [entry.url, entry])).values()]
+}
+
 export async function readPlateauTilesets(
 	client: PlateauClient,
 	onSkip: (url: string, reason: string) => void
 ): Promise<PlateauTileset[]> {
 	const catalog = await client.getJSON<{ datasets: CatalogEntry[] }>(PLATEAU_CATALOG_URL)
-	const entries = catalog.datasets.filter((entry) => entry.type_en === "bldg" && /lod2_no_texture/.test(entry.url))
+	const entries = selectBuildingTilesets(catalog.datasets)
 	const tilesets: PlateauTileset[] = []
 	// Wards of one designated city share one dataset, so each dataset's license is read once.
 	const licenses = new Map<string, Promise<string | null>>()

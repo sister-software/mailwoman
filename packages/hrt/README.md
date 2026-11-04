@@ -47,7 +47,7 @@ The fork's Java build of 2026-10-23 (`planet.v4`) read the Overture release that
 does not record which one, so this comparison checks counts rather than bytes. On a 4 km Osaka box (135.48–135.52° E, 34.66–34.70° N) from release
 2026-10-21.0, with 35,223 buildings and 379 building parts, tile `15/28718/13015` held 3,855 buildings, 4 building
 parts and 2,810 heights in both archives. `planet.v4` predates the fork's `height_src`, `district` and `class`
-attributes, so only the `hrt` tile carries them.
+attributes, so only the `hrt` tile has them.
 
 `hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
 `atan2`. On 200,000 inputs, Rust's own `hypot` differed from Java's in the last bit for 26,528 (13%). JTS measures

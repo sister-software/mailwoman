@@ -6,7 +6,38 @@
 
 import { describe, expect, it } from "vitest"
 
-import { boundsFromTilesetHead, datasetNameFromTilesetURL } from "#sdk/plateau"
+import { boundsFromTilesetHead, datasetNameFromTilesetURL, selectBuildingTilesets } from "#sdk/plateau"
+
+describe("selectBuildingTilesets", () => {
+	const base = "https://assets.cms.plateau.reearth.io/assets"
+
+	const ward = (hash: string, variant: string) => ({
+		type_en: "bldg",
+		url: `${base}/${hash}/13100_tokyo23-ku_city_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_${variant}/tileset.json`,
+	})
+
+	it("takes the textured LoD2 tileset in place of the untextured one, whatever its asset path", () => {
+		const textured = ward("16/aaaa", "lod2")
+
+		expect(selectBuildingTilesets([ward("bc/bbbb", "lod2_no_texture"), textured, ward("c3/cccc", "lod1")])).toEqual([
+			textured,
+		])
+	})
+
+	it("lists a textured tileset once when two untextured entries pair with it", () => {
+		const textured = ward("16/aaaa", "lod2")
+
+		expect(
+			selectBuildingTilesets([ward("bc/bbbb", "lod2_no_texture"), ward("bd/eeee", "lod2_no_texture"), textured])
+		).toEqual([textured])
+	})
+
+	it("keeps an untextured tileset whose ward has no textured one, and skips other themes", () => {
+		const untextured = ward("bc/bbbb", "lod2_no_texture")
+
+		expect(selectBuildingTilesets([untextured, { ...ward("d4/dddd", "lod2"), type_en: "tran" }])).toEqual([untextured])
+	})
+})
 
 describe("datasetNameFromTilesetURL", () => {
 	it("builds the CKAN name from a prefecture or city release URL", () => {

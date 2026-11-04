@@ -226,9 +226,7 @@ function buildingsTileJSONURL(config: EarthConfig): URL | null {
 /**
  * Source layers only a `mailwoman/basemaps` build holds.
  *
- * The configured Protomaps tiles lack them, and MapLibre logs an error for every style layer that reads one.
- * Their style layers are kept only when the loaded tileset's TileJSON lists
- * the source layer in `vector_layers`.
+ * When the basemap's TileJSON is unreadable, the style keeps the other basemap layers and drops these.
  */
 const BUILD_ONLY_SOURCE_LAYERS = new Set(["trees", "infrastructure"])
 
@@ -236,7 +234,6 @@ const BUILD_ONLY_SOURCE_LAYERS = new Set(["trees", "infrastructure"])
  * The source layers a TileJSON lists in `vector_layers`.
  *
  * An unreadable TileJSON answers an empty set and logs the failure.
- * The style then drops the build-only layers.
  */
 async function readVectorLayers(tileJSONURL: string): Promise<ReadonlySet<string>> {
 	try {
@@ -265,14 +262,33 @@ function takeReleasesManifest(): Promise<ReleasesManifest | null> {
 }
 
 /**
- * The composed basemap style both geocoder runtimes render.
+ * Whether a basemap style layer reads a source layer the basemap holds.
+ *
+ * MapLibre logs an error for every style layer that reads a missing source layer,
+ * such as `address_label` over a basemap built without `buildings`.
+ * With an unreadable TileJSON (an empty `vectorLayers`), only the build-only layers are dropped.
  */
-export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
+function basemapHasSourceLayer(
+	layer: ReturnType<StyleSpecificationComposer["toJSON"]>["layers"][number],
+	vectorLayers: ReadonlySet<string>
+): boolean {
+	if (!("source-layer" in layer) || layer.source !== MailwomanBaseTileSetID) return true
+
+	const sourceLayer = String(layer["source-layer"])
+
+	return vectorLayers.size ? vectorLayers.has(sourceLayer) : !BUILD_ONLY_SOURCE_LAYERS.has(sourceLayer)
+}
+
+/**
+ * The composed basemap style both geocoder runtimes render, or `null` until the basemap's TileJSON is read.
+ *
+ * The style waits for the TileJSON so that it never changes after the map loads it.
+ * A changed style makes MapLibre rebuild the style from scratch and request every loaded tile again.
+ */
+export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle | null {
 	const tileJSONURL = useMemo(() => basemapTileJSONURL(config).href, [config])
 	const buildingsURL = useMemo(() => buildingsTileJSONURL(config)?.href ?? null, [config])
 
-	// `null` until the TileJSON is read.
-	// The style draws without the build-only layers until then.
 	const [vectorLayers, setVectorLayers] = useState<ReadonlySet<string> | null>(null)
 
 	useEffect(() => {
@@ -289,7 +305,9 @@ export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
 		}
 	}, [tileJSONURL])
 
-	return useMemo<MapCanvasStyle>(() => {
+	return useMemo<MapCanvasStyle | null>(() => {
+		if (vectorLayers === null) return null
+
 		const style = new StyleSpecificationComposer({
 			sources: {
 				[MailwomanBaseTileSetID]: { type: "vector", url: tileJSONURL },
@@ -304,13 +322,7 @@ export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
 
 		return {
 			...style,
-			layers: style.layers.filter((layer) => {
-				if (!("source-layer" in layer)) return true
-
-				const sourceLayer = String(layer["source-layer"])
-
-				return !BUILD_ONLY_SOURCE_LAYERS.has(sourceLayer) || (vectorLayers?.has(sourceLayer) ?? false)
-			}),
+			layers: style.layers.filter((layer) => basemapHasSourceLayer(layer, vectorLayers)),
 		}
 	}, [tileJSONURL, buildingsURL, vectorLayers, config.underseaFeaturesURL])
 }

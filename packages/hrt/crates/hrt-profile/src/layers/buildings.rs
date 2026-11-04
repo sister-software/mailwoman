@@ -394,7 +394,8 @@ pub fn process_overture(
 }
 
 /// `Buildings.postProcess`. At zoom 15, addresses with equal attributes keep their first point, without its street.
-/// Below it the name attributes drop; at zooms 11 and 12 heights round to 20 meters and neighboring footprints merge.
+/// Below it the name attributes drop; below zoom 14 the feature id and `sort_rank` drop as well; at zooms 11 and 12
+/// heights round to 20 meters and neighboring footprints merge.
 pub fn post_process(zoom: u8, features: Vec<TileFeature>, counts: &mut SnapCounts) -> Vec<TileFeature> {
 	if zoom == 15 {
 		let mut buildings = Vec::with_capacity(features.len());
@@ -415,13 +416,19 @@ pub fn post_process(zoom: u8, features: Vec<TileFeature>, counts: &mut SnapCount
 		}));
 		return buildings;
 	}
-	// The fork's Area.filterArea with no minimum area keeps every feature and removes its names.
+	// The fork's Area.filterArea with no minimum area keeps every feature and removes its names. Below zoom 14 the feature
+	// id and `sort_rank` drop too: the map reads a footprint's id only to hide it under a city model, which draws from
+	// zoom 14, and no style reads `sort_rank`. On a central Osaka z13 tile they were 26% of the decoded bytes.
 	let mut features: Vec<TileFeature> = features
 		.into_iter()
 		.map(|mut feature| {
+			let below_14 = zoom < 14;
 			feature
 				.attributes
-				.retain(|(key, _)| key != "name" && !key.starts_with("name:"));
+				.retain(|(key, _)| key != "name" && !key.starts_with("name:") && !(below_14 && key == "sort_rank"));
+			if below_14 {
+				feature.id = 0;
+			}
 			feature
 		})
 		.collect();

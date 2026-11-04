@@ -551,7 +551,10 @@ export const Scene3D: React.FC = () => {
 					...cityModels.map(
 						(tileset) =>
 							new Tile3DLayer({
-								id: `city-model-${tileset.cityCode}-${tileset.year}`,
+								// The wards of one designated city, such as Osaka's, are separate
+								// tilesets under one city code, so only the URL tells them apart.
+								// deck.gl refuses two layers with one id.
+								id: `city-model-${tileset.url}`,
 								...placement,
 								data: tileset.url,
 								loader: Tiles3DLoader,
