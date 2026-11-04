@@ -47,8 +47,11 @@ export function CompactBuildings(): null {
 
 		// three.js and 3DTilesRendererJS load only on a page that draws city models.
 		// The main bundle stays without them.
-		void import("#scene/city-models/layer").then(({ CityModelsLayer }) => {
-			if (removed || !map.getLayer(COMPACT_BUILDINGS_LAYER_ID)) return
+		// The import starts once the building layer is on the map, so the city layer lands beside it.
+		const mountCityModels = async () => {
+			const { CityModelsLayer } = await import("#scene/city-models/layer")
+
+			if (removed || map.getLayer(CITY_MODELS_LAYER_ID)) return
 
 			const cityModels = new CityModelsLayer(
 				CITY_TILESETS,
@@ -57,7 +60,7 @@ export function CompactBuildings(): null {
 			)
 
 			map.addLayer(cityModels, map.getStyle().layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
-		})
+		}
 
 		const mount = () => {
 			if (map.getLayer(COMPACT_BUILDINGS_LAYER_ID)) return
@@ -78,6 +81,7 @@ export function CompactBuildings(): null {
 			}
 
 			map.addLayer(buildings, style.layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
+			void mountCityModels()
 		}
 
 		if (map.isStyleLoaded()) {
