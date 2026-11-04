@@ -12,8 +12,8 @@
  *   The part goes to `<out>/wikidata-vital-places-00000.parquet`, and the holdout and counts beside it.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -40,7 +40,8 @@ const { values } = parseArguments({
 
 if (!values.out) throw new Error("--out names the directory the part is written to")
 
-if (!values["source-root"]) throw new Error("--source-root names the fetch's --out root, such as <data root>/corpus/sources")
+if (!values["source-root"])
+	throw new Error("--source-root names the fetch's --out root, such as <data root>/corpus/sources")
 
 const out = PathBuilder.from(resolvePath(values.out as string))
 const sourceDir = vitalPlacesPath(PathBuilder.from(resolvePath(values["source-root"] as string)))
@@ -110,7 +111,12 @@ await writeLocalJSONLFile(
 	out(`${VITAL_PLACES_SOURCE}-holdout.jsonl`)
 )
 
-const counts = { ...render.counts, rows: rows.length, holdoutRows: render.holdout.length, quarantined: quarantined.length }
+const counts = {
+	...render.counts,
+	rows: rows.length,
+	holdoutRows: render.holdout.length,
+	quarantined: quarantined.length,
+}
 
 await writeLocalJSONFile(counts, out(`${VITAL_PLACES_SOURCE}-counts.json`))
 

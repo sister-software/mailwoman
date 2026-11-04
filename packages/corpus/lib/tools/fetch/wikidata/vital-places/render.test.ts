@@ -6,6 +6,7 @@
 
 import { describe, expect, test } from "vitest"
 
+import type { VitalPlace } from "#tools/fetch/wikidata/vital-places/inventory"
 import {
 	holdsOutVitalPlace,
 	renderVitalPlaceForms,
@@ -13,7 +14,6 @@ import {
 	VITAL_PLACE_RENDERINGS,
 	vitalPlaceRendering,
 } from "#tools/fetch/wikidata/vital-places/render"
-import type { VitalPlace } from "#tools/fetch/wikidata/vital-places/inventory"
 
 // The roots follow Wikidata's tree. Q1440300 (observation tower) sits under both Q811979 and Q56061.
 // Q515 (city) sits under Q486972 only. Q46169 (national park) sits under Q56061 and Q473972.

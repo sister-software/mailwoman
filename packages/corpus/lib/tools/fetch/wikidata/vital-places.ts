@@ -52,7 +52,6 @@ import {
 	WIKIDATA_API_ENDPOINT,
 } from "#tools/fetch/wikidata/vital-places/entities"
 import { buildInventory, type VitalPlaceCounts, writeInventory } from "#tools/fetch/wikidata/vital-places/inventory"
-import { fetchVitalEntitiesFromQueries } from "#tools/fetch/wikidata/vital-places/query-entities"
 import { formatElapsed, type ProgressReporter } from "#tools/fetch/wikidata/vital-places/progress"
 import {
 	downloadQRank,
@@ -61,6 +60,7 @@ import {
 	type QRankRow,
 	readTopQRank,
 } from "#tools/fetch/wikidata/vital-places/qrank"
+import { fetchVitalEntitiesFromQueries } from "#tools/fetch/wikidata/vital-places/query-entities"
 
 /**
  * The source id, and the directory under the fetch root.
@@ -223,9 +223,9 @@ export async function fetchWikidataVitalPlaces(
 	// Records the query service wrote before blank-node values were dropped can hold a `genid` IRI in place of an item.
 	const isItemID = (id: string) => /^Q\d+$/u.test(id)
 
-	const countryIDs = [
-		...new Set(located.flatMap((record) => (isVitalEntity(record) ? record.countries : []))),
-	].filter(isItemID)
+	const countryIDs = [...new Set(located.flatMap((record) => (isVitalEntity(record) ? record.countries : [])))].filter(
+		isItemID
+	)
 
 	const countryCodes = await readCountryCodes(api, countryIDs, knownCodes, report)
 	await writeLocalJSONFile(countryCodes, countriesPath)

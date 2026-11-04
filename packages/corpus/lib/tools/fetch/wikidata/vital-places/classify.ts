@@ -91,10 +91,7 @@ export type PlaceVerdict = (typeof PLACE_VERDICTS)[keyof typeof PLACE_VERDICTS]
  *
  * `wdt:P279*` includes the zero-length path, so a class that is itself a root descends from it.
  */
-export function buildClassDescentQuery(
-	classQIDs: readonly string[],
-	roots: readonly string[] = DESCENT_ROOTS
-): string {
+export function buildClassDescentQuery(classQIDs: readonly string[], roots: readonly string[] = DESCENT_ROOTS): string {
 	if (!classQIDs.length || classQIDs.length > CLASS_QUERY_BATCH) {
 		throw new RangeError(`a class descent query names 1 to ${CLASS_QUERY_BATCH} classes, not ${classQIDs.length}`)
 	}

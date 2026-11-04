@@ -11,10 +11,7 @@
 		"package": "@mailwoman/neural-weights-en-us",
 		"package_version": "10.7.0",
 		"model_card_version": "10.8.0",
-		"chain": [
-			"@mailwoman/neural-weights-en-nz",
-			"@mailwoman/neural-weights-en-us"
-		],
+		"chain": ["@mailwoman/neural-weights-en-nz", "@mailwoman/neural-weights-en-us"],
 		"note": "These entries are @mailwoman/neural-weights-en-us's record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.",
 		"attribution": [
 			{
@@ -61,9 +58,7 @@
 		"required_attributions": [
 			{
 				"license": "BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE",
-				"sources": [
-					"rendered-fr-admin-split"
-				],
+				"sources": ["rendered-fr-admin-split"],
 				"statement": null
 			},
 			{
@@ -83,38 +78,27 @@
 			},
 			{
 				"license": "CDLA-Permissive-2.0",
-				"sources": [
-					"overture-latam"
-				],
+				"sources": ["overture-latam"],
 				"statement": null
 			},
 			{
 				"license": "CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",
-				"sources": [
-					"rendered-sg-register"
-				],
+				"sources": ["rendered-sg-register"],
 				"statement": null
 			},
 			{
 				"license": "DL-DE-BY-2.0 AND DL-DE-ZERO-2.0 AND LicenseRef-unchecked-corpus-input-us-who-s-on-first",
-				"sources": [
-					"rendered-de"
-				],
+				"sources": ["rendered-de"],
 				"statement": null
 			},
 			{
 				"license": "etalab-2.0",
-				"sources": [
-					"ban",
-					"rendered-fr-order"
-				],
+				"sources": ["ban", "rendered-fr-order"],
 				"statement": null
 			},
 			{
 				"license": "Licence Ouverte 1.0",
-				"sources": [
-					"fr-finess-overseas"
-				],
+				"sources": ["fr-finess-overseas"],
 				"statement": null
 			},
 			{
@@ -136,101 +120,72 @@
 			},
 			{
 				"license": "LicenseRef-CC-BY-unstated-version",
-				"sources": [
-					"opendata-az"
-				],
+				"sources": ["opendata-az"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-FO-Umhvorvisstovan-Brukstreytir",
-				"sources": [
-					"adressur-fo"
-				],
+				"sources": ["adressur-fo"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-IM-OGL",
-				"sources": [
-					"landregistry-im"
-				],
+				"sources": ["landregistry-im"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-LI-ABI-OGD-2",
-				"sources": [
-					"llv-li"
-				],
+				"sources": ["llv-li"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-Licencia-Datos-Abiertos-Uruguay-0.1",
-				"sources": [
-					"ide-uy"
-				],
+				"sources": ["ide-uy"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-unchecked-access-free-us-us-health-1",
-				"sources": [
-					"usgov-nppes"
-				],
+				"sources": ["usgov-nppes"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-unchecked-access-free-us-us-health-2",
-				"sources": [
-					"usgov-hrsa-fqhc"
-				],
+				"sources": ["usgov-hrsa-fqhc"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-unchecked-corpus-input-us-new-york-department-of-state",
-				"sources": [
-					"state-ny-notaries"
-				],
+				"sources": ["state-ny-notaries"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-unchecked-corpus-input-us-overture-maps-foundation",
-				"sources": [
-					"overture"
-				],
+				"sources": ["overture"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-unchecked-corpus-input-us-texas-secretary-of-state",
-				"sources": [
-					"state-tx-notaries"
-				],
+				"sources": ["state-tx-notaries"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-unchecked-corpus-input-us-u-s-census-bureau",
-				"sources": [
-					"tiger"
-				],
+				"sources": ["tiger"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation",
-				"sources": [
-					"usgov-nad"
-				],
+				"sources": ["usgov-nad"],
 				"statement": null
 			},
 			{
 				"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
-				"sources": [
-					"wof-admin",
-					"wof-postalcode"
-				],
+				"sources": ["wof-admin", "wof-postalcode"],
 				"statement": null
 			},
 			{
 				"license": "none-recorded-on-rows",
-				"sources": [
-					"invented-anchor-absorption"
-				],
+				"sources": ["invented-anchor-absorption"],
 				"statement": null
 			},
 			{
@@ -341,180 +296,127 @@
 			},
 			{
 				"license": "OGL-UK-3.0",
-				"sources": [
-					"rendered-gb-os-open"
-				],
+				"sources": ["rendered-gb-os-open"],
 				"statement": null
 			},
 			{
 				"license": "OpenAddresses and National Address Database US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
-				"sources": [
-					"spliced-unit-v30"
-				],
+				"sources": ["spliced-unit-v30"],
 				"statement": null
 			},
 			{
 				"license": "OpenAddresses and National Address Database US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
-				"sources": [
-					"invented-po-box-cedex"
-				],
+				"sources": ["invented-po-box-cedex"],
 				"statement": null
 			},
 			{
 				"license": "OpenAddresses and National Address Database US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)",
-				"sources": [
-					"spliced-affix"
-				],
+				"sources": ["spliced-affix"],
 				"statement": null
 			},
 			{
 				"license": "OpenAddresses and National Address Database US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
-				"sources": [
-					"spliced-suffix-boundary"
-				],
+				"sources": ["spliced-suffix-boundary"],
 				"statement": null
 			},
 			{
 				"license": "OpenAddresses CH tuples, rendered native-order — see ingest SOURCES",
-				"sources": [
-					"rendered-ch"
-				],
+				"sources": ["rendered-ch"],
 				"statement": null
 			},
 			{
 				"license": "OpenAddresses HR tuples, rendered native-order — see ingest SOURCES",
-				"sources": [
-					"rendered-hr"
-				],
+				"sources": ["rendered-hr"],
 				"statement": null
 			},
 			{
 				"license": "OpenAddresses LU tuples, rendered native-order — see ingest SOURCES",
-				"sources": [
-					"rendered-lu"
-				],
+				"sources": ["rendered-lu"],
 				"statement": null
 			},
 			{
 				"license": "OpenAddresses multi-locale and National Address Database US skeletons + injected ISO-3166 country surface forms (codex)",
-				"sources": [
-					"spliced-country"
-				],
+				"sources": ["spliced-country"],
 				"statement": null
 			},
 			{
 				"license": "OpenAddresses PT tuples, rendered native-order — see ingest SOURCES",
-				"sources": [
-					"rendered-pt"
-				],
+				"sources": ["rendered-pt"],
 				"statement": null
 			},
 			{
 				"license": "OpenAddresses SK tuples, rendered native-order — see ingest SOURCES",
-				"sources": [
-					"rendered-sk"
-				],
+				"sources": ["rendered-sk"],
 				"statement": null
 			},
 			{
 				"license": "Public Domain",
-				"sources": [
-					"bsp-gu"
-				],
+				"sources": ["bsp-gu"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — bare-postcode; postcodes from OpenAddresses (per-source attribution in the model card)",
-				"sources": [
-					"codex-bare-postcode"
-				],
+				"sources": ["codex-bare-postcode"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
-				"sources": [
-					"rendered-cz-pcfirst-preposition-v21"
-				],
+				"sources": ["rendered-cz-pcfirst-preposition-v21"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — derived from CC-BY / public-domain input tuples",
-				"sources": [
-					"invented-house-venue",
-					"invented-po-box-military"
-				],
+				"sources": ["invented-house-venue", "invented-po-box-military"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
-				"sources": [
-					"fragment-fr-bare-street-v22"
-				],
+				"sources": ["fragment-fr-bare-street-v22"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — fr-fragment; (street, commune) from BAN (Base Adresse Nationale, Licence Ouverte)",
-				"sources": [
-					"fragment-fr"
-				],
+				"sources": ["fragment-fr"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — fragment-assay; street/number/city from OpenAddresses no",
-				"sources": [
-					"fragment-assay"
-				],
+				"sources": ["fragment-assay"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
-				"sources": [
-					"rendered-nl-postcode"
-				],
+				"sources": ["rendered-nl-postcode"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — no-fragment; (street, number, postcode, city) from OpenAddresses NO / Kartverket",
-				"sources": [
-					"fragment-no"
-				],
+				"sources": ["fragment-no"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) and Overture Places names (CDLA-Permissive-2.0) over OpenAddresses / BAN / US situs / OS OpenData (OGL-UK-3.0) address skeletons",
-				"sources": [
-					"spliced-sub-venue"
-				],
+				"sources": ["spliced-sub-venue"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — si-bare-village; (village, number, postcode) from OpenAddresses SI (per-source attribution in the model card)",
-				"sources": [
-					"rendered-si-bare-village"
-				],
+				"sources": ["rendered-si-bare-village"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
-				"sources": [
-					"spliced-trailing-region-ca-bare",
-					"spliced-trailing-region-es-v28",
-					"spliced-trailing-region-us"
-				],
+				"sources": ["spliced-trailing-region-ca-bare", "spliced-trailing-region-es-v28", "spliced-trailing-region-us"],
 				"statement": null
 			},
 			{
 				"license": "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",
-				"sources": [
-					"deepseek-kryptonite"
-				],
+				"sources": ["deepseek-kryptonite"],
 				"statement": null
 			},
 			{
 				"license": "TIGER/Line 2023 EDGES (US Census, public domain) real street pairs; National Address Database (public domain) Cook IL and Morris NJ zip-to-city tails",
-				"sources": [
-					"invented-intersection"
-				],
+				"sources": ["invented-intersection"],
 				"statement": null
 			}
 		],
@@ -676,9 +578,7 @@
 			{
 				"text": "OpenStreetMap contributors (ODbL-1.0): this overlay decodes through the `@mailwoman/neural-weights-en-us` model graph, which trained on OpenStreetMap-derived training extracts that package's card and effective training manifest record. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright.",
 				"license_named": "ODbL-1.0",
-				"uses": [
-					"training"
-				]
+				"uses": ["training"]
 			}
 		],
 		"by_use": {

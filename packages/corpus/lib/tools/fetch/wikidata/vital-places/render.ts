@@ -17,12 +17,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { sha256Hex } from "@mailwoman/core/hash"
 
 import { SourceRegister } from "#registers"
-import {
-	type ClassRoots,
-	ROAD_ROOTS,
-	SETTLEMENT_ROOTS,
-	SITE_ROOTS,
-} from "#tools/fetch/wikidata/vital-places/classify"
+import { type ClassRoots, ROAD_ROOTS, SETTLEMENT_ROOTS, SITE_ROOTS } from "#tools/fetch/wikidata/vital-places/classify"
 import type { VitalPlace } from "#tools/fetch/wikidata/vital-places/inventory"
 
 /**
