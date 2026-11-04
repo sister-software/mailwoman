@@ -23,6 +23,8 @@ const ROOTS = {
 	Q515: ["Q486972", "Q618123"],
 	Q46169: ["Q56061", "Q473972"],
 	Q4022: ["Q618123"],
+	// Q79007 (street) sits under Q811979 and itself, as Calle de Alcalá's class does.
+	Q79007: ["Q811979", "Q79007"],
 }
 
 function place(overrides: Partial<VitalPlace>): VitalPlace {
@@ -64,6 +66,10 @@ describe("vitalPlaceRendering", () => {
 		expect(vitalPlaceRendering(place({ classes: ["Q515", "Q1440300"], population: 2_100_000 }), ROOTS)).toBe(
 			VITAL_PLACE_RENDERINGS.settlement
 		)
+	})
+
+	test("a named street is left to the street sources", () => {
+		expect(vitalPlaceRendering(place({ classes: ["Q79007"] }), ROOTS)).toBe(VITAL_PLACE_RENDERINGS.road)
 	})
 
 	test("a place whose countries state no code renders no rows", () => {

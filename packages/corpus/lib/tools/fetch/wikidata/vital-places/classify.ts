@@ -48,10 +48,19 @@ export const SETTLEMENT_ROOTS: readonly string[] = ["Q486972", "Q56061", "Q6256"
 export const SITE_ROOTS: readonly string[] = ["Q811979", "Q473972", "Q839954"]
 
 /**
+ * A place whose class descends from one of these roots is a street or road: road and street.
+ *
+ * Wikidata files named streets under architectural structure, so a render of them as venues teaches `Calle de Alcalá`
+ * as a venue. The street sources already teach those names under `street`. Thoroughfare is left out because square
+ * descends from it, and Times Square is a venue.
+ */
+export const ROAD_ROOTS: readonly string[] = ["Q34442", "Q79007"]
+
+/**
  * Every root the descent query asks about: the inventory's and the render's.
  */
 export const DESCENT_ROOTS: readonly string[] = [
-	...new Set([...PLACE_ROOTS, ...EXCLUDED_ROOTS, ...SETTLEMENT_ROOTS, ...SITE_ROOTS]),
+	...new Set([...PLACE_ROOTS, ...EXCLUDED_ROOTS, ...SETTLEMENT_ROOTS, ...SITE_ROOTS, ...ROAD_ROOTS]),
 ]
 
 /**

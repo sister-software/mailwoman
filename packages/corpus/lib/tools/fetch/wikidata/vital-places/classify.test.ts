@@ -38,7 +38,7 @@ describe("buildClassDescentQuery", () => {
 	it("names the batch's classes and every root in one walk", () => {
 		expect(buildClassDescentQuery(["Q1440476", "Q515"])).toBe(`SELECT DISTINCT ?class ?root WHERE {
   VALUES ?class { wd:Q1440476 wd:Q515 }
-  VALUES ?root { wd:Q2221906 wd:Q618123 wd:Q811979 wd:Q1190554 wd:Q3024240 wd:Q486972 wd:Q56061 wd:Q6256 wd:Q473972 wd:Q839954 }
+  VALUES ?root { wd:Q2221906 wd:Q618123 wd:Q811979 wd:Q1190554 wd:Q3024240 wd:Q486972 wd:Q56061 wd:Q6256 wd:Q473972 wd:Q839954 wd:Q34442 wd:Q79007 }
   ?class wdt:P279* ?root .
 }`)
 	})

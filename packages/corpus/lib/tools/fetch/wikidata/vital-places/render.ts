@@ -18,6 +18,7 @@ import { createHash } from "node:crypto"
 import { SourceRegister } from "#registers"
 import {
 	type ClassRoots,
+	ROAD_ROOTS,
 	SETTLEMENT_ROOTS,
 	SITE_ROOTS,
 } from "#tools/fetch/wikidata/vital-places/classify"
@@ -56,6 +57,10 @@ export const VITAL_PLACE_RENDERINGS = {
 	 */
 	settlement: "settlement",
 	/**
+	 * The place is a street or road, left to the street sources.
+	 */
+	road: "road",
+	/**
 	 * No country of the place states an ISO 3166-1 code, so a row would have no `country` value.
 	 */
 	noCountry: "no-country",
@@ -80,6 +85,8 @@ export function vitalPlaceRendering(
 	const site = SITE_ROOTS.some((root) => placeRoots.has(root))
 
 	if (settlement && (!site || place.population != null)) return VITAL_PLACE_RENDERINGS.settlement
+
+	if (ROAD_ROOTS.some((root) => placeRoots.has(root))) return VITAL_PLACE_RENDERINGS.road
 
 	if (!vitalPlaceCountry(place)) return VITAL_PLACE_RENDERINGS.noCountry
 
@@ -216,7 +223,7 @@ export function renderVitalPlaces(
 	const result: VitalPlacesRender = {
 		rows: [],
 		holdout: [],
-		counts: { venue: 0, settlement: 0, "no-country": 0, heldOutEntities: 0, trainedEntities: 0 },
+		counts: { venue: 0, settlement: 0, road: 0, "no-country": 0, heldOutEntities: 0, trainedEntities: 0 },
 	}
 
 	for (const place of places) {
