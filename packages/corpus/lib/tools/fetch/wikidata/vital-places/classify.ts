@@ -102,25 +102,36 @@ export function readClassRoots(classQIDs: readonly string[], results: SPARQLResu
 }
 
 /**
+ * The roots of physical things: geographical feature and architectural structure.
+ */
+const PHYSICAL_ROOTS: readonly string[] = ["Q618123", "Q811979"]
+
+/**
+ * Occurrence, the excluded root a physical root overrides.
+ *
+ * Wikidata's class tree places some built classes under occurrence: mausoleum and tomb descend from burial.
+ * The Taj Mahal is a mausoleum and stays a place.
+ * Historical-country classes also reach geographical feature in the tree, so historical country excludes regardless.
+ */
+const OCCURRENCE_ROOT = "Q1190554"
+
+/**
  * The verdict for an item from its classes' roots.
  *
- * An excluded root wins over a place root, so a battle fought at a fortress stays out.
+ * Historical country keeps the item out.
+ * Occurrence keeps it out unless a physical root also applies, so a battle stays out and a mausoleum stays in.
+ * Otherwise any place root makes it a place.
  * A class with no cached roots leaves the item unclassified.
  */
 export function placeVerdict(classes: readonly string[], roots: Readonly<ClassRoots>): PlaceVerdict {
-	let place = false
+	const itemRoots = new Set(classes.flatMap((cls) => roots[cls] ?? []))
+	const physical = PHYSICAL_ROOTS.some((root) => itemRoots.has(root))
 
-	for (const cls of classes) {
-		for (const root of roots[cls] ?? []) {
-			if (EXCLUDED_ROOTS.includes(root)) return PLACE_VERDICTS.excluded
-
-			if (PLACE_ROOTS.includes(root)) {
-				place = true
-			}
-		}
+	for (const root of EXCLUDED_ROOTS) {
+		if (itemRoots.has(root) && !(root === OCCURRENCE_ROOT && physical)) return PLACE_VERDICTS.excluded
 	}
 
-	return place ? PLACE_VERDICTS.place : PLACE_VERDICTS.unclassified
+	return PLACE_ROOTS.some((root) => itemRoots.has(root)) ? PLACE_VERDICTS.place : PLACE_VERDICTS.unclassified
 }
 
 /**
