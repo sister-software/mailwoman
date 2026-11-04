@@ -63,7 +63,7 @@ export const PrivateCorpusEnvSchema = z.object({
 	}),
 	WIKIDATA_BOT_PASSWORD: blankAsAbsent(z.string().optional()).meta({
 		title: "Wikidata bot password",
-		description: "The generated password of the bot-password login WIKIDATA_BOT_USERNAME names.",
+		description: "The generated password of the bot-password login in WIKIDATA_BOT_USERNAME.",
 	}),
 	// LLM API keys for the corpus golden-expansion tooling and the DeepSeek generator.
 	DEEPSEEK_API_KEY: z.string().optional().meta({

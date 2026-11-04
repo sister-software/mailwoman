@@ -85,7 +85,7 @@ export const spec = {
 		"out-root": {
 			type: "string",
 			default: dataRootPath("corpus", "sources").toString(),
-			description: "Destination root, under the data root unless this names another",
+			description: "Destination root, under the data root unless this points elsewhere",
 		},
 		mode: { type: "string", choices: ["featureserver", "bulk"], description: "NAD fetch strategy" },
 		"nad-url": { type: "string", description: "NAD bulk URL" },

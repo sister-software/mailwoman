@@ -162,7 +162,7 @@ export interface WikidataHostConfig {
 	minRequestIntervalMs: number
 	timeoutMs: number
 	/**
-	 * The first wait before a retry whose answer names none, doubling on each further attempt.
+	 * The first wait before a retry whose answer sets no `Retry-After`, doubling on each further attempt.
 	 *
 	 * @defaultValue the client's own default
 	 */

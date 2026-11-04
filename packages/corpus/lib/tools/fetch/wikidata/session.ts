@@ -56,7 +56,7 @@ export const ACTION_API_LIMITS: Readonly<Record<WikimediaRequestMode, ActionAPIL
 }
 
 /**
- * The bot credentials two environment values name, or `null` when neither is set.
+ * The bot credentials from two environment values, or `null` when neither is set.
  *
  * @throws When only one is set, or the username lacks the bot password's `@app` part.
  */

@@ -77,7 +77,7 @@ export const WIKIDATA_API_ENDPOINT = "https://www.wikidata.org/w/api.php"
 export const WBGETENTITIES_BATCH = 50
 
 /**
- * The ids one entity request asks for when a caller names no batch size.
+ * The ids one entity request asks for when a caller sets no batch size.
  *
  * Measured 2026-11-04 from the lab host, serially, with this module's `props` and ten languages:
  * 10 ids answered in 607 and 849 ms, 20 in 883 and 961 ms, and 50 in 1,455 and 1,596 ms.
@@ -111,14 +111,14 @@ const MAXLAG_MIN_WAIT_MS = 5000
 const MAXLAG_MAX_WAIT_MS = 60_000
 
 /**
- * The first wait before a retry when the answer names none.
+ * The first wait before a retry when the answer sets no `Retry-After`.
  *
  * The rate-limit page asks for at least five seconds.
  */
 const WIKIDATA_API_RETRY_BASE_DELAY_MS = 5000
 
 /**
- * The languages whose labels and aliases are kept when a caller names none.
+ * The languages whose labels and aliases are kept when a caller passes none.
  */
 export const DEFAULT_LANGUAGES: readonly string[] = ["en", "fr", "es", "de", "it", "pt", "ru", "ja", "zh", "ar"]
 
@@ -424,7 +424,7 @@ export class WikidataAPIClient extends APIClient<WikidataAPIClientConfig> {
 	 * `meta=tokens`, then `action=login` with `lgname`, `lgpassword` and `lgtoken` in a POST body.
 	 * Concurrent callers share one login.
 	 *
-	 * @returns The account name the API reports.
+	 * @returns The account the API reports.
 	 * @throws With the credential values redacted, when a step fails or the session reads as anonymous.
 	 */
 	public logIn(): Promise<string> {
@@ -543,7 +543,7 @@ export class WikidataAPIClient extends APIClient<WikidataAPIClientConfig> {
 	 *
 	 * The API files a redirected item under its target id with a `redirects.from` field,
 	 * so the answer is re-keyed by the requested id.
-	 * An id the API names in neither way is an error in the answer and is refused
+	 * An id the answer files in neither way is an error in the answer and is refused
 	 * rather than read as missing.
 	 */
 	public async getEntities(
@@ -567,11 +567,12 @@ export class WikidataAPIClient extends APIClient<WikidataAPIClientConfig> {
 
 		if (!missing.length) return byRequestedID
 
-		// The API drops the entities past its response-size limit and says so in `warnings.result`.
-		// A batch of countries, whose claim lists are long, exceeds it.
+		// The API drops the entities past its response-size limit and reports the
+		// truncation in `warnings.result`.
+		// A batch of countries exceeds it, because each country's claim list is long.
 		// The dropped ids are requested again in two halves until each answer fits.
 		if (!isTruncated(body) || ids.length === 1) {
-			throw new Error(`wbgetentities: the answer names no entity for ${missing[0]}`)
+			throw new Error(`wbgetentities: the answer holds no entity for ${missing[0]}`)
 		}
 
 		const half = Math.ceil(missing.length / 2)
@@ -673,7 +674,7 @@ export function claimItemIDs(entity: WikidataEntityBody, property: string): stri
 /**
  * The best-ranked coordinate on Earth, or `null`.
  *
- * A coordinate on another globe, such as a Martian crater's, is not a place an address names.
+ * A coordinate on another globe, such as a Martian crater's, is not a place an address refers to.
  */
 export function readEarthCoordinate(entity: WikidataEntityBody): LatLon | null {
 	for (const claim of rankedClaims(entity, PROPERTY.coordinate)) {
@@ -829,7 +830,7 @@ export interface FetchVitalEntitiesResult {
 }
 
 /**
- * The mode a progress line names: the account when logged in.
+ * The mode a progress line reports: the account when logged in.
  */
 function describeMode(client: Pick<WikidataAPIClient, "loggedInAs">): string {
 	return client.loggedInAs ? `logged in as ${client.loggedInAs}` : "anonymous"

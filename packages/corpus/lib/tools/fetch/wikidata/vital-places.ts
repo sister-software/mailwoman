@@ -69,7 +69,7 @@ import {
 export const VITAL_PLACES_SLUG = "wikidata-vital-places"
 
 /**
- * The number of ranked items read when a caller names no count.
+ * The number of ranked items read when a caller sets no count.
  */
 export const DEFAULT_TOP = 50_000
 
