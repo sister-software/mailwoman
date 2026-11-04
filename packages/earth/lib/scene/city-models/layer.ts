@@ -20,7 +20,17 @@ import { TilesRenderer } from "3d-tiles-renderer"
 import { GLTFExtensionsPlugin } from "3d-tiles-renderer/plugins"
 import type { CityTileset } from "@mailwoman/structures/city-tilesets"
 import type { CustomLayerInterface, CustomRenderMethodInput, Map as MapLibreMap } from "maplibre-gl"
-import { AmbientLight, DirectionalLight, Matrix4, PerspectiveCamera, Scene, WebGLRenderer } from "three"
+import {
+	AmbientLight,
+	DirectionalLight,
+	DoubleSide,
+	type Material,
+	Matrix4,
+	Mesh,
+	PerspectiveCamera,
+	Scene,
+	WebGLRenderer,
+} from "three"
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js"
 import dracoWasmURL from "three/examples/jsm/libs/draco/draco_decoder.wasm?url"
 import dracoWrapperURL from "three/examples/jsm/libs/draco/draco_wasm_wrapper.js?url"
@@ -186,7 +196,17 @@ export class CityModelsLayer implements CustomLayerInterface {
 			loaded: false,
 		}
 
-		tiles.addEventListener("load-model", () => {
+		tiles.addEventListener("load-model", ({ scene: model }) => {
+			// The frame mirrors the north axis (mercator y grows south), which reverses every
+			// triangle's winding under this camera, so the models draw both faces of each triangle.
+			model.traverse((object) => {
+				if (object instanceof Mesh) {
+					for (const material of [object.material].flat() as Material[]) {
+						material.side = DoubleSide
+					}
+				}
+			})
+
 			active.loaded = true
 			this.#map?.triggerRepaint()
 		})
