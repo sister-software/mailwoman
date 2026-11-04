@@ -91,7 +91,11 @@ export const spec = {
 		"nad-url": { type: "string", description: "NAD bulk URL" },
 		"chunk-size": { type: "number", description: "NAD records per output file" },
 		"page-size": { type: "number", description: "NAD records per request" },
-		concurrency: { type: "number", description: "NAD parallel page fetches" },
+		concurrency: {
+			type: "number",
+			description:
+				"NAD: parallel page fetches. wikidata-vital-places: entity requests in flight, capped at 1 anonymously and 3 when WIKIDATA_BOT_USERNAME and WIKIDATA_BOT_PASSWORD log in (default: the cap)",
+		},
 		"start-oid": { type: "number", description: "First NAD OBJECTID" },
 		"end-oid": { type: "number", description: "Exclusive final NAD OBJECTID" },
 		country: { type: "string", description: "OpenAddresses country code" },
@@ -124,6 +128,10 @@ export const spec = {
 		languages: {
 			type: "string",
 			description: "wikidata-vital-places: label and alias languages, comma-separated (default: ten)",
+		},
+		batch: {
+			type: "number",
+			description: "wikidata-vital-places: ids per wbgetentities request, 1 to 50 (default: 10)",
 		},
 	},
 } as const satisfies CommandSpec
@@ -321,6 +329,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 					top: options.top,
 					// Null takes the module's own ten languages.
 					languages: options.languages ? extractDelimited(options.languages) : null,
+					batchSize: options.batch,
+					concurrency: options.concurrency,
 				},
 				reportToStderr
 			)

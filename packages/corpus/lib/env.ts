@@ -54,6 +54,17 @@ export const PrivateCorpusEnvSchema = z.object({
 		title: "OpenAddresses batch token",
 		description: "API token used by the OpenAddresses batch-download corpus fetcher.",
 	}),
+	// Wikidata bot-password login for the vital-places fetcher (`lib/tools/fetch/wikidata/session.ts`).
+	// Set both or neither.
+	WIKIDATA_BOT_USERNAME: blankAsAbsent(z.string().optional()).meta({
+		title: "Wikidata bot username",
+		description:
+			"Bot-password login of the form Name@app, from Special:BotPasswords. With WIKIDATA_BOT_PASSWORD it logs the wikidata-vital-places fetcher in, which raises its Action API concurrency from 1 to 3. Unset fetches anonymously.",
+	}),
+	WIKIDATA_BOT_PASSWORD: blankAsAbsent(z.string().optional()).meta({
+		title: "Wikidata bot password",
+		description: "The generated password of the bot-password login WIKIDATA_BOT_USERNAME names.",
+	}),
 	// LLM API keys for the corpus golden-expansion tooling and the DeepSeek generator.
 	DEEPSEEK_API_KEY: z.string().optional().meta({
 		title: "DeepSeek API key",
