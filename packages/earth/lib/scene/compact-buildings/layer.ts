@@ -13,6 +13,7 @@
 
 import type { CustomLayerInterface, CustomRenderMethodInput, Map as MapLibreMap } from "maplibre-gl"
 
+import { mercatorWorld } from "../mercator-world.ts"
 import { decodeBuildingTile, ROOF_STRIDE, TILE_ZOOM, unitMeters, WALL_STRIDE } from "./decode.ts"
 
 /**
@@ -92,7 +93,36 @@ interface ResidentTile {
 	unitMeters: number
 }
 
+/**
+ * The most hidden areas the shaders test, one per city model drawn in place of these buildings.
+ */
+const MAX_HIDDEN_AREAS = 32
+
+/**
+ * GLSL shared by both vertex shaders: whether a tile position lies in an area another layer draws.
+ */
+const HIDDEN_AREA_TEST = `
+uniform vec4 u_hidden[${MAX_HIDDEN_AREAS}];
+uniform int u_hidden_count;
+
+bool hidden(vec2 position) {
+	vec2 mercator = u_projection_tile_mercator_coords.xy + position * u_projection_tile_mercator_coords.zw;
+	for (int index = 0; index < ${MAX_HIDDEN_AREAS}; index++) {
+		if (index >= u_hidden_count) break;
+		vec4 area = u_hidden[index];
+		if (mercator.x >= area.x && mercator.x <= area.z && mercator.y >= area.y && mercator.y <= area.w) return true;
+	}
+	return false;
+}`
+
+/**
+ * A clip-space position outside the view volume.
+ * The GPU drops the triangles of a vertex placed there.
+ */
+const CULLED = "vec4(2.0, 2.0, 2.0, 1.0)"
+
 const WALL_VERTEX_SHADER = `
+${HIDDEN_AREA_TEST}
 in vec2 a_corner;
 in vec4 a_edge;
 in vec2 a_height;
@@ -108,7 +138,8 @@ void main() {
 	vec2 position = mix(a_edge.xy, a_edge.zw, a_corner.x);
 	float base = a_height.x * 0.1;
 	float top = a_height.y * 0.1;
-	gl_Position = projectTileFor3D(position, mix(base, top, a_corner.y));
+	// A whole edge drops when its first corner lies in a hidden area.
+	gl_Position = hidden(a_edge.xy) ? ${CULLED} : projectTileFor3D(position, mix(base, top, a_corner.y));
 
 	vec2 along = a_edge.zw - a_edge.xy;
 	float meters = length(along) * u_unit_meters;
@@ -152,13 +183,14 @@ void main() {
 }`
 
 const ROOF_VERTEX_SHADER = `
+${HIDDEN_AREA_TEST}
 in vec2 a_position;
 in float a_z;
 in vec4 a_color;
 out vec3 v_color;
 
 void main() {
-	gl_Position = projectTileFor3D(a_position, a_z * 0.1);
+	gl_Position = hidden(a_position) ? ${CULLED} : projectTileFor3D(a_position, a_z * 0.1);
 	v_color = a_color.rgb * a_color.a;
 }`
 
@@ -245,6 +277,8 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 	}
 
 	#tileURL: (x: number, y: number) => string
+	#hidden = new Float32Array(MAX_HIDDEN_AREAS * 4)
+	#hiddenCount = 0
 	#map: MapLibreMap | null = null
 	#gl: WebGL2RenderingContext | null = null
 	#variant = ""
@@ -324,7 +358,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 			prelude + WALL_VERTEX_SHADER,
 			WALL_FRAGMENT_SHADER,
 			["a_corner", "a_edge", "a_height", "a_color"],
-			["u_unit_meters"]
+			["u_unit_meters", "u_hidden", "u_hidden_count"]
 		)
 
 		this.#roofProgram = link(
@@ -332,7 +366,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 			prelude + ROOF_VERTEX_SHADER,
 			ROOF_FRAGMENT_SHADER,
 			["a_position", "a_z", "a_color"],
-			[]
+			["u_hidden", "u_hidden_count"]
 		)
 
 		this.#variant = shaderData.variantName
@@ -540,6 +574,25 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 		gl.uniform4fv(uniform("u_projection_clipping_plane"), data.clippingPlane)
 		gl.uniform1f(uniform("u_projection_transition"), data.projectionTransition)
 		gl.uniformMatrix4fv(uniform("u_projection_fallback_matrix"), false, Float32Array.from(data.fallbackMatrix))
+		gl.uniform4fv(uniform("u_hidden"), this.#hidden)
+		gl.uniform1i(uniform("u_hidden_count"), this.#hiddenCount)
+	}
+
+	/**
+	 * Stops drawing the buildings inside each `[west, south, east, north]` area,
+	 * where another layer draws a city model in their place.
+	 * At most {@link MAX_HIDDEN_AREAS} areas count.
+	 */
+	setHiddenAreas(areas: ReadonlyArray<readonly [number, number, number, number]>): void {
+		this.#hidden.fill(0)
+		this.#hiddenCount = Math.min(areas.length, MAX_HIDDEN_AREAS)
+
+		areas.slice(0, MAX_HIDDEN_AREAS).forEach(([west, south, east, north], index) => {
+			// The area's north-west corner has the smaller mercator y.
+			this.#hidden.set([...mercatorWorld(west, north), ...mercatorWorld(east, south)], index * 4)
+		})
+
+		this.#map?.triggerRepaint()
 	}
 
 	#readTimer(gl: WebGL2RenderingContext): void {

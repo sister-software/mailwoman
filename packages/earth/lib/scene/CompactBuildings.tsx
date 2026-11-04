@@ -4,9 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   `<CompactBuildings>` draws the compact building tiles that `?buildings3d=<tileset>` asks for with
- *   {@link CompactBuildingsLayer}, and hides the vector-tile building footprints while it does.
+ *   {@link CompactBuildingsLayer}, and the converted city models with {@link CityModelsLayer}. It hides the
+ *   vector-tile building footprints while they draw, and the compact buildings inside each city model that has drawn.
  */
 
+import { type CityTileset, cityTilesetPath } from "@mailwoman/structures/city-tilesets"
+import cityTilesets from "@mailwoman/structures/data/city-tilesets.json" with { type: "json" }
 import { useEffect } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
@@ -16,8 +19,15 @@ import { pageTilesetParam } from "#routes"
 import { COMPACT_BUILDINGS_LAYER_ID, CompactBuildingsLayer } from "./compact-buildings/layer.ts"
 
 /**
- * Mounts the GPU building layer under the map's first label layer when the page
- * asks for a compact building tileset.
+ * The city model layer's id, repeated here so removing it needs no import of the layer's module.
+ */
+const CITY_MODELS_LAYER_ID = "city-models"
+
+const CITY_TILESETS = cityTilesets as CityTileset[]
+
+/**
+ * Mounts the GPU building and city model layers under the map's first label layer
+ * when the page asks for a compact building tileset.
  */
 export function CompactBuildings(): null {
 	const { current: mapRef } = useMap()
@@ -28,11 +38,26 @@ export function CompactBuildings(): null {
 
 		if (!map || !tileset) return
 
-		const layer = new CompactBuildingsLayer(
+		const buildings = new CompactBuildingsLayer(
 			(x, y) => new URL(`${tileset}/14/${x}/${y}.bin`, PRODUCTION_CONFIG.tileWorkerURL).href
 		)
 
+		let removed = false
 		const hidden: string[] = []
+
+		// three.js and 3DTilesRendererJS load only on a page that draws city models.
+		// The main bundle stays without them.
+		void import("#scene/city-models/layer").then(({ CityModelsLayer }) => {
+			if (removed || !map.getLayer(COMPACT_BUILDINGS_LAYER_ID)) return
+
+			const cityModels = new CityModelsLayer(
+				CITY_TILESETS,
+				(city) => new URL(cityTilesetPath(city), PRODUCTION_CONFIG.tileWorkerURL).href,
+				(covered) => buildings.setHiddenAreas(covered.map((city) => city.bounds))
+			)
+
+			map.addLayer(cityModels, map.getStyle().layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
+		})
 
 		const mount = () => {
 			if (map.getLayer(COMPACT_BUILDINGS_LAYER_ID)) return
@@ -52,7 +77,7 @@ export function CompactBuildings(): null {
 				}
 			}
 
-			map.addLayer(layer, style.layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
+			map.addLayer(buildings, style.layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
 		}
 
 		if (map.isStyleLoaded()) {
@@ -62,10 +87,11 @@ export function CompactBuildings(): null {
 		}
 
 		return () => {
+			removed = true
 			map.off("load", mount)
 
-			if (map.getLayer(COMPACT_BUILDINGS_LAYER_ID)) {
-				map.removeLayer(COMPACT_BUILDINGS_LAYER_ID)
+			for (const id of [CITY_MODELS_LAYER_ID, COMPACT_BUILDINGS_LAYER_ID].filter((layerID) => map.getLayer(layerID))) {
+				map.removeLayer(id)
 			}
 
 			for (const id of hidden.filter((layerID) => map.getLayer(layerID))) {

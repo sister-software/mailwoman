@@ -24,6 +24,8 @@ import type React from "react"
 import { useEffect, useMemo } from "react"
 import { useControl, useMap } from "react-map-gl/maplibre"
 
+import { pageTilesetParam } from "#routes"
+
 import {
 	broadleafTreeMesh,
 	coniferTreeMesh,
@@ -103,6 +105,12 @@ function exposeTransform(map: MapInstance): void {
 /**
  * The PLATEAU building tilesets whose CKAN record states the elected site policy.
  */
+/**
+ * Whether the page draws buildings with the GPU building layer.
+ * That layer also draws the converted city models.
+ */
+const GPU_BUILDINGS = pageTilesetParam("buildings3d") !== null
+
 const CITY_MODELS = electedPlateauTilesets(
 	plateauTilesets.map(({ bounds: [west = 0, south = 0, east = 0, north = 0], ...tileset }): PlateauTileset => ({
 		...tileset,
@@ -458,7 +466,8 @@ export const Scene3D: React.FC = () => {
 				changed = pruneDistant(map, props) || changed
 			}
 
-			const cityModels = cityModelsToKeep(map, keptCityModels)
+			// The GPU building layer draws the converted city models itself.
+			const cityModels = GPU_BUILDINGS ? [] : cityModelsToKeep(map, keptCityModels)
 			const opacity = cityModelOpacity(map.getZoom())
 			const cityModelKey = `${opacity} ${cityModels.map((tileset) => tileset.url).join(" ")}`
 
