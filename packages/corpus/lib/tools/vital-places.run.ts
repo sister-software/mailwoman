@@ -12,11 +12,11 @@
  *   The part goes to `<out>/wikidata-vital-places-00000.parquet`, and the holdout and counts beside it.
  */
 
-import { createHash } from "node:crypto"
-
-import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { sha256Hex } from "@mailwoman/core/hash"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { PathBuilder, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -27,6 +27,7 @@ import { VITAL_PLACES_FILES, vitalPlacesPath } from "#tools/fetch/wikidata/vital
 import type { ClassRoots } from "#tools/fetch/wikidata/vital-places/classify"
 import type { VitalPlace } from "#tools/fetch/wikidata/vital-places/inventory"
 import { renderVitalPlaces, VITAL_PLACES_SOURCE } from "#tools/fetch/wikidata/vital-places/render"
+import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils/align"
 
 const { values } = parseArguments({
@@ -38,7 +39,9 @@ const { values } = parseArguments({
 })
 
 if (!values.out) throw new Error("--out names the directory the part is written to")
-if (!values["source-root"]) throw new Error("--source-root names the fetch's --out root, such as <data root>/corpus/sources")
+
+if (!values["source-root"])
+	throw new Error("--source-root names the fetch's --out root, such as <data root>/corpus/sources")
 
 const out = PathBuilder.from(resolvePath(values.out as string))
 const sourceDir = vitalPlacesPath(PathBuilder.from(resolvePath(values["source-root"] as string)))
@@ -64,7 +67,16 @@ const rows: ParquetRow[] = []
 const quarantined: string[] = []
 
 for (const row of render.rows) {
-	const aligned = alignRow({ ...row, license: "CC0-1.0", surface: "rendered" } as unknown as Parameters<typeof alignRow>[0])
+	const aligned = alignRow({
+		raw: row.raw,
+		components: row.components,
+		country: row.country,
+		source: row.source,
+		source_id: row.source_id,
+		license: "CC0-1.0",
+		register: row.register,
+		surface: SurfaceOrigin.Rendered,
+	})
 
 	if (aligned.kind !== "labeled") {
 		quarantined.push(row.source_id)
@@ -78,7 +90,7 @@ for (const row of render.rows) {
 const coordinates = new Map(places.map((place) => [place.qid, place.coordinate]))
 
 await writeParquetFile(rows, out(`${VITAL_PLACES_SOURCE}-00000.parquet`), {
-	extractHash: `${VITAL_PLACES_SOURCE}:${createHash("sha256").update(JSON.stringify(places)).digest("hex")}`,
+	extractHash: `${VITAL_PLACES_SOURCE}:${sha256Hex(stringifyJSON(places))}`,
 	codeHash: "packages/corpus/lib/tools/vital-places.run.ts",
 	config: { sourceDir: sourceDir.toString(), exempt: exempt.size },
 })
@@ -91,7 +103,7 @@ await writeLocalJSONLFile(
 		country: row.country,
 		lat: coordinates.get(row.qid)?.lat,
 		lon: coordinates.get(row.qid)?.lon,
-		tolerance_m: 50000,
+		tolerance_m: 50_000,
 		form: "country" in row.components ? "with-country" : "bare",
 		input: row.raw,
 		components: row.components,
@@ -99,7 +111,13 @@ await writeLocalJSONLFile(
 	out(`${VITAL_PLACES_SOURCE}-holdout.jsonl`)
 )
 
-const counts = { ...render.counts, rows: rows.length, holdoutRows: render.holdout.length, quarantined: quarantined.length }
+const counts = {
+	...render.counts,
+	rows: rows.length,
+	holdoutRows: render.holdout.length,
+	quarantined: quarantined.length,
+}
 
 await writeLocalJSONFile(counts, out(`${VITAL_PLACES_SOURCE}-counts.json`))
-console.log(JSON.stringify(counts))
+
+console.log(stringifyJSON(counts))

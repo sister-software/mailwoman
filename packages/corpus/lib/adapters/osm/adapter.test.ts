@@ -1,6 +1,5 @@
-import { createHash } from "node:crypto"
-
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { sha256Hex } from "@mailwoman/core/hash"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
@@ -377,6 +376,7 @@ describe("withTrailingCountry", () => {
 
 		expect(named.length / ids.length).toBeGreaterThan(OSM_TRAILING_COUNTRY_SHARE - 0.05)
 		expect(named.length / ids.length).toBeLessThan(OSM_TRAILING_COUNTRY_SHARE + 0.05)
+
 		expect(named[0]).toEqual({
 			raw: "Komitas Avenue 5, Yerevan, Armenia",
 			components: { ...components, country: "Armenia" },
@@ -385,9 +385,10 @@ describe("withTrailingCountry", () => {
 
 	it("keeps the share on ids a lowest-hash sampler kept", () => {
 		const lowest = Array.from({ length: 20_000 }, (_, index) => `osm-${index.toString(16)}`)
-			.map((id) => ({ id, hash: createHash("sha256").update(id).digest().readUInt32BE(0) }))
+			.map((id) => ({ id, hash: Number.parseInt(sha256Hex(id).slice(0, 8), 16) }))
 			.toSorted((left, right) => left.hash - right.hash)
 			.slice(0, 2000)
+
 		const named = lowest.filter(({ id }) => withTrailingCountry("x", components, "AM", id).components.country)
 
 		expect(named.length / lowest.length).toBeGreaterThan(OSM_TRAILING_COUNTRY_SHARE - 0.05)

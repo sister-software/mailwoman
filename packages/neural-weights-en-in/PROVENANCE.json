@@ -10,12 +10,12 @@
 	"inherited_lineage": {
 		"package": "@mailwoman/neural-weights-en-us",
 		"package_version": "10.7.0",
-		"model_card_version": "10.7.0",
+		"model_card_version": "10.8.0",
 		"chain": ["@mailwoman/neural-weights-en-in", "@mailwoman/neural-weights-en-us"],
 		"note": "These entries are @mailwoman/neural-weights-en-us's record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.",
 		"attribution": [
 			{
-				"text": "OpenStreetMap contributors (ODbL-1.0): the training extracts of the 100 ODbL sources of corpus v0.7.10-gb-county, the per-country `osm-*` extracts read from Geofabrik extracts (the 2026-10-02 extracts for RU, IN, ID, NG, PK, VN and BD, and the 2026-10-16 and 2026-10-17 extracts for the countries added in #2663 and #2665), the `rendered-pk-register` and `rendered-bd-register` extracts rendered from OSM tuples, and the 49,219 `spliced-sub-venue` rows that carry an OpenStreetMap venue or sub-venue name. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. The extracts are Derivative Databases under ODbL 1.0, the effective training manifest packages/corpus/data/training-manifests/v0.7.10-gb-county.effective.json records what reached the trainer, and they are published under ODbL 1.0 at https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract.",
+				"text": "OpenStreetMap contributors (ODbL-1.0): the training extracts of the 100 ODbL sources of corpus v0.7.10-gb-county, the per-country `osm-*` extracts read from Geofabrik extracts (the 2026-10-02 extracts for RU, IN, ID, NG, PK, VN and BD, and the 2026-10-16 and 2026-10-17 extracts for the countries added in #2663 and #2665), the `rendered-pk-register` and `rendered-bd-register` extracts rendered from OSM tuples, and the 49,219 `spliced-sub-venue` rows that carry an OpenStreetMap venue or sub-venue name. © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. Corpus v0.8.18-retention-overlay renders 30% of the osm sources' rows with a trailing country name. The extracts are Derivative Databases under ODbL 1.0, the effective training manifest packages/corpus/data/training-manifests/v0.8.18-retention-overlay.effective.json records what reached the trainer, and they are published under ODbL 1.0 at https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract.",
 				"license_named": "ODbL-1.0"
 			},
 			{
@@ -63,17 +63,37 @@
 			},
 			{
 				"license": "CC-BY-4.0",
-				"sources": ["cordis", "gbpa-bs", "gnaf", "lv-varis", "ro-retea-scolara", "ryhti-ax"],
+				"sources": [
+					"cordis",
+					"gbpa-bs",
+					"geonames-features",
+					"gnaf",
+					"invented-postal-guideline",
+					"invented-postal-unit-guideline",
+					"lv-varis",
+					"ro-retea-scolara",
+					"ryhti-ax"
+				],
 				"statement": null
 			},
 			{
 				"license": "CDLA-Permissive-2.0",
-				"sources": ["overture", "overture-latam"],
+				"sources": ["overture-latam"],
 				"statement": null
 			},
 			{
 				"license": "CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",
 				"sources": ["rendered-sg-register"],
+				"statement": null
+			},
+			{
+				"license": "DL-DE-BY-2.0 AND DL-DE-ZERO-2.0 AND LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+				"sources": ["rendered-de"],
+				"statement": null
+			},
+			{
+				"license": "etalab-2.0",
+				"sources": ["ban", "rendered-fr-order"],
 				"statement": null
 			},
 			{
@@ -84,7 +104,6 @@
 			{
 				"license": "Licence Ouverte 2.0",
 				"sources": [
-					"ban",
 					"ban-bl",
 					"ban-gf",
 					"ban-gp",
@@ -122,6 +141,46 @@
 			{
 				"license": "LicenseRef-Licencia-Datos-Abiertos-Uruguay-0.1",
 				"sources": ["ide-uy"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-access-free-us-us-health-1",
+				"sources": ["usgov-nppes"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-access-free-us-us-health-2",
+				"sources": ["usgov-hrsa-fqhc"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-corpus-input-us-new-york-department-of-state",
+				"sources": ["state-ny-notaries"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-corpus-input-us-overture-maps-foundation",
+				"sources": ["overture"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-corpus-input-us-texas-secretary-of-state",
+				"sources": ["state-tx-notaries"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-corpus-input-us-u-s-census-bureau",
+				"sources": ["tiger"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation",
+				"sources": ["usgov-nad"],
+				"statement": null
+			},
+			{
+				"license": "LicenseRef-unchecked-corpus-input-us-who-s-on-first",
+				"sources": ["wof-admin", "wof-postalcode"],
 				"statement": null
 			},
 			{
@@ -236,6 +295,11 @@
 				"statement": "© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright."
 			},
 			{
+				"license": "OGL-UK-3.0",
+				"sources": ["rendered-gb-os-open"],
+				"statement": null
+			},
+			{
 				"license": "OpenAddresses and National Address Database US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators",
 				"sources": ["spliced-unit-v30"],
 				"statement": null
@@ -258,16 +322,6 @@
 			{
 				"license": "OpenAddresses CH tuples, rendered native-order — see ingest SOURCES",
 				"sources": ["rendered-ch"],
-				"statement": null
-			},
-			{
-				"license": "OpenAddresses DE tuples, rendered native-order — see ingest SOURCES",
-				"sources": ["rendered-de"],
-				"statement": null
-			},
-			{
-				"license": "OpenAddresses FR countrywide tuples, rendered canonical + reversed-order — see ingest SOURCE",
-				"sources": ["rendered-fr-order"],
 				"statement": null
 			},
 			{
@@ -296,21 +350,8 @@
 				"statement": null
 			},
 			{
-				"license": "OS OpenData GB tuples (OGL-UK-3.0), rendered native-order — see ingest SOURCES",
-				"sources": ["rendered-gb-os-open"],
-				"statement": null
-			},
-			{
 				"license": "Public Domain",
-				"sources": [
-					"bsp-gu",
-					"state-ny-notaries",
-					"state-tx-notaries",
-					"tiger",
-					"usgov-hrsa-fqhc",
-					"usgov-nad",
-					"usgov-nppes"
-				],
+				"sources": ["bsp-gu"],
 				"statement": null
 			},
 			{
@@ -486,8 +527,8 @@
 					"spliced-sub-venue"
 				],
 				"url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract",
-				"manifest_url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/767406aa5a731e61a37058f9323bfe2cf5838217/MANIFEST.json",
-				"statement": "The OpenStreetMap-derived training extracts of corpus v0.7.10-gb-county, as the 242 parquet files of the 100 ODbL sources the trainer read (2,860,227 rows, including the 49,219 of 120,000 spliced-sub-venue rows that carry an OpenStreetMap venue or sub-venue name), plus the four OpenStreetMap extracts that recipe drew names from, © OpenStreetMap contributors"
+				"manifest_url": "https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/59ebed0358279c08a6ce6e3b9f23d99a2ba5655c/MANIFEST.json",
+				"statement": "The OpenStreetMap-derived training extracts of corpus v0.8.18-retention-overlay, © OpenStreetMap contributors: the 101 parquet files of the osm sources under data-v0.8.18/ (2,931,896 rows, 30% of them rendered with a trailing English country name), and the files of spliced-sub-venue, rendered-bd-register and rendered-pk-register under data/, which v0.8.18 holds unchanged from v0.7.10-gb-county. The dataset's MANIFEST.json at the revision named above lists every file with its sha256 and names this model under produced_works."
 			}
 		],
 		"unresolved": null

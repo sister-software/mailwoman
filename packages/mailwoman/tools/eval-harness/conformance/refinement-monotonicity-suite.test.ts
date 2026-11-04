@@ -124,10 +124,16 @@ describe("the committed refinement suite", () => {
 		expect(coverage.links).toBeGreaterThan(coverage.stated)
 	})
 
-	it("carries no tracked row — a red row here would be a live defect, and there is none", () => {
+	it("gives every tracked row a reference and a note, and every enforcing row neither", () => {
 		for (const fixture of fixtures) {
-			expect(fixture.status ?? "pass", `${fixture.id}`).toBe("pass")
-			expect(fixture.bugRef).toBeNull()
+			if ((fixture.status ?? "pass") === "pass") {
+				expect(fixture.bugRef, `${fixture.id}: an enforcing row must not name a defect`).toBeNull()
+
+				continue
+			}
+
+			expect(fixture.bugRef, `${fixture.id}: tracked without a reference`).toBeTruthy()
+			expect(fixture.note, `${fixture.id}: tracked without a note`).toBeTruthy()
 		}
 	})
 })
