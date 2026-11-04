@@ -162,6 +162,29 @@ extend-ignore-re = [
 ]
 
 [default.extend-words]
+# ISO 15924 script codes, as packages/codex/lib/country/writing-systems.ts emits them (`Beng` is Bengali).
+arab = "arab"
+armn = "armn"
+beng = "beng"
+cyrl = "cyrl"
+deva = "deva"
+ethi = "ethi"
+geor = "geor"
+grek = "grek"
+hang = "hang"
+hani = "hani"
+hebr = "hebr"
+hira = "hira"
+kana = "kana"
+khmr = "khmr"
+laoo = "laoo"
+latn = "latn"
+mymr = "mymr"
+sinh = "sinh"
+taml = "taml"
+thaa = "thaa"
+thai = "thai"
+tibt = "tibt"
 # Publisher and register names, codes and place names in the decoder-exposure sources: France's FINESS
 # register and the ANS terminology `TRE-R35`, the education ministry's directorate `DNE`, Wallis and Futuna's
 # `Alo` and `Mata Utu`, Latvia's `DAT_BEIG` column, CORDIS's `SME` column, and the German sole-trader marker `Inh.`.

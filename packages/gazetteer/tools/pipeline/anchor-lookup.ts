@@ -6,6 +6,7 @@
  *   Builds the postcode anchor lookup that maps each postcode to its countries and a centroid.
  */
 
+import { countriesDeclaredBy } from "@mailwoman/codex/country/sets"
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
@@ -231,29 +232,54 @@ function pyJSONValue(v: unknown): string {
 type LookupRow = [Record<string, number>, number, number, string | null]
 
 /**
- * The pilot anchor-lookup countries, all of which use five-digit postcodes.
- *
- * {@link buildAnchorLookup} uses this list by default.
+ * One country's license-clean postcode-centroid source.
  */
-export const ANCHOR_PILOT_COUNTRIES = ["DE", "FR", "US"] as const
+interface AnchorSource {
+	country: string
+	load: () => Map<string, Centroid>
+	/**
+	 * Whether the country was in the five-digit-postcode pilot, which
+	 * {@link buildAnchorLookup} builds by default.
+	 */
+	pilot: boolean
+}
 
 /**
- * The v2 anchor-lookup countries add locations with license-clean postcode sources to the pilot set.
+ * Every country with a centroid loader, in centroid-priority order.
  *
- * The order sets centroid priority.
  * The pilot countries come first so their codes keep their centroids.
  */
-export const ANCHOR_V2_COUNTRIES = ["DE", "FR", "US", "GB", "NL", "ES", "IT"] as const
+const ANCHOR_SOURCES: readonly AnchorSource[] = [
+	{ country: "DE", load: () => loadIntl("DE"), pilot: true },
+	{ country: "FR", load: () => loadIntl("FR"), pilot: true },
+	{ country: "US", load: loadUs, pilot: true },
+	{ country: "GB", load: loadGBCodePoint, pilot: false },
+	{ country: "NL", load: loadNLPC6, pilot: false },
+	{ country: "ES", load: () => loadIntl("ES"), pilot: false },
+	{ country: "IT", load: () => loadIntl("IT"), pilot: false },
+]
 
-const COUNTRY_LOADERS: Record<string, () => Map<string, Centroid>> = {
-	DE: () => loadIntl("DE"),
-	ES: () => loadIntl("ES"),
-	FR: () => loadIntl("FR"),
-	GB: loadGBCodePoint,
-	IT: () => loadIntl("IT"),
-	NL: loadNLPC6,
-	US: loadUs,
-}
+/**
+ * The pilot anchor-lookup countries, all of which use five-digit postcodes.
+ *
+ * {@link buildAnchorLookup} uses this set by default.
+ */
+export const ANCHOR_PILOT_COUNTRIES = countriesDeclaredBy(
+	"anchor-lookup pilot",
+	ANCHOR_SOURCES.filter((source) => source.pilot).map((source) => source.country)
+)
+
+/**
+ * The v2 anchor-lookup countries: every country with a loader, in centroid-priority order.
+ */
+export const ANCHOR_V2_COUNTRIES = countriesDeclaredBy(
+	"anchor-lookup loaders",
+	ANCHOR_SOURCES.map((source) => source.country)
+)
+
+const COUNTRY_LOADERS: ReadonlyMap<string, () => Map<string, Centroid>> = new Map(
+	ANCHOR_SOURCES.map((source) => [source.country, source.load])
+)
 
 const WRITE_FLUSH_ENTRIES = 4096
 
@@ -336,15 +362,15 @@ export interface AnchorLookupStats {
  * @throws If `include` contains a country with no loader.
  */
 export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<AnchorLookupStats> {
-	const countries = (args.include?.length ? args.include : ANCHOR_PILOT_COUNTRIES).map((c) => c.toUpperCase())
+	const countries = (args.include?.length ? args.include : [...ANCHOR_PILOT_COUNTRIES]).map((c) => c.toUpperCase())
 
 	for (const country of countries) {
-		if (!COUNTRY_LOADERS[country]) {
-			throw new Error(`No anchor-lookup loader for ${country} (have: ${Object.keys(COUNTRY_LOADERS).join(", ")})`)
+		if (!COUNTRY_LOADERS.has(country)) {
+			throw new Error(`No anchor-lookup loader for ${country} (have: ${[...COUNTRY_LOADERS.keys()].join(", ")})`)
 		}
 	}
 
-	const sources: Array<[string, Map<string, Centroid>]> = countries.map((c) => [c, COUNTRY_LOADERS[c]!()])
+	const sources: Array<[string, Map<string, Centroid>]> = countries.map((c) => [c, COUNTRY_LOADERS.get(c)!()])
 	let gbOutwardKeys = 0
 
 	if (countries.includes("GB") && args.gbOutward !== false) {

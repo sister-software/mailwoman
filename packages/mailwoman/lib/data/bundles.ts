@@ -343,6 +343,8 @@ export const BUNDLES: Record<string, DataBundle> = {
 		name: "poi",
 		role: ServingRole.POI,
 		activation: "selection",
+		// country-branch: the countries the published POI build covers.
+		// The layer manifest's coverage would replace it.
 		countries: ["US", "CA", "MX", "FR"],
 		description: "Overture-places POI layer, covering the United States, Canada, Mexico and France.",
 		artifacts: [

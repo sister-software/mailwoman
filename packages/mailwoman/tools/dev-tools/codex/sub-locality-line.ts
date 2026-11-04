@@ -26,6 +26,8 @@
  *   takes more work than rerunning this census.
  */
 
+// country-branch: the recorded result of the census above, one per-country fact each.
+// Rerunning the census, or the postal operators' guides, would replace it.
 /**
  * ISO 3166-1 alpha-2 codes whose layout has no `dependent_locality` line.
  */
