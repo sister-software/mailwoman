@@ -10,7 +10,7 @@ import type {
 	LayerSpecification,
 } from "@maplibre/maplibre-gl-style-spec"
 
-import { GuideMapPalette, MailwomanBaseTileSetID } from "#base/theme"
+import { GuideMapPalette, MailwomanBuildingsTileSetID } from "#base/theme"
 import { LayerID } from "#styles/layers"
 
 const BuildingLayerID = LayerID.bind(null, "buildings")
@@ -151,7 +151,7 @@ export const BuildingLayers: LayerSpecification[] = [
 	{
 		id: "basemap-buildings-outline",
 		type: "line",
-		source: MailwomanBaseTileSetID,
+		source: MailwomanBuildingsTileSetID,
 		"source-layer": "buildings",
 		minzoom: 14,
 		paint: {
@@ -171,7 +171,7 @@ function createBuildingFillStyleLayer(fillStyleSpec: BuildingFillStyleSpec): Lay
 	const baseStyle: LayerSpecification = {
 		...fillStyleSpec,
 		type: "fill-extrusion",
-		source: MailwomanBaseTileSetID,
+		source: MailwomanBuildingsTileSetID,
 		"source-layer": "buildings",
 		minzoom: 10,
 		paint: {

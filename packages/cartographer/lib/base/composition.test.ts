@@ -1,6 +1,8 @@
+import type { SourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 import { expect, test } from "vitest"
 
 import { createLightSpec, createSkySpec, StyleSpecificationComposer } from "#base/composition"
+import { MailwomanBaseTileSetID, MailwomanBuildingsTileSetID } from "#base/theme"
 
 test("createLightSpec: returns the house defaults when called bare", () => {
 	expect(createLightSpec()).toEqual({
@@ -154,6 +156,26 @@ test("Composer: a composition can bring its own base layers without hillshade so
 	expect(Object.keys(style.sources)).toEqual(["moon"])
 	expect("sprite" in style).toBe(false)
 	expect(style.glyphs).toMatch(/protomaps\/fonts/u)
+})
+
+test("Composer: footprint layers read a separate buildings source when the style has one, else the basemap", () => {
+	const base: SourceSpecification = { type: "vector", url: "https://tiles.mailwoman.post/planet.json" }
+	const buildings: SourceSpecification = { type: "vector", url: "https://tiles.mailwoman.post/buildings.json" }
+
+	const footprintSources = (sources: Record<string, SourceSpecification>): Set<string> =>
+		new Set(
+			new StyleSpecificationComposer({ sources })
+				.toJSON()
+				.layers.filter((layer) => "source-layer" in layer && layer["source-layer"] === "buildings")
+				.filter((layer) => layer.type !== "symbol")
+				.map((layer) => ("source" in layer ? String(layer.source) : ""))
+		)
+
+	expect(footprintSources({ [MailwomanBaseTileSetID]: base })).toEqual(new Set([MailwomanBaseTileSetID]))
+
+	expect(footprintSources({ [MailwomanBaseTileSetID]: base, [MailwomanBuildingsTileSetID]: buildings })).toEqual(
+		new Set([MailwomanBuildingsTileSetID])
+	)
 })
 
 test("Composer: two instances from the shared BaseLayers have independent layer lists", () => {

@@ -19,6 +19,15 @@ import { TileSetSourceID } from "#styles/sources"
  */
 export const MailwomanBaseTileSetID = TileSetSourceID(PROTOMAPS_PLANET_TILESET_NAME)
 
+/**
+ * Identifier for the source the building footprint layers read: a separate buildings
+ * tileset, such as one built from Overture's buildings theme.
+ *
+ * A style whose sources lack it draws the footprints from {@linkcode MailwomanBaseTileSetID}
+ * instead, as `StyleSpecificationComposer` arranges.
+ */
+export const MailwomanBuildingsTileSetID = TileSetSourceID("mailwoman-buildings")
+
 const lightFlavor = namedFlavor("light")
 const darkFlavor = namedFlavor("dark")
 

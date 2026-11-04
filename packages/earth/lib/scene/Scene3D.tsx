@@ -13,7 +13,7 @@ import { MapboxOverlay } from "@deck.gl/mapbox"
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers"
 import { Tiles3DLoader } from "@loaders.gl/3d-tiles"
 import { BUILDING_MODELED_STATE } from "@mailwoman/cartographer/base/buildings"
-import { MailwomanBaseTileSetID } from "@mailwoman/cartographer/base/theme"
+import { MailwomanBaseTileSetID, MailwomanBuildingsTileSetID } from "@mailwoman/cartographer/base/theme"
 import { TreeLayers, TreePalette } from "@mailwoman/cartographer/base/trees"
 import plateauTilesets from "@mailwoman/structures/data/plateau-tilesets.json" with { type: "json" }
 import { electedPlateauTilesets, plateauTilesetsInView, type PlateauTileset } from "@mailwoman/structures/jp/plateau"
@@ -254,11 +254,13 @@ function containsPoint({ bounds: [west, south, east, north] }: PlateauTileset, [
  * `marked` holds the ids currently in the modeled state.
  */
 function markModeledFootprints(map: MapInstance, cityModels: PlateauTileset[], marked: Set<string | number>): void {
-	const target = { source: MailwomanBaseTileSetID, sourceLayer: "buildings" }
+	// The footprints come from the separate buildings tileset when the style loads one, else from the basemap.
+	const source = map.getSource(MailwomanBuildingsTileSetID) ? MailwomanBuildingsTileSetID : MailwomanBaseTileSetID
+	const target = { source, sourceLayer: "buildings" }
 	const covered = new Set<string | number>()
 
 	if (cityModels.length) {
-		for (const feature of map.querySourceFeatures(MailwomanBaseTileSetID, { sourceLayer: "buildings" })) {
+		for (const feature of map.querySourceFeatures(source, { sourceLayer: "buildings" })) {
 			const { id, geometry } = feature
 
 			if (id == null || covered.has(id)) continue

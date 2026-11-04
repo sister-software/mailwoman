@@ -15,6 +15,7 @@ import {
 	createTerrainDEMSource,
 	HillshadeTileSetID,
 } from "#base/terrain"
+import { MailwomanBaseTileSetID, MailwomanBuildingsTileSetID } from "#base/theme"
 import {
 	LayerSpecificationList,
 	type LayerSpecificationListInput,
@@ -146,8 +147,22 @@ export class StyleSpecificationComposer {
 		}
 	}
 
+	/**
+	 * The composed layers.
+	 *
+	 * Without a separate buildings tileset among the sources, the footprint layers
+	 * read the basemap's `buildings` layer.
+	 */
 	public get layers(): LayerSpecificationListItem[] {
-		return Array.from(this.layersList)
+		const layers = Array.from(this.layersList)
+
+		if (MailwomanBuildingsTileSetID in this.sources) return layers
+
+		return layers.map((layer) =>
+			"source" in layer && layer.source === MailwomanBuildingsTileSetID
+				? { ...layer, source: MailwomanBaseTileSetID }
+				: layer
+		)
 	}
 
 	toJSON(): StyleSpecification {

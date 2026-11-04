@@ -12,7 +12,7 @@ import { InfrastructureLayers } from "#base/infrastructure"
 import { LandUnderlayLayers, OceanCoastLayers, OceanLayers } from "#base/ocean"
 import { withGroundWidth } from "#base/road-width"
 import { HillshadeTileSetID } from "#base/terrain"
-import { GuideMapPalette, MailwomanBaseFlavor, MailwomanBaseTileSetID } from "#base/theme"
+import { GuideMapPalette, MailwomanBaseFlavor, MailwomanBaseTileSetID, MailwomanBuildingsTileSetID } from "#base/theme"
 import { TreeLayers } from "#base/trees"
 import { MAP_FONT_REGULAR } from "#styles/fonts"
 import { LayerID } from "#styles/layers"
@@ -157,6 +157,9 @@ const GuideMapLanduseLayer: LayerSpecification = {
 
 function toGuideMapLayers(source: LayerSpecification): LayerSpecification[] {
 	if (source.id === "landuse_park") return [source, GuideMapLanduseLayer]
+
+	// The Protomaps footprint fill reads the footprints wherever the extruded building layers do.
+	if (source.id === "buildings" && source.type === "fill") return [{ ...source, source: MailwomanBuildingsTileSetID }]
 
 	if (source.type !== "line") return [source]
 

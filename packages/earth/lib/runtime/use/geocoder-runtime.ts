@@ -11,7 +11,11 @@
  * maplibre graph. This assembly imports all three.
  */
 
-import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
+import {
+	StyleSpecificationComposer,
+	MailwomanBaseTileSetID,
+	MailwomanBuildingsTileSetID,
+} from "@mailwoman/cartographer/base"
 import { GuideMapLight, GuideMapSky } from "@mailwoman/cartographer/base/theme"
 import {
 	createUnderseaLabelSource,
@@ -180,19 +184,19 @@ function modelDisabled(): boolean {
 const TILESET_NAME = /^[a-z0-9][a-z0-9._-]*$/u
 
 /**
- * The tileset `?basemap=` asks for, or `null` when the page has no such parameter
- * or its value is not a tileset name.
+ * The tileset a page parameter such as `?basemap=` asks for, or `null` when the page
+ * has no such parameter or its value is not a tileset name.
  *
  * A build is served only as XYZ tiles through the tile worker, so the parameter takes a tileset name.
  * A URL to an archive is refused.
  */
-function requestedBasemap(): string | null {
-	const name = pageSearchParam("basemap")
+function requestedTileset(parameter: "basemap" | "buildings"): string | null {
+	const name = pageSearchParam(parameter)
 
 	if (name === null) return null
 
 	if (!TILESET_NAME.test(name)) {
-		console.warn(`[mailwoman earth] ?basemap= takes a tile-worker tileset name; ignoring ${stringifyJSON(name)}`)
+		console.warn(`[mailwoman earth] ?${parameter}= takes a tile-worker tileset name; ignoring ${stringifyJSON(name)}`)
 
 		return null
 	}
@@ -204,9 +208,19 @@ function requestedBasemap(): string | null {
  * The basemap's TileJSON: the tileset `?basemap=` asks for on the tile worker, or the configured basemap.
  */
 function basemapTileJSONURL(config: EarthConfig): URL {
-	const name = requestedBasemap()
+	const name = requestedTileset("basemap")
 
 	return name ? new URL(`${name}.json`, config.tileWorkerURL) : config.basemapTileJSONURL
+}
+
+/**
+ * The TileJSON of the separate buildings tileset `?buildings=` asks for, or `null`
+ * to draw the footprints from the basemap's own `buildings` layer.
+ */
+function buildingsTileJSONURL(config: EarthConfig): URL | null {
+	const name = requestedTileset("buildings")
+
+	return name ? new URL(`${name}.json`, config.tileWorkerURL) : null
 }
 
 /**
@@ -255,6 +269,7 @@ function takeReleasesManifest(): Promise<ReleasesManifest | null> {
  */
 export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
 	const tileJSONURL = useMemo(() => basemapTileJSONURL(config).href, [config])
+	const buildingsURL = useMemo(() => buildingsTileJSONURL(config)?.href ?? null, [config])
 
 	// `null` until the TileJSON is read.
 	// The style draws without the build-only layers until then.
@@ -278,6 +293,7 @@ export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
 		const style = new StyleSpecificationComposer({
 			sources: {
 				[MailwomanBaseTileSetID]: { type: "vector", url: tileJSONURL },
+				...(buildingsURL ? { [MailwomanBuildingsTileSetID]: { type: "vector", url: buildingsURL } as const } : {}),
 				[UnderseaTileSetID]: createUnderseaLabelSource(config.underseaFeaturesURL.href),
 			},
 			// Undersea names draw under the ocean and island labels, so a sea's name wins a collision with a seamount's.
@@ -296,7 +312,7 @@ export function useEarthMapStyle(config: EarthConfig): MapCanvasStyle {
 				return !BUILD_ONLY_SOURCE_LAYERS.has(sourceLayer) || (vectorLayers?.has(sourceLayer) ?? false)
 			}),
 		}
-	}, [tileJSONURL, vectorLayers, config.underseaFeaturesURL])
+	}, [tileJSONURL, buildingsURL, vectorLayers, config.underseaFeaturesURL])
 }
 
 /**
