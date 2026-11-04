@@ -72,6 +72,12 @@ extend-ignore-re = [
 	'''\bCENTRE\b''',
 	'''\|centre\|''',
 	'''\(CC BY 4\.0\) licence''',
+	# OpenStreetMap tag keys (`building:colour`, `roof:shape/height/levels/colour/...`), the Arnis function
+	# `facade_tone_for_colour` and Sponge's `.schem` file extension, quoted by the Arnis building review.
+	'''\b(?:building|roof)(?::[a-z]+)*:colour\b''',
+	'''/colour/''',
+	'''\bfacade_tone_for_colour\b''',
+	'''\.schem\b''',
 	'''["'`]neighbourhood["'`]''',
 	'''\bneighbourhood\s*:|\.neighbourhood\b''',
 	'''["'`]licence["'`]''',

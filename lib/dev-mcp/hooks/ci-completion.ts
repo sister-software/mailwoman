@@ -7,7 +7,7 @@
  * A marker belongs to the Claude Code session that created its PR.
  * The MCP server cannot see the session's id, so the tool writes the marker unowned.
  *
- * This module's `PostToolUse` handler runs in the creating session right after the tool returns.
+ * This module's PostToolUse handler runs in the creating session right after the tool returns.
  * It records the payload's `session_id` in every marker the tool wrote.
  *
  * The `Stop` handler blocks only the owning session, and only while its checkout
@@ -38,7 +38,7 @@ export interface TrackedCI {
 	repo: string
 	pullRequestNumber: number
 	/**
-	 * The Claude Code session that created the PR, or `null` until its `PostToolUse` hook records it.
+	 * The Claude Code session that created the PR, or `null` until its PostToolUse hook records it.
 	 */
 	sessionID: string | null
 }
@@ -167,7 +167,7 @@ export async function assertSessionCIComplete(
 }
 
 /**
- * The `PostToolUse` handler: records the session as owner of the markers a
+ * The PostToolUse handler: records the session as owner of the markers a
  * `mwdev_pull_request` create wrote.
  */
 async function claimAfterCreate(payload: CIHookPayload): Promise<void> {
