@@ -135,15 +135,20 @@ void main() {
 	// A window grid: one band per floor, a window every 3 m along the wall. The ground floor and walls under 2 m stay
 	// blank. Towers over 30 m take larger blue-gray glass, lower buildings smaller warm-gray windows.
 	float tower = step(30.0, v_wall_height);
-	float floorY = fract(v_wall.y / v_floor_height);
-	float bayX = fract(v_wall.x / mix(3.0, 2.0, tower));
+	vec2 cell = vec2(v_wall.x / mix(3.0, 2.0, tower), v_wall.y / v_floor_height);
+	float floorY = fract(cell.y);
+	float bayX = fract(cell.x);
 	float inBand = step(mix(0.35, 0.18, tower), floorY) * step(floorY, mix(0.78, 0.9, tower));
 	float inBay = step(mix(0.2, 0.08, tower), bayX) * step(bayX, mix(0.8, 0.92, tower));
 	float aboveGround = step(v_floor_height, v_wall.y) * step(2.0, v_wall_height);
-	float window = inBand * inBay * aboveGround;
-	vec3 glass = mix(vec3(0.58, 0.60, 0.62), vec3(0.47, 0.56, 0.66), tower);
+	// Where a floor or bay shrinks toward a pixel, the grid would alias into noise, so it fades to its average.
+	vec2 cellsPerPixel = fwidth(cell);
+	float detail = 1.0 - smoothstep(0.25, 0.6, max(cellsPerPixel.x, cellsPerPixel.y));
+	float coverage = mix(0.25, 0.6, tower);
+	float window = mix(coverage, inBand * inBay, detail) * aboveGround;
+	vec3 glass = mix(vec3(0.62, 0.62, 0.62), vec3(0.50, 0.58, 0.68), tower);
 	vec3 wall = v_color * v_shade;
-	fragColor = vec4(mix(wall, glass * v_shade, window * mix(0.55, 0.75, tower)), 1.0);
+	fragColor = vec4(mix(wall, glass * v_shade, window * mix(0.4, 0.65, tower)), 1.0);
 }`
 
 const ROOF_VERTEX_SHADER = `
@@ -632,10 +637,10 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 			this.#request(x, y)
 		}
 
+		// Each finished request repaints the map.
+		// That frame requests the next missing tiles.
+		// The layer never repaints on its own, so the map can go idle.
+		// Timer results are read on whichever frame comes next.
 		this.#evict(gl)
-
-		if (missing.length || this.#timer?.queries.length) {
-			this.#map.triggerRepaint()
-		}
 	}
 }
