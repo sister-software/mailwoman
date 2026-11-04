@@ -27,6 +27,7 @@ import { VITAL_PLACES_FILES, vitalPlacesPath } from "#tools/fetch/wikidata/vital
 import type { ClassRoots } from "#tools/fetch/wikidata/vital-places/classify"
 import type { VitalPlace } from "#tools/fetch/wikidata/vital-places/inventory"
 import { renderVitalPlaces, VITAL_PLACES_SOURCE } from "#tools/fetch/wikidata/vital-places/render"
+import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils/align"
 
 const { values } = parseArguments({
@@ -65,7 +66,16 @@ const rows: ParquetRow[] = []
 const quarantined: string[] = []
 
 for (const row of render.rows) {
-	const aligned = alignRow({ ...row, license: "CC0-1.0", surface: "rendered" } as unknown as Parameters<typeof alignRow>[0])
+	const aligned = alignRow({
+		raw: row.raw,
+		components: row.components,
+		country: row.country,
+		source: row.source,
+		source_id: row.source_id,
+		license: "CC0-1.0",
+		register: row.register,
+		surface: SurfaceOrigin.Rendered,
+	})
 
 	if (aligned.kind !== "labeled") {
 		quarantined.push(row.source_id)

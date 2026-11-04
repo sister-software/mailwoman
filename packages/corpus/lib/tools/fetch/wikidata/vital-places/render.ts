@@ -13,6 +13,7 @@
  * The holdout is chosen by a hash of the QID, so every form and language of a held-out place stays out of training.
  */
 
+import type { ComponentTag } from "@mailwoman/codex/component"
 import { sha256Hex } from "@mailwoman/core/hash"
 
 import { SourceRegister } from "#registers"
@@ -112,7 +113,7 @@ export interface VitalPlaceForm {
 	 */
 	id: string
 	raw: string
-	components: Record<string, string>
+	components: Partial<Record<ComponentTag, string>>
 }
 
 /**
@@ -198,7 +199,7 @@ export function holdsOutVitalPlace(qid: string, exempt: ReadonlySet<string> = ne
  */
 export interface VitalPlaceRow {
 	raw: string
-	components: Record<string, string>
+	components: Partial<Record<ComponentTag, string>>
 	country: string
 	source: typeof VITAL_PLACES_SOURCE
 	source_id: string
