@@ -24,10 +24,11 @@ crates as default members, because none of them links libtorch.
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage, zipped shapefile and Overture GeoParquet readers.                                                  |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.                            |
 
-`hrt-profile` holds thirteen of the fork's fourteen layers: `water`, from OpenStreetMap, Natural Earth and the
-prepared ocean polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; `boundaries`, from
-OpenStreetMap and Natural Earth; `landcover`, from the Daylight landcover GeoPackage and Natural Earth; and `roads`,
-`buildings`, `places`, `pois`, `landuse`, `infrastructure`, `facilities`, `trees` and `transit`, from OpenStreetMap.
+`hrt-profile` holds thirteen of the fork's fourteen layers. `water` comes from OpenStreetMap, Natural Earth and the
+prepared ocean polygons. `earth` comes from OpenStreetMap, Natural Earth and the prepared land polygons. `boundaries`
+comes from OpenStreetMap and Natural Earth, and `landcover` from the Daylight landcover GeoPackage and Natural Earth.
+`roads`, `buildings`, `places`, `pois`, `landuse`, `infrastructure`, `facilities`, `trees` and `transit` come from
+OpenStreetMap.
 `buildings` can also take its footprints from Overture's buildings theme, described below. The other Overture sources,
 the canopy-raster treetops and the Overture-only `districts` layer are not ported. The fork's `transit` layer emits no
 features. `hrt-cli` carries the parity profile and the basemap profile the comparisons below use.
@@ -36,7 +37,7 @@ features. `hrt-cli` carries the parity profile and the basemap profile the compa
 
 `basemap-test - buildings.pmtiles layer=buildings overture-buildings=<dir>` builds the `buildings` layer from a synced
 `theme=buildings/` directory of Overture's release, without an OpenStreetMap file. The input `-` skips both
-OpenStreetMap passes. `bounds=<west,south,east,north>` limits the build; without it the archive covers the world.
+OpenStreetMap passes. `bounds=<west,south,east,north>` limits the build. Without it, the archive covers the world.
 `hrt-sources`' `overture` reader reads the row groups in parallel. It reads `theme` and `type` from the hive directory
 names, as the fork's `--overture_buildings` does, and skips row groups and rows whose `bbox` lies outside the bounds.
 With an OpenStreetMap file as well, OpenStreetMap contributes only the address points. `no-footprints` keeps only those
@@ -53,7 +54,7 @@ attributes, so only the `hrt` tile carries them.
 lengths with `Math.hypot`, and the road smoothing places points with it. A last-bit difference in a smoothed point
 changed which vertex Douglas-Peucker kept in 63 of 6,350 Luxembourg road tiles. With the translations, every probe
 input matched Java's bits. `Math.cos` remains the platform's, because HotSpot replaces it with an intrinsic. Its result
-differed for 456 of the 200,000 inputs; it sets only the smoothing's 6-meter cap, and no tile differed.
+differed for 456 of the 200,000 inputs. It sets only the smoothing's 6-meter cap, and every tile matched.
 
 `hrt-render` links GEOS, built from source by the `geos` crate's `static` feature, so building it needs cmake and a C++
 compiler. GEOS ports the JTS validity test and precision reducer Planetiler calls when a polygon's rounded form is
@@ -105,7 +106,7 @@ sort for two inputs:
 
 Two differences from Planetiler leave the output unchanged on these inputs. `hrt-osm` skips untagged nodes, which no
 profile rule matches. geo's `relate` returns a result on invalid rings where JTS raises a topology exception, so
-`hrt-osm` has no counterpart to Planetiler's retry after `buffer(0)`; neither input exercised that retry.
+`hrt-osm` has no counterpart to Planetiler's retry after `buffer(0)`. Neither input exercised that retry.
 
 ## Renderer parity with Planetiler
 
@@ -145,7 +146,7 @@ cargo run --release -p hrt-cli -- record rust.pmtiles rust.jsonl
 ```
 
 `clock` exits 0 when every tile is in both archives and every shared tile holds equal layers. `record` writes one JSON
-line per tile with each layer's feature count and a digest of its features in the form `clock` compares; two archives
+line per tile with each layer's feature count and a digest of its features in the form `clock` compares. Two archives
 that `clock` calls equal give the same record. On 2026-11-02 the Java and `hrt` archives were equal on every tile:
 
 | Input                                          | Tiles | Equal | Byte-identical after gunzip | Features compared |
@@ -158,7 +159,7 @@ The tiles that are not byte-identical hold polygons whose rings start at a diffe
 
 Luxembourg also gave a first timing on the lab host (16 cores, load average 1.45 at the start), both builds limited to
 four threads. The parity profile writes no attributes and runs no post-processing, so these figures measure reading,
-rendering, sorting and encoding; the basemap profile's attribute and merge work adds to both builds:
+rendering, sorting and encoding. The basemap profile's attribute and merge work adds to both builds:
 
 | Build                                                                 | Wall clock | CPU time | Peak resident memory |
 | --------------------------------------------------------------------- | ---------: | -------: | -------------------: |
@@ -166,11 +167,11 @@ rendering, sorting and encoding; the basemap profile's attribute and merge work 
 | `hrt render-test`, `RAYON_NUM_THREADS=4`, tiles encoded on one thread |     11.6 s |     23 s |               395 MB |
 | `hrt render-test`, `RAYON_NUM_THREADS=4`, tiles encoded in parallel   |     10.1 s |     29 s |               534 MB |
 
-The Planetiler figures are its own stage table and exclude JVM start-up; its stages were pass 1 2 s, pass 2 17 s, sort
+The Planetiler figures are its own stage table and exclude JVM start-up. Its stages were pass 1 2 s, pass 2 17 s, sort
 4 s and archive 7 s. The first `hrt` run used 199% CPU of the four threads because it encoded tiles on one thread. The
-second encodes each batch of tiles on rayon's threads and writes them in tile order; it used 285% CPU, and the host's
+second encodes each batch of tiles on rayon's threads and writes them in tile order. It used 285% CPU, and the host's
 load average had risen to 18.5 from other jobs by the time it finished, so its CPU time includes contention. These are
-single runs on a shared host; the Phase 0 baseline and `hrt titrate` repeat them under controlled load.
+single runs on a shared host. The Phase 0 baseline and `hrt titrate` repeat them under controlled load.
 
 ## Water layer parity
 
@@ -204,7 +205,7 @@ On 2026-11-02:
 | `luxembourg-latest.osm.pbf`, OpenStreetMap only | 6,009 | 6,006 |                                  4 |         3 |
 
 The prepared ocean polygons are in EPSG:3857. Planetiler converts them to longitude and latitude through GeoTools and
-then to world coordinates, and `hrt` applies the same two formulas; every Monaco and San Francisco tile was equal without
+then to world coordinates, and `hrt` applies the same two formulas. Every Monaco and San Francisco tile was equal without
 a vertex tolerance.
 
 Without post-processing, all 6,015 Luxembourg tiles and their 75,794 features were identical, so the three remaining
@@ -271,12 +272,12 @@ On 2026-11-02, every tile was equal without a vertex tolerance, and most were by
 
 The places rows read the curated label zooms from the fork's `tiles/src/main/resources/places.csv` through
 `places=`, as the fork reads them from its jar. The pois rows run with an empty QRank table on both sides, so no POI
-takes a zoom from its page-view rank; `LayerDump.java` passes the empty table because the fork's `Pois` throws on a
+takes a zoom from its page-view rank. `LayerDump.java` passes the empty table because the fork's `Pois` throws on a
 `wikidata` tag when it has none. A production build reads the gzipped `qrank.csv`, which `basemap-test` takes through `qrank=`.
 
 The `landcover` layer comes from the Daylight landcover GeoPackage through `landcover=`, plus Natural Earth's
 Antarctic glaciers. Monaco and Luxembourg lie outside both: with Natural Earth only, both builds write an empty
-archive for each. The Daylight path has unit tests and no parity run yet; the GeoPackage is a large download, which
+archive for each. The Daylight path has unit tests and no parity run yet. The GeoPackage is a large download, which
 belongs on the AWS build host.
 
 For `buildings`, the counts below include tiles equal within the polygon tolerance:
@@ -293,7 +294,7 @@ against `hrt`'s 9 rings and 49.9.
 
 The boundaries rows read Natural Earth through `ne=` as well. Natural Earth's admin boundary lines are multi-lines, and
 a non-OSM source's multi-line is a line, as Planetiler's `SimpleFeature` treats it. Within map bounds the GeoPackage
-reader returns each table's rows in ascending key order, the order geopackage-java hands Planetiler; all 558 Natural
+reader returns each table's rows in ascending key order, the order geopackage-java hands Planetiler. All 558 Natural
 Earth records inside Luxembourg's bounds then carry the same running number in both readers.
 
 A tile equal in content but not in bytes holds a polygon whose ring starts at another vertex. Some polygons turn invalid
@@ -363,7 +364,7 @@ as `hrt`, and `hrt`'s tile holds the forest clipped to that piece.
 
 Four equal landuse tiles hold the same features in another order. In the three `hrt clock` printed, the first feature
 out of order is a forest relation that the clip split into several polygons, which suggests GEOS's overlay lists a
-multipolygon's members in a different order from JTS's; that cause is not yet tested.
+multipolygon's members in a different order from JTS's. That cause is not yet tested.
 
 ## Devanagari name encoding parity
 
@@ -465,7 +466,7 @@ lookup lands depends on every key in the table, so this tile's cause is not esta
 The differing polygons in `water`, `buildings`, `landuse` and `landcover` are the polygon merges recorded for
 Luxembourg: GEOS's buffer, union and precision reducer in `hrt`, JTS's in Planetiler. In the 200 tiles `clock`
 detailed, the first differing polygon had intersection over union between 0.96 and 0.9999. The bundled GEOS is 3.15.1dev,
-which its version file records as a port of JTS 1.20.0, the JTS Planetiler 0.10.2 uses; the two still return different
+which its version file records as a port of JTS 1.20.0, the JTS Planetiler 0.10.2 uses. The two still return different
 rings for the same input. During merges, Planetiler snapped and repaired 66 polygons and `hrt` 70. During rendering,
 both repaired 581,396.
 
@@ -510,15 +511,15 @@ JTS's `SimpleMCSweepLineIntersector.addEdge` (8.10%), `Arrays.copyOf(Object[])` 
 
 Planetiler names its threads after their stage, so the samples split by stage:
 
-| Thread                  | CPU samples | Most frequent methods                                                                                |
-| ----------------------- | ----------: | ---------------------------------------------------------------------------------------------------- |
-| `osm_pass2_process`     |      56,151 | `Arrays.copyOf(Object[])` 4,710; `subsimplify` 3,635; JTS `MonotoneChain.computeIntersections` 2,185 |
-| `archive_encode`        |      17,794 | `subsimplify` 1,417; `HashMap.getNode` 1,218; `ArrayList.add` 1,193; `HashMap.resize` 943            |
-| `osm_pass1_parse`       |       5,746 | `DenseNodeIterator.next` 1,394; `String.hashCode` 822; protobuf `readRawVarint32` 628                |
-| `osm_water_process`     |       2,634 |                                                                                                      |
-| `osm_pass1_process`     |       2,063 |                                                                                                      |
-| `osm_land_process`      |       1,375 |                                                                                                      |
-| `ne_read`, `ne_process` |         141 |                                                                                                      |
+| Thread                  | CPU samples | Most frequent methods                                                                                      |
+| ----------------------- | ----------: | ---------------------------------------------------------------------------------------------------------- |
+| `osm_pass2_process`     |      56,151 | `Arrays.copyOf(Object[])` (4,710), `subsimplify` (3,635), JTS `MonotoneChain.computeIntersections` (2,185) |
+| `archive_encode`        |      17,794 | `subsimplify` (1,417), `HashMap.getNode` (1,218), `ArrayList.add` (1,193), `HashMap.resize` (943)          |
+| `osm_pass1_parse`       |       5,746 | `DenseNodeIterator.next` (1,394), `String.hashCode` (822), protobuf `readRawVarint32` (628)                |
+| `osm_water_process`     |       2,634 |                                                                                                            |
+| `osm_pass1_process`     |       2,063 |                                                                                                            |
+| `osm_land_process`      |       1,375 |                                                                                                            |
+| `ne_read`, `ne_process` |         141 |                                                                                                            |
 
 The Natural Earth stage took 1m14s yet holds 141 CPU samples. It logged its start at 0:02:45 and its first rows read
 at 0:03:31, then read about 10,000 rows, 3% of the file, because the rest lie outside Japan's bounds. The 46 seconds
@@ -527,6 +528,6 @@ I/O and native inflate, outside the Java code the Flight Recorder's execution sa
 
 The unprofiled Java build's log records its temporary storage and largest tiles. It used a 2.5 GB node location cache, a
 393 MB multipolygon geometry cache and a feature database that peaked at 18 GB, and it wrote 189,423,246 features into
-10,997,053 tiles. Planetiler printed the archive size only as 4G; `hrt`'s archive was 4,098,754,482 bytes. The largest
+10,997,053 tiles. Planetiler printed the archive size only as 4G, and `hrt`'s archive was 4,098,754,482 bytes. The largest
 gzipped tile was 13/7274/3224 in Tokyo, 1.3 MB, of which buildings were 2.8 MB before compression. By zoom, the largest
 gzipped tile grew from 14 kB at z0 to 246 kB at z9 and peaked at z13.
