@@ -8,8 +8,12 @@
 //! - `hrt render-test <input.osm.pbf> <output.pmtiles>` builds an archive with the parity profile.
 //! - `hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<borders.json>] [raw]
 //!   [places=<places.csv>] [qrank=<qrank.csv.gz>] [ne=<gpkg or zip>] [osm-water=<zip>] [osm-land=<zip>]
-//!   [landcover=<daylight-landcover.gpkg>] [clip=<polygon.geojson>] [clip-buffer=<pixels>] [pgf=<pgf-encoding.zip>]`
-//!   builds ported layers of the basemap profile as `packages/hrt/parity/LayerDump.java` builds the fork's own. `raw`
+//!   [landcover=<daylight-landcover.gpkg>] [clip=<polygon.geojson>] [clip-buffer=<pixels>] [pgf=<pgf-encoding.zip>]
+//!   [overture-buildings=<theme=buildings directory>] [no-footprints] [bounds=<west,south,east,north>]`
+//!   builds ported layers of the basemap profile as `packages/hrt/parity/LayerDump.java` builds the fork's own. An
+//!   input of `-` reads no OpenStreetMap file. `overture-buildings` takes the `buildings` layer's footprints from
+//!   Overture instead of OpenStreetMap, `no-footprints` keeps only its address points, and `bounds` replaces the
+//!   OpenStreetMap header's bounds, which a build without an OpenStreetMap file otherwise lacks. `raw`
 //!   skips post-processing, `clip` clips every tile to the polygon, buffered by `clip-buffer` (default 4) pixels of a
 //!   256-pixel tile as a fraction of the polygon's larger side, and `pgf` registers the fork's fonts so names in their
 //!   scripts get `pgf:` attributes.
@@ -38,11 +42,20 @@ use std::time::Instant;
 
 use hrt_profile::Profile;
 
-fn build(input: &str, extra: &[pipeline::ExtraSource], output: &str, profile: &impl Profile) -> ExitCode {
+/// Builds `output` with `profile`. An `input` of `-` reads no OpenStreetMap file, for an archive built from the extra
+/// sources alone.
+fn build(
+	input: &str,
+	bounds: Option<[f64; 4]>,
+	extra: &[pipeline::ExtraSource],
+	output: &str,
+	profile: &impl Profile,
+) -> ExitCode {
 	let started = Instant::now();
 	let output = PathBuf::from(output);
+	let input = (input != "-").then(|| PathBuf::from(input));
 	let scratch = tempfile::tempdir().expect("a scratch directory");
-	match pipeline::build(&PathBuf::from(input), extra, &output, scratch.path(), profile) {
+	match pipeline::build(input.as_deref(), bounds, extra, &output, scratch.path(), profile) {
 		Ok(report) => {
 			eprintln!("render: {:?}", report.render);
 			eprintln!("sorted {} records into {} tiles", report.records, report.tiles);
@@ -62,7 +75,7 @@ fn build(input: &str, extra: &[pipeline::ExtraSource], output: &str, profile: &i
 fn usage() -> ExitCode {
 	eprintln!("usage: hrt render-test <input.osm.pbf> <output.pmtiles>");
 	eprintln!(
-		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>] [landcover=<path>] [clip=<path>] [clip-buffer=<pixels>] [pgf=<path>]"
+		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>] [landcover=<path>] [clip=<path>] [clip-buffer=<pixels>] [pgf=<path>] [overture-buildings=<dir>] [no-footprints] [bounds=<w,s,e,n>]"
 	);
 	eprintln!("       hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>");
 	eprintln!("       hrt render-dump <input.osm.pbf>");
@@ -74,7 +87,7 @@ fn usage() -> ExitCode {
 fn main() -> ExitCode {
 	let args: Vec<String> = std::env::args().skip(1).collect();
 	match args.first().map(String::as_str) {
-		Some("render-test") if args.len() == 3 => build(&args[1], &[], &args[2], &parity_profile::ParityProfile),
+		Some("render-test") if args.len() == 3 => build(&args[1], None, &[], &args[2], &parity_profile::ParityProfile),
 		Some("merge-probe") if args.len() == 6 => {
 			let tile: Vec<u32> = args[2].split('/').filter_map(|part| part.parse().ok()).collect();
 			if tile.len() != 3 {
@@ -122,8 +135,32 @@ fn main() -> ExitCode {
 			let mut clip_path = None;
 			let mut clip_buffer = hrt_profile::clip::DEFAULT_BUFFER;
 			let mut fonts = None;
+			let mut bounds = None;
+			let mut footprints = hrt_profile::layers::buildings::Footprints::Osm;
 			for option in &args[3..] {
-				if let Some(path) = option.strip_prefix("pgf=") {
+				if let Some(path) = option.strip_prefix("overture-buildings=") {
+					extra.push(pipeline::ExtraSource {
+						name: "overture_buildings".into(),
+						path: path.into(),
+						format: pipeline::SourceFormat::GeoParquet,
+					});
+					if footprints == hrt_profile::layers::buildings::Footprints::Osm {
+						footprints = hrt_profile::layers::buildings::Footprints::Overture;
+					}
+				} else if option == "no-footprints" {
+					footprints = hrt_profile::layers::buildings::Footprints::None;
+				} else if let Some(text) = option.strip_prefix("bounds=") {
+					let values: Vec<f64> = text.split(',').filter_map(|part| part.parse().ok()).collect();
+					match values[..] {
+						[west, south, east, north] if west < east && south < north => {
+							bounds = Some([west, south, east, north])
+						}
+						_ => {
+							eprintln!("bounds must be west,south,east,north degrees, but was {text}");
+							return ExitCode::FAILURE;
+						}
+					}
+				} else if let Some(path) = option.strip_prefix("pgf=") {
 					let path = PathBuf::from(path);
 					match hrt_profile::pgf::FontRegistry::from_zip(&path, &hrt_profile::pgf::FORK_FONTS) {
 						Ok(registry) => fonts = Some(registry),
@@ -205,6 +242,7 @@ fn main() -> ExitCode {
 			};
 			profile.raw = raw;
 			profile.fonts = fonts;
+			profile.footprints = footprints;
 			if let Some(path) = clip_path {
 				match hrt_profile::clip::Clip::from_geojson_file(0, basemap_profile::MAX_ZOOM, clip_buffer, &path) {
 					Ok(clip) => profile.clip = Some(clip),
@@ -220,7 +258,7 @@ fn main() -> ExitCode {
 			if let Some(qrank) = qrank {
 				profile.qrank = qrank;
 			}
-			let code = build(&args[1], &extra, &args[2], &profile);
+			let code = build(&args[1], bounds, &extra, &args[2], &profile);
 			eprintln!("merge snapping: {:?}", profile.merge_counts.lock().unwrap());
 			if let Some(clip) = &profile.clip {
 				eprintln!("clip failures: {:?}", clip.failures);

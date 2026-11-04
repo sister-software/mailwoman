@@ -52,6 +52,8 @@ pub struct BasemapProfile {
 	pub clip: Option<Clip>,
 	/// The fonts from `pgf-encoding.zip` whose scripts' names get `pgf:` attributes; `None` writes none.
 	pub fonts: Option<FontRegistry>,
+	/// Where the `buildings` layer's footprints come from.
+	pub footprints: buildings::Footprints,
 	pub merge_counts: Mutex<SnapCounts>,
 }
 
@@ -71,6 +73,7 @@ impl BasemapProfile {
 			raw: false,
 			clip: None,
 			fonts: None,
+			footprints: buildings::Footprints::Osm,
 			merge_counts: Mutex::new(SnapCounts::default()),
 		})
 	}
@@ -117,8 +120,14 @@ impl Profile for BasemapProfile {
 		if let Some(layer) = self.layer_id(landuse::LAYER_NAME).filter(|_| osm) {
 			landuse::process_osm(&self.input(source), layer, &mut out, config);
 		}
-		if let Some(layer) = self.layer_id(buildings::LAYER_NAME).filter(|_| osm) {
-			buildings::process_osm(&self.input(source), layer, &mut out, config);
+		if let Some(layer) = self.layer_id(buildings::LAYER_NAME) {
+			match source.source {
+				"osm" => buildings::process_osm(&self.input(source), layer, self.footprints, &mut out, config),
+				"overture_buildings" => {
+					buildings::process_overture(&self.input(source), layer, self.footprints, &mut out, config)
+				}
+				_ => {}
+			}
 		}
 		if let Some(layer) = self.layer_id(places::LAYER_NAME).filter(|_| osm) {
 			let mut input = self.input(source);

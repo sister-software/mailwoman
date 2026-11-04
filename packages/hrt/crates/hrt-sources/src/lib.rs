@@ -10,6 +10,7 @@
 
 pub mod geopackage;
 pub mod java_text;
+pub mod overture;
 pub mod shapefile_zip;
 pub mod wkb;
 

@@ -217,7 +217,6 @@ fn gzip(bytes: &[u8]) -> io::Result<Vec<u8>> {
 	encoder.finish()
 }
 
-/// Builds `output` from the OpenStreetMap file `input` with `profile`, sorting in `scratch`.
 /// The format of an input other than the OpenStreetMap file.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SourceFormat {
@@ -225,6 +224,8 @@ pub enum SourceFormat {
 	GeoPackage,
 	/// A zip archive holding one or more shapefiles.
 	ShapefileZip,
+	/// A GeoParquet file, or a directory of them such as an Overture theme with its hive partitions.
+	GeoParquet,
 }
 
 /// An input other than the OpenStreetMap file, under the source name the profile routes on.
@@ -292,6 +293,7 @@ fn process_extra_source(
 	bounds: Option<[f64; 4]>,
 	profile: &impl Profile,
 	emitter: &Emitter<'_, '_>,
+	progress: &Progress,
 ) -> io::Result<u64> {
 	// Extractions are kept beside the archive, so a later build reuses them.
 	let cache = source.path.with_extension("hrt-unzipped");
@@ -333,6 +335,22 @@ fn process_extra_source(
 				count += hrt_sources::shapefile_zip::read(&shapefile, bounds, &mut each)?;
 			}
 		}
+		// The reader runs its row groups on rayon's threads, so each record renders on the thread that read it.
+		SourceFormat::GeoParquet => {
+			count += hrt_sources::overture::read(&source.path, bounds, |record| {
+				let _working = progress.working(Work::Other(record.id));
+				let feature = hrt_osm::SourceFeature::fixed(
+					record.id,
+					hrt_osm::ElementKind::Other,
+					(source.name.as_str(), record.layer.as_str()),
+					&record.tags,
+					record.geometry,
+					&empty_nodes,
+				);
+				emitter.emit(&profile.process(&feature));
+				progress.tick();
+			})?;
+		}
 	}
 	flush(&mut batch);
 	Ok(count)
@@ -345,26 +363,40 @@ fn source_stage(name: &str) -> &'static str {
 		"osm_water" => "source: OSM water polygons",
 		"osm_land" => "source: OSM land polygons",
 		"landcover" => "source: Daylight land cover",
+		"overture_buildings" => "source: Overture buildings",
 		_ => "source: other",
 	}
 }
 
+/// Builds an archive from the OpenStreetMap file `input`, when given, and the extra sources. The archive covers
+/// `bounds` (`[west, south, east, north]` degrees) when given, else the OpenStreetMap file's header bounds, else the
+/// world.
 pub fn build(
-	input: &Path,
+	input: Option<&Path>,
+	bounds: Option<[f64; 4]>,
 	extra_sources: &[ExtraSource],
 	output: &Path,
 	scratch: &Path,
 	profile: &impl Profile,
 ) -> io::Result<BuildReport> {
 	let progress = Progress::start();
-	progress.stage("pass 1: relations and node locations", "");
-	let state = pass1(input, |relation| profile.keep_relation(relation))?;
+	let state = match input {
+		Some(input) => {
+			progress.stage("pass 1: relations and node locations", "");
+			Some(pass1(input, |relation| profile.keep_relation(relation))?)
+		}
+		None => None,
+	};
 	let sorter = Sorter::new(scratch, 64 << 20);
 	let threads = rayon::current_num_threads();
 	let writers: Vec<Mutex<_>> = (0..=threads).map(|_| Mutex::new(sorter.writer())).collect();
 	let render_counts = Mutex::new(RenderCounts::default());
 	let failure: Mutex<Option<io::Error>> = Mutex::new(None);
-	let bounds = input_bounds(input)?;
+	let bounds = match (bounds, input) {
+		(Some(bounds), _) => Some(bounds),
+		(None, Some(input)) => input_bounds(input)?,
+		(None, None) => None,
+	};
 	let config = render_config(profile.max_zoom(), bounds);
 	let emitter = Emitter {
 		writers: &writers,
@@ -374,20 +406,27 @@ pub fn build(
 		failure: &failure,
 	};
 
-	progress.stage("pass 2: OSM features", "features");
-	pass2(input, &state, |source| {
-		let _working = progress.working(match source.kind {
-			hrt_osm::ElementKind::Node => Work::Node(source.id),
-			hrt_osm::ElementKind::Way => Work::Way(source.id),
-			hrt_osm::ElementKind::Relation => Work::Relation(source.id),
-			hrt_osm::ElementKind::Other => Work::Other(source.id),
-		});
-		emitter.emit(&profile.process(source));
-		progress.tick();
-	})?;
+	if let (Some(input), Some(state)) = (input, &state) {
+		progress.stage("pass 2: OSM features", "features");
+		pass2(input, state, |source| {
+			let _working = progress.working(match source.kind {
+				hrt_osm::ElementKind::Node => Work::Node(source.id),
+				hrt_osm::ElementKind::Way => Work::Way(source.id),
+				hrt_osm::ElementKind::Relation => Work::Relation(source.id),
+				hrt_osm::ElementKind::Other => Work::Other(source.id),
+			});
+			emitter.emit(&profile.process(source));
+			progress.tick();
+		})?;
+	}
 	for source in extra_sources {
-		progress.stage(source_stage(&source.name), "");
-		process_extra_source(source, bounds, profile, &emitter)?;
+		let unit = if source.format == SourceFormat::GeoParquet {
+			"features"
+		} else {
+			""
+		};
+		progress.stage(source_stage(&source.name), unit);
+		process_extra_source(source, bounds, profile, &emitter, &progress)?;
 	}
 	progress.stage("sort: flushing chunks", "");
 	for writer in writers {

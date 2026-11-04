@@ -21,15 +21,32 @@ crates as default members, because none of them links libtorch.
 | `hrt-render`  | Planetiler's renderer: simplification, stripe clipping into tiles, polygon snapping, and MVT command encoding.                                  |
 | `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids.                           |
 | `hrt-profile` | The basemap profile: the fork's `Matcher` rules, a `FeatureCollector`-style builder, OSM names with their `pgf:` encodings, merges, and layers. |
-| `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage and zipped shapefile readers that number features as Planetiler does.                               |
+| `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage, zipped shapefile and Overture GeoParquet readers.                                                  |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.                            |
 
 `hrt-profile` holds thirteen of the fork's fourteen layers: `water`, from OpenStreetMap, Natural Earth and the
 prepared ocean polygons; `earth`, from OpenStreetMap, Natural Earth and the prepared land polygons; `boundaries`, from
 OpenStreetMap and Natural Earth; `landcover`, from the Daylight landcover GeoPackage and Natural Earth; and `roads`,
 `buildings`, `places`, `pois`, `landuse`, `infrastructure`, `facilities`, `trees` and `transit`, from OpenStreetMap.
-The Overture sources, the canopy-raster treetops and the Overture-only `districts` layer are not ported. The fork's `transit` layer emits no features. `hrt-cli` carries the parity profile and
-the basemap profile the comparisons below use.
+`buildings` can also take its footprints from Overture's buildings theme, described below. The other Overture sources,
+the canopy-raster treetops and the Overture-only `districts` layer are not ported. The fork's `transit` layer emits no
+features. `hrt-cli` carries the parity profile and the basemap profile the comparisons below use.
+
+### Overture buildings
+
+`basemap-test - buildings.pmtiles layer=buildings overture-buildings=<dir>` builds the `buildings` layer from a synced
+`theme=buildings/` directory of Overture's release, without an OpenStreetMap file. The input `-` skips both
+OpenStreetMap passes. `bounds=<west,south,east,north>` limits the build; without it the archive covers the world.
+`hrt-sources`' `overture` reader reads the row groups in parallel. It reads `theme` and `type` from the hive directory
+names, as the fork's `--overture_buildings` does, and skips row groups and rows whose `bbox` lies outside the bounds.
+With an OpenStreetMap file as well, OpenStreetMap contributes only the address points. `no-footprints` keeps only those
+address points, for an OpenStreetMap archive whose footprints come from a separate Overture archive.
+
+The fork's Java build of 2026-10-23 (`planet.v4`) read the Overture release that was latest that day, and its archive
+does not record which one, so this comparison checks counts rather than bytes. On a 4 km Osaka box (135.48–135.52° E, 34.66–34.70° N) from release
+2026-10-21.0, with 35,223 buildings and 379 building parts, tile `15/28718/13015` held 3,855 buildings, 4 building
+parts and 2,810 heights in both archives. `planet.v4` predates the fork's `height_src`, `district` and `class`
+attributes, so only the `hrt` tile carries them.
 
 `hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
 `atan2`. On 200,000 inputs, Rust's own `hypot` differed from Java's in the last bit for 26,528 (13%). JTS measures

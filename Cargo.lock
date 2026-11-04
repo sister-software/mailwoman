@@ -1059,8 +1059,12 @@ dependencies = [
 name = "hrt-sources"
 version = "0.1.0"
 dependencies = [
+ "arrow-array",
+ "arrow-schema",
  "geo-types",
  "hrt-osm",
+ "parquet",
+ "rayon",
  "rusqlite",
  "shapefile",
  "tempfile",

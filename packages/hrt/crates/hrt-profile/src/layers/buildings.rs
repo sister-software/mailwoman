@@ -4,10 +4,12 @@
 //
 // Ported from the basemaps fork's layers/Buildings.java (BSD-3-Clause, Protomaps).
 
-//! The `buildings` layer from OpenStreetMap: building and building-part footprints with rounded corners and heights,
-//! and address points at zoom 15. Footprints merge into blocks at zooms 11 and 12.
+//! The `buildings` layer: building and building-part footprints with rounded corners and heights, from OpenStreetMap or
+//! from Overture's buildings theme, and OpenStreetMap address points at zoom 15. Footprints merge into blocks at zooms
+//! 11 and 12.
 //!
-//! The Overture building source of the Java layer is not ported here.
+//! [`Footprints`] decides where footprints come from. With Overture footprints, OpenStreetMap building polygons are
+//! skipped, so a building is drawn once.
 
 use hrt_e::Value;
 use hrt_render::geom::java_round;
@@ -82,7 +84,6 @@ fn quantize(value: f64, step: i32) -> f64 {
 /// The fork's `isModeledLandmark`: whether the footprint's longitude and latitude centroid lies within a landmark's
 /// radius. Footprints whose bounds lie far from every landmark skip the centroid.
 fn is_modeled_landmark(input: &Input<'_>) -> bool {
-	use geos::Geom as _;
 	let Ok(world) = input.source.world_geometry() else {
 		return false;
 	};
@@ -102,11 +103,7 @@ fn is_modeled_landmark(input: &Input<'_>) -> bool {
 	if !near {
 		return false;
 	}
-	let Some((x, y)) = hrt_render::snap::to_geos(&world_to_lon_lat(&world))
-		.ok()
-		.and_then(|shape| shape.get_centroid().ok())
-		.and_then(|centroid| Some((centroid.get_x().ok()?, centroid.get_y().ok()?)))
-	else {
+	let Some((x, y)) = lon_lat_centroid(input) else {
 		return false;
 	};
 	MODELED_LANDMARKS.iter().any(|[landmark_lon, landmark_lat, radius]| {
@@ -141,12 +138,30 @@ fn rounded_footprint<'c>(collector: &'c mut Collector<'_>, input: &Input<'_>, la
 	}
 }
 
+/// Where the layer's footprints come from, the fork's `overtureFootprints` and `footprints` flags.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Footprints {
+	/// OpenStreetMap building and building-part polygons.
+	#[default]
+	Osm,
+	/// Overture's buildings theme; OpenStreetMap contributes only address points.
+	Overture,
+	/// No footprints: the layer holds only the address points that house-number labels read.
+	None,
+}
+
 /// `Buildings.processOsm`: footprints of buildings and building parts, and address points.
-pub fn process_osm(input: &Input<'_>, layer: u32, features: &mut Vec<Emitted>, config: CollectorConfig) {
+pub fn process_osm(
+	input: &Input<'_>,
+	layer: u32,
+	footprints: Footprints,
+	features: &mut Vec<Emitted>,
+	config: CollectorConfig,
+) {
 	let mut collector = Collector::new(input, config);
 	let is_building = (input.has_tag("building") && input.tag("building") != Some("no"))
 		|| (input.has_tag("building:part") && input.tag("building:part") != Some("no"));
-	if input.can_be_polygon() && is_building && !is_modeled_landmark(input) {
+	if footprints == Footprints::Osm && input.can_be_polygon() && is_building && !is_modeled_landmark(input) {
 		let (height, min_height) = parse_height(
 			input.tag(HEIGHT_KEY),
 			input.tag("building:levels"),
@@ -191,6 +206,189 @@ pub fn process_osm(input: &Input<'_>, layer: u32, features: &mut Vec<Emitted>, c
 				.set_attr("kind", "address")
 				.set_min_zoom(15);
 		}
+	}
+	features.extend(collector.finish());
+}
+
+/// The footprint's centroid in longitude and latitude, as JTS computes it on `latLonGeometry()`.
+fn lon_lat_centroid(input: &Input<'_>) -> Option<(f64, f64)> {
+	use geos::Geom as _;
+	let world = Geom::from(&input.source.world_geometry().ok()?);
+	let centroid = hrt_render::snap::to_geos(&world_to_lon_lat(&world))
+		.ok()?
+		.get_centroid()
+		.ok()?;
+	Some((centroid.get_x().ok()?, centroid.get_y().ok()?))
+}
+
+/// `BuildingAttributes.HEIGHT_FROM_TAG` and `HEIGHT_FROM_FLOORS`: where a building's `height` came from.
+const HEIGHT_FROM_TAG: &str = "height";
+const HEIGHT_FROM_FLOORS: &str = "floors";
+
+/// The side of a district cell in meters; the buildings in one cell share a district index.
+const DISTRICT_CELL_METERS: f64 = 128.0;
+const DISTRICT_COUNT: i64 = 16;
+
+/// `BuildingAttributes.district`: a hash of the 128 m cell holding the point, from 0 to 15. A style picks a building's
+/// palette entry from it, so a street reads as one fabric while neighboring districts differ.
+fn district(lon: f64, lat: f64) -> i32 {
+	// Java's `Math.cos` and Rust's agree to within an ulp, which moves a building only when it lies on a cell edge.
+	let cell_x = (lon * 111_320.0 * lat.to_radians().cos() / DISTRICT_CELL_METERS).floor() as i64;
+	let cell_y = (lat * 110_540.0 / DISTRICT_CELL_METERS).floor() as i64;
+	let mut h =
+		cell_x.wrapping_mul(0x9E37_79B9_7F4A_7C15_u64 as i64) ^ cell_y.wrapping_mul(0xC2B2_AE3D_27D4_EB4F_u64 as i64);
+	h ^= ((h as u64) >> 31) as i64;
+	h = h.wrapping_mul(0xBF58_476D_1CE4_E5B9_u64 as i64);
+	h ^= ((h as u64) >> 29) as i64;
+	h.rem_euclid(DISTRICT_COUNT) as i32
+}
+
+/// The color names `BuildingAttributes` accepts, ported there from Arnis (Apache-2.0, `src/colors.rs`).
+const NAMED_COLORS: &[(&str, &str)] = &[
+	("aqua", "#00ffff"),
+	("cyan", "#00ffff"),
+	("beige", "#bbad8e"),
+	("black", "#000000"),
+	("blue", "#0000ff"),
+	("brown", "#804000"),
+	("darkgray", "#606060"),
+	("darkgrey", "#606060"),
+	("darkbrown", "#5a3214"),
+	("darkred", "#8b0000"),
+	("dimgray", "#696969"),
+	("dimgrey", "#696969"),
+	("firebrick", "#b22222"),
+	("fuchsia", "#ff00ff"),
+	("magenta", "#ff00ff"),
+	("gold", "#ffd700"),
+	("gray", "#808080"),
+	("grey", "#808080"),
+	("green", "#008000"),
+	("ivory", "#fffff0"),
+	("khaki", "#f0e68c"),
+	("lightblue", "#add8e6"),
+	("lightgray", "#d3d3d3"),
+	("lightgrey", "#d3d3d3"),
+	("lightgreen", "#90ee90"),
+	("lightyellow", "#ffffe0"),
+	("lime", "#00ff00"),
+	("limestone", "#f6f0d0"),
+	("maroon", "#800000"),
+	("navy", "#000080"),
+	("olive", "#808000"),
+	("orange", "#ff8000"),
+	("pink", "#ffc0cb"),
+	("purple", "#800080"),
+	("red", "#ff0000"),
+	("salmon", "#fa8072"),
+	("sandstone", "#d7bc8a"),
+	("silver", "#c0c0c0"),
+	("tan", "#d2b48c"),
+	("teal", "#008080"),
+	("white", "#ffffff"),
+	("yellow", "#ffff00"),
+];
+
+/// `BuildingAttributes.normalizeColor`: a color as lowercase `#rrggbb`, or `None` when the text is neither a hex color
+/// nor a known color name.
+fn normalize_color(value: Option<&str>) -> Option<String> {
+	// Java's `String.trim` removes every character up to U+0020 from both ends.
+	let trimmed = value?.trim_matches(|c: char| c <= ' ').to_lowercase();
+	let hex = |text: &str| text.chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase());
+	if let Some(digits) = trimmed.strip_prefix('#') {
+		if digits.len() == 6 && hex(digits) {
+			return Some(trimmed);
+		}
+		if digits.len() == 3 && hex(digits) {
+			return Some(digits.chars().fold(String::from("#"), |mut out, c| {
+				out.push(c);
+				out.push(c);
+				out
+			}));
+		}
+	}
+	let name: String = trimmed
+		.chars()
+		.filter(|&c| !is_java_space(c) && c != '_' && c != '-')
+		.collect();
+	NAMED_COLORS
+		.iter()
+		.find(|(known, _)| *known == name)
+		.map(|(_, color)| (*color).to_owned())
+}
+
+/// The fork's `gersFeatureId`: a tile feature id from an Overture GERS id's first 52 bits, which stay exact as a
+/// JavaScript number, so a map client can key feature state by it. An id that does not start with 13 hex digits gets
+/// its Java `hashCode` as an unsigned number.
+fn gers_feature_id(gers: Option<&str>) -> i64 {
+	let Some(gers) = gers else {
+		return 0;
+	};
+	let hex: String = gers.chars().filter(|&c| c != '-').collect();
+	match hex.get(..13).filter(|head| head.chars().all(|c| c.is_ascii_hexdigit())) {
+		Some(head) => i64::from_str_radix(head, 16).unwrap_or(0),
+		None => {
+			// Java's `String.hashCode` over UTF-16 code units, each read as an unsigned `char`.
+			let hash = gers
+				.encode_utf16()
+				.fold(0i32, |h, unit| h.wrapping_mul(31).wrapping_add(i32::from(unit)));
+			i64::from(hash as u32)
+		}
+	}
+}
+
+/// `Buildings.processOverture`: a footprint for each Overture building and building part. A building with parts is
+/// left to its parts, because its own outline is the envelope of every part at the tallest part's height.
+pub fn process_overture(
+	input: &Input<'_>,
+	layer: u32,
+	footprints: Footprints,
+	features: &mut Vec<Emitted>,
+	config: CollectorConfig,
+) {
+	if footprints == Footprints::None || input.tag("theme") != Some("buildings") {
+		return;
+	}
+	let part = match input.tag("type") {
+		Some("building") => false,
+		Some("building_part") => true,
+		_ => return,
+	};
+	if (!part && input.tag("has_parts") == Some("true")) || is_modeled_landmark(input) {
+		return;
+	}
+	// Overture gives height in meters and floors as `num_floors`; floors convert the same way as `building:levels`.
+	let (height, min_height) = parse_height(input.tag("height"), input.tag("num_floors"), input.tag("min_height"));
+	let height_source = if input.has_tag("height") {
+		Some(HEIGHT_FROM_TAG)
+	} else if input.has_tag("num_floors") {
+		Some(HEIGHT_FROM_FLOORS)
+	} else {
+		None
+	};
+	let district = lon_lat_centroid(input).map(|(lon, lat)| district(lon, lat));
+	let number = |key: &str| input.tag(key).and_then(|text| text.parse::<f64>().ok());
+	let mut collector = Collector::new(input, config);
+	let feature = rounded_footprint(&mut collector, input, layer)
+		.set_id(gers_feature_id(input.tag("id")))
+		.set_attr("kind", if part { "building_part" } else { "building" })
+		// Heights are quantized per zoom in post-processing.
+		.set_attr(HEIGHT_KEY, height)
+		.set_attr_with_min_zoom("height_src", height_source, 13)
+		.set_attr_with_min_zoom("district", district, 13)
+		.set_attr_with_min_zoom("facade_color", normalize_color(input.tag("facade_color")), 13)
+		.set_attr_with_min_zoom("roof_color", normalize_color(input.tag("roof_color")), 13)
+		.set_attr_with_min_zoom("roof_material", input.tag("roof_material"), 15)
+		.set_attr_with_min_zoom("facade_material", input.tag("facade_material"), 15)
+		.set_attr_with_min_zoom("class", input.tag("class"), 15)
+		.set_attr_with_min_zoom("roof_shape", input.tag("roof_shape"), 15)
+		.set_attr_with_min_zoom("roof_height", number("roof_height"), 15)
+		.set_attr("sort_rank", 400)
+		.set_zoom_range(if part { 13 } else { 11 }, 15)
+		.set_min_pixel_size(0.0)
+		.set_min_pixel_size_overrides(12, 1.0);
+	if part {
+		feature.set_attr(MIN_HEIGHT_KEY, min_height);
 	}
 	features.extend(collector.finish());
 }
@@ -257,6 +455,40 @@ mod tests {
 		assert_eq!(parse_height(Some("12,5"), None, None), (Some(12.5), None));
 		assert_eq!(parse_height(None, Some("4"), Some("3")), (Some(14.0), Some(3.0)));
 		assert_eq!(parse_height(None, Some("0"), None), (Some(5.0), None));
+	}
+
+	#[test]
+	fn colors_normalize_from_hex_and_names() {
+		assert_eq!(normalize_color(Some(" #A0B1C2 ")).as_deref(), Some("#a0b1c2"));
+		assert_eq!(normalize_color(Some("#abc")).as_deref(), Some("#aabbcc"));
+		assert_eq!(normalize_color(Some("Dark_Grey")).as_deref(), Some("#606060"));
+		assert_eq!(normalize_color(Some("light green")).as_deref(), Some("#90ee90"));
+		assert_eq!(normalize_color(Some("#abcd")), None);
+		assert_eq!(normalize_color(Some("mauve")), None);
+		assert_eq!(normalize_color(None), None);
+	}
+
+	#[test]
+	fn gers_ids_keep_their_first_52_bits() {
+		assert_eq!(
+			gers_feature_id(Some("08b2f5a3-7c1e-4fff-0200-0a1b2c3d4e5f")),
+			0x08b2f5a37c1e4
+		);
+		// Java's "abc".hashCode() is 96354.
+		assert_eq!(gers_feature_id(Some("abc")), 96354);
+		assert_eq!(gers_feature_id(None), 0);
+	}
+
+	#[test]
+	fn districts_spread_over_sixteen_cells() {
+		let mut seen = [false; 16];
+		for step in 0..400 {
+			let index = district(135.5 + f64::from(step) * 0.002, 34.68);
+			seen[index as usize] = true;
+		}
+		assert!(seen.iter().all(|&hit| hit));
+		// Two points in one 128 m cell share an index.
+		assert_eq!(district(135.50001, 34.68001), district(135.50002, 34.68002));
 	}
 
 	#[test]
