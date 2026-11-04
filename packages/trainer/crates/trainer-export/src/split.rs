@@ -32,6 +32,7 @@ use crate::onnx::tensor_proto::DataType;
 use crate::onnx::tensor_shape_proto::dimension;
 use crate::onnx::type_proto::Value as TypeValue;
 use crate::onnx::{ModelProto, TensorProto};
+use crate::shape::attr_i;
 use crate::{fail, Result};
 
 pub const MAGIC: &[u8; 4] = b"MWE1";
@@ -103,14 +104,36 @@ pub fn split_embeddings(model: &mut ModelProto) -> Result<EmbeddingTable> {
 	let readers: Vec<usize> = (0..graph.node.len())
 		.filter(|i| graph.node[*i].input.iter().any(|n| n == INPUT_IDS))
 		.collect();
-	if readers.len() != 1 || graph.node[readers[0]].op_type.as_deref() != Some("Gather") {
+	let (gathers, shapes): (Vec<usize>, Vec<usize>) = readers
+		.iter()
+		.partition(|i| graph.node[**i].op_type.as_deref() == Some("Gather"));
+	// The Rust exporter reads the batch and sequence dimensions as `Shape(input_ids)` slices. `inputs_embeds` declares
+	// the same two leading dimensions, so a slice inside [0, 2) reads the same values from it. A slice without both
+	// bounds, or with a negative bound, could reach the hidden dimension, so the split refuses it.
+	let admitted_shape = |node: &crate::onnx::NodeProto| {
+		node.op_type.as_deref() == Some("Shape")
+			&& matches!(
+				(attr_i(node, "start"), attr_i(node, "end")),
+				(Some(start), Some(end)) if 0 <= start && start < end && end <= 2
+			)
+	};
+	if gathers.len() != 1 || !shapes.iter().all(|i| admitted_shape(&graph.node[*i])) {
 		let ops: Vec<_> = readers
 			.iter()
 			.map(|i| graph.node[*i].op_type.clone().unwrap_or_default())
 			.collect();
-		return Err(fail!("{INPUT_IDS} must feed exactly one Gather; read by {ops:?}"));
+		return Err(fail!(
+			"{INPUT_IDS} must feed exactly one Gather and only Shape slices within dims [0, 2); read by {ops:?}"
+		));
 	}
-	let gather = graph.node[readers[0]].clone();
+	for i in &shapes {
+		for name in &mut graph.node[*i].input {
+			if name == INPUT_IDS {
+				*name = INPUTS_EMBEDS.to_owned();
+			}
+		}
+	}
+	let gather = graph.node[gathers[0]].clone();
 	let table_name = gather.input[0].clone();
 	let table_index = find(graph, &table_name)
 		.ok_or_else(|| fail!("the Gather over {INPUT_IDS} reads {table_name}, which is not an initializer"))?;

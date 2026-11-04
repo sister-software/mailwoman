@@ -48,7 +48,7 @@ fn ints(tensor: &TensorProto) -> Option<Vec<i64>> {
 	}
 }
 
-fn attr_i(node: &NodeProto, name: &str) -> Option<i64> {
+pub(crate) fn attr_i(node: &NodeProto, name: &str) -> Option<i64> {
 	node.attribute
 		.iter()
 		.find(|a| a.name.as_deref() == Some(name))
