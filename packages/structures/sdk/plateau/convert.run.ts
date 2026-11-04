@@ -23,7 +23,14 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { CitySource, type CityTileset } from "#city-tilesets"
 import { electedPlateauTilesets, type PlateauTileset } from "#jp/plateau"
 import { createPlateauTileClient } from "#sdk/plateau"
-import { convertB3dm, convertTilesetJSON, type TilesetTile } from "#sdk/three-d-tiles"
+import {
+	convertB3dm,
+	convertTilesetJSON,
+	INTERIOR_TEXTURE_EDGE,
+	limitTextureEdge,
+	MAX_TEXTURE_EDGE,
+	type TilesetTile,
+} from "#sdk/three-d-tiles"
 
 const { values } = parseArguments({
 	options: {
@@ -71,9 +78,10 @@ for (const tileset of chosen) {
 
 	const worker = async () => {
 		while (next < paths.length) {
-			const path = paths[next++]!
+			const { path, leaf } = paths[next++]!
 			const source = await client.getBytes(new URL(path, tileset.url).href)
-			const converted = path.endsWith(".b3dm") ? convertB3dm(source) : source
+			const edge = leaf ? MAX_TEXTURE_EDGE : INTERIOR_TEXTURE_EDGE
+			const converted = path.endsWith(".b3dm") ? await limitTextureEdge(convertB3dm(source), edge) : source
 			const gzipped = await gzip(converted)
 
 			bytes += gzipped.length

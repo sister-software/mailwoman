@@ -7737,6 +7737,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     http-status-codes: "npm:^2.3.0"
     mailwoman: "workspace:*"
+    sharp: "npm:0.35.5"
   languageName: unknown
   linkType: soft
 

@@ -43,6 +43,15 @@ import { EARTH_CIRCUMFERENCE, mercatorWorld } from "../mercator-world.ts"
 const MIN_ZOOM = 14
 
 /**
+ * The bytes of decoded geometry and textures each city's tile cache holds.
+ *
+ * The converter limits textures to 1,024 pixels on a side for leaf tiles and 512 for tiles with children.
+ * A view at zoom 17 and 60 degrees pitch over Tokyo Station then loads 124 Chiyoda tiles,
+ * leaves and their ancestors, and all of them fit.
+ */
+const CACHE_BYTES = 512 * 1024 * 1024
+
+/**
  * The WGS84 ellipsoid's semi-major axis and first eccentricity squared.
  */
 const WGS84_A = 6_378_137
@@ -157,7 +166,16 @@ export class CityModelsLayer implements CustomLayerInterface {
 	onAdd(map: MapLibreMap, gl: WebGL2RenderingContext): void {
 		this.#map = map
 		this.#renderer = new WebGLRenderer({ canvas: map.getCanvas(), context: gl })
+
 		this.#renderer.autoClear = false
+		// For measurement: each active tileset's renderer counters, such as tiles loaded, visible and refused by a full
+		// cache.
+		;(globalThis as { __mailwomanCityModels?: () => unknown }).__mailwomanCityModels = () =>
+			[...this.#active.values()].map(({ city, tiles }) => ({
+				id: city.id,
+				stats: Reflect.get(tiles, "stats"),
+				loadProgress: tiles.loadProgress,
+			}))
 	}
 
 	onRemove(): void {
@@ -175,6 +193,12 @@ export class CityModelsLayer implements CustomLayerInterface {
 	#activate(city: CityTileset): ActiveCity {
 		const tiles = new TilesRenderer(this.#tilesetURL(city))
 
+		// A view near the ground refines to leaf tiles, and the leaves in view
+		// nearly fill the cache's byte budget.
+		// Siblings outside the view would take the room the visible leaves need.
+		tiles.loadSiblings = false
+		tiles.lruCache.maxBytesSize = CACHE_BYTES
+		tiles.lruCache.minBytesSize = CACHE_BYTES * 0.75
 		tiles.registerPlugin(new GLTFExtensionsPlugin({ dracoLoader: this.#draco, metadata: true }))
 		const scene = new Scene()
 
@@ -212,6 +236,10 @@ export class CityModelsLayer implements CustomLayerInterface {
 		})
 
 		tiles.addEventListener("load-tile-set", () => this.#map?.triggerRepaint())
+
+		tiles.addEventListener("load-error", ({ url, error }) => {
+			console.warn(`[mailwoman earth] city model tile ${String(url)} failed`, error)
+		})
 
 		return active
 	}
@@ -257,15 +285,32 @@ export class CityModelsLayer implements CustomLayerInterface {
 		const projectionInverse = projectionMatrix.clone().invert()
 		const camera = this.#camera
 
-		camera.projectionMatrix.copy(projectionMatrix)
-		camera.projectionMatrixInverse.copy(projectionInverse)
 		renderer.resetState()
 
 		for (const active of this.#active.values()) {
-			// view = P⁻¹ · (mercator → clip) · (ECEF → mercator), so P · view is MapLibre's own matrix for these points.
-			camera.matrixWorldInverse.copy(projectionInverse).multiply(mercatorToClip).multiply(active.ecefToMercator)
+			// MapLibre's view space for these points is view = P⁻¹ · (mercator → clip) · (ECEF → mercator).
+			// It is in MapLibre's own units per meter and mirrored on one axis.
+			// 3DTilesRendererJS culls and measures distance in view space, so its view
+			// matrix must be a rotation and translation in meters.
+			// The uniform scale and the mirror therefore move into the projection matrix.
+			const view = projectionInverse.clone().multiply(mercatorToClip).multiply(active.ecefToMercator)
+			const determinant = view.determinant()
+			const scale = Math.cbrt(Math.abs(determinant))
+			const scaleAndMirror = new Matrix4().makeScale(determinant < 0 ? -scale : scale, scale, scale)
+
+			camera.matrixWorldInverse.copy(scaleAndMirror.clone().invert().multiply(view))
 			camera.matrixWorld.copy(camera.matrixWorldInverse).invert()
 			camera.matrix.copy(camera.matrixWorld)
+
+			// The division by the scale keeps every normalized device coordinate.
+			// It also returns element 5 to the field-of-view term.
+			// The renderer reads that term to convert geometric error to pixels.
+			camera.projectionMatrix
+				.copy(projectionMatrix)
+				.multiply(scaleAndMirror)
+				.multiplyScalar(1 / scale)
+
+			camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert()
 			active.tiles.setCamera(camera)
 			active.tiles.setResolution(camera, gl.drawingBufferWidth, gl.drawingBufferHeight)
 			active.tiles.update()

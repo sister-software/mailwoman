@@ -7,7 +7,7 @@
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it } from "vitest"
 
-import { convertB3dm, convertTilesetJSON } from "#sdk/three-d-tiles"
+import { convertB3dm, convertTilesetJSON, limitTextureEdge } from "#sdk/three-d-tiles"
 
 /**
  * The parts of a converted glTF document the tests read.
@@ -164,6 +164,68 @@ describe("convertB3dm", () => {
 	})
 })
 
+describe("limitTextureEdge", () => {
+	it("scales a large image to the limit and moves the views after it", async () => {
+		const { default: sharp } = await import("sharp")
+
+		const image = new Uint8Array(
+			await sharp({ create: { width: 64, height: 32, channels: 3, background: "#808080" } })
+				.webp()
+				.toBuffer()
+		)
+
+		const geometry = new Uint8Array([1, 2, 3, 4, 5])
+		const binary = new Uint8Array(image.length + 8 + geometry.length)
+		const geometryAt = Math.ceil(image.length / 8) * 8
+
+		binary.set(image)
+		binary.set(geometry, geometryAt)
+
+		const source = glb(
+			{
+				asset: { version: "2.0" },
+				images: [{ bufferView: 0, mimeType: "image/webp" }],
+				buffers: [{ byteLength: binary.length }],
+				bufferViews: [
+					{ buffer: 0, byteOffset: 0, byteLength: image.length },
+					{ buffer: 0, byteOffset: geometryAt, byteLength: geometry.length },
+				],
+			},
+			binary
+		)
+
+		const limited = await limitTextureEdge(source, 16)
+		const json = readJSON(limited)
+		const view = new DataView(limited.buffer, limited.byteOffset)
+		const binaryAt = 20 + view.getUint32(12, true) + 8
+
+		const [imageView, geometryView] = json.bufferViews as [
+			ConvertedDocument["bufferViews"][number],
+			ConvertedDocument["bufferViews"][number],
+		]
+
+		const resized = limited.subarray(
+			binaryAt + imageView.byteOffset,
+			binaryAt + imageView.byteOffset + imageView.byteLength
+		)
+
+		const metadata = await sharp(resized).metadata()
+
+		expect([metadata.width, metadata.height, metadata.format]).toEqual([16, 8, "webp"])
+		expect(geometryView.byteOffset % 8).toBe(0)
+
+		expect([
+			...limited.subarray(binaryAt + geometryView.byteOffset, binaryAt + geometryView.byteOffset + geometry.length),
+		]).toEqual([1, 2, 3, 4, 5])
+	})
+
+	it("returns the input when every image is within the limit", async () => {
+		const source = glb({ asset: { version: "2.0" } }, new Uint8Array(0))
+
+		expect(await limitTextureEdge(source, 16)).toBe(source)
+	})
+})
+
 describe("convertTilesetJSON", () => {
 	it("points every b3dm content at its glb, renames url to uri and lists the source paths", () => {
 		const tileset = {
@@ -171,7 +233,10 @@ describe("convertTilesetJSON", () => {
 			root: { content: { url: "data/a.b3dm" }, children: [{ content: { uri: "data/b.b3dm" } }, {}] },
 		}
 
-		expect(convertTilesetJSON(tileset)).toEqual(["data/a.b3dm", "data/b.b3dm"])
+		expect(convertTilesetJSON(tileset)).toEqual([
+			{ path: "data/a.b3dm", leaf: false },
+			{ path: "data/b.b3dm", leaf: true },
+		])
 
 		expect(tileset).toEqual({
 			asset: { version: "1.1" },
