@@ -247,7 +247,7 @@ export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 ]
 
 /**
- * `designatorID` → Wikidata QID, matching `fetch/wikidata-subvenue.ts`'s `SUBVENUE_CONCEPTS`.
+ * `designatorID` → Wikidata QID, matching `fetch/wikidata/subvenue.ts`'s `SUBVENUE_CONCEPTS`.
  *
  * The builder remains a pure function over parsed input.
  * The test compares both maps.

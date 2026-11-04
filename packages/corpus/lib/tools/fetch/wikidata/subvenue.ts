@@ -130,6 +130,11 @@ export interface CreateWikidataClientOptions {
 	 * Replacement headers must keep the required `User-Agent`.
 	 */
 	axios?: ConstructorParameters<typeof APIClient>[0]["axios"]
+	/**
+	 * Where the client's own lines go.
+	 * A test passes `silentLogger()`.
+	 */
+	logger?: ConstructorParameters<typeof APIClient>[0]["logger"]
 }
 
 /**
@@ -150,19 +155,41 @@ export class WikidataClient extends APIClient {
 }
 
 /**
- * Creates a Wikidata client with the fetcher's pacing, retry, cache and header defaults.
+ * What distinguishes one Wikimedia host's client from another's in {@linkcode wikidataClientConfig}.
  */
-export function createWikidataClient(options: CreateWikidataClientOptions): WikidataClient {
-	return new WikidataClient({
-		displayName: "Wikidata Query Service",
-		minRequestIntervalMs: WDQS_MIN_REQUEST_INTERVAL_MS,
+export interface WikidataHostConfig {
+	displayName: string
+	minRequestIntervalMs: number
+	timeoutMs: number
+	/**
+	 * The `Accept` header the host's JSON answer is requested under.
+	 */
+	accept: string
+	/**
+	 * Whether a cached response body is one the host answered, so a cached error page is not replayed.
+	 */
+	validate: (body: unknown) => boolean
+}
+
+/**
+ * The client configuration every Wikimedia host shares: the required `User-Agent`,
+ * three attempts, a disk cache under the caller's TTL, and strict JSON parsing.
+ */
+export function wikidataClientConfig(
+	host: WikidataHostConfig,
+	options: CreateWikidataClientOptions
+): ConstructorParameters<typeof APIClient>[0] {
+	return {
+		displayName: host.displayName,
+		logger: options.logger,
+		minRequestIntervalMs: host.minRequestIntervalMs,
 		retry: { maxAttempts: WDQS_MAX_ATTEMPTS },
 		clock: options.clock,
 		caching: {
 			storage: buildDiskStorage({
 				directory: options.cacheDir,
 				// The validator checks the cached response body inside the envelope.
-				validate: (value) => isSPARQLResults(value.data?.data),
+				validate: (value) => host.validate(value.data?.data),
 			}),
 			ttl: WDQS_CACHE_TTL_MS,
 			// The configured TTL overrides the CDN cache headers.
@@ -171,15 +198,33 @@ export function createWikidataClient(options: CreateWikidataClientOptions): Wiki
 		axios: {
 			headers: {
 				"User-Agent": WIKIDATA_USER_AGENT,
-				Accept: "application/sparql-results+json",
+				Accept: host.accept,
 			},
-			timeout: WDQS_REQUEST_TIMEOUT_MS,
+			timeout: host.timeoutMs,
 			responseType: "json",
 			// Malformed or HTML error bodies throw parse errors instead of passing as JSON.
 			transitional: { silentJSONParsing: false },
 			...options.axios,
 		},
-	})
+	}
+}
+
+/**
+ * Creates a Wikidata client with the fetcher's pacing, retry, cache and header defaults.
+ */
+export function createWikidataClient(options: CreateWikidataClientOptions): WikidataClient {
+	return new WikidataClient(
+		wikidataClientConfig(
+			{
+				displayName: "Wikidata Query Service",
+				minRequestIntervalMs: WDQS_MIN_REQUEST_INTERVAL_MS,
+				timeoutMs: WDQS_REQUEST_TIMEOUT_MS,
+				accept: "application/sparql-results+json",
+				validate: isSPARQLResults,
+			},
+			options
+		)
+	)
 }
 
 /**
