@@ -13,7 +13,7 @@
  * The holdout is chosen by a hash of the QID, so every form and language of a held-out place stays out of training.
  */
 
-import { createHash } from "node:crypto"
+import { sha256Hex } from "@mailwoman/core/hash"
 
 import { SourceRegister } from "#registers"
 import {
@@ -71,9 +71,12 @@ export type VitalPlaceRendering = (typeof VITAL_PLACE_RENDERINGS)[keyof typeof V
 /**
  * Whether a place renders as venues.
  *
- * A place under a settlement root is left to Who's On First unless a class is also under a site root and the place
- * states no population. Wikidata's class tree puts observation tower, national park and ancient city under settlement
- * or administrative roots. The site exception keeps the Eiffel Tower and Machu Picchu as venues.
+ * A place under a settlement root is left to Who's On First unless a class is also
+ * under a site root and the place states no population.
+ * Wikidata's class tree puts observation tower, national park and ancient city
+ * under settlement or administrative roots.
+ *
+ * The site exception keeps the Eiffel Tower and Machu Picchu as venues.
  * A capital whose old town is a World Heritage site states a population and stays a locality.
  */
 export function vitalPlaceRendering(
@@ -113,15 +116,16 @@ export interface VitalPlaceForm {
 }
 
 /**
- * Whether a name renders: two to {@linkcode MAX_LABEL_LENGTH} code units with no comma, semicolon or parenthesis,
- * since each of those would read as a component boundary inside the venue.
+ * Whether a name renders: two to {@linkcode MAX_LABEL_LENGTH} code units with no comma, semicolon
+ * or parenthesis, since each of those would read as a component boundary inside the venue.
  */
 function isRenderableName(name: string | undefined): name is string {
 	return typeof name === "string" && name.length >= 2 && name.length <= MAX_LABEL_LENGTH && !/[,;()]/u.test(name)
 }
 
 /**
- * The forms of one place, labels in the inventory's language order, with each distinct bare surface rendered once.
+ * The forms of one place, labels in the inventory's language order,
+ * with each distinct bare surface rendered once.
  *
  * @param countryName The name of an ISO 3166-1 code in a language, `undefined` when the language has none.
  */
@@ -158,9 +162,11 @@ export function renderVitalPlaceForms(
 }
 
 /**
- * A country name from `Intl.DisplayNames`, which covers every ISO 3166-1 code in every language the runtime ships.
+ * A country name from `Intl.DisplayNames`, which covers every ISO 3166-1 code
+ * in every language the runtime ships.
  *
- * A code the runtime has no name for comes back as the code itself. This function returns `undefined` for it.
+ * A code the runtime has no name for comes back as the code itself.
+ * This function returns `undefined` for it.
  */
 export function createDisplayCountryName(): (code: string, language: string) => string | undefined {
 	const byLanguage = new Map<string, Intl.DisplayNames>()
@@ -180,11 +186,11 @@ export function createDisplayCountryName(): (code: string, language: string) => 
 }
 
 /**
- * Whether an entity goes to the holdout: one in {@linkcode HOLDOUT_MODULUS} by the first four bytes of the QID's
- * SHA-256, unless the entity is exempt.
+ * Whether an entity goes to the holdout: one in {@linkcode HOLDOUT_MODULUS} by the
+ * first four bytes of the QID's SHA-256, unless the entity is exempt.
  */
 export function holdsOutVitalPlace(qid: string, exempt: ReadonlySet<string> = new Set()): boolean {
-	return !exempt.has(qid) && createHash("sha256").update(qid).digest().readUInt32BE(0) % HOLDOUT_MODULUS === 0
+	return !exempt.has(qid) && Number.parseInt(sha256Hex(qid).slice(0, 8), 16) % HOLDOUT_MODULUS === 0
 }
 
 /**

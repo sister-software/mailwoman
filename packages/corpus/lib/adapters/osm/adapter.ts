@@ -10,11 +10,10 @@
  * That is why `defaultLicense` is not an option on this adapter.
  */
 
-import { createHash } from "node:crypto"
-
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
+import { sha256Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
@@ -41,17 +40,30 @@ export const OSM_ADAPTER_ID = "osm"
 /**
  * The share of rows rendered with a trailing country name.
  *
- * An OpenStreetMap address holds no country token, and the country layouts print none. Without a share that ends in
- * the country's name, a country whose street rows all come from this adapter has no `street, locality, country` row
- * at all, and the model reads such an address by the WOF shape `locality, region, country` (#2925).
+ * An OpenStreetMap address holds no country token, and the country layouts print none.
+ * Without a share that ends in the country's name, a country whose street rows all come
+ * from this adapter has no `street, locality, country` row at all, and the model reads
+ * such an address by the WOF shape `locality, region, country` (#2925).
  */
 export const OSM_TRAILING_COUNTRY_SHARE = 0.3
 
 /**
+ * The shortest country name appended.
+ *
+ * A bare alpha-2 code collides with region abbreviations.
+ */
+const MIN_TRAILING_COUNTRY_LENGTH = 3
+
+/**
+ * The number of values a 32-bit unsigned integer takes, which scales a hash prefix to the unit interval.
+ */
+const UINT32_RANGE = 2 ** 32
+
+/**
  * The row with `, <country>` appended when the source id's hash falls in the trailing-country share.
  *
- * The English name of three or more characters is used, because a bare alpha-2 code collides with region
- * abbreviations. A country with no such name keeps the row unchanged.
+ * The English name of {@linkcode MIN_TRAILING_COUNTRY_LENGTH} or more characters is used.
+ * A country with no such name keeps the row unchanged.
  */
 export function withTrailingCountry(
 	raw: string,
@@ -59,10 +71,10 @@ export function withTrailingCountry(
 	country: string,
 	sourceID: string
 ): { raw: string; components: Partial<Record<ComponentTag, string>> } {
-	// The salt keeps the draw independent of a sampler that kept the lowest source-id hashes, as osm-ru's 2,000,177
-	// rows were kept: unsalted, 96.6% of those ids fall under the share.
-	const draw = createHash("sha256").update(`trailing-country:${sourceID}`).digest().readUInt32BE(0) / 0x1_0000_0000
-	const name = countryDisplayNames(country, ["en"]).find((candidate) => candidate.length >= 3)
+	// The salt keeps the draw independent of a sampler that kept the lowest source-id hashes. osm-ru's
+	// 2,000,177 rows were kept that way, and unsalted, 96.6% of those ids fall under the share.
+	const draw = Number.parseInt(sha256Hex(`trailing-country:${sourceID}`).slice(0, 8), 16) / UINT32_RANGE
+	const name = countryDisplayNames(country, ["en"]).find((candidate) => candidate.length >= MIN_TRAILING_COUNTRY_LENGTH)
 
 	if (draw >= OSM_TRAILING_COUNTRY_SHARE || !name || components.country) return { raw, components }
 
@@ -376,8 +388,8 @@ export function createOSMAdapter(): CorpusAdapter {
 					countDropped(opts, `component:${tag}:not-rendered`)
 				}
 
-				// The source id is the rendered address's, so a row keeps its id and its split whether or not it
-				// takes the trailing country.
+				// The source id is the rendered address's, so a row keeps its id and its split
+				// whether or not it takes the trailing country.
 				const sourceID = stableSourceID(OSM_ADAPTER_ID, rendered.components)
 				const { raw, components: aligned } = withTrailingCountry(rendered.raw, rendered.components, country, sourceID)
 

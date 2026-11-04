@@ -78,8 +78,8 @@ export const DEFAULT_TOP = 50_000
 export const VITAL_PLACES_FILES = {
 	entities: "entities.jsonl",
 	countries: "countries.json",
-	// The name changes with `DESCENT_ROOTS`: an entry cached under fewer roots would read as descending from none of
-	// the roots it was never asked about.
+	// The name changes with `DESCENT_ROOTS`: an entry cached under fewer roots would
+	// read as descending from none of the roots it was never asked about.
 	classRoots: "class-roots.v3.json",
 	places: "places.jsonl",
 	counts: "counts.json",
@@ -201,7 +201,8 @@ export async function fetchWikidataVitalPlaces(
 	await using wdqs = createWikidataClient({ cacheDir })
 
 	// The query service returns only the fields a record keeps.
-	// A `wbgetentities` batch holds every statement and sitelink, so the Robot policy asks for a five-second wait after each answer.
+	// A `wbgetentities` batch holds every statement and sitelink, so the Robot policy
+	// asks for a five-second wait after each answer.
 	const entities = await fetchVitalEntitiesFromQueries(wdqs, rows, {
 		entitiesPath,
 		languages,
@@ -221,15 +222,18 @@ export async function fetchWikidataVitalPlaces(
 
 	// Records the query service wrote before blank-node values were dropped can hold a `genid` IRI in place of an item.
 	const isItemID = (id: string) => /^Q\d+$/u.test(id)
+
 	const countryIDs = [
 		...new Set(located.flatMap((record) => (isVitalEntity(record) ? record.countries : []))),
 	].filter(isItemID)
+
 	const countryCodes = await readCountryCodes(api, countryIDs, knownCodes, report)
 	await writeLocalJSONFile(countryCodes, countriesPath)
 
 	const classIDs = [...new Set(located.flatMap((record) => (isVitalEntity(record) ? record.classes : [])))].filter(
 		isItemID
 	)
+
 	const classes = await classifyClasses(wdqs, classIDs, { cachePath: destDir(VITAL_PLACES_FILES.classRoots), report })
 
 	const inventory = buildInventory(records, classes.roots, countryCodes)
