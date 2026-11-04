@@ -11,6 +11,8 @@
  */
 export type StreetOrder = "number-first" | "number-last"
 
+// country-branch: a per-country fact transcribed from the OpenCage templates.
+// A generator that reads those templates would replace the hand copy.
 /**
  * Lists the countries that separate the street name and house number with a comma, as in `Calle Mayor, 12`.
  *

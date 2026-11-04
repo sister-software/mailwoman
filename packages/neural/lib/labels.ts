@@ -199,6 +199,8 @@ export const DEFAULT_LABEL_SET: LabelSetName = "stage3"
  */
 export const IGNORE_INDEX = -100
 
+// country-branch: the trained locale head's class order, index-pinned and append-only.
+// data/label-schema.v1.json holds the same order for the trainer.
 /**
  * Locale-head class order.
  *

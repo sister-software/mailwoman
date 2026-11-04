@@ -123,6 +123,8 @@ import {
  */
 export const GLEIF_ADAPTER_ID = "gleif-lei"
 
+// country-branch: each entry is a review finding about one country's sampled rows, listed below.
+// A street split that handles the defect removes the entry.
 /**
  * Countries whose sampled rows show a labeling defect the street split cannot detect,
  * so none of their rows is emitted until the split handles them.

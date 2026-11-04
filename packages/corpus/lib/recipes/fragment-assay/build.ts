@@ -10,6 +10,7 @@
  *   renumbers every row after it.
  */
 
+import { layoutForCountry, layoutPrintsNumberBeforeStreet } from "@mailwoman/codex/address/layouts"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
@@ -283,7 +284,22 @@ async function pushCorpusHarvest(options: FragmentAssayOptions, push: Push) {
 
 const COUNTRY_CAP = 1500
 const MAX_TAIL_NUMBER = 3999
-const NUMBER_FIRST = new Set(["US", "GB", "CA", "FR"])
+
+/**
+ * Whether a country's codex layout prints the house number after the street.
+ *
+ * @throws When the codex has no layout for the country, or its layout omits the number or the street.
+ */
+function numberTrailsStreet(country: string): boolean {
+	const layout = layoutForCountry(country)
+	const numberFirst = layout ? layoutPrintsNumberBeforeStreet(layout) : null
+
+	if (numberFirst == null) {
+		throw new Error(`The codex layout for ${country} does not order the house number against the street.`)
+	}
+
+	return !numberFirst
+}
 
 /**
  * The country rows: a tail-position block over US streets and localities, and a leading-position block.
@@ -321,7 +337,7 @@ async function pushCountryCounterweight(
 
 		if (!forms.length || !streets.length || !localities.length) continue
 
-		const trailing = !NUMBER_FIRST.has(country)
+		const trailing = numberTrailsStreet(country)
 
 		for (const [index, street] of streets.entries()) {
 			const locality = localities[index % localities.length]!

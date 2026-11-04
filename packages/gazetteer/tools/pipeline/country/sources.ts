@@ -30,6 +30,8 @@ export const AdminSource = {
 
 export type AdminSource = (typeof AdminSource)[keyof typeof AdminSource]
 
+// country-branch: a per-country coverage decision recorded by hand.
+// A per-country admin-source manifest written by the gazetteer build would replace it.
 /**
  * The countries accepted as two-source (Overture + GeoNames); removing an entry is
  * a coverage decision and adding one is what this module refuses.

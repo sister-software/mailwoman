@@ -15,6 +15,7 @@
  */
 
 import { countInto, mostCommon } from "@mailwoman/core/stats"
+import { weightedCountries, type WeightedCountries } from "@mailwoman/corpus/training/config/load"
 import type { TrainingConfig } from "@mailwoman/corpus/training/config/schema"
 import type { MTFNode } from "@mailwoman/mtf/tools/sampler/native"
 
@@ -120,12 +121,10 @@ type CoverageEntry = TrainingConfig["data"]["required_validation_coverage"][numb
  * Replaces each `country: "*"` entry with one per admitted country,
  * keeping a country's own entry for the split.
  *
- * A country at weight zero admits no row and receives no floor.
+ * The admitted countries come from {@linkcode weightedCountries}, so a country at
+ * weight zero admits no row and receives no floor.
  */
-export function expandRequirements(
-	required: readonly CoverageEntry[],
-	countryWeights: Record<string, number>
-): CoverageEntry[] {
+export function expandRequirements(required: readonly CoverageEntry[], admitted: WeightedCountries): CoverageEntry[] {
 	const explicit = required.filter((entry) => entry.country !== EVERY_ADMITTED_COUNTRY)
 	const named = new Set(explicit.map((entry) => `${entry.country}\u0000${entry.split}`))
 	const expanded = [...explicit]
@@ -133,10 +132,8 @@ export function expandRequirements(
 	for (const template of required) {
 		if (template.country !== EVERY_ADMITTED_COUNTRY) continue
 
-		for (const [country, weight] of Object.entries(countryWeights).toSorted(([a], [b]) =>
-			a < b ? -1 : a > b ? 1 : 0
-		)) {
-			if (weight > 0 && !named.has(`${country}\u0000${template.split}`)) {
+		for (const country of [...admitted].toSorted()) {
+			if (!named.has(`${country}\u0000${template.split}`)) {
 				expanded.push({ ...template, country })
 			}
 		}
@@ -213,7 +210,7 @@ export function validationCoverageReport(
 	)
 
 	const blind = blindCountries(splits, options.countries)
-	const required = expandRequirements(config.data.required_validation_coverage, config.data.country_weights)
+	const required = expandRequirements(config.data.required_validation_coverage, weightedCountries(config))
 	const failures = required.length ? failingRequirements(splits, required) : []
 
 	const report = {

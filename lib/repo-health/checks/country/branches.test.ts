@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { findCountryBranches, isCountryHome } from "#repo-health/checks/country-branches"
+import { findCountryBranches, isCountryHome } from "#repo-health/checks/country/branches"
 
 const shared = (text: string) => [{ file: "packages/corpus/lib/recipes/thing.ts", text }]
 

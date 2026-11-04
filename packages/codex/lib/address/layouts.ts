@@ -198,6 +198,20 @@ export function layoutPrintsPostcodeBeforeLocality(layout: AddressLayout): boole
 }
 
 /**
+ * Whether the layout prints the house number before the street, as `221B Baker Street` does,
+ * or `null` when the layout prints one of the two and not the other.
+ */
+export function layoutPrintsNumberBeforeStreet(layout: AddressLayout): boolean | null {
+	const tags = printedTags(layout)
+	const numberAt = tags.indexOf("house_number")
+	const streetAt = tags.indexOf("street")
+
+	if (numberAt === -1 || streetAt === -1) return null
+
+	return numberAt < streetAt
+}
+
+/**
  * Every slot a layout prints, in print order, flattened across lines
  * rather than per line, because the CJK systems put the whole admin run on one line
  * and a comparison of line indices would read them as unordered.

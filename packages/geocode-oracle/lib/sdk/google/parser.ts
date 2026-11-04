@@ -86,6 +86,8 @@ const COMPONENT_RULES: readonly ComponentRule[] = [
  *
  * This is a default that makes the common case right rather than a claim about postal law.
  */
+// country-branch: a per-country postal convention, documented above as a default.
+// Who's On First's region abbreviations, read per country, would replace it.
 const REGION_ABBREVIATION_COUNTRIES = new Set(["US", "CA", "AU", "MX", "BR"])
 
 /**

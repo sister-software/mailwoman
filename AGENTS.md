@@ -164,6 +164,14 @@ every country and print the distribution. When the countries that looked anomalo
 populated mode, the rule is wrong rather than the countries. A census drawn from where the data is
 densest encodes that region's structure as the norm.
 
+A collection of countries is a `CountrySet` from `@mailwoman/codex/country/sets`, built by a constructor
+that reads one source table: `worldCountries()`, `countriesOfScript()`, `countriesOfAddressSystem()`,
+`countriesOfWeightsFamily()`, `dependentTerritories()`, or `countriesDeclaredBy()` for a list a config
+declares. A signature states the set it needs. The `country-literal-sets` repository check reports a
+hand-typed list of codes held by a binding such as `CJK_COUNTRIES`, and a cast to `CountrySet`. A list
+that records a per-country fact keeps a `country-branch:` reason. `docs/engineering/reference/country-sets.mdx`
+describes the module.
+
 The acronym convention capitalizes each acronym as a complete camel-case component: `createWOFResolver`,
 `parseJSON`, `readID`, and `modelURL`. Preserve external names, snake-case wire fields, and documented
 CLI adapter keys. `sister-software/no-title-case-acronym` enforces the convention.

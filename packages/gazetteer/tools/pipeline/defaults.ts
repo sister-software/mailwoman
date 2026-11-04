@@ -13,6 +13,9 @@
  * 	 TODO: Move most of this to JSON configuration files.
  */
 
+// country-branch: the four lists in this module assign admin ids by source
+// and position, so each records the ingest of a built artifact.
+// The per-source JSON configuration the module header names would replace them.
 /**
  * The locales whose WOF GeoJSON repos are cloned + ingested directly (`<repos>/whosonfirst-data*`).
  */
@@ -34,6 +37,7 @@ export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
 	"US",
 ] as const
 
+// country-branch: an ingest list of a built artifact, as the first list in this module states.
 /**
  * Overture `divisions`-theme backfill set (synthetic ids @ 8e12) for the zero-WOF-repo locales.
  */
@@ -126,6 +130,7 @@ export const DEFAULT_OVERTURE_COUNTRIES = [
 	"ZA",
 ] as const
 
+// country-branch: an ingest list of a built artifact, as the first list in this module states.
 /**
  * GeoNames alias-fold tail (synthetic ids @ 9e12): bilingual/alt-name coverage for the remaining locales.
  */
@@ -347,6 +352,7 @@ export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
  */
 export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
 
+// country-branch: an ingest list of a built artifact, as the first list in this module states.
 /**
  * The tail database's country set, in the frozen artifact's ingest order.
  *
