@@ -30,12 +30,45 @@ const MIN_HEIGHT_KEY: &str = "min_height";
 const CORNER_METERS: f64 = 1.2;
 const CORNER_PASSES: usize = 2;
 
-/// Landmarks a 3D model draws, as longitude, latitude and radius in meters. A footprint whose centroid lies within the
-/// radius is left out, so its extruded prisms do not show through the model.
-const MODELED_LANDMARKS: [[f64; 3]; 2] = [
-	[139.745433, 35.658581, 45.0], // Tokyo Tower
-	[139.810700, 35.710063, 45.0], // Tokyo Skytree
-];
+/// The landmarks Earth draws from a model, `packages/structures/data/landmarks.json`. A footprint whose centroid lies
+/// within a landmark's `suppressRadius` of its `anchor` is left out, so its extruded prisms do not show through the
+/// model. Earth's `landmarkCovering` applies the same test.
+const LANDMARKS_JSON: &str = include_str!("../../../../../structures/data/landmarks.json");
+
+/// The largest suppression radius in meters the bounding-box shortcut in [`is_modeled_landmark`] allows.
+const MAX_SUPPRESS_RADIUS: f64 = 250.0;
+
+/// Each landmark's anchor longitude, latitude and suppression radius in meters.
+///
+/// # Panics
+///
+/// When the landmark list is not a JSON array of objects with a two-number `anchor` and a `suppressRadius` between 0
+/// and [`MAX_SUPPRESS_RADIUS`]. The list is compiled in, so a malformed list fails every build that reads it.
+fn parse_landmarks(json: &str) -> Vec<[f64; 3]> {
+	let landmarks: serde_json::Value = serde_json::from_str(json).expect("the landmark list is JSON");
+	let landmarks = landmarks.as_array().expect("the landmark list is an array");
+	landmarks
+		.iter()
+		.map(|landmark| {
+			let id = landmark["id"].as_str().unwrap_or("?");
+			let anchor = landmark["anchor"].as_array().filter(|anchor| anchor.len() == 2);
+			let lon = anchor.and_then(|anchor| anchor[0].as_f64());
+			let lat = anchor.and_then(|anchor| anchor[1].as_f64());
+			let radius = landmark["suppressRadius"].as_f64();
+			match (lon, lat, radius) {
+				(Some(lon), Some(lat), Some(radius)) if radius > 0.0 && radius <= MAX_SUPPRESS_RADIUS => {
+					[lon, lat, radius]
+				}
+				_ => panic!("landmark {id} needs a [longitude, latitude] anchor and a suppressRadius in (0, 250]"),
+			}
+		})
+		.collect()
+}
+
+fn modeled_landmarks() -> &'static [[f64; 3]] {
+	static LANDMARKS: std::sync::OnceLock<Vec<[f64; 3]>> = std::sync::OnceLock::new();
+	LANDMARKS.get_or_init(|| parse_landmarks(LANDMARKS_JSON))
+}
 
 /// Java's `\s`: the six ASCII whitespace characters.
 fn is_java_space(c: char) -> bool {
@@ -97,8 +130,9 @@ pub(crate) fn is_modeled_landmark(input: &Input<'_>) -> bool {
 	};
 	let lon = |x: f64| x * 360.0 - 180.0;
 	let lat = hrt_osm::coords::world_lat;
-	// About 0.01 degrees, over twenty times the largest radius, keeps the shortcut clear of every landmark.
-	let near = MODELED_LANDMARKS.iter().any(|[landmark_lon, landmark_lat, _]| {
+	// A margin of 0.01 degrees is at least 250 m of longitude up to 77 degrees of latitude, so a footprint whose
+	// centroid lies within MAX_SUPPRESS_RADIUS of a landmark always passes the shortcut.
+	let near = modeled_landmarks().iter().any(|[landmark_lon, landmark_lat, _]| {
 		lon(min_x) - 0.01 <= *landmark_lon
 			&& *landmark_lon <= lon(max_x) + 0.01
 			&& lat(max_y) - 0.01 <= *landmark_lat
@@ -110,7 +144,7 @@ pub(crate) fn is_modeled_landmark(input: &Input<'_>) -> bool {
 	let Some((x, y)) = lon_lat_centroid(input) else {
 		return false;
 	};
-	MODELED_LANDMARKS.iter().any(|[landmark_lon, landmark_lat, radius]| {
+	modeled_landmarks().iter().any(|[landmark_lon, landmark_lat, radius]| {
 		let dx = (x - landmark_lon) * 111_320.0 * landmark_lat.to_radians().cos();
 		let dy = (y - landmark_lat) * 110_540.0;
 		java_math::hypot(dx, dy) <= *radius
@@ -457,6 +491,22 @@ fn same_attributes(a: &[(String, Value)], b: &[(String, Value)]) -> bool {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn landmarks_come_from_the_structures_list() {
+		let landmarks = modeled_landmarks();
+		// Tokyo Tower's anchor and radius, as the list states them.
+		assert!(landmarks.contains(&[139.745433, 35.658581, 45.0]));
+		assert!(landmarks
+			.iter()
+			.all(|[_, _, radius]| *radius > 0.0 && *radius <= MAX_SUPPRESS_RADIUS));
+	}
+
+	#[test]
+	#[should_panic(expected = "landmark wide needs")]
+	fn landmarks_refuse_a_radius_past_the_shortcut_margin() {
+		parse_landmarks(r#"[{"id": "wide", "anchor": [0, 0], "suppressRadius": 300}]"#);
+	}
 
 	#[test]
 	fn heights_take_comma_decimals_and_levels() {

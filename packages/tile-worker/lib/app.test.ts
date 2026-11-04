@@ -89,6 +89,15 @@ describe("tile worker routes", () => {
 		})
 	})
 
+	it("sends a landmark model to the landmark route and refuses other names", async () => {
+		const probe = routeProbe()
+
+		expect((await probe("/landmarks/eiffel-tower.glb"))?.params).toEqual({ file: "eiffel-tower.glb" })
+		expect(await probe("/landmarks/eiffel-tower.json")).toBeNull()
+		expect(await probe("/landmarks/Eiffel_Tower.glb")).toBeNull()
+		expect(await probe("/landmarks/models/eiffel-tower.glb")).toBeNull()
+	})
+
 	it("captures a dotted tile set name and the tile file whole", async () => {
 		const probe = routeProbe()
 

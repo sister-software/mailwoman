@@ -10,6 +10,8 @@
 
 import { type CityTileset, cityTilesetPath } from "@mailwoman/structures/city-tilesets"
 import cityTilesets from "@mailwoman/structures/data/city-tilesets.json" with { type: "json" }
+import landmarks from "@mailwoman/structures/data/landmarks.json" with { type: "json" }
+import { type Landmark, landmarkBounds } from "@mailwoman/structures/landmarks"
 import { useEffect } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
@@ -24,6 +26,17 @@ import { COMPACT_BUILDINGS_LAYER_ID, CompactBuildingsLayer } from "./compact-bui
 const CITY_MODELS_LAYER_ID = "city-models"
 
 const CITY_TILESETS = cityTilesets as CityTileset[]
+
+/**
+ * The square around each landmark inside which the building layer stops drawing,
+ * because `<Scene3D>` draws the landmark's model there.
+ *
+ * Tiles built before a landmark joined the list still hold its footprint.
+ *
+ * The squares come first in the hidden-area list, so city models covering the
+ * view cannot push them past the shader's limit.
+ */
+const LANDMARK_AREAS = (landmarks as Landmark[]).map(landmarkBounds)
 
 /**
  * Mounts the GPU building and city model layers under the map's first label layer
@@ -56,7 +69,7 @@ export function CompactBuildings(): null {
 			const cityModels = new CityModelsLayer(
 				CITY_TILESETS,
 				(city) => new URL(cityTilesetPath(city), PRODUCTION_CONFIG.tileWorkerURL).href,
-				(covered) => buildings.setHiddenAreas(covered.map((city) => city.bounds))
+				(covered) => buildings.setHiddenAreas([...LANDMARK_AREAS, ...covered.map((city) => city.bounds)])
 			)
 
 			map.addLayer(cityModels, map.getStyle().layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
@@ -80,6 +93,7 @@ export function CompactBuildings(): null {
 				}
 			}
 
+			buildings.setHiddenAreas(LANDMARK_AREAS)
 			map.addLayer(buildings, style.layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
 			void mountCityModels()
 		}

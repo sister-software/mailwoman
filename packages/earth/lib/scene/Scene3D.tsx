@@ -15,8 +15,17 @@ import { Tiles3DLoader } from "@loaders.gl/3d-tiles"
 import { BUILDING_MODELED_STATE } from "@mailwoman/cartographer/base/buildings"
 import { MailwomanBaseTileSetID, MailwomanBuildingsTileSetID } from "@mailwoman/cartographer/base/theme"
 import { TreeLayers, TreePalette } from "@mailwoman/cartographer/base/trees"
+import landmarkList from "@mailwoman/structures/data/landmarks.json" with { type: "json" }
 import plateauTilesets from "@mailwoman/structures/data/plateau-tilesets.json" with { type: "json" }
 import { electedPlateauTilesets, plateauTilesetsInView, type PlateauTileset } from "@mailwoman/structures/jp/plateau"
+import {
+	isGLBLandmark,
+	landmarkCovering,
+	LandmarkModelFormat,
+	readLandmarkMesh,
+	type Landmark,
+	type LandmarkGLBModel,
+} from "@mailwoman/structures/landmarks"
 import { Matrix4, Vector3 } from "@math.gl/core"
 import { Ellipsoid } from "@math.gl/geospatial"
 import type { Map as MapInstance } from "maplibre-gl"
@@ -24,12 +33,15 @@ import type React from "react"
 import { useEffect, useMemo } from "react"
 import { useControl, useMap } from "react-map-gl/maplibre"
 
+import { PRODUCTION_CONFIG } from "#config"
 import { pageTilesetParam } from "#routes"
 
+import { byteRGB } from "./compact-buildings/decode.ts"
 import {
 	broadleafTreeMesh,
 	coniferTreeMesh,
 	directionHeading,
+	type SceneMesh,
 	StreetProp,
 	streetPropMeshes,
 	tokyoSkytreeMesh,
@@ -68,14 +80,51 @@ const STREET_PROPS = new Set<unknown>(Object.values(StreetProp))
 const PROP_MIN_ZOOM = 16
 
 /**
- * Landmarks the basemap leaves out of its building layer so these meshes can draw them.
- *
- * The basemap's `Buildings.MODELED_LANDMARKS` lists the same coordinates.
+ * The landmarks the overlay draws from a model, from `packages/structures/data/landmarks.json`.
+ * hrt leaves their footprints out of the building tiles, and {@link markModeledFootprints}
+ * hides them in older tiles.
  */
-const Landmarks = [
-	{ id: "tokyo-tower", position: [139.745433, 35.658581] as [number, number], mesh: tokyoTowerMesh },
-	{ id: "tokyo-skytree", position: [139.8107, 35.710063] as [number, number], mesh: tokyoSkytreeMesh },
-]
+const LANDMARKS = landmarkList as Landmark[]
+
+/**
+ * The mesh builder for each landmark whose model is procedural, by landmark id.
+ */
+const PROCEDURAL_LANDMARK_MESHES: Readonly<Record<string, () => SceneMesh>> = {
+	"tokyo-tower": tokyoTowerMesh,
+	"tokyo-skytree": tokyoSkytreeMesh,
+}
+
+/**
+ * The zoom from which the overlay downloads a converted landmark model whose anchor is near the view.
+ * The Eiffel Tower's model is about 560 KB gzipped.
+ */
+const LANDMARK_MODEL_MIN_ZOOM = 12
+
+/**
+ * A converted landmark model in the attribute layout `SimpleMeshLayer` reads.
+ *
+ * The model has no normals, so the layer shades each triangle flat from its screen-space derivatives.
+ */
+interface LandmarkModelMesh {
+	attributes: { positions: { value: Float32Array; size: 3 } }
+	indices: { value: Uint32Array; size: 1 }
+}
+
+/**
+ * Whether a point lies in the view's bounds widened by half their size on each side.
+ */
+function nearView(map: MapInstance, [longitude, latitude]: readonly [number, number]): boolean {
+	const bounds = map.getBounds()
+	const lonMargin = (bounds.getEast() - bounds.getWest()) / 2
+	const latMargin = (bounds.getNorth() - bounds.getSouth()) / 2
+
+	return (
+		longitude >= bounds.getWest() - lonMargin &&
+		longitude <= bounds.getEast() + lonMargin &&
+		latitude >= bounds.getSouth() - latMargin &&
+		latitude <= bounds.getNorth() + latMargin
+	)
+}
 
 /**
  * The zoom below which the overlay clears its trees.
@@ -254,20 +303,25 @@ function containsPoint({ bounds: [west, south, east, north] }: PlateauTileset, [
 
 /**
  * Sets the modeled state on each loaded footprint whose first vertex lies inside a
- * drawn city model, and clears it from footprints that left one.
+ * drawn city model, or whose vertex mean lies within a landmark's suppression radius,
+ * and clears it from footprints that left both.
  *
- * The building layers then skip those footprints, so a city model and an
- * extrusion never draw the same building.
+ * The building layers then skip those footprints, so a model and an extrusion never draw the same building.
  *
  * `marked` holds the ids currently in the modeled state.
  */
-function markModeledFootprints(map: MapInstance, cityModels: PlateauTileset[], marked: Set<string | number>): void {
+function markModeledFootprints(
+	map: MapInstance,
+	cityModels: PlateauTileset[],
+	landmarks: Landmark[],
+	marked: Set<string | number>
+): void {
 	// The footprints come from the separate buildings tileset when the style loads one, else from the basemap.
 	const source = map.getSource(MailwomanBuildingsTileSetID) ? MailwomanBuildingsTileSetID : MailwomanBaseTileSetID
 	const target = { source, sourceLayer: "buildings" }
 	const covered = new Set<string | number>()
 
-	if (cityModels.length) {
+	if (cityModels.length || landmarks.length) {
 		for (const feature of map.querySourceFeatures(source, { sourceLayer: "buildings" })) {
 			const { id, geometry } = feature
 
@@ -284,6 +338,19 @@ function markModeledFootprints(map: MapInstance, cityModels: PlateauTileset[], m
 
 			if (vertex && cityModels.some((tileset) => containsPoint(tileset, vertex))) {
 				covered.add(id)
+
+				continue
+			}
+
+			if (ring?.length && landmarks.length) {
+				// A closed ring repeats its first vertex last, so the mean leaves that copy out.
+				const vertices = ring.length > 1 ? ring.slice(0, -1) : ring
+				const longitude = vertices.reduce((sum, [x = 0]) => sum + x, 0) / vertices.length
+				const latitude = vertices.reduce((sum, [, y = 0]) => sum + y, 0) / vertices.length
+
+				if (landmarkCovering(landmarks, longitude, latitude)) {
+					covered.add(id)
+				}
 			}
 		}
 	}
@@ -382,20 +449,10 @@ function addLoadedProps(map: MapInstance, cache: Map<string, PropInstance>): boo
  * Returns whether the cache lost an instance.
  */
 function pruneDistant(map: MapInstance, cache: Map<string, { position: [number, number] }>): boolean {
-	const bounds = map.getBounds()
-	const lonMargin = (bounds.getEast() - bounds.getWest()) / 2
-	const latMargin = (bounds.getNorth() - bounds.getSouth()) / 2
 	let removed = false
 
 	for (const [key, { position }] of cache) {
-		const [lon, lat] = position
-
-		if (
-			lon < bounds.getWest() - lonMargin ||
-			lon > bounds.getEast() + lonMargin ||
-			lat < bounds.getSouth() - latMargin ||
-			lat > bounds.getNorth() + latMargin
-		) {
+		if (!nearView(map, position)) {
 			cache.delete(key)
 			removed = true
 		}
@@ -425,7 +482,15 @@ export const Scene3D: React.FC = () => {
 		() => ({
 			broadleaf: broadleafTreeMesh(TreePalette.trunk, TreePalette.crown),
 			conifer: coniferTreeMesh(TreePalette.trunk, TreePalette.needleCrown),
-			landmarks: Landmarks.map((landmark) => ({ ...landmark, mesh: landmark.mesh() })),
+			procedural: LANDMARKS.filter((landmark) => landmark.model.format === LandmarkModelFormat.Procedural).map(
+				(landmark) => {
+					const build = PROCEDURAL_LANDMARK_MESHES[landmark.id]
+
+					if (!build) throw new Error(`landmark ${landmark.id} is procedural but meshes.ts builds no mesh for it`)
+
+					return { id: landmark.id, position: landmark.anchor, mesh: build() }
+				}
+			),
 			props: streetPropMeshes(),
 		}),
 		[]
@@ -441,10 +506,36 @@ export const Scene3D: React.FC = () => {
 		const props = new Map<string, PropInstance>()
 		const modeledFootprints = new Set<string | number>()
 		const keptCityModels = new Set<string>()
+		// Each converted landmark model by landmark id, or `null` while it downloads or after it failed.
+		const landmarkModels = new Map<string, LandmarkModelMesh | null>()
 		let drawnSize = -1
 		let drawnProps = -1
 		let drawnCityModels: string | null = null
 		let changed = true
+
+		// The entry is set before the download, so each model downloads once per mount.
+		const loadLandmarkModel = (landmark: Landmark & { model: LandmarkGLBModel }) => {
+			landmarkModels.set(landmark.id, null)
+
+			void fetch(new URL(landmark.model.path, PRODUCTION_CONFIG.tileWorkerURL))
+				.then((response) => {
+					if (!response.ok) throw new Error(`${landmark.model.path} answered ${response.status}`)
+
+					return response.arrayBuffer()
+				})
+				.then((bytes) => {
+					const { positions, indices } = readLandmarkMesh(new Uint8Array(bytes))
+
+					landmarkModels.set(landmark.id, {
+						attributes: { positions: { value: positions, size: 3 } },
+						indices: { value: indices, size: 1 },
+					})
+
+					changed = true
+					schedule()
+				})
+				.catch((error: unknown) => console.warn(`landmark model ${landmark.id} did not load`, error))
+		}
 
 		// Every read of the style runs once the style has loaded and `getStyle()` lists its layers.
 		const update = () => {
@@ -471,8 +562,18 @@ export const Scene3D: React.FC = () => {
 			const opacity = cityModelOpacity(map.getZoom())
 			const cityModelKey = `${opacity} ${cityModels.map((tileset) => tileset.url).join(" ")}`
 
+			const landmarksNear = LANDMARKS.filter((landmark) => nearView(map, landmark.anchor))
+
 			// While the models fade in, the footprints under them stay drawn, so the two cross-fade.
-			markModeledFootprints(map, opacity === 1 ? cityModels : [], modeledFootprints)
+			markModeledFootprints(map, opacity === 1 ? cityModels : [], landmarksNear, modeledFootprints)
+
+			if (map.getZoom() >= LANDMARK_MODEL_MIN_ZOOM) {
+				for (const landmark of landmarksNear.filter(isGLBLandmark)) {
+					if (!landmarkModels.has(landmark.id)) {
+						loadLandmarkModel(landmark)
+					}
+				}
+			}
 
 			if (!changed && drawnSize === trees.size && drawnProps === props.size && drawnCityModels === cityModelKey) return
 			changed = false
@@ -512,19 +613,48 @@ export const Scene3D: React.FC = () => {
 					material: { ambient: 0.6, diffuse: 0.55, shininess: 8, specularColor: [20, 20, 20] },
 				})
 
-			const landmarkLayers = meshes.landmarks.map(
-				(landmark) =>
-					new SimpleMeshLayer({
-						id: `landmark-${landmark.id}`,
-						...placement,
-						data: [landmark],
-						mesh: landmark.mesh,
-						getPosition: (d: typeof landmark) => d.position,
-						getColor: [255, 255, 255],
-						coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-						material: { ambient: 0.55, diffuse: 0.6, shininess: 24, specularColor: [40, 40, 40] },
-					})
-			)
+			const landmarkMaterial = {
+				ambient: 0.55,
+				diffuse: 0.6,
+				shininess: 24,
+				specularColor: [40, 40, 40] as [number, number, number],
+			}
+
+			const landmarkLayers = [
+				...meshes.procedural.map(
+					(landmark) =>
+						new SimpleMeshLayer({
+							id: `landmark-${landmark.id}`,
+							...placement,
+							data: [landmark],
+							mesh: landmark.mesh,
+							getPosition: (d: typeof landmark) => d.position,
+							getColor: [255, 255, 255],
+							coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+							material: landmarkMaterial,
+						})
+				),
+				...LANDMARKS.filter(isGLBLandmark).flatMap((landmark) => {
+					const mesh = landmarkModels.get(landmark.id)
+
+					return mesh
+						? [
+								new SimpleMeshLayer({
+									id: `landmark-${landmark.id}`,
+									...placement,
+									data: [landmark],
+									mesh,
+									getPosition: (d: Landmark) => d.anchor,
+									// deck.gl's yaw turns counterclockwise seen from above, and a landmark's yaw turns clockwise.
+									getOrientation: (d: Landmark) => [0, -d.yaw, 0],
+									getColor: byteRGB(landmark.color ?? "#ffffff"),
+									coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+									material: landmarkMaterial,
+								}),
+							]
+						: []
+				}),
+			]
 
 			const cachedProps = [...props.values()]
 
