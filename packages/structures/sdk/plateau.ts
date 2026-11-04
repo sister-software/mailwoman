@@ -187,19 +187,33 @@ function tilesetDirectory(url: string): string {
  * An untextured tileset's glTF sets no base color, vertex color or texture, so it renders as one flat gray.
  * A textured tileset's glTF holds photographic textures or vertex colors.
  *
+ * Each selected tileset also records `untexturedURL`, the ward's untextured tileset.
+ * The city model converter reads that one, because Earth's own layer draws every
+ * building in the map's style and uses only the geometry.
+ *
  * Each tileset appears once.
  * The catalog can list one ward's untextured tileset twice under two asset paths,
  * as it does Mashiki-machi's 2023 buildings, and both pair with the one textured tileset.
+ * The first of the two becomes `untexturedURL`.
  */
-export function selectBuildingTilesets<T extends Pick<CatalogEntry, "type_en" | "url">>(datasets: readonly T[]): T[] {
+export function selectBuildingTilesets<T extends Pick<CatalogEntry, "type_en" | "url">>(
+	datasets: readonly T[]
+): Array<T & { untexturedURL: string }> {
 	const buildings = datasets.filter((entry) => entry.type_en === "bldg")
 	const byDirectory = new Map(buildings.map((entry) => [tilesetDirectory(entry.url), entry]))
+	const selected = new Map<string, T & { untexturedURL: string }>()
 
-	const selected = buildings
-		.filter((entry) => tilesetDirectory(entry.url).endsWith("_lod2_no_texture"))
-		.map((entry) => byDirectory.get(tilesetDirectory(entry.url).replace(/_lod2_no_texture$/u, "_lod2")) ?? entry)
+	for (const untextured of buildings) {
+		if (!tilesetDirectory(untextured.url).endsWith("_lod2_no_texture")) continue
 
-	return [...new Map(selected.map((entry) => [entry.url, entry])).values()]
+		const drawn = byDirectory.get(tilesetDirectory(untextured.url).replace(/_lod2_no_texture$/u, "_lod2")) ?? untextured
+
+		if (!selected.has(drawn.url)) {
+			selected.set(drawn.url, { ...drawn, untexturedURL: untextured.url })
+		}
+	}
+
+	return [...selected.values()]
 }
 
 export async function readPlateauTilesets(
@@ -236,6 +250,7 @@ export async function readPlateauTilesets(
 			dataset: dataset ?? "",
 			licenseTitle: dataset ? await licenses.get(dataset)! : null,
 			url: entry.url,
+			untexturedURL: entry.untexturedURL,
 			bounds,
 			geoidHeight: await readGeoidHeight(client, (west + east) / 2, (south + north) / 2),
 		})

@@ -23,6 +23,7 @@ const CHIYODA: PlateauTileset = {
 	dataset: "plateau-13101-chiyoda-ku-2025",
 	licenseTitle: PLATEAU_SITE_POLICY_LICENSE,
 	url: "https://example.test/13101/tileset.json",
+	untexturedURL: "https://example.test/13101_no_texture/tileset.json",
 	bounds: [139.73, 35.66, 139.79, 35.71],
 	geoidHeight: 36.7,
 }

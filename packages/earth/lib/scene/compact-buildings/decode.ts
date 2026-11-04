@@ -90,7 +90,10 @@ function scaledToLengthOne([x, y, z]: readonly [number, number, number]): [numbe
 	return [x / length, y / length, z / length]
 }
 
-function byteRGB(hex: string): RGB {
+/**
+ * Converts an sRGB hex color to a triple of bytes, 0 to 255.
+ */
+export function byteRGB(hex: string): RGB {
 	const [red, green, blue] = hexRGB(hex)
 
 	return [Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255)]

@@ -1,12 +1,12 @@
 [
 	{
-		"id": "13101_chiyoda-ku_pref_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_lod2",
+		"id": "13101_chiyoda-ku_pref_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_lod2_no_texture",
 		"source": "plateau",
-		"sourceURL": "https://assets.cms.plateau.reearth.io/assets/28/07d0a1-b6be-46ef-bd87-4f0683b5ef6e/13101_chiyoda-ku_pref_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_lod2/tileset.json",
+		"sourceURL": "https://assets.cms.plateau.reearth.io/assets/72/e900e5-938c-4376-a9de-a124b270880c/13101_chiyoda-ku_pref_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_lod2_no_texture/tileset.json",
 		"licenseTitle": "PLATEAU Site Policy 「３．著作権について」に拠る",
 		"bounds": [139.7301664021838, 35.669012960411685, 139.78276691189942, 35.70517892296438],
 		"geoidHeight": 36.8412,
 		"tiles": 633,
-		"bytes": 216353666
+		"bytes": 31266283
 	}
 ]

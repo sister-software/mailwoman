@@ -69,9 +69,11 @@ function directoryOf(url: string): string {
 const records: CityTileset[] = []
 
 for (const tileset of chosen) {
-	const id = directoryOf(tileset.url)
+	// Earth's city model layer colors and patterns every building itself, so the conversion reads the untextured set.
+	const sourceURL = tileset.untexturedURL
+	const id = directoryOf(sourceURL)
 	const started = Date.now()
-	const json = await client.getJSON<{ asset: { version: string }; root: TilesetTile }>(tileset.url)
+	const json = await client.getJSON<{ asset: { version: string }; root: TilesetTile }>(sourceURL)
 	const paths = convertTilesetJSON(json)
 	let bytes = 0
 	let next = 0
@@ -79,7 +81,7 @@ for (const tileset of chosen) {
 	const worker = async () => {
 		while (next < paths.length) {
 			const { path, leaf } = paths[next++]!
-			const source = await client.getBytes(new URL(path, tileset.url).href)
+			const source = await client.getBytes(new URL(path, sourceURL).href)
 			const edge = leaf ? MAX_TEXTURE_EDGE : INTERIOR_TEXTURE_EDGE
 			const converted = path.endsWith(".b3dm") ? await limitTextureEdge(convertB3dm(source), edge) : source
 			const gzipped = await gzip(converted)
@@ -98,7 +100,7 @@ for (const tileset of chosen) {
 	records.push({
 		id,
 		source: CitySource.plateau,
-		sourceURL: tileset.url,
+		sourceURL,
 		licenseTitle: tileset.licenseTitle,
 		bounds: tileset.bounds,
 		geoidHeight: tileset.geoidHeight,

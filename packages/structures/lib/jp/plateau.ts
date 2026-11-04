@@ -5,8 +5,8 @@
  *
  *   PLATEAU's hosted 3D Tiles building sets, and the selection of the ones a published map may draw.
  *
- *   `data/plateau-tilesets.json` lists one untextured LoD2 building tileset per municipal dataset, with the license
- *   its CKAN record states. `sdk/plateau-tilesets.run.ts` regenerates it from PLATEAU VIEW's catalog.
+ *   `data/plateau-tilesets.json` lists one LoD2 building tileset per ward, with the license its CKAN record states.
+ *   `sdk/plateau/tilesets.run.ts` regenerates it from PLATEAU VIEW's catalog.
  */
 
 /**
@@ -15,7 +15,7 @@
 export const PLATEAU_SITE_POLICY_LICENSE = "PLATEAU Site Policy 「３．著作権について」に拠る"
 
 /**
- * One municipality's untextured LoD2 building tileset.
+ * One ward's LoD2 building tilesets.
  */
 export interface PlateauTileset {
 	/**
@@ -33,7 +33,15 @@ export interface PlateauTileset {
 	 * The `license_title` of that CKAN record, or null when no record of that name was found.
 	 */
 	licenseTitle: string | null
+	/**
+	 * The tileset the deck.gl city model layer draws: the textured LoD2 tileset where the catalog has one.
+	 */
 	url: string
+	/**
+	 * The ward's untextured LoD2 tileset.
+	 * The city model converter reads its geometry.
+	 */
+	untexturedURL: string
 	/**
 	 * The tileset root's extent as `[west, south, east, north]` in degrees.
 	 */

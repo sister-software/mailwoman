@@ -16,26 +16,30 @@ describe("selectBuildingTilesets", () => {
 		url: `${base}/${hash}/13100_tokyo23-ku_city_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_${variant}/tileset.json`,
 	})
 
-	it("takes the textured LoD2 tileset in place of the untextured one, whatever its asset path", () => {
+	it("draws the textured LoD2 tileset and records the untextured one, whatever their asset paths", () => {
 		const textured = ward("16/aaaa", "lod2")
+		const untextured = ward("bc/bbbb", "lod2_no_texture")
 
-		expect(selectBuildingTilesets([ward("bc/bbbb", "lod2_no_texture"), textured, ward("c3/cccc", "lod1")])).toEqual([
-			textured,
+		expect(selectBuildingTilesets([untextured, textured, ward("c3/cccc", "lod1")])).toEqual([
+			{ ...textured, untexturedURL: untextured.url },
 		])
 	})
 
-	it("lists a textured tileset once when two untextured entries pair with it", () => {
+	it("lists a textured tileset once when two untextured entries pair with it, recording the first", () => {
 		const textured = ward("16/aaaa", "lod2")
+		const first = ward("bc/bbbb", "lod2_no_texture")
 
-		expect(
-			selectBuildingTilesets([ward("bc/bbbb", "lod2_no_texture"), ward("bd/eeee", "lod2_no_texture"), textured])
-		).toEqual([textured])
+		expect(selectBuildingTilesets([first, ward("bd/eeee", "lod2_no_texture"), textured])).toEqual([
+			{ ...textured, untexturedURL: first.url },
+		])
 	})
 
 	it("keeps an untextured tileset whose ward has no textured one, and skips other themes", () => {
 		const untextured = ward("bc/bbbb", "lod2_no_texture")
 
-		expect(selectBuildingTilesets([untextured, { ...ward("d4/dddd", "lod2"), type_en: "tran" }])).toEqual([untextured])
+		expect(selectBuildingTilesets([untextured, { ...ward("d4/dddd", "lod2"), type_en: "tran" }])).toEqual([
+			{ ...untextured, untexturedURL: untextured.url },
+		])
 	})
 })
 

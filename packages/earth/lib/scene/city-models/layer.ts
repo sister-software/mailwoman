@@ -20,22 +20,13 @@ import { TilesRenderer } from "3d-tiles-renderer"
 import { GLTFExtensionsPlugin } from "3d-tiles-renderer/plugins"
 import type { CityTileset } from "@mailwoman/structures/city-tilesets"
 import type { CustomLayerInterface, CustomRenderMethodInput, Map as MapLibreMap } from "maplibre-gl"
-import {
-	AmbientLight,
-	DirectionalLight,
-	DoubleSide,
-	type Material,
-	Matrix4,
-	Mesh,
-	PerspectiveCamera,
-	Scene,
-	WebGLRenderer,
-} from "three"
+import { Matrix4, PerspectiveCamera, Scene, WebGLRenderer } from "three"
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js"
 import dracoWasmURL from "three/examples/jsm/libs/draco/draco_decoder.wasm?url"
 import dracoWrapperURL from "three/examples/jsm/libs/draco/draco_wasm_wrapper.js?url"
 
 import { EARTH_CIRCUMFERENCE, mercatorWorld } from "../mercator-world.ts"
+import { type CityFrame, cityFrame, createCityModelMaterial, styleCityModel } from "./style.ts"
 
 /**
  * The lowest map zoom the layer draws at.
@@ -50,12 +41,6 @@ const MIN_ZOOM = 14
  * leaves and their ancestors, and all of them fit.
  */
 const CACHE_BYTES = 512 * 1024 * 1024
-
-/**
- * The WGS84 ellipsoid's semi-major axis and first eccentricity squared.
- */
-const WGS84_A = 6_378_137
-const WGS84_E2 = 6.69437999014e-3
 
 /**
  * Above this globe-to-mercator transition the map draws as a globe, where the
@@ -84,28 +69,23 @@ interface ActiveCity {
  * The matrix from ECEF meters to MapLibre's mercator world (x east and y south in 0..1,
  * z up in mercator units) in a local frame at `longitude`, `latitude` and ellipsoid height `height`.
  */
-function ecefToMercatorMatrix(longitude: number, latitude: number, height: number): Matrix4 {
-	const λ = (longitude * Math.PI) / 180
-	const φ = (latitude * Math.PI) / 180
-	const [sinλ, cosλ, sinφ, cosφ] = [Math.sin(λ), Math.cos(λ), Math.sin(φ), Math.cos(φ)]
-	const n = WGS84_A / Math.sqrt(1 - WGS84_E2 * sinφ * sinφ)
-	const origin = [(n + height) * cosφ * cosλ, (n + height) * cosφ * sinλ, (n * (1 - WGS84_E2) + height) * sinφ]
+function ecefToMercatorMatrix({ origin, east, north, up, longitude, latitude }: CityFrame): Matrix4 {
 	const [x, y] = mercatorWorld(longitude, latitude)
-	const k = 1 / (EARTH_CIRCUMFERENCE * cosφ)
+	const k = 1 / (EARTH_CIRCUMFERENCE * Math.cos((latitude * Math.PI) / 180))
 
 	// Rows: east, north (negated, since mercator y grows south) and up, each scaled to mercator units.
 	const rotation = new Matrix4().set(
-		-sinλ * k,
-		cosλ * k,
+		east.x * k,
+		east.y * k,
+		east.z * k,
 		0,
+		-north.x * k,
+		-north.y * k,
+		-north.z * k,
 		0,
-		sinφ * cosλ * k,
-		sinφ * sinλ * k,
-		-cosφ * k,
-		0,
-		cosφ * cosλ * k,
-		cosφ * sinλ * k,
-		sinφ * k,
+		up.x * k,
+		up.y * k,
+		up.z * k,
 		0,
 		0,
 		0,
@@ -116,7 +96,7 @@ function ecefToMercatorMatrix(longitude: number, latitude: number, height: numbe
 	return new Matrix4()
 		.makeTranslation(x, y, 0)
 		.multiply(rotation)
-		.multiply(new Matrix4().makeTranslation(-origin[0]!, -origin[1]!, -origin[2]!))
+		.multiply(new Matrix4().makeTranslation(origin.clone().negate()))
 }
 
 /**
@@ -142,6 +122,7 @@ export class CityModelsLayer implements CustomLayerInterface {
 	#renderer: WebGLRenderer | null = null
 	#camera = new PerspectiveCamera()
 	#draco = new DRACOLoader().setDecoderPath({ js: dracoWrapperURL, wasm: dracoWasmURL })
+	#material = createCityModelMaterial()
 	#active = new Map<string, ActiveCity>()
 	#covered = ""
 
@@ -185,6 +166,7 @@ export class CityModelsLayer implements CustomLayerInterface {
 
 		this.#active.clear()
 		this.#draco.dispose()
+		this.#material.dispose()
 		this.#renderer?.dispose()
 		this.#renderer = null
 		this.#map = null
@@ -202,35 +184,22 @@ export class CityModelsLayer implements CustomLayerInterface {
 		tiles.registerPlugin(new GLTFExtensionsPlugin({ dracoLoader: this.#draco, metadata: true }))
 		const scene = new Scene()
 
-		scene.add(new AmbientLight(0xff_ff_ff, 1.6))
-		const sun = new DirectionalLight(0xff_ff_ff, 1.4)
-
-		// The light comes from above, toward the north-west, in ECEF at the tileset's center.
-		sun.position.copy(tiles.group.position).set(-0.4, 0.6, 0.7)
-		scene.add(sun)
 		scene.add(tiles.group)
 
 		const [west, south, east, north] = city.bounds
+		// The frame's origin sits on the ellipsoid at the geoid height, so the models stand on the map's ground.
+		const frame = cityFrame((west + east) / 2, (south + north) / 2, city.geoidHeight)
 
 		const active: ActiveCity = {
 			city,
 			tiles,
 			scene,
-			ecefToMercator: ecefToMercatorMatrix((west + east) / 2, (south + north) / 2, city.geoidHeight),
+			ecefToMercator: ecefToMercatorMatrix(frame),
 			loaded: false,
 		}
 
 		tiles.addEventListener("load-model", ({ scene: model }) => {
-			// The frame mirrors the north axis (mercator y grows south), which reverses every
-			// triangle's winding under this camera, so the models draw both faces of each triangle.
-			model.traverse((object) => {
-				if (object instanceof Mesh) {
-					for (const material of [object.material].flat() as Material[]) {
-						material.side = DoubleSide
-					}
-				}
-			})
-
+			styleCityModel(model, frame, this.#material)
 			active.loaded = true
 			this.#map?.triggerRepaint()
 		})
