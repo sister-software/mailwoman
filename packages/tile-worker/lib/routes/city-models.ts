@@ -13,7 +13,7 @@
 import { ResourceError } from "@mailwoman/core/errors"
 import type { Context } from "hono"
 
-import { cacheResponse, type TileWorkerHono } from "#caching"
+import type { TileWorkerHono } from "#caching"
 import { assertR2KeyMatch, assertR2ObjectBody } from "#storage"
 
 /**
@@ -59,7 +59,7 @@ export async function serveCityModelFile(c: Context<TileWorkerHono>): Promise<Re
 		},
 	})
 
-	cacheResponse(c, response)
-
+	// The response cache would store the gzip bytes as an unencoded body, so this route
+	// answers from R2 every time and the browser caches by `Cache-Control`.
 	return response
 }
