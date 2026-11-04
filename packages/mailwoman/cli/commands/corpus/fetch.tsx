@@ -67,6 +67,7 @@ const sources = [
 	"vlaanderen",
 	"wallonie",
 	"wikidata-subvenue",
+	"wikidata-vital-places",
 ] as const satisfies readonly FetchSourceID[]
 
 /**
@@ -119,6 +120,11 @@ export const spec = {
 			description: "matrikkelen Geonorge area codes, comma-separated: 0000 and 2100 (default: both)",
 		},
 		limit: { type: "number", description: "es-catastro and es-navarra: stop after this many archives" },
+		top: { type: "number", description: "wikidata-vital-places: ranked items to describe (default: 50000)" },
+		languages: {
+			type: "string",
+			description: "wikidata-vital-places: label and alias languages, comma-separated (default: ten)",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -166,7 +172,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 	const { fetchStateHISchools } = await import("@mailwoman/corpus/us/tools/fetch/state/hi-schools")
 	const { fetchStateSources } = await import("@mailwoman/corpus/us/tools/fetch/state/sources")
 	const { fetchTigerFull } = await import("@mailwoman/corpus/us/tools/fetch/tiger-full")
-	const { fetchWikidataSubVenue } = await import("@mailwoman/corpus/tools/fetch/wikidata-subvenue")
+	const { fetchWikidataSubVenue } = await import("@mailwoman/corpus/tools/fetch/wikidata/subvenue")
+	const { fetchWikidataVitalPlaces } = await import("@mailwoman/corpus/tools/fetch/wikidata/vital-places")
 
 	const base = { outRoot: PathBuilder.from(options.outRoot) }
 
@@ -307,6 +314,16 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchOurAirports(base, reportToStderr)
 		case "wikidata-subvenue":
 			return fetchWikidataSubVenue(base, reportToStderr)
+		case "wikidata-vital-places":
+			return fetchWikidataVitalPlaces(
+				{
+					...base,
+					top: options.top,
+					// Null takes the module's own ten languages.
+					languages: options.languages ? extractDelimited(options.languages) : null,
+				},
+				reportToStderr
+			)
 		case "state-sources":
 			return fetchStateSources(base, reportToStderr)
 		case "state-hi-schools":
