@@ -36,6 +36,25 @@ export const PLACE_ROOTS: readonly string[] = ["Q2221906", "Q618123", "Q811979"]
 export const EXCLUDED_ROOTS: readonly string[] = ["Q1190554", "Q3024240"]
 
 /**
+ * A place whose class descends from one of these roots is a settlement or an administrative area,
+ * and Who's On First already teaches its name: human settlement, administrative territorial entity and country.
+ */
+export const SETTLEMENT_ROOTS: readonly string[] = ["Q486972", "Q56061", "Q6256"]
+
+/**
+ * A place whose class descends from one of these roots is a site to visit, even when a settlement root applies too:
+ * architectural structure (`Q811979`), `Q473972` (national parks and reserves) and archaeological site (`Q839954`).
+ */
+export const SITE_ROOTS: readonly string[] = ["Q811979", "Q473972", "Q839954"]
+
+/**
+ * Every root the descent query asks about: the inventory's and the render's.
+ */
+export const DESCENT_ROOTS: readonly string[] = [
+	...new Set([...PLACE_ROOTS, ...EXCLUDED_ROOTS, ...SETTLEMENT_ROOTS, ...SITE_ROOTS]),
+]
+
+/**
  * The most class ids one descent query names.
  *
  * Measured on 2026-11-03: a batch of 150 answers within the service's 60-second limit.
@@ -65,7 +84,7 @@ export type PlaceVerdict = (typeof PLACE_VERDICTS)[keyof typeof PLACE_VERDICTS]
  */
 export function buildClassDescentQuery(
 	classQIDs: readonly string[],
-	roots: readonly string[] = [...PLACE_ROOTS, ...EXCLUDED_ROOTS]
+	roots: readonly string[] = DESCENT_ROOTS
 ): string {
 	if (!classQIDs.length || classQIDs.length > CLASS_QUERY_BATCH) {
 		throw new RangeError(`a class descent query names 1 to ${CLASS_QUERY_BATCH} classes, not ${classQIDs.length}`)
@@ -116,22 +135,32 @@ const PHYSICAL_ROOTS: readonly string[] = ["Q618123", "Q811979"]
 const OCCURRENCE_ROOT = "Q1190554"
 
 /**
+ * Whether one class excludes its instances.
+ *
+ * Historical country excludes. Occurrence excludes unless the same class also descends from a physical root, as
+ * mausoleum does, so the override never lets a separate event class through.
+ */
+function excludesInstances(classRoots: readonly string[]): boolean {
+	const physical = PHYSICAL_ROOTS.some((root) => classRoots.includes(root))
+
+	return EXCLUDED_ROOTS.some((root) => classRoots.includes(root) && !(root === OCCURRENCE_ROOT && physical))
+}
+
+/**
  * The verdict for an item from its classes' roots.
  *
- * Historical country keeps the item out.
- * Occurrence keeps it out unless a physical root also applies, so a battle stays out and a mausoleum stays in.
+ * Any class that excludes its instances keeps the item out, so a battle fought at a fortress stays out.
  * Otherwise any place root makes it a place.
  * A class with no cached roots leaves the item unclassified.
  */
 export function placeVerdict(classes: readonly string[], roots: Readonly<ClassRoots>): PlaceVerdict {
-	const itemRoots = new Set(classes.flatMap((cls) => roots[cls] ?? []))
-	const physical = PHYSICAL_ROOTS.some((root) => itemRoots.has(root))
+	const classRoots = classes.map((cls) => roots[cls] ?? [])
 
-	for (const root of EXCLUDED_ROOTS) {
-		if (itemRoots.has(root) && !(root === OCCURRENCE_ROOT && physical)) return PLACE_VERDICTS.excluded
-	}
+	if (classRoots.some(excludesInstances)) return PLACE_VERDICTS.excluded
 
-	return PLACE_ROOTS.some((root) => itemRoots.has(root)) ? PLACE_VERDICTS.place : PLACE_VERDICTS.unclassified
+	return classRoots.some((rootsOfClass) => PLACE_ROOTS.some((root) => rootsOfClass.includes(root)))
+		? PLACE_VERDICTS.place
+		: PLACE_VERDICTS.unclassified
 }
 
 /**

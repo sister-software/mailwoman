@@ -15,6 +15,7 @@
 import { appendLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
+import type { LatLon } from "@mailwoman/spatial/position"
 import type { PathBuilderLike } from "path-ts"
 
 import type { WikidataClient } from "#tools/fetch/wikidata/subvenue"
@@ -70,10 +71,10 @@ export function buildEntityFieldsQuery(qids: readonly string[], languages: reado
  *
  * Another body's coordinate writes its globe's IRI before the point.
  */
-function readPointLiteral(literal: string): { latitude: number; longitude: number } | null {
+export function readPointLiteral(literal: string): LatLon | null {
 	const point = /^Point\(([-\d.eE]+) ([-\d.eE]+)\)$/u.exec(literal.trim())
 
-	return point ? { latitude: Number(point[2]), longitude: Number(point[1]) } : null
+	return point ? { lat: Number(point[2]), lon: Number(point[1]) } : null
 }
 
 /**
@@ -89,7 +90,7 @@ export function recordsFromFieldRows(
 		sitelinks: number
 		classes: Set<string>
 		countries: Set<string>
-		coordinate: { latitude: number; longitude: number } | null
+		coordinate: LatLon | null
 		population: number | null
 		labels: Record<string, string>
 		aliases: Record<string, string[]>

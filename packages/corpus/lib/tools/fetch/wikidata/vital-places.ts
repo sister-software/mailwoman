@@ -14,7 +14,7 @@
  * 2. `entities.jsonl`: one record per ranked id, appended as each request answers ({@linkcode fetchVitalEntities}).
  *    These requests skip the HTTP cache, and go out logged in when `WIKIDATA_BOT_USERNAME` and
  *    `WIKIDATA_BOT_PASSWORD` are set.
- * 3. `countries.json` and `class-roots.json`: the country codes and the class verdicts, cached
+ * 3. `countries.json` and `class-roots.v2.json`: the country codes and the class verdicts, cached
  *    ({@linkcode readCountryCodes}, {@linkcode classifyClasses}).
  * 4. `places.jsonl`, `counts.json` and `MANIFEST.json`: the inventory, rewritten from the files above.
  *
@@ -78,7 +78,9 @@ export const DEFAULT_TOP = 50_000
 export const VITAL_PLACES_FILES = {
 	entities: "entities.jsonl",
 	countries: "countries.json",
-	classRoots: "class-roots.json",
+	// The name changes with `DESCENT_ROOTS`: an entry cached under fewer roots would read as descending from none of
+	// the roots it was never asked about.
+	classRoots: "class-roots.v2.json",
 	places: "places.jsonl",
 	counts: "counts.json",
 	manifest: "MANIFEST.json",

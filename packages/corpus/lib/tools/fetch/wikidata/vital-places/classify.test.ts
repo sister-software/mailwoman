@@ -38,7 +38,7 @@ describe("buildClassDescentQuery", () => {
 	it("names the batch's classes and every root in one walk", () => {
 		expect(buildClassDescentQuery(["Q1440476", "Q515"])).toBe(`SELECT DISTINCT ?class ?root WHERE {
   VALUES ?class { wd:Q1440476 wd:Q515 }
-  VALUES ?root { wd:Q2221906 wd:Q618123 wd:Q811979 wd:Q1190554 wd:Q3024240 }
+  VALUES ?root { wd:Q2221906 wd:Q618123 wd:Q811979 wd:Q1190554 wd:Q3024240 wd:Q486972 wd:Q56061 wd:Q6256 wd:Q473972 wd:Q839954 }
   ?class wdt:P279* ?root .
 }`)
 	})
@@ -93,6 +93,14 @@ describe("placeVerdict", () => {
 
 	it("lets an excluded root win over a place root", () => {
 		expect(placeVerdict(["Q1440476", "Q178561"], roots)).toBe("excluded")
+	})
+
+	it("keeps a built class that also descends from occurrence, as mausoleum does", () => {
+		expect(placeVerdict(["Q162875"], { Q162875: ["Q811979", "Q618123", "Q2221906", "Q1190554"] })).toBe("place")
+	})
+
+	it("excludes a historical-country class even when it reaches geographical feature", () => {
+		expect(placeVerdict(["Q417175"], { Q417175: ["Q618123", "Q2221906", "Q3024240"] })).toBe("excluded")
 	})
 
 	it("leaves an item with no rooted class, or an unknown class, unclassified", () => {
