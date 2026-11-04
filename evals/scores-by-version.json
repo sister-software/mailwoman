@@ -1482,6 +1482,48 @@
 				}
 			},
 			"notes": "Rights-clean model (v7.10.0 seed 42). Operator accepted us.postcode 92.1, fr.postcode 98.6 and fr.house_number 96.5 below their floors to retire 10.1.0's training-rights violations (#2682). OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the eval spec's revision comment): us.postcode, fr.postcode, fr.house_number. [graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fa269c16-8422-42f8-b944-7d4b32b5974f/scratchpad/promo-v7100-s42-fixed]"
+		},
+		{
+			"run_id": "v9-0-0-base-20261104",
+			"model_version": "10.8.0",
+			"model_path": "@mailwoman/neural-weights-en-us@10.8.0",
+			"corpus_version": "v0.8.18-retention-overlay",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"tokenizer_md5": "5a1759ca2a384ab7fe1ac2166399106c",
+			"eval_set_version": "promotion-eval battery (v9.0.0-base): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-11-04",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 90000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 95.5,
+					"country_homograph": 98.1,
+					"micro": 87.7,
+					"locality": 87.9,
+					"region": 93.1,
+					"street": 75.9,
+					"street_prefix": 100,
+					"street_suffix": 100,
+					"unit": 100,
+					"po_box_real": 97.4,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.1,
+					"house_number": 98.2,
+					"region": 81.6,
+					"cedex_real": 100
+				},
+				"de": {
+					"native_locality_anchor_on": 91.6
+				},
+				"arena": {
+					"perturb": 68
+				}
+			},
+			"notes": "[graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/mnt/mw/audits/2925/promotion-v863]"
 		}
 	]
 }
