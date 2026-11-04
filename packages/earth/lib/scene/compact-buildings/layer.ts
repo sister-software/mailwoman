@@ -104,9 +104,11 @@ const MAX_HIDDEN_AREAS = 32
 const HIDDEN_AREA_TEST = `
 uniform vec4 u_hidden[${MAX_HIDDEN_AREAS}];
 uniform int u_hidden_count;
+// The tile's mercator offset and scale. MapLibre's prelude declares its own copy only in the globe variant.
+uniform vec4 u_tile_mercator;
 
 bool hidden(vec2 position) {
-	vec2 mercator = u_projection_tile_mercator_coords.xy + position * u_projection_tile_mercator_coords.zw;
+	vec2 mercator = u_tile_mercator.xy + position * u_tile_mercator.zw;
 	for (int index = 0; index < ${MAX_HIDDEN_AREAS}; index++) {
 		if (index >= u_hidden_count) break;
 		vec4 area = u_hidden[index];
@@ -358,7 +360,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 			prelude + WALL_VERTEX_SHADER,
 			WALL_FRAGMENT_SHADER,
 			["a_corner", "a_edge", "a_height", "a_color"],
-			["u_unit_meters", "u_hidden", "u_hidden_count"]
+			["u_unit_meters", "u_hidden", "u_hidden_count", "u_tile_mercator"]
 		)
 
 		this.#roofProgram = link(
@@ -366,7 +368,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 			prelude + ROOF_VERTEX_SHADER,
 			ROOF_FRAGMENT_SHADER,
 			["a_position", "a_z", "a_color"],
-			["u_hidden", "u_hidden_count"]
+			["u_hidden", "u_hidden_count", "u_tile_mercator"]
 		)
 
 		this.#variant = shaderData.variantName
@@ -576,6 +578,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 		gl.uniformMatrix4fv(uniform("u_projection_fallback_matrix"), false, Float32Array.from(data.fallbackMatrix))
 		gl.uniform4fv(uniform("u_hidden"), this.#hidden)
 		gl.uniform1i(uniform("u_hidden_count"), this.#hiddenCount)
+		gl.uniform4fv(uniform("u_tile_mercator"), data.tileMercatorCoords)
 	}
 
 	/**
