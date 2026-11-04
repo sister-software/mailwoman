@@ -12,6 +12,8 @@
  *
  * 1. `qrank.csv.gz` and `qrank.json`: the ranked list and its receipt ({@linkcode downloadQRank}).
  * 2. `entities.jsonl`: one record per ranked id, appended as each request answers ({@linkcode fetchVitalEntities}).
+ *    These requests skip the HTTP cache, and go out logged in when `WIKIDATA_BOT_USERNAME` and
+ *    `WIKIDATA_BOT_PASSWORD` are set.
  * 3. `countries.json` and `class-roots.json`: the country codes and the class verdicts, cached
  *    ({@linkcode readCountryCodes}, {@linkcode classifyClasses}).
  * 4. `places.jsonl`, `counts.json` and `MANIFEST.json`: the inventory, rewritten from the files above.
@@ -30,8 +32,10 @@ import { formatQuantity } from "@mailwoman/core/resources/locale"
 import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
+import { $private } from "#env"
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { writeManifest } from "#tools/fetch/download"
+import { botCredentialsFrom, type WikidataBotCredentials } from "#tools/fetch/wikidata/session"
 import { createWikidataClient, WDQS_ENDPOINT, WIKIDATA_USER_AGENT } from "#tools/fetch/wikidata/subvenue"
 import {
 	CLASS_QUERY_BATCH,
@@ -41,6 +45,7 @@ import {
 } from "#tools/fetch/wikidata/vital-places/classify"
 import {
 	createWikidataAPIClient,
+	DEFAULT_ENTITY_BATCH,
 	DEFAULT_LANGUAGES,
 	fetchVitalEntities,
 	isVitalEntity,
@@ -64,7 +69,7 @@ import {
 export const VITAL_PLACES_SLUG = "wikidata-vital-places"
 
 /**
- * The number of ranked items read when a caller names no count.
+ * The number of ranked items read when a caller sets no count.
  */
 export const DEFAULT_TOP = 50_000
 
@@ -95,6 +100,23 @@ export interface FetchWikidataVitalPlacesOptions extends BaseFetchOptions {
 	 * @defaultValue {@linkcode DEFAULT_LANGUAGES}
 	 */
 	languages?: readonly string[] | null
+	/**
+	 * The ids one entity request asks for.
+	 * @defaultValue {@linkcode DEFAULT_ENTITY_BATCH}
+	 */
+	batchSize?: number | null
+	/**
+	 * The entity requests in flight at once, capped at 1 anonymously and 3 logged in.
+	 * @defaultValue the mode's cap
+	 */
+	concurrency?: number | null
+	/**
+	 * The bot login.
+	 *
+	 * Absent reads `WIKIDATA_BOT_USERNAME` and `WIKIDATA_BOT_PASSWORD`.
+	 * `null` fetches anonymously.
+	 */
+	credentials?: WikidataBotCredentials | null
 }
 
 interface VitalPlacesFile {
@@ -160,10 +182,29 @@ export async function fetchWikidataVitalPlaces(
 
 	report?.(`  qrank: read ${formatQuantity(rows.length)} ranked items in ${formatElapsed(readStartedAt)}`)
 
+	const credentials =
+		options.credentials === undefined
+			? botCredentialsFrom($private.WIKIDATA_BOT_USERNAME, $private.WIKIDATA_BOT_PASSWORD)
+			: options.credentials
+
 	const cacheDir = destDir(VITAL_PLACES_FILES.httpCache)
-	await using api = createWikidataAPIClient({ cacheDir })
+	await using api = createWikidataAPIClient({ cacheDir, credentials })
+
+	if (credentials) {
+		report?.(`  login: logged in as ${await api.logIn()}`)
+	} else {
+		report?.("  login: no WIKIDATA_BOT_USERNAME and WIKIDATA_BOT_PASSWORD, requests go out anonymously")
+	}
+
 	const entitiesPath = destDir(VITAL_PLACES_FILES.entities)
-	const entities = await fetchVitalEntities(api, rows, { entitiesPath, languages, report })
+
+	const entities = await fetchVitalEntities(api, rows, {
+		entitiesPath,
+		languages,
+		batchSize: options.batchSize ?? DEFAULT_ENTITY_BATCH,
+		concurrency: options.concurrency ?? undefined,
+		report,
+	})
 
 	const ranked = new Set(rows.map((row) => row.qid))
 	const records = (await readEntityRecords(entitiesPath)).filter((record) => ranked.has(record.qid))

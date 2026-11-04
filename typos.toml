@@ -157,8 +157,9 @@ extend-ignore-re = [
 	'''\bbduk_recognised_premises\b''',
 	# OpenStreetMap's `leisure=sports_centre`, which the Protomaps basemap carries as a landuse `kind`.
 	'''\bsports_centre\b''',
-	# CityGML's level-of-detail names (`LoD2`, `lod3`) in the structure-source register.
-	'''\b[Ll]o[Dd][0-4]''',
+	# CityGML's level-of-detail names (`LoD2`, `lod3`) in the structure-source register, and in PLATEAU's
+	# tileset directory names after an underscore (`..._bldg_3dtiles_13101_chiyoda-ku_lod2`).
+	'''(?:\b|_)[Ll]o[Dd][0-4]''',
 ]
 
 [default.extend-words]

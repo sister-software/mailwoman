@@ -162,6 +162,12 @@ export interface WikidataHostConfig {
 	minRequestIntervalMs: number
 	timeoutMs: number
 	/**
+	 * The first wait before a retry whose answer sets no `Retry-After`, doubling on each further attempt.
+	 *
+	 * @defaultValue the client's own default
+	 */
+	retryBaseDelayMs?: number
+	/**
 	 * The `Accept` header the host's JSON answer is requested under.
 	 */
 	accept: string
@@ -183,7 +189,7 @@ export function wikidataClientConfig(
 		displayName: host.displayName,
 		logger: options.logger,
 		minRequestIntervalMs: host.minRequestIntervalMs,
-		retry: { maxAttempts: WDQS_MAX_ATTEMPTS },
+		retry: { maxAttempts: WDQS_MAX_ATTEMPTS, baseDelayMs: host.retryBaseDelayMs },
 		clock: options.clock,
 		caching: {
 			storage: buildDiskStorage({
@@ -199,6 +205,9 @@ export function wikidataClientConfig(
 			headers: {
 				"User-Agent": WIKIDATA_USER_AGENT,
 				Accept: host.accept,
+				// Wikimedia's robot policy and API etiquette ask for gzip.
+				// Axios decompresses the answer.
+				"Accept-Encoding": "gzip",
 			},
 			timeout: host.timeoutMs,
 			responseType: "json",
