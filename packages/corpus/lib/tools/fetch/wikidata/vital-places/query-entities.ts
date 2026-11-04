@@ -42,6 +42,11 @@ export const QUERY_ENTITY_BATCH = 200
 export const QUERY_ENTITY_CONCURRENCY = 3
 
 /**
+ * The IRI of a Wikidata item.
+ */
+const ITEM_IRI = /\/entity\/Q\d+$/u
+
+/**
  * The query for one batch: one row per field value, tagged with the field it belongs to.
  */
 export function buildEntityFieldsQuery(qids: readonly string[], languages: readonly string[]): string {
@@ -118,11 +123,12 @@ export function recordsFromFieldRows(
 			case "sitelinks":
 				fields.sitelinks = Number(value)
 				break
+			// An "unknown value" statement answers with a blank node (`.well-known/genid/...`), which is no item.
 			case "class":
-				fields.classes.add(entityQID(value))
+				if (ITEM_IRI.test(value)) fields.classes.add(entityQID(value))
 				break
 			case "country":
-				fields.countries.add(entityQID(value))
+				if (ITEM_IRI.test(value)) fields.countries.add(entityQID(value))
 				break
 			case "coordinate":
 				fields.coordinate ??= readPointLiteral(value)

@@ -217,11 +217,17 @@ export async function fetchWikidataVitalPlaces(
 		? await readLocalJSONFile<Record<string, string | null>>(countriesPath)
 		: {}
 
-	const countryIDs = [...new Set(located.flatMap((record) => (isVitalEntity(record) ? record.countries : [])))]
+	// Records the query service wrote before blank-node values were dropped can hold a `genid` IRI in place of an item.
+	const isItemID = (id: string) => /^Q\d+$/u.test(id)
+	const countryIDs = [
+		...new Set(located.flatMap((record) => (isVitalEntity(record) ? record.countries : []))),
+	].filter(isItemID)
 	const countryCodes = await readCountryCodes(api, countryIDs, knownCodes, report)
 	await writeLocalJSONFile(countryCodes, countriesPath)
 
-	const classIDs = [...new Set(located.flatMap((record) => (isVitalEntity(record) ? record.classes : [])))]
+	const classIDs = [...new Set(located.flatMap((record) => (isVitalEntity(record) ? record.classes : [])))].filter(
+		isItemID
+	)
 	const classes = await classifyClasses(wdqs, classIDs, { cachePath: destDir(VITAL_PLACES_FILES.classRoots), report })
 
 	const inventory = buildInventory(records, classes.roots, countryCodes)
