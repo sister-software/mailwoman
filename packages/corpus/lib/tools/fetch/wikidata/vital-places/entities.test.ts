@@ -196,6 +196,39 @@ describe("fetchVitalEntities", () => {
 		expect(entities.get("Q999")?.id).toBe("Q243")
 	})
 
+	it("requests again, in halves, the ids a size-truncated answer dropped", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-vital-truncated-")
+
+		const truncated = {
+			result: { "*": "This result was truncated because it would otherwise be larger than the limit" },
+		}
+
+		const { client } = stubAPI(
+			[
+				{ body: { entities: { Q1: { id: "Q1" } }, warnings: truncated } },
+				{ body: { entities: { Q2: { id: "Q2" } } } },
+				{ body: { entities: { Q3: { id: "Q3" } } } },
+			],
+			scratch.path("http-cache").toString()
+		)
+
+		await using _client = client
+
+		const entities = await client.getEntities(["Q1", "Q2", "Q3"], ["en"])
+
+		expect([...entities.keys()].toSorted()).toEqual(["Q1", "Q2", "Q3"])
+	})
+
+	it("refuses an answer that drops an id without a truncation warning", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-vital-dropped-")
+
+		const { client } = stubAPI([{ body: { entities: { Q1: { id: "Q1" } } } }], scratch.path("http-cache").toString())
+
+		await using _client = client
+
+		await expect(client.getEntities(["Q1", "Q2"], ["en"])).rejects.toThrow(/no entity for Q2/u)
+	})
+
 	it("reports a failed request and leaves its ids for a rerun", async () => {
 		await using scratch = await temporaryDirectory("mailwoman-vital-failed-")
 		const entitiesPath = scratch.path("entities.jsonl")

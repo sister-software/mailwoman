@@ -140,6 +140,14 @@ export interface WikidataClaim {
 export interface WikidataEntitiesResponse {
 	entities?: Record<string, WikidataEntityBody>
 	error?: { code?: string; info?: string }
+	warnings?: { result?: { "*"?: string } }
+}
+
+/**
+ * Whether the API dropped entities from an answer to keep it under its response-size limit.
+ */
+function isTruncated(body: WikidataEntitiesResponse): boolean {
+	return /truncated/iu.test(body.warnings?.result?.["*"] ?? "")
 }
 
 /**
@@ -191,8 +199,25 @@ export class WikidataAPIClient extends APIClient {
 			byRequestedID.set(entity.redirects?.from ?? entity.id ?? key, entity)
 		}
 
-		for (const id of ids) {
-			if (!byRequestedID.has(id)) throw new Error(`wbgetentities: the answer names no entity for ${id}`)
+		const missing = ids.filter((id) => !byRequestedID.has(id))
+
+		if (!missing.length) return byRequestedID
+
+		// The API drops the entities past its response-size limit and says so in `warnings.result`.
+		// A batch of countries, whose claim lists are long, exceeds it.
+		// The dropped ids are requested again in two halves until each answer fits.
+		if (!isTruncated(body) || ids.length === 1) {
+			throw new Error(`wbgetentities: the answer names no entity for ${missing[0]}`)
+		}
+
+		const half = Math.ceil(missing.length / 2)
+
+		for (const part of [missing.slice(0, half), missing.slice(half)]) {
+			if (!part.length) continue
+
+			for (const [id, entity] of await this.getEntities(part, languages)) {
+				byRequestedID.set(id, entity)
+			}
 		}
 
 		return byRequestedID
