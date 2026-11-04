@@ -14,7 +14,7 @@ export function createTerrainDEMSource(): RasterDEMSourceSpecification {
 	const terrainSource: RasterDEMSourceSpecification = {
 		type: "raster-dem",
 		encoding: "terrarium",
-		tiles: ["https://tiles.mailwoman.ai/terrain/terrarium/{z}/{x}/{y}.png"],
+		tiles: ["https://tiles.mailwoman.post/terrain/terrarium/{z}/{x}/{y}.png"],
 		tileSize: 256,
 		maxzoom: 15,
 	}

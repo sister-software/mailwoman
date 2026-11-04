@@ -15,7 +15,7 @@ If you have seen `@mailwoman/neural-web` referenced before: the browser runtime 
 `@mailwoman/neural` itself, as the `./web-loader` and `./web-onnx-runner` subpaths, and the old package
 stopped publishing after 9.3.0. Everything on this page uses the subpaths.
 
-[Earth](https://earth.mailwoman.ai/) is the finished version of this — the same loader, the same model files, plus a
+[Earth](https://earth.mailwoman.post/) is the finished version of this — the same loader, the same model files, plus a
 gazetteer and a map. By the end of this page you'll have the parse half of it in your own page: eight
 files served from your own origin, one `await`, and a tree in the tab. You'll also have the measured
 byte and time cost of the load, and a clear line around what the browser build does not do. About
@@ -31,8 +31,8 @@ The third item decides how this page is structured, so read it before you copy a
 - **About 125 MB of static assets** to host: 50.4 MB of model files plus `onnxruntime-web`'s four
   `.wasm` builds. A visitor fetches the model files and exactly one of those builds. That build is between
   12.5 MB and 25.4 MB depending on the execution provider the browser lands on.
-- **The demo's asset host is not a public CDN.** `public.mailwoman.ai` answers a cross-origin
-  request only for `https://mailwoman.ai`, so a browser on your own domain gets no
+- **The demo's asset host is not a public CDN.** `public.mailwoman.post` answers a cross-origin
+  request only for `https://mailwoman.post`, so a browser on your own domain gets no
   `Access-Control-Allow-Origin` header back and the fetch fails. Host your own copies. Step 1 is
   where they come from, and they arrive in an npm package you already have if you have installed the
   parser at all.
@@ -236,7 +236,7 @@ Two constraints ride on that:
 
 ## Resolve addresses in the browser
 
-Components are not coordinates. [Earth](https://earth.mailwoman.ai/) resolves them by range-loading a 2.88 GB gazetteer
+Components are not coordinates. [Earth](https://earth.mailwoman.post/) resolves them by range-loading a 2.88 GB gazetteer
 over HTTP: a read-only SQLite VFS fetches only the chunks a lookup touches. That is three to five range
 requests for a cold name lookup. That implementation is docs-site code rather
 than a published package, and two things stand between it and your page.

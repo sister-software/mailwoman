@@ -441,6 +441,8 @@ export const CARRIED_SOURCES: ReadonlyArray<string> = [
 	// The producer's code is absent from the tree.
 	// The two configs record its runs.
 	"oa-slavic",
+	// Wikidata landmarks, natural features, parks and sites, written by lib/tools/vital-places.run.ts.
+	"wikidata-vital-places",
 ]
 
 const BY_RETIRED = new Map(RECIPE_SOURCES.map((entry) => [entry.retired, entry]))

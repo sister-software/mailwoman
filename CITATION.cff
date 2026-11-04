@@ -16,9 +16,9 @@ authors:
 version: 10.7.0
 date-released: "2026-10-18"
 repository-code: https://github.com/sister-software/mailwoman
-url: https://mailwoman.ai
+url: https://mailwoman.post
 license: AGPL-3.0-only
-license-url: https://mailwoman.ai/license
+license-url: https://mailwoman.post/license
 keywords:
   - address parsing
   - geocoding

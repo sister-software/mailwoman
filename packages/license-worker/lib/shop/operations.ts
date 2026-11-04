@@ -27,7 +27,7 @@ import { STRIPE_API_VERSION } from "#stripe/client"
 
 const ShopModeSchema = z.enum(["test", "live"])
 
-const DEFAULT_SITE_ORIGIN = "https://mailwoman.ai"
+const DEFAULT_SITE_ORIGIN = "https://mailwoman.post"
 
 function stripeFor(mode: ShopMode): Stripe {
 	const key = mode === "live" ? $private.MAILWOMAN_STRIPE_LIVE_SECRET_KEY : $private.MAILWOMAN_STRIPE_SECRET_KEY

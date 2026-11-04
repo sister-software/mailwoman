@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { readTrainingConfigText, typedTrainingConfig, weightedCountries } from "@mailwoman/corpus/training/config/load"
 import { expect, test } from "vitest"
 
 import { blindCountries, expandRequirements, failingRequirements, type SplitScan } from "./coverage.ts"
@@ -51,8 +52,32 @@ test("a floor naming a split the report lacks is a failure", () => {
 	])
 })
 
+/**
+ * The schema defaults with `data.country_weights` replaced, as a loaded YAML config holds them.
+ */
+const weighted = (countryWeights: Record<string, number>) => {
+	const rows = Object.entries(countryWeights).map(([country, weight]) => `    "${country}": ${weight}`)
+
+	return typedTrainingConfig(readTrainingConfigText(`data:\n  country_weights:\n${rows.join("\n")}\n`, "test"), "test")
+}
+
 test("an every-country entry expands over the admitted countries, keeping an explicit entry", () => {
-	const expanded = expandRequirements([floor("*", 3), floor("FR", 9)], { US: 1, FR: 1, DE: 0 })
+	const admitted = weightedCountries(weighted({ US: 1, FR: 1, DE: 0 }))
+	const expanded = expandRequirements([floor("*", 3), floor("FR", 9)], admitted)
 
 	expect(expanded).toEqual([floor("FR", 9), floor("US", 3)])
+})
+
+test("expansion reads the branded admitted set rather than a weight map or a literal list", () => {
+	// The compiler checks these calls, and the test never runs them.
+	const refused = () => {
+		// @ts-expect-error The weight map is not the admitted set: weight-zero keys would expand.
+		expandRequirements([floor("*", 3)], { US: 1, DE: 0 })
+
+		// @ts-expect-error A literal list carries no brand.
+		expandRequirements([floor("*", 3)], ["US", "DE"])
+	}
+
+	expect(refused).toBeTypeOf("function")
+	expect(() => weightedCountries(weighted({ US: 1, QQ: 1 }))).toThrow(/QQ/)
 })

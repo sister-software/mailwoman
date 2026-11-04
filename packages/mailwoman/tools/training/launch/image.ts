@@ -176,9 +176,9 @@ export function trainerBuildScript(variant: TrainerVariant): string {
 /**
  * The repository files a trainer image holds, relative to the repository root and sorted.
  *
- * Every file Git includes under `packages/trainer`, the mtf crates the trainer depends on,
- * the root workspace's manifest, lockfile and toolchain file, and the data files,
- * except Markdown and each crate's tests, benches and examples.
+ * Every file Git includes under `packages/trainer`, every workspace member crate under
+ * `packages/*\/crates`, the root workspace's manifest, lockfile and toolchain file,
+ * and the data files, except Markdown and each crate's tests, benches and examples.
  *
  * `cargo build -p trainer-cli` reads none of the excluded files, and the list is what
  * the image's digest covers, so a change to a test keeps the published image.
@@ -186,7 +186,11 @@ export function trainerBuildScript(variant: TrainerVariant): string {
 export async function trainerSourceFiles(): Promise<string[]> {
 	const trainer = await workingTreeFiles(["packages/trainer"])
 
-	const mtf = await workingTreeFiles(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "packages/mtf/crates"])
+	// Every workspace member's crate, beside the trainer's own: cargo loads the whole workspace
+	// the root manifest declares, refuses a `default-members` entry that is no member,
+	// and under `--locked` refuses a lockfile that lists crates the workspace lacks.
+	// `-p trainer-cli` compiles only the trainer and what it depends on.
+	const mtf = await workingTreeFiles(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", ":(glob)packages/*/crates/**"])
 
 	return [...new Set([...[...trainer, ...mtf].filter(isBuildInput), ...TRAINER_DATA_FILES])].toSorted()
 }

@@ -31,8 +31,8 @@ Japanese, Korean, Taiwanese and Chinese addresses. It ships as `@mailwoman/neura
 on Node and in the browser (ONNX Runtime Web).
 
 - **Source**: https://github.com/sister-software/mailwoman
-- **Docs**: https://mailwoman.ai/docs
-- **License**: AGPL-3.0 (a commercial license is available: https://mailwoman.ai/license)
+- **Docs**: https://mailwoman.post/docs
+- **License**: AGPL-3.0 (a commercial license is available: https://mailwoman.post/license)
 
 ## Usage
 

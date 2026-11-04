@@ -14,17 +14,17 @@ import {
 	creditsFor,
 	HILLSHADE_INPUTS,
 } from "@mailwoman/structures/basemaps"
+import { UNDERSEA_ATTRIBUTION } from "@mailwoman/undersea"
 import { commitURL } from "@mailwoman/universe/site-kit/build-info"
 import { DATA_CREDITS } from "mailwoman/browser-runtime/resources"
 import type { ReactNode } from "react"
 
-import { loadsBasemapBuild } from "#runtime/use/geocoder-runtime"
-
 /**
- * The basemap the page loads: a `?basemap=` link loads a `mailwoman/basemaps` build,
- * and the page otherwise loads the Protomaps v4 planet build.
+ * The basemap the page loads.
+ *
+ * The configured planet and every `?basemap=` tileset are `mailwoman/basemaps` builds.
  */
-const LOADED_BASEMAP = loadsBasemapBuild() ? Basemap.MailwomanBuild : Basemap.ProtomapsV4
+const LOADED_BASEMAP = Basemap.MailwomanBuild
 
 /**
  * The credits for every source the map draws from: the loaded basemap's inputs
@@ -40,6 +40,11 @@ const BASEMAP_ATTRIBUTION = [
 			{credit.text}
 		</a>
 	)),
+	// The undersea labels and search read the GEBCO gazetteer.
+	// GEBCO asks for this citation.
+	<a key="gebco" href="https://www.gebco.net" target="_blank" rel="noreferrer">
+		{UNDERSEA_ATTRIBUTION}
+	</a>,
 	<a key="protomaps" href="https://protomaps.com" target="_blank" rel="noreferrer">
 		Protomaps
 	</a>,
@@ -73,7 +78,7 @@ export interface EarthFooterProps {
 export function EarthFooter({ status }: EarthFooterProps): ReactNode {
 	return (
 		<MapFooter
-			identity={<AppIdentity name="Mailwoman Earth" docsURL="https://mailwoman.ai/docs" commitHref={commitURL} />}
+			identity={<AppIdentity name="Mailwoman Earth" docsURL="https://mailwoman.post/docs" commitHref={commitURL} />}
 			status={status}
 			attribution={ATTRIBUTION}
 		/>

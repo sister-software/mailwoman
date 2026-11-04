@@ -9,8 +9,8 @@ import { createPlanetaryStyle, PALETTES } from "#planetary"
 test.each(["moon", "mars"] as const)("%s: a valid planetary style with labels decluttered by diameter", (body) => {
 	const style = createPlanetaryStyle({
 		body,
-		nomenclatureTileJSONURL: `https://tiles.mailwoman.ai/${body}.json`,
-		hillshadeTileJSONURL: `https://tiles.mailwoman.ai/${body}-hillshade.json`,
+		nomenclatureTileJSONURL: `https://tiles.mailwoman.post/${body}.json`,
+		hillshadeTileJSONURL: `https://tiles.mailwoman.post/${body}-hillshade.json`,
 	})
 
 	expect(validateStyleMin(style)).toEqual([])
@@ -56,7 +56,7 @@ test.each(["moon", "mars"] as const)("%s: a valid planetary style with labels de
 test("without a hillshade tileset the style carries neither the source nor the layer", () => {
 	const style = createPlanetaryStyle({
 		body: "moon",
-		nomenclatureTileJSONURL: "https://tiles.mailwoman.ai/moon.json",
+		nomenclatureTileJSONURL: "https://tiles.mailwoman.post/moon.json",
 	})
 
 	expect(validateStyleMin(style)).toEqual([])

@@ -105,7 +105,8 @@ const ALLOWED: Record<string, string> = {
 	"packages/core/lib/module/package-command.test.ts":
 		"builds nested fixture installs independently of package executable resolution",
 	"packages/corpus/lib/build/code-hash.ts": "resolves installed package directories for dependency graph hashing",
-	"packages/corpus/lib/build/code-hash.test.ts": "builds a scratch install layout for the package resolver under test",
+	"packages/corpus/lib/build/code-hash.integration.test.ts":
+		"builds a scratch install layout for the package resolver under test",
 	"packages/neural/lib/weights/declared-artifact.test.ts":
 		"builds a staged package symlink independently of the artifact reader under test",
 	"lib/repo-health/checks/node-modules-reacharound.test.ts":

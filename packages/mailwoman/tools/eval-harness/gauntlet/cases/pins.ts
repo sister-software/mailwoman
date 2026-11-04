@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Measures and checks the regression-corpus pins in `load.test.ts`. It updates those pins without loading a model or gazetteer.
+ *   Measures and checks the regression-corpus pins in `load.integration.test.ts`. It updates those pins without loading a model or gazetteer.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -15,7 +15,7 @@ import { ablationBoardID } from "#tools/eval-harness/gauntlet/ablation"
 import { loadRegressionCases, regressionCorpusHash } from "#tools/eval-harness/gauntlet/cases/load"
 
 /**
- * Values that `load.test.ts` pins, keyed by the constant names in that file.
+ * Values that `load.integration.test.ts` pins, keyed by the constant names in that file.
  */
 export interface BoardPins {
 	CORPUS_SIZE: number
@@ -26,7 +26,7 @@ export interface BoardPins {
 /**
  * Repository-relative path of the test file that holds the pinned constants.
  */
-export const PIN_TEST_PATH = "packages/mailwoman/tools/eval-harness/gauntlet/cases/load.test.ts"
+export const PIN_TEST_PATH = "packages/mailwoman/tools/eval-harness/gauntlet/cases/load.integration.test.ts"
 
 /**
  * Measures the pins from the committed corpus with the same loaders that the pin test uses.

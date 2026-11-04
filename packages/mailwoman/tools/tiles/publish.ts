@@ -3,11 +3,11 @@
 
 /**
  *   This module publishes a PMTiles archive to the Cloudflare R2 bucket the tile worker serves from
- *   ($private.MAILWOMAN_TILES_BUCKET → https://tiles.mailwoman.ai/...).
+ *   ($private.MAILWOMAN_TILES_BUCKET → https://tiles.mailwoman.post/...).
  *
  *   The `tiles publish` command and planetary pipeline both call these functions.
  *   The worker reads the key `<prefix>/<tileset>.pmtiles` (prefix `tiles` per its wrangler config) and exposes
- *   `https://tiles.mailwoman.ai/<tileset>.json` and `/<tileset>/{z}/{x}/{y}.{ext}`.
+ *   `https://tiles.mailwoman.post/<tileset>.json` and `/<tileset>/{z}/{x}/{y}.{ext}`.
  *
  *   Uploads go through `rclone`: the `RCLONE_S3_*` variables are its s3-backend config (source the repo `.env` first:
  *   `set -a. . ./.env. set +a`). rclone handles multipart for large archives.
@@ -126,7 +126,7 @@ export async function publishTiles(options: PublishTilesOptions): Promise<string
 	if (!options.file.endsWith(".pmtiles")) throw new CommandError(`--file must be a .pmtiles archive: ${options.file}`)
 
 	const key = `${options.prefix}/${options.tileset}.pmtiles`
-	const servedAt = `https://tiles.mailwoman.ai/${options.tileset}.json`
+	const servedAt = `https://tiles.mailwoman.post/${options.tileset}.json`
 
 	const report = await uploadToBucket({
 		file: options.file,

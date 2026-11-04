@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/resolver-wof-sqlite",
-	"version": "10.7.0",
+	"version": "10.8.0",
 	"description": "Who's On First SQLite resolver — FTS5-backed PlaceLookup that resolves text queries to WOF place IDs + coordinates. Optional dependency for callers who want geocoding.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -127,10 +127,11 @@
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/gazetteer": "workspace:*",
 		"@mailwoman/match": "workspace:*",
+		"@mailwoman/postcode": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"h3-js": "^4.5.0",
+		"@sister.software/h3": "^1.1.0",
 		"kysely": "^0.29.7",
 		"path-ts": "^2.5.0",
 		"spliterator": "^10.1.1",

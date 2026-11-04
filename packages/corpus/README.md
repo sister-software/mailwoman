@@ -172,8 +172,8 @@ stops updating and no researcher checked the national portal behind it.
 
 - [`@mailwoman/neural`](../neural) — the runtime that loads and runs the trained model
 - [`@mailwoman/neural-weights-en-us`](../neural-weights-en-us) — the trained model itself
-- [Corpus Construction concepts](https://mailwoman.ai/articles/concepts/corpus-construction/)
-- [Concepts for the training pipeline](https://mailwoman.ai/articles/concepts/training-pipeline/)
+- [Corpus Construction concepts](https://mailwoman.post/articles/concepts/corpus-construction/)
+- [Concepts for the training pipeline](https://mailwoman.post/articles/concepts/training-pipeline/)
 - [CONTRIBUTING_MODEL_WORK](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx)
 
 ## License

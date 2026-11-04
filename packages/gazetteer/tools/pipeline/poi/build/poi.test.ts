@@ -12,9 +12,9 @@ import { CoverageBasis } from "@mailwoman/evidence"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
-import { shortCellToInt, type H3Cell, type LatLonBounds } from "@mailwoman/spatial"
+import { shortCellToInt, type LatLonBounds } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToParent, latLngToCell } from "h3-js"
+import { cellToParent, latLngToCell } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -381,9 +381,9 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 
 	it("keys a row's observed count off cellToParent(res9Cell, 6), never a direct latLngToCell(row, 6)", () => {
 		// If this point ever stops being divergent, it needs re-selecting by brute-force search.
-		const oldBuggyCell = shortCellToInt(latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 6) as H3Cell)
-		const res9Cell = latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 9) as H3Cell
-		const unifiedCell = shortCellToInt(cellToParent(res9Cell, 6) as H3Cell)
+		const oldBuggyCell = shortCellToInt(latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 6))
+		const res9Cell = latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 9)
+		const unifiedCell = shortCellToInt(cellToParent(res9Cell, 6))
 
 		expect(unifiedCell).not.toBe(oldBuggyCell)
 

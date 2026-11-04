@@ -4,8 +4,8 @@
 import type google from "@googlemaps/google-maps-services-js"
 import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { latLngToCell } from "@sister.software/h3"
 import { convert as convertCoords } from "geo-coordinates-parser"
-import { latLngToCell } from "h3-js"
 
 import { type BBox2DLiteral, type BBox3DLiteral, GeoBoundingBox, isBBox } from "#bbox"
 import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
@@ -16,7 +16,7 @@ import {
 	isPointLiteral,
 	pointInputCoordinates,
 } from "#geometries/point/coordinates"
-import { type H3Cell, shortenH3Cell } from "#h3/cell"
+import { shortenH3Cell } from "#h3/cell"
 import { type GeoObjectLiteral, GeometryType } from "#objects"
 import {
 	type InternalPointCoordinates,
@@ -318,7 +318,7 @@ export class GeoPoint implements PointLiteral {
 	 * Converts the GeoPoint to a H3 short cell address.
 	 */
 	public toH3Cell(resolution = 15) {
-		const cell = latLngToCell(this.#latitude, this.#longitude, resolution) as H3Cell
+		const cell = latLngToCell(this.#latitude, this.#longitude, resolution)
 
 		return cell
 	}

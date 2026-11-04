@@ -1,6 +1,6 @@
 # @mailwoman/neural-weights-de-de
 
-German (`de-DE`) weights overlay for [mailwoman](https://mailwoman.ai).
+German (`de-DE`) weights overlay for [mailwoman](https://mailwoman.post).
 
 **Data-only.** This package ships no model of its own — it declares
 `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and shares that package's `model.onnx`
@@ -38,4 +38,4 @@ trained to read, so the notice applies here too:
 > (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright.
 
 `LICENSE.md` in this package repeats the base graph's required attributions, and
-https://mailwoman.ai/resources/osm/attribution explains how Mailwoman reads the license.
+https://mailwoman.post/resources/osm/attribution explains how Mailwoman reads the license.

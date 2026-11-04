@@ -1,0 +1,77 @@
+---
+title: Country sets — branded collections, each derived from one source table
+role: reference
+audience: maintainer
+owner: engineering
+source-of-truth: packages/codex/lib/country/sets.ts
+tags:
+  - codex
+  - data
+---
+
+# Country sets
+
+`@mailwoman/codex/country/sets` exports `CountrySet<Spec>`, a `ReadonlySet` of ISO 3166-1 alpha-2 codes
+whose type records the source its members came from. The constructors in that module are the only code
+that produces one. None of them accepts a literal list of codes, so a signature that states the set it
+needs refuses `["US", "FR"]` at compile time:
+
+```ts
+function trainAll(countries: CountrySet<{ world: true }>): void
+
+trainAll(worldCountries()) // compiles
+trainAll(["US", "FR"]) // refused: a literal array carries no brand
+trainAll(countriesOfScript("Latn")) // refused: a script set is not the world set
+```
+
+## Constructors
+
+| Constructor                               | Source                                                                                                 | Members                                                                     |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `worldCountries()`                        | `CountryISO2` (`packages/codex/lib/country/codes.ts`)                                                  | every code, dependencies and territories included                           |
+| `dependentTerritories()`                  | the `dependency` column of `COUNTRY_REFERENCE`, from mledoze/countries `independent: false`            | dependencies and territories                                                |
+| `countriesOfScript(script)`               | `COUNTRY_SCRIPTS` (`packages/codex/lib/country/writing-systems.ts`), generated from CLDR               | countries where the script writes an official language                      |
+| `countriesOfAddressSystem(system, table)` | a model card's `address_systems` table, passed by the caller                                           | countries whose member shares the id of the system country's `local` member |
+| `countriesOfWeightsFamily(family)`        | a `FAMILIES` entry from `@mailwoman/neural`, passed by the caller, joined through `OFFICIAL_LANGUAGES` | each locale's region and every country where a family language is official  |
+| `countriesDeclaredBy(source, codes)`      | a declaration outside source, such as a training config                                                | the listed codes, refusing any code `CountryISO2` lacks                     |
+
+The address-system and weights-family constructors take their source as an argument because the packages
+that own it, the weights packages and `@mailwoman/neural`, depend on the codex.
+
+`union`, `intersect` and `minus` keep the brand and record the operation in the spec, so a union is
+not assignable where a single source is required. The sovereign states are
+`minus(worldCountries(), dependentTerritories())`. `hasCountry(set, code)` tests an unvalidated string.
+
+Script and address system are separate axes. A script set describes the script an input is written in. An
+address-system set selects the codex conventions that apply. A country can belong to several script
+sets: RS under `Latn` and `Cyrl`, JP under `Hani`, `Hira` and `Kana`, HK and MO under `Hani` and `Latn`.
+
+## The script table
+
+`node packages/mailwoman/tools/dev-tools/codex/country/writing-systems.run.ts` regenerates `writing-systems.ts` from
+the cldr-core supplemental `territoryInfo` and `likelySubtags` files, fetched from jsdelivr at the
+pinned release or read from `--cldr-dir`. Only the dev-tool reads CLDR. The codex ships the
+generated table and gains no dependency. For each official or de facto official language of a
+territory, a `territoryInfo` key with a script subtag (`sr_Latn`) takes that script, and a bare key
+takes `likelySubtags` for the language in that territory, then for the bare language. The ISO 15924
+codes for a combination expand to the Unicode Script property values a text is written in: `Jpan` to
+Hani, Hira and Kana, `Kore` to Hang and Hani, `Hans` and `Hant` to Hani. The tool refuses a territory on
+which the CLDR release and `OFFICIAL_LANGUAGES` disagree about having an official language.
+
+Under CLDR 47.0.0 the table covers 250 territories: 223 with one script, 24 with two and 3 with three.
+The module comment lists every multi-script territory.
+
+## The repository check
+
+`country-literal-sets` (`lib/repo-health/checks/country/literal-sets.ts`) reports three shapes outside
+test files and per-country homes:
+
+- an array or `Set` literal of three or more two-letter codes held by a binding or property whose name
+  reads as a country collection;
+- the same literal passed straight to `countriesDeclaredBy`;
+- a cast to `CountrySet` outside `sets.ts`.
+
+A list that records a per-country fact rather than a rule, such as an index-pinned label map or an
+ingest order that assigns ids, keeps a `// country-branch: <reason>` comment on its statement or above
+its doc comment, naming the source that would replace it. A list of subdivision codes held by a name such
+as `STATES` is not read as countries.

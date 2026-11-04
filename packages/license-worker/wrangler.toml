@@ -13,15 +13,15 @@
 name = "mailwoman-license"
 main = "./lib/index.ts"
 compatibility_date = "2026-08-22"
-routes = [{ pattern = "license.mailwoman.ai", custom_domain = true }]
+routes = [{ pattern = "license.mailwoman.post", custom_domain = true }]
 
 [triggers]
 crons = ["0 */6 * * *"]
 
 [vars]
 ISSUANCE_ENABLED = "true"
-SITE_ORIGIN = "https://mailwoman.ai"
-EMAIL_FROM = "licenses@mailwoman.ai"
+SITE_ORIGIN = "https://mailwoman.post"
+EMAIL_FROM = "licenses@mailwoman.post"
 STRIPE_LIVE_MODE = "true"
 LICENSE_SIGNING_KID = "v9-e3d8105a"
 # The paid-artifact bucket lives in the EU jurisdiction, and a jurisdiction bucket answers only on its own S3 host.

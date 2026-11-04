@@ -31,10 +31,10 @@ import {
 	normalizeStreetForKeyLocale,
 	streetLocaleForSurface,
 } from "@mailwoman/resolver-wof-sqlite/street"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 import { dirname } from "path-ts"
 
 import { extractAddrPoints } from "#sdk/extract"
@@ -209,7 +209,7 @@ export async function buildRooftopDatabase(options: RooftopBuildOptions): Promis
 				continue
 			}
 
-			const h3Cell = shortCellToInt(latLngToCell(rec.lat, rec.lon, ADDRESS_POINT_H3_RESOLUTION) as H3Cell)
+			const h3Cell = shortCellToInt(latLngToCell(rec.lat, rec.lon, ADDRESS_POINT_H3_RESOLUTION))
 			const locality = rec.suburb ?? rec.city
 
 			// A bilingual street gets one row per language form, each keyed on that form,

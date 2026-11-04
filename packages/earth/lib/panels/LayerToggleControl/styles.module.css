@@ -45,6 +45,51 @@
 	min-width: 0;
 }
 
+/*
+ * A flex summary drops the browser's disclosure marker, so the row draws its own chevron at the end.
+ * The chevron turns down while the group is open.
+ */
+.layerGroup > summary {
+	list-style: none;
+}
+
+.layerGroup > summary::-webkit-details-marker {
+	display: none;
+}
+
+.layerGroup > summary::after {
+	content: "›";
+	flex: 0 0 auto;
+	width: 1ch;
+	text-align: center;
+	color: var(--ss-color-emphasis-600);
+	transition: transform var(--ss-transition-fast) var(--ss-transition-timing-default);
+}
+
+.layerGroup[open] > summary::after {
+	transform: rotate(90deg);
+}
+
+.layerGroup[open] > summary {
+	color: var(--ss-color-content);
+}
+
+/* A group's layers sit indented under its summary. */
+.layerList {
+	display: grid;
+	gap: 0.05rem;
+	padding: 0.1rem 0 0.4rem 1.4rem;
+}
+
+/* A layer row shows the style's layer ID, which can be long, so it wraps rather than widening the sheet. */
+.layerID {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	font-family: var(--ss-font-family-monospace);
+	font-size: var(--mw-font-size-caption);
+}
+
 /* How many layers the group carries, set apart from its name so the row reads as a name and a count, not one phrase. */
 .layerToggleCount {
 	flex: 0 0 auto;

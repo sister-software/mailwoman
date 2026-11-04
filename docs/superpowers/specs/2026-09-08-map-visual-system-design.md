@@ -7,7 +7,7 @@
 > decision below that "`@mailwoman/react` owns the tokens" no longer holds. The materials and chrome
 > sections still describe the apps.
 
-Three deployed apps (`earth.mailwoman.ai`, `moon.mailwoman.ai`, `mars.mailwoman.ai`) share one React
+Three deployed apps (`earth.mailwoman.post`, `moon.mailwoman.post`, `mars.mailwoman.post`) share one React
 component package and one stylesheet, and none of them has a finished product design. This design gives
 the four consumers of `@mailwoman/react` a single token vocabulary that the package owns, replaces the
 desktop control panel with map chrome, and repairs the rendering defects measured below.
@@ -52,7 +52,7 @@ navbar that does not exist outside Docusaurus.
 ### Two shipped styles request a glyph stack the bucket does not serve
 
 `packages/cartographer/lib/planetary/layers.ts:93` and `packages/cartographer/lib/base/buildings.ts:117`
-both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mailwoman.ai/protomaps/fonts/<stack>/0-255.pbf` returned:
+both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mailwoman.post/protomaps/fonts/<stack>/0-255.pbf` returned:
 
 | Stack                                                       | Result            |
 | ----------------------------------------------------------- | ----------------- |
@@ -66,7 +66,7 @@ both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mail
 
 MapLibre renders no text at all when a glyph range fails, so requesting an absent stack is a defect in
 itself, and `#styles/fonts` now holds the served names. It does not explain the missing planetary labels,
-because after the repair deployed on `9504425c7`, `mars.mailwoman.ai` still draws none.
+because after the repair deployed on `9504425c7`, `mars.mailwoman.post` still draws none.
 
 ### No nomenclature tile is ever requested, and the cause is above the style
 
@@ -95,11 +95,11 @@ build. The derived path points at a file the build never emitted, and the Worker
 with `index.html` at status 200. The web worker then starts, fails to parse HTML as a module, and exits
 without logging anything.
 
-| URL                                                        | Serves                                        |
-| ---------------------------------------------------------- | --------------------------------------------- |
-| `mars.mailwoman.ai/assets/maplibre-gl-worker.mjs`          | 200 `text/html`, 645 bytes — the SPA fallback |
-| `moon.mailwoman.ai/assets/maplibre-gl-worker.mjs`          | 200 `text/html`, 645 bytes                    |
-| `earth.mailwoman.ai/assets/maplibre-gl-worker-AbPoOmO0.js` | 200 `text/javascript`, 485,612 bytes          |
+| URL                                                          | Serves                                        |
+| ------------------------------------------------------------ | --------------------------------------------- |
+| `mars.mailwoman.post/assets/maplibre-gl-worker.mjs`          | 200 `text/html`, 645 bytes — the SPA fallback |
+| `moon.mailwoman.post/assets/maplibre-gl-worker.mjs`          | 200 `text/html`, 645 bytes                    |
+| `earth.mailwoman.post/assets/maplibre-gl-worker-AbPoOmO0.js` | 200 `text/javascript`, 485,612 bytes          |
 
 MapLibre parses vector tiles and rasterizes glyph ranges inside that worker, and only raster tiles decode
 on the main thread. That explains the observed split: the hillshade draws and the labels never appear.
@@ -135,7 +135,7 @@ MapLibre's default grey ramp.
 | hairline | `--mw-line: #b9d8ec`      | absent                                        |
 | type     | Bliss Pro / Fira Code     | `system-ui`, and the UA default on `<button>` |
 
-Both typefaces are served from `public.mailwoman.ai` and declared in `docs/src/css/fonts/BlissPro.css` and
+Both typefaces are served from `public.mailwoman.post` and declared in `docs/src/css/fonts/BlissPro.css` and
 `docs/src/css/fonts/FiraCode.css`, on an origin both apps already preconnect to.
 
 ### Three font families without a type system
@@ -145,7 +145,7 @@ computes `Arial`. The button has no family set at all, so it takes the user agen
 
 ### The panel leads with the model card
 
-The first prose on `earth.mailwoman.ai` is the release note for v9.1.0, followed by a model-version
+The first prose on `earth.mailwoman.post` is the release note for v9.1.0, followed by a model-version
 select, a backend readout, a Force WASM checkbox and a Compare checkbox. These four expert controls sit
 above the address field. The right-hand panel lists internal style-layer counts (`Roads (39)`,
 `Landuse / parks (12)`). The example chips wrap 3/3/2/1/1/1 down five rows.

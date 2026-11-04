@@ -193,7 +193,7 @@ const Interactive: CommandComponent<typeof spec> = ({ options }) => {
 									kind: "finished",
 									report: step.report,
 									exitCode: 0,
-									note: "Buy at https://mailwoman.ai/license and adopt the key with: mailwoman license adopt <key> --secret <secret>",
+									note: "Buy at https://mailwoman.post/license and adopt the key with: mailwoman license adopt <key> --secret <secret>",
 								})
 
 								break

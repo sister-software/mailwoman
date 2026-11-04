@@ -308,17 +308,17 @@ crons = ["0 */6 * * *"]
 
 [vars]
 ISSUANCE_ENABLED = "false"
-SITE_ORIGIN = "https://mailwoman.ai"
+SITE_ORIGIN = "https://mailwoman.post"
 AGREEMENT_VERSION = "commercial-2026-10"
-EMAIL_FROM = "licenses@mailwoman.ai"
+EMAIL_FROM = "licenses@mailwoman.post"
 
 [env.sandbox]
 name = "mailwoman-license-sandbox"
 [env.sandbox.vars]
 ISSUANCE_ENABLED = "false"
-SITE_ORIGIN = "https://mailwoman.ai"
+SITE_ORIGIN = "https://mailwoman.post"
 AGREEMENT_VERSION = "commercial-2026-10"
-EMAIL_FROM = "licenses@mailwoman.ai"
+EMAIL_FROM = "licenses@mailwoman.post"
 STRIPE_LIVE_MODE = "false"
 LICENSE_SIGNING_KID = "v9-sandbox0"
 STRIPE_PRICE_MONTHLY = "price_sandbox_monthly"
@@ -343,12 +343,12 @@ simple = { limit = 60, period = 60 }
 
 [env.production]
 name = "mailwoman-license"
-routes = [{ pattern = "license.mailwoman.ai", custom_domain = true }]
+routes = [{ pattern = "license.mailwoman.post", custom_domain = true }]
 [env.production.vars]
 ISSUANCE_ENABLED = "false"
-SITE_ORIGIN = "https://mailwoman.ai"
+SITE_ORIGIN = "https://mailwoman.post"
 AGREEMENT_VERSION = "commercial-2026-10"
-EMAIL_FROM = "licenses@mailwoman.ai"
+EMAIL_FROM = "licenses@mailwoman.post"
 STRIPE_LIVE_MODE = "true"
 LICENSE_SIGNING_KID = "REPLACE-WITH-THE-WORKER-KEY-ID"
 STRIPE_PRICE_MONTHLY = "REPLACE"

@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://mailwoman.ai/img/mailwoman-seal-magenta.svg">
-    <img src="https://mailwoman.ai/img/mailwoman-seal-navy.svg" alt="" width="96" height="96">
+    <source media="(prefers-color-scheme: dark)" srcset="https://mailwoman.post/img/mailwoman-seal-magenta.svg">
+    <img src="https://mailwoman.post/img/mailwoman-seal-navy.svg" alt="" width="96" height="96">
   </picture>
 </p>
 

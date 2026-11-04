@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/ban",
-	"version": "10.7.0",
+	"version": "10.8.0",
 	"description": "Base Adresse Nationale (France) rooftop address-point ingestion — builds the national FR precision extract on the situs address-point schema.",
 	"keywords": [
 		"address-point",
@@ -92,7 +92,7 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"h3-js": "^4.5.0",
+		"@sister.software/h3": "^1.1.0",
 		"path-ts": "^2.5.0",
 		"spliterator": "^10.1.1"
 	},

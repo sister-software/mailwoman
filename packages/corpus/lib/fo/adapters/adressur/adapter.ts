@@ -35,7 +35,7 @@ import { Globerator } from "spliterator/node/fs"
 import { UnsupportedCountryError } from "#adapters/errors"
 import { present } from "#adapters/present"
 import { stableSourceIDFromParts } from "#adapters/source-id"
-import { composeHouseNumber } from "#adapters/street-line"
+import { composeHouseNumber } from "#adapters/street/line"
 import { SourceRegister } from "#registers"
 import {
 	AddressRole,

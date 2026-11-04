@@ -44,6 +44,8 @@ export function loadDefaultBaseline(): VerifyBaseline {
 	return DEFAULT_VERIFY_BASELINE
 }
 
+// country-branch: a spot check of four small countries' extents, sized to stay cheap.
+// An extent check over every country in the baseline would replace it.
 const EXTENT_SPOT_COUNTRIES = ["BE", "AT", "CH", "LU"] as const
 
 /**

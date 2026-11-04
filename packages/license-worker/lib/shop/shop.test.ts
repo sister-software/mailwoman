@@ -13,8 +13,8 @@ import { ACCEPTED_EVENT_TYPES as WEBHOOK_EVENTS } from "#stripe/webhook"
 import { recordingStripeFetch, type StripeRoute } from "#test/support/stripe/mock"
 
 const worker = readEnv(env)
-const SITE = "https://mailwoman.ai"
-const WORKER = "https://license.mailwoman.ai"
+const SITE = "https://mailwoman.post"
+const WORKER = "https://license.mailwoman.post"
 
 function emptyAccount(): Record<string, StripeRoute> {
 	return {

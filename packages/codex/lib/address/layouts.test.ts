@@ -45,6 +45,7 @@ import {
 	isLargestFirstSystem,
 	layoutForCountry,
 	layoutPrintsLargestFirst,
+	layoutPrintsNumberBeforeStreet,
 	layoutPrintsPostcodeBeforeLocality,
 	layoutPrintsTag,
 	lineJoinForCountry,
@@ -284,6 +285,16 @@ describe("layoutPrintsTag and layoutPrintsPostcodeBeforeLocality", () => {
 
 		expect(layoutPrintsTag(us, "region")).toBe(true)
 		expect(layoutPrintsPostcodeBeforeLocality(us)).toBe(false)
+	})
+})
+
+describe("layoutPrintsNumberBeforeStreet", () => {
+	it("reads the number-first and number-last layouts", () => {
+		for (const country of ["US", "GB", "CA", "FR"]) {
+			expect(layoutPrintsNumberBeforeStreet(layoutForCountry(country)!)).toBe(true)
+		}
+
+		expect(layoutPrintsNumberBeforeStreet(layoutForCountry("DE")!)).toBe(false)
 	})
 })
 

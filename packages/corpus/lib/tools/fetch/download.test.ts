@@ -227,6 +227,25 @@ describe("resumableDownload", () => {
 		expect(lines).toHaveLength(3)
 	})
 
+	it("reports inside a connection every progressEveryBytes, before the connection's own line", async () => {
+		await using scratch = await temporaryDirectory("resume-")
+		const dest = scratch.path("body.bin")
+		rangeConnections = 0
+		const lines: string[] = []
+
+		await resumableDownload({
+			url: `${base}/range`,
+			dest,
+			retryDelayMs: 1,
+			progressEveryBytes: 1,
+			report: (line) => lines.push(line),
+		})
+
+		expect(rangeConnections).toBe(3)
+		expect(lines.length).toBeGreaterThan(3)
+		expect(lines.every((line) => /^ {2}\d+\.\d MB of 0\.0 MB$/u.test(line))).toBe(true)
+	})
+
 	it("reads a 416 past the end as the whole body already on disk", async () => {
 		await using scratch = await temporaryDirectory("resume-")
 		const dest = scratch.path("body.bin")

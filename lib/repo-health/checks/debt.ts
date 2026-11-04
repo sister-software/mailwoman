@@ -403,9 +403,13 @@ const TYPESCRIPT_SOURCE = /\.tsx?$/u
 
 /**
  * Regex for retired vocabulary matches.
+ *
+ * The family that matches `seam` exempts the ordinary words that contain it:
+ * `seamer`, `seaman` and `seamount`.
+ * A seamount is an undersea mountain, the commonest feature type in the GEBCO gazetteer.
  */
 const BANNED_VOCABULARY =
-	/(?<!\p{L})(?:[Ss]hard|SHARD)(?:s|ed|ing|S|ED|ING)?(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?:[A-Za-z_]*[a-z0-9_](?=Lever|LEVER)|[A-Za-z_]*_(?=lever))?(?:[Ll]ever|LEVER)(?!ag|AG|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|kusen|KUSEN|n\b|N\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?<!Golden )(?:gat(?:e|es|ed|ing)|Gat(?:e|es|ed|ing)|GAT(?:E|ES|ED|ING))(?!\p{L})|(?<![\p{L}])[a-z][A-Za-z]*Gat(?:e|es|ed|ing)[A-Za-z]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed)(?!\p{L})|(?<!\p{L})[A-Z_]*GAT(?:E|ES|ED|ING)_[A-Z_]*(?!\p{L})|(?<!\p{L})[Cc]ut(?:s|ting)?(?!\p{L}|\s-[a-z])|(?<!\p{L})CUT(?:S|TING)?(?!\p{L})/gu
+	/(?<!\p{L})(?:[Ss]hard|SHARD)(?:s|ed|ing|S|ED|ING)?(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?:[A-Za-z_]*[a-z0-9_](?=Lever|LEVER)|[A-Za-z_]*_(?=lever))?(?:[Ll]ever|LEVER)(?!ag|AG|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|kusen|KUSEN|n\b|N\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b|ounts?\b|OUNTS?\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?<!Golden )(?:gat(?:e|es|ed|ing)|Gat(?:e|es|ed|ing)|GAT(?:E|ES|ED|ING))(?!\p{L})|(?<![\p{L}])[a-z][A-Za-z]*Gat(?:e|es|ed|ing)[A-Za-z]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed)(?!\p{L})|(?<!\p{L})[A-Z_]*GAT(?:E|ES|ED|ING)_[A-Z_]*(?!\p{L})|(?<!\p{L})[Cc]ut(?:s|ting)?(?!\p{L}|\s-[a-z])|(?<!\p{L})CUT(?:S|TING)?(?!\p{L})/gu
 
 /**
  * Allowed path prefixes for retired-vocabulary matches, with reasons.
@@ -438,6 +442,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 		"an airport gate is a numbered unit an address states: `Gate 12, Terminal 2, Manchester Airport`",
 	],
 	["packages/codex/lib/designator-tables.test.ts", "the test quotes that board address verbatim"],
+	[
+		"packages/mailwoman/tools/eval-harness/famous-places/",
+		"the famous-places fixture and its builder's title list carry landmarks' real names: Brandenburg Gate",
+	],
 	[
 		"packages/corpus/lib/no/adapters/matrikkelen/adapter.test.ts",
 		"the assertions quote the rendered form of those fixture rows, so they carry the same street types",
@@ -535,6 +543,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["docs/static/benchmarks/", "benchmark panels hold real addresses such as Hobsons Gate"],
 	["packages/mailwoman/data/county-population-ranked.json", "Gates County is a real North Carolina county"],
 	["packages/osm/fixtures/", "OSM fixtures carry tags verbatim, such as aeroway=gate"],
+	[
+		"packages/hrt/crates/hrt-profile/src/layers/",
+		"the basemap layers match OSM tags verbatim, such as barrier=gate and seamark:type=cable_submarine",
+	],
 	[".yarn/", "vendored third-party release"],
 	[
 		"packages/trainer/crates/trainer-export/proto/",

@@ -17,7 +17,7 @@ import {
 	regionCoverageCells,
 	geometryContains,
 } from "@mailwoman/spatial"
-import { cellToBoundary } from "h3-js"
+import { cellToBoundary } from "@sister.software/h3"
 import { describe, expect, it } from "vitest"
 
 /**

@@ -14,7 +14,7 @@ pub struct Piece {
 
 /// One painted channel over a row's pieces: `dim` features and one confidence per piece.
 ///
-/// The values are `f64`, the precision the Python loader computed them in. They become `f32` once, when the
+/// The values are `f64`, the precision the reference loader computed them in. They become `f32` once, when the
 /// encoder packs the batch, which is the conversion `torch.tensor(..., dtype=torch.float32)` applied.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Channel {

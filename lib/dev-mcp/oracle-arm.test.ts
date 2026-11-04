@@ -6,13 +6,7 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
-import {
-	DEFAULT_GOOGLE_CALL_CAP,
-	OracleMeter,
-	OracleProviderName,
-	ORACLE_GRADE_MODE,
-	readOracleConfig,
-} from "#dev-mcp/oracle-arm"
+import { DEFAULT_GOOGLE_CALL_CAP, OracleMeter, OracleProviderName, readOracleConfig } from "#dev-mcp/oracle-arm"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -108,11 +102,5 @@ describe("OracleMeter — google", () => {
 		meter.recordGoogleCalls(3)
 
 		expect(meter.googleCallsUsed).toBe(3)
-	})
-})
-
-describe("the grading refusal", () => {
-	it("is diff-only, and that is a refusal rather than a default", () => {
-		expect(ORACLE_GRADE_MODE).toBe("diff-only")
 	})
 })

@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/bdc",
-	"version": "10.7.0",
+	"version": "10.8.0",
 	"description": "FCC Broadband Data Collection (BDC) availability data — fetch/parse/ingest provider and bdc.db layer reader",
 	"keywords": [
 		"bdc",
@@ -83,7 +83,7 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"h3-js": "^4.5.0",
+		"@sister.software/h3": "^1.1.0",
 		"kysely": "^0.29.7",
 		"path-ts": "^2.5.0",
 		"spliterator": "^10.1.1",

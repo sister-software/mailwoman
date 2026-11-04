@@ -18,6 +18,7 @@ import { useMap } from "react-map-gl/maplibre"
 
 import { pageSearchParam } from "#routes"
 
+import { CompactBuildings } from "../scene/CompactBuildings.tsx"
 import { Scene3D } from "../scene/Scene3D.tsx"
 import { CameraPermalink } from "./CameraPermalink.tsx"
 import { JurisdictionInspector } from "./JurisdictionInspector.tsx"
@@ -37,6 +38,7 @@ export const MapControls: React.FC<{ devMode: boolean }> = ({ devMode }) => {
 	return (
 		<>
 			{pageSearchParam("no-3d") === null ? <Scene3D /> : null}
+			<CompactBuildings />
 			<CameraPermalink />
 			<JurisdictionInspector map={map} />
 			{devMode ? <DebugControl map={map} /> : null}

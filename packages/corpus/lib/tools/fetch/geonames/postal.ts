@@ -30,6 +30,8 @@ const SLUG = "geonames-postal"
  */
 const BASE_URL = "https://download.geonames.org/export/zip"
 
+// country-branch: a default download selection rather than a rule over countries.
+// The source register's elected postcode sources per country would replace it.
 /**
  * Countries fetched when the caller names none.
  *

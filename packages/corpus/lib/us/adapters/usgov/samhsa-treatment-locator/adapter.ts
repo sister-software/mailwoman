@@ -31,7 +31,9 @@ import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/source-id"
+import { createUnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 import { splitUSStreetLine, unitLine } from "#us/street-unit"
@@ -104,6 +106,8 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 			"SAMHSA Behavioral Health Treatment Services Locator (public-domain). Adversarial source: venue + two-line address co-occurrence, hand-entered.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
+			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
+
 			if (opts.country && opts.country !== "US") {
 				throw new Error(`usgov-samhsa adapter: only US supported, got country=${opts.country}`)
 			}
@@ -120,7 +124,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
 				const venue = composeVenue(record.name1 ?? "", record.name2 ?? null)
-				const line = splitUSStreetLine(record.street1 ?? "")
+				const line = splitUSStreetLine(record.street1 ?? "", units)
 				// A unit on the first line comes before one on the second, the order the publisher wrote them.
 				// A second line that opens with no designator, such as `2nd Floor`, stays out of the row.
 				const firstUnit = line && "street" in line ? line.unit : undefined

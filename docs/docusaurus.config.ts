@@ -1,6 +1,7 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
 import { gitSync } from "@mailwoman/core/git"
+import { FontFamilies } from "@sister.software/theme"
 import { themes as prismThemes } from "prism-react-renderer"
 
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
@@ -66,14 +67,14 @@ const config: Config = {
 				rel: "preconnect",
 				// Map label glyphs (SDF ranges) still load from here.
 				// The page faces come from @sister.software/fonts.
-				href: "https://public.mailwoman.ai",
+				href: "https://public.mailwoman.post",
 			},
 		},
 		{
 			tagName: "link",
 			attributes: {
 				rel: "preconnect",
-				href: "https://tiles.mailwoman.ai",
+				href: "https://tiles.mailwoman.post",
 			},
 		},
 	],
@@ -90,7 +91,7 @@ const config: Config = {
 		},
 	},
 
-	url: "https://mailwoman.ai",
+	url: "https://mailwoman.post",
 	baseUrl: "/",
 	trailingSlash: false,
 
@@ -227,7 +228,7 @@ const config: Config = {
 		mermaid: {
 			theme: { light: "base", dark: "base" },
 			options: {
-				fontFamily: '"Go Mono Web", "Go Mono Fallback", monospace',
+				fontFamily: FontFamilies.mono,
 				flowchart: { htmlLabels: false, curve: "basis", padding: 18 },
 				themeVariables: { primaryColor: "#ffffff", lineColor: "#373d40" },
 			},
@@ -253,7 +254,7 @@ const config: Config = {
 						eyebrow: "Try it",
 						title: "Geocode an address in your browser",
 						body: "Earth runs the whole engine client-side. Nothing you type leaves the tab.",
-						to: "https://earth.mailwoman.ai/",
+						to: "https://earth.mailwoman.post/",
 						linkLabel: "Open Earth",
 					},
 				}),
@@ -313,7 +314,7 @@ const config: Config = {
 				},
 				{
 					// The call to action, styled as a button rather than a nav label.
-					href: "https://earth.mailwoman.ai/",
+					href: "https://earth.mailwoman.post/",
 					label: "Try the geocoder",
 					position: "right",
 					className: "navbar__cta",
@@ -332,7 +333,7 @@ const config: Config = {
 				{
 					title: "Try it",
 					items: [
-						{ label: "Earth", href: "https://earth.mailwoman.ai/" },
+						{ label: "Earth", href: "https://earth.mailwoman.post/" },
 						{ label: "Field notes", to: "/research" },
 						// /training is a published page with no other route into it.
 						{ label: "Training", to: "/training" },

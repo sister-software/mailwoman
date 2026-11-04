@@ -13,13 +13,11 @@ import type { StructureSourceRegister } from "#types"
  */
 export const Basemap = {
 	/**
-	 * The Protomaps v4 planet build served from `tiles.mailwoman.ai/planet.v4.json`.
+	 * A `mailwoman/basemaps` build, served by the tile worker from `tiles/<name>.pmtiles` in `mailwoman-tiles`.
 	 *
-	 * Its TileJSON describes it as derived from OpenStreetMap and Natural Earth.
-	 */
-	ProtomapsV4: "protomaps-v4",
-	/**
-	 * A `mailwoman/basemaps` regional build, such as `protomaps/builds/japan-2026-10-22.pmtiles`.
+	 * The planet at `tiles.mailwoman.post/planet.v4.json` is one: a 323 GiB archive
+	 * built on 2026-10-23 with Overture buildings.
+	 * Its TileJSON still states Protomaps' default description of OpenStreetMap and Natural Earth.
 	 */
 	MailwomanBuild: "mailwoman-build",
 } as const
@@ -33,7 +31,6 @@ export type Basemap = (typeof Basemap)[keyof typeof Basemap]
  * The register sources each basemap's tiles are built from.
  */
 export const BASEMAP_INPUTS: Readonly<Record<Basemap, readonly string[]>> = {
-	[Basemap.ProtomapsV4]: ["international-osm", "international-natural-earth"],
 	[Basemap.MailwomanBuild]: [
 		"international-osm",
 		"international-overture-buildings",

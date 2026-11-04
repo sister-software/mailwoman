@@ -12,7 +12,7 @@ import type { DataReleaseManifest } from "#data/release"
 /**
  * Public artifact host.
  */
-export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
+export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.post/mailwoman/"
 
 /**
  * One downloadable file within a {@link DataBundle}.
@@ -340,6 +340,8 @@ export const BUNDLES: Record<string, DataBundle> = {
 		name: "poi",
 		role: ServingRole.POI,
 		activation: "selection",
+		// country-branch: the countries the published POI build covers.
+		// The layer manifest's coverage would replace it.
 		countries: ["US", "CA", "MX", "FR"],
 		description: "Overture-places POI layer, covering the United States, Canada, Mexico and France.",
 		artifacts: [

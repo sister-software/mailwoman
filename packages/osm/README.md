@@ -50,7 +50,7 @@ credit its manifest records, and `mailwoman data bom` reports each one as its ow
 share-alike data, set `MAILWOMAN_REFUSE_OBLIGATIONS=share-alike`: the geocode session then refuses to start
 while an OpenStreetMap database is on disk, and its error repeats the database's recorded provenance.
 
-The customer-facing explanation is the [OpenStreetMap attribution page](https://mailwoman.ai/resources/osm/attribution).
+The customer-facing explanation is the [OpenStreetMap attribution page](https://mailwoman.post/resources/osm/attribution).
 
 ## Build a per-country database
 

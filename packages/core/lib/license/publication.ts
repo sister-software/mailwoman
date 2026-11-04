@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The freshness check against mailwoman.ai's well-known register is kept apart from the offline verification in
+ *   The freshness check against mailwoman.post's well-known register is kept apart from the offline verification in
  *   `configured.ts` so a caller that needs only the offline answer never loads the HTTP client behind this one.
  */
 
@@ -22,7 +22,7 @@ export function licenseKeysWellKnownURL(): string {
 }
 
 /**
- * Whether mailwoman.ai still lists a key id as active.
+ * Whether mailwoman.post still lists a key id as active.
  *
  * `unreachable` means the network request received no answer.
  * `unpublished` means the site answered without a register.
@@ -59,7 +59,7 @@ function isRegister(document: unknown): document is Pick<PublishedLicenseKeys, "
 
 /**
  * Ask the well-known register about one key id, bounded to a few seconds
- * so a doctor run without a route to mailwoman.ai does not hang on it.
+ * so a doctor run without a route to mailwoman.post does not hang on it.
  */
 export async function confirmLicenseKeyPublished(
 	kid: string,

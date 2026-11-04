@@ -164,25 +164,32 @@ function GeocoderInner({
 	return (
 		<div className="mw-geocoder-demo">
 			<div className="mw-geocoder-demo__map">
-				<MapCanvas
-					mapStyle={runtime.mapStyle}
-					mapRef={mapRef}
-					initialViewState={{
-						longitude: runtime.initialCenter[0],
-						latitude: runtime.initialCenter[1],
-						zoom: runtime.initialZoom ?? 3,
-					}}
-					style={{ width: "100%", height: "100%" }}
-					starfield
-					// The attribution is compact.
-					// The MapLibre logo is hidden.
-					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
-				>
-					<GraticuleLayer beforeID={baseLayerID} />
-					<OverlayLayers overlays={runtime.overlays} beforeID={labelLayerID} />
-					<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
-					{panels.mapControls}
-				</MapCanvas>
+				{runtime.mapStyle ? (
+					<MapCanvas
+						mapStyle={runtime.mapStyle}
+						mapRef={mapRef}
+						initialViewState={{
+							longitude: runtime.initialCenter[0],
+							latitude: runtime.initialCenter[1],
+							zoom: runtime.initialZoom ?? 3,
+						}}
+						style={{ width: "100%", height: "100%" }}
+						starfield
+						// The attribution is compact.
+						// The MapLibre logo is hidden.
+						mapProps={{
+							attributionControl: { compact: true },
+							maplibreLogo: false,
+							onLoad: onMapLoad,
+							maxTileCacheSize: TILE_CACHE_SIZE,
+						}}
+					>
+						<GraticuleLayer beforeID={baseLayerID} />
+						<OverlayLayers overlays={runtime.overlays} beforeID={labelLayerID} />
+						<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
+						{panels.mapControls}
+					</MapCanvas>
+				) : null}
 			</div>
 
 			<GeocoderControls
@@ -203,6 +210,15 @@ function GeocoderInner({
 		</div>
 	)
 }
+
+/**
+ * The most tiles MapLibre keeps per source for tiles that have left the view.
+ *
+ * MapLibre otherwise sizes this cache from the viewport.
+ * On a tilted street view over dense building extrusions that kept about 1.2 MB of buffers
+ * per cached tile, 64 MB for 52 tiles over central Osaka, all of them out of view.
+ */
+const TILE_CACHE_SIZE = 16
 
 // These defaults are module constants so each render sees the same reference and memo dependencies stay stable.
 const NO_PANELS: GeocoderPanels = {}

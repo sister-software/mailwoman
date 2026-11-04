@@ -27,14 +27,14 @@ The network behavior has four boundaries:
   from the US Census, Geofabrik, `adresse.data.gouv.fr` and the FCC. You run these commands
   deliberately, at build time, separately from parsing.
 - **The data pull command downloads reference data.** `mailwoman data pull` fetches prebuilt
-  gazetteer, POI and locale bundles from `public.mailwoman.ai`. A HEAD request checks the remote
+  gazetteer, POI and locale bundles from `public.mailwoman.post`. A HEAD request checks the remote
   size, and then a GET streams the file to disk. The command runs only when you invoke it.
   [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx#5-geocode-it) shows the
   exchange line by line.
 - **The browser runtime downloads its model.** `@mailwoman/neural/web/loader` fetches model and data
   artifacts once, from a URL your application supplies. The query text stays in the page. Our hosted
-  [Earth](https://earth.mailwoman.ai/) demo is a deployment of that runtime. It serves those
-  artifacts from `public.mailwoman.ai` and calls `tiles.mailwoman.ai` for coarse map centering. The
+  [Earth](https://earth.mailwoman.post/) demo is a deployment of that runtime. It serves those
+  artifacts from `public.mailwoman.post` and calls `tiles.mailwoman.post` for coarse map centering. The
   demo makes both of those requests. The library you install makes neither.
 
 ## How it is licensed
@@ -61,7 +61,7 @@ runs against the published tarball instead of the working tree, so the SBOMs des
 installs and exclude development-only dependencies.
 
 The files are served under
-[`/sbom/`](https://mailwoman.ai/sbom/mailwoman-9.4.0.cdx.json) and committed to the
+[`/sbom/`](https://mailwoman.post/sbom/mailwoman-9.4.0.cdx.json) and committed to the
 repository. Generation is a release-time step that runs on demand instead of in CI, so the newest
 published SBOM can lag behind the newest release. Check the version in the filename before you scan
 it.

@@ -3,7 +3,7 @@
 
 /**
  *   The home page tour: six queries and the answers Earth gave them.
- *   Each answer was recorded from `earth.mailwoman.ai/?q=<query>` on the stop's `recordedOn` date.
+ *   Each answer was recorded from `earth.mailwoman.post/?q=<query>` on the stop's `recordedOn` date.
  *   The tier is the one Earth reported, coarse ones included, so the tour shows what a lookup returns today.
  *   Re-record an entry when the gazetteer or the model changes what it returns, and update its date.
  */

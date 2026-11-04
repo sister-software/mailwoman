@@ -25,6 +25,7 @@ fn write(path: &Path, source: &str, n: usize) -> Value {
 			labels: vec!["O".into(); 3],
 			country: Some("US".into()),
 			source: source.into(),
+			source_id: None,
 			spans: None,
 		})
 		.collect();

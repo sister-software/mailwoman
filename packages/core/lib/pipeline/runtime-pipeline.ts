@@ -65,6 +65,8 @@ export const COARSE_PLACER_ANCHOR_WEIGHT = 1
  */
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
+// country-branch: the fallback for an artifact without a coverage manifest,
+// which is the planetary source and takes precedence whenever it is present.
 /**
  * The countries eligible for a hard country filter when the artifact has no coverage manifest.
  *

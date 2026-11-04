@@ -2,7 +2,7 @@
 	"name": "@mailwoman/planetary",
 	"version": "1.0.0",
 	"private": true,
-	"description": "Planetary — moon.mailwoman.ai and mars.mailwoman.ai from one source: a globe over the body's published nomenclature and hillshade archives, built per body with PLANETARY_BODY, as a React + Vite installable PWA on Cloudflare Workers Static Assets.",
+	"description": "Planetary — moon.mailwoman.post and mars.mailwoman.post from one source: a globe over the body's published nomenclature and hillshade archives, built per body with PLANETARY_BODY, as a React + Vite installable PWA on Cloudflare Workers Static Assets.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"contributors": [
 		{

@@ -65,8 +65,12 @@ describe("expandNameAbbreviations", () => {
 
 describe("VARIANT_SIMILARITY_MIN", () => {
 	it("sits in the measured band: nearest admitted 0.875, nearest refused 0.833", () => {
-		expect(VARIANT_SIMILARITY_MIN).toBe(0.85)
-		expect(ownNameSimilarity("адамовка", "adamowka")).toBeCloseTo(0.875, 3)
-		expect(ownNameSimilarity("lievin", "levin")).toBeCloseTo(0.833, 3)
+		const admitted = ownNameSimilarity("адамовка", "adamowka")!
+		const refused = ownNameSimilarity("lievin", "levin")!
+
+		expect(admitted).toBeCloseTo(0.875, 3)
+		expect(refused).toBeCloseTo(0.833, 3)
+		expect(refused).toBeLessThan(VARIANT_SIMILARITY_MIN)
+		expect(admitted).toBeGreaterThanOrEqual(VARIANT_SIMILARITY_MIN)
 	})
 })

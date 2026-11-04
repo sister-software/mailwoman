@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "10.7.0",
+	"version": "10.8.0",
 	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"keywords": [
 		"address",
@@ -247,9 +247,9 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/variant-aliases": "workspace:*",
 		"@mailwoman/zoning": "workspace:*",
+		"@sister.software/h3": "^1.1.0",
 		"chalk": "^6.0.1",
 		"d3-scale-chromatic": "^3.1.0",
-		"h3-js": "^4.5.0",
 		"ink": "^8.0.0",
 		"kysely": "^0.29.7",
 		"onnxruntime-node": "^1.31.1",

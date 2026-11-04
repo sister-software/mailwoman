@@ -97,10 +97,11 @@ function nonEmpty(...values: Array<string | null | undefined>): string | null {
 /**
  * The house number a NAD record states, read from its own four columns.
  *
- * NAD publishes `AddNo_Full` already assembled and the parts beside it, so this prefers the
- * assembled column and falls back to joining `AddNum_Pre`, `Add_Number` and `AddNum_Suf`.
- * The shared `composeHouseNumber` in `#adapters/street-line` joins exactly two columns with
- * one separator, so it fits a publisher that splits the number in two rather than in four.
+ * NAD publishes `AddNo_Full` already assembled and its three parts beside it, so this prefers
+ * the assembled column and falls back to joining `AddNum_Pre`, `Add_Number` and `AddNum_Suf`.
+ * The shared `composeHouseNumber` in `#adapters/street/line` joins two columns with one separator.
+ *
+ * It suits a publisher that splits the number in two, and this reader joins three.
  */
 export function nadHouseNumber(r: NADRecord): string | null {
 	const full = (r.AddNo_Full ?? "").toString().trim()

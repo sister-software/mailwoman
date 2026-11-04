@@ -1,6 +1,6 @@
 # Site + Earth UX audit — 2026-09-13
 
-Scope: `mailwoman.ai` (Docusaurus docs site) and `earth.mailwoman.ai` (geocoder demo), walked live in
+Scope: `mailwoman.post` (Docusaurus docs site) and `earth.mailwoman.post` (geocoder demo), walked live in
 Chrome plus a source sweep of `docs/` and `packages/earth` + `packages/react`. Ordered by severity.
 Every claim states the file:line or the live observation it came from.
 
@@ -134,7 +134,7 @@ with no interaction. A scroll appeared to fix it because any interaction forces 
 that had by then arrived.
 
 **The withdrawn claim** was that MapLibre never requested a tile at all, evidenced by
-`performance.getEntriesByType("resource")` reporting three requests to `tiles.mailwoman.ai` for the
+`performance.getEntriesByType("resource")` reporting three requests to `tiles.mailwoman.post` for the
 whole page life. That measurement cannot state the claim:
 
 - Resource Timing holds **250 entries by default** and drops the rest silently. This page fetches the
@@ -143,7 +143,7 @@ whole page life. That measurement cannot state the claim:
   for, so "three entries" measures the buffer rather than the network.
 - And the tiles come from the host that was counted:
   `packages/tile-worker/lib/protomaps.ts:72` builds the template as
-  `https://tiles.mailwoman.ai/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles rendered on screen, so
+  `https://tiles.mailwoman.post/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles rendered on screen, so
   requests to that host were made and went unrecorded. The two observations cannot both be true,
   and the measurement is the one that is wrong.
 
@@ -279,9 +279,9 @@ where the rest of this genre already lives.
 
 ## P1 — the font pop-in
 
-Measured on a cold load of `mailwoman.ai`: the six WOFF2 files all start at **~1570 ms**, and the document
+Measured on a cold load of `mailwoman.post`: the six WOFF2 files all start at **~1570 ms**, and the document
 has **zero `<link rel="preload">` for fonts** (only `mailwoman-seal-magenta.svg`). The chain is
-HTML → `styles.*.css` → parse → discover `@font-face` → cross-origin fetch to `public.mailwoman.ai`. With
+HTML → `styles.*.css` → parse → discover `@font-face` → cross-origin fetch to `public.mailwoman.post`. With
 `font-display: swap` on every face (`docs/src/css/fonts/BlissPro.css`, `FiraCode.css`), every visitor
 gets a flash plus a reflow.
 
@@ -293,12 +293,12 @@ every line on the page. No rule declares
 Four fixes, in order of payoff:
 
 1. `preload` the four faces that paint above the fold (Bliss Pro Regular 400, Medium 500, Bold 700, and
-   the Fira Code variable face). Everything else can stay lazy. The `preconnect` to `public.mailwoman.ai`
+   the Fira Code variable face). Everything else can stay lazy. The `preconnect` to `public.mailwoman.post`
    (`docusaurus.config.ts:71`) saves the handshake but not the CSS-parse discovery delay.
 2. Add a metric-matched `@font-face` fallback (`local("system-ui")` + `size-adjust`) so the swap does not
    move text.
 3. Consider self-hosting the four critical faces on the docs origin and leaving the rest on
-   `public.mailwoman.ai` — removes a connection from the critical path entirely.
+   `public.mailwoman.post` — removes a connection from the critical path entirely.
 
 ---
 

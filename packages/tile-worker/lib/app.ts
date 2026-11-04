@@ -14,6 +14,7 @@ import { renderWorkerError } from "@mailwoman/api-worker/errors"
 import { Hono, type Context, type Handler } from "hono"
 
 import { edgeResponseCache, fromCache, type ResponseCache, type TileWorkerHono } from "#caching"
+import { CITY_TILESET_FILE, CITY_TILESET_NAME, serveCityModelFile } from "#routes/city-models"
 import { serveDatabase } from "#routes/db"
 import { serveGeolocation } from "#routes/geolocation"
 import { serveHeartbeat, serveHome } from "#routes/healthcheck"
@@ -89,6 +90,22 @@ function providerTileSetName(c: Context<TileWorkerHono>): string {
 }
 
 /**
+ * The path of one file of a converted city tileset.
+ */
+const CITY_MODEL_ROUTE = `/3dtiles/:tileset{${CITY_TILESET_NAME}}/:file{${CITY_TILESET_FILE}}`
+
+/**
+ * Routes that bypass the response cache.
+ *
+ * A city model file goes out gzipped with `encodeBody: "manual"`.
+ * The cache hands such a body back as unencoded bytes.
+ *
+ * The edge then compresses those bytes again.
+ * A cached copy therefore reached the browser as gzip inside brotli.
+ */
+const UNCACHED_ROUTES = new Set([CITY_MODEL_ROUTE])
+
+/**
  * The tile Worker's routes in match order, as path and handler.
  *
  * The order is the one the Worker has always matched in.
@@ -128,6 +145,7 @@ export const TILE_WORKER_ROUTES: ReadonlyArray<readonly [path: string, handler: 
 	["/geolocate", serveGeolocation],
 	["/", serveHome],
 	["/heartbeat", serveHeartbeat],
+	[CITY_MODEL_ROUTE, serveCityModelFile],
 ]
 
 /**
@@ -155,7 +173,11 @@ export function createTileWorkerApp(options: TileWorkerAppOptions = {}): Hono<Ti
 	})
 
 	for (const [path, handler] of TILE_WORKER_ROUTES) {
-		app.on(["GET", "HEAD"], path, fromCache, handler)
+		if (UNCACHED_ROUTES.has(path)) {
+			app.on(["GET", "HEAD"], path, handler)
+		} else {
+			app.on(["GET", "HEAD"], path, fromCache, handler)
+		}
 	}
 
 	app.notFound((c) => new Response(`URL path ${c.req.path} does not match any known route`, { status: 404 }))

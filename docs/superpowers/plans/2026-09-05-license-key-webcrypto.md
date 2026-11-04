@@ -843,7 +843,7 @@ Expected: fail — the names are not exported.
  * @author Teffen Ellis, et al.
  *
  *   The register of license signing keys: the one source both the shipped trust map and the well-known JSON on
- *   mailwoman.ai derive from, so the two cannot disagree. A key enters when `mailwoman license keygen` mints it and
+ *   mailwoman.post derive from, so the two cannot disagree. A key enters when `mailwoman license keygen` mints it and
  *   moves through three states:
  *
  *   - `active`: may sign and verify.
@@ -1240,7 +1240,7 @@ Expected: fail — module not found.
  * @author Teffen Ellis, et al.
  *
  *   Refuse a tree whose committed well-known key register differs from the typed register it derives from. The doctor
- *   and `license verify --online` read the committed file from mailwoman.ai; the shipped trust map reads the typed
+ *   and `license verify --online` read the committed file from mailwoman.post; the shipped trust map reads the typed
  *   register; a difference between them is a key that one side trusts and the other does not.
  */
 

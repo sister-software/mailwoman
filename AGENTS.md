@@ -1,11 +1,11 @@
 # AGENTS.md
 
 Mailwoman is a postal-address parser. The unscoped `mailwoman` package provides the CLI and library.
-The `packages/` directory also contains 80 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
-82 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
+The `packages/` directory also contains 81 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
+83 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
 authoritative reader. The root package, `@mailwoman/universe`, is private.
 
-Sixty-six workspaces publish to npm. `.release-it.json` defines that set, and the sixteen others are
+Sixty-six workspaces publish to npm. `.release-it.json` defines that set, and the seventeen others are
 private. `packages/osm` publishes as code only: its `mailwoman.codeOnly` declaration makes the release
 audit refuse a tarball that ships a data file. Run the workspace check described in
 `lib/release-kit/AGENTS.md` after adding or moving a workspace.
@@ -16,7 +16,7 @@ workspace conventions.
 `test/` holds fixtures, shared test helpers and Playwright suites. `docs/` keeps Docusaurus
 source under `src/`. The complete workspace catalog is
 `docs/engineering/reference/workspaces.mdx`. The non-workspace directories `packages/trainer/`
-(a cargo workspace), `hf-publish/`, `data/`, `evals/`, and `docker/` have their purposes documented in that catalog and their
+and `packages/hrt/` (cargo crates), `hf-publish/`, `data/`, `evals/`, and `docker/` have their purposes documented in that catalog and their
 local READMEs.
 
 ## Instruction routing
@@ -163,6 +163,14 @@ a global distribution. Before adding a row to a per-country table such as
 every country and print the distribution. When the countries that looked anomalous sit inside a
 populated mode, the rule is wrong rather than the countries. A census drawn from where the data is
 densest encodes that region's structure as the norm.
+
+A collection of countries is a `CountrySet` from `@mailwoman/codex/country/sets`, built by a constructor
+that reads one source table: `worldCountries()`, `countriesOfScript()`, `countriesOfAddressSystem()`,
+`countriesOfWeightsFamily()`, `dependentTerritories()`, or `countriesDeclaredBy()` for a list a config
+declares. A signature states the set it needs. The `country-literal-sets` repository check reports a
+hand-typed list of codes held by a binding such as `CJK_COUNTRIES`, and a cast to `CountrySet`. A list
+that records a per-country fact keeps a `country-branch:` reason. `docs/engineering/reference/country-sets.mdx`
+describes the module.
 
 The acronym convention capitalizes each acronym as a complete camel-case component: `createWOFResolver`,
 `parseJSON`, `readID`, and `modelURL`. Preserve external names, snake-case wire fields, and documented

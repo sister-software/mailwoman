@@ -3,7 +3,7 @@
 
 /**
  *   The POI build's tunable defaults, kept import-free so command specifications can interpolate them
- *   without loading DuckDB, h3-js, or the resolver schema layer.
+ *   without loading DuckDB, the H3 library, or the resolver schema layer.
  */
 
 /**

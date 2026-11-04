@@ -6,7 +6,7 @@
  *   surfaces.
  *
  *   Reads an already-parsed payload rather than issuing a query: the acquisition lives in
- *   `fetch/wikidata-subvenue.ts`, and keeping the conversion a pure function of parsed input is what
+ *   `fetch/wikidata/subvenue.ts`, and keeping the conversion a pure function of parsed input is what
  *   lets the builder stay deterministic and testable with no network and no fixture on disk.
  *
  *   Wikidata gives a concept name per language rather than a designator as addressed. Q849706's Spanish label

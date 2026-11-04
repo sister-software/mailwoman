@@ -353,6 +353,15 @@ export interface AdapterOptions {
 	limit?: number | null
 
 	/**
+	 * The corpus street index (`#tools/street-index/build`) that confirms a street left
+	 * after a unit is split off.
+	 *
+	 * A build reads it from the previous corpus version.
+	 * Without it, the unit splitter confirms a street only by its street-type word or number.
+	 */
+	streetIndex?: PathBuilderLike | null
+
+	/**
 	 * The fraction of rows that include an explicit `country` component.
 	 *
 	 * A source without country tokens teaches the model that country tokens are rare.

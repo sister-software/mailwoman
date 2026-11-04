@@ -6,8 +6,7 @@
 
  */
 
-import { cellToParent, isValidCell } from "h3-js"
-import type { Tagged } from "type-fest"
+import { cellToParent, isValidCell, type H3Cell } from "@sister.software/h3"
 
 /**
  * The finest resolution H3 defines.
@@ -16,22 +15,19 @@ import type { Tagged } from "type-fest"
 export const H3_MAX_RESOLUTION = 15
 
 /**
- * A H3 cell index, full 64 bits, written as 15 lowercase hex characters matching `^[0-9a-f]{15}$`.
- */
-export type H3Cell = Tagged<string, "H3Cell">
-
-/**
- * Is `value` a real H3 cell index, delegating to h3-js because the hex surface
- * shape is necessary but not sufficient.
+ * Is `value` a real H3 cell index, delegating to the H3 library because the hex
+ * surface shape is necessary but not sufficient.
  */
 export function isH3Cell(value: string): value is H3Cell {
 	return isValidCell(value)
 }
 
+declare const h3CellShortBrand: unique symbol
+
 /**
- * A H3 cell index with its mode and resolution nibbles removed — the low 52 bits, fixed width.
+ * Represents the low 52 bits of an H3 cell index with its mode and resolution nibbles removed.
  */
-export type H3CellShort = Tagged<string, "H3CellShort">
+export type H3CellShort = string & { readonly [h3CellShortBrand]: true }
 
 /**
  * Number of hex characters in the short form: 52 bits, a 7-bit base cell followed by fifteen 3-bit digits.
@@ -71,9 +67,9 @@ export function expandH3Cell(h3CellShort: H3CellShort, resolution = H3_MAX_RESOL
 
 	// Accept an unpadded short cell too — an integer round-tripped through `toString(16)` loses its leading zeros.
 	const shortHex = h3CellShort.padStart(SHORT_CELL_HEX_LENGTH, "0")
-	const cell = `8${resolution.toString(16)}${shortHex}` as H3Cell
+	const cell = `8${resolution.toString(16)}${shortHex}`
 
-	if (!isValidCell(cell)) {
+	if (!isH3Cell(cell)) {
 		throw new Error(
 			`Short H3 cell "${h3CellShort}" does not name a valid cell at resolution ${resolution} — it was captured at a different resolution.`
 		)
@@ -152,5 +148,5 @@ export function recoverShortCellResolution(cells: readonly number[], context = "
  * A centroid can land in a different parent.
  */
 export function shortCellToParentInt(shortCell: number, from: number, to: number): number {
-	return shortCellToInt(cellToParent(expandShortCellInt(shortCell, from), to) as H3Cell)
+	return shortCellToInt(cellToParent(expandShortCellInt(shortCell, from), to))
 }

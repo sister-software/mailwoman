@@ -1,0 +1,13 @@
+[package]
+name = "hrt-pmtiles"
+description = "The Hilbert Rust Tiler's PMTiles v3 writer: Hilbert tile ids, the header, directory encoding with leaf directories, and tile deduplication."
+version.workspace = true
+edition.workspace = true
+license = "AGPL-3.0-only OR LicenseRef-Commercial"
+repository.workspace = true
+
+[dependencies]
+flate2 = "1"
+
+[dev-dependencies]
+tempfile = "3"

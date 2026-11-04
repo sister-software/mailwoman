@@ -1,8 +1,9 @@
 /**
- * The brand typefaces: Go, Go Mono and Go Smallcaps from `@sister.software/fonts`, served from public.sister.software.
+ * The brand typefaces come from `@sister.software/fonts`, served from public.sister.software.
  *
  * The token layer binds the faces (`--ss-font-family-base`, `--ss-font-family-monospace`, …); a rule names a role,
- * never a family. Go Mono sets numbers and code. Map labels are drawn from SDF glyph ranges instead and stay on the
+ * never a family. Archivo sets display text, Go Musubi sets reading text and small caps, and Fira Code sets code.
+ * M PLUS U supplies Japanese alongside Archivo and Go Musubi. Map labels use SDF glyph ranges and retain the
  * `--mw-font-family-map` stack.
  *
  * Kept as `@mailwoman/react/fonts.css` so the apps and Storybook import one path.

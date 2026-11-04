@@ -66,6 +66,7 @@ const sources = [
 	"vlaanderen",
 	"wallonie",
 	"wikidata-subvenue",
+	"wikidata-vital-places",
 ] as const satisfies readonly FetchSourceID[]
 
 /**
@@ -83,13 +84,17 @@ export const spec = {
 		"out-root": {
 			type: "string",
 			default: dataRootPath("corpus", "sources").toString(),
-			description: "Destination root, under the data root unless this names another",
+			description: "Destination root, under the data root unless this points elsewhere",
 		},
 		mode: { type: "string", choices: ["featureserver", "bulk"], description: "NAD fetch strategy" },
 		"nad-url": { type: "string", description: "NAD bulk URL" },
 		"chunk-size": { type: "number", description: "NAD records per output file" },
 		"page-size": { type: "number", description: "NAD records per request" },
-		concurrency: { type: "number", description: "NAD parallel page fetches" },
+		concurrency: {
+			type: "number",
+			description:
+				"NAD: parallel page fetches. wikidata-vital-places: entity requests in flight, capped at 1 anonymously and 3 when WIKIDATA_BOT_USERNAME and WIKIDATA_BOT_PASSWORD log in (default: the cap)",
+		},
 		"start-oid": { type: "number", description: "First NAD OBJECTID" },
 		"end-oid": { type: "number", description: "Exclusive final NAD OBJECTID" },
 		country: { type: "string", description: "OpenAddresses country code" },
@@ -118,6 +123,15 @@ export const spec = {
 			description: "matrikkelen Geonorge area codes, comma-separated: 0000 and 2100 (default: both)",
 		},
 		limit: { type: "number", description: "es-catastro and es-navarra: stop after this many archives" },
+		top: { type: "number", description: "wikidata-vital-places: ranked items to describe (default: 50000)" },
+		languages: {
+			type: "string",
+			description: "wikidata-vital-places: label and alias languages, comma-separated (default: ten)",
+		},
+		batch: {
+			type: "number",
+			description: "wikidata-vital-places: ids per wbgetentities request, 1 to 50 (default: 10)",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -165,7 +179,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 	const { fetchStateHISchools } = await import("@mailwoman/corpus/us/tools/fetch/state/hi-schools")
 	const { fetchStateSources } = await import("@mailwoman/corpus/us/tools/fetch/state/sources")
 	const { fetchTigerFull } = await import("@mailwoman/corpus/us/tools/fetch/tiger-full")
-	const { fetchWikidataSubVenue } = await import("@mailwoman/corpus/tools/fetch/wikidata-subvenue")
+	const { fetchWikidataSubVenue } = await import("@mailwoman/corpus/tools/fetch/wikidata/subvenue")
+	const { fetchWikidataVitalPlaces } = await import("@mailwoman/corpus/tools/fetch/wikidata/vital-places")
 
 	const base = { outRoot: PathBuilder.from(options.outRoot) }
 
@@ -306,6 +321,18 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchOurAirports(base, reportToStderr)
 		case "wikidata-subvenue":
 			return fetchWikidataSubVenue(base, reportToStderr)
+		case "wikidata-vital-places":
+			return fetchWikidataVitalPlaces(
+				{
+					...base,
+					top: options.top,
+					// Null takes the module's own ten languages.
+					languages: options.languages ? extractDelimited(options.languages) : null,
+					batchSize: options.batch,
+					concurrency: options.concurrency,
+				},
+				reportToStderr
+			)
 		case "state-sources":
 			return fetchStateSources(base, reportToStderr)
 		case "state-hi-schools":

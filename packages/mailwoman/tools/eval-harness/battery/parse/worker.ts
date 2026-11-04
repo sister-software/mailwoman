@@ -2,17 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `parallelMapWorkers` handler behind `parseBatteryRows`. Each worker thread loads one classifier per locale
- *   package from the weights cache in its `userData`. It parses the rows dispatched to it with the held-out inference
- *   options (`HELDOUT_INFERENCE_RULE`) and returns each row's id with every parsed span in input order.
+ *   The `parallelMapWorkers` handler behind `parseRowsWithWorkers`. Each worker thread loads one classifier per locale
+ *   package from the weights cache in its `userData`, refusing a package whose loader reports an unfed required
+ *   channel. It parses the rows dispatched to it with the held-out inference options (`HELDOUT_INFERENCE_RULE`) and
+ *   returns each row's id with every parsed span in input order.
  */
 
-import { walkNodes } from "@mailwoman/core/decoder"
 import { workerUserData } from "@mailwoman/core/workers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import type { BatterySpan } from "#tools/eval-harness/battery/classify"
-import { heldoutWeightsLocale, readHeldoutLocalePackages } from "#tools/eval-harness/heldout/per/country"
+import type { ParseRow } from "#tools/eval-harness/battery/parse/rows"
+import {
+	assertFedClassifier,
+	heldoutWeightsLocale,
+	readHeldoutLocalePackages,
+	treeSpans,
+} from "#tools/eval-harness/heldout/per/country"
 
 const { cacheRoot, intraOpNumThreads } = workerUserData<{ cacheRoot: string; intraOpNumThreads: number }>()
 
@@ -20,18 +26,17 @@ const packages = await readHeldoutLocalePackages()
 const classifiers = new Map<string, Promise<NeuralAddressClassifier>>()
 
 /**
- * Parses one suite row.
+ * Parses one row.
  */
-export async function handleItem(row: {
-	source_id: string
-	raw: string
-	country: string | null
-}): Promise<{ id: string; spans: BatterySpan[] }> {
+export async function handleItem(row: ParseRow): Promise<{ id: string; spans: BatterySpan[] }> {
 	const locale = heldoutWeightsLocale(row.country, packages)
 	let classifier = classifiers.get(locale)
 
 	if (!classifier) {
-		classifier = NeuralAddressClassifier.loadFromWeights({ locale, cacheRoot, intraOpNumThreads })
+		classifier = NeuralAddressClassifier.loadFromWeights({ locale, cacheRoot, intraOpNumThreads }).then((loaded) =>
+			assertFedClassifier(loaded, locale, cacheRoot)
+		)
+
 		classifiers.set(locale, classifier)
 	}
 
@@ -43,10 +48,7 @@ export async function handleItem(row: {
 	})
 
 	return {
-		id: row.source_id,
-		// `end` comes from the tree node, since a node's value can differ from the raw text it spans.
-		spans: [...walkNodes(tree.roots)]
-			.toSorted((a, b) => a.start - b.start)
-			.map((node) => [node.tag, node.start, node.end, node.value]),
+		id: row.id,
+		spans: treeSpans(tree).toSorted((a, b) => a[1] - b[1]),
 	}
 }

@@ -437,7 +437,7 @@ backends, and a promotion is not done until all three agree on one md5:
 | ------------- | ------------------------------ | ----------------------------------------------------------------------------- |
 | **npm**       | `publish.yml` (CI, OIDC)       | library consumers. **Fetches the binary from HF**, so HF must be staged first |
 | **HF bucket** | `mailwoman release hf`         | the npm fetch source + HF-direct `loadFromWeights`                            |
-| **R2/demo**   | `publish-public-bucket.run.ts` | the browser demo (reads `public.mailwoman.ai` rather than HF)                 |
+| **R2/demo**   | `publish-public-bucket.run.ts` | the browser demo (reads `public.mailwoman.post` rather than HF)               |
 
 The end-to-end order that worked: **the promotion eval (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Each of the following notes records a trap that once cost time:
 
@@ -458,7 +458,7 @@ number namespace but are not in lockstep at any given moment. Check both:
 
 ```bash
 curl -s https://registry.npmjs.org/mailwoman | jq -r '."dist-tags".latest'      # e.g. 4.10.0 (npm code)
-curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq -r .defaultVersion  # e.g. v4.6.0 (demo model)
+curl -s https://public.mailwoman.post/mailwoman/en-us/releases.json | jq -r .defaultVersion  # e.g. v4.6.0 (demo model)
 ```
 
 **The new release must exceed the npm `latest`**, because npm refuses to republish an existing version. The
@@ -497,7 +497,7 @@ contents. Include every reused FST and pair index declared by the release, as we
 Check that the prior objects are readable before downloading them:
 
 ```bash
-B=https://public.mailwoman.ai/mailwoman/en-us/v<PRIOR>      # e.g. v4.6.0
+B=https://public.mailwoman.post/mailwoman/en-us/v<PRIOR>      # e.g. v4.6.0
 for f in fst-en-US.bin wof-hot.db wof-polygons.db postcode-us.bin postcode-de.bin postcode-fr.bin; do
   curl --fail --silent --show-error --head "$B/$f"
 done
@@ -836,7 +836,7 @@ runs from CI through OIDC, with **no npm credentials anywhere**. The order is:
 
    > **⚠️ The HF `--set-default` by itself does not switch the live demo** (found on night 10, v4.2.0).
 
-> `public.mailwoman.ai` serves from the **R2** bucket. A second step updates the demo,
+> `public.mailwoman.post` serves from the **R2** bucket. A second step updates the demo,
 > mandatory step. Stage the same artifact set (plus `postcode-*.bin` + `wof-polygons.db`, copied from the
 > prior version's R2 path when unchanged) into the R2 layout and run:
 >
@@ -845,7 +845,7 @@ runs from CI through OIDC, with **no npm credentials anywhere**. The order is:
 > node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts --src <staged-dir>
 > ```
 >
-> Verify with `curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq .defaultVersion`
+> Verify with `curl -s https://public.mailwoman.post/mailwoman/en-us/releases.json | jq .defaultVersion`
 > and an md5 of the served `model.onnx` against the artifact the promotion eval passed. CI's weight fetch reads HF. The
 > demo reads R2. A release is done when both backends agree.
 

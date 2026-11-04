@@ -5,6 +5,37 @@ __metadata:
   version: 10
   cacheKey: 10
 
+"3d-tiles-renderer@npm:0.5.3":
+  version: 0.5.3
+  resolution: "3d-tiles-renderer@npm:0.5.3"
+  dependencies:
+    "@mapbox/vector-tile": "npm:^2.0.3"
+    pbf: "npm:^4.0.1"
+    pmtiles: "npm:^4.3.2"
+  peerDependencies:
+    "@babylonjs/core": ">=8.0.0"
+    "@babylonjs/loaders": ">=8.0.0"
+    "@react-three/fiber": ^8.17.9 || ^9.0.0
+    react: ^18.3.1 || ^19.0.0
+    react-dom: ^18.3.1 || ^19.0.0
+    three: ">=0.167.0"
+  peerDependenciesMeta:
+    "@babylonjs/core":
+      optional: true
+    "@babylonjs/loaders":
+      optional: true
+    "@react-three/fiber":
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+    three:
+      optional: true
+  checksum: 10/3cbc4c757f5df04911ede7758534c16d16e00ec44327a7f3605a74b27e9487fb782453feabbace29cec056852cae476ede3735734becb91f1f0c64b351acfff4
+  languageName: node
+  linkType: hard
+
 "@11ty/gray-matter@npm:^1.0.0":
   version: 1.0.0
   resolution: "@11ty/gray-matter@npm:1.0.0"
@@ -3761,6 +3792,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dimforge/rapier3d-compat@npm:~0.12.0":
+  version: 0.12.0
+  resolution: "@dimforge/rapier3d-compat@npm:0.12.0"
+  checksum: 10/56cd538b59d534d2ed91de3eb7efd804af5defe146f65294e8ce81982a4bd6c27d61c1014c15a77bb5f5eff0de7a12fbc9b16bf895a2ec56ea5496fd80c78e26
+  languageName: node
+  linkType: hard
+
 "@discoveryjs/json-ext@npm:0.5.7":
   version: 0.5.7
   resolution: "@discoveryjs/json-ext@npm:0.5.7"
@@ -6500,8 +6538,8 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@sister.software/h3": "npm:^1.1.0"
     "@types/node": "npm:^26.6.6"
-    h3-js: "npm:^4.5.0"
   languageName: unknown
   linkType: soft
 
@@ -6587,7 +6625,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.1.0"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
   languageName: unknown
@@ -6604,7 +6642,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.1.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
@@ -6660,7 +6698,7 @@ __metadata:
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.1.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
   languageName: unknown
@@ -6730,6 +6768,7 @@ __metadata:
     "@mailwoman/postcode": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/record": "workspace:*"
+    "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
@@ -6788,9 +6827,9 @@ __metadata:
     "@mdx-js/react": "npm:^3.1.1"
     "@playwright/test": "npm:^1.64.1"
     "@protomaps/basemaps": "npm:^5.7.2"
-    "@sister.software/docusaurus-theme": "npm:^14.7.0"
-    "@sister.software/fonts": "npm:^14.7.0"
-    "@sister.software/theme": "npm:^14.7.0"
+    "@sister.software/docusaurus-theme": "npm:^14.8.0"
+    "@sister.software/fonts": "npm:^14.8.0"
+    "@sister.software/theme": "npm:^14.8.0"
     "@storybook/addon-docs": "npm:^10.6.5"
     "@storybook/react-vite": "npm:^10.6.5"
     "@types/node": "npm:^26.6.6"
@@ -6837,6 +6876,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/earth@workspace:packages/earth"
   dependencies:
+    3d-tiles-renderer: "npm:0.5.3"
     "@deck.gl/core": "npm:^9.4.1"
     "@deck.gl/extensions": "npm:^9.4.1"
     "@deck.gl/geo-layers": "npm:^9.4.1"
@@ -6858,21 +6898,23 @@ __metadata:
     "@mailwoman/resolver-wof-wasm": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/structures": "workspace:*"
+    "@mailwoman/undersea": "workspace:*"
     "@mailwoman/universe": "workspace:*"
     "@math.gl/core": "npm:^4.1.0"
     "@math.gl/geospatial": "npm:^4.1.0"
     "@playwright/test": "npm:^1.64.1"
     "@types/react": "npm:^19.3.0"
     "@types/react-dom": "npm:^19.3.0"
+    "@types/three": "npm:0.186.0"
     "@vitejs/plugin-react": "npm:^6.1.2"
     mailwoman: "workspace:*"
     maplibre-gl: "npm:^6.16.0"
     onnxruntime-web: "npm:1.31.1"
-    pmtiles: "npm:^4.5.0"
     react: "npm:^19.3.1"
     react-dom: "npm:^19.3.1"
     react-map-gl: "npm:^8.1.3"
     spliterator: "npm:^10.1.1"
+    three: "npm:0.186.0"
     vite: "npm:^8.3.5"
     vite-plugin-pwa: "npm:^2.0.0"
     workbox-precaching: "npm:^7.4.1"
@@ -6942,7 +6984,7 @@ __metadata:
     "@mailwoman/dossier": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.1.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
   languageName: unknown
@@ -6969,11 +7011,11 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
+    "@sister.software/h3": "npm:^1.1.0"
     "@types/d3-color": "npm:^3.1.3"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
     d3-color: "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
-    h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.7"
     mailwoman: "workspace:*"
     path-ts: "npm:^2.5.0"
@@ -7395,7 +7437,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.1.0"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
   languageName: unknown
@@ -7496,8 +7538,8 @@ __metadata:
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
-    "@sister.software/fonts": "npm:^14.7.0"
-    "@sister.software/theme": "npm:^14.7.0"
+    "@sister.software/fonts": "npm:^14.8.0"
+    "@sister.software/theme": "npm:^14.8.0"
     "@storybook/addon-docs": "npm:^10.6.5"
     "@storybook/react-vite": "npm:^10.6.5"
     "@styleframe/core": "npm:^3.7.0"
@@ -7560,8 +7602,8 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     "@protomaps/basemaps": "npm:^5.7.2"
+    "@sister.software/h3": "npm:^1.1.0"
     "@types/node": "npm:^26.6.6"
-    h3-js: "npm:^4.5.0"
     path-ts: "npm:^2.5.0"
     playwright: "npm:^1.64.1"
     spliterator: "npm:^10.1.1"
@@ -7579,10 +7621,11 @@ __metadata:
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/gazetteer": "workspace:*"
     "@mailwoman/match": "workspace:*"
+    "@mailwoman/postcode": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.1.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
@@ -7602,8 +7645,8 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
+    "@sister.software/h3": "npm:^1.1.0"
     "@sqlite.org/sqlite-wasm": "npm:^3.54.1-build1"
-    h3-js: "npm:^4.5.0"
     path-ts: "npm:^2.5.0"
     zod: "npm:^4.6.7"
   languageName: unknown
@@ -7647,7 +7690,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.1.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
@@ -7662,9 +7705,9 @@ __metadata:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/postcode": "workspace:*"
+    "@sister.software/h3": "npm:^1.1.0"
     "@types/google.maps": "npm:^3.66.9"
     geo-coordinates-parser: "npm:^1.7.4"
-    h3-js: "npm:^4.5.0"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
     type-fest: "npm:^5.10.0"
@@ -7694,6 +7737,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     http-status-codes: "npm:^2.3.0"
     mailwoman: "workspace:*"
+    sharp: "npm:0.35.5"
   languageName: unknown
   linkType: soft
 
@@ -7754,6 +7798,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/undersea@workspace:*, @mailwoman/undersea@workspace:packages/undersea":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/undersea@workspace:packages/undersea"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    "@sister.software/h3": "npm:^1.1.0"
+    kysely: "npm:^0.29.7"
+    path-ts: "npm:^2.5.0"
+    sharp: "npm:0.35.5"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/universe@workspace:*, @mailwoman/universe@workspace:.":
   version: 0.0.0-use.local
   resolution: "@mailwoman/universe@workspace:."
@@ -7778,9 +7837,9 @@ __metadata:
     "@oxlint/plugins": "npm:1.90.0"
     "@playwright/test": "npm:^1.64.1"
     "@release-it-plugins/workspaces": "npm:^6.0.0"
-    "@sister.software/oxfmt-config": "npm:^14.7.0"
-    "@sister.software/oxlint-config": "npm:^14.7.0"
-    "@sister.software/tsconfig": "npm:^14.7.0"
+    "@sister.software/oxfmt-config": "npm:^14.8.0"
+    "@sister.software/oxlint-config": "npm:^14.8.0"
+    "@sister.software/tsconfig": "npm:^14.8.0"
     "@types/node": "npm:^26.6.6"
     "@types/react": "npm:^19.3.0"
     "@types/regenerate": "npm:^1.4.3"
@@ -7833,7 +7892,7 @@ __metadata:
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    h3-js: "npm:^4.5.0"
+    "@sister.software/h3": "npm:^1.1.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
@@ -7895,6 +7954,17 @@ __metadata:
   dependencies:
     "@mapbox/point-geometry": "npm:~0.1.0"
   checksum: 10/ed31eeef0d593befde76b5b4edf0472709a2ba66dd6b32fad5671caa245fdac976e23ff385facf36e297f14a53c905bfde8911599e8aa690354d52b22bc4cfc5
+  languageName: node
+  linkType: hard
+
+"@mapbox/vector-tile@npm:^2.0.3":
+  version: 2.0.5
+  resolution: "@mapbox/vector-tile@npm:2.0.5"
+  dependencies:
+    "@mapbox/point-geometry": "npm:~1.1.0"
+    "@types/geojson": "npm:^7946.0.16"
+    pbf: "npm:^4.0.2"
+  checksum: 10/ca788f6c34bc699033f02f6f9a8fc2a4539cfb6c85bdd5a3a143c31698ae8865e99e3b51a4cf11a2070a14c435cba2ec8ca1bcad4eeac0cd678b972a7736c402
   languageName: node
   linkType: hard
 
@@ -10660,65 +10730,72 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sister.software/docusaurus-theme@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/docusaurus-theme@npm:14.7.0"
+"@sister.software/docusaurus-theme@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/docusaurus-theme@npm:14.8.0"
   dependencies:
-    "@sister.software/fonts": "npm:^14.7.0"
-    "@sister.software/theme": "npm:^14.7.0"
+    "@sister.software/fonts": "npm:^14.8.0"
+    "@sister.software/theme": "npm:^14.8.0"
     clsx: "npm:^2.1.1"
   peerDependencies:
     "@docusaurus/core": ^3.10.0
     "@docusaurus/theme-classic": ^3.10.0
     "@docusaurus/theme-common": ^3.10.0
     react: ^19.0.0
-  checksum: 10/81f5516e493c41e9e15f4202c2c7df46143fe3e6f366cc4527b9b9ec858d00030e1641bda325c1bb6af70dccb868d60c64ef07053b9ca896c8652a3007259698
+  checksum: 10/ce180a59012d7b53dd82d5abc2fa375d655accefc233c220c5115960149e15439b1431e1dbd4d129349168549611df5958ee10711b2ab6619f1acbb6bd287449
   languageName: node
   linkType: hard
 
-"@sister.software/fonts@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/fonts@npm:14.7.0"
-  checksum: 10/5ec0cdc77a5936594c9a07b1afe9917700dabc08cda85ebff3e01df11f9c83858b7a15064421a0117afca297f899988102f242b0ed8caadb85078886f1c81a94
+"@sister.software/fonts@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/fonts@npm:14.8.0"
+  checksum: 10/8dae27a00431358364225471bf51ff50a61900563b127c54df18473e7c797506db9c1561a5d0726a147de4f76277e1ded6381b61799a09b3ea7a6ba4a0f11b62
   languageName: node
   linkType: hard
 
-"@sister.software/oxfmt-config@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/oxfmt-config@npm:14.7.0"
+"@sister.software/h3@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@sister.software/h3@npm:1.1.0"
+  checksum: 10/6ee57baaa0bbf845d5eb3458e8c6f4c492140df54aeed312c99de21c9a9fc20a83c943e8528bf9676f57dc77783c30c5398133e68b2f0d3ac80fab76e32a4ee3
+  languageName: node
+  linkType: hard
+
+"@sister.software/oxfmt-config@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/oxfmt-config@npm:14.8.0"
   peerDependencies:
     oxfmt: ">=0.60.0 <1"
-  checksum: 10/c2497cca3d47b53d61797af30fe78cffa82dbc4fba9fb2dabd8db40b577342c84b8d4510a19489d25eaec19e133eea76554081816025d1f3640ad1e654c4d383
+  checksum: 10/7e69f5b7db727ffbe3a53db4fd846129d5e4249d51c69164232d594d43aa5a31c878d7deb9a079f606a8f33df5f841b7cf47c78a3d287d1dd834f31751e94f7d
   languageName: node
   linkType: hard
 
-"@sister.software/oxlint-config@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/oxlint-config@npm:14.7.0"
+"@sister.software/oxlint-config@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/oxlint-config@npm:14.8.0"
   peerDependencies:
     oxlint: ">=1.75.0 <2"
     oxlint-tsgolint: ">=7.0.2003 <8"
   peerDependenciesMeta:
     oxlint-tsgolint:
       optional: true
-  checksum: 10/183107d8ef17c264cd20c005c795d2436fbb56f2c9d1b8d3040ce3ba1751e116b15ff25d269fc93aa9b2fd538374d74ed09bb1e6088e5dba85df27d895bed451
+  checksum: 10/5ef21a00fbb4de518e4dce199bac0aa9563df5c4b1332ce9dba83886caa460c73e7eb87d90f9448ce6440d2d51672a695d2444e0a9fff93442a193301829df26
   languageName: node
   linkType: hard
 
-"@sister.software/theme@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/theme@npm:14.7.0"
+"@sister.software/theme@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/theme@npm:14.8.0"
   dependencies:
-    "@sister.software/fonts": "npm:^14.7.0"
+    "@sister.software/fonts": "npm:^14.8.0"
     styleframe: "npm:^3.9.1"
-  checksum: 10/3ae091a2ea84479400772c4c1199fe6cfa6e7ee07e9ca5d129ed676f35f804ca22892dc42106ca26a09ba82be673499a5a9ce578202f24e85f352140d4fe5ac8
+  checksum: 10/39cdcd8ec9a2c8095dc399d61dbc5d72e2f05a28afdbd8c265b39602194f383ed018ec32a9b68ee5d1163cb2e8da6add80abdfbf4def63758cd3f1c2982d657f
   languageName: node
   linkType: hard
 
-"@sister.software/tsconfig@npm:^14.7.0":
-  version: 14.7.0
-  resolution: "@sister.software/tsconfig@npm:14.7.0"
-  checksum: 10/3ef0d8dc27930c0bb804d4faa6acb54ac8cf323fbf16f0e4b8e5f5e07b8a884013b475f99d4b0048c80c969bf2dafa4587e00619814e7a4ad5cf8a1c94bd61fb
+"@sister.software/tsconfig@npm:^14.8.0":
+  version: 14.8.0
+  resolution: "@sister.software/tsconfig@npm:14.8.0"
+  checksum: 10/153e1050051d642e4c24999e6754194c681692d9c8ce75c95e29519234d8e8b31fdd688e04667e257e44d7e4faee1d70ca94f9da97f9a0c3596feaa25b3e19e1
   languageName: node
   linkType: hard
 
@@ -11855,6 +11932,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tweenjs/tween.js@npm:~23.1.3":
+  version: 23.1.3
+  resolution: "@tweenjs/tween.js@npm:23.1.3"
+  checksum: 10/10ecaf311c975162459bd016ef7eb1f3118a257050c4886de9737dee823fc829100a0887f3fc298f7a5577140eac054f9609b823eb0748ca7b653ec85ffba75e
+  languageName: node
+  linkType: hard
+
 "@tybys/wasm-util@npm:^0.10.0, @tybys/wasm-util@npm:^0.10.1, @tybys/wasm-util@npm:^0.10.3":
   version: 0.10.3
   resolution: "@tybys/wasm-util@npm:0.10.3"
@@ -12712,6 +12796,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/stats.js@npm:*":
+  version: 0.17.4
+  resolution: "@types/stats.js@npm:0.17.4"
+  checksum: 10/6f1a20e09da0c0b371b3c095b2787a91a9397944679aa506a0886160faf0ad185b911a34b4ec325f146810c5be969f085e81264e2dbe39fd57eb8ff98347b5f4
+  languageName: node
+  linkType: hard
+
+"@types/three@npm:0.186.0":
+  version: 0.186.0
+  resolution: "@types/three@npm:0.186.0"
+  dependencies:
+    "@dimforge/rapier3d-compat": "npm:~0.12.0"
+    "@tweenjs/tween.js": "npm:~23.1.3"
+    "@types/stats.js": "npm:*"
+    "@types/webxr": "npm:>=0.5.17"
+    fflate: "npm:~0.8.3"
+    meshoptimizer: "npm:~1.1.1"
+  checksum: 10/4925a6c8c96f017ad0d565cc60b329593720fdf7f3801c054b3de07eecd900ba72d696ae8ac05f453fdd57d7ca4abbb4dffe9fac0e06b34ef165ed7fb245f4f8
+  languageName: node
+  linkType: hard
+
 "@types/trusted-types@npm:^2.0.2, @types/trusted-types@npm:^2.0.7":
   version: 2.0.7
   resolution: "@types/trusted-types@npm:2.0.7"
@@ -12730,6 +12835,13 @@ __metadata:
   version: 2.0.11
   resolution: "@types/unist@npm:2.0.11"
   checksum: 10/6d436e832bc35c6dde9f056ac515ebf2b3384a1d7f63679d12358766f9b313368077402e9c1126a14d827f10370a5485e628bf61aa91117cf4fc882423191a4e
+  languageName: node
+  linkType: hard
+
+"@types/webxr@npm:>=0.5.17":
+  version: 0.5.24
+  resolution: "@types/webxr@npm:0.5.24"
+  checksum: 10/780afba558f73588922c2e71a6dcffd29d132179c5ddf290e9e5fe43a8a5eedd34dc7395209c19c06aa7a916cd2230a9d6f3f3afb2c7a9f6c820dc1f775f266a
   languageName: node
   linkType: hard
 
@@ -18290,7 +18402,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fflate@npm:^0.8.2, fflate@npm:^0.8.3":
+"fflate@npm:^0.8.2, fflate@npm:^0.8.3, fflate@npm:~0.8.3":
   version: 0.8.3
   resolution: "fflate@npm:0.8.3"
   checksum: 10/6ebf528dc9c56e78e715eac615b009b25dc33e15c1920b11ebba44e6d76181c647756a81a23e19247907496b93aa99928514c53090579a65109e026ac2824aa7
@@ -19140,7 +19252,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"h3-js@npm:^4.4.0, h3-js@npm:^4.5.0":
+"h3-js@npm:^4.4.0":
   version: 4.5.0
   resolution: "h3-js@npm:4.5.0"
   checksum: 10/87ac3ec97d686cd4c3b59b80d28e7d890419c9adf625d86a8c29f5a7e6dbbe56fabdeefdb95a47d406c232c604437364d8d89af4220dd1d86fdc29b9655ca4d6
@@ -21941,9 +22053,9 @@ __metadata:
     "@mailwoman/tiger": "workspace:*"
     "@mailwoman/variant-aliases": "workspace:*"
     "@mailwoman/zoning": "workspace:*"
+    "@sister.software/h3": "npm:^1.1.0"
     chalk: "npm:^6.0.1"
     d3-scale-chromatic: "npm:^3.1.0"
-    h3-js: "npm:^4.5.0"
     ink: "npm:^8.0.0"
     kysely: "npm:^0.29.7"
     modal: "npm:0.11.1"
@@ -22473,6 +22585,13 @@ __metadata:
   version: 1.3.0
   resolution: "meshoptimizer@npm:1.3.0"
   checksum: 10/c27c815da6f5bbcaa87b931ea9befd6cd5fbb6925084c272cedfcc6a4ef338cd09ef76c311b881290f446150f19fc903778f466560519c7a6b276c3bf4f69803
+  languageName: node
+  linkType: hard
+
+"meshoptimizer@npm:~1.1.1":
+  version: 1.1.1
+  resolution: "meshoptimizer@npm:1.1.1"
+  checksum: 10/0e05f06059ee2389f45d6245c310cce3a0c5fe57cef7014a925c66e19e9a4a41360250bd39f242c1381eaa821a7089d8da371792147f4bf35b5d95fe3e3d504e
   languageName: node
   linkType: hard
 
@@ -24774,6 +24893,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pbf@npm:^4.0.1, pbf@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "pbf@npm:4.0.2"
+  dependencies:
+    resolve-protobuf-schema: "npm:^2.1.0"
+  bin:
+    pbf: bin/pbf
+  checksum: 10/a6d60f2f374c51bcb08b1b49d08c01aed31c4e9cfbf43002178e1cf0f63c5f5fc4aa9dd0220948be775e2d0bcc644954b9d1e8dca91466a5160dcc0a0313edd3
+  languageName: node
+  linkType: hard
+
 "pbf@npm:^5.0.0, pbf@npm:^5.1.2":
   version: 5.1.2
   resolution: "pbf@npm:5.1.2"
@@ -24986,7 +25116,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pmtiles@npm:^4.5.0":
+"pmtiles@npm:^4.3.2, pmtiles@npm:^4.5.0":
   version: 4.5.0
   resolution: "pmtiles@npm:4.5.0"
   dependencies:
@@ -29421,6 +29551,13 @@ __metadata:
   dependencies:
     real-require: "npm:^1.0.0"
   checksum: 10/040d1f5284806a28d12ac83fc0a1f0b32547c6773b5fab9494c664798fa7fb14197bede695ec61221c5f93f64a32b0f1850408d0ad5730af03ee1d1efe6c1b05
+  languageName: node
+  linkType: hard
+
+"three@npm:0.186.0":
+  version: 0.186.0
+  resolution: "three@npm:0.186.0"
+  checksum: 10/9a2e21487ad7e424a1eed48284bdc285ad91f1a4ba16791e5567da144e76b03939aee82b8a2c00ab1e634d62aba47e13985a22a64a99f8fb7ffda968b9c85053
   languageName: node
   linkType: hard
 

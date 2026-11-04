@@ -33,7 +33,7 @@
 - A secret file is created `0600` through `writePrivateTextFile`; the key file is not a secret and uses `writeLocalTextFile`.
 - The CLI never writes a token this build does not trust: `refresh` and `adopt` verify offline against `trustedLicenseSigningKeys()` first and refuse `unknown_key` with the action (upgrade mailwoman).
 - Public status words are the worker's: `active`, `lapsed`, `revoked`, `unknown`; the client adds `unreachable`. No reason, name or date travels with them.
-- Site: exact-origin CORS on the worker admits `https://mailwoman.ai`, so the claim call is a plain `fetch` from the page. The page never stores the token or the secret anywhere but the DOM.
+- Site: exact-origin CORS on the worker admits `https://mailwoman.post`, so the claim call is a plain `fetch` from the page. The page never stores the token or the secret anywhere but the DOM.
 - The Payment Link, portal and terms URLs are operator-owned (spec issue A). They live in one constants module and start `undefined`; the Purchase section renders only when both Payment Links are set, so the live page never shows a dead button.
 - `docs/src/pages/license/terms/<version>.mdx` is issue A's deliverable (legal text). This plan creates no terms page.
 - Prose follows `config/vale/.vale-vocab.ini` (README, plan) and the site's `config/vale/.vale.ini` (pages). Acronyms cap as whole components, and snake_case wire keys stay.
@@ -250,7 +250,7 @@ Update its header comment: the file is why a refreshed key applies without an en
 
 ```ts
 	/**
-	 * The license worker's origin (`https://license.mailwoman.ai`), for `mailwoman license refresh` and the online lid
+	 * The license worker's origin (`https://license.mailwoman.post`), for `mailwoman license refresh` and the online lid
 	 * status. Overridden in tests and against a sandbox deploy.
 	 */
 	MAILWOMAN_LICENSE_URL: z.string().optional(),
@@ -284,7 +284,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 ```ts
 // @mailwoman/core/license/status
-export const DEFAULT_LICENSE_URL = "https://license.mailwoman.ai"
+export const DEFAULT_LICENSE_URL = "https://license.mailwoman.post"
 export function licenseWorkerURL(override?: string): string // no trailing slash
 export type LicenseStatusAnswer = "active" | "lapsed" | "revoked" | "unknown" | "unreachable"
 export function checkLicenseStatus(
@@ -365,7 +365,7 @@ afterAll(async () => {
 describe("the license worker client", () => {
 	it("derives the worker origin with no trailing slash", () => {
 		expect(licenseWorkerURL("https://license.example/")).toBe("https://license.example")
-		expect(licenseWorkerURL(undefined)).toBe("https://license.mailwoman.ai")
+		expect(licenseWorkerURL(undefined)).toBe("https://license.mailwoman.post")
 	})
 
 	it("status answers the worker's word, and unreachable for a host that does not answer", async () => {
@@ -418,7 +418,7 @@ import { APIClient } from "#api/APIClient"
 import { $public } from "#env"
 import { silentLogger } from "#logging/index"
 
-export const DEFAULT_LICENSE_URL = "https://license.mailwoman.ai"
+export const DEFAULT_LICENSE_URL = "https://license.mailwoman.post"
 
 export function licenseWorkerURL(override: string | undefined = $public.MAILWOMAN_LICENSE_URL): string {
 	return (override ?? DEFAULT_LICENSE_URL).replace(/\/+$/u, "")
@@ -522,7 +522,7 @@ Behavior:
 
 - `license adopt <token> [--secret <s>]`: positional `token` (second positional after the action. Add a second optional positional `argument` to the spec, described as "adopt: the token"). Verify offline. `valid` → write the key file. With `--secret`, the payload must contain `lid` (refuse otherwise: "this token was not issued by the self-service worker, so it has no refresh secret") and the credentials file is written 0600. `expired` → refuse with the expiry date. `unknown_key` → refuse: "this release does not trust key id <kid>; upgrade mailwoman to a release that lists it, then adopt again"; `invalid` → refuse with the reason. Print the paths written and `mailwoman license verify --online` as the next command. `--json` prints `{ keyPath, refreshPath?, payload }`.
 - `license refresh [--lid <lid> --secret <s>]`: credentials from the flags, else `readRefreshCredentials()`, else a usage error naming `adopt`. Call `refreshLicenseKey`. `active` → verify the token offline. `valid` → write the key file and print `status: active`, `expires`, the path. `unknown_key` → do not write, print the action, exit 1. `pending` → "the first payment has not been recorded yet. The key arrives by email" exit 1. `lapsed`/`revoked` → print the word, exit 1, key file untouched. `not_found` → "no license answers to this lid and secret" exit 1. `unreachable` → print it with the URL, exit 2. `--json` prints the answer plus `keyPath` when written.
-- `license verify --online`: when the payload contains `lid`, also `checkLicenseStatus(lid)` and print `license.mailwoman.ai: <word>` beside the publication line. The exit code adds `revoked` and `lapsed` as failures. JSON gains `lid_status`.
+- `license verify --online`: when the payload contains `lid`, also `checkLicenseStatus(lid)` and print `license.mailwoman.post: <word>` beside the publication line. The exit code adds `revoked` and `lapsed` as failures. JSON gains `lid_status`.
 - Every message that includes a URL uses `licenseWorkerURL()`.
 
 - [x] **Step 1: Write the failing tests**
@@ -617,12 +617,12 @@ test("refresh reads the credentials file, asks the worker, and refuses to write 
 
 test("verify --online reports the lid status beside the publication", async () => {
 	// Token as above with a lid; the stub worker answers /v1/license-status with { status: "revoked" }.
-	// Expect stdout to contain "license.mailwoman.ai: revoked" is wrong — the line names the configured URL — so expect
+	// Expect stdout to contain "license.mailwoman.post: revoked" is wrong — the line names the configured URL — so expect
 	// `${env.MAILWOMAN_LICENSE_URL}: revoked` and exit code 1.
 })
 ```
 
-Write the third test in full following the second's shape (the stub gains `worker.post("/v1/license-status", (c) => c.json({ status: "revoked" }))`, the CLI is invoked with `["verify", "--key", token, "--online", "--json"]`, and the test asserts `lid_status: "revoked"` in the JSON and exit code 1). The `--online` publication check hits the real mailwoman.ai unless `MAILWOMAN_DOCS_URL` points at the stub. Set `MAILWOMAN_DOCS_URL` to the stub too and serve `/.well-known/mailwoman/license-keys.json` with `{ keys: [] }` so the publication reads `unlisted` deterministically.
+Write the third test in full following the second's shape (the stub gains `worker.post("/v1/license-status", (c) => c.json({ status: "revoked" }))`, the CLI is invoked with `["verify", "--key", token, "--online", "--json"]`, and the test asserts `lid_status: "revoked"` in the JSON and exit code 1). The `--online` publication check hits the real mailwoman.post unless `MAILWOMAN_DOCS_URL` points at the stub. Set `MAILWOMAN_DOCS_URL` to the stub too and serve `/.well-known/mailwoman/license-keys.json` with `{ keys: [] }` so the publication reads `unlisted` deterministically.
 
 Add `pathExists` (`@mailwoman/core/fs/readers`), `writePrivateTextFile` (`@mailwoman/core/fs/writers`), `resolvePath` (`path-ts`) to the test's imports. `hono` and `@mailwoman/api-kit` are already dependencies of `mailwoman`. Confirm both in `packages/mailwoman/package.json` before importing, and add either to `devDependencies` only if it is absent.
 
@@ -882,7 +882,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 ```ts
 // docs/src/license/shop.ts
-export const LICENSE_WORKER_URL = "https://license.mailwoman.ai"
+export const LICENSE_WORKER_URL = "https://license.mailwoman.post"
 export const SUPPORT_EMAIL = "teffen@sister.software"
 export const AGREEMENT_VERSION = "commercial-2026-10"
 export const TERMS_PATH = `/license/terms/${AGREEMENT_VERSION}`
@@ -895,7 +895,7 @@ export function shopIsOpen(): boolean
 
 - [x] **Step 1: The constants and the component**
 
-`shop.ts` as above with a header saying which values the operator fills (issue A in the spec's issue split) and that the worker's exact-origin CORS admits `https://mailwoman.ai`, which is why the page can call it directly.
+`shop.ts` as above with a header saying which values the operator fills (issue A in the spec's issue split) and that the worker's exact-origin CORS admits `https://mailwoman.post`, which is why the page can call it directly.
 
 `BuyLicense.tsx`:
 
@@ -1204,7 +1204,7 @@ The docs site is a browser bundle, so raw `fetch` is right here (the `APIClient`
 - `waiting_too_long`: "Your payment is recorded but the key is not ready yet. It arrives by email on its own. If it has not arrived within an hour, write to <SUPPORT_EMAIL> with your session id <sessionID>."
 - `revoked`: "This license has been revoked. Write to <SUPPORT_EMAIL>."
 - `not_found`: "Stripe does not know this session. Use the link Stripe sent you, or write to <SUPPORT_EMAIL>."
-- `unreachable`: "license.mailwoman.ai did not answer. The key arrives by email on its own. Reload to try again."
+- `unreachable`: "license.mailwoman.post did not answer. The key arrives by email on its own. Reload to try again."
 - No `session_id` in the query: "This page is where Stripe sends you after payment. Purchase at /license." with a link.
 
 `docs/src/pages/license/issued.tsx`:
@@ -1269,7 +1269,7 @@ writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key` and the credentials to `r
 `unreachable`. New env: `MAILWOMAN_LICENSE_URL`.
 ```
 
-- [x] **Step 2: The worker README** gains one line under "First deploy" step 7: the Payment Link's success URL is `https://mailwoman.ai/license/issued?session_id={CHECKOUT_SESSION_ID}`.
+- [x] **Step 2: The worker README** gains one line under "First deploy" step 7: the Payment Link's success URL is `https://mailwoman.post/license/issued?session_id={CHECKOUT_SESSION_ID}`.
 
 - [ ] **Step 3: Full check**
 

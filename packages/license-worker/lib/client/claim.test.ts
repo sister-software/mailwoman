@@ -83,7 +83,7 @@ describe("the claim page's state", () => {
 	})
 
 	it("the claim URL names the worker's route with the session id escaped", () => {
-		expect(claimURL("cs_test_a1")).toBe("https://license.mailwoman.ai/v1/checkout-sessions/cs_test_a1/license")
-		expect(claimURL("a/b")).toBe("https://license.mailwoman.ai/v1/checkout-sessions/a%2Fb/license")
+		expect(claimURL("cs_test_a1")).toBe("https://license.mailwoman.post/v1/checkout-sessions/cs_test_a1/license")
+		expect(claimURL("a/b")).toBe("https://license.mailwoman.post/v1/checkout-sessions/a%2Fb/license")
 	})
 })

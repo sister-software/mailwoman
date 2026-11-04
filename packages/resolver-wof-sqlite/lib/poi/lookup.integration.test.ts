@@ -13,9 +13,9 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { haversine, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { haversine, shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
+import { cellToLatLng, gridRingUnsafe, latLngToCell } from "@sister.software/h3"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
@@ -34,10 +34,10 @@ import { normalizeLocalityForKey } from "#street"
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
 
 /**
- * Every fixture row's h3_cell is computed here, with h3-js, from its own lat/lon — never hardcoded.
+ * Every fixture row's h3_cell is computed here, with the H3 library, from its own lat/lon — never hardcoded.
  */
 function cellFor(latitude: number, longitude: number): number {
-	const full = latLngToCell(latitude, longitude, POI_H3_RESOLUTION) as H3Cell
+	const full = latLngToCell(latitude, longitude, POI_H3_RESOLUTION)
 
 	return shortCellToInt(full)
 }
@@ -62,12 +62,12 @@ const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3,
 // A res-9 disk of radius r covers gridDistance ≤ r.
 // The reader's loop over `maxRings` rings covers gridDistance ≤ `maxRings - 1`, so this
 // cell first appears at maxRings 14 and is missed by the old 12-ring default (covers ≤ 11).
-// The coordinate is derived from h3-js (a real ring-13 cell's center),
-// never hardcoded — same discipline as `cellFor`.
+// The coordinate is derived from H3 (a real ring-13 cell's center), never hardcoded —
+// same discipline as `cellFor`.
 // This mirrors "hiking trail near Marseille", whose nearest `trail` sits at
 // gridDistance 13 (~3.9 km) in the real poi.db.
 const TRAIL_GRID_DISTANCE = 13
-const SPRINGFIELD_ORIGIN = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, POI_H3_RESOLUTION) as H3Cell
+const SPRINGFIELD_ORIGIN = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, POI_H3_RESOLUTION)
 const [TRAIL_LAT, TRAIL_LNG] = cellToLatLng(gridRingUnsafe(SPRINGFIELD_ORIGIN, TRAIL_GRID_DISTANCE)[0]!)
 
 const TRAIL_SPARSE: FixtureRow = {

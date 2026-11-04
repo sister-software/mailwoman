@@ -118,7 +118,7 @@ on everything already published is irrevocable, and the pricing page publishes t
 
 ### 3.3 Mechanics
 
-Today artifacts are published to Cloudflare R2 behind `public.mailwoman.ai` without authentication. A
+Today artifacts are published to Cloudflare R2 behind `public.mailwoman.post` without authentication. A
 WAF rule blocks full-file downloads of byte-ranged `.db` objects, so the demo's range
 requests keep working without the cost of whole-file egress. The channel split uses the same
 infrastructure:
@@ -306,7 +306,7 @@ Steps 1–4 are ours and need no lawyer. Steps 5–7 are the ones likely to stal
 
 - [Database products catalog](../../records/site-2026-08/licensing/data-products.md) — the artifact
   inventory this policy applies to (D2).
-- See [Pricing](https://mailwoman.ai/pricing) for the published tiers and OEM band.
+- See [Pricing](https://mailwoman.post/pricing) for the published tiers and OEM band.
 - [Data licensing & provenance](../../records/site-2026-08/licensing/data-provenance.md) — the per-source
   license table and the ODbL boundary this document's §5 rule is derived from.
 - [Spatial-layer interface](../../engineering/reference/layer-interface.mdx) — the

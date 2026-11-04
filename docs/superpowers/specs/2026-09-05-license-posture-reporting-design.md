@@ -55,18 +55,18 @@ wire:
   "name": "mailwoman",
   "version": "9.2.0",
   "license": "AGPL-3.0-only",
-  "license_url": "https://mailwoman.ai/license",
+  "license_url": "https://mailwoman.post/license",
   "notice": "mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. A commercial license waives that obligation."
 }
 ```
 
-| Field         | Value                                                                                                    |
-| ------------- | -------------------------------------------------------------------------------------------------------- |
-| `name`        | `mailwoman`, constant                                                                                    |
-| `version`     | the `mailwoman` package version, from `readMailwomanManifest`                                            |
-| `license`     | the applied branch: `AGPL-3.0-only`, or `LicenseRef-Commercial` when the configured key verifies `valid` |
-| `license_url` | `${MAILWOMAN_DOCS_URL ?? "https://mailwoman.ai"}/license`, derived the way `licenseKeysWellKnownURL` is  |
-| `notice`      | present only when `license` is `AGPL-3.0-only`; absent otherwise                                         |
+| Field         | Value                                                                                                     |
+| ------------- | --------------------------------------------------------------------------------------------------------- |
+| `name`        | `mailwoman`, constant                                                                                     |
+| `version`     | the `mailwoman` package version, from `readMailwomanManifest`                                             |
+| `license`     | the applied branch: `AGPL-3.0-only`, or `LicenseRef-Commercial` when the configured key verifies `valid`  |
+| `license_url` | `${MAILWOMAN_DOCS_URL ?? "https://mailwoman.post"}/license`, derived the way `licenseKeysWellKnownURL` is |
+| `notice`      | present only when `license` is `AGPL-3.0-only`; absent otherwise                                          |
 
 An expired, unknown, invalid or retired key reads as `AGPL-3.0-only` with the notice present, the
 same reading the doctor gives it. The stamp does not say why, and the doctor does.
@@ -117,7 +117,7 @@ The launcher `packages/mailwoman/lib/cli.ts` prints the notice once, at the end 
 
 ```
 mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source.
-A commercial license waives that obligation: https://mailwoman.ai/license
+A commercial license waives that obligation: https://mailwoman.post/license
 ```
 
 The launcher must keep its single static import (its header explains the compile-cache ordering). The
@@ -159,7 +159,7 @@ that each `create*App` mounts beside its CORS middleware:
 
 ```
 Server: mailwoman/9.2.0 (AGPL-3.0-only)
-Link: <https://mailwoman.ai/license>; rel="license"
+Link: <https://mailwoman.post/license>; rel="license"
 ```
 
 `rel="license"` is a registered link relation (RFC 8288). The libpostal drop-in, and every proxy in
@@ -169,7 +169,7 @@ reads `mailwoman/9.2.0 (LicenseRef-Commercial)` and the `Link` header is unchang
 
 ## The `/license` page
 
-`https://mailwoman.ai/license` returns 404 today, as do `/licensing`, `/licensing/commercial` and
+`https://mailwoman.post/license` returns 404 today, as do `/licensing`, `/licensing/commercial` and
 `/pricing`. The pages under `docs/records/site-2026-08/licensing/` are records and have no route. This
 design adds one routed page, `docs/src/pages/license.mdx`, that states:
 

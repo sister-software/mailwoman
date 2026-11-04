@@ -6,9 +6,10 @@ import type { ExpressionSpecification, LayerSpecification } from "maplibre-gl"
 
 import { BuildingLayers } from "#base/buildings"
 import { InfrastructureLayers } from "#base/infrastructure"
-import { OceanCoastLayers, OceanFloorLayers } from "#base/ocean"
+import { LandUnderlayLayers, OceanCoastLayers, OceanLayers } from "#base/ocean"
+import { withGroundWidth } from "#base/road-width"
 import { HillshadeTileSetID } from "#base/terrain"
-import { GuideMapPalette, MailwomanBaseFlavor, MailwomanBaseTileSetID } from "#base/theme"
+import { GuideMapPalette, MailwomanBaseFlavor, MailwomanBaseTileSetID, MailwomanBuildingsTileSetID } from "#base/theme"
 import { TreeLayers } from "#base/trees"
 import { MAP_FONT_REGULAR } from "#styles/fonts"
 import { LayerID } from "#styles/layers"
@@ -154,12 +155,16 @@ const GuideMapLanduseLayer: LayerSpecification = {
 function toGuideMapLayers(source: LayerSpecification): LayerSpecification[] {
 	if (source.id === "landuse_park") return [source, GuideMapLanduseLayer]
 
+	// The Protomaps footprint fill reads the footprints wherever the extruded building layers do.
+	if (source.id === "buildings" && source.type === "fill") return [{ ...source, source: MailwomanBuildingsTileSetID }]
+
 	if (source.type !== "line") return [source]
 
 	// Protomaps defaults to miter joins.
 	// They draw road corners and bends as sharp points.
+	// A road's body width follows its ground width at street zoom.
 	const layer: typeof source = source.id.startsWith("roads_")
-		? { ...source, layout: { ...source.layout, "line-join": "round", "line-cap": "round" } }
+		? withGroundWidth({ ...source, layout: { ...source.layout, "line-join": "round", "line-cap": "round" } })
 		: source
 
 	if (MAJOR_ROAD_LAYER_IDS.has(layer.id)) {
@@ -313,41 +318,88 @@ const OneWayArrowLayer: LayerSpecification = {
 
 /**
  * The Protomaps land fill.
- * The ocean floor layers precede it.
+ * The land underlay precedes it.
  */
 const EARTH_FILL_LAYER_ID = "earth"
 
 /**
  * The Protomaps water fill.
- * The coast glow follows it.
+ * The ocean layers precede it and the coast glow follows it.
  */
 const WATER_FILL_LAYER_ID = "water"
 
 /**
+ * The municipal and regional boundary layers, drawn under the ocean fill.
+ */
+const SUB_NATIONAL_BOUNDARY_LAYER_IDS = new Set(["boundaries_band", "boundaries"])
+
+/**
+ * The land fill's color by zoom.
+ *
+ * Up to z7 the generalized land cover draws over the land fill, and its polygons stop short of the coast.
+ * The land fill shows in that gap, so it takes the lawn color there and fades to the
+ * ground color as the land cover fades out between z5 and z7.
+ */
+const earthFillColor: ExpressionSpecification = [
+	"interpolate",
+	["linear"],
+	["zoom"],
+	5,
+	GuideMapPalette.lawn,
+	7,
+	GuideMapPalette.ground,
+]
+
+const subNationalBoundaryLayers = nonLabelLayers.filter((layer) => SUB_NATIONAL_BOUNDARY_LAYER_IDS.has(layer.id))
+
+/**
  * Places the ocean layers around the Protomaps fills.
  *
- * The sea floor draws under the land fill, and the water fill leaves the ocean clear
- * so the depth shading shows.
- * Lakes and rivers keep the water fill.
+ * The ocean fill draws opaque over the land layers, with the depth shading over it.
+ * Municipal and regional boundaries move under the ocean fill, so a city limit drawn out to sea is hidden.
+ * Lakes and rivers keep the Protomaps water fill.
  */
 function withOceanLayers(layer: LayerSpecification): LayerSpecification[] {
-	if (layer.id === EARTH_FILL_LAYER_ID) return [...OceanFloorLayers, layer]
+	if (SUB_NATIONAL_BOUNDARY_LAYER_IDS.has(layer.id)) return []
+
+	if (layer.id === EARTH_FILL_LAYER_ID && layer.type === "fill") {
+		return [...LandUnderlayLayers, { ...layer, paint: { ...layer.paint, "fill-color": earthFillColor } }]
+	}
 
 	if (layer.id !== WATER_FILL_LAYER_ID || layer.type !== "fill") return [layer]
 
-	const oceanClear: LayerSpecification = {
+	const inlandWater: LayerSpecification = {
 		...layer,
-		paint: {
-			...layer.paint,
-			"fill-color": ["case", ["==", ["get", "kind"], "ocean"], "rgba(0, 0, 0, 0)", GuideMapPalette.water],
-		},
+		filter: ["all", ["==", ["geometry-type"], "Polygon"], ["!=", ["get", "kind"], "ocean"]],
+		paint: { ...layer.paint, "fill-color": GuideMapPalette.water },
 	}
 
-	return [oceanClear, ...OceanCoastLayers]
+	// The coast glow draws before inland water, so where a river polygon meets the ocean
+	// polygon the river covers the glow along their shared edge.
+	return [...subNationalBoundaryLayers, ...OceanLayers, ...OceanCoastLayers, inlandWater, FerryLayer]
 }
 
 /**
- * The base map's layer stack, in draw order — terrain, then land cover, then water, then boundaries.
+ * Ferry routes: a dashed line over the water, from the `ferry` kind the build writes into `roads` from z11.
+ */
+const FerryLayer: LayerSpecification = {
+	id: LayerID(MailwomanBaseTileSetID, "ferry"),
+	type: "line",
+	source: MailwomanBaseTileSetID,
+	"source-layer": "roads",
+	minzoom: 11,
+	filter: ["==", ["get", "kind"], "ferry"],
+	paint: {
+		"line-color": GuideMapPalette.ferry,
+		"line-width": ["interpolate", ["linear"], ["zoom"], 11, 1, 16, 2],
+		"line-dasharray": [3, 2],
+		"line-opacity": 0.8,
+	},
+}
+
+/**
+ * The base map's layer stack, in draw order: land, then the boundaries
+ * and the ocean over them, then roads, buildings and labels.
  */
 export const BaseLayers: LayerSpecification[] = [
 	...nonLabelLayers.flatMap(withOceanLayers),

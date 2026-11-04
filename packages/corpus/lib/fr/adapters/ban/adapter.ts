@@ -28,10 +28,12 @@ import { CSVSpliterator } from "spliterator"
 
 import { UnsupportedCountryError } from "#adapters/errors"
 import { stableSourceID } from "#adapters/source-id"
-import { composeHouseNumber } from "#adapters/street-line"
+import { composeHouseNumber } from "#adapters/street/line"
+import { createUnitSplitter } from "#adapters/street/unit"
 import { countryOfInseeCode, INSEE_COUNTRIES } from "#fr/insee-country"
 import { decomposeFrStreet } from "#fr/street-decompose"
 import { SourceRegister } from "#registers"
+import { streetIndexOpener } from "#street-index/reader"
 import {
 	AddressRole,
 	type AdapterOptions,
@@ -85,6 +87,7 @@ export function createBanAdapter(): CorpusAdapter {
 			})
 
 			let emitted = 0
+			const units = await createUnitSplitter({ streetIndex: streetIndexOpener(opts.streetIndex) })
 
 			for await (const record of rows as AsyncIterable<BanRow>) {
 				if (opts.signal?.aborted) break
@@ -125,12 +128,19 @@ export function createBanAdapter(): CorpusAdapter {
 					continue
 				}
 
-				const decomposed = decomposeFrStreet(street)
+				// A few streets end in the building they name (`Rue du General Charles de Gaulle Bat B`):
+				// the building becomes the unit and the street keeps the rest.
+				const withUnit = units.split(street, { country, locality, postcode })
+				const decomposed = decomposeFrStreet(withUnit?.street ?? street)
 
 				const components: CanonicalRow["components"] = {}
 
 				if (house) {
 					components.house_number = house
+				}
+
+				if (withUnit) {
+					components.unit = withUnit.unit
 				}
 
 				if (decomposed.prefix) {

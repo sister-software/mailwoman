@@ -43,8 +43,9 @@ const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
  * Every promote-eval verdict and measurement that grew the hard-country safelist appears here.
  * A country deliberately kept off the list appears with `hardFilterSafe: false`.
  *
- * The derived safelist (`hardFilterSafe === true`) is asserted byte-identical to
- * `HARD_PLACE_COUNTRY_SAFELIST` in `coverage-manifest.test.ts`, so the two cannot drift silently.
+ * The derived safelist (`hardFilterSafe === true`) is asserted byte-identical
+ * to `HARD_PLACE_COUNTRY_SAFELIST` in `coverage-manifest.integration.test.ts`,
+ * so the two cannot drift silently.
  *
  * Grow this at promotes, with the panel receipt in `source`.
  * The fact reaches production at the next gazetteer rebuild.

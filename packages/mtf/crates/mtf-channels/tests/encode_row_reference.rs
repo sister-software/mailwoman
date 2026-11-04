@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-//! Encodes the row of `fixtures/encode-row-reference.json` and compares every tensor with the Python encoder's.
+//! Encodes the row of `fixtures/encode-row-reference.json` and compares every tensor with the reference record's.
 //!
 //! The fixture's four cases are the token label source, the span label source, the shaped anchor and a row
 //! without channels, each with every channel the case configures. Floats are compared as `f32` bit patterns,
-//! the values `torch.tensor(..., dtype=torch.float32)` produced from the Python lists.
+//! the values `torch.tensor(..., dtype=torch.float32)` produced from the recorded lists.
 
 #![cfg(feature = "finders")]
 

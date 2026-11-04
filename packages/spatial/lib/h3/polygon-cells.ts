@@ -16,17 +16,17 @@ import {
 	latLngToCell,
 	polygonToCellsExperimental,
 	POLYGON_TO_CELLS_FLAGS,
-} from "h3-js"
+	type H3Cell,
+} from "@sister.software/h3"
 
 import type { LatLonBounds } from "#bbox"
 import { METRES_PER_DEGREE } from "#distance"
 import type { MultiPolygonRings } from "#geometries/polygon"
 import { ringsBoundingBox } from "#geometries/ring-blob"
-import { shortCellToInt, type H3Cell } from "#h3/cell"
-
+import { shortCellToInt } from "#h3/cell"
 /**
  * The largest bounding-box cell estimate a single polyfill may reserve, a memory ceiling
- * because h3-js allocates its output buffer from the polygon's bounding box before walking.
+ * because H3 sizes its output buffer from the polygon's bounding box before walking.
  */
 export const CELL_ESTIMATE_BUDGET = 2_000_000
 
@@ -53,7 +53,7 @@ function boxExtentMetres(box: LatLonBounds): { heightM: number; widthM: number }
  * The single cell containing this whole bounding box, or `null` when it spans
  * more than one — exact because an H3 cell is convex.
  */
-function enclosingCell(box: LatLonBounds, resolution: number): string | null {
+function enclosingCell(box: LatLonBounds, resolution: number): H3Cell | null {
 	if (!Number.isFinite(box.minLat)) return null
 
 	const first = latLngToCell(box.minLat, box.minLon, resolution)
@@ -140,16 +140,16 @@ export function classifyFeatureCells(
 	layerLabel = "polygon index"
 ): FeatureCells {
 	let resolution = resolutionForFeature(polygons, targetResolution)
-	let touched = new Set<string>()
-	let full = new Set<string>()
+	let touched = new Set<H3Cell>()
+	let full = new Set<H3Cell>()
 
 	// `estimateCellCount` approximates what h3 will reserve, so an allocation failure
 	// steps the resolution down and retries rather than ending the build. a feature
 	// that fails at {@link MIN_INDEX_RESOLUTION} is refused.
 	for (;;) {
 		try {
-			touched = new Set<string>()
-			full = new Set<string>()
+			touched = new Set<H3Cell>()
+			full = new Set<H3Cell>()
 
 			for (const rings of polygons) {
 				// `isGeoJSON = true`: the rings are already `[lon, lat]`, so converting would
@@ -227,11 +227,11 @@ export function classifyFeatureCells(
 
 	for (const cell of touched) {
 		if (!full.has(cell)) {
-			partial.push(cell as H3Cell)
+			partial.push(cell)
 		}
 	}
 
-	return { resolution, whole: [...full] as H3Cell[], partial }
+	return { resolution, whole: [...full], partial }
 }
 
 /**
@@ -260,8 +260,8 @@ export function groupCellsByResolution(cells: Iterable<string>): string[][] {
  *
  * Cells from different resolutions cause h3 to throw when pooled.
  */
-export function compactAcrossResolutions(cells: Iterable<string>): string[] {
-	const compacted: string[] = []
+export function compactAcrossResolutions(cells: Iterable<string>): H3Cell[] {
+	const compacted: H3Cell[] = []
 
 	for (const group of groupCellsByResolution(cells)) {
 		compacted.push(...compactCells(group))
@@ -281,7 +281,7 @@ export function ancestorChainCells(
 	resolutions: readonly number[]
 ): H3Cell[] {
 	return resolutions.map((resolution) =>
-		resolution === indexResolution ? indexCell : (cellToParent(indexCell, resolution) as H3Cell)
+		resolution === indexResolution ? indexCell : cellToParent(indexCell, resolution)
 	)
 }
 
@@ -299,7 +299,7 @@ export function featureCellRows(cells: FeatureCells): Array<{
 
 	for (const cell of compactAcrossResolutions(cells.whole)) {
 		const resolution = getResolution(cell)
-		const short = shortCellToInt(cell as H3Cell)
+		const short = shortCellToInt(cell)
 
 		wholeShort.add(short)
 		rows.push({ h3Cell: short, resolution, containment: "whole" })
@@ -324,7 +324,7 @@ export function featureCellRows(cells: FeatureCells): Array<{
  * fresh `latLngToCell` so a fringe row does not land in a neighboring coverage cell.
  */
 export function coverageCellFor(cell: H3Cell, coverageResolution: number): H3Cell {
-	return cellToParent(cell, coverageResolution) as H3Cell
+	return cellToParent(cell, coverageResolution)
 }
 
 /**
@@ -350,6 +350,6 @@ export function addCoverageCells(
 	}
 
 	for (const child of cellToChildren(cell, coverageResolution)) {
-		into.add(shortCellToInt(child as H3Cell))
+		into.add(shortCellToInt(child))
 	}
 }

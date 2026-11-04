@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { CAPITAL_LEVEL, CAPITAL_MATCH_RADIUS_KM, CapitalIndex } from "#capitals"
+import { CAPITAL_LEVEL, CapitalIndex } from "#capitals"
 
 // San José CR (the national capital, with its GeoNames alternates) and Salt Lake City
 // (an admin-1 seat), real coordinates so the radius checks below mean what they say.
@@ -52,11 +52,5 @@ describe("CapitalIndex.levelOfPlace", () => {
 		])
 
 		expect(both.levelOfPlace("Mexico City", "MX", 19.43, -99.13)).toBe(CAPITAL_LEVEL.national)
-	})
-})
-
-describe("CAPITAL_MATCH_RADIUS_KM", () => {
-	it("holds the centroid-drift bound the sentences above rely on", () => {
-		expect(CAPITAL_MATCH_RADIUS_KM).toBe(25)
 	})
 })

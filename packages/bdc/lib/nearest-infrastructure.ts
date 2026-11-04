@@ -34,12 +34,11 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, type CoverageCell, type layerschemahandle } from "@mailwoman/core/layers"
 import { POI_H3_RESOLUTION, type POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
-import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
+import { shortCellToInt, type PointLiteral } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 
 import { res9ShortCellToRes6Parent } from "#filing/landscape"
-
 /**
  * Ring budget default for {@link nearestInfrastructure} — wider than `POILookup`'s own internal
  * `DEFAULT_MAX_RINGS` (16, ≈5.4 km) because telecom infrastructure (central offices, comm towers)
@@ -119,7 +118,7 @@ export async function nearestInfrastructure(
 			throw new Error(`nearestInfrastructure: hit ${stringifyJSON(hit.name)} has no categoryID`)
 		}
 
-		const h3Cell = shortCellToInt(latLngToCell(hit.latitude, hit.longitude, POI_H3_RESOLUTION) as H3Cell)
+		const h3Cell = shortCellToInt(latLngToCell(hit.latitude, hit.longitude, POI_H3_RESOLUTION))
 		const coverage = await readLayerCoverage(schemadb, res9ShortCellToRes6Parent(h3Cell))
 
 		infrastructureHits.push({

@@ -20,6 +20,7 @@ import {
 	StreetOrder,
 	streetOrderForCountry,
 } from "#adapters/cordis/adapter"
+import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
 import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
@@ -101,9 +102,11 @@ function zipOf(content: string): Buffer {
 }
 
 let lexicon: PersonNameLexicon
+let units: UnitSplitter
 
 beforeAll(async () => {
 	lexicon = await loadPersonNameLexicon()
+	units = await createUnitSplitter()
 })
 
 async function runOverCSV(options: { country?: string; limit?: number } = {}) {
@@ -126,12 +129,14 @@ async function runOverCSV(options: { country?: string; limit?: number } = {}) {
 }
 
 describe("cordis adapter over published participation rows", () => {
-	it("writes the four organizations whose address it can place, under the license and register", async () => {
+	it("writes the five organizations whose address it can place, under the license and register", async () => {
 		const { manifest, rows } = await runOverCSV()
 
-		expect(manifest.yielded).toBe(4)
+		expect(manifest.yielded).toBe(5)
 
 		expect(rows.map((row) => row.raw).toSorted()).toEqual([
+			// The floor and door come off the line before the house number, so `1` is the number.
+			"COMET GLOBAL INNOVATION, SL, C GRAN DE GRACIA, 1 PLANTA 4 PUERTA 3, 08012 Barcelona",
 			"EREVNITIKO PANEPISTIMIAKO INSTITOUTO SYSTIMATON EPIKOINONION KAI YPOLOGISTON, PATISION 42, 106 82 ATHINA",
 			// Ghana's layout is read from UPU's description.
 			// The participant entered a private mail bag in the postcode column.
@@ -162,7 +167,7 @@ describe("cordis adapter over published participation rows", () => {
 		expect(Object.fromEntries(dropped)).toEqual({
 			"row:duplicate-record": 1,
 			[`row:${CORDISRefusal.StreetNumberUnplaced}`]: 2,
-			[`row:${CORDISRefusal.StreetDigitInRemainder}`]: 2,
+			[`row:${CORDISRefusal.StreetDigitInRemainder}`]: 1,
 			[`row:${CORDISRefusal.CountryNotISO}`]: 1,
 			[`row:${CORDISRefusal.LocalityAbsent}`]: 1,
 		})
@@ -182,6 +187,23 @@ describe("cordis adapter over published participation rows", () => {
 		const rows = await Array.fromAsync(createCORDISAdapter().rows({ inputPath: input.path }))
 
 		expect(rows.map((row) => row.country).toSorted()).toEqual(["CH", "GR"])
+	})
+
+	it("leaves out a line with an undoubled quote and reads every record after it", async () => {
+		await using input = await temporaryDirectory("mailwoman-cordis-quote-")
+
+		// Line 95,875 of `cordis-fp7projects-csv.zip`'s `organization.csv` (`886ee479…`),
+		// verbatim: the URL ends in an undoubled `"`, so the field never closes.
+		const fp7Holides =
+			'"332933";"HOLIDES";"974056444";"";"AIRBUS DS LIMITED";"CAS-UK";"";"PRC";"CELTIC SPRINGS QUADRANT HOUSE";"NP10 8FZ";"NEWPORT GWENT";"UK";"";"";"http://www.eads.com/eads/int/en.html#/story-2"";"https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/contact-form/project/974056444/332933";"2016-10-03 10:22:42";"1949291";"6";"participant";"23893.85";"";"";"false";""'
+
+		await writeLocalFile(zipOf(organizationCSV([fp7Holides, H2020_LICR])), input.path("cordis-fp7projects-csv.zip"))
+
+		const dropped = new Map<string, number>()
+		const rows = await Array.fromAsync(createCORDISAdapter().rows({ inputPath: input.path, dropped }))
+
+		expect(rows.map((row) => row.components.locality)).toEqual(["Zurich"])
+		expect(dropped.get("row:unbalanced-quote")).toBe(1)
 	})
 
 	it("raises on a directory holding no archive, rather than reading as a publisher with none", async () => {
@@ -308,10 +330,40 @@ describe("naturalPersonForm", () => {
 })
 
 describe("readCORDISRecord", () => {
+	it("labels a building at the end of the street line as the unit when the street index holds the street", async () => {
+		const record = {
+			name: "EXAMPLE SA",
+			street: "12 BD SAINT-JACQUES BATIMENT B",
+			postCode: "75014",
+			city: "Paris",
+			country: "FR",
+		}
+
+		const indexed = await createUnitSplitter({
+			streetIndex: () => ({
+				countries: new Set(["FR"]),
+				hasStreetName: (street) => street.toUpperCase() === "BD SAINT-JACQUES",
+			}),
+		})
+
+		const reading = readCORDISRecord(record, lexicon, indexed)
+
+		const unindexed = readCORDISRecord(record, lexicon, units)
+
+		expect("admitted" in unindexed && unindexed.admitted.components.street).toBe("BD SAINT-JACQUES BATIMENT B")
+
+		expect("admitted" in reading && reading.admitted.components).toMatchObject({
+			house_number: "12",
+			street: "BD SAINT-JACQUES",
+			unit: "BATIMENT B",
+		})
+	})
+
 	it("drops a postcode with no digit and keeps the row", () => {
 		const reading = readCORDISRecord(
 			{ name: "UNIVERSITY COLLEGE CORK", street: "WESTERN ROAD", postCode: "EIRE", city: "Cork", country: "IE" },
-			lexicon
+			lexicon,
+			units
 		)
 
 		expect(reading).toEqual({
@@ -323,7 +375,8 @@ describe("readCORDISRecord", () => {
 	it("refuses a record in a country codex holds no layout for", () => {
 		const reading = readCORDISRecord(
 			{ name: "UNIVERSITE D'ABOMEY-CALAVI", street: "01 BP 526", postCode: "", city: "Cotonou", country: "BJ" },
-			lexicon
+			lexicon,
+			units
 		)
 
 		expect(reading).toEqual({ refused: CORDISRefusal.CountryNoLayout, country: "BJ" })
@@ -333,7 +386,8 @@ describe("readCORDISRecord", () => {
 		// Burkina Faso's layout has no postcode slot, so this record would print as a name and a city.
 		const reading = readCORDISRecord(
 			{ name: "MINISTERE DE LA SANTE", street: "", postCode: "7003", city: "Ouagadougou", country: "BF" },
-			lexicon
+			lexicon,
+			units
 		)
 
 		expect(reading).toEqual({ refused: CORDISRefusal.ComponentsTooFew, country: "BF" })
@@ -341,7 +395,7 @@ describe("readCORDISRecord", () => {
 
 	it("refuses a record that places nothing beside its locality", () => {
 		expect(
-			readCORDISRecord({ name: "ACME", street: "-", postCode: "N/A", city: "Lyon", country: "FR" }, lexicon)
+			readCORDISRecord({ name: "ACME", street: "-", postCode: "N/A", city: "Lyon", country: "FR" }, lexicon, units)
 		).toEqual({
 			refused: CORDISRefusal.ComponentsTooFew,
 			country: "FR",

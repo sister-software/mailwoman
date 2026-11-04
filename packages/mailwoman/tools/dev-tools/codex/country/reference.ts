@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Regenerates the committed calling-code and currency table in `codex/country/reference-data.ts`.
+ * Regenerates the committed calling-code, currency and dependency table in `codex/country/reference/data.ts`.
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
@@ -16,13 +16,17 @@ const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/count
  * Resolves the committed table from the `@mailwoman/codex` package root, so the path
  * is the same from the source tree, `out/` and a published tarball.
  */
-const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "reference-data.ts")
+const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "lib", "country", "reference", "data.ts")
 
 /**
  * Describes the fields this tool reads from one mledoze/countries record.
  */
 interface MledozeCountry {
 	cca2?: string
+	/**
+	 * `false` for a dependency or territory, `true` for a sovereign state, `null` where the source abstains.
+	 */
+	independent?: boolean | null
 	idd?: { root?: string; suffixes?: string[] }
 	currencies?: Record<string, { name?: string; symbol?: string }>
 }
@@ -33,6 +37,7 @@ interface MledozeCountry {
 interface CountryReferenceEntry {
 	callingCode?: number
 	currency?: { isoCode: string; name?: string; symbol?: string }
+	dependency?: true
 }
 
 /**
@@ -42,7 +47,7 @@ export interface GenerateCountryReferenceOptions {
 	/**
 	 * Overrides the output path.
 	 *
-	 * @defaultValue the committed `codex/country/reference-data.ts`.
+	 * @defaultValue the committed `codex/country/reference/data.ts`.
 	 */
 	out?: string
 }
@@ -80,13 +85,17 @@ function callingCode(country: MledozeCountry): number | null {
 	return Number.isFinite(n) ? n : null
 }
 
+/**
+ * Prints one row on one line, as the committed table holds it once `oxfmt` spaces it.
+ */
 const serialize = (o: CountryReferenceEntry): string =>
-	prettyJSON(o)
+	stringifyJSON(o)
 		.replaceAll('"isoCode"', "isoCode")
 		.replaceAll('"callingCode"', "callingCode")
 		.replaceAll('"currency"', "currency")
 		.replaceAll('"name"', "name")
 		.replaceAll('"symbol"', "symbol")
+		.replaceAll('"dependency"', "dependency")
 
 /**
  * Fetches mledoze/countries and regenerates the committed `COUNTRY_REFERENCE` table.
@@ -130,6 +139,11 @@ export async function generateCountryReference(
 			}
 		}
 
+		// The source abstains on a code it lists as `null`, so only an explicit `false` marks a dependency.
+		if (country.independent === false) {
+			entry.dependency = true
+		}
+
 		if (Object.keys(entry).length) {
 			rows[alpha2] = entry
 		}
@@ -145,18 +159,26 @@ export async function generateCountryReference(
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   generated — do not edit by hand. Country calling codes (E.164) + currencies (ISO 4217), derived
- *   from mledoze/countries (https://github.com/mledoze/countries, ODbL). nanp members map to 1.
- *   Regenerate with: mailwoman dev generate country-reference
+ *   generated — do not edit by hand. Country calling codes (E.164), currencies (ISO 4217) and
+ *   dependency status, derived from mledoze/countries (https://github.com/mledoze/countries, ODbL).
+ *   nanp members map to 1. Regenerate with: mailwoman dev generate country-reference
  */
 
-/** Static per-country reference: calling code + currency. */
+/**
+ * Static per-country reference: calling code, currency and dependency status.
+ */
 export interface CountryReference {
 	callingCode?: number
 	currency?: { isoCode: string; name?: string; symbol?: string }
+	/**
+	 * Set on a dependency or territory, where the source's \`independent\` is \`false\`.
+	 */
+	dependency?: true
 }
 
-/** ISO 3166-1 alpha-2 → reference. */
+/**
+ * ISO 3166-1 alpha-2 → reference.
+ */
 export const COUNTRY_REFERENCE: Record<string, CountryReference> = {`
 
 	await writeLocalTextFile(`${header}\n${body}\n}\n`, outPath)

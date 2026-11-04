@@ -75,6 +75,7 @@ fn span_row(raw: &str, tokens: &[&str], starts: &[i64], ends: &[i64], tags: &[&s
 		labels: vec!["O".into(); tokens.len()],
 		country: Some("JP".into()),
 		source: "test".into(),
+		source_id: None,
 		spans: Some(SpanTriple {
 			starts: starts.to_vec(),
 			ends: ends.to_vec(),

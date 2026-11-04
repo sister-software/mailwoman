@@ -30,10 +30,10 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-import { shortCellToInt, type H3Cell, type LatLonBounds } from "@mailwoman/spatial"
+import { shortCellToInt, type LatLonBounds } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
-import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
+import { cellToParent, latLngToCell, polygonToCells } from "@sister.software/h3"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
 const COVERAGE_H3_RESOLUTION = 6
@@ -100,8 +100,8 @@ export function bboxCoverageCells(
 	for (const row of rows) {
 		if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) continue
 
-		const res9Cell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
-		const cell = cellToParent(res9Cell, resolution) as H3Cell
+		const res9Cell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION)
+		const cell = cellToParent(res9Cell, resolution)
 		const h3Cell = shortCellToInt(cell)
 
 		observed.set(h3Cell, (observed.get(h3Cell) ?? 0) + 1)
@@ -114,7 +114,7 @@ export function bboxCoverageCells(
 		[bbox.maxLat, bbox.minLon],
 	]
 
-	const polyfilled = polygonToCells(ring, resolution) as H3Cell[]
+	const polyfilled = polygonToCells(ring, resolution)
 
 	return polyfilled.map((cell) => {
 		const h3Cell = shortCellToInt(cell)
@@ -327,7 +327,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 				continue
 			}
 
-			const fullCell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
+			const fullCell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION)
 			const h3Cell = shortCellToInt(fullCell)
 			const catID = categoryID(row.category)
 			const negRank = -Math.log10(row.confidence + 1e-6)
@@ -353,7 +353,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			inserted++
 			countries.set(row.country, (countries.get(row.country) ?? 0) + 1)
 
-			const parentCell = cellToParent(fullCell, COVERAGE_H3_RESOLUTION) as H3Cell
+			const parentCell = cellToParent(fullCell, COVERAGE_H3_RESOLUTION)
 			const coverageCell = shortCellToInt(parentCell)
 			coverage.set(coverageCell, (coverage.get(coverageCell) ?? 0) + 1)
 

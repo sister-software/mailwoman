@@ -72,7 +72,7 @@ const LicenseEnvSchema = object({
 			"Signed commercial license assertion used by `mailwoman doctor`. This does not change runtime behavior.",
 	}),
 	/**
-	 * The license worker's origin (`https://license.mailwoman.ai` when unset),
+	 * The license worker's origin (`https://license.mailwoman.post` when unset),
 	 * for `mailwoman license refresh` and the online per-license status.
 	 *
 	 * Pointed at a sandbox deploy or a test stub.

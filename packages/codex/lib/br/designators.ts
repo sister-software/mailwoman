@@ -41,7 +41,7 @@ function row(
 	spelling: string,
 	concept: DesignatorConcept,
 	source: string,
-	options: Partial<Pick<PostalDesignatorRow, "abbreviations" | "position">> = {}
+	options: Partial<Pick<PostalDesignatorRow, "abbreviations" | "position" | "partOfStreetLine">> = {}
 ): PostalDesignatorRow {
 	return {
 		spelling,
@@ -51,6 +51,7 @@ function row(
 		concept,
 		language: "pt",
 		source,
+		...(options.partOfStreetLine ? { partOfStreetLine: true } : {}),
 	}
 }
 
@@ -69,12 +70,15 @@ export const BR_POSTAL_DESIGNATORS: PostalDesignatorTable = {
 		row("CPC", "special_routing", UPU),
 		row("Edifício", "building", wiktionary("edif%C3%ADcio")),
 		row("Bloco", "block", UPU, { abbreviations: ["BL"] }),
-		row("Conjunto", "building", UPU, { abbreviations: ["CJ"] }),
+		// Brasília's addresses descend sector, quadra, conjunto, casa (`QR 603 CONJUNTO 8 CASA 4`),
+		// and a lot inside a quadra is numbered `Lote`.
+		// Those levels are the street line's own, so a unit splitter keeps them.
+		row("Conjunto", "building", UPU, { abbreviations: ["CJ"], partOfStreetLine: true }),
 		row("Quadra", "block", UPU, { abbreviations: ["Q"] }),
 		row("Apto.", "apartment", wiktionary("apto"), { abbreviations: ["Apartamento"] }),
 		row("Sala", "room", wiktionary("sala")),
-		row("Casa", "unit", wiktionary("casa")),
-		row("Lote", "unit", wiktionary("lote")),
+		row("Casa", "unit", wiktionary("casa"), { partOfStreetLine: true }),
+		row("Lote", "unit", wiktionary("lote"), { partOfStreetLine: true }),
 		...FLOOR_ROWS,
 		row("Térreo", "ground_floor", wiktionary("ground_floor"), { position: "standalone" }),
 		row("Subsolo", "basement", wiktionary("basement"), { position: "standalone" }),

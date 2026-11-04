@@ -38,6 +38,21 @@ const IDLE_SPIN_TURNS = 50
 const IDLE_BACKOFF_MS = 1
 
 /**
+ * Options for {@linkcode VirtualClock}.
+ */
+export interface VirtualClockOptions {
+	/**
+	 * Real time {@linkcode VirtualClock.runUntilSettled} tolerates with no work pending
+	 * before declaring the work stuck.
+	 *
+	 * Defaults to {@linkcode IDLE_BUDGET_MS}.
+	 * A test that exercises the stuck-work guard itself passes a small budget
+	 * rather than paying the production one.
+	 */
+	idleBudgetMs?: number
+}
+
+/**
  * Run every queued microtask to quiescence.
  *
  * A `setImmediate` is scheduled behind the entire microtask queue, so awaiting one guarantees
@@ -123,6 +138,11 @@ export class VirtualClock implements ClockLike {
 	#now = 0
 	#pending: Array<{ deadline: number; resolve: () => void }> = []
 	readonly sleepCalls: number[] = []
+	readonly #idleBudgetMs: number
+
+	public constructor(options: VirtualClockOptions = {}) {
+		this.#idleBudgetMs = options.idleBudgetMs ?? IDLE_BUDGET_MS
+	}
 
 	public now(): number {
 		return this.#now
@@ -207,9 +227,9 @@ export class VirtualClock implements ClockLike {
 	 * If a sleep is pending, it advances to the earliest deadline.
 	 * If none is, yield and look again.
 	 *
-	 * @throws Rather than hanging when the work neither settles nor schedules anything
-	 * for {@linkcode IDLE_BUDGET_MS} of real time — a diagnosable failure beats a
-	 * test-timeout stack trace pointing at the `it()`.
+	 * @throws Rather than hanging when the work neither settles nor schedules anything for the
+	 * configured idle budget (see {@linkcode VirtualClockOptions.idleBudgetMs}) of real time —
+	 * a diagnosable failure beats a test-timeout stack trace pointing at the `it()`.
 	 */
 	public async runUntilSettled<T>(work: Promise<T>): Promise<T> {
 		let settled = false
@@ -250,7 +270,7 @@ export class VirtualClock implements ClockLike {
 
 				const idleFor = performance.now() - idleSince
 
-				if (idleFor > IDLE_BUDGET_MS) {
+				if (idleFor > this.#idleBudgetMs) {
 					throw new Error(
 						`VirtualClock.runUntilSettled: no pending sleep and no progress for ${Math.round(idleFor)}ms of ` +
 							`real time at t=${this.#now}. The work is blocked on something this clock does not drive.`

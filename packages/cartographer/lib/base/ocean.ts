@@ -27,82 +27,97 @@ const LAND_UNDERLAY_MAX_ZOOM = 6
  * its continents from the first frame.
  */
 export function createLandUnderlaySource(): GeoJSONSourceSpecification {
-	return { type: "geojson", data: "https://public.mailwoman.ai/natural-earth/land-110m.json" }
+	return { type: "geojson", data: "https://public.mailwoman.post/natural-earth/land-110m.json" }
 }
 
 /**
- * Colors of the sea floor by depth, from the shelf to the abyssal plain.
+ * Colors of the sea by depth, from the shelf to the trenches.
  *
- * Shallow water stays close to the water fill, so a coast reads as a pale band that deepens offshore.
+ * The sea is a tropical blue that darkens with depth, as water does when it is deep.
  */
 export const OceanPalette = {
-	shelf: "#bcd7f2",
-	slope: "#93bce6",
-	deep: "#5f93cf",
-	abyss: "#3a6aa8",
-	trench: "#2a4f85",
+	/**
+	 * The ocean fill: water over the continental shelf, down to about 100 m.
+	 */
+	shelf: GuideMapPalette.water,
+	slope: "#5cc4f2",
+	deep: "#35ace8",
+	abyss: "#2396de",
+	trench: "#1679c9",
 	/**
 	 * The color of the blurred line along the coast.
 	 */
-	coastGlow: "#eef6fd",
+	coastGlow: "#d6f4fd",
 } as const
 
 /**
- * The ocean's depth shading, drawn under the land fill.
+ * The depth below which the depth shading starts to darken the ocean fill, in meters.
  *
- * The terrain tiles include ETOPO1 bathymetry, so elevation below zero is the sea floor.
- * The bathymetry ends at z10 and is stretched beyond it, so its coastline misses reclaimed land.
- *
- * The land fill drawn over these layers decides the coast instead.
- * - `ocean-depth` colors the sea by depth with a `color-relief` layer.
- * - `ocean-floor` shades the sea floor's relief up to z7, where the land hillshade takes over.
+ * The bathymetry is ETOPO1 at about 1.8 km per sample, so a sample on a coast can read
+ * below sea level over land: a reclaimed shore, or a narrow headland.
+ * The depth shading draws over the land fill, so it stays transparent down to this depth.
+ * A coastal sample rarely reads this deep.
  */
-export const OceanFloorLayers: LayerSpecification[] = [
-	{
-		id: OceanLayerID("ocean-depth"),
-		type: "color-relief",
-		source: BathymetryTileSetID,
-		paint: {
-			"color-relief-opacity": 0.85,
-			"color-relief-color": [
-				"interpolate",
-				["linear"],
-				["elevation"],
-				-8000,
-				OceanPalette.trench,
-				-4000,
-				OceanPalette.abyss,
-				-1500,
-				OceanPalette.deep,
-				-200,
-				OceanPalette.slope,
-				-20,
-				OceanPalette.shelf,
-				-1,
-				GuideMapPalette.water,
-			],
-		},
-	},
-	{
-		id: OceanLayerID("ocean-floor"),
-		type: "hillshade",
-		source: BathymetryTileSetID,
-		maxzoom: 7,
-		paint: {
-			"hillshade-exaggeration": 0.35,
-			"hillshade-shadow-color": OceanPalette.trench,
-			"hillshade-highlight-color": "#ffffff",
-			"hillshade-accent-color": OceanPalette.deep,
-		},
-	},
-	// The basemap's land fill covers this layer once its tiles load.
-	// At 1:110m the coast fills in bays such as Tokyo Bay, so the layer stops at globe scale.
+const DEPTH_SHADING_START_M = -100
+
+/**
+ * The land fill drawn under the basemap's land while its tiles load, at globe zoom.
+ *
+ * The basemap's land fill covers this layer once its tiles load.
+ * At 1:110m the coast fills in bays such as Tokyo Bay, so the layer stops at globe scale.
+ *
+ * It is lawn green because at that scale the land cover over it is mostly vegetation.
+ */
+export const LandUnderlayLayers: LayerSpecification[] = [
 	{
 		id: OceanLayerID("land-underlay"),
 		type: "fill",
 		source: LandUnderlayTileSetID,
 		maxzoom: LAND_UNDERLAY_MAX_ZOOM,
-		paint: { "fill-color": GuideMapPalette.ground },
+		paint: { "fill-color": GuideMapPalette.lawn },
+	},
+]
+
+/**
+ * The ocean, drawn over the land layers.
+ *
+ * - `ocean-fill` is opaque, so a land-use polygon or boundary that runs out to sea is hidden under it.
+ *   Marine reserves and city limits drawn in OSM over the water are two such cases.
+ * - `ocean-depth` darkens the fill by depth with a `color-relief` layer over the
+ *   ETOPO1 bathymetry in the terrain tiles.
+ *   The bathymetry ends at z10 and is stretched beyond it.
+ *   The shading is a smooth gradient, without relief shading, so the sea floor reads as depth of water.
+ */
+export const OceanLayers: LayerSpecification[] = [
+	{
+		id: OceanLayerID("ocean-fill"),
+		type: "fill",
+		source: MailwomanBaseTileSetID,
+		"source-layer": "water",
+		filter: ["==", ["get", "kind"], "ocean"],
+		paint: { "fill-color": OceanPalette.shelf },
+	},
+	{
+		id: OceanLayerID("ocean-depth"),
+		type: "color-relief",
+		source: BathymetryTileSetID,
+		paint: {
+			"color-relief-color": [
+				"interpolate",
+				["linear"],
+				["elevation"],
+				-9000,
+				OceanPalette.trench,
+				-4000,
+				OceanPalette.abyss,
+				-1500,
+				OceanPalette.deep,
+				-400,
+				OceanPalette.slope,
+				DEPTH_SHADING_START_M,
+				"rgba(143, 218, 247, 0)",
+			],
+		},
 	},
 ]
 

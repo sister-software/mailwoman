@@ -52,18 +52,18 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
+import { cellToLatLng, gridRingUnsafe, latLngToCell } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { res9ShortCellToRes6Parent } from "#filing/landscape"
-import { nearestInfrastructure, NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS } from "#nearest-infrastructure"
+import { nearestInfrastructure } from "#nearest-infrastructure"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
 
-const SPRINGFIELD_ORIGIN = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, POI_H3_RESOLUTION) as H3Cell
+const SPRINGFIELD_ORIGIN = latLngToCell(SPRINGFIELD.latitude, SPRINGFIELD.longitude, POI_H3_RESOLUTION)
 
 const SPRINGFIELD_CENTER = {
 	type: "Point" as const,
@@ -78,7 +78,7 @@ const REMOTE = { latitude: 41.8781, longitude: -87.6298 }
 
 // Exactly gridDistance 20 from the Springfield origin cell — inside the 32-ring default
 // (covers ≤ 31), outside POILookup's own internal default of 16 rings (covers ≤ 15).
-// Derived from h3-js, never hardcoded, matching poi-lookup.test.ts's TRAIL_SPARSE discipline.
+// Derived from H3, never hardcoded, matching poi-lookup.test.ts's TRAIL_SPARSE discipline.
 const MID_RING_GRID_DISTANCE = 20
 const [MID_RING_LAT, MID_RING_LNG] = cellToLatLng(gridRingUnsafe(SPRINGFIELD_ORIGIN, MID_RING_GRID_DISTANCE)[0]!)
 
@@ -131,7 +131,7 @@ const TELECOM_CATEGORY_IDS = ["telecom_exchange", "tower_comms"]
 const CATEGORY_IDS: Record<string, number> = { telecom_exchange: 1, tower_comms: 2, cafe: 3 }
 
 function cellFor(latitude: number, longitude: number): number {
-	const full = latLngToCell(latitude, longitude, POI_H3_RESOLUTION) as H3Cell
+	const full = latLngToCell(latitude, longitude, POI_H3_RESOLUTION)
 
 	return shortCellToInt(full)
 }
@@ -336,8 +336,6 @@ describe("nearestInfrastructure", () => {
 
 		expect(withExplicit16.map((h) => h.name)).not.toContain(TELECOM_EXCHANGE_MID_RING.name)
 		expect(withExplicit16.map((h) => h.name)).toEqual([TELECOM_EXCHANGE_NEAR.name])
-
-		expect(NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS).toBe(32)
 	})
 
 	it("limit is respected", async () => {

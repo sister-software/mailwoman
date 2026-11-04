@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/coastal",
-	"version": "10.7.0",
+	"version": "10.8.0",
 	"description": "Environment Agency National Coastal Erosion Risk Mapping (England) — acquisition, build, and the coastal-england.db layer reader",
 	"keywords": [
 		"coastal-erosion",
@@ -80,7 +80,7 @@
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"h3-js": "^4.5.0",
+		"@sister.software/h3": "^1.1.0",
 		"kysely": "^0.29.7",
 		"path-ts": "^2.5.0"
 	},

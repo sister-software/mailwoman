@@ -71,6 +71,21 @@ describe("tile worker routes", () => {
 		await expect(routeOf("/planet.v4/15/29103")).resolves.toBeNull()
 	})
 
+	it("sends a city model file to the 3D Tiles route and refuses other file types", async () => {
+		const probe = routeProbe()
+		const tileset = "13101_chiyoda-ku_pref_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_lod2"
+
+		expect((await probe(`/3dtiles/${tileset}/tileset.json`))?.index).toBe(11)
+		expect((await probe(`/3dtiles/${tileset}/data/data0.glb`))?.params).toEqual({ tileset, file: "data/data0.glb" })
+		expect(await probe(`/3dtiles/${tileset}/data/data0.b3dm`)).toBeNull()
+
+		// URL parsing resolves `..` before routing, so a parent path still reads a key under `3dtiles/`.
+		expect((await probe(`/3dtiles/${tileset}/../other/tileset.json`))?.params).toEqual({
+			tileset: "other",
+			file: "tileset.json",
+		})
+	})
+
 	it("captures a dotted tile set name and the tile file whole", async () => {
 		const probe = routeProbe()
 
@@ -139,8 +154,8 @@ describe("createTileWorkerApp", () => {
 				"access-control-allow-origin"
 			)
 
-		await expect(originHeader("https://earth.mailwoman.ai")).resolves.toBe("https://earth.mailwoman.ai")
-		await expect(originHeader("https://moon.mailwoman.ai")).resolves.toBe("https://moon.mailwoman.ai")
+		await expect(originHeader("https://earth.mailwoman.post")).resolves.toBe("https://earth.mailwoman.post")
+		await expect(originHeader("https://moon.mailwoman.post")).resolves.toBe("https://moon.mailwoman.post")
 		await expect(originHeader("https://maplibre.org")).resolves.toBe("https://maplibre.org")
 		await expect(originHeader("vscode-webview://abc123")).resolves.toBe("vscode-webview://abc123")
 		await expect(originHeader("http://localhost:7781")).resolves.toBe("http://localhost:7781")
@@ -151,7 +166,7 @@ describe("createTileWorkerApp", () => {
 			{
 				method: "OPTIONS",
 				headers: {
-					origin: "https://earth.mailwoman.ai",
+					origin: "https://earth.mailwoman.post",
 					"access-control-request-method": "GET",
 					"access-control-request-headers": "range",
 				},
@@ -173,12 +188,12 @@ describe("createTileWorkerApp", () => {
 
 		const response = await app.request(
 			"http://localhost/planet.v4.json",
-			{ headers: { origin: "https://earth.mailwoman.ai" } },
+			{ headers: { origin: "https://earth.mailwoman.post" } },
 			{},
 			executionContext
 		)
 
 		await expect(response.json()).resolves.toEqual({ cached: true })
-		expect(response.headers.get("access-control-allow-origin")).toBe("https://earth.mailwoman.ai")
+		expect(response.headers.get("access-control-allow-origin")).toBe("https://earth.mailwoman.post")
 	})
 })

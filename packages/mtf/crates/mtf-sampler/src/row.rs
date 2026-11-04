@@ -25,6 +25,8 @@ pub struct Row {
 	pub labels: Vec<String>,
 	pub country: Option<String>,
 	pub source: String,
+	/// The row's stable identity, where the file stores `source_id`. It reaches no tensor.
+	pub source_id: Option<String>,
 	pub spans: Option<SpanTriple>,
 }
 

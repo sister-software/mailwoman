@@ -60,7 +60,7 @@ describe("licensedPullDecision", () => {
 		)
 
 		expect(decision.lines.join("\n")).toContain('mailwoman license evaluate --name "<you>" --email <address>')
-		expect(decision.lines.join("\n")).toContain("https://mailwoman.ai/license")
+		expect(decision.lines.join("\n")).toContain("https://mailwoman.post/license")
 	})
 
 	it("requests a single-artifact bundle under its tier and a multi-artifact bundle under the tier plus the path", () => {

@@ -78,7 +78,7 @@ function HomepageHeader(): ReactNode {
 					</p>
 
 					<HeroSearch
-						action="https://earth.mailwoman.ai/"
+						action="https://earth.mailwoman.post/"
 						placeholder={stop.query}
 						classes={{
 							form: styles.heroSearch,

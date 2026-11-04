@@ -476,6 +476,37 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 		expect(raw.slice(span_starts![regionIdx]!, span_ends![regionIdx]!)).toBe("AK")
 		expect(span_starts![regionIdx]).toBe(9)
 	})
+
+	it("binds a value to the occurrence in its own case before a case-folded one", () => {
+		const result = alignRow(
+			baseRow({
+				raw: "119 West UNION Street, WEST UNION, IL 62477",
+				components: {
+					house_number: "119",
+					street_prefix: "West",
+					street: "UNION",
+					street_suffix: "Street",
+					locality: "WEST UNION",
+					region: "IL",
+					postcode: "62477",
+				},
+			})
+		)
+
+		expect(result.kind).toBe("labeled")
+
+		if (result.kind !== "labeled") return
+
+		expect(result.row.span_tags).toEqual([
+			"house_number",
+			"street_prefix",
+			"street",
+			"street_suffix",
+			"locality",
+			"region",
+			"postcode",
+		])
+	})
 })
 
 describe("alignRow — combining-mark / non-Latin name variants (#555)", () => {

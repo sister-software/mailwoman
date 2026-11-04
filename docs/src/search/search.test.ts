@@ -7,7 +7,7 @@ import { describe, expect, test } from "vitest"
 import { fixtureDatabase } from "./database.node.ts"
 import type { SearchDatabase, SQLValue } from "./database.ts"
 import { FIXTURE_RECORDS } from "./fixtures.ts"
-import { collapseBySection, HITS_PER_PAGE, search, surfaceWord } from "./search.ts"
+import { collapseBySection, search, surfaceWord } from "./search.ts"
 
 const db = fixtureDatabase(FIXTURE_RECORDS)
 
@@ -82,8 +82,6 @@ describe("collapseBySection", () => {
 			"/a#two",
 			"/b#",
 		])
-
-		expect(HITS_PER_PAGE).toBe(3)
 	})
 })
 

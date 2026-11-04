@@ -11,6 +11,7 @@ import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { SeededRandom } from "@mailwoman/core/utils"
+import { compactPostcode } from "@mailwoman/postcode/display-form"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 import type { PathBuilderLike } from "path-ts"
@@ -141,7 +142,7 @@ export function renderBarePostcode(country: string, postcode: string): string[] 
 
 	if (!form) return []
 
-	return form.render(postcode.trim().toUpperCase().replaceAll(/\s+/gu, ""))
+	return form.render(compactPostcode(postcode))
 }
 
 /**

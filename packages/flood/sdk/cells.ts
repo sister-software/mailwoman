@@ -7,7 +7,7 @@
  *
  *   the classifier itself lives IN `@mailwoman/spatial`, re-exported below so this package's call sites and
  *   its `@mailwoman/flood/sdk/cells` subpath keep reading the same. `classifyFeatureCells` and the
- *   allocator-avoiding shortcuts around it are properties of h3-js rather than of this product — the layer
+ *   allocator-avoiding shortcuts around it are properties of H3 rather than of this product — the layer
  *   interface's polygon-builder section states them as requirements on every polygon builder — and a second
  *   copy of the zero-cell guard is a second place for it to stop guarding.
  *
@@ -18,15 +18,15 @@
  *   do not.
  */
 
-import { compactAcrossResolutions, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
-import { getResolution } from "h3-js"
+import { compactAcrossResolutions, shortCellToInt, type FeatureCells } from "@mailwoman/spatial"
+import { getResolution, type H3Cell } from "@sister.software/h3"
 
 /**
  * A zone's accumulated cell sets across every feature carrying that zone code.
  */
 interface ZoneAccumulator {
-	whole: Set<string>
-	touched: Set<string>
+	whole: Set<H3Cell>
+	touched: Set<H3Cell>
 }
 
 /**
@@ -77,7 +77,7 @@ export interface CellIndexMeasurement {
  * Accumulate one resolution's cell index over a stream of features.
  *
  * Held as short-cell strings rather than the integers the tables store, because `compactCells`
- * and `cellToParent` are h3-js functions over full indexes and round-tripping through
+ * and `cellToParent` are H3 functions over full indexes and round-tripping through
  * the integer form at every step would cost more than the strings do.
  */
 export class FloodCellIndex {
@@ -93,7 +93,7 @@ export class FloodCellIndex {
 	 *
 	 * The index can identify those cells only after it sees every feature.
 	 */
-	readonly #candidates = new Map<string, Set<string>>()
+	readonly #candidates = new Map<H3Cell, Set<string>>()
 
 	#coarsened = 0
 
@@ -181,7 +181,7 @@ export class FloodCellIndex {
 				resolutions.add(resolution)
 
 				zoneCells.push({
-					h3Cell: shortCellToInt(cell as H3Cell),
+					h3Cell: shortCellToInt(cell),
 					resolution,
 					zoneCode,
 					containment: "whole",
@@ -201,7 +201,7 @@ export class FloodCellIndex {
 				partialForZone++
 
 				zoneCells.push({
-					h3Cell: shortCellToInt(cell as H3Cell),
+					h3Cell: shortCellToInt(cell),
 					resolution,
 					zoneCode,
 					containment: "partial",
@@ -228,7 +228,7 @@ export class FloodCellIndex {
 			// reached it, so its candidate list would never be read.
 			if (!partialCellKeys.has(cell)) continue
 
-			const h3Cell = shortCellToInt(cell as H3Cell)
+			const h3Cell = shortCellToInt(cell)
 			const resolution = getResolution(cell)
 
 			for (const areaID of areas) {

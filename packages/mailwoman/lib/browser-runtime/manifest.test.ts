@@ -139,7 +139,7 @@ describe("fetchPairIndexManifest — the countries a pair-index generation holds
 			countries: ["gb", "nz", "us"],
 		})
 
-		expect(requested).toEqual(["https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/index.json"])
+		expect(requested).toEqual(["https://public.mailwoman.post/mailwoman/pair-index/2026-10-17/index.json"])
 	})
 
 	test("answers null with a warning when the bucket holds no manifest at the generation", async () => {

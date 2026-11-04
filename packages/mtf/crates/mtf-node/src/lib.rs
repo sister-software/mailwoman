@@ -113,6 +113,7 @@ fn to_row(row: SampledRow, index: usize) -> Result<Row> {
 		labels: row.labels,
 		country: row.country,
 		source: row.source,
+		source_id: None,
 		spans,
 	})
 }

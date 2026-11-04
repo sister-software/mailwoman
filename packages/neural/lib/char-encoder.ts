@@ -8,8 +8,8 @@ import { familyFallbackFor } from "#weights/families"
 
 /**
  * @file The character encoder for char-path models. It uses one unit per Unicode code point rather than per
- *   UTF-16 unit, matching Python's treatment of astral characters. The classifier imports this module
- *   into the browser bundle, so it reaches no `node:` module.
+ *   UTF-16 unit, matching the training encoder's treatment of astral characters. The classifier imports this
+ *   module into the browser bundle, so it reaches no `node:` module.
  */
 
 /**

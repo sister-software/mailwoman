@@ -19,7 +19,31 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
-_No unreleased changes._
+### Changed — H3 indexing moves from `h3-js` to `@sister.software/h3`
+
+Every workspace that indexed with `h3-js` 4.5.0 now depends on `@sister.software/h3` 1.0.0, a Rust port of
+the H3 C library compiled to WebAssembly with the same function names, argument order and cell strings. The
+import lines are the only change: initialization is implicit, so every call stays synchronous.
+
+h3-js allocated a 32 MiB heap when its module was first evaluated, which was the largest single part of a
+Worker isolate's 128 MB. The new package instantiates a module of about 174 KB on the first H3 call
+instead.
+
+Both libraries recomputed the stored res-9 `h3_cell` columns of two shipped layers:
+
+- `uprn.db`: all 41,629,393 rows match.
+- `poi.db`: 1,490 of 14,664,001 rows (0.010%) get the neighboring cell.
+
+Every one of those 1,490 points lies within about 3e-16 rad of a cell edge, closer than the two libraries'
+floating-point math agree. Most share one Overture confidence score, which points to a single upstream source that places POIs on
+res-9 edges. Lookups
+search a ring of cells, so such a place is still found. A rebuild of the layer realigns the column with the
+runtime library.
+
+Error behavior differs on invalid input. An out-of-range resolution or a non-finite coordinate now
+throws `RangeError`, and `polygonToCells([], res)` throws rather than returning `[]`. The package's
+`docs/api-decisions.md` lists every difference. `@deck.gl/geo-layers` still brings in `h3-js` as its own
+dependency.
 
 ## 10.0.0 — 2026-09-12
 
@@ -392,7 +416,7 @@ not trust. `verifyConfiguredLicenseKey` reads the key file when `MAILWOMAN_LICEN
 --online` and `mailwoman doctor` report the per-license status as a fifth word beside the key-id publication: `active`,
 `lapsed`, `revoked`, `unknown`, or `unreachable`. New in core: `@mailwoman/core/license/status` (the worker client),
 `decodeLicenseKeyPayload`, and the env var `MAILWOMAN_LICENSE_URL`. `mailwoman --version` loads 136 modules, from 132.
-The key-id publication gains a word: `unpublished`, when mailwoman.ai answers and has no register at the well-known
+The key-id publication gains a word: `unpublished`, when mailwoman.post answers and has no register at the well-known
 path (a 4xx, or a body that is not a register), kept apart from `unreachable`, which stays a network answer. Neither
 changes the branch. The doctor reports which one it saw.
 
@@ -436,10 +460,10 @@ Every JSON record the CLI emits (`geocode --json`, `reverse --json`, `autocomple
 Nominatim result, and the Photon FeatureCollection include an `engine` object: `name`, `version`, the license branch that
 applies (`AGPL-3.0-only` or `LicenseRef-Commercial`), `license_url`, and, under the open-source branch, a one-sentence
 `notice`. Every HTTP response from the four servers sends `Server: mailwoman/<version> (<license>)` and
-`Link: <https://mailwoman.ai/license>; rel="license"`. Every CLI invocation ends with the same notice on stderr, and each
+`Link: <https://mailwoman.post/license>; rel="license"`. Every CLI invocation ends with the same notice on stderr, and each
 server prints it once at listen. A valid `MAILWOMAN_LICENSE_KEY` silences the notice, and no other setting does. The stamp never
 includes the licensee or the key id. These changes leave runtime behavior unchanged. The page the stamp links to is new:
-`https://mailwoman.ai/license`.
+`https://mailwoman.post/license`.
 
 ### Changed — `mailwoman autocomplete --json` wraps its array
 

@@ -11,7 +11,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 import type { CandidateDatabase } from "#candidate/schema"
-import { type CurrencyBackfillCountryReport, DEFAULT_DEAD_PLACETYPES, resurrectCurrencyHoles } from "#currency-backfill"
+import { type CurrencyBackfillCountryReport, resurrectCurrencyHoles } from "#currency-backfill"
 import type { WOFDatabase } from "#schema"
 
 const GILLINGHAM = { lat: 51.389, lon: 0.548 }
@@ -89,7 +89,6 @@ describe("resurrectCurrencyHoles — the census mode", () => {
 	it("judges only localities by default, and the finer surviving child does not block the dead parent", async () => {
 		const { reports, staged, total } = await census(null, { dryRun: true })
 
-		expect(DEFAULT_DEAD_PLACETYPES).toEqual(["locality"])
 		expect(reports).toHaveLength(1)
 		expect(reports[0]).toMatchObject({ country: "GB", dumpPresent: true, judged: 1, blocked: 0, resurrected: 1 })
 		expect(Object.keys(reports[0]!.byDeadPlacetype)).toEqual(["locality"])

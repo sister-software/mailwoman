@@ -1,0 +1,14 @@
+[package]
+name = "hrt-e"
+description = "The Hilbert Rust Tiler's Mapbox Vector Tile encoder: layers with interned keys and values, and zig-zag delta geometry commands."
+version.workspace = true
+edition.workspace = true
+license = "AGPL-3.0-only OR LicenseRef-Commercial"
+repository.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+flate2 = "1"
+hrt-pmtiles = { path = "../hrt-pmtiles" }
+tempfile = "3"

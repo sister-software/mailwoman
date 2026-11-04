@@ -34,6 +34,8 @@ struct RowGroup {
 	labels: StrListColumn,
 	country: StrColumn,
 	source: StrColumn,
+	/// Present when the file stores `source_id`, so a consumed row keeps its stable identity for the exposure record.
+	source_id: Option<StrColumn>,
 	spans: Option<(IntListColumn, IntListColumn, StrListColumn)>,
 	admitted: Option<Vec<bool>>,
 	order: Vec<usize>,
@@ -100,18 +102,21 @@ impl FileRows {
 		if self.has_spans {
 			columns.extend(SPAN_COLUMNS);
 		}
-		if self.row_filter.is_some() {
+		let has_source_id = self.row_filter.is_some() || file.has_column("source_id");
+		if has_source_id {
 			columns.push("source_id");
 		}
 		let batch = file.read_row_group(index, &columns)?;
 		let path = &self.path;
 		let get = |name: &str| column(&batch, name, path);
-		let admitted = match &self.row_filter {
-			Some(filter) => {
-				let ids = StrColumn::new(get("source_id")?, "source_id")?;
-				Some((0..ids.len()).map(|i| filter.admits(ids.get(i))).collect())
-			}
-			None => None,
+		let source_id = if has_source_id {
+			Some(StrColumn::new(get("source_id")?, "source_id")?)
+		} else {
+			None
+		};
+		let admitted = match (&self.row_filter, &source_id) {
+			(Some(filter), Some(ids)) => Some((0..ids.len()).map(|i| filter.admits(ids.get(i))).collect()),
+			_ => None,
 		};
 		let spans = if self.has_spans {
 			Some((
@@ -131,6 +136,7 @@ impl FileRows {
 			labels: StrListColumn::new(get("labels")?, "labels")?,
 			country: StrColumn::new(get("country")?, "country")?,
 			source: StrColumn::new(get("source")?, "source")?,
+			source_id,
 			spans,
 			admitted,
 			order,
@@ -261,6 +267,7 @@ impl FileRows {
 				labels,
 				country: country.map(str::to_owned),
 				source,
+				source_id: group.source_id.as_ref().and_then(|ids| ids.get(i)).map(str::to_owned),
 				spans,
 			}));
 		}

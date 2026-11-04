@@ -85,7 +85,7 @@ describe("basemapBOMComponent", () => {
 	it("lists every input with its elected license and credit", () => {
 		const component = basemapBOMComponent({
 			basemap: Basemap.MailwomanBuild,
-			url: "https://public.mailwoman.ai/protomaps/builds/japan-2026-10-22.pmtiles",
+			url: "https://public.mailwoman.post/protomaps/builds/japan-2026-10-22.pmtiles",
 			version: "2026-10-22",
 			license: "ODbL-1.0",
 		})

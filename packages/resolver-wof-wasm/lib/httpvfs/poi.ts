@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import type { POIDistanceHit } from "@mailwoman/core/resolver"
-import { haversine, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
-import { gridDisk, latLngToCell } from "h3-js"
+import { haversine, shortCellToInt } from "@mailwoman/spatial"
+import { gridDisk, latLngToCell } from "@sister.software/h3"
 
 import { memoizeResettable, type RangeDatabase } from "#httpvfs/database"
 
@@ -101,12 +101,12 @@ export async function searchPOICategory(database: RangeDatabase, opts: POISearch
 
 	if (!categoryIDs.length) return []
 
-	const origin = latLngToCell(opts.center.lat, opts.center.lon, POI_H3_RESOLUTION) as H3Cell
+	const origin = latLngToCell(opts.center.lat, opts.center.lon, POI_H3_RESOLUTION)
 	const seenCells = new Set<string>()
 	const rows: POIRow[] = []
 
 	for (let ring = 0; ring < maxRings; ring++) {
-		const ringCells = (gridDisk(origin, ring) as H3Cell[]).filter((cell) => !seenCells.has(cell))
+		const ringCells = gridDisk(origin, ring).filter((cell) => !seenCells.has(cell))
 
 		for (const cell of ringCells) {
 			seenCells.add(cell)

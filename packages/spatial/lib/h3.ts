@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { cellToLatLng } from "h3-js"
+import { cellToLatLng, type H3Cell } from "@sister.software/h3"
 
 import { GeoPoint } from "#geometries/point"
 import type { PointLiteral } from "#geometries/point/coordinates"
-import { type H3Cell, type H3CellShort, expandH3Cell } from "#h3/cell"
+import { type H3CellShort, expandH3Cell } from "#h3/cell"
 
 export * from "#h3/cell"
 export * from "#h3/interior-cells"

@@ -13,6 +13,7 @@
  *   and test rows stay out.
  */
 
+import { countriesDeclaredBy, hasCountry } from "@mailwoman/codex/country/sets"
 import { directoryHasEntries, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -34,10 +35,18 @@ import {
 import { openParquetRowStream } from "#parquet/streams"
 import { pythonRepr } from "#training/config/python-yaml"
 
+// country-branch: membership is the country list of the CJK family's own corpora,
+// which no table records yet.
+// The CJK corpus manifests' country columns would replace it.
 /**
  * Countries whose rows the CJK family already reads from its own sources.
+ *
+ * Every member writes an official language in Han, Kana or Hangul
+ * (`foreign-places.test.ts` checks it against `countriesOfScript`).
+ * The script sets also hold SG, whose Chinese-script rows the CJK family reads from
+ * no source of its own, so they stay foreign rows and route here.
  */
-export const CJK_COUNTRIES: ReadonlySet<string> = new Set(["JP", "CN", "TW", "HK", "MO", "KR", "KP"])
+export const CJK_COUNTRIES = countriesDeclaredBy("CJK family corpora", ["JP", "CN", "TW", "HK", "MO", "KR", "KP"])
 
 /**
  * The least share of a row's letters in Han, Kana or Hangul for the row to route to the CJK family.
@@ -135,7 +144,7 @@ export function cjkShare(text: string): number {
  * Whether a row is a CJK-script place row of a country outside {@linkcode CJK_COUNTRIES}.
  */
 export function isForeignCJKRow(row: { raw: string; country: string }): boolean {
-	return !CJK_COUNTRIES.has(row.country) && cjkShare(row.raw) >= MIN_CJK_SHARE
+	return !hasCountry(CJK_COUNTRIES, row.country) && cjkShare(row.raw) >= MIN_CJK_SHARE
 }
 
 /**

@@ -6,10 +6,9 @@
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
-import { latLngToCell } from "h3-js"
+import { shortCellToInt } from "@mailwoman/spatial"
+import { latLngToCell, type H3Cell } from "@sister.software/h3"
 import type { Kysely } from "kysely"
-
 /**
  * Resolution the `uprn` table's `h3_cell` column is keyed at, shared with the other layer spines.
  */
@@ -64,7 +63,7 @@ export interface UPRNDatabase extends layerschemadatabase {
  * This is the one derivation the builder and its consumers share so their cells cannot disagree.
  */
 export function uprnFullCell(latitude: number, longitude: number): H3Cell {
-	return latLngToCell(latitude, longitude, UPRN_H3_RESOLUTION) as H3Cell
+	return latLngToCell(latitude, longitude, UPRN_H3_RESOLUTION)
 }
 
 /**

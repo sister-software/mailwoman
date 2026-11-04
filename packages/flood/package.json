@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/flood",
-	"version": "10.7.0",
+	"version": "10.8.0",
 	"description": "Environment Agency Flood Map for Planning (England) — acquisition, build, and the flood.db layer reader",
 	"keywords": [
 		"environment-agency",
@@ -79,7 +79,7 @@
 		"@mailwoman/dossier": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"h3-js": "^4.5.0",
+		"@sister.software/h3": "^1.1.0",
 		"kysely": "^0.29.7",
 		"path-ts": "^2.5.0"
 	},

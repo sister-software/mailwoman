@@ -6,9 +6,9 @@
  */
 
 import { allRows } from "@mailwoman/core/utils"
-import { haversine, shortCellToInt, type GeoCoordinate, type H3Cell } from "@mailwoman/spatial"
+import { haversine, shortCellToInt, type GeoCoordinate } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { gridDisk } from "h3-js"
+import { gridDisk } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import type { UPRNDatabase } from "#uprn/schema"
@@ -127,13 +127,13 @@ export class UPRNLookup implements Disposable {
 
 			if (closestPossibleM > Math.min(radiusM, best?.distanceM ?? radiusM)) break
 
-			const diskCells = gridDisk(origin, ring) as string[]
+			const diskCells = gridDisk(origin, ring)
 			const newCells: number[] = []
 
 			for (const cell of diskCells) {
 				if (!seenCells.has(cell)) {
 					seenCells.add(cell)
-					newCells.push(shortCellToInt(cell as H3Cell))
+					newCells.push(shortCellToInt(cell))
 				}
 			}
 

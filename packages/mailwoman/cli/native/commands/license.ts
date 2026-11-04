@@ -6,7 +6,7 @@
  *   customers and installations. `keygen` creates an Ed25519 signing pair in the config root and prints the
  *   public key with its key id. `issue` signs a payload with the private key and prints the token.
  *   `verify` checks a token (or the configured token) offline against this build's register. With `--online`,
- *   it asks mailwoman.ai whether the key id remains listed and asks the license worker whether the license is active.
+ *   it asks mailwoman.post whether the key id remains listed and asks the license worker whether the license is active.
  *   `register` prints the well-known file derived from the register. The `--write` flag writes it under `docs/static`.
  *   `adopt` writes a purchased token to the config-root key file and stores its refresh secret beside it.
  *   `refresh` exchanges that secret for the current token after renewal. Neither command writes a token this build cannot verify.
@@ -157,7 +157,7 @@ export const spec = {
 			type: "boolean",
 			default: false,
 			description:
-				"verify: also ask mailwoman.ai's well-known register whether the key id is still listed, and the license worker whether a self-service license still stands.",
+				"verify: also ask mailwoman.post's well-known register whether the key id is still listed, and the license worker whether a self-service license still stands.",
 		},
 		write: {
 			type: "boolean",
@@ -668,7 +668,7 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 		}
 
 		if (publication) {
-			lines.push(`mailwoman.ai: ${publication} (${licenseKeysWellKnownURL()})`)
+			lines.push(`mailwoman.post: ${publication} (${licenseKeysWellKnownURL()})`)
 		}
 
 		if (lidStatus) {

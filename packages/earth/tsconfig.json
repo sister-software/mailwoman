@@ -29,6 +29,7 @@
 		{ "path": "../resolver-wof-wasm" },
 		{ "path": "../../lib" },
 		{ "path": "../spatial" },
-		{ "path": "../structures" }
+		{ "path": "../structures" },
+		{ "path": "../undersea" }
 	]
 }

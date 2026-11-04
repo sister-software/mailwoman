@@ -82,7 +82,7 @@ Three decisions recorded here that refine the spec:
   	license_url: string
   	notice?: string
   }
-  export const DEFAULT_DOCS_URL = "https://mailwoman.ai"
+  export const DEFAULT_DOCS_URL = "https://mailwoman.post"
   export const LICENSE_PAGE_PATH = "/license"
   export function licensePageURL(docsURL?: string): string
   export function buildEngineStamp(input: {
@@ -138,8 +138,8 @@ const unknownKey = verifyLicenseKey(token, { trustedKeys: {}, now: new Date("202
 const invalid = verifyLicenseKey("mwl1.not.real", { trustedKeys })
 
 describe("licensePageURL", () => {
-	it("defaults to mailwoman.ai and strips a trailing slash", () => {
-		expect(licensePageURL()).toBe("https://mailwoman.ai/license")
+	it("defaults to mailwoman.post and strips a trailing slash", () => {
+		expect(licensePageURL()).toBe("https://mailwoman.post/license")
 		expect(licensePageURL("http://localhost:3000/")).toBe("http://localhost:3000/license")
 	})
 })
@@ -152,7 +152,7 @@ describe("buildEngineStamp", () => {
 			name: "mailwoman",
 			version: "9.2.0",
 			license: "AGPL-3.0-only",
-			license_url: "https://mailwoman.ai/license",
+			license_url: "https://mailwoman.post/license",
 			notice:
 				"mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. A commercial license waives that obligation.",
 		})
@@ -201,7 +201,7 @@ describe("licenseNoticeLines", () => {
 
 		expect(licenseNoticeLines(stamp)).toEqual([
 			"mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source.",
-			"A commercial license waives that obligation: https://mailwoman.ai/license",
+			"A commercial license waives that obligation: https://mailwoman.post/license",
 		])
 	})
 
@@ -248,7 +248,7 @@ Expected: fail — `buildEngineStamp` is not exported from `@mailwoman/core/lice
 import type { LicenseKeyVerification } from "#license/key"
 import { chooseLicenseBranch } from "#license/obligations"
 
-export const DEFAULT_DOCS_URL = "https://mailwoman.ai"
+export const DEFAULT_DOCS_URL = "https://mailwoman.post"
 
 /**
  * The page the notice and the `Link: rel="license"` header point at. Singular, matching `license_url` and the `license`
@@ -413,7 +413,7 @@ describe("printLicenseNotice", () => {
 				name: "mailwoman" as const,
 				version: "0.0.0",
 				license: "AGPL-3.0-only",
-				license_url: "https://mailwoman.ai/license",
+				license_url: "https://mailwoman.post/license",
 				notice: "x",
 			},
 		}
@@ -422,14 +422,14 @@ describe("printLicenseNotice", () => {
 				name: "mailwoman" as const,
 				version: "0.0.0",
 				license: "LicenseRef-Commercial",
-				license_url: "https://mailwoman.ai/license",
+				license_url: "https://mailwoman.post/license",
 			},
 		}
 		const written: string[] = []
 
 		printLicenseNotice(open, (line) => written.push(line))
 		expect(written).toHaveLength(2)
-		expect(written[1]).toContain("https://mailwoman.ai/license")
+		expect(written[1]).toContain("https://mailwoman.post/license")
 
 		written.length = 0
 		printLicenseNotice(commercial, (line) => written.push(line))
@@ -801,7 +801,7 @@ const stamp: EngineStamp = {
 	name: "mailwoman",
 	version: "9.2.0",
 	license: "AGPL-3.0-only",
-	license_url: "https://mailwoman.ai/license",
+	license_url: "https://mailwoman.post/license",
 	notice: "n",
 }
 
@@ -832,7 +832,7 @@ test("engineHeaders: Server and Link ride on a 200", async () => {
 
 	expect(res.status).toBe(200)
 	expect(res.headers.get("server")).toBe("mailwoman/9.2.0 (AGPL-3.0-only)")
-	expect(res.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+	expect(res.headers.get("link")).toBe('<https://mailwoman.post/license>; rel="license"')
 })
 
 test("engineHeaders: the headers ride on the error net's 500 too", async () => {
@@ -978,7 +978,7 @@ const stamp: EngineStamp = {
 	name: "mailwoman",
 	version: "9.2.0",
 	license: "AGPL-3.0-only",
-	license_url: "https://mailwoman.ai/license",
+	license_url: "https://mailwoman.post/license",
 	notice: "n",
 }
 
@@ -997,12 +997,12 @@ test("engine option: every /v1 body carries `engine` and every response carries 
 	]) {
 		expect(res.status).toBe(200)
 		expect(res.headers.get("server")).toBe("mailwoman/9.2.0 (AGPL-3.0-only)")
-		expect(res.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+		expect(res.headers.get("link")).toBe('<https://mailwoman.post/license>; rel="license"')
 		expect(((await res.json()) as { engine: EngineStamp }).engine).toEqual(stamp)
 	}
 
 	const health = await app.request("/health")
-	expect(health.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+	expect(health.headers.get("link")).toBe('<https://mailwoman.post/license>; rel="license"')
 	expect((await health.json()) as object).not.toHaveProperty("engine")
 })
 
@@ -1135,7 +1135,7 @@ const stamp: EngineStamp = {
 	name: "mailwoman",
 	version: "9.2.0",
 	license: "AGPL-3.0-only",
-	license_url: "https://mailwoman.ai/license",
+	license_url: "https://mailwoman.post/license",
 	notice: "n",
 }
 
@@ -1143,7 +1143,7 @@ test("engine option: each jsonv2 result carries `engine` beside an unchanged `li
 	const app = createNominatimApp(fixtureEngine, { engine: stamp })
 
 	const jsonv2 = await app.request("/search?q=1600+Pennsylvania&format=jsonv2")
-	expect(jsonv2.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+	expect(jsonv2.headers.get("link")).toBe('<https://mailwoman.post/license>; rel="license"')
 	const results = (await jsonv2.json()) as Array<{ licence: string; engine: EngineStamp }>
 	expect(results.length).toBeGreaterThan(0)
 	for (const r of results) {
@@ -1240,7 +1240,7 @@ const stamp: EngineStamp = {
 	name: "mailwoman",
 	version: "9.2.0",
 	license: "AGPL-3.0-only",
-	license_url: "https://mailwoman.ai/license",
+	license_url: "https://mailwoman.post/license",
 	notice: "n",
 }
 
@@ -1317,7 +1317,7 @@ const stamp: EngineStamp = {
 	name: "mailwoman",
 	version: "9.2.0",
 	license: "AGPL-3.0-only",
-	license_url: "https://mailwoman.ai/license",
+	license_url: "https://mailwoman.post/license",
 	notice: "n",
 }
 
@@ -1333,7 +1333,7 @@ test("engine option: headers only — the /parse body is byte-identical with and
 	const plain = await request(createLibpostalApp(fixtureEngine))
 
 	expect(stamped.headers.get("server")).toBe("mailwoman/9.2.0 (AGPL-3.0-only)")
-	expect(stamped.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+	expect(stamped.headers.get("link")).toBe('<https://mailwoman.post/license>; rel="license"')
 	expect(plain.headers.get("server")).toBeNull()
 	expect(await stamped.text()).toBe(await plain.text())
 })
@@ -1505,7 +1505,7 @@ mailwoman doctor
 ````
 
 `license verify` reports `valid`, `expired`, `unknown_key` or `invalid`, and with `--online` also whether
-mailwoman.ai still lists the key id as active. `doctor` reports the branch that applies and the
+mailwoman.post still lists the key id as active. `doctor` reports the branch that applies and the
 obligations that branch imposes. With a valid key the notice is silent and `engine.license` reads
 `LicenseRef-Commercial`.
 
@@ -1549,7 +1549,7 @@ Every JSON record the CLI emits (`geocode --json`, `reverse --json`, `autocomple
 Nominatim result, and the Photon FeatureCollection carry an `engine` object: `name`, `version`, the license branch that
 applies (`AGPL-3.0-only` or `LicenseRef-Commercial`), `license_url`, and, under the open-source branch, a one-sentence
 `notice`. Every HTTP response from the four servers carries `Server: mailwoman/<version> (<license>)` and
-`Link: <https://mailwoman.ai/license>; rel="license"`. Every CLI invocation ends with the same notice on stderr, and each
+`Link: <https://mailwoman.post/license>; rel="license"`. Every CLI invocation ends with the same notice on stderr, and each
 server prints it once at listen. A valid `MAILWOMAN_LICENSE_KEY` silences the notice; nothing else does. The stamp never
 carries the licensee or the key id. Nothing here changes what runs.
 ```

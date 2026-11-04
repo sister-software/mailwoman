@@ -25,6 +25,11 @@
  *   Each row is parsed by its country's shipped locale package (`HELDOUT_INFERENCE_RULE`), so every arm's cache
  *   must hold every package the rows need. The report records the rule and the country-to-package map.
  *
+ *   Rows are parsed on `--workers` worker threads (`heldout/per/parse-cache`). Parses are kept under
+ *   `$MAILWOMAN_DATA_ROOT/models/arms/heldout-parses/` and read back when the rows, the weights files and the commit
+ *   all match, so a rerun or an added arm parses only what is new. The report's `parses` entry records, per arm,
+ *   the cache file read or written, or why the cache was left unused. `--no-parse-cache` parses every arm again.
+ *
  *   After the per-country table it prints the exact-parse difference split by row kind, by provenance, by both,
  *   and by source within the unseen address rows, with the equal-country rate on address rows. `--from-report
  *   <report .json>` prints those splits from a report this command wrote earlier, without parsing.
@@ -42,11 +47,13 @@ import {
 	HELDOUT_CAPABILITY_CELL,
 	HELDOUT_INFERENCE_RULE,
 	type HeldoutArmResult,
+	heldoutRowID,
+	heldoutWeightsLocale,
 	readHeldoutLocalePackages,
 	type ProvenanceHistory,
 	type ProvenanceRecord,
 	sampleHeldoutRows,
-	scoreHeldoutWeights,
+	scoreHeldoutArm,
 } from "#tools/eval-harness/heldout/per/country"
 import {
 	byKindAndProvenance,
@@ -57,6 +64,7 @@ import {
 	formatPairedSplits,
 	splitPairedOutcomes,
 } from "#tools/eval-harness/heldout/per/paired-splits"
+import { type HeldoutParseSource, parseHeldoutRows } from "#tools/eval-harness/heldout/per/parse-cache"
 import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
 import {
 	capabilityProbeSources,
@@ -115,6 +123,12 @@ const { values } = parseArguments({
 			default: CURRENT_RELEASE_SPEC,
 			description:
 				"The release specification whose capability requirements name the probe sources kept out of the address cells",
+		},
+		workers: { type: "string", default: "6", description: "Parse worker threads" },
+		threads: { type: "string", default: "2", description: "ONNX threads per parse worker" },
+		"no-parse-cache": {
+			type: "boolean",
+			description: "Parse every arm again rather than reading parses cached for the same rows, weights and commit",
 		},
 	},
 })
@@ -236,23 +250,29 @@ async function scoreAndReport(): Promise<void> {
 	const packages = await readHeldoutLocalePackages()
 	const capabilitySources = capabilityProbeSources(await readReleaseSpec(values.spec))
 
+	const parseSources: HeldoutParseSource[] = []
+
 	for (const [index, arm] of arms.entries()) {
 		console.error(`scoring arm ${index + 1} of ${arms.length}: ${arm}`)
 
-		const started = performance.now()
+		const { parses, source } = await parseHeldoutRows(rows, arm, {
+			packages,
+			workers: Number(values.workers),
+			threads: Number(values.threads),
+			...(values["no-parse-cache"] ? { cacheDirectory: null } : {}),
+		})
 
-		const onRow = (done: number, total: number) => {
-			if (done % 1000 && done !== total) return
-			const seconds = (performance.now() - started) / 1000
-			const remaining = ((total - done) * seconds) / done
+		parseSources.push(source)
 
-			console.error(
-				`  ${done}/${total} rows, ${(done / seconds).toFixed(1)} rows/s, ` +
-					`${Math.round(seconds / 60)} min elapsed, about ${Math.round(remaining / 60)} min left in this arm`
+		scored.push(
+			await scoreHeldoutArm(
+				rows,
+				async (row) => parses.get(heldoutRowID(row))!,
+				history,
+				(row) => heldoutWeightsLocale(row.country, packages),
+				capabilitySources
 			)
-		}
-
-		scored.push(await scoreHeldoutWeights(rows, arm, history, { packages, capabilitySources, onRow }))
+		)
 	}
 
 	assertPairedArms(scored)
@@ -301,6 +321,7 @@ async function scoreAndReport(): Promise<void> {
 			provenance: values.provenance ?? null,
 			capabilitySources: { spec: values.spec, sources: [...capabilitySources].toSorted() },
 			inference: { rule: HELDOUT_INFERENCE_RULE, packages: Object.fromEntries(packages) },
+			parses: arms.map((arm, i) => ({ arm, ...parseSources[i]! })),
 			rows: rows.length,
 			arms,
 			countries: report,

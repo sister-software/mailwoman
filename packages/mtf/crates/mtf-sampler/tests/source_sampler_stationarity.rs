@@ -20,6 +20,7 @@ fn main_st(source: &str, n: usize, country: &str) -> Vec<Row> {
 			labels: vec!["O".into(); 4],
 			country: Some(country.into()),
 			source: source.into(),
+			source_id: None,
 			spans: None,
 		})
 		.collect()

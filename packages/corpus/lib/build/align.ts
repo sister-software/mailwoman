@@ -23,6 +23,7 @@ import {
 	type AlignOutputName,
 	type AlignSettings,
 } from "#build/checkpoint"
+import { componentFindings, ENFORCED_COMPONENT_RULES } from "#build/component-check"
 import { createIneligibilityReader } from "#build/eligibility"
 import { streamJSONL } from "#build/rows"
 import type { BuildProfile, BuildStage } from "#build/types"
@@ -283,6 +284,20 @@ export function createRowAligner(opts: RowAlignerOptions): (row: CanonicalRow) =
 			tally.excludedByEligibility++
 
 			quarantine(row, `source-ineligible:${ineligible.join("; ")}`)
+
+			return
+		}
+
+		// A row whose values fail its country's rules or contradict each other (#2898) is
+		// quarantined before augmentation, so no variant inherits the wrong value.
+		const invalid = componentFindings(row.components, row.country).filter((finding) =>
+			ENFORCED_COMPONENT_RULES.has(finding.rule)
+		)
+
+		if (invalid.length) {
+			quarantine(row, invalid.map((finding) => `component-invalid:${finding.rule}`).join("; "))
+
+			tally.quarantined++
 
 			return
 		}

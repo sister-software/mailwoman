@@ -12,7 +12,7 @@ import { MapboxOverlay } from "@deck.gl/mapbox"
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers"
 import { Tiles3DLoader } from "@loaders.gl/3d-tiles"
 import { BUILDING_MODELED_STATE } from "@mailwoman/cartographer/base/buildings"
-import { MailwomanBaseTileSetID } from "@mailwoman/cartographer/base/theme"
+import { MailwomanBaseTileSetID, MailwomanBuildingsTileSetID } from "@mailwoman/cartographer/base/theme"
 import { TreeLayers, TreePalette } from "@mailwoman/cartographer/base/trees"
 import plateauTilesets from "@mailwoman/structures/data/plateau-tilesets.json" with { type: "json" }
 import { electedPlateauTilesets, plateauTilesetsInView, type PlateauTileset } from "@mailwoman/structures/jp/plateau"
@@ -22,6 +22,8 @@ import type { Map as MapInstance } from "maplibre-gl"
 import type React from "react"
 import { useEffect, useMemo } from "react"
 import { useControl, useMap } from "react-map-gl/maplibre"
+
+import { pageTilesetParam } from "#routes"
 
 import {
 	broadleafTreeMesh,
@@ -102,6 +104,12 @@ function exposeTransform(map: MapInstance): void {
 /**
  * The PLATEAU building tilesets whose CKAN record states the elected site policy.
  */
+/**
+ * Whether the page draws buildings with the GPU building layer.
+ * That layer also draws the converted city models.
+ */
+const GPU_BUILDINGS = pageTilesetParam("buildings3d") !== null
+
 const CITY_MODELS = electedPlateauTilesets(
 	plateauTilesets.map(({ bounds: [west = 0, south = 0, east = 0, north = 0], ...tileset }): PlateauTileset => ({
 		...tileset,
@@ -253,11 +261,13 @@ function containsPoint({ bounds: [west, south, east, north] }: PlateauTileset, [
  * `marked` holds the ids currently in the modeled state.
  */
 function markModeledFootprints(map: MapInstance, cityModels: PlateauTileset[], marked: Set<string | number>): void {
-	const target = { source: MailwomanBaseTileSetID, sourceLayer: "buildings" }
+	// The footprints come from the separate buildings tileset when the style loads one, else from the basemap.
+	const source = map.getSource(MailwomanBuildingsTileSetID) ? MailwomanBuildingsTileSetID : MailwomanBaseTileSetID
+	const target = { source, sourceLayer: "buildings" }
 	const covered = new Set<string | number>()
 
 	if (cityModels.length) {
-		for (const feature of map.querySourceFeatures(MailwomanBaseTileSetID, { sourceLayer: "buildings" })) {
+		for (const feature of map.querySourceFeatures(source, { sourceLayer: "buildings" })) {
 			const { id, geometry } = feature
 
 			if (id == null || covered.has(id)) continue
@@ -455,7 +465,8 @@ export const Scene3D: React.FC = () => {
 				changed = pruneDistant(map, props) || changed
 			}
 
-			const cityModels = cityModelsToKeep(map, keptCityModels)
+			// The GPU building layer draws the converted city models itself.
+			const cityModels = GPU_BUILDINGS ? [] : cityModelsToKeep(map, keptCityModels)
 			const opacity = cityModelOpacity(map.getZoom())
 			const cityModelKey = `${opacity} ${cityModels.map((tileset) => tileset.url).join(" ")}`
 
@@ -548,7 +559,10 @@ export const Scene3D: React.FC = () => {
 					...cityModels.map(
 						(tileset) =>
 							new Tile3DLayer({
-								id: `city-model-${tileset.cityCode}-${tileset.year}`,
+								// The wards of one designated city, such as Osaka's, are separate
+								// tilesets under one city code, so only the URL tells them apart.
+								// deck.gl refuses two layers with one id.
+								id: `city-model-${tileset.url}`,
 								...placement,
 								data: tileset.url,
 								loader: Tiles3DLoader,

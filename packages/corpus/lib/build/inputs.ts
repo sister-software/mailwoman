@@ -33,6 +33,13 @@ export interface BuildInputRecord {
 	inputPath: string
 	country?: string
 	limit?: number
+	/**
+	 * The street index the unit splitter reads (`#tools/street-index/build`),
+	 * data-root-relative like `inputPath`.
+	 *
+	 * A build reads the index built from the previous corpus version.
+	 */
+	streetIndex?: string
 }
 
 /**
@@ -73,9 +80,16 @@ export async function readBuildInputs(path: PathBuilderLike): Promise<Record<str
 				throw new Error(`${path.toString()}: adapter ${id} has no \`inputPath\`.`)
 			}
 
-			const resolved = isAbsolute(input.inputPath) ? input.inputPath : dataRootPath(input.inputPath).toString()
+			const resolve = (relative: string) => (isAbsolute(relative) ? relative : dataRootPath(relative).toString())
 
-			return [id, { ...input, inputPath: resolved } satisfies AdapterOptions]
+			return [
+				id,
+				{
+					...input,
+					inputPath: resolve(input.inputPath),
+					...(input.streetIndex ? { streetIndex: resolve(input.streetIndex) } : {}),
+				} satisfies AdapterOptions,
+			]
 		})
 	)
 }

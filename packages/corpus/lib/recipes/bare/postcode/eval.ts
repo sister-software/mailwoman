@@ -8,6 +8,8 @@
  *   the model on the identical Swedish input.
  */
 
+import { compactPostcode } from "@mailwoman/postcode/display-form"
+
 export type BarePostcodeEvalFamily = "nnn_nn" | "nnnn_ll"
 
 export interface BarePostcodeEvalCase {
@@ -81,18 +83,11 @@ export const BARE_POSTCODE_EVAL_CASES: readonly BarePostcodeEvalCase[] = [
 	...DUTCH.map((input) => ({ input, country: "NL" as const, family: "nnnn_ll" as const })),
 ]
 
-/**
- * Normalize the model-visible postcode value for reservation checks.
- */
-export function normalizeBarePostcodeSurface(surface: string): string {
-	return surface.trim().toUpperCase().replaceAll(/\s+/gu, "")
-}
-
-const RESERVED_SURFACES = new Set(BARE_POSTCODE_EVAL_CASES.map(({ input }) => normalizeBarePostcodeSurface(input)))
+const RESERVED_SURFACES = new Set(BARE_POSTCODE_EVAL_CASES.map(({ input }) => compactPostcode(input)))
 
 /**
- * Whether a postcode string is reserved exclusively for the capability evaluation.
+ * Whether a postcode string is reserved exclusively for the capability evaluation, compared in compact form.
  */
 export function isReservedBarePostcode(surface: string): boolean {
-	return RESERVED_SURFACES.has(normalizeBarePostcodeSurface(surface))
+	return RESERVED_SURFACES.has(compactPostcode(surface))
 }

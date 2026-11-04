@@ -4,8 +4,8 @@
 /**
  * @file The shapes a point can arrive in, and the reading of their coordinates.
  *
- *   This module imports no runtime geometry class. `GeoPoint` imports h3-js, and a caller that only needs the
- *   coordinates of a `GeoPointInput` must not pay for the 32 MiB heap that module allocates on first evaluation.
+ *   This module imports no runtime geometry class. `GeoPoint` imports `@sister.software/h3`, and a caller that only needs
+ *   the coordinates of a `GeoPointInput` must not load its embedded WebAssembly binary.
  */
 
 import type { LatLng, LatLngLiteral } from "@googlemaps/google-maps-services-js"

@@ -15,10 +15,10 @@ import {
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
-import { ancestorChainCells, bboxContains, shortCellToInt, type H3Cell, pointInEncodedRings } from "@mailwoman/spatial"
+import { ancestorChainCells, bboxContains, shortCellToInt, pointInEncodedRings } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "h3-js"
+import { latLngToCell, type H3Cell } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import type { FloodDatabase } from "#schema"
@@ -180,7 +180,7 @@ export class FloodZoneLookup implements Disposable {
 	 * What the authority's map assigns at this coordinate.
 	 */
 	public lookup(latitude: number, longitude: number): FloodZoneReading {
-		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution) as H3Cell
+		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution)
 		const coverage = this.#readCoverage(indexCell)
 		const zone = this.#resolveZone(indexCell, latitude, longitude)
 

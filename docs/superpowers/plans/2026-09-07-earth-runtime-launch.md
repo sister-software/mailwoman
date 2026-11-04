@@ -2,7 +2,7 @@
 
 > **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** `packages/earth` runs the real browser geocoder with parity to today's docs page, the "demo" names in `@mailwoman/react/map` become product names, the browser test suite moves to the app, the docs site redirects `/demo`, `/debug` and `/trace` to `earth.mailwoman.ai`, and the geocoder page, its runtime assembly, its service worker and its dependencies leave `docs/`. The plan is done only after that removal lands.
+**Goal:** `packages/earth` runs the real browser geocoder with parity to today's docs page, the "demo" names in `@mailwoman/react/map` become product names, the browser test suite moves to the app, the docs site redirects `/demo`, `/debug` and `/trace` to `earth.mailwoman.post`, and the geocoder page, its runtime assembly, its service worker and its dependencies leave `docs/`. The plan is done only after that removal lands.
 
 **Architecture:** The runtime assembly (`_runtime.ts`, the basemap and polygon helpers, the geolocation hook, the range-cache registration) becomes application code under `packages/earth/lib/runtime/`, consuming the package homes the first runtime plan created. The service worker gains the range cache. The host panels and the two live explainers (`ModelVisualizer`, `LiveModelVisualizer`) move to the app with `/debug` and `/trace`. The docs keep `DemoEmbed` (renamed `RuntimeEmbed`) for the explainers that stay, the maplibre worker staging for `DashboardMap`, and the sql.js staging for the explainers that resolve. The Playwright suite moves with the page and its fixtures; `demo-smoke.yml` targets the new host.
 
@@ -123,7 +123,7 @@ yarn workspace @mailwoman/earth build > /tmp/earth-build.log 2>&1; echo "EXIT=$?
 yarn workspace @mailwoman/earth preview
 ```
 
-Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.ai`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning means a `node:` specifier is on the static graph. `yarn mwops health bundle-graph` reports which package imports it, and the fix is an export condition in that package rather than an alias here.
+Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.post`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning means a `node:` specifier is on the static graph. `yarn mwops health bundle-graph` reports which package imports it, and the fix is an export condition in that package rather than an alias here.
 
 ```bash
 git add packages/earth packages/site-kit docs
@@ -202,7 +202,7 @@ git mv docs/test/e2e/index.ts docs/test/e2e/fixtures docs/test/e2e/utils package
 
 - [ ] **Step 2: The smoke workflow**
 
-`.github/workflows/demo-smoke.yml` → `earth-smoke.yml`: `MAILWOMAN_EARTH_URL: ${{ inputs.earth_url || 'https://earth.mailwoman.ai' }}`, `working-directory: packages/earth`, `yarn playwright install chromium`, `yarn test:browser --grep @smoke`. `yarn mwops health no-root-scripts` reads the workflow, so run it.
+`.github/workflows/demo-smoke.yml` → `earth-smoke.yml`: `MAILWOMAN_EARTH_URL: ${{ inputs.earth_url || 'https://earth.mailwoman.post' }}`, `working-directory: packages/earth`, `yarn playwright install chromium`, `yarn test:browser --grep @smoke`. `yarn mwops health no-root-scripts` reads the workflow, so run it.
 
 - [ ] **Step 3: Run the seven parity specs on the app, on the real assets**
 
@@ -215,7 +215,7 @@ Expected: 7 of 7, then the full suite passes. The cold-load spec's action timeou
 
 ```bash
 git add packages/earth docs .github/workflows
-git commit -m "test(earth): the browser suite and its fixtures run against the app; the smoke workflow targets earth.mailwoman.ai"
+git commit -m "test(earth): the browser suite and its fixtures run against the app; the smoke workflow targets earth.mailwoman.post"
 ```
 
 ---
@@ -267,11 +267,11 @@ git commit -m "refactor(react,earth,docs): the geocoder surface is named for wha
 - [ ] **Step 1: CORS is already in place from the shell plan. Verify against production data**
 
 ```bash
-for u in https://public.mailwoman.ai/mailwoman/en-us/releases.json https://tiles.mailwoman.ai/basemap-v4.json; do curl -sI -H "Origin: https://earth.mailwoman.ai" "$u" | grep -i "access-control-allow-origin\|^HTTP" | tr -d '\r'; done
-curl -sI -H "Origin: https://earth.mailwoman.ai" -H "Range: bytes=0-65535" "https://public.mailwoman.ai/mailwoman/wof-hot/$(node -e "console.log(require('./packages/mailwoman/out/browser-runtime/resources.js').ADMIN_GAZETTEER_VERSION)")/wof-hot.db" | grep -i "^HTTP\|content-range\|access-control" | tr -d '\r'
+for u in https://public.mailwoman.post/mailwoman/en-us/releases.json https://tiles.mailwoman.post/basemap-v4.json; do curl -sI -H "Origin: https://earth.mailwoman.post" "$u" | grep -i "access-control-allow-origin\|^HTTP" | tr -d '\r'; done
+curl -sI -H "Origin: https://earth.mailwoman.post" -H "Range: bytes=0-65535" "https://public.mailwoman.post/mailwoman/wof-hot/$(node -e "console.log(require('./packages/mailwoman/out/browser-runtime/resources.js').ADMIN_GAZETTEER_VERSION)")/wof-hot.db" | grep -i "^HTTP\|content-range\|access-control" | tr -d '\r'
 ```
 
-Expected: `200`/`206` and an `Access-Control-Allow-Origin` echoing the origin (or `*` from the public bucket). A missing header on `public.mailwoman.ai` is a bucket CORS rule the operator sets in the Cloudflare dashboard. Record it in the PR as the second dashboard step and do not proceed to Task 6 until it is in place.
+Expected: `200`/`206` and an `Access-Control-Allow-Origin` echoing the origin (or `*` from the public bucket). A missing header on `public.mailwoman.post` is a bucket CORS rule the operator sets in the Cloudflare dashboard. Record it in the PR as the second dashboard step and do not proceed to Task 6 until it is in place.
 
 - [ ] **Step 2: Deploy and smoke**
 
@@ -291,7 +291,7 @@ Expected: pass on the real deployment. The parity list from the spec's definitio
 
 - Create: `docs/src/pages/demo/index.tsx` (redirect), `docs/src/pages/debug.tsx` (redirect), `docs/src/pages/trace.tsx` (redirect)
 - Rename: `docs/src/contexts/DemoEmbed.tsx` → `RuntimeEmbed.tsx` (`useRuntimeEmbed`, `RuntimeEmbedProvider`); `docs/plugins/demo-assets/` → `docs/plugins/runtime-assets/`
-- Modify: `docs/docusaurus.config.ts` (navbar and footer `/demo` → `https://earth.mailwoman.ai`, the plugin path, sitemap ignore patterns), `docs/package.json` (dependencies per knip, `imports["#shared/*"]` and `#e2e` gone), `.github/workflows/docs-build.yml` (paths), `docs/.gitignore` (the staged-asset entries that remain), `AGENTS.md` (the `apps/web-demo` line, the docs row, and the `demo-assets` mention in the fs bullet if any)
+- Modify: `docs/docusaurus.config.ts` (navbar and footer `/demo` → `https://earth.mailwoman.post`, the plugin path, sitemap ignore patterns), `docs/package.json` (dependencies per knip, `imports["#shared/*"]` and `#e2e` gone), `.github/workflows/docs-build.yml` (paths), `docs/.gitignore` (the staged-asset entries that remain), `AGENTS.md` (the `apps/web-demo` line, the docs row, and the `demo-assets` mention in the fs bullet if any)
 - Delete: whatever remains under `docs/src/shared/` except `maplibre-worker.ts` and `maplibre-worker-url.ts`; `docs/plugins/demo-assets/` moves with the plugin rename
 
 - [ ] **Step 1: The redirects**
@@ -304,7 +304,7 @@ Docusaurus deploys to GitHub Pages. GitHub Pages serves no server-side redirect.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The geocoder lives at earth.mailwoman.ai. This page forwards a visitor there with their query intact, and shows
+ *   The geocoder lives at earth.mailwoman.post. This page forwards a visitor there with their query intact, and shows
  *   the link for a client that does not run the script.
  */
 
@@ -312,7 +312,7 @@ import Head from "@docusaurus/Head"
 import Layout from "@theme/Layout"
 import { useEffect } from "react"
 
-const EARTH = "https://earth.mailwoman.ai"
+const EARTH = "https://earth.mailwoman.post"
 
 export default function DemoRedirect() {
 	useEffect(() => {
@@ -327,7 +327,7 @@ export default function DemoRedirect() {
 			</Head>
 			<main style={{ padding: "2rem" }}>
 				<p>
-					The geocoder has moved to <a href={`${EARTH}/`}>earth.mailwoman.ai</a>.
+					The geocoder has moved to <a href={`${EARTH}/`}>earth.mailwoman.post</a>.
 				</p>
 			</main>
 		</Layout>
@@ -339,7 +339,7 @@ export default function DemoRedirect() {
 
 - [ ] **Step 2: Config, plugin, dependencies**
 
-`docusaurus.config.ts`: the navbar CTA and the footer item point at `https://earth.mailwoman.ai`; the `demo-assets` plugin path becomes `runtime-assets`; the sitemap ignore patterns keep `/debug` and `/trace` (they are redirect pages) and add `/demo`. `docs/plugins/runtime-assets/plugin.ts` keeps the maplibre worker staging (for `DashboardMap`), the sql.js staging through `stageSQLJSAssets` (for the explainers that resolve), the workspace aliases, and the SSR policy; `stagePairIndexes` goes if no code in docs reads a pair index any more (`grep -rn "pair-index" docs/src`). Then:
+`docusaurus.config.ts`: the navbar CTA and the footer item point at `https://earth.mailwoman.post`; the `demo-assets` plugin path becomes `runtime-assets`; the sitemap ignore patterns keep `/debug` and `/trace` (they are redirect pages) and add `/demo`. `docs/plugins/runtime-assets/plugin.ts` keeps the maplibre worker staging (for `DashboardMap`), the sql.js staging through `stageSQLJSAssets` (for the explainers that resolve), the workspace aliases, and the SSR policy; `stagePairIndexes` goes if no code in docs reads a pair index any more (`grep -rn "pair-index" docs/src`). Then:
 
 ```bash
 yarn install
@@ -350,7 +350,7 @@ Remove every docs dependency knip names as unused, and re-run until it names non
 
 - [ ] **Step 3: Workflows, AGENTS, ignore files**
 
-`.github/workflows/docs-build.yml` `push.paths`: `docs/**`, `packages/react/**`, `packages/core/**`, `packages/codex/**`, `packages/cartographer/**`, `packages/neural/**`, `mailwoman` if the explainers import `mailwoman/browser-runtime` (they do, because `RuntimeEmbed` loads through it). The list is the set of packages a docs import reaches, measured by `grep -rhoE 'from "(@mailwoman/[a-z-]+|mailwoman)' docs/src | sort -u`. `AGENTS.md`: delete the `apps/web-demo/` bullet under the non-workspace directories. Set the `docs/` row to "Docusaurus site → https://mailwoman.ai. Prose, the explainers, links to earth, moon and mars". Add rows for `packages/earth` and `packages/site-kit` (the planetary rows land with their plans). Delete the fs bullet's mention of the browser bundle's shim policy, if any. `docs/.gitignore` keeps `/static/mailwoman/sqljs/` and `/static/mailwoman/maplibre/`, drops the `pair-index` entry if staging went.
+`.github/workflows/docs-build.yml` `push.paths`: `docs/**`, `packages/react/**`, `packages/core/**`, `packages/codex/**`, `packages/cartographer/**`, `packages/neural/**`, `mailwoman` if the explainers import `mailwoman/browser-runtime` (they do, because `RuntimeEmbed` loads through it). The list is the set of packages a docs import reaches, measured by `grep -rhoE 'from "(@mailwoman/[a-z-]+|mailwoman)' docs/src | sort -u`. `AGENTS.md`: delete the `apps/web-demo/` bullet under the non-workspace directories. Set the `docs/` row to "Docusaurus site → https://mailwoman.post. Prose, the explainers, links to earth, moon and mars". Add rows for `packages/earth` and `packages/site-kit` (the planetary rows land with their plans). Delete the fs bullet's mention of the browser bundle's shim policy, if any. `docs/.gitignore` keeps `/static/mailwoman/sqljs/` and `/static/mailwoman/maplibre/`, drops the `pair-index` entry if staging went.
 
 - [ ] **Step 4: The proofs**
 
@@ -374,7 +374,7 @@ Expected:
 
 ```bash
 git add docs AGENTS.md .github/workflows/docs-build.yml
-git commit -m "chore(docs): the geocoder leaves Docusaurus — redirects to earth.mailwoman.ai, the runtime-assets plugin keeps only what the explainers need, dependencies by knip"
+git commit -m "chore(docs): the geocoder leaves Docusaurus — redirects to earth.mailwoman.post, the runtime-assets plugin keeps only what the explainers need, dependencies by knip"
 ```
 
 ---
@@ -403,12 +403,12 @@ In `docs/superpowers/specs/2026-09-06-earth-app-design.md`, "Definition of done"
 
 ```bash
 git push -u origin feat/earth-runtime-launch
-gh pr create --title "Earth runtime, part 2: the real geocoder at earth.mailwoman.ai; the docs retire the page" --body-file - <<'EOF'
+gh pr create --title "Earth runtime, part 2: the real geocoder at earth.mailwoman.post; the docs retire the page" --body-file - <<'EOF'
 Implements the application rows of docs/superpowers/specs/2026-09-06-earth-app-design.md by docs/superpowers/plans/2026-09-07-earth-runtime-launch.md.
 
 - packages/earth runs the real runtime (assembly, panels, the two live explainers, the range cache in its service worker, sql.js staged by site-kit through resolver-wof-wasm/host-assets); /, /debug, /trace; ?runtime=fake keeps the fixture reachable
 - @mailwoman/react/map renamed for what it is: Geocoder, MapCanvas, GeocoderControls, useGeocode, GeocoderRuntime, GeocoderPanels, useReleaseRuntime, makeFakeGeocoderRuntime; no compatibility re-exports
-- the ten browser specs and their fixtures run against the app; earth-smoke.yml targets earth.mailwoman.ai
+- the ten browser specs and their fixtures run against the app; earth-smoke.yml targets earth.mailwoman.post
 - docs: /demo, /debug, /trace redirect with the query intact; the runtime-assets plugin keeps only what the explainers need; dependencies trimmed by knip; docs/src/shared holds the two maplibre files only
 
 Parity: the seven specs of 100-demo-cold-load and 200-demo-resolve pass on the preview deployment; <list any hand-checked item>.

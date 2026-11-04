@@ -20,25 +20,17 @@ import { isoDate, streamToDisk } from "@mailwoman/core/utils"
 import { CoverageBasis } from "@mailwoman/evidence"
 import { uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
-import {
-	LATITUDE_MAX,
-	LATITUDE_MIN,
-	LONGITUDE_MAX,
-	LONGITUDE_MIN,
-	shortCellToInt,
-	type H3Cell,
-} from "@mailwoman/spatial"
+import { LATITUDE_MAX, LATITUDE_MIN, LONGITUDE_MAX, LONGITUDE_MIN, shortCellToInt } from "@mailwoman/spatial"
 import { OS_DOWNLOADS_API_BASE, type OSDownload } from "@mailwoman/spatial/gb/os-downloads"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { cellToParent } from "h3-js"
+import { cellToParent } from "@sister.software/h3"
 import { dirname, PathBuilder, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#tools/pipeline/database-lifecycle"
 import { createOSDownloadsClient } from "#tools/pipeline/gb/codepoint/fetch"
-
 /**
  * The OS Data Hub product ID for Open UPRN.
  */
@@ -636,7 +628,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 		inserted++
 
-		const parent = shortCellToInt(cellToParent(fullCell, UPRN_COVERAGE_H3_RESOLUTION) as H3Cell)
+		const parent = shortCellToInt(cellToParent(fullCell, UPRN_COVERAGE_H3_RESOLUTION))
 
 		coverage.set(parent, (coverage.get(parent) ?? 0) + 1)
 

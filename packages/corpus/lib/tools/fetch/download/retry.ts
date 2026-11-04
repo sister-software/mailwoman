@@ -62,6 +62,13 @@ async function bytesOnDisk(path: string): Promise<number> {
 }
 
 /**
+ * A progress line for a transfer, `12.3 MB of 126.0 MB` when the total is known.
+ */
+function transferLine(have: number, total: number | null): string {
+	return `  ${(have / 1024 / 1024).toFixed(1)} MB${total ? ` of ${(total / 1024 / 1024).toFixed(1)} MB` : ""}`
+}
+
+/**
  * Download `url` to `dest` in ranges, resuming from whatever the `.tmp` sibling already holds.
  *
  * The total comes from the first `Content-Range`, and the loop gives up after `maxConnections`
@@ -76,8 +83,15 @@ export async function resumableDownload(options: {
 	maxConnections?: number
 	retryDelayMs?: number
 	report?: (line: string) => void
+	/**
+	 * Report the bytes landed each time a connection advances by this count.
+	 *
+	 * Without it, a connection that streams the whole body reports once, at its end.
+	 */
+	progressEveryBytes?: number
 }): Promise<number> {
 	const { url, dest, headers = {}, maxConnections = 400, retryDelayMs = DEFAULT_RETRY_DELAY_MS, report } = options
+	const { progressEveryBytes } = options
 	const tmp = dest + ".tmp"
 	let have = await bytesOnDisk(tmp)
 	let total: number | null = null
@@ -116,10 +130,26 @@ export async function resumableDownload(options: {
 		}
 
 		const before = have
+		const knownTotal = total
+		let landed = before
+		let nextReportAt = progressEveryBytes ? before + progressEveryBytes : Infinity
+
+		const counter = new TransformStream<Uint8Array, Uint8Array>({
+			transform(chunk, controller) {
+				landed += chunk.byteLength
+
+				if (progressEveryBytes && landed >= nextReportAt) {
+					report?.(transferLine(landed, knownTotal))
+					nextReportAt = landed + progressEveryBytes
+				}
+
+				controller.enqueue(chunk)
+			},
+		})
 
 		try {
 			await pipeline(
-				Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]),
+				Readable.fromWeb((res.body as ReadableStream<Uint8Array>).pipeThrough(counter)),
 				openWriteStream(tmp, { flags: "a" })
 			)
 		} catch {
@@ -133,7 +163,7 @@ export async function resumableDownload(options: {
 		if (have === before) {
 			await sleep(retryDelayMs)
 		} else {
-			report?.(`  ${(have / 1024 / 1024).toFixed(1)} MB${total ? ` of ${(total / 1024 / 1024).toFixed(1)} MB` : ""}`)
+			report?.(transferLine(have, total))
 		}
 	}
 

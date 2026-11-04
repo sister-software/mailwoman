@@ -10,10 +10,9 @@ import {
 	compactAcrossResolutions,
 	shortCellToInt,
 	type FeatureCells,
-	type H3Cell,
 	type MultiPolygonRings,
 } from "@mailwoman/spatial"
-import { getResolution } from "h3-js"
+import { getResolution, type H3Cell } from "@sister.software/h3"
 
 /**
  * The label assigned to this layer's classifier failures.
@@ -79,7 +78,7 @@ export interface SoilCellIndexMeasurement {
 
 /**
  * Accumulates one resolution's cell index over a stream of delineations,
- * held as short-cell strings because `compactCells` needs full h3-js indexes
+ * held as short-cell strings because `compactCells` needs full H3 indexes
  * and round-tripping through the integer form would cost more.
  */
 export class SoilCellIndex {
@@ -192,6 +191,6 @@ export function formatSoilResolutionRows(
 /**
  * The cell integer a short-cell string stores as.
  */
-export function cellToShortInt(cell: string): number {
-	return shortCellToInt(cell as H3Cell)
+export function cellToShortInt(cell: H3Cell): number {
+	return shortCellToInt(cell)
 }

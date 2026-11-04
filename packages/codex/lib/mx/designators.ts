@@ -47,7 +47,7 @@ function row(
 	spelling: string,
 	concept: DesignatorConcept,
 	source: string,
-	options: Partial<Pick<PostalDesignatorRow, "abbreviations" | "position">> = {}
+	options: Partial<Pick<PostalDesignatorRow, "abbreviations" | "position" | "partOfStreetLine">> = {}
 ): PostalDesignatorRow {
 	return {
 		spelling,
@@ -57,6 +57,7 @@ function row(
 		concept,
 		language: "es",
 		source,
+		...(options.partOfStreetLine ? { partOfStreetLine: true } : {}),
 	}
 }
 
@@ -93,8 +94,10 @@ export const MX_POSTAL_DESIGNATORS: PostalDesignatorTable = {
 		row("Torre", "tower", wiktionary("torre")),
 		row("Super Manzana", "block", UPU),
 		row("Sala", "room", wiktionary("sala")),
-		row("Casa", "unit", wiktionary("casa")),
-		row("Lote", "unit", wiktionary("lote")),
+		// A lot and a house inside a manzana (`MANZANA 21 LOTE 55`) number the premise
+		// on the street line, so a unit splitter keeps them.
+		row("Casa", "unit", wiktionary("casa"), { partOfStreetLine: true }),
+		row("Lote", "unit", wiktionary("lote"), { partOfStreetLine: true }),
 		row("Manzana", "block", wiktionary("manzana")),
 		...FLOOR_ROWS,
 		row("S/N", "number_sign", wiktionary("s%2Fn"), { position: "standalone" }),

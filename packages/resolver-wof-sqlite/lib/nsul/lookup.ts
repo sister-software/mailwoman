@@ -24,9 +24,10 @@
  */
 
 import type { UkCountryCode } from "@mailwoman/codex/gb/country"
+import { compactPostcode } from "@mailwoman/postcode/display-form"
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
-import { compactPostcode, type NSULDatabase } from "#nsul/schema"
+import type { NSULDatabase } from "#nsul/schema"
 import { prepareAll, prepareGet } from "#sqlite-utils"
 
 /**

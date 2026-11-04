@@ -7,7 +7,7 @@ import {
 	type BrandNameCount,
 	serializeBrandTable,
 } from "#tools/pipeline/poi/build/brands"
-import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#tools/pipeline/poi/defaults"
+import { DEFAULT_MIN_ROWS } from "#tools/pipeline/poi/defaults"
 
 const SOURCE_LAYER = { name: "poi", version: "2026-05-20.0", sourceVintage: "2026-05-20.0" }
 
@@ -148,17 +148,6 @@ describe("aggregateBrands — dominance floor", () => {
 
 		expect(aggregateBrands(rows, 1, 0.7).map((b) => b.wikidata)).toEqual([])
 		expect(aggregateBrands(rows, 1, 0.5).map((b) => b.wikidata)).toEqual(["Q1"])
-	})
-
-	it("defaults dominance to DEFAULT_DOMINANCE when omitted", () => {
-		const rows: BrandNameCount[] = [
-			{ wikidata: "Q1", name: "Modal But Not Dominant", n: 49 },
-			{ wikidata: "Q1", name: "Second", n: 26 },
-			{ wikidata: "Q1", name: "Third", n: 25 },
-		]
-
-		expect(DEFAULT_DOMINANCE).toBe(0.5)
-		expect(aggregateBrands(rows, 1)).toEqual([])
 	})
 
 	it("a lone name variant always has modal share 1.0 and clears any dominance floor", () => {

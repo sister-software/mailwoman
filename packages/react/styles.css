@@ -1509,9 +1509,13 @@
 	 * The title and its close button ride together and stay put while the body scrolls. The close is not decoration:
 	 * on a phone the sheet is the whole panel and covers the control that opened it, so this is the only way out.
 	 */
+	/*
+	 * The negative top offset matches the negative top margin. A sticky header stops at the scroll container's content
+	 * edge, which sits one padding below the sheet's top, so `top: 0` left a band of the sheet above the header.
+	 */
 	.mw-map-sheet__header {
 		position: sticky;
-		top: 0;
+		top: calc(-1 * var(--ss-spacing-4));
 		z-index: 1;
 		display: flex;
 		align-items: center;
@@ -1555,23 +1559,6 @@
 	.mw-map-sheet__close:focus-visible {
 		outline: 2px solid var(--ss-color-primary);
 		outline-offset: 1px;
-	}
-
-	/*
-	 * The close sits at the right of the grip bar.
-	 *
-	 * IN FLOW on the desktop column, where the bar has no handle to center and therefore no height of its own. Taken
-	 * out of flow there it reserved nothing, and a 44px button hanging from a 0px bar came down across the right end
-	 * of the search field below it — the overlap this whole panel was meant to end. In flow it carries the bar, and
-	 * the field starts under it.
-	 *
-	 * The phone rule below puts it back to absolute, where the handle is the bar and has to stay centered on the sheet
-	 * rather than on the space the close leaves, and where the target grows to a full 44px because the drawer is the
-	 * whole panel and this is the only way out of it.
-	 */
-	.mw-map-sheet__close--floating {
-		margin-left: auto;
-		right: 0.25rem;
 	}
 
 	.mw-map-sheet__row {
@@ -1778,13 +1765,6 @@
 			min-height: 2.25rem;
 		}
 
-		.mw-map-sheet__close--floating {
-			position: absolute;
-			margin-left: 0;
-			width: 2.75rem;
-			height: 2.75rem;
-		}
-
 		.mw-map-sheet--side {
 			top: 0;
 			left: 0;
@@ -1806,6 +1786,7 @@
 
 		/* The header spans the panel's full width once the sheet loses its own inset. */
 		.mw-map-sheet--side .mw-map-sheet__header {
+			top: calc(-1 * (var(--ss-spacing-4) + var(--mw-safe-area-top)));
 			margin: calc(-1 * (var(--ss-spacing-4) + var(--mw-safe-area-top))) calc(-1 * var(--ss-spacing-4))
 				var(--ss-spacing-3);
 			padding-top: calc(var(--ss-spacing-3) + var(--mw-safe-area-top));
@@ -2020,10 +2001,10 @@
 	}
 
 	/*
-	 * The compass capsule collapses to nothing while the compass is hidden, so the capsules below it do not sit under
-	 * a gap the map shows through. `visibility` alone kept the box.
+	 * The compass draws on the map without a capsule: its ring and needle are the whole control.
+	 * The doubled class outranks the `.mw-map-control-group` rule below, which sets the capsule's shadow.
 	 */
-	.mw-map-control-group--compass:has(.mw-map-compass--north) {
+	.mw-map-control-group.mw-map-control-group--compass {
 		box-shadow: none;
 		border-color: transparent;
 		background: transparent;
@@ -2120,12 +2101,13 @@
 			visibility 0s linear 0s;
 	}
 
-	.mw-map-compass:hover:not(:disabled) {
-		background: var(--ss-color-emphasis-100);
+	/* Hover and press darken the ring rather than fill a box behind it. */
+	.mw-map-compass:hover:not(:disabled) .mw-map-compass__dial {
+		stroke: var(--ss-color-emphasis-600);
 	}
 
-	.mw-map-compass:active:not(:disabled) {
-		background: var(--ss-color-emphasis-200);
+	.mw-map-compass:active:not(:disabled) .mw-map-compass__dial {
+		stroke: var(--ss-color-content);
 	}
 
 	.mw-map-compass:focus-visible {

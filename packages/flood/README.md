@@ -184,6 +184,9 @@ edge, where a six-decimal rendering and a nine-decimal one fall on opposite side
 
 The finding every polygon builder on this spine inherits, stated with what it cost here.
 
+The runs below used h3-js 4.5.0, before the switch to `@sister.software/h3`. The zero-cell guard and
+the process bound stay in place for every polygon builder.
+
 **The mechanism.** h3's WASM heap cannot be reset from JavaScript, and it does not survive an
 unbounded number of `polygonToCells` calls. h3-js frees every buffer it allocates, so what
 accumulates is fragmentation across millions of interleaved tiny and large allocations. What makes it

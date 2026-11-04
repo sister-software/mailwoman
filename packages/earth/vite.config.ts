@@ -19,7 +19,7 @@ export default defineConfig({
 		stageSQLiteRuntimePlugin("public/sqlite"),
 		VitePWA(
 			installablePWA({
-				origin: "https://earth.mailwoman.ai/",
+				origin: "https://earth.mailwoman.post/",
 				name: "Mailwoman Earth",
 				shortName: "Earth",
 				themeColor: "#0b1020",

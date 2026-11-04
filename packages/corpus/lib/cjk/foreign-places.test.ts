@@ -5,6 +5,7 @@
  * @file The foreign-place builder routes CJK-script rows of non-CJK countries and follows the split attribute.
  */
 
+import { countriesOfScript, minus, union } from "@mailwoman/codex/country/sets"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -13,6 +14,7 @@ import { describe, expect, it } from "vitest"
 
 import {
 	buildForeignPlaces,
+	CJK_COUNTRIES,
 	cjkShare,
 	type ForeignPlaceRow,
 	isForeignCJKRow,
@@ -85,6 +87,15 @@ describe("cjkShare", () => {
 		expect(isForeignCJKRow({ raw: "ニューヨーク州ブルックリン区", country: "US" })).toBe(true)
 		expect(isForeignCJKRow({ raw: "フェアモント, WV", country: "US" })).toBe(false)
 		expect(isForeignCJKRow({ raw: "東京都渋谷区", country: "JP" })).toBe(false)
+	})
+
+	it("declares only countries that write an official language in a CJK script", () => {
+		const cjkScripts = union(
+			union(countriesOfScript("Hani"), countriesOfScript("Hang")),
+			union(countriesOfScript("Hira"), countriesOfScript("Kana"))
+		)
+
+		expect([...minus(CJK_COUNTRIES, cjkScripts)]).toEqual([])
 	})
 })
 

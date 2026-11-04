@@ -172,6 +172,8 @@ export function computeGroupSegments(
  */
 export const MAX_TRAILING_POSTCODE_WORDS = 2
 
+// country-branch: membership is earned per country by a confound board, described below.
+// The codex layouts' postcode-before-locality reading proposes candidates, and a board admits each.
 /**
  * Countries whose postal convention writes the postcode before the locality on the same
  * line ("12210 Montpeyroux") rather than after it ("Macclesfield SK11 9PD").

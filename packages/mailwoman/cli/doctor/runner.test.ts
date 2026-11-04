@@ -232,7 +232,7 @@ describe("runDoctor (injected boundaries)", () => {
 			keyStatus: "valid",
 		})
 
-		expect(check.detail).toContain("confirmed by mailwoman.ai")
+		expect(check.detail).toContain("confirmed by mailwoman.post")
 	})
 
 	it("license posture: the installation id is reported when the config root holds one", async () => {

@@ -72,20 +72,32 @@ extend-ignore-re = [
 	'''\bCENTRE\b''',
 	'''\|centre\|''',
 	'''\(CC BY 4\.0\) licence''',
+	# OpenStreetMap tag keys (`building:colour`, `roof:shape/height/levels/colour/...`), the Arnis function
+	# `facade_tone_for_colour` and Sponge's `.schem` file extension, quoted by the Arnis building review.
+	'''\b(?:building|roof)(?::[a-z]+)*:colour\b''',
+	'''/colour/''',
+	'''\bfacade_tone_for_colour\b''',
+	'''\.schem\b''',
 	'''["'`]neighbourhood["'`]''',
 	'''\bneighbourhood\s*:|\.neighbourhood\b''',
 	'''["'`]licence["'`]''',
 	'''["'`]metre["'`]''',
 	'''["'`]modelled["'`]''',
 	'''\blicence\s*:|\.licence\b''',
+	# An ordinal street number in capitals, as US registers write it (`SW 92ND AVE`, `3RD ST`).
+	'''\b\d+(?:ST|ND|RD|TH)\b''',
 	'''#fulfil\b|`fulfil`''',
 	'''viewport-centre''',
+	# The buffer join-style constants of JTS (`BufferParameters.JOIN_MITRE`) and the geos crate (`JoinStyle::Mitre`).
+	'''\bJOIN_MITRE\b|JoinStyle::Mitre\b''',
+	# OpenStreetMap tag values the basemap layers match verbatim (`shop=garden_centre`, `leisure=sports_centre`).
+	'''\b(?:adult_gaming|garden|sports)_centre\b''',
 	'''Licence Ouverte''',
 	'''Open (?:Government |Data )?Licence''',
 	'''Norwegian Licence for Open Government Data''',
 	'''Singapore Open Data Licence''',
 	'''\bINSERTs\b|\bUPDATEs\b|\bATTACHed\b''',
-	'''\b(?:\d+nd(?:Order)?|\d+PN|\d+BA)\b''',
+	'''\b(?:\d+(?:nd|ND)(?:Order)?|\d+PN|\d+BA)\b''',
 	'''\b[0-9a-f]{7,40}\b''',
 	'''St Mary Axe|st mary axe''',
 	'''Generalised Zoning(?: Types)?|generalised-zoning-types|Standardised Zoning Objective''',
@@ -151,11 +163,35 @@ extend-ignore-re = [
 	'''\bbduk_recognised_premises\b''',
 	# OpenStreetMap's `leisure=sports_centre`, which the Protomaps basemap carries as a landuse `kind`.
 	'''\bsports_centre\b''',
-	# CityGML's level-of-detail names (`LoD2`, `lod3`) in the structure-source register.
-	'''\b[Ll]o[Dd][0-4]''',
+	# CityGML's level-of-detail names (`LoD2`, `lod3`) in the structure-source register, and in PLATEAU's
+	# tileset directory names after an underscore (`..._bldg_3dtiles_13101_chiyoda-ku_lod2`).
+	'''(?:\b|_)[Ll]o[Dd][0-4]''',
 ]
 
 [default.extend-words]
+# ISO 15924 script codes, as packages/codex/lib/country/writing-systems.ts emits them (`Beng` is Bengali).
+arab = "arab"
+armn = "armn"
+beng = "beng"
+cyrl = "cyrl"
+deva = "deva"
+ethi = "ethi"
+geor = "geor"
+grek = "grek"
+hang = "hang"
+hani = "hani"
+hebr = "hebr"
+hira = "hira"
+kana = "kana"
+khmr = "khmr"
+laoo = "laoo"
+latn = "latn"
+mymr = "mymr"
+sinh = "sinh"
+taml = "taml"
+thaa = "thaa"
+thai = "thai"
+tibt = "tibt"
 # Publisher and register names, codes and place names in the decoder-exposure sources: France's FINESS
 # register and the ANS terminology `TRE-R35`, the education ministry's directorate `DNE`, Wallis and Futuna's
 # `Alo` and `Mata Utu`, Latvia's `DAT_BEIG` column, CORDIS's `SME` column, and the German sole-trader marker `Inh.`.

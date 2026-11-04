@@ -19,17 +19,17 @@ const loc = parseCoordinateString("37.7749° N, 122.4194° W")
 
 ## What's inside
 
-| Capability             | Implementation                                                              |
-| ---------------------- | --------------------------------------------------------------------------- |
-| **Coordinate math**    | Haversine distance, direction, bounding-box containment                     |
-| **H3 indexing**        | Hexagonal grid indexing via `h3-js` — spatial blocking for the matcher      |
-| **WKB/WKT geometry**   | Parse/format Well-Known Binary geometry via `wkx`                           |
-| **Coordinate parsing** | Parse decimal, DMS, and UTM coordinate strings via `geo-coordinates-parser` |
-| **GeoJSON**            | GeoJSON Feature/FeatureCollection types and utilities                       |
+| Capability             | Implementation                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| **Coordinate math**    | Haversine distance, direction, bounding-box containment                              |
+| **H3 indexing**        | Hexagonal grid indexing via `@sister.software/h3` — spatial blocking for the matcher |
+| **WKB/WKT geometry**   | Parse/format Well-Known Binary geometry via `wkx`                                    |
+| **Coordinate parsing** | Parse decimal, DMS, and UTM coordinate strings via `geo-coordinates-parser`          |
+| **GeoJSON**            | GeoJSON Feature/FeatureCollection types and utilities                                |
 
 ## Dependencies
 
-- [`h3-js`](https://github.com/uber/h3-js) — Uber's hexagonal hierarchical geospatial indexing system
+- [`@sister.software/h3`](https://github.com/sister-software/h3) — a Rust/WebAssembly implementation of Uber's H3 hexagonal hierarchical geospatial index
 - [`wkx`](https://github.com/cschwarz/wkx) — Well-Known Binary geometry parser
 - [`geo-coordinates-parser`](https://github.com/geops/geo-coordinates-parser) — coordinate string parsing
 

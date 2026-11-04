@@ -21,7 +21,7 @@ import { MapCompass } from "./MapCompass.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
 import { MapProgressBar } from "./MapProgressBar.tsx"
 import { MapSearchBar, SearchGlyph } from "./MapSearchBar.tsx"
-import { MapSheet, SheetClose } from "./MapSheet.tsx"
+import { MapSheet } from "./MapSheet.tsx"
 import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 import { ResultPanel } from "./ResultPanel.tsx"
 import { VersionPicker } from "./VersionPicker.tsx"
@@ -297,6 +297,14 @@ export function GeocoderControls({
 		[onSubmitQuery, geocode]
 	)
 
+	// An emptied field removes the result and its pin.
+	// It also tells the host to drop the query from its URL.
+	const clearQuery = useCallback(() => {
+		geocode.reset()
+		setSheetHeight(null)
+		onSubmitQuery?.("")
+	}, [onSubmitQuery, geocode])
+
 	// The initial query waits for `runtime.ready` because the parse pipeline drops
 	// a submit made before the model loads.
 	// The ref makes it run once, so a later render cannot overwrite the user's own query.
@@ -437,14 +445,6 @@ export function GeocoderControls({
 								}}
 							/>
 						) : null}
-
-						{showSheet ? (
-							<SheetClose
-								label="Close the result"
-								className="mw-map-sheet__close--floating"
-								onClose={() => setResultDismissed(true)}
-							/>
-						) : null}
 					</div>
 
 					<form
@@ -454,14 +454,28 @@ export function GeocoderControls({
 							runQuery(geocode.text)
 						}}
 					>
-						{/* The search bar has no trailing control because `type="search"` provides a native clear button. */}
+						{/*
+						 * The search bar has no trailing control because `type="search"`
+						 * provides a native clear button.
+						 *
+						 * An empty field clears the result, its pin and the URL's query,
+						 * so that button is the one way to clear a search.
+						 */}
 						<MapSearchBar label="Search addresses" leading={<SearchGlyph />} busy={busy}>
 							<input
 								id="mw-pipeline-input"
 								type="search"
 								aria-label="Address"
 								value={geocode.text}
-								onChange={(event) => geocode.setText(event.target.value)}
+								onChange={(event) => {
+									const text = event.target.value
+
+									geocode.setText(text)
+
+									if (text === "") {
+										clearQuery()
+									}
+								}}
 								// Focus selects the value only while it equals the placeholder, so typing replaces it.
 								onFocus={(event) => {
 									if (placeholder && event.currentTarget.value === placeholder) {

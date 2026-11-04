@@ -5,11 +5,11 @@
  *   Tokenizer parity test — the single essential assertion in Phase 3.
  *
  *   Loads `tokenizer-v0.1.0.model` (the same file that Phase 2 used to tokenize the corpus) and a
- *   Python-generated fixture of `(raw, pieces, ids)` triples. Asserts that the TS tokenizer
+ *   reference fixture of `(raw, pieces, ids)` triples. Asserts that the TS tokenizer
  *   produces byte-for-byte identical pieces + ids for each raw.
  *
- *   If a single fixture entry diverges, the TS↔Python pipeline is broken and downstream BIO decoding
- *   will produce nonsense. Regenerate the fixture via:
+ *   If a single fixture entry diverges, the TS tokenizer has drifted from what the training pipeline
+ *   encoded and downstream BIO decoding will produce nonsense. Regenerate the fixture via:
  *
  *   ```
  *   node packages/neural/tools/fixtures/tokenizer-parity.run.ts \
@@ -35,13 +35,16 @@ interface FixtureEntry {
 
 const fixture = await readLocalJSONFile<FixtureEntry[]>(FIXTURE_PATH)
 
-describe("MailwomanTokenizer — Python parity", () => {
-	test.each(fixture)("pieces+ids match Python for $raw", async ({ raw, pieces: expectedPieces, ids: expectedIDs }) => {
-		const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)
-		const result = tokenizer.encode(raw)
-		expect(result.pieces.map((p) => p.piece)).toEqual(expectedPieces)
-		expect(result.ids).toEqual(expectedIDs)
-	})
+describe("MailwomanTokenizer — reference parity", () => {
+	test.each(fixture)(
+		"pieces+ids match the reference fixture for $raw",
+		async ({ raw, pieces: expectedPieces, ids: expectedIDs }) => {
+			const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)
+			const result = tokenizer.encode(raw)
+			expect(result.pieces.map((p) => p.piece)).toEqual(expectedPieces)
+			expect(result.ids).toEqual(expectedIDs)
+		}
+	)
 })
 
 describe("MailwomanTokenizer — offset reconstruction", () => {

@@ -1,7 +1,141 @@
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { describe, expect, it, vi } from "vitest"
 
-import { assertCIComplete } from "#dev-mcp/hooks/ci-completion"
+import {
+	assertCIComplete,
+	assertSessionCIComplete,
+	claimTrackedCI,
+	trackedCIMarkerPath,
+	trackedCIMarkerPaths,
+	type TrackedCI,
+} from "#dev-mcp/hooks/ci-completion"
+
+const SESSION_A = "session-a"
+const SESSION_B = "session-b"
+
+/**
+ * A `gh` stub for an open PR on `feat/mine` whose `test` check fails.
+ */
+function failingPullRequest() {
+	return vi
+		.fn()
+		.mockResolvedValueOnce({
+			stdout: stringifyJSON({ headRefOid: "head-a", headRefName: "feat/mine", state: "OPEN" }),
+			stderr: "",
+		})
+		.mockResolvedValueOnce({ stdout: stringifyJSON([{ name: "test", bucket: "fail" }]), stderr: "" })
+		.mockResolvedValueOnce({ stdout: stringifyJSON({ headRefOid: "head-a" }), stderr: "" })
+}
+
+describe("session-owned CI marker", () => {
+	const onMine = () => "feat/mine"
+
+	async function checkoutWith(marker: Partial<TrackedCI>) {
+		const directory = await temporaryDirectory("mw-ci-marker-")
+		await writeLocalJSONFile(marker, trackedCIMarkerPath(directory.path.toString()))
+
+		return directory
+	}
+
+	it("blocks the owning session while CI is unresolved", async () => {
+		await using checkout = await checkoutWith({ repo: "owner/repo", pullRequestNumber: 1, sessionID: SESSION_A })
+
+		await expect(
+			assertSessionCIComplete({ cwd: checkout.path.toString(), session_id: SESSION_A }, failingPullRequest(), onMine)
+		).rejects.toThrow("unresolved")
+	})
+
+	it("passes another session in the same checkout without reading GitHub", async () => {
+		await using checkout = await checkoutWith({ repo: "owner/repo", pullRequestNumber: 1, sessionID: SESSION_A })
+		const run = failingPullRequest()
+
+		await expect(
+			assertSessionCIComplete({ cwd: checkout.path.toString(), session_id: SESSION_B }, run, onMine)
+		).resolves.toBeUndefined()
+
+		expect(run).not.toHaveBeenCalled()
+	})
+
+	it.each([
+		["an unowned marker", { repo: "owner/repo", pullRequestNumber: 1, sessionID: null }],
+		["a marker written before ownership", { repo: "owner/repo", pullRequestNumber: 1 }],
+	])("passes every session for %s", async (_label, marker) => {
+		await using checkout = await checkoutWith(marker)
+		const run = failingPullRequest()
+
+		for (const session_id of [SESSION_A, SESSION_B]) {
+			await expect(
+				assertSessionCIComplete({ cwd: checkout.path.toString(), session_id }, run, onMine)
+			).resolves.toBeUndefined()
+		}
+
+		expect(run).not.toHaveBeenCalled()
+	})
+
+	it("passes the owning session when its checkout is on another branch", async () => {
+		await using checkout = await checkoutWith({ repo: "owner/repo", pullRequestNumber: 1, sessionID: SESSION_A })
+
+		await expect(
+			assertSessionCIComplete(
+				{ cwd: checkout.path.toString(), session_id: SESSION_A },
+				failingPullRequest(),
+				() => "main"
+			)
+		).resolves.toBeUndefined()
+	})
+
+	it.each(["CLOSED", "MERGED"])("passes the owning session once the PR is %s", async (state) => {
+		await using checkout = await checkoutWith({ repo: "owner/repo", pullRequestNumber: 1, sessionID: SESSION_A })
+
+		const run = vi.fn().mockResolvedValueOnce({
+			stdout: stringifyJSON({ headRefOid: "head-a", headRefName: "feat/mine", state }),
+			stderr: "",
+		})
+
+		await expect(
+			assertSessionCIComplete({ cwd: checkout.path.toString(), session_id: SESSION_A }, run, onMine)
+		).resolves.toBeUndefined()
+
+		expect(run).toHaveBeenCalledTimes(1)
+	})
+
+	it("passes a checkout with no marker", async () => {
+		await using checkout = await temporaryDirectory("mw-ci-marker-")
+
+		await expect(
+			assertSessionCIComplete({ cwd: checkout.path.toString(), session_id: SESSION_A }, failingPullRequest(), onMine)
+		).resolves.toBeUndefined()
+	})
+
+	it("records the creating session on the worktree and main-checkout markers, and keeps another owner", async () => {
+		await using main = await checkoutWith({ repo: "owner/repo", pullRequestNumber: 2, sessionID: null })
+		await using worktree = await checkoutWith({ repo: "owner/repo", pullRequestNumber: 2, sessionID: null })
+		await using other = await checkoutWith({ repo: "owner/repo", pullRequestNumber: 3, sessionID: SESSION_B })
+
+		const paths = trackedCIMarkerPaths(main.path.toString(), worktree.path.toString())
+
+		expect(paths).toEqual([trackedCIMarkerPath(worktree.path.toString()), trackedCIMarkerPath(main.path.toString())])
+
+		await expect(claimTrackedCI([...paths, trackedCIMarkerPath(other.path.toString())], SESSION_A)).resolves.toEqual(
+			paths
+		)
+
+		for (const path of paths) {
+			await expect(readLocalJSONFile(path)).resolves.toEqual({
+				repo: "owner/repo",
+				pullRequestNumber: 2,
+				sessionID: SESSION_A,
+			})
+		}
+
+		await expect(readLocalJSONFile(trackedCIMarkerPath(other.path.toString()))).resolves.toMatchObject({
+			sessionID: SESSION_B,
+		})
+	})
+})
 
 function reader(checks: { name: string; bucket: string }[], head = "head-a") {
 	return vi

@@ -26,9 +26,9 @@ import {
 import { CoverageBasis } from "@mailwoman/evidence"
 import { NSUL_COVERAGE_H3_RESOLUTION, NSULLookup } from "@mailwoman/resolver-wof-sqlite/nsul"
 import { createUPRNTable, uprnFullCell, uprnH3Cell, type UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToParent } from "h3-js"
+import { cellToParent } from "@sister.software/h3"
 import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
@@ -328,7 +328,7 @@ describe("buildNSULLayer (fixture)", () => {
 		// Coverage: the res-6 parent of a written point is designated-complete.
 		// An unsurveyed cell is unknown.
 		const parent = shortCellToInt(
-			cellToParent(uprnFullCell(UPRN_POINTS[0]!.lat, UPRN_POINTS[0]!.lon), NSUL_COVERAGE_H3_RESOLUTION) as H3Cell
+			cellToParent(uprnFullCell(UPRN_POINTS[0]!.lat, UPRN_POINTS[0]!.lon), NSUL_COVERAGE_H3_RESOLUTION)
 		)
 
 		const surveyed = await readLayerCoverage(kdb, parent)

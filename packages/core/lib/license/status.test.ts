@@ -26,7 +26,7 @@ describe("the license worker client", () => {
 	it("derives the worker origin with no trailing slash", () => {
 		expect(licenseWorkerURL("https://license.example/")).toBe("https://license.example")
 		expect(licenseWorkerURL(`https://license.example${"/".repeat(50_000)}`)).toBe("https://license.example")
-		expect(licenseWorkerURL(undefined)).toBe("https://license.mailwoman.ai")
+		expect(licenseWorkerURL(undefined)).toBe("https://license.mailwoman.post")
 	})
 
 	it("status answers the worker's word, unknown for a word outside the four, and unreachable when nothing answers", async () => {

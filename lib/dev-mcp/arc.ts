@@ -12,6 +12,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256File } from "@mailwoman/core/hash"
+import { releaseArmModelPath } from "mailwoman/tools/eval-harness/release/arm"
 import { CURRENT_RELEASE_SPEC } from "mailwoman/tools/eval-harness/release/current-spec"
 import { ReleaseOutcome } from "mailwoman/tools/eval-harness/release/evaluate"
 import { readReleaseSpec } from "mailwoman/tools/eval-harness/release/requirements"
@@ -382,7 +383,7 @@ async function readReleaseEvidence(
 	return {
 		verdict: releaseVerdict ? await readLocalJSONFile<unknown>(releaseVerdict) : null,
 		verdictPath: releaseVerdict ?? null,
-		candidateSHA256: await sha256File(resolvePath(candidate, "model.onnx")),
+		candidateSHA256: await sha256File(releaseArmModelPath(candidate)),
 		specVersion: spec.specVersion,
 	}
 }

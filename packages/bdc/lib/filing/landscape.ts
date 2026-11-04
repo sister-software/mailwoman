@@ -23,9 +23,9 @@
 
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { CoverageBasis } from "@mailwoman/evidence"
-import { shortCellToInt, shortCellToParentInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt, shortCellToParentInt } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 import { sql } from "kysely"
 
 import { BDC_COVERAGE_H3_RESOLUTION, BDC_H3_RESOLUTION, type BDCDatabase } from "#schema"
@@ -158,7 +158,7 @@ export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
  * comes from {@link res9ShortCellToRes6Parent}, as the reader derives it.
  */
 export function blockCentroidCells(centroid: { lat: number; lon: number }): { h3Cell: number; coverageCell: number } {
-	const h3Cell = shortCellToInt(latLngToCell(centroid.lat, centroid.lon, BDC_H3_RESOLUTION) as H3Cell)
+	const h3Cell = shortCellToInt(latLngToCell(centroid.lat, centroid.lon, BDC_H3_RESOLUTION))
 
 	return { h3Cell, coverageCell: res9ShortCellToRes6Parent(h3Cell) }
 }

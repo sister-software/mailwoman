@@ -16,7 +16,7 @@ The core gazetteer is built entirely from permissive sources, so a resolved coor
 This page records the state as of 2026-08 and its text is left as it was written. The paragraph above no longer describes what the shipped `candidate` bundle contains, and a reader acting on it would be misinformed.
 
 Measured 2026-09-27 from the artifacts themselves. The `candidate` bundle serves
-`gazetteer/2026-08-25b/candidate.db` from `public.mailwoman.ai`, 2,880,921,600 bytes, last modified
+`gazetteer/2026-08-25b/candidate.db` from `public.mailwoman.post`, 2,880,921,600 bytes, last modified
 2026-08-25. Its own `layer_manifest`, read over HTTP range requests, records `tier = build-local`,
 `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0`, `source = admin-global-priority@2026-08-25`
 and `build_sha = 2b9894111`.
@@ -140,7 +140,8 @@ a command-line flag and a filter that a reader could not have used.
 
 `--exclude-share-alike` was never a flag on `mw corpus build` or on any other command. Its underlying
 option, `buildCorpus({ excludeLicenses })`, was reachable only from the library, and the only caller in
-the repository was `packages/corpus/lib/build.test.ts`. No corpus was ever built with it.
+the repository was its test file, since renamed to `packages/corpus/lib/build.integration.test.ts`. No
+corpus was ever built with it.
 
 `SHARE_ALIKE_PATTERN` was an anchored prefix match, `/^ODbL|^Open Database License|^CC-BY-SA|^CC-SA/i`,
 over the row's `license` column. Measured over `v0.7.0-de-holdout` on 2026-09-26, that column holds 71

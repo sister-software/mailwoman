@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/gazetteer",
-	"version": "10.7.0",
+	"version": "10.8.0",
 	"description": "Who's On First readers and the gazetteer build pipeline: placetypes, hierarchies, repo sync, and the admin, postcode, POI and address layers the resolver reads.",
 	"keywords": [
 		"gazetteer",
@@ -87,9 +87,9 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
+		"@sister.software/h3": "^1.1.0",
 		"d3-color": "^3.1.0",
 		"d3-scale-chromatic": "^3.1.0",
-		"h3-js": "^4.5.0",
 		"kysely": "^0.29.7",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.5.0",

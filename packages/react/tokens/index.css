@@ -177,10 +177,15 @@
 	--ss-color-frame-ink: var(--ss-color-chrome-ink);
 	--ss-color-selected: var(--mw-color-blue);
 	--ss-color-selected-contrast: var(--ss-color-white);
-	--ss-font-family-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
-	--ss-font-family-reading: "Go Web", "Go Fallback", -apple-system, BlinkMacSystemFont, sans-serif;
+	--ss-font-family-display:
+		"Archivo Web", "M PLUS U Japanese Web", "Sister Japanese Display Fallback", "Hiragino Sans", "Yu Gothic",
+		"Helvetica Neue", Arial, sans-serif;
+	--ss-font-family-reading:
+		"Go Musubi Web", "Go Web", "Go Fallback", "M PLUS U Japanese Web", "Hiragino Sans", "Yu Gothic", -apple-system,
+		BlinkMacSystemFont, sans-serif;
 	--ss-font-family-system: "Pixelify Sans", "Go Mono Web", "Go Mono Fallback", monospace;
-	--ss-font-family-smallcaps: "Go Smallcaps Web", "Go Web", "Go Fallback", sans-serif;
+	--ss-font-family-smallcaps:
+		"Go Musubi Smallcaps Web", "Go Smallcaps Web", "M PLUS U Japanese Web", "Hiragino Sans", sans-serif;
 	--ss-font-family-mono: "Fira Code Web", "SF Mono", "Roboto Mono", "Segoe UI Mono", "Courier New", Courier, monospace;
 	--ss-font-family-base: var(--ss-font-family-reading);
 	--ss-font-family-heading: var(--ss-font-family-reading);

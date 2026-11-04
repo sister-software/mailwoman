@@ -69,7 +69,7 @@ describe("the license message", () => {
 	}
 
 	const renewal = { ...first, refreshSecret: null, issued: "2026-11-01", expires: "2026-12-15" }
-	const site = "https://mailwoman.ai"
+	const site = "https://mailwoman.post"
 
 	it("tells an evaluator the key is not re-issued and points at the declare and buy routes", () => {
 		const evaluation = {
@@ -91,7 +91,7 @@ describe("the license message", () => {
 
 	it("walks the buyer from the key to what comes after it, in text and in HTML alike", () => {
 		const text = renderLicenseEmail(first, site)
-		const html = renderLicenseEmailHTML(first, site, "licenses@mailwoman.ai")
+		const html = renderLicenseEmailHTML(first, site, "licenses@mailwoman.post")
 
 		// React escapes quotes in text nodes.
 		// The command is read back as a person copies it.
@@ -112,7 +112,7 @@ describe("the license message", () => {
 
 		expect(html.startsWith("<!DOCTYPE html")).toBe(true)
 		expect(html).toContain("<html")
-		expect(html).toContain("licenses@mailwoman.ai")
+		expect(html).toContain("licenses@mailwoman.post")
 	})
 
 	it("a renewal carries the new key, names the stored secret rather than repeating it, and adopts without one", () => {

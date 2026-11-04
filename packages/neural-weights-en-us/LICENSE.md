@@ -12,7 +12,7 @@ over a network (section 13). Under a commercial agreement, the source offer and 
 condition do not apply to the code and model artifacts Sister Software authors.
 
 - Open-source terms: https://github.com/sister-software/mailwoman/blob/main/LICENSE.md
-- Commercial terms, as executed at checkout: https://mailwoman.ai/license/terms/commercial-2026-10
+- Commercial terms, as executed at checkout: https://mailwoman.post/license/terms/commercial-2026-10
 - Commercial terms, as a reference template that does not itself execute:
   https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md
 
@@ -25,8 +25,8 @@ components continues to apply and is not waived or relicensed by a commercial ag
 
 ## Attribution the training data requires
 
-The effective training manifest for corpus `v0.7.10-gb-county` records the sources one audited epoch of
-`corpus-python/src/mailwoman_train/configs/v7.10.0-gb-county-60k.yaml` drew rows from. Rows under these terms require the statement that follows, reproduced in any redistribution:
+The effective training manifest for corpus `v0.8.18-retention-overlay` records the sources one audited epoch of
+`packages/corpus/data/training-configs/v8.6.3-base-c6-90k-v0818-wof15-s42.yaml` drew rows from. Rows under these terms require the statement that follows, reproduced in any redistribution:
 
 - © OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright. (`ODbL-1.0`: osm-ae, osm-al, osm-am, osm-ao, osm-ar, osm-aw, osm-az, osm-ba, osm-bb, osm-bd, osm-bh, osm-bm, osm-bn, osm-bs, osm-bt, osm-bw, osm-by, osm-bz, osm-cd, osm-ci, osm-cl, osm-co, osm-cr, osm-cu, osm-cw, osm-do, osm-dz, osm-ec, osm-eg, osm-ge, osm-gg, osm-gh, osm-gl, osm-gt, osm-hk, osm-ht, osm-id, osm-in, osm-iq, osm-ir, osm-je, osm-jm, osm-jo, osm-ke, osm-kg, osm-kh, osm-kw, osm-kz, osm-lb, osm-lk, osm-lr, osm-ma, osm-md, osm-me, osm-mg, osm-mk, osm-mm, osm-mn, osm-mo, osm-mt, osm-mv, osm-my, osm-mz, osm-na, osm-ng, osm-np, osm-om, osm-pa, osm-pe, osm-pf, osm-ph, osm-pk, osm-pr, osm-py, osm-qa, osm-rs, osm-ru, osm-rw, osm-sa, osm-sm, osm-sn, osm-sr, osm-sv, osm-th, osm-tj, osm-tm, osm-tn, osm-tt, osm-tz, osm-ua, osm-ug, osm-uz, osm-ve, osm-vi, osm-vn, osm-zm, osm-zw, rendered-bd-register, rendered-pk-register, spliced-sub-venue)
 
@@ -35,31 +35,39 @@ entry or the model card's attribution entries. A label this repository does not 
 its obligations are unknown rather than absent:
 
 - `BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE`: rendered-fr-admin-split
-- `CC-BY-4.0`: cordis, gbpa-bs, gnaf, lv-varis, ro-retea-scolara, ryhti-ax
-- `CDLA-Permissive-2.0`: overture, overture-latam
+- `CC-BY-4.0`: cordis, gbpa-bs, geonames-features, gnaf, invented-postal-guideline, invented-postal-unit-guideline, lv-varis, ro-retea-scolara, ryhti-ax
+- `CDLA-Permissive-2.0`: overture-latam
 - `CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)`: rendered-sg-register
+- `DL-DE-BY-2.0 AND DL-DE-ZERO-2.0 AND LicenseRef-unchecked-corpus-input-us-who-s-on-first`: rendered-de
+- `etalab-2.0`: ban, rendered-fr-order
 - `Licence Ouverte 1.0`: fr-finess-overseas
-- `Licence Ouverte 2.0`: ban, ban-bl, ban-gf, ban-gp, ban-mf, ban-mq, ban-nc, ban-pf, ban-pm, ban-re, ban-yt, fr-annuaire-education-overseas
+- `Licence Ouverte 2.0`: ban-bl, ban-gf, ban-gp, ban-mf, ban-mq, ban-nc, ban-pf, ban-pm, ban-re, ban-yt, fr-annuaire-education-overseas
 - `LicenseRef-CC-BY-unstated-version`: opendata-az
 - `LicenseRef-FO-Umhvorvisstovan-Brukstreytir`: adressur-fo
 - `LicenseRef-IM-OGL`: landregistry-im
 - `LicenseRef-LI-ABI-OGD-2`: llv-li
 - `LicenseRef-Licencia-Datos-Abiertos-Uruguay-0.1`: ide-uy
+- `LicenseRef-unchecked-access-free-us-us-health-1`: usgov-nppes
+- `LicenseRef-unchecked-access-free-us-us-health-2`: usgov-hrsa-fqhc
+- `LicenseRef-unchecked-corpus-input-us-new-york-department-of-state`: state-ny-notaries
+- `LicenseRef-unchecked-corpus-input-us-overture-maps-foundation`: overture
+- `LicenseRef-unchecked-corpus-input-us-texas-secretary-of-state`: state-tx-notaries
+- `LicenseRef-unchecked-corpus-input-us-u-s-census-bureau`: tiger
+- `LicenseRef-unchecked-corpus-input-us-u-s-department-of-transportation`: usgov-nad
+- `LicenseRef-unchecked-corpus-input-us-who-s-on-first`: wof-admin, wof-postalcode
 - `none-recorded-on-rows`: invented-anchor-absorption
+- `OGL-UK-3.0`: rendered-gb-os-open
 - `OpenAddresses and National Address Database US (non-VT) skeletons + injected USPS Pub-28 C2 unit designators`: spliced-unit-v30
 - `OpenAddresses and National Address Database US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)`: invented-po-box-cedex
 - `OpenAddresses and National Address Database US (non-VT) skeletons, street split via USPS Pub-28 C1/C2 (codex)`: spliced-affix
 - `OpenAddresses and National Address Database US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)`: spliced-suffix-boundary
 - `OpenAddresses CH tuples, rendered native-order — see ingest SOURCES`: rendered-ch
-- `OpenAddresses DE tuples, rendered native-order — see ingest SOURCES`: rendered-de
-- `OpenAddresses FR countrywide tuples, rendered canonical + reversed-order — see ingest SOURCE`: rendered-fr-order
 - `OpenAddresses HR tuples, rendered native-order — see ingest SOURCES`: rendered-hr
 - `OpenAddresses LU tuples, rendered native-order — see ingest SOURCES`: rendered-lu
 - `OpenAddresses multi-locale and National Address Database US skeletons + injected ISO-3166 country surface forms (codex)`: spliced-country
 - `OpenAddresses PT tuples, rendered native-order — see ingest SOURCES`: rendered-pt
 - `OpenAddresses SK tuples, rendered native-order — see ingest SOURCES`: rendered-sk
-- `OS OpenData GB tuples (OGL-UK-3.0), rendered native-order — see ingest SOURCES`: rendered-gb-os-open
-- `Public Domain`: bsp-gu, state-ny-notaries, state-tx-notaries, tiger, usgov-hrsa-fqhc, usgov-nad, usgov-nppes
+- `Public Domain`: bsp-gu
 - `Synthetic — bare-postcode; postcodes from OpenAddresses (per-source attribution in the model card)`: codex-bare-postcode
 - `Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)`: rendered-cz-pcfirst-preposition-v21
 - `Synthetic — derived from CC-BY / public-domain input tuples`: invented-house-venue, invented-po-box-military
@@ -79,7 +87,7 @@ its obligations are unknown rather than absent:
 The license of these training databases requires that the recipients of a work produced from them be offered
 the databases, so each is published in machine-readable form under its own license:
 
-- The OpenStreetMap-derived training extracts of corpus v0.7.10-gb-county, as the 242 parquet files of the 100 ODbL sources the trainer read (2,860,227 rows, including the 49,219 of 120,000 spliced-sub-venue rows that carry an OpenStreetMap venue or sub-venue name), plus the four OpenStreetMap extracts that recipe drew names from, © OpenStreetMap contributors (`ODbL-1.0`, ODbL 1.0 section 4.6(a): osm-ae, osm-al, osm-am, osm-ao, osm-ar, osm-aw, osm-az, osm-ba, osm-bb, osm-bd, osm-bh, osm-bm, osm-bn, osm-bs, osm-bt, osm-bw, osm-by, osm-bz, osm-cd, osm-ci, osm-cl, osm-co, osm-cr, osm-cu, osm-cw, osm-do, osm-dz, osm-ec, osm-eg, osm-ge, osm-gg, osm-gh, osm-gl, osm-gt, osm-hk, osm-ht, osm-id, osm-in, osm-iq, osm-ir, osm-je, osm-jm, osm-jo, osm-ke, osm-kg, osm-kh, osm-kw, osm-kz, osm-lb, osm-lk, osm-lr, osm-ma, osm-md, osm-me, osm-mg, osm-mk, osm-mm, osm-mn, osm-mo, osm-mt, osm-mv, osm-my, osm-mz, osm-na, osm-ng, osm-np, osm-om, osm-pa, osm-pe, osm-pf, osm-ph, osm-pk, osm-pr, osm-py, osm-qa, osm-rs, osm-ru, osm-rw, osm-sa, osm-sm, osm-sn, osm-sr, osm-sv, osm-th, osm-tj, osm-tm, osm-tn, osm-tt, osm-tz, osm-ua, osm-ug, osm-uz, osm-ve, osm-vi, osm-vn, osm-zm, osm-zw, rendered-bd-register, rendered-pk-register, spliced-sub-venue): https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract. Files, rows and sha256 digests: https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/767406aa5a731e61a37058f9323bfe2cf5838217/MANIFEST.json
+- The OpenStreetMap-derived training extracts of corpus v0.8.18-retention-overlay, © OpenStreetMap contributors: the 101 parquet files of the osm sources under data-v0.8.18/ (2,931,896 rows, 30% of them rendered with a trailing English country name), and the files of spliced-sub-venue, rendered-bd-register and rendered-pk-register under data/, which v0.8.18 holds unchanged from v0.7.10-gb-county. The dataset's MANIFEST.json at the revision named above lists every file with its sha256 and names this model under produced_works. (`ODbL-1.0`, ODbL 1.0 section 4.6(a): osm-ae, osm-al, osm-am, osm-ao, osm-ar, osm-aw, osm-az, osm-ba, osm-bb, osm-bd, osm-bh, osm-bm, osm-bn, osm-bs, osm-bt, osm-bw, osm-by, osm-bz, osm-cd, osm-ci, osm-cl, osm-co, osm-cr, osm-cu, osm-cw, osm-do, osm-dz, osm-ec, osm-eg, osm-ge, osm-gg, osm-gh, osm-gl, osm-gt, osm-hk, osm-ht, osm-id, osm-in, osm-iq, osm-ir, osm-je, osm-jm, osm-jo, osm-ke, osm-kg, osm-kh, osm-kw, osm-kz, osm-lb, osm-lk, osm-lr, osm-ma, osm-md, osm-me, osm-mg, osm-mk, osm-mm, osm-mn, osm-mo, osm-mt, osm-mv, osm-my, osm-mz, osm-na, osm-ng, osm-np, osm-om, osm-pa, osm-pe, osm-pf, osm-ph, osm-pk, osm-pr, osm-py, osm-qa, osm-rs, osm-ru, osm-rw, osm-sa, osm-sm, osm-sn, osm-sr, osm-sv, osm-th, osm-tj, osm-tm, osm-tn, osm-tt, osm-tz, osm-ua, osm-ug, osm-uz, osm-ve, osm-vi, osm-vn, osm-zm, osm-zw, rendered-bd-register, rendered-pk-register, spliced-sub-venue): https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract. Files, rows and sha256 digests: https://huggingface.co/datasets/sister-software/mailwoman-osm-training-extract/resolve/59ebed0358279c08a6ce6e3b9f23d99a2ba5655c/MANIFEST.json
 
 ## Where the sources are recorded
 

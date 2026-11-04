@@ -29,6 +29,7 @@ pub fn row(raw: &str, tokens: &[&str], labels: &[&str]) -> Row {
 		labels: strings(labels),
 		country: Some("US".to_owned()),
 		source: "test".to_owned(),
+		source_id: None,
 		spans: None,
 	}
 }
@@ -159,6 +160,7 @@ pub fn make_row(raw: &str, spans: &[(&str, &str)], country: &str, tokens: Option
 		tokens,
 		country: Some(country.to_owned()),
 		source: "openaddresses".to_owned(),
+		source_id: None,
 		spans: Some(SpanTriple { starts, ends, tags }),
 	}
 }

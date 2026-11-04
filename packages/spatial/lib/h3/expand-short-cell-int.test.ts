@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 import { describe, expect, it } from "vitest"
 
-import { expandShortCellInt, type H3Cell, shortCellToInt } from "#h3/cell"
+import { expandShortCellInt, shortCellToInt } from "#h3/cell"
 
 describe("expandShortCellInt", () => {
 	it("inverts shortCellToInt at the stored resolution", () => {
-		const cell = latLngToCell(51.5074, -0.1278, 9) as H3Cell
+		const cell = latLngToCell(51.5074, -0.1278, 9)
 
 		expect(expandShortCellInt(shortCellToInt(cell), 9)).toBe(cell)
 	})

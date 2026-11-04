@@ -36,7 +36,7 @@ Here is the same matching decision, scored two ways:
 
 String-first draws its decision boundary vertically. Two records match if their spelling is close enough, regardless of where on Earth they sit. Geocode-first draws the boundary horizontally. Geographically close records are plausible matches, distant records are rejected, and spelling only breaks ties between close candidates. The two failure cases (the same place written differently, and different places written almost identically) sit in the corners where those boundaries disagree, and geocode-first handles both correctly. The image above shows the same Fellegi-Sunter scorer with real per-field weights, run twice: once with only the name, and once with distance as well. Geography gets more weight by design.
 
-We therefore stopped matching on the written form. [Mailwoman](https://mailwoman.ai) is a calibrated street-level geocoder. Given a messy address line, it returns a coordinate, a resolution tier, and a calibrated uncertainty. With those, entity resolution works differently. You match on the resolved place: the coordinate, the canonical key, and the admin hierarchy. The string is evidence about the place, and the place is the identity.
+We therefore stopped matching on the written form. [Mailwoman](https://mailwoman.post) is a calibrated street-level geocoder. Given a messy address line, it returns a coordinate, a resolution tier, and a calibrated uncertainty. With those, entity resolution works differently. You match on the resolved place: the coordinate, the canonical key, and the admin hierarchy. The string is evidence about the place, and the place is the identity.
 
 Three things change as a result.
 

@@ -1,6 +1,8 @@
+import type { SourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 import { expect, test } from "vitest"
 
 import { createLightSpec, createSkySpec, StyleSpecificationComposer } from "#base/composition"
+import { MailwomanBaseTileSetID, MailwomanBuildingsTileSetID } from "#base/theme"
 
 test("createLightSpec: returns the house defaults when called bare", () => {
 	expect(createLightSpec()).toEqual({
@@ -111,8 +113,8 @@ test("Composer.toJSON: emits a v8 style with the self-host glyph + sprite endpoi
 	const style = new StyleSpecificationComposer({ sources: {} }).toJSON()
 
 	expect(style.version).toBe(8)
-	expect(style.glyphs).toBe("https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf")
-	expect(style.sprite).toBe("https://public.mailwoman.ai/protomaps/sprites/v4/light")
+	expect(style.glyphs).toBe("https://public.mailwoman.post/protomaps/fonts/{fontstack}/{range}.pbf")
+	expect(style.sprite).toBe("https://public.mailwoman.post/protomaps/sprites/v4/light")
 })
 
 test("Composer.toJSON: carries the composed light, sky, terrain, sources and layers through", () => {
@@ -144,7 +146,7 @@ test("Composer: a composition with no overrides is the Earth style: base layers,
 
 test("Composer: a composition can bring its own base layers without hillshade source and no sprite", () => {
 	const style = new StyleSpecificationComposer({
-		sources: { moon: { type: "vector", url: "https://tiles.mailwoman.ai/moon.json" } },
+		sources: { moon: { type: "vector", url: "https://tiles.mailwoman.post/moon.json" } },
 		baseLayers: [{ id: "space", type: "background", paint: { "background-color": "#000" } }],
 		hillshadeSource: null,
 		sprite: null,
@@ -154,6 +156,26 @@ test("Composer: a composition can bring its own base layers without hillshade so
 	expect(Object.keys(style.sources)).toEqual(["moon"])
 	expect("sprite" in style).toBe(false)
 	expect(style.glyphs).toMatch(/protomaps\/fonts/u)
+})
+
+test("Composer: footprint layers read a separate buildings source when the style has one, else the basemap", () => {
+	const base: SourceSpecification = { type: "vector", url: "https://tiles.mailwoman.post/planet.json" }
+	const buildings: SourceSpecification = { type: "vector", url: "https://tiles.mailwoman.post/buildings.json" }
+
+	const footprintSources = (sources: Record<string, SourceSpecification>): Set<string> =>
+		new Set(
+			new StyleSpecificationComposer({ sources })
+				.toJSON()
+				.layers.filter((layer) => "source-layer" in layer && layer["source-layer"] === "buildings")
+				.filter((layer) => layer.type !== "symbol")
+				.map((layer) => ("source" in layer ? String(layer.source) : ""))
+		)
+
+	expect(footprintSources({ [MailwomanBaseTileSetID]: base })).toEqual(new Set([MailwomanBaseTileSetID]))
+
+	expect(footprintSources({ [MailwomanBaseTileSetID]: base, [MailwomanBuildingsTileSetID]: buildings })).toEqual(
+		new Set([MailwomanBuildingsTileSetID])
+	)
 })
 
 test("Composer: two instances from the shared BaseLayers have independent layer lists", () => {

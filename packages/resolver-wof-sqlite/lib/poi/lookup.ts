@@ -6,16 +6,16 @@
  *   `without rowid` B-tree `poi-schema.ts` builds. Category, brand and name searches share one
  *   artifact. Each path has a method that returns its details.
  *
- *   `latLngToCell` and `gridDisk` come from `h3-js`. The 48-bit short-cell packing that turns a raw
+ *   `latLngToCell` and `gridDisk` come from `@sister.software/h3`. The 48-bit short-cell packing that turns a raw
  *   H3 cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt`, and
  *   that math is never reimplemented here.
  */
 
 import { allRows } from "@mailwoman/core/utils"
-import { haversine, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { haversine, shortCellToInt } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
-import { gridDisk, latLngToCell } from "h3-js"
+import { gridDisk, latLngToCell } from "@sister.software/h3"
 
 import type { POICategoryCodeTable, POIDatabase, POITable } from "#poi/schema"
 /**
@@ -243,7 +243,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		// This is a clean miss instead of a throw.
 		if (!categoryIDs.length) return []
 
-		const origin = latLngToCell(center.latitude, center.longitude, POI_H3_RESOLUTION) as H3Cell
+		const origin = latLngToCell(center.latitude, center.longitude, POI_H3_RESOLUTION)
 		const seenCells = new Set<string>()
 		let rows: POIRow[] = []
 
@@ -251,12 +251,12 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		for (let ring = 0; ring < maxRings; ring++) {
 			// gridDisk(origin, ring) returns the whole disk out to `ring`, so diffing against
 			// the already-probed set derives only this ring's new cells.
-			const diskCells = gridDisk(origin, ring) as string[]
+			const diskCells = gridDisk(origin, ring)
 			const newCells = diskCells.filter((cell) => !seenCells.has(cell))
 
 			for (const cell of newCells) {
 				seenCells.add(cell)
-				const shortCell = shortCellToInt(cell as H3Cell)
+				const shortCell = shortCellToInt(cell)
 
 				for (const categoryID of categoryIDs) {
 					rows.push(...allRows<POIRow>(this.#categoryCellProbe, shortCell, categoryID, limit))

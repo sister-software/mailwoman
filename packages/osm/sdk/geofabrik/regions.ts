@@ -37,6 +37,8 @@ export interface GeofabrikRegion {
  */
 export const GEOFABRIK_BASE_URL = "https://download.geofabrik.de/"
 
+// country-branch: each row records which countries one Geofabrik extract covers.
+// Geofabrik's index-v1.json, which lists each extract's ISO codes, would replace the hand copy.
 const REGIONS: readonly GeofabrikRegion[] = [
 	{ id: "australia-oceania/new-zealand", countries: ["NZ"], partial: [] },
 	{ id: "asia/indonesia", countries: ["ID"], partial: [] },

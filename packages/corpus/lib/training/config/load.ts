@@ -17,6 +17,7 @@
  *   mapping key that a JSON object reader would move out of its YAML position.
  */
 
+import { countriesDeclaredBy, type CountrySet } from "@mailwoman/codex/country/sets"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import type { PathBuilderLike } from "path-ts"
 
@@ -593,6 +594,26 @@ export function typedTrainingConfig(config: ConfigInstance, source: string): Tra
 
 	return result.data
 }
+
+/**
+ * The countries a config admits: the `data.country_weights` keys with a positive weight, in key order.
+ *
+ * A country at weight zero admits no row.
+ *
+ * @throws {TypeError} When a key is not an ISO 3166-1 alpha-2 code, naming the config.
+ */
+export function weightedCountries(config: TrainingConfig, source = "data.country_weights"): WeightedCountries {
+	const codes = Object.entries(config.data.country_weights)
+		.filter(([, weight]) => weight > 0)
+		.map(([country]) => country)
+
+	return countriesDeclaredBy(source, codes)
+}
+
+/**
+ * The branded set {@linkcode weightedCountries} returns.
+ */
+export type WeightedCountries = CountrySet<{ declaredBy: string }>
 
 /**
  * The version of the built corpus a config trains on: `data.corpus_dir`'s last segment without `corpus-`.

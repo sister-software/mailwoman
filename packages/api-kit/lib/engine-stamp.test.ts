@@ -38,7 +38,7 @@ test("engineHeaders: Server and Link ride on a 200", async () => {
 
 	expect(res.status).toBe(200)
 	expect(res.headers.get("server")).toBe("mailwoman/9.2.0 (AGPL-3.0-only)")
-	expect(res.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+	expect(res.headers.get("link")).toBe('<https://mailwoman.post/license>; rel="license"')
 })
 
 test("engineHeaders: the headers ride on the error net's 500 too", async () => {

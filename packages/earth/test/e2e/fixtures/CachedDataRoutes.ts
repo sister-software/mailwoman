@@ -19,7 +19,7 @@ import type { Page, Route } from "@playwright/test"
  * Origins whose GETs are cached.
  * The tile worker serves the basemap the same specs load.
  */
-const CACHED_ORIGINS = ["https://public.mailwoman.ai/", "https://tiles.mailwoman.ai/"] as const
+const CACHED_ORIGINS = ["https://public.mailwoman.post/", "https://tiles.mailwoman.post/"] as const
 
 const CONTENT_TYPES: Record<string, string> = {
 	".json": "application/json",

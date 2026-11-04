@@ -3,7 +3,7 @@
 
 /**
  *   The register of license signing keys: the one source both the shipped trust map and the well-known JSON on
- *   mailwoman.ai derive from, so the two cannot disagree. A key enters when `mailwoman license keygen` mints it and
+ *   mailwoman.post derive from, so the two cannot disagree. A key enters when `mailwoman license keygen` mints it and
  *   moves through three states:
  *
  *   - `active`: may sign and verify.

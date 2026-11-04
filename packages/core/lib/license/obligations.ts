@@ -96,6 +96,12 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// They state no share-alike term.
 	// Retrieved 2026-09-27 and retained at internal/strategy/rights-receipts/mx-gb-2026-09-27/mx-inegi-terminos.html.
 	["LicenseRef-INEGI-Terms", [LicenseObligation.Attribution]],
+	// The GEBCO undersea gazetteer, under the operator's own election of 2026-11-02 (#2896).
+	// GEBCO and NOAA NCEI publish it with a citation request and no stated restriction.
+	// The disclaimer excludes only navigation and safety-at-sea use.
+	// The election rests on that publication without a written grant, and a request for one has gone to GEBCO.
+	// The citation is the obligation it records.
+	["LicenseRef-GEBCO-Operator-Election", [LicenseObligation.Attribution]],
 	["MIT", [LicenseObligation.Attribution]],
 	["Apache-2.0", [LicenseObligation.Attribution]],
 ])

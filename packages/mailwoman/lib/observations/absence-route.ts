@@ -13,9 +13,9 @@ import type {
 	SourceProvenance,
 } from "@mailwoman/geographic-model"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
-import { recoverShortCellResolution, type H3Cell } from "@mailwoman/spatial"
+import { recoverShortCellResolution } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { latLngToCell } from "h3-js"
+import { latLngToCell } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import { readCommittedModel } from "#observations/committed-model"
@@ -318,7 +318,7 @@ async function decide(answer: POIQueryResult | null, context: DecisionContext): 
 	if (!searchCenter) return { fired: false, refusal: "no_search_center" }
 
 	const resolution = context.identity.coverageResolution
-	const cellIndex = latLngToCell(searchCenter.latitude, searchCenter.longitude, resolution) as H3Cell
+	const cellIndex = latLngToCell(searchCenter.latitude, searchCenter.longitude, resolution)
 	const h3Cell = Number(BigInt(`0x${cellIndex.slice(2)}`))
 	const cell: CoverageCell | null = await readLayerCoverage(context.db, h3Cell)
 

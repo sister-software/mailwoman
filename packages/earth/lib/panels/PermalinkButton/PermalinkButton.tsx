@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Copy a `https://earth.mailwoman.ai/?q=<encoded>` link to the clipboard via the shared `useClipboard` (async
+ *   Copy a `https://earth.mailwoman.post/?q=<encoded>` link to the clipboard via the shared `useClipboard` (async
  *   Clipboard API with a legacy `execCommand` fallback for older browsers). Visible feedback is a 1.5 s checkmark swap
  *   so the person knows the click landed.
  */

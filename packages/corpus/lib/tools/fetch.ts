@@ -38,7 +38,8 @@ import { fetchGLEIF } from "#tools/fetch/gleif"
 import { fetchOpenAddresses } from "#tools/fetch/openaddresses"
 import { fetchOurAirports } from "#tools/fetch/ourairports"
 import { fetchVlaanderenAD } from "#tools/fetch/vlaanderen-ad"
-import { fetchWikidataSubVenue } from "#tools/fetch/wikidata-subvenue"
+import { fetchWikidataSubVenue } from "#tools/fetch/wikidata/subvenue"
+import { fetchWikidataVitalPlaces } from "#tools/fetch/wikidata/vital-places"
 import { fetchGCISTW } from "#tw/tools/fetch/gcis"
 import { fetchHRSA } from "#us/tools/fetch/hrsa"
 import { fetchIMLSPLS } from "#us/tools/fetch/imls-pls"
@@ -94,6 +95,7 @@ export const FETCH_SOURCES = {
 	"state-hi-schools": fetchStateHISchools,
 	"tiger-full": fetchTigerFull,
 	"wikidata-subvenue": fetchWikidataSubVenue,
+	"wikidata-vital-places": fetchWikidataVitalPlaces,
 } as const
 
 /**

@@ -3,7 +3,7 @@
  *
  * These assertions mirror the deleted Python trainer's country-lexicon tests, so a drift
  * in the TS matcher would show the model different clues at inference than it trained on.
- * The inline lexicon matches the Python fixture exactly.
+ * The inline lexicon matches the deleted trainer's fixture exactly.
  *
  * The critical properties: the long leading form ("united states of america") paints every word
  * as an unambiguous country surface, homographs ("georgia", "CA") fire `country_surface` and

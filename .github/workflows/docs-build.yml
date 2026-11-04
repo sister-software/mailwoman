@@ -1,4 +1,4 @@
-# Builds the Docusaurus site at mailwoman.ai and deploys it to GitHub Pages from main.
+# Builds the Docusaurus site at mailwoman.post and deploys it to GitHub Pages from main.
 #
 # The Earth, Moon and Mars map apps deploy separately through deploy.yml. This site bundles the
 # runtime embed, the explorers and license pages, and the OpenAPI and CLI references that the

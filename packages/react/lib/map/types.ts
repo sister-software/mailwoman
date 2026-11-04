@@ -88,9 +88,13 @@ export interface VersionOption {
  */
 export interface GeocoderRuntime extends PipelineRuntime {
 	/**
-	 * The composed basemap style (URL or `StyleSpecification`).
+	 * The composed basemap style (URL or `StyleSpecification`), or `null`
+	 * while the host is still composing it.
+	 *
+	 * The map mounts once the style is set.
+	 * A host that waits for its inputs hands the map one style, so MapLibre never rebuilds it.
 	 */
-	mapStyle: MapCanvasStyle
+	mapStyle: MapCanvasStyle | null
 	overlays?: OverlaySpec[]
 	/**
 	 * Initial map center as `[lon, lat]`.

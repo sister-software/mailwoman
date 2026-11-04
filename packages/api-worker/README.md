@@ -9,7 +9,7 @@ The Worker selects its backend from the environment. An `API_BACKEND` service bi
 `ENGINE_ORIGIN` names the HTTP origin of a `mailwoman serve` host. Without either, every request answers 503.
 
 The Worker caps each request body at 64 KiB and answers 504 when the backend passes a 10-second deadline. It
-replaces the backend's CORS headers with its own origin list: the Earth and docs origins, `dev.mailwoman.ai`, and
+replaces the backend's CORS headers with its own origin list: the Earth and docs origins, `dev.mailwoman.post`, and
 localhost.
 
 ## Run it locally

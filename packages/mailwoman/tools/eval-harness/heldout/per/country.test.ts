@@ -17,7 +17,10 @@ import {
 	readHeldoutLocalePackages,
 	sampleHeldoutRows,
 	scoreHeldoutArm,
+	scoreHeldoutRow,
+	scoreHeldoutSpans,
 	scoreHeldoutWeights,
+	treeSpans,
 } from "#tools/eval-harness/heldout/per/country"
 import { CURRENT_RELEASE_SPEC } from "#tools/eval-harness/release/current-spec"
 import { capabilityProbeSources, readReleaseSpec } from "#tools/eval-harness/release/requirements"
@@ -95,10 +98,7 @@ describe("sampleHeldoutRows grouping", () => {
 
 		expect(rule).toMatchObject({ perCountry: 10, seed: 7 })
 
-		const arm = await scoreHeldoutArm(rows, async (row) => ({
-			raw: row.raw,
-			roots: [],
-		}))
+		const arm = await scoreHeldoutArm(rows, async () => [])
 
 		expect(new Set(arm.rows.filter((r) => r.group === "b1").map((r) => r.rowID)).size).toBe(3)
 	})
@@ -238,8 +238,8 @@ const extraTree = (row: HeldoutRow): AddressTree => {
 
 describe("scoreHeldoutArm", () => {
 	it("writes aligned per-row outcomes for two arms on identical rows", async () => {
-		const shipped = await scoreHeldoutArm(rows, async (row) => exactTree(row))
-		const candidate = await scoreHeldoutArm(rows, async (row) => extraTree(row))
+		const shipped = await scoreHeldoutArm(rows, async (row) => treeSpans(exactTree(row)))
+		const candidate = await scoreHeldoutArm(rows, async (row) => treeSpans(extraTree(row)))
 
 		expect(() => assertPairedArms([shipped, candidate])).not.toThrow()
 		expect(shipped.rows.map((r) => r.rowID)).toEqual(["oa-us:a1", heldoutRowID(rows[1]!)])
@@ -272,7 +272,14 @@ describe("scoreHeldoutArm", () => {
 		const probes = capabilityProbeSources(spec)
 		const [probe] = [...probes]
 		const probeRow: HeldoutRow = { ...rows[0]!, source: probe!, source_id: "p1", group: "p1" }
-		const arm = await scoreHeldoutArm([rows[0]!, probeRow], async (row) => exactTree(row), undefined, undefined, probes)
+
+		const arm = await scoreHeldoutArm(
+			[rows[0]!, probeRow],
+			async (row) => treeSpans(exactTree(row)),
+			undefined,
+			undefined,
+			probes
+		)
 
 		expect(arm.rows.map((r) => [r.source, r.kind])).toEqual([
 			["oa-us", "address"],
@@ -285,23 +292,44 @@ describe("scoreHeldoutArm", () => {
 
 	it("assigns a provenance class only from a recorded history", async () => {
 		const history = new Map([["oa-us:a1", { provenance: "verified_unseen" as const, evidence: "audit.json#sha" }]])
-		const arm = await scoreHeldoutArm(rows, async (row) => exactTree(row), history)
+		const arm = await scoreHeldoutArm(rows, async (row) => treeSpans(exactTree(row)), history)
 
 		expect(arm.rows.map((r) => r.provenance)).toEqual(["verified_unseen", "unknown"])
 	})
 
 	it("refuses misaligned arms and duplicate identities", async () => {
-		const full = await scoreHeldoutArm(rows, async (row) => exactTree(row))
-		const reversed = await scoreHeldoutArm(rows.toReversed(), async (row) => exactTree(row))
+		const full = await scoreHeldoutArm(rows, async (row) => treeSpans(exactTree(row)))
+		const reversed = await scoreHeldoutArm(rows.toReversed(), async (row) => treeSpans(exactTree(row)))
 
 		expect(() => assertPairedArms([full, reversed])).toThrow(/row 0/u)
-		await expect(scoreHeldoutArm([rows[0]!, rows[0]!], async (row) => exactTree(row))).rejects.toThrow(/share/u)
+
+		await expect(scoreHeldoutArm([rows[0]!, rows[0]!], async (row) => treeSpans(exactTree(row)))).rejects.toThrow(
+			/share/u
+		)
 	})
 
 	it("refuses a malformed annotation rather than scoring it", async () => {
 		const bad = { ...rows[0]!, span_ends: [2] }
 
-		await expect(scoreHeldoutArm([bad], async () => exactTree(rows[0]!))).rejects.toThrow(/row oa-us:a1/u)
+		await expect(scoreHeldoutArm([bad], async () => treeSpans(exactTree(rows[0]!)))).rejects.toThrow(/row oa-us:a1/u)
+	})
+})
+
+describe("scoreHeldoutSpans", () => {
+	it("scores a nested tree's flat spans in any order as it scores the tree", () => {
+		const row = rows[0]!
+		const street = { ...node(row.raw, "street", 3, 10), children: [node(row.raw, "street_suffix", 8, 10)] }
+
+		const nested: AddressTree = {
+			raw: row.raw,
+			roots: [node(row.raw, "house_number", 0, 2), street, node(row.raw, "postcode", 0, 2)],
+		}
+
+		const fromTree = scoreHeldoutRow(row, nested)
+
+		expect(treeSpans(nested).map(([tag]) => tag)).toEqual(["house_number", "street", "street_suffix", "postcode"])
+		expect(scoreHeldoutSpans(row, treeSpans(nested).toReversed())).toEqual(fromTree)
+		expect(fromTree).toMatchObject({ exact: false, spansRecovered: 2, goldRecovered: true })
 	})
 })
 

@@ -46,12 +46,13 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 	})
 
 	it("still reports genuinely stuck work, rather than hanging", async () => {
-		const clock = new VirtualClock()
+		// A small budget exercises the guard without paying the production 5s one.
+		const clock = new VirtualClock({ idleBudgetMs: 150 })
 
 		const stuck = new Promise<never>(() => {})
 
 		await expect(clock.runUntilSettled(stuck)).rejects.toThrow(/blocked on something this clock does not drive/)
-	}, 30_000)
+	})
 
 	it("measures its budget with performance.now, not the fakeable Date", async () => {
 		// Consumers freeze `Date` inside their describe blocks, so a budget reading `Date.now()`
@@ -60,7 +61,7 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 
 		try {
-			const clock = new VirtualClock()
+			const clock = new VirtualClock({ idleBudgetMs: 150 })
 
 			await expect(clock.runUntilSettled(new Promise<never>(() => {}))).rejects.toThrow(
 				/blocked on something this clock does not drive/
@@ -68,7 +69,7 @@ describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 		} finally {
 			vi.useRealTimers()
 		}
-	}, 30_000)
+	})
 
 	it("does not busy-spin while waiting — the spin starved the I/O it waited for", async () => {
 		const clock = new VirtualClock()

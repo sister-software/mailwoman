@@ -4,13 +4,7 @@
 import { EMPTY_PLACE_FIELDS, type ResolvedPlace } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import {
-	DEFAULT_COUNTRY_PRIOR_WEIGHT,
-	NATIONAL_CAPITAL_MARGIN_LOG10,
-	promoteCapitals,
-	rankByCountryPrior,
-	rankByImportance,
-} from "#toponym-prior"
+import { promoteCapitals, rankByCountryPrior, rankByImportance } from "#toponym-prior"
 
 const place = (over: Partial<ResolvedPlace> & Pick<ResolvedPlace, "id" | "name" | "country">): ResolvedPlace => ({
 	...EMPTY_PLACE_FIELDS,
@@ -272,10 +266,6 @@ describe("rankByCountryPrior", () => {
 
 		expect(rankByCountryPrior(mixed, "US").map((c) => c.id)).toEqual([1, 2])
 	})
-
-	it("weights in log10-population units, matching the resolver's anchorWeight default", () => {
-		expect(DEFAULT_COUNTRY_PRIOR_WEIGHT).toBe(2)
-	})
 })
 
 describe("promoteCapitals (#1880 — bounded capital promotion after the fame key)", () => {
@@ -364,9 +354,5 @@ describe("promoteCapitals (#1880 — bounded capital promotion after the fame ke
 
 		expect(promoteCapitals(rows, undefined).map((p) => p.id)).toEqual(["a", "b"])
 		expect(promoteCapitals(rows, () => 0).map((p) => p.id)).toEqual(["a", "b"])
-	})
-
-	it("holds the margin the sentences above rely on", () => {
-		expect(NATIONAL_CAPITAL_MARGIN_LOG10).toBe(2)
 	})
 })

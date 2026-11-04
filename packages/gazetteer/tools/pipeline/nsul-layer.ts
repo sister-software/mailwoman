@@ -48,10 +48,10 @@ import { CoverageBasis } from "@mailwoman/evidence"
 import type { NSULDatabase } from "@mailwoman/resolver-wof-sqlite/nsul"
 import { nsulDatabasePath, uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
-import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { expandShortCellInt, shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed/db"
-import { cellToParent } from "h3-js"
+import { cellToParent } from "@sister.software/h3"
 import { dirname, type PathBuilder, resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
@@ -783,13 +783,10 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const item = itemRaw ? tryParsingJSON<NSULItemRecord>(itemRaw) : null
 
 	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const {
-		createUPRNPostcodeTable,
-		createNSULMetaTable,
-		createNSULIndexes,
-		compactPostcode,
-		NSUL_COVERAGE_H3_RESOLUTION,
-	} = await import("@mailwoman/resolver-wof-sqlite/nsul")
+	const { createUPRNPostcodeTable, createNSULMetaTable, createNSULIndexes, NSUL_COVERAGE_H3_RESOLUTION } =
+		await import("@mailwoman/resolver-wof-sqlite/nsul")
+
+	const { compactPostcode } = await import("@mailwoman/postcode/display-form")
 
 	const { UPRN_H3_RESOLUTION } = await import("@mailwoman/resolver-wof-sqlite/uprn")
 
@@ -834,7 +831,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	)
 
 	const parentCell = (h3Cell: number): number =>
-		shortCellToInt(cellToParent(expandShortCellInt(h3Cell, UPRN_H3_RESOLUTION), NSUL_COVERAGE_H3_RESOLUTION) as H3Cell)
+		shortCellToInt(cellToParent(expandShortCellInt(h3Cell, UPRN_H3_RESOLUTION), NSUL_COVERAGE_H3_RESOLUTION))
 
 	kdb.exec("BEGIN")
 

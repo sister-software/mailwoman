@@ -3,7 +3,7 @@
 
 /**
  *   `<MapCanvas>` stories against a stub style — a single `background` layer, zero sources, zero network.
- *   Never hits `tiles.mailwoman.ai`; the whole point of the extracted map is that it renders in
+ *   Never hits `tiles.mailwoman.post`; the whole point of the extracted map is that it renders in
  *   isolation (Storybook / a headless browser) with an injected offline style, exactly as the composed
  *   demo will with a fake runtime in a later phase.
  */

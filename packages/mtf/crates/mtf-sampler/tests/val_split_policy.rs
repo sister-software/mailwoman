@@ -23,6 +23,7 @@ fn row(raw: &str, source: &str, labels: Option<&[&str]>) -> Row {
 		tokens,
 		country: Some("US".into()),
 		source: source.into(),
+		source_id: None,
 		spans: None,
 	}
 }

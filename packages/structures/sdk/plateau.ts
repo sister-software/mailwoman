@@ -51,6 +51,15 @@ export class PlateauClient extends APIClient<APIClientConfig> {
 		return (await this.fetch<T>({ url })).data
 	}
 
+	/**
+	 * A file's bytes, such as a tile of a 3D Tiles tileset.
+	 */
+	public async getBytes(url: string): Promise<Uint8Array> {
+		const response = await this.fetch<ArrayBuffer>({ url, responseType: "arraybuffer" })
+
+		return new Uint8Array(response.data)
+	}
+
 	public async getHead(url: string): Promise<string> {
 		const response = await this.fetch<string>({
 			url,
@@ -60,6 +69,20 @@ export class PlateauClient extends APIClient<APIClientConfig> {
 
 		return response.data
 	}
+}
+
+/**
+ * A client used only for the tileset host, `assets.cms.plateau.reearth.io`,
+ * a CDN that the converter reads tens of thousands of tiles from.
+ *
+ * It keeps the retries and drops the request spacing the catalog and CKAN API get.
+ */
+export function createPlateauTileClient(): PlateauClient {
+	return new PlateauClient({
+		displayName: "PLATEAU tiles",
+		minRequestIntervalMs: 0,
+		retry: { maxAttempts: API_CLIENT_DEFAULTS.maxAttempts, baseDelayMs: API_CLIENT_DEFAULTS.baseRetryDelayMs },
+	})
 }
 
 export function createPlateauClient(): PlateauClient {
@@ -146,12 +169,58 @@ interface GeoidCalcResponse {
 	ExportData?: { ErrMsg?: string }
 }
 
+/**
+ * A tileset's directory name, such as `13100_tokyo23-ku_city_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_lod2`.
+ *
+ * The catalog serves each variant of one ward's buildings under a different asset path,
+ * so only the directory names pair them.
+ */
+function tilesetDirectory(url: string): string {
+	return url.split("/").at(-2) ?? ""
+}
+
+/**
+ * The building tilesets to draw: one LoD2 tileset per ward, textured where the
+ * catalog has a textured LoD2 tileset beside the untextured one.
+ *
+ * An untextured tileset's glTF sets no base color, vertex color or texture, so it renders as one flat gray.
+ * A textured tileset's glTF holds photographic textures or vertex colors.
+ *
+ * Each selected tileset also records `untexturedURL`, the ward's untextured tileset.
+ * The city model converter reads that one, because Earth's own layer draws every
+ * building in the map's style and uses only the geometry.
+ *
+ * Each tileset appears once.
+ * The catalog can list one ward's untextured tileset twice under two asset paths,
+ * as it does Mashiki-machi's 2023 buildings, and both pair with the one textured tileset.
+ * The first of the two becomes `untexturedURL`.
+ */
+export function selectBuildingTilesets<T extends Pick<CatalogEntry, "type_en" | "url">>(
+	datasets: readonly T[]
+): Array<T & { untexturedURL: string }> {
+	const buildings = datasets.filter((entry) => entry.type_en === "bldg")
+	const byDirectory = new Map(buildings.map((entry) => [tilesetDirectory(entry.url), entry]))
+	const selected = new Map<string, T & { untexturedURL: string }>()
+
+	for (const untextured of buildings) {
+		if (!tilesetDirectory(untextured.url).endsWith("_lod2_no_texture")) continue
+
+		const drawn = byDirectory.get(tilesetDirectory(untextured.url).replace(/_lod2_no_texture$/u, "_lod2")) ?? untextured
+
+		if (!selected.has(drawn.url)) {
+			selected.set(drawn.url, { ...drawn, untexturedURL: untextured.url })
+		}
+	}
+
+	return [...selected.values()]
+}
+
 export async function readPlateauTilesets(
 	client: PlateauClient,
 	onSkip: (url: string, reason: string) => void
 ): Promise<PlateauTileset[]> {
 	const catalog = await client.getJSON<{ datasets: CatalogEntry[] }>(PLATEAU_CATALOG_URL)
-	const entries = catalog.datasets.filter((entry) => entry.type_en === "bldg" && /lod2_no_texture/.test(entry.url))
+	const entries = selectBuildingTilesets(catalog.datasets)
 	const tilesets: PlateauTileset[] = []
 	// Wards of one designated city share one dataset, so each dataset's license is read once.
 	const licenses = new Map<string, Promise<string | null>>()
@@ -180,6 +249,7 @@ export async function readPlateauTilesets(
 			dataset: dataset ?? "",
 			licenseTitle: dataset ? await licenses.get(dataset)! : null,
 			url: entry.url,
+			untexturedURL: entry.untexturedURL,
 			bounds,
 			geoidHeight: await readGeoidHeight(client, (west + east) / 2, (south + north) / 2),
 		})

@@ -11,7 +11,7 @@ import type { VitePWAOptions } from "vite-plugin-pwa"
 
 export interface PWAIdentity {
 	/**
-	 * The origin with a trailing slash, e.g. `https://earth.mailwoman.ai/`.
+	 * The origin with a trailing slash, e.g. `https://earth.mailwoman.post/`.
 	 *
 	 * It is the manifest `id`, which is what keeps the three sites' installations distinct.
 	 */

@@ -1,15 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { getBaseCellNumber, latLngToCell } from "h3-js"
+import { getBaseCellNumber, latLngToCell } from "@sister.software/h3"
 import { expect, test } from "vitest"
 
-import { expandH3Cell, isH3Cell, shortCellToInt, shortenH3Cell, type H3Cell, type H3CellShort } from "#h3/cell"
-
-// A real resolution-9 cell (White House, 38.8977, -77.0365) from h3-js itself
+import { expandH3Cell, isH3Cell, shortCellToInt, shortenH3Cell, type H3CellShort } from "#h3/cell"
+// A real resolution-9 cell (White House, 38.8977, -77.0365) from the H3 library itself
 // rather than a synthetic hex string.
 // This exercises the actual encoding shortCellToInt is packing.
-const CELL = latLngToCell(38.8977, -77.0365, 9) as H3Cell
+const CELL = latLngToCell(38.8977, -77.0365, 9)
 
 // Every resolution H3 defines, so the round-trip is asserted across the whole range
 // rather than at the resolutions this repo happens to use today.
@@ -26,7 +25,7 @@ test("shortCellToInt: packs a real res-9 cell to the 48-bit short-cell integer",
 })
 
 test.for(RESOLUTIONS)("expandH3Cell: round-trips a cell captured at resolution %i", (resolution) => {
-	const cell = latLngToCell(38.8977, -77.0365, resolution) as H3Cell
+	const cell = latLngToCell(38.8977, -77.0365, resolution)
 
 	expect(expandH3Cell(shortenH3Cell(cell), resolution)).toBe(cell)
 })
@@ -34,7 +33,7 @@ test.for(RESOLUTIONS)("expandH3Cell: round-trips a cell captured at resolution %
 // Base cells 0-7 leave the top nibble of the short form zero, so the hex string only
 // survives the round-trip if both halves agree on a fixed 13-character width.
 test("expandH3Cell: round-trips a cell whose base cell zeroes the leading nibble", () => {
-	const cell = latLngToCell(64.3025, 135.29175, 15) as H3Cell
+	const cell = latLngToCell(64.3025, 135.29175, 15)
 
 	expect(getBaseCellNumber(cell)).toBeLessThan(8)
 	expect(shortenH3Cell(cell)).toHaveLength(13)
@@ -44,7 +43,7 @@ test("expandH3Cell: round-trips a cell whose base cell zeroes the leading nibble
 // A short cell derived from an integer key has lost its leading zeros.
 // Expansion has to restore them rather than shift the digit path.
 test("expandH3Cell: accepts an unpadded short cell recovered from its integer form", () => {
-	const cell = latLngToCell(64.3025, 135.29175, 15) as H3Cell
+	const cell = latLngToCell(64.3025, 135.29175, 15)
 	const unpadded = shortCellToInt(cell).toString(16) as H3CellShort
 
 	expect(unpadded).toHaveLength(12)
@@ -52,7 +51,7 @@ test("expandH3Cell: accepts an unpadded short cell recovered from its integer fo
 })
 
 test("expandH3Cell: rejects a resolution the short cell was not captured at", () => {
-	const short = shortenH3Cell(latLngToCell(38.8977, -77.0365, 15) as H3Cell)
+	const short = shortenH3Cell(latLngToCell(38.8977, -77.0365, 15))
 
 	expect(() => expandH3Cell(short, 9)).toThrow(/does not name a valid cell at resolution 9/)
 })

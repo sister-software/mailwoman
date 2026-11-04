@@ -6,9 +6,9 @@
  *   through a node:sqlite-backed stub of the range-read database handle.
  */
 
-import { type H3Cell, shortCellToInt } from "@mailwoman/spatial"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToLatLng, gridDisk, latLngToCell } from "h3-js"
+import { cellToLatLng, gridDisk, latLngToCell, type H3Cell } from "@sister.software/h3"
 import { describe, expect, test } from "vitest"
 
 import type { RangeDatabase } from "#httpvfs/database"
@@ -18,7 +18,7 @@ import { registerOpenDatabases, stubRangeDatabase, trackDatabase } from "#test/r
 registerOpenDatabases()
 
 const CENTER = { lat: 39.7817, lon: -89.6501 }
-const ORIGIN = latLngToCell(CENTER.lat, CENTER.lon, 9) as H3Cell
+const ORIGIN = latLngToCell(CENTER.lat, CENTER.lon, 9)
 
 /**
  * A cell exactly `ring` steps from the origin.
@@ -26,7 +26,11 @@ const ORIGIN = latLngToCell(CENTER.lat, CENTER.lon, 9) as H3Cell
 function cellAtRing(ring: number): H3Cell {
 	const inner = new Set(ring > 0 ? gridDisk(ORIGIN, ring - 1) : [])
 
-	return gridDisk(ORIGIN, ring).find((cell) => !inner.has(cell)) as H3Cell
+	const cell = gridDisk(ORIGIN, ring).find((candidate) => !inner.has(candidate))
+
+	if (!cell) throw new Error(`No fixture cell found in ring ${ring}`)
+
+	return cell
 }
 
 interface Fixture {

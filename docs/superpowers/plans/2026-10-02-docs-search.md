@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace Algolia DocSearch on `https://mailwoman.ai` with a gzip-compressed SQLite FTS5 index written by the docs build and queried in the browser through the sqlite-wasm worker the repository already ships, behind a native-element search modal in `@mailwoman/react`.
+**Goal:** Replace Algolia DocSearch on `https://mailwoman.post` with a gzip-compressed SQLite FTS5 index written by the docs build and queried in the browser through the sqlite-wasm worker the repository already ships, behind a native-element search modal in `@mailwoman/react`.
 
 **Architecture:** The docs build extracts heading-scoped records from the built HTML and writes `search-index.db.gz`. The browser opens it whole in the existing range worker. The worker gains a `whole` open strategy with `DecompressionStream`. Pure query code in `docs/src/search/` runs BM25 lexical search with prefix matching and vocabulary-based typo correction over a two-method `SearchDatabase` interface, so the same code is tested in Node over `node:sqlite`. The modal in `@mailwoman/react` takes a `search` function and owns no data access.
 

@@ -68,6 +68,8 @@ The hook's interface is:
 - PR creation appends an unchecked CI review task to the issue and returns `handoff_ready: false`.
   After reviewing successful checks, call `mwdev_pull_request` with `action: complete`. The tool
   independently checks CI before marking that task complete and unlinking the issue.
-- The tool persists `.claude/state/tracked-ci.json`. Both clients' Stop hooks check the current PR head
-  directly on GitHub and block handoff while checks are absent, pending, failing, or unreadable.
+- The tool persists `.claude/state/tracked-ci.json`, and a Claude Code `PostToolUse` hook records the
+  creating session as its owner. The Claude Code Stop hook checks the current PR head directly on GitHub
+  and blocks the owning session's handoff while checks are absent, pending, failing, or unreadable. It
+  does not block another session in the same checkout, and Codex registers no CI Stop hook.
 - Keep the CI marker so a later push requires fresh verification.

@@ -39,6 +39,10 @@ export const SourceRegister = {
 	 */
 	GeoNames: "geonames",
 	/**
+	 * Wikidata's structured data: item labels, aliases and statements, under CC0.
+	 */
+	Wikidata: "wikidata",
+	/**
 	 * GeoNames postal-code tables, published separately from the place gazetteer.
 	 */
 	GeoNamesPostal: "geonames-postal",

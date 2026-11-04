@@ -1,0 +1,21 @@
+[package]
+name = "hrt-sources"
+description = "The Hilbert Rust Tiler's non-OpenStreetMap inputs: GeoPackage and zipped shapefile readers that yield features as Planetiler's readers do."
+version.workspace = true
+edition.workspace = true
+license = "(AGPL-3.0-only OR LicenseRef-Commercial) AND Apache-2.0"
+repository.workspace = true
+
+[dependencies]
+arrow-array = "60"
+arrow-schema = "60"
+geo-types = "0.7"
+hrt-osm = { path = "../hrt-osm" }
+parquet = { version = "60", default-features = false, features = ["arrow", "snap", "zstd", "simdutf8"] }
+rayon = "1"
+rusqlite = { version = "0.37", features = ["bundled"] }
+shapefile = { version = "0.6", features = ["geo-types"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }
+
+[dev-dependencies]
+tempfile = "3"

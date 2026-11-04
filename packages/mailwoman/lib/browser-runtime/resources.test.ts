@@ -25,14 +25,14 @@ import {
 
 describe("pair-index URL construction", () => {
 	test("a versioned base carries the generation segment", () => {
-		expect(pairIndexBaseURL("2026-10-17")).toBe("https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17")
+		expect(pairIndexBaseURL("2026-10-17")).toBe("https://public.mailwoman.post/mailwoman/pair-index/2026-10-17")
 	})
 
 	test("every country the generation's manifest lists gets a binary URL under the base", () => {
 		expect(pairIndexURLs(pairIndexBaseURL("2026-10-17"), ["gb", "nz", "us"])).toEqual([
-			"https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/pair-index-gb.bin",
-			"https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/pair-index-nz.bin",
-			"https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/pair-index-us.bin",
+			"https://public.mailwoman.post/mailwoman/pair-index/2026-10-17/pair-index-gb.bin",
+			"https://public.mailwoman.post/mailwoman/pair-index/2026-10-17/pair-index-nz.bin",
+			"https://public.mailwoman.post/mailwoman/pair-index/2026-10-17/pair-index-us.bin",
 		])
 	})
 
@@ -42,7 +42,7 @@ describe("pair-index URL construction", () => {
 
 	test("the manifest sits beside the binaries under the generation", () => {
 		expect(pairIndexManifestURL(pairIndexBaseURL("2026-10-17"))).toBe(
-			"https://public.mailwoman.ai/mailwoman/pair-index/2026-10-17/index.json"
+			"https://public.mailwoman.post/mailwoman/pair-index/2026-10-17/index.json"
 		)
 	})
 
@@ -57,7 +57,7 @@ describe("pair-index URL construction", () => {
 })
 
 // The regression the versioning scheme undoes was a bare base URL string literal in the
-// loader (`const pairIndexBaseURL = "https://public.mailwoman.ai/mailwoman/pair-index"`),
+// loader (`const pairIndexBaseURL = "https://public.mailwoman.post/mailwoman/pair-index"`),
 // which is how the path escaped the versioning discipline the sibling assets follow.
 // Keep the literal in resources/, where the version constant lives next to it.
 const source = await readLocalTextFile(resolveModulePath("mailwoman/browser-runtime/load-assets"))

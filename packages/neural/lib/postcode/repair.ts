@@ -33,7 +33,7 @@ export interface PostcodeMatch extends SpanMatch {
 /**
  * Lists the per-country postcode shape patterns, most specific first.
  *
- * The table lives in `@mailwoman/postcode/shapes` because the Python trainer reads the same data.
+ * The table lives in `@mailwoman/postcode/shapes` because the training pipeline vendors the same data.
  * The copies must stay aligned.
  */
 export const POSTCODE_PATTERNS: ReadonlyArray<{

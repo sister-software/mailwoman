@@ -18,7 +18,7 @@
 
 import { type StreetSpanConvention, streetSpanConventionFor } from "@mailwoman/codex/street/convention"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { groupTuplesByTag, walkNodes } from "@mailwoman/core/decoder"
+import { walkNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -33,6 +33,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import type { PathBuilderLike } from "path-ts"
 
+import type { BatterySpan } from "#tools/eval-harness/battery/classify"
 import { scoreExactParseUnderConvention, validateAnnotatedSpans } from "#tools/eval-harness/score/exact-parse"
 
 /**
@@ -553,27 +554,50 @@ export function countHeldoutCells(
 }
 
 /**
+ * Every node of a parse as a flat span, in {@linkcode walkNodes} order.
+ *
+ * `end` comes from the tree node, since a node's value can differ from the raw text it spans.
+ */
+export function treeSpans(tree: AddressTree): BatterySpan[] {
+	return [...walkNodes(tree.roots)].map((node) => [node.tag, node.start, node.end, node.value])
+}
+
+/**
  * Scores one parse of one row.
  */
 export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: ProvenanceHistory): HeldoutRowOutcome {
+	return scoreHeldoutSpans(row, treeSpans(tree), history)
+}
+
+/**
+ * Scores one parse of one row, given every node of the parse as a flat span.
+ *
+ * The outcome does not depend on the order of `spans`, so a parse read back from a worker
+ * or a cache scores as the tree it came from does.
+ */
+export function scoreHeldoutSpans(
+	row: HeldoutRow,
+	spans: readonly BatterySpan[],
+	history?: ProvenanceHistory
+): HeldoutRowOutcome {
 	const rowID = heldoutRowID(row)
 	const annotated = validateAnnotatedSpans(row, rowID)
 
 	const exactOutcome = scoreExactParseUnderConvention(
 		row.raw,
 		annotated,
-		[...walkNodes(tree.roots)],
+		spans.map(([tag, start, end]) => ({ tag, start, end })),
 		streetSpanConventionFor(row.country)
 	)
 
-	const byTag = groupTuplesByTag(tree)
+	const byTag = Map.groupBy(spans, ([tag]) => tag)
 
 	let spansRecovered = 0
 
 	for (const [i, tag] of row.span_tags.entries()) {
 		const gold = foldCaseWhitespace(row.raw.slice(row.span_starts[i], row.span_ends[i]))
 
-		if ((byTag.get(tag) ?? []).some((value) => foldCaseWhitespace(value) === gold)) {
+		if ((byTag.get(tag) ?? []).some((span) => foldCaseWhitespace(span[3]) === gold)) {
 			spansRecovered++
 		}
 	}
@@ -597,7 +621,7 @@ export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: Pr
 }
 
 /**
- * Scores one arm over every row, given a parse function.
+ * Scores one arm over every row, given a function that returns each row's parse as flat spans.
  *
  * A row whose source is in `capabilitySources` keeps its outcome for the capability checks.
  * The scorer totals that outcome in its country's capability cell rather than its address cell.
@@ -608,7 +632,7 @@ export function scoreHeldoutRow(row: HeldoutRow, tree: AddressTree, history?: Pr
  */
 export async function scoreHeldoutArm(
 	rows: readonly HeldoutRow[],
-	parse: (row: HeldoutRow) => Promise<AddressTree>,
+	parse: (row: HeldoutRow) => Promise<readonly BatterySpan[]>,
 	history?: ProvenanceHistory,
 	weightsLocaleFor?: (row: HeldoutRow) => string,
 	capabilitySources: ReadonlySet<string> = new Set(),
@@ -619,7 +643,7 @@ export async function scoreHeldoutArm(
 	const seen = new Set<string>()
 
 	for (const row of rows) {
-		const outcome = scoreHeldoutRow(row, await parse(row), history)
+		const outcome = scoreHeldoutSpans(row, await parse(row), history)
 
 		onRow?.(outcomes.length + 1, rows.length)
 
@@ -737,6 +761,30 @@ const loadFromCache: HeldoutClassifierLoader = (locale, cacheRoot) =>
 	NeuralAddressClassifier.loadFromWeights({ locale, cacheRoot })
 
 /**
+ * Returns `classifier` when its loader fed every required channel.
+ *
+ * @throws When the loader reports an unfed required channel: a degraded configuration
+ * is not the product the requirements describe.
+ */
+export function assertFedClassifier<T extends Pick<HeldoutClassifier, "unfedChannels">>(
+	classifier: T,
+	locale: string,
+	cacheRoot: string
+): T {
+	const [unfed, ...more] = classifier.unfedChannels
+
+	if (unfed) {
+		throw new Error(
+			`refusing to score ${locale} from ${cacheRoot}: the loader reports the required ${unfed.channel} ` +
+				`channel unfed for ${unfed.weightsPackage} (${unfed.detail})` +
+				(more.length ? `, and ${more.map((m) => m.channel).join(", ")} as well` : "")
+		)
+	}
+
+	return classifier
+}
+
+/**
  * Scores one model, loaded from a package-shaped weights cache as `mwdev_arc` takes, over every row,
  * parsing each row with the package {@linkcode HELDOUT_INFERENCE_RULE} names and recording it per row.
  *
@@ -768,19 +816,7 @@ export async function scoreHeldoutWeights(
 		let pending = classifiers.get(locale)
 
 		if (!pending) {
-			pending = load(locale, cacheRoot).then((classifier) => {
-				const [unfed, ...more] = classifier.unfedChannels
-
-				if (unfed) {
-					throw new Error(
-						`refusing to score ${locale} from ${cacheRoot}: the loader reports the required ${unfed.channel} ` +
-							`channel unfed for ${unfed.weightsPackage} (${unfed.detail})` +
-							(more.length ? `, and ${more.map((m) => m.channel).join(", ")} as well` : "")
-					)
-				}
-
-				return classifier
-			})
+			pending = load(locale, cacheRoot).then((classifier) => assertFedClassifier(classifier, locale, cacheRoot))
 
 			classifiers.set(locale, pending)
 		}
@@ -793,10 +829,14 @@ export async function scoreHeldoutWeights(
 	return scoreHeldoutArm(
 		rows,
 		async (row) =>
-			(await classifierFor(localeFor(row))).parse(row.raw, {
-				postcodeRepair: true,
-				...(row.country ? { localeHint: row.country } : {}),
-			}),
+			treeSpans(
+				await (
+					await classifierFor(localeFor(row))
+				).parse(row.raw, {
+					postcodeRepair: true,
+					...(row.country ? { localeHint: row.country } : {}),
+				})
+			),
 		history,
 		localeFor,
 		options.capabilitySources,

@@ -1,6 +1,6 @@
 # @mailwoman/neural-weights-es-es
 
-es-ES weights overlay for [mailwoman](https://mailwoman.ai).
+es-ES weights overlay for [mailwoman](https://mailwoman.post).
 
 **Data-only.** Declares `mailwoman.baseWeights` and shares the base model and tokenizer with
 `@mailwoman/neural-weights-en-us`; what it adds is `pair-index-es.bin`.
@@ -25,4 +25,4 @@ trained to read, so the notice applies here too:
 > (https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright.
 
 `LICENSE.md` in this package repeats the base graph's required attributions, and
-https://mailwoman.ai/resources/osm/attribution explains how Mailwoman reads the license.
+https://mailwoman.post/resources/osm/attribution explains how Mailwoman reads the license.

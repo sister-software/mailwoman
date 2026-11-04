@@ -16,17 +16,17 @@ import { cors } from "hono/cors"
  * The Mailwoman sites, production and development, that may call a Mailwoman Worker from a browser.
  */
 export const MAILWOMAN_SITE_ORIGINS: ReadonlySet<string> = new Set([
-	"https://mailwoman.ai",
-	"https://earth.mailwoman.ai",
-	"https://moon.mailwoman.ai",
-	"https://mars.mailwoman.ai",
+	"https://mailwoman.post",
+	"https://earth.mailwoman.post",
+	"https://moon.mailwoman.post",
+	"https://mars.mailwoman.post",
 	"https://mailwoman.sister.software",
 	"https://sister.software",
-	"https://dev.mailwoman.ai",
-	"https://dev.mailwoman.ai:7777",
-	"https://dev.mailwoman.ai:8888",
-	"http://dev.mailwoman.ai:7777",
-	"http://dev.mailwoman.ai:8888",
+	"https://dev.mailwoman.post",
+	"https://dev.mailwoman.post:7777",
+	"https://dev.mailwoman.post:8888",
+	"http://dev.mailwoman.post:7777",
+	"http://dev.mailwoman.post:8888",
 ])
 
 /**

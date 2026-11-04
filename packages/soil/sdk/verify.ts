@@ -7,10 +7,9 @@ import {
 	pointInEncodedRings,
 	segmentDistanceMetres,
 	shortCellToInt,
-	type H3Cell,
 } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToParent, latLngToCell } from "h3-js"
+import { cellToParent, latLngToCell } from "@sister.software/h3"
 import type { PathBuilderLike } from "path-ts"
 
 import { SoilCapabilityLookup, SoilReadingKind } from "#index"
@@ -176,12 +175,12 @@ function candidateDelineations(
 			"JOIN soil_map_unit_area a ON a.area_id = c.area_id WHERE c.h3_cell = ?"
 	)
 
-	const indexCell = latLngToCell(latitude, longitude, indexResolution) as H3Cell
+	const indexCell = latLngToCell(latitude, longitude, indexResolution)
 	const seen = new Set<string>()
 	const candidates: Array<{ mukey: string; rings: Uint8Array }> = []
 
 	for (const resolution of resolutions) {
-		const cell = resolution === indexResolution ? indexCell : (cellToParent(indexCell, resolution) as H3Cell)
+		const cell = resolution === indexResolution ? indexCell : cellToParent(indexCell, resolution)
 
 		for (const row of selectCandidates.all(shortCellToInt(cell)) as Array<{
 			area_id: string

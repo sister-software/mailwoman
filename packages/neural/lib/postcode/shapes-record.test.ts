@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The postcode-shape record is data authored once in `@mailwoman/postcode`. The Python trainer cannot
- *   import that package, so it includes a byte-identical copy that this test checks against the
- *   authored one.
+ *   The postcode-shape record is data authored once in `@mailwoman/postcode`. The training pipeline
+ *   (`packages/trainer`, Rust) cannot import that package, so it vendors a byte-identical copy that this
+ *   test checks against the authored one.
  *
  *   The test lives in this package because `@mailwoman/postcode` depends only on codex, and the check
  *   needs core's repo-root resolver.
@@ -12,26 +12,25 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { POSTCODE_SHAPES, POSTCODE_SHAPES_VERSION } from "@mailwoman/postcode/shapes"
+import { POSTCODE_SHAPES } from "@mailwoman/postcode/shapes"
 import { describe, expect, it } from "vitest"
 
 const AUTHORED = repoRootPath("packages", "postcode", "lib", "shapes.json")
 const VENDORED = repoRootPath("packages", "trainer", "data", "postcode-shapes.json")
 
 describe("the postcode shape record", () => {
-	it("is vendored into the Python package byte for byte", async () => {
+	it("is vendored into the trainer's data directory byte for byte", async () => {
 		const [authored, vendored] = await Promise.all([readLocalBuffer(AUTHORED), readLocalBuffer(VENDORED)])
 
 		expect(
 			vendored.equals(authored),
 			`${VENDORED} has drifted from ${AUTHORED}. The codex copy is the authored one — copy it across rather ` +
-				"than editing the Python side."
+				"than editing the vendored copy."
 		).toBe(true)
 	})
 
 	it("compiles every shape, in the order the record declares", () => {
 		expect(POSTCODE_SHAPES.length).toBeGreaterThanOrEqual(12)
-		expect(POSTCODE_SHAPES_VERSION).toBe("postcode-shapes-v2")
 
 		// Priority is the index, so the catch-all has to stay last or it claims the spans the specific rows exist for.
 		expect(POSTCODE_SHAPES.at(-1)?.label).toBe("NUM5")
@@ -41,7 +40,7 @@ describe("the postcode shape record", () => {
 		}
 	})
 
-	it("finds the two shapes whose absence went unnoticed on the Python side", () => {
+	it("finds the two shapes whose absence went unnoticed on the trainer side", () => {
 		const firstMatch = (label: string, text: string) => {
 			const shape = POSTCODE_SHAPES.find((candidate) => candidate.label === label)
 

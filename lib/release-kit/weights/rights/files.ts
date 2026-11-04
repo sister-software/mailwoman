@@ -555,7 +555,7 @@ over a network (section 13). Under a commercial agreement, the source offer and 
 condition do not apply to the code and model artifacts Sister Software authors.
 
 - Open-source terms: https://github.com/sister-software/mailwoman/blob/main/LICENSE.md
-- Commercial terms, as executed at checkout: https://mailwoman.ai/license/terms/commercial-2026-10
+- Commercial terms, as executed at checkout: https://mailwoman.post/license/terms/commercial-2026-10
 - Commercial terms, as a reference template that does not itself execute:
   https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md
 

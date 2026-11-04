@@ -34,7 +34,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { stableSourceID } from "#adapters/source-id"
-import { composeHouseNumber } from "#adapters/street-line"
+import { composeHouseNumber } from "#adapters/street/line"
 import { countryOfInseeCode } from "#fr/insee-country"
 import { decomposeFrStreet } from "#fr/street-decompose"
 import type { CorpusRecipe } from "#recipes/scaffold"

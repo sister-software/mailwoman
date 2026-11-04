@@ -359,6 +359,6 @@ export async function publishToPublicBucket(
 export function formatPublicBucketPublishResult(result: PublishToPublicBucketResult, dryRun: boolean): string {
 	return (
 		`\n${dryRun ? "(dry-run) " : ""}${result.objects} objects, ${(result.bytes / 1024 / 1024).toFixed(1)} MB → ` +
-		`${result.bucket}/${result.prefix}/\nServed at https://public.mailwoman.ai/${result.prefix}/...`
+		`${result.bucket}/${result.prefix}/\nServed at https://public.mailwoman.post/${result.prefix}/...`
 	)
 }

@@ -24,6 +24,7 @@ fn quiet_lane(source: &str, first: usize, n: usize) -> Vec<Row> {
 			labels: vec!["O".into(); 4],
 			country: Some("US".into()),
 			source: source.into(),
+			source_id: None,
 			spans: None,
 		})
 		.collect()

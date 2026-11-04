@@ -26,7 +26,7 @@ test.describe("Mailwoman Earth shell", () => {
 	test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
 		// This test uses the real runtime because the fake runtime can hide a missing commit link.
 		// It blocks data downloads because the footer must render without them.
-		await page.route("https://public.mailwoman.ai/**", (route) => route.abort())
+		await page.route("https://public.mailwoman.post/**", (route) => route.abort())
 
 		await page.goto("/")
 
@@ -34,7 +34,7 @@ test.describe("Mailwoman Earth shell", () => {
 
 		await expect(footer.getByRole("link", { name: "Developer Documentation" })).toHaveAttribute(
 			"href",
-			"https://mailwoman.ai/docs"
+			"https://mailwoman.post/docs"
 		)
 
 		const commit = footer.locator("a[href*='/commit/']")
@@ -78,7 +78,7 @@ test.describe("Mailwoman Earth shell", () => {
 
 		const manifest = await request.get("/manifest.webmanifest")
 		expect(manifest.status()).toBe(200)
-		expect(((await manifest.json()) as { id: string }).id).toBe("https://earth.mailwoman.ai/")
+		expect(((await manifest.json()) as { id: string }).id).toBe("https://earth.mailwoman.post/")
 
 		const worker = await request.get("/service-worker.js")
 		expect(worker.status()).toBe(200)

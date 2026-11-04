@@ -34,7 +34,7 @@ function bundleWith(name: string, remotePath: string, approxBytes: number): Data
 function snapshotWith(rows: Array<{ bundle: string; remotePath: string; contentLength: number | null }>) {
 	const snapshot: PublishedBundlesSnapshot = {
 		measuredAt: "2026-09-27T05:18:08Z",
-		bucket: "https://public.mailwoman.ai/mailwoman/",
+		bucket: "https://public.mailwoman.post/mailwoman/",
 		bundles: rows.map((row) => ({
 			bundle: row.bundle,
 			rights: { database: { status: "unmeasured", reason: "fixture" }, components: [] },

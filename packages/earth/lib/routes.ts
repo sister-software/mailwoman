@@ -7,6 +7,7 @@
  * fails visibly.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate/bounds"
 import { wrapLongitude } from "@mailwoman/spatial/position"
 
@@ -42,7 +43,7 @@ const GAZETTE_PLACE = /^\/gazette\/(\d+)\/([^/]+)$/u
  * The route a pathname names, with a trailing slash forgiven, or null for a path the app does not serve.
  */
 export function routeForPath(pathname: string): Route | null {
-	const normalized = pathname.replace(CAMERA_SEGMENT, "").replace(/\/+$/u, "") || "/"
+	const normalized = pathname.replace(CAMERA_SEGMENTS, "").replace(/\/+$/u, "") || "/"
 
 	if (GAZETTE_PLACE.test(normalized)) return Route.Gazette
 
@@ -89,6 +90,32 @@ export function pageSearchParam(name: string): string | null {
 }
 
 /**
+ * A tileset name on the tile worker, such as `tokyo-2026-10-25`.
+ */
+const TILESET_NAME = /^[a-z0-9][a-z0-9._-]*$/u
+
+/**
+ * The tile-worker tileset a page parameter such as `?basemap=` asks for, or `null`
+ * when the page has no such parameter or its value is not a tileset name.
+ *
+ * A build is served only as XYZ tiles through the tile worker, so the parameter takes a tileset name.
+ * A URL to an archive is refused.
+ */
+export function pageTilesetParam(parameter: "basemap" | "buildings" | "buildings3d"): string | null {
+	const name = pageSearchParam(parameter)
+
+	if (name === null) return null
+
+	if (!TILESET_NAME.test(name)) {
+		console.warn(`[mailwoman earth] ?${parameter}= takes a tile-worker tileset name; ignoring ${stringifyJSON(name)}`)
+
+		return null
+	}
+
+	return name
+}
+
+/**
  * Which runtime the page mounts: `fake` is the canned runtime the shell smoke and the stories use.
  * Any other value or no value selects the real geocoder.
  */
@@ -128,8 +155,19 @@ export interface CameraParams {
  * The pattern also accepts `%40` and `%2C` for `@` and `,`.
  * Cloudflare's static-asset server redirects a path that contains either character to its
  * percent-encoded form, so a reloaded page arrives at `/%4048.4%2C130.9%2C3.47z`.
+ *
+ * The zoom may be negative: the globe zooms out below 0, and MapLibre reports `-0.08` there.
+ * A segment the pattern rejects stays in the path, and the next camera write appends a second one after it.
  */
-const CAMERA_SEGMENT = /\/(?:@|%40)(-?[\d.]+)(?:,|%2C)(-?[\d.]+)(?:(?:,|%2C)([\d.]+)z)?\/?$/iu
+const CAMERA_SEGMENT = /\/(?:@|%40)(-?[\d.]+)(?:,|%2C)(-?[\d.]+)(?:(?:,|%2C)(-?[\d.]+)z)?\/?$/iu
+
+/**
+ * One or more trailing camera segments, removed to recover the route.
+ *
+ * An address written before negative zooms were read can hold two, such as
+ * `/%4079.36%2C-61.18%2C-0.08z/@33.73,138.62,8z`, and both are removed.
+ */
+const CAMERA_SEGMENTS = /(?:\/(?:@|%40)-?[\d.]+(?:,|%2C)-?[\d.]+(?:(?:,|%2C)-?[\d.]+z)?)+\/?$/iu
 
 /**
  * Decimal places written for a coordinate.
@@ -180,7 +218,7 @@ export function cameraFromLocation(pathname: string, search: string): CameraPara
  */
 export function pathWithCamera(url: URL, center: readonly [lon: number, lat: number], zoom: number): string {
 	const next = new URL(url)
-	const route = next.pathname.replace(CAMERA_SEGMENT, "").replace(/\/+$/u, "")
+	const route = next.pathname.replace(CAMERA_SEGMENTS, "").replace(/\/+$/u, "")
 	const [lon, lat] = center
 
 	next.pathname = `${route}/@${decimalText(lat, COORDINATE_DECIMALS)},${decimalText(wrapLongitude(lon), COORDINATE_DECIMALS)},${decimalText(zoom, ZOOM_DECIMALS)}z`

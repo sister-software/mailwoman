@@ -1,4 +1,4 @@
-# Planetary: `moon.mailwoman.ai` and `mars.mailwoman.ai`
+# Planetary: `moon.mailwoman.post` and `mars.mailwoman.post`
 
 **Status:** design approved 2026-09-06. The operator decided on one app, `packages/planetary`, built twice. The
 name `planetary` is the conventional umbrella term in planetary cartography and covers the Moon. Separate `moon` and
@@ -89,7 +89,7 @@ nomenclature labels, and selection highlight. Labels are styled by feature type 
 planitiae, montes, valles, craters) and decluttered by zoom against `diameterKm`, so a larger feature
 appears at a lower zoom. The Moon is dark with grayscale terrain, and Mars is dark with rust terrain.
 The design leaves `base/theme.ts` and the Earth sprite at
-`public.mailwoman.ai/protomaps/sprites/v4/light` unchanged, and planetary styles use no sprite in v1.
+`public.mailwoman.post/protomaps/sprites/v4/light` unchanged, and planetary styles use no sprite in v1.
 
 ### Tiles
 
@@ -98,12 +98,12 @@ The app reads TileJSON from the tile worker's existing route shape:
 ```ts
 const tiles = {
 	moon: {
-		nomenclature: "https://tiles.mailwoman.ai/moon.json",
-		hillshade: "https://tiles.mailwoman.ai/moon-hillshade.json",
+		nomenclature: "https://tiles.mailwoman.post/moon.json",
+		hillshade: "https://tiles.mailwoman.post/moon-hillshade.json",
 	},
 	mars: {
-		nomenclature: "https://tiles.mailwoman.ai/mars.json",
-		hillshade: "https://tiles.mailwoman.ai/mars-hillshade.json",
+		nomenclature: "https://tiles.mailwoman.post/mars.json",
+		hillshade: "https://tiles.mailwoman.post/mars-hillshade.json",
 	},
 }
 ```
@@ -134,7 +134,7 @@ the body config and the search artifact, but never a PMTiles archive. Manifest i
 
 ```json
 {
-	"id": "https://moon.mailwoman.ai/",
+	"id": "https://moon.mailwoman.post/",
 	"name": "Mailwoman Moon",
 	"short_name": "Moon",
 	"start_url": "/",
@@ -153,7 +153,7 @@ is always visible.
 
 ### Test plan
 
-- Unit: body config selection from `PLANETARY_BODY`, `moon.mailwoman.ai` and `mars.mailwoman.ai`
+- Unit: body config selection from `PLANETARY_BODY`, `moon.mailwoman.post` and `mars.mailwoman.post`
   mapping to their bodies, an unknown production host failing explicitly, and route parsing for
   `/feature/<id>`.
 - `createPlanetaryStyle` returns a valid `StyleSpecification` for each body, validated with
@@ -166,7 +166,7 @@ is always visible.
 
 ## Definition of done
 
-- `moon.mailwoman.ai` and `mars.mailwoman.ai` serve globes over their published nomenclature and
+- `moon.mailwoman.post` and `mars.mailwoman.post` serve globes over their published nomenclature and
   hillshade archives, with labels decluttered by scale, a feature panel, search, stable feature URLs,
   and visible attribution.
 - Both are separate installable PWAs built from one source, with distinct identities and caches.

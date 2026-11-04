@@ -48,12 +48,12 @@ const flavor = {
 
 const composeStyle = (lang: string): StyleSpecification => ({
 	version: 8,
-	glyphs: "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf",
-	sprite: "https://public.mailwoman.ai/protomaps/sprites/v4/light",
+	glyphs: "https://public.mailwoman.post/protomaps/fonts/{fontstack}/{range}.pbf",
+	sprite: "https://public.mailwoman.post/protomaps/sprites/v4/light",
 	sources: {
 		[SOURCE_ID]: {
 			type: "vector",
-			url: "https://tiles.mailwoman.ai/planet.v4.json",
+			url: "https://tiles.mailwoman.post/planet.v4.json",
 			attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>',
 		},
 	},

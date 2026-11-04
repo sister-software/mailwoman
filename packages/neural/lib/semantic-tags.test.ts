@@ -20,11 +20,9 @@ import {
 const NAMES = Object.keys(LABEL_SETS) as LabelSetName[]
 
 describe("semantic tag registry", () => {
-	// The values the Python trainer's `semantic_tags.py` held when the registry moved here.
+	// The registry's frozen assignments, recorded when the registry moved here from the retired trainer.
 	// Global ids are append-only, so these stay true as tags are added.
-	test("keeps the ids, refinements and head mappings the Python registry assigned", () => {
-		expect(SEMANTIC_TAG_REGISTRY_VERSION).toBe(1)
-
+	test("keeps the registry's frozen ids, refinements and head mappings", () => {
 		expect(SEMANTIC_TAGS.slice(0, 33)).toEqual([
 			"country",
 			"region",

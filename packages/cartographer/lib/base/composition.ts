@@ -12,6 +12,7 @@ import {
 	createTerrainDEMSource,
 	HillshadeTileSetID,
 } from "#base/terrain"
+import { MailwomanBaseTileSetID, MailwomanBuildingsTileSetID } from "#base/theme"
 import {
 	LayerSpecificationList,
 	type LayerSpecificationListInput,
@@ -59,7 +60,7 @@ export function createSkySpec(spec?: Partial<SkySpecification>): SkySpecificatio
  * The Protomaps font set, mirrored under the public bucket so a style never
  * depends on an upstream host at render time.
  */
-export const PROTOMAPS_GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf"
+export const PROTOMAPS_GLYPHS_URL = "https://public.mailwoman.post/protomaps/fonts/{fontstack}/{range}.pbf"
 
 /**
  * The Earth sprite.
@@ -67,7 +68,7 @@ export const PROTOMAPS_GLYPHS_URL = "https://public.mailwoman.ai/protomaps/fonts
  * It must match the basemap schema version: the v4 sprite includes the icons the v4 theme's
  * layers reference by name, so a style over a different basemap version needs a different sprite.
  */
-export const PROTOMAPS_SPRITE_URL = "https://public.mailwoman.ai/protomaps/sprites/v4/light"
+export const PROTOMAPS_SPRITE_URL = "https://public.mailwoman.post/protomaps/sprites/v4/light"
 
 export interface StyleSpecificationComposition {
 	sources: Record<string, SourceSpecification>
@@ -143,8 +144,22 @@ export class StyleSpecificationComposer {
 		}
 	}
 
+	/**
+	 * The composed layers.
+	 *
+	 * Without a separate buildings tileset among the sources, the footprint layers
+	 * read the basemap's `buildings` layer.
+	 */
 	public get layers(): LayerSpecificationListItem[] {
-		return Array.from(this.layersList)
+		const layers = Array.from(this.layersList)
+
+		if (MailwomanBuildingsTileSetID in this.sources) return layers
+
+		return layers.map((layer) =>
+			"source" in layer && layer.source === MailwomanBuildingsTileSetID
+				? { ...layer, source: MailwomanBaseTileSetID }
+				: layer
+		)
 	}
 
 	toJSON(): StyleSpecification {

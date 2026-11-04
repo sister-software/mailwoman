@@ -73,7 +73,7 @@ function summarizeValidationError(error: { issues: Array<{ path: PropertyKey[]; 
 export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
 	...(await readServedDocumentInfo(import.meta.url, "@mailwoman/api")),
 	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
-	contact: { name: "Sister Software", url: "https://mailwoman.ai" },
+	contact: { name: "Sister Software", url: "https://mailwoman.post" },
 	servers: [
 		{
 			url: "http://{host}:{port}",

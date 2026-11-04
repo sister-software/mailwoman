@@ -37,6 +37,12 @@ const HIGHWAY_CONTRACT_SOURCE =
 
 const GENERAL_DELIVERY_SOURCE = "https://pe.usps.com/text/pub28/28c2_032.htm"
 
+/**
+ * Publication 28 section 213: "If the pound sign (#) is used, there must be a space
+ * between the pound sign and the secondary number."
+ */
+const POUND_SIGN_SOURCE = "https://pe.usps.com/text/pub28/28c2_003.htm"
+
 const NEAR_ASKER_SOURCE =
 	"composed from the near row and the first-person pronoun (Wiktionary https://en.wiktionary.org/wiki/me)"
 
@@ -126,6 +132,8 @@ export const US_POSTAL_DESIGNATORS: PostalDesignatorTable = {
 		row("RR", "rural_route", RURAL_ROUTE_SOURCE, { abbreviations: ["RURAL ROUTE", "RFD", "RD"] }),
 		row("HC", "rural_route", HIGHWAY_CONTRACT_SOURCE, { abbreviations: ["HIGHWAY CONTRACT", "STAR ROUTE"] }),
 		...UNIT_ROWS,
+		// The pound sign stands in for a secondary unit designator whose type is unknown (`LAWRENCE EXPY # 190`).
+		row("#", "unit", POUND_SIGN_SOURCE),
 		...FLOOR_ROWS,
 		row("near", "near", "https://en.wiktionary.org/wiki/near"),
 		row("PSC", "special_routing", "https://pe.usps.com/text/pub28/28c2_019.htm", {

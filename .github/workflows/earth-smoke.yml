@@ -1,4 +1,4 @@
-# Production functional smoke for Mailwoman Earth, the geocoder at earth.mailwoman.ai.
+# Production functional smoke for Mailwoman Earth, the geocoder at earth.mailwoman.post.
 #
 # Version parity is not functional parity: a deployment can serve the right model version while its gazetteer,
 # FST or street tier returns no answer, and every one of those failures produces zero console errors. This runs
@@ -18,7 +18,7 @@ on:
       earth_url:
         description: "Deployed Earth origin to smoke (default: production)"
         type: string
-        default: "https://earth.mailwoman.ai"
+        default: "https://earth.mailwoman.post"
 
 permissions:
   contents: read
@@ -36,7 +36,7 @@ jobs:
     timeout-minutes: 15
     env:
       # workflow_dispatch override wins. the scheduled run uses production.
-      MAILWOMAN_EARTH_URL: ${{ inputs.earth_url || 'https://earth.mailwoman.ai' }}
+      MAILWOMAN_EARTH_URL: ${{ inputs.earth_url || 'https://earth.mailwoman.post' }}
     steps:
       - uses: actions/checkout@v7
 

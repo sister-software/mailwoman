@@ -70,7 +70,8 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 		expect(text).toMatch(/system\s+us \((auto|pinned)\)/u)
 		expect(text).toContain("mode ")
 		expect(text).toMatch(/locale-head\s+[A-Z]{2} \d\.\d\d/u)
-		expect(text).toMatch(/tokens\s+\d+\s+▁3/u)
+		// The c6 tokenizer writes each digit as its own piece, so `3215` renders as `▁ 3 2 1 5`.
+		expect(text).toMatch(/tokens\s+\d+\s+▁\s?3/u)
 		expect(text).toMatch(/channels\s+anchor (not fed|\d+\/\d+)/u)
 		expect(text).toMatch(/decode\s+(viterbi|argmax)/u)
 

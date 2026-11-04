@@ -4,7 +4,7 @@
 /**
  * @file The stylesheet rules, driven on the shapes that shipped broken.
  *
- *   Every case here is a defect that reached production on earth.mailwoman.ai: the candidate list that painted the
+ *   Every case here is a defect that reached production on earth.mailwoman.post: the candidate list that painted the
  *   user agent's near-black `buttontext` inside a dark sheet, the sheets that stood 34px past their own `max-height`
  *   because the cap measured the content box, the glass whose standard `backdrop-filter` the minifier dropped in
  *   favor of the `-webkit-` twin written after it. The reduced-transparency fallback covered four of the six

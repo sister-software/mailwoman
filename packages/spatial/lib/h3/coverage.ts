@@ -11,9 +11,9 @@
  */
 
 import { toCoverageCell, type CoverageCell, type CoverageRow } from "@mailwoman/core/layers"
-import { cellToParent } from "h3-js"
+import { cellToParent, type H3Cell } from "@sister.software/h3"
 
-import { shortCellToInt, type H3Cell } from "#h3/cell"
+import { shortCellToInt } from "#h3/cell"
 
 /**
  * The one capability the probe needs of a prepared statement.
@@ -38,7 +38,7 @@ export function readCoverageAt(
 	indexCell: H3Cell,
 	coverageResolution: number
 ): (CoverageCell & { h3CellIndex: string; resolution: number }) | null {
-	const coverageCell = cellToParent(indexCell, coverageResolution) as H3Cell
+	const coverageCell = cellToParent(indexCell, coverageResolution)
 
 	return toCoverageCell(
 		(select.get(shortCellToInt(coverageCell)) as CoverageRow | undefined) ?? null,

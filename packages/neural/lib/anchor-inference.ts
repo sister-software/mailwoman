@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The per-piece anchor feature layout is cross-language and must match the Python
- *   `anchor_feature_vector` byte-for-byte, since a wrong locale order or centroid scale feeds the
- *   model garbage.
+ *   The per-piece anchor feature layout is cross-language and must match the training encoder's
+ *   `feature_vector` (`mtf-channels::anchor`) byte-for-byte, since a wrong locale order or centroid scale
+ *   feeds the model garbage.
  */
 
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
@@ -46,8 +46,9 @@ export interface AnchorLookup {
 }
 
 /**
- * Builds the fixed-width anchor feature vector mirroring Python's `anchor_feature_vector`: the in-set
- * country posterior renormalized over {@linkcode LOCALE_ORDER}, plus a `lat/90`, `lon/180` centroid.
+ * Builds the fixed-width anchor feature vector mirroring the training encoder's
+ * `feature_vector` (`mtf-channels::anchor`): the in-set country posterior renormalized
+ * over {@linkcode LOCALE_ORDER}, plus a `lat/90`, `lon/180` centroid.
  */
 export function anchorFeatureVector(posterior: Record<string, number>, lat: number, lon: number): number[] {
 	const vec = new Array<number>(ANCHOR_FEATURE_DIM).fill(0)

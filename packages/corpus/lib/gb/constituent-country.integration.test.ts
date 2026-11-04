@@ -3,12 +3,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createLayerCoverageTable, createLayerManifestTable } from "@mailwoman/core/layers"
-import {
-	compactPostcode,
-	createNSULIndexes,
-	createUPRNPostcodeTable,
-	type NSULDatabase,
-} from "@mailwoman/resolver-wof-sqlite/nsul"
+import { compactPostcode } from "@mailwoman/postcode/display-form"
+import { createNSULIndexes, createUPRNPostcodeTable, type NSULDatabase } from "@mailwoman/resolver-wof-sqlite/nsul"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

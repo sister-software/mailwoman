@@ -11,7 +11,8 @@ import type { RepoCheck } from "#repo-health/check"
 import { bundleGraphCheck } from "#repo-health/checks/bundle-graph"
 import { cliFlagPropertiesCheck } from "#repo-health/checks/cli-flag-properties"
 import { corpusSourceInputsCheck } from "#repo-health/checks/corpus-source-inputs"
-import { countryBranchesCheck } from "#repo-health/checks/country-branches"
+import { countryBranchesCheck } from "#repo-health/checks/country/branches"
+import { countryLiteralSetsCheck } from "#repo-health/checks/country/literal-sets"
 import { dataProvenanceCheck } from "#repo-health/checks/data-provenance"
 import { debtCheck } from "#repo-health/checks/debt"
 import { docLinkTargetsCheck } from "#repo-health/checks/doc-link-targets"
@@ -86,6 +87,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	corpusSourceInputsCheck,
 	stalePathLiteralsCheck,
 	countryBranchesCheck,
+	countryLiteralSetsCheck,
 	debtCheck,
 	bundleGraphCheck,
 	vocabCensusCheck,

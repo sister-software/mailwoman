@@ -7,10 +7,10 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { cellToBoundary, gridDisk, polygonToCells } from "h3-js"
+import { cellToBoundary, gridDisk, polygonToCells, type H3Cell } from "@sister.software/h3"
 
 import { arealPolygons, geometryContains, type ParsedGeometry, type PolygonRings } from "#geometries/polygon"
-import { shortCellToInt, type H3Cell } from "#h3/cell"
+import { shortCellToInt } from "#h3/cell"
 
 /**
  * The rings a polyfill walks: every polygon's outer ring, with holes deliberately not
@@ -73,7 +73,7 @@ export function geometryBBox(geometry: ParsedGeometry): {
  * polyfill that {@link interiorCoverageCells} narrows.
  */
 export function regionCoverageCells(geometry: ParsedGeometry, resolution: number): H3Cell[] {
-	const cells = new Set<string>()
+	const cells = new Set<H3Cell>()
 
 	for (const ring of outerRings(geometry)) {
 		// polygonToCells's default (non-GeoJSON) coordinate order is [lat, lng] per vertex.
@@ -84,14 +84,14 @@ export function regionCoverageCells(geometry: ParsedGeometry, resolution: number
 		}
 	}
 
-	return [...cells] as H3Cell[]
+	return [...cells]
 }
 
 /**
  * The cells of {@link regionCoverageCells} that lie wholly inside `geometry`.
  */
 export function interiorCoverageCells(geometry: ParsedGeometry, resolution: number): H3Cell[] {
-	const polyfilled = new Set<string>(regionCoverageCells(geometry, resolution))
+	const polyfilled = new Set<H3Cell>(regionCoverageCells(geometry, resolution))
 	const interior: H3Cell[] = []
 
 	for (const cell of polyfilled) {
@@ -101,7 +101,7 @@ export function interiorCoverageCells(geometry: ParsedGeometry, resolution: numb
 
 		if (!vertices.every(([lat, lon]) => geometryContains(geometry, lon!, lat!))) continue
 
-		interior.push(cell as H3Cell)
+		interior.push(cell)
 	}
 
 	return interior

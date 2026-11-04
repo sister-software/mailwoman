@@ -16,6 +16,7 @@
 		{ "path": "../core" },
 		{ "path": "../dictionaries" },
 		{ "path": "../evidence" },
+		{ "path": "../postcode" },
 		{ "path": "../resolver" },
 		{ "path": "../spatial" }
 	]
