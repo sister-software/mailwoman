@@ -52,6 +52,15 @@ export class PlateauClient extends APIClient<APIClientConfig> {
 		return (await this.fetch<T>({ url })).data
 	}
 
+	/**
+	 * A file's bytes, such as a tile of a 3D Tiles tileset.
+	 */
+	public async getBytes(url: string): Promise<Uint8Array> {
+		const response = await this.fetch<ArrayBuffer>({ url, responseType: "arraybuffer" })
+
+		return new Uint8Array(response.data)
+	}
+
 	public async getHead(url: string): Promise<string> {
 		const response = await this.fetch<string>({
 			url,
@@ -61,6 +70,20 @@ export class PlateauClient extends APIClient<APIClientConfig> {
 
 		return response.data
 	}
+}
+
+/**
+ * A client used only for the tileset host, `assets.cms.plateau.reearth.io`,
+ * a CDN that the converter reads tens of thousands of tiles from.
+ *
+ * It keeps the retries and drops the request spacing the catalog and CKAN API get.
+ */
+export function createPlateauTileClient(): PlateauClient {
+	return new PlateauClient({
+		displayName: "PLATEAU tiles",
+		minRequestIntervalMs: 0,
+		retry: { maxAttempts: API_CLIENT_DEFAULTS.maxAttempts, baseDelayMs: API_CLIENT_DEFAULTS.baseRetryDelayMs },
+	})
 }
 
 export function createPlateauClient(): PlateauClient {

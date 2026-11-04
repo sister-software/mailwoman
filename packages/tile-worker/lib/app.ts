@@ -15,6 +15,7 @@ import { renderWorkerError } from "@mailwoman/api-worker/errors"
 import { Hono, type Context, type Handler } from "hono"
 
 import { edgeResponseCache, fromCache, type ResponseCache, type TileWorkerHono } from "#caching"
+import { CITY_TILESET_FILE, CITY_TILESET_NAME, serveCityModelFile } from "#routes/city-models"
 import { serveDatabase } from "#routes/db"
 import { serveGeolocation } from "#routes/geolocation"
 import { serveHeartbeat, serveHome } from "#routes/healthcheck"
@@ -129,6 +130,7 @@ export const TILE_WORKER_ROUTES: ReadonlyArray<readonly [path: string, handler: 
 	["/geolocate", serveGeolocation],
 	["/", serveHome],
 	["/heartbeat", serveHeartbeat],
+	[`/3dtiles/:tileset{${CITY_TILESET_NAME}}/:file{${CITY_TILESET_FILE}}`, serveCityModelFile],
 ]
 
 /**

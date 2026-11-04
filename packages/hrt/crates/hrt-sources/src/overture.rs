@@ -9,8 +9,8 @@
 //! - Its WKB `geometry` column becomes the geometry, converted from longitude and latitude to world coordinates.
 //! - Each top-level column of a string, boolean or number type becomes a tag, written as Java's `toString` writes the
 //!   value, so `has_parts` reads `true` and a height of 12 reads `12.0`. Null values give no tag.
-//! - Each `key=value` directory between the root and the file becomes a tag too, as hive partitioning does. The release
-//!   keeps `theme` and `type` only in the path.
+//! - Each `key=value` directory on the file's path becomes a tag too, as hive partitioning does, including the root
+//!   itself when it is a partition such as `theme=buildings/`. The release keeps `theme` and `type` only in the path.
 //!
 //! Struct and list columns, such as `names`, `sources` and `bbox`, give no tags. With map bounds, a row group whose
 //! `bbox` statistics lie outside them is skipped, and so is each row whose `bbox` lies outside them.
@@ -68,10 +68,12 @@ pub fn parquet_files(root: &Path) -> io::Result<Vec<PathBuf>> {
 	Ok(files)
 }
 
-/// The `key=value` directory names between `root` and `file`, as hive partitioning reads them.
-fn hive_tags(root: &Path, file: &Path) -> Vec<(String, String)> {
-	let relative = file.strip_prefix(root).unwrap_or(file);
-	let Some(parent) = relative.parent() else {
+/// The `key=value` directory names on `file`'s path, as hive partitioning reads them.
+///
+/// The root given to [`read`] can itself be a partition, such as a synced `theme=buildings/` directory, so every
+/// directory on the path counts, not only those below the root.
+fn hive_tags(file: &Path) -> Vec<(String, String)> {
+	let Some(parent) = file.parent() else {
 		return Vec::new();
 	};
 	parent
@@ -262,7 +264,7 @@ pub fn read(root: &Path, bounds: Option<[f64; 4]>, each: impl Fn(Record) + Sync)
 	let mut opened = Vec::new();
 	for path in parquet_files(root)? {
 		let metadata = ArrowReaderMetadata::load(&File::open(&path)?, Default::default()).map_err(parquet_error)?;
-		let hive = hive_tags(root, &path);
+		let hive = hive_tags(&path);
 		let layer = hive
 			.iter()
 			.find(|(key, _)| key == "type")
@@ -399,7 +401,9 @@ mod tests {
 		std::fs::create_dir_all(&typed).unwrap();
 		write_buildings(&typed.join("part-0.parquet"), &[1.0, 2.0, 3.0]);
 		let records = std::sync::Mutex::new(Vec::new());
-		let rows = read(dir.path(), None, |record| records.lock().unwrap().push(record)).unwrap();
+		// The root is the theme's own directory, as a build reads a synced `theme=buildings/`; its `theme` still counts.
+		let root = dir.path().join("theme=buildings");
+		let rows = read(&root, None, |record| records.lock().unwrap().push(record)).unwrap();
 		let mut records = records.into_inner().unwrap();
 		records.sort_by_key(|record| record.id);
 		assert_eq!(rows, 3);

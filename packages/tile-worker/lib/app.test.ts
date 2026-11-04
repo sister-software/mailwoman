@@ -74,6 +74,21 @@ describe("tile worker routes", () => {
 		await expect(routeOf("/planet.v4/15/29103")).resolves.toBeNull()
 	})
 
+	it("sends a city model file to the 3D Tiles route and refuses other file types", async () => {
+		const probe = routeProbe()
+		const tileset = "13101_chiyoda-ku_pref_2025_citygml_1_op_bldg_3dtiles_13101_chiyoda-ku_lod2"
+
+		expect((await probe(`/3dtiles/${tileset}/tileset.json`))?.index).toBe(11)
+		expect((await probe(`/3dtiles/${tileset}/data/data0.glb`))?.params).toEqual({ tileset, file: "data/data0.glb" })
+		expect(await probe(`/3dtiles/${tileset}/data/data0.b3dm`)).toBeNull()
+
+		// URL parsing resolves `..` before routing, so a parent path still reads a key under `3dtiles/`.
+		expect((await probe(`/3dtiles/${tileset}/../other/tileset.json`))?.params).toEqual({
+			tileset: "other",
+			file: "tileset.json",
+		})
+	})
+
 	it("captures a dotted tile set name and the tile file whole", async () => {
 		const probe = routeProbe()
 
