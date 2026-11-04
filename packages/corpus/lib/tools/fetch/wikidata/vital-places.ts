@@ -45,15 +45,14 @@ import {
 } from "#tools/fetch/wikidata/vital-places/classify"
 import {
 	createWikidataAPIClient,
-	DEFAULT_ENTITY_BATCH,
 	DEFAULT_LANGUAGES,
-	fetchVitalEntities,
 	isVitalEntity,
 	readCountryCodes,
 	readEntityRecords,
 	WIKIDATA_API_ENDPOINT,
 } from "#tools/fetch/wikidata/vital-places/entities"
 import { buildInventory, type VitalPlaceCounts, writeInventory } from "#tools/fetch/wikidata/vital-places/inventory"
+import { fetchVitalEntitiesFromQueries } from "#tools/fetch/wikidata/vital-places/query-entities"
 import { formatElapsed, type ProgressReporter } from "#tools/fetch/wikidata/vital-places/progress"
 import {
 	downloadQRank,
@@ -197,11 +196,13 @@ export async function fetchWikidataVitalPlaces(
 	}
 
 	const entitiesPath = destDir(VITAL_PLACES_FILES.entities)
+	await using wdqs = createWikidataClient({ cacheDir })
 
-	const entities = await fetchVitalEntities(api, rows, {
+	// The query service returns only the fields a record keeps.
+	// A `wbgetentities` batch holds every statement and sitelink, so the Robot policy asks for a five-second wait after each answer.
+	const entities = await fetchVitalEntitiesFromQueries(wdqs, rows, {
 		entitiesPath,
 		languages,
-		batchSize: options.batchSize ?? DEFAULT_ENTITY_BATCH,
 		concurrency: options.concurrency ?? undefined,
 		report,
 	})
@@ -220,7 +221,6 @@ export async function fetchWikidataVitalPlaces(
 	const countryCodes = await readCountryCodes(api, countryIDs, knownCodes, report)
 	await writeLocalJSONFile(countryCodes, countriesPath)
 
-	await using wdqs = createWikidataClient({ cacheDir })
 	const classIDs = [...new Set(located.flatMap((record) => (isVitalEntity(record) ? record.classes : [])))]
 	const classes = await classifyClasses(wdqs, classIDs, { cachePath: destDir(VITAL_PLACES_FILES.classRoots), report })
 
