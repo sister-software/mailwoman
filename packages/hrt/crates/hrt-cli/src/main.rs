@@ -17,6 +17,8 @@
 //!   skips post-processing, `clip` clips every tile to the polygon, buffered by `clip-buffer` (default 4) pixels of a
 //!   256-pixel tile as a fraction of the polygon's larger side, and `pgf` registers the fork's fonts so names in their
 //!   scripts get `pgf:` attributes.
+//! - `hrt building-tiles <theme=buildings directory> <output.pmtiles> [bounds=<west,south,east,north>]` writes the
+//!   compact building tiles `hrt_profile::building_buffers` describes, one per z14 tile, from Overture alone.
 //! - `hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>` writes each name beside its `pgf:` encoding, for
 //!   comparison with `packages/hrt/parity/PgfProbe.java`.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
@@ -27,6 +29,7 @@
 //!   digest of its features in the form `clock` compares.
 
 mod basemap_profile;
+mod building_tiles;
 mod clock;
 mod merge_probe;
 mod parity_profile;
@@ -72,11 +75,21 @@ fn build(
 	}
 }
 
+/// `west,south,east,north` degrees, or `None` unless all four parse and west < east and south < north.
+fn parse_bounds(text: &str) -> Option<[f64; 4]> {
+	let values: Vec<f64> = text.split(',').filter_map(|part| part.parse().ok()).collect();
+	match values[..] {
+		[west, south, east, north] if west < east && south < north => Some([west, south, east, north]),
+		_ => None,
+	}
+}
+
 fn usage() -> ExitCode {
 	eprintln!("usage: hrt render-test <input.osm.pbf> <output.pmtiles>");
 	eprintln!(
 		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>] [landcover=<path>] [clip=<path>] [clip-buffer=<pixels>] [pgf=<path>] [overture-buildings=<dir>] [no-footprints] [bounds=<w,s,e,n>]"
 	);
+	eprintln!("       hrt building-tiles <theme=buildings dir> <output.pmtiles> [bounds=<w,s,e,n>]");
 	eprintln!("       hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>");
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
@@ -105,6 +118,43 @@ fn main() -> ExitCode {
 				Ok(()) => ExitCode::SUCCESS,
 				Err(error) => {
 					eprintln!("merge-probe failed: {error}");
+					ExitCode::FAILURE
+				}
+			}
+		}
+		Some("building-tiles") if args.len() == 3 || args.len() == 4 => {
+			let bounds = match args
+				.get(3)
+				.map(|option| parse_bounds(option.strip_prefix("bounds=").unwrap_or("")))
+			{
+				None => None,
+				Some(Some(bounds)) => Some(bounds),
+				Some(None) => {
+					eprintln!(
+						"bounds must be bounds=west,south,east,north degrees, but was {}",
+						args[3]
+					);
+					return ExitCode::FAILURE;
+				}
+			};
+			let started = Instant::now();
+			let scratch = tempfile::tempdir().expect("a scratch directory");
+			match building_tiles::build(
+				&PathBuf::from(&args[1]),
+				bounds,
+				&PathBuf::from(&args[2]),
+				scratch.path(),
+			) {
+				Ok(report) => {
+					eprintln!(
+						"read {} rows; wrote {} building records into {} tiles, {} bytes",
+						report.rows, report.records, report.tiles, report.archive_bytes
+					);
+					eprintln!("built {} in {:.2?}", args[2], started.elapsed());
+					ExitCode::SUCCESS
+				}
+				Err(error) => {
+					eprintln!("building-tiles failed: {error}");
 					ExitCode::FAILURE
 				}
 			}
@@ -150,12 +200,9 @@ fn main() -> ExitCode {
 				} else if option == "no-footprints" {
 					footprints = hrt_profile::layers::buildings::Footprints::None;
 				} else if let Some(text) = option.strip_prefix("bounds=") {
-					let values: Vec<f64> = text.split(',').filter_map(|part| part.parse().ok()).collect();
-					match values[..] {
-						[west, south, east, north] if west < east && south < north => {
-							bounds = Some([west, south, east, north])
-						}
-						_ => {
+					match parse_bounds(text) {
+						Some(parsed) => bounds = Some(parsed),
+						None => {
 							eprintln!("bounds must be west,south,east,north degrees, but was {text}");
 							return ExitCode::FAILURE;
 						}

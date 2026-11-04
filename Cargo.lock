@@ -1020,12 +1020,15 @@ dependencies = [
 name = "hrt-profile"
 version = "0.1.0"
 dependencies = [
+ "earcutr",
  "flate2",
  "geo",
+ "geo-types",
  "geos",
  "harfrust",
  "hrt-e",
  "hrt-osm",
+ "hrt-pmtiles",
  "hrt-render",
  "hrt-sort",
  "regex",

@@ -9,6 +9,7 @@
 //! `mailwoman/basemaps` fork.
 
 pub mod builder;
+pub mod building_buffers;
 pub mod clip;
 pub mod country;
 pub mod expr;

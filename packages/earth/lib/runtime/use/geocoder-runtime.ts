@@ -28,7 +28,6 @@ import {
 	JurisdictionLayers,
 	JurisdictionTileSetID,
 } from "@mailwoman/cartographer/jurisdictions"
-import { stringifyJSON } from "@mailwoman/core/json"
 import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import { startEarly } from "@mailwoman/core/promises"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
@@ -80,7 +79,7 @@ import ortWASMURL from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
-import { pageSearchParam } from "#routes"
+import { pageSearchParam, pageTilesetParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
 import { pruneDBRangeCache } from "#runtime/range-cache"
 import { loadUnderseaIndex, underseaPlaceView } from "#runtime/undersea"
@@ -179,36 +178,10 @@ function modelDisabled(): boolean {
 }
 
 /**
- * A tileset name on the tile worker, as `?basemap=` takes it, such as `tokyo-2026-10-25`.
- */
-const TILESET_NAME = /^[a-z0-9][a-z0-9._-]*$/u
-
-/**
- * The tileset a page parameter such as `?basemap=` asks for, or `null` when the page
- * has no such parameter or its value is not a tileset name.
- *
- * A build is served only as XYZ tiles through the tile worker, so the parameter takes a tileset name.
- * A URL to an archive is refused.
- */
-function requestedTileset(parameter: "basemap" | "buildings"): string | null {
-	const name = pageSearchParam(parameter)
-
-	if (name === null) return null
-
-	if (!TILESET_NAME.test(name)) {
-		console.warn(`[mailwoman earth] ?${parameter}= takes a tile-worker tileset name; ignoring ${stringifyJSON(name)}`)
-
-		return null
-	}
-
-	return name
-}
-
-/**
  * The basemap's TileJSON: the tileset `?basemap=` asks for on the tile worker, or the configured basemap.
  */
 function basemapTileJSONURL(config: EarthConfig): URL {
-	const name = requestedTileset("basemap")
+	const name = pageTilesetParam("basemap")
 
 	return name ? new URL(`${name}.json`, config.tileWorkerURL) : config.basemapTileJSONURL
 }
@@ -218,7 +191,7 @@ function basemapTileJSONURL(config: EarthConfig): URL {
  * to draw the footprints from the basemap's own `buildings` layer.
  */
 function buildingsTileJSONURL(config: EarthConfig): URL | null {
-	const name = requestedTileset("buildings")
+	const name = pageTilesetParam("buildings")
 
 	return name ? new URL(`${name}.json`, config.tileWorkerURL) : null
 }

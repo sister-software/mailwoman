@@ -8,6 +8,7 @@
  * fails visibly.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate/bounds"
 import { wrapLongitude } from "@mailwoman/spatial/position"
 
@@ -87,6 +88,32 @@ export function gazettePlacePath(place: GazettePlaceRef): string {
  */
 export function pageSearchParam(name: string): string | null {
 	return typeof location !== "undefined" ? new URLSearchParams(location.search).get(name) : null
+}
+
+/**
+ * A tileset name on the tile worker, such as `tokyo-2026-10-25`.
+ */
+const TILESET_NAME = /^[a-z0-9][a-z0-9._-]*$/u
+
+/**
+ * The tile-worker tileset a page parameter such as `?basemap=` asks for, or `null`
+ * when the page has no such parameter or its value is not a tileset name.
+ *
+ * A build is served only as XYZ tiles through the tile worker, so the parameter takes a tileset name.
+ * A URL to an archive is refused.
+ */
+export function pageTilesetParam(parameter: "basemap" | "buildings" | "buildings3d"): string | null {
+	const name = pageSearchParam(parameter)
+
+	if (name === null) return null
+
+	if (!TILESET_NAME.test(name)) {
+		console.warn(`[mailwoman earth] ?${parameter}= takes a tile-worker tileset name; ignoring ${stringifyJSON(name)}`)
+
+		return null
+	}
+
+	return name
 }
 
 /**

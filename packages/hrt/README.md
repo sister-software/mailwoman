@@ -49,6 +49,20 @@ does not record which one, so this comparison checks counts rather than bytes. O
 parts and 2,810 heights in both archives. `planet.v4` predates the fork's `height_src`, `district` and `class`
 attributes, so only the `hrt` tile has them.
 
+### Compact building tiles
+
+`hrt building-tiles <theme=buildings dir> <out.pmtiles> [bounds=<west,south,east,north>]` writes an archive for
+Earth's GPU building layer. The page parameter `?buildings3d=<tileset>` turns that layer on. Each building is written once, into the z14 tile
+that holds the center of its bounding box, with coordinates relative to that tile in 8,192 units per side. Each record
+holds the building's id, heights, colors, floor count, roof shape, footprint rings and roof triangles.
+`hrt-profile/src/building_buffers.rs` documents the record layout. The archive has tile type `Unknown` and no archive
+compression. Each tile body is gzipped, so the tile worker serves it as `.bin` unchanged and the browser decompresses
+it.
+
+On the 4 km Osaka box above, 35,602 Overture rows gave 35,496 building records in 9 tiles and a 1,237,024-byte archive,
+about 34.8 bytes per building. The vector-tile archive of the same box for z11 to z15 is 3,529,317 bytes. Earth's
+decoder turns the 9 tiles into 6,683,084 bytes of GPU buffers, about 188 bytes per building.
+
 `hrt-render`'s `java_math` module translates the fdlibm functions behind Java's `Math.hypot`, `sinh`, `atan` and
 `atan2`. On 200,000 inputs, Rust's own `hypot` differed from Java's in the last bit for 26,528 (13%). JTS measures
 lengths with `Math.hypot`, and the road smoothing places points with it. A last-bit difference in a smoothed point

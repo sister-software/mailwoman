@@ -26,6 +26,8 @@ requests.
 See [the route definitions](lib/app.ts) for allowed path characters.
 `/geolocate` returns HTTP 424 when Cloudflare metadata is unavailable.
 A valid map-tile request for which the archive has no tile returns HTTP 204.
+A `.bin` tile reads an archive of PMTiles tile type `Unknown`, such as the compact building tiles from
+`hrt building-tiles`, and returns its bytes as `application/octet-stream`.
 Terrain requests support zoom levels 0 through 15.
 
 ## Storage configuration

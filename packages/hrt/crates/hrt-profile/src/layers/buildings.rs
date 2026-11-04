@@ -67,7 +67,11 @@ fn parse_height_value(value: Option<&str>) -> Option<f64> {
 }
 
 /// The fork's `parseHeight`: the tagged height, else three meters per level plus two; and the minimum height.
-fn parse_height(height: Option<&str>, levels: Option<&str>, min_height: Option<&str>) -> (Option<f64>, Option<f64>) {
+pub(crate) fn parse_height(
+	height: Option<&str>,
+	levels: Option<&str>,
+	min_height: Option<&str>,
+) -> (Option<f64>, Option<f64>) {
 	let height =
 		parse_height_value(height).or_else(|| parse_double_or_null(levels).map(|levels| levels.max(1.0) * 3.0 + 2.0));
 	(height, parse_height_value(min_height))
@@ -83,7 +87,7 @@ fn quantize(value: f64, step: i32) -> f64 {
 
 /// The fork's `isModeledLandmark`: whether the footprint's longitude and latitude centroid lies within a landmark's
 /// radius. Footprints whose bounds lie far from every landmark skip the centroid.
-fn is_modeled_landmark(input: &Input<'_>) -> bool {
+pub(crate) fn is_modeled_landmark(input: &Input<'_>) -> bool {
 	let Ok(world) = input.source.world_geometry() else {
 		return false;
 	};
@@ -211,7 +215,7 @@ pub fn process_osm(
 }
 
 /// The footprint's centroid in longitude and latitude, as JTS computes it on `latLonGeometry()`.
-fn lon_lat_centroid(input: &Input<'_>) -> Option<(f64, f64)> {
+pub(crate) fn lon_lat_centroid(input: &Input<'_>) -> Option<(f64, f64)> {
 	use geos::Geom as _;
 	let world = Geom::from(&input.source.world_geometry().ok()?);
 	let centroid = hrt_render::snap::to_geos(&world_to_lon_lat(&world))
@@ -231,7 +235,7 @@ const DISTRICT_COUNT: i64 = 16;
 
 /// `BuildingAttributes.district`: a hash of the 128 m cell holding the point, from 0 to 15. A style picks a building's
 /// palette entry from it, so a street reads as one fabric while neighboring districts differ.
-fn district(lon: f64, lat: f64) -> i32 {
+pub(crate) fn district(lon: f64, lat: f64) -> i32 {
 	// Java's `Math.cos` and Rust's agree to within an ulp, which moves a building only when it lies on a cell edge.
 	let cell_x = (lon * 111_320.0 * lat.to_radians().cos() / DISTRICT_CELL_METERS).floor() as i64;
 	let cell_y = (lat * 110_540.0 / DISTRICT_CELL_METERS).floor() as i64;
@@ -291,7 +295,7 @@ const NAMED_COLORS: &[(&str, &str)] = &[
 
 /// `BuildingAttributes.normalizeColor`: a color as lowercase `#rrggbb`, or `None` when the text is neither a hex color
 /// nor a known color name.
-fn normalize_color(value: Option<&str>) -> Option<String> {
+pub(crate) fn normalize_color(value: Option<&str>) -> Option<String> {
 	// Java's `String.trim` removes every character up to U+0020 from both ends.
 	let trimmed = value?.trim_matches(|c: char| c <= ' ').to_lowercase();
 	let hex = |text: &str| text.chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase());
@@ -320,7 +324,7 @@ fn normalize_color(value: Option<&str>) -> Option<String> {
 /// The fork's `gersFeatureId`: a tile feature id from an Overture GERS id's first 52 bits, which stay exact as a
 /// JavaScript number, so a map client can key feature state by it. An id that does not start with 13 hex digits gets
 /// its Java `hashCode` as an unsigned number.
-fn gers_feature_id(gers: Option<&str>) -> i64 {
+pub(crate) fn gers_feature_id(gers: Option<&str>) -> i64 {
 	let Some(gers) = gers else {
 		return 0;
 	};
