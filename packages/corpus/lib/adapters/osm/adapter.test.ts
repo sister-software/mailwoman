@@ -8,8 +8,10 @@ import {
 	housenumberIsDesignator,
 	isStreetName,
 	OSM_ADAPTER_ID,
+	OSM_TRAILING_COUNTRY_SHARE,
 	sameName,
 	splitCityValue,
+	withTrailingCountry,
 } from "#adapters/osm/adapter"
 import { OSM_LICENSE } from "#adapters/osm/license"
 import { runAdapter } from "#runner"
@@ -359,5 +361,28 @@ describe("osm adapter", () => {
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/--country is required/u)
+	})
+})
+
+describe("withTrailingCountry", () => {
+	const components = { street: "Komitas Avenue", house_number: "5", locality: "Yerevan" }
+	const ids = Array.from({ length: 2000 }, (_, index) => `osm:${index}`)
+
+	it("appends the English country name to about the configured share of rows, aligned as `country`", () => {
+		const rendered = ids.map((id) => withTrailingCountry("Komitas Avenue 5, Yerevan", components, "AM", id))
+		const named = rendered.filter((row) => row.components.country)
+
+		expect(named.length / ids.length).toBeGreaterThan(OSM_TRAILING_COUNTRY_SHARE - 0.05)
+		expect(named.length / ids.length).toBeLessThan(OSM_TRAILING_COUNTRY_SHARE + 0.05)
+		expect(named[0]).toEqual({
+			raw: "Komitas Avenue 5, Yerevan, Armenia",
+			components: { ...components, country: "Armenia" },
+		})
+	})
+
+	it("decides by the source id, so a rebuild renders the same rows", () => {
+		for (const id of ids.slice(0, 50)) {
+			expect(withTrailingCountry("x", components, "AM", id)).toEqual(withTrailingCountry("x", components, "AM", id))
+		}
 	})
 })

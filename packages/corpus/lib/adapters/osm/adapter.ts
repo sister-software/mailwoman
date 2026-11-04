@@ -10,7 +10,11 @@
  * That is why `defaultLicense` is not an option on this adapter.
  */
 
+import { createHash } from "node:crypto"
+
 import { formatAddressRow } from "@mailwoman/codex/address/format"
+import type { ComponentTag } from "@mailwoman/codex/component"
+import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
@@ -33,6 +37,35 @@ import {
  * Registry id for this adapter, stamped into every row it emits.
  */
 export const OSM_ADAPTER_ID = "osm"
+
+/**
+ * The share of rows rendered with a trailing country name.
+ *
+ * An OpenStreetMap address holds no country token, and the country layouts print none. Without a share that ends in
+ * the country's name, a country whose street rows all come from this adapter has no `street, locality, country` row
+ * at all, and the model reads such an address by the WOF shape `locality, region, country` (#2925).
+ */
+export const OSM_TRAILING_COUNTRY_SHARE = 0.3
+
+/**
+ * The row with `, <country>` appended when the source id's hash falls in the trailing-country share.
+ *
+ * The English name of three or more characters is used, because a bare alpha-2 code collides with region
+ * abbreviations. A country with no such name keeps the row unchanged.
+ */
+export function withTrailingCountry(
+	raw: string,
+	components: Partial<Record<ComponentTag, string>>,
+	country: string,
+	sourceID: string
+): { raw: string; components: Partial<Record<ComponentTag, string>> } {
+	const draw = createHash("sha256").update(sourceID).digest().readUInt32BE(0) / 0x1_0000_0000
+	const name = countryDisplayNames(country, ["en"]).find((candidate) => candidate.length >= 3)
+
+	if (draw >= OSM_TRAILING_COUNTRY_SHARE || !name || components.country) return { raw, components }
+
+	return { raw: `${raw}, ${name}`, components: { ...components, country: name } }
+}
 
 /**
  * The per-row shape `@mailwoman/osm`'s `emit-corpus-jsonl` writes.
@@ -337,18 +370,21 @@ export function createOSMAdapter(): CorpusAdapter {
 					continue
 				}
 
-				const { raw, components: aligned } = rendered
-
 				for (const tag of rendered.unplaced) {
 					countDropped(opts, `component:${tag}:not-rendered`)
 				}
+
+				// The source id is the rendered address's, so a row keeps its id and its split whether or not it
+				// takes the trailing country.
+				const sourceID = stableSourceID(OSM_ADAPTER_ID, rendered.components)
+				const { raw, components: aligned } = withTrailingCountry(rendered.raw, rendered.components, country, sourceID)
 
 				yield {
 					raw,
 					components: aligned,
 					country,
 					source: OSM_ADAPTER_ID,
-					source_id: stableSourceID(OSM_ADAPTER_ID, aligned),
+					source_id: sourceID,
 					license: OSM_LICENSE,
 				}
 
