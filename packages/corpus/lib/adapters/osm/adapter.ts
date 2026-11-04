@@ -59,7 +59,9 @@ export function withTrailingCountry(
 	country: string,
 	sourceID: string
 ): { raw: string; components: Partial<Record<ComponentTag, string>> } {
-	const draw = createHash("sha256").update(sourceID).digest().readUInt32BE(0) / 0x1_0000_0000
+	// The salt keeps the draw independent of a sampler that kept the lowest source-id hashes, as osm-ru's 2,000,177
+	// rows were kept: unsalted, 96.6% of those ids fall under the share.
+	const draw = createHash("sha256").update(`trailing-country:${sourceID}`).digest().readUInt32BE(0) / 0x1_0000_0000
 	const name = countryDisplayNames(country, ["en"]).find((candidate) => candidate.length >= 3)
 
 	if (draw >= OSM_TRAILING_COUNTRY_SHARE || !name || components.country) return { raw, components }

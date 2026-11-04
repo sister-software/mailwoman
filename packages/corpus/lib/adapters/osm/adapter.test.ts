@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto"
+
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
@@ -313,7 +315,8 @@ describe("osm adapter", () => {
 
 		const road104 = rows.find((r) => r.raw.includes("Road 104"))
 
-		expect(road104?.raw).toBe("24 Road 104, Dhaka - 1207")
+		// The row may take the trailing-country share, so its body is matched up to that suffix.
+		expect(road104?.raw).toMatch(/^24 Road 104, Dhaka - 1207(?:, Bangladesh)?$/u)
 
 		expect(road104?.components).toMatchObject({
 			house_number: "24",
@@ -378,6 +381,17 @@ describe("withTrailingCountry", () => {
 			raw: "Komitas Avenue 5, Yerevan, Armenia",
 			components: { ...components, country: "Armenia" },
 		})
+	})
+
+	it("keeps the share on ids a lowest-hash sampler kept", () => {
+		const lowest = Array.from({ length: 20_000 }, (_, index) => `osm-${index.toString(16)}`)
+			.map((id) => ({ id, hash: createHash("sha256").update(id).digest().readUInt32BE(0) }))
+			.toSorted((left, right) => left.hash - right.hash)
+			.slice(0, 2000)
+		const named = lowest.filter(({ id }) => withTrailingCountry("x", components, "AM", id).components.country)
+
+		expect(named.length / lowest.length).toBeGreaterThan(OSM_TRAILING_COUNTRY_SHARE - 0.05)
+		expect(named.length / lowest.length).toBeLessThan(OSM_TRAILING_COUNTRY_SHARE + 0.05)
 	})
 
 	it("decides by the source id, so a rebuild renders the same rows", () => {
