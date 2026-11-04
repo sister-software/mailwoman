@@ -41,8 +41,9 @@ function place(overrides: Partial<VitalPlace>): VitalPlace {
 	}
 }
 
-const countryName = (code: string, language: string) =>
-	({ "FR/en": "France", "FR/de": "Frankreich", "FR/ja": "フランス" })[`${code}/${language}`]
+const COUNTRY_NAMES: Record<string, string> = { "FR/en": "France", "FR/de": "Frankreich", "FR/ja": "フランス" }
+
+const countryName = (code: string, language: string): string | undefined => COUNTRY_NAMES[`${code}/${language}`]
 
 describe("vitalPlaceRendering", () => {
 	test("a built place under an administrative root renders as a venue", () => {
