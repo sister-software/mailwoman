@@ -14,7 +14,19 @@ import { hexRGB } from "../meshes.ts"
 /**
  * The first four bytes of a decompressed tile.
  */
-const MAGIC = "MWB1"
+const MAGIC = "MWB2"
+
+/**
+ * Bytes of a record's resolved style, each `0xFF` until the build resolves it.
+ */
+const STYLE_BYTES = 8
+
+/**
+ * Headings whose unit vectors' dot product exceeds this, about 14 degrees apart,
+ * continue one straight wall run.
+ * Arnis's `RUN_HEADING_COS`.
+ */
+const RUN_HEADING_COS = 0.97
 
 /**
  * The `height` a building records when its source states no height or floor count.
@@ -39,9 +51,101 @@ export const TILE_ZOOM = 14
 
 /**
  * Bytes per wall instance: `i16` x0, y0, x1, y1; `u16` base and top in decimeters;
- * `u8` red, green, blue and floors.
+ * `u8` red, green, blue and floors; `u16` the length of the straight wall run the
+ * edge belongs to and the edge's start along it, in decimeters; `u8` the edge's flags
+ * (bits 0 and 1 its facade class, bit 2 the front edge, bit 3 a street corner) and the building's
+ * flags (bit 0 attached, bit 1 enclosed, bit 2 a street faces a wall); and two style bytes.
  */
-export const WALL_STRIDE = 16
+export const WALL_STRIDE = 24
+
+/**
+ * What a wall edge faces, from bits 0 and 1 of its edge flags.
+ *
+ * `packages/hrt/crates/hrt-profile/src/facade_plan.rs` classifies the edges.
+ */
+export const FacadeClass = {
+	Street: 0,
+	Rear: 1,
+	Party: 2,
+	Open: 3,
+} as const
+
+export type FacadeClass = (typeof FacadeClass)[keyof typeof FacadeClass]
+
+/**
+ * The straight wall runs of a ring: for each edge, the run's length and the edge's
+ * start along it, in the units the edge lengths are given in.
+ *
+ * Consecutive edges whose headings stay within {@link RUN_HEADING_COS} form one run,
+ * so a vertex part way along a facade does not break its bays.
+ * A ring whose first vertex lies part way along a wall joins its last run to its first,
+ * as Arnis's `lay_out_facade_columns` does.
+ * A zero-length edge joins the run it touches.
+ */
+export function wallRuns(xs: ArrayLike<number>, ys: ArrayLike<number>): { length: number[]; offset: number[] } {
+	const count = xs.length
+
+	const heading = (edge: number): [number, number] | null => {
+		const next = (edge + 1) % count
+		const dx = xs[next]! - xs[edge]!
+		const dy = ys[next]! - ys[edge]!
+		const length = Math.hypot(dx, dy)
+
+		return length > 0 ? [dx / length, dy / length] : null
+	}
+
+	const parallel = (a: [number, number] | null, b: [number, number] | null) =>
+		!a || !b || a[0] * b[0] + a[1] * b[1] > RUN_HEADING_COS
+
+	const runs: number[][] = []
+	let last: [number, number] | null = null
+
+	for (let edge = 0; edge < count; edge++) {
+		const here = heading(edge)
+
+		if (!runs.length || !parallel(last, here)) {
+			runs.push([])
+		}
+
+		runs.at(-1)!.push(edge)
+
+		if (here) {
+			last = here
+		}
+	}
+
+	if (runs.length > 1) {
+		let first: [number, number] | null = null
+
+		for (let edge = 0; edge < count && !first; edge++) {
+			first = heading(edge)
+		}
+
+		if (parallel(last, first)) {
+			const tail = runs.pop()!
+			runs[0] = [...tail, ...runs[0]!]
+		}
+	}
+
+	const length = new Array<number>(count).fill(0)
+	const offset = new Array<number>(count).fill(0)
+
+	for (const run of runs) {
+		let along = 0
+
+		for (const edge of run) {
+			offset[edge] = along
+			const next = (edge + 1) % count
+			along += Math.hypot(xs[next]! - xs[edge]!, ys[next]! - ys[edge]!)
+		}
+
+		for (const edge of run) {
+			length[edge] = along
+		}
+	}
+
+	return { length, offset }
+}
 
 /**
  * Bytes per roof vertex: `i16` x, y; `u16` z in decimeters and two bytes of padding;
@@ -138,7 +242,7 @@ export function unitMeters(tileY: number): number {
  * Decodes a decompressed tile body for z14 row `tileY`, which sets the meters per
  * tile unit that pitched roofs are shaded with.
  *
- * @throws When the body does not start with `MWB1` or ends inside a record.
+ * @throws When the body does not start with `MWB2` or ends inside a record.
  */
 export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBuildingTile {
 	const view = new DataView(bytes)
@@ -207,8 +311,10 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 		const roofTag = view.getUint32(at + 10, true)
 		const district = view.getUint8(at + 14)
 		const floors = view.getUint8(at + 15)
-		const ringCount = view.getUint8(at + 17)
-		at += 18
+		const buildingFlags = view.getUint8(at + 17)
+		const style = new Uint8Array(bytes, at + 18, STYLE_BYTES)
+		const ringCount = view.getUint8(at + 18 + STYLE_BYTES)
+		at += 19 + STYLE_BYTES
 
 		const ringSizes: number[] = []
 
@@ -224,6 +330,10 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 			xs[vertex] = view.getInt16(at, true)
 			ys[vertex] = view.getInt16(at + 2, true)
 		}
+
+		const exterior = ringSizes[0] ?? 0
+		const edgeFlags = new Uint8Array(bytes, at, exterior)
+		at += exterior
 
 		const ridgeCount = view.getUint8(at)
 		at += 1
@@ -252,7 +362,9 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 		growWalls(vertexCount)
 		let ringStart = 0
 
-		for (const size of ringSizes) {
+		for (const [ring, size] of ringSizes.entries()) {
+			const runs = wallRuns(xs.subarray(ringStart, ringStart + size), ys.subarray(ringStart, ringStart + size))
+
 			for (let edge = 0; edge < size; edge++) {
 				const from = ringStart + edge
 				const to = ringStart + ((edge + 1) % size)
@@ -267,6 +379,13 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 				walls.setUint8(offset + 13, wallColor[1])
 				walls.setUint8(offset + 14, wallColor[2])
 				walls.setUint8(offset + 15, floors)
+				walls.setUint16(offset + 16, Math.min(0xff_ff, Math.round(runs.length[edge]! * metersPerUnit * 10)), true)
+				walls.setUint16(offset + 18, Math.min(0xff_ff, Math.round(runs.offset[edge]! * metersPerUnit * 10)), true)
+				// A courtyard's walls are not classified, so they read as open.
+				walls.setUint8(offset + 20, ring === 0 ? edgeFlags[edge]! : FacadeClass.Open)
+				walls.setUint8(offset + 21, buildingFlags)
+				walls.setUint8(offset + 22, style[0]!)
+				walls.setUint8(offset + 23, style[1]!)
 
 				wallCount++
 			}

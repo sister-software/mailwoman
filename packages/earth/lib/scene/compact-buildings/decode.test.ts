@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { decodeBuildingTile, ROOF_STRIDE, unitMeters, WALL_STRIDE } from "#scene/compact-buildings/decode"
+import { decodeBuildingTile, ROOF_STRIDE, unitMeters, WALL_STRIDE, wallRuns } from "#scene/compact-buildings/decode"
 
 interface RecordSpec {
 	height: number
@@ -16,6 +16,8 @@ interface RecordSpec {
 	district?: number
 	floors?: number
 	roofShape?: number
+	flags?: number
+	edgeFlags?: number[]
 	rings: Array<Array<[number, number]>>
 	ridge?: Array<[number, number]>
 	triangles: number[]
@@ -54,6 +56,12 @@ function record(spec: RecordSpec): number[] {
 	u8(spec.district ?? 0)
 	u8(spec.floors ?? 0)
 	u8(spec.roofShape ?? 0)
+	u8(spec.flags ?? 0)
+
+	for (let index = 0; index < 8; index++) {
+		u8(0xff)
+	}
+
 	u8(spec.rings.length)
 
 	for (const ring of spec.rings) {
@@ -63,6 +71,10 @@ function record(spec: RecordSpec): number[] {
 	for (const [x, y] of spec.rings.flat()) {
 		i16(x)
 		i16(y)
+	}
+
+	for (let edge = 0; edge < (spec.rings[0]?.length ?? 0); edge++) {
+		u8(spec.edgeFlags?.[edge] ?? 3)
 	}
 
 	u8(spec.ridge?.length ?? 0)
@@ -82,7 +94,7 @@ function record(spec: RecordSpec): number[] {
 }
 
 function tile(...records: number[][]): ArrayBuffer {
-	const body = [..."MWB1"].map((c) => c.charCodeAt(0))
+	const body = [..."MWB2"].map((c) => c.charCodeAt(0))
 
 	body.push(records.length, 0, 0, 0)
 
@@ -170,10 +182,59 @@ test("a pitched roof gives each face its own vertices with walls ending at the e
 })
 
 test("a truncated or foreign tile throws", () => {
-	expect(() => decodeBuildingTile(new Uint8Array([1, 2, 3, 4, 0, 0, 0, 0]).buffer, 0)).toThrow(/MWB1/u)
+	expect(() => decodeBuildingTile(new Uint8Array([1, 2, 3, 4, 0, 0, 0, 0]).buffer, 0)).toThrow(/MWB2/u)
 	const whole = new Uint8Array(tile(record({ height: 10, eave: 10, rings: [square], triangles: [0, 1, 2] })))
 	// DataView throws a RangeError for a read past the end of the tile.
 	expect(() => decodeBuildingTile(whole.slice(0, -2).buffer, 0)).toThrow(RangeError)
+})
+
+test("each wall carries its edge flags, the building flags and its straight run's length and start", () => {
+	// A rectangle whose south side is split by a vertex at (150, 150): edges east, south, south and west.
+	const split: Array<[number, number]> = [
+		[100, 100],
+		[200, 100],
+		[200, 150],
+		[150, 150],
+		[100, 150],
+	]
+
+	const decoded = decodeBuildingTile(
+		tile(
+			record({
+				height: 100,
+				eave: 100,
+				flags: 0b101,
+				edgeFlags: [3, 1, 0b100, 0, 2],
+				rings: [split],
+				triangles: [0, 1, 2],
+			})
+		),
+		6000
+	)
+
+	const walls = new DataView(decoded.walls)
+	const unit = unitMeters(6000)
+	const decimeters = (units: number) => Math.round(units * unit * 10)
+
+	expect([0, 1, 2, 3, 4].map((wall) => walls.getUint8(wall * WALL_STRIDE + 20))).toEqual([3, 1, 0b100, 0, 2])
+	expect(walls.getUint8(21)).toBe(0b101)
+	// The two south edges form one 100-unit run, and the second starts 50 units along it.
+	expect(walls.getUint16(2 * WALL_STRIDE + 16, true)).toBe(decimeters(100))
+	expect(walls.getUint16(2 * WALL_STRIDE + 18, true)).toBe(0)
+	expect(walls.getUint16(3 * WALL_STRIDE + 16, true)).toBe(decimeters(100))
+	expect(walls.getUint16(3 * WALL_STRIDE + 18, true)).toBe(decimeters(50))
+	// The east edge is its own 50-unit run.
+	expect(walls.getUint16(1 * WALL_STRIDE + 16, true)).toBe(decimeters(50))
+})
+
+test("a ring that starts part way along a wall joins its last run to its first", () => {
+	// The ring starts half way along its north side, so the last edge continues the first.
+	const runs = wallRuns([150, 200, 200, 100, 100], [100, 100, 150, 150, 100])
+	// Edge 4 (100,100)→(150,100) runs before edge 0 (150,100)→(200,100) in one 100-unit run.
+	expect(runs.length[0]).toBe(100)
+	expect(runs.length[4]).toBe(100)
+	expect(runs.offset[4]).toBe(0)
+	expect(runs.offset[0]).toBe(50)
 })
 
 test("a tile unit near the equator is about 0.3 m and shrinks toward the poles", () => {

@@ -14,7 +14,7 @@
 import type { CustomLayerInterface, CustomRenderMethodInput, Map as MapLibreMap } from "maplibre-gl"
 
 import { mercatorWorld } from "../mercator-world.ts"
-import { decodeBuildingTile, ROOF_STRIDE, TILE_ZOOM, unitMeters, WALL_STRIDE } from "./decode.ts"
+import { decodeBuildingTile, FacadeClass, ROOF_STRIDE, TILE_ZOOM, unitMeters, WALL_STRIDE } from "./decode.ts"
 
 /**
  * The lowest map zoom the layer draws at.
@@ -129,12 +129,16 @@ in vec2 a_corner;
 in vec4 a_edge;
 in vec2 a_height;
 in vec4 a_color;
+in vec2 a_run;
+in vec4 a_flags;
 uniform float u_unit_meters;
 out vec3 v_color;
 out vec2 v_wall;
 out float v_shade;
 flat out float v_floor_height;
 flat out float v_wall_height;
+flat out float v_run_length;
+flat out float v_edge_flags;
 
 void main() {
 	vec2 position = mix(a_edge.xy, a_edge.zw, a_corner.x);
@@ -148,7 +152,10 @@ void main() {
 	vec2 normal = normalize(vec2(along.y, -along.x) + vec2(1e-6));
 	// Light from the north-west; both faces of a wall take the same shade, so ring winding does not matter.
 	v_shade = 0.70 + 0.30 * abs(dot(normal, normalize(vec2(-0.6, -0.8))));
-	v_wall = vec2(a_corner.x * meters, a_corner.y * (top - base));
+	// Along the wall run rather than the edge, so a vertex part way along a facade does not break its bays.
+	v_wall = vec2(a_run.y * 0.1 + a_corner.x * meters, a_corner.y * (top - base));
+	v_run_length = a_run.x * 0.1;
+	v_edge_flags = a_flags.x;
 	float floors = a_color.w * 255.0;
 	v_wall_height = top - base;
 	v_floor_height = floors > 0.0 ? (top - base) / floors : 3.2;
@@ -162,18 +169,59 @@ in vec2 v_wall;
 in float v_shade;
 flat in float v_floor_height;
 flat in float v_wall_height;
+flat in float v_run_length;
+flat in float v_edge_flags;
 out vec4 fragColor;
 
+// Whether column i of a straight wall run len columns long is glass, as Arnis's BayLayout::plan and slot lay a run
+// out: as many windows as fit between corner piers, the spare columns split between the two ends, and an odd spare
+// column widening the middle pier (an even count) or the middle window (an odd count). A run of single windows with
+// five or more drops one window for a wider middle pier instead.
+bool bayWindow(int len, int i, int window, int pier, int cornerWidth) {
+	int corner = len < 3 * (window + pier) ? 1 : max(cornerWidth, 1);
+	int count = len - 2 * corner >= window ? (len - 2 * corner + pier) / (window + pier) : 0;
+	if (count == 0) return false;
+	int spare = len - count * window - (count - 1) * pier;
+	bool wideWindow = false;
+	bool widePier = false;
+	if (spare % 2 == 1) {
+		if (count % 2 == 0) {
+			widePier = true;
+		} else if (window == 1 && count >= 5) {
+			// Arnis plans again with one window fewer; the count is then even, so an odd spare widens the middle pier.
+			count -= 1;
+			spare += window + pier;
+			widePier = spare % 2 == 1;
+		} else {
+			wideWindow = true;
+		}
+	}
+	int lead = spare / 2;
+	if (i < lead || i >= len - lead) return false;
+	int period = window + pier;
+	int mid = count / 2;
+	int x = i - lead;
+	// Bays before the middle one, with the pier after the last of them widened.
+	int before = mid * period + (widePier ? 1 : 0);
+	if (x < before) return x < mid * period && x % period < window;
+	int y = x - before;
+	int middle = window + (wideWindow ? 1 : 0);
+	if (y < middle) return true;
+	return (y - middle) % period >= pier;
+}
+
 void main() {
-	// A window grid: one band per floor, a window every 3 m along the wall. The ground floor and walls under 2 m stay
-	// blank. Towers over 30 m take larger blue-gray glass, lower buildings smaller warm-gray windows.
+	// Windows: one band per floor, and along the wall the bays of its straight run. The ground floor, walls under
+	// 2 m and party walls stay blank. Towers over 30 m take blue-gray glass, lower buildings warm-gray windows.
 	float tower = step(30.0, v_wall_height);
 	vec2 cell = vec2(v_wall.x / mix(3.0, 2.0, tower), v_wall.y / v_floor_height);
 	float floorY = fract(cell.y);
-	float bayX = fract(cell.x);
 	float inBand = step(mix(0.35, 0.18, tower), floorY) * step(floorY, mix(0.78, 0.9, tower));
-	float inBay = step(mix(0.2, 0.08, tower), bayX) * step(bayX, mix(0.8, 0.92, tower));
-	float aboveGround = step(v_floor_height, v_wall.y) * step(2.0, v_wall_height);
+	// Until the build resolves each building's window archetype, every run takes 2 m windows, 1 m piers and 1 m
+	// corners.
+	float inBay = bayWindow(int(v_run_length), int(floor(v_wall.x)), 2, 1, 1) ? 1.0 : 0.0;
+	float party = float(int(v_edge_flags) % 4 == ${FacadeClass.Party});
+	float aboveGround = step(v_floor_height, v_wall.y) * step(2.0, v_wall_height) * (1.0 - party);
 	// Where a floor or bay shrinks toward a pixel, the grid would alias into noise, so it fades to its average.
 	vec2 cellsPerPixel = fwidth(cell);
 	float detail = 1.0 - smoothstep(0.25, 0.6, max(cellsPerPixel.x, cellsPerPixel.y));
@@ -359,7 +407,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 			gl,
 			prelude + WALL_VERTEX_SHADER,
 			WALL_FRAGMENT_SHADER,
-			["a_corner", "a_edge", "a_height", "a_color"],
+			["a_corner", "a_edge", "a_height", "a_color", "a_run", "a_flags"],
 			["u_unit_meters", "u_hidden", "u_hidden_count", "u_tile_mercator"]
 		)
 
@@ -494,6 +542,14 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 		gl.enableVertexAttribArray(color)
 		gl.vertexAttribPointer(color, 4, gl.UNSIGNED_BYTE, true, WALL_STRIDE, 12)
 		gl.vertexAttribDivisor(color, 1)
+		const run = attribute(walls, "a_run")
+		gl.enableVertexAttribArray(run)
+		gl.vertexAttribPointer(run, 2, gl.UNSIGNED_SHORT, false, WALL_STRIDE, 16)
+		gl.vertexAttribDivisor(run, 1)
+		const flags = attribute(walls, "a_flags")
+		gl.enableVertexAttribArray(flags)
+		gl.vertexAttribPointer(flags, 4, gl.UNSIGNED_BYTE, false, WALL_STRIDE, 20)
+		gl.vertexAttribDivisor(flags, 1)
 
 		const roofVAO = gl.createVertexArray()!
 		gl.bindVertexArray(roofVAO)
