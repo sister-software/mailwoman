@@ -21,9 +21,9 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use geo_types::{Coord, Geometry, LineString, MultiPolygon, Polygon};
+use hrt_facade::{FacadeInput, FacadeStyle, NeighborFacts, Outline, RoofType};
 use hrt_osm::{ElementKind, Tags};
 use hrt_pmtiles::{Compression, TileType, Writer, WriterOptions};
-use hrt_facade::{FacadeInput, FacadeStyle, NeighborFacts, Outline, RoofType};
 use hrt_profile::building_buffers::{
 	building_draft, draft_records, home_tile, quantize_polygon, tile_body, unit_meters, BuildingDraft, PitchedRoof,
 	EXTENT, STYLE_BYTES, TILE_ZOOM, UNRESOLVED_STYLE,
@@ -146,8 +146,14 @@ fn meets(box_: [f64; 4], bounds: Option<[f64; 4]>) -> bool {
 		return true;
 	};
 	let margin = margin_world((box_[1] + box_[3]) / 2.0);
-	let (x0, x1) = (hrt_osm::coords::world_x(west) - margin, hrt_osm::coords::world_x(east) + margin);
-	let (y0, y1) = (hrt_osm::coords::world_y(north) - margin, hrt_osm::coords::world_y(south) + margin);
+	let (x0, x1) = (
+		hrt_osm::coords::world_x(west) - margin,
+		hrt_osm::coords::world_x(east) + margin,
+	);
+	let (y0, y1) = (
+		hrt_osm::coords::world_y(north) - margin,
+		hrt_osm::coords::world_y(south) + margin,
+	);
 	box_[0] <= x1 && box_[2] >= x0 && box_[1] <= y1 && box_[3] >= y0
 }
 
@@ -326,7 +332,12 @@ fn decode_row(bytes: &[u8]) -> io::Result<SortedRow> {
 /// A ring in tile units as grid cells of one meter.
 fn cells(ring: &[[i16; 2]], unit: f64) -> Vec<(i32, i32)> {
 	ring.iter()
-		.map(|[x, y]| ((f64::from(*x) * unit).round() as i32, (f64::from(*y) * unit).round() as i32))
+		.map(|[x, y]| {
+			(
+				(f64::from(*x) * unit).round() as i32,
+				(f64::from(*y) * unit).round() as i32,
+			)
+		})
 		.collect()
 }
 
@@ -418,26 +429,125 @@ fn pitched_roof(style: &FacadeStyle) -> Option<PitchedRoof> {
 	}
 }
 
+/// The longitude and latitude of a polygon's bounding-box center.
+fn center(polygon: &Polygon) -> (f64, f64) {
+	let box_ = bounds_of(polygon.exterior().0.iter().copied());
+	(
+		(box_[0] + box_[2]) / 2.0 * 360.0 - 180.0,
+		hrt_osm::coords::world_lat((box_[1] + box_[3]) / 2.0),
+	)
+}
+
+/// The facade tags a part without a material or colour of its own takes from a masonry building, as Arnis's
+/// `inherit_masonry_facade_tags` gives them.
+const FACADE_KEYS: [&str; 5] = [
+	"building:material",
+	"building:facade:material",
+	"facade:material",
+	"building:colour",
+	"colour",
+];
+
+/// Whether a building's facade is masonry: brick, stone, plaster, render or concrete, as Arnis tests it.
+fn masonry(tags: &hrt_facade::Tags) -> bool {
+	tags.get("building:material")
+		.or_else(|| tags.get("building:facade:material"))
+		.is_some_and(|material| {
+			let normalized: String = material
+				.chars()
+				.filter(|c| !c.is_whitespace() && *c != '_' && *c != '-')
+				.flat_map(char::to_lowercase)
+				.collect();
+			matches!(
+				normalized.as_str(),
+				"brick"
+					| "bricks" | "stone"
+					| "naturalstone"
+					| "limestone" | "sandstone"
+					| "marble" | "granite"
+					| "plaster" | "stucco"
+					| "render" | "concrete"
+			)
+		})
+}
+
+/// What a building's style resolution shares with the rest of its group.
+struct StyleGroup {
+	/// The group seed: a part's carries its building's style hint, year and housing mark.
+	seed: u64,
+	element_id: u64,
+	tags: hrt_facade::Tags,
+	/// Where the district cell is taken: the building's center, so every part shares one district.
+	district_center: (f64, f64),
+}
+
+/// The style group of a building, or of a part whose building is among `rows`, as Arnis's `osm_parser` groups the
+/// parts of a building under its outline.
+fn style_group(row: &SortedRow, polygon: &Polygon, rows: &[SortedRow], by_id: &HashMap<&str, usize>) -> StyleGroup {
+	let mut tags = facade_tags(&row.tags);
+	let element_id = facade_seed(&row.tags);
+	let parent = (row.tags.get("type") == Some("building_part"))
+		.then(|| row.tags.get("building_id"))
+		.flatten()
+		.and_then(|id| by_id.get(id))
+		.map(|&index| &rows[index]);
+	let Some(parent) = parent else {
+		return StyleGroup {
+			seed: element_id,
+			element_id,
+			tags,
+			district_center: center(polygon),
+		};
+	};
+	let outline = facade_tags(&parent.tags);
+	let mut hint = hrt_facade::seed::building_style_hint(&outline);
+	if hint == hrt_facade::StyleHint::None {
+		hint = hrt_facade::seed::building_style_hint(&tags);
+	}
+	let seed = hrt_facade::part_group_seed(
+		facade_seed(&parent.tags),
+		hint,
+		hrt_facade::seed::year_for_parts(&outline),
+		hrt_facade::seed::is_housing_type(&outline),
+	);
+	if masonry(&outline) && !FACADE_KEYS.iter().any(|key| tags.contains_key(*key)) {
+		for key in FACADE_KEYS {
+			if let Some(value) = outline.get(key) {
+				tags.insert(key.to_owned(), value.clone());
+			}
+		}
+	}
+	let district_center = parent.polygons.first().map_or_else(|| center(polygon), center);
+	StyleGroup {
+		seed,
+		element_id,
+		tags,
+		district_center,
+	}
+}
+
 /// Resolves a draft's style from its first polygon's exterior and facade plan, and applies it.
-fn resolve_style(draft: &mut BuildingDraft, tags: &Tags, exterior: &[(i32, i32)], fill: usize, plan: &FacadePlan) {
+fn resolve_style(
+	draft: &mut BuildingDraft,
+	group: &StyleGroup,
+	exterior: &[(i32, i32)],
+	fill: usize,
+	plan: &FacadePlan,
+) {
 	let Some(first) = draft.polygons.first() else {
 		return;
 	};
-	let box_ = bounds_of(first.exterior().0.iter().copied());
-	let lon = (box_[0] + box_[2]) / 2.0 * 360.0 - 180.0;
-	let lat = hrt_osm::coords::world_lat((box_[1] + box_[3]) / 2.0);
-	let facade_tags = facade_tags(tags);
-	let seed = facade_seed(tags);
+	let (lon, lat) = center(first);
 	let mut nodes = exterior.to_vec();
 	nodes.push(exterior[0]);
 	let style = hrt_facade::resolve(&FacadeInput {
-		seed,
-		element_id: seed,
-		tags: &facade_tags,
+		seed: group.seed,
+		element_id: group.element_id,
+		tags: &group.tags,
 		outline: Outline { nodes, cells: fill },
 		lon,
 		lat,
-		district_cell: hrt_facade::district_cell(lon, lat),
+		district_cell: hrt_facade::district_cell(group.district_center.0, group.district_center.1),
 		relation_levels: None,
 		neighbors: Some(NeighborFacts {
 			attached: plan.attached,
@@ -447,7 +557,9 @@ fn resolve_style(draft: &mut BuildingDraft, tags: &Tags, exterior: &[(i32, i32)]
 		}),
 		has_mapped_entrance: false,
 	});
-	let inferred = (!draft.has_height()).then(|| style.inferred_height.map(f64::from)).flatten();
+	let inferred = (!draft.has_height())
+		.then(|| style.inferred_height.map(f64::from))
+		.flatten();
 	draft.apply_style(style_bytes(&style), inferred, pitched_roof(&style));
 }
 
@@ -527,20 +639,31 @@ fn process_tile((tx, ty): (u32, u32), rows: &[SortedRow], osm: &OsmInputs) -> Ti
 		roads: &roads,
 	};
 	let empty = HashSet::new();
+	// Every row in the tile, home or context, by GERS id, so a part finds its building.
+	let by_id: HashMap<&str, usize> = rows
+		.iter()
+		.enumerate()
+		.filter_map(|(index, row)| Some((row.tags.get("id")?, index)))
+		.collect();
 	let mut output = TileOutput::default();
 	for (row, draft) in rows.iter().zip(drafts) {
 		let (true, Some(mut draft)) = (row.home, draft) else {
 			continue;
 		};
-		let styled = draft.polygons.first().filter(|first| home_tile(first) == (tx, ty)).and_then(|first| {
-			let rings = quantize_polygon(first, (tx, ty))?;
-			let exterior = cells(&rings[0], unit);
-			let plan = compute_facade_plan(&exterior, own.get(&draft.group).unwrap_or(&empty), &near);
-			Some((exterior, plan))
-		});
+		let styled = draft
+			.polygons
+			.first()
+			.filter(|first| home_tile(first) == (tx, ty))
+			.and_then(|first| {
+				let rings = quantize_polygon(first, (tx, ty))?;
+				let exterior = cells(&rings[0], unit);
+				let plan = compute_facade_plan(&exterior, own.get(&draft.group).unwrap_or(&empty), &near);
+				Some((exterior, plan))
+			});
 		if let Some((exterior, plan)) = styled {
 			let fill = fill_cells(&exterior).len();
-			resolve_style(&mut draft, &row.tags, &exterior, fill, &plan);
+			let group = style_group(row, &draft.polygons[0], rows, &by_id);
+			resolve_style(&mut draft, &group, &exterior, fill, &plan);
 		}
 		let draft = &draft;
 		let plans = Mutex::new(Vec::<FacadePlan>::new());
@@ -601,8 +724,11 @@ pub fn build(
 			.and_then(|key| osm_inputs.buildings.get(&key))
 		{
 			joined.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-			let extra: Vec<(String, String)> =
-				osm_tags.0.iter().map(|(key, value)| (format!("osm:{key}"), value.clone())).collect();
+			let extra: Vec<(String, String)> = osm_tags
+				.0
+				.iter()
+				.map(|(key, value)| (format!("osm:{key}"), value.clone()))
+				.collect();
 			tags.0.extend(extra);
 		}
 		let mut homes: Vec<(u32, u32)> = polygons.iter().map(home_tile).collect();
@@ -706,14 +832,73 @@ mod tests {
 	fn a_sorted_row_round_trips() {
 		let polygon = Polygon::new(
 			LineString::from(vec![(0.1, 0.2), (0.3, 0.2), (0.3, 0.4), (0.1, 0.2)]),
-			vec![LineString::from(vec![(0.15, 0.25), (0.2, 0.25), (0.2, 0.3), (0.15, 0.25)])],
+			vec![LineString::from(vec![
+				(0.15, 0.25),
+				(0.2, 0.25),
+				(0.2, 0.3),
+				(0.15, 0.25),
+			])],
 		);
-		let tags = Tags(vec![("theme".into(), "buildings".into()), ("osm:shop".into(), "bakery".into())]);
+		let tags = Tags(vec![
+			("theme".into(), "buildings".into()),
+			("osm:shop".into(), "bakery".into()),
+		]);
 		let row = decode_row(&encode_row(true, 7, &tags, std::slice::from_ref(&polygon))).unwrap();
 		assert!(row.home);
 		assert_eq!(row.id, 7);
 		assert_eq!(row.tags, tags);
 		assert_eq!(row.polygons, [polygon]);
+	}
+
+	#[test]
+	fn the_parts_of_a_brick_building_share_its_group_seed_district_and_material() {
+		let square = |x: f64| {
+			Polygon::new(
+				LineString::from(vec![(x, 0.3), (x + 0.00001, 0.3), (x + 0.00001, 0.30001), (x, 0.3)]),
+				vec![],
+			)
+		};
+		let row = |tags: Vec<(&str, &str)>, x: f64| SortedRow {
+			home: true,
+			id: 1,
+			tags: Tags(tags.into_iter().map(|(k, v)| (k.to_owned(), v.to_owned())).collect()),
+			polygons: vec![square(x)],
+		};
+		let rows = vec![
+			row(
+				vec![
+					("id", "outline"),
+					("type", "building"),
+					("has_parts", "true"),
+					("osm:building:material", "brick"),
+					("osm:start_date", "1914"),
+				],
+				0.5,
+			),
+			row(
+				vec![("id", "east"), ("type", "building_part"), ("building_id", "outline")],
+				0.50001,
+			),
+			row(
+				vec![("id", "west"), ("type", "building_part"), ("building_id", "outline")],
+				0.49999,
+			),
+			row(vec![("id", "loose"), ("type", "building")], 0.6),
+		];
+		let by_id: HashMap<&str, usize> = rows
+			.iter()
+			.enumerate()
+			.map(|(i, r)| (r.tags.get("id").unwrap(), i))
+			.collect();
+		let group = |index: usize| style_group(&rows[index], &rows[index].polygons[0], &rows, &by_id);
+		let (east, west, loose) = (group(1), group(2), group(3));
+		assert_eq!(east.seed, west.seed);
+		assert_ne!(east.element_id, west.element_id);
+		assert_eq!(east.district_center, west.district_center);
+		assert_eq!(east.tags.get("building:material").map(String::as_str), Some("brick"));
+		// The outline's year rides in the group seed, as Arnis packs it for pre-war buildings.
+		assert_eq!(hrt_facade::seed::year_from_seed(east.seed), Some(1914));
+		assert_eq!(loose.seed, loose.element_id);
 	}
 
 	#[test]

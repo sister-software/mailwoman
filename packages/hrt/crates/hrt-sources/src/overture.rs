@@ -490,7 +490,11 @@ mod tests {
 			fields.clone(),
 			vec![
 				text(vec![Some("/properties/height"), Some(""), None]),
-				text(vec![Some("OpenStreetMap"), Some("OpenStreetMap"), Some("Esri Community Maps")]),
+				text(vec![
+					Some("OpenStreetMap"),
+					Some("OpenStreetMap"),
+					Some("Esri Community Maps"),
+				]),
 				text(vec![Some("w2@1"), Some("w1@3"), Some("{ABC}")]),
 			],
 			None,

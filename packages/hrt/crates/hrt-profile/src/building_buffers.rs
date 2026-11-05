@@ -162,7 +162,11 @@ pub fn building_draft(input: &Input<'_>) -> Option<BuildingDraft> {
 		Geometry::MultiPolygon(polygons) => polygons.0,
 		_ => Vec::new(),
 	};
-	let group = gers_feature_id(if part { input.tag("building_id") } else { input.tag("id") });
+	let group = gers_feature_id(if part {
+		input.tag("building_id")
+	} else {
+		input.tag("id")
+	});
 	Some(BuildingDraft {
 		attributes,
 		polygons,
@@ -196,7 +200,14 @@ pub fn home_tile(polygon: &Polygon) -> (u32, u32) {
 	let scale = f64::from(1u32 << TILE_ZOOM);
 	let [min_x, min_y, max_x, max_y] = polygon.exterior().0.iter().fold(
 		[f64::INFINITY, f64::INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY],
-		|[min_x, min_y, max_x, max_y], coord| [min_x.min(coord.x), min_y.min(coord.y), max_x.max(coord.x), max_y.max(coord.y)],
+		|[min_x, min_y, max_x, max_y], coord| {
+			[
+				min_x.min(coord.x),
+				min_y.min(coord.y),
+				max_x.max(coord.x),
+				max_y.max(coord.y),
+			]
+		},
 	);
 	let max_index = f64::from((1u32 << TILE_ZOOM) - 1);
 	(

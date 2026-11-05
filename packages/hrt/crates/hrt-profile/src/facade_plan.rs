@@ -124,7 +124,10 @@ pub fn surface_highway_type(tag: &dyn Fn(&str) -> Option<String>) -> Option<Stri
 	if is("area", "yes") || is("indoor", "yes") || is("aeroway", "jet_bridge") || is("man_made", "pier") {
 		return None;
 	}
-	if tag("level").and_then(|level| level.parse::<i32>().ok()).is_some_and(|level| level < 0) {
+	if tag("level")
+		.and_then(|level| level.parse::<i32>().ok())
+		.is_some_and(|level| level < 0)
+	{
 		return None;
 	}
 	// Arnis bores a tunnel underground unless the terrain leaves no room; a map draws no terrain bore, so a tunnel is
@@ -166,7 +169,9 @@ pub fn highway_block_range(highway: &str, tag: &dyn Fn(&str) -> Option<String>) 
 		.clamp(1, MAX_LANES);
 	let width = tag("width").and_then(|raw| {
 		let text = raw.trim().trim_end_matches('m').trim().to_owned();
-		text.parse::<f64>().ok().filter(|value| value.is_finite() && *value > 0.0)
+		text.parse::<f64>()
+			.ok()
+			.filter(|value| value.is_finite() && *value > 0.0)
 	});
 	if let Some(width) = width {
 		range = (width / 2.0).round() as i32;
@@ -201,7 +206,8 @@ impl Bitmap {
 
 	fn index(&self, x: i32, z: i32) -> Option<usize> {
 		let (dx, dz) = (x - self.min.0, z - self.min.1);
-		(dx >= 0 && dz >= 0 && dx < self.width && dz < self.height).then(|| dz as usize * self.width as usize + dx as usize)
+		(dx >= 0 && dz >= 0 && dx < self.width && dz < self.height)
+			.then(|| dz as usize * self.width as usize + dx as usize)
 	}
 
 	pub fn set(&mut self, x: i32, z: i32) {
@@ -211,7 +217,8 @@ impl Bitmap {
 	}
 
 	pub fn contains(&self, x: i32, z: i32) -> bool {
-		self.index(x, z).is_some_and(|index| self.bits[index / 64] & (1 << (index % 64)) != 0)
+		self.index(x, z)
+			.is_some_and(|index| self.bits[index / 64] & (1 << (index % 64)) != 0)
 	}
 }
 
@@ -365,7 +372,10 @@ pub fn compute_facade_plan(ring: &[(i32, i32)], own: &HashSet<(i32, i32)>, near:
 			len,
 		}));
 	}
-	let has_any_street = segments.iter().flatten().any(|segment| segment.class == FacadeClass::Street);
+	let has_any_street = segments
+		.iter()
+		.flatten()
+		.any(|segment| segment.class == FacadeClass::Street);
 	if has_any_street {
 		for segment in segments.iter_mut().flatten() {
 			if segment.class == FacadeClass::Open {
@@ -493,10 +503,25 @@ mod tests {
 		for &(x, z) in &own {
 			footprints.set(x, z);
 		}
-		let plan = compute_facade_plan(&ring, &own, &Neighborhood { footprints: &footprints, roads: &roads });
+		let plan = compute_facade_plan(
+			&ring,
+			&own,
+			&Neighborhood {
+				footprints: &footprints,
+				roads: &roads,
+			},
+		);
 		let classes: Vec<_> = plan.segments.iter().map(|s| s.unwrap().class).collect();
 		// Edges: north (0,0)-(20,0), east, south (20,10)-(0,10), west. The road surface starts 2 m south of the wall.
-		assert_eq!(classes, [FacadeClass::Rear, FacadeClass::Rear, FacadeClass::Street, FacadeClass::Rear]);
+		assert_eq!(
+			classes,
+			[
+				FacadeClass::Rear,
+				FacadeClass::Rear,
+				FacadeClass::Street,
+				FacadeClass::Rear
+			]
+		);
 		assert_eq!(plan.front_segment, Some(2));
 		assert_eq!(plan.segments[2].unwrap().road_dist, Some(2));
 		assert!(plan.has_any_street && !plan.attached && !plan.enclosed);
@@ -512,9 +537,24 @@ mod tests {
 		}
 		let roads = grid();
 		let own: HashSet<_> = fill_cells(&left).into_iter().collect();
-		let plan = compute_facade_plan(&left, &own, &Neighborhood { footprints: &footprints, roads: &roads });
+		let plan = compute_facade_plan(
+			&left,
+			&own,
+			&Neighborhood {
+				footprints: &footprints,
+				roads: &roads,
+			},
+		);
 		let classes: Vec<_> = plan.segments.iter().map(|s| s.unwrap().class).collect();
-		assert_eq!(classes, [FacadeClass::Open, FacadeClass::Party, FacadeClass::Open, FacadeClass::Open]);
+		assert_eq!(
+			classes,
+			[
+				FacadeClass::Open,
+				FacadeClass::Party,
+				FacadeClass::Open,
+				FacadeClass::Open
+			]
+		);
 		assert!(plan.attached);
 		assert!(!plan.has_any_street);
 	}
@@ -530,7 +570,14 @@ mod tests {
 		for &(x, z) in &own {
 			footprints.set(x, z);
 		}
-		let plan = compute_facade_plan(&ring, &own, &Neighborhood { footprints: &footprints, roads: &roads });
+		let plan = compute_facade_plan(
+			&ring,
+			&own,
+			&Neighborhood {
+				footprints: &footprints,
+				roads: &roads,
+			},
+		);
 		// East edge (index 1) then south edge (index 2) meet at (20, 20).
 		assert_eq!(plan.corner, Some((1, 2)));
 	}
@@ -544,6 +591,9 @@ mod tests {
 		assert_eq!(highway_block_range("primary", &tags(&[("lanes", "4")])), 7);
 		assert_eq!(highway_block_range("primary", &tags(&[("width", "6 m")])), 3);
 		assert_eq!(highway_block_range("footway", &tags(&[])), 1);
-		assert_eq!(surface_highway_type(&tags(&[("highway", "primary"), ("tunnel", "yes")])), None);
+		assert_eq!(
+			surface_highway_type(&tags(&[("highway", "primary"), ("tunnel", "yes")])),
+			None
+		);
 	}
 }

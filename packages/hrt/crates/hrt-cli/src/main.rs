@@ -90,7 +90,9 @@ fn usage() -> ExitCode {
 	eprintln!(
 		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>] [landcover=<path>] [clip=<path>] [clip-buffer=<pixels>] [pgf=<path>] [overture-buildings=<dir>] [no-footprints] [bounds=<w,s,e,n>]"
 	);
-	eprintln!("       hrt building-tiles <theme=buildings dir> <output.pmtiles> [bounds=<w,s,e,n>] [osm=<file.osm.pbf>]");
+	eprintln!(
+		"       hrt building-tiles <theme=buildings dir> <output.pmtiles> [bounds=<w,s,e,n>] [osm=<file.osm.pbf>]"
+	);
 	eprintln!("       hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>");
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
