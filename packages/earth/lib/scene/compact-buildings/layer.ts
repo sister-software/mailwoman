@@ -24,6 +24,14 @@ export const COMPACT_BUILDINGS_MIN_ZOOM = 13
 const MIN_ZOOM = COMPACT_BUILDINGS_MIN_ZOOM
 
 /**
+ * Meters the storey grid starts above a building's base.
+ *
+ * The ground storey is that much taller than the storeys above.
+ * The value is Arnis's `GROUND_FLOOR_BONUS`, two rows of one meter.
+ */
+const GROUND_FLOOR_BONUS = 2
+
+/**
  * The GPU bytes the layer keeps before it evicts tiles out of view, least recently drawn first.
  */
 const GPU_BUDGET_BYTES = 48 * 1024 * 1024
@@ -252,12 +260,20 @@ void main() {
 	int bayPier = resolved ? int(v_bays.y) : 1;
 	int bayCorner = resolved ? int(v_bays.z) : 1;
 
+	// Storeys as Arnis's floor_row counts them: the grid starts ${GROUND_FLOOR_BONUS} m up, so the ground storey is
+	// that much taller, and row 0 of each storey is the band between storeys.
 	float cycle = v_floor_height;
-	float storey = floor(v_wall.y / cycle);
-	int row = int(floor(v_wall.y - storey * cycle));
+	float anchored = v_wall.y - ${GROUND_FLOOR_BONUS}.0;
+	float storey = floor(anchored / cycle);
+	int row = int(floor(anchored - storey * cycle));
 	int column = int(floor(v_wall.x));
 	int len = int(v_run_length);
-	bool groundStorey = storey < 1.0;
+	float groundTop = min(${GROUND_FLOOR_BONUS}.0 + cycle, v_wall_height);
+	bool groundStorey = v_wall.y < groundTop;
+	// Arnis builds a wall to a whole number of storeys, so its top storey ends at the roof. An Overture height ends
+	// anywhere, so a window row glazes only where it ends half a meter or more below the wall top, rather than
+	// running up into the roof.
+	bool wholeStorey = ${GROUND_FLOOR_BONUS}.0 + storey * cycle + float(row) + 1.0 <= v_wall_height - 0.5;
 	bool street = edgeClass == ${FacadeClass.Street};
 	bool party = edgeClass == ${FacadeClass.Party};
 
@@ -268,11 +284,13 @@ void main() {
 			// sign band, on Arnis's shop rhythm of 3 m windows and 1 m piers.
 			if (street && (ground == 1 || ground == 2)) {
 				bool display = bayWindow(len, column, 3, 1, 1);
-				glassAmount = display && v_wall.y < cycle - 0.8 ? 1.0 : 0.0;
+				glassAmount = display && v_wall.y < groundTop - 1.0 ? 1.0 : 0.0;
 			} else if (resolved) {
-				glassAmount = archetypeRow(archetype, row, int(cycle)) && bayWindow(len, column, bayWindowWidth, bayPier, bayCorner) ? 1.0 : 0.0;
+				// A plain ground floor glazes like the floors above it, from the second row of the anchored grid up.
+				bool glazed = v_wall.y >= ${GROUND_FLOOR_BONUS}.0 && archetypeRow(archetype, row, int(cycle));
+				glassAmount = glazed && wholeStorey && bayWindow(len, column, bayWindowWidth, bayPier, bayCorner) ? 1.0 : 0.0;
 			}
-		} else {
+		} else if (wholeStorey) {
 			bool inRow = archetypeRow(archetype, row, int(cycle));
 			bool inBay = ribbon ? (column >= bayCorner && column < len - bayCorner) : bayWindow(len, column, bayWindowWidth, bayPier, bayCorner);
 			glassAmount = inRow && inBay ? 1.0 : 0.0;
@@ -289,9 +307,10 @@ void main() {
 	// Trim: a band at each floor line when the style draws accent lines, and a cornice along the top of a wall with a
 	// parapet or an accent roof line.
 	float trim = 0.0;
-	if (floorLines && !groundStorey && v_wall.y - storey * cycle < 0.3) trim = 1.0;
+	// Arnis lays the accent band on row 0 of each storey, a whole meter.
+	if (floorLines && !groundStorey && row == 0) trim = 1.0;
 	if ((parapet || roofLine) && v_wall.y > v_wall_height - 0.6) trim = 1.0;
-	if (street && (ground == 1 || ground == 2) && groundStorey && v_wall.y >= cycle - 0.8) trim = 1.0;
+	if (street && (ground == 1 || ground == 2) && groundStorey && v_wall.y >= groundTop - 1.0) trim = 1.0;
 	wall = mix(wall, v_trim.rgb, trim * detail);
 	vec3 glass = resolved ? v_glass : vec3(0.62);
 	fragColor = vec4(mix(wall, glass, window) * v_shade, 1.0);
