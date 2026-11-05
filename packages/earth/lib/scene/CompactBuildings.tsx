@@ -18,7 +18,16 @@ import { useMap } from "react-map-gl/maplibre"
 import { PRODUCTION_CONFIG } from "#config"
 import { pageTilesetParam } from "#routes"
 
-import { COMPACT_BUILDINGS_LAYER_ID, CompactBuildingsLayer } from "./compact-buildings/layer.ts"
+import {
+	COMPACT_BUILDINGS_LAYER_ID,
+	COMPACT_BUILDINGS_MIN_ZOOM,
+	CompactBuildingsLayer,
+} from "./compact-buildings/layer.ts"
+
+/**
+ * The highest zoom a MapLibre style layer can declare.
+ */
+const MAX_STYLE_ZOOM = 24
 
 /**
  * The city model layer's id, repeated here so removing it needs no import of the layer's module.
@@ -56,7 +65,8 @@ export function CompactBuildings(): null {
 		)
 
 		let removed = false
-		const hidden: string[] = []
+		// Each vector building layer the compact layer takes over from, with the zoom range the style gave it.
+		const handedOff: Array<[id: string, range: [number, number]]> = []
 
 		// three.js and 3DTilesRendererJS load only on a page that draws city models.
 		// The main bundle stays without them.
@@ -80,7 +90,9 @@ export function CompactBuildings(): null {
 
 			const style = map.getStyle()
 
-			// The extruded footprints would draw the same buildings twice.
+			// The extruded footprints would draw the same buildings twice where the compact
+			// layer draws, so they stop at its lowest zoom and keep the zooms below it,
+			// as the page without compact buildings shows them.
 			// Address labels stay.
 			for (const styleLayer of style.layers) {
 				if (
@@ -88,8 +100,9 @@ export function CompactBuildings(): null {
 					styleLayer["source-layer"] === "buildings" &&
 					styleLayer.type !== "symbol"
 				) {
-					map.setLayoutProperty(styleLayer.id, "visibility", "none")
-					hidden.push(styleLayer.id)
+					const range: [number, number] = [styleLayer.minzoom ?? 0, styleLayer.maxzoom ?? MAX_STYLE_ZOOM]
+					map.setLayerZoomRange(styleLayer.id, range[0], Math.min(range[1], COMPACT_BUILDINGS_MIN_ZOOM))
+					handedOff.push([styleLayer.id, range])
 				}
 			}
 
@@ -112,8 +125,8 @@ export function CompactBuildings(): null {
 				map.removeLayer(id)
 			}
 
-			for (const id of hidden.filter((layerID) => map.getLayer(layerID))) {
-				map.setLayoutProperty(id, "visibility", "visible")
+			for (const [id, [minzoom, maxzoom]] of handedOff.filter(([layerID]) => map.getLayer(layerID))) {
+				map.setLayerZoomRange(id, minzoom, maxzoom)
 			}
 		}
 	}, [mapRef, tileset])

@@ -19,7 +19,9 @@ import { decodeBuildingTile, FacadeClass, ROOF_STRIDE, TILE_ZOOM, unitMeters, WA
 /**
  * The lowest map zoom the layer draws at.
  */
-const MIN_ZOOM = 13
+export const COMPACT_BUILDINGS_MIN_ZOOM = 13
+
+const MIN_ZOOM = COMPACT_BUILDINGS_MIN_ZOOM
 
 /**
  * The GPU bytes the layer keeps before it evicts tiles out of view, least recently drawn first.
