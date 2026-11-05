@@ -61,7 +61,6 @@ export const spec = {
 			choices: ["score", "containment", "either"],
 			description: "Which reading of a weak resolution lifts the #685 brake",
 		},
-		"hierarchy-completion": booleanOption("Enable hierarchy completion"),
 		"postcode-anchor": booleanOption("Add anchor-coordinate arm"),
 		"postcode-databases": { type: "string", description: "Postcode databases" },
 		"anchor-min-conf": { type: "number", description: "Anchor trust floor" },

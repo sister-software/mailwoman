@@ -11,18 +11,6 @@ import { EMPTY_PLACE_FIELDS, type ResolvedPlace, type ResolverBackend } from "@m
 import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/postcode/systems"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
-/**
- * One additional admin role a resolved place also fulfills, such as Berlin's
- * federal-state role beside its locality role.
- */
-export interface DualRole {
-	id: number
-	name: string
-	placetype: string
-	relationshipType: string
-	role: "region" | "locality"
-}
-
 export interface MailwomanLookupLike {
 	findPlace: (q: {
 		text: string
@@ -62,12 +50,6 @@ export interface MailwomanLookupLike {
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 		}>
 	>
-	/**
-	 * Dual-role partner roles for a resolved place id.
-	 *
-	 * Absent on lookups built from a slim DB that predates the `coincident_roles` relation.
-	 */
-	coincidentRolesFor?: (placeID: number) => Promise<DualRole[]>
 }
 
 type CascadeHits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
@@ -206,11 +188,8 @@ export async function runCascade(
 
 	// adminCoherence performs the convergence.
 	// No defaultCountry is deliberate, because the demo ranks globally.
-	// Hierarchy completion is off because it calls `ancestors()` and `coincidentLocalitiesFor()`.
-	// Both are synchronous, and a lookup that reads HTTP byte ranges cannot provide them.
 	const resolved = (await resolver.resolveTree(tree, {
 		adminCoherence: true,
-		hierarchyCompletion: false,
 		...(bias && bias.length ? { bias } : {}),
 	})) as {
 		roots: ResolvedTreeNode[]

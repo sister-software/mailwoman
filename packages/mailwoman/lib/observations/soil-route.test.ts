@@ -66,7 +66,6 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 			],
 		}),
 		artifactCoverage: null,
-		capabilityGaps: null,
 	}
 
 	return {

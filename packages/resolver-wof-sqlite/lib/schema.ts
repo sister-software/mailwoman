@@ -171,23 +171,6 @@ export interface ConcordancesTable {
 }
 
 /**
- * `coincident_roles`.
- *
- * The dual-role relation, where a place is both an admin region and a locality (Berlin the city-state).
- *
- * One row per (admin, locality) pair the resolver can complete a hierarchy with.
- * Surfaced by {@link MailwomanLookupLike.coincidentRolesFor}.
- */
-export interface CoincidentRolesTable {
-	admin_id: number
-	locality_id: number
-	relationship_type: string
-	admin_placetype: string
-	distance_km: number
-	locality_population: number
-}
-
-/**
  * The full schema we hand to `Kysely<WOFDatabase>` / `new DatabaseClient<WOFDatabase>(...)`.
  *
  * Tables not listed here will fail type-checked queries, by design.
@@ -205,5 +188,4 @@ export interface WOFDatabase {
 	place_population: PlacePopulationTable
 	place_abbr: PlaceAbbrTable
 	concordances: ConcordancesTable
-	coincident_roles: CoincidentRolesTable
 }

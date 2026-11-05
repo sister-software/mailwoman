@@ -7,7 +7,7 @@
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
-import type { Ancestor, CoincidentLocality } from "@mailwoman/core/resolver"
+import type { Ancestor } from "@mailwoman/core/resolver"
 import { allRows } from "@mailwoman/core/utils"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
@@ -16,7 +16,6 @@ import type { PathBuilderLike } from "path-ts"
 
 import { ancestorLineage } from "#ancestry"
 import { candidateFromSearchRow, rankCandidates } from "#candidate/scoring"
-import { loadCoincidentLocalities } from "#coincident-roles"
 import {
 	ADDRESS_CONVENTION_TABLE,
 	resolveConvention,
@@ -155,10 +154,6 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	 * Strategy names already warned about, so an unknown name surfaces once.
 	 */
 	readonly #warnedUnknownStrategies = new Set<string>()
-	/**
-	 * Lazily-built `admin_id → coincident localities` map, null until first use.
-	 */
-	#coincidentRolesCache: Map<number, CoincidentLocality[]> | null = null
 	/**
 	 * Per-id memoized ancestor lineages, queried once per chain.
 	 */
@@ -353,21 +348,6 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		}
 
 		return found
-	}
-
-	/**
-	 * Dual-role localities coincident with an admin id, or `[]` when the relation table is absent.
-	 */
-	coincidentLocalitiesFor(adminID: number | string): CoincidentLocality[] {
-		const id = typeof adminID === "number" ? adminID : Number(adminID)
-
-		if (!Number.isFinite(id)) return []
-
-		if (!this.#coincidentRolesCache) {
-			this.#coincidentRolesCache = loadCoincidentLocalities(this.database)
-		}
-
-		return this.#coincidentRolesCache.get(id) ?? []
 	}
 
 	/**

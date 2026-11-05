@@ -21,9 +21,3 @@ export default meta
 type Story = StoryObj<typeof ResolvedPlace>
 
 export const Default: Story = {}
-
-export const DualRole: Story = {
-	args: {
-		dualRoles: [{ id: 1, name: "New York", placetype: "region", relationshipType: "city-state", role: "region" }],
-	},
-}

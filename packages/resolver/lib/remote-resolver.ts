@@ -6,7 +6,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { stringifyJSON } from "@mailwoman/core/json"
-import type { BackendCapabilityGap, GazetteerArtifactCoverage, ResolveOpts, Resolver } from "@mailwoman/core/resolver"
+import type { GazetteerArtifactCoverage, ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 
 /**
  * Describes the `ResolveOpts` sent over the wire.
@@ -91,7 +91,6 @@ export class RemoteResolver implements Resolver {
 	readonly #timeoutMs: number
 	readonly #headers: Record<string, string>
 	readonly artifactCoverage: GazetteerArtifactCoverage | null = null
-	readonly capabilityGaps: readonly BackendCapabilityGap[] | null = null
 
 	constructor(opts: RemoteResolverOpts) {
 		if (!opts.endpoint) throw new Error("RemoteResolver: `endpoint` is required")

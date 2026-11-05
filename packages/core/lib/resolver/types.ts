@@ -157,10 +157,6 @@ export interface ResolverBackend {
 		limit?: number
 	}): Promise<ResolvedPlace[]>
 	/**
-	 * Optional coincident localities lookup.
-	 */
-	coincidentLocalitiesFor?(adminID: number | string): CoincidentLocality[]
-	/**
 	 * Optional ancestor lineage lookup.
 	 */
 	ancestors?(id: number | string): Ancestor[]
@@ -170,48 +166,10 @@ export interface ResolverBackend {
 	artifactCoverage?: GazetteerArtifactCoverage | null
 }
 
-export interface BackendCapabilityGap {
-	/**
-	 * A backend capability that is absent.
-	 */
-	capability: "ancestors" | "coincidentLocalitiesFor"
-	/**
-	 * Related resolve option.
-	 */
-	option: keyof ResolveOpts
-	/**
-	 * Whether the option defaults to on.
-	 */
-	defaultOn: boolean
-	/**
-	 * User-visible degradation.
-	 */
-	degrades: string
-	/**
-	 * Backend class name.
-	 */
-	backend: string
-}
-
 export interface Ancestor {
 	id: number | string
 	placetype: string
 	name: string
-}
-
-export interface CoincidentLocality extends ResolvedPlace {
-	/**
-	 * Relationship type.
-	 */
-	relationshipType: string
-	/**
-	 * Locality population.
-	 */
-	population: number
-	/**
-	 * Centroid distance in km.
-	 */
-	distanceKm: number
 }
 
 /**
@@ -257,7 +215,6 @@ export interface ResolveSwitches {
 	postcodeContainmentCoherence: boolean
 	postcodePrefixPrior: boolean
 	adminCoherence: boolean
-	hierarchyCompletion: boolean
 	includeAncestors: boolean
 	adminContainmentRerank: boolean
 	dependentLocalityContainment: boolean
@@ -279,7 +236,6 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 	postcodeContainmentCoherence: false,
 	postcodePrefixPrior: false,
 	adminCoherence: true,
-	hierarchyCompletion: true,
 	includeAncestors: false,
 	adminContainmentRerank: true,
 	dependentLocalityContainment: true,
@@ -470,12 +426,6 @@ export interface ResolveOpts {
 	 */
 	adminCoherence?: boolean
 	/**
-	 * Enables dual-role hierarchy completion.
-	 *
-	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
-	 */
-	hierarchyCompletion?: boolean
-	/**
 	 * Attach ancestor lineage to resolved nodes.
 	 *
 	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
@@ -589,8 +539,4 @@ export interface Resolver {
 	 * Optional artifact coverage facts passthrough.
 	 */
 	artifactCoverage: GazetteerArtifactCoverage | null
-	/**
-	 * Optional list of missing backend capabilities.
-	 */
-	capabilityGaps: readonly BackendCapabilityGap[] | null
 }

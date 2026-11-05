@@ -619,7 +619,6 @@ describe("The lineage-attachment wiring", () => {
 				}
 			},
 			artifactCoverage: null,
-			capabilityGaps: null,
 		}
 
 		return { classifier, resolver, placeCountry: "none" }

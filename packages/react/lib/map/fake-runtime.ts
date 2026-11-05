@@ -125,7 +125,6 @@ export function makeFakeParseResult(input = "350 5th Ave, New York, NY 10118"): 
 		],
 		fstActive: true,
 		fstProvenance: { builtAt: "2026-07-01T00:00:00Z", stateCount: 51, placeCount: 94_000, importanceMatches: 12_000 },
-		dualRoles: null,
 	}
 }
 

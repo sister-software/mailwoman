@@ -43,7 +43,6 @@ const traces: unknown[] = []
 function instrumented(resolver: Resolver, trace: boolean): Resolver {
 	return {
 		artifactCoverage: resolver.artifactCoverage,
-		capabilityGaps: resolver.capabilityGaps,
 		resolveTree: (tree, opts) =>
 			resolver.resolveTree(tree, {
 				...opts,

@@ -24,7 +24,6 @@ describe("resolveSwitches", () => {
 			"postcodeConsistency",
 			"postcodeCountryCoherence",
 			"adminCoherence",
-			"hierarchyCompletion",
 		] as const) {
 			expect(resolveSwitches({})[key]).toBe(true)
 			expect(resolveSwitches({ [key]: false })[key]).toBe(false)

@@ -5,7 +5,7 @@
  *
  *   The admin build's Freeze phase checkpoints WAL, freezes the journal and closes the ancestor relation.
  *   It creates an `ancestors(id)` index before the −4 backfill. The `wof:hierarchy` −4 backfill applies only to WOF ids.
- *   The phase then builds `coincident_roles`, indexes and analyze data. It also runs an integrity check. The index comes first
+ *   The phase then builds indexes and analyze data. It also runs an integrity check. The index comes first
  *   because the backfill's per-candidate lookups otherwise full-scan the 13M-row table and the build
  *   stalls for hours. The phase runs in place on the staging DB. The caller then `vacuum into`s the final artifact
  *   afterwards.
@@ -33,7 +33,6 @@ export interface FreezeAdminOptions {
 export interface FreezeAdminResult {
 	ancestorRows: number
 	backfillPlacesFixed: number
-	coincidentRoles: number
 }
 
 /**
@@ -47,7 +46,6 @@ export async function freezeAdmin(
 	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
 		await import("@mailwoman/resolver-wof-sqlite/ancestry")
 
-	const { buildCoincidentRoles } = await import("@mailwoman/resolver-wof-sqlite/coincident-roles")
 	const { createUnifiedIndexes, populateAncestors } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const phase = opts.onPhase ?? (() => {})
 
@@ -103,11 +101,6 @@ export async function freezeAdmin(
 		}
 	}
 
-	// The dual-role-place relation needs `ancestors`, `spr` bbox and `place_population`, all present by now.
-	// It drives the resolver's hierarchy completion (on by default).
-	phase("coincident-roles")
-	const roles = buildCoincidentRoles(db)
-
 	phase("indexes")
 	await createUnifiedIndexes(db)
 
@@ -118,5 +111,5 @@ export async function freezeAdmin(
 	phase("integrity")
 	assertDatabaseIntegrity(db, "admin")
 
-	return { ancestorRows, backfillPlacesFixed, coincidentRoles: roles.rowCount }
+	return { ancestorRows, backfillPlacesFixed }
 }

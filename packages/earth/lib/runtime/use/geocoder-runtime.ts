@@ -54,7 +54,6 @@ import {
 	DEFAULT_LOCALE,
 	parseStageLabelsFor,
 	projectCascadeHits,
-	resolveDualRoles,
 	runClassifyStage,
 } from "mailwoman/browser-runtime/classify"
 import { FamilyBundles, silentAssetProgress } from "mailwoman/browser-runtime/family-bundles"
@@ -556,7 +555,6 @@ export function useGeocoderRuntime({
 					fstActive: assets?.fstMatcher != null,
 					fstProvenance: assets?.fstProvenance ?? null,
 					timing: { ...timing, resolve: null },
-					dualRoles: null,
 				}
 			}
 
@@ -648,11 +646,6 @@ export function useGeocoderRuntime({
 			// ahead of the admin matches, after a street-level coordinate.
 			candidates.splice(streetResolution ? 1 : 0, 0, ...(await underseaPlaces()))
 
-			// Whether the resolved place doubles as another admin tier.
-			// This is best-effort.
-			// The helper skips a synthesized street/anchor pin (`id === 0`).
-			const dualRoles = await resolveDualRoles(wofLookup, candidates[0])
-
 			return {
 				input,
 				tree,
@@ -663,7 +656,6 @@ export function useGeocoderRuntime({
 				fstActive: assets?.fstMatcher != null,
 				fstProvenance: assets?.fstProvenance ?? null,
 				timing: { ...timing, resolve: tResolve - tBeforeResolve },
-				dualRoles: dualRoles as ParseResult["dualRoles"],
 			}
 		},
 		[

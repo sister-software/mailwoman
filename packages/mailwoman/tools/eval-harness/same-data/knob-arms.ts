@@ -63,7 +63,6 @@ const KNOB_OPTION_KINDS = {
 	postcodeFormatCountries: "string[]",
 	postcodePrefixIndex: null,
 	adminCoherence: "boolean",
-	hierarchyCompletion: "boolean",
 	includeAncestors: "boolean",
 	adminContainmentRerank: "boolean",
 	dependentLocalityContainment: "boolean",

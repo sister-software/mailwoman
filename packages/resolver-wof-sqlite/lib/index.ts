@@ -8,7 +8,6 @@ export type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "
 
 export type {
 	AncestorsTable,
-	CoincidentRolesTable,
 	ConcordancesTable,
 	GeojsonTable,
 	NamesTable,

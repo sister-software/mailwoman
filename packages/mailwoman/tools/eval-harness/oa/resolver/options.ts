@@ -91,10 +91,6 @@ export interface OAResolverEvalOptions {
 	 */
 	eval?: string
 	/**
-	 * Recover the locality dropped for a dual-role place.
-	 */
-	hierarchyCompletion?: boolean
-	/**
 	 * House-number interpolation database (single-state).
 	 */
 	interpolation?: string

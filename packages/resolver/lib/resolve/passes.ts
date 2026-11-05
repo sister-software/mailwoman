@@ -7,14 +7,11 @@
 import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
 import { isShapeExcludedPostcode, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import {
-	type CoincidentLocality,
 	type DefaultCountry,
 	EMPTY_PLACE_FIELDS,
-	compareReferential,
 	type ResolveCandidateTrace,
 	type ResolveNodeTrace,
 	type PostcodePrefixIndexLike,
-	referentialFromPopulation,
 	type ResolvedPlace,
 	type ResolveOpts,
 	type ResolverBackend,
@@ -24,7 +21,6 @@ import { PLACETYPE_SPECIFICITY } from "@mailwoman/gazetteer/whosonfirst/placetyp
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { decorateNode, isResolvedWithCoord } from "#decorate-node"
-import type { CoordinateOptionalPlace } from "#postcode/prefix"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "#span-rescore"
 
 const TRACE_CANDIDATE_CAP = 10
@@ -296,12 +292,6 @@ export interface ResolutionState {
 	hardCountry?: string
 
 	/**
-	 * Whether a resolved region gains its coincident locality of the same name as an
-	 * interpretation when the tree has no locality node.
-	 */
-	hierarchyCompletion: boolean
-
-	/**
 	 * Whether each resolved node gets its ancestor lineage in metadata, when the backend supports it.
 	 */
 	includeAncestors: boolean
@@ -327,48 +317,6 @@ export interface ResolutionState {
 	 * and no caller-supplied default country.
 	 */
 	regionQualifier?: string | null
-
-	/**
-	 * Whether any node maps to the `locality` placetype.
-	 * Hierarchy completion runs only when this is false.
-	 */
-	localityNodePresent: boolean
-
-	/**
-	 * The first resolved region place, used to look up its coincident locality.
-	 */
-	resolvedRegion: CoordinateOptionalPlace | null
-
-	/**
-	 * The decorated node for {@link ResolutionState.resolvedRegion}.
-	 *
-	 * Hierarchy completion adds the locality interpretation to it in place.
-	 */
-	resolvedRegionNode: AddressNode | null
-}
-
-/**
- * Picks the completion locality among coincident candidates of the same name.
- *
- * It prefers the most populous candidate, then the nearest candidate.
- * It returns `null` on an exact tie.
- */
-export function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLocality | null {
-	if (!candidates.length) return null
-
-	if (candidates.length === 1) return candidates[0]!
-
-	const ranked = [...candidates]
-		.map((c) => ({ c, referential: referentialFromPopulation(c.population), population: c.population }))
-		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
-		.sort((a, b) => compareReferential(a, b) || a.c.distanceKm - b.c.distanceKm)
-		.map((x) => x.c)
-
-	const [first, second] = ranked
-
-	if (first!.population === second!.population && first!.distanceKm === second!.distanceKm) return null
-
-	return first!
 }
 
 /**

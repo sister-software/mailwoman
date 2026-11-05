@@ -177,7 +177,6 @@ export const Compare: React.FC<CompareProps> = ({ primary, compareMode, compareV
 					fstActive: false,
 					fstProvenance: null,
 					timing: { ...timing, resolve: null },
-					dualRoles: null,
 				})
 			} catch (caught) {
 				if (cancelled) return

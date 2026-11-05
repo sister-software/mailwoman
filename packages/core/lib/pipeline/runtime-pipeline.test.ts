@@ -34,7 +34,6 @@ function fakeResolver(decorator: (tree: AddressTree) => AddressTree): Resolver {
 	return {
 		resolveTree: vi.fn(async (tree: AddressTree) => decorator(tree)),
 		artifactCoverage: null,
-		capabilityGaps: null,
 	}
 }
 
@@ -95,7 +94,7 @@ describe("RunPipeline — artifact-manifest safelist precedence (survey candidat
 		override?: ReadonlySet<string>
 	}): Promise<string | null> => {
 		const resolveTree = vi.fn(async (tree: AddressTree, _opts?: ResolveOpts) => tree)
-		const resolver: Resolver = { resolveTree, artifactCoverage: null, capabilityGaps: null }
+		const resolver: Resolver = { resolveTree, artifactCoverage: null }
 
 		if (opts.artifact) {
 			resolver.artifactCoverage = opts.artifact
@@ -239,7 +238,6 @@ describe("runPipeline — stage composition", () => {
 					return tree
 				}),
 				artifactCoverage: null,
-				capabilityGaps: null,
 			},
 		}
 
@@ -513,7 +511,6 @@ describe("RunPipeline — graceful degradation", () => {
 				throw new Error("resolver boom")
 			}),
 			artifactCoverage: null,
-			capabilityGaps: null,
 		}
 
 		const result = await runPipeline("hello", { classifier, resolver })
@@ -720,7 +717,6 @@ describe("RunPipeline — non-graceful stage failures", () => {
 				throw new Error("resolver exploded")
 			}),
 			artifactCoverage: null,
-			capabilityGaps: null,
 		}
 
 		const result = await runPipeline("10118", {
@@ -758,7 +754,7 @@ describe("runPipeline — locale + opts threading", () => {
 	})
 
 	it("passes resolveOpts to resolver", async () => {
-		const resolver: Resolver = { resolveTree: vi.fn(async (t) => t), artifactCoverage: null, capabilityGaps: null }
+		const resolver: Resolver = { resolveTree: vi.fn(async (t) => t), artifactCoverage: null }
 		await runPipeline("hello", { resolver }, { resolveOpts: { maxLookups: 3 } })
 		expect(resolver.resolveTree).toHaveBeenCalledWith(expect.anything(), { maxLookups: 3 })
 	})
@@ -775,7 +771,6 @@ describe("RunPipeline — coarse-placer soft prior", () => {
 				return t
 			}),
 			artifactCoverage: null,
-			capabilityGaps: null,
 		}
 
 		return { resolver, seen }
@@ -954,7 +949,6 @@ describe("Stage faults — a swallowed stage crash is recorded, never silent", (
 					throw new Error("backend closed")
 				}),
 				artifactCoverage: null,
-				capabilityGaps: null,
 			},
 		})
 
@@ -984,7 +978,6 @@ describe("Stage faults — a swallowed stage crash is recorded, never silent", (
 					throw new Error("backend closed")
 				}),
 				artifactCoverage: null,
-				capabilityGaps: null,
 			},
 		})
 

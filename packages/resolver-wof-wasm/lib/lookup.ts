@@ -17,7 +17,6 @@
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
-import { type CoincidentLocality, EMPTY_PLACE_FIELDS } from "@mailwoman/core/resolver"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "@mailwoman/resolver-wof-sqlite"
 // Browser-safe subpath imports (fts.ts's only node:sqlite import is type-only).
 // The shared alias-bag parser and query fold keep this backend byte-identical to Node's exact tier.
@@ -50,11 +49,6 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	readonly #db: Database
 	#hasPopulationCache: boolean | null = null
 	#hasPlaceAbbrCache: boolean | null = null
-	/**
-	 * Lazily-built `admin_id` to coincident-localities map from the `coincident_roles`
-	 * relation in the slim DB.
-	 */
-	#coincidentRolesCache?: Map<number, CoincidentLocality[]>
 
 	constructor(opts: WOFWasmPlaceLookupOpts) {
 		this.#db = opts.db
@@ -259,73 +253,6 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				regionScopeMiss: null,
 				variantAliasExempted: null,
 			}))
-	}
-
-	/**
-	 * Dual-role localities coincident with an admin id, from the `coincident_roles`
-	 * relation added to the slim DB by build-slim.
-	 *
-	 * Backs the resolver's hierarchy completion in the browser and
-	 * mirrors `WOFSQLitePlaceLookup.coincidentLocalitiesFor`.
-	 * Returns `[]` when the slim DB predates the relation.
-	 *
-	 * Loaded once and memoized, since the relation is a few hundred rows.
-	 */
-	coincidentLocalitiesFor(adminID: number | string): CoincidentLocality[] {
-		const id = typeof adminID === "number" ? adminID : Number(adminID)
-
-		if (!Number.isFinite(id)) return []
-
-		if (!this.#coincidentRolesCache) {
-			const map = new Map<number, CoincidentLocality[]>()
-
-			if (tableExists(this.#db, "coincident_roles")) {
-				const rows = this.#db.selectObjects(
-					`SELECT cr.admin_id AS adminID, s.id AS id, s.name AS name, s.country AS country,
-						s.latitude AS lat, s.longitude AS lon, cr.relationship_type AS relationshipType,
-						cr.locality_population AS population, cr.distance_km AS distanceKm
-					FROM coincident_roles cr JOIN spr s ON s.id = cr.locality_id`
-				) as Array<{
-					adminID: number
-					id: number
-					name: string
-					country: string
-					lat: number
-					lon: number
-					relationshipType: string
-					population: number
-					distanceKm: number
-				}>
-
-				for (const r of rows) {
-					const candidate: CoincidentLocality = {
-						...EMPTY_PLACE_FIELDS,
-						id: r.id,
-						name: r.name,
-						placetype: "locality",
-						country: r.country,
-						lat: r.lat,
-						lon: r.lon,
-						score: 0,
-						relationshipType: r.relationshipType,
-						population: r.population,
-						distanceKm: r.distanceKm,
-					}
-
-					const list = map.get(r.adminID)
-
-					if (list) {
-						list.push(candidate)
-					} else {
-						map.set(r.adminID, [candidate])
-					}
-				}
-			}
-
-			this.#coincidentRolesCache = map
-		}
-
-		return this.#coincidentRolesCache.get(id) ?? []
 	}
 
 	[Symbol.dispose](): void {

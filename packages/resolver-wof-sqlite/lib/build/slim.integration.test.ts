@@ -225,31 +225,6 @@ describe("buildSlimWOFDatabase", () => {
 		expect(result.rowCounts.spr).toBe(5) // 1 country + 1 region + 1 locality + 2 postcodes
 	})
 
-	test("carries the coincident_roles relation, filtered to surviving spr ids (#402)", async () => {
-		const source = scratch.path("src.db")
-		const output = scratch.path("slim.db")
-		buildFixtureWOF(source)
-		// A dual-role relation: Illinois(101) ⊃ Springfield(201) [survives top-2] and ⊃ Mascoutah(202) [trimmed].
-		using s = new DatabaseClient<WOFDatabase>(source)
-
-		s.exec(`CREATE TABLE coincident_roles (
-			admin_id INTEGER NOT NULL, locality_id INTEGER NOT NULL, relationship_type TEXT NOT NULL,
-			admin_placetype TEXT NOT NULL, distance_km REAL NOT NULL, locality_population INTEGER NOT NULL DEFAULT 0,
-			PRIMARY KEY (admin_id, locality_id))`)
-
-		s.exec(`INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000)`)
-		s.exec(`INSERT INTO coincident_roles VALUES (101, 202, 'capital-seat', 'region', 6.0, 8000)`)
-
-		// keeps Springfield, drops Mascoutah
-		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 })
-
-		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
-
-		const rows = slim.prepare(`SELECT admin_id, locality_id FROM coincident_roles ORDER BY locality_id`).all()
-		// Only the surviving pair — Mascoutah's row is dropped because 202 was trimmed from spr.
-		expect(rows).toEqual([{ admin_id: 101, locality_id: 201 }])
-	})
-
 	test("materializes place_abbr from language='abbr' names, filtered to surviving ids, surviving dropNames (#189)", async () => {
 		const source = scratch.path("src.db")
 		const output = scratch.path("slim.db")

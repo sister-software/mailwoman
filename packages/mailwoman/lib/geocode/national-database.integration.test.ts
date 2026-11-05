@@ -24,7 +24,6 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 			return tree
 		}),
 		artifactCoverage: null,
-		capabilityGaps: null,
 	}
 
 	return { resolver, seen }

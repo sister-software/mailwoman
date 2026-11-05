@@ -39,8 +39,6 @@ export { hardCountrySafelistFromCoverage } from "#resolver/coverage-facts"
 
 export type {
 	Ancestor,
-	BackendCapabilityGap,
-	CoincidentLocality,
 	ResolveCandidateTrace,
 	ResolveNodeTrace,
 	ResolveOpts,
