@@ -308,6 +308,11 @@ Code that must live outside the monorepo, such as a starter template, a generate
 satellite tooling, is created under the `mailwoman` GitHub organization at `github.com/mailwoman/...`.
 The monorepo itself stays `sister-software/mailwoman`.
 
+A new git worktree has no `node_modules`. Run `yarn install` in the worktree before its first commit, then
+`yarn compile` when a check reads `out/`. The pre-commit hook needs both. Never commit with `--no-verify`, and
+never symlink another checkout's `node_modules`, because the checks then grade that checkout. A worktree
+without an install has a setup step left to do, and the agent does it before committing.
+
 Preserve unrelated working-tree changes. Edit files through your agent's file-editing tool or a patch
 it applies, so the symbol precheck runs on every edit. A `PreToolUse` hook enforces this by refusing
 shell writes inside the repository. Do not use destructive Git commands to discard operator work.
