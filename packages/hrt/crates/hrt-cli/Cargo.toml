@@ -22,5 +22,6 @@ hrt-profile = { path = "../hrt-profile" }
 hrt-render = { path = "../hrt-render" }
 hrt-sort = { path = "../hrt-sort" }
 hrt-sources = { path = "../hrt-sources" }
+rand = { version = "=0.9.4", default-features = false }
 rayon = "1"
 tempfile = "3"

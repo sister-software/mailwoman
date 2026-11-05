@@ -25,8 +25,8 @@ use hrt_facade::{FacadeInput, FacadeStyle, NeighborFacts, Outline, RoofType};
 use hrt_osm::{ElementKind, Tags};
 use hrt_pmtiles::{Compression, TileType, Writer, WriterOptions};
 use hrt_profile::building_buffers::{
-	building_draft, draft_records, home_tile, quantize_polygon, tile_body, unit_meters, BuildingDraft, PitchedRoof,
-	EXTENT, STYLE_BYTES, TILE_ZOOM, UNRESOLVED_STYLE,
+	building_draft, draft_records, home_tile, quantize_polygon, tile_body, unit_meters, BuildingDraft, RoofShape,
+	RoofSpec, EXTENT, STYLE_BYTES, TILE_ZOOM, UNRESOLVED_STYLE,
 };
 use hrt_profile::facade_plan::{
 	compute_facade_plan, fill_cells, highway_block_range, stamp_road, surface_highway_type, Bitmap, FacadeClass,
@@ -348,7 +348,7 @@ fn facade_tags(tags: &Tags) -> hrt_facade::Tags {
 	let mut out = hrt_facade::overture_tags(
 		tags.get("subtype"),
 		tags.get("class"),
-		number("height"),
+		number("height").filter(|_| !ignores_overture_height(tags)),
 		number("num_floors").map(|floors| floors as i32),
 		number("min_height"),
 		tags.get("roof_shape"),
@@ -369,6 +369,19 @@ fn facade_tags(tags: &Tags) -> hrt_facade::Tags {
 		}
 	}
 	out
+}
+
+/// Whether a building's Overture height is set aside for the style's inferred height: a garage, carport or shed that
+/// OpenStreetMap gives no height or level count of its own.
+///
+/// Overture takes these classes' heights from USGS Lidar, which over a small outbuilding often measures the trees
+/// above it. In Detroit's 2026-10-21.0 rows, 12,812 of 70,164 garages stand 12 m or taller, and USGS Lidar supplied
+/// the height of 12,807 of those.
+fn ignores_overture_height(tags: &Tags) -> bool {
+	matches!(tags.get("class"), Some("garage" | "garages" | "carport" | "shed"))
+		&& ["osm:height", "osm:building:levels"]
+			.iter()
+			.all(|key| tags.get(key).is_none())
 }
 
 /// The seed Arnis would give the building: its OpenStreetMap way, or relation's first outer ring, or else its GERS id.
@@ -416,16 +429,73 @@ fn style_bytes(style: &FacadeStyle) -> [u8; STYLE_BYTES] {
 	]
 }
 
-/// The pitched roof the compact record can draw for a resolved roof type: half-hipped draws hipped, and the shapes
-/// the record has no geometry for yet draw flat.
-fn pitched_roof(style: &FacadeStyle) -> Option<PitchedRoof> {
-	if !style.generate_roof {
-		return None;
-	}
-	match style.roof_type {
-		RoofType::Gabled => Some(PitchedRoof::Gabled),
-		RoofType::Hipped | RoofType::HalfHipped => Some(PitchedRoof::Hipped),
-		_ => None,
+/// A compass bearing from a `roof:direction` value, as Arnis's `parse_roof_direction_degrees` reads one.
+fn roof_direction_degrees(value: &str) -> Option<f64> {
+	let degrees = match value.trim().to_ascii_lowercase().as_str() {
+		"n" | "north" => 0.0,
+		"ne" => 45.0,
+		"e" | "east" => 90.0,
+		"se" => 135.0,
+		"s" | "south" => 180.0,
+		"sw" => 225.0,
+		"w" | "west" => 270.0,
+		"nw" => 315.0,
+		other => other.parse::<f64>().ok()?,
+	};
+	degrees.is_finite().then(|| degrees.rem_euclid(360.0))
+}
+
+/// The roof a resolved style draws, with the tags Arnis's `generate_roof` reads: `roof:height` for the rise,
+/// `roof:levels` for a mansard's steep band and `roof:direction` for a skillion. A skillion without a direction falls
+/// across the footprint's narrower axis, toward the side a seeded coin picks, as Arnis's `generate_skillion_roof` does.
+fn roof_spec(style: &FacadeStyle, group: &StyleGroup, exterior: &[(i32, i32)]) -> RoofSpec {
+	let shape = if style.generate_roof {
+		match style.roof_type {
+			RoofType::Gabled => RoofShape::Gabled,
+			RoofType::Hipped => RoofShape::Hipped,
+			RoofType::HalfHipped => RoofShape::HalfHipped,
+			RoofType::Gambrel => RoofShape::Gambrel,
+			RoofType::Round => RoofShape::Round,
+			RoofType::Mansard => RoofShape::Mansard,
+			RoofType::Skillion => RoofShape::Skillion,
+			RoofType::Pyramidal => RoofShape::Pyramidal,
+			RoofType::Dome => RoofShape::Dome,
+			RoofType::Cone => RoofShape::Cone,
+			RoofType::Onion => RoofShape::Onion,
+			RoofType::Flat => RoofShape::Flat,
+		}
+	} else {
+		RoofShape::Flat
+	};
+	let tag = |key: &str| group.tags.get(key).map(String::as_str);
+	let skillion_bearing = tag("roof:direction")
+		.and_then(roof_direction_degrees)
+		.unwrap_or_else(|| {
+			let (min_x, max_x) = exterior
+				.iter()
+				.fold((i32::MAX, i32::MIN), |(a, b), p| (a.min(p.0), b.max(p.0)));
+			let (min_z, max_z) = exterior
+				.iter()
+				.fold((i32::MAX, i32::MIN), |(a, b), p| (a.min(p.1), b.max(p.1)));
+			let flip = rand::Rng::random_bool(
+				&mut hrt_facade::rng::element_rng(group.element_id ^ 0x5C11_1104_D129_0000),
+				0.5,
+			);
+			match (max_x - min_x <= max_z - min_z, flip) {
+				(true, true) => 270.0,
+				(true, false) => 90.0,
+				(false, true) => 0.0,
+				(false, false) => 180.0,
+			}
+		});
+	RoofSpec {
+		shape,
+		stated_rise: tag("roof:height").and_then(|text| text.trim().trim_end_matches('m').trim().parse().ok()),
+		steep: style.category == hrt_facade::BuildingCategory::Religious,
+		skillion_bearing,
+		mansard_steep: tag("roof:levels")
+			.and_then(|text| text.trim().parse::<f64>().ok())
+			.map_or(4.0, |levels| (levels * 3.0).round().clamp(3.0, 6.0)),
 	}
 }
 
@@ -560,7 +630,7 @@ fn resolve_style(
 	let inferred = (!draft.has_height())
 		.then(|| style.inferred_height.map(f64::from))
 		.flatten();
-	draft.apply_style(style_bytes(&style), inferred, pitched_roof(&style));
+	draft.apply_style(style_bytes(&style), inferred, roof_spec(&style, group, exterior));
 }
 
 /// What one tile's processing wrote.
@@ -663,6 +733,9 @@ fn process_tile((tx, ty): (u32, u32), rows: &[SortedRow], osm: &OsmInputs) -> Ti
 		if let Some((exterior, plan)) = styled {
 			let fill = fill_cells(&exterior).len();
 			let group = style_group(row, &draft.polygons[0], rows, &by_id);
+			if ignores_overture_height(&row.tags) {
+				draft.clear_height();
+			}
 			resolve_style(&mut draft, &group, &exterior, fill, &plan);
 		}
 		let draft = &draft;

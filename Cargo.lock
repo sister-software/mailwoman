@@ -988,6 +988,7 @@ dependencies = [
  "hrt-render",
  "hrt-sort",
  "hrt-sources",
+ "rand 0.9.4",
  "rayon",
  "tempfile",
 ]

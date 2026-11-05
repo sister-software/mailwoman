@@ -21,7 +21,10 @@ interface RecordSpec {
 	edgeFlags?: number[]
 	style?: number[]
 	rings: Array<Array<[number, number]>>
-	ridge?: Array<[number, number]>
+	/**
+	 * Roof vertices: x and y in tile units and the height in decimeters.
+	 */
+	roof?: Array<[number, number, number]>
 	triangles: number[]
 }
 
@@ -79,11 +82,12 @@ function record(spec: RecordSpec): number[] {
 		u8(spec.edgeFlags?.[edge] ?? 3)
 	}
 
-	u8(spec.ridge?.length ?? 0)
+	u16(spec.roof?.length ?? 0)
 
-	for (const [x, y] of spec.ridge ?? []) {
+	for (const [x, y, z] of spec.roof ?? []) {
 		i16(x)
 		i16(y)
+		u16(z)
 	}
 
 	u16(spec.triangles.length / 3)
@@ -164,9 +168,9 @@ test("a pitched roof gives each face its own vertices with walls ending at the e
 				eave: 70,
 				roofShape: 1,
 				rings: [square],
-				ridge: [
-					[100, 125],
-					[200, 125],
+				roof: [
+					[100, 125, 100],
+					[200, 125, 90],
 				],
 				triangles: [0, 1, 5, 0, 5, 4, 2, 3, 4, 2, 4, 5, 3, 0, 4, 1, 2, 5],
 			})
@@ -178,8 +182,10 @@ test("a pitched roof gives each face its own vertices with walls ending at the e
 
 	expect(decoded.roofVertexCount).toBe(18)
 	expect(new DataView(decoded.walls).getUint16(10, true)).toBe(70)
-	// The third corner of the first face is ridge vertex 5, at the full height.
-	expect(roof.getUint16(2 * ROOF_STRIDE + 4, true)).toBe(100)
+	// Each roof vertex keeps its own height: the first face's third corner is roof vertex 5 at 9 m.
+	expect(roof.getUint16(2 * ROOF_STRIDE + 4, true)).toBe(90)
+	// The second face's third corner is roof vertex 4 at 10 m.
+	expect(roof.getUint16(5 * ROOF_STRIDE + 4, true)).toBe(100)
 	expect(roof.getUint16(4, true)).toBe(70)
 })
 

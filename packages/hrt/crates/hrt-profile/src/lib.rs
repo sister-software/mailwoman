@@ -22,6 +22,7 @@ pub mod merge;
 pub mod names;
 pub mod parse;
 pub mod pgf;
+pub mod roof_mesh;
 pub mod smoothing;
 pub mod sort_key;
 

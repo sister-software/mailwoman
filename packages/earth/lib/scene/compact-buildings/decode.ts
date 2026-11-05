@@ -382,24 +382,27 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 		}
 
 		const vertexCount = ringSizes.reduce((sum, size) => sum + size, 0)
-		const xs = new Int16Array(vertexCount + 2)
-		const ys = new Int16Array(vertexCount + 2)
+		const exterior = ringSizes[0] ?? 0
+		// The roof vertex count follows the footprint and its edge flags.
+		const roofCount = view.getUint16(at + vertexCount * 4 + exterior, true)
+		const xs = new Int16Array(vertexCount + roofCount)
+		const ys = new Int16Array(vertexCount + roofCount)
+		// Each roof vertex's height in decimeters.
+		// Footprint vertices sit at the eave.
+		const roofZ = new Uint16Array(roofCount)
 
 		for (let vertex = 0; vertex < vertexCount; vertex++, at += 4) {
 			xs[vertex] = view.getInt16(at, true)
 			ys[vertex] = view.getInt16(at + 2, true)
 		}
 
-		const exterior = ringSizes[0] ?? 0
 		const edgeFlags = new Uint8Array(bytes, at, exterior)
-		at += exterior
+		at += exterior + 2
 
-		const ridgeCount = view.getUint8(at)
-		at += 1
-
-		for (let vertex = 0; vertex < ridgeCount; vertex++, at += 4) {
+		for (let vertex = 0; vertex < roofCount; vertex++, at += 6) {
 			xs[vertexCount + vertex] = view.getInt16(at, true)
 			ys[vertexCount + vertex] = view.getInt16(at + 2, true)
+			roofZ[vertex] = view.getUint16(at + 4, true)
 		}
 
 		const triangleCount = view.getUint16(at, true)
@@ -459,7 +462,7 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 			ringStart += size
 		}
 
-		if (ridgeCount === 0) {
+		if (roofCount === 0) {
 			// A flat roof shares its footprint vertices across triangles.
 			growRoof(vertexCount, triangles.length)
 			const first = roofVertexCount
@@ -472,9 +475,9 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 				indices[indexCount++] = first + index
 			}
 		} else {
-			// A pitched roof's faces each take their own vertices, so each face is shaded by its own slope.
+			// A shaped roof's faces each take their own vertices, so each face is shaded by its own slope.
 			growRoof(triangles.length, triangles.length)
-			const z = (index: number) => (index >= vertexCount ? top : wallTop)
+			const z = (index: number) => (index >= vertexCount ? roofZ[index - vertexCount]! : wallTop)
 
 			for (let triangle = 0; triangle < triangleCount; triangle++) {
 				const corners = [triangles[triangle * 3]!, triangles[triangle * 3 + 1]!, triangles[triangle * 3 + 2]!]
