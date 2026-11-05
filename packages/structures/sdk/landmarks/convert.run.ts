@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Downloads each converted landmark's model from its `sourceURL`, converts it with `convertLandmarkModel`, and
+ *   Downloads each converted landmark's model from its `sourceURL`, resolving a Sketchfab page through
+ *   `SKETCHFAB_API_KEY`, converts it with `convertLandmarkModel`, and
  *   writes it gzipped to `<out>/<model path>`, such as `<out>/landmarks/eiffel-tower.glb`.
  *
  *   Usage: node packages/structures/sdk/landmarks/convert.run.ts --out <dir> [--landmark <id> ...]
@@ -21,6 +22,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { isGLBLandmark, type Landmark } from "#landmarks"
 import { convertLandmarkModel } from "#sdk/landmarks"
+import { resolveModelDownloadURL } from "#sdk/landmarks/sketchfab"
 
 const { values } = parseArguments({
 	options: {
@@ -40,7 +42,7 @@ const chosen = landmarks
 	.filter((landmark) => !values.landmark?.length || values.landmark.includes(landmark.id))
 
 for (const landmark of chosen) {
-	const response = await fetch(landmark.model.sourceURL, {
+	const response = await fetch(await resolveModelDownloadURL(landmark.model.sourceURL), {
 		headers: { "User-Agent": "mailwoman-landmarks (+https://github.com/sister-software/mailwoman)" },
 	})
 
