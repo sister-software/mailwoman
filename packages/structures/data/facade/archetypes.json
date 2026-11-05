@@ -1,0 +1,178 @@
+{
+	"$comment": "Window archetypes: `rhythms` give (window, pier, corner) widths in wall columns; `weights` are the per-category rows pick_window_archetype matches in order, each with optional guards (region: north_america, europe or other; era; dwelling; masonry_wall; banded_office) and either a weighted `table` summing to 100 or a `fixed` archetype; `shop` and `closed_retail` are the shopfront and department-store rhythms. Transcribed from Arnis d8e8b662 (Apache-2.0) src/element_processing/buildings.rs WindowArchetype::rhythm, pick_window_archetype, SHOP_RHYTHM, closed_retail_bays.",
+	"rhythms": {
+		"sash": [1, 1, 1],
+		"portrait": [2, 2, 2],
+		"hooded": [2, 2, 2],
+		"spaced": [1, 2, 2],
+		"wide": [3, 2, 2],
+		"ribbon": [4, 1, 1],
+		"piers": [2, 1, 2],
+		"deco_piers": [2, 1, 2],
+		"strips": [1, 1, 1],
+		"paired_punched": [3, 2, 2]
+	},
+	"shop": [3, 1, 1],
+	"closed_retail": [1, 5, 3],
+	"weights": [
+		{
+			"categories": ["house"],
+			"table": [
+				["portrait", 45],
+				["spaced", 30],
+				["sash", 10],
+				["wide", 15]
+			]
+		},
+		{
+			"categories": ["residential"],
+			"region": "north_america",
+			"table": [
+				["sash", 40],
+				["portrait", 30],
+				["spaced", 10],
+				["ribbon", 10],
+				["wide", 10]
+			]
+		},
+		{
+			"categories": ["residential"],
+			"region": "europe",
+			"table": [
+				["spaced", 60],
+				["portrait", 32],
+				["sash", 4],
+				["ribbon", 2],
+				["wide", 2]
+			]
+		},
+		{
+			"categories": ["residential"],
+			"table": [
+				["portrait", 40],
+				["spaced", 20],
+				["sash", 15],
+				["ribbon", 15],
+				["wide", 10]
+			]
+		},
+		{
+			"categories": ["default"],
+			"region": "north_america",
+			"table": [
+				["sash", 30],
+				["portrait", 40],
+				["ribbon", 15],
+				["wide", 15]
+			]
+		},
+		{
+			"categories": ["default"],
+			"region": "europe",
+			"table": [
+				["spaced", 55],
+				["portrait", 33],
+				["ribbon", 6],
+				["wide", 6]
+			]
+		},
+		{
+			"categories": ["default"],
+			"table": [
+				["portrait", 45],
+				["spaced", 20],
+				["ribbon", 20],
+				["wide", 15]
+			]
+		},
+		{
+			"categories": ["commercial", "office"],
+			"table": [
+				["portrait", 35],
+				["ribbon", 35],
+				["wide", 20],
+				["spaced", 10]
+			]
+		},
+		{
+			"categories": ["hotel"],
+			"table": [
+				["portrait", 45],
+				["spaced", 25],
+				["ribbon", 20],
+				["wide", 10]
+			]
+		},
+		{
+			"categories": ["school", "hospital"],
+			"table": [
+				["portrait", 30],
+				["wide", 35],
+				["ribbon", 35]
+			]
+		},
+		{
+			"categories": ["industrial", "warehouse"],
+			"table": [
+				["wide", 40],
+				["ribbon", 50],
+				["portrait", 10]
+			]
+		},
+		{
+			"categories": ["historic"],
+			"table": [
+				["portrait", 50],
+				["spaced", 30],
+				["hooded", 20]
+			]
+		},
+		{
+			"categories": ["tall_building", "masonry_skyscraper"],
+			"era": "post_war_panel",
+			"dwelling": true,
+			"table": [
+				["portrait", 45],
+				["wide", 35],
+				["strips", 20]
+			]
+		},
+		{
+			"categories": ["tall_building", "masonry_skyscraper"],
+			"era": "post_war_panel",
+			"table": [
+				["ribbon", 60],
+				["wide", 25],
+				["strips", 15]
+			]
+		},
+		{
+			"categories": ["tall_building"],
+			"masonry_wall": true,
+			"table": [
+				["piers", 65],
+				["strips", 35]
+			]
+		},
+		{
+			"categories": ["tall_building"],
+			"table": [
+				["ribbon", 50],
+				["piers", 25],
+				["strips", 25]
+			]
+		},
+		{ "categories": ["masonry_skyscraper"], "fixed": "piers" },
+		{
+			"categories": ["contemporary_skyscraper"],
+			"banded_office": true,
+			"table": [
+				["ribbon", 70],
+				["wide", 30]
+			]
+		},
+		{ "categories": ["contemporary_skyscraper"], "fixed": "wide" },
+		{ "categories": ["religious", "farm"], "fixed": "spaced" },
+		{ "categories": "*", "fixed": "portrait" }
+	]
+}

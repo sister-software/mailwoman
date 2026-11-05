@@ -1,0 +1,217 @@
+{
+	"$comment": "Storey or hall-height inference for buildings without height data, by building type and footprint area in square meters. Each row lists weighted values: storeys when `hall` is false, blocks when true. A row with `area` applies to that half-open range; `yes_tiny` and `yes_large` are the two-way rolls the untyped building makes before its table. Transcribed from Arnis d8e8b662 (Apache-2.0) src/element_processing/buildings.rs infer_building_height.",
+	"tower": [
+		[12, 40],
+		[16, 35],
+		[20, 25]
+	],
+	"arena_large": {
+		"min_area": 5000,
+		"hall": true,
+		"table": [
+			[20, 40],
+			[24, 40],
+			[28, 20]
+		]
+	},
+	"arena": {
+		"hall": true,
+		"table": [
+			[10, 50],
+			[12, 50]
+		]
+	},
+	"by_type": [
+		{
+			"types": ["sports_hall", "sports_centre", "gymnasium", "riding_hall"],
+			"hall": true,
+			"table": [
+				[8, 40],
+				[10, 40],
+				[12, 20]
+			]
+		},
+		{ "types": ["bungalow", "static_caravan"], "hall": false, "table": [[1, 100]] },
+		{
+			"types": ["house", "detached", "villa", "farm"],
+			"hall": false,
+			"table": [
+				[1, 25],
+				[2, 55],
+				[3, 20]
+			]
+		},
+		{
+			"types": ["semidetached_house"],
+			"hall": false,
+			"table": [
+				[2, 70],
+				[3, 30]
+			]
+		},
+		{
+			"types": ["terrace"],
+			"hall": false,
+			"table": [
+				[2, 50],
+				[3, 40],
+				[4, 10]
+			]
+		},
+		{
+			"types": ["apartments", "residential", "dormitory"],
+			"hall": false,
+			"table": [
+				[3, 30],
+				[4, 30],
+				[5, 25],
+				[6, 15]
+			]
+		},
+		{
+			"types": ["hotel"],
+			"hall": false,
+			"table": [
+				[3, 25],
+				[4, 30],
+				[5, 25],
+				[6, 10],
+				[8, 10]
+			]
+		},
+		{
+			"types": ["office", "commercial"],
+			"area": [0, 300],
+			"hall": false,
+			"table": [
+				[2, 40],
+				[3, 60]
+			]
+		},
+		{
+			"types": ["office", "commercial"],
+			"area": [300, 1000],
+			"hall": false,
+			"table": [
+				[3, 40],
+				[4, 35],
+				[5, 25]
+			]
+		},
+		{
+			"types": ["office", "commercial"],
+			"area": [1000, null],
+			"hall": false,
+			"table": [
+				[4, 40],
+				[5, 30],
+				[6, 20],
+				[8, 10]
+			]
+		},
+		{
+			"types": ["retail", "shop", "supermarket"],
+			"hall": false,
+			"table": [
+				[1, 60],
+				[2, 40]
+			]
+		},
+		{ "types": ["kiosk"], "hall": false, "table": [[1, 100]] },
+		{
+			"types": ["parking"],
+			"hall": false,
+			"table": [
+				[2, 30],
+				[3, 40],
+				[4, 20],
+				[5, 10]
+			]
+		},
+		{
+			"types": ["school", "kindergarten", "college", "university"],
+			"hall": false,
+			"table": [
+				[2, 50],
+				[3, 40],
+				[4, 10]
+			]
+		},
+		{
+			"types": ["hospital"],
+			"hall": false,
+			"table": [
+				[4, 40],
+				[5, 30],
+				[6, 20],
+				[7, 10]
+			]
+		},
+		{
+			"types": ["cathedral"],
+			"hall": true,
+			"table": [
+				[18, 50],
+				[21, 30],
+				[24, 20]
+			]
+		},
+		{
+			"types": ["church", "chapel", "mosque", "synagogue", "temple", "religious"],
+			"hall": true,
+			"table": [
+				[10, 50],
+				[12, 30],
+				[14, 20]
+			]
+		},
+		{
+			"types": ["industrial", "warehouse", "hangar", "barn", "stable"],
+			"hall": true,
+			"table": [
+				[5, 20],
+				[7, 50],
+				[9, 30]
+			]
+		},
+		{ "types": ["garage", "garages", "carport", "shed", "hut"], "hall": true, "table": [[3, 100]] },
+		{
+			"types": ["cabin"],
+			"hall": false,
+			"table": [
+				[1, 80],
+				[2, 20]
+			]
+		}
+	],
+	"untyped": [
+		{ "area": [0, 40], "roll": "tiny" },
+		{
+			"area": [40, 150],
+			"hall": false,
+			"table": [
+				[1, 15],
+				[2, 60],
+				[3, 25]
+			]
+		},
+		{
+			"area": [150, 600],
+			"hall": false,
+			"table": [
+				[2, 40],
+				[3, 40],
+				[4, 20]
+			]
+		},
+		{ "area": [600, null], "roll": "large" }
+	],
+	"untyped_tiny": { "hall_chance": 0.5, "hall": [[3, 100]], "storeys": [[1, 100]] },
+	"untyped_large": {
+		"hall_below": 40,
+		"storeys_three_below": 75,
+		"hall": [[7, 100]],
+		"three": [[3, 100]],
+		"four": [[4, 100]]
+	}
+}

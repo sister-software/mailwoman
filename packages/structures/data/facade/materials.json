@@ -1,0 +1,289 @@
+{
+	"$comment": "Normalized tag words (lowercase, whitespace, '_' and '-' removed) the facade crate matches building:architecture, building:material, building:cladding and roof:material against. Transcribed from Arnis d8e8b662 (Apache-2.0): src/osm_parser.rs ORNATE_STYLES, BRUTALIST_STYLES, MODERN_STYLES, MASONRY_MATERIALS, MASONRY_CLADDING, CONCRETE_MATERIALS, PANEL_MATERIALS; src/block_definitions.rs get_wall_block_for_material and get_roof_block_for_material; src/element_processing/buildings.rs facade_tone_for_material, roof_material_family, is_sheet_metal.",
+	"ornate_styles": [
+		"artdeco",
+		"artnouveau",
+		"gothic",
+		"neogothic",
+		"gothicrevival",
+		"neoclassicism",
+		"neoclassical",
+		"classicism",
+		"classicalrevival",
+		"greekrevival",
+		"baroque",
+		"neobaroque",
+		"rococo",
+		"barocco",
+		"historicism",
+		"eclectic",
+		"renaissance",
+		"neorenaissance",
+		"romanesque",
+		"neoromanesque",
+		"romanesquerevival",
+		"victorian",
+		"georgian",
+		"federal",
+		"italianate",
+		"beauxarts",
+		"wilhelminianstyle",
+		"queenanne"
+	],
+	"brutalist_styles": ["brutalist", "constructivism", "stalinistneoclassicism"],
+	"modern_styles": ["modern", "contemporary", "modernism", "functionalism", "newobjectivity", "postmodern", "bauhaus"],
+	"masonry_materials": [
+		"brick",
+		"bricks",
+		"redbrick",
+		"silicatebrick",
+		"stone",
+		"naturalstone",
+		"sandstone",
+		"limestone",
+		"masonry",
+		"granite",
+		"marble",
+		"terracotta",
+		"adobe",
+		"stucco",
+		"pebbledash"
+	],
+	"masonry_cladding": ["brick", "brickmonolith", "plaster", "rendered", "rendering", "stone", "tiling"],
+	"concrete_materials": ["concrete", "reinforcedconcrete", "concretereinforced", "concretemasonryunit"],
+	"panel_materials": ["panel", "panels", "prefab", "prefabricated", "panelhouse"],
+	"wall_block_for_material": [
+		{ "words": ["brick", "bricks", "redbrick"], "blocks": ["brick", "brick", "brick", "polished_granite"] },
+		{
+			"words": ["stone", "naturalstone", "hard"],
+			"blocks": ["stone_bricks", "smooth_stone", "polished_andesite", "andesite"]
+		},
+		{ "words": ["limestone"], "blocks": ["mushroom_stem", "smooth_sandstone", "calcite"] },
+		{ "words": ["sandstone"], "blocks": ["smooth_sandstone", "smooth_sandstone", "sandstone"] },
+		{ "words": ["marble"], "blocks": ["quartz_block", "calcite", "polished_diorite"] },
+		{
+			"words": ["granite"],
+			"blocks": ["polished_andesite", "polished_andesite", "light_gray_concrete", "polished_granite"]
+		},
+		{ "words": ["slate"], "blocks": ["deepslate_bricks", "polished_deepslate", "polished_blackstone"] },
+		{
+			"words": [
+				"concrete",
+				"reinforcedconcrete",
+				"cementblock",
+				"cement",
+				"breezeblock",
+				"concreteblock",
+				"concreteblocks",
+				"block",
+				"concretemasonryunit"
+			],
+			"blocks": ["light_gray_concrete", "light_gray_concrete", "smooth_stone", "white_concrete"]
+		},
+		{
+			"words": ["plaster", "stucco", "render", "rendering", "limerender", "plastered"],
+			"blocks": ["white_concrete", "white_concrete", "white_terracotta", "smooth_sandstone", "mushroom_stem"]
+		},
+		{
+			"words": [
+				"wood",
+				"timber",
+				"timberframe",
+				"timberframing",
+				"timberplanks",
+				"halftimber",
+				"halftimbered",
+				"loghouse",
+				"logs",
+				"bamboo"
+			],
+			"blocks": ["oak_planks", "spruce_planks", "dark_oak_planks", "oak_log"]
+		},
+		{ "words": ["reed"], "blocks": ["hay_bale"] },
+		{
+			"words": [
+				"metal",
+				"steel",
+				"iron",
+				"aluminium",
+				"aluminum",
+				"corrugatedsteel",
+				"corrugatediron",
+				"corrugatedmetal",
+				"tin",
+				"sheetmetal",
+				"metalsheet",
+				"metalplates"
+			],
+			"blocks": ["iron_block", "light_gray_concrete", "gray_concrete"]
+		},
+		{
+			"words": ["copper", "oxidisedcopper", "oxidizedcopper", "patina", "verdigris"],
+			"blocks": ["waxed_oxidized_copper", "waxed_exposed_copper", "waxed_copper_block"]
+		},
+		{
+			"words": ["glass"],
+			"blocks": ["gray_stained_glass", "light_gray_stained_glass", "cyan_stained_glass", "black_stained_glass"]
+		},
+		{
+			"words": ["mirror", "solarpanels"],
+			"blocks": ["gray_stained_glass", "cyan_stained_glass", "black_stained_glass"]
+		},
+		{
+			"words": ["tiles", "tile", "rooftiles", "ceramictiles", "ceramic", "terracotta"],
+			"blocks": ["white_terracotta", "brown_terracotta", "red_terracotta", "orange_terracotta"]
+		},
+		{
+			"words": ["mud", "adobe", "earth", "clay", "rammedearth", "cob", "loam"],
+			"blocks": ["mud_bricks", "brown_terracotta", "brown_concrete"]
+		},
+		{ "words": ["thatch", "straw"], "blocks": ["hay_bale"] },
+		{
+			"words": ["asbestos", "asbestoscement", "fibrecement", "fibercement"],
+			"blocks": ["light_gray_concrete", "gray_concrete"]
+		},
+		{
+			"words": ["vinyl", "siding", "vinylsiding", "weatherboard", "weatherboarding", "clapboard"],
+			"blocks": ["oak_planks", "spruce_planks", "white_concrete"]
+		},
+		{
+			"words": ["panel", "panels", "panelling", "paneling", "panelhouse", "prefab", "prefabricated"],
+			"blocks": ["light_gray_concrete", "gray_concrete", "white_concrete"]
+		},
+		{ "words": ["plastic", "light"], "blocks": ["white_concrete", "light_gray_concrete", "quartz_block", "glass"] },
+		{ "words": ["mixed", "masonry"], "blocks": ["stone_bricks", "brick", "smooth_stone", "cobblestone"] },
+		{ "words": ["pebbledash"], "blocks": ["andesite", "cobblestone", "stone_bricks"] }
+	],
+	"roof_block_for_material": [
+		{
+			"words": ["glass", "glazing", "acrylicglass", "mirror"],
+			"blocks": ["glass", "white_stained_glass", "light_gray_stained_glass"]
+		},
+		{
+			"words": [
+				"tile",
+				"tiles",
+				"rooftile",
+				"rooftiles",
+				"ceramic",
+				"ceramictiles",
+				"claytile",
+				"claytiles",
+				"cementtile",
+				"terracotta"
+			],
+			"blocks": ["red_terracotta", "brick", "brick", "terracotta"]
+		},
+		{ "words": ["slate", "slates"], "blocks": ["cobbled_deepslate", "deepslate_tiles"] },
+		{
+			"words": [
+				"metal",
+				"steel",
+				"aluminium",
+				"aluminum",
+				"corrugatedsteel",
+				"corrugatediron",
+				"corrugatedmetal",
+				"corrugatedironsheets",
+				"corrugated",
+				"cgi",
+				"tin",
+				"sheetmetal",
+				"metalsheet",
+				"metalplates"
+			],
+			"blocks": ["polished_andesite", "smooth_stone", "light_gray_concrete", "iron_block"]
+		},
+		{ "words": ["zinc", "zink", "lead"], "blocks": ["polished_andesite", "polished_andesite", "stone_bricks"] },
+		{ "words": ["copper"], "blocks": ["waxed_oxidized_copper"] },
+		{
+			"words": ["concrete", "reinforcedconcrete", "rcc", "concerte", "cement", "concreteslab"],
+			"blocks": ["light_gray_concrete", "gray_concrete", "smooth_stone"]
+		},
+		{
+			"words": ["wood", "timber", "shingle", "shingles", "woodshingle", "woodshingles"],
+			"blocks": ["oak_planks", "spruce_planks", "dark_oak_planks"]
+		},
+		{ "words": ["thatch", "straw", "reed", "reeds", "palmleaves"], "blocks": ["hay_bale"] },
+		{
+			"words": [
+				"asphalt",
+				"bitumen",
+				"tar",
+				"tarpaper",
+				"rolledasphalt",
+				"rolledroofing",
+				"asphaltshingle",
+				"asphaltshingles",
+				"roofingfelt"
+			],
+			"blocks": ["cobbled_deepslate", "deepslate_tiles", "polished_blackstone_bricks"]
+		},
+		{ "words": ["stone"], "blocks": ["stone_bricks", "smooth_stone", "andesite"] },
+		{ "words": ["gravel"], "blocks": ["gravel"] },
+		{ "words": ["grass", "green", "vegetation", "greenroof", "sod"], "blocks": ["grass_block", "moss_block"] },
+		{
+			"words": ["eternit", "asbestos", "fibrecement", "fibercement"],
+			"blocks": ["polished_andesite", "cobbled_deepslate", "deepslate_tiles"]
+		},
+		{ "words": ["plastic"], "blocks": ["light_gray_concrete", "gray_concrete", "white_concrete", "glass"] },
+		{ "words": ["solarpanels", "photovoltaic"], "blocks": ["black_concrete", "blackstone", "polished_blackstone"] }
+	],
+	"facade_tone_families": [
+		{ "words": ["brick", "bricks", "redbrick", "clinker"], "family": "BRICKWORK" },
+		{ "words": ["stone", "naturalstone", "limestone", "sandstone", "marble", "granite"], "family": "STONEWORK" },
+		{ "words": ["plaster", "stucco", "render", "rendering", "limerender", "plastered"], "family": "RENDERED" },
+		{
+			"words": [
+				"concrete",
+				"reinforcedconcrete",
+				"cement",
+				"concreteblock",
+				"concreteblocks",
+				"panel",
+				"panels",
+				"prefab",
+				"prefabricated"
+			],
+			"family": "CONCRETE_WORK"
+		}
+	],
+	"roof_material_families": [
+		{
+			"words": [
+				"tile",
+				"tiles",
+				"rooftile",
+				"rooftiles",
+				"claytile",
+				"claytiles",
+				"ceramic",
+				"ceramictiles",
+				"terracotta",
+				"pantiles"
+			],
+			"family": "tile"
+		},
+		{ "words": ["concretetile", "concretetiles", "cementtile", "cementtiles"], "family": "concrete_tile" },
+		{ "words": ["slate", "slates"], "family": "slate" },
+		{ "words": ["copper"], "family": "copper" }
+	],
+	"sheet_metal": [
+		"metal",
+		"steel",
+		"aluminium",
+		"aluminum",
+		"iron",
+		"tin",
+		"zinc",
+		"zink",
+		"lead",
+		"sheetmetal",
+		"metalsheet",
+		"metalplates",
+		"corrugated",
+		"corrugatediron",
+		"corrugatedsteel",
+		"corrugatedmetal"
+	]
+}

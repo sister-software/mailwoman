@@ -1,0 +1,50 @@
+{
+	"$comment": "The probabilities and shares the facade decisions roll against. Transcribed from Arnis d8e8b662 (Apache-2.0) src/element_processing/buildings.rs: european_default_roof, BuildingStyle::resolve, flat_parapet_for, pick_ground_floor, generate_buildings (top treatment, attic, surrounds, piano nobile, rustication, base course), plan_podium_tower, curtain_rhythm, pick_window_archetype, masonry_window_glass, and src/element_processing/rooftops.rs pick_membrane.",
+	"european_roof_share": {
+		"historic_ornate": 0.95,
+		"traditional_pre_war": 0.88,
+		"post_war_panel_commercial": 0.1,
+		"post_war_panel": 0.4,
+		"contemporary_commercial": 0.05,
+		"contemporary": 0.25,
+		"unknown_attached": 0.8,
+		"unknown_large": 0.4,
+		"unknown": 0.65
+	},
+	"european_mansard_share": 0.15,
+	"apartment_block_weights": { "old": [45, 20], "other": [45, 35] },
+	"prewar_mansard_chance": 0.3,
+	"industrial_skillion_chance": 0.55,
+	"accent_roof_line_chance": 0.25,
+	"accent_lines_glassy_chance": 0.6,
+	"accent_lines_chance": 0.2,
+	"vertical_accent_chance": 0.1,
+	"chimney_chance": 0.4,
+	"contemporary_residential_pillars_chance": 0.5,
+	"flat_parapet_share": { "north_america": 0.92, "europe": 0.7, "other": 0.8, "low_factor": 0.7 },
+	"ground_floor": {
+		"commercial_corner": 0.85,
+		"commercial": 0.65,
+		"office": 0.4,
+		"residential": { "north_america": 0.6, "europe": 0.45, "other": 0.3 },
+		"residential_corner_bonus": 0.15
+	},
+	"top_treatment_chance": 0.45,
+	"attic_chance": 0.55,
+	"surrounds_chance": { "historic": 1.0, "traditional_pre_war": 0.6, "unknown": 0.35 },
+	"piano_nobile_chance": { "historic": 0.5, "hotel": 0.2, "european_ornate": 0.6 },
+	"rustication_prewar_chance": 0.7,
+	"base_course_chance": 0.7,
+	"podium_chance": 0.4,
+	"curtain_wide_chance": 0.4,
+	"prewar_paired_chance": 0.75,
+	"masonry_glass_gray_chance": 0.7,
+	"membrane_green_share": { "contemporary": 0.25, "unknown": 0.06, "post_war_panel": 0.06, "other": 0.03 },
+	"membrane_na_bands": {
+		"industrial": [50, 85, 95],
+		"prewar": [20, 50, 75],
+		"contemporary": [45, 85, 97],
+		"other": [30, 65, 85]
+	},
+	"membrane_eu_bands": { "eu_grey_below": 50, "ballast_below": 80 }
+}

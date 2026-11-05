@@ -22,6 +22,7 @@ crates as default members, because none of them links libtorch.
 | `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids.                           |
 | `hrt-profile` | The basemap profile: the fork's `Matcher` rules, a `FeatureCollector`-style builder, OSM names with their `pgf:` encodings, merges, and layers. |
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage, zipped shapefile and Overture GeoParquet readers.                                                  |
+| `hrt-facade`  | Building facade styles for the compact building tiles, ported from Arnis: category, era, region, materials, window rhythm and ground floor.     |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.                            |
 
 `hrt-profile` holds thirteen of the fork's fourteen layers. `water` comes from OpenStreetMap, Natural Earth and the
@@ -79,8 +80,8 @@ invalid.
 ## Checks
 
 ```sh
-cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli
-cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli \
+cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-facade -p hrt-cli
+cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-facade -p hrt-cli \
   --all-targets -- -D warnings
 ```
 
