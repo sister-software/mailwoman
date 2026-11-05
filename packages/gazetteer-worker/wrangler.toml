@@ -1,0 +1,10 @@
+name = "mailwoman-gazetteer"
+main = "./lib/index.ts"
+compatibility_date = "2026-10-24"
+# The engine Worker reaches this Worker through a service binding only.
+workers_dev = false
+
+# The public asset bucket. `candidate.db` is read from it by range, at the key `candidateDatabaseKey()` returns.
+[[r2_buckets]]
+binding = "PUBLIC_BUCKET"
+bucket_name = "mailwoman-public"

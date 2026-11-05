@@ -61,6 +61,7 @@
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/geocoder-service": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/react": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",

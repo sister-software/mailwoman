@@ -5663,6 +5663,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@journeyapps/wa-sqlite@npm:2.0.10":
+  version: 2.0.10
+  resolution: "@journeyapps/wa-sqlite@npm:2.0.10"
+  dependenciesMeta:
+    monaco-editor@0.34.1:
+      unplugged: true
+    web-test-runner-jasmine@0.0.6:
+      unplugged: true
+  checksum: 10/e90b0b96180dd92fdb4c8f137c7fed7cd1344076e43f6d64dd59626ff3f60f4ab6664b418e6ea54ff01bac9fb326cff51f954e4596bba2e9c9643f4c089b0760
+  languageName: node
+  linkType: hard
+
 "@jridgewell/gen-mapping@npm:^0.3.12, @jridgewell/gen-mapping@npm:^0.3.5":
   version: 0.3.13
   resolution: "@jridgewell/gen-mapping@npm:0.3.13"
@@ -6897,6 +6909,7 @@ __metadata:
     "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/geocoder-service": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/react": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
@@ -6995,6 +7008,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/gazetteer-worker@workspace:packages/gazetteer-worker":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/gazetteer-worker@workspace:packages/gazetteer-worker"
+  dependencies:
+    "@cloudflare/vitest-plugin": "npm:^1.4.11"
+    "@cloudflare/workers-types": "npm:^5.20261029.1"
+    "@journeyapps/wa-sqlite": "npm:2.0.10"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/resolver-wof-wasm": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    mailwoman: "workspace:*"
+    vitest: "npm:^5.0.5"
+    wrangler: "npm:^4.156.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/gazetteer@workspace:*, @mailwoman/gazetteer@workspace:packages/gazetteer":
   version: 0.0.0-use.local
   resolution: "@mailwoman/gazetteer@workspace:packages/gazetteer"
@@ -7042,6 +7072,14 @@ __metadata:
     "@types/node": "npm:^26.6.6"
     path-ts: "npm:^2.5.0"
     zod: "npm:^4.6.7"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/geocoder-service@workspace:*, @mailwoman/geocoder-service@workspace:packages/geocoder-service":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/geocoder-service@workspace:packages/geocoder-service"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
   languageName: unknown
   linkType: soft
 

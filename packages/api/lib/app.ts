@@ -7,19 +7,12 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import {
-	attachOpenAPIDocs,
-	engineHeaders,
-	errorResponse,
-	type OpenAPIDocInfo,
-	readServedDocumentInfo,
-} from "@mailwoman/api-kit"
+import { attachOpenAPIDocs, engineHeaders, errorResponse, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import type { EngineStamp } from "@mailwoman/core/license"
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
 
 import type { MailwomanAPIEngine } from "#engine"
-import { FormattingTag, GeocodingTag, MetaTag, ParsingTag, ResolvingTag } from "#operations/tags"
 import { DEFAULT_BATCH_MAX, registerMailwomanAPIRoutes } from "#routes"
 
 /**
@@ -59,6 +52,14 @@ export interface MailwomanAPIOptions {
 	 * An embedding app may omit it.
 	 */
 	engine?: EngineStamp
+
+	/**
+	 * The metadata of the OpenAPI document served at `GET /openapi.json`.
+	 *
+	 * The route is mounted only when this is set.
+	 * `mailwoman serve` passes `MAILWOMAN_API_DOC_INFO` from `#doc-info`.
+	 */
+	docInfo?: OpenAPIDocInfo
 }
 
 /**
@@ -66,23 +67,6 @@ export interface MailwomanAPIOptions {
  */
 function summarizeValidationError(error: { issues: Array<{ path: PropertyKey[]; message: string }> }): string {
 	return error.issues.map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`).join("; ")
-}
-
-/**
- * OpenAPI metadata shared by the mounted endpoint and document generator.
- */
-export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
-	...(await readServedDocumentInfo(import.meta.url, "@mailwoman/api")),
-	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
-	contact: { name: "Sister Software", url: "https://mailwoman.post" },
-	servers: [
-		{
-			url: "http://{host}:{port}",
-			variables: { host: { default: "127.0.0.1" }, port: { default: "3000" } },
-		},
-	],
-	security: [],
-	tags: [ParsingTag, GeocodingTag, ResolvingTag, FormattingTag, MetaTag],
 }
 
 /**
@@ -134,7 +118,9 @@ export function createMailwomanAPI(engine: MailwomanAPIEngine, options: Mailwoma
 		engine: options.engine,
 	})
 
-	attachOpenAPIDocs(app, MAILWOMAN_API_DOC_INFO)
+	if (options.docInfo) {
+		attachOpenAPIDocs(app, options.docInfo)
+	}
 
 	return app
 }

@@ -11,7 +11,13 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import { beforeEach, expect, test } from "vitest"
 
-import { createMailwomanAPI, type GeocodeInit, MAX_ADDRESS_LENGTH, type MailwomanAPIEngine } from "#index"
+import {
+	createMailwomanAPI,
+	type GeocodeInit,
+	MAILWOMAN_API_DOC_INFO,
+	MAX_ADDRESS_LENGTH,
+	type MailwomanAPIEngine,
+} from "#index"
 import type { ParseResponse } from "#operations/parse/address"
 
 beforeEach(() => {
@@ -572,8 +578,14 @@ test("GET /metrics: reflects a recorded /v1/geocode call", async () => {
 
 // MARK: /openapi.json
 
+test("GET /openapi.json: absent unless the caller passes the document metadata", async () => {
+	const res = await createMailwomanAPI(fullEngine).request("/openapi.json")
+
+	expect(res.status).toBe(404)
+})
+
 test("GET /openapi.json: documents all 8 native paths, and is not self-referenced", async () => {
-	const app = createMailwomanAPI(fullEngine)
+	const app = createMailwomanAPI(fullEngine, { docInfo: MAILWOMAN_API_DOC_INFO })
 
 	const res = await app.request("/openapi.json")
 	expect(res.status).toBe(200)
@@ -597,7 +609,7 @@ test("GET /openapi.json: documents all 8 native paths, and is not self-reference
 })
 
 test("GET /openapi.json: full-info document config lands (license, contact, servers, security, tags)", async () => {
-	const app = createMailwomanAPI(fullEngine)
+	const app = createMailwomanAPI(fullEngine, { docInfo: MAILWOMAN_API_DOC_INFO })
 
 	const res = await app.request("/openapi.json")
 

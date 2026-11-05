@@ -306,21 +306,6 @@
 			"node": "./lib/api.ts",
 			"default": "./out/api.js"
 		},
-		"./api/disk-storage": {
-			"types": "./out/api/disk-storage.d.ts",
-			"node": "./lib/api/disk-storage.ts",
-			"default": "./out/api/disk-storage.js"
-		},
-		"./api/paced-client": {
-			"types": "./out/api/paced-client.d.ts",
-			"node": "./lib/api/paced-client.ts",
-			"default": "./out/api/paced-client.js"
-		},
-		"./resolver/fixture-authoritative-provider": {
-			"types": "./out/resolver/fixture-authoritative-provider.d.ts",
-			"node": "./lib/resolver/fixture-authoritative-provider.ts",
-			"default": "./out/resolver/fixture-authoritative-provider.js"
-		},
 		"./api/test-clocks": {
 			"types": "./out/api/test/clocks.d.ts",
 			"node": "./lib/api/test/clocks.ts",
@@ -330,6 +315,11 @@
 			"types": "./out/api/test/transport.d.ts",
 			"node": "./lib/api/test/transport.ts",
 			"default": "./out/api/test/transport.js"
+		},
+		"./api/*": {
+			"types": "./out/api/*.d.ts",
+			"node": "./lib/api/*.ts",
+			"default": "./out/api/*.js"
 		},
 		"./logging": {
 			"types": "./out/logging.d.ts",
@@ -351,6 +341,11 @@
 			"node": "./lib/resolver.ts",
 			"default": "./out/resolver.js"
 		},
+		"./resolver/fixture-authoritative-provider": {
+			"types": "./out/resolver/fixture-authoritative-provider.d.ts",
+			"node": "./lib/resolver/fixture-authoritative-provider.ts",
+			"default": "./out/resolver/fixture-authoritative-provider.js"
+		},
 		"./errors": {
 			"types": "./out/errors/schema.d.ts",
 			"node": "./lib/errors/schema.ts",
@@ -360,6 +355,11 @@
 			"types": "./out/routing.d.ts",
 			"node": "./lib/routing.ts",
 			"default": "./out/routing.js"
+		},
+		"./network/*": {
+			"types": "./out/network/*.d.ts",
+			"node": "./lib/network/*.ts",
+			"default": "./out/network/*.js"
 		},
 		"./strings/*": {
 			"types": "./out/strings/*.d.ts",

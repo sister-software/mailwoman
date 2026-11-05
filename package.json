@@ -95,6 +95,7 @@
 		"test": "vitest",
 		"test:coverage": "vitest --coverage",
 		"test:integration": "vitest --config vitest.slow.config.ts",
+		"test:gazetteer-worker": "yarn workspace @mailwoman/gazetteer-worker test",
 		"test:license-worker": "yarn workspace @mailwoman/license-worker test",
 		"test:unit": "vitest --config vitest.fast.config.ts",
 		"typecheck": "run-s compile typecheck:projects",

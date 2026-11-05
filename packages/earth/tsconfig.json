@@ -22,6 +22,7 @@
 		{ "path": "../api" },
 		{ "path": "../cartographer" },
 		{ "path": "../core" },
+		{ "path": "../geocoder-service" },
 		{ "path": "../mailwoman" },
 		{ "path": "../neural" },
 		{ "path": "../react" },

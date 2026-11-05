@@ -10,8 +10,10 @@
 
 import type { GeocodeBiasPoint } from "@mailwoman/api/operations/geocode/address"
 import type { EngineStamp } from "@mailwoman/core/license"
-import type { ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import { GeocoderService, ProviderPlacement } from "@mailwoman/geocoder-service"
 import type { GeocoderRuntime, MapBias, ResolvedMapPlace, Suggestion } from "@mailwoman/react/map"
+import { useConnectivity } from "@mailwoman/react/network/ReachabilityProvider"
 import { useCallback, useMemo, useState } from "react"
 
 import type { EarthConfig } from "#config"
@@ -69,8 +71,32 @@ async function noRemoteSuggestions(): Promise<Suggestion[]> {
 	return []
 }
 
+interface RemoteQuery {
+	input: string
+	bias: GeocodeBiasPoint[]
+}
+
+interface RemoteAnswer {
+	result: ParseResult
+	engine: EngineStamp | null
+}
+
+/**
+ * The route of the hosted API that the page's `ReachabilityProvider` probes.
+ *
+ * The API Worker answers it with 503 when its backend is unavailable,
+ * so a failing backend reads as unreachable.
+ */
+export function remoteGeocoderHealthURL(apiURL: URL): URL {
+	return new URL("health", apiURL)
+}
+
 /**
  * Build the {@link GeocoderRuntime} that sends each address to the hosted API at `apiURL`.
+ *
+ * The runtime asks a {@linkcode GeocoderService} that holds only the remote provider,
+ * so a query made while the nearest `ReachabilityProvider` reads offline rejects at
+ * once with a connectivity error instead of a failed fetch.
  */
 export function useRemoteGeocoderRuntime(
 	apiURL: URL,
@@ -80,6 +106,22 @@ export function useRemoteGeocoderRuntime(
 	const overlays = useEarthOverlays(config)
 	const geoBias = useGeoBias()
 	const [engine, setEngine] = useState<EngineStamp | null>(null)
+	const { read, recheck } = useConnectivity()
+
+	const service = useMemo(
+		() =>
+			new GeocoderService<RemoteQuery, RemoteAnswer>({
+				remote: {
+					id: apiURL.host,
+					placement: ProviderPlacement.Remote,
+					isReady: () => true,
+					geocode: ({ input, bias }, { signal, onStage }) => remoteGeocode(apiURL, input, bias, { onStage }, signal),
+				},
+				connectivity: read,
+				onRemoteUnavailable: recheck,
+			}),
+		[apiURL, read, recheck]
+	)
 
 	const runParseWithBias = useCallback(
 		async (input: string, viewport: MapBias | null, hooks: { onStage: (stage: number) => void }) => {
@@ -93,13 +135,13 @@ export function useRemoteGeocoderRuntime(
 				bias.push({ ...geoBias.locationRef.current, weight: DEVICE_LOCATION_BIAS_WEIGHT })
 			}
 
-			const { result, engine: stamp } = await remoteGeocode(apiURL, input, bias, hooks)
+			const { answer } = await service.geocode({ input, bias }, { onStage: hooks.onStage })
 
-			setEngine(stamp)
+			setEngine(answer.engine)
 
-			return result
+			return answer.result
 		},
-		[apiURL, geoBias.locationRef]
+		[service, geoBias.locationRef]
 	)
 
 	const runParse = useCallback(
