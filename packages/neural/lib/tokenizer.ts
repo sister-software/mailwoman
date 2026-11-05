@@ -10,7 +10,7 @@
  *   consumes from its native span.
  */
 
-import { MTF_WASM_URL, MTFRuntime, type MTFModel, type MTFWasmSource } from "@mailwoman/mtf"
+import { MTFRuntime, mtfWASMURL, type MTFModel, type MTFWasmSource } from "@mailwoman/mtf"
 import type { PathBuilderLike } from "path-ts"
 
 /**
@@ -25,22 +25,24 @@ export const SPACE_SENTINEL = "▁"
 let runtimePromise: Promise<MTFRuntime> | null = null
 
 /**
- * Reads the runtime's WASM bytes from where `MTF_WASM_URL` points.
+ * Reads the runtime's WASM bytes from where {@linkcode mtfWASMURL} points.
  *
  * A `file:` URL is read from disk, as in Node.
  * Any other URL is fetched, as in a browser bundle whose host serves the binary
  * at the URL the bundler resolved.
  */
 async function readRuntimeWasm(): Promise<MTFWasmSource> {
-	if (MTF_WASM_URL.protocol === "file:") {
+	const url = mtfWASMURL()
+
+	if (url.protocol === "file:") {
 		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")
 
-		return new Uint8Array(await readFile(MTF_WASM_URL))
+		return new Uint8Array(await readFile(url))
 	}
 
-	const response = await fetch(MTF_WASM_URL)
+	const response = await fetch(url)
 
-	if (!response.ok) throw new Error(`tokenizer runtime ${MTF_WASM_URL} answered ${response.status}`)
+	if (!response.ok) throw new Error(`tokenizer runtime ${url} answered ${response.status}`)
 
 	return response.arrayBuffer()
 }
@@ -49,6 +51,23 @@ function loadRuntime(): Promise<MTFRuntime> {
 	runtimePromise ??= readRuntimeWasm().then((wasm) => MTFRuntime.instantiate(wasm))
 
 	return runtimePromise
+}
+
+/**
+ * Supply the WASM the tokenizer runtime instantiates from, in place of reading {@linkcode mtfWASMURL}.
+ *
+ * A Cloudflare Worker refuses to compile WASM from bytes at run time, so its entry imports
+ * `mtf.wasm` as a bundled `WebAssembly.Module` and passes it here before the first tokenizer loads.
+ * Every loader, including the browser's `loadFromBase64` path, then instantiates from it.
+ *
+ * @throws When a tokenizer already started loading the runtime from another source.
+ */
+export function setTokenizerRuntimeSource(source: MTFWasmSource): void {
+	if (runtimePromise) {
+		throw new Error("the tokenizer runtime is already loading; set its source before the first tokenizer loads")
+	}
+
+	runtimePromise = MTFRuntime.instantiate(source)
 }
 
 /**

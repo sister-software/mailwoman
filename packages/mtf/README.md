@@ -11,10 +11,10 @@ rollback runtime.
 ## Usage
 
 ```ts
-import { MTF_WASM_URL, MTFRuntime } from "@mailwoman/mtf"
+import { MTFRuntime, mtfWASMURL } from "@mailwoman/mtf"
 
 // Node reads the committed binary from disk. A browser fetches the URL its bundler resolved.
-const runtime = await MTFRuntime.instantiate(new Uint8Array(await readFile(MTF_WASM_URL)))
+const runtime = await MTFRuntime.instantiate(new Uint8Array(await readFile(mtfWASMURL())))
 using model = runtime.loadModel(tokenizerModelBytes)
 
 const { ids, pieces, begins, ends } = model.encode("10 Downing Street, London SW1A 2AA")

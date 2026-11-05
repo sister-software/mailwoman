@@ -214,7 +214,7 @@ const SQLITE_RUNTIME_LOCATOR = await tryResolveFile("@sqlite.org/sqlite-wasm/sql
 /**
  * The tokenizer runtime's wasm.
  *
- * `MTF_WASM_URL` resolves to `../wasm/mtf.wasm` from the bundled script.
+ * `mtfWASMURL()` resolves to `../wasm/mtf.wasm` from the bundled script.
  */
 const MTF_WASM_PATH = requireFromHere.resolve("@mailwoman/mtf/wasm/mtf.wasm")
 const CANDIDATE_DB_PATH = databaseRootPath(dataRootPath())("wof", "candidate.db")

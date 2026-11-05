@@ -1,0 +1,46 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { workspacePath } from "@mailwoman/core/paths"
+import { mtfWASMURL, type MTFWasmSource } from "@mailwoman/mtf"
+import { describe, expect, test } from "vitest"
+
+import { MailwomanTokenizer, setTokenizerRuntimeSource } from "#tokenizer"
+
+const MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
+
+/**
+ * The mtf runtime compiled to a `WebAssembly.Module`, as a Worker's bundler supplies it.
+ *
+ * mtf types a compiled module opaquely so its declarations need no DOM library, so the cast states which source this is.
+ */
+async function compileRuntime(): Promise<MTFWasmSource> {
+	const bytes = await readLocalBuffer(mtfWASMURL())
+
+	return (await WebAssembly.compile(new Uint8Array(bytes))) as MTFWasmSource
+}
+
+describe("setTokenizerRuntimeSource", () => {
+	// The runtime is one per module graph, so these run in order: the first sets the source, the second finds it set.
+	test("a tokenizer loads over a precompiled module, as a Worker supplies it", async () => {
+		const compiled = await compileRuntime()
+
+		setTokenizerRuntimeSource(compiled)
+
+		const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)
+		const { ids, pieces } = tokenizer.encode("1600 Pennsylvania Ave NW")
+
+		expect(ids.length).toBeGreaterThan(0)
+		expect(pieces.map((p) => p.id)).toEqual(ids)
+	})
+
+	test("refuses a second source once the runtime is loading", async () => {
+		const compiled = await compileRuntime()
+
+		expect(() => setTokenizerRuntimeSource(compiled)).toThrow(/already loading/u)
+	})
+})

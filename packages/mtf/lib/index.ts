@@ -8,7 +8,7 @@
  *   The module's import has no side effects: the WASM fetch and instantiation happen in the caller.
  *   The caller obtains the WASM bytes or a compiled `WebAssembly.Module` (Workers supply the latter)
  *   and passes it to {@linkcode MTFRuntime.instantiate}.
- *   `MTF_WASM_URL` locates the committed binary beside this package.
+ *   {@linkcode mtfWASMURL} locates the committed binary beside this package.
  *   A loaded model's encode and decode methods are synchronous.
  */
 
@@ -16,8 +16,12 @@
  * The location of the committed `wasm/mtf.wasm`, resolved from this module.
  *
  * The same relative path holds from `lib/` in the repository and from `out/` in a tarball.
+ * It is computed on call rather than at import, because a Cloudflare Worker bundle has no
+ * `import.meta.url` to resolve against, and a Worker supplies the compiled module instead.
  */
-export const MTF_WASM_URL = new URL("../wasm/mtf.wasm", import.meta.url)
+export function mtfWASMURL(): URL {
+	return new URL("../wasm/mtf.wasm", import.meta.url)
+}
 
 /**
  * A compiled `WebAssembly.Module`, as a Worker runtime supplies it.
