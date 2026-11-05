@@ -328,10 +328,10 @@ export const mintCloudflareTokens = defineOperation({
  */
 export const purgeCloudflareCache = defineOperation({
 	id: "release.purge-cloudflare-cache",
-	description: `Purge cached copies of --urls a,b on ${MAILWOMAN_ZONE.name} with CLOUDFLARE_CACHE_PURGE_TOKEN.`,
+	description: `Purge cached copies of --urls a,b on ${MAILWOMAN_ZONE.name} with CLOUDFLARE_CACHE_PURGE_TOKEN. The public bucket answers with Vary: Origin, so --origins a,b also purges the copy cached for each page origin that fetched the URL.`,
 	effect: OperationEffect.ExternalWrite,
-	options: { urls: { type: "string" } },
-	inputSchema: z.object({ urls: list }).strict(),
+	options: { urls: { type: "string" }, origins: { type: "string" } },
+	inputSchema: z.object({ urls: list, origins: list }).strict(),
 	outputSchema: z.object({ purged: z.array(z.string()) }),
 	async run(input, context) {
 		if (!input.urls.length) throw new Error("purge-cloudflare-cache needs --urls")
@@ -344,8 +344,17 @@ export const purgeCloudflareCache = defineOperation({
 
 		if (outside.length) throw new Error(`outside ${MAILWOMAN_ZONE.name}: ${outside.join(", ")}`)
 
+		// Each cached variant is purged by its URL and the request headers that keyed it.
+		const files = input.urls.flatMap((url) => [
+			{ url },
+			...input.origins.map((origin) => ({ url, headers: { Origin: origin } })),
+		])
+
+		const describe = (file: (typeof files)[number]): string =>
+			"headers" in file ? `${file.url} (Origin: ${file.headers.Origin})` : file.url
+
 		if (context.dryRun) {
-			context.log(`would purge ${input.urls.length} URL(s)`)
+			context.log(`would purge ${files.length} cached variant(s)`)
 
 			return { purged: [] }
 		}
@@ -361,10 +370,10 @@ export const purgeCloudflareCache = defineOperation({
 		const client = cloudflareClient({ kind: "token", token })
 
 		// A non-Enterprise plan accepts at most 30 URLs in one purge request.
-		for (let start = 0; start < input.urls.length; start += 30) {
-			await client.cache.purge({ zone_id: MAILWOMAN_ZONE.id, files: input.urls.slice(start, start + 30) })
+		for (let start = 0; start < files.length; start += 30) {
+			await client.cache.purge({ zone_id: MAILWOMAN_ZONE.id, files: files.slice(start, start + 30) })
 		}
 
-		return { purged: input.urls }
+		return { purged: files.map(describe) }
 	},
 })
