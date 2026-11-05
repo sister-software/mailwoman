@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import blockPalette from "@mailwoman/structures/data/facade/block-palette.json" with { type: "json" }
 import { expect, test } from "vitest"
 
 import { decodeBuildingTile, ROOF_STRIDE, unitMeters, WALL_STRIDE, wallRuns } from "#scene/compact-buildings/decode"
@@ -18,6 +19,7 @@ interface RecordSpec {
 	roofShape?: number
 	flags?: number
 	edgeFlags?: number[]
+	style?: number[]
 	rings: Array<Array<[number, number]>>
 	ridge?: Array<[number, number]>
 	triangles: number[]
@@ -58,8 +60,8 @@ function record(spec: RecordSpec): number[] {
 	u8(spec.roofShape ?? 0)
 	u8(spec.flags ?? 0)
 
-	for (let index = 0; index < 8; index++) {
-		u8(0xff)
+	for (let index = 0; index < 16; index++) {
+		u8(spec.style?.[index] ?? 0xff)
 	}
 
 	u8(spec.rings.length)
@@ -225,6 +227,32 @@ test("each wall carries its edge flags, the building flags and its straight run'
 	expect(walls.getUint16(3 * WALL_STRIDE + 18, true)).toBe(decimeters(50))
 	// The east edge is its own 50-unit run.
 	expect(walls.getUint16(1 * WALL_STRIDE + 16, true)).toBe(decimeters(50))
+})
+
+test("a resolved style colors the walls from the block palette and carries the window layout", () => {
+	// Palette indexes 0 (white concrete) for the walls, 1 for trim, 3 for glass and 7 for the roof.
+	// Category 4, archetype 6 and a shopfront (1).
+	// Windows 2 m wide between 1 m piers and 1 m corners, on 4 m storeys, with windows and a parapet.
+	const style = [0, 1, 2, 3, 4, 0xff, 6, 7, 4, 6, 1, 2, 1, 1, 4, 0b11]
+
+	const decoded = decodeBuildingTile(
+		tile(record({ height: 100, eave: 100, wallColor: 0x80_ff_00_00, style, rings: [square], triangles: [0, 1, 2] })),
+		6000
+	)
+
+	const walls = new DataView(decoded.walls)
+	const palette = blockPalette.blocks
+
+	// The resolved wall block wins over the tagged red.
+	expect([walls.getUint8(12), walls.getUint8(13), walls.getUint8(14)]).toEqual(palette[0]!.rgb)
+	expect([walls.getUint8(22), walls.getUint8(23)]).toEqual([6, 1])
+	expect([walls.getUint8(24), walls.getUint8(25), walls.getUint8(26)]).toEqual(palette[3]!.rgb)
+	expect(walls.getUint8(27)).toBe(4)
+	expect([walls.getUint8(28), walls.getUint8(29), walls.getUint8(30)]).toEqual(palette[1]!.rgb)
+	expect(walls.getUint8(31)).toBe(0b11)
+	expect([walls.getUint8(32), walls.getUint8(33), walls.getUint8(34), walls.getUint8(35)]).toEqual([2, 1, 1, 4])
+	const roof = new DataView(decoded.roofVertices)
+	expect([roof.getUint8(8), roof.getUint8(9), roof.getUint8(10)]).toEqual(palette[7]!.rgb)
 })
 
 test("a ring that starts part way along a wall joins its last run to its first", () => {

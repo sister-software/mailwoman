@@ -26,7 +26,7 @@
 //! | floors | `u8` | `num_floors`, at most 255, or 0 when absent |
 //! | roof shape | `u8` | 0 flat, 1 gabled, 2 hipped |
 //! | flags | `u8` | Bit 0 attached, bit 1 enclosed, bit 2 a street faces at least one wall |
-//! | style | `u8` × 8 | The building's resolved style; each byte is `0xFF` until the build resolves it |
+//! | style | `u8` × 16 | The building's resolved style, `0xFF` throughout when the build resolved none; see below |
 //! | ring count | `u8` | The exterior ring and its holes |
 //! | ring sizes | `u16` × ring count | Vertices per ring, without the closing vertex |
 //! | footprint | `i16` × 2 × vertices | x and y in tile units, y down, ring after ring |
@@ -54,8 +54,24 @@ pub const TILE_ZOOM: u8 = 14;
 pub const EXTENT: f64 = 8192.0;
 /// The first four bytes of a decompressed tile body.
 pub const MAGIC: &[u8; 4] = b"MWB2";
-/// A style byte the build has not resolved.
+/// A style byte the build has not resolved, or a palette slot the style leaves empty.
 pub const UNRESOLVED_STYLE: u8 = 0xFF;
+/// Bytes of a record's style.
+///
+/// Bytes 0 to 7 are block palette indexes (`hrt_facade::palette` order): wall, trim, accent, glass, spandrel, base
+/// course, shop frame and roof. Bytes 8 to 10 are the declaration-order indexes of `hrt_facade`'s
+/// `BuildingCategory`, `WindowArchetype` and `GroundFloor`. Bytes 11 to 13 are the bay rhythm's window, pier and
+/// corner widths in meters, byte 14 the storey height in meters, and byte 15 the flags: bit 0 windows, bit 1 a
+/// parapet, bit 2 horizontal window bands, bit 3 accent lines at the floors, bit 4 an accent roof line, bit 5 a tall
+/// building, bit 6 a vertical accent, bit 7 a generated roof.
+pub const STYLE_BYTES: usize = 16;
+
+/// A pitched roof shape a style can give a building whose source states none.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PitchedRoof {
+	Gabled,
+	Hipped,
+}
 /// The `height` a building with no stated height or floor count records.
 pub const UNKNOWN_HEIGHT: u16 = 0xFFFF;
 
@@ -80,7 +96,7 @@ struct Attributes {
 	roof_shape: RoofShape,
 	/// Bits 0 to 2 of the record's flags byte that the draft sets; the facade plan sets the rest.
 	flags: u8,
-	style: [u8; 8],
+	style: [u8; STYLE_BYTES],
 }
 
 /// A color as `0x00RRGGBB` with bit 31 set, or 0 for none.
@@ -139,7 +155,7 @@ pub fn building_draft(input: &Input<'_>) -> Option<BuildingDraft> {
 			.map_or(0, |floors| floors.clamp(0.0, 255.0) as u8),
 		roof_shape,
 		flags: 0,
-		style: [UNRESOLVED_STYLE; 8],
+		style: [UNRESOLVED_STYLE; STYLE_BYTES],
 	};
 	let polygons: Vec<Polygon> = match world {
 		Geometry::Polygon(polygon) => vec![polygon],
@@ -152,6 +168,27 @@ pub fn building_draft(input: &Input<'_>) -> Option<BuildingDraft> {
 		polygons,
 		group,
 	})
+}
+
+impl BuildingDraft {
+	/// Whether the source states a height or floor count.
+	pub fn has_height(&self) -> bool {
+		self.attributes.height.is_some()
+	}
+
+	/// Sets the resolved style. A building whose source states no height takes `inferred_height` in meters, and
+	/// `roof` replaces the roof shape: `None` for a flat roof.
+	pub fn apply_style(&mut self, style: [u8; STYLE_BYTES], inferred_height: Option<f64>, roof: Option<PitchedRoof>) {
+		self.attributes.style = style;
+		if self.attributes.height.is_none() {
+			self.attributes.height = inferred_height.map(|height| self.attributes.base + height);
+		}
+		self.attributes.roof_shape = match roof {
+			Some(PitchedRoof::Gabled) => RoofShape::Gabled,
+			Some(PitchedRoof::Hipped) => RoofShape::Hipped,
+			None => RoofShape::Flat,
+		};
+	}
 }
 
 /// The z14 tile that holds the center of a polygon's bounding box.
@@ -412,7 +449,7 @@ mod tests {
 			floors: 2,
 			roof_shape,
 			flags: 0,
-			style: [UNRESOLVED_STYLE; 8],
+			style: [UNRESOLVED_STYLE; STYLE_BYTES],
 		}
 	}
 
@@ -431,8 +468,8 @@ mod tests {
 		u16::from_le_bytes([record[at], record[at + 1]])
 	}
 
-	/// The offset of the ring count: the fixed fields, the flags byte and the eight style bytes.
-	const RINGS_AT: usize = 34;
+	/// The offset of the ring count: the fixed fields, the flags byte and the style bytes.
+	const RINGS_AT: usize = 26 + STYLE_BYTES;
 
 	#[test]
 	fn a_flat_building_writes_its_ring_edges_and_two_triangles_into_the_tile_of_its_center() {
@@ -460,7 +497,7 @@ mod tests {
 		assert_eq!(record[22..25], [3, 2, 0]);
 		// Bit 2: a street faces a wall.
 		assert_eq!(record[25], 0b100);
-		assert_eq!(record[26..RINGS_AT], [UNRESOLVED_STYLE; 8]);
+		assert_eq!(record[26..RINGS_AT], [UNRESOLVED_STYLE; STYLE_BYTES]);
 		assert_eq!(record[RINGS_AT], 1);
 		assert_eq!(read_u16(&record, RINGS_AT + 1), 4);
 		let vertices_at = RINGS_AT + 3;

@@ -23,8 +23,10 @@ use std::sync::Mutex;
 use geo_types::{Coord, Geometry, LineString, MultiPolygon, Polygon};
 use hrt_osm::{ElementKind, Tags};
 use hrt_pmtiles::{Compression, TileType, Writer, WriterOptions};
+use hrt_facade::{FacadeInput, FacadeStyle, NeighborFacts, Outline, RoofType};
 use hrt_profile::building_buffers::{
-	building_draft, draft_records, home_tile, quantize_polygon, tile_body, unit_meters, EXTENT, TILE_ZOOM,
+	building_draft, draft_records, home_tile, quantize_polygon, tile_body, unit_meters, BuildingDraft, PitchedRoof,
+	EXTENT, STYLE_BYTES, TILE_ZOOM, UNRESOLVED_STYLE,
 };
 use hrt_profile::facade_plan::{
 	compute_facade_plan, fill_cells, highway_block_range, stamp_road, surface_highway_type, Bitmap, FacadeClass,
@@ -328,6 +330,127 @@ fn cells(ring: &[[i16; 2]], unit: f64) -> Vec<(i32, i32)> {
 		.collect()
 }
 
+/// The tags Arnis reads for a building: the Overture row's columns as `hrt_facade::overture_tags` maps them, with the
+/// joined OpenStreetMap tags (`osm:<key>`) taking precedence, as Arnis reads a mapped way's own tags.
+fn facade_tags(tags: &Tags) -> hrt_facade::Tags {
+	let number = |key: &str| tags.get(key).and_then(|text| text.parse::<f64>().ok());
+	let mut out = hrt_facade::overture_tags(
+		tags.get("subtype"),
+		tags.get("class"),
+		number("height"),
+		number("num_floors").map(|floors| floors as i32),
+		number("min_height"),
+		tags.get("roof_shape"),
+		tags.get("roof_material"),
+		tags.get("roof_orientation"),
+		number("roof_height"),
+		tags.get("facade_color"),
+		tags.get("roof_color"),
+		tags.get("facade_material"),
+		true,
+	);
+	if tags.get("type") == Some("building_part") {
+		out.insert("building:part".to_owned(), "yes".to_owned());
+	}
+	for (key, value) in &tags.0 {
+		if let Some(osm_key) = key.strip_prefix("osm:") {
+			out.insert(osm_key.to_owned(), value.clone());
+		}
+	}
+	out
+}
+
+/// The seed Arnis would give the building: its OpenStreetMap way, or relation's first outer ring, or else its GERS id.
+fn facade_seed(tags: &Tags) -> u64 {
+	match tags.get("sources:OpenStreetMap").and_then(osm_element) {
+		Some(('w', id)) => hrt_facade::seed_for_osm_way(id as u64),
+		Some((_, id)) => hrt_facade::seed_for_relation_ring(id as u64, 0),
+		None => hrt_facade::seed_for_overture_id(tags.get("id").unwrap_or_default()),
+	}
+}
+
+/// A resolved style as the record's style bytes, described at `hrt_profile::building_buffers::STYLE_BYTES`.
+fn style_bytes(style: &FacadeStyle) -> [u8; STYLE_BYTES] {
+	let meters = |value: i32| value.clamp(0, 254) as u8;
+	let flags = [
+		style.has_windows,
+		style.has_parapet,
+		style.use_horizontal_windows,
+		style.use_accent_lines,
+		style.use_accent_roof_line,
+		style.is_tall_building,
+		style.use_vertical_accent,
+		style.generate_roof,
+	]
+	.iter()
+	.enumerate()
+	.fold(0u8, |flags, (bit, set)| flags | u8::from(*set) << bit);
+	[
+		style.wall.index(),
+		style.trim.index(),
+		style.accent.index(),
+		style.glass.index(),
+		style.spandrel.index(),
+		style.base_course.map_or(UNRESOLVED_STYLE, |block| block.index()),
+		style.shop_frame.index(),
+		style.roof_block.unwrap_or(style.roof_cover.base).index(),
+		style.category as u8,
+		style.window_archetype as u8,
+		style.ground as u8,
+		meters(style.bays.window),
+		meters(style.bays.pier),
+		meters(style.bays.corner),
+		meters(style.floor_cycle),
+		flags,
+	]
+}
+
+/// The pitched roof the compact record can draw for a resolved roof type: half-hipped draws hipped, and the shapes
+/// the record has no geometry for yet draw flat.
+fn pitched_roof(style: &FacadeStyle) -> Option<PitchedRoof> {
+	if !style.generate_roof {
+		return None;
+	}
+	match style.roof_type {
+		RoofType::Gabled => Some(PitchedRoof::Gabled),
+		RoofType::Hipped | RoofType::HalfHipped => Some(PitchedRoof::Hipped),
+		_ => None,
+	}
+}
+
+/// Resolves a draft's style from its first polygon's exterior and facade plan, and applies it.
+fn resolve_style(draft: &mut BuildingDraft, tags: &Tags, exterior: &[(i32, i32)], fill: usize, plan: &FacadePlan) {
+	let Some(first) = draft.polygons.first() else {
+		return;
+	};
+	let box_ = bounds_of(first.exterior().0.iter().copied());
+	let lon = (box_[0] + box_[2]) / 2.0 * 360.0 - 180.0;
+	let lat = hrt_osm::coords::world_lat((box_[1] + box_[3]) / 2.0);
+	let facade_tags = facade_tags(tags);
+	let seed = facade_seed(tags);
+	let mut nodes = exterior.to_vec();
+	nodes.push(exterior[0]);
+	let style = hrt_facade::resolve(&FacadeInput {
+		seed,
+		element_id: seed,
+		tags: &facade_tags,
+		outline: Outline { nodes, cells: fill },
+		lon,
+		lat,
+		district_cell: hrt_facade::district_cell(lon, lat),
+		relation_levels: None,
+		neighbors: Some(NeighborFacts {
+			attached: plan.attached,
+			enclosed: plan.enclosed,
+			has_any_street: plan.has_any_street,
+			street_corner: plan.corner.is_some(),
+		}),
+		has_mapped_entrance: false,
+	});
+	let inferred = (!draft.has_height()).then(|| style.inferred_height.map(f64::from)).flatten();
+	draft.apply_style(style_bytes(&style), inferred, pitched_roof(&style));
+}
+
 /// What one tile's processing wrote.
 #[derive(Default)]
 struct TileOutput {
@@ -405,10 +528,21 @@ fn process_tile((tx, ty): (u32, u32), rows: &[SortedRow], osm: &OsmInputs) -> Ti
 	};
 	let empty = HashSet::new();
 	let mut output = TileOutput::default();
-	for (row, draft) in rows.iter().zip(&drafts) {
-		let (true, Some(draft)) = (row.home, draft) else {
+	for (row, draft) in rows.iter().zip(drafts) {
+		let (true, Some(mut draft)) = (row.home, draft) else {
 			continue;
 		};
+		let styled = draft.polygons.first().filter(|first| home_tile(first) == (tx, ty)).and_then(|first| {
+			let rings = quantize_polygon(first, (tx, ty))?;
+			let exterior = cells(&rings[0], unit);
+			let plan = compute_facade_plan(&exterior, own.get(&draft.group).unwrap_or(&empty), &near);
+			Some((exterior, plan))
+		});
+		if let Some((exterior, plan)) = styled {
+			let fill = fill_cells(&exterior).len();
+			resolve_style(&mut draft, &row.tags, &exterior, fill, &plan);
+		}
+		let draft = &draft;
 		let plans = Mutex::new(Vec::<FacadePlan>::new());
 		let records = draft_records(draft, &|ring, tile| {
 			if tile != (tx, ty) {

@@ -981,6 +981,7 @@ dependencies = [
  "geo-types",
  "geos",
  "hrt-e",
+ "hrt-facade",
  "hrt-osm",
  "hrt-pmtiles",
  "hrt-profile",

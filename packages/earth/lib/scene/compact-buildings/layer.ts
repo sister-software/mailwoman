@@ -131,6 +131,9 @@ in vec2 a_height;
 in vec4 a_color;
 in vec2 a_run;
 in vec4 a_flags;
+in vec4 a_glass;
+in vec4 a_trim;
+in vec4 a_bays;
 uniform float u_unit_meters;
 out vec3 v_color;
 out vec2 v_wall;
@@ -138,7 +141,10 @@ out float v_shade;
 flat out float v_floor_height;
 flat out float v_wall_height;
 flat out float v_run_length;
-flat out float v_edge_flags;
+flat out vec4 v_flags;
+flat out vec3 v_glass;
+flat out vec4 v_trim;
+flat out vec4 v_bays;
 
 void main() {
 	vec2 position = mix(a_edge.xy, a_edge.zw, a_corner.x);
@@ -155,11 +161,15 @@ void main() {
 	// Along the wall run rather than the edge, so a vertex part way along a facade does not break its bays.
 	v_wall = vec2(a_run.y * 0.1 + a_corner.x * meters, a_corner.y * (top - base));
 	v_run_length = a_run.x * 0.1;
-	v_edge_flags = a_flags.x;
+	v_flags = a_flags;
 	float floors = a_color.w * 255.0;
 	v_wall_height = top - base;
-	v_floor_height = floors > 0.0 ? (top - base) / floors : 3.2;
+	// A resolved style gives the storey height in meters; 255 means the build resolved none.
+	v_floor_height = a_glass.w < 255.0 ? max(a_glass.w, 2.0) : (floors > 0.0 ? (top - base) / floors : 3.2);
 	v_color = a_color.rgb;
+	v_glass = a_glass.rgb / 255.0;
+	v_trim = vec4(a_trim.rgb / 255.0, a_trim.w);
+	v_bays = a_bays;
 }`
 
 const WALL_FRAGMENT_SHADER = `#version 300 es
@@ -170,7 +180,10 @@ in float v_shade;
 flat in float v_floor_height;
 flat in float v_wall_height;
 flat in float v_run_length;
-flat in float v_edge_flags;
+flat in vec4 v_flags;
+flat in vec3 v_glass;
+flat in vec4 v_trim;
+flat in vec4 v_bays;
 out vec4 fragColor;
 
 // Whether column i of a straight wall run len columns long is glass, as Arnis's BayLayout::plan and slot lay a run
@@ -210,26 +223,76 @@ bool bayWindow(int len, int i, int window, int pier, int cornerWidth) {
 	return (y - middle) % period >= pier;
 }
 
+// Whether row \`row\` (meters above the storey's floor, 0 the band between storeys) of a storey \`cycle\` rows tall is
+// glass under a window archetype, as Arnis's archetype_allows_window decides. The archetype indexes follow
+// hrt_facade's WindowArchetype: 2 Spaced and 0 Sash keep two-row sashes, 4 Ribbon keeps a two-row spandrel and
+// 9 DecoPiers keeps a spandrel under its windows on storeys of four rows or more.
+bool archetypeRow(int archetype, int row, int cycle) {
+	if (archetype == 4 && cycle >= 4) return row >= 2;
+	if (archetype == 9 && cycle >= 4) return row >= 1 && row < cycle - 1;
+	if (archetype == 2 || archetype == 0) return row >= 1 && row <= 2;
+	return row >= 1;
+}
+
 void main() {
-	// Windows: one band per floor, and along the wall the bays of its straight run. The ground floor, walls under
-	// 2 m and party walls stay blank. Towers over 30 m take blue-gray glass, lower buildings warm-gray windows.
-	float tower = step(30.0, v_wall_height);
-	vec2 cell = vec2(v_wall.x / mix(3.0, 2.0, tower), v_wall.y / v_floor_height);
-	float floorY = fract(cell.y);
-	float inBand = step(mix(0.35, 0.18, tower), floorY) * step(floorY, mix(0.78, 0.9, tower));
-	// Until the build resolves each building's window archetype, every run takes 2 m windows, 1 m piers and 1 m
-	// corners.
-	float inBay = bayWindow(int(v_run_length), int(floor(v_wall.x)), 2, 1, 1) ? 1.0 : 0.0;
-	float party = float(int(v_edge_flags) % 4 == ${FacadeClass.Party});
-	float aboveGround = step(v_floor_height, v_wall.y) * step(2.0, v_wall_height) * (1.0 - party);
-	// Where a floor or bay shrinks toward a pixel, the grid would alias into noise, so it fades to its average.
+	int edgeClass = int(v_flags.x) % 4;
+	int archetype = int(v_flags.z);
+	int ground = int(v_flags.w);
+	int styleFlags = int(v_trim.w);
+	bool resolved = styleFlags != 255;
+	bool hasWindows = !resolved || (styleFlags & 1) != 0;
+	bool parapet = resolved && (styleFlags & 2) != 0;
+	bool ribbon = resolved && (styleFlags & 4) != 0;
+	bool floorLines = resolved && (styleFlags & 8) != 0;
+	bool roofLine = resolved && (styleFlags & 16) != 0;
+	// Bay widths in meters; a building without a resolved style takes 2 m windows, 1 m piers and 1 m corners.
+	int bayWindowWidth = resolved ? int(v_bays.x) : 2;
+	int bayPier = resolved ? int(v_bays.y) : 1;
+	int bayCorner = resolved ? int(v_bays.z) : 1;
+
+	float cycle = v_floor_height;
+	float storey = floor(v_wall.y / cycle);
+	int row = int(floor(v_wall.y - storey * cycle));
+	int column = int(floor(v_wall.x));
+	int len = int(v_run_length);
+	bool groundStorey = storey < 1.0;
+	bool street = edgeClass == ${FacadeClass.Street};
+	bool party = edgeClass == ${FacadeClass.Party};
+
+	float glassAmount = 0.0;
+	if (hasWindows && !party && v_wall_height >= 2.0) {
+		if (groundStorey) {
+			// A shopfront (1) or lobby (2) on a street wall: display glass from the pavement up between piers, under a
+			// sign band, on Arnis's shop rhythm of 3 m windows and 1 m piers.
+			if (street && (ground == 1 || ground == 2)) {
+				bool display = bayWindow(len, column, 3, 1, 1);
+				glassAmount = display && v_wall.y < cycle - 0.8 ? 1.0 : 0.0;
+			} else if (resolved) {
+				glassAmount = archetypeRow(archetype, row, int(cycle)) && bayWindow(len, column, bayWindowWidth, bayPier, bayCorner) ? 1.0 : 0.0;
+			}
+		} else {
+			bool inRow = archetypeRow(archetype, row, int(cycle));
+			bool inBay = ribbon ? (column >= bayCorner && column < len - bayCorner) : bayWindow(len, column, bayWindowWidth, bayPier, bayCorner);
+			glassAmount = inRow && inBay ? 1.0 : 0.0;
+		}
+	}
+	// Where a storey or bay shrinks toward a pixel, the pattern would alias into noise, so it fades to its average.
+	vec2 cell = vec2(v_wall.x / float(bayWindowWidth + bayPier), v_wall.y / cycle);
 	vec2 cellsPerPixel = fwidth(cell);
 	float detail = 1.0 - smoothstep(0.25, 0.6, max(cellsPerPixel.x, cellsPerPixel.y));
-	float coverage = mix(0.25, 0.6, tower);
-	float window = mix(coverage, inBand * inBay, detail) * aboveGround;
-	vec3 glass = mix(vec3(0.62, 0.62, 0.62), vec3(0.50, 0.58, 0.68), tower);
-	vec3 wall = v_color * v_shade;
-	fragColor = vec4(mix(wall, glass * v_shade, window * mix(0.4, 0.65, tower)), 1.0);
+	float average = hasWindows && !party ? float(bayWindowWidth) / float(bayWindowWidth + bayPier) * 0.6 : 0.0;
+	float window = mix(average, glassAmount, detail);
+
+	vec3 wall = v_color;
+	// Trim: a band at each floor line when the style draws accent lines, and a cornice along the top of a wall with a
+	// parapet or an accent roof line.
+	float trim = 0.0;
+	if (floorLines && !groundStorey && v_wall.y - storey * cycle < 0.3) trim = 1.0;
+	if ((parapet || roofLine) && v_wall.y > v_wall_height - 0.6) trim = 1.0;
+	if (street && (ground == 1 || ground == 2) && groundStorey && v_wall.y >= cycle - 0.8) trim = 1.0;
+	wall = mix(wall, v_trim.rgb, trim * detail);
+	vec3 glass = resolved ? v_glass : vec3(0.62);
+	fragColor = vec4(mix(wall, glass, window) * v_shade, 1.0);
 }`
 
 const ROOF_VERTEX_SHADER = `
@@ -407,7 +470,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 			gl,
 			prelude + WALL_VERTEX_SHADER,
 			WALL_FRAGMENT_SHADER,
-			["a_corner", "a_edge", "a_height", "a_color", "a_run", "a_flags"],
+			["a_corner", "a_edge", "a_height", "a_color", "a_run", "a_flags", "a_glass", "a_trim", "a_bays"],
 			["u_unit_meters", "u_hidden", "u_hidden_count", "u_tile_mercator"]
 		)
 
@@ -550,6 +613,17 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 		gl.enableVertexAttribArray(flags)
 		gl.vertexAttribPointer(flags, 4, gl.UNSIGNED_BYTE, false, WALL_STRIDE, 20)
 		gl.vertexAttribDivisor(flags, 1)
+
+		for (const [name, at] of [
+			["a_glass", 24],
+			["a_trim", 28],
+			["a_bays", 32],
+		] as const) {
+			const location = attribute(walls, name)
+			gl.enableVertexAttribArray(location)
+			gl.vertexAttribPointer(location, 4, gl.UNSIGNED_BYTE, false, WALL_STRIDE, at)
+			gl.vertexAttribDivisor(location, 1)
+		}
 
 		const roofVAO = gl.createVertexArray()!
 		gl.bindVertexArray(roofVAO)
