@@ -137,7 +137,6 @@ class WOFResolver implements Resolver {
 		this.#backend = backend
 		this.artifactCoverage = backend.artifactCoverage ?? null
 		this.capabilityGaps = describeCapabilityGaps(backend)
-		reportCapabilityGaps(this.capabilityGaps)
 	}
 
 	/**
@@ -148,6 +147,11 @@ class WOFResolver implements Resolver {
 	async resolveTree(tree: AddressTree, callerOpts: ResolveOpts = {}): Promise<AddressTree> {
 		// Every on/off switch resolves against the one defaults table, so the reads below are plain truthiness.
 		const opts: ResolvedOpts = { ...callerOpts, ...resolveSwitches(callerOpts) }
+
+		// A gap is reported only for an option this call leaves on.
+		// A caller that turns the option off has chosen the behavior the gap would impose.
+		reportCapabilityGaps(this.capabilityGaps.filter((gap) => opts[gap.option]))
+
 		// Optional early postcode-shape pass.
 		// Runs sync and can only narrow candidates.
 		const shapeVerdict = opts.postcodeShapeCoherence ? applyPostcodeShapeCoherence(tree.roots) : null

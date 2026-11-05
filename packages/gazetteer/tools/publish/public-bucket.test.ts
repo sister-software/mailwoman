@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { gzip } from "@mailwoman/core/fs/compression"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
@@ -66,6 +67,31 @@ describe("publishToPublicBucket", () => {
 			"en-us/v10.0.0/fst-en-US.bin": "gzip",
 			"en-us/v10.0.0/model.onnx": "gzip",
 		})
+	})
+
+	it("refuses a whole-fetch binary that is already gzip data before invoking the upload transport", async () => {
+		await using directory = await temporaryDirectory("mw-public-bucket-")
+		await makeDirectories(directory.path("en-us", "v10.0.0"))
+		await writeLocalFile(await gzip("PCB1"), directory.path("en-us", "v10.0.0", "postcode-de.bin"))
+		const upload = vi.fn()
+
+		await expect(publishToPublicBucket({ src: directory.path, upload })).rejects.toThrow(
+			/en-us\/v10\.0\.0\/postcode-de\.bin: the staged file is already gzip data/
+		)
+
+		expect(upload).not.toHaveBeenCalled()
+	})
+
+	it("admits gzip data under an identity-encoded extension", async () => {
+		await using directory = await temporaryDirectory("mw-public-bucket-")
+		await makeDirectories(directory.path("en-us", "v10.0.0"))
+		await writeLocalFile(await gzip("rows"), directory.path("en-us", "v10.0.0", "embeddings.rows"))
+
+		const uploads = await planPublicBucketUploads(directory.path, "mailwoman")
+
+		expect(uploads.map((upload) => [upload.relativePath, upload.contentEncoding])).toEqual([
+			["en-us/v10.0.0/embeddings.rows", null],
+		])
 	})
 
 	it("refuses a flat pair-index key before invoking the upload transport", async () => {

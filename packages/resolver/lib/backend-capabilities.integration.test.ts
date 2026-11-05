@@ -9,9 +9,10 @@
  */
 
 import type { ResolverBackend } from "@mailwoman/core/resolver"
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { describeCapabilityGaps, formatCapabilityGaps } from "#backend-capabilities"
+import { createWOFResolver } from "#resolve"
 
 /**
  * The minimum a backend must implement.
@@ -65,5 +66,40 @@ describe("describeCapabilityGaps", () => {
 		expect(line).toContain("ancestors()")
 		expect(line).toContain("coincidentLocalitiesFor()")
 		expect(line).not.toContain("\n")
+	})
+})
+
+describe("the capability-gap report", () => {
+	afterEach(() => {
+		vi.restoreAllMocks()
+	})
+
+	// The report is deduplicated per backend name for the whole process, so each case declares its own class.
+	it("is written when a resolveTree call leaves the dependent option on", async () => {
+		class GapReportedBackend extends MinimalBackend {}
+		const errors = vi.spyOn(console, "error").mockImplementation(() => {})
+		const resolver = createWOFResolver(new GapReportedBackend())
+
+		expect(errors).not.toHaveBeenCalled()
+
+		await resolver.resolveTree({ raw: "", roots: [] })
+
+		expect(errors).toHaveBeenCalledTimes(1)
+		expect(String(errors.mock.calls[0]?.[0])).toContain("GapReportedBackend lacks ancestors()")
+	})
+
+	it("is not written when the caller turns the dependent option off, and the gaps stay readable as data", async () => {
+		class GapDeclinedBackend extends MinimalBackend {}
+		const errors = vi.spyOn(console, "error").mockImplementation(() => {})
+		const resolver = createWOFResolver(new GapDeclinedBackend())
+
+		await resolver.resolveTree({ raw: "", roots: [] }, { hierarchyCompletion: false })
+
+		expect(errors).not.toHaveBeenCalled()
+
+		expect(resolver.capabilityGaps?.map((gap) => gap.capability).toSorted()).toEqual([
+			"ancestors",
+			"coincidentLocalitiesFor",
+		])
 	})
 })

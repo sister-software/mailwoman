@@ -204,9 +204,13 @@ export async function runCascade(
 	const backend = new CandidateResolverBackend(lookup)
 	const resolver = createWOFResolver(backend)
 
-	// adminCoherence performs the convergence and no defaultCountry is deliberate, because the demo ranks globally.
+	// adminCoherence performs the convergence.
+	// No defaultCountry is deliberate, because the demo ranks globally.
+	// Hierarchy completion is off because it calls `ancestors()` and `coincidentLocalitiesFor()`.
+	// Both are synchronous, and a lookup that reads HTTP byte ranges cannot provide them.
 	const resolved = (await resolver.resolveTree(tree, {
 		adminCoherence: true,
+		hierarchyCompletion: false,
 		...(bias && bias.length ? { bias } : {}),
 	})) as {
 		roots: ResolvedTreeNode[]
