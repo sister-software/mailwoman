@@ -31,7 +31,7 @@ const UNRESOLVED = 0xff
 /**
  * The sRGB color of each block, indexed by the palette byte a record's style stores.
  */
-const BLOCK_COLORS: readonly RGB[] = blockPalette.blocks.map((block) => block.rgb as unknown as RGB)
+const BLOCK_COLORS: readonly RGB[] = blockPalette.blocks.map(({ rgb }): RGB => [rgb[0] ?? 0, rgb[1] ?? 0, rgb[2] ?? 0])
 
 /**
  * The palette color of a style byte, or `null` for an unresolved byte.

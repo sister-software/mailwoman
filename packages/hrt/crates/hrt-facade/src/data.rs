@@ -187,6 +187,10 @@ pub struct MaterialTables {
 	pub facade_tone_families: Vec<WordsFamily>,
 	pub roof_material_families: Vec<WordsFamily>,
 	pub sheet_metal: Vec<String>,
+	/// `building=*` values that keep castle masonry.
+	pub fortification_buildings: Vec<String>,
+	/// `historic=*` values that keep castle masonry.
+	pub fortification_historic: Vec<String>,
 }
 
 #[derive(Deserialize)]

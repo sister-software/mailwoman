@@ -615,19 +615,9 @@ pub fn get_wall_block_for_category(
 
 /// Walls, towers and ruins that keep castle masonry under `historic=*`.
 fn is_fortification(tags: &Tags) -> bool {
-	let tag = |k: &str| tags.get(k).map(String::as_str).unwrap_or("");
-	matches!(tag("building"), "castle" | "ruins" | "fort" | "bunker")
-		|| matches!(
-			tag("historic"),
-			"castle"
-				| "fort" | "fortress"
-				| "fortification"
-				| "citywalls"
-				| "city_wall"
-				| "city_gate"
-				| "tower" | "ruins"
-				| "bunker" | "archaeological_site"
-		)
+	let materials = &data::tables().materials;
+	let has = |key: &str, values: &[String]| tags.get(key).is_some_and(|value| values.iter().any(|v| v == value));
+	has("building", &materials.fortification_buildings) || has("historic", &materials.fortification_historic)
 }
 
 /// The wall for a building without material or colour tags: the regional palette where the region has one, else
@@ -774,7 +764,7 @@ pub fn coping_for(wall: Block, accent: Block, seed: u64) -> Block {
 	}
 }
 
-/// The block whose slab Arnis `get_slab_block_for_material` cuts for a material.
+/// The block whose slab Arnis `get_slab_block_for_material` makes for a material.
 pub fn slab_of(material: Block) -> Block {
 	rule_blocks(&data::tables().trim.slab_of, material, None)
 		.first()

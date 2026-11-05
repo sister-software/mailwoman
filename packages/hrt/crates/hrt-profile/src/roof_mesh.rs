@@ -216,7 +216,7 @@ fn footprint_corners(ring: &[[f64; 2]]) -> Corners {
 
 /// A gable-family roof over a rectangle: lines parallel to the ridge at the profile's breakpoints, `profile` giving
 /// the height at each distance from the eave, up to the ridge at half the span. `close` says which ends get a gable
-/// wall: an end cut back into a larger wing's roof stays open. Returns the rise.
+/// wall: an end shortened to a larger wing's ridge stays open. Returns the rise.
 fn add_gable(
 	builder: &mut Builder,
 	c: Corners,
@@ -309,7 +309,7 @@ struct Wing {
 	v: (f64, f64),
 	/// The ridge runs along `u`, else along `v`.
 	along_u: bool,
-	/// Ridge ends cut back where the wing runs into a larger wing's roof.
+	/// Ridge ends shortened to the ridge of a larger wing this one runs into.
 	clipped: (bool, bool),
 }
 
@@ -359,8 +359,8 @@ fn dominant_axis_angle(ring: &[[f64; 2]]) -> f64 {
 	sum_s.atan2(sum_c) / 4.0
 }
 
-/// Wall lines along one axis merged into the cuts of a coarse grid: lines within 2 m of each other are one wall with
-/// a jog. `None` for fewer than two cuts or more than a dozen. Arnis's `merge_wall_lines`.
+/// Wall lines along one axis merged into the lines of a coarse grid: lines within 2 m of each other are one wall with
+/// a jog. `None` for fewer than two grid lines or more than a dozen. Arnis's `merge_wall_lines`.
 fn merge_wall_lines(mut lines: Vec<(f64, f64)>) -> Option<Vec<f64>> {
 	lines.sort_by(|a, b| a.0.total_cmp(&b.0));
 	let mut groups: Vec<Vec<(f64, f64)>> = Vec::new();
@@ -405,7 +405,7 @@ fn polygon_contains(ring: &[(f64, f64)], x: f64, z: f64) -> bool {
 }
 
 /// Splits an L, T, U or other right-angled footprint into overlapping rectangular wings, each roofed along its own
-/// length, with a wing that runs into a longer perpendicular wing cut back to that wing's ridge. `None` for a plain
+/// length, with a wing that runs into a longer perpendicular wing shortened to that wing's ridge. `None` for a plain
 /// rectangle, a footprint with long oblique walls, one too intricate to split, or wings that all run one way.
 /// Arnis's `roof_wings`, on a footprint without courtyards. Returns the frame angle and the wings.
 fn roof_wings(ring: &[[f64; 2]]) -> Option<(f64, Vec<Wing>)> {

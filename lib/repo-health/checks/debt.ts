@@ -433,6 +433,14 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/dictionaries/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
 	[
+		"packages/structures/data/facade/",
+		"Arnis's tables quote Minecraft block ids and OpenStreetMap tag values verbatim: `cut_sandstone_slab`, `historic=city_gate`",
+	],
+	[
+		"packages/hrt/crates/hrt-facade/tests/",
+		"the parity fixtures record Arnis's own outputs verbatim, Minecraft block ids such as `cut_sandstone_slab` included",
+	],
+	[
 		"packages/corpus/fixtures/",
 		"an adapter fixture is address rows, and a street type is a common noun in its own language: " +
 			"`gate` is Norwegian for street, so `Karl Johans gate` is the most ordinary address Norway has",

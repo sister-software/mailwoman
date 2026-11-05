@@ -1,5 +1,5 @@
 {
-	"$comment": "Normalized tag words (lowercase, whitespace, '_' and '-' removed) the facade crate matches building:architecture, building:material, building:cladding and roof:material against. Transcribed from Arnis d8e8b662 (Apache-2.0): src/osm_parser.rs ORNATE_STYLES, BRUTALIST_STYLES, MODERN_STYLES, MASONRY_MATERIALS, MASONRY_CLADDING, CONCRETE_MATERIALS, PANEL_MATERIALS; src/block_definitions.rs get_wall_block_for_material and get_roof_block_for_material; src/element_processing/buildings.rs facade_tone_for_material, roof_material_family, is_sheet_metal.",
+	"$comment": "Normalized tag words (lowercase, whitespace, '_' and '-' removed) the facade crate matches building:architecture, building:material, building:cladding and roof:material against. Transcribed from Arnis d8e8b662 (Apache-2.0): src/osm_parser.rs ORNATE_STYLES, BRUTALIST_STYLES, MODERN_STYLES, MASONRY_MATERIALS, MASONRY_CLADDING, CONCRETE_MATERIALS, PANEL_MATERIALS; src/block_definitions.rs get_wall_block_for_material and get_roof_block_for_material; src/element_processing/buildings.rs facade_tone_for_material, roof_material_family, is_sheet_metal, is_fortification.",
 	"ornate_styles": [
 		"artdeco",
 		"artnouveau",
@@ -285,5 +285,19 @@
 		"corrugatediron",
 		"corrugatedsteel",
 		"corrugatedmetal"
+	],
+	"fortification_buildings": ["castle", "ruins", "fort", "bunker"],
+	"fortification_historic": [
+		"castle",
+		"fort",
+		"fortress",
+		"fortification",
+		"citywalls",
+		"city_wall",
+		"city_gate",
+		"tower",
+		"ruins",
+		"bunker",
+		"archaeological_site"
 	]
 }
