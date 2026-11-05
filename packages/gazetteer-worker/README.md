@@ -1,7 +1,7 @@
 # @mailwoman/gazetteer-worker
 
 This private workspace holds the Cloudflare Worker that answers gazetteer place lookups for the hosted geocoder. It
-runs apart from the engine Worker, which holds the classifier, because the whole pipeline in one isolate exceeds
+runs apart from the engine Worker that holds the classifier, because the whole pipeline in one isolate exceeds
 the 128 MB Worker memory limit. #2839 records the measurements.
 
 The Worker's default export is a `WorkerEntrypoint`. A caller binds it as a service and calls its methods over RPC:

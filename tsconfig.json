@@ -127,6 +127,8 @@
 		{ "path": "./packages/license-worker/tsconfig.test.json" },
 		{ "path": "./packages/gazetteer-worker" },
 		{ "path": "./packages/gazetteer-worker/tsconfig.test.json" },
+		{ "path": "./packages/engine-worker" },
+		{ "path": "./packages/engine-worker/tsconfig.test.json" },
 		{ "path": "./packages/map-tui" },
 		{ "path": "./packages/map-tui/cli" },
 		{ "path": "./packages/mtf" },

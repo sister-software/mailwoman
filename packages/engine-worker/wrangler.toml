@@ -1,0 +1,9 @@
+name = "mailwoman-engine"
+main = "./lib/index.ts"
+compatibility_date = "2026-10-24"
+workers_dev = false
+
+# The gazetteer Worker answers every place lookup the cascade makes, so this isolate loads no gazetteer database.
+[[services]]
+binding = "GAZETTEER"
+service = "mailwoman-gazetteer"

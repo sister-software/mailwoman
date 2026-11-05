@@ -181,6 +181,11 @@
 			"node": "./lib/license/status.ts",
 			"default": "./out/license/status.js"
 		},
+		"./license/stamp": {
+			"types": "./out/license/stamp.d.ts",
+			"node": "./lib/license/stamp.ts",
+			"default": "./out/license/stamp.js"
+		},
 		"./resources": {
 			"types": "./out/resources.d.ts",
 			"node": "./lib/resources.ts",
