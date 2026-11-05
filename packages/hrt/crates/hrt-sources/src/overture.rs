@@ -12,8 +12,12 @@
 //! - Each `key=value` directory on the file's path becomes a tag too, as hive partitioning does, including the root
 //!   itself when it is a partition such as `theme=buildings/`. The release keeps `theme` and `type` only in the path.
 //!
-//! Struct and list columns, such as `names`, `sources` and `bbox`, give no tags. With map bounds, a row group whose
-//! `bbox` statistics lie outside them is skipped, and so is each row whose `bbox` lies outside them.
+//! The `sources` list gives one tag per dataset, `sources:<dataset>`, holding that dataset's `record_id`, such as
+//! `sources:OpenStreetMap=w783697382@1`. A dataset's entry for the whole feature, with no `property`, wins over its
+//! entries for single properties. Other struct and list columns, such as `names` and `bbox`, give no tags.
+//!
+//! With map bounds, a row group whose `bbox` statistics lie outside them is skipped, and so is each row whose `bbox`
+//! lies outside them.
 //!
 //! Row groups are read in parallel on rayon's threads, so `each` runs on several threads at once and sees rows out of
 //! order. Each record's id is its row's position across the whole input, counted from 1 in path order, which does not
@@ -42,6 +46,41 @@ use crate::{lon_lat_to_world, Record};
 
 const GEOMETRY: &str = "geometry";
 const BBOX: &str = "bbox";
+const SOURCES: &str = "sources";
+
+/// The `sources:<dataset>` tags of a row: each dataset's `record_id`, preferring its entry with no `property`.
+fn source_tags(sources: &ArrayRef, row: usize) -> Vec<(String, String)> {
+	if sources.is_null(row) {
+		return Vec::new();
+	}
+	let entries = match sources.data_type() {
+		DataType::List(_) => sources.as_list::<i32>().value(row),
+		DataType::LargeList(_) => sources.as_list::<i64>().value(row),
+		_ => return Vec::new(),
+	};
+	let Some(entries) = entries.as_struct_opt() else {
+		return Vec::new();
+	};
+	let (Some(dataset), Some(record_id)) = (entries.column_by_name("dataset"), entries.column_by_name("record_id"))
+	else {
+		return Vec::new();
+	};
+	let property = entries.column_by_name("property");
+	let mut tags: Vec<(String, String, bool)> = Vec::new();
+	for entry in 0..entries.len() {
+		let (Some(dataset), Some(record_id)) = (cell_text(dataset, entry), cell_text(record_id, entry)) else {
+			continue;
+		};
+		let whole = property.is_none_or(|property| cell_text(property, entry).is_none_or(|text| text.is_empty()));
+		let key = format!("{SOURCES}:{dataset}");
+		match tags.iter_mut().find(|(existing, _, _)| *existing == key) {
+			Some(found) if whole && !found.2 => *found = (key, record_id, true),
+			Some(_) => {}
+			None => tags.push((key, record_id, whole)),
+		}
+	}
+	tags.into_iter().map(|(key, value, _)| (key, value)).collect()
+}
 
 fn parquet_error(error: impl std::error::Error + Send + Sync + 'static) -> io::Error {
 	io::Error::other(error)
@@ -221,6 +260,7 @@ fn read_batch(
 		.column_by_name(GEOMETRY)
 		.ok_or_else(|| io::Error::other(format!("{} has no geometry column", opened.path.display())))?;
 	let bbox = batch.column_by_name(BBOX).and_then(|column| column.as_struct_opt());
+	let sources = batch.column_by_name(SOURCES);
 	let tag_columns: Vec<(&str, &ArrayRef)> = schema
 		.fields()
 		.iter()
@@ -247,6 +287,9 @@ fn read_batch(
 			if let Some(text) = cell_text(column, row) {
 				tags.push(((*name).to_owned(), text));
 			}
+		}
+		if let Some(sources) = sources {
+			tags.extend(source_tags(sources, row));
 		}
 		each(Record {
 			id: first_id + row as i64,
@@ -302,7 +345,12 @@ pub fn read(root: &Path, bounds: Option<[f64; 4]>, each: impl Fn(Record) + Sync)
 				.fields()
 				.iter()
 				.enumerate()
-				.filter(|(_, field)| field.name() == GEOMETRY || field.name() == BBOX || is_tag_type(field.data_type()))
+				.filter(|(_, field)| {
+					field.name() == GEOMETRY
+						|| field.name() == BBOX
+						|| field.name() == SOURCES
+						|| is_tag_type(field.data_type())
+				})
 				.map(|(index, _)| index)
 				.collect();
 			let mask = ProjectionMask::roots(opened.metadata.parquet_schema(), roots);
@@ -426,6 +474,41 @@ mod tests {
 		assert_eq!(tag(first, "has_parts").as_deref(), Some("true"));
 		assert_eq!(tag(&records[1], "height"), None);
 		assert_eq!(tag(first, "bbox"), None);
+	}
+
+	#[test]
+	fn sources_give_one_record_id_per_dataset_preferring_the_whole_feature_entry() {
+		let fields = Fields::from(vec![
+			Field::new("property", DataType::Utf8, true),
+			Field::new("dataset", DataType::Utf8, true),
+			Field::new("record_id", DataType::Utf8, true),
+		]);
+		let text = |values: Vec<Option<&str>>| Arc::new(StringArray::from(values)) as ArrayRef;
+		// Row 0: OSM gives the height first and the whole feature second; Esri gives the whole feature.
+		// Row 1: no entries.
+		let entries = StructArray::new(
+			fields.clone(),
+			vec![
+				text(vec![Some("/properties/height"), Some(""), None]),
+				text(vec![Some("OpenStreetMap"), Some("OpenStreetMap"), Some("Esri Community Maps")]),
+				text(vec![Some("w2@1"), Some("w1@3"), Some("{ABC}")]),
+			],
+			None,
+		);
+		let list: ArrayRef = Arc::new(arrow_array::ListArray::new(
+			Arc::new(Field::new("element", DataType::Struct(fields), true)),
+			arrow_buffer::OffsetBuffer::new(vec![0, 3, 3].into()),
+			Arc::new(entries),
+			None,
+		));
+		assert_eq!(
+			source_tags(&list, 0),
+			[
+				("sources:OpenStreetMap".to_owned(), "w1@3".to_owned()),
+				("sources:Esri Community Maps".to_owned(), "{ABC}".to_owned()),
+			]
+		);
+		assert!(source_tags(&list, 1).is_empty());
 	}
 
 	#[test]

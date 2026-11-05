@@ -13,6 +13,7 @@ pub mod building_buffers;
 pub mod clip;
 pub mod country;
 pub mod expr;
+pub mod facade_plan;
 pub mod input;
 pub mod layers;
 pub mod line_merger;
