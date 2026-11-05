@@ -42,6 +42,7 @@ export const plan = defineOperation({
 	description:
 		"Describe what a release of this checkout publishes — HEAD, version, packages, weights artifacts, destinations — sealed under a digest that publish-workspace and bless-package re-verify.",
 	effect: OperationEffect.Read,
+	options: {},
 	inputSchema: z.object({}),
 	outputSchema: planSchema,
 	run: (_input, context) => computeReleasePlan(context.repoRoot),

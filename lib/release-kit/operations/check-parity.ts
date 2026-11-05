@@ -25,6 +25,7 @@ export const checkParity = defineOperation({
 	description:
 		"Compare the demo manifest and the docs releases matrix against npm latest and the shipped model card; --warn-only downgrades a mismatch to a warning.",
 	effect: OperationEffect.Read,
+	options: { "warn-only": { type: "boolean" } },
 	inputSchema: z.object({ "warn-only": flag }).strict(),
 	outputSchema: z.object({
 		npmLatest: z.string(),

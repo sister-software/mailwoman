@@ -26,6 +26,7 @@ export const installUdevRuleOperation = defineOperation({
 	description:
 		"Install a udev rule that keeps TRIM enabled on a USB-attached SSD whose bridge supports UNMAP but not WRITE SAME.",
 	effect: StorageEffect.HostWrite,
+	options: { vendor: { type: "string" }, product: { type: "string" }, path: { type: "string" } },
 	inputSchema: z
 		.object({
 			vendor: z.string().default("04e8").describe("USB vendor id, as `lsusb` prints it."),
@@ -72,6 +73,13 @@ export const installSudoersOperation = defineOperation({
 	description:
 		"Install a passwordless-sudo rule for the mwops CLI. Grants unattended root for EVERY verb — requires --accept-risk.",
 	effect: StorageEffect.HostWrite,
+	options: {
+		user: { type: "string" },
+		"node-path": { type: "string" },
+		"cli-path": { type: "string" },
+		path: { type: "string" },
+		"accept-risk": { type: "boolean" },
+	},
 	inputSchema: z
 		.object({
 			user: z.string().describe("The user the rule grants root to."),

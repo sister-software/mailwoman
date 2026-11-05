@@ -38,6 +38,7 @@ export const cleanOperation = defineOperation({
 	description:
 		"Remove generated out/dist trees and TypeScript build metadata, including stale outputs unknown to the current compiler (--workspace <package> limits scope).",
 	effect: OperationEffect.LocalWrite,
+	options: { workspace: { type: "string" } },
 	inputSchema: z.object({ workspace: text }).strict(),
 	outputSchema: cleanOutput,
 	async run(input, context) {

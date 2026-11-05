@@ -19,6 +19,8 @@
 
 import type { ZodType } from "zod"
 
+import type { ParseArgsOptionsConfig } from "#scripting/arguments"
+
 /**
  * What every operation receives beside its input, whatever its family.
  *
@@ -52,6 +54,13 @@ export interface Operation<
 	 * What the operation does to the world, declared rather than inferred.
 	 */
 	effect: TEffect
+	/**
+	 * The command-line flags a CLI adapter passes to `parseArgs` from `node:util`, one per input key.
+	 *
+	 * A boolean flag is turned off with its `--no-` form.
+	 * The parsed values go to `inputSchema`, which decides each value's final type.
+	 */
+	options: ParseArgsOptionsConfig
 	inputSchema: ZodType<In>
 	outputSchema: ZodType<Out>
 	run(input: In, context: TContext): Promise<Out>

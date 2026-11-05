@@ -7,7 +7,7 @@
 import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-import { dispatch, parseOptions } from "#ops-cli"
+import { dispatch } from "#ops-cli"
 
 function io() {
 	const out: string[] = []
@@ -80,13 +80,6 @@ describe("mwops dispatch", () => {
 
 		await expect(dispatch(["health", "fix", "prefix-directories"], withRealRoot)).resolves.toBe(0)
 		expect(h.out.join("")).toContain("nothing to move")
-	})
-
-	it("parses --key value, --key=value and bare flags, leaving values as strings for the schema", () => {
-		expect(parseOptions(["plan", "--json", "--version", "9.3.0", "--out=x.json", "--dry-run"])).toEqual({
-			options: { json: true, version: "9.3.0", out: "x.json", "dry-run": true },
-			rest: ["plan"],
-		})
 	})
 
 	it("renders clean as a concise summary outside JSON mode", async () => {

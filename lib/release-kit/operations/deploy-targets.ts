@@ -49,6 +49,7 @@ export const deployTargets = defineOperation({
 	description:
 		"The Cloudflare Workers a change reaches, as a job matrix: --base and --head bound the diff, or --targets names them (all, or a comma-separated list).",
 	effect: OperationEffect.Read,
+	options: { base: { type: "string" }, head: { type: "string" }, targets: { type: "string" } },
 	inputSchema: z.object({ base: text, head: text, targets: list }).strict(),
 	outputSchema: z.object({
 		changed: z.array(z.string()),

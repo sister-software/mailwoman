@@ -20,6 +20,16 @@ export const stageWeightsCacheOperation = defineOperation({
 	description:
 		"Assemble a package-shaped weights directory under --out <cacheRoot> so a candidate model is graded as a bundle: --from seeds it, --file name=path (comma list), --omit (comma list) and --card diverge it, and --dereference copies the bytes for a board-routed mwdev_compare arm.",
 	effect: OperationEffect.LocalWrite,
+	options: {
+		out: { type: "string", short: "o" },
+		locale: { type: "string" },
+		from: { type: "string" },
+		file: { type: "string" },
+		omit: { type: "string" },
+		card: { type: "string" },
+		clean: { type: "boolean" },
+		dereference: { type: "boolean" },
+	},
 	inputSchema: z
 		.object({
 			out: z.string({ error: "--out <dir> is required" }),

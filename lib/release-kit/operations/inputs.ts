@@ -20,12 +20,12 @@ export const flag = z
 	.transform((value) => value === true || value === "true" || value === "1")
 
 /**
- * A boolean flag that defaults to true and is turned off with `--flag false`.
+ * A boolean flag that defaults to true and is turned off with `--no-flag`.
  */
 export const flagDefaultOn = z
 	.union([z.boolean(), z.string()])
 	.optional()
-	.transform((value) => !value || value === true || value === "true" || value === "1")
+	.transform((value) => value == null || value === true || value === "true" || value === "1")
 
 /**
  * An optional string.

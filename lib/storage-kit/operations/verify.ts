@@ -14,7 +14,7 @@ import { z } from "zod"
 
 import { runHostCommand } from "#storage-kit/command"
 import { defineOperation, StorageEffect } from "#storage-kit/operation"
-import { volumeSpec } from "#storage-kit/volume"
+import { VOLUME_OPTIONS, volumeSpec } from "#storage-kit/volume"
 
 const check = z.object({ name: z.string(), ok: z.boolean(), detail: z.string() })
 
@@ -41,6 +41,7 @@ export const verifyOperation = defineOperation({
 	id: "storage.verify",
 	description: "Assert the data-root volume is mounted with the intended options and compression properties.",
 	effect: StorageEffect.Read,
+	options: VOLUME_OPTIONS,
 	inputSchema: volumeSpec.partial({ device: true, serial: true }).strict(),
 	outputSchema: verifyOutput,
 	async run(input, context) {

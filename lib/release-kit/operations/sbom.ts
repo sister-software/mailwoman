@@ -20,6 +20,7 @@ export const sbom = defineOperation({
 	description:
 		"Generate SPDX 2.3 + CycloneDX 1.5 SBOMs for the PUBLISHED mailwoman package (--version, default: the workspace version) into docs/static/sbom (--out).",
 	effect: OperationEffect.LocalWrite,
+	options: { version: { type: "string" }, out: { type: "string", short: "o" } },
 	inputSchema: z.object({ version: text, out: text }).strict(),
 	outputSchema: z.object({ version: z.string(), spdxPath: z.string(), cdxPath: z.string(), dependencies: z.number() }),
 	run: (input, context) =>

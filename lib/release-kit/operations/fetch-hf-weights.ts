@@ -21,6 +21,7 @@ export const fetchHFWeightsOperation = defineOperation({
 	description:
 		"Materialize a release's weights artifacts from the public Hugging Face bucket into the checkout (or --into <root>); --version names another bucket directory than the base model card's.",
 	effect: OperationEffect.LocalWrite,
+	options: { into: { type: "string" }, version: { type: "string" } },
 	inputSchema: z.object({ into: text, version: text }).strict(),
 	outputSchema: z.object({
 		version: z.string(),

@@ -14,7 +14,7 @@ import { z } from "zod"
 import { claimFailures, inspectDevice, rootDeviceName } from "#storage-kit/device"
 import { renderFstabEntry } from "#storage-kit/fstab"
 import { defineOperation, StorageEffect } from "#storage-kit/operation"
-import { volumeSpec } from "#storage-kit/volume"
+import { VOLUME_OPTIONS, volumeSpec } from "#storage-kit/volume"
 
 const planOutput = z.object({
 	device: z.object({
@@ -37,6 +37,7 @@ export const planOperation = defineOperation({
 	id: "storage.plan",
 	description: "Show what `storage prepare` would do to a device, and every guard that would stop it.",
 	effect: StorageEffect.Read,
+	options: VOLUME_OPTIONS,
 	inputSchema: volumeSpec.strict(),
 	outputSchema: planOutput,
 	async run(input, context) {

@@ -15,7 +15,7 @@ import { z } from "zod"
 
 import { runHostCommand } from "#storage-kit/command"
 import { defineOperation, StorageEffect } from "#storage-kit/operation"
-import { volumeSpec } from "#storage-kit/volume"
+import { VOLUME_OPTIONS, volumeSpec } from "#storage-kit/volume"
 
 const statusOutput = z.object({
 	mountPoint: z.string(),
@@ -43,6 +43,7 @@ export const statusOperation = defineOperation({
 	id: "storage.status",
 	description: "Capacity and the compression ratio the data-root volume is achieving.",
 	effect: StorageEffect.Read,
+	options: VOLUME_OPTIONS,
 	inputSchema: volumeSpec.partial({ device: true, serial: true }).strict(),
 	outputSchema: statusOutput,
 	async run(input, context) {

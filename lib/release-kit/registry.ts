@@ -15,6 +15,7 @@ import type { ReleaseOperation } from "#release-kit/operation"
 import { blessPackage } from "#release-kit/operations/bless-package"
 import { checkParity } from "#release-kit/operations/check-parity"
 import { cleanOperation } from "#release-kit/operations/clean"
+import { cloudflareTokens, mintCloudflareTokens, purgeCloudflareCache } from "#release-kit/operations/cloudflare-tokens"
 import { copyWeightsOperation } from "#release-kit/operations/copy-weights"
 import { deployTargets } from "#release-kit/operations/deploy-targets"
 import { fetchHFWeightsOperation } from "#release-kit/operations/fetch-hf-weights"
@@ -38,7 +39,8 @@ import { writeRightsFiles } from "#release-kit/operations/write-rights-files"
  *
  * The plan comes first, followed by read-only checks.
  * Local writes follow in release order.
- * The two external writes come last.
+ *
+ * The external writes come last: the two npm publishes, then the two Cloudflare writes.
  */
 export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	plan,
@@ -59,8 +61,11 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	stageWeightsCacheOperation,
 	scaffoldWeightsOverlayOperation,
 	deployTargets,
+	cloudflareTokens,
 	publishWorkspaceOperation,
 	blessPackage,
+	mintCloudflareTokens,
+	purgeCloudflareCache,
 ] as ReadonlyArray<ReleaseOperation<unknown, unknown>>
 
 /**

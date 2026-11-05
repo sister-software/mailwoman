@@ -81,6 +81,11 @@
 			"node": "./lib/index.ts",
 			"default": "./out/index.js"
 		},
+		"./cloudflare": {
+			"types": "./out/cloudflare.d.ts",
+			"node": "./lib/cloudflare.ts",
+			"default": "./out/cloudflare.js"
+		},
 		"./coarse-placer": {
 			"types": "./out/coarse-placer/coarse-placer.d.ts",
 			"node": "./lib/coarse-placer/coarse-placer.ts",
@@ -694,5 +699,13 @@
 		"@duckdb/node-api": "^2.0.0-r.1",
 		"@types/trusted-types": "^2.0.7",
 		"@types/yauzl-promise": "^4.0.1"
+	},
+	"peerDependencies": {
+		"wrangler": "^4.156.0"
+	},
+	"peerDependenciesMeta": {
+		"wrangler": {
+			"optional": true
+		}
 	}
 }

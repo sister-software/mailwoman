@@ -21,6 +21,7 @@ export const copyWeightsOperation = defineOperation({
 	description:
 		"Materialize every weights workspace's binaries and soft-feed artifacts from this machine's data root into the checkout (or --into <root>). Skipped under MAILWOMAN_SKIP_WEIGHTS_COPY.",
 	effect: OperationEffect.LocalWrite,
+	options: { into: { type: "string" } },
 	inputSchema: z.object({ into: text }).strict(),
 	outputSchema: z.object({ skipped: z.boolean(), workspaces: z.array(z.string()) }),
 	run: (input, context) =>

@@ -21,6 +21,12 @@ export const preflight = defineOperation({
 	description:
 		"Stage the tracked tree in an isolated root, materialize the weights there (--source repo|hf), then pack and audit every release workspace. No git, npm, R2 or Hugging Face writes.",
 	effect: OperationEffect.LocalWrite,
+	options: {
+		source: { type: "string" },
+		version: { type: "string" },
+		staging: { type: "string" },
+		keep: { type: "boolean" },
+	},
 	inputSchema: z
 		.object({
 			source: z.enum(WEIGHTS_SOURCES).default("repo"),

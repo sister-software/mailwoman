@@ -83,7 +83,7 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 
 ### Credential + upload gotchas (this cost a whole session — read it)
 
-- **Which keys write `mailwoman-tiles`:** the `RCLONE_S3_PUBLIC_*` keys. The plain `RCLONE_S3_*` keys are scoped to `mailwoman-assets` and **403 on mailwoman-tiles** (read _and_ write). `CF_AUTH_TOKEN` is the Cloudflare API token (wrangler).
+- **Which keys write `mailwoman-tiles`:** the `RCLONE_S3_PUBLIC_*` keys. The plain `RCLONE_S3_*` keys are scoped to `mailwoman-assets` and **403 on mailwoman-tiles** (read _and_ write). Wrangler reads `CLOUDFLARE_API_TOKEN`, which `yarn mwops release mint-cloudflare-tokens -o <file>` mints with the deploy role's scopes.
 - **`wrangler r2 object put` hard-caps at 300 MiB** — useless for these archives. **rclone does multipart with no cap** — that's why `tiles publish` uses rclone rather than wrangler.
 - **`mailwoman-public` ≠ `mailwoman-tiles`.** `mailwoman-public` (`public.mailwoman.post/mailwoman/`, the `publish-public-bucket.run.ts` target) hosts the demo's model/DBs/data files. The tile worker reads `mailwoman-tiles`. Don't put tiles in `mailwoman-public`.
 

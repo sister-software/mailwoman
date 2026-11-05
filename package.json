@@ -134,6 +134,7 @@
 		"@typescript/native": "npm:typescript@^7.0.2",
 		"@vitest/coverage-v8": "5.0.5",
 		"@vvago/vale": "^3.25.1",
+		"cloudflare": "7.3.0",
 		"dependency-cruiser": "^18.7.0",
 		"esbuild": "0.28.2",
 		"husky": "^9.1.7",

@@ -21,6 +21,7 @@ export const writeRightsFiles = defineOperation({
 	description:
 		"Regenerate every published weights package's LICENSE.md and PROVENANCE.json from its package.json and model-card.json. The `weights-rights` health check holds the tree equal to this output.",
 	effect: OperationEffect.LocalWrite,
+	options: {},
 	inputSchema: z.object({}).strict(),
 	outputSchema: z.object({ files: z.array(rightsFileState) }),
 	async run(_input, context) {
