@@ -508,7 +508,7 @@ fn center(polygon: &Polygon) -> (f64, f64) {
 	)
 }
 
-/// The facade tags a part without a material or colour of its own takes from a masonry building, as Arnis's
+/// The facade tags a part without a material or color of its own takes from a masonry building, as Arnis's
 /// `inherit_masonry_facade_tags` gives them.
 const FACADE_KEYS: [&str; 5] = [
 	"building:material",

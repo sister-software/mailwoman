@@ -22,7 +22,7 @@ use crate::rng::element_rng;
 use crate::seed::{self, ArchEra, Tags};
 use crate::style::RoofContext;
 
-/// Facade materials a tagged colour is matched within.
+/// Facade materials a tagged color is matched within.
 pub const BRICKWORK: u8 = 1;
 pub const STONEWORK: u8 = 2;
 pub const RENDERED: u8 = 4;
@@ -40,13 +40,13 @@ fn material_tag(tags: &Tags) -> Option<&String> {
 		.or_else(|| tags.get("facade:material"))
 }
 
-fn colour_tag(tags: &Tags) -> Option<RGBTuple> {
+fn color_tag(tags: &Tags) -> Option<RGBTuple> {
 	tags.get("building:colour")
 		.or_else(|| tags.get("colour"))
 		.and_then(|c| color_text_to_rgb_tuple(c))
 }
 
-/// The wall block an OSM material or colour tag asks for, or `None` without one.
+/// The wall block an OSM material or color tag asks for, or `None` without one.
 pub fn determine_wall_block_from_tags(tags: &Tags, category: BuildingCategory, rng: &mut impl Rng) -> Option<Block> {
 	if category == BuildingCategory::GlassySkyscraper {
 		return None;
@@ -62,18 +62,18 @@ pub fn determine_wall_block_from_tags(tags: &Tags, category: BuildingCategory, r
 			return Some(block);
 		}
 	}
-	if let Some(rgb) = colour_tag(tags) {
+	if let Some(rgb) = color_tag(tags) {
 		if let Some(block) =
-			tower_facade_tones(category, tags).and_then(|family| facade_tone_for_colour(rgb, family, rng))
+			tower_facade_tones(category, tags).and_then(|family| facade_tone_for_color(rgb, family, rng))
 		{
 			return Some(block);
 		}
-		return Some(wall_block_for_colour_tag(rgb, rng));
+		return Some(wall_block_for_color_tag(rgb, rng));
 	}
 	None
 }
 
-/// Steel shows its paint, so a metal with a colour tag defers to the colour.
+/// Steel shows its paint, so a metal with a color tag defers to the color.
 fn painted_metal(material: &str, tags: &Tags) -> bool {
 	matches!(
 		material.trim().to_ascii_lowercase().as_str(),
@@ -93,10 +93,10 @@ fn family_mask(name: &str) -> u8 {
 		.fold(0, |acc, bit| acc | bit)
 }
 
-/// The wall of a brick, stone, render or concrete facade that also has a colour tag: that material's nearest
-/// shade, or the colour itself where the material has no shade near it.
+/// The wall of a brick, stone, render or concrete facade that also has a color tag: that material's nearest
+/// shade, or the color itself where the material has no shade near it.
 fn facade_tone_for_material(material: &str, tags: &Tags, rng: &mut impl Rng) -> Option<Block> {
-	let rgb = colour_tag(tags)?;
+	let rgb = color_tag(tags)?;
 	let normalized = norm_tag(material);
 	let family = data::tables()
 		.materials
@@ -104,10 +104,10 @@ fn facade_tone_for_material(material: &str, tags: &Tags, rng: &mut impl Rng) -> 
 		.iter()
 		.find(|row| row.words.contains(&normalized))
 		.map(|row| family_mask(&row.family))?;
-	facade_tone_for_colour(rgb, family, rng).or_else(|| Some(wall_block_for_colour_tag(rgb, rng)))
+	facade_tone_for_color(rgb, family, rng).or_else(|| Some(wall_block_for_color_tag(rgb, rng)))
 }
 
-/// The tone family of a tower with a colour but no material; `None` for every other building.
+/// The tone family of a tower with a color but no material; `None` for every other building.
 fn tower_facade_tones(category: BuildingCategory, tags: &Tags) -> Option<u8> {
 	if !matches!(
 		category,
@@ -128,9 +128,9 @@ fn tower_facade_tones(category: BuildingCategory, tags: &Tags) -> Option<u8> {
 	Some(if masonry { STONEWORK | BRICKWORK } else { CONCRETE_WORK })
 }
 
-/// The nearest facade tone of `family` to a tagged colour, hue-keeping, among near ties; `None` when even the
+/// The nearest facade tone of `family` to a tagged color, hue-keeping, among near ties; `None` when even the
 /// nearest is far off.
-fn facade_tone_for_colour(rgb: RGBTuple, family: u8, rng: &mut impl Rng) -> Option<Block> {
+fn facade_tone_for_color(rgb: RGBTuple, family: u8, rng: &mut impl Rng) -> Option<Block> {
 	const MAX_DISTANCE: f32 = 0.03;
 	let target = oklab_components(&rgb);
 	let insert = |best: &mut [(f32, Block); 3], d: f32, block: Block| {
@@ -162,7 +162,7 @@ fn facade_tone_for_colour(rgb: RGBTuple, family: u8, rng: &mut impl Rng) -> Opti
 	Some(best[rng.random_range(0..near)].1)
 }
 
-/// Whether a block's Oklab colour keeps the hue of a tagged one.
+/// Whether a block's Oklab color keeps the hue of a tagged one.
 fn keeps_hue(target: (f32, f32, f32), block: (f32, f32, f32)) -> bool {
 	let target_chroma = target.1.hypot(target.2);
 	if target_chroma < 0.03 {
@@ -176,9 +176,9 @@ fn keeps_hue(target: (f32, f32, f32), block: (f32, f32, f32)) -> bool {
 	cos >= 0.927
 }
 
-/// The wall for a `building:colour` tag: the nearest render or stone tone for pale unsaturated colours, the
+/// The wall for a `building:colour` tag: the nearest render or stone tone for pale unsaturated colors, the
 /// general palette for the rest.
-fn wall_block_for_colour_tag(rgb: RGBTuple, rng: &mut impl Rng) -> Block {
+fn wall_block_for_color_tag(rgb: RGBTuple, rng: &mut impl Rng) -> Block {
 	let target = oklab_components(&rgb);
 	if target.0 < 0.55 || target.1.hypot(target.2) >= 0.14 {
 		return wall_block_for_color(rgb, rng);
@@ -196,7 +196,7 @@ fn wall_block_for_colour_tag(rgb: RGBTuple, rng: &mut impl Rng) -> Block {
 		.map_or(Block::WhiteConcrete, |(b, _)| b)
 }
 
-/// Squared Oklab distance with lightness downweighted, for colour tags. Arnis `tag_match_distance`.
+/// Squared Oklab distance with lightness downweighted, for color tags. Arnis `tag_match_distance`.
 fn tag_match_distance(a: (f32, f32, f32), b: (f32, f32, f32)) -> f32 {
 	let dl = 0.5 * (a.0 - b.0);
 	let da = a.1 - b.1;
@@ -620,7 +620,7 @@ fn is_fortification(tags: &Tags) -> bool {
 	has("building", &materials.fortification_buildings) || has("historic", &materials.fortification_historic)
 }
 
-/// The wall for a building without material or colour tags: the regional palette where the region has one, else
+/// The wall for a building without material or color tags: the regional palette where the region has one, else
 /// the category palette. Arnis `determine_wall_block`.
 pub fn determine_wall_block(
 	tags: &Tags,
@@ -817,8 +817,8 @@ pub fn glass_backing(glass: Block) -> GlassBacking {
 	}
 }
 
-/// Stained glass for the mapped colour of a glass building. Arnis `glass_for_colour`.
-pub fn glass_for_colour(rgb: RGBTuple) -> Block {
+/// Stained glass for the mapped color of a glass building. Arnis `glass_for_colour`.
+pub fn glass_for_color(rgb: RGBTuple) -> Block {
 	let (l, a, b) = oklab_components(&rgb);
 	let chroma = a.hypot(b);
 	let hue = b.atan2(a).to_degrees().rem_euclid(360.0);
@@ -881,10 +881,10 @@ pub fn glass_palette(
 	let first_material = materials.next();
 	let glass_tagged = first_material == Some(true) || materials.any(|glass| glass);
 	let other_material = first_material.is_some() && !glass_tagged;
-	let colour = colour_tag(tags);
-	let colour_glass = colour.map(glass_for_colour);
-	let tint = colour_glass.filter(|_| glass_tagged);
-	let stone_colour = colour.is_some_and(|rgb| {
+	let color = color_tag(tags);
+	let color_glass = color.map(glass_for_color);
+	let tint = color_glass.filter(|_| glass_tagged);
+	let stone_color = color.is_some_and(|rgb| {
 		let (_, a, b) = oklab_components(&rgb);
 		let hue = b.atan2(a).to_degrees().rem_euclid(360.0);
 		!(100.0..300.0).contains(&hue) && a.hypot(b) >= 0.03
@@ -893,8 +893,8 @@ pub fn glass_palette(
 		_ if other_material => (wall_block, window_block),
 		BuildingCategory::GlassySkyscraper | BuildingCategory::GlassCornerSkyscraper => {
 			let own_glass = is_glass_wall(wall_block).then_some(wall_block);
-			let wall = colour_glass
-				.filter(|_| glass_tagged || !stone_colour)
+			let wall = color_glass
+				.filter(|_| glass_tagged || !stone_color)
 				.or(own_glass)
 				.unwrap_or(Block::GrayStainedGlass);
 			(wall, window_block)

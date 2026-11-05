@@ -5,7 +5,7 @@
 // Ported from Arnis `src/element_processing/buildings.rs` at commit d8e8b662 (github.com/louis-e/arnis,
 // Apache-2.0): `RoofContext`, `BuildingStyle` and `BuildingStyle::resolve`. The draw order on the shared RNG is
 // unchanged, including the floor block and chimney draws a map never reads. Modified: the Mapillary tail, which
-// swaps the wall for a photographed colour, is left out.
+// swaps the wall for a photographed color, is left out.
 
 //! The resolved style of one building: its blocks, window style, accent features, roof and relief family.
 

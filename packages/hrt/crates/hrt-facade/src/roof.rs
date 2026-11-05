@@ -435,27 +435,27 @@ pub fn roof_distinct_from_wall(roof: Block, wall: Block, region: MaterialRegion)
 /// The roof covering `roof:material` and `roof:colour` ask for, or `None` without either. Arnis `tagged_roof_block`.
 pub fn tagged_roof_block(tags: &Tags, pitched: bool, chosen: Option<Block>, rng: &mut impl Rng) -> Option<Block> {
 	let material = tags.get("roof:material");
-	let colour = tags.get("roof:colour").and_then(|c| color_text_to_rgb_tuple(c));
+	let color = tags.get("roof:colour").and_then(|c| color_text_to_rgb_tuple(c));
 	if !pitched {
 		return material
 			.and_then(|m| get_roof_block_for_material(m, rng))
-			.or_else(|| colour.map(|rgb| roof_block_for_color(rgb, rng)));
+			.or_else(|| color.map(|rgb| roof_block_for_color(rgb, rng)));
 	}
 	if let Some(family) = material.and_then(|m| roof_material_family(m)) {
-		return Some(match colour {
+		return Some(match color {
 			Some(rgb) => nearest_roof_shade(family, rgb).0,
 			None => chosen
 				.filter(|b| family.contains(b))
 				.unwrap_or_else(|| family[rng.random_range(0..family.len())]),
 		});
 	}
-	if let (Some(rgb), true) = (colour, material.is_some_and(|m| is_sheet_metal(m))) {
-		return Some(roof_family_for_colour(rgb, rng));
+	if let (Some(rgb), true) = (color, material.is_some_and(|m| is_sheet_metal(m))) {
+		return Some(roof_family_for_color(rgb, rng));
 	}
 	if let Some(block) = material.and_then(|m| get_roof_block_for_material(m, rng)) {
 		return Some(block);
 	}
-	colour.map(|rgb| roof_family_for_colour(rgb, rng))
+	color.map(|rgb| roof_family_for_color(rgb, rng))
 }
 
 /// Whether a `roof:material` value is sheet metal.
@@ -500,7 +500,7 @@ fn nearest_roof_shade(family: &[Block], rgb: RGBTuple) -> (Block, f32) {
 }
 
 /// A pitched roof for a bare `roof:colour`. Arnis `roof_family_for_colour`.
-fn roof_family_for_colour(rgb: RGBTuple, rng: &mut impl Rng) -> Block {
+fn roof_family_for_color(rgb: RGBTuple, rng: &mut impl Rng) -> Block {
 	let (l, a, b) = oklab_components(&rgb);
 	if a.hypot(b) < 0.035 {
 		return if l >= 0.55 {

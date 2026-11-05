@@ -503,7 +503,7 @@ impl TowerZoning {
 		})
 	}
 
-	/// The zones of a tower whose colour or material is mapped keep the mapped wall.
+	/// The zones of a tower whose color or material is mapped keep the mapped wall.
 	pub fn keeping_mapped_wall(self, wall_block: Block, tags: &Tags) -> Self {
 		if crate::category::has_mapped_wall(tags) {
 			Self {

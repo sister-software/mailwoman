@@ -118,7 +118,7 @@ fn regions_match_arnis_on_a_world_grid_and_a_detroit_box() {
 }
 
 #[test]
-fn colour_matching_matches_arnis() {
+fn color_matching_matches_arnis() {
 	use hrt_facade::rng::element_rng;
 	let mut checked = 0;
 	for line in COLORS.lines() {
@@ -140,7 +140,7 @@ fn colour_matching_matches_arnis() {
 			"roof for {rgb:?}"
 		);
 		assert_eq!(
-			hrt_facade::walls::glass_for_colour(rgb),
+			hrt_facade::walls::glass_for_color(rgb),
 			block(case["glass"].as_str().unwrap()),
 			"glass for {rgb:?}"
 		);
