@@ -17,8 +17,9 @@
 //!   skips post-processing, `clip` clips every tile to the polygon, buffered by `clip-buffer` (default 4) pixels of a
 //!   256-pixel tile as a fraction of the polygon's larger side, and `pgf` registers the fork's fonts so names in their
 //!   scripts get `pgf:` attributes.
-//! - `hrt building-tiles <theme=buildings directory> <output.pmtiles> [bounds=<west,south,east,north>]` writes the
-//!   compact building tiles `hrt_profile::building_buffers` describes, one per z14 tile, from Overture alone.
+//! - `hrt building-tiles <theme=buildings directory> <output.pmtiles> [bounds=<west,south,east,north>]
+//!   [osm=<input.osm.pbf>]` writes the compact building tiles `hrt_profile::building_buffers` describes, one per z14
+//!   tile. With an OpenStreetMap file, buildings join its tags and walls are classified against its roads.
 //! - `hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>` writes each name beside its `pgf:` encoding, for
 //!   comparison with `packages/hrt/parity/PgfProbe.java`.
 //! - `hrt render-dump <input.osm.pbf>` prints every tile piece the parity profile renders, in the line format of
@@ -89,7 +90,7 @@ fn usage() -> ExitCode {
 	eprintln!(
 		"       hrt basemap-test <input.osm.pbf> <output.pmtiles> layer=<name>[,<name>] [borders=<path>] [places=<path>] [qrank=<path>] [raw] [ne=<path>] [osm-water=<path>] [osm-land=<path>] [landcover=<path>] [clip=<path>] [clip-buffer=<pixels>] [pgf=<path>] [overture-buildings=<dir>] [no-footprints] [bounds=<w,s,e,n>]"
 	);
-	eprintln!("       hrt building-tiles <theme=buildings dir> <output.pmtiles> [bounds=<w,s,e,n>]");
+	eprintln!("       hrt building-tiles <theme=buildings dir> <output.pmtiles> [bounds=<w,s,e,n>] [osm=<file.osm.pbf>]");
 	eprintln!("       hrt pgf-probe <pgf-encoding.zip> <names.txt> <out.tsv>");
 	eprintln!("       hrt render-dump <input.osm.pbf>");
 	eprintln!("       hrt clock <a.pmtiles> <b.pmtiles> [max details]");
@@ -122,26 +123,29 @@ fn main() -> ExitCode {
 				}
 			}
 		}
-		Some("building-tiles") if args.len() == 3 || args.len() == 4 => {
-			let bounds = match args
-				.get(3)
-				.map(|option| parse_bounds(option.strip_prefix("bounds=").unwrap_or("")))
-			{
-				None => None,
-				Some(Some(bounds)) => Some(bounds),
-				Some(None) => {
-					eprintln!(
-						"bounds must be bounds=west,south,east,north degrees, but was {}",
-						args[3]
-					);
+		Some("building-tiles") if (3..=5).contains(&args.len()) => {
+			let mut bounds = None;
+			let mut osm = None;
+			for option in &args[3..] {
+				if let Some(text) = option.strip_prefix("bounds=") {
+					let Some(parsed) = parse_bounds(text) else {
+						eprintln!("bounds must be bounds=west,south,east,north degrees, but was {option}");
+						return ExitCode::FAILURE;
+					};
+					bounds = Some(parsed);
+				} else if let Some(path) = option.strip_prefix("osm=") {
+					osm = Some(PathBuf::from(path));
+				} else {
+					eprintln!("building-tiles takes bounds=<w,s,e,n> and osm=<file.osm.pbf>, but was given {option}");
 					return ExitCode::FAILURE;
 				}
-			};
+			}
 			let started = Instant::now();
 			let scratch = tempfile::tempdir().expect("a scratch directory");
 			match building_tiles::build(
 				&PathBuf::from(&args[1]),
 				bounds,
+				osm.as_deref(),
 				&PathBuf::from(&args[2]),
 				scratch.path(),
 			) {
@@ -149,6 +153,15 @@ fn main() -> ExitCode {
 					eprintln!(
 						"read {} rows; wrote {} building records into {} tiles, {} bytes",
 						report.rows, report.records, report.tiles, report.archive_bytes
+					);
+					eprintln!(
+						"OpenStreetMap: {} buildings, {} roads, {} rows joined",
+						report.osm_buildings, report.osm_roads, report.joined
+					);
+					let [street, rear, party, open] = report.edges;
+					eprintln!(
+						"walls: {street} street, {rear} rear, {party} party, {open} open; {} attached, {} enclosed",
+						report.attached, report.enclosed
 					);
 					eprintln!("built {} in {:.2?}", args[2], started.elapsed());
 					ExitCode::SUCCESS

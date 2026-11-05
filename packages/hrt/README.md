@@ -51,8 +51,10 @@ attributes, so only the `hrt` tile has them.
 
 ### Compact building tiles
 
-`hrt building-tiles <theme=buildings dir> <out.pmtiles> [bounds=<west,south,east,north>]` writes an archive for
-Earth's GPU building layer. The page parameter `?buildings3d=<tileset>` turns that layer on. Each building is written once, into the z14 tile
+`hrt building-tiles <theme=buildings dir> <out.pmtiles> [bounds=<west,south,east,north>] [osm=<file.osm.pbf>]` writes
+an archive for Earth's GPU building layer. With an OpenStreetMap file, each building joins the tags of the way or
+relation its Overture `sources` names, and each exterior wall is classified as a street, rear, party or open wall
+against the file's roads and the neighboring footprints, by rules adapted from Arnis (`hrt-profile/src/facade_plan.rs`). The page parameter `?buildings3d=<tileset>` turns that layer on. Each building is written once, into the z14 tile
 that holds the center of its bounding box, with coordinates relative to that tile in 8,192 units per side. Each record
 holds the building's id, heights, colors, floor count, roof shape, footprint rings and roof triangles.
 `hrt-profile/src/building_buffers.rs` documents the record layout. The archive has tile type `Unknown` and no archive

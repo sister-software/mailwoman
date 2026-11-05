@@ -11,7 +11,7 @@
 //!
 //! # Tile body
 //!
-//! A tile body is gzip-compressed. Decompressed, it is the 4 bytes `MWB1`, a little-endian `u32` record count, and the
+//! A tile body is gzip-compressed. Decompressed, it is the 4 bytes `MWB2`, a little-endian `u32` record count, and the
 //! records in ascending byte order. Every number is little-endian. A record is one polygon of one building:
 //!
 //! | Field | Type | Meaning |
@@ -25,9 +25,12 @@
 //! | district | `u8` | The 128 m palette cell, 0 to 15, or 255 when the centroid could not be computed |
 //! | floors | `u8` | `num_floors`, at most 255, or 0 when absent |
 //! | roof shape | `u8` | 0 flat, 1 gabled, 2 hipped |
+//! | flags | `u8` | Bit 0 attached, bit 1 enclosed, bit 2 a street faces at least one wall |
+//! | style | `u8` × 8 | The building's resolved style; each byte is `0xFF` until the build resolves it |
 //! | ring count | `u8` | The exterior ring and its holes |
 //! | ring sizes | `u16` × ring count | Vertices per ring, without the closing vertex |
 //! | footprint | `i16` × 2 × vertices | x and y in tile units, y down, ring after ring |
+//! | edge flags | `u8` × exterior vertices | Per exterior edge from vertex `i` to `i + 1`: bits 0 and 1 the [`FacadeClass`], bit 2 the front edge, bit 3 the first edge of a street corner |
 //! | ridge count | `u8` | 0, or 2 for a gabled or hipped roof |
 //! | ridge | `i16` × 2 × ridge count | The ridge's two ends at `height`; the footprint sits at `eave` |
 //! | triangle count | `u16` | Roof triangles |
@@ -39,6 +42,7 @@ use flate2::write::GzEncoder;
 use flate2::Compression;
 use geo_types::{Geometry, LineString, Polygon};
 
+use crate::facade_plan::{FacadeClass, FacadePlan};
 use crate::input::Input;
 use crate::layers::buildings::{
 	district, gers_feature_id, is_modeled_landmark, lon_lat_centroid, normalize_color, parse_height,
@@ -49,7 +53,9 @@ pub const TILE_ZOOM: u8 = 14;
 /// Units per tile side, MapLibre's vector-tile extent.
 pub const EXTENT: f64 = 8192.0;
 /// The first four bytes of a decompressed tile body.
-pub const MAGIC: &[u8; 4] = b"MWB1";
+pub const MAGIC: &[u8; 4] = b"MWB2";
+/// A style byte the build has not resolved.
+pub const UNRESOLVED_STYLE: u8 = 0xFF;
 /// The `height` a building with no stated height or floor count records.
 pub const UNKNOWN_HEIGHT: u16 = 0xFFFF;
 
@@ -72,6 +78,9 @@ struct Attributes {
 	district: u8,
 	floors: u8,
 	roof_shape: RoofShape,
+	/// Bits 0 to 2 of the record's flags byte that the draft sets; the facade plan sets the rest.
+	flags: u8,
+	style: [u8; 8],
 }
 
 /// A color as `0x00RRGGBB` with bit 31 set, or 0 for none.
@@ -86,23 +95,30 @@ fn decimeters(meters: f64) -> u16 {
 	(meters * 10.0).round().clamp(0.0, f64::from(UNKNOWN_HEIGHT - 1)) as u16
 }
 
-/// The records of one Overture building or building part, each with the z14 tile id it belongs to, or none for a feature
-/// the `buildings` layer would skip: another theme or type, a building drawn by its parts, or a modeled landmark.
-pub fn building_records(input: &Input<'_>) -> Vec<(u64, Vec<u8>)> {
+/// One Overture building or building part before its records are written: its attributes and its polygons in world
+/// coordinates.
+pub struct BuildingDraft {
+	attributes: Attributes,
+	pub polygons: Vec<Polygon>,
+	/// The parts of one building share a group, its GERS id; a building is its own group.
+	pub group: i64,
+}
+
+/// The draft of one Overture building or building part, or `None` for a feature the `buildings` layer would skip:
+/// another theme or type, a building drawn by its parts, or a modeled landmark.
+pub fn building_draft(input: &Input<'_>) -> Option<BuildingDraft> {
 	if input.tag("theme") != Some("buildings") {
-		return Vec::new();
+		return None;
 	}
 	let part = match input.tag("type") {
 		Some("building") => false,
 		Some("building_part") => true,
-		_ => return Vec::new(),
+		_ => return None,
 	};
 	if (!part && input.tag("has_parts") == Some("true")) || is_modeled_landmark(input) {
-		return Vec::new();
+		return None;
 	}
-	let Ok(world) = input.source.world_geometry() else {
-		return Vec::new();
-	};
+	let world = input.source.world_geometry().ok()?;
 	let (height, base) = parse_height(input.tag("height"), input.tag("num_floors"), input.tag("min_height"));
 	let roof_shape = match input.tag("roof_shape") {
 		Some("gabled") => RoofShape::Gabled,
@@ -122,15 +138,73 @@ pub fn building_records(input: &Input<'_>) -> Vec<(u64, Vec<u8>)> {
 			.and_then(|text| text.parse::<f64>().ok())
 			.map_or(0, |floors| floors.clamp(0.0, 255.0) as u8),
 		roof_shape,
+		flags: 0,
+		style: [UNRESOLVED_STYLE; 8],
 	};
-	let polygons: Vec<&Polygon> = match &world {
+	let polygons: Vec<Polygon> = match world {
 		Geometry::Polygon(polygon) => vec![polygon],
-		Geometry::MultiPolygon(polygons) => polygons.0.iter().collect(),
+		Geometry::MultiPolygon(polygons) => polygons.0,
 		_ => Vec::new(),
 	};
-	polygons
-		.into_iter()
-		.filter_map(|polygon| polygon_record(polygon, &attributes))
+	let group = gers_feature_id(if part { input.tag("building_id") } else { input.tag("id") });
+	Some(BuildingDraft {
+		attributes,
+		polygons,
+		group,
+	})
+}
+
+/// The z14 tile that holds the center of a polygon's bounding box.
+pub fn home_tile(polygon: &Polygon) -> (u32, u32) {
+	let scale = f64::from(1u32 << TILE_ZOOM);
+	let [min_x, min_y, max_x, max_y] = polygon.exterior().0.iter().fold(
+		[f64::INFINITY, f64::INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY],
+		|[min_x, min_y, max_x, max_y], coord| [min_x.min(coord.x), min_y.min(coord.y), max_x.max(coord.x), max_y.max(coord.y)],
+	);
+	let max_index = f64::from((1u32 << TILE_ZOOM) - 1);
+	(
+		((min_x + max_x) / 2.0 * scale).floor().clamp(0.0, max_index) as u32,
+		((min_y + max_y) / 2.0 * scale).floor().clamp(0.0, max_index) as u32,
+	)
+}
+
+/// One tile unit in meters at tile row `ty`: the tile's ground width over the extent.
+pub fn unit_meters(ty: u32) -> f64 {
+	let scale = f64::from(1u32 << TILE_ZOOM);
+	let latitude = hrt_osm::coords::world_lat((f64::from(ty) + 0.5) / scale);
+	40_075_016.686 * latitude.to_radians().cos() / scale / EXTENT
+}
+
+/// A polygon's rings in tile units relative to tile `(tx, ty)`: the exterior, which must quantize, then each hole that
+/// does.
+pub fn quantize_polygon(polygon: &Polygon, (tx, ty): (u32, u32)) -> Option<Vec<Vec<[i16; 2]>>> {
+	let scale = f64::from(1u32 << TILE_ZOOM);
+	let (tx, ty) = (f64::from(tx), f64::from(ty));
+	let mut rings = vec![quantize_ring(polygon.exterior(), scale, tx, ty)?];
+	rings.extend(
+		polygon
+			.interiors()
+			.iter()
+			.filter_map(|ring| quantize_ring(ring, scale, tx, ty)),
+	);
+	rings.truncate(usize::from(u8::MAX));
+	Some(rings)
+}
+
+/// Classifies a polygon's exterior ring, given in tile units relative to its home tile `(x, y)`.
+pub type ExteriorPlanner<'a> = dyn Fn(&[[i16; 2]], (u32, u32)) -> FacadePlan + 'a;
+
+/// The records of a draft, one per polygon, each with the z14 tile id it belongs to.
+pub fn draft_records(draft: &BuildingDraft, plan: &ExteriorPlanner<'_>) -> Vec<(u64, Vec<u8>)> {
+	draft
+		.polygons
+		.iter()
+		.filter_map(|polygon| {
+			let tile = home_tile(polygon);
+			let rings = quantize_polygon(polygon, tile)?;
+			let facade = plan(&rings[0], tile);
+			polygon_record(tile, rings, &draft.attributes, &facade)
+		})
 		.collect()
 }
 
@@ -157,42 +231,37 @@ fn quantize_ring(ring: &LineString, scale: f64, tx: f64, ty: f64) -> Option<Vec<
 	(out.len() >= 3).then_some(out)
 }
 
-/// The record of one polygon, with its tile id, or `None` when its exterior does not quantize to a ring.
-fn polygon_record(polygon: &Polygon, attributes: &Attributes) -> Option<(u64, Vec<u8>)> {
-	let scale = f64::from(1u32 << TILE_ZOOM);
-	let bounds = polygon.exterior().0.iter().fold(
-		[f64::INFINITY, f64::INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY],
-		|[min_x, min_y, max_x, max_y], coord| {
-			[
-				min_x.min(coord.x),
-				min_y.min(coord.y),
-				max_x.max(coord.x),
-				max_y.max(coord.y),
-			]
-		},
-	);
-	let max_index = f64::from((1u32 << TILE_ZOOM) - 1);
-	let tx = ((bounds[0] + bounds[2]) / 2.0 * scale).floor().clamp(0.0, max_index);
-	let ty = ((bounds[1] + bounds[3]) / 2.0 * scale).floor().clamp(0.0, max_index);
-	let mut rings = vec![quantize_ring(polygon.exterior(), scale, tx, ty)?];
-	rings.extend(
-		polygon
-			.interiors()
-			.iter()
-			.filter_map(|ring| quantize_ring(ring, scale, tx, ty)),
-	);
-	rings.truncate(usize::from(u8::MAX));
+/// An exterior edge's flags byte: bits 0 and 1 its class, bit 2 the front edge, bit 3 the first edge of a street corner.
+/// An edge the plan has no entry for, or one shorter than a meter, is open.
+fn edge_flags(plan: &FacadePlan, edge: usize) -> u8 {
+	let class = plan
+		.segments
+		.get(edge)
+		.copied()
+		.flatten()
+		.map_or(FacadeClass::Open, |segment| segment.class) as u8;
+	let front = u8::from(plan.front_segment == Some(edge)) << 2;
+	let corner = u8::from(plan.corner.is_some_and(|(first, _)| first == edge)) << 3;
+	class | front | corner
+}
+
+/// The record of one polygon in tile `(tx, ty)`, with its tile id, or `None` when it has too many vertices or its roof
+/// does not triangulate.
+fn polygon_record(
+	(tx, ty): (u32, u32),
+	rings: Vec<Vec<[i16; 2]>>,
+	attributes: &Attributes,
+	plan: &FacadePlan,
+) -> Option<(u64, Vec<u8>)> {
 	let vertices: Vec<[i16; 2]> = rings.iter().flatten().copied().collect();
 	if vertices.len() > usize::from(u16::MAX) {
 		return None;
 	}
+	let (height, eave, ridge, triangles) = roof(&rings, &vertices, attributes, unit_meters(ty))?;
+	let flags =
+		attributes.flags | u8::from(plan.attached) | u8::from(plan.enclosed) << 1 | u8::from(plan.has_any_street) << 2;
 
-	// One tile unit in meters at this tile's latitude: the tile's ground width over the extent.
-	let latitude = hrt_osm::coords::world_lat((ty + 0.5) / scale);
-	let unit_meters = 40_075_016.686 * latitude.to_radians().cos() / scale / EXTENT;
-	let (height, eave, ridge, triangles) = roof(&rings, &vertices, attributes, unit_meters)?;
-
-	let mut record = Vec::with_capacity(32 + vertices.len() * 4 + triangles.len() * 2);
+	let mut record = Vec::with_capacity(48 + vertices.len() * 5 + triangles.len() * 2);
 	record.extend_from_slice(&attributes.id.to_le_bytes());
 	record.extend_from_slice(&height.to_le_bytes());
 	record.extend_from_slice(&eave.to_le_bytes());
@@ -206,6 +275,8 @@ fn polygon_record(polygon: &Polygon, attributes: &Attributes) -> Option<(u64, Ve
 	} else {
 		attributes.roof_shape
 	} as u8);
+	record.push(flags);
+	record.extend_from_slice(&attributes.style);
 	record.push(rings.len() as u8);
 	for ring in &rings {
 		record.extend_from_slice(&(ring.len() as u16).to_le_bytes());
@@ -214,6 +285,7 @@ fn polygon_record(polygon: &Polygon, attributes: &Attributes) -> Option<(u64, Ve
 		record.extend_from_slice(&x.to_le_bytes());
 		record.extend_from_slice(&y.to_le_bytes());
 	}
+	record.extend((0..rings[0].len()).map(|edge| edge_flags(plan, edge)));
 	record.push(ridge.len() as u8);
 	for [x, y] in &ridge {
 		record.extend_from_slice(&x.to_le_bytes());
@@ -223,7 +295,7 @@ fn polygon_record(polygon: &Polygon, attributes: &Attributes) -> Option<(u64, Ve
 	for index in &triangles {
 		record.extend_from_slice(&index.to_le_bytes());
 	}
-	Some((hrt_pmtiles::tile_id(TILE_ZOOM, tx as u32, ty as u32), record))
+	Some((hrt_pmtiles::tile_id(TILE_ZOOM, tx, ty), record))
 }
 
 /// The pitch a gabled or hipped roof takes when the source states no roof height: rise over half the short side.
@@ -325,6 +397,7 @@ pub fn tile_body(records: &[Vec<u8>]) -> io::Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::facade_plan::SegmentFacade;
 	use geo_types::{coord, polygon};
 
 	fn attributes(roof_shape: RoofShape, height: Option<f64>) -> Attributes {
@@ -338,7 +411,15 @@ mod tests {
 			district: 3,
 			floors: 2,
 			roof_shape,
+			flags: 0,
+			style: [UNRESOLVED_STYLE; 8],
 		}
+	}
+
+	/// The record of `polygon` in its home tile, with `plan` for its exterior.
+	fn record_of(polygon: &Polygon, attributes: &Attributes, plan: &FacadePlan) -> Option<(u64, Vec<u8>)> {
+		let tile = home_tile(polygon);
+		polygon_record(tile, quantize_polygon(polygon, tile)?, attributes, plan)
 	}
 
 	/// A square of side `side` world units with its top-left corner at `(x, y)` in world coordinates.
@@ -350,26 +431,49 @@ mod tests {
 		u16::from_le_bytes([record[at], record[at + 1]])
 	}
 
+	/// The offset of the ring count: the fixed fields, the flags byte and the eight style bytes.
+	const RINGS_AT: usize = 34;
+
 	#[test]
-	fn a_flat_building_writes_its_ring_and_two_triangles_into_the_tile_of_its_center() {
+	fn a_flat_building_writes_its_ring_edges_and_two_triangles_into_the_tile_of_its_center() {
 		let scale = f64::from(1u32 << TILE_ZOOM);
 		// A rectangle inside tile (100, 200), 1/64 of a tile wide.
 		let polygon = square(100.25 / scale, 200.5 / scale, 1.0 / 64.0 / scale);
-		let (tile, record) = polygon_record(&polygon, &attributes(RoofShape::Flat, Some(12.3))).unwrap();
+		let street = SegmentFacade {
+			class: FacadeClass::Street,
+			road_dist: Some(3),
+			normal: (0, 1),
+			len: 10,
+		};
+		let plan = FacadePlan {
+			segments: vec![None, None, Some(street), None],
+			front_segment: Some(2),
+			has_any_street: true,
+			..FacadePlan::default()
+		};
+		let (tile, record) = record_of(&polygon, &attributes(RoofShape::Flat, Some(12.3)), &plan).unwrap();
 		assert_eq!(tile, hrt_pmtiles::tile_id(TILE_ZOOM, 100, 200));
 		assert_eq!(f64::from_le_bytes(record[0..8].try_into().unwrap()), 42.0);
 		assert_eq!(read_u16(&record, 8), 123);
 		assert_eq!(read_u16(&record, 10), 123);
 		assert_eq!(u32::from_le_bytes(record[14..18].try_into().unwrap()), 0x80c0_c0c0);
-		assert_eq!(record[22..26], [3, 2, 0, 1]);
-		assert_eq!(read_u16(&record, 26), 4);
+		assert_eq!(record[22..25], [3, 2, 0]);
+		// Bit 2: a street faces a wall.
+		assert_eq!(record[25], 0b100);
+		assert_eq!(record[26..RINGS_AT], [UNRESOLVED_STYLE; 8]);
+		assert_eq!(record[RINGS_AT], 1);
+		assert_eq!(read_u16(&record, RINGS_AT + 1), 4);
+		let vertices_at = RINGS_AT + 3;
 		// The first vertex sits a quarter of the extent from the tile's west edge and half from its north edge.
-		assert_eq!(read_u16(&record, 28), 2048);
-		assert_eq!(read_u16(&record, 30), 4096);
-		let after_vertices = 28 + 4 * 4;
-		assert_eq!(record[after_vertices], 0);
-		assert_eq!(read_u16(&record, after_vertices + 1), 2);
-		assert_eq!(record.len(), after_vertices + 3 + 2 * 3 * 2);
+		assert_eq!(read_u16(&record, vertices_at), 2048);
+		assert_eq!(read_u16(&record, vertices_at + 2), 4096);
+		let edges_at = vertices_at + 4 * 4;
+		// Edges without a plan entry are open (3); the street edge is the front edge (class 0, bit 2).
+		assert_eq!(record[edges_at..edges_at + 4], [3, 3, 0b100, 3]);
+		let ridge_at = edges_at + 4;
+		assert_eq!(record[ridge_at], 0);
+		assert_eq!(read_u16(&record, ridge_at + 1), 2);
+		assert_eq!(record.len(), ridge_at + 3 + 2 * 3 * 2);
 	}
 
 	#[test]
@@ -378,17 +482,15 @@ mod tests {
 		let polygon = square(100.25 / scale, 200.5 / scale, 1.0 / 64.0 / scale);
 		let mut gabled = attributes(RoofShape::Gabled, Some(10.0));
 		gabled.roof_height = Some(3.0);
-		let (_, record) = polygon_record(&polygon, &gabled).unwrap();
+		let (_, record) = record_of(&polygon, &gabled, &FacadePlan::default()).unwrap();
 		assert_eq!(read_u16(&record, 8), 100);
 		assert_eq!(read_u16(&record, 10), 70);
 		assert_eq!(record[24], RoofShape::Gabled as u8);
-		let after_vertices = 28 + 4 * 4;
-		assert_eq!(record[after_vertices], 2);
+		let ridge_at = RINGS_AT + 3 + 4 * 4 + 4;
+		assert_eq!(record[ridge_at], 2);
 		// The rectangle is 128 units wide and 64 tall; the ridge runs along the long sides, halfway down the short ones.
-		let ridge_y = read_u16(&record, after_vertices + 3);
-		assert_eq!(ridge_y, 4096 + 32);
-		let triangles_at = after_vertices + 1 + 8;
-		assert_eq!(read_u16(&record, triangles_at), 6);
+		assert_eq!(read_u16(&record, ridge_at + 3), 4096 + 32);
+		assert_eq!(read_u16(&record, ridge_at + 1 + 8), 6);
 	}
 
 	#[test]
@@ -411,15 +513,16 @@ mod tests {
 				coord! { x: x + side * 0.25, y: y + side * 0.25 },
 			])],
 		);
-		let (_, record) = polygon_record(&polygon, &attributes(RoofShape::Gabled, None)).unwrap();
+		let (_, record) = record_of(&polygon, &attributes(RoofShape::Gabled, None), &FacadePlan::default()).unwrap();
 		assert_eq!(read_u16(&record, 8), UNKNOWN_HEIGHT);
 		// Two rings: a pitched roof needs one, so the roof is flat.
 		assert_eq!(record[24], RoofShape::Flat as u8);
-		assert_eq!(record[25], 2);
-		let after_vertices = 26 + 2 * 2 + 8 * 4;
-		assert_eq!(record[after_vertices], 0);
+		assert_eq!(record[RINGS_AT], 2);
+		// Edge flags cover the exterior's four edges only.
+		let ridge_at = RINGS_AT + 1 + 2 * 2 + 8 * 4 + 4;
+		assert_eq!(record[ridge_at], 0);
 		// A square with a square hole triangulates into eight triangles.
-		assert_eq!(read_u16(&record, after_vertices + 1), 8);
+		assert_eq!(read_u16(&record, ridge_at + 1), 8);
 	}
 
 	#[test]
@@ -427,6 +530,6 @@ mod tests {
 		let body = tile_body(&[vec![1, 2], vec![3]]).unwrap();
 		let mut decoded = Vec::new();
 		io::Read::read_to_end(&mut flate2::read::GzDecoder::new(&body[..]), &mut decoded).unwrap();
-		assert_eq!(decoded, [b'M', b'W', b'B', b'1', 2, 0, 0, 0, 1, 2, 3]);
+		assert_eq!(decoded, [b'M', b'W', b'B', b'2', 2, 0, 0, 0, 1, 2, 3]);
 	}
 }
