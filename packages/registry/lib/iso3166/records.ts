@@ -10,7 +10,7 @@
  *   membership predicates cover officially assigned codes only.
  */
 
-import { iso31661RecordsArtifact } from "#artifacts/iso3166-1-records"
+import { iso31661RecordsArtifact } from "#artifacts/iso3166-1/records"
 import {
 	ARITY_NUMERIC,
 	CODE_LENGTH_2,

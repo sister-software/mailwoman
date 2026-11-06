@@ -6,7 +6,7 @@
  *   Airport record retrieval and the located-in-country relation over the `iata-airport-records` artifact.
  */
 
-import { iataAirportRecordsArtifact } from "#artifacts/iata-airport-records"
+import { iataAirportRecordsArtifact } from "#artifacts/iata-airport/records"
 import { CODE_LENGTH_3, decode2, decode3, encode2, encode3 } from "#key"
 import { Artifact } from "#rgy1/reader"
 import { ColumnView, IDTableView, RelationView, StringPoolView } from "#rgy1/views"

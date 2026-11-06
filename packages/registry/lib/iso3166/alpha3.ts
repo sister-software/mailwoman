@@ -7,7 +7,7 @@
  *   that 2,197-byte bitset and the reader, and no name, airport or record.
  */
 
-import { iso31661Alpha3MembershipArtifact } from "#artifacts/iso3166-1-alpha3-membership"
+import { iso31661Alpha3MembershipArtifact } from "#artifacts/iso3166-1/alpha3-membership"
 import { type Parsed, ParseFailure, shapeFailure } from "#errors"
 import { encode3 } from "#key"
 import { Artifact } from "#rgy1/reader"

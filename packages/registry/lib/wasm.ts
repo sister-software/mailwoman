@@ -13,8 +13,8 @@
  */
 
 import { countryAirportCollisionArtifact } from "#artifacts/country-airport-collision"
-import { iataAirportMembershipArtifact } from "#artifacts/iata-airport-membership"
-import { iso31661Alpha3MembershipArtifact } from "#artifacts/iso3166-1-alpha3-membership"
+import { iataAirportMembershipArtifact } from "#artifacts/iata-airport/membership"
+import { iso31661Alpha3MembershipArtifact } from "#artifacts/iso3166-1/alpha3-membership"
 import { CODE_LENGTH_3 } from "#key"
 
 /**

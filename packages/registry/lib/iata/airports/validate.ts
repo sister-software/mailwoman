@@ -7,7 +7,7 @@
  *   2,197-byte bitset and the reader, and no airport record, coordinate or name.
  */
 
-import { iataAirportMembershipArtifact } from "#artifacts/iata-airport-membership"
+import { iataAirportMembershipArtifact } from "#artifacts/iata-airport/membership"
 import { type Parsed, ParseFailure, shapeFailure } from "#errors"
 import { encode3 } from "#key"
 import { Artifact } from "#rgy1/reader"
