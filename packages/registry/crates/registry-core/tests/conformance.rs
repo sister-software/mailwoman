@@ -97,7 +97,7 @@ trait BitsLen {
 
 impl BitsLen for Bitset<'_> {
 	fn bits_len(&self) -> usize {
-		(key::KEY_SPACE_3 as usize + 7) / 8
+		(key::KEY_SPACE_3 as usize).div_ceil(8)
 	}
 }
 
