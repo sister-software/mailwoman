@@ -27,6 +27,7 @@ import { Globerator } from "spliterator/node/fs"
 import { deOrderEval } from "#tools/eval-harness/de/order-eval"
 import { demoCascadeSmoke } from "#tools/eval-harness/demo/cascade/smoke"
 import { externalArenas } from "#tools/eval-harness/external-arenas"
+import { scoreFamousPlaceAnswers } from "#tools/eval-harness/famous-places/answers"
 import { scoreFamousPlaces } from "#tools/eval-harness/famous-places/score"
 import { frParseRecall } from "#tools/eval-harness/fr/parse-recall"
 import { maskRegressionCheck } from "#tools/eval-harness/mask-regression"
@@ -555,6 +556,21 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		)
 
 		await writeLocalFile(renderLines(famousLines), `${OUT_DIR}/${tag}-famous-places.md`)
+
+		// The parse score above reads labels, and this one reads the place each label's geocoding path answers.
+		const famousAnswerLines: string[] = []
+
+		await profile.time("famous-places-answers", tag, () =>
+			scoreFamousPlaceAnswers(
+				{
+					...(wc ? { weightsCacheRoot: wc } : { modelPath: m }),
+					json: `${OUT_DIR}/${tag}-famous-places-answers.json`,
+				},
+				(line) => famousAnswerLines.push(line)
+			)
+		)
+
+		await writeLocalFile(renderLines(famousAnswerLines), `${OUT_DIR}/${tag}-famous-places-answers.md`)
 
 		// Watch lenses, recorded but not floored, with no JSON sidecar.
 		await runAffix(`${tag}-watch-intersection-vt.md`, { file: "data/eval/external/intersection-golden-vt.jsonl" })
