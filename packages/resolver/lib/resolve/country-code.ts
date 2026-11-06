@@ -6,6 +6,18 @@
  *   Reads a country written as a code of three or more capitals: `USA`, `RUS`, `RMI`.
  *
  *   Two-letter codes stay out, because `CA`, `IN` and `LA` are also regions and cities.
+ *
+ *   The codes a country claims are its ISO 3166-1 alpha-3 code and the abbreviations the codex curates:
+ *   `COUNTRY_ABBREVIATIONS` (`UAE`, `PNG`, `RMI`) and the capitalized entries of `COUNTRY_SURFACE_FORMS` (`GER`, `ROM`).
+ *   With the ISO codes as the only claimed set, `UAE` would read as Mount Aue, an aerodrome in Papua New Guinea with
+ *   one Wikipedia edition, because IATA assigns that code too. The abbreviation table records what a country's own users write, and a code
+ *   written for a country is read as that country wherever it is written: as a whole input here, and as a region in
+ *   `readRegionCodeAsCountry`.
+ *
+ *   A code a country claims answers the country ahead of any airport holding the same IATA code. Of the 249 alpha-3
+ *   codes, 191 are also an airport's code in Wikidata's P238 file: `AUS` (Austin–Bergstrom), `FRA` (Frankfurt), `HND`
+ *   (Tokyo Haneda), `USA` (Concord Regional). `applyLandmark` lists that airport as the country's alternative. A code
+ *   no country claims answers the airport: `SFO`, `LHR`, `DTW`.
  */
 
 import { COUNTRY_ABBREVIATIONS, matchCountry, matchSubdivision } from "@mailwoman/codex/country"
@@ -19,6 +31,10 @@ const ABBREVIATIONS: ReadonlySet<string> = new Set(Object.values(COUNTRY_ABBREVI
 
 /**
  * Returns the alpha-2 code of a country written as a code, or null for any other text.
+ *
+ * The text has to be the whole code in capitals, three or more characters, and not a subdivision code.
+ * `AUS`, `HND` and `UAE` are countries.
+ * `SFO`, `Aus` and `IN` are not.
  */
 export function writtenCountryCode(written: string): string | null {
 	const value = written.trim()

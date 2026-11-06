@@ -382,7 +382,10 @@ The prominence is `log10(sitelinks + 1)`, so the published margin is `DECISIVE_M
 Five rules decide what the layer may answer:
 
 - An input that is only a country code of three or more capitals answers the country, so `USA` is the United States and
-  `FRA` is France. `FRA, Germany` reaches the airport.
+  `FRA` is France. A country's codes are its ISO 3166-1 alpha-3 code and the abbreviations the codex curates, such as
+  `UAE` and `PNG`. An airport holding the same IATA code is listed as the country's alternative: `AUS` answers Australia
+  and lists Austin–Bergstrom International Airport, and `FRA, Germany` reaches Frankfurt Airport. A code no country
+  claims answers the airport: `SFO`, `LHR`, `DTW`.
 - A settlement that leads a name stays with the admin ladder, which ranks settlements.
 - A place's own English or local name ranks ahead of a translation or an alias. `Hamburg` is an alias of Hamburg Airport
   and the name of a city.

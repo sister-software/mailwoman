@@ -8,6 +8,11 @@
  *   The place of that name with the most Wikipedia language editions answers, and the others stay as alternatives. A
  *   prominence of log10(sitelinks) puts the lead on the scale the admin tier's `declared_ambiguity` margin reads, so a
  *   close call is declared by the same rule that declares one between two towns.
+ *
+ *   A code written in capitals reads by one rule. A code a country is written as answers the country, and the airport
+ *   holding the same IATA code is listed as an alternative: `AUS` is Australia, then Austin–Bergstrom. Every other code
+ *   answers the place holding it: `SFO`, `LHR` and `DTW` are airports. `writtenCountryCode` states which codes a country
+ *   claims.
  */
 
 import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
@@ -64,6 +69,27 @@ function placeOf(hit: LandmarkHit): ResolvedPlace {
 }
 
 /**
+ * Lists every landmark that holds the written code on the resolved country node, as its alternatives.
+ *
+ * `AUS` answers Australia, and Austin–Bergstrom International Airport is the
+ * reading a caller can pick instead.
+ * A word spelled like the code, such as the town of Usa under `USA`,
+ * is not a holder of the code and stays out.
+ *
+ * The list sits on a resolved country node, so a country the gazetteer left unresolved keeps its parse.
+ */
+function listCodeHoldersOnCountry(roots: AddressNode[], hits: readonly LandmarkHit[]): void {
+	const country = roots.find((root) => root.tag === "country" && typeof root.placeID === "string")
+	const holders = hits.filter((hit) => hit.code && hit.kind === "venue")
+
+	if (!country || !holders.length) return
+
+	const listed = (country.alternatives as ResolvedPlace[] | undefined) ?? []
+
+	country.alternatives = [...listed, ...holders.map(placeOf)]
+}
+
+/**
  * Replaces the parse's reading of a landmark name with a venue node that holds the answer.
  *
  * The first comma-separated part is the name, and any other part is context that has to have resolved.
@@ -88,9 +114,13 @@ export function applyLandmark(roots: AddressNode[], raw: string, landmarks: Land
 
 	if (hasContext && !context.length) return
 
-	// A bare country code answers the country.
+	// A bare country code answers the country, and the airport holding the same code is listed beside it.
 	// With context, `FRA, Germany` can still reach the airport.
-	if (!hasContext && writtenCountryCode(name)) return
+	if (!hasContext && writtenCountryCode(name)) {
+		listCodeHoldersOnCountry(roots, hits)
+
+		return
+	}
 
 	const candidates = hasContext ? hitsInContext(hits, context) : hits
 	const leader = candidates[0]

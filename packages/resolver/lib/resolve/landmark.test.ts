@@ -86,6 +86,39 @@ describe("applyLandmark", () => {
 		expect(roots[0]!.placeID).toBe("wikidata:Q8731")
 	})
 
+	describe("with a code a country claims", () => {
+		const AUSTRALIA = { placeID: "wof:85632793", lat: -25, lon: 134, metadata: { resolver_country: "AU" } }
+		const AUSTIN = hit({ qid: "Q1430913", name: "Austin-Bergstrom International Airport", code: true, sitelinks: 34 })
+
+		it("keeps the country as the answer and lists the airport holding the code", () => {
+			const roots = [node("country", "AUS", 0, AUSTRALIA)]
+
+			applyLandmark(roots, "AUS", lookup([AUSTIN]))
+
+			expect(roots).toHaveLength(1)
+			expect(roots[0]!.placeID).toBe("wof:85632793")
+			expect(roots[0]!.alternatives).toMatchObject([{ id: "Q1430913", placetype: "venue", country: "US" }])
+		})
+
+		it("lists no word spelled like the code", () => {
+			const roots = [node("country", "USA", 0, { ...AUSTRALIA, metadata: { resolver_country: "US" } })]
+			const usa = hit({ qid: "Q1041977", name: "Usa", kind: "settlement", country: "JP", code: false })
+
+			applyLandmark(roots, "USA", lookup([usa]))
+
+			expect(roots[0]!.alternatives).toBeUndefined()
+		})
+
+		it("leaves an unresolved country alone", () => {
+			const roots = [node("venue", "AUS", 0)]
+
+			applyLandmark(roots, "AUS", lookup([AUSTIN]))
+
+			expect(roots[0]).toMatchObject({ tag: "venue", value: "AUS" })
+			expect(roots[0]!.placeID).toBeUndefined()
+		})
+	})
+
 	it("lets an alias answer a name the gazetteer left unresolved", () => {
 		const roots = [node("locality", "Dtw", 0)]
 		const airport = hit({ qid: "Q1", name: "Detroit Metropolitan Wayne County Airport", primary: false })

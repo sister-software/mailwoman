@@ -35,11 +35,17 @@ describe("writtenCountryCode", () => {
 		["RMI", "MH"],
 		["UAE", "AE"],
 		["U.A.E.", "AE"],
-	])("reads %s", (written, iso2) => {
+		["PNG", "PG"],
+		["AUS", "AU"],
+		["HND", "HN"],
+		["MEX", "MX"],
+		["CAN", "CA"],
+		["GER", "DE"],
+	])("reads %s, ahead of any airport holding the code", (written, iso2) => {
 		expect(writtenCountryCode(written)).toBe(iso2)
 	})
 
-	it.each(["Usa", "CA", "IN", "DTW", "Russia"])("reads %s as no country code", (written) => {
+	it.each(["Usa", "CA", "IN", "DTW", "SFO", "LHR", "Russia"])("reads %s as no country code", (written) => {
 		expect(writtenCountryCode(written)).toBeNull()
 	})
 })
