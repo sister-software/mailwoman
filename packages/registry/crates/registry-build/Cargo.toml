@@ -1,0 +1,18 @@
+[package]
+name = "registry-build"
+description = "The RGY1 compiler: reads @mailwoman/registry's normalized JSON and writes its lookup artifacts deterministically."
+version.workspace = true
+edition.workspace = true
+license = "AGPL-3.0-only OR LicenseRef-Commercial"
+repository.workspace = true
+
+[[bin]]
+name = "registry-build"
+path = "src/main.rs"
+
+[dependencies]
+registry-core = { path = "../registry-core" }
+serde = { version = "1", features = ["derive"] }
+# `float_roundtrip` parses every decimal to the nearest double, as JavaScript does; the default parser can be one unit
+# in the last place away, which would move an airport's coordinate bytes away from the normalized JSON's value.
+serde_json = { version = "1", features = ["float_roundtrip"] }

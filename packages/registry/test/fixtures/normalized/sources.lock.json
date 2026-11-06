@@ -1,0 +1,19 @@
+{
+	"$comment": "A synthetic lock for the fixture profile. The digests are of nothing; the fixture records are invented so the tests cover country-only, airport-only, collision, missing, former-code, source-extension and unstated-country cases.",
+	"profile": "fixture-synthetic",
+	"sources": {
+		"fixture-countries": {
+			"url": "fixture:countries",
+			"sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+			"bytes": 0,
+			"publication": "synthetic"
+		},
+		"fixture-airports": {
+			"url": "fixture:airports",
+			"sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+			"bytes": 0,
+			"publication": "synthetic"
+		}
+	},
+	"$notElected": {}
+}

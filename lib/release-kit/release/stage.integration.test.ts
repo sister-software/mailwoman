@@ -31,14 +31,14 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 describe("checkReleaseListIdentity", () => {
-	it("holds on the current tree: 64 published, every absence sanctioned by name", async () => {
+	it("holds on the current tree: 65 published, every absence sanctioned by name", async () => {
 		const identity = await checkReleaseListIdentity(repoRootPath())
 
-		expect(identity.publishCount).toBe(66)
+		expect(identity.publishCount).toBe(65)
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])
-		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(21)
+		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(23)
 	})
 
 	it("names an unsanctioned absence instead of reporting a count mismatch", async () => {

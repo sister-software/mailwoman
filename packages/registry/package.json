@@ -1,0 +1,95 @@
+{
+	"name": "@mailwoman/registry",
+	"version": "10.8.0",
+	"description": "A generated, typed registry of standardized identifiers and their relationships: ISO 3166-1 country codes and IATA airport codes in this release, compiled from pinned open sources into RGY1 lookup artifacts with branded types, a synchronous TypeScript reader, a Rust lookup core and a WebAssembly batch adapter.",
+	"keywords": [
+		"airport-codes",
+		"country-codes",
+		"iata",
+		"iso-3166",
+		"registry"
+	],
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/registry"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"lib/**/*.ts",
+		"sdk/**/*.ts",
+		"tools/**/*.ts",
+		"data/manifests/*.json",
+		"data/normalized/*.json",
+		"definitions/*.json",
+		"wasm/*.wasm",
+		"docs/*.md",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#sdk/*": {
+			"types": "./out/sdk/*.d.ts",
+			"node": "./sdk/*.ts",
+			"default": "./out/sdk/*.js"
+		},
+		"#tools/*": {
+			"types": "./out/tools/*.d.ts",
+			"node": "./tools/*.ts",
+			"default": "./out/tools/*.js"
+		},
+		"#*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		"./wasm/registry.wasm": "./wasm/registry.wasm",
+		"./wasm/registry-simd.wasm": "./wasm/registry-simd.wasm",
+		".": {
+			"types": "./out/index.d.ts",
+			"node": "./lib/index.ts",
+			"default": "./out/index.js"
+		},
+		"./sdk/*": {
+			"types": "./out/sdk/*.d.ts",
+			"node": "./sdk/*.ts",
+			"default": "./out/sdk/*.js"
+		},
+		"./tools/*": {
+			"types": "./out/tools/*.d.ts",
+			"node": "./tools/*.ts",
+			"default": "./out/tools/*.js"
+		},
+		"./*": {
+			"types": "./out/*.d.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"path-ts": "^2.5.0"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"esbuild": "0.28.2"
+	}
+}

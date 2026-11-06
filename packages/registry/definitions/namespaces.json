@@ -1,0 +1,63 @@
+{
+	"$comment": "The identifier namespaces of the first slice, their key grammars and the artifacts that serve them. The compiler and the TypeScript readers read the same file.",
+	"schemaVersion": 1,
+	"normalizationVersion": 1,
+	"namespaces": {
+		"iso3166-1-alpha2": { "arity": 2, "alphabet": "A-Z", "brand": "ISO.CountryCode_3166_1_Alpha2" },
+		"iso3166-1-alpha3": { "arity": 3, "alphabet": "A-Z", "brand": "ISO.CountryCode_3166_1_Alpha3" },
+		"iso3166-1-numeric": { "arity": 3, "alphabet": "0-9", "brand": "ISO.CountryCode_3166_1_Numeric" },
+		"iata-location": { "arity": 3, "alphabet": "A-Z", "brand": "IATA.LocationCode" },
+		"icao-location": { "arity": 4, "alphabet": "A-Z0-9", "brand": "ICAO.LocationIndicator" }
+	},
+	"artifacts": {
+		"iso3166-1-alpha2-membership": {
+			"namespaces": ["iso3166-1-alpha2"],
+			"sections": ["bitset"],
+			"status": "officially-assigned"
+		},
+		"iso3166-1-alpha3-membership": {
+			"namespaces": ["iso3166-1-alpha3"],
+			"sections": ["bitset"],
+			"status": "officially-assigned"
+		},
+		"iso3166-1-records": {
+			"namespaces": ["iso3166-1-alpha2", "iso3166-1-alpha3", "iso3166-1-numeric"],
+			"sections": ["id-table", "column", "string-offsets", "utf8"],
+			"columns": ["alpha2Key", "alpha3Key", "numeric", "status", "name", "entityId"],
+			"status": "every status; the status column distinguishes them"
+		},
+		"iata-airport-membership": {
+			"namespaces": ["iata-location"],
+			"sections": ["bitset"],
+			"kinds": ["airport"]
+		},
+		"iata-airport-records": {
+			"namespaces": ["iata-location", "icao-location"],
+			"sections": ["id-table", "column", "string-offsets", "utf8", "relation-offsets", "relation-targets"],
+			"columns": [
+				"iataKey",
+				"countryAlpha2Key",
+				"countryStatus",
+				"facility",
+				"scheduledService",
+				"latitude",
+				"longitude",
+				"name",
+				"icao",
+				"municipality",
+				"isoRegion",
+				"entityId"
+			],
+			"relations": ["airport-located-in-country"],
+			"kinds": ["airport"]
+		},
+		"country-airport-collision": {
+			"namespaces": ["iso3166-1-alpha3", "iata-location"],
+			"sections": ["bitset"],
+			"meaning": "iso3166-1-alpha3 officially-assigned codes that are also an iata-location airport code"
+		}
+	},
+	"facilities": ["large_airport", "medium_airport", "small_airport", "seaplane_base", "heliport"],
+	"countryStatuses": ["officially-assigned", "formerly-used"],
+	"airportCountryStatuses": ["iso3166-1", "source-extension", "unstated"]
+}

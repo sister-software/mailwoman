@@ -1,0 +1,91 @@
+{
+	"profile": "fixture-synthetic",
+	"source": "fixture-airports",
+	"normalizationVersion": 1,
+	"records": [
+		{
+			"entityID": "fixture:airport-1",
+			"iata": "AUS",
+			"icao": "KAUS",
+			"name": "Austin-Bergstrom International Airport",
+			"facility": "large_airport",
+			"scheduledService": true,
+			"latitude": 30.1945,
+			"longitude": -97.6699,
+			"country": "US",
+			"countryStatus": "iso3166-1",
+			"isoRegion": "US-TX",
+			"municipality": "Austin"
+		},
+		{
+			"entityID": "fixture:airport-2",
+			"iata": "FRA",
+			"icao": "EDDF",
+			"name": "Frankfurt Airport",
+			"facility": "large_airport",
+			"scheduledService": true,
+			"latitude": 50.0333,
+			"longitude": 8.5706,
+			"country": "DE",
+			"countryStatus": "source-extension",
+			"isoRegion": "DE-HE",
+			"municipality": "Frankfurt am Main"
+		},
+		{
+			"entityID": "fixture:airport-3",
+			"iata": "LHR",
+			"icao": "EGLL",
+			"name": "London Heathrow Airport",
+			"facility": "large_airport",
+			"scheduledService": true,
+			"latitude": 51.4706,
+			"longitude": -0.461941,
+			"country": "GB",
+			"countryStatus": "iso3166-1",
+			"isoRegion": "GB-ENG",
+			"municipality": "London"
+		},
+		{
+			"entityID": "fixture:airport-4",
+			"iata": "PRX",
+			"icao": null,
+			"name": "Prístina Fixture Heliport",
+			"facility": "heliport",
+			"scheduledService": false,
+			"latitude": 42.6,
+			"longitude": 21.0,
+			"country": "XK",
+			"countryStatus": "source-extension",
+			"isoRegion": null,
+			"municipality": null
+		},
+		{
+			"entityID": "fixture:airport-5",
+			"iata": "SFO",
+			"icao": "KSFO",
+			"name": "San Francisco International Airport",
+			"facility": "large_airport",
+			"scheduledService": true,
+			"latitude": 37.6189,
+			"longitude": -122.375,
+			"country": "US",
+			"countryStatus": "iso3166-1",
+			"isoRegion": "US-CA",
+			"municipality": "San Francisco"
+		},
+		{
+			"entityID": "fixture:airport-6",
+			"iata": "ZZZ",
+			"icao": null,
+			"name": "Unplaced Fixture Strip",
+			"facility": "small_airport",
+			"scheduledService": false,
+			"latitude": 0.5,
+			"longitude": 0.5,
+			"country": null,
+			"countryStatus": "unstated",
+			"isoRegion": null,
+			"municipality": null
+		}
+	]
+}

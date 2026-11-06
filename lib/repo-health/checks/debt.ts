@@ -433,6 +433,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/dictionaries/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
 	[
+		"packages/registry/data/normalized/",
+		"OurAirports airport names are external names kept verbatim: Cut Bank Municipal Airport, Seam",
+	],
+	[
 		"packages/structures/data/facade/",
 		"Arnis's tables quote Minecraft block ids and OpenStreetMap tag values verbatim: `cut_sandstone_slab`, `historic=city_gate`",
 	],

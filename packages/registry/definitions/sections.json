@@ -1,0 +1,73 @@
+{
+	"$comment": "The RGY1 section kinds and their encodings. docs/rgy1.md is the normative text; tools/generate-sections.run.ts writes lib/rgy1/sections.generated.ts and crates/registry-core/src/sections.rs from this file, and lib/rgy1/sections.test.ts holds the three equal.",
+	"envelope": {
+		"magic": "RGY1",
+		"version": 1,
+		"headerOffset": 32,
+		"directoryEntryBytes": 24,
+		"alignment": 8
+	},
+	"kinds": [
+		{
+			"id": 1,
+			"name": "bitset",
+			"encoding": 1,
+			"elementWidth": 0,
+			"count": "the number of keys in the key space; the payload holds ceil(count / 8) bytes",
+			"aux": "the key arity: 2 or 3 upper-case ASCII letters, or 0 for a three-digit numeric key",
+			"bitOrder": "bit (key & 7) of byte (key >> 3)"
+		},
+		{
+			"id": 2,
+			"name": "id-table",
+			"encoding": 1,
+			"elementWidth": "1, 2 or 4 bytes, unsigned little-endian",
+			"count": "the number of keys in the key space",
+			"aux": "the key arity, as for bitset",
+			"value": "row id plus one; zero means the key is absent"
+		},
+		{
+			"id": 3,
+			"name": "string-offsets",
+			"encoding": 1,
+			"elementWidth": 4,
+			"count": "the number of strings plus one; offsets are monotonic and end at the utf8 section's length",
+			"aux": 0
+		},
+		{
+			"id": 4,
+			"name": "utf8",
+			"encoding": 1,
+			"elementWidth": 0,
+			"count": "the byte length; the bytes are strict UTF-8",
+			"aux": 0
+		},
+		{
+			"id": 5,
+			"name": "column",
+			"encoding": 1,
+			"elementWidth": "1, 2, 4 or 8 bytes; integers unsigned little-endian, 8-byte columns IEEE 754 doubles",
+			"count": "the number of rows",
+			"aux": "the index into the header's columns list"
+		},
+		{
+			"id": 6,
+			"name": "relation-offsets",
+			"encoding": 1,
+			"elementWidth": 4,
+			"count": "the number of source keys plus one",
+			"aux": "the index into the header's relations list"
+		},
+		{
+			"id": 7,
+			"name": "relation-targets",
+			"encoding": 1,
+			"elementWidth": 4,
+			"count": "the number of targets; each is a row id in the relation's target column set",
+			"aux": "the index into the header's relations list"
+		}
+	],
+	"flags": {
+		"required": 1
+	}
+}

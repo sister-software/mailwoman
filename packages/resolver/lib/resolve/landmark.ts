@@ -17,6 +17,7 @@
 
 import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import { EMPTY_PLACE_FIELDS, type LandmarkHit, type LandmarkLookup, type ResolvedPlace } from "@mailwoman/core/resolver"
+import { isCountryAirportCollision } from "@mailwoman/registry/overlap/country-airport"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { decorateNode } from "#decorate-node"
@@ -77,12 +78,22 @@ function placeOf(hit: LandmarkHit): ResolvedPlace {
  * is not a holder of the code and stays out.
  *
  * The list sits on a resolved country node, so a country the gazetteer left unresolved keeps its parse.
+ *
+ * The node also records `code_collision`, the identifier registry's verdict on whether the written
+ * code is both an officially assigned ISO 3166-1 alpha-3 code and an IATA airport code in its profile.
+ * The registry and the landmark layer read different sources, so the flag
+ * and the listed holders can disagree, and both are kept.
  */
-function listCodeHoldersOnCountry(roots: AddressNode[], hits: readonly LandmarkHit[]): void {
+function listCodeHoldersOnCountry(roots: AddressNode[], code: string, hits: readonly LandmarkHit[]): void {
 	const country = roots.find((root) => root.tag === "country" && typeof root.placeID === "string")
+
+	if (!country) return
+
+	country.metadata = { ...country.metadata, code_collision: isCountryAirportCollision(code) }
+
 	const holders = hits.filter((hit) => hit.code && hit.kind === "venue")
 
-	if (!country || !holders.length) return
+	if (!holders.length) return
 
 	const listed = (country.alternatives as ResolvedPlace[] | undefined) ?? []
 
@@ -105,22 +116,23 @@ export function applyLandmark(roots: AddressNode[], raw: string, landmarks: Land
 	if (!name) return
 
 	const hits = landmarks.find(name)
+	const hasContext = raw.trim().length > name.length
+
+	// A bare country code answers the country, and the airport holding the same code is listed beside it.
+	// The registry's collision verdict is stamped whether or not the landmark layer holds the code.
+	// With context, `FRA, Germany` can still reach the airport.
+	if (!hasContext && writtenCountryCode(name)) {
+		listCodeHoldersOnCountry(roots, name, hits)
+
+		return
+	}
 
 	if (!hits.length) return
 
 	const nameEnd = raw.indexOf(name) + name.length
-	const hasContext = raw.trim().length > name.length
 	const context = roots.filter((node) => node.start >= nameEnd && typeof node.placeID === "string")
 
 	if (hasContext && !context.length) return
-
-	// A bare country code answers the country, and the airport holding the same code is listed beside it.
-	// With context, `FRA, Germany` can still reach the airport.
-	if (!hasContext && writtenCountryCode(name)) {
-		listCodeHoldersOnCountry(roots, hits)
-
-		return
-	}
 
 	const candidates = hasContext ? hitsInContext(hits, context) : hits
 	const leader = candidates[0]

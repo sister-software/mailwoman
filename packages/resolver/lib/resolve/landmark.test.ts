@@ -98,6 +98,16 @@ describe("applyLandmark", () => {
 			expect(roots).toHaveLength(1)
 			expect(roots[0]!.placeID).toBe("wof:85632793")
 			expect(roots[0]!.alternatives).toMatchObject([{ id: "Q1430913", placetype: "venue", country: "US" }])
+			expect(roots[0]!.metadata?.["code_collision"]).toBe(true)
+		})
+
+		it("records the registry's verdict when no landmark holds the code", () => {
+			const roots = [node("country", "GBR", 0, { ...AUSTRALIA, metadata: { resolver_country: "GB" } })]
+
+			applyLandmark(roots, "GBR", lookup([]))
+
+			expect(roots[0]!.metadata?.["code_collision"]).toBe(true)
+			expect(roots[0]!.alternatives).toBeUndefined()
 		})
 
 		it("lists no word spelled like the code", () => {

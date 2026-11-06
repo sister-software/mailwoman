@@ -1,0 +1,56 @@
+{
+	"profile": "fixture-synthetic",
+	"source": "fixture-countries",
+	"normalizationVersion": 1,
+	"records": [
+		{
+			"entityID": "fixture:country-AU",
+			"alpha2": "AU",
+			"alpha3": "AUS",
+			"numeric": "036",
+			"name": "Australia",
+			"status": "officially-assigned"
+		},
+		{
+			"entityID": "fixture:country-DD",
+			"alpha2": "DD",
+			"alpha3": "DDR",
+			"numeric": "278",
+			"name": "German Democratic Republic",
+			"status": "formerly-used",
+			"dissolved": "1990-10-03T00:00:00Z"
+		},
+		{
+			"entityID": "fixture:country-FR",
+			"alpha2": "FR",
+			"alpha3": "FRA",
+			"numeric": "250",
+			"name": "France",
+			"status": "officially-assigned"
+		},
+		{
+			"entityID": "fixture:country-GB",
+			"alpha2": "GB",
+			"alpha3": "GBR",
+			"numeric": "826",
+			"name": "United Kingdom",
+			"status": "officially-assigned"
+		},
+		{
+			"entityID": "fixture:country-US",
+			"alpha2": "US",
+			"alpha3": "USA",
+			"numeric": "840",
+			"name": "United States of America",
+			"status": "officially-assigned"
+		},
+		{
+			"entityID": "fixture:country-ZZ",
+			"alpha2": "ZW",
+			"alpha3": "ZWE",
+			"numeric": "716",
+			"name": "Zimbabwe",
+			"status": "officially-assigned"
+		}
+	]
+}

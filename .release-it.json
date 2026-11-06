@@ -55,7 +55,6 @@
 				"packages/query-shape",
 				"packages/react",
 				"packages/record",
-				"packages/entity-resolution",
 				"packages/resolver",
 				"packages/resolver-wof-sqlite",
 				"packages/resolver-wof-wasm",
@@ -118,6 +117,8 @@
 		"packages/gazetteer-worker": "private gazetteer lookup Worker behind the hosted geocoder — Cloudflare infrastructure, never publishes",
 		"packages/geocoder-service": "private choice between Earth's hosted and in-browser geocoders — no published consumer yet",
 		"packages/engine-worker": "private parse and geocode Worker behind the hosted geocoder — Cloudflare infrastructure, never publishes",
-		"packages/service-worker-cache": "private Workbox handlers and plugins for Earth's service worker — no published consumer yet"
+		"packages/service-worker-cache": "private Workbox handlers and plugins for Earth's service worker — no published consumer yet",
+		"packages/entity-resolution": "renamed from @mailwoman/registry in #2945 — the new npm name needs `mwops release bless-package` before it may enter the release list",
+		"packages/registry": "the identifier registry of #2945 — the npm name @mailwoman/registry holds 63 published versions of the record-matching application, and the operator has not yet decided whether this package continues that version line"
 	}
 }
