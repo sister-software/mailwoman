@@ -15,6 +15,8 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { build } from "esbuild"
 import { describe, expect, it } from "vitest"
 
+import { artifactModulePath } from "./artifact-path.ts"
+
 const registry = workspacePath("registry")
 
 async function bundle(source: string): Promise<string> {
@@ -37,7 +39,9 @@ async function bundle(source: string): Promise<string> {
  * The first 64 characters of an artifact module's base64 text, enough to identify the artifact in a bundle.
  */
 async function signature(name: string): Promise<string> {
-	const module = await readLocalTextFile(workspacePath("registry", "lib", "artifacts", `${name}.ts`))
+	const module = await readLocalTextFile(
+		workspacePath("registry", "lib", "artifacts", `${artifactModulePath(name)}.ts`)
+	)
 	const match = /"([A-Za-z0-9+/=]{64})/.exec(module)
 
 	if (!match) throw new Error(`${name}: no base64 text`)

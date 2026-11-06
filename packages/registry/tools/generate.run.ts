@@ -24,6 +24,8 @@ import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
+import { artifactModulePath } from "#tools/artifact-path"
+
 const { values } = parseArguments({ options: { check: { type: "boolean", default: false } } })
 const registry = (...segments: string[]): string => workspacePath("registry", ...segments)
 
@@ -35,11 +37,6 @@ const ARTIFACTS = [
 	"iata-airport-records",
 	"country-airport-collision",
 ] as const
-
-/**
- * Returns the module an artifact's bytes live in under `lib/artifacts/`, grouped by the dataset it reads.
- */
-const modulePath = (name: string): string => name.replace(/^(iso3166-1|iata-airport)-/u, "$1/")
 
 const camel = (name: string): string =>
 	name.replaceAll(/-(\w)/g, (_, letter: string) => letter.toUpperCase()).replace(/^(\d)/, "_$1")
@@ -113,7 +110,7 @@ export function ${getter}(): Uint8Array {
 }
 `
 
-	await emit(registry("lib", "artifacts", `${modulePath(name)}.ts`), module)
+	await emit(registry("lib", "artifacts", `${artifactModulePath(name)}.ts`), module)
 }
 
 await emit(registry("data", "manifests", "artifacts.json"), prettyJSON(manifest))
