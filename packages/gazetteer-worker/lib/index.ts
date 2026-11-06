@@ -198,17 +198,21 @@ export default class GazetteerWorker extends WorkerEntrypoint<GazetteerWorkerEnv
 			})
 		}
 
-		const answer: LandmarkRouteResponse = {
-			hits: await this.findLandmarks(name, source),
-			source,
-			...LANDMARK_LICENSES[source],
-		}
+		const crossOrigin = { "Access-Control-Allow-Origin": "*" }
 
-		return Response.json(answer, {
-			headers: {
-				"Access-Control-Allow-Origin": "*",
-				"Cache-Control": "public, max-age=86400",
-			},
-		})
+		try {
+			const answer: LandmarkRouteResponse = {
+				hits: await this.findLandmarks(name, source),
+				source,
+				...LANDMARK_LICENSES[source],
+			}
+
+			return Response.json(answer, { headers: { ...crossOrigin, "Cache-Control": "public, max-age=86400" } })
+		} catch (error) {
+			// A browser reads the status only when the failure holds the cross-origin header.
+			console.error(`The ${source} landmark layer could not be read`, error)
+
+			return new Response(`The ${source} landmark layer could not be read.`, { status: 503, headers: crossOrigin })
+		}
 	}
 }
