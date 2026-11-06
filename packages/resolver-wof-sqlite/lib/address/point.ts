@@ -252,6 +252,16 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			row = this.#probe(streetNorm, number.replace("-", ""), query)
 		}
 
+		// A grid number leads with a compass letter.
+		// One writer's `N3971` is another source's `n 3971`.
+		if (!row) {
+			const grid = /^([nesw])(?:\s+)?(\d+)$/.exec(number)
+
+			if (grid) {
+				row = this.#probe(streetNorm, number.includes(" ") ? `${grid[1]}${grid[2]}` : `${grid[1]} ${grid[2]}`, query)
+			}
+		}
+
 		// The registers store one number per point, so a range such as "385-387" falls back to its low end.
 		if (!row) {
 			const low = /^(\d+[a-z]?)-\d+[a-z]?$/.exec(number)?.[1]

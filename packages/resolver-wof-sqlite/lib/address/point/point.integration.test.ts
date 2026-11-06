@@ -154,6 +154,38 @@ beforeAll(async () => {
 	)
 
 	insert.run(
+		"sunny slope avenue",
+		"sunny slope avenue",
+		"n 3971",
+		null,
+		"53011",
+		"cascade",
+		"Sunny Slope Avenue",
+		43.684,
+		-88.163,
+		"t",
+		"r",
+		null,
+		null
+	)
+
+	insert.run(
+		"sunny slope avenue",
+		"sunny slope avenue",
+		"w145",
+		null,
+		"53011",
+		"cascade",
+		"Sunny Slope Avenue",
+		43.685,
+		-88.164,
+		"t",
+		"r",
+		null,
+		null
+	)
+
+	insert.run(
 		"old volcano road",
 		"old volcano road",
 		"194074",
@@ -263,6 +295,16 @@ describe("AddressPointSqliteLookup", () => {
 		expect(lookup.find({ street: "Old Volcano Rd", number: "19-4074", postcode: "96785", bbox: null })?.lat).toBe(
 			19.4257922
 		)
+	})
+
+	it("matches a compass-led grid number across both spacings", () => {
+		const find = (number: string) =>
+			lookup.find({ street: "Sunny Slope Ave", number, postcode: "53011", bbox: null })?.lat
+
+		expect(find("N3971")).toBe(43.684)
+		expect(find("N 3971")).toBe(43.684)
+		expect(find("W145")).toBe(43.685)
+		expect(find("W 145")).toBe(43.685)
 	})
 
 	it("reads a short hyphenated step as a range and leaves the joined house alone", () => {
