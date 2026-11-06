@@ -24,8 +24,6 @@ import { COUNTRY_ABBREVIATIONS, matchCountry, matchSubdivision } from "@mailwoma
 import { countryDisplayNames } from "@mailwoman/codex/country/display-names"
 import { firstNodeWhere, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
-import { isCountryCodeAlpha3 } from "@mailwoman/registry/iso3166/alpha3"
-import { alpha2ForAlpha3 } from "@mailwoman/registry/iso3166/relations"
 
 import { decorateNode } from "#decorate-node"
 
@@ -38,16 +36,14 @@ const ABBREVIATIONS: ReadonlySet<string> = new Set(Object.values(COUNTRY_ABBREVI
  * `AUS`, `HND` and `UAE` are countries.
  * `SFO`, `Aus` and `IN` are not.
  *
- * The ISO 3166-1 alpha-3 claim is read from `@mailwoman/registry`,
- * whose profile states its source and coverage.
- * The codex supplies the curated abbreviations and surface forms outside the standard.
+ * The codex holds the ISO 3166-1 alpha-3 codes and the curated abbreviations.
+ * The registry's country records stay out of this module, because they would add
+ * 51 KB to every browser bundle that holds the resolver.
  */
 export function writtenCountryCode(written: string): string | null {
 	const value = written.trim()
 
 	if (!/^[\p{Lu}.]{3,}$/u.test(value) || matchSubdivision(value)) return null
-
-	if (isCountryCodeAlpha3(value)) return alpha2ForAlpha3(value) ?? matchCountry(value)?.iso2 ?? null
 
 	return matchCountry(value)?.iso2 ?? null
 }
