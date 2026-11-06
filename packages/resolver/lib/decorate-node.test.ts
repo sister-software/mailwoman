@@ -115,6 +115,18 @@ describe("decorateNode and the stored extent", () => {
 		expect(n.metadata?.["resolver_bbox"]).toEqual(bbox)
 	})
 
+	it("reads corners a few millionths of a degree apart as a point", () => {
+		const n = node()
+
+		decorateNode(
+			n,
+			place({ bbox: { minLat: 10.7737245, maxLat: 10.7737264, minLon: 106.7165985, maxLon: 106.7166137 } }),
+			[]
+		)
+
+		expect(n.metadata?.["resolver_bbox"]).toBeUndefined()
+	})
+
 	it("records an alias win and leaves a primary-name win unmarked", () => {
 		const alias = node()
 		const primary = node()
