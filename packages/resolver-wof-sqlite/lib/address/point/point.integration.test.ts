@@ -31,6 +31,7 @@ beforeAll(async () => {
 	using kdb = new DatabaseClient<AddressPointDatabase>(path)
 
 	await createAddressPointTable(kdb)
+	kdb.exec("CREATE INDEX idx_ap_street ON address_point (street_norm, number)")
 
 	const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
 
@@ -206,6 +207,50 @@ beforeAll(async () => {
 })
 
 describe("AddressPointSqliteLookup", () => {
+	it("searches around a locality only where the street index exists", async () => {
+		const path = fixtures.use(await temporaryDirectory("ap-bbox-")).path("fixture.db")
+		const bbox = { minLat: 36, maxLat: 37, minLon: -116, maxLon: -115 }
+		const query = { street: "Duneville St", number: "1985", locality: "Las Vegas", bbox }
+
+		{
+			using db = new DatabaseClient<AddressPointDatabase>(path)
+
+			await createAddressPointTable(db)
+
+			db.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`).run(
+				"duneville street",
+				"duneville street",
+				"1985",
+				null,
+				null,
+				null,
+				"DUNEVILLE ST",
+				36.1501484,
+				-115.2215886,
+				"t",
+				"r",
+				null,
+				null
+			)
+		}
+
+		{
+			using unindexed = new AddressPointSqliteLookup(path)
+
+			expect(unindexed.find(query)).toBeNull()
+		}
+
+		{
+			using db = new DatabaseClient<AddressPointDatabase>(path)
+
+			db.exec("CREATE INDEX idx_ap_street ON address_point (street_norm, number)")
+		}
+
+		using indexed = new AddressPointSqliteLookup(path)
+
+		expect(indexed.find(query)?.lat).toBe(36.1501484)
+	})
+
 	it("answers an exact (street, number) within the postcode scope", () => {
 		expect(lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505", bbox: null })?.lat).toBe(-27.1836)
 	})

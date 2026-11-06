@@ -17,7 +17,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { makeDirectories, movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { ADDRESS_POINT_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
@@ -90,6 +90,9 @@ for (const [state, members] of states) {
 			(column) => column.name
 		)
 
+		// The repeat check below reads this index, and the lookup's search around a locality requires it.
+		db.exec("CREATE INDEX IF NOT EXISTS idx_ap_street ON address_point (street_norm, number)")
+
 		const hasCell = columns.includes("h3_cell")
 		const stored = db.prepare("SELECT lat, lon FROM address_point WHERE street_norm = ? AND number = ?")
 
@@ -110,15 +113,26 @@ for (const [state, members] of states) {
 			const zip = cache(`${member.replaceAll("/", "__")}.zip`)
 
 			if (!(await pathExists(zip))) {
-				const response = await fetch(`https://results.openaddresses.io/latest/run/${member}.zip`)
+				// A failed transfer is reported with the state's counts, and a rerun retries it because no file was kept.
+				const partial = `${zip.toString()}.part`
 
-				if (!response.ok || !response.body) {
-					missing.push(`${member} (${response.status})`)
+				try {
+					const response = await fetch(`https://results.openaddresses.io/latest/run/${member}.zip`)
+
+					if (!response.ok || !response.body) {
+						missing.push(`${member} (${response.status})`)
+
+						continue
+					}
+
+					await pipeline(Readable.fromWeb(response.body), openWriteStream(partial))
+					await movePath(partial, zip)
+				} catch (error) {
+					await removePathIfPresent(partial)
+					missing.push(`${member} (${String(error)})`)
 
 					continue
 				}
-
-				await pipeline(Readable.fromWeb(response.body), openWriteStream(zip))
 			}
 
 			const csv = scratch.path(`${member.replaceAll("/", "__")}.csv`)

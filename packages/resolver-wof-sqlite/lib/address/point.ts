@@ -7,6 +7,7 @@
 
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { indexExists } from "@mailwoman/sqlite/introspection"
 import type { PathBuilderLike } from "path-ts"
 
 import type { AddressPointDatabase, AddressPointTable } from "#address/point/schema"
@@ -94,6 +95,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	readonly #byLocalityTail:
 		| PreparedGet<[street: StreetKey, number: string, tailPattern: string], AddressPointRow>
 		| undefined
+	readonly #hasStreetIndex: boolean = false
 	readonly #byBbox:
 		| PreparedGet<
 				[street: StreetKey, number: string, minLat: number, maxLat: number, minLon: number, maxLon: number],
@@ -160,6 +162,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1`
 			)
+
+			this.#hasStreetIndex = indexExists(this.#db, "idx_ap_street")
 
 			this.#byBbox = prepareGet(
 				this.#db,
@@ -335,7 +339,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		}
 
 		// The bounding box serves extracts whose points have no postcode or locality, such as OSM.
-		if (!row && query.bbox) {
+		// A database without the street index skips this search, because each miss would scan the whole table.
+		if (!row && query.bbox && this.#hasStreetIndex) {
 			const b = query.bbox
 			const candidate = this.#byBbox!(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon)
 
