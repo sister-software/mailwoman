@@ -60,9 +60,9 @@ Fields every artifact carries:
 | `encodings`            | Section kind name to encoding version, for every kind the writer knows       |
 | `generator`            | The writer's crate name and version                                          |
 
-A records artifact adds `rows`, `columns` (`{ name, type, width }` in column order; a `u8` column with a
-closed vocabulary adds `values`, and a key column that can be absent adds `absent`) and, when it holds a
-relation, `relations` (`{ name, source, targets }` in relation order). A membership artifact adds `status`
+A records artifact adds `rows`, `columns` (`{ name, type, width }` in column order) and, when it holds a
+relation, `relations` (`{ name, source, targets }` in relation order). A `u8` column with a closed vocabulary adds
+`values`, and a key column that can be absent adds `absent`. A membership artifact adds `status`
 or `kinds`. The collision artifact adds `meaning`.
 
 ## Directory
@@ -74,7 +74,7 @@ The directory starts at the directory offset and holds one 24-byte entry per sec
 | 0            | `u16` | Section kind                                                           |
 | 2            | `u16` | The encoding version of that kind                                      |
 | 4            | `u16` | Element width in bytes; `0` for a variable-width or bit-packed payload |
-| 6            | `u16` | Section flags; bit 0 means required for interpretation                 |
+| 6            | `u16` | Section flags. Bit 0 means required for interpretation                 |
 | 8            | `u32` | Section byte offset                                                    |
 | 12           | `u32` | Section byte length                                                    |
 | 16           | `u32` | Logical element count, defined per kind                                |
@@ -108,11 +108,11 @@ writes `lib/rgy1/sections.generated.ts` and `crates/registry-core/src/sections.r
 
 | Id  | Kind               | Width      | Count                | Aux                      | Payload                                                              |
 | --- | ------------------ | ---------- | -------------------- | ------------------------ | -------------------------------------------------------------------- |
-| 1   | `bitset`           | 0          | Key space size       | Key arity                | `ceil(count / 8)` bytes; bit `key & 7` of byte `key >> 3`            |
+| 1   | `bitset`           | 0          | Key space size       | Key arity                | `ceil(count / 8)` bytes. Bit `key & 7` of byte `key >> 3`            |
 | 2   | `id-table`         | 1, 2 or 4  | Key space size       | Key arity                | Row id plus one per key; `0` means absent                            |
 | 3   | `string-offsets`   | 4          | Strings plus one     | 0                        | Monotonic byte offsets into the `utf8` section, ending at its length |
-| 4   | `utf8`             | 0          | Byte length          | 0                        | Strict UTF-8; string `i` is bytes `offsets[i]..offsets[i+1]`         |
-| 5   | `column`           | 1, 2, 4, 8 | Rows                 | Column index in header   | Fixed-width cells; width 8 is an IEEE 754 double                     |
+| 4   | `utf8`             | 0          | Byte length          | 0                        | Strict UTF-8. String `i` is bytes `offsets[i]..offsets[i+1]`         |
+| 5   | `column`           | 1, 2, 4, 8 | Rows                 | Column index in header   | Fixed-width cells. Width 8 is an IEEE 754 double                     |
 | 6   | `relation-offsets` | 4          | Source keys plus one | Relation index in header | Monotonic offsets into the matching `relation-targets`               |
 | 7   | `relation-targets` | 4          | Targets              | Relation index in header | Row ids in the relation's target set                                 |
 

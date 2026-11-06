@@ -22,7 +22,7 @@ memory, so the boundary cost is visible rather than folded into a kernel number.
 | wasm scalar: compile + instantiate + load 3 artifacts                                             | 926    |
 | wasm simd: compile + instantiate + load 3 artifacts                                               | 1,169  |
 
-Module import dominates startup and is Node's module loading of the base64 modules and the reader; the
+Module import dominates startup and is Node's module loading of the base64 modules and the reader. The
 decode and validation of the three bitsets costs 0.6 ms.
 
 ## Lookups
@@ -135,7 +135,7 @@ decode and validation of the three bitsets costs 0.6 ms.
 | iata-airport-records        | 1,123,320 | 3496ece1013624ad |
 | country-airport-collision   | 3,056     | 2154993ce8f65602 |
 
-The collision bitset's payload is 2,197 bytes; the 3,056-byte artifact adds the envelope, a 798-byte
+The collision bitset's payload is 2,197 bytes. The 3,056-byte artifact adds the envelope, a 798-byte
 header and padding. Each artifact ships as its own module holding its bytes as base64 (4/3 of the size),
 so a bundle retains the artifacts its imports reach and no other; `tools/bundle-fixtures.integration.test.ts`
 checks the country-only, collision-only, interpretation, wasm and type-only consumers. The wasm binaries

@@ -20,7 +20,7 @@ reader and lookups), `registry-build` (the compiler) and `registry-wasm` (the C-
 through `tools/generate-sections.run.ts`. `lib/artifacts/*.ts`, `data/manifests/artifacts.json` and
 `test/fixtures/artifacts/*.rgy1` come from `tools/generate.run.ts`. `wasm/*.wasm` come from
 `tools/build-wasm.run.ts`. Each tool takes `--check` and exits non-zero when a committed file differs. Edit the
-definition, the data or the compiler, then rerun the tool; never edit a generated file.
+definition, the data or the compiler, then rerun the tool. Never edit a generated file.
 
 ## The order of a data change
 
@@ -32,8 +32,8 @@ refused build prints the record to fix in the normalizer or the source.
 
 `lib/overlap/country-airport.test.ts` holds every one of the 17,576 three-letter keys of the three bitsets equal to a
 set oracle built from the normalized JSON. `lib/rgy1/layout.test.ts` walks the committed fixture artifacts with its
-own byte reader against `test/fixtures/layout.json`, so the writer and the reader agreeing is never the only check;
-when the fixture data changes, recompute the expectations by hand from the formula in that file's comment.
+own byte reader against `test/fixtures/layout.json`, so the writer and the reader agreeing is never the only check.
+When the fixture data changes, recompute the expectations by hand from the formula in that file's comment.
 `lib/wasm.test.ts` runs both wasm variants over the whole key space against the TypeScript reader. `cargo test -p
 registry-core` runs the Rust conformance suite over the same fixtures. `tools/bundle-fixtures.integration.test.ts`
-bundles tiny consumers with esbuild and checks which artifacts each bundle retains; it reads `out/`, so compile first.
+bundles tiny consumers with esbuild and checks which artifacts each bundle retains. It reads `out/`, so compile first.

@@ -54,7 +54,7 @@ re-exports the subpaths and decodes an artifact at its first call.
 
 `ISO.CountryCode_3166_1_Alpha2`, `ISO.CountryCode_3166_1_Alpha3`, `ISO.CountryCode_3166_1_Numeric`,
 `IATA.LocationCode`, `IATA.AirportCode` and `ICAO.LocationIndicator` are declaration-only brands. A predicate
-narrows a `string` to its brand; the compiler refuses one brand where another is expected. A branded value
+narrows a `string` to its brand. The compiler refuses one brand where another is expected. A branded value
 records that the validator accepted it under the built profile at the time of the call.
 
 ## WebAssembly batches

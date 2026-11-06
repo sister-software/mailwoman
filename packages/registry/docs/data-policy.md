@@ -11,7 +11,7 @@ predicate in this package answers for one profile. The built profile is `open-20
 
 | Profile             | Sources                                                | Where                                |
 | ------------------- | ------------------------------------------------------ | ------------------------------------ |
-| `open-2026-11`      | Wikidata ISO 3166-1 claims; OurAirports `airports.csv` | `data/normalized/`, `lib/artifacts/` |
+| `open-2026-11`      | Wikidata ISO 3166-1 claims, OurAirports `airports.csv` | `data/normalized/`, `lib/artifacts/` |
 | `fixture-synthetic` | Six invented countries and six invented airports       | `test/fixtures/`                     |
 
 An official IATA location database or an ISO 3166 data product would be another profile with another
@@ -76,6 +76,6 @@ Network access happens only in step 1. A build never fetches.
 
 ## What is not committed
 
-The raw source files live under the data root and are not committed; the lock's digests identify them.
+The raw source files live under the data root and are not committed. The lock's digests identify them.
 `PROVENANCE.md` conventions for the corpus do not apply here because no row of these sources trains a
 model.
