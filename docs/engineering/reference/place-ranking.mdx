@@ -356,5 +356,32 @@ The venue tier has no prominence signal. `confidence` measures whether a venue e
 values sit close together for venues of very different fame: the Tennessee cabin scores 0.92, and
 the palace scores 0.99.
 
-To rank an unanchored venue by prominence, the tier would need a field such as the venue's own Wikidata
-ID and sitelink count. `poi.db` stores `brand_wikidata`, but not the venue's own Wikidata ID.
+`poi.db` stores `brand_wikidata`, but not the venue's own Wikidata ID, so the landmark layer ranks an
+unanchored venue instead.
+
+## The landmark layer
+
+`<data root>/db/poi/landmarks.db` holds Wikidata places under every name and alias they are written with, plus IATA
+codes from property P238. The source is CC0. `tools/dev-tools/landmarks/build.run.ts` builds it from the vital-places
+inventory. `applyLandmark` reads it after the admin walk, for an input with no house number, postcode, unit or PO box.
+
+The rule, as a caller reads it:
+
+> A query that is only a name, with no city, region or country, answers the place of that name with the most Wikipedia
+> language editions (Wikidata sitelinks). When the leader's count does not exceed the runner-up's by the published
+> margin, the response still returns the leader but marks it `declared_ambiguity` and lists the alternatives with their
+> counts. Add a qualifier, a country, or a focus point to choose a namesake.
+
+The prominence is `log10(sitelinks + 1)`, so the published margin is `DECISIVE_MARGIN_LOG10`, a lead of about 3.2 times.
+`Hyde Park` answers London with 63 sitelinks against 35 for Hyde Park, New York, and that lead of 1.8 times is declared.
+
+Four rules decide what the layer may answer:
+
+- A settlement that leads a name stays with the admin ladder, which ranks settlements.
+- A place's own English or local name ranks ahead of a translation or an alias. `Hamburg` is an alias of Hamburg Airport
+  and the name of a city.
+- A translation or alias answers only a name the admin walk left unresolved.
+- A code answers only in its own case, and then ranks ahead of every word spelled the same. `LAX` is the airport and
+  `Lax` is a village in Switzerland.
+
+Context beside the name narrows the hits to the stated country, and to 50 km around a stated locality.

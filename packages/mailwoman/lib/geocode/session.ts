@@ -334,7 +334,7 @@ function parseBiasPoints(raw: string | null): NonNullable<GeocodeDeps["bias"]> {
  * The fork-to-entity probe's dependencies and the `poi.db` handle to dispose.
  */
 export interface ForkEntityProbe {
-	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric" | "rowFitsVenueHead" | "isVenueCategoryWord">
+	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric" | "rowFitsVenueHead" | "isVenueCategoryWord" | "landmarks">
 
 	/**
 	 * The `poi.db` handle behind `deps.poiLookup`, kept separately because
@@ -449,7 +449,20 @@ export async function loadForkEntityDeps(
 		}
 	}
 
-	if (options.forkEntity === false || !paths.length) return { deps: {} }
+	if (options.forkEntity === false) return { deps: {} }
+
+	// The landmark layer sits beside `poi.db` under the same convention as the stations layer, and answers without it.
+	const landmarkDBPath = resolvePath(dirname(layerDatabasePath(options.dataRoot, "poi")), LANDMARK_DATABASE_FILE)
+
+	const landmarks = (await pathExists(landmarkDBPath))
+		? new (await import("@mailwoman/resolver-wof-sqlite/landmark")).LandmarkSqliteLookup(landmarkDBPath)
+		: null
+
+	const landmarkDeps = landmarks ? { landmarks } : {}
+
+	if (!paths.length) {
+		return { deps: landmarkDeps, ...(landmarks ? { handle: landmarks } : {}) }
+	}
 
 	const [{ POILookup }, { loadStreetMorphologyFST }, { isVenueCategoryWord, rowFitsVenueHead }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/poi"),
@@ -468,12 +481,15 @@ export async function loadForkEntityDeps(
 			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
 			rowFitsVenueHead,
 			isVenueCategoryWord,
+			...landmarkDeps,
 		},
 		handle: {
 			[Symbol.dispose]: () => {
 				for (const lookup of lookups) {
 					lookup[Symbol.dispose]()
 				}
+
+				landmarks?.[Symbol.dispose]()
 			},
 		},
 	}
@@ -484,6 +500,12 @@ export async function loadForkEntityDeps(
  * `gazetteer build poi --source osm --rules stations` into the directory that holds `poi.db`.
  */
 export const STATIONS_DATABASE_FILE = "stations.db"
+
+/**
+ * The file name of the landmark layer, built by `tools/dev-tools/landmarks/build.run.ts`
+ * into the directory that holds `poi.db`.
+ */
+export const LANDMARK_DATABASE_FILE = "landmarks.db"
 
 /**
  * Loads the gazetteer, neural model and optional layers.
@@ -652,7 +674,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let placer: CoarsePlacer | null = null
 	let resolver: Resolver
 	let bias: NonNullable<GeocodeDeps["bias"]>
-	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric" | "rowFitsVenueHead" | "isVenueCategoryWord">
+	let forkEntityDeps: ForkEntityProbe["deps"]
 
 	const leadingStopwords = await readLibPostalSingleWordStopwords((options.locale ?? "en-US").split("-")[0]!)
 

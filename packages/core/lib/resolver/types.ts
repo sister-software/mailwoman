@@ -178,6 +178,45 @@ export interface Ancestor {
 export type WeakResolutionReading = "score" | "containment" | "either"
 
 /**
+ * What a landmark row is: a place the layer answers, or a settlement the admin ladder answers.
+ */
+export type LandmarkKind = "venue" | "settlement"
+
+/**
+ * One place a landmark name belongs to.
+ */
+export interface LandmarkHit {
+	/**
+	 * The Wikidata item.
+	 */
+	qid: string
+	name: string
+	kind: LandmarkKind
+	country: string | null
+	lat: number
+	lon: number
+	/**
+	 * The number of Wikipedia language editions that describe the place.
+	 */
+	sitelinks: number
+	/**
+	 * Whether the name is the place's own English or local name, rather than a translation or alias.
+	 */
+	primary: boolean
+	/**
+	 * Whether the input wrote an identifier code of the place, such as `DTW`, in its own case.
+	 */
+	code: boolean
+}
+
+/**
+ * Finds the places a name belongs to, primary names first, then most sitelinks first.
+ */
+export interface LandmarkLookup {
+	find(name: string): LandmarkHit[]
+}
+
+/**
  * Who chose a default country scope.
  *
  * - `"caller"`: the caller asked for the country.
@@ -359,6 +398,17 @@ export interface ResolveOpts {
 	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	spanRescoreRequireContextRemainder?: boolean
+	/**
+	 * The landmark layer.
+	 *
+	 * It answers an input that is a place's name with no street or postcode.
+	 */
+	landmarks?: LandmarkLookup
+	/**
+	 * The input as the caller wrote it, because the parse may fold its case
+	 * and a code such as `DTW` needs that case.
+	 */
+	writtenInput?: string
 	/**
 	 * Returns whether a word is a POI category, so span-rescore does not re-read
 	 * a venue's last word as a locality.

@@ -49,6 +49,9 @@ export type {
 	Resolver,
 	ResolverBackend,
 	WeakResolutionReading,
+	LandmarkHit,
+	LandmarkKind,
+	LandmarkLookup,
 } from "#resolver/types"
 
 export type {

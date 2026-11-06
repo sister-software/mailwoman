@@ -339,10 +339,9 @@ describe("findRescoreCandidate", () => {
 			place(5, "Golden Gate Park", "neighbourhood"),
 		]
 
-		const backend = {
-			findPlace: async ({ text, placetype }: { text: string; placetype?: string }) =>
-				rows.filter((row) => row.name === text && row.placetype === placetype),
-		} as unknown as ResolverBackend
+		const backend: ResolverBackend = {
+			findPlace: async ({ text, placetype }) => rows.filter((row) => row.name === text && row.placetype === placetype),
+		}
 
 		const venueTree = (raw: string): AddressNode[] => [
 			{ tag: "venue", value: raw, start: 0, end: raw.length, confidence: 0.9, children: [] },

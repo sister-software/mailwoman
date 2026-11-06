@@ -36,6 +36,27 @@ type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "relea
 const SELECT_COLS = "lat, lon, source, release, locality_norm, postcode"
 
 /**
+ * The widest span of numbers a written range covers on one building or block.
+ */
+const WIDEST_HOUSE_NUMBER_RANGE = 200
+
+/**
+ * Returns whether two hyphenated numbers read as one number rather than a range of houses.
+ *
+ * `8-9 Upper St` is a range, and joining it would answer the different house at number 89.
+ * `19-4074` and Queens's `123-45` cannot be ranges, because a range climbs by a short step.
+ */
+function isJoinedHyphenNumber(number: string): boolean {
+	const parts = /^(\d+)-(\d+)$/.exec(number)
+
+	if (!parts) return false
+
+	const span = Number(parts[2]) - Number(parts[1])
+
+	return span < 0 || span > WIDEST_HOUSE_NUMBER_RANGE
+}
+
+/**
  * Finds an address point by exact normalized `(street, number)` within a postcode,
  * a locality, or a bounding box.
  *
@@ -223,7 +244,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		// A hyphenated number can be one number written two ways: Hawaii's `19-4074`
 		// is stored as `194074` by some sources.
 		// This runs ahead of the range fallback, because that fallback reads it as house number 19.
-		if (!row && /^\d+-\d+$/.test(number)) {
+		if (!row && isJoinedHyphenNumber(number)) {
 			row = this.#probe(streetNorm, number.replace("-", ""), query)
 		}
 

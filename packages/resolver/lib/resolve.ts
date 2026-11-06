@@ -46,6 +46,7 @@ import {
 } from "#postcode/country-coherence"
 import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcodePrefix } from "#postcode/prefix"
 import { applyPostcodeShapeCoherence } from "#postcode/shape-coherence"
+import { applyLandmark } from "#resolve/landmark"
 import {
 	applyPostcodeConsistency,
 	applyRooftopConsistency,
@@ -237,6 +238,10 @@ class WOFResolver implements Resolver {
 			await applyExplicitCountryCoherence(newRoots, this.#backend)
 			// Re-resolve foreign region/locality pairs blocked by locale scope.
 			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry?.country ?? null)
+		}
+
+		if (opts.landmarks) {
+			applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.landmarks)
 		}
 
 		// The postcode and rooftop passes hold a locality to the same distance from their point.

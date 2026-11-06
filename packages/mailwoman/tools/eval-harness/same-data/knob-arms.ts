@@ -51,6 +51,8 @@ const KNOB_OPTION_KINDS = {
 	spanRescoreThresholdKm: "number",
 	spanRescoreRequireContextRemainder: "boolean",
 	isVenueCategoryWord: null,
+	landmarks: null,
+	writtenInput: "string",
 	spanRescoreWeakResolution: "weak-resolution",
 	postalCompoundRecovery: "boolean",
 	postcodeConsistency: "boolean",

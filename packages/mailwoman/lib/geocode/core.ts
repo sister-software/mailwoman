@@ -192,6 +192,11 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	isVenueCategoryWord?: (word: string) => boolean
 	/**
+	 * The landmark layer.
+	 * It answers an input that is a place's name.
+	 */
+	landmarks?: import("@mailwoman/core/resolver").LandmarkLookup
+	/**
 	 * Gazetteer FST prior.
 	 */
 	fst?: import("@mailwoman/core/pipeline").FSTMatcherLike
@@ -728,6 +733,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	if (deps.isVenueCategoryWord) {
 		opts.isVenueCategoryWord = deps.isVenueCategoryWord
+	}
+
+	if (deps.landmarks) {
+		opts.landmarks = deps.landmarks
+		opts.writtenInput = input
 	}
 
 	// Pin weak-resolution mode only when explicitly set.

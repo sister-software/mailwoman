@@ -236,7 +236,7 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 			// and resolver rather than a candidate, so it can never block a ship.
 			return (await runAblationLayer(runAblationOptions(options))).pass ? 0 : 1
 		case "clarity": {
-			const { runClarityLayer } = await import("#tools/eval-harness/gauntlet/clarity-layer")
+			const { runClarityLayer } = await import("#tools/eval-harness/gauntlet/clarity/layer")
 
 			return (
 				await runClarityLayer({

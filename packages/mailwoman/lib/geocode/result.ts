@@ -180,7 +180,7 @@ function candidatesOf(primaryNode: AddressNode | null): GeocodeResult["candidate
 			lat: a.lat,
 			lon: a.lon,
 			countryCode: a.country ? String(a.country).trim().toUpperCase() : null,
-			placeID: a.id != null ? `wof:${a.id}` : null,
+			placeID: a.id == null ? null : a.placetype === "venue" ? `wikidata:${a.id}` : `wof:${a.id}`,
 			score: scoreOf(a.score),
 		})
 	}
@@ -260,6 +260,16 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 			tier = "street"
 			uncertaintyM = (streetNode.metadata["uncertainty_m"] as number | null) ?? null
 		}
+	}
+
+	// A landmark answer is its own place, finer than any admin node the input states beside it.
+	const landmarkNode = allNodes.find((n) => n.tag === "venue" && typeof n.metadata?.["landmark_sitelinks"] === "number")
+
+	if (tier === "admin" && landmarkNode) {
+		lat = landmarkNode.lat ?? null
+		lon = landmarkNode.lon ?? null
+		tier = "venue"
+		coordinateSource = { source: "wikidata", release: null }
 	}
 
 	if (tier === "admin") {
@@ -352,7 +362,15 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 		intent_markers: [],
 		derivation: null,
-		entity: null,
+		entity:
+			tier === "venue" && landmarkNode
+				? {
+						name: (landmarkNode.metadata?.["resolver_name"] as string | undefined) ?? landmarkNode.value,
+						categoryID: null,
+						confidence: 1,
+						country: countryCode ?? "",
+					}
+				: null,
 		authoritative: null,
 	}
 
