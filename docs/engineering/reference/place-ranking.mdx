@@ -394,3 +394,19 @@ Five rules decide what the layer may answer:
   `Lax` is a village in Switzerland.
 
 Context beside the name narrows the hits to the stated country, and to 50 km around a stated locality.
+
+## The OpenStreetMap place layer
+
+`<data root>/db/osm/places-osm.db` holds named parks, attractions, civic buildings, aerodromes and islets from OpenStreetMap
+in the same table as the landmark layer. `tools/dev-tools/landmarks/osm/places.run.ts` scrolls them out of a Photon index's
+embedded OpenSearch. The data is ODbL, so the database is build-local and `MAILWOMAN_REFUSE_OBLIGATIONS` refuses it.
+
+`applyLandmark` reads it a second time after span rescore, with three differences from the Wikidata pass:
+
+- A place in the gazetteer with a measured population that holds the whole written name keeps it. `Volcano` stays the town. A
+  row with no population yields, so `Piedmont Park` answers the park in Atlanta over a locality of that name in South Carolina.
+- A stated town bounds its places by its own extent where the gazetteer holds one, and the nearest namesake answers.
+- A place has no Wikipedia edition count, so its prominence is Photon's importance. Two namesakes rarely lead by the published
+  margin, so a bare name held by several places reads as a close call.
+
+The answer's `coordinate_source` is `openstreetmap:planet`, which the Nominatim and Photon shapes credit.

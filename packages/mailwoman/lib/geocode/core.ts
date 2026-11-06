@@ -197,6 +197,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	landmarks?: import("@mailwoman/core/resolver").LandmarkLookup
 	/**
+	 * The OpenStreetMap place layer, read after span rescore.
+	 */
+	osmPlaces?: import("@mailwoman/core/resolver").LandmarkLookup
+	/**
 	 * Gazetteer FST prior.
 	 */
 	fst?: import("@mailwoman/core/pipeline").FSTMatcherLike
@@ -735,6 +739,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	if (deps.isVenueCategoryWord) {
 		opts.isVenueCategoryWord = deps.isVenueCategoryWord
+	}
+
+	if (deps.osmPlaces) {
+		opts.osmPlaces = deps.osmPlaces
 	}
 
 	if (deps.landmarks) {

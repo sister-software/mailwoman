@@ -45,7 +45,7 @@ import {
 import { selectedParsePriorArtifacts, selectedStreetMorphologyPath } from "#geocode/fst-layers"
 import { layerDatabasePath, resolveLayerDatabasePath } from "#geocode/layer-paths"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
-import { openOSMRegionDatabases } from "#geocode/osm-layers"
+import { openOSMPlaces, openOSMRegionDatabases } from "#geocode/osm-layers"
 import { type RegionDatabaseResolver, USStateDatabaseProvider } from "#geocode/regions"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
 import type { CoastalErosionRoute } from "#observations/coastal-route"
@@ -334,7 +334,10 @@ function parseBiasPoints(raw: string | null): NonNullable<GeocodeDeps["bias"]> {
  * The fork-to-entity probe's dependencies and the `poi.db` handle to dispose.
  */
 export interface ForkEntityProbe {
-	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric" | "rowFitsVenueHead" | "isVenueCategoryWord" | "landmarks">
+	deps: Pick<
+		GeocodeDeps,
+		"poiLookup" | "isStreetGeneric" | "rowFitsVenueHead" | "isVenueCategoryWord" | "landmarks" | "osmPlaces"
+	>
 
 	/**
 	 * The `poi.db` handle behind `deps.poiLookup`, kept separately because
@@ -454,14 +457,23 @@ export async function loadForkEntityDeps(
 	// The landmark layer sits beside `poi.db` under the same convention as the stations layer, and answers without it.
 	const landmarkDBPath = resolvePath(dirname(layerDatabasePath(options.dataRoot, "poi")), LANDMARK_DATABASE_FILE)
 
-	const landmarks = (await pathExists(landmarkDBPath))
+	const landmarkLayer = (await pathExists(landmarkDBPath))
 		? new (await import("@mailwoman/resolver-wof-sqlite/landmark")).LandmarkSqliteLookup(landmarkDBPath)
 		: null
 
-	const landmarkDeps = landmarks ? { landmarks } : {}
+	const osmPlaces = await openOSMPlaces(options.dataRoot)
+
+	const landmarkDeps = { ...(landmarkLayer ? { landmarks: landmarkLayer } : {}), ...(osmPlaces ? { osmPlaces } : {}) }
+
+	const landmarks = {
+		[Symbol.dispose]: () => {
+			landmarkLayer?.[Symbol.dispose]()
+			osmPlaces?.[Symbol.dispose]()
+		},
+	}
 
 	if (!paths.length) {
-		return { deps: landmarkDeps, ...(landmarks ? { handle: landmarks } : {}) }
+		return { deps: landmarkDeps, handle: landmarks }
 	}
 
 	const [{ POILookup }, { loadStreetMorphologyFST }, { isVenueCategoryWord, rowFitsVenueHead }] = await Promise.all([
@@ -489,7 +501,7 @@ export async function loadForkEntityDeps(
 					lookup[Symbol.dispose]()
 				}
 
-				landmarks?.[Symbol.dispose]()
+				landmarks[Symbol.dispose]()
 			},
 		},
 	}

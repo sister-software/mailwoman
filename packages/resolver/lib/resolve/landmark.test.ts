@@ -138,6 +138,81 @@ describe("applyLandmark", () => {
 		expect(roots[0]!.placeID).toBe("wikidata:Q1")
 	})
 
+	it("writes a name's value with its spacing and Unicode form normalized", () => {
+		const roots = [node("venue", "Hyde  Park", 0)]
+
+		applyLandmark(roots, "Hyde  Park", lookup([LONDON_PARK]))
+
+		expect(roots[0]!.value).toBe("Hyde Park")
+	})
+
+	describe("an OpenStreetMap place", () => {
+		const park = hit({ qid: "osm:W1", name: "Piedmont Park", primary: false, importance: 0.3, lat: 33.79, lon: -84.37 })
+
+		it("answers a name the walk resolved only in part, crediting OpenStreetMap", () => {
+			const roots = [node("locality", "Piedmont", 0, { placeID: "wof:1" })]
+
+			applyLandmark(roots, "Piedmont Park", lookup([park]))
+
+			expect(roots[0]).toMatchObject({ placeID: "openstreetmap:W1", tag: "venue" })
+			expect(roots[0]!.metadata?.["landmark_source"]).toBe("openstreetmap:planet")
+		})
+
+		it("answers over a row with no measured population holding the whole name", () => {
+			const roots = [node("locality", "Piedmont Park", 0, { placeID: "wof:5", metadata: { resolver_score: 0 } })]
+
+			applyLandmark(roots, "Piedmont Park", lookup([park]))
+
+			expect(roots[0]!.placeID).toBe("openstreetmap:W1")
+		})
+
+		it("leaves a town nested under its region that holds the whole name", () => {
+			const town = node("locality", "New York", 0, { placeID: "wof:2", metadata: { resolver_score: 6.9 } })
+			const region = node("region", "NY", 10, { placeID: "wof:3", children: [town] })
+
+			applyLandmark([region], "New York, NY", lookup([hit({ ...park, name: "New York" })]))
+
+			expect(region.tag).toBe("region")
+			expect(town.tag).toBe("locality")
+		})
+
+		it("stays inside a stated town's extent, and takes the nearest namesake there", () => {
+			const fondDuLac = {
+				placeID: "wof:4",
+				lat: 43.77,
+				lon: -88.44,
+				metadata: {
+					resolver_country: "US",
+					resolver_bbox: { minLat: 43.74, maxLat: 43.81, minLon: -88.5, maxLon: -88.4 },
+				},
+			}
+
+			const near = hit({
+				qid: "osm:W2",
+				name: "Lakeside Park",
+				primary: false,
+				importance: 0.1,
+				lat: 43.795,
+				lon: -88.442,
+			})
+
+			const out = hit({
+				qid: "osm:W3",
+				name: "Lakeside Park",
+				primary: false,
+				importance: 0.5,
+				lat: 43.9,
+				lon: -88.442,
+			})
+
+			const roots = [node("venue", "Lakeside Park", 0), node("locality", "Fond du Lac", 15, fondDuLac)]
+
+			applyLandmark(roots, "Lakeside Park, Fond du Lac", lookup([out, near]))
+
+			expect(roots[0]!.placeID).toBe("openstreetmap:W2")
+		})
+	})
+
 	describe("with context beside the name", () => {
 		const CHICAGO = { placeID: "wof:2", lat: 41.88, lon: -87.63, metadata: { resolver_country: "US" } }
 

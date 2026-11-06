@@ -52,6 +52,7 @@ const KNOB_OPTION_KINDS = {
 	spanRescoreRequireContextRemainder: "boolean",
 	isVenueCategoryWord: null,
 	landmarks: null,
+	osmPlaces: null,
 	writtenInput: "string",
 	spanRescoreWeakResolution: "weak-resolution",
 	postalCompoundRecovery: "boolean",

@@ -16,11 +16,20 @@
  */
 
 import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
-import { EMPTY_PLACE_FIELDS, type LandmarkHit, type LandmarkLookup, type ResolvedPlace } from "@mailwoman/core/resolver"
+import {
+	EMPTY_PLACE_FIELDS,
+	landmarkPlaceID,
+	OSM_LANDMARK_PREFIX,
+	type LandmarkHit,
+	type LandmarkLookup,
+	type ResolvedPlace,
+} from "@mailwoman/core/resolver"
 import { isCountryAirportCollision } from "@mailwoman/registry/overlap/country-airport"
+import { isLatLonBounds, latLonBoundsContain } from "@mailwoman/spatial/bbox"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { decorateNode } from "#decorate-node"
+import { foldName } from "#fold-name"
 import { writtenCountryCode } from "#resolve/country-code"
 
 /**
@@ -28,6 +37,11 @@ import { writtenCountryCode } from "#resolve/country-code"
  * A landmark name cannot answer an address.
  */
 const ADDRESS_TAGS: ReadonlySet<string> = new Set(["house_number", "postcode", "unit", "po_box"])
+
+/**
+ * The namesakes a landmark answer lists: OpenStreetMap can hold hundreds of parks under one name.
+ */
+const LISTED_ALTERNATIVES = 8
 
 /**
  * The farthest a landmark may lie from a locality the input states, matching span rescore's postcode radius.
@@ -38,21 +52,34 @@ const STATED_LOCALITY_RADIUS_KM = 50
  * Keeps the hits an input's stated context permits: its country, and the surroundings of its locality.
  */
 function hitsInContext(hits: readonly LandmarkHit[], context: readonly AddressNode[]): LandmarkHit[] {
-	const country = context
+	const nodes = [...walkNodes(context)]
+
+	const country = nodes
 		.map((node) => node.metadata?.["resolver_country"])
 		.find((code): code is string => typeof code === "string")
 
-	const locality = context.find((node) => node.tag === "locality" && node.lat != null && node.lon != null)
+	const locality = nodes.find((node) => node.tag === "locality" && node.lat != null && node.lon != null)
+	const extent = locality?.metadata?.["resolver_bbox"]
 
-	return hits.filter(
-		(hit) =>
-			hit.country === country &&
-			(!locality || haversine(locality.lat!, locality.lon!, hit.lat, hit.lon) <= STATED_LOCALITY_RADIUS_KM)
-	)
+	const distance = (hit: LandmarkHit) => (locality ? haversine(locality.lat!, locality.lon!, hit.lat, hit.lon) : 0)
+
+	// OpenStreetMap holds a St Mary's in every village, so a stated town's own extent
+	// bounds its places where the gazetteer holds one.
+	// Wikipedia editions separate famous namesakes, so a Wikidata place keeps the wider radius.
+	const inLocality = (hit: LandmarkHit) =>
+		hit.qid.startsWith(OSM_LANDMARK_PREFIX) && isLatLonBounds(extent)
+			? latLonBoundsContain(extent, hit.lat, hit.lon)
+			: distance(hit) <= STATED_LOCALITY_RADIUS_KM
+
+	const kept = hits.filter((hit) => hit.country === country && inLocality(hit))
+
+	return kept.every((hit) => hit.qid.startsWith(OSM_LANDMARK_PREFIX))
+		? kept.toSorted((a, b) => distance(a) - distance(b))
+		: kept
 }
 
 function placeOf(hit: LandmarkHit): ResolvedPlace {
-	const prominence = Math.log10(hit.sitelinks + 1)
+	const prominence = hit.importance ?? Math.log10(hit.sitelinks + 1)
 
 	return {
 		...EMPTY_PLACE_FIELDS,
@@ -141,25 +168,46 @@ export function applyLandmark(roots: AddressNode[], raw: string, landmarks: Land
 
 	// A translation or alias is the weakest claim on a name, so it answers only where the
 	// gazetteer holds none: `Hamburg` is an alias of Hamburg Airport and the name of a city.
-	const nameResolved = roots.some(
-		(root) =>
-			typeof root.placeID === "string" && (root.start < nameEnd || root.value.toLowerCase() === name.toLowerCase())
-	)
+	const resolved = roots.filter((root) => typeof root.placeID === "string")
+	const fromOSM = leader.qid.startsWith(OSM_LANDMARK_PREFIX)
 
-	if (!leader.primary && !leader.code && nameResolved) return
+	if (fromOSM) {
+		// A school or a park in OpenStreetMap can share its town's name,
+		// so a place holding the whole name keeps it.
+		// `Piedmont Park` is free to answer, because the walk resolved only `Piedmont`.
+		// A row with no measured population yields, as `Piedmont Park` in South
+		// Carolina yields to the park in Atlanta.
+		const holdsName = (node: AddressNode) =>
+			typeof node.placeID === "string" &&
+			foldName(node.value) === foldName(name) &&
+			Number(node.metadata?.["resolver_score"] ?? 0) > 0
+
+		if (nodes.some(holdsName)) return
+	} else {
+		const nameResolved = resolved.some(
+			(root) => root.start < nameEnd || root.value.toLowerCase() === name.toLowerCase()
+		)
+
+		if (!leader.primary && !leader.code && nameResolved) return
+	}
 
 	const node: AddressNode = {
 		tag: "venue",
-		value: name,
+		value: name.normalize("NFC").replaceAll(/\s+/gu, " "),
 		start: raw.indexOf(name),
 		end: nameEnd,
 		confidence: 1,
 		children: [],
 	}
 
-	decorateNode(node, placeOf(leader), candidates.slice(1).map(placeOf))
-	node.placeID = `wikidata:${leader.qid}`
-	node.metadata = { ...node.metadata, landmark_sitelinks: leader.sitelinks }
+	decorateNode(node, placeOf(leader), candidates.slice(1, LISTED_ALTERNATIVES + 1).map(placeOf))
+	node.placeID = landmarkPlaceID(leader.qid)
+
+	node.metadata = {
+		...node.metadata,
+		landmark_sitelinks: leader.sitelinks,
+		...(fromOSM ? { landmark_source: "openstreetmap:planet" } : {}),
+	}
 
 	roots.splice(0, roots.length, node, ...context)
 }

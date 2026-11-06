@@ -283,6 +283,11 @@ class WOFResolver implements Resolver {
 			await applySpanRescore(newRoots, tree.raw, this.#backend, opts)
 		}
 
+		// OpenStreetMap places answer after span rescore, so a town that holds the whole name keeps it.
+		if (opts.osmPlaces) {
+			applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.osmPlaces)
+		}
+
 		// Retry exact address-point tier once after span-rescore recovery.
 		if (opts.addressPoints) {
 			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)

@@ -211,6 +211,26 @@ export interface LandmarkHit {
 	 * Whether the input wrote an identifier code of the place, such as `DTW`, in its own case.
 	 */
 	code: boolean
+	/**
+	 * The importance Photon's index holds for an OpenStreetMap place, in place of a sitelink count.
+	 */
+	importance?: number | null
+}
+
+/**
+ * The stable ID prefix of a landmark that came from OpenStreetMap, as in `osm:W427818536`.
+ */
+export const OSM_LANDMARK_PREFIX = "osm:"
+
+/**
+ * Returns a landmark's place ID: `openstreetmap:W427818536` or `wikidata:Q160409`.
+ */
+export function landmarkPlaceID(id: string | number): string {
+	const value = String(id)
+
+	return value.startsWith(OSM_LANDMARK_PREFIX)
+		? `openstreetmap:${value.slice(OSM_LANDMARK_PREFIX.length)}`
+		: `wikidata:${value}`
 }
 
 /**
@@ -408,6 +428,10 @@ export interface ResolveOpts {
 	 * It answers an input that is a place's name with no street or postcode.
 	 */
 	landmarks?: LandmarkLookup
+	/**
+	 * The OpenStreetMap place layer, read after span rescore with the same rules as the landmark layer.
+	 */
+	osmPlaces?: LandmarkLookup
 	/**
 	 * The input as the caller wrote it, because the parse may fold its case
 	 * and a code such as `DTW` needs that case.

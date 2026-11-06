@@ -6,7 +6,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { VitalPlace } from "@mailwoman/corpus/tools/fetch/wikidata/vital-places/inventory"
-import { LandmarkSqliteLookup } from "@mailwoman/resolver-wof-sqlite/landmark"
+import { landmarkNameKey, LandmarkSqliteLookup } from "@mailwoman/resolver-wof-sqlite/landmark"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { airportRows, readAirportCodes } from "./airport-codes.ts"
@@ -98,6 +98,16 @@ describe("readAirportCodes", () => {
 		})
 
 		expect(code).toMatchObject({ name_key: "sfo", code: "SFO", is_primary: 1 })
+	})
+})
+
+describe("landmarkNameKey", () => {
+	it("reads one key across Unicode form, apostrophe style and a closing period", () => {
+		const key = landmarkNameKey("St George's")
+
+		expect(landmarkNameKey("St George’s")).toBe(key)
+		expect(landmarkNameKey("St George's.")).toBe(key)
+		expect(landmarkNameKey("Kraków")).toBe(landmarkNameKey("Kraków"))
 	})
 })
 

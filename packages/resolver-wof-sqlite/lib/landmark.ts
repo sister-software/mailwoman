@@ -40,6 +40,15 @@ export interface LandmarkNameTable {
 	 * 1 when this is the place's own name in English or its country's language, 0 for a translation or alias.
 	 */
 	is_primary: number
+	/**
+	 * The importance Photon's index holds for an OpenStreetMap place, or `null` for a Wikidata place.
+	 */
+	importance: number | null
+	/**
+	 * The place's short H3 cell, the spatial key an OpenStreetMap layer's manifest names,
+	 * or `null` for a Wikidata place.
+	 */
+	h3_cell: number | null
 }
 
 export interface LandmarkDatabase {
@@ -60,6 +69,8 @@ export const LANDMARK_NAME_COLUMNS = [
 	"sitelinks",
 	"code",
 	"is_primary",
+	"importance",
+	"h3_cell",
 ] as const satisfies ReadonlyArray<keyof LandmarkNameTable>
 
 /**
@@ -80,9 +91,21 @@ export async function createLandmarkTables(db: Kysely<LandmarkDatabase>): Promis
 		.addColumn("sitelinks", "integer", (c) => c.notNull())
 		.addColumn("code", "text")
 		.addColumn("is_primary", "integer", (c) => c.notNull())
+		.addColumn("importance", "real")
+		.addColumn("h3_cell", "integer")
 		.addPrimaryKeyConstraint("landmark_name_pk", ["name_key", "qid"])
 		.modifyEnd(sql`without rowid`)
 		.execute()
+}
+
+/**
+ * Returns the key a written name is stored and read under.
+ *
+ * Canonical Unicode form, a typographic apostrophe and a sentence's closing period do not change
+ * which place a name means, so `St George’s.` and `St George's` read one row.
+ */
+export function landmarkNameKey(written: string): string {
+	return normalizeLocalityForKey(written.normalize("NFC").replaceAll("’", "'").trim().replace(/\.+$/u, ""))
 }
 
 /**
@@ -106,7 +129,7 @@ export class LandmarkSqliteLookup implements LandmarkLookup, Disposable {
 
 		this.#byName = prepareAll(
 			this.#db,
-			"SELECT * FROM landmark_name WHERE name_key = ? ORDER BY is_primary DESC, sitelinks DESC, qid"
+			"SELECT * FROM landmark_name WHERE name_key = ? ORDER BY is_primary DESC, sitelinks DESC, importance DESC, qid"
 		)
 	}
 
@@ -116,7 +139,7 @@ export class LandmarkSqliteLookup implements LandmarkLookup, Disposable {
 		// A code written in its own case is an identifier, so it ranks ahead of every word spelled the same.
 		const isCode = (row: LandmarkNameTable) => row.code === written
 
-		return this.#byName(normalizeLocalityForKey(written))
+		return this.#byName(landmarkNameKey(written))
 			.filter((row) => !row.code || isCode(row))
 			.toSorted((a, b) => Number(isCode(b)) - Number(isCode(a)))
 			.map((row) => ({
@@ -129,6 +152,7 @@ export class LandmarkSqliteLookup implements LandmarkLookup, Disposable {
 				lon: row.longitude,
 				sitelinks: row.sitelinks,
 				primary: row.is_primary === 1,
+				importance: row.importance,
 			}))
 	}
 

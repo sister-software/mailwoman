@@ -18,10 +18,10 @@ import {
 	createLandmarkTables,
 	isLandmarkCode,
 	LANDMARK_NAME_COLUMNS,
+	landmarkNameKey,
 	type LandmarkDatabase,
 	type LandmarkNameTable,
 } from "@mailwoman/resolver-wof-sqlite/landmark"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
 import type { PathBuilderLike } from "path-ts"
 
@@ -48,7 +48,7 @@ export function landmarkRows(place: VitalPlace, roots: Readonly<ClassRoots>): La
 	const rows = new Map<string, LandmarkNameTable>()
 
 	const add = (written: string, code: string | null, isPrimary: boolean) => {
-		const key = normalizeLocalityForKey(written)
+		const key = landmarkNameKey(written)
 
 		if (key.length < 2 || rows.has(key)) return
 
@@ -63,6 +63,8 @@ export function landmarkRows(place: VitalPlace, roots: Readonly<ClassRoots>): La
 			longitude: coordinate.lon,
 			sitelinks: place.sitelinks,
 			code,
+			importance: null,
+			h3_cell: null,
 		})
 	}
 

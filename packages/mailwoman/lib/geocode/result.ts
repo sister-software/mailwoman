@@ -7,6 +7,7 @@
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import type { CoordinateSource, GeocodeResult, UnfollowedComponent } from "@mailwoman/core/geocode"
+import { landmarkPlaceID } from "@mailwoman/core/resolver"
 import { adminLadderForNodes, ladderWithContainedDependentLocality } from "@mailwoman/resolver"
 import { isLatLonBounds } from "@mailwoman/spatial/bbox"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
@@ -182,7 +183,7 @@ function candidatesOf(primaryNode: AddressNode | null): GeocodeResult["candidate
 			lat: a.lat,
 			lon: a.lon,
 			countryCode: a.country ? String(a.country).trim().toUpperCase() : null,
-			placeID: a.id == null ? null : a.placetype === "venue" ? `wikidata:${a.id}` : `wof:${a.id}`,
+			placeID: a.id == null ? null : a.placetype === "venue" ? landmarkPlaceID(a.id) : `wof:${a.id}`,
 			score: scoreOf(a.score),
 			...(a.matchedAlias ? { matchedAlias: true as const } : {}),
 		})
@@ -272,7 +273,11 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		lat = landmarkNode.lat ?? null
 		lon = landmarkNode.lon ?? null
 		tier = "venue"
-		coordinateSource = { source: "wikidata", release: null }
+
+		coordinateSource = {
+			source: (landmarkNode.metadata?.["landmark_source"] as string | undefined) ?? "wikidata",
+			release: null,
+		}
 	}
 
 	if (tier === "admin") {

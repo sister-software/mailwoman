@@ -34,7 +34,14 @@ export type {
 
 export type { RegionDatabaseProvider, RegionDatabases } from "#resolver/region-database-provider"
 
-export { EMPTY_PLACE_FIELDS, RESOLVE_SWITCH_DEFAULTS, resolveSwitches } from "#resolver/types"
+export {
+	EMPTY_PLACE_FIELDS,
+	landmarkPlaceID,
+	OSM_LANDMARK_PREFIX,
+	RESOLVE_SWITCH_DEFAULTS,
+	resolveSwitches,
+} from "#resolver/types"
+
 export { hardCountrySafelistFromCoverage } from "#resolver/coverage-facts"
 
 export type {

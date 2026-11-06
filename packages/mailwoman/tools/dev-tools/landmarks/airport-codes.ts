@@ -8,8 +8,7 @@
  */
 
 import type { SPARQLResults } from "@mailwoman/corpus/tools/fetch/wikidata/subvenue"
-import { isLandmarkCode, type LandmarkNameTable } from "@mailwoman/resolver-wof-sqlite/landmark"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { isLandmarkCode, landmarkNameKey, type LandmarkNameTable } from "@mailwoman/resolver-wof-sqlite/landmark"
 
 /**
  * Every located aerodrome with an IATA code that Wikidata records no closing date for.
@@ -79,13 +78,15 @@ export function airportRows(airport: AirportCode): LandmarkNameTable[] {
 		longitude: airport.lon,
 		sitelinks: airport.sitelinks,
 		is_primary: 1,
+		importance: null,
+		h3_cell: null,
 	}
 
-	const rows: LandmarkNameTable[] = [{ ...base, name_key: normalizeLocalityForKey(airport.iata), code: airport.iata }]
+	const rows: LandmarkNameTable[] = [{ ...base, name_key: landmarkNameKey(airport.iata), code: airport.iata }]
 
 	// An unlabeled item comes back with its id or code as its label, and neither is a written name.
 	if (airport.name !== airport.iata && airport.name !== airport.qid) {
-		rows.push({ ...base, name_key: normalizeLocalityForKey(airport.name), code: null })
+		rows.push({ ...base, name_key: landmarkNameKey(airport.name), code: null })
 	}
 
 	return rows
