@@ -4,7 +4,8 @@
 /**
  *   The fetch the browser runtime loads its artifacts through: a reset late in a download rejects the body read
  *   rather than the `fetch()` call, so the body is buffered inside the retry. An HTTP status is never retried
- *   because a 404 is an answer the loaders interpret.
+ *   because a 404 is an answer the loaders interpret. An attempt that receives no bytes for `STALL_TIMEOUT_MS` is
+ *   aborted and retried, because a connection that goes silent without closing never rejects on its own.
  */
 
 import { startEarly } from "@mailwoman/core/promises"
@@ -14,12 +15,33 @@ const ATTEMPTS = 3
 const FIRST_RETRY_DELAY_MS = 500
 
 /**
- * Only a `TypeError` marks a retriable network failure — a reset, a refused connection,
- * a cors refusal, or a body read that loses its connection — while an http status,
- * an abort or a bad URL are not retried.
+ * How long one attempt may wait for its response headers or its next body chunk.
+ *
+ * The timer measures silence rather than total duration.
+ * A slow download that keeps delivering bytes runs to completion.
+ */
+export const STALL_TIMEOUT_MS = 30_000
+
+/**
+ * An attempt aborted because its connection delivered no bytes for {@link STALL_TIMEOUT_MS}.
+ */
+export class FetchStalledError extends Error {
+	constructor(url: string, timeoutMs: number) {
+		super(`fetch stalled: no bytes from ${url} for ${timeoutMs} ms`)
+		this.name = "FetchStalledError"
+	}
+}
+
+/**
+ * A `TypeError` marks a retriable network failure.
+ *
+ * A reset, a refused connection, a CORS refusal and a lost body read each raise one.
+ * A stalled attempt is retried the same way.
+ *
+ * An HTTP status, a caller's abort and a bad URL are not retried.
  */
 function isNetworkFailure(error: unknown): boolean {
-	return error instanceof TypeError
+	return error instanceof TypeError || error instanceof FetchStalledError
 }
 
 /**
@@ -30,17 +52,40 @@ async function fetchComplete(
 	init?: Parameters<typeof fetch>[1],
 	onBytes?: BytesReceived
 ): Promise<Response> {
-	const response = await fetch(input, init)
+	const stall = new AbortController()
+	const signal = init?.signal ? AbortSignal.any([init.signal, stall.signal]) : stall.signal
+	let timer: ReturnType<typeof setTimeout> | undefined
 
-	if (!response.ok || !response.body) return response
+	const rearm = (): void => {
+		clearTimeout(timer)
+		timer = setTimeout(() => stall.abort(new FetchStalledError(requestURL(input), STALL_TIMEOUT_MS)), STALL_TIMEOUT_MS)
+	}
 
-	const bytes = onBytes ? await drainWithProgress(response, onBytes) : new Uint8Array(await response.arrayBuffer())
+	rearm()
 
-	return new Response(bytes, {
-		status: response.status,
-		statusText: response.statusText,
-		headers: response.headers,
-	})
+	try {
+		const response = await fetch(input, { ...init, signal })
+
+		if (!response.ok || !response.body) return response
+
+		rearm()
+
+		const bytes = await drain(response, (received, total) => {
+			rearm()
+			onBytes?.(received, total)
+		})
+
+		return new Response(bytes, {
+			status: response.status,
+			statusText: response.statusText,
+			headers: response.headers,
+		})
+	} catch (error) {
+		// A browser rejects an aborted read with the abort reason, but the platform does not guarantee it.
+		throw stall.signal.aborted ? stall.signal.reason : error
+	} finally {
+		clearTimeout(timer)
+	}
 }
 
 /**
@@ -53,11 +98,13 @@ async function fetchComplete(
 export type BytesReceived = (received: number, total: number | null) => void
 
 /**
+ * Reads a response body chunk by chunk, reporting each arrival.
+ *
  * `content-length` describes the wire bytes while the reader yields decoded ones,
  * so a content-encoded response can report a fraction above 1.
  * The consumer clamps rather than this lying about the total.
  */
-async function drainWithProgress(response: Response, onBytes: BytesReceived): Promise<Uint8Array> {
+async function drain(response: Response, onBytes: BytesReceived): Promise<Uint8Array> {
 	const declared = Number(response.headers.get("content-length"))
 	const total = Number.isFinite(declared) && declared > 0 ? declared : null
 	const reader = response.body!.getReader()

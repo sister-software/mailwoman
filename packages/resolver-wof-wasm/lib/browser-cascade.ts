@@ -5,22 +5,16 @@
  *   Tree resolution over a browser-side place lookup, with the lookup kept structural (`MailwomanLookupLike`).
  */
 
+import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
-import { EMPTY_PLACE_FIELDS, type ResolvedPlace, type ResolverBackend } from "@mailwoman/core/resolver"
+import {
+	EMPTY_PLACE_FIELDS,
+	type ResolvedPlace,
+	type ResolveOpts,
+	type ResolverBackend,
+} from "@mailwoman/core/resolver"
 import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/postcode/systems"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
-
-/**
- * One additional admin role a resolved place also fulfills, such as Berlin's
- * federal-state role beside its locality role.
- */
-export interface DualRole {
-	id: number
-	name: string
-	placetype: string
-	relationshipType: string
-	role: "region" | "locality"
-}
 
 export interface MailwomanLookupLike {
 	findPlace: (q: {
@@ -61,12 +55,6 @@ export interface MailwomanLookupLike {
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 		}>
 	>
-	/**
-	 * Dual-role partner roles for a resolved place id.
-	 *
-	 * Absent on lookups built from a slim DB that predates the `coincident_roles` relation.
-	 */
-	coincidentRolesFor?: (placeID: number) => Promise<DualRole[]>
 }
 
 type CascadeHits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
@@ -107,6 +95,7 @@ const WOF_RANK_REGION = 4
  * centroid is coarser than the locality it sits in.
  */
 const PIN_RANK: Record<string, number> = {
+	venue: 6,
 	locality: 5,
 	borough: 4,
 	localadmin: 4,
@@ -192,20 +181,36 @@ export class CandidateResolverBackend implements ResolverBackend {
 	}
 }
 
+/**
+ * Returns the number a cascade hit is keyed by.
+ *
+ * A landmark's identifier is text such as `Q160409`.
+ * It takes a negative hash, and every Who's On First id is positive.
+ */
+function cascadeHitID(id: unknown): number {
+	const numeric = Number(id)
+
+	return Number.isFinite(numeric) ? numeric : -hashFNV1a(String(id))
+}
+
 export async function runCascade(
 	lookup: MailwomanLookupLike,
 	tree: AddressTree,
 	rawText: string,
-	bias?: ResolveBias
+	bias?: ResolveBias,
+	landmarkLayers: Pick<ResolveOpts, "landmarks" | "osmPlaces"> = {}
 ): Promise<CascadeHits> {
 	const usable = (cs: CascadeHits): CascadeHits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
 
 	const backend = new CandidateResolverBackend(lookup)
 	const resolver = createWOFResolver(backend)
 
-	// adminCoherence performs the convergence and no defaultCountry is deliberate, because the demo ranks globally.
+	// adminCoherence performs the convergence.
+	// No defaultCountry is deliberate, because the demo ranks globally.
 	const resolved = (await resolver.resolveTree(tree, {
 		adminCoherence: true,
+		writtenInput: rawText,
+		...landmarkLayers,
 		...(bias && bias.length ? { bias } : {}),
 	})) as {
 		roots: ResolvedTreeNode[]
@@ -223,7 +228,7 @@ export async function runCascade(
 		) {
 			const sep = node.sourceID.indexOf(":")
 			const placetype = sep === -1 ? node.sourceID : node.sourceID.slice(0, sep)
-			const id = Number(node.placeID?.replace(/^wof:/, "") ?? node.sourceID.slice(sep + 1))
+			const id = cascadeHitID(node.placeID?.replace(/^wof:/, "") ?? node.sourceID.slice(sep + 1))
 			const meta = backend.metaFor(id)
 
 			const hit: CascadeHits[number] = {
@@ -253,7 +258,7 @@ export async function runCascade(
 					id,
 					usable(
 						alts.map((a) => ({
-							id: Number(a.id),
+							id: cascadeHitID(a.id),
 							name: String(a.name ?? ""),
 							placetype: String(a.placetype ?? placetype),
 							country: typeof a.country === "string" && a.country ? a.country : null,
@@ -261,7 +266,7 @@ export async function runCascade(
 							lon: Number(a.lon),
 							score: typeof a.score === "number" ? a.score : 0,
 							exactMatch: a.exactMatch === true,
-							bbox: backend.metaFor(Number(a.id))?.bbox,
+							bbox: backend.metaFor(cascadeHitID(a.id))?.bbox,
 						}))
 					)
 				)

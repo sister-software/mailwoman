@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { workspacePath } from "@mailwoman/core/paths"
-import type { SourceRecord } from "@mailwoman/registry"
+import type { SourceRecord } from "@mailwoman/entity-resolution"
 import { describe, expect, it } from "vitest"
 
 import { geocodeStream } from "#geocode"

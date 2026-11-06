@@ -11,6 +11,14 @@ mwops health debt
 mwops health baseline debt
 ```
 
+Each operation declares its flags as a `parseArgs` options config beside its input schema. A flag the operation does
+not declare exits 2. A boolean flag is turned off with its `--no-` form.
+
+The Cloudflare tokens start from `mwops release cloudflare-tokens`, which verifies each role's token and prints a
+dashboard link that pre-fills its permissions. Create the minter from its link and set `CLOUDFLARE_TOKEN_MINTER`, or set
+`CLOUDFLARE_EMAIL` and `CLOUDFLARE_API_KEY` to the Global API Key. Then `mwops release mint-cloudflare-tokens -o <file>`
+creates the deploy and cache-purge tokens as account-owned tokens and writes them to that new file, mode 0600.
+
 `health baseline debt` is the one mutation the health verb performs: it rewrites `lib/repo-health/baseline.json`
 from the current readings, after a reviewed reduction. Every other `health` invocation only reads.
 

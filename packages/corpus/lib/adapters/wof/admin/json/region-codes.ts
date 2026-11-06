@@ -66,3 +66,19 @@ function codesFor(country: string): ReadonlyMap<string, string> {
 export function regionCodeFor(country: string, regionName: string): string | null {
 	return codesFor(country.toUpperCase()).get(regionName.toLowerCase()) ?? null
 }
+
+/**
+ * The name of the region `country`'s addresses write as `regionCode`, in lower case as the
+ * spec table holds it, title-cased word by word, or `null` when they write no such code.
+ */
+export function regionNameFor(country: string, regionCode: string): string | null {
+	const wanted = regionCode.toUpperCase()
+
+	for (const [name, code] of codesFor(country.toUpperCase())) {
+		if (code.toUpperCase() === wanted) {
+			return name.replaceAll(/(^|\s)\p{L}/gu, (initial) => initial.toUpperCase())
+		}
+	}
+
+	return null
+}

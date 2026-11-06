@@ -36,7 +36,6 @@ function testDeps(): GeocodeDeps {
 			],
 		}),
 		artifactCoverage: null,
-		capabilityGaps: null,
 	}
 
 	return { classifier, resolver, placeCountry: "none" }

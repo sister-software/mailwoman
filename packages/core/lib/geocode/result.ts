@@ -68,6 +68,12 @@ export const GeocodeCandidateSchema = z
 		 * The field is null when the resolver recorded no score for the candidate.
 		 */
 		score: z.number().nullable(),
+		/**
+		 * True when the input matched an alias of this place, such as a former name, and differs from `name`.
+		 *
+		 * The field is absent when the input matched the primary name.
+		 */
+		matchedAlias: z.literal(true).optional(),
 	})
 	.meta({ id: "GeocodeCandidate", description: "A ranked candidate place." })
 

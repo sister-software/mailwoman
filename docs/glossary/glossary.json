@@ -337,13 +337,6 @@
 			"relatedTerms": ["concordance", "parent chain", "joint decoding"]
 		},
 		{
-			"term": "coincident roles",
-			"definition": "A precomputed Who's On First relation that pairs a region with its same-named locality (Berlin city ↔ Berlin state) so the resolver can complete the hierarchy at resolution time.",
-			"tags": ["resolver"],
-			"aliases": ["coincident-roles relation"],
-			"relatedTerms": ["dual-role place", "hierarchy completion", "WOF"]
-		},
-		{
 			"term": "component tag",
 			"definition": "One of the 25 labels in Mailwoman's address schema — street, locality, region, postcode, house_number, unit, po_box, country, venue, intersection, and others. Each parsed span carries exactly one component tag.",
 			"tags": ["architecture"],
@@ -543,10 +536,10 @@
 		},
 		{
 			"term": "dual-role place",
-			"definition": "A place that is two placetypes at once — Berlin as both a city and a state, Washington DC as city and district. Resolved using the coincident-roles relation plus hierarchy completion.",
+			"definition": "A place that is two placetypes at once — Berlin as both a city and a state, Washington DC as city and district. The label convention decides the reading: a city-state written once is a locality, and a second occurrence of the name is the region.",
 			"tags": ["resolver", "locality"],
 			"aliases": ["city-state"],
-			"relatedTerms": ["coincident roles", "hierarchy completion", "placetype"]
+			"relatedTerms": ["placetype"]
 		},
 		{
 			"term": "E911",
@@ -949,12 +942,6 @@
 			"tags": ["neural"],
 			"aliases": ["representation", "hidden representation"],
 			"relatedTerms": ["embedding", "encoder", "attention"]
-		},
-		{
-			"term": "hierarchy completion",
-			"definition": "The post-resolution step that synthesizes a dropped locality when a dual-role region resolves but the parser omitted the city (e.g. supplying 'Berlin' the city under 'Berlin' the state).",
-			"tags": ["resolver"],
-			"relatedTerms": ["dual-role place", "coincident roles", "parent chain"]
 		},
 		{
 			"term": "homonymy",

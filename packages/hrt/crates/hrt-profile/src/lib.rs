@@ -12,6 +12,7 @@ pub mod building_buffers;
 pub mod clip;
 pub mod country;
 pub mod expr;
+pub mod facade_plan;
 pub mod input;
 pub mod layers;
 pub mod line_merger;
@@ -20,6 +21,7 @@ pub mod merge;
 pub mod names;
 pub mod parse;
 pub mod pgf;
+pub mod roof_mesh;
 pub mod smoothing;
 pub mod sort_key;
 

@@ -8,7 +8,13 @@
 
 import { afterEach, describe, expect, test, vi } from "vitest"
 
-import { DEFAULT_CHUNK_SIZE, openRangeDatabase, openWholeDatabase } from "#httpvfs/database"
+import {
+	DEFAULT_CHUNK_SIZE,
+	isSQLiteReadFailure,
+	openRangeDatabase,
+	openWholeDatabase,
+	RangeWorkerError,
+} from "#httpvfs/database"
 import type { RangeWorkerCall } from "#httpvfs/worker-protocol"
 
 class FakeWorker extends EventTarget {
@@ -37,9 +43,46 @@ class FakeWorker extends EventTarget {
 	terminate(): void {}
 }
 
+/**
+ * A worker whose queries of the `candidate` table fail the way sqlite-wasm reports a failed page read.
+ */
+class FailingReadWorker extends FakeWorker {
+	override postMessage(call: RangeWorkerCall): void {
+		if (call.type === "query" && call.sql.includes("candidate")) {
+			queueMicrotask(() =>
+				this.dispatchEvent(
+					new MessageEvent("message", {
+						data: { id: call.id, error: "SQLITE_IOERR_READ: sqlite3 result code 266: disk I/O error", resultCode: 266 },
+					})
+				)
+			)
+
+			return
+		}
+
+		super.postMessage(call)
+	}
+}
+
 afterEach(() => {
 	FakeWorker.posted = []
 	vi.unstubAllGlobals()
+})
+
+describe("a failed statement", () => {
+	test("rejects with the worker's SQLite result code, and a failed page read reads as one", async () => {
+		vi.stubGlobal("Worker", FailingReadWorker)
+		vi.stubGlobal("location", { href: "https://example.test/page" })
+
+		const database = await openRangeDatabase("/candidate.db", "/sqlite/")
+		const failure = await database.query("SELECT name FROM candidate").catch((error: unknown) => error)
+
+		expect(failure).toBeInstanceOf(RangeWorkerError)
+		expect((failure as RangeWorkerError).resultCode).toBe(266)
+		expect(isSQLiteReadFailure(failure)).toBe(true)
+		expect(isSQLiteReadFailure(new RangeWorkerError("SQLITE_ERROR: no such table", 1))).toBe(false)
+		expect(isSQLiteReadFailure(new Error("SQLITE_IOERR_READ"))).toBe(false)
+	})
 })
 
 describe("the open request", () => {

@@ -1,0 +1,52 @@
+{
+	"name": "@mailwoman/gazetteer-worker",
+	"version": "0.0.0",
+	"private": true,
+	"description": "The Cloudflare Worker that answers gazetteer place lookups over a service binding, reading candidate.db from R2.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"type": "module",
+	"imports": {
+		"#*": {
+			"types": "./out/*.d.ts",
+			"workerd": "./lib/*.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"types": "./out/index.d.ts",
+			"workerd": "./lib/index.ts",
+			"node": "./lib/index.ts",
+			"default": "./out/index.js"
+		},
+		"./*": {
+			"types": "./out/*.d.ts",
+			"workerd": "./lib/*.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js"
+		}
+	},
+	"scripts": {
+		"test": "vitest run",
+		"deploy:dry-run": "wrangler deploy --dry-run"
+	},
+	"dependencies": {
+		"@journeyapps/wa-sqlite": "2.0.10",
+		"@mailwoman/resolver-wof-wasm": "workspace:*",
+		"mailwoman": "workspace:*"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-plugin": "^1.4.11",
+		"@cloudflare/workers-types": "^5.20261029.1",
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
+		"vitest": "^5.0.5",
+		"wrangler": "^4.156.0"
+	},
+	"engines": {
+		"node": "^24.22.1 || >=26.12.1"
+	}
+}

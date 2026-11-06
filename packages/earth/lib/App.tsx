@@ -11,6 +11,7 @@ import "@mailwoman/react/styles.css"
 import "./styles/app.css"
 import { Geocoder, type GeocoderPanels } from "@mailwoman/react/map"
 import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/fake-runtime"
+import { ReachabilityProvider } from "@mailwoman/react/network/ReachabilityProvider"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/classify"
 import { useMemo } from "react"
 
@@ -30,7 +31,11 @@ import {
 	type GeocoderRuntimeOptions,
 	useGeocoderRuntime,
 } from "#runtime/use/geocoder-runtime"
-import { remoteGeocoderURL, useRemoteGeocoderRuntime } from "#runtime/use/remote-geocoder-runtime"
+import {
+	remoteGeocoderHealthURL,
+	remoteGeocoderURL,
+	useRemoteGeocoderRuntime,
+} from "#runtime/use/remote-geocoder-runtime"
 
 import { GazettePage } from "./explorers/Gazette/GazettePage.tsx"
 import { LiveModelVisualizer } from "./explorers/LiveModelVisualizer.tsx"
@@ -77,6 +82,14 @@ function LocalGeocoder({ route, query }: { route: Route; query: string | null })
 }
 
 function RemoteGeocoder({ apiURL, route, query }: { apiURL: URL; route: Route; query: string | null }) {
+	return (
+		<ReachabilityProvider url={remoteGeocoderHealthURL(apiURL)}>
+			<RemoteGeocoderView apiURL={apiURL} route={route} query={query} />
+		</ReachabilityProvider>
+	)
+}
+
+function RemoteGeocoderView({ apiURL, route, query }: { apiURL: URL; route: Route; query: string | null }) {
 	const handle = useRemoteGeocoderRuntime(apiURL, useRuntimeOptions())
 
 	return <GeocoderView handle={handle} route={route} query={query} />

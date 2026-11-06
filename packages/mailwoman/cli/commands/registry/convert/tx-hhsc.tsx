@@ -30,7 +30,7 @@ export const spec = {
 
 const RegistryConvertTXHHSC: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { convertTXHHSC } = await import("@mailwoman/registry/tools/txhhsc-to-oarow")
+		const { convertTXHHSC } = await import("@mailwoman/entity-resolution/tools/txhhsc-to-oarow")
 
 		return convertTXHHSC({ src: options.src, out: options.out }, (line) => console.error(line))
 	})

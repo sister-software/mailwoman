@@ -18,4 +18,5 @@ shapefile = { version = "0.6", features = ["geo-types"] }
 zip = { version = "9", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
+arrow-buffer = "60"
 tempfile = "3"

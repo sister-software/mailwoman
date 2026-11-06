@@ -54,6 +54,37 @@ export interface RangeDatabaseOptions {
 export const DEFAULT_CHUNK_SIZE = 65_536
 
 /**
+ * SQLite's primary result code for an I/O error.
+ *
+ * The low byte of an extended code holds the primary code, so `SQLITE_IOERR_READ` (266) reads as 10.
+ */
+const SQLITE_IOERR = 10
+
+/**
+ * A statement the range worker could not run, with SQLite's extended result code
+ * when SQLite raised the failure.
+ */
+export class RangeWorkerError extends Error {
+	readonly resultCode: number | null
+
+	constructor(message: string, resultCode: number | null) {
+		super(message)
+		this.name = "RangeWorkerError"
+		this.resultCode = resultCode
+	}
+}
+
+/**
+ * Whether a range-database failure is a page read SQLite could not complete, as when a range request fails.
+ *
+ * In a page under a caching service worker that is offline, it means the pages
+ * a query needs were never cached.
+ */
+export function isSQLiteReadFailure(error: unknown): boolean {
+	return error instanceof RangeWorkerError && error.resultCode != null && (error.resultCode & 0xff) === SQLITE_IOERR
+}
+
+/**
  * The file name of the compiled worker script under the runtime base URL,
  * as `stageSQLiteRuntimeAssets` writes it.
  */
@@ -82,7 +113,7 @@ class RangeWorkerClient implements RangeDatabase {
 			this.#pending.delete(reply.id)
 
 			if ("error" in reply) {
-				waiter.reject(new Error(reply.error))
+				waiter.reject(new RangeWorkerError(reply.error, reply.resultCode))
 			} else {
 				waiter.resolve(reply.result)
 			}

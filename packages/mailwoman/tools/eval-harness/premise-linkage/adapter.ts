@@ -365,7 +365,6 @@ export function syntheticFixtureDeps(): GeocodeDeps {
 
 	const resolver: Resolver = {
 		artifactCoverage: null,
-		capabilityGaps: null,
 		resolveTree: async (tree) => ({
 			raw: tree.raw,
 			roots: [

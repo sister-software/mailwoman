@@ -11,8 +11,8 @@
 import { workerData } from "node:worker_threads"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mailwoman/entity-resolution"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mailwoman/registry"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import { geocodeAddress, parseForGeocode } from "#geocode/core"

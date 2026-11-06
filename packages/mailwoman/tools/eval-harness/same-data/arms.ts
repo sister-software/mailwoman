@@ -51,7 +51,6 @@ export const ABLATION_RESOLVE_OPTS: ResolveOpts = {
 	spanRescore: false,
 	postalCompoundRecovery: false,
 	parentFallback: false,
-	hierarchyCompletion: false,
 }
 
 export interface ArmRowResult {

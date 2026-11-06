@@ -123,7 +123,7 @@ picks itself:
 
 ```js
 import { scorePair } from "@mailwoman/match"
-import { buildDefaultModel } from "@mailwoman/registry"
+import { buildDefaultModel } from "@mailwoman/entity-resolution"
 
 const model = buildDefaultModel({ collapseSpatial: true })
 
@@ -166,7 +166,7 @@ moves and the defaults land where they were calibrated to.
 Anything between the two observed weights separates them. Halfway is `-13`; use `-15` for margin:
 
 ```js
-import { ingestRows, resolveEntities, toGeoJSON } from "@mailwoman/registry"
+import { ingestRows, resolveEntities, toGeoJSON } from "@mailwoman/entity-resolution"
 
 const records = await ingestRows(rows, mapping, { geocodeAddress })
 const { entities, candidatePairs } = resolveEntities(records, { learnedScorer: false, threshold: -15 })

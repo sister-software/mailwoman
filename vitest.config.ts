@@ -134,8 +134,9 @@ export default defineConfig({
 			"**/scratchpad/**",
 			// React tests require Vitest browser mode and run separately in CI.
 			"**/react/**/*.test.{ts,tsx}",
-			// License-worker tests require the Workers pool and run separately in CI.
+			// The license and gazetteer Workers' tests require the Workers pool and run separately in CI.
 			"**/license-worker/**/*.test.ts",
+			"**/gazetteer-worker/**/*.test.ts",
 		],
 	},
 })

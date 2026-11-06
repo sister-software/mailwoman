@@ -1,0 +1,82 @@
+{
+	"$comment": "Window glass per category, and what stands behind a glass wall. `window_pools` are the glass lists whose order the draw indexes; `pool_for_category` names the pool per category (absent: `variations`); `backing` is the (panel, alternate, spandrel) behind each glass tint; `spandrel_panel` and `curtain_frame` are the post-war spandrel and the grid tower's corner frame per glass. Transcribed from Arnis d8e8b662 (Apache-2.0) src/block_definitions.rs WINDOW_VARIATIONS and kin, src/element_processing/buildings.rs window_pool_for_category, glass_backing, spandrel_panel, curtain_frame_for.",
+	"window_pools": {
+		"variations": [
+			"gray_stained_glass",
+			"light_gray_stained_glass",
+			"gray_stained_glass",
+			"light_gray_stained_glass",
+			"glass"
+		],
+		"residential": [
+			"gray_stained_glass",
+			"light_gray_stained_glass",
+			"gray_stained_glass",
+			"light_gray_stained_glass",
+			"glass"
+		],
+		"institutional": ["gray_stained_glass", "light_gray_stained_glass", "gray_stained_glass", "black_stained_glass"],
+		"tower": [
+			"gray_stained_glass",
+			"gray_stained_glass",
+			"light_gray_stained_glass",
+			"black_stained_glass",
+			"cyan_stained_glass"
+		],
+		"hospitality": ["gray_stained_glass", "light_gray_stained_glass", "gray_stained_glass", "black_stained_glass"],
+		"industrial": ["gray_stained_glass", "light_gray_stained_glass", "glass"],
+		"religious": [
+			"blue_stained_glass",
+			"cyan_stained_glass",
+			"light_blue_stained_glass",
+			"brown_stained_glass",
+			"white_stained_glass"
+		],
+		"farm": ["glass", "white_stained_glass", "light_gray_stained_glass"],
+		"historic": ["light_gray_stained_glass", "gray_stained_glass", "glass"]
+	},
+	"pool_for_category": {
+		"residential": "residential",
+		"house": "residential",
+		"school": "institutional",
+		"hospital": "institutional",
+		"office": "institutional",
+		"commercial": "institutional",
+		"tall_building": "institutional",
+		"contemporary_skyscraper": "tower",
+		"grid_skyscraper": "tower",
+		"modern_skyscraper": "tower",
+		"glassy_skyscraper": "tower",
+		"glass_corner_skyscraper": "tower",
+		"hotel": "hospitality",
+		"industrial": "industrial",
+		"warehouse": "industrial",
+		"religious": "religious",
+		"farm": "farm",
+		"historic": "historic"
+	},
+	"backing": {
+		"black_stained_glass": ["gray_concrete", "polished_deepslate", "black_concrete"],
+		"gray_stained_glass": ["cyan_terracotta", "gray_concrete", "black_concrete"],
+		"cyan_stained_glass": ["cyan_terracotta", "gray_concrete", "gray_concrete"],
+		"blue_stained_glass": ["cyan_terracotta", "gray_concrete", "gray_concrete"],
+		"light_blue_stained_glass": ["cyan_terracotta", "gray_concrete", "gray_concrete"],
+		"brown_stained_glass": ["brown_terracotta", "gray_terracotta", "black_concrete"],
+		"default": ["white_concrete", "smooth_stone", "light_gray_concrete"]
+	},
+	"spandrel_panel": {
+		"cyan_stained_glass": "light_gray_concrete",
+		"light_blue_stained_glass": "light_gray_concrete",
+		"glass": "white_concrete",
+		"white_stained_glass": "white_concrete",
+		"light_gray_stained_glass": "white_concrete"
+	},
+	"curtain_frame": {
+		"black_stained_glass": "gray_concrete",
+		"brown_stained_glass": "gray_terracotta",
+		"gray_stained_glass": "light_gray_concrete",
+		"cyan_stained_glass": "light_gray_concrete",
+		"blue_stained_glass": "light_gray_concrete",
+		"default": "smooth_stone"
+	}
+}

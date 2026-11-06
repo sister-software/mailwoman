@@ -23,7 +23,7 @@ function fakeClassifier(): AddressClassifier {
 }
 
 function passthroughResolver(): Resolver {
-	return { resolveTree: vi.fn(async (tree) => tree), artifactCoverage: null, capabilityGaps: null }
+	return { resolveTree: vi.fn(async (tree) => tree), artifactCoverage: null }
 }
 
 describe("createRuntimePipeline — wiring", () => {

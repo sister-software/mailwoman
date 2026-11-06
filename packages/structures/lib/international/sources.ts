@@ -141,6 +141,21 @@ export const INTERNATIONAL_SOURCES: readonly StructureSource[] = [
 			"Commons licenses each file separately. This row records the catalog. A model enters a build only under " +
 			"its own decision.",
 	},
+	{
+		sourceID: "international-3dmr-4",
+		jurisdiction: INTERNATIONAL,
+		name: "Eiffel Tower, 3D Model Repository model 4, revision 3",
+		publisher: "n42k on 3dmr.eu, from the Blend Swap file 67944 by ingoenius",
+		datasetURL: "https://3dmr.eu/model/4",
+		detail: [StructureDetail.Model],
+		formats: ["glTF binary"],
+		license: "international-3dmr-4",
+		attribution: "Eiffel Tower model by ingoenius (Blend Swap) and n42k (3dmr.eu), CC0 1.0",
+		attributionURL: "https://3dmr.eu/model/4",
+		note:
+			"`packages/structures/sdk/landmarks/convert.run.ts` drops the model's textures and UV coordinates, merges its " +
+			"meshes into one, and the map draws it in one color.",
+	},
 ]
 
 /**
@@ -259,5 +274,23 @@ export const INTERNATIONAL_LICENSES: readonly LicenseDecision<StructureOperation
 		state: LicenseReviewState.Unchecked,
 		publisherStatement: "Licensed per file, under terms each file page states.",
 		note: RESEARCH_HANDOFF_NOTE,
+	},
+	{
+		licenseID: "international-3dmr-4",
+		state: LicenseReviewState.Elected,
+		electedTerms: "Creative Commons CC0 1.0 Universal Public Domain Dedication",
+		spdx: "CC0-1.0",
+		retrievedCopy: `${TERMS}/international-3dmr-4.md`,
+		retrievedAt: "2026-11-04",
+		electedBecause:
+			"3DMR states CC0 1.0 for the model, and the Blend Swap file it was taken from states CC Zero, so both the " +
+			"uploader and the original author dedicated it.",
+		operations: permittedByGrant({
+			fetch: "CC0 1.0 §2 waives copyright, including the right to reproduce the work.",
+			convert: "CC0 1.0 §2 waives the right to adapt the work.",
+			adapt: "CC0 1.0 §2 waives the right to adapt the work.",
+			redistribute: "CC0 1.0 §2 waives the rights of distribution and public display.",
+			"commercial-sublicense": "CC0 1.0 §2 waives every right for any purpose, including commercial purposes.",
+		}),
 	},
 ]

@@ -24,6 +24,7 @@ const DIRS = new Map([
 const CLOSURES = new Map([
 	["tiles", new Set(["@mailwoman/tile-worker", "@mailwoman/core"])],
 	["license", new Set(["@mailwoman/license-worker", "@mailwoman/core"])],
+	["places", new Set(["@mailwoman/gazetteer-worker", "@mailwoman/core"])],
 	["earth", new Set(["@mailwoman/earth", "@mailwoman/react", "@mailwoman/core"])],
 	["moon", new Set(["@mailwoman/planetary", "@mailwoman/react", "@mailwoman/core"])],
 	["mars", new Set(["@mailwoman/planetary", "@mailwoman/react", "@mailwoman/core"])],
@@ -49,7 +50,7 @@ describe("selectDeployTargets", () => {
 
 	it("a change in a shared dependency reaches every target whose closure carries it", () => {
 		expect(ids(["packages/react/lib/map/MapCanvas.tsx"])).toEqual(["earth", "moon", "mars"])
-		expect(ids(["packages/core/lib/git.ts"])).toEqual(["tiles", "license", "earth", "moon", "mars"])
+		expect(ids(["packages/core/lib/git.ts"])).toEqual(["tiles", "license", "places", "earth", "moon", "mars"])
 	})
 
 	it("root-owned source reaches the workspaces that import it", () => {
@@ -61,7 +62,7 @@ describe("selectDeployTargets", () => {
 	it("a root build file reaches everything, and says which file", () => {
 		const selections = selectDeployTargets(["yarn.lock"], CLOSURES, DIRS)
 
-		expect(selections.map(({ target }) => target.id)).toEqual(["tiles", "license", "earth", "moon", "mars"])
+		expect(selections.map(({ target }) => target.id)).toEqual(["tiles", "license", "places", "earth", "moon", "mars"])
 		expect(selections[0]?.reasons).toEqual(["yarn.lock"])
 	})
 

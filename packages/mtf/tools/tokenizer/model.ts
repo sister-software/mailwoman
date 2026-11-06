@@ -10,7 +10,7 @@ import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { replaceFileAtomically, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 
-import { MTF_WASM_URL, type MTFModel, MTFRuntime } from "#index"
+import { type MTFModel, MTFRuntime, mtfWASMURL } from "#index"
 
 import { runMTFTokenizer } from "./binary.ts"
 
@@ -103,7 +103,7 @@ let runtime: Promise<MTFRuntime> | null = null
  * Dispose it after use.
  */
 export async function loadEncoder(path: string): Promise<MTFModel> {
-	runtime ??= readLocalBuffer(MTF_WASM_URL).then((bytes) => MTFRuntime.instantiate(new Uint8Array(bytes)))
+	runtime ??= readLocalBuffer(mtfWASMURL()).then((bytes) => MTFRuntime.instantiate(new Uint8Array(bytes)))
 
 	return (await runtime).loadModel(await readLocalBuffer(path))
 }

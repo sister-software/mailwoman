@@ -1,0 +1,50 @@
+{
+	"$comment": "Hand-derived expectations for test/fixtures/artifacts/*.rgy1, read by lib/rgy1/layout.test.ts with its own byte walker rather than the reader. Offsets follow docs/rgy1.md: directory at align8(32 + headerLength), first payload at align8(directory + 24 × sections), each section at a multiple of 8. The bit positions are the spec's key formula applied by hand: AUS = ((0×26+20)×26+18) = 538, FRA = ((5×26+17)×26+0) = 3822, GBR = ((6×26+1)×26+17) = 4099, DDR = ((3×26+3)×26+17) = 2123, LHR = ((11×26+7)×26+17) = 7635. The relation holds the fixture's three airports with an ISO country: AUS and SFO in US, LHR in GB; FRA's country is a source extension and PRX and ZZZ have none.",
+	"country-airport-collision": {
+		"magic": "RGY1",
+		"version": 1,
+		"flags": 0,
+		"sectionCount": 1,
+		"sections": [{ "kind": 1, "encoding": 1, "elementWidth": 0, "flags": 1, "length": 2197, "count": 17576, "aux": 3 }],
+		"bitsSet": [538, 3822],
+		"bitsClear": [4099, 2123, 7635],
+		"popcount": 2
+	},
+	"iso3166-1-alpha3-membership": {
+		"sectionCount": 1,
+		"sections": [{ "kind": 1, "encoding": 1, "elementWidth": 0, "flags": 1, "length": 2197, "count": 17576, "aux": 3 }],
+		"bitsSet": [538, 3822, 4099],
+		"bitsClear": [2123, 7635],
+		"popcount": 5
+	},
+	"iata-airport-membership": {
+		"sectionCount": 1,
+		"sections": [{ "kind": 1, "encoding": 1, "elementWidth": 0, "flags": 1, "length": 2197, "count": 17576, "aux": 3 }],
+		"bitsSet": [538, 3822, 7635],
+		"bitsClear": [4099, 2123],
+		"popcount": 6
+	},
+	"iso3166-1-alpha2-membership": {
+		"sectionCount": 1,
+		"sections": [{ "kind": 1, "encoding": 1, "elementWidth": 0, "flags": 1, "length": 85, "count": 676, "aux": 2 }],
+		"popcount": 5
+	},
+	"iso3166-1-records": {
+		"sectionCount": 11,
+		"kinds": [2, 2, 2, 5, 5, 5, 5, 5, 5, 3, 4],
+		"idTables": [
+			{ "aux": 2, "elementWidth": 2, "count": 676 },
+			{ "aux": 3, "elementWidth": 2, "count": 17576 },
+			{ "aux": 0, "elementWidth": 2, "count": 1000 }
+		],
+		"rows": 6,
+		"firstString": ""
+	},
+	"iata-airport-records": {
+		"sectionCount": 18,
+		"kinds": [2, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 4, 6, 7],
+		"rows": 6,
+		"relationOffsetsCount": 677,
+		"relationTargets": 3
+	}
+}

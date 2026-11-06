@@ -9,15 +9,8 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { DEFAULT_PLACETYPE_MAP, isPlacetypeFallback } from "@mailwoman/codex/placetype-map"
+import { collectNodes, isShapeExcludedPostcode, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import {
-	collectNodes,
-	isShapeExcludedPostcode,
-	type AddressNode,
-	type AddressTree,
-	type Interpretation,
-} from "@mailwoman/core/decoder"
-import {
-	type BackendCapabilityGap,
 	type DefaultCountry,
 	type ResolveNodeTrace,
 	type ResolvedPlace,
@@ -36,7 +29,6 @@ import {
 } from "#admin/coherence-passes"
 import { adminContainmentVerdict, firstRegionQualifier, partitionByContainment } from "#admin/containment"
 import { resolveCompoundMunicipality } from "#admin/jp-municipality"
-import { describeCapabilityGaps, reportCapabilityGaps } from "#backend-capabilities"
 import {
 	BARE_REGION_DOMINANCE_LOG10,
 	bareCountryCandidate,
@@ -53,6 +45,8 @@ import {
 } from "#postcode/country-coherence"
 import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcodePrefix } from "#postcode/prefix"
 import { applyPostcodeShapeCoherence } from "#postcode/shape-coherence"
+import { applyCountryCode, readRegionCodeAsCountry } from "#resolve/country-code"
+import { applyLandmark } from "#resolve/landmark"
 import {
 	applyPostcodeConsistency,
 	applyRooftopConsistency,
@@ -61,10 +55,10 @@ import {
 	DIAGNOSTIC_BANDS,
 	firstPostcodeValue,
 	NOOP_TRACE_RECORDER,
-	pickCompletion,
 	type ResolutionState,
 	type ResolvedOpts,
 } from "#resolve/passes"
+import { applyLocalityAsRegion, applyRegionCity } from "#resolve/region-city"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street/tier"
 import {
 	type CapitalLevelFn,
@@ -127,16 +121,10 @@ class WOFResolver implements Resolver {
 	 * Coverage metadata surfaced from the backend artifact.
 	 */
 	readonly artifactCoverage: Resolver["artifactCoverage"]
-	/**
-	 * Optional backend capabilities that the implementation lacks.
-	 */
-	readonly capabilityGaps: readonly BackendCapabilityGap[]
 
 	constructor(backend: ResolverBackend) {
 		this.#backend = backend
 		this.artifactCoverage = backend.artifactCoverage ?? null
-		this.capabilityGaps = describeCapabilityGaps(backend)
-		reportCapabilityGaps(this.capabilityGaps)
 	}
 
 	/**
@@ -144,9 +132,12 @@ class WOFResolver implements Resolver {
 	 */
 	findPlace: Resolver["findPlace"] = (query) => this.#backend.findPlace(query)
 
-	async resolveTree(tree: AddressTree, callerOpts: ResolveOpts = {}): Promise<AddressTree> {
+	async resolveTree(parsed: AddressTree, callerOpts: ResolveOpts = {}): Promise<AddressTree> {
+		const tree = readRegionCodeAsCountry(parsed)
+
 		// Every on/off switch resolves against the one defaults table, so the reads below are plain truthiness.
 		const opts: ResolvedOpts = { ...callerOpts, ...resolveSwitches(callerOpts) }
+
 		// Optional early postcode-shape pass.
 		// Runs sync and can only narrow candidates.
 		const shapeVerdict = opts.postcodeShapeCoherence ? applyPostcodeShapeCoherence(tree.roots) : null
@@ -180,17 +171,12 @@ class WOFResolver implements Resolver {
 			localeCountryPriorWeight: opts.localeCountryPriorWeight ?? DEFAULT_COUNTRY_PRIOR_WEIGHT,
 			capitalLevel: opts.capitalLevel,
 			hardCountry: opts.hardCountry,
-			// Dual-role hierarchy completion (default on, backend-dependent).
-			hierarchyCompletion: opts.hierarchyCompletion,
 			includeAncestors: opts.includeAncestors,
 			// Optional admin containment rerank uses a pre-scanned region qualifier.
 			adminContainmentRerank: opts.adminContainmentRerank,
 			dependentLocalityContainment: opts.dependentLocalityContainment,
 			regionQualifier: firstRegionQualifier(tree.roots),
 			...(opts.traceSink ? { traceSink: opts.traceSink } : {}),
-			localityNodePresent: false,
-			resolvedRegion: null,
-			resolvedRegionNode: null,
 		}
 
 		// Optional pre-walk postcode-country coherence pass.
@@ -246,11 +232,6 @@ class WOFResolver implements Resolver {
 			}
 		}
 
-		// If enabled, add a dropped dual-role locality as a region interpretation.
-		if (state.hierarchyCompletion && state.resolvedRegion && state.resolvedRegionNode && !state.localityNodePresent) {
-			this.#completeRegionRole(state.resolvedRegion, state.resolvedRegionNode)
-		}
-
 		// Admin coherence passes (default on).
 		if (opts.adminCoherence) {
 			// Clear contradictory parent-fallback picks before coherence passes.
@@ -260,6 +241,17 @@ class WOFResolver implements Resolver {
 			await applyExplicitCountryCoherence(newRoots, this.#backend)
 			// Re-resolve foreign region/locality pairs blocked by locale scope.
 			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry?.country ?? null)
+			await applyRegionCity(newRoots, this.#backend)
+
+			if (isCallerScope(state.defaultCountry)) {
+				await applyLocalityAsRegion(newRoots, this.#backend, state.defaultCountry!.country)
+			}
+
+			await applyCountryCode(newRoots, opts.writtenInput ?? tree.raw, this.#backend)
+		}
+
+		if (opts.landmarks) {
+			await applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.landmarks)
 		}
 
 		// The postcode and rooftop passes hold a locality to the same distance from their point.
@@ -290,6 +282,11 @@ class WOFResolver implements Resolver {
 			await applySpanRescore(newRoots, tree.raw, this.#backend, opts)
 		}
 
+		// OpenStreetMap places answer after span rescore, so a town that holds the whole name keeps it.
+		if (opts.osmPlaces) {
+			await applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.osmPlaces)
+		}
+
 		// Retry exact address-point tier once after span-rescore recovery.
 		if (opts.addressPoints) {
 			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
@@ -308,28 +305,6 @@ class WOFResolver implements Resolver {
 		return { raw: tree.raw, roots: newRoots }
 	}
 
-	/**
-	 * Add a dropped dual-role locality as a `locality` interpretation on a resolved region node.
-	 */
-	#completeRegionRole(region: CoordinateOptionalPlace, regionNode: AddressNode): void {
-		if (typeof region.id !== "number" || !this.#backend.coincidentLocalitiesFor) return
-		const loc = pickCompletion(this.#backend.coincidentLocalitiesFor(region.id))
-
-		if (!loc) return
-
-		const interpretation: Interpretation = {
-			tag: "locality",
-			placeID: `wof:${loc.id}`,
-			sourceID: `${loc.placetype}:${loc.id}`,
-			lat: loc.lat,
-			lon: loc.lon,
-			confidence: 0,
-			metadata: { relationship_type: loc.relationshipType, resolver_completed: true, resolver_name: loc.name },
-		}
-
-		regionNode.interpretations = [...(regionNode.interpretations ?? []), interpretation]
-	}
-
 	async #walk(
 		node: AddressNode,
 		parentResolved: CoordinateOptionalPlace | null,
@@ -340,11 +315,6 @@ class WOFResolver implements Resolver {
 		const decorated: AddressNode = { ...node, children: [] }
 
 		const placetype = state.placetypeMap[node.tag as ComponentTag]
-
-		// Track whether a locality node exists for hierarchy completion.
-		if (placetype === "locality") {
-			state.localityNodePresent = true
-		}
 
 		let resolved: CoordinateOptionalPlace | null = null
 
@@ -389,12 +359,6 @@ class WOFResolver implements Resolver {
 				// Optional lineage attachment.
 				if (state.includeAncestors && this.#backend.ancestors) {
 					decorated.metadata = { ...decorated.metadata, ancestors: this.#backend.ancestors(picked.top.id) }
-				}
-
-				// Capture first resolved region for hierarchy completion.
-				if (placetype === "region" && state.resolvedRegion === null) {
-					state.resolvedRegion = picked.top
-					state.resolvedRegionNode = decorated
 				}
 			}
 		}

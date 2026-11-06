@@ -363,6 +363,16 @@ globalThis.addEventListener("message", (event: MessageEvent<RangeWorkerCall>) =>
 
 	answer(call).then(
 		(result) => reply({ id: call.id, result }),
-		(error: unknown) => reply({ id: call.id, error: error instanceof Error ? error.message : String(error) })
+		(error: unknown) => {
+			// sqlite-wasm's `SQLite3Error` sets `resultCode` to SQLite's extended code, such as 266.
+			// The page branches on the number, so the reply copies it beside the message.
+			const resultCode = (error as { resultCode?: unknown } | null)?.resultCode
+
+			reply({
+				id: call.id,
+				error: error instanceof Error ? error.message : String(error),
+				resultCode: typeof resultCode === "number" ? resultCode : null,
+			})
+		}
 	)
 })

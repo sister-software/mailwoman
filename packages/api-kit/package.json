@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/api-kit",
-	"version": "10.8.0",
+	"version": "11.0.0",
 	"description": "API plumbing for Mailwoman's HTTP surfaces — Hono node serve wrapper, OpenAPI emit helpers, shared wire atoms. Plumbing only: domain schemas live with their routes.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -45,7 +45,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@hono/node-server": "^2.1.5",
+		"@hono/node-server": "^2.1.6",
 		"@hono/zod-openapi": "^1.6.3",
 		"@mailwoman/core": "workspace:*",
 		"hono": "^4.13.14",

@@ -1,0 +1,13 @@
+[package]
+name = "registry-core"
+description = "The borrowed RGY1 reader and the identifier lookups @mailwoman/registry's TypeScript, native and WebAssembly surfaces share."
+version.workspace = true
+edition.workspace = true
+license = "AGPL-3.0-only OR LicenseRef-Commercial"
+repository.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+registry-build = { path = "../registry-build" }
+serde_json = "1"

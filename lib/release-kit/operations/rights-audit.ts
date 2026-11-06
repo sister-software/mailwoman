@@ -94,6 +94,7 @@ export const rightsAudit = defineOperation({
 	description:
 		"Read the source register, every published weights package's provenance record, and any frozen training manifest, and report what the chain from a source's terms to a published tarball establishes and what it leaves open. Fails when a model card records a corpus that has no frozen training manifest, or when a package with OpenStreetMap ancestry lacks the OpenStreetMap notice in its card or README, or when a graph package's effective training manifest holds a source lacking a transform and train permission that known-training-rights-violations.json does not record, or that file records a violation no longer measured.",
 	effect: OperationEffect.Read,
+	options: {},
 	inputSchema: z.object({}).strict(),
 	outputSchema: z.object({
 		register: registerAudit,

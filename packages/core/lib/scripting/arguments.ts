@@ -12,7 +12,7 @@ import { parseArgs, type ParseArgsConfig } from "node:util"
 
 import { TextSpliterator } from "spliterator"
 
-export type { ParseArgsConfig } from "node:util"
+export type { ParseArgsConfig, ParseArgsOptionsConfig } from "node:util"
 
 export type UnsafeCLIArgument = string & { __unsafeCLIArgumentBrand: never }
 

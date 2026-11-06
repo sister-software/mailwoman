@@ -1,0 +1,41 @@
+[
+	{
+		"id": "eiffel-tower",
+		"name": "Eiffel Tower",
+		"wikidata": "Q243",
+		"osm": "way/5013364",
+		"anchor": [2.2945008, 48.8582603],
+		"height": 310.5,
+		"yaw": 44.3,
+		"color": "#706550",
+		"suppressRadius": 95,
+		"model": {
+			"format": "glb",
+			"source": "international-3dmr-4",
+			"sourceURL": "https://3dmr.eu/api/model/4/3",
+			"path": "landmarks/eiffel-tower.glb"
+		}
+	},
+	{
+		"id": "tokyo-skytree",
+		"name": "Tokyo Skytree",
+		"wikidata": "Q57965",
+		"osm": "way/288269147",
+		"anchor": [139.8107, 35.710063],
+		"height": 634,
+		"yaw": 0,
+		"suppressRadius": 45,
+		"model": { "format": "procedural" }
+	},
+	{
+		"id": "tokyo-tower",
+		"name": "Tokyo Tower",
+		"wikidata": "Q183536",
+		"osm": "relation/4247312",
+		"anchor": [139.745433, 35.658581],
+		"height": 333,
+		"yaw": 0,
+		"suppressRadius": 45,
+		"model": { "format": "procedural" }
+	}
+]

@@ -16,6 +16,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { filesAtRef, renamesSince } from "@mailwoman/core/git"
 import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { findOperation, type Operation, type OperationContext } from "@mailwoman/core/scripting"
+import { parseArguments, type ParseArgsOptionsConfig } from "@mailwoman/core/scripting/arguments"
 import { shopOperations } from "@mailwoman/license-worker/shop/operations"
 import { resolvePath } from "path-ts"
 
@@ -59,35 +60,44 @@ export interface DispatchIO {
 }
 
 /**
- * `--key value` and `--flag` pairs into an object the operation's `inputSchema` coerces
- * and validates, so values stay strings here and the schema decides the type.
+ * The flags every operation and health command accepts.
  */
-export function parseOptions(args: readonly string[]): { options: Record<string, string | boolean>; rest: string[] } {
-	const options: Record<string, string | boolean> = {}
-	const rest: string[] = []
+const COMMON_OPTIONS = {
+	json: { type: "boolean" },
+	"dry-run": { type: "boolean" },
+} as const satisfies ParseArgsOptionsConfig
 
-	for (let i = 0; i < args.length; i++) {
-		const arg = args[i]!
+const HEALTH_OPTIONS = {
+	...COMMON_OPTIONS,
+	moves: { type: "string" },
+	"literals-since": { type: "string" },
+} as const satisfies ParseArgsOptionsConfig
 
-		if (!arg.startsWith("--")) {
-			rest.push(arg)
+/**
+ * Parsed flag values, keyed by long name.
+ */
+export type ParsedFlags = Record<string, string | boolean | undefined>
 
-			continue
-		}
+/**
+ * Parse `args` against the declared `options` with `parseArgs` from `node:util`.
+ *
+ * An undeclared flag, or a string flag without its value, throws.
+ * A boolean flag is turned off with its `--no-` form.
+ * Arguments that are not flags come back in `rest`, in order.
+ */
+export function parseFlags(
+	args: readonly string[],
+	options: ParseArgsOptionsConfig
+): { options: ParsedFlags; rest: string[] } {
+	const { values, positionals } = parseArguments({
+		args: [...args],
+		options,
+		strict: true,
+		allowPositionals: true,
+		allowNegative: true,
+	})
 
-		const body = arg.slice(2)
-		const eq = body.indexOf("=")
-
-		if (eq !== -1) {
-			options[body.slice(0, eq)] = body.slice(eq + 1)
-		} else if (i + 1 < args.length && !args[i + 1]!.startsWith("--")) {
-			options[body] = args[++i]!
-		} else {
-			options[body] = true
-		}
-	}
-
-	return { options, rest }
+	return { options: { ...values } as ParsedFlags, rest: positionals }
 }
 
 function usage(io: DispatchIO): number {
@@ -168,10 +178,10 @@ async function runOperation<TContext extends OperationContext>(
 	args: readonly string[],
 	io: DispatchIO
 ): Promise<number> {
-	const { options, rest } = parseOptions(args)
-	const id = rest[0]
+	// The operation comes before its flags, because its own `options` decide how the flags parse.
+	const [id, ...flags] = args
 
-	if (!id) return usage(io)
+	if (!id || id.startsWith("-")) return usage(io)
 
 	const operation = findOperation(view.registry, view.verb, id)
 
@@ -179,6 +189,20 @@ async function runOperation<TContext extends OperationContext>(
 		io.stderr(
 			`mwops ${view.verb}: no operation ${stringifyJSON(id)}; registered: ${view.registry.map((o) => o.id).join(", ") || "(none)"}\n`
 		)
+
+		return 2
+	}
+
+	let options: ParsedFlags
+
+	try {
+		const parsedFlags = parseFlags(flags, { ...operation.options, ...COMMON_OPTIONS })
+
+		if (parsedFlags.rest.length) throw new Error(`unexpected argument ${stringifyJSON(parsedFlags.rest[0])}`)
+
+		options = parsedFlags.options
+	} catch (error) {
+		io.stderr(`mwops ${view.verb} ${operation.id}: ${error instanceof Error ? error.message : String(error)}\n`)
 
 		return 2
 	}
@@ -219,11 +243,7 @@ async function runOperation<TContext extends OperationContext>(
  * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings,
  * where `debt` is the only counter set.
  */
-async function runBaseline(
-	targets: readonly string[],
-	options: Record<string, string | boolean>,
-	io: DispatchIO
-): Promise<number> {
+async function runBaseline(targets: readonly string[], options: ParsedFlags, io: DispatchIO): Promise<number> {
 	const target = targets[0]
 
 	if (target !== "debt") {
@@ -252,11 +272,7 @@ async function runBaseline(
  * `mwops health comments [path]` — rebuild the source-comment inventory and its heuristic
  * review leads, a report about the tree rather than a verdict on it.
  */
-async function runComments(
-	targets: readonly string[],
-	options: Record<string, string | boolean>,
-	io: DispatchIO
-): Promise<number> {
+async function runComments(targets: readonly string[], options: ParsedFlags, io: DispatchIO): Promise<number> {
 	const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
 	const report = await runCommentInventory(context, targets[0] ?? DEFAULT_TRIAGE_DATABASE)
 
@@ -274,11 +290,7 @@ async function runComments(
  * `mwops health fix <check>` — apply the mechanical repair for one check, building and proving
  * the plan before anything is written so `--dry-run` reports exactly what the write would do.
  */
-async function runFix(
-	targets: readonly string[],
-	options: Record<string, string | boolean>,
-	io: DispatchIO
-): Promise<number> {
+async function runFix(targets: readonly string[], options: ParsedFlags, io: DispatchIO): Promise<number> {
 	const id = targets[0]
 	const fix = id ? findFix(id) : null
 
@@ -415,11 +427,7 @@ type MoveFile = ModuleMove[] | { moves: ModuleMove[]; manifests?: Array<{ file: 
  *
  * The plan is proven before anything is written, as with `health fix`.
  */
-async function runMove(
-	targets: readonly string[],
-	options: Record<string, string | boolean>,
-	io: DispatchIO
-): Promise<number> {
+async function runMove(targets: readonly string[], options: ParsedFlags, io: DispatchIO): Promise<number> {
 	let moves: ModuleMove[]
 	const manifests: ManifestReplacement[] = []
 
@@ -481,7 +489,17 @@ async function runMove(
 }
 
 async function runHealth(args: readonly string[], io: DispatchIO): Promise<number> {
-	const { options, rest } = parseOptions(args)
+	let parsed: ReturnType<typeof parseFlags>
+
+	try {
+		parsed = parseFlags(args, HEALTH_OPTIONS)
+	} catch (error) {
+		io.stderr(`mwops health: ${error instanceof Error ? error.message : String(error)}\n`)
+
+		return 2
+	}
+
+	const { options, rest } = parsed
 	const id = rest[0]
 
 	if (!id) return usage(io)

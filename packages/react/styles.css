@@ -543,14 +543,6 @@
 		margin: 0;
 	}
 
-	.mw-resolved__dual {
-		margin: var(--ss-spacing-2) 0 0;
-		padding: calc(var(--ss-spacing-1) * 1.5) var(--ss-spacing-2);
-		border-radius: var(--ss-radius-global);
-		background: var(--ss-color-info-contrast-background);
-		font-size: 0.9rem;
-	}
-
 	/* #endregion */
 
 	/* #region Candidate picker */

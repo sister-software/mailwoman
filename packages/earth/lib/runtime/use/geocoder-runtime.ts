@@ -29,6 +29,7 @@ import {
 } from "@mailwoman/cartographer/jurisdictions"
 import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import { startEarly } from "@mailwoman/core/promises"
+import type { LandmarkLookup } from "@mailwoman/core/resolver"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
 import { useReleaseRuntime } from "@mailwoman/react"
 import type {
@@ -48,12 +49,13 @@ import {
 	resolveStreet,
 	type StreetResolution,
 } from "@mailwoman/resolver-wof-wasm/httpvfs/street"
+import { LandmarkSource, RemoteLandmarkLookup } from "@mailwoman/resolver-wof-wasm/remote-landmark"
+import { postPruneMessage } from "@mailwoman/service-worker-cache/prune"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import {
 	DEFAULT_LOCALE,
 	parseStageLabelsFor,
 	projectCascadeHits,
-	resolveDualRoles,
 	runClassifyStage,
 } from "mailwoman/browser-runtime/classify"
 import { FamilyBundles, silentAssetProgress } from "mailwoman/browser-runtime/family-bundles"
@@ -80,7 +82,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { EarthConfig } from "#config"
 import { pageSearchParam, pageTilesetParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
-import { pruneDBRangeCache } from "#runtime/range-cache"
 import { loadUnderseaIndex, underseaPlaceView } from "#runtime/undersea"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 
@@ -179,6 +180,25 @@ function modelDisabled(): boolean {
 /**
  * The basemap's TileJSON: the tileset `?basemap=` asks for on the tile worker, or the configured basemap.
  */
+/**
+ * Reads one landmark layer, and keeps a search working when the Worker does not answer.
+ *
+ * The layers improve a bare place name, and the page geocodes offline without them.
+ * A failed read goes to the console with its layer, and the gazetteer's own answer stands.
+ */
+function landmarkLayer(baseURL: URL, source: LandmarkSource): LandmarkLookup {
+	const lookup = new RemoteLandmarkLookup(baseURL, source)
+
+	return {
+		find: (name) =>
+			lookup.find(name).catch((error: unknown) => {
+				console.warn(`The ${source} landmark layer did not answer for the name "${name}"`, error)
+
+				return []
+			}),
+	}
+}
+
 function basemapTileJSONURL(config: EarthConfig): URL {
 	const name = pageTilesetParam("basemap")
 
@@ -375,7 +395,7 @@ export function useGeocoderRuntime({
 
 	useEffect(() => {
 		if (rt.selectedVersion) {
-			pruneDBRangeCache(rt.selectedVersion)
+			postPruneMessage(rt.selectedVersion)
 		}
 	}, [rt.selectedVersion])
 
@@ -555,7 +575,6 @@ export function useGeocoderRuntime({
 					fstActive: assets?.fstMatcher != null,
 					fstProvenance: assets?.fstProvenance ?? null,
 					timing: { ...timing, resolve: null },
-					dualRoles: null,
 				}
 			}
 
@@ -589,7 +608,26 @@ export function useGeocoderRuntime({
 			}
 
 			const tBeforeResolve = performance.now()
-			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias)
+
+			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias, {
+				landmarks: landmarkLayer(config.landmarkAPIURL, LandmarkSource.Wikidata),
+				osmPlaces: landmarkLayer(config.landmarkAPIURL, LandmarkSource.OpenStreetMap),
+			}).catch(async (error: unknown) => {
+				// Offline, the gazetteer answers only from the range chunks the service worker cached while online.
+				// A read past them fails inside SQLite as `SQLITE_IOERR_READ`,
+				// a disk I/O error that hides the cause.
+				const { isSQLiteReadFailure } = await import("@mailwoman/resolver-wof-wasm/httpvfs/database")
+
+				if (isSQLiteReadFailure(error)) {
+					throw new Error(
+						"The gazetteer could not read the pages this address needs: they are not cached on this device, and the network did not answer.",
+						{ cause: error }
+					)
+				}
+
+				throw error
+			})
+
 			const tResolve = performance.now()
 
 			// Postcode-only dead end: answer the postcode's centroid from the release's postcode binaries.
@@ -647,11 +685,6 @@ export function useGeocoderRuntime({
 			// ahead of the admin matches, after a street-level coordinate.
 			candidates.splice(streetResolution ? 1 : 0, 0, ...(await underseaPlaces()))
 
-			// Whether the resolved place doubles as another admin tier.
-			// This is best-effort.
-			// The helper skips a synthesized street/anchor pin (`id === 0`).
-			const dualRoles = await resolveDualRoles(wofLookup, candidates[0])
-
 			return {
 				input,
 				tree,
@@ -662,10 +695,10 @@ export function useGeocoderRuntime({
 				fstActive: assets?.fstMatcher != null,
 				fstProvenance: assets?.fstProvenance ?? null,
 				timing: { ...timing, resolve: tResolve - tBeforeResolve },
-				dualRoles: dualRoles as ParseResult["dualRoles"],
 			}
 		},
 		[
+			config.landmarkAPIURL,
 			config.underseaFeaturesURL,
 			ensureStreetLookups,
 			familyBundles,

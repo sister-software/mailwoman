@@ -48,7 +48,7 @@ extend-exclude = [
 	"packages/mailwoman/tools/eval-harness/baselines.json",
 	"packages/mailwoman/tools/eval-harness/invariance/suite.jsonl",
 	# These modules are generated from models or language registries.
-	"packages/registry/lib/models/*-gbt-en-us.ts",
+	"packages/entity-resolution/lib/models/*-gbt-en-us.ts",
 	"packages/codex/lib/country/official-languages.ts",
 	"packages/postcode/lib/country-formats/data.ts",
 	"packages/postcode/lib/subregions.json",
@@ -72,11 +72,15 @@ extend-ignore-re = [
 	'''\bCENTRE\b''',
 	'''\|centre\|''',
 	'''\(CC BY 4\.0\) licence''',
-	# OpenStreetMap tag keys (`building:colour`, `roof:shape/height/levels/colour/...`), the Arnis function
-	# `facade_tone_for_colour` and Sponge's `.schem` file extension, quoted by the Arnis building review.
+	# OpenStreetMap tag keys (`building:colour`, `roof:shape/height/levels/colour/...`, a bare quoted `colour`) and
+	# the quoted tag value `theatre`, the Arnis functions `facade_tone_for_colour`, `roof_family_for_colour` and
+	# `glass_for_colour`, and Sponge's `.schem` file extension, quoted by the Arnis building review and the
+	# vendored Arnis code in packages/hrt.
 	'''\b(?:building|roof)(?::[a-z]+)*:colour\b''',
 	'''/colour/''',
-	'''\bfacade_tone_for_colour\b''',
+	'''["'`]colour["'`]''',
+	'''["'`]theatre["'`]''',
+	'''\b(?:facade_tone|roof_family|glass)_for_colour\b''',
 	'''\.schem\b''',
 	'''["'`]neighbourhood["'`]''',
 	'''\bneighbourhood\s*:|\.neighbourhood\b''',

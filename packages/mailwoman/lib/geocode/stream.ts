@@ -3,7 +3,7 @@
 
 /**
  * This module geocodes normalized records across worker threads using `spliterator.parallelMapWorkers`.
- * The pipeline composes it after `@mailwoman/registry`'s `normalizeCSV`. Each worker rebuilds the
+ * The pipeline composes it after `@mailwoman/entity-resolution`'s `normalizeCSV`. Each worker rebuilds the
  * classifier, WOF lookup, resolver and databases from {@link GeocodeStreamConfig} at startup. Workers
  * return records in completion order. The work is latency- and memory-bound, so concurrency stays low.
  * A measured NPPES sweep peaked at 2 workers (~1.4x) and degraded at higher counts because the shared
@@ -12,7 +12,7 @@
  */
 
 import { availableParallelism } from "@mailwoman/core/utils/system"
-import type { ColumnMapping, SourceRecord } from "@mailwoman/registry"
+import type { ColumnMapping, SourceRecord } from "@mailwoman/entity-resolution"
 import { parallelMapWorkers } from "spliterator"
 
 export interface GeocodeStreamConfig {

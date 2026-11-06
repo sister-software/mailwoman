@@ -10,6 +10,7 @@
  */
 
 export * from "#app"
+export * from "#doc-info"
 export * from "#engine"
 export * from "#routes"
 export * from "#input-limits"

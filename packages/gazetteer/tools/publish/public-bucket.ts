@@ -12,7 +12,7 @@
 
 import { $public } from "@mailwoman/core/env"
 import { gzip } from "@mailwoman/core/fs/compression"
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readFileRange, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { isDirectory, readFileSize } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -218,6 +218,30 @@ function assertPairIndexManifests(relativePaths: readonly string[]): void {
 }
 
 /**
+ * The two bytes every gzip member starts with.
+ */
+const GZIP_SIGNATURE = [0x1f, 0x8b] as const
+
+/**
+ * Refuses a staged file that is already gzip data when the upload gzip-encodes its extension.
+ *
+ * The browser removes one encoding layer, so a twice-compressed object reaches its reader as gzip bytes.
+ * A copy downloaded from the bucket without decoding is the usual source.
+ */
+async function assertNotPrecompressed(file: string, relativePath: string): Promise<void> {
+	const head = await readFileRange(file, 0, GZIP_SIGNATURE.length)
+
+	if (head[0] !== GZIP_SIGNATURE[0] || head[1] !== GZIP_SIGNATURE[1]) return
+
+	throw new CommandError(
+		`refusing to publish ${relativePath}: the staged file is already gzip data.\n` +
+			"  The upload stores this extension gzip-encoded, and the browser removes one layer, so its reader\n" +
+			"  would receive gzip bytes. Stage the decoded file: a copy fetched from the bucket needs\n" +
+			"  `rclone copyto --s3-decompress` or a gunzip first."
+	)
+}
+
+/**
  * Lists and validates every object before any credentials are read or bytes are uploaded.
  */
 export async function planPublicBucketUploads(
@@ -250,12 +274,18 @@ export async function planPublicBucketUploads(
 				)
 			}
 
+			const metadata = metadataFor(relativePath)
+
+			if (metadata.contentEncoding === "gzip") {
+				await assertNotPrecompressed(file, relativePath)
+			}
+
 			return {
 				file,
 				relativePath,
 				key: `${prefix}/${relativePath}`,
 				size: await readFileSize(file),
-				...metadataFor(relativePath),
+				...metadata,
 			}
 		})
 	)

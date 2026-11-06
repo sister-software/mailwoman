@@ -57,6 +57,34 @@ Inc., Apache-2.0) and of darts-clone (Copyright (c) 2008-2011 Susumu Yata, BSD 2
 `packages/mtf/THIRD_PARTY_NOTICES.md` lists each ported file and its upstream source, and
 `packages/mtf/third-party/` holds both license texts.
 
+### Arnis — Apache-2.0
+
+The `hrt-facade` crate (`packages/hrt/crates/hrt-facade`) ports the building style decisions of
+[Arnis](https://github.com/louis-e/arnis) by Louis Erbkamm, at commit `d8e8b662`, under the
+[Apache License, Version 2.0](https://github.com/louis-e/arnis/blob/main/LICENSE): the category,
+era, region, climate, wall and roof material, window rhythm and ground floor rules of
+`src/element_processing/buildings.rs`, `src/element_processing/rooftops.rs`, `src/osm_parser.rs`,
+`src/block_palette.rs`, `src/block_definitions.rs`, `src/colors.rs`, `src/climate.rs` and
+`src/deterministic_rng.rs`. The tables those rules read were transcribed into the JSON files under
+`packages/structures/data/facade/`, and each file's `$comment` records the Arnis constant it came
+from. Each ported module's header records its source file and the changes made.
+
+Section 4 of the license requires that the attribution notices in Arnis's `NOTICE` file be kept
+intact. That file states:
+
+> Arnis
+> Copyright (c) 2022-2026 Louis Erbkamm (louis-e)
+>
+> This product is developed and maintained by Louis Erbkamm (louis-e). It is free and open source
+> software, licensed under the Apache License, Version 2.0. See the LICENSE file for the full
+> terms.
+>
+> The only official sources for Arnis are: https://github.com/louis-e/arnis and
+> https://arnismc.com
+
+The crate builds the `hrt` tiler and is not published to npm. The colors it decides reach the
+Earth map's building tiles.
+
 ## Data bundled in the published packages
 
 These ship inside `@mailwoman/core` (under `data/`), with the upstream license text vendored

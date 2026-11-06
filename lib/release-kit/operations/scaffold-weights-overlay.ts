@@ -17,6 +17,7 @@ export const scaffoldWeightsOverlayOperation = defineOperation({
 	description:
 		"Scaffold a data-only @mailwoman/neural-weights-<locale> overlay (--locale es-ES [--artifact pair-index-es.bin]) and register it in the root workspaces, the release list, release.config.json and the smoke pack set.",
 	effect: OperationEffect.LocalWrite,
+	options: { locale: { type: "string" }, artifact: { type: "string" }, base: { type: "string" } },
 	inputSchema: z
 		.object({ locale: z.string({ error: "--locale is required (e.g. es-ES)" }), artifact: text, base: text })
 		.strict(),

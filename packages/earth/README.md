@@ -37,7 +37,7 @@ with no model download. Cloudflare's SPA fallback serves `index.html` for each, 
 ## Layout
 
 - `lib/runtime/`: the runtime assembly over `mailwoman/browser-runtime` (`useGeocoderRuntime`), the geolocation hook,
-  the polygon opener, and the range-cache protocol the service worker speaks. `lib/runtime/use/geocoder-runtime.ts`
+  and the polygon opener. `lib/service-worker.ts` registers the cache routes, built from `@mailwoman/service-worker-cache`. `lib/runtime/use/geocoder-runtime.ts`
   builds the classify deps object field by field from the browser loader's output rather than spreading it, and every
   classify dep is optional. A new field returned by `packages/mailwoman/lib/browser-runtime/load-assets.ts` therefore
   reaches the app only when this file forwards it. TypeScript does not report the omission, and no Node test exercises

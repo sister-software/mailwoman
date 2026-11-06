@@ -1,0 +1,13 @@
+[package]
+name = "registry-wasm"
+description = "The C-ABI WebAssembly adapter over registry-core that @mailwoman/registry's TypeScript loader calls."
+version.workspace = true
+edition.workspace = true
+license = "AGPL-3.0-only OR LicenseRef-Commercial"
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+registry-core = { path = "../registry-core" }

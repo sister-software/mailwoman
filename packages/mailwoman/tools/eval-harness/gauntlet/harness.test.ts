@@ -495,7 +495,6 @@ describe(": the Mailwoman-only arm uses the production pipeline, unchanged", () 
 							return deps.resolver.resolveTree(tree)
 						},
 						artifactCoverage: null,
-						capabilityGaps: null,
 					},
 				},
 			})

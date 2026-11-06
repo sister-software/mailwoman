@@ -5,7 +5,7 @@
  *   `mailwoman registry <csv>`: the geocode-first record matcher, end to end.
  *
  *   Constructs the heavy geocoder with a neural parser, WOF resolver and per-state situs/interp databases.
- *   It injects the geocoder into the matcher's `GeocodeAddress` interface, so `@mailwoman/registry` never
+ *   It injects the geocoder into the matcher's `GeocodeAddress` interface, so `@mailwoman/entity-resolution` never
  *   imports the runtime.
  *
  *   Geographic blocking puts textual variants of the same place in one block. The real run
@@ -19,9 +19,9 @@ import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/entity-resolution"
+import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/entity-resolution/tools/eval-geocoder"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
-import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
-import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools/eval-geocoder"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
@@ -122,7 +122,7 @@ export async function loadMapping(
 async function buildGeocoder(options: Options): Promise<{ geocodeAddress: GeocodeAddress } & Disposable> {
 	const { decodeAsJSON } = await import("@mailwoman/core/decoder")
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { geocodeAddressVia } = await import("@mailwoman/registry")
+	const { geocodeAddressVia } = await import("@mailwoman/entity-resolution")
 	const { createWOFResolver } = await import("@mailwoman/resolver")
 
 	const [{ geocodeAddress }, { USStateDatabaseProvider }] = await Promise.all([
@@ -217,7 +217,7 @@ export interface EvalGeocoderFlags {
 }
 
 /**
- * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools`
+ * Build the {@link EvalGeocoderFactory} the `@mailwoman/entity-resolution/tools`
  * record-matcher tools take, pinned to a plain `WOFSQLitePlaceLookup`,
  * `defaultCountry: { country: "US", source: "caller" }`, `placeCountry: "none"`,
  * and `postcodeRepair: true` so migrated evals reproduce the retired scripts' numbers.
@@ -226,7 +226,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 	return async (init): Promise<EvalGeocoder> => {
 		const { decodeAsJSON } = await import("@mailwoman/core/decoder")
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-		const { geocodeAddressVia } = await import("@mailwoman/registry")
+		const { geocodeAddressVia } = await import("@mailwoman/entity-resolution")
 		const { createWOFResolver } = await import("@mailwoman/resolver")
 
 		const [{ geocodeAddress }, { USStateDatabaseProvider }] = await Promise.all([
@@ -325,7 +325,7 @@ async function writeOutputs(
 ): Promise<string | null> {
 	if (!options.out && !options.mapOut) return null
 
-	const { toMapHTML } = await import("@mailwoman/registry")
+	const { toMapHTML } = await import("@mailwoman/entity-resolution")
 	const lines: string[] = []
 
 	if (options.out) {
@@ -362,7 +362,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 		resolveEntities,
 		streamRows,
 		toGeoJSON,
-	} = await import("@mailwoman/registry")
+	} = await import("@mailwoman/entity-resolution")
 
 	using geocoder = await buildGeocoder(options)
 	const { geocodeAddress: geocodeForIngest } = geocoder
@@ -410,8 +410,8 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 	const geocoded = records.filter((r) => r.address?.geocode).length
 
-	// Reconciliation mode: classify entities by eligibility and funding role membership through
-	// the same `@mailwoman/registry` library as `registry scorer-eval coverage-reconciliation`.
+	// Reconciliation mode: classify entities by eligibility and funding role membership through the
+	// same `@mailwoman/entity-resolution` library as `registry scorer-eval coverage-reconciliation`.
 	if (options.reconcile) {
 		const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
 		const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
@@ -459,7 +459,8 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 }
 
 async function runRegistry(csvPath: string, options: Options): Promise<string> {
-	const { inferMapping, ingestRows, streamRows, resolveEntities, toGeoJSON } = await import("@mailwoman/registry")
+	const { inferMapping, ingestRows, streamRows, resolveEntities, toGeoJSON } =
+		await import("@mailwoman/entity-resolution")
 
 	if (options.reconcile) {
 		throw new CommandError(

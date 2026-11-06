@@ -19,6 +19,7 @@ export const prepareVersion = defineOperation({
 	description:
 		"Write the target version (patch|minor|major|x.y.z) into the root package.json, every release workspace, and release.config.json without running git or npm. --check-only resolves and validates without writing.",
 	effect: OperationEffect.LocalWrite,
+	options: { version: { type: "string" }, "check-only": { type: "boolean" } },
 	inputSchema: z
 		.object({
 			version: z.string({ error: "--version is required (patch | minor | major | x.y.z)" }),

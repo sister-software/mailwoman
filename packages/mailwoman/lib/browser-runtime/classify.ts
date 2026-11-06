@@ -16,7 +16,6 @@ import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { AnchorRegionLookupLike } from "@mailwoman/core/pipeline"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import type { KnownFormatHitView } from "@mailwoman/query-shape/types"
-import type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
 import type { FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
 
@@ -251,27 +250,5 @@ export async function runClassifyStage(
 		kindResult: kindResult as ParseResult["kindResult"],
 		knownFormats: queryShape.knownFormats,
 		timing: { shape: tShape - tStart, classify: tClassify - tShape },
-	}
-}
-
-/**
- * Dual-role resolution shared by both parse paths.
- *
- * It reports whether the resolved pin doubles as another admin tier.
- * It returns `null` for a placeless pin (`id === 0`), a lookup with no `coincidentRolesFor`,
- * an empty relation or a failed query.
- */
-export async function resolveDualRoles(
-	lookup: MailwomanLookupLike,
-	primaryHit: { id: number } | null | undefined
-): Promise<DualRole[] | null> {
-	if (!primaryHit || !primaryHit.id || !lookup.coincidentRolesFor) return null
-
-	try {
-		const roles = await lookup.coincidentRolesFor(primaryHit.id)
-
-		return roles.length ? roles : null
-	} catch {
-		return null
 	}
 }

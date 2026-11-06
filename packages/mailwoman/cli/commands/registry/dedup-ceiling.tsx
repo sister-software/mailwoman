@@ -31,7 +31,7 @@ export const spec = {
 
 const RegistryDedupCeiling: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dedupCeiling } = await import("@mailwoman/registry/tools/dedup-ceiling")
+		const { dedupCeiling } = await import("@mailwoman/entity-resolution/tools/dedup-ceiling")
 
 		return dedupCeiling(
 			{ sources: options.sources, cap: options.cap, state: options.state, tau: options.tau, outMd: options.outMd },

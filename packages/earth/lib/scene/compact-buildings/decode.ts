@@ -7,13 +7,44 @@
  */
 
 import { GuideMapPalette } from "@mailwoman/cartographer/base/theme"
+import blockPalette from "@mailwoman/structures/data/facade/block-palette.json" with { type: "json" }
 
 import { hexRGB } from "../meshes.ts"
 
 /**
  * The first four bytes of a decompressed tile.
  */
-const MAGIC = "MWB1"
+const MAGIC = "MWB2"
+
+/**
+ * Bytes of a record's resolved style, all `0xFF` when the build resolved none.
+ * `STYLE_BYTES` in `building_buffers.rs` documents each byte.
+ */
+const STYLE_BYTES = 16
+
+/**
+ * A style byte the build left unresolved, or a palette slot the style leaves empty.
+ */
+const UNRESOLVED = 0xff
+
+/**
+ * The sRGB color of each block, indexed by the palette byte a record's style stores.
+ */
+const BLOCK_COLORS: readonly RGB[] = blockPalette.blocks.map(({ rgb }): RGB => [rgb[0] ?? 0, rgb[1] ?? 0, rgb[2] ?? 0])
+
+/**
+ * The palette color of a style byte, or `null` for an unresolved byte.
+ */
+function blockColor(index: number): RGB | null {
+	return index === UNRESOLVED ? null : (BLOCK_COLORS[index] ?? null)
+}
+
+/**
+ * Headings whose unit vectors' dot product exceeds this, about 14 degrees apart,
+ * continue one straight wall run.
+ * Arnis's `RUN_HEADING_COS`.
+ */
+const RUN_HEADING_COS = 0.97
 
 /**
  * The `height` a building records when its source states no height or floor count.
@@ -37,10 +68,112 @@ export const TILE_EXTENT = 8192
 export const TILE_ZOOM = 14
 
 /**
- * Bytes per wall instance: `i16` x0, y0, x1, y1; `u16` base and top in decimeters;
- * `u8` red, green, blue and floors.
+ * Bytes per wall instance, in order:
+ *
+ * - `i16` x0, y0, x1, y1.
+ * - `u16` base and top in decimeters.
+ * - `u8` red, green, blue and floors.
+ * - `u16` the length of the straight wall run the edge belongs to and the
+ *   edge's start along it, in decimeters.
+ * - `u8` the edge's flags (bits 0 and 1 its facade class, bit 2 the front edge, bit 3 a street corner)
+ *   and the building's flags (bit 0 attached, bit 1 enclosed, bit 2 a street faces a wall).
+ * - `u8` the window archetype and ground floor.
+ * - `u8` the glass's red, green and blue and the storey height in meters.
+ * - `u8` the trim's red, green and blue and the style flags.
+ * - `u8` the bay rhythm's window, pier and corner widths in meters and the category.
+ *
+ * The style bytes are `0xFF` for a building the build resolved no style for.
  */
-export const WALL_STRIDE = 16
+export const WALL_STRIDE = 36
+
+/**
+ * What a wall edge faces, from bits 0 and 1 of its edge flags.
+ *
+ * `packages/hrt/crates/hrt-profile/src/facade_plan.rs` classifies the edges.
+ */
+export const FacadeClass = {
+	Street: 0,
+	Rear: 1,
+	Party: 2,
+	Open: 3,
+} as const
+
+export type FacadeClass = (typeof FacadeClass)[keyof typeof FacadeClass]
+
+/**
+ * The straight wall runs of a ring: for each edge, the run's length and the edge's
+ * start along it, in the units the edge lengths are given in.
+ *
+ * Consecutive edges whose headings stay within {@link RUN_HEADING_COS} form one run,
+ * so a vertex part way along a facade does not break its bays.
+ * A ring whose first vertex lies part way along a wall joins its last run to its first,
+ * as Arnis's `lay_out_facade_columns` does.
+ * A zero-length edge joins the run it touches.
+ */
+export function wallRuns(xs: ArrayLike<number>, ys: ArrayLike<number>): { length: number[]; offset: number[] } {
+	const count = xs.length
+
+	const heading = (edge: number): [number, number] | null => {
+		const next = (edge + 1) % count
+		const dx = xs[next]! - xs[edge]!
+		const dy = ys[next]! - ys[edge]!
+		const length = Math.hypot(dx, dy)
+
+		return length > 0 ? [dx / length, dy / length] : null
+	}
+
+	const parallel = (a: [number, number] | null, b: [number, number] | null) =>
+		!a || !b || a[0] * b[0] + a[1] * b[1] > RUN_HEADING_COS
+
+	const runs: number[][] = []
+	let last: [number, number] | null = null
+
+	for (let edge = 0; edge < count; edge++) {
+		const here = heading(edge)
+
+		if (!runs.length || !parallel(last, here)) {
+			runs.push([])
+		}
+
+		runs.at(-1)!.push(edge)
+
+		if (here) {
+			last = here
+		}
+	}
+
+	if (runs.length > 1) {
+		let first: [number, number] | null = null
+
+		for (let edge = 0; edge < count && !first; edge++) {
+			first = heading(edge)
+		}
+
+		if (parallel(last, first)) {
+			const tail = runs.pop()!
+			runs[0] = [...tail, ...runs[0]!]
+		}
+	}
+
+	const length = new Array<number>(count).fill(0)
+	const offset = new Array<number>(count).fill(0)
+
+	for (const run of runs) {
+		let along = 0
+
+		for (const edge of run) {
+			offset[edge] = along
+			const next = (edge + 1) % count
+			along += Math.hypot(xs[next]! - xs[edge]!, ys[next]! - ys[edge]!)
+		}
+
+		for (const edge of run) {
+			length[edge] = along
+		}
+	}
+
+	return { length, offset }
+}
 
 /**
  * Bytes per roof vertex: `i16` x, y; `u16` z in decimeters and two bytes of padding;
@@ -102,6 +235,36 @@ const BASE_COLOR = byteRGB(GuideMapPalette.building)
 const DISTRICT_COLORS = GuideMapPalette.buildingDistricts.map(byteRGB)
 
 /**
+ * The glass of a building the build resolved no style for: the warm gray the window grid drew before styles.
+ */
+const DEFAULT_GLASS: RGB = [158, 158, 158]
+
+/**
+ * Where a wall instance's style bytes start.
+ */
+const WALL_STYLE_OFFSET = 22
+
+/**
+ * The 14 style bytes every wall of a building shares, in the wall instance's order from
+ * byte 22: window archetype, ground floor, glass color, storey height, trim color,
+ * style flags, bay window, pier and corner widths, and category.
+ */
+function wallStyleBytes(style: Uint8Array, glass: RGB, trim: RGB): Uint8Array {
+	return Uint8Array.of(
+		style[9]!,
+		style[10]!,
+		...glass,
+		style[14]!,
+		...trim,
+		style[15]!,
+		style[11]!,
+		style[12]!,
+		style[13]!,
+		style[8]!
+	)
+}
+
+/**
  * A tagged color (bit 31 set) mixed toward the base building color, or `null` when the bit is clear.
  */
 function taggedColor(packed: number): RGB | null {
@@ -137,7 +300,7 @@ export function unitMeters(tileY: number): number {
  * Decodes a decompressed tile body for z14 row `tileY`, which sets the meters per
  * tile unit that pitched roofs are shaded with.
  *
- * @throws When the body does not start with `MWB1` or ends inside a record.
+ * @throws When the body does not start with `MWB2` or ends inside a record.
  */
 export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBuildingTile {
 	const view = new DataView(bytes)
@@ -206,8 +369,10 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 		const roofTag = view.getUint32(at + 10, true)
 		const district = view.getUint8(at + 14)
 		const floors = view.getUint8(at + 15)
-		const ringCount = view.getUint8(at + 17)
-		at += 18
+		const buildingFlags = view.getUint8(at + 17)
+		const style = new Uint8Array(bytes, at + 18, STYLE_BYTES)
+		const ringCount = view.getUint8(at + 18 + STYLE_BYTES)
+		at += 19 + STYLE_BYTES
 
 		const ringSizes: number[] = []
 
@@ -216,20 +381,27 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 		}
 
 		const vertexCount = ringSizes.reduce((sum, size) => sum + size, 0)
-		const xs = new Int16Array(vertexCount + 2)
-		const ys = new Int16Array(vertexCount + 2)
+		const exterior = ringSizes[0] ?? 0
+		// The roof vertex count follows the footprint and its edge flags.
+		const roofCount = view.getUint16(at + vertexCount * 4 + exterior, true)
+		const xs = new Int16Array(vertexCount + roofCount)
+		const ys = new Int16Array(vertexCount + roofCount)
+		// Each roof vertex's height in decimeters.
+		// Footprint vertices sit at the eave.
+		const roofZ = new Uint16Array(roofCount)
 
 		for (let vertex = 0; vertex < vertexCount; vertex++, at += 4) {
 			xs[vertex] = view.getInt16(at, true)
 			ys[vertex] = view.getInt16(at + 2, true)
 		}
 
-		const ridgeCount = view.getUint8(at)
-		at += 1
+		const edgeFlags = new Uint8Array(bytes, at, exterior)
+		at += exterior + 2
 
-		for (let vertex = 0; vertex < ridgeCount; vertex++, at += 4) {
+		for (let vertex = 0; vertex < roofCount; vertex++, at += 6) {
 			xs[vertexCount + vertex] = view.getInt16(at, true)
 			ys[vertexCount + vertex] = view.getInt16(at + 2, true)
+			roofZ[vertex] = view.getUint16(at + 4, true)
 		}
 
 		const triangleCount = view.getUint16(at, true)
@@ -243,15 +415,25 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 		const top = height === UNKNOWN_HEIGHT ? base + UNKNOWN_HEIGHT_DECIMETERS : height
 		const wallTop = eave === UNKNOWN_HEIGHT ? top : eave
 
+		// A resolved style already matched any tagged color to its nearest block, as Arnis does.
 		const wallColor =
-			taggedColor(wallTag) ?? taggedColor(roofTag) ?? (DISTRICT_COLORS[district] as RGB | undefined) ?? BASE_COLOR
+			blockColor(style[0]!) ??
+			taggedColor(wallTag) ??
+			taggedColor(roofTag) ??
+			(DISTRICT_COLORS[district] as RGB | undefined) ??
+			BASE_COLOR
 
-		const roofColor = taggedColor(roofTag) ?? scaledColor(wallColor, UNTAGGED_ROOF_SHADE)
+		const roofColor = blockColor(style[7]!) ?? taggedColor(roofTag) ?? scaledColor(wallColor, UNTAGGED_ROOF_SHADE)
+		const glassColor = blockColor(style[3]!) ?? DEFAULT_GLASS
+		const trimColor = blockColor(style[1]!) ?? wallColor
+		const wallStyle = wallStyleBytes(style, glassColor, trimColor)
 
 		growWalls(vertexCount)
 		let ringStart = 0
 
-		for (const size of ringSizes) {
+		for (const [ring, size] of ringSizes.entries()) {
+			const runs = wallRuns(xs.subarray(ringStart, ringStart + size), ys.subarray(ringStart, ringStart + size))
+
 			for (let edge = 0; edge < size; edge++) {
 				const from = ringStart + edge
 				const to = ringStart + ((edge + 1) % size)
@@ -266,6 +448,12 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 				walls.setUint8(offset + 13, wallColor[1])
 				walls.setUint8(offset + 14, wallColor[2])
 				walls.setUint8(offset + 15, floors)
+				walls.setUint16(offset + 16, Math.min(0xff_ff, Math.round(runs.length[edge]! * metersPerUnit * 10)), true)
+				walls.setUint16(offset + 18, Math.min(0xff_ff, Math.round(runs.offset[edge]! * metersPerUnit * 10)), true)
+				// A courtyard's walls are not classified, so they read as open.
+				walls.setUint8(offset + 20, ring === 0 ? edgeFlags[edge]! : FacadeClass.Open)
+				walls.setUint8(offset + 21, buildingFlags)
+				new Uint8Array(walls.buffer).set(wallStyle, offset + WALL_STYLE_OFFSET)
 
 				wallCount++
 			}
@@ -273,7 +461,7 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 			ringStart += size
 		}
 
-		if (ridgeCount === 0) {
+		if (roofCount === 0) {
 			// A flat roof shares its footprint vertices across triangles.
 			growRoof(vertexCount, triangles.length)
 			const first = roofVertexCount
@@ -286,9 +474,9 @@ export function decodeBuildingTile(bytes: ArrayBuffer, tileY: number): DecodedBu
 				indices[indexCount++] = first + index
 			}
 		} else {
-			// A pitched roof's faces each take their own vertices, so each face is shaded by its own slope.
+			// A shaped roof's faces each take their own vertices, so each face is shaded by its own slope.
 			growRoof(triangles.length, triangles.length)
-			const z = (index: number) => (index >= vertexCount ? top : wallTop)
+			const z = (index: number) => (index >= vertexCount ? roofZ[index - vertexCount]! : wallTop)
 
 			for (let triangle = 0; triangle < triangleCount; triangle++) {
 				const corners = [triangles[triangle * 3]!, triangles[triangle * 3 + 1]!, triangles[triangle * 3 + 2]!]

@@ -92,13 +92,6 @@ function buildFixtureWOF(path: PathBuilderLike): void {
 		INSERT INTO names (id, language, name) VALUES (111, 'eng', 'Vt Plains');
 		INSERT INTO place_population VALUES (110, 1000);
 		INSERT INTO place_population VALUES (111, 100000000);
-
-		-- Dual-role relation (#402): Illinois(101) ⊃ Springfield(201). build-slim carries it to the slim DB.
-		CREATE TABLE coincident_roles (
-			admin_id INTEGER NOT NULL, locality_id INTEGER NOT NULL, relationship_type TEXT NOT NULL,
-			admin_placetype TEXT NOT NULL, distance_km REAL NOT NULL, locality_population INTEGER NOT NULL DEFAULT 0,
-			PRIMARY KEY (admin_id, locality_id));
-		INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000);
 	`)
 }
 
@@ -116,27 +109,6 @@ afterAll(async () => {
 })
 
 describe("WOFWasmPlaceLookup", () => {
-	test("CoincidentLocalitiesFor reads the relation carried into the slim DB", async () => {
-		const { db } = await loadSlimWOFDatabase({ source: slimBytes })
-		const lookup = new WOFWasmPlaceLookup({ db })
-
-		try {
-			const roles = lookup.coincidentLocalitiesFor(101)
-			expect(roles).toHaveLength(1)
-
-			expect(roles[0]).toMatchObject({
-				id: 201,
-				name: "Springfield",
-				placetype: "locality",
-				relationshipType: "capital-seat",
-			})
-
-			expect(lookup.coincidentLocalitiesFor(99_999)).toHaveLength(0)
-		} finally {
-			lookup[Symbol.dispose]()
-		}
-	})
-
 	test("opens a slim DB and resolves a locality", async () => {
 		const { db } = await loadSlimWOFDatabase({ source: slimBytes })
 		const lookup = new WOFWasmPlaceLookup({ db })

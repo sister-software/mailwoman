@@ -1,0 +1,367 @@
+{
+	"$comment": "Roof coverings. `pools` are weighted pitched-roof coverings as blocks (Arnis names them by family: tile_red is red_terracotta, tile_brick brick, tile_dark mangrove_planks, tile_brown nether_brick, tile_orange terracotta, slate cobbled_deepslate, slate_dark deepslate_tiles, glazed_black polished_blackstone_bricks, zinc polished_andesite, copper_roof waxed_oxidized_copper, metal_green dark_prismarine, metal_red red_nether_bricks); `pool_for_region` names a pool per material region, with a `house` pool where detached houses differ; `tile_families` are the clay tiles; `membranes` are the flat-roof (field, patch, repair) triples per family and `membrane_shares` the percent per family by region, with the European and North American rules in code. Transcribed from Arnis d8e8b662 (Apache-2.0) src/element_processing/buildings.rs roof pools and pitched_roof_block, src/element_processing/rooftops.rs MEMBRANES and regional_membrane_shares.",
+	"pools": {
+		"central": [
+			["red_terracotta", 55],
+			["brick", 10],
+			["nether_brick", 12],
+			["terracotta", 5],
+			["cobbled_deepslate", 13]
+		],
+		"central_east": [
+			["mangrove_planks", 30],
+			["red_terracotta", 25],
+			["brick", 15],
+			["terracotta", 10],
+			["cobbled_deepslate", 15]
+		],
+		"brick_north": [
+			["brick", 35],
+			["red_terracotta", 15],
+			["terracotta", 15],
+			["deepslate_tiles", 25],
+			["polished_blackstone_bricks", 10]
+		],
+		"british": [
+			["deepslate_tiles", 65],
+			["brick", 25],
+			["terracotta", 10]
+		],
+		"france": [
+			["polished_andesite", 50],
+			["cobbled_deepslate", 20],
+			["deepslate_tiles", 15],
+			["red_terracotta", 10],
+			["terracotta", 5]
+		],
+		"mediterranean": [
+			["terracotta", 45],
+			["polished_granite", 15],
+			["brick", 25],
+			["red_terracotta", 10],
+			["mud_bricks", 5]
+		],
+		"nordic": [
+			["brick", 30],
+			["red_terracotta", 10],
+			["polished_blackstone_bricks", 25],
+			["deepslate_tiles", 25],
+			["nether_brick", 10]
+		],
+		"na_house": [
+			["cobbled_deepslate", 28],
+			["deepslate_tiles", 16],
+			["polished_blackstone_bricks", 12],
+			["dark_oak_planks", 14],
+			["spruce_planks", 8],
+			["mud_bricks", 6],
+			["brick", 5],
+			["terracotta", 4],
+			["dark_prismarine", 3]
+		],
+		"sunbelt": [
+			["terracotta", 22],
+			["red_terracotta", 8],
+			["brick", 10],
+			["cobbled_deepslate", 24],
+			["deepslate_tiles", 12],
+			["mud_bricks", 10],
+			["dark_oak_planks", 7],
+			["spruce_planks", 7]
+		],
+		"na_urban": [
+			["deepslate_tiles", 45],
+			["cobbled_deepslate", 20],
+			["polished_blackstone_bricks", 20],
+			["brick", 15]
+		],
+		"other": [
+			["brick", 30],
+			["terracotta", 15],
+			["red_terracotta", 5],
+			["cobbled_deepslate", 20],
+			["deepslate_tiles", 15],
+			["polished_andesite", 10],
+			["dark_oak_planks", 5]
+		],
+		"canada_house": [
+			["cobbled_deepslate", 28],
+			["deepslate_tiles", 18],
+			["polished_blackstone_bricks", 14],
+			["dark_oak_planks", 10],
+			["spruce_planks", 6],
+			["polished_andesite", 10],
+			["mud_bricks", 6],
+			["dark_prismarine", 4],
+			["brick", 4]
+		],
+		"east": [
+			["polished_andesite", 22],
+			["dark_prismarine", 18],
+			["red_nether_bricks", 12],
+			["mangrove_planks", 8],
+			["cobbled_deepslate", 14],
+			["red_terracotta", 12],
+			["brick", 8],
+			["nether_brick", 6]
+		],
+		"middle_east": [
+			["terracotta", 35],
+			["brick", 25],
+			["polished_andesite", 20],
+			["red_terracotta", 10],
+			["cobbled_deepslate", 10]
+		],
+		"africa": [
+			["polished_andesite", 30],
+			["brick", 15],
+			["red_terracotta", 10],
+			["dark_prismarine", 10],
+			["cobbled_deepslate", 12],
+			["terracotta", 10],
+			["red_nether_bricks", 8],
+			["mud_bricks", 5]
+		],
+		"south_asia": [
+			["terracotta", 30],
+			["brick", 20],
+			["polished_andesite", 25],
+			["cobbled_deepslate", 10],
+			["red_terracotta", 10],
+			["dark_prismarine", 5]
+		],
+		"southeast_asia": [
+			["terracotta", 25],
+			["brick", 15],
+			["polished_andesite", 20],
+			["red_terracotta", 10],
+			["cobbled_deepslate", 10],
+			["dark_prismarine", 8],
+			["red_nether_bricks", 6],
+			["mud_bricks", 6]
+		],
+		"east_asia": [
+			["cobbled_deepslate", 30],
+			["deepslate_tiles", 20],
+			["polished_blackstone_bricks", 10],
+			["brick", 12],
+			["terracotta", 8],
+			["polished_andesite", 10],
+			["dark_prismarine", 6],
+			["red_terracotta", 4]
+		],
+		"korea": [
+			["deepslate_tiles", 26],
+			["cobbled_deepslate", 16],
+			["dark_prismarine", 18],
+			["terracotta", 12],
+			["red_terracotta", 10],
+			["red_nether_bricks", 8],
+			["polished_andesite", 10]
+		],
+		"japan": [
+			["deepslate_tiles", 38],
+			["cobbled_deepslate", 34],
+			["polished_blackstone_bricks", 10],
+			["polished_andesite", 10],
+			["nether_brick", 5],
+			["dark_prismarine", 3]
+		],
+		"latam": [
+			["terracotta", 35],
+			["brick", 25],
+			["red_terracotta", 10],
+			["polished_andesite", 15],
+			["cobbled_deepslate", 8],
+			["mud_bricks", 7]
+		],
+		"southern_cone": [
+			["brick", 30],
+			["terracotta", 25],
+			["red_terracotta", 12],
+			["cobbled_deepslate", 15],
+			["polished_andesite", 10],
+			["deepslate_tiles", 8]
+		],
+		"australasia": [
+			["terracotta", 22],
+			["brick", 14],
+			["cobbled_deepslate", 22],
+			["polished_andesite", 16],
+			["nether_brick", 8],
+			["red_nether_bricks", 6],
+			["polished_blackstone_bricks", 6],
+			["dark_prismarine", 4]
+		],
+		"spire": [
+			["waxed_oxidized_copper", 45],
+			["deepslate_tiles", 40],
+			["polished_blackstone_bricks", 15]
+		],
+		"mansard": [
+			["deepslate_tiles", 50],
+			["polished_andesite", 30],
+			["cobbled_deepslate", 20]
+		],
+		"french_mansard": [
+			["polished_andesite", 50],
+			["deepslate_tiles", 50]
+		],
+		"industrial": [
+			["polished_andesite", 40],
+			["brick", 20],
+			["cobbled_deepslate", 25],
+			["deepslate_tiles", 15]
+		]
+	},
+	"pool_for_region": {
+		"central": { "other": "central" },
+		"central_east": { "other": "central_east" },
+		"brick_north": { "other": "brick_north" },
+		"british_isles": { "other": "british" },
+		"france": { "other": "france" },
+		"mediterranean": { "other": "mediterranean" },
+		"nordic": { "other": "nordic" },
+		"north_america": { "house": "na_house", "other": "na_urban" },
+		"north_america_sunbelt": { "house": "sunbelt", "other": "na_urban" },
+		"canada": { "house": "canada_house", "other": "na_urban" },
+		"east_europe": { "other": "east" },
+		"central_asia": { "other": "east" },
+		"middle_east": { "other": "middle_east" },
+		"sub_saharan_africa": { "other": "africa" },
+		"south_asia": { "other": "south_asia" },
+		"southeast_asia": { "other": "southeast_asia" },
+		"east_asia": { "other": "east_asia" },
+		"korea": { "other": "korea" },
+		"japan": { "other": "japan" },
+		"latin_america": { "other": "latam" },
+		"southern_cone": { "other": "southern_cone" },
+		"australasia": { "other": "australasia" },
+		"other": { "other": "other" }
+	},
+	"tile_families": ["red_terracotta", "brick", "mangrove_planks", "nether_brick", "terracotta"],
+	"concrete_tile": ["nether_brick", "cobbled_deepslate"],
+	"slate_family": ["cobbled_deepslate", "deepslate_tiles"],
+	"copper_family": ["waxed_oxidized_copper"],
+	"painted_sheet": ["dark_prismarine", "red_nether_bricks"],
+	"tile_brown": "nether_brick",
+	"district_roof_share": 0.7,
+	"district_roof_share_elsewhere": 0.4,
+	"membranes": {
+		"white": [
+			["calcite", "white_wool", "smooth_stone"],
+			["white_concrete", "diorite", "light_gray_concrete"],
+			["white_wool", "calcite", "polished_andesite"]
+		],
+		"light": [
+			["smooth_stone", "light_gray_concrete", "andesite"],
+			["light_gray_concrete", "smooth_stone", "polished_andesite"]
+		],
+		"grey": [
+			["gray_wool", "gray_concrete", "polished_blackstone"],
+			["polished_andesite", "andesite", "gray_concrete"]
+		],
+		"dark": [
+			["smooth_basalt", "gray_wool", "black_concrete"],
+			["gray_wool", "smooth_basalt", "polished_blackstone"]
+		],
+		"ballast": [
+			["andesite", "moss_block", "coarse_dirt"],
+			["andesite", "tuff", "gray_concrete"],
+			["gray_concrete", "coarse_dirt", "moss_block"]
+		],
+		"eu_grey": [
+			["gray_concrete", "light_gray_concrete", "smooth_stone"],
+			["light_gray_concrete", "smooth_stone", "gray_concrete"],
+			["smooth_stone", "gray_wool", "light_gray_concrete"]
+		],
+		"dusty": [
+			["mushroom_stem", "smooth_sandstone", "light_gray_concrete"],
+			["light_gray_concrete", "mushroom_stem", "smooth_sandstone"],
+			["smooth_sandstone", "mushroom_stem", "smooth_stone"]
+		],
+		"stained": [
+			["light_gray_concrete", "gray_concrete", "blue_wool"],
+			["gray_concrete", "cyan_terracotta", "light_gray_concrete"],
+			["smooth_stone", "gray_concrete", "cyan_terracotta"]
+		],
+		"clay": [
+			["terracotta", "red_terracotta", "light_gray_concrete"],
+			["red_terracotta", "terracotta", "smooth_stone"]
+		],
+		"painted_green": [
+			["waxed_oxidized_copper", "cyan_terracotta", "light_gray_concrete"],
+			["waxed_oxidized_copper", "waxed_oxidized_copper", "cyan_terracotta"]
+		]
+	},
+	"membrane_shares": {
+		"east_europe": [
+			["dark", 45],
+			["grey", 35],
+			["light", 20]
+		],
+		"central_asia": [
+			["dark", 30],
+			["grey", 30],
+			["dusty", 25],
+			["light", 15]
+		],
+		"middle_east": [
+			["dusty", 60],
+			["light", 20],
+			["white", 15],
+			["grey", 5]
+		],
+		"south_asia": [
+			["stained", 55],
+			["light", 20],
+			["grey", 17],
+			["clay", 8]
+		],
+		"southeast_asia": [
+			["stained", 35],
+			["grey", 27],
+			["light", 28],
+			["clay", 10]
+		],
+		"east_asia": [
+			["light", 40],
+			["grey", 35],
+			["stained", 15],
+			["clay", 10]
+		],
+		"korea": [
+			["painted_green", 45],
+			["grey", 30],
+			["light", 25]
+		],
+		"japan": [
+			["light", 50],
+			["grey", 40],
+			["white", 10]
+		],
+		"sub_saharan_africa": [
+			["light", 30],
+			["grey", 30],
+			["dusty", 25],
+			["stained", 15]
+		],
+		"latin_america": [
+			["clay", 30],
+			["white", 25],
+			["light", 27],
+			["grey", 18]
+		],
+		"southern_cone": [
+			["clay", 20],
+			["light", 35],
+			["grey", 30],
+			["white", 15]
+		],
+		"australasia": [
+			["light", 35],
+			["grey", 35],
+			["white", 30]
+		]
+	}
+}

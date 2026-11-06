@@ -1,0 +1,24 @@
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"rootDir": "./lib",
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
+		"resolveJsonModule": true,
+		"types": ["@cloudflare/workers-types"],
+		"customConditions": ["workerd"]
+	},
+	"include": ["./lib/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts"],
+	"references": [
+		{ "path": "../api" },
+		{ "path": "../core" },
+		{ "path": "../gazetteer-worker" },
+		{ "path": "../mailwoman" },
+		{ "path": "../neural" },
+		{ "path": "../resolver" },
+		{ "path": "../resolver-wof-wasm" }
+	]
+}

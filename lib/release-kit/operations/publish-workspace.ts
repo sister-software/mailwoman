@@ -25,6 +25,13 @@ export const publishWorkspaceOperation = defineOperation({
 	description:
 		"Pack one workspace with the publish exports map injected, audit the tarball, and npm publish it. Requires --plan <file> from `release plan --json`, or --allow-unplanned for release-it's hook.",
 	effect: OperationEffect.ExternalWrite,
+	options: {
+		workspace: { type: "string" },
+		plan: { type: "string" },
+		"allow-unplanned": { type: "boolean" },
+		tag: { type: "string" },
+		access: { type: "string" },
+	},
 	inputSchema: z
 		.object({
 			/**

@@ -256,7 +256,7 @@ node packages/mailwoman/out/cli/main.js gazetteer build admin        # ~10 min; 
 
 One command runs the whole pipeline: WOF ingest → Overture divisions (real `division_area` extents +
 country nodes, #1015) → GeoNames folds → freeze (ancestors closure → `ancestors(id)` index →
-`wof:hierarchy` −4 backfill → coincident_roles) → enrich (region abbrevs + `place_abbr`, the steps the
+`wof:hierarchy` −4 backfill) → enrich (region abbrevs + `place_abbr`, the steps the
 2026-07-07 rebuild missed) → FTS (`place_search` + `place_bbox`) → the **structural verify step** → seal
 0444 → build-log append.
 

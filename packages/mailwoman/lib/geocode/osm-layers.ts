@@ -7,8 +7,12 @@
  *   the same license refusal.
  */
 
-import { type ArtifactManifest, BuildRecipeName, ServingRole } from "@mailwoman/core/layers"
+import { databaseRootPath } from "@mailwoman/core/data-root"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { type ArtifactManifest, BuildRecipeName, readLayerManifest, ServingRole } from "@mailwoman/core/layers"
 import type { RegionDatabaseProvider } from "@mailwoman/core/resolver"
+import type { LandmarkSqliteLookup } from "@mailwoman/resolver-wof-sqlite/landmark"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
@@ -35,6 +39,34 @@ export function isOSMBuiltArtifact(manifest: ArtifactManifest): boolean {
  */
 export function isNationalAddressPointArtifact(manifest: ArtifactManifest): boolean {
 	return !isOSMBuiltArtifact(manifest)
+}
+
+/**
+ * The file name of the place layer `tools/dev-tools/landmarks/osm/places.run.ts` builds under `db/osm`.
+ */
+export const OSM_PLACES_DATABASE_FILE = "places-osm.db"
+
+/**
+ * Opens the OpenStreetMap place layer an operator built, or returns `null` when none is built.
+ *
+ * @throws When `MAILWOMAN_REFUSE_OBLIGATIONS` names a class of the layer's recorded license.
+ */
+export async function openOSMPlaces(dataRoot: PathBuilderLike): Promise<LandmarkSqliteLookup | null> {
+	const path = databaseRootPath(dataRoot)("osm", OSM_PLACES_DATABASE_FILE)
+
+	if (!(await pathExists(path))) return null
+
+	const refuse = parseObligationRefusals([$public.MAILWOMAN_REFUSE_OBLIGATIONS ?? ""])
+
+	if (refuse.length) {
+		using db = new DatabaseClient<never>(path, { readOnly: true })
+
+		assertLayerObligationsAccepted(await readLayerManifest(db), path.toString(), refuse)
+	}
+
+	const { LandmarkSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite/landmark")
+
+	return new LandmarkSqliteLookup(path)
 }
 
 /**

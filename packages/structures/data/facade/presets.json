@@ -1,0 +1,187 @@
+{
+	"$comment": "Style presets per building category: a set field pins a decision, an absent one leaves it to BuildingStyle::resolve. Transcribed from Arnis d8e8b662 (Apache-2.0) src/element_processing/buildings.rs BuildingStylePreset constructors and for_category. Modified: the greenhouse roof preset is the full block of Arnis's smooth stone slab.",
+	"house": {
+		"use_accent_lines": false,
+		"use_accent_roof_line": true,
+		"has_chimney": true,
+		"wall_depth_style": "subtle_pilasters"
+	},
+	"residential": { "use_accent_lines": false, "wall_depth_style": "subtle_pilasters" },
+	"farm": { "use_accent_lines": false, "use_vertical_accent": false, "has_chimney": false, "wall_depth_style": "none" },
+	"commercial": { "use_accent_roof_line": true, "wall_depth_style": "modern_pillars", "has_parapet": true },
+	"office": {
+		"use_accent_roof_line": true,
+		"has_chimney": false,
+		"wall_depth_style": "modern_pillars",
+		"has_parapet": true
+	},
+	"hotel": {
+		"use_accent_roof_line": true,
+		"use_accent_lines": true,
+		"has_chimney": false,
+		"wall_depth_style": "modern_pillars",
+		"has_parapet": true
+	},
+	"industrial": {
+		"has_chimney": false,
+		"use_accent_lines": false,
+		"use_vertical_accent": false,
+		"wall_depth_style": "industrial_beams"
+	},
+	"warehouse": {
+		"has_chimney": false,
+		"use_accent_lines": false,
+		"use_vertical_accent": false,
+		"use_accent_roof_line": false,
+		"wall_depth_style": "industrial_beams"
+	},
+	"school": {
+		"use_accent_roof_line": true,
+		"has_chimney": false,
+		"wall_depth_style": "institutional_bands",
+		"has_parapet": true
+	},
+	"hospital": {
+		"use_accent_roof_line": true,
+		"roof_type": "flat",
+		"has_chimney": false,
+		"wall_depth_style": "institutional_bands",
+		"has_parapet": true
+	},
+	"religious": {
+		"use_accent_roof_line": true,
+		"use_accent_lines": false,
+		"has_chimney": false,
+		"wall_depth_style": "religious_buttress"
+	},
+	"historic": {
+		"has_chimney": false,
+		"use_accent_lines": false,
+		"use_vertical_accent": false,
+		"use_accent_roof_line": false,
+		"wall_depth_style": "historic_ornate"
+	},
+	"tower": {
+		"has_windows": true,
+		"window_block": "glass",
+		"use_accent_lines": true,
+		"use_vertical_accent": false,
+		"use_accent_roof_line": true,
+		"roof_type": "flat",
+		"generate_roof": true,
+		"has_chimney": false,
+		"wall_depth_style": "none"
+	},
+	"garage": {
+		"roof_type": "flat",
+		"has_chimney": false,
+		"use_accent_lines": false,
+		"use_vertical_accent": false,
+		"use_accent_roof_line": true,
+		"generate_roof": true,
+		"has_windows": false,
+		"has_garage_door": true,
+		"wall_depth_style": "none"
+	},
+	"shed": {
+		"wall_block": "oak_log",
+		"roof_block": "oak_planks",
+		"has_chimney": false,
+		"use_accent_lines": false,
+		"use_vertical_accent": false,
+		"use_accent_roof_line": false,
+		"has_windows": false,
+		"has_single_door": true,
+		"wall_depth_style": "none"
+	},
+	"greenhouse": {
+		"roof_block": "smooth_stone",
+		"has_chimney": false,
+		"use_accent_lines": false,
+		"use_vertical_accent": false,
+		"use_accent_roof_line": false,
+		"roof_type": "flat",
+		"generate_roof": true,
+		"has_windows": false,
+		"has_single_door": true,
+		"wall_depth_style": "none"
+	},
+	"tall_building": {
+		"roof_type": "flat",
+		"has_chimney": false,
+		"use_accent_roof_line": true,
+		"wall_depth_style": "skyscraper_fins",
+		"has_parapet": true
+	},
+	"glassy_skyscraper": {
+		"has_windows": false,
+		"use_vertical_accent": false,
+		"use_accent_roof_line": true,
+		"roof_type": "flat",
+		"generate_roof": true,
+		"has_chimney": false,
+		"wall_depth_style": "glass_curtain",
+		"has_parapet": true
+	},
+	"glass_corner_skyscraper": {
+		"accent_block": "light_gray_concrete",
+		"has_windows": false,
+		"use_vertical_accent": false,
+		"use_accent_roof_line": true,
+		"roof_type": "flat",
+		"generate_roof": true,
+		"has_chimney": false,
+		"wall_depth_style": "glass_curtain",
+		"has_parapet": true
+	},
+	"grid_skyscraper": {
+		"has_windows": true,
+		"use_horizontal_windows": false,
+		"use_accent_roof_line": true,
+		"roof_type": "flat",
+		"generate_roof": true,
+		"has_chimney": false,
+		"has_garage_door": false,
+		"has_single_door": false,
+		"wall_depth_style": "none",
+		"has_parapet": true
+	},
+	"contemporary_skyscraper": {
+		"has_windows": true,
+		"use_horizontal_windows": false,
+		"use_accent_roof_line": true,
+		"roof_type": "flat",
+		"generate_roof": true,
+		"has_chimney": false,
+		"has_garage_door": false,
+		"has_single_door": false,
+		"wall_depth_style": "modern_pillars",
+		"has_parapet": true
+	},
+	"modern_skyscraper": {
+		"roof_type": "flat",
+		"generate_roof": true,
+		"has_chimney": false,
+		"use_accent_roof_line": true,
+		"use_vertical_accent": false,
+		"wall_depth_style": "skyscraper_fins",
+		"has_parapet": true
+	},
+	"masonry_skyscraper": {
+		"floor_block": "smooth_stone",
+		"window_block": "light_gray_stained_glass",
+		"accent_block": "smooth_stone",
+		"has_windows": true,
+		"use_horizontal_windows": false,
+		"use_accent_lines": true,
+		"use_accent_roof_line": true,
+		"roof_type": "flat",
+		"generate_roof": true,
+		"has_chimney": false,
+		"has_garage_door": false,
+		"has_single_door": false,
+		"wall_depth_style": "historic_ornate",
+		"has_parapet": true
+	},
+	"default": {}
+}

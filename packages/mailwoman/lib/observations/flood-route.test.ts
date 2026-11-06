@@ -53,7 +53,6 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 			],
 		}),
 		artifactCoverage: null,
-		capabilityGaps: null,
 	}
 
 	// A fixed verdict lets the tests assert the marker's `kind` exactly.

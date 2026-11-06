@@ -145,13 +145,31 @@ export function applyAddressPoint(
 
 	let bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null = null
 
+	// A row stating no locality or postcode matches on its street and number,
+	// and the box keeps it in the stated place.
+	// The box is the town's own extent where the gazetteer holds one, because `W 1st St`
+	// repeats in the next town inside any fixed radius.
+	// A stated postcode adds the radius to it, because a rural ZIP Code's mailing town covers
+	// addresses far outside that town's own extent, and a row stating another postcode stays refused.
 	if (bboxFallback && localityNode?.lat != null && localityNode.lon != null) {
-		bbox = {
+		const extent = resolvedExtent(localityNode)
+
+		const radius = {
 			minLat: localityNode.lat - LOCALITY_BBOX_RADIUS_DEG,
 			maxLat: localityNode.lat + LOCALITY_BBOX_RADIUS_DEG,
 			minLon: localityNode.lon - LOCALITY_BBOX_RADIUS_DEG,
 			maxLon: localityNode.lon + LOCALITY_BBOX_RADIUS_DEG,
 		}
+
+		bbox =
+			extent && postcode
+				? {
+						minLat: Math.min(extent.minLat, radius.minLat),
+						maxLat: Math.max(extent.maxLat, radius.maxLat),
+						minLon: Math.min(extent.minLon, radius.minLon),
+						maxLon: Math.max(extent.maxLon, radius.maxLon),
+					}
+				: (extent ?? radius)
 	}
 
 	let street: AddressNode | null = null

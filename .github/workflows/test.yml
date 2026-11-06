@@ -590,10 +590,14 @@ jobs:
         if: needs.scope.outputs.opportunity == 'true'
         run: yarn workspace @mailwoman/opportunity-app test:browser
 
-      # The license worker tests need the Workers runtime, so the root sweep excludes them.
+      # The license and gazetteer worker tests need the Workers runtime, so the root sweep excludes them.
       - name: Test license worker (Workers pool)
         if: needs.scope.outputs.worker == 'true'
         run: yarn test:license-worker
+
+      - name: Test gazetteer worker (Workers pool)
+        if: needs.scope.outputs.worker == 'true'
+        run: yarn test:gazetteer-worker
 
       # Uploaded on success too: the per-test durations and retried tests are the flake/slowness record.
       - name: Upload test results

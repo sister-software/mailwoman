@@ -6,7 +6,7 @@
  *   output is a static asset Cloudflare serves without invoking a Worker.
  */
 
-import { buildInfoPlugin } from "@mailwoman/universe/site-kit/vite/build-info"
+import { buildCommitDefine, buildInfoPlugin } from "@mailwoman/universe/site-kit/vite/build-info"
 import { installablePWA } from "@mailwoman/universe/site-kit/vite/pwa"
 import { stageSQLiteRuntimePlugin } from "@mailwoman/universe/site-kit/vite/stage-sqlite-runtime"
 import react from "@vitejs/plugin-react"
@@ -14,6 +14,8 @@ import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 
 export default defineConfig({
+	// The service worker names its caches after the build's commit, so a deploy starts each cache empty.
+	define: await buildCommitDefine(),
 	plugins: [
 		react(),
 		stageSQLiteRuntimePlugin("public/sqlite"),

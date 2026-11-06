@@ -42,7 +42,7 @@ import {
 import { selectedParsePriorArtifacts, selectedStreetMorphologyPath } from "#geocode/fst-layers"
 import { layerDatabasePath, resolveLayerDatabasePath } from "#geocode/layer-paths"
 import { OvertureNationalDatabaseProvider } from "#geocode/national-overture"
-import { openOSMRegionDatabases } from "#geocode/osm-layers"
+import { openOSMPlaces, openOSMRegionDatabases } from "#geocode/osm-layers"
 import { type RegionDatabaseResolver, USStateDatabaseProvider } from "#geocode/regions"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
 import type { CoastalErosionRoute } from "#observations/coastal-route"
@@ -331,7 +331,10 @@ function parseBiasPoints(raw: string | null): NonNullable<GeocodeDeps["bias"]> {
  * The fork-to-entity probe's dependencies and the `poi.db` handle to dispose.
  */
 export interface ForkEntityProbe {
-	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
+	deps: Pick<
+		GeocodeDeps,
+		"poiLookup" | "isStreetGeneric" | "rowFitsVenueHead" | "isVenueCategoryWord" | "landmarks" | "osmPlaces"
+	>
 
 	/**
 	 * The `poi.db` handle behind `deps.poiLookup`, kept separately because
@@ -446,11 +449,34 @@ export async function loadForkEntityDeps(
 		}
 	}
 
-	if (options.forkEntity === false || !paths.length) return { deps: {} }
+	if (options.forkEntity === false) return { deps: {} }
 
-	const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
+	// The landmark layer sits beside `poi.db` under the same convention as the stations layer, and answers without it.
+	const landmarkDBPath = resolvePath(dirname(layerDatabasePath(options.dataRoot, "poi")), LANDMARK_DATABASE_FILE)
+
+	const landmarkLayer = (await pathExists(landmarkDBPath))
+		? new (await import("@mailwoman/resolver-wof-sqlite/landmark")).LandmarkSqliteLookup(landmarkDBPath)
+		: null
+
+	const osmPlaces = await openOSMPlaces(options.dataRoot)
+
+	const landmarkDeps = { ...(landmarkLayer ? { landmarks: landmarkLayer } : {}), ...(osmPlaces ? { osmPlaces } : {}) }
+
+	const landmarks = {
+		[Symbol.dispose]: () => {
+			landmarkLayer?.[Symbol.dispose]()
+			osmPlaces?.[Symbol.dispose]()
+		},
+	}
+
+	if (!paths.length) {
+		return { deps: landmarkDeps, handle: landmarks }
+	}
+
+	const [{ POILookup }, { loadStreetMorphologyFST }, { isVenueCategoryWord, rowFitsVenueHead }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/poi"),
 		import("@mailwoman/resolver-wof-sqlite/street"),
+		import("#poi/venue-head-fit"),
 	])
 
 	// The street-morphology FST the active selection lists, else the loader's own data-root default.
@@ -462,12 +488,17 @@ export async function loadForkEntityDeps(
 		deps: {
 			poiLookup: { search: (query) => lookups.flatMap((lookup) => lookup.search(query)) },
 			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
+			rowFitsVenueHead,
+			isVenueCategoryWord,
+			...landmarkDeps,
 		},
 		handle: {
 			[Symbol.dispose]: () => {
 				for (const lookup of lookups) {
 					lookup[Symbol.dispose]()
 				}
+
+				landmarks[Symbol.dispose]()
 			},
 		},
 	}
@@ -478,6 +509,12 @@ export async function loadForkEntityDeps(
  * `gazetteer build poi --source osm --rules stations` into the directory that holds `poi.db`.
  */
 export const STATIONS_DATABASE_FILE = "stations.db"
+
+/**
+ * The file name of the landmark layer, built by `tools/dev-tools/landmarks/build.run.ts`
+ * into the directory that holds `poi.db`.
+ */
+export const LANDMARK_DATABASE_FILE = "landmarks.db"
 
 /**
  * Loads the gazetteer, neural model and optional layers.
@@ -646,7 +683,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let placer: CoarsePlacer | null = null
 	let resolver: Resolver
 	let bias: NonNullable<GeocodeDeps["bias"]>
-	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
+	let forkEntityDeps: ForkEntityProbe["deps"]
 
 	const leadingStopwords = await readLibPostalSingleWordStopwords((options.locale ?? "en-US").split("-")[0]!)
 

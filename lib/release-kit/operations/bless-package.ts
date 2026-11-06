@@ -4,7 +4,7 @@
 import { z } from "zod"
 
 import { defineOperation, OperationEffect } from "#release-kit/operation"
-import { flag, list, text } from "#release-kit/operations/inputs"
+import { flag, flagDefaultOn, list, text } from "#release-kit/operations/inputs"
 import { blessPackages } from "#release-kit/release/bless-package"
 import { assertPlanHolds } from "#release-kit/release/plan"
 
@@ -21,6 +21,16 @@ export const blessPackage = defineOperation({
 	description:
 		"First publish + trusted-publisher configuration for one or more workspaces (--dirs a,b) through the npm CLI's own 2FA handshake. Requires --plan <file>, or --allow-unplanned.",
 	effect: OperationEffect.ExternalWrite,
+	options: {
+		dirs: { type: "string" },
+		plan: { type: "string" },
+		"allow-unplanned": { type: "boolean" },
+		version: { type: "string" },
+		file: { type: "string" },
+		env: { type: "string" },
+		provider: { type: "string" },
+		trust: { type: "boolean" },
+	},
 	inputSchema: z
 		.object({
 			dirs: list,
@@ -30,7 +40,7 @@ export const blessPackage = defineOperation({
 			file: z.string().default("publish.yml"),
 			env: text,
 			provider: z.string().default("github"),
-			"no-trust": flag,
+			trust: flagDefaultOn,
 		})
 		.strict(),
 	outputSchema: z.object({ blessed: z.array(blessedPackage), planDigest: z.string().nullable() }),
@@ -57,7 +67,7 @@ export const blessPackage = defineOperation({
 			file: input.file,
 			...(input.env ? { env: input.env } : {}),
 			provider: input.provider,
-			noTrust: input["no-trust"],
+			noTrust: !input.trust,
 			dryRun: context.dryRun,
 			log: context.log,
 		})

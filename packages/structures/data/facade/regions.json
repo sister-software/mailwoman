@@ -1,0 +1,589 @@
+{
+	"$comment": "Building-material regions as an ordered rule list, transcribed from Arnis d8e8b662 (Apache-2.0) src/element_processing/buildings.rs MaterialRegion::at, in_north_america, canadian, in_europe, elsewhere and mongolia_south_border, plus building_region and roof_habit. A rule holds `when` (a predicate) and either `region` or nested `rules`; the first rule whose predicate holds decides. A predicate is `true`, {all: [...]}, {any: [...]}, {not: p}, {ref: name} (a named boolean classifier under `classifiers`), or {lat: {op: rhs}} / {lon: {op: rhs}} with op one of gt, ge, lt, le and rhs a number or a function of the other coordinate: {of, pieces: [{below|upto, value, slope?, at?, interpolate?}], cap?} evaluated as value + slope * (x - at) in the first piece whose bound holds (below: x < bound, upto: x <= bound, none: last), or the piecewise-linear interpolation of its points held flat beyond the ends, then capped at `cap`. The arithmetic order reproduces Arnis's expressions bit for bit. Borders are hand-traced where building habits change, not political borders; a Who's On First building-tradition layer would replace this file.",
+	"regions": [
+		"north_america",
+		"north_america_sunbelt",
+		"canada",
+		"british_isles",
+		"brick_north",
+		"france",
+		"central",
+		"central_east",
+		"nordic",
+		"mediterranean",
+		"east_europe",
+		"central_asia",
+		"middle_east",
+		"sub_saharan_africa",
+		"south_asia",
+		"southeast_asia",
+		"east_asia",
+		"korea",
+		"japan",
+		"latin_america",
+		"southern_cone",
+		"australasia",
+		"other"
+	],
+	"building_region": {
+		"north_america": ["north_america", "north_america_sunbelt", "canada"],
+		"europe": [
+			"british_isles",
+			"brick_north",
+			"france",
+			"central",
+			"central_east",
+			"nordic",
+			"mediterranean",
+			"east_europe"
+		]
+	},
+	"roof_habits": {
+		"japan": { "house": 0.93, "block": 0.35, "block_max_m": 10.0, "hipped": 0.4 },
+		"korea": { "house": 0.45, "block": 0.05, "block_max_m": 10.0, "hipped": 0.35 },
+		"east_asia": { "house": 0.4, "block": 0.1, "block_max_m": 10.0, "hipped": 0.25 },
+		"southeast_asia": { "house": 0.75, "block": 0.2, "block_max_m": 13.0, "hipped": 0.6 },
+		"south_asia": { "house": 0.15, "block": 0.03, "block_max_m": 10.0, "hipped": 0.4 },
+		"middle_east": { "house": 0.04, "block": 0.0, "block_max_m": 0.0, "hipped": 0.3 },
+		"sub_saharan_africa": { "house": 0.75, "block": 0.25, "block_max_m": 10.0, "hipped": 0.65 },
+		"latin_america": { "house": 0.4, "block": 0.1, "block_max_m": 10.0, "hipped": 0.35 },
+		"southern_cone": { "house": 0.55, "block": 0.12, "block_max_m": 10.0, "hipped": 0.4 },
+		"east_europe": { "house": 0.92, "block": 0.55, "block_max_m": 23.0, "hipped": 0.6 },
+		"central_asia": { "house": 0.7, "block": 0.15, "block_max_m": 13.0, "hipped": 0.5 },
+		"australasia": { "house": 0.97, "block": 0.7, "block_max_m": 13.0, "hipped": 0.7 }
+	},
+	"classifiers": {
+		"canadian": [
+			{ "when": { "lon": { "lt": -141.0 } }, "value": false },
+			{
+				"when": { "all": [{ "lon": { "ge": -125.0 } }, { "lon": { "le": -123.2 } }, { "lat": { "ge": 48.3 } }] },
+				"value": true
+			},
+			{
+				"when": { "all": [{ "lon": { "ge": -83.13 } }, { "lon": { "lt": -82.415 } }] },
+				"value": {
+					"all": [
+						{ "lat": { "ge": 41.7 } },
+						{
+							"lat": {
+								"lt": {
+									"of": "lon",
+									"pieces": [
+										{ "below": -82.9, "value": 42.325, "slope": 0.35, "at": -83.04 },
+										{ "value": 42.36, "slope": 0.55, "at": -82.9 }
+									]
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"when": true,
+				"value": {
+					"lat": {
+						"ge": {
+							"of": "lon",
+							"pieces": [
+								{ "below": -95.15, "value": 49.0 },
+								{ "below": -90.5, "value": 48.605 },
+								{ "below": -89.5, "value": 48.0 },
+								{ "below": -84.5, "value": 47.8 },
+								{ "below": -83.13, "value": 46.25 },
+								{ "below": -78.95, "value": 41.75, "slope": 0.24, "at": -82.5 },
+								{ "below": -76.35, "value": 43.65 },
+								{
+									"below": -74.73,
+									"interpolate": [
+										[-76.35, 44.17],
+										[-75.9, 44.36],
+										[-75.68, 44.585],
+										[-75.5, 44.7],
+										[-75.1, 44.88],
+										[-74.73, 45.0]
+									]
+								},
+								{ "below": -71.5, "value": 45.0 },
+								{ "below": -69.2, "value": 45.0, "slope": 1.07, "at": -71.5 },
+								{ "below": -67.8, "value": 47.25 },
+								{ "below": -67.0, "value": 45.0 },
+								{ "value": 40.0 }
+							]
+						}
+					}
+				}
+			}
+		]
+	},
+	"rules": [
+		{
+			"when": {
+				"all": [
+					{ "lat": { "ge": 15.0 } },
+					{ "lat": { "le": 75.0 } },
+					{ "lon": { "ge": -170.0 } },
+					{ "lon": { "le": -50.0 } }
+				]
+			},
+			"rules": [
+				{
+					"when": {
+						"all": [
+							{ "lat": { "gt": 59.5 } },
+							{
+								"any": [{ "lon": { "gt": -60.0 } }, { "all": [{ "lat": { "gt": 76.0 } }, { "lon": { "gt": -75.0 } }] }]
+							}
+						]
+					},
+					"region": "nordic"
+				},
+				{
+					"when": {
+						"any": [
+							{
+								"lat": {
+									"lt": {
+										"of": "lon",
+										"pieces": [
+											{ "upto": -114.8, "value": 32.53 },
+											{ "upto": -111.0, "value": 32.53, "slope": -0.316, "at": -114.8 },
+											{ "upto": -106.5, "value": 31.33 },
+											{ "upto": -97.1, "value": 31.76, "slope": -0.645, "at": -106.5 },
+											{ "value": 24.4 }
+										]
+									}
+								}
+							},
+							{ "all": [{ "lon": { "gt": -79.5 } }, { "lat": { "lt": 27.5 } }] }
+						]
+					},
+					"region": "latin_america"
+				},
+				{ "when": { "ref": "canadian" }, "region": "canada" },
+				{
+					"when": {
+						"any": [
+							{ "all": [{ "lat": { "lt": 42.0 } }, { "lon": { "lt": -114.0 } }] },
+							{ "all": [{ "lat": { "lt": 37.5 } }, { "lon": { "lt": -103.0 } }] },
+							{ "all": [{ "lat": { "lt": 31.0 } }, { "lon": { "gt": -87.7 } }] }
+						]
+					},
+					"region": "north_america_sunbelt"
+				},
+				{ "when": true, "region": "north_america" }
+			]
+		},
+		{
+			"when": {
+				"all": [
+					{ "lat": { "ge": 34.0 } },
+					{ "lat": { "le": 72.0 } },
+					{ "lon": { "ge": -25.0 } },
+					{ "lon": { "le": 45.0 } }
+				]
+			},
+			"rules": [
+				{
+					"when": {
+						"any": [
+							{
+								"all": [
+									{ "lon": { "lt": 11.6 } },
+									{ "lat": { "lt": { "of": "lon", "pieces": [{ "below": -1.5, "value": 35.95 }, { "value": 37.5 }] } } }
+								]
+							},
+							{
+								"all": [
+									{ "lon": { "ge": 35.7 } },
+									{
+										"lat": {
+											"lt": {
+												"of": "lon",
+												"pieces": [
+													{ "below": 40.0, "value": 37.0 },
+													{ "below": 42.4, "value": 37.15 },
+													{ "value": 37.4 }
+												]
+											}
+										}
+									}
+								]
+							}
+						]
+					},
+					"region": "middle_east"
+				},
+				{
+					"when": {
+						"any": [
+							{ "all": [{ "lat": { "ge": 41.45 } }, { "lon": { "ge": 40.0 } }, { "lat": { "lt": 43.35 } }] },
+							{ "all": [{ "lon": { "ge": 43.45 } }, { "lat": { "ge": 40.3 } }, { "lat": { "lt": 43.35 } }] },
+							{ "all": [{ "lon": { "ge": 44.4 } }, { "lat": { "ge": 38.85 } }, { "lat": { "lt": 43.35 } }] }
+						]
+					},
+					"region": "central_asia"
+				},
+				{
+					"when": {
+						"any": [
+							{
+								"all": [
+									{ "lat": { "ge": 48.0 } },
+									{ "lon": { "ge": 23.6 } },
+									{ "any": [{ "lat": { "lt": 59.7 } }, { "lon": { "ge": 28.0 } }] },
+									{ "any": [{ "lat": { "lt": 60.5 } }, { "lon": { "ge": 31.0 } }] }
+								]
+							},
+							{ "all": [{ "lat": { "ge": 54.35 } }, { "lon": { "ge": 19.6 } }, { "lat": { "lt": 59.7 } }] },
+							{
+								"all": [
+									{ "lat": { "ge": 45.5 } },
+									{ "lat": { "lt": 48.5 } },
+									{
+										"lon": {
+											"ge": {
+												"of": "lat",
+												"pieces": [
+													{ "below": 47.2, "value": 28.1, "slope": -0.33, "at": 46.0 },
+													{ "value": 27.7, "slope": -1.19, "at": 47.2 }
+												]
+											}
+										}
+									}
+								]
+							},
+							{ "all": [{ "lat": { "ge": 44.3 } }, { "lon": { "ge": 29.7 } }] },
+							{ "all": [{ "lat": { "ge": 43.35 } }, { "lon": { "ge": 37.0 } }] }
+						]
+					},
+					"region": "east_europe"
+				},
+				{
+					"when": {
+						"all": [
+							{ "lon": { "ge": -11.0 } },
+							{ "lon": { "le": 1.8 } },
+							{ "lat": { "le": 61.0 } },
+							{
+								"lat": {
+									"ge": {
+										"of": "lon",
+										"pieces": [{ "below": -2.0, "value": 49.85 }, { "below": 1.25, "value": 50.3 }, { "value": 51.0 }]
+									}
+								}
+							}
+						]
+					},
+					"region": "british_isles"
+				},
+				{
+					"when": {
+						"any": [
+							{ "lat": { "ge": 62.0 } },
+							{
+								"all": [
+									{ "lat": { "ge": 54.5 } },
+									{ "lon": { "ge": 4.5 } },
+									{ "any": [{ "lon": { "lt": 21.0 } }, { "lat": { "gt": 59.5 } }] }
+								]
+							}
+						]
+					},
+					"region": "nordic"
+				},
+				{
+					"when": {
+						"any": [
+							{ "lat": { "lt": 44.3 } },
+							{ "all": [{ "lat": { "lt": 46.0 } }, { "lon": { "ge": 6.6 } }, { "lon": { "lt": 13.9 } }] }
+						]
+					},
+					"region": "mediterranean"
+				},
+				{
+					"when": {
+						"any": [
+							{
+								"all": [
+									{ "lat": { "ge": 50.25 } },
+									{ "lat": { "le": 53.7 } },
+									{ "lon": { "ge": 2.4 } },
+									{ "lon": { "lt": { "of": "lat", "pieces": [{ "below": 52.0, "value": 6.05 }, { "value": 7.05 }] } } }
+								]
+							},
+							{ "all": [{ "lat": { "ge": 53.0 } }, { "lon": { "ge": 7.0 } }, { "lon": { "lt": 24.0 } }] },
+							{ "all": [{ "lat": { "ge": 51.7 } }, { "lon": { "ge": 6.0 } }, { "lon": { "lt": 9.0 } }] }
+						]
+					},
+					"region": "brick_north"
+				},
+				{
+					"when": {
+						"all": [
+							{ "lon": { "ge": -5.5 } },
+							{ "lat": { "le": 51.2 } },
+							{
+								"lon": {
+									"lt": {
+										"of": "lat",
+										"pieces": [{ "below": 47.6, "value": 6.0 }, { "below": 49.0, "value": 7.6 }, { "value": 6.5 }]
+									}
+								}
+							}
+						]
+					},
+					"region": "france"
+				},
+				{
+					"when": { "all": [{ "lat": { "ge": 49.6 } }, { "lat": { "lt": 52.0 } }, { "lon": { "ge": 10.5 } }] },
+					"region": "central_east"
+				},
+				{ "when": true, "region": "central" }
+			]
+		},
+		{
+			"when": {
+				"any": [
+					{ "all": [{ "lat": { "le": -10.5 } }, { "lon": { "ge": 112.0 } }, { "lon": { "le": 155.0 } }] },
+					{ "all": [{ "lat": { "le": -33.5 } }, { "lon": { "ge": 165.0 } }] }
+				]
+			},
+			"region": "australasia"
+		},
+		{
+			"when": {
+				"any": [
+					{
+						"all": [
+							{ "lat": { "ge": 30.0 } },
+							{ "lat": { "le": 45.6 } },
+							{ "lon": { "ge": 129.0 } },
+							{ "lon": { "le": 146.0 } },
+							{ "not": { "all": [{ "lon": { "lt": 129.6 } }, { "lat": { "ge": 34.8 } }] } },
+							{ "not": { "all": [{ "lat": { "gt": 42.3 } }, { "lon": { "lt": 139.0 } }] } }
+						]
+					},
+					{
+						"all": [
+							{ "lat": { "ge": 24.0 } },
+							{ "lat": { "lt": 30.0 } },
+							{ "lon": { "ge": 122.9 } },
+							{ "lon": { "le": 131.5 } }
+						]
+					}
+				]
+			},
+			"region": "japan"
+		},
+		{
+			"when": {
+				"all": [
+					{ "lon": { "ge": 124.5 } },
+					{ "lon": { "le": 130.7 } },
+					{ "lat": { "ge": 33.0 } },
+					{ "lat": { "lt": { "of": "lon", "pieces": [{ "value": 39.9, "slope": 0.75, "at": 124.3 }], "cap": 42.3 } } }
+				]
+			},
+			"region": "korea"
+		},
+		{
+			"when": {
+				"any": [
+					{ "all": [{ "lon": { "ge": 131.0 } }, { "lat": { "ge": 42.4 } }] },
+					{ "all": [{ "lat": { "ge": 53.6 } }, { "lon": { "ge": 87.5 } }] },
+					{ "all": [{ "lat": { "ge": 50.0 } }, { "lon": { "ge": 87.5 } }, { "lon": { "lt": 119.5 } }] },
+					{ "all": [{ "lat": { "ge": 49.6 } }, { "lon": { "ge": 127.6 } }, { "lon": { "lt": 131.0 } }] },
+					{ "all": [{ "lon": { "ge": 45.0 } }, { "lon": { "lt": 87.5 } }, { "lat": { "ge": 49.2 } }] },
+					{ "all": [{ "lon": { "ge": 45.0 } }, { "lon": { "lt": 53.0 } }, { "lat": { "ge": 45.0 } }] },
+					{ "all": [{ "lon": { "ge": 53.0 } }, { "lon": { "lt": 82.5 } }, { "lat": { "ge": 46.0 } }] },
+					{ "all": [{ "lon": { "ge": 82.5 } }, { "lon": { "lt": 85.7 } }, { "lat": { "ge": 47.2 } }] },
+					{
+						"all": [
+							{ "lon": { "ge": 87.7 } },
+							{ "lon": { "lt": 116.0 } },
+							{
+								"lat": {
+									"ge": {
+										"of": "lon",
+										"pieces": [
+											{
+												"interpolate": [
+													[87.7, 49.2],
+													[91.0, 46.6],
+													[97.0, 42.75],
+													[105.0, 41.6],
+													[112.0, 43.7],
+													[116.0, 45.5]
+												]
+											}
+										]
+									}
+								}
+							}
+						]
+					}
+				]
+			},
+			"region": "east_europe"
+		},
+		{
+			"when": {
+				"any": [
+					{ "all": [{ "lon": { "ge": 45.0 } }, { "lon": { "lt": 53.0 } }, { "lat": { "ge": 38.5 } }] },
+					{ "all": [{ "lon": { "ge": 53.0 } }, { "lon": { "lt": 73.5 } }, { "lat": { "ge": 37.4 } }] },
+					{ "all": [{ "lon": { "ge": 73.5 } }, { "lon": { "lt": 80.2 } }, { "lat": { "ge": 39.5 } }] },
+					{ "all": [{ "lon": { "ge": 80.2 } }, { "lon": { "lt": 82.5 } }, { "lat": { "ge": 45.0 } }] }
+				]
+			},
+			"region": "central_asia"
+		},
+		{
+			"when": { "all": [{ "lon": { "lt": -13.0 } }, { "lat": { "ge": 27.5 } }, { "lat": { "lt": 40.0 } }] },
+			"region": "mediterranean"
+		},
+		{
+			"when": {
+				"all": [
+					{
+						"any": [
+							{
+								"all": [
+									{ "lat": { "ge": 29.4 } },
+									{ "lat": { "lt": 38.5 } },
+									{ "lon": { "ge": 60.5 } },
+									{
+										"lon": {
+											"lt": {
+												"of": "lat",
+												"pieces": [
+													{ "below": 31.0, "value": 66.5 },
+													{ "below": 33.0, "value": 69.0 },
+													{ "below": 34.6, "value": 70.6 },
+													{ "below": 36.5, "value": 71.3 },
+													{ "value": 74.9 }
+												]
+											}
+										}
+									}
+								]
+							},
+							{ "all": [{ "lat": { "ge": 15.5 } }, { "lon": { "ge": -18.0 } }, { "lon": { "lt": 61.6 } }] },
+							{ "all": [{ "lat": { "ge": 12.0 } }, { "lon": { "ge": 42.5 } }, { "lon": { "lt": 61.6 } }] },
+							{ "all": [{ "lat": { "ge": -1.7 } }, { "lon": { "ge": 43.0 } }, { "lon": { "lt": 61.6 } }] }
+						]
+					},
+					{ "lat": { "lt": 45.0 } }
+				]
+			},
+			"region": "middle_east"
+		},
+		{
+			"when": {
+				"all": [
+					{ "lon": { "ge": 60.8 } },
+					{
+						"lon": {
+							"lt": {
+								"of": "lat",
+								"pieces": [{ "below": 24.0, "value": 92.6 }, { "below": 27.0, "value": 94.6 }, { "value": 97.5 }]
+							}
+						}
+					},
+					{ "lat": { "ge": -1.0 } },
+					{
+						"lat": {
+							"lt": {
+								"of": "lon",
+								"pieces": [
+									{ "below": 77.8, "value": 37.1 },
+									{ "below": 80.0, "value": 35.5 },
+									{ "below": 81.0, "value": 30.4 },
+									{ "below": 88.2, "value": 30.4, "slope": -0.34, "at": 81.0 },
+									{ "value": 28.0 }
+								]
+							}
+						}
+					}
+				]
+			},
+			"region": "south_asia"
+		},
+		{
+			"when": {
+				"any": [
+					{
+						"all": [
+							{ "lon": { "ge": 92.6 } },
+							{ "lon": { "lt": 141.0 } },
+							{ "lat": { "ge": -11.0 } },
+							{
+								"lat": {
+									"lt": {
+										"of": "lon",
+										"pieces": [
+											{ "below": 97.5, "value": 28.5 },
+											{ "below": 100.5, "value": 24.0 },
+											{ "below": 106.5, "value": 22.9 },
+											{ "below": 108.5, "value": 22.0 },
+											{ "below": 119.0, "value": 17.5 },
+											{ "value": 21.3 }
+										]
+									}
+								}
+							}
+						]
+					},
+					{
+						"all": [
+							{ "any": [{ "lon": { "ge": 141.0 } }, { "lon": { "le": -130.0 } }] },
+							{ "lat": { "ge": -30.0 } },
+							{ "lat": { "lt": 25.0 } }
+						]
+					}
+				]
+			},
+			"region": "southeast_asia"
+		},
+		{
+			"when": {
+				"all": [
+					{ "lon": { "ge": 73.5 } },
+					{ "lon": { "le": 135.0 } },
+					{ "lat": { "ge": 17.5 } },
+					{ "lat": { "lt": 53.6 } }
+				]
+			},
+			"region": "east_asia"
+		},
+		{
+			"when": {
+				"all": [
+					{ "lon": { "ge": -25.0 } },
+					{ "lon": { "le": 58.0 } },
+					{ "lat": { "ge": -35.5 } },
+					{ "lat": { "lt": 15.5 } }
+				]
+			},
+			"region": "sub_saharan_africa"
+		},
+		{
+			"when": {
+				"all": [
+					{ "lon": { "ge": -120.0 } },
+					{ "lon": { "le": -30.0 } },
+					{ "lat": { "ge": -60.0 } },
+					{ "lat": { "lt": 15.0 } }
+				]
+			},
+			"rules": [
+				{ "when": { "lat": { "lt": -30.0 } }, "region": "southern_cone" },
+				{ "when": true, "region": "latin_america" }
+			]
+		},
+		{
+			"when": { "all": [{ "lat": { "ge": 66.0 } }, { "lon": { "ge": -25.0 } }, { "lon": { "le": 45.0 } }] },
+			"region": "nordic"
+		},
+		{ "when": true, "region": "other" }
+	]
+}

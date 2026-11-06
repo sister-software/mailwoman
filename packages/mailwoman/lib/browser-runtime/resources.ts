@@ -62,6 +62,16 @@ export const DATA_CREDITS: readonly DataCredit[] = [
 		artifacts: "the POI layer",
 	},
 	{
+		publisher: "Wikidata",
+		termsURL: "https://www.wikidata.org/wiki/Wikidata:Licensing",
+		artifacts: "the landmark layer",
+	},
+	{
+		publisher: "OpenStreetMap contributors",
+		termsURL: "https://www.openstreetmap.org/copyright",
+		artifacts: "the place names the gazetteer Worker answers",
+	},
+	{
 		publisher: "United States Department of Transportation",
 		termsURL: "https://www.transportation.gov/gis/national-address-database/national-address-database-nad-disclaimer",
 		artifacts: "the US address-point extracts, whose National Address Database rows are 68.2% of them",

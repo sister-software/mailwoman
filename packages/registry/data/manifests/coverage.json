@@ -1,0 +1,56 @@
+{
+	"profile": "open-2026-11",
+	"namespaces": {
+		"iso3166-1-alpha2": {
+			"source": "wikidata-iso3166-1",
+			"count": 249,
+			"statuses": {
+				"officially-assigned": 249,
+				"formerly-used": 4
+			},
+			"missMeans": "not-found-in-snapshot: the source holds no such code, and the issuing authority may still have assigned it"
+		},
+		"iso3166-1-alpha3": {
+			"source": "wikidata-iso3166-1",
+			"count": 249,
+			"statuses": {
+				"officially-assigned": 249,
+				"formerly-used": 4
+			},
+			"missMeans": "not-found-in-snapshot: the source holds no such code, and the issuing authority may still have assigned it"
+		},
+		"iso3166-1-numeric": {
+			"source": "wikidata-iso3166-1",
+			"count": 249,
+			"statuses": {
+				"officially-assigned": 249,
+				"formerly-used": 4
+			},
+			"missMeans": "not-found-in-snapshot: the source holds no such code, and the issuing authority may still have assigned it"
+		},
+		"iata-location": {
+			"source": "ourairports-airports",
+			"count": 9053,
+			"kinds": ["airport"],
+			"unsupported": ["metropolitan", "intermodal", "rail", "bus"],
+			"statuses": {
+				"iso3166-1": 9052,
+				"source-extension": 1
+			},
+			"missMeans": "not-found-in-snapshot: the source holds no such code, and the issuing authority may still have assigned it"
+		},
+		"icao-location": {
+			"source": "ourairports-airports",
+			"count": 7821,
+			"kinds": ["airport"],
+			"unsupported": ["a location with no IATA code: the source rows without iata_code are left unread"],
+			"missMeans": "not-found-in-snapshot: the source holds no such code, and the issuing authority may still have assigned it"
+		},
+		"$countryListComparison": {
+			"source": "ourairports-countries",
+			"count": 6,
+			"kinds": ["onlyOurAirports: XK,XP,ZZ", "onlyWikidata: AX,BV,SJ"],
+			"missMeans": "a comparison rather than a namespace"
+		}
+	}
+}

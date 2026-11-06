@@ -533,5 +533,96 @@ export function streetKeyVariants(street: string, locale: StreetLocale = "us"): 
 		}
 	}
 
+	for (const candidate of routeKeyVariants(primary)) {
+		if (!variants.includes(candidate)) {
+			variants.push(candidate)
+		}
+	}
+
 	return variants
+}
+
+/**
+ * The route designators a numbered road is written with, by the system the query's prefix selects.
+ *
+ * The forms are the ones US address sources store, measured over the state extracts:
+ * `state road 10`, `state highway 42`, `highway 79`, `united states highway 31`, `interstate 35`.
+ */
+const ROUTE_DESIGNATORS: Readonly<Record<"us" | "state" | "interstate", readonly string[]>> = {
+	us: ["united states highway", "us highway", "us route", "highway", "route"],
+	state: ["state road", "state highway", "state route", "highway", "route"],
+	interstate: ["interstate"],
+}
+
+/**
+ * The spellings of a county road, as US address sources store them.
+ *
+ * Wisconsin leads with `cth`, Texas with `county road`, and Florida with `cr`,
+ * and a county road may take letters, as `cth cw` does.
+ */
+const COUNTY_ROAD_DESIGNATORS: readonly string[] = ["county road", "county highway", "county", "cth", "co road", "cr"]
+
+/**
+ * Reads a county road's designator from a query, such as `county rd cw`,
+ * `cty hwy 5`, `co rd 12`, `cr 40` or `cth a`.
+ *
+ * A bare `co 5` stays a Colorado state route.
+ */
+const COUNTY_ROAD_QUERY =
+	/^(?:(?:county|cty|co) (?:road|rd|highway|hwy|trunk|trunk highway) (\d+[a-z]?|[a-z]{1,3})|(?:county|cty|cth|cr) (\d+[a-z]?|[a-z]{1,2}))$/
+
+const COMPASS_WORDS: readonly string[] = ["north", "south", "east", "west"]
+
+/**
+ * A query's route number and system: `in 245` and `state route 245` read as state routes,
+ * `us 93` as a US route, and `i 68` as an interstate.
+ *
+ * A two-letter prefix is any state's code, because the shape is the same in every state.
+ */
+function parseRouteQuery(key: string): { system: keyof typeof ROUTE_DESIGNATORS; route: string } | null {
+	const match =
+		/^(us|i|interstate|[a-z]{2}|state|sr)(?: (?:road|rd|route|rte|rt|highway|hwy))? (\d+[a-z]?)$/.exec(key) ??
+		/^(highway|hwy|route|rte)() ?(\d+[a-z]?)$/.exec(key)
+
+	if (!match) return null
+
+	const route = match.at(-1)!
+	const prefix = match[1]!
+
+	if (prefix === "us") return { system: "us", route }
+
+	if (prefix === "i" || prefix === "interstate") return { system: "interstate", route }
+
+	return { system: "state", route }
+}
+
+/**
+ * Lists the stored spellings of a numbered route, with and without the compass word a source may add.
+ *
+ * `IN-245` is stored as `north state road 245` in Indiana, so a query gives no hint of the spelling.
+ * The caller's postcode, locality or box still scopes each probe.
+ */
+export function routeKeyVariants(key: StreetKey): StreetKey[] {
+	const written = key.replaceAll("-", " ")
+	const countyRoad = COUNTY_ROAD_QUERY.exec(written)
+
+	if (countyRoad) {
+		const route = countyRoad[1] ?? countyRoad[2]!
+
+		return COUNTY_ROAD_DESIGNATORS.map((designator) => `${designator} ${route}` as StreetKey)
+	}
+
+	const parsed = parseRouteQuery(written)
+
+	if (!parsed) return []
+
+	return ROUTE_DESIGNATORS[parsed.system].flatMap((designator) => {
+		const base = `${designator} ${parsed.route}`
+
+		return [
+			base,
+			...COMPASS_WORDS.map((compass) => `${compass} ${base}`),
+			...COMPASS_WORDS.map((compass) => `${base} ${compass}`),
+		] as StreetKey[]
+	})
 }

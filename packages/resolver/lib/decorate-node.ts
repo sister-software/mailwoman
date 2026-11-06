@@ -12,6 +12,11 @@ import type { ResolvedPlace } from "@mailwoman/core/resolver"
 import type { CoordinateOptionalPlace } from "#postcode/prefix"
 
 /**
+ * The widest stored extent, in degrees, that is a single point: about 10 meters, narrower than any place.
+ */
+const POINT_EXTENT_DEGREES = 0.0001
+
+/**
  * A resolved node has a real coordinate (placeID set + non-zero lat/lon).
  */
 export function isResolvedWithCoord(n: AddressNode): boolean {
@@ -89,10 +94,16 @@ export function decorateNode(
 		node.metadata["resolver_importance"] = resolved.importance
 	}
 
-	// A point-only row stores its coordinate as both corners, so only an extent with area measures the place's size.
+	if (resolved.matchedAlias) {
+		node.metadata["resolver_matched_alias"] = true
+	}
+
+	// A point-only row stores its coordinate as both corners, and a row stored
+	// in single precision can hold them a few millionths of a degree apart,
+	// so only an extent wider than that measures the place's size.
 	const bbox = resolved.bbox
 
-	if (bbox && (bbox.minLat !== bbox.maxLat || bbox.minLon !== bbox.maxLon)) {
+	if (bbox && (bbox.maxLat - bbox.minLat > POINT_EXTENT_DEGREES || bbox.maxLon - bbox.minLon > POINT_EXTENT_DEGREES)) {
 		node.metadata["resolver_bbox"] = bbox
 	}
 

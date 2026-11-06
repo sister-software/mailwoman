@@ -1,0 +1,201 @@
+{
+	"$comment": "Trim, accent, plinth and coping stone per wall block: each map lists `walls` groups with the candidate `blocks` the draw indexes, and a `default` for every other wall. Transcribed from Arnis d8e8b662 (Apache-2.0) src/element_processing/buildings.rs trim_block_for_wall, accent_for_wall, base_course_for_wall, deco_spandrel_for_wall, SHOP_FRAME_OPTIONS, EU_SHOP_FRAME_OPTIONS and src/element_processing/rooftops.rs coping_for. Modified: a coping slab is the full block of its texture (`slab_of` is get_slab_block_for_material with each slab named by that block), and `trim.brick` keeps Arnis's seeded draw among three light stones while the other trims are fixed.",
+	"trim": [
+		{
+			"walls": [
+				"brick",
+				"terracotta",
+				"red_terracotta",
+				"orange_terracotta",
+				"granite",
+				"polished_granite",
+				"nether_brick",
+				"red_nether_bricks",
+				"mud_bricks",
+				"brown_terracotta",
+				"brown_concrete"
+			],
+			"blocks": ["smooth_stone", "polished_diorite", "smooth_sandstone"],
+			"seeded": true
+		},
+		{ "walls": ["sandstone"], "blocks": ["smooth_sandstone"] },
+		{ "walls": ["smooth_sandstone", "end_stone_bricks", "yellow_terracotta"], "blocks": ["sandstone"] },
+		{ "walls": ["quartz_block", "quartz_bricks", "smooth_quartz", "white_concrete"], "blocks": ["stone_bricks"] },
+		{ "walls": ["white_terracotta"], "blocks": ["quartz_block"] },
+		{ "walls": ["smooth_stone", "polished_diorite", "diorite"], "blocks": ["quartz_block"] },
+		{ "walls": ["oak_planks", "oak_log", "spruce_planks", "spruce_log"], "blocks": ["dark_oak_planks"] },
+		{ "walls": ["dark_oak_planks"], "blocks": ["spruce_planks"] },
+		{ "default": true, "blocks": ["polished_diorite"] }
+	],
+	"accent": [
+		{
+			"walls": ["white_concrete", "calcite", "quartz_block", "mushroom_stem", "light_gray_concrete_powder"],
+			"blocks": ["stone_bricks", "stone_bricks", "smooth_stone", "quartz_block"]
+		},
+		{
+			"walls": [
+				"white_terracotta",
+				"cherry_planks",
+				"birch_planks",
+				"yellow_terracotta",
+				"red_terracotta",
+				"terracotta",
+				"orange_terracotta"
+			],
+			"blocks": ["quartz_block", "quartz_block", "smooth_quartz", "stone_bricks"]
+		},
+		{ "walls": ["smooth_sandstone", "end_stone_bricks"], "blocks": ["sandstone", "sandstone", "smooth_stone"] },
+		{ "glass": true, "blocks": ["polished_andesite", "smooth_stone", "light_gray_concrete"] },
+		{ "walls": ["sandstone"], "blocks": ["smooth_sandstone", "smooth_sandstone", "smooth_stone"] },
+		{
+			"walls": ["brick", "polished_granite", "granite", "mud_bricks", "brown_terracotta"],
+			"blocks": ["smooth_sandstone", "mushroom_stem", "stone_bricks", "smooth_stone"]
+		},
+		{
+			"default": true,
+			"blocks": ["polished_andesite", "smooth_stone", "stone_bricks", "mud_bricks", "andesite", "chiseled_stone_bricks"]
+		}
+	],
+	"base_course": [
+		{ "walls": ["oak_planks", "spruce_planks", "oak_log", "spruce_log"], "blocks": ["cobblestone"] },
+		{ "walls": ["andesite", "gray_concrete", "light_gray_concrete"], "blocks": ["polished_andesite"] },
+		{ "glass": true, "blocks": ["polished_blackstone"] },
+		{ "default": true, "blocks": ["stone_bricks"] }
+	],
+	"coping": [
+		{
+			"walls": [
+				"brick",
+				"mud_bricks",
+				"terracotta",
+				"red_terracotta",
+				"orange_terracotta",
+				"brown_terracotta",
+				"granite",
+				"polished_granite",
+				"brown_concrete",
+				"nether_brick",
+				"red_nether_bricks"
+			],
+			"blocks": ["smooth_stone", "smooth_stone", "stone_bricks", "quartz_block", "sandstone"]
+		},
+		{
+			"walls": [
+				"quartz_block",
+				"quartz_bricks",
+				"smooth_quartz",
+				"white_concrete",
+				"white_terracotta",
+				"calcite",
+				"diorite",
+				"polished_diorite"
+			],
+			"blocks": ["smooth_quartz", "polished_diorite", "quartz_block"]
+		},
+		{
+			"walls": ["sandstone", "smooth_sandstone", "end_stone_bricks", "yellow_terracotta"],
+			"blocks": ["sandstone", "smooth_stone"]
+		},
+		{
+			"walls": [
+				"stone_bricks",
+				"stone",
+				"andesite",
+				"polished_andesite",
+				"smooth_stone",
+				"light_gray_concrete",
+				"cobblestone",
+				"tuff",
+				"light_gray_terracotta"
+			],
+			"blocks": ["smooth_stone", "stone_bricks", "polished_andesite"]
+		},
+		{
+			"walls": [
+				"blackstone",
+				"polished_blackstone",
+				"polished_blackstone_bricks",
+				"deepslate",
+				"deepslate_bricks",
+				"polished_deepslate",
+				"gray_concrete",
+				"black_concrete",
+				"gray_terracotta",
+				"cyan_terracotta",
+				"blue_terracotta"
+			],
+			"blocks": ["polished_blackstone", "smooth_stone", "deepslate_tiles"]
+		},
+		{ "glass_and_glass_accent": true, "blocks": ["smooth_stone"] },
+		{ "glass": true, "accent": true, "blocks": [] },
+		{ "default": true, "wall": true, "blocks": [] }
+	],
+	"slab_of": [
+		{ "walls": ["stone_bricks", "chiseled_stone_bricks", "cracked_stone_bricks"], "blocks": ["stone_bricks"] },
+		{ "walls": ["brick", "brown_terracotta", "brown_concrete_powder", "red_terracotta"], "blocks": ["brick"] },
+		{ "walls": ["granite", "polished_granite", "terracotta"], "blocks": ["polished_granite"] },
+		{
+			"walls": ["mud_bricks", "white_terracotta", "gray_terracotta", "light_blue_terracotta"],
+			"blocks": ["mud_bricks"]
+		},
+		{ "walls": ["oak_planks", "oak_log"], "blocks": ["oak_planks"] },
+		{ "walls": ["spruce_planks"], "blocks": ["spruce_planks"] },
+		{ "walls": ["dark_oak_planks"], "blocks": ["dark_oak_planks"] },
+		{
+			"walls": [
+				"quartz_block",
+				"quartz_bricks",
+				"white_concrete",
+				"mushroom_stem",
+				"calcite",
+				"pink_terracotta",
+				"lime_terracotta"
+			],
+			"blocks": ["quartz_block"]
+		},
+		{ "walls": ["polished_andesite"], "blocks": ["polished_andesite"] },
+		{
+			"walls": ["smooth_stone", "andesite", "gray_concrete", "light_gray_concrete", "light_gray_concrete_powder"],
+			"blocks": ["smooth_stone"]
+		},
+		{ "walls": ["deepslate_bricks", "polished_deepslate"], "blocks": ["polished_deepslate"] },
+		{ "walls": ["deepslate_tiles"], "blocks": ["deepslate_tiles"] },
+		{ "walls": ["cobbled_deepslate"], "blocks": ["cobbled_deepslate"] },
+		{ "walls": ["polished_blackstone_bricks", "polished_blackstone"], "blocks": ["polished_blackstone"] },
+		{ "walls": ["blackstone"], "blocks": ["blackstone"] },
+		{ "walls": ["red_nether_bricks"], "blocks": ["red_nether_bricks"] },
+		{ "walls": ["nether_brick"], "blocks": ["nether_brick"] },
+		{ "walls": ["dark_prismarine"], "blocks": ["dark_prismarine"] },
+		{ "walls": ["waxed_oxidized_copper"], "blocks": ["waxed_oxidized_copper"] },
+		{ "walls": ["mangrove_planks"], "blocks": ["mangrove_planks"] },
+		{ "walls": ["cherry_planks"], "blocks": ["cherry_planks"] },
+		{ "walls": ["birch_planks"], "blocks": ["sandstone"] },
+		{ "walls": ["sandstone", "smooth_sandstone"], "blocks": ["stone"] },
+		{ "default": true, "blocks": ["stone_bricks"] }
+	],
+	"deco_spandrel": {
+		"dark_or_masonry": ["polished_blackstone", "black_terracotta", "polished_deepslate"],
+		"warm_stone": ["brown_terracotta", "gray_terracotta"],
+		"default": ["gray_terracotta", "polished_deepslate"]
+	},
+	"shop_frame": {
+		"default": ["black_concrete", "polished_deepslate", "polished_blackstone", "dark_prismarine"],
+		"europe": ["black_concrete", "polished_deepslate", "gray_concrete", "polished_blackstone"]
+	},
+	"roof_distinct_from_wall": {
+		"brick_tone": ["brick", "polished_granite", "granite"],
+		"red_tone": ["red_terracotta", "mangrove_planks"],
+		"orange_tone": ["terracotta", "orange_terracotta"],
+		"mid_grey": [
+			"polished_andesite",
+			"andesite",
+			"stone",
+			"stone_bricks",
+			"smooth_stone",
+			"light_gray_concrete",
+			"light_gray_concrete_powder",
+			"cyan_terracotta",
+			"tuff"
+		]
+	}
+}

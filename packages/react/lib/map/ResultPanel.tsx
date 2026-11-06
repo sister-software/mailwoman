@@ -60,7 +60,7 @@ export function ResultPanel({
 
 			{selectedCandidate ? (
 				<>
-					<ResolvedPlace place={selectedCandidate} dualRoles={result.dualRoles} />
+					<ResolvedPlace place={selectedCandidate} />
 					{result.candidates.length > 1 ? (
 						<CandidatePicker
 							candidates={result.candidates}

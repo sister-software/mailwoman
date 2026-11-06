@@ -5,7 +5,7 @@
  *   Tests authoritative and inferred clustering against in-memory fixtures.
  */
 
-import type { SourceRecord } from "@mailwoman/registry"
+import type { SourceRecord } from "@mailwoman/entity-resolution"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 

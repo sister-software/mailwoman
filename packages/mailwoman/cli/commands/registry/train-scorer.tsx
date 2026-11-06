@@ -49,9 +49,9 @@ type Variant = (typeof variants)[number]
 
 async function runVariant(variant: Variant, options: Options): Promise<{ out: string; pairs: number }> {
 	const [{ trainCrossSourceGBT }, { trainDedupGBT }, { trainOrgCrossSourceGBT }] = await Promise.all([
-		import("@mailwoman/registry/tools/train/cross-gbt"),
-		import("@mailwoman/registry/tools/train/gbt"),
-		import("@mailwoman/registry/tools/train/org-cross-gbt"),
+		import("@mailwoman/entity-resolution/tools/train/cross-gbt"),
+		import("@mailwoman/entity-resolution/tools/train/gbt"),
+		import("@mailwoman/entity-resolution/tools/train/org-cross-gbt"),
 	])
 
 	const { evalGeocoderFactory } = await import("#commands/registry/run")

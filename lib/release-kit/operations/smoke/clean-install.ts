@@ -16,6 +16,7 @@ export const smokeCleanInstallOperation = defineOperation({
 	description:
 		"Pack every published workspace, npm install the tarballs into a throwaway project with no hoisting, and run the compiled CLI plus every entrypoint import. Run after `yarn compile`.",
 	effect: OperationEffect.LocalWrite,
+	options: {},
 	inputSchema: z.object({}).strict(),
 	outputSchema: z.object({ packed: z.number(), mcpTools: z.number(), standaloneLeaves: z.array(z.string()) }),
 	run: (_input, context) => smokeCleanInstall({ repoRoot: context.repoRoot, log: context.log }),

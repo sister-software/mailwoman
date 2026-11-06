@@ -90,6 +90,10 @@ export interface ResolvedPlace {
 	 */
 	variantAliasExempted?: true | null
 	/**
+	 * True when the input matched an alias of this place and differs from its primary name.
+	 */
+	matchedAlias?: true | null
+	/**
 	 * Optional stored extent.
 	 * A point-only row stores its coordinate as both corners.
 	 */
@@ -154,10 +158,6 @@ export interface ResolverBackend {
 		limit?: number
 	}): Promise<ResolvedPlace[]>
 	/**
-	 * Optional coincident localities lookup.
-	 */
-	coincidentLocalitiesFor?(adminID: number | string): CoincidentLocality[]
-	/**
 	 * Optional ancestor lineage lookup.
 	 */
 	ancestors?(id: number | string): Ancestor[]
@@ -167,54 +167,75 @@ export interface ResolverBackend {
 	artifactCoverage?: GazetteerArtifactCoverage | null
 }
 
-export interface BackendCapabilityGap {
-	/**
-	 * A backend capability that is absent.
-	 */
-	capability: "ancestors" | "coincidentLocalitiesFor"
-	/**
-	 * Related resolve option.
-	 */
-	option: keyof ResolveOpts
-	/**
-	 * Whether the option defaults to on.
-	 */
-	defaultOn: boolean
-	/**
-	 * User-visible degradation.
-	 */
-	degrades: string
-	/**
-	 * Backend class name.
-	 */
-	backend: string
-}
-
 export interface Ancestor {
 	id: number | string
 	placetype: string
 	name: string
 }
 
-export interface CoincidentLocality extends ResolvedPlace {
-	/**
-	 * Relationship type.
-	 */
-	relationshipType: string
-	/**
-	 * Locality population.
-	 */
-	population: number
-	/**
-	 * Centroid distance in km.
-	 */
-	distanceKm: number
-}
-
 /**
  * A reading used for weak-resolution span-rescore behavior.
  */
 export type WeakResolutionReading = "score" | "containment" | "either"
+
+/**
+ * What a landmark row is: a place the layer answers, or a settlement the admin ladder answers.
+ */
+export type LandmarkKind = "venue" | "settlement"
+
+/**
+ * One place a landmark name belongs to.
+ */
+export interface LandmarkHit {
+	/**
+	 * The Wikidata item.
+	 */
+	qid: string
+	name: string
+	kind: LandmarkKind
+	country: string | null
+	lat: number
+	lon: number
+	/**
+	 * The number of Wikipedia language editions that describe the place.
+	 */
+	sitelinks: number
+	/**
+	 * Whether the name is the place's own English or local name, rather than a translation or alias.
+	 */
+	primary: boolean
+	/**
+	 * Whether the input wrote an identifier code of the place, such as `DTW`, in its own case.
+	 */
+	code: boolean
+	/**
+	 * The importance Photon's index holds for an OpenStreetMap place, in place of a sitelink count.
+	 */
+	importance?: number | null
+}
+
+/**
+ * The stable ID prefix of a landmark that came from OpenStreetMap, as in `osm:W427818536`.
+ */
+export const OSM_LANDMARK_PREFIX = "osm:"
+
+/**
+ * Returns a landmark's place ID: `openstreetmap:W427818536` or `wikidata:Q160409`.
+ */
+export function landmarkPlaceID(id: string | number): string {
+	const value = String(id)
+
+	return value.startsWith(OSM_LANDMARK_PREFIX)
+		? `openstreetmap:${value.slice(OSM_LANDMARK_PREFIX.length)}`
+		: `wikidata:${value}`
+}
+
+/**
+ * Finds the places a name belongs to, primary names first, then most sitelinks first.
+ */
+export interface LandmarkLookup {
+	find(name: string): LandmarkHit[] | Promise<LandmarkHit[]>
+}
 
 /**
  * Who chose a default country scope.
@@ -254,7 +275,6 @@ export interface ResolveSwitches {
 	postcodeContainmentCoherence: boolean
 	postcodePrefixPrior: boolean
 	adminCoherence: boolean
-	hierarchyCompletion: boolean
 	includeAncestors: boolean
 	adminContainmentRerank: boolean
 	dependentLocalityContainment: boolean
@@ -276,7 +296,6 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 	postcodeContainmentCoherence: false,
 	postcodePrefixPrior: false,
 	adminCoherence: true,
-	hierarchyCompletion: true,
 	includeAncestors: false,
 	adminContainmentRerank: true,
 	dependentLocalityContainment: true,
@@ -401,6 +420,26 @@ export interface ResolveOpts {
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
+	 * The landmark layer.
+	 *
+	 * It answers an input that is a place's name with no street or postcode.
+	 */
+	landmarks?: LandmarkLookup
+	/**
+	 * The OpenStreetMap place layer, read after span rescore with the same rules as the landmark layer.
+	 */
+	osmPlaces?: LandmarkLookup
+	/**
+	 * The input as the caller wrote it, because the parse may fold its case
+	 * and a code such as `DTW` needs that case.
+	 */
+	writtenInput?: string
+	/**
+	 * Returns whether a word is a POI category, so span-rescore does not re-read
+	 * a venue's last word as a locality.
+	 */
+	isVenueCategoryWord?: (word: string) => boolean
+	/**
 	 * Weak-resolution reading used by span-rescore.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
@@ -466,12 +505,6 @@ export interface ResolveOpts {
 	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
 	 */
 	adminCoherence?: boolean
-	/**
-	 * Enables dual-role hierarchy completion.
-	 *
-	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
-	 */
-	hierarchyCompletion?: boolean
 	/**
 	 * Attach ancestor lineage to resolved nodes.
 	 *
@@ -586,8 +619,4 @@ export interface Resolver {
 	 * Optional artifact coverage facts passthrough.
 	 */
 	artifactCoverage: GazetteerArtifactCoverage | null
-	/**
-	 * Optional list of missing backend capabilities.
-	 */
-	capabilityGaps: readonly BackendCapabilityGap[] | null
 }

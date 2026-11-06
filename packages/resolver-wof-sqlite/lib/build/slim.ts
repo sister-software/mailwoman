@@ -51,7 +51,6 @@ export type SlimBuildPhase =
 	| "postcode"
 	| "names"
 	| "place_population"
-	| "coincident_roles"
 	| "place_abbr"
 	| "fts"
 	| "vacuum"
@@ -310,24 +309,6 @@ async function copyFromSource(
 				)
 				.onConflict((oc) => oc.doNothing())
 				.execute()
-		}
-
-		// `ancestors` is intentionally not copied, so the derived `coincident_roles`
-		// table is copied and filtered to surviving spr ids.
-		const relationSchema = out
-			.prepare(`SELECT sql FROM src.sqlite_master WHERE type = 'table' AND name = 'coincident_roles'`)
-			.get() as { sql?: string } | undefined
-
-		if (relationSchema?.sql) {
-			progress("coincident_roles", `${inputPath}: copying dual-role relation`)
-			out.exec(relationSchema.sql.replace(/CREATE TABLE/i, "CREATE TABLE IF NOT EXISTS"))
-
-			out.exec(
-				`INSERT OR IGNORE INTO coincident_roles SELECT * FROM src.coincident_roles
-					WHERE admin_id IN (SELECT id FROM spr) AND locality_id IN (SELECT id FROM spr)`
-			)
-
-			out.exec(`CREATE INDEX IF NOT EXISTS coincident_roles_by_admin ON coincident_roles (admin_id)`)
 		}
 	} finally {
 		out.exec(`DETACH DATABASE src;`)

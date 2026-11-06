@@ -62,6 +62,10 @@ export const PublicReleaseEnvSchema = z.object({
 		title: "Release dry run",
 		description: "Dry-run override consumed by the release-it workspaces publish flow.",
 	}),
+	CLOUDFLARE_ACCOUNT_ID: z.string().optional().meta({
+		title: "Cloudflare account",
+		description: "The Cloudflare account that owns the Workers, the R2 buckets and the mailwoman.post zone.",
+	}),
 })
 
 /**
@@ -82,4 +86,26 @@ export const PrivateReleaseEnvSchema = z.object({
 			description: "Resolve URL used to fetch staged weights from the Hugging Face bucket.",
 			examples: ["https://huggingface.co/buckets/sister-software/mailwoman/resolve/"],
 		}),
+	CLOUDFLARE_API_TOKEN: z.string().optional().meta({
+		title: "Cloudflare deploy token",
+		description: "The deploy role's token, read by wrangler. `mwops release mint-cloudflare-tokens` mints it.",
+	}),
+	CLOUDFLARE_CACHE_PURGE_TOKEN: z.string().optional().meta({
+		title: "Cloudflare cache-purge token",
+		description: "Purges cached URLs on mailwoman.post. `mwops release mint-cloudflare-tokens` mints it.",
+	}),
+	CLOUDFLARE_TOKEN_MINTER: z.string().optional().meta({
+		title: "Cloudflare token minter",
+		description:
+			"An account-owned token holding only Account API Tokens: Edit, created from the link `mwops release cloudflare-tokens` prints.",
+	}),
+	CLOUDFLARE_EMAIL: z.string().optional().meta({
+		title: "Cloudflare account email",
+		description: "The login email that authenticates `CLOUDFLARE_API_KEY`.",
+	}),
+	CLOUDFLARE_API_KEY: z.string().optional().meta({
+		title: "Cloudflare Global API Key",
+		description:
+			"The account's Global API Key, which mints the scoped tokens in place of `CLOUDFLARE_TOKEN_MINTER`. Unset it after minting.",
+	}),
 })

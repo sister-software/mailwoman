@@ -15,7 +15,7 @@ use trainer_export::checkpoint::read_state_dict;
 use trainer_export::export::{export_checkpoint, ExportOptions};
 use trainer_export::onnx::{ModelProto, ValueInfoProto};
 use trainer_export::quantize::quantize_dynamic_qint8;
-use trainer_export::split::{split_model_file, HotSelection};
+use trainer_export::split::{split_embeddings, split_model_file, HotSelection};
 
 fn fixtures() -> PathBuf {
 	Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
@@ -360,4 +360,51 @@ fn the_split_refuses_a_graph_whose_ids_feed_more_than_the_table() {
 	let out = tempfile::tempdir().unwrap();
 	let error = split_model_file(model, out.path(), None).err().unwrap();
 	assert!(error.0.contains("exactly one Gather"), "{error}");
+}
+
+/// The exporter's own graph, quantized, must split: every reader of `input_ids` it emits is one the split admits.
+/// An exporter change that adds another reader fails here rather than at the next demo release.
+#[test]
+fn the_exporters_quantized_graph_splits_and_its_shape_slices_read_the_embeddings() {
+	let mut model =
+		quantize_dynamic_qint8(export_checkpoint(&fixtures().join("tiny-bundle"), &ExportOptions::default()).unwrap())
+			.unwrap();
+	split_embeddings(&mut model).unwrap();
+	let graph = model.graph.unwrap();
+	assert!(
+		!graph.node.iter().any(|n| n.input.iter().any(|i| i == "input_ids")),
+		"no node reads input_ids after the split"
+	);
+	let shapes = graph
+		.node
+		.iter()
+		.filter(|n| n.op_type.as_deref() == Some("Shape") && n.input.iter().any(|i| i == "inputs_embeds"))
+		.count();
+	assert_eq!(shapes, 2, "the batch and sequence slices read inputs_embeds");
+	assert!(graph.input.iter().any(|i| i.name.as_deref() == Some("inputs_embeds")));
+}
+
+/// A `Shape` of `input_ids` that could reach a third dimension reads a different value from `inputs_embeds`.
+#[test]
+fn the_split_refuses_a_shape_slice_that_could_reach_the_hidden_dimension() {
+	use trainer_export::graph::attr_int;
+
+	for attributes in [
+		vec![attr_int("start", 0)],
+		vec![attr_int("start", -1), attr_int("end", 2)],
+	] {
+		let bytes = std::fs::read(split_fixture("model.onnx")).unwrap();
+		let mut model = ModelProto::decode(bytes.as_slice()).unwrap();
+		let graph = model.graph.as_mut().unwrap();
+		graph.node.push(trainer_export::onnx::NodeProto {
+			op_type: Some("Shape".into()),
+			input: vec!["input_ids".into()],
+			output: vec!["unbounded_shape".into()],
+			attribute: attributes,
+			..Default::default()
+		});
+		let out = tempfile::tempdir().unwrap();
+		let error = split_model_file(model, out.path(), None).err().unwrap();
+		assert!(error.0.contains("Shape slices within dims [0, 2)"), "{error}");
+	}
 }

@@ -1,0 +1,48 @@
+{
+	"profile": "open-2026-11",
+	"sources": {
+		"ourairports-airports": {
+			"url": "https://davidmegginson.github.io/ourairports-data/airports.csv",
+			"sha256": "e2e65a3ddaf76170c0e2c373cb8b68597bdf3b59d243c4d6db454d48498ba6d7",
+			"bytes": 12757683,
+			"publication": "Fri, 06 Nov 2026 02:53:56 GMT",
+			"terms": {
+				"statement": "All data is released to the Public Domain, and comes with no guarantee of accuracy or fitness for use.",
+				"readAt": "https://ourairports.com/data/",
+				"elected": true
+			},
+			"feeds": ["iata-location", "icao-location"]
+		},
+		"ourairports-countries": {
+			"url": "https://davidmegginson.github.io/ourairports-data/countries.csv",
+			"sha256": "2a9dbee691125b0cdb8ceb5fe227c48c903f99c488963b8e53e2ab366521c639",
+			"bytes": 24583,
+			"publication": "Fri, 06 Nov 2026 02:53:56 GMT",
+			"terms": {
+				"statement": "All data is released to the Public Domain, and comes with no guarantee of accuracy or fitness for use.",
+				"readAt": "https://ourairports.com/data/",
+				"elected": true
+			},
+			"feeds": ["iso3166-1-alpha2"]
+		},
+		"wikidata-iso3166-1": {
+			"url": "https://query.wikidata.org/sparql?format=json&query=SELECT%20%3Fitem%20%3FitemLabel%20%3Falpha2%20%3Falpha3%20%3Fnumeric%20%3Fdissolved%20WHERE%20%7B%0A%20%20%3Fitem%20wdt%3AP297%20%3Falpha2%3B%20wdt%3AP298%20%3Falpha3%3B%20wdt%3AP299%20%3Fnumeric.%0A%20%20OPTIONAL%20%7B%20%3Fitem%20wdt%3AP576%20%3Fdissolved.%20%7D%0A%20%20SERVICE%20wikibase%3Alabel%20%7B%20bd%3AserviceParam%20wikibase%3Alanguage%20%22en%22.%20%7D%0A%7D%0AORDER%20BY%20%3Falpha2%20%3Fitem",
+			"sha256": "d32b79875dd5688e87910af0bd0aa5ef11049b91b7b48e77a9600823b362c9fd",
+			"bytes": 120867,
+			"publication": "unstated",
+			"terms": {
+				"statement": "Wikidata publishes its structured data under the Creative Commons CC0 1.0 Universal public domain dedication.",
+				"readAt": "https://www.wikidata.org/wiki/Wikidata:Licensing",
+				"elected": true
+			},
+			"feeds": ["iso3166-1-alpha2", "iso3166-1-alpha3", "iso3166-1-numeric"]
+		}
+	},
+	"$notElected": {
+		"unsd-m49": {
+			"url": "https://unstats.un.org/unsd/methodology/m49/overview/",
+			"terms": "The United Nations grants permission to Users to visit the Site and to download and copy the information for the User's personal, non-commercial use, without any right to resell or redistribute them or to compile or create derivative works therefrom.",
+			"readAt": "https://www.un.org/en/about-us/terms-of-use"
+		}
+	}
+}

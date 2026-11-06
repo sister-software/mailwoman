@@ -31,6 +31,7 @@ beforeAll(async () => {
 	using kdb = new DatabaseClient<AddressPointDatabase>(path)
 
 	await createAddressPointTable(kdb)
+	kdb.exec("CREATE INDEX idx_ap_street ON address_point (street_norm, number)")
 
 	const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
 
@@ -152,18 +153,170 @@ beforeAll(async () => {
 		null
 	)
 
+	insert.run(
+		"sunny slope avenue",
+		"sunny slope avenue",
+		"n 3971",
+		null,
+		"53011",
+		"cascade",
+		"Sunny Slope Avenue",
+		43.684,
+		-88.163,
+		"t",
+		"r",
+		null,
+		null
+	)
+
+	insert.run(
+		"sunny slope avenue",
+		"sunny slope avenue",
+		"w145",
+		null,
+		"53011",
+		"cascade",
+		"Sunny Slope Avenue",
+		43.685,
+		-88.164,
+		"t",
+		"r",
+		null,
+		null
+	)
+
+	insert.run(
+		"old volcano road",
+		"old volcano road",
+		"194074",
+		null,
+		"96785",
+		"volcano",
+		"OLD VOLCANO RD",
+		19.4257922,
+		-155.238827,
+		"t",
+		"r",
+		null,
+		null
+	)
+
+	insert.run(
+		"old volcano road",
+		"old volcano road",
+		"89",
+		null,
+		"96785",
+		"volcano",
+		"OLD VOLCANO RD",
+		19.5,
+		-155.3,
+		"t",
+		"r",
+		null,
+		null
+	)
+
+	insert.run(
+		"north state road 245",
+		"north state road 245",
+		"69",
+		null,
+		"47579",
+		"mariah hill",
+		"North State Road 245",
+		38.11519,
+		-86.909451,
+		"t",
+		"r",
+		null,
+		null
+	)
+
 	lookup = new AddressPointSqliteLookup(path)
 	fullKeys = new AddressPointSqliteLookup(path, { localityKeys: "full" })
 	finestKeys = new AddressPointSqliteLookup(path, { localityKeys: "full", localityLevel: "finest" })
 })
 
 describe("AddressPointSqliteLookup", () => {
+	it("searches around a locality only where the street index exists", async () => {
+		const path = fixtures.use(await temporaryDirectory("ap-bbox-")).path("fixture.db")
+		const bbox = { minLat: 36, maxLat: 37, minLon: -116, maxLon: -115 }
+		const query = { street: "Duneville St", number: "1985", locality: "Las Vegas", bbox }
+
+		{
+			using db = new DatabaseClient<AddressPointDatabase>(path)
+
+			await createAddressPointTable(db)
+
+			db.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`).run(
+				"duneville street",
+				"duneville street",
+				"1985",
+				null,
+				null,
+				null,
+				"DUNEVILLE ST",
+				36.1501484,
+				-115.2215886,
+				"t",
+				"r",
+				null,
+				null
+			)
+		}
+
+		{
+			using unindexed = new AddressPointSqliteLookup(path)
+
+			expect(unindexed.find(query)).toBeNull()
+		}
+
+		{
+			using db = new DatabaseClient<AddressPointDatabase>(path)
+
+			db.exec("CREATE INDEX idx_ap_street ON address_point (street_norm, number)")
+		}
+
+		using indexed = new AddressPointSqliteLookup(path)
+
+		expect(indexed.find(query)?.lat).toBe(36.1501484)
+	})
+
 	it("answers an exact (street, number) within the postcode scope", () => {
 		expect(lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505", bbox: null })?.lat).toBe(-27.1836)
 	})
 
 	it("prefers a verbatim range key over the low-end fallback", () => {
 		expect(lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505", bbox: null })?.lat).toBe(-27.9999)
+	})
+
+	it("matches a hyphenated number against its stored unhyphenated form", () => {
+		expect(lookup.find({ street: "Old Volcano Rd", number: "19-4074", postcode: "96785", bbox: null })?.lat).toBe(
+			19.4257922
+		)
+	})
+
+	it("matches a compass-led grid number across both spacings", () => {
+		const find = (number: string) =>
+			lookup.find({ street: "Sunny Slope Ave", number, postcode: "53011", bbox: null })?.lat
+
+		expect(find("N3971")).toBe(43.684)
+		expect(find("N 3971")).toBe(43.684)
+		expect(find("W145")).toBe(43.685)
+		expect(find("W 145")).toBe(43.685)
+	})
+
+	it("reads a short hyphenated step as a range and leaves the joined house alone", () => {
+		expect(lookup.find({ street: "Old Volcano Rd", number: "8-9", postcode: "96785", bbox: null })).toBeNull()
+	})
+
+	it("matches a written state route against the spelling the source stores", () => {
+		expect(lookup.find({ street: "IN-245", number: "69", postcode: "47579", bbox: null })?.lat).toBe(38.11519)
+	})
+
+	it("reads a street name that opens with two letters as no route", () => {
+		expect(lookup.find({ street: "Elm 245", number: "69", postcode: "47579", bbox: null })).toBeNull()
 	})
 
 	it("falls back to the range's low end when the range key misses", () => {

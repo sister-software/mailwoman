@@ -2,108 +2,122 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The application's data shapes — the messy record that goes in and the canonical entity that
- *   comes out. Plain interfaces over the `@mailwoman/record` types.
- */
-
-import type { ResolutionTier } from "@mailwoman/annotations/geo"
-import type { OrganizationName, PersonName, PostalAddress } from "@mailwoman/record"
-
-/**
- * A single source record: one row of a messy contact/organization dataset, after normalization.
- */
-export interface SourceRecord {
-	/**
-	 * Stable identifier within the input (row id, primary key…).
-	 */
-	id: string
-	/**
-	 * Provenance: which file / dataset this came from.
-	 */
-	source: string | null
-	/**
-	 * Parsed person name, when the record is a contact.
-	 */
-	name: PersonName | null
-	/**
-	 * Canonicalized organization name, when the record is an org.
-	 */
-	organization: OrganizationName | null
-	/**
-	 * The address, normalized + (ideally) geocoded.
-	 */
-	address: PostalAddress | null
-	phone: string | null
-	email: string | null
-	/**
-	 * Additional secondary-identifier fields, normalized.
-	 *
-	 * Anything that helps tell two records apart or confirm they're the same beyond
-	 * name/org/address/phone (an authorized-official name, a provider taxonomy, a license number…).
-	 *
-	 * Used as extra comparisons + corroborators when the model is built with matching `discriminators`.
-	 * Keyed by a stable field name the model references.
-	 */
-	attributes: Record<string, string> | null
-	/**
-	 * The original row, verbatim, for audit.
-	 */
-	raw: Record<string, string> | null
-}
-
-/**
- * A resolved canonical entity: a cluster of source records judged to be the same real-world thing.
- */
-export interface ResolvedEntity {
-	/**
-	 * Identifier assigned to the entity.
-	 */
-	id: string
-	/**
-	 * The source records that resolved to this entity.
-	 */
-	records: SourceRecord[]
-	/**
-	 * The most complete record, used as the entity's canonical face.
-	 */
-	representative: SourceRecord
-	/**
-	 * The entity's location, from the representative's geocode.
-	 */
-	coordinate: { latitude: number; longitude: number } | null
-	/**
-	 * Weakest within-cluster link weight in bits (how tightly it holds together); `null` for a singleton.
-	 */
-	cohesion: number | null
-}
-
-/**
- * The three reconciliation buckets an entity can fall into.
- */
-export type ReconciliationBucket = "enrolled" | "eligible-not-enrolled" | "funded-not-eligible"
-
-export interface EntityGeoData {
-	entityID: string
-	sourceIDs: string[]
-	recordCount: number
-	cohesion: number | null
-	sources: string[]
-	name: string | null
-	organization: string | null
-	address: string | null
-	geocodeTier: ResolutionTier | null
-	bucket: ReconciliationBucket | null
-}
-
-/**
- * Feature properties the map renderer consumes — {@link EntityGeoData} with every
- * field optional, plus an unconstrained `bucket`.
+ *   Branded identifier types. A brand is a declaration-only unique symbol, so a branded value is a plain string at
+ *   runtime and the compiler refuses to pass one namespace's code where another's is expected.
  *
- * The renderer assigns a color per distinct bucket value in first-seen order and builds
- * its legend from that set, so a bucket is any categorical label rather than only a
- * {@link ReconciliationBucket}; and a collection assembled from something other than resolved
- * entities (raw address points, links read back from a file) have no entity id or display name.
+ *   A branded value records that a validator accepted it under a documented profile at the time of the call. The
+ *   issuing authority's later assignments are outside what the brand records.
  */
-export type MapFeatureData = Partial<Omit<EntityGeoData, "bucket">> & { bucket?: string | null }
 
-// #endregion
+/**
+ * ISO 3166-1 country code namespaces.
+ *
+ * ISO 3166-2 codes subdivisions and is a separate brand, outside country codes.
+ */
+export declare namespace ISO {
+	const $CountryCode_3166_1_Alpha2: unique symbol
+	const $CountryCode_3166_1_Alpha3: unique symbol
+	const $CountryCode_3166_1_Numeric: unique symbol
+
+	/**
+	 * A two-letter country code the profile holds as officially assigned, such as `GB`.
+	 */
+	type CountryCode_3166_1_Alpha2 = string & { readonly [$CountryCode_3166_1_Alpha2]: true }
+
+	/**
+	 * A three-letter country code the profile holds as officially assigned, such as `GBR`.
+	 */
+	type CountryCode_3166_1_Alpha3 = string & { readonly [$CountryCode_3166_1_Alpha3]: true }
+
+	/**
+	 * A three-digit country code, kept as a string so `036` keeps its leading zero.
+	 */
+	type CountryCode_3166_1_Numeric = string & { readonly [$CountryCode_3166_1_Numeric]: true }
+}
+
+/**
+ * IATA location code namespaces.
+ */
+export declare namespace IATA {
+	const $LocationCode: unique symbol
+	const $AirportCode: unique symbol
+
+	/**
+	 * A three-letter IATA location code of any kind.
+	 */
+	type LocationCode = string & { readonly [$LocationCode]: true }
+
+	/**
+	 * A location code the profile holds for an airport.
+	 *
+	 * The open profile holds only airports, so every code it accepts is one of these.
+	 * A metropolitan code is outside the profile and is refused.
+	 */
+	type AirportCode = LocationCode & { readonly [$AirportCode]: true }
+}
+
+/**
+ * ICAO location indicator namespace.
+ */
+export declare namespace ICAO {
+	const $LocationIndicator: unique symbol
+
+	/**
+	 * A four-character ICAO location indicator, such as `EGLL`.
+	 */
+	type LocationIndicator = string & { readonly [$LocationIndicator]: true }
+}
+
+/**
+ * The status a country record holds.
+ */
+export const CountryStatus = {
+	OfficiallyAssigned: "officially-assigned",
+	FormerlyUsed: "formerly-used",
+} as const
+
+export type CountryStatus = (typeof CountryStatus)[keyof typeof CountryStatus]
+
+/**
+ * How an airport record's country column relates to ISO 3166-1.
+ */
+export const AirportCountryStatus = {
+	ISO3166_1: "iso3166-1",
+	SourceExtension: "source-extension",
+	Unstated: "unstated",
+} as const
+
+export type AirportCountryStatus = (typeof AirportCountryStatus)[keyof typeof AirportCountryStatus]
+
+/**
+ * One country record as the records artifact holds it.
+ */
+export interface CountryRecord {
+	entityID: string
+	alpha2: string
+	alpha3: string
+	numeric: string
+	name: string
+	status: CountryStatus
+}
+
+/**
+ * One airport record as the records artifact holds it.
+ */
+export interface AirportRecord {
+	entityID: string
+	iata: IATA.AirportCode
+	icao: ICAO.LocationIndicator | null
+	name: string
+	facility: string
+	scheduledService: boolean
+	latitude: number
+	longitude: number
+	/**
+	 * The country as the source spells it, or null.
+	 */
+	country: string | null
+	countryStatus: AirportCountryStatus
+	municipality: string | null
+	isoRegion: string | null
+}

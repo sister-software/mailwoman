@@ -183,6 +183,23 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	isStreetGeneric?: (token: string) => boolean
 	/**
+	 * Returns whether a POI row's category agrees with the venue name that found it.
+	 */
+	rowFitsVenueHead?: (name: string, categoryID: string | null) => boolean
+	/**
+	 * Returns whether a word is a POI category, read by span rescore for a venue's last word.
+	 */
+	isVenueCategoryWord?: (word: string) => boolean
+	/**
+	 * The landmark layer.
+	 * It answers an input that is a place's name.
+	 */
+	landmarks?: import("@mailwoman/core/resolver").LandmarkLookup
+	/**
+	 * The OpenStreetMap place layer, read after span rescore.
+	 */
+	osmPlaces?: import("@mailwoman/core/resolver").LandmarkLookup
+	/**
 	 * Gazetteer FST prior.
 	 */
 	fst?: import("@mailwoman/core/pipeline").FSTMatcherLike
@@ -673,6 +690,8 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	if (addressPoints) {
 		opts.addressPoints = addressPoints
+		// A register's row can state no locality or postcode, so the search around the resolved locality reaches it.
+		opts.addressPointBboxFallback = true
 	}
 
 	// Optional country-keyed street-centroid tier with country hints.
@@ -715,6 +734,19 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	for (const key of FORWARDED_RESOLVER_SWITCHES) {
 		opts[key] = switches[key]
+	}
+
+	if (deps.isVenueCategoryWord) {
+		opts.isVenueCategoryWord = deps.isVenueCategoryWord
+	}
+
+	if (deps.osmPlaces) {
+		opts.osmPlaces = deps.osmPlaces
+	}
+
+	if (deps.landmarks) {
+		opts.landmarks = deps.landmarks
+		opts.writtenInput = input
 	}
 
 	// Pin weak-resolution mode only when explicitly set.

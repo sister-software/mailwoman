@@ -50,6 +50,27 @@ export const COUNTRY_SURFACE_FORMS = {
 export type CountrySurfaceISO2 = keyof typeof COUNTRY_SURFACE_FORMS
 
 /**
+ * Abbreviations a country's own government or postal users write, outside ISO 3166.
+ *
+ * The matcher reads these and the corpus renderers leave them out.
+ * This table leaves out sporting codes because they collide with ordinary words: `CHI`, `BAR`, `VAN`.
+ */
+export const COUNTRY_ABBREVIATIONS = {
+	AE: ["UAE", "U.A.E."],
+	CD: ["DRC"],
+	CN: ["PRC"],
+	FM: ["FSM"],
+	HK: ["HKSAR"],
+	KP: ["DPRK"],
+	KR: ["ROK"],
+	MH: ["RMI"],
+	MP: ["CNMI"],
+	PG: ["PNG"],
+	SA: ["KSA"],
+	ZA: ["RSA"],
+} as const satisfies Partial<Record<CountryISO2, readonly string[]>>
+
+/**
  * Alpha-2 -> canonical English country name.
  */
 export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
@@ -97,6 +118,12 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 
 		if (iso2) {
 			put(alpha3, iso2)
+		}
+	}
+
+	for (const [iso2, forms] of Object.entries(COUNTRY_ABBREVIATIONS)) {
+		for (const form of forms) {
+			put(form, iso2)
 		}
 	}
 

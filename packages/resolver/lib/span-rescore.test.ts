@@ -318,6 +318,69 @@ describe("findRescoreCandidate", () => {
 		expect(ruled).toBeNull()
 	})
 
+	describe("a parse that reads the input as one venue", () => {
+		const place = (id: number, name: string, placetype: string): ResolvedPlace => ({
+			...EMPTY_PLACE_FIELDS,
+			id,
+			name,
+			placetype,
+			country: "US",
+			lat: 37,
+			lon: -122,
+			score: 5,
+			exactMatch: true,
+		})
+
+		const rows = [
+			place(1, "Narita", "locality"),
+			place(2, "Airport", "locality"),
+			place(3, "London", "locality"),
+			place(4, "Golden Gate", "locality"),
+			place(5, "Golden Gate Park", "neighbourhood"),
+		]
+
+		const backend: ResolverBackend = {
+			findPlace: async ({ text, placetype }) => rows.filter((row) => row.name === text && row.placetype === placetype),
+		}
+
+		const venueTree = (raw: string): AddressNode[] => [
+			{ tag: "venue", value: raw, start: 0, end: raw.length, confidence: 0.9, children: [] },
+		]
+
+		const isVenueCategoryWord = (word: string) => word === "Airport"
+
+		it("refuses a last word that is a category, and reads the name's location", async () => {
+			const raw = "Narita Airport"
+
+			const hit = await findRescoreCandidate(raw, venueTree(raw), backend, { thresholdKm: 0, isVenueCategoryWord })
+
+			expect(hit?.text).toBe("Narita")
+		})
+
+		it("keeps a last word that states the location", async () => {
+			const raw = "Tower of London"
+
+			const hit = await findRescoreCandidate(raw, venueTree(raw), backend, { thresholdKm: 0, isVenueCategoryWord })
+
+			expect(hit?.text).toBe("London")
+		})
+
+		it("answers a sub-locality row that holds the whole name ahead of a shorter span", async () => {
+			const raw = "Golden Gate Park"
+
+			const hit = await findRescoreCandidate(raw, venueTree(raw), backend, { thresholdKm: 0 })
+
+			expect(hit?.place.id).toBe(5)
+			expect(hit?.text).toBe(raw)
+		})
+
+		it("reads no sub-locality row when no venue covers the input", async () => {
+			const hit = await findRescoreCandidate("Golden Gate Park", [], backend, { thresholdKm: 0 })
+
+			expect(hit?.place.id).toBe(4)
+		})
+	})
+
 	it(": the rule keeps a sub-span whose remainder is a subdivision code", async () => {
 		const hit = await findRescoreCandidate("WA Sammamish", [], await makeBackend(), {
 			thresholdKm: 0,

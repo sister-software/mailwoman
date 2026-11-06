@@ -1,11 +1,11 @@
 # AGENTS.md
 
 Mailwoman is a postal-address parser. The unscoped `mailwoman` package provides the CLI and library.
-The `packages/` directory also contains 81 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
-83 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
+The `packages/` directory also contains 86 scoped `@mailwoman/*` packages. The root `workspaces` field expands to
+88 workspaces, including `docs`; `readWorkspaceDirectories` in `@mailwoman/core/workspaces` is the
 authoritative reader. The root package, `@mailwoman/universe`, is private.
 
-Sixty-six workspaces publish to npm. `.release-it.json` defines that set, and the seventeen others are
+Sixty-seven workspaces publish to npm. `.release-it.json` defines that set, and the twenty-one others are
 private. `packages/osm` publishes as code only: its `mailwoman.codeOnly` declaration makes the release
 audit refuse a tarball that ships a data file. Run the workspace check described in
 `lib/release-kit/AGENTS.md` after adding or moving a workspace.
@@ -307,6 +307,11 @@ this structure.
 Code that must live outside the monorepo, such as a starter template, a generated artifact or
 satellite tooling, is created under the `mailwoman` GitHub organization at `github.com/mailwoman/...`.
 The monorepo itself stays `sister-software/mailwoman`.
+
+A new git worktree has no `node_modules`. Run `yarn install` in the worktree before its first commit, then
+`yarn compile` when a check reads `out/`. The pre-commit hook needs both. Never commit with `--no-verify`, and
+never symlink another checkout's `node_modules`, because the checks then grade that checkout. A worktree
+without an install has a setup step left to do, and the agent does it before committing.
 
 Preserve unrelated working-tree changes. Edit files through your agent's file-editing tool or a patch
 it applies, so the symbol precheck runs on every edit. A `PreToolUse` hook enforces this by refusing

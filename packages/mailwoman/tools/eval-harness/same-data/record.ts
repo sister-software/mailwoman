@@ -38,10 +38,21 @@ import {
  *
  * Destructured rather than filtered by key so the compiler checks the return
  * type against `WITHHELD_CANDIDATE_FIELDS`.
+ *
+ * `matchedAlias` is also a verdict about the query.
+ * The frozen rulers predate it and list their withheld fields exactly,
+ * so it is dropped here and left off that tuple.
  */
 function stripWithheld(place: ResolvedPlace): SameDataCandidate {
-	const { containedByQualifier, mismatch, regionScopeMiss, resolutionQuality, variantAliasExempted, ...candidate } =
-		place
+	const {
+		containedByQualifier,
+		matchedAlias,
+		mismatch,
+		regionScopeMiss,
+		resolutionQuality,
+		variantAliasExempted,
+		...candidate
+	} = place
 
 	return candidate
 }

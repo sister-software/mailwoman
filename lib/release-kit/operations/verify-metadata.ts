@@ -17,6 +17,12 @@ export const verifyMetadata = defineOperation({
 	description:
 		"Check that the shipped model's version has propagated to the eval ledger, the releases matrix and the status page; one actionable remediation per stale surface.",
 	effect: OperationEffect.Read,
+	options: {
+		card: { type: "string" },
+		ledger: { type: "string" },
+		releases: { type: "string" },
+		status: { type: "string" },
+	},
 	inputSchema: z.object({ card: text, ledger: text, releases: text, status: text }).strict(),
 	outputSchema: z.object({ modelVersion: z.string(), surfaces: z.array(surfaceResult) }),
 	run: (input, context) =>

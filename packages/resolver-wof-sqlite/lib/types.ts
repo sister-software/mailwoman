@@ -106,10 +106,15 @@ export interface PlaceCandidate {
 	regionScopeMiss: boolean | null
 
 	/**
-	 * Set when the variant exemption spared the candidate from the cross-country
-	 * alias penalty, by the candidate-table backend only.
+	 * Set when the variant exemption spared the candidate from the alias penalty,
+	 * by the candidate-table backend only.
 	 */
 	variantAliasExempted: true | null
+
+	/**
+	 * Set when the input matched an alias of this place, by the candidate-table backend only.
+	 */
+	matchedAlias?: true | null
 }
 
 /**

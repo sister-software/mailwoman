@@ -12,7 +12,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { workspacePath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 
-import { MTF_WASM_URL, MTFRuntime, type MTFEncodeResult } from "#index"
+import { MTFRuntime, mtfWASMURL, type MTFEncodeResult } from "#index"
 
 interface ReferenceRow extends MTFEncodeResult {
 	text: string
@@ -24,7 +24,7 @@ const TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice",
 const haveTokenizer = await pathExists(TOKENIZER_PATH)
 
 async function loadModel() {
-	const runtime = await MTFRuntime.instantiate(new Uint8Array(await readLocalBuffer(MTF_WASM_URL)))
+	const runtime = await MTFRuntime.instantiate(new Uint8Array(await readLocalBuffer(mtfWASMURL())))
 
 	return runtime.loadModel(new Uint8Array(await readLocalBuffer(TOKENIZER_PATH)))
 }
@@ -63,7 +63,7 @@ describe("MTF WASM runtime", () => {
 	})
 
 	test("rejects bytes that are not a model", async () => {
-		const runtime = await MTFRuntime.instantiate(new Uint8Array(await readLocalBuffer(MTF_WASM_URL)))
+		const runtime = await MTFRuntime.instantiate(new Uint8Array(await readLocalBuffer(mtfWASMURL())))
 
 		expect(() => runtime.loadModel(new Uint8Array([0xff, 0xff, 0xff]))).toThrow(/failed to load/)
 	})

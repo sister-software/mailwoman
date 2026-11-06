@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   City models as 3D Tiles 1.1, one file per request, from the tiles bucket's `3dtiles/` prefix.
+ *   City models as 3D Tiles 1.1, one file per request, from the tiles bucket's `3dtiles/` prefix, and landmark
+ *   models as single binary glTF files from its `landmarks/` prefix.
  *
  *   The converter stores each file gzipped. The route sends the stored bytes with `Content-Encoding: gzip`, so the
  *   Worker passes them through and the browser decompresses them. Each request reads one file of one tileset. The
@@ -42,7 +43,32 @@ export async function serveCityModelFile(c: Context<TileWorkerHono>): Promise<Re
 
 	if (!tileset || !file || !contentType) throw ResourceError.from(400, "Invalid city model path")
 
-	const object = await c.env.MAILWOMAN_TILES_BUCKET.get(`3dtiles/${tileset}/${file}`)
+	return serveGzippedObject(c, `3dtiles/${tileset}/${file}`, contentType)
+}
+
+/**
+ * A converted landmark model's file name, such as `eiffel-tower.glb`.
+ */
+export const LANDMARK_MODEL_FILE = "[a-z0-9]+(?:-[a-z0-9]+)*\\.glb"
+
+/**
+ * Serves one converted landmark model from the tiles bucket's `landmarks/` prefix.
+ *
+ * The converter, `packages/structures/sdk/landmarks/convert.run.ts`, stores each model gzipped.
+ */
+export async function serveLandmarkModel(c: Context<TileWorkerHono>): Promise<Response> {
+	const file = c.req.param("file") ?? ""
+
+	if (!file) throw ResourceError.from(400, "Invalid landmark model path")
+
+	return serveGzippedObject(c, `landmarks/${file}`, CONTENT_TYPES["glb"]!)
+}
+
+/**
+ * Sends a stored gzipped object with `Content-Encoding: gzip`, so the browser decompresses it.
+ */
+async function serveGzippedObject(c: Context<TileWorkerHono>, key: string, contentType: string): Promise<Response> {
+	const object = await c.env.MAILWOMAN_TILES_BUCKET.get(key)
 
 	assertR2KeyMatch(object)
 	assertR2ObjectBody(object)

@@ -22,6 +22,7 @@ crates as default members, because none of them links libtorch.
 | `hrt-sort`    | Planetiler's 64-bit tile, layer and sort-key order, an external merge sort, and grouping into tiles with label grids.                           |
 | `hrt-profile` | The basemap profile: the fork's `Matcher` rules, a `FeatureCollector`-style builder, OSM names with their `pgf:` encodings, merges, and layers. |
 | `hrt-sources` | Inputs other than OpenStreetMap: GeoPackage, zipped shapefile and Overture GeoParquet readers.                                                  |
+| `hrt-facade`  | Building facade styles for the compact building tiles, ported from Arnis: category, era, region, materials, window rhythm and ground floor.     |
 | `hrt-cli`     | The `hrt` program: the build pipeline, `render-dump`, `basemap-test`, `clock` (the archive comparison) and `record`.                            |
 
 `hrt-profile` holds thirteen of the fork's fourteen layers. `water` comes from OpenStreetMap, Natural Earth and the
@@ -51,8 +52,10 @@ attributes, so only the `hrt` tile has them.
 
 ### Compact building tiles
 
-`hrt building-tiles <theme=buildings dir> <out.pmtiles> [bounds=<west,south,east,north>]` writes an archive for
-Earth's GPU building layer. The page parameter `?buildings3d=<tileset>` turns that layer on. Each building is written once, into the z14 tile
+`hrt building-tiles <theme=buildings dir> <out.pmtiles> [bounds=<west,south,east,north>] [osm=<file.osm.pbf>]` writes
+an archive for Earth's GPU building layer. With an OpenStreetMap file, each building joins the tags of the way or
+relation its Overture `sources` names, and each exterior wall is classified as a street, rear, party or open wall
+against the file's roads and the neighboring footprints, by rules adapted from Arnis (`hrt-profile/src/facade_plan.rs`). The page parameter `?buildings3d=<tileset>` turns that layer on. Each building is written once, into the z14 tile
 that holds the center of its bounding box, with coordinates relative to that tile in 8,192 units per side. Each record
 holds the building's id, heights, colors, floor count, roof shape, footprint rings and roof triangles.
 `hrt-profile/src/building_buffers.rs` documents the record layout. The archive has tile type `Unknown` and no archive
@@ -77,8 +80,8 @@ invalid.
 ## Checks
 
 ```sh
-cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli
-cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-cli \
+cargo test -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-facade -p hrt-cli
+cargo clippy -p hrt-pmtiles -p hrt-e -p hrt-osm -p hrt-render -p hrt-sort -p hrt-profile -p hrt-sources -p hrt-facade -p hrt-cli \
   --all-targets -- -D warnings
 ```
 

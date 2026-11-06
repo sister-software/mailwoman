@@ -176,7 +176,6 @@ export async function remoteGeocode(
 			candidates,
 			fstActive: false,
 			fstProvenance: null,
-			dualRoles: null,
 		},
 		engine: response.engine ?? null,
 	}

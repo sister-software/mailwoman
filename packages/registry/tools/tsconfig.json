@@ -5,21 +5,12 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"outDir": "../out/tools",
+		"allowSyntheticDefaultImports": true,
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true
 	},
 	"include": ["./**/*"],
 	"exclude": ["./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [
-		{ "path": "../../browser" },
-		{ "path": ".." },
-		// ---
-		{ "path": "../../core" },
-		{ "path": "../../match" },
-		{ "path": "../../record" },
-		{ "path": "../../resolver-wof-sqlite" },
-		{ "path": "../../spatial" },
-		{ "path": "../../sqlite" }
-	]
+	"references": [{ "path": ".." }, { "path": "../sdk" }, { "path": "../../core" }]
 }

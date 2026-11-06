@@ -2,21 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/registry` — the geocode-first record-matching application.
+ *   `@mailwoman/registry`: standardized identifiers and their relationships, compiled from pinned open sources.
  *
- *   {@link resolveEntities} runs the whole matcher (block → score → cluster) over normalized
- *   contact/organization {@link SourceRecord}s and returns canonical {@link ResolvedEntity entities};
- *   {@link toGeoJSON} exports them for QGIS. This is the clinic-funding use case mailwoman was built
- *   for, finally standing on a calibrated, label-free matcher.
+ *   The root entry re-exports the narrow modules. Every export is a function or a type, and no module decodes an
+ *   artifact until its first call, so importing the root costs the modules the bundler keeps and no table.
+ *   Import a subpath such as `@mailwoman/registry/iso3166/alpha2` when a bundle must retain one table only.
  */
 
-export * from "#address-key"
-export * from "#geojson"
-export * from "#ingest"
-export * from "#geocode-handler"
-export * from "#learned-scorer"
-export * from "#map-html"
-export * from "#models/dedup-gbt-en-us"
-export * from "#reconcile"
-export * from "#resolve"
-export * from "#types"
+export type { ParseFailure, Parsed } from "#errors"
+export { getAirportByIATA, airportsInCountry, airportRecordCount, airportRecordsHeader } from "#iata/airports/records"
+export { isAirportCode, parseAirportCode } from "#iata/airports/validate"
+export type { ArtifactInspection } from "#inspect"
+export { inspectArtifact } from "#inspect"
+export { isCountryCodeAlpha2, parseCountryCodeAlpha2 } from "#iso3166/alpha2"
+export { isCountryCodeAlpha3, parseCountryCodeAlpha3 } from "#iso3166/alpha3"
+export {
+	countryRecordCount,
+	countryRecordsHeader,
+	getCountryByAlpha2,
+	getCountryByAlpha3,
+	getCountryByNumeric,
+} from "#iso3166/records"
+export { alpha2ForAlpha3, alpha2ForNumeric, alpha3ForAlpha2 } from "#iso3166/relations"
+export type { Normalization } from "#normalize"
+export { canonicalSpelling } from "#normalize"
+export type { CodeMatch } from "#overlap/country-airport"
+export { interpretCountryOrAirportCode, isCountryAirportCollision } from "#overlap/country-airport"
+export type { AirportRecord, CountryRecord, IATA, ICAO, ISO } from "#types"
+export { AirportCountryStatus, CountryStatus } from "#types"

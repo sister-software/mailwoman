@@ -206,19 +206,8 @@ export async function buildParseRig(
  * Every tri-state resolves to `undefined` when neither flag is passed, leaving the library default in force.
  */
 export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: string): Record<string, unknown> {
-	// `--hierarchy-completion` (generalizing the `--city-state-fallback` alias): recover the
-	// locality the parser drops for a dual-role place (city-state or capital-seat province),
-	// via the precomputed coincident-roles relation.
-	// Opt-in, default-off → by default this eval is byte-identical.
-	// Pass it to measure the before/after.
-	// Applied to both the neural and rules resolve paths (they share `resolveOpts`),
-	// so the comparison stays fair.
-	// `--city-state-fallback` kept as an alias.
-	const hierarchyCompletion = options.hierarchyCompletion ?? false
-
 	return {
 		...(defaultCountry && defaultCountry.toLowerCase() !== "none" ? { defaultCountry } : {}),
-		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
 		// A `"production"` pin passes no option, so the resolver's defaults table decides.
 		...switchPinEntry("adminCoherence", options.adminCoherence ?? "production"),
 		...switchPinEntry("postcodeCountryCoherence", options.postcodeCountryCoherence ?? "production"),

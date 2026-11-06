@@ -86,6 +86,28 @@ function registerKeyedTo(stored: string, at: { lat: number; lon: number }) {
 	return { lookup, localities }
 }
 
+describe("applyAddressPoint's scoping box", () => {
+	const boxOf = (postcode: boolean) => {
+		const boxes: unknown[] = []
+		const lookup = { find: (query) => (boxes.push(query.bbox), null) } as AddressPointLookup
+
+		applyAddressPoint(hoodTree({ postcode }).roots, lookup, true)
+
+		return boxes[0] as typeof PLACE_BOX
+	}
+
+	test("is the town's own extent when the input states no postcode", () => {
+		expect(boxOf(false)).toEqual(PLACE_BOX)
+	})
+
+	test("widens past the town's extent when the input states a postcode", () => {
+		const box = boxOf(true)
+
+		expect(box.minLat).toBeLessThan(PLACE_BOX.minLat)
+		expect(box.maxLon).toBeGreaterThan(PLACE_BOX.maxLon)
+	})
+})
+
 describe("applyAddressPoint's ancestor retry", () => {
 	test("answers from the nearest ancestor the register keys its rows to", () => {
 		const tree = hoodTree()

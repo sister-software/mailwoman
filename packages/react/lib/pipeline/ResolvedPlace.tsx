@@ -2,19 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `ResolvedPlace` — the "Resolved place" detail list (name, placetype, WOF id, coords, score) plus an
- *   optional dual-role note. Presentational.
+ *   `ResolvedPlace` — the "Resolved place" detail list (name, placetype, WOF id, coords, score). Presentational.
  */
 
-import type { DualRoleView, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
-import { Fragment, type ReactNode } from "react"
+import type { ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import type { ReactNode } from "react"
 
 export interface ResolvedPlaceProps {
 	place: ResolvedPlaceView
-	dualRoles?: DualRoleView[] | null
 }
 
-export function ResolvedPlace({ place, dualRoles }: ResolvedPlaceProps): ReactNode {
+export function ResolvedPlace({ place }: ResolvedPlaceProps): ReactNode {
 	return (
 		<div className="mw-resolved">
 			<h2>Resolved place</h2>
@@ -33,12 +31,12 @@ export function ResolvedPlace({ place, dualRoles }: ResolvedPlaceProps): ReactNo
 								: `≈ interpolated · ±${place.uncertaintyM ?? "?"} m`}
 						</dd>
 					</>
-				) : (
+				) : place.id > 0 ? (
 					<>
 						<dt>WOF id</dt>
 						<dd>{place.id}</dd>
 					</>
-				)}
+				) : null}
 				<dt>coords</dt>
 				<dd>
 					{place.lat.toFixed(4)}, {place.lon.toFixed(4)}
@@ -46,17 +44,6 @@ export function ResolvedPlace({ place, dualRoles }: ResolvedPlaceProps): ReactNo
 				<dt>score</dt>
 				<dd>{place.score == null ? "unscored" : place.score.toFixed(3)}</dd>
 			</dl>
-			{dualRoles && dualRoles.length ? (
-				<p className="mw-resolved__dual">
-					🏛️ <strong>Dual-role place.</strong> {place.name} also resolves as{" "}
-					{dualRoles.map((role, i) => (
-						<Fragment key={`${role.role}-${role.id}`}>
-							{i > 0 ? ", " : ""}a <strong>{role.role}</strong> ({role.relationshipType.replaceAll("-", " ")})
-						</Fragment>
-					))}
-					.
-				</p>
-			) : null}
 		</div>
 	)
 }

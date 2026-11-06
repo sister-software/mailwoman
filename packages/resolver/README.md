@@ -28,10 +28,6 @@ const decorated = await resolver.resolveTree(tree)
 
 `createWOFResolver` takes a `ResolverBackend` — a structural interface rather than a class. `@mailwoman/resolver-wof-sqlite` implements it over `node:sqlite`, `@mailwoman/resolver-wof-wasm` over `@sqlite.org/sqlite-wasm` in a browser, and `RemoteResolver` over HTTP. This package imports none of them.
 
-Backends differ in what they can answer. `describeCapabilityGaps(backend)` reports missing optional
-methods. A default-on feature that no-ops without logging on your backend reports that condition instead
-of looking like a bad result.
-
 ## Absence is a value
 
 Two rules run through this package, and both exist because their opposites shipped bugs.
@@ -82,7 +78,7 @@ A span ranked in isolation gets Portland, Maine to Messina, Italy. These checks 
 
 Import the barrel for the whole surface, or a subpath to take one piece without the rest:
 
-`./resolve` · `./admin-winner` · `./decorate-node` · `./plausibility` · `./postcode-prefix` · `./postcode-country-coherence` · `./postcode-shape-coherence` · `./admin-containment` · `./span-rescore` · `./street-evidence` · `./toponym-prior` · `./rerank` · `./remote-resolver` · `./backend-capabilities`
+`./resolve` · `./admin-winner` · `./decorate-node` · `./plausibility` · `./postcode-prefix` · `./postcode-country-coherence` · `./postcode-shape-coherence` · `./admin-containment` · `./span-rescore` · `./street-evidence` · `./toponym-prior` · `./rerank` · `./remote-resolver`
 
 The type interface (`ResolverBackend`, `ResolveOpts`, `ResolvedPlace`) lives in `@mailwoman/core/resolver` so that `core` stays a leaf, and is re-exported here — `@mailwoman/resolver` is the complete surface.
 

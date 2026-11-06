@@ -28,7 +28,6 @@ function captureResolver(): { resolver: Resolver; seen: AddressTree[] } {
 			return tree
 		}),
 		artifactCoverage: null,
-		capabilityGaps: null,
 	}
 
 	return { resolver, seen }

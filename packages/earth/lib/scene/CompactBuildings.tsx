@@ -9,13 +9,24 @@
 
 import { type CityTileset, cityTilesetPath } from "@mailwoman/structures/city-tilesets"
 import cityTilesets from "@mailwoman/structures/data/city-tilesets.json" with { type: "json" }
+import landmarks from "@mailwoman/structures/data/landmarks.json" with { type: "json" }
+import { type Landmark, landmarkBounds } from "@mailwoman/structures/landmarks"
 import { useEffect } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
 import { PRODUCTION_CONFIG } from "#config"
 import { pageTilesetParam } from "#routes"
 
-import { COMPACT_BUILDINGS_LAYER_ID, CompactBuildingsLayer } from "./compact-buildings/layer.ts"
+import {
+	COMPACT_BUILDINGS_LAYER_ID,
+	COMPACT_BUILDINGS_MIN_ZOOM,
+	CompactBuildingsLayer,
+} from "./compact-buildings/layer.ts"
+
+/**
+ * The highest zoom a MapLibre style layer can declare.
+ */
+const MAX_STYLE_ZOOM = 24
 
 /**
  * The city model layer's id, repeated here so removing it needs no import of the layer's module.
@@ -23,6 +34,17 @@ import { COMPACT_BUILDINGS_LAYER_ID, CompactBuildingsLayer } from "./compact-bui
 const CITY_MODELS_LAYER_ID = "city-models"
 
 const CITY_TILESETS = cityTilesets as CityTileset[]
+
+/**
+ * The square around each landmark inside which the building layer stops drawing,
+ * because `<Scene3D>` draws the landmark's model there.
+ *
+ * Tiles built before a landmark joined the list still hold its footprint.
+ *
+ * The squares come first in the hidden-area list, so city models covering the
+ * view cannot push them past the shader's limit.
+ */
+const LANDMARK_AREAS = (landmarks as Landmark[]).map(landmarkBounds)
 
 /**
  * Mounts the GPU building and city model layers under the map's first label layer
@@ -42,7 +64,8 @@ export function CompactBuildings(): null {
 		)
 
 		let removed = false
-		const hidden: string[] = []
+		// Each vector building layer the compact layer takes over from, with the zoom range the style gave it.
+		const handedOff: Array<[id: string, range: [number, number]]> = []
 
 		// three.js and 3DTilesRendererJS load only on a page that draws city models.
 		// The main bundle stays without them.
@@ -55,7 +78,7 @@ export function CompactBuildings(): null {
 			const cityModels = new CityModelsLayer(
 				CITY_TILESETS,
 				(city) => new URL(cityTilesetPath(city), PRODUCTION_CONFIG.tileWorkerURL).href,
-				(covered) => buildings.setHiddenAreas(covered.map((city) => city.bounds))
+				(covered) => buildings.setHiddenAreas([...LANDMARK_AREAS, ...covered.map((city) => city.bounds)])
 			)
 
 			map.addLayer(cityModels, map.getStyle().layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
@@ -66,7 +89,9 @@ export function CompactBuildings(): null {
 
 			const style = map.getStyle()
 
-			// The extruded footprints would draw the same buildings twice.
+			// The extruded footprints would draw the same buildings twice where the compact
+			// layer draws, so they stop at its lowest zoom and keep the zooms below it,
+			// as the page without compact buildings shows them.
 			// Address labels stay.
 			for (const styleLayer of style.layers) {
 				if (
@@ -74,11 +99,13 @@ export function CompactBuildings(): null {
 					styleLayer["source-layer"] === "buildings" &&
 					styleLayer.type !== "symbol"
 				) {
-					map.setLayoutProperty(styleLayer.id, "visibility", "none")
-					hidden.push(styleLayer.id)
+					const range: [number, number] = [styleLayer.minzoom ?? 0, styleLayer.maxzoom ?? MAX_STYLE_ZOOM]
+					map.setLayerZoomRange(styleLayer.id, range[0], Math.min(range[1], COMPACT_BUILDINGS_MIN_ZOOM))
+					handedOff.push([styleLayer.id, range])
 				}
 			}
 
+			buildings.setHiddenAreas(LANDMARK_AREAS)
 			map.addLayer(buildings, style.layers.find((styleLayer) => styleLayer.type === "symbol")?.id)
 			void mountCityModels()
 		}
@@ -97,8 +124,8 @@ export function CompactBuildings(): null {
 				map.removeLayer(id)
 			}
 
-			for (const id of hidden.filter((layerID) => map.getLayer(layerID))) {
-				map.setLayoutProperty(id, "visibility", "visible")
+			for (const [id, [minzoom, maxzoom]] of handedOff.filter(([layerID]) => map.getLayer(layerID))) {
+				map.setLayerZoomRange(id, minzoom, maxzoom)
 			}
 		}
 	}, [mapRef, tileset])

@@ -1,115 +1,110 @@
 # @mailwoman/registry
 
-**Geocode-first record-matching application** — the high-level entry point that
-runs the full block → score → cluster pipeline over ingested records and returns
-canonical entities ready for export.
+A generated, typed registry of standardized identifiers and their relationships. This release holds ISO
+3166-1 country codes (alpha-2, alpha-3, numeric) and IATA airport codes, compiled from pinned open sources
+into RGY1 lookup artifacts, with branded TypeScript types, a synchronous reader, a Rust compiler and lookup
+core, and a WebAssembly batch adapter.
 
-This is the clinic-funding use case Mailwoman was built for, standing on a
-calibrated, label-free matcher.
+The package is a registry and a query engine. `AUS` is Australia under `iso3166-1-alpha3` and
+Austin-Bergstrom International Airport under `iata-location`, and this package answers both. The choice
+between them for a free-text address belongs to Mailwoman, in `@mailwoman/resolver`.
 
-```ts
-import { ingestRows, resolveEntities, toGeoJSON } from "@mailwoman/registry"
-
-// 1. Ingest — rows → normalized SourceRecords. The mapping is POSITIONAL (arg 2) rather than a field of the
-//    options object, and `geocodeAddress` belongs here: each address is resolved as it is ingested.
-const records = await ingestRows(
-	rows,
-	{ organization: "Provider Name", address: ["Street Address", "City", "State", "ZIP"] },
-	{ geocodeAddress }
-)
-
-// 2. Resolve — block → score → cluster with geo-first defaults. SYNCHRONOUS, and it returns a
-//    ResolveResult rather than a bare array: `entities` alongside the pair counts blocking produced.
-const { entities, candidatePairs, droppedBlocks } = resolveEntities(records)
-
-// 3. Export — GeoJSON for QGIS. Entities with no resolved coordinate are skipped, so the feature
-//    count can be lower than `entities.length`.
-const fc = toGeoJSON(entities)
-```
-
-## The full pipeline
-
-```
-CSV / SQLite → ingestRows → SourceRecord[] → resolveEntities → ResolveResult
-                                                                    ↓
-                                                            .entities → toGeoJSON()
-                                                                    ↓
-                                                            GeoJSON → QGIS
-```
-
-## API
+## What it answers
 
 ```ts
-// Ingest — parse CSV / map columns → normalized records
-import { inferMapping, ingestRows, normalizeCSV, parseCSV } from "@mailwoman/registry"
-// ingestRows(rows, mapping, opts?): Promise<SourceRecord[]>
-//   opts: { geocodeAddress?, addressSeparator? }  — addressSeparator defaults to ", "
-// parseCSV(text): Record<string, string>[]
-// inferMapping(header): ColumnMapping
-// normalizeCSV(path, { mapping, delimiter? }): AsyncGenerator<SourceRecord>  — streams, does NOT geocode
-// Resolve — run the full matcher pipeline
-import { resolveEntities } from "@mailwoman/registry"
-// resolveEntities(records, config?): ResolveResult
-//   ResolveResult: { entities, candidatePairs, droppedBlocks }
-//   config: { model?, blockingKeys?, threshold?, maxBlockSize?, trainEM?, addressFrequency?,
-//             collapseSpatial?, requireCorroboration?, usePhone?, linkage?, discriminators?,
-//             exactDiscriminators?, scorer?, learnedScorer? }
-// Export — GeoJSON, MapLibre HTML, reconciliation reports
-import { reconcile, toGeoJSON, toMapHTML } from "@mailwoman/registry"
-// Learned scorer — pre-trained GBT for single-dataset dedup, default-on
-import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "@mailwoman/registry"
+import { getAirportByIATA, airportsInCountry } from "@mailwoman/registry/iata/airports/records"
+import { isAirportCode } from "@mailwoman/registry/iata/airports/validate"
+import { isCountryCodeAlpha2, parseCountryCodeAlpha2 } from "@mailwoman/registry/iso3166/alpha2"
+import { isCountryCodeAlpha3 } from "@mailwoman/registry/iso3166/alpha3"
+import { getCountryByAlpha3 } from "@mailwoman/registry/iso3166/records"
+import { alpha2ForAlpha3 } from "@mailwoman/registry/iso3166/relations"
+import { canonicalSpelling } from "@mailwoman/registry/normalize"
+import { interpretCountryOrAirportCode, isCountryAirportCollision } from "@mailwoman/registry/overlap/country-airport"
+
+isCountryCodeAlpha2("GB") // true
+parseCountryCodeAlpha2("gb") // { ok: false, reason: "case", input: "gb" }
+isCountryCodeAlpha3("AUS") // true
+alpha2ForAlpha3("AUS") // "AU"
+getCountryByAlpha3("DDR") // { alpha3: "DDR", status: "formerly-used", … }: readable, outside the strict brand
+isAirportCode("SFO") // true
+getAirportByIATA("AUS")?.country // "US"
+airportsInCountry("AU").length // the airports OurAirports places in Australia
+
+isCountryAirportCollision("AUS") // true
+interpretCountryOrAirportCode("AUS")
+// [
+//   { system: "iso3166-1-alpha3", code: "AUS", country: "AU", entityId: "wikidata:Q408", name: "Australia" },
+//   { system: "iata-location", code: "AUS", kind: "airport", country: "US", countryStatus: "iso3166-1", entityId: "ourairports:3632", name: "Austin Bergstrom International Airport" },
+// ]
+
+canonicalSpelling(" aus ") // { value: "AUS", trimmed: true, uppercased: true }
 ```
 
-`geocodeAddress` is an `ingestRows` option rather than a `resolveEntities` one — coordinates have to exist
-before blocking can use them.
+Every predicate is strict: canonical case and length, membership in the built profile. `canonicalSpelling`
+is the explicit step that trims and upper-cases, and it reports what it did. A miss means
+`not-found-in-snapshot`: the source holds no such code, and the issuing authority may still have assigned
+it. `inspectArtifact` reads an artifact's profile, sources and coverage.
 
-## Default configuration
+Each subpath retains its own artifact and no other. `iso3166/alpha2` carries an 85-byte bitset;
+`overlap/country-airport`'s `isCountryAirportCollision` carries the 2,197-byte collision bitset;
+`interpretCountryOrAirportCode` carries the two record artifacts (51 KB and 1.1 MB). The root entry
+re-exports the subpaths and decodes an artifact at its first call.
 
-`resolveEntities` ships with these defaults:
+## Brands
 
-- **The blocking keys:** geo-cell on the resolved coordinate (0.05°, neighbors expanded) + canonical
-  address + phone + email
-- **The scoring model:** Fellegi-Sunter with label-free EM, term frequency adjustment
-- **Learned scorer:** the bundled `DEDUP_GBT_MODEL`, on by default for single-dataset dedup
-- **Threshold:** `DEDUP_GBT_META.recommendedThreshold` (2.8324) while the bundled model is active,
-  otherwise 0. The unit is the GBT's own logit rather than a Fellegi-Sunter match weight in bits and not a
-  probability, so a 0-to-1 value is a category error here. Higher is stricter.
-- **Linkage:** single (connected components), with average linkage available for the over-merge case
+`ISO.CountryCode_3166_1_Alpha2`, `ISO.CountryCode_3166_1_Alpha3`, `ISO.CountryCode_3166_1_Numeric`,
+`IATA.LocationCode`, `IATA.AirportCode` and `ICAO.LocationIndicator` are declaration-only brands. A predicate
+narrows a `string` to its brand. The compiler refuses one brand where another is expected. A branded value
+records that the validator accepted it under the built profile at the time of the call.
 
-## CLI
+## WebAssembly batches
 
-The `mailwoman` CLI exposes `registry` as a command:
+```ts
+import { readFile } from "node:fs/promises"
 
-```bash
-# Multi-source entity resolution
-mailwoman registry --sources config.json --resolve-db "$MAILWOMAN_CANDIDATE_DB" --out entities.geojson
+import { createRegistry, preferredWasmVariant, registryWasmURL, ClassifyMask } from "@mailwoman/registry/wasm"
 
-# Cross-dataset reconciliation
-mailwoman registry --sources tx-nppes.json --reconcile tx-fcc.json --resolve-db "$MAILWOMAN_CANDIDATE_DB"
+const registry = await createRegistry({ wasm: await readFile(registryWasmURL(preferredWasmVariant())) })
+const packed = new TextEncoder().encode("AUSSFOGBR") // count × 3 bytes
+const masks = new Uint8Array(3)
+
+registry.countryAirport.classifyManyInto(packed, masks)
+// masks[0] === ClassifyMask.Country | ClassifyMask.Airport | ClassifyMask.Collision
 ```
 
-`--resolve-db` (or `$MAILWOMAN_WOF_DB`) is required to BOOT, and is then ignored whenever
-`$MAILWOMAN_CANDIDATE_DB` is set. `requireCommandWOFPath` throws before anything opens; `createResolverBackend`
-then prefers the candidate backend and never touches the WOF path (the inline comment in `run.tsx` states
-this correctly: `$MAILWOMAN_CANDIDATE_DB` selects the demo-parity candidate backend, and FTS over `wofPath` is the fallback).
-A nonexistent path satisfies that requirement.
+The caller loads the module bytes, and `createRegistry` compiles them. `registryWasmURL` locates the
+committed `wasm/registry.wasm` and `wasm/registry-simd.wasm`, and `preferredWasmVariant` reports which the
+host runs. One call classifies the whole batch, and the staging buffers are reused while they fit.
+`docs/performance.md` measures where the batch kernel's per-code cost falls below the TypeScript reader's
+(from about 256 codes, over bytes the caller already holds) and where it stays above it (strings, one code
+at a time).
 
-So: set `$MAILWOMAN_CANDIDATE_DB` and pass anything to `--resolve-db`. Do not pass `candidate.db` to
-`--resolve-db` with the environment variable unset. The flag is believed on that path, and the admin
-backend queries `place_search`/`spr`, which a candidate gazetteer does not have.
+## Sources and profile
 
-An argument required only to discard it is a defect in this command. Documented rather than fixed.
+The built profile is `open-2026-11`: Wikidata's ISO 3166-1 claims (CC0) and OurAirports' `airports.csv`
+(public domain), pinned by SHA-256 in `data/manifests/sources.lock.json`. `docs/data-policy.md` states the
+terms, what the profile holds and leaves out, and why the UN M49 crosswalk is recorded as not elected.
+`data/manifests/coverage.json` declares each namespace's count and status mix.
 
-Two CLI defaults differ from the library defaults: `--threshold` defaults to `0`, which is the
-Fellegi-Sunter baseline rather than the bundled model's calibrated 2.8324, and `--train-em` is on.
+## Layout and tooling
 
-## Related
+`docs/rgy1.md` is the normative artifact layout. `crates/registry-build` compiles the normalized JSON into
+artifacts, `crates/registry-core` is the `no_std` reader and lookup core, and `crates/registry-wasm` is the
+C-ABI adapter. The TypeScript reader in `lib/rgy1/` follows the same document and is checked against an
+independent byte walker and against the Rust reader over the same fixture artifacts.
 
-- [`@mailwoman/match`](../match) — the low-level block/score/cluster primitives
-- [`@mailwoman/record`](../record) — `SourceRecord` schema and normalizers
-- [`@mailwoman/address-id`](../address-id) — exact-match join key
-- [Match messy records to one entity each](https://mailwoman.post/docs/developers/how-to/match-messy-records)
+| Command                                                           | Does                                                                                                             |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `node packages/registry/sdk/fetch.run.ts [--repin]`               | Downloads the pinned sources into the data root and checks or rewrites the lock                                  |
+| `node packages/registry/tools/normalize.run.ts`                   | Writes `data/normalized/*.json` and `data/manifests/coverage.json`                                               |
+| `node packages/registry/tools/generate.run.ts [--check]`          | Compiles the artifacts, writes `lib/artifacts/*.ts` and `data/manifests/artifacts.json`, recompiles the fixtures |
+| `node packages/registry/tools/generate-sections.run.ts [--check]` | Writes the section constants TypeScript and Rust share                                                           |
+| `node packages/registry/tools/build-wasm.run.ts [--check]`        | Builds `wasm/registry.wasm` and `wasm/registry-simd.wasm`                                                        |
+| `node packages/registry/tools/bench.run.ts [--json]`              | Measures the arms and prints the report                                                                          |
+| `cargo test -p registry-core`                                     | The Rust conformance suite over the fixture profile                                                              |
 
-## License
+## Follow-up
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)
+ISO 3166-2 subdivisions, ISO 639 language codes, ISO 15924 scripts, UN M49 regions, BCP 47, Unicode locale
+identifiers, UN/LOCODE, metropolitan IATA codes and Zod adapters are tracked as later milestones of
+sister-software/mailwoman#2945 and are not in this package.

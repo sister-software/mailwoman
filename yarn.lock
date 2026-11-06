@@ -5051,12 +5051,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hono/node-server@npm:^2.1.5":
-  version: 2.1.5
-  resolution: "@hono/node-server@npm:2.1.5"
+"@hono/node-server@npm:^2.1.6":
+  version: 2.1.6
+  resolution: "@hono/node-server@npm:2.1.6"
   peerDependencies:
     hono: ^4 || ^5.0.0-0
-  checksum: 10/4b6f21fe37f956a61856b6f517f91543962f32466a88477d362e8cff77272e541ea6388b8026275e1a2a1976d098c9bf4c3e1d8f8087505e8eac777f0f872901
+  checksum: 10/43e5fa3972b20e22a6471874f4858011a80633011df60e312c37f472051f983ae47ea8f76004157c38a6317cea4a152745601a031d2428b7c44bdf7778a9a0b6
   languageName: node
   linkType: hard
 
@@ -5660,6 +5660,18 @@ __metadata:
     typescript:
       optional: true
   checksum: 10/399c106f653c11ddc44ea9a61a52547e3856f028a9deda58aef6ee4bb00c7a1ffb5a755b9681a1439818b154868414b71cebde8876de225e63579d76c4742580
+  languageName: node
+  linkType: hard
+
+"@journeyapps/wa-sqlite@npm:2.0.10":
+  version: 2.0.10
+  resolution: "@journeyapps/wa-sqlite@npm:2.0.10"
+  dependenciesMeta:
+    monaco-editor@0.34.1:
+      unplugged: true
+    web-test-runner-jasmine@0.0.6:
+      unplugged: true
+  checksum: 10/e90b0b96180dd92fdb4c8f137c7fed7cd1344076e43f6d64dd59626ff3f60f4ab6664b418e6ea54ff01bac9fb326cff51f954e4596bba2e9c9643f4c089b0760
   languageName: node
   linkType: hard
 
@@ -6559,7 +6571,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/api-kit@workspace:packages/api-kit"
   dependencies:
-    "@hono/node-server": "npm:^2.1.5"
+    "@hono/node-server": "npm:^2.1.6"
     "@hono/zod-openapi": "npm:^1.6.3"
     "@mailwoman/core": "workspace:*"
     hono: "npm:^4.13.14"
@@ -6749,6 +6761,11 @@ __metadata:
     type-fest: "npm:^5.10.0"
     yauzl-promise: "npm:^4.0.0"
     zod: "npm:^4.6.7"
+  peerDependencies:
+    wrangler: ^4.156.0
+  peerDependenciesMeta:
+    wrangler:
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -6892,10 +6909,12 @@ __metadata:
     "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/geocoder-service": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/react": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
+    "@mailwoman/service-worker-cache": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/structures": "workspace:*"
     "@mailwoman/undersea": "workspace:*"
@@ -6917,9 +6936,54 @@ __metadata:
     three: "npm:0.186.0"
     vite: "npm:^8.3.5"
     vite-plugin-pwa: "npm:^2.0.0"
+    workbox-cacheable-response: "npm:^7.4.1"
+    workbox-expiration: "npm:^7.4.1"
     workbox-precaching: "npm:^7.4.1"
+    workbox-routing: "npm:^7.4.1"
+    workbox-strategies: "npm:^7.4.1"
     workbox-window: "npm:^7.4.1"
     wrangler: "npm:^4.156.0"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/engine-worker@workspace:packages/engine-worker":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/engine-worker@workspace:packages/engine-worker"
+  dependencies:
+    "@cloudflare/workers-types": "npm:^5.20261029.1"
+    "@mailwoman/api": "workspace:*"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/gazetteer-worker": "workspace:*"
+    "@mailwoman/mtf": "workspace:*"
+    "@mailwoman/neural": "workspace:*"
+    "@mailwoman/resolver": "workspace:*"
+    "@mailwoman/resolver-wof-wasm": "workspace:*"
+    mailwoman: "workspace:*"
+    onnxruntime-web: "npm:1.31.1"
+    vitest: "npm:^5.0.5"
+    wrangler: "npm:^4.156.0"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/entity-resolution@workspace:*, @mailwoman/entity-resolution@workspace:packages/entity-resolution":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/entity-resolution@workspace:packages/entity-resolution"
+  dependencies:
+    "@mailwoman/address-id": "workspace:*"
+    "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/browser": "workspace:*"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/match": "workspace:*"
+    "@mailwoman/record": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    "@protomaps/basemaps": "npm:^5.7.2"
+    "@sister.software/h3": "npm:^1.1.0"
+    "@types/node": "npm:^26.6.6"
+    path-ts: "npm:^2.5.0"
+    playwright: "npm:^1.64.1"
+    spliterator: "npm:^10.1.1"
   languageName: unknown
   linkType: soft
 
@@ -6958,9 +7022,9 @@ __metadata:
   resolution: "@mailwoman/filer@workspace:packages/filer"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/entity-resolution": "workspace:*"
     "@mailwoman/match": "workspace:*"
     "@mailwoman/record": "workspace:*"
-    "@mailwoman/registry": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     dom-serializer: "npm:^3.1.1"
     domhandler: "npm:^6.0.1"
@@ -6987,6 +7051,23 @@ __metadata:
     "@sister.software/h3": "npm:^1.1.0"
     kysely: "npm:^0.29.7"
     path-ts: "npm:^2.5.0"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/gazetteer-worker@workspace:*, @mailwoman/gazetteer-worker@workspace:packages/gazetteer-worker":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/gazetteer-worker@workspace:packages/gazetteer-worker"
+  dependencies:
+    "@cloudflare/vitest-plugin": "npm:^1.4.11"
+    "@cloudflare/workers-types": "npm:^5.20261029.1"
+    "@journeyapps/wa-sqlite": "npm:2.0.10"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/resolver-wof-wasm": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    mailwoman: "workspace:*"
+    vitest: "npm:^5.0.5"
+    wrangler: "npm:^4.156.0"
   languageName: unknown
   linkType: soft
 
@@ -7037,6 +7118,14 @@ __metadata:
     "@types/node": "npm:^26.6.6"
     path-ts: "npm:^2.5.0"
     zod: "npm:^4.6.7"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/geocoder-service@workspace:*, @mailwoman/geocoder-service@workspace:packages/geocoder-service":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/geocoder-service@workspace:packages/geocoder-service"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -7592,21 +7681,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/registry@workspace:packages/registry"
   dependencies:
-    "@mailwoman/address-id": "workspace:*"
-    "@mailwoman/annotations": "workspace:*"
-    "@mailwoman/browser": "workspace:*"
     "@mailwoman/core": "workspace:*"
-    "@mailwoman/match": "workspace:*"
-    "@mailwoman/record": "workspace:*"
-    "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    "@mailwoman/spatial": "workspace:*"
-    "@mailwoman/sqlite": "workspace:*"
-    "@protomaps/basemaps": "npm:^5.7.2"
-    "@sister.software/h3": "npm:^1.1.0"
     "@types/node": "npm:^26.6.6"
+    esbuild: "npm:0.28.2"
     path-ts: "npm:^2.5.0"
-    playwright: "npm:^1.64.1"
-    spliterator: "npm:^10.1.1"
   languageName: unknown
   linkType: soft
 
@@ -7662,6 +7740,7 @@ __metadata:
     "@mailwoman/gazetteer": "workspace:*"
     "@mailwoman/postcode": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
+    "@mailwoman/registry": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     path-ts: "npm:^2.5.0"
     spliterator: "npm:^10.1.1"
@@ -7680,6 +7759,14 @@ __metadata:
 "@mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm":
   version: 0.0.0-use.local
   resolution: "@mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/service-worker-cache@workspace:*, @mailwoman/service-worker-cache@workspace:packages/service-worker-cache":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/service-worker-cache@workspace:packages/service-worker-cache"
+  dependencies:
+    workbox-core: "npm:^7.4.1"
   languageName: unknown
   linkType: soft
 
@@ -7738,6 +7825,7 @@ __metadata:
     http-status-codes: "npm:^2.3.0"
     mailwoman: "workspace:*"
     sharp: "npm:0.35.5"
+    zod: "npm:^4.6.7"
   languageName: unknown
   linkType: soft
 
@@ -7847,6 +7935,7 @@ __metadata:
     "@typescript/native": "npm:typescript@^7.0.2"
     "@vitest/coverage-v8": "npm:5.0.5"
     "@vvago/vale": "npm:^3.25.1"
+    cloudflare: "npm:7.3.0"
     dependency-cruiser: "npm:^18.7.0"
     esbuild: "npm:0.28.2"
     husky: "npm:^9.1.7"
@@ -15362,6 +15451,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cloudflare@npm:7.3.0":
+  version: 7.3.0
+  resolution: "cloudflare@npm:7.3.0"
+  bin:
+    cloudflare: bin/cli
+  checksum: 10/43ab69e67ed5a9444f25c40dcdcdc5891569358a0df475b3c9dd11403f808d3527bc74a7d841e9a83701c0ff73a90b04fc00f7455d87d7d56c5b6832015e1282
+  languageName: node
+  linkType: hard
+
 "clsx@npm:^2.0.0, clsx@npm:^2.1.1":
   version: 2.1.1
   resolution: "clsx@npm:2.1.1"
@@ -22025,6 +22123,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"
     "@mailwoman/dictionaries": "workspace:*"
+    "@mailwoman/entity-resolution": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/filer": "workspace:*"
     "@mailwoman/flood": "workspace:*"
@@ -22043,7 +22142,6 @@ __metadata:
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/postcode": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
-    "@mailwoman/registry": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
@@ -31311,7 +31409,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-cacheable-response@npm:7.4.1":
+"workbox-cacheable-response@npm:7.4.1, workbox-cacheable-response@npm:^7.4.1":
   version: 7.4.1
   resolution: "workbox-cacheable-response@npm:7.4.1"
   dependencies:
@@ -31320,14 +31418,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-core@npm:7.4.1":
+"workbox-core@npm:7.4.1, workbox-core@npm:^7.4.1":
   version: 7.4.1
   resolution: "workbox-core@npm:7.4.1"
   checksum: 10/7c6b5d5008b30f4cd87d82ef946bff066ec231784c23b7c455230a100922b5de99cc0baf059a3883babf05fff5a98eaf0f62407a3b6bce2dda280f44412899bd
   languageName: node
   linkType: hard
 
-"workbox-expiration@npm:7.4.1":
+"workbox-expiration@npm:7.4.1, workbox-expiration@npm:^7.4.1":
   version: 7.4.1
   resolution: "workbox-expiration@npm:7.4.1"
   dependencies:
@@ -31392,7 +31490,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-routing@npm:7.4.1":
+"workbox-routing@npm:7.4.1, workbox-routing@npm:^7.4.1":
   version: 7.4.1
   resolution: "workbox-routing@npm:7.4.1"
   dependencies:
@@ -31401,7 +31499,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-strategies@npm:7.4.1":
+"workbox-strategies@npm:7.4.1, workbox-strategies@npm:^7.4.1":
   version: 7.4.1
   resolution: "workbox-strategies@npm:7.4.1"
   dependencies:

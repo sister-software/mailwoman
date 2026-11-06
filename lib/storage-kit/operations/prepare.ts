@@ -21,7 +21,7 @@ import { claimFailures, inspectDevice, rootDeviceName } from "#storage-kit/devic
 import { enableUnmap, inspectDiscard } from "#storage-kit/discard"
 import { spliceFstab } from "#storage-kit/fstab"
 import { assertRoot, defineOperation, StorageEffect } from "#storage-kit/operation"
-import { volumeSpec } from "#storage-kit/volume"
+import { VOLUME_OPTIONS, volumeSpec } from "#storage-kit/volume"
 
 const prepareOutput = z.object({
 	device: z.string(),
@@ -58,6 +58,7 @@ export const prepareOperation = defineOperation({
 	description:
 		"Partition, format, and mount a device as the data-root volume, then check every property it set. Destructive: the operator states the serial it must match.",
 	effect: StorageEffect.HostWrite,
+	options: VOLUME_OPTIONS,
 	inputSchema: volumeSpec.strict(),
 	outputSchema: prepareOutput,
 	async run(input, context) {

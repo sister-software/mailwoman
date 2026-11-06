@@ -8,7 +8,7 @@
  *   locally, so they are operator-run.
  */
 
-import type { EvalGeocodeStream } from "@mailwoman/registry/tools/eval-geocoder"
+import type { EvalGeocodeStream } from "@mailwoman/entity-resolution/tools/eval-geocoder"
 
 import {
 	type CommandSpec,
@@ -89,16 +89,16 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 		{ scorerCrossStateEval },
 		{ scorerPairwiseEval },
 	] = await Promise.all([
-		import("@mailwoman/registry/tools/coverage-reconciliation"),
-		import("@mailwoman/registry/tools/cross/dataset-correlation"),
-		import("@mailwoman/registry/tools/cross/source-threshold-sweep"),
-		import("@mailwoman/registry/tools/dedup-ceiling"),
-		import("@mailwoman/registry/tools/geocoder/namesake-probe"),
-		import("@mailwoman/registry/tools/geocoder/vs-provided-coords"),
-		import("@mailwoman/registry/tools/nppes/dedup-benchmark"),
-		import("@mailwoman/registry/tools/learned/scorer/clustering-eval"),
-		import("@mailwoman/registry/tools/learned/scorer/crossstate-eval"),
-		import("@mailwoman/registry/tools/learned/scorer/eval"),
+		import("@mailwoman/entity-resolution/tools/coverage-reconciliation"),
+		import("@mailwoman/entity-resolution/tools/cross/dataset-correlation"),
+		import("@mailwoman/entity-resolution/tools/cross/source-threshold-sweep"),
+		import("@mailwoman/entity-resolution/tools/dedup-ceiling"),
+		import("@mailwoman/entity-resolution/tools/geocoder/namesake-probe"),
+		import("@mailwoman/entity-resolution/tools/geocoder/vs-provided-coords"),
+		import("@mailwoman/entity-resolution/tools/nppes/dedup-benchmark"),
+		import("@mailwoman/entity-resolution/tools/learned/scorer/clustering-eval"),
+		import("@mailwoman/entity-resolution/tools/learned/scorer/crossstate-eval"),
+		import("@mailwoman/entity-resolution/tools/learned/scorer/eval"),
 	])
 
 	const { evalGeocoderFactory } = await import("#commands/registry/run")

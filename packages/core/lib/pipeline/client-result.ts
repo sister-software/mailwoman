@@ -38,14 +38,6 @@ export interface ResolvedPlaceView {
 	uncertaintyM: number | null
 }
 
-export interface DualRoleView {
-	id: number
-	name: string
-	placetype: string
-	relationshipType: string
-	role: string
-}
-
 export interface StageTiming {
 	shape: number
 	classify: number
@@ -86,5 +78,4 @@ export interface ParseResult {
 	candidates: ResolvedPlaceView[]
 	fstActive: boolean
 	fstProvenance: FSTProvenance | null
-	dualRoles: DualRoleView[] | null
 }

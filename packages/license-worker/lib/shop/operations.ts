@@ -84,6 +84,12 @@ const provisionOperation = defineOperation({
 	description:
 		"Reconcile the Stripe account against the shop catalog: the Product, the two Prices, the two Payment Links, the portal configuration and, given --worker-origin, the webhook destination. Reports what exists and what is missing; --apply creates the missing objects and writes their ids into lib/shop/ids.json.",
 	effect: OperationEffect.ExternalWrite,
+	options: {
+		mode: { type: "string" },
+		apply: { type: "boolean" },
+		"site-origin": { type: "string" },
+		"worker-origin": { type: "string" },
+	},
 	inputSchema: ProvisionInputSchema,
 	outputSchema: ProvisionReportSchema.extend({
 		written: z.string().nullable(),
@@ -120,6 +126,7 @@ const statusOperation = defineOperation({
 	id: "shop.status",
 	description: "Read what the Stripe account holds against the shop catalog, writing nothing.",
 	effect: OperationEffect.Read,
+	options: { mode: { type: "string" }, "site-origin": { type: "string" }, "worker-origin": { type: "string" } },
 	inputSchema: z.object({
 		mode: ShopModeSchema,
 		"site-origin": z.string().optional(),
@@ -148,6 +155,12 @@ const rehearseOperation = defineOperation({
 	description:
 		"Start a rehearsal purchase in Stripe's test mode: a customer on a test clock and a Checkout Session shaped as the Payment Link is. Prints the URL to pay with the test card; then run shop.rehearse-renewal with the session id.",
 	effect: OperationEffect.ExternalWrite,
+	options: {
+		plan: { type: "string" },
+		licensee: { type: "string" },
+		email: { type: "string" },
+		"site-origin": { type: "string" },
+	},
 	inputSchema: z.object({
 		plan: z.enum(SHOP_PLAN_CODES).optional(),
 		licensee: z.string().optional(),
@@ -172,10 +185,12 @@ const rehearseRenewalOperation = defineOperation({
 	description:
 		"Second half of a rehearsal: wait for the worker to issue the first token, advance the test clock past the period end, and wait for the renewal's token. Reports both tokens' dates and whether the renewed expiry is the new period end plus the grace.",
 	effect: OperationEffect.ExternalWrite,
+	options: { session: { type: "string" }, "worker-origin": { type: "string" }, days: { type: "string" } },
 	inputSchema: z.object({
 		session: z.string(),
 		"worker-origin": z.string(),
-		days: z.number().int().positive().optional(),
+		// A command line passes the number as text.
+		days: z.coerce.number().int().positive().optional(),
 	}),
 	outputSchema: z.object({
 		subscription: z.string(),

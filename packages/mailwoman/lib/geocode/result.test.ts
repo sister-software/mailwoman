@@ -154,6 +154,14 @@ describe("candidate scores", () => {
 
 		expect(candidates[0]?.score).toBeNull()
 	})
+
+	it("states an alias win on the winner and leaves a primary-name win without the field", () => {
+		const alias = extractGeocodeResult(SPRINGFIELD, springfieldTree({ resolver_matched_alias: true }))
+		const primary = extractGeocodeResult(SPRINGFIELD, springfieldTree({}))
+
+		expect(alias.candidates[0]?.matchedAlias).toBe(true)
+		expect(primary.candidates[0]).not.toHaveProperty("matchedAlias")
+	})
 })
 
 describe("coordinate_source", () => {

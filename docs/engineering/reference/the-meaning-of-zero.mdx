@@ -85,20 +85,7 @@ An unknown place and a known-but-unimportant place are both perfectly inert, and
 Measured on the Paris fixtures: only 3 of 43 surfaces were inert this way — so on that corpus the
 inertia is not what's protecting us, but the ambiguity is still live everywhere else.
 
-### 3. `CoincidentLocality.population` — unknown ranks as unpopulated
-
-`core/resolver/types.ts`:
-
-```ts
-/** Locality population (0 when unknown) — the PRIMARY disambiguator when an admin has several. */
-population: number
-```
-
-A locality whose population we don't know sorts identically to one with no inhabitants, and both
-lose to anything populated — **in the primary disambiguator**. Related to #743, where a
-population-first ranking could not be moved by a soft prior for low-population FI/PL localities.
-
-### 4. Zero-valued baselines — the same shape, caught in the act
+### 3. Zero-valued baselines — the same shape, caught in the act
 
 `baseline-assert.ts` checks a reading against a registered value by relative deviation. At
 `value: 0` the relative band is undefined: every reading is either exactly right or infinitely wrong.

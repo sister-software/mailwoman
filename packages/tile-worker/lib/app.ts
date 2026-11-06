@@ -14,7 +14,13 @@ import { renderWorkerError } from "@mailwoman/api-worker/errors"
 import { Hono, type Context, type Handler } from "hono"
 
 import { edgeResponseCache, fromCache, type ResponseCache, type TileWorkerHono } from "#caching"
-import { CITY_TILESET_FILE, CITY_TILESET_NAME, serveCityModelFile } from "#routes/city-models"
+import {
+	CITY_TILESET_FILE,
+	CITY_TILESET_NAME,
+	LANDMARK_MODEL_FILE,
+	serveCityModelFile,
+	serveLandmarkModel,
+} from "#routes/city-models"
 import { serveDatabase } from "#routes/db"
 import { serveGeolocation } from "#routes/geolocation"
 import { serveHeartbeat, serveHome } from "#routes/healthcheck"
@@ -95,15 +101,20 @@ function providerTileSetName(c: Context<TileWorkerHono>): string {
 const CITY_MODEL_ROUTE = `/3dtiles/:tileset{${CITY_TILESET_NAME}}/:file{${CITY_TILESET_FILE}}`
 
 /**
+ * The path of one converted landmark model.
+ */
+const LANDMARK_MODEL_ROUTE = `/landmarks/:file{${LANDMARK_MODEL_FILE}}`
+
+/**
  * Routes that bypass the response cache.
  *
- * A city model file goes out gzipped with `encodeBody: "manual"`.
+ * A city model file or landmark model goes out gzipped with `encodeBody: "manual"`.
  * The cache hands such a body back as unencoded bytes.
  *
  * The edge then compresses those bytes again.
  * A cached copy therefore reached the browser as gzip inside brotli.
  */
-const UNCACHED_ROUTES = new Set([CITY_MODEL_ROUTE])
+const UNCACHED_ROUTES = new Set([CITY_MODEL_ROUTE, LANDMARK_MODEL_ROUTE])
 
 /**
  * The tile Worker's routes in match order, as path and handler.
@@ -146,6 +157,7 @@ export const TILE_WORKER_ROUTES: ReadonlyArray<readonly [path: string, handler: 
 	["/", serveHome],
 	["/heartbeat", serveHeartbeat],
 	[CITY_MODEL_ROUTE, serveCityModelFile],
+	[LANDMARK_MODEL_ROUTE, serveLandmarkModel],
 ]
 
 /**

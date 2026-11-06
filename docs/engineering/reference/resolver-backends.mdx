@@ -134,28 +134,17 @@ mailwoman eval oa-resolver \
 
 ## What the candidate backend does not implement
 
-`ResolverBackend` marks `ancestors()` and `coincidentLocalitiesFor()` as optional, and
-`WOFCandidateTableLookup` implements neither. Its public surface is `findPlace` and `close`.
-`candidate.db` has no `ancestors` table for these methods to read, so closing the gap requires a
-new build output as well as the methods.
-
-The resolver guards both calls with a plain return. The option they serve, `hierarchyCompletion`,
-**is enabled by default**. On the default backend, a caller who never set the option therefore gets
-a feature that reports success and does no work:
-
-| Absent method               | What stops working                                                                                                                                                                                |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ancestors()`               | a parse that drops the locality of a city-state or dependent locality keeps the gap; `metadata.ancestors` — the containment lineage the Nominatim and Photon drop-ins expose — is never populated |
-| `coincidentLocalitiesFor()` | the dual-role pass never runs, so a region that is also a locality under the same name resolves to one role only                                                                                  |
-
-`Resolver.capabilityGaps` exposes these gaps as data, and the resolver reports each gap once on
-stderr, so a caller can see the missing capability directly. The report does not fix the gap.
+`ResolverBackend` marks `ancestors()` as optional, and `WOFCandidateTableLookup` does not
+implement it. Its public surface is `findPlace` and `close`. The published `candidate.db` holds a
+`candidate_ancestor` table that the Earth Gazette explorer reads, but the lookup does not answer
+`ancestors()` from it. On the candidate backend, `includeAncestors` (default off) therefore leaves
+`metadata.ancestors` unset, and the Nominatim and Photon drop-ins cannot expose a containment
+lineage.
 
 **Before FTS can be retired**, complete these steps in order:
 
-1. Build an `ancestors` table into `candidate.db` (`build-candidate.ts`) and implement both methods
-   on `WOFCandidateTableLookup`. Until then, the candidate backend cannot serve
-   `hierarchyCompletion`, and the drop-ins cannot serve ancestry.
+1. Implement `ancestors()` on `WOFCandidateTableLookup` over `candidate_ancestor`. Until then, the
+   drop-ins cannot serve ancestry from the candidate backend.
 2. Port the remaining FTS-only paths: the NL postcode retry ladder, the `near`/`maxDistanceKm` hard
    filters, and the Geographic Rule Engine conventions.
 3. Remove the last hard pin. `commands/registry/run.tsx` constructs `WOFSQLitePlaceLookup` directly

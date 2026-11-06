@@ -16,6 +16,7 @@
  *   listed eight directories and missed `address-points` and `interpolation`, which hold 54 and 52 databases.
  */
 
+import type { ParseArgsOptionsConfig } from "@mailwoman/core/scripting/arguments"
 import { z } from "zod"
 
 import { DEFAULT_MOUNT_OPTIONS } from "#storage-kit/fstab"
@@ -41,3 +42,18 @@ export const volumeSpec = z.object({
 })
 
 export type VolumeSpec = z.infer<typeof volumeSpec>
+
+/**
+ * The `mwops storage` flags for {@linkcode volumeSpec}, one per key.
+ */
+export const VOLUME_OPTIONS = {
+	device: { type: "string" },
+	serial: { type: "string" },
+	transport: { type: "string" },
+	model: { type: "string" },
+	label: { type: "string" },
+	"mount-point": { type: "string" },
+	options: { type: "string" },
+	uncompressed: { type: "string" },
+	owner: { type: "string" },
+} as const satisfies ParseArgsOptionsConfig

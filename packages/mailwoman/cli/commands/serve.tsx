@@ -203,7 +203,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 		let disposed = false
 
 		void (async () => {
-			const { createMailwomanAPI } = await import("@mailwoman/api")
+			const { createMailwomanAPI, MAILWOMAN_API_DOC_INFO } = await import("@mailwoman/api")
 			const { serveNode } = await import("@mailwoman/api-kit")
 			const { $public } = await import("#env")
 			const { createServeEngine } = await import("#api-engine")
@@ -239,6 +239,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 			const app = createMailwomanAPI(engine, {
 				batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX),
 				engine: engineStamp.stamp,
+				docInfo: MAILWOMAN_API_DOC_INFO,
 			})
 
 			const server = await serveNode({

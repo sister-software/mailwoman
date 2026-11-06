@@ -1,0 +1,19 @@
+# The API Worker bound to the engine Worker, for running the three hosted-geocoder Workers together under
+# `wrangler dev`. From packages/engine-worker:
+#
+#   yarn wrangler dev -c ../api-worker/wrangler.local-engine.toml -c wrangler.toml -c ../gazetteer-worker/wrangler.toml
+#
+# The deployed API Worker keeps wrangler.toml, which binds no engine Worker until one is deployed.
+name = "mailwoman-api"
+main = "./lib/index.ts"
+compatibility_date = "2026-10-24"
+workers_dev = false
+
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "2838"
+simple = { limit = 60, period = 60 }
+
+[[services]]
+binding = "API_BACKEND"
+service = "mailwoman-engine"

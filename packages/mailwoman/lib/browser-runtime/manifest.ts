@@ -219,13 +219,14 @@ export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesMa
 /**
  * Fetch + normalize a locale's releases manifest, the base locale's by default.
  *
- * `cache: "reload"` bypasses the (immutable-Cache-Control) http cache for the version
+ * `cache: "no-store"` bypasses the (immutable-Cache-Control) http cache for the version
  * pointer so a returning visitor sees a `defaultVersion` bump.
+ * Cloudflare's workerd accepts `no-store` and refuses `reload`, so a Worker can call this too.
  *
  * A locale the bucket publishes no manifest for answers null.
  */
 export async function fetchReleasesManifest(locale: string = DEFAULT_LOCALE): Promise<ReleasesManifest | null> {
-	const res = await fetchWithRetry(releasesManifestURL(locale), { cache: "reload" })
+	const res = await fetchWithRetry(releasesManifestURL(locale), { cache: "no-store" })
 
 	return res.ok ? normalizeReleasesManifest((await res.json()) as WireReleasesManifest) : null
 }

@@ -18,6 +18,7 @@ export const generatedSurfaces = defineOperation({
 	description:
 		"Regenerate every version-stamped generated document (the man page, the docs CLI reference) after a version bump. Requires a compiled tree.",
 	effect: OperationEffect.LocalWrite,
+	options: {},
 	inputSchema: z.object({}).strict(),
 	outputSchema: z.object({ surfaces: z.array(surfaceState) }),
 	async run(_input, context) {
