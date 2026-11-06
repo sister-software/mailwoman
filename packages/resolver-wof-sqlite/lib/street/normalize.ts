@@ -557,6 +557,23 @@ const ROUTE_DESIGNATORS: Readonly<Record<"us" | "state" | "interstate", readonly
 	interstate: ["interstate"],
 }
 
+/**
+ * The spellings of a county road, as US address sources store them.
+ *
+ * Wisconsin leads with `cth`, Texas with `county road`, and Florida with `cr`,
+ * and a county road may take letters, as `cth cw` does.
+ */
+const COUNTY_ROAD_DESIGNATORS: readonly string[] = ["county road", "county highway", "county", "cth", "co road", "cr"]
+
+/**
+ * Reads a county road's designator from a query, such as `county rd cw`,
+ * `cty hwy 5`, `co rd 12`, `cr 40` or `cth a`.
+ *
+ * A bare `co 5` stays a Colorado state route.
+ */
+const COUNTY_ROAD_QUERY =
+	/^(?:(?:county|cty|co) (?:road|rd|highway|hwy|trunk|trunk highway) (\d+[a-z]?|[a-z]{1,3})|(?:county|cty|cth|cr) (\d+[a-z]?|[a-z]{1,2}))$/
+
 const COMPASS_WORDS: readonly string[] = ["north", "south", "east", "west"]
 
 /**
@@ -567,7 +584,7 @@ const COMPASS_WORDS: readonly string[] = ["north", "south", "east", "west"]
  */
 function parseRouteQuery(key: string): { system: keyof typeof ROUTE_DESIGNATORS; route: string } | null {
 	const match =
-		/^(us|i|interstate|[a-z]{2}|state|sr|cr)(?: (?:road|rd|route|rte|rt|highway|hwy))? (\d+[a-z]?)$/.exec(key) ??
+		/^(us|i|interstate|[a-z]{2}|state|sr)(?: (?:road|rd|route|rte|rt|highway|hwy))? (\d+[a-z]?)$/.exec(key) ??
 		/^(highway|hwy|route|rte)() ?(\d+[a-z]?)$/.exec(key)
 
 	if (!match) return null
@@ -589,7 +606,16 @@ function parseRouteQuery(key: string): { system: keyof typeof ROUTE_DESIGNATORS;
  * The caller's postcode, locality or box still scopes each probe.
  */
 export function routeKeyVariants(key: StreetKey): StreetKey[] {
-	const parsed = parseRouteQuery(key.replaceAll("-", " "))
+	const written = key.replaceAll("-", " ")
+	const countyRoad = COUNTY_ROAD_QUERY.exec(written)
+
+	if (countyRoad) {
+		const route = countyRoad[1] ?? countyRoad[2]!
+
+		return COUNTY_ROAD_DESIGNATORS.map((designator) => `${designator} ${route}` as StreetKey)
+	}
+
+	const parsed = parseRouteQuery(written)
 
 	if (!parsed) return []
 

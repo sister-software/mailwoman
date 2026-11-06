@@ -117,6 +117,27 @@ describe("stripLocalityQualifier (query-side fallback)", () => {
 	})
 })
 
+describe("streetKeyVariants on a county road", () => {
+	const SPELLINGS = (route: string) =>
+		["county road", "county highway", "county", "cth", "co road", "cr"].map((d) => `${d} ${route}`)
+
+	it("probes every stored spelling of a lettered or numbered county road", () => {
+		for (const written of ["County Rd CW", "County Road CW", "CTH CW", "County Hwy CW", "Cty Rd CW", "Co Rd CW"]) {
+			expect(streetKeyVariants(written)).toEqual(expect.arrayContaining(SPELLINGS("cw")))
+		}
+
+		for (const written of ["CR 240", "CR-240", "County Road 240", "Co Rd 240"]) {
+			expect(streetKeyVariants(written)).toEqual(expect.arrayContaining(SPELLINGS("240")))
+		}
+	})
+
+	it("leaves a county-named street and a bare Colorado route alone", () => {
+		expect(streetKeyVariants("County Line Rd")).toEqual(["county line road"])
+		expect(streetKeyVariants("CO-5")).toContain("state highway 5")
+		expect(streetKeyVariants("CO-5")).not.toContain("county road 5")
+	})
+})
+
 describe("streetKeyVariants", () => {
 	it("keeps a plain name single-variant", () => {
 		expect(streetKeyVariants("East 13 Mile Road")).toEqual(["east 13 mile road"])
