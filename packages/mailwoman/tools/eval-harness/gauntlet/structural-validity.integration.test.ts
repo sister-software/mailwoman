@@ -40,9 +40,9 @@ const KNOWN_INVALID: Record<string, string> = {
 	"ae-thin-system-14":
 		"`OFFICE 2003 A, SWISS TOWER, CLUSTER Y JUMEIRAH LAKES TOWERS, DUBAI, United Arab Emirates`: `CLUSTER Y JUMEIRAH` and `DUBAI` both read as localities, and `LAKES TOWERS` as a street.",
 	"gb-vob-2-veneti": "`2 Veneti`: the venue name splits into a house number `2` and a street `Veneti`.",
-	// The rows below decode to an invalid tree under the 10.8.0 model (v8.6.3 seed 42), accepted in #2926. The capital
-	// or main city reads as the region in the first seven, the remainder of the `<street>, <city>, <country>` defect #2925
-	// traces to wof-admin's `<place>, <region>, <country>` rows.
+	// The rows below decode to an invalid tree under the 10.8.0 model (v8.6.3 seed 42), accepted in #2926.
+	// The capital or main city reads as the region in the first seven, the remainder of the
+	// `<street>, <city>, <country>` defect #2925 traces to wof-admin's `<place>, <region>, <country>` rows.
 	"ae-thin-system-03":
 		"`OPP. UNION PAPER MILLS, DUBAI, United Arab Emirates`: `DUBAI` reads as the region, so the landmark is a dependent_locality with no locality.",
 	"ae-thin-system-06":
@@ -57,6 +57,8 @@ const KNOWN_INVALID: Record<string, string> = {
 		"`UNIT 117, JBK COMPOUND, SALWA, DOHA, Qatar`: `DOHA` reads as the region and `SALWA` as the locality, so the compound is a dependent_locality beside it.",
 	"th-cs-sukhumvit-soi-11-bangkok":
 		"`Sukhumvit Soi 11, Bangkok`: `Bangkok` reads as the region, so the soi is a dependent_locality with no locality.",
+	"vn-op-le-duan-city-twice":
+		"`34 Lê Duẩn, Sài Gòn, Hồ Chí Minh, Vietnam`: `Hồ Chí Minh` reads as the region, so `Sài Gòn` is a dependent_locality with no locality. `applyRegionCity` corrects the answer after the parse.",
 	"gh-ws-digital-address-ga-183-8164-accra":
 		"`GA-183-8164, Accra, Ghana`: the GhanaPost digital address reads as a house number with no street.",
 	"jp-grouping-corner-bracket-building":
