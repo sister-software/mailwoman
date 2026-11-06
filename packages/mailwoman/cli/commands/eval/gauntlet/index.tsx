@@ -35,9 +35,10 @@ export const spec = {
 		"weights-cache": { type: "string", description: "Candidate weights dir" },
 		layer: {
 			type: "string",
-			choices: ["regression", "metamorphic", "holdout", "ablation"],
+			choices: ["regression", "metamorphic", "holdout", "ablation", "clarity"],
 			description: "Single layer",
 		},
+		match: { type: "string", description: "Clarity layer: keep cases whose id matches this pattern" },
 		n: { type: "number", default: 300, description: "Held-out sample size" },
 		out: { type: "string", description: "Ablation artifact dir" },
 		components: { type: "string", description: "Components to delete" },

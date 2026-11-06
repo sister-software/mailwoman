@@ -37,11 +37,11 @@ import type { SwitchPin } from "#tools/eval-harness/switch-pin"
  * The Gauntlet layers.
  *
  * The first three make up the combined verdict.
- * `ablation` is reachable only via `--layer ablation`.
+ * `ablation` and `clarity` are reachable only via `--layer`.
  *
- * It is absent from the combined check and cannot block a ship.
+ * They are absent from the combined check and cannot block a ship.
  */
-export type GauntletLayer = "regression" | "metamorphic" | "holdout" | "ablation"
+export type GauntletLayer = "regression" | "metamorphic" | "holdout" | "ablation" | "clarity"
 
 /**
  * Options for {@linkcode runGauntlet}.
@@ -151,6 +151,10 @@ export interface GauntletRunOptions {
 	 * Ablation: cap the number of cases (not variants) — a smoke run.
 	 */
 	limit?: number
+	/**
+	 * Clarity: keep only cases whose id matches this pattern.
+	 */
+	match?: string
 }
 
 /**
@@ -231,6 +235,20 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 			// Exit 0 unless the instrument produced no cell: the map grades the corpus
 			// and resolver rather than a candidate, so it can never block a ship.
 			return (await runAblationLayer(runAblationOptions(options))).pass ? 0 : 1
+		case "clarity": {
+			const { runClarityLayer } = await import("#tools/eval-harness/gauntlet/clarity-layer")
+
+			return (
+				await runClarityLayer({
+					...layerOptions,
+					...(options.out ? { outDir: options.out } : {}),
+					...(options.limit ? { limit: options.limit } : {}),
+					...(options.match ? { match: options.match } : {}),
+				})
+			).pass
+				? 0
+				: 1
+		}
 	}
 }
 
