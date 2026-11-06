@@ -152,6 +152,38 @@ beforeAll(async () => {
 		null
 	)
 
+	insert.run(
+		"old volcano road",
+		"old volcano road",
+		"194074",
+		null,
+		"96785",
+		"volcano",
+		"OLD VOLCANO RD",
+		19.4257922,
+		-155.238827,
+		"t",
+		"r",
+		null,
+		null
+	)
+
+	insert.run(
+		"north state road 245",
+		"north state road 245",
+		"69",
+		null,
+		"47579",
+		"santa claus",
+		"North State Road 245",
+		38.11519,
+		-86.909451,
+		"t",
+		"r",
+		null,
+		null
+	)
+
 	lookup = new AddressPointSqliteLookup(path)
 	fullKeys = new AddressPointSqliteLookup(path, { localityKeys: "full" })
 	finestKeys = new AddressPointSqliteLookup(path, { localityKeys: "full", localityLevel: "finest" })
@@ -164,6 +196,20 @@ describe("AddressPointSqliteLookup", () => {
 
 	it("prefers a verbatim range key over the low-end fallback", () => {
 		expect(lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505", bbox: null })?.lat).toBe(-27.9999)
+	})
+
+	it("matches a hyphenated number against its stored unhyphenated form", () => {
+		expect(lookup.find({ street: "Old Volcano Rd", number: "19-4074", postcode: "96785", bbox: null })?.lat).toBe(
+			19.4257922
+		)
+	})
+
+	it("matches a written state route against the spelling the source stores", () => {
+		expect(lookup.find({ street: "IN-245", number: "69", postcode: "47579", bbox: null })?.lat).toBe(38.11519)
+	})
+
+	it("reads a street name that opens with two letters as no route", () => {
+		expect(lookup.find({ street: "Elm 245", number: "69", postcode: "47579", bbox: null })).toBeNull()
 	})
 
 	it("falls back to the range's low end when the range key misses", () => {

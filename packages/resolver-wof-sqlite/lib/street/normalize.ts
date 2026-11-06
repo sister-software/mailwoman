@@ -536,5 +536,70 @@ export function streetKeyVariants(street: string, locale: StreetLocale = "us"): 
 		}
 	}
 
+	for (const candidate of routeKeyVariants(primary)) {
+		if (!variants.includes(candidate)) {
+			variants.push(candidate)
+		}
+	}
+
 	return variants
+}
+
+/**
+ * The route designators a numbered road is written with, by the system the query's prefix selects.
+ *
+ * The forms are the ones US address sources store, measured over the state extracts:
+ * `state road 10`, `state highway 42`, `highway 79`, `united states highway 31`, `interstate 35`.
+ */
+const ROUTE_DESIGNATORS: Readonly<Record<"us" | "state" | "interstate", readonly string[]>> = {
+	us: ["united states highway", "us highway", "us route", "highway", "route"],
+	state: ["state road", "state highway", "state route", "highway", "route"],
+	interstate: ["interstate"],
+}
+
+const COMPASS_WORDS: readonly string[] = ["north", "south", "east", "west"]
+
+/**
+ * A query's route number and system: `in 245` and `state route 245` read as state routes,
+ * `us 93` as a US route, and `i 68` as an interstate.
+ *
+ * A two-letter prefix is any state's code, because the shape is the same in every state.
+ */
+function parseRouteQuery(key: string): { system: keyof typeof ROUTE_DESIGNATORS; route: string } | null {
+	const match =
+		/^(us|i|interstate|[a-z]{2}|state|sr|cr)(?: (?:road|rd|route|rte|rt|highway|hwy))? (\d+[a-z]?)$/.exec(key) ??
+		/^(highway|hwy|route|rte)() ?(\d+[a-z]?)$/.exec(key)
+
+	if (!match) return null
+
+	const route = match.at(-1)!
+	const prefix = match[1]!
+
+	if (prefix === "us") return { system: "us", route }
+
+	if (prefix === "i" || prefix === "interstate") return { system: "interstate", route }
+
+	return { system: "state", route }
+}
+
+/**
+ * Lists the stored spellings of a numbered route, with and without the compass word a source may add.
+ *
+ * `IN-245` is stored as `north state road 245` in Indiana, so a query gives no hint of the spelling.
+ * The caller's postcode, locality or box still scopes each probe.
+ */
+export function routeKeyVariants(key: StreetKey): StreetKey[] {
+	const parsed = parseRouteQuery(key.replaceAll("-", " "))
+
+	if (!parsed) return []
+
+	return ROUTE_DESIGNATORS[parsed.system].flatMap((designator) => {
+		const base = `${designator} ${parsed.route}`
+
+		return [
+			base,
+			...COMPASS_WORDS.map((compass) => `${compass} ${base}`),
+			...COMPASS_WORDS.map((compass) => `${base} ${compass}`),
+		] as StreetKey[]
+	})
 }

@@ -141,7 +141,12 @@ describe("streetKeyVariants", () => {
 		expect(streetKeyVariants("48th St")).toEqual(["48th street", "48 street"])
 		expect(streetKeyVariants("48 St")).toEqual(["48 street", "48th street"])
 		expect(streetKeyVariants("West 11 Street")).toEqual(["west 11 street", "west 11th street"])
-		expect(streetKeyVariants("US Route 9")).toEqual(["us route 9"])
+
+		const route = streetKeyVariants("US Route 9")
+
+		expect(route[0]).toBe("us route 9")
+		expect(route).not.toContain("us route 9th")
+		expect(route).toContain("east united states highway 9")
 	})
 
 	it("never touches a street genuinely named with a type word", () => {

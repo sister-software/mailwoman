@@ -220,6 +220,13 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	) {
 		let row = this.#probe(streetNorm, number, query)
 
+		// A hyphenated number can be one number written two ways: Hawaii's `19-4074`
+		// is stored as `194074` by some sources.
+		// This runs ahead of the range fallback, because that fallback reads it as house number 19.
+		if (!row && /^\d+-\d+$/.test(number)) {
+			row = this.#probe(streetNorm, number.replace("-", ""), query)
+		}
+
 		// The registers store one number per point, so a range such as "385-387" falls back to its low end.
 		if (!row) {
 			const low = /^(\d+[a-z]?)-\d+[a-z]?$/.exec(number)?.[1]
