@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/dictionaries",
-	"version": "10.8.0",
+	"version": "11.0.0",
 	"description": "Vendored libpostal dictionaries, libaddressinput address metadata and curated reference tables, with their path resolvers and download tools",
 	"keywords": [
 		"address",
