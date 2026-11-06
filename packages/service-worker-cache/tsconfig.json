@@ -1,0 +1,13 @@
+{
+	"extends": "@sister.software/tsconfig/web",
+	"compilerOptions": {
+		"rootDir": "./lib",
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true,
+		"lib": ["ESNext", "DOM", "WebWorker"]
+	},
+	"include": ["./lib/**/*"],
+	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts"]
+}

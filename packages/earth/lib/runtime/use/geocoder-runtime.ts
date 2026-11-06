@@ -49,6 +49,7 @@ import {
 	resolveStreet,
 	type StreetResolution,
 } from "@mailwoman/resolver-wof-wasm/httpvfs/street"
+import { postPruneMessage } from "@mailwoman/service-worker-cache/prune"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import {
 	DEFAULT_LOCALE,
@@ -80,7 +81,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { EarthConfig } from "#config"
 import { pageSearchParam, pageTilesetParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
-import { pruneDBRangeCache } from "#runtime/range-cache"
 import { loadUnderseaIndex, underseaPlaceView } from "#runtime/undersea"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
 
@@ -375,7 +375,7 @@ export function useGeocoderRuntime({
 
 	useEffect(() => {
 		if (rt.selectedVersion) {
-			pruneDBRangeCache(rt.selectedVersion)
+			postPruneMessage(rt.selectedVersion)
 		}
 	}, [rt.selectedVersion])
 

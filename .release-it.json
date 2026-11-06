@@ -117,6 +117,7 @@
 		"packages/neural-weights-base-latn": "parked shared base for #1177 — publish wiring deliberately not landed",
 		"packages/gazetteer-worker": "private gazetteer lookup Worker behind the hosted geocoder — Cloudflare infrastructure, never publishes",
 		"packages/geocoder-service": "private choice between Earth's hosted and in-browser geocoders — no published consumer yet",
-		"packages/engine-worker": "private parse and geocode Worker behind the hosted geocoder — Cloudflare infrastructure, never publishes"
+		"packages/engine-worker": "private parse and geocode Worker behind the hosted geocoder — Cloudflare infrastructure, never publishes",
+		"packages/service-worker-cache": "private Workbox handlers and plugins for Earth's service worker — no published consumer yet"
 	}
 }

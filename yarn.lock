@@ -6914,6 +6914,7 @@ __metadata:
     "@mailwoman/react": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
+    "@mailwoman/service-worker-cache": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/structures": "workspace:*"
     "@mailwoman/undersea": "workspace:*"
@@ -6935,7 +6936,11 @@ __metadata:
     three: "npm:0.186.0"
     vite: "npm:^8.3.5"
     vite-plugin-pwa: "npm:^2.0.0"
+    workbox-cacheable-response: "npm:^7.4.1"
+    workbox-expiration: "npm:^7.4.1"
     workbox-precaching: "npm:^7.4.1"
+    workbox-routing: "npm:^7.4.1"
+    workbox-strategies: "npm:^7.4.1"
     workbox-window: "npm:^7.4.1"
     wrangler: "npm:^4.156.0"
   languageName: unknown
@@ -7742,6 +7747,14 @@ __metadata:
 "@mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm":
   version: 0.0.0-use.local
   resolution: "@mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/service-worker-cache@workspace:*, @mailwoman/service-worker-cache@workspace:packages/service-worker-cache":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/service-worker-cache@workspace:packages/service-worker-cache"
+  dependencies:
+    workbox-core: "npm:^7.4.1"
   languageName: unknown
   linkType: soft
 
@@ -31384,7 +31397,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-cacheable-response@npm:7.4.1":
+"workbox-cacheable-response@npm:7.4.1, workbox-cacheable-response@npm:^7.4.1":
   version: 7.4.1
   resolution: "workbox-cacheable-response@npm:7.4.1"
   dependencies:
@@ -31393,14 +31406,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-core@npm:7.4.1":
+"workbox-core@npm:7.4.1, workbox-core@npm:^7.4.1":
   version: 7.4.1
   resolution: "workbox-core@npm:7.4.1"
   checksum: 10/7c6b5d5008b30f4cd87d82ef946bff066ec231784c23b7c455230a100922b5de99cc0baf059a3883babf05fff5a98eaf0f62407a3b6bce2dda280f44412899bd
   languageName: node
   linkType: hard
 
-"workbox-expiration@npm:7.4.1":
+"workbox-expiration@npm:7.4.1, workbox-expiration@npm:^7.4.1":
   version: 7.4.1
   resolution: "workbox-expiration@npm:7.4.1"
   dependencies:
@@ -31465,7 +31478,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-routing@npm:7.4.1":
+"workbox-routing@npm:7.4.1, workbox-routing@npm:^7.4.1":
   version: 7.4.1
   resolution: "workbox-routing@npm:7.4.1"
   dependencies:
@@ -31474,7 +31487,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"workbox-strategies@npm:7.4.1":
+"workbox-strategies@npm:7.4.1, workbox-strategies@npm:^7.4.1":
   version: 7.4.1
   resolution: "workbox-strategies@npm:7.4.1"
   dependencies:

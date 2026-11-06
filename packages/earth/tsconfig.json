@@ -28,6 +28,7 @@
 		{ "path": "../react" },
 		{ "path": "../resolver-wof-sqlite" },
 		{ "path": "../resolver-wof-wasm" },
+		{ "path": "../service-worker-cache" },
 		{ "path": "../../lib" },
 		{ "path": "../spatial" },
 		{ "path": "../structures" },

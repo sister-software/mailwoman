@@ -3,53 +3,85 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The Earth service worker. `vite-plugin-pwa` injects the precache manifest into this file — the app shell, its
- * hashed assets, the icons and the manifest — and no code here precaches a model, a database or a tile.
+ * The Earth service worker. `vite-plugin-pwa` injects the precache manifest into this file: the app shell, its hashed
+ * assets, the icons and the manifest. The routes below cache what the page fetches from the data origin and the tile
+ * Worker, so a page that loses its connection keeps the release it loaded and the tiles it drew.
  *
- * The worker also stores the range-chunk cache for the byte-range databases the resolver reads from the data
- * origin: every validated 64 KB range chunk of a versioned, immutable URL is stored in Cache Storage. The URL
- * and offset form its key. Each chunk's body length is checked against its Content-Range because Mobile Safari's HTTP cache
- * can hand back a torn chunk (a truncated body for a 206) that reaches SQLite as "database disk image is
- * malformed" — a torn chunk is refetched once with `cache: "no-store"`, and the readers' own cache-busting retry
- * stays as the backstop for browsers without service workers.
+ * - A navigation loads the precached `index.html`.
+ * - A file of the build that the precache leaves out, such as a `.wasm` runtime, is cache-first on first use.
+ * - The staged SQLite runtime is stale-while-revalidate, because its file names have no content hash.
+ * - A range read of a `.db` file goes to the range-chunk handler, and the handler stores each validated chunk. A `?cb=` retry
+ *   from the readers asks for fresh bytes, so a URL with a query string bypasses it.
+ * - A whole-file read on the data origin is cache-first. Every path there is versioned, apart from `releases.json`.
+ * - `releases.json` and a tileset's TileJSON are network-first, so an offline page reads the last copy.
+ * - A tile is cache-first, with an entry cap.
  *
- * Non-database requests are never intercepted. The handler does not call `respondWith` for them. The range reader issues
- * range reads as synchronous XHR inside a dedicated worker. Those reads still route through this handler because the
- * worker inherits its creator document's controller. The page posts {@link PruneMessage} after it selects a release
- * and drops chunks from other releases.
+ * The range reader issues its reads as synchronous XHR inside a dedicated worker, and those reads still reach this
+ * worker because the dedicated worker inherits its creator document's controller. The page posts a prune message after
+ * it selects a release, and this worker then drops range chunks and release files of other releases.
  */
 
 /// <reference lib="webworker" />
 
-import { precacheAndRoute } from "workbox-precaching"
+import { isPruneMessage, pruneOtherVersions } from "@mailwoman/service-worker-cache/prune"
+import { createRangeChunkHandler } from "@mailwoman/service-worker-cache/range-chunks"
+import { tornBodyPlugin } from "@mailwoman/service-worker-cache/torn-body"
+import { CacheableResponsePlugin } from "workbox-cacheable-response"
+import { ExpirationPlugin } from "workbox-expiration"
+import { createHandlerBoundToURL, precacheAndRoute } from "workbox-precaching"
+import { NavigationRoute, registerRoute } from "workbox-routing"
+import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from "workbox-strategies"
 
 import { PRODUCTION_CONFIG } from "#config"
-import { PRUNE_MESSAGE_TYPE, type PruneMessage } from "#runtime/range-cache"
 
 declare const self: ServiceWorkerGlobalScope
 
 precacheAndRoute(self.__WB_MANIFEST)
 
-// #region Range cache
+// Earth routes in the page, so every navigation, such as `/debug`
+// or `/?geocoder=local`, loads the same shell.
+// The precache route matches a URL only after dropping `utm_*` and `fbclid`,
+// so it answers none of these from the cache.
+registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html")))
 
-const HTTP_PARTIAL_CONTENT = 206
+const RANGE_CACHE = "mailwoman-db-ranges-v1"
+const ASSET_CACHE = "mailwoman-release-assets-v1"
+const MANIFEST_CACHE = "mailwoman-manifests-v1"
+const TILE_CACHE = "mailwoman-tiles-v1"
+const APP_ASSET_CACHE = "mailwoman-app-assets-v1"
 
-const CACHE_NAME = "mailwoman-db-ranges-v1"
-const DB_HOST = PRODUCTION_CONFIG.dataOriginURL.hostname
+/**
+ * The build's own files kept outside the precache: the WebAssembly runtimes of
+ * the current build and a few before it.
+ */
+const MAX_APP_ASSET_ENTRIES = 40
 
-interface ValidatedChunk {
-	body: ArrayBuffer
-	contentRange: string
-}
+/**
+ * The tiles kept on the device.
+ *
+ * The expiration plugin drops the least recently used tile past the cap,
+ * and drops the whole cache on a quota error.
+ */
+const MAX_TILE_ENTRIES = 6000
 
-function isPruneMessage(data: unknown): data is PruneMessage {
-	return (
-		typeof data === "object" &&
-		data !== null &&
-		(data as { type?: unknown }).type === PRUNE_MESSAGE_TYPE &&
-		typeof (data as { keepVersion?: unknown }).keepVersion === "string"
-	)
-}
+/**
+ * The release files kept on the device: a release's model, tokenizer, FSTs, postcode binaries
+ * and pair indexes, for the current release and a few before it.
+ */
+const MAX_ASSET_ENTRIES = 200
+
+/**
+ * How long a network-first route waits before it answers from the cache.
+ */
+const MANIFEST_NETWORK_TIMEOUT_SECONDS = 4
+
+const DATA_HOST = PRODUCTION_CONFIG.dataOriginURL.hostname
+const TILE_HOST = PRODUCTION_CONFIG.tileWorkerURL.hostname
+
+/**
+ * A tile path ends in `/<z>/<x>/<y>.<extension>`, the tile Worker's tile route.
+ */
+const TILE_PATH = /\/\d+\/\d+\/\d+\.[a-z0-9]+$/u
 
 self.addEventListener("install", () => {
 	void self.skipWaiting()
@@ -61,138 +93,77 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("message", (event) => {
 	if (isPruneMessage(event.data)) {
-		event.waitUntil(pruneOtherVersions(event.data.keepVersion))
-	}
-})
+		const { keepVersion } = event.data
 
-self.addEventListener("fetch", (event) => {
-	const request = event.request
-
-	if (request.method !== "GET") return
-
-	let url: URL
-
-	try {
-		url = new URL(request.url)
-	} catch {
-		return
-	}
-
-	// Only the database files with plain URLs: a `?cb=` cache-busting retry from the
-	// readers asks for untouched fresh bytes, so it bypasses this cache entirely.
-	if (url.hostname !== DB_HOST || !url.pathname.endsWith(".db") || url.search !== "") return
-
-	const range = request.headers.get("range")
-	const match = range ? /^bytes=(\d+)-(\d+)$/u.exec(range) : null
-
-	if (!match) return
-
-	event.respondWith(respondWithCachedRange(request, url.href, Number(match[1]), Number(match[2])))
-})
-
-async function respondWithCachedRange(request: Request, href: string, start: number, end: number): Promise<Response> {
-	try {
-		const cache = await caches.open(CACHE_NAME)
-		// The Cache API rejects 206 responses, so chunks are stored as 200s under a synthetic
-		// per-range URL with the real Content-Range in a header for reconstruction.
-		const cacheKey = `${href}?mwrange=${start}-${end}`
-		const hit = await cache.match(cacheKey)
-
-		if (hit) {
-			const contentRange = hit.headers.get("x-mw-content-range")
-			const body = await hit.arrayBuffer()
-
-			if (contentRange && body.byteLength === rangeLength(contentRange)) {
-				return rangeResponse(body, contentRange)
-			}
-
-			// An unreadable entry falls through to the network.
-			await cache.delete(cacheKey)
-		}
-
-		let response = await fetch(request)
-		let chunk = response.status === HTTP_PARTIAL_CONTENT ? await validatedChunk(response) : null
-
-		if (!chunk && response.status === HTTP_PARTIAL_CONTENT) {
-			// A torn chunk out of the http cache: force fresh bytes once.
-			response = await fetch(href, {
-				method: "GET",
-				mode: "cors",
-				credentials: "omit",
-				cache: "no-store",
-				headers: { range: `bytes=${start}-${end}` },
-			})
-
-			chunk = response.status === HTTP_PARTIAL_CONTENT ? await validatedChunk(response) : null
-		}
-
-		if (!chunk) return response
-
-		await cache.put(
-			cacheKey,
-			new Response(chunk.body.slice(0), {
-				status: 200,
-				headers: {
-					"content-type": "application/octet-stream",
-					"x-mw-content-range": chunk.contentRange,
-				},
-			})
+		event.waitUntil(
+			Promise.all(
+				[RANGE_CACHE, ASSET_CACHE].map(async (name) => pruneOtherVersions(await caches.open(name), keepVersion))
+			)
 		)
-
-		return rangeResponse(chunk.body, chunk.contentRange)
-	} catch {
-		return fetch(request)
 	}
-}
+})
 
-/**
- * Read a 206 response's body and verify its length against the Content-Range header.
- *
- * The header gives the expected length, including for a final chunk shorter than requested.
- * The result is null for a torn body or an unparsable header.
- */
-async function validatedChunk(response: Response): Promise<ValidatedChunk | null> {
-	const contentRange = response.headers.get("content-range")
-	const expected = contentRange ? rangeLength(contentRange) : null
-
-	if (expected === null || !contentRange) return null
-
-	const body = await response.arrayBuffer()
-
-	if (body.byteLength !== expected) return null
-
-	return { body, contentRange }
-}
-
-function rangeLength(contentRange: string): number | null {
-	const parsed = /^bytes (\d+)-(\d+)\/(?:\d+|\*)$/u.exec(contentRange)
-
-	if (!parsed) return null
-
-	return Number(parsed[2]) - Number(parsed[1]) + 1
-}
-
-function rangeResponse(body: ArrayBuffer, contentRange: string): Response {
-	return new Response(body, {
-		status: HTTP_PARTIAL_CONTENT,
-		statusText: "Partial Content",
-		headers: {
-			"content-type": "application/octet-stream",
-			"content-length": String(body.byteLength),
-			"content-range": contentRange,
-		},
+// The build's hashed files that the precache leaves out, such as onnxruntime's 14.8 MB `.wasm`:
+// stored on first use, so a visitor who never loads the browser model never downloads them.
+registerRoute(
+	({ url }) => url.origin === self.location.origin && url.pathname.startsWith("/assets/"),
+	new CacheFirst({
+		cacheName: APP_ASSET_CACHE,
+		plugins: [
+			new CacheableResponsePlugin({ statuses: [200] }),
+			tornBodyPlugin(),
+			new ExpirationPlugin({ maxEntries: MAX_APP_ASSET_ENTRIES, purgeOnQuotaError: true }),
+		],
 	})
-}
+)
 
-async function pruneOtherVersions(keepVersion: string): Promise<void> {
-	const cache = await caches.open(CACHE_NAME)
-	const keepSegment = `/${keepVersion}/`
+// The SQLite runtime the range reader loads from `PRODUCTION_CONFIG.sqliteRuntimeBaseURL`.
+// Its file names have no content hash, so a cached copy answers at once
+// and the network's copy replaces it for the next load.
+registerRoute(
+	({ url }) =>
+		url.origin === self.location.origin && url.pathname.startsWith(`${PRODUCTION_CONFIG.sqliteRuntimeBaseURL}/`),
+	new StaleWhileRevalidate({
+		cacheName: APP_ASSET_CACHE,
+		plugins: [new CacheableResponsePlugin({ statuses: [200] }), tornBodyPlugin()],
+	})
+)
 
-	for (const request of await cache.keys()) {
-		if (!new URL(request.url).pathname.includes(keepSegment)) {
-			await cache.delete(request)
-		}
-	}
-}
+registerRoute(
+	({ url, request }) =>
+		url.hostname === DATA_HOST && url.pathname.endsWith(".db") && url.search === "" && request.headers.has("range"),
+	createRangeChunkHandler({ cacheName: RANGE_CACHE })
+)
 
-// #endregion
+registerRoute(
+	({ url }) => (url.hostname === DATA_HOST || url.hostname === TILE_HOST) && url.pathname.endsWith(".json"),
+	new NetworkFirst({
+		cacheName: MANIFEST_CACHE,
+		networkTimeoutSeconds: MANIFEST_NETWORK_TIMEOUT_SECONDS,
+		plugins: [new CacheableResponsePlugin({ statuses: [200] })],
+	})
+)
+
+registerRoute(
+	({ url, request }) => url.hostname === DATA_HOST && url.search === "" && !request.headers.has("range"),
+	new CacheFirst({
+		cacheName: ASSET_CACHE,
+		plugins: [
+			new CacheableResponsePlugin({ statuses: [200] }),
+			tornBodyPlugin(),
+			new ExpirationPlugin({ maxEntries: MAX_ASSET_ENTRIES, purgeOnQuotaError: true }),
+		],
+	})
+)
+
+registerRoute(
+	({ url }) => url.hostname === TILE_HOST && TILE_PATH.test(url.pathname),
+	new CacheFirst({
+		cacheName: TILE_CACHE,
+		plugins: [
+			new CacheableResponsePlugin({ statuses: [200] }),
+			tornBodyPlugin(),
+			new ExpirationPlugin({ maxEntries: MAX_TILE_ENTRIES, purgeOnQuotaError: true }),
+		],
+	})
+)
