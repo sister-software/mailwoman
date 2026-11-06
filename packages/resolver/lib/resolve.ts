@@ -58,6 +58,7 @@ import {
 	type ResolutionState,
 	type ResolvedOpts,
 } from "#resolve/passes"
+import { applyRegionCity } from "#resolve/region-city"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street/tier"
 import {
 	type CapitalLevelFn,
@@ -238,6 +239,7 @@ class WOFResolver implements Resolver {
 			await applyExplicitCountryCoherence(newRoots, this.#backend)
 			// Re-resolve foreign region/locality pairs blocked by locale scope.
 			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry?.country ?? null)
+			await applyRegionCity(newRoots, this.#backend)
 		}
 
 		if (opts.landmarks) {
