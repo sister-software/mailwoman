@@ -146,6 +146,49 @@ describe("applyLandmark", () => {
 		expect(roots[0]!.value).toBe("Hyde Park")
 	})
 
+	describe("with a name the parser reads as a street", () => {
+		const street = (value: string, suffix: string) => [
+			node("street", value, 0),
+			node("street_suffix", suffix, value.length + 1),
+		]
+
+		it("answers a famous street from Wikidata and keeps it a street", async () => {
+			const roots = street("Downing", "Street")
+
+			await applyLandmark(roots, "Downing Street", lookup([hit({ qid: "Q1", name: "Downing Street" })]))
+
+			expect(roots[0]).toMatchObject({ tag: "street", value: "Downing Street", lat: 40.78 })
+		})
+
+		it("keeps the street when the hit is an alias of another place", async () => {
+			const roots = street("Baker", "Street")
+
+			await applyLandmark(
+				roots,
+				"Baker Street",
+				lookup([hit({ qid: "Q2", name: "Baker Street tube station", primary: false })])
+			)
+
+			expect(roots[0]).toMatchObject({ tag: "street", value: "Baker" })
+		})
+
+		it("keeps the street over an OpenStreetMap place of that spelling", async () => {
+			const roots = street("Wall", "Street")
+
+			await applyLandmark(roots, "Wall Street", lookup([hit({ qid: "osm:W7", name: "Wall Street" })]))
+
+			expect(roots[0]).toMatchObject({ tag: "street", value: "Wall" })
+		})
+
+		it("answers a park the parser read as a street with the suffix Park", async () => {
+			const roots = street("Piedmont", "Park")
+
+			await applyLandmark(roots, "Piedmont Park", lookup([hit({ qid: "osm:W8", name: "Piedmont Park" })]))
+
+			expect(roots[0]).toMatchObject({ tag: "venue", value: "Piedmont Park" })
+		})
+	})
+
 	describe("an OpenStreetMap place", () => {
 		const park = hit({ qid: "osm:W1", name: "Piedmont Park", primary: false, importance: 0.3, lat: 33.79, lon: -84.37 })
 
@@ -158,8 +201,22 @@ describe("applyLandmark", () => {
 			expect(roots[0]!.metadata?.["landmark_source"]).toBe("openstreetmap:planet")
 		})
 
-		it("answers over a row with no measured population holding the whole name", async () => {
-			const roots = [node("locality", "Piedmont Park", 0, { placeID: "wof:5", metadata: { resolver_score: 0 } })]
+		it("keeps a place with no measured population unless the parser read a park", async () => {
+			const vogel = [node("locality", "Vogel", 0, { placeID: "wof:6", metadata: { resolver_score: 0 } })]
+
+			await applyLandmark(vogel, "Vogel", lookup([hit({ qid: "osm:W9", name: "Vogel" })]))
+
+			expect(vogel[0]!.placeID).toBe("wof:6")
+		})
+
+		it("answers a park over a row with no measured population holding the whole name", async () => {
+			const roots = [
+				node("locality", "Piedmont Park", 0, {
+					placeID: "wof:5",
+					metadata: { resolver_score: 0 },
+					children: [node("street_suffix", "Park", 9)],
+				}),
+			]
 
 			await applyLandmark(roots, "Piedmont Park", lookup([park]))
 

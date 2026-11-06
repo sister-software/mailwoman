@@ -171,16 +171,28 @@ export async function applyLandmark(roots: AddressNode[], raw: string, landmarks
 	const resolved = roots.filter((root) => typeof root.placeID === "string")
 	const fromOSM = leader.qid.startsWith(OSM_LANDMARK_PREFIX)
 
+	// The parser reads `Wall Street` and `Times Square` as streets, and `Central Park` as a venue.
+	// It also reads some parks as a street with the suffix `Park`, and those stay places.
+	const inName = (node: AddressNode) => node.start < nameEnd
+
+	const readsAsPark = nodes.some(
+		(node) => node.tag === "street_suffix" && inName(node) && foldName(node.value) === "park"
+	)
+
+	const readsAsStreet = !readsAsPark && nodes.some((node) => node.tag === "street" && inName(node))
+
 	if (fromOSM) {
+		// OpenStreetMap holds a place spelled like a street in some other town: `Wall Street` also answers in Utah.
+		if (readsAsStreet) return
+
 		// A school or a park in OpenStreetMap can share its town's name,
 		// so a place holding the whole name keeps it.
-		// `Piedmont Park` is free to answer, because the walk resolved only `Piedmont`.
-		// A row with no measured population yields, as `Piedmont Park` in South
-		// Carolina yields to the park in Atlanta.
+		// A park reading beats a row with no measured population, as `Piedmont Park`
+		// in South Carolina yields to the park in Atlanta.
 		const holdsName = (node: AddressNode) =>
 			typeof node.placeID === "string" &&
 			foldName(node.value) === foldName(name) &&
-			Number(node.metadata?.["resolver_score"] ?? 0) > 0
+			(!readsAsPark || Number(node.metadata?.["resolver_score"] ?? 0) > 0)
 
 		if (nodes.some(holdsName)) return
 	} else {
@@ -188,11 +200,13 @@ export async function applyLandmark(roots: AddressNode[], raw: string, landmarks
 			(root) => root.start < nameEnd || root.value.toLowerCase() === name.toLowerCase()
 		)
 
-		if (!leader.primary && !leader.code && nameResolved) return
+		// `Baker Street` is an alias of the tube station, and the street keeps its name.
+		if (!leader.primary && !leader.code && (nameResolved || readsAsStreet)) return
 	}
 
 	const node: AddressNode = {
-		tag: "venue",
+		// A famous street answers from Wikidata and stays a street: `Downing Street` holds a coordinate and a street.
+		tag: readsAsStreet ? "street" : "venue",
 		value: name.normalize("NFC").replaceAll(/\s+/gu, " "),
 		start: raw.indexOf(name),
 		end: nameEnd,

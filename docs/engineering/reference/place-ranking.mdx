@@ -403,8 +403,12 @@ embedded OpenSearch. The data is ODbL, so the database is build-local and `MAILW
 
 `applyLandmark` reads it a second time after span rescore, with three differences from the Wikidata pass:
 
-- A place in the gazetteer with a measured population that holds the whole written name keeps it. `Volcano` stays the town. A
-  row with no population yields, so `Piedmont Park` answers the park in Atlanta over a locality of that name in South Carolina.
+- A place in the gazetteer that holds the whole written name keeps it. `Volcano` stays the town. When the parser read a street
+  with the suffix `Park`, a row with no population yields, so `Piedmont Park` answers the park in Atlanta over a locality of that
+  name in South Carolina.
+- A name the parser read as any other street keeps the street, because OpenStreetMap holds places spelled like streets in other
+  towns. In the Wikidata pass, the place's own name still answers and stays tagged as a street, as `Downing Street` does, and an
+  alias of another place yields, as the tube station does under `Baker Street`.
 - A stated town bounds its places by its own extent where the gazetteer holds one, and the nearest namesake answers.
 - A place has no Wikipedia edition count, so its prominence is Photon's importance. Two namesakes rarely lead by the published
   margin, so a bare name held by several places reads as a close call.

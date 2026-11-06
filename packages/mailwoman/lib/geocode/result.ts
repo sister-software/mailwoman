@@ -267,7 +267,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	}
 
 	// A landmark answer is its own place, finer than any admin node the input states beside it.
-	const landmarkNode = allNodes.find((n) => n.tag === "venue" && typeof n.metadata?.["landmark_sitelinks"] === "number")
+	const landmarkNode = allNodes.find((n) => typeof n.metadata?.["landmark_sitelinks"] === "number")
 
 	if (tier === "admin" && landmarkNode) {
 		lat = landmarkNode.lat ?? null
