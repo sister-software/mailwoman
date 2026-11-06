@@ -21,7 +21,7 @@ run only when the required input is available.
 ```mermaid
 flowchart TD
     A["span text → name_key"] --> B["SQL fetch<br/>ORDER BY neg_rank, up to 64 rows"]
-    B --> C["cross-country alias penalty<br/>effectiveNegRank"]
+    B --> C["alias penalty<br/>effectiveNegRank"]
     C --> D{"postcode country<br/>posterior present?"}
     D -- yes --> E["anchor rerank<br/>prominence + w·P(country)"]
     D -- no --> F{"locale prior on and<br/>no default country?"}
@@ -128,10 +128,9 @@ The candidate backend's `score` is `−neg_rank`, a log-population rank that mea
 gold rows in [Resolver backends](./resolver-backends.mdx). `minWinningScore` checks this value, so
 the floor it sets is a minimum population rank and holds no information about confidence.
 
-## The cross-country alias penalty
+## The alias penalty
 
-An alias row (`is_primary = 0`) gets a penalty if the highest-ranked primary-name row with the
-same key is in another country:
+An alias row (`is_primary = 0`) gets a penalty if another row holds the same key as its primary name:
 
 <math display="block">
   <mrow>
@@ -142,7 +141,7 @@ same key is in another country:
     <mrow>
       <mo>{</mo>
       <mtable>
-        <mtr><mtd><mn>1</mn></mtd><mtd><mtext>alias, and the top primary row is in another country</mtext></mtd></mtr>
+        <mtr><mtd><mn>1</mn></mtd><mtd><mtext>alias, and the key has a primary row</mtext></mtd></mtr>
         <mtr><mtd><mn>0</mn></mtd><mtd><mtext>otherwise</mtext></mtd></mtr>
       </mtable>
     </mrow>
@@ -150,9 +149,14 @@ same key is in another country:
 </math>
 
 The penalty is `PRIMARY_PREFERENCE_LOG10 = 1`, or one log10 population unit. An alias can still
-win if it is at least ten times as populous as the primary row in the other country. This is why
-`LA` still resolves to Los Angeles. A penalized row also loses `exactMatch`, so a later country
-pin cannot promote it back into that tier.
+win if it is at least ten times as populous as the primary row, in any country. `LA` still resolves
+to Los Angeles, and the misspelling `Dehli` still resolves to Delhi ahead of a village of that name.
+`Central Park` answers Central Park, Washington, ahead of Bethpage, New York, an alias row with 5.8
+times its population. A penalized row also loses `exactMatch`, so a later country pin cannot promote
+it back into that tier.
+
+When a place wins through an alias, the node's metadata has `resolver_matched_alias` and the result's
+candidate has `matchedAlias: true`, so a caller can see that the input matched another name of the place.
 
 ## Importance
 

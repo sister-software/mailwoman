@@ -41,8 +41,15 @@ import {
  * type against `WITHHELD_CANDIDATE_FIELDS`.
  */
 function stripWithheld(place: ResolvedPlace): SameDataCandidate {
-	const { containedByQualifier, mismatch, regionScopeMiss, resolutionQuality, variantAliasExempted, ...candidate } =
-		place
+	const {
+		containedByQualifier,
+		matchedAlias,
+		mismatch,
+		regionScopeMiss,
+		resolutionQuality,
+		variantAliasExempted,
+		...candidate
+	} = place
 
 	return candidate
 }

@@ -684,6 +684,8 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 				variantAliasExempted: row.variantExempted ? true : null,
 
+				matchedAlias: row.is_primary === 0 ? true : null,
+
 				population: hasPopulation ? row.population : null,
 				referential: hasPopulation ? referentialFromPopulation(row.population) : null,
 				encyclopedic: null,

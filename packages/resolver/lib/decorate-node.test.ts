@@ -115,6 +115,17 @@ describe("decorateNode and the stored extent", () => {
 		expect(n.metadata?.["resolver_bbox"]).toEqual(bbox)
 	})
 
+	it("records an alias win and leaves a primary-name win unmarked", () => {
+		const alias = node()
+		const primary = node()
+
+		decorateNode(alias, place({ matchedAlias: true }), [])
+		decorateNode(primary, place(), [])
+
+		expect(alias.metadata?.["resolver_matched_alias"]).toBe(true)
+		expect(primary.metadata?.["resolver_matched_alias"]).toBeUndefined()
+	})
+
 	it("records no extent for a point-only row, whose corners are its coordinate", () => {
 		const n = node()
 

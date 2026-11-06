@@ -511,7 +511,7 @@ describe("RankByPrimaryPreference firing mark (variantExempted)", () => {
 		expect(variant.effectiveNegRank).toBeCloseTo(-5.1, 5)
 	})
 
-	test("an in-country variant never fires — no cross-country penalty was eligible", () => {
+	test("an in-country variant takes the same exemption", () => {
 		const ranked = rankByPrimaryPreference(
 			[row(-6.1, 0, 1, "variant"), row(-5.53, 1, 1)],
 			5,
@@ -522,7 +522,7 @@ describe("RankByPrimaryPreference firing mark (variantExempted)", () => {
 
 		const variant = ranked.find((r) => r.is_primary === 0)!
 
-		expect("variantExempted" in variant).toBe(false)
+		expect(variant.variantExempted).toBe(true)
 	})
 
 	test("an exempted variant that still loses keeps its candidate-level mark below the winner", () => {
@@ -558,11 +558,17 @@ describe("rankByPrimaryPreference (bounded cross-country primary preference)", (
 		expect(ranked[0]!.demoted).toBe(false)
 	})
 
-	test("A same-country alias is never penalized (population decides — Frisco → San Francisco)", () => {
+	test("a same-country alias under 10x loses to the primary (Frisco answers Frisco, Texas)", () => {
 		const ranked = rankByPrimaryPreference([row(-5.91, 0, 1), row(-5.34, 1, 1)], 5)
+		expect(ranked[0]!.is_primary).toBe(1)
+		expect(ranked[1]!.demoted).toBe(true)
+		expect(ranked[1]!.effectiveNegRank).toBeCloseTo(-4.91, 5)
+	})
+
+	test("a same-country alias over 10x keeps the name (Dehli answers Delhi)", () => {
+		const ranked = rankByPrimaryPreference([row(-7.21, 0, 1), row(-3.1, 1, 1)], 5)
 		expect(ranked[0]!.is_primary).toBe(0)
 		expect(ranked[0]!.demoted).toBe(false)
-		expect(ranked[0]!.effectiveNegRank).toBeCloseTo(-5.91, 5)
 	})
 
 	test("with no primary in the set, population order is untouched", () => {
@@ -581,11 +587,11 @@ describe("rankByPrimaryPreference (bounded cross-country primary preference)", (
 	})
 
 	test("a populated tie keeps scan order — the unmeasured-primary term never reaches a measured row", () => {
-		const alias = { neg_rank: -5, is_primary: 0, country_id: 1, population: 100_000 }
-		const primary = { neg_rank: -5, is_primary: 1, country_id: 1, population: 100_000 }
-		const ranked = rankByPrimaryPreference([alias, primary], 5)
+		const first = { neg_rank: -5, is_primary: 1, country_id: 1, population: 100_000, name_role: "a" }
+		const second = { neg_rank: -5, is_primary: 1, country_id: 1, population: 100_000, name_role: "b" }
+		const ranked = rankByPrimaryPreference([first, second], 5)
 
-		expect(ranked[0]!.is_primary).toBe(0)
+		expect(ranked[0]!.name_role).toBe("a")
 	})
 })
 
@@ -624,10 +630,12 @@ describe("RankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 		expect(under[0]!.is_primary).toBe(1)
 	})
 
-	test("SAME-country collision is unaffected by the ratio setting — population-first at any ratio", () => {
-		const ranked = rankByPrimaryPreference([pop(950_000, 0, US), pop(100_000, 1, US)], 5)
-		expect(ranked[0]!.is_primary).toBe(0)
-		expect(ranked[0]!.demoted).toBe(false)
+	test("a same-country collision reads the same ratio as a cross-country one", () => {
+		const under = rankByPrimaryPreference([pop(950_000, 0, US), pop(100_000, 1, US)], 5)
+		const over = rankByPrimaryPreference([pop(1_050_000, 0, US), pop(100_000, 1, US)], 5)
+
+		expect(under[0]!.is_primary).toBe(1)
+		expect(over[0]!.is_primary).toBe(0)
 	})
 })
 

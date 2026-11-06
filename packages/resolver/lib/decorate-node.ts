@@ -90,6 +90,10 @@ export function decorateNode(
 		node.metadata["resolver_importance"] = resolved.importance
 	}
 
+	if (resolved.matchedAlias) {
+		node.metadata["resolver_matched_alias"] = true
+	}
+
 	// A point-only row stores its coordinate as both corners, so only an extent with area measures the place's size.
 	const bbox = resolved.bbox
 

@@ -138,6 +138,7 @@ interface CandidateAlternative {
 	country?: string
 	id?: number | string
 	score?: number
+	matchedAlias?: true | null
 }
 
 /**
@@ -162,6 +163,7 @@ function candidatesOf(primaryNode: AddressNode | null): GeocodeResult["candidate
 			countryCode: (metadata["resolver_country"] as string | null)?.trim()?.toUpperCase() ?? null,
 			placeID: primaryNode.placeID || null,
 			score: scoreOf(metadata["resolver_score"]),
+			...(metadata["resolver_matched_alias"] ? { matchedAlias: true as const } : {}),
 		},
 	]
 
@@ -182,6 +184,7 @@ function candidatesOf(primaryNode: AddressNode | null): GeocodeResult["candidate
 			countryCode: a.country ? String(a.country).trim().toUpperCase() : null,
 			placeID: a.id == null ? null : a.placetype === "venue" ? `wikidata:${a.id}` : `wof:${a.id}`,
 			score: scoreOf(a.score),
+			...(a.matchedAlias ? { matchedAlias: true as const } : {}),
 		})
 	}
 

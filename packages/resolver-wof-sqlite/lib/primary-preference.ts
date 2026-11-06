@@ -11,14 +11,15 @@ import type { CandidateTable } from "#candidate/schema"
  *
  * `is_primary` is optional, so an older artifact without the column skips the re-rank without an error.
  */
-export type PrimaryPreferenceRow = Pick<CandidateTable, "neg_rank" | "country_id"> &
+export type PrimaryPreferenceRow = Pick<CandidateTable, "neg_rank"> &
 	Partial<Pick<CandidateTable, "is_primary" | "placetype_id" | "population" | "name_role">>
 
 /**
- * The log10-population penalty applied to an alias row when the top primary-name
- * row for the same key is in another country.
+ * The log10-population penalty applied to an alias row when another row holds
+ * the same key as its primary name.
  *
- * An alias at least 10 times as populous still wins, so alternate names such as "LA" keep working.
+ * An alias at least 10 times as populous still wins, so alternate names such as "LA"
+ * and misspellings of a large city such as "Dehli" keep working.
  */
 export const PRIMARY_PREFERENCE_LOG10 = 1
 
@@ -37,7 +38,7 @@ export const RERANK_FETCH = 64
  */
 export type RankedRow<R> = R & {
 	/**
-	 * `neg_rank` plus any cross-country alias penalty.
+	 * `neg_rank` plus any alias penalty.
 	 *
 	 * Rows are ordered by this value.
 	 * The emitted `prominence` derives from it.
@@ -47,12 +48,11 @@ export type RankedRow<R> = R & {
 	effectiveNegRank: number
 
 	/**
-	 * True when this row is a cross-country alias that the penalty moved behind
-	 * the top primary for the same key.
+	 * True when this row is an alias that the penalty moved behind the top primary for the same key.
 	 *
 	 * A demoted row loses `exactMatch`, so the resolver's country pin cannot promote
-	 * a coincidental foreign exonym back over the primary.
-	 * A dominant alias and a same-country alias are never demoted.
+	 * a coincidental exonym back over the primary.
+	 * A dominant alias is never demoted.
 	 */
 	demoted: boolean
 
@@ -82,7 +82,7 @@ export type RankedRow<R> = R & {
 /**
  * Re-ranks population-ordered candidate rows.
  *
- * A cross-country alias must beat the top primary by `delta` in log10 population.
+ * An alias must beat the top primary by `delta` in log10 population, in any country.
  * The function returns the top `limit` rows.
  *
  * When `placetypes` is given, an exact tie prefers a populated `locality`.
@@ -103,19 +103,12 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 		}
 	}
 
-	const topCountry = topPrimary?.country_id
-
-	const wouldPenalize = (r: R): boolean =>
-		typeof topCountry === "number" && r.is_primary !== 1 && r.country_id !== topCountry
-
-	const isCrossCountryAlias = (r: R): boolean =>
-		wouldPenalize(r) && !(exemptVariantAliases && r.name_role === "variant")
+	const isAliasOfPrimary = (r: R): boolean => topPrimary != null && r.is_primary !== 1
 
 	const annotate = (r: R): RankedRow<R> => {
-		const penalized = isCrossCountryAlias(r)
+		const exempted = exemptVariantAliases && r.name_role === "variant" && isAliasOfPrimary(r)
+		const penalized = isAliasOfPrimary(r) && !exempted
 		const effectiveNegRank = r.neg_rank + (penalized ? delta : 0)
-
-		const exempted = !penalized && exemptVariantAliases && r.name_role === "variant" && wouldPenalize(r)
 
 		return {
 			...r,

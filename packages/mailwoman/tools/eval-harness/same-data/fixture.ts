@@ -36,6 +36,7 @@ export const SAME_DATA_SCHEMA_VERSION = 1
  */
 export const WITHHELD_CANDIDATE_FIELDS = [
 	"containedByQualifier",
+	"matchedAlias",
 	"mismatch",
 	"regionScopeMiss",
 	"resolutionQuality",

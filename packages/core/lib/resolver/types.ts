@@ -93,6 +93,10 @@ export interface ResolvedPlace {
 	 */
 	variantAliasExempted?: true | null
 	/**
+	 * True when the input matched an alias of this place and differs from its primary name.
+	 */
+	matchedAlias?: true | null
+	/**
 	 * Optional stored extent.
 	 * A point-only row stores its coordinate as both corners.
 	 */
