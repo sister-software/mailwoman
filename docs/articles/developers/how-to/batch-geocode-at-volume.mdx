@@ -327,11 +327,11 @@ the end.
 
 ## The shipped version of this
 
-`geocodeStream` from `mailwoman/geocode` is the same pattern already built, wired to `@mailwoman/registry`'s
+`geocodeStream` from `mailwoman/geocode` is the same pattern already built, wired to `@mailwoman/entity-resolution`'s
 CSV normalizer:
 
 ```js
-import { normalizeCSV } from "@mailwoman/registry"
+import { normalizeCSV } from "@mailwoman/entity-resolution"
 import { geocodeStream } from "mailwoman/geocode"
 
 const normalized = normalizeCSV("customers.csv", { mapping })

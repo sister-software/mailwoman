@@ -108,12 +108,12 @@ a library, and `mailwoman serve` is its command. The endpoint tables are on
 
 ## Record work
 
-| Package                 | What it is                                                                  | Install it when                                   |
-| ----------------------- | --------------------------------------------------------------------------- | ------------------------------------------------- |
-| `@mailwoman/registry`   | The record-matching application: resolve messy records to geocoded entities | You are deduplicating a customer or vendor list   |
-| `@mailwoman/match`      | The matcher itself: blocking, scoring, clustering                           | You are building your own matching pipeline       |
-| `@mailwoman/record`     | The record schema and its per-field normalizers                             | You are feeding `@mailwoman/match` directly       |
-| `@mailwoman/address-id` | A stable address primary key                                                | You need exact-match joins rather than fuzzy ones |
+| Package                        | What it is                                                                  | Install it when                                   |
+| ------------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------- |
+| `@mailwoman/entity-resolution` | The record-matching application: resolve messy records to geocoded entities | You are deduplicating a customer or vendor list   |
+| `@mailwoman/match`             | The matcher itself: blocking, scoring, clustering                           | You are building your own matching pipeline       |
+| `@mailwoman/record`            | The record schema and its per-field normalizers                             | You are feeding `@mailwoman/match` directly       |
+| `@mailwoman/address-id`        | A stable address primary key                                                | You need exact-match joins rather than fuzzy ones |
 
 [Match messy records](../how-to/match-messy-records.mdx) is the worked example.
 

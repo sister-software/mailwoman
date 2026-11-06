@@ -76,7 +76,7 @@
 			"entry": ["index.ts", "scripts/**/*.ts"],
 			"ignoreDependencies": ["@mailwoman/neural-weights-en-us", "@mailwoman/neural-weights-cjk"]
 		},
-		"packages/registry": {
+		"packages/entity-resolution": {
 			"entry": ["lib/index.ts", "lib/cli.ts", "lib/models/**/*.ts", "tools/**/*.ts"]
 		},
 		"packages/tile-worker": {

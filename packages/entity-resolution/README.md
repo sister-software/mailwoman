@@ -1,4 +1,4 @@
-# @mailwoman/registry
+# @mailwoman/entity-resolution
 
 **Geocode-first record-matching application** — the high-level entry point that
 runs the full block → score → cluster pipeline over ingested records and returns
@@ -8,7 +8,7 @@ This is the clinic-funding use case Mailwoman was built for, standing on a
 calibrated, label-free matcher.
 
 ```ts
-import { ingestRows, resolveEntities, toGeoJSON } from "@mailwoman/registry"
+import { ingestRows, resolveEntities, toGeoJSON } from "@mailwoman/entity-resolution"
 
 // 1. Ingest — rows → normalized SourceRecords. The mapping is POSITIONAL (arg 2) rather than a field of the
 //    options object, and `geocodeAddress` belongs here: each address is resolved as it is ingested.
@@ -41,23 +41,23 @@ CSV / SQLite → ingestRows → SourceRecord[] → resolveEntities → ResolveRe
 
 ```ts
 // Ingest — parse CSV / map columns → normalized records
-import { inferMapping, ingestRows, normalizeCSV, parseCSV } from "@mailwoman/registry"
+import { inferMapping, ingestRows, normalizeCSV, parseCSV } from "@mailwoman/entity-resolution"
 // ingestRows(rows, mapping, opts?): Promise<SourceRecord[]>
 //   opts: { geocodeAddress?, addressSeparator? }  — addressSeparator defaults to ", "
 // parseCSV(text): Record<string, string>[]
 // inferMapping(header): ColumnMapping
 // normalizeCSV(path, { mapping, delimiter? }): AsyncGenerator<SourceRecord>  — streams, does NOT geocode
 // Resolve — run the full matcher pipeline
-import { resolveEntities } from "@mailwoman/registry"
+import { resolveEntities } from "@mailwoman/entity-resolution"
 // resolveEntities(records, config?): ResolveResult
 //   ResolveResult: { entities, candidatePairs, droppedBlocks }
 //   config: { model?, blockingKeys?, threshold?, maxBlockSize?, trainEM?, addressFrequency?,
 //             collapseSpatial?, requireCorroboration?, usePhone?, linkage?, discriminators?,
 //             exactDiscriminators?, scorer?, learnedScorer? }
 // Export — GeoJSON, MapLibre HTML, reconciliation reports
-import { reconcile, toGeoJSON, toMapHTML } from "@mailwoman/registry"
+import { reconcile, toGeoJSON, toMapHTML } from "@mailwoman/entity-resolution"
 // Learned scorer — pre-trained GBT for single-dataset dedup, default-on
-import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "@mailwoman/registry"
+import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "@mailwoman/entity-resolution"
 ```
 
 `geocodeAddress` is an `ingestRows` option rather than a `resolveEntities` one — coordinates have to exist

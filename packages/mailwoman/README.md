@@ -221,7 +221,7 @@ package is the umbrella that wires them together as a single `npm install`.
 | `@mailwoman/record`               | Record schema + normalizers                        |
 | `@mailwoman/match`                | Block → score → cluster matcher                    |
 | `@mailwoman/address-id`           | Stable address primary key                         |
-| `@mailwoman/registry`             | Entity resolution application                      |
+| `@mailwoman/entity-resolution`    | Entity resolution application                      |
 
 ## Related
 

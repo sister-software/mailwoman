@@ -7,7 +7,7 @@
  *   figures (`cross-dataset-map`, `source-provenance-map`) must be served over localhost to render
  *   their basemap (the house tile server cors-restricts to localhost + the docs domains). PNG
  *   rendering stays programmatic via `renderPlotlyHTMLToPNG` / `renderServedMapToPNG` in
- *   `@mailwoman/registry/tools` (lazy playwright).
+ *   `@mailwoman/entity-resolution/tools` (lazy playwright).
  */
 
 import { Text } from "ink"
@@ -51,10 +51,10 @@ type Figure = (typeof figures)[number]
 async function runFigure(figure: Figure, options: Options): Promise<string> {
 	const [{ crossDatasetMap }, { geocodeFirstSurface }, { sourceProvenanceMap }, { yardstickFigure }] =
 		await Promise.all([
-			import("@mailwoman/registry/tools/viz/cross-dataset-map"),
-			import("@mailwoman/registry/tools/viz/geocode-first-surface"),
-			import("@mailwoman/registry/tools/viz/source-provenance-map"),
-			import("@mailwoman/registry/tools/viz/yardstick-figure"),
+			import("@mailwoman/entity-resolution/tools/viz/cross-dataset-map"),
+			import("@mailwoman/entity-resolution/tools/viz/geocode-first-surface"),
+			import("@mailwoman/entity-resolution/tools/viz/source-provenance-map"),
+			import("@mailwoman/entity-resolution/tools/viz/yardstick-figure"),
 		])
 
 	switch (figure) {

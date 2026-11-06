@@ -32,7 +32,7 @@ export const spec = {
 
 const RegistryMatcherScale: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { matcherScale } = await import("@mailwoman/registry/tools/matcher-scale")
+		const { matcherScale } = await import("@mailwoman/entity-resolution/tools/matcher-scale")
 
 		return matcherScale(
 			{

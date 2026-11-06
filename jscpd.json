@@ -9,7 +9,7 @@
 		"**/out/**",
 		"docs/build/**",
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
-		"packages/registry/lib/models/**",
+		"packages/entity-resolution/lib/models/**",
 		"**/*.d.ts"
 	],
 	"path": ["packages"]

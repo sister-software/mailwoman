@@ -32,7 +32,7 @@ export const spec = {
 
 const RegistryGoldSetSample: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { goldSetSample } = await import("@mailwoman/registry/tools/gold-set-sample")
+		const { goldSetSample } = await import("@mailwoman/entity-resolution/tools/gold-set-sample")
 
 		return goldSetSample(
 			{

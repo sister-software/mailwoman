@@ -15,6 +15,6 @@
 		{ "path": "../core" },
 		{ "path": "../match" },
 		{ "path": "../record" },
-		{ "path": "../registry" }
+		{ "path": "../entity-resolution" }
 	]
 }

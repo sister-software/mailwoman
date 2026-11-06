@@ -96,7 +96,7 @@ export async function trainCrossSourceGBT(
 	const SOURCES = resolvePath(options.sources ?? dataRootPath("record-matcher", "sources"))
 	const STATE = stateOption(options)
 	const NPIS = options.npis ?? 2000
-	const OUT = options.out || "packages/registry/lib/models/crosssource-gbt-en-us.ts"
+	const OUT = options.out || "packages/entity-resolution/lib/models/crosssource-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"
 	// Max cross-source recall subject to this held-out pairwise precision.
 	const PRECISION_BAR = options.precisionBar ?? 0.95

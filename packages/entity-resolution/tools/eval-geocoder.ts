@@ -5,7 +5,7 @@
  *
  *   The injected-geocoder interface for the record-matcher tools. The registry package never imports
  *   the heavy runtime (neural parser, WOF resolver, per-state extracts), since `mailwoman` depends on
- *   `@mailwoman/registry` and the reverse import would cycle the workspace graph. Each tool instead
+ *   `@mailwoman/entity-resolution` and the reverse import would cycle the workspace graph. Each tool instead
  *   takes an {@linkcode EvalGeocoderFactory} the CLI command constructs from
  *   `mailwoman/geocode-core` (see `mailwoman/commands/registry/run.tsx`).
  */

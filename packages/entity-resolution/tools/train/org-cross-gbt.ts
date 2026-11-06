@@ -91,7 +91,7 @@ export async function trainOrgCrossSourceGBT(
 ): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
 	const SOURCES = resolvePath(options.sources ?? dataRootPath("record-matcher", "sources"))
 	const CAP = options.cap ?? 6000
-	const OUT = options.out || "packages/registry/lib/models/org-crosssource-gbt-en-us.ts"
+	const OUT = options.out || "packages/entity-resolution/lib/models/org-crosssource-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"
 	// Max cross-source recall subject to this held-out pairwise precision.
 	const PRECISION_BAR = options.precisionBar ?? 0.95

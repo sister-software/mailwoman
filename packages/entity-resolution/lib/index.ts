@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/registry` — the geocode-first record-matching application.
+ *   `@mailwoman/entity-resolution` — the geocode-first record-matching application.
  *
  *   {@link resolveEntities} runs the whole matcher (block → score → cluster) over normalized
  *   contact/organization {@link SourceRecord}s and returns canonical {@link ResolvedEntity entities};

@@ -153,7 +153,7 @@ export async function coverageReconciliation(
 	// The dedup-calibrated GBT default rejects that pair.
 	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })
 
-	// Reconcile through the shared @mailwoman/registry code path, so the script and the CLI agree.
+	// Reconcile through the shared @mailwoman/entity-resolution code path, so the script and the CLI agree.
 	const config: ReconcileConfig = { eligibilitySources: [...ELIGIBILITY], fundingSources: [...FUNDING] }
 	const result = reconcileCoverage(entities, config)
 	const geojson = reconciliationGeoJSON(result)

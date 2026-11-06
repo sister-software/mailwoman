@@ -55,7 +55,7 @@
 				"packages/query-shape",
 				"packages/react",
 				"packages/record",
-				"packages/registry",
+				"packages/entity-resolution",
 				"packages/resolver",
 				"packages/resolver-wof-sqlite",
 				"packages/resolver-wof-wasm",

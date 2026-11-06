@@ -6965,6 +6965,28 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/entity-resolution@workspace:*, @mailwoman/entity-resolution@workspace:packages/entity-resolution":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/entity-resolution@workspace:packages/entity-resolution"
+  dependencies:
+    "@mailwoman/address-id": "workspace:*"
+    "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/browser": "workspace:*"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/match": "workspace:*"
+    "@mailwoman/record": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    "@protomaps/basemaps": "npm:^5.7.2"
+    "@sister.software/h3": "npm:^1.1.0"
+    "@types/node": "npm:^26.6.6"
+    path-ts: "npm:^2.5.0"
+    playwright: "npm:^1.64.1"
+    spliterator: "npm:^10.1.1"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/evidence@workspace:*, @mailwoman/evidence@workspace:packages/evidence":
   version: 0.0.0-use.local
   resolution: "@mailwoman/evidence@workspace:packages/evidence"
@@ -7000,9 +7022,9 @@ __metadata:
   resolution: "@mailwoman/filer@workspace:packages/filer"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/entity-resolution": "workspace:*"
     "@mailwoman/match": "workspace:*"
     "@mailwoman/record": "workspace:*"
-    "@mailwoman/registry": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     dom-serializer: "npm:^3.1.1"
     domhandler: "npm:^6.0.1"
@@ -7651,28 +7673,6 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@types/node": "npm:^26.6.6"
-    spliterator: "npm:^10.1.1"
-  languageName: unknown
-  linkType: soft
-
-"@mailwoman/registry@workspace:*, @mailwoman/registry@workspace:packages/registry":
-  version: 0.0.0-use.local
-  resolution: "@mailwoman/registry@workspace:packages/registry"
-  dependencies:
-    "@mailwoman/address-id": "workspace:*"
-    "@mailwoman/annotations": "workspace:*"
-    "@mailwoman/browser": "workspace:*"
-    "@mailwoman/core": "workspace:*"
-    "@mailwoman/match": "workspace:*"
-    "@mailwoman/record": "workspace:*"
-    "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    "@mailwoman/spatial": "workspace:*"
-    "@mailwoman/sqlite": "workspace:*"
-    "@protomaps/basemaps": "npm:^5.7.2"
-    "@sister.software/h3": "npm:^1.1.0"
-    "@types/node": "npm:^26.6.6"
-    path-ts: "npm:^2.5.0"
-    playwright: "npm:^1.64.1"
     spliterator: "npm:^10.1.1"
   languageName: unknown
   linkType: soft
@@ -22111,6 +22111,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"
     "@mailwoman/dictionaries": "workspace:*"
+    "@mailwoman/entity-resolution": "workspace:*"
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/filer": "workspace:*"
     "@mailwoman/flood": "workspace:*"
@@ -22129,7 +22130,6 @@ __metadata:
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/postcode": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
-    "@mailwoman/registry": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
