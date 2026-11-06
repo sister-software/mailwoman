@@ -687,6 +687,8 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	if (addressPoints) {
 		opts.addressPoints = addressPoints
+		// A register's row can state no locality or postcode, so the search around the resolved locality reaches it.
+		opts.addressPointBboxFallback = true
 	}
 
 	// Optional country-keyed street-centroid tier with country hints.
