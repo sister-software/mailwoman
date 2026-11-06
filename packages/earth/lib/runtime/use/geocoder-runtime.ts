@@ -588,7 +588,23 @@ export function useGeocoderRuntime({
 			}
 
 			const tBeforeResolve = performance.now()
-			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias)
+
+			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias).catch(async (error: unknown) => {
+				// Offline, the gazetteer answers only from the range chunks the service worker cached while online.
+				// A read past them fails inside SQLite as `SQLITE_IOERR_READ`,
+				// a disk I/O error that hides the cause.
+				const { isSQLiteReadFailure } = await import("@mailwoman/resolver-wof-wasm/httpvfs/database")
+
+				if (isSQLiteReadFailure(error)) {
+					throw new Error(
+						"The gazetteer could not read the pages this address needs: they are not cached on this device, and the network did not answer.",
+						{ cause: error }
+					)
+				}
+
+				throw error
+			})
+
 			const tResolve = performance.now()
 
 			// Postcode-only dead end: answer the postcode's centroid from the release's postcode binaries.

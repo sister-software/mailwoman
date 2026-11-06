@@ -84,4 +84,12 @@ export type RangeWorkerCall = RangeWorkerRequest & { id: number }
  */
 export type RangeWorkerReply =
 	| { id: number; result: RangeWorkerResults[keyof RangeWorkerResults] }
-	| { id: number; error: string }
+	| {
+			id: number
+			error: string
+			/**
+			 * SQLite's extended result code when the failure came from SQLite,
+			 * such as 266 for `SQLITE_IOERR_READ`, and `null` otherwise.
+			 */
+			resultCode: number | null
+	  }

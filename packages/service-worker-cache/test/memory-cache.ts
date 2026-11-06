@@ -49,8 +49,16 @@ export class MemoryCache implements Pick<Cache, "match" | "put" | "delete" | "ke
 	}
 }
 
-export class MemoryCacheStorage implements RangeChunkCacheStorage {
+export class MemoryCacheStorage implements RangeChunkCacheStorage, Pick<CacheStorage, "keys" | "delete"> {
 	readonly caches = new Map<string, MemoryCache>()
+
+	async keys(): Promise<string[]> {
+		return [...this.caches.keys()]
+	}
+
+	async delete(name: string): Promise<boolean> {
+		return this.caches.delete(name)
+	}
 
 	async open(name: string): Promise<MemoryCache> {
 		let cache = this.caches.get(name)

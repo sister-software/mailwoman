@@ -14,7 +14,8 @@
  *   from the readers asks for fresh bytes, so a URL with a query string bypasses it.
  * - A whole-file read on the data origin is cache-first. Every path there is versioned, apart from `releases.json`.
  * - `releases.json` and a tileset's TileJSON are network-first, so an offline page reads the last copy.
- * - A tile is cache-first, with an entry cap.
+ * - A tile is cache-first, with an entry cap. A tile with no cached copy that the network cannot fetch answers 404.
+ *   MapLibre reads a 404 as a missing tile: it logs no error and draws the nearest loaded parent tile in its place.
  *
  * The range reader issues its reads as synchronous XHR inside a dedicated worker, and those reads still reach this
  * worker because the dedicated worker inherits its creator document's controller. The page posts a prune message after
@@ -23,6 +24,8 @@
 
 /// <reference lib="webworker" />
 
+import { buildCacheName, deleteOtherBuildCaches } from "@mailwoman/service-worker-cache/build-caches"
+import { missingWhenUnreachablePlugin } from "@mailwoman/service-worker-cache/missing-when-unreachable"
 import { isPruneMessage, pruneOtherVersions } from "@mailwoman/service-worker-cache/prune"
 import { createRangeChunkHandler } from "@mailwoman/service-worker-cache/range-chunks"
 import { tornBodyPlugin } from "@mailwoman/service-worker-cache/torn-body"
@@ -44,15 +47,35 @@ precacheAndRoute(self.__WB_MANIFEST)
 // so it answers none of these from the cache.
 registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html")))
 
-const RANGE_CACHE = "mailwoman-db-ranges-v1"
-const ASSET_CACHE = "mailwoman-release-assets-v1"
-const MANIFEST_CACHE = "mailwoman-manifests-v1"
-const TILE_CACHE = "mailwoman-tiles-v1"
-const APP_ASSET_CACHE = "mailwoman-app-assets-v1"
+/**
+ * The build's short commit, as `vite.config.ts` defines it.
+ */
+declare const __MAILWOMAN_BUILD_COMMIT__: string
 
 /**
- * The build's own files kept outside the precache: the WebAssembly runtimes of
- * the current build and a few before it.
+ * Every runtime cache's name starts with this.
+ *
+ * On activation the worker deletes the caches with it that belong to another build,
+ * so a deploy starts each cache empty.
+ */
+const CACHE_PREFIX = "mailwoman-"
+
+const RANGE_CACHE = buildCacheName(CACHE_PREFIX, "db-ranges", __MAILWOMAN_BUILD_COMMIT__)
+const ASSET_CACHE = buildCacheName(CACHE_PREFIX, "release-assets", __MAILWOMAN_BUILD_COMMIT__)
+const MANIFEST_CACHE = buildCacheName(CACHE_PREFIX, "manifests", __MAILWOMAN_BUILD_COMMIT__)
+const TILE_CACHE = buildCacheName(CACHE_PREFIX, "tiles", __MAILWOMAN_BUILD_COMMIT__)
+const APP_ASSET_CACHE = buildCacheName(CACHE_PREFIX, "app-assets", __MAILWOMAN_BUILD_COMMIT__)
+
+const CURRENT_CACHES: ReadonlySet<string> = new Set([
+	RANGE_CACHE,
+	ASSET_CACHE,
+	MANIFEST_CACHE,
+	TILE_CACHE,
+	APP_ASSET_CACHE,
+])
+
+/**
+ * The build's own files kept outside the precache, such as its WebAssembly runtimes.
  */
 const MAX_APP_ASSET_ENTRIES = 40
 
@@ -65,8 +88,8 @@ const MAX_APP_ASSET_ENTRIES = 40
 const MAX_TILE_ENTRIES = 6000
 
 /**
- * The release files kept on the device: a release's model, tokenizer, FSTs, postcode binaries
- * and pair indexes, for the current release and a few before it.
+ * The release files kept on the device: a release's model, tokenizer, FSTs,
+ * postcode binaries and pair indexes.
  */
 const MAX_ASSET_ENTRIES = 200
 
@@ -88,7 +111,7 @@ self.addEventListener("install", () => {
 })
 
 self.addEventListener("activate", (event) => {
-	event.waitUntil(self.clients.claim())
+	event.waitUntil(deleteOtherBuildCaches(caches, CACHE_PREFIX, CURRENT_CACHES).then(() => self.clients.claim()))
 })
 
 self.addEventListener("message", (event) => {
@@ -164,6 +187,7 @@ registerRoute(
 			new CacheableResponsePlugin({ statuses: [200] }),
 			tornBodyPlugin(),
 			new ExpirationPlugin({ maxEntries: MAX_TILE_ENTRIES, purgeOnQuotaError: true }),
+			missingWhenUnreachablePlugin(),
 		],
 	})
 )
