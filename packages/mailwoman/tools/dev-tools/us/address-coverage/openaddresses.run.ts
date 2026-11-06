@@ -5,7 +5,7 @@
  *
  *   Merges the OpenAddresses source runs a plan file lists into their state address-point databases.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/us-address-coverage/openaddresses.run.ts \
+ *   Usage: node packages/mailwoman/tools/dev-tools/us/address-coverage/openaddresses.run.ts \
  *   --plan <plan.json> --release <date> [--states nh,nv]
  *
  *   The plan is a JSON array of `{ member, license }`, such as `{ "member": "us/nh/statewide", "license": null }`.
@@ -34,7 +34,7 @@ import {
 	openAddressesRow,
 	postcodeNearPoint,
 	repeatsStoredPoint,
-} from "#tools/dev-tools/us-address-coverage/openaddresses"
+} from "#tools/dev-tools/us/address-coverage/openaddresses"
 
 const { values } = parseArguments({
 	options: { plan: { type: "string" }, release: { type: "string" }, states: { type: "string" } },

@@ -5,7 +5,7 @@
  *
  *   Writes the per-county US address coverage census as JSON, and prints a state summary.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/us-address-coverage/census.run.ts --out <file.json>
+ *   Usage: node packages/mailwoman/tools/dev-tools/us/address-coverage/census.run.ts --out <file.json>
  *
  *   The denominator is `<data root>/census/Gaz_counties_national.txt`, the unzipped gazetteer that
  *   `COUNTY_GAZETTEER_URL` serves.
@@ -27,7 +27,7 @@ import {
 	coverageRatio,
 	readCountyHousingUnits,
 	THIN_COUNTY_RATIO,
-} from "#tools/dev-tools/us-address-coverage/census"
+} from "#tools/dev-tools/us/address-coverage/census"
 
 const { values } = parseArguments({ options: { out: { type: "string" } } })
 
