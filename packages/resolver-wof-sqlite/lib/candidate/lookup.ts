@@ -553,16 +553,19 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 				}
 			}
 
-			// Typo-tolerant fallback for true name misses only, skipping postcodes and respecting the fuzzy-country scope.
+			// Typo-tolerant fallback for true name misses only, skipping postcodes.
+			// With no stated country, locale hint or parent to search within,
+			// a correction keeps its first letter.
+			// `Aucklnad` reaches Auckland, and `Anal Island` stays away from `Capual Island` in the Philippines.
 			const fuzzyCountryID =
 				!query.country && query.fuzzyCountry ? this.#countryToID.get(query.fuzzyCountry.toUpperCase()) : undefined
 
-			const fuzzyScopedOut = !query.country && !!query.fuzzyCountry && typeof fuzzyCountryID !== "number"
+			const hasCountryEvidence = !!query.country || regionID !== null || typeof fuzzyCountryID === "number"
 
 			if (
 				!rows.length &&
 				!wantsPostcode &&
-				!fuzzyScopedOut &&
+				!(query.fuzzyCountry && !query.country && typeof fuzzyCountryID !== "number") &&
 				this.#ftsProbe &&
 				this.#nameKeyExistsProbe &&
 				!this.#nameKeyExistsProbe.get(nameKey)
@@ -574,7 +577,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 					const ranked = hits
 						.map((h) => ({ nk: String(h.name_key), s: wordFuzzySimilarity(nameKey, String(h.name_key)) }))
-						.filter((h) => h.s >= WORD_FUZZY_MIN)
+						.filter((h) => h.s >= WORD_FUZZY_MIN && (hasCountryEvidence || h.nk[0] === nameKey[0]))
 						// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 						.sort((a, b) => b.s - a.s)
 

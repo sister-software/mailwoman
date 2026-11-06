@@ -385,6 +385,15 @@ describe("WOFCandidateTableLookup", () => {
 		await expect(lk.findPlace({ text: "Zzzqqx", placetype: "locality", country: "US" })).resolves.toHaveLength(0)
 	})
 
+	test("with no country to search within, a correction keeps its first letter", async () => {
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		expect((await lk.findPlace({ text: "Chicgo", placetype: "locality" }))[0]?.name).toBe("Chicago")
+		await expect(lk.findPlace({ text: "Xhicago", placetype: "locality" })).resolves.toHaveLength(0)
+
+		expect((await lk.findPlace({ text: "Xhicago", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
+	})
+
 	test("A typo-corrected row is NOT an exact match", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
