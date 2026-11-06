@@ -546,6 +546,65 @@ describe("the Empire State Building pair (#2570)", () => {
 		expect(result.hierarchy).toEqual([])
 	})
 
+	it("answers from the POI layer when the parse reads the whole input as one venue", () => {
+		const result = { ...adminAnswer("Empire", 37.644839, -120.902851), venue: "Empire State Building" as string | null }
+
+		applyEntityTiers(result, [], "Empire State Building", [placed("Empire", 37.644839, -120.902851)], {
+			poiLookup: manhattan,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+			kind: "landmark",
+		})
+
+		expect(result.resolution_tier).toBe("venue")
+		expect(result.lat).toBeCloseTo(40.749143)
+		expect(result.locality).toBeNull()
+	})
+
+	it("leaves the near-anchor search to a venue span shorter than the input", () => {
+		const result = {
+			...adminAnswer("New York", 40.7127281, -74.0060152),
+			venue: "Empire State Building" as string | null,
+		}
+
+		applyEntityTiers(result, [], "Empire State Building, New York", [placed("New York", 40.7127281, -74.0060152)], {
+			poiLookup: manhattan,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+			kind: "landmark",
+		})
+
+		expect(result.locality).toBe("New York")
+		expect(result.lat).toBeCloseTo(40.749143)
+	})
+
+	it("drops a row whose category disagrees with the name, and keeps the near-anchor answer open", () => {
+		const detroit = stubLookup([
+			{ name: "Detroit Metro Airport", categoryID: "travel_service", lat: 42.601546, lon: -83.430802, country: "US" },
+			{
+				name: "Detroit Metro Airport - Delta Mcnamara Terminal",
+				categoryID: "airport",
+				lat: 42.2103198,
+				lon: -83.3561039,
+				country: "US",
+			},
+		])
+
+		const result = { ...adminAnswer("Detroit", 42.398648, -83.164558), venue: "Detroit Metro Airport" as string | null }
+
+		applyEntityTiers(result, [], "Detroit Metro Airport", [placed("Detroit", 42.398648, -83.164558)], {
+			poiLookup: detroit,
+			isStreetGeneric: NO_GENERICS,
+			rowFitsVenueHead: (_name, categoryID) => categoryID === "airport",
+			poiVenueTier: true,
+			kind: "landmark",
+		})
+
+		expect(result.resolution_tier).toBe("venue")
+		expect(result.lat).toBeCloseTo(42.2103198)
+		expect(result.locality).toBe("Detroit")
+	})
+
 	it("keeps an admin answer whose resolved node covers the whole input", () => {
 		const city = stubLookup([{ name: "Empire City", categoryID: "casino", lat: 40.9, lon: -73.86, country: "US" }])
 		const result = adminAnswer("Empire City", 41, -74)

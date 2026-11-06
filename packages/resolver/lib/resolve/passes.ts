@@ -356,6 +356,7 @@ export async function applySpanRescore(
 
 			postalCompoundRecovery: opts.postalCompoundRecovery,
 			spanRescoreRequireContextRemainder: opts.spanRescoreRequireContextRemainder,
+			...(opts.isVenueCategoryWord ? { isVenueCategoryWord: opts.isVenueCategoryWord } : {}),
 		})
 	} catch {
 		return

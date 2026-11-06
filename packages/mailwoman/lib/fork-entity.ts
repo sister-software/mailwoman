@@ -167,6 +167,12 @@ export interface ForkEntityProbeOpts {
 	 * The probe rejects a query containing one so a street name cannot match a venue.
 	 */
 	isStreetGeneric: (token: string) => boolean
+	/**
+	 * Returns whether a row's category agrees with the name that found it.
+	 *
+	 * The landmark probe drops a row that disagrees, and a caller without the taxonomy reads every row.
+	 */
+	rowFitsVenueHead?: (name: string, categoryID: string | null) => boolean
 }
 
 /**
@@ -203,12 +209,21 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
  * and `Center` in `Rockefeller Center`, and the kind classifier has already refused a
  * name that ends in a street suffix before an input reaches the `landmark` kind.
  */
-export function probeLandmarkEntity(rawQuery: string, opts: Pick<ForkEntityProbeOpts, "lookup">): ForkEntityHit | null {
+export function probeLandmarkEntity(
+	rawQuery: string,
+	opts: Pick<ForkEntityProbeOpts, "lookup" | "rowFitsVenueHead">
+): ForkEntityHit | null {
 	const found = exactEntities(rawQuery, opts)
 
 	if (!found) return null
 
-	const top = pickCorroborated(found.entities, found.decorated)
+	const { rowFitsVenueHead } = opts
+
+	const entities = rowFitsVenueHead
+		? found.entities.filter((entity) => rowFitsVenueHead(rawQuery, entity.categoryID))
+		: found.entities
+
+	const top = pickCorroborated(entities, found.decorated)
 
 	return top ? hitOf(top, rawQuery) : null
 }
@@ -401,9 +416,11 @@ export function probeVenueNearAnchor(
  * The probe answers only when one entity holds the name.
  * The refinement runs only when `poiVenueTier` is set and the current tier is `admin` or `street`.
  *
- * A bare input whose kind verdict is `landmark`, with no venue span and no resolved node that covers
- * the whole input, takes the exact-name probe on the whole input, so `Empire State Building`
+ * A bare input whose kind verdict is `landmark`, with no resolved node that covers the
+ * whole input, takes the exact-name probe on the whole input, so `Empire State Building`
  * answers from the POI layer rather than from the locality Empire its first word matched.
+ * The parse may label the name as admin words or as one venue span, and a venue span counts only when
+ * it covers the input, because a shorter span beside other components is the near-anchor search's case.
  */
 export function applyEntityTiers(
 	result: ForkEntityAnswerTarget & {
@@ -416,6 +433,7 @@ export function applyEntityTiers(
 	deps: {
 		poiLookup?: ForkEntityProbeOpts["lookup"]
 		isStreetGeneric?: ForkEntityProbeOpts["isStreetGeneric"]
+		rowFitsVenueHead?: ForkEntityProbeOpts["rowFitsVenueHead"]
 		poiVenueTier?: boolean
 		/**
 		 * The kind verdict for the input, read for the bare-landmark probe.
@@ -429,7 +447,11 @@ export function applyEntityTiers(
 		deps.poiLookup &&
 		deps.isStreetGeneric
 	) {
-		const entity = probeForkEntity(parseInput, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
+		const entity = probeForkEntity(parseInput, {
+			lookup: deps.poiLookup,
+			isStreetGeneric: deps.isStreetGeneric,
+			...(deps.rowFitsVenueHead ? { rowFitsVenueHead: deps.rowFitsVenueHead } : {}),
+		})
 
 		if (entity) {
 			applyForkEntityAnswer(result, entity, resolvedRoots)
@@ -439,11 +461,14 @@ export function applyEntityTiers(
 	if (
 		deps.poiVenueTier === true &&
 		deps.kind === "landmark" &&
-		!result.venue &&
+		(!result.venue || normalizeLocalityForKey(result.venue) === normalizeLocalityForKey(parseInput)) &&
 		deps.poiLookup &&
 		!adminConsumedInput(resolvedRoots, parseInput)
 	) {
-		const entity = probeLandmarkEntity(parseInput, { lookup: deps.poiLookup })
+		const entity = probeLandmarkEntity(parseInput, {
+			lookup: deps.poiLookup,
+			...(deps.rowFitsVenueHead ? { rowFitsVenueHead: deps.rowFitsVenueHead } : {}),
+		})
 
 		if (entity) {
 			answerAsWholeInputEntity(result, entity)
@@ -451,7 +476,11 @@ export function applyEntityTiers(
 	}
 
 	if (deps.poiVenueTier === true && result.lat === null && result.venue && deps.poiLookup && deps.isStreetGeneric) {
-		const entity = probeForkEntity(result.venue, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
+		const entity = probeForkEntity(result.venue, {
+			lookup: deps.poiLookup,
+			isStreetGeneric: deps.isStreetGeneric,
+			...(deps.rowFitsVenueHead ? { rowFitsVenueHead: deps.rowFitsVenueHead } : {}),
+		})
 
 		if (entity) {
 			applyForkEntityAnswer(result, entity, resolvedRoots)
@@ -471,7 +500,11 @@ export function applyEntityTiers(
 		deps.poiLookup &&
 		deps.isStreetGeneric
 	) {
-		const entity = probeForkEntity(parseInput, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
+		const entity = probeForkEntity(parseInput, {
+			lookup: deps.poiLookup,
+			isStreetGeneric: deps.isStreetGeneric,
+			...(deps.rowFitsVenueHead ? { rowFitsVenueHead: deps.rowFitsVenueHead } : {}),
+		})
 
 		// The entity supplies the coordinate.
 		// The parse keeps its components, because a bare `Southbank` is both a locality name

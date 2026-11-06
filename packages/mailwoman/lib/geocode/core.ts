@@ -184,6 +184,14 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	 */
 	isStreetGeneric?: (token: string) => boolean
 	/**
+	 * Returns whether a POI row's category agrees with the venue name that found it.
+	 */
+	rowFitsVenueHead?: (name: string, categoryID: string | null) => boolean
+	/**
+	 * Returns whether a word is a POI category, read by span rescore for a venue's last word.
+	 */
+	isVenueCategoryWord?: (word: string) => boolean
+	/**
 	 * Gazetteer FST prior.
 	 */
 	fst?: import("@mailwoman/core/pipeline").FSTMatcherLike
@@ -716,6 +724,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	for (const key of FORWARDED_RESOLVER_SWITCHES) {
 		opts[key] = switches[key]
+	}
+
+	if (deps.isVenueCategoryWord) {
+		opts.isVenueCategoryWord = deps.isVenueCategoryWord
 	}
 
 	// Pin weak-resolution mode only when explicitly set.

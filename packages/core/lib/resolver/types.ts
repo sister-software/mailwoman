@@ -360,6 +360,11 @@ export interface ResolveOpts {
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
+	 * Returns whether a word is a POI category, so span-rescore does not re-read
+	 * a venue's last word as a locality.
+	 */
+	isVenueCategoryWord?: (word: string) => boolean
+	/**
 	 * Weak-resolution reading used by span-rescore.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading

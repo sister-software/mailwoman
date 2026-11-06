@@ -16,12 +16,14 @@ import { scoreFamousPlaceAnswers } from "#tools/eval-harness/famous-places/answe
 const { values } = parseArguments({
 	options: {
 		"weights-cache": { type: "string" },
+		file: { type: "string" },
 		json: { type: "string" },
 	},
 })
 
 const result = await scoreFamousPlaceAnswers({
 	...(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {}),
+	...(values.file ? { file: values.file } : {}),
 	...(values.json ? { json: values.json } : {}),
 })
 

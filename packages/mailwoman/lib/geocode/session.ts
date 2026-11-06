@@ -334,7 +334,7 @@ function parseBiasPoints(raw: string | null): NonNullable<GeocodeDeps["bias"]> {
  * The fork-to-entity probe's dependencies and the `poi.db` handle to dispose.
  */
 export interface ForkEntityProbe {
-	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
+	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric" | "rowFitsVenueHead" | "isVenueCategoryWord">
 
 	/**
 	 * The `poi.db` handle behind `deps.poiLookup`, kept separately because
@@ -451,9 +451,10 @@ export async function loadForkEntityDeps(
 
 	if (options.forkEntity === false || !paths.length) return { deps: {} }
 
-	const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
+	const [{ POILookup }, { loadStreetMorphologyFST }, { isVenueCategoryWord, rowFitsVenueHead }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/poi"),
 		import("@mailwoman/resolver-wof-sqlite/street"),
+		import("#poi/venue-head-fit"),
 	])
 
 	// The street-morphology FST the active selection lists, else the loader's own data-root default.
@@ -465,6 +466,8 @@ export async function loadForkEntityDeps(
 		deps: {
 			poiLookup: { search: (query) => lookups.flatMap((lookup) => lookup.search(query)) },
 			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
+			rowFitsVenueHead,
+			isVenueCategoryWord,
 		},
 		handle: {
 			[Symbol.dispose]: () => {
@@ -649,7 +652,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let placer: CoarsePlacer | null = null
 	let resolver: Resolver
 	let bias: NonNullable<GeocodeDeps["bias"]>
-	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
+	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric" | "rowFitsVenueHead" | "isVenueCategoryWord">
 
 	const leadingStopwords = await readLibPostalSingleWordStopwords((options.locale ?? "en-US").split("-")[0]!)
 

@@ -14,6 +14,7 @@ import { isRegionAbbreviationToken } from "@mailwoman/query-shape/region-abbrevi
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { partitionByContainment } from "#admin/containment"
+import { bareSublocalityCandidate } from "#bare-toponym-race"
 import { foldName } from "#fold-name"
 import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } from "#toponym-prior"
 
@@ -58,6 +59,11 @@ export interface SpanRescoreOptions {
 	 * @defaultValue `false`
 	 */
 	postalCompoundRecovery?: boolean
+	/**
+	 * Returns whether a word is a POI category, so a venue's last word is not re-read as a locality.
+	 * A caller without the taxonomy leaves every span eligible.
+	 */
+	isVenueCategoryWord?: (word: string) => boolean
 	/**
 	 * When the span covers the whole unqualified input, treat {@link country} as an additive prior
 	 * instead of a hard gazetteer filter; `false` restores the hard filter byte-for-byte.
@@ -420,6 +426,9 @@ export async function findRescoreCandidate(
 	const qualified = !!postcode || hasAdminQualifier(roots)
 	const wholeInput = toks.length ? { start: toks[0]!.start, end: toks.at(-1)!.end } : null
 	const softCountryEligible = softCountry && !!country && !qualified && !!wholeInput
+	const venue = firstNodeWhere(roots, (n) => n.tag === "venue")
+
+	const venueCoversInput = !!venue && !!wholeInput && venue.start <= wholeInput.start && wholeInput.end <= venue.end
 
 	for (const sp of spans) {
 		const key = foldName(sp.text)
@@ -428,6 +437,11 @@ export async function findRescoreCandidate(
 		// `wholeSpan` by itself decides the alias tier, while the soft-country prior
 		// also needs an unqualified tree and a caller country.
 		const wholeSpan = !!wholeInput && sp.start === wholeInput.start && sp.end === wholeInput.end
+
+		// A category word ending a multi-word venue states what the place is, as `Airport`
+		// in `Narita Airport`, so a locality of that name is a coincidence of spelling.
+		// Another last word can state the location, as `London` in `Tower of London`.
+		if (venue && sp.end === venue.end && sp.start > venue.start && opts.isVenueCategoryWord?.(sp.text)) continue
 
 		// A sub-span that drops a word of the name is a corruption rather than a
 		// recovery. see `remainderIsContext`.
@@ -490,6 +504,23 @@ export async function findRescoreCandidate(
 				place: h,
 				postcodeVerified: anchor !== null,
 				alternatives: exact.filter((a) => a !== h && withinThreshold(a)),
+			}
+		}
+
+		// A whole-input venue can be a sub-locality row, as `Golden Gate Park` is a neighborhood,
+		// and that row states the whole name where a shorter span would state part of it.
+		if (wholeSpan && venueCoversInput) {
+			const sublocality = await bareSublocalityCandidate(backend, sp.text, country)
+
+			if (sublocality && withinThreshold(sublocality)) {
+				return {
+					text: sp.text,
+					start: sp.start,
+					end: sp.end,
+					place: sublocality,
+					postcodeVerified: anchor !== null,
+					alternatives: [],
+				}
 			}
 		}
 	}
