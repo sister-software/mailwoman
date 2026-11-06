@@ -32,56 +32,56 @@ function node(tag: string, value: string, start: number, extra: Partial<AddressN
 }
 
 describe("applyLandmark", () => {
-	it("replaces a wrong parse of a bare name with the leader and its alternatives", () => {
+	it("replaces a wrong parse of a bare name with the leader and its alternatives", async () => {
 		const roots = [node("street", "Hyde", 0), node("street_suffix", "Park", 5)]
 
-		applyLandmark(roots, "Hyde Park", lookup([LONDON_PARK, CHICAGO_AREA]))
+		await applyLandmark(roots, "Hyde Park", lookup([LONDON_PARK, CHICAGO_AREA]))
 
 		expect(roots).toHaveLength(1)
 		expect(roots[0]).toMatchObject({ tag: "venue", value: "Hyde Park", lat: 51.5, placeID: "wikidata:Q123738" })
 		expect(roots[0]!.alternatives).toHaveLength(1)
 	})
 
-	it("states prominence as log10 sitelinks, the scale the ambiguity margin reads", () => {
+	it("states prominence as log10 sitelinks, the scale the ambiguity margin reads", async () => {
 		const roots = [node("venue", "Hyde Park", 0)]
 
-		applyLandmark(roots, "Hyde Park", lookup([hit({ qid: "Q1", name: "Hyde Park", sitelinks: 99 })]))
+		await applyLandmark(roots, "Hyde Park", lookup([hit({ qid: "Q1", name: "Hyde Park", sitelinks: 99 })]))
 
 		expect(roots[0]!.metadata?.["resolver_prominence"]).toBeCloseTo(2)
 	})
 
-	it("leaves a name a settlement leads to the admin ladder", () => {
+	it("leaves a name a settlement leads to the admin ladder", async () => {
 		const roots = [node("locality", "Paris", 0)]
 
-		applyLandmark(roots, "Paris", lookup([hit({ qid: "Q90", name: "Paris", kind: "settlement" })]))
+		await applyLandmark(roots, "Paris", lookup([hit({ qid: "Q90", name: "Paris", kind: "settlement" })]))
 
 		expect(roots[0]!.tag).toBe("locality")
 	})
 
-	it("leaves an address alone", () => {
+	it("leaves an address alone", async () => {
 		const roots = [node("venue", "Hyde Park", 0), node("postcode", "W2 2UH", 11)]
 
-		applyLandmark(roots, "Hyde Park, W2 2UH", lookup([LONDON_PARK]))
+		await applyLandmark(roots, "Hyde Park, W2 2UH", lookup([LONDON_PARK]))
 
 		expect(roots).toHaveLength(2)
 		expect(roots[0]!.lat).toBeUndefined()
 	})
 
-	it("keeps an alias from taking a name the gazetteer resolved", () => {
+	it("keeps an alias from taking a name the gazetteer resolved", async () => {
 		const resolved = node("locality", "Hamburg", 0, { placeID: "wof:1", lat: 53.5, lon: 10 })
 		const alias = hit({ qid: "Q27706", name: "Hamburg Airport", country: "DE", primary: false })
 		const roots = [resolved]
 
-		applyLandmark(roots, "Hamburg", lookup([alias]))
+		await applyLandmark(roots, "Hamburg", lookup([alias]))
 
 		expect(roots[0]).toBe(resolved)
 	})
 
-	it("lets a code written in its own case take a name the gazetteer resolved", () => {
+	it("lets a code written in its own case take a name the gazetteer resolved", async () => {
 		const roots = [node("locality", "Lax", 0, { placeID: "wof:1", lat: 46.4, lon: 8.1 })]
 		const airport = hit({ qid: "Q8731", name: "Los Angeles International Airport", primary: false, code: true })
 
-		applyLandmark(roots, "LAX", lookup([airport]))
+		await applyLandmark(roots, "LAX", lookup([airport]))
 
 		expect(roots[0]!.placeID).toBe("wikidata:Q8731")
 	})
@@ -90,10 +90,10 @@ describe("applyLandmark", () => {
 		const AUSTRALIA = { placeID: "wof:85632793", lat: -25, lon: 134, metadata: { resolver_country: "AU" } }
 		const AUSTIN = hit({ qid: "Q1430913", name: "Austin-Bergstrom International Airport", code: true, sitelinks: 34 })
 
-		it("keeps the country as the answer and lists the airport holding the code", () => {
+		it("keeps the country as the answer and lists the airport holding the code", async () => {
 			const roots = [node("country", "AUS", 0, AUSTRALIA)]
 
-			applyLandmark(roots, "AUS", lookup([AUSTIN]))
+			await applyLandmark(roots, "AUS", lookup([AUSTIN]))
 
 			expect(roots).toHaveLength(1)
 			expect(roots[0]!.placeID).toBe("wof:85632793")
@@ -101,47 +101,47 @@ describe("applyLandmark", () => {
 			expect(roots[0]!.metadata?.["code_collision"]).toBe(true)
 		})
 
-		it("records the registry's verdict when no landmark holds the code", () => {
+		it("records the registry's verdict when no landmark holds the code", async () => {
 			const roots = [node("country", "GBR", 0, { ...AUSTRALIA, metadata: { resolver_country: "GB" } })]
 
-			applyLandmark(roots, "GBR", lookup([]))
+			await applyLandmark(roots, "GBR", lookup([]))
 
 			expect(roots[0]!.metadata?.["code_collision"]).toBe(true)
 			expect(roots[0]!.alternatives).toBeUndefined()
 		})
 
-		it("lists no word spelled like the code", () => {
+		it("lists no word spelled like the code", async () => {
 			const roots = [node("country", "USA", 0, { ...AUSTRALIA, metadata: { resolver_country: "US" } })]
 			const usa = hit({ qid: "Q1041977", name: "Usa", kind: "settlement", country: "JP", code: false })
 
-			applyLandmark(roots, "USA", lookup([usa]))
+			await applyLandmark(roots, "USA", lookup([usa]))
 
 			expect(roots[0]!.alternatives).toBeUndefined()
 		})
 
-		it("leaves an unresolved country alone", () => {
+		it("leaves an unresolved country alone", async () => {
 			const roots = [node("venue", "AUS", 0)]
 
-			applyLandmark(roots, "AUS", lookup([AUSTIN]))
+			await applyLandmark(roots, "AUS", lookup([AUSTIN]))
 
 			expect(roots[0]).toMatchObject({ tag: "venue", value: "AUS" })
 			expect(roots[0]!.placeID).toBeUndefined()
 		})
 	})
 
-	it("lets an alias answer a name the gazetteer left unresolved", () => {
+	it("lets an alias answer a name the gazetteer left unresolved", async () => {
 		const roots = [node("locality", "Dtw", 0)]
 		const airport = hit({ qid: "Q1", name: "Detroit Metropolitan Wayne County Airport", primary: false })
 
-		applyLandmark(roots, "DTW", lookup([airport]))
+		await applyLandmark(roots, "DTW", lookup([airport]))
 
 		expect(roots[0]!.placeID).toBe("wikidata:Q1")
 	})
 
-	it("writes a name's value with its spacing and Unicode form normalized", () => {
+	it("writes a name's value with its spacing and Unicode form normalized", async () => {
 		const roots = [node("venue", "Hyde  Park", 0)]
 
-		applyLandmark(roots, "Hyde  Park", lookup([LONDON_PARK]))
+		await applyLandmark(roots, "Hyde  Park", lookup([LONDON_PARK]))
 
 		expect(roots[0]!.value).toBe("Hyde Park")
 	})
@@ -149,34 +149,34 @@ describe("applyLandmark", () => {
 	describe("an OpenStreetMap place", () => {
 		const park = hit({ qid: "osm:W1", name: "Piedmont Park", primary: false, importance: 0.3, lat: 33.79, lon: -84.37 })
 
-		it("answers a name the walk resolved only in part, crediting OpenStreetMap", () => {
+		it("answers a name the walk resolved only in part, crediting OpenStreetMap", async () => {
 			const roots = [node("locality", "Piedmont", 0, { placeID: "wof:1" })]
 
-			applyLandmark(roots, "Piedmont Park", lookup([park]))
+			await applyLandmark(roots, "Piedmont Park", lookup([park]))
 
 			expect(roots[0]).toMatchObject({ placeID: "openstreetmap:W1", tag: "venue" })
 			expect(roots[0]!.metadata?.["landmark_source"]).toBe("openstreetmap:planet")
 		})
 
-		it("answers over a row with no measured population holding the whole name", () => {
+		it("answers over a row with no measured population holding the whole name", async () => {
 			const roots = [node("locality", "Piedmont Park", 0, { placeID: "wof:5", metadata: { resolver_score: 0 } })]
 
-			applyLandmark(roots, "Piedmont Park", lookup([park]))
+			await applyLandmark(roots, "Piedmont Park", lookup([park]))
 
 			expect(roots[0]!.placeID).toBe("openstreetmap:W1")
 		})
 
-		it("leaves a town nested under its region that holds the whole name", () => {
+		it("leaves a town nested under its region that holds the whole name", async () => {
 			const town = node("locality", "New York", 0, { placeID: "wof:2", metadata: { resolver_score: 6.9 } })
 			const region = node("region", "NY", 10, { placeID: "wof:3", children: [town] })
 
-			applyLandmark([region], "New York, NY", lookup([hit({ ...park, name: "New York" })]))
+			await applyLandmark([region], "New York, NY", lookup([hit({ ...park, name: "New York" })]))
 
 			expect(region.tag).toBe("region")
 			expect(town.tag).toBe("locality")
 		})
 
-		it("stays inside a stated town's extent, and takes the nearest namesake there", () => {
+		it("stays inside a stated town's extent, and takes the nearest namesake there", async () => {
 			const fondDuLac = {
 				placeID: "wof:4",
 				lat: 43.77,
@@ -207,7 +207,7 @@ describe("applyLandmark", () => {
 
 			const roots = [node("venue", "Lakeside Park", 0), node("locality", "Fond du Lac", 15, fondDuLac)]
 
-			applyLandmark(roots, "Lakeside Park, Fond du Lac", lookup([out, near]))
+			await applyLandmark(roots, "Lakeside Park, Fond du Lac", lookup([out, near]))
 
 			expect(roots[0]!.placeID).toBe("openstreetmap:W2")
 		})
@@ -216,27 +216,27 @@ describe("applyLandmark", () => {
 	describe("with context beside the name", () => {
 		const CHICAGO = { placeID: "wof:2", lat: 41.88, lon: -87.63, metadata: { resolver_country: "US" } }
 
-		it("reads the namesake inside the stated locality", () => {
+		it("reads the namesake inside the stated locality", async () => {
 			const roots = [node("venue", "Hyde Park", 0), node("locality", "Chicago", 11, CHICAGO)]
 
-			applyLandmark(roots, "Hyde Park, Chicago", lookup([LONDON_PARK, CHICAGO_AREA]))
+			await applyLandmark(roots, "Hyde Park, Chicago", lookup([LONDON_PARK, CHICAGO_AREA]))
 
 			expect(roots[0]!.placeID).toBe("wikidata:Q3143666")
 			expect(roots[1]!.tag).toBe("locality")
 		})
 
-		it("answers no namesake outside the stated country", () => {
+		it("answers no namesake outside the stated country", async () => {
 			const roots = [node("venue", "Hyde Park", 0), node("locality", "Chicago", 11, CHICAGO)]
 
-			applyLandmark(roots, "Hyde Park, Chicago", lookup([LONDON_PARK]))
+			await applyLandmark(roots, "Hyde Park, Chicago", lookup([LONDON_PARK]))
 
 			expect(roots[0]!.placeID).toBeUndefined()
 		})
 
-		it("leaves the parse alone when the context resolved no place", () => {
+		it("leaves the parse alone when the context resolved no place", async () => {
 			const roots = [node("venue", "Hyde Park", 0), node("locality", "Nowhere", 11)]
 
-			applyLandmark(roots, "Hyde Park, Nowhere", lookup([LONDON_PARK]))
+			await applyLandmark(roots, "Hyde Park, Nowhere", lookup([LONDON_PARK]))
 
 			expect(roots).toHaveLength(2)
 			expect(roots[0]!.placeID).toBeUndefined()

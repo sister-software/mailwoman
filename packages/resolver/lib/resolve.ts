@@ -252,7 +252,7 @@ class WOFResolver implements Resolver {
 		}
 
 		if (opts.landmarks) {
-			applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.landmarks)
+			await applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.landmarks)
 		}
 
 		// The postcode and rooftop passes hold a locality to the same distance from their point.
@@ -285,7 +285,7 @@ class WOFResolver implements Resolver {
 
 		// OpenStreetMap places answer after span rescore, so a town that holds the whole name keeps it.
 		if (opts.osmPlaces) {
-			applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.osmPlaces)
+			await applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.osmPlaces)
 		}
 
 		// Retry exact address-point tier once after span-rescore recovery.

@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       targets:
-        description: "Workers to deploy: all, or a comma-separated list of tiles, license, earth, moon, mars"
+        description: "Workers to deploy: all, or a comma-separated list of tiles, license, places, earth, moon, mars"
         type: string
         default: all
 

@@ -133,7 +133,7 @@ function listCodeHoldersOnCountry(roots: AddressNode[], code: string, hits: read
  * The first comma-separated part is the name, and any other part is context that has to have resolved.
  * A settlement that leads the name stays with the admin ladder, because the ladder ranks settlements.
  */
-export function applyLandmark(roots: AddressNode[], raw: string, landmarks: LandmarkLookup): void {
+export async function applyLandmark(roots: AddressNode[], raw: string, landmarks: LandmarkLookup): Promise<void> {
 	const nodes = [...walkNodes(roots)]
 
 	if (nodes.some((node) => ADDRESS_TAGS.has(node.tag))) return
@@ -142,7 +142,7 @@ export function applyLandmark(roots: AddressNode[], raw: string, landmarks: Land
 
 	if (!name) return
 
-	const hits = landmarks.find(name)
+	const hits = await landmarks.find(name)
 	const hasContext = raw.trim().length > name.length
 
 	// A bare country code answers the country, and the airport holding the same code is listed beside it.

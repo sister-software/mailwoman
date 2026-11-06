@@ -17,6 +17,14 @@ declare global {
 			 * The fixture candidate database, base64-encoded.
 			 */
 			CANDIDATE_FIXTURE_BASE64: string
+			/**
+			 * The fixture Wikidata landmark database, base64-encoded.
+			 */
+			LANDMARK_FIXTURE_BASE64: string
+			/**
+			 * The fixture OpenStreetMap place database, base64-encoded.
+			 */
+			OSM_PLACES_FIXTURE_BASE64: string
 		}
 
 		interface GlobalProps {

@@ -16,7 +16,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { walkWorkspaceClosure, workspaceDirectories } from "#release-kit/release/workspace-closure"
 
-export type DeployTargetID = "tiles" | "license" | "earth" | "moon" | "mars"
+export type DeployTargetID = "tiles" | "license" | "places" | "earth" | "moon" | "mars"
 
 export interface DeployTarget {
 	id: DeployTargetID
@@ -53,7 +53,7 @@ export interface DeployTarget {
 const PLANETARY_BUILD = "yarn workspace @mailwoman/planetary build"
 
 /**
- * The five Workers, in the order the workflow lists them.
+ * The Workers, in the order the workflow lists them.
  */
 export const DEPLOY_TARGETS: readonly DeployTarget[] = [
 	{
@@ -75,6 +75,16 @@ export const DEPLOY_TARGETS: readonly DeployTarget[] = [
 		body: "",
 		deployArgs: "",
 		receipt: "https://license.mailwoman.post/health",
+	},
+	{
+		id: "places",
+		worker: "mailwoman-gazetteer",
+		workspace: "@mailwoman/gazetteer-worker",
+		cwd: "packages/gazetteer-worker",
+		build: "",
+		body: "",
+		deployArgs: "",
+		receipt: "https://places.mailwoman.post/v1/landmarks?name=Central%20Park&source=wikidata",
 	},
 	{
 		id: "earth",

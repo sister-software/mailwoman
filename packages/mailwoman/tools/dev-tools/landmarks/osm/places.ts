@@ -10,7 +10,7 @@
  */
 
 import { OSM_LANDMARK_PREFIX } from "@mailwoman/core/resolver"
-import { landmarkNameKey, type LandmarkNameTable } from "@mailwoman/resolver-wof-sqlite/landmark"
+import { landmarkNameKey, type LandmarkNameTable } from "@mailwoman/resolver-wof-sqlite/landmark/rows"
 import { shortCellToInt } from "@mailwoman/spatial"
 import { latLngToCell } from "@sister.software/h3"
 

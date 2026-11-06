@@ -10,6 +10,7 @@
 
 import type { MailwomanAPIEngine } from "@mailwoman/api/engine"
 import { type AddressTree, decodeAsTuples, decodeAsXML } from "@mailwoman/core/decoder"
+import type { ResolveOpts } from "@mailwoman/core/resolver"
 import { CandidateResolverBackend, type MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { extractGeocodeResult } from "mailwoman/geocode/result"
@@ -40,6 +41,11 @@ export interface EngineWorkerEngineOptions {
 	 * The place lookup the cascade sends each gazetteer query to, such as the gazetteer Worker's binding.
 	 */
 	lookup: MailwomanLookupLike
+
+	/**
+	 * The landmark layers a bare place name reads, such as the gazetteer Worker's `findLandmarks`.
+	 */
+	landmarkLayers?: Pick<ResolveOpts, "landmarks" | "osmPlaces">
 }
 
 /**
@@ -50,7 +56,11 @@ export interface EngineWorkerEngineOptions {
  * The geocode resolves the parsed tree through the gazetteer cascade and answers at
  * admin tier: the street tiers' databases are not reachable from the Worker.
  */
-export function createEngineWorkerEngine({ pipeline, lookup }: EngineWorkerEngineOptions): MailwomanAPIEngine {
+export function createEngineWorkerEngine({
+	pipeline,
+	lookup,
+	landmarkLayers = {},
+}: EngineWorkerEngineOptions): MailwomanAPIEngine {
 	const resolver = createWOFResolver(new CandidateResolverBackend(lookup))
 
 	return {
@@ -68,10 +78,11 @@ export function createEngineWorkerEngine({ pipeline, lookup }: EngineWorkerEngin
 		geocode: async (address, init) => {
 			const tree = await (await pipeline()).parse(address)
 
-			const resolved = await resolver.resolveTree(
-				tree,
-				init.bias.length ? { bias: init.bias.map((point) => ({ ...point })) } : {}
-			)
+			const resolved = await resolver.resolveTree(tree, {
+				writtenInput: address,
+				...landmarkLayers,
+				...(init.bias.length ? { bias: init.bias.map((point) => ({ ...point })) } : {}),
+			})
 
 			return { ...extractGeocodeResult(address, resolved), tree: init.includeTree ? tree : null }
 		},

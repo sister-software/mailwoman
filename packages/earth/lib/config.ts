@@ -34,6 +34,12 @@ export interface EarthConfig {
 	 */
 	geocoderAPIURL: URL | null
 	/**
+	 * The gazetteer Worker.
+	 *
+	 * It answers a bare place name from the Wikidata and OpenStreetMap landmark layers.
+	 */
+	landmarkAPIURL: URL
+	/**
 	 * The GEBCO undersea gazetteer's browser asset, built by `@mailwoman/undersea`.
 	 * The map draws its labels, and the search reads its names.
 	 */
@@ -53,5 +59,6 @@ export const PRODUCTION_CONFIG: EarthConfig = {
 	sqliteRuntimeBaseURL: "/sqlite",
 	// The API Worker has no production route yet.
 	geocoderAPIURL: null,
+	landmarkAPIURL: new URL("https://places.mailwoman.post/"),
 	underseaFeaturesURL: new URL("https://public.mailwoman.post/undersea/gebco-2026-11-02/v2/undersea-features.geojson"),
 }

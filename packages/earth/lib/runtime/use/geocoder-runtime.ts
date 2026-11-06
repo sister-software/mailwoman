@@ -30,6 +30,7 @@ import {
 } from "@mailwoman/cartographer/jurisdictions"
 import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 import { startEarly } from "@mailwoman/core/promises"
+import type { LandmarkLookup } from "@mailwoman/core/resolver"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
 import { useReleaseRuntime } from "@mailwoman/react"
 import type {
@@ -49,6 +50,7 @@ import {
 	resolveStreet,
 	type StreetResolution,
 } from "@mailwoman/resolver-wof-wasm/httpvfs/street"
+import { LandmarkSource, RemoteLandmarkLookup } from "@mailwoman/resolver-wof-wasm/remote-landmark"
 import { postPruneMessage } from "@mailwoman/service-worker-cache/prune"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import {
@@ -179,6 +181,25 @@ function modelDisabled(): boolean {
 /**
  * The basemap's TileJSON: the tileset `?basemap=` asks for on the tile worker, or the configured basemap.
  */
+/**
+ * Reads one landmark layer, and keeps a search working when the Worker does not answer.
+ *
+ * The layers improve a bare place name, and the page geocodes offline without them.
+ * A failed read goes to the console with its layer, and the gazetteer's own answer stands.
+ */
+function landmarkLayer(baseURL: URL, source: LandmarkSource): LandmarkLookup {
+	const lookup = new RemoteLandmarkLookup(baseURL, source)
+
+	return {
+		find: (name) =>
+			lookup.find(name).catch((error: unknown) => {
+				console.warn(`The ${source} landmark layer did not answer for the name "${name}"`, error)
+
+				return []
+			}),
+	}
+}
+
 function basemapTileJSONURL(config: EarthConfig): URL {
 	const name = pageTilesetParam("basemap")
 
@@ -589,7 +610,10 @@ export function useGeocoderRuntime({
 
 			const tBeforeResolve = performance.now()
 
-			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias).catch(async (error: unknown) => {
+			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias, {
+				landmarks: landmarkLayer(config.landmarkAPIURL, LandmarkSource.Wikidata),
+				osmPlaces: landmarkLayer(config.landmarkAPIURL, LandmarkSource.OpenStreetMap),
+			}).catch(async (error: unknown) => {
 				// Offline, the gazetteer answers only from the range chunks the service worker cached while online.
 				// A read past them fails inside SQLite as `SQLITE_IOERR_READ`,
 				// a disk I/O error that hides the cause.
@@ -675,6 +699,7 @@ export function useGeocoderRuntime({
 			}
 		},
 		[
+			config.landmarkAPIURL,
 			config.underseaFeaturesURL,
 			ensureStreetLookups,
 			familyBundles,

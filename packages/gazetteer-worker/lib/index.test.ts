@@ -7,12 +7,50 @@
 import { env, exports } from "cloudflare:workers"
 import { beforeAll, describe, expect, test } from "vitest"
 
-import { candidateDatabaseKey } from "#index"
+import { candidateDatabaseKey, LANDMARK_DATABASE_KEY, OSM_PLACES_DATABASE_KEY } from "#index"
+
+const bytes = (base64: string) => Uint8Array.from(atob(base64), (character) => character.charCodeAt(0))
 
 beforeAll(async () => {
-	const fixture = Uint8Array.from(atob(env.CANDIDATE_FIXTURE_BASE64), (character) => character.charCodeAt(0))
+	await env.PUBLIC_BUCKET.put(candidateDatabaseKey(), bytes(env.CANDIDATE_FIXTURE_BASE64))
+	await env.PUBLIC_BUCKET.put(LANDMARK_DATABASE_KEY, bytes(env.LANDMARK_FIXTURE_BASE64))
+	await env.OSM_PLACES_BUCKET.put(OSM_PLACES_DATABASE_KEY, bytes(env.OSM_PLACES_FIXTURE_BASE64))
+})
 
-	await env.PUBLIC_BUCKET.put(candidateDatabaseKey(), fixture)
+describe("the landmark route", () => {
+	const read = (query: string) => exports.default.fetch(`https://places.invalid/v1/landmarks?${query}`)
+
+	test("answers a Wikidata name with its hits and CC0 license", async () => {
+		const response = await read("name=Central%20Park&source=wikidata")
+		const answer = (await response.json()) as { hits: Array<{ qid: string }>; license: string }
+
+		expect(response.status).toBe(200)
+		expect(answer.hits.map(({ qid }) => qid)).toEqual(["Q160409"])
+		expect(answer.license).toBe("CC0-1.0")
+	})
+
+	test("credits OpenStreetMap beside an OpenStreetMap hit", async () => {
+		const answer = (await (await read("name=Piedmont%20Park&source=openstreetmap")).json()) as {
+			hits: Array<{ qid: string }>
+			attribution: string
+			license: string
+		}
+
+		expect(answer.hits.map(({ qid }) => qid)).toEqual(["W1"])
+		expect(answer.attribution).toBe("© OpenStreetMap contributors")
+		expect(answer.license).toBe("ODbL-1.0")
+	})
+
+	test("bounds the rows one name reads", async () => {
+		const answer = (await (await read("name=Crowded&source=openstreetmap")).json()) as { hits: unknown[] }
+
+		expect(answer.hits).toHaveLength(100)
+	})
+
+	test("refuses a request with no name or an unknown source", async () => {
+		expect((await read("source=wikidata")).status).toBe(400)
+		expect((await read("name=Central%20Park&source=every")).status).toBe(400)
+	})
 })
 
 describe("the gazetteer Worker's RPC entry point", () => {

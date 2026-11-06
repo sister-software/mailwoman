@@ -18,10 +18,9 @@ import {
 	createLandmarkTables,
 	isLandmarkCode,
 	LANDMARK_NAME_COLUMNS,
-	landmarkNameKey,
 	type LandmarkDatabase,
-	type LandmarkNameTable,
 } from "@mailwoman/resolver-wof-sqlite/landmark"
+import { landmarkNameKey, type LandmarkNameTable } from "@mailwoman/resolver-wof-sqlite/landmark/rows"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
 import type { PathBuilderLike } from "path-ts"
 

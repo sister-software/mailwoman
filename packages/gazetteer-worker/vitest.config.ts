@@ -40,14 +40,37 @@ const FIXTURE_SQL = `
 	CREATE INDEX candidate_name_key ON candidate (name_key);
 `
 
-async function buildFixture(): Promise<string> {
+const LANDMARK_TABLE_SQL = `
+	PRAGMA page_size = 4096;
+	CREATE TABLE landmark_name (
+		name_key TEXT NOT NULL, qid TEXT NOT NULL, name TEXT NOT NULL, kind TEXT NOT NULL, country TEXT,
+		latitude REAL NOT NULL, longitude REAL NOT NULL, sitelinks INTEGER NOT NULL, code TEXT, is_primary INTEGER NOT NULL,
+		importance REAL, h3_cell INTEGER,
+		PRIMARY KEY (name_key, qid)
+	) WITHOUT ROWID;
+`
+
+const WIKIDATA_FIXTURE_SQL = `${LANDMARK_TABLE_SQL}
+	INSERT INTO landmark_name VALUES ('central park', 'Q160409', 'Central Park', 'venue', 'US', 40.78, -73.96, 80, NULL, 1, NULL, NULL);
+`
+
+/**
+ * One OpenStreetMap park, and 150 rows under one name, more than the route reads.
+ */
+const OSM_FIXTURE_SQL = `${LANDMARK_TABLE_SQL}
+	INSERT INTO landmark_name VALUES ('piedmont park', 'W1', 'Piedmont Park', 'venue', 'US', 33.78, -84.37, 0, NULL, 1, 0.43, 1);
+	WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 150)
+		INSERT INTO landmark_name SELECT 'crowded', 'N' || i, 'Crowded', 'venue', 'US', 1.0, 1.0, 0, NULL, 1, 0.1, 1 FROM n;
+`
+
+async function buildFixture(sql: string): Promise<string> {
 	await using directory = await temporaryDirectory("gazetteer-worker-fixture-")
-	const path = directory.path("candidate.db")
+	const path = directory.path("fixture.db")
 
 	{
 		using db = new DatabaseClient<CandidateDatabase>(path)
 
-		db.exec(FIXTURE_SQL)
+		db.exec(sql)
 	}
 
 	return (await readLocalBuffer(path)).toString("base64")
@@ -58,7 +81,11 @@ export default defineConfig({
 		cloudflareTest({
 			wrangler: { configPath: "./wrangler.toml" },
 			miniflare: {
-				bindings: { CANDIDATE_FIXTURE_BASE64: await buildFixture() },
+				bindings: {
+					CANDIDATE_FIXTURE_BASE64: await buildFixture(FIXTURE_SQL),
+					LANDMARK_FIXTURE_BASE64: await buildFixture(WIKIDATA_FIXTURE_SQL),
+					OSM_PLACES_FIXTURE_BASE64: await buildFixture(OSM_FIXTURE_SQL),
+				},
 			},
 		}),
 	],

@@ -410,3 +410,11 @@ embedded OpenSearch. The data is ODbL, so the database is build-local and `MAILW
   margin, so a bare name held by several places reads as a close call.
 
 The answer's `coordinate_source` is `openstreetmap:planet`, which the Nominatim and Photon shapes credit.
+
+Earth and the engine Worker read both layers through the gazetteer Worker, because a browser holds neither database. Its
+`GET /v1/landmarks?name=&source=` route reads at most 100 rows for one name and returns the layer's credit and license with
+them. On the 2026-08-03 planet build, 1,303 of 3,778,629 names hold more rows than that. The route's limit can drop a stated
+town's own namesake under those names, because rows arrive by importance before context narrows them.
+
+Earth treats a failed read as a missing layer, so a bare name offline falls back to the gazetteer and the console records the
+failure.

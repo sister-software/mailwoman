@@ -237,7 +237,7 @@ export function landmarkPlaceID(id: string | number): string {
  * Finds the places a name belongs to, primary names first, then most sitelinks first.
  */
 export interface LandmarkLookup {
-	find(name: string): LandmarkHit[]
+	find(name: string): LandmarkHit[] | Promise<LandmarkHit[]>
 }
 
 /**

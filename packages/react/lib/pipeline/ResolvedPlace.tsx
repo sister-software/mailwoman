@@ -32,12 +32,12 @@ export function ResolvedPlace({ place }: ResolvedPlaceProps): ReactNode {
 								: `≈ interpolated · ±${place.uncertaintyM ?? "?"} m`}
 						</dd>
 					</>
-				) : (
+				) : place.id > 0 ? (
 					<>
 						<dt>WOF id</dt>
 						<dd>{place.id}</dd>
 					</>
-				)}
+				) : null}
 				<dt>coords</dt>
 				<dd>
 					{place.lat.toFixed(4)}, {place.lon.toFixed(4)}

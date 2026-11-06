@@ -8,7 +8,8 @@
  */
 
 import type { SPARQLResults } from "@mailwoman/corpus/tools/fetch/wikidata/subvenue"
-import { isLandmarkCode, landmarkNameKey, type LandmarkNameTable } from "@mailwoman/resolver-wof-sqlite/landmark"
+import { isLandmarkCode } from "@mailwoman/resolver-wof-sqlite/landmark"
+import { landmarkNameKey, type LandmarkNameTable } from "@mailwoman/resolver-wof-sqlite/landmark/rows"
 
 /**
  * Every located aerodrome with an IATA code that Wikidata records no closing date for.

@@ -12,6 +12,7 @@
 import { createMailwomanAPI } from "@mailwoman/api"
 import { buildEngineStamp } from "@mailwoman/core/license/stamp"
 import type GazetteerWorker from "@mailwoman/gazetteer-worker"
+import { LandmarkSource } from "@mailwoman/resolver-wof-wasm/remote-landmark"
 import mailwomanPackage from "mailwoman/package.json" with { type: "json" }
 
 import { createEngineWorkerEngine, type ReleasePipeline } from "#engine"
@@ -57,6 +58,10 @@ export default {
 		const engine = createEngineWorkerEngine({
 			pipeline: loadPipeline,
 			lookup: { findPlace: (query) => env.GAZETTEER.findPlace(query) },
+			landmarkLayers: {
+				landmarks: { find: (name) => env.GAZETTEER.findLandmarks(name, LandmarkSource.Wikidata) },
+				osmPlaces: { find: (name) => env.GAZETTEER.findLandmarks(name, LandmarkSource.OpenStreetMap) },
+			},
 		})
 
 		return createMailwomanAPI(engine, { engine: ENGINE_STAMP }).fetch(request)

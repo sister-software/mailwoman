@@ -1,10 +1,19 @@
 name = "mailwoman-gazetteer"
 main = "./lib/index.ts"
 compatibility_date = "2026-10-24"
-# The engine Worker reaches this Worker through a service binding only.
 workers_dev = false
+# `/v1/landmarks` is the one route a browser reaches. The engine Worker uses the service binding.
+routes = [{ pattern = "places.mailwoman.post", custom_domain = true }]
 
-# The public asset bucket. `candidate.db` is read from it by range, at the key `candidateDatabaseKey()` returns.
+# The public asset bucket. `candidate.db` and the Wikidata landmark database are read from it by range.
 [[r2_buckets]]
 binding = "PUBLIC_BUCKET"
 bucket_name = "mailwoman-public"
+jurisdiction = "eu"
+
+# The OpenStreetMap place database stays behind this Worker. The bucket has no public URL or custom domain, and the
+# tile Worker serves only its own prefixes, so `OSM_PLACES_DATABASE_KEY` sits outside them.
+[[r2_buckets]]
+binding = "OSM_PLACES_BUCKET"
+bucket_name = "mailwoman-tiles"
+jurisdiction = "eu"

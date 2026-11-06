@@ -6,7 +6,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { VitalPlace } from "@mailwoman/corpus/tools/fetch/wikidata/vital-places/inventory"
-import { landmarkNameKey, LandmarkSqliteLookup } from "@mailwoman/resolver-wof-sqlite/landmark"
+import { LandmarkSqliteLookup } from "@mailwoman/resolver-wof-sqlite/landmark"
+import { landmarkNameKey } from "@mailwoman/resolver-wof-sqlite/landmark/rows"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { airportRows, readAirportCodes } from "./airport-codes.ts"
