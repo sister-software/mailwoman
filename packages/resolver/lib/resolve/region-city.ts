@@ -45,3 +45,27 @@ export async function applyRegionCity(roots: AddressNode[], backend: ResolverBac
 	decorateNode(region, city, others)
 	region.metadata = { ...region.metadata, region_city: true }
 }
+
+/**
+ * Reads a locality the gazetteer holds only as a region, inside a country the input states.
+ *
+ * `Likiep Atoll, RMI` parses the atoll as a locality, and the Marshall Islands hold it as a region.
+ * This runs after the locality band missed, so a place with a locality row keeps it.
+ */
+export async function applyLocalityAsRegion(
+	roots: AddressNode[],
+	backend: ResolverBackend,
+	country: string
+): Promise<void> {
+	const nodes = [...walkNodes(roots)]
+	const locality = nodes.find((node) => node.tag === "locality" && !node.placeID && node.value.trim())
+
+	if (!locality || nodes.some((node) => node.tag === "region" && node.placeID)) return
+
+	const [region, ...others] = await backend.findPlace({ text: locality.value, placetype: "region", country })
+
+	if (!region?.exactMatch || region.country !== country) return
+
+	locality.tag = "region"
+	decorateNode(locality, region, others)
+}

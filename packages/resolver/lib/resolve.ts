@@ -46,6 +46,7 @@ import {
 } from "#postcode/country-coherence"
 import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcodePrefix } from "#postcode/prefix"
 import { applyPostcodeShapeCoherence } from "#postcode/shape-coherence"
+import { applyCountryCode, readRegionCodeAsCountry } from "#resolve/country-code"
 import { applyLandmark } from "#resolve/landmark"
 import {
 	applyPostcodeConsistency,
@@ -58,7 +59,7 @@ import {
 	type ResolutionState,
 	type ResolvedOpts,
 } from "#resolve/passes"
-import { applyRegionCity } from "#resolve/region-city"
+import { applyLocalityAsRegion, applyRegionCity } from "#resolve/region-city"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street/tier"
 import {
 	type CapitalLevelFn,
@@ -132,7 +133,9 @@ class WOFResolver implements Resolver {
 	 */
 	findPlace: Resolver["findPlace"] = (query) => this.#backend.findPlace(query)
 
-	async resolveTree(tree: AddressTree, callerOpts: ResolveOpts = {}): Promise<AddressTree> {
+	async resolveTree(parsed: AddressTree, callerOpts: ResolveOpts = {}): Promise<AddressTree> {
+		const tree = readRegionCodeAsCountry(parsed)
+
 		// Every on/off switch resolves against the one defaults table, so the reads below are plain truthiness.
 		const opts: ResolvedOpts = { ...callerOpts, ...resolveSwitches(callerOpts) }
 
@@ -240,6 +243,12 @@ class WOFResolver implements Resolver {
 			// Re-resolve foreign region/locality pairs blocked by locale scope.
 			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry?.country ?? null)
 			await applyRegionCity(newRoots, this.#backend)
+
+			if (isCallerScope(state.defaultCountry)) {
+				await applyLocalityAsRegion(newRoots, this.#backend, state.defaultCountry!.country)
+			}
+
+			await applyCountryCode(newRoots, opts.writtenInput ?? tree.raw, this.#backend)
 		}
 
 		if (opts.landmarks) {

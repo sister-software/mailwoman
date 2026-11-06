@@ -379,8 +379,10 @@ The rule, as a caller reads it:
 The prominence is `log10(sitelinks + 1)`, so the published margin is `DECISIVE_MARGIN_LOG10`, a lead of about 3.2 times.
 `Hyde Park` answers London with 63 sitelinks against 35 for Hyde Park, New York, and that lead of 1.8 times is declared.
 
-Four rules decide what the layer may answer:
+Five rules decide what the layer may answer:
 
+- An input that is only a country code of three or more capitals answers the country, so `USA` is the United States and
+  `FRA` is France. `FRA, Germany` reaches the airport.
 - A settlement that leads a name stays with the admin ladder, which ranks settlements.
 - A place's own English or local name ranks ahead of a translation or an alias. `Hamburg` is an alias of Hamburg Airport
   and the name of a city.

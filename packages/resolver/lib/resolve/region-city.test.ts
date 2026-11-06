@@ -8,7 +8,7 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import { EMPTY_PLACE_FIELDS, type ResolvedPlace, type ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { applyRegionCity } from "#resolve/region-city"
+import { applyLocalityAsRegion, applyRegionCity } from "#resolve/region-city"
 
 const CITY: ResolvedPlace = {
 	...EMPTY_PLACE_FIELDS,
@@ -33,6 +33,44 @@ const streetAddress = () => [
 	node("street", "Lê Duẩn", 3),
 	node("region", "Hồ Chí Minh", 12, { placeID: "wof:8638961045712", lat: 9.78361575, lon: 107.539162 }),
 ]
+
+describe("applyLocalityAsRegion", () => {
+	const ATOLL: ResolvedPlace = {
+		...EMPTY_PLACE_FIELDS,
+		id: 85_681_000,
+		name: "Likiep Atoll",
+		placetype: "region",
+		country: "MH",
+		lat: 9.88333,
+		lon: 169.15,
+		score: 3,
+		exactMatch: true,
+	}
+
+	it("reads an unresolved locality as the region of that name in the stated country", async () => {
+		const roots = [node("locality", "Likiep Atoll", 0)]
+
+		await applyLocalityAsRegion(roots, backendOf([ATOLL]), "MH")
+
+		expect(roots[0]).toMatchObject({ tag: "region", lat: 9.88333 })
+	})
+
+	it("leaves a resolved locality", async () => {
+		const roots = [node("locality", "Likiep Atoll", 0, { placeID: "wof:1" })]
+
+		await applyLocalityAsRegion(roots, backendOf([ATOLL]), "MH")
+
+		expect(roots[0]!.tag).toBe("locality")
+	})
+
+	it("leaves a locality when the region is in another country", async () => {
+		const roots = [node("locality", "Likiep Atoll", 0)]
+
+		await applyLocalityAsRegion(roots, backendOf([ATOLL]), "FM")
+
+		expect(roots[0]!.tag).toBe("locality")
+	})
+})
 
 describe("applyRegionCity", () => {
 	it("reads a street address's region as the city of that name inside it", async () => {

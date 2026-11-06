@@ -15,6 +15,7 @@ import { EMPTY_PLACE_FIELDS, type LandmarkHit, type LandmarkLookup, type Resolve
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 
 import { decorateNode } from "#decorate-node"
+import { writtenCountryCode } from "#resolve/country-code"
 
 /**
  * The tags that make an input an address.
@@ -86,6 +87,10 @@ export function applyLandmark(roots: AddressNode[], raw: string, landmarks: Land
 	const context = roots.filter((node) => node.start >= nameEnd && typeof node.placeID === "string")
 
 	if (hasContext && !context.length) return
+
+	// A bare country code answers the country.
+	// With context, `FRA, Germany` can still reach the airport.
+	if (!hasContext && writtenCountryCode(name)) return
 
 	const candidates = hasContext ? hitsInContext(hits, context) : hits
 	const leader = candidates[0]
