@@ -6,7 +6,13 @@
 
 import { describe, expect, it } from "vitest"
 
-import { isAdmittedLicense, openAddressesRow, repeatsStoredPoint } from "./openaddresses.ts"
+import {
+	isAdmittedLicense,
+	isAdmittedSource,
+	openAddressesRow,
+	postcodeNearPoint,
+	repeatsStoredPoint,
+} from "./openaddresses.ts"
 
 describe("isAdmittedLicense", () => {
 	it.each([
@@ -29,6 +35,26 @@ describe("isAdmittedLicense", () => {
 		["Unknown"],
 	])("refuses %j", (license) => {
 		expect(isAdmittedLicense(license)).toBe(false)
+	})
+})
+
+describe("isAdmittedSource", () => {
+	it("admits a reviewed source its recorded wording alone would refuse", () => {
+		expect(isAdmittedSource("us/tx/san_antonio", { text: "Indemnification" })).toBe(true)
+		expect(isAdmittedSource("us/pa/bucks", { text: "Not for commercial use or resale." })).toBe(false)
+	})
+})
+
+describe("postcodeNearPoint", () => {
+	const dueWest = { postcode: "29639", geometry: "[[-82.38815,34.328206],[-82.3896,34.32932]]" }
+	const beaufort = { postcode: "29945", geometry: "[[-80.861,32.6937],[-80.862,32.6945]]" }
+
+	it("takes the postcode of the segment beside the point", () => {
+		expect(postcodeNearPoint({ lat: 32.6936489, lon: -80.8609899 }, [dueWest, beaufort])).toBe("29945")
+	})
+
+	it("reads null when the only segment of that name and number lies elsewhere", () => {
+		expect(postcodeNearPoint({ lat: 32.6936489, lon: -80.8609899 }, [dueWest])).toBeNull()
 	})
 })
 

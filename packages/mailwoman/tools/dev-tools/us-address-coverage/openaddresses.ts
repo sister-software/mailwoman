@@ -9,6 +9,7 @@
  *   the corpus's situs source table, so no training recipe reads these rows.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/json"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
@@ -48,6 +49,61 @@ export function isAdmittedLicense(license: unknown): boolean {
 	if (url) return OPEN_LICENSE_URL.test(url)
 
 	return true
+}
+
+/**
+ * Sources whose recorded terms a reader checked and found to restrict no use,
+ * with the wording that decided each.
+ *
+ * `isAdmittedLicense` reads a pattern over the wording and refuses each of them.
+ */
+const REVIEWED_OPEN: Readonly<Record<string, string>> = {
+	"us/tx/san_antonio":
+		"data.sanantonio.gov carries a CC BY 4.0 notice, and the recorded `Indemnification` restricts no use.",
+	"us/ca/city_of_san_diego": "The recorded terms are the ODC PDDL, a public domain dedication.",
+	"us/pa/somerset": "The recorded terms read `Access_Constraints: None. Use_Constraints: None.`",
+	"us/co/city_of_commerce_city": "The recorded terms disclaim liability and restrict no use.",
+	"us/nm/dona_ana": "The recorded terms disclaim warranty, and their one condition concerns resale of hard copy.",
+}
+
+/**
+ * Decides whether a source's rows are admitted, by its recorded license or a review of its terms.
+ */
+export function isAdmittedSource(member: string, license: unknown): boolean {
+	return member in REVIEWED_OPEN || isAdmittedLicense(license)
+}
+
+/**
+ * The farthest, in degrees, a street segment's vertex may lie from a point
+ * whose postcode it supplies: about 1 km.
+ *
+ * A state can hold several streets of one name, each with its own postcode,
+ * so the segment has to lie beside the point.
+ */
+const SEGMENT_REACH_DEGREES = 0.01
+
+/**
+ * Returns the postcode of the segment nearest a point, or null when no segment's vertex lies within reach.
+ */
+export function postcodeNearPoint(
+	point: { lat: number; lon: number },
+	segments: ReadonlyArray<{ postcode: string; geometry: string }>
+): string | null {
+	let best: string | null = null
+	let bestDistance = SEGMENT_REACH_DEGREES
+
+	for (const { postcode, geometry } of segments) {
+		for (const [lon, lat] of parseJSONStrict<Array<[number, number]>>(geometry)) {
+			const distance = Math.max(Math.abs(lat - point.lat), Math.abs(lon - point.lon))
+
+			if (distance <= bestDistance) {
+				best = postcode
+				bestDistance = distance
+			}
+		}
+	}
+
+	return best
 }
 
 /**

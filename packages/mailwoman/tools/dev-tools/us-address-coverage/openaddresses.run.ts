@@ -29,9 +29,10 @@ import { latLngToCell } from "@sister.software/h3"
 import { CSVSpliterator } from "spliterator"
 
 import {
-	isAdmittedLicense,
+	isAdmittedSource,
 	type OpenAddressesRecord,
 	openAddressesRow,
+	postcodeNearPoint,
 	repeatsStoredPoint,
 } from "#tools/dev-tools/us-address-coverage/openaddresses"
 
@@ -48,7 +49,7 @@ const cache = dataRootPath("oa-cache")
 
 await makeDirectories(cache)
 
-const admitted = plan.filter((source) => isAdmittedLicense(source.license))
+const admitted = plan.filter((source) => isAdmittedSource(source.member, source.license))
 const states = new Map<string, string[]>()
 
 for (const { member } of admitted) {
@@ -93,6 +94,10 @@ for (const [state, members] of states) {
 		// The repeat check below reads this index, and the lookup's search around a locality requires it.
 		db.exec("CREATE INDEX IF NOT EXISTS idx_ap_street ON address_point (street_norm, number)")
 
+		// A rerun replaces its own earlier rows.
+		// A bare `openaddresses` source came from another build and stays.
+		db.exec("DELETE FROM address_point WHERE source LIKE 'openaddresses:us/%'")
+
 		const hasCell = columns.includes("h3_cell")
 		const stored = db.prepare("SELECT lat, lon FROM address_point WHERE street_norm = ? AND number = ?")
 
@@ -106,7 +111,7 @@ for (const [state, members] of states) {
 		})
 
 		const segmentPostcode = segments.prepare(
-			"SELECT postcode FROM street_segment WHERE street_norm = ? AND min_hn <= ? AND max_hn >= ? AND postcode IS NOT NULL LIMIT 1"
+			"SELECT postcode, geometry FROM street_segment WHERE street_norm = ? AND min_hn <= ? AND max_hn >= ? AND postcode IS NOT NULL"
 		)
 
 		for (const member of members) {
@@ -167,11 +172,13 @@ for (const [state, members] of states) {
 				const houseNumber = Number.parseInt(row.number, 10)
 
 				if (!row.postcode && !Number.isNaN(houseNumber)) {
-					const segment = segmentPostcode.get(row.street_norm, houseNumber, houseNumber) as
-						| { postcode: string }
-						| undefined
-
-					row.postcode = segment?.postcode ?? null
+					row.postcode = postcodeNearPoint(
+						row,
+						segmentPostcode.all(row.street_norm, houseNumber, houseNumber) as Array<{
+							postcode: string
+							geometry: string
+						}>
+					)
 				}
 
 				const cell = hasCell ? shortCellToInt(latLngToCell(row.lat, row.lon, ADDRESS_POINT_H3_RESOLUTION)) : null
