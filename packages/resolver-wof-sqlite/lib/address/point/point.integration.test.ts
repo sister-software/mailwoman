@@ -169,6 +169,22 @@ beforeAll(async () => {
 	)
 
 	insert.run(
+		"old volcano road",
+		"old volcano road",
+		"89",
+		null,
+		"96785",
+		"volcano",
+		"OLD VOLCANO RD",
+		19.5,
+		-155.3,
+		"t",
+		"r",
+		null,
+		null
+	)
+
+	insert.run(
 		"north state road 245",
 		"north state road 245",
 		"69",
@@ -202,6 +218,10 @@ describe("AddressPointSqliteLookup", () => {
 		expect(lookup.find({ street: "Old Volcano Rd", number: "19-4074", postcode: "96785", bbox: null })?.lat).toBe(
 			19.4257922
 		)
+	})
+
+	it("reads a short hyphenated step as a range and leaves the joined house alone", () => {
+		expect(lookup.find({ street: "Old Volcano Rd", number: "8-9", postcode: "96785", bbox: null })).toBeNull()
 	})
 
 	it("matches a written state route against the spelling the source stores", () => {
