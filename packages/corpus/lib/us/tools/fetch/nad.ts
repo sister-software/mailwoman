@@ -17,9 +17,11 @@
  *
  *   The ArcGIS FeatureServer is the only fully-automated path. As of 2026-05:
  *
- *   - **`bulk`** mode requires a pre-signed S3 URL (Akamai blocks scripted curl on the DOT page). Pass
- *       `--nad-url <presigned>` from a browser visit to
+ *   - **`bulk`** mode takes the release's download link (Akamai blocks scripted requests on the DOT page). Pass
+ *       `--nad-url <link>` from a browser visit to
  *       [https://www.transportation.gov/gis/national-address-database](https://www.transportation.gov/gis/national-address-database).
+ *       It downloads `bulk/nad.zip`, extracts it to `bulk/extracted/`, and writes the text release to Parquet
+ *       sorted by state and county beside it.
  *   - **`featureserver`** mode (default) pages the live FeatureService via objectid ranges, writing
  *       ndjson chunks into `<outRoot>/usgov-nad/featureserver/`.
  *
@@ -37,14 +39,18 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { statPath, pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { ResumeRefusedError, streamToDisk } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
-import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
+import { readManifest, writeManifest } from "#tools/fetch/download"
+import { convertNADToParquet } from "#us/tools/fetch/nad/parquet"
 
 const SLUG = "usgov-nad"
 
@@ -310,38 +316,111 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 	return { fetched, skipped, failed: totalErrors, failedCodes }
 }
 
+/**
+ * The archive's file name on disk.
+ * The download URL can name a media type rather than a file.
+ */
+const BULK_ARCHIVE = "nad.zip"
+
+/**
+ * The extracted member the conversion reads: the release's one large delimited text file.
+ */
+const BULK_TEXT_MEMBER = /\.(?:txt|csv)$/iu
+
+/**
+ * Downloads the bulk archive, extracts its text, and converts it to Parquet sorted by state and county.
+ *
+ * Each step keeps its output when the step before it is unchanged.
+ * An archive whose manifest records the same URL and whose hash still matches is
+ * not downloaded again, extracted members already on disk are kept, and the Parquet
+ * file is kept while its record holds the same archive hash.
+ *
+ * An interrupted download resumes from its `.part` file when the host honors
+ * byte ranges, and starts over when it does not.
+ */
 async function bulkMode(options: FetchNADOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	if (!options.nadURL) {
 		throw new Error(
 			`bulk mode requires --nad-url. Akamai protects the DOT page; ` +
 				`visit https://www.transportation.gov/gis/national-address-database in a browser, ` +
-				`accept the disclaimer, and re-run with the pre-signed S3 URL.`
+				`accept the disclaimer, and re-run with the download link.`
 		)
 	}
 
-	const destDir = options.outRoot(SLUG)
-	await makeDirectories(destDir)
-	const filename = new URL(options.nadURL).pathname.split("/").pop() ?? "NAD.zip"
-	const destPath = destDir(filename)
+	const url = options.nadURL
+	const bulkDir = options.outRoot(SLUG, "bulk")
+	const archivePath = bulkDir(BULK_ARCHIVE)
+	const manifestPath = bulkDir("MANIFEST.json")
 
-	report?.(`=== ${SLUG} / ${filename}`)
-	report?.(`  URL: ${options.nadURL.slice(0, 100)}${options.nadURL.length > 100 ? "…" : ""}`)
+	await makeDirectories(bulkDir)
+	report?.(`=== ${SLUG} / bulk`)
 
-	const { bytes } = await downloadToFile({ url: options.nadURL, dest: destPath, timeoutMs: 3 * 3600 * 1000, report })
+	const recorded = await readManifest<SourceManifest>(manifestPath)
+	let sha256: string
 
-	const sha = await sha256File(destPath)
+	if (
+		recorded?.source_url === url &&
+		(await pathExists(archivePath)) &&
+		(await sha256File(archivePath)) === recorded.sha256
+	) {
+		sha256 = recorded.sha256
+		report?.(`  archive current: ${ByteFormatter.formatIEC(recorded.bytes)} sha256=${sha256}`)
+	} else {
+		const partialPath = `${archivePath}.part`
+		const resumeFrom = (await tryStat(partialPath))?.size ?? 0
 
-	await writeManifest(destDir("MANIFEST.json"), {
-		source_url: options.nadURL,
-		downloaded_at: new Date().toISOString(),
-		filename,
-		sha256: sha,
-		bytes,
+		const download = (from: number) =>
+			streamToDisk({
+				url,
+				destination: archivePath,
+				context: SLUG,
+				partialPath,
+				retainPartial: true,
+				...(from ? { resumeFrom: from } : {}),
+				onProgress: (line) => report?.(`  ${line}`),
+			})
+
+		const bytes = await download(resumeFrom).catch((error: unknown) => {
+			if (!(error instanceof ResumeRefusedError)) throw error
+
+			report?.(`  ${error.message}; downloading from the start`)
+
+			return download(0)
+		})
+
+		sha256 = await sha256File(archivePath)
+
+		await writeManifest(manifestPath, {
+			source_url: url,
+			downloaded_at: new Date().toISOString(),
+			filename: BULK_ARCHIVE,
+			sha256,
+			bytes,
+		} satisfies SourceManifest)
+
+		report?.(`  ✓ ${ByteFormatter.formatIEC(bytes)} sha256=${sha256}`)
+	}
+
+	const extracted = await extractZipEntries(archivePath, bulkDir("extracted"), { skipExisting: true })
+	const member = extracted.find((name) => BULK_TEXT_MEMBER.test(name))
+
+	if (!member) {
+		throw new Error(`${SLUG}: the archive holds no delimited text file (members: ${extracted.join(", ")})`)
+	}
+
+	const parquetPath = bulkDir(`${member.replace(/\.[^.]+$/u, "").replaceAll("/", "_")}.parquet`)
+
+	const { record, converted } = await convertNADToParquet({
+		textPath: bulkDir("extracted", member),
+		parquetPath,
+		sourceSHA256: sha256,
+		member,
+		report,
 	})
 
-	report?.(`  ✓ ${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB  sha256=${sha}`)
+	report?.(`  ${converted ? "✓ wrote" : "kept"} ${parquetPath}: ${record.rows.toLocaleString()} rows`)
 
-	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
+	return { fetched: converted ? 1 : 0, skipped: converted ? 0 : 1, failed: 0, failedCodes: [] }
 }
 
 export async function fetchNAD(options: FetchNADOptions, report?: (line: string) => void): Promise<FetchSummary> {

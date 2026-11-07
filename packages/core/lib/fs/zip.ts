@@ -27,6 +27,7 @@ import { open as openArchive, type Entry, type ZipFileOptions } from "yauzl-prom
 import { tryStat } from "#fs/readers/stat"
 import { openWriteStream } from "#fs/streams"
 import { makeDirectories } from "#fs/writers"
+import { spawnProcess } from "#process"
 import { once } from "#utils/events"
 
 type StreamingArchive = Awaited<ReturnType<typeof openArchive>>
@@ -314,6 +315,53 @@ export async function extractZipEntry(
 	throw new Error(`No entry matching ${selector} in ${archivePath}`)
 }
 
+/**
+ * The zip method number of Deflate64.
+ * Neither yauzl nor Node's zlib decodes it.
+ */
+const DEFLATE64_METHOD = 9
+
+/**
+ * Streams one member through the system's `unzip -p` into `destination`.
+ *
+ * This reads a Deflate64 member, the method the US DOT's National Address Database release uses.
+ * It needs Info-ZIP `unzip` on the path.
+ *
+ * A host without it fails with an error stating that requirement.
+ */
+async function extractWithSystemUnzip(
+	archivePath: PathBuilderLike,
+	member: string,
+	destination: PathBuilderLike
+): Promise<void> {
+	// `unzip` reads a member argument as a wildcard pattern, so its pattern characters are escaped.
+	const pattern = member.replaceAll(/[[\]*?\\]/gu, (character) => `\\${character}`)
+	const child = spawnProcess("unzip", ["-p", archivePath, pattern], { stdio: ["ignore", "pipe", "pipe"] })
+	let stderr = ""
+
+	child.stderr.on("data", (chunk: Buffer) => {
+		stderr += chunk.toString()
+	})
+
+	const exited = new Promise<number>((resolve, reject) => {
+		child.on("error", (error: NodeJS.ErrnoException) =>
+			reject(
+				error.code === "ENOENT"
+					? new Error(`${member} is Deflate64-compressed and needs Info-ZIP \`unzip\` on the path to extract`)
+					: error
+			)
+		)
+
+		child.on("close", (code) => resolve(code ?? 1))
+	})
+
+	await Promise.all([pipeline(child.stdout, openWriteStream(destination)), exited])
+
+	const code = await exited
+
+	if (code !== 0) throw new Error(`unzip -p ${member} exited ${code}: ${stderr.trim()}`)
+}
+
 export interface ExtractZipEntriesOptions {
 	/**
 	 * Which members to write.
@@ -372,7 +420,9 @@ export async function extractZipEntries(
 		const existing = skipExisting ? await tryStat(destination) : null
 
 		if (existing?.size !== entry.uncompressedSize) {
-			await pipeline(await entry.openReadStream(), openWriteStream(destination))
+			await (entry.compressionMethod === DEFLATE64_METHOD
+				? extractWithSystemUnzip(archivePath, name, destination)
+				: pipeline(await entry.openReadStream(), openWriteStream(destination)))
 		}
 
 		written.push(name)
