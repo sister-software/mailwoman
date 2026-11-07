@@ -58,6 +58,7 @@ import {
 import { LandmarkSource, RemoteLandmarkLookup } from "@mailwoman/resolver-wof-wasm/remote/landmark"
 import { postPruneMessage } from "@mailwoman/service-worker-cache/prune"
 import type { Coordinates2D } from "@mailwoman/spatial"
+import { parsePointQuery } from "@mailwoman/spatial/point-query"
 import {
 	DEFAULT_LOCALE,
 	parseStageLabelsFor,
@@ -86,10 +87,13 @@ import ortWASMURL from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
+import { type Gazetteer, openGazetteer } from "#explorers/Gazette/gazetteer"
 import { pageSearchParam, pageTilesetParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
+import { locatePointQuery, pointQueryResult } from "#runtime/point-place"
 import { loadUnderseaIndex, underseaPlaceView } from "#runtime/undersea"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
+import { readWOFPlace } from "#runtime/wof-place"
 
 /**
  * Per-region interp-radius conformal factor, with `INTERP_RADIUS_DEFAULT` for unmeasured regions.
@@ -247,6 +251,25 @@ async function readVectorLayers(tileJSONURL: string): Promise<ReadonlySet<string
 
 		return new Set()
 	}
+}
+
+/**
+ * Rethrows a range-read failure with its cause stated.
+ *
+ * Offline, the gazetteer answers only from the range chunks the service worker cached while online.
+ * A read past them fails inside SQLite as `SQLITE_IOERR_READ`, a disk I/O error that hides the cause.
+ */
+export async function explainReadFailure(error: unknown): Promise<never> {
+	const { isSQLiteReadFailure } = await import("@mailwoman/resolver-wof-wasm/httpvfs/database")
+
+	if (isSQLiteReadFailure(error)) {
+		throw new Error(
+			"The gazetteer could not read the pages this query needs: they are not cached on this device, and the network did not answer.",
+			{ cause: error }
+		)
+	}
+
+	throw error
 }
 
 function takeReleasesManifest(): Promise<ReleasesManifest | null> {
@@ -426,6 +449,8 @@ export function useGeocoderRuntime({
 	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	const polygonInflightRef = useRef<Set<number>>(new Set())
 	const [polygonCache, setPolygonCache] = useState<Map<number, PlaceGeometry | null>>(() => new Map())
+	// The gazetteer handle a `wof:` query reads the containment chain through, opened on the first such query.
+	const gazetteerRef = useRef<Promise<Gazetteer> | null>(null)
 
 	// URLs are version-scoped, so reset polygon state on version change.
 	useEffect(() => {
@@ -434,6 +459,63 @@ export function useGeocoderRuntime({
 		// oxlint-disable-next-line react/set-state-in-effect -- Polygon IDs and cached geometry are scoped to the selected release.
 		setPolygonCache(new Map())
 	}, [rt.selectedVersion])
+
+	useEffect(() => {
+		gazetteerRef.current = null
+	}, [sqliteRuntimeBaseURL])
+
+	/**
+	 * The release's polygon file, opened once per version, or `null` for a release without one.
+	 *
+	 * A failed open is forgotten so the next read tries again.
+	 */
+	const ensurePolygonDB = useCallback((): Promise<PolygonDB> | null => {
+		const release = rt.selectedRelease
+		const version = rt.selectedVersion
+
+		if (!release?.hasPolygons || !version) return null
+
+		if (!polygonDBRef.current) {
+			const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqliteRuntimeBaseURL)
+
+			polygonDBRef.current = loading
+
+			loading.catch(() => {
+				if (polygonDBRef.current === loading) {
+					polygonDBRef.current = null
+				}
+			})
+		}
+
+		return polygonDBRef.current
+	}, [rt.selectedRelease, rt.selectedVersion, sqliteRuntimeBaseURL])
+
+	/**
+	 * A `wof:` query's place, from the containment chain and the release's polygon.
+	 *
+	 * The polygon lands in the cache so the map draws it without a second read.
+	 */
+	const readWOF = useCallback(
+		async (id: number): Promise<ResolvedPlaceView> => {
+			gazetteerRef.current ??= openGazetteer(sqliteRuntimeBaseURL)
+
+			const opening = gazetteerRef.current
+
+			opening.catch(() => {
+				if (gazetteerRef.current === opening) {
+					gazetteerRef.current = null
+				}
+			})
+
+			const [gazetteer, polygons] = await Promise.all([opening, ensurePolygonDB()])
+			const { place, geometry } = await readWOFPlace(gazetteer, id, polygons)
+
+			setPolygonCache((prev) => new Map(prev).set(id, geometry))
+
+			return place
+		},
+		[ensurePolygonDB, sqliteRuntimeBaseURL]
+	)
 
 	const ensureStreetLookups = useCallback(
 		async (slug: string): Promise<StreetLookups | null> => {
@@ -471,6 +553,18 @@ export function useGeocoderRuntime({
 
 	const runParseWithBias = useCallback(
 		async (input: string, bias: MapBias | null, hooks: { onStage: (stage: number) => void }): Promise<ParseResult> => {
+			// A point query has its own decoder, so the classifier never reads it.
+			const point = parsePointQuery(input)
+
+			if (point) {
+				hooks.onStage(0)
+
+				const started = performance.now()
+				const place = await locatePointQuery(point, bias, readWOF).catch(explainReadFailure)
+
+				return pointQueryResult(input, point, place, performance.now() - started)
+			}
+
 			const assets = rt.assets
 
 			if (!assets) throw new Error("Classifier not ready")
@@ -587,19 +681,7 @@ export function useGeocoderRuntime({
 			hooks.onStage(2)
 
 			// Open the polygon DB now (no await) so its worker spawn overlaps the cascade below.
-			const release = rt.selectedRelease
-			const version = rt.selectedVersion
-
-			if (release?.hasPolygons && version && !polygonDBRef.current) {
-				const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqliteRuntimeBaseURL)
-				polygonDBRef.current = loading
-
-				loading.catch(() => {
-					if (polygonDBRef.current === loading) {
-						polygonDBRef.current = null
-					}
-				})
-			}
+			ensurePolygonDB()
 
 			// Viewport bias: the map center as a population-ceilinged soft proximity hint,
 			// with a granted device location joining as a weaker second hint.
@@ -638,21 +720,7 @@ export function useGeocoderRuntime({
 							: match
 					)
 				},
-			}).catch(async (error: unknown) => {
-				// Offline, the gazetteer answers only from the range chunks the service worker cached while online.
-				// A read past them fails inside SQLite as `SQLITE_IOERR_READ`,
-				// a disk I/O error that hides the cause.
-				const { isSQLiteReadFailure } = await import("@mailwoman/resolver-wof-wasm/httpvfs/database")
-
-				if (isSQLiteReadFailure(error)) {
-					throw new Error(
-						"The gazetteer could not read the pages this address needs: they are not cached on this device, and the network did not answer.",
-						{ cause: error }
-					)
-				}
-
-				throw error
-			})
+			}).catch(explainReadFailure)
 
 			const tResolve = performance.now()
 
@@ -727,13 +795,12 @@ export function useGeocoderRuntime({
 		[
 			config.landmarkAPIURL,
 			config.underseaFeaturesURL,
+			ensurePolygonDB,
 			ensureStreetLookups,
 			familyBundles,
 			geoBias.locationRef,
-			sqliteRuntimeBaseURL,
+			readWOF,
 			rt.assets,
-			rt.selectedRelease,
-			rt.selectedVersion,
 		]
 	)
 
@@ -777,21 +844,22 @@ export function useGeocoderRuntime({
 
 	const resolveMapPlace = useCallback(
 		(candidate: ResolvedPlaceView): ResolvedMapPlace | null => {
+			// The cascade's extras ride beside the candidate.
+			// A candidate another path built, such as a decoded point, has its own box and radius.
 			const extras = extrasRef.current.get(candidate) ?? null
 
 			const place: ResolvedMapPlace = {
 				...candidate,
-				bbox: extras?.bbox ?? null,
-				tier: extras?.tier ?? null,
-				uncertaintyM: extras?.uncertaintyM ?? null,
+				bbox: extras?.bbox ?? candidate.bbox,
+				tier: extras?.tier ?? candidate.tier,
+				uncertaintyM: extras?.uncertaintyM ?? candidate.uncertaintyM,
 			}
 
 			// Crisp admin polygon only for a real WOF place with no street tier, because
 			// `computeMapPlaceRenderSpec` prefers `geometry` and the cache update re-runs this enricher.
-			const release = rt.selectedRelease
-			const version = rt.selectedVersion
+			const polygons = candidate.id && !place.tier ? ensurePolygonDB() : null
 
-			if (!place.tier && candidate.id && release?.hasPolygons && version) {
+			if (polygons) {
 				const cached = polygonCache.get(candidate.id)
 
 				if (cached != null) {
@@ -802,14 +870,7 @@ export function useGeocoderRuntime({
 
 					void (async () => {
 						try {
-							if (!polygonDBRef.current) {
-								polygonDBRef.current = loadPolygonDB(
-									assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"),
-									sqliteRuntimeBaseURL
-								)
-							}
-
-							const geom = await (await polygonDBRef.current).get(placeID)
+							const geom = await (await polygons).get(placeID)
 							setPolygonCache((prev) => new Map(prev).set(placeID, geom ?? null))
 						} catch (error) {
 							console.error("Crisp polygon unavailable; falling back to bbox", error)
@@ -825,7 +886,7 @@ export function useGeocoderRuntime({
 
 			return place
 		},
-		[sqliteRuntimeBaseURL, polygonCache, rt.selectedRelease, rt.selectedVersion]
+		[ensurePolygonDB, polygonCache]
 	)
 
 	const traceParse = useCallback(

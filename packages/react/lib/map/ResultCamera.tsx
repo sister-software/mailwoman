@@ -15,8 +15,14 @@ import type { MapCameraTarget } from "#map/place-render"
  *
  * MapLibre checks for existence and can turn into a NaN camera move.
  */
-export function fitBoundsOptionsFor(padding: number, animate: boolean): FitBoundsOptions {
-	return animate ? { padding } : { padding, duration: 0 }
+export function fitBoundsOptionsFor(padding: number, animate: boolean, maxZoom?: number): FitBoundsOptions {
+	const options: FitBoundsOptions = animate ? { padding } : { padding, duration: 0 }
+
+	if (typeof maxZoom === "number") {
+		options.maxZoom = maxZoom
+	}
+
+	return options
 }
 
 /**
@@ -56,7 +62,7 @@ export function ResultCamera({ target, animate = true }: ResultCameraProps): Rea
 			return
 		}
 
-		instance.fitBounds(target.bounds, fitBoundsOptionsFor(target.padding, animate))
+		instance.fitBounds(target.bounds, fitBoundsOptionsFor(target.padding, animate, target.maxZoom))
 	}, [map, target, animate])
 
 	return null

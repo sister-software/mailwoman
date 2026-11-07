@@ -14,18 +14,23 @@ import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/cl
 import { GeocoderService, ProviderPlacement } from "@mailwoman/geocoder-service"
 import type { GeocoderRuntime, MapBias, ResolvedMapPlace, Suggestion } from "@mailwoman/react/map"
 import { useConnectivity } from "@mailwoman/react/network/ReachabilityProvider"
+import { parsePointQuery } from "@mailwoman/spatial/point-query"
 import { useCallback, useMemo, useState } from "react"
 
 import type { EarthConfig } from "#config"
+import { openGazetteer } from "#explorers/Gazette/gazetteer"
 import { pageSearchParam } from "#routes"
+import { locatePointQuery, pointQueryResult } from "#runtime/point-place"
 import { REMOTE_PARSE_STAGE_LABELS, remoteGeocode } from "#runtime/remote-geocoder"
 import { useGeoBias } from "#runtime/use/geo-bias"
 import {
+	explainReadFailure,
 	type GeocoderRuntimeHandle,
 	type GeocoderRuntimeOptions,
 	useEarthMapStyle,
 	useEarthOverlays,
 } from "#runtime/use/geocoder-runtime"
+import { readWOFPlace } from "#runtime/wof-place"
 
 /**
  * The hosted API the page geocodes through, or `null` when the page runs the model in the browser.
@@ -123,8 +128,31 @@ export function useRemoteGeocoderRuntime(
 		[apiURL, read, recheck]
 	)
 
+	// A `wof:` query reads the containment chain from the browser gazetteer, opened on the first such query.
+	// The hosted runtime loads no polygon file, so the reader states that the id cannot be placed.
+	const readWOF = useCallback(
+		async (id: number): Promise<ResolvedPlaceView> => {
+			const gazetteer = await openGazetteer(config.sqliteRuntimeBaseURL)
+
+			return (await readWOFPlace(gazetteer, id, null)).place
+		},
+		[config.sqliteRuntimeBaseURL]
+	)
+
 	const runParseWithBias = useCallback(
 		async (input: string, viewport: MapBias | null, hooks: { onStage: (stage: number) => void }) => {
+			// A point query has its own decoder, so it is answered without a request to the API.
+			const point = parsePointQuery(input)
+
+			if (point) {
+				hooks.onStage(0)
+
+				const started = performance.now()
+				const place = await locatePointQuery(point, viewport, readWOF).catch(explainReadFailure)
+
+				return pointQueryResult(input, point, place, performance.now() - started)
+			}
+
 			const bias: GeocodeBiasPoint[] = []
 
 			if (viewport) {
@@ -141,7 +169,7 @@ export function useRemoteGeocoderRuntime(
 
 			return answer.result
 		},
-		[service, geoBias.locationRef]
+		[service, geoBias.locationRef, readWOF]
 	)
 
 	const runParse = useCallback(

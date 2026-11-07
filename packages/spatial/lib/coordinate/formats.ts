@@ -7,6 +7,7 @@
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 
 import { MERCATOR_LATITUDE_MAX, MERCATOR_LATITUDE_MIN } from "#coordinate/bounds"
+import type { DegreeCell } from "#coordinate/cell"
 
 const GEOHASH_BITS_PER_CHAR = 5
 
@@ -125,6 +126,64 @@ export function toGeohash(lat: number, lon: number, precision = 9): string {
 	}
 
 	return hash
+}
+
+/**
+ * The cell a geohash names: its center and its span in degrees.
+ */
+export type DecodedGeohash = DegreeCell
+
+/**
+ * Decode a geohash to its cell, or `null` for a string outside the geohash alphabet.
+ *
+ * The alphabet excludes `a`, `i`, `l` and `o`, so the test is a character-class test, and the
+ * reading walks the same alternating longitude and latitude bits {@link toGeohash} writes.
+ */
+export function fromGeohash(hash: string): DecodedGeohash | null {
+	if (!hash) return null
+
+	let latMin = -90
+	let latMax = 90
+	let lonMin = -180
+	let lonMax = 180
+	let evenBit = true
+
+	for (const char of hash.toLowerCase()) {
+		const value = GEOHASH_BASE32.indexOf(char)
+
+		if (value === -1) return null
+
+		for (let shift = GEOHASH_BITS_PER_CHAR - 1; shift >= 0; shift--) {
+			const bit = (value >> shift) & 1
+
+			if (evenBit) {
+				const mid = (lonMin + lonMax) / 2
+
+				if (bit) {
+					lonMin = mid
+				} else {
+					lonMax = mid
+				}
+			} else {
+				const mid = (latMin + latMax) / 2
+
+				if (bit) {
+					latMin = mid
+				} else {
+					latMax = mid
+				}
+			}
+
+			evenBit = !evenBit
+		}
+	}
+
+	return {
+		lat: (latMin + latMax) / 2,
+		lon: (lonMin + lonMax) / 2,
+		latSpanDeg: latMax - latMin,
+		lonSpanDeg: lonMax - lonMin,
+	}
 }
 
 const A_CODE = "A".charCodeAt(0)

@@ -11,7 +11,7 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { collectNodes, firstNodeWhere, slotNodes } from "@mailwoman/core/decoder"
 import type { GeocodeResult } from "@mailwoman/core/geocode"
-import { decodePlusCode, isFullPlusCode, recoverNearestPlusCode } from "@mailwoman/spatial"
+import { cellRadiusMeters, decodePlusCode, isFullPlusCode, recoverNearestPlusCode } from "@mailwoman/spatial"
 
 import { epistemicStatusFor } from "#geocode/epistemic-status"
 
@@ -79,15 +79,12 @@ export function applyPlusCodeOverride(result: GeocodeResult, input: string, reso
 
 	if (!cell) return
 
-	const latHalfM = (cell.latSpanDeg / 2) * 111_320
-	const lonHalfM = (cell.lonSpanDeg / 2) * 111_320 * Math.cos((cell.lat * Math.PI) / 180)
-
 	result.lat = cell.lat
 	result.lon = cell.lon
 	result.resolution_tier = "plus_code"
 	result.epistemic_status = epistemicStatusFor("plus_code", result.lat)
 	result.coordinate_source = null
-	result.uncertainty_m = Math.max(1, Math.round(Math.hypot(latHalfM, lonHalfM)))
+	result.uncertainty_m = cellRadiusMeters(cell)
 }
 
 /**

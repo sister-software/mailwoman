@@ -9,6 +9,7 @@
  *   survive the visit. A permalink reopens them.
  */
 
+import { parsePointQuery, type PointQuery, POINT_QUERY_LABEL, POINT_QUERY_PHRASE } from "@mailwoman/spatial/point-query"
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
@@ -20,6 +21,8 @@ import {
 	type Gazetteer,
 	nameKeyOf,
 	openGazetteer,
+	type PlaceByID,
+	placeByID,
 	placeByRef,
 	placesNamed,
 	searchByPrefix,
@@ -56,6 +59,12 @@ interface PlaceView {
 }
 
 /**
+ * What the page shows for a place: its row with its chain when the link holds the key,
+ * or only the chain when the link holds the id without a key.
+ */
+type PlaceReading = { kind: "row"; view: PlaceView } | { kind: "id"; known: PlaceByID }
+
+/**
  * A result the page keeps beside the place it answers, so a stale result is never shown for the next place.
  */
 interface ForPlace<T> {
@@ -78,13 +87,17 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 	const [groups, setGroups] = useState<NameGroup[]>([])
 	const [searching, setSearching] = useState(false)
 	const [ref, setRef] = useState<GazettePlaceRef | null>(place)
-	const [keptView, setKeptView] = useState<ForPlace<PlaceView> | null>(null)
+	const [keptReading, setKeptReading] = useState<ForPlace<PlaceReading> | null>(null)
 	const [keptPlaceError, setKeptPlaceError] = useState<ForPlace<string> | null>(null)
 	const [searchError, setSearchError] = useState<string | null>(null)
 	const [bytesRead, setBytesRead] = useState<number | null>(null)
 
-	const view = forRef(keptView, ref)
+	const reading = forRef(keptReading, ref)
 	const placeError = forRef(keptPlaceError, ref)
+
+	// A point-shaped query rather than a name: a `wof:` id opens its place, and the other
+	// shapes are explained, because the gazetteer indexes names and not positions.
+	const pointQuery = parsePointQuery(text)
 
 	// Only the newest search or place load may publish its result.
 	const searchSequence = useRef(0)
@@ -132,6 +145,18 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 			if (!gazetteer) return
 
 			const mine = ++searchSequence.current
+			const point = parsePointQuery(input)
+
+			if (point) {
+				setGroups([])
+				setSearching(false)
+
+				if (point.kind === "wof") {
+					navigate({ sprID: point.id, nameKey: null })
+				}
+
+				return
+			}
 
 			if (!nameKeyOf(input)) {
 				setGroups([])
@@ -162,7 +187,7 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 				}
 			)
 		},
-		[gazetteer]
+		[gazetteer, navigate]
 	)
 
 	// A prefix search follows the text after the debounce.
@@ -181,25 +206,35 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 		if (!gazetteer || !ref) return
 
 		const mine = ++placeSequence.current
+		const { sprID, nameKey } = ref
 
-		Promise.all([
-			placeByRef(gazetteer, ref.sprID, ref.nameKey),
-			ancestorsOf(gazetteer, ref.sprID),
-			placesNamed(gazetteer, ref.nameKey),
-		]).then(
-			async ([row, ancestors, named]) => {
+		const load = async (): Promise<PlaceReading | string> => {
+			if (nameKey === null) {
+				return { kind: "id", known: await placeByID(gazetteer, sprID) }
+			}
+
+			const [row, ancestors, named] = await Promise.all([
+				placeByRef(gazetteer, sprID, nameKey),
+				ancestorsOf(gazetteer, sprID),
+				placesNamed(gazetteer, nameKey),
+			])
+
+			if (!row) return `No place ${sprID} is filed under the key "${nameKey}" in this gazetteer.`
+
+			return { kind: "row", view: { row, ancestors, siblings: named.filter((other) => other.sprID !== row.sprID) } }
+		}
+
+		load().then(
+			async (value) => {
 				if (mine !== placeSequence.current) return
 
-				if (!row) {
-					setKeptPlaceError({
-						ref,
-						value: `No place ${ref.sprID} is filed under the key "${ref.nameKey}" in this gazetteer.`,
-					})
+				if (typeof value === "string") {
+					setKeptPlaceError({ ref, value })
 
 					return
 				}
 
-				setKeptView({ ref, value: { row, ancestors, siblings: named.filter((other) => other.sprID !== row.sprID) } })
+				setKeptReading({ ref, value })
 				setBytesRead(await gazetteer.database.bytesRead())
 			},
 			(error: unknown) => {
@@ -277,13 +312,20 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 			<div className={styles.columns}>
 				<section className={styles.column} aria-label="Results">
 					<h2 className={styles.sectionTitle}>
-						{groups.length ? `${groups.length} names` : nameKeyOf(text) ? "No names yet" : "Type a name"}
+						{groups.length
+							? `${groups.length} names`
+							: pointQuery
+								? `${POINT_QUERY_LABEL[pointQuery.kind]}, not a name`
+								: nameKeyOf(text)
+									? "No names yet"
+									: "Type a name"}
 					</h2>
 					{searchError ? (
 						<p className="mw-error" role="alert">
 							{searchError}
 						</p>
 					) : null}
+					{pointQuery ? <PointNote query={pointQuery} text={text} /> : null}
 					<ul className={styles.results}>
 						{groups.map((group) => (
 							<li key={group.nameKey}>
@@ -312,8 +354,10 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 							{placeError}
 						</p>
 					) : null}
-					{view ? (
-						<PlaceView view={view} placeLink={placeLink} />
+					{reading?.kind === "row" ? (
+						<PlaceView view={reading.view} placeLink={placeLink} />
+					) : reading?.kind === "id" ? (
+						<ChainOnlyPlace known={reading.known} version={gazetteer?.version ?? "unknown"} placeLink={placeLink} />
 					) : ref ? (
 						<p className={styles.hint}>Loading the place…</p>
 					) : (
@@ -325,13 +369,87 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 	)
 }
 
-function PlaceView({
-	view,
+type PlaceLink = (target: GazettePlaceRef, label: React.ReactNode, className?: string) => React.JSX.Element
+
+/**
+ * What a point query means to a name index: a `wof:` id opens its chain here, and every
+ * other shape belongs on the map, because the gazetteer has no index over positions.
+ */
+function PointNote({ query, text }: { query: PointQuery; text: string }): React.JSX.Element {
+	if (query.kind === "wof") {
+		return <p className={styles.hint}>Opening the containment chain of Who&apos;s On First {query.id}.</p>
+	}
+
+	return (
+		<p className={styles.hint}>
+			The gazetteer indexes names, not positions, so {POINT_QUERY_PHRASE[query.kind]} finds no row here.{" "}
+			<a href={`/?q=${encodeURIComponent(text.trim())}`}>Open it on the map.</a>
+		</p>
+	)
+}
+
+/**
+ * The page for a place the link identifies by id without a key: the chain the gazetteer
+ * records for it, and the fact that the place's own row is reachable only through a name key.
+ */
+function ChainOnlyPlace({
+	known,
+	version,
 	placeLink,
 }: {
-	view: PlaceView
-	placeLink: (target: GazettePlaceRef, label: React.ReactNode, className?: string) => React.JSX.Element
+	known: PlaceByID
+	version: string
+	placeLink: PlaceLink
 }): React.JSX.Element {
+	const { sprID, ancestors } = known
+
+	return (
+		<article className={styles.place}>
+			<header>
+				<h2 className={styles.placeName}>Who&apos;s On First {sprID}</h2>
+				<p className={styles.placeLine}>
+					<span>
+						WOF <code>{sprID}</code>
+					</span>
+					<a href={spelunkerURL(sprID)} target="_blank" rel="noreferrer">
+						Spelunker
+					</a>
+					<a href={`/?q=${encodeURIComponent(`wof:${sprID}`)}`}>Open on the map</a>
+				</p>
+			</header>
+
+			<p className={styles.hint}>
+				{known.known
+					? `Gazetteer ${version} labels this place in its containment tree.`
+					: ancestors.length
+						? `Gazetteer ${version} records a chain for this place but no containment label.`
+						: `Gazetteer ${version} records nothing for this id: it is not one of the gazetteer's places.`}{" "}
+				The candidate table files each place under its name key, so the row itself opens from a name search or an
+				ancestor&apos;s page.
+			</p>
+
+			<section>
+				<h3 className={styles.sectionTitle}>Ancestors</h3>
+				{ancestors.length ? (
+					<ol className={styles.chain}>
+						{ancestors.map((ancestor) => (
+							<li key={ancestor.sprID}>
+								{placeLink(
+									{ sprID: ancestor.sprID, nameKey: ancestor.nameKey },
+									`${ancestor.name} (${ancestor.placetype})`
+								)}
+							</li>
+						))}
+					</ol>
+				) : (
+					<p className={styles.hint}>The gazetteer records no ancestor for this place.</p>
+				)}
+			</section>
+		</article>
+	)
+}
+
+function PlaceView({ view, placeLink }: { view: PlaceView; placeLink: PlaceLink }): React.JSX.Element {
 	const { row, ancestors, siblings } = view
 	const reading = resolverReading(row)
 	const rankAmongNamed = siblings.filter((other) => other.negRank < row.negRank).length + 1

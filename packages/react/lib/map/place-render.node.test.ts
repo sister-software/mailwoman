@@ -29,6 +29,26 @@ test("Street interpolated tier → fly to the looser zoom 15", () => {
 	expect(spec.camera).toEqual({ kind: "center", center: [-74, 40], zoom: 15 })
 })
 
+test("an uncertainty radius with no street tier draws its circle and fits it", () => {
+	const spec = computeMapPlaceRenderSpec(place({ uncertaintyM: 60 }))
+
+	expect(spec.outline?.type).toBe("Polygon")
+	expect(spec.camera.kind).toBe("bounds")
+
+	if (spec.camera.kind === "bounds") {
+		expect(spec.camera.maxZoom).toBe(17)
+
+		const [[west, south], [east, north]] = spec.camera.bounds
+
+		expect(west).toBeLessThan(-74)
+		expect(east).toBeGreaterThan(-74)
+		expect(south).toBeLessThan(40)
+		expect(north).toBeGreaterThan(40)
+		// A 60 m radius spans about 0.001° of latitude.
+		expect(north - south).toBeLessThan(0.01)
+	}
+})
+
 test("A pre-fetched crisp polygon → draw it and fit its bounds (padding 40)", () => {
 	const geometry = {
 		type: "Polygon" as const,

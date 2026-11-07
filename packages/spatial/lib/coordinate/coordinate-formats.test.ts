@@ -8,6 +8,7 @@ import { expect, test } from "vitest"
 
 import {
 	coordinateFormatAnnotator,
+	fromGeohash,
 	qiblaBearing,
 	sunTimes,
 	toDMS,
@@ -36,6 +37,24 @@ test("toGeohash: precision-9, deterministic, DC prefix", () => {
 	expect(gh).toHaveLength(9)
 	expect(gh.startsWith("dqc")).toBe(true)
 	expect(toGeohash(LAT, LON)).toBe(gh)
+})
+
+test("fromGeohash: the cell center sits within the cell of the encoded point, and the span halves each character", () => {
+	const hash = toGeohash(LAT, LON)
+	const cell = fromGeohash(hash)!
+
+	expect(Math.abs(cell.lat - LAT)).toBeLessThanOrEqual(cell.latSpanDeg / 2)
+	expect(Math.abs(cell.lon - LON)).toBeLessThanOrEqual(cell.lonSpanDeg / 2)
+	expect(toGeohash(cell.lat, cell.lon)).toBe(hash)
+
+	// `ezs42` is the geohash article's worked example for 42.605, -5.603.
+	const example = fromGeohash("ezs42")!
+	expect(example.lat).toBeCloseTo(42.605, 2)
+	expect(example.lon).toBeCloseTo(-5.603, 2)
+
+	expect(fromGeohash("EZS42")).toEqual(example)
+	expect(fromGeohash("ezs4a")).toBeNull()
+	expect(fromGeohash("")).toBeNull()
 })
 
 test("toMercator: EPSG:3857 projection in range", () => {
