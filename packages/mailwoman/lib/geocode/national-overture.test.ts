@@ -39,7 +39,9 @@ describe("OvertureNationalDatabaseProvider", () => {
 	it("registers Taiwan under the zh locale and refuses an unregistered country loudly", () => {
 		expect(supportedOvertureCountries()).toContain("tw")
 		expect(streetLocaleForOvertureCountry("TW")).toBe("zh")
-		expect(() => streetLocaleForOvertureCountry("kr")).toThrow(/COUNTRY_TO_STREET_LOCALE/)
+		expect(streetLocaleForOvertureCountry("IT")).toBe("it")
+		expect(streetLocaleForOvertureCountry("ES")).toBe("es")
+		expect(() => streetLocaleForOvertureCountry("kr")).toThrow(/NATIONAL_OVERTURE_COUNTRIES/)
 	})
 
 	it("carries the upstream register's license alone, without an Overture addresses-theme grant", () => {

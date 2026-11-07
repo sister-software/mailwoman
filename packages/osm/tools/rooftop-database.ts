@@ -41,7 +41,7 @@ import { dirname } from "path-ts"
 import { extractAddrPoints } from "#sdk/extract"
 import type { ExtractProvenance } from "#sdk/extract/receipt"
 import { buildStreetRecoveryIndex } from "#sdk/street/recovery"
-import { streetLocaleForCountry } from "#street-locale"
+import { streetLocaleForOSMCountry } from "#street-locale"
 import { osmAddressPointLayerManifest } from "#tools/layer-manifest"
 import { streetNameForms } from "#tools/street-names"
 
@@ -112,7 +112,7 @@ export interface RooftopBuildCounts {
  */
 export async function buildRooftopDatabase(options: RooftopBuildOptions): Promise<RooftopBuildCounts> {
 	const log = options.log ?? (() => {})
-	const locale = streetLocaleForCountry(options.country)
+	const locale = streetLocaleForOSMCountry(options.country)
 	const source = `openstreetmap:${options.country}`
 	const recoverSource = `${source}#recovered`
 	const recoveryIndex = options.recover ? await buildStreetRecoveryIndex(options.pbf) : null

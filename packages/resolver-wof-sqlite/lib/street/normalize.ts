@@ -7,6 +7,8 @@
 import { AbbreviationToDirectional, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"
 import type { Tagged } from "type-fest"
 
+import { streetLocaleForCountry } from "#street/locale"
+
 /**
  * A place name folded by {@link normalizeLocalityForKey}, minted only by calling the fold.
  */
@@ -146,7 +148,7 @@ export function normalizeStreetForKey(street: string): StreetKey {
  * Names the rule set {@link normalizeStreetForKeyLocale} uses to fold a street
  * name into an address-point key.
  */
-export type StreetLocale = "us" | "en" | "es" | "fr" | "de" | "it" | "nl" | "pl" | "vn" | "id" | "zh"
+export type StreetLocale = "us" | "en" | "es" | "fr" | "de" | "it" | "nl" | "pl" | "vn" | "id" | "zh" | "und"
 
 /**
  * Every locale {@link normalizeStreetForKeyLocale} keys streets under.
@@ -163,6 +165,7 @@ export const STREET_LOCALES = [
 	"vn",
 	"id",
 	"zh",
+	"und",
 ] as const satisfies readonly StreetLocale[]
 
 function foldHan(input: string): string {
@@ -170,24 +173,27 @@ function foldHan(input: string): string {
 }
 
 /**
- * Creates a country-to-street-locale lookup for an acquisition SDK, throwing
- * rather than falling back so a misregistered locale cannot key every street wrongly.
+ * Creates the street-locale lookup for one source's built databases.
+ *
+ * `localeFor` answers {@link streetLocaleForCountry} for a country in `countries`
+ * and throws for any other, since that source has built no database there to fold a query for.
+ * Every source therefore folds a country's streets under one locale.
  */
 export function createStreetLocaleRegistry(
-	registry: ReadonlyMap<string, StreetLocale>,
+	countries: readonly string[],
 	label: string
 ): { localeFor: (countryCode: string) => StreetLocale; supported: () => string[] } {
+	const built = new Set(countries.map((country) => country.toLowerCase()))
+
 	return {
 		localeFor: (countryCode) => {
-			const locale = registry.get(countryCode.toLowerCase())
-
-			if (!locale) {
-				throw new Error(`No street-normalization locale registered for country "${countryCode}". ${label}`)
+			if (!built.has(countryCode.toLowerCase())) {
+				throw new Error(`No database is registered for country "${countryCode}". ${label}`)
 			}
 
-			return locale
+			return streetLocaleForCountry(countryCode)
 		},
-		supported: () => [...registry.keys()],
+		supported: () => [...built],
 	}
 }
 

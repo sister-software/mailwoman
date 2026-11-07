@@ -58,7 +58,8 @@ const wanted = new Set(
 /**
  * The street-normalization locale this measurement folds a country's streets under.
  *
- * `streetLocaleForCountry` in `@mailwoman/osm/sdk` answers the same question for the OSM rooftop build.
+ * `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/street` answers
+ * the same question for every build.
  * Its membership records which countries have an OSM extract rather than
  * which countries the normalizer has rules for.
  *

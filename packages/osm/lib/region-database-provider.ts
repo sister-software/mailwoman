@@ -22,7 +22,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder } from "path-ts"
 
 import { osmDatabaseRoot } from "#paths"
-import { streetLocaleForCountry, supportedOSMCountries } from "#street-locale"
+import { streetLocaleForOSMCountry, supportedOSMCountries } from "#street-locale"
 
 /**
  * The member of {@link RegionDatabases} an OSM extract supplies, narrowed to the
@@ -159,7 +159,7 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 				// The rooftop builder stores `addr:suburb` before `addr:city`, so a stored locality can be part of a place.
 				entry = {
 					addressPoints: new AddressPointSqliteLookup(path, {
-						streetLocale: streetLocaleForCountry(cc),
+						streetLocale: streetLocaleForOSMCountry(cc),
 						localityLevel: "finest",
 					}),
 				}

@@ -3,64 +3,36 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Country → street-normalization-locale routing for the OSM rooftop build. The normalizer itself
- *   lives in `@mailwoman/resolver-wof-sqlite/street-normalize` (the one-function discipline — the
- *   reader on the resolver side and the builder here must call the identical function). This module
- *   only maps an ISO-3166 country code to the locale that selects the right per-locale rules.
- *   re-exports the normalizer so the OSM SDK is a self-contained surface.
+ *   The countries the OSM rooftop build has an extract for, and the street locale each folds under.
+ *   The locale comes from `streetLocaleForCountry` in `@mailwoman/resolver-wof-sqlite/street`, which the
+ *   reader also calls, so a build and a query fold one street to one key.
  */
 
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 
 /**
- * ISO-3166 alpha-2 (lowercase) → the street-normalization locale.
+ * The countries with an OSM rooftop extract, in ISO 3166-1 alpha-2.
  *
- * Deliberately small: only the countries we ship an OSM rooftop extract for.
- * Each supported country needs a one-line entry and a matching per-locale branch
- * in `normalizeStreetForKeyLocale` — keep them in lockstep.
+ * AU's extract is built from G-NAF rather than OSM and lives in this provider's home.
  */
-const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
-	["gb", "en"],
-	["nz", "en"],
-	// AU's extract is G-NAF-sourced (CC-BY rather than OSM), but lives in this
-	// provider's home and keys with the same `en` rules.
-	// G-NAF stores street types as full words ("street", "close"), which is exactly
-	// the surface the `en` normalizer folds.
-	["au", "en"],
-	["fr", "fr"],
-	["de", "de"],
-	["nl", "nl"],
-	// CA defaults to English.
-	// Surface routing selects French rules when appropriate.
-	["ca", "en"],
-	// These locales provide transliteration and abbreviation rules their base folds do not cover.
-	["pl", "pl"],
-	["vn", "vn"],
-	["id", "id"],
-	// Islamabad-sector addressing ("House 4, Street 25, F-7/2") is English-typed.
-	// The en rules fold it.
-	["pk", "en"],
-])
+const OSM_EXTRACT_COUNTRIES = ["gb", "nz", "au", "fr", "de", "nl", "ca", "pl", "vn", "id", "pk"] as const
 
 const registry = createStreetLocaleRegistry(
-	COUNTRY_TO_STREET_LOCALE,
-	"Add it to COUNTRY_TO_STREET_LOCALE and add the matching branch in normalizeStreetForKeyLocale before building its OSM rooftop extract."
+	OSM_EXTRACT_COUNTRIES,
+	"Build its OSM rooftop extract and add it to OSM_EXTRACT_COUNTRIES."
 )
 
 /**
- * Resolve the street-normalization locale for a country.
+ * The street locale an OSM extract country folds under.
  *
- * @throws for an unsupported country rather than silently folding with the wrong rules — an extract
- * built with the wrong normalizer keys every street incorrectly and looks fine until a probe misses.
- * Add the country to {@link COUNTRY_TO_STREET_LOCALE} (and a branch in `normalizeStreetForKeyLocale`)
- * before building its extract.
+ * @throws For a country without an OSM extract.
  */
-export function streetLocaleForCountry(countryCode: string): StreetLocale {
+export function streetLocaleForOSMCountry(countryCode: string): StreetLocale {
 	return registry.localeFor(countryCode)
 }
 
 /**
- * The countries with a registered OSM rooftop street locale (for CLI validation / help text).
+ * The countries with an OSM rooftop extract, for CLI validation and help text.
  */
 export function supportedOSMCountries(): string[] {
 	return registry.supported()

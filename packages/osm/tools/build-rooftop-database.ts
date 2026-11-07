@@ -29,7 +29,7 @@ import { resolvePath } from "path-ts"
 import { osmLicenseNotice } from "#license"
 import { osmDatabasePath } from "#paths"
 import { readExtractProvenance } from "#sdk/extract/receipt"
-import { streetLocaleForCountry } from "#street-locale"
+import { streetLocaleForOSMCountry } from "#street-locale"
 import { buildRooftopDatabase } from "#tools/rooftop-database"
 
 const { values } = parseArguments({
@@ -59,7 +59,7 @@ if (!country || !pbf) {
 
 if (!(await pathExists(pbf))) throw new Error(`PBF not found: ${pbf}`)
 // Throws for an unsupported country, so the build fails loud and never keys with the wrong normalizer.
-streetLocaleForCountry(country)
+streetLocaleForOSMCountry(country)
 
 const slug = values.slug?.toLowerCase() || country
 const release = values.release || "unknown"
