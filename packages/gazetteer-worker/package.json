@@ -43,6 +43,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
+		"vite": "^8.3.5",
 		"vitest": "^5.0.5",
 		"wrangler": "^4.156.0"
 	},
