@@ -73,6 +73,10 @@ export interface NADRecord {
 	State?: string | null
 	Zip_Code?: string | null
 	Plus_4?: string | null
+	AddAuth?: string | null
+	Longitude?: string | null
+	Latitude?: string | null
+	Placement?: string | null
 }
 
 /**
@@ -116,6 +120,10 @@ export const NAD_RECORD_COLUMNS = [
 	"State",
 	"Zip_Code",
 	"Plus_4",
+	"AddAuth",
+	"Longitude",
+	"Latitude",
+	"Placement",
 ] as const satisfies ReadonlyArray<keyof NADRecord>
 
 /**
@@ -254,10 +262,21 @@ const NAD_PLACEHOLDER_PLACE_NAMES: ReadonlySet<string> = new Set(["not stated", 
  * Each of these values counts as absent, and the next column supplies the place name.
  */
 export function composeNADLocality(r: NADRecord): string | null {
-	const stated = (value: string | null | undefined) =>
-		NAD_PLACEHOLDER_PLACE_NAMES.has(value?.trim().toLowerCase() ?? "") ? null : value
+	return nonEmpty(
+		statedNADPlaceName(r.Post_City),
+		statedNADPlaceName(r.Inc_Muni),
+		statedNADPlaceName(r.Census_Plc),
+		statedNADPlaceName(r.Uninc_Comm)
+	)
+}
 
-	return nonEmpty(stated(r.Post_City), stated(r.Inc_Muni), stated(r.Census_Plc), stated(r.Uninc_Comm))
+/**
+ * A NAD place-name column's value trimmed, or `null` when it is empty or a placeholder such as `Not stated`.
+ */
+export function statedNADPlaceName(value: string | null | undefined): string | null {
+	const trimmed = value?.trim() ?? ""
+
+	return trimmed && !NAD_PLACEHOLDER_PLACE_NAMES.has(trimmed.toLowerCase()) ? trimmed : null
 }
 
 function composePostcode(r: NADRecord): string | null {
