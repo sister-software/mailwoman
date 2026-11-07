@@ -10,6 +10,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { indexExists } from "@mailwoman/sqlite/introspection"
 import type { PathBuilderLike } from "path-ts"
 
+import { houseNumberForms } from "#address/number-forms"
 import type { AddressPointDatabase, AddressPointTable } from "#address/point/schema"
 import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
 import {
@@ -35,27 +36,6 @@ type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "relea
  * It must match the fields of `AddressPointRow`.
  */
 const SELECT_COLS = "lat, lon, source, release, locality_norm, postcode"
-
-/**
- * The widest span of numbers a written range covers on one building or block.
- */
-const WIDEST_HOUSE_NUMBER_RANGE = 200
-
-/**
- * Returns whether two hyphenated numbers read as one number rather than a range of houses.
- *
- * `8-9 Upper St` is a range, and joining it would answer the different house at number 89.
- * `19-4074` and Queens's `123-45` cannot be ranges, because a range climbs by a short step.
- */
-function isJoinedHyphenNumber(number: string): boolean {
-	const parts = /^(\d+)-(\d+)$/.exec(number)
-
-	if (!parts) return false
-
-	const span = Number(parts[2]) - Number(parts[1])
-
-	return span < 0 || span > WIDEST_HOUSE_NUMBER_RANGE
-}
 
 /**
  * Finds an address point by exact normalized `(street, number)` within a postcode,
@@ -243,61 +223,13 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
 		}
 	) {
-		let row = this.#probe(streetNorm, number, query)
+		for (const form of houseNumberForms(number, this.#locale)) {
+			const row = this.#probe(streetNorm, form, query)
 
-		// A hyphenated number can be one number written two ways: Hawaii's `19-4074`
-		// is stored as `194074` by some sources.
-		// This runs ahead of the range fallback, because that fallback reads it as house number 19.
-		if (!row && isJoinedHyphenNumber(number)) {
-			row = this.#probe(streetNorm, number.replace("-", ""), query)
+			if (row) return row
 		}
 
-		// A grid number leads with a compass letter.
-		// One writer's `N3971` is another source's `n 3971`.
-		if (!row) {
-			const grid = /^([nesw])(?:\s+)?(\d+)$/.exec(number)
-
-			if (grid) {
-				row = this.#probe(streetNorm, number.includes(" ") ? `${grid[1]}${grid[2]}` : `${grid[1]} ${grid[2]}`, query)
-			}
-		}
-
-		// The registers store one number per point, so a range such as "385-387" falls back to its low end.
-		if (!row) {
-			const low = /^(\d+[a-z]?)-\d+[a-z]?$/.exec(number)?.[1]
-
-			if (low) {
-				row = this.#probe(streetNorm, low, query)
-			}
-		}
-
-		// BAN stores a letter suffix as "3 a", while G-NAF and most OA sources store "3a".
-		// For a number of digits plus one letter, the lookup retries the other spacing
-		// and then the bare number.
-		if (!row) {
-			const joined = /^(\d+)\s+([a-z])$/.exec(number)
-			const spaced = /^(\d+)([a-z])$/.exec(number)
-
-			if (joined) {
-				row = this.#probe(streetNorm, `${joined[1]}${joined[2]}`, query) ?? this.#probe(streetNorm, joined[1]!, query)
-			} else if (spaced) {
-				row = this.#probe(streetNorm, `${spaced[1]} ${spaced[2]}`, query) ?? this.#probe(streetNorm, spaced[1]!, query)
-			}
-		}
-
-		// The Taiwanese register stores `14之12` and `30附40` as numbers `14` and `30`.
-		// It stores the rest in `unit`.
-		// A query number that still includes the sub-number falls back to the base number.
-		// That result is approximate.
-		if (!row && this.#locale === "zh") {
-			const base = /^(\d+)(?:[之附]\d+)+$/u.exec(number)?.[1]
-
-			if (base) {
-				row = this.#probe(streetNorm, base, query)
-			}
-		}
-
-		return row
+		return null
 	}
 
 	/**
