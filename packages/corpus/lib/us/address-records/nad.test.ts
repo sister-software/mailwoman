@@ -4,10 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
+import { workspacePath } from "@mailwoman/core/paths"
+import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
 import type { NADRecord } from "#us/adapters/usgov/nad/adapter"
 import { nadAddressNames, nadAddressRecord } from "#us/address-records/nad"
+
+const CORPUS_FIXTURE = workspacePath("corpus", "lib", "us", "adapters", "usgov", "nad", "fixtures", "fixture.ndjson")
 
 /**
  * Release 24's row for 390 White Horse Court in the Town of Rome, Adams County, Wisconsin.
@@ -71,6 +76,29 @@ describe("NAD address records", () => {
 
 	it("reads a territory row's country from its own ISO code", () => {
 		expect(nadAddressRecord({ ...WHITE_HORSE, State: "PR" })?.country).toBe("PR")
+	})
+
+	it("emits a record for each of the corpus fixture's rows that states a number, a street and a state", async () => {
+		const fixture = await Array.fromAsync(JSONSpliterator.fromAsync<Record<string, unknown>>(CORPUS_FIXTURE))
+
+		// The corpus fixture predates positions, so each row is given one.
+		// Its strings stay as the release writes them.
+		const rows = fixture.map((row): NADRecord => ({
+			...Object.fromEntries(Object.entries(row).map(([key, value]) => [key, value == null ? null : String(value)])),
+			Longitude: "-89.4",
+			Latitude: "43.07",
+		}))
+
+		const records = rows.map(nadAddressRecord)
+
+		// Row 4 (Yellowstone) has no house number and row 11 the state `ZZ`, so 10 of the 12 rows emit.
+		// Rows without a postal city or a ZIP Code still place a point.
+		expect(records.filter(isPresent)).toHaveLength(10)
+		expect(records[3]).toBeNull()
+		expect(records[10]).toBeNull()
+		expect(records[6]?.country).toBe("PR")
+		expect(records[7]?.number).toBe("99 b")
+		expect(records[11]?.postcode).toBeNull()
 	})
 
 	it("falls back to the object id under the placeholder UUID, and refuses a row without a position", () => {

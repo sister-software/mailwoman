@@ -6,7 +6,7 @@
  *   Emits the National Address Database release as address records for the address layer's key tables.
  */
 
-import { US_TERRITORY_ABBREVIATIONS } from "@mailwoman/codex/us/state"
+import { isUSStateAbbreviation, US_TERRITORY_ABBREVIATIONS } from "@mailwoman/codex/us/state"
 import { isPresent } from "@mailwoman/core/objects"
 import {
 	AddressNameForm,
@@ -94,7 +94,7 @@ export function nadAddressRecord(record: NADRecord): AddressRecord | null {
 	const lat = coordinate(record.Latitude)
 	const lon = coordinate(record.Longitude)
 
-	if (!state || !number || !street || !Number.isFinite(lat) || !Number.isFinite(lon)) return null
+	if (!isUSStateAbbreviation(state) || !number || !street || !Number.isFinite(lat) || !Number.isFinite(lon)) return null
 
 	const streetKey = normalizeStreetForKey(street)
 	const uuid = record.UUID && record.UUID !== PLACEHOLDER_UUID ? record.UUID : null
