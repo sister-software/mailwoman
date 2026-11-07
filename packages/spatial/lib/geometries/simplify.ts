@@ -20,6 +20,11 @@ export type AreaGeometry = { type: "Polygon"; coordinates: Ring[] } | { type: "M
  */
 const MIN_RING_POSITIONS = 4
 
+/**
+ * The positions a ring keeps when the tolerance collapses it.
+ */
+const COLLAPSED_RING_POSITIONS = 8
+
 const squaredDistanceToSegment = ([x, y]: Position, [ax, ay]: Position, [bx, by]: Position): number => {
 	const dx = bx - ax
 	const dy = by - ay
@@ -82,13 +87,25 @@ function simplifyRing(ring: Ring, tolerance: number): Ring {
 	return ring.filter((_, i) => keep[i] === 1)
 }
 
+/**
+ * Returns a closed ring of evenly spaced positions from a ring too small to simplify.
+ */
+function sampleRing(ring: Ring): Ring {
+	if (ring.length <= COLLAPSED_RING_POSITIONS) return ring
+
+	const last = ring.length - 1
+	const steps = COLLAPSED_RING_POSITIONS - 1
+
+	return Array.from({ length: COLLAPSED_RING_POSITIONS }, (_, step) => ring[Math.round((step * last) / steps)]!)
+}
+
 const rounded = (value: number, factor: number) => Math.round(value * factor) / factor
 
 /**
  * Simplifies each ring and rounds its positions to two dimensions at the given precision.
  *
- * A polygon whose outer ring collapses below a closed ring keeps that ring unsimplified,
- * so a small island still draws.
+ * A polygon whose outer ring collapses below a closed ring keeps a few evenly spaced
+ * positions from that ring, so a small island still draws at a bounded size.
  * An inner ring that collapses drops.
  */
 export function simplifyAreaGeometry(geometry: AreaGeometry, tolerance: number, decimals = 5): AreaGeometry {
@@ -98,7 +115,7 @@ export function simplifyAreaGeometry(geometry: AreaGeometry, tolerance: number, 
 		rings.flatMap((ring, index) => {
 			const simplified = ring.length > MIN_RING_POSITIONS ? simplifyRing(ring, tolerance) : ring
 
-			const kept = simplified.length >= MIN_RING_POSITIONS ? simplified : index === 0 ? ring : null
+			const kept = simplified.length >= MIN_RING_POSITIONS ? simplified : index === 0 ? sampleRing(ring) : null
 
 			return kept ? [kept.map(([lon, lat]): Position => [rounded(lon, factor), rounded(lat, factor)])] : []
 		})

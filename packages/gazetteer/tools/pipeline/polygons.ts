@@ -139,10 +139,16 @@ function fitGeometry(area: AreaGeometry, tolerance: number): { geom: string; coa
  * Returns the width plus the height of a polygon's outer ring, in degrees.
  */
 function polygonSpan(polygon: number[][][]): number {
-	const longitudes = polygon[0]!.map(([longitude]) => longitude!)
-	const latitudes = polygon[0]!.map(([, latitude]) => latitude!)
+	let [minLon, minLat, maxLon, maxLat] = [Infinity, Infinity, -Infinity, -Infinity]
 
-	return Math.max(...longitudes) - Math.min(...longitudes) + Math.max(...latitudes) - Math.min(...latitudes)
+	for (const [lon, lat] of polygon[0]!) {
+		minLon = Math.min(minLon, lon!)
+		maxLon = Math.max(maxLon, lon!)
+		minLat = Math.min(minLat, lat!)
+		maxLat = Math.max(maxLat, lat!)
+	}
+
+	return maxLon - minLon + maxLat - minLat
 }
 
 /**
@@ -154,11 +160,14 @@ function polygonSpan(polygon: number[][][]): number {
 function keepLargestPolygons(geometry: AreaGeometry): AreaGeometry {
 	if (geometry.type !== "MultiPolygon") return geometry
 
-	const largestFirst = (geometry.coordinates as number[][][][]).toSorted((a, b) => polygonSpan(b) - polygonSpan(a))
+	const largestFirst = (geometry.coordinates as number[][][][])
+		.map((polygon) => ({ polygon, span: polygonSpan(polygon) }))
+		.toSorted((a, b) => b.span - a.span)
+
 	const kept: number[][][][] = []
 	let bytes = stringifyJSON({ ...geometry, coordinates: [] }).length
 
-	for (const polygon of largestFirst) {
+	for (const { polygon } of largestFirst) {
 		bytes += stringifyJSON(polygon).length + 1
 
 		if (bytes > MAX_GEOMETRY_BYTES && kept.length) break

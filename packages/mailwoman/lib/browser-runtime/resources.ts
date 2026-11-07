@@ -159,6 +159,22 @@ export const NATIONAL_STREET_EXTRACT_VERSION = "2026-07-10"
 export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
 
 /**
+ * Version of the Who's On First boundary file, built by `mailwoman gazetteer build polygons`.
+ *
+ * Every model release shares it.
+ * The browser caches range chunks by URL and offset, so a rebuilt file is published under a new version.
+ */
+export const WOF_POLYGONS_VERSION = "2026-11-07"
+
+/**
+ * Returns the URL of the boundary file.
+ * The runtime reads it with byte ranges.
+ */
+export function wofPolygonsURL(): string {
+	return `${ASSET_BASE_URL}polygons/${WOF_POLYGONS_VERSION}/wof-polygons.db`
+}
+
+/**
  * Returns the URL of the global candidate gazetteer.
  * The runtime reads it with byte ranges.
  */

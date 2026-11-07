@@ -65,12 +65,7 @@ import {
 import { postPruneMessage } from "@mailwoman/service-worker-cache/prune"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import { parsePointQuery } from "@mailwoman/spatial/point-query"
-import {
-	DEFAULT_LOCALE,
-	parseStageLabelsFor,
-	projectCascadeHits,
-	runClassifyStage,
-} from "mailwoman/browser-runtime/classify"
+import { parseStageLabelsFor, projectCascadeHits, runClassifyStage } from "mailwoman/browser-runtime/classify"
 import { FamilyBundles, silentAssetProgress } from "mailwoman/browser-runtime/family-bundles"
 import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
 import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
@@ -78,11 +73,11 @@ import type { ReleaseInfo, ReleasesManifest } from "mailwoman/browser-runtime/ma
 import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import { postcodeCentroidFor, postcodeFallbackKeys } from "mailwoman/browser-runtime/postcode-fallback"
 import {
-	assetURL,
 	HOSTED_STREET_SLUGS,
 	NATIONAL_STREET_SLUGS,
 	regionToStateSlug,
 	streetExtractURL,
+	wofPolygonsURL,
 } from "mailwoman/browser-runtime/resources"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 // The binary that `onnxruntime-web/wasm` instantiates.
@@ -480,18 +475,15 @@ export function useGeocoderRuntime({
 	}, [sqliteRuntimeBaseURL])
 
 	/**
-	 * The release's polygon file, opened once per version, or `null` for a release without one.
+	 * The boundary file, opened once.
+	 *
+	 * Its ids follow the gazetteer, so every model release reads one file.
 	 *
 	 * A failed open is forgotten so the next read tries again.
 	 */
-	const ensurePolygonDB = useCallback((): Promise<PolygonDB> | null => {
-		const release = rt.selectedRelease
-		const version = rt.selectedVersion
-
-		if (!release?.hasPolygons || !version) return null
-
+	const ensurePolygonDB = useCallback((): Promise<PolygonDB> => {
 		if (!polygonDBRef.current) {
-			const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqliteRuntimeBaseURL)
+			const loading = loadPolygonDB(wofPolygonsURL(), sqliteRuntimeBaseURL)
 
 			polygonDBRef.current = loading
 
@@ -503,7 +495,7 @@ export function useGeocoderRuntime({
 		}
 
 		return polygonDBRef.current
-	}, [rt.selectedRelease, rt.selectedVersion, sqliteRuntimeBaseURL])
+	}, [sqliteRuntimeBaseURL])
 
 	/**
 	 * A `wof:` query's place, from the containment chain and the release's polygon.

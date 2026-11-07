@@ -246,18 +246,38 @@ export async function buildStreetTable(options: BuildStreetTableOptions): Promis
 		report()
 
 		const nodeIDs = new Map<string, number>()
-		const nodes: Array<{ lat: number; lon: number; keys: Set<string> }> = []
+		const nodes: Array<{ lat: number; lon: number; keys: string[] }> = []
+		const interned = new Map<string, string>()
+
+		// A substring from the parser can hold its whole source chunk in memory.
+		// A fresh copy of each distinct string releases the chunk, and one copy
+		// serves every row that repeats it.
+		const intern = (text: string): string => {
+			const held = interned.get(text)
+
+			if (typeof held === "string") return held
+
+			const copy = Buffer.from(text).toString()
+
+			interned.set(copy, copy)
+
+			return copy
+		}
 
 		const nodeAt = (reference: string, position: { lat: number; lon: number }, key: string) => {
 			let id = nodeIDs.get(reference)
 
 			if (typeof id !== "number") {
 				id = nodes.length
-				nodeIDs.set(reference, id)
-				nodes.push({ ...position, keys: new Set() })
+				nodeIDs.set(Buffer.from(reference).toString(), id)
+				nodes.push({ lat: position.lat, lon: position.lon, keys: [] })
 			}
 
-			nodes[id]!.keys.add(key)
+			const { keys } = nodes[id]!
+
+			if (!keys.includes(key)) {
+				keys.push(key)
+			}
 
 			return id
 		}
@@ -267,7 +287,7 @@ export async function buildStreetTable(options: BuildStreetTableOptions): Promis
 		const links: Link[] = []
 
 		for await (const edge of options.edges) {
-			const key = String(normalizeStreetForKey(edge.name))
+			const key = intern(String(normalizeStreetForKey(edge.name)))
 
 			if (!key) {
 				counts.skippedEdges++
@@ -279,8 +299,8 @@ export async function buildStreetTable(options: BuildStreetTableOptions): Promis
 
 			links.push({
 				key,
-				alternateKey: edge.alternateName ? String(normalizeStreetForKey(edge.alternateName)) || null : null,
-				name: edge.name,
+				alternateKey: edge.alternateName ? intern(String(normalizeStreetForKey(edge.alternateName))) || null : null,
+				name: intern(edge.name),
 				lat: edge.middle.lat,
 				lon: edge.middle.lon,
 				meters: edge.meters,
@@ -290,6 +310,7 @@ export async function buildStreetTable(options: BuildStreetTableOptions): Promis
 		}
 
 		nodeIDs.clear()
+		interned.clear()
 		counts.stage = "merge"
 		report()
 
@@ -315,9 +336,15 @@ export async function buildStreetTable(options: BuildStreetTableOptions): Promis
 					const id = ++counts.streets
 					const first = street[0]!
 					const center = middleLink(street)
-					const lats = street.map(({ lat }) => lat)
-					const lons = street.map(({ lon }) => lon)
-					const bounds = [Math.min(...lats), Math.max(...lats), Math.min(...lons), Math.max(...lons)] as const
+
+					const bounds: [number, number, number, number] = [Infinity, -Infinity, Infinity, -Infinity]
+
+					for (const { lat, lon } of street) {
+						bounds[0] = Math.min(bounds[0], lat)
+						bounds[1] = Math.max(bounds[1], lat)
+						bounds[2] = Math.min(bounds[2], lon)
+						bounds[3] = Math.max(bounds[3], lon)
+					}
 
 					insertStreet.run(
 						id,
@@ -374,11 +401,11 @@ export async function buildStreetTable(options: BuildStreetTableOptions): Promis
 				const pairs = new Map<string, number[]>()
 
 				nodes.forEach(({ keys }, node) => {
-					if (keys.size < 2) return
+					if (keys.length < 2) return
 
 					counts.crossingNodes++
 
-					const sorted = [...keys].toSorted()
+					const sorted = keys.toSorted()
 
 					for (let first = 0; first < sorted.length; first++) {
 						for (let second = first + 1; second < sorted.length; second++) {

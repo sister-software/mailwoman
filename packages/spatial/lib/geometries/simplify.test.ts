@@ -51,6 +51,23 @@ describe("simplifyAreaGeometry", () => {
 		expect(out.coordinates[0]!.length).toBeGreaterThanOrEqual(4)
 	})
 
+	it("bounds a densely drawn island that the tolerance collapses, and keeps its ring closed", () => {
+		const positions = 200_000
+
+		const island = Array.from({ length: positions + 1 }, (_, step): [number, number] => {
+			const angle = ((step % positions) / positions) * 2 * Math.PI
+
+			return [0.01 * Math.cos(angle), 0.01 * Math.sin(angle)]
+		})
+
+		const out = simplifyAreaGeometry({ type: "Polygon", coordinates: [island] }, 1) as {
+			coordinates: number[][][]
+		}
+
+		expect(out.coordinates[0]).toHaveLength(8)
+		expect(out.coordinates[0]![0]).toEqual(out.coordinates[0]!.at(-1))
+	})
+
 	it("simplifies each polygon of a multipolygon and rounds to the stated precision", () => {
 		const out = simplifyAreaGeometry(
 			{

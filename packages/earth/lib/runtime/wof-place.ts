@@ -50,7 +50,7 @@ export async function readWOFPlace(gazetteer: Gazetteer, id: number, polygons: P
 
 		throw new Error(
 			polygons
-				? `${reference} has no polygon in this release, so it has no coordinate to show.${sits}`
+				? `${reference} has no polygon in the boundary file, so it has no coordinate to show.${sits}`
 				: `${reference} cannot be placed here: this runtime loads no polygon file.${sits}`
 		)
 	}
