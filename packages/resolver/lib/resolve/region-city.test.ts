@@ -8,7 +8,13 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import { EMPTY_PLACE_FIELDS, type ResolvedPlace, type ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { applyCountryAsRegion, applyLocalityAsRegion, applyRegionCity, applyVenueAsTown } from "#resolve/region-city"
+import {
+	applyCountryAsRegion,
+	applyLocalityAsRegion,
+	applyRegionCity,
+	applyStreetAsTown,
+	applyVenueAsTown,
+} from "#resolve/region-city"
 
 const CITY: ResolvedPlace = {
 	...EMPTY_PLACE_FIELDS,
@@ -104,6 +110,56 @@ describe("a country the input names beside a town", () => {
 		await applyCountryAsRegion(roots, atlas)
 
 		expect(roots[1]!.tag).toBe("country")
+	})
+})
+
+describe("applyStreetAsTown", () => {
+	const CROCKETTS_BLUFF = {
+		...CITY,
+		id: 1_243_286_477,
+		name: "Crocketts Bluff",
+		country: "US",
+		lat: 34.44399,
+		lon: -91.22012,
+	}
+
+	const postcodeAt = (lat: number, lon: number) =>
+		node("postcode", "72038", 20, { placeID: "wof:554741891", lat, lon, metadata: { resolver_country: "US" } })
+
+	const unnumbered = (lat: number, lon: number) => [
+		node("street", "Crocketts", 0),
+		node("street_suffix", "Bluff", 10),
+		node("region", "AR", 17, { placeID: "wof:85688585" }),
+		postcodeAt(lat, lon),
+	]
+
+	it("reads the street's spans as the town that holds the postcode", async () => {
+		const roots = unnumbered(34.446308, -91.243804)
+
+		await applyStreetAsTown(roots, backendOf([CROCKETTS_BLUFF]))
+
+		expect(roots.map(({ tag, value }) => `${tag}:${value}`)).toEqual([
+			"locality:Crocketts Bluff",
+			"region:AR",
+			"postcode:72038",
+		])
+		expect(roots[0]).toMatchObject({ end: 15, lat: CROCKETTS_BLUFF.lat, placeID: "wof:1243286477" })
+	})
+
+	it("keeps the street when the town sits far from the postcode", async () => {
+		const roots = unnumbered(36, -94)
+
+		await applyStreetAsTown(roots, backendOf([CROCKETTS_BLUFF]))
+
+		expect(roots[0]!.tag).toBe("street")
+	})
+
+	it("keeps a numbered street", async () => {
+		const roots = [node("house_number", "12", 0), ...unnumbered(34.446308, -91.243804)]
+
+		await applyStreetAsTown(roots, backendOf([CROCKETTS_BLUFF]))
+
+		expect(roots[1]!.tag).toBe("street")
 	})
 })
 
