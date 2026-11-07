@@ -16,7 +16,7 @@
  *   The entry's extra field stores the actual values.
  */
 
-import { pipeline } from "node:stream/promises"
+import { finished, pipeline } from "node:stream/promises"
 import { crc32 } from "node:zlib"
 
 import ADMZip from "adm-zip"
@@ -24,10 +24,10 @@ import iconv from "iconv-lite"
 import { resolvePath, dirname, basename, type PathBuilderLike } from "path-ts"
 import { open as openArchive, type Entry, type ZipFileOptions } from "yauzl-promise"
 
+import { inflateDeflate64 } from "#fs/deflate64"
 import { tryStat } from "#fs/readers/stat"
 import { openWriteStream } from "#fs/streams"
 import { makeDirectories } from "#fs/writers"
-import { spawnProcess } from "#process"
 import { once } from "#utils/events"
 
 type StreamingArchive = Awaited<ReturnType<typeof openArchive>>
@@ -165,6 +165,96 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 	})
 }
 
+/**
+ * The zip method number of Deflate64.
+ *
+ * Neither yauzl nor Node's zlib decodes it, so {@link openMemberContents}
+ * inflates it with {@link inflateDeflate64}.
+ */
+const DEFLATE64_METHOD = 9
+
+/**
+ * Raises when a member's decompressed CRC-32 or length disagrees with its central-directory header.
+ */
+function assertMemberIntegrity(archivePath: PathBuilderLike, entry: Entry, checksum: number, length: number): void {
+	if (checksum !== entry.crc32) {
+		throw new Error(
+			`CRC mismatch in ${archivePath}: ${entry.filename} is 0x${checksum.toString(16)}, header claims 0x${entry.crc32.toString(16)}`
+		)
+	}
+
+	if (length !== entry.uncompressedSize) {
+		throw new Error(
+			`Length mismatch in ${archivePath}: ${entry.filename} is ${length} bytes, header claims ${entry.uncompressedSize}`
+		)
+	}
+}
+
+/**
+ * Passes `chunks` through and raises at their end when the member's CRC-32
+ * or length disagrees with its header.
+ */
+async function* withIntegrityCheck(
+	archivePath: PathBuilderLike,
+	entry: Entry,
+	chunks: AsyncIterable<Uint8Array>
+): AsyncGenerator<Uint8Array> {
+	let checksum = 0
+	let length = 0
+
+	for await (const chunk of chunks) {
+		checksum = crc32(chunk, checksum)
+		length += chunk.length
+
+		yield chunk
+	}
+
+	assertMemberIntegrity(archivePath, entry, checksum, length)
+}
+
+type MemberContents = AsyncIterable<Uint8Array> & AsyncDisposable
+
+/**
+ * One member's decompressed bytes, ended when the owning scope exits.
+ *
+ * A Deflate64 member is read raw, with yauzl's `decompress: false`,
+ * and inflated by {@link inflateDeflate64}.
+ * Yauzl checks neither the CRC-32 nor the length of a raw read.
+ *
+ * This path checks both unless `checkIntegrity` is false, as for {@link verifyZipIntegrity},
+ * which checks every member itself.
+ * Every other method goes through {@link openEntryStream}, where yauzl checks a deflated member.
+ */
+async function openMemberContents(
+	archivePath: PathBuilderLike,
+	entry: Entry,
+	{ checkIntegrity = true }: { checkIntegrity?: boolean } = {}
+): Promise<MemberContents> {
+	if (entry.compressionMethod !== DEFLATE64_METHOD) {
+		return openEntryStream(entry, checkIntegrity ? undefined : { validateCrc32: false })
+	}
+
+	const raw = await entry.openReadStream({ decompress: false })
+	const inflated = inflateDeflate64(raw)
+	const contents = checkIntegrity ? withIntegrityCheck(archivePath, entry, inflated) : inflated
+
+	return {
+		[Symbol.asyncIterator]: () => contents,
+		[Symbol.asyncDispose]: async () => {
+			// The generator's return runs the decoder's cleanup and ends its iteration of the raw stream.
+			await contents.return(undefined)
+
+			// The inflater stops at the final block without reading the raw stream's end, and the generator's
+			// return destroys it, so the close may already have been delivered by now.
+			// `finished` settles on a stream that has already closed, where waiting
+			// on the `close` event would hang.
+			// The wait matters for the reason `openEntryStream` gives: the archive cannot close during a read.
+			raw.destroy()
+			await finished(raw).catch(() => undefined)
+		},
+	}
+}
+
 export type ZipEntryContentPair = [entry: ADMZip.IZipEntry, content: Buffer]
 
 /**
@@ -279,7 +369,7 @@ export async function* readZipEntry(
 	for await (const entry of archive) {
 		if (!selectorMatches(selector, entryName(entry, options))) continue
 
-		await using contents = await openEntryStream(entry)
+		await using contents = await openMemberContents(archivePath, entry)
 
 		yield* contents
 
@@ -307,59 +397,14 @@ export async function extractZipEntry(
 	for await (const entry of archive) {
 		if (!selectorMatches(selector, entryName(entry))) continue
 
-		await pipeline(await entry.openReadStream(), openWriteStream(destinationPath))
+		await using contents = await openMemberContents(archivePath, entry)
+
+		await pipeline(contents, openWriteStream(destinationPath))
 
 		return entry.uncompressedSize
 	}
 
 	throw new Error(`No entry matching ${selector} in ${archivePath}`)
-}
-
-/**
- * The zip method number of Deflate64.
- * Neither yauzl nor Node's zlib decodes it.
- */
-const DEFLATE64_METHOD = 9
-
-/**
- * Streams one member through the system's `unzip -p` into `destination`.
- *
- * This reads a Deflate64 member, the method the US DOT's National Address Database release uses.
- * It needs Info-ZIP `unzip` on the path.
- *
- * A host without it fails with an error stating that requirement.
- */
-async function extractWithSystemUnzip(
-	archivePath: PathBuilderLike,
-	member: string,
-	destination: PathBuilderLike
-): Promise<void> {
-	// `unzip` reads a member argument as a wildcard pattern, so its pattern characters are escaped.
-	const pattern = member.replaceAll(/[[\]*?\\]/gu, (character) => `\\${character}`)
-	const child = spawnProcess("unzip", ["-p", archivePath, pattern], { stdio: ["ignore", "pipe", "pipe"] })
-	let stderr = ""
-
-	child.stderr.on("data", (chunk: Buffer) => {
-		stderr += chunk.toString()
-	})
-
-	const exited = new Promise<number>((resolve, reject) => {
-		child.on("error", (error: NodeJS.ErrnoException) =>
-			reject(
-				error.code === "ENOENT"
-					? new Error(`${member} is Deflate64-compressed and needs Info-ZIP \`unzip\` on the path to extract`)
-					: error
-			)
-		)
-
-		child.on("close", (code) => resolve(code ?? 1))
-	})
-
-	await Promise.all([pipeline(child.stdout, openWriteStream(destination)), exited])
-
-	const code = await exited
-
-	if (code !== 0) throw new Error(`unzip -p ${member} exited ${code}: ${stderr.trim()}`)
 }
 
 export interface ExtractZipEntriesOptions {
@@ -420,9 +465,9 @@ export async function extractZipEntries(
 		const existing = skipExisting ? await tryStat(destination) : null
 
 		if (existing?.size !== entry.uncompressedSize) {
-			await (entry.compressionMethod === DEFLATE64_METHOD
-				? extractWithSystemUnzip(archivePath, name, destination)
-				: pipeline(await entry.openReadStream(), openWriteStream(destination)))
+			await using contents = await openMemberContents(archivePath, entry)
+
+			await pipeline(contents, openWriteStream(destination))
 		}
 
 		written.push(name)
@@ -440,7 +485,7 @@ export async function extractZipEntries(
  *
  * The CRC is computed here rather than delegated to yauzl's `validateCrc32`, which asserts `Cannot validate CRC32
  * for uncompressed data` on a stored member — precisely what this is meant to catch — and folding it locally covers
- * both storage methods with one path.
+ * stored, deflated and Deflate64 members with one path.
  *
  * @category Files
  *
@@ -454,26 +499,16 @@ export async function verifyZipIntegrity(archivePath: PathBuilderLike): Promise<
 	for await (const entry of archive) {
 		if (isDirectoryMember(entryName(entry))) continue
 
-		await using contents = await openEntryStream(entry, { validateCrc32: false })
+		await using contents = await openMemberContents(archivePath, entry, { checkIntegrity: false })
 		let checksum = 0
 		let length = 0
 
 		for await (const chunk of contents) {
-			checksum = crc32(chunk as Uint8Array, checksum)
-			length += (chunk as Uint8Array).length
+			checksum = crc32(chunk, checksum)
+			length += chunk.length
 		}
 
-		if (checksum !== entry.crc32) {
-			throw new Error(
-				`CRC mismatch in ${archivePath}: ${entry.filename} is 0x${checksum.toString(16)}, header claims 0x${entry.crc32.toString(16)}`
-			)
-		}
-
-		if (length !== entry.uncompressedSize) {
-			throw new Error(
-				`Length mismatch in ${archivePath}: ${entry.filename} is ${length} bytes, header claims ${entry.uncompressedSize}`
-			)
-		}
+		assertMemberIntegrity(archivePath, entry, checksum, length)
 
 		checked++
 	}
