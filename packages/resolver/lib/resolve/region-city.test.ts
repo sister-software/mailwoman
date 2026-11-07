@@ -40,6 +40,38 @@ const streetAddress = () => [
 	node("region", "Hồ Chí Minh", 12, { placeID: "wof:8638961045712", lat: 9.78361575, lon: 107.539162 }),
 ]
 
+describe("applyRegionCity with a resolved district", () => {
+	const HAMBURG = {
+		...CITY,
+		id: 101_748_175,
+		name: "Hamburg",
+		country: "DE",
+		lat: 53.55,
+		lon: 10,
+		bbox: { minLat: 53.39, maxLat: 53.74, minLon: 9.73, maxLon: 10.33 },
+	}
+
+	it("reads the region as its city when a district sits beside it, and lets the district answer", async () => {
+		const roots = [
+			node("dependent_locality", "Altona", 0, { placeID: "wof:1847524011", lat: 53.577, lon: 9.876 }),
+			node("region", "Hamburg", 8, { placeID: "wof:85682505" }),
+		]
+
+		await applyRegionCity(roots, backendOf([HAMBURG]))
+
+		expect(roots[1]).toMatchObject({ tag: "locality", placeID: "wof:101748175" })
+		expect(roots[0]!.metadata).toMatchObject({ contained_by_parent: true })
+	})
+
+	it("keeps a bare region beside an unresolved district", async () => {
+		const roots = [node("dependent_locality", "Nowhere", 0), node("region", "Hamburg", 9, { placeID: "wof:85682505" })]
+
+		await applyRegionCity(roots, backendOf([HAMBURG]))
+
+		expect(roots[1]!.tag).toBe("region")
+	})
+})
+
 describe("applyRegionCity with an unresolved locality", () => {
 	it("reads the region as its city when the parsed locality found no row", async () => {
 		const roots = [node("locality", "Nowhere", 8), ...streetAddress()]
@@ -143,6 +175,7 @@ describe("applyStreetAsTown", () => {
 			"region:AR",
 			"postcode:72038",
 		])
+
 		expect(roots[0]).toMatchObject({ end: 15, lat: CROCKETTS_BLUFF.lat, placeID: "wof:1243286477" })
 	})
 
@@ -175,6 +208,29 @@ describe("applyVenueAsTown", () => {
 		await applyVenueAsTown(roots, backendOf([ROAD_TOWN]))
 
 		expect(roots[0]).toMatchObject({ tag: "locality", placeID: `wof:${ROAD_TOWN.id}` })
+	})
+
+	it("reads each form of a slash-doubled name until one names a town", async () => {
+		const DERRY: ResolvedPlace = { ...CITY, id: 101_752_123, name: "Derry", country: "GB" }
+		const asked: string[] = []
+
+		const backend: ResolverBackend = {
+			findPlace: async ({ text }) => {
+				asked.push(text)
+
+				return text === "Londonderry" ? [DERRY] : [{ ...DERRY, exactMatch: false }]
+			},
+		}
+
+		const roots = [
+			node("venue", "Derry/Londonderry", 0),
+			node("country", "United Kingdom", 19, { placeID: "wof:85633159", metadata: { resolver_country: "GB" } }),
+		]
+
+		await applyVenueAsTown(roots, backend)
+
+		expect(asked).toEqual(["Derry/Londonderry", "Derry", "Londonderry"])
+		expect(roots[0]).toMatchObject({ tag: "locality", placeID: `wof:${DERRY.id}` })
 	})
 
 	it("keeps the venue when the country's only match is a correction", async () => {

@@ -21,8 +21,10 @@ import { streetNumberPairs } from "#street/tier"
  *
  * A place held at both levels occurs wherever a city is its own province, so the test reads the hierarchy.
  *
- * A bare region stays a region, because only a street and number say the input
- * means somewhere a street can be.
+ * `Altona, Hamburg` and `Triana, Sevilla` state a resolved district, and a district also sits inside a city.
+ *
+ * A bare region stays a region, because only a street and number or a district
+ * say the input means somewhere inside a city.
  *
  * A locality the gazetteer did not resolve leaves the region as the only place,
  * and Bristol's region point lies in the Bristol Channel, so the city answers there too.
@@ -30,7 +32,11 @@ import { streetNumberPairs } from "#street/tier"
 export async function applyRegionCity(roots: AddressNode[], backend: ResolverBackend): Promise<void> {
 	const nodes = [...walkNodes(roots)]
 
-	if (nodes.some((node) => node.tag === "locality" && node.placeID) || !streetNumberPairs(roots).length) return
+	// A street with a number, or a resolved district, places the input inside a city.
+	const insideACity =
+		streetNumberPairs(roots).length > 0 || nodes.some((node) => node.tag === "dependent_locality" && node.placeID)
+
+	if (nodes.some((node) => node.tag === "locality" && node.placeID) || !insideACity) return
 
 	const region = nodes.find((node) => node.tag === "region" && node.placeID?.startsWith("wof:"))
 
@@ -48,6 +54,24 @@ export async function applyRegionCity(roots: AddressNode[], backend: ResolverBac
 	region.tag = "locality"
 	decorateNode(region, city, others)
 	region.metadata = { ...region.metadata, region_city: true }
+
+	// A district inside the city's box answers ahead of the city, as the walk's containment stamp lets it.
+	for (const district of nodes) {
+		if (district.tag !== "dependent_locality" || !district.placeID || district.lat == null || district.lon == null)
+			continue
+
+		const box = city.bbox
+
+		if (
+			box &&
+			district.lat >= box.minLat &&
+			district.lat <= box.maxLat &&
+			district.lon >= box.minLon &&
+			district.lon <= box.maxLon
+		) {
+			district.metadata = { ...district.metadata, contained_by_parent: true }
+		}
+	}
 }
 
 /**
@@ -208,11 +232,24 @@ export async function applyVenueAsTown(roots: AddressNode[], backend: ResolverBa
 
 	if (!venue || !country || nodes.some((node) => node !== venue && node !== country)) return
 
-	const [town, ...others] = await backend.findPlace({
-		text: venue.value,
-		placetype: "locality",
-		country: country.metadata!["resolver_country"] as string,
-	})
+	// A name written in two forms, `Derry/Londonderry` or `Biel/Bienne`, is read whole and then as each form.
+	const forms = [venue.value, ...venue.value.split("/").map((form) => form.trim())].filter(
+		(form, index, all) => form && all.indexOf(form) === index
+	)
+
+	let found: Awaited<ReturnType<ResolverBackend["findPlace"]>> = []
+
+	for (const form of forms) {
+		found = await backend.findPlace({
+			text: form,
+			placetype: "locality",
+			country: country.metadata!["resolver_country"] as string,
+		})
+
+		if (found[0]?.exactMatch) break
+	}
+
+	const [town, ...others] = found
 
 	if (!town?.exactMatch) return
 
