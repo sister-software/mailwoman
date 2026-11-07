@@ -162,6 +162,37 @@ describe("buildAddressLayer", () => {
 		expect(await readLayerCoverage(lookup, cell)).toMatchObject({ observedRows: 3, basis: "source_present" })
 	})
 
+	it("seals a file that answers its checked reads, and refuses one that misses a read", async () => {
+		await using dir = await temporaryDirectory("address-layer-")
+
+		const options = {
+			sources: new Map([["usgov-nad", { license: "public-domain", authority: null }]]),
+			manifest: MANIFEST,
+			lookupPath: dir.path("lookup.db"),
+			detailPath: dir.path("detail.db"),
+		}
+
+		const street = normalizeStreetForKey("N Downer Ave")
+
+		await buildAddressLayer({
+			...options,
+			records: stream([record({ number: "3200", streetRaw: "N Downer Ave" })]),
+			checks: [
+				{ table: "key_postcode", scope: "53211", street, number: "3200" },
+				{ table: "key_region", scope: "", street, number: "3200" },
+			],
+		})
+
+		await expect(
+			buildAddressLayer({
+				...options,
+				lookupPath: dir.path("missing.db"),
+				records: stream([record({ number: "3200", streetRaw: "N Downer Ave" })]),
+				checks: [{ table: "key_postcode", scope: "53211", street, number: "9999" }],
+			})
+		).rejects.toThrow(/misses 1 of 1 checked reads: key_postcode 53211/)
+	})
+
 	it("refuses a record whose source the build lists no terms for", async () => {
 		await using dir = await temporaryDirectory("address-layer-")
 

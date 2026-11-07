@@ -89,6 +89,18 @@ interface StagingDatabase extends AddressDetailDatabase {
 }
 
 /**
+ * One keyed read a build must answer: a street and number under one level's scope.
+ *
+ * `scope` is ignored for `key_region`, which has none.
+ */
+export interface AddressLayerReadCheck {
+	table: StagedLevel
+	scope: string
+	street: string
+	number: string
+}
+
+/**
  * What a source's rows are published under, from the register.
  */
 export interface AddressSourceTerms {
@@ -107,6 +119,11 @@ export interface BuildAddressLayerOptions {
 	 * The `layer_manifest` row `lookup.db` holds.
 	 */
 	manifest: AddressLayerManifest
+	/**
+	 * Keyed reads the finished `lookup.db` must answer before it is sealed,
+	 * such as a known address at each level.
+	 */
+	checks?: readonly AddressLayerReadCheck[]
 	lookupPath: PathBuilderLike
 	detailPath: PathBuilderLike
 	/**
@@ -176,7 +193,7 @@ export async function buildAddressLayer(options: BuildAddressLayerOptions): Prom
 	try {
 		const summary = await stageRecords(options, stagingPath)
 
-		await writeLookup(options.lookupPath, stagingPath, summary, options.sources, options.manifest)
+		await writeLookup(options.lookupPath, stagingPath, summary, options.sources, options.manifest, options.checks ?? [])
 		await writeDetail(options.detailPath, stagingPath, summary)
 
 		return summary
@@ -299,7 +316,8 @@ async function writeLookup(
 	stagingPath: string,
 	summary: AddressLayerBuildSummary,
 	terms: ReadonlyMap<string, AddressSourceTerms>,
-	manifest: AddressLayerManifest
+	manifest: AddressLayerManifest,
+	checks: readonly AddressLayerReadCheck[]
 ): Promise<void> {
 	await buildSealedArtifact<AddressLookupDatabase, true, void>({
 		out: lookupPath,
@@ -374,6 +392,25 @@ async function writeLookup(
 				if (count > summary.keys[table]) {
 					throw new Error(`${table} holds ${count} rows, more than the ${summary.keys[table]} staged for it`)
 				}
+			}
+
+			const unanswered = checks.filter((check) => {
+				const row =
+					check.table === StagedLevel.Region
+						? db
+								.prepare("SELECT 1 FROM key_region WHERE street = ? AND number = ? LIMIT 1")
+								.get(check.street, check.number)
+						: db
+								.prepare(`SELECT 1 FROM ${check.table} WHERE scope = ? AND street = ? AND number = ? LIMIT 1`)
+								.get(check.scope, check.street, check.number)
+
+				return row == null
+			})
+
+			if (unanswered.length) {
+				const listed = unanswered.map((check) => `${check.table} ${check.scope} ${check.street} ${check.number}`)
+
+				throw new Error(`lookup.db misses ${unanswered.length} of ${checks.length} checked reads: ${listed.join("; ")}`)
 			}
 
 			await writeLayerCoverage(db, sourcePresentCoverageCells(summary.coverage))
