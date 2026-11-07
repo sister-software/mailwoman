@@ -179,6 +179,41 @@ export interface Ancestor {
 }
 
 /**
+ * What the gazetteer records about a place identified by id without a name key.
+ *
+ * The candidate table is keyed by name, so an id reaches the place's containment chain
+ * and its interval label, and not its own row.
+ * A caller with a name key reads the row through {@link placeByRef}.
+ */
+export interface PlaceByID {
+	sprID: number
+	ancestors: Ancestor[]
+	/**
+	 * Whether the interval table labels the place.
+	 *
+	 * That label is the gazetteer's own record that the id is one of its places.
+	 */
+	known: boolean
+}
+
+/**
+ * A place by its Who's On First id: its ancestor chain and whether the gazetteer labels it.
+ *
+ * Both reads are primary-key probes.
+ * A read the range worker cannot complete throws, so an unreadable place never reads as an unknown one.
+ */
+export async function placeByID(gazetteer: Gazetteer, sprID: number): Promise<PlaceByID> {
+	const [ancestors, interval] = await Promise.all([
+		ancestorsOf(gazetteer, sprID),
+		gazetteer.database.query<{ spr_id: number }>("SELECT spr_id FROM candidate_interval WHERE spr_id = ? LIMIT 1", [
+			sprID,
+		]),
+	])
+
+	return { sprID, ancestors, known: interval.length > 0 }
+}
+
+/**
  * The ancestors of a place from its parent upward, each linkable through its own key.
  */
 export async function ancestorsOf(gazetteer: Gazetteer, sprID: number): Promise<Ancestor[]> {

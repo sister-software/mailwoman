@@ -255,6 +255,8 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// The subcommand has to be a whole argument.
 		["a health check whose name starts with a refused subcommand", `yarn mwops health node-modules-reacharound`],
 		["a script whose name starts with a refused subcommand", `yarn exec-plan --dry-run`],
+		["a compressed-size report on the data root", `compsize -x /mnt/mw/db`],
+		["a disk-usage report on the data root", `du -sh /mnt/mw/corpus`],
 	])("admits %s", (_label, command) => {
 		expect(refusalFor(command)).toBeNull()
 	})

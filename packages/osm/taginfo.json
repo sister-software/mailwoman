@@ -1,0 +1,291 @@
+{
+	"$schema": "https://raw.githubusercontent.com/taginfo/taginfo-projects/master/taginfo-project-schema.json",
+	"data_format": 1,
+	"data_url": "https://raw.githubusercontent.com/sister-software/mailwoman/main/packages/osm/taginfo.json",
+	"data_updated": "20261107T041228Z",
+	"project": {
+		"name": "Mailwoman",
+		"description": "Address parser and geocoder. Builds per-country address, point-of-interest and sub-venue databases from OSM extracts.",
+		"project_url": "https://mailwoman.post",
+		"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md",
+		"contact_name": "Teffen Ellis",
+		"contact_email": "teffen@sister.software"
+	},
+	"tags": [
+		{
+			"key": "addr:housenumber",
+			"object_types": ["node", "area"],
+			"description": "Required. Every node or building with this tag becomes one address point in the per-country address database.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "addr:street",
+			"object_types": ["node", "area"],
+			"description": "Street the address point is stored under. Points without it are counted; the build can recover the street from the nearest named highway.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "addr:postcode",
+			"object_types": ["node", "area"],
+			"description": "Stored with the address point and used to match postcode queries.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "addr:suburb",
+			"object_types": ["node", "area"],
+			"description": "Stored with the address point.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "addr:city",
+			"object_types": ["node", "area"],
+			"description": "Stored with the address point.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "addr:unit",
+			"object_types": ["node", "area"],
+			"description": "Secondary unit (flat, suite). Read into the training corpus for the address parser.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "addr:place",
+			"object_types": ["node", "area"],
+			"description": "Used in place of addr:street where an address has no street (for example housing schemes). Read into the training corpus.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "addr:subdistrict",
+			"object_types": ["node", "area"],
+			"description": "Read into the training corpus (for example Vietnamese wards).",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "addr:district",
+			"object_types": ["node", "area"],
+			"description": "Read into the training corpus (for example Vietnamese districts).",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "addr:province",
+			"object_types": ["node", "area"],
+			"description": "Read into the training corpus.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "addr:country",
+			"object_types": ["node", "area"],
+			"description": "Read into the training corpus where mappers set it.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "highway",
+			"object_types": ["way"],
+			"description": "Named highways are indexed to recover addr:street for address points that lack it.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "name",
+			"object_types": ["node", "way", "area"],
+			"description": "Name of highways (street recovery), administrative boundaries, stations and sub-venues.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "boundary",
+			"value": "administrative",
+			"object_types": ["relation", "area"],
+			"description": "Administrative boundaries are read to place training addresses in their region.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "admin_level",
+			"object_types": ["relation", "area"],
+			"description": "Selects which administrative boundary level to read.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "man_made",
+			"value": "telephone_exchange",
+			"object_types": ["node", "area"],
+			"description": "Telecom points of interest: telephone exchanges.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "telecom",
+			"value": "exchange",
+			"object_types": ["node", "area"],
+			"description": "Telecom points of interest: telephone exchanges.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "man_made",
+			"value": "street_cabinet",
+			"object_types": ["node", "area"],
+			"description": "Telecom points of interest: street cabinets, together with street_cabinet=telecom.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "street_cabinet",
+			"value": "telecom",
+			"object_types": ["node", "area"],
+			"description": "Telecom points of interest, together with man_made=street_cabinet.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "man_made",
+			"value": "mast",
+			"object_types": ["node", "area"],
+			"description": "Telecom points of interest: communication masts, together with tower:type=communication.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "tower:type",
+			"value": "communication",
+			"object_types": ["node", "area"],
+			"description": "Telecom points of interest, together with man_made=mast.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "man_made",
+			"value": "data_center",
+			"object_types": ["node", "area"],
+			"description": "Telecom points of interest: data centers.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "telecom",
+			"value": "data_center",
+			"object_types": ["node", "area"],
+			"description": "Telecom points of interest: data centers.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "railway",
+			"value": "station",
+			"object_types": ["node", "area"],
+			"description": "Stations (points of interest) and venues that contain sub-venues such as platforms.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "railway",
+			"value": "halt",
+			"object_types": ["node", "area"],
+			"description": "Stations (points of interest).",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "station",
+			"value": "subway",
+			"object_types": ["node", "area"],
+			"description": "Metro and light-rail stations, together with railway=station.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "station",
+			"value": "light_rail",
+			"object_types": ["node", "area"],
+			"description": "Metro and light-rail stations, together with railway=station.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "name:en",
+			"object_types": ["node", "area"],
+			"description": "Station names in English, searched with \"Station\" appended.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "name:ja",
+			"object_types": ["node", "area"],
+			"description": "Station names in Japanese, searched with 駅 appended.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "name:ko",
+			"object_types": ["node", "area"],
+			"description": "Station names in Korean, searched with 역 appended.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "name:zh",
+			"object_types": ["node", "area"],
+			"description": "Station names in Chinese, searched with 站 appended.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "aeroway",
+			"value": "terminal",
+			"object_types": ["node", "area"],
+			"description": "Airport terminals, stored as sub-venues of the airport.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "building",
+			"value": "terminal",
+			"object_types": ["node", "area"],
+			"description": "Terminal buildings, stored as sub-venues.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "aeroway",
+			"value": "gate",
+			"object_types": ["node", "area"],
+			"description": "Airport gates, stored as sub-venues.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "aeroway",
+			"value": "aerodrome",
+			"object_types": ["node", "area"],
+			"description": "Airports, as venues that contain terminals and gates.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "public_transport",
+			"value": "platform",
+			"object_types": ["node", "area"],
+			"description": "Platforms, stored as sub-venues of a station.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "railway",
+			"value": "platform",
+			"object_types": ["node", "area"],
+			"description": "Platforms, stored as sub-venues of a station.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "public_transport",
+			"value": "station",
+			"object_types": ["node", "area"],
+			"description": "Stations, as venues that contain platforms.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "amenity",
+			"value": "university",
+			"object_types": ["node", "area"],
+			"description": "Campuses, as venues that contain buildings.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "amenity",
+			"value": "college",
+			"object_types": ["node", "area"],
+			"description": "Campuses, as venues that contain buildings.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "amenity",
+			"value": "hospital",
+			"object_types": ["node", "area"],
+			"description": "Hospital campuses, as venues that contain buildings.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		},
+		{
+			"key": "ref",
+			"object_types": ["node", "area"],
+			"description": "Reference (for example a gate or platform number) of a sub-venue.",
+			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
+		}
+	]
+}

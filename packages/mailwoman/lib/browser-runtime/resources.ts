@@ -68,6 +68,11 @@ export const DATA_CREDITS: readonly DataCredit[] = [
 		artifacts: "the landmark layer",
 	},
 	{
+		publisher: "Contains OS data © Crown copyright and database right 2026",
+		termsURL: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+		artifacts: "the street table",
+	},
+	{
 		publisher: "OpenStreetMap contributors",
 		termsURL: "https://www.openstreetmap.org/copyright",
 		artifacts: "the place names the gazetteer Worker answers",
@@ -146,17 +151,28 @@ export const NATIONAL_STREET_SLUGS = new Set(["fr"])
 export const NATIONAL_STREET_EXTRACT_VERSION = "2026-07-10"
 
 /**
- * The national extract slug used when no US state extract applies.
- */
-export const NATIONAL_STREET_FALLBACK_SLUG = "fr"
-
-/**
  * Version of the admin gazetteer.
  *
  * Every model release shares it.
  * Update it after uploading a rebuilt gazetteer.
  */
 export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
+
+/**
+ * Version of the Who's On First boundary file, built by `mailwoman gazetteer build polygons`.
+ *
+ * Every model release shares it.
+ * The browser caches range chunks by URL and offset, so a rebuilt file is published under a new version.
+ */
+export const WOF_POLYGONS_VERSION = "2026-11-07b"
+
+/**
+ * Returns the URL of the boundary file.
+ * The runtime reads it with byte ranges.
+ */
+export function wofPolygonsURL(): string {
+	return `${ASSET_BASE_URL}polygons/${WOF_POLYGONS_VERSION}/wof-polygons.db`
+}
 
 /**
  * Returns the URL of the global candidate gazetteer.

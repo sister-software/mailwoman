@@ -14,14 +14,17 @@
 
 import type { R2Bucket } from "@cloudflare/workers-types"
 import type { LandmarkHit } from "@mailwoman/core/resolver"
+import type { CrossingHit, StreetTableArea, StreetTableHit } from "@mailwoman/resolver-wof-sqlite/street/table"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { RangeLandmarkLookup } from "@mailwoman/resolver-wof-wasm/httpvfs/landmark"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-wasm/httpvfs/resolver"
+import { RangeStreetTable } from "@mailwoman/resolver-wof-wasm/httpvfs/street/table"
 import {
 	LANDMARK_ROUTE,
 	LandmarkSource,
 	type LandmarkRouteResponse,
-} from "@mailwoman/resolver-wof-wasm/remote-landmark"
+} from "@mailwoman/resolver-wof-wasm/remote/landmark"
+import { CROSSING_ROUTE, STREET_ROUTE, type StreetRouteResponse } from "@mailwoman/resolver-wof-wasm/remote/street"
 import { WorkerEntrypoint } from "cloudflare:workers"
 import { ADMIN_GAZETTEER_VERSION } from "mailwoman/browser-runtime/resources"
 
@@ -146,6 +149,68 @@ function isLandmarkSource(source: string | null): source is LandmarkSource {
 }
 
 /**
+ * The key of the street table in the public bucket.
+ * The key states the source and date its rows came from.
+ */
+export const STREET_TABLE_KEY = "mailwoman/streets/gb-os-open-roads-2026-11-07b/streets.db"
+
+/**
+ * The credit the street table's source requires beside its answers.
+ */
+const STREET_TABLE_LICENSE = {
+	attribution: "Contains OS data © Crown copyright and database right 2026",
+	license: "OGL-UK-3.0",
+}
+
+const STREET_NAME_LIMIT = 200
+
+/**
+ * The most places one street or crossing read scopes to.
+ */
+const STREET_PLACE_LIMIT = 8
+
+/**
+ * The largest radius a street read searches, in meters.
+ */
+const STREET_RADIUS_LIMIT = 20_000
+
+const streetTable = openOncePerIsolate(
+	async (env) => new RangeStreetTable(await openR2Database(env.PUBLIC_BUCKET, STREET_TABLE_KEY, LANDMARK_CACHE))
+)
+
+/**
+ * Reads the route's repeated `place` parameter, or null when one is malformed or they exceed the limit.
+ */
+function readPlaces(url: URL): number[] | null {
+	const places = url.searchParams.getAll("place").map(Number)
+
+	return places.length <= STREET_PLACE_LIMIT && places.every(Number.isSafeInteger) ? places : null
+}
+
+/**
+ * Reads the route's `near` and `radius` parameters, undefined when absent and null when malformed.
+ */
+function readArea(url: URL): StreetTableArea | undefined | null {
+	const near = url.searchParams.get("near")
+
+	if (!near) return undefined
+
+	const [lat, lon] = near.split(",").map(Number)
+	const radiusM = Number(url.searchParams.get("radius"))
+
+	if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null
+
+	if (!(radiusM > 0 && radiusM <= STREET_RADIUS_LIMIT)) return null
+
+	return { lat: lat!, lon: lon!, radiusM }
+}
+
+const CROSS_ORIGIN = { "Access-Control-Allow-Origin": "*" }
+
+const isWrittenStreet = (street: string | undefined): street is string =>
+	Boolean(street) && street!.length <= STREET_NAME_LIMIT
+
+/**
  * The service-binding entry point.
  *
  * A caller binds this Worker and calls `findPlace` on the binding.
@@ -185,6 +250,10 @@ export default class GazetteerWorker extends WorkerEntrypoint<GazetteerWorkerEnv
 	override async fetch(request: Request): Promise<Response> {
 		const url = new URL(request.url)
 
+		if (request.method === "GET" && (url.pathname === STREET_ROUTE || url.pathname === CROSSING_ROUTE)) {
+			return this.#answerStreetRoute(url)
+		}
+
 		if (url.pathname !== LANDMARK_ROUTE || request.method !== "GET") {
 			return new Response("The gazetteer Worker answers place lookups over its service binding.", { status: 404 })
 		}
@@ -213,6 +282,51 @@ export default class GazetteerWorker extends WorkerEntrypoint<GazetteerWorkerEnv
 			console.error(`The ${source} landmark layer could not be read`, error)
 
 			return new Response(`The ${source} landmark layer could not be read.`, { status: 503, headers: crossOrigin })
+		}
+	}
+
+	/**
+	 * Answers `GET /v1/streets?street=&place=&near=&radius=` and `GET /v1/crossings?first=&second=&place=`.
+	 */
+	async #answerStreetRoute(url: URL): Promise<Response> {
+		const places = readPlaces(url)
+		const near = readArea(url)
+		const refuse = (message: string) => new Response(message, { status: 400, headers: CROSS_ORIGIN })
+
+		if (!places || near === null) {
+			return refuse(`At most ${STREET_PLACE_LIMIT} place ids and a radius up to ${STREET_RADIUS_LIMIT} m are allowed.`)
+		}
+
+		try {
+			const lookup = await streetTable.open(this.env)
+			let hits: Array<StreetTableHit | CrossingHit>
+
+			if (url.pathname === STREET_ROUTE) {
+				const street = url.searchParams.get("street")?.trim()
+
+				if (!isWrittenStreet(street) || (!places.length && !near)) {
+					return refuse(`street of 1 to ${STREET_NAME_LIMIT} characters and a place or a near point are required.`)
+				}
+
+				hits = await lookup.findStreets({ street, places, ...(near ? { near } : {}) })
+			} else {
+				const first = url.searchParams.get("first")?.trim()
+				const second = url.searchParams.get("second")?.trim()
+
+				if (!isWrittenStreet(first) || !isWrittenStreet(second)) {
+					return refuse(`first and second of 1 to ${STREET_NAME_LIMIT} characters are required.`)
+				}
+
+				hits = await lookup.findCrossings({ first, second, places })
+			}
+
+			const answer: StreetRouteResponse<StreetTableHit | CrossingHit> = { hits, ...STREET_TABLE_LICENSE }
+
+			return Response.json(answer, { headers: { ...CROSS_ORIGIN, "Cache-Control": "public, max-age=86400" } })
+		} catch (error) {
+			console.error("The street table could not be read", error)
+
+			return new Response("The street table could not be read.", { status: 503, headers: CROSS_ORIGIN })
 		}
 	}
 }

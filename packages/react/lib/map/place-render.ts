@@ -54,7 +54,15 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
  */
 export type MapCameraTarget =
 	| { kind: "center"; center: LngLat; zoom: number }
-	| { kind: "bounds"; bounds: BoundsTuple; padding: number }
+	| {
+			kind: "bounds"
+			bounds: BoundsTuple
+			padding: number
+			/**
+			 * The closest the fit may zoom, for bounds a few meters across.
+			 */
+			maxZoom?: number
+	  }
 
 /**
  * The markers, outline and camera target for one resolved place, as returned
@@ -92,15 +100,28 @@ const MIN_EXTENT_DEG = 0.001
 export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRenderSpec {
 	const markers: LngLat[] = [[place.lon, place.lat]]
 
-	if (place.tier && place.uncertaintyM != null) {
+	// An uncertainty radius draws as a circle whether or not a street tier set it:
+	// a decoded plus code or H3 cell has one too.
+	// The two street tiers keep their fixed zooms.
+	// Any other radius fits its circle and stops at the address-point zoom.
+	if (place.uncertaintyM != null) {
+		const outline = radiusCircleGeometry(place.lat, place.lon, place.uncertaintyM)
+
 		return {
 			markers,
-			outline: radiusCircleGeometry(place.lat, place.lon, place.uncertaintyM),
-			camera: {
-				kind: "center",
-				center: [place.lon, place.lat],
-				zoom: place.tier === "address_point" ? ZOOM.addressPoint : ZOOM.interpolated,
-			},
+			outline,
+			camera: place.tier
+				? {
+						kind: "center",
+						center: [place.lon, place.lat],
+						zoom: place.tier === "address_point" ? ZOOM.addressPoint : ZOOM.interpolated,
+					}
+				: {
+						kind: "bounds",
+						bounds: bboxToBounds(geomBounds(outline)),
+						padding: FIT_PADDING,
+						maxZoom: ZOOM.addressPoint,
+					},
 		}
 	}
 

@@ -12,6 +12,7 @@
  *   A classifier bundle that predates the trace hook reports that fact instead of rendering an empty workbench.
  */
 
+import { parsePointQuery, POINT_QUERY_PHRASE } from "@mailwoman/spatial/point-query"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -22,8 +23,6 @@ import { ReadingsPanel } from "./ModelVisualizer/ReadingsPanel.tsx"
 import { TileBoard } from "./ModelVisualizer/TileBoard.tsx"
 
 import styles from "./ModelVisualizer/styles.module.css"
-
-const DEFAULT_TEXT = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 /**
  * How long the input rests before a keystroke's trace runs.
@@ -55,7 +54,8 @@ export interface LiveModelVisualizerProps {
 	 */
 	errorMessage: string | null
 	/**
-	 * The text to trace first, from the URL, in place of the default address.
+	 * The text to trace first, from the URL.
+	 * Without it the field opens empty.
 	 */
 	initialText?: string | null
 	/**
@@ -73,7 +73,7 @@ export function LiveModelVisualizer({
 	initialText,
 	onTextTraced,
 }: LiveModelVisualizerProps): React.JSX.Element {
-	const [text, setText] = useState(initialText ?? DEFAULT_TEXT)
+	const [text, setText] = useState(initialText ?? "")
 	const [trace, setTrace] = useState<ParseTraceLike | null>(null)
 	const [pending, setPending] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -89,6 +89,10 @@ export function LiveModelVisualizer({
 	const tiles = useMemo(() => tilesOf(text), [text])
 	const [probe, setProbe] = useState<{ text: string; flips: LabelFlip[][] } | null>(null)
 	const [probing, setProbing] = useState(false)
+
+	// A point query has no decode path: the classifier labels address words, and coordinates,
+	// a plus code or a Who's On First id are decoded by their own readers on the map page.
+	const pointQuery = parsePointQuery(text)
 
 	const run = useCallback(
 		async (input: string) => {
@@ -123,13 +127,14 @@ export function LiveModelVisualizer({
 	)
 
 	// Trace as the text changes, after the debounce, once the classifier is usable.
+	// An empty field has no text to trace.
 	useEffect(() => {
-		if (!ready || !supportsTrace) return
+		if (!ready || !supportsTrace || pointQuery || text.trim() === "") return
 
 		const timer = setTimeout(() => void run(text), DEBOUNCE_MS)
 
 		return () => clearTimeout(timer)
-	}, [ready, supportsTrace, run, text])
+	}, [ready, supportsTrace, run, text, pointQuery])
 
 	// One trace per tile with that tile removed, compared against a trace of the tiles joined by spaces.
 	const probeTiles = useCallback(async () => {
@@ -189,6 +194,7 @@ export function LiveModelVisualizer({
 						setText(event.target.value)
 					}}
 					aria-label="Address to trace"
+					placeholder="An address to trace, newlines included"
 					spellCheck={false}
 				/>
 				<div className={styles.traceMeta}>
@@ -198,10 +204,16 @@ export function LiveModelVisualizer({
 					<p className={styles.traceStatus} aria-live="polite">
 						{lastMs === null ? "No trace yet." : `Last trace ${lastMs} ms.`}
 					</p>
-					<button type="submit" className={styles.traceButton} disabled={pending}>
+					<button type="submit" className={styles.traceButton} disabled={pending || pointQuery !== null}>
 						{pending ? "Tracing…" : "Trace"}
 					</button>
 				</div>
+				{pointQuery ? (
+					<p className={styles.traceHint} role="status">
+						This is {POINT_QUERY_PHRASE[pointQuery.kind]}, not an address. The classifier labels address words and has
+						no decode path for it. <a href={`/?q=${encodeURIComponent(text.trim())}`}>Open it on the map.</a>
+					</p>
+				) : null}
 				{error ? (
 					<p className="mw-error" role="alert">
 						{error}

@@ -304,9 +304,12 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	const streetLocality =
 		tier === "street" ? (streetNode?.metadata?.["street_locality"] as string | null)?.trim() || null : null
 
+	// The locality field holds the town, so a district written ahead of it fills the field only when no town is stated.
 	const locality =
 		streetLocality ??
-		allNodes.find((n) => n.tag === "locality" || n.tag === "dependent_locality")?.value?.trim() ??
+		(
+			allNodes.find((n) => n.tag === "locality") ?? allNodes.find((n) => n.tag === "dependent_locality")
+		)?.value?.trim() ??
 		null
 
 	const region = allNodes.find((n) => n.tag === "region")?.value?.trim() || null

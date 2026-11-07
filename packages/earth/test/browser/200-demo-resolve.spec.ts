@@ -203,14 +203,39 @@ test.describe("Demo — resolution cascade", () => {
 		})
 	}
 
-	test("White House default — surfaces no fail-pattern errors even when resolver returns nothing", async ({ demo }) => {
+	test("White House — surfaces no fail-pattern errors even when resolver returns nothing", async ({ demo }) => {
 		// Postcode 20500 has lat=0/lon=0 in WOF.
 		// Cascade filters it.
 		// Raw text + locality may also miss.
 		// The test isn't asserting the resolution succeeds.
 		// It's asserting that the "Style is not done loading" race + bbox-on-empty-result paths stay clean.
 		await demo.goto()
+		await demo.clickExample("White House")
 		await demo.submit()
 		demo.console.assertNoFailEvents()
+	})
+
+	test("each submitted query is a history entry, and the back button restores the earlier result", async ({
+		demo,
+		page,
+	}) => {
+		await demo.goto()
+		await demo.setAddress("Chicago, IL")
+		await demo.submit()
+		await expect(page).toHaveURL(/q=Chicago/u)
+		await expect(page).toHaveTitle(/^Chicago · /u)
+
+		await demo.setAddress("Moscow, Russia")
+		await demo.submitForUpdate()
+		await expect(page).toHaveURL(/q=Moscow/u)
+		// The title reads the resolved place's own name.
+		// For Moscow that is its Russian primary name.
+		await expect(page).toHaveTitle(/^Москва · /u)
+
+		await page.goBack()
+		await expect(page).toHaveURL(/q=Chicago/u)
+		await expect(page.locator("#mw-pipeline-input")).toHaveValue("Chicago, IL")
+		await expect(page).toHaveTitle(/^Chicago · /u, { timeout: 60_000 })
+		demo.expectNear(await demo.readCoords(), { lat: 41.9, lon: -87.7 }, 0.5)
 	})
 })

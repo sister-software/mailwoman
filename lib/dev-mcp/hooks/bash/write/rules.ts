@@ -28,6 +28,9 @@ const ADMITTED = new Set([
 	"cat",
 	"column",
 	"comm",
+	// `compsize` reports a btrfs tree's on-disk size after compression, and writes only to stdout.
+	// `du` reports the size before compression.
+	"compsize",
 	// ImageMagick's `convert` rasterizes an SVG into the path its last argument names,
 	// for checking a diagram's layout.
 	// It derives its output from its arguments like `zstd`.

@@ -12,6 +12,7 @@ import { cloudflareTest } from "@cloudflare/vitest-plugin"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
+import { STREET_TABLE_DDL } from "@mailwoman/resolver-wof-sqlite/street/table"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { defineConfig } from "vitest/config"
 
@@ -63,6 +64,19 @@ const OSM_FIXTURE_SQL = `${LANDMARK_TABLE_SQL}
 		INSERT INTO landmark_name SELECT 'crowded', 'N' || i, 'Crowded', 'venue', 'US', 1.0, 1.0, 0, NULL, 1, 0.1, 1 FROM n;
 `
 
+/**
+ * Two streets called High Street in different places, and one crossing.
+ */
+const STREET_FIXTURE_SQL = `
+	PRAGMA page_size = 4096;
+	${STREET_TABLE_DDL}
+	INSERT INTO street VALUES (1, 'High Street', 51.45, -2.55, 300, '[51.45,-2.55]'), (2, 'High Street', 53.1, -2.1, 200, '[53.1,-2.1]');
+	INSERT INTO street_name VALUES ('high street', 1, 51.45, 51.45, -2.55, -2.55), ('high street', 2, 53.1, 53.1, -2.1, -2.1);
+	INSERT INTO street_place VALUES ('high street', 85786019, 1, 51.45, -2.55), ('high street', 7, 2, 53.1, -2.1);
+	INSERT INTO street_crossing VALUES ('church lane', 'high street', 1, 51.45, -2.55, 1);
+	INSERT INTO street_crossing_place VALUES (1, 85786019);
+`
+
 async function buildFixture(sql: string): Promise<string> {
 	await using directory = await temporaryDirectory("gazetteer-worker-fixture-")
 	const path = directory.path("fixture.db")
@@ -85,6 +99,7 @@ export default defineConfig({
 					CANDIDATE_FIXTURE_BASE64: await buildFixture(FIXTURE_SQL),
 					LANDMARK_FIXTURE_BASE64: await buildFixture(WIKIDATA_FIXTURE_SQL),
 					OSM_PLACES_FIXTURE_BASE64: await buildFixture(OSM_FIXTURE_SQL),
+					STREET_FIXTURE_BASE64: await buildFixture(STREET_FIXTURE_SQL),
 				},
 			},
 		}),

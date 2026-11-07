@@ -64,8 +64,38 @@ export interface KindView {
 	alternatives: ReadonlyArray<{ kind: string; confidence: number }>
 }
 
+/**
+ * What the data held for one parsed component.
+ *
+ * A parse can label a span correctly while no database holds it, so this states
+ * the lookup's result beside the label.
+ */
+export interface ComponentMatch {
+	tag: string
+	value: string
+	matched: boolean
+	/**
+	 * The stored name that answered, or `null` when the lookup found no row.
+	 */
+	name: string | null
+	placetype: string | null
+	/**
+	 * The stored identifier that answered, such as `wof:85786019`.
+	 */
+	placeID: string | null
+	/**
+	 * What the lookup searched, when that explains the result, such as a street
+	 * tier with no data for the region.
+	 */
+	note: string | null
+}
+
 export interface ParseResult {
 	input: string
+	/**
+	 * The lookup result per component, on a runtime that reports it.
+	 */
+	matches?: ComponentMatch[]
 	/**
 	 * The decoder's `AddressTree`, opaque here so this module stays free of the decoder's types.
 	 *
