@@ -17,6 +17,7 @@
 		"lib/**/*.ts",
 		"lib/**/*.tsx",
 		"tools/**/*.ts",
+		"wasm/deflate64.wasm",
 		"!**/*.test.ts",
 		"!**/*.test.tsx"
 	],

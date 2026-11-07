@@ -57,6 +57,11 @@ Inc., Apache-2.0) and of darts-clone (Copyright (c) 2008-2011 Susumu Yata, BSD 2
 `packages/mtf/THIRD_PARTY_NOTICES.md` lists each ported file and its upstream source, and
 `packages/mtf/third-party/` holds both license texts.
 
+### deflate64 — MIT
+
+`@mailwoman/core` ships the [deflate64](https://github.com/anatawa12/deflate64-rs) crate, version
+0.1.12, compiled to WASM as `wasm/deflate64.wasm`, to inflate zip members compressed with method 9. `packages/core/THIRD_PARTY_NOTICES.md` reproduces its MIT notice.
+
 ### Arnis — Apache-2.0
 
 The `hrt-facade` crate (`packages/hrt/crates/hrt-facade`) ports the building style decisions of

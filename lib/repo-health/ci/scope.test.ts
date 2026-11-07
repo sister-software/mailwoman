@@ -165,6 +165,13 @@ describe("selectCIScope", () => {
 		}
 	)
 
+	it("selects the rust job and core's suites for a change to core's Deflate64 crate", () => {
+		const scope = selectCIScope(workspaces, files, ["packages/core/crates/deflate64-wasm/src/lib.rs"], [])
+
+		expect(scope).toMatchObject({ full: false, rust: true })
+		expect(scope.affected).toContain("packages/core")
+	})
+
 	it.each(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml"])(
 		"selects the rust job and every suite for %s, a root cargo workspace file",
 		(file) => {

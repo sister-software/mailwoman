@@ -7,6 +7,7 @@ members = ["packages/*/crates/*"]
 # `trainer-cli` link libtorch through `torch-sys`: build them with `-p <crate>` or `--workspace` after
 # `node packages/mailwoman/tools/training/libtorch.run.ts` installs it where `.cargo/config.toml` points `LIBTORCH`.
 default-members = [
+	"packages/core/crates/*",
 	"packages/mtf/crates/*",
 	"packages/registry/crates/*",
 	"packages/trainer/crates/trainer-export",
