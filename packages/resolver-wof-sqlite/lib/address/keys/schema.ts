@@ -11,6 +11,7 @@
  *   pages, the property a reader of the file by HTTP range depends on.
  */
 
+import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { type Kysely, sql } from "kysely"
 
 /**
@@ -80,9 +81,10 @@ export interface AddressStreetTable {
 }
 
 /**
- * The `lookup.db` schema, for `new DatabaseClient<AddressLookupDatabase>(...)`.
+ * The `lookup.db` schema, for `new DatabaseClient<AddressLookupDatabase>(...)`,
+ * with the layer interface's `layer_manifest` and `layer_coverage` tables.
  */
-export interface AddressLookupDatabase {
+export interface AddressLookupDatabase extends layerschemadatabase {
 	source: AddressSourceTable
 	key_postcode: AddressKeyTable
 	key_locality: AddressKeyTable

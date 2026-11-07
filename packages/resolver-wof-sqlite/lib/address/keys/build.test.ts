@@ -6,10 +6,13 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { LayerFreshnessPolicy, LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { latLngToCell } from "@sister.software/h3"
 import { describe, expect, it } from "vitest"
 
-import { buildAddressLayer } from "#address/keys/build"
+import { ADDRESS_LAYER_COVERAGE_RESOLUTION, type AddressLayerManifest, buildAddressLayer } from "#address/keys/build"
 import { addressPostcodeKey } from "#address/keys/postcode"
 import type { AddressDetailDatabase, AddressLookupDatabase } from "#address/keys/schema"
 import { AddressNameForm, type AddressRecord } from "#address/record"
@@ -52,6 +55,20 @@ async function* stream(records: AddressRecord[]) {
 	yield* records
 }
 
+const MANIFEST: AddressLayerManifest = {
+	name: "addresses-us-wi",
+	version: "2026-11-07",
+	tier: LayerTier.Shipped,
+	license: "CC0-1.0",
+	attribution: null,
+	source: "fixture",
+	sourceVintage: "2026-11-07",
+	buildCmd: "vitest",
+	buildSHA: "0000000",
+	freshnessPolicy: LayerFreshnessPolicy.Sealed,
+	createdAt: "2026-11-07T00:00:00Z",
+}
+
 describe("addressPostcodeKey", () => {
 	it("reduces a US ZIP+4 to its ZIP Code and compacts every other country's postcode", () => {
 		expect(addressPostcodeKey("US", "53221-3633")).toBe("53221")
@@ -78,6 +95,7 @@ describe("buildAddressLayer", () => {
 				["usgov-nad", { license: "public-domain", authority: "US DOT" }],
 				["openaddresses:us/wi/statewide", { license: null, authority: null }],
 			]),
+			manifest: MANIFEST,
 			lookupPath: dir.path("lookup.db"),
 			detailPath: dir.path("detail.db"),
 		})
@@ -130,6 +148,17 @@ describe("buildAddressLayer", () => {
 		const pageSize = lookup.prepare("PRAGMA page_size").get() as { page_size: number }
 
 		expect(pageSize.page_size).toBe(8192)
+
+		const manifest = await readLayerManifest(lookup)
+
+		expect(manifest).toMatchObject({
+			name: "addresses-us-wi",
+			sourceRecords: { "usgov-nad": 2, "openaddresses:us/wi/statewide": 1 },
+		})
+
+		const cell = shortCellToInt(latLngToCell(43.07, -87.88, ADDRESS_LAYER_COVERAGE_RESOLUTION))
+
+		expect(await readLayerCoverage(lookup, cell)).toMatchObject({ observedRows: 3, basis: "source_present" })
 	})
 
 	it("refuses a record whose source the build lists no terms for", async () => {
@@ -139,6 +168,7 @@ describe("buildAddressLayer", () => {
 			buildAddressLayer({
 				records: stream([record({ number: "1", streetRaw: "Elm St", source: "unlisted" })]),
 				sources: new Map(),
+				manifest: MANIFEST,
 				lookupPath: dir.path("lookup.db"),
 				detailPath: dir.path("detail.db"),
 			})

@@ -11,8 +11,13 @@
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { sourcePresentCoverageCells } from "@mailwoman/core/layers"
+import { type LayerManifest, writeLayerCoverage, writeLayerManifest } from "@mailwoman/core/layers/manifest"
+import { createLayerCoverageTable, createLayerManifestTable } from "@mailwoman/core/layers/schema"
+import { shortCellToInt } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
+import { latLngToCell } from "@sister.software/h3"
 import { type Kysely, sql } from "kysely"
 import type { PathBuilderLike } from "path-ts"
 
@@ -37,6 +42,18 @@ import type { AddressRecord } from "#address/record"
  * At 8 KiB a key hit read 4 pages in 3 range chunks on the Wisconsin prototype.
  */
 export const ADDRESS_LAYER_PAGE_SIZE = 8192
+
+/**
+ * The H3 resolution `layer_coverage` counts points at, about 36 km² per cell.
+ */
+export const ADDRESS_LAYER_COVERAGE_RESOLUTION = 6
+
+/**
+ * The provenance a caller states for the layer it builds.
+ *
+ * The build supplies the schema version, the spine keys and the per-source record counts.
+ */
+export type AddressLayerManifest = Omit<LayerManifest, "schemaVersion" | "spineKeys" | "sourceRecords">
 
 /**
  * The level each staged key row answers.
@@ -86,6 +103,10 @@ export interface BuildAddressLayerOptions {
 	 * A record whose source has no entry stops the build.
 	 */
 	sources: ReadonlyMap<string, AddressSourceTerms>
+	/**
+	 * The `layer_manifest` row `lookup.db` holds.
+	 */
+	manifest: AddressLayerManifest
 	lookupPath: PathBuilderLike
 	detailPath: PathBuilderLike
 	/**
@@ -112,6 +133,10 @@ export interface AddressLayerBuildSummary {
 	 * Locality names per record, the duplication the per-form keys cost.
 	 */
 	localityFormsPerRecord: number
+	/**
+	 * Points per H3 cell at {@link ADDRESS_LAYER_COVERAGE_RESOLUTION}, keyed by the cell's short integer form.
+	 */
+	coverage: ReadonlyMap<number, number>
 }
 
 async function createStagingTables(db: Kysely<StagingDatabase>): Promise<void> {
@@ -151,7 +176,7 @@ export async function buildAddressLayer(options: BuildAddressLayerOptions): Prom
 	try {
 		const summary = await stageRecords(options, stagingPath)
 
-		await writeLookup(options.lookupPath, stagingPath, summary, options.sources)
+		await writeLookup(options.lookupPath, stagingPath, summary, options.sources, options.manifest)
 		await writeDetail(options.detailPath, stagingPath, summary)
 
 		return summary
@@ -174,6 +199,7 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 	const sourceIDs = new Map<string, number>()
 	const keys: Record<StagedLevel, number> = { key_postcode: 0, key_locality: 0, key_subregion: 0, key_region: 0 }
 	const sources: Record<string, number> = {}
+	const coverage = new Map<number, number>()
 	let records = 0
 	let localityNames = 0
 
@@ -221,6 +247,10 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 
 		put(StagedLevel.Region, "")
 
+		const cell = shortCellToInt(latLngToCell(record.lat, record.lon, ADDRESS_LAYER_COVERAGE_RESOLUTION))
+
+		coverage.set(cell, (coverage.get(cell) ?? 0) + 1)
+
 		detail.run(
 			addressID,
 			sourceID,
@@ -260,6 +290,7 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 		keys,
 		sources,
 		localityFormsPerRecord: records ? localityNames / records : 0,
+		coverage,
 	}
 }
 
@@ -267,12 +298,15 @@ async function writeLookup(
 	lookupPath: PathBuilderLike,
 	stagingPath: string,
 	summary: AddressLayerBuildSummary,
-	terms: ReadonlyMap<string, AddressSourceTerms>
+	terms: ReadonlyMap<string, AddressSourceTerms>,
+	manifest: AddressLayerManifest
 ): Promise<void> {
 	await buildSealedArtifact<AddressLookupDatabase, true, void>({
 		out: lookupPath,
 		createTables: async (db) => {
 			db.exec(`PRAGMA page_size = ${ADDRESS_LAYER_PAGE_SIZE}`)
+			await createLayerManifestTable(db)
+			await createLayerCoverageTable(db)
 			await createAddressSourceTable(db)
 
 			for (const table of ADDRESS_SCOPED_KEY_TABLES) {
@@ -341,6 +375,15 @@ async function writeLookup(
 					throw new Error(`${table} holds ${count} rows, more than the ${summary.keys[table]} staged for it`)
 				}
 			}
+
+			await writeLayerCoverage(db, sourcePresentCoverageCells(summary.coverage))
+
+			await writeLayerManifest(db, {
+				...manifest,
+				schemaVersion: 1,
+				spineKeys: { h3: { column: "layer_coverage.h3_cell", resolution: ADDRESS_LAYER_COVERAGE_RESOLUTION } },
+				sourceRecords: summary.sources,
+			})
 		},
 	})
 }
