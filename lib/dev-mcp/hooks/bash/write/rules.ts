@@ -28,6 +28,8 @@ const ADMITTED = new Set([
 	"cat",
 	"column",
 	"comm",
+	// Reports mounted filesystems and writes only to stdout.
+	"findmnt",
 	// `compsize` reports a btrfs tree's on-disk size after compression, and writes only to stdout.
 	// `du` reports the size before compression.
 	"compsize",
