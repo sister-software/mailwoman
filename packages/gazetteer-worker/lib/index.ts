@@ -152,7 +152,7 @@ function isLandmarkSource(source: string | null): source is LandmarkSource {
  * The key of the street table in the public bucket.
  * The key states the source and date its rows came from.
  */
-export const STREET_TABLE_KEY = "mailwoman/streets/gb-os-open-roads-2026-11-07/streets.db"
+export const STREET_TABLE_KEY = "mailwoman/streets/gb-os-open-roads-2026-11-07b/streets.db"
 
 /**
  * The credit the street table's source requires beside its answers.

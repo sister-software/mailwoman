@@ -5,7 +5,9 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { stringifyJSON } from "@mailwoman/core/json"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
+import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import type { StreetTableDatabase } from "@mailwoman/resolver-wof-sqlite/street/table"
 import { RangeStreetTable } from "@mailwoman/resolver-wof-wasm/httpvfs/street/table"
 import { readStreetFromTable } from "@mailwoman/resolver-wof-wasm/remote/street"
@@ -128,6 +130,91 @@ describe("buildStreetTable", () => {
 		expect(hits).toHaveLength(1)
 		expect(reversed).toEqual(hits)
 		expect(await lookup.findCrossings({ first: "High Street", second: "Church Lane", places: [2] })).toEqual([])
+	})
+})
+
+describe("buildStreetTable with a boundary file", () => {
+	it("ties a street to the places whose boundaries hold it, and a street in a gap to the smallest box", async () => {
+		await using directory = await temporaryDirectory("streets-")
+		const candidatePath = directory.path("candidate.db")
+
+		{
+			using db = new DatabaseClient<CandidateDatabase>(candidatePath)
+
+			db.exec(
+				`CREATE TABLE placetype_codes (id INTEGER, placetype TEXT);
+				 CREATE TABLE country_codes (id INTEGER, code TEXT);
+				 CREATE TABLE candidate (spr_id INTEGER, placetype_id INTEGER, country_id INTEGER, is_primary INTEGER,
+				   min_lat REAL, max_lat REAL, min_lon REAL, max_lon REAL);
+				 INSERT INTO placetype_codes VALUES (1, 'locality');
+				 INSERT INTO country_codes VALUES (1, 'GB');
+				 INSERT INTO candidate VALUES (1, 1, 1, 1, 51, 52, -3, -2), (2, 1, 1, 1, 51.7, 51.9, -3, -2),
+				   (3, 1, 1, 1, 51, 51.4, -3, -2);`
+			)
+		}
+
+		const boundariesPath = directory.path("boundaries.db")
+
+		// Place 1's box covers both streets, and its boundary holds only the southern half of the box.
+		// Place 2's boundary misses North Road inside a small box, and place 3 has no boundary.
+		const elsewhere = {
+			type: "Polygon",
+			coordinates: [
+				[
+					[-3, 51.7],
+					[-2.9, 51.7],
+					[-2.9, 51.75],
+					[-3, 51.75],
+					[-3, 51.7],
+				],
+			],
+		}
+
+		const southernHalf = {
+			type: "Polygon",
+			coordinates: [
+				[
+					[-3, 51],
+					[-2, 51],
+					[-2, 51.5],
+					[-3, 51.5],
+					[-3, 51],
+				],
+			],
+		}
+
+		{
+			using db = new DatabaseClient<PolygonDatabase>(boundariesPath)
+
+			db.exec("CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT NOT NULL)")
+			db.prepare("INSERT INTO polygons VALUES (1, ?)").run(stringifyJSON(southernHalf))
+			db.prepare("INSERT INTO polygons VALUES (2, ?)").run(stringifyJSON(elsewhere))
+		}
+
+		const out = directory.path("streets.db")
+
+		const counts = await buildStreetTable({
+			edges: stream([edge("South Road", "a", "b", 51.2, -2.5), edge("North Road", "c", "d", 51.8, -2.5)]),
+			countries: ["GB"],
+			out,
+			candidatePath,
+			boundariesPath,
+		})
+
+		expect(counts).toMatchObject({ places: 3, placesWithBoundary: 2, streetsWithoutPlace: 0 })
+
+		using db = new DatabaseClient<StreetTableDatabase>(out, { readOnly: true })
+
+		const rows = db.prepare("SELECT name_key, place_id FROM street_place ORDER BY name_key, place_id").all() as Array<{
+			name_key: string
+			place_id: number
+		}>
+
+		expect(rows.map(({ name_key, place_id }) => `${name_key}:${place_id}`)).toEqual([
+			"north road:2",
+			"south road:1",
+			"south road:3",
+		])
 	})
 })
 

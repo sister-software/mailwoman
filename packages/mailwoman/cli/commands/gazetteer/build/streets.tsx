@@ -24,6 +24,7 @@ export const spec = {
 			type: "string",
 			description: "Directory of Open Roads GML. Default <data-root>/corpus/sources/gb-os-open/open-roads/data",
 		},
+		boundaries: { type: "string", description: "Boundary file. Default <data-root>/db/wof/wof-polygons.db" },
 	},
 } as const satisfies CommandSpec
 
@@ -37,6 +38,7 @@ const GazetteerBuildStreets: CommandComponent<typeof spec> = ({ options }) => {
 		const counts = await buildStreetTable({
 			edges: readOpenRoadsEdges(options.input ?? dataRootPath("corpus/sources/gb-os-open/open-roads/data")),
 			countries: ["GB"],
+			boundariesPath: options.boundaries ?? wofDatabasePath("wof-polygons.db"),
 			out,
 			onProgress: (progress) => console.error(`streets: ${stringifyJSON(progress)}`),
 		})

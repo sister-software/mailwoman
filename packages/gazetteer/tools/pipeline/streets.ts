@@ -8,12 +8,14 @@
  *   so one method serves every country. The build holds the network in memory, and one country's source fits.
  */
 
-import { stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { STREET_TABLE_DDL, type StreetTableDatabase } from "@mailwoman/resolver-wof-sqlite/street/table"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
+import { geometryContains, type ParsedGeometry } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
 import type { PathBuilderLike } from "path-ts"
@@ -49,6 +51,13 @@ export interface BuildStreetTableOptions {
 	 */
 	candidatePath?: PathBuilderLike
 	/**
+	 * The boundary file.
+	 *
+	 * A place with a boundary holds what lies inside it, and any other place holds what
+	 * lies inside its bounding box, because a box can reach far past the place itself.
+	 */
+	boundariesPath?: PathBuilderLike
+	/**
 	 * Called once a minute, and at the end of each stage.
 	 */
 	onProgress?: (counts: StreetTableCounts) => void
@@ -57,6 +66,7 @@ export interface BuildStreetTableOptions {
 export interface StreetTableCounts {
 	stage: "places" | "read" | "merge" | "streets" | "crossings" | "done"
 	places: number
+	placesWithBoundary: number
 	edges: number
 	skippedEdges: number
 	streets: number
@@ -73,6 +83,7 @@ interface Place {
 	maxLat: number
 	minLon: number
 	maxLon: number
+	boundary: ParsedGeometry | null
 }
 
 interface Link {
@@ -100,12 +111,21 @@ const round = (value: number) => Math.round(value * POINT_DECIMALS) / POINT_DECI
 
 const gridCell = (value: number) => Math.floor(value * PLACE_GRID_CELLS_PER_DEGREE)
 
+const boxArea = ({ minLat, maxLat, minLon, maxLon }: Place) => (maxLat - minLat) * (maxLon - minLon)
+
 /**
  * Indexes the gazetteer's sub-country places in a coarse grid so a point reads
  * the places whose extents hold it.
  */
-function readPlaceGrid(candidatePath: PathBuilderLike, countries: readonly string[], counts: StreetTableCounts) {
+function readPlaceGrid(
+	candidatePath: PathBuilderLike,
+	boundariesPath: PathBuilderLike | undefined,
+	countries: readonly string[],
+	counts: StreetTableCounts
+) {
 	using db = new DatabaseClient<CandidateDatabase>(candidatePath, { readOnly: true })
+	using boundaries = boundariesPath ? new DatabaseClient<PolygonDatabase>(boundariesPath, { readOnly: true }) : null
+	const readBoundary = boundaries?.prepare("SELECT geom FROM polygons WHERE id = ?")
 	const grid = new Map<string, Place[]>()
 	const seen = new Set<number>()
 
@@ -119,7 +139,7 @@ function readPlaceGrid(candidatePath: PathBuilderLike, countries: readonly strin
 			 AND t.placetype IN ('locality', 'localadmin', 'borough', 'macrohood', 'neighbourhood', 'microhood')
 			 AND c.max_lat > c.min_lat`
 		)
-		.iterate(...countries) as Iterable<Place>
+		.iterate(...countries) as Iterable<Omit<Place, "boundary">>
 
 	for (const row of rows) {
 		const id = Number(row.id)
@@ -129,7 +149,12 @@ function readPlaceGrid(candidatePath: PathBuilderLike, countries: readonly strin
 
 		counts.places++
 
-		const place = { ...row, id }
+		const stored = readBoundary?.get(id) as { geom: string } | undefined
+		const place: Place = { ...row, id, boundary: stored ? parseJSONStrict<ParsedGeometry>(stored.geom) : null }
+
+		if (stored) {
+			counts.placesWithBoundary++
+		}
 
 		for (let lat = gridCell(row.minLat); lat <= gridCell(row.maxLat); lat++) {
 			for (let lon = gridCell(row.minLon); lon <= gridCell(row.maxLon); lon++) {
@@ -145,10 +170,18 @@ function readPlaceGrid(candidatePath: PathBuilderLike, countries: readonly strin
 		}
 	}
 
-	return (lat: number, lon: number): Place[] =>
-		(grid.get(`${gridCell(lat)}:${gridCell(lon)}`) ?? []).filter(
+	// Boundaries leave gaps between towns, so a point inside no boundary belongs to the smallest box that holds it.
+	return (lat: number, lon: number): Place[] => {
+		const inBox = (grid.get(`${gridCell(lat)}:${gridCell(lon)}`) ?? []).filter(
 			(place) => lat >= place.minLat && lat <= place.maxLat && lon >= place.minLon && lon <= place.maxLon
 		)
+
+		const inside = inBox.filter((place) => geometryContains(place.boundary, lon, lat) ?? true)
+
+		if (inside.length || !inBox.length) return inside
+
+		return inBox.toSorted((a, b) => boxArea(a) - boxArea(b)).slice(0, 1)
+	}
 }
 
 /**
@@ -227,6 +260,7 @@ export async function buildStreetTable(options: BuildStreetTableOptions): Promis
 	const counts: StreetTableCounts = {
 		stage: "places",
 		places: 0,
+		placesWithBoundary: 0,
 		edges: 0,
 		skippedEdges: 0,
 		streets: 0,
@@ -241,7 +275,12 @@ export async function buildStreetTable(options: BuildStreetTableOptions): Promis
 	const timer = setInterval(report, PROGRESS_INTERVAL_MS)
 
 	try {
-		const placesAt = readPlaceGrid(options.candidatePath ?? wofDatabasePath("candidate.db"), options.countries, counts)
+		const placesAt = readPlaceGrid(
+			options.candidatePath ?? wofDatabasePath("candidate.db"),
+			options.boundariesPath,
+			options.countries,
+			counts
+		)
 
 		report()
 
