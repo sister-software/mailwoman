@@ -7,7 +7,9 @@
  */
 
 import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
+import { walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
+import type { ComponentMatch } from "@mailwoman/core/pipeline/client-result"
 import {
 	EMPTY_PLACE_FIELDS,
 	type ResolvedPlace,
@@ -64,6 +66,23 @@ type CascadeHits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
  * Soft proximity hints: ordered, weighted, never a hard filter.
  */
 export type ResolveBias = Array<{ lat: number; lon: number; weight?: number }>
+
+/**
+ * The cascade's landmark layers, and a reader of the resolved tree.
+ */
+export interface CascadeOptions extends Pick<ResolveOpts, "landmarks" | "osmPlaces"> {
+	onResolved?: (roots: readonly AddressNode[]) => void
+}
+
+/**
+ * The placetypes below a town.
+ */
+const NEIGHBORHOOD_BAND = ["neighbourhood", "macrohood", "microhood"]
+
+/**
+ * The tags a place lookup never answers: a caller's street tier reports the street and number.
+ */
+const UNMATCHED_TAGS: ReadonlySet<string> = new Set(["street_prefix", "street_suffix", "house_number", "unit"])
 
 type LookupHit = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>[number]
 
@@ -154,15 +173,24 @@ export class CandidateResolverBackend implements ResolverBackend {
 			}
 		}
 
-		const hits = await this.#lookup.findPlace({
-			text: query.text,
-			placetype: query.placetype,
-			country,
-			bbox: bbox ?? undefined,
-			postcode: query.postcode,
-			limit: query.limit,
-			bias: query.bias,
-		})
+		const lookup = (placetype: typeof query.placetype) =>
+			this.#lookup.findPlace({
+				text: query.text,
+				placetype,
+				country,
+				bbox: bbox ?? undefined,
+				postcode: query.postcode,
+				limit: query.limit,
+				bias: query.bias,
+			})
+
+		let hits = await lookup(query.placetype)
+
+		// A locality inside a stated parent can be a neighborhood of it, as Brislington is of Bristol.
+		// The native lookup injects the same band.
+		if (!hits.length && bbox && query.placetype === "locality") {
+			hits = await lookup(NEIGHBORHOOD_BAND)
+		}
 
 		return hits.map((h) => {
 			this.#meta.set(h.id, { bbox: h.bbox, country: h.country, placetype: h.placetype })
@@ -183,6 +211,29 @@ export class CandidateResolverBackend implements ResolverBackend {
 }
 
 /**
+ * Lists what the resolved tree holds for each parsed place component.
+ */
+export function resolvedSpanResults(roots: readonly AddressNode[]): ComponentMatch[] {
+	return [...walkNodes([...roots])]
+		.filter((node) => !UNMATCHED_TAGS.has(node.tag) && node.value.trim())
+		.toSorted((a, b) => a.start - b.start)
+		.map((node) => {
+			const placeID = typeof node.placeID === "string" ? node.placeID : null
+			const name = node.metadata?.["resolver_name"]
+
+			return {
+				tag: node.tag,
+				value: node.value,
+				matched: placeID !== null,
+				name: typeof name === "string" ? name : null,
+				placetype: placeID && node.sourceID ? node.sourceID.split(":", 1)[0]! : null,
+				placeID,
+				note: null,
+			}
+		})
+}
+
+/**
  * Returns the number a cascade hit is keyed by.
  *
  * A landmark's identifier is text such as `Q160409`.
@@ -199,7 +250,7 @@ export async function runCascade(
 	tree: AddressTree,
 	rawText: string,
 	bias?: ResolveBias,
-	landmarkLayers: Pick<ResolveOpts, "landmarks" | "osmPlaces"> = {}
+	{ onResolved, ...landmarkLayers }: CascadeOptions = {}
 ): Promise<CascadeHits> {
 	const usable = (cs: CascadeHits): CascadeHits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
 
@@ -208,12 +259,16 @@ export async function runCascade(
 
 	// adminCoherence performs the convergence.
 	// No defaultCountry is deliberate, because the demo ranks globally.
-	const resolved = (await resolver.resolveTree(tree, {
+	const resolvedTree = await resolver.resolveTree(tree, {
 		adminCoherence: true,
 		writtenInput: rawText,
 		...landmarkLayers,
 		...(bias && bias.length ? { bias } : {}),
-	})) as {
+	})
+
+	onResolved?.(resolvedTree.roots)
+
+	const resolved = resolvedTree as {
 		roots: ResolvedTreeNode[]
 	}
 

@@ -13,6 +13,7 @@ import { CopyButton } from "../common/CopyButton.tsx"
 import { KindBadge } from "../common/KindBadge.tsx"
 import { CandidatePicker } from "../pipeline/CandidatePicker.tsx"
 import { ComponentTable } from "../pipeline/ComponentTable.tsx"
+import { MatchTable } from "../pipeline/MatchTable.tsx"
 import { ResolvedPlace } from "../pipeline/ResolvedPlace.tsx"
 
 export interface ResultPanelProps {
@@ -60,6 +61,13 @@ export function ResultPanel({
 			{extras ? extras(result) : null}
 
 			<ComponentTable nodes={result.nodes} />
+
+			{result.matches?.length ? (
+				<>
+					<h2>Matched in the data</h2>
+					<MatchTable matches={result.matches} />
+				</>
+			) : null}
 
 			{selectedCandidate ? (
 				<>

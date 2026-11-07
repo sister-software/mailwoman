@@ -22,11 +22,14 @@ import { streetNumberPairs } from "#street/tier"
  *
  * A bare region stays a region, because only a street and number say the input
  * means somewhere a street can be.
+ *
+ * A locality the gazetteer did not resolve leaves the region as the only place,
+ * and Bristol's region point lies in the Bristol Channel, so the city answers there too.
  */
 export async function applyRegionCity(roots: AddressNode[], backend: ResolverBackend): Promise<void> {
 	const nodes = [...walkNodes(roots)]
 
-	if (nodes.some((node) => node.tag === "locality") || !streetNumberPairs(roots).length) return
+	if (nodes.some((node) => node.tag === "locality" && node.placeID) || !streetNumberPairs(roots).length) return
 
 	const region = nodes.find((node) => node.tag === "region" && node.placeID?.startsWith("wof:"))
 
@@ -68,4 +71,75 @@ export async function applyLocalityAsRegion(
 
 	locality.tag = "region"
 	decorateNode(locality, region, others)
+}
+
+/**
+ * Reads a country as the region of the same name when only that region holds the stated town.
+ *
+ * `Savannah, Georgia` parses `Georgia` as the country, and the country holds no Savannah.
+ * `Tbilisi, Georgia` keeps the country, because the country holds Tbilisi.
+ *
+ * A caller's US scope leaves the country of Georgia unresolved, so that node has no country to test against.
+ */
+export async function applyCountryAsRegion(roots: AddressNode[], backend: ResolverBackend): Promise<void> {
+	const nodes = [...walkNodes(roots)]
+	const country = nodes.find((node) => node.tag === "country" && node.value.trim())
+	const locality = nodes.find((node) => node.tag === "locality" && node.value.trim())
+
+	if (!country || !locality || nodes.some((node) => node.tag === "region")) return
+
+	const stated = country.metadata?.["resolver_country"]
+
+	if (typeof stated === "string") {
+		const [local] = await backend.findPlace({ text: locality.value, placetype: "locality", country: stated })
+
+		if (local?.exactMatch) return
+	}
+
+	for (const region of await backend.findPlace({ text: country.value, placetype: "region" })) {
+		if (!region.exactMatch) continue
+
+		const [city, ...others] = await backend.findPlace({
+			text: locality.value,
+			placetype: "locality",
+			parentID: region.id,
+		})
+
+		if (!city?.exactMatch || city.regionScopeMiss) continue
+
+		country.tag = "region"
+		decorateNode(country, region, [])
+		decorateNode(locality, city, others)
+
+		return
+	}
+}
+
+/**
+ * Reads a venue as a town when the input states only a country beside it
+ * and the country holds a town of that name.
+ *
+ * `Road Town, British Virgin Islands` parses the town as a venue.
+ * This runs ahead of the landmark layer, so an airport alias under `Biggin Hill`
+ * yields to the town that holds the name.
+ */
+export async function applyVenueAsTown(roots: AddressNode[], backend: ResolverBackend): Promise<void> {
+	const nodes = [...walkNodes(roots)]
+	const venue = nodes.find((node) => node.tag === "venue" && !node.placeID && node.value.trim())
+	const country = nodes.find(
+		(node) => node.tag === "country" && typeof node.metadata?.["resolver_country"] === "string"
+	)
+
+	if (!venue || !country || nodes.some((node) => node !== venue && node !== country)) return
+
+	const [town, ...others] = await backend.findPlace({
+		text: venue.value,
+		placetype: "locality",
+		country: country.metadata!["resolver_country"] as string,
+	})
+
+	if (!town?.exactMatch) return
+
+	venue.tag = "locality"
+	decorateNode(venue, town, others)
 }

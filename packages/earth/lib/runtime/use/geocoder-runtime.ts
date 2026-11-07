@@ -28,7 +28,12 @@ import {
 	JurisdictionLayers,
 	JurisdictionTileSetID,
 } from "@mailwoman/cartographer/jurisdictions"
-import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import type {
+	ParseResult,
+	ParsedComponent,
+	ResolvedPlaceView,
+	ComponentMatch,
+} from "@mailwoman/core/pipeline/client-result"
 import { startEarly } from "@mailwoman/core/promises"
 import type { LandmarkLookup } from "@mailwoman/core/resolver"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
@@ -43,7 +48,7 @@ import type {
 } from "@mailwoman/react/map"
 import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
 import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
-import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+import { resolvedSpanResults, runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import {
 	type HTTPVFSAddressPointLookup,
 	type HTTPVFSInterpolator,
@@ -610,9 +615,29 @@ export function useGeocoderRuntime({
 
 			const tBeforeResolve = performance.now()
 
+			let matches: ComponentMatch[] = []
+
 			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias, {
 				landmarks: landmarkLayer(config.landmarkAPIURL, LandmarkSource.Wikidata),
 				osmPlaces: landmarkLayer(config.landmarkAPIURL, LandmarkSource.OpenStreetMap),
+				onResolved: (roots) => {
+					matches = resolvedSpanResults(roots).map((match) =>
+						STREET_COMPONENT_TAGS.has(match.tag)
+							? {
+									...match,
+									value: streetValue,
+									matched: streetResolution !== null,
+									placetype: streetResolution?.tier ?? null,
+									name: streetResolution ? streetValue : null,
+									note: !streetSlug
+										? "no street data for this region"
+										: streetResolution
+											? null
+											: `searched the ${streetSlug} street data`,
+								}
+							: match
+					)
+				},
 			}).catch(async (error: unknown) => {
 				// Offline, the gazetteer answers only from the range chunks the service worker cached while online.
 				// A read past them fails inside SQLite as `SQLITE_IOERR_READ`,
@@ -690,6 +715,7 @@ export function useGeocoderRuntime({
 				input,
 				tree,
 				nodes: asView(nodes),
+				matches,
 				resolved: candidates[0] ?? null,
 				candidates,
 				kindResult,
