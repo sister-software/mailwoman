@@ -3,18 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reads the US DOT National Address Database from a directory of NDJSON files written by the NAD fetcher.
+ *   Reads the US DOT National Address Database from the Parquet file `mailwoman corpus fetch nad` writes.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { US_STATE_ABBREVIATIONS } from "@mailwoman/codex/us/state"
-import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
-import { resolvePathBuilder } from "path-ts"
-import { TextSpliterator } from "spliterator"
-import { Globerator } from "spliterator/node/fs"
+import type { PathBuilderLike } from "path-ts"
 
 import { rawTextDiscriminator } from "#adapters/record-id"
+import { openParquetRowStream } from "#parquet/streams"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
@@ -33,10 +31,12 @@ export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"
 const NAD_PLACEHOLDER_UUID = /^0{8}-0{4}-0{4}-0{4}-0{12}$/u
 
 /**
- * One NAD address point as the FeatureServer pages publish it, limited to the fields a reader here uses.
+ * One NAD address point as the release publishes it, limited to the fields a reader here uses.
+ *
+ * The release's text file is read with every column as text.
  */
 export interface NADRecord {
-	OBJECTID?: number
+	OID_?: string | null
 	UUID?: string | null
 	AddNum_Pre?: string | null
 	Add_Number?: number | string | null
@@ -73,6 +73,86 @@ export interface NADRecord {
 	State?: string | null
 	Zip_Code?: string | null
 	Plus_4?: string | null
+}
+
+/**
+ * The release columns {@link readNADRecords} projects, one per {@link NADRecord} field.
+ */
+export const NAD_RECORD_COLUMNS = [
+	"OID_",
+	"UUID",
+	"AddNum_Pre",
+	"Add_Number",
+	"AddNum_Suf",
+	"AddNo_Full",
+	"St_PreMod",
+	"St_PreDir",
+	"St_PreTyp",
+	"St_PreSep",
+	"St_Name",
+	"St_PosTyp",
+	"St_PosDir",
+	"St_PosMod",
+	"StNam_Full",
+	"Building",
+	"Floor",
+	"Unit",
+	"Room",
+	"Seat",
+	"Addtl_Loc",
+	"SubAddress",
+	"LandmkName",
+	"County",
+	"Inc_Muni",
+	"Post_City",
+	"Census_Plc",
+	"Uninc_Comm",
+	"Nbrhd_Comm",
+	"NatAmArea",
+	"NatAmSub",
+	"Urbnztn_PR",
+	"PlaceOther",
+	"PlaceNmTyp",
+	"State",
+	"Zip_Code",
+	"Plus_4",
+] as const satisfies ReadonlyArray<keyof NADRecord>
+
+/**
+ * A NAD UUID in the lower-case, unbraced form the FeatureServer published.
+ *
+ * The release text writes `{0002173C-ADA8-4421-ACF2-F9B6F12B52F0}`, and the
+ * FeatureServer wrote `0002173c-ada8-4421-acf2-f9b6f12b52f0`.
+ * Row ids are built from this form, so a record read from either keeps one
+ * `source_id` and lands in one split.
+ */
+export function normalizeNADUUID(value: string | null | undefined): string | null {
+	const unbraced = (value ?? "")
+		.trim()
+		.replace(/^\{(.*)\}$/u, "$1")
+		.toLowerCase()
+
+	return unbraced || null
+}
+
+/**
+ * Streams the NAD records of one release Parquet file in file order, with each UUID normalized.
+ *
+ * @param where A DuckDB condition rows must satisfy, built with `escapeSQLString` for every literal.
+ * @throws When the file lacks a column of {@link NAD_RECORD_COLUMNS}.
+ */
+export async function* readNADRecords(
+	parquetPath: PathBuilderLike,
+	options: { where?: string } = {}
+): AsyncGenerator<NADRecord> {
+	const rows = openParquetRowStream<NADRecord>(parquetPath, {
+		columns: NAD_RECORD_COLUMNS,
+		...(options.where ? { where: options.where } : {}),
+	})
+
+	for await (const row of rows) {
+		yield { ...row, UUID: normalizeNADUUID(row.UUID) }
+	}
 }
 
 /**
@@ -210,88 +290,71 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				throw new Error(`usgov-nad adapter: only US supported, got country=${opts.country}`)
 			}
 
-			// The input must be a directory of NDJSON files.
-			const files = await Globerator.files("ndjson", {
-				cwd: opts.inputPath,
-				absolute: false,
-				recursive: false,
-			}).toSorted()
-
 			let emitted = 0
-			outer: for (const file of files) {
+
+			// The row stream closes its DuckDB connection when the loop exits early.
+			for await (const record of readNADRecords(opts.inputPath)) {
 				if (opts.signal?.aborted) break
-				// The spliterator closes the file when the loop exits early.
-				const lines = TextSpliterator.fromAsync(resolvePathBuilder(opts.inputPath, file))
 
-				for await (const line of lines) {
-					if (opts.signal?.aborted) break outer
+				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
-					if (typeof opts.limit === "number" && emitted >= opts.limit) break outer
+				const state = (record.State ?? "").trim().toUpperCase()
 
-					if (!line) continue
+				if (!US_STATES_SET.has(state)) continue
 
-					const record = tryParsingJSON<NADRecord>(line)
+				const locality = composeNADLocality(record)
 
-					if (!record) continue
+				if (!locality) continue
 
-					const state = (record.State ?? "").toString().trim().toUpperCase()
+				const postcode = composePostcode(record)
 
-					if (!US_STATES_SET.has(state)) continue
+				if (!postcode) continue
 
-					const locality = composeNADLocality(record)
+				const decomposed = decomposeNADStreet(record)
+				const houseNumber = nadHouseNumber(record)
+				const venue = nonEmpty(record.LandmkName)
+				const unit = nonEmpty(record.Unit, record.Building, record.Floor, record.Room)
 
-					if (!locality) continue
-
-					const postcode = composePostcode(record)
-
-					if (!postcode) continue
-
-					const decomposed = decomposeNADStreet(record)
-					const houseNumber = nadHouseNumber(record)
-					const venue = nonEmpty(record.LandmkName)
-					const unit = nonEmpty(record.Unit, record.Building, record.Floor, record.Room)
-
-					const components: CanonicalRow["components"] = {
-						...(venue ? { venue } : {}),
-						...(houseNumber ? { house_number: houseNumber } : {}),
-						...(decomposed?.prefix ? { street_prefix: decomposed.prefix } : {}),
-						...(decomposed?.street ? { street: decomposed.street } : {}),
-						...(decomposed?.suffix ? { street_suffix: decomposed.suffix } : {}),
-						...(unit ? { unit } : {}),
-						locality,
-						region: state,
-						postcode,
-					}
-
-					const rendered = formatAddressRow(components, "US", { singleLine: true })
-
-					if (!rendered) continue
-
-					const { raw, components: aligned } = rendered
-
-					if (Object.keys(aligned).length <= 2) continue
-
-					// NAD repeats a UUID across distinct addresses
-					// (6804 Breed Street and 704 West Breed Street, CHILTON, WI share 79461b5e-…),
-					// and 82 addresses share the all-zero placeholder UUID (#2894).
-					// The id therefore adds a digest of the rendered address to the UUID.
-					// Two points of one address stay one record, and two addresses under one UUID become two.
-					const key = record.UUID && !NAD_PLACEHOLDER_UUID.test(record.UUID) ? record.UUID : record.OBJECTID
-
-					const sourceID = `${USGOV_NAD_ADAPTER_ID}-${key ?? `${file}:${emitted}`}-${rawTextDiscriminator(raw)}`
-
-					yield {
-						raw,
-						components: aligned,
-						country: "US",
-						locale: "en-US",
-						source: USGOV_NAD_ADAPTER_ID,
-						source_id: sourceID,
-						license: USGOV_NAD_DEFAULT_LICENSE,
-					}
-
-					emitted++
+				const components: CanonicalRow["components"] = {
+					...(venue ? { venue } : {}),
+					...(houseNumber ? { house_number: houseNumber } : {}),
+					...(decomposed?.prefix ? { street_prefix: decomposed.prefix } : {}),
+					...(decomposed?.street ? { street: decomposed.street } : {}),
+					...(decomposed?.suffix ? { street_suffix: decomposed.suffix } : {}),
+					...(unit ? { unit } : {}),
+					locality,
+					region: state,
+					postcode,
 				}
+
+				const rendered = formatAddressRow(components, "US", { singleLine: true })
+
+				if (!rendered) continue
+
+				const { raw, components: aligned } = rendered
+
+				if (Object.keys(aligned).length <= 2) continue
+
+				// NAD repeats a UUID across distinct addresses
+				// (6804 Breed Street and 704 West Breed Street, CHILTON, WI share 79461b5e-…),
+				// and 82 addresses share the all-zero placeholder UUID (#2894).
+				// The id therefore adds a digest of the rendered address to the UUID.
+				// Two points of one address stay one record, and two addresses under one UUID become two.
+				const key = record.UUID && !NAD_PLACEHOLDER_UUID.test(record.UUID) ? record.UUID : record.OID_
+
+				const sourceID = `${USGOV_NAD_ADAPTER_ID}-${key ?? `row${emitted}`}-${rawTextDiscriminator(raw)}`
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: USGOV_NAD_ADAPTER_ID,
+					source_id: sourceID,
+					license: USGOV_NAD_DEFAULT_LICENSE,
+				}
+
+				emitted++
 			}
 		},
 	}

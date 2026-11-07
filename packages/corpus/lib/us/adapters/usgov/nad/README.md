@@ -22,20 +22,21 @@ single training-data upgrade available.
 
 ## Input
 
-The adapter consumes NDJSON files produced by `fetch-nad.ts`'s featureserver
-mode. Each file is `oids_<start>-<end>.ndjson` with a sibling `.manifest.json`.
-
-Point `--input` at the directory of those files:
+The adapter reads the release Parquet file that `mailwoman corpus fetch nad`
+writes: `usgov-nad/bulk/<member>.parquet` under the sources root, such as
+`TXT_NAD_r24.parquet` for release 24. The fetcher reads every column of the
+release text as text and sorts rows by `State`, `County` and `UUID`.
 
 ```sh
+mailwoman corpus fetch nad
 npx mailwoman corpus run usgov-nad \
-  --input /data/corpus/sources/usgov-nad/featureserver/ \
-  --output /data/corpus/aligned/
+  --input $MAILWOMAN_DATA_ROOT/corpus/sources/usgov-nad/bulk/TXT_NAD_r24.parquet \
+  --output $MAILWOMAN_DATA_ROOT/corpus/aligned/
 ```
 
-The adapter iterates every `.ndjson` in the directory, skipping the
-`quarantined-bash-bug/` subdir (legacy of the bash-fetcher's silent-page-
-failure bug — see `fetch-nad.ts` PR notes).
+The release writes each UUID in braces and upper case. The adapter reads it in
+the lower-case unbraced form the earlier FeatureServer pages used, so an address
+keeps one `source_id` across both reads.
 
 ## NAD v9 schema fields consumed
 
@@ -61,8 +62,8 @@ One `CanonicalRow` per NAD record where the address quad is populated:
 - `country`: `"US"`
 - `locale`: `"en-US"`
 - `license`: `"Public Domain"`
-- `source_id`: `"usgov-nad-<UUID>"` (NAD's stable UUID) or
-  `"usgov-nad-<OBJECTID>"` when UUID is absent
+- `source_id`: `"usgov-nad-<UUID>-<digest>"` (NAD's UUID) or
+  `"usgov-nad-<OID_>-<digest>"` when the UUID is absent or the all-zero placeholder
 
 ## Row filters
 

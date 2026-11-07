@@ -10,7 +10,7 @@
  *
  *   Usage:
  *   node --max-old-space-size=8192 packages/mailwoman/tools/dev-tools/corpus/nad-skeletons.run.ts \
- *     [--input <featureserver dir>] [--states IL,MA] [--cap 100000] [--seed 20261017]
+ *     [--input <release parquet>] [--states IL,MA] [--cap 100000] [--seed 20261017]
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -20,11 +20,15 @@ import {
 	NAD_SKELETON_STATES,
 	NAD_ZIP_CITY_COUNTIES,
 } from "@mailwoman/corpus/us/recipes/skeleton-sources"
+import { nadReleaseParquetPath } from "@mailwoman/corpus/us/tools/fetch/nad"
 import { buildNADSkeletons, writeNADSkeletonSummary } from "@mailwoman/corpus/us/tools/nad-skeletons"
 
 const { values } = parseArguments({
 	options: {
-		input: { type: "string", description: "NAD FeatureServer NDJSON directory" },
+		input: {
+			type: "string",
+			description: "NAD release Parquet file (default: the one `mailwoman corpus fetch nad` wrote)",
+		},
 		states: { type: "string", description: "Comma-separated states to sample (default: NAD_SKELETON_STATES)" },
 		cap: { type: "string", description: "Most rows per state sample (default 100000)" },
 		seed: { type: "string", description: "Reservoir seed (default 20261017)" },
@@ -41,16 +45,12 @@ if (!Number.isInteger(seed)) throw new Error(`--seed must be an integer, read ${
 const states = values.states ? values.states.split(",").map((s) => s.trim().toUpperCase()) : [...NAD_SKELETON_STATES]
 
 const summary = await buildNADSkeletons({
-	inputDirectory: values.input ?? dataRootPath("corpus", "sources", "usgov-nad", "featureserver"),
+	parquetPath: values.input ?? (await nadReleaseParquetPath(dataRootPath("corpus", "sources"))),
 	states,
 	cap,
 	seed,
 	zipCityCounties: NAD_ZIP_CITY_COUNTIES,
-	onPage: (read, total) => {
-		if (read % 50 === 0 || read === total) {
-			console.error(`  ${read}/${total} pages`)
-		}
-	},
+	onProgress: (read) => console.error(`  ${read.toLocaleString()} records`),
 })
 
 await writeNADSkeletonSummary(summary, dataRootPath(NAD_SKELETON_DIRECTORY, "SUMMARY.json"))

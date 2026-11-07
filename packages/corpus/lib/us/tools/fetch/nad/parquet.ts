@@ -46,6 +46,26 @@ const SORT_COLUMNS = ["State", "County", "UUID"] as const
 const ROW_GROUP_ROWS = 1_000_000
 
 /**
+ * The record of a Parquet file converted from `member` of the archive hashed `sourceSHA256`.
+ *
+ * Returns `null` when the Parquet file or its record is absent, or when the
+ * record states another archive or member.
+ */
+export async function readCurrentNADParquetRecord(
+	parquetPath: PathBuilderLike,
+	sourceSHA256: string,
+	member: string
+): Promise<NADParquetRecord | null> {
+	const recordPath = recordPathFor(parquetPath)
+
+	if (!(await pathExists(parquetPath)) || !(await pathExists(recordPath))) return null
+
+	const recorded = await readLocalJSONFile<NADParquetRecord>(recordPath)
+
+	return recorded.sourceSHA256 === sourceSHA256 && recorded.member === member ? recorded : null
+}
+
+/**
  * Converts one extracted NAD text file to sorted Parquet, or keeps the existing file
  * when its record holds the same archive hash.
  *
@@ -64,15 +84,12 @@ export async function convertNADToParquet(options: {
 }): Promise<{ record: NADParquetRecord; converted: boolean }> {
 	const { textPath, parquetPath, sourceSHA256, member, report } = options
 	const recordPath = recordPathFor(parquetPath)
+	const current = await readCurrentNADParquetRecord(parquetPath, sourceSHA256, member)
 
-	if ((await pathExists(parquetPath)) && (await pathExists(recordPath))) {
-		const recorded = await readLocalJSONFile<NADParquetRecord>(recordPath)
+	if (current) {
+		report?.(`  parquet current: ${current.rows.toLocaleString()} rows from ${member}`)
 
-		if (recorded.sourceSHA256 === sourceSHA256 && recorded.member === member) {
-			report?.(`  parquet current: ${recorded.rows.toLocaleString()} rows from ${member}`)
-
-			return { record: recorded, converted: false }
-		}
+		return { record: current, converted: false }
 	}
 
 	using db = await openDuckDB()
