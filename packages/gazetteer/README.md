@@ -112,7 +112,7 @@ in `mailwoman` and expose them through `mailwoman gazetteer`.
 
 | Command                               | Purpose                                                                                                  |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `mailwoman gazetteer repos-sync`      | Synchronize WOF source repositories.                                                                     |
+| `mailwoman gazetteer inspect sync`    | Clone or refresh the WOF repositories from the `mailwoman` forks, one directory each under the root.     |
 | `mailwoman gazetteer build admin`     | Ingest WOF, Overture and GeoNames administrative data, enrich it, build indexes and verify the database. |
 | `mailwoman gazetteer build candidate` | Build the candidate database from administrative and supplementary layers.                               |
 | `mailwoman gazetteer build fts`       | Build SQLite search indexes.                                                                             |

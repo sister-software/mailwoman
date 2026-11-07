@@ -45,10 +45,10 @@ export function databaseRootPath<T extends PathBuilderLike>(source: T) {
 }
 
 /**
- * Path builder for the Who's On First git checkouts: `$MAILWOMAN_DATA_ROOT/src/wof-repos/`,
+ * Path builder for the Who's On First git checkouts: `$MAILWOMAN_DATA_ROOT/src/wof-repos/<name>`.
  * They are cloned sources rather than built artifacts.
  *
- * `mailwoman gazetteer repos-sync` writes here.
+ * `mailwoman gazetteer inspect sync` clones each repository here from its `mailwoman` fork.
  * Admin builds read here.
  * Postcode builds and polygon builds also read from here.
  */

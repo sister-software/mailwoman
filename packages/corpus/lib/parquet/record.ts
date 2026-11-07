@@ -306,8 +306,8 @@ async function computeFingerprint(path: PathBuilderLike): Promise<string> {
  * The git checkouts in `path` and its immediate subdirectories, as sorted paths
  * relative to `path`, with `.` for `path` itself.
  *
- * The WOF input holds its checkouts one or two levels down: `whosonfirst-data-admin-us`
- * and `whosonfirst-data/whosonfirst-data-admin-gb`.
+ * The WOF input holds its checkouts one level down, such as `whosonfirst-data-admin-us`.
+ * The second level is read too, so a checkout left inside another directory is still recorded.
  */
 async function gitCheckouts(path: PathBuilderLike): Promise<string[]> {
 	const markers = await Globerator.from(["*/.git", "*/*/.git", ".git"], {

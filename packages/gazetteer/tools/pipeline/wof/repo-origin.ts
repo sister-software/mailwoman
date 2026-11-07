@@ -1,34 +1,44 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Where a Who's On First clone fetches from, and the GitHub operations that keep that source current.
+ *
+ *   Every clone's `origin` is the `mailwoman` fork of its repository, and its `upstream` remote is the original.
+ *   Corrections are committed to the fork and proposed upstream from there. A GitHub fork does not follow its parent,
+ *   so the sync merges upstream into each fork on GitHub before a clone fetches from it.
+ */
+
 import { errorMessage } from "@mailwoman/core/errors/schema"
-import { runFile } from "@mailwoman/core/process"
+import { isProcessError, runFile } from "@mailwoman/core/process"
+import { sleep } from "@mailwoman/core/utils/sleep"
+
+import { WOF_DATA_OWNER } from "#whosonfirst/extract-repo"
+import { PLACETYPES_REPO } from "#whosonfirst/placetypes/Placetype"
 
 /**
- * The GitHub org that owns our forks.
+ * The GitHub organization that owns our forks.
  */
 export const FORK_ORG = "mailwoman"
 
 /**
- * The upstream org every `whosonfirst-data-*` repo lives in.
- */
-export const UPSTREAM_ORG = "whosonfirst-data"
-
-/**
- * Describes the remote a WOF repo should be cloned from.
- * The `reason` field is meant for build logs.
+ * The two remotes a clone of one repository has.
  */
 export interface RepoOrigin {
 	repo: string
-	org: string
-	url: string
-	source: "fork" | "upstream"
-	reason: string
 	/**
-	 * Our fork's URL whenever the fork exists, clean or diverged, and `null`
-	 * when it does not or could not be probed.
-	 *
-	 * A clone of upstream still needs this remote: a correction made in the clone
-	 * is pushed to the fork before its upstream PR.
+	 * The `origin` remote: our fork.
 	 */
-	forkURL: string | null
+	forkURL: string
+	/**
+	 * The organization holding the original repository.
+	 */
+	upstreamOrg: string
+	/**
+	 * The `upstream` remote: the original repository.
+	 */
+	upstreamURL: string
 }
 
 /**
@@ -39,98 +49,150 @@ export function repoURL(org: string, repo: string): string {
 }
 
 /**
- * The state of our fork of a repo.
+ * The organization holding a repository's original.
  *
- * A `clean` fork has no commits ahead of upstream.
- * A `diverged` fork has at least one.
+ * The placetypes repository is the one Who's On First repository outside `whosonfirst-data`.
  */
-export type ForkState = "absent" | "clean" | "diverged"
+export function upstreamOrgOf(repo: string): string {
+	return repo === PLACETYPES_REPO.name ? PLACETYPES_REPO.upstreamOwner : WOF_DATA_OWNER
+}
 
 /**
- * Reports the {@link ForkState} of a repo in an org.
- * Tests inject a stub in place of GitHub.
+ * The remotes for a repository's clone.
  */
-export type ForkProbe = (org: string, repo: string) => Promise<ForkState>
-
-/**
- * Resolves a WOF repo to our fork when the fork has diverged.
- * Otherwise, it resolves to upstream.
- *
- * A clean fork resolves to upstream because GitHub forks do not track their parent.
- * A probe failure also resolves to upstream and records the failure in `reason`.
- */
-export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Promise<RepoOrigin> {
-	let state: ForkState
-	let probeFailure: string | null = null
-
-	try {
-		state = await probe(FORK_ORG, repo)
-	} catch (error) {
-		state = "absent"
-		probeFailure = (error as Error).message
-	}
-
-	if (state === "diverged") {
-		return {
-			repo,
-			org: FORK_ORG,
-			url: repoURL(FORK_ORG, repo),
-			source: "fork",
-			reason: `${FORK_ORG}/${repo} carries commits upstream does not — our corrections ride this remote`,
-			forkURL: repoURL(FORK_ORG, repo),
-		}
-	}
-
-	const reason = probeFailure
-		? `fork lookup failed (${probeFailure}) — falling back to upstream, which is NOT evidence about the fork`
-		: state === "clean"
-			? `${FORK_ORG}/${repo} exists but carries nothing upstream lacks — upstream is the same content and stays current, ` +
-				"while a fork does not track its parent"
-			: `no ${FORK_ORG}/${repo} fork`
+export function wofRepoOrigin(repo: string): RepoOrigin {
+	const upstreamOrg = upstreamOrgOf(repo)
 
 	return {
 		repo,
-		org: UPSTREAM_ORG,
-		url: repoURL(UPSTREAM_ORG, repo),
-		source: "upstream",
-		reason,
-		forkURL: state === "clean" ? repoURL(FORK_ORG, repo) : null,
+		forkURL: repoURL(FORK_ORG, repo),
+		upstreamOrg,
+		upstreamURL: repoURL(upstreamOrg, repo),
 	}
 }
 
 /**
- * Probes our fork through the `gh` CLI.
+ * What merging upstream into a fork did on GitHub.
  *
- * @returns `diverged` when GitHub's compare shows the fork ahead of upstream,
- * `clean` when the fork has no commits ahead.
- * It returns `absent` when the fork lookup returns 404.
- * @throws Error when the fork lookup fails for another reason or the compare yields no `ahead_by`.
+ * `conflict` means the fork's corrections and upstream's new commits touch the same lines.
+ * GitHub leaves the fork unchanged, and a person merges it by hand.
  */
-export const githubForkProbe: ForkProbe = async (org, repo) => {
-	try {
-		await runFile("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
-	} catch (error) {
-		const stderr = error instanceof Error && "stderr" in error && typeof error.stderr === "string" ? error.stderr : ""
+export type ForkUpdate =
+	| { kind: "fast-forward" | "merge" | "none"; branch: string }
+	| { kind: "conflict"; branch: string; message: string }
 
-		if (/HTTP 404|Not Found/i.test(`${errorMessage(error)}${stderr}`)) {
-			return "absent"
-		}
+/**
+ * The GitHub operations the sync needs.
+ * Tests inject a stub in place of GitHub.
+ */
+export interface ForkHost {
+	/**
+	 * Creates `mailwoman/<repo>` as a fork of the original when it does not exist.
+	 *
+	 * @returns `true` when this call created the fork.
+	 */
+	ensureFork(origin: RepoOrigin): Promise<boolean>
+	/**
+	 * Merges the original's default branch into the fork's matching branch.
+	 */
+	updateFork(origin: RepoOrigin): Promise<ForkUpdate>
+}
+
+/**
+ * Seconds to wait for a newly requested fork to appear.
+ *
+ * GitHub answers a fork request at once and copies the repository afterward.
+ * The large country repositories take tens of seconds.
+ */
+const FORK_READY_TIMEOUT_SECONDS = 300
+
+/**
+ * A failed `gh` call's message and standard error together, where `gh` writes the HTTP status.
+ */
+function ghErrorText(error: unknown): string {
+	return isProcessError(error) ? `${error.message}${error.stderr}` : errorMessage(error)
+}
+
+function isNotFound(error: unknown): boolean {
+	return /HTTP 404|Not Found/i.test(ghErrorText(error))
+}
+
+async function readDefaultBranch(org: string, repo: string): Promise<string | null> {
+	try {
+		const { stdout } = await runFile("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".default_branch"])
+
+		return stdout.trim() || null
+	} catch (error) {
+		if (isNotFound(error)) return null
 
 		throw error
 	}
+}
 
-	const { stdout } = await runFile("gh", [
-		"api",
-		`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
-		"--jq",
-		".ahead_by",
-	])
+/**
+ * {@link ForkHost} through the `gh` CLI.
+ */
+export const githubForkHost: ForkHost = {
+	async ensureFork(origin) {
+		if (await readDefaultBranch(FORK_ORG, origin.repo)) return false
 
-	const aheadBy = Number(stdout.trim())
+		await runFile("gh", [
+			"api",
+			"--method",
+			"POST",
+			`/repos/${origin.upstreamOrg}/${origin.repo}/forks`,
+			"-f",
+			`organization=${FORK_ORG}`,
+			"-F",
+			"default_branch_only=true",
+		])
 
-	if (stdout.trim() === "" || !Number.isInteger(aheadBy)) {
-		throw new Error(`compare returned no ahead_by for ${org}/${repo}: "${stdout.trim()}"`)
-	}
+		const deadline = Date.now() + FORK_READY_TIMEOUT_SECONDS * 1000
 
-	return aheadBy > 0 ? "diverged" : "clean"
+		while (Date.now() < deadline) {
+			if (await readDefaultBranch(FORK_ORG, origin.repo)) return true
+
+			await sleep(5000)
+		}
+
+		throw new Error(
+			`${FORK_ORG}/${origin.repo} did not appear within ${FORK_READY_TIMEOUT_SECONDS}s of the fork request`
+		)
+	},
+
+	async updateFork(origin) {
+		const branch = await readDefaultBranch(FORK_ORG, origin.repo)
+
+		if (!branch) throw new Error(`${FORK_ORG}/${origin.repo} does not exist`)
+
+		try {
+			const { stdout } = await runFile("gh", [
+				"api",
+				"--method",
+				"POST",
+				`/repos/${FORK_ORG}/${origin.repo}/merge-upstream`,
+				"-f",
+				`branch=${branch}`,
+				"--jq",
+				".merge_type",
+			])
+
+			const kind = stdout.trim()
+
+			if (kind !== "fast-forward" && kind !== "merge" && kind !== "none") {
+				throw new Error(`merge-upstream for ${FORK_ORG}/${origin.repo} answered merge_type "${kind}"`)
+			}
+
+			return { kind, branch }
+		} catch (error) {
+			const text = ghErrorText(error)
+
+			// GitHub answers 409 when the merge conflicts and 422 when the branches cannot be merged automatically.
+			if (/HTTP 409|HTTP 422/.test(text)) {
+				return { kind: "conflict", branch, message: /^[^\n]*/.exec(text)?.[0] ?? text }
+			}
+
+			throw error
+		}
+	},
 }

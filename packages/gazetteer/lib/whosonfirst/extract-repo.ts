@@ -17,7 +17,11 @@ import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import type { WOFFeature } from "#whosonfirst/placetypes/admin"
 
 /**
- * The GitHub organization holding the country data repositories.
+ * The upstream GitHub organization holding the country data repositories.
+ *
+ * It is also the prefix of every country repository's name.
+ * Clones are made from the `mailwoman` fork of each repository, so this organization
+ * appears in a clone's `upstream` remote and never in its path.
  */
 export const WOF_DATA_OWNER = "whosonfirst-data"
 
@@ -32,31 +36,23 @@ export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: st
 }
 
 /**
- * Find a cloned repository under a repositories root, in either layout.
+ * The directory a repository's clone occupies: `<root>/<name>`.
  *
- * Two are in use and both are legitimate.
- * `gazetteer inspect sync` writes `<root>/<owner>/<name>`.
- * The admin ingest's depth-agnostic GeoJSON glob reads it.
- *
- * The shipped postcode extracts were built from repositories cloned by hand as `<root>/<name>`.
- * A reader that knows only one layout reports a present repository as missing.
- *
- * Every reader here treats missing as "no evidence".
- * It continues in that case.
- * So the wrong layout is silent rather than loud.
+ * Every Who's On First repository is cloned once, directly under the repositories root,
+ * by `gazetteer inspect sync`.
+ * The repository names are unique across the upstream organizations, so the path needs no owner segment.
  */
-export async function resolveWOFRepo(
-	reposRoot: PathBuilderLike,
-	name: string,
-	owner = WOF_DATA_OWNER
-): Promise<string | null> {
-	for (const candidate of [resolvePath(reposRoot, owner, name), resolvePath(reposRoot, name)]) {
-		if (await isDirectory(candidate)) {
-			return candidate.toString()
-		}
-	}
+export function wofClonePath(reposRoot: PathBuilderLike, name: string): string {
+	return resolvePath(reposRoot, name).toString()
+}
 
-	return null
+/**
+ * Find a cloned repository under a repositories root, or `null` when it is not cloned.
+ */
+export async function resolveWOFRepo(reposRoot: PathBuilderLike, name: string): Promise<string | null> {
+	const candidate = wofClonePath(reposRoot, name)
+
+	return (await isDirectory(candidate)) ? candidate : null
 }
 
 /**

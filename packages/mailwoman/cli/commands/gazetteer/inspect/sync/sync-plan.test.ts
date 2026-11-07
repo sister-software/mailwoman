@@ -7,13 +7,11 @@ import {
 	type DiscoveredRepo,
 } from "#cli/commands/gazetteer/inspect/sync/plan"
 
-const url = (name: string) => `https://github.com/whosonfirst-data/${name}`
-
 const DISCOVERED: readonly DiscoveredRepo[] = [
-	{ name: "whosonfirst-data-admin-tr", url: url("whosonfirst-data-admin-tr"), diskUsageKB: 74_752 },
-	{ name: "whosonfirst-data-postalcode-tr", url: url("whosonfirst-data-postalcode-tr"), diskUsageKB: 6144 },
-	{ name: "whosonfirst-data-admin-fr", url: url("whosonfirst-data-admin-fr"), diskUsageKB: 235_000 },
-	{ name: "whosonfirst-data-venue-tr", url: url("whosonfirst-data-venue-tr"), diskUsageKB: 75_776 },
+	{ name: "whosonfirst-data-admin-tr", diskUsageKB: 74_752 },
+	{ name: "whosonfirst-data-postalcode-tr", diskUsageKB: 6144 },
+	{ name: "whosonfirst-data-admin-fr", diskUsageKB: 235_000 },
+	{ name: "whosonfirst-data-venue-tr", diskUsageKB: 75_776 },
 ]
 
 describe("assertDestinationNotARepoName", () => {
@@ -70,11 +68,33 @@ describe("selectRepos", () => {
 		expect(() => selectRepos(DISCOVERED, { repos: "whosonfirst-data-admin-turkey" })).toThrow(/--countries/)
 	})
 
-	it("refuses an unfiltered sync, stating the cost", () => {
+	it("refuses an unfiltered sync when nothing is cloned, stating the cost", () => {
 		const call = () => selectRepos(DISCOVERED, {})
 
 		expect(call).toThrow(/--all/)
 		expect(call).toThrow(/4 repositories/)
+	})
+
+	it("refreshes the existing clones when no filter is given", () => {
+		const selection = selectRepos(DISCOVERED, { cloned: ["whosonfirst-data-admin-fr"] })
+
+		expect(selection.selected.map((entry) => entry.name)).toEqual(["whosonfirst-data-admin-fr"])
+	})
+
+	it("adds the named repositories to the existing clones", () => {
+		const selection = selectRepos(DISCOVERED, { countries: "tr", cloned: ["whosonfirst-data-admin-fr"] })
+
+		expect(selection.selected.map((entry) => entry.name)).toEqual([
+			"whosonfirst-data-admin-tr",
+			"whosonfirst-data-postalcode-tr",
+			"whosonfirst-data-admin-fr",
+		])
+	})
+
+	it("keeps a clone that discovery did not list, such as an archived repository or the placetypes repository", () => {
+		const selection = selectRepos(DISCOVERED, { cloned: ["whosonfirst-placetypes"] })
+
+		expect(selection.selected).toEqual([{ name: "whosonfirst-placetypes" }])
 	})
 
 	it("syncs everything only when --all is explicit", () => {

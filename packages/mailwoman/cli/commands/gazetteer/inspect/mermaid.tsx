@@ -103,7 +103,7 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 
 		if (!placetype) {
 			throw new CommandError(
-				`No placetype named '${placetypeName}' found. Ensure '${localRepoDirectory.toString()}' contains a whosonfirst/whosonfirst-placetypes clone (run \`mailwoman gazetteer inspect sync\` first).`
+				`No placetype named '${placetypeName}' found. Ensure '${localRepoDirectory.toString()}' contains a whosonfirst-placetypes clone (run \`mailwoman gazetteer inspect sync\` first).`
 			)
 		}
 

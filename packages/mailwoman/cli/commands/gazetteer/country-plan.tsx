@@ -125,24 +125,11 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 				}
 			}
 
-			if (audit.duplicated.length) {
-				lines.push("", "checked out TWICE — two independent copies that can diverge:")
+			if (audit.strays.length) {
+				lines.push("", "directories under the repos root that are not clones; the ingest reads their GeoJSON too:")
 
-				for (const repo of audit.duplicated) {
-					const commits = Object.entries(repo.commits)
-						.map(([layout, head]) => `${layout}=${head}`)
-						.join(" ")
-
-					lines.push(`  ${audit.diverged.includes(repo) ? "✗" : "·"} ${repo.name}  ${commits}`)
-				}
-			}
-
-			if (audit.aliased.length) {
-				// `ingestWOF` does not follow directory symlinks, so the direct checkout supplies these records once.
-				lines.push("", "symlinked into the other layout — one copy, ingested through the direct path once:")
-
-				for (const repo of audit.aliased) {
-					lines.push(`  · ${repo.name}`)
+				for (const name of audit.strays) {
+					lines.push(`  ✗ ${name}`)
 				}
 			}
 

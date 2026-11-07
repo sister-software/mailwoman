@@ -71,7 +71,7 @@ export const spec = {
 		tol: { type: "number", default: 0.004, description: "Simplification tolerance in degrees" },
 		repos: {
 			type: "string",
-			default: wofReposPath("whosonfirst-data").toString(),
+			default: wofReposPath().toString(),
 			description: "WOF GeoJSON repository root",
 		},
 	},

@@ -24,10 +24,9 @@ import { Globerator } from "spliterator/node/fs"
 const MAX_LISTED_ARTIFACTS = 12
 
 async function adminRoots(): Promise<string[]> {
-	const pattern = wofReposPath("whosonfirst-data/whosonfirst-data-admin-*/data")
-	const matched = await Globerator.from(pattern, { absolute: true }).toSorted()
+	const pattern = wofReposPath("whosonfirst-data-admin-*/data")
 
-	return [...matched, wofReposPath("whosonfirst-data-admin-us/data").toString()]
+	return Globerator.from(pattern, { absolute: true, onlyFiles: false }).toSorted()
 }
 
 const ADMIN_ROOTS = await adminRoots()

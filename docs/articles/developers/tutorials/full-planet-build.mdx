@@ -92,10 +92,12 @@ not to, because the build behind it is the heaviest thing in this repository, an
 it. These are its steps. The disk each one needs follows the block:
 
 ```bash
-# 1. Clone the Who's On First data repositories into <data-root>/src/wof-repos.
+# 1. Clone the Who's On First data repositories into <data-root>/src/wof-repos,
+#    one directory per repository, each from its mailwoman fork.
 #    `--countries` takes ISO-2 codes and pulls each country's admin + postalcode
-#    repositories; `--repos` names them individually. One of the two is required —
-#    the org holds 823 non-archived repositories, several hundred GB checked out.
+#    repositories; `--repos` names them individually. The first sync needs one of
+#    the two, because the org holds 823 non-archived repositories, several hundred
+#    GB checked out. A later sync with neither refreshes the clones already there.
 npx mailwoman gazetteer inspect sync --countries fr
 
 # 2. Build the admin database. Reads the repos above, streams Overture divisions
