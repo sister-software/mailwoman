@@ -24,8 +24,6 @@ import { TileBoard } from "./ModelVisualizer/TileBoard.tsx"
 
 import styles from "./ModelVisualizer/styles.module.css"
 
-const DEFAULT_TEXT = "1600 Pennsylvania Ave NW, Washington, DC 20500"
-
 /**
  * How long the input rests before a keystroke's trace runs.
  *
@@ -56,7 +54,8 @@ export interface LiveModelVisualizerProps {
 	 */
 	errorMessage: string | null
 	/**
-	 * The text to trace first, from the URL, in place of the default address.
+	 * The text to trace first, from the URL.
+	 * Without it the field opens empty.
 	 */
 	initialText?: string | null
 	/**
@@ -74,7 +73,7 @@ export function LiveModelVisualizer({
 	initialText,
 	onTextTraced,
 }: LiveModelVisualizerProps): React.JSX.Element {
-	const [text, setText] = useState(initialText ?? DEFAULT_TEXT)
+	const [text, setText] = useState(initialText ?? "")
 	const [trace, setTrace] = useState<ParseTraceLike | null>(null)
 	const [pending, setPending] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -128,8 +127,9 @@ export function LiveModelVisualizer({
 	)
 
 	// Trace as the text changes, after the debounce, once the classifier is usable.
+	// An empty field has no text to trace.
 	useEffect(() => {
-		if (!ready || !supportsTrace || pointQuery) return
+		if (!ready || !supportsTrace || pointQuery || text.trim() === "") return
 
 		const timer = setTimeout(() => void run(text), DEBOUNCE_MS)
 
@@ -194,6 +194,7 @@ export function LiveModelVisualizer({
 						setText(event.target.value)
 					}}
 					aria-label="Address to trace"
+					placeholder="An address to trace, newlines included"
 					spellCheck={false}
 				/>
 				<div className={styles.traceMeta}>

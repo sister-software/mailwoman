@@ -38,15 +38,18 @@ export interface GeocoderControlsProps {
 	autocomplete: UsePlaceAutocomplete
 	compare: UseCompareState
 	/**
-	 * A query from the URL to run once the runtime is ready.
+	 * The query the host's URL names.
+	 *
+	 * Each new value is submitted once the runtime is ready, unless it is the query submitted last.
 	 */
-	initialQuery?: string | null
+	query?: string | null
 	panels: GeocoderPanels
 	presets: ReadonlyArray<Preset>
 	/**
 	 * The input placeholder.
 	 *
-	 * The field also selects its value on focus while it still equals this text.
+	 * A host that pre-fills the field with the same text gets its value selected
+	 * on focus, so typing replaces it.
 	 */
 	placeholder: string
 	map?: MapInstance | null
@@ -95,7 +98,7 @@ export function GeocoderControls({
 	presets,
 	placeholder,
 	map = null,
-	initialQuery = null,
+	query = null,
 	onSubmitQuery,
 	onSelectVersion,
 	developer = false,
@@ -288,14 +291,19 @@ export function GeocoderControls({
 	const toggleSheet = (name: Exclude<SheetName, null>) => setOpenSheet((current) => (current === name ? null : name))
 	const closeSheet = useCallback(() => setOpenSheet(null), [])
 
+	// The query submitted last, from the field or from the host's URL, so the URL's query
+	// is not submitted a second time after the host records the submit it heard.
+	const lastSubmitted = useRef<string | null>(null)
+
 	// Every user-initiated query goes through this function, so `onSubmitQuery` fires from one place.
 	const runQuery = useCallback(
-		(query: string) => {
+		(text: string) => {
 			// A new query shows the result panel again at its default height.
 			setResultDismissed(false)
 			setSheetHeight(null)
-			onSubmitQuery?.(query)
-			void geocode.submit(query)
+			lastSubmitted.current = text
+			onSubmitQuery?.(text)
+			void geocode.submit(text)
 		},
 		[onSubmitQuery, geocode]
 	)
@@ -305,33 +313,47 @@ export function GeocoderControls({
 	const clearQuery = useCallback(() => {
 		geocode.reset()
 		setSheetHeight(null)
+		lastSubmitted.current = null
 		onSubmitQuery?.("")
 	}, [onSubmitQuery, geocode])
 
-	// The initial query waits for `runtime.ready` because the parse pipeline drops
+	// The URL's query waits for `runtime.ready` because the parse pipeline drops
 	// a submit made before the model loads.
-	// The ref makes it run once, so a later render cannot overwrite the user's own query.
-	const autoRanInitialQuery = useRef(false)
-
+	// A later value, such as the one the back button restores, fills the field and runs.
+	// A URL with no query after one with a query is the entry before the first search.
+	// It clears the field and the result.
 	useEffect(() => {
-		if (autoRanInitialQuery.current) return
+		if (query === lastSubmitted.current) return
 
-		if (!initialQuery || !runtime.ready) return
+		if (!query) {
+			if (lastSubmitted.current === null) return
 
-		autoRanInitialQuery.current = true
+			lastSubmitted.current = null
+			geocode.setText("")
+			geocode.reset()
+
+			return
+		}
+
+		if (!runtime.ready) return
+
+		lastSubmitted.current = query
+		geocode.setText(query)
+		// oxlint-disable-next-line react/set-state-in-effect -- The history is the external system here: a restored entry's result shows again as a submitted one would.
+		setResultDismissed(false)
 		// This calls `geocode.submit` directly because the query is already in the URL.
-		void geocode.submit(initialQuery)
-	}, [initialQuery, runtime.ready, geocode])
+		void geocode.submit(query)
+	}, [query, runtime.ready, geocode])
 
 	// A drawer-breakpoint crossing clears any dragged height.
 	// The height could clip the desktop column.
 	useEffect(() => {
-		const query = globalThis.matchMedia(DRAWER_LAYOUT)
+		const layout = globalThis.matchMedia(DRAWER_LAYOUT)
 		const onChange = () => setSheetHeight(null)
 
-		query.addEventListener("change", onChange)
+		layout.addEventListener("change", onChange)
 
-		return () => query.removeEventListener("change", onChange)
+		return () => layout.removeEventListener("change", onChange)
 	}, [])
 
 	// A user pan, zoom, or rotate shrinks the drawer to its floor detent without dismissing the result.
@@ -487,6 +509,8 @@ export function GeocoderControls({
 								}}
 								disabled={!runtime.ready}
 								placeholder={placeholder}
+								// An address is full of proper nouns and codes the browser's dictionary lacks.
+								spellCheck={false}
 								onKeyDown={autocomplete.onInputKeyDown}
 								{...autocomplete.inputProps}
 							/>

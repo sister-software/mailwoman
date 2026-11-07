@@ -13,6 +13,7 @@ import { parsePointQuery, type PointQuery, POINT_QUERY_LABEL, POINT_QUERY_PHRASE
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
+import { pageTitle } from "#page-title"
 import { type GazettePlaceRef, gazettePlaceFromPath, gazettePlacePath, searchWithQuery } from "#routes"
 
 import {
@@ -94,6 +95,13 @@ export function GazettePage({ config, query, place }: GazettePageProps): React.J
 
 	const reading = forRef(keptReading, ref)
 	const placeError = forRef(keptPlaceError, ref)
+
+	// The tab reads as the opened place.
+	useEffect(() => {
+		document.title = pageTitle(
+			reading?.kind === "row" ? reading.view.row.name : reading?.kind === "id" ? `WOF ${reading.known.sprID}` : null
+		)
+	}, [reading])
 
 	// A point-shaped query rather than a name: a `wof:` id opens its place, and the other
 	// shapes are explained, because the gazetteer indexes names and not positions.

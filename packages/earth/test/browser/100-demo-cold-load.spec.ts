@@ -6,9 +6,10 @@ test.describe("Demo — cold load", () => {
 		demo.console.assertNoFailEvents()
 	})
 
-	test("renders example chips + the form", async ({ demo, page }) => {
+	test("renders example chips + an empty form", async ({ demo, page }) => {
 		await demo.goto()
-		await expect(page.locator("#mw-pipeline-input")).toHaveValue("1600 Pennsylvania Ave NW, Washington, DC 20500")
+		await expect(page.locator("#mw-pipeline-input")).toHaveValue("")
+		await expect(page.locator("#mw-pipeline-input")).toHaveAttribute("spellcheck", "false")
 		await expect(page.locator("button:has-text('White House')")).toBeVisible()
 		await expect(page.locator("button:has-text('ZIP only')")).toBeVisible()
 	})
