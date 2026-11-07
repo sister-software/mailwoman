@@ -69,6 +69,15 @@ export interface PolygonBuildCounts {
 	 * Rows written for a merged place through the Wikidata id it shares with a record.
 	 */
 	linkedByWikidata: number
+	/**
+	 * Rows written for a merged country through its country code, for the merged
+	 * rows that hold no Wikidata id.
+	 */
+	linkedByCountryCode: number
+	/**
+	 * Boundaries simplified past the build's tolerance to fit {@linkcode MAX_GEOMETRY_BYTES}.
+	 */
+	coarsened: number
 	superseded: number
 	deprecated: number
 	notInGazetteer: number
@@ -81,12 +90,83 @@ export interface PolygonBuildCounts {
 const DEFAULT_TOLERANCE_DEGREES = 0.001
 
 /**
+ * The largest boundary a browser reads and draws for one place.
+ */
+const MAX_GEOMETRY_BYTES = 200_000
+
+/**
+ * The coarsest tolerance a boundary reaches, so an archipelago whose rings
+ * cannot shrink further stops the search.
+ */
+const MAX_TOLERANCE_DEGREES = 0.5
+
+/**
+ * The record placetypes that speak for a whole country code.
+ * Who's On First files Puerto Rico as a dependency.
+ */
+const COUNTRY_LEVEL_PLACETYPES: ReadonlySet<string> = new Set(["country", "dependency"])
+
+/**
  * The record's boundary, when its geometry holds an area.
  */
 function areaOf(feature: WOFFeature): AreaGeometry | null {
 	const { geometry } = feature
 
 	return geometry?.type === "Polygon" || geometry?.type === "MultiPolygon" ? (geometry as AreaGeometry) : null
+}
+
+/**
+ * Serializes a boundary at the build's tolerance, doubling the tolerance
+ * while the result exceeds the size limit.
+ */
+function fitGeometry(area: AreaGeometry, tolerance: number): { geom: string; coarsened: boolean } {
+	let current = tolerance
+	let geom = stringifyJSON(simplifyAreaGeometry(area, current))
+
+	while (geom.length > MAX_GEOMETRY_BYTES && current < MAX_TOLERANCE_DEGREES) {
+		current *= 2
+		geom = stringifyJSON(simplifyAreaGeometry(area, current))
+	}
+
+	if (geom.length > MAX_GEOMETRY_BYTES && area.type === "MultiPolygon") {
+		geom = stringifyJSON(keepLargestPolygons(simplifyAreaGeometry(area, current)))
+	}
+
+	return { geom, coarsened: current !== tolerance }
+}
+
+/**
+ * Returns the width plus the height of a polygon's outer ring, in degrees.
+ */
+function polygonSpan(polygon: number[][][]): number {
+	const longitudes = polygon[0]!.map(([longitude]) => longitude!)
+	const latitudes = polygon[0]!.map(([, latitude]) => latitude!)
+
+	return Math.max(...longitudes) - Math.min(...longitudes) + Math.max(...latitudes) - Math.min(...latitudes)
+}
+
+/**
+ * Drops a multipolygon's smallest parts until the rest fit the size limit.
+ *
+ * Each ring keeps at least four positions at any tolerance, so an archipelago of
+ * thousands of islets stays too large at the coarsest tolerance.
+ */
+function keepLargestPolygons(geometry: AreaGeometry): AreaGeometry {
+	if (geometry.type !== "MultiPolygon") return geometry
+
+	const largestFirst = (geometry.coordinates as number[][][][]).toSorted((a, b) => polygonSpan(b) - polygonSpan(a))
+	const kept: number[][][][] = []
+	let bytes = stringifyJSON({ ...geometry, coordinates: [] }).length
+
+	for (const polygon of largestFirst) {
+		bytes += stringifyJSON(polygon).length + 1
+
+		if (bytes > MAX_GEOMETRY_BYTES && kept.length) break
+
+		kept.push(polygon)
+	}
+
+	return { ...geometry, coordinates: kept } as AreaGeometry
 }
 
 /**
@@ -131,6 +211,37 @@ function readWikidataLinks(adminPath: PathBuilderLike, gazetteerIDs: ReadonlySet
 }
 
 /**
+ * Reads the gazetteer's country places under each upper-case country code.
+ *
+ * A merged country row can hold no concordance at all, and a country code identifies one country.
+ */
+function readCountryPlaces(candidatePath: PathBuilderLike): Map<string, number[]> {
+	using db = new DatabaseClient<CandidateDatabase>(candidatePath, { readOnly: true })
+	const places = new Map<string, number[]>()
+
+	const rows = db
+		.prepare(
+			`SELECT DISTINCT c.spr_id AS id, k.code AS code FROM candidate c
+			 JOIN placetype_codes t ON t.id = c.placetype_id
+			 JOIN country_codes k ON k.id = c.country_id
+			 WHERE t.placetype = 'country'`
+		)
+		.iterate()
+
+	for (const { id, code } of rows as Iterable<{ id: number; code: string }>) {
+		const held = places.get(code)
+
+		if (held) {
+			held.push(Number(id))
+		} else {
+			places.set(code, [Number(id)])
+		}
+	}
+
+	return places
+}
+
+/**
  * Lists the clones to read as glob patterns under the repositories directory.
  */
 function repositoryPatterns({ countries, postcodes }: Pick<BuildPolygonsOptions, "countries" | "postcodes">): string[] {
@@ -150,7 +261,9 @@ export async function buildPolygonsDatabase(
 	const out = String(PathBuilder.from(options.out ?? wofDatabasePath("wof-polygons.db")))
 	const reposDir = options.reposDir ?? wofReposPath("whosonfirst-data")
 	const tolerance = options.tolerance ?? DEFAULT_TOLERANCE_DEGREES
-	const gazetteerIDs = readGazetteerIDs(options.candidatePath ?? wofDatabasePath("candidate.db"))
+	const candidatePath = options.candidatePath ?? wofDatabasePath("candidate.db")
+	const gazetteerIDs = readGazetteerIDs(candidatePath)
+	const countryPlaces = readCountryPlaces(candidatePath)
 
 	const wikidataLinks = readWikidataLinks(
 		options.adminPath ?? wofDatabasePath("admin-global-priority.db"),
@@ -161,6 +274,8 @@ export async function buildPolygonsDatabase(
 		read: 0,
 		kept: 0,
 		linkedByWikidata: 0,
+		linkedByCountryCode: 0,
+		coarsened: 0,
 		superseded: 0,
 		deprecated: 0,
 		notInGazetteer: 0,
@@ -213,13 +328,19 @@ export async function buildPolygonsDatabase(
 				const id = Number(properties?.["wof:id"] ?? feature.id)
 				const wikidata = properties?.["wof:concordances"]?.["wd:id"]
 				const linked = (wikidata ? wikidataLinks.get(String(wikidata)) : null)?.filter((place) => place !== id) ?? []
+
+				const sameCountry =
+					COUNTRY_LEVEL_PLACETYPES.has(String(properties?.["wof:placetype"])) && properties?.["wof:country"]
+						? (countryPlaces.get(String(properties["wof:country"]))?.filter((place) => place !== id) ?? [])
+						: []
+
 				const held = gazetteerIDs.has(id)
 
 				if (properties?.["wof:superseded_by"]?.length) {
 					counts.superseded++
 				} else if (properties?.["edtf:deprecated"]) {
 					counts.deprecated++
-				} else if (!held && !linked.length) {
+				} else if (!held && !linked.length && !sameCountry.length) {
 					counts.notInGazetteer++
 				} else {
 					const area = areaOf(feature)
@@ -230,7 +351,9 @@ export async function buildPolygonsDatabase(
 						continue
 					}
 
-					const geom = stringifyJSON(simplifyAreaGeometry(area, tolerance))
+					const { geom, coarsened } = fitGeometry(area, tolerance)
+
+					counts.coarsened += Number(coarsened)
 
 					if (held) {
 						insert.run(id, geom)
@@ -240,6 +363,10 @@ export async function buildPolygonsDatabase(
 
 					for (const place of linked) {
 						counts.linkedByWikidata += Number(insertLinked.run(place, geom).changes)
+					}
+
+					for (const place of sameCountry) {
+						counts.linkedByCountryCode += Number(insertLinked.run(place, geom).changes)
 					}
 
 					counts.geometryBytes += geom.length

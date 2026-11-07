@@ -111,6 +111,88 @@ export function readOpenRoadsLink(element: MarkupElement): OpenRoadsLink | "unna
 }
 
 /**
+ * One road link as a network edge: its name or road number, and the nodes it joins.
+ */
+export interface OpenRoadsNetworkLink {
+	/**
+	 * `road:name1`, or `road:roadClassificationNumber` for a road with no name.
+	 */
+	name: string
+	/**
+	 * `road:name2`, the name in a second language.
+	 */
+	alternateName: string | null
+	startNode: string
+	endNode: string
+	meters: number
+	/**
+	 * The centreline as flat `[easting0, northing0, easting1, northing1, …]` in EPSG:27700 meters.
+	 */
+	vertices: Float64Array
+}
+
+const nodeReference = (element: MarkupElement, path: string) =>
+	(elementAtPath(element, path)?.attributes["xlink:href"] ?? "").replace(/^#/u, "").trim()
+
+/**
+ * Reads a link as a network edge, or returns null for a link with no label, node or usable centreline.
+ */
+export function readOpenRoadsNetworkLink(element: MarkupElement): OpenRoadsNetworkLink | null {
+	const name = (textAtPath(element, "road:name1") ?? textAtPath(element, "road:roadClassificationNumber") ?? "").trim()
+	const startNode = nodeReference(element, "net:startNode")
+	const endNode = nodeReference(element, "net:endNode")
+	const posList = (textAtPath(element, ...LINE_PATH, "gml:posList") ?? "").trim()
+
+	if (!name || !startNode || !endNode || !posList) return null
+
+	const dimension = Number(elementAtPath(element, ...LINE_PATH)?.attributes.srsDimension ?? "2") || 2
+	const ordinates = posList.split(/\s+/u).map(Number)
+	const vertexCount = Math.floor(ordinates.length / dimension)
+
+	if (vertexCount < 2 || ordinates.some((ordinate) => !Number.isFinite(ordinate))) return null
+
+	const vertices = new Float64Array(vertexCount * 2)
+
+	for (let vertex = 0; vertex < vertexCount; vertex++) {
+		vertices[vertex * 2] = ordinates[vertex * dimension]!
+		vertices[vertex * 2 + 1] = ordinates[vertex * dimension + 1]!
+	}
+
+	return {
+		name,
+		alternateName: textAtPath(element, "road:name2")?.trim() || null,
+		startNode,
+		endNode,
+		meters: Number(textAtPath(element, "road:length") ?? 0) || 0,
+		vertices,
+	}
+}
+
+/**
+ * Streams every labeled road link in one Open Roads GML tile as a network edge.
+ */
+export async function* readOpenRoadsNetwork(
+	gmlPath: PathBuilderLike,
+	stats: OpenRoadsReadStats
+): AsyncGenerator<OpenRoadsNetworkLink> {
+	for await (const element of streamMarkupElements(openReadStream(gmlPath), OPEN_ROADS_LINK_ELEMENT, { xml: true })) {
+		stats.links++
+
+		const link = readOpenRoadsNetworkLink(element)
+
+		if (!link) {
+			stats.unnamed++
+
+			continue
+		}
+
+		stats.named++
+
+		yield link
+	}
+}
+
+/**
  * Streams links with names from one Open Roads GML tile.
  */
 export async function* readOpenRoadsLinks(

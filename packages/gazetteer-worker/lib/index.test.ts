@@ -4,10 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { StreetRouteResponse } from "@mailwoman/resolver-wof-wasm/remote/street"
 import { env, exports } from "cloudflare:workers"
 import { beforeAll, describe, expect, test } from "vitest"
 
-import { candidateDatabaseKey, LANDMARK_DATABASE_KEY, OSM_PLACES_DATABASE_KEY } from "#index"
+import { candidateDatabaseKey, LANDMARK_DATABASE_KEY, OSM_PLACES_DATABASE_KEY, STREET_TABLE_KEY } from "#index"
 
 const bytes = (base64: string) => Uint8Array.from(atob(base64), (character) => character.charCodeAt(0))
 
@@ -15,6 +16,43 @@ beforeAll(async () => {
 	await env.PUBLIC_BUCKET.put(candidateDatabaseKey(), bytes(env.CANDIDATE_FIXTURE_BASE64))
 	await env.PUBLIC_BUCKET.put(LANDMARK_DATABASE_KEY, bytes(env.LANDMARK_FIXTURE_BASE64))
 	await env.OSM_PLACES_BUCKET.put(OSM_PLACES_DATABASE_KEY, bytes(env.OSM_PLACES_FIXTURE_BASE64))
+	await env.PUBLIC_BUCKET.put(STREET_TABLE_KEY, bytes(env.STREET_FIXTURE_BASE64))
+})
+
+describe("the street routes", () => {
+	const read = async (path: string) => {
+		const response = await exports.default.fetch(`https://places.invalid${path}`)
+
+		return {
+			status: response.status,
+			body: response.ok ? ((await response.json()) as StreetRouteResponse<never>) : null,
+		}
+	}
+
+	test("answers a street by its place's id, with the source's credit", async () => {
+		const { body } = await read("/v1/streets?street=High%20Street&place=85786019")
+
+		expect(body?.hits).toMatchObject([{ streetID: 1, name: "High Street", lat: 51.45, distanceM: null }])
+		expect(body?.license).toBe("OGL-UK-3.0")
+	})
+
+	test("answers a street near a point, skipping a namesake outside the radius", async () => {
+		const { body } = await read("/v1/streets?street=High%20Street&near=53.1,-2.1&radius=1000")
+
+		expect(body?.hits).toMatchObject([{ streetID: 2 }])
+	})
+
+	test("answers a crossing in either order inside its place", async () => {
+		const { body } = await read("/v1/crossings?first=High%20Street&second=Church%20Lane&place=85786019")
+
+		expect(body?.hits).toMatchObject([{ lat: 51.45, lon: -2.55, nodes: 1 }])
+	})
+
+	test("refuses an unscoped street, a wide radius and too many places", async () => {
+		expect((await read("/v1/streets?street=High%20Street")).status).toBe(400)
+		expect((await read("/v1/streets?street=High%20Street&near=53.1,-2.1&radius=99999")).status).toBe(400)
+		expect((await read(`/v1/crossings?first=a&second=b&${"place=1&".repeat(9)}`)).status).toBe(400)
+	})
 })
 
 describe("the landmark route", () => {

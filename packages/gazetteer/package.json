@@ -96,6 +96,7 @@
 		"spliterator": "^10.1.1"
 	},
 	"devDependencies": {
+		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@types/d3-color": "^3.1.3",
 		"@types/d3-scale-chromatic": "^3.1.0"
 	},

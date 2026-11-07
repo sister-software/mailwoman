@@ -65,7 +65,7 @@ export const DATA_DIRECTORIES: readonly DataDirectory[] = [
 	{ path: "gauntlet", holds: "regression.db and the gauntlet's other built rows." },
 ]
 
-export interface DataDirectoryListing extends DataDirectory {
+interface DataDirectoryListing extends DataDirectory {
 	exists: boolean
 	entries: number
 	sample: string[]

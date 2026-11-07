@@ -500,6 +500,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["packages/corpus/lib/subvenue/", "the sub-venue lexicon readers name the physical gate"],
 	["packages/corpus/lib/tools/overture-subvenue.ts", "sub-venue extraction names the physical gate"],
 	["packages/corpus/lib/tools/fetch/", "sub-venue source fetchers name the physical gate"],
+	["packages/osm/taginfo.json", "the taginfo project file lists OpenStreetMap tag values verbatim: `aeroway=gate`"],
 	["packages/osm/sdk/extract/subvenue.ts", "sub-venue extraction names the physical gate"],
 	["packages/osm/sdk/extract/subvenue/rules.ts", "the sub-venue tag rules name the physical gate"],
 	["packages/osm/sdk/extract/subvenue/subvenue.test.ts", "sub-venue extraction tests name the physical gate"],

@@ -149,14 +149,14 @@
 			"key": "man_made",
 			"value": "data_center",
 			"object_types": ["node", "area"],
-			"description": "Telecom points of interest: data centres.",
+			"description": "Telecom points of interest: data centers.",
 			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
 		},
 		{
 			"key": "telecom",
 			"value": "data_center",
 			"object_types": ["node", "area"],
-			"description": "Telecom points of interest: data centres.",
+			"description": "Telecom points of interest: data centers.",
 			"doc_url": "https://github.com/sister-software/mailwoman/blob/main/packages/osm/README.md"
 		},
 		{

@@ -6,7 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { LandmarkSource, RemoteLandmarkLookup } from "#remote-landmark"
+import { LandmarkSource, RemoteLandmarkLookup } from "#remote/landmark"
 
 const BASE_URL = new URL("https://places.invalid/")
 

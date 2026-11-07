@@ -55,7 +55,7 @@ import {
 	resolveStreet,
 	type StreetResolution,
 } from "@mailwoman/resolver-wof-wasm/httpvfs/street"
-import { LandmarkSource, RemoteLandmarkLookup } from "@mailwoman/resolver-wof-wasm/remote-landmark"
+import { LandmarkSource, RemoteLandmarkLookup } from "@mailwoman/resolver-wof-wasm/remote/landmark"
 import { postPruneMessage } from "@mailwoman/service-worker-cache/prune"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import {
