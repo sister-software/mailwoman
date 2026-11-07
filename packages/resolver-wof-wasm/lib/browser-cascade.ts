@@ -234,6 +234,33 @@ export function resolvedSpanResults(roots: readonly AddressNode[]): ComponentMat
 }
 
 /**
+ * The tags that state a place an address's street can sit in, deepest first.
+ */
+const STREET_PLACE_TAGS: readonly string[] = ["dependent_locality", "locality"]
+
+/**
+ * Reads what a resolved tree states about where its street is: the places deepest first, and the country.
+ */
+export function statedStreetScope(roots: readonly AddressNode[]): {
+	places: Array<{ id: number; lat: number; lon: number }>
+	country: string | null
+} {
+	const nodes = [...walkNodes([...roots])]
+
+	const places = STREET_PLACE_TAGS.flatMap((tag) => nodes.filter((node) => node.tag === tag)).flatMap((node) => {
+		const id = typeof node.placeID === "string" ? Number(node.placeID.replace(/^wof:/u, "")) : Number.NaN
+
+		return Number.isSafeInteger(id) && node.lat != null && node.lon != null
+			? [{ id, lat: node.lat, lon: node.lon }]
+			: []
+	})
+
+	const country = nodes.map((node) => node.metadata?.["resolver_country"]).find((code) => typeof code === "string")
+
+	return { places, country: typeof country === "string" ? country : null }
+}
+
+/**
  * Returns the number a cascade hit is keyed by.
  *
  * A landmark's identifier is text such as `Q160409`.

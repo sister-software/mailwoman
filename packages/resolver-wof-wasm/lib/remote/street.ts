@@ -105,6 +105,11 @@ export interface StreetTableAnswer {
 	lon: number
 	name: string
 	/**
+	 * The merged street's length.
+	 * It bounds how far the answer can sit from the address.
+	 */
+	meters: number
+	/**
 	 * The evidence that chose this street.
 	 */
 	basis: "postcode" | "place" | "near_place"
@@ -129,7 +134,7 @@ const PLACE_REACH_METERS = 5000
 const answerFrom = (ranked: StreetTableHit[], basis: StreetTableAnswer["basis"]): StreetTableAnswer | null => {
 	const [best, ...alternatives] = ranked
 
-	return best ? { lat: best.lat, lon: best.lon, name: best.name, basis, alternatives } : null
+	return best ? { lat: best.lat, lon: best.lon, name: best.name, meters: best.meters, basis, alternatives } : null
 }
 
 /**

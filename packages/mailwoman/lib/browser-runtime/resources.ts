@@ -68,6 +68,11 @@ export const DATA_CREDITS: readonly DataCredit[] = [
 		artifacts: "the landmark layer",
 	},
 	{
+		publisher: "Contains OS data © Crown copyright and database right 2026",
+		termsURL: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+		artifacts: "the street table",
+	},
+	{
 		publisher: "OpenStreetMap contributors",
 		termsURL: "https://www.openstreetmap.org/copyright",
 		artifacts: "the place names the gazetteer Worker answers",
@@ -144,11 +149,6 @@ export const NATIONAL_STREET_SLUGS = new Set(["fr"])
  * Version of the published national street extracts.
  */
 export const NATIONAL_STREET_EXTRACT_VERSION = "2026-07-10"
-
-/**
- * The national extract slug used when no US state extract applies.
- */
-export const NATIONAL_STREET_FALLBACK_SLUG = "fr"
 
 /**
  * Version of the admin gazetteer.

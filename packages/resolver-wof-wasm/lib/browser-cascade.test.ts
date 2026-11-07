@@ -7,7 +7,12 @@
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
-import { CandidateResolverBackend, resolvedSpanResults, type MailwomanLookupLike } from "#browser-cascade"
+import {
+	CandidateResolverBackend,
+	resolvedSpanResults,
+	statedStreetScope,
+	type MailwomanLookupLike,
+} from "#browser-cascade"
 
 const place = (id: number, name: string, placetype: string) => ({
 	id,
@@ -41,6 +46,38 @@ describe("CandidateResolverBackend", () => {
 
 		expect(found?.name).toBe("Brislington")
 		expect(asked).toEqual(["region", "locality", ["neighbourhood", "macrohood", "microhood"]])
+	})
+})
+
+describe("statedStreetScope", () => {
+	it("lists resolved places deepest first, skips a landmark's id, and reads the country", () => {
+		const node = (tag: string, placeID: string | null, extra: Partial<AddressNode> = {}) =>
+			({
+				tag,
+				value: tag,
+				start: 0,
+				end: 1,
+				confidence: 0.9,
+				children: [],
+				...(placeID ? { placeID, lat: 51, lon: -2 } : {}),
+				...extra,
+			}) as AddressNode
+
+		const scope = statedStreetScope([
+			node("country", "wof:85633159", {
+				metadata: { resolver_country: "GB" },
+				children: [
+					node("locality", "wof:1175612699"),
+					node("dependent_locality", "wof:85786019"),
+					node("venue", "wof:7"),
+					node("locality", "wikidata:Q1"),
+					node("locality", null),
+				],
+			}),
+		])
+
+		expect(scope.places.map(({ id }) => id)).toEqual([85_786_019, 1_175_612_699])
+		expect(scope.country).toBe("GB")
 	})
 })
 

@@ -28,6 +28,7 @@ import {
 	JurisdictionLayers,
 	JurisdictionTileSetID,
 } from "@mailwoman/cartographer/jurisdictions"
+import type { AddressNode } from "@mailwoman/core/decoder"
 import type {
 	ParseResult,
 	ParsedComponent,
@@ -48,7 +49,7 @@ import type {
 } from "@mailwoman/react/map"
 import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
 import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
-import { resolvedSpanResults, runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+import { resolvedSpanResults, runCascade, statedStreetScope } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import {
 	type HTTPVFSAddressPointLookup,
 	type HTTPVFSInterpolator,
@@ -56,6 +57,11 @@ import {
 	type StreetResolution,
 } from "@mailwoman/resolver-wof-wasm/httpvfs/street"
 import { LandmarkSource, RemoteLandmarkLookup } from "@mailwoman/resolver-wof-wasm/remote/landmark"
+import {
+	readStreetFromTable,
+	RemoteStreetTable,
+	type StreetTableAnswer,
+} from "@mailwoman/resolver-wof-wasm/remote/street"
 import { postPruneMessage } from "@mailwoman/service-worker-cache/prune"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import { parsePointQuery } from "@mailwoman/spatial/point-query"
@@ -74,7 +80,6 @@ import { postcodeCentroidFor, postcodeFallbackKeys } from "mailwoman/browser-run
 import {
 	assetURL,
 	HOSTED_STREET_SLUGS,
-	NATIONAL_STREET_FALLBACK_SLUG,
 	NATIONAL_STREET_SLUGS,
 	regionToStateSlug,
 	streetExtractURL,
@@ -100,6 +105,16 @@ import { readWOFPlace } from "#runtime/wof-place"
  */
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
 const INTERP_RADIUS_DEFAULT = 1.95
+
+/**
+ * The most other streets the candidate list shows after the street table's answer.
+ */
+const STREET_ALTERNATIVE_LIMIT = 4
+
+/**
+ * The smallest radius a street table answer draws, so a short street stays visible on the map.
+ */
+const STREET_MIN_RADIUS_METERS = 25
 
 /**
  * Spans that together make up the street name — assembled in source order for the situs/interp query.
@@ -624,31 +639,32 @@ export function useGeocoderRuntime({
 			const houseNumberNode = nodes.find((n) => n.tag === "house_number")
 			const stateSlug = regionToStateSlug((stateNode?.value as string | undefined) ?? null)
 
-			const streetSlug =
-				stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)
-					? stateSlug
-					: stateSlug
-						? undefined
-						: NATIONAL_STREET_FALLBACK_SLUG
+			const readExtract = async (slug: string): Promise<StreetResolution | null> => {
+				if (!streetValue || !houseNumberNode?.value) return null
 
-			if (streetValue && houseNumberNode?.value && streetSlug) {
 				try {
-					const street = await ensureStreetLookups(streetSlug)
+					const street = await ensureStreetLookups(slug)
 
-					if (street) {
-						streetResolution = await resolveStreet(
-							streetValue,
-							String(houseNumberNode.value),
-							postcodeNode?.value ? String(postcodeNode.value) : null,
-							localityNode?.value ? String(localityNode.value) : null,
-							street.situs,
-							street.interp ?? null,
-							INTERP_RADIUS_BY_REGION[streetSlug] ?? INTERP_RADIUS_DEFAULT
-						)
-					}
+					return street
+						? await resolveStreet(
+								streetValue,
+								String(houseNumberNode.value),
+								postcodeNode?.value ? String(postcodeNode.value) : null,
+								localityNode?.value ? String(localityNode.value) : null,
+								street.situs,
+								street.interp ?? null,
+								INTERP_RADIUS_BY_REGION[slug] ?? INTERP_RADIUS_DEFAULT
+							)
+						: null
 				} catch (error) {
 					console.warn("[mailwoman earth] street tier unavailable; falling back to admin cascade", error)
+
+					return null
 				}
+			}
+
+			if (stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)) {
+				streetResolution = await readExtract(stateSlug)
 			}
 
 			const asView = (nds: typeof nodes): ParsedComponent[] =>
@@ -697,30 +713,74 @@ export function useGeocoderRuntime({
 
 			const tBeforeResolve = performance.now()
 
-			let matches: ComponentMatch[] = []
+			let resolvedRoots: readonly AddressNode[] = []
 
 			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias, {
 				landmarks: landmarkLayer(config.landmarkAPIURL, LandmarkSource.Wikidata),
 				osmPlaces: landmarkLayer(config.landmarkAPIURL, LandmarkSource.OpenStreetMap),
 				onResolved: (roots) => {
-					matches = resolvedSpanResults(roots).map((match) =>
-						STREET_COMPONENT_TAGS.has(match.tag)
-							? {
-									...match,
-									value: streetValue,
-									matched: streetResolution !== null,
-									placetype: streetResolution?.tier ?? null,
-									name: streetResolution ? streetValue : null,
-									note: !streetSlug
-										? "no street data for this region"
-										: streetResolution
-											? null
-											: `searched the ${streetSlug} street data`,
-								}
-							: match
-					)
+					resolvedRoots = roots
 				},
 			}).catch(explainReadFailure)
+
+			// A street without a state reads the data for the country the address resolved to.
+			// A country with a national extract reads it, and every other country reads the street table.
+			const { places, country } = statedStreetScope(resolvedRoots)
+			const nationalSlug = country?.toLowerCase()
+			let tableAnswer: StreetTableAnswer | null = null
+			let streetNote: string | null = null
+
+			if (streetValue && !stateSlug) {
+				if (nationalSlug && NATIONAL_STREET_SLUGS.has(nationalSlug)) {
+					streetResolution = await readExtract(nationalSlug)
+					streetNote = `searched the ${nationalSlug} street data`
+				} else {
+					const postcodePoint =
+						postcodeNode?.value && assets?.anchorLookup
+							? postcodeCentroidFor(
+									assets.anchorLookup,
+									postcodeFallbackKeys(String(postcodeNode.value), input, knownFormats)
+								)
+							: null
+
+					try {
+						tableAnswer = await readStreetFromTable(new RemoteStreetTable(config.landmarkAPIURL), {
+							street: streetValue,
+							places,
+							postcodePoint,
+						})
+					} catch (error) {
+						console.warn(`The street table did not answer for "${streetValue}"`, error)
+					}
+
+					streetNote = tableAnswer
+						? tableAnswer.alternatives.length
+							? `${tableAnswer.alternatives.length} other streets could match`
+							: null
+						: postcodePoint
+							? "no street of this name near the postcode"
+							: "searched the street table"
+				}
+			} else if (stateSlug && !HOSTED_STREET_SLUGS.has(stateSlug)) {
+				streetNote = "no street data for this region"
+			} else if (stateSlug) {
+				streetNote = `searched the ${stateSlug} street data`
+			}
+
+			const streetMatched = streetResolution !== null || tableAnswer !== null
+
+			const matches: ComponentMatch[] = resolvedSpanResults(resolvedRoots).map((match) =>
+				STREET_COMPONENT_TAGS.has(match.tag)
+					? {
+							...match,
+							value: streetValue,
+							matched: streetMatched,
+							placetype: streetResolution?.tier ?? (tableAnswer ? "street" : null),
+							name: tableAnswer?.name ?? (streetResolution ? streetValue : null),
+							note: streetResolution ? null : streetNote,
+						}
+					: match
+			)
 
 			const tResolve = performance.now()
 
@@ -773,11 +833,40 @@ export function useGeocoderRuntime({
 				})
 
 				candidates.unshift(streetCandidate)
+			} else if (tableAnswer) {
+				// The table locates a street, so the answer holds a radius and no address tier.
+				// Each other street that could match follows it in the candidate list.
+				const houseNumber = houseNumberNode?.value ? `${String(houseNumberNode.value)} ` : ""
+
+				const streetCandidates = [
+					{ ...tableAnswer, name: `${houseNumber}${tableAnswer.name}` },
+					...tableAnswer.alternatives.slice(0, STREET_ALTERNATIVE_LIMIT),
+				].map(({ name, lat, lon, meters }, index) => {
+					const uncertaintyM = Math.max(STREET_MIN_RADIUS_METERS, meters / 2)
+
+					const candidate: ResolvedPlaceView = {
+						id: 0,
+						name,
+						placetype: "street",
+						lat,
+						lon,
+						score: index ? 0 : 1,
+						bbox: null,
+						tier: null,
+						uncertaintyM,
+					}
+
+					extrasRef.current.set(candidate, { bbox: null, tier: null, uncertaintyM })
+
+					return candidate
+				})
+
+				candidates.unshift(...streetCandidates)
 			}
 
 			// An input that equals an undersea feature's whole name answers that feature
 			// ahead of the admin matches, after a street-level coordinate.
-			candidates.splice(streetResolution ? 1 : 0, 0, ...(await underseaPlaces()))
+			candidates.splice(streetResolution || tableAnswer ? 1 : 0, 0, ...(await underseaPlaces()))
 
 			return {
 				input,
