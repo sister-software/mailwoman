@@ -249,7 +249,7 @@ const config: Config = {
 			items: [
 				sidebarMegaMenu("product", {
 					label: "Product",
-					descriptions: { Product: "One engine you install rather than call." },
+					descriptions: { Product: "Turn addresses into useful location data." },
 					featured: {
 						eyebrow: "Try it",
 						title: "Geocode an address in your browser",

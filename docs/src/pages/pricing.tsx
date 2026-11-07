@@ -31,7 +31,7 @@ interface TierProps {
 }
 
 const Tier = ({ name, price, basis, audience, points, cta, featured }: TierProps): ReactNode => (
-	<article className={clsx(styles.tier, featured && styles.tierFeatured)}>
+	<article className={clsx(styles.tier, "mw-glass-surface", featured && styles.tierFeatured)}>
 		<Heading as="h2" className={styles.tierName}>
 			{name}
 		</Heading>
@@ -104,7 +104,7 @@ export default function Pricing(): ReactNode {
 							"Paid tiers with a declared key",
 							"Share your source with the people you serve",
 						]}
-						cta={{ label: "Get started", to: "/docs/developers/get-started/what-mailwoman-is" }}
+						cta={{ label: "Start building for free", to: "/docs/developers/get-started/what-mailwoman-is" }}
 					/>
 					<Tier
 						featured

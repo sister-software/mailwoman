@@ -67,8 +67,8 @@ function HomepageHeader(): ReactNode {
 			</div>
 
 			<div className={clsx("container", styles.heroInner)}>
-				<div className={styles.heroPanel}>
-					<p className={styles.heroEyebrow}>Open source · No API key · Runs in your process</p>
+				<div className={clsx(styles.heroPanel, "mw-glass-surface")}>
+					<p className={styles.heroEyebrow}>Open source · No API key · On your own devices</p>
 					<Heading as="h1" className={styles.heroTitle}>
 						Every address, resolved on your own machines.
 					</Heading>
@@ -118,49 +118,43 @@ function HomepageHeader(): ReactNode {
 								))}
 							</div>
 							{reducedMotion ? null : (
-								<button type="button" className={styles.heroPause} onClick={() => setPaused((value) => !value)}>
-									{paused ? "Resume tour" : "Pause tour"}
+								<button
+									type="button"
+									className={styles.heroPause}
+									aria-label={paused ? "Resume tour" : "Pause tour"}
+									title={paused ? "Resume tour" : "Pause tour"}
+									onClick={() => setPaused((value) => !value)}
+								>
+									<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+										{paused ? <path d="m8 5 11 7-11 7Z" /> : <path d="M6 5h4v14H6zM14 5h4v14h-4z" />}
+									</svg>
 								</button>
 							)}
 						</div>
 					</figure>
-					<p className={styles.heroFine}>
-						This answer was recorded from Earth, the in-browser build, on {stop.recordedOn}.
-					</p>
 				</div>
 			</div>
 		</header>
 	)
 }
 
-/**
- * The figures behind the hero's claims, each one measured on the reference page it links to.
- */
-function Stats(): ReactNode {
+function Benefits(): ReactNode {
 	return (
-		<section className={styles.stats}>
-			<dl className={clsx("container", styles.statRow)}>
+		<section className={styles.benefits} aria-label="Why choose Mailwoman">
+			<div className={clsx("container", styles.benefitRow)}>
 				<div>
-					<dt>The model</dt>
-					<dd>39.4 MB</dd>
-					<p>An int8 encoder that ships inside an npm package.</p>
+					<h2>Your addresses stay private</h2>
+					<p>Parse and locate addresses on your own devices, without sending them to a third-party API.</p>
 				</div>
 				<div>
-					<dt>The global gazetteer</dt>
-					<dd>2.88 GB</dd>
-					<p>A download you keep, not a service you call.</p>
+					<h2>More lookups. Same price.</h2>
+					<p>A flat commercial license covers your company at any volume. No per-address fees.</p>
 				</div>
 				<div>
-					<dt>Requests to us</dt>
-					<dd>0</dd>
-					<p>The lookup runs in your process and reports nothing back.</p>
+					<h2>Build it into your app</h2>
+					<p>Use the same address engine in Node.js, in a browser, or from the command line.</p>
 				</div>
-				<div>
-					<dt>Commercial license</dt>
-					<dd>{PRICE_MONTHLY}</dd>
-					<p>A month, per company, at any volume.</p>
-				</div>
-			</dl>
+			</div>
 		</section>
 	)
 }
@@ -209,8 +203,8 @@ function Coverage(): ReactNode {
 				Where it resolves
 			</Heading>
 			<p className={styles.sectionLead}>
-				Every country answers at the admin tier from one download. Street data and a measured parser are country by
-				country, and this is where each one stands.
+				The global download locates cities and regions across 244 countries. Add street data for individual addresses in
+				the United States and France. This table shows the available data and how address parsing has been tested.
 			</p>
 			<CoverageTable />
 		</section>
@@ -220,42 +214,45 @@ function Coverage(): ReactNode {
 const SOLUTIONS: readonly { to: string; title: string; body: string }[] = [
 	{
 		to: "/docs/solutions/eliminate-the-per-request-bill",
-		title: "My geocoding bill grows with every customer",
-		body: "A flat license does not move when the volume does.",
+		title: "Keep geocoding costs predictable",
+		body: "Add customers and look up more addresses for the same flat license fee.",
 	},
 	{
 		to: "/docs/solutions/keep-addresses-inside",
-		title: "Addresses can't leave our network",
-		body: "An in-process geocode opens no socket, so there is no third-party flow to paper.",
+		title: "Keep sensitive addresses private",
+		body: "Process addresses inside your network, without sending them to another company.",
 	},
 	{
 		to: "/docs/solutions/resolve-a-messy-file",
-		title: "I have a messy customer file",
-		body: "Parse, geocode and match in one pipeline, joined on the coordinate.",
+		title: "Make sense of messy address lists",
+		body: "Turn inconsistent customer records into structured addresses and match them by location.",
 	},
 	{
 		to: "/docs/solutions/fleet-reverse-geocoding",
-		title: "I reverse-geocode a fleet",
-		body: "A local reverse lookup is bounded by disk and CPU, not by a quota.",
+		title: "Put fleet locations into words",
+		body: "Turn GPS coordinates into locations using your own hardware, without API quotas.",
 	},
 	{
 		to: "/docs/solutions/own-what-you-look-up",
-		title: "I need to keep the results",
-		body: "A result computed on your own disk is an output you own.",
+		title: "Keep and reuse your results",
+		body: "Store the locations you compute and use them across your applications.",
 	},
 	{
 		to: "/docs/solutions/research-and-teaching",
-		title: "I'm doing research or teaching",
-		body: "Free under the AGPL, with a declared key for every data tier.",
+		title: "Explore, research and teach",
+		body: "Study the code and build with open address data. Mailwoman is free under the AGPL.",
 	},
 ]
 
 function SolutionFinder(): ReactNode {
 	return (
-		<section className={clsx("container", styles.section)}>
+		<section className={clsx("container", styles.section, styles.solutionSection)}>
 			<Heading as="h2" className={styles.sectionHeading}>
-				What brings you here?
+				What will you build with Mailwoman?
 			</Heading>
+			<p className={styles.sectionLead}>
+				From a customer spreadsheet to a fleet of vehicles, start with your use case.
+			</p>
 			<div className={styles.solutions}>
 				{SOLUTIONS.map((solution) => (
 					<Link key={solution.to} to={solution.to} className={styles.solution}>
@@ -277,7 +274,7 @@ function PricingTeaser(): ReactNode {
 			<div className={clsx("container", styles.teaserInner)}>
 				<div>
 					<Heading as="h2" className={styles.teaserTitle}>
-						Free under the AGPL. {PRICE_MONTHLY} a month to keep your source closed.
+						Free under the AGPL. Commercial licensing is {PRICE_MONTHLY} a month.
 					</Heading>
 					<p>
 						No seats, no per-address fees, and no meter. Your thousandth lookup and your hundred-millionth cost the
@@ -297,7 +294,7 @@ function FeaturedWork(): ReactNode {
 		<section className={styles.featured}>
 			<div className="container">
 				<Heading as="h2" className={styles.featuredSectionHeading}>
-					Worked examples, on real public data
+					See what address data can do
 				</Heading>
 				<div className={clsx("row", styles.featuredRow)}>
 					<div className="col col--6">
@@ -363,7 +360,7 @@ function QuickStart(): ReactNode {
 				<Heading as="h2">Quick start</Heading>
 				<div className={clsx("row", styles.codeRow)}>
 					<div className="col col--6">
-						<h4>Library</h4>
+						<h4>JavaScript &amp; TypeScript</h4>
 						<CodeBlock language="bash">
 							npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 						</CodeBlock>
@@ -382,7 +379,7 @@ const result = await parse("apt 4b 350 5th ave new york ny 10118")
 						</CodeBlock>
 					</div>
 					<div className="col col--6">
-						<h4>CLI</h4>
+						<h4>Command Line Interface</h4>
 						<CodeBlock language="bash">{`npx mailwoman parse "350 5th Ave, New York, NY 10118"`}</CodeBlock>
 						<CodeBlock language="json">
 							{`{
@@ -395,9 +392,11 @@ const result = await parse("apt 4b 350 5th ave new york ny 10118")
 }`}
 						</CodeBlock>
 						<p>
-							No coordinates in that output, because geocoding needs the gazetteer.{" "}
-							<Link to="/docs/developers/get-started/ten-minute-trial">Your first ten minutes</Link> covers what you get
-							out of the box and what still needs a download.
+							Mailwoman&apos;s neural encoder turns address text into structured fields. Add open map data to match
+							those addresses to coordinates.
+						</p>
+						<p>
+							<Link to="/docs/developers/get-started/ten-minute-trial">Set up geocoding in minutes →</Link>
 						</p>
 					</div>
 				</div>
@@ -415,14 +414,14 @@ export default function Home(): ReactNode {
 	return (
 		<Layout
 			title={title}
-			description="An address parser and geocoder that runs in your own process. It needs no API key or server: a neural parser plus an open-data resolver, in Node or entirely in your browser."
+			description="Parse and geocode addresses on your own devices. No API key or per-address fees. Use Mailwoman in Node.js or entirely in your browser."
 		>
 			<HomepageHeader />
 			<main>
-				<Stats />
+				<Benefits />
 				<HowItWorks />
-				<Coverage />
 				<SolutionFinder />
+				<Coverage />
 				<QuickStart />
 				<FeaturedWork />
 				<PricingTeaser />
