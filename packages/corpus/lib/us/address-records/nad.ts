@@ -21,6 +21,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import type { PathBuilderLike } from "path-ts"
 
+import { bareMunicipalityName } from "#address-records/legal-forms"
 import {
 	decomposeNADStreet,
 	nadHouseNumber,
@@ -29,7 +30,6 @@ import {
 	statedNADPlaceName,
 	USGOV_NAD_ADAPTER_ID,
 } from "#us/adapters/usgov/nad/adapter"
-import { bareMunicipalityName } from "#us/address-records/legal-forms"
 
 const TERRITORIES: ReadonlySet<string> = new Set(US_TERRITORY_ABBREVIATIONS)
 
@@ -72,7 +72,7 @@ export function nadAddressNames(record: NADRecord): AddressName[] {
 		const written = statedNADPlaceName(column)
 
 		add("locality", AddressNameForm.Written, written)
-		add("locality", AddressNameForm.Bare, written ? bareMunicipalityName(written) : null)
+		add("locality", AddressNameForm.Bare, written ? bareMunicipalityName(written, "US") : null)
 	}
 
 	add("locality", AddressNameForm.Postal, statedNADPlaceName(record.Post_City))

@@ -7,7 +7,6 @@
 import { describe, expect, it } from "vitest"
 
 import type { NADRecord } from "#us/adapters/usgov/nad/adapter"
-import { bareMunicipalityName } from "#us/address-records/legal-forms"
 import { nadAddressNames, nadAddressRecord } from "#us/address-records/nad"
 
 /**
@@ -33,14 +32,6 @@ const WHITE_HORSE: NADRecord = {
 }
 
 describe("NAD address records", () => {
-	it("strips a municipality's legal-form words and keeps the publisher's case", () => {
-		expect(bareMunicipalityName("Town of Madison")).toBe("Madison")
-		expect(bareMunicipalityName("CITY OF WAUWATOSA")).toBe("WAUWATOSA")
-		expect(bareMunicipalityName("Charter Township of Canton")).toBe("Canton")
-		expect(bareMunicipalityName("Madison")).toBeNull()
-		expect(bareMunicipalityName("Townsend")).toBeNull()
-	})
-
 	it("states the written and bare municipality as localities and skips a placeholder postal city", () => {
 		const names = nadAddressNames(WHITE_HORSE)
 
