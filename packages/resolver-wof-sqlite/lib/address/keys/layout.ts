@@ -10,7 +10,8 @@
  *   or subdivisions.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers/stat"
+import { readLocalJSONFile, sortedGlob } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { type RecordedFile, sha256File } from "@mailwoman/core/hash"
 import { relative, resolvePathBuilder, type PathBuilder, type PathBuilderLike } from "path-ts"
@@ -117,6 +118,24 @@ export async function describeAddressLayerFile(root: PathBuilderLike, path: Path
 	const [stats, sha256] = await Promise.all([statPath(path), sha256File(path)])
 
 	return { path: relative(root, path).toString(), bytes: stats.size, sha256 }
+}
+
+/**
+ * The newest manifest a country's address layer holds under `root`, by its dated
+ * version directory, or `null` when the country has no layer there.
+ */
+export async function readLatestAddressLayerManifest(
+	root: PathBuilderLike,
+	country: string
+): Promise<AddressLayerCountryManifest | null> {
+	const countryDir = resolvePathBuilder(root, "addresses", country.toLowerCase())
+
+	if (!(await pathExists(countryDir))) return null
+
+	// Versions are ISO dates, so code-point order is date order and the last manifest is the newest.
+	const newest = (await sortedGlob(countryDir, "*/manifest.json")).at(-1)
+
+	return newest ? readLocalJSONFile<AddressLayerCountryManifest>(newest) : null
 }
 
 /**

@@ -43,11 +43,11 @@ function lookupAnswering(hit: AddressPointHit): AddressPointLookup {
 	return { find: () => hit }
 }
 
-function geocodeThrough(hit: AddressPointHit | null): ReturnType<typeof extractGeocodeResult> {
+async function geocodeThrough(hit: AddressPointHit | null): Promise<ReturnType<typeof extractGeocodeResult>> {
 	const tree = addressTree()
 
 	if (hit) {
-		applyAddressPoint(tree.roots, lookupAnswering(hit))
+		await applyAddressPoint(tree.roots, lookupAnswering(hit))
 	}
 
 	return extractGeocodeResult(INPUT, tree)
@@ -165,29 +165,29 @@ describe("candidate scores", () => {
 })
 
 describe("coordinate_source", () => {
-	it("keeps an OpenStreetMap row's stamp and release", () => {
-		const result = geocodeThrough({ ...ROW, source: "openstreetmap:nz", release: "2026-08-06" })
+	it("keeps an OpenStreetMap row's stamp and release", async () => {
+		const result = await geocodeThrough({ ...ROW, source: "openstreetmap:nz", release: "2026-08-06" })
 
 		expect(result.resolution_tier).toBe("address_point")
 		expect(result.coordinate_source).toEqual({ source: "openstreetmap:nz", release: "2026-08-06" })
 	})
 
-	it("keeps a street-recovered OpenStreetMap row's stamp verbatim", () => {
-		const result = geocodeThrough({ ...ROW, source: "openstreetmap:nz#recovered", release: "2026-08-06" })
+	it("keeps a street-recovered OpenStreetMap row's stamp verbatim", async () => {
+		const result = await geocodeThrough({ ...ROW, source: "openstreetmap:nz#recovered", release: "2026-08-06" })
 
 		expect(result.coordinate_source?.source).toBe("openstreetmap:nz#recovered")
 		expect(isOpenStreetMapSource(result.coordinate_source?.source)).toBe(true)
 	})
 
-	it("reports a non-OSM row under its own stamp and never as OpenStreetMap", () => {
-		const result = geocodeThrough({ ...ROW, source: "overture:NAD", release: "2026-05-20.0" })
+	it("reports a non-OSM row under its own stamp and never as OpenStreetMap", async () => {
+		const result = await geocodeThrough({ ...ROW, source: "overture:NAD", release: "2026-05-20.0" })
 
 		expect(result.coordinate_source).toEqual({ source: "overture:NAD", release: "2026-05-20.0" })
 		expect(isOpenStreetMapSource(result.coordinate_source?.source)).toBe(false)
 	})
 
-	it("is null when the gazetteer's admin ladder placed the coordinate", () => {
-		const result = geocodeThrough(null)
+	it("is null when the gazetteer's admin ladder placed the coordinate", async () => {
+		const result = await geocodeThrough(null)
 
 		expect(result.resolution_tier).toBe("admin")
 		expect(result.lat).toBe(-37.1368)

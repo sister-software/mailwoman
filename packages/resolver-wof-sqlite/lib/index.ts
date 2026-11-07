@@ -122,6 +122,8 @@ export {
 
 export { AddressPointInterpolator } from "#address/point/interpolation"
 export { AddressPointSqliteLookup } from "#address/point"
+export { openAddressLayerLookup } from "#address/keys/open"
+export { readLatestAddressLayerManifest } from "#address/keys/layout"
 
 export {
 	STREET_CENTROID_COLUMNS,

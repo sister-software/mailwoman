@@ -288,7 +288,7 @@ class WOFResolver implements Resolver {
 
 		// Optional exact address-point tier.
 		if (opts.addressPoints) {
-			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
+			await applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
 		}
 
 		// Optional interpolation tier after exact points.
@@ -309,7 +309,7 @@ class WOFResolver implements Resolver {
 
 		// Retry exact address-point tier once after span-rescore recovery.
 		if (opts.addressPoints) {
-			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
+			await applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
 		}
 
 		// A rooftop row keyed by locality name can lie in a namesake of the selected locality.

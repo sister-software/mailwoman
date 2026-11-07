@@ -9,7 +9,7 @@
  *   written in key order with `INSERT … SELECT … ORDER BY`, so its B-tree pages hold contiguous keys.
  */
 
-import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sourcePresentCoverageCells } from "@mailwoman/core/layers"
 import { type LayerManifest, writeLayerCoverage, writeLayerManifest } from "@mailwoman/core/layers/manifest"
@@ -19,7 +19,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
 import { latLngToCell } from "@sister.software/h3"
 import { type Kysely, sql } from "kysely"
-import type { PathBuilderLike } from "path-ts"
+import { dirname, type PathBuilderLike } from "path-ts"
 
 import { addressPostcodeKey } from "#address/keys/postcode"
 import {
@@ -188,6 +188,7 @@ async function createStagingTables(db: Kysely<StagingDatabase>): Promise<void> {
 export async function buildAddressLayer(options: BuildAddressLayerOptions): Promise<AddressLayerBuildSummary> {
 	const stagingPath = `${options.lookupPath}.stage-${process.pid}`
 
+	await Promise.all([makeDirectories(dirname(options.lookupPath)), makeDirectories(dirname(options.detailPath))])
 	await removePathIfPresent(stagingPath)
 
 	try {
