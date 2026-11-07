@@ -110,8 +110,9 @@ export function nadAddressRecord(record: NADRecord): AddressRecord | null {
 	return {
 		source: USGOV_NAD_ADAPTER_ID,
 		sourceRecordID,
-		// Each territory's USPS code is also its ISO 3166-1 code.
+		// Each territory's USPS code is also its ISO 3166-1 code, and a state's is its ISO 3166-2 suffix.
 		country: TERRITORIES.has(state) ? state : "US",
+		subdivision: TERRITORIES.has(state) ? null : `US-${state}`,
 		number,
 		unit: unit || null,
 		streetRaw: street,

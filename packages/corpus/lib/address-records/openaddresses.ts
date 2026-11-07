@@ -58,6 +58,16 @@ export function openAddressesRunCountry(member: string): string {
 }
 
 /**
+ * The ISO 3166-2 code a run's member path states, such as `US-WI` for `us/wi/statewide`, or `null`
+ * when its second segment is a city or body rather than a two-letter subdivision code (`de/berlin`).
+ */
+export function openAddressesRunSubdivision(member: string): string | null {
+	const [, segment] = member.split("/")
+
+	return segment && /^[a-z]{2}$/iu.test(segment) ? `${openAddressesRunCountry(member)}-${segment.toUpperCase()}` : null
+}
+
+/**
  * The address record for one run row, or `null` when the row lacks a number, a street or a position.
  *
  * `CITY` becomes a written locality with its bare form beside it, `REGION` the region,
@@ -108,6 +118,7 @@ export function openAddressesAddressRecord(
 		sourceRecordID:
 			row.id?.trim() || row.hash?.trim() || `digest:${rawTextDiscriminator(`${number} ${street} ${lat},${lon}`)}`,
 		country,
+		subdivision: openAddressesRunSubdivision(member),
 		number,
 		unit: row.unit?.trim() || null,
 		streetRaw: street,

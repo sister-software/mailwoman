@@ -32,6 +32,7 @@ function record(overrides: Partial<AddressRecord> & Pick<AddressRecord, "number"
 		source: "usgov-nad",
 		sourceRecordID: `nad-${overrides.number}`,
 		country: "US",
+		subdivision: "US-WI",
 		unit: null,
 		streetKey,
 		routeKey: canonicalizeRouteKey(streetKey),

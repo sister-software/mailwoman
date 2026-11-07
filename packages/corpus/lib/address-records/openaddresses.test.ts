@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest"
 import {
 	openAddressesAddressRecord,
 	openAddressesRunCountry,
+	openAddressesRunSubdivision,
 	readOpenAddressesRunRecords,
 } from "#address-records/openaddresses"
 import { useScratchDir } from "#test-kit"
@@ -40,6 +41,8 @@ describe("OpenAddresses address records", () => {
 	it("reads the country from the run's member path", () => {
 		expect(openAddressesRunCountry("us/wi/statewide")).toBe("US")
 		expect(openAddressesRunCountry("de/berlin")).toBe("DE")
+		expect(openAddressesRunSubdivision("us/wi/statewide")).toBe("US-WI")
+		expect(openAddressesRunSubdivision("de/berlin")).toBeNull()
 		expect(() => openAddressesRunCountry("statewide")).toThrow(/country code/)
 	})
 
@@ -52,7 +55,7 @@ describe("OpenAddresses address records", () => {
 
 		expect(records).toHaveLength(7)
 		expect(new Set(records.map((record) => record.source))).toEqual(new Set(["openaddresses:us/wi/statewide"]))
-		expect(records.every((record) => record.country === "US")).toBe(true)
+		expect(records.every((record) => record.country === "US" && record.subdivision === "US-WI")).toBe(true)
 
 		const quoted = records.find((record) => record.number === "1")
 

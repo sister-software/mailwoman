@@ -8,6 +8,7 @@
 
 import { type BANAddrRecord, extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
 import { streetLocaleForBANCountry } from "@mailwoman/ban/street-locale"
+import { departementInfo } from "@mailwoman/codex/fr/departement"
 import {
 	AddressNameForm,
 	type AddressName,
@@ -43,6 +44,22 @@ const ARRONDISSEMENT = /^(.+?)\s+\d+(?:er|e)\s+arrondissement$/iu
  */
 export function arrondissementCity(commune: string): string | null {
 	return ARRONDISSEMENT.exec(commune.trim())?.[1] ?? null
+}
+
+/**
+ * The ISO 3166-2 code of a metropolitan commune's région, such as `FR-IDF` for INSEE
+ * `75103`, read from the département its code opens with.
+ *
+ * An overseas commune lies in its own ISO 3166-1 country, so it has none.
+ */
+export function banSubdivision(country: string, codeInsee: string | null): string | null {
+	// country-branch: the département-to-région table is metropolitan France's,
+	// and BAN's overseas rows are ISO countries of their own.
+	if (country !== "FR" || !codeInsee) return null
+
+	const region = departementInfo(codeInsee.trim().slice(0, 2))?.region
+
+	return region ? `FR-${region}` : null
 }
 
 /**
@@ -91,11 +108,13 @@ export function banAddressRecord(record: BANAddrRecord): AddressRecord | null {
 	if (!numero || !streetKey) return null
 
 	const number = normalizeHouseNumberForKey(record.rep ? `${numero} ${record.rep}` : numero, STREET_LOCALE)
+	const country = countryOfInseeCode(record.codeInsee ?? "")
 
 	return {
 		source: BAN_ADDRESS_SOURCE,
 		sourceRecordID: record.id ?? `digest:${rawTextDiscriminator(`${number} ${record.street} ${record.codeInsee}`)}`,
-		country: countryOfInseeCode(record.codeInsee ?? ""),
+		country,
+		subdivision: banSubdivision(country, record.codeInsee),
 		number,
 		unit: null,
 		streetRaw: record.street,

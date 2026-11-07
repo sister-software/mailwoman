@@ -79,6 +79,13 @@ export interface AddressRecord {
 	 */
 	country: string
 	/**
+	 * The ISO 3166-2 code of the first-level subdivision the point lies in, such as `US-WI`
+	 * or `FR-IDF`, or `null` when the source states none.
+	 *
+	 * A country large enough to be split is written one file per subdivision.
+	 */
+	subdivision: string | null
+	/**
 	 * The house number lower-cased and kept as text, since `123-A` and `12 1/2` are numbers.
 	 */
 	number: string

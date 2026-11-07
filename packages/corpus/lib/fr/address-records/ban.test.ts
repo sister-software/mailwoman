@@ -58,7 +58,12 @@ describe("BAN address records", () => {
 	it("states an arrondissement, its city and the postal city as localities, with the INSEE code", async () => {
 		const [paris] = await records()
 
-		expect(paris).toMatchObject({ sourceRecordID: "75103_ka7f7y_00001", adminCode: "75103", country: "FR" })
+		expect(paris).toMatchObject({
+			sourceRecordID: "75103_ka7f7y_00001",
+			adminCode: "75103",
+			country: "FR",
+			subdivision: "FR-IDF",
+		})
 
 		expect(paris!.names.map(({ level, form, value }) => `${level}:${form}:${value}`)).toEqual([
 			"locality:written:Paris 3e Arrondissement",
@@ -70,7 +75,7 @@ describe("BAN address records", () => {
 		const all = await records()
 
 		expect(all[1]!.number).toBe("8 bis")
-		expect(all[2]).toMatchObject({ country: "GP", adminCode: "97104", placement: "segment" })
+		expect(all[2]).toMatchObject({ country: "GP", subdivision: null, adminCode: "97104", placement: "segment" })
 	})
 
 	it("keeps a merged commune's former name and a lieu-dit, and digests a row without an id", async () => {

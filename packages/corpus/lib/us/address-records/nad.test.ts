@@ -74,8 +74,9 @@ describe("NAD address records", () => {
 		})
 	})
 
-	it("reads a territory row's country from its own ISO code", () => {
-		expect(nadAddressRecord({ ...WHITE_HORSE, State: "PR" })?.country).toBe("PR")
+	it("reads a territory row's country from its own ISO code, and a state row's subdivision from its USPS code", () => {
+		expect(nadAddressRecord({ ...WHITE_HORSE, State: "PR" })).toMatchObject({ country: "PR", subdivision: null })
+		expect(nadAddressRecord(WHITE_HORSE)?.subdivision).toBe("US-WI")
 	})
 
 	it("emits a record for each of the corpus fixture's rows that states a number, a street and a state", async () => {

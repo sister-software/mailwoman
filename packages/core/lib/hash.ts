@@ -13,6 +13,16 @@ import type { PathBuilderLike } from "path-ts"
 import { openReadStream } from "#fs/streams"
 
 /**
+ * One file as a record lists it: its path, its size and its SHA-256,
+ * the values a later reader checks it against.
+ */
+export interface RecordedFile {
+	path: string
+	bytes: number
+	sha256: string
+}
+
+/**
  * The stream produces a file's SHA-256 hash in hexadecimal.
  */
 export async function sha256File(path: PathBuilderLike): Promise<string> {
