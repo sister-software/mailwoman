@@ -20,7 +20,7 @@ import { useCallback, useMemo, useState } from "react"
 import type { EarthConfig } from "#config"
 import { openGazetteer } from "#explorers/Gazette/gazetteer"
 import { pageSearchParam } from "#routes"
-import { locatePointQuery, pointQueryResult } from "#runtime/point-place"
+import { locatePointQuery, pointQueryResult } from "#runtime/point/place"
 import { REMOTE_PARSE_STAGE_LABELS, remoteGeocode } from "#runtime/remote-geocoder"
 import { useGeoBias } from "#runtime/use/geo-bias"
 import {

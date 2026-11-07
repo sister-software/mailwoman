@@ -14,7 +14,7 @@ import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import type React from "react"
 import { useEffect, useState } from "react"
 
-import { isPointResult } from "#runtime/point-place"
+import { isPointResult } from "#runtime/point/place"
 
 import { ModelVisualizer } from "../explorers/ModelVisualizer/ModelVisualizer.tsx"
 

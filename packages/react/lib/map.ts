@@ -23,6 +23,16 @@ export type { MapCompassProps } from "./map/MapCompass.tsx"
 export { useMapBearing } from "./map/useMapBearing.ts"
 export type { UseMapBearing } from "./map/useMapBearing.ts"
 export { useMapLabelPick } from "./map/useMapLabelPick.ts"
+export { MapContextMenu, MapContextMenuAction, MapContextMenuRow, useMapContextMenu } from "./map/MapContextMenu.tsx"
+
+export type {
+	MapContextMenuActionProps,
+	MapContextMenuPoint,
+	MapContextMenuProps,
+	MapContextMenuRowProps,
+	UseMapContextMenu,
+} from "./map/MapContextMenu.tsx"
+
 export { MapControlButton, MapControlGroup, MapControlStack } from "./map/MapControlStack.tsx"
 export type { MapControlButtonProps, MapControlGroupProps, MapControlStackProps } from "./map/MapControlStack.tsx"
 export { MapFooter } from "./map/MapFooter.tsx"

@@ -1681,6 +1681,85 @@
 	}
 
 	/*
+	 * The right-click menu: a glass panel at the pointer, above every other surface, because it answers a
+	 * gesture on the map itself. Each row reads label, value, copy on one line, and the actions follow the rows.
+	 */
+	.mw-map-menu {
+		position: absolute;
+		z-index: 7;
+		display: grid;
+		min-width: 16rem;
+		max-width: min(20rem, calc(100vw - 2rem));
+		padding: var(--ss-spacing-2);
+		border-radius: var(--ss-radius-global);
+		box-shadow: var(--mw-material-glass-shadow);
+	}
+
+	.mw-map-menu__row {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		gap: var(--ss-spacing-2);
+		padding: var(--ss-spacing-1) var(--ss-spacing-2);
+		border-radius: var(--ss-radius-tag);
+	}
+
+	.mw-map-menu__row:hover {
+		background: var(--ss-color-emphasis-100);
+	}
+
+	.mw-map-menu__label {
+		font-size: var(--mw-font-size-caption);
+		font-weight: var(--ss-font-weight-semibold);
+		color: var(--ss-color-content-secondary);
+		white-space: nowrap;
+	}
+
+	.mw-map-menu__value {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-family: var(--ss-font-family-monospace);
+		font-size: var(--mw-font-size-footnote);
+		color: var(--ss-color-content);
+	}
+
+	.mw-map-menu__copy,
+	.mw-map-menu__action {
+		font: inherit;
+		font-size: var(--mw-font-size-caption);
+		color: var(--ss-color-content);
+		background: transparent;
+		border: 1px solid var(--ss-color-emphasis-300);
+		border-radius: var(--ss-radius-tag);
+		cursor: pointer;
+	}
+
+	.mw-map-menu__copy {
+		padding: 0.1rem var(--ss-spacing-2);
+		white-space: nowrap;
+	}
+
+	.mw-map-menu__action {
+		margin-top: var(--ss-spacing-2);
+		padding: var(--ss-spacing-2);
+		font-weight: var(--ss-font-weight-semibold);
+	}
+
+	.mw-map-menu__copy:hover,
+	.mw-map-menu__action:hover {
+		background: var(--mw-material-glass-fallback-background);
+		border-color: var(--ss-color-primary);
+	}
+
+	.mw-map-menu__copy:focus-visible,
+	.mw-map-menu__action:focus-visible {
+		outline: 2px solid var(--ss-color-primary);
+		outline-offset: 1px;
+	}
+
+	/*
 	 * On a phone the chrome spans the width and the sheet becomes a true bottom sheet against the edge, which is what
 	 * leaves the map its full height.
 	 */
@@ -1806,7 +1885,8 @@
 	.mw-map-footer,
 	.mw-map-footer__popover,
 	.mw-map-sheet,
-	.mw-map-panel {
+	.mw-map-panel,
+	.mw-map-menu {
 		background: var(--mw-material-glass-background);
 		border: 1px solid var(--mw-material-glass-border);
 		/*
@@ -2326,7 +2406,8 @@
 		.mw-map-footer,
 		.mw-map-footer__popover,
 		.mw-map-sheet,
-		.mw-map-panel {
+		.mw-map-panel,
+		.mw-map-menu {
 			background: var(--mw-material-glass-fallback-background);
 		}
 	}
@@ -2338,7 +2419,8 @@
 		.mw-map-footer,
 		.mw-map-footer__popover,
 		.mw-map-sheet,
-		.mw-map-panel {
+		.mw-map-panel,
+		.mw-map-menu {
 			background: var(--mw-material-glass-fallback-background);
 			-webkit-backdrop-filter: none;
 			backdrop-filter: none;

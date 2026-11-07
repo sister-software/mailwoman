@@ -21,6 +21,7 @@ import { CompareToggle } from "./CompareToggle.tsx"
 import { DebugInfo } from "./DebugInfo.tsx"
 import { MapChipRow } from "./MapChipRow.tsx"
 import { MapCompass } from "./MapCompass.tsx"
+import { MapContextMenu, MapContextMenuAction, useMapContextMenu } from "./MapContextMenu.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
 import { MapProgressBar } from "./MapProgressBar.tsx"
 import { MapSearchBar, SearchGlyph } from "./MapSearchBar.tsx"
@@ -410,6 +411,24 @@ export function GeocoderControls({
 
 	useMapLabelPick(map, pickLabel)
 
+	// The right-click menu.
+	// Its one built-in action searches the point itself.
+	// The runtime reads that query as a coordinate pair.
+	const contextMenu = useMapContextMenu(map)
+	const menuPoint = contextMenu.point
+
+	const searchMenuPoint = useCallback(() => {
+		if (!menuPoint) return
+
+		const [lon, lat] = menuPoint.lngLat
+		const text = `${lat.toFixed(6)}, ${lon.toFixed(6)}`
+
+		contextMenu.close()
+		geocode.setText(text)
+		geocode.reset()
+		runQuery(text)
+	}, [menuPoint, contextMenu, geocode, runQuery])
+
 	const chips = presets.map((preset) => ({ label: preset.label, value: preset.value }))
 	// The model download does not open the result panel.
 	// The progress bar reports it instead.
@@ -665,6 +684,13 @@ export function GeocoderControls({
 
 					{panels.developerExtras}
 				</MapSheet>
+			) : null}
+
+			{menuPoint ? (
+				<MapContextMenu point={menuPoint} onClose={contextMenu.close}>
+					{panels.contextMenu?.(menuPoint)}
+					<MapContextMenuAction onSelect={searchMenuPoint}>Search this point</MapContextMenuAction>
+				</MapContextMenu>
 			) : null}
 
 			{panels.footer}
