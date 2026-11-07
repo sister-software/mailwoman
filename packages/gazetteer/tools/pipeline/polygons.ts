@@ -338,9 +338,13 @@ export async function buildPolygonsDatabase(
 				const wikidata = properties?.["wof:concordances"]?.["wd:id"]
 				const linked = (wikidata ? wikidataLinks.get(String(wikidata)) : null)?.filter((place) => place !== id) ?? []
 
+				// A dependency states its parent in `wof:country` and its own code in
+				// `iso:country`: Puerto Rico holds US and PR.
+				const ownCode = properties?.["iso:country"] ?? properties?.["wof:country"]
+
 				const sameCountry =
-					COUNTRY_LEVEL_PLACETYPES.has(String(properties?.["wof:placetype"])) && properties?.["wof:country"]
-						? (countryPlaces.get(String(properties["wof:country"]))?.filter((place) => place !== id) ?? [])
+					COUNTRY_LEVEL_PLACETYPES.has(String(properties?.["wof:placetype"])) && ownCode
+						? (countryPlaces.get(String(ownCode))?.filter((place) => place !== id) ?? [])
 						: []
 
 				const held = gazetteerIDs.has(id)

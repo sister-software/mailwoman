@@ -45,6 +45,12 @@ describe("buildPolygonsDatabase", () => {
 		await writeLocalTextFile(record(7, SQUARE, { "wof:concordances": { "wd:id": "Q155" } }), repo("7.geojson"))
 		await writeLocalTextFile(record(8, SQUARE, { "wof:placetype": "country", "wof:country": "CD" }), repo("8.geojson"))
 
+		// A dependency states its parent's code in `wof:country` and its own in `iso:country`.
+		await writeLocalTextFile(
+			record(10, SQUARE, { "wof:placetype": "dependency", "wof:country": "US", "iso:country": "PR" }),
+			repo("10.geojson")
+		)
+
 		const candidatePath = directory.path("candidate.db")
 
 		{
@@ -55,9 +61,9 @@ describe("buildPolygonsDatabase", () => {
 				 CREATE TABLE country_codes (id INTEGER, code TEXT);
 				 CREATE TABLE candidate (spr_id INTEGER, placetype_id INTEGER, country_id INTEGER);
 				 INSERT INTO placetype_codes VALUES (1, 'locality'), (2, 'country');
-				 INSERT INTO country_codes VALUES (1, 'GB'), (2, 'CD');
+				 INSERT INTO country_codes VALUES (1, 'GB'), (2, 'CD'), (3, 'PR');
 				 INSERT INTO candidate (spr_id, placetype_id, country_id) VALUES
-				   (1, 1, 1), (1, 1, 1), (2, 1, 1), (3, 1, 1), (5, 1, 1), (6, 1, 1), (9000, 1, 1), (9001, 2, 2);`
+				   (1, 1, 1), (1, 1, 1), (2, 1, 1), (3, 1, 1), (5, 1, 1), (6, 1, 1), (9000, 1, 1), (9001, 2, 2), (9002, 2, 3);`
 			)
 		}
 
@@ -87,10 +93,10 @@ describe("buildPolygonsDatabase", () => {
 		})
 
 		expect(counts).toMatchObject({
-			read: 8,
+			read: 9,
 			kept: 2,
 			linkedByWikidata: 1,
-			linkedByCountryCode: 1,
+			linkedByCountryCode: 2,
 			coarsened: 0,
 			superseded: 1,
 			deprecated: 1,
@@ -101,7 +107,7 @@ describe("buildPolygonsDatabase", () => {
 		using built = new DatabaseClient<PolygonDatabase>(out, { readOnly: true })
 		const rows = built.prepare("SELECT id FROM polygons ORDER BY id").all() as Array<{ id: number }>
 
-		expect(rows.map(({ id }) => id)).toEqual([1, 6, 9000, 9001])
+		expect(rows.map(({ id }) => id)).toEqual([1, 6, 9000, 9001, 9002])
 	})
 
 	it("coarsens a boundary until it fits the size limit, and counts it", async () => {

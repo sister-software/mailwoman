@@ -24,6 +24,12 @@ export interface WOFBaseProperties {
 	"wof:superseded_by"?: number[]
 	"wof:supersedes"?: number[]
 	"wof:country"?: string
+	/**
+	 * The place's own ISO 3166-1 code.
+	 *
+	 * A dependency holds its own code here and its parent's in `wof:country`.
+	 */
+	"iso:country"?: string
 	"wof:concordances"?: Record<string, string | number>
 	/**
 	 * Every ancestor chain the place belongs to, coarsest key
