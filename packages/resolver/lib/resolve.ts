@@ -66,6 +66,7 @@ import {
 	applyStreetAsTown,
 	applyVenueAsTown,
 } from "#resolve/region-city"
+import { applyWholeInputPlace } from "#resolve/whole-input"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street/tier"
 import {
 	type CapitalLevelFn,
@@ -262,6 +263,15 @@ class WOFResolver implements Resolver {
 
 		if (opts.landmarks) {
 			await applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.landmarks)
+		}
+
+		if (opts.adminCoherence) {
+			await applyWholeInputPlace(
+				newRoots,
+				opts.writtenInput ?? tree.raw,
+				this.#backend,
+				isCallerScope(state.defaultCountry) ? state.defaultCountry!.country : null
+			)
 		}
 
 		// The postcode and rooftop passes hold a locality to the same distance from their point.
