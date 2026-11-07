@@ -10,51 +10,25 @@
  *   list. The directory contents form the recipe. The next build includes any clone, whether or not someone declared
  *   it. A declaration without a clone will produce no coverage.
  *
- *   Two layouts can coexist. A repository present in both can represent two independent checkouts or one checkout
- *   reached through a symlink. The audit distinguishes these cases instead of counting paths. Only independent copies
- *   can diverge. If one copy is pulled and the other remains unchanged, filesystem enumeration order decides which
- *   value is ingested. `verifyAdmin` tests floors and cannot detect that conflict. A symlink alias points to one
- *   physical copy, so it cannot diverge. A risk estimate that combines aliases and separate checkouts would be wrong.
+ *   Every clone sits directly under the root at `<root>/<name>`. Any other directory there is a stray: the ingest's
+ *   glob reads its GeoJSON as well, so a second copy of a repository inside a stray makes the ingested value depend on
+ *   filesystem enumeration order. The audit lists strays so a sync or a build log can say so.
  */
 
-import { entryLeadsToDirectory, pathExists, realPath } from "@mailwoman/core/fs/readers/stat"
+import { entryLeadsToDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { gitSync } from "@mailwoman/core/git"
 import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-/**
- * Where a clone sits relative to the repos root.
- */
-export const CloneLayout = {
-	/**
-	 * `<root>/<name>`.
-	 */
-	Flat: "flat",
-	/**
-	 * `<root>/<owner>/<name>`, the layout `gazetteer inspect sync` writes.
-	 */
-	Nested: "nested",
-} as const
-
-export type CloneLayout = (typeof CloneLayout)[keyof typeof CloneLayout]
+import { PLACETYPES_REPO } from "#whosonfirst/placetypes/Placetype"
 
 export interface ClonedRepo {
 	name: string
-	layouts: CloneLayout[]
 	/**
-	 * True when the layouts resolve to the same directory through a symlink rather than a second checkout.
-	 *
-	 * The ingest skips the alias.
-	 * One physical directory cannot diverge from itself.
+	 * `head` of the checkout, or `null` for a directory that is not a git checkout
+	 * or when commits were not read.
 	 */
-	aliased: boolean
-	/**
-	 * `head` per layout, so a duplicate can be reported as same-commit or diverged
-	 * rather than merely as duplicated.
-	 *
-	 * Absent for a directory that is not a git checkout.
-	 */
-	commits: Partial<Record<CloneLayout, string>>
+	commit: string | null
 	/**
 	 * The ISO-2 country the repo name encodes, or `undefined` for a repo with no
 	 * country (`whosonfirst-placetypes`).
@@ -67,25 +41,17 @@ export interface ReposAudit {
 	root: PathBuilderLike
 	repos: ClonedRepo[]
 	/**
-	 * Repos present in both layouts as independent checkouts.
-	 *
-	 * Reported separately because the count is the finding.
+	 * Directories under the root that are not a repository clone, by name.
 	 */
-	duplicated: ClonedRepo[]
+	strays: string[]
 	/**
-	 * Repos reachable through both layouts via a symlink, one physical copy.
+	 * Symbolic links under the root, by name, whether or not they resolve.
 	 *
-	 * The ingest skips the symlinked layout.
-	 * The physical directory cannot diverge like a duplicated checkout in {@link ReposAudit.duplicated}.
+	 * The sync never creates one.
+	 * The admin ingest does not follow links, so a build omits a repository that
+	 * is reachable only through one.
 	 */
-	aliased: ClonedRepo[]
-	/**
-	 * Duplicated repos whose two copies are at different commits, the state
-	 * where the ingest's result depends on enumeration order.
-	 *
-	 * Empty is the good case and is reported as such.
-	 */
-	diverged: ClonedRepo[]
+	links: string[]
 }
 
 const REPO_NAME = /^whosonfirst-(?:data|external)-(?<theme>[a-z]+(?:-[a-z]+)*?)-(?<country>[a-z]{2})$/
@@ -99,6 +65,19 @@ export function parseRepoName(name: string): { theme?: string; country?: string 
 	if (!match?.groups) return {}
 
 	return { theme: match.groups["theme"], country: match.groups["country"]?.toUpperCase() }
+}
+
+/**
+ * Any repository in the two Who's On First data organizations, including those with
+ * no country code, such as `whosonfirst-data-admin-alt`.
+ */
+const DATA_REPO_NAME = /^whosonfirst-(?:data|external)-[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+/**
+ * Whether a directory under the repos root, given by its name, is a Who's On First repository clone.
+ */
+export function isRepositoryDirectory(name: string): boolean {
+	return DATA_REPO_NAME.test(name) || name === PLACETYPES_REPO.name
 }
 
 /**
@@ -116,99 +95,44 @@ function headOf(dir: PathBuilder): string | null {
 }
 
 /**
- * Walk the repos root and report every clone, its layout(s) and its vintage.
- *
- * The audit examines two levels because repositories use two layouts:
- * directly under the root or under an owner directory.
- * Paths below that level belong to a repo's own contents.
+ * Walk the repos root and report every clone, its vintage, and every directory that is not a clone.
  */
 export async function auditReposRoot(
 	root: PathBuilderLike,
 	options: { readCommits?: boolean } = {}
 ): Promise<ReposAudit> {
-	const byName = new Map<string, ClonedRepo>()
+	if (!(await pathExists(root))) return { root, repos: [], strays: [], links: [] }
 
-	const realPaths = new Map<string, string[]>()
-
-	const record = async (name: string, layout: CloneLayout, dir: PathBuilder): Promise<void> => {
-		const existing = byName.get(name) ?? { name, layouts: [], commits: {}, aliased: false, ...parseRepoName(name) }
-
-		existing.layouts.push(layout)
-
-		// `realpath` is what separates a second checkout from a second path to the first.
-		// Directory listings cannot distinguish the cases because both shapes look identical from `ls`.
-		try {
-			realPaths.set(name, [...(realPaths.get(name) ?? []), await realPath(dir)])
-		} catch {
-			// Unresolvable (a broken link).
-			// Left out of the alias comparison rather than guessed at.
-		}
-
-		if (options.readCommits !== false) {
-			const head = headOf(dir)
-
-			if (head) {
-				existing.commits[layout] = head
-			}
-		}
-
-		byName.set(name, existing)
-	}
-
-	if (!(await pathExists(root))) {
-		return {
-			root,
-			repos: [],
-			duplicated: [],
-			aliased: [],
-			diverged: [],
-		}
-	}
+	const repos: ClonedRepo[] = []
+	const strays: string[] = []
+	const links: string[] = []
 
 	for await (const entry of Globerator.from("*", { cwd: root, withFileTypes: true, onlyFiles: false })) {
-		const full = resolvePathBuilder(root, entry.name)
-
-		if (!(await entryLeadsToDirectory(entry))) continue
-
-		if (entry.name.startsWith("whosonfirst-data-") || entry.name.startsWith("whosonfirst-external-")) {
-			await record(entry.name, CloneLayout.Flat, full)
+		// Checked before resolving the entry: a link that points at itself makes the resolution throw `ELOOP`.
+		if (entry.isSymbolicLink()) {
+			links.push(entry.name)
 
 			continue
 		}
 
-		// An owner directory whose children are the nested layout.
-		// A name that is itself a repo was handled above.
-		for await (const child of Globerator.from("*", { cwd: full, withFileTypes: true, onlyFiles: false })) {
-			const childPath = full(child.name)
+		if (!(await entryLeadsToDirectory(entry))) continue
 
-			if (child.name.startsWith("whosonfirst-") && (await entryLeadsToDirectory(child))) {
-				await record(child.name, CloneLayout.Nested, childPath)
-			}
+		if (!isRepositoryDirectory(entry.name)) {
+			strays.push(entry.name)
+
+			continue
 		}
+
+		const commit = options.readCommits === false ? null : headOf(resolvePathBuilder(root, entry.name))
+
+		repos.push({ name: entry.name, commit, ...parseRepoName(entry.name) })
 	}
-
-	for (const [name, paths] of realPaths) {
-		const repo = byName.get(name)
-
-		if (repo && paths.length > 1 && new Set(paths).size === 1) {
-			repo.aliased = true
-		}
-	}
-
-	const repos = [...byName.values()].toSorted((a, b) => a.name.localeCompare(b.name))
-	const multiPath = repos.filter((repo) => repo.layouts.length > 1)
-	const duplicated = multiPath.filter((repo) => !repo.aliased)
 
 	return {
 		root,
-		repos,
-		duplicated,
-		aliased: multiPath.filter((repo) => repo.aliased),
-		diverged: duplicated.filter((repo) => {
-			const commits = Object.values(repo.commits)
-
-			return commits.length > 1 && new Set(commits).size > 1
-		}),
+		repos: repos.toSorted((a, b) => a.name.localeCompare(b.name)),
+		strays: strays.toSorted(),
+		links: links.toSorted(),
 	}
 }
 
@@ -224,18 +148,18 @@ export function clonedCountries(audit: ReposAudit): string[] {
  */
 export function reposSentence(audit: ReposAudit): string {
 	const countries = clonedCountries(audit)
+	const { links, strays } = audit
 
 	return (
 		`${audit.repos.length} ${audit.repos.length === 1 ? "repository" : "repositories"} cloned, covering ` +
-		`${countries.length} ${countries.length === 1 ? "country" : "countries"}` +
-		`${audit.duplicated.length ? `; ${audit.duplicated.length} checked out TWICE` : "; none checked out twice"}` +
-		`${
-			audit.duplicated.length
-				? audit.diverged.length
-					? `, ${audit.diverged.length} at DIFFERENT commits — the ingest's result depends on enumeration order`
-					: ", at identical commits, so the cost is read time and disk"
-				: ""
-		}` +
-		`${audit.aliased.length ? `; ${audit.aliased.length} symlinked into the other layout (ingested through the direct path once)` : ""}.`
+		`${countries.length} ${countries.length === 1 ? "country" : "countries"}; ` +
+		(strays.length
+			? `${strays.length} other ${strays.length === 1 ? "directory" : "directories"} under the root ` +
+				`(${strays.join(", ")}), whose GeoJSON the admin ingest also reads`
+			: "every directory under the root is a repository clone") +
+		(links.length
+			? `; ${links.length} symbolic ${links.length === 1 ? "link" : "links"} (${links.join(", ")}), ` +
+				"which the admin ingest does not follow."
+			: ".")
 	)
 }

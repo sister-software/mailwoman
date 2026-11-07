@@ -6,11 +6,11 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { prepareRepositoryDirectories, type RepositorySource } from "@mailwoman/core/resources/git"
-import type { PathBuilder } from "path-ts"
+import { resolvePath, type PathBuilder } from "path-ts"
 import { parallelMap } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
+import { resolveWOFRepo } from "#whosonfirst/extract-repo"
 import {
 	normalizePlacetypeDefinition,
 	type PlacetypeDefinition,
@@ -20,13 +20,15 @@ import {
 } from "#whosonfirst/placetypes/definition"
 
 /**
- * Upstream Who's On First placetypes repository the local definitions are generated from.
+ * The Who's On First placetypes repository the local definitions are generated from.
+ *
+ * It is cloned beside the country data repositories, from its `mailwoman` fork.
+ * Its upstream lives in the `whosonfirst` organization rather than `whosonfirst-data`.
  */
-export const PLACETYPES_REPO_SOURCE = {
-	url: "https://github.com/whosonfirst/whosonfirst-placetypes.git",
-	owner: "whosonfirst",
+export const PLACETYPES_REPO = {
 	name: "whosonfirst-placetypes",
-} as const satisfies RepositorySource
+	upstreamOwner: "whosonfirst",
+} as const
 
 interface PlacetypeServiceInit {
 	batchSize: number
@@ -71,12 +73,12 @@ export class Placetype implements Disposable {
 	// #region Static Methods
 
 	static async prepare({ batchSize, localRepoDirectory }: PlacetypeServiceInit) {
-		const { repoDirectory, exists } = await prepareRepositoryDirectories(PLACETYPES_REPO_SOURCE, localRepoDirectory)
+		const repoDirectory = await resolveWOFRepo(localRepoDirectory, PLACETYPES_REPO.name)
 
-		if (!exists) return
+		if (!repoDirectory) return
 
 		const definitionPaths = Globerator.from("*.json", {
-			cwd: repoDirectory("placetypes"),
+			cwd: resolvePath(repoDirectory, "placetypes"),
 			absolute: true,
 		})
 

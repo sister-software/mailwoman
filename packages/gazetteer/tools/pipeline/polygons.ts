@@ -268,7 +268,7 @@ export async function buildPolygonsDatabase(
 	options: BuildPolygonsOptions = {}
 ): Promise<{ out: string; counts: PolygonBuildCounts }> {
 	const out = String(PathBuilder.from(options.out ?? wofDatabasePath("wof-polygons.db")))
-	const reposDir = options.reposDir ?? wofReposPath("whosonfirst-data")
+	const reposDir = options.reposDir ?? wofReposPath
 	const tolerance = options.tolerance ?? DEFAULT_TOLERANCE_DEGREES
 	const candidatePath = options.candidatePath ?? wofDatabasePath("candidate.db")
 	const gazetteerIDs = readGazetteerIDs(candidatePath)

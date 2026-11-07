@@ -201,11 +201,6 @@
 			"node": "./lib/resources/languages.ts",
 			"default": "./out/resources/languages.js"
 		},
-		"./resources/git": {
-			"types": "./out/resources/git.d.ts",
-			"node": "./lib/resources/git.ts",
-			"default": "./out/resources/git.js"
-		},
 		"./resources/languages/types.gen": {
 			"types": "./out/resources/languages/types.gen.d.ts",
 			"node": "./lib/resources/languages/types.gen.ts",

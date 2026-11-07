@@ -22,9 +22,9 @@ export const provenanceTool = (_deps: DevToolDeps): DevTool => ({
 		"and a confident answer. Reports per artifact: size, mtime, symlink target (`candidate.db` is a POINTER " +
 		"that `gazetteer promote` swaps, so the target name carries the build's identity), and whether it is " +
 		"SEALED — an owner-writable database is mid-build or one a verify check refused, and must not be graded " +
-		"against. Also reports each WOF repo's origin, vintage and shallowness from the `repos-sync` stamp, plus " +
-		"the last admin build-log entries. READ-ONLY: the repairs are `gazetteer repos-sync` and `gazetteer " +
-		"inspect sync`, opt-in because they change what the next build ingests. An absent repo stamp is reported " +
+		"against. Also reports each WOF repo's origin, vintage and shallowness from the stamp `gazetteer inspect " +
+		"sync` writes, plus the last admin build-log entries. READ-ONLY: the repair is `gazetteer inspect sync`, " +
+		"which the operator runs because it changes what the next build ingests. An absent repo stamp is reported " +
 		"as ABSENT, never as 'current'.",
 	inputSchema: z.object({
 		extra: z

@@ -18,11 +18,10 @@ import { WOF_DATA_OWNER, wofRepoName } from "@mailwoman/gazetteer/whosonfirst"
 export const WOF_REPO_OWNER = WOF_DATA_OWNER
 
 /**
- * Repository details returned by `gh repo list`.
+ * Repository details returned by `gh repo list` for the upstream organization.
  */
 export interface DiscoveredRepo {
 	name: string
-	url: string
 	/**
 	 * GitHub's packed repository size in KB.
 	 * A checkout can be much larger.
@@ -74,6 +73,12 @@ export interface SelectReposOptions {
 	 * Selects every repository when no other filter is set.
 	 */
 	all?: boolean
+	/**
+	 * Names of the repositories already cloned under the root.
+	 *
+	 * Every one is selected, so a sync with no filter refreshes the clones that exist.
+	 */
+	cloned?: readonly string[]
 }
 
 /**
@@ -113,9 +118,12 @@ function totalKB(entries: readonly DiscoveredRepo[]): number {
 }
 
 /**
- * Selects discovered repositories by name, country or `all`.
+ * Selects the repositories already cloned, plus discovered repositories by name, country or `all`.
  *
- * It throws a descriptive error for an unknown name, an unknown country or a missing filter.
+ * A cloned repository missing from the discovery, such as one upstream archived,
+ * is still selected, so its clone keeps being refreshed from its fork.
+ * It throws a descriptive error for an unknown name, an unknown country,
+ * or a sync with no filter and no clones.
  */
 export function selectRepos(discovered: readonly DiscoveredRepo[], options: SelectReposOptions): RepoSelection {
 	const byName = new Map(discovered.map((entry) => [entry.name, entry]))
@@ -152,20 +160,23 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		}
 	}
 
-	if (!wanted.size) {
-		if (!options.all) {
-			throw new CommandError(
-				`No --repos or --countries filter. Syncing all of ${WOF_REPO_OWNER} means ` +
-					`${discovered.length} repositories, ${ByteFormatter.formatSI(totalKB(discovered) * 1024)} as GitHub ` +
-					`reports them — several times that once checked out. Pass --all to confirm, or narrow the sync.`
-			)
-		}
+	const cloned = options.cloned ?? []
 
-		return { selected: [...discovered], totalDiskUsageKB: totalKB(discovered) }
+	if (!wanted.size && !options.all && !cloned.length) {
+		throw new CommandError(
+			`Nothing is cloned yet, and there is no --repos or --countries filter. Syncing all of ${WOF_REPO_OWNER} means ` +
+				`${discovered.length} repositories, ${ByteFormatter.formatSI(totalKB(discovered) * 1024)} as GitHub ` +
+				`reports them — several times that once checked out. Pass --all to confirm, or narrow the sync.`
+		)
 	}
 
-	// The selection keeps discovery order so that plans are stable.
-	const selected = discovered.filter((entry) => wanted.has(entry.name))
+	// The selection keeps discovery order so that plans are stable, then appends clones discovery did not list.
+	const named = options.all
+		? [...discovered]
+		: discovered.filter((entry) => wanted.has(entry.name) || cloned.includes(entry.name))
+
+	const listed = new Set(named.map((entry) => entry.name))
+	const selected = [...named, ...cloned.filter((name) => !listed.has(name)).map((name) => ({ name }))]
 
 	return { selected, totalDiskUsageKB: totalKB(selected) }
 }

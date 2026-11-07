@@ -10,7 +10,9 @@ that was error-prone in the v0.5.2/v0.5.3 sessions (forgot importance step, stal
 
 ## Prerequisites
 
-- WOF GeoJSON repos cloned to `$MAILWOMAN_DATA_ROOT/src/wof-repos/` (or `$WOF_REPOS_DIR`)
+- WOF GeoJSON repos cloned to `$MAILWOMAN_DATA_ROOT/src/wof-repos/<name>` by `mailwoman gazetteer inspect sync`, which
+  clones each from its `mailwoman` fork and refreshes the clones already there. Leave every clone there to that command:
+  the admin ingest globs the whole directory, so a hand-made copy changes what a build reads.
 - WOF admin SQLite at `$MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db` (or `$WOF_ADMIN_DB`)
 - Compiled workspace: `yarn compile`
 
