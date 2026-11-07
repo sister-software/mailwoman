@@ -147,7 +147,7 @@ describe("readStreetFromTable", () => {
 		expect(byPostcode).toMatchObject({ name: "Stryd Fawr", basis: "postcode", alternatives: [] })
 	})
 
-	it("answers nothing when a postcode's point sits far from every street of that name", async () => {
+	it("falls through to the place and reports the disagreement when a postcode reaches no street", async () => {
 		await using directory = await temporaryDirectory("streets-")
 		const { db, lookup } = await buildFixture(directory)
 
@@ -159,6 +159,10 @@ describe("readStreetFromTable", () => {
 				places: [{ id: 1, lat: 51.05, lon: -2.95 }],
 				postcodePoint: { lat: 40, lon: -2.95 },
 			})
+		).toMatchObject({ name: "High Street", basis: "place", postcodeDisagrees: true })
+
+		expect(
+			await readStreetFromTable(lookup, { street: "High Street", places: [], postcodePoint: { lat: 40, lon: -2.95 } })
 		).toBeNull()
 	})
 

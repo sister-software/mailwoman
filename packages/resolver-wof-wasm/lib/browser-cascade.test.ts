@@ -72,11 +72,13 @@ describe("statedStreetScope", () => {
 					node("venue", "wof:7"),
 					node("locality", "wikidata:Q1"),
 					node("locality", null),
+					node("postcode", "wof:9700000188925"),
 				],
 			}),
 		])
 
 		expect(scope.places.map(({ id }) => id)).toEqual([85_786_019, 1_175_612_699])
+		expect(scope.postcodePoint).toEqual({ lat: 51, lon: -2 })
 		expect(scope.country).toBe("GB")
 	})
 })

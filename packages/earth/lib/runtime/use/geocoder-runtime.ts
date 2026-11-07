@@ -717,7 +717,7 @@ export function useGeocoderRuntime({
 
 			// A street without a state reads the data for the country the address resolved to.
 			// A country with a national extract reads it, and every other country reads the street table.
-			const { places, country } = statedStreetScope(resolvedRoots)
+			const { places, country, postcodePoint: statedPostcodePoint } = statedStreetScope(resolvedRoots)
 			const nationalSlug = country?.toLowerCase()
 			let tableAnswer: StreetTableAnswer | null = null
 			let streetNote: string | null = null
@@ -727,13 +727,15 @@ export function useGeocoderRuntime({
 					streetResolution = await readExtract(nationalSlug)
 					streetNote = `searched the ${nationalSlug} street data`
 				} else {
+					// The gazetteer's postcode answers first, and the release's postcode binaries cover the rest.
 					const postcodePoint =
-						postcodeNode?.value && assets?.anchorLookup
+						statedPostcodePoint ??
+						(postcodeNode?.value && assets?.anchorLookup
 							? postcodeCentroidFor(
 									assets.anchorLookup,
 									postcodeFallbackKeys(String(postcodeNode.value), input, knownFormats)
 								)
-							: null
+							: null)
 
 					try {
 						tableAnswer = await readStreetFromTable(new RemoteStreetTable(config.landmarkAPIURL), {
@@ -745,13 +747,15 @@ export function useGeocoderRuntime({
 						console.warn(`The street table did not answer for "${streetValue}"`, error)
 					}
 
-					streetNote = tableAnswer
-						? tableAnswer.alternatives.length
-							? `${tableAnswer.alternatives.length} other streets could match`
-							: null
-						: postcodePoint
+					streetNote = !tableAnswer
+						? postcodePoint
 							? "no street of this name near the postcode"
 							: "searched the street table"
+						: tableAnswer.postcodeDisagrees
+							? "this street sits far from the stated postcode"
+							: tableAnswer.alternatives.length
+								? `${tableAnswer.alternatives.length} other streets could match`
+								: null
 				}
 			} else if (stateSlug && !HOSTED_STREET_SLUGS.has(stateSlug)) {
 				streetNote = "no street data for this region"

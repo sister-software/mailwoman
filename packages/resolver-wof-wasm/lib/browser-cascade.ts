@@ -239,10 +239,12 @@ export function resolvedSpanResults(roots: readonly AddressNode[]): ComponentMat
 const STREET_PLACE_TAGS: readonly string[] = ["dependent_locality", "locality"]
 
 /**
- * Reads what a resolved tree states about where its street is: the places deepest first, and the country.
+ * Reads what a resolved tree states about where its street is: the places deepest first,
+ * the postcode's point when the gazetteer holds that postcode, and the country.
  */
 export function statedStreetScope(roots: readonly AddressNode[]): {
 	places: Array<{ id: number; lat: number; lon: number }>
+	postcodePoint: { lat: number; lon: number } | null
 	country: string | null
 } {
 	const nodes = [...walkNodes([...roots])]
@@ -256,8 +258,13 @@ export function statedStreetScope(roots: readonly AddressNode[]): {
 	})
 
 	const country = nodes.map((node) => node.metadata?.["resolver_country"]).find((code) => typeof code === "string")
+	const postcode = nodes.find((node) => node.tag === "postcode" && node.lat != null && node.lon != null)
 
-	return { places, country: typeof country === "string" ? country : null }
+	return {
+		places,
+		postcodePoint: postcode ? { lat: postcode.lat!, lon: postcode.lon! } : null,
+		country: typeof country === "string" ? country : null,
+	}
 }
 
 /**

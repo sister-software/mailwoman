@@ -118,11 +118,14 @@ export interface StreetTableAnswer {
 	 * A non-empty list marks the answer as ambiguous.
 	 */
 	alternatives: StreetTableHit[]
+	/**
+	 * True when the address states a postcode and no street of this name lies within reach of its point.
+	 */
+	postcodeDisagrees: boolean
 }
 
 /**
  * How far a postcode's point may sit from a street the same address states.
- * A street farther away contradicts the postcode.
  */
 const POSTCODE_REACH_METERS = 2000
 
@@ -131,20 +134,26 @@ const POSTCODE_REACH_METERS = 2000
  */
 const PLACE_REACH_METERS = 5000
 
-const answerFrom = (ranked: StreetTableHit[], basis: StreetTableAnswer["basis"]): StreetTableAnswer | null => {
+const answerFrom = (
+	ranked: StreetTableHit[],
+	basis: StreetTableAnswer["basis"],
+	postcodeDisagrees = false
+): StreetTableAnswer | null => {
 	const [best, ...alternatives] = ranked
 
-	return best ? { lat: best.lat, lon: best.lon, name: best.name, meters: best.meters, basis, alternatives } : null
+	return best
+		? { lat: best.lat, lon: best.lon, name: best.name, meters: best.meters, basis, alternatives, postcodeDisagrees }
+		: null
 }
 
 /**
  * Chooses a street from the table's rows.
  *
  * A postcode's point decides first, because it locates the address directly.
- * A stated postcode that no street of this name reaches answers null rather than a namesake elsewhere.
+ * A postcode can cover an area wider than its reach, so a postcode no street reaches
+ * falls through to the stated places and the answer reports the disagreement.
  *
- * Without a postcode, each stated place is tried deepest first, ranking its rows
- * by distance from the place's own point.
+ * Each stated place is tried deepest first, ranking its rows by distance from the place's own point.
  */
 export async function readStreetFromTable(
 	lookup: StreetTableLookup,
@@ -155,8 +164,12 @@ export async function readStreetFromTable(
 	if (postcodePoint) {
 		const near = { ...postcodePoint, radiusM: POSTCODE_REACH_METERS }
 
-		return answerFrom(await lookup.findStreets({ street, near }), "postcode")
+		const answer = answerFrom(await lookup.findStreets({ street, near }), "postcode")
+
+		if (answer) return answer
 	}
+
+	const postcodeDisagrees = Boolean(postcodePoint)
 
 	for (const place of places) {
 		const hits = await lookup.findStreets({ street, places: [place.id] })
@@ -166,14 +179,15 @@ export async function readStreetFromTable(
 
 			return answerFrom(
 				hits.toSorted((a, b) => distance(a) - distance(b)),
-				"place"
+				"place",
+				postcodeDisagrees
 			)
 		}
 	}
 
 	for (const place of places) {
 		const near = { lat: place.lat, lon: place.lon, radiusM: PLACE_REACH_METERS }
-		const answer = answerFrom(await lookup.findStreets({ street, near }), "near_place")
+		const answer = answerFrom(await lookup.findStreets({ street, near }), "near_place", postcodeDisagrees)
 
 		if (answer) return answer
 	}
