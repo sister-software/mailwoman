@@ -1,15 +1,16 @@
 ---
 title: What ships today
-description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 10.8.0.
+description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 11.0.0.
 role: reference
 source-of-truth: package.json versions + `mailwoman doctor` + the eval ledger at evals/scores-by-version.json
 ---
 
 # What ships today
 
-:::info[Verified as of release 10.8.0, model 10.8.0]
+:::info[Verified as of release 11.0.0, model 10.8.0]
 
-The `model.onnx` and `tokenizer.model` sizes were measured on 2026-11-04 against the 10.8.0 artifacts. The package
+Release 11.0.0 ships the 10.8.0 model unchanged, and its `model.onnx` md5 `e711a725a1b1fd5d959d6f27f17b911a` was read from the
+published tarball on 2026-11-07. The `model.onnx` and `tokenizer.model` sizes were measured on 2026-11-04 against the 10.8.0 artifacts. The package
 total below is computed from the published 10.6.0 tarball's figures with those two files replaced, so it leaves out
 the size change of the model card and the rights records. 10.8.0 ships 10.7.0's FSTs, pair indexes, postcode tables
 and lexicons. The release process refuses to publish if the model version in this box is older than the model the
@@ -36,7 +37,7 @@ weights package version therefore follows the release instead of the model's own
 
 | Fact                | Value                                                                 |
 | ------------------- | --------------------------------------------------------------------- |
-| Release             | `10.8.0`                                                              |
+| Release             | `11.0.0`                                                              |
 | Model version       | `10.8.0` — the Latin base, v8.6.3 seed 42 step 90,000                 |
 | Node floor          | `>=24.18.0` (the `engines` field on the `mailwoman` entry package)    |
 | Module format       | ESM only                                                              |
