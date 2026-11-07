@@ -14,8 +14,10 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/address/record"
 import {
 	canonicalizeRouteKey,
+	normalizeHouseNumberForKey,
 	normalizeLocalityForKey,
-	normalizeStreetForKey,
+	normalizeStreetForKeyLocale,
+	type StreetLocale,
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
@@ -62,17 +64,24 @@ export function openAddressesRunCountry(member: string): string {
  * and `DISTRICT` the subregion, since US runs fill it with a county or borough.
  * The publisher's `ID`, then the run's `HASH`, identifies the point, and a row with
  * neither takes a digest of its number, street and position.
+ *
+ * @param streetLocale The locale the street and house number keys are folded under.
+ * The address layer's reader must fold a query for this country under the same locale.
  */
-export function openAddressesAddressRecord(row: OpenAddressesRunRecord, member: string): AddressRecord | null {
+export function openAddressesAddressRecord(
+	row: OpenAddressesRunRecord,
+	member: string,
+	streetLocale: StreetLocale
+): AddressRecord | null {
 	const country = openAddressesRunCountry(member)
-	const number = row.number?.trim().toLowerCase()
+	const number = row.number?.trim() ? normalizeHouseNumberForKey(row.number, streetLocale) : null
 	const street = row.street?.trim()
 	const lat = row.lat?.trim() ? Number(row.lat) : Number.NaN
 	const lon = row.lon?.trim() ? Number(row.lon) : Number.NaN
 
 	if (!number || !street || !Number.isFinite(lat) || !Number.isFinite(lon)) return null
 
-	const streetKey = normalizeStreetForKey(street)
+	const streetKey = normalizeStreetForKeyLocale(street, streetLocale)
 
 	if (!streetKey) return null
 
@@ -106,6 +115,7 @@ export function openAddressesAddressRecord(row: OpenAddressesRunRecord, member: 
 		routeKey: canonicalizeRouteKey(streetKey),
 		postcode: row.postcode?.trim() || null,
 		names,
+		adminCode: null,
 		lat,
 		lon,
 		placement: null,
@@ -117,15 +127,17 @@ export function openAddressesAddressRecord(row: OpenAddressesRunRecord, member: 
  * Streams the address records of one extracted OpenAddresses run CSV, skipping rows the record refuses.
  *
  * @param member The run's member path, such as `us/wi/statewide`, which supplies the source id and country.
+ * @param streetLocale The locale {@link openAddressesAddressRecord} folds keys under.
  */
 export async function* readOpenAddressesRunRecords(
 	csvPath: PathBuilderLike,
-	member: string
+	member: string,
+	streetLocale: StreetLocale
 ): AsyncGenerator<AddressRecord> {
 	const rows = CSVSpliterator.fromAsync<OpenAddressesRunRecord>(csvPath.toString(), { normalizeKeys: true })
 
 	for await (const row of rows) {
-		const record = openAddressesAddressRecord(row, member)
+		const record = openAddressesAddressRecord(row, member, streetLocale)
 
 		if (record) {
 			yield record

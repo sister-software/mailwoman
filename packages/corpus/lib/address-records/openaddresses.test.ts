@@ -5,6 +5,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -47,7 +48,7 @@ describe("OpenAddresses address records", () => {
 
 		await writeLocalTextFile(RUN_CSV, csv)
 
-		const records = await Array.fromAsync(readOpenAddressesRunRecords(csv, "us/wi/statewide"))
+		const records = await Array.fromAsync(readOpenAddressesRunRecords(csv, "us/wi/statewide", "us"))
 
 		expect(records).toHaveLength(7)
 		expect(new Set(records.map((record) => record.source))).toEqual(new Set(["openaddresses:us/wi/statewide"]))
@@ -71,7 +72,8 @@ describe("OpenAddresses address records", () => {
 				region: "WI",
 				hash: "c1b2c3d4e5f60718",
 			},
-			"us/wi/statewide"
+			"us/wi/statewide",
+			"us"
 		)
 
 		expect(record?.postcode).toBeNull()
@@ -88,10 +90,12 @@ describe("OpenAddresses address records", () => {
 	it("derives no bare form outside a country with legal-form words, and digests a row without an id", () => {
 		const record = openAddressesAddressRecord(
 			{ lon: "13.4050", lat: "52.5200", number: "1", street: "Unter den Linden", city: "Berlin" },
-			"de/berlin"
+			"de/berlin",
+			"de"
 		)
 
 		expect(record?.names.map((name) => name.form)).toEqual(["written"])
+		expect(record?.streetKey).toBe(normalizeStreetForKeyLocale("Unter den Linden", "de"))
 		expect(record?.sourceRecordID).toMatch(/^digest:[0-9a-f]{12}$/u)
 	})
 })

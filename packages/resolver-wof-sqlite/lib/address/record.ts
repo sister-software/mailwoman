@@ -26,7 +26,8 @@ export const AddressNameForm = {
 	 */
 	Written: "written",
 	/**
-	 * The written municipality without its legal-form words, such as `Madison` from `Town of Madison`.
+	 * The written municipality without its legal-form words, such as `Madison` from `Town of Madison`,
+	 * or the city an arrondissement belongs to, such as `Paris` from `Paris 3e Arrondissement`.
 	 *
 	 * The per-source table of those words is data, never a branch in the adapter.
 	 */
@@ -95,6 +96,13 @@ export interface AddressRecord {
 	 * A level may hold several names, such as a municipality's written and bare forms.
 	 */
 	names: readonly AddressName[]
+	/**
+	 * The publisher's own code for the municipality, such as BAN's `code_insee` (`75103`),
+	 * or `null` when the publisher states none.
+	 *
+	 * The key-table build joins it to the Who's On First place that holds the same code.
+	 */
+	adminCode: string | null
 	lat: number
 	lon: number
 	/**

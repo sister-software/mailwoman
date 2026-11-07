@@ -119,6 +119,7 @@ export function nadAddressRecord(record: NADRecord): AddressRecord | null {
 		routeKey: canonicalizeRouteKey(streetKey),
 		postcode: record.Zip_Code?.trim() || null,
 		names: nadAddressNames(record),
+		adminCode: null,
 		lat,
 		lon,
 		placement: record.Placement?.trim() || null,
