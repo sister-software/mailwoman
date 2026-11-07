@@ -263,6 +263,15 @@ export function parsePointQuery(text: string): PointQuery | null {
 }
 
 /**
+ * A coordinate pair as text, latitude first, in the form {@link parsePointQuery} reads back.
+ *
+ * Six decimals place a point within about 11 cm.
+ */
+export function coordinatePairText(lat: number, lon: number, decimals = 6): string {
+	return `${lat.toFixed(decimals)}, ${lon.toFixed(decimals)}`
+}
+
+/**
  * The label a point query is shown under, such as the tag column of a parse.
  */
 export const POINT_QUERY_LABEL: Record<PointQuery["kind"], string> = {

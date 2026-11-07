@@ -6,7 +6,18 @@
 
 import { describe, expect, test } from "vitest"
 
-import { parsePointQuery } from "#point-query"
+import { coordinatePairText, parsePointQuery } from "#point-query"
+
+test("coordinatePairText writes the pair the parser reads back", () => {
+	expect(coordinatePairText(48.8584, 2.2945)).toBe("48.858400, 2.294500")
+
+	expect(parsePointQuery(coordinatePairText(-33.865, 151.21))).toEqual({
+		kind: "coordinates",
+		lat: -33.865,
+		lon: 151.21,
+		order: "lat_lon",
+	})
+})
 
 describe("parsePointQuery", () => {
 	test("reads decimal pairs latitude first, in every common spelling", () => {

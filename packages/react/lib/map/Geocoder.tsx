@@ -216,7 +216,8 @@ function GeocoderInner({
 					>
 						<GraticuleLayer beforeID={baseLayerID} />
 						<OverlayLayers overlays={runtime.overlays} beforeID={labelLayerID} />
-						<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
+						{/* A pinned place came from a click on the map, so the camera stays where the visitor put it. */}
+						<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera && !geocode.pinned} />
 						{panels.mapControls}
 					</MapCanvas>
 				) : null}

@@ -1681,6 +1681,63 @@
 	}
 
 	/*
+	 * The place card a map click opens: a glass strip across the bottom of the map, as the reference map apps
+	 * show, with the name on the left, the actions on the right and a close at the end. The phone rule below
+	 * moves it to the top, because the search drawer owns the bottom edge there.
+	 */
+	.mw-map-card {
+		position: absolute;
+		left: 50%;
+		bottom: calc(var(--mw-map-footer-height) + var(--mw-safe-area-bottom) + 1rem);
+		z-index: 4;
+		display: flex;
+		align-items: center;
+		gap: var(--ss-spacing-3);
+		box-sizing: border-box;
+		width: min(32rem, calc(100vw - 2rem));
+		padding: var(--ss-spacing-2) var(--ss-spacing-2) var(--ss-spacing-2) var(--ss-spacing-4);
+		border-radius: var(--ss-radius-global);
+		box-shadow: var(--mw-material-glass-shadow);
+		transform: translateX(-50%);
+	}
+
+	.mw-map-card__body {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.mw-map-card__title {
+		margin: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-family: var(--ss-font-family-heading);
+		font-size: var(--mw-font-size-body);
+		font-weight: var(--ss-font-weight-bold);
+		color: var(--ss-color-content);
+	}
+
+	.mw-map-card__line {
+		display: flex;
+		gap: var(--ss-spacing-2);
+		margin: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		font-size: var(--mw-font-size-caption);
+		color: var(--ss-color-content-secondary);
+	}
+
+	.mw-map-card__coords {
+		font-family: var(--ss-font-family-monospace);
+	}
+
+	.mw-map-card__actions {
+		display: flex;
+		flex: 0 0 auto;
+		gap: var(--ss-spacing-1);
+	}
+
+	/*
 	 * The right-click menu: a glass panel at the pointer, above every other surface, because it answers a
 	 * gesture on the map itself. Each row reads label, value, copy on one line, and the actions follow the rows.
 	 */
@@ -1849,6 +1906,15 @@
 			padding: calc(var(--ss-spacing-4) + var(--mw-safe-area-top)) var(--ss-spacing-4) var(--ss-spacing-4);
 		}
 
+		/* The search drawer owns the bottom edge, so the place card opens under the top safe area instead. */
+		.mw-map-card {
+			top: calc(1rem + var(--mw-safe-area-top));
+			bottom: auto;
+			width: calc(100vw - 6rem);
+			left: 1rem;
+			transform: none;
+		}
+
 		/* The chips take the full width on a phone, so the fade has less to hide behind. */
 		.mw-map-chiprow {
 			-webkit-mask-image: linear-gradient(to right, black calc(100% - 1.25rem), transparent);
@@ -1886,7 +1952,8 @@
 	.mw-map-footer__popover,
 	.mw-map-sheet,
 	.mw-map-panel,
-	.mw-map-menu {
+	.mw-map-menu,
+	.mw-map-card {
 		background: var(--mw-material-glass-background);
 		border: 1px solid var(--mw-material-glass-border);
 		/*
@@ -2407,7 +2474,8 @@
 		.mw-map-footer__popover,
 		.mw-map-sheet,
 		.mw-map-panel,
-		.mw-map-menu {
+		.mw-map-menu,
+		.mw-map-card {
 			background: var(--mw-material-glass-fallback-background);
 		}
 	}
@@ -2420,7 +2488,8 @@
 		.mw-map-footer__popover,
 		.mw-map-sheet,
 		.mw-map-panel,
-		.mw-map-menu {
+		.mw-map-menu,
+		.mw-map-card {
 			background: var(--mw-material-glass-fallback-background);
 			-webkit-backdrop-filter: none;
 			backdrop-filter: none;

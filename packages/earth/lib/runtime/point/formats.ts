@@ -11,6 +11,7 @@
 
 import type { MapContextMenuRowProps } from "@mailwoman/react/map"
 import { encodePlusCode } from "@mailwoman/spatial/open-location-code"
+import { coordinatePairText } from "@mailwoman/spatial/point-query"
 
 /**
  * The finest resolution H3 defines.
@@ -49,7 +50,7 @@ export async function describePoint(lat: number, lon: number, zoom: number): Pro
 	const formats: MapContextMenuRowProps[] = [
 		{
 			label: "Coordinates",
-			value: `${lat.toFixed(6)}, ${lon.toFixed(6)}`,
+			value: coordinatePairText(lat, lon),
 			hint: "Decimal degrees, latitude first",
 		},
 		{ label: "DMS", value: `${dms.lat} ${dms.lon}`, hint: "Degrees, minutes and seconds" },

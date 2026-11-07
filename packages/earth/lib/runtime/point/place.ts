@@ -14,7 +14,7 @@ import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/cl
 import type { MapBias } from "@mailwoman/react/map"
 import { cellBounds, cellRadiusMeters, type DegreeCell } from "@mailwoman/spatial/coordinate/cell"
 import { decodePlusCode, recoverNearestPlusCode } from "@mailwoman/spatial/open-location-code"
-import { POINT_QUERY_LABEL, type PointQuery } from "@mailwoman/spatial/point-query"
+import { coordinatePairText, POINT_QUERY_LABEL, type PointQuery } from "@mailwoman/spatial/point-query"
 
 /**
  * The `kindResult.kind` of a point result, so a renderer can tell it from a classified address.
@@ -91,7 +91,7 @@ export async function locatePointQuery(
 		case "coordinates":
 			return {
 				id: 0,
-				name: `${query.lat.toFixed(6)}, ${query.lon.toFixed(6)}`,
+				name: coordinatePairText(query.lat, query.lon),
 				placetype: POINT_QUERY_LABEL.coordinates,
 				lat: query.lat,
 				lon: query.lon,

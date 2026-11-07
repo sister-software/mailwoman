@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { coordinatePairText } from "@mailwoman/spatial/point-query"
 import type React from "react"
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import type { MapInstance } from "react-map-gl/maplibre"
@@ -12,7 +13,7 @@ import type { GeocoderPanels, GeocoderRuntime } from "#map/types"
 import type { UseCompareState } from "#map/useCompareState"
 import type { UseGeocode } from "#map/useGeocode"
 import { useMapBearing } from "#map/useMapBearing"
-import { useMapLabelPick } from "#map/useMapLabelPick"
+import { type MapPick, useMapPick } from "#map/useMapPick"
 import type { UsePlaceAutocomplete } from "#map/usePlaceAutocomplete"
 
 import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
@@ -23,6 +24,7 @@ import { MapChipRow } from "./MapChipRow.tsx"
 import { MapCompass } from "./MapCompass.tsx"
 import { MapContextMenu, MapContextMenuAction, useMapContextMenu } from "./MapContextMenu.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
+import { MapPlaceCard, pickQuery } from "./MapPlaceCard.tsx"
 import { MapProgressBar } from "./MapProgressBar.tsx"
 import { MapSearchBar, SearchGlyph } from "./MapSearchBar.tsx"
 import { MapSheet } from "./MapSheet.tsx"
@@ -383,7 +385,43 @@ export function GeocoderControls({
 		}
 	}, [map, sheetDetents])
 
-	// Escape dismisses the result only while no side sheet is open.
+	// A click on the map opens the place card for what it landed on and pins that point.
+	// A label click also fills the field with the label's name, without a parse: the tile
+	// feature already holds the coordinate, and a parse could land on a homonym elsewhere.
+	const [pick, setPick] = useState<MapPick | null>(null)
+
+	const onMapPick = useCallback(
+		(picked: MapPick) => {
+			const [lon, lat] = picked.lngLat
+
+			if (picked.kind === "label" && picked.name) {
+				geocode.setText(picked.name)
+				geocode.reset()
+			}
+
+			geocode.pin({
+				id: 0,
+				name: pickQuery(picked),
+				placetype: picked.placetype ?? "point",
+				lat,
+				lon,
+				score: null,
+				bbox: null,
+				tier: null,
+				uncertaintyM: null,
+			})
+
+			setPick(picked)
+		},
+		[geocode]
+	)
+
+	const closeCard = useCallback(() => {
+		setPick(null)
+		geocode.pin(null)
+	}, [geocode])
+
+	// Escape dismisses the result and the place card only while no side sheet is open.
 	// `MapSheet` also listens for Escape on the document, so one keystroke would otherwise close both.
 	useEffect(() => {
 		if (openSheet) return
@@ -391,25 +429,27 @@ export function GeocoderControls({
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.key === "Escape") {
 				setResultDismissed(true)
+				closeCard()
 			}
 		}
 
 		document.addEventListener("keydown", onKeyDown)
 
 		return () => document.removeEventListener("keydown", onKeyDown)
-	}, [openSheet])
+	}, [openSheet, closeCard])
 
-	// A map-label click searches for its name.
-	const pickLabel = useCallback(
-		(name: string) => {
-			geocode.setText(name)
+	useMapPick(map, onMapPick)
+
+	// A search from the map fills the field and runs the text, as a typed query would.
+	const searchFromMap = useCallback(
+		(text: string) => {
+			setPick(null)
+			geocode.setText(text)
 			geocode.reset()
-			runQuery(name)
+			runQuery(text)
 		},
 		[geocode, runQuery]
 	)
-
-	useMapLabelPick(map, pickLabel)
 
 	// The right-click menu.
 	// Its one built-in action searches the point itself.
@@ -421,13 +461,10 @@ export function GeocoderControls({
 		if (!menuPoint) return
 
 		const [lon, lat] = menuPoint.lngLat
-		const text = `${lat.toFixed(6)}, ${lon.toFixed(6)}`
 
 		contextMenu.close()
-		geocode.setText(text)
-		geocode.reset()
-		runQuery(text)
-	}, [menuPoint, contextMenu, geocode, runQuery])
+		searchFromMap(coordinatePairText(lat, lon))
+	}, [menuPoint, contextMenu, searchFromMap])
 
 	const chips = presets.map((preset) => ({ label: preset.label, value: preset.value }))
 	// The model download does not open the result panel.
@@ -685,6 +722,8 @@ export function GeocoderControls({
 					{panels.developerExtras}
 				</MapSheet>
 			) : null}
+
+			{pick ? <MapPlaceCard pick={pick} onSearch={searchFromMap} onClose={closeCard} /> : null}
 
 			{menuPoint ? (
 				<MapContextMenu point={menuPoint} onClose={contextMenu.close}>
