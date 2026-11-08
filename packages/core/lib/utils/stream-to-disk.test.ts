@@ -109,6 +109,74 @@ describe("streamToDisk", () => {
 		await expect(readLocalTextFile(destination)).resolves.toBe(body)
 	})
 
+	it("reports the bytes on disk against the stated length to onBytes in place of the stride lines", async () => {
+		const body = CHUNKS.join("")
+
+		vi.stubGlobal("fetch", async () => {
+			const response = chunkedResponse()
+
+			response.headers.set("content-length", String(body.length))
+
+			return response
+		})
+
+		await using scratch = await temporaryDirectory()
+		const reports: Array<[number, number | null]> = []
+		const messages: string[] = []
+
+		await streamToDisk({
+			url: "https://example.test/file",
+			destination: scratch.path("sized.bin"),
+			context: "test",
+			progressStrideBytes: 1,
+			onProgress: (message) => messages.push(message),
+			onBytes: (received, total) => reports.push([received, total]),
+		})
+
+		expect(reports[0]).toEqual([0, body.length])
+		expect(reports.at(-1)).toEqual([body.length, body.length])
+		const counts = reports.map(([received]) => received)
+
+		expect(counts).toEqual(counts.toSorted((a, b) => a - b))
+
+		expect(messages).toEqual([
+			"downloading https://example.test/file",
+			`downloaded ${body.length.toLocaleString()} bytes`,
+		])
+	})
+
+	it("reports a resumed transfer from its offset against the range's total", async () => {
+		const body = CHUNKS.join("")
+		const offset = CHUNKS[0]!.length
+
+		vi.stubGlobal(
+			"fetch",
+			async () =>
+				new Response(body.slice(offset), {
+					status: 206,
+					headers: { "content-range": `bytes ${offset}-${body.length - 1}/${body.length}` },
+				})
+		)
+
+		await using scratch = await temporaryDirectory()
+		const partialPath = scratch.path("resumed.partial").toString()
+		const reports: Array<[number, number | null]> = []
+
+		await writeLocalTextFile(CHUNKS[0]!, partialPath)
+
+		await streamToDisk({
+			url: "https://example.test/file",
+			destination: scratch.path("resumed.bin"),
+			context: "test",
+			partialPath,
+			resumeFrom: offset,
+			onBytes: (received, total) => reports.push([received, total]),
+		})
+
+		expect(reports[0]).toEqual([offset, body.length])
+		expect(reports.at(-1)).toEqual([body.length, body.length])
+	})
+
 	it("refuses a resume the host answers with the whole object and keeps the partial bytes", async () => {
 		vi.stubGlobal("fetch", async () => chunkedResponse())
 		await using scratch = await temporaryDirectory()

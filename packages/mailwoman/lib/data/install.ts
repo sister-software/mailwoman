@@ -244,6 +244,10 @@ interface ExecuteOptions {
 	client: APIClient
 	signal?: AbortSignal
 	onProgress?: (message: string) => void
+	/**
+	 * Receives each downloading artifact's bytes on disk and total length after every chunk.
+	 */
+	onTransfer?: (remotePath: string, received: number, total: number | null) => void
 	now?: () => Date
 }
 
@@ -352,6 +356,12 @@ async function acquire(
 		headers: { range: "bytes=0-" },
 		...(options.signal ? { signal: options.signal } : {}),
 		...(options.onProgress ? { onProgress: options.onProgress } : {}),
+		...(options.onTransfer
+			? {
+					onBytes: (received: number, total: number | null) =>
+						options.onTransfer!(planned.artifact.remotePath, received, total),
+				}
+			: {}),
 		...(options.now ? { now: options.now } : {}),
 	})
 }

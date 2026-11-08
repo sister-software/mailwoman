@@ -8,13 +8,15 @@
  *   access or data writes. Otherwise it executes the plan: each artifact is acquired with a receipt into the data
  *   root's staging area, verified, sealed and installed, and a bundle whose readers consult the active selection
  *   is activated by one atomic replacement of `active.json` once every artifact of the bundle is installed.
+ *   On a terminal, each download redraws one line with its bytes, total and percent.
  *
  *   It never builds from source. For a request with no published artifact, it prints the build as a separate command.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { Text } from "ink"
+import { Box, Text } from "ink"
+import { useEffect, useState } from "react"
 
 import {
 	type Check,
@@ -22,7 +24,10 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
+	ProgressLines,
+	TransferProgress,
 	useCommandTask,
+	useProgressFeed,
 	writeRawStdout,
 } from "#cli-kit"
 import { BUNDLES } from "#data/bundles"
@@ -191,6 +196,11 @@ async function pull(
 		dataRoot: string
 		host?: string
 		refuse: ReturnType<typeof parseObligationRefusals>
+		/**
+		 * Receives each download's bytes.
+		 * Without it the transfer logs a line per 16 MB instead.
+		 */
+		onTransfer?: (remotePath: string, received: number, total: number | null) => void
 	}
 ): Promise<PullResult> {
 	const plan = await planInstallation({
@@ -239,6 +249,7 @@ async function pull(
 			client,
 			signal: controller.signal,
 			onProgress: (message) => console.error(`  ${message}`),
+			...(opts.onTransfer ? { onTransfer: opts.onTransfer } : {}),
 		})
 
 		const checks = [...planned.checks]
@@ -296,6 +307,15 @@ async function pull(
 }
 
 const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
+	const feed = useProgressFeed()
+	const [transfers] = useState(() => new TransferProgress())
+	// Ink redraws a frame in place only on a terminal, and `--json` keeps stdout for the report.
+	// Elsewhere the transfer's own log lines on stderr show its progress.
+	const live = process.stdout.isTTY === true && !options.json
+	const { watch } = feed
+
+	useEffect(() => watch(transfers), [watch, transfers])
+
 	const state = useCommandTask(
 		async () => {
 			if (!args.length) {
@@ -313,6 +333,7 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 				dataRoot: (options.dataRoot ?? dataRootPath()).toString(),
 				...(options.host ? { host: options.host } : {}),
 				refuse: parseObligationRefusals(refused),
+				...(live ? { onTransfer: transfers.report.bind(transfers) } : {}),
 			})
 
 			if (options.json) {
@@ -324,7 +345,19 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	if (state.status !== "done") return <CommandTaskResult state={state} running={<Text color="gray">pulling…</Text>} />
+	if (state.status !== "done") {
+		return (
+			<CommandTaskResult
+				state={state}
+				running={
+					<Box flexDirection="column">
+						<Text color="gray">pulling…</Text>
+						<ProgressLines entries={feed.entries} />
+					</Box>
+				}
+			/>
+		)
+	}
 
 	if (options.json) return null
 

@@ -182,6 +182,11 @@ export async function acquireRemoteObject(options: {
 	headers?: Record<string, string>
 	signal?: AbortSignal
 	onProgress?: (message: string) => void
+	/**
+	 * Receives the bytes on disk and the object's total length after each chunk,
+	 * as `streamToDisk` reports them.
+	 */
+	onBytes?: (received: number, total: number | null) => void
 	now?: () => Date
 }): Promise<AcquiredFile> {
 	const now = options.now ?? (() => new Date())
@@ -249,6 +254,7 @@ export async function acquireRemoteObject(options: {
 			},
 			...(options.signal ? { signal: options.signal } : {}),
 			...(options.onProgress ? { onProgress: options.onProgress } : {}),
+			...(options.onBytes ? { onBytes: options.onBytes } : {}),
 		})
 
 	let bytes: number

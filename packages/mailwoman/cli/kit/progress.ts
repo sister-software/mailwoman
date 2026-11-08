@@ -7,7 +7,9 @@
  *   Written without JSX because Node type stripping cannot compile it.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import type { ProcessProgress } from "@mailwoman/core/process"
+import { TypedEventTarget } from "@mailwoman/core/utils/events"
 import { Box, Text } from "ink"
 import { createElement as h, useCallback, useState } from "react"
 import type * as React from "react"
@@ -25,6 +27,46 @@ export interface ProgressSource {
  * was watched under, or by its command line when the source has no label.
  */
 export type ProgressEntries = ReadonlyMap<string, ProcessProgress>
+
+/**
+ * The byte step a transfer without a stated length reports at: one per megabyte.
+ */
+const UNSIZED_STEP_BYTES = 1_000_000
+
+/**
+ * A {@linkcode ProgressSource} for byte transfers, such as the downloads
+ * `streamToDisk` reports through `onBytes`.
+ *
+ * Each label's step is its bytes on disk against the total, as `12.3 MB of 456 MB` with the percent.
+ * A step is emitted only when the whole percent changes, or for a transfer of unknown length when
+ * another megabyte arrives, so a per-chunk report causes at most about a hundred renders per transfer.
+ */
+export class TransferProgress extends TypedEventTarget<{ progress: ProcessProgress & { command: string } }> {
+	#shown = new Map<string, number>()
+
+	/**
+	 * Report `received` bytes of `total` for the transfer whose progress line `label` keys.
+	 */
+	public report(label: string, received: number, total: number | null): void {
+		const sized = total != null && total > 0
+
+		const position = sized
+			? Math.floor((Math.min(received, total) / total) * 100)
+			: Math.floor(received / UNSIZED_STEP_BYTES)
+
+		if (this.#shown.get(label) === position) return
+
+		this.#shown.set(label, position)
+
+		this.emit("progress", {
+			command: label,
+			stage: sized
+				? `${ByteFormatter.formatSI(received)} of ${ByteFormatter.formatSI(total)}`
+				: ByteFormatter.formatSI(received),
+			...(sized ? { percent: position } : {}),
+		})
+	}
+}
 
 /**
  * What {@linkcode useProgressFeed} answers.
