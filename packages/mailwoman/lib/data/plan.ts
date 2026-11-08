@@ -258,9 +258,14 @@ export interface PlannedBundle {
 	 */
 	terms: string[]
 	/**
-	 * What the copies already on disk record, beside the registry.
+	 * What the copies already on disk record, beside the registry, with a line for the artifacts not on disk.
 	 */
 	artifactTerms: string[]
+	/**
+	 * The lines of {@link artifactTerms} for copies present on disk.
+	 * A first pull has none.
+	 */
+	artifactTermsOnDisk: string[]
 	refusals: PlannedRefusal[]
 	/**
 	 * The access decision for a licensed bundle, or `null` for a free one.
@@ -471,6 +476,7 @@ export async function planInstallation(request: InstallationRequest): Promise<In
 			problems: [],
 			terms: [],
 			artifactTerms: [],
+			artifactTermsOnDisk: [],
 			refusals: [],
 			access: null,
 			missingDependencies: [],
@@ -503,6 +509,12 @@ export async function planInstallation(request: InstallationRequest): Promise<In
 		const ownCopies = copies.filter((copy) => artifacts.some((a) => a.remotePath === copy.receipt?.remotePath))
 
 		planned.artifactTerms = describeArtifactTerms(bundle, observations)
+
+		planned.artifactTermsOnDisk = describeArtifactTerms(
+			bundle,
+			observations.filter((observation) => observation.state !== "absent")
+		)
+
 		planned.refusals = bundleRefusals(bundle, observations, ownCopies, refuse)
 
 		if (bundle.access === "licensed") {

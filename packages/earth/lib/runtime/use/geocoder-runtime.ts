@@ -27,7 +27,13 @@ import {
 	JurisdictionLayers,
 	JurisdictionTileSetID,
 } from "@mailwoman/cartographer/jurisdictions"
-import type { ParseResult, ParsedComponent, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
+import type { AddressNode } from "@mailwoman/core/decoder"
+import type {
+	ParseResult,
+	ParsedComponent,
+	ResolvedPlaceView,
+	ComponentMatch,
+} from "@mailwoman/core/pipeline/client-result"
 import { startEarly } from "@mailwoman/core/promises"
 import type { LandmarkLookup } from "@mailwoman/core/resolver"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
@@ -42,22 +48,23 @@ import type {
 } from "@mailwoman/react/map"
 import type { PlaceGeometry } from "@mailwoman/react/map/geometry"
 import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
-import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+import { resolvedSpanResults, runCascade, statedStreetScope } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import {
 	type HTTPVFSAddressPointLookup,
 	type HTTPVFSInterpolator,
 	resolveStreet,
 	type StreetResolution,
 } from "@mailwoman/resolver-wof-wasm/httpvfs/street"
-import { LandmarkSource, RemoteLandmarkLookup } from "@mailwoman/resolver-wof-wasm/remote-landmark"
+import { LandmarkSource, RemoteLandmarkLookup } from "@mailwoman/resolver-wof-wasm/remote/landmark"
+import {
+	readStreetFromTable,
+	RemoteStreetTable,
+	type StreetTableAnswer,
+} from "@mailwoman/resolver-wof-wasm/remote/street"
 import { postPruneMessage } from "@mailwoman/service-worker-cache/prune"
 import type { Coordinates2D } from "@mailwoman/spatial"
-import {
-	DEFAULT_LOCALE,
-	parseStageLabelsFor,
-	projectCascadeHits,
-	runClassifyStage,
-} from "mailwoman/browser-runtime/classify"
+import { parsePointQuery } from "@mailwoman/spatial/point-query"
+import { parseStageLabelsFor, projectCascadeHits, runClassifyStage } from "mailwoman/browser-runtime/classify"
 import { FamilyBundles, silentAssetProgress } from "mailwoman/browser-runtime/family-bundles"
 import type { ReleaseAssets } from "mailwoman/browser-runtime/load-assets"
 import { loadReleaseAssets } from "mailwoman/browser-runtime/load-assets"
@@ -65,12 +72,11 @@ import type { ReleaseInfo, ReleasesManifest } from "mailwoman/browser-runtime/ma
 import { fetchReleasesManifest } from "mailwoman/browser-runtime/manifest"
 import { postcodeCentroidFor, postcodeFallbackKeys } from "mailwoman/browser-runtime/postcode-fallback"
 import {
-	assetURL,
 	HOSTED_STREET_SLUGS,
-	NATIONAL_STREET_FALLBACK_SLUG,
 	NATIONAL_STREET_SLUGS,
 	regionToStateSlug,
 	streetExtractURL,
+	wofPolygonsURL,
 } from "mailwoman/browser-runtime/resources"
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 // The binary that `onnxruntime-web/wasm` instantiates.
@@ -80,16 +86,29 @@ import ortWASMURL from "onnxruntime-web/ort-wasm-simd-threaded.wasm?url"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { EarthConfig } from "#config"
+import { type Gazetteer, openGazetteer } from "#explorers/Gazette/gazetteer"
 import { pageSearchParam, pageTilesetParam } from "#routes"
 import { loadPolygonDB, type PolygonDB } from "#runtime/basemap"
+import { locatePointQuery, pointQueryResult } from "#runtime/point/place"
 import { loadUnderseaIndex, underseaPlaceView } from "#runtime/undersea"
 import { useGeoBias, type GeoBiasControl } from "#runtime/use/geo-bias"
+import { readWOFPlace } from "#runtime/wof-place"
 
 /**
  * Per-region interp-radius conformal factor, with `INTERP_RADIUS_DEFAULT` for unmeasured regions.
  */
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
 const INTERP_RADIUS_DEFAULT = 1.95
+
+/**
+ * The most other streets the candidate list shows after the street table's answer.
+ */
+const STREET_ALTERNATIVE_LIMIT = 4
+
+/**
+ * The smallest radius a street table answer draws, so a short street stays visible on the map.
+ */
+const STREET_MIN_RADIUS_METERS = 25
 
 /**
  * Spans that together make up the street name — assembled in source order for the situs/interp query.
@@ -241,6 +260,25 @@ async function readVectorLayers(tileJSONURL: string): Promise<ReadonlySet<string
 
 		return new Set()
 	}
+}
+
+/**
+ * Rethrows a range-read failure with its cause stated.
+ *
+ * Offline, the gazetteer answers only from the range chunks the service worker cached while online.
+ * A read past them fails inside SQLite as `SQLITE_IOERR_READ`, a disk I/O error that hides the cause.
+ */
+export async function explainReadFailure(error: unknown): Promise<never> {
+	const { isSQLiteReadFailure } = await import("@mailwoman/resolver-wof-wasm/httpvfs/database")
+
+	if (isSQLiteReadFailure(error)) {
+		throw new Error(
+			"The gazetteer could not read the pages this query needs: they are not cached on this device, and the network did not answer.",
+			{ cause: error }
+		)
+	}
+
+	throw error
 }
 
 function takeReleasesManifest(): Promise<ReleasesManifest | null> {
@@ -420,6 +458,8 @@ export function useGeocoderRuntime({
 	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
 	const polygonInflightRef = useRef<Set<number>>(new Set())
 	const [polygonCache, setPolygonCache] = useState<Map<number, PlaceGeometry | null>>(() => new Map())
+	// The gazetteer handle a `wof:` query reads the containment chain through, opened on the first such query.
+	const gazetteerRef = useRef<Promise<Gazetteer> | null>(null)
 
 	// URLs are version-scoped, so reset polygon state on version change.
 	useEffect(() => {
@@ -428,6 +468,60 @@ export function useGeocoderRuntime({
 		// oxlint-disable-next-line react/set-state-in-effect -- Polygon IDs and cached geometry are scoped to the selected release.
 		setPolygonCache(new Map())
 	}, [rt.selectedVersion])
+
+	useEffect(() => {
+		gazetteerRef.current = null
+	}, [sqliteRuntimeBaseURL])
+
+	/**
+	 * The boundary file, opened once.
+	 *
+	 * Its ids follow the gazetteer, so every model release reads one file.
+	 *
+	 * A failed open is forgotten so the next read tries again.
+	 */
+	const ensurePolygonDB = useCallback((): Promise<PolygonDB> => {
+		if (!polygonDBRef.current) {
+			const loading = loadPolygonDB(wofPolygonsURL(), sqliteRuntimeBaseURL)
+
+			polygonDBRef.current = loading
+
+			loading.catch(() => {
+				if (polygonDBRef.current === loading) {
+					polygonDBRef.current = null
+				}
+			})
+		}
+
+		return polygonDBRef.current
+	}, [sqliteRuntimeBaseURL])
+
+	/**
+	 * A `wof:` query's place, from the containment chain and the release's polygon.
+	 *
+	 * The polygon lands in the cache so the map draws it without a second read.
+	 */
+	const readWOF = useCallback(
+		async (id: number): Promise<ResolvedPlaceView> => {
+			gazetteerRef.current ??= openGazetteer(sqliteRuntimeBaseURL)
+
+			const opening = gazetteerRef.current
+
+			opening.catch(() => {
+				if (gazetteerRef.current === opening) {
+					gazetteerRef.current = null
+				}
+			})
+
+			const [gazetteer, polygons] = await Promise.all([opening, ensurePolygonDB()])
+			const { place, geometry } = await readWOFPlace(gazetteer, id, polygons)
+
+			setPolygonCache((prev) => new Map(prev).set(id, geometry))
+
+			return place
+		},
+		[ensurePolygonDB, sqliteRuntimeBaseURL]
+	)
 
 	const ensureStreetLookups = useCallback(
 		async (slug: string): Promise<StreetLookups | null> => {
@@ -465,6 +559,18 @@ export function useGeocoderRuntime({
 
 	const runParseWithBias = useCallback(
 		async (input: string, bias: MapBias | null, hooks: { onStage: (stage: number) => void }): Promise<ParseResult> => {
+			// A point query has its own decoder, so the classifier never reads it.
+			const point = parsePointQuery(input)
+
+			if (point) {
+				hooks.onStage(0)
+
+				const started = performance.now()
+				const place = await locatePointQuery(point, bias, readWOF).catch(explainReadFailure)
+
+				return pointQueryResult(input, point, place, performance.now() - started)
+			}
+
 			const assets = rt.assets
 
 			if (!assets) throw new Error("Classifier not ready")
@@ -524,31 +630,32 @@ export function useGeocoderRuntime({
 			const houseNumberNode = nodes.find((n) => n.tag === "house_number")
 			const stateSlug = regionToStateSlug((stateNode?.value as string | undefined) ?? null)
 
-			const streetSlug =
-				stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)
-					? stateSlug
-					: stateSlug
-						? undefined
-						: NATIONAL_STREET_FALLBACK_SLUG
+			const readExtract = async (slug: string): Promise<StreetResolution | null> => {
+				if (!streetValue || !houseNumberNode?.value) return null
 
-			if (streetValue && houseNumberNode?.value && streetSlug) {
 				try {
-					const street = await ensureStreetLookups(streetSlug)
+					const street = await ensureStreetLookups(slug)
 
-					if (street) {
-						streetResolution = await resolveStreet(
-							streetValue,
-							String(houseNumberNode.value),
-							postcodeNode?.value ? String(postcodeNode.value) : null,
-							localityNode?.value ? String(localityNode.value) : null,
-							street.situs,
-							street.interp ?? null,
-							INTERP_RADIUS_BY_REGION[streetSlug] ?? INTERP_RADIUS_DEFAULT
-						)
-					}
+					return street
+						? await resolveStreet(
+								streetValue,
+								String(houseNumberNode.value),
+								postcodeNode?.value ? String(postcodeNode.value) : null,
+								localityNode?.value ? String(localityNode.value) : null,
+								street.situs,
+								street.interp ?? null,
+								INTERP_RADIUS_BY_REGION[slug] ?? INTERP_RADIUS_DEFAULT
+							)
+						: null
 				} catch (error) {
 					console.warn("[mailwoman earth] street tier unavailable; falling back to admin cascade", error)
+
+					return null
 				}
+			}
+
+			if (stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)) {
+				streetResolution = await readExtract(stateSlug)
 			}
 
 			const asView = (nds: typeof nodes): ParsedComponent[] =>
@@ -581,19 +688,7 @@ export function useGeocoderRuntime({
 			hooks.onStage(2)
 
 			// Open the polygon DB now (no await) so its worker spawn overlaps the cascade below.
-			const release = rt.selectedRelease
-			const version = rt.selectedVersion
-
-			if (release?.hasPolygons && version && !polygonDBRef.current) {
-				const loading = loadPolygonDB(assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"), sqliteRuntimeBaseURL)
-				polygonDBRef.current = loading
-
-				loading.catch(() => {
-					if (polygonDBRef.current === loading) {
-						polygonDBRef.current = null
-					}
-				})
-			}
+			ensurePolygonDB()
 
 			// Viewport bias: the map center as a population-ceilinged soft proximity hint,
 			// with a granted device location joining as a weaker second hint.
@@ -609,24 +704,78 @@ export function useGeocoderRuntime({
 
 			const tBeforeResolve = performance.now()
 
+			let resolvedRoots: readonly AddressNode[] = []
+
 			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias, {
 				landmarks: landmarkLayer(config.landmarkAPIURL, LandmarkSource.Wikidata),
 				osmPlaces: landmarkLayer(config.landmarkAPIURL, LandmarkSource.OpenStreetMap),
-			}).catch(async (error: unknown) => {
-				// Offline, the gazetteer answers only from the range chunks the service worker cached while online.
-				// A read past them fails inside SQLite as `SQLITE_IOERR_READ`,
-				// a disk I/O error that hides the cause.
-				const { isSQLiteReadFailure } = await import("@mailwoman/resolver-wof-wasm/httpvfs/database")
+				onResolved: (roots) => {
+					resolvedRoots = roots
+				},
+			}).catch(explainReadFailure)
 
-				if (isSQLiteReadFailure(error)) {
-					throw new Error(
-						"The gazetteer could not read the pages this address needs: they are not cached on this device, and the network did not answer.",
-						{ cause: error }
-					)
+			// A street without a state reads the data for the country the address resolved to.
+			// A country with a national extract reads it, and every other country reads the street table.
+			const { places, country, postcodePoint: statedPostcodePoint } = statedStreetScope(resolvedRoots)
+			const nationalSlug = country?.toLowerCase()
+			let tableAnswer: StreetTableAnswer | null = null
+			let streetNote: string | null = null
+
+			if (streetValue && !stateSlug) {
+				if (nationalSlug && NATIONAL_STREET_SLUGS.has(nationalSlug)) {
+					streetResolution = await readExtract(nationalSlug)
+					streetNote = `searched the ${nationalSlug} street data`
+				} else {
+					// The gazetteer's postcode answers first, and the release's postcode binaries cover the rest.
+					const postcodePoint =
+						statedPostcodePoint ??
+						(postcodeNode?.value && assets?.anchorLookup
+							? postcodeCentroidFor(
+									assets.anchorLookup,
+									postcodeFallbackKeys(String(postcodeNode.value), input, knownFormats)
+								)
+							: null)
+
+					try {
+						tableAnswer = await readStreetFromTable(new RemoteStreetTable(config.landmarkAPIURL), {
+							street: streetValue,
+							places,
+							postcodePoint,
+						})
+					} catch (error) {
+						console.warn(`The street table did not answer for "${streetValue}"`, error)
+					}
+
+					streetNote = !tableAnswer
+						? postcodePoint
+							? "no street of this name near the postcode"
+							: "searched the street table"
+						: tableAnswer.postcodeDisagrees
+							? "this street sits far from the stated postcode"
+							: tableAnswer.alternatives.length
+								? `${tableAnswer.alternatives.length} other streets could match`
+								: null
 				}
+			} else if (stateSlug && !HOSTED_STREET_SLUGS.has(stateSlug)) {
+				streetNote = "no street data for this region"
+			} else if (stateSlug) {
+				streetNote = `searched the ${stateSlug} street data`
+			}
 
-				throw error
-			})
+			const streetMatched = streetResolution !== null || tableAnswer !== null
+
+			const matches: ComponentMatch[] = resolvedSpanResults(resolvedRoots).map((match) =>
+				STREET_COMPONENT_TAGS.has(match.tag)
+					? {
+							...match,
+							value: streetValue,
+							matched: streetMatched,
+							placetype: streetResolution?.tier ?? (tableAnswer ? "street" : null),
+							name: tableAnswer?.name ?? (streetResolution ? streetValue : null),
+							note: streetResolution ? null : streetNote,
+						}
+					: match
+			)
 
 			const tResolve = performance.now()
 
@@ -679,16 +828,46 @@ export function useGeocoderRuntime({
 				})
 
 				candidates.unshift(streetCandidate)
+			} else if (tableAnswer) {
+				// The table locates a street, so the answer holds a radius and no address tier.
+				// Each other street that could match follows it in the candidate list.
+				const houseNumber = houseNumberNode?.value ? `${String(houseNumberNode.value)} ` : ""
+
+				const streetCandidates = [
+					{ ...tableAnswer, name: `${houseNumber}${tableAnswer.name}` },
+					...tableAnswer.alternatives.slice(0, STREET_ALTERNATIVE_LIMIT),
+				].map(({ name, lat, lon, meters }, index) => {
+					const uncertaintyM = Math.max(STREET_MIN_RADIUS_METERS, meters / 2)
+
+					const candidate: ResolvedPlaceView = {
+						id: 0,
+						name,
+						placetype: "street",
+						lat,
+						lon,
+						score: index ? 0 : 1,
+						bbox: null,
+						tier: null,
+						uncertaintyM,
+					}
+
+					extrasRef.current.set(candidate, { bbox: null, tier: null, uncertaintyM })
+
+					return candidate
+				})
+
+				candidates.unshift(...streetCandidates)
 			}
 
 			// An input that equals an undersea feature's whole name answers that feature
 			// ahead of the admin matches, after a street-level coordinate.
-			candidates.splice(streetResolution ? 1 : 0, 0, ...(await underseaPlaces()))
+			candidates.splice(streetResolution || tableAnswer ? 1 : 0, 0, ...(await underseaPlaces()))
 
 			return {
 				input,
 				tree,
 				nodes: asView(nodes),
+				matches,
 				resolved: candidates[0] ?? null,
 				candidates,
 				kindResult,
@@ -700,13 +879,12 @@ export function useGeocoderRuntime({
 		[
 			config.landmarkAPIURL,
 			config.underseaFeaturesURL,
+			ensurePolygonDB,
 			ensureStreetLookups,
 			familyBundles,
 			geoBias.locationRef,
-			sqliteRuntimeBaseURL,
+			readWOF,
 			rt.assets,
-			rt.selectedRelease,
-			rt.selectedVersion,
 		]
 	)
 
@@ -750,21 +928,22 @@ export function useGeocoderRuntime({
 
 	const resolveMapPlace = useCallback(
 		(candidate: ResolvedPlaceView): ResolvedMapPlace | null => {
+			// The cascade's extras ride beside the candidate.
+			// A candidate another path built, such as a decoded point, has its own box and radius.
 			const extras = extrasRef.current.get(candidate) ?? null
 
 			const place: ResolvedMapPlace = {
 				...candidate,
-				bbox: extras?.bbox ?? null,
-				tier: extras?.tier ?? null,
-				uncertaintyM: extras?.uncertaintyM ?? null,
+				bbox: extras?.bbox ?? candidate.bbox,
+				tier: extras?.tier ?? candidate.tier,
+				uncertaintyM: extras?.uncertaintyM ?? candidate.uncertaintyM,
 			}
 
 			// Crisp admin polygon only for a real WOF place with no street tier, because
 			// `computeMapPlaceRenderSpec` prefers `geometry` and the cache update re-runs this enricher.
-			const release = rt.selectedRelease
-			const version = rt.selectedVersion
+			const polygons = candidate.id && !place.tier ? ensurePolygonDB() : null
 
-			if (!place.tier && candidate.id && release?.hasPolygons && version) {
+			if (polygons) {
 				const cached = polygonCache.get(candidate.id)
 
 				if (cached != null) {
@@ -775,14 +954,7 @@ export function useGeocoderRuntime({
 
 					void (async () => {
 						try {
-							if (!polygonDBRef.current) {
-								polygonDBRef.current = loadPolygonDB(
-									assetURL(DEFAULT_LOCALE, version, "wof-polygons.db"),
-									sqliteRuntimeBaseURL
-								)
-							}
-
-							const geom = await (await polygonDBRef.current).get(placeID)
+							const geom = await (await polygons).get(placeID)
 							setPolygonCache((prev) => new Map(prev).set(placeID, geom ?? null))
 						} catch (error) {
 							console.error("Crisp polygon unavailable; falling back to bbox", error)
@@ -798,7 +970,7 @@ export function useGeocoderRuntime({
 
 			return place
 		},
-		[sqliteRuntimeBaseURL, polygonCache, rt.selectedRelease, rt.selectedVersion]
+		[ensurePolygonDB, polygonCache]
 	)
 
 	const traceParse = useCallback(

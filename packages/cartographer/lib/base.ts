@@ -4,4 +4,5 @@
 export * from "#base/buildings"
 export * from "#base/composition"
 export * from "#base/layers"
+export * from "#base/standalone"
 export * from "#base/theme"

@@ -15,6 +15,7 @@ import type {
 	RegionDatabaseProvider,
 	RegionDatabases,
 } from "@mailwoman/core/resolver"
+import type { AddressLayerCountryManifest } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
 import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
@@ -123,6 +124,14 @@ export async function selectInterpolationDB(dataRoot: string, stateSlug: string 
 export interface RegionDatabaseFactory {
 	AddressPointSqliteLookup: new (dbPath: string) => AddressPointLookup & Disposable
 	StreetInterpolator: new (opts: { dbPath: string }) => InterpolationLookup & Disposable
+	/**
+	 * Opens one region's address-layer `lookup.db`.
+	 *
+	 * A state the newest US address-layer manifest lists is read through it,
+	 * and every other state through {@link AddressPointSqliteLookup}.
+	 */
+	openAddressLayerLookup?: (lookupPath: string, country: string) => AddressPointLookup & Disposable
+	readLatestAddressLayerManifest?: (root: string, country: string) => Promise<AddressLayerCountryManifest | null>
 }
 
 /**
@@ -163,6 +172,11 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 	 * Resolved database paths per slug, filled by {@linkcode warm}.
 	 */
 	readonly #paths = new Map<string, { apPath: string | null; ipPath: string | null }>()
+	/**
+	 * The address-layer `lookup.db` per slug, for the states the newest US manifest lists,
+	 * filled by {@linkcode warm}.
+	 */
+	readonly #layerPaths = new Map<string, string>()
 
 	private constructor(factory: RegionDatabaseFactory, dataRoot: string, manifest: DataReleaseManifest | null) {
 		this.#factory = factory
@@ -213,11 +227,34 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 
 			this.#paths.set(slug, { apPath, ipPath })
 		}
+
+		this.#layerPaths.clear()
+
+		const layerRoot = resolvePath(this.#dataRoot, "db")
+		const layer = await this.#factory.readLatestAddressLayerManifest?.(layerRoot, "US")
+
+		for (const region of layer?.regions ?? []) {
+			// A region's ISO 3166-2 code, `US-WI`, names the state its file covers.
+			const slug = region.subdivision?.split("-")[1]?.toLowerCase()
+
+			if (slug) {
+				this.#layerPaths.set(slug, resolvePath(layerRoot, region.lookup.path))
+			}
+		}
 	}
 
 	#open(stateSlug: string): RegionDatabaseCacheEntry {
-		const { apPath, ipPath } = this.#paths.get(stateSlug.toLowerCase()) ?? { apPath: null, ipPath: null }
-		const ap = apPath ? new this.#factory.AddressPointSqliteLookup(apPath) : null
+		const paths = this.#paths.get(stateSlug.toLowerCase()) ?? { apPath: null, ipPath: null }
+		const layerPath = this.#factory.openAddressLayerLookup ? this.#layerPaths.get(stateSlug.toLowerCase()) : undefined
+		const apPath = layerPath ?? paths.apPath
+		const { ipPath } = paths
+
+		const ap = layerPath
+			? this.#factory.openAddressLayerLookup!(layerPath, "US")
+			: apPath
+				? new this.#factory.AddressPointSqliteLookup(apPath)
+				: null
+
 		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : null
 
 		return { addressPoints: ap, interpolation: ip, _ap: ap, _ip: ip, apPath, ipPath }
@@ -246,8 +283,8 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 	 * Re-reads the manifest and database paths.
 	 * It reopens cached states whose paths changed.
 	 *
-	 * The replaced handles stay open until the next reload.
-	 * Lookups are synchronous, so no query still holds one by then.
+	 * The replaced handles stay open until the next reload, so a lookup started
+	 * on one finishes before the handle closes.
 	 * The method returns the new manifest.
 	 */
 	async reload(): Promise<DataReleaseManifest | null> {
@@ -260,9 +297,11 @@ export class USStateDatabaseProvider implements RegionDatabaseProvider<string, R
 		await this.warm()
 
 		for (const [slug, old] of this.#cache) {
-			const { apPath, ipPath } = this.#paths.get(slug.toLowerCase()) ?? { apPath: null, ipPath: null }
+			const paths = this.#paths.get(slug.toLowerCase()) ?? { apPath: null, ipPath: null }
+			const layerPath = this.#factory.openAddressLayerLookup ? this.#layerPaths.get(slug.toLowerCase()) : undefined
+			const apPath = layerPath ?? paths.apPath
 
-			if (apPath === old.apPath && ipPath === old.ipPath) continue
+			if (apPath === old.apPath && paths.ipPath === old.ipPath) continue
 			this.#cache.set(slug, this.#open(slug))
 
 			if (old._ap) {

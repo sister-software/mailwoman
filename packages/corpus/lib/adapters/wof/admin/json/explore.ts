@@ -47,18 +47,14 @@ export function wofFeatureRelativePath(id: number): string {
 /**
  * The repos under `reposRoot`, as paths relative to it, per-country admin repos first, then the rest.
  *
- * A repo is a directory holding `data/`.
- * The data root keeps some one level down, such as `whosonfirst-data/whosonfirst-data-admin-fr`.
+ * A repo is a directory holding `data/`, directly under the root, where `gazetteer inspect sync` clones it.
  */
 export async function listWOFRepos(reposRoot: PathBuilderLike = wofReposPath): Promise<string[]> {
 	const root = PathBuilder.from(reposRoot)
 	const cwd = root.toString()
 
 	// A pattern ending in `data` matches only a repo's data directory, so a stray file beside it is never probed.
-	const dataDirectories = [
-		...(await Globerator.from("*/data", { cwd, absolute: false, onlyFiles: false }).toSorted()),
-		...(await Globerator.from("*/*/data", { cwd, absolute: false, onlyFiles: false }).toSorted()),
-	]
+	const dataDirectories = await Globerator.from("*/data", { cwd, absolute: false, onlyFiles: false }).toSorted()
 
 	const repos = dataDirectories.map((directory) => directory.slice(0, -"/data".length))
 

@@ -12,7 +12,7 @@
 
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
-import { sha256File } from "@mailwoman/core/hash"
+import { type RecordedFile, sha256File } from "@mailwoman/core/hash"
 import { canonicalJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
@@ -39,15 +39,6 @@ export interface SourceBuildSettings {
 	rowsPerFile: number
 	shuffleSeed: number
 	shuffleWindow: number
-}
-
-/**
- * One file a complete source lists, with what its reuse is checked against.
- */
-export interface RecordedFile {
-	path: string
-	bytes: number
-	sha256: string
 }
 
 /**

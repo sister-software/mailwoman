@@ -30,7 +30,6 @@ describe("resolveSwitches", () => {
 	test("default-off switches match the former `=== true` reads", () => {
 		for (const key of [
 			"addressPointBboxFallback",
-			"spanRescoreRequireContextRemainder",
 			"postcodeContainmentCoherence",
 			"postcodePrefixPrior",
 			"includeAncestors",

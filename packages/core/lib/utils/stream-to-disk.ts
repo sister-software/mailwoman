@@ -9,6 +9,7 @@
 
 import type { PathBuilderLike } from "path-ts"
 
+import { rangedResponseTotal } from "#api/content-range"
 import { openWriteStream, pipeline, Readable } from "#fs/streams"
 import { movePath, removePathIfPresent } from "#fs/writers"
 
@@ -30,6 +31,13 @@ export interface StreamToDiskOptions {
 	 */
 	headers?: Record<string, string>
 	onProgress?: (message: string) => void
+	/**
+	 * Receives the bytes on disk after each chunk, counting any resumed offset,
+	 * and the object's total length when the response states it, else `null`.
+	 *
+	 * A caller that passes it draws the count itself, so {@link onProgress} receives no stride lines.
+	 */
+	onBytes?: (received: number, total: number | null) => void
 	/**
 	 * Receives every chunk in order as it is written.
 	 *
@@ -134,13 +142,20 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 	let received = offset
 	let reported = offset
 
+	const total = rangedResponseTotal(response, offset)
+	const { onBytes } = options
+
+	onBytes?.(received, total)
+
 	const source = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0])
 
 	source.on("data", (chunk: Buffer) => {
 		received += chunk.byteLength
 		options.onChunk?.(chunk)
 
-		if (received - reported >= strideBytes) {
+		if (onBytes) {
+			onBytes(received, total)
+		} else if (received - reported >= strideBytes) {
 			reported = received
 
 			options.onProgress?.(`${(received / 1024 / 1024).toFixed(0)} MB`)

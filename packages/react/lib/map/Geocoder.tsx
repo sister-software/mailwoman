@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
+import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
+import { type ReactNode, useCallback, useEffect, useEffectEvent, useRef, useState } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
 import type { GeocoderPanels, GeocoderRuntime, MapBias } from "#map/types"
@@ -38,12 +39,28 @@ export interface GeocoderProps {
 	 */
 	defaultAddress?: string
 	/**
-	 * A query to run once when the runtime is ready, such as a permalink's `?q=` value.
+	 * The field's placeholder while it is empty.
+	 *
+	 * @defaultValue `"Search an address or place"`
+	 */
+	placeholder?: string
+	/**
+	 * The query the host's URL names, such as a permalink's `?q=` value.
 	 *
 	 * Unlike {@link GeocoderProps.defaultAddress}, this query is submitted,
 	 * so a shared link reproduces its result.
+	 * Each new value is submitted once the runtime is ready, so a host that reads its URL
+	 * on `popstate` lets the back and forward buttons re-run earlier searches.
+	 *
+	 * A value equal to the last submitted query is not submitted again.
 	 */
-	initialQuery?: string | null
+	query?: string | null
+	/**
+	 * Called with each parse result, and with `null` when the result is cleared.
+	 *
+	 * The host decides what to do with it, such as setting the document title.
+	 */
+	onResult?: (result: ParseResult | null) => void
 	/**
 	 * The example chips.
 	 *
@@ -81,24 +98,27 @@ export interface GeocoderProps {
 }
 
 interface GeocoderInnerProps extends Required<
-	Pick<GeocoderProps, "runtime" | "defaultAddress" | "minBiasZoom" | "applyResultCamera" | "developer">
+	Pick<GeocoderProps, "runtime" | "defaultAddress" | "placeholder" | "minBiasZoom" | "applyResultCamera" | "developer">
 > {
 	panels: GeocoderPanels
 	presets: ReadonlyArray<Preset>
-	initialQuery: string | null
+	query: string | null
 	onSubmitQuery?: (query: string) => void
+	onResult?: (result: ParseResult | null) => void
 }
 
 function GeocoderInner({
 	runtime,
 	panels,
 	defaultAddress,
+	placeholder,
 	presets,
 	minBiasZoom,
 	applyResultCamera,
 	developer,
-	initialQuery,
+	query,
 	onSubmitQuery,
+	onResult,
 }: GeocoderInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
 	// The controls render outside `<MapCanvas>` and cannot call `useMap()`.
@@ -145,6 +165,13 @@ function GeocoderInner({
 	const geocode = useGeocode({ runtime, defaultText: defaultAddress, getBias })
 	const compare = useCompareState()
 
+	// The host hears each result as it lands, including the `null` a reset leaves.
+	const reportResult = useEffectEvent((result: ParseResult | null) => onResult?.(result))
+
+	useEffect(() => {
+		reportResult(geocode.result)
+	}, [geocode.result])
+
 	const autocomplete = usePlaceAutocomplete({
 		text: geocode.text,
 		setText: geocode.setText,
@@ -186,7 +213,8 @@ function GeocoderInner({
 					>
 						<GraticuleLayer beforeID={baseLayerID} />
 						<OverlayLayers overlays={runtime.overlays} beforeID={labelLayerID} />
-						<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera} />
+						{/* A pinned place came from a click on the map, so the camera stays where the visitor put it. */}
+						<ResolvedPlaceLayers spec={spec} applyCamera={applyResultCamera && !geocode.pinned} />
 						{panels.mapControls}
 					</MapCanvas>
 				) : null}
@@ -199,8 +227,8 @@ function GeocoderInner({
 				compare={compare}
 				panels={panels}
 				presets={presets}
-				placeholder={defaultAddress}
-				initialQuery={initialQuery}
+				placeholder={placeholder}
+				query={query}
 				map={map}
 				onSubmitQuery={onSubmitQuery}
 				onSelectVersion={onSelectVersion}
@@ -235,12 +263,14 @@ export function Geocoder({
 	runtime,
 	panels = NO_PANELS,
 	defaultAddress = "",
+	placeholder = "Search an address or place",
 	presets = NO_PRESETS,
 	minBiasZoom = 4,
 	applyResultCamera = true,
 	developer = false,
-	initialQuery = null,
+	query = null,
 	onSubmitQuery,
+	onResult,
 }: GeocoderProps): ReactNode {
 	return (
 		<ClientOnly
@@ -255,12 +285,14 @@ export function Geocoder({
 					runtime={runtime}
 					panels={panels}
 					defaultAddress={defaultAddress}
+					placeholder={placeholder}
 					presets={presets}
 					minBiasZoom={minBiasZoom}
 					applyResultCamera={applyResultCamera}
 					developer={developer}
-					initialQuery={initialQuery}
+					query={query}
 					onSubmitQuery={onSubmitQuery}
+					onResult={onResult}
 				/>
 			)}
 		</ClientOnly>

@@ -5,7 +5,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { resolveWOFDataDir, resolveWOFRepo, wofRepoName } from "#whosonfirst/extract-repo"
+import { resolveWOFDataDir, resolveWOFRepo, wofClonePath, wofRepoName } from "#whosonfirst/extract-repo"
 
 const REPO = "whosonfirst-data-postalcode-tr"
 
@@ -18,26 +18,18 @@ beforeEach(async () => {
 afterEach(() => root[Symbol.asyncDispose]())
 
 describe("resolveWOFRepo", () => {
-	it("finds a repository under its owner directory, where a sync writes it", async () => {
-		const expected = root.path("whosonfirst-data", REPO)
-		await makeDirectories(expected)
-
-		await expect(resolveWOFRepo(root.path, REPO)).resolves.toBe(expected.toString())
-	})
-
-	it("finds a repository cloned flat at the root.path, the layout the postcode extracts were built from", async () => {
+	it("finds a repository directly under the root, where a sync writes it", async () => {
 		const expected = root.path(REPO)
 		await makeDirectories(expected)
 
 		await expect(resolveWOFRepo(root.path, REPO)).resolves.toBe(expected.toString())
+		expect(wofClonePath(root.path, REPO)).toBe(expected.toString())
 	})
 
-	it("prefers the owner directory when a tree carries both", async () => {
-		const owned = root.path("whosonfirst-data", REPO)
-		await makeDirectories(owned)
-		await makeDirectories(root.path(REPO))
+	it("reads one path only, so a clone under an owner directory is reported as not cloned", async () => {
+		await makeDirectories(root.path("whosonfirst-data", REPO))
 
-		await expect(resolveWOFRepo(root.path, REPO)).resolves.toBe(owned.toString())
+		await expect(resolveWOFRepo(root.path, REPO)).resolves.toBeNull()
 	})
 
 	it("answers null when the repository is absent, so a caller can say which name is missing", async () => {
@@ -53,12 +45,10 @@ describe("wofRepoName", () => {
 })
 
 describe("resolveWOFDataDir", () => {
-	it("answers the data directory readWOFFeature expects, in either layout", async () => {
-		await makeDirectories(root.path("whosonfirst-data", REPO, "data"))
+	it("answers the data directory readWOFFeature expects", async () => {
+		await makeDirectories(root.path(REPO, "data"))
 
-		await expect(resolveWOFDataDir(root.path, "postalcode", "TR")).resolves.toBe(
-			root.path("whosonfirst-data", REPO, "data").toString()
-		)
+		await expect(resolveWOFDataDir(root.path, "postalcode", "TR")).resolves.toBe(root.path(REPO, "data").toString())
 	})
 
 	it("answers null for a country that is not cloned, so a caller can say which", async () => {

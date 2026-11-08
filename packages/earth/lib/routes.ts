@@ -32,12 +32,14 @@ const ROUTES_BY_PATH: ReadonlyMap<string, Route> = new Map([
 ])
 
 /**
- * A place permalink under the gazette, `/gazette/<spr_id>/<name_key>`.
+ * A place permalink under the gazette, `/gazette/<spr_id>/<name_key>`,
+ * or `/gazette/<spr_id>` for a place identified by id without a key.
  *
- * The path includes the key because the browser gazetteer indexes places by key first
+ * The path holds the key because the browser gazetteer indexes places by key first
  * and has no index on the id by itself.
+ * Without the key the page reads the place's containment chain and not its row.
  */
-const GAZETTE_PLACE = /^\/gazette\/(\d+)\/([^/]+)$/u
+const GAZETTE_PLACE = /^\/gazette\/(\d+)(?:\/([^/]+))?$/u
 
 /**
  * The route a pathname names, with a trailing slash forgiven, or null for a path the app does not serve.
@@ -55,7 +57,10 @@ export function routeForPath(pathname: string): Route | null {
  */
 export interface GazettePlaceRef {
 	sprID: number
-	nameKey: string
+	/**
+	 * The key the place is filed under, or `null` when the link holds the id without a key.
+	 */
+	nameKey: string | null
 }
 
 /**
@@ -70,14 +75,16 @@ export function gazettePlaceFromPath(pathname: string): GazettePlaceRef | null {
 
 	if (!Number.isSafeInteger(sprID)) return null
 
-	return { sprID, nameKey: decodeURIComponent(match[2]!) }
+	return { sprID, nameKey: match[2] ? decodeURIComponent(match[2]) : null }
 }
 
 /**
  * The permalink of a place under the gazette.
  */
 export function gazettePlacePath(place: GazettePlaceRef): string {
-	return `/gazette/${place.sprID}/${encodeURIComponent(place.nameKey)}`
+	return place.nameKey === null
+		? `/gazette/${place.sprID}`
+		: `/gazette/${place.sprID}/${encodeURIComponent(place.nameKey)}`
 }
 
 /**

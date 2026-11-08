@@ -125,13 +125,6 @@ export interface OAResolverEvalOptions {
 	 */
 	postcodeConsistencyMaxMoveKm?: number
 	/**
-	 * A span-rescore sub-span may drop context but never a word of the name.
-	 *
-	 * Default-off in the library until a measurement supports it, so an unset
-	 * pin leaves this eval byte-identical.
-	 */
-	spanRescoreRequireContextRemainder?: boolean
-	/**
 	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
 	 * Unset is the shipped brake, so an unset pin leaves this eval byte-identical.

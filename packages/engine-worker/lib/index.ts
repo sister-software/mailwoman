@@ -11,7 +11,7 @@
 import { createMailwomanAPI } from "@mailwoman/api"
 import { buildEngineStamp } from "@mailwoman/core/license/stamp"
 import type GazetteerWorker from "@mailwoman/gazetteer-worker"
-import { LandmarkSource } from "@mailwoman/resolver-wof-wasm/remote-landmark"
+import { LandmarkSource } from "@mailwoman/resolver-wof-wasm/remote/landmark"
 import mailwomanPackage from "mailwoman/package.json" with { type: "json" }
 
 import { createEngineWorkerEngine, type ReleasePipeline } from "#engine"

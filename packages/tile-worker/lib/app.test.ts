@@ -69,6 +69,8 @@ describe("tile worker routes", () => {
 		await expect(routeOf("/")).resolves.toBe(9)
 		await expect(routeOf("/heartbeat")).resolves.toBe(10)
 		await expect(routeOf("/planet.v4/15/29103")).resolves.toBeNull()
+		await expect(routeOf("/styles/light.json")).resolves.toBe(13)
+		await expect(routeOf("/styles/mailwoman-dark.json")).resolves.toBe(13)
 	})
 
 	it("sends a city model file to the 3D Tiles route and refuses other file types", async () => {

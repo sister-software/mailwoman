@@ -18,6 +18,11 @@ use std::sync::Arc;
 
 /// Writes `n` rows of `source`, each with the `source_id` `<source>:<i>`, and returns the file's manifest entry.
 fn write(path: &Path, source: &str, n: usize) -> Value {
+	write_with_ids(path, source, n, source)
+}
+
+/// Writes `n` rows of `source`, each with the `source_id` `<id_prefix>:<i>`, and returns the file's manifest entry.
+fn write_with_ids(path: &Path, source: &str, n: usize, id_prefix: &str) -> Value {
 	let rows: Vec<Row> = (0..n)
 		.map(|i| Row {
 			raw: format!("{i} quiet lane"),
@@ -31,7 +36,7 @@ fn write(path: &Path, source: &str, n: usize) -> Value {
 		.collect();
 	let options = WriteOptions {
 		without_spans: true,
-		source_ids: Some((0..n).map(|i| Some(format!("{source}:{i}"))).collect()),
+		source_ids: Some((0..n).map(|i| Some(format!("{id_prefix}:{i}"))).collect()),
 	};
 	write_corpus_parquet(&rows, path, 1 << 20, &options);
 	json!({"split": "train", "path": path, "source": source, "rows": n, "sha256": file_sha256(path).unwrap()})
@@ -114,6 +119,28 @@ fn an_inline_deletion_drops_its_rows_from_its_source_target_only() {
 	assert!(!rows.contains("4 quiet lane|tiger"));
 	assert!(rows.contains("1 quiet lane|usgov-nad"));
 	assert_eq!(rows.len(), 8);
+}
+
+/// The corpus build leaves `source_id` uniqueness to each adapter, so two sources can hold the same id. A deletion
+/// names its target, and the other source's row with that id stays (#2559).
+#[test]
+fn a_deletion_leaves_another_source_s_row_with_the_same_source_id() {
+	let dir = tempfile::tempdir().unwrap();
+	let corpus = dir.path().join("corpus");
+	let osm = write_with_ids(&corpus.join("train/osm.parquet"), "osm", 3, "shared");
+	let ban = write_with_ids(&corpus.join("train/ban.parquet"), "ban", 3, "shared");
+	let deletions = json!([{"target": {"source": "osm"}, "source_ids": ["shared:1"], "reason": "r", "issue": "#1"}]);
+	std::fs::write(
+		corpus.join("MANIFEST.json"),
+		json!({"files": [osm, ban], "deletions": deletions}).to_string(),
+	)
+	.unwrap();
+	let settings = config(
+		&corpus,
+		json!({"country_weights": {"US": 1.0}, "source_weights": {"osm": 1.0, "ban": 1.0}, "coarse_filter": false}),
+	);
+	let counts: BTreeMap<String, u64> = source_row_counts(&settings, "train").unwrap().into_iter().collect();
+	assert_eq!(counts, BTreeMap::from([("ban".to_owned(), 3), ("osm".to_owned(), 2)]));
 }
 
 #[test]

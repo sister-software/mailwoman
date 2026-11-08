@@ -124,12 +124,12 @@ function firstOfTag(roots: readonly AddressNode[], tag: AddressNode["tag"]): Add
  * because the ancestor key also matches the same street and number in the ancestor's other parts.
  * A locality without a bounding box gets no retry.
  */
-export function applyAddressPoint(
+export async function applyAddressPoint(
 	roots: AddressNode[],
 	lookup: AddressPointLookup,
 	bboxFallback?: boolean,
 	ancestorsOf?: (id: number | string) => Ancestor[]
-): void {
+): Promise<void> {
 	const pairs = streetNumberPairs(roots)
 	const directionalUnit = [...walkNodes(roots)].find((n) => n.tag === "unit" && isDirectionalUnit(n.value))
 	const localityNode = firstOfTag(roots, "locality")
@@ -174,10 +174,10 @@ export function applyAddressPoint(
 
 	let street: AddressNode | null = null
 	let houseNumber: AddressNode | null = null
-	let hit: ReturnType<AddressPointLookup["find"]> | null = null
+	let hit: Awaited<ReturnType<AddressPointLookup["find"]>> = null
 
 	for (const pair of pairs) {
-		hit = lookup.find({
+		hit = await lookup.find({
 			street: assembleStreetValue(pair.street, directionalUnit),
 			number: pair.houseNumber.value,
 			postcode: postcode ?? null,
@@ -201,7 +201,7 @@ export function applyAddressPoint(
 	if (!hit && locality && extent) {
 		retry: for (const name of ancestorLocalityNames(localityNode, ancestorsOf)) {
 			for (const pair of pairs) {
-				const candidate = lookup.find({
+				const candidate = await lookup.find({
 					street: assembleStreetValue(pair.street, directionalUnit),
 					number: pair.houseNumber.value,
 					postcode: postcode ?? null,

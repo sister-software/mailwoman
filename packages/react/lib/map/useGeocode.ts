@@ -17,7 +17,7 @@
  *   callback, so this hook stays independent of the map binding.
  */
 
-import { useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
 
 import type { ResolvedMapPlace } from "#map/place-render"
 import type { GeocoderRuntime, MapBias } from "#map/types"
@@ -43,9 +43,21 @@ export interface UseGeocodeOptions {
 
 export interface UseGeocode extends UseParsePipeline {
 	/**
-	 * The selected candidate enriched into the map-render shape (bbox / tier / polygon), or `null`.
+	 * The pinned place when one is set, else the selected candidate enriched into the
+	 * map-render shape (bbox / tier / polygon), or `null`.
 	 */
 	mapPlace: ResolvedMapPlace | null
+	/**
+	 * A place the map shows without a parse, such as a clicked label at the tile
+	 * feature's own coordinate, or `null`.
+	 *
+	 * The next submit or reset clears it.
+	 */
+	pinned: ResolvedMapPlace | null
+	/**
+	 * Show `place` on the map in place of the result's candidate, or clear the pin with `null`.
+	 */
+	pin: (place: ResolvedMapPlace | null) => void
 }
 
 export function useGeocode({ runtime, defaultText, getBias }: UseGeocodeOptions): UseGeocode {
@@ -63,8 +75,9 @@ export function useGeocode({ runtime, defaultText, getBias }: UseGeocodeOptions)
 	}, [runtime, getBias])
 
 	const pipeline = useParsePipeline({ runtime: geoRuntime, defaultText })
+	const [pinned, pin] = useState<ResolvedMapPlace | null>(null)
 
-	const mapPlace = useMemo<ResolvedMapPlace | null>(() => {
+	const candidatePlace = useMemo<ResolvedMapPlace | null>(() => {
 		if (!pipeline.selectedCandidate || !pipeline.result) return null
 
 		return runtime.resolveMapPlace
@@ -72,5 +85,22 @@ export function useGeocode({ runtime, defaultText, getBias }: UseGeocodeOptions)
 			: pipeline.selectedCandidate
 	}, [pipeline.selectedCandidate, pipeline.result, runtime])
 
-	return { ...pipeline, mapPlace }
+	// A parse answers the question the pin stood in for, so either one clears it.
+	const { submit, reset } = pipeline
+
+	const submitAndUnpin = useCallback(
+		(query?: string) => {
+			pin(null)
+
+			return submit(query)
+		},
+		[submit]
+	)
+
+	const resetAndUnpin = useCallback(() => {
+		pin(null)
+		reset()
+	}, [reset])
+
+	return { ...pipeline, submit: submitAndUnpin, reset: resetAndUnpin, mapPlace: pinned ?? candidatePlace, pinned, pin }
 }

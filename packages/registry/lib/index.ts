@@ -16,6 +16,7 @@ export type { ArtifactInspection } from "#inspect"
 export { inspectArtifact } from "#inspect"
 export { isCountryCodeAlpha2, parseCountryCodeAlpha2 } from "#iso3166/alpha2"
 export { isCountryCodeAlpha3, parseCountryCodeAlpha3 } from "#iso3166/alpha3"
+
 export {
 	countryRecordCount,
 	countryRecordsHeader,
@@ -23,6 +24,7 @@ export {
 	getCountryByAlpha3,
 	getCountryByNumeric,
 } from "#iso3166/records"
+
 export { alpha2ForAlpha3, alpha2ForNumeric, alpha3ForAlpha2 } from "#iso3166/relations"
 export type { Normalization } from "#normalize"
 export { canonicalSpelling } from "#normalize"

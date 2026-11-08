@@ -3,6 +3,56 @@
  * fonts, tokens, Infima mapping and classic-theme restyle. Only Mailwoman-specific controls live here.
  */
 
+:root {
+	--mw-glass-opacity: 92%;
+	--mw-glass-blur: var(--ss-spacing-2);
+}
+
+/* The navbar's glass sits on a pseudo-element so its blur does not limit the dropdown's backdrop. */
+.navbar.navbar {
+	background: transparent;
+	isolation: isolate;
+}
+
+.navbar::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	--mw-glass-surface-color: var(--ss-color-background);
+}
+
+.mw-glass-surface,
+.navbar::before,
+.ss-megamenu-panel > .ss-megamenu-grid {
+	background: var(--mw-glass-surface-color, var(--ss-color-background-raised));
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+	.mw-glass-surface,
+	.navbar::before,
+	.ss-megamenu-panel > .ss-megamenu-grid {
+		background: color-mix(
+			in srgb,
+			var(--mw-glass-surface-color, var(--ss-color-background-raised)) var(--mw-glass-opacity),
+			transparent
+		);
+		-webkit-backdrop-filter: blur(var(--mw-glass-blur)) saturate(110%);
+		backdrop-filter: blur(var(--mw-glass-blur)) saturate(110%);
+	}
+}
+
+@media (prefers-reduced-transparency: reduce) {
+	.mw-glass-surface,
+	.navbar::before,
+	.ss-megamenu-panel > .ss-megamenu-grid {
+		background: var(--mw-glass-surface-color, var(--ss-color-background-raised));
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+	}
+}
+
 /* Nested categories sit flush under their level-1 parent. */
 .theme-doc-sidebar-menu.menu__list .theme-doc-sidebar-item-category-level-1 > .menu__list {
 	padding-left: 0;
@@ -10,6 +60,27 @@
 
 .glossary-term-wrapper a {
 	border-bottom-color: var(--ss-color-emphasis-500);
+}
+
+.ss-megamenu-panel .ss-megamenu-heading {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ss-spacing-2);
+}
+
+/* The shared theme reserves columns for optional menu sections.
+   A menu with neither a section rail nor a featured card needs only its content column. */
+@media (width >= 997px) {
+	.ss-megamenu-panel > .ss-megamenu-grid:not(:has(.ss-megamenu-rail, .ss-megamenu-featured)) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+/* The shared theme hides featured cards at this width, so menus without a rail use the full width. */
+@media (997px <= width <= 1200px) {
+	.ss-megamenu-panel > .ss-megamenu-grid:not(:has(.ss-megamenu-rail)) {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }
 
 /* Navbar call to action (docusaurus.config.ts's `className: "navbar__cta"`): the one primary key in the bar, so the
@@ -39,7 +110,7 @@
 	display: inline-flex;
 	gap: var(--ss-spacing-2);
 	align-items: center;
-	margin: 0 var(--ss-spacing-2);
+	margin: 0;
 	padding: var(--ss-spacing-1) var(--ss-spacing-3);
 	border: var(--ss-border-width-global) solid var(--ss-color-edge);
 	border-radius: var(--ss-radius-global);
@@ -78,6 +149,49 @@
 	font: inherit;
 	font-size: 0.75rem;
 	line-height: 1.4;
+}
+
+/* Text and icon controls share the same height in the navbar's top row. */
+@media (width >= 997px) {
+	.navbar .ss-navbar-top .navbar__items--right > :has(> .navbar__search-button) {
+		padding-inline: 0;
+	}
+
+	.navbar .ss-navbar-top .ss-navbar-color-mode,
+	.navbar .ss-navbar-top .navbar__cta,
+	.navbar .ss-navbar-top .navbar__item--github,
+	.navbar .ss-navbar-top .ss-navbar-color-mode button,
+	.navbar .ss-navbar-top .navbar__search-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		line-height: var(--ifm-line-height-base);
+		height: calc(1rem * var(--ifm-line-height-base) + var(--ss-spacing-2) + 2 * var(--ss-border-width-global));
+		box-sizing: border-box;
+	}
+
+	.navbar .ss-navbar-top .ss-navbar-color-mode {
+		width: auto;
+	}
+}
+
+.ss-footer .ss-footer-link {
+	text-decoration: none;
+}
+
+.ss-footer .ss-footer-link:hover {
+	text-decoration: underline;
+}
+
+.ss-footer .ss-footer-external {
+	display: none;
+}
+
+.ss-footer .ss-footer-status {
+	background: var(--ss-color-background-surface);
+	color: var(--ss-color-content);
+	border-color: var(--ss-color-edge);
+	font-weight: var(--ss-font-weight-semibold);
 }
 
 @media (width <= 996px) {

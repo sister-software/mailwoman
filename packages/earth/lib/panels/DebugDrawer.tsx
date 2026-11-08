@@ -13,6 +13,8 @@ import type { ParseTraceLike } from "mailwoman/browser-runtime/types"
 import type React from "react"
 import { useEffect, useState } from "react"
 
+import { isPointResult } from "#runtime/point/place"
+
 import { ModelVisualizer } from "../explorers/ModelVisualizer/ModelVisualizer.tsx"
 
 import demoStyles from "./panels.module.css"
@@ -43,7 +45,8 @@ export interface DebugDrawerProps {
  */
 export const DebugDrawer: React.FC<DebugDrawerProps> = ({ result, devMode, traceParse, onClose }) => {
 	const [storedTrace, setStoredTrace] = useState<{ input: string; trace: ParseTraceLike | null } | null>(null)
-	const input = result?.input ?? null
+	// A point query never reached the classifier, so there is no decode path to draw for it.
+	const input = result && !isPointResult(result) ? result.input : null
 	const trace = storedTrace?.input === input ? storedTrace.trace : null
 
 	useEffect(() => {

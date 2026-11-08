@@ -267,7 +267,6 @@ export interface ResolveSwitches {
 	parentFallback: boolean
 	addressPointBboxFallback: boolean
 	spanRescore: boolean
-	spanRescoreRequireContextRemainder: boolean
 	postalCompoundRecovery: boolean
 	postcodeConsistency: boolean
 	postcodeCountryCoherence: boolean
@@ -288,7 +287,6 @@ export const RESOLVE_SWITCH_DEFAULTS: Readonly<ResolveSwitches> = {
 	parentFallback: true,
 	addressPointBboxFallback: false,
 	spanRescore: true,
-	spanRescoreRequireContextRemainder: false,
 	postalCompoundRecovery: true,
 	postcodeConsistency: true,
 	postcodeCountryCoherence: true,
@@ -413,12 +411,6 @@ export interface ResolveOpts {
 	 * Span-rescore postcode-consistency radius in km.
 	 */
 	spanRescoreThresholdKm?: number
-	/**
-	 * Require contextual remainder for span-rescore sub-spans.
-	 *
-	 * @defaultValue {@linkcode RESOLVE_SWITCH_DEFAULTS}
-	 */
-	spanRescoreRequireContextRemainder?: boolean
 	/**
 	 * The landmark layer.
 	 *

@@ -7,6 +7,7 @@
  */
 
 import { PRICE_MONTHLY } from "@mailwoman/license-worker/client/constants"
+import clsx from "clsx"
 import { useId, useState, type ReactNode } from "react"
 
 import { monthlyCost, oldestReading, ProviderRates } from "./rates.ts"
@@ -15,13 +16,15 @@ import styles from "./styles.module.css"
 
 const MIN_EXPONENT = 4
 const MAX_EXPONENT = 8
-const STEPS = 400
+const STEPS = 100
 
 /**
- * Google's last volume band starts above 5 million lookups a month.
- * Past it, every metered row is at its lowest rate.
+ * The logarithmic scale marks each power of ten between its endpoints.
  */
-const DEEPEST_DISCOUNT = 5_000_000
+const RANGE_MARKERS = Array.from(
+	{ length: MAX_EXPONENT - MIN_EXPONENT + 1 },
+	(_, index) => (index / (MAX_EXPONENT - MIN_EXPONENT)) * STEPS
+)
 
 const toRequests = (step: number) => {
 	const raw = 10 ** (MIN_EXPONENT + (step / STEPS) * (MAX_EXPONENT - MIN_EXPONENT))
@@ -35,12 +38,26 @@ const toStep = (requests: number) =>
 	Math.round(((Math.log10(Math.max(requests, 1)) - MIN_EXPONENT) / (MAX_EXPONENT - MIN_EXPONENT)) * STEPS)
 
 const count = new Intl.NumberFormat("en-US")
+const compactCount = new Intl.NumberFormat("en-US", { notation: "compact" })
 const dollars = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
 
 export const PricingCalculator = (): ReactNode => {
 	const [requests, setRequests] = useState(1_000_000)
+	// The handle retains its raw position because distinct positions can round to the same request count.
+	const [rangeStep, setRangeStep] = useState(() => toStep(requests))
+	const [pulseCount, setPulseCount] = useState(0)
 	const inputID = useId()
 	const rangeID = useId()
+	const sourcesID = useId()
+
+	const updateVolume = (nextRequests: number, nextStep: number) => {
+		if (nextRequests > requests && RANGE_MARKERS.some((marker) => rangeStep < marker && nextStep >= marker)) {
+			setPulseCount((current) => current + 1)
+		}
+
+		setRequests(nextRequests)
+		setRangeStep(nextStep)
+	}
 
 	return (
 		<div className={styles.calculator}>
@@ -53,26 +70,42 @@ export const PricingCalculator = (): ReactNode => {
 					className={styles.number}
 					type="number"
 					min={0}
-					step={1000}
+					step={100}
 					value={requests}
-					onChange={(event) => setRequests(Math.max(0, Number(event.target.value) || 0))}
+					onChange={(event) => {
+						const nextRequests = Math.max(0, Number(event.target.value) || 0)
+
+						updateVolume(nextRequests, Math.min(STEPS, Math.max(0, toStep(nextRequests))))
+					}}
 				/>
 				<input
 					id={rangeID}
 					aria-label="Addresses geocoded a month, on a logarithmic scale"
+					aria-valuetext={`${count.format(requests)} addresses per month`}
 					className={styles.range}
 					type="range"
+					list={`${rangeID}-markers`}
 					min={0}
 					max={STEPS}
-					value={Math.min(STEPS, Math.max(0, toStep(requests)))}
-					onChange={(event) => setRequests(toRequests(Number(event.target.value)))}
+					step={1}
+					value={rangeStep}
+					onChange={(event) => {
+						const nextStep = Number(event.target.value)
+
+						updateVolume(toRequests(nextStep), nextStep)
+					}}
 				/>
+				<datalist id={`${rangeID}-markers`}>
+					{RANGE_MARKERS.map((marker) => (
+						<option key={marker} value={marker} />
+					))}
+				</datalist>
 				<div className={styles.scale} aria-hidden="true">
-					<span>10K</span>
-					<span>100K</span>
-					<span>1M</span>
-					<span>10M</span>
-					<span>100M</span>
+					{RANGE_MARKERS.map((marker) => (
+						<span key={marker} style={{ left: `${(marker / STEPS) * 100}%` }}>
+							{compactCount.format(toRequests(marker))}
+						</span>
+					))}
 				</div>
 			</div>
 
@@ -86,7 +119,18 @@ export const PricingCalculator = (): ReactNode => {
 					</tr>
 				</thead>
 				<tbody aria-live="polite">
-					{ProviderRates.map((rate) => {
+					<tr className={styles.ours}>
+						<th scope="row">
+							<span className={styles.provider}>Mailwoman</span>
+							<span className={styles.product}>One flat monthly price. Unlimited address lookups.</span>
+						</th>
+						<td className={styles.amount}>
+							<span key={pulseCount} className={clsx(styles.price, pulseCount > 0 && styles.pricePulse)}>
+								{PRICE_MONTHLY}
+							</span>
+						</td>
+					</tr>
+					{ProviderRates.map((rate, index) => {
 						const cost = monthlyCost(rate, requests)
 
 						return (
@@ -94,30 +138,45 @@ export const PricingCalculator = (): ReactNode => {
 								<th scope="row">
 									<span className={styles.provider}>{rate.provider}</span>
 									<span className={styles.product}>
-										{rate.product} · {rate.note} ·{" "}
-										<a href={rate.sourceURL} rel="noopener">
-											list rate, read {rate.retrievedOn}
-										</a>
+										{rate.product} · {rate.note}
+										<sup>
+											<a
+												href={`#${sourcesID}-${index}`}
+												className={styles.sourceMarker}
+												aria-label={`Pricing source for ${rate.provider}, ${rate.product}`}
+												title={`List rate, read ${rate.retrievedOn}`}
+											>
+												†
+											</a>
+										</sup>
 									</span>
 								</th>
-								<td className={styles.amount}>{cost === null ? "Quote on request" : dollars.format(cost)}</td>
+								<td className={styles.amount}>
+									{typeof cost === "number" ? (
+										<span key={pulseCount} className={clsx(styles.price, pulseCount > 0 && styles.pricePulse)}>
+											{dollars.format(cost)}
+										</span>
+									) : (
+										"Quote on request"
+									)}
+								</td>
 							</tr>
 						)
 					})}
-					<tr className={styles.ours}>
-						<th scope="row">
-							<span className={styles.provider}>Mailwoman</span>
-							<span className={styles.product}>
-								Commercial license · This row does not read the slider.
-								{requests > DEEPEST_DISCOUNT
-									? " At this volume the metered rows have earned their discount. Ours was already there."
-									: null}
-							</span>
-						</th>
-						<td className={styles.amount}>{PRICE_MONTHLY}</td>
-					</tr>
 				</tbody>
 			</table>
+
+			<ul className={styles.sources} aria-label="Pricing sources">
+				{ProviderRates.map((rate, index) => (
+					<li key={rate.product} id={`${sourcesID}-${index}`}>
+						<span aria-hidden="true">† </span>
+						<a href={rate.sourceURL} rel="noopener">
+							{rate.provider} · {rate.product}
+						</a>
+						{` — list rate, read ${rate.retrievedOn}.`}
+					</li>
+				))}
+			</ul>
 
 			<p className={styles.fine}>
 				Published list prices as of {oldestReading()}, before volume agreements, credits or negotiated discounts. Read

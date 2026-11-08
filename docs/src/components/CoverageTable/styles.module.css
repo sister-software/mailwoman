@@ -10,7 +10,8 @@
 	display: table;
 	width: 100%;
 	margin: 0;
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
 }
 
 .table tr {
@@ -28,12 +29,23 @@
 }
 
 .table thead th {
-	background: none;
+	background: var(--ss-color-background-surface);
 	border-bottom: 2px solid var(--ss-color-edge);
 	font-size: 0.75rem;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	white-space: nowrap;
+}
+
+.table thead th:first-child {
+	border-start-start-radius: calc(var(--ss-radius-tag) * 2);
+}
+
+.table thead th:last-child {
+	border-start-end-radius: calc(var(--ss-radius-tag) * 2);
+}
+
+.table code {
+	font-weight: var(--ss-font-weight-semibold);
 }
 
 .table tbody th {
@@ -55,6 +67,7 @@
 .tierFine {
 	font-family: var(--ifm-font-family-monospace);
 	font-size: 0.75rem;
+	font-weight: var(--ss-font-weight-semibold);
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
 	padding: 0.1rem 0.4rem;

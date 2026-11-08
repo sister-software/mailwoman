@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The tile Worker's Hono app: PMTiles tiles and TileJSON from R2, terrarium elevation tiles, SQLite byte ranges for
+ *   The tile Worker's Hono app: PMTiles tiles and TileJSON from R2, basemap styles, terrarium elevation tiles, SQLite byte ranges for
  *   the browser's httpvfs reader, and the caller's approximate location.
  *
  *   Hono matches a regex parameter only when it fills its whole path segment, so a route whose last segment holds a
@@ -24,6 +24,7 @@ import {
 import { serveDatabase } from "#routes/db"
 import { serveGeolocation } from "#routes/geolocation"
 import { serveHeartbeat, serveHome } from "#routes/healthcheck"
+import { serveBasemapStyle, STYLE_FILE } from "#routes/style"
 import { serveTerrariumTile } from "#routes/terrain"
 import { serveTile, serveTileMetadata, tileSetOfMetadataFile } from "#routes/tile"
 
@@ -158,6 +159,7 @@ export const TILE_WORKER_ROUTES: ReadonlyArray<readonly [path: string, handler: 
 	["/heartbeat", serveHeartbeat],
 	[CITY_MODEL_ROUTE, serveCityModelFile],
 	[LANDMARK_MODEL_ROUTE, serveLandmarkModel],
+	[`/styles/:style{${STYLE_FILE}}`, serveBasemapStyle],
 ]
 
 /**

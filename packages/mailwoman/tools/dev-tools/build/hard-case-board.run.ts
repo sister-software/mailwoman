@@ -32,7 +32,7 @@ const { values } = parseArguments({ options: { out: { type: "string" } } })
 const OUT = values.out ?? HARD_CASE_BOARD_PATH
 
 const ADDED_AT = "2026-08-06"
-const WOF_DB = wofDatabasePath("fst-staging-2026-08-05", "admin-global-priority-importance.db")
+const WOF_DB = wofDatabasePath("admin-global-priority-importance.db")
 const POP_FST_DIR = wofDatabasePath("fst-per-locale")
 const IMP_FST_DIR = wofDatabasePath("fst-staging-2026-08-05-importance-fanoutfix")
 

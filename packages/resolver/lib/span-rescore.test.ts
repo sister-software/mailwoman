@@ -304,18 +304,17 @@ describe("findRescoreCandidate", () => {
 		expect(hit?.place.id).toBe(51)
 	})
 
-	it(": a sub-span dropping a NAME word is refused under spanRescoreRequireContextRemainder", async () => {
-		const backend = await makeBackend()
+	it(": returns a sub-span that drops a NAME word, flagged as dropping the name", async () => {
+		const hit = await findRescoreCandidate("Fort Worth", [], await makeBackend(), { thresholdKm: 0 })
 
-		const shipped = await findRescoreCandidate("Fort Worth", [], backend, { thresholdKm: 0 })
-		expect(shipped?.place.id).toBe(60)
+		expect(hit?.place.id).toBe(60)
+		expect(hit?.dropsName).toBe(true)
+	})
 
-		const ruled = await findRescoreCandidate("Fort Worth", [], backend, {
-			thresholdKm: 0,
-			spanRescoreRequireContextRemainder: true,
-		})
+	it(": a whole-input span drops no word of the name", async () => {
+		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], await makeBackend(), { thresholdKm: 0 })
 
-		expect(ruled).toBeNull()
+		expect(hit?.dropsName).toBe(false)
 	})
 
 	describe("a parse that reads the input as one venue", () => {
@@ -363,6 +362,32 @@ describe("findRescoreCandidate", () => {
 			const hit = await findRescoreCandidate(raw, venueTree(raw), backend, { thresholdKm: 0, isVenueCategoryWord })
 
 			expect(hit?.text).toBe("London")
+			// `Tower of` is part of the name, so `London` may scope the venue lookup but is not the answer.
+			expect(hit?.dropsName).toBe(true)
+		})
+
+		it("reads a sub-span that is its own comma-separated segment as the location", async () => {
+			const raw = "Evergreen Cemetery, London"
+
+			const hit = await findRescoreCandidate(raw, venueTree(raw), backend, { thresholdKm: 0 })
+
+			expect(hit?.text).toBe("London")
+			expect(hit?.dropsName).toBe(false)
+		})
+
+		it("answers a span that keeps the name ahead of one that drops a word of it", async () => {
+			// `Narita` is also a locality, and reading it would leave `Lodge` behind.
+			const hit = await findRescoreCandidate("Narita Lodge, London", [], backend, { thresholdKm: 0 })
+
+			expect(hit?.text).toBe("London")
+			expect(hit?.dropsName).toBe(false)
+		})
+
+		it("falls back to the name-dropping span when no span keeps the name", async () => {
+			const hit = await findRescoreCandidate("Narita Lodge", [], backend, { thresholdKm: 0 })
+
+			expect(hit?.text).toBe("Narita")
+			expect(hit?.dropsName).toBe(true)
 		})
 
 		it("answers a sub-locality row that holds the whole name ahead of a shorter span", async () => {
@@ -381,26 +406,22 @@ describe("findRescoreCandidate", () => {
 		})
 	})
 
-	it(": the rule keeps a sub-span whose remainder is a subdivision code", async () => {
-		const hit = await findRescoreCandidate("WA Sammamish", [], await makeBackend(), {
-			thresholdKm: 0,
-			spanRescoreRequireContextRemainder: true,
-		})
+	it(": a sub-span whose remainder is a subdivision code keeps every word of the name", async () => {
+		const hit = await findRescoreCandidate("WA Sammamish", [], await makeBackend(), { thresholdKm: 0 })
 
 		expect(hit?.text).toBe("Sammamish")
 		expect(hit?.place.id).toBe(51)
+		expect(hit?.dropsName).toBe(false)
 	})
 
-	it(": the rule keeps a sub-span whose remainder is a number", async () => {
-		const hit = await findRescoreCandidate("86-300 Grudziądz", [], await makeBackend(), {
-			thresholdKm: 0,
-			spanRescoreRequireContextRemainder: true,
-		})
+	it(": a sub-span whose remainder is a number keeps every word of the name", async () => {
+		const hit = await findRescoreCandidate("86-300 Grudziądz", [], await makeBackend(), { thresholdKm: 0 })
 
 		expect(hit?.place.id).toBe(1)
+		expect(hit?.dropsName).toBe(false)
 	})
 
-	it(": keeps a sub-span whose remainder the PARSE read as a street", async () => {
+	it(": a sub-span whose remainder the PARSE read as a street keeps every word of the name", async () => {
 		const raw = "86-300 Grudziądz, Daliowa 4"
 
 		const roots: AddressNode[] = [
@@ -415,15 +436,13 @@ describe("findRescoreCandidate", () => {
 			}),
 		]
 
-		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), {
-			thresholdKm: 0,
-			spanRescoreRequireContextRemainder: true,
-		})
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { thresholdKm: 0 })
 
 		expect(hit?.place.id).toBe(1)
+		expect(hit?.dropsName).toBe(false)
 	})
 
-	it(": a street node OVERLAPPING the span is not context — the `Fort Worth` shape", async () => {
+	it(": probes no span inside a street body the parse read", async () => {
 		const raw = "86-300 Grudziądz, Daliowa 4"
 
 		const roots: AddressNode[] = [
@@ -431,12 +450,7 @@ describe("findRescoreCandidate", () => {
 			node({ tag: "street", value: "Grudziądz, Daliowa", start: 7, end: 25 }),
 		]
 
-		const ruled = await findRescoreCandidate(raw, roots, await makeBackend(), {
-			thresholdKm: 0,
-			spanRescoreRequireContextRemainder: true,
-		})
-
-		expect(ruled).toBeNull()
+		expect(await findRescoreCandidate(raw, roots, await makeBackend(), { thresholdKm: 0 })).toBeNull()
 	})
 
 	it("flags a recovery CONDITIONAL when the postcode resolves and the match is within range", async () => {

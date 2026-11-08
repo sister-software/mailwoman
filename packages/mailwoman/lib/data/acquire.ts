@@ -15,6 +15,7 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
+import { rangedResponseTotal } from "@mailwoman/core/api/content-range"
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
@@ -182,6 +183,11 @@ export async function acquireRemoteObject(options: {
 	headers?: Record<string, string>
 	signal?: AbortSignal
 	onProgress?: (message: string) => void
+	/**
+	 * Receives the bytes on disk and the object's total length after each chunk,
+	 * as `streamToDisk` reports them.
+	 */
+	onBytes?: (received: number, total: number | null) => void
 	now?: () => Date
 }): Promise<AcquiredFile> {
 	const now = options.now ?? (() => new Date())
@@ -242,13 +248,11 @@ export async function acquireRemoteObject(options: {
 			resumeFrom: offset,
 			retainPartial: true,
 			onResponse: (response) => {
-				const total = /\/(\d+)$/u.exec(response.headers.get("content-range") ?? "")?.[1]
-				const length = response.headers.get("content-length")
-
-				answeredLength = total ? Number(total) : length ? offset + Number(length) : null
+				answeredLength = rangedResponseTotal(response, offset)
 			},
 			...(options.signal ? { signal: options.signal } : {}),
 			...(options.onProgress ? { onProgress: options.onProgress } : {}),
+			...(options.onBytes ? { onBytes: options.onBytes } : {}),
 		})
 
 	let bytes: number

@@ -46,7 +46,7 @@ describe("streetNumberPairs", () => {
 })
 
 describe("applyAddressPoint", () => {
-	test("probes the nearest pair first and stamps the number the register answered for", () => {
+	test("probes the nearest pair first and stamps the number the register answered for", async () => {
 		const tree = barTree()
 		const probed: string[] = []
 
@@ -60,7 +60,7 @@ describe("applyAddressPoint", () => {
 			},
 		} as AddressPointLookup
 
-		applyAddressPoint(tree.roots, lookup)
+		await applyAddressPoint(tree.roots, lookup)
 
 		expect(probed).toEqual(["22"])
 
@@ -69,7 +69,7 @@ describe("applyAddressPoint", () => {
 		expect(numbers.find((n) => n.value === "1802")?.metadata).toBeUndefined()
 	})
 
-	test("falls through to the next pair when the nearest one is not in the register", () => {
+	test("falls through to the next pair when the nearest one is not in the register", async () => {
 		const tree = barTree()
 		const probed: string[] = []
 
@@ -83,12 +83,12 @@ describe("applyAddressPoint", () => {
 			},
 		} as AddressPointLookup
 
-		applyAddressPoint(tree.roots, lookup)
+		await applyAddressPoint(tree.roots, lookup)
 
 		expect(probed).toEqual(["22", "1802"])
 	})
 
-	test("carries the region and subregion spans beside the locality, for a register scoped by that pair", () => {
+	test("carries the region and subregion spans beside the locality, for a register scoped by that pair", async () => {
 		const raw = "台北市中正區重慶南路一段122號"
 
 		const tree = buildAddressTree(raw, [
@@ -108,7 +108,7 @@ describe("applyAddressPoint", () => {
 			},
 		} as AddressPointLookup
 
-		applyAddressPoint(tree.roots, lookup)
+		await applyAddressPoint(tree.roots, lookup)
 
 		expect(queries).toHaveLength(1)
 

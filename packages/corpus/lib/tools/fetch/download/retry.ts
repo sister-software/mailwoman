@@ -5,6 +5,7 @@
  * @file Retries and resumes interrupted corpus downloads.
  */
 
+import { contentRangeTotal } from "@mailwoman/core/api/content-range"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { movePath } from "@mailwoman/core/fs/writers"
@@ -112,8 +113,7 @@ export async function resumableDownload(options: {
 		if (res.status === HTTP_RANGE_NOT_SATISFIABLE && have > 0) {
 			// The file on disk is already the whole body when no bytes follow `have`.
 			// `Content-Range: bytes */<total>` gives its length.
-			const whole = /\*\/(\d+)/.exec(res.headers.get("content-range") ?? "")?.[1]
-			total = whole ? Number(whole) : have
+			total = contentRangeTotal(res.headers.get("content-range")) ?? have
 			await res.body?.cancel()
 
 			break
@@ -123,11 +123,7 @@ export async function resumableDownload(options: {
 			throw new HTTPStatusError(res.status, `HTTP ${res.status} for a range request — ${url}`)
 		}
 
-		const range = /bytes \d+-\d+\/(\d+)/.exec(res.headers.get("content-range") ?? "")?.[1]
-
-		if (range) {
-			total = Number(range)
-		}
+		total = contentRangeTotal(res.headers.get("content-range")) ?? total
 
 		const before = have
 		const knownTotal = total

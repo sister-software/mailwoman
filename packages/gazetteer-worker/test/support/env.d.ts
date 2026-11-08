@@ -24,6 +24,10 @@ declare global {
 			 * The fixture OpenStreetMap place database, base64-encoded.
 			 */
 			OSM_PLACES_FIXTURE_BASE64: string
+			/**
+			 * The fixture street table, base64-encoded.
+			 */
+			STREET_FIXTURE_BASE64: string
 		}
 
 		interface GlobalProps {

@@ -5,7 +5,8 @@
  *   This file contains types and utilities for working with geographic positions.
  */
 
-import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
+/// <reference types="google.maps" />
+
 import type { PlanarPoint } from "@mailwoman/annotations"
 
 import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
@@ -179,13 +180,14 @@ export function isCoordPairLiteral(input: unknown): input is [number, number] | 
 }
 
 /**
- * Type-predicate to determine if the given input is a {@linkcode LatLngLiteral} object.
+ * Type-predicate to determine if the given input is a
+ * {@linkcode google.maps.LatLngLiteral | LatLngLiteral} object.
  *
  * @category Position
  * @category Type Predicates
  * @see {@link https://developers.google.com/maps/documentation/javascript/reference/coordinates#LatLngLiteral Google Maps API Documentation}
  */
-export function isGoogleMapsLatLngLiteral(input: unknown): input is LatLngLiteral {
+export function isGoogleMapsLatLngLiteral(input: unknown): input is google.maps.LatLngLiteral {
 	if (!input || typeof input !== "object") return false
 
 	if (!Object.hasOwn(input, "lat") || !Object.hasOwn(input, "lng")) return false

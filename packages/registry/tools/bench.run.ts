@@ -84,13 +84,17 @@ const firstQueryNs = nanoseconds(firstQueryStart)
 const countries = await readLocalJSONFile<{ records: Array<{ alpha3: string; status: string }> }>(
 	workspacePath("registry", "data", "normalized", "iso3166-1.json")
 )
+
 const airports = await readLocalJSONFile<{ records: Array<{ iata: string }> }>(
 	workspacePath("registry", "data", "normalized", "iata-airports.json")
 )
+
 const setStart = process.hrtime.bigint()
+
 const countrySet = new Set(
 	countries.records.filter((record) => record.status === "officially-assigned").map((record) => record.alpha3)
 )
+
 const airportSet = new Set(airports.records.map((record) => record.iata))
 const collisionSet = new Set([...countrySet].filter((code) => airportSet.has(code)))
 const setBuildNs = nanoseconds(setStart)
@@ -161,6 +165,7 @@ for (const [distribution, codes] of [
 }
 
 const variants = wasm.preferredWasmVariant() === "simd" ? (["scalar", "simd"] as const) : (["scalar"] as const)
+
 const startup: Record<string, number> = {
 	"module import": importNs,
 	"artifact decode + validate (3 bitsets)": decodeNs,

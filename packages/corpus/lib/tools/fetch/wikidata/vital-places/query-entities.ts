@@ -125,10 +125,14 @@ export function recordsFromFieldRows(
 				break
 			// An "unknown value" statement answers with a blank node (`.well-known/genid/...`), which is no item.
 			case "class":
-				if (ITEM_IRI.test(value)) fields.classes.add(entityQID(value))
+				if (ITEM_IRI.test(value)) {
+					fields.classes.add(entityQID(value))
+				}
 				break
 			case "country":
-				if (ITEM_IRI.test(value)) fields.countries.add(entityQID(value))
+				if (ITEM_IRI.test(value)) {
+					fields.countries.add(entityQID(value))
+				}
 				break
 			case "coordinate":
 				fields.coordinate ??= readPointLiteral(value)
@@ -244,6 +248,7 @@ export async function fetchVitalEntitiesFromQueries(
 			} catch (error) {
 				writes = writes.catch(() => undefined)
 				result.failedBatches.push(batch[0]!.qid)
+
 				report?.(
 					`  ✗ entities: query ${index + 1} (${batch[0]!.qid}…): ${error instanceof Error ? error.message : String(error)}`
 				)

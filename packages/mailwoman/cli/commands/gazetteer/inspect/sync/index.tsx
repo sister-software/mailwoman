@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer inspect sync` — clone or pull the Who's On First country repositories that the gazetteer
- *   builds read.
+ *   `mailwoman gazetteer inspect sync` — clone or refresh the Who's On First repositories that the gazetteer builds
+ *   read, every one from its `mailwoman` fork, directly under the repos root.
  *
  *   The destination defaults to `<data-root>/src/wof-repos`, matching every consumer of these repositories
  *   (`gazetteer build admin`, `gazetteer build`, `build postcode-database`, `gazetteer polygons` all document that same
- *   default). Which repositories to sync is decided in `sync-plan.ts` before any network work, so a mistake is a
- *   message rather than a directory full of clones.
+ *   default). The repositories already cloned there are always refreshed; `--repos`, `--countries` and `--all` add more.
+ *   Which repositories to sync is decided in `plan.ts` before any network work, so a mistake is a message rather than
+ *   a directory full of clones. `syncWOFRepo` in `@mailwoman/gazetteer` does the per-repository work.
  *
  *   The progress display reports repositories. Per-repository `▸` lines are required because a first
  *   clone of a large country runs for minutes. A counter that moves only on completion looks like a
@@ -17,14 +18,15 @@
  */
 
 import { ProgressBar } from "@inkjs/ui"
-import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
 import { wofReposPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { GitClient } from "@mailwoman/core/git"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import type { RepoSyncResult } from "@mailwoman/gazetteer/tools/pipeline/repos/sync"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 import { useState } from "react"
@@ -46,8 +48,9 @@ import {
 	type DiscoveredRepo,
 	type RepoSelection,
 } from "#cli/commands/gazetteer/inspect/sync/plan"
+
 /**
- * Concurrency for the clone fan-out.
+ * Concurrency for the sync fan-out.
  *
  * Fixed rather than `availableParallelism()`: these are network transfers of hundreds of
  * megabytes, so the ceiling is bandwidth and GitHub's patience rather than cores.
@@ -68,7 +71,7 @@ const MAX_LISTED_CHECKS = 25
  */
 export const spec = {
 	name: "sync",
-	description: "Synchronize Who's On First repositories.",
+	description: "Clone or refresh Who's On First repositories from the mailwoman forks.",
 	positionals: [
 		{
 			name: "local-repo-directory",
@@ -76,21 +79,26 @@ export const spec = {
 		},
 	],
 	options: {
-		repos: { type: "string", description: "Comma-separated repository allow-list" },
-		countries: { type: "string", description: "Comma-separated ISO-2 countries (admin + postalcode repositories)" },
+		repos: { type: "string", description: "Comma-separated repositories to add to the clones that exist" },
+		countries: { type: "string", description: "Comma-separated ISO-2 countries to add (admin + postalcode)" },
 		all: { type: "boolean", default: false, description: `Sync every repository in ${WOF_REPO_OWNER}` },
-		"dry-run": { type: "boolean", default: false, description: "Print the plan without cloning" },
+		"dry-run": {
+			type: "boolean",
+			default: false,
+			description:
+				"Report what each repository needs, measured against its fork, without a GitHub request or a change to any clone",
+		},
 	},
 } as const satisfies CommandSpec
 
 interface SyncPlan {
 	destination: string
 	selection: RepoSelection
-	sourceCount: number
+	count: number
 }
 
 /**
- * Ask GitHub what the organization holds.
+ * Ask GitHub what the upstream organization holds.
  *
  * `gh` is a hard requirement and its absence is reported as such: without this the
  * failure surfaces as an opaque spawn error from deep inside the task.
@@ -105,22 +113,55 @@ async function discoverRepos(): Promise<DiscoveredRepo[]> {
 			"--limit",
 			"1000",
 			"--json",
-			"name",
-			"--json",
-			"url",
-			"--json",
-			"diskUsage",
+			"name,diskUsage",
 		])
 
-		return parseJSONStrict<Array<{ name: string; url: string; diskUsage: number }>>(stdout).map(
-			({ name, url, diskUsage }) => ({ name, url, diskUsageKB: diskUsage })
-		)
+		return parseJSONStrict<Array<{ name: string; diskUsage: number }>>(stdout).map(({ name, diskUsage }) => ({
+			name,
+			diskUsageKB: diskUsage,
+		}))
 	} catch (error) {
 		throw new CommandError(
 			`Could not list ${WOF_REPO_OWNER} through \`gh\`. Install the GitHub CLI and run \`gh auth login\`.`,
 			{ cause: error }
 		)
 	}
+}
+
+/**
+ * The sentence for one repository's line in the closing list.
+ */
+function describeResult(result: RepoSyncResult): string {
+	const parts = [result.reason]
+
+	if (result.forkCreated) {
+		parts.push("fork created")
+	}
+
+	const update = result.forkUpdate
+
+	if (update?.kind === "conflict") {
+		parts.push(`fork conflicts with upstream: ${update.message}`)
+	} else if (update && update.kind !== "none") {
+		parts.push(`fork ${update.kind} from upstream`)
+	}
+
+	const { compacted } = result
+
+	if (compacted) {
+		parts.push(
+			`re-shallowed from ${compacted.commitsBefore} to ${compacted.commitsAfter} commit(s)` +
+				(compacted.otherBranches.length ? `; local branches keep history: ${compacted.otherBranches.join(", ")}` : "")
+		)
+	}
+
+	for (const change of result.remoteChanges) {
+		parts.push(
+			`${result.dryRun ? "would " : ""}${change.kind === "remove" ? "remove" : change.kind} remote ${change.remote}`
+		)
+	}
+
+	return parts.join("; ")
 }
 
 const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) => {
@@ -138,121 +179,131 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 			}
 
 			const destination = PathBuilder.from(requested ?? wofReposPath())
+			const dryRun = options.dryRun
 
-			const [{ Placetype, PLACETYPES_REPO_SOURCE }, { synchronizeRepo }] = await Promise.all([
+			const [
+				{ Placetype, PLACETYPES_REPO },
+				{ auditReposRoot },
+				{ sameRemote, syncSentence, syncWOFRepo },
+				{ githubForkHost },
+			] = await Promise.all([
 				import("@mailwoman/gazetteer"),
-				import("@mailwoman/core"),
+				import("@mailwoman/gazetteer/tools/pipeline/repos/audit"),
+				import("@mailwoman/gazetteer/tools/pipeline/repos/sync"),
+				import("@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"),
 			])
 
+			const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 			const { parallelMap } = await import("spliterator")
+
+			const audit = await auditReposRoot(destination, { readCommits: false })
+
+			for (const stray of audit.strays) {
+				console.error(`▸ ${destination}/${stray} is not a repository clone; the admin ingest reads its GeoJSON too`)
+			}
+
+			for (const link of audit.links) {
+				console.error(`▸ ${destination}/${link} is a symbolic link; the sync leaves it alone and the ingest skips it`)
+			}
 
 			const selection = selectRepos(await discoverRepos(), {
 				repos: options.repos,
 				countries: options.countries,
 				all: options.all,
+				cloned: audit.repos.map((repo) => repo.name),
 			})
 
-			// Where each repo comes from is resolved per repo rather than assumed to be upstream.
-			// `gh repo list` enumerates the upstream org, so the discovered `url` always refers to upstream.
-			// A new clone from that URL would replace the corrections stored in our fork with upstream data.
-			// A clone already on disk keeps its remotes: `synchronizeRepo` pulls in place
-			// and never rewrites a remote, so this fixes new clones only.
-			// `gazetteer repos-sync` reports and re-points the existing ones.
-			const { githubForkProbe, resolveWOFRepoOrigin } =
-				await import("@mailwoman/gazetteer/tools/pipeline/wof/repo-origin")
+			// `Placetype.prepare` reads the placetypes repository below, so every sync includes it.
+			const names = [...new Set([...selection.selected.map((entry) => entry.name), PLACETYPES_REPO.name])]
 
-			const resolved = await Promise.all(
-				selection.selected.map(async ({ name }) => {
-					const origin = await resolveWOFRepoOrigin(name, githubForkProbe)
-
-					if (origin.source === "fork") {
-						console.error(`▸ ${name}: ${origin.reason}`)
-					} else if (origin.reason.includes("fork lookup failed")) {
-						console.error(`▸ ${name}: ${origin.reason}`)
-					}
-
-					// `owner` is the directory.
-					// It stays upstream even when the bytes come from our fork.
-					// The destination is `<root>/<owner>/<name>`, so keying it on the
-					// resolved org would give one repo two homes.
-					// `ingestWOF` globs the whole root, so the build would read both and resolve the
-					// conflict by FastGlob enumeration order (`repos-audit.ts` documents that hazard).
-					// One repo, one directory, whichever remote filled it.
-					return { name, url: origin.url, owner: WOF_REPO_OWNER }
-				})
-			)
-
-			// `Placetype.prepare` reads the required placetypes codex below.
-			// Every consumer of a synchronized tree resolves placetypes through this codex.
-			const sources: RepositorySource[] = [...resolved, PLACETYPES_REPO_SOURCE]
-
-			setPlan({ destination: destination.toString(), selection, sourceCount: sources.length })
+			setPlan({ destination: destination.toString(), selection, count: names.length })
 
 			console.error(
-				`▸ sync ${formatQuantity(sources.length)} repositories ` +
+				`▸ sync ${formatQuantity(names.length)} repositories ` +
 					`(${ByteFormatter.formatSI(selection.totalDiskUsageKB * 1024)} as GitHub reports them) → ${destination}` +
-					(options.dryRun ? " (dry-run)" : "")
+					(dryRun ? " (dry-run)" : "")
 			)
 
-			if (options.dryRun) {
-				return {
-					ok: true,
-					checks: sources.map((source) => ({
-						ok: true,
-						check: source.name,
-						detail: `[dry-run] ${source.url} → ${destination}/${source.owner}/${source.name}`,
-					})),
-				}
-			}
-
+			const results: RepoSyncResult[] = []
 			const checks: Check[] = []
 			let ok = true
 
 			const batchIterator = parallelMap(
-				sources,
-				async (source) => {
+				names,
+				async (name) => {
 					const startedAt = performance.now()
 
-					setActive((current) => [...current, source.name])
+					setActive((current) => [...current, name])
 
-					console.error(`▸ ${source.name}`)
-
-					let action: SynchronizeAction | null = null
-					let failure: string | null = null
+					console.error(`▸ ${name}`)
 
 					await using client = new GitClient({ cwd: destination })
 
-					const unwatch = progress.watch(client, source.name)
+					const unwatch = progress.watch(client, name)
+
+					let detail: string
+					let passed: boolean
 
 					try {
-						action = await synchronizeRepo(source, destination, client)
+						const result = await syncWOFRepo(name, { root: destination, host: githubForkHost, client, dryRun })
+
+						results.push(result)
+						detail = describeResult(result)
+						passed = !result.action.startsWith("refuse") && result.forkUpdate?.kind !== "conflict"
 					} catch (error) {
-						ok = false
-						failure = error instanceof Error ? error.message : String(error)
+						detail = error instanceof Error ? error.message : String(error)
+						passed = false
 					} finally {
 						unwatch()
-						progress.clear(source.name)
+						progress.clear(name)
 					}
+
+					ok &&= passed
 
 					const elapsed = `${((performance.now() - startedAt) / 1000).toFixed(1)}s`
 
-					setActive((current) => current.filter((name) => name !== source.name))
+					setActive((current) => current.filter((entry) => entry !== name))
 					setDoneCount((count) => count + 1)
 
-					console.error(`${failure ? "✗" : "✓"} ${source.name} ${failure ?? action} ${elapsed}`)
+					console.error(`${passed ? "✓" : "✗"} ${name} ${detail} ${elapsed}`)
 
-					checks.push({
-						ok: !failure,
-						check: source.name,
-						detail: failure ?? `${action} in ${elapsed}`,
-					})
+					checks.push({ ok: passed, check: name, detail: `${detail} (${elapsed})` })
 				},
 				{ concurrency: CONCURRENCY }
 			)
 
 			await Array.fromAsync(batchIterator)
 
-			await Placetype.prepare({ batchSize: CONCURRENCY, localRepoDirectory: destination })
+			console.error(`▸ ${syncSentence(results)}`)
+
+			if (!dryRun) {
+				await Placetype.prepare({ batchSize: CONCURRENCY, localRepoDirectory: destination })
+
+				// The vintage stamp lives outside the repos root because `ingestWOF` globs that root.
+				const vintagePath = wofDatabasePath("repos-vintage.json")
+
+				await makeDirectories(vintagePath.dirname())
+
+				await writeLocalJSONFile(
+					{
+						root: destination.toString(),
+						repos: results
+							.toSorted((a, b) => a.repo.localeCompare(b.repo))
+							.map((result) => ({
+								repo: result.repo,
+								originURL: result.state.remotes["origin"] ?? null,
+								onFork: sameRemote(result.state.remotes["origin"], result.origin.forkURL),
+								head: result.state.head,
+								headDate: result.state.headDate,
+								shallow: result.state.shallow,
+								action: result.action,
+							})),
+					},
+					vintagePath
+				)
+
+				console.error(`▸ vintage → ${vintagePath}`)
+			}
 
 			if (checks.length > MAX_LISTED_CHECKS) {
 				const failed = checks.filter((check) => !check.ok)
@@ -263,7 +314,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 						{
 							ok,
 							check: `${formatQuantity(checks.length)} repositories`,
-							detail: `${formatQuantity(checks.length - failed.length)} synchronized, ${formatQuantity(failed.length)} failed — see the lines above for each`,
+							detail: `${formatQuantity(checks.length - failed.length)} synchronized, ${formatQuantity(failed.length)} failed or refused — see the lines above for each`,
 						},
 						...failed,
 					],
@@ -281,12 +332,12 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 
 	if (!plan) return <Text color="gray">Listing {WOF_REPO_OWNER}…</Text>
 
-	const percentage = (doneCount / plan.sourceCount) * 100
+	const percentage = (doneCount / plan.count) * 100
 
 	return (
 		<Box flexDirection="column">
 			<Text color="gray">
-				{plan.destination} — {formatQuantity(plan.sourceCount)} repositories,{" "}
+				{plan.destination} — {formatQuantity(plan.count)} repositories,{" "}
 				{ByteFormatter.formatSI(plan.selection.totalDiskUsageKB * 1024)}
 			</Text>
 
@@ -305,7 +356,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				<ProgressBar value={percentage} />
 				<Text>
 					{" "}
-					{formatQuantity(doneCount)} of {formatQuantity(plan.sourceCount)} repositories
+					{formatQuantity(doneCount)} of {formatQuantity(plan.count)} repositories
 				</Text>
 			</Box>
 		</Box>

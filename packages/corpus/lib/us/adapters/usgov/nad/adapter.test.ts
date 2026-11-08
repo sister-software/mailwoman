@@ -2,28 +2,65 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
-import type { PathBuilderLike } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
+import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
 import { recordIDOf } from "#adapters/record-id"
 import { useScratchDir } from "#test-kit"
 import type { CanonicalRow } from "#types"
-import { createUsgovNADAdapter, USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE } from "#us/adapters/usgov/nad/adapter"
+import {
+	createUsgovNADAdapter,
+	NAD_RECORD_COLUMNS,
+	nadUnitText,
+	normalizeNADUUID,
+	USGOV_NAD_ADAPTER_ID,
+	USGOV_NAD_DEFAULT_LICENSE,
+} from "#us/adapters/usgov/nad/adapter"
+import { convertNADToParquet } from "#us/tools/fetch/nad/parquet"
 
-const FIXTURE_DIR = workspacePath("corpus", "lib", "us", "adapters", "usgov", "nad", "fixtures")
+const FIXTURE = workspacePath("corpus", "lib", "us", "adapters", "usgov", "nad", "fixtures", "fixture.ndjson")
 
 const scratch = useScratchDir("usgov-nad")
+
+/**
+ * Writes `records` as release text with every column the adapter reads,
+ * and converts it the way the fetcher does.
+ */
+async function writeReleaseParquet(records: ReadonlyArray<Record<string, unknown>>): Promise<PathBuilder> {
+	const cell = (value: unknown) => {
+		const text = value == null ? "" : String(value)
+
+		return /[",\r\n]/u.test(text) ? `"${text.replaceAll('"', '""')}"` : text
+	}
+
+	const lines = [
+		NAD_RECORD_COLUMNS.join(","),
+		...records.map((record) => NAD_RECORD_COLUMNS.map((column) => cell(record[column])).join(",")),
+	]
+
+	const textPath = scratch.path("NAD_test.txt")
+	const parquetPath = scratch.path("NAD_test.parquet")
+
+	await writeLocalTextFile(`${lines.join("\n")}\n`, textPath)
+	await convertNADToParquet({ textPath, parquetPath, sourceSHA256: "test", member: "NAD_test.txt" })
+
+	return parquetPath
+}
+
+async function fixtureParquet(): Promise<PathBuilder> {
+	return writeReleaseParquet(await Array.fromAsync(JSONSpliterator.fromAsync<Record<string, unknown>>(FIXTURE)))
+}
 
 async function collect(
 	adapter = createUsgovNADAdapter(),
 	opts: { country?: string; limit?: number } = {},
-	inputPath: PathBuilderLike = FIXTURE_DIR
+	inputPath?: PathBuilderLike
 ) {
 	const out: CanonicalRow[] = []
 
-	for await (const row of adapter.rows({ inputPath, ...opts })) {
+	for await (const row of adapter.rows({ inputPath: inputPath ?? (await fixtureParquet()), ...opts })) {
 		out.push(row)
 	}
 
@@ -35,6 +72,33 @@ describe("usgov-nad adapter", () => {
 		// fixture.ndjson has 12 rows: 9 valid, 3 dropped (empty Post_City, bad state ZZ, empty Zip_Code).
 		const rows = await collect()
 		expect(rows).toHaveLength(9)
+	})
+
+	it("reads a braced upper-case release UUID in the FeatureServer's lower-case form", async () => {
+		expect(normalizeNADUUID("{0002173C-ADA8-4421-ACF2-F9B6F12B52F0}")).toBe("0002173c-ada8-4421-acf2-f9b6f12b52f0")
+		expect(normalizeNADUUID("  ")).toBeNull()
+
+		const parquetPath = await writeReleaseParquet([
+			{
+				OID_: 34_538_810,
+				UUID: "{0002173C-ADA8-4421-ACF2-F9B6F12B52F0}",
+				Add_Number: 390,
+				AddNo_Full: "390",
+				St_Name: "White Horse",
+				St_PosTyp: "Court",
+				StNam_Full: "White Horse Court",
+				County: "Adams",
+				Inc_Muni: "Town of Rome",
+				Post_City: "Not stated",
+				State: "WI",
+				Zip_Code: "54457",
+			},
+		])
+
+		const [row] = await collect(createUsgovNADAdapter(), {}, parquetPath)
+
+		expect(row!.raw).toBe("390 White Horse Court, Town of Rome, WI 54457")
+		expect(row!.source_id).toMatch(/^usgov-nad-0002173c-ada8-4421-acf2-f9b6f12b52f0-[0-9a-f]{12}$/u)
 	})
 
 	it("composes a 4-component address with venue when LandmkName is set", async () => {
@@ -148,29 +212,28 @@ describe("usgov-nad adapter", () => {
 
 		// Two records from NAD's own pages under UUID 79461b5e-…, and two under the placeholder.
 		const records = [
-			{ ...breed, OBJECTID: 39_590_132, UUID: "79461b5e-7d9f-4fb2-baad-310a014e4bda" },
+			{ ...breed, OID_: 39_590_132, UUID: "79461b5e-7d9f-4fb2-baad-310a014e4bda" },
 			{
 				...breed,
-				OBJECTID: 70_311_605,
+				OID_: 70_311_605,
 				UUID: "79461b5e-7d9f-4fb2-baad-310a014e4bda",
 				Add_Number: 704,
 				AddNo_Full: "704",
 				St_PreDir: "West",
 				StNam_Full: "West Breed Street",
 			},
-			{ ...breed, OBJECTID: 1, UUID: "00000000-0000-0000-0000-000000000000", Add_Number: 10, AddNo_Full: "10" },
-			{ ...breed, OBJECTID: 2, UUID: "00000000-0000-0000-0000-000000000000", Add_Number: 12, AddNo_Full: "12" },
+			{ ...breed, OID_: 1, UUID: "00000000-0000-0000-0000-000000000000", Add_Number: 10, AddNo_Full: "10" },
+			{ ...breed, OID_: 2, UUID: "00000000-0000-0000-0000-000000000000", Add_Number: 12, AddNo_Full: "12" },
 		]
 
-		await writeLocalTextFile(records.map((r) => stringifyJSON(r)).join("\n") + "\n", scratch.path("pages.ndjson"))
-
-		const rows = await collect(createUsgovNADAdapter(), {}, scratch.path)
+		const rows = await collect(createUsgovNADAdapter(), {}, await writeReleaseParquet(records))
 		const recordIDs = new Set(rows.map((row) => recordIDOf(row.source_id)))
+		const byNumber = (number: string) => rows.find((row) => row.components.house_number === number)
 
 		expect(rows).toHaveLength(records.length)
 		expect(recordIDs.size).toBe(records.length)
-		expect(rows[0]!.source_id).toMatch(/^usgov-nad-79461b5e-7d9f-4fb2-baad-310a014e4bda-[0-9a-f]{12}$/u)
-		expect(rows[2]!.source_id).toMatch(/^usgov-nad-1-[0-9a-f]{12}$/u)
+		expect(byNumber("6804")!.source_id).toMatch(/^usgov-nad-79461b5e-7d9f-4fb2-baad-310a014e4bda-[0-9a-f]{12}$/u)
+		expect(byNumber("10")!.source_id).toMatch(/^usgov-nad-1-[0-9a-f]{12}$/u)
 	})
 
 	it("honors opts.limit (soft cap)", async () => {
@@ -182,11 +245,23 @@ describe("usgov-nad adapter", () => {
 		const adapter = createUsgovNADAdapter()
 
 		const iterate = async () => {
-			for await (const _ of adapter.rows({ inputPath: FIXTURE_DIR, country: "FR" })) {
+			for await (const _ of adapter.rows({ inputPath: FIXTURE, country: "FR" })) {
 				/* should throw before first yield */
 			}
 		}
 
 		await expect(iterate()).rejects.toThrow(/only US supported/)
+	})
+})
+
+describe("nadUnitText", () => {
+	it.each([
+		[{ Building: "BLDG 3", Unit: "APT 2" }, "BLDG 3 APT 2"],
+		[{ Building: "Apartment 2", Unit: "Apartment 2" }, "Apartment 2"],
+		[{ Floor: " FL 4 ", Room: "RM 410" }, "FL 4 RM 410"],
+		[{ Unit: "#106" }, "#106"],
+		[{ Building: " ", Unit: null }, null],
+	])("composes %j as %j", (record, expected) => {
+		expect(nadUnitText(record)).toBe(expected)
 	})
 })

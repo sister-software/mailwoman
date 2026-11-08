@@ -15,7 +15,7 @@ This page is the flag interface for the `mailwoman` command-line interface. Each
 the command's own schema, and each description is that flag's help text verbatim, so this page and
 `mailwoman <command> --help` cannot disagree.
 
-The CLI has 186 commands. This page documents the 31 that a consumer of the published
+The CLI has 189 commands. This page documents the 32 that a consumer of the published
 package runs. The rest build the datasets and train the models inside a checkout of the repository,
 and they are listed by group under [Commands this page does not cover](#commands-this-page-does-not-cover).
 
@@ -409,6 +409,7 @@ mailwoman data pull [options] <bundle...>
 | `--data-root [data-root]` | string                        | —       | Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)                                                                |
 | `--host [host]`           | string                        | —       | Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket. |
 | `--refuse [refuse...]`    | `share-alike` \| `unresolved` | —       | Decline a bundle whose recorded expression has this class of obligation (share-alike, unresolved). Repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS       |
+| `--terms`                 | boolean                       | `false` | Print each bundle's full license terms, conditions and open rights questions instead of the summary                                                         |
 | `--json`                  | boolean                       | `false` | Emit the plan, its problems by kind and each artifact's outcome as JSON                                                                                     |
 
 ### `mailwoman data sources`
@@ -475,6 +476,22 @@ mailwoman clients generate [options]
 | `--skip-verify`       | boolean | `false` | Skip client build verification (development only)            |
 
 ## `mailwoman registry`
+
+### `mailwoman registry address-pair-sample`
+
+Sample cross-source address-point pairs from an address layer for adjudication.
+
+```
+mailwoman registry address-pair-sample [options]
+```
+
+| Flag                              | Type   | Default | Description                                   |
+| --------------------------------- | ------ | ------- | --------------------------------------------- |
+| `--layer-version [layer-version]` | string | —       | The address layer version, such as 2026-11-08 |
+| `--regions [regions]`             | string | —       | Comma-separated regions, such as us-ny,us-co  |
+| `--per-stratum [per-stratum]`     | number | `60`    | Pairs kept per stratum across all regions     |
+| `--seed [seed]`                   | number | `1`     | Selects which key groups are read             |
+| `--out-jsonl [out-jsonl]`         | string | —       | Write the sampled pairs here as JSONL         |
 
 ### `mailwoman registry convert tx-hhsc`
 
@@ -689,11 +706,11 @@ tutorials under [See also](#see-also) run the ones a self-hosting reader needs.
 | `mailwoman dev`       | 14       | Repository maintenance: source generation, fixture capture, lint passes.              |
 | `mailwoman eval`      | 27       | Runs the evaluations that decide whether a model ships.                               |
 | `mailwoman filer`     | 2        | Record-linkage evaluation over regulatory filings.                                    |
-| `mailwoman gazetteer` | 59       | Builds every gazetteer artifact, including the candidate and admin databases.         |
+| `mailwoman gazetteer` | 60       | Builds every gazetteer artifact, including the candidate and admin databases.         |
 | `mailwoman gnaf`      | 1        | Assembles the Australian G-NAF address register.                                      |
 | `mailwoman placer`    | 5        | Trains and evaluates the coarse country placer.                                       |
 | `mailwoman release`   | 2        | Stages model weights for a release and admin-merges a pull request behind its guards. |
-| `mailwoman situs`     | 5        | Builds the US rooftop address-point and interpolation databases.                      |
+| `mailwoman situs`     | 6        | Builds the US rooftop address-point and interpolation databases.                      |
 | `mailwoman tiger`     | 4        | Processes US Census TIGER/Line road and boundary data.                                |
 | `mailwoman tiles`     | 1        | Publishes vector tiles to the demo map's bucket.                                      |
 | `mailwoman train`     | 1        | Resolves the training configurations the model trainer reads.                         |
@@ -706,7 +723,7 @@ flag changes, and no check catches it. The generator reads the same command spec
 build the binary, so a flag string here is the flag string `--help` prints. A test asserts the
 committed page against a fresh render. A stale page therefore fails the build.
 
-The scope split is deliberate. A page that covers all 186 commands would bury the 31 that run against
+The scope split is deliberate. A page that covers all 189 commands would bury the 32 that run against
 an installed package under training and dataset tooling that requires the repository, its data root,
 and hours of wall clock. The generator refuses to run if it meets a command group it has never been
 told about, so the boundary is a decision someone makes rather than an omission.

@@ -125,6 +125,8 @@ async function cliIn(dataRoot: string, ...args: string[]): Promise<{ status: num
 				MAILWOMAN_DATA_ROOT: dataRoot,
 				MAILWOMAN_CANDIDATE_DB: undefined,
 				MAILWOMAN_WOF_DB: undefined,
+				// The printed commands start with the prefix npm's user agent selects.
+				npm_config_user_agent: "npm/10.8.0 node/v24.0.0 linux x64 workspaces/false",
 			}),
 			maxBuffer: 16 * 1024 * 1024,
 			timeout: CLI_SPAWN_TIMEOUT_MS,
@@ -150,7 +152,7 @@ describe("mailwoman data pull from an empty data root", () => {
 		expect(setup.stdout).toMatch(/parsing\s+available/u)
 		expect(setup.stdout).toMatch(/place resolution\s+unavailable/u)
 
-		expect(setup.stdout).toMatch(/Next installation:\s+mailwoman data pull candidate /u)
+		expect(setup.stdout).toMatch(/Next installation:\s+npx mailwoman data pull candidate /u)
 
 		const dry = await cli("data", "pull", "candidate", "--dry-run", ...host)
 
@@ -162,6 +164,9 @@ describe("mailwoman data pull from an empty data root", () => {
 
 		expect(candidate.status).toBe(0)
 		await expect(pathExists(root.path("active.json"))).resolves.toBe(true)
+		expect(stripAnsi(candidate.stdout)).toContain('npx mailwoman geocode "<an address in the installed area>"')
+		expect(stripAnsi(candidate.stdout)).toMatch(/candidate license ODbL-1\.0/u)
+		expect(stripAnsi(candidate.stdout)).not.toContain("terms: terms:")
 
 		const dcDry = await cli("data", "pull", "us", "--only", "dc", "--dry-run", ...host)
 

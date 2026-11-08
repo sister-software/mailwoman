@@ -12,6 +12,7 @@
 /// <reference types="vitest/config" />
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { assertCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
@@ -19,6 +20,10 @@ import type { Alias } from "vite"
 import { defineConfig } from "vite"
 
 const here = import.meta.dirname
+
+// A worktree without its own install loads this config's `@mailwoman/core` from the checkout above it.
+// Its tests would then build paths, overlays and fixtures in that checkout.
+await assertCheckoutLocality(here)
 
 const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
 

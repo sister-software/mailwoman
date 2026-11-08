@@ -240,32 +240,6 @@ describe("adminContainmentRerank pin (#1717 stage 2)", () => {
 	})
 })
 
-describe("spanRescoreRequireContextRemainder — #2266's pin", () => {
-	it("survives every hop from run options to the resolve, both directions", () => {
-		expect(depsFromRun({ spanRescoreRequireContextRemainder: "on" })).toEqual({
-			spanRescoreRequireContextRemainder: true,
-		})
-
-		expect(depsFromRun({ spanRescoreRequireContextRemainder: "off" })).toEqual({
-			spanRescoreRequireContextRemainder: false,
-		})
-	})
-
-	it("is named in the run banner, both directions, and absent at production", () => {
-		expect(describeResolverPins(pinned({ spanRescoreRequireContextRemainder: "on" }))).toContain(
-			"spanRescoreRequireContextRemainder=ON"
-		)
-
-		expect(describeResolverPins(pinned({ spanRescoreRequireContextRemainder: "off" }))).toContain(
-			"spanRescoreRequireContextRemainder=OFF"
-		)
-
-		expect(describeResolverPins(pinned({ adminContainmentRerank: "on" }))).not.toContain(
-			"spanRescoreRequireContextRemainder"
-		)
-	})
-})
-
 describe("spanRescoreWeakResolution — #2264's pin", () => {
 	it("survives every hop from run options to the resolve, each reading", () => {
 		for (const reading of ["score", "containment", "either"] as const) {

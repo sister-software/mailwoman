@@ -15,6 +15,7 @@
  *   3. {@link cluster Cluster} — resolve the non-transitive pairwise link graph into canonical entities.
  */
 
+export * from "#address-point"
 export * from "#blocking"
 export * from "#clustering"
 export * from "#comparators"

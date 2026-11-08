@@ -42,6 +42,10 @@ export interface AddressPointHit {
 /**
  * Street-level exact-point lookup.
  *
+ * A reader over a local file may answer synchronously, and a reader over HTTP
+ * range reads answers with a promise.
+ * Callers await the answer either way.
+ *
  * Implementations own their normalization.
  * Both the extract build and this lookup must apply the same normalizer
  * (see `resolver-wof-sqlite/street-normalize.ts`).
@@ -74,7 +78,7 @@ export interface AddressPointLookup {
 		 * US situs never passes it, so the Latin path stays byte-stable.
 		 */
 		bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | null
-	}): AddressPointHit | null
+	}): AddressPointHit | null | Promise<AddressPointHit | null>
 }
 
 /**

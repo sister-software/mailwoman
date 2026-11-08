@@ -69,7 +69,7 @@ test("extract: yields the full tuple, folds rep to lower-case, skips coordinate-
 test("provider: FR-only, keys with the FR street locale, throws otherwise", () => {
 	expect(supportedBANCountries()).toEqual(["fr"])
 	expect(streetLocaleForBANCountry("FR")).toBe("fr")
-	expect(() => streetLocaleForBANCountry("de")).toThrow(/Add it to BAN_COUNTRY_TO_STREET_LOCALE/)
+	expect(() => streetLocaleForBANCountry("de")).toThrow(/BAN_EXTRACT_COUNTRIES/)
 })
 
 // These cases cover nom_ld (lieu-dit) records from the French survey.

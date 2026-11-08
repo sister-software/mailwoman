@@ -12,6 +12,7 @@ import {
 
 function healthyDeps(): DoctorDeps {
 	return {
+		commandPrefix: async () => "npx mailwoman",
 		exists: async () => true,
 		fileSize: async () => 40_000_000,
 		isWritable: async () => true,
@@ -299,7 +300,7 @@ describe("runDoctor (injected boundaries)", () => {
 		expect(revokedCheck.status).toBe(CheckStatus.Degraded)
 		expect(revokedCheck.detail).toContain("online this license is revoked")
 		expect(revokedCheck.consequence).toContain("offline")
-		expect(revokedCheck.fix).toBe("mailwoman license refresh")
+		expect(revokedCheck.fix).toBe("npx mailwoman license refresh")
 
 		expect(revokedCheck.license).toMatchObject({ applied: "LicenseRef-Commercial", lidStatus: "revoked" })
 

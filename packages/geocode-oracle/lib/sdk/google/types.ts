@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The subset of the Google Geocoding API's JSON response this package consumes. Hand-written because `@googlemaps/google-maps-services-js` is an optional `spatial` dependency a supported install can lack.
+ * @file The subset of the Google Geocoding API's JSON response this package consumes. Hand-written so the package depends on the Google Maps client library neither for types nor at runtime.
  *
  * Field names are Google's wire keys (`snake_case`), which the house acronym-casing rule preserves.
  */

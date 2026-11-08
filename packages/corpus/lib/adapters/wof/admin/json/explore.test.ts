@@ -109,13 +109,10 @@ describe("exploreWOFRecord", () => {
 		expect(exploration.unresolvedAncestors).toContain(REGION)
 	})
 
-	it("finds a repo one directory down, as the data root keeps whosonfirst-data", async () => {
+	it("reads clones directly under the root only, so a copy under an owner directory is not consulted", async () => {
 		await writeTree("whosonfirst-data", "whosonfirst-data-admin-us")
 
-		const exploration = await exploreWOFRecord(BOROUGH, { reposRoot: scratch.path })
-
-		expect(exploration.path).toContain("whosonfirst-data/whosonfirst-data-admin-us")
-		expect(exploration.ancestors).toHaveLength(3)
+		await expect(findWOFFeaturePath(BOROUGH, scratch.path)).resolves.toBeNull()
 	})
 
 	it("throws when no repo holds the record", async () => {

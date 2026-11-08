@@ -86,6 +86,11 @@ const ALLOWED: Record<string, string> = {
 		"inspects a scratch project's install layout from outside, by design",
 	"lib/release-kit/release/smoke/installed-bin.ts":
 		"reads the bin entry from a scratch project's installed manifest, for both clean-install smokes",
+	// Looks for a `mailwoman` bin in the reader's own project, found upward from the working directory.
+	// Module resolution would answer from this CLI's install instead of that project.
+	"packages/mailwoman/cli/kit/invocation.ts": "probes the reader's project for an installed mailwoman bin",
+	"packages/mailwoman/cli/kit/invocation.test.ts":
+		"builds a scratch project with an installed bin for the probe under test",
 	// Builds the node_modules symlink farm a git worktree lacks rather than reading one,
 	// so there is no path to resolve until this code creates the directory.
 	"lib/dev-mcp/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
@@ -109,6 +114,16 @@ const ALLOWED: Record<string, string> = {
 		"builds a scratch install layout for the package resolver under test",
 	"packages/neural/lib/weights/declared-artifact.test.ts":
 		"builds a staged package symlink independently of the artifact reader under test",
+	// Build the install layouts the checkout-locality guard must refuse: a worktree's own
+	// node_modules link, and the install above a worktree that Node's upward walk reaches.
+	// Reads the entry tree's own `node_modules` entry with lstat to report whether it is absent or a link.
+	// Package resolution would answer through the link, and the link is the condition under inspection.
+	"packages/core/lib/module/checkout-locality.ts":
+		"inspects the entry checkout's own node_modules entry rather than a package inside it",
+	"packages/core/lib/module/checkout-locality.test.ts":
+		"links a scratch tree's node_modules to name the link state the guard reports",
+	"packages/core/lib/module/checkout-locality.integration.test.ts":
+		"links this checkout's install above and inside a worktree to reproduce the resolution leak",
 	"lib/repo-health/checks/node-modules-reacharound.test.ts":
 		"records source snippets containing install paths as inputs to the checker",
 	"lib/dev-mcp/routed-mailwoman-arm.test.ts":

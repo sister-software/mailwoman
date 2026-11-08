@@ -13,14 +13,17 @@ import { matchLeadingDesignator } from "@mailwoman/codex/us"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalBuffer, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
-import { tryParsingJSON } from "@mailwoman/core/json"
 import { mulberry32 } from "@mailwoman/core/random"
 import ADMZip from "adm-zip"
-import { resolvePathBuilder, type PathBuilderLike } from "path-ts"
-import { TextSpliterator } from "spliterator"
-import { Globerator } from "spliterator/node/fs"
+import type { PathBuilderLike } from "path-ts"
 
-import { composeNADLocality, decomposeNADStreet, nadHouseNumber, type NADRecord } from "#us/adapters/usgov/nad/adapter"
+import {
+	composeNADLocality,
+	decomposeNADStreet,
+	nadHouseNumber,
+	type NADRecord,
+	readNADRecords,
+} from "#us/adapters/usgov/nad/adapter"
 import { nadSkeletonFile, nadZipCityPath, type NADZipCityCounty } from "#us/recipes/skeleton-sources"
 
 /**
@@ -90,7 +93,7 @@ export function nadSkeletonRow(record: NADRecord): NADSkeletonRow | null {
 		DISTRICT: text(record.County),
 		REGION: region,
 		POSTCODE: postcode,
-		ID: text(record.UUID) || text(record.OBJECTID),
+		ID: text(record.UUID) || text(record.OID_),
 	}
 }
 
@@ -216,9 +219,9 @@ function shapeOf(region: string, t: ShapeTally): NADStateShape {
 
 export interface BuildNADSkeletonsOptions {
 	/**
-	 * The directory of FeatureServer NDJSON pages the NAD fetcher writes.
+	 * The release Parquet file `mailwoman corpus fetch nad` writes.
 	 */
-	inputDirectory: PathBuilderLike
+	parquetPath: PathBuilderLike
 	/**
 	 * The states to sample, as USPS abbreviations.
 	 */
@@ -230,13 +233,16 @@ export interface BuildNADSkeletonsOptions {
 	seed: number
 	zipCityCounties: readonly NADZipCityCounty[]
 	/**
-	 * Called after each page with the count read so far.
+	 * Called after every millionth record with the count read so far.
 	 */
-	onPage?: (pagesRead: number, pages: number) => void
+	onProgress?: (recordsRead: number) => void
 }
 
 export interface NADSkeletonSummary {
-	pages: number
+	/**
+	 * The records read from the release, usable or not.
+	 */
+	records: number
 	cap: number
 	seed: number
 	shapes: NADStateShape[]
@@ -245,16 +251,16 @@ export interface NADSkeletonSummary {
 }
 
 /**
- * Reads every NAD page once, measures every state's address shapes,
+ * Reads every NAD record once, measures every state's address shapes,
  * keeps a uniform reservoir sample of at most `cap` rows for each requested state,
  * and tallies the majority city of each ZIP in each requested county.
  *
- * The sample is written in reservoir order rather than page order, so a reader that
+ * The sample is written in reservoir order rather than file order, so a reader that
  * takes the first N rows still draws across the whole state.
  * It refuses to replace a file that already exists.
  */
 export async function buildNADSkeletons(options: BuildNADSkeletonsOptions): Promise<NADSkeletonSummary> {
-	const { inputDirectory, cap, seed } = options
+	const { parquetPath, cap, seed } = options
 	const states = new Set(options.states.map((s) => s.toUpperCase()))
 
 	const outputs = [
@@ -273,72 +279,68 @@ export async function buildNADSkeletons(options: BuildNADSkeletonsOptions): Prom
 	const countyKey = (region: string, county: string) => `${region}|${county.toLowerCase()}`
 	const wantedCounties = new Set(options.zipCityCounties.map((c) => countyKey(c.region, c.county)))
 
-	const pages = await Globerator.files("ndjson", { cwd: inputDirectory, absolute: false, recursive: false }).toSorted()
+	let recordsRead = 0
 
-	let pagesRead = 0
+	for await (const record of readNADRecords(parquetPath)) {
+		if (++recordsRead % 1_000_000 === 0) {
+			options.onProgress?.(recordsRead)
+		}
 
-	for (const page of pages) {
-		for await (const line of TextSpliterator.fromAsync(resolvePathBuilder(inputDirectory, page))) {
-			if (!line) continue
-			const record = tryParsingJSON<NADRecord>(line)
+		const row = nadSkeletonRow(record)
 
-			if (!record) continue
-			const row = nadSkeletonRow(record)
+		if (!row) continue
 
-			if (!row) continue
+		let tally = tallies.get(row.REGION)
 
-			let tally = tallies.get(row.REGION)
+		if (!tally) {
+			tallies.set(row.REGION, (tally = newTally()))
+		}
 
-			if (!tally) {
-				tallies.set(row.REGION, (tally = newTally()))
+		tallyShape(tally, record, row)
+
+		if (states.has(row.REGION)) {
+			let reservoir = reservoirs.get(row.REGION)
+
+			if (!reservoir) {
+				reservoirs.set(row.REGION, (reservoir = { seen: 0, rows: [] }))
 			}
 
-			tallyShape(tally, record, row)
+			reservoir.seen++
 
-			if (states.has(row.REGION)) {
-				let reservoir = reservoirs.get(row.REGION)
+			if (reservoir.rows.length < cap) {
+				reservoir.rows.push(row)
+			} else {
+				const slot = Math.floor(random() * reservoir.seen)
 
-				if (!reservoir) {
-					reservoirs.set(row.REGION, (reservoir = { seen: 0, rows: [] }))
+				if (slot < cap) {
+					reservoir.rows[slot] = row
 				}
-
-				reservoir.seen++
-
-				if (reservoir.rows.length < cap) {
-					reservoir.rows.push(row)
-				} else {
-					const slot = Math.floor(random() * reservoir.seen)
-
-					if (slot < cap) {
-						reservoir.rows[slot] = row
-					}
-				}
-			}
-
-			const key = countyKey(row.REGION, row.DISTRICT)
-
-			if (wantedCounties.has(key)) {
-				let byZip = zipCity.get(key)
-
-				if (!byZip) {
-					zipCity.set(key, (byZip = new Map()))
-				}
-
-				let byCity = byZip.get(row.POSTCODE)
-
-				if (!byCity) {
-					byZip.set(row.POSTCODE, (byCity = new Map()))
-				}
-
-				byCity.set(row.CITY, (byCity.get(row.CITY) ?? 0) + 1)
 			}
 		}
 
-		options.onPage?.(++pagesRead, pages.length)
+		const key = countyKey(row.REGION, row.DISTRICT)
+
+		if (wantedCounties.has(key)) {
+			let byZip = zipCity.get(key)
+
+			if (!byZip) {
+				zipCity.set(key, (byZip = new Map()))
+			}
+
+			let byCity = byZip.get(row.POSTCODE)
+
+			if (!byCity) {
+				byZip.set(row.POSTCODE, (byCity = new Map()))
+			}
+
+			byCity.set(row.CITY, (byCity.get(row.CITY) ?? 0) + 1)
+		}
 	}
 
+	options.onProgress?.(recordsRead)
+
 	const summary: NADSkeletonSummary = {
-		pages: pages.length,
+		records: recordsRead,
 		cap,
 		seed,
 		shapes: [...tallies].map(([region, t]) => shapeOf(region, t)).toSorted((a, b) => b.usable - a.usable),

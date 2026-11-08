@@ -104,11 +104,6 @@ export interface GauntletRunOptions {
 	 */
 	dependentLocalityContainment?: SwitchPin
 	/**
-	 * Pin the span-rescore requirement that a sub-span keep every word of the name.
-	 * @defaultValue `"production"`
-	 */
-	spanRescoreRequireContextRemainder?: SwitchPin
-	/**
 	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
 	 * Three readings exist and have no off spelling.
@@ -183,7 +178,6 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 		gazetteerPrior: options.gazetteerPrior ?? "production",
 		adminContainmentRerank: options.adminContainmentRerank ?? "production",
 		dependentLocalityContainment: options.dependentLocalityContainment ?? "production",
-		spanRescoreRequireContextRemainder: options.spanRescoreRequireContextRemainder ?? "production",
 		spanRescoreWeakResolution: options.spanRescoreWeakResolution ?? "production",
 		poiVenueTier: options.poiVenueTier ?? "production",
 		venueHeadPrior: options.venueHeadPrior ?? "production",

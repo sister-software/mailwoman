@@ -22,6 +22,7 @@ import { EarthFooter } from "./EarthFooter.tsx"
 import { LayerToggleControl } from "./LayerToggleControl/LayerToggleControl.tsx"
 import { MapControls } from "./MapControls.tsx"
 import { PermalinkButton } from "./PermalinkButton/PermalinkButton.tsx"
+import { PointFormats } from "./PointFormats.tsx"
 import { ResultExtras } from "./ResultExtras.tsx"
 
 export interface GeocoderPanelsOptions {
@@ -123,6 +124,8 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			// condition as the decode-path drawer.
 			mapControls: <MapControls devMode={devMode} />,
 			layers: ({ map }) => <LayerToggleControl map={map} />,
+			// The right-click menu lists the point in each encoding the spatial package writes.
+			contextMenu: (point) => <PointFormats point={point} />,
 			// The identity and credits live in `EarthFooter` so this footer and the canned
 			// runtime's cannot differ; `status` is the one thing only this path has.
 			footer: <EarthFooter status={loadStatus} />,

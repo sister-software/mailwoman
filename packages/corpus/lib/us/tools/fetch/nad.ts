@@ -2,357 +2,184 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fetch the US DOT National Address Database (NAD) — ~97 million structured US address-point
- *   records aggregated from state and local authorities. Source for the `usgov-nad` adapter.
+ *   Fetch the US DOT National Address Database (NAD) release and write it to Parquet for the `usgov-nad` adapter.
  *   US Public Domain (17 U.S.C. § 105).
  *
- *   - Bounded per-chunk page concurrency (4× speedup at safe pressure)
- *   - 5× larger page size (5 000 vs. the old bash fetcher's 2 000) — fewer round-trips per chunk
- *   - A `complete: true` flag that is set only when every page in the chunk fetched without error
- *   - Built-in fetch with gzip/brotli decompression (no curl or Python subprocess per page)
- *   - Per-chunk manifest with sha256 + record count + error count
- *
- *   ## Source layout
- *
- *   The ArcGIS FeatureServer is the only fully-automated path. As of 2026-05:
- *
- *   - **`bulk`** mode requires a pre-signed S3 URL (Akamai blocks scripted curl on the DOT page). Pass
- *       `--nad-url <presigned>` from a browser visit to
- *       [https://www.transportation.gov/gis/national-address-database](https://www.transportation.gov/gis/national-address-database).
- *   - **`featureserver`** mode (default) pages the live FeatureService via objectid ranges, writing
- *       ndjson chunks into `<outRoot>/usgov-nad/featureserver/`.
+ *   The release is one zip archive holding a delimited text file of every address point, about 99 million rows in
+ *   release 24. The command downloads it to `<outRoot>/usgov-nad/bulk/nad.zip`, extracts the text, and writes
+ *   `<member>.parquet` sorted by state and county beside the archive.
  *
  *   ## Usage
  *
  *   ```sh
- *   mailwoman corpus fetch nad --out-root $MAILWOMAN_DATA_ROOT/corpus/sources
+ *   mailwoman corpus fetch nad
  *
- *   # Resume from an OID
- *   mailwoman corpus fetch nad --start-oid 34400001
- *
- *   # Increase concurrency on a fast link
- *   mailwoman corpus fetch nad --concurrency 8 --page-size 10000
+ *   # A release published at another link
+ *   mailwoman corpus fetch nad --nad-url <link>
  *   ```
  */
 
-import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
-import { stringifyJSON } from "@mailwoman/core/json"
-import type { PathBuilderLike } from "path-ts"
+import { ResumeRefusedError, streamToDisk } from "@mailwoman/core/utils"
+import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
+import { Globerator } from "spliterator/node/fs"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
-import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
+import { readManifest, writeManifest } from "#tools/fetch/download"
+import { convertNADToParquet, readCurrentNADParquetRecord } from "#us/tools/fetch/nad/parquet"
 
 const SLUG = "usgov-nad"
 
-const FEATURE_SERVICE_URL =
-	"https://services.arcgis.com/xOi1kZaI0eWDREZv/ArcGIS/rest/services/Address_Points_from_National_Address_Database_view/FeatureServer/0"
+/**
+ * The download link DOT's open-data portal serves for the current NAD release.
+ */
+export const NAD_RELEASE_URL = "https://data.transportation.gov/download/fc2s-wawr/application%2Fx-zip-compressed"
 
 export interface FetchNADOptions extends BaseFetchOptions {
 	/**
-	 * Fetch strategy.
+	 * The release archive's download link.
 	 *
-	 * @defaultValue `featureserver`
-	 */
-	mode?: "featureserver" | "bulk"
-	/**
-	 * Pre-signed S3 URL for bulk mode.
+	 * @defaultValue {@linkcode NAD_RELEASE_URL}
 	 */
 	nadURL?: string
-	/**
-	 * Records per output file.
-	 *
-	 * @defaultValue `100000`
-	 */
-	chunkSize?: number
-	/**
-	 * Records per http request.
-	 *
-	 * @defaultValue `5000`
-	 */
-	pageSize?: number
-	/**
-	 * Parallel page fetches within a chunk.
-	 *
-	 * @defaultValue `4`
-	 */
-	concurrency?: number
-	/**
-	 * Start objectid.
-	 *
-	 * @defaultValue `1`
-	 */
-	startOID?: number
-	/**
-	 * Stop before this OID.
-	 *
-	 * @defaultValue = total count.
-	 */
-	endOID?: number
-}
-
-interface ChunkManifest {
-	source_url: string
-	oid_range: [number, number]
-	downloaded_at: string
-	filename: string
-	sha256: string
-	bytes: number
-	record_count: number
-	page_errors: number
-	complete: boolean
 }
 
 /**
- * ArcGIS paged reads.
+ * The release Parquet file {@link fetchNAD} wrote under `sourcesRoot`,
+ * such as `usgov-nad/bulk/TXT_NAD_r24.parquet`.
  *
- * Retry is on: the loop walks objectid ranges to completion, since one throttled
- * page can otherwise end a multi-hour national download.
- * No rate budget — pages are requested one at a time and each assembles thousands of records server-side.
+ * @throws When the bulk directory holds no Parquet file or more than one, naming each one found.
  */
-const nadClient = new APIClient({
-	displayName: "nad",
-	retry: true,
-	axios: { headers: { "Accept-Encoding": "gzip, br" } },
-})
+export async function nadReleaseParquetPath(sourcesRoot: PathBuilderLike): Promise<PathBuilder> {
+	const bulkDir = resolvePathBuilder(sourcesRoot, SLUG, "bulk")
 
-async function fetchPage(startOID: number, endOID: number, pageSize: number): Promise<unknown[]> {
-	const url = new URL(`${FEATURE_SERVICE_URL}/query`)
-	url.searchParams.set("where", `OBJECTID BETWEEN ${startOID} AND ${endOID}`)
-	url.searchParams.set("outFields", "*")
-	url.searchParams.set("f", "json")
-	url.searchParams.set("resultRecordCount", String(pageSize))
+	const found = (await pathExists(bulkDir))
+		? await Globerator.files("parquet", { cwd: bulkDir, absolute: false, recursive: false }).toSorted()
+		: []
 
-	const data = await nadClient
-		.fetch<{ features?: Array<{ attributes: unknown }>; error?: { message: string } }>({
-			url: url.toString(),
-			timeout: 120_000,
-		})
-		.then(pluckResponseData)
-
-	if (data.error) throw new Error(`ArcGIS error on OID ${startOID}-${endOID}: ${data.error.message}`)
-
-	return (data.features ?? []).map((f) => f.attributes)
-}
-
-async function discoverTotalCount(): Promise<number> {
-	const url = new URL(`${FEATURE_SERVICE_URL}/query`)
-	url.searchParams.set("where", "1=1")
-	url.searchParams.set("returnCountOnly", "true")
-	url.searchParams.set("f", "json")
-
-	const data = await nadClient
-		.fetch<{ count?: number }>({ url: url.toString(), timeout: 30_000 })
-		.then(pluckResponseData)
-
-	if (typeof data.count !== "number") throw new Error("NAD count query returned no count field")
-
-	return data.count
-}
-
-/**
- * Fetch a single chunk by paging through its OID range with bounded concurrency.
- *
- * Returns the count of records written and the count of pages that errored.
- * The caller decides whether to mark the chunk complete based on errors === 0.
- *
- * Note(phase1): this is a JSON API pager rather than a file download —
- * the shared `downloadToFile` doesn't apply here.
- */
-async function fetchChunk(
-	chunkPath: PathBuilderLike,
-	chunkStart: number,
-	chunkEnd: number,
-	pageSize: number,
-	concurrency: number,
-	report?: (line: string) => void
-): Promise<{ recordCount: number; errors: number }> {
-	const pageRanges: Array<[number, number]> = []
-
-	for (let cursor = chunkStart; cursor <= chunkEnd; cursor += pageSize) {
-		pageRanges.push([cursor, Math.min(cursor + pageSize - 1, chunkEnd)])
-	}
-
-	// Results indexed by page slot for in-order write.
-	const pageResults: Array<{ rows: unknown[]; error: Error | null }> = pageRanges.map(() => ({
-		rows: [],
-		error: null,
-	}))
-
-	let nextSlot = 0
-
-	const workers = Array.from({ length: Math.min(concurrency, pageRanges.length) }, async () => {
-		while (true) {
-			const slot = nextSlot++
-
-			if (slot >= pageRanges.length) return
-			const [s, e] = pageRanges[slot]!
-
-			try {
-				pageResults[slot]!.rows = await fetchPage(s, e, pageSize)
-			} catch (error) {
-				pageResults[slot]!.error = error as Error
-				report?.(`    ✗ page ${s}-${e}: ${(error as Error).message}`)
-			}
-		}
-	})
-
-	await Promise.all(workers)
-
-	// Single-writer phase — write all pages in OID order to keep ndjson deterministic.
-	const lines: string[] = []
-	let errors = 0
-
-	for (const { rows, error } of pageResults) {
-		if (error) {
-			errors++
-
-			continue
-		}
-
-		for (const row of rows) {
-			lines.push(stringifyJSON(row))
-		}
-	}
-
-	await writeLocalTextFile(lines, chunkPath)
-
-	return { recordCount: lines.length, errors }
-}
-
-async function featureserverMode(options: FetchNADOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const chunkSize = options.chunkSize ?? 100_000
-	const pageSize = options.pageSize ?? 5000
-	const concurrency = options.concurrency ?? 4
-	const startOID = options.startOID ?? 1
-
-	const chunkDir = options.outRoot(SLUG, "featureserver")
-	await makeDirectories(chunkDir)
-
-	report?.(`=== ${SLUG} / featureserver`)
-	report?.(`  Discovering record count ...`)
-	const totalCount = await discoverTotalCount()
-	const endOID = options.endOID ?? totalCount
-	report?.(`  Total records: ${totalCount.toLocaleString()}`)
-	report?.(`  OID range: ${startOID.toLocaleString()} .. ${endOID.toLocaleString()}`)
-	report?.(`  Chunk size: ${chunkSize}, page size: ${pageSize}, concurrency: ${concurrency}`)
-
-	let fetched = 0
-	let skipped = 0
-	let totalRecords = 0
-	let totalErrors = 0
-	const failedCodes: string[] = []
-
-	for (let cursor = startOID; cursor <= endOID; cursor += chunkSize) {
-		const chunkEnd = Math.min(cursor + chunkSize - 1, endOID)
-		const chunkName = `oids_${cursor}-${chunkEnd}`
-		const chunkPath = chunkDir(`${chunkName}.ndjson`)
-		const manifestPath = chunkDir(`${chunkName}.manifest.json`)
-
-		// Idempotency: skip a chunk only when its manifest is marked complete.
-		// Complete is set only after a clean fetch.
-		if (await pathExists(chunkPath)) {
-			const recorded = await readManifest<ChunkManifest>(manifestPath)
-
-			if (recorded?.complete) {
-				skipped++
-
-				continue
-			}
-		}
-
-		report?.(`  Fetching ${chunkName} ...`)
-		const t0 = Date.now()
-		const { recordCount, errors } = await fetchChunk(chunkPath, cursor, chunkEnd, pageSize, concurrency, report)
-		const elapsed = ((Date.now() - t0) / 1000).toFixed(1)
-		const bytes = (await statPath(chunkPath)).size
-		const sha = await sha256File(chunkPath)
-
-		const manifest: ChunkManifest = {
-			source_url: FEATURE_SERVICE_URL,
-			oid_range: [cursor, chunkEnd],
-			downloaded_at: new Date().toISOString(),
-			filename: `${chunkName}.ndjson`,
-			sha256: sha,
-			bytes,
-			record_count: recordCount,
-			page_errors: errors,
-			complete: errors === 0,
-		}
-
-		await writeManifest(manifestPath, manifest)
-
-		const status = errors === 0 ? "✓" : `⚠ ${errors} page errors`
-
-		report?.(
-			`    ${status}  ${recordCount.toLocaleString()} records in ${elapsed}s  (${(bytes / 1024 / 1024).toFixed(1)} MB)`
-		)
-
-		fetched++
-		totalRecords += recordCount
-		totalErrors += errors
-
-		if (errors > 0) {
-			failedCodes.push(chunkName)
-		}
-	}
-
-	report?.(`=== featureserver summary ===`)
-	report?.(`chunks fetched: ${fetched}  skipped: ${skipped}`)
-	report?.(`total records: ${totalRecords.toLocaleString()}`)
-	report?.(`page errors:   ${totalErrors}`)
-	report?.(`output:        ${chunkDir}`)
-
-	// `failed` counts page errors and `failedCodes` records the dirty chunks.
-	return { fetched, skipped, failed: totalErrors, failedCodes }
-}
-
-async function bulkMode(options: FetchNADOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	if (!options.nadURL) {
+	if (found.length !== 1) {
 		throw new Error(
-			`bulk mode requires --nad-url. Akamai protects the DOT page; ` +
-				`visit https://www.transportation.gov/gis/national-address-database in a browser, ` +
-				`accept the disclaimer, and re-run with the pre-signed S3 URL.`
+			`${bulkDir} holds ${found.length} Parquet files (${found.join(", ") || "none"}); ` +
+				`run \`mailwoman corpus fetch nad\` or pass the file`
 		)
 	}
 
-	const destDir = options.outRoot(SLUG)
-	await makeDirectories(destDir)
-	const filename = new URL(options.nadURL).pathname.split("/").pop() ?? "NAD.zip"
-	const destPath = destDir(filename)
+	return bulkDir(found[0]!)
+}
 
-	report?.(`=== ${SLUG} / ${filename}`)
-	report?.(`  URL: ${options.nadURL.slice(0, 100)}${options.nadURL.length > 100 ? "…" : ""}`)
+/**
+ * The archive's file name on disk.
+ * The download URL can name a media type rather than a file.
+ */
+const BULK_ARCHIVE = "nad.zip"
 
-	const { bytes } = await downloadToFile({ url: options.nadURL, dest: destPath, timeoutMs: 3 * 3600 * 1000, report })
+/**
+ * The member the conversion reads: the release's one large delimited text file.
+ */
+const BULK_TEXT_MEMBER = /\.(?:txt|csv)$/iu
 
-	const sha = await sha256File(destPath)
+/**
+ * Downloads the release archive, extracts its text, and converts it to Parquet sorted by state and county.
+ *
+ * Each step keeps its output when the step before it is unchanged.
+ * An archive whose manifest records the same URL and whose hash still matches is not downloaded again.
+ *
+ * A Parquet file whose record holds the archive's hash and member is kept,
+ * and the text is then never extracted.
+ *
+ * The extracted text, 42 GB for release 24, is removed once its Parquet file is written.
+ * An interrupted download resumes from its `.part` file when the host honors
+ * byte ranges, and starts over when it does not.
+ */
+export async function fetchNAD(options: FetchNADOptions, report?: (line: string) => void): Promise<FetchSummary> {
+	const url = options.nadURL ?? NAD_RELEASE_URL
+	const bulkDir = options.outRoot(SLUG, "bulk")
+	const archivePath = bulkDir(BULK_ARCHIVE)
+	const manifestPath = bulkDir("MANIFEST.json")
 
-	await writeManifest(destDir("MANIFEST.json"), {
-		source_url: options.nadURL,
-		downloaded_at: new Date().toISOString(),
-		filename,
-		sha256: sha,
-		bytes,
+	await makeDirectories(bulkDir)
+	report?.(`=== ${SLUG} / bulk`)
+
+	const recorded = await readManifest<SourceManifest>(manifestPath)
+	let sha256: string
+
+	if (
+		recorded?.source_url === url &&
+		(await pathExists(archivePath)) &&
+		(await sha256File(archivePath)) === recorded.sha256
+	) {
+		sha256 = recorded.sha256
+		report?.(`  archive current: ${ByteFormatter.formatIEC(recorded.bytes)} sha256=${sha256}`)
+	} else {
+		const partialPath = `${archivePath}.part`
+		const resumeFrom = (await tryStat(partialPath))?.size ?? 0
+
+		const download = (from: number) =>
+			streamToDisk({
+				url,
+				destination: archivePath,
+				context: SLUG,
+				partialPath,
+				retainPartial: true,
+				...(from ? { resumeFrom: from } : {}),
+				onProgress: (line) => report?.(`  ${line}`),
+			})
+
+		const bytes = await download(resumeFrom).catch((error: unknown) => {
+			if (!(error instanceof ResumeRefusedError)) throw error
+
+			report?.(`  ${error.message}; downloading from the start`)
+
+			return download(0)
+		})
+
+		sha256 = await sha256File(archivePath)
+
+		await writeManifest(manifestPath, {
+			source_url: url,
+			downloaded_at: new Date().toISOString(),
+			filename: BULK_ARCHIVE,
+			sha256,
+			bytes,
+		} satisfies SourceManifest)
+
+		report?.(`  ✓ ${ByteFormatter.formatIEC(bytes)} sha256=${sha256}`)
+	}
+
+	const members = (await listZipEntries(archivePath)).map((entry) => entry.name)
+	const member = members.find((name) => BULK_TEXT_MEMBER.test(name))
+
+	if (!member) {
+		throw new Error(`${SLUG}: the archive holds no delimited text file (members: ${members.join(", ")})`)
+	}
+
+	const parquetPath = bulkDir(`${member.replace(/\.[^.]+$/u, "").replaceAll("/", "_")}.parquet`)
+	const current = await readCurrentNADParquetRecord(parquetPath, sha256, member)
+
+	if (current) {
+		report?.(`  parquet current: ${current.rows.toLocaleString()} rows from ${member} in ${parquetPath}`)
+
+		return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
+	}
+
+	const extractedDir = bulkDir("extracted")
+
+	await extractZipEntries(archivePath, extractedDir, { selector: member, skipExisting: true })
+
+	const { record } = await convertNADToParquet({
+		textPath: extractedDir(member),
+		parquetPath,
+		sourceSHA256: sha256,
+		member,
+		report,
 	})
 
-	report?.(`  ✓ ${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB  sha256=${sha}`)
+	await removePathIfPresent(extractedDir)
+	report?.(`  ✓ wrote ${parquetPath}: ${record.rows.toLocaleString()} rows; removed ${extractedDir}`)
 
 	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
-}
-
-export async function fetchNAD(options: FetchNADOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const mode = options.mode ?? "featureserver"
-
-	if (mode === "featureserver") {
-		return featureserverMode(options, report)
-	}
-
-	if (mode === "bulk") {
-		return bulkMode(options, report)
-	}
-
-	throw new Error(`unknown mode "${String(mode)}" (expected featureserver|bulk)`)
 }

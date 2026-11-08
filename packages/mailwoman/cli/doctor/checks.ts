@@ -347,7 +347,7 @@ export interface GazetteerObservation {
 /**
  * Checks whether a gazetteer is available for geocoding, in the resolver's order of preference.
  */
-export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
+export function gazetteerCheck(o: GazetteerObservation, command: string): DoctorCheck {
 	const base = { id: "gazetteer", label: "Admin gazetteer", core: false, consequence: null, fix: null, license: null }
 
 	if (o.envCandidate) {
@@ -373,7 +373,7 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 		consequence:
 			"Nothing can be turned into a coordinate. `mailwoman parse` still labels an address, but " +
 			"`mailwoman geocode` has no gazetteer to look a place up in, so it errors instead of answering.",
-		fix: `mailwoman data pull candidate`,
+		fix: `${command} data pull candidate`,
 	}
 }
 
@@ -407,9 +407,9 @@ export interface POIObservation {
 /**
  * Checks whether the POI layer is present and its manifest is readable.
  */
-export function checkPOI(o: POIObservation): DoctorCheck {
+export function checkPOI(o: POIObservation, command: string): DoctorCheck {
 	const base = { id: "poi-layer", label: "POI layer", core: false, consequence: null, fix: null, license: null }
-	const fix = "mailwoman gazetteer build poi   (or: mailwoman data pull poi)"
+	const fix = `${command} gazetteer build poi   (or: ${command} data pull poi)`
 
 	const consequence =
 		"A Point of Interest (POI) database is necessary to geocode businesses and landmarks. Without it a query " +
@@ -532,7 +532,7 @@ export interface RuntimeLicenseObservation {
  *
  * The check is informational and does not change runtime behavior.
  */
-export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
+export function runtimeLicenseCheck(o: RuntimeLicenseObservation, command: string): DoctorCheck {
 	const base = {
 		id: "license-mailwoman",
 		label: "License (mailwoman)",
@@ -597,7 +597,7 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 				consequence:
 					`The key verifies offline until its date, so the runtime still applies the commercial branch; online, the license it names is ${o.lidStatus}. ` +
 					`Manage billing at ${docsSiteURL()}/license.`,
-				fix: "mailwoman license refresh",
+				fix: `${command} license refresh`,
 				license,
 			}
 		}
@@ -629,7 +629,7 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 		detail: `${applied} — ${reason}; the open-source branch applies · ${trailer}`,
 		consequence:
 			"A configured license key that does not verify leaves this installation under AGPL-3.0-only terms: attribution, share-alike on modifications, and a source offer to network users.",
-		fix: "mailwoman license verify   (then request a current key from Sister Software)",
+		fix: `${command} license verify   (then request a current key from Sister Software)`,
 		license,
 	}
 }

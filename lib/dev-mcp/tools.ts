@@ -20,6 +20,7 @@ import { daemonTool } from "#dev-mcp/tools/daemon"
 import { diagnoseTool } from "#dev-mcp/tools/diagnose"
 import { diffGeocodeTool } from "#dev-mcp/tools/diff/geocode"
 import { diffParseTool } from "#dev-mcp/tools/diff/parse"
+import { directoriesTool } from "#dev-mcp/tools/directories"
 import { fanoutTool } from "#dev-mcp/tools/fanout"
 import { githubTools } from "#dev-mcp/tools/github"
 import { inputsTool } from "#dev-mcp/tools/inputs"
@@ -67,6 +68,7 @@ const FACTORIES = [
 	reliabilityTool,
 	rigTool,
 	provenanceTool,
+	directoriesTool,
 	coverageTool,
 	diffParseTool,
 	diffGeocodeTool,

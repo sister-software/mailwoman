@@ -307,6 +307,7 @@ for (const binding of await select(`SELECT ?item ?coord ?countryCode ?stateName 
 	if (entity && binding.stateName) {
 		entity.countryName = binding.stateName.value
 	}
+
 	keep(entity)
 }
 

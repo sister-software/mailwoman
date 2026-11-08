@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { coordinatePairText } from "@mailwoman/spatial/point-query"
 import type React from "react"
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import type { MapInstance } from "react-map-gl/maplibre"
@@ -9,7 +10,7 @@ import type { GeocoderPanels, GeocoderRuntime } from "#map/types"
 import type { UseCompareState } from "#map/useCompareState"
 import type { UseGeocode } from "#map/useGeocode"
 import { useMapBearing } from "#map/useMapBearing"
-import { useMapLabelPick } from "#map/useMapLabelPick"
+import { type MapPick, useMapPick } from "#map/useMapPick"
 import type { UsePlaceAutocomplete } from "#map/usePlaceAutocomplete"
 
 import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
@@ -18,7 +19,9 @@ import { CompareToggle } from "./CompareToggle.tsx"
 import { DebugInfo } from "./DebugInfo.tsx"
 import { MapChipRow } from "./MapChipRow.tsx"
 import { MapCompass } from "./MapCompass.tsx"
+import { MapContextMenu, MapContextMenuAction, useMapContextMenu } from "./MapContextMenu.tsx"
 import { MapControlButton, MapControlGroup, MapControlStack } from "./MapControlStack.tsx"
+import { MapPlaceCard, pickQuery } from "./MapPlaceCard.tsx"
 import { MapProgressBar } from "./MapProgressBar.tsx"
 import { MapSearchBar, SearchGlyph } from "./MapSearchBar.tsx"
 import { MapSheet } from "./MapSheet.tsx"
@@ -35,15 +38,18 @@ export interface GeocoderControlsProps {
 	autocomplete: UsePlaceAutocomplete
 	compare: UseCompareState
 	/**
-	 * A query from the URL to run once the runtime is ready.
+	 * The query the host's URL names.
+	 *
+	 * Each new value is submitted once the runtime is ready, unless it is the query submitted last.
 	 */
-	initialQuery?: string | null
+	query?: string | null
 	panels: GeocoderPanels
 	presets: ReadonlyArray<Preset>
 	/**
 	 * The input placeholder.
 	 *
-	 * The field also selects its value on focus while it still equals this text.
+	 * A host that pre-fills the field with the same text gets its value selected
+	 * on focus, so typing replaces it.
 	 */
 	placeholder: string
 	map?: MapInstance | null
@@ -92,7 +98,7 @@ export function GeocoderControls({
 	presets,
 	placeholder,
 	map = null,
-	initialQuery = null,
+	query = null,
 	onSubmitQuery,
 	onSelectVersion,
 	developer = false,
@@ -285,14 +291,19 @@ export function GeocoderControls({
 	const toggleSheet = (name: Exclude<SheetName, null>) => setOpenSheet((current) => (current === name ? null : name))
 	const closeSheet = useCallback(() => setOpenSheet(null), [])
 
+	// The query submitted last, from the field or from the host's URL, so the URL's query
+	// is not submitted a second time after the host records the submit it heard.
+	const lastSubmitted = useRef<string | null>(null)
+
 	// Every user-initiated query goes through this function, so `onSubmitQuery` fires from one place.
 	const runQuery = useCallback(
-		(query: string) => {
+		(text: string) => {
 			// A new query shows the result panel again at its default height.
 			setResultDismissed(false)
 			setSheetHeight(null)
-			onSubmitQuery?.(query)
-			void geocode.submit(query)
+			lastSubmitted.current = text
+			onSubmitQuery?.(text)
+			void geocode.submit(text)
 		},
 		[onSubmitQuery, geocode]
 	)
@@ -302,33 +313,47 @@ export function GeocoderControls({
 	const clearQuery = useCallback(() => {
 		geocode.reset()
 		setSheetHeight(null)
+		lastSubmitted.current = null
 		onSubmitQuery?.("")
 	}, [onSubmitQuery, geocode])
 
-	// The initial query waits for `runtime.ready` because the parse pipeline drops
+	// The URL's query waits for `runtime.ready` because the parse pipeline drops
 	// a submit made before the model loads.
-	// The ref makes it run once, so a later render cannot overwrite the user's own query.
-	const autoRanInitialQuery = useRef(false)
-
+	// A later value, such as the one the back button restores, fills the field and runs.
+	// A URL with no query after one with a query is the entry before the first search.
+	// It clears the field and the result.
 	useEffect(() => {
-		if (autoRanInitialQuery.current) return
+		if (query === lastSubmitted.current) return
 
-		if (!initialQuery || !runtime.ready) return
+		if (!query) {
+			if (lastSubmitted.current === null) return
 
-		autoRanInitialQuery.current = true
+			lastSubmitted.current = null
+			geocode.setText("")
+			geocode.reset()
+
+			return
+		}
+
+		if (!runtime.ready) return
+
+		lastSubmitted.current = query
+		geocode.setText(query)
+		// oxlint-disable-next-line react/set-state-in-effect -- The history is the external system here: a restored entry's result shows again as a submitted one would.
+		setResultDismissed(false)
 		// This calls `geocode.submit` directly because the query is already in the URL.
-		void geocode.submit(initialQuery)
-	}, [initialQuery, runtime.ready, geocode])
+		void geocode.submit(query)
+	}, [query, runtime.ready, geocode])
 
 	// A drawer-breakpoint crossing clears any dragged height.
 	// The height could clip the desktop column.
 	useEffect(() => {
-		const query = globalThis.matchMedia(DRAWER_LAYOUT)
+		const layout = globalThis.matchMedia(DRAWER_LAYOUT)
 		const onChange = () => setSheetHeight(null)
 
-		query.addEventListener("change", onChange)
+		layout.addEventListener("change", onChange)
 
-		return () => query.removeEventListener("change", onChange)
+		return () => layout.removeEventListener("change", onChange)
 	}, [])
 
 	// A user pan, zoom, or rotate shrinks the drawer to its floor detent without dismissing the result.
@@ -357,7 +382,43 @@ export function GeocoderControls({
 		}
 	}, [map, sheetDetents])
 
-	// Escape dismisses the result only while no side sheet is open.
+	// A click on the map opens the place card for what it landed on and pins that point.
+	// A label click also fills the field with the label's name, without a parse: the tile
+	// feature already holds the coordinate, and a parse could land on a homonym elsewhere.
+	const [pick, setPick] = useState<MapPick | null>(null)
+
+	const onMapPick = useCallback(
+		(picked: MapPick) => {
+			const [lon, lat] = picked.lngLat
+
+			if (picked.kind === "label" && picked.name) {
+				geocode.setText(picked.name)
+				geocode.reset()
+			}
+
+			geocode.pin({
+				id: 0,
+				name: pickQuery(picked),
+				placetype: picked.placetype ?? "point",
+				lat,
+				lon,
+				score: null,
+				bbox: null,
+				tier: null,
+				uncertaintyM: null,
+			})
+
+			setPick(picked)
+		},
+		[geocode]
+	)
+
+	const closeCard = useCallback(() => {
+		setPick(null)
+		geocode.pin(null)
+	}, [geocode])
+
+	// Escape dismisses the result and the place card only while no side sheet is open.
 	// `MapSheet` also listens for Escape on the document, so one keystroke would otherwise close both.
 	useEffect(() => {
 		if (openSheet) return
@@ -365,25 +426,42 @@ export function GeocoderControls({
 		const onKeyDown = (event: KeyboardEvent) => {
 			if (event.key === "Escape") {
 				setResultDismissed(true)
+				closeCard()
 			}
 		}
 
 		document.addEventListener("keydown", onKeyDown)
 
 		return () => document.removeEventListener("keydown", onKeyDown)
-	}, [openSheet])
+	}, [openSheet, closeCard])
 
-	// A map-label click searches for its name.
-	const pickLabel = useCallback(
-		(name: string) => {
-			geocode.setText(name)
+	useMapPick(map, onMapPick)
+
+	// A search from the map fills the field and runs the text, as a typed query would.
+	const searchFromMap = useCallback(
+		(text: string) => {
+			setPick(null)
+			geocode.setText(text)
 			geocode.reset()
-			runQuery(name)
+			runQuery(text)
 		},
 		[geocode, runQuery]
 	)
 
-	useMapLabelPick(map, pickLabel)
+	// The right-click menu.
+	// Its one built-in action searches the point itself.
+	// The runtime reads that query as a coordinate pair.
+	const contextMenu = useMapContextMenu(map)
+	const menuPoint = contextMenu.point
+
+	const searchMenuPoint = useCallback(() => {
+		if (!menuPoint) return
+
+		const [lon, lat] = menuPoint.lngLat
+
+		contextMenu.close()
+		searchFromMap(coordinatePairText(lat, lon))
+	}, [menuPoint, contextMenu, searchFromMap])
 
 	const chips = presets.map((preset) => ({ label: preset.label, value: preset.value }))
 	// The model download does not open the result panel.
@@ -484,6 +562,8 @@ export function GeocoderControls({
 								}}
 								disabled={!runtime.ready}
 								placeholder={placeholder}
+								// An address is full of proper nouns and codes the browser's dictionary lacks.
+								spellCheck={false}
 								onKeyDown={autocomplete.onInputKeyDown}
 								{...autocomplete.inputProps}
 							/>
@@ -638,6 +718,15 @@ export function GeocoderControls({
 
 					{panels.developerExtras}
 				</MapSheet>
+			) : null}
+
+			{pick ? <MapPlaceCard pick={pick} onSearch={searchFromMap} onClose={closeCard} /> : null}
+
+			{menuPoint ? (
+				<MapContextMenu point={menuPoint} onClose={contextMenu.close}>
+					{panels.contextMenu?.(menuPoint)}
+					<MapContextMenuAction onSelect={searchMenuPoint}>Search this point</MapContextMenuAction>
+				</MapContextMenu>
 			) : null}
 
 			{panels.footer}

@@ -1,67 +1,31 @@
 import { describe, expect, it } from "vitest"
 
-import { FORK_ORG, type ForkState, repoURL, resolveWOFRepoOrigin, UPSTREAM_ORG } from "#tools/pipeline/wof/repo-origin"
+import { FORK_ORG, repoURL, upstreamOrgOf, wofRepoOrigin } from "#tools/pipeline/wof/repo-origin"
 
-const states: Record<string, ForkState> = {
-	"whosonfirst-data-admin-gb": "diverged",
-	"whosonfirst-data-admin-fr": "clean",
-}
-
-const probe = async (org: string, repo: string): Promise<ForkState> =>
-	org === FORK_ORG ? (states[repo] ?? "absent") : "absent"
-
-describe("resolveWOFRepoOrigin", () => {
-	it("prefers our fork when it carries commits upstream does not", async () => {
-		const origin = await resolveWOFRepoOrigin("whosonfirst-data-admin-gb", probe)
-
-		expect(origin).toMatchObject({ org: FORK_ORG, source: "fork" })
-		expect(origin.url).toBe("ssh://git@github.com/mailwoman/whosonfirst-data-admin-gb")
-		expect(origin.reason).toContain("carries commits upstream does not")
-	})
-
-	it("Sends a CLEAN fork to upstream — existence is not correction, and a fork does not track its parent", async () => {
-		const origin = await resolveWOFRepoOrigin("whosonfirst-data-admin-fr", probe)
-
-		expect(origin).toMatchObject({ org: UPSTREAM_ORG, source: "upstream" })
-		expect(origin.reason).toContain("carries nothing upstream lacks")
-		expect(origin.reason).toContain("does not track its parent")
-	})
-
-	it("falls back to upstream when no fork exists, and says so", async () => {
-		const origin = await resolveWOFRepoOrigin("whosonfirst-data-admin-zz", probe)
-
-		expect(origin).toMatchObject({ org: UPSTREAM_ORG, source: "upstream" })
-		expect(origin.reason).toContain("no mailwoman/whosonfirst-data-admin-zz fork")
-	})
-
-	it("reads a FAILED probe as upstream-with-a-caveat, never as proof about the fork", async () => {
-		const origin = await resolveWOFRepoOrigin("whosonfirst-data-admin-gb", async () => {
-			throw new Error("gh: not authenticated")
+describe("wofRepoOrigin", () => {
+	it("fetches every country repository from our fork and keeps whosonfirst-data as upstream", () => {
+		expect(wofRepoOrigin("whosonfirst-data-admin-gb")).toEqual({
+			repo: "whosonfirst-data-admin-gb",
+			forkURL: "ssh://git@github.com/mailwoman/whosonfirst-data-admin-gb",
+			upstreamOrg: "whosonfirst-data",
+			upstreamURL: "ssh://git@github.com/whosonfirst-data/whosonfirst-data-admin-gb",
 		})
-
-		expect(origin.source).toBe("upstream")
-		expect(origin.reason).toContain("fork lookup failed")
-		expect(origin.reason).toContain("NOT evidence")
 	})
 
-	it("distinguishes the three upstream reasons, so a log says WHICH one happened", async () => {
-		const clean = await resolveWOFRepoOrigin("whosonfirst-data-admin-fr", probe)
-		const absent = await resolveWOFRepoOrigin("whosonfirst-data-admin-zz", probe)
+	it("gives the placetypes repository its upstream in the whosonfirst organization", () => {
+		expect(upstreamOrgOf("whosonfirst-placetypes")).toBe("whosonfirst")
 
-		const failed = await resolveWOFRepoOrigin("whosonfirst-data-admin-gb", async () => {
-			throw new Error("boom")
-		})
+		expect(wofRepoOrigin("whosonfirst-placetypes").upstreamURL).toBe(
+			"ssh://git@github.com/whosonfirst/whosonfirst-placetypes"
+		)
 
-		expect(new Set([clean.reason, absent.reason, failed.reason]).size).toBe(3)
+		expect(wofRepoOrigin("whosonfirst-placetypes").forkURL).toBe(repoURL(FORK_ORG, "whosonfirst-placetypes"))
 	})
 
-	it("records the fork's URL whenever the fork exists, so an upstream clone can still push to it", async () => {
-		const diverged = await resolveWOFRepoOrigin("whosonfirst-data-admin-gb", probe)
-		const clean = await resolveWOFRepoOrigin("whosonfirst-data-admin-fr", probe)
-		const absent = await resolveWOFRepoOrigin("whosonfirst-data-admin-zz", probe)
+	it("treats a postcode repository the same way as an admin repository", () => {
+		const origin = wofRepoOrigin("whosonfirst-data-postalcode-us")
 
-		expect(diverged.forkURL).toBe(repoURL(FORK_ORG, "whosonfirst-data-admin-gb"))
-		expect(clean.forkURL).toBe(repoURL(FORK_ORG, "whosonfirst-data-admin-fr"))
-		expect(absent.forkURL).toBeNull()
+		expect(origin.forkURL).toBe(repoURL(FORK_ORG, "whosonfirst-data-postalcode-us"))
+		expect(origin.upstreamOrg).toBe("whosonfirst-data")
 	})
 })

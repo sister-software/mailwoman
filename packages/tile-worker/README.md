@@ -15,6 +15,7 @@ requests.
 | `/heartbeat`                                                      | Plain-text `OK`.                                               |
 | `/<tileset>.json`                                                 | TileJSON metadata from a PMTiles archive.                      |
 | `/<tileset>/<z>/<x>/<y>.<extension>`                              | One map tile.                                                  |
+| `/styles/<style>.json`                                            | A MapLibre basemap style over the planet tileset.              |
 | `/tiger/<state>/<tileset>.json`                                   | TIGER tileset metadata.                                        |
 | `/tiger/<state>/<tileset>/<z>/<x>/<y>.<extension>`                | One TIGER tile.                                                |
 | `/providers/<provider>/<state>/<tileset>.json`                    | Provider tileset metadata.                                     |
@@ -29,6 +30,14 @@ A valid map-tile request for which the archive has no tile returns HTTP 204.
 A `.bin` tile reads an archive of PMTiles tile type `Unknown`, such as the compact building tiles from
 `hrt building-tiles`, and returns its bytes as `application/octet-stream`.
 Terrain requests support zoom levels 0 through 15.
+
+`/styles/<style>.json` answers a style built by `createBasemapStyle` in `@mailwoman/cartographer/base/standalone`:
+one vector source that names the planet tile template, zoom range and attribution read from the archive, and the
+`@protomaps/basemaps` layers. `<style>` is `light`, `dark`, `white`, `grayscale`, `black`, `mailwoman` or
+`mailwoman-dark`; an unknown name answers HTTP 404. The optional `lang` query parameter sets the label language
+(default `en`); a malformed tag answers HTTP 400. Because the style carries the tile template itself, a client that
+cannot read TileJSON, such as QGIS, needs only this URL. In QGIS, add a generic vector tile connection with the URL
+`https://tiles.mailwoman.post/planet.v4/{z}/{x}/{y}.mvt`, zoom 0 to 15, and this style URL.
 
 ## Storage configuration
 

@@ -87,21 +87,21 @@ function registerKeyedTo(stored: string, at: { lat: number; lon: number }) {
 }
 
 describe("applyAddressPoint's scoping box", () => {
-	const boxOf = (postcode: boolean) => {
+	const boxOf = async (postcode: boolean) => {
 		const boxes: unknown[] = []
 		const lookup = { find: (query) => (boxes.push(query.bbox), null) } as AddressPointLookup
 
-		applyAddressPoint(hoodTree({ postcode }).roots, lookup, true)
+		await applyAddressPoint(hoodTree({ postcode }).roots, lookup, true)
 
 		return boxes[0] as typeof PLACE_BOX
 	}
 
-	test("is the town's own extent when the input states no postcode", () => {
-		expect(boxOf(false)).toEqual(PLACE_BOX)
+	test("is the town's own extent when the input states no postcode", async () => {
+		expect(await boxOf(false)).toEqual(PLACE_BOX)
 	})
 
-	test("widens past the town's extent when the input states a postcode", () => {
-		const box = boxOf(true)
+	test("widens past the town's extent when the input states a postcode", async () => {
+		const box = await boxOf(true)
 
 		expect(box.minLat).toBeLessThan(PLACE_BOX.minLat)
 		expect(box.maxLon).toBeGreaterThan(PLACE_BOX.maxLon)
@@ -109,11 +109,11 @@ describe("applyAddressPoint's scoping box", () => {
 })
 
 describe("applyAddressPoint's ancestor retry", () => {
-	test("answers from the nearest ancestor the register keys its rows to", () => {
+	test("answers from the nearest ancestor the register keys its rows to", async () => {
 		const tree = hoodTree()
 		const { lookup, localities } = registerKeyedTo("City", INSIDE)
 
-		applyAddressPoint(tree.roots, lookup, false, ancestorsOf)
+		await applyAddressPoint(tree.roots, lookup, false, ancestorsOf)
 
 		expect(localities).toEqual(["Hood", "Borough", "City"])
 
@@ -122,50 +122,50 @@ describe("applyAddressPoint's ancestor retry", () => {
 		expect(street.metadata?.["address_point_ancestor_locality"]).toBe("City")
 	})
 
-	test("never retries with a county or region ancestor", () => {
+	test("never retries with a county or region ancestor", async () => {
 		const tree = hoodTree()
 		const { lookup, localities } = registerKeyedTo("County", INSIDE)
 
-		applyAddressPoint(tree.roots, lookup, false, ancestorsOf)
+		await applyAddressPoint(tree.roots, lookup, false, ancestorsOf)
 
 		expect(localities).not.toContain("County")
 		expect(localities).not.toContain("Region")
 		expect(streetOf(tree.roots).metadata?.["resolution_tier"]).toBeUndefined()
 	})
 
-	test("refuses an ancestor-keyed row outside the resolved locality's box", () => {
+	test("refuses an ancestor-keyed row outside the resolved locality's box", async () => {
 		const tree = hoodTree()
 		const { lookup } = registerKeyedTo("City", OUTSIDE)
 
-		applyAddressPoint(tree.roots, lookup, false, ancestorsOf)
+		await applyAddressPoint(tree.roots, lookup, false, ancestorsOf)
 
 		expect(streetOf(tree.roots).metadata?.["resolution_tier"]).toBeUndefined()
 	})
 
-	test("does not retry when the resolved locality has no box to hold the row to", () => {
+	test("does not retry when the resolved locality has no box to hold the row to", async () => {
 		const tree = hoodTree({ box: false })
 		const { lookup, localities } = registerKeyedTo("City", INSIDE)
 
-		applyAddressPoint(tree.roots, lookup, false, ancestorsOf)
+		await applyAddressPoint(tree.roots, lookup, false, ancestorsOf)
 
 		expect(localities).toEqual(["Hood"])
 		expect(streetOf(tree.roots).metadata?.["resolution_tier"]).toBeUndefined()
 	})
 
-	test("does not retry when the backend gives no lineage", () => {
+	test("does not retry when the backend gives no lineage", async () => {
 		const tree = hoodTree()
 		const { lookup, localities } = registerKeyedTo("City", INSIDE)
 
-		applyAddressPoint(tree.roots, lookup, false)
+		await applyAddressPoint(tree.roots, lookup, false)
 
 		expect(localities).toEqual(["Hood"])
 	})
 
-	test("keeps a row the parsed locality's own key answers without consulting the ancestors", () => {
+	test("keeps a row the parsed locality's own key answers without consulting the ancestors", async () => {
 		const tree = hoodTree()
 		const { lookup, localities } = registerKeyedTo("Hood", OUTSIDE)
 
-		applyAddressPoint(tree.roots, lookup, false, ancestorsOf)
+		await applyAddressPoint(tree.roots, lookup, false, ancestorsOf)
 
 		expect(localities).toEqual(["Hood"])
 

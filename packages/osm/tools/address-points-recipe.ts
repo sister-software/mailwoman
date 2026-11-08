@@ -41,7 +41,7 @@ import {
 import { OSM_LICENSE } from "#license"
 import { createOutlineContainment } from "#sdk/country-outline"
 import { geofabrikExtractURL, type GeofabrikRegion, geofabrikRegions } from "#sdk/geofabrik/regions"
-import { streetLocaleForCountry, supportedOSMCountries } from "#street-locale"
+import { streetLocaleForOSMCountry, supportedOSMCountries } from "#street-locale"
 import { buildRooftopDatabase } from "#tools/rooftop-database"
 
 /**
@@ -277,7 +277,7 @@ export function createOSMAddressPointsRecipe(recipeOptions: OSMRecipeOptions = {
 						role: ServingRole.AddressPoints,
 						format: ArtifactFormat.SQLite,
 						schemaVersion: 1,
-						normalization: { ...STREET_KEY_NORMALIZATION, locale: streetLocaleForCountry(country) },
+						normalization: { ...STREET_KEY_NORMALIZATION, locale: streetLocaleForOSMCountry(country) },
 						scope: output.scope,
 						observedCountries: counts.written ? [output.country] : [],
 						// The spine schema writes no per-cell coverage table, so a miss supports no negative answer.

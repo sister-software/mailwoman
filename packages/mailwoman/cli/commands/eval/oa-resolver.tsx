@@ -54,7 +54,6 @@ export const spec = {
 			description: "Pin postcode-disambiguated locality selection",
 		},
 		"postcode-max-move-km": { type: "number", description: "Cap how far the postcode fallback may move a coordinate" },
-		"span-rescore-require-context-remainder": booleanOption("A sub-span may drop context, never a word of the name"),
 		"span-rescore-weak-resolution": {
 			type: "string",
 			choices: ["score", "containment", "either"],

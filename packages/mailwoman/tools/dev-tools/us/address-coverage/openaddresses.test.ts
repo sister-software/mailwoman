@@ -3,44 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import {
-	isAdmittedLicense,
-	isAdmittedSource,
-	openAddressesRow,
-	postcodeNearPoint,
-	repeatsStoredPoint,
-} from "./openaddresses.ts"
-
-describe("isAdmittedLicense", () => {
-	it.each([
-		[null],
-		[{ text: "Public Domain", attribution: false, "share-alike": false }],
-		[{ text: "CC BY 3.0", url: "https://creativecommons.org/licenses/by/3.0/" }],
-		[{ url: "https://creativecommons.org/publicdomain/zero/1.0/", text: "CC 0" }],
-		[{ attribution: true, "attribution name": "Benzie County", presumed: true }],
-	])("admits %j", (license) => {
-		expect(isAdmittedLicense(license)).toBe(true)
-	})
-
-	it.each([
-		[{ text: "CC-BY-SA", "share-alike": true }],
-		[{ text: "CC-BY-SA" }],
-		[{ text: "Not for commercial use or resale." }],
-		[{ text: "Indemnification", attribution: false, "share-alike": false }],
-		[{ url: "https://www.opendataphilly.org/organization/about/city-of-philadelphia" }],
-		["https://www.acgov.org/acdata/terms.htm"],
-		["Unknown"],
-	])("refuses %j", (license) => {
-		expect(isAdmittedLicense(license)).toBe(false)
-	})
-})
-
-describe("isAdmittedSource", () => {
-	it("admits a reviewed source its recorded wording alone would refuse", () => {
-		expect(isAdmittedSource("us/tx/san_antonio", { text: "Indemnification" })).toBe(true)
-		expect(isAdmittedSource("us/pa/bucks", { text: "Not for commercial use or resale." })).toBe(false)
-	})
-})
+import { openAddressesRow, postcodeNearPoint, repeatsStoredPoint } from "./openaddresses.ts"
 
 describe("postcodeNearPoint", () => {
 	const dueWest = { postcode: "29639", geometry: "[[-82.38815,34.328206],[-82.3896,34.32932]]" }

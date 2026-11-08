@@ -10,7 +10,7 @@
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { expect, test } from "vitest"
 
-import { streetLocaleForCountry, supportedOSMCountries } from "#street-locale"
+import { streetLocaleForOSMCountry, supportedOSMCountries } from "#street-locale"
 
 test("fr: the Paris acceptance address keys consistently", () => {
 	const key = normalizeStreetForKeyLocale("Rue du Chevaleret", "fr")
@@ -51,12 +51,26 @@ test("en: GB/NZ street suffix surfaces key consistently", () => {
 	expect(normalizeStreetForKeyLocale("Avery Hill Rd", "en")).toBe(normalizeStreetForKeyLocale("Avery Hill Road", "en"))
 })
 
-test("streetLocaleForCountry: maps the supported countries, throws otherwise", () => {
-	expect(streetLocaleForCountry("GB")).toBe("en")
-	expect(streetLocaleForCountry("nz")).toBe("en")
-	expect(streetLocaleForCountry("FR")).toBe("fr")
-	expect(streetLocaleForCountry("de")).toBe("de")
-	expect(streetLocaleForCountry("nl")).toBe("nl")
-	expect(supportedOSMCountries().toSorted()).toEqual(["au", "ca", "de", "fr", "gb", "id", "nl", "nz", "pk", "pl", "vn"])
-	expect(() => streetLocaleForCountry("xx")).toThrow(/No street-normalization locale/)
+test("streetLocaleForOSMCountry: folds each extract country under the locale its extract was built with", () => {
+	// The locales every OSM extract was built under before the locale came from one table.
+	const built = {
+		gb: "en",
+		nz: "en",
+		au: "en",
+		fr: "fr",
+		de: "de",
+		nl: "nl",
+		ca: "en",
+		pl: "pl",
+		vn: "vn",
+		id: "id",
+		pk: "en",
+	}
+
+	for (const [country, locale] of Object.entries(built)) {
+		expect(streetLocaleForOSMCountry(country)).toBe(locale)
+	}
+
+	expect(supportedOSMCountries().toSorted()).toEqual(Object.keys(built).toSorted())
+	expect(() => streetLocaleForOSMCountry("xx")).toThrow(/No database is registered/)
 })

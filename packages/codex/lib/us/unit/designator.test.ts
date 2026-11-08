@@ -13,7 +13,50 @@ import {
 	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
 	US_UNIT_DESIGNATOR_REQUIRES_RANGE,
 	US_UNIT_DESIGNATOR_VARIANTS,
+	usUnitIdentifier,
 } from "#us/unit/designator"
+
+describe("usUnitIdentifier", () => {
+	it("reads one identifier from a designator, a pound sign or a bare value", () => {
+		for (const unit of ["UNIT 2", "Apt. 2", "apartment 2", "#2", "Apt #2", "2", " 2 "]) {
+			expect(usUnitIdentifier(unit), unit).toBe("2")
+		}
+
+		expect(usUnitIdentifier("UNIT B")).toBe("b")
+		expect(usUnitIdentifier("Suite 4-B")).toBe("4b")
+	})
+
+	it("reads a designator that stands alone as its canonical designator, and folds a unit without one whole", () => {
+		expect(usUnitIdentifier("Basement")).toBe(usUnitIdentifier("BSMT"))
+		expect(usUnitIdentifier("North Wing")).toBe("northwing")
+	})
+
+	it("returns null for an absent or empty unit", () => {
+		expect(usUnitIdentifier(null)).toBeNull()
+		expect(usUnitIdentifier(undefined)).toBeNull()
+		expect(usUnitIdentifier("  ")).toBeNull()
+	})
+
+	it("drops designator words wherever they stand", () => {
+		expect(usUnitIdentifier("BLDG 25 FL 1")).toBe(usUnitIdentifier("25 1"))
+		expect(usUnitIdentifier("FL 2 #201")).toBe(usUnitIdentifier("2 #201"))
+		expect(usUnitIdentifier("MBL HM CRT SPACE")).toBe(usUnitIdentifier("MBL HM CRT"))
+		expect(usUnitIdentifier("2 #202")).not.toBe(usUnitIdentifier("FL 2 #200"))
+	})
+
+	it("drops leading zeros from a numeric identifier and keeps differing numbers apart", () => {
+		expect(usUnitIdentifier("UNIT 0807")).toBe(usUnitIdentifier("807"))
+		expect(usUnitIdentifier("808")).not.toBe(usUnitIdentifier("0807"))
+	})
+
+	it("reads a placeholder, the record's house number, or its number and street as no unit", () => {
+		expect(usUnitIdentifier("<Null>")).toBeNull()
+		expect(usUnitIdentifier("108", { number: "108", street: "17th St" })).toBeNull()
+		expect(usUnitIdentifier("108 17th St", { number: "108", street: "17th St" })).toBeNull()
+		expect(usUnitIdentifier("2", { number: "108", street: "17th St" })).toBe("2")
+		expect(usUnitIdentifier("#2", { number: "2", street: "Main Street" })).toBe("2")
+	})
+})
 
 describe("US_UNIT_DESIGNATOR_LOOKUP", () => {
 	it("maps canonical, full-word, and abbreviated variants to the canonical key", () => {

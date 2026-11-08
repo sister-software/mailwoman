@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { FingerprintSet } from "#fingerprints"
 import { DedupStore, runAdapter, type RunnerProgress } from "#runner"
+import { readCanonicalRows } from "#test-kit"
 import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 function makeAdapter(opts: {
@@ -178,6 +179,51 @@ describe("runAdapter", () => {
 		expect(manifest.yielded).toBe(3)
 		expect(manifest.written).toBe(2)
 		expect(manifest.deduped).toBe(1)
+	})
+
+	// The dedup key leaves out `source` and `license`, so the runner's own scope is
+	// all that keeps two sources' copies of an address apart.
+	// A key store shared across runs would drop the second source's row (#2559).
+	it("dedupes within one adapter's run only, so a second source's copy of the same address is written", async () => {
+		const address = baseRow({ source_id: "shared-1", raw: "12 Rue de la Paix Paris", components: {} })
+
+		for (const id of ["osm", "ban"]) {
+			const manifest = await runAdapter({
+				adapter: makeAdapter({ id, rows: [address, { ...address, source_id: "shared-2" }] }),
+				adapterOptions: { inputPath: "ignored" },
+				outputDir: scratch.path,
+				corpusVersion: "0.1.0",
+			})
+
+			expect({ id, written: manifest.written, deduped: manifest.deduped }).toEqual({ id, written: 1, deduped: 1 })
+		}
+
+		const kept = await Promise.all(["osm", "ban"].map((id) => readCanonicalRows(scratch.path, id)))
+
+		expect(kept.map((rows) => rows.map((row) => [row.source, row.source_id]))).toEqual([
+			[["osm", "shared-1"]],
+			[["ban", "shared-1"]],
+		])
+	})
+
+	// One source can write rows under several upstream licenses (OpenAddresses stamps each file's own),
+	// and the first row's license is the one that survives the dedup.
+	it("dedupes rows of one run across license values, keeping the first row's license", async () => {
+		const manifest = await runAdapter({
+			adapter: makeAdapter({
+				id: "syn",
+				rows: [
+					baseRow({ source_id: "syn-1", license: "CC-BY-4.0" }),
+					baseRow({ source_id: "syn-2", license: "ODbL-1.0" }),
+				],
+			}),
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		expect(manifest.written).toBe(1)
+		expect((await readCanonicalRows(scratch.path, "syn")).map((row) => row.license)).toEqual(["CC-BY-4.0"])
 	})
 
 	it("calls onProgress every `progressEvery` rows + one final tick", async () => {

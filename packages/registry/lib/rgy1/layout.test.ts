@@ -91,6 +91,7 @@ describe("RGY1 layout", () => {
 			const bytes = new Uint8Array(
 				await readLocalBuffer(workspacePath("registry", "test", "fixtures", "artifacts", `${name}.rgy1`))
 			)
+
 			const walked = walk(bytes)
 
 			expect(walked.magic).toBe(expected.magic ?? "RGY1")
@@ -173,6 +174,7 @@ describe("RGY1 layout", () => {
 				expect(new TextDecoder().decode(bytes.subarray(utf8.offset + start, utf8.offset + end))).toBe(
 					expected.firstString
 				)
+
 				expect(walked.view.getUint32(offsets.offset + (offsets.count - 1) * 4, true)).toBe(utf8.length)
 			}
 

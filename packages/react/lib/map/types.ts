@@ -13,6 +13,7 @@ import type { LngLat, ResolvedMapPlace } from "#map/place-render"
 import type { PipelineRuntime } from "#pipeline/types"
 
 import type { MapCanvasStyle } from "./MapCanvas.tsx"
+import type { MapContextMenuPoint } from "./MapContextMenu.tsx"
 
 /**
  * An alias for {@link LngLat}.
@@ -256,4 +257,11 @@ export interface GeocoderPanels {
 	 * A permalink control for the current address (host's PermalinkButton).
 	 */
 	permalink?: (text: string) => ReactNode
+	/**
+	 * The rows of the map's right-click menu for a point, such as the point's coordinates
+	 * in each encoding the host offers, as `MapContextMenuRow` elements.
+	 *
+	 * The menu itself, its placement and its search action belong to the package.
+	 */
+	contextMenu?: (point: MapContextMenuPoint) => ReactNode
 }

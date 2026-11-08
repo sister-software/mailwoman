@@ -73,6 +73,22 @@ export interface BANAddrRecord {
 	 * Preserved verbatim so a coverage basis can be computed per commune rather than inferred from a share.
 	 */
 	certified: number | null
+	/**
+	 * `id` — BAN's identifier for the address, such as `75103_ka7f7y_00001`, or null when blank.
+	 */
+	id: string | null
+	/**
+	 * `libelle_acheminement` — the postal city La Poste routes to, such as `PARIS` for every arrondissement.
+	 */
+	postalCity: string | null
+	/**
+	 * `nom_ancienne_commune` — the former commune of an address in a merged commune (`commune nouvelle`).
+	 */
+	formerCommune: string | null
+	/**
+	 * `type_position` — how BAN placed the point, such as `entrée`, `bâtiment` or `parcelle`.
+	 */
+	positionType: string | null
 }
 
 /**
@@ -89,6 +105,10 @@ const REQUIRED_COLUMNS = [
 	"lat",
 	"code_insee",
 	"certification_commune",
+	"id",
+	"libelle_acheminement",
+	"nom_ancienne_commune",
+	"type_position",
 ] as const
 
 /**
@@ -224,6 +244,10 @@ export async function* extractBANAddrPoints(csvPath: PathBuilderLike): AsyncGene
 			lat,
 			codeInsee: row.code_insee || null,
 			certified: certification === "1" ? 1 : certification === "0" ? 0 : null,
+			id: row.id || null,
+			postalCity: row.libelle_acheminement || null,
+			formerCommune: row.nom_ancienne_commune || null,
+			positionType: row.type_position || null,
 		}
 	}
 }

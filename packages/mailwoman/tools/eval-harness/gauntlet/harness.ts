@@ -188,10 +188,6 @@ export interface GauntletResolverPins {
 	 */
 	streetMorphologyPrior: SwitchPin
 	/**
-	 * A span-rescore sub-span may drop context but never a word of the name.
-	 */
-	spanRescoreRequireContextRemainder: SwitchPin
-	/**
 	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
 	 * Three readings exist and the shipped brake is the absence of all of them, so there is no off pin.
@@ -213,7 +209,6 @@ export const PRODUCTION_RESOLVER_PINS: Readonly<GauntletResolverPins> = {
 	venueHeadPrior: "production",
 	venueHeadBiasScale: "production",
 	streetMorphologyPrior: "production",
-	spanRescoreRequireContextRemainder: "production",
 	spanRescoreWeakResolution: "production",
 }
 
@@ -228,7 +223,6 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 	adminContainmentRerank?: boolean
 	dependentLocalityContainment?: boolean
 	poiVenueTier?: boolean
-	spanRescoreRequireContextRemainder?: boolean
 	spanRescoreWeakResolution?: WeakResolutionReading
 } {
 	return {
@@ -236,7 +230,6 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
 		...switchPinEntry("adminContainmentRerank", pins.adminContainmentRerank),
 		...switchPinEntry("dependentLocalityContainment", pins.dependentLocalityContainment),
 		...switchPinEntry("poiVenueTier", pins.poiVenueTier),
-		...switchPinEntry("spanRescoreRequireContextRemainder", pins.spanRescoreRequireContextRemainder),
 		...(pins.spanRescoreWeakResolution === "production"
 			? {}
 			: { spanRescoreWeakResolution: pins.spanRescoreWeakResolution }),

@@ -8,7 +8,45 @@
 
 import { describe, expect, it } from "vitest"
 
-import { decodePlusCode, isFullPlusCode, isShortPlusCode, recoverNearestPlusCode } from "#open-location-code"
+import {
+	decodePlusCode,
+	encodePlusCode,
+	isFullPlusCode,
+	isShortPlusCode,
+	recoverNearestPlusCode,
+} from "#open-location-code"
+
+describe("encodePlusCode", () => {
+	it("matches the official encoding vectors", () => {
+		// lat, lon, length, code — rows from encoding.csv.
+		const vectors: Array<[number, number, 10 | 11, string]> = [
+			[47.36559, 8.524997, 10, "8FVC9G8F+6X"],
+			[47.36559, 8.524997, 11, "8FVC9G8F+6XQ"],
+		]
+
+		for (const [lat, lon, length, code] of vectors) {
+			expect(encodePlusCode(lat, lon, length)).toBe(code)
+		}
+	})
+
+	it("round-trips through the decoder inside the cell", () => {
+		for (const [lat, lon] of [
+			[12.8884531, -86.5398875],
+			[-41.273, 174.786],
+			[38.8977, -77.0365],
+		] as const) {
+			for (const length of [10, 11] as const) {
+				const code = encodePlusCode(lat, lon, length)
+				const cell = decodePlusCode(code)!
+
+				expect(isFullPlusCode(code), code).toBe(true)
+				// A point on a cell edge, such as 174.786, lands in either neighbor by floating-point rounding.
+				expect(Math.abs(cell.lat - lat)).toBeLessThanOrEqual(cell.latSpanDeg / 2 + 1e-9)
+				expect(Math.abs(cell.lon - lon)).toBeLessThanOrEqual(cell.lonSpanDeg / 2 + 1e-9)
+			}
+		}
+	})
+})
 
 describe("decodePlusCode", () => {
 	it("matches the official decoding vectors (cell centers)", () => {

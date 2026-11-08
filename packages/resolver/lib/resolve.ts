@@ -58,7 +58,14 @@ import {
 	type ResolutionState,
 	type ResolvedOpts,
 } from "#resolve/passes"
-import { applyLocalityAsRegion, applyRegionCity } from "#resolve/region-city"
+import {
+	applyCountryAsRegion,
+	applyLocalityAsRegion,
+	applyRegionCity,
+	applyStreetAsTown,
+	applyVenueAsTown,
+} from "#resolve/region-city"
+import { applyWholeInputPlace } from "#resolve/whole-input"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street/tier"
 import {
 	type CapitalLevelFn,
@@ -242,6 +249,9 @@ class WOFResolver implements Resolver {
 			// Re-resolve foreign region/locality pairs blocked by locale scope.
 			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry?.country ?? null)
 			await applyRegionCity(newRoots, this.#backend)
+			await applyCountryAsRegion(newRoots, this.#backend)
+			await applyVenueAsTown(newRoots, this.#backend)
+			await applyStreetAsTown(newRoots, this.#backend)
 
 			if (isCallerScope(state.defaultCountry)) {
 				await applyLocalityAsRegion(newRoots, this.#backend, state.defaultCountry!.country)
@@ -252,6 +262,15 @@ class WOFResolver implements Resolver {
 
 		if (opts.landmarks) {
 			await applyLandmark(newRoots, opts.writtenInput ?? tree.raw, opts.landmarks)
+		}
+
+		if (opts.adminCoherence) {
+			await applyWholeInputPlace(
+				newRoots,
+				opts.writtenInput ?? tree.raw,
+				this.#backend,
+				isCallerScope(state.defaultCountry) ? state.defaultCountry!.country : null
+			)
 		}
 
 		// The postcode and rooftop passes hold a locality to the same distance from their point.
@@ -268,7 +287,7 @@ class WOFResolver implements Resolver {
 
 		// Optional exact address-point tier.
 		if (opts.addressPoints) {
-			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
+			await applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
 		}
 
 		// Optional interpolation tier after exact points.
@@ -289,7 +308,7 @@ class WOFResolver implements Resolver {
 
 		// Retry exact address-point tier once after span-rescore recovery.
 		if (opts.addressPoints) {
-			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
+			await applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback, ancestorsOf)
 		}
 
 		// A rooftop row keyed by locality name can lie in a namesake of the selected locality.

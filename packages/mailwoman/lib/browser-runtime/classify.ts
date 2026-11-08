@@ -54,11 +54,6 @@ export function parseStageLabelsFor(hasResolver: boolean): string[] {
 export const DEFAULT_LOCALE = "en-us"
 
 /**
- * The demo address exercises a house number, street, directional, locality and region in one line.
- */
-export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
-
-/**
  * Demo preset addresses, each carrying its ISO country code so a locale that structural
  * routing cannot detect from text shape still fires while the input equals the preset text.
  */

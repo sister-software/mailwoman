@@ -41,6 +41,7 @@ async function signature(name: string): Promise<string> {
 	const module = await readLocalTextFile(
 		workspacePath("registry", "lib", "artifacts", `${artifactModulePath(name)}.ts`)
 	)
+
 	const match = /"([A-Za-z0-9+/=]{64})/.exec(module)
 
 	if (!match) throw new Error(`${name}: no base64 text`)

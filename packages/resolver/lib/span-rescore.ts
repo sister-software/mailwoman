@@ -76,14 +76,6 @@ export interface SpanRescoreOptions {
 	 * @defaultValue {@linkcode DEFAULT_COUNTRY_PRIOR_WEIGHT} (2), and 0 removes the locale's say entirely.
 	 */
 	bareToponymCountryWeight?: number
-	/**
-	 * Admit a proper sub-span only when every token it leaves behind is a subdivision code or a number.
-	 *
-	 * See `remainderIsContext` for the rule.
-	 *
-	 * @defaultValue `false`
-	 */
-	spanRescoreRequireContextRemainder?: boolean
 }
 
 /**
@@ -115,6 +107,13 @@ export interface RescoreCandidate {
 	 * so the top-1-vs-top-2 dominance margin stays computable.
 	 */
 	alternatives: ResolvedPlace[]
+	/**
+	 * Whether the span is a proper sub-span that leaves a word of the name behind,
+	 * as `Manchester` leaves `The` and `Art Gallery` in `The Manchester Art Gallery`.
+	 *
+	 * Such a span may scope a venue lookup, but it is not by itself an answer to the input.
+	 */
+	dropsName: boolean
 }
 
 interface RawTok {
@@ -404,11 +403,21 @@ export async function findRescoreCandidate(
 	/**
 	 * Whether every token a sub-span leaves behind is context rather than identity,
 	 * testing the remainder's shape rather than the span being proper.
+	 *
+	 * A span that is its own comma-separated segment states the location,
+	 * as `Kalkaska` does in `Evergreen Cemetery, Kalkaska`.
+	 * Otherwise each remaining token must be a subdivision code, a number,
+	 * or part of a street the parse read beside the span.
 	 */
 	const remainderIsContext = (span: { start: number; end: number }): boolean => {
 		const outside = toks.filter((t) => t.end <= span.start || t.start >= span.end)
 
 		if (!outside.length) return true
+
+		const before = raw.slice(0, span.start).trimEnd()
+		const after = raw.slice(span.end).trimStart()
+
+		if ((!before || before.endsWith(",")) && (!after || after.startsWith(","))) return true
 
 		const streetContext = streets.filter(([start, end]) => end <= span.start || start >= span.end)
 
@@ -429,6 +438,11 @@ export async function findRescoreCandidate(
 
 	const venueCoversInput = !!venue && !!wholeInput && venue.start <= wholeInput.start && wholeInput.end <= venue.end
 
+	// The first hit whose span drops a word of the name.
+	// A later span that keeps the name answers ahead of it, as `Kalkaska` does over
+	// `Evergreen` in `Evergreen Cemetery, Kalkaska`.
+	let nameDropping: RescoreCandidate | null = null
+
 	for (const sp of spans) {
 		const key = foldName(sp.text)
 
@@ -442,9 +456,9 @@ export async function findRescoreCandidate(
 		// Another last word can state the location, as `London` in `Tower of London`.
 		if (venue && sp.end === venue.end && sp.start > venue.start && opts.isVenueCategoryWord?.(sp.text)) continue
 
-		// A sub-span that drops a word of the name is a corruption rather than a
-		// recovery. see `remainderIsContext`.
-		if (opts.spanRescoreRequireContextRemainder && !wholeSpan && !remainderIsContext(sp)) continue
+		const dropsName = !wholeSpan && !remainderIsContext(sp)
+
+		if (nameDropping && dropsName) continue
 
 		const bare = softCountryEligible && wholeSpan
 		const qualifier = wholeSpan ? null : qualifierRemainder(sp)
@@ -491,19 +505,26 @@ export async function findRescoreCandidate(
 		const withinThreshold = (p: ResolvedPlace): boolean =>
 			!anchor || thresholdKm <= 0 || haversine(anchor.lat, anchor.lon, p.lat, p.lon) <= thresholdKm
 
-		for (const h of exact) {
-			if (!withinThreshold(h)) continue
+		const h = exact.find(withinThreshold)
 
+		if (h) {
 			// `postcodeVerified` is true only when an anchor existed and validated this match within
 			// `thresholdKm`; otherwise the match is returned unrestricted but flagged lower-precision.
-			return {
+			const candidate: RescoreCandidate = {
 				text: sp.text,
 				start: sp.start,
 				end: sp.end,
 				place: h,
 				postcodeVerified: anchor !== null,
 				alternatives: exact.filter((a) => a !== h && withinThreshold(a)),
+				dropsName,
 			}
+
+			if (!dropsName) return candidate
+
+			nameDropping = candidate
+
+			continue
 		}
 
 		// A whole-input venue can be a sub-locality row, as `Golden Gate Park` is a neighborhood,
@@ -519,10 +540,13 @@ export async function findRescoreCandidate(
 					place: sublocality,
 					postcodeVerified: anchor !== null,
 					alternatives: [],
+					dropsName,
 				}
 			}
 		}
 	}
+
+	if (nameDropping) return nameDropping
 
 	// Joint country recovery: when the scoped pass finds no match and a postcode
 	// is present, re-probe unscoped and accept a cross-country promotion only
@@ -555,7 +579,16 @@ export async function findRescoreCandidate(
 					// Admission uses per-candidate postcode verification.
 					// The postcode already picked the country, so this pass has no remaining
 					// country ambiguity to report.
-					return { text: sp.text, start: sp.start, end: sp.end, place: h, postcodeVerified: true, alternatives: [] }
+					// The postcode verified the place, so the span answers even when it drops a word of the name.
+					return {
+						text: sp.text,
+						start: sp.start,
+						end: sp.end,
+						place: h,
+						postcodeVerified: true,
+						alternatives: [],
+						dropsName: false,
+					}
 				}
 			}
 		}

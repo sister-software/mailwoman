@@ -15,6 +15,7 @@
 		{ "path": "../../browser" },
 		{ "path": ".." },
 		// ---
+		{ "path": "../../codex" },
 		{ "path": "../../core" },
 		{ "path": "../../match" },
 		{ "path": "../../record" },

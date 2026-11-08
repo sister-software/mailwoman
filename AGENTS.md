@@ -312,6 +312,9 @@ A new git worktree has no `node_modules`. Run `yarn install` in the worktree bef
 `yarn compile` when a check reads `out/`. The pre-commit hook needs both. Never commit with `--no-verify`, and
 never symlink another checkout's `node_modules`, because the checks then grade that checkout. A worktree
 without an install has a setup step left to do, and the agent does it before committing.
+A worktree without its own `node_modules` resolves `@mailwoman/*` from the checkout above it, so `mwops`,
+the `mailwoman` CLI, the root Vitest config and the pre-commit hook refuse to start there. Run
+`yarn mwops checkout` to see which checkout a tree's packages come from.
 
 Preserve unrelated working-tree changes. Edit files through your agent's file-editing tool or a patch
 it applies, so the symbol precheck runs on every edit. A `PreToolUse` hook enforces this by refusing

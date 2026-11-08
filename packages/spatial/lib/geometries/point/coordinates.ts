@@ -8,7 +8,8 @@
  *   the coordinates of a `GeoPointInput` must not load its embedded WebAssembly binary.
  */
 
-import type { LatLng, LatLngLiteral } from "@googlemaps/google-maps-services-js"
+/// <reference types="google.maps" />
+
 import { tryParsingJSON } from "@mailwoman/core/json"
 
 import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
@@ -97,8 +98,7 @@ export type GeoPointInput =
 	| Point3DCoordinates
 	| GeolocationCoordinatesLike
 	| InternalPointCoordinates
-	| LatLngLiteral
-	| LatLng
+	| google.maps.LatLngLiteral
 
 /**
  * Reads the `[longitude, latitude(, altitude)]` coordinates out of a point of any accepted shape.

@@ -43,6 +43,7 @@ import {
 	type POIObservation,
 	type WeightsObservation,
 } from "#cli/doctor/checks"
+import { mailwomanCommandPrefix } from "#cli/kit/invocation"
 import { LayerCatalog } from "#data/catalog"
 import { type ObligationRefusal, parseObligationRefusals } from "#data/obligations"
 import { $public } from "#env"
@@ -78,6 +79,10 @@ interface ResolvedWeightsLike {
  * and wired to the real ones by {@link defaultDoctorDeps}.
  */
 export interface DoctorDeps {
+	/**
+	 * The prefix a fix's command starts with, such as `npx mailwoman`.
+	 */
+	commandPrefix(): Promise<string>
 	exists(path: string): Promise<boolean>
 	fileSize(path: string): Promise<number | null>
 	isWritable(path: string): Promise<boolean>
@@ -213,6 +218,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 	const dataRoot = dataRootPath()
 
 	return {
+		commandPrefix: mailwomanCommandPrefix,
 		exists: pathExists,
 		fileSize: async (path) => {
 			try {
@@ -420,8 +426,9 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	})
 
 	const gazetteerObservation = await gatherGazetteer(deps)
-	const gazetteer = gazetteerCheck(gazetteerObservation)
-	const poi = checkPOI(await gatherPOI(deps))
+	const command = await deps.commandPrefix()
+	const gazetteer = gazetteerCheck(gazetteerObservation, command)
+	const poi = checkPOI(await gatherPOI(deps), command)
 
 	const key = await deps.licenseKey()
 	const publication = key && "kid" in key ? await deps.confirmLicenseKeyPublished(key.kid) : null
@@ -429,13 +436,16 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	const lidStatus =
 		key && "payload" in key && isSelfServicePayload(key.payload) ? await deps.checkLicenseStatus(key.payload.lid) : null
 
-	const runtimeLicense = runtimeLicenseCheck({
-		expression: await deps.runtimeLicense(),
-		key: key ?? null,
-		publication: publication ?? null,
-		lidStatus: lidStatus ?? null,
-		installationID: await deps.installationID(),
-	})
+	const runtimeLicense = runtimeLicenseCheck(
+		{
+			expression: await deps.runtimeLicense(),
+			key: key ?? null,
+			publication: publication ?? null,
+			lidStatus: lidStatus ?? null,
+			installationID: await deps.installationID(),
+		},
+		command
+	)
 
 	const fixedLayerObservations = (
 		await Promise.all((await deps.layerDatabases()).map((layer) => gatherLayerLicense(deps, layer)))

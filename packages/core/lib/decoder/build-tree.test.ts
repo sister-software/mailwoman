@@ -529,8 +529,8 @@ describe("a house number in a numbered settlement without a street", () => {
 	})
 
 	test("stays a root without a country, or in a country the codex does not list with a cited source", () => {
-		// DE shows the form in the held-out suites but has no cited source yet (#2880), so it is not listed.
-		for (const country of [undefined, "US", "DE"]) {
+		// EG shows the form in the held-out suites but has no cited source (#2880), so it is not listed.
+		for (const country of [undefined, "US", "EG"]) {
 			const tree = buildAddressTree(RAW, TOKENS, { country })
 
 			expect(tree.roots.map((root) => root.tag)).toContain("house_number")

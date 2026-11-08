@@ -98,6 +98,16 @@ describe("requiredAttributions", () => {
 		])
 	})
 
+	it("places a source whose AND expression carries ODbL in the ODbL group beside its own", () => {
+		const joined = "CC-BY-4.0 AND LicenseRef-unchecked-corpus-input-us-who-s-on-first AND ODbL-1.0"
+		const attributions = requiredAttributions([record("osm-cn", OSM_LICENSE), record("coarse-placer-cn-units", joined)])
+
+		expect(attributions).toEqual([
+			{ license: joined, sources: ["coarse-placer-cn-units"], statement: null },
+			{ license: OSM_LICENSE, sources: ["coarse-placer-cn-units", "osm-cn"], statement: OSM_ATTRIBUTION },
+		])
+	})
+
 	it("reads the retired spelling a corpus assembled before 2026-09-26 stores", () => {
 		const attributions = requiredAttributions([record("synth-sub-venue", spliced)])
 

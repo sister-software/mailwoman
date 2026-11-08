@@ -12,21 +12,20 @@ import type { PathBuilderLike } from "path-ts"
 import { LayerCatalog } from "#data/catalog"
 import { isNationalAddressPointArtifact } from "#geocode/osm-layers"
 
-const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
-	["tw", "zh"],
-	["it", "it"],
-	["es", "es"],
-])
+/**
+ * The countries with a national address-point database built from Overture, in ISO 3166-1 alpha-2.
+ */
+const NATIONAL_OVERTURE_COUNTRIES = ["tw", "it", "es"] as const
 
 const registry = createStreetLocaleRegistry(
-	COUNTRY_TO_STREET_LOCALE,
-	"Add it to COUNTRY_TO_STREET_LOCALE in national-overture.ts, with the matching branch in normalizeStreetForKeyLocale, before building its national address-point database."
+	NATIONAL_OVERTURE_COUNTRIES,
+	"Build its national address-point database and add it to NATIONAL_OVERTURE_COUNTRIES in national-overture.ts."
 )
 
 /**
- * Returns the street-normalization locale used to key a country's national address-point database.
+ * Returns the street locale a country's national address-point database folds under.
  *
- * @throws When the country has no registered locale, since its street keys would not match at lookup time.
+ * @throws For a country without a national address-point database.
  */
 export function streetLocaleForOvertureCountry(countryCode: string): StreetLocale {
 	return registry.localeFor(countryCode)

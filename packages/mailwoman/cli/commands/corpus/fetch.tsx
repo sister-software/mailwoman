@@ -86,17 +86,12 @@ export const spec = {
 			default: dataRootPath("corpus", "sources").toString(),
 			description: "Destination root, under the data root unless this points elsewhere",
 		},
-		mode: { type: "string", choices: ["featureserver", "bulk"], description: "NAD fetch strategy" },
-		"nad-url": { type: "string", description: "NAD bulk URL" },
-		"chunk-size": { type: "number", description: "NAD records per output file" },
-		"page-size": { type: "number", description: "NAD records per request" },
+		"nad-url": { type: "string", description: "NAD release archive link (default: DOT's open-data portal link)" },
 		concurrency: {
 			type: "number",
 			description:
-				"NAD: parallel page fetches. wikidata-vital-places: entity requests in flight, capped at 1 anonymously and 3 when WIKIDATA_BOT_USERNAME and WIKIDATA_BOT_PASSWORD log in (default: the cap)",
+				"wikidata-vital-places: entity requests in flight, capped at 1 anonymously and 3 when WIKIDATA_BOT_USERNAME and WIKIDATA_BOT_PASSWORD log in (default: the cap)",
 		},
-		"start-oid": { type: "number", description: "First NAD OBJECTID" },
-		"end-oid": { type: "number", description: "Exclusive final NAD OBJECTID" },
 		country: { type: "string", description: "OpenAddresses country code" },
 		countries: { type: "string", description: "GeoNames postal ISO alpha-2 codes, comma-separated" },
 		"skip-state-fips": { type: "string", description: "TIGER state FIPS codes to skip" },
@@ -275,19 +270,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		case "ban":
 			return fetchBan(base, reportToStderr)
 		case "nad":
-			return fetchNAD(
-				{
-					...base,
-					mode: options.mode,
-					nadURL: options.nadUrl,
-					chunkSize: options.chunkSize,
-					pageSize: options.pageSize,
-					concurrency: options.concurrency,
-					startOID: options.startOid,
-					endOID: options.endOid,
-				},
-				reportToStderr
-			)
+			return fetchNAD({ ...base, nadURL: options.nadUrl }, reportToStderr)
 		case "geonames-dump":
 			return fetchGeonamesDumps(
 				{

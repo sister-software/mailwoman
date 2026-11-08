@@ -173,7 +173,7 @@ function plannedBytes(artifact: PlannedArtifact): number {
  * A bundle published per state is offered one state at a time with `--only`,
  * with the smallest and largest state's size, rather than as the whole bundle.
  */
-export function nextInstallation(plan: InstallationPlan): string[] {
+export function nextInstallation(plan: InstallationPlan, command: string): string[] {
 	const pending = plan.bundles.filter((bundle) => bundle.artifacts.some((artifact) => !isInstalled(artifact)))
 
 	const gazetteer = pending.find((bundle) =>
@@ -195,7 +195,7 @@ export function nextInstallation(plan: InstallationPlan): string[] {
 		if (!bySlug.size) {
 			const bytes = missing.reduce((sum, artifact) => sum + plannedBytes(artifact), 0)
 
-			return { bundle, bytes, command: `mailwoman data pull ${bundle.name}   # ${ByteFormatter.formatSI(bytes)}` }
+			return { bundle, bytes, command: `${command} data pull ${bundle.name}   # ${ByteFormatter.formatSI(bytes)}` }
 		}
 
 		const sizes = [...bySlug.entries()].toSorted((a, b) => a[1] - b[1])
@@ -206,7 +206,7 @@ export function nextInstallation(plan: InstallationPlan): string[] {
 			bundle,
 			bytes: smallest[1],
 			command:
-				`mailwoman data pull ${bundle.name} --only <state>   # one of ${sizes.length} states, ` +
+				`${command} data pull ${bundle.name} --only <state>   # one of ${sizes.length} states, ` +
 				`from ${ByteFormatter.formatSI(smallest[1])} (${smallest[0]}) to ${ByteFormatter.formatSI(largest[1])} (${largest[0]})`,
 		}
 	})
@@ -299,6 +299,10 @@ export interface SetupChecks {
 	dataRoot: string
 	configRoot: string
 	parse: SampleParse
+	/**
+	 * The prefix the printed commands start with, such as `npx mailwoman`.
+	 */
+	command: string
 }
 
 /**
@@ -393,7 +397,7 @@ export function setupSummary(
 		}
 	}
 
-	const next = installation?.next ?? missing.map((row) => `mailwoman data pull ${row.name}`)
+	const next = installation?.next ?? missing.map((row) => `${checks.command} data pull ${row.name}`)
 
 	if (next.length) {
 		lines.push("", "Next installation:")

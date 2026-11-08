@@ -39,8 +39,12 @@ interface ArtifactState {
 
 interface RepoVintage {
 	repo: string
-	origin: string
-	source: string
+	originURL: string | null
+	/**
+	 * Whether the clone's `origin` is its `mailwoman` fork.
+	 * A stamp written before this field existed lacks it.
+	 */
+	onFork?: boolean
 	head: string | null
 	headDate: string | null
 	shallow: boolean | null
@@ -53,8 +57,8 @@ export interface ProvenanceReport {
 	dataRoot: string
 	artifacts: ArtifactState[]
 	/**
-	 * Read from the stamp `gazetteer repos-sync` writes, or `null` when that has never been
-	 * run here — absence is reported rather than read as "the repos are current".
+	 * Read from the stamp `gazetteer inspect sync` writes, or `null` when that has never
+	 * been run here — absence is reported rather than read as "the repos are current".
 	 */
 	repos: RepoVintage[] | null
 	reposStampPath: string
@@ -163,7 +167,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 
 	if (!repos) {
 		notes.push(
-			`no repo vintage stamp at ${reposStampPath} — run \`mailwoman gazetteer repos-sync\`. Its ABSENCE says the ` +
+			`no repo vintage stamp at ${reposStampPath} — run \`mailwoman gazetteer inspect sync\`. Its ABSENCE says the ` +
 				`repos root has not been surveyed, NOT that it is current.`
 		)
 	}
@@ -186,12 +190,21 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 		)
 	}
 
-	const upstreamPointed = (repos ?? []).filter((r) => r.source === "upstream")
+	const offFork = (repos ?? []).filter((r) => r.onFork === false)
+	const unstated = (repos ?? []).filter((r) => typeof r.onFork !== "boolean")
 
-	if (upstreamPointed.length) {
+	if (offFork.length) {
 		notes.push(
-			`${upstreamPointed.length} repo(s) resolve to upstream. That is correct where no fork exists; where one does, ` +
-				`a sync pulls upstream over our corrections. \`gazetteer repos-sync\` names which is which.`
+			`${offFork.length} clone(s) fetch origin from somewhere other than their mailwoman fork: ` +
+				`${offFork.map((r) => `${r.repo} (${r.originURL ?? "no origin"})`).join(", ")}. ` +
+				`\`gazetteer inspect sync\` re-points them.`
+		)
+	}
+
+	if (unstated.length) {
+		notes.push(
+			`${unstated.length} stamp row(s) do not record whether the clone fetches from its fork; the stamp predates ` +
+				`that field. Run \`gazetteer inspect sync\` to rewrite it.`
 		)
 	}
 

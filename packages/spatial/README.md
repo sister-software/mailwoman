@@ -33,7 +33,7 @@ const loc = parseCoordinateString("37.7749° N, 122.4194° W")
 - [`wkx`](https://github.com/cschwarz/wkx) — Well-Known Binary geometry parser
 - [`geo-coordinates-parser`](https://github.com/geops/geo-coordinates-parser) — coordinate string parsing
 
-Optional: `@googlemaps/google-maps-services-js` for Google Maps API integration.
+- [`@types/google.maps`](https://www.npmjs.com/package/@types/google.maps) — type declarations for the Google Maps `LatLngLiteral` shape that `GeoPoint` accepts and returns
 
 ## Related
 

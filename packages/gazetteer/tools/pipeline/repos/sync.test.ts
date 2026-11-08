@@ -2,52 +2,36 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the sync planner. The planner is where every decision about someone's working tree is made, so these pin
- *   the refusals above all — a plan that fast-forwards over unpushed corrections destroys the only copy. The whole
- *   reason the fork exists is that corrections are authored in these directories.
+ *   Tests for the repository sync. The refusals matter most: a sync that moves a clone with unpushed corrections to the
+ *   fork's tip destroys the only copy, and the corrections are authored in these directories.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { GitClient, type GitProgress } from "@mailwoman/core/git"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import {
-	applyRepoSyncPlan,
 	type CloneState,
 	inspectClone,
 	planRepoSync,
+	Remote,
+	remoteChanges,
 	sameRemote,
 	SyncAction,
 	syncSentence,
+	syncWOFRepo,
 } from "#tools/pipeline/repos/sync"
-import { FORK_ORG, repoURL, UPSTREAM_ORG } from "#tools/pipeline/wof/repo-origin"
+import { type ForkHost, type ForkUpdate, type RepoOrigin, wofRepoOrigin } from "#tools/pipeline/wof/repo-origin"
 
 const REPO = "whosonfirst-data-admin-gb"
-const DIR = `/repos/${REPO}`
-
-const forkOrigin = {
-	repo: REPO,
-	org: FORK_ORG,
-	url: repoURL(FORK_ORG, REPO),
-	source: "fork" as const,
-	reason: "fork exists",
-	forkURL: repoURL(FORK_ORG, REPO),
-}
-
-const upstreamOrigin = {
-	repo: REPO,
-	org: UPSTREAM_ORG,
-	url: repoURL(UPSTREAM_ORG, REPO),
-	source: "upstream" as const,
-	reason: "no fork",
-	forkURL: null,
-}
 
 const clone = (over: Partial<CloneState> = {}): CloneState => ({
 	exists: true,
 	isRepository: true,
-	originURL: repoURL(FORK_ORG, REPO),
+	remotes: {},
+	branch: "main",
 	dirty: false,
 	ahead: 0,
 	behind: 0,
@@ -58,7 +42,7 @@ const clone = (over: Partial<CloneState> = {}): CloneState => ({
 })
 
 describe("sameRemote", () => {
-	it("equates the URL forms GitHub answers to, so a correct clone is never reported as needing a re-point", () => {
+	it("equates the URL forms GitHub answers to, so a correct clone is never re-pointed", () => {
 		const forms = [
 			"ssh://git@github.com/mailwoman/whosonfirst-data-admin-gb",
 			"git@github.com:mailwoman/whosonfirst-data-admin-gb",
@@ -68,195 +52,283 @@ describe("sameRemote", () => {
 		]
 
 		for (const form of forms) {
-			expect(sameRemote(form, forms[0] ?? null), form).toBe(true)
+			expect(sameRemote(form, forms[0]), form).toBe(true)
 		}
 	})
 
-	it("separates the fork from upstream — the one comparison that must not be fuzzy", () => {
-		expect(sameRemote(repoURL(FORK_ORG, REPO), repoURL(UPSTREAM_ORG, REPO))).toBe(false)
+	it("separates the fork from upstream", () => {
+		const origin = wofRepoOrigin(REPO)
+
+		expect(sameRemote(origin.forkURL, origin.upstreamURL)).toBe(false)
 	})
 
-	it("treats an absent remote as not-matching rather than as a match against null", () => {
-		expect(sameRemote(null, repoURL(FORK_ORG, REPO))).toBe(false)
-		expect(sameRemote(null, null)).toBe(false)
+	it("treats an absent remote as not matching", () => {
+		expect(sameRemote(null, wofRepoOrigin(REPO).forkURL)).toBe(false)
+		expect(sameRemote(undefined, undefined)).toBe(false)
+	})
+})
+
+describe("remoteChanges", () => {
+	const origin = wofRepoOrigin(REPO)
+
+	it("moves an upstream origin onto the fork, adds upstream, and removes the old fork remote", () => {
+		expect(remoteChanges(origin, { origin: origin.upstreamURL, fork: origin.forkURL })).toEqual([
+			{ kind: "set-url", remote: Remote.Origin, url: origin.forkURL },
+			{ kind: "add", remote: Remote.Upstream, url: origin.upstreamURL },
+			{ kind: "remove", remote: Remote.LegacyFork, url: origin.forkURL },
+		])
+	})
+
+	it("changes nothing on a clone whose remotes are already right, in another URL form", () => {
+		const remotes = {
+			origin: "git@github.com:mailwoman/whosonfirst-data-admin-gb.git",
+			upstream: "https://github.com/whosonfirst-data/whosonfirst-data-admin-gb",
+		}
+
+		expect(remoteChanges(origin, remotes)).toEqual([])
+	})
+
+	it("leaves a remote with another name alone", () => {
+		expect(remoteChanges(origin, { origin: origin.forkURL, upstream: origin.upstreamURL, mine: "x" })).toEqual([])
 	})
 })
 
 describe("planRepoSync", () => {
-	it("refuses a dirty tree even when the remote is right and the clone is behind", () => {
-		const plan = planRepoSync(forkOrigin, DIR, clone({ dirty: true, behind: 12 }))
-
-		expect(plan.action).toBe(SyncAction.RefuseDirty)
+	it("refuses a dirty tree even when it is behind", () => {
+		expect(planRepoSync(clone({ dirty: true, behind: 12 })).action).toBe(SyncAction.RefuseDirty)
 	})
 
-	it("refuses a clone carrying unpushed commits — the corrections are authored here", () => {
-		const plan = planRepoSync(forkOrigin, DIR, clone({ ahead: 35 }))
+	it("refuses a clone carrying commits the fork lacks", () => {
+		const plan = planRepoSync(clone({ ahead: 35, behind: 2 }))
 
 		expect(plan.action).toBe(SyncAction.RefuseLocalCommits)
-		expect(plan.reason).toContain("35 commit(s) not on the remote")
+		expect(plan.reason).toContain("35 commit(s) the fork lacks")
 	})
 
-	it("ranks a refusal ABOVE a re-point, so a dirty upstream-pointed clone is never offered for re-pointing", () => {
-		const plan = planRepoSync(forkOrigin, DIR, clone({ dirty: true, originURL: repoURL(UPSTREAM_ORG, REPO) }))
-
-		expect(plan.action).toBe(SyncAction.RefuseDirty)
+	it("clones what is absent and refuses a directory that is not a checkout", () => {
+		expect(planRepoSync(clone({ exists: false, isRepository: false })).action).toBe(SyncAction.Clone)
+		expect(planRepoSync(clone({ isRepository: false })).action).toBe(SyncAction.RefuseNotAClone)
 	})
 
-	it("reports a fork-available clone still aimed at upstream, and does not call it a fetch", () => {
-		const plan = planRepoSync(forkOrigin, DIR, clone({ originURL: repoURL(UPSTREAM_ORG, REPO), behind: 3 }))
-
-		expect(plan.action).toBe(SyncAction.RepointRequired)
-		expect(plan.reason).toContain(UPSTREAM_ORG)
-		expect(plan.reason).toContain(FORK_ORG)
-	})
-
-	it("clones what is absent", () => {
-		expect(
-			planRepoSync(
-				upstreamOrigin,
-				DIR,
-				clone({
-					exists: false,
-					isRepository: false,
-					originURL: null,
-					dirty: null,
-					ahead: null,
-					behind: null,
-					shallow: null,
-					head: null,
-					headDate: null,
-				})
-			).action
-		).toBe(SyncAction.Clone)
-	})
-
-	it("refuses a directory that is not a checkout rather than cloning over it", () => {
-		expect(
-			planRepoSync(
-				upstreamOrigin,
-				DIR,
-				clone({
-					isRepository: false,
-					originURL: null,
-					dirty: null,
-					ahead: null,
-					behind: null,
-					shallow: null,
-					head: null,
-					headDate: null,
-				})
-			).action
-		).toBe(SyncAction.RefuseNotAClone)
-	})
-
-	it("fast-forwards a clean, correctly-pointed, behind clone — and only then", () => {
-		expect(planRepoSync(forkOrigin, DIR, clone({ behind: 7 })).action).toBe(SyncAction.FastForward)
-		expect(planRepoSync(forkOrigin, DIR, clone()).action).toBe(SyncAction.UpToDate)
-	})
-
-	it("does not refuse a clone that is level with its fork — the post-repoint state a naive @{u} read mistakes for unpushed work", () => {
-		// What the GB checkout looked like the moment its remote was re-pointed:
-		// level with `origin`, 35 ahead of the remote it was moved away from.
-		// The latter prevents a clean clone from syncing.
-		expect(planRepoSync(forkOrigin, DIR, clone({ ahead: 0, behind: 0 })).action).toBe(SyncAction.UpToDate)
-	})
-
-	it("carries the vintage and the shallowness through, so a reader knows the history is not there", () => {
-		const plan = planRepoSync(forkOrigin, DIR, clone())
-
-		expect(plan.state.shallow).toBe(true)
-		expect(plan.state.headDate).toBe("2026-08-19T18:42:34+02:00")
+	it("fast-forwards a clean clone that is behind, and only then", () => {
+		expect(planRepoSync(clone({ behind: 7 })).action).toBe(SyncAction.FastForward)
+		expect(planRepoSync(clone()).action).toBe(SyncAction.UpToDate)
 	})
 })
 
-describe("syncSentence", () => {
-	it("names an unverifiable fork lookup as unverified, never as an absent fork", () => {
-		const blind = {
-			...upstreamOrigin,
-			reason: "fork lookup failed (gh: not authenticated) — falling back to upstream, which is NOT evidence",
-		}
+/**
+ * A {@link ForkHost} that records its calls and answers `update` for every fork.
+ */
+function recordingHost(update: ForkUpdate["kind"] = "none"): ForkHost & { calls: string[] } {
+	const calls: string[] = []
 
-		const sentence = syncSentence([planRepoSync(blind, DIR, clone({ originURL: repoURL(UPSTREAM_ORG, REPO) }))])
+	return {
+		calls,
+		async ensureFork(origin) {
+			calls.push(`ensure ${origin.repo}`)
 
-		expect(sentence).toContain("could NOT be checked for a fork")
-	})
+			return false
+		},
+		async updateFork(origin) {
+			calls.push(`update ${origin.repo}`)
 
-	it("stays silent about fork lookups when every one succeeded", () => {
-		expect(syncSentence([planRepoSync(forkOrigin, DIR, clone())])).not.toContain("could NOT be checked")
-	})
-})
+			return update === "conflict"
+				? { kind: "conflict", branch: "main", message: "HTTP 409" }
+				: { kind: update, branch: "main" }
+		},
+	}
+}
 
-describe("applyRepoSyncPlan", () => {
-	it("clones a missing repo through the client and reports its transfer progress", async () => {
-		await using scratch = await temporaryDirectory("repos-sync-")
+async function commit(client: GitClient, directory: PathBuilder, file: string): Promise<void> {
+	await writeLocalTextFile(`${file}\n`, directory(file))
+	await client.read(["-C", directory.toString(), "add", file])
 
-		const origin = scratch.path("origin")
+	await client.read([
+		"-C",
+		directory.toString(),
+		"-c",
+		"user.email=fixture@example.invalid",
+		"-c",
+		"user.name=Fixture",
+		"commit",
+		"-qm",
+		file,
+	])
+}
 
-		await new GitClient({ cwd: scratch.path }).read(["init", "--quiet", "--initial-branch=main", origin.toString()])
-		await writeLocalTextFile("fixture\n", origin("README"))
+/**
+ * An upstream repository with one commit and a fork of it one commit ahead.
+ */
+async function forkedFixture(scratch: PathBuilder, client: GitClient): Promise<RepoOrigin> {
+	const upstream = scratch("upstream")
+	const fork = scratch("fork")
 
-		const originRepo = new GitClient({ cwd: origin })
+	await client.read(["init", "--quiet", "--initial-branch=main", upstream.toString()])
+	await commit(client, upstream, "README")
+	await client.read(["clone", "--quiet", upstream.toString(), fork.toString()])
+	await commit(client, fork, "CORRECTION")
 
-		await originRepo.read(["add", "README"])
-		await originRepo.read(["-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture", "commit", "-qm", "x"])
+	return { repo: REPO, forkURL: `file://${fork}`, upstreamOrg: "upstream", upstreamURL: `file://${upstream}` }
+}
 
-		const directory = scratch.path("repos", UPSTREAM_ORG, REPO).toString()
-
-		const plan = planRepoSync(
-			{ ...forkOrigin, url: `file://${origin}`, forkURL: `file://${origin}` },
-			directory,
-			await inspectClone(directory)
-		)
-
-		expect(plan.action).toBe(SyncAction.Clone)
-
+describe("syncWOFRepo", () => {
+	it("clones a missing repository from the fork, adds upstream, and reports transfer progress", async () => {
+		await using scratch = await temporaryDirectory("repos-sync-clone-")
 		await using client = new GitClient({ cwd: scratch.path })
 
+		const origin = await forkedFixture(scratch.path, client)
+		const host = recordingHost()
 		const steps: GitProgress[] = []
 
 		client.on("progress", (step) => steps.push(step))
 
-		await expect(applyRepoSyncPlan(plan, { client })).resolves.toBe(`cloned ${REPO} from fork`)
+		const result = await syncWOFRepo(REPO, { root: scratch.path("repos"), host, client, resolveOrigin: () => origin })
+
+		expect(result.action).toBe(SyncAction.Clone)
+		expect(result.directory).toBe(scratch.path("repos", REPO).toString())
+		expect(host.calls).toEqual([`ensure ${REPO}`, `update ${REPO}`])
+		expect(result.state.remotes).toEqual({ origin: origin.forkURL, upstream: origin.upstreamURL })
+		expect(result.state.shallow).toBe(true)
 		expect(steps.length).toBeGreaterThan(0)
-		expect((await inspectClone(directory)).shallow).toBe(true)
 	})
 
-	it("gives a clone of upstream a fork remote when a clean fork exists, and leaves a correct one alone", async () => {
-		await using scratch = await temporaryDirectory("repos-sync-fork-")
-
-		const upstream = scratch.path("upstream")
-
-		await new GitClient({ cwd: scratch.path }).read(["init", "--quiet", "--initial-branch=main", upstream.toString()])
-		await writeLocalTextFile("fixture\n", upstream("README"))
-
-		const upstreamRepo = new GitClient({ cwd: upstream })
-
-		await upstreamRepo.read(["add", "README"])
-
-		await upstreamRepo.read([
-			"-c",
-			"user.email=fixture@example.invalid",
-			"-c",
-			"user.name=Fixture",
-			"commit",
-			"-qm",
-			"x",
-		])
-
-		const directory = scratch.path("repos", REPO).toString()
-		const origin = { ...upstreamOrigin, url: `file://${upstream}`, forkURL: repoURL(FORK_ORG, REPO) }
-
+	it("re-points a clone of upstream at the fork and fast-forwards it to the fork's tip", async () => {
+		await using scratch = await temporaryDirectory("repos-sync-repoint-")
 		await using client = new GitClient({ cwd: scratch.path })
 
+		const origin = await forkedFixture(scratch.path, client)
+		const directory = scratch.path("repos", REPO)
+
+		await client.read(["clone", "--quiet", origin.upstreamURL, directory.toString()])
+		await client.read(["-C", directory.toString(), "remote", "add", "fork", origin.forkURL])
+
+		const result = await syncWOFRepo(REPO, {
+			root: scratch.path("repos"),
+			host: recordingHost(),
+			client,
+			resolveOrigin: () => origin,
+		})
+
+		expect(result.action).toBe(SyncAction.FastForward)
+		expect(result.state.remotes).toEqual({ origin: origin.forkURL, upstream: origin.upstreamURL })
+		expect(result.state.behind).toBe(0)
+		await expect(client.read(["-C", directory.toString(), "log", "-1", "--format=%s"])).resolves.toBe("CORRECTION")
+
 		await expect(
-			applyRepoSyncPlan(planRepoSync(origin, directory, await inspectClone(directory)), { client })
-		).resolves.toBe(`cloned ${REPO} from upstream; added the fork remote of ${REPO} at ${repoURL(FORK_ORG, REPO)}`)
+			client.read(["-C", directory.toString(), "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"])
+		).resolves.toBe("origin/main")
 
-		await expect(client.read(["-C", directory, "remote", "get-url", "fork"])).resolves.toBe(repoURL(FORK_ORG, REPO))
+		// The full clone of upstream plus the fork's correction held two commits.
+		// Compaction leaves the tip only.
+		expect(result.compacted).toEqual({ commitsBefore: 2, commitsAfter: 1, otherBranches: [] })
 
-		const again = planRepoSync(origin, directory, await inspectClone(directory))
+		await expect(client.read(["-C", directory.toString(), "rev-parse", "--is-shallow-repository"])).resolves.toBe(
+			"true"
+		)
+	})
 
-		expect(again.action).toBe(SyncAction.UpToDate)
-		await expect(applyRepoSyncPlan(again, { client })).resolves.toBeNull()
+	it("fetches only the checked-out branch from the fork and reports a local branch that keeps history", async () => {
+		await using scratch = await temporaryDirectory("repos-sync-branches-")
+		await using client = new GitClient({ cwd: scratch.path })
+
+		const origin = await forkedFixture(scratch.path, client)
+		const fork = scratch.path("fork")
+		const directory = scratch.path("repos", REPO)
+
+		await client.read(["-C", fork.toString(), "branch", "topic"])
+		await client.read(["clone", "--quiet", origin.forkURL, directory.toString()])
+		await client.read(["-C", directory.toString(), "branch", "local-work", "HEAD~1"])
+		await commit(client, fork, "LATER")
+
+		const result = await syncWOFRepo(REPO, {
+			root: scratch.path("repos"),
+			host: recordingHost(),
+			client,
+			resolveOrigin: () => origin,
+		})
+
+		expect(result.action).toBe(SyncAction.FastForward)
+		expect(result.compacted?.otherBranches).toEqual(["local-work"])
+
+		// `origin/topic` is gone.
+		// `origin/HEAD` is a symbolic ref to `origin/main` and holds no history.
+		await expect(
+			client.read(["-C", directory.toString(), "for-each-ref", "--format=%(refname)", "refs/remotes"])
+		).resolves.toBe("refs/remotes/origin/HEAD\nrefs/remotes/origin/main")
+	})
+
+	it("re-points but leaves a clone with unpushed commits on its own commit", async () => {
+		await using scratch = await temporaryDirectory("repos-sync-ahead-")
+		await using client = new GitClient({ cwd: scratch.path })
+
+		const origin = await forkedFixture(scratch.path, client)
+		const directory = scratch.path("repos", REPO)
+
+		await client.read(["clone", "--quiet", origin.upstreamURL, directory.toString()])
+		await commit(client, directory, "UNPUSHED")
+
+		const before = await client.read(["-C", directory.toString(), "rev-parse", "HEAD"])
+
+		const result = await syncWOFRepo(REPO, {
+			root: scratch.path("repos"),
+			host: recordingHost(),
+			client,
+			resolveOrigin: () => origin,
+		})
+
+		expect(result.action).toBe(SyncAction.RefuseLocalCommits)
+		expect(result.state.remotes["origin"]).toBe(origin.forkURL)
+		await expect(client.read(["-C", directory.toString(), "rev-parse", "HEAD"])).resolves.toBe(before)
+	})
+
+	it("makes no GitHub request and leaves remotes and HEAD alone in a dry run, measuring against the fork", async () => {
+		await using scratch = await temporaryDirectory("repos-sync-dry-")
+		await using client = new GitClient({ cwd: scratch.path })
+
+		const origin = await forkedFixture(scratch.path, client)
+		const directory = scratch.path("repos", REPO)
+
+		await client.read(["clone", "--quiet", origin.upstreamURL, directory.toString()])
+
+		const head = await client.read(["-C", directory.toString(), "rev-parse", "HEAD"])
+
+		const host = recordingHost()
+		const options = { root: scratch.path("repos"), host, client, dryRun: true, resolveOrigin: () => origin }
+
+		const existing = await syncWOFRepo(REPO, options)
+		const missing = await syncWOFRepo(REPO, { ...options, root: scratch.path("elsewhere") })
+
+		expect(host.calls).toEqual([])
+
+		expect(existing.remoteChanges.map((change) => `${change.kind} ${change.remote}`)).toEqual([
+			"set-url origin",
+			"add upstream",
+		])
+
+		// The upstream clone is one commit behind the fork.
+		// A comparison against the stale origin reports it level.
+		expect(existing.action).toBe(SyncAction.FastForward)
+		expect((await inspectClone(directory)).remotes).toEqual({ origin: origin.upstreamURL })
+		await expect(client.read(["-C", directory.toString(), "rev-parse", "HEAD"])).resolves.toBe(head)
+		expect(missing.action).toBe(SyncAction.Clone)
+		expect((await inspectClone(scratch.path("elsewhere", REPO))).exists).toBe(false)
+		expect(syncSentence([existing, missing])).toContain("would be cloned")
+	})
+
+	it("reports a fork that conflicts with upstream in the sentence", async () => {
+		await using scratch = await temporaryDirectory("repos-sync-conflict-")
+		await using client = new GitClient({ cwd: scratch.path })
+
+		const origin = await forkedFixture(scratch.path, client)
+
+		const result = await syncWOFRepo(REPO, {
+			root: scratch.path("repos"),
+			host: recordingHost("conflict"),
+			client,
+			resolveOrigin: () => origin,
+		})
+
+		expect(result.forkUpdate).toMatchObject({ kind: "conflict" })
+		expect(syncSentence([result])).toContain("1 fork(s) conflict with upstream")
 	})
 })

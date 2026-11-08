@@ -6,14 +6,23 @@
  */
 
 import ADMZip from "adm-zip"
-import type { PathBuilder } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { readLocalBuffer, readLocalTextFile } from "#fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "#fs/temporary"
 import { writeLocalFile } from "#fs/writers"
-import { extractZipEntries, listZipEntries, memberPath, readZipEntry } from "#fs/zip"
+import {
+	extractZipEntries,
+	extractZipEntry,
+	listZipEntries,
+	memberPath,
+	readZipEntry,
+	verifyZipIntegrity,
+} from "#fs/zip"
+import { resolvePackagePath } from "#module/resolvers"
 import { mulberry32 } from "#random"
+import { DEFLATE64_FIXTURE_MEMBER, deflate64MemberBytes } from "#test/deflate64-fixture"
 
 /**
  * Big and incompressible: a member that inflates in one pass is already finished
@@ -167,6 +176,68 @@ describe("extractZipEntries", () => {
 		expect(bytes.indexOf("../evil.txt")).toBeGreaterThanOrEqual(0)
 		await expect(extractZipEntries(archive, destination)).rejects.toThrow(/\.\. segment/u)
 		await expect(readLocalTextFile(directory.path("escape", "evil.txt"))).rejects.toThrow(/ENOENT/u)
+	})
+})
+
+describe("a Deflate64 member", () => {
+	const fixture = resolvePackagePath("@mailwoman/core", "test", "fixtures", "zip", "deflate64.zip")
+	const source = Buffer.from(deflate64MemberBytes())
+
+	/**
+	 * The fixture with its member's CRC-32 changed in the central directory, the copy yauzl reads.
+	 */
+	async function writeCorruptedFixture(): Promise<PathBuilder> {
+		const bytes = Buffer.from(await readLocalBuffer(fixture))
+		const central = bytes.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]))
+		const corrupted = directory.path("deflate64-corrupted.zip")
+
+		expect(central).toBeGreaterThan(0)
+		bytes.writeUInt32LE((bytes.readUInt32LE(central + 16) ^ 1) >>> 0, central + 16)
+		await writeLocalFile(bytes, corrupted)
+
+		return corrupted
+	}
+
+	async function readAll(path: PathBuilderLike): Promise<Buffer> {
+		const parts: Uint8Array[] = []
+
+		for await (const chunk of readZipEntry(path, DEFLATE64_FIXTURE_MEMBER)) {
+			parts.push(chunk)
+		}
+
+		return Buffer.concat(parts)
+	}
+
+	it("reads through readZipEntry byte for byte", async () => {
+		expect(Buffer.compare(await readAll(fixture), source)).toBe(0)
+	})
+
+	it("reads again after a consumer abandoned it, so the archive was really closed", async () => {
+		// oxlint-disable-next-line no-unreachable-loop -- abandoning the member is the setup under test.
+		for await (const _chunk of readZipEntry(fixture, DEFLATE64_FIXTURE_MEMBER)) break
+
+		expect(await readAll(fixture)).toHaveLength(source.length)
+	})
+
+	it("extracts through extractZipEntry and extractZipEntries byte for byte", async () => {
+		const single = directory.path("deflate64-single.bin")
+		const tree = directory.path("deflate64-tree")
+
+		await expect(extractZipEntry(fixture, DEFLATE64_FIXTURE_MEMBER, single)).resolves.toBe(source.length)
+		await expect(extractZipEntries(fixture, tree)).resolves.toEqual([DEFLATE64_FIXTURE_MEMBER])
+		expect(Buffer.compare(await readLocalBuffer(single), source)).toBe(0)
+		expect(Buffer.compare(await readLocalBuffer(tree(DEFLATE64_FIXTURE_MEMBER)), source)).toBe(0)
+	})
+
+	it("passes verifyZipIntegrity", async () => {
+		await expect(verifyZipIntegrity(fixture)).resolves.toBe(1)
+	})
+
+	it("fails verifyZipIntegrity and readZipEntry when its CRC-32 disagrees with the header", async () => {
+		const corrupted = await writeCorruptedFixture()
+
+		await expect(verifyZipIntegrity(corrupted)).rejects.toThrow(/CRC mismatch/u)
+		await expect(readAll(corrupted)).rejects.toThrow(/CRC mismatch/u)
 	})
 })
 

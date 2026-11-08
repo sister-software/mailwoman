@@ -9,13 +9,15 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import "@mailwoman/react/fonts.css"
 import "@mailwoman/react/styles.css"
 import "./styles/app.css"
+import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { Geocoder, type GeocoderPanels } from "@mailwoman/react/map"
 import { makeFakeGeocoderRuntime } from "@mailwoman/react/map/fake-runtime"
 import { ReachabilityProvider } from "@mailwoman/react/network/ReachabilityProvider"
-import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/classify"
-import { useMemo } from "react"
+import { EXAMPLE_ADDRESSES } from "mailwoman/browser-runtime/classify"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { PRODUCTION_CONFIG } from "#config"
+import { pageTitle } from "#page-title"
 import {
 	cameraFromLocation,
 	gazettePlaceFromPath,
@@ -47,6 +49,11 @@ import panelStyles from "./panels/panels.module.css"
 
 const PRESETS = EXAMPLE_ADDRESSES.map((example) => ({ label: example.label, value: example.address }))
 
+/**
+ * The empty field's placeholder: an address, a place name, or any point shape the parser reads.
+ */
+const PLACEHOLDER = "Search an address, a place or coordinates"
+
 function NotFound({ pathname }: { pathname: string }) {
 	return (
 		<section className="not-found" data-testid="not-found">
@@ -75,44 +82,84 @@ function useRuntimeOptions(): GeocoderRuntimeOptions {
 	}
 }
 
-function LocalGeocoder({ route, query }: { route: Route; query: string | null }) {
-	const handle = useGeocoderRuntime(useRuntimeOptions())
-
-	return <GeocoderView handle={handle} route={route} query={query} />
+/**
+ * The query the URL names, kept in step with the history: a submit records a new entry,
+ * and the back and forward buttons restore the entry's query.
+ */
+interface URLQuery {
+	query: string | null
+	/**
+	 * Record a submitted query as a history entry, or remove the query for an emptied field.
+	 */
+	record: (query: string) => void
 }
 
-function RemoteGeocoder({ apiURL, route, query }: { apiURL: URL; route: Route; query: string | null }) {
+function useURLQuery(): URLQuery {
+	const [query, setQuery] = useState(() => queryFromSearch(location.search))
+
+	useEffect(() => {
+		const onPopState = () => setQuery(queryFromSearch(location.search))
+
+		addEventListener("popstate", onPopState)
+
+		return () => removeEventListener("popstate", onPopState)
+	}, [])
+
+	const record = useCallback((next: string) => {
+		writeQueryToURL(next)
+		setQuery(next.trim() === "" ? null : next)
+	}, [])
+
+	return { query, record }
+}
+
+function LocalGeocoder({ route, url }: { route: Route; url: URLQuery }) {
+	const handle = useGeocoderRuntime(useRuntimeOptions())
+
+	return <GeocoderView handle={handle} route={route} url={url} />
+}
+
+function RemoteGeocoder({ apiURL, route, url }: { apiURL: URL; route: Route; url: URLQuery }) {
 	return (
 		<ReachabilityProvider url={remoteGeocoderHealthURL(apiURL)}>
-			<RemoteGeocoderView apiURL={apiURL} route={route} query={query} />
+			<RemoteGeocoderView apiURL={apiURL} route={route} url={url} />
 		</ReachabilityProvider>
 	)
 }
 
-function RemoteGeocoderView({ apiURL, route, query }: { apiURL: URL; route: Route; query: string | null }) {
+function RemoteGeocoderView({ apiURL, route, url }: { apiURL: URL; route: Route; url: URLQuery }) {
 	const handle = useRemoteGeocoderRuntime(apiURL, useRuntimeOptions())
 
-	return <GeocoderView handle={handle} route={route} query={query} />
+	return <GeocoderView handle={handle} route={route} url={url} />
 }
 
-function GeocoderView({ handle, route, query }: { handle: GeocoderRuntimeHandle; route: Route; query: string | null }) {
+function GeocoderView({ handle, route, url }: { handle: GeocoderRuntimeHandle; route: Route; url: URLQuery }) {
 	const panels = useGeocoderPanels({ handle, debugDefault: route === Route.Debug })
 
 	return (
 		<Geocoder
 			runtime={handle.runtime}
 			panels={panels}
-			defaultAddress={query ?? DEFAULT_ADDRESS}
-			// `defaultAddress` only pre-fills the field, so only the URL's query goes to
-			// `initialQuery`; a cold visit still pre-fills the demo address without resolving it.
-			initialQuery={query}
+			// The URL's query pre-fills the field and is submitted.
+			// A cold visit opens an empty field.
+			defaultAddress={url.query ?? ""}
+			placeholder={PLACEHOLDER}
+			query={url.query}
 			presets={PRESETS}
 			// `/debug` exists to show the model's intermediate outputs, so it opens
 			// the disclosure the default view collapses.
 			developer={route === Route.Debug}
-			onSubmitQuery={writeQueryToURL}
+			onSubmitQuery={url.record}
+			onResult={titleAfterResult}
 		/>
 	)
+}
+
+/**
+ * The tab reads as the matched place.
+ */
+function titleAfterResult(result: ParseResult | null): void {
+	document.title = pageTitle(result?.resolved?.name ?? null)
 }
 
 /**
@@ -134,16 +181,36 @@ function TracePage({ query }: { query: string | null }) {
 				loadingProgress={handle.runtime.loading?.progress ?? null}
 				errorMessage={handle.runtime.errorMessage ?? null}
 				initialText={query}
-				onTextTraced={writeQueryToURL}
+				onTextTraced={replaceQueryInURL}
 			/>
 		</div>
 	)
 }
 
 /**
- * `replaceState`, not `pushState`, so the back button does not walk every submitted query.
+ * Each submitted query is a history entry, as on Google Maps, so the back
+ * button returns to the previous search.
+ *
+ * An emptied field is not a search, so it rewrites the entry instead, and a query
+ * equal to the URL's leaves the history as it is.
  */
 function writeQueryToURL(query: string): void {
+	const next = searchWithQuery(new URL(location.href), query)
+
+	if (next === `${location.pathname}${location.search}${location.hash}`) return
+
+	if (query.trim() === "") {
+		history.replaceState(history.state, "", next)
+	} else {
+		history.pushState(history.state, "", next)
+	}
+}
+
+/**
+ * The trace workbench writes the traced text on every keystroke, so it rewrites the entry
+ * rather than adding one per keystroke.
+ */
+function replaceQueryInURL(query: string): void {
 	history.replaceState(history.state, "", searchWithQuery(new URL(location.href), query))
 }
 
@@ -159,13 +226,20 @@ function FakeGeocoder({ query }: { query: string | null }) {
 	const runtime = useMemo(() => makeFakeGeocoderRuntime(), [])
 
 	return (
-		<Geocoder runtime={runtime} panels={IDENTITY_PANELS} defaultAddress={query ?? DEFAULT_ADDRESS} presets={PRESETS} />
+		<Geocoder
+			runtime={runtime}
+			panels={IDENTITY_PANELS}
+			defaultAddress={query ?? ""}
+			placeholder={PLACEHOLDER}
+			presets={PRESETS}
+		/>
 	)
 }
 
 export function App() {
 	const route = routeForPath(location.pathname)
-	const query = queryFromSearch(location.search)
+	const url = useURLQuery()
+	const { query } = url
 	const mode = runtimeModeFromSearch(location.search)
 	const apiURL = remoteGeocoderURL(PRODUCTION_CONFIG)
 
@@ -189,9 +263,9 @@ export function App() {
 			) : route === Route.Trace ? (
 				<TracePage query={query} />
 			) : apiURL ? (
-				<RemoteGeocoder apiURL={apiURL} route={route} query={query} />
+				<RemoteGeocoder apiURL={apiURL} route={route} url={url} />
 			) : (
-				<LocalGeocoder route={route} query={query} />
+				<LocalGeocoder route={route} url={url} />
 			)}
 		</main>
 	)
