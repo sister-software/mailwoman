@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import type google from "@googlemaps/google-maps-services-js"
-import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
+/// <reference types="google.maps" />
+
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { latLngToCell } from "@sister.software/h3"
 import { convert as convertCoords } from "geo-coordinates-parser"
@@ -169,18 +169,14 @@ export class GeoPoint implements PointLiteral {
 
 	/**
 	 * Creates a new GeoPoint instance from a Google Maps API
-	 * {@linkcode google.LatLngLiteral | LatLngLiteral} object.
+	 * {@linkcode google.maps.LatLngLiteral | LatLngLiteral} object.
 	 */
-	constructor(latLngLiteral: google.LatLngLiteral, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
+	constructor(latLngLiteral: google.maps.LatLngLiteral, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 
 	/**
 	 * Creates a new GeoPoint instance from internal coordinates.
 	 */
 	constructor(interpolatedCoords: InternalPointCoordinates, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
-	/**
-	 * Creates a new GeoPoint instance from a Google Maps API {@linkcode google.LatLng | LatLng} object.
-	 */
-	constructor(latLng: LatLngLiteral, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 	/**
 	 * Create a new GeoPoint instance from another {@linkcode PointLiteral}.
 	 */
@@ -299,9 +295,9 @@ export class GeoPoint implements PointLiteral {
 	}
 
 	/**
-	 * Converts the GeoPoint to a Google Maps API {@linkcode google.LatLngLiteral | LatLngLiteral} object.
+	 * Converts the GeoPoint to a Google Maps API {@linkcode google.maps.LatLngLiteral | LatLngLiteral} object.
 	 */
-	public toGoogleLatLngLiteral(): google.LatLngLiteral {
+	public toGoogleLatLngLiteral(): google.maps.LatLngLiteral {
 		return {
 			lat: this.#latitude,
 			lng: this.#longitude,

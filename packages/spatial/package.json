@@ -66,19 +66,15 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/postcode": "workspace:*",
 		"@sister.software/h3": "^1.1.0",
+		"@types/google.maps": "^3.66.9",
 		"geo-coordinates-parser": "^1.7.4",
 		"path-ts": "^2.5.0",
 		"spliterator": "^10.1.1",
 		"wkx": "^0.5.0"
 	},
 	"devDependencies": {
-		"@googlemaps/google-maps-services-js": "^3.4.2",
 		"@mailwoman/annotations": "workspace:*",
 		"type-fest": "^5.10.0"
-	},
-	"optionalDependencies": {
-		"@googlemaps/google-maps-services-js": "^3.4.2",
-		"@types/google.maps": "^3.66.9"
 	},
 	"engines": {
 		"node": "^24.22.1 || >=26.12.1"
