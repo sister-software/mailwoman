@@ -49,7 +49,6 @@ const KNOB_OPTION_KINDS = {
 	streetCountryHints: "string[]",
 	spanRescore: "boolean",
 	spanRescoreThresholdKm: "number",
-	spanRescoreRequireContextRemainder: "boolean",
 	isVenueCategoryWord: null,
 	landmarks: null,
 	osmPlaces: null,

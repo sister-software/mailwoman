@@ -666,7 +666,6 @@ describe("The lineage-attachment wiring", () => {
 			adminContainmentRerank: true,
 			postcodeShapeCoherence: true,
 			postcodeContainmentCoherence: false,
-			spanRescoreRequireContextRemainder: false,
 			postcodePrefixPrior: false,
 		})
 
@@ -688,7 +687,6 @@ describe("The lineage-attachment wiring", () => {
 			"postcodeShapeCoherence",
 			"postcodeContainmentCoherence",
 			"adminContainmentRerank",
-			"spanRescoreRequireContextRemainder",
 			"postcodePrefixPrior",
 		] as const) {
 			expect(GEOCODE_SWITCH_DEFAULTS[key]).toBe(RESOLVE_SWITCH_DEFAULTS[key])

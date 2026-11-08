@@ -14,6 +14,7 @@ import { describe, expect, it } from "vitest"
 
 import {
 	applyEntityTiers,
+	nameDroppingRescoreToWithdraw,
 	probeForkEntity,
 	probeVenueNearAnchor,
 	probeVenueNearAnchorFolded,
@@ -431,6 +432,118 @@ describe("applyEntityTiers for a parsed venue with no coordinate", () => {
 
 		expect(anchored.resolution_tier).toBe("venue")
 		expect(anchored.lat).toBeCloseTo(51.48223)
+	})
+})
+
+describe("nameDroppingRescoreToWithdraw (a sub-span that drops a word of the name)", () => {
+	const MANCHESTER = { lat: 53.4794892, lon: -2.2451148 }
+
+	const rescued = (locality: string, dropsName: boolean): AddressNode => ({
+		tag: "locality",
+		value: locality,
+		start: 4,
+		end: 4 + locality.length,
+		confidence: 0.5,
+		children: [],
+		...MANCHESTER,
+		metadata: { span_rescore: true, rescore_drops_name: dropsName },
+	})
+
+	const answeredBy = (venue: string) => ({
+		...MANCHESTER,
+		resolution_tier: "admin" as string | null,
+		venue: venue as string | null,
+	})
+
+	const gallery = stubLookup([
+		{
+			name: "The Manchester Art Gallery",
+			categoryID: "art_gallery",
+			lat: 53.47859765,
+			lon: -2.24165836,
+			country: "GB",
+		},
+	])
+
+	it("keeps the locality when it scopes a venue that answers near it", () => {
+		const roots = [rescued("Manchester", true)]
+
+		expect(
+			nameDroppingRescoreToWithdraw(answeredBy("The Manchester Art Gallery"), roots, {
+				poiLookup: gallery,
+				isStreetGeneric: NO_GENERICS,
+				poiVenueTier: true,
+			})
+		).toBeNull()
+
+		const result = {
+			...answeredBy("The Manchester Art Gallery"),
+			countryCode: "GB",
+			entity: null,
+			admin_coherence: null,
+		}
+
+		applyEntityTiers(result, [], "The Manchester Art Gallery", roots, {
+			poiLookup: gallery,
+			isStreetGeneric: NO_GENERICS,
+			poiVenueTier: true,
+		})
+
+		expect(result.resolution_tier).toBe("venue")
+		expect(result.lat).toBeCloseTo(53.47859765)
+	})
+
+	it("withdraws the locality when no venue answers near it, so the fork probe can read the whole input", () => {
+		const roots = [rescued("Manchester", true)]
+		const restaurant = stubLookup([{ name: "Manchester Grill", lat: 48.87, lon: 2.35, country: "FR" }])
+
+		expect(
+			nameDroppingRescoreToWithdraw(answeredBy("Manchester Grill"), roots, {
+				poiLookup: restaurant,
+				isStreetGeneric: NO_GENERICS,
+				poiVenueTier: true,
+			})
+		).toBe(roots[0])
+
+		// With the locality withdrawn the result has no coordinate, and the declared-fork probe answers.
+		const result = {
+			lat: null,
+			lon: null,
+			resolution_tier: null,
+			countryCode: null,
+			venue: "Manchester Grill",
+			entity: null,
+			admin_coherence: null,
+		}
+
+		applyEntityTiers(result, [{ code: "declared_fork" }], "Manchester Grill", [], {
+			poiLookup: restaurant,
+			isStreetGeneric: NO_GENERICS,
+		})
+
+		expect(result.lat).toBeCloseTo(48.87)
+	})
+
+	it("keeps a locality that drops no word of the name", () => {
+		expect(
+			nameDroppingRescoreToWithdraw(answeredBy("Evergreen Cemetery"), [rescued("Manchester", false)], {
+				poiLookup: stubLookup([]),
+				isStreetGeneric: NO_GENERICS,
+				poiVenueTier: true,
+			})
+		).toBeNull()
+	})
+
+	it("keeps the locality when a later tier answered instead of it", () => {
+		const result = { ...answeredBy("Manchester Grill"), resolution_tier: "address_point" }
+
+		expect(
+			nameDroppingRescoreToWithdraw(result, [rescued("Manchester", true)], {
+				poiLookup: stubLookup([]),
+				isStreetGeneric: NO_GENERICS,
+				poiVenueTier: true,
+			})
+		).toBeNull()
 	})
 })
 

@@ -514,31 +514,76 @@ export function applyEntityTiers(
 		}
 	}
 
-	if (
-		deps.poiVenueTier === true &&
-		deps.poiLookup &&
-		result.venue &&
-		result.lat !== null &&
-		result.lon !== null &&
-		(result.resolution_tier === "admin" || result.resolution_tier === "postcode" || result.resolution_tier === "street")
-	) {
-		const anchor = { lat: result.lat, lon: result.lon }
+	const hit = venueNearAnswer(result, resolvedRoots, deps)
 
-		const hit = probeVenueNearAnchorFolded(
-			result.venue,
-			{ ...anchor, radiusM: venueAnchorRadiusM(anchor, resolvedRoots) },
-			{ lookup: deps.poiLookup, ...(deps.isStreetGeneric ? { isStreetGeneric: deps.isStreetGeneric } : {}) }
-		)
-
-		if (hit) {
-			result.lat = hit.latitude
-			result.lon = hit.longitude
-			result.resolution_tier = "venue"
-			result.epistemic_status = epistemicStatusFor("venue", result.lat)
-			result.coordinate_source = null
-			result.entity = { name: hit.name, categoryID: hit.categoryID, confidence: hit.confidence, country: hit.country }
-		}
+	if (hit) {
+		result.lat = hit.latitude
+		result.lon = hit.longitude
+		result.resolution_tier = "venue"
+		result.epistemic_status = epistemicStatusFor("venue", result.lat)
+		result.coordinate_source = null
+		result.entity = { name: hit.name, categoryID: hit.categoryID, confidence: hit.confidence, country: hit.country }
 	}
+}
+
+/**
+ * The near-anchor venue refinement's hit: the parsed venue's single exact-name entity near an admin,
+ * postcode or street answer, or `null` when the refinement does not apply or finds none.
+ */
+function venueNearAnswer(
+	result: Pick<ForkEntityAnswerTarget, "lat" | "lon" | "resolution_tier" | "venue">,
+	resolvedRoots: readonly AddressNode[],
+	deps: {
+		poiLookup?: ForkEntityProbeOpts["lookup"]
+		isStreetGeneric?: ForkEntityProbeOpts["isStreetGeneric"]
+		poiVenueTier?: boolean
+	}
+): ForkEntityHit | null {
+	if (
+		deps.poiVenueTier !== true ||
+		!deps.poiLookup ||
+		!result.venue ||
+		result.lat === null ||
+		result.lon === null ||
+		(result.resolution_tier !== "admin" && result.resolution_tier !== "postcode" && result.resolution_tier !== "street")
+	) {
+		return null
+	}
+
+	const anchor = { lat: result.lat, lon: result.lon }
+
+	return probeVenueNearAnchorFolded(
+		result.venue,
+		{ ...anchor, radiusM: venueAnchorRadiusM(anchor, resolvedRoots) },
+		{ lookup: deps.poiLookup, ...(deps.isStreetGeneric ? { isStreetGeneric: deps.isStreetGeneric } : {}) }
+	)
+}
+
+/**
+ * The span-rescore locality a result must give up before the entity tiers run, or `null`.
+ *
+ * Span rescore marks a sub-span that leaves a word of the name behind with
+ * `rescore_drops_name`, as `Manchester` in `The Manchester Art Gallery`.
+ * That locality still scopes the near-anchor venue lookup, so the gallery answers from the venue tier.
+ *
+ * When the lookup finds no venue near it and the locality is the answer, the locality would
+ * answer a name it only appears inside, so the caller drops the node and the input abstains.
+ * The declared-fork probe then reads the whole input.
+ */
+export function nameDroppingRescoreToWithdraw(
+	result: Pick<ForkEntityAnswerTarget, "lat" | "lon" | "resolution_tier" | "venue">,
+	resolvedRoots: readonly AddressNode[],
+	deps: {
+		poiLookup?: ForkEntityProbeOpts["lookup"]
+		isStreetGeneric?: ForkEntityProbeOpts["isStreetGeneric"]
+		poiVenueTier?: boolean
+	}
+): AddressNode | null {
+	const node = resolvedRoots.find((n) => n.metadata?.["rescore_drops_name"] === true)
+
+	if (!node || result.resolution_tier !== "admin" || result.lat !== node.lat || result.lon !== node.lon) return null
+
+	return venueNearAnswer(result, resolvedRoots, deps) ? null : node
 }
 
 /**

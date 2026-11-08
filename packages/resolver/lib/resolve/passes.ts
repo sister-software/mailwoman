@@ -355,7 +355,6 @@ export async function applySpanRescore(
 			thresholdKm: opts.spanRescoreThresholdKm,
 
 			postalCompoundRecovery: opts.postalCompoundRecovery,
-			spanRescoreRequireContextRemainder: opts.spanRescoreRequireContextRemainder,
 			...(opts.isVenueCategoryWord ? { isVenueCategoryWord: opts.isVenueCategoryWord } : {}),
 		})
 	} catch {
@@ -382,7 +381,15 @@ export async function applySpanRescore(
 
 	decorateNode(node, hit.place, hit.alternatives)
 
-	node.metadata = { ...node.metadata, span_rescore: true, rescore_postcode_verified: hit.postcodeVerified }
+	// `rescore_drops_name` tells the geocode that this locality may scope a venue lookup.
+	// It answers only when a venue answers near it.
+	node.metadata = {
+		...node.metadata,
+		span_rescore: true,
+		rescore_postcode_verified: hit.postcodeVerified,
+		rescore_drops_name: hit.dropsName,
+	}
+
 	roots.push(node)
 
 	if (opts.traceSink) {

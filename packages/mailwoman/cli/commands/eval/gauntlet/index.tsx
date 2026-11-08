@@ -67,12 +67,6 @@ export const spec = {
 			default: "production",
 			description: "Pin the dependent-locality containment",
 		},
-		"span-rescore-require-context-remainder": {
-			type: "string",
-			choices: SWITCH_PIN_CHOICES,
-			default: "production",
-			description: "Pin the refusal of a span-rescore sub-span that drops a word of the name",
-		},
 		"poi-venue-tier": {
 			type: "string",
 			choices: SWITCH_PIN_CHOICES,

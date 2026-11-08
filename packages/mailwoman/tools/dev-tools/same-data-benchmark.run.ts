@@ -450,11 +450,6 @@ const DEFAULT_KNOB_ARMS: KnobArm[] = [
 	{ label: "minWinningScore 5", opts: { minWinningScore: 5 } },
 	{ label: "spanRescore off", opts: { spanRescore: false } },
 	{ label: "minWinningScore 4 + spanRescore off", opts: { minWinningScore: 4, spanRescore: false } },
-	// This arm applies a narrower refusal than the blanket floor.
-	// Span rescore still runs.
-	// It refuses a sub-span that drops a word of the name.
-	// It keeps one that drops a qualifier, a number or a street the parse read is kept.
-	{ label: "spanRescore context remainder", opts: { spanRescoreRequireContextRemainder: true } },
 ]
 
 async function knobPhase(): Promise<void> {

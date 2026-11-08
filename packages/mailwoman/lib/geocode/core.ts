@@ -51,7 +51,7 @@ import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
-import { applyEntityTiers } from "#fork-entity"
+import { applyEntityTiers, nameDroppingRescoreToWithdraw } from "#fork-entity"
 import { classifierForInput, type GeocodeClassifier, normalizeGeocodeInput } from "#geocode/classifier"
 import { traceCollector } from "#geocode/derivation"
 import { parsePriorOptions } from "#geocode/parse-priors"
@@ -128,10 +128,6 @@ export interface GeocodeSwitches {
 	 */
 	dependentLocalityContainment: boolean
 	/**
-	 * Requires span-rescore recovery to leave a context remainder.
-	 */
-	spanRescoreRequireContextRemainder: boolean
-	/**
 	 * Uses the postcode-prefix prior.
 	 * It needs {@link GeocodeDeps.postcodePrefixIndex}.
 	 */
@@ -156,7 +152,6 @@ export const GEOCODE_SWITCH_DEFAULTS: Readonly<GeocodeSwitches> = {
 	postcodeContainmentCoherence: RESOLVE_SWITCH_DEFAULTS.postcodeContainmentCoherence,
 	adminContainmentRerank: RESOLVE_SWITCH_DEFAULTS.adminContainmentRerank,
 	dependentLocalityContainment: RESOLVE_SWITCH_DEFAULTS.dependentLocalityContainment,
-	spanRescoreRequireContextRemainder: RESOLVE_SWITCH_DEFAULTS.spanRescoreRequireContextRemainder,
 	postcodePrefixPrior: RESOLVE_SWITCH_DEFAULTS.postcodePrefixPrior,
 }
 
@@ -546,7 +541,6 @@ const FORWARDED_RESOLVER_SWITCHES = [
 	"postcodeContainmentCoherence",
 	"adminContainmentRerank",
 	"dependentLocalityContainment",
-	"spanRescoreRequireContextRemainder",
 	"postcodePrefixPrior",
 ] as const satisfies readonly (keyof GeocodeSwitches & keyof ResolveOpts)[]
 
@@ -558,6 +552,29 @@ function placerCountrySetting(deps: GeocodeDeps): { use: PlacerCountryUse; safel
 		use: deps.placerCountryUse ?? DEFAULT_PLACER_COUNTRY_USE,
 		safelist: deps.hardCountrySafelist ?? deps.resolver.artifactCoverage?.hardCountrySafelist ?? null,
 	}
+}
+
+/**
+ * Extracts the result without a name-dropping span-rescore locality.
+ *
+ * The locality is removed when no venue answers near it, so the input abstains.
+ * See {@linkcode nameDroppingRescoreToWithdraw}.
+ *
+ * It leaves `resolved.roots` in place, so later tiers read the tree without it.
+ */
+function extractWithoutNameDroppingRescore(
+	input: string,
+	resolved: AddressTree,
+	deps: Parameters<typeof nameDroppingRescoreToWithdraw>[2]
+): GeocodeResult {
+	const result = extractGeocodeResult(input, resolved)
+	const withdrawn = nameDroppingRescoreToWithdraw(result, resolved.roots, deps)
+
+	if (!withdrawn) return result
+
+	resolved.roots.splice(resolved.roots.indexOf(withdrawn), 1)
+
+	return extractGeocodeResult(input, resolved)
 }
 
 async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
@@ -792,7 +809,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	let result = extractGeocodeResult(input, resolved)
+	let result = extractWithoutNameDroppingRescore(input, resolved, { ...deps, poiVenueTier: switches.poiVenueTier })
 
 	// Compute kind verdict over parseInput for downstream markers and fallback behavior.
 	const verdict = classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape)

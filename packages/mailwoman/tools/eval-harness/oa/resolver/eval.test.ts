@@ -342,17 +342,6 @@ describe("resolveOptsFrom", () => {
 		expect(resolveOptsFrom({ postcodeConsistency: "production" }, "none")).toEqual({})
 	})
 
-	it("carries the #2266 span-rescore pin only when it is set", () => {
-		expect(resolveOptsFrom({ spanRescoreRequireContextRemainder: true }, "none")).toEqual({
-			spanRescoreRequireContextRemainder: true,
-		})
-
-		// The library defaults this option off.
-		// An explicit `false` would pin the shipped behavior.
-		// The unset option exercises the one-sided-forwarding case represented by the gauntlet's tri-states.
-		expect(resolveOptsFrom({ spanRescoreRequireContextRemainder: false }, "none")).toEqual({})
-	})
-
 	it("carries the #2264 weak-resolution reading verbatim, and nothing when unset", () => {
 		expect(resolveOptsFrom({ spanRescoreWeakResolution: "containment" }, "none")).toEqual({
 			spanRescoreWeakResolution: "containment",
