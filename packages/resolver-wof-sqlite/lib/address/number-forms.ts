@@ -4,28 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import { isJoinedHouseNumber } from "@mailwoman/match/address-point"
+
 import type { StreetLocale } from "#street/normalize"
-
-/**
- * The widest span of numbers a written range covers on one building or block.
- */
-const WIDEST_HOUSE_NUMBER_RANGE = 200
-
-/**
- * Returns whether two hyphenated numbers read as one number rather than a range of houses.
- *
- * `8-9 Upper St` is a range, and joining it would answer the different house at number 89.
- * `19-4074` and Queens's `123-45` cannot be ranges, because a range climbs by a short step.
- */
-function isJoinedHyphenNumber(number: string): boolean {
-	const parts = /^(\d+)-(\d+)$/.exec(number)
-
-	if (!parts) return false
-
-	const span = Number(parts[2]) - Number(parts[1])
-
-	return span < 0 || span > WIDEST_HOUSE_NUMBER_RANGE
-}
 
 /**
  * The forms a normalized house number is probed under, the written form first,
@@ -46,7 +27,7 @@ function isJoinedHyphenNumber(number: string): boolean {
 export function* houseNumberForms(number: string, locale: StreetLocale): Generator<string> {
 	yield number
 
-	if (isJoinedHyphenNumber(number)) {
+	if (isJoinedHouseNumber(number)) {
 		yield number.replace("-", "")
 	}
 

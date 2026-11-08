@@ -40,6 +40,13 @@ describe("houseNumberComparison", () => {
 		expect(houseNumberParts("N123")).toBeNull()
 	})
 
+	it("reads a hyphenated number too wide or too low for a range as its joined digits", () => {
+		expect(houseNumberParts("19-4074")).toEqual({ base: 194_074, suffix: "", rangeEnd: null })
+		expect(houseNumberParts("123-45")).toEqual({ base: 12_345, suffix: "", rangeEnd: null })
+		expect(label("19-4074", "194074")).toBe("exact")
+		expect(label("8-9", "9")).toBe("in-range")
+	})
+
 	it("levels a pair by exact number, shared base, range containment or difference", () => {
 		expect(label("12", "12")).toBe("exact")
 		expect(label("12a", "12A")).toBe("exact")

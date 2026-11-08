@@ -77,10 +77,38 @@ export interface HouseNumberParts {
 const HOUSE_NUMBER = /^\s*(\d+)\s*([A-Za-z]{0,2}|\s*\d+\/\d+)?\s*(?:-\s*(\d+))?\s*$/
 
 /**
+ * The widest span of numbers a written range covers on one building or block.
+ */
+const WIDEST_HOUSE_NUMBER_RANGE = 200
+
+/**
+ * Returns whether two hyphenated numbers read as one number rather than a range of houses.
+ *
+ * `8-9 Upper St` is a range, and joining it would answer the different house at number 89.
+ * `19-4074` and Queens's `123-45` cannot be ranges, because a range climbs by a short step.
+ */
+export function isJoinedHouseNumber(number: string): boolean {
+	const parts = /^\s*(\d+)\s*-\s*(\d+)\s*$/.exec(number)
+
+	if (!parts) return false
+
+	const span = Number(parts[2]) - Number(parts[1])
+
+	return span < 0 || span > WIDEST_HOUSE_NUMBER_RANGE
+}
+
+/**
  * Reads a house number such as `12`, `12A`, `12 1/2` or `12-14` into its parts,
  * or `null` when it does not start with digits.
+ *
+ * A hyphenated number that {@link isJoinedHouseNumber} reads as one number,
+ * such as Hawaii's `19-4074`, is read as its joined digits, `194074`, with no range.
  */
 export function houseNumberParts(value: string | null | undefined): HouseNumberParts | null {
+	if (value != null && isJoinedHouseNumber(value)) {
+		return { base: Number(value.replaceAll(/[\s-]/g, "")), suffix: "", rangeEnd: null }
+	}
+
 	const match = value == null ? null : HOUSE_NUMBER.exec(value)
 
 	if (!match) return null
