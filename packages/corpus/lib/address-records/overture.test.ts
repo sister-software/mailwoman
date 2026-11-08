@@ -6,6 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
+import { createUnitSplitter } from "#adapters/street/unit"
 import { overtureAddressRecord, type OvertureAddressRow } from "#address-records/overture"
 
 /**
@@ -62,6 +63,16 @@ describe("overtureAddressRecord", () => {
 		)
 
 		expect(record).toMatchObject({ subdivision: null, sourceRecordID: LORIDA.id, source: "overture:Comune di Milano" })
+	})
+
+	it("splits a unit written at the end of the street when the row's unit is empty", async () => {
+		const units = await createUnitSplitter()
+
+		// Contra Costa County's dataset writes `COOGINS DR #106` with no unit.
+		const record = overtureAddressRecord({ ...LORIDA, street: "COOGINS DR #106", unit: null }, "en", units)
+
+		expect(record?.streetRaw).toBe("COOGINS DR")
+		expect(record?.unit).toBe("#106")
 	})
 
 	it("refuses a row without a number, a source or a position", () => {

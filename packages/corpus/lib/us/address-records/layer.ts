@@ -30,6 +30,7 @@ import {
 import type { AddressRecord } from "@mailwoman/resolver-wof-sqlite/address/record"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
+import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import { isAdmittedSource } from "#address-records/admission"
 import { readOpenAddressesRunRecords } from "#address-records/openaddresses"
 import { readOvertureAddressRecords } from "#address-records/overture"
@@ -128,7 +129,8 @@ async function* stateRecords(
 	state: string,
 	hasNAD: boolean,
 	runs: readonly string[],
-	scratch: PathBuilder
+	scratch: PathBuilder,
+	units: UnitSplitter
 ): AsyncGenerator<AddressRecord> {
 	if (hasNAD) {
 		yield* readNADAddressRecords(options.nadParquet, { where: `"State" = '${escapeSQLString(state)}'` })
@@ -137,6 +139,7 @@ async function* stateRecords(
 	yield* readOvertureAddressRecords(options.overtureParquet, {
 		where: `country = 'US' AND address_levels[1].value = '${escapeSQLString(state)}' AND sources[1].dataset <> 'NAD'`,
 		streetLocale: "en",
+		units,
 	})
 
 	for (const member of runs) {
@@ -145,7 +148,7 @@ async function* stateRecords(
 		await extractZipEntry(runArchive(options.openAddresses.cache, member), `${member}.csv`, csv)
 
 		try {
-			yield* readOpenAddressesRunRecords(csv, member, "en")
+			yield* readOpenAddressesRunRecords(csv, member, "en", units)
 		} finally {
 			await removePathIfPresent(csv)
 		}
@@ -182,6 +185,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 
 	const omitted = new Set(options.omitFromManifest)
 	const recorded = recordedRunTerms(options.openAddresses.plan)
+	const units = await createUnitSplitter()
 	const regions: AddressLayerCountryManifest["regions"] = []
 	const builds: USStateBuild[] = []
 	let refusedRuns = 0
@@ -237,7 +241,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 		const started = Date.now()
 
 		const summary = await buildAddressLayer({
-			records: stateRecords(options, state, hasNAD, runs, scratch.path),
+			records: stateRecords(options, state, hasNAD, runs, scratch.path, units),
 			sources,
 			manifest,
 			lookupPath: files.lookup,

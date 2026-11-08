@@ -8,6 +8,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { describe, expect, it } from "vitest"
 
+import { createUnitSplitter } from "#adapters/street/unit"
 import {
 	openAddressesAddressRecord,
 	openAddressesRunCountry,
@@ -100,5 +101,30 @@ describe("OpenAddresses address records", () => {
 		expect(record?.names.map((name) => name.form)).toEqual(["written"])
 		expect(record?.streetKey).toBe(normalizeStreetForKeyLocale("Unter den Linden", "de"))
 		expect(record?.sourceRecordID).toMatch(/^digest:[0-9a-f]{12}$/u)
+	})
+
+	it("splits a unit written at the end of the street when the run's unit column is empty", async () => {
+		const units = await createUnitSplitter()
+		const base = { lon: "-121.28801", lat: "38.74546", number: "100", postcode: "95678" }
+
+		// Placer County's run writes `VERNON ST APT 114` with an empty UNIT column.
+		const split = openAddressesAddressRecord({ ...base, street: "VERNON ST APT 114" }, "us/ca/placer", "us", units)
+
+		expect(split?.streetRaw).toBe("VERNON ST")
+		expect(split?.unit).toBe("APT 114")
+		expect(split?.streetKey).toBe(normalizeStreetForKeyLocale("VERNON ST", "us"))
+
+		// A stated unit is kept, and its street is left as written.
+		const stated = openAddressesAddressRecord(
+			{ ...base, street: "VERNON ST APT 114", unit: "114" },
+			"us/ca/placer",
+			"us",
+			units
+		)
+
+		expect(stated?.streetRaw).toBe("VERNON ST APT 114")
+		expect(stated?.unit).toBe("114")
+		// Without a splitter the street is kept as written.
+		expect(openAddressesAddressRecord({ ...base, street: "VERNON ST APT 114" }, "us/ca/placer", "us")?.unit).toBeNull()
 	})
 })

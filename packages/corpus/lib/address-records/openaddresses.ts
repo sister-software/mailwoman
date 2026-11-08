@@ -23,6 +23,7 @@ import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { rawTextDiscriminator } from "#adapters/record-id"
+import type { UnitSplitter } from "#adapters/street/unit"
 import { bareMunicipalityName } from "#address-records/legal-forms"
 
 /**
@@ -75,17 +76,30 @@ export function openAddressesRunSubdivision(member: string): string | null {
  * The publisher's `ID`, then the run's `HASH`, identifies the point, and a row with
  * neither takes a digest of its number, street and position.
  *
+ * A row whose `UNIT` is empty and whose street ends in a unit (`VERNON ST APT 114`, `COOGINS DR #106`)
+ * has that unit split off, so the street key matches the same building's key in other sources.
+ *
  * @param streetLocale The locale the street and house number keys are folded under.
  * The address layer's reader must fold a query for this country under the same locale.
+ * @param units Splits a trailing unit off the street.
+ * Without it the street is kept as written.
  */
 export function openAddressesAddressRecord(
 	row: OpenAddressesRunRecord,
 	member: string,
-	streetLocale: StreetLocale
+	streetLocale: StreetLocale,
+	units?: UnitSplitter
 ): AddressRecord | null {
 	const country = openAddressesRunCountry(member)
 	const number = row.number?.trim() ? normalizeHouseNumberForKey(row.number, streetLocale) : null
-	const street = row.street?.trim()
+	const written = row.street?.trim()
+	const stated = row.unit?.trim()
+	const postcode = row.postcode?.trim()
+
+	const split =
+		written && !stated && units ? units.split(written, { country, ...(postcode ? { postcode } : {}) }) : null
+
+	const street = split?.street ?? written
 	const lat = row.lat?.trim() ? Number(row.lat) : Number.NaN
 	const lon = row.lon?.trim() ? Number(row.lon) : Number.NaN
 
@@ -116,15 +130,15 @@ export function openAddressesAddressRecord(
 	return {
 		source: `openaddresses:${member}`,
 		sourceRecordID:
-			row.id?.trim() || row.hash?.trim() || `digest:${rawTextDiscriminator(`${number} ${street} ${lat},${lon}`)}`,
+			row.id?.trim() || row.hash?.trim() || `digest:${rawTextDiscriminator(`${number} ${written} ${lat},${lon}`)}`,
 		country,
 		subdivision: openAddressesRunSubdivision(member),
 		number,
-		unit: row.unit?.trim() || null,
+		unit: stated || split?.unit || null,
 		streetRaw: street,
 		streetKey,
 		routeKey: canonicalizeRouteKey(streetKey),
-		postcode: row.postcode?.trim() || null,
+		postcode: postcode || null,
 		names,
 		adminCode: null,
 		lat,
@@ -139,16 +153,18 @@ export function openAddressesAddressRecord(
  *
  * @param member The run's member path, such as `us/wi/statewide`, which supplies the source id and country.
  * @param streetLocale The locale {@link openAddressesAddressRecord} folds keys under.
+ * @param units Splits a trailing unit off each street, as {@link openAddressesAddressRecord} describes.
  */
 export async function* readOpenAddressesRunRecords(
 	csvPath: PathBuilderLike,
 	member: string,
-	streetLocale: StreetLocale
+	streetLocale: StreetLocale,
+	units?: UnitSplitter
 ): AsyncGenerator<AddressRecord> {
 	const rows = CSVSpliterator.fromAsync<OpenAddressesRunRecord>(csvPath.toString(), { normalizeKeys: true })
 
 	for await (const row of rows) {
-		const record = openAddressesAddressRecord(row, member, streetLocale)
+		const record = openAddressesAddressRecord(row, member, streetLocale, units)
 
 		if (record) {
 			yield record

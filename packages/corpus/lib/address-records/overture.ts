@@ -21,6 +21,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import type { PathBuilderLike } from "path-ts"
 
+import type { UnitSplitter } from "#adapters/street/unit"
 import { bareMunicipalityName } from "#address-records/legal-forms"
 import { openParquetRowStream } from "#parquet/streams"
 
@@ -66,13 +67,29 @@ const COLUMNS = [
  * `postal_city` is the postal locality.
  * A two-letter first level is read as the subdivision code, as Overture writes US states (`WI`).
  *
+ * A row whose unit is empty and whose street ends in a unit (`FRUITVALE AV U 121`) has
+ * that unit split off, so the street key matches the same building's key in other sources.
+ *
  * @param streetLocale The locale the street and number keys are folded under.
+ * @param units Splits a trailing unit off the street.
+ * Without it the street is kept as written.
  */
-export function overtureAddressRecord(row: OvertureAddressRow, streetLocale: StreetLocale): AddressRecord | null {
+export function overtureAddressRecord(
+	row: OvertureAddressRow,
+	streetLocale: StreetLocale,
+	units?: UnitSplitter
+): AddressRecord | null {
 	const country = row.country?.trim().toUpperCase()
-	const street = row.street?.trim()
+	const written = row.street?.trim()
+	const stated = row.unit?.trim()
+	const postcode = row.postcode?.trim()
 	const number = row.number?.trim() ? normalizeHouseNumberForKey(row.number, streetLocale) : null
 	const source = row.sources?.[0]
+
+	const split =
+		country && written && !stated && units ? units.split(written, { country, ...(postcode ? { postcode } : {}) }) : null
+
+	const street = split?.street ?? written
 
 	if (!country || !street || !number || !source?.dataset) return null
 
@@ -109,11 +126,11 @@ export function overtureAddressRecord(row: OvertureAddressRow, streetLocale: Str
 		country,
 		subdivision: region && /^[A-Z]{2}$/u.test(region) ? `${country}-${region}` : null,
 		number,
-		unit: row.unit?.trim() || null,
+		unit: stated || split?.unit || null,
 		streetRaw: street,
 		streetKey,
 		routeKey: canonicalizeRouteKey(streetKey),
-		postcode: row.postcode?.trim() || null,
+		postcode: postcode || null,
 		names,
 		adminCode: null,
 		lat: row.lat,
@@ -129,10 +146,11 @@ export function overtureAddressRecord(row: OvertureAddressRow, streetLocale: Str
  *
  * @param where A DuckDB condition rows must satisfy, such as `address_levels[1].value = 'FL'`,
  * built with `escapeSQLString`.
+ * @param units Splits a trailing unit off each street, as {@link overtureAddressRecord} describes.
  */
 export async function* readOvertureAddressRecords(
 	parquetPath: PathBuilderLike | readonly PathBuilderLike[],
-	options: { where?: string; streetLocale: StreetLocale }
+	options: { where?: string; streetLocale: StreetLocale; units?: UnitSplitter }
 ): AsyncGenerator<AddressRecord> {
 	const rows = openParquetRowStream<OvertureAddressRow>(parquetPath, {
 		columns: COLUMNS,
@@ -140,7 +158,7 @@ export async function* readOvertureAddressRecords(
 	})
 
 	for await (const row of rows) {
-		const record = overtureAddressRecord(row, options.streetLocale)
+		const record = overtureAddressRecord(row, options.streetLocale, options.units)
 
 		if (record) {
 			yield record
