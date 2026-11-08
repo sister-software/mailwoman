@@ -22,6 +22,11 @@ describe("isAdmittedLicense", () => {
 	it.each([
 		[{ text: "CC-BY-SA", "share-alike": true }],
 		[{ text: "CC-BY-SA" }],
+		[{ text: "CC BY SA 4.0" }],
+		[{ text: "CC BY-NC 4.0" }],
+		[{ text: "CC BY-ND 4.0" }],
+		["CC BY-NC-SA 4.0"],
+		[{ text: "Creative Commons Attribution-NonCommercial 4.0" }],
 		[{ text: "Not for commercial use or resale." }],
 		[{ text: "Indemnification", attribution: false, "share-alike": false }],
 		[{ url: "https://www.opendataphilly.org/organization/about/city-of-philadelphia" }],
