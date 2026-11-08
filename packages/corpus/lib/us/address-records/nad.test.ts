@@ -74,6 +74,12 @@ describe("NAD address records", () => {
 		})
 	})
 
+	it("keeps a unit part once when the publisher writes it into two columns, and joins distinct parts", () => {
+		// Release 24's row for 43 Belanger Drive, Lake Luzerne NY 12846, states `Apartment 2` as both Building and Unit.
+		expect(nadAddressRecord({ ...WHITE_HORSE, Building: "Apartment 2", Unit: "Apartment 2" })?.unit).toBe("Apartment 2")
+		expect(nadAddressRecord({ ...WHITE_HORSE, Building: "Building C", Unit: "Unit 4" })?.unit).toBe("Building C Unit 4")
+	})
+
 	it("reads a territory row's country from its own ISO code, and a state row's subdivision from its USPS code", () => {
 		expect(nadAddressRecord({ ...WHITE_HORSE, State: "PR" })).toMatchObject({ country: "PR", subdivision: null })
 		expect(nadAddressRecord(WHITE_HORSE)?.subdivision).toBe("US-WI")

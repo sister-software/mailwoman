@@ -102,10 +102,13 @@ export function nadAddressRecord(record: NADRecord): AddressRecord | null {
 
 	if (!sourceRecordID) return null
 
-	const unit = [record.Building, record.Floor, record.Unit, record.Room]
-		.map((part) => part?.trim() || null)
-		.filter(isPresent)
-		.join(" ")
+	// A publisher may write one designator into several columns, as New York writes `Apartment 2`
+	// into both `Building` and `Unit`, so a part that repeats an earlier one is kept once.
+	const unit = [
+		...new Set(
+			[record.Building, record.Floor, record.Unit, record.Room].map((part) => part?.trim() || null).filter(isPresent)
+		),
+	].join(" ")
 
 	return {
 		source: USGOV_NAD_ADAPTER_ID,
