@@ -25,6 +25,8 @@
  * @see {@link https://pe.usps.com/text/pub28/28apc_003.htm USPS Secondary Unit Designators}
  */
 
+import { normalizeAddressToken } from "#address/key"
+
 /**
  * Canonical USPS secondary unit designator → recognized variants.
  *
@@ -224,6 +226,66 @@ export function lookupUnitDesignator(input: string | null): UnitDesignatorMatch 
  */
 export function isUnitDesignatorToken(input: unknown): boolean {
 	return typeof input === "string" && US_UNIT_DESIGNATOR_LOOKUP.has(input.trim().toLowerCase())
+}
+
+/**
+ * Unit values publishers write for an absent unit.
+ */
+const ABSENT_UNIT_VALUES = new Set(["null", "<null>", "none", "n/a", "na"])
+
+/**
+ * The address a unit field is read against, so a field that repeats the address is read as no unit.
+ */
+export interface UnitContext {
+	number?: string | null
+	street?: string | null
+}
+
+/**
+ * The identifier a US unit states without its designator, folded for comparison,
+ * or `null` when the unit field states no unit.
+ *
+ * Publishers write one unit as `UNIT 2`, `Apt. 2`, `#2` or a bare `2`, and each of these yields `2`.
+ * Designator words are dropped wherever they stand and the remaining words joined,
+ * so `BLDG 25 FL 1` and `25 1` both yield `251`.
+ *
+ * Zeros that open a numeric word are dropped, so `0807` and `807` agree.
+ * A unit that is only designators, such as `Basement`, yields its first canonical
+ * designator, so `BSMT` and `Basement` agree.
+ *
+ * Other words are folded and kept, so `North Wing` yields `northwing`.
+ *
+ * A field holding a placeholder such as `<Null>`, exactly the record's own house number,
+ * or the record's number and street states no unit and yields `null`.
+ */
+export function usUnitIdentifier(unit: string | null | undefined, context: UnitContext = {}): string | null {
+	const trimmed = unit?.trim()
+
+	if (!trimmed || ABSENT_UNIT_VALUES.has(trimmed.toLowerCase())) return null
+
+	const folded = normalizeAddressToken(trimmed)
+	const number = context.number ? normalizeAddressToken(context.number) : null
+	const street = context.street ? normalizeAddressToken(context.street) : null
+
+	// A field equal to the bare house number repeats it, while `#2` or `UNIT 2` at number 2 still states a unit.
+	if (trimmed === context.number?.trim()) return null
+
+	if (number && street && folded.startsWith(`${number} `) && folded.includes(street)) return null
+
+	// Designator words are dropped wherever they stand, so NAD's `25 1` and `BLDG 25 FL 1` agree.
+	const words = trimmed.split(/\s+/)
+	const designators = words.map((word) => US_UNIT_DESIGNATOR_LOOKUP.get(word.toLowerCase().replace(/\.$/, "")))
+
+	const identifier = words
+		.filter((_, index) => !designators[index])
+		.map((word) =>
+			normalizeAddressToken(word.replace(/^#/, ""))
+				.replaceAll(" ", "")
+				.replace(/^0+(?=\d)/, "")
+		)
+		.join("")
+
+	return identifier || designators.find((designator) => designator != null) || null
 }
 
 /**
