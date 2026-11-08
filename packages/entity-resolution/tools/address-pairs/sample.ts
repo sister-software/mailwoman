@@ -158,6 +158,12 @@ export interface AddressPairSampleResult {
 	candidates: Record<AddressPairStratum, number>
 }
 
+/**
+ * The stack size from which a pair lands in the stacked-point stratum.
+ *
+ * Every record's stack is recorded exactly, whatever its size, so the rule the layer
+ * build applies to smaller stacks grades on the same values.
+ */
 const STACK_MIN_ADDRESSES = 100
 const RULE_DEGREES = 0.002
 const POSTCODE_NEAR_DEGREES = 0.005
@@ -234,7 +240,7 @@ export async function addressPairSample(
 		for (const row of detail
 			.prepare(
 				`SELECT source_id, round(lat, 5) AS la, round(lon, 5) AS lo, count(DISTINCT street_raw || '|' || number) AS n
-				 FROM address GROUP BY source_id, la, lo HAVING n >= ${STACK_MIN_ADDRESSES}`
+				 FROM address GROUP BY source_id, la, lo HAVING n > 1`
 			)
 			.all() as Array<{ source_id: number; la: number; lo: number; n: number }>) {
 			stacks.set(`${row.source_id}@${pointKey(row.la, row.lo)}`, row.n)

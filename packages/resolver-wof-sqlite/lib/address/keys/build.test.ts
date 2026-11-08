@@ -207,6 +207,56 @@ describe("buildAddressLayer", () => {
 		).rejects.toThrow(/lists no terms for/)
 	})
 
+	it("drops a lower-ranked record that repeats a higher-ranked one, and keeps a unit row and a distant namesake", async () => {
+		await using dir = await temporaryDirectory("address-layer-")
+		const run = "openaddresses:us/wi/statewide"
+
+		const name = (value: string) => ({
+			level: "locality" as const,
+			form: AddressNameForm.Written,
+			value,
+			key: normalizeLocalityForKey(value),
+		})
+
+		const summary = await buildAddressLayer({
+			records: stream([
+				record({ number: "3200", streetRaw: "N Downer Ave" }),
+				record({ number: "3200", streetRaw: "N Downer Ave", source: run, sourceRecordID: "o1", lat: 43.0702 }),
+				record({ number: "3200", streetRaw: "N Downer Ave", source: run, sourceRecordID: "o2", unit: "APT 2" }),
+				record({
+					number: "3200",
+					streetRaw: "N Downer Ave",
+					source: run,
+					sourceRecordID: "o3",
+					names: [name("Shorewood")],
+					lat: 43.2,
+				}),
+			]),
+			sources: new Map([
+				["usgov-nad", { license: "public-domain", authority: null }],
+				[run, { license: null, authority: null }],
+			]),
+			manifest: MANIFEST,
+			lookupPath: dir.path("lookup.db"),
+			detailPath: dir.path("detail.db"),
+			duplicates: {
+				rank: (source) => (source === "usgov-nad" ? 0 : 1),
+				unitIdentifier: (unit) => unit?.replace(/^APT\s+/u, "") ?? null,
+			},
+		})
+
+		expect(summary.refused).toEqual({ [run]: { duplicate: 1 } })
+		expect(summary.records).toBe(3)
+
+		using detail = new DatabaseClient<AddressDetailDatabase>(dir.path("detail.db"), { readOnly: true })
+
+		expect(
+			(await detail.selectFrom("address").select("source_record_id").execute())
+				.map((row) => row.source_record_id)
+				.toSorted()
+		).toEqual(["nad-3200", "o2", "o3"])
+	})
+
 	it("leaves out a refused record and every record on a point stacked past the limit, and counts them", async () => {
 		await using dir = await temporaryDirectory("address-layer-")
 		const run = "openaddresses:us/wi/statewide"

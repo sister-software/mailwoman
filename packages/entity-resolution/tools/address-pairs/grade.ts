@@ -13,7 +13,7 @@
  *   - `rule` is the deterministic rule the layer build applies: the same postcode key, the same unit text, and points
  *     within 0.002 degrees.
  *   - `rule-unit-identifier` is that rule with the unit compared by identifier, so `#2` and `UNIT 2` agree.
- *   - `fellegi-sunter` scores the house number, postcode, locality and distance with `@mailwoman/match`. Its `m` and
+ *   - `fellegi-sunter` scores the postcode, locality and distance with `@mailwoman/match`. Its `m` and
  *     `u` are fitted by EM on an unlabeled population of candidate pairs, never on the labels. A point a source
  *     shares among more than five addresses locates none of them, so a pair touching one has no distance evidence.
  *
@@ -29,7 +29,6 @@ import {
 	distanceComparison,
 	estimateParameters,
 	type FellegiSunterModel,
-	houseNumberComparison,
 	scorePair,
 } from "@mailwoman/match"
 
@@ -182,7 +181,9 @@ export const ADDRESS_POINT_DISTANCE_LEVELS: ComparisonLevel[] = [
 ]
 
 /**
- * Builds the address-point Fellegi-Sunter model over house number, postcode, locality and distance.
+ * Builds the address-point Fellegi-Sunter model over postcode, locality and distance.
+ *
+ * The house number is left out: every pair of a postcode key group shares it, so it gives no evidence.
  */
 export function addressPointModel(): FellegiSunterModel<AddressPairRecord> {
 	const distance = distanceComparison<AddressPairRecord>({
@@ -194,7 +195,6 @@ export function addressPointModel(): FellegiSunterModel<AddressPairRecord> {
 	return {
 		lambda: 0.5,
 		comparisons: [
-			houseNumberComparison<AddressPairRecord>({ extract: (r) => r.number }),
 			postcodeComparison,
 			localityComparison,
 			{
