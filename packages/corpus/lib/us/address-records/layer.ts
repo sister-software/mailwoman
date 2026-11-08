@@ -15,6 +15,7 @@ import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { writeAddressLayerAttribution } from "@mailwoman/resolver-wof-sqlite/address/keys/attribution"
 import {
+	ADDRESS_LAYER_STACK_LIMIT,
 	buildAddressLayer,
 	type AddressLayerManifest,
 	type AddressSourceTerms,
@@ -28,6 +29,7 @@ import {
 	type AddressLayerCountryManifest,
 } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
 import type { AddressRecord } from "@mailwoman/resolver-wof-sqlite/address/record"
+import { openSubdivisionBoundsCheck } from "@mailwoman/resolver-wof-sqlite/address/subdivision-bounds"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
@@ -76,6 +78,10 @@ export interface BuildUSAddressLayerOptions {
 	 * The commit the build ran from, for each file's `layer_manifest`.
 	 */
 	buildSHA: string
+	/**
+	 * The Who's On First admin database a record's point is checked against its state's bounding box in.
+	 */
+	adminDatabase: PathBuilderLike
 	onState?: (summary: USStateBuild) => void
 }
 
@@ -90,6 +96,10 @@ export interface USStateBuild {
 	openAddresses: number
 	runs: number
 	seconds: number
+	/**
+	 * Records left out of the state, per source id and reason.
+	 */
+	refused: Record<string, Record<string, number>>
 }
 
 export interface USAddressLayerBuild {
@@ -186,6 +196,8 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 	const omitted = new Set(options.omitFromManifest)
 	const recorded = recordedRunTerms(options.openAddresses.plan)
 	const units = await createUnitSplitter()
+
+	using bounds = openSubdivisionBoundsCheck(options.adminDatabase)
 	const regions: AddressLayerCountryManifest["regions"] = []
 	const builds: USStateBuild[] = []
 	let refusedRuns = 0
@@ -246,6 +258,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 			manifest,
 			lookupPath: files.lookup,
 			detailPath: files.detail,
+			refuseRecord: (record) => bounds.refuse(record),
 		})
 
 		let nad = 0
@@ -267,6 +280,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 			openAddresses: summary.records - nad - overture,
 			runs: runs.length,
 			seconds: Math.round((Date.now() - started) / 1000),
+			refused: summary.refused,
 		}
 
 		await writeAddressLayerAttribution(options.root, region, options.version, recorded)
@@ -281,6 +295,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 				records: summary.records,
 				lookup: await describeAddressLayerFile(options.root, files.lookup),
 				detail: await describeAddressLayerFile(options.root, files.detail),
+				refused: summary.refused,
 			})
 		}
 	}
@@ -299,6 +314,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 		country: "US",
 		version: options.version,
 		splitRows: ADDRESS_LAYER_SPLIT_ROWS,
+		stackLimit: ADDRESS_LAYER_STACK_LIMIT,
 		regions: [...kept, ...regions].toSorted((left, right) => left.region.localeCompare(right.region)),
 	})
 

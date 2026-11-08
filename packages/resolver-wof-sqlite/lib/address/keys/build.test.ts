@@ -206,4 +206,39 @@ describe("buildAddressLayer", () => {
 			})
 		).rejects.toThrow(/lists no terms for/)
 	})
+
+	it("leaves out a refused record and every record on a point stacked past the limit, and counts them", async () => {
+		await using dir = await temporaryDirectory("address-layer-")
+		const run = "openaddresses:us/wi/statewide"
+
+		const summary = await buildAddressLayer({
+			records: stream([
+				record({ number: "3200", streetRaw: "N Downer Ave" }),
+				// Three distinct addresses one source places at one point, past a limit of two.
+				record({ number: "1", streetRaw: "Elm St", source: run, lat: 43.1, lon: -87.9 }),
+				record({ number: "2", streetRaw: "Oak St", source: run, lat: 43.1, lon: -87.9 }),
+				record({ number: "3", streetRaw: "Ash St", source: run, lat: 43.1, lon: -87.9 }),
+				record({ number: "9", streetRaw: "Far St", source: run, lat: 37.6, lon: -81.5 }),
+			]),
+			sources: new Map([
+				["usgov-nad", { license: "public-domain", authority: null }],
+				[run, { license: null, authority: null }],
+			]),
+			manifest: MANIFEST,
+			lookupPath: dir.path("lookup.db"),
+			detailPath: dir.path("detail.db"),
+			refuseRecord: (row) => (row.lat < 40 ? "outside-subdivision" : null),
+			stackLimit: 2,
+		})
+
+		expect(summary.records).toBe(1)
+		expect(summary.sources).toMatchObject({ "usgov-nad": 1, [run]: 0 })
+		expect(summary.refused).toEqual({ [run]: { "outside-subdivision": 1, "stacked-point": 3 } })
+
+		using detail = new DatabaseClient<AddressDetailDatabase>(dir.path("detail.db"), { readOnly: true })
+		using lookup = new DatabaseClient<AddressLookupDatabase>(dir.path("lookup.db"), { readOnly: true })
+
+		expect((await detail.selectFrom("address").select("number").execute()).map((row) => row.number)).toEqual(["3200"])
+		expect(await lookup.selectFrom("key_region").select("number").execute()).toEqual([{ number: "3200" }])
+	})
 })
