@@ -10,6 +10,7 @@
 
 import type { PathBuilderLike } from "path-ts"
 
+import { rangedResponseTotal } from "#api/content-range"
 import { openWriteStream, pipeline, Readable } from "#fs/streams"
 import { movePath, removePathIfPresent } from "#fs/writers"
 
@@ -142,10 +143,7 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 	let received = offset
 	let reported = offset
 
-	// `Content-Range` states the total, and `Content-Length` the bytes after the offset.
-	const rangeTotal = /\/(\d+)$/u.exec(response.headers.get("content-range") ?? "")?.[1]
-	const length = response.headers.get("content-length")
-	const total = rangeTotal ? Number(rangeTotal) : length ? offset + Number(length) : null
+	const total = rangedResponseTotal(response, offset)
 	const { onBytes } = options
 
 	onBytes?.(received, total)

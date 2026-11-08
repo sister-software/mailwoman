@@ -15,6 +15,7 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
+import { rangedResponseTotal } from "@mailwoman/core/api/content-range"
 import { acquireDirectoryLock } from "@mailwoman/core/fs/lock"
 import { tryReadLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
@@ -247,10 +248,7 @@ export async function acquireRemoteObject(options: {
 			resumeFrom: offset,
 			retainPartial: true,
 			onResponse: (response) => {
-				const total = /\/(\d+)$/u.exec(response.headers.get("content-range") ?? "")?.[1]
-				const length = response.headers.get("content-length")
-
-				answeredLength = total ? Number(total) : length ? offset + Number(length) : null
+				answeredLength = rangedResponseTotal(response, offset)
 			},
 			...(options.signal ? { signal: options.signal } : {}),
 			...(options.onProgress ? { onProgress: options.onProgress } : {}),
