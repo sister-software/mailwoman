@@ -92,7 +92,7 @@
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"kysely": "^0.29.7",
+		"kysely": "^0.29.8",
 		"path-ts": "^2.5.0",
 		"read-excel-file": "^9.3.14",
 		"spliterator": "^10.1.1",

@@ -101,8 +101,8 @@
 	"devDependencies": {
 		"@types/node": "^26.6.6",
 		"adm-zip": "^0.6.1",
-		"dependency-cruiser": "^18.7.0",
-		"kysely": "^0.29.7",
+		"dependency-cruiser": "^18.7.2",
+		"kysely": "^0.29.8",
 		"write-excel-file": "^4.1.1"
 	}
 }
