@@ -30,13 +30,10 @@ export interface DataDirectory {
  */
 export const DATA_DIRECTORIES: readonly DataDirectory[] = [
 	{
-		path: "src/wof-repos/whosonfirst-data",
-		holds: "Every Who's On First repository, admin and postcode, for every country. Each record holds its polygon.",
-	},
-	{
-		path: "corpus/sources/wof/whosonfirst-data",
-		holds: "The Who's On First repositories the corpus reads directly.",
-		caution: "This holds only France and the US. Look in src/wof-repos/whosonfirst-data for any other country.",
+		path: "src/wof-repos",
+		holds:
+			"Every Who's On First repository, admin and postcode, for every country, one clone per repository at " +
+			"src/wof-repos/<name>. Each record holds its polygon. The corpus builds read this directory too.",
 	},
 	{ path: "corpus/sources", holds: "One directory per downloaded corpus source: national registers, NAD, BAN, TIGER." },
 	{

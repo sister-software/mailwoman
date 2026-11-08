@@ -9,8 +9,9 @@
  *   2. Upstream is merged into the fork on GitHub.
  *   3. A missing clone is cloned from the fork at depth 1, directly under the root.
  *   4. An existing clone's remotes are set to `origin` = the fork and `upstream` = the original. A leftover `fork`
- *      remote is removed.
+ *      remote is removed, and `origin` fetches only the checked-out branch.
  *   5. The clone fetches `origin` and fast-forwards when it is behind.
+ *   6. A clone holding more than one commit is re-shallowed to its tip, and the older objects are pruned.
  *
  *   A clone with uncommitted changes or commits the fork lacks is fetched but left on its current commit. The
  *   corrections that reach the fork are authored in these directories, and a reset would lose the only copy.
@@ -132,6 +133,11 @@ export interface RepoSyncResult {
 	 * `null` in a dry run.
 	 */
 	forkUpdate: ForkUpdate | null
+	/**
+	 * What re-shallowing the clone did, or `null` when it was skipped: a dry run,
+	 * a refused clone, a fresh clone, or a clone that already held one commit.
+	 */
+	compacted: CloneCompaction | null
 	state: CloneState
 	dryRun: boolean
 }
@@ -343,6 +349,7 @@ export async function syncWOFRepo(repo: string, options: SyncWOFRepoOptions): Pr
 		remoteChanges: changes,
 		forkCreated,
 		forkUpdate,
+		compacted: null,
 		state,
 		dryRun,
 	})
@@ -380,6 +387,20 @@ export async function syncWOFRepo(repo: string, options: SyncWOFRepoOptions): Pr
 		await client.read(["-C", directory, ...args])
 	}
 
+	if (before.branch) {
+		// `origin` tracks the one branch the clone has checked out.
+		// A wider refspec fetches every branch of the fork, and each of those
+		// branches keeps its history in the clone.
+		await client.read([
+			"-C",
+			directory,
+			"config",
+			"--replace-all",
+			`remote.${Remote.Origin}.fetch`,
+			`+refs/heads/${before.branch}:refs/remotes/${Remote.Origin}/${before.branch}`,
+		])
+	}
+
 	await client.start(["-C", directory, "fetch", "--progress", Remote.Origin]).result
 
 	if (before.branch) {
@@ -389,11 +410,90 @@ export async function syncWOFRepo(repo: string, options: SyncWOFRepoOptions): Pr
 	const fetched = await inspectClone(directory)
 	const plan = planRepoSync(fetched)
 
-	if (plan.action !== SyncAction.FastForward || !fetched.branch) return result(fetched, changes)
+	if (plan.action === SyncAction.FastForward && fetched.branch) {
+		await client.read(["-C", directory, "merge", "--ff-only", `${Remote.Origin}/${fetched.branch}`])
+	}
 
-	await client.read(["-C", directory, "merge", "--ff-only", `${Remote.Origin}/${fetched.branch}`])
+	const compacted =
+		(plan.action === SyncAction.FastForward || plan.action === SyncAction.UpToDate) && fetched.branch
+			? await compactClone(directory, fetched.branch, client)
+			: null
 
-	return result(await inspectClone(directory), changes, plan)
+	return { ...result(await inspectClone(directory), changes, plan), compacted }
+}
+
+/**
+ * What re-shallowing a clone did.
+ */
+export interface CloneCompaction {
+	/**
+	 * Commits the clone held before, across every ref.
+	 */
+	commitsBefore: number
+	commitsAfter: number
+	/**
+	 * Local branches other than the checked-out one.
+	 *
+	 * Each keeps its history, so a clone with one holds more than its tip after compaction.
+	 */
+	otherBranches: string[]
+}
+
+/**
+ * This function reduces a clone to one commit of history: the tip of `branch`,
+ * which must equal `origin`'s copy of it.
+ *
+ * A fetch from a fork adds every commit between the clone's shallow boundary
+ * and the fork's tip, so a clone deepens with each sync.
+ * This step drops remote-tracking refs other than `origin/<branch>`, re-fetches the
+ * branch at depth 1, and prunes the objects only the dropped history reached.
+ * Returns `null` when the clone already holds one commit.
+ */
+export async function compactClone(
+	directory: string,
+	branch: string,
+	client: GitClient
+): Promise<CloneCompaction | null> {
+	const git = (args: string[]): Promise<string> => client.read(["-C", directory, ...args])
+	const countCommits = async (): Promise<number> => Number(await git(["rev-list", "--count", "--all"]))
+	const commitsBefore = await countCommits()
+
+	if (commitsBefore <= 1) return null
+
+	const keep = `refs/remotes/${Remote.Origin}/${branch}`
+
+	// A symbolic ref such as `origin/HEAD` names another ref and holds no history of its own.
+	// `update-ref -d` on one would delete the ref it points to, so symbolic refs are skipped.
+	const remoteRefs = await client.readLines([
+		"-C",
+		directory,
+		"for-each-ref",
+		"--format=%(refname) %(symref)",
+		"refs/remotes",
+	])
+
+	for (const line of remoteRefs) {
+		const [ref, symref] = line.split(" ") as [string, string?]
+
+		if (ref !== keep && !symref) {
+			await git(["update-ref", "-d", ref])
+		}
+	}
+
+	// Pseudo-refs a merge or fetch leaves behind can name the older commits.
+	for (const pseudo of ["ORIG_HEAD", "FETCH_HEAD"]) {
+		await git(["update-ref", "-d", pseudo]).catch(() => undefined)
+	}
+
+	await client.start(["-C", directory, "fetch", "--progress", "--depth", "1", Remote.Origin, branch]).result
+	await git(["reflog", "expire", "--expire=now", "--all"])
+	await git(["gc", "--prune=now", "--quiet"])
+
+	const otherBranches = (
+		await client.readLines(["-C", directory, "for-each-ref", "--format=%(refname:short)", "refs/heads"])
+	).filter((name) => name !== branch)
+
+	return { commitsBefore, commitsAfter: await countCommits(), otherBranches }
 }
 
 /**
@@ -404,6 +504,7 @@ export function syncSentence(results: readonly RepoSyncResult[]): string {
 	const refused = results.filter((r) => r.action.startsWith("refuse")).length
 	const repointed = results.filter((r) => r.remoteChanges.some((c) => c.remote === Remote.Origin)).length
 	const created = results.filter((r) => r.forkCreated).length
+	const compacted = results.filter((r) => r.compacted).length
 	const conflicts = results.filter((r) => r.forkUpdate?.kind === "conflict").length
 	const verb = results.some((r) => r.dryRun) ? "would be " : ""
 
@@ -411,6 +512,7 @@ export function syncSentence(results: readonly RepoSyncResult[]): string {
 		`${results.length} repo(s): ${count(SyncAction.Clone)} ${verb}cloned, ${count(SyncAction.FastForward)} ${verb}fast-forwarded, ` +
 		`${count(SyncAction.UpToDate)} up to date, ${refused} refused; ${repointed} ${verb}re-pointed at the fork` +
 		(created ? `; ${created} fork(s) created` : "") +
+		(compacted ? `; ${compacted} clone(s) re-shallowed to one commit` : "") +
 		(conflicts ? `; ${conflicts} fork(s) conflict with upstream and need a merge by hand` : "")
 	)
 }

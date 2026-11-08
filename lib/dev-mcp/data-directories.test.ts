@@ -16,9 +16,9 @@ describe("DATA_DIRECTORIES", () => {
 		expect(paths.every((path) => !path.startsWith("/"))).toBe(true)
 	})
 
-	it("points a search for another country's Who's On First records at the full clones", () => {
-		const subset = DATA_DIRECTORIES.find(({ path }) => path === "corpus/sources/wof/whosonfirst-data")
+	it("points every Who's On First search at the one repositories root", () => {
+		const wof = DATA_DIRECTORIES.filter(({ holds }) => holds.includes("Who's On First"))
 
-		expect(subset?.caution).toContain("src/wof-repos/whosonfirst-data")
+		expect(wof.map(({ path }) => path)).toEqual(["src/wof-repos"])
 	})
 })
