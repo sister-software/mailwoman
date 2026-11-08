@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+export * from "#styles/assets"
 export * from "#styles/fonts"
 export * from "#styles/layers"
 export * from "#styles/sources"
