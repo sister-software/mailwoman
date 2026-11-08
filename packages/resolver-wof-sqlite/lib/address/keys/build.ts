@@ -41,6 +41,7 @@ import {
 	createAddressStreetTable,
 } from "#address/keys/schema"
 import type { AddressRecord } from "#address/record"
+import { addressPointStacksSQL } from "#address/stack"
 
 /**
  * The SQLite page size of both files.
@@ -402,8 +403,7 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 	db.exec(`CREATE TEMP TABLE stacked AS
 		SELECT address_id FROM address
 		WHERE (source_id, round(lat, 5), round(lon, 5)) IN (
-			SELECT source_id, round(lat, 5), round(lon, 5) FROM address
-			GROUP BY 1, 2, 3 HAVING count(DISTINCT street_raw || '|' || number) > ${options.stackLimit ?? ADDRESS_LAYER_STACK_LIMIT})`)
+			SELECT source_id, la, lo FROM (${addressPointStacksSQL(options.stackLimit ?? ADDRESS_LAYER_STACK_LIMIT)}))`)
 
 	drop("stacked", "stacked-point")
 
@@ -433,9 +433,7 @@ function markDuplicates(
 	sourceNames: ReadonlyMap<number, string>
 ): void {
 	// SQLite rounds the points for both the stack count and the join, so a record meets its own point's count.
-	db.exec(`CREATE TEMP TABLE stack AS
-		SELECT source_id, round(lat, 5) AS la, round(lon, 5) AS lo, count(DISTINCT street_raw || '|' || number) AS n
-		FROM address GROUP BY 1, 2, 3 HAVING n > ${ADDRESS_DUPLICATE_STACK_LIMIT}`)
+	db.exec(`CREATE TEMP TABLE stack AS ${addressPointStacksSQL(ADDRESS_DUPLICATE_STACK_LIMIT)}`)
 
 	db.exec("CREATE INDEX temp.stack_point ON stack (source_id, la, lo)")
 	db.exec("CREATE TEMP TABLE duplicate (address_id INTEGER PRIMARY KEY)")

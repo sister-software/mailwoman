@@ -31,8 +31,14 @@ import {
 	type FellegiSunterModel,
 	scorePair,
 } from "@mailwoman/match"
+import { ADDRESS_DUPLICATE_STACK_LIMIT } from "@mailwoman/resolver-wof-sqlite/address/duplicate"
 
-import type { AddressPair, AddressPairRecord, AddressPairStratum } from "#tools/address-pairs/sample"
+import {
+	type AddressPair,
+	type AddressPairRecord,
+	type AddressPairStratum,
+	RULE_DEGREES,
+} from "#tools/address-pairs/sample"
 
 /**
  * The counts and rates of one arm over one set of pairs.
@@ -64,13 +70,6 @@ export interface ArmResult {
 		score: number | null
 	}>
 }
-
-/**
- * Distinct addresses a source may place at one point before the point stops locating any one of them.
- */
-export const STACKED_POINT_ADDRESSES = 5
-
-const RULE_DEGREES = 0.002
 
 /**
  * A record's unit identifier, read again from its unit text against its own number and street.
@@ -200,7 +199,9 @@ export function addressPointModel(): FellegiSunterModel<AddressPairRecord> {
 			{
 				...distance,
 				assess: (a, b) =>
-					a.stack > STACKED_POINT_ADDRESSES || b.stack > STACKED_POINT_ADDRESSES ? -1 : distance.assess(a, b),
+					a.stack > ADDRESS_DUPLICATE_STACK_LIMIT || b.stack > ADDRESS_DUPLICATE_STACK_LIMIT
+						? -1
+						: distance.assess(a, b),
 			},
 		],
 	}
