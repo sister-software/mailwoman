@@ -90,7 +90,7 @@ export function applyPlusCodeOverride(result: GeocodeResult, input: string, reso
 /**
  * The component slots the parse can use for a plus-code token.
  */
-const COMPONENT_SLOTS = [
+const COMPONENT_SLOTS = new Set([
 	"locality",
 	"region",
 	"postcode",
@@ -99,7 +99,9 @@ const COMPONENT_SLOTS = [
 	"venue",
 	"dependent_locality",
 	"unit",
-] as const
+] as const)
+
+type ComponentSlot = typeof COMPONENT_SLOTS extends Set<infer T> ? T : never
 
 /**
  * A plus code is a coordinate claim and never a component, whatever tag the parse gave it.
@@ -115,6 +117,7 @@ const COMPONENT_SLOTS = [
 function evictCodeFromComponents(result: GeocodeResult, tree: AddressTree, token: string): void {
 	const upper = token.toUpperCase()
 	const isCode = (value: string): boolean => value.trim().toUpperCase() === upper
+
 	const components = result.components as Partial<Record<string, string>>
 
 	for (const node of collectNodes(tree.roots, (n) => isCode(n.value))) {
@@ -134,8 +137,8 @@ function evictCodeFromComponents(result: GeocodeResult, tree: AddressTree, token
 			}
 		}
 
-		if ((COMPONENT_SLOTS as readonly string[]).includes(tag)) {
-			const slot = tag as (typeof COMPONENT_SLOTS)[number]
+		if (COMPONENT_SLOTS.has(tag as ComponentSlot)) {
+			const slot = tag as ComponentSlot
 
 			if (result[slot] && isCode(result[slot]!)) {
 				result[slot] = replacement
