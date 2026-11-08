@@ -107,6 +107,11 @@ export interface AddressLayerCountryManifest {
 	 * The most distinct addresses one source could place at one point before the build refused them.
 	 */
 	stackLimit?: number
+	/**
+	 * The duplicate rule the build dropped repeated records by: the source ranking it applied,
+	 * highest first, and the distance and stacked-point limits of `isDuplicateAddress`.
+	 */
+	duplicateRule?: { ranking: readonly string[]; distanceKm: number; stackLimit: number }
 	regions: Array<
 		AddressLayerRegion & {
 			lookup: RecordedFile

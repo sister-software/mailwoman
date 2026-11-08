@@ -8,11 +8,17 @@
  */
 
 import { US_STATE_ABBREVIATIONS, US_TERRITORY_ABBREVIATIONS } from "@mailwoman/codex/us/state"
+import { usUnitIdentifier } from "@mailwoman/codex/us/unit/designator"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
+import {
+	ADDRESS_DUPLICATE_DISTANCE_KM,
+	ADDRESS_DUPLICATE_STACK_LIMIT,
+	type AddressDuplicateRule,
+} from "@mailwoman/resolver-wof-sqlite/address/duplicate"
 import { writeAddressLayerAttribution } from "@mailwoman/resolver-wof-sqlite/address/keys/attribution"
 import {
 	ADDRESS_LAYER_STACK_LIMIT,
@@ -166,6 +172,32 @@ async function* stateRecords(
 }
 
 /**
+ * The US layer's source ranking, highest first: NAD, then OpenAddresses runs
+ * read directly, then Overture's datasets.
+ *
+ * Overture's datasets rank last because most are copies of OpenAddresses runs from an earlier release.
+ */
+export const US_ADDRESS_SOURCE_RANKING = ["usgov-nad", "openaddresses:*", "overture:*"] as const
+
+/**
+ * A source id's place in {@linkcode US_ADDRESS_SOURCE_RANKING}, lowest first.
+ */
+export function usAddressSourceRank(source: string): number {
+	if (source === "usgov-nad") return 0
+
+	if (source.startsWith("openaddresses:")) return 1
+
+	if (source.startsWith("overture:")) return 2
+
+	return 3
+}
+
+const US_DUPLICATE_RULE: AddressDuplicateRule = {
+	rank: usAddressSourceRank,
+	unitIdentifier: (unit, context) => usUnitIdentifier(unit, context),
+}
+
+/**
  * The terms each planned OpenAddresses run's source definition records, keyed by the run's source id.
  */
 function recordedRunTerms(plan: readonly OpenAddressesPlanEntry[]): Map<string, unknown> {
@@ -259,6 +291,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 			lookupPath: files.lookup,
 			detailPath: files.detail,
 			refuseRecord: (record) => bounds.refuse(record),
+			duplicates: US_DUPLICATE_RULE,
 		})
 
 		let nad = 0
@@ -315,6 +348,11 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 		version: options.version,
 		splitRows: ADDRESS_LAYER_SPLIT_ROWS,
 		stackLimit: ADDRESS_LAYER_STACK_LIMIT,
+		duplicateRule: {
+			ranking: US_ADDRESS_SOURCE_RANKING,
+			distanceKm: ADDRESS_DUPLICATE_DISTANCE_KM,
+			stackLimit: ADDRESS_DUPLICATE_STACK_LIMIT,
+		},
 		regions: [...kept, ...regions].toSorted((left, right) => left.region.localeCompare(right.region)),
 	})
 

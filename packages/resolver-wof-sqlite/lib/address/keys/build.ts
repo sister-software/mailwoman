@@ -10,7 +10,7 @@
  */
 
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { stringifyJSON } from "@mailwoman/core/json"
+import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { sourcePresentCoverageCells } from "@mailwoman/core/layers"
 import { type LayerManifest, writeLayerCoverage, writeLayerManifest } from "@mailwoman/core/layers/manifest"
 import { createLayerCoverageTable, createLayerManifestTable } from "@mailwoman/core/layers/schema"
@@ -21,6 +21,12 @@ import { latLngToCell } from "@sister.software/h3"
 import { type Kysely, sql } from "kysely"
 import { dirname, type PathBuilderLike } from "path-ts"
 
+import {
+	ADDRESS_DUPLICATE_STACK_LIMIT,
+	type AddressDuplicateRule,
+	type DuplicateCandidate,
+	isDuplicateAddress,
+} from "#address/duplicate"
 import { addressPostcodeKey } from "#address/keys/postcode"
 import {
 	ADDRESS_SCOPED_KEY_TABLES,
@@ -144,6 +150,12 @@ export interface BuildAddressLayerOptions {
 	 * @defaultValue {@linkcode ADDRESS_LAYER_STACK_LIMIT}
 	 */
 	stackLimit?: number
+	/**
+	 * Drops each record that repeats a higher-ranked source's record of the same postcode key,
+	 * by {@link isDuplicateAddress}, under the reason `duplicate`.
+	 * Without it every source's record is kept.
+	 */
+	duplicates?: AddressDuplicateRule
 }
 
 /**
@@ -344,26 +356,20 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 		sourceRow.run(name, id)
 	}
 
-	// A point one source shares among more than `stackLimit` addresses locates none
-	// of them, so every record on it is removed from the staged keys and details,
-	// and the counts the build's checks compare are lowered to match.
 	const sourceNames = new Map([...sourceIDs].map(([name, id]) => [id, name]))
 
-	db.exec(`CREATE TEMP TABLE stacked AS
-		SELECT address_id, source_id, lat, lon FROM address
-		WHERE (source_id, round(lat, 5), round(lon, 5)) IN (
-			SELECT source_id, round(lat, 5), round(lon, 5) FROM address
-			GROUP BY 1, 2, 3 HAVING count(DISTINCT street_raw || '|' || number) > ${options.stackLimit ?? ADDRESS_LAYER_STACK_LIMIT})`)
+	// Removes the records a temporary table lists from the staged keys and details,
+	// counts them under `reason`, and lowers the counts the build's checks compare to match.
+	const drop = (table: string, reason: string) => {
+		const dropped = db
+			.prepare(`SELECT a.source_id, a.lat, a.lon FROM ${table} t JOIN address a USING (address_id)`)
+			.all() as Array<{
+			source_id: number
+			lat: number
+			lon: number
+		}>
 
-	const stacked = db.prepare("SELECT address_id, source_id, lat, lon FROM stacked").all() as Array<{
-		address_id: number
-		source_id: number
-		lat: number
-		lon: number
-	}>
-
-	if (stacked.length) {
-		for (const row of stacked) {
+		for (const row of dropped) {
 			const source = sourceNames.get(row.source_id)!
 			const cell = shortCellToInt(latLngToCell(row.lat, row.lon, ADDRESS_LAYER_COVERAGE_RESOLUTION))
 			const remaining = (coverage.get(cell) ?? 0) - 1
@@ -375,23 +381,36 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 			}
 
 			sources[source] = (sources[source] ?? 0) - 1
-			refuse(source, "stacked-point")
+			refuse(source, reason)
 		}
 
 		for (const { level, n } of db
 			.prepare(
-				"SELECT level, count(*) AS n FROM stage WHERE address_id IN (SELECT address_id FROM stacked) GROUP BY level"
+				`SELECT level, count(*) AS n FROM stage WHERE address_id IN (SELECT address_id FROM ${table}) GROUP BY level`
 			)
 			.all() as Array<{ level: StagedLevel; n: number }>) {
 			keys[level] -= n
 		}
 
-		db.exec("DELETE FROM stage WHERE address_id IN (SELECT address_id FROM stacked)")
-		db.exec("DELETE FROM address WHERE address_id IN (SELECT address_id FROM stacked)")
-		records -= stacked.length
+		db.exec(`DELETE FROM stage WHERE address_id IN (SELECT address_id FROM ${table})`)
+		db.exec(`DELETE FROM address WHERE address_id IN (SELECT address_id FROM ${table})`)
+		db.exec(`DROP TABLE ${table}`)
+		records -= dropped.length
 	}
 
-	db.exec("DROP TABLE stacked")
+	// A point one source shares among more than `stackLimit` addresses locates none of them.
+	db.exec(`CREATE TEMP TABLE stacked AS
+		SELECT address_id FROM address
+		WHERE (source_id, round(lat, 5), round(lon, 5)) IN (
+			SELECT source_id, round(lat, 5), round(lon, 5) FROM address
+			GROUP BY 1, 2, 3 HAVING count(DISTINCT street_raw || '|' || number) > ${options.stackLimit ?? ADDRESS_LAYER_STACK_LIMIT})`)
+
+	drop("stacked", "stacked-point")
+
+	if (options.duplicates) {
+		markDuplicates(db, options.duplicates, sourceNames)
+		drop("duplicate", "duplicate")
+	}
 
 	return {
 		records,
@@ -401,6 +420,96 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 		coverage,
 		refused,
 	}
+}
+
+/**
+ * Lists in a temporary `duplicate` table every staged record that repeats a higher-ranked
+ * record of its postcode key group, by {@link isDuplicateAddress}.
+ * Only groups holding two or more sources are read.
+ */
+function markDuplicates(
+	db: DatabaseClient<StagingDatabase>,
+	rule: AddressDuplicateRule,
+	sourceNames: ReadonlyMap<number, string>
+): void {
+	// SQLite rounds the points for both the stack count and the join, so a record meets its own point's count.
+	db.exec(`CREATE TEMP TABLE stack AS
+		SELECT source_id, round(lat, 5) AS la, round(lon, 5) AS lo, count(DISTINCT street_raw || '|' || number) AS n
+		FROM address GROUP BY 1, 2, 3 HAVING n > ${ADDRESS_DUPLICATE_STACK_LIMIT}`)
+
+	db.exec("CREATE INDEX temp.stack_point ON stack (source_id, la, lo)")
+	db.exec("CREATE TEMP TABLE duplicate (address_id INTEGER PRIMARY KEY)")
+
+	const mark = db.prepare("INSERT OR IGNORE INTO duplicate VALUES (?)")
+
+	type Member = DuplicateCandidate & { addressID: number; rank: number }
+
+	const settle = (group: Member[]) => {
+		for (const lower of group) {
+			if (group.some((higher) => higher.rank < lower.rank && isDuplicateAddress(rule, higher, lower))) {
+				mark.run(lower.addressID)
+			}
+		}
+	}
+
+	let group: Member[] = []
+	let key = ""
+
+	db.exec("BEGIN")
+
+	for (const row of db
+		.prepare(
+			`SELECT s.scope, s.street, s.number AS key_number, a.address_id, a.source_id, a.unit, a.number, a.street_raw,
+				a.names, a.lat, a.lon, coalesce(k.n, 1) AS stack
+			 FROM stage s JOIN address a ON a.address_id = s.address_id
+			 LEFT JOIN stack k ON k.source_id = a.source_id AND k.la = round(a.lat, 5) AND k.lo = round(a.lon, 5)
+			 WHERE s.level = '${StagedLevel.Postcode}' AND (s.scope, s.street, s.number) IN (
+				SELECT scope, street, number FROM stage WHERE level = '${StagedLevel.Postcode}'
+				GROUP BY 1, 2, 3 HAVING count(DISTINCT source_id) > 1)
+			 ORDER BY s.scope, s.street, s.number`
+		)
+		.iterate() as Iterable<{
+		scope: string
+		street: string
+		key_number: string
+		address_id: number
+		source_id: number
+		unit: string | null
+		number: string
+		street_raw: string
+		names: string
+		lat: number
+		lon: number
+		stack: number
+	}>) {
+		const rowKey = `${row.scope}|${row.street}|${row.key_number}`
+
+		if (rowKey !== key) {
+			settle(group)
+			group = []
+			key = rowKey
+		}
+
+		const source = sourceNames.get(row.source_id)!
+		const names = parseJSONStrict<Array<{ level: string; value: string }>>(row.names)
+
+		group.push({
+			addressID: row.address_id,
+			rank: rule.rank(source),
+			source,
+			unit: row.unit,
+			number: row.number,
+			streetRaw: row.street_raw,
+			localities: names.filter((name) => name.level === "locality").map((name) => name.value),
+			lat: row.lat,
+			lon: row.lon,
+			stack: row.stack,
+		})
+	}
+
+	settle(group)
+	db.exec("COMMIT")
+	db.exec("DROP TABLE stack")
 }
 
 async function writeLookup(
