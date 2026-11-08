@@ -44,6 +44,7 @@ import { typecheckTestsCheck } from "#repo-health/checks/typecheck-tests"
 import { versionSyncCheck } from "#repo-health/checks/version-sync"
 import { vocabCensusCheck } from "#repo-health/checks/vocab-census"
 import { weightsFamilyCheck } from "#repo-health/checks/weights/family"
+import { weightsMaterializationCheck } from "#repo-health/checks/weights/materialization"
 import { weightsReconciliationCheck } from "#repo-health/checks/weights/reconciliation"
 import { weightsRightsCheck } from "#repo-health/checks/weights/rights"
 import { wireIdentifiersCheck } from "#repo-health/checks/wire-identifiers"
@@ -64,6 +65,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	weightsFamilyCheck,
 	weightsRightsCheck,
 	weightsReconciliationCheck,
+	weightsMaterializationCheck,
 	dataProvenanceCheck,
 	publishedBundlesCheck,
 	testLayoutCheck,
