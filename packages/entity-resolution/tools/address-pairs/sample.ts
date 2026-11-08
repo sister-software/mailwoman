@@ -24,6 +24,7 @@ import { hashFNV1a } from "@mailwoman/core/coarse-placer/fnv-hash"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { addressLayerFiles } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
+import { addressPointStacksSQL } from "@mailwoman/resolver-wof-sqlite/address/stack"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
@@ -165,7 +166,13 @@ export interface AddressPairSampleResult {
  * build applies to smaller stacks grades on the same values.
  */
 const STACK_MIN_ADDRESSES = 100
-const RULE_DEGREES = 0.002
+
+/**
+ * How far apart, in degrees on each axis, the deterministic rule the layer build applied
+ * before #2978 let two points of one address lie.
+ * The `rule` arm of the grade reads it from here.
+ */
+export const RULE_DEGREES = 0.002
 const POSTCODE_NEAR_DEGREES = 0.005
 
 interface KeyRow {
@@ -189,6 +196,8 @@ interface DetailRow {
 	lon: number
 	placement: string | null
 	authority: string | null
+	la: number
+	lo: number
 }
 
 function sourceRank(name: string): number {
@@ -196,8 +205,6 @@ function sourceRank(name: string): number {
 
 	return name.startsWith("openaddresses:") ? 1 : 2
 }
-
-const pointKey = (lat: number, lon: number) => `${lat.toFixed(5)},${lon.toFixed(5)}`
 
 function strataRecord<T>(value: () => T): Record<AddressPairStratum, T> {
 	return Object.fromEntries(Object.values(AddressPairStratum).map((stratum) => [stratum, value()])) as Record<
@@ -237,18 +244,19 @@ export async function addressPairSample(
 
 		const stacks = new Map<string, number>()
 
-		for (const row of detail
-			.prepare(
-				`SELECT source_id, round(lat, 5) AS la, round(lon, 5) AS lo, count(DISTINCT street_raw || '|' || number) AS n
-				 FROM address GROUP BY source_id, la, lo HAVING n > 1`
-			)
-			.all() as Array<{ source_id: number; la: number; lo: number; n: number }>) {
-			stacks.set(`${row.source_id}@${pointKey(row.la, row.lo)}`, row.n)
+		// The detail read below rounds each record's point in SQLite too, so the keys of both sides agree.
+		for (const row of detail.prepare(addressPointStacksSQL(1)).all() as Array<{
+			source_id: number
+			la: number
+			lo: number
+			n: number
+		}>) {
+			stacks.set(`${row.source_id}@${row.la},${row.lo}`, row.n)
 		}
 
 		const readDetail = detail.prepare(
 			`SELECT address_id, source_id, source_record_id, number, unit, street_raw, postcode, names, lat, lon, placement,
-				authority FROM address WHERE address_id = ?`
+				authority, round(lat, 5) AS la, round(lon, 5) AS lo FROM address WHERE address_id = ?`
 		)
 
 		const record = (id: number): AddressPairRecord => {
@@ -272,7 +280,7 @@ export async function addressPairSample(
 				placement: row.placement,
 				lat: row.lat,
 				lon: row.lon,
-				stack: stacks.get(`${row.source_id}@${pointKey(row.lat, row.lon)}`) ?? 1,
+				stack: stacks.get(`${row.source_id}@${row.la},${row.lo}`) ?? 1,
 			}
 		}
 
