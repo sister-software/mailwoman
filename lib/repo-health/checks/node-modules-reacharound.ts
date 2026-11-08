@@ -87,6 +87,11 @@ const ALLOWED: Record<string, string> = {
 		"inspects a scratch project's install layout from outside, by design",
 	"lib/release-kit/release/smoke/installed-bin.ts":
 		"reads the bin entry from a scratch project's installed manifest, for both clean-install smokes",
+	// Looks for a `mailwoman` bin in the reader's own project, found upward from the working directory.
+	// Module resolution would answer from this CLI's install instead of that project.
+	"packages/mailwoman/cli/kit/invocation.ts": "probes the reader's project for an installed mailwoman bin",
+	"packages/mailwoman/cli/kit/invocation.test.ts":
+		"builds a scratch project with an installed bin for the probe under test",
 	// Builds the node_modules symlink farm a git worktree lacks rather than reading one,
 	// so there is no path to resolve until this code creates the directory.
 	"lib/dev-mcp/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
