@@ -8,6 +8,7 @@
 
 import { parseJSONStrict } from "@mailwoman/core/json"
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
+import { type LatLonBounds, latLonBoundsContain } from "@mailwoman/spatial/bbox"
 
 import {
 	type AddressKeyHit,
@@ -15,17 +16,6 @@ import {
 	AddressKeyLookup,
 	type AddressStatementRunner,
 } from "#address/keys/lookup"
-
-interface Bounds {
-	minLat: number
-	maxLat: number
-	minLon: number
-	maxLon: number
-}
-
-function contains(bounds: Bounds, hit: AddressKeyHit): boolean {
-	return hit.lat >= bounds.minLat && hit.lat <= bounds.maxLat && hit.lon >= bounds.minLon && hit.lon <= bounds.maxLon
-}
 
 /**
  * An {@link AddressPointLookup} over one region's `lookup.db`.
@@ -57,11 +47,11 @@ export class AddressKeyPointLookup implements AddressPointLookup {
 	/**
 	 * The first region-key row inside `bounds` whose record states no postcode and no locality.
 	 */
-	async #unscopedInside(hits: readonly AddressKeyHit[], bounds: Bounds): Promise<AddressKeyHit | undefined> {
+	async #unscopedInside(hits: readonly AddressKeyHit[], bounds: LatLonBounds): Promise<AddressKeyHit | undefined> {
 		if (!this.#detail) return undefined
 
 		for (const candidate of hits) {
-			if (!contains(bounds, candidate)) continue
+			if (!latLonBoundsContain(bounds, candidate.lat, candidate.lon)) continue
 
 			const [row] = await this.#detail.query<{ postcode: string | null; names: string }>(
 				"SELECT postcode, names FROM address WHERE address_id = ?",

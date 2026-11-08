@@ -6,17 +6,11 @@
  *   Refuses an address record whose point lies outside the bounding box of the subdivision it states.
  */
 
+import { type LatLonBounds, latLonBoundsContain } from "@mailwoman/spatial/bbox"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import type { AddressRecord } from "#address/record"
-
-interface Bounds {
-	minLat: number
-	maxLat: number
-	minLon: number
-	maxLon: number
-}
 
 /**
  * The reason a record outside its subdivision's box is refused under.
@@ -58,7 +52,7 @@ export function openSubdivisionBoundsCheck(adminDatabasePath: PathBuilderLike): 
 		 ORDER BY s.max_latitude - s.min_latitude DESC LIMIT 1`
 	)
 
-	const boxes = new Map<string, Bounds | null>()
+	const boxes = new Map<string, LatLonBounds | null>()
 	const unchecked = new Set<string>()
 
 	return {
@@ -71,7 +65,7 @@ export function openSubdivisionBoundsCheck(adminDatabasePath: PathBuilderLike): 
 			let box = boxes.get(subdivision)
 
 			if (box === undefined) {
-				box = (read.get(subdivision) as Bounds | undefined) ?? null
+				box = (read.get(subdivision) as LatLonBounds | undefined) ?? null
 				boxes.set(subdivision, box)
 
 				if (!box) {
@@ -81,10 +75,7 @@ export function openSubdivisionBoundsCheck(adminDatabasePath: PathBuilderLike): 
 
 			if (!box) return null
 
-			const inside =
-				record.lat >= box.minLat && record.lat <= box.maxLat && record.lon >= box.minLon && record.lon <= box.maxLon
-
-			return inside ? null : OUTSIDE_SUBDIVISION
+			return latLonBoundsContain(box, record.lat, record.lon) ? null : OUTSIDE_SUBDIVISION
 		},
 		[Symbol.dispose]: () => db[Symbol.dispose](),
 	}

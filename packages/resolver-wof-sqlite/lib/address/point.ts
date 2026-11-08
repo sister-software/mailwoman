@@ -6,6 +6,7 @@
  */
 
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
+import { latLonBoundsContain } from "@mailwoman/spatial/bbox"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { indexExists } from "@mailwoman/sqlite/introspection"
 import type { PathBuilderLike } from "path-ts"
@@ -360,7 +361,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 
 		if (!bbox) return true
 
-		return row.lat >= bbox.minLat && row.lat <= bbox.maxLat && row.lon >= bbox.minLon && row.lon <= bbox.maxLon
+		return latLonBoundsContain(bbox, row.lat, row.lon)
 	}
 
 	[Symbol.dispose](): void {
