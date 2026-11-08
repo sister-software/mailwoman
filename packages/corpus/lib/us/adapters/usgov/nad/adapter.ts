@@ -173,6 +173,27 @@ export async function* readNADRecords(
  */
 const US_STATES_SET: ReadonlySet<string> = new Set(US_STATE_ABBREVIATIONS)
 
+/**
+ * A NAD row's unit as an address writes it: its `Building`, `Floor`, `Unit`
+ * and `Room` parts in that order, or `null` when all four are empty.
+ *
+ * A publisher may write one designator into several columns, as New York writes `Apartment 2`
+ * into both `Building` and `Unit`, so a part that repeats an earlier one is kept once.
+ */
+export function nadUnitText(record: NADRecord): string | null {
+	const parts = new Set<string>()
+
+	for (const part of [record.Building, record.Floor, record.Unit, record.Room]) {
+		const trimmed = part?.trim()
+
+		if (trimmed) {
+			parts.add(trimmed)
+		}
+	}
+
+	return parts.size ? [...parts].join(" ") : null
+}
+
 function nonEmpty(...values: Array<string | null | undefined>): string | null {
 	for (const v of values) {
 		const trimmed = (v ?? "").toString().trim()
@@ -332,7 +353,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				const decomposed = decomposeNADStreet(record)
 				const houseNumber = nadHouseNumber(record)
 				const venue = nonEmpty(record.LandmkName)
-				const unit = nonEmpty(record.Unit, record.Building, record.Floor, record.Room)
+				const unit = nadUnitText(record)
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),

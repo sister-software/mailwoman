@@ -7,7 +7,6 @@
  */
 
 import { isUSStateAbbreviation, US_TERRITORY_ABBREVIATIONS } from "@mailwoman/codex/us/state"
-import { isPresent } from "@mailwoman/core/objects"
 import {
 	AddressNameForm,
 	collectAddressNames,
@@ -22,6 +21,7 @@ import {
 	decomposeNADStreet,
 	NAD_PLACEHOLDER_UUID,
 	nadHouseNumber,
+	nadUnitText,
 	type NADRecord,
 	readNADRecords,
 	statedNADPlaceName,
@@ -82,13 +82,7 @@ export function nadAddressRecord(record: NADRecord): AddressRecord | null {
 
 	if (!sourceRecordID) return null
 
-	// A publisher may write one designator into several columns, as New York writes `Apartment 2`
-	// into both `Building` and `Unit`, so a part that repeats an earlier one is kept once.
-	const unit = [
-		...new Set(
-			[record.Building, record.Floor, record.Unit, record.Room].map((part) => part?.trim() || null).filter(isPresent)
-		),
-	].join(" ")
+	const unit = nadUnitText(record)
 
 	return {
 		source: USGOV_NAD_ADAPTER_ID,
@@ -97,7 +91,7 @@ export function nadAddressRecord(record: NADRecord): AddressRecord | null {
 		country: TERRITORIES.has(state) ? state : "US",
 		subdivision: TERRITORIES.has(state) ? null : `US-${state}`,
 		number,
-		unit: unit || null,
+		unit,
 		streetRaw: street,
 		streetKey,
 		routeKey: canonicalizeRouteKey(streetKey),

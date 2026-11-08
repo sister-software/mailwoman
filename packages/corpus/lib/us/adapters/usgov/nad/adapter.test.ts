@@ -16,6 +16,7 @@ import type { CanonicalRow } from "#types"
 import {
 	createUsgovNADAdapter,
 	NAD_RECORD_COLUMNS,
+	nadUnitText,
 	normalizeNADUUID,
 	USGOV_NAD_ADAPTER_ID,
 	USGOV_NAD_DEFAULT_LICENSE,
@@ -253,5 +254,17 @@ describe("usgov-nad adapter", () => {
 		}
 
 		await expect(iterate()).rejects.toThrow(/only US supported/)
+	})
+})
+
+describe("nadUnitText", () => {
+	it.each([
+		[{ Building: "BLDG 3", Unit: "APT 2" }, "BLDG 3 APT 2"],
+		[{ Building: "Apartment 2", Unit: "Apartment 2" }, "Apartment 2"],
+		[{ Floor: " FL 4 ", Room: "RM 410" }, "FL 4 RM 410"],
+		[{ Unit: "#106" }, "#106"],
+		[{ Building: " ", Unit: null }, null],
+	])("composes %j as %j", (record, expected) => {
+		expect(nadUnitText(record)).toBe(expected)
 	})
 })
