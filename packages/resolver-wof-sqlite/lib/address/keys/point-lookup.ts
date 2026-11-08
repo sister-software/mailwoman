@@ -6,6 +6,7 @@
  *   The resolver's address-point tier, answered from an address layer's `lookup.db` through `AddressKeyLookup`.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/json"
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
 
 import {
@@ -30,21 +31,53 @@ function contains(bounds: Bounds, hit: AddressKeyHit): boolean {
  * An {@link AddressPointLookup} over one region's `lookup.db`.
  *
  * A postcode, locality or subregion key answers with its first row.
- * A region key matches a street and number anywhere in the file, so it answers
- * only inside the box the resolver passes around the resolved locality, and only
- * when the parse stated no postcode or locality to match.
+ * A region key matches a street and number anywhere in the file.
  *
- * With no box it does not answer, as the `address_point` reader did not.
+ * It answers only with a row inside the box the resolver passes around the resolved locality,
+ * and only with a row whose record states no postcode and no locality, read from `detail.db`.
+ * A row that states either would have matched its own scope, so its place is not the one the parse states.
+ *
+ * This is the rule the `address_point` reader applies to its bounding-box scope.
+ *
+ * With no box, or with no `detail.db` to read, a region key does not answer.
  */
 export class AddressKeyPointLookup implements AddressPointLookup {
 	readonly #runner: AddressStatementRunner
+	readonly #detail: AddressStatementRunner | null
 	readonly #lookup: AddressKeyLookup
 	#sources: Promise<Map<number, string>> | null = null
 	#release: Promise<string> | null = null
 
-	constructor(runner: AddressStatementRunner, options: { country: string }) {
+	constructor(runner: AddressStatementRunner, options: { country: string; detail?: AddressStatementRunner | null }) {
 		this.#runner = runner
+		this.#detail = options.detail ?? null
 		this.#lookup = new AddressKeyLookup(runner, { country: options.country })
+	}
+
+	/**
+	 * The first region-key row inside `bounds` whose record states no postcode and no locality.
+	 */
+	async #unscopedInside(hits: readonly AddressKeyHit[], bounds: Bounds): Promise<AddressKeyHit | undefined> {
+		if (!this.#detail) return undefined
+
+		for (const candidate of hits) {
+			if (!contains(bounds, candidate)) continue
+
+			const [row] = await this.#detail.query<{ postcode: string | null; names: string }>(
+				"SELECT postcode, names FROM address WHERE address_id = ?",
+				[candidate.addressID]
+			)
+
+			if (!row) throw new Error(`detail.db holds no address ${candidate.addressID} for a lookup.db key row`)
+
+			const statesLocality = parseJSONStrict<Array<{ level: string }>>(row.names).some(
+				(name) => name.level === "locality" || name.level === "dependent_locality"
+			)
+
+			if (!row.postcode && !statesLocality) return candidate
+		}
+
+		return undefined
 	}
 
 	async find(query: Parameters<AddressPointLookup["find"]>[0]): Promise<AddressPointHit | null> {
@@ -61,7 +94,7 @@ export class AddressKeyPointLookup implements AddressPointLookup {
 		const hit =
 			answer.level === AddressKeyLevel.Region
 				? query.bbox
-					? answer.hits.find((candidate) => contains(query.bbox!, candidate))
+					? await this.#unscopedInside(answer.hits, query.bbox)
 					: undefined
 				: answer.hits[0]
 

@@ -13,7 +13,7 @@ import { openAddressLayerLookup } from "#address/keys/open"
 import { AddressNameForm, type AddressRecord } from "#address/record"
 import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "#street/normalize"
 
-function record(number: string, postcode: string | null, locality: string, lat: number): AddressRecord {
+function record(number: string, postcode: string | null, locality: string | null, lat: number): AddressRecord {
 	const streetKey = normalizeStreetForKey("Main St")
 
 	return {
@@ -27,9 +27,9 @@ function record(number: string, postcode: string | null, locality: string, lat: 
 		streetKey,
 		routeKey: canonicalizeRouteKey(streetKey),
 		postcode,
-		names: [
-			{ level: "locality", form: AddressNameForm.Written, value: locality, key: normalizeLocalityForKey(locality) },
-		],
+		names: locality
+			? [{ level: "locality", form: AddressNameForm.Written, value: locality, key: normalizeLocalityForKey(locality) }]
+			: [],
 		adminCode: null,
 		lat,
 		lon: -88,
@@ -47,7 +47,11 @@ describe("openAddressLayerLookup", () => {
 		await using dir = await temporaryDirectory("address-point-lookup-")
 
 		await buildAddressLayer({
-			records: stream([record("10", "53001", "Adell", 43.6), record("10", null, "Allenton", 43.4)]),
+			records: stream([
+				record("10", "53001", "Adell", 43.6),
+				record("10", null, "Allenton", 43.4),
+				record("10", null, null, 43.45),
+			]),
 			sources: new Map([["usgov-nad", { license: "public-domain", authority: null }]]),
 			manifest: {
 				name: "addresses-us-wi",
@@ -84,12 +88,22 @@ describe("openAddressLayerLookup", () => {
 		// A query that states a street and number and no place answers only inside the resolver's box.
 		expect(await lookup.find({ street: "Main St", number: "10", bbox: null })).toBeNull()
 
+		// Inside the box, the Allenton row states a locality, so it would have matched its own scope.
+		// The row that states neither a postcode nor a locality answers.
 		expect(
 			await lookup.find({
 				street: "Main St",
 				number: "10",
 				bbox: { minLat: 43.3, maxLat: 43.5, minLon: -89, maxLon: -87 },
 			})
-		).toMatchObject({ lat: 43.4 })
+		).toMatchObject({ lat: 43.45 })
+
+		expect(
+			await lookup.find({
+				street: "Main St",
+				number: "10",
+				bbox: { minLat: 43.35, maxLat: 43.42, minLon: -89, maxLon: -87 },
+			})
+		).toBeNull()
 	})
 })
