@@ -130,7 +130,29 @@ export interface BuildAddressLayerOptions {
 	 * Called after every millionth record with the count staged so far.
 	 */
 	onProgress?: (records: number) => void
+	/**
+	 * Returns why a record is left out of the layer, such as `outside-subdivision`, or `null` to keep it.
+	 *
+	 * Each refusal is counted in the summary under its source and reason.
+	 */
+	refuseRecord?: (record: AddressRecord) => string | null
+	/**
+	 * The most distinct street-and-number pairs one source may place at one point, rounded to 1e-5 degrees.
+	 *
+	 * The records at a point over this limit are left out under the reason `stacked-point`.
+	 *
+	 * @defaultValue {@linkcode ADDRESS_LAYER_STACK_LIMIT}
+	 */
+	stackLimit?: number
 }
+
+/**
+ * The most distinct addresses one source may place at one point before the layer refuses them all.
+ *
+ * Across the 2026-11-08 US layer, point counts fall bin by bin from 2 to 1,000 addresses per point,
+ * and four points lie above 1,000: two hold 1,004 and 1,653 addresses, and two hold 10,525 and 12,868.
+ */
+export const ADDRESS_LAYER_STACK_LIMIT = 1000
 
 /**
  * The counts one build wrote.
@@ -154,6 +176,10 @@ export interface AddressLayerBuildSummary {
 	 * Points per H3 cell at {@link ADDRESS_LAYER_COVERAGE_RESOLUTION}, keyed by the cell's short integer form.
 	 */
 	coverage: ReadonlyMap<number, number>
+	/**
+	 * Records left out of the layer, per source id and reason.
+	 */
+	refused: Record<string, Record<string, number>>
 }
 
 async function createStagingTables(db: Kysely<StagingDatabase>): Promise<void> {
@@ -218,8 +244,15 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 	const keys: Record<StagedLevel, number> = { key_postcode: 0, key_locality: 0, key_subregion: 0, key_region: 0 }
 	const sources: Record<string, number> = {}
 	const coverage = new Map<number, number>()
+	const refused: Record<string, Record<string, number>> = {}
 	let records = 0
 	let localityNames = 0
+
+	const refuse = (source: string, reason: string, count = 1) => {
+		const bySource = (refused[source] ??= {})
+
+		bySource[reason] = (bySource[reason] ?? 0) + count
+	}
 
 	db.exec("BEGIN")
 
@@ -228,6 +261,14 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 			throw new Error(
 				`address record ${record.sourceRecordID} has source ${record.source}, which the build lists no terms for`
 			)
+		}
+
+		const reason = options.refuseRecord?.(record)
+
+		if (reason) {
+			refuse(record.source, reason)
+
+			continue
 		}
 
 		let sourceID = sourceIDs.get(record.source)
@@ -303,12 +344,62 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 		sourceRow.run(name, id)
 	}
 
+	// A point one source shares among more than `stackLimit` addresses locates none
+	// of them, so every record on it is removed from the staged keys and details,
+	// and the counts the build's checks compare are lowered to match.
+	const sourceNames = new Map([...sourceIDs].map(([name, id]) => [id, name]))
+
+	db.exec(`CREATE TEMP TABLE stacked AS
+		SELECT address_id, source_id, lat, lon FROM address
+		WHERE (source_id, round(lat, 5), round(lon, 5)) IN (
+			SELECT source_id, round(lat, 5), round(lon, 5) FROM address
+			GROUP BY 1, 2, 3 HAVING count(DISTINCT street_raw || '|' || number) > ${options.stackLimit ?? ADDRESS_LAYER_STACK_LIMIT})`)
+
+	const stacked = db.prepare("SELECT address_id, source_id, lat, lon FROM stacked").all() as Array<{
+		address_id: number
+		source_id: number
+		lat: number
+		lon: number
+	}>
+
+	if (stacked.length) {
+		for (const row of stacked) {
+			const source = sourceNames.get(row.source_id)!
+			const cell = shortCellToInt(latLngToCell(row.lat, row.lon, ADDRESS_LAYER_COVERAGE_RESOLUTION))
+			const remaining = (coverage.get(cell) ?? 0) - 1
+
+			if (remaining > 0) {
+				coverage.set(cell, remaining)
+			} else {
+				coverage.delete(cell)
+			}
+
+			sources[source] = (sources[source] ?? 0) - 1
+			refuse(source, "stacked-point")
+		}
+
+		for (const { level, n } of db
+			.prepare(
+				"SELECT level, count(*) AS n FROM stage WHERE address_id IN (SELECT address_id FROM stacked) GROUP BY level"
+			)
+			.all() as Array<{ level: StagedLevel; n: number }>) {
+			keys[level] -= n
+		}
+
+		db.exec("DELETE FROM stage WHERE address_id IN (SELECT address_id FROM stacked)")
+		db.exec("DELETE FROM address WHERE address_id IN (SELECT address_id FROM stacked)")
+		records -= stacked.length
+	}
+
+	db.exec("DROP TABLE stacked")
+
 	return {
 		records,
 		keys,
 		sources,
 		localityFormsPerRecord: records ? localityNames / records : 0,
 		coverage,
+		refused,
 	}
 }
 

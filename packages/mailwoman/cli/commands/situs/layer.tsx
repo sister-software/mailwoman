@@ -60,6 +60,7 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 		const { buildSHA } = await import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest")
 		const { nadReleaseParquetPath } = await import("@mailwoman/corpus/us/tools/fetch/nad")
 		const { buildUSAddressLayer } = await import("@mailwoman/corpus/us/address-records/layer")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const lines: string[] = []
 
@@ -72,11 +73,25 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 			...(options.states ? { states: extractDelimited(options.states) } : {}),
 			...(options.omit ? { omitFromManifest: extractDelimited(options.omit) } : {}),
 			buildSHA: buildSHA(repoRootPath()),
+			adminDatabase: wofDatabasePath("admin-global-priority.db"),
 			onState: (build) => {
+				const refused: Record<string, number> = {}
+
+				for (const reasons of Object.values(build.refused)) {
+					for (const [reason, count] of Object.entries(reasons)) {
+						refused[reason] = (refused[reason] ?? 0) + count
+					}
+				}
+
+				const refusedText = Object.entries(refused)
+					.map(([reason, count]) => `${count.toLocaleString()} ${reason}`)
+					.join(", ")
+
 				const line =
 					`${build.state}: ${build.records.toLocaleString()} records ` +
 					`(NAD ${build.nad.toLocaleString()}, Overture ${build.overture.toLocaleString()}, ` +
-					`OpenAddresses ${build.openAddresses.toLocaleString()} from ${build.runs} runs) in ${build.seconds} s`
+					`OpenAddresses ${build.openAddresses.toLocaleString()} from ${build.runs} runs) in ${build.seconds} s` +
+					(refusedText ? `; refused ${refusedText}` : "")
 
 				lines.push(line)
 

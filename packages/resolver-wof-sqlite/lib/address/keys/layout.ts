@@ -103,10 +103,18 @@ export interface AddressLayerCountryManifest {
 	 * The split threshold the build applied, so a reader sees why a country is one file or several.
 	 */
 	splitRows: number
+	/**
+	 * The most distinct addresses one source could place at one point before the build refused them.
+	 */
+	stackLimit?: number
 	regions: Array<
 		AddressLayerRegion & {
 			lookup: RecordedFile
 			detail: RecordedFile
+			/**
+			 * Records the build left out of the region, per source id and reason.
+			 */
+			refused?: Record<string, Record<string, number>>
 		}
 	>
 }
