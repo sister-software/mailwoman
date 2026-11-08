@@ -18,6 +18,7 @@ describe("matchesExpectedComponents", () => {
 		expect(
 			matchesExpectedComponents({ venue: "Christ the Redeemer" }, { locality: "Christ The", region: "Redeemer" })
 		).toBe(false)
+
 		expect(matchesExpectedComponents({ locality: "Berlin" }, { locality: "Berlin", region: "Berlin" })).toBe(false)
 	})
 

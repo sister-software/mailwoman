@@ -479,6 +479,48 @@ export function describeBundleRights(bundle: DataBundle): string[] {
 }
 
 /**
+ * The short form of a bundle's rights that a pull prints by default.
+ */
+export interface BundleRightsSummary {
+	/**
+	 * The recorded expression with the obligations it implies, as {@link describeBundleRights} writes it.
+	 */
+	license: string
+	publishers: readonly string[]
+	/**
+	 * The first sentence of each condition.
+	 *
+	 * The rest of a condition explains it and prints with the full terms.
+	 */
+	conditions: string[]
+	unresolvedCount: number
+}
+
+/**
+ * The first sentence of `text`: up to the first full stop followed by whitespace and a capital letter.
+ */
+function leadSentence(text: string): string {
+	return text.split(/(?<=\.)\s+(?=[A-Z])/u, 1)[0] ?? text
+}
+
+/**
+ * Shorten a bundle's rights to its license, publishers, the first sentence of each
+ * condition, and the number of unresolved questions.
+ *
+ * The full prose remains in {@link describeBundleRights}.
+ */
+export function summarizeBundleRights(bundle: DataBundle): BundleRightsSummary {
+	const { rights } = bundle
+
+	return {
+		license: describeExpression(rights.expression),
+		publishers: rights.publishers,
+		conditions: rights.conditions.map(leadSentence),
+		unresolvedCount: rights.unresolved.length,
+	}
+}
+
+/**
  * The license data found for one bundle artifact on this machine.
  */
 export interface ArtifactTermsObservation {

@@ -58,6 +58,7 @@ describe("IATA airport records", () => {
 
 	it("relates airports to the country the source places them in", () => {
 		const australia = airportsInCountry("AU")
+
 		const expected = normalized.records.filter(
 			(record) => record.country === "AU" && record.countryStatus === "iso3166-1"
 		)

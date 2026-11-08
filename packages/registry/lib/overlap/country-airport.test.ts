@@ -25,6 +25,7 @@ interface Airports {
 }
 
 const countries = await readLocalJSONFile<Countries>(workspacePath("registry", "data", "normalized", "iso3166-1.json"))
+
 const airports = await readLocalJSONFile<Airports>(
 	workspacePath("registry", "data", "normalized", "iata-airports.json")
 )
@@ -32,6 +33,7 @@ const airports = await readLocalJSONFile<Airports>(
 const currentAlpha3 = new Set(
 	countries.records.filter((record) => record.status === "officially-assigned").map((record) => record.alpha3)
 )
+
 const airportCodes = new Set(airports.records.map((record) => record.iata))
 
 describe("country/airport collision index", () => {
@@ -83,6 +85,7 @@ describe("country/airport collision index", () => {
 
 		expect(matches).toHaveLength(2)
 		expect(matches[0]).toMatchObject({ system: "iso3166-1-alpha3", code: "AUS", country: "AU", name: "Australia" })
+
 		expect(matches[1]).toMatchObject({
 			system: "iata-location",
 			code: "AUS",
@@ -90,6 +93,7 @@ describe("country/airport collision index", () => {
 			country: "US",
 			countryStatus: "iso3166-1",
 		})
+
 		expect(matches[1]!.name).toMatch(/Austin/)
 	})
 

@@ -20,6 +20,11 @@ import {
 	type DoctorCheck,
 } from "#doctor"
 
+/**
+ * A prefix other than the bare program name, so a fix that ignores its argument fails the assertion.
+ */
+const PREFIX = "npx mailwoman"
+
 describe("version parsing + floor comparison", () => {
 	it("parses a floor out of an engines range", () => {
 		expect(parseVersionFloor(">=24.18.0")).toEqual({ major: 24, minor: 18, patch: 0 })
@@ -135,12 +140,15 @@ describe("dataRootCheck (optional)", () => {
 
 describe("gazetteerCheck (optional)", () => {
 	it("ok on an env-resolved candidate.db", () => {
-		const c = gazetteerCheck({
-			envCandidate: { path: "/wof/candidate.db", sizeBytes: 1_400_000_000 },
-			conventionCandidate: null,
-			wofDatabase: null,
-			probed: ["/wof/candidate.db"],
-		})
+		const c = gazetteerCheck(
+			{
+				envCandidate: { path: "/wof/candidate.db", sizeBytes: 1_400_000_000 },
+				conventionCandidate: null,
+				wofDatabase: null,
+				probed: ["/wof/candidate.db"],
+			},
+			PREFIX
+		)
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("candidate.db")
@@ -149,24 +157,30 @@ describe("gazetteerCheck (optional)", () => {
 	})
 
 	it("ok on a discovered WOF database", () => {
-		const c = gazetteerCheck({
-			envCandidate: null,
-			conventionCandidate: null,
-			wofDatabase: { path: "/wof/admin.db", sizeBytes: null },
-			probed: ["/wof/admin.db"],
-		})
+		const c = gazetteerCheck(
+			{
+				envCandidate: null,
+				conventionCandidate: null,
+				wofDatabase: { path: "/wof/admin.db", sizeBytes: null },
+				probed: ["/wof/admin.db"],
+			},
+			PREFIX
+		)
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("WOF admin database")
 	})
 
 	it("ok on a convention-path candidate.db with no env set", () => {
-		const c = gazetteerCheck({
-			envCandidate: null,
-			conventionCandidate: "/data/wof/candidate.db",
-			wofDatabase: null,
-			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
-		})
+		const c = gazetteerCheck(
+			{
+				envCandidate: null,
+				conventionCandidate: "/data/wof/candidate.db",
+				wofDatabase: null,
+				probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
+			},
+			PREFIX
+		)
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("/data/wof/candidate.db")
@@ -174,12 +188,15 @@ describe("gazetteerCheck (optional)", () => {
 	})
 
 	it("prefers a convention-path candidate.db over a WOF database, matching resolution precedence", () => {
-		const c = gazetteerCheck({
-			envCandidate: null,
-			conventionCandidate: "/data/wof/candidate.db",
-			wofDatabase: { path: "/data/wof/admin.db", sizeBytes: null },
-			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
-		})
+		const c = gazetteerCheck(
+			{
+				envCandidate: null,
+				conventionCandidate: "/data/wof/candidate.db",
+				wofDatabase: { path: "/data/wof/admin.db", sizeBytes: null },
+				probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
+			},
+			PREFIX
+		)
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("candidate.db")
@@ -187,27 +204,34 @@ describe("gazetteerCheck (optional)", () => {
 	})
 
 	it("missing with the data-pull hint when nothing found", () => {
-		const c = gazetteerCheck({ envCandidate: null, conventionCandidate: null, wofDatabase: null, probed: ["/a", "/b"] })
+		const c = gazetteerCheck(
+			{ envCandidate: null, conventionCandidate: null, wofDatabase: null, probed: ["/a", "/b"] },
+			PREFIX
+		)
+
 		expect(c.status).toBe(CheckStatus.Missing)
-		expect(c.fix).toContain("mailwoman data pull candidate")
+		expect(c.fix).toBe("npx mailwoman data pull candidate")
 		expect(c.detail).toContain("2 paths")
 	})
 })
 
 describe("checkPOI (optional)", () => {
 	it("ok with manifest identity when the layer opens", () => {
-		const c = checkPOI({
-			path: "/poi/poi.db",
-			exists: true,
-			manifest: {
-				name: "poi",
-				version: "2026-07-20a",
-				sourceVintage: "2026-07",
-				license: "CDLA-Permissive-2.0",
-				attribution: "Overture Maps Foundation",
+		const c = checkPOI(
+			{
+				path: "/poi/poi.db",
+				exists: true,
+				manifest: {
+					name: "poi",
+					version: "2026-07-20a",
+					sourceVintage: "2026-07",
+					license: "CDLA-Permissive-2.0",
+					attribution: "Overture Maps Foundation",
+				},
+				error: null,
 			},
-			error: null,
-		})
+			PREFIX
+		)
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("poi v2026-07-20a")
@@ -215,19 +239,21 @@ describe("checkPOI (optional)", () => {
 	})
 
 	it("missing with a build/download fix when absent", () => {
-		const c = checkPOI({ path: "/poi/poi.db", exists: false, manifest: null, error: null })
+		const c = checkPOI({ path: "/poi/poi.db", exists: false, manifest: null, error: null }, PREFIX)
 		expect(c.status).toBe(CheckStatus.Missing)
-		expect(c.fix).toContain("mailwoman gazetteer build poi")
-		expect(c.fix).toContain("mailwoman data pull poi")
+		expect(c.fix).toBe("npx mailwoman gazetteer build poi   (or: npx mailwoman data pull poi)")
 	})
 
 	it("degraded when present but the manifest is unreadable", () => {
-		const c = checkPOI({
-			path: "/poi/poi.db",
-			exists: true,
-			manifest: null,
-			error: "layer manifest: expected exactly 1 row, found 0",
-		})
+		const c = checkPOI(
+			{
+				path: "/poi/poi.db",
+				exists: true,
+				manifest: null,
+				error: "layer manifest: expected exactly 1 row, found 0",
+			},
+			PREFIX
+		)
 
 		expect(c.status).toBe(CheckStatus.Degraded)
 		expect(c.detail).toContain("unreadable")
@@ -335,10 +361,13 @@ describe("Every failing check states its consequence", () => {
 		["data root read-only", dataRootCheck({ path: "/ro", exists: true, writable: false, fromEnv: true })],
 		[
 			"gazetteer absent",
-			gazetteerCheck({ envCandidate: null, conventionCandidate: null, wofDatabase: null, probed: ["/a", "/b"] }),
+			gazetteerCheck(
+				{ envCandidate: null, conventionCandidate: null, wofDatabase: null, probed: ["/a", "/b"] },
+				PREFIX
+			),
 		],
-		["poi absent", checkPOI({ path: "/poi.db", exists: false, manifest: null, error: null })],
-		["poi unreadable", checkPOI({ path: "/poi.db", exists: true, manifest: null, error: "not a database" })],
+		["poi absent", checkPOI({ path: "/poi.db", exists: false, manifest: null, error: null }, PREFIX)],
+		["poi unreadable", checkPOI({ path: "/poi.db", exists: true, manifest: null, error: "not a database" }, PREFIX)],
 		[
 			"overlay absent",
 			localeOverlayCheck({
@@ -359,7 +388,7 @@ describe("Every failing check states its consequence", () => {
 	}
 
 	it("names the POI layer's consequence in product terms, verbatim from the ask", () => {
-		expect(checkPOI({ path: "/poi.db", exists: false, manifest: null, error: null }).consequence).toContain(
+		expect(checkPOI({ path: "/poi.db", exists: false, manifest: null, error: null }, PREFIX).consequence).toContain(
 			"A Point of Interest (POI) database is necessary to geocode businesses and landmarks."
 		)
 	})

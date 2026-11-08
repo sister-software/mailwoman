@@ -12,6 +12,7 @@ import {
 	needsDownload,
 	PUBLIC_BUCKET_BASE_URL,
 	resolveBundleArtifacts,
+	summarizeBundleRights,
 	type BundleArtifact,
 	type DataBundle,
 } from "#data"
@@ -103,6 +104,22 @@ describe("every bundle states its terms before it is pulled", () => {
 		expect(lines.some((line) => line.startsWith("you must:"))).toBe(true)
 		expect(lines.some((line) => line.startsWith("unresolved:"))).toBe(true)
 	})
+
+	it.each(Object.values(BUNDLES))(
+		"$name summarizes to its expression, each condition's lead sentence and a count of open questions",
+		(bundle) => {
+			const summary = summarizeBundleRights(bundle)
+
+			expect(summary.license.startsWith(bundle.rights.expression)).toBe(true)
+			expect(summary.unresolvedCount).toBe(bundle.rights.unresolved.length)
+			expect(summary.conditions).toHaveLength(bundle.rights.conditions.length)
+
+			summary.conditions.forEach((sentence, index) => {
+				expect(bundle.rights.conditions[index]!.startsWith(sentence)).toBe(true)
+				expect(sentence).not.toMatch(/\.\s+[A-Z]/u)
+			})
+		}
+	)
 
 	it.each(Object.values(BUNDLES))("$name records an admissible expression a pull can decide on", (bundle) => {
 		expect(() => assertAdmissibleLicenseExpression(bundle.rights.expression, bundle.name)).not.toThrow()

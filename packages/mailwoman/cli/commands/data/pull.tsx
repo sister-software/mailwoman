@@ -8,15 +8,20 @@
  *   access or data writes. Otherwise it executes the plan: each artifact is acquired with a receipt into the data
  *   root's staging area, verified, sealed and installed, and a bundle whose readers consult the active selection
  *   is activated by one atomic replacement of `active.json` once every artifact of the bundle is installed.
- *   On a terminal, each download redraws one line with its bytes, total and percent.
+ *   On a terminal, each download redraws one line with a bar, its bytes, total, percent, rate and time remaining.
+ *   Without a terminal, the same line is written to stderr at every tenth of the transfer.
+ *
+ *   Each bundle's terms print first as a summary: the recorded expression, the publishers, the first sentence of
+ *   each condition, and the number of open rights questions. `--terms` prints the full prose.
  *
  *   It never builds from source. For a request with no published artifact, it prints the build as a separate command.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { createConsoleLogger, type IRuntimeLogger } from "@mailwoman/core/logging"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
-import { useEffect, useState } from "react"
+import { type ReactElement, useEffect, useState } from "react"
 
 import {
 	type Check,
@@ -24,13 +29,15 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
+	describeProgressStep,
+	mailwomanCommandPrefix,
 	ProgressLines,
 	TransferProgress,
 	useCommandTask,
 	useProgressFeed,
 	writeRawStdout,
 } from "#cli-kit"
-import { BUNDLES } from "#data/bundles"
+import { BUNDLES, type BundleRightsSummary, summarizeBundleRights } from "#data/bundles"
 import { ArtifactOutcome, type ArtifactResult, executeInstallation } from "#data/install"
 import { readConfiguredKey } from "#data/licensed"
 import { OBLIGATION_REFUSALS, parseObligationRefusals } from "#data/obligations"
@@ -92,6 +99,12 @@ export const spec = {
 				`Decline a bundle whose recorded expression has this class of obligation (${OBLIGATION_REFUSALS.join(", ")}). ` +
 				"Repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS",
 		},
+		terms: {
+			type: "boolean",
+			default: false,
+			description:
+				"Print each bundle's full license terms, conditions and open rights questions instead of the summary",
+		},
 		json: {
 			type: "boolean",
 			default: false,
@@ -100,8 +113,30 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
+/**
+ * One bundle's terms as the pull prints them before its checks.
+ */
+interface BundleTerms {
+	bundle: string
+	summary: BundleRightsSummary
+	/**
+	 * The full rights lines, present when `--terms` asked for them.
+	 */
+	full: string[] | null
+	/**
+	 * What copies of the bundle already on disk record.
+	 * With `--terms`, it also covers the artifacts not on disk.
+	 */
+	onDisk: string[]
+	/**
+	 * The command that prints the full terms, as the reader would type it.
+	 */
+	termsCommand: string
+}
+
 interface PullResult {
 	ok: boolean
+	terms: BundleTerms[]
 	checks: Check[]
 	/**
 	 * The structured result `--json` prints: the plan's problems by kind, each artifact's
@@ -120,8 +155,28 @@ interface PullResult {
 }
 
 /**
- * The plan's lines: each bundle's terms, what its copies on disk record, its refusals
- * and access, its artifacts, then the transfer, disk and dependency summary.
+ * Each known bundle's terms: the summary, and with `fullTerms` the complete prose
+ * and a line for artifacts not yet on disk.
+ */
+function planTerms(plan: InstallationPlan, fullTerms: boolean, command: string): BundleTerms[] {
+	return plan.bundles.flatMap((bundle) =>
+		bundle.bundle
+			? [
+					{
+						bundle: bundle.name,
+						summary: summarizeBundleRights(bundle.bundle),
+						full: fullTerms ? bundle.terms : null,
+						onDisk: fullTerms ? bundle.artifactTerms : bundle.artifactTermsOnDisk,
+						termsCommand: `${command} data pull ${bundle.name} --dry-run --terms`,
+					},
+				]
+			: []
+	)
+}
+
+/**
+ * The plan's checks: each bundle's problems, refusals and access, its artifacts,
+ * then the transfer, disk and dependency summary.
  */
 function planChecks(plan: InstallationPlan, dryRun: boolean): { ok: boolean; checks: Check[] } {
 	const checks: Check[] = []
@@ -131,14 +186,6 @@ function planChecks(plan: InstallationPlan, dryRun: boolean): { ok: boolean; che
 		for (const problem of bundle.problems) {
 			ok = false
 			checks.push({ ok: false, check: `${bundle.name}: ${ProblemKind.Unavailable}`, detail: problem })
-		}
-
-		for (const line of bundle.terms) {
-			checks.push({ ok: true, check: `${bundle.name}: terms`, detail: line })
-		}
-
-		for (const line of bundle.artifactTerms) {
-			checks.push({ ok: true, check: `${bundle.name}: artifact`, detail: line })
 		}
 
 		for (const { subject, finding } of bundle.refusals) {
@@ -196,11 +243,19 @@ async function pull(
 		dataRoot: string
 		host?: string
 		refuse: ReturnType<typeof parseObligationRefusals>
+		fullTerms: boolean
+		/**
+		 * The prefix that runs this CLI, as {@linkcode mailwomanCommandPrefix} answers it.
+		 */
+		command: string
+		/**
+		 * Receives the terms once the plan exists, so they print before any transfer starts.
+		 */
+		onTerms?: (terms: BundleTerms[]) => void
 		/**
 		 * Receives each download's bytes.
-		 * Without it the transfer logs a line per 16 MB instead.
 		 */
-		onTransfer?: (remotePath: string, received: number, total: number | null) => void
+		onTransfer: (remotePath: string, received: number, total: number | null) => void
 	}
 ): Promise<PullResult> {
 	const plan = await planInstallation({
@@ -214,6 +269,9 @@ async function pull(
 	})
 
 	const planned = planChecks(plan, opts.dryRun)
+	const terms = planTerms(plan, opts.fullTerms, opts.command)
+
+	opts.onTerms?.(terms)
 
 	const report: PullResult["report"] = {
 		dataRoot: plan.dataRoot,
@@ -233,11 +291,20 @@ async function pull(
 		cancelled: false,
 	}
 
-	if (opts.dryRun || plan.fitsOnDisk === false) return { ...planned, report }
+	if (opts.dryRun || plan.fitsOnDisk === false) return { ...planned, terms, report }
 
 	const { APIClient } = await import("@mailwoman/core/api")
 
-	await using client = new APIClient({ displayName: "mailwoman data", minRequestIntervalMs: 150, retry: true })
+	// The client's request lines are diagnostics for a developer.
+	// Its warnings and errors still print.
+	const logger: IRuntimeLogger = { ...createConsoleLogger("mailwoman data"), debug: () => {}, trace: () => {} }
+
+	await using client = new APIClient({
+		displayName: "mailwoman data",
+		logger,
+		minRequestIntervalMs: 150,
+		retry: true,
+	})
 
 	const controller = new AbortController()
 	const abort = () => controller.abort()
@@ -249,7 +316,7 @@ async function pull(
 			client,
 			signal: controller.signal,
 			onProgress: (message) => console.error(`  ${message}`),
-			...(opts.onTransfer ? { onTransfer: opts.onTransfer } : {}),
+			onTransfer: opts.onTransfer,
 		})
 
 		const checks = [...planned.checks]
@@ -266,7 +333,7 @@ async function pull(
 			checks.push({
 				ok: true,
 				check: "selection",
-				detail: `generation ${result.selection.generation} is active (${plan.dataRoot}/active.json); \`mailwoman data status\` lists it`,
+				detail: `generation ${result.selection.generation} is active (${plan.dataRoot}/active.json); \`${opts.command} data status\` lists it`,
 			})
 		}
 
@@ -286,12 +353,13 @@ async function pull(
 			checks.push({
 				ok: true,
 				check: "next",
-				detail: 'mailwoman geocode "<an address in the installed area>" --format text',
+				detail: `${opts.command} geocode "<an address in the installed area>" --format text`,
 			})
 		}
 
 		return {
 			ok: planned.ok && result.ok,
+			terms,
 			checks,
 			report: {
 				...report,
@@ -306,20 +374,65 @@ async function pull(
 	}
 }
 
+/**
+ * A bundle's terms: the summary, or with `--terms` the full prose, then what copies on disk record.
+ */
+function TermsBlock({ terms }: { terms: BundleTerms }): ReactElement {
+	const { bundle, summary, full, onDisk, termsCommand } = terms
+
+	const lines = full ?? [
+		`published by ${summary.publishers.join("; ")}`,
+		...summary.conditions.map((line) => `you must: ${line}`),
+	]
+
+	return (
+		<Box flexDirection="column" marginBottom={1}>
+			<Text>
+				<Text bold>{bundle}</Text> <Text color="gray">license</Text> {summary.license}
+			</Text>
+			{[...lines, ...onDisk].map((line, index) => (
+				<Box key={index} marginLeft={2}>
+					<Text wrap="wrap">{line}</Text>
+				</Box>
+			))}
+			{full || !summary.unresolvedCount ? null : (
+				<Box marginLeft={2}>
+					<Text color="gray" wrap="wrap">
+						{summary.unresolvedCount} rights questions are open. `{termsCommand}` prints them with the full terms.
+					</Text>
+				</Box>
+			)}
+		</Box>
+	)
+}
+
 const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 	const feed = useProgressFeed()
-	const [transfers] = useState(() => new TransferProgress())
 	// Ink redraws a frame in place only on a terminal, and `--json` keeps stdout for the report.
-	// Elsewhere the transfer's own log lines on stderr show its progress.
+	// Elsewhere a line per tenth of each transfer goes to stderr.
 	const live = process.stdout.isTTY === true && !options.json
+
+	const [transfers] = useState(() =>
+		live
+			? new TransferProgress()
+			: new TransferProgress({ percentStep: 10, unsizedStepBytes: 100_000_000, refreshMs: Infinity })
+	)
+
+	const [plannedTerms, setPlannedTerms] = useState<BundleTerms[]>([])
 	const { watch } = feed
 
-	useEffect(() => watch(transfers), [watch, transfers])
+	useEffect(() => {
+		if (live) return watch(transfers)
+
+		return transfers.on("progress", ({ command, ...step }) => console.error(`  ${describeProgressStep(command, step)}`))
+	}, [live, watch, transfers])
 
 	const state = useCommandTask(
 		async () => {
+			const command = await mailwomanCommandPrefix()
+
 			if (!args.length) {
-				throw new CommandError(`mailwoman data pull <bundle...> — known bundles: ${Object.keys(BUNDLES).join(", ")}`)
+				throw new CommandError(`${command} data pull <bundle...> — known bundles: ${Object.keys(BUNDLES).join(", ")}`)
 			}
 
 			// A flag sets the refusal for this pull.
@@ -333,7 +446,10 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 				dataRoot: (options.dataRoot ?? dataRootPath()).toString(),
 				...(options.host ? { host: options.host } : {}),
 				refuse: parseObligationRefusals(refused),
-				...(live ? { onTransfer: transfers.report.bind(transfers) } : {}),
+				fullTerms: options.terms,
+				command,
+				onTerms: setPlannedTerms,
+				onTransfer: transfers.report.bind(transfers),
 			})
 
 			if (options.json) {
@@ -351,6 +467,7 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 				state={state}
 				running={
 					<Box flexDirection="column">
+						{options.json ? null : plannedTerms.map((terms) => <TermsBlock key={terms.bundle} terms={terms} />)}
 						<Text color="gray">pulling…</Text>
 						<ProgressLines entries={feed.entries} />
 					</Box>
@@ -361,7 +478,14 @@ const DataPull: CommandComponent<typeof spec> = ({ options, args }) => {
 
 	if (options.json) return null
 
-	return <CheckList checks={state.result.checks} verdict={state.result.ok} />
+	return (
+		<Box flexDirection="column">
+			{state.result.terms.map((terms) => (
+				<TermsBlock key={terms.bundle} terms={terms} />
+			))}
+			<CheckList checks={state.result.checks} verdict={state.result.ok} />
+		</Box>
+	)
 }
 
 export default DataPull

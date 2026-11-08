@@ -36,23 +36,27 @@ export const PLACE_ROOTS: readonly string[] = ["Q2221906", "Q618123", "Q811979"]
 export const EXCLUDED_ROOTS: readonly string[] = ["Q1190554", "Q3024240"]
 
 /**
- * A place whose class descends from one of these roots is a settlement or an administrative area,
- * and Who's On First already teaches its name: human settlement, administrative territorial entity and country.
+ * A place whose class descends from one of these roots is a settlement or an
+ * administrative area, and Who's On First already teaches its name: human settlement,
+ * administrative territorial entity and country.
  */
 export const SETTLEMENT_ROOTS: readonly string[] = ["Q486972", "Q56061", "Q6256"]
 
 /**
- * A place whose class descends from one of these roots is a site to visit, even when a settlement root applies too:
- * architectural structure (`Q811979`), `Q473972` (national parks and reserves) and archaeological site (`Q839954`).
+ * A place whose class descends from one of these roots is a site to visit, even
+ * when a settlement root applies too: architectural structure (`Q811979`),
+ * `Q473972` (national parks and reserves) and archaeological site (`Q839954`).
  */
 export const SITE_ROOTS: readonly string[] = ["Q811979", "Q473972", "Q839954"]
 
 /**
  * A place whose class descends from one of these roots is a street or road: road and street.
  *
- * Wikidata files named streets under architectural structure, so a render of them as venues teaches `Calle de Alcalá`
- * as a venue. The street sources already teach those names under `street`. Thoroughfare is left out because square
- * descends from it, and Times Square is a venue.
+ * Wikidata files categorize streets under architectural structure, so a render of
+ * them as venues teaches `Calle de Alcalá` as a venue.
+ * The street sources already teach those names under `street`.
+ *
+ * Thoroughfare is left out because square descends from it, and Times Square is a venue.
  */
 export const ROAD_ROOTS: readonly string[] = ["Q34442", "Q79007"]
 
@@ -136,15 +140,18 @@ const PHYSICAL_ROOTS: readonly string[] = ["Q618123", "Q811979"]
  *
  * Wikidata's class tree places some built classes under occurrence: mausoleum and tomb descend from burial.
  * The Taj Mahal is a mausoleum and stays a place.
- * Historical-country classes also reach geographical feature in the tree, so historical country excludes regardless.
+ *
+ * Historical-country classes also reach geographical feature in the tree,
+ * so historical country excludes regardless.
  */
 const OCCURRENCE_ROOT = "Q1190554"
 
 /**
  * Whether one class excludes its instances.
  *
- * Historical country excludes. Occurrence excludes unless the same class also descends from a physical root, as
- * mausoleum does, so the override never lets a separate event class through.
+ * Historical country excludes.
+ * Occurrence excludes unless the same class also descends from a physical root,
+ * as mausoleum does, so the override never lets a separate event class through.
  */
 function excludesInstances(classRoots: readonly string[]): boolean {
 	const physical = PHYSICAL_ROOTS.some((root) => classRoots.includes(root))

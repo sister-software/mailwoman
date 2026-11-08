@@ -24,6 +24,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
+	mailwomanCommandPrefix,
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
@@ -216,12 +217,13 @@ async function statusForBundles(
 
 	// Installed artifacts outside the selection and acquisitions that stopped are reported apart from the active ones.
 	const installation = await readInstallationState(dataRoot)
+	const command = await mailwomanCommandPrefix()
 
 	for (const copy of installation.inactive) {
 		checks.push({
 			ok: true,
 			check: "installed, not selected",
-			detail: `${copy.receipt?.remotePath ?? copy.manifest.role} at ${copy.path}; \`mailwoman data activate ${copy.installationID}\` or a pull of its bundle selects it`,
+			detail: `${copy.receipt?.remotePath ?? copy.manifest.role} at ${copy.path}; \`${command} data activate ${copy.installationID}\` or a pull of its bundle selects it`,
 		})
 	}
 

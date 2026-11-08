@@ -16,7 +16,13 @@ import { configRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { Box, Text } from "ink"
 import React, { useEffect, useState } from "react"
 
-import { type CommandComponent, type CommandSpec, CommandTaskResult, useCommandTask } from "#cli-kit"
+import {
+	type CommandComponent,
+	type CommandSpec,
+	CommandTaskResult,
+	mailwomanCommandPrefix,
+	useCommandTask,
+} from "#cli-kit"
 import { declareAction, evaluateAction, spec as licenseSpec } from "#cli/native/commands/license"
 import { parseCommand } from "#cli/native/spec"
 import {
@@ -75,11 +81,12 @@ async function runChecks(countries: readonly string[]): Promise<SetupReport> {
 	)
 
 	const parse = await parseSample(await mailwomanCLIPath())
+	const command = await mailwomanCommandPrefix()
 
 	return {
-		checks: { dataRoot: dataRoot.toString(), configRoot: configRoot.toString(), parse },
+		checks: { dataRoot: dataRoot.toString(), configRoot: configRoot.toString(), parse, command },
 		tiers: tiersFor(countries, installedBundles(plan)),
-		installation: { capabilities: setupCapabilities(parse, plan), next: nextInstallation(plan) },
+		installation: { capabilities: setupCapabilities(parse, plan), next: nextInstallation(plan, command) },
 	}
 }
 
@@ -194,7 +201,7 @@ const Interactive: CommandComponent<typeof spec> = ({ options }) => {
 									kind: "finished",
 									report: step.report,
 									exitCode: 0,
-									note: "Buy at https://mailwoman.post/license and adopt the key with: mailwoman license adopt <key> --secret <secret>",
+									note: `Buy at https://mailwoman.post/license and adopt the key with: ${step.report.checks.command} license adopt <key> --secret <secret>`,
 								})
 
 								break
@@ -278,7 +285,7 @@ function Finished({ report, exitCode, note }: { report: SetupReport; exitCode: n
 			{pulls.map((line) => (
 				<Text key={line}>{line}</Text>
 			))}
-			<Text>Check the installation any time: mailwoman doctor</Text>
+			<Text>Check the installation any time: {report.checks.command} doctor</Text>
 		</Box>
 	)
 }

@@ -167,8 +167,7 @@ export async function assertSessionCIComplete(
 }
 
 /**
- * The PostToolUse handler: records the session as owner of the markers a
- * `mwdev_pull_request` create wrote.
+ * The PostToolUse handler: records the session as owner of the markers a `mwdev_pull_request` create wrote.
  */
 async function claimAfterCreate(payload: CIHookPayload): Promise<void> {
 	if (payload.tool_name !== PULL_REQUEST_TOOL_NAME || payload.tool_input?.action !== "create") return

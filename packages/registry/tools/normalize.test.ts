@@ -32,11 +32,13 @@ describe("normalizeCountries", () => {
 		)
 
 		expect(records.map((record) => record.alpha2)).toEqual(["DD", "US"])
+
 		expect(records[0]).toMatchObject({
 			status: "formerly-used",
 			dissolved: "1990-10-03T00:00:00Z",
 			entityID: "wikidata:Q16957",
 		})
+
 		expect(records[1]).toMatchObject({ status: "officially-assigned" })
 		expect(records[1]).not.toHaveProperty("dissolved")
 	})
@@ -88,9 +90,11 @@ describe("normalizeAirports", () => {
 			row("1", "heliport", "Pristina Heli", "42.6", "21.0", "XK", "PRX"),
 			row("3", "small_airport", "No Code", "0", "0", "US", ""),
 		].join("\n")
+
 		const { records } = normalizeAirports(csv, current, "test")
 
 		expect(records.map((record) => record.iata)).toEqual(["LHR", "PRX"])
+
 		expect(records[0]).toMatchObject({
 			icao: "EGLL",
 			country: "GB",
@@ -98,6 +102,7 @@ describe("normalizeAirports", () => {
 			entityID: "ourairports:2",
 			facility: "large_airport",
 		})
+
 		expect(records[1]).toMatchObject({ icao: null, country: "XK", countryStatus: "source-extension" })
 	})
 
@@ -113,6 +118,7 @@ describe("normalizeAirports", () => {
 				"test"
 			)
 		).toThrow(/held by/)
+
 		expect(() =>
 			normalizeAirports([HEADER, row("1", "heliport", "A", "north", "2", "US", "AAA")].join("\n"), current, "test")
 		).toThrow(/coordinate/)

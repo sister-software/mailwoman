@@ -100,6 +100,7 @@ describe("setupSummary", () => {
 				dataRoot: "/data",
 				configRoot: "/config",
 				parse: { status: "ok", components: { house_number: "1600", street: "Pennsylvania Avenue NW" } },
+				command: "npx mailwoman",
 			},
 			tiers
 		)
@@ -116,12 +117,17 @@ describe("setupSummary", () => {
 		expect(gbLine).toContain("licensed")
 		expect(gbLine).toContain("not installed")
 		expect(lines.join("\n")).toContain("mailwoman license declare")
-		expect(lines.join("\n")).toContain("mailwoman data pull gb-streets")
+		expect(lines).toContain("  npx mailwoman data pull gb-streets")
 	})
 
 	it("states a failed parse with its reason", () => {
 		const lines = setupSummary(
-			{ dataRoot: "/data", configRoot: "/config", parse: { status: "failed", reason: "no weights" } },
+			{
+				dataRoot: "/data",
+				configRoot: "/config",
+				parse: { status: "failed", reason: "no weights" },
+				command: "mailwoman",
+			},
 			tiers
 		)
 
@@ -143,12 +149,12 @@ describe("setupCapabilities and nextInstallation", () => {
 			[Capability.Interpolation, "unavailable"],
 		])
 
-		const next = nextInstallation(plan)
+		const next = nextInstallation(plan, "npx mailwoman")
 
-		expect(next[0]).toMatch(/^mailwoman data pull candidate {3}# 2\.9 GB$/u)
+		expect(next[0]).toMatch(/^npx mailwoman data pull candidate {3}# 2\.9 GB$/u)
 
 		expect(next[1]).toMatch(
-			/^mailwoman data pull us --only <state> {3}# one of 52 states, from .+ \(vi\) to .+ \(ca\)$/u
+			/^npx mailwoman data pull us --only <state> {3}# one of 52 states, from .+ \(vi\) to .+ \(ca\)$/u
 		)
 
 		expect(installedBundles(plan)).toEqual(new Set())
@@ -171,7 +177,7 @@ describe("setupCapabilities and nextInstallation", () => {
 			detail: `installed for 1 of ${BUNDLES["us"]!.artifacts.filter((a) => a.family === "address-points").length} published scopes (US-DC)`,
 		})
 
-		expect(nextInstallation(plan)).toHaveLength(1)
+		expect(nextInstallation(plan, "mailwoman")).toHaveLength(1)
 		expect(installedBundles(plan)).toEqual(new Set(["candidate"]))
 	})
 })

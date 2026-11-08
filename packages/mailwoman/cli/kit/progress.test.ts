@@ -14,7 +14,7 @@ import { type ProcessProgress, runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { expect, test } from "vitest"
 
-import { stripAnsi, TransferProgress } from "#cli-kit"
+import { describeProgressStep, type ProgressStep, stripAnsi, TransferProgress } from "#cli-kit"
 
 const HARNESS = `
 	import { createElement as h, useEffect } from "react"
@@ -98,7 +98,7 @@ const DOWNLOAD_HARNESS = `
 `
 
 test("TransferProgress emits a step only when the whole percent or, without a total, the megabyte changes", () => {
-	const transfers = new TransferProgress()
+	const transfers = new TransferProgress({ now: () => 0 })
 	const steps: ProcessProgress[] = []
 
 	transfers.on("progress", ({ command: _command, ...step }) => steps.push(step))
@@ -129,15 +129,15 @@ test("draws a local download's bytes, total and percent as it arrives", async ()
 	const total = ByteFormatter.formatSI(3_000_000)
 
 	// Where the frames fall depends on how the socket splits the writes, so only their order is fixed.
-	const percents = [...stripAnsi(stdout).matchAll(new RegExp(`geo/object\\.db: .+ of ${total} (\\d+)%`, "gu"))].map(
-		(match) => Number(match[1])
-	)
+	const percents = [
+		...stripAnsi(stdout).matchAll(new RegExp(`geo/object\\.db: [█░]+\\s+(\\d+)%\\s+.+ of ${total}`, "gu")),
+	].map((match) => Number(match[1]))
 
 	expect(stderr).toContain("bytes 3000000")
 	expect(percents.some((percent) => percent > 0 && percent < 100)).toBe(true)
 	expect(percents).toEqual(percents.toSorted((a, b) => a - b))
 	expect(percents.at(-1)).toBe(100)
-	expect(stripAnsi(stdout)).toContain(`geo/object.db: ${total} of ${total} 100%`)
+	expect(stripAnsi(stdout)).toContain(`geo/object.db: ${"█".repeat(24)}  100%  ${total} of ${total}`)
 }, 30_000)
 
 test("renders the latest step per command", async () => {
@@ -148,7 +148,61 @@ test("renders the latest step per command", async () => {
 
 	const text = stripAnsi(stdout)
 
-	expect(text).toContain("git clone a: Receiving objects 50% (5/10)")
-	expect(text).toContain("git clone b: Resolving deltas 100% (10/10)")
+	expect(text).toMatch(/git clone a: [█░]{24}\s+50%\s+Receiving objects\s+\(5\/10\)/u)
+	expect(text).toMatch(/git clone b: █{24}\s+100%\s+Resolving deltas\s+\(10\/10\)/u)
 	expect(text).not.toContain("20%")
 }, 30_000)
+
+test("TransferProgress reports the average rate and the time remaining once a second has passed", () => {
+	let clock = 0
+	const transfers = new TransferProgress({ now: () => clock })
+	const steps: Array<ProgressStep & { command: string }> = []
+
+	transfers.on("progress", (step) => steps.push(step))
+
+	transfers.report("db", 0, 1000)
+
+	clock = 500
+	transfers.report("db", 100, 1000)
+
+	clock = 2000
+	transfers.report("db", 250, 1000)
+
+	// The percent is unchanged and the refresh interval has passed, so the step is emitted again with a new rate.
+	clock = 3000
+	transfers.report("db", 259, 1000)
+
+	expect(steps.map((step) => step.percent)).toEqual([0, 10, 25, 25])
+	expect(steps[1]?.bytesPerSecond).toBeUndefined()
+	expect(steps[2]).toMatchObject({ bytesPerSecond: 125, secondsRemaining: 6 })
+
+	expect(describeProgressStep("db", steps[2]!)).toBe(
+		`db: ${"█".repeat(6)}${"░".repeat(18)}   25%  ${ByteFormatter.formatSI(250)} of ${ByteFormatter.formatSI(1000)}` +
+			`  ${ByteFormatter.formatSI(125)}/s  6s left`
+	)
+})
+
+test("TransferProgress at ten percent per step, without a refresh interval, emits one step per tenth", () => {
+	let clock = 0
+	const transfers = new TransferProgress({ percentStep: 10, refreshMs: Infinity, now: () => clock })
+	const tenths: number[] = []
+
+	transfers.on("progress", (step) => tenths.push(Math.floor((step.percent ?? -1) / 10)))
+
+	for (let received = 0; received <= 1000; received += 7) {
+		clock += 1000
+		transfers.report("db", received, 1000)
+	}
+
+	transfers.report("db", 1000, 1000)
+
+	expect(tenths).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+})
+
+test("describeProgressStep writes the time remaining in minutes or hours, and omits it at 100%", () => {
+	const step = (secondsRemaining: number): ProgressStep => ({ stage: "s", percent: 50, secondsRemaining })
+
+	expect(describeProgressStep("k", step(125))).toMatch(/2m 05s left$/u)
+	expect(describeProgressStep("k", step(4320))).toMatch(/1h 12m left$/u)
+	expect(describeProgressStep("k", { stage: "s", percent: 100, secondsRemaining: 0 })).not.toContain("left")
+})

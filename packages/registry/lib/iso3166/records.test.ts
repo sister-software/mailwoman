@@ -50,6 +50,7 @@ describe("ISO 3166-1 records", () => {
 
 		expect(getCountryByAlpha3(former.alpha3)?.status).toBe("formerly-used")
 		expect(isCountryCodeAlpha3(former.alpha3)).toBe(false)
+
 		expect(parseCountryCodeAlpha3(former.alpha3)).toEqual({
 			ok: false,
 			reason: "not-found-in-snapshot",

@@ -15,8 +15,10 @@ import {
 	vitalPlaceRendering,
 } from "#tools/fetch/wikidata/vital-places/render"
 
-// The roots follow Wikidata's tree. Q1440300 (observation tower) sits under both Q811979 and Q56061.
-// Q515 (city) sits under Q486972 only. Q46169 (national park) sits under Q56061 and Q473972.
+// The roots follow Wikidata's tree.
+// Q1440300 (observation tower) sits under both Q811979 and Q56061.
+// Q515 (city) sits under Q486972 only.
+// Q46169 (national park) sits under Q56061 and Q473972.
 // Q4022 (river) sits under neither a settlement nor a site root.
 const ROOTS = {
 	Q1440300: ["Q811979", "Q56061", "Q618123"],
@@ -98,6 +100,7 @@ describe("renderVitalPlaceForms", () => {
 			"エッフェル塔",
 			"La dame de fer",
 		])
+
 		expect(forms[1]!.components).toEqual({ venue: "Eiffel Tower", country: "France" })
 	})
 

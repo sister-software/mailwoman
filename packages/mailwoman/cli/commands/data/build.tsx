@@ -26,6 +26,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
+	mailwomanCommandPrefix,
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
@@ -259,17 +260,19 @@ async function build(
 
 		checks.push({ ok: true, check: "installation", detail: result.installation.id })
 
+		const command = await mailwomanCommandPrefix()
+
 		checks.push(
 			result.activatedGeneration
 				? {
 						ok: true,
 						check: "selection",
-						detail: `generation ${result.activatedGeneration} is active; \`mailwoman data status\` lists it`,
+						detail: `generation ${result.activatedGeneration} is active; \`${command} data status\` lists it`,
 					}
 				: {
 						ok: true,
 						check: "next",
-						detail: `mailwoman data activate ${result.installation.id}  (selects the built layers)`,
+						detail: `${command} data activate ${result.installation.id}  (selects the built layers)`,
 					}
 		)
 
@@ -277,7 +280,7 @@ async function build(
 			checks.push({
 				ok: true,
 				check: "next",
-				detail: 'mailwoman geocode "<an address in the built country>" --format text',
+				detail: `${command} geocode "<an address in the built country>" --format text`,
 			})
 		}
 
@@ -292,8 +295,11 @@ const DataBuild: CommandComponent<typeof spec> = ({ options, args }) => {
 		async () => {
 			const [recipe] = args
 
-			if (!recipe)
-				throw new CommandError(`mailwoman data build <recipe> — recipes: ${Object.values(BuildRecipeName).join(", ")}`)
+			if (!recipe) {
+				throw new CommandError(
+					`${await mailwomanCommandPrefix()} data build <recipe> — recipes: ${Object.values(BuildRecipeName).join(", ")}`
+				)
+			}
 
 			const countries = extractDelimited(options.countries).map((country) => country.trim().toUpperCase())
 
