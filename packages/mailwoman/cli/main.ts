@@ -56,25 +56,26 @@ async function printVersion(): Promise<number> {
 
 function dispatchCommand(): Promise<number> {
 	const runnerModule = import("@mailwoman/core/scripting/command")
-	const routerModule = import("#cli/native/router")
-	const commandRouterModule = import("#cli/native/command/router")
-	const argumentsModule = import("@mailwoman/core/scripting/arguments")
+	const localityModule = import("@mailwoman/core/module/checkout-locality")
 
-	return Promise.all([runnerModule, routerModule, commandRouterModule, argumentsModule]).then(
-		([
-			{ runCLICommand },
-			{ dispatchNativeCommand },
-			{ dispatchCommand: dispatchFilesystemCommand },
-			{ cliArguments },
-		]) => {
+	return Promise.all([runnerModule, localityModule]).then(([{ runCLICommand }, { assertCheckoutLocality }]) =>
+		runCLICommand(async () => {
+			// In a repository checkout, refuse to run on another checkout's packages
+			// before the command graph loads.
+			// An installed CLI's core sits in no working tree, so the guard answers after a few stats.
+			await assertCheckoutLocality(import.meta.dirname)
+
+			const [{ dispatchNativeCommand }, { dispatchCommand: dispatchFilesystemCommand }, { cliArguments }] =
+				await Promise.all([
+					import("#cli/native/router"),
+					import("#cli/native/command/router"),
+					import("@mailwoman/core/scripting/arguments"),
+				])
+
 			const launchArguments = cliArguments()
 
-			return runCLICommand(() =>
-				dispatchNativeCommand(launchArguments).then((exitCode) => {
-					return exitCode ?? dispatchFilesystemCommand(launchArguments)
-				})
-			).then((exitCode) => exitCode ?? 0)
-		}
+			return (await dispatchNativeCommand(launchArguments)) ?? dispatchFilesystemCommand(launchArguments)
+		}).then((exitCode) => exitCode ?? 0)
 	)
 }
 

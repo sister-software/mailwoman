@@ -110,6 +110,16 @@ const ALLOWED: Record<string, string> = {
 		"builds a scratch install layout for the package resolver under test",
 	"packages/neural/lib/weights/declared-artifact.test.ts":
 		"builds a staged package symlink independently of the artifact reader under test",
+	// Build the install layouts the checkout-locality guard must refuse: a worktree's own
+	// node_modules link, and the install above a worktree that Node's upward walk reaches.
+	// Reads the entry tree's own `node_modules` entry with lstat to report whether it is absent or a link.
+	// Package resolution would answer through the link, and the link is the condition under inspection.
+	"packages/core/lib/module/checkout-locality.ts":
+		"inspects the entry checkout's own node_modules entry rather than a package inside it",
+	"packages/core/lib/module/checkout-locality.test.ts":
+		"links a scratch tree's node_modules to name the link state the guard reports",
+	"packages/core/lib/module/checkout-locality.integration.test.ts":
+		"links this checkout's install above and inside a worktree to reproduce the resolution leak",
 	"lib/repo-health/checks/node-modules-reacharound.test.ts":
 		"records source snippets containing install paths as inputs to the checker",
 	"lib/dev-mcp/routed-mailwoman-arm.test.ts":

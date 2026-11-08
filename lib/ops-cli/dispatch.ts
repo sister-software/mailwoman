@@ -16,6 +16,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { filesAtRef, renamesSince } from "@mailwoman/core/git"
 import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { describeCheckoutLeak, readCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
 import { findOperation, type Operation, type OperationContext } from "@mailwoman/core/scripting"
 import { parseArguments, type ParseArgsOptionsConfig } from "@mailwoman/core/scripting/arguments"
 import { shopOperations } from "@mailwoman/license-worker/shop/operations"
@@ -109,6 +110,7 @@ function usage(io: DispatchIO): number {
 			"  mwops release <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops shop <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops health <check>|all [--json]",
+			"  mwops checkout                   (confirm this checkout runs on its own packages, not a parent's install)",
 			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
 			"  mwops ci-test <fast|slow>        (run a root Vitest suite with ci-scope's selected files)",
 			"  mwops health baseline debt        (rewrite lib/repo-health/baseline.json from the current readings)",
@@ -560,6 +562,34 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 }
 
 /**
+ * `mwops checkout` — name the checkout this tool runs from and the one its packages were loaded from.
+ *
+ * The bin wrapper has already refused a mismatch, so from the command line this reports a match.
+ * The pre-commit hook runs it as its first step.
+ *
+ * @returns 1 when the two checkouts differ, or when neither side is a working tree.
+ */
+async function reportCheckoutLocality(io: DispatchIO): Promise<number> {
+	const locality = await readCheckoutLocality(import.meta.dirname)
+
+	if (!locality) {
+		io.stderr(`mwops checkout: ${import.meta.dirname} or the loaded @mailwoman/core is in no git working tree\n`)
+
+		return 1
+	}
+
+	if (!locality.local) {
+		io.stderr(`mwops checkout: ${describeCheckoutLeak(locality)}\n`)
+
+		return 1
+	}
+
+	io.stdout(`${locality.entryTree} runs on its own packages (node_modules: ${locality.nodeModules.state})\n`)
+
+	return 0
+}
+
+/**
  * Route one invocation.
  *
  * @returns The exit code.
@@ -568,6 +598,8 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 	const [verb, ...rest] = args
 
 	switch (verb) {
+		case "checkout":
+			return reportCheckoutLocality(io)
 		case "ci-scope":
 			io.stdout(prettyJSON(await writeCIScope(io.repoRoot)))
 			return 0

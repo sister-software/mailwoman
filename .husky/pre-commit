@@ -11,6 +11,13 @@
 
 set -e
 
+# Checkout locality, before any linter loads:
+# - A worktree without its own install resolves `@mailwoman/*` from the checkout above it.
+# - A worktree whose node_modules links to another checkout does the same.
+# - Every check below would then grade the other checkout's packages.
+# - `mwops checkout` names both checkouts and the repair, and exits non-zero.
+node lib/ops-cli/cli.ts checkout
+
 # Build staged-file list:
 # - ACMR only (Added/Copied/Modified/Renamed).
 # - Skip deletions (nothing to lint).
