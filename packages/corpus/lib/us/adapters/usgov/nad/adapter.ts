@@ -28,7 +28,7 @@ export const USGOV_NAD_DEFAULT_LICENSE = "Public Domain"
 /**
  * The all-zero UUID some NAD contributors publish in place of an identifier.
  */
-const NAD_PLACEHOLDER_UUID = /^0{8}-0{4}-0{4}-0{4}-0{12}$/u
+export const NAD_PLACEHOLDER_UUID = /^0{8}-0{4}-0{4}-0{4}-0{12}$/u
 
 /**
  * One NAD address point as the release publishes it, limited to the fields a reader here uses.

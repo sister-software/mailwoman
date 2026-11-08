@@ -11,14 +11,13 @@ import { streetLocaleForBANCountry } from "@mailwoman/ban/street-locale"
 import { departementInfo } from "@mailwoman/codex/fr/departement"
 import {
 	AddressNameForm,
+	collectAddressNames,
 	type AddressName,
-	type AddressNameLevel,
 	type AddressRecord,
 } from "@mailwoman/resolver-wof-sqlite/address/record"
 import {
 	canonicalizeRouteKey,
 	normalizeHouseNumberForKey,
-	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import type { PathBuilderLike } from "path-ts"
@@ -73,18 +72,7 @@ export function banSubdivision(country: string, codeInsee: string | null): strin
  * A pair of level and key is kept once, under the first form that produced it.
  */
 export function banAddressNames(record: BANAddrRecord): AddressName[] {
-	const names: AddressName[] = []
-
-	const add = (level: AddressNameLevel, form: AddressNameForm, value: string | null) => {
-		const trimmed = value?.trim()
-
-		if (!trimmed) return
-		const key = normalizeLocalityForKey(trimmed)
-
-		if (key && !names.some((name) => name.level === level && name.key === key)) {
-			names.push({ level, form, value: trimmed, key })
-		}
-	}
+	const { names, add } = collectAddressNames()
 
 	add("locality", AddressNameForm.Written, record.city)
 	add("locality", AddressNameForm.Bare, record.city ? arrondissementCity(record.city) : null)

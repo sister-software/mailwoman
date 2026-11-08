@@ -6,16 +6,10 @@
  *   Emits an OpenAddresses per-source run as address records for the address layer's key tables.
  */
 
-import {
-	AddressNameForm,
-	type AddressName,
-	type AddressNameLevel,
-	type AddressRecord,
-} from "@mailwoman/resolver-wof-sqlite/address/record"
+import { AddressNameForm, collectAddressNames, type AddressRecord } from "@mailwoman/resolver-wof-sqlite/address/record"
 import {
 	canonicalizeRouteKey,
 	normalizeHouseNumberForKey,
-	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 	type StreetLocale,
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
@@ -109,18 +103,7 @@ export function openAddressesAddressRecord(
 
 	if (!streetKey) return null
 
-	const names: AddressName[] = []
-
-	const add = (level: AddressNameLevel, form: AddressNameForm, value: string | null | undefined) => {
-		const trimmed = value?.trim()
-
-		if (!trimmed) return
-		const key = normalizeLocalityForKey(trimmed)
-
-		if (key && !names.some((name) => name.level === level && name.key === key)) {
-			names.push({ level, form, value: trimmed, key })
-		}
-	}
+	const { names, add } = collectAddressNames()
 
 	add("region", AddressNameForm.Written, row.region)
 	add("subregion", AddressNameForm.Written, row.district)

@@ -10,20 +10,17 @@ import { isUSStateAbbreviation, US_TERRITORY_ABBREVIATIONS } from "@mailwoman/co
 import { isPresent } from "@mailwoman/core/objects"
 import {
 	AddressNameForm,
+	collectAddressNames,
 	type AddressName,
-	type AddressNameLevel,
 	type AddressRecord,
 } from "@mailwoman/resolver-wof-sqlite/address/record"
-import {
-	canonicalizeRouteKey,
-	normalizeLocalityForKey,
-	normalizeStreetForKey,
-} from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { canonicalizeRouteKey, normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import type { PathBuilderLike } from "path-ts"
 
 import { bareMunicipalityName } from "#address-records/legal-forms"
 import {
 	decomposeNADStreet,
+	NAD_PLACEHOLDER_UUID,
 	nadHouseNumber,
 	type NADRecord,
 	readNADRecords,
@@ -32,11 +29,6 @@ import {
 } from "#us/adapters/usgov/nad/adapter"
 
 const TERRITORIES: ReadonlySet<string> = new Set(US_TERRITORY_ABBREVIATIONS)
-
-/**
- * The all-zero UUID some NAD contributors publish in place of an identifier.
- */
-const PLACEHOLDER_UUID = "00000000-0000-0000-0000-000000000000"
 
 /**
  * Every place name in a NAD record, by level, with the bare form of each written municipality beside it.
@@ -49,19 +41,7 @@ const PLACEHOLDER_UUID = "00000000-0000-0000-0000-000000000000"
  * A pair of level and key is kept once, under the first form that produced it.
  */
 export function nadAddressNames(record: NADRecord): AddressName[] {
-	const names: AddressName[] = []
-	const seen = new Set<string>()
-
-	const add = (level: AddressNameLevel, form: AddressNameForm, value: string | null) => {
-		if (!value) return
-		const key = normalizeLocalityForKey(value)
-		const identity = `${level}|${key}`
-
-		if (!key || seen.has(identity)) return
-
-		seen.add(identity)
-		names.push({ level, form, value, key })
-	}
+	const { names, add } = collectAddressNames()
 
 	const state = statedNADPlaceName(record.State)
 
@@ -97,7 +77,7 @@ export function nadAddressRecord(record: NADRecord): AddressRecord | null {
 	if (!isUSStateAbbreviation(state) || !number || !street || !Number.isFinite(lat) || !Number.isFinite(lon)) return null
 
 	const streetKey = normalizeStreetForKey(street)
-	const uuid = record.UUID && record.UUID !== PLACEHOLDER_UUID ? record.UUID : null
+	const uuid = record.UUID && !NAD_PLACEHOLDER_UUID.test(record.UUID) ? record.UUID : null
 	const sourceRecordID = uuid ?? (record.OID_ ? `oid:${record.OID_}` : null)
 
 	if (!sourceRecordID) return null

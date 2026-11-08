@@ -8,7 +8,7 @@
 
 import type { ADMIN_HIERARCHY_TAGS } from "@mailwoman/codex/component"
 
-import type { NameKey, RouteKey, StreetKey } from "#street/normalize"
+import { type NameKey, normalizeLocalityForKey, type RouteKey, type StreetKey } from "#street/normalize"
 
 /**
  * The hierarchy level a place name on an address record states, as the encoder model tags it.
@@ -55,6 +55,37 @@ export interface AddressName {
 	 * Shared `normalizeLocalityForKey` of `value`, the form a key table stores and a lookup probes.
 	 */
 	key: NameKey
+}
+
+/**
+ * Collects a record's names in the order an adapter states them.
+ *
+ * Each value is trimmed and keyed with `normalizeLocalityForKey`.
+ * A value whose key is empty, or whose level and key an earlier name already holds, is skipped.
+ */
+export function collectAddressNames(): {
+	names: AddressName[]
+	add(level: AddressNameLevel, form: AddressNameForm, value: string | null | undefined): void
+} {
+	const names: AddressName[] = []
+	const seen = new Set<string>()
+
+	return {
+		names,
+		add(level, form, value) {
+			const trimmed = value?.trim()
+
+			if (!trimmed) return
+
+			const key = normalizeLocalityForKey(trimmed)
+			const identity = `${level}|${key}`
+
+			if (!key || seen.has(identity)) return
+
+			seen.add(identity)
+			names.push({ level, form, value: trimmed, key })
+		},
+	}
 }
 
 /**
