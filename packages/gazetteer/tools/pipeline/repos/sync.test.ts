@@ -218,6 +218,44 @@ describe("syncWOFRepo", () => {
 		await expect(
 			client.read(["-C", directory.toString(), "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"])
 		).resolves.toBe("origin/main")
+
+		// The full clone of upstream plus the fork's correction held two commits.
+		// Compaction leaves the tip only.
+		expect(result.compacted).toEqual({ commitsBefore: 2, commitsAfter: 1, otherBranches: [] })
+
+		await expect(client.read(["-C", directory.toString(), "rev-parse", "--is-shallow-repository"])).resolves.toBe(
+			"true"
+		)
+	})
+
+	it("fetches only the checked-out branch from the fork and reports a local branch that keeps history", async () => {
+		await using scratch = await temporaryDirectory("repos-sync-branches-")
+		await using client = new GitClient({ cwd: scratch.path })
+
+		const origin = await forkedFixture(scratch.path, client)
+		const fork = scratch.path("fork")
+		const directory = scratch.path("repos", REPO)
+
+		await client.read(["-C", fork.toString(), "branch", "topic"])
+		await client.read(["clone", "--quiet", origin.forkURL, directory.toString()])
+		await client.read(["-C", directory.toString(), "branch", "local-work", "HEAD~1"])
+		await commit(client, fork, "LATER")
+
+		const result = await syncWOFRepo(REPO, {
+			root: scratch.path("repos"),
+			host: recordingHost(),
+			client,
+			resolveOrigin: () => origin,
+		})
+
+		expect(result.action).toBe(SyncAction.FastForward)
+		expect(result.compacted?.otherBranches).toEqual(["local-work"])
+
+		// `origin/topic` is gone.
+		// `origin/HEAD` is a symbolic ref to `origin/main` and holds no history.
+		await expect(
+			client.read(["-C", directory.toString(), "for-each-ref", "--format=%(refname)", "refs/remotes"])
+		).resolves.toBe("refs/remotes/origin/HEAD\nrefs/remotes/origin/main")
 	})
 
 	it("re-points but leaves a clone with unpushed commits on its own commit", async () => {

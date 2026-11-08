@@ -20,19 +20,14 @@ A directory containing one or more cloned `whosonfirst-data-admin-*` repos:
     └── data/...
 ```
 
-`<inputPath>` is the directory you handed `mailwoman wof sync` — the corpus
-pipeline clones the admin + postcode repos into a shared
-`/data/corpus/sources/wof/repos/whosonfirst-data/` root and the adapter walks
-that root recursively (`**/*.geojson`).
-
-Use the patched `mailwoman wof sync --repos <comma-separated>` flag to clone
-only the four repos the corpus build needs (~2.9 GB) rather than all ~100
-non-archived repos in the org:
+`<inputPath>` is the repositories root, `$MAILWOMAN_DATA_ROOT/src/wof-repos`,
+which every recorded corpus build names in its `inputs.json`. Each repository
+is cloned once there, from its `mailwoman` fork, by
+`mailwoman gazetteer inspect sync`, and the adapter walks that root
+recursively (`**/*.geojson`). To add the repositories one country needs:
 
 ```sh
-mailwoman wof sync /data/corpus/sources/wof/ \
-  --repos whosonfirst-data-admin-us,whosonfirst-data-admin-fr,\
-whosonfirst-data-postalcode-us,whosonfirst-data-postalcode-fr
+mailwoman gazetteer inspect sync --countries us,fr
 ```
 
 ## Recognized properties

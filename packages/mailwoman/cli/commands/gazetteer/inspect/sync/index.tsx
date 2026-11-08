@@ -147,6 +147,15 @@ function describeResult(result: RepoSyncResult): string {
 		parts.push(`fork ${update.kind} from upstream`)
 	}
 
+	const { compacted } = result
+
+	if (compacted) {
+		parts.push(
+			`re-shallowed from ${compacted.commitsBefore} to ${compacted.commitsAfter} commit(s)` +
+				(compacted.otherBranches.length ? `; local branches keep history: ${compacted.otherBranches.join(", ")}` : "")
+		)
+	}
+
 	for (const change of result.remoteChanges) {
 		parts.push(
 			`${result.dryRun ? "would " : ""}${change.kind === "remove" ? "remove" : change.kind} remote ${change.remote}`
