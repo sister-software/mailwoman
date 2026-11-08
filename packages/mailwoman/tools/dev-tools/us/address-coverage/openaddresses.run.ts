@@ -20,6 +20,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { isAdmittedSource } from "@mailwoman/corpus/address-records/admission"
 import { ADDRESS_POINT_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/address/point/spine-schema"
 import { addressPointDatabasePath, interpolationDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { shortCellToInt } from "@mailwoman/spatial"
@@ -29,7 +30,6 @@ import { latLngToCell } from "@sister.software/h3"
 import { CSVSpliterator } from "spliterator"
 
 import {
-	isAdmittedSource,
 	type OpenAddressesRecord,
 	openAddressesRow,
 	postcodeNearPoint,
