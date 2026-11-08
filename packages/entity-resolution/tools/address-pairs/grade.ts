@@ -20,7 +20,6 @@
  *   A pair adjudicated `unsure` is left out of every count.
  */
 
-import { normalizeAddressToken } from "@mailwoman/codex/address/key"
 import { usUnitIdentifier } from "@mailwoman/codex/us/unit/designator"
 import {
 	agreementPattern,
@@ -31,7 +30,7 @@ import {
 	type FellegiSunterModel,
 	scorePair,
 } from "@mailwoman/match"
-import { ADDRESS_DUPLICATE_STACK_LIMIT } from "@mailwoman/resolver-wof-sqlite/address/duplicate"
+import { ADDRESS_DUPLICATE_STACK_LIMIT, addressLocalityKeys } from "@mailwoman/resolver-wof-sqlite/address/duplicate"
 
 import {
 	type AddressPair,
@@ -149,8 +148,7 @@ const postcodeComparison: Comparison<AddressPairRecord> = {
 		a.postcode && b.postcode && a.postcode !== "0" && b.postcode !== "0" ? (a.postcode === b.postcode ? 0 : 1) : -1,
 }
 
-const localityKeys = (record: AddressPairRecord) =>
-	new Set(record.localities.map((name) => normalizeAddressToken(name)).filter((name) => name.length > 0))
+const localityKeys = (record: AddressPairRecord) => addressLocalityKeys(record.localities)
 
 const localityComparison: Comparison<AddressPairRecord> = {
 	name: "locality",

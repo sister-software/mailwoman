@@ -7,8 +7,9 @@
  *   number, so the layer build may drop it.
  */
 
-import { normalizeAddressToken } from "@mailwoman/codex/address/key"
 import { haversine } from "@mailwoman/spatial/geometries/point/distance"
+
+import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * The farthest apart two records' points may lie, in kilometers, while their localities disagree.
@@ -54,8 +55,14 @@ export interface AddressDuplicateRule {
 	unitIdentifier(unit: string | null, context: { number: string; street: string }): string | null
 }
 
-const localityKeys = (record: DuplicateCandidate) =>
-	new Set(record.localities.map((name) => normalizeAddressToken(name)).filter((name) => name.length > 0))
+/**
+ * The keys of a record's stated localities, folded as the layer's key tables fold a locality name.
+ */
+export function addressLocalityKeys(localities: readonly string[]): Set<string> {
+	return new Set(localities.map((name) => normalizeLocalityForKey(name)).filter((key) => key.length > 0))
+}
+
+const localityKeys = (record: DuplicateCandidate) => addressLocalityKeys(record.localities)
 
 /**
  * Whether `lower` repeats `higher`'s delivery point.
