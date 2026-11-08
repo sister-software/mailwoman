@@ -13,6 +13,7 @@ import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
+import { writeAddressLayerAttribution } from "@mailwoman/resolver-wof-sqlite/address/keys/attribution"
 import {
 	buildAddressLayer,
 	type AddressLayerManifest,
@@ -152,6 +153,13 @@ async function* stateRecords(
 }
 
 /**
+ * The terms each planned OpenAddresses run's source definition records, keyed by the run's source id.
+ */
+function recordedRunTerms(plan: readonly OpenAddressesPlanEntry[]): Map<string, unknown> {
+	return new Map(plan.map(({ member, license }) => [`openaddresses:${member}`, license]))
+}
+
+/**
  * Builds every requested state's `lookup.db` and `detail.db` under `addresses/us-<state>/<version>/`,
  * one state at a time, and writes the US manifest once every state is built.
  *
@@ -173,6 +181,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 	)
 
 	const omitted = new Set(options.omitFromManifest)
+	const recorded = recordedRunTerms(options.openAddresses.plan)
 	const regions: AddressLayerCountryManifest["regions"] = []
 	const builds: USStateBuild[] = []
 	let refusedRuns = 0
@@ -255,6 +264,8 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 			runs: runs.length,
 			seconds: Math.round((Date.now() - started) / 1000),
 		}
+
+		await writeAddressLayerAttribution(options.root, region, options.version, recorded)
 
 		builds.push(build)
 		options.onState?.(build)
