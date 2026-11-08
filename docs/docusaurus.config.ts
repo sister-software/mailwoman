@@ -221,7 +221,7 @@ const config: Config = {
 	themeConfig: {
 		// Default og:image / twitter:card for every page.
 		// Regenerate via docs/scripts/social-card.html.
-		image: "img/social-card.png",
+		image: "img/social-card.jpg",
 		colorMode: {
 			respectPrefersColorScheme: true,
 		},
