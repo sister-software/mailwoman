@@ -29,6 +29,9 @@ import { readParquetRecord } from "#parquet/record"
 import type { ParquetRow } from "#parquet/schema"
 import { openParquetRowStream } from "#parquet/streams"
 import type { ParquetManifest } from "#parquet/writers"
+import { SourceRegister } from "#registers"
+import { committedRowLicenses } from "#source-register/row-license"
+import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "#utils/license"
 import { defaultHoldouts, writeSplitManifestsFromLabeledFiles } from "#utils/split"
 
@@ -67,8 +70,8 @@ describe("assertHeapForAdapters", () => {
 	})
 })
 
-// Each test runs a whole buildCorpus over the fixture, some of them twice. On the self-hosted CI runners one
-// test takes longer than the suite's 15-second default.
+// Each test runs a whole buildCorpus over the fixture, some of them twice.
+// On the self-hosted CI runners one test takes longer than the suite's 15-second default.
 describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", { timeout: 60_000 }, () => {
 	it("produces top-level MANIFEST.json + parquet files + splits + quarantine pile", async () => {
 		const outDir = scratch.path("build")
@@ -368,6 +371,83 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", { timeo
 		await expect(digests(secondDir)).resolves.toEqual(first)
 		// A run that wrote no labeled rows would pass a digest comparison of two empty files.
 		expect(first["labeled-train.jsonl"]).not.toBe("absent")
+	})
+})
+
+/**
+ * An adapter that yields `rows` under its own id, as the runner requires.
+ */
+function rowsAdapter(
+	id: string,
+	register: SourceRegister,
+	rows: readonly Omit<CanonicalRow, "source">[]
+): CorpusAdapter {
+	return {
+		id,
+		defaultLicense: "CC0-1.0",
+		addressRole: AddressRole.Premise,
+		register,
+		surface: SurfaceOrigin.Attested,
+		description: `fixture adapter ${id}`,
+		async *rows() {
+			for (const row of rows) {
+				yield { ...row, source: id }
+			}
+		},
+	}
+}
+
+// Share-alike rows (OpenStreetMap's `osm`) must stay separate from every other source's rows (#2559).
+// The two sources here emit one address with the same text, components and `source_id`.
+// A cross-source dedup, merge or relabel anywhere from the runner to the parquet
+// writer changes what this reads back.
+describe("buildCorpus keeps sources independent", { timeout: 60_000 }, () => {
+	// A serial build only: a parallel build's workers load adapters from the registry,
+	// and `#build/parallel.integration.test` holds the parallel bytes equal to the serial ones.
+	it("writes each source's copy of one address to that source's own files, under its own license", async () => {
+		const outDir = scratch.path("independent")
+
+		const address = {
+			raw: "12 Rue de la Paix 75002 Paris",
+			components: { house_number: "12", street: "Rue de la Paix", postcode: "75002", locality: "Paris" },
+			country: "FR",
+			source_id: "shared-address-1",
+		}
+
+		// The adapters yield their rows from memory, and each source's derivation fingerprints its input path.
+		const inputPath = scratch.path("input.json")
+
+		await writeLocalJSONFile(address, inputPath)
+
+		const manifest = await buildCorpus({
+			outputDir: outDir,
+			corpusVersion: "0.1.0",
+			adapters: [
+				rowsAdapter("osm", SourceRegister.OpenStreetMap, [{ ...address, license: "ODbL-1.0" }]),
+				rowsAdapter("ban", SourceRegister.BaseAdresseNationale, [{ ...address, license: "etalab-2.0" }]),
+			],
+			unshippableReason: "test fixture: one invented address emitted under two source ids",
+			adapterInputs: { osm: { inputPath }, ban: { inputPath } },
+			synthesize: false,
+			shuffleWindow: 1,
+		})
+
+		expect(manifest.total_aligned_rows).toBe(2)
+
+		const corpusManifest = await readLocalJSONFile<ParquetManifest>(outDir("corpus-v0.1.0", "MANIFEST.json"))
+		const licenses = await committedRowLicenses()
+		const read: Array<{ file: string; source: string; source_id: string; license: string }> = []
+
+		for (const file of corpusManifest.files) {
+			for await (const row of openParquetRowStream<ParquetRow>(file.path)) {
+				read.push({ file: file.source!, source: row.source, source_id: row.source_id, license: row.license })
+			}
+		}
+
+		expect(read.toSorted((a, b) => a.source.localeCompare(b.source))).toEqual([
+			{ file: "ban", source: "ban", source_id: "shared-address-1", license: licenses.licenseOf("ban") },
+			{ file: "osm", source: "osm", source_id: "shared-address-1", license: "ODbL-1.0" },
+		])
 	})
 })
 

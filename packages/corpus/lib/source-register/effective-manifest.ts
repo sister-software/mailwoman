@@ -202,11 +202,22 @@ const CONTENT_LICENSES: Readonly<Record<string, readonly string[]>> = {
 /**
  * The licenses a source owes attribution under: the license its rows state
  * and licenses that apply to its contents.
+ *
+ * A source whose rows join several publications states an `AND` expression,
+ * such as `CC-BY-4.0 AND LicenseRef-… AND ODbL-1.0`.
+ * The source joins the group of each term of that expression with a recorded statement, so OpenStreetMap
+ * text inside it is credited with the statement every other OpenStreetMap-derived source receives.
  */
 function attributedLicenses(record: EffectiveSourceRecord): string[] {
 	const current = currentSourceName(record.source) ?? record.source
 
-	return [record.license, ...(CONTENT_LICENSES[current] ?? [])].filter((license) => {
+	const stated = summarizeLicense(record.license).identifiers.filter((identifier) =>
+		Object.hasOwn(ATTRIBUTION_STATEMENTS, identifier)
+	)
+
+	const licenses = new Set([record.license, ...stated, ...(CONTENT_LICENSES[current] ?? [])])
+
+	return [...licenses].filter((license) => {
 		const summary = summarizeLicense(license)
 
 		return !summary.recognized || summary.obligations.includes(LicenseObligation.Attribution)
@@ -220,7 +231,8 @@ function attributedLicenses(record: EffectiveSourceRecord): string[] {
  * A license is included when `summarizeLicense` records an attribution obligation for it, or
  * when it is unrecognized, since an unrecognized license's obligations are unknown rather than absent.
  *
- * A source joins the group of every license in {@linkcode CONTENT_LICENSES} beside its own.
+ * A source joins the group of every license in {@linkcode CONTENT_LICENSES} beside its own,
+ * and the group of every term of its own expression that has a recorded statement.
  */
 export function requiredAttributions(sources: readonly EffectiveSourceRecord[]): RequiredAttribution[] {
 	const byLicense = new Map<string, string[]>()
