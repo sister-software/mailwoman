@@ -378,15 +378,14 @@ export async function diagnoseClones(
 			}
 		}
 
-		if (report.dangling.sample.length < SAMPLE_LIMIT) {
-			report.dangling.sample.push({
-				id,
-				keys: [...candidate.keys],
-				referencedBy: candidate.referencedBy,
-				references: candidate.references,
-				successors,
-			})
-		}
+		// Every dangling ID is listed, because a repair needs each one.
+		report.dangling.sample.push({
+			id,
+			keys: [...candidate.keys],
+			referencedBy: candidate.referencedBy,
+			references: candidate.references,
+			successors,
+		})
 	}
 
 	if (mapping) {
@@ -395,10 +394,8 @@ export async function diagnoseClones(
 
 			if (finals.some((successor) => !present.has(successor))) {
 				report.mapping.successorMissing++
-
-				if (report.mapping.sample.length < SAMPLE_LIMIT) {
-					report.mapping.sample.push({ id, successors: finals })
-				}
+				// Every listed ID with a missing successor is listed, because a repair needs each one.
+				report.mapping.sample.push({ id, successors: finals })
 			}
 		}
 	}
