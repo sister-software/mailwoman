@@ -19,14 +19,12 @@ describe("FR address-system conventions (#719)", () => {
 		expect(fr!.forbiddenTags ?? []).not.toContain("street_prefix")
 	})
 
-	it("KEEPS street_suffix forbidden — FR has no trailing street suffix (measured: zero leakage, free constraint)", () => {
-		const fr = conventionsForSystem("fr")
-		expect(fr!.forbiddenTags ?? []).toContain("street_suffix")
+	it("forbids no tag, so a French-looking address outside France keeps its street_suffix (#2987)", () => {
+		expect(conventionsForSystem("fr")!.forbiddenTags).toBeUndefined()
 	})
 
-	it("the literal table row agrees with the lookup (no aliasing surprise)", () => {
-		expect(ADDRESS_SYSTEM_CONVENTIONS.fr?.forbiddenTags ?? []).not.toContain("street_prefix")
-		expect(ADDRESS_SYSTEM_CONVENTIONS.fr?.forbiddenTags ?? []).toContain("street_suffix")
+	it("the literal table row agrees with the lookup", () => {
+		expect(ADDRESS_SYSTEM_CONVENTIONS.fr).toBe(conventionsForSystem("fr"))
 	})
 })
 

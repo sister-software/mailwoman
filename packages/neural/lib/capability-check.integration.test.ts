@@ -39,8 +39,8 @@ describe.skipIf(!haveAll)("CreateScorer capability delta check", () => {
 		;(ADDRESS_SYSTEM_CONVENTIONS as Record<string, AddressSystemConventions | undefined>).fr = savedFr
 	})
 
-	test("PASSES on the real post-D2 conventions (FR forbids only street_suffix, which the model does not emit)", async () => {
-		expect(ADDRESS_SYSTEM_CONVENTIONS.fr!.forbiddenTags).toEqual(["street_suffix"])
+	test("PASSES on the real conventions, where FR forbids no tag", async () => {
+		expect(ADDRESS_SYSTEM_CONVENTIONS.fr!.forbiddenTags).toBeUndefined()
 		const scorer = await createScorer(baseOpts)
 		expect(scorer).toBeDefined()
 	})

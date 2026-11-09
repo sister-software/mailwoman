@@ -580,7 +580,5 @@
 			}
 		]
 	},
-	"conventions_forbidden_tags": {
-		"FR": ["street_suffix"]
-	}
+	"conventions_forbidden_tags": {}
 }
