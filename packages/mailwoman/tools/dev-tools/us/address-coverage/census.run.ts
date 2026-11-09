@@ -165,10 +165,12 @@ for (const file of files) {
 			.all() as Array<{ postcode: string; points: number }>
 
 		for (const { postcode, points } of rows) {
-			if (postcode) {
-				pointsByPostcode.set(postcode, points)
-			} else {
+			if (!postcode) {
 				withoutPostcode += points
+			}
+			// In layer mode every record is placed by location below, so the postcode split is not used.
+			else if (!reverse) {
+				pointsByPostcode.set(postcode, points)
 			}
 		}
 	}
@@ -178,18 +180,18 @@ for (const file of files) {
 		segments.filter((row) => row.postcode)
 	)
 
-	// A layer record without a postcode is placed in its county by location: one county lookup per 0.01° cell.
+	// A layer record is placed in its county by location: one county lookup per 0.01° cell.
+	// Every layer record has a point, so layer mode places all of them this way
+	// and leaves the postcode split to the address-point databases.
 	let placedByLocation = 0
 	let placedByBox = 0
 	let unplaced = 0
 
-	if (reverse && hasPoints && withoutPostcode > 0) {
+	if (reverse && hasPoints) {
 		using pointsDB = new DatabaseClient<never>(pointsPath, { readOnly: true })
 
 		const cells = pointsDB
-			.prepare(
-				`select round(lat, 2) lat, round(lon, 2) lon, count(*) points from ${table} where postcode is null group by 1, 2`
-			)
+			.prepare(`select round(lat, 2) lat, round(lon, 2) lon, count(*) points from ${table} group by 1, 2`)
 			.all() as Array<{ lat: number; lon: number; points: number }>
 
 		for (const cell of cells) {
