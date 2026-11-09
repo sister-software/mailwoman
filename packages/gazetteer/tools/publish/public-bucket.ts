@@ -31,7 +31,13 @@ export const IMMUTABLE_CACHE_CONTROL = "public, max-age=604800, immutable"
  */
 export const MUTABLE_CACHE_CONTROL = "public, max-age=60, must-revalidate"
 
-const MUTABLE_FILES = new Set(["releases.json"])
+/**
+ * Files rewritten at a stable key.
+ *
+ * An address-layer version's `manifest.json` is one: a build that adds a region
+ * to the version rewrites its manifest.
+ */
+const MUTABLE_FILES = new Set(["releases.json", "manifest.json"])
 const VERSIONED_DIRECTORIES = new Set(["pair-index", "autocomplete"])
 
 /**

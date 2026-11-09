@@ -94,7 +94,7 @@ const SitusPublish: CommandComponent<typeof spec> = ({ options }) => {
 		 * Links each path, relative to the layer root, into a fresh staging directory,
 		 * then publishes and verifies it.
 		 */
-		const publishPaths = async (paths: readonly string[]) => {
+		const publishPaths = async (paths: readonly string[], skipUnchanged: boolean) => {
 			await using staging = await temporaryDirectory("address-layer-publish-")
 
 			for (const path of paths) {
@@ -115,7 +115,7 @@ const SitusPublish: CommandComponent<typeof spec> = ({ options }) => {
 					result = await publishToPublicBucket({
 						src: staging.path(),
 						dryRun,
-						skipUnchanged: true,
+						skipUnchanged,
 						onObject: console.error,
 					})
 				} catch (error) {
@@ -159,8 +159,9 @@ const SitusPublish: CommandComponent<typeof spec> = ({ options }) => {
 
 		lines.push(`${version}: ${built.length} regions built in this version: ${built.map((r) => r.region).join(", ")}`)
 
-		await publishPaths(regionPaths)
-		await publishPaths([`addresses/us/${version}/manifest.json`])
+		await publishPaths(regionPaths, true)
+		// A manifest rewritten with one more region can keep its size, so it is always sent.
+		await publishPaths([`addresses/us/${version}/manifest.json`], false)
 
 		return lines
 	})
