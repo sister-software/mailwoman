@@ -73,6 +73,18 @@ export function isSupersededRecord(record: WOFRecordShape): boolean {
 }
 
 /**
+ * Whether a parsed record is deprecated and lists no successor.
+ *
+ * A deprecated record's `edtf:deprecated` holds a date.
+ * The values `""` and `"uuuu"` mean the record is not deprecated.
+ */
+export function isDeprecatedWithoutSuccessor(record: WOFRecordShape): boolean {
+	const deprecated = record.properties?.["edtf:deprecated"]
+
+	return typeof deprecated === "string" && /^\d/.test(deprecated) && !isSupersededRecord(record)
+}
+
+/**
  * The `wof:geomhash` of a geometry: the MD5 of its compact JSON with `coordinates`
  * before `type`, the form the current WOF exporter writes.
  */

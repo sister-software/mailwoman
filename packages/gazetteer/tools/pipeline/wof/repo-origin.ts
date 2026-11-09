@@ -23,22 +23,30 @@ import { PLACETYPES_REPO } from "#whosonfirst/placetypes/Placetype"
 export const FORK_ORG = "mailwoman"
 
 /**
- * The two remotes a clone of one repository has.
+ * The repository that lists the IDs the forks removed, each with its successors.
+ *
+ * `mailwoman` created it, so it has no original in `whosonfirst-data`.
+ * Its clone has no `upstream` remote, and the sync never forks or merges it.
+ */
+export const WOF_DEPRECATED_REPO = "whosonfirst-data-deprecated"
+
+/**
+ * The remotes a clone of one repository has.
  */
 export interface RepoOrigin {
 	repo: string
 	/**
-	 * The `origin` remote: our fork.
+	 * The `origin` remote: our fork, or our own repository when it has no original.
 	 */
 	forkURL: string
 	/**
-	 * The organization holding the original repository.
+	 * The organization holding the original repository, or `null` for a repository `mailwoman` created.
 	 */
-	upstreamOrg: string
+	upstreamOrg: string | null
 	/**
-	 * The `upstream` remote: the original repository.
+	 * The `upstream` remote: the original repository, or `null` when there is none.
 	 */
-	upstreamURL: string
+	upstreamURL: string | null
 }
 
 /**
@@ -51,9 +59,12 @@ export function repoURL(org: string, repo: string): string {
 /**
  * The organization holding a repository's original.
  *
- * The placetypes repository is the one Who's On First repository outside `whosonfirst-data`.
+ * The placetypes repository is the one Who's On First repository outside `whosonfirst-data`,
+ * and {@linkcode WOF_DEPRECATED_REPO} has no original.
  */
-export function upstreamOrgOf(repo: string): string {
+export function upstreamOrgOf(repo: string): string | null {
+	if (repo === WOF_DEPRECATED_REPO) return null
+
 	return repo === PLACETYPES_REPO.name ? PLACETYPES_REPO.upstreamOwner : WOF_DATA_OWNER
 }
 
@@ -67,7 +78,7 @@ export function wofRepoOrigin(repo: string): RepoOrigin {
 		repo,
 		forkURL: repoURL(FORK_ORG, repo),
 		upstreamOrg,
-		upstreamURL: repoURL(upstreamOrg, repo),
+		upstreamURL: upstreamOrg ? repoURL(upstreamOrg, repo) : null,
 	}
 }
 
@@ -135,6 +146,8 @@ async function readDefaultBranch(org: string, repo: string): Promise<string | nu
 export const githubForkHost: ForkHost = {
 	async ensureFork(origin) {
 		if (await readDefaultBranch(FORK_ORG, origin.repo)) return false
+
+		if (!origin.upstreamOrg) throw new Error(`${FORK_ORG}/${origin.repo} does not exist and has no original to fork`)
 
 		await runFile("gh", [
 			"api",
