@@ -14,6 +14,9 @@
 import { md5Hex } from "@mailwoman/core/hash"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { roundGeometryCoordinates } from "@mailwoman/spatial/geometries/round"
+import { TextSpliterator } from "spliterator"
+
+import { placetypeFromHierarchyKey } from "#whosonfirst/hierarchy"
 
 /**
  * Decimal places a rounded coordinate keeps: about 0.11 m at the equator,
@@ -176,3 +179,146 @@ export function roundRecordGeometry(text: string, decimals = DEFAULT_COORDINATE_
  * One JSON number token.
  */
 const NUMBER_TOKEN = /-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?/g
+
+/**
+ * The record that replaced a removed one: its ID and its placetype.
+ */
+export interface RecordSuccessor {
+	readonly id: number
+	readonly placetype: string
+}
+
+/**
+ * What {@link repointRecordReferences} did to one record.
+ *
+ * `references` counts the values it replaced, and `kept` counts the hierarchy values it left
+ * because the successor's placetype differs from the key's.
+ */
+export type ReferenceRepointing =
+	| { kind: "unchanged"; kept: number }
+	| { kind: "repointed"; text: string; references: number; kept: number }
+
+/**
+ * The `"wof:parent_id"` line, with the indent, the ID and the comma captured.
+ */
+const PARENT_LINE = /^([ \t]*"wof:parent_id":[ \t]*)(\d+)(,?)$/m
+
+/**
+ * A block-valued member printed one element per line: the opening line, the body
+ * and the closing bracket at the opening line's indent.
+ */
+function memberBlock(text: string, key: string): { start: number; end: number; indent: string; body: string } | null {
+	const open = new RegExp(`^([ \\t]*)"${key}":\\[\\n`, "m").exec(text)
+
+	if (!open) return null
+
+	const indent = open[1]!
+	const bodyStart = open.index + open[0].length
+	const close = text.indexOf(`\n${indent}]`, bodyStart)
+
+	if (close === -1) return null
+
+	return { start: bodyStart, end: close, indent, body: text.slice(bodyStart, close) }
+}
+
+/**
+ * Replaces each removed ID a record refers to with its successor, in `wof:parent_id`,
+ * `wof:hierarchy` and `wof:belongsto`, rewriting only those lines.
+ *
+ * `successorOf` answers the one successor of a removed ID, or `null` for an ID to leave as it is.
+ * A `wof:hierarchy` value is replaced only by a successor of the placetype its
+ * key gives, so a `region_id` stays a region.
+ *
+ * `wof:parent_id` takes the successor whatever its placetype.
+ * When `wof:belongsto` already lists the successor, the removed ID's entry is dropped there.
+ *
+ * A removed ID whose successor is the record itself, such as a merged commune the new
+ * commune supersedes, is never written as the record's own parent or ancestor.
+ * Its parent and hierarchy values are kept and counted, and its `wof:belongsto` entry is dropped.
+ */
+export function repointRecordReferences(
+	text: string,
+	successorOf: (id: number) => RecordSuccessor | null
+): ReferenceRepointing {
+	let out = text
+	let references = 0
+	let kept = 0
+
+	const ownID = Number(/^[ \t]*"wof:id":[ \t]*(\d+)/m.exec(text)?.[1])
+	const isSelf = (successor: RecordSuccessor | null) => successor?.id === ownID
+
+	const parent = PARENT_LINE.exec(out)
+	const parentSuccessor = parent ? successorOf(Number(parent[2])) : null
+
+	if (isSelf(parentSuccessor)) {
+		kept++
+	} else if (parent && parentSuccessor) {
+		out = `${out.slice(0, parent.index)}${parent[1]}${parentSuccessor.id}${parent[3]}${out.slice(parent.index + parent[0].length)}`
+
+		references++
+	}
+
+	const hierarchy = memberBlock(out, "wof:hierarchy")
+
+	if (hierarchy) {
+		const body = hierarchy.body.replaceAll(
+			/^([ \t]*"([a-z_]+)":[ \t]*)(\d+)(,?)$/gm,
+			(line, prefix: string, key: string, value: string, comma: string) => {
+				const successor = successorOf(Number(value))
+
+				if (!successor) return line
+
+				if (isSelf(successor) || placetypeFromHierarchyKey(key) !== successor.placetype) {
+					kept++
+
+					return line
+				}
+
+				references++
+
+				return `${prefix}${successor.id}${comma}`
+			}
+		)
+
+		out = `${out.slice(0, hierarchy.start)}${body}${out.slice(hierarchy.end)}`
+	}
+
+	const belongsTo = memberBlock(out, "wof:belongsto")
+
+	if (belongsTo) {
+		// Untrimmed, so the first line keeps the indent each rewritten line takes.
+		const lines = TextSpliterator.from(belongsTo.body, { trim: false }).toArray()
+		const itemIndent = /^[ \t]*/.exec(lines[0] ?? "")?.[0] ?? ""
+		const ids = lines.map((line) => Number(line.trim().replace(/,$/, "")))
+
+		if (ids.every((id) => Number.isInteger(id))) {
+			const seen = new Set<number>()
+			const next: number[] = []
+			let changed = false
+
+			for (const id of ids) {
+				const successor = successorOf(id)
+				const value = successor ? successor.id : id
+
+				if (successor) {
+					changed = true
+
+					references++
+				}
+
+				if (seen.has(value) || value === ownID) continue
+
+				seen.add(value)
+				next.push(value)
+			}
+
+			if (changed) {
+				const body = next.map((id, index) => `${itemIndent}${id}${index < next.length - 1 ? "," : ""}`).join("\n")
+
+				out = `${out.slice(0, belongsTo.start)}${body}${out.slice(belongsTo.end)}`
+			}
+		}
+	}
+
+	return references ? { kind: "repointed", text: out, references, kept } : { kind: "unchanged", kept }
+}

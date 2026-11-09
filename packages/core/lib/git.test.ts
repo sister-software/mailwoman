@@ -99,7 +99,7 @@ describe("streamTrackedFiles", () => {
 
 		await new GitClient({ cwd: scratch.path }).read(["init", "--quiet", "--initial-branch=main", repo.toString()])
 
-		for (const file of ["README", "data/101/1.geojson", "data/102/2 with space.geojson"]) {
+		for (const file of ["README", "data/101/1.geojson", "data/102/ 2 with space.geojson"]) {
 			await writeLocalTextFile("fixture\n", repo(file))
 		}
 
@@ -111,7 +111,7 @@ describe("streamTrackedFiles", () => {
 		const streamed = await Array.fromAsync(streamTrackedFiles(repo, ["data"]))
 
 		expect(streamed).toEqual(await trackedFiles(repo, ["data"]))
-		expect(streamed).toEqual(["data/101/1.geojson", "data/102/2 with space.geojson"])
+		expect(streamed).toEqual(["data/101/1.geojson", "data/102/ 2 with space.geojson"])
 	})
 
 	it("throws when the directory is not a repository rather than ending as an empty listing", async () => {

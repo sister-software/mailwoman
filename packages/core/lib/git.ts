@@ -515,7 +515,8 @@ export async function* streamTrackedFiles(
 		child.on("close", (code) => resolve({ code, stderr }))
 	})
 
-	yield* TextSpliterator.fromAsync(child.stdout, { delimiter: "\0", skipEmpty: true })
+	// Untrimmed, so a path that starts or ends with a space keeps it.
+	yield* TextSpliterator.fromAsync(child.stdout, { delimiter: "\0", skipEmpty: true, trim: false })
 
 	const { code, stderr } = await exited
 

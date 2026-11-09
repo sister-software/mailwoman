@@ -5,9 +5,17 @@
  */
 
 import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/json"
+import { TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-import { isSupersededRecord, roundRecordGeometry, SlimSkip, wofGeometryHash } from "#tools/pipeline/wof/slim"
+import {
+	isSupersededRecord,
+	repointRecordReferences,
+	type RecordSuccessor,
+	roundRecordGeometry,
+	SlimSkip,
+	wofGeometryHash,
+} from "#tools/pipeline/wof/slim"
 
 /**
  * A record in the WOF layout: one property per line, then the geometry on one line.
@@ -123,5 +131,119 @@ describe("isSupersededRecord", () => {
 		expect(isSupersededRecord({ properties: { "wof:superseded_by": [5] } })).toBe(true)
 		expect(isSupersededRecord({ properties: { "wof:superseded_by": [] } })).toBe(false)
 		expect(isSupersededRecord({ properties: {} })).toBe(false)
+	})
+})
+
+describe("repointRecordReferences", () => {
+	/**
+	 * A locality in the WOF exporter's layout whose region, 85675763, was superseded by 1360701001.
+	 */
+	const purzanMohri = (belongsTo: number[] = [102_191_569, 85_632_659, 85_675_763, 1_108_692_295]): string =>
+		[
+			"{",
+			'  "id": 1193013231,',
+			'  "type": "Feature",',
+			'  "properties": {',
+			'    "wof:belongsto":[',
+			belongsTo.map((id, index) => `        ${id}${index < belongsTo.length - 1 ? "," : ""}`).join("\n"),
+			"    ],",
+			'    "wof:hierarchy":[',
+			"        {",
+			'            "continent_id":102191569,',
+			'            "country_id":85632659,',
+			'            "county_id":1108692295,',
+			'            "locality_id":1193013231,',
+			'            "region_id":85675763',
+			"        }",
+			"    ],",
+			'    "wof:id":1193013231,',
+			'    "wof:name":"Purzan Mohri",',
+			'    "wof:parent_id":85675763,',
+			'    "wof:placetype":"locality"',
+			"},",
+			'  "geometry": {"coordinates":[71.0,33.0],"type":"Point"}',
+			"}",
+			"",
+		].join("\n")
+
+	const khyber: RecordSuccessor = { id: 1_360_701_001, placetype: "region" }
+	const successorOf = (id: number) => (id === 85_675_763 ? khyber : null)
+
+	it("replaces the removed region in the parent, the hierarchy and belongsto, and changes no other line", () => {
+		const before = purzanMohri()
+		const result = repointRecordReferences(before, successorOf)
+
+		expect(result).toMatchObject({ kind: "repointed", references: 3, kept: 0 })
+
+		if (result.kind !== "repointed") return
+
+		const changed = (text: string) => TextSpliterator.from(text, { trim: false, skipEmpty: false }).toArray()
+		const diff = changed(before).flatMap((line, index) => (line === changed(result.text)[index] ? [] : [line.trim()]))
+
+		expect(diff).toEqual(["85675763,", '"region_id":85675763', '"wof:parent_id":85675763,'])
+
+		const properties = parseJSONStrict<{ properties: Record<string, unknown> }>(result.text).properties
+
+		expect(properties["wof:parent_id"]).toBe(1_360_701_001)
+		expect(properties["wof:belongsto"]).toEqual([102_191_569, 85_632_659, 1_360_701_001, 1_108_692_295])
+
+		expect(properties["wof:hierarchy"]).toEqual([
+			{
+				continent_id: 102_191_569,
+				country_id: 85_632_659,
+				county_id: 1_108_692_295,
+				locality_id: 1_193_013_231,
+				region_id: 1_360_701_001,
+			},
+		])
+	})
+
+	it("leaves a hierarchy value whose successor is another placetype, and still repoints the parent", () => {
+		const result = repointRecordReferences(purzanMohri(), (id) =>
+			id === 85_675_763 ? { id: 1_360_701_001, placetype: "macroregion" } : null
+		)
+
+		expect(result).toMatchObject({ kind: "repointed", kept: 1 })
+
+		if (result.kind !== "repointed") return
+
+		const properties = parseJSONStrict<{ properties: Record<string, unknown> }>(result.text).properties
+
+		expect(properties["wof:parent_id"]).toBe(1_360_701_001)
+		expect((properties["wof:hierarchy"] as Array<Record<string, number>>)[0]?.["region_id"]).toBe(85_675_763)
+	})
+
+	it("drops the removed ID from belongsto when the successor is already listed", () => {
+		const result = repointRecordReferences(
+			purzanMohri([102_191_569, 85_632_659, 85_675_763, 1_360_701_001]),
+			successorOf
+		)
+
+		if (result.kind !== "repointed") throw new Error("expected a repointed record")
+
+		const properties = parseJSONStrict<{ properties: Record<string, unknown> }>(result.text).properties
+
+		expect(properties["wof:belongsto"]).toEqual([102_191_569, 85_632_659, 1_360_701_001])
+	})
+
+	it("never makes a record its own parent or ancestor when the removed ID's successor is the record", () => {
+		// The removed region's successor is the locality itself, as a merged commune's successor can be.
+		const result = repointRecordReferences(purzanMohri(), (id) =>
+			id === 85_675_763 ? { id: 1_193_013_231, placetype: "locality" } : null
+		)
+
+		expect(result).toMatchObject({ kind: "repointed", kept: 2 })
+
+		if (result.kind !== "repointed") return
+
+		const properties = parseJSONStrict<{ properties: Record<string, unknown> }>(result.text).properties
+
+		expect(properties["wof:parent_id"]).toBe(85_675_763)
+		expect((properties["wof:hierarchy"] as Array<Record<string, number>>)[0]?.["region_id"]).toBe(85_675_763)
+		expect(properties["wof:belongsto"]).toEqual([102_191_569, 85_632_659, 1_108_692_295])
+	})
+
+	it("leaves a record with no removed reference unchanged", () => {
+		expect(repointRecordReferences(purzanMohri(), () => null)).toEqual({ kind: "unchanged", kept: 0 })
 	})
 })
