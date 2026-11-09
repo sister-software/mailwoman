@@ -16,6 +16,13 @@ import {
 	regionLayoutForCountry,
 	type AddressScript,
 } from "#address/layouts"
+import {
+	applyCasing,
+	dropAddressPunctuation,
+	postalStyleForCountry,
+	type AddressCasing,
+	type PostalStyle,
+} from "#address/postal-style"
 import { joinRendering, renderAddress, type ComponentDict } from "#address/render"
 import { COMPONENT_TAGS, type ComponentTag } from "#component"
 
@@ -57,6 +64,22 @@ export interface FormatAddressOptions {
 	 * A country with no region position renders with its ordinary layout and reports the region unplaced.
 	 */
 	withRegion?: boolean
+
+	/**
+	 * Print the country's postal-authority form: its recorded casing and punctuation,
+	 * and the gap it leaves before the postcode.
+	 *
+	 * See {@linkcode postalStyleForCountry}.
+	 * A country with no recorded style renders in its ordinary form, with `casing` still applied.
+	 */
+	postal?: boolean
+
+	/**
+	 * The case to print in: `"upper"`, `"lower"`, or `null` to keep the case the components were given in.
+	 *
+	 * Unset, the postal form takes the country's recorded casing, and the ordinary form keeps the given case.
+	 */
+	casing?: AddressCasing
 }
 
 function separatorFor(country: string, script: AddressScript, opts: FormatAddressOptions): string {
@@ -270,7 +293,53 @@ export function formatAddressRow(
 		placed.postcode = writtenPostcode
 	}
 
-	return { raw, components: placed, unplaced: rendering.unplaced, script }
+	const style = opts.postal ? postalStyleForCountry(country) : null
+	const casing = opts.casing !== undefined ? opts.casing : (style?.casing ?? null)
+
+	if (!style && !casing) return { raw, components: placed, unplaced: rendering.unplaced, script }
+
+	return { ...restyle(raw, placed, style, casing), unplaced: rendering.unplaced, script }
+}
+
+/**
+ * Applies a postal style and a casing to a rendered address and to its placed components
+ * alike, so each component's text still occurs in the rendered text.
+ */
+function restyle(
+	raw: string,
+	placed: ComponentDict,
+	style: PostalStyle | null,
+	casing: AddressCasing
+): { raw: string; components: ComponentDict } {
+	const transform = (value: string) => {
+		const cased = applyCasing(value, casing)
+
+		return style?.dropPunctuation ? dropAddressPunctuation(cased) : cased
+	}
+
+	const components: ComponentDict = {}
+
+	for (const [tag, value] of Object.entries(placed)) {
+		if (value) {
+			components[tag as ComponentTag] = transform(value)
+		}
+	}
+
+	let text = transform(raw)
+	const postcode = components.postcode
+
+	if (style && postcode) {
+		const at = text.lastIndexOf(postcode)
+		const before = text.slice(0, at)
+		const spaces = /[ \t]+$/.exec(before)
+
+		// A postcode starting its own line keeps that line break.
+		if (at > 0 && spaces) {
+			text = `${before.slice(0, spaces.index)}${style.postcodeGap}${text.slice(at)}`
+		}
+	}
+
+	return { raw: text, components }
 }
 
 /**
