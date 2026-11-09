@@ -24,7 +24,7 @@ export const STUB_STYLE: StyleSpecification = {
 /**
  * The style for a basemap TileJSON URL, or the stub style when the build has none.
  */
-export function basemapStyle(tileJSONURL: string | null): StyleSpecification {
+export function opportunityMapStyle(tileJSONURL: string | null): StyleSpecification {
 	if (!tileJSONURL) return STUB_STYLE
 
 	return new StyleSpecificationComposer({

@@ -17,7 +17,7 @@ import "./styles/app.css"
 import type { EntityID } from "@mailwoman/dossier"
 import { type ReactNode, useCallback, useMemo, useState } from "react"
 
-import { basemapStyle } from "#basemap"
+import { opportunityMapStyle } from "#basemap"
 import { controlDefaults, type ControlValues } from "#controls"
 import { MapScale, OpportunityMap } from "#map/OpportunityMap"
 import { BuildingList } from "#panels/BuildingList"
@@ -48,7 +48,7 @@ export function App(): ReactNode {
 	const [selected, setSelected] = useState<ReadonlySet<EntityID>>(() => new Set())
 	const [scale, setScale] = useState<MapScale>(MapScale.Buildings)
 	const [basemapURL] = useState(() => __OPPORTUNITY_BASEMAP_URL__)
-	const mapStyle = useMemo(() => basemapStyle(basemapURL), [basemapURL])
+	const mapStyle = useMemo(() => opportunityMapStyle(basemapURL), [basemapURL])
 	const view = useMemo(() => opportunityView(dataset, values, selected), [dataset, values, selected])
 
 	const toggle = useCallback((building: EntityID) => {

@@ -7,11 +7,11 @@
 import { MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
 import { describe, expect, test } from "vitest"
 
-import { basemapStyle, STUB_STYLE } from "#basemap"
+import { opportunityMapStyle, STUB_STYLE } from "#basemap"
 
-describe("basemapStyle", () => {
+describe("opportunityMapStyle", () => {
 	test("a build without a basemap URL draws the stub style, which names no source, glyph host or sprite", () => {
-		const style = basemapStyle(null)
+		const style = opportunityMapStyle(null)
 
 		expect(style).toBe(STUB_STYLE)
 		expect(style.sources).toEqual({})
@@ -22,7 +22,7 @@ describe("basemapStyle", () => {
 
 	test("a build with a basemap URL draws the cartographer base style over that tileset", () => {
 		const url = "https://tiles.example.test/basemap-v4.json"
-		const style = basemapStyle(url)
+		const style = opportunityMapStyle(url)
 
 		expect(style.sources[MailwomanBaseTileSetID]).toEqual({ type: "vector", url })
 		expect(style.layers.length).toBeGreaterThan(1)

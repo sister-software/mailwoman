@@ -32,7 +32,7 @@ A `.bin` tile reads an archive of PMTiles tile type `Unknown`, such as the compa
 Terrain requests support zoom levels 0 through 15.
 
 `/styles/<style>.json` answers a style built by `createBasemapStyle` in `@mailwoman/cartographer/base/standalone`:
-one vector source that names the planet tile template, zoom range and attribution read from the archive, and the
+one vector source that holds the planet tile template, zoom range and attribution read from the archive, and the
 `@protomaps/basemaps` layers. `<style>` is `light`, `dark`, `white`, `grayscale`, `black`, `mailwoman` or
 `mailwoman-dark`; an unknown name answers HTTP 404. The optional `lang` query parameter sets the label language
 (default `en`); a malformed tag answers HTTP 400. Because the style carries the tile template itself, a client that
