@@ -38,6 +38,11 @@ const { values } = parseArguments({
 		out: { type: "string", description: "Report prefix; writes <out>.json and <out>.md" },
 		workers: { type: "string", default: "3", description: "Parse worker threads" },
 		threads: { type: "string", default: "2", description: "ONNX threads per parse worker" },
+		"no-hint": {
+			type: "boolean",
+			default: false,
+			description: "Parse without the row's country as the classifier's locale hint, as the runtime pipeline does",
+		},
 	},
 })
 
@@ -110,7 +115,16 @@ for (const shape of Object.values(OSMSuiteShape)) {
 		const started = performance.now()
 
 		const outcomes = await Array.fromAsync(
-			gradeOSMSuite(rows as OSMSuiteRow[], { cacheRoot: arm.cache, packages, intraOpNumThreads: threads }, workers)
+			gradeOSMSuite(
+				rows as OSMSuiteRow[],
+				{
+					cacheRoot: arm.cache,
+					packages,
+					intraOpNumThreads: threads,
+					localeHint: values["no-hint"] ? "none" : "row-country",
+				},
+				workers
+			)
 		)
 
 		if (outcomes.length !== rows.length) {
@@ -153,6 +167,10 @@ await writeLocalTextFile(
 		"",
 		`Suites from \`${values.suites}\`. ${workers} workers × ${threads} ONNX threads. Each cell is the share of rows ` +
 			"parsed exactly, with the exact count.",
+		"",
+		values["no-hint"]
+			? "Parsed without a locale hint, as the runtime pipeline parses."
+			: "Parsed with each row's country as the classifier's locale hint.",
 		"",
 		...report.arms.map(
 			(arm) => `- \`${arm.name}\`: \`${arm.cache}\`, en-US card version ${arm.model.version ?? "unrecorded"}`

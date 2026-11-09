@@ -13,6 +13,10 @@
  *
  *   `--from-report <report .json>` prints the failure groups of a report this command wrote earlier, without scoring.
  *
+ *   `--no-hint` parses without the row's country as the classifier's locale hint. The runtime pipeline passes no hint
+ *   unless its caller sets `PipelineOpts.localeHint`, so an unhinted arm grades what production parses. Its parses are
+ *   cached as `<suite>[-v2]-nohint.jsonl`.
+ *
  *   Each weights cache must hold every Latin locale package (the `full-cache` layout). Parses are cached per arm and
  *   suite under `$MAILWOMAN_DATA_ROOT/models/arms/battery/<arm>/<suite>[-v2].jsonl` and reused when present. For the
  *   `v1` rows the parse files the suites were first scored with (`models/arms/<suite>-parses-<arm>.jsonl`) are
@@ -57,6 +61,11 @@ const { values } = parseArguments({
 		workers: { type: "string", default: "6", description: "Parse worker threads" },
 		threads: { type: "string", default: "2", description: "ONNX threads per parse worker" },
 		"from-report": { type: "string", description: "A report this command wrote; print its failure groups" },
+		"no-hint": {
+			type: "boolean",
+			default: false,
+			description: "Parse without the row's country as the classifier's locale hint, as the runtime pipeline does",
+		},
 	},
 })
 
@@ -79,19 +88,22 @@ if (values["from-report"]) {
 async function parsesFor(arm: BatteryArm, spec: BatterySuiteSpec): Promise<string> {
 	const armDir = dataRootPath("models", "arms", "battery", arm.name)
 
+	const localeHint = values["no-hint"] ? "none" : "row-country"
+
+	// An unhinted parse is cached under its own name, so a hinted file is never read for it.
 	const cached = dataRootPath(
 		"models",
 		"arms",
 		"battery",
 		arm.name,
-		`${spec.id}${spec.rows === "v1" ? "" : `-${spec.rows}`}.jsonl`
+		`${spec.id}${spec.rows === "v1" ? "" : `-${spec.rows}`}${localeHint === "none" ? "-nohint" : ""}.jsonl`
 	)
 
 	if (await pathExists(cached)) return cached.toString()
 
 	const legacy = dataRootPath("models", "arms", `${spec.id}-parses-${arm.name}.jsonl`)
 
-	if (spec.rows === "v1" && (await pathExists(legacy))) return legacy.toString()
+	if (localeHint === "row-country" && spec.rows === "v1" && (await pathExists(legacy))) return legacy.toString()
 
 	await makeDirectories(armDir)
 
@@ -101,6 +113,7 @@ async function parsesFor(arm: BatteryArm, spec: BatterySuiteSpec): Promise<strin
 		cacheRoot: arm.cache,
 		workers: Number(values.workers),
 		threads: Number(values.threads),
+		localeHint,
 	})
 
 	return cached.toString()

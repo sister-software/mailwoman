@@ -21,7 +21,11 @@ import {
 	treeSpans,
 } from "#tools/eval-harness/heldout/per/country"
 
-const { cacheRoot, intraOpNumThreads } = workerUserData<{ cacheRoot: string; intraOpNumThreads: number }>()
+const { cacheRoot, intraOpNumThreads, localeHint } = workerUserData<{
+	cacheRoot: string
+	intraOpNumThreads: number
+	localeHint: "row-country" | "none"
+}>()
 
 const packages = await readHeldoutLocalePackages()
 const classifiers = new Map<string, Promise<NeuralAddressClassifier>>()
@@ -45,7 +49,7 @@ export async function handleItem(row: ParseRow): Promise<{ id: string; spans: Ba
 		await classifier
 	).parse(row.raw, {
 		postcodeRepair: true,
-		...(row.country ? { localeHint: row.country } : {}),
+		...(row.country && localeHint === "row-country" ? { localeHint: row.country } : {}),
 	})
 
 	return {

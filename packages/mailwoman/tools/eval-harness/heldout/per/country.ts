@@ -807,6 +807,13 @@ export async function scoreHeldoutWeights(
 		 * Called after each row with the rows scored so far and the total, for progress reporting.
 		 */
 		onRow?: (scored: number, total: number) => void
+		/**
+		 * Whether each row's country is the classifier's locale hint (`row-country`)
+		 * or no hint is passed (`none`, as the runtime pipeline parses).
+		 *
+		 * @defaultValue `"row-country"`
+		 */
+		localeHint?: "row-country" | "none"
 	} = {}
 ): Promise<HeldoutArmResult> {
 	const packages = options.packages ?? (await readHeldoutLocalePackages())
@@ -835,7 +842,7 @@ export async function scoreHeldoutWeights(
 					await classifierFor(localeFor(row))
 				).parse(row.raw, {
 					postcodeRepair: true,
-					...(row.country ? { localeHint: row.country } : {}),
+					...(row.country && options.localeHint !== "none" ? { localeHint: row.country } : {}),
 				})
 			),
 		history,

@@ -131,6 +131,11 @@ const { values } = parseArguments({
 			type: "boolean",
 			description: "Parse every arm again rather than reading parses cached for the same rows, weights and commit",
 		},
+		"no-hint": {
+			type: "boolean",
+			default: false,
+			description: "Parse without the row's country as the classifier's locale hint, as the runtime pipeline does",
+		},
 	},
 })
 
@@ -260,6 +265,7 @@ async function scoreAndReport(): Promise<void> {
 			packages,
 			workers: Number(values.workers),
 			threads: Number(values.threads),
+			localeHint: values["no-hint"] ? "none" : "row-country",
 			...(values["no-parse-cache"] ? { cacheDirectory: null } : {}),
 		})
 
@@ -321,7 +327,11 @@ async function scoreAndReport(): Promise<void> {
 			dataset,
 			provenance: values.provenance ?? null,
 			capabilitySources: { spec: values.spec, sources: [...capabilitySources].toSorted() },
-			inference: { rule: HELDOUT_INFERENCE_RULE, packages: Object.fromEntries(packages) },
+			inference: {
+				rule: HELDOUT_INFERENCE_RULE,
+				packages: Object.fromEntries(packages),
+				localeHint: values["no-hint"] ? "none" : "row-country",
+			},
 			parses: arms.map((arm, i) => ({ arm, ...parseSources[i]! })),
 			rows: rows.length,
 			arms,

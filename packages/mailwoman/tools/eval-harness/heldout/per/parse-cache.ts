@@ -47,6 +47,12 @@ export interface HeldoutParseCacheKey {
 	 */
 	weights: string
 	commit: string
+	/**
+	 * Present as `"none"` for parses made without the row's country as the locale hint.
+	 *
+	 * A hinted key leaves it out, so the files hinted runs cached before the field existed keep their names.
+	 */
+	localeHint?: "none"
 }
 
 /**
@@ -123,6 +129,13 @@ export interface HeldoutParseOptions {
 	 * Where cached parse files live, or `null` to parse without the cache.
 	 */
 	cacheDirectory?: PathBuilderLike | null
+	/**
+	 * Whether each row's country is the classifier's locale hint (`row-country`)
+	 * or no hint is passed (`none`).
+	 *
+	 * @defaultValue `"row-country"`
+	 */
+	localeHint?: "row-country" | "none"
 }
 
 /**
@@ -142,7 +155,8 @@ export async function parseHeldoutRows(
 	options: HeldoutParseOptions
 ): Promise<{ parses: Map<string, readonly BatterySpan[]>; source: HeldoutParseSource }> {
 	const parseRows = heldoutParseRows(rows)
-	const pool = { cacheRoot, workers: options.workers, threads: options.threads }
+	const localeHint = options.localeHint ?? "row-country"
+	const pool = { cacheRoot, workers: options.workers, threads: options.threads, localeHint }
 
 	const cacheDirectory =
 		options.cacheDirectory === undefined ? dataRootPath("models", "arms", "heldout-parses") : options.cacheDirectory
@@ -172,6 +186,7 @@ export async function parseHeldoutRows(
 			rows.map((row) => heldoutWeightsLocale(row.country, options.packages))
 		),
 		commit: await gitHead(),
+		...(localeHint === "none" ? { localeHint } : {}),
 	}
 
 	const name = sha256Hex(stringifyJSON(key)).slice(0, 16)
