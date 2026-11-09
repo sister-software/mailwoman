@@ -18,11 +18,14 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { addressLayerFiles } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
+import {
+	addressLayerManifestPath,
+	type AddressLayerCountryManifest,
+} from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
 import {
 	addressPointDatabasePath,
 	interpolationDatabasePath,
@@ -55,15 +58,28 @@ if ((layerRoot == null) !== (layerVersion == null)) {
 }
 
 /**
- * The database holding a state's address points and the table to count: the US address
- * layer's `detail.db` when `--layer-root` is given, else the state's address-point database.
+ * The version's US manifest, read once.
+ *
+ * A version can keep regions an earlier version built, so a region's file is the path
+ * its manifest entry names, never one rebuilt from the version.
+ */
+const layerManifest =
+	layerRoot != null && layerVersion != null
+		? await readLocalJSONFile<AddressLayerCountryManifest>(addressLayerManifestPath(layerRoot, "US", layerVersion))
+		: null
+
+/**
+ * The database holding a state's address points and the table to count: the `detail.db` the US address
+ * layer's manifest names when `--layer-root` is given, else the state's address-point database.
  */
 function pointsSource(state: string): { path: string; table: string } {
-	if (layerRoot != null && layerVersion != null) {
-		return {
-			path: addressLayerFiles(resolvePath(layerRoot), `us-${state}`, layerVersion).detail.toString(),
-			table: "address",
-		}
+	if (layerManifest && layerRoot != null) {
+		const region = layerManifest.regions.find((entry) => entry.region === `us-${state}`)
+		const path = region
+			? resolvePath(layerRoot, region.detail.path).toString()
+			: `us-${state} (absent from the manifest)`
+
+		return { path, table: "address" }
 	}
 
 	return { path: addressPointDatabasePath(`address-points-us-${state}.db`).toString(), table: "address_point" }
