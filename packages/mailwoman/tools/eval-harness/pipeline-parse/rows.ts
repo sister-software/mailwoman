@@ -111,6 +111,7 @@ export async function parsePipelineRows(
 		cacheRoot: options.cacheRoot ?? null,
 		intraOpNumThreads: options.threads ?? 1,
 		conventions: options.conventions ?? "declared",
+		lineBreaks: options.lineBreaks ?? "keep",
 	}
 
 	const byID = new Map<string, PipelineParse>()

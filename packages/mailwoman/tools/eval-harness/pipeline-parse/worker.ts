@@ -32,6 +32,10 @@ export interface PipelineParseWorkerData {
 	 * The address-system conventions the classifier loads with: `declared` follows the model card.
 	 */
 	conventions: "declared" | "off" | "auto"
+	/**
+	 * What the pipeline parses a line break as, passed as `PipelineOpts.lineBreaks`.
+	 */
+	lineBreaks: "keep" | "comma"
 }
 
 /**
@@ -61,7 +65,7 @@ export interface PipelineParse {
 	ms: number
 }
 
-const { locale, cacheRoot, intraOpNumThreads, conventions } = workerUserData<PipelineParseWorkerData>()
+const { locale, cacheRoot, intraOpNumThreads, conventions, lineBreaks } = workerUserData<PipelineParseWorkerData>()
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({
 	locale,
@@ -77,7 +81,7 @@ const parse = createRuntimePipeline({ classifier })
  */
 export async function handleItem(row: PipelineParseRow): Promise<PipelineParse> {
 	const started = performance.now()
-	const result = await parse(row.raw, row.localeHint ? { localeHint: row.localeHint } : {})
+	const result = await parse(row.raw, { lineBreaks, ...(row.localeHint ? { localeHint: row.localeHint } : {}) })
 
 	const spans = [...walkNodes(result.tree?.roots ?? [])]
 		.map((node): BatterySpan => [node.tag, node.start, node.end, node.value])

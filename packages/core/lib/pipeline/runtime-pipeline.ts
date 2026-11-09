@@ -135,6 +135,20 @@ function identityNormalize(raw: string, opts?: { locale?: string }): NormalizedI
 }
 
 /**
+ * Returns the normalized input with each line break, and the spaces around it,
+ * written as `, ` when `mode` is `"comma"`.
+ *
+ * The parse tree's offsets point into the normalized text.
+ * The normalizer already reshapes that text, and a caller reads offsets against
+ * the tree, so the rewrite moves none of them.
+ */
+export function rewriteLineBreaks(input: NormalizedInputLite, mode: "keep" | "comma"): NormalizedInputLite {
+	if (mode === "keep" || !/[\r\n]/.test(input.normalized)) return input
+
+	return { ...input, normalized: input.normalized.replaceAll(/[ \t]*(?:\r\n|[\r\n])[ \t]*/g, ", ") }
+}
+
+/**
  * Returns an empty query shape.
  *
  * The pipeline uses it when no query-shape stage is configured.
@@ -273,7 +287,7 @@ export async function runPipeline(
 	const classifyKind = stages.classifyKind ?? defaultClassifyKind
 
 	throwIfAborted(opts)
-	const normalized = normalize(raw, { locale: opts?.locale })
+	const normalized = rewriteLineBreaks(normalize(raw, { locale: opts?.locale }), opts?.lineBreaks ?? "keep")
 	timing["normalize"] = performance.now() - t0
 
 	// The coarse placer adds a country prior unless the caller already supplied one.

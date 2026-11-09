@@ -319,6 +319,23 @@ describe("runPipeline — stage composition", () => {
 		expect(options).not.toHaveProperty("localeHint")
 	})
 
+	it("parses each line break and its surrounding spaces as `, ` under lineBreaks: comma", async () => {
+		const input = "206 Saint Clair Street \nFort Recovery, OH\r\n 45846"
+		const rewritten = "206 Saint Clair Street, Fort Recovery, OH, 45846"
+		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree(rewritten)) }
+
+		const result = await runPipeline(input, { classifier }, { lineBreaks: "comma" })
+
+		expect(classifier.parse).toHaveBeenCalledWith(rewritten, expect.anything())
+		expect(result.tree.raw).toBe(rewritten)
+
+		const kept: AddressClassifier = { parse: vi.fn(async () => fakeTree(input)) }
+
+		await runPipeline(input, { classifier: kept })
+
+		expect(kept.parse).toHaveBeenCalledWith(input, expect.anything())
+	})
+
 	it("threads an explicit PipelineOpts.inputMode to classifier.parse (Decision A)", async () => {
 		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("belleville")) }
 		await runPipeline("belleville", { classifier }, { inputMode: "fragmented" })

@@ -143,6 +143,17 @@ export interface PipelineOpts {
 	 */
 	localeHint?: string
 	/**
+	 * What the pipeline parses a line break as.
+	 *
+	 * - `"keep"`, the default, parses the text as given.
+	 * - `"comma"` parses each line break, with the spaces around it, as `, `,
+	 *   the one-line form the corpus renders.
+	 *
+	 * A line break between the street line and the city line is absent from training (#2992).
+	 * The tree's offsets point into the normalized text, as they do for every other normalization.
+	 */
+	lineBreaks?: "keep" | "comma"
+	/**
 	 * The input register.
 	 * The default `"auto"` derives it from the query kind.
 	 */
