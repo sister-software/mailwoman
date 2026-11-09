@@ -1,0 +1,101 @@
+---
+title: Check parsed records against an application policy
+description: Classify parsed US street-address records as pass, fail, or unknown using required components and ZIP Code shape.
+role: guide
+verified-with: mailwoman v11.0.0
+---
+
+# Check parsed records against an application policy
+
+Use this procedure when an application needs a stated completeness check before it accepts a parsed US street address. The example requires one `house_number`, `street`, `locality`, `region`, and `postcode` component. It then checks the postcode's US ZIP Code shape. These are application requirements for this example. They do not define which addresses the postal service accepts.
+
+The check returns `pass` when all required components appear once and the postcode has ZIP Code shape. It returns `fail` when those components appear but the postcode has the wrong shape. It returns `unknown` when the input, country, parse evidence, or a required component is missing or ambiguous. A parsed component can be wrong, so even `pass` establishes only that this policy's presence and shape checks succeeded.
+
+## Prerequisites
+
+Use Node.js 24.22.1 and an empty project directory. Install the published 11.0.0 packages:
+
+```bash
+npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/codex@11.0.0
+```
+
+The parser and ZIP Code shape check run without a geocoding database. Establish `countryCode: "US"` from your application's own country field before using this policy. An inferred country from postcode shape would make the policy circular. Adapt the required tags and postcode check for other address types or countries.
+
+## 1. Save the policy and examples
+
+Save this complete file as `validate-records.mjs`:
+
+```js
+import { isZipCode } from "@mailwoman/codex/us"
+import { createRuntimePipeline } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+const required = ["house_number", "street", "locality", "region", "postcode"]
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
+
+function collect(nodes, found = new Map()) {
+	for (const node of nodes) {
+		const values = found.get(node.tag) ?? []
+		values.push(node.value)
+		found.set(node.tag, values)
+		collect(node.children, found)
+	}
+	return found
+}
+
+async function check(record) {
+	if (record.countryCode !== "US")
+		return { status: "unknown", reason: "US policy requires an established US country code" }
+	if (typeof record.raw !== "string" || record.raw.trim() === "") {
+		return { status: "unknown", reason: "address input is missing" }
+	}
+
+	const result = await parse(record.raw, { locale: "en-US" })
+	if (result.faults.length > 0) return { status: "unknown", reason: "parser reported a stage fault" }
+	const components = collect(result.tree.roots)
+	const missing = required.filter((tag) => (components.get(tag)?.length ?? 0) !== 1)
+	if (missing.length > 0) {
+		return { status: "unknown", reason: `required component is missing or repeated: ${missing.join(", ")}` }
+	}
+
+	const postcode = components.get("postcode")[0]
+	if (!isZipCode(postcode)) return { status: "fail", reason: `postcode ${postcode} fails US ZIP Code shape` }
+	return { status: "pass", reason: "required components are present and postcode has US ZIP Code shape" }
+}
+
+const records = [
+	{ id: "complete", raw: "350 5th Ave, New York, NY 10118", countryCode: "US" },
+	{ id: "bad-shape", raw: "350 5th Ave, New York, NY 1011", countryCode: "US" },
+	{ id: "no-postcode", raw: "350 5th Ave, New York, NY", countryCode: "US" },
+]
+
+for (const record of records) {
+	const { status, reason } = await check(record)
+	console.log(`${record.id}: ${status} — ${reason}`)
+}
+```
+
+The recursive `collect` function reads nested nodes without discarding repeated tags. The policy treats a missing or repeated required tag as unknown because this parse has not supplied one unambiguous value for that requirement. A parser stage fault also produces unknown. An exception while loading or running the parser stops the script and needs operational investigation. The example does not turn an exception into a valid-looking policy result.
+
+## 2. Run the check
+
+```bash
+node validate-records.mjs
+```
+
+The following output was captured with the published 11.0.0 packages on Node.js 24.22.1:
+
+```text
+complete: pass — required components are present and postcode has US ZIP Code shape
+bad-shape: fail — postcode 1011 fails US ZIP Code shape
+no-postcode: unknown — required component is missing or repeated: postcode
+```
+
+The parser returned all five required tags for `350 5th Ave, New York, NY 10118`. It returned `postcode: "1011"` for `350 5th Ave, New York, NY 1011`, and `isZipCode("1011")` returned `false`. It returned no `postcode` node for `350 5th Ave, New York, NY`, so the policy could not evaluate that requirement.
+
+## 3. Apply the result to your workflow
+
+Accept `pass` only for the stated presence and postcode-shape policy. Send `fail` to correction with the recorded reason. Request the missing field or review the parse when the result is `unknown`. Keep the original input with the outcome so a reviewer can check what the parser read.
+
+A ZIP Code can have valid syntax without being assigned to a real place. These checks do not establish that a building exists or that mail can be delivered there. A geocode uses separate geographic data and reports its own candidate and coordinate evidence. Read [confidence and ambiguity](../explanation/confidence-and-limits.mdx) before adding geocode evidence to an acceptance policy, and use the [result schema](../reference/schema.mdx) to inspect component tags and `faults`.

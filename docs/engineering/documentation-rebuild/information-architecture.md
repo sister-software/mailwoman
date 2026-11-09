@@ -8,47 +8,47 @@ Diátaxis separates learning, work, lookup, and understanding. A tutorial leads 
 
 ## Site map
 
-| Destination ID | Proposed route                              | Role        | Reader question or result                                                                  |
-| -------------- | ------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------ |
-| P01            | `/product`                                  | landing     | What does Mailwoman provide today?                                                         |
-| P02            | `/product/capabilities`                     | landing     | Which operations can I use, and which data does each require?                              |
-| P03            | `/product/deployment`                       | landing     | Which runtime shape fits my constraints?                                                   |
-| P04            | `/product/data-and-licensing`               | landing     | What data, license, attribution, and provenance obligations apply?                         |
-| P05            | `/product/limits-and-status`                | landing     | Which capabilities and locale/data tiers are published, buildable, or unverified?          |
-| P06            | `/solutions`                                | landing     | Which stated use cases match my problem?                                                   |
-| D01            | `/docs/start`                               | tutorial    | Install the library and inspect a first parse.                                             |
-| D02            | `/docs/tutorials/geocode-a-file`            | tutorial    | Learn parsing, local data, coordinate provenance, and unresolved rows through a small CSV. |
-| D03            | `/docs/tutorials/run-a-server`              | tutorial    | Learn the native HTTP surface by starting and querying a local server.                     |
-| D04            | `/docs/tutorials/inspect-a-parse`           | tutorial    | Learn spans, tags, confidence, and trace output through one result.                        |
-| D05            | `/docs/guides/batch-geocode`                | guide       | Batch geocode records with explicit unresolved rows.                                       |
-| D06            | `/docs/guides/add-autocomplete`             | guide       | Add autocomplete to an application.                                                        |
-| D07            | `/docs/guides/operate-data`                 | guide       | Download, inspect, refresh, migrate, and roll back local data.                             |
-| D08            | `/docs/guides/deploy`                       | guide       | Deploy a supported service form with measured resource needs.                              |
-| D09            | `/docs/guides/use-a-compatible-http-client` | guide       | Connect an existing Nominatim, Photon, or libpostal client to a supported surface.         |
-| D10            | `/docs/guides/handle-results`               | guide       | Handle messy input, edge address kinds, and confidence thresholds.                         |
-| D11            | `/docs/guides/report-a-problem`             | guide       | Capture a reproducible parser or security report and send it to the right place.           |
-| D12            | `/docs/guides/validate-records`             | guide       | Apply a stated completeness and postal-shape policy to parsed records.                     |
-| D13            | `/docs/guides/match-records`                | guide       | Match candidate address records and review uncertain pairs.                                |
-| D14            | `/docs/guides/reverse-geocode`              | guide       | Resolve a coordinate and interpret containment.                                            |
-| D15            | `/docs/guides/use-mcp`                      | guide       | Configure and check the MCP server in a client.                                            |
-| D16            | `/docs/guides/parse-in-browser`             | guide       | Load model assets and parse in a browser application.                                      |
-| D17            | `/docs/guides/annotate-results`             | guide       | Apply annotators and choose an output projection.                                          |
-| D18            | `/docs/guides/install-coding-skill`         | guide       | Install and update the code-assistant skill.                                               |
-| R01            | `/docs/reference/library`                   | reference   | Library imports, signatures, options, returns, and errors.                                 |
-| R02            | `/docs/reference/cli`                       | reference   | Commands, flags, exit codes, and generated command output.                                 |
-| R03            | `/docs/reference/http`                      | reference   | Native and compatibility endpoints, request/response shapes, and errors.                   |
-| R04            | `/docs/reference/schema`                    | reference   | Component tags, spans, result fields, kinds, tiers, and provenance.                        |
-| R05            | `/docs/reference/packages-and-runtime`      | reference   | Published packages, runtime flags, footprints, and compatibility.                          |
-| R06            | `/docs/reference/data-and-locales`          | reference   | Data bundles, locale support, layer availability, and prerequisites.                       |
-| E01            | `/docs/explanation/address-systems`         | explanation | Why worldwide addresses resist one format and one validation rule.                         |
-| E02            | `/docs/explanation/parsing`                 | explanation | How tokens, labels, decoder constraints, and gazetteer priors interact.                    |
-| E03            | `/docs/explanation/geocoding`               | explanation | How geocoding sources and precision tiers affect a coordinate.                             |
-| E04            | `/docs/explanation/confidence-and-limits`   | explanation | What confidence, ambiguity, and abstention mean for use decisions.                         |
-| E05            | `/docs/explanation/data-and-model-quality`  | explanation | How corpus provenance, holdouts, and release evaluation support claims.                    |
-| V01            | `/evidence/benchmarks`                      | evidence    | Dated benchmark index and how to read the metrics.                                         |
-| V02            | `/evidence/geocoding-panels`                | evidence    | Reproducible country/panel measurements with losses and caveats.                           |
-| V03            | `/evidence/comparisons`                     | evidence    | Dated, scoped alternatives and runnable comparison method.                                 |
-| A01            | `/about`                                    | landing     | Mission, contact, support, and security route.                                             |
+| Destination ID | Proposed route                              | Role        | Reader question or result                                                                           |
+| -------------- | ------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------- |
+| P01            | `/product`                                  | landing     | What does Mailwoman provide today?                                                                  |
+| P02            | `/product/capabilities`                     | landing     | Which operations can I use, and which data does each require?                                       |
+| P03            | `/product/deployment`                       | landing     | Which runtime shape fits my constraints?                                                            |
+| P04            | `/product/data-and-licensing`               | landing     | What data, license, attribution, and provenance obligations apply?                                  |
+| P05            | `/product/limits-and-status`                | landing     | Which capabilities and locale/data tiers are published, buildable, or unverified?                   |
+| P06            | `/solutions`                                | landing     | Which stated use cases match my problem?                                                            |
+| D01            | `/docs/start`                               | tutorial    | Install the library and inspect a first parse.                                                      |
+| D02            | `/docs/tutorials/geocode-a-file`            | tutorial    | Learn local data, place candidates, coordinate provenance, and unresolved rows through a small CSV. |
+| D03            | `/docs/tutorials/run-a-server`              | tutorial    | Learn the native HTTP surface by starting and querying a local server.                              |
+| D04            | `/docs/tutorials/inspect-a-parse`           | tutorial    | Learn spans, tags, confidence, and parser trace output through one result.                          |
+| D05            | `/docs/guides/batch-geocode`                | guide       | Batch geocode records with explicit unresolved rows.                                                |
+| D06            | `/docs/guides/add-autocomplete`             | guide       | Add autocomplete to an application.                                                                 |
+| D07            | `/docs/guides/operate-data`                 | guide       | Download, inspect, refresh, migrate, and roll back local data.                                      |
+| D08            | `/docs/guides/deploy`                       | guide       | Deploy a supported service form with measured resource needs.                                       |
+| D09            | `/docs/guides/use-a-compatible-http-client` | guide       | Connect an existing Nominatim, Photon, or libpostal client to a supported surface.                  |
+| D10            | `/docs/guides/handle-results`               | guide       | Handle messy input, edge address kinds, and confidence thresholds.                                  |
+| D11            | `/docs/guides/report-a-problem`             | guide       | Capture a reproducible parser or security report and send it to the right place.                    |
+| D12            | `/docs/guides/validate-records`             | guide       | Apply a stated completeness and postal-shape policy to parsed records.                              |
+| D13            | `/docs/guides/match-records`                | guide       | Match candidate address records and review uncertain pairs.                                         |
+| D14            | `/docs/guides/reverse-geocode`              | guide       | Resolve a coordinate and interpret containment.                                                     |
+| D15            | `/docs/guides/use-mcp`                      | guide       | Configure and check the MCP server in a client.                                                     |
+| D16            | `/docs/guides/parse-in-browser`             | guide       | Load model assets and parse in a browser application.                                               |
+| D17            | `/docs/guides/annotate-results`             | guide       | Apply annotators and choose an output projection.                                                   |
+| D18            | `/docs/guides/install-coding-skill`         | guide       | Install and update the code-assistant skill.                                                        |
+| R01            | `/docs/reference/library`                   | reference   | Library imports, signatures, options, returns, and errors.                                          |
+| R02            | `/docs/reference/cli`                       | reference   | Commands, flags, exit codes, and generated command output.                                          |
+| R03            | `/docs/reference/http`                      | reference   | Native and compatibility endpoints, request/response shapes, and errors.                            |
+| R04            | `/docs/reference/schema`                    | reference   | Component tags, spans, result fields, kinds, tiers, and provenance.                                 |
+| R05            | `/docs/reference/packages-and-runtime`      | reference   | Published packages, runtime flags, footprints, and compatibility.                                   |
+| R06            | `/docs/reference/data-and-locales`          | reference   | Data bundles, locale support, layer availability, and prerequisites.                                |
+| E01            | `/docs/explanation/address-systems`         | explanation | Why worldwide addresses resist one format and one validation rule.                                  |
+| E02            | `/docs/explanation/parsing`                 | explanation | How tokens, labels, decoder constraints, and gazetteer priors interact.                             |
+| E03            | `/docs/explanation/geocoding`               | explanation | How geocoding sources and precision tiers affect a coordinate.                                      |
+| E04            | `/docs/explanation/confidence-and-limits`   | explanation | What confidence, ambiguity, and abstention mean for use decisions.                                  |
+| E05            | `/docs/explanation/data-and-model-quality`  | explanation | How corpus provenance, holdouts, and release evaluation support claims.                             |
+| V01            | `/evidence/benchmarks`                      | evidence    | Dated benchmark index and how to read the metrics.                                                  |
+| V02            | `/evidence/geocoding-panels`                | evidence    | Reproducible country/panel measurements with losses and caveats.                                    |
+| V03            | `/evidence/comparisons`                     | evidence    | Dated, scoped alternatives and runnable comparison method.                                          |
+| A01            | `/about`                                    | landing     | Mission, contact, support, and security route.                                                      |
 
 This first architecture proposes 39 destinations: 6 product/solution landing pages + 18 learning/work pages + 6 reference pages + 5 explanation pages + 3 evidence pages + 1 about page = 39. These are proposed destinations, with no publication quota.
 

@@ -250,6 +250,7 @@ const config: Config = {
 				sidebarMegaMenu("product", {
 					label: "Product",
 					descriptions: { Product: "Turn addresses into useful location data." },
+					footer: { label: "Product overview", to: "/product" },
 					featured: {
 						eyebrow: "Try it",
 						title: "Geocode an address in your browser",
@@ -305,6 +306,7 @@ const config: Config = {
 				sidebarMegaMenu("about", {
 					label: "About",
 					descriptions: { About: "Who makes Mailwoman and why." },
+					footer: { label: "About Mailwoman", to: "/about" },
 				}),
 				{
 					// A page of its own, outside the docs.

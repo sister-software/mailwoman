@@ -11,6 +11,7 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 const sidebars: SidebarsConfig = {
 	product: [
 		"product/overview",
+		{ type: "link", label: "Limits and release status", href: "/product/limits-and-status" },
 		"product/capabilities",
 		"product/deployment-options",
 		"product/drop-in-replacements",
@@ -29,6 +30,7 @@ const sidebars: SidebarsConfig = {
 			type: "category",
 			label: "Get started",
 			items: [
+				"start",
 				"developers/get-started/what-mailwoman-is",
 				"developers/get-started/install-and-first-parse",
 				"developers/get-started/ten-minute-trial",
@@ -38,6 +40,7 @@ const sidebars: SidebarsConfig = {
 			type: "category",
 			label: "Tutorials",
 			items: [
+				"tutorials/inspect-a-parse",
 				"developers/tutorials/understand-a-parse",
 				"developers/tutorials/geocode-a-csv",
 				"developers/tutorials/run-the-api-server",
@@ -52,6 +55,9 @@ const sidebars: SidebarsConfig = {
 			type: "category",
 			label: "How-to guides",
 			items: [
+				"guides/report-a-problem",
+				"guides/validate-records",
+				"guides/install-coding-skill",
 				"developers/how-to/handle-messy-input",
 				"developers/how-to/handle-po-boxes-and-edge-kinds",
 				"developers/how-to/validate-addresses",
@@ -75,6 +81,9 @@ const sidebars: SidebarsConfig = {
 			label: "Reference",
 			// The CLI page is generated from the command specs.
 			items: [
+				"reference/library",
+				"reference/schema",
+				"reference/packages-and-runtime",
 				"developers/reference/library-api",
 				"developers/reference/cli",
 				"developers/reference/http-apis",
@@ -84,6 +93,11 @@ const sidebars: SidebarsConfig = {
 				"developers/reference/locales-and-tiers",
 				"developers/reference/footprints",
 			],
+		},
+		{
+			type: "category",
+			label: "Explanation",
+			items: ["explanation/parsing", "explanation/confidence-and-limits"],
 		},
 		{
 			type: "category",

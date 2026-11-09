@@ -1,0 +1,32 @@
+---
+title: Mailwoman product overview
+description: Parse address text locally, then add geographic data when you need place matches and coordinates.
+---
+
+# Mailwoman reads addresses and locates places
+
+Mailwoman is an address parser and geocoder that you run in your own application or on your own server. Its published Node.js library separates two operations: a parser labels spans of address text, and a geocoder uses geographic data to select a place or coordinate. You can use the parser after installing its model package. The geocoder also needs a separate local gazetteer or other supported data layer.
+
+## Start with a parse
+
+A published `mailwoman@11.0.0` library run parsed this exact input:
+
+```text
+apt 4b 350 5th ave new york ny 10118
+```
+
+The returned tree included `unit: "Apt 4B"`, `house_number: "350"`, `locality: "New York"`, and `postcode: "10118"`. Each node also had a span into the returned normalized text. [Install Mailwoman and inspect a first parse](/docs/start) gives the complete script, command, output, and package versions for that run.
+
+The parser identifies roles in the input. It does not establish that a building exists or that a postal carrier can deliver there. [Confidence and ambiguity](/docs/explanation/confidence-and-limits) explains what the returned scores and later geographic evidence can support.
+
+## Add geographic data when you need coordinates
+
+The geocoder can resolve parsed names against an installed local gazetteer and return a coordinate with its resolution tier, candidate places, and provenance fields. Geographic data is a separate download. The published 11.0.0 native server also requires a valid WOF or candidate database before it starts. The [result schema](/docs/reference/schema) defines the coordinate and evidence fields.
+
+Your application can run the parser and geocoder against local model and data files. Dataset download commands and optional remote integrations have their own network behavior. Review [security and compliance](/docs/about/security-and-compliance) for those boundaries and [data products](/docs/product/data-products) for published bundle provenance.
+
+[Limits and release status](/product/limits-and-status) separates published bundles, locally buildable data, installed data, and evaluated locale claims for release 11.0.0.
+
+## Choose a starting point
+
+[Run the first parse](/docs/start) to see the published library behavior without setting up geographic data. Then use the [library reference](/docs/reference/library) to choose an API. Review [licensing](/license) and [pricing](/pricing) for the terms that apply to your deployment.
