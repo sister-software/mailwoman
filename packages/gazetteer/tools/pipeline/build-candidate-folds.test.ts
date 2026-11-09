@@ -44,7 +44,6 @@ test("buildCandidate refuses a build-local fold before building, and names it", 
 			postcodeDatabases: [ni.toString()],
 			localityDatabases: [],
 			importanceDB: false,
-			currencyBackfillCountries: false,
 		})
 	).rejects.toThrow(/permits no publication/)
 
@@ -55,7 +54,6 @@ test("buildCandidate refuses a build-local fold before building, and names it", 
 			postcodeDatabases: [ni.toString()],
 			localityDatabases: [],
 			importanceDB: false,
-			currencyBackfillCountries: false,
 		})
 	).rejects.toThrow(new RegExp(`${ni.toString()} \\(postalcode-ni-osm\\) tier build-local, recorded in meta`))
 
@@ -74,7 +72,6 @@ test("buildCandidate folds a build-local database when asked, and says so before
 		postcodeDatabases: [ni.toString()],
 		localityDatabases: [],
 		importanceDB: false,
-		currencyBackfillCountries: false,
 		includeBuildLocalFolds: true,
 		onProgress: (phase, message) => phases.push(`${phase}: ${message}`),
 	}).then(

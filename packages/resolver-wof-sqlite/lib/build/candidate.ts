@@ -30,7 +30,6 @@ import {
 } from "#candidate/schema"
 import { createCapitalTable } from "#capital-schema"
 import type { CapitalPoint } from "#capitals"
-import { resurrectCurrencyHoles } from "#currency-backfill"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
@@ -86,25 +85,6 @@ export interface BuildCandidateOptions {
 	 * Consumers treat NULL as unmeasured.
 	 */
 	importance?: PathBuilderLike
-
-	/**
-	 * Settings for restoring deprecated WOF places that have no successor and have a GeoNames attestation.
-	 *
-	 * A deprecated place is restored only when no live row of the same name lies within 10 km and
-	 * a GeoNames populated place with the same folded name and at least 1,000 people lies within 10 km.
-	 * Countries without `<cc>.txt` under `geonamesDir` are skipped and reported.
-	 */
-	currencyBackfill?: {
-		geonamesDir: PathBuilderLike
-		countries: readonly string[]
-
-		/**
-		 * The deprecated placetypes eligible for restoration.
-		 *
-		 * @defaultValue `locality`
-		 */
-		deadPlacetypes?: readonly string[]
-	}
 
 	/**
 	 * Receives a phase name and a message as each build step runs.
@@ -419,27 +399,6 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			tx: kdb,
 		}).toLocaleString()} bare admin names`
 	)
-
-	if (opts.currencyBackfill) {
-		const nBackfill = await resurrectCurrencyHoles({
-			src,
-			tx: kdb,
-			geonamesDir: opts.currencyBackfill.geonamesDir,
-			countries: opts.currencyBackfill.countries,
-			...(opts.currencyBackfill.deadPlacetypes ? { deadPlacetypes: opts.currencyBackfill.deadPlacetypes } : {}),
-			attrs,
-			ccID,
-			ptID,
-			regionOf,
-			importance,
-			stageRow,
-			progress,
-		})
-
-		progress("currency-backfill", `${nBackfill.toLocaleString()} resurrections staged`)
-	} else {
-		progress("currency-backfill", "not configured — deprecated-no-successor holes stay dead (#1737)")
-	}
 
 	progress("aliases", "exploding alias bags")
 

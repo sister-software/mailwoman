@@ -51,12 +51,7 @@ import {
 	readFoldTerms,
 } from "#tools/pipeline/candidate-manifest"
 import { emitCoverageManifest } from "#tools/pipeline/coverage-manifest"
-import {
-	DEFAULT_FOLD_COUNTRIES,
-	DEFAULT_IMPORTANCE_DB,
-	DEFAULT_WOF_PRIORITY_COUNTRIES,
-	geonamesAdminGapCountries,
-} from "#tools/pipeline/defaults"
+import { DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB, geonamesAdminGapCountries } from "#tools/pipeline/defaults"
 import { buildSHA, stampLayerManifest } from "#tools/pipeline/stamp-manifest"
 import { publishToPublicBucket } from "#tools/publish/public-bucket"
 
@@ -359,16 +354,6 @@ export interface BuildOptions {
 	 */
 	importanceDB?: string | false
 	/**
-	 * Countries judged by the cross-source currency backfill
-	 * (WOF localities resurrected only under a GeoNames attestation); default is the
-	 * WOF-priority set, the only countries whose admin comes from WOF repos.
-	 *
-	 * A country without a `<data-root>/geonames/<CC>.txt` dump is skipped loudly.
-	 *
-	 * Pass `false` to disable.
-	 */
-	currencyBackfillCountries?: readonly string[] | false
-	/**
 	 * Fold a database whose own tier permits no publication, for a gazetteer built for local use.
 	 *
 	 * Off by default, so a build that could reach a publish includes only folds whose tier allows it.
@@ -407,11 +392,6 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	// Only the second may skip the resolve, so a missing artifact is not indistinguishable
 	// from a deliberate opt-out in the build log.
 	const importance = opts.importanceDB === false ? undefined : (opts.importanceDB ?? (await resolveImportanceDB()))
-
-	const backfillCountries =
-		opts.currencyBackfillCountries === false
-			? undefined
-			: (opts.currencyBackfillCountries ?? DEFAULT_WOF_PRIORITY_COUNTRIES)
 
 	// Include the committed capitals reference in the artifact so `capital_tier` works for
 	// npm consumers who pulled candidate.db (published packages do not ship the repo file).
@@ -456,7 +436,6 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		postcodes: postcodeDatabases,
 		localities: localityDatabases,
 		...(importance ? { importance } : {}),
-		...(backfillCountries ? { currencyBackfill: { geonamesDir: geonamesDir(), countries: backfillCountries } } : {}),
 		...(capitals?.length ? { capitals } : {}),
 		onProgress: opts.onProgress,
 	})

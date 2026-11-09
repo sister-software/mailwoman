@@ -6,6 +6,8 @@
  *   Simplifies a polygon or multipolygon by Douglas-Peucker over each ring, for a place boundary drawn on a map.
  */
 
+import { roundCoordinate } from "#geometries/round"
+
 type Position = [number, number, ...number[]]
 
 type Ring = Position[]
@@ -99,8 +101,6 @@ function sampleRing(ring: Ring): Ring {
 	return Array.from({ length: COLLAPSED_RING_POSITIONS }, (_, step) => ring[Math.round((step * last) / steps)]!)
 }
 
-const rounded = (value: number, factor: number) => Math.round(value * factor) / factor
-
 /**
  * Simplifies each ring and rounds its positions to two dimensions at the given precision.
  *
@@ -109,15 +109,15 @@ const rounded = (value: number, factor: number) => Math.round(value * factor) / 
  * An inner ring that collapses drops.
  */
 export function simplifyAreaGeometry(geometry: AreaGeometry, tolerance: number, decimals = 5): AreaGeometry {
-	const factor = 10 ** decimals
-
 	const polygon = (rings: Ring[]): Ring[] =>
 		rings.flatMap((ring, index) => {
 			const simplified = ring.length > MIN_RING_POSITIONS ? simplifyRing(ring, tolerance) : ring
 
 			const kept = simplified.length >= MIN_RING_POSITIONS ? simplified : index === 0 ? sampleRing(ring) : null
 
-			return kept ? [kept.map(([lon, lat]): Position => [rounded(lon, factor), rounded(lat, factor)])] : []
+			return kept
+				? [kept.map(([lon, lat]): Position => [roundCoordinate(lon, decimals), roundCoordinate(lat, decimals)])]
+				: []
 		})
 
 	return geometry.type === "Polygon"
