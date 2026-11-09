@@ -224,7 +224,7 @@ function revertResolverDecoration(node: AddressNode): void {
  * Re-picks a locality to the place with the same name inside the country specified in
  * the address, when that country is the locality's nearest admin context.
  *
- * It leaves the locality unchanged when it already resolved to that place or
+ * It leaves the locality unchanged when it already resolved inside that country or
  * when that country has no locality with the same name.
  */
 export async function applyExplicitCountryCoherence(
@@ -260,6 +260,12 @@ async function reconcileExplicitCountry(
 	const iso2 = matchCountry(countryNode.value)?.iso2 ?? matchSubdivision(countryNode.value)?.country
 
 	if (!iso2) return
+
+	// A pick already inside the written country agrees with it, so the pass keeps it.
+	// The re-query asks for the locality placetype only.
+	// Re-picking would replace a dependent locality's contained neighborhood with
+	// a same-name locality elsewhere in the country.
+	if (isResolvedWithCoord(localityNode) && localityNode.metadata?.["resolver_country"] === iso2) return
 
 	const scoped = await backend.findPlace({
 		text: localityNode.value,
