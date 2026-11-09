@@ -11,6 +11,7 @@
  *   production returns can run on every core.
  */
 
+import { DEFAULT_CASE_NORMALIZATION } from "@mailwoman/core/pipeline/types"
 import { totalMemoryBytes } from "@mailwoman/core/utils/system"
 import { parallelMapWorkers } from "spliterator"
 
@@ -112,6 +113,7 @@ export async function parsePipelineRows(
 		intraOpNumThreads: options.threads ?? 1,
 		conventions: options.conventions ?? "declared",
 		lineBreaks: options.lineBreaks ?? "keep",
+		caseNormalization: options.caseNormalization ?? DEFAULT_CASE_NORMALIZATION,
 	}
 
 	const byID = new Map<string, PipelineParse>()

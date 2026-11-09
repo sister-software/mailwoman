@@ -9,6 +9,7 @@
  */
 
 import { walkNodes } from "@mailwoman/core/decoder"
+import type { CaseNormalization } from "@mailwoman/core/pipeline/types"
 import { workerThreadID, workerUserData } from "@mailwoman/core/workers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
@@ -36,6 +37,10 @@ export interface PipelineParseWorkerData {
 	 * What the pipeline parses a line break as, passed as `PipelineOpts.lineBreaks`.
 	 */
 	lineBreaks: "keep" | "comma"
+	/**
+	 * The classifier's case normalization, passed as `PipelineOpts.caseNormalization`.
+	 */
+	caseNormalization: CaseNormalization
 }
 
 /**
@@ -65,7 +70,8 @@ export interface PipelineParse {
 	ms: number
 }
 
-const { locale, cacheRoot, intraOpNumThreads, conventions, lineBreaks } = workerUserData<PipelineParseWorkerData>()
+const { locale, cacheRoot, intraOpNumThreads, conventions, lineBreaks, caseNormalization } =
+	workerUserData<PipelineParseWorkerData>()
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({
 	locale,
@@ -81,7 +87,11 @@ const parse = createRuntimePipeline({ classifier })
  */
 export async function handleItem(row: PipelineParseRow): Promise<PipelineParse> {
 	const started = performance.now()
-	const result = await parse(row.raw, { lineBreaks, ...(row.localeHint ? { localeHint: row.localeHint } : {}) })
+	const result = await parse(row.raw, {
+		lineBreaks,
+		caseNormalization,
+		...(row.localeHint ? { localeHint: row.localeHint } : {}),
+	})
 
 	const spans = [...walkNodes(result.tree?.roots ?? [])]
 		.map((node): BatterySpan => [node.tag, node.start, node.end, node.value])
