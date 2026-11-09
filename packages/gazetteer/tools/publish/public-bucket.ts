@@ -104,8 +104,17 @@ export interface PublishToPublicBucketOptions {
 export interface PublishToPublicBucketResult {
 	bucket: string
 	prefix: string
+	/**
+	 * Every object the staged directory holds, and the local bytes they total.
+	 */
 	objects: number
 	bytes: number
+	/**
+	 * The objects this run sent, and their local bytes.
+	 * `skipUnchanged` leaves the rest already stored.
+	 */
+	uploaded: number
+	uploadedBytes: number
 }
 
 function extension(path: string): string {
@@ -442,6 +451,9 @@ export async function publishToPublicBucket(
 	const transport = env ? (options.upload ?? (await awsTransport(env))) : undefined
 	const stored = env && options.skipUnchanged ? await storedObjectSize(env) : null
 
+	let uploaded = 0
+	let uploadedBytes = 0
+
 	for (const asset of uploads) {
 		if (stored && !asset.contentEncoding && (await stored(bucket, asset.key)) === asset.size) {
 			options.onObject?.(`  = ${asset.key}  (already stored at ${asset.size} bytes)`)
@@ -451,6 +463,9 @@ export async function publishToPublicBucket(
 
 		await transport?.(asset, bucket)
 		options.onObject?.(objectLine(asset, dryRun))
+
+		uploaded++
+		uploadedBytes += asset.size
 	}
 
 	return {
@@ -458,6 +473,8 @@ export async function publishToPublicBucket(
 		prefix,
 		objects: uploads.length,
 		bytes: uploads.reduce((total, asset) => total + asset.size, 0),
+		uploaded,
+		uploadedBytes,
 	}
 }
 
@@ -526,8 +543,13 @@ export async function verifyPublicBucketUploads(
  * Formats the final report shared by the standalone entry point and tests.
  */
 export function formatPublicBucketPublishResult(result: PublishToPublicBucketResult, dryRun: boolean): string {
+	const megabytes = (bytes: number) => (bytes / 1024 / 1024).toFixed(1)
+	const stored = result.objects - result.uploaded
+	const storedText = stored ? `; ${stored} already stored` : ""
+
 	return (
-		`\n${dryRun ? "(dry-run) " : ""}${result.objects} objects, ${(result.bytes / 1024 / 1024).toFixed(1)} MB → ` +
+		`\n${dryRun ? "(dry-run) " : ""}${result.uploaded} of ${result.objects} objects sent, ` +
+		`${megabytes(result.uploadedBytes)} MB${storedText} → ` +
 		`${result.bucket}/${result.prefix}/\nServed at https://public.mailwoman.post/${result.prefix}/...`
 	)
 }
