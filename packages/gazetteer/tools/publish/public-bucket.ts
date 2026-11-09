@@ -11,7 +11,7 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { gzip } from "@mailwoman/core/fs/compression"
+import { gunzip, gzip } from "@mailwoman/core/fs/compression"
 import { readFileRange, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { isDirectory, readFileSize } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
@@ -91,6 +91,14 @@ export interface PublishToPublicBucketOptions {
 	env?: PublicBucketEnvironment
 	upload?: PublicBucketTransport
 	onObject?: (line: string) => void
+	/**
+	 * Skip an identity-encoded object the bucket already stores at the local file's size,
+	 * so an interrupted publish resumes after the objects it finished.
+	 *
+	 * An encoded object is always uploaded, since its stored size is the compressed one.
+	 * Use it only for keys under a versioned path, where an object of the same size is the same file.
+	 */
+	skipUnchanged?: boolean
 }
 
 export interface PublishToPublicBucketResult {
@@ -312,23 +320,68 @@ async function defaultEnvironment(): Promise<PublicBucketEnvironment> {
 	}
 }
 
-async function awsTransport(env: PublicBucketEnvironment): Promise<PublicBucketTransport> {
-	const [{ S3Client }, { Upload }] = await Promise.all([import("@aws-sdk/client-s3"), import("@aws-sdk/lib-storage")])
+async function publicBucketClient(env: PublicBucketEnvironment) {
+	const { S3Client } = await import("@aws-sdk/client-s3")
 
-	const client = new S3Client({
+	return new S3Client({
 		endpoint: requiredEnv(env, "RCLONE_S3_PUBLIC_ENDPOINT"),
 		region: env["RCLONE_S3_PUBLIC_REGION"] ?? "auto",
 		credentials: {
 			accessKeyId: requiredEnv(env, "RCLONE_S3_PUBLIC_ACCESS_KEY_ID"),
 			secretAccessKey: requiredEnv(env, "RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY"),
 		},
+		// Without a request timeout, a connection that stops moving bytes holds its part forever.
+		// The timeout fails the stalled part, and the retry sends it again.
+		requestHandler: {
+			requestTimeout: REQUEST_TIMEOUT_MS,
+			throwOnRequestTimeout: true,
+			// Kept-alive sockets let the parts of one object reuse connections instead of opening one each.
+			// Node's address racing gives each candidate 250 ms by default, so a slow
+			// link exhausts every address and fails with ETIMEDOUT.
+			// A longer attempt window lets a slow IPv4 connect finish.
+			httpsAgent: { keepAlive: true, autoSelectFamilyAttemptTimeout: CONNECT_ATTEMPT_MS },
+		},
+		maxAttempts: 5,
 	})
+}
+
+/**
+ * How long one request may go without completing before it is failed and retried.
+ *
+ * A multipart part is {@linkcode UPLOAD_PART_BYTES}, which this host sent in about 6 s on 2026-11-09.
+ */
+const REQUEST_TIMEOUT_MS = 120_000
+
+/**
+ * How long a connect to one of the endpoint's addresses may take before the next is tried.
+ *
+ * The endpoint resolves to IPv4 and IPv6 addresses.
+ * On 2026-11-09 the lab host connected over IPv4 in 0.5–1.9 s and had no IPv6 route.
+ */
+const CONNECT_ATTEMPT_MS = 2000
+
+/**
+ * The size of each multipart part.
+ *
+ * The library's 5 MiB default turns a 4 GiB database into some 800 requests.
+ */
+const UPLOAD_PART_BYTES = 32 * 1024 * 1024
+
+/**
+ * Parts of one object in flight at once.
+ */
+const UPLOAD_QUEUE_SIZE = 8
+
+async function awsTransport(env: PublicBucketEnvironment): Promise<PublicBucketTransport> {
+	const [client, { Upload }] = await Promise.all([publicBucketClient(env), import("@aws-sdk/lib-storage")])
 
 	return async (asset, bucket) => {
 		const encoded = asset.contentEncoding ? await gzip(await readLocalBuffer(asset.file)) : null
 
 		await new Upload({
 			client,
+			partSize: UPLOAD_PART_BYTES,
+			queueSize: UPLOAD_QUEUE_SIZE,
 			params: {
 				Bucket: bucket,
 				Key: asset.key,
@@ -339,6 +392,25 @@ async function awsTransport(env: PublicBucketEnvironment): Promise<PublicBucketT
 				ContentEncoding: asset.contentEncoding ?? undefined,
 			},
 		}).done()
+	}
+}
+
+/**
+ * Returns a reader of an object's stored size, or null for a key the bucket does not hold.
+ */
+async function storedObjectSize(
+	env: PublicBucketEnvironment
+): Promise<(bucket: string, key: string) => Promise<number | null>> {
+	const [client, { HeadObjectCommand }] = await Promise.all([publicBucketClient(env), import("@aws-sdk/client-s3")])
+
+	return async (bucket, key) => {
+		try {
+			return (await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }))).ContentLength ?? null
+		} catch (error) {
+			if ((error as { name?: string }).name === "NotFound") return null
+
+			throw error
+		}
 	}
 }
 
@@ -366,11 +438,17 @@ export async function publishToPublicBucket(
 	const uploads = await planPublicBucketUploads(options.src, prefix)
 	const dryRun = options.dryRun ?? false
 
-	const transport = dryRun
-		? undefined
-		: (options.upload ?? (await awsTransport(options.env ?? (await defaultEnvironment()))))
+	const env = dryRun ? null : (options.env ?? (await defaultEnvironment()))
+	const transport = env ? (options.upload ?? (await awsTransport(env))) : undefined
+	const stored = env && options.skipUnchanged ? await storedObjectSize(env) : null
 
 	for (const asset of uploads) {
+		if (stored && !asset.contentEncoding && (await stored(bucket, asset.key)) === asset.size) {
+			options.onObject?.(`  = ${asset.key}  (already stored at ${asset.size} bytes)`)
+
+			continue
+		}
+
 		await transport?.(asset, bucket)
 		options.onObject?.(objectLine(asset, dryRun))
 	}
@@ -381,6 +459,67 @@ export async function publishToPublicBucket(
 		objects: uploads.length,
 		bytes: uploads.reduce((total, asset) => total + asset.size, 0),
 	}
+}
+
+/**
+ * One staged file whose stored object does not match it.
+ */
+export interface PublicBucketMismatch {
+	key: string
+	reason: string
+}
+
+/**
+ * Checks every file below `src` against the object the bucket stores for it,
+ * through the bucket's own records.
+ *
+ * A plain object's stored `ContentLength` must equal the file's size.
+ * An object the publisher gzips is fetched, decompressed and compared byte for byte,
+ * since its stored length is the compressed one.
+ *
+ * A missing object or a failed request is reported as a mismatch.
+ *
+ * The bucket's records are read with `HeadObject` rather than over the public URL: a one-byte range
+ * request through Node's `fetch` came back `200` without `Content-Range` for large objects there.
+ */
+export async function verifyPublicBucketUploads(
+	options: Pick<PublishToPublicBucketOptions, "src" | "bucket" | "prefix" | "env">
+): Promise<{ objects: number; mismatches: PublicBucketMismatch[] }> {
+	const bucket = options.bucket ?? $public.MAILWOMAN_PUBLIC_BUCKET
+	const uploads = await planPublicBucketUploads(options.src, options.prefix ?? "mailwoman")
+
+	const [client, { HeadObjectCommand, GetObjectCommand }] = await Promise.all([
+		publicBucketClient(options.env ?? (await defaultEnvironment())),
+		import("@aws-sdk/client-s3"),
+	])
+
+	const mismatches: PublicBucketMismatch[] = []
+
+	for (const asset of uploads) {
+		try {
+			const head = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: asset.key }))
+
+			if (!asset.contentEncoding) {
+				if (head.ContentLength !== asset.size) {
+					mismatches.push({ key: asset.key, reason: `stored ${head.ContentLength} bytes, local ${asset.size}` })
+				}
+
+				continue
+			}
+
+			const object = await client.send(new GetObjectCommand({ Bucket: bucket, Key: asset.key }))
+			const stored = await gunzip(await object.Body!.transformToByteArray())
+			const local = await readLocalBuffer(asset.file)
+
+			if (stored.length !== local.length || !local.equals(stored)) {
+				mismatches.push({ key: asset.key, reason: `decoded ${stored.length} bytes, local ${local.length}` })
+			}
+		} catch (error) {
+			mismatches.push({ key: asset.key, reason: `${(error as Error).name}: ${(error as Error).message}` })
+		}
+	}
+
+	return { objects: uploads.length, mismatches }
 }
 
 /**
