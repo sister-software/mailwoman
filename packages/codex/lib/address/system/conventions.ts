@@ -39,13 +39,17 @@ export interface AddressSystemConventions {
  */
 export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSystemConventions>> = {
 	/**
-	 * France (La Poste / afnor NF Z 10-011): the street type is a leading particle labeled `street_prefix`
-	 * ("Rue de Rivoli"), and French addresses never have a trailing USPS-style `street_suffix`.
+	 * France (La Poste / afnor NF Z 10-011): the street type is a leading particle
+	 * labeled `street_prefix` ("Rue de Rivoli").
+	 *
+	 * French addresses have no trailing USPS-style `street_suffix`, but the system forbids no tag.
+	 * The locale head also detects France on addresses elsewhere that hold French words,
+	 * such as `1405 Saint Alban's Drive` in Louisiana, and a `street_suffix` mask
+	 * there deletes the street type the address does have.
 	 *
 	 * Postcode: exactly five digits (NF Z 10-011, documented in fr/code-postal).
 	 */
 	fr: {
-		forbiddenTags: ["street_suffix"],
 		postcodePattern: CODE_POSTAL_PATTERN,
 	},
 

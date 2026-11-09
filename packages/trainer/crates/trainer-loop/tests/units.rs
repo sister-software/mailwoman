@@ -78,7 +78,7 @@ fn a_model_section_enabling_a_retired_head_is_refused() {
 	}
 }
 
-/// Locale 1 forbids `street_suffix`, as the schema's FR row does; the other eight forbid nothing.
+/// Locale 1 forbids `street_suffix`, a synthetic row that exercises the mask; the other eight forbid nothing.
 fn conventions() -> Vec<Vec<String>> {
 	let mut out = vec![Vec::new(); 9];
 	out[1] = vec!["street_suffix".to_owned()];
