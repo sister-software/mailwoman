@@ -66,8 +66,8 @@ export const COARSE_PLACER_ANCHOR_WEIGHT = 1
  */
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
-// country-branch: the fallback for an artifact without a coverage manifest,
-// which is the planetary source and takes precedence whenever it is present.
+// country-branch: the fallback for an artifact without a coverage manifest.
+// The coverage manifest is the planetary source and takes precedence whenever it is present.
 /**
  * The countries eligible for a hard country filter when the artifact has no coverage manifest.
  *
@@ -407,6 +407,7 @@ export async function runPipeline(
 			anchorRegions: stages.anchorRegions ?? null,
 			venueHead: stages.venueHead?.(locale) ?? null,
 			inputMode: deriveInputMode(opts?.inputMode ?? "auto", kind.kind),
+			localeHint: opts?.localeHint ?? null,
 		})
 
 		timing["token-classify"] = performance.now() - tClassify
@@ -488,6 +489,7 @@ async function safeClassify(
 		anchorRegions: AnchorRegionLookupLike | null
 		venueHead: VenueHeadStage | null
 		inputMode: InputMode
+		localeHint: string | null
 	}
 ): Promise<AddressTree> {
 	const {
@@ -499,12 +501,14 @@ async function safeClassify(
 		anchorRegions,
 		venueHead,
 		inputMode,
+		localeHint,
 	} = knobs
 
 	try {
 		return await classifier.parse(text, {
 			queryShape,
 			inputMode,
+			...(localeHint ? { localeHint } : {}),
 			fst,
 			postcodeRepair: true,
 			caseNormalization,

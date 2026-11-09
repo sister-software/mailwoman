@@ -308,6 +308,17 @@ describe("runPipeline — stage composition", () => {
 		expect("venueHead" in options).toBe(false)
 	})
 
+	it("passes PipelineOpts.localeHint to classifier.parse only when the caller sets it", async () => {
+		const hinted: AddressClassifier = { parse: vi.fn(async () => fakeTree("belleville")) }
+		await runPipeline("belleville", { classifier: hinted }, { localeHint: "US" })
+		expect(hinted.parse).toHaveBeenCalledWith("belleville", expect.objectContaining({ localeHint: "US" }))
+
+		const unhinted: AddressClassifier = { parse: vi.fn(async () => fakeTree("belleville")) }
+		await runPipeline("belleville", { classifier: unhinted }, { locale: "en-US" })
+		const options = (unhinted.parse as ReturnType<typeof vi.fn>).mock.calls[0]![1] as Record<string, unknown>
+		expect(options).not.toHaveProperty("localeHint")
+	})
+
 	it("threads an explicit PipelineOpts.inputMode to classifier.parse (Decision A)", async () => {
 		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("belleville")) }
 		await runPipeline("belleville", { classifier }, { inputMode: "fragmented" })

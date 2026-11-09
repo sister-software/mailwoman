@@ -136,6 +136,13 @@ export interface PipelineOpts {
 	locale?: Intl.UnicodeBCP47LocaleIdentifier
 	userLocation?: UserLocation
 	/**
+	 * The ISO 3166-1 alpha-2 country passed to the classifier as its locale hint, such as `US`.
+	 *
+	 * When it is unset, the classifier receives no hint.
+	 * The pipeline derives no hint from `locale` or `userLocation`, so a caller states it explicitly.
+	 */
+	localeHint?: string
+	/**
 	 * The input register.
 	 * The default `"auto"` derives it from the query kind.
 	 */
@@ -322,7 +329,8 @@ export const QueryIntentMarkerSchema = z
 		mechanism: z.string(),
 		/**
 		 * Human-readable text.
-		 * Branch on `code`, which is stable.
+		 *
+		 * Branch on `code`, because its values stay fixed across releases.
 		 */
 		message: z.string(),
 		/**
@@ -691,6 +699,13 @@ export interface ClassifierOpts {
 	 */
 	queryShape?: Pick<QueryShapeLite, "knownFormats">
 	inputMode?: InputMode
+	/**
+	 * The ISO 3166-1 alpha-2 country the caller expects the address to be in.
+	 *
+	 * A model with a `locale_hint` input reads it as evidence it can overrule,
+	 * and other classifiers ignore it.
+	 */
+	localeHint?: string
 	fst?: FSTMatcherLike | null
 	fstBiasScale?: number
 	/**
