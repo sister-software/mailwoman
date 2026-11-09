@@ -17,6 +17,20 @@ import { COMPONENT_TAGS, type ComponentTag } from "#component"
  */
 export interface AddressSlot {
 	readonly tag: ComponentTag
+	/**
+	 * The text the slot renders when the value is absent, as Puerto Rico's postal
+	 * form writes `PR` after the town.
+	 *
+	 * The rendered text then counts as that tag, so a corpus row labels it.
+	 */
+	readonly fallback?: string
+}
+
+/**
+ * A slot for `tag` that renders `text` when the address gives no value, such as `fixedSlot("region", "PR")`.
+ */
+export function fixedSlot(tag: ComponentTag, text: string): AddressSlot {
+	return Object.freeze({ tag, fallback: text })
 }
 
 /**

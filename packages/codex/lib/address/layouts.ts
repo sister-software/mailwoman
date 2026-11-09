@@ -667,7 +667,9 @@ export function lineJoinForCountry(countryCode: string | null, script?: AddressS
 const SYSTEM_KEY_IGNORED_TAGS: ReadonlySet<ComponentTag> = new Set(["attention", "venue", "country"])
 
 function systemKeyTokens(atom: AddressAtom): string[] {
-	if (isSlot(atom)) return SYSTEM_KEY_IGNORED_TAGS.has(atom.tag) ? [] : [atom.tag]
+	// A slot with fixed text, such as Puerto Rico's `PR`, prints the skeleton's literal, so it
+	// counts like a connector and leaves the country's system id where the trainer assigned it.
+	if (isSlot(atom)) return SYSTEM_KEY_IGNORED_TAGS.has(atom.tag) || atom.fallback ? [] : [atom.tag]
 
 	if (isLayout(atom)) return atom.lines.flatMap((line) => line.flatMap(systemKeyTokens))
 

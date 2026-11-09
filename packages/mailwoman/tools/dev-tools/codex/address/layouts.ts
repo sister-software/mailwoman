@@ -15,6 +15,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { sslAddressSpecsPath } from "@mailwoman/dictionaries/paths"
+import { postcodeSyntax } from "@mailwoman/postcode/country-formats"
 import { Globerator } from "spliterator/node/fs"
 
 import {
@@ -67,6 +68,34 @@ function printsLargestFirst(lines: readonly string[]): boolean {
 }
 
 /**
+ * Whether a generated layout writes a region code as a slot with fixed text,
+ * so the emitted file imports `fixedSlot`.
+ */
+let usesFixedSlot = false
+
+/**
+ * Rewrites a skeleton's literal country code between two fields as a region
+ * slot with that code as its fixed text.
+ *
+ * Puerto Rico's skeleton is `%C PR %Z`: the postal form writes `PR` after the town as the region.
+ * Copied as literal text, it renders with no region component, so a corpus row labels it `O`.
+ *
+ * A code the country's postcode syntax declares as its prefix, such as Azerbaijan's `AZ`,
+ * is postcode text and stays literal.
+ */
+function regionCodeAsSlot(line: string, code: string): string {
+	const literal = new RegExp(`\\} ${code} \\$\\{`)
+
+	if (!literal.test(line)) return line
+
+	if (postcodeSyntax(code)?.prefix?.trim() === code) return line
+
+	usesFixedSlot = true
+
+	return line.replace(literal, `} \${fixedSlot("region", "${code}")} \${`)
+}
+
+/**
  * Render one `fmt` into template source, adding every slot it names to `slots`
  * so the emitted file destructures exactly what it uses.
  */
@@ -116,7 +145,7 @@ function layoutSource(
 		}
 
 		if (sawField) {
-			lines.push(line.trim())
+			lines.push(regionCodeAsSlot(line.trim(), code))
 		}
 	}
 
@@ -241,14 +270,14 @@ const emitted = `/**
  *   checked against real addresses on a board, because a generated skeleton is a starting point rather than a verdict.
  *
  *   The Latin table below is the exception to that split. A hand-authored entry states one order per country, so a
- *   country whose two scripts disagree cannot carry its second order there — Hong Kong's hand-authored layout is the
- *   Latin one, which leaves the Chinese order with nowhere to live. The Latin skeletons are therefore generated for
+ *   country whose two scripts disagree cannot store its second order there. Hong Kong's hand-authored layout is the
+ *   Latin one, so the table has no place for its Chinese order. The Latin skeletons are therefore generated for
  *   every country that has one, hand-authored or not.
  */
 
 // oxlint-disable max-lines -- one entry per country, each a template that reads in the order it prints
 
-import { addr, ${[...streetNodes].toSorted().join(", ")}, SLOTS, type AddressLayout } from "#address/layout"
+import { addr, ${usesFixedSlot ? "fixedSlot, " : ""}${[...streetNodes].toSorted().join(", ")}, SLOTS, type AddressLayout } from "#address/layout"
 
 const { ${[...usedSlots].toSorted().join(", ")} } = SLOTS
 

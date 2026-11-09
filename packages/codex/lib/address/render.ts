@@ -58,7 +58,7 @@ function rendered(result: readonly AddressPiece[] | null): boolean {
 
 function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly AddressPiece[] | null {
 	if (isSlot(atom)) {
-		const text = components[atom.tag]?.trim()
+		const text = components[atom.tag]?.trim() || atom.fallback
 
 		return text ? [{ tag: atom.tag, text, softBreak: false }] : null
 	}

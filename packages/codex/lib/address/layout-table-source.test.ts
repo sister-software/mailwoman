@@ -73,7 +73,9 @@ function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): s
 }
 
 function nameOf(atom: AddressAtom): string[] {
-	if (isSlot(atom)) return [atom.tag]
+	// A slot with fixed text, such as Puerto Rico's `PR`, transcribes the skeleton's literal
+	// text, so it compares like a connector and drops out of the field list.
+	if (isSlot(atom)) return atom.fallback ? [] : [atom.tag]
 
 	// An alternation or a nested layout is the street line however that country spells it.
 	if (isAlternation(atom) || isLayout(atom)) return ["«street»"]

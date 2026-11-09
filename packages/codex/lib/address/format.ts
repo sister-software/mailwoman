@@ -255,7 +255,8 @@ export function formatAddressRow(
 	const placed: ComponentDict = {}
 
 	for (const tag of rendering.placed) {
-		const value = components[tag]
+		// A slot with a fallback renders text the components lack, so its value is the text it printed.
+		const value = components[tag] || rendering.pieces.find((piece) => piece.tag === tag)?.text
 
 		if (value) {
 			placed[tag] = value

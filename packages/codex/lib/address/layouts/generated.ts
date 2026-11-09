@@ -23,6 +23,7 @@
 
 import {
 	addr,
+	fixedSlot,
 	hanStreet,
 	numberFirstCommaStreet,
 	numberFirstStreet,
@@ -1173,7 +1174,7 @@ ${country}`,
 ${venue}
 ${numberFirstStreet}
 ${dependent_locality}
-${locality} PR ${postcode}
+${locality} ${fixedSlot("region", "PR")} ${postcode}
 ${country}`,
 
 	// %N%n%O%n%A%n%Z %C

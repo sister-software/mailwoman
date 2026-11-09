@@ -267,6 +267,32 @@ describe("a postcode written with its layout's prefix", () => {
 		expect(row.components.postcode).toBe(written)
 	})
 
+	it("places Puerto Rico's fixed `PR` as the region when the address gives none, and a given region over it", () => {
+		const components = { street: "Calle Munoz Rivera", house_number: "555", locality: "Caguas", postcode: "00725" }
+		const fixed = formatAddressRow(components, "PR", { singleLine: true })!
+
+		expect(fixed.raw).toContain("Caguas PR 00725")
+		expect(fixed.components.region).toBe("PR")
+
+		const given = formatAddressRow({ ...components, region: "Caguas Municipio" }, "PR", { singleLine: true })!
+
+		expect(given.raw).toContain("Caguas Caguas Municipio 00725")
+		expect(given.components.region).toBe("Caguas Municipio")
+	})
+
+	it("keeps Azerbaijan's `AZ`, its postcode prefix, as postcode text rather than a region", () => {
+		const row = formatAddressRow(
+			{ street: "Neftchilar", house_number: "1", postcode: "1000", locality: "Baku" },
+			"AZ",
+			{
+				singleLine: true,
+			}
+		)!
+
+		expect(row.raw).toContain("AZ 1000")
+		expect(row.components.region).toBeUndefined()
+	})
+
 	it("leaves a postcode with no glued prefix as given", () => {
 		const row = formatAddressRow(
 			{ street: "Hauptstraße", house_number: "1", postcode: "10115", locality: "Berlin" },
