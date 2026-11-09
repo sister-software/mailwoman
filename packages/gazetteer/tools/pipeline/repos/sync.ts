@@ -184,7 +184,11 @@ export function remoteChanges(origin: RepoOrigin, remotes: Readonly<Record<strin
 	}
 
 	want(Remote.Origin, origin.forkURL)
-	want(Remote.Upstream, origin.upstreamURL)
+
+	// A repository with no original keeps whatever `upstream` remote it has, and gets none added.
+	if (origin.upstreamURL) {
+		want(Remote.Upstream, origin.upstreamURL)
+	}
 
 	const legacy = remotes[Remote.LegacyFork]
 
@@ -335,8 +339,10 @@ export async function syncWOFRepo(repo: string, options: SyncWOFRepoOptions): Pr
 	const origin = (options.resolveOrigin ?? wofRepoOrigin)(repo)
 	const directory = wofClonePath(options.root, repo)
 
-	const forkCreated = dryRun ? null : await host.ensureFork(origin)
-	const forkUpdate = dryRun ? null : await host.updateFork(origin)
+	// A repository with no original has no fork to create or merge into.
+	const manageFork = !dryRun && origin.upstreamOrg !== null
+	const forkCreated = manageFork ? await host.ensureFork(origin) : null
+	const forkUpdate = manageFork ? await host.updateFork(origin) : null
 
 	// The plan defaults to the one the reported state implies.
 	// A clone or fast-forward passes the plan it ran, because the state read afterward is up to date.
@@ -361,7 +367,10 @@ export async function syncWOFRepo(repo: string, options: SyncWOFRepoOptions): Pr
 
 		await makeDirectories(dirname(directory))
 		await client.clone(origin.forkURL, directory, { depth: 1 })
-		await client.read(["-C", directory, "remote", "add", Remote.Upstream, origin.upstreamURL])
+
+		if (origin.upstreamURL) {
+			await client.read(["-C", directory, "remote", "add", Remote.Upstream, origin.upstreamURL])
+		}
 
 		return result(await inspectClone(directory), [], { action: SyncAction.Clone, reason: "cloned from the fork" })
 	}

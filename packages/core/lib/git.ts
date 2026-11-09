@@ -25,6 +25,7 @@ import {
 	type ProcessTaskOptions,
 	runFile,
 	runFileSync,
+	spawnProcess,
 } from "#process"
 import { TypedEventTarget } from "#utils/events"
 
@@ -486,6 +487,39 @@ export async function trackedFiles(
 	pathspecs: string[] = []
 ): Promise<string[]> {
 	return new GitClient({ cwd: repoRoot }).readNulDelimited(["ls-files", "-z", ...pathspecs])
+}
+
+/**
+ * {@linkcode trackedFiles} as a stream, for a repository whose listing outgrows the 64 MiB buffer.
+ *
+ * A Who's On First postcode clone tracks about 1.7 million files, more than that buffer holds.
+ * Paths arrive as git writes them, so memory holds one chunk of the listing at a time.
+ *
+ * @throws After the last path when `git ls-files` exits non-zero, so a caller never
+ * treats a listing that stopped early as complete.
+ */
+export async function* streamTrackedFiles(
+	repoRoot: PathBuilderLike = repoRootPathBuilder,
+	pathspecs: string[] = []
+): AsyncGenerator<string> {
+	const child = spawnProcess("git", ["ls-files", "-z", ...pathspecs], {
+		cwd: repoRoot,
+		stdio: ["ignore", "pipe", "pipe"],
+	})
+
+	const exited = new Promise<{ code: number | null; stderr: string }>((resolve, reject) => {
+		let stderr = ""
+
+		child.stderr.on("data", (chunk: Buffer) => (stderr += chunk.toString("utf8")))
+		child.on("error", reject)
+		child.on("close", (code) => resolve({ code, stderr }))
+	})
+
+	yield* TextSpliterator.fromAsync(child.stdout, { delimiter: "\0", skipEmpty: true })
+
+	const { code, stderr } = await exited
+
+	if (code !== 0) throw new Error(`git ls-files exited ${code} in ${repoRoot.toString()}: ${stderr.trim()}`)
 }
 
 /**
