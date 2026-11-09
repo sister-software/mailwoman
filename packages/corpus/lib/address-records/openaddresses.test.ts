@@ -4,8 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { gzip } from "@mailwoman/core/fs/compression"
+import { writeLocalBuffer, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street/normalize"
+import { CSVSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
 import { createUnitSplitter } from "#adapters/street/unit"
@@ -13,6 +16,8 @@ import {
 	openAddressesAddressRecord,
 	openAddressesRunCountry,
 	openAddressesRunSubdivision,
+	openAddressesSourceCacheName,
+	readOpenAddressesGeoJSONRunRecords,
 	readOpenAddressesRunRecords,
 } from "#address-records/openaddresses"
 import { useScratchDir } from "#test-kit"
@@ -45,6 +50,31 @@ describe("OpenAddresses address records", () => {
 		expect(openAddressesRunSubdivision("us/wi/statewide")).toBe("US-WI")
 		expect(openAddressesRunSubdivision("de/berlin")).toBeNull()
 		expect(() => openAddressesRunCountry("statewide")).toThrow(/country code/)
+	})
+
+	it("reads a batch job's gzip-compressed GeoJSON into the same records as the run's CSV", async () => {
+		const csv = scratch.path("statewide.csv")
+
+		await writeLocalTextFile(RUN_CSV, csv)
+
+		const rows = await Array.fromAsync(CSVSpliterator.fromAsync<Record<string, string>>(csv.toString()))
+
+		const features = rows.map(({ LON, LAT, ...properties }) => ({
+			type: "Feature",
+			geometry: LON && LAT ? { type: "Point", coordinates: [Number(LON), Number(LAT)] } : null,
+			properties: Object.fromEntries(Object.entries(properties).map(([key, value]) => [key.toLowerCase(), value])),
+		}))
+
+		const geojson = scratch.path(openAddressesSourceCacheName("us/wi/statewide"))
+
+		await writeLocalBuffer(await gzip(features.map((feature) => stringifyJSON(feature)).join("\n")), geojson)
+
+		const fromCSV = await Array.fromAsync(readOpenAddressesRunRecords(csv, "us/wi/statewide", "us"))
+		const fromGeoJSON = await Array.fromAsync(readOpenAddressesGeoJSONRunRecords(geojson, "us/wi/statewide", "us"))
+
+		expect(geojson.toString()).toMatch(/us__wi__statewide\.source\.geojson\.gz$/)
+		expect(fromGeoJSON).toHaveLength(7)
+		expect(fromGeoJSON).toEqual(fromCSV)
 	})
 
 	it("emits seven of ten run rows and keeps the member as the wire source id", async () => {

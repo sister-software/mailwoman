@@ -94,6 +94,11 @@ export const spec = {
 				"wikidata-vital-places: entity requests in flight, capped at 1 anonymously and 3 when WIKIDATA_BOT_USERNAME and WIKIDATA_BOT_PASSWORD log in (default: the cap)",
 		},
 		country: { type: "string", description: "OpenAddresses country code" },
+		sources: {
+			type: "string",
+			description:
+				"openaddresses: source members, comma-separated (us/mi/statewide); caches each one's latest batch job output in the data root's oa-cache instead of a country collection",
+		},
 		countries: { type: "string", description: "GeoNames postal ISO alpha-2 codes, comma-separated" },
 		"skip-state-fips": { type: "string", description: "TIGER state FIPS codes to skip" },
 		"rate-sleep": { type: "number", description: "TIGER delay between downloads" },
@@ -300,7 +305,14 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		case "nppes":
 			return fetchNPPES(base, reportToStderr)
 		case "openaddresses":
-			return fetchOpenAddresses({ ...base, country: options.country }, reportToStderr)
+			return fetchOpenAddresses(
+				{
+					...base,
+					country: options.country,
+					sources: options.sources ? extractDelimited(options.sources) : null,
+				},
+				reportToStderr
+			)
 		case "ourairports":
 			return fetchOurAirports(base, reportToStderr)
 		case "wikidata-subvenue":

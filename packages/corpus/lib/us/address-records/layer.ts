@@ -40,7 +40,11 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import { isAdmittedSource } from "#address-records/admission"
-import { readOpenAddressesRunRecords } from "#address-records/openaddresses"
+import {
+	openAddressesSourceCacheName,
+	readOpenAddressesGeoJSONRunRecords,
+	readOpenAddressesRunRecords,
+} from "#address-records/openaddresses"
 import { readOvertureAddressRecords } from "#address-records/overture"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { recordPathFor } from "#parquet/record"
@@ -134,10 +138,30 @@ async function overtureDatasets(overture: PathBuilderLike, state: string): Promi
 }
 
 /**
- * The cached archive of one OpenAddresses run.
+ * The cached archive of one OpenAddresses run from the anonymous results endpoint.
  */
 function runArchive(cache: PathBuilderLike, member: string): string {
 	return resolvePath(cache, `${member.replaceAll("/", "__")}.zip`).toString()
+}
+
+/**
+ * The cached batch API job output of one OpenAddresses run, as `fetchOpenAddressesSources` writes it.
+ */
+function runGeoJSON(cache: PathBuilderLike, member: string): string {
+	return resolvePath(cache, openAddressesSourceCacheName(member)).toString()
+}
+
+/**
+ * Where the cache holds a run, preferring the batch job output, or null when it holds neither form.
+ */
+async function cachedRun(cache: PathBuilderLike, member: string): Promise<{ path: string; geojson: boolean } | null> {
+	const geojson = runGeoJSON(cache, member)
+
+	if (await pathExists(geojson)) return { path: geojson, geojson: true }
+
+	const archive = runArchive(cache, member)
+
+	return (await pathExists(archive)) ? { path: archive, geojson: false } : null
 }
 
 async function* stateRecords(
@@ -159,9 +183,19 @@ async function* stateRecords(
 	})
 
 	for (const member of runs) {
+		const cached = await cachedRun(options.openAddresses.cache, member)
+
+		if (!cached) throw new Error(`the OpenAddresses cache lost ${member} after the plan admitted it`)
+
+		if (cached.geojson) {
+			yield* readOpenAddressesGeoJSONRunRecords(cached.path, member, "en", units)
+
+			continue
+		}
+
 		const csv = scratch(`${member.replaceAll("/", "__")}.csv`)
 
-		await extractZipEntry(runArchive(options.openAddresses.cache, member), `${member}.csv`, csv)
+		await extractZipEntry(cached.path, `${member}.csv`, csv)
 
 		try {
 			yield* readOpenAddressesRunRecords(csv, member, "en", units)
@@ -249,7 +283,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 
 			if (!isAdmittedSource(member, license)) {
 				refusedRuns++
-			} else if (await pathExists(runArchive(options.openAddresses.cache, member))) {
+			} else if (await cachedRun(options.openAddresses.cache, member)) {
 				runs.push(member)
 			} else {
 				missingRuns++

@@ -1,23 +1,26 @@
-import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Fetch an OpenAddresses country collection from batch.openaddresses.io.
+ * Fetch from batch.openaddresses.io: a country collection, or individual sources' latest job outputs.
  */
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
+import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { readFileRange, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream, pipeline } from "@mailwoman/core/fs/streams"
 import { movePath, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { runFile, spawnProcess } from "@mailwoman/core/process"
-import { isoSeconds } from "@mailwoman/core/utils"
-import type { PathBuilderLike } from "path-ts"
+import { isoDate, isoSeconds } from "@mailwoman/core/utils"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 import { AsyncSpliterator } from "spliterator"
 
+import { openAddressesSourceCacheName } from "#address-records/openaddresses"
 import { $private } from "#env"
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { streamDownload, writeManifest } from "#tools/fetch/download"
@@ -46,7 +49,56 @@ const OA_COLLECTION_IDS: Record<string, number> = {
 
 export interface FetchOpenAddressesOptions extends BaseFetchOptions {
 	country?: string
+	/**
+	 * OpenAddresses source members, such as `us/mi/statewide`.
+	 *
+	 * When set, the fetch caches each source's latest batch job output in `cache`
+	 * instead of a country collection.
+	 */
+	sources?: readonly string[] | null
+	/**
+	 * Where source job outputs are cached, the US address layer's OpenAddresses cache.
+	 */
+	cache?: PathBuilderLike
 }
+
+/**
+ * One entry of `GET /api/data`: a source layer's latest successful job.
+ */
+interface OaDataEntry {
+	job?: number
+	layer?: string
+	updated?: number
+}
+
+/**
+ * The fields of `GET /api/job/:id` the fetch checks.
+ */
+interface OaJob {
+	count?: number
+	status?: string
+}
+
+/**
+ * What a cached source job output's `.RECORD.json` sidecar states.
+ */
+export interface OpenAddressesSourceRecord {
+	member: string
+	job: number
+	/**
+	 * When OpenAddresses last updated the job, as an ISO date.
+	 */
+	updated: string | null
+	features: number
+	bytes: number
+	sha256: string
+	fetchedAt: string
+}
+
+/**
+ * The first two bytes of every gzip member.
+ */
+const GZIP_MAGIC = [0x1f, 0x8b] as const
 
 interface OaCollection {
 	name?: string
@@ -68,10 +120,147 @@ async function gunzipToFile(src: PathBuilderLike, dest: PathBuilderLike): Promis
 	})
 }
 
+/**
+ * Caches each source's latest batch job output, `source.geojson.gz`, in `cache` under
+ * {@linkcode openAddressesSourceCacheName}, with a `.RECORD.json` sidecar.
+ *
+ * The file is stored compressed, as the batch API serves it, because the
+ * address-layer reader decompresses while it streams.
+ * A source whose sidecar records the latest job, and whose file still has the recorded size, is skipped.
+ *
+ * A download whose feature count differs from the job's recorded count is refused and removed.
+ */
+export async function fetchOpenAddressesSources(
+	options: { sources: readonly string[]; cache: PathBuilderLike },
+	report?: (line: string) => void
+): Promise<FetchSummary> {
+	const token = $private.OA_BATCH_TOKEN
+
+	if (!token) {
+		report?.("ERROR: OA_BATCH_TOKEN is not set. Register at https://batch.openaddresses.io/register for a token.")
+
+		return { fetched: 0, skipped: 0, failed: options.sources.length, failedCodes: ["OA_BATCH_TOKEN"] }
+	}
+
+	const headers = { Authorization: `Bearer ${token}` }
+	const client = new APIClient({ displayName: "openaddresses-api", retry: true, axios: { headers } })
+	const summary: FetchSummary = { fetched: 0, skipped: 0, failed: 0, failedCodes: [] }
+
+	const fail = (member: string, reason: string) => {
+		report?.(`  ✗ ${member}: ${reason}`)
+
+		summary.failed++
+		summary.failedCodes.push(member)
+	}
+
+	await makeDirectories(options.cache)
+
+	for (const member of options.sources) {
+		const name = openAddressesSourceCacheName(member)
+		const destination = resolvePath(options.cache, name)
+		const recordPath = resolvePath(options.cache, `${name}.RECORD.json`)
+
+		const data = await client.fetch<OaDataEntry[]>({
+			url: `${OA_BASE}/api/data`,
+			params: { source: member, layer: "addresses" },
+			timeout: 30_000,
+		})
+
+		const latest = data.data
+			.filter((entry) => typeof entry.job === "number")
+			.toSorted((a, b) => (b.updated ?? 0) - (a.updated ?? 0))[0]
+
+		if (!latest?.job) {
+			fail(member, "the batch API lists no addresses job")
+
+			continue
+		}
+
+		const recorded = (await pathExists(recordPath))
+			? await readLocalJSONFile<OpenAddressesSourceRecord>(recordPath)
+			: null
+
+		if (
+			recorded?.job === latest.job &&
+			(await pathExists(destination)) &&
+			(await statPath(destination)).size === recorded.bytes
+		) {
+			report?.(`  = ${member}: job ${latest.job} already cached`)
+
+			summary.skipped++
+
+			continue
+		}
+
+		const job = (await client.fetch<OaJob>({ url: `${OA_BASE}/api/job/${latest.job}`, timeout: 30_000 })).data
+		const partial = resolvePath(options.cache, `${name}.partial`)
+
+		const status = await streamDownload(`${OA_BASE}/api/job/${latest.job}/output/source.geojson.gz`, partial, {
+			headers,
+			timeoutMs: 7_200_000,
+			retries: 3,
+			retryDelayMs: 30_000,
+		})
+
+		if (status !== HTTP_OK) {
+			await removePathIfPresent(partial)
+			fail(member, `job ${latest.job} output answered HTTP ${status}`)
+
+			continue
+		}
+
+		const magic = await readFileRange(partial, 0, GZIP_MAGIC.length)
+
+		if (!GZIP_MAGIC.every((byte, i) => magic[i] === byte)) {
+			await removePathIfPresent(partial)
+			fail(member, `job ${latest.job} output is not gzip`)
+
+			continue
+		}
+
+		const features = await AsyncSpliterator.count(partial.toString())
+
+		if (typeof job.count === "number" && features !== job.count) {
+			await removePathIfPresent(partial)
+			fail(member, `job ${latest.job} output holds ${features} features where the job records ${job.count}`)
+
+			continue
+		}
+
+		const record: OpenAddressesSourceRecord = {
+			member,
+			job: latest.job,
+			updated: latest.updated ? isoDate(new Date(latest.updated)) : null,
+			features,
+			bytes: (await statPath(partial)).size,
+			sha256: await sha256File(partial),
+			fetchedAt: isoSeconds(),
+		}
+
+		await movePath(partial, destination)
+		await writeManifest(recordPath, record)
+
+		report?.(
+			`  ✓ ${member}: job ${record.job} (${record.updated}), ${record.features} features, ${ByteFormatter.formatIEC(record.bytes)}`
+		)
+
+		summary.fetched++
+	}
+
+	return summary
+}
+
 export async function fetchOpenAddresses(
 	options: FetchOpenAddressesOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
+	if (options.sources?.length) {
+		return fetchOpenAddressesSources(
+			{ sources: options.sources, cache: options.cache ?? dataRootPath("oa-cache") },
+			report
+		)
+	}
+
 	const country = options.country ?? "ca"
 	const token = $private.OA_BATCH_TOKEN
 
