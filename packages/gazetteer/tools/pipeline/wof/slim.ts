@@ -202,11 +202,6 @@ export type ReferenceRepointing =
 const UNKNOWN_PARENT = -1
 
 /**
- * The indent one nesting level adds in the WOF exporter's layout.
- */
-const LEVEL_INDENT = "    "
-
-/**
  * The `"wof:parent_id"` line, with the indent, the ID and the comma captured.
  */
 const PARENT_LINE = /^([ \t]*"wof:parent_id":[ \t]*)(-?\d+)(,?)$/m
@@ -214,9 +209,12 @@ const PARENT_LINE = /^([ \t]*"wof:parent_id":[ \t]*)(-?\d+)(,?)$/m
 /**
  * A block-valued member printed one element per line: the opening line, the body
  * and the closing bracket at the opening line's indent.
+ *
+ * Exporters differ on a space after the colon (`"wof:hierarchy":[`
+ * and `"wof:hierarchy": [`), so both open a block.
  */
 function memberBlock(text: string, key: string): { start: number; end: number; indent: string; body: string } | null {
-	const open = new RegExp(`^([ \\t]*)"${key}":\\[\\n`, "m").exec(text)
+	const open = new RegExp(`^([ \\t]*)"${key}":[ \\t]*\\[\\n`, "m").exec(text)
 
 	if (!open) return null
 
@@ -230,12 +228,18 @@ function memberBlock(text: string, key: string): { start: number; end: number; i
 }
 
 /**
- * Renders `wof:hierarchy` branches in the WOF exporter's layout: one branch object
- * per block, one key per line, keys in sorted order.
+ * Renders `wof:hierarchy` branches in the layout of the block they came from:
+ * one branch object per block, one key per line, keys in sorted order.
+ *
+ * The branch indent, the key indent and the text between a key and its value are read
+ * from `original`, the block's body as the file printed it, so a two-space exporter
+ * and a four-space exporter each keep their layout.
  */
-function printHierarchyBranches(branches: ReadonlyArray<Record<string, number>>, indent: string): string {
-	const branchIndent = `${indent}${LEVEL_INDENT}`
-	const keyIndent = `${branchIndent}${LEVEL_INDENT}`
+function printHierarchyBranches(branches: ReadonlyArray<Record<string, number>>, original: string): string {
+	const branchIndent = /^([ \t]*)\{/m.exec(original)?.[1] ?? ""
+	const keyLine = /^([ \t]*)"[a-z_]+":([ \t]*)-?\d/m.exec(original)
+	const keyIndent = keyLine?.[1] ?? `${branchIndent}    `
+	const separator = `:${keyLine?.[2] ?? ""}`
 
 	return branches
 		.map((branch) => {
@@ -243,7 +247,9 @@ function printHierarchyBranches(branches: ReadonlyArray<Record<string, number>>,
 
 			if (!keys.length) return `${branchIndent}{}`
 
-			const lines = keys.map((key, index) => `${keyIndent}"${key}":${branch[key]}${index < keys.length - 1 ? "," : ""}`)
+			const lines = keys.map(
+				(key, index) => `${keyIndent}"${key}"${separator}${branch[key]}${index < keys.length - 1 ? "," : ""}`
+			)
 
 			return `${branchIndent}{\n${lines.join("\n")}\n${branchIndent}}`
 		})
@@ -344,7 +350,7 @@ export function repointRecordReferences(
 		})
 
 		if (changed) {
-			out = `${out.slice(0, hierarchy.start)}${printHierarchyBranches(next, hierarchy.indent)}${out.slice(hierarchy.end)}`
+			out = `${out.slice(0, hierarchy.start)}${printHierarchyBranches(next, hierarchy.body)}${out.slice(hierarchy.end)}`
 		}
 	}
 

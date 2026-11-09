@@ -271,6 +271,41 @@ describe("repointRecordReferences", () => {
 		expect(propertiesOf(result.text)["wof:belongsto"]).toEqual([102_191_569, 85_632_659, 1_108_692_295])
 	})
 
+	it("keeps the layout of an exporter that indents by two and puts a space after each colon", () => {
+		// The whosonfirst-data-admin-gb layout, from Rochester (WOF 101750331).
+		const before = [
+			"{",
+			'  "id": 101750331,',
+			'  "type": "Feature",',
+			'  "properties": {',
+			'    "wof:belongsto": [',
+			"      1360698565,",
+			"      85633159",
+			"    ],",
+			'    "wof:hierarchy": [',
+			"      {",
+			'        "country_id": 85633159,',
+			'        "locality_id": 101750331,',
+			'        "region_id": 1360698565',
+			"      }",
+			"    ],",
+			'    "wof:id": 101750331,',
+			'    "wof:parent_id": 1360698565',
+			"  },",
+			'  "geometry": {"coordinates":[0.5,51.4],"type":"Point"}',
+			"}",
+			"",
+		].join("\n")
+
+		const result = repointRecordReferences(before, (id) =>
+			id === 1_360_698_565 ? { kind: "replace", id: 1_880_762_057, placetype: "region" } : null
+		)
+
+		if (result.kind !== "repointed") throw new Error("expected a repointed record")
+
+		expect(result.text).toBe(before.replaceAll("1360698565", "1880762057"))
+	})
+
 	it("leaves a record with no removed reference unchanged", () => {
 		expect(repointRecordReferences(purzanMohri(), () => null)).toEqual({ kind: "unchanged" })
 	})
