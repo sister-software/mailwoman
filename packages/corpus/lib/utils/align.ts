@@ -344,24 +344,31 @@ function labelTokens(tokens: readonly TextSpan[], spans: readonly ComponentSpan[
 	const seenSpan = new Set<number>()
 
 	for (const token of tokens) {
-		let assigned: BIOLabel = "O"
+		// A token inside one span takes that span's tag.
+		// A token that overlaps exactly one span without lying inside it holds that component
+		// plus text a layout glued to it, such as `FL-9485` around the postcode `9485`,
+		// so it takes that span's tag too and the token labels agree with the span triple.
+		// A token across two spans stays `O`.
+		let index = spans.findIndex((s) => token.start >= s.start && token.end <= s.end)
 
-		for (let i = 0; i < spans.length; i++) {
-			const s = spans[i]!
+		if (index < 0) {
+			const overlapping = spans.flatMap((s, i) => (token.start < s.end && token.end > s.start ? [i] : []))
 
-			if (token.start >= s.start && token.end <= s.end) {
-				if (!seenSpan.has(i)) {
-					assigned = `B-${s.tag}` as BIOLabel
-					seenSpan.add(i)
-				} else {
-					assigned = `I-${s.tag}` as BIOLabel
-				}
-
-				break
+			if (overlapping.length === 1) {
+				index = overlapping[0]!
 			}
 		}
 
-		out.push(assigned)
+		if (index < 0) {
+			out.push("O")
+
+			continue
+		}
+
+		const tag = spans[index]!.tag
+
+		out.push((seenSpan.has(index) ? `I-${tag}` : `B-${tag}`) as BIOLabel)
+		seenSpan.add(index)
 	}
 
 	return out
