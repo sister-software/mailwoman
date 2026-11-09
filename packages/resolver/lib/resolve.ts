@@ -226,6 +226,9 @@ class WOFResolver implements Resolver {
 			newRoots.push(await this.#walk(root, /* parentResolved */ null, state))
 		}
 
+		// A later pass that gives one of these nodes a different place removes the walk's ancestors with the old place.
+		const walkedWithAncestors = collectNodes(newRoots, (n) => n.metadata?.["ancestors"] != null)
+
 		// Stamp metadata for postcode-country override.
 		if (postcodeScope) {
 			stampPostcodeCountryScope(newRoots, postcodeScope)
@@ -320,6 +323,17 @@ class WOFResolver implements Resolver {
 		// Optional street-centroid tier runs last.
 		if (opts.streetCentroids) {
 			applyStreetCentroid(newRoots, tree.raw, opts.streetCentroids, opts.streetCountryHints ?? [])
+		}
+
+		// The walk's ancestors are read again for the place that replaced its pick.
+		if (this.#backend.ancestors) {
+			for (const node of walkedWithAncestors) {
+				const id = node.placeID?.startsWith("wof:") ? Number(node.placeID.slice(4)) : Number.NaN
+
+				if (node.metadata?.["ancestors"] == null && Number.isInteger(id)) {
+					node.metadata = { ...node.metadata, ancestors: this.#backend.ancestors(id) }
+				}
+			}
 		}
 
 		return { raw: tree.raw, roots: newRoots }
