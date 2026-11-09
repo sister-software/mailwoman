@@ -6,18 +6,29 @@
 
 import { describe, expect, it } from "vitest"
 
-import { attributePoints, coverageRatio, readCountyHousingUnits } from "./census.ts"
+import { attributePoints, coverageRatio, readCountyHousing, UNITS_PER_STRUCTURE } from "./census.ts"
 
-describe("readCountyHousingUnits", () => {
-	it("reads the housing units of a county by its GEOID", () => {
-		const table =
-			"USPS\tGEOID\tNAME\tPOP10\tHU10\tINTPTLONG                  \nWI\t55117\tSheboygan County\t115507\t49617\t-87.9\n"
+const HEADER = ["NAME", "B25024_001E", ...UNITS_PER_STRUCTURE.map(([variable]) => variable), "state", "county"]
 
-		expect(readCountyHousingUnits(table).get("55117")).toBe(49_617)
+describe("readCountyHousing", () => {
+	it("keys a county by state and county code and divides each bucket by its units per structure", () => {
+		// 100 single-family homes, 4 duplexes (8 units) and one 50-plus building of 200 units.
+		const counts = ["100", "0", "8", "0", "0", "0", "0", "200", "0", "0"]
+		const housing = readCountyHousing([HEADER, ["Capitol Planning Region, Connecticut", "308", ...counts, "09", "110"]])
+
+		expect(housing.get("09110")).toEqual({
+			name: "Capitol Planning Region, Connecticut",
+			housingUnits: 308,
+			structures: 100 + 8 / 2 + 200 / 100,
+		})
 	})
 
-	it("refuses a table without a column it needs", () => {
-		expect(() => readCountyHousingUnits("USPS\tGEOID\nWI\t55117\n")).toThrow(/HU10/)
+	it("refuses a table without a column it needs, and a count that is not a number", () => {
+		expect(() => readCountyHousing([["NAME", "state", "county"]])).toThrow(/B25024_001E/)
+
+		expect(() =>
+			readCountyHousing([HEADER, ["X", "null", ...UNITS_PER_STRUCTURE.map(() => "0"), "09", "110"]])
+		).toThrow(/not a count/)
 	})
 })
 
@@ -42,8 +53,8 @@ describe("attributePoints", () => {
 })
 
 describe("coverageRatio", () => {
-	it("reads null for a county with no housing units", () => {
-		expect(coverageRatio({ housingUnits: 0, addressPoints: 4 })).toBeNull()
-		expect(coverageRatio({ housingUnits: 4, addressPoints: 1 })).toBe(0.25)
+	it("divides address points by estimated structures, and reads null for a county with none", () => {
+		expect(coverageRatio({ structures: 0, addressPoints: 4 })).toBeNull()
+		expect(coverageRatio({ structures: 4, addressPoints: 1 })).toBe(0.25)
 	})
 })

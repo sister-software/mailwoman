@@ -161,4 +161,13 @@ export const PrivateMailwomanEnvSchema = z.object({
 		title: "Premise-linkage salt",
 		description: "Per-run secret used to salt published case identifiers in controlled premise-linkage evaluations.",
 	}),
+	US_CENSUS_API_KEY: z
+		.string()
+		.optional()
+		.meta({
+			title: "US Census API key",
+			description:
+				"Key for api.census.gov, which the US address coverage census reads its county housing table from. " +
+				"Request one at https://api.census.gov/data/key_signup.html.",
+		}),
 })

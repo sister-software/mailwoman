@@ -11,17 +11,17 @@
  *   With `--layer-root`, the points are the US address layer's records under that root's `addresses/` directory, such
  *   as `$MAILWOMAN_DATA_ROOT/db`, rather than each state's address-point database. A layer record without a postcode
  *   is placed in a county by location: each 0.01° cell gets one county lookup against `wof-polygons-us-full.db`, and the
- *   county's `uscensus:geoid` concordance gives the gazetteer's GEOID.
+ *   county's `uscensus:geoid` concordance gives its FIPS code.
  *
- *   The denominator is `<data root>/census/Gaz_counties_national.txt`, the unzipped gazetteer that
- *   `COUNTY_GAZETTEER_URL` serves.
+ *   The denominator is ACS 2021 five-year table B25024, read from api.census.gov with `US_CENSUS_API_KEY`. Each state's
+ *   counties are that table's set, and a point placed in a code the table lacks is counted as unmatched.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
-import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { US_FIPS_STATE } from "@mailwoman/corpus/us/fips-state"
 import {
 	addressLayerManifestPath,
 	type AddressLayerCountryManifest,
@@ -36,11 +36,12 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
+import { $private } from "#env"
 import {
 	attributePoints,
 	type CountyCoverage,
 	coverageRatio,
-	readCountyHousingUnits,
+	fetchCountyHousing,
 	THIN_COUNTY_RATIO,
 } from "#tools/dev-tools/us/address-coverage/census"
 
@@ -75,6 +76,7 @@ const layerManifest =
 function pointsSource(state: string): { path: string; table: string } {
 	if (layerManifest && layerRoot != null) {
 		const region = layerManifest.regions.find((entry) => entry.region === `us-${state}`)
+
 		const path = region
 			? resolvePath(layerRoot, region.detail.path).toString()
 			: `us-${state} (absent from the manifest)`
@@ -87,7 +89,12 @@ function pointsSource(state: string): { path: string; table: string } {
 
 const EXTRACT_NAME = /^interpolation-us-([a-z]{2})\.db$/u
 
-const housing = readCountyHousingUnits(await readLocalTextFile(dataRootPath("census", "Gaz_counties_national.txt")))
+const apiKey = $private.US_CENSUS_API_KEY
+
+if (!apiKey)
+	throw new Error("US_CENSUS_API_KEY is not set; request a key at https://api.census.gov/data/key_signup.html")
+
+const housing = await fetchCountyHousing(apiKey)
 
 const files = (
 	await Globerator.files("db", { cwd: interpolationDatabasePath, absolute: false, recursive: false }).toSorted()
@@ -98,9 +105,14 @@ const counties: CountyCoverage[] = []
 const states: Array<{
 	state: string
 	housingUnits: number
+	structures: number
 	addressPoints: number
 	withoutPostcode: number
 	unattributed: number
+	/**
+	 * Points placed in a county code the ACS table lacks, so no county of the state holds them.
+	 */
+	unmatched: number
 	/**
 	 * Layer records without a postcode placed in a county by the county polygon containing their cell.
 	 */
@@ -237,21 +249,34 @@ for (const file of files) {
 		segmentsByCounty.set(county, (segmentsByCounty.get(county) ?? 0) + count)
 	}
 
-	const stateCounties = [...segmentsByCounty.keys()].map((fips) => ({
-		fips,
-		housingUnits: housing.get(fips) ?? 0,
-		addressPoints: Math.round(byCounty.get(fips) ?? 0),
-		streetSegments: segmentsByCounty.get(fips) ?? 0,
-	}))
+	// The state's counties are the ACS table's, the county set Who's On First places points in.
+	// The interpolation databases' TIGER county codes are a separate column and can differ.
+	const stateFIPS = Object.entries(US_FIPS_STATE).find(([, info]) => info.abbreviation === state.toUpperCase())?.[0]
+
+	if (!stateFIPS) throw new Error(`${state} has no FIPS state code`)
+
+	const stateCounties = [...housing]
+		.filter(([fips]) => fips.startsWith(stateFIPS))
+		.map(([fips, county]) => ({
+			fips,
+			...county,
+			addressPoints: Math.round(byCounty.get(fips) ?? 0),
+			streetSegments: segmentsByCounty.get(fips) ?? 0,
+		}))
+
+	// Points placed in a code the ACS table lacks are counted, never dropped.
+	const unmatched = [...byCounty].filter(([fips]) => !housing.has(fips)).reduce((sum, [, points]) => sum + points, 0)
 
 	counties.push(...stateCounties)
 
 	states.push({
 		state,
 		housingUnits: stateCounties.map((county) => county.housingUnits).reduce((sum, units) => sum + units, 0),
+		structures: Math.round(stateCounties.map((county) => county.structures).reduce((sum, count) => sum + count, 0)),
 		addressPoints: stateCounties.map((county) => county.addressPoints).reduce((sum, points) => sum + points, 0),
 		withoutPostcode,
 		unattributed,
+		unmatched: Math.round(unmatched),
 		placedByLocation,
 		placedByBox,
 		unplaced,
@@ -259,19 +284,30 @@ for (const file of files) {
 	})
 }
 
-await writeLocalJSONFile({ denominator: "2010 Census HU10", states, counties }, resolvePath(values.out))
+await writeLocalJSONFile(
+	{ denominator: "ACS 2021 five-year B25024, estimated structures", states, counties },
+	resolvePath(values.out)
+)
 
-for (const row of states.toSorted((a, b) => a.addressPoints / a.housingUnits - b.addressPoints / b.housingUnits)) {
-	const ratio = coverageRatio(row)
+console.log(["state", "structures", "points", "ratio", "without postcode", "unattributed", "unmatched"].join("\t"))
 
+for (const row of states.toSorted((a, b) => (coverageRatio(a) ?? 0) - (coverageRatio(b) ?? 0))) {
 	console.log(
-		[row.state, row.housingUnits, row.addressPoints, ratio?.toFixed(3), row.withoutPostcode, row.unattributed].join(
-			"\t"
-		)
+		[
+			row.state,
+			row.structures,
+			row.addressPoints,
+			coverageRatio(row)?.toFixed(3),
+			row.withoutPostcode,
+			row.unattributed,
+			row.unmatched,
+		].join("\t")
 	)
 }
 
 const thin = counties.filter((county) => (coverageRatio(county) ?? 1) < THIN_COUNTY_RATIO)
-const units = thin.map((county) => county.housingUnits).reduce((sum, count) => sum + count, 0)
+const structures = Math.round(thin.map((county) => county.structures).reduce((sum, count) => sum + count, 0))
 
-console.log(`counties: ${counties.length}; under a quarter of housing units: ${thin.length}, holding ${units} units`)
+console.log(
+	`counties: ${counties.length}; under a quarter of estimated structures: ${thin.length}, holding ${structures} structures`
+)
