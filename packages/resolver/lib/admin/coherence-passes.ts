@@ -9,7 +9,7 @@ import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/codex/placetype-map"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
-import { decorateNode, isResolvedWithCoord } from "#decorate-node"
+import { decorateNode, isResolvedWithCoord, PICK_METADATA_KEYS } from "#decorate-node"
 
 const REGION_LINEAGE_PLACETYPES: ReadonlySet<string> = new Set(PLACETYPE_FILTER_GROUPS["region"] ?? ["region"])
 
@@ -199,16 +199,7 @@ function revertResolverDecoration(node: AddressNode): void {
 	node.source = typeof priorSource === "string" ? priorSource : null
 	node.sourceID = typeof priorSourceID === "string" ? priorSourceID : null
 
-	for (const key of [
-		"classifier_source",
-		"classifier_source_id",
-		"resolver_score",
-		"resolver_prominence",
-		"resolver_name",
-		"resolver_country",
-		"resolution_quality",
-		"postcode_city_mismatch",
-	]) {
+	for (const key of ["classifier_source", "classifier_source_id", ...PICK_METADATA_KEYS]) {
 		// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object is not on a hot path
 		delete meta[key]
 	}
