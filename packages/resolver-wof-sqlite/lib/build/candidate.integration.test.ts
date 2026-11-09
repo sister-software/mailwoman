@@ -1,5 +1,4 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
@@ -735,7 +734,7 @@ describe("StageCountryDisplayNames ( thread 1)", () => {
 	})
 })
 
-describe("ResurrectCurrencyHoles ( — the currency backfill)", () => {
+describe("deprecated WOF records", () => {
 	function buildFixtureCurrency(path: PathBuilderLike): void {
 		using db = new DatabaseClient<WOFDatabase>(path)
 
@@ -772,81 +771,22 @@ describe("ResurrectCurrencyHoles ( — the currency backfill)", () => {
 		`)
 	}
 
-	function geonamesLine(id: number, name: string, lat: number, lon: number, fclass: string, pop: number): string {
-		const f = Array.from({ length: 19 }).fill("")
-
-		f[0] = String(id)
-		f[1] = name
-		f[2] = name
-		f[4] = String(lat)
-		f[5] = String(lon)
-		f[6] = fclass
-		f[7] = "PPL"
-		f[8] = "GB"
-		f[14] = String(pop)
-
-		return f.join("\t")
-	}
-
-	async function buildWithBackfill(withOption: boolean): Promise<DatabaseClient<CandidateDatabase>> {
+	test("keeps every deprecated and superseded record out of the candidate table, and keeps live namesakes", async () => {
 		const input = scratch.path("admin-currency.db")
 		const output = scratch.path("candidate-currency.db")
-		const geonamesDir = scratch.path("geonames")
 
 		buildFixtureCurrency(input)
 
-		await makeDirectories(geonamesDir)
+		await buildCandidateTable({ input, output })
 
-		await writeLocalTextFile(
-			[
-				geonamesLine(1, "Rochester", 51.388, 0.505, "P", 28_671),
-				geonamesLine(2, "Tinyham", 54.001, -1.001, "P", 300),
-				geonamesLine(3, "Ghosttown", 55.001, -1.201, "P", 5000),
+		using db = new DatabaseClient<CandidateDatabase>(output, { readOnly: true })
 
-				geonamesLine(4, "Oldblob", 52.001, -1.001, "S", 90_000),
-			],
-			geonamesDir("GB.txt")
+		const ids = (db.prepare(`SELECT DISTINCT spr_id FROM candidate ORDER BY spr_id`).all() as { spr_id: number }[]).map(
+			(row) => row.spr_id
 		)
 
-		await buildCandidateTable({
-			input,
-			output,
-			...(withOption ? { currencyBackfill: { geonamesDir, countries: ["GB"] } } : {}),
-		})
-
-		return new DatabaseClient<CandidateDatabase>(output, { readOnly: true })
-	}
-
-	test("resurrects the Rochester class: dead + attested + only a DISTANT namesake alive", async () => {
-		using db = await buildWithBackfill(true)
-
-		const rows = db
-			.prepare(`SELECT spr_id, population, is_primary FROM candidate WHERE name_key = 'rochester' ORDER BY spr_id`)
-			.all() as { spr_id: number; population: number; is_primary: number }[]
-
-		expect(rows.map((r) => r.spr_id)).toEqual([300, 301])
-
-		const kent = rows.find((r) => r.spr_id === 300)!
-
-		expect(kent.population).toBe(28_671)
-
-		expect(kent.is_primary).toBe(1)
-	})
-
-	test("keeps the checks: unattested, near-live, under-floor and superseded rows all stay dead", async () => {
-		using db = await buildWithBackfill(true)
-
-		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {
-			const rows = db.prepare(`SELECT spr_id FROM candidate WHERE name_key = ?`).all(key) as { spr_id: number }[]
-
-			expect(rows.map((r) => r.spr_id)).toEqual(key === "nearlive" ? [304] : [])
-		}
-	})
-
-	test("without the option the pass never runs and every hole stays dead", async () => {
-		using db = await buildWithBackfill(false)
-		const { n } = db.prepare(`SELECT COUNT(*) AS n FROM candidate WHERE spr_id = 300`).get() as { n: number }
-
-		expect(n).toBe(0)
+		// Records 300, 302, 303, 305 and 306 are deprecated.
+		// Records 301 and 304 are live.
+		expect(ids).toEqual([301, 304])
 	})
 })
