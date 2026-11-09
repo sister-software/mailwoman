@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest"
 import {
 	isSupersededRecord,
 	repointRecordReferences,
-	type RecordSuccessor,
+	type ReferenceResolution,
 	roundRecordGeometry,
 	SlimSkip,
 	wofGeometryHash,
@@ -166,14 +166,16 @@ describe("repointRecordReferences", () => {
 			"",
 		].join("\n")
 
-	const khyber: RecordSuccessor = { id: 1_360_701_001, placetype: "region" }
+	const khyber: ReferenceResolution = { kind: "replace", id: 1_360_701_001, placetype: "region" }
 	const successorOf = (id: number) => (id === 85_675_763 ? khyber : null)
+	const propertiesOf = (text: string) => parseJSONStrict<{ properties: Record<string, unknown> }>(text).properties
+	const hierarchyOf = (text: string) => propertiesOf(text)["wof:hierarchy"] as Array<Record<string, number>>
 
 	it("replaces the removed region in the parent, the hierarchy and belongsto, and changes no other line", () => {
 		const before = purzanMohri()
 		const result = repointRecordReferences(before, successorOf)
 
-		expect(result).toMatchObject({ kind: "repointed", references: 3, kept: 0 })
+		expect(result).toMatchObject({ kind: "repointed", replaced: 3, moved: 0, removed: 0 })
 
 		if (result.kind !== "repointed") return
 
@@ -198,19 +200,49 @@ describe("repointRecordReferences", () => {
 		])
 	})
 
-	it("leaves a hierarchy value whose successor is another placetype, and still repoints the parent", () => {
+	it("moves a hierarchy value to the key of a successor of another placetype", () => {
 		const result = repointRecordReferences(purzanMohri(), (id) =>
-			id === 85_675_763 ? { id: 1_360_701_001, placetype: "macroregion" } : null
+			id === 85_675_763 ? { kind: "replace", id: 1_360_701_001, placetype: "macroregion" } : null
 		)
 
-		expect(result).toMatchObject({ kind: "repointed", kept: 1 })
+		expect(result).toMatchObject({ kind: "repointed", moved: 1 })
 
 		if (result.kind !== "repointed") return
 
-		const properties = parseJSONStrict<{ properties: Record<string, unknown> }>(result.text).properties
+		expect(propertiesOf(result.text)["wof:parent_id"]).toBe(1_360_701_001)
 
-		expect(properties["wof:parent_id"]).toBe(1_360_701_001)
-		expect((properties["wof:hierarchy"] as Array<Record<string, number>>)[0]?.["region_id"]).toBe(85_675_763)
+		expect(hierarchyOf(result.text)[0]).toEqual({
+			continent_id: 102_191_569,
+			country_id: 85_632_659,
+			county_id: 1_108_692_295,
+			locality_id: 1_193_013_231,
+			macroregion_id: 1_360_701_001,
+		})
+	})
+
+	it("drops the old key when the branch already states the successor's level", () => {
+		// The removed region's successor is a county, and the branch already has its own county.
+		const result = repointRecordReferences(purzanMohri(), (id) =>
+			id === 85_675_763 ? { kind: "replace", id: 1_360_701_001, placetype: "county" } : null
+		)
+
+		if (result.kind !== "repointed") throw new Error("expected a repointed record")
+
+		expect(result.removed).toBe(1)
+		expect(hierarchyOf(result.text)[0]).toMatchObject({ county_id: 1_108_692_295 })
+		expect(hierarchyOf(result.text)[0]).not.toHaveProperty("region_id")
+	})
+
+	it("removes a reference with no successor and leaves an unknown parent", () => {
+		const result = repointRecordReferences(purzanMohri(), (id) => (id === 85_675_763 ? { kind: "remove" } : null))
+
+		expect(result).toMatchObject({ kind: "repointed", replaced: 0, removed: 3 })
+
+		if (result.kind !== "repointed") return
+
+		expect(propertiesOf(result.text)["wof:parent_id"]).toBe(-1)
+		expect(propertiesOf(result.text)["wof:belongsto"]).toEqual([102_191_569, 85_632_659, 1_108_692_295])
+		expect(hierarchyOf(result.text)[0]).not.toHaveProperty("region_id")
 	})
 
 	it("drops the removed ID from belongsto when the successor is already listed", () => {
@@ -221,29 +253,25 @@ describe("repointRecordReferences", () => {
 
 		if (result.kind !== "repointed") throw new Error("expected a repointed record")
 
-		const properties = parseJSONStrict<{ properties: Record<string, unknown> }>(result.text).properties
-
-		expect(properties["wof:belongsto"]).toEqual([102_191_569, 85_632_659, 1_360_701_001])
+		expect(propertiesOf(result.text)["wof:belongsto"]).toEqual([102_191_569, 85_632_659, 1_360_701_001])
 	})
 
 	it("never makes a record its own parent or ancestor when the removed ID's successor is the record", () => {
 		// The removed region's successor is the locality itself, as a merged commune's successor can be.
 		const result = repointRecordReferences(purzanMohri(), (id) =>
-			id === 85_675_763 ? { id: 1_193_013_231, placetype: "locality" } : null
+			id === 85_675_763 ? { kind: "replace", id: 1_193_013_231, placetype: "locality" } : null
 		)
 
-		expect(result).toMatchObject({ kind: "repointed", kept: 2 })
+		expect(result).toMatchObject({ kind: "repointed", replaced: 0, removed: 3 })
 
 		if (result.kind !== "repointed") return
 
-		const properties = parseJSONStrict<{ properties: Record<string, unknown> }>(result.text).properties
-
-		expect(properties["wof:parent_id"]).toBe(85_675_763)
-		expect((properties["wof:hierarchy"] as Array<Record<string, number>>)[0]?.["region_id"]).toBe(85_675_763)
-		expect(properties["wof:belongsto"]).toEqual([102_191_569, 85_632_659, 1_108_692_295])
+		expect(propertiesOf(result.text)["wof:parent_id"]).toBe(-1)
+		expect(hierarchyOf(result.text)[0]).not.toHaveProperty("region_id")
+		expect(propertiesOf(result.text)["wof:belongsto"]).toEqual([102_191_569, 85_632_659, 1_108_692_295])
 	})
 
 	it("leaves a record with no removed reference unchanged", () => {
-		expect(repointRecordReferences(purzanMohri(), () => null)).toEqual({ kind: "unchanged", kept: 0 })
+		expect(repointRecordReferences(purzanMohri(), () => null)).toEqual({ kind: "unchanged" })
 	})
 })

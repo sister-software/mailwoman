@@ -16,8 +16,6 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { roundGeometryCoordinates } from "@mailwoman/spatial/geometries/round"
 import { TextSpliterator } from "spliterator"
 
-import { placetypeFromHierarchyKey } from "#whosonfirst/hierarchy"
-
 /**
  * Decimal places a rounded coordinate keeps: about 0.11 m at the equator,
  * and the precision most WOF sources publish.
@@ -181,27 +179,37 @@ export function roundRecordGeometry(text: string, decimals = DEFAULT_COORDINATE_
 const NUMBER_TOKEN = /-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?/g
 
 /**
- * The record that replaced a removed one: its ID and its placetype.
+ * What a record's reference to a removed ID becomes.
+ *
+ * `replace` names the one successor and its placetype.
+ * `remove` drops the reference, for an ID with no successor or none the caller can choose.
  */
-export interface RecordSuccessor {
-	readonly id: number
-	readonly placetype: string
-}
+export type ReferenceResolution = { kind: "replace"; id: number; placetype: string } | { kind: "remove" }
 
 /**
  * What {@link repointRecordReferences} did to one record.
  *
- * `references` counts the values it replaced, and `kept` counts the hierarchy values it left
- * because the successor's placetype differs from the key's.
+ * `replaced` counts the references it pointed at a successor, `moved` counts the hierarchy values
+ * it moved to the successor's placetype key, and `removed` counts the references it dropped.
  */
 export type ReferenceRepointing =
-	| { kind: "unchanged"; kept: number }
-	| { kind: "repointed"; text: string; references: number; kept: number }
+	| { kind: "unchanged" }
+	| { kind: "repointed"; text: string; replaced: number; moved: number; removed: number }
+
+/**
+ * The `wof:parent_id` WOF writes for a record whose parent is unknown.
+ */
+const UNKNOWN_PARENT = -1
+
+/**
+ * The indent one nesting level adds in the WOF exporter's layout.
+ */
+const LEVEL_INDENT = "    "
 
 /**
  * The `"wof:parent_id"` line, with the indent, the ID and the comma captured.
  */
-const PARENT_LINE = /^([ \t]*"wof:parent_id":[ \t]*)(\d+)(,?)$/m
+const PARENT_LINE = /^([ \t]*"wof:parent_id":[ \t]*)(-?\d+)(,?)$/m
 
 /**
  * A block-valued member printed one element per line: the opening line, the body
@@ -222,65 +230,122 @@ function memberBlock(text: string, key: string): { start: number; end: number; i
 }
 
 /**
- * Replaces each removed ID a record refers to with its successor, in `wof:parent_id`,
- * `wof:hierarchy` and `wof:belongsto`, rewriting only those lines.
+ * Renders `wof:hierarchy` branches in the WOF exporter's layout: one branch object
+ * per block, one key per line, keys in sorted order.
+ */
+function printHierarchyBranches(branches: ReadonlyArray<Record<string, number>>, indent: string): string {
+	const branchIndent = `${indent}${LEVEL_INDENT}`
+	const keyIndent = `${branchIndent}${LEVEL_INDENT}`
+
+	return branches
+		.map((branch) => {
+			const keys = Object.keys(branch).toSorted()
+
+			if (!keys.length) return `${branchIndent}{}`
+
+			const lines = keys.map((key, index) => `${keyIndent}"${key}":${branch[key]}${index < keys.length - 1 ? "," : ""}`)
+
+			return `${branchIndent}{\n${lines.join("\n")}\n${branchIndent}}`
+		})
+		.join(",\n")
+}
+
+/**
+ * Points each reference a record makes to a removed ID at what `resolve` answers for it,
+ * in `wof:parent_id`, `wof:hierarchy` and `wof:belongsto`, and changes no other member.
  *
- * `successorOf` answers the one successor of a removed ID, or `null` for an ID to leave as it is.
- * A `wof:hierarchy` value is replaced only by a successor of the placetype its
- * key gives, so a `region_id` stays a region.
+ * `resolve` answers `null` for an ID to leave as it is.
+ * A replacement whose successor is the record itself, such as the new commune a merged
+ * commune became, is removed, because a record is never its own parent or ancestor.
  *
- * `wof:parent_id` takes the successor whatever its placetype.
- * When `wof:belongsto` already lists the successor, the removed ID's entry is dropped there.
+ * `wof:parent_id` takes a replacement whatever its placetype, and becomes `-1`,
+ * WOF's unknown parent, on removal.
+ * A `wof:hierarchy` value moves to the key of the successor's placetype,
+ * so a county superseded by a region becomes a `region_id`.
  *
- * A removed ID whose successor is the record itself, such as a merged commune the new
- * commune supersedes, is never written as the record's own parent or ancestor.
- * Its parent and hierarchy values are kept and counted, and its `wof:belongsto` entry is dropped.
+ * When the branch already holds that key, the branch's value stands and the old key is dropped.
+ * `wof:belongsto` lists each ancestor once.
  */
 export function repointRecordReferences(
 	text: string,
-	successorOf: (id: number) => RecordSuccessor | null
+	resolve: (id: number) => ReferenceResolution | null
 ): ReferenceRepointing {
 	let out = text
-	let references = 0
-	let kept = 0
+	let replaced = 0
+	let moved = 0
+	let removed = 0
 
 	const ownID = Number(/^[ \t]*"wof:id":[ \t]*(\d+)/m.exec(text)?.[1])
-	const isSelf = (successor: RecordSuccessor | null) => successor?.id === ownID
+
+	const resolveFor = (id: number): ReferenceResolution | null => {
+		const resolution = resolve(id)
+
+		return resolution?.kind === "replace" && resolution.id === ownID ? { kind: "remove" } : resolution
+	}
 
 	const parent = PARENT_LINE.exec(out)
-	const parentSuccessor = parent ? successorOf(Number(parent[2])) : null
+	const parentResolution = parent ? resolveFor(Number(parent[2])) : null
 
-	if (isSelf(parentSuccessor)) {
-		kept++
-	} else if (parent && parentSuccessor) {
-		out = `${out.slice(0, parent.index)}${parent[1]}${parentSuccessor.id}${parent[3]}${out.slice(parent.index + parent[0].length)}`
+	if (parent && parentResolution) {
+		const value = parentResolution.kind === "replace" ? parentResolution.id : UNKNOWN_PARENT
 
-		references++
+		out = `${out.slice(0, parent.index)}${parent[1]}${value}${parent[3]}${out.slice(parent.index + parent[0].length)}`
+
+		if (parentResolution.kind === "replace") {
+			replaced++
+		} else {
+			removed++
+		}
 	}
 
 	const hierarchy = memberBlock(out, "wof:hierarchy")
 
 	if (hierarchy) {
-		const body = hierarchy.body.replaceAll(
-			/^([ \t]*"([a-z_]+)":[ \t]*)(\d+)(,?)$/gm,
-			(line, prefix: string, key: string, value: string, comma: string) => {
-				const successor = successorOf(Number(value))
+		const branches = parseJSONStrict<Array<Record<string, number>>>(`[${hierarchy.body}]`)
+		let changed = false
 
-				if (!successor) return line
+		const next = branches.map((branch) => {
+			const result: Record<string, number> = {}
 
-				if (isSelf(successor) || placetypeFromHierarchyKey(key) !== successor.placetype) {
-					kept++
+			for (const [key, value] of Object.entries(branch)) {
+				const resolution = typeof value === "number" ? resolveFor(value) : null
 
-					return line
+				if (!resolution) {
+					result[key] = value
+
+					continue
 				}
 
-				references++
+				changed = true
 
-				return `${prefix}${successor.id}${comma}`
+				if (resolution.kind === "remove") {
+					removed++
+
+					continue
+				}
+
+				const target = `${resolution.placetype}_id`
+
+				if (target === key) {
+					result[key] = resolution.id
+
+					replaced++
+				} else if (target in branch) {
+					// The branch already states this level, so its own value is kept.
+					removed++
+				} else {
+					result[target] = resolution.id
+
+					moved++
+				}
 			}
-		)
 
-		out = `${out.slice(0, hierarchy.start)}${body}${out.slice(hierarchy.end)}`
+			return result
+		})
+
+		if (changed) {
+			out = `${out.slice(0, hierarchy.start)}${printHierarchyBranches(next, hierarchy.indent)}${out.slice(hierarchy.end)}`
+		}
 	}
 
 	const belongsTo = memberBlock(out, "wof:belongsto")
@@ -297,14 +362,23 @@ export function repointRecordReferences(
 			let changed = false
 
 			for (const id of ids) {
-				const successor = successorOf(id)
-				const value = successor ? successor.id : id
+				const resolution = resolveFor(id)
 
-				if (successor) {
+				if (resolution) {
 					changed = true
-
-					references++
 				}
+
+				if (resolution?.kind === "remove") {
+					removed++
+
+					continue
+				}
+
+				if (resolution) {
+					replaced++
+				}
+
+				const value = resolution ? resolution.id : id
 
 				if (seen.has(value) || value === ownID) continue
 
@@ -320,5 +394,5 @@ export function repointRecordReferences(
 		}
 	}
 
-	return references ? { kind: "repointed", text: out, references, kept } : { kind: "unchanged", kept }
+	return replaced + moved + removed ? { kind: "repointed", text: out, replaced, moved, removed } : { kind: "unchanged" }
 }
