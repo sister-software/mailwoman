@@ -55,6 +55,38 @@ export interface PipelineParseOptions extends Partial<Omit<PipelineParseWorkerDa
 }
 
 /**
+ * One worker's share of a run: the rows it parsed and the time it spent parsing them.
+ */
+export interface PipelineWorkerThroughput {
+	worker: number
+	rows: number
+	busyMs: number
+	/**
+	 * Rows per second of the worker's own parsing time.
+	 */
+	rowsPerSecond: number
+}
+
+/**
+ * Totals each worker's rows and parsing time over a run's parses, ordered by worker `threadId`.
+ */
+export function workerThroughput(parses: readonly PipelineParse[]): PipelineWorkerThroughput[] {
+	const byWorker = new Map<number, { rows: number; busyMs: number }>()
+
+	for (const parse of parses) {
+		const entry = byWorker.get(parse.worker) ?? { rows: 0, busyMs: 0 }
+
+		entry.rows++
+		entry.busyMs += parse.ms
+		byWorker.set(parse.worker, entry)
+	}
+
+	return [...byWorker]
+		.toSorted(([a], [b]) => a - b)
+		.map(([worker, { rows, busyMs }]) => ({ worker, rows, busyMs, rowsPerSecond: busyMs ? (rows * 1000) / busyMs : 0 }))
+}
+
+/**
  * Parses `rows` and returns one parse per row, in the order the rows were given.
  *
  * @throws When `workers` would need more than half the host's memory, or when a row's parse never returns.

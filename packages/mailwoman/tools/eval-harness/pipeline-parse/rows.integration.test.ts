@@ -9,7 +9,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { describe, expect, it } from "vitest"
 
 import { createRuntimePipeline } from "#runtime-pipeline"
-import { parsePipelineRows } from "#tools/eval-harness/pipeline-parse/rows"
+import { parsePipelineRows, workerThroughput } from "#tools/eval-harness/pipeline-parse/rows"
 
 const ROWS = [
 	"206 Saint Clair Street, Fort Recovery, OH 45846",
@@ -41,6 +41,12 @@ describe("parsePipelineRows", () => {
 
 		expect(pooled.map((entry) => entry.id)).toEqual(ROWS.map((row) => row.id))
 		expect(pooled.map((entry) => entry.spans)).toEqual(direct)
+
+		const throughput = workerThroughput(pooled)
+
+		expect(throughput.reduce((total, entry) => total + entry.rows, 0)).toBe(ROWS.length)
+		expect(throughput.length).toBeLessThanOrEqual(2)
+		expect(throughput.every((entry) => entry.worker > 0 && entry.busyMs > 0)).toBe(true)
 	}, 120_000)
 
 	it("refuses a worker count whose memory exceeds half the host", async () => {

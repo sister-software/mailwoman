@@ -9,7 +9,7 @@
  */
 
 import { walkNodes } from "@mailwoman/core/decoder"
-import { workerUserData } from "@mailwoman/core/workers"
+import { workerThreadID, workerUserData } from "@mailwoman/core/workers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { createRuntimePipeline } from "#runtime-pipeline"
@@ -51,6 +51,14 @@ export interface PipelineParse {
 	id: string
 	spans: BatterySpan[]
 	kind: string | null
+	/**
+	 * The `threadId` of the worker that parsed the row.
+	 */
+	worker: number
+	/**
+	 * The time the worker spent parsing the row, in milliseconds.
+	 */
+	ms: number
 }
 
 const { locale, cacheRoot, intraOpNumThreads, conventions } = workerUserData<PipelineParseWorkerData>()
@@ -68,11 +76,18 @@ const parse = createRuntimePipeline({ classifier })
  * Parses one row.
  */
 export async function handleItem(row: PipelineParseRow): Promise<PipelineParse> {
+	const started = performance.now()
 	const result = await parse(row.raw, row.localeHint ? { localeHint: row.localeHint } : {})
 
 	const spans = [...walkNodes(result.tree?.roots ?? [])]
 		.map((node): BatterySpan => [node.tag, node.start, node.end, node.value])
 		.toSorted((a, b) => a[1] - b[1])
 
-	return { id: row.id, spans, kind: result.kind?.kind ?? null }
+	return {
+		id: row.id,
+		spans,
+		kind: result.kind?.kind ?? null,
+		worker: workerThreadID(),
+		ms: performance.now() - started,
+	}
 }

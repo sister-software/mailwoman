@@ -4,7 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
-import { workerData } from "node:worker_threads"
+import { threadId, workerData } from "node:worker_threads"
+
+/**
+ * Returns the `threadId` of the thread running this module: 0 on the main thread,
+ * and a positive integer in a worker.
+ */
+export function workerThreadID(): number {
+	return threadId
+}
 
 /**
  * The `userData` a spliterator `parallelMapWorkers` coordinator passed this worker thread.
