@@ -41,6 +41,7 @@ import {
 } from "#repo-health"
 import { writeCIScope } from "#repo-health/actions-output"
 import { isCITestSuite, runCITests } from "#repo-health/ci/test"
+import { effectCensusPath, writeEffectCensus } from "#repo-health/effects/census"
 import { planPathLiteralRewrites } from "#repo-health/move/literals"
 import { storageOperations, type StorageContext } from "#storage-kit"
 
@@ -113,6 +114,7 @@ function usage(io: DispatchIO): number {
 			"  mwops checkout                   (confirm this checkout runs on its own packages, not a parent's install)",
 			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
 			"  mwops ci-test <fast|slow>        (run a root Vitest suite with ci-scope's selected files)",
+			"  mwops effects                    (write every source's read, write, network and process edges to out/repo-health/effects/edges.json)",
 			"  mwops health baseline debt        (rewrite lib/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
 			"  mwops health move <from> <to> [<from> <to> …] [--dry-run]   (or --moves <file.json> listing {from, to})",
@@ -603,6 +605,31 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 		case "ci-scope":
 			io.stdout(prettyJSON(await writeCIScope(io.repoRoot)))
 			return 0
+		case "effects": {
+			const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
+			const census = await writeEffectCensus(context)
+			const resolved = census.edges.filter((edge) => edge.target).length
+			const byKind = Object.groupBy(census.rows, (row) => row.kind)
+
+			// The written file holds the per-workspace rows.
+			// The terminal shows the totals by kind.
+			io.stdout(
+				prettyJSON({
+					written: effectCensusPath(io.repoRoot),
+					sources: census.sources,
+					edges: census.edges.length,
+					resolved,
+					unresolved: census.edges.length - resolved,
+					kinds: Object.entries(byKind).map(([kind, rows = []]) => ({
+						kind,
+						resolved: rows.reduce((sum, row) => sum + row.resolved, 0),
+						unresolved: rows.reduce((sum, row) => sum + row.unresolved, 0),
+					})),
+				})
+			)
+
+			return 0
+		}
 		case "ci-test": {
 			const [suite] = rest
 
