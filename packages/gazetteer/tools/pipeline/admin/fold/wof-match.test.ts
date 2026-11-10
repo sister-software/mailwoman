@@ -89,6 +89,20 @@ describe("buildWOFPlaceIndex", () => {
 		).toEqual({ id: 85_678_001, placetype: "region", by: "name" })
 	})
 
+	it("matches a localadmin with no settlement of its name to the county of its name", async () => {
+		using db = await stagingDatabase()
+
+		db.prepare(
+			`INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current) VALUES (102049925, 85678001, 'Mazowe', 'county', 'ZW', -17.4, 30.9, 1)`
+		).run()
+
+		const index = buildWOFPlaceIndex(db)
+
+		expect(
+			index.match({ name: "Mazowe", placetype: "localadmin", country: "ZW", latitude: -17.45, longitude: 30.95 })
+		).toEqual({ id: 102_049_925, placetype: "county", by: "name" })
+	})
+
 	it("claims a name once per record and refuses one the record already carries", async () => {
 		using db = await stagingDatabase()
 		const index = buildWOFPlaceIndex(db)

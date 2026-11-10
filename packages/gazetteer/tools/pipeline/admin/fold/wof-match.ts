@@ -258,25 +258,35 @@ export function buildWOFPlaceIndex(db: DatabaseClient<WOFDatabase>): WOFPlaceInd
 
 			if (!key) return null
 
-			const { radiusKm } = MATCH_TIERS[tier]
-			let best: { id: number; placetype: string; km: number } | null = null
-
-			for (const row of byName.all(candidate.country.toUpperCase(), key) as Array<{
+			const rows = byName.all(candidate.country.toUpperCase(), key) as Array<{
 				id: number
 				placetype: string
 				latitude: number
 				longitude: number
-			}>) {
-				if (!sameTier(row.placetype, tier)) continue
+			}>
 
-				const km = haversine(candidate.latitude, candidate.longitude, row.latitude, row.longitude)
+			const nearest = (within: MatchTier) => {
+				const { radiusKm } = MATCH_TIERS[within]
+				let best: { id: number; placetype: string; km: number } | null = null
 
-				if (km <= radiusKm && (!best || km < best.km)) {
-					best = { id: row.id, placetype: row.placetype, km }
+				for (const row of rows) {
+					if (!sameTier(row.placetype, within)) continue
+
+					const km = haversine(candidate.latitude, candidate.longitude, row.latitude, row.longitude)
+
+					if (km <= radiusKm && (!best || km < best.km)) {
+						best = { id: row.id, placetype: row.placetype, km }
+					}
 				}
+
+				return best ? { id: best.id, placetype: best.placetype, by: "name" as const } : null
 			}
 
-			return best ? { id: best.id, placetype: best.placetype, by: "name" } : null
+			// Some sources give a localadmin a county's extent: Overture's Belgian localadmins
+			// are arrondissements, and WOF files an arrondissement as a county.
+			// A localadmin with no settlement match therefore tries the county group
+			// before it is written as a place of its own.
+			return nearest(tier) ?? (candidate.placetype === "localadmin" ? nearest("county") : null)
 		},
 		claimName(match, country, name) {
 			const key = normalizeLocalityForKey(name)
