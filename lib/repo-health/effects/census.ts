@@ -8,12 +8,19 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { relative, resolvePath } from "path-ts"
 import { parallelMap } from "spliterator"
 
 import type { RepoContext } from "#repo-health/check"
 import { parseContextSource } from "#repo-health/context"
-import { type EffectEdge, extractEffectEdges } from "#repo-health/effects/extract"
+import {
+	type EffectEdge,
+	extractEffectEdges,
+	type ImportedPaths,
+	type RootedExport,
+	summarizeRootedExports,
+} from "#repo-health/effects/extract"
 import type { EffectKind } from "#repo-health/effects/interfaces"
 import { trackedSourcePaths } from "#repo-health/tracked-sources"
 
@@ -70,15 +77,69 @@ export function summarizeEffectEdges(edges: readonly EffectEdge[]): EffectCensus
 }
 
 /**
+ * A workspace's `paths` module, by its path relative to the repository root.
+ */
+const PATHS_MODULE = /^packages\/([^/]+)\/lib\/paths\.ts$/
+
+/**
+ * The resolved exports of every workspace's `lib/paths.ts`, by the workspace directory
+ * that holds it, with the package name that `@mailwoman/<name>/paths` reaches it by.
+ */
+async function collectPathsModules(
+	context: RepoContext,
+	paths: readonly string[]
+): Promise<Map<string, { packageName: string; exports: Map<string, RootedExport> }>> {
+	const modules = new Map<string, { packageName: string; exports: Map<string, RootedExport> }>()
+
+	for (const path of paths) {
+		const file = relative(context.repoRoot, path).toString()
+		const directory = PATHS_MODULE.exec(file)?.[1]
+
+		if (!directory) continue
+
+		const workspace = `packages/${directory}`
+		const manifestPath = resolvePath(context.repoRoot, workspace, "package.json")
+		const { name } = await readPackageJSON(manifestPath)
+
+		if (!name) throw new Error(`${manifestPath} states no package name, so its paths module cannot be imported by one`)
+
+		const source = await parseContextSource(context, path, { setParentNodes: true })
+
+		modules.set(workspace, { packageName: name, exports: summarizeRootedExports(source, file) })
+	}
+
+	return modules
+}
+
+/**
+ * For each file, the `paths` exports a specifier reaches from it: `#paths` reaches
+ * the file's own workspace's module, and `@mailwoman/<name>/paths` reaches the
+ * module of the workspace that publishes that name.
+ */
+function importedPathsResolver(
+	modules: ReadonlyMap<string, { packageName: string; exports: Map<string, RootedExport> }>
+): (file: string) => ImportedPaths {
+	const byPackage = new Map([...modules.values()].map((module) => [`${module.packageName}/paths`, module.exports]))
+
+	return (file) => {
+		const own = modules.get(censusGroupOf(file))?.exports ?? null
+
+		return (specifier) => (specifier === "#paths" ? own : (byPackage.get(specifier) ?? null))
+	}
+}
+
+/**
  * The effect edges of every tracked `.ts` and `.tsx` source in `context`.
  */
 async function collectEffectCensus(context: RepoContext): Promise<EffectCensus> {
 	const paths = await trackedSourcePaths(context, { existingOnly: true })
+	const importedPathsOf = importedPathsResolver(await collectPathsModules(context, paths))
 
 	const perFile = await parallelMap(paths, async (path) => {
 		const source = await parseContextSource(context, path, { setParentNodes: true })
+		const file = relative(context.repoRoot, path).toString()
 
-		return extractEffectEdges(source, relative(context.repoRoot, path).toString())
+		return extractEffectEdges(source, file, importedPathsOf(file))
 	}).toArray()
 
 	const edges = perFile.flat()
