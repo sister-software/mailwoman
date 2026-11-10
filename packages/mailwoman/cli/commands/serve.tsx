@@ -20,6 +20,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 
 import type { CommandSpec, ParsedCommandComponent } from "#cli-kit"
+import { primaryExitAfterWorkerExit } from "#cli/kit/cluster-exit"
 import { printLicenseNotice, resolveEngineStamp } from "#cli/kit/engine-stamp"
 
 interface ServerConfig {
@@ -60,6 +61,7 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		// but at the primary, where the exit handler below can see it.
 		let anyListened = false
 		let liveWorkerCount = cpus
+		let shuttingDown = false
 
 		cluster.on("listening", () => {
 			// One notice per server, from the primary, the first time a worker binds.
@@ -77,9 +79,12 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 
 			liveWorkerCount--
 
-			if (liveWorkerCount === 0 && !anyListened) {
-				// A boot that never listened is a failed boot — supervisors must see nonzero.
-				process.exit(1)
+			const exit = primaryExitAfterWorkerExit({ liveWorkers: liveWorkerCount, anyListened, shuttingDown })
+
+			if (exit) {
+				console.error(`serve: ${exit.reason}`)
+
+				process.exit(exit.code)
 			}
 		})
 
@@ -88,6 +93,8 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		// Forward the signal explicitly so each worker's serveNode drain runs, then exit
 		// once they're gone (bounded — a hung worker must not wedge the shutdown).
 		const forward = (signal: NodeJS.Signals) => {
+			shuttingDown = true
+
 			const alive = Object.values(cluster.workers ?? {}).filter(isPresent)
 
 			if (!alive.length) {
