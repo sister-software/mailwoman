@@ -5,6 +5,7 @@
  *
  *   `mwops` routes release, shop, storage, and health operations through their registries.
  *   The `ci-scope` command selects CI suites and writes GitHub Actions outputs.
+ *   The `ci-replay` command replays that selection over recorded history and compares two replays.
  *   The `ci-test` command runs a selected suite.
  *   Dispatch receives its output streams and checkout path from the entry point.
  *
@@ -13,7 +14,8 @@
  *   check's mechanical repair.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { filesAtRef, renamesSince } from "@mailwoman/core/git"
 import { parseJSONStrict, prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { describeCheckoutLeak, readCheckoutLocality } from "@mailwoman/core/module/checkout-locality"
@@ -40,6 +42,7 @@ import {
 	writeBaseline,
 } from "#repo-health"
 import { writeCIScope } from "#repo-health/actions-output"
+import { type CIReplay, compareCIReplays, replayCIScope } from "#repo-health/ci/replay"
 import { isCITestSuite, runCITests } from "#repo-health/ci/test"
 import { effectCensusPath, writeEffectCensus } from "#repo-health/effects/census"
 import { planPathLiteralRewrites } from "#repo-health/move/literals"
@@ -113,6 +116,8 @@ function usage(io: DispatchIO): number {
 			"  mwops health <check>|all [--json]",
 			"  mwops checkout                   (confirm this checkout runs on its own packages, not a parent's install)",
 			"  mwops ci-scope                   (select CI suites and write GitHub Actions outputs)",
+			"  mwops ci-replay --ref <sha> --out <file> [--commits N] [--runs N]   (replay test selection over history)",
+			"  mwops ci-replay --compare <before> <after>                          (pair two replays row by row)",
 			"  mwops ci-test <fast|slow>        (run a root Vitest suite with ci-scope's selected files)",
 			"  mwops effects                    (write every source's read, write, network and process edges to out/repo-health/effects/edges.json)",
 			"  mwops health baseline debt        (rewrite lib/repo-health/baseline.json from the current readings)",
@@ -591,6 +596,69 @@ async function reportCheckoutLocality(io: DispatchIO): Promise<number> {
 	return 0
 }
 
+const CI_REPLAY_OPTIONS = {
+	ref: { type: "string" },
+	commits: { type: "string", default: "200" },
+	runs: { type: "string", default: "400" },
+	out: { type: "string" },
+	compare: { type: "boolean", default: false },
+} as const satisfies ParseArgsOptionsConfig
+
+/**
+ * `mwops ci-replay --ref <sha> --out <file>` replays the checkout's test
+ * selection over history and writes it.
+ *
+ * `mwops ci-replay --compare <before> <after>` pairs two replays and prints the comparison.
+ */
+async function runCIReplay(args: readonly string[], io: DispatchIO): Promise<number> {
+	const { options, rest } = parseFlags(args, CI_REPLAY_OPTIONS)
+
+	if (options.compare) {
+		const [beforePath, afterPath] = rest
+
+		if (!beforePath || !afterPath || rest.length !== 2) {
+			io.stderr("mwops ci-replay --compare requires two replay files\n")
+
+			return 2
+		}
+
+		const comparison = compareCIReplays(
+			await readLocalJSONFile<CIReplay>(beforePath),
+			await readLocalJSONFile<CIReplay>(afterPath)
+		)
+
+		io.stdout(prettyJSON(comparison))
+
+		return comparison.failures.some((failure) => failure.selectedBefore && !failure.selectedAfter) ? 1 : 0
+	}
+
+	const ref = options.ref
+	const out = options.out
+	const commits = Number(options.commits)
+	const runs = Number(options.runs)
+
+	if (typeof ref !== "string" || typeof out !== "string" || !Number.isInteger(commits) || !Number.isInteger(runs)) {
+		io.stderr("mwops ci-replay requires --ref <commit> and --out <file>, and integer --commits and --runs\n")
+
+		return 2
+	}
+
+	const replay = await replayCIScope(io.repoRoot, { ref, commits, runs })
+
+	await writeLocalJSONFile(replay, out)
+
+	io.stdout(
+		prettyJSON({
+			written: out,
+			commits: replay.commits.length,
+			failures: replay.failures.length,
+			unchecked: replay.unchecked.length,
+		})
+	)
+
+	return 0
+}
+
 /**
  * Route one invocation.
  *
@@ -605,6 +673,8 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 		case "ci-scope":
 			io.stdout(prettyJSON(await writeCIScope(io.repoRoot)))
 			return 0
+		case "ci-replay":
+			return runCIReplay(rest, io)
 		case "effects": {
 			const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
 			const census = await writeEffectCensus(context)

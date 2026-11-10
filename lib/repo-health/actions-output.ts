@@ -11,7 +11,7 @@ import { resolvePath } from "path-ts"
 import { z } from "zod"
 
 import { readRelatedCITests, selectRelatedCIScope } from "#repo-health/ci/related"
-import { readCIWorkspaces, selectCIScope, type CIScope } from "#repo-health/ci/scope"
+import { type CIScope, type CIWorkspace, readCIWorkspaces, selectCIScope } from "#repo-health/ci/scope"
 
 const ciEnvironment = liveEnv(
 	z.object({
@@ -57,6 +57,50 @@ export async function scopesByDiff(
 }
 
 /**
+ * The inputs one selection reads: the workspace graph and tracked files of the checkout,
+ * the changed paths, the published workspace directories, whether the event requires
+ * every suite, and the reader of Vitest's related tests.
+ */
+export interface CIScopeInputs {
+	workspaces: readonly CIWorkspace[]
+	files: readonly string[]
+	changed: readonly string[]
+	published: readonly string[]
+	forceFull: boolean
+	readRelated: (changed: readonly string[], config: string) => Promise<string[]>
+}
+
+/**
+ * Selects the suites and test files a change requires.
+ *
+ * `writeCIScope` calls it once per run.
+ * `mwops ci-replay` calls it once per recorded commit, with one Vitest reader
+ * per suite reused across the calls.
+ */
+export async function computeCIScope(inputs: CIScopeInputs): Promise<CIScope> {
+	const workspaceScope = selectCIScope(
+		inputs.workspaces,
+		inputs.files,
+		inputs.changed,
+		inputs.published,
+		inputs.forceFull
+	)
+
+	return selectRelatedCIScope(workspaceScope, inputs.workspaces, inputs.changed, inputs.readRelated)
+}
+
+/**
+ * The directories of the workspaces `.release-it.json` publishes.
+ */
+export async function readPublishedWorkspaces(root: string): Promise<string[]> {
+	const release = await readLocalJSONFile<{
+		plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
+	}>(resolvePath(root, ".release-it.json"))
+
+	return release.plugins["@release-it-plugins/workspaces"].workspaces
+}
+
+/**
  * Writes the selected suites to GitHub Actions outputs and returns the selection.
  */
 export async function writeCIScope(root: string): Promise<CIScope> {
@@ -80,23 +124,14 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 
 	const files = await trackedFiles(root)
 
-	const release = await readLocalJSONFile<{
-		plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
-	}>(resolvePath(root, ".release-it.json"))
-
-	const workspaces = await readCIWorkspaces(root, files)
-
-	const workspaceScope = selectCIScope(
-		workspaces,
+	const scope = await computeCIScope({
+		workspaces: await readCIWorkspaces(root, files),
 		files,
 		changed,
-		release.plugins["@release-it-plugins/workspaces"].workspaces,
-		!scoped
-	)
-
-	const scope = await selectRelatedCIScope(workspaceScope, workspaces, changed, (inputs, config) =>
-		readRelatedCITests(root, inputs, config)
-	)
+		published: await readPublishedWorkspaces(root),
+		forceFull: !scoped,
+		readRelated: (inputs, config) => readRelatedCITests(root, inputs, config),
+	})
 
 	const outputs = {
 		...Object.fromEntries(Object.entries(scope).filter(([, value]) => typeof value === "boolean")),
