@@ -23,6 +23,12 @@ import { defineOperation, StorageEffect } from "#storage-kit/operation"
  */
 const MIGRATED_SUFFIX = ".migrated"
 
+/**
+ * The `rsync` flags that keep a tree as it is: permissions, times, owners and links,
+ * hard links, ACLs and extended attributes.
+ */
+const PRESERVE_TREE = ["--archive", "--hard-links", "--acls", "--xattrs"]
+
 const migrateInput = z
 	.object({
 		source: z.string().min(1),
@@ -124,12 +130,12 @@ export const migrateOperation = defineOperation({
 			return { source, destination, steps, kept: null }
 		}
 
-		await rsync(["-aHAX", "--partial", "--mkpath", `${source}/`, `${destination}/`], "copy")
+		await rsync([...PRESERVE_TREE, "--partial", "--mkpath", `${source}/`, `${destination}/`], "copy")
 		step(`copied ${source}/ to ${destination}/`)
 
 		assertNoDifferences(
 			await rsync(
-				["-aHAX", "--checksum", "--dry-run", "--itemize-changes", `${source}/`, `${destination}/`],
+				[...PRESERVE_TREE, "--checksum", "--dry-run", "--itemize-changes", `${source}/`, `${destination}/`],
 				"checksum"
 			),
 			"checksum"
@@ -144,7 +150,7 @@ export const migrateOperation = defineOperation({
 		// A metadata dry run through the link compares every name, size and modification
 		// time without reading contents again.
 		assertNoDifferences(
-			await rsync(["-aHAX", "--dry-run", "--itemize-changes", `${source}/`, `${aside}/`], "read through link"),
+			await rsync([...PRESERVE_TREE, "--dry-run", "--itemize-changes", `${source}/`, `${aside}/`], "read through link"),
 			"read through link"
 		)
 
