@@ -12,7 +12,7 @@
 
 use crate::corpus_files::{file_source_counts, files_source_counts, CorpusFile};
 use crate::error::{Error, Result};
-use crate::file_rows::FileRows;
+use crate::file_rows::{FileRows, StartState};
 use crate::parquet_file::ParquetFile;
 use crate::pyrandom::PyRandom;
 use crate::row::Row;
@@ -229,7 +229,7 @@ pub struct HeldOut {
 	files: Vec<CorpusFile>,
 	row_limit: Option<usize>,
 	split: String,
-	started: bool,
+	start: StartState,
 	quotas: Vec<Option<usize>>,
 	next_file: usize,
 	current: Option<(FileRows, Option<usize>)>,
@@ -241,7 +241,7 @@ impl HeldOut {
 			files,
 			row_limit,
 			split: split.to_owned(),
-			started: false,
+			start: StartState::Pending,
 			quotas: Vec::new(),
 			next_file: 0,
 			current: None,
@@ -256,7 +256,7 @@ impl HeldOut {
 		}
 	}
 
-	fn start(&mut self, rng: &mut PyRandom) -> Result<()> {
+	fn plan(&mut self, rng: &mut PyRandom) -> Result<()> {
 		rng.shuffle(&mut self.files);
 		self.quotas = match self.row_limit {
 			None => vec![None; self.files.len()],
@@ -284,10 +284,10 @@ impl HeldOut {
 	}
 
 	pub fn next(&mut self, rng: &mut PyRandom, shared: &Shared) -> Result<Option<Row>> {
-		if !self.started {
-			self.started = true;
-			self.start(rng)?;
-		}
+		let mut start = std::mem::replace(&mut self.start, StartState::Pending);
+		let started = start.ensure(|| self.plan(rng));
+		self.start = start;
+		started?;
 		loop {
 			if self.current.is_none() {
 				if self.next_file >= self.files.len() {

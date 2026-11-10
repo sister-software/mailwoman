@@ -197,6 +197,10 @@ impl SamplerConfig {
 		if config.country_weights.is_empty() {
 			return Err(Error::Input("country_weights must be non-empty".into()));
 		}
+		// The shuffle draws a buffer slot for every upstream row, and an empty buffer has no slot to draw.
+		if config.shuffle_buffer == 0 {
+			return Err(Error::Input("shuffle_buffer must hold at least one row".into()));
+		}
 		Ok(config)
 	}
 

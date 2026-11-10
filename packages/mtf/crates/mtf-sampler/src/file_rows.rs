@@ -55,7 +55,38 @@ pub struct FileRows {
 	row_groups: Vec<usize>,
 	next_group: usize,
 	current: Option<RowGroup>,
-	started: bool,
+	start: StartState,
+}
+
+/// Whether a lazily started reader has opened its input.
+///
+/// A failed start is terminal and keeps its error. A start draws from the caller's generator, so trying again would
+/// draw a second time and move every later draw.
+#[derive(Debug, Clone, PartialEq)]
+pub enum StartState {
+	Pending,
+	Started,
+	Failed(Error),
+}
+
+impl StartState {
+	/// Run `start` on the first call, and answer the recorded outcome on every later one.
+	pub fn ensure(&mut self, start: impl FnOnce() -> Result<()>) -> Result<()> {
+		match self {
+			StartState::Started => Ok(()),
+			StartState::Failed(error) => Err(error.clone()),
+			StartState::Pending => match start() {
+				Ok(()) => {
+					*self = StartState::Started;
+					Ok(())
+				}
+				Err(error) => {
+					*self = StartState::Failed(error.clone());
+					Err(error)
+				}
+			},
+		}
+	}
 }
 
 impl FileRows {
@@ -75,11 +106,11 @@ impl FileRows {
 			row_groups: Vec::new(),
 			next_group: 0,
 			current: None,
-			started: false,
+			start: StartState::Pending,
 		}
 	}
 
-	fn start(&mut self, rng: &mut PyRandom) -> Result<()> {
+	fn open(&mut self, rng: &mut PyRandom) -> Result<()> {
 		let file = ParquetFile::open(&self.path)?;
 		let present: Vec<&str> = SPAN_COLUMNS.iter().copied().filter(|c| file.has_column(c)).collect();
 		if !present.is_empty() && present.len() != SPAN_COLUMNS.len() {
@@ -148,10 +179,10 @@ impl FileRows {
 
 	/// The next accepted row, or `None` once the file is exhausted.
 	pub fn next(&mut self, rng: &mut PyRandom, shared: &Shared) -> Result<Option<Row>> {
-		if !self.started {
-			self.started = true;
-			self.start(rng)?;
-		}
+		let mut start = std::mem::replace(&mut self.start, StartState::Pending);
+		let started = start.ensure(|| self.open(rng));
+		self.start = start;
+		started?;
 		loop {
 			shared.check_cancelled()?;
 			if self.current.is_none() {
@@ -273,5 +304,31 @@ impl FileRows {
 			}));
 		}
 		Ok(None)
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::config::Weights;
+	use crate::pyrandom::Seed;
+	use crate::sampler::CancelToken;
+
+	#[test]
+	fn a_file_whose_start_failed_fails_again_rather_than_reading_as_exhausted() {
+		let shared = Shared {
+			country_weights: Weights(vec![("US".into(), 1.0)]),
+			max_country_weight: 1.0,
+			coarse_filter: false,
+			active_tags: Default::default(),
+			source_weights: None,
+			cancel: CancelToken::default(),
+			observer: None,
+		};
+		let mut rows = FileRows::new("/nonexistent/train/part-a.parquet".into(), None, None, None);
+		let mut rng = PyRandom::new(Seed::Int(7));
+		let first = rows.next(&mut rng, &shared).unwrap_err();
+		let second = rows.next(&mut rng, &shared).unwrap_err();
+		assert_eq!(first, second);
 	}
 }
