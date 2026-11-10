@@ -43,6 +43,7 @@ import { sealDatabase } from "@mailwoman/sqlite/sealed/db"
 import { probeManifest } from "mailwoman/data/inventory"
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
+import { buildWOFPlaceIndex } from "#tools/pipeline/admin/fold/wof-match"
 import {
 	candidateLayerManifest,
 	censusFolds,
@@ -311,10 +312,21 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	const adminForCountries =
 		opts.adminForCountries ?? new Set(geonamesAdminGapCountries().filter((cc) => requested.has(cc)))
 
+	// The re-fold matches GeoNames places against the copy's WOF records, as the admin build does,
+	// so a place WOF holds adds its names to that record rather than coming back as a second row.
+	const index = buildWOFPlaceIndex(db)
+
 	const ingested = await ingestGeonamesAliases(db, countries, opts.geonamesDir ?? geonamesDir(), opts.onCountry, {
 		adminForCountries,
 		alternateDir: opts.alternateDir ?? geonamesAlternateDir(),
+		existing: {
+			match: (place) => index.match(place),
+			claimName: (match, country, name) => index.claimName(match, country, name),
+			onGap: () => {},
+		},
 	})
+
+	index.dispose()
 
 	opts.onPhase?.("place_search", "rebuilding place_search + place_bbox from the updated names")
 	const res = buildPlaceSearchFTS(db, { drop: true, onProgress: (phase, detail) => opts.onPhase?.(phase, detail) })
