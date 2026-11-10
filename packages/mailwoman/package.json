@@ -248,6 +248,7 @@
 		"@mailwoman/variant-aliases": "workspace:*",
 		"@mailwoman/zoning": "workspace:*",
 		"@sister.software/h3": "^1.1.0",
+		"async-init": "^1.0.0",
 		"chalk": "^6.0.1",
 		"d3-scale-chromatic": "^3.1.0",
 		"ink": "^8.0.0",

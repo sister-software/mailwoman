@@ -5,6 +5,8 @@
  *
  */
 
+import { Service } from "async-init"
+
 /**
  * Marks a promise started ahead of the await that reads it as handled, and returns it unchanged.
  *
@@ -23,25 +25,15 @@ export function startEarly<T>(promise: Promise<T>): Promise<T> {
  * A resolved value stays cached.
  * A rejection clears the memo, so the next call loads again rather than receiving
  * the same failure for the rest of the process or page.
+ *
+ * The memo is an `async-init` `Service`, the lazy handle `FamilyBundles` keeps one of per weights family.
+ * The value sits in a box, because a `Service` holds objects only and calls the
+ * lifecycle hooks of an object that declares them.
  */
 export function memoizeResettable<T>(load: () => Promise<T>): () => Promise<T> {
-	let memo: Promise<T> | null = null
+	const service = new Service(async () => ({ value: await load() }))
 
-	return () => {
-		if (!memo) {
-			const pending = load()
-
-			memo = pending
-
-			pending.catch(() => {
-				if (memo === pending) {
-					memo = null
-				}
-			})
-		}
-
-		return memo
-	}
+	return () => service.resolve().then((box) => box.value)
 }
 
 /**
