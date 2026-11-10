@@ -250,24 +250,3 @@ export async function tableExists(database: RangeDatabase, name: string): Promis
 
 	return Number(rows[0]?.n ?? 0) > 0
 }
-
-/**
- * Memoizes a zero-argument async probe as its in-flight promise so concurrent callers share one query.
- *
- * A rejection clears the memo so a transient failure can retry.
- */
-export function memoizeResettable<T>(fn: () => Promise<T>): () => Promise<T> {
-	let memo: Promise<T> | null = null
-
-	return () => {
-		if (!memo) {
-			memo = fn()
-
-			memo.catch(() => {
-				memo = null
-			})
-		}
-
-		return memo
-	}
-}

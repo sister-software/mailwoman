@@ -10,6 +10,7 @@
  *   consumes from its native span.
  */
 
+import { memoizeResettable } from "@mailwoman/core/promises"
 import { MTFRuntime, mtfWASMURL, type MTFModel, type MTFWasmSource } from "@mailwoman/mtf"
 import type { PathBuilderLike } from "path-ts"
 
@@ -19,10 +20,15 @@ import type { PathBuilderLike } from "path-ts"
 export const SPACE_SENTINEL = "▁"
 
 /**
- * The WASM runtime instantiates once per process.
- * Every tokenizer instance shares it.
+ * The WASM a host supplied through {@linkcode setTokenizerRuntimeSource},
+ * or `null` to read {@linkcode mtfWASMURL}.
  */
-let runtimePromise: Promise<MTFRuntime> | null = null
+let runtimeSource: MTFWasmSource | null = null
+
+/**
+ * Whether a tokenizer has started loading the runtime, after which the source is fixed.
+ */
+let runtimeStarted = false
 
 /**
  * Reads the runtime's WASM bytes from where {@linkcode mtfWASMURL} points.
@@ -47,10 +53,20 @@ async function readRuntimeWasm(): Promise<MTFWasmSource> {
 	return response.arrayBuffer()
 }
 
-function loadRuntime(): Promise<MTFRuntime> {
-	runtimePromise ??= readRuntimeWasm().then((wasm) => MTFRuntime.instantiate(wasm))
+/**
+ * The WASM runtime instantiates once per process, and every tokenizer instance shares it.
+ *
+ * A failed read or instantiation is retried by the next tokenizer load, so a page
+ * whose first fetch failed can still tokenize once the network answers.
+ */
+const instantiateRuntime = memoizeResettable(async () =>
+	MTFRuntime.instantiate(runtimeSource ?? (await readRuntimeWasm()))
+)
 
-	return runtimePromise
+function loadRuntime(): Promise<MTFRuntime> {
+	runtimeStarted = true
+
+	return instantiateRuntime()
 }
 
 /**
@@ -60,14 +76,16 @@ function loadRuntime(): Promise<MTFRuntime> {
  * `mtf.wasm` as a bundled `WebAssembly.Module` and passes it here before the first tokenizer loads.
  * Every loader, including the browser's `loadFromBase64` path, then instantiates from it.
  *
- * @throws When a tokenizer already started loading the runtime from another source.
+ * The runtime instantiates from it when the first tokenizer loads.
+ *
+ * @throws When a source was already set, or a tokenizer already started loading the runtime.
  */
 export function setTokenizerRuntimeSource(source: MTFWasmSource): void {
-	if (runtimePromise) {
+	if (runtimeSource || runtimeStarted) {
 		throw new Error("the tokenizer runtime is already loading; set its source before the first tokenizer loads")
 	}
 
-	runtimePromise = MTFRuntime.instantiate(source)
+	runtimeSource = source
 }
 
 /**

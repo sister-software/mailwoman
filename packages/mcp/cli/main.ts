@@ -10,6 +10,7 @@ import type { PipelineResult } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
+import { memoizeResettable } from "@mailwoman/core/promises"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { familyRollup } from "@mailwoman/filer/family-rollup"
@@ -44,28 +45,26 @@ const { values } = parseArguments({
 
 const poiDatabasePath = values["poi-db"] ?? null
 
-let corePromise:
-	| Promise<{
-			classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
-			resolver: Resolver
-			databases: USStateDatabaseProvider
-	  }>
-	| undefined
-
 const CORE_BACKED_TOOLS = "mailwoman_parse, mailwoman_geocode, mailwoman_poi_search, mailwoman_overpass_export"
 
 const CORE_FREE_TOOLS =
 	"mailwoman_layer_manifest, mailwoman_bdc_filing_landscape, mailwoman_filer_lookup, mailwoman_filer_family"
 
-function loadCore(): Promise<{
-	classifier: ScriptRoutedClassifier
-	resolver: Resolver
-	/**
-	 * The concrete US provider, because `GeocodeDeps.databases` accepts a null state slug.
-	 */
-	databases: USStateDatabaseProvider
-}> {
-	corePromise ??= (async () => {
+/**
+ * The classifier, resolver and state databases the core-backed tools share.
+ *
+ * A failed load, such as a missing gazetteer, is retried by the next tool call,
+ * so installing the data needs no server restart.
+ */
+const loadCore = memoizeResettable(
+	async (): Promise<{
+		classifier: ScriptRoutedClassifier<NeuralAddressClassifier>
+		resolver: Resolver
+		/**
+		 * The concrete US provider, because `GeocodeDeps.databases` accepts a null state slug.
+		 */
+		databases: USStateDatabaseProvider
+	}> => {
 		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 		const wofPaths: string[] = []
 
@@ -103,10 +102,8 @@ function loadCore(): Promise<{
 		const databases = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 
 		return { classifier, resolver, databases }
-	})()
-
-	return corePromise
-}
+	}
+)
 
 type Pipeline = (raw: string) => Promise<PipelineResult>
 

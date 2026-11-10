@@ -11,6 +11,7 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
+import { memoizeResettable } from "@mailwoman/core/promises"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
@@ -21,7 +22,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { clampFraction, pointAlong } from "@mailwoman/spatial/polyline"
 
-import { memoizeResettable, type RangeDatabase, tableExists } from "#httpvfs/database"
+import { type RangeDatabase, tableExists } from "#httpvfs/database"
 
 const ADDRESS_POINT_BY_POSTCODE =
 	"SELECT lat, lon, source, release FROM address_point WHERE postcode = ? AND street_norm = ? AND number = ? LIMIT 1"

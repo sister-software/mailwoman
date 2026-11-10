@@ -23,6 +23,7 @@ import { RetrieveHealthOperation } from "@mailwoman/api/operations/retrieve/heal
 import { SearchPOIOperation } from "@mailwoman/api/operations/search-poi"
 import type { PipelineOpts } from "@mailwoman/core"
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
+import { memoizeResettable } from "@mailwoman/core/promises"
 import type { Resolver } from "@mailwoman/core/resolver/types"
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
@@ -120,12 +121,13 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	const { decodeAsTuples, extractGeocodeResult } = await loadHelpers()
 
 	// The pipeline loads model weights, so it is built on the first request rather than at registration.
-	let pipelinePromise: Promise<RuntimePipeline> | null = null
+	// A failed build is retried by the next request, so installing the data needs no restart.
+	const loadPipeline = memoizeResettable(() => buildPipeline(opts, locale))
 
 	const getPipeline = (): Promise<RuntimePipeline> => {
 		if (opts.pipeline) return Promise.resolve(opts.pipeline)
 
-		return (pipelinePromise ??= buildPipeline(opts, locale))
+		return loadPipeline()
 	}
 
 	const mailwoman: MailwomanDecorator = {

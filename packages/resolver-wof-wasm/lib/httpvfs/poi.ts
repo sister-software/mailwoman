@@ -4,11 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
+import { memoizeResettable } from "@mailwoman/core/promises"
 import type { POIDistanceHit } from "@mailwoman/core/resolver"
 import { haversine, shortCellToInt } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "@sister.software/h3"
 
-import { memoizeResettable, type RangeDatabase } from "#httpvfs/database"
+import type { RangeDatabase } from "#httpvfs/database"
 
 const POI_H3_RESOLUTION = 9
 

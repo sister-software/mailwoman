@@ -11,6 +11,7 @@
 
 import { Ancestrie, autocomplete } from "@mailwoman/ancestrie"
 import { isPresent } from "@mailwoman/core/objects"
+import { memoizeResettable } from "@mailwoman/core/promises"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { z } from "zod"
 
@@ -147,14 +148,13 @@ export class PlaceAutocompleteIndex {
 
 	/**
 	 * @param manifest Reads the generation's manifest.
-	 * Called once.
+	 * Called once, and again after a call that rejected.
 	 * @param load Reads one partition file into a trie.
-	 * Called once per partition.
+	 * Called once per partition, and again after a call that rejected.
 	 */
 	constructor(manifest: () => Promise<AutocompleteIndexManifest>, load: (partition: string) => Promise<Ancestrie>) {
-		let pending: Promise<AutocompleteIndexManifest> | null = null
-
-		this.#manifest = () => (pending ??= manifest())
+		// A failed manifest read is retried by the next query, so one dropped request leaves completion working.
+		this.#manifest = memoizeResettable(manifest)
 		this.#load = load
 	}
 
@@ -209,8 +209,17 @@ export class PlaceAutocompleteIndex {
 		let loading = this.#files.get(partition)
 
 		if (!loading) {
-			loading = this.#load(partition)
-			this.#files.set(partition, loading)
+			const pending = this.#load(partition)
+
+			loading = pending
+			this.#files.set(partition, pending)
+
+			// A failed read leaves the map, so the next query on this partition reads it again.
+			pending.catch(() => {
+				if (this.#files.get(partition) === pending) {
+					this.#files.delete(partition)
+				}
+			})
 		}
 
 		return loading

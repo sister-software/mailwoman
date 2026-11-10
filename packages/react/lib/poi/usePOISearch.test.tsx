@@ -40,7 +40,7 @@ function Harness({
 	runLiveSearch?: typeof mockLiveSearchSuccess
 	brandLiveSearch?: boolean
 }): ReactNode {
-	const { result, liveSearch, canSearchLive, searchLive } = usePOISearch({
+	const { result, error, liveSearch, canSearchLive, searchLive } = usePOISearch({
 		text,
 		loadRuntime: loader,
 		runLiveSearch,
@@ -53,12 +53,48 @@ function Harness({
 			<span className="subject">{subjectLabel(result?.subject ?? null)}</span>
 			<span className="live">{liveSearch.status}</span>
 			<span className="hit">{liveSearch.status === "success" ? (liveSearch.hits[0]?.name ?? "") : ""}</span>
+			<span className="error">{error ?? ""}</span>
 			<button type="button" onClick={searchLive} disabled={!canSearchLive}>
 				go
 			</button>
 		</div>
 	)
 }
+
+const loadFailingRuntime = async (): Promise<Awaited<ReturnType<typeof makePOIRuntime>>> => {
+	throw new Error("taxonomy unreachable")
+}
+
+const loadFailingClassifier = async () => {
+	const runtime = makePOIRuntime()
+
+	return {
+		...runtime,
+		classify: async (): Promise<never> => {
+			throw new Error("classifier failed")
+		},
+	}
+}
+
+test("a runtime that fails to load reports its error instead of staying pending", async () => {
+	const { container } = renderComponent(<Harness text="drinking fountain, Springfield" loader={loadFailingRuntime} />)
+
+	await vi.waitFor(() => expect(container.querySelector(".error")?.textContent).toBe("taxonomy unreachable"), {
+		timeout: 2000,
+	})
+
+	expect(container.querySelector(".subject")?.textContent).toBe("no-subject")
+})
+
+test("a classification that rejects reports its error for that text", async () => {
+	const { container } = renderComponent(
+		<Harness text="drinking fountain, Springfield" loader={loadFailingClassifier} />
+	)
+
+	await vi.waitFor(() => expect(container.querySelector(".error")?.textContent).toBe("classifier failed"), {
+		timeout: 2000,
+	})
+})
 
 test("a POI kind with no lexicon hit yields no subject (abstain)", async () => {
 	const { container } = renderComponent(<Harness text="hospital" />)

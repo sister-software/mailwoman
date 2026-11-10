@@ -12,6 +12,7 @@
  */
 
 import { readLocalBuffer } from "#fs/readers"
+import { memoizeResettable } from "#promises"
 
 /**
  * The location of the committed `wasm/deflate64.wasm`, resolved from this module.
@@ -69,13 +70,13 @@ const Status = {
  */
 const OUTPUT_SPAN = 256 * 1024
 
-let compiled: Promise<CompiledModule> | null = null
-
-function compiledModule(): Promise<CompiledModule> {
-	compiled ??= readLocalBuffer(deflate64WASMURL()).then((bytes) => WebAssembly.compile(new Uint8Array(bytes)))
-
-	return compiled
-}
+/**
+ * The module, compiled once per process.
+ * A failed read or compile is retried by the next inflate.
+ */
+const compiledModule = memoizeResettable((): Promise<CompiledModule> =>
+	readLocalBuffer(deflate64WASMURL()).then((bytes) => WebAssembly.compile(new Uint8Array(bytes)))
+)
 
 /**
  * A staging span in linear memory, kept while it is large enough and replaced when a chunk outgrows it.

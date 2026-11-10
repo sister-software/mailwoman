@@ -5,6 +5,7 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { memoizeResettable } from "@mailwoman/core/promises"
 import ort from "onnxruntime-node"
 import type { PathBuilderLike } from "path-ts"
 
@@ -109,8 +110,19 @@ function outputTensor(tensor: ort.Tensor): OutputTensor {
  */
 export class ONNXRunner {
 	private session: ort.InferenceSession | null = null
-	private loadPromise: Promise<ort.InferenceSession> | null = null
 	public readonly fixedSeqLen: number
+
+	/**
+	 * Reads the model and creates its session once, shared by concurrent inferences.
+	 *
+	 * A failed read or session creation is retried by the next inference.
+	 */
+	private readonly loadSession = memoizeResettable(async (): Promise<ort.InferenceSession> => {
+		const bytes = this.modelBytes ?? new Uint8Array(await readLocalBuffer(this.modelPath))
+		this.session = await this.createSession(bytes)
+
+		return this.session
+	})
 
 	private readonly executionProviders: string[]
 	private readonly intraOpNumThreads: number | undefined
@@ -158,16 +170,7 @@ export class ONNXRunner {
 	private async ensureSession(): Promise<ort.InferenceSession> {
 		if (this.session) return this.session
 
-		if (!this.loadPromise) {
-			this.loadPromise = (async () => {
-				const bytes = this.modelBytes ?? new Uint8Array(await readLocalBuffer(this.modelPath))
-				this.session = await this.createSession(bytes)
-
-				return this.session
-			})()
-		}
-
-		return this.loadPromise
+		return this.loadSession()
 	}
 
 	/**

@@ -18,6 +18,33 @@ export function startEarly<T>(promise: Promise<T>): Promise<T> {
 }
 
 /**
+ * Memoizes a zero-argument async load as its in-flight promise, so concurrent callers share one call.
+ *
+ * A resolved value stays cached.
+ * A rejection clears the memo, so the next call loads again rather than receiving
+ * the same failure for the rest of the process or page.
+ */
+export function memoizeResettable<T>(load: () => Promise<T>): () => Promise<T> {
+	let memo: Promise<T> | null = null
+
+	return () => {
+		if (!memo) {
+			const pending = load()
+
+			memo = pending
+
+			pending.catch(() => {
+				if (memo === pending) {
+					memo = null
+				}
+			})
+		}
+
+		return memo
+	}
+}
+
+/**
  * Await every enumerable own property of an object while preserving its keys.
  */
 type AwaitedObject<T extends object> = {
