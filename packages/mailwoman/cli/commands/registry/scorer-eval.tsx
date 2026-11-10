@@ -9,7 +9,8 @@
  *   locally, so they are operator-run.
  */
 
-import type { EvalGeocodeStream } from "@mailwoman/entity-resolution/tools/eval-geocoder"
+import { allKeyed } from "@mailwoman/core/promises"
+import type { EvalGeocoderFactory, EvalGeocodeStream } from "@mailwoman/entity-resolution/tools/eval-geocoder"
 
 import {
 	type CommandSpec,
@@ -77,31 +78,172 @@ export const spec = {
 
 type Options = OptionsOf<typeof spec>
 
-async function runKind(kind: Kind, options: Options): Promise<string> {
-	const [
-		{ coverageReconciliation },
-		{ crossDatasetCorrelation },
-		{ crossSourceThresholdSweep },
-		{ dedupCeiling },
-		{ geocoderNamesakeProbe },
-		{ geocoderVsProvidedCoords },
-		{ nppesDedupBenchmark },
-		{ scorerClusteringEval },
-		{ scorerCrossStateEval },
-		{ scorerPairwiseEval },
-	] = await Promise.all([
-		import("@mailwoman/entity-resolution/tools/coverage-reconciliation"),
-		import("@mailwoman/entity-resolution/tools/cross/dataset-correlation"),
-		import("@mailwoman/entity-resolution/tools/cross/source-threshold-sweep"),
-		import("@mailwoman/entity-resolution/tools/dedup-ceiling"),
-		import("@mailwoman/entity-resolution/tools/geocoder/namesake-probe"),
-		import("@mailwoman/entity-resolution/tools/geocoder/vs-provided-coords"),
-		import("@mailwoman/entity-resolution/tools/nppes/dedup-benchmark"),
-		import("@mailwoman/entity-resolution/tools/learned/scorer/clustering-eval"),
-		import("@mailwoman/entity-resolution/tools/learned/scorer/crossstate-eval"),
-		import("@mailwoman/entity-resolution/tools/learned/scorer/eval"),
-	])
+/**
+ * What every evaluator reads: the geocoder factory, the record-matcher sources and the report path.
+ */
+interface EvalBase {
+	createGeocoder: EvalGeocoderFactory
+	sources: Options["sources"]
+	outMd: Options["outMd"]
+}
 
+/**
+ * One evaluation kind: it loads that kind's module, runs it and answers the line the command prints.
+ */
+type KindEvaluator = (base: EvalBase, options: Options) => Promise<string>
+
+/**
+ * The evaluator of each kind.
+ *
+ * Each entry imports its own module when it runs, so a run loads the one kind it was asked for.
+ */
+const EVALUATORS = {
+	pairwise: async (base, options) => {
+		const { scorerPairwiseEval } = await import("@mailwoman/entity-resolution/tools/learned/scorer/eval")
+
+		await scorerPairwiseEval(
+			{ ...base, state: options.state, npis: options.npis, seed: options.seed, seeds: options.seeds },
+			reportToStderr
+		)
+
+		return "pairwise: report emitted"
+	},
+	clustering: async (base, options) => {
+		const { scorerClusteringEval } = await import("@mailwoman/entity-resolution/tools/learned/scorer/clustering-eval")
+
+		await scorerClusteringEval(
+			{
+				...base,
+				state: options.state,
+				npis: options.npis,
+				split: options.split,
+				seed: options.seed,
+				seeds: options.seeds,
+			},
+			reportToStderr
+		)
+
+		return "clustering: report emitted"
+	},
+	"cross-state": async (base, options) => {
+		const { scorerCrossStateEval } = await import("@mailwoman/entity-resolution/tools/learned/scorer/crossstate-eval")
+
+		await scorerCrossStateEval(
+			{ ...base, trainState: options.trainState, evalState: options.evalState, npis: options.npis },
+			reportToStderr
+		)
+
+		return "cross-state: report emitted"
+	},
+	// The same tool as `registry dedup-ceiling`, geocode-free, kept here
+	// so the whole eval suite is reachable from one command.
+	"dedup-ceiling": async (_base, options) => {
+		const { dedupCeiling } = await import("@mailwoman/entity-resolution/tools/dedup-ceiling")
+
+		const res = await dedupCeiling(
+			{ sources: options.sources, cap: options.cap, state: options.state, tau: options.tau, outMd: options.outMd },
+			reportToStderr
+		)
+
+		return `dedup-ceiling: ${res.collide} collisions over ${res.pairs} co-located pairs`
+	},
+	"nppes-benchmark": async (base, options) => {
+		const { nppesDedupBenchmark } = await import("@mailwoman/entity-resolution/tools/nppes/dedup-benchmark")
+
+		// The threaded-geocode surface is injected lazily.
+		// The worker pool only loads when requested.
+		const geocodeStream: EvalGeocodeStream = (records, opts) =>
+			(async function* () {
+				const { stream, dataRoot, wofPaths } = await allKeyed({
+					stream: import("#geocode/stream"),
+					dataRoot: import("@mailwoman/core/data-root"),
+					wofPaths: import("@mailwoman/resolver-wof-sqlite/paths"),
+				})
+
+				yield* stream.geocodeStream(records, {
+					mapping: opts.mapping,
+					geocode: {
+						wofDBPath: options.wof || wofPaths.wofDatabasePath("admin-global-priority.db").toString(),
+						dataRoot: options.dataRoot || dataRoot.dataRootPath().toString(),
+						locale: "en-US",
+						country: "US",
+					},
+					concurrency: opts.concurrency,
+				})
+			})()
+
+		await nppesDedupBenchmark(
+			{
+				...base,
+				geocodeStream,
+				state: options.state,
+				maxNpis: options.maxNpis,
+				trainEm: options.trainEm,
+				legacyJoin: options.legacyJoin,
+				candidate: options.candidate,
+				dumpOvermerges: options.dumpOvermerges,
+				h3Res: options.h3Res,
+				parallelGeocode: options.parallelGeocode,
+				geoConcurrency: options.geoConcurrency,
+			},
+			reportToStderr
+		)
+
+		return "nppes-benchmark: report emitted"
+	},
+	"coverage-reconciliation": async (base, options) => {
+		const { coverageReconciliation } = await import("@mailwoman/entity-resolution/tools/coverage-reconciliation")
+
+		await coverageReconciliation(
+			{ ...base, cap: options.cap, state: options.state, outGeojson: options.outGeojson },
+			reportToStderr
+		)
+
+		return "coverage-reconciliation: report emitted"
+	},
+	"cross-dataset": async (base, options) => {
+		const { crossDatasetCorrelation } = await import("@mailwoman/entity-resolution/tools/cross/dataset-correlation")
+
+		await crossDatasetCorrelation(
+			{
+				...base,
+				cap: options.cap,
+				state: options.state,
+				corpusFrequency: options.corpusFrequency,
+				outGeojson: options.outGeojson,
+			},
+			reportToStderr
+		)
+
+		return "cross-dataset: report emitted"
+	},
+	"threshold-sweep": async (base, options) => {
+		const { crossSourceThresholdSweep } =
+			await import("@mailwoman/entity-resolution/tools/cross/source-threshold-sweep")
+
+		await crossSourceThresholdSweep(
+			{ ...base, cap: options.cap, state: options.state, candidate: options.candidate },
+			reportToStderr
+		)
+
+		return "threshold-sweep: report emitted"
+	},
+	"namesake-probe": async (base) => {
+		const { geocoderNamesakeProbe } = await import("@mailwoman/entity-resolution/tools/geocoder/namesake-probe")
+		const res = await geocoderNamesakeProbe({ createGeocoder: base.createGeocoder }, reportToStderr)
+
+		return `namesake-probe: ${res.wrongRegion}/${res.total} variants wrong-region`
+	},
+	"vs-provided-coords": async (base, options) => {
+		const { geocoderVsProvidedCoords } = await import("@mailwoman/entity-resolution/tools/geocoder/vs-provided-coords")
+
+		await geocoderVsProvidedCoords({ ...base, max: options.max }, reportToStderr)
+
+		return "vs-provided-coords: report emitted"
+	},
+} as const satisfies Record<Kind, KindEvaluator>
+
+async function runKind(kind: Kind, options: Options): Promise<string> {
 	const { evalGeocoderFactory } = await import("#commands/registry/run")
 
 	const createGeocoder = evalGeocoderFactory({
@@ -112,131 +254,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 		modelCardPath: options.modelCard,
 	})
 
-	const base = { createGeocoder, sources: options.sources, outMd: options.outMd }
-
-	switch (kind) {
-		case "pairwise": {
-			await scorerPairwiseEval(
-				{ ...base, state: options.state, npis: options.npis, seed: options.seed, seeds: options.seeds },
-				reportToStderr
-			)
-
-			return "pairwise: report emitted"
-		}
-		case "clustering": {
-			await scorerClusteringEval(
-				{
-					...base,
-					state: options.state,
-					npis: options.npis,
-					split: options.split,
-					seed: options.seed,
-					seeds: options.seeds,
-				},
-				reportToStderr
-			)
-
-			return "clustering: report emitted"
-		}
-		case "cross-state": {
-			await scorerCrossStateEval(
-				{ ...base, trainState: options.trainState, evalState: options.evalState, npis: options.npis },
-				reportToStderr
-			)
-
-			return "cross-state: report emitted"
-		}
-		case "dedup-ceiling": {
-			// The same tool as `registry dedup-ceiling`, geocode-free, kept here
-			// so the whole eval suite is reachable from one command.
-			const res = await dedupCeiling(
-				{ sources: options.sources, cap: options.cap, state: options.state, tau: options.tau, outMd: options.outMd },
-				reportToStderr
-			)
-
-			return `dedup-ceiling: ${res.collide} collisions over ${res.pairs} co-located pairs`
-		}
-		case "nppes-benchmark": {
-			// The threaded-geocode surface is injected lazily.
-			// The worker pool only loads when requested.
-			const geocodeStream: EvalGeocodeStream = (records, opts) =>
-				(async function* () {
-					const { geocodeStream: stream } = await import("#geocode/stream")
-					const { dataRootPath } = await import("@mailwoman/core/data-root")
-					const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-
-					yield* stream(records, {
-						mapping: opts.mapping,
-						geocode: {
-							wofDBPath: options.wof || wofDatabasePath("admin-global-priority.db").toString(),
-							dataRoot: options.dataRoot || dataRootPath().toString(),
-							locale: "en-US",
-							country: "US",
-						},
-						concurrency: opts.concurrency,
-					})
-				})()
-
-			await nppesDedupBenchmark(
-				{
-					...base,
-					geocodeStream,
-					state: options.state,
-					maxNpis: options.maxNpis,
-					trainEm: options.trainEm,
-					legacyJoin: options.legacyJoin,
-					candidate: options.candidate,
-					dumpOvermerges: options.dumpOvermerges,
-					h3Res: options.h3Res,
-					parallelGeocode: options.parallelGeocode,
-					geoConcurrency: options.geoConcurrency,
-				},
-				reportToStderr
-			)
-
-			return "nppes-benchmark: report emitted"
-		}
-		case "coverage-reconciliation": {
-			await coverageReconciliation(
-				{ ...base, cap: options.cap, state: options.state, outGeojson: options.outGeojson },
-				reportToStderr
-			)
-
-			return "coverage-reconciliation: report emitted"
-		}
-		case "cross-dataset": {
-			await crossDatasetCorrelation(
-				{
-					...base,
-					cap: options.cap,
-					state: options.state,
-					corpusFrequency: options.corpusFrequency,
-					outGeojson: options.outGeojson,
-				},
-				reportToStderr
-			)
-
-			return "cross-dataset: report emitted"
-		}
-		case "threshold-sweep": {
-			await crossSourceThresholdSweep(
-				{ ...base, cap: options.cap, state: options.state, candidate: options.candidate },
-				reportToStderr
-			)
-
-			return "threshold-sweep: report emitted"
-		}
-		case "namesake-probe": {
-			const res = await geocoderNamesakeProbe({ createGeocoder }, reportToStderr)
-
-			return `namesake-probe: ${res.wrongRegion}/${res.total} variants wrong-region`
-		}
-		case "vs-provided-coords": {
-			await geocoderVsProvidedCoords({ ...base, max: options.max }, reportToStderr)
-
-			return "vs-provided-coords: report emitted"
-		}
-	}
+	return EVALUATORS[kind]({ createGeocoder, sources: options.sources, outMd: options.outMd }, options)
 }
 
 const RegistryScorerEval: CommandComponent<typeof spec, [Kind]> = ({ options, args }) => {

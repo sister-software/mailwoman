@@ -18,6 +18,7 @@ import {
 	type QueryKindResult,
 	type SoftChannelName,
 } from "@mailwoman/core/pipeline"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { RegionDatabases, ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { readLibPostalSingleWordStopwords } from "@mailwoman/dictionaries/libpostal"
@@ -346,88 +347,66 @@ export interface ForkEntityProbe {
 	handle?: Disposable
 }
 
-/**
- * Opens the authority-designation route from the sealed flood layer in the data root,
- * returning `undefined` when the layer is missing or fails to open.
- */
-export async function loadAuthorityDesignationRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">,
-	catalog?: LayerCatalog
-): Promise<AuthorityDesignationRoute | null> {
-	const floodDBPath = await resolveLayerDatabasePath(options.dataRoot, "flood", catalog)
+type LayerDatabasePath = Awaited<ReturnType<typeof resolveLayerDatabasePath>>
 
-	if (!(await pathExists(floodDBPath))) return null
+/**
+ * The route `open` builds over a sealed layer database, or `null` when the
+ * database is absent or fails to open.
+ */
+async function openLayerRoute<Route>(
+	databasePath: LayerDatabasePath,
+	open: (databasePath: LayerDatabasePath) => Route | Promise<Route>
+): Promise<Route | null> {
+	if (!(await pathExists(databasePath))) return null
 
 	try {
-		const { createAuthorityDesignationRoute } = await import("#observations/flood-route")
-
-		return createAuthorityDesignationRoute({ databasePath: floodDBPath })
+		return await open(databasePath)
 	} catch {
 		return null
 	}
 }
 
 /**
- * Opens the soil-capability route from the sealed soil layer in the data root,
- * returning `undefined` when the layer is missing or fails to open.
+ * The observation routes over the sealed layers in the data root: authority designation
+ * from the flood layer, soil capability, coastal erosion from the England coastal layer,
+ * and zoning from the Irish zoning layer.
+ *
+ * A route is `null` when its layer is missing or fails to open.
+ *
+ * The four layer paths resolve before any route opens, so a path that fails to
+ * resolve throws with no database handle open.
+ * The routes then open in parallel.
  */
-export async function loadSoilCapabilityRoute(
+export async function loadLayerRoutes(
 	options: Pick<GeocodeSessionOptions, "dataRoot">,
 	catalog?: LayerCatalog
-): Promise<SoilCapabilityRoute | null> {
-	const soilDBPath = await resolveLayerDatabasePath(options.dataRoot, "soil", catalog)
+): Promise<{
+	designation: AuthorityDesignationRoute | null
+	soil: SoilCapabilityRoute | null
+	coastal: CoastalErosionRoute | null
+	zoning: ZoningDesignationRoute | null
+}> {
+	const paths = await allKeyed({
+		flood: resolveLayerDatabasePath(options.dataRoot, "flood", catalog),
+		soil: resolveLayerDatabasePath(options.dataRoot, "soil", catalog),
+		coastal: resolveLayerDatabasePath(options.dataRoot, "coastal", catalog),
+		zoning: resolveLayerDatabasePath(options.dataRoot, "zoning", catalog),
+	})
 
-	if (!(await pathExists(soilDBPath))) return null
-
-	try {
-		const { createSoilCapabilityRoute } = await import("#observations/soil-route")
-
-		return createSoilCapabilityRoute({ databasePath: soilDBPath })
-	} catch {
-		return null
-	}
-}
-
-/**
- * Opens the coastal-erosion route from the sealed England coastal layer in the data root,
- * returning `undefined` when the layer is missing or fails to open.
- */
-export async function loadCoastalErosionRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">,
-	catalog?: LayerCatalog
-): Promise<CoastalErosionRoute | null> {
-	const coastalDBPath = await resolveLayerDatabasePath(options.dataRoot, "coastal", catalog)
-
-	if (!(await pathExists(coastalDBPath))) return null
-
-	try {
-		const { createCoastalErosionRoute } = await import("#observations/coastal-route")
-
-		return createCoastalErosionRoute({ databasePath: coastalDBPath })
-	} catch {
-		return null
-	}
-}
-
-/**
- * Opens the zoning route from the sealed Irish zoning layer in the data root,
- * returning `undefined` when the layer is missing or fails to open.
- */
-export async function loadZoningDesignationRoute(
-	options: Pick<GeocodeSessionOptions, "dataRoot">,
-	catalog?: LayerCatalog
-): Promise<ZoningDesignationRoute | null> {
-	const zoningDBPath = await resolveLayerDatabasePath(options.dataRoot, "zoning", catalog)
-
-	if (!(await pathExists(zoningDBPath))) return null
-
-	try {
-		const { createZoningDesignationRoute } = await import("#observations/zoning-route")
-
-		return createZoningDesignationRoute({ databasePath: zoningDBPath })
-	} catch {
-		return null
-	}
+	return allKeyed({
+		designation: openLayerRoute(paths.flood, async (databasePath) =>
+			(await import("#observations/flood-route")).createAuthorityDesignationRoute({ databasePath })
+		),
+		soil: openLayerRoute(paths.soil, async (databasePath) =>
+			(await import("#observations/soil-route")).createSoilCapabilityRoute({ databasePath })
+		),
+		coastal: openLayerRoute(paths.coastal, async (databasePath) =>
+			(await import("#observations/coastal-route")).createCoastalErosionRoute({ databasePath })
+		),
+		zoning: openLayerRoute(paths.zoning, async (databasePath) =>
+			(await import("#observations/zoning-route")).createZoningDesignationRoute({ databasePath })
+		),
+	})
 }
 
 /**
@@ -717,11 +696,14 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		const probe = await loadForkEntityDeps(options, catalog)
 
 		forkEntityDeps = probe.deps
+
 		poiHandle = probe.handle ?? null
-		designationRoute = await loadAuthorityDesignationRoute(options, catalog)
-		soilRoute = await loadSoilCapabilityRoute(options, catalog)
-		coastalRoute = await loadCoastalErosionRoute(options, catalog)
-		zoningRoute = await loadZoningDesignationRoute(options, catalog)
+		;({
+			designation: designationRoute,
+			soil: soilRoute,
+			coastal: coastalRoute,
+			zoning: zoningRoute,
+		} = await loadLayerRoutes(options, catalog))
 	} catch (error) {
 		// `dispose` releases everything the stack holds and the handles opened in this block, so the stack lets go.
 		pending.move()

@@ -9,6 +9,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { FetchSourceID } from "@mailwoman/corpus/tools/fetch"
 import type { FetchSummary } from "@mailwoman/corpus/tools/fetch/download/network"
@@ -143,228 +144,192 @@ export const spec = {
 
 type Options = OptionsOf<typeof spec>
 
-async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
-	const { fetchACRASG } = await import("@mailwoman/corpus/sg/tools/fetch/acra")
-	const { fetchADSEE } = await import("@mailwoman/corpus/ee/tools/fetch/ads")
-	const { fetchBan } = await import("@mailwoman/corpus/fr/tools/fetch/ban")
-	const { fetchBDAdresses } = await import("@mailwoman/corpus/lu/tools/fetch/bd-adresses")
-	const { fetchBrussels } = await import("@mailwoman/corpus/be/tools/fetch/brussels")
-	const { fetchCORDIS } = await import("@mailwoman/corpus/tools/fetch/cordis")
-	const { fetchAnnuaireEducationOverseas } = await import("@mailwoman/corpus/fr/tools/fetch/annuaire-education")
-	const { fetchFinessOverseas } = await import("@mailwoman/corpus/fr/tools/fetch/finess")
-	const { fetchGBOSOpen } = await import("@mailwoman/corpus/gb/tools/fetch/os-open")
-	const { fetchGLEIF } = await import("@mailwoman/corpus/tools/fetch/gleif")
-	const { fetchVaris } = await import("@mailwoman/corpus/lv/tools/fetch/varis")
-	const { fetchVlaanderenAD } = await import("@mailwoman/corpus/tools/fetch/vlaanderen-ad")
-	const { fetchWallonie } = await import("@mailwoman/corpus/be/tools/fetch/wallonie")
-	const { fetchCzCuzk } = await import("@mailwoman/corpus/cz/tools/fetch/cuzk")
-	const { fetchDKAddresses } = await import("@mailwoman/corpus/dk/tools/fetch/inspire")
-	const { fetchEMUiAPL } = await import("@mailwoman/corpus/pl/tools/fetch/emuia")
-	const { fetchESBizkaia } = await import("@mailwoman/corpus/es/tools/fetch/bizkaia")
-	const { fetchESCatastro } = await import("@mailwoman/corpus/es/tools/fetch/catastro")
-	const { fetchESGipuzkoa } = await import("@mailwoman/corpus/es/tools/fetch/gipuzkoa")
-	const { fetchESNavarra } = await import("@mailwoman/corpus/es/tools/fetch/navarra")
-	const { fetchGCISTW } = await import("@mailwoman/corpus/tw/tools/fetch/gcis")
-	const { fetchGeonamesDumps } = await import("@mailwoman/corpus/tools/fetch/geonames/dump")
-	const { fetchGeonamesPostal } = await import("@mailwoman/corpus/tools/fetch/geonames/postal")
-	const { fetchHoujinJP } = await import("@mailwoman/corpus/jp/tools/fetch/houjin")
-	const { fetchHRSA } = await import("@mailwoman/corpus/us/tools/fetch/hrsa")
-	const { fetchIMLSPLS } = await import("@mailwoman/corpus/us/tools/fetch/imls-pls")
-	const { fetchITANAC } = await import("@mailwoman/corpus/it/tools/fetch/anac")
-	const { fetchJusoKR } = await import("@mailwoman/corpus/kr/tools/fetch/juso")
-	const { fetchLocaldataKR } = await import("@mailwoman/corpus/kr/tools/fetch/localdata")
-	const { fetchMatrikkelen } = await import("@mailwoman/corpus/no/tools/fetch/matrikkelen")
-	const { fetchNAD } = await import("@mailwoman/corpus/us/tools/fetch/nad")
-	const { fetchNLKadaster } = await import("@mailwoman/corpus/nl/tools/fetch/kadaster")
-	const { fetchNPPES } = await import("@mailwoman/corpus/us/tools/fetch/nppes")
-	const { fetchOpenAddresses } = await import("@mailwoman/corpus/tools/fetch/openaddresses")
-	const { fetchOurAirports } = await import("@mailwoman/corpus/tools/fetch/ourairports")
-	const { fetchReteaScolara } = await import("@mailwoman/corpus/ro/tools/fetch/retea-scolara")
-	const { fetchRyhti } = await import("@mailwoman/corpus/fi/tools/fetch/ryhti")
-	const { fetchSKInspire } = await import("@mailwoman/corpus/sk/tools/fetch/inspire")
-	const { fetchStateHISchools } = await import("@mailwoman/corpus/us/tools/fetch/state/hi-schools")
-	const { fetchStateSources } = await import("@mailwoman/corpus/us/tools/fetch/state/sources")
-	const { fetchTigerFull } = await import("@mailwoman/corpus/us/tools/fetch/tiger-full")
-	const { fetchWikidataSubVenue } = await import("@mailwoman/corpus/tools/fetch/wikidata/subvenue")
-	const { fetchWikidataVitalPlaces } = await import("@mailwoman/corpus/tools/fetch/wikidata/vital-places")
-
-	const base = { outRoot: PathBuilder.from(options.outRoot) }
-
-	switch (source) {
-		case "acra-sg":
-			return fetchACRASG(base, reportToStderr)
-		case "ads-ee":
-			return fetchADSEE(base, reportToStderr)
-		case "bd-adresses":
-			return fetchBDAdresses(base, reportToStderr)
-		case "brussels":
-			return fetchBrussels(base, reportToStderr)
-		case "cordis":
-			return fetchCORDIS(base, reportToStderr)
-		case "lv-varis":
-			return fetchVaris(base, reportToStderr)
-		case "fr-annuaire-education-overseas":
-			return fetchAnnuaireEducationOverseas(base, reportToStderr)
-		case "fr-finess-overseas":
-			return fetchFinessOverseas(base, reportToStderr)
-		case "gb-os-open":
-			return fetchGBOSOpen(base, reportToStderr)
-		case "gleif":
-			return fetchGLEIF(base, reportToStderr)
-		case "ro-retea-scolara":
-			return fetchReteaScolara(base, reportToStderr)
-		case "vlaanderen":
-			return fetchVlaanderenAD(base, reportToStderr)
-		case "wallonie":
-			return fetchWallonie(base, reportToStderr)
-		case "cz-cuzk":
-			return fetchCzCuzk(base, reportToStderr)
-		case "dk-inspire":
-			return fetchDKAddresses(base, reportToStderr)
-		case "emuia-pl":
-			return fetchEMUiAPL(base, reportToStderr)
-		case "es-bizkaia":
-			return fetchESBizkaia(base, reportToStderr)
-		case "es-catastro":
-			return fetchESCatastro(
-				{
-					...base,
-					provinces: options.provinces ? extractDelimited(options.provinces) : null,
-					municipalities: options.municipalities ? extractDelimited(options.municipalities) : null,
-					limit: options.limit,
-				},
-				reportToStderr
-			)
-		case "es-gipuzkoa":
-			return fetchESGipuzkoa(base, reportToStderr)
-		case "es-navarra":
-			return fetchESNavarra(
-				{
-					...base,
-					partitions: options.partitions ? extractDelimited(options.partitions) : null,
-					limit: options.limit,
-				},
-				reportToStderr
-			)
-		case "matrikkelen":
-			return fetchMatrikkelen(
-				{
-					...base,
-					// Null takes both areas the address-source register holds rows for,
-					// `0000` for the mainland and `2100` for Svalbard.
-					areas: options.areas ? extractDelimited(options.areas) : null,
-				},
-				reportToStderr
-			)
-		case "nl-kadaster":
-			return fetchNLKadaster(base, reportToStderr)
-		case "sk-inspire":
-			return fetchSKInspire(base, reportToStderr)
-		case "ryhti":
-			return fetchRyhti(base, reportToStderr)
-		case "gcis-tw":
-			return fetchGCISTW(base, reportToStderr)
-		case "houjin-jp":
-			return fetchHoujinJP(base, reportToStderr)
-		case "it-anac":
-			return fetchITANAC(
-				{ ...base, editions: options.editions ? extractDelimited(options.editions) : null },
-				reportToStderr
-			)
-		case "juso-kr":
-			return fetchJusoKR({ ...base, month: options.month }, reportToStderr)
-		case "localdata-kr":
-			return fetchLocaldataKR(
-				{ ...base, categories: options.categories ? extractDelimited(options.categories) : null },
-				reportToStderr
-			)
-		case "ban":
-			return fetchBan(base, reportToStderr)
-		case "nad":
-			return fetchNAD({ ...base, nadURL: options.nadUrl }, reportToStderr)
-		case "geonames-dump":
-			return fetchGeonamesDumps(
-				{
-					...base,
-					// Null means every country the source's own countryInfo.txt catalogs.
-					// Present dumps are skipped.
-					countries: options.countries ? extractDelimited(options.countries) : null,
-				},
-				reportToStderr
-			)
-		case "geonames-postal":
-			return fetchGeonamesPostal(
-				{
-					...base,
-					// Null rather than an empty list when the flag is absent: the module's
-					// own default set is the answer for "fetch what the corpus wants",
-					// and an empty array would fetch no countries while looking deliberate.
-					countries: options.countries ? extractDelimited(options.countries) : null,
-				},
-				reportToStderr
-			)
-		case "hrsa":
-			return fetchHRSA(base, reportToStderr)
-		case "imls-pls":
-			return fetchIMLSPLS(base, reportToStderr)
-		case "nppes":
-			return fetchNPPES(base, reportToStderr)
-		case "openaddresses": {
-			const planned = options.plan
-				? (
-						await (
-							await import("@mailwoman/core/fs/readers")
-						).readLocalJSONFile<Array<{ member: string; job: number | null; updated: string | null }>>(options.plan)
-					)
-						.filter((entry) => entry.job != null)
-						.map(({ member, job, updated }) => ({ member, job, updated }))
-				: null
-
-			return fetchOpenAddresses(
-				{
-					...base,
-					country: options.country,
-					sources:
-						planned ?? (options.sources ? extractDelimited(options.sources).map((member) => ({ member })) : null),
-				},
-				reportToStderr
-			)
-		}
-		case "ourairports":
-			return fetchOurAirports(base, reportToStderr)
-		case "wikidata-subvenue":
-			return fetchWikidataSubVenue(base, reportToStderr)
-		case "wikidata-vital-places":
-			return fetchWikidataVitalPlaces(
-				{
-					...base,
-					top: options.top,
-					// Null takes the module's own ten languages.
-					languages: options.languages ? extractDelimited(options.languages) : null,
-					batchSize: options.batch,
-					concurrency: options.concurrency,
-				},
-				reportToStderr
-			)
-		case "state-sources":
-			return fetchStateSources(base, reportToStderr)
-		case "state-hi-schools":
-			return fetchStateHISchools(base, reportToStderr)
-		case "tiger-full":
-			return fetchTigerFull(
-				{
-					...base,
-					skipStateFips: options.skipStateFips,
-					rateSleep: options.rateSleep,
-					maxParallel: options.maxParallel,
-					dryRun: options.dryRun,
-				},
-				reportToStderr
-			)
-	}
+/**
+ * The output root every fetcher writes under.
+ */
+interface FetchBase {
+	outRoot: PathBuilder
 }
 
-const CorpusFetch: CommandComponent<typeof spec, [FetchSourceID]> = ({ options, args }) => {
+/**
+ * One source's fetch: it loads that source's module and calls its fetcher with the options it reads.
+ */
+type SourceFetcher = (base: FetchBase, options: Options) => Promise<FetchSummary>
+
+const delimited = (value: string | undefined): string[] | null => (value ? extractDelimited(value) : null)
+
+/**
+ * The fetcher of each source, keyed by source ID.
+ *
+ * Each entry imports its own module when it runs, so a fetch loads the one source it was asked for.
+ * The table states every module the command may load.
+ * A computed specifier would leave that list unstated.
+ */
+const FETCHERS = {
+	"acra-sg": async (base) => (await import("@mailwoman/corpus/sg/tools/fetch/acra")).fetchACRASG(base, reportToStderr),
+	"ads-ee": async (base) => (await import("@mailwoman/corpus/ee/tools/fetch/ads")).fetchADSEE(base, reportToStderr),
+	ban: async (base) => (await import("@mailwoman/corpus/fr/tools/fetch/ban")).fetchBan(base, reportToStderr),
+	"bd-adresses": async (base) =>
+		(await import("@mailwoman/corpus/lu/tools/fetch/bd-adresses")).fetchBDAdresses(base, reportToStderr),
+	brussels: async (base) =>
+		(await import("@mailwoman/corpus/be/tools/fetch/brussels")).fetchBrussels(base, reportToStderr),
+	cordis: async (base) => (await import("@mailwoman/corpus/tools/fetch/cordis")).fetchCORDIS(base, reportToStderr),
+	"cz-cuzk": async (base) => (await import("@mailwoman/corpus/cz/tools/fetch/cuzk")).fetchCzCuzk(base, reportToStderr),
+	"dk-inspire": async (base) =>
+		(await import("@mailwoman/corpus/dk/tools/fetch/inspire")).fetchDKAddresses(base, reportToStderr),
+	"emuia-pl": async (base) =>
+		(await import("@mailwoman/corpus/pl/tools/fetch/emuia")).fetchEMUiAPL(base, reportToStderr),
+	"es-bizkaia": async (base) =>
+		(await import("@mailwoman/corpus/es/tools/fetch/bizkaia")).fetchESBizkaia(base, reportToStderr),
+	"es-catastro": async (base, options) =>
+		(await import("@mailwoman/corpus/es/tools/fetch/catastro")).fetchESCatastro(
+			{
+				...base,
+				provinces: delimited(options.provinces),
+				municipalities: delimited(options.municipalities),
+				limit: options.limit,
+			},
+			reportToStderr
+		),
+	"es-gipuzkoa": async (base) =>
+		(await import("@mailwoman/corpus/es/tools/fetch/gipuzkoa")).fetchESGipuzkoa(base, reportToStderr),
+	"es-navarra": async (base, options) =>
+		(await import("@mailwoman/corpus/es/tools/fetch/navarra")).fetchESNavarra(
+			{ ...base, partitions: delimited(options.partitions), limit: options.limit },
+			reportToStderr
+		),
+	"fr-annuaire-education-overseas": async (base) =>
+		(await import("@mailwoman/corpus/fr/tools/fetch/annuaire-education")).fetchAnnuaireEducationOverseas(
+			base,
+			reportToStderr
+		),
+	"fr-finess-overseas": async (base) =>
+		(await import("@mailwoman/corpus/fr/tools/fetch/finess")).fetchFinessOverseas(base, reportToStderr),
+	"gb-os-open": async (base) =>
+		(await import("@mailwoman/corpus/gb/tools/fetch/os-open")).fetchGBOSOpen(base, reportToStderr),
+	"gcis-tw": async (base) => (await import("@mailwoman/corpus/tw/tools/fetch/gcis")).fetchGCISTW(base, reportToStderr),
+	gleif: async (base) => (await import("@mailwoman/corpus/tools/fetch/gleif")).fetchGLEIF(base, reportToStderr),
+	"houjin-jp": async (base) =>
+		(await import("@mailwoman/corpus/jp/tools/fetch/houjin")).fetchHoujinJP(base, reportToStderr),
+	"it-anac": async (base, options) =>
+		(await import("@mailwoman/corpus/it/tools/fetch/anac")).fetchITANAC(
+			{ ...base, editions: delimited(options.editions) },
+			reportToStderr
+		),
+	"juso-kr": async (base, options) =>
+		(await import("@mailwoman/corpus/kr/tools/fetch/juso")).fetchJusoKR(
+			{ ...base, month: options.month },
+			reportToStderr
+		),
+	"localdata-kr": async (base, options) =>
+		(await import("@mailwoman/corpus/kr/tools/fetch/localdata")).fetchLocaldataKR(
+			{ ...base, categories: delimited(options.categories) },
+			reportToStderr
+		),
+	"lv-varis": async (base) => (await import("@mailwoman/corpus/lv/tools/fetch/varis")).fetchVaris(base, reportToStderr),
+	// Null takes both areas the address-source register holds rows for, `0000` for the mainland and `2100` for Svalbard.
+	matrikkelen: async (base, options) =>
+		(await import("@mailwoman/corpus/no/tools/fetch/matrikkelen")).fetchMatrikkelen(
+			{ ...base, areas: delimited(options.areas) },
+			reportToStderr
+		),
+	nad: async (base, options) =>
+		(await import("@mailwoman/corpus/us/tools/fetch/nad")).fetchNAD(
+			{ ...base, nadURL: options.nadUrl },
+			reportToStderr
+		),
+	"nl-kadaster": async (base) =>
+		(await import("@mailwoman/corpus/nl/tools/fetch/kadaster")).fetchNLKadaster(base, reportToStderr),
+	"ro-retea-scolara": async (base) =>
+		(await import("@mailwoman/corpus/ro/tools/fetch/retea-scolara")).fetchReteaScolara(base, reportToStderr),
+	ryhti: async (base) => (await import("@mailwoman/corpus/fi/tools/fetch/ryhti")).fetchRyhti(base, reportToStderr),
+	"sk-inspire": async (base) =>
+		(await import("@mailwoman/corpus/sk/tools/fetch/inspire")).fetchSKInspire(base, reportToStderr),
+	// Null means every country the source's own countryInfo.txt catalogs.
+	// Present dumps are skipped.
+	"geonames-dump": async (base, options) =>
+		(await import("@mailwoman/corpus/tools/fetch/geonames/dump")).fetchGeonamesDumps(
+			{ ...base, countries: delimited(options.countries) },
+			reportToStderr
+		),
+	// Null when the flag is absent takes the module's own default set, the countries the corpus wants.
+	// An empty array would fetch no countries while looking deliberate.
+	"geonames-postal": async (base, options) =>
+		(await import("@mailwoman/corpus/tools/fetch/geonames/postal")).fetchGeonamesPostal(
+			{ ...base, countries: delimited(options.countries) },
+			reportToStderr
+		),
+	hrsa: async (base) => (await import("@mailwoman/corpus/us/tools/fetch/hrsa")).fetchHRSA(base, reportToStderr),
+	"imls-pls": async (base) =>
+		(await import("@mailwoman/corpus/us/tools/fetch/imls-pls")).fetchIMLSPLS(base, reportToStderr),
+	nppes: async (base) => (await import("@mailwoman/corpus/us/tools/fetch/nppes")).fetchNPPES(base, reportToStderr),
+	openaddresses: async (base, options) => {
+		const { openaddresses, readers } = await allKeyed({
+			openaddresses: import("@mailwoman/corpus/tools/fetch/openaddresses"),
+			readers: import("@mailwoman/core/fs/readers"),
+		})
+
+		const planned = options.plan
+			? (
+					await readers.readLocalJSONFile<Array<{ member: string; job: number | null; updated: string | null }>>(
+						options.plan
+					)
+				)
+					.filter((entry) => entry.job != null)
+					.map(({ member, job, updated }) => ({ member, job, updated }))
+			: null
+
+		return openaddresses.fetchOpenAddresses(
+			{
+				...base,
+				country: options.country,
+				sources: planned ?? delimited(options.sources)?.map((member) => ({ member })) ?? null,
+			},
+			reportToStderr
+		)
+	},
+	ourairports: async (base) =>
+		(await import("@mailwoman/corpus/tools/fetch/ourairports")).fetchOurAirports(base, reportToStderr),
+	"state-sources": async (base) =>
+		(await import("@mailwoman/corpus/us/tools/fetch/state/sources")).fetchStateSources(base, reportToStderr),
+	"state-hi-schools": async (base) =>
+		(await import("@mailwoman/corpus/us/tools/fetch/state/hi-schools")).fetchStateHISchools(base, reportToStderr),
+	"tiger-full": async (base, options) =>
+		(await import("@mailwoman/corpus/us/tools/fetch/tiger-full")).fetchTigerFull(
+			{
+				...base,
+				skipStateFips: options.skipStateFips,
+				rateSleep: options.rateSleep,
+				maxParallel: options.maxParallel,
+				dryRun: options.dryRun,
+			},
+			reportToStderr
+		),
+	vlaanderen: async (base) =>
+		(await import("@mailwoman/corpus/tools/fetch/vlaanderen-ad")).fetchVlaanderenAD(base, reportToStderr),
+	wallonie: async (base) =>
+		(await import("@mailwoman/corpus/be/tools/fetch/wallonie")).fetchWallonie(base, reportToStderr),
+	"wikidata-subvenue": async (base) =>
+		(await import("@mailwoman/corpus/tools/fetch/wikidata/subvenue")).fetchWikidataSubVenue(base, reportToStderr),
+	// Null languages take the module's own ten.
+	"wikidata-vital-places": async (base, options) =>
+		(await import("@mailwoman/corpus/tools/fetch/wikidata/vital-places")).fetchWikidataVitalPlaces(
+			{
+				...base,
+				top: options.top,
+				languages: delimited(options.languages),
+				batchSize: options.batch,
+				concurrency: options.concurrency,
+			},
+			reportToStderr
+		),
+} as const satisfies Record<(typeof sources)[number], SourceFetcher>
+
+function runSource(source: (typeof sources)[number], options: Options): Promise<FetchSummary> {
+	return FETCHERS[source]({ outRoot: PathBuilder.from(options.outRoot) }, options)
+}
+
+const CorpusFetch: CommandComponent<typeof spec, [(typeof sources)[number]]> = ({ options, args }) => {
 	const state = useCommandTask(
 		() => runSource(args[0], options),
 		(summary) => (summary.failed > 0 ? 1 : 0)
