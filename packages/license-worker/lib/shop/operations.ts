@@ -11,6 +11,7 @@
  *   `sk_live_`.
  */
 
+import { executeD1WithWrangler } from "@mailwoman/core/cloudflare"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isIdentical } from "@mailwoman/core/identical"
@@ -19,7 +20,9 @@ import { defineOperation, OperationEffect, type ReleaseOperation } from "@mailwo
 import Stripe from "stripe"
 import { z } from "zod"
 
+import { LicenseState } from "#ledger/schema"
 import { SHOP_PLAN_CODES, SHOP_PLANS } from "#shop/catalog"
+import { declarationStateStatement } from "#shop/declaration-state"
 import { $private } from "#shop/env"
 import { type ShopIDsByMode, type ShopMode, withShopIDs } from "#shop/ids"
 import { type ProvisionReport, ProvisionReportSchema, provisionShop } from "#shop/provision"
@@ -214,6 +217,44 @@ const rehearseRenewalOperation = defineOperation({
 	},
 })
 
+const LicenseStateSchema = z.enum(Object.values(LicenseState) as [LicenseState, ...LicenseState[]])
+
+const declarationStateOperation = defineOperation({
+	id: "shop.declaration-state",
+	description:
+		"Move a declared license from one state to another on the remote ledger, applied only while the row still holds --from. Prints the statement; --apply runs it through wrangler d1 execute and reports whether the row moved.",
+	effect: OperationEffect.ExternalWrite,
+	options: { lid: { type: "string" }, from: { type: "string" }, to: { type: "string" }, apply: { type: "boolean" } },
+	inputSchema: z.object({
+		lid: z.string(),
+		from: LicenseStateSchema,
+		to: LicenseStateSchema,
+		apply: z.boolean().optional(),
+	}),
+	outputSchema: z.object({
+		statement: z.string(),
+		outcome: z.enum(["updated", "conflict"]).nullable(),
+	}),
+	async run(input, context) {
+		const statement = declarationStateStatement(input.lid, input.from, input.to, new Date().toISOString())
+
+		if (input.apply !== true || context.dryRun) {
+			context.log("dry run; pass --apply to run the statement against the remote ledger")
+
+			return { statement, outcome: null }
+		}
+
+		const { changes } = await executeD1WithWrangler({
+			database: "LICENSE_LEDGER",
+			config: resolvePackagePath("@mailwoman/license-worker", "wrangler.toml").toString(),
+			command: statement,
+		})
+
+		// A conflict means the row no longer holds --from, or no declaration has the id.
+		return { statement, outcome: changes > 0 ? "updated" : "conflict" }
+	},
+})
+
 /**
  * The registry `mwops shop` is a view over, in the order the usage lists them.
  */
@@ -222,4 +263,5 @@ export const shopOperations: ReadonlyArray<ReleaseOperation<unknown, unknown>> =
 	provisionOperation,
 	rehearseOperation,
 	rehearseRenewalOperation,
+	declarationStateOperation,
 ] as ReadonlyArray<ReleaseOperation<unknown, unknown>>

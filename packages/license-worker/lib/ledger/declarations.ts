@@ -14,6 +14,7 @@ import type {
 	DeclarationRow,
 	EmailState,
 	IssuanceRow,
+	LicenseState,
 	NewDeclaration,
 	NewDownload,
 	NewIssuance,
@@ -94,6 +95,83 @@ export async function setIssuanceEmailState(
 		.set({ email_state: state, email_message_id: messageID })
 		.where("issuance_id", "=", issuanceID)
 		.execute()
+}
+
+/**
+ * Clear a declaration's plaintext refresh secret once the message that includes it has been sent.
+ */
+export async function clearDeclarationPendingSecret(ledger: Ledger, lid: string, at: string): Promise<void> {
+	await ledger
+		.updateTable("declarations")
+		.set({ refresh_secret_pending: null, updated_at: at })
+		.where("lid", "=", lid)
+		.execute()
+}
+
+/**
+ * Each emailed declaration's current issuance whose email is `pending` or `failed`.
+ *
+ * `pending` covers a crash between the mint and the send.
+ * `failed` is a provider refusal.
+ *
+ * Only the highest `seq` per declaration is listed, so a resend sends the token that is current.
+ */
+export async function issuancesAwaitingEmail(
+	ledger: Ledger
+): Promise<Array<{ declaration: DeclarationRow; issuance: IssuanceRow }>> {
+	const issuances = await ledger
+		.selectFrom("issuances as current")
+		.selectAll("current")
+		.innerJoin("declarations", "declarations.lid", "current.lid")
+		.where("declarations.email", "is not", null)
+		.where("current.email_state", "in", ["pending", "failed"])
+		.where(({ eb, selectFrom }) =>
+			eb(
+				"current.seq",
+				"=",
+				selectFrom("issuances as later")
+					.select(({ fn }) => fn.max("later.seq").as("seq"))
+					.whereRef("later.lid", "=", "current.lid")
+			)
+		)
+		.orderBy("current.issuance_id")
+		.execute()
+
+	const listed: Array<{ declaration: DeclarationRow; issuance: IssuanceRow }> = []
+
+	for (const issuance of issuances) {
+		const declaration = await findDeclaration(ledger, issuance.lid)
+
+		if (!declaration)
+			throw new Error(`issuance ${issuance.issuance_id} names declaration ${issuance.lid}, which has no row`)
+
+		listed.push({ declaration, issuance })
+	}
+
+	return listed
+}
+
+/**
+ * Move a declared license from the state its caller read to another.
+ *
+ * The write applies only while the row still holds `transition.from`.
+ * `"conflict"` means another writer changed the state after the caller read it,
+ * and the row keeps that writer's values.
+ */
+export async function setDeclarationState(
+	ledger: Ledger,
+	lid: string,
+	transition: { from: LicenseState; to: LicenseState },
+	at: string
+): Promise<"updated" | "conflict"> {
+	const result = await ledger
+		.updateTable("declarations")
+		.set({ license_state: transition.to, updated_at: at })
+		.where("lid", "=", lid)
+		.where("license_state", "=", transition.from)
+		.executeTakeFirst()
+
+	return Number(result.numUpdatedRows ?? 0) > 0 ? "updated" : "conflict"
 }
 
 /**

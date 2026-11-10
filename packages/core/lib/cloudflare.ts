@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Cloudflare token request builders and the wrangler R2 upload. API calls go through the `cloudflare` SDK.
+ *   Cloudflare token request builders, the wrangler R2 upload and the wrangler D1 statement. API calls go through the
+ *   `cloudflare` SDK.
  */
 
 export * from "#cloudflare/tokens"

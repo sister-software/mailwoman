@@ -9,8 +9,10 @@
 import type Stripe from "stripe"
 
 import { todayUTC } from "#dates"
+import { resendIssuanceEmail } from "#declare"
 import type { LicenseWorkerEnv } from "#env"
 import { type FulfilDependencies, fulfilInvoice, sendTokenEmail } from "#fulfil"
+import { issuancesAwaitingEmail } from "#ledger/declarations"
 import {
 	allLicenses,
 	currentToken,
@@ -30,10 +32,14 @@ export type ReconcileStage = "mint" | "email" | "state"
 export type ReconcileFailure =
 	| { stage: "mint"; invoiceID: string; reason: string }
 	| { stage: "email"; invoiceID: string; lid: string; reason: string }
+	| { stage: "email"; issuanceID: string; lid: string; reason: string }
 	| { stage: "state"; lid: string; reason: string }
 
 export interface ReconcileReport {
 	minted: string[]
+	/**
+	 * Invoice ids of paid tokens and issuance ids of declared tokens whose email this pass sent again.
+	 */
 	resent: string[]
 	refused: Array<{ invoiceID: string; reason: string }>
 	corrected: Array<{ lid: string; from: LicenseState; to: LicenseState }>
@@ -56,6 +62,7 @@ export interface ReconcileOptions {
 }
 
 const PAYMENT_STATE_DISPUTED = "disputed"
+const PAYMENT_STATE_DISPUTE_WON = "dispute_won"
 const PAYMENT_STATE_REFUNDED = "refunded"
 
 const EMAIL_ADDRESS = /[^\s@<>"']+@[^\s@<>"']+/gu
@@ -116,6 +123,38 @@ export async function reconcileLedger(
 			}
 		} catch (error) {
 			report.failed.push({ stage: "email", invoiceID: token.invoice_id, lid: token.lid, reason: failureReason(error) })
+		}
+	}
+
+	let awaitingIssuances: Awaited<ReturnType<typeof issuancesAwaitingEmail>> = []
+
+	try {
+		awaitingIssuances = await issuancesAwaitingEmail(deps.ledger)
+	} catch (error) {
+		report.incomplete.push({ stage: "email", reason: failureReason(error) })
+	}
+
+	for (const { declaration, issuance } of awaitingIssuances) {
+		try {
+			const delivery = await resendIssuanceEmail(deps, declaration, issuance)
+
+			if (delivery === "sent") {
+				report.resent.push(issuance.issuance_id)
+			} else if (delivery === "failed") {
+				report.failed.push({
+					stage: "email",
+					issuanceID: issuance.issuance_id,
+					lid: declaration.lid,
+					reason: "provider refused",
+				})
+			}
+		} catch (error) {
+			report.failed.push({
+				stage: "email",
+				issuanceID: issuance.issuance_id,
+				lid: declaration.lid,
+				reason: failureReason(error),
+			})
 		}
 	}
 
@@ -268,8 +307,10 @@ async function stateStripeSays(
 
 	if (dispute?.status !== "won") return null
 
+	// The ruling closes the dispute, so the payment state stops reading `disputed`.
+	// A later pass then leaves the license to its subscription instead of rereading a settled dispute.
 	return {
 		state: licenseStateAfterSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today }),
-		paymentState: null,
+		paymentState: PAYMENT_STATE_DISPUTE_WON,
 	}
 }
