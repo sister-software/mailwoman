@@ -148,21 +148,35 @@ pub fn save_checkpoint(
 }
 
 /// `find_latest_checkpoint`: the highest-step `step-*` directory holding `training_state.json`.
+///
+/// The step is parsed from the name, because `checkpoint_dir_name` pads to six digits and a seven-digit step sorts
+/// before a six-digit one as a string. A `step-*` checkpoint whose name holds no integer step is refused with its
+/// path, as is a directory entry that cannot be read.
 pub fn find_latest_checkpoint(output_dir: &Path) -> Result<Option<PathBuf>> {
 	if !output_dir.is_dir() {
 		return Ok(None);
 	}
-	let mut candidates: Vec<PathBuf> = std::fs::read_dir(output_dir)?
-		.filter_map(|e| e.ok().map(|e| e.path()))
-		.filter(|p| {
-			p.file_name()
-				.and_then(|n| n.to_str())
-				.is_some_and(|n| n.starts_with("step-"))
-				&& p.join(TRAINING_STATE).is_file()
-		})
-		.collect();
-	candidates.sort();
-	Ok(candidates.pop())
+	let mut latest: Option<(i64, PathBuf)> = None;
+	for entry in std::fs::read_dir(output_dir)? {
+		let path = entry.map_err(|e| fail!("{}: {e}", output_dir.display()))?.path();
+		let Some(digits) = path
+			.file_name()
+			.and_then(|n| n.to_str())
+			.and_then(|n| n.strip_prefix("step-"))
+		else {
+			continue;
+		};
+		if !path.join(TRAINING_STATE).is_file() {
+			continue;
+		}
+		let step: i64 = digits
+			.parse()
+			.map_err(|_| fail!("{}: the checkpoint name holds no integer step", path.display()))?;
+		if latest.as_ref().is_none_or(|(best, _)| step > *best) {
+			latest = Some((step, path));
+		}
+	}
+	Ok(latest.map(|(_, path)| path))
 }
 
 /// `checkpoint_extras`: the step, the config stamped for the resume-drift report, and the vocabulary width.

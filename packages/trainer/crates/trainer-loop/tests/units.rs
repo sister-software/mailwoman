@@ -340,6 +340,26 @@ fn every_loss_term_fires_and_backward_reaches_the_heads() {
 }
 
 #[test]
+fn the_latest_checkpoint_is_the_highest_step_past_the_name_padding() {
+	let dir = tempfile::tempdir().unwrap();
+	for step in [999_999, 1_000_000, 42] {
+		let checkpoint = dir.path().join(checkpoint_dir_name(step));
+		std::fs::create_dir_all(&checkpoint).unwrap();
+		std::fs::write(checkpoint.join("training_state.json"), "{}").unwrap();
+	}
+	assert_eq!(
+		find_latest_checkpoint(dir.path()).unwrap(),
+		Some(dir.path().join(checkpoint_dir_name(1_000_000)))
+	);
+
+	let stray = dir.path().join("step-old");
+	std::fs::create_dir_all(&stray).unwrap();
+	std::fs::write(stray.join("training_state.json"), "{}").unwrap();
+	let refusal = find_latest_checkpoint(dir.path()).unwrap_err().to_string();
+	assert!(refusal.contains("step-old"), "{refusal}");
+}
+
+#[test]
 fn a_checkpoint_restores_the_model_optimizer_and_schedule() {
 	let _guard = seeded(1);
 	let mut model = CoarseEncoder::new(spec()).unwrap();
