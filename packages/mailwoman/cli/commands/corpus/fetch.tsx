@@ -99,6 +99,11 @@ export const spec = {
 			description:
 				"openaddresses: source members, comma-separated (us/mi/statewide); caches each one's latest batch job output in the data root's oa-cache instead of a country collection",
 		},
+		plan: {
+			type: "string",
+			description:
+				"openaddresses: a plan JSON from address-coverage/plan.run.ts; caches the latest batch job output of every member it lists with a job",
+		},
 		countries: { type: "string", description: "GeoNames postal ISO alpha-2 codes, comma-separated" },
 		"skip-state-fips": { type: "string", description: "TIGER state FIPS codes to skip" },
 		"rate-sleep": { type: "number", description: "TIGER delay between downloads" },
@@ -304,15 +309,26 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchIMLSPLS(base, reportToStderr)
 		case "nppes":
 			return fetchNPPES(base, reportToStderr)
-		case "openaddresses":
+		case "openaddresses": {
+			const planned = options.plan
+				? (
+						await (
+							await import("@mailwoman/core/fs/readers")
+						).readLocalJSONFile<Array<{ member: string; job: number | null }>>(options.plan)
+					)
+						.filter((entry) => entry.job != null)
+						.map((entry) => entry.member)
+				: null
+
 			return fetchOpenAddresses(
 				{
 					...base,
 					country: options.country,
-					sources: options.sources ? extractDelimited(options.sources) : null,
+					sources: planned ?? (options.sources ? extractDelimited(options.sources) : null),
 				},
 				reportToStderr
 			)
+		}
 		case "ourairports":
 			return fetchOurAirports(base, reportToStderr)
 		case "wikidata-subvenue":

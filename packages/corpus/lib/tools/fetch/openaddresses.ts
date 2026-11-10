@@ -65,10 +65,150 @@ export interface FetchOpenAddressesOptions extends BaseFetchOptions {
 /**
  * One entry of `GET /api/data`: a source layer's latest successful job.
  */
-interface OaDataEntry {
+export interface OaDataEntry {
+	/**
+	 * The source's member path, such as `us/tx/nueces`.
+	 */
+	source?: string
 	job?: number
 	layer?: string
-	updated?: number
+	/**
+	 * When the job last updated, as the ISO timestamp the API returns, such as `2026-10-30T15:01:55.655Z`.
+	 */
+	updated?: string
+	/**
+	 * The job output's size in bytes.
+	 */
+	size?: number
+}
+
+/**
+ * The entry with the most recent `updated` timestamp among those that name a job,
+ * or undefined when none does.
+ */
+export function latestOpenAddressesJob(entries: readonly OaDataEntry[]): OaDataEntry | undefined {
+	return entries
+		.filter((entry) => typeof entry.job === "number")
+		.toSorted((a, b) => Date.parse(b.updated ?? "") - Date.parse(a.updated ?? ""))[0]
+}
+
+/**
+ * A batch API client authenticated with `OA_BATCH_TOKEN`.
+ *
+ * @throws When `OA_BATCH_TOKEN` is not set.
+ */
+export function createOpenAddressesClient(): APIClient {
+	const token = $private.OA_BATCH_TOKEN
+
+	if (!token) throw new Error("OA_BATCH_TOKEN is not set; register at https://batch.openaddresses.io/register")
+
+	return new APIClient({
+		displayName: "openaddresses-api",
+		retry: true,
+		axios: { headers: { Authorization: `Bearer ${token}` } },
+	})
+}
+
+/**
+ * The fields of one job's record, `GET /api/job/:id`, the plan reads.
+ */
+export interface OpenAddressesJobRecord {
+	id: number
+	/**
+	 * The license object the source's definition states, such as `{ "url": "…", "website": "…" }`.
+	 */
+	license?: unknown
+	/**
+	 * The source definition's URL at the commit the job ran from.
+	 */
+	source?: string
+	count?: number
+	status?: string
+}
+
+/**
+ * One job's record as the batch API returns it.
+ */
+export async function readOpenAddressesJob(client: APIClient, id: number): Promise<OpenAddressesJobRecord> {
+	return (await client.fetch<OpenAddressesJobRecord>({ url: `${OA_BASE}/api/job/${id}`, timeout: 30_000 })).data
+}
+
+/**
+ * Every `GET /api/data` entry the batch API lists for one layer, across all sources.
+ */
+export async function listOpenAddressesLayerJobs(client: APIClient, layer: string): Promise<OaDataEntry[]> {
+	const response = await client.fetch<OaDataEntry[]>({
+		url: `${OA_BASE}/api/data`,
+		params: { layer },
+		timeout: 120_000,
+	})
+
+	return response.data
+}
+
+/**
+ * One source the batch API holds an addresses job for, with the license its latest job states.
+ */
+export interface OpenAddressesPlanSource {
+	member: string
+	license: unknown
+	/**
+	 * The latest batch job, or null for a source an earlier plan listed that the
+	 * batch API holds no addresses job for.
+	 *
+	 * The cache can still hold that source's run from the anonymous results endpoint.
+	 */
+	job: number | null
+	updated: string | null
+	/**
+	 * The latest job's feature count, or null when its record states none.
+	 */
+	features: number | null
+	/**
+	 * The latest job output's size in bytes, or null when the API states none.
+	 */
+	bytes: number | null
+}
+
+/**
+ * Lists every addresses source under a member prefix, such as `us/`, with its latest job's license.
+ *
+ * A source with several addresses entries, one per layer `name` such as `county`,
+ * keeps the most recently updated.
+ * Each source's job record is read once, for the license and feature count the plan records.
+ */
+export async function buildOpenAddressesPlan(
+	client: APIClient,
+	prefix: string,
+	report?: (done: number, total: number) => void
+): Promise<OpenAddressesPlanSource[]> {
+	const bySource = Map.groupBy(
+		(await listOpenAddressesLayerJobs(client, "addresses")).filter((entry) => entry.source?.startsWith(prefix)),
+		(entry) => entry.source!
+	)
+
+	const plan: OpenAddressesPlanSource[] = []
+
+	for (const [member, entries] of [...bySource].toSorted(([a], [b]) => a.localeCompare(b))) {
+		const latest = latestOpenAddressesJob(entries)
+
+		if (!latest?.job) continue
+
+		const record = await readOpenAddressesJob(client, latest.job)
+
+		plan.push({
+			member,
+			license: record.license ?? null,
+			job: latest.job,
+			updated: latest.updated ?? null,
+			features: typeof record.count === "number" ? record.count : null,
+			bytes: typeof latest.size === "number" ? latest.size : null,
+		})
+
+		report?.(plan.length, bySource.size)
+	}
+
+	return plan
 }
 
 /**
@@ -166,9 +306,7 @@ export async function fetchOpenAddressesSources(
 			timeout: 30_000,
 		})
 
-		const latest = data.data
-			.filter((entry) => typeof entry.job === "number")
-			.toSorted((a, b) => (b.updated ?? 0) - (a.updated ?? 0))[0]
+		const latest = latestOpenAddressesJob(data.data)
 
 		if (!latest?.job) {
 			fail(member, "the batch API lists no addresses job")
