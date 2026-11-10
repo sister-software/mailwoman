@@ -26,6 +26,11 @@ export const spec = {
 	description: "Build the US address layer, one lookup.db and detail.db per state",
 	options: {
 		"layer-version": { type: "string", description: "The layer version, an ISO date such as 2026-11-08" },
+		"base-version": {
+			type: "string",
+			description:
+				"The published version whose regions a new version's first build keeps for the states it does not rebuild",
+		},
 		states: { type: "string", description: "Comma-separated USPS state codes to build (default: every state and DC)" },
 		omit: {
 			type: "string",
@@ -67,6 +72,7 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 		const result = await buildUSAddressLayer({
 			root: dataRootPath("db"),
 			version,
+			...(options.baseVersion ? { baseVersion: options.baseVersion } : {}),
 			nadParquet: await nadReleaseParquetPath(dataRootPath("corpus", "sources")),
 			overtureParquet: dataRootPath("overture", options.release, "addresses-us.parquet"),
 			openAddresses: { plan: await readLocalJSONFile(options.plan), cache: dataRootPath("oa-cache") },

@@ -65,6 +65,11 @@ export interface BuildUSAddressLayerOptions {
 	 */
 	root: PathBuilderLike
 	version: string
+	/**
+	 * The published version whose regions a new version's first build keeps,
+	 * for the states it does not rebuild.
+	 */
+	baseVersion?: string
 	nadParquet: PathBuilderLike
 	/**
 	 * The Overture US address Parquet file whose non-NAD rows join NAD's.
@@ -262,6 +267,27 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 		state.toUpperCase()
 	)
 
+	// A version's files are published under `immutable` cache headers,
+	// so a region is built into a version once.
+	// A rebuild goes into a new version.
+	// Every earlier region's files stay under their own version's path.
+	const built: string[] = []
+
+	for (const state of states) {
+		const { lookup } = addressLayerFiles(options.root, `us-${state.toLowerCase()}`, options.version)
+
+		if (await pathExists(lookup)) {
+			built.push(`us-${state.toLowerCase()}`)
+		}
+	}
+
+	if (built.length) {
+		throw new Error(
+			`${built.join(", ")} already built in ${options.version}; build into a new version, ` +
+				"because a published version's files are cached as immutable"
+		)
+	}
+
 	const omitted = new Set(options.omitFromManifest)
 	const recorded = recordedRunTerms(options.openAddresses.plan)
 	const units = await createUnitSplitter()
@@ -370,11 +396,20 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 		}
 	}
 
-	// A build of some states keeps the regions an earlier build of this version listed.
+	// A build of some states keeps the regions an earlier build of this version listed, or,
+	// for a version's first build, the regions the base version lists, at that version's paths.
 	const existingPath = addressLayerManifestPath(options.root, "US", options.version)
 
-	const kept = (await pathExists(existingPath))
-		? (await readLocalJSONFile<AddressLayerCountryManifest>(existingPath)).regions.filter(
+	const basePath = options.baseVersion ? addressLayerManifestPath(options.root, "US", options.baseVersion) : null
+
+	const keptFrom = (await pathExists(existingPath)) ? existingPath : basePath
+
+	if (keptFrom === basePath && basePath && !(await pathExists(basePath))) {
+		throw new Error(`the base version ${options.baseVersion} has no manifest at ${basePath}`)
+	}
+
+	const kept = keptFrom
+		? (await readLocalJSONFile<AddressLayerCountryManifest>(keptFrom)).regions.filter(
 				(region) =>
 					!builds.some((build) => `us-${build.state.toLowerCase()}` === region.region) && !omitted.has(region.region)
 			)
