@@ -223,7 +223,7 @@ export async function ingestGeonamesPostal(
 	)
 
 	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', ?, '', 0)`
+		`INSERT INTO names (id, name, placetype, country, language, lastmodified, source) VALUES (?, ?, 'postalcode', ?, '', 0, 'geonames')`
 	)
 
 	let nextID = GEONAMES_POSTAL_ID_BASE

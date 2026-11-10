@@ -263,11 +263,11 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 	)
 
 	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+		`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'wof')`
 	)
 
 	const concordancesInsert = db.prepare(
-		`INSERT INTO concordances (id, other_id, other_source, lastmodified) VALUES (?, ?, ?, ?)`
+		`INSERT INTO concordances (id, other_id, other_source, lastmodified, source) VALUES (?, ?, ?, ?, 'wof')`
 	)
 
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)

@@ -8,7 +8,7 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
-import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { DatabaseClient, StatementSync } from "@mailwoman/sqlite/client"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import type { WOFDatabase } from "#schema"
@@ -64,6 +64,12 @@ export interface GeonamesIngestProgress {
 	 * It distinguishes a sparse source from aliases that the fold discarded.
 	 */
 	aliasesRefused: number | null
+
+	/**
+	 * The number of populated places that matched an existing record and added their
+	 * names to it, or null when the fold had no matcher.
+	 */
+	matched?: number | null
 }
 
 /**
@@ -74,7 +80,9 @@ export function formatGeonamesIngestProgress(event: GeonamesIngestProgress, miss
 		return `${event.country}: ${missingFile ? `${missingFile} missing` : "dump missing"} — download from download.geonames.org/export/dump/${event.country}.zip; skipped`
 	}
 
-	return `${event.country}: ${event.places.toLocaleString()} places, ${(event.aliasesRefused ?? 0).toLocaleString()} alt-names refused`
+	const matched = event.matched == null ? "" : `, ${event.matched.toLocaleString()} matched an existing record`
+
+	return `${event.country}: ${event.places.toLocaleString()} places${matched}, ${(event.aliasesRefused ?? 0).toLocaleString()} alt-names refused`
 }
 
 interface V2Alias {
@@ -140,6 +148,113 @@ async function parseAlternateNamesV2(
 }
 
 /**
+ * A GeoNames place the fold is about to write.
+ */
+export interface GeonamesFoldPlace {
+	geonamesID: number
+	name: string
+	placetype: "country" | "region" | "locality"
+	country: string
+	latitude: number
+	longitude: number
+}
+
+/**
+ * The record a GeoNames place matched in the database being folded into.
+ */
+export interface GeonamesFoldMatch {
+	id: number
+	placetype: string
+}
+
+/**
+ * Matches GeoNames places against the records already in the database being folded into.
+ */
+export interface GeonamesFoldMatcher {
+	match(place: GeonamesFoldPlace): GeonamesFoldMatch | null
+	/**
+	 * Answers whether the matched record lacks a name, recording it so the name is written once.
+	 */
+	claimName(match: GeonamesFoldMatch, country: string, name: string): boolean
+	onGap(place: GeonamesFoldPlace & { id: number }): void
+}
+
+/**
+ * Folds one country's GeoNames `A`-class rows, its country and its ADM1 regions,
+ * and links each region the fold wrote to the country.
+ *
+ * A row that matches an existing record writes no row and adds its name to that record,
+ * and its id is the existing record's.
+ * Only regions the fold wrote are re-parented, so an existing region keeps its own parent.
+ */
+function foldAdminRows(
+	statements: { db: DatabaseClient<WOFDatabase>; spr: StatementSync; names: StatementSync; ancestors: StatementSync },
+	input: {
+		rows: readonly string[][]
+		country: string
+		clean: (s: string) => string | null
+		existing: GeonamesFoldMatcher | undefined
+		claim: (match: GeonamesFoldMatch, name: string) => void
+		nextID: number
+	}
+): { countryID: number; adminMap: Map<string, number>; nextID: number } {
+	const { rows, country: cc, clean, existing, claim } = input
+	let id = input.nextID
+	let countryID = -1
+	const adminMap = new Map<string, number>()
+	// The regions this fold wrote, as opposed to existing records a region matched.
+	const writtenRegions = new Set<number>()
+
+	for (const f of rows) {
+		const aname = clean(f[2] ?? "") ?? clean(f[1] ?? "")
+
+		if (!aname) continue
+		const lat = Number(f[4]) || 0
+		const lon = Number(f[5]) || 0
+		const placetype: GeonamesFoldPlace["placetype"] = f[7]?.startsWith("PCL") ? "country" : "region"
+
+		if (placetype === "country" && countryID >= 0) continue
+
+		if (placetype === "region" && !(f[7] === "ADM1" && f[10])) continue
+
+		const place = { geonamesID: Number(f[0]), name: aname, placetype, country: cc, latitude: lat, longitude: lon }
+		const matched = existing?.match(place) ?? null
+
+		if (matched) {
+			claim(matched, aname)
+		}
+
+		const rid = matched?.id ?? id++
+
+		if (!matched) {
+			statements.spr.run(rid, -1, aname, placetype, cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
+			statements.names.run(rid, aname, placetype, cc, "", "", 0, 0)
+			statements.ancestors.run(rid, rid, placetype)
+			existing?.onGap({ ...place, id: rid })
+		}
+
+		if (placetype === "country") {
+			countryID = rid
+		} else {
+			adminMap.set(f[10]!, rid)
+
+			if (!matched) {
+				writtenRegions.add(rid)
+			}
+		}
+	}
+
+	if (countryID >= 0) {
+		for (const rid of writtenRegions) {
+			statements.db.prepare("UPDATE spr SET parent_id = ? WHERE id = ?").run(countryID, rid)
+			statements.ancestors.run(rid, countryID, "country")
+		}
+	}
+
+	return { countryID, adminMap, nextID: id }
+}
+
+/**
  * Purges the fold's id range, then adds GeoNames `P`-class places and their
  * alternate names for `countries` to `db`.
  * It returns the number of places ingested.
@@ -156,6 +271,13 @@ export async function ingestGeonamesAliases(
 		adminForCountries?: ReadonlySet<string>
 
 		alternateDir?: PathBuilderLike
+		/**
+		 * The records already in `db` to match against.
+		 *
+		 * A GeoNames place that matches one adds its names to that record and writes no row.
+		 * A place that matches none is written and reported to `onGap`.
+		 */
+		existing?: GeonamesFoldMatcher
 	}
 ): Promise<number> {
 	const LATIN_NAME = /^[\p{Script=Latin}\p{M}\s\-'.]{2,60}$/u
@@ -184,7 +306,7 @@ export async function ingestGeonamesAliases(
 	)
 
 	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+		`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'geonames')`
 	)
 
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
@@ -218,6 +340,7 @@ export async function ingestGeonamesAliases(
 
 		let nc = 0
 		let refused = 0
+		let matchedPlaces = 0
 
 		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
 		const v2File = opts?.alternateDir ? resolvePathBuilder(opts.alternateDir, `${cc}.txt`) : null
@@ -244,39 +367,25 @@ export async function ingestGeonamesAliases(
 
 		const v2 = readV2 ? await parseAlternateNamesV2(v2File!, cc, wanted) : null
 
-		let countryID = -1
-		const adminMap = new Map<string, number>()
-
-		if (addAdmin) {
-			for (const f of adminRows) {
-				const aname = clean(f[2] ?? "") ?? clean(f[1] ?? "")
-
-				if (!aname) continue
-				const lat = Number(f[4]) || 0
-				const lon = Number(f[5]) || 0
-
-				if (f[7]?.startsWith("PCL")) {
-					if (countryID >= 0) continue
-					countryID = id++
-					sprInsert.run(countryID, -1, aname, "country", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
-					namesInsert.run(countryID, aname, "country", cc, "", "", 0, 0)
-					ancestorInsert.run(countryID, countryID, "country")
-				} else if (f[7] === "ADM1" && f[10]) {
-					const rid = id++
-					sprInsert.run(rid, -1, aname, "region", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
-					namesInsert.run(rid, aname, "region", cc, "", "", 0, 0)
-					ancestorInsert.run(rid, rid, "region")
-					adminMap.set(f[10], rid)
-				}
-			}
-
-			if (countryID >= 0) {
-				for (const rid of adminMap.values()) {
-					db.prepare("UPDATE spr SET parent_id = ? WHERE id = ?").run(countryID, rid)
-					ancestorInsert.run(rid, countryID, "country")
-				}
+		/**
+		 * Writes a place's name onto the existing record it matched, once.
+		 */
+		const claim = (match: GeonamesFoldMatch, name: string, language = "", privateuse = "", official = 0) => {
+			if (opts?.existing?.claimName(match, cc, name)) {
+				namesInsert.run(match.id, name, match.placetype, cc, language, privateuse, official, 0)
 			}
 		}
+
+		const admin = addAdmin
+			? foldAdminRows(
+					{ db, spr: sprInsert, names: namesInsert, ancestors: ancestorInsert },
+					{ rows: adminRows, country: cc, clean, existing: opts?.existing, claim, nextID: id }
+				)
+			: { countryID: -1, adminMap: new Map<string, number>(), nextID: id }
+
+		const { countryID, adminMap } = admin
+
+		id = admin.nextID
 
 		for await (const f of readUnquotedTSV(file)) {
 			if (f[6] !== "P") continue
@@ -287,7 +396,46 @@ export async function ingestGeonamesAliases(
 			const name = clean(f[1] ?? "")
 
 			if (!name) continue
+
+			const tags = v2?.get(Number(f[0]))
+			const alternates = [f[2] ?? "", ...(f[3] ? f[3].split(",") : [])]
+
+			const place = {
+				geonamesID: Number(f[0]),
+				name,
+				placetype: "locality" as const,
+				country: cc,
+				latitude: lat,
+				longitude: lon,
+			}
+
+			const matched = opts?.existing?.match(place) ?? null
+
+			if (matched) {
+				claim(matched, name)
+
+				for (const raw of alternates) {
+					const alt = cleanAlias(raw)
+
+					if (!alt && raw.trim()) {
+						refused++
+					}
+
+					if (alt) {
+						const tag = tags?.get(alt)
+
+						claim(matched, alt, tag?.language ?? "", tag?.privateuse ?? "", tag?.official ?? 0)
+					}
+				}
+
+				matchedPlaces++
+
+				continue
+			}
+
 			const nid = id++
+
+			opts?.existing?.onGap({ ...place, id: nid })
 
 			const regionID = addAdmin ? (adminMap.get(f[10] ?? "") ?? -1) : -1
 			const parentID = regionID >= 0 ? regionID : addAdmin && countryID >= 0 ? countryID : -1
@@ -309,9 +457,7 @@ export async function ingestGeonamesAliases(
 
 			const seen = new Set([name])
 
-			const tags = v2?.get(Number(f[0]))
-
-			for (const raw of [f[2] ?? "", ...(f[3] ? f[3].split(",") : [])]) {
+			for (const raw of alternates) {
 				const alt = cleanAlias(raw)
 
 				if (!alt && raw.trim()) {
@@ -335,7 +481,14 @@ export async function ingestGeonamesAliases(
 			nc++
 		}
 
-		report({ country: cc, places: nc, skipped: false, aliasesRefused: refused })
+		report({
+			country: cc,
+			places: nc,
+			skipped: false,
+			aliasesRefused: refused,
+			matched: opts?.existing ? matchedPlaces : null,
+		})
+
 		total += nc
 	}
 

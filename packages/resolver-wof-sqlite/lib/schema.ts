@@ -99,6 +99,12 @@ export interface NamesTable {
 	official: number | null
 	name: string
 	lastmodified: number
+	/**
+	 * The dataset the row came from, one of `ROW_SOURCES` in `unified-schema.ts`.
+	 *
+	 * Databases built before the column existed have no such column.
+	 */
+	source?: string
 }
 
 /**
@@ -168,6 +174,12 @@ export interface ConcordancesTable {
 	other_id: string
 	other_source: string
 	lastmodified: number
+	/**
+	 * The dataset the row came from, one of `ROW_SOURCES` in `unified-schema.ts`.
+	 *
+	 * Databases built before the column existed have no such column.
+	 */
+	source?: string
 }
 
 /**

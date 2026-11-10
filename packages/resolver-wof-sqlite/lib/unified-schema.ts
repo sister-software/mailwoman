@@ -14,6 +14,19 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { WOFDatabase } from "#schema"
 
+/**
+ * The datasets a `names` or `concordances` row can come from.
+ *
+ * `libaddressinput` is the region abbreviations from the address specs.
+ * `mailwoman` is a row this repository wrote by hand or derived from no external dataset.
+ */
+export const ROW_SOURCES = ["wof", "overture", "geonames", "libaddressinput", "mailwoman"] as const
+
+/**
+ * One of {@link ROW_SOURCES}.
+ */
+export type RowSource = (typeof ROW_SOURCES)[number]
+
 export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Promise<void> {
 	// PRAGMAs run raw because Kysely does not model them.
 	// They tune the bulk build.
@@ -56,6 +69,10 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 	// The name-exact tier already consults spr.name.
 	// `official` only marks the aliases eligible to join it.
 	// Both are ingest-time facts, never computed at query time.
+	//
+	// `source` on `names` and `concordances` is the dataset the row came from, one of {@link ROW_SOURCES}.
+	// A name another source adds to a WOF record keeps that source, so a license filter can find it.
+	// The empty default marks a writer that has not stated a source, and the admin verify step refuses it.
 	await db.schema
 		.createTable("names")
 		.ifNotExists()
@@ -67,6 +84,7 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 		.addColumn("privateuse", "text", (c) => c.notNull().defaultTo(""))
 		.addColumn("official", "integer", (c) => c.notNull().defaultTo(0))
 		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
+		.addColumn("source", "text", (c) => c.notNull().defaultTo(""))
 		.execute()
 
 	await db.schema
@@ -76,6 +94,7 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 		.addColumn("other_id", "text", (c) => c.notNull())
 		.addColumn("other_source", "text", (c) => c.notNull())
 		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
+		.addColumn("source", "text", (c) => c.notNull().defaultTo(""))
 		.execute()
 
 	await db.schema

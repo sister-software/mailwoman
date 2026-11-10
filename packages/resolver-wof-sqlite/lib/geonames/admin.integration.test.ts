@@ -71,7 +71,7 @@ beforeAll(async () => {
 	)
 
 	db.exec(
-		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER)`
+		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER, source TEXT)`
 	)
 
 	db.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
@@ -130,7 +130,7 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 		 is_current INTEGER, is_deprecated INTEGER, is_ceased INTEGER, is_superseded INTEGER, is_superseding INTEGER, lastmodified INTEGER)`)
 
 	db2.exec(
-		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER)`
+		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER, source TEXT)`
 	)
 
 	db2.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
@@ -148,6 +148,65 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM ancestors WHERE id = ancestor_id").get() as Row).n).toBe(1)
 	expect((db2.prepare("SELECT parent_id FROM spr WHERE placetype='locality'").get() as Row).parent_id).toBe(-1)
+})
+
+test("a matched place writes no row, adds its names to the record it matched, and leaves that record's parent", async () => {
+	using matched = DatabaseClient.temp<WOFDatabase>()
+
+	matched.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
+		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
+		 is_current INTEGER, is_deprecated INTEGER, is_ceased INTEGER, is_superseded INTEGER, is_superseding INTEGER, lastmodified INTEGER)`)
+
+	matched.exec(
+		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER, source TEXT)`
+	)
+
+	matched.exec(
+		`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`
+	)
+
+	matched.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
+
+	// The existing records: Georgia, and a T'bilisi region whose parent is Georgia.
+	matched.exec(
+		`INSERT INTO spr (id, parent_id, name, placetype, country) VALUES (85632229, -1, 'Georgia', 'country', 'GE')`
+	)
+
+	matched.exec(
+		`INSERT INTO spr (id, parent_id, name, placetype, country) VALUES (85672345, 85632229, 'Tbilisi', 'region', 'GE')`
+	)
+
+	const existing = new Map([
+		["country", { id: 85_632_229, placetype: "country" }],
+		["region", { id: 85_672_345, placetype: "region" }],
+	])
+
+	const gaps: number[] = []
+
+	await ingestGeonamesAliases(matched, ["GE"], dir.path, () => {}, {
+		adminForCountries: new Set(["GE"]),
+		existing: {
+			match: (place) => existing.get(place.placetype) ?? null,
+			claimName: (_match, _country, name) => name !== "Georgia",
+			onGap: (place) => void gaps.push(place.geonamesID),
+		},
+	})
+
+	// The country and region matched, so the only row the fold wrote is the locality.
+	expect((matched.prepare("SELECT COUNT(*) n FROM spr").get() as Row).n).toBe(3)
+	expect(gaps).toEqual([611_717])
+
+	const locality = matched.prepare("SELECT parent_id FROM spr WHERE placetype = 'locality'").get() as Row
+
+	expect(locality.parent_id).toBe(85_672_345)
+	expect((matched.prepare("SELECT parent_id FROM spr WHERE id = 85672345").get() as Row).parent_id).toBe(85_632_229)
+
+	// The matcher refused "Georgia" as a name the record already has,
+	// and "Tbilisi" was claimed onto the region.
+	// The claimed name keeps its own source, so a license filter can tell it from a WOF name.
+	expect(matched.prepare("SELECT id, name, source FROM names WHERE id < 100000000 ORDER BY id").all()).toEqual([
+		{ id: 85_672_345, name: "Tbilisi", source: "geonames" },
+	])
 })
 
 test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)", async () => {
@@ -179,7 +238,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 		 is_current INTEGER, is_deprecated INTEGER, is_ceased INTEGER, is_superseded INTEGER, is_superseding INTEGER, lastmodified INTEGER)`)
 
 	hk.exec(
-		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER)`
+		`CREATE TABLE names (id INTEGER, name TEXT, placetype TEXT, country TEXT, language TEXT, privateuse TEXT, official INTEGER, lastmodified INTEGER, source TEXT)`
 	)
 
 	hk.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)

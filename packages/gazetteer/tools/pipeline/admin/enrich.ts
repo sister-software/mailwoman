@@ -67,7 +67,7 @@ export async function enrichAdmin<DB>(
 	}
 
 	const insert = db.prepare(
-		"INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'region', ?, 'abbr', 0)"
+		"INSERT INTO names (id, name, placetype, country, language, lastmodified, source) VALUES (?, ?, 'region', ?, 'abbr', 0, 'libaddressinput')"
 	)
 
 	let added = 0

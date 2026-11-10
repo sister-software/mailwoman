@@ -17,6 +17,8 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
+import { type FoldGap, GAP_SOURCE_TERMS, type WOFPlaceIndex } from "#tools/pipeline/admin/fold/wof-match"
+
 export interface FoldGeonamesOptions {
 	/**
 	 * ISO-2 codes for the alias fold (`<CC>.txt` under {@link FoldGeonamesOptions.geonamesDir}).
@@ -44,6 +46,10 @@ export interface FoldGeonamesOptions {
 	 * A zero-coverage locale has no A-class admin fold unless the lookup includes it.
 	 */
 	adminForCountries?: ReadonlySet<string>
+	/**
+	 * The WOF records to match against, and the receiver for places that match none.
+	 */
+	wof?: { index: WOFPlaceIndex; onGap: (gap: FoldGap) => void }
 }
 
 export interface FoldGeonamesResult {
@@ -61,11 +67,24 @@ export async function foldGeonames(
 	const { ingestGeonamesAliases } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 	const geonamesDir = opts.geonamesDir ?? dataRootPath("geonames")
 	const alternateDir = opts.alternateDir ?? dataRootPath("geonames-alternate")
+	const wof = opts.wof
 
 	const placesIngested = opts.countries.length
 		? await ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, {
 				alternateDir,
 				adminForCountries: opts.adminForCountries,
+				existing: wof && {
+					match: (place) => wof.index.match(place),
+					claimName: (match, country, name) => wof.index.claimName(match, country, name),
+					onGap: ({ geonamesID, ...place }) =>
+						wof.onGap({
+							...place,
+							source: "geonames",
+							...GAP_SOURCE_TERMS.geonames,
+							sourceID: String(geonamesID),
+							geonamesID,
+						}),
+				},
 			})
 		: 0
 

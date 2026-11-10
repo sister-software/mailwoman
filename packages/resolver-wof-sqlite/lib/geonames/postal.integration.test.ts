@@ -44,7 +44,7 @@ async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 			is_ceased INTEGER NOT NULL DEFAULT 0, is_superseded INTEGER NOT NULL DEFAULT 0,
 			is_superseding INTEGER NOT NULL DEFAULT 0, lastmodified INTEGER NOT NULL DEFAULT 0
 		);
-		CREATE TABLE names (id INTEGER NOT NULL, name TEXT, placetype TEXT, country TEXT, language TEXT, lastmodified INTEGER);
+		CREATE TABLE names (id INTEGER NOT NULL, name TEXT, placetype TEXT, country TEXT, language TEXT, lastmodified INTEGER, source TEXT);
 	`)
 
 	return db

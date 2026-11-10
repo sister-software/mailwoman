@@ -99,9 +99,9 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 		const id = OVERTURE_ID_BASE + 1
 
 		spr.run(id, -1, "Testville", "locality", "US", 1.5, 2.5, 1, 2, 1.9, 2.9, 1, 0, 0, 0, 0, 0)
-		names.run(id, "Testville", "locality", "US", "", 0, 0)
+		names.run(id, "Testville", "locality", "US", "", 0, 0, "overture")
 		population.run(id, 1234)
-		concordances.run(id, "Q140147", "wd:id", 0)
+		concordances.run(id, "Q140147", "wd:id", 0, "overture")
 
 		expect(db.prepare("SELECT name, placetype, country FROM spr WHERE id = ?").get(id)).toEqual({
 			name: "Testville",

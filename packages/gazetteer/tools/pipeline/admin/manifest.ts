@@ -17,7 +17,10 @@ import type { LayerManifest } from "@mailwoman/core/layers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 
 /**
- * The number of rows each fold contributed to a build.
+ * The number of rows each source contributed to a build.
+ *
+ * A source contributes through its own places and through names it added to another source's record,
+ * so the admin build counts the `names` and `concordances` rows tagged with each source.
  */
 export interface IngestCounts {
 	wof: number
