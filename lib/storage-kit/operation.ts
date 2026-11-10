@@ -20,6 +20,11 @@ export const StorageEffect = {
 	 * mounts — and requires root, so it is reachable only after the CLI wrapper has elevated.
 	 */
 	HostWrite: "host-write",
+	/**
+	 * Moves data between volumes the invoking user owns.
+	 * Needs no privilege.
+	 */
+	DataWrite: "data-write",
 } as const
 
 export type StorageEffect = (typeof StorageEffect)[keyof typeof StorageEffect]

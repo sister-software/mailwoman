@@ -12,6 +12,7 @@ import { findOperation } from "@mailwoman/core/scripting"
 
 import type { StorageOperation } from "#storage-kit/operation"
 import { installSudoersOperation, installUdevRuleOperation } from "#storage-kit/operations/install-rules"
+import { migrateOperation } from "#storage-kit/operations/migrate"
 import { planOperation } from "#storage-kit/operations/plan"
 import { prepareOperation } from "#storage-kit/operations/prepare"
 import { statusOperation } from "#storage-kit/operations/status"
@@ -26,6 +27,7 @@ export const storageOperations: ReadonlyArray<StorageOperation<unknown, unknown>
 	prepareOperation,
 	verifyOperation,
 	statusOperation,
+	migrateOperation,
 	installUdevRuleOperation,
 	installSudoersOperation,
 ] as ReadonlyArray<StorageOperation<unknown, unknown>>
