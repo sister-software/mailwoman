@@ -93,6 +93,17 @@ export function latestOpenAddressesJob(entries: readonly OaDataEntry[]): OaDataE
 }
 
 /**
+ * The latest job of one member among the entries the batch API returned for it.
+ *
+ * The API's `source` parameter matches by prefix, so a query for `us/fl/statewide`
+ * also returns the jobs of `us/fl/statewide2`.
+ * Only entries whose `source` is the member itself are read.
+ */
+export function latestMemberJob(entries: readonly OaDataEntry[], member: string): OaDataEntry | undefined {
+	return latestOpenAddressesJob(entries.filter((entry) => entry.source === member))
+}
+
+/**
  * A batch API client authenticated with `OA_BATCH_TOKEN`.
  *
  * @throws When `OA_BATCH_TOKEN` is not set.
@@ -306,7 +317,7 @@ export async function fetchOpenAddressesSources(
 			timeout: 30_000,
 		})
 
-		const latest = latestOpenAddressesJob(data.data)
+		const latest = latestMemberJob(data.data, member)
 
 		if (!latest?.job) {
 			fail(member, "the batch API lists no addresses job")
