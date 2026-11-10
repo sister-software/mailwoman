@@ -5,7 +5,7 @@
  *
  *   Pairs two county coverage censuses by FIPS code and lists the counties whose thin status moved.
  *
- *   Usage: node packages/mailwoman/tools/dev-tools/us/address-coverage/census-compare.run.ts --before <census.json>
+ *   Usage: node packages/mailwoman/tools/dev-tools/us/address-coverage/census/compare.run.ts --before <census.json>
  *   --after <census.json> [--state <two-digit FIPS>]
  *
  *   Both files are `census.run.ts` outputs. A county is thin when its points fall under

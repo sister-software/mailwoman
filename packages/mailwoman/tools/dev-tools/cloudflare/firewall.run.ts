@@ -5,7 +5,7 @@
  *
  *   Creates or updates the zone's custom firewall rule that keeps a bucket path browser-only.
  *
- *   Usage: node --env-file=.env packages/mailwoman/tools/dev-tools/cloudflare/browser-only-access.run.ts --zone
+ *   Usage: node --env-file=.env packages/mailwoman/tools/dev-tools/cloudflare/firewall.run.ts --zone
  *   <zone name> --host <hostname> --path-prefix <prefix> --origins <origin,origin> [--apply]
  *
  *   Without `--apply` it only reads: it prints the zone's current rule and the rule it would write. The rule is found
@@ -13,13 +13,11 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { isPresent } from "@mailwoman/core/objects"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { $private } from "#env"
-import {
-	browserOnlyAccessDescription,
-	browserOnlyAccessExpression,
-} from "#tools/dev-tools/cloudflare/browser-only-access"
+import { browserOnlyAccessDescription, browserOnlyAccessExpression } from "#tools/dev-tools/cloudflare/firewall"
 
 const { values } = parseArguments({
 	options: {
@@ -35,9 +33,13 @@ if (!values.zone || !values.host || !values["path-prefix"] || !values.origins) {
 	throw new Error("--zone, --host, --path-prefix and --origins are required")
 }
 
-const token = $private.CLOUDFLARE_API_TOKEN
+const token = $private.CLOUDFLARE_FIREWALL_TOKEN
 
-if (!token) throw new Error("CLOUDFLARE_API_TOKEN is not set")
+if (!token) {
+	throw new Error(
+		"CLOUDFLARE_FIREWALL_TOKEN is not set; `mwops release mint-cloudflare-tokens` mints the firewall role's"
+	)
+}
 
 const access = {
 	host: values.host,
@@ -45,7 +47,7 @@ const access = {
 	origins: values.origins
 		.split(",")
 		.map((origin) => origin.trim())
-		.filter(Boolean),
+		.filter(isPresent),
 }
 
 const rule = {

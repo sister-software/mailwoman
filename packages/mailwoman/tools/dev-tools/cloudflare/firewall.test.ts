@@ -8,10 +8,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import {
-	browserOnlyAccessDescription,
-	browserOnlyAccessExpression,
-} from "#tools/dev-tools/cloudflare/browser-only-access"
+import { browserOnlyAccessDescription, browserOnlyAccessExpression } from "#tools/dev-tools/cloudflare/firewall"
 
 const access = {
 	host: "public.mailwoman.post",

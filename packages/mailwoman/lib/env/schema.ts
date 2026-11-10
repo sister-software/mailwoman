@@ -170,13 +170,13 @@ export const PrivateMailwomanEnvSchema = z.object({
 				"Key for api.census.gov, which the US address coverage census reads its county housing table from. " +
 				"Request one at https://api.census.gov/data/key_signup.html.",
 		}),
-	CLOUDFLARE_API_TOKEN: z
+	CLOUDFLARE_FIREWALL_TOKEN: z
 		.string()
 		.optional()
 		.meta({
-			title: "Cloudflare API token",
+			title: "Cloudflare firewall-rules token",
 			description:
-				"Token for api.cloudflare.com. Wrangler reads it for R2 uploads, and the bucket access-rule tool reads it to " +
-				"edit the zone's custom firewall rules, which needs the Zone WAF edit permission.",
+				"The firewall role's token from `mwops release mint-cloudflare-tokens`: Zone WAF edit and Zone read on " +
+				"mailwoman.post, which the bucket's browser-only access-rule tool needs.",
 		}),
 })
