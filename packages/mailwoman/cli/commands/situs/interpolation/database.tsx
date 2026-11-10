@@ -126,11 +126,11 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		const {
 			client: { DatabaseClient },
 			json: { parseJSONStrict },
-			moduleinterpCalibration: { INTERP_RADIUS_CALIBRATION },
+			interpCalibration: { INTERP_RADIUS_CALIBRATION },
 		} = await allKeyed({
 			client: import("@mailwoman/sqlite/client"),
 			json: import("@mailwoman/core/json"),
-			moduleinterpCalibration: import("#interp-calibration"),
+			interpCalibration: import("#interp-calibration"),
 		})
 
 		if (!options.state || !STATE_FIPS[options.state.toUpperCase()]) {

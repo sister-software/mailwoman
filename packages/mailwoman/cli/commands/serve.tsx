@@ -217,13 +217,13 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 			const {
 				api: { createMailwomanAPI, MAILWOMAN_API_DOC_INFO },
 				apiKit: { serveNode },
-				moduleenv: { $public },
-				moduleapiEngine: { createServeEngine },
+				env: { $public },
+				apiEngine: { createServeEngine },
 			} = await allKeyed({
 				api: import("@mailwoman/api"),
 				apiKit: import("@mailwoman/api-kit"),
-				moduleenv: import("#env"),
-				moduleapiEngine: import("#api-engine"),
+				env: import("#env"),
+				apiEngine: import("#api-engine"),
 			})
 
 			const { engine, preflight } = await createServeEngine()

@@ -74,8 +74,8 @@ const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
 
 		const {
 			schema: { PremiseLinkageMode, PremiseLinkagePolicy },
-			moduleenv: { $private },
-		} = await allKeyed({ schema: import("#tools/eval-harness/premise-linkage/schema"), moduleenv: import("#env") })
+			env: { $private },
+		} = await allKeyed({ schema: import("#tools/eval-harness/premise-linkage/schema"), env: import("#env") })
 
 		const controlled = typeof options.config === "string" && options.config.length > 0
 		const mode = controlled ? PremiseLinkageMode.Controlled : PremiseLinkageMode.Synthetic

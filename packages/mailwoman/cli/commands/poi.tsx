@@ -100,11 +100,11 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 	try {
 		const {
 			resolverWofSqlite: mod,
-			moduleresolverBackend: { createResolverBackend },
+			resolverBackend: { createResolverBackend },
 			resolver: { createWOFResolver },
 		} = await allKeyed({
 			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
-			moduleresolverBackend: import("#resolver-backend"),
+			resolverBackend: import("#resolver-backend"),
 			resolver: import("@mailwoman/resolver"),
 		})
 

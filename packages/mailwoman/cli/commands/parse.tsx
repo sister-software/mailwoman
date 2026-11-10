@@ -306,8 +306,8 @@ async function resolveWithCandidates(
 async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) => Promise<T>): Promise<T> {
 	const {
 		resolver: { createWOFResolver },
-		moduleresolverBackend: { createResolverBackend, resolveCandidateDBPath },
-	} = await allKeyed({ resolver: import("@mailwoman/resolver"), moduleresolverBackend: import("#resolver-backend") })
+		resolverBackend: { createResolverBackend, resolveCandidateDBPath },
+	} = await allKeyed({ resolver: import("@mailwoman/resolver"), resolverBackend: import("#resolver-backend") })
 
 	// `@mailwoman/resolver-wof-sqlite` is an optional peer, so it loads only when a resolver is needed.
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")

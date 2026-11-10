@@ -104,10 +104,15 @@ const IDENTIFIER = /^[A-Za-z_$][\w$]*$/u
  * A key for a module in the keyed form: the specifier's last segment in camel case,
  * made unique within the run.
  */
-function keyFor(specifier: string, taken: Set<string>): string {
-	const segment = (specifier.split("/").at(-1) ?? specifier).replace(/\.[cm]?[jt]sx?$/u, "")
+export function keyFor(specifier: string, taken: Set<string>): string {
+	// A `#` subpath import (`#resolver-backend`) or a `node:` builtin keys by the name after its prefix.
+	const segment = (specifier.split("/").at(-1) ?? specifier)
+		.replace(/^(?:#|node:)/u, "")
+		.replace(/\.[cm]?[jt]sx?$/u, "")
+
 	const camel = segment.replaceAll(/[-_.]+([A-Za-z0-9])/gu, (_match, letter: string) => letter.toUpperCase())
-	const base = IDENTIFIER.test(camel) ? camel : `module${camel.replaceAll(/[^\w$]/gu, "")}`
+	const cleaned = camel.replaceAll(/[^\w$]/gu, "")
+	const base = IDENTIFIER.test(cleaned) ? cleaned : `module${cleaned.charAt(0).toUpperCase()}${cleaned.slice(1)}`
 	let key = base
 
 	for (let suffix = 2; taken.has(key); suffix++) {

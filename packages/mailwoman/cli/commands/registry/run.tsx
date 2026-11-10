@@ -140,11 +140,11 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	])
 
 	const {
-		moduleinterpCalibration: { INTERP_RADIUS_CALIBRATION },
-		moduleresolverBackend: { createResolverBackend },
+		interpCalibration: { INTERP_RADIUS_CALIBRATION },
+		resolverBackend: { createResolverBackend },
 	} = await allKeyed({
-		moduleinterpCalibration: import("#interp-calibration"),
-		moduleresolverBackend: import("#resolver-backend"),
+		interpCalibration: import("#interp-calibration"),
+		resolverBackend: import("#resolver-backend"),
 	})
 
 	const wofPath = await requireCommandWOFPath(options)
