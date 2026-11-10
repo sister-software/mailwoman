@@ -17,8 +17,8 @@ import {
 	joinTarget,
 	literalText,
 	type ResolvedTarget,
-	resolveTarget,
-	scopeOf,
+	targetOfExpression,
+	bindSourceScope,
 } from "#repo-health/effects/resolve"
 
 /**
@@ -66,7 +66,7 @@ function partialTarget(scope: FileScope, call: ts.CallExpression): ResolvedTarge
 
 	if (binding?.kind === "join") {
 		const [first, ...rest] = call.arguments
-		const base = first ? resolveTarget(scope, first) : null
+		const base = first ? targetOfExpression(scope, first) : null
 
 		return base ? joinTarget(base, literalPrefix(rest)) : null
 	}
@@ -147,7 +147,7 @@ export function extractPathMentions(
 	file: string,
 	importedPaths: ImportedPaths | null = null
 ): ResolvedTarget[] {
-	const scope = scopeOf(source, file, importedPaths)
+	const scope = bindSourceScope(source, file, importedPaths)
 	const found: ResolvedTarget[] = []
 
 	const record = (target: ResolvedTarget | null): boolean => {
@@ -170,7 +170,7 @@ export function extractPathMentions(
 
 		if ((ts.isCallExpression(node) || ts.isNewExpression(node)) && callsEffectInterface(scope, node)) {
 			for (const arg of node.arguments ?? []) {
-				if (!resolveTarget(scope, arg)) {
+				if (!targetOfExpression(scope, arg)) {
 					visit(arg)
 				}
 			}
@@ -179,17 +179,17 @@ export function extractPathMentions(
 		}
 
 		if (ts.isPropertyAccessExpression(node) && (isImportMeta(node, "dirname") || isImportMeta(node, "filename"))) {
-			record(resolveTarget(scope, node))
+			record(targetOfExpression(scope, node))
 
 			return
 		}
 
-		if (isModuleURL(node) && record(resolveTarget(scope, node))) return
+		if (isModuleURL(node) && record(targetOfExpression(scope, node))) return
 
 		if (
 			ts.isCallExpression(node) &&
 			buildsPath(scope, node) &&
-			record(resolveTarget(scope, node) ?? partialTarget(scope, node))
+			record(targetOfExpression(scope, node) ?? partialTarget(scope, node))
 		) {
 			return
 		}

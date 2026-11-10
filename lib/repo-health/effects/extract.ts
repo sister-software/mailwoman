@@ -24,8 +24,8 @@ import {
 	joinTarget,
 	literalSegments,
 	type ResolvedTarget,
-	resolveTarget,
-	scopeOf,
+	targetOfExpression,
+	bindSourceScope,
 	withoutAwait,
 } from "#repo-health/effects/resolve"
 
@@ -165,7 +165,7 @@ function edgesOfCall(
 		if (parameter.property) {
 			const options = args[parameter.index]
 			const path = options ? propertyValue(options, parameter.property) : null
-			const target = path ? resolveTarget(scope, path) : null
+			const target = path ? targetOfExpression(scope, path) : null
 
 			found.push(edgeOf(scope, call, effect.name, kind, path, target, [path ?? options ?? call]))
 
@@ -177,7 +177,7 @@ function edgesOfCall(
 
 			if (!first) continue
 
-			const base = resolveTarget(scope, first)
+			const base = targetOfExpression(scope, first)
 			const segments = parameter.segments ? literalSegments(rest, 0) : []
 			const target = base && segments ? joinTarget(base, segments) : null
 
@@ -249,7 +249,7 @@ function edgeOfAPIFetch(scope: FileScope, call: ts.CallExpression): EffectEdge {
 
 	const url = propertyValue(options, "url")
 
-	return edgeOf(scope, call, name, EffectKind.Network, url ?? options, url ? resolveTarget(scope, url) : null)
+	return edgeOf(scope, call, name, EffectKind.Network, url ?? options, url ? targetOfExpression(scope, url) : null)
 }
 
 function isProcessEnv(scope: FileScope, node: ts.Node): node is ts.PropertyAccessExpression {
@@ -330,7 +330,7 @@ function edgeOfEnvironmentRead(scope: FileScope, node: ts.Node): EffectEdge | nu
 	}
 
 	const key = node.argumentExpression
-	const variable = resolveTarget(scope, key)
+	const variable = targetOfExpression(scope, key)
 	const target = variable?.root === PathRoot.Literal ? { root: PathRoot.Environment, path: variable.path } : null
 
 	return edgeOf(scope, node, name, EffectKind.Environment, key, target)
@@ -457,7 +457,7 @@ export function extractEffectEdges(
 	file: string,
 	importedPaths: ImportedPaths | null = null
 ): EffectEdge[] {
-	const scope = scopeOf(source, file, importedPaths)
+	const scope = bindSourceScope(source, file, importedPaths)
 	const found: EffectEdge[] = []
 
 	const visit = (node: ts.Node): void => {

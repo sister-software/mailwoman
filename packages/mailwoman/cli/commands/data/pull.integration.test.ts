@@ -19,13 +19,13 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { artifactIDFromSHA256, ServingRole } from "@mailwoman/core/layers"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build/candidate"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilder, resolvePath } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 
-import { stripAnsi } from "#cli-kit"
 import { BUNDLES } from "#data/bundles"
 import { LayerCatalog, readInstalledManifest } from "#data/catalog"
 import { mailwomanCLIPath } from "#metadata"
@@ -164,9 +164,9 @@ describe("mailwoman data pull from an empty data root", () => {
 
 		expect(candidate.status).toBe(0)
 		await expect(pathExists(root.path("active.json"))).resolves.toBe(true)
-		expect(stripAnsi(candidate.stdout)).toContain('npx mailwoman geocode "<an address in the installed area>"')
-		expect(stripAnsi(candidate.stdout)).toMatch(/candidate license ODbL-1\.0/u)
-		expect(stripAnsi(candidate.stdout)).not.toContain("terms: terms:")
+		expect(stripANSI(candidate.stdout)).toContain('npx mailwoman geocode "<an address in the installed area>"')
+		expect(stripANSI(candidate.stdout)).toMatch(/candidate license ODbL-1\.0/u)
+		expect(stripANSI(candidate.stdout)).not.toContain("terms: terms:")
 
 		const dcDry = await cli("data", "pull", "us", "--only", "dc", "--dry-run", ...host)
 
@@ -250,7 +250,7 @@ describe("mailwoman data pull --force over a corrupted installed artifact", () =
 		expect(plain.status).not.toBe(0)
 
 		// Ink wraps a line at the terminal width, so the match allows a break between any two words.
-		expect(stripAnsi(`${plain.stdout}\n${plain.stderr}`)).toMatch(
+		expect(stripANSI(`${plain.stdout}\n${plain.stderr}`)).toMatch(
 			/failed\s+verification:[\s\S]*Pull\s+again\s+with\s+--force/u
 		)
 

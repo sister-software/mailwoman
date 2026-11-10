@@ -250,7 +250,7 @@ function collectAPIClasses(source: ts.SourceFile, bindings: ReadonlyMap<string, 
 /**
  * The resolver's reading of `source`, with its imports bound through `importedPaths`.
  */
-export function scopeOf(source: ts.SourceFile, file: string, importedPaths: ImportedPaths | null): FileScope {
+export function bindSourceScope(source: ts.SourceFile, file: string, importedPaths: ImportedPaths | null): FileScope {
 	const bindings = collectBindings(source, importedPaths)
 
 	return { file, source, bindings, apiClasses: collectAPIClasses(source, bindings), substitutions: new Map() }
@@ -520,7 +520,7 @@ function pathBuilderOf(scope: FileScope, call: ts.CallExpression, depth: number)
 
 	if (!fromClass && !fromFunction) return null
 
-	const base = resolveTarget(scope, first, depth + 1)
+	const base = targetOfExpression(scope, first, depth + 1)
 	const segments = literalSegments(rest, depth)
 
 	return base && segments ? joinTarget(base, segments) : null
@@ -543,7 +543,7 @@ function resolveTemplate(scope: FileScope, template: ts.TemplateExpression, dept
 	let text = template.head.text
 
 	for (const [index, span] of template.templateSpans.entries()) {
-		const part = resolveTarget(scope, span.expression, depth + 1)
+		const part = targetOfExpression(scope, span.expression, depth + 1)
 
 		if (!part) return null
 
@@ -576,14 +576,14 @@ function resolveLocalCall(scope: FileScope, call: ts.CallExpression, depth: numb
 
 	for (const [index, parameter] of local.parameters.entries()) {
 		const arg = call.arguments[index]
-		const target = arg ? resolveTarget(scope, arg, depth + 1) : null
+		const target = arg ? targetOfExpression(scope, arg, depth + 1) : null
 
 		if (target) {
 			substitutions.set(parameter, target)
 		}
 	}
 
-	return resolveTarget({ ...scope, substitutions }, local.returned, depth + 1)
+	return targetOfExpression({ ...scope, substitutions }, local.returned, depth + 1)
 }
 
 function resolveIdentifier(scope: FileScope, identifier: ts.Identifier, depth: number): ResolvedTarget | null {
@@ -593,7 +593,7 @@ function resolveIdentifier(scope: FileScope, identifier: ts.Identifier, depth: n
 	if (substituted) return substituted
 
 	const initializer = depth < CONSTANT_DEPTH ? initializerOf(identifier) : null
-	const resolved = initializer ? resolveTarget(scope, initializer, depth + 1) : null
+	const resolved = initializer ? targetOfExpression(scope, initializer, depth + 1) : null
 
 	if (resolved) return resolved
 
@@ -612,7 +612,7 @@ function resolveBuilderCall(
 ): ResolvedTarget | null {
 	if (builder.rebases) {
 		const [first] = args
-		const base = first ? resolveTarget(scope, first, depth + 1) : null
+		const base = first ? targetOfExpression(scope, first, depth + 1) : null
 
 		return base ? joinTarget(base, builder.rebases) : null
 	}
@@ -668,7 +668,7 @@ function resolveCall(scope: FileScope, call: ts.CallExpression, depth: number): 
 
 		if (!first) return null
 
-		const base = resolveTarget(scope, first, depth + 1)
+		const base = targetOfExpression(scope, first, depth + 1)
 		const segments = literalSegments(rest, depth)
 
 		return base && segments ? joinTarget(base, segments) : null
@@ -676,7 +676,7 @@ function resolveCall(scope: FileScope, call: ts.CallExpression, depth: number): 
 
 	if (binding?.kind === "rooted" && binding.rooted.kind === "function") {
 		const [first] = call.arguments
-		const base = first ? resolveTarget(scope, first, depth + 1) : null
+		const base = first ? targetOfExpression(scope, first, depth + 1) : null
 
 		return base ? joinTarget(base, [binding.rooted.suffix]) : null
 	}
@@ -695,7 +695,7 @@ function resolveCall(scope: FileScope, call: ts.CallExpression, depth: number): 
 /**
  * The rooted path `expression` names, or `null` when its value depends on something the file does not state.
  */
-export function resolveTarget(scope: FileScope, expression: ts.Expression, depth = 0): ResolvedTarget | null {
+export function targetOfExpression(scope: FileScope, expression: ts.Expression, depth = 0): ResolvedTarget | null {
 	if (depth > CONSTANT_DEPTH * 2) return null
 
 	const literal = literalText(expression)
@@ -707,7 +707,7 @@ export function resolveTarget(scope: FileScope, expression: ts.Expression, depth
 	if (isImportMeta(expression, "filename")) return { root: PathRoot.Repository, path: scope.file }
 
 	if (ts.isParenthesizedExpression(expression) || ts.isAsExpression(expression) || ts.isAwaitExpression(expression)) {
-		return resolveTarget(scope, expression.expression, depth)
+		return targetOfExpression(scope, expression.expression, depth)
 	}
 
 	if (ts.isTemplateExpression(expression)) return resolveTemplate(scope, expression, depth)
@@ -741,7 +741,7 @@ export function summarizeRootedExports(
 	file: string,
 	importedPaths: ImportedPaths | null = null
 ): Map<string, RootedExport> {
-	const scope = scopeOf(source, file, importedPaths)
+	const scope = bindSourceScope(source, file, importedPaths)
 	const exported = new Map<string, RootedExport>()
 
 	const isExported = (statement: ts.Statement): boolean =>
@@ -755,7 +755,7 @@ export function summarizeRootedExports(
 			for (const declaration of statement.declarationList.declarations) {
 				if (!ts.isIdentifier(declaration.name) || !declaration.initializer) continue
 
-				const target = resolveTarget(scope, withoutAwait(declaration.initializer))
+				const target = targetOfExpression(scope, withoutAwait(declaration.initializer))
 
 				if (target && target.root !== PathRoot.Literal && target.root !== PathRoot.Argument) {
 					exported.set(declaration.name.text, { kind: "constant", target })
@@ -768,7 +768,7 @@ export function summarizeRootedExports(
 			if (!local || !rootParameter) continue
 
 			const substitutions = new Map([[rootParameter, { root: PathRoot.Argument, path: "" }]])
-			const target = resolveTarget({ ...scope, substitutions }, local.returned)
+			const target = targetOfExpression({ ...scope, substitutions }, local.returned)
 
 			if (target?.root === PathRoot.Argument) {
 				exported.set(statement.name.text, { kind: "function", suffix: target.path })

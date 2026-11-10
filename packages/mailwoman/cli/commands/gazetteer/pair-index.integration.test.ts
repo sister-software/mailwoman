@@ -10,9 +10,9 @@
 
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { describe, expect, test } from "vitest"
 
-import { stripAnsi } from "#cli-kit"
 import { mailwomanCLIPath } from "#metadata"
 
 const cliBin = await mailwomanCLIPath()
@@ -45,7 +45,7 @@ describe("mailwoman gazetteer pair-index --country gb --source <csv>", () => {
 		expect(failure).toBeInstanceOf(Error)
 
 		const { stdout = "", stderr = "" } = failure as { stdout?: string; stderr?: string }
-		const output = stripAnsi(`${stdout}\n${stderr}`).replaceAll(/\s+/g, " ")
+		const output = stripANSI(`${stdout}\n${stderr}`).replaceAll(/\s+/g, " ")
 
 		expect(output).toContain("a Great Britain build reads no tuple CSV")
 	})

@@ -54,7 +54,7 @@ const RAW_EFFECT_MODULES = /^node:(?:fs|child_process|sqlite)(?:\/|$)/u
 
 const TEST_FILE = /\.(?:test|spec)\.[cm]?[jt]sx?$/u
 
-export function isTestFile(file: string): boolean {
+export function isTestSource(file: string): boolean {
 	return TEST_FILE.test(file)
 }
 
@@ -209,7 +209,7 @@ export function summarizeRuntimeReads(
 	file: string,
 	options: RuntimeReadOptions
 ): RuntimeReads | null {
-	const test = isTestFile(file)
+	const test = isTestSource(file)
 	const edges = extractEffectEdges(source, file, options.importedPaths)
 	let unbounded = unboundedImport(source, test)
 	const paths = new Set<string>()

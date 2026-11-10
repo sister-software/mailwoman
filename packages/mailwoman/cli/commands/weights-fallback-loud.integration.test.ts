@@ -4,11 +4,11 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-import { stripAnsi } from "#cli-kit"
 import { $public } from "#env"
 import { mailwomanCLIPath } from "#metadata"
 
@@ -53,7 +53,7 @@ async function runCLI(
 }
 
 function parseStdoutJSON(stdout: string): unknown {
-	const cleaned = stripAnsi(stdout).trim()
+	const cleaned = stripANSI(stdout).trim()
 	const start = cleaned.search(/[{[]/u)
 
 	if (start < 0) throw new Error(`No JSON payload in stdout:\n${stdout}`)
@@ -179,7 +179,7 @@ describe("— the interactive/declined degraded banner is unchanged (check)", ()
 		// Ink wraps the error to the terminal width, so the check ignores line breaks.
 		// Chalk closes and reopens its color at the wrap, leaving an escape sequence between two words.
 		// The sequences therefore come out before the whitespace collapse.
-		expect(stripAnsi(`${stdout}${stderr}`).replaceAll(/\s+/g, " ")).toContain(
+		expect(stripANSI(`${stdout}${stderr}`).replaceAll(/\s+/g, " ")).toContain(
 			"cannot be combined with --policy or --neural"
 		)
 	}, 30_000)

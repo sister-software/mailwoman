@@ -17,7 +17,7 @@ function replay(commits: ReplaySelection[], failures: CIReplay["failures"] = [])
 }
 
 describe("failedTestFiles", () => {
-	it("reads each failing test file once from a Vitest log, through escape-byte and caret-notation colour codes", () => {
+	it("reads each failing test file once from a Vitest log, through escape-byte and caret-notation color codes", () => {
 		const log = [
 			"unit-slow\tTest (slow)\t2026-11-10T05:16:50Z \u001B[41m\u001B[1m FAIL \u001B[22m\u001B[49m packages/corpus/lib/build.integration.test.ts > resume > refuses",
 			"unit-fast\tTest (fast)\t2026-11-10T05:16:51Z  FAIL  lib/repo-health/ci/scope.test.ts > visits cycles",

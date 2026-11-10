@@ -36,6 +36,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { spawnProcess } from "@mailwoman/core/process"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { isoDate } from "@mailwoman/core/utils"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
@@ -50,7 +51,6 @@ import {
 	type CommandComponent,
 	positiveInteger,
 	splitUSStateCodes,
-	stripAnsi,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -264,7 +264,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			}
 
 			if (r.code !== 0) {
-				console.error(`[FAIL] ${r.state} (${r.seconds}s)\n${stripAnsi(r.err || "").slice(-600)}`)
+				console.error(`[FAIL] ${r.state} (${r.seconds}s)\n${stripANSI(r.err || "").slice(-600)}`)
 
 				manifest.states[r.state] = { ok: false }
 
@@ -276,7 +276,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			// The child's parse-relevant facts span its Ink summary (stdout) + plain
 			// progress (stderr) — combine + strip ansi, then match without line anchors
 			// so the summary's "✓ "/" " render prefixes don't defeat the regex.
-			const text = stripAnsi(`${r.out ?? ""}\n${r.err ?? ""}`)
+			const text = stripANSI(`${r.out ?? ""}\n${r.err ?? ""}`)
 			const pts = Number(text.match(/(\d+) points →/)?.[1] ?? 0)
 			const datasets: Record<string, number> = {}
 

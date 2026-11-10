@@ -180,11 +180,9 @@ export default {
 				"packages/core/lib/fs/**/*.ts",
 				// `identical.ts` wraps `isDeepStrictEqual` from `node:util`, `process.ts` wraps
 				// `node:child_process`, and `scripting/arguments.ts` wraps `parseArgs` from `node:util`.
-				// `strings/terminal.ts` wraps `stripVTControlCharacters` from `node:util`.
 				"packages/core/lib/identical.ts",
 				"packages/core/lib/process.ts",
 				"packages/core/lib/scripting/arguments.ts",
-				"packages/core/lib/strings/terminal.ts",
 				// These core modules wrap `node:os`, `node:timers/promises`, `node:events`,
 				// `node:crypto` and `node:module`.
 				"packages/core/lib/utils/system.ts",

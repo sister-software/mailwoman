@@ -31,7 +31,7 @@ renders `--[no-]x`. A factory-built command `spec` is invisible to the static op
 
 ## Terminal output tests
 
-Strip ANSI control sequences with `stripAnsi` from `mailwoman/cli/kit` before matching rendered output.
+Strip ANSI control sequences with `stripANSI` from `@mailwoman/core/strings/terminal` before matching rendered output.
 Chalk follows `FORCE_COLOR`, so a raw capture has colored and uncolored forms. Escape sequences can split
 whitespace matches and can make a negative assertion pass even when the prohibited text is present.
 

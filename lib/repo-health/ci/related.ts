@@ -4,7 +4,7 @@
 import { resolvePath, relative } from "path-ts"
 import { createVitest } from "vitest/node"
 
-import { isTestFile, readsAnyOf } from "#repo-health/ci/runtime-reads"
+import { isTestSource, readsAnyOf } from "#repo-health/ci/runtime-reads"
 import { type CIScope, type CIWorkspace, dataRootReaders } from "#repo-health/ci/scope"
 
 /**
@@ -59,7 +59,7 @@ export async function selectRelatedCIScope(
 	const nonModules = inputs.filter((file) => !MODULE_FILE.test(file))
 
 	const readingModules = readers
-		.filter(([file, reads]) => !isTestFile(file) && inAffected(file) && readsAnyOf(reads, inputs, affected))
+		.filter(([file, reads]) => !isTestSource(file) && inAffected(file) && readsAnyOf(reads, inputs, affected))
 		.map(([file]) => file)
 
 	const related = [...new Set([...inputs, ...readingModules])].toSorted()
@@ -70,7 +70,7 @@ export async function selectRelatedCIScope(
 	])
 
 	const readingTests = new Set(
-		readers.filter(([file, reads]) => isTestFile(file) && readsAnyOf(reads, inputs, affected)).map(([file]) => file)
+		readers.filter(([file, reads]) => isTestSource(file) && readsAnyOf(reads, inputs, affected)).map(([file]) => file)
 	)
 
 	const narrow = (fromGraph: readonly string[], selected: readonly string[]): string[] => {

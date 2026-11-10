@@ -297,15 +297,6 @@ export function splitNumberList(raw: string | null): number[] {
 	return extractDelimited(raw).map(Number)
 }
 
-const ANSI_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;?]*[A-Za-z]`, "gu")
-
-/**
- * Removes ANSI escape sequences from child-process output.
- */
-export function stripAnsi(value: string): string {
-	return value.replaceAll(ANSI_PATTERN, "")
-}
-
 /**
  * The result shape shared by polygon-layer verifications.
  */

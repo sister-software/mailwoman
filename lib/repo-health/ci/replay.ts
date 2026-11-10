@@ -17,7 +17,7 @@
 import { git, trackedFiles } from "@mailwoman/core/git"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
-import { stripTerminalControls } from "@mailwoman/core/strings/terminal"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { TextSpliterator } from "spliterator"
 import { z } from "zod"
 
@@ -41,7 +41,7 @@ export interface ReplaySelection {
  * A failed `Test` run on `main`, the push diff it tested, the failing test files its
  * log reports, and the tests the replayed rule selects for that diff.
  */
-export interface ReplayFailure {
+interface ReplayFailure {
 	runID: number
 	sha: string
 	base: string
@@ -52,7 +52,7 @@ export interface ReplayFailure {
 /**
  * A failed `Test` run the replay could not check, and why.
  */
-export interface UncheckedRun {
+interface UncheckedRun {
 	runID: number
 	sha: string
 	reason: string
@@ -80,18 +80,18 @@ export interface CIReplay {
 const GH_LOG_BUFFER = 512 * 1024 * 1024
 
 /**
- * An ANSI colour sequence in the caret notation `gh run view --log` writes it in: `^[[41m` for ESC `[41m`.
+ * An ANSI color sequence in the caret notation `gh run view --log` writes it in: `^[[41m` for ESC `[41m`.
  */
-const CARET_COLOUR_SEQUENCE = /\^\[\[[0-9;]*m/gu
+const CARET_COLOR_SEQUENCE = /\^\[\[[0-9;]*m/gu
 
 /**
  * The test files a Vitest log reports as failed, from its ` FAIL  <file> > <test>` lines.
  *
- * The log may hold its colour codes as escape bytes or in caret notation, so both are removed first.
+ * The log may hold its color codes as escape bytes or in caret notation, so both are removed first.
  */
 export function failedTestFiles(log: string): string[] {
 	const files = new Set<string>()
-	const plain = stripTerminalControls(log).replaceAll(CARET_COLOUR_SEQUENCE, "")
+	const plain = stripANSI(log).replaceAll(CARET_COLOR_SEQUENCE, "")
 
 	for (const match of plain.matchAll(/\bFAIL\s+((?:packages|lib|docs)\/\S+?\.test\.tsx?)\b/gu)) {
 		const [, file] = match
@@ -260,7 +260,7 @@ export async function replayCIScope(root: string, options: CIReplayOptions): Pro
 /**
  * One commit's selections under the two rules, with the test files only one of them selects.
  */
-export interface ReplayCommitComparison {
+interface ReplayCommitComparison {
 	sha: string
 	before: number
 	after: number
@@ -271,7 +271,7 @@ export interface ReplayCommitComparison {
 /**
  * A recorded failing test file and the rules that select it for the push it failed on.
  */
-export interface ReplayFailureComparison {
+interface ReplayFailureComparison {
 	runID: number
 	sha: string
 	file: string

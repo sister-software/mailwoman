@@ -8,13 +8,13 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { workspacePath } from "@mailwoman/core/paths"
+import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"
 import { describe, expect, test } from "vitest"
 
-import { stripAnsi } from "#cli-kit"
 import { $public } from "#env"
 import { createGeocodeCommandOptions } from "#geocode"
 
@@ -54,7 +54,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 	test("renders a captured DebugFrame for a real address, tier line + map ink + echoed input", async () => {
 		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "100x30" })
 
-		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
+		const text = stripANSI(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
 		expect(text).toMatch(/address_point|admin/)
 
@@ -66,7 +66,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 	test("the captured frame carries the dev-mode evidence rows and result sections from REAL pipeline data", async () => {
 		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "140x40" })
 
-		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
+		const text = stripANSI(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
 		expect(text).toMatch(/system\s+us \((auto|pinned)\)/u)
 		expect(text).toContain("mode ")

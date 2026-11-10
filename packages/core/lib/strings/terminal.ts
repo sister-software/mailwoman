@@ -6,12 +6,16 @@
  *   Text a terminal program wrote, as plain text.
  */
 
-import { stripVTControlCharacters } from "node:util"
+/**
+ * An ANSI control sequence: ESC, `[`, its numeric parameters, and the letter that ends it, such as `ESC[31m`.
+ *
+ * The pattern is built from the code point so the source holds no literal control character.
+ */
+const ANSI_SEQUENCE = new RegExp(`${String.fromCharCode(27)}\\[[0-9;?]*[A-Za-z]`, "gu")
 
 /**
- * `text` with its ANSI escape sequences removed, such as the colour codes a
- * test runner writes around `FAIL`.
+ * `text` with its ANSI control sequences removed, such as the color codes Chalk and Vitest write.
  */
-export function stripTerminalControls(text: string): string {
-	return stripVTControlCharacters(text)
+export function stripANSI(text: string): string {
+	return text.replaceAll(ANSI_SEQUENCE, "")
 }
