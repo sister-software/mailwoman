@@ -257,6 +257,56 @@ describe("buildAddressLayer", () => {
 		).toEqual(["nad-3200", "o2", "o3"])
 	})
 
+	it("drops a record with no postcode that repeats a nearby higher-ranked one, and keeps a distant namesake", async () => {
+		await using dir = await temporaryDirectory("address-layer-")
+		const run = "openaddresses:us/mt/statewide"
+
+		// The shape of Montana's statewide run against NAD: the run states no postcode,
+		// so the two share no postcode group.
+		// One run record lies about 1 m from NAD's point, the other about 20 km away in another town.
+		const summary = await buildAddressLayer({
+			records: stream([
+				record({ number: "30", streetRaw: "5th Avenue Southeast", postcode: "59427", lat: 48.63235, lon: -112.32788 }),
+				record({
+					number: "30",
+					streetRaw: "5th Avenue Southeast",
+					source: run,
+					sourceRecordID: "near",
+					postcode: null,
+					lat: 48.63234,
+					lon: -112.32787,
+				}),
+				record({
+					number: "30",
+					streetRaw: "5th Avenue Southeast",
+					source: run,
+					sourceRecordID: "far",
+					postcode: null,
+					lat: 48.81,
+					lon: -112.32787,
+				}),
+			]),
+			sources: new Map([
+				["usgov-nad", { license: "public-domain", authority: null }],
+				[run, { license: null, authority: null }],
+			]),
+			manifest: MANIFEST,
+			lookupPath: dir.path("lookup.db"),
+			detailPath: dir.path("detail.db"),
+			duplicates: { rank: (source) => (source === "usgov-nad" ? 0 : 1), unitIdentifier: () => null },
+		})
+
+		expect(summary.refused).toEqual({ [run]: { duplicate: 1 } })
+
+		using detail = new DatabaseClient<AddressDetailDatabase>(dir.path("detail.db"), { readOnly: true })
+
+		expect(
+			(await detail.selectFrom("address").select("source_record_id").execute())
+				.map((row) => row.source_record_id)
+				.toSorted()
+		).toEqual(["far", "nad-30"])
+	})
+
 	it("leaves out a refused record and every record on a point stacked past the limit, and counts them", async () => {
 		await using dir = await temporaryDirectory("address-layer-")
 		const run = "openaddresses:us/wi/statewide"

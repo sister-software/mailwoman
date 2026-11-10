@@ -84,11 +84,44 @@ export function isDuplicateAddress(
 	higher: DuplicateCandidate,
 	lower: DuplicateCandidate
 ): boolean {
+	return statesSameUnit(rule, higher, lower) && repeatsWithinPostcode(higher, lower)
+}
+
+/**
+ * Whether `lower` repeats `higher`'s delivery point when the two share a street and number
+ * but not a postcode group, because one of them states no postcode.
+ *
+ * Without a shared postcode, a locality agreement can join two towns' `100 Main Street`, so this
+ * needs the points within {@linkcode ADDRESS_DUPLICATE_DISTANCE_KM} whatever the localities say.
+ * A point stacked past {@linkcode ADDRESS_DUPLICATE_STACK_LIMIT} addresses gives
+ * no distance, so a pair touching one is not a repeat.
+ */
+export function isNearbyDuplicateAddress(
+	rule: AddressDuplicateRule,
+	higher: DuplicateCandidate,
+	lower: DuplicateCandidate
+): boolean {
+	if (!statesSameUnit(rule, higher, lower)) return false
+
+	if (higher.stack > ADDRESS_DUPLICATE_STACK_LIMIT || lower.stack > ADDRESS_DUPLICATE_STACK_LIMIT) return false
+
+	return haversine(higher.lat, higher.lon, lower.lat, lower.lon) <= ADDRESS_DUPLICATE_DISTANCE_KM
+}
+
+/**
+ * Whether two records state the same unit by identifier, or both state none.
+ */
+function statesSameUnit(rule: AddressDuplicateRule, higher: DuplicateCandidate, lower: DuplicateCandidate): boolean {
 	const unit = (record: DuplicateCandidate) =>
 		rule.unitIdentifier(record.unit, { number: record.number, street: record.streetRaw })
 
-	if (unit(higher) !== unit(lower)) return false
+	return unit(higher) === unit(lower)
+}
 
+/**
+ * Whether two records of one postcode key group are one delivery point, once their units agree.
+ */
+function repeatsWithinPostcode(higher: DuplicateCandidate, lower: DuplicateCandidate): boolean {
 	const a = localityKeys(higher)
 	const b = localityKeys(lower)
 	const disjoint = a.size > 0 && b.size > 0 && ![...a].some((name) => b.has(name))

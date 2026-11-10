@@ -26,6 +26,7 @@ import {
 	type AddressDuplicateRule,
 	type DuplicateCandidate,
 	isDuplicateAddress,
+	isNearbyDuplicateAddress,
 } from "#address/duplicate"
 import { addressPostcodeKey } from "#address/keys/postcode"
 import {
@@ -459,72 +460,104 @@ function markDuplicates(
 
 	const mark = db.prepare("INSERT OR IGNORE INTO duplicate VALUES (?)")
 
-	type Member = DuplicateCandidate & { addressID: number; rank: number }
+	type Member = DuplicateCandidate & { addressID: number; rank: number; postcode: boolean }
 
-	const settle = (group: Member[]) => {
-		for (const lower of group) {
-			if (group.some((higher) => higher.rank < lower.rank && isDuplicateAddress(rule, higher, lower))) {
-				mark.run(lower.addressID)
+	// Reads each street-and-number group the query yields, in key order, and marks every
+	// lower-ranked member that `repeats` judges a repeat of a higher-ranked one.
+	const settleGroups = (query: string, repeats: (higher: Member, lower: Member) => boolean) => {
+		let group: Member[] = []
+		let key = ""
+
+		const settle = () => {
+			for (const lower of group) {
+				if (group.some((higher) => higher.rank < lower.rank && repeats(higher, lower))) {
+					mark.run(lower.addressID)
+				}
 			}
 		}
+
+		for (const row of db.prepare(query).iterate() as Iterable<{
+			scope: string
+			street: string
+			key_number: string
+			address_id: number
+			source_id: number
+			unit: string | null
+			number: string
+			street_raw: string
+			names: string
+			lat: number
+			lon: number
+			stack: number
+			postcode: number
+		}>) {
+			const rowKey = `${row.scope}|${row.street}|${row.key_number}`
+
+			if (rowKey !== key) {
+				settle()
+				group = []
+				key = rowKey
+			}
+
+			const source = sourceNames.get(row.source_id)!
+			const names = parseJSONStrict<Array<{ level: string; value: string }>>(row.names)
+
+			group.push({
+				addressID: row.address_id,
+				rank: rule.rank(source),
+				source,
+				unit: row.unit,
+				number: row.number,
+				streetRaw: row.street_raw,
+				localities: names.filter((name) => name.level === "locality").map((name) => name.value),
+				lat: row.lat,
+				lon: row.lon,
+				stack: row.stack,
+				postcode: row.postcode === 1,
+			})
+		}
+
+		settle()
 	}
 
-	let group: Member[] = []
-	let key = ""
+	const memberColumns = `s.scope, s.street, s.number AS key_number, a.address_id, a.source_id, a.unit, a.number,
+		a.street_raw, a.names, a.lat, a.lon, coalesce(k.n, 1) AS stack`
+
+	const stackJoin =
+		"LEFT JOIN stack k ON k.source_id = a.source_id AND k.la = round(a.lat, 5) AND k.lo = round(a.lon, 5)"
 
 	db.exec("BEGIN")
 
-	for (const row of db
-		.prepare(
-			`SELECT s.scope, s.street, s.number AS key_number, a.address_id, a.source_id, a.unit, a.number, a.street_raw,
-				a.names, a.lat, a.lon, coalesce(k.n, 1) AS stack
-			 FROM stage s JOIN address a ON a.address_id = s.address_id
-			 LEFT JOIN stack k ON k.source_id = a.source_id AND k.la = round(a.lat, 5) AND k.lo = round(a.lon, 5)
-			 WHERE s.level = '${StagedLevel.Postcode}' AND (s.scope, s.street, s.number) IN (
-				SELECT scope, street, number FROM stage WHERE level = '${StagedLevel.Postcode}'
-				GROUP BY 1, 2, 3 HAVING count(DISTINCT source_id) > 1)
-			 ORDER BY s.scope, s.street, s.number`
-		)
-		.iterate() as Iterable<{
-		scope: string
-		street: string
-		key_number: string
-		address_id: number
-		source_id: number
-		unit: string | null
-		number: string
-		street_raw: string
-		names: string
-		lat: number
-		lon: number
-		stack: number
-	}>) {
-		const rowKey = `${row.scope}|${row.street}|${row.key_number}`
+	settleGroups(
+		`SELECT ${memberColumns}, 1 AS postcode
+		 FROM stage s JOIN address a ON a.address_id = s.address_id ${stackJoin}
+		 WHERE s.level = '${StagedLevel.Postcode}' AND (s.scope, s.street, s.number) IN (
+			SELECT scope, street, number FROM stage WHERE level = '${StagedLevel.Postcode}'
+			GROUP BY 1, 2, 3 HAVING count(DISTINCT source_id) > 1)
+		 ORDER BY s.scope, s.street, s.number`,
+		(higher, lower) => isDuplicateAddress(rule, higher, lower)
+	)
 
-		if (rowKey !== key) {
-			settle(group)
-			group = []
-			key = rowKey
-		}
+	// A record with no postcode key shares no postcode group, so it is compared at the region level
+	// with every record of its street and number, and repeats one only when their points are near.
+	db.exec(
+		`CREATE TEMP TABLE keyed (address_id INTEGER PRIMARY KEY);
+		 INSERT OR IGNORE INTO keyed SELECT address_id FROM stage WHERE level = '${StagedLevel.Postcode}'`
+	)
 
-		const source = sourceNames.get(row.source_id)!
-		const names = parseJSONStrict<Array<{ level: string; value: string }>>(row.names)
+	settleGroups(
+		`SELECT ${memberColumns}, p.address_id IS NOT NULL AS postcode
+		 FROM stage s JOIN address a ON a.address_id = s.address_id ${stackJoin}
+		 LEFT JOIN keyed p ON p.address_id = s.address_id
+		 WHERE s.level = '${StagedLevel.Region}' AND (s.street, s.number) IN (
+			SELECT g.street, g.number FROM stage g LEFT JOIN keyed q ON q.address_id = g.address_id
+			WHERE g.level = '${StagedLevel.Region}'
+			GROUP BY 1, 2 HAVING count(DISTINCT g.source_id) > 1 AND count(q.address_id) < count(*))
+		 ORDER BY s.street, s.number`,
+		(higher, lower) => !(higher.postcode && lower.postcode) && isNearbyDuplicateAddress(rule, higher, lower)
+	)
 
-		group.push({
-			addressID: row.address_id,
-			rank: rule.rank(source),
-			source,
-			unit: row.unit,
-			number: row.number,
-			streetRaw: row.street_raw,
-			localities: names.filter((name) => name.level === "locality").map((name) => name.value),
-			lat: row.lat,
-			lon: row.lon,
-			stack: row.stack,
-		})
-	}
-
-	settle(group)
+	db.exec("DROP TABLE keyed")
 	db.exec("COMMIT")
 	db.exec("DROP TABLE stack")
 }
