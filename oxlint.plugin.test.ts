@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import plugin from "./oxlint.plugin.ts"
+import { localRules } from "./oxlint.plugin.ts"
 
 interface TestNode {
 	type: string
@@ -16,7 +16,7 @@ interface TestNode {
 
 function reportsFor(ruleName: string, node: TestNode): string[] {
 	const messages: string[] = []
-	const rule = plugin.rules[ruleName]!
+	const rule = localRules[ruleName]!
 
 	const listeners = rule.create({
 		options: [],
@@ -52,7 +52,7 @@ function deliverToListeners(listeners: Record<string, ((node: TestNode) => void)
 
 function commentReports(value: string): string[] {
 	const messages: string[] = []
-	const rule = plugin.rules["require-disable-reason"]!
+	const rule = localRules["require-disable-reason"]!
 	const comment = { type: "Line", range: [0, value.length] as [number, number], value }
 
 	const listeners = rule.create({
