@@ -712,9 +712,17 @@ export async function harvestPagedWFS(options: PagedWFSHarvestOptions): Promise<
 			return manifest
 		}
 
-		options.report?.(`  ${dataPath} hashes to ${digest} rather than ${manifest.sha256} — harvesting it again`)
+		options.report?.(
+			`  ${dataPath} hashes to ${digest} rather than ${manifest.sha256} — removing it and harvesting from the first page`
+		)
 
-		manifest = { ...manifest, complete: false, sha256: null }
+		// The reconcile step hashed the last page and matched the size, so the change
+		// sits in the header, an earlier page or the footer.
+		// The manifest records no digest for the header, so no prefix of the file can be
+		// proven intact, and the harvest starts over from an empty file.
+		await removePathIfPresent(dataPath)
+
+		manifest = emptyManifest(options)
 	}
 
 	const atPageCap = (): boolean => typeof options.maxPages === "number" && manifest.pages.length >= options.maxPages

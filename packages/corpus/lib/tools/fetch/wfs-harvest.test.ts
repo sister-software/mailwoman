@@ -6,7 +6,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { appendLocalTextFile } from "@mailwoman/core/fs/writers"
+import { appendLocalTextFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"
@@ -291,6 +291,32 @@ describe("harvestPagedWFS", () => {
 		}
 
 		await expect(harvestPagedWFS(harvestOptions(scratch.path, silent))).rejects.toThrow(/stated no numberReturned/u)
+	})
+
+	it("harvests again from an empty file when a complete harvest's bytes changed at their recorded size", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-wfs-harvest-")
+		const dataPath = PathBuilder.from(scratch.path)("address.gml")
+		const counted = { featureCount: { count: 4, because: "the service reported numberMatched" } }
+
+		await harvestPagedWFS(
+			harvestOptions(scratch.path, fakeService({ total: 4, header: "HEAD\n", footer: "TAIL\n" }), {
+				filename: "address.gml",
+				...counted,
+			})
+		)
+
+		// Same length, different bytes, outside the last page the reconcile step hashes.
+		const harvested = await readLocalTextFile(dataPath)
+
+		await writeLocalTextFile(harvested.replace("TAIL\n", "TAMP\n"), dataPath)
+
+		const again = fakeService({ total: 4, header: "HEAD\n", footer: "TAIL\n" })
+
+		const manifest = await harvestPagedWFS(harvestOptions(scratch.path, again, { filename: "address.gml", ...counted }))
+
+		expect(again.asked).toEqual([0, 2])
+		expect(manifest.complete).toBe(true)
+		await expect(readLocalTextFile(dataPath)).resolves.toBe("HEAD\nfeature-0\nfeature-1\nfeature-2\nfeature-3\nTAIL\n")
 	})
 
 	it("starts over when the manifest describes a different page size", async () => {
