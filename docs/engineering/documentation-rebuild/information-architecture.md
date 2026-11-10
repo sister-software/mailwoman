@@ -25,7 +25,7 @@ Diátaxis separates learning, work, lookup, and understanding. A tutorial leads 
 | D07            | `/docs/guides/operate-data`                 | guide       | Download, inspect, refresh, migrate, and roll back local data.                                      |
 | D08            | `/docs/guides/deploy`                       | guide       | Deploy a supported service form with measured resource needs.                                       |
 | D09            | `/docs/guides/use-a-compatible-http-client` | guide       | Connect an existing Nominatim, Photon, or libpostal client to a supported surface.                  |
-| D10            | `/docs/guides/handle-results`               | guide       | Handle messy input, edge address kinds, and confidence thresholds.                                  |
+| D10            | `/docs/guides/normalize-input`              | guide       | Normalize a raw address before direct parsing and preserve a map to the original text.              |
 | D11            | `/docs/guides/report-a-problem`             | guide       | Capture a reproducible parser or security report and send it to the right place.                    |
 | D12            | `/docs/guides/validate-records`             | guide       | Apply a stated completeness and postal-shape policy to parsed records.                              |
 | D13            | `/docs/guides/match-records`                | guide       | Match candidate address records and review uncertain pairs.                                         |
@@ -34,6 +34,11 @@ Diátaxis separates learning, work, lookup, and understanding. A tutorial leads 
 | D16            | `/docs/guides/parse-in-browser`             | guide       | Load model assets and parse in a browser application.                                               |
 | D17            | `/docs/guides/annotate-results`             | guide       | Apply annotators and choose an output projection.                                                   |
 | D18            | `/docs/guides/install-coding-skill`         | guide       | Install and update the code-assistant skill.                                                        |
+| D19            | `/docs/guides/handle-po-boxes`              | guide       | Route a PO box parse without treating a post-office coordinate as the box location.                 |
+| D20            | `/docs/guides/handle-intersections`         | guide       | Detect an intersection query and require evidence of a crossing point before using coordinates.     |
+| D21            | `/docs/guides/handle-bare-postcodes`        | guide       | Require caller country context before a bare-postcode lookup and preserve unresolved results.       |
+| D22            | `/docs/guides/handle-landmark-queries`      | guide       | Route a landmark or relative-place query and inspect the available place evidence.                  |
+| D23            | `/docs/guides/review-parse-results`         | guide       | Route parsed records to accept, request more input, or review under a measured application policy.  |
 | R01            | `/docs/reference/library`                   | reference   | Library imports, signatures, options, returns, and errors.                                          |
 | R02            | `/docs/reference/cli`                       | reference   | Commands, flags, exit codes, and generated command output.                                          |
 | R03            | `/docs/reference/http`                      | reference   | Native and compatibility endpoints, request/response shapes, and errors.                            |
@@ -50,7 +55,7 @@ Diátaxis separates learning, work, lookup, and understanding. A tutorial leads 
 | V03            | `/evidence/comparisons`                     | evidence    | Dated, scoped alternatives and runnable comparison method.                                          |
 | A01            | `/about`                                    | landing     | Mission, contact, support, and security route.                                                      |
 
-This first architecture proposes 39 destinations: 6 product/solution landing pages + 18 learning/work pages + 6 reference pages + 5 explanation pages + 3 evidence pages + 1 about page = 39. These are proposed destinations, with no publication quota.
+This revised architecture proposes 44 destinations: 6 product/solution landing pages + 23 learning/work pages + 6 reference pages + 5 explanation pages + 3 evidence pages + 1 about page = 44. The five added guide destinations split the former D10 brief by reader outcome. These are proposed destinations, with no publication quota.
 
 ## Navigation and cross-links
 

@@ -11,6 +11,9 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 const sidebars: SidebarsConfig = {
 	product: [
 		"product/overview",
+		{ type: "link", label: "Choose an operation", href: "/product/capabilities" },
+		{ type: "link", label: "Choose a deployment", href: "/product/deployment" },
+		{ type: "link", label: "Data and licensing", href: "/product/data-and-licensing" },
 		{ type: "link", label: "Limits and release status", href: "/product/limits-and-status" },
 		"product/capabilities",
 		"product/deployment-options",
@@ -18,6 +21,7 @@ const sidebars: SidebarsConfig = {
 		"product/data-products",
 	],
 	solutions: [
+		{ type: "link", label: "Choose a workflow", href: "/solutions" },
 		"solutions/eliminate-the-per-request-bill",
 		"solutions/own-what-you-look-up",
 		"solutions/keep-addresses-inside",
@@ -58,6 +62,15 @@ const sidebars: SidebarsConfig = {
 				"guides/report-a-problem",
 				"guides/validate-records",
 				"guides/install-coding-skill",
+				"guides/annotate-results",
+				"guides/match-records",
+				"guides/normalize-input",
+				"guides/handle-po-boxes",
+				"guides/handle-intersections",
+				"guides/handle-bare-postcodes",
+				"guides/review-parse-results",
+				"guides/parse-in-browser",
+				"guides/add-autocomplete",
 				"developers/how-to/handle-messy-input",
 				"developers/how-to/handle-po-boxes-and-edge-kinds",
 				"developers/how-to/validate-addresses",
@@ -81,9 +94,12 @@ const sidebars: SidebarsConfig = {
 			label: "Reference",
 			// The CLI page is generated from the command specs.
 			items: [
+				"reference/cli",
+				"reference/http",
 				"reference/library",
 				"reference/schema",
 				"reference/packages-and-runtime",
+				"reference/data-and-locales",
 				"developers/reference/library-api",
 				"developers/reference/cli",
 				"developers/reference/http-apis",
@@ -97,7 +113,13 @@ const sidebars: SidebarsConfig = {
 		{
 			type: "category",
 			label: "Explanation",
-			items: ["explanation/parsing", "explanation/confidence-and-limits"],
+			items: [
+				"explanation/address-systems",
+				"explanation/parsing",
+				"explanation/geocoding",
+				"explanation/confidence-and-limits",
+				"explanation/data-and-model-quality",
+			],
 		},
 		{
 			type: "category",
@@ -154,6 +176,7 @@ const sidebars: SidebarsConfig = {
 	],
 	about: ["about/mission", "about/security-and-compliance", "about/contact"],
 	resources: [
+		{ type: "link", label: "Benchmark evidence", href: "/evidence/benchmarks" },
 		{
 			type: "category",
 			label: "Benchmarks",

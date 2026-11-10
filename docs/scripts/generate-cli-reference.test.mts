@@ -16,7 +16,9 @@ import {
 	COMMANDS_DIRECTORY,
 	escapeCell,
 	OUTPUT_PATH,
+	REBUILD_OUTPUT_PATH,
 	renderCLIReference,
+	renderRebuildCLIReference,
 	renderDefault,
 	renderTable,
 	type CLISurface,
@@ -97,6 +99,14 @@ describe("generate-cli-reference", () => {
 			committed,
 			"docs/articles/developers/reference/cli.mdx is stale — run `node docs/scripts/generate-cli-reference.mts`"
 		).toBe(page)
+	})
+
+	it("matches the new route and keeps published checks separate from checkout flags", async () => {
+		const generated = await readLocalTextFile(REBUILD_OUTPUT_PATH)
+
+		expect(generated).toBe(renderRebuildCLIReference(surface))
+		expect(generated).toContain("## Published 11.0.0 checks")
+		expect(generated).toContain("current checkout's compiled command specifications")
 	})
 
 	it("renders deterministically and leaks no host path or timestamp", () => {

@@ -1,0 +1,73 @@
+---
+title: Route intersection descriptions for review
+description: Check both crossing-street components before treating a parse as an intersection description.
+role: guide
+source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/pipeline/result.ts, packages/codex/lib/component.ts
+verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0 on Node.js 24.22.1
+---
+
+# Route intersection descriptions for review
+
+Use this guide when a location-intake workflow receives a possible street intersection and needs the two street descriptions before a person checks the location. The parser identifies text spans. This example records no crossing coordinate and routes the description for review.
+
+## Install the parser packages
+
+Use Node.js 24.22.1 in an ECMAScript module project. Install the published packages used here:
+
+```sh
+npm install --save-exact mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+This parse-only exercise needs no geographic database. Save the following file as `route-intersection.mjs`.
+
+## Check the two street components
+
+```js
+import { createRuntimePipeline } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
+
+for (const input of ["5th Avenue and Main Street, Springfield, IL", "5th and Main"]) {
+	const result = await parse(input)
+	const nodes = []
+	function visit(node) {
+		nodes.push({ tag: node.tag, value: node.value, start: node.start, end: node.end })
+		for (const child of node.children) visit(child)
+	}
+	for (const root of result.tree.roots) visit(root)
+
+	const first = nodes.find((node) => node.tag === "intersection_a")
+	const second = nodes.find((node) => node.tag === "intersection_b")
+	const route = result.faults.length
+		? "review-stage-fault"
+		: first && second
+			? "crossing-description-review"
+			: result.kind.kind === "intersection"
+				? "request-clarification"
+				: "other-address-flow"
+	console.log(
+		JSON.stringify({
+			input,
+			kind: result.kind.kind,
+			alternatives: result.kind.alternatives.map((a) => a.kind),
+			tree: nodes,
+			decision: { route, crossingCoordinate: "unknown" },
+		})
+	)
+}
+```
+
+This application rule requires both `intersection_a` and `intersection_b` nodes and checks that the pipeline recorded no stage fault. It records the query kind and alternatives for diagnosis. If the top kind is `intersection` but the tree lacks either crossing-street component, it asks for clarification. The rule makes no coordinate decision from a kind or a component tag.
+
+Run `node route-intersection.mjs`. Published 11.0.0 returned the complete output below:
+
+```json
+{"input":"5th Avenue and Main Street, Springfield, IL","kind":"structured_address","alternatives":["intersection","vague"],"tree":[{"tag":"region","value":"IL","start":41,"end":43},{"tag":"locality","value":"Springfield","start":28,"end":39},{"tag":"intersection_a","value":"5th Avenue","start":0,"end":10},{"tag":"intersection_b","value":"Main Street","start":15,"end":26}],"decision":{"route":"crossing-description-review","crossingCoordinate":"unknown"}}
+{"input":"5th and Main","kind":"intersection","alternatives":["landmark","structured_address","vague"],"tree":[{"tag":"venue","value":"5th and Main","start":0,"end":12}],"decision":{"route":"request-clarification","crossingCoordinate":"unknown"}}
+```
+
+For `5th Avenue and Main Street, Springfield, IL`, the returned kind is `structured_address`, while the tree contains `intersection_a: "5th Avenue"` and `intersection_b: "Main Street"`. The application sends those two strings for crossing-description review. For `5th and Main`, the returned kind is `intersection`, while the tree contains only `venue: "5th and Main"`. The application asks for clarification. These results show why this application's two-street route checks the component tree and records the kind separately.
+
+Both results leave `crossingCoordinate` as `unknown` because no geographic lookup ran. A returned locality or a pair of street names does not identify a verified crossing point. A coordinate workflow needs a supported geographic source, a tested lookup for the exact input, and evidence that the point represents the crossing. Check the [data prerequisites](../reference/data-and-locales.mdx), [result schema](../reference/schema.mdx), and [coordinate evidence limits](../explanation/confidence-and-limits.mdx) before adding that workflow.

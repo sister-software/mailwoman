@@ -1,0 +1,71 @@
+---
+title: Route PO box records for mailing review
+description: Identify a PO box parse and keep mailing intake separate from building-coordinate use.
+role: guide
+source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/pipeline/result.ts, packages/codex/lib/component.ts
+verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0 on Node.js 24.22.1
+---
+
+# Route PO box records for mailing review
+
+Use this guide when a US mailing-address intake needs to separate PO box records from records intended for a building-coordinate workflow. The example records a complete PO box parse as a mailing-address candidate for review and requests more input when the box has no locality, region, or postcode. These are application choices. A parse does not check that the box exists or that mail can be delivered to it.
+
+## Install the parser packages
+
+Use Node.js 24.22.1 in an ECMAScript module project. Install the packages used in the published 11.0.0 example:
+
+```sh
+npm install --save-exact mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+The example uses the English model and requires no geographic database. Save the following complete script as `route-po-box.mjs`.
+
+## Parse and apply a mailing intake rule
+
+```js
+import { createRuntimePipeline } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
+
+for (const input of ["PO Box 1234, Springfield, IL 62701", "PO Box 1234"]) {
+	const result = await parse(input)
+	const nodes = []
+	function visit(node) {
+		nodes.push({ tag: node.tag, value: node.value, start: node.start, end: node.end })
+		for (const child of node.children) visit(child)
+	}
+	for (const root of result.tree.roots) visit(root)
+
+	const required = ["po_box", "locality", "region", "postcode"]
+	const missing = required.filter((tag) => !nodes.some((node) => node.tag === tag))
+	const mailingCandidate = result.kind.kind === "po_box" && result.faults.length === 0 && missing.length === 0
+	console.log(
+		JSON.stringify({
+			input,
+			kind: result.kind.kind,
+			tree: nodes,
+			decision: {
+				route: mailingCandidate ? "mailing-address-review" : "request-more-input",
+				missing,
+				deliveryStatus: "unknown",
+				buildingCoordinate: "unknown",
+			},
+		})
+	)
+}
+```
+
+The code flattens the returned tree for display, while retaining each component's tag, value, and offsets. It requires both the `po_box` query kind and a `po_box` node. It also checks for a locality, region, postcode, and an empty `faults` array before placing a record in this application's mailing-review queue. A missing field sends the record to a request for more input. The application supplies the US mailing-intake context. The parser locale does not establish the destination country.
+
+Run `node route-po-box.mjs`. The published 11.0.0 packages returned this complete output:
+
+```json
+{"input":"PO Box 1234, Springfield, IL 62701","kind":"po_box","tree":[{"tag":"region","value":"IL","start":26,"end":28},{"tag":"locality","value":"Springfield","start":13,"end":24},{"tag":"po_box","value":"PO Box 1234","start":0,"end":11},{"tag":"postcode","value":"62701","start":29,"end":34}],"decision":{"route":"mailing-address-review","missing":[],"deliveryStatus":"unknown","buildingCoordinate":"unknown"}}
+{"input":"PO Box 1234","kind":"po_box","tree":[{"tag":"po_box","value":"PO Box 1234","start":0,"end":11}],"decision":{"route":"request-more-input","missing":["locality","region","postcode"],"deliveryStatus":"unknown","buildingCoordinate":"unknown"}}
+```
+
+For `PO Box 1234, Springfield, IL 62701`, the parser returned kind `po_box` and a `po_box` component containing `PO Box 1234`. The first record has the four components this intake requires, so the application routes it to mailing-address review. For `PO Box 1234`, the parse has the box component and lacks the three place fields. The application requests more input. In both cases, delivery status and the location of a building remain unknown.
+
+The script makes no geocode call. A coordinate returned for a city or post office would need its own source and precision evidence before any location use. Do not use a PO box parse or a coarse place coordinate as a building destination. If you need a coordinate, first install and verify a [geographic data bundle](../reference/data-and-locales.mdx), then inspect the returned `resolution_tier`, `epistemic_status`, and coordinate provenance in the [result schema](../reference/schema.mdx). The [confidence and limits explanation](../explanation/confidence-and-limits.mdx) describes why a parser score cannot answer the coordinate or deliverability question.

@@ -1,0 +1,99 @@
+---
+title: Route parse results to review
+description: Apply an explicit row-level intake rule and inspect its decisions against labeled examples.
+role: guide
+source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/pipeline/result.ts, packages/core/lib/decoder/types.ts
+verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0 on Node.js 24.22.1
+---
+
+# Route parse results to review
+
+Use this procedure when a US street-address intake needs a consistent rule for sending parser output to a review queue. Define what your downstream workflow requires first. This example requires a `structured_address` kind, an empty `faults` array, and nodes tagged `house_number`, `street`, `locality`, `region`, and `postcode`. A row meeting those conditions is ready for a separate validation step. The rule does not decide whether an address exists or receives mail.
+
+## Install and label example rows
+
+Use Node.js 24.22.1 in an ECMAScript module project. Install the published packages used here:
+
+```sh
+npm install --save-exact mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+The seven labels in the script below are illustrative application decisions stated before this rule is evaluated. The first three complete street-address strings are labeled `ready`; the PO box, intersection, isolated unit, and row with an unsupported region string are labeled `review`. These labels describe this intake's desired routing. They are not postal-authority judgments or verified location identities. The example needs no geographic database.
+
+## Apply the row rule
+
+Save the following file as `review-parses.mjs`:
+
+```js
+import { createRuntimePipeline } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
+const examples = [
+	["A1", "ready", "1600 Pennsylvania Avenue NW, Washington, DC 20500"],
+	["A2", "ready", "350 5th Ave, New York, NY 10118"],
+	["A3", "ready", "11 W 53rd St, New York, NY 10019"],
+	["R1", "review", "PO Box 1234, Springfield, IL 62701"],
+	["R2", "review", "5th and Main"],
+	["R3", "review", "Suite 400"],
+	["R4", "review", "42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000"],
+]
+const required = ["house_number", "street", "locality", "region", "postcode"]
+let readyCorrect = 0
+let reviewCorrect = 0
+
+for (const [id, expected, input] of examples) {
+	const result = await parse(input)
+	const nodes = []
+	function visit(node) {
+		nodes.push(node)
+		for (const child of node.children) visit(child)
+	}
+	for (const root of result.tree.roots) visit(root)
+	const missing = required.filter((tag) => !nodes.some((node) => node.tag === tag))
+	const route = result.faults.length || result.kind.kind !== "structured_address" || missing.length ? "review" : "ready"
+	const weakest = nodes.reduce((a, b) => (!a || b.confidence < a.confidence ? b : a), null)
+	if (expected === "ready" && route === "ready") readyCorrect++
+	if (expected === "review" && route === "review") reviewCorrect++
+	console.log(
+		JSON.stringify({
+			id,
+			input,
+			expected,
+			route,
+			kind: result.kind.kind,
+			missing,
+			weakest: weakest ? `${weakest.tag}:${weakest.confidence.toFixed(3)}` : null,
+		})
+	)
+}
+const readyTotal = examples.filter((example) => example[1] === "ready").length
+const reviewTotal = examples.filter((example) => example[1] === "review").length
+console.log(`Labeled ready routed ready: ${readyCorrect}/${readyTotal}`)
+console.log(`Labeled review routed review: ${reviewCorrect}/${reviewTotal}`)
+```
+
+The rule checks the kind and component tags across the whole tree. It prints the weakest returned node score for diagnosis but does not use that score to route the record. A stage fault sends a row to review, even if the tree still contains nodes.
+
+## Inspect the decisions
+
+Run `node review-parses.mjs`. Published 11.0.0 returned this complete output:
+
+```text
+{"id":"A1","input":"1600 Pennsylvania Avenue NW, Washington, DC 20500","expected":"ready","route":"ready","kind":"structured_address","missing":[],"weakest":"postcode:0.914"}
+{"id":"A2","input":"350 5th Ave, New York, NY 10118","expected":"ready","route":"ready","kind":"structured_address","missing":[],"weakest":"postcode:0.915"}
+{"id":"A3","input":"11 W 53rd St, New York, NY 10019","expected":"ready","route":"ready","kind":"structured_address","missing":[],"weakest":"postcode:0.914"}
+{"id":"R1","input":"PO Box 1234, Springfield, IL 62701","expected":"review","route":"review","kind":"po_box","missing":["house_number","street"],"weakest":"postcode:0.914"}
+{"id":"R2","input":"5th and Main","expected":"review","route":"review","kind":"intersection","missing":["house_number","street","locality","region","postcode"],"weakest":"venue:0.757"}
+{"id":"R3","input":"Suite 400","expected":"review","route":"review","kind":"landmark","missing":["house_number","locality","region","postcode"],"weakest":"unit:0.029"}
+{"id":"R4","input":"42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000","expected":"review","route":"review","kind":"structured_address","missing":["region"],"weakest":"locality:0.841"}
+Labeled ready routed ready: 3/3
+Labeled review routed review: 4/4
+```
+
+The rule sent all three of the three rows labeled `ready` to downstream validation and all four of the four rows labeled `review` to review. This is an executed result for seven selected example strings. It does not estimate production accuracy or establish a confidence cutoff. For `42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000`, the observed reason is the missing `region` tag. The parser did not check whether that address exists.
+
+The PO box row's weakest node score is `0.914`, the same rounded value as the first ready row. A cutoff chosen from these seven scores would mix different query kinds and score origins. The bundled calibration metadata identifies a model version older than the published 10.8.0 English model, so it does not establish a probability interpretation for these raw values. The [confidence and limits explanation](../explanation/confidence-and-limits.mdx) gives the version evidence. Use a separate, representative labeled set to evaluate any score-based policy for your model, locale, and application costs.
+
+For production intake, label records that cover your actual input sources before evaluating this rule. Count false ready decisions and unnecessary reviews with denominators, inspect the exact failed inputs, then change the condition that caused each error. Send rows marked ready through a separate [record validation policy](./validate-records.mdx). The [result schema](../reference/schema.mdx) defines the kind, fault, tag, and score fields used here.
