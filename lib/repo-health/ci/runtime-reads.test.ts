@@ -88,6 +88,26 @@ describe("summarizeRuntimeReads", () => {
 		expect(summarize(callerScript, TEST)?.unbounded).toBe("runs process.execPath")
 	})
 
+	it("bounds a computed import by the paths an effect-loads comment above its statement declares", () => {
+		const declared = [
+			"export async function load(name) {",
+			"\t// effect-loads: packages/mailwoman/cli/commands, packages/astrogeology/lib/commands",
+			"\treturn import(`./commands/${name}.js`)",
+			"}",
+		].join("\n")
+
+		expect(summarize(declared)).toEqual({
+			unbounded: null,
+			paths: ["packages/astrogeology/lib/commands", "packages/mailwoman/cli/commands"],
+			exact: [],
+			dataRoot: false,
+		})
+
+		expect(summarize(declared.replace("effect-loads", "loads"))?.unbounded).toBe(
+			"loads a module by a computed specifier"
+		)
+	})
+
 	it("answers null for a module that reads only what it imports", () => {
 		expect(summarize('import { value } from "./value.ts"\nexport const doubled = value * 2')).toBeNull()
 	})

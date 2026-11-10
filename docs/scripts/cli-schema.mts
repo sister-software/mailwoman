@@ -82,6 +82,8 @@ export async function readCommands(
 		}
 
 		if (!MODULE_EXTENSION.test(entry) || entry.endsWith(".d.js")) continue
+
+		// effect-loads: packages/mailwoman/cli/commands
 		const module = (await import(pathToFileURL(path).href)) as { spec?: CommandSpec; default?: unknown; run?: unknown }
 		const fileName = entry.replace(MODULE_EXTENSION, "")
 		// The declared name, so a file that moves into a prefix directory keeps the name users type.

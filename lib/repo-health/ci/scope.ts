@@ -8,6 +8,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { dirname, isAbsolute, join, relative, resolvePath } from "path-ts"
@@ -171,14 +172,24 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 					true
 				)
 
+				const declaredLoads = new Set<string>()
+
 				const reads = summarizeRuntimeReads(source, file, {
 					repoRoot,
 					packageDirectories,
 					importedPaths: importedPathsOf(file),
+					declared: declaredLoads,
 				})
 
 				if (reads) {
 					;(owner.runtimeReads ??= {})[file] = reads
+				}
+
+				// A declared path that does not exist would match no change and drop the tests that depend on it.
+				for (const declared of declaredLoads) {
+					if (!(await pathExists(resolvePath(repoRoot, declared)))) {
+						throw new Error(`${file} declares effect-loads: ${declared}, and no such path exists in the checkout`)
+					}
 				}
 
 				const addImport = (specifier: string): void => {

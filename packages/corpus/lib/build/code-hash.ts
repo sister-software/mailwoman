@@ -57,6 +57,7 @@ export function defaultRepositoryRoot(): string {
  * The resolve options the repository's dependency-cruiser config declares.
  */
 async function repositoryResolveOptions(repositoryRoot: string): Promise<Record<string, unknown>> {
+	// effect-loads: dependency-cruiser.config.mjs
 	const config = (await import(pathToFileURL(resolvePath(repositoryRoot, "dependency-cruiser.config.mjs")).href)) as {
 		default: { options?: { enhancedResolveOptions?: Record<string, unknown> } }
 	}
@@ -338,6 +339,7 @@ export async function loadAdapterFromModule(
 	adapterID: string,
 	repositoryRoot: string = defaultRepositoryRoot()
 ): Promise<CorpusAdapter> {
+	// effect-loads: packages/corpus/lib
 	const exports = (await import(pathToFileURL(resolvePath(repositoryRoot, module)).href)) as Record<string, unknown>
 	const adapter = Object.values(exports).find((value) => isAdapter(value) && value.id === adapterID)
 
@@ -365,6 +367,7 @@ export async function adapterModules(
 	const byID = new Map<string, string>()
 
 	for (const module of graph.edges.get(ADAPTER_REGISTRATION_MODULE) ?? []) {
+		// effect-loads: packages/corpus/lib
 		const exports = (await import(pathToFileURL(resolvePath(repositoryRoot, module)).href)) as Record<string, unknown>
 
 		for (const value of Object.values(exports)) {

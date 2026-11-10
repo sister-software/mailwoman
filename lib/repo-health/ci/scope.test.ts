@@ -259,6 +259,26 @@ describe("readCIWorkspaces", () => {
 		})
 	})
 
+	it("refuses an effect-loads comment that declares a path the checkout lacks", async () => {
+		await using directory = await temporaryDirectory("ci-runtime-inputs-")
+		const root = directory.path
+		await writeLocalJSONFile({ workspaces: ["packages/*"] }, root("package.json"))
+		await writeLocalJSONFile({ name: "reader" }, root("packages/reader/package.json"))
+		const sourceFile = "packages/reader/lib/router.ts"
+
+		await writeLocalTextFile(
+			"export function load(name) {\n\t// effect-loads: packages/reader/lib/commands\n\treturn import(name)\n}",
+			root(sourceFile)
+		)
+
+		await expect(readCIWorkspaces(root.toString(), [sourceFile])).rejects.toThrow(
+			"declares effect-loads: packages/reader/lib/commands"
+		)
+
+		await writeLocalTextFile("export const fetch = 1", root("packages/reader/lib/commands/fetch.ts"))
+		await expect(readCIWorkspaces(root.toString(), [sourceFile])).resolves.toBeDefined()
+	})
+
 	it("records no runtime reads for a module that imports an effect interface without calling it", async () => {
 		await using directory = await temporaryDirectory("ci-runtime-inputs-")
 		const root = directory.path

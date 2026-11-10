@@ -172,6 +172,7 @@ export async function dispatchCommand(argv: readonly string[]): Promise<number> 
 
 	if (!selected) return groupHelp(filesystemParts)
 
+	// effect-loads: packages/mailwoman/cli/commands
 	return import(selected.href).then((module) =>
 		runCommand(module, commandParts.join(" "), argv.slice(commandParts.length))
 	)

@@ -59,14 +59,51 @@ export function isTestSource(file: string): boolean {
 }
 
 /**
+ * The comment that declares where a computed `import()` loads from, on the line above
+ * the statement that holds it: `// effect-loads: packages/mailwoman/cli/commands`.
+ * Several repository paths are separated by commas.
+ */
+const EFFECT_LOADS = /\/\/\s*effect-loads:\s*(.+)$/mu
+
+function splitDeclaredPaths(declared: string): string[] {
+	return declared
+		.split(",")
+		.map((path) => path.trim())
+		.filter((path) => path.length > 0)
+}
+
+/**
+ * The repository paths an `effect-loads` comment above `call`'s statement declares,
+ * or `null` when it has none.
+ */
+function declaredLoads(source: ts.SourceFile, call: ts.Node): string[] | null {
+	let statement: ts.Node = call
+
+	while (statement.parent && !ts.isBlock(statement.parent) && !ts.isSourceFile(statement.parent)) {
+		statement = statement.parent
+	}
+
+	for (const range of ts.getLeadingCommentRanges(source.text, statement.pos) ?? []) {
+		const declared = EFFECT_LOADS.exec(source.text.slice(range.pos, range.end))?.[1]
+
+		if (declared) return splitDeclaredPaths(declared)
+	}
+
+	return null
+}
+
+/**
  * The reason a module may load or reach any file through its imports, or `null`
  * when its imports state each target.
+ *
+ * A computed `import()` with an `effect-loads` comment adds the paths the comment
+ * declares to `loads` in place of a reason.
  *
  * A raw builtin import counts only in a test.
  * In library code the lint rules confine those builtins to core's wrappers.
  * Those wrappers act on the paths their callers pass.
  */
-function unboundedImport(source: ts.SourceFile, test: boolean): string | null {
+function unboundedImport(source: ts.SourceFile, test: boolean, loads: Set<string>): string | null {
 	let reason: string | null = null
 
 	const visit = (node: ts.Node): void => {
@@ -84,21 +121,29 @@ function unboundedImport(source: ts.SourceFile, test: boolean): string | null {
 			return
 		}
 
-		const loads =
+		const loadsModule =
 			ts.isCallExpression(node) &&
 			(node.expression.kind === ts.SyntaxKind.ImportKeyword ||
 				(ts.isIdentifier(node.expression) && node.expression.text === "require"))
 
-		if (loads) {
+		if (loadsModule) {
 			const [specifier] = node.arguments
 
 			if (!specifier || !ts.isStringLiteralLike(specifier)) {
-				reason = "loads a module by a computed specifier"
+				const declared = declaredLoads(source, node)
 
-				return
+				if (!declared) {
+					reason = "loads a module by a computed specifier"
+
+					return
+				}
+
+				for (const path of declared) {
+					loads.add(path)
+				}
 			}
 
-			if (test && RAW_EFFECT_MODULES.test(specifier.text)) {
+			if (specifier && ts.isStringLiteralLike(specifier) && test && RAW_EFFECT_MODULES.test(specifier.text)) {
 				reason = `loads ${specifier.text}`
 
 				return
@@ -196,6 +241,11 @@ export interface RuntimeReadOptions {
 	 */
 	packageDirectories: ReadonlyMap<string, string>
 	importedPaths: ImportedPaths | null
+	/**
+	 * Receives each path an `effect-loads` comment declares for a computed `import()`,
+	 * so the caller can check that the path exists.
+	 */
+	declared?: Set<string>
 }
 
 /**
@@ -211,8 +261,9 @@ export function summarizeRuntimeReads(
 ): RuntimeReads | null {
 	const test = isTestSource(file)
 	const edges = extractEffectEdges(source, file, options.importedPaths)
-	let unbounded = unboundedImport(source, test)
-	const paths = new Set<string>()
+	const declared = options.declared ?? new Set<string>()
+	let unbounded = unboundedImport(source, test, declared)
+	const paths = new Set(declared)
 	const exact = new Set<string>()
 	let dataRoot = false
 
