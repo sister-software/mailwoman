@@ -64,4 +64,27 @@ describe("buildUSAddressLayer", () => {
 			})
 		).rejects.toThrow("us-tx already built in 2026-11-10; build into a new version")
 	})
+
+	it("stops when the plan lists runs and the cache directory is absent, as an unmounted volume leaves it", async () => {
+		await using directory = await temporaryDirectory("us-layer-cache-")
+		const nadParquet = directory.path("nad.parquet").toString()
+
+		await writeLocalJSONFile({ rowsByState: { TX: 1 } }, recordPathFor(nadParquet))
+
+		await expect(
+			buildUSAddressLayer({
+				root: directory.path("db"),
+				version: "2026-11-12",
+				nadParquet,
+				overtureParquet: directory.path("overture.parquet"),
+				openAddresses: {
+					plan: [{ member: "us/tx/nueces", license: null }],
+					cache: directory.path("oa-cache"),
+				},
+				states: ["TX"],
+				buildSHA: "test",
+				adminDatabase: directory.path("admin.db"),
+			})
+		).rejects.toThrow("does not exist; if it is on a separate volume, mount it before building")
+	})
 })

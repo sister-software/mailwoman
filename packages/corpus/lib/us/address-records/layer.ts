@@ -353,6 +353,16 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 		)
 	}
 
+	// A run absent from the cache counts as missing.
+	// An absent cache directory would count every run as missing and build each state
+	// from its NAD and Overture rows with no OpenAddresses runs.
+	if (options.openAddresses.plan.length && !(await pathExists(options.openAddresses.cache))) {
+		throw new Error(
+			`the OpenAddresses cache ${options.openAddresses.cache} does not exist; ` +
+				"if it is on a separate volume, mount it before building"
+		)
+	}
+
 	const omitted = new Set(options.omitFromManifest)
 	const recorded = recordedRunTerms(options.openAddresses.plan)
 	const units = await createUnitSplitter()
