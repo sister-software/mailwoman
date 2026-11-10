@@ -9,6 +9,8 @@
  *   written in key order with `INSERT … SELECT … ORDER BY`, so its B-tree pages hold contiguous keys.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { readFilesystemSpace, statPath } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { sourcePresentCoverageCells } from "@mailwoman/core/layers"
@@ -261,6 +263,8 @@ export async function buildAddressLayer(options: BuildAddressLayerOptions): Prom
 		const summary = await stageRecords(options, stagingPath)
 		const threads = sortThreadsPragma(options.sortThreads)
 
+		await assertOutputSpace(options.lookupPath, stagingPath)
+
 		await writeLookup(
 			options.lookupPath,
 			stagingPath,
@@ -284,6 +288,28 @@ export async function buildAddressLayer(options: BuildAddressLayerOptions): Prom
  */
 function sortThreadsPragma(count: number | undefined): string {
 	return `PRAGMA threads = ${Math.max(0, Math.floor(count ?? 0))}`
+}
+
+/**
+ * Throws before `lookup.db` and `detail.db` are written when their filesystem has
+ * less free space than the staging database occupies.
+ *
+ * The staging database holds every row both files are written from, so its size bounds what they need.
+ * A shortfall found here stops the build with the space it needs.
+ *
+ * Without the check, SQLite reports `database or disk is full` partway through writing.
+ */
+async function assertOutputSpace(lookupPath: PathBuilderLike, stagingPath: string): Promise<void> {
+	const needed = (await statPath(stagingPath)).size
+	const space = await readFilesystemSpace(dirname(lookupPath))
+
+	if (space.availableBytes < needed) {
+		throw new Error(
+			`${space.measuredAt} has ${ByteFormatter.formatIEC(space.availableBytes)} free, and writing ` +
+				`${basename(lookupPath.toString())} and detail.db from the staging database ${stagingPath} needs up to ` +
+				`${ByteFormatter.formatIEC(needed)}. Free space on that filesystem and build again.`
+		)
+	}
 }
 
 async function stageRecords(options: BuildAddressLayerOptions, stagingPath: string): Promise<AddressLayerBuildSummary> {
