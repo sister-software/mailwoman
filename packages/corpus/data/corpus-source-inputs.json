@@ -4367,6 +4367,11 @@
 					"registerSource": "us-geodata-aggregate-2",
 					"license": "unchecked-corpus-input-us-who-s-on-first",
 					"reads": "postcode, locality and region ancestor tuples"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "Canadian locality and region names from the Overture Divisions rows of the admin gazetteer, which the postcode-to-locality parent join reads beside the Who's On First rows"
 				}
 			],
 			"authored": ["@mailwoman/codex CA and US region codes"]
@@ -4378,6 +4383,11 @@
 					"registerSource": "us-geodata-aggregate-2",
 					"license": "unchecked-corpus-input-us-who-s-on-first",
 					"reads": "postcode, locality and region ancestor tuples"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "Canadian locality and region names from the Overture Divisions rows of the admin gazetteer, which the postcode-to-locality parent join reads beside the Who's On First rows"
 				}
 			],
 			"authored": ["@mailwoman/codex CA and US region codes"]
@@ -4427,6 +4437,11 @@
 					"registerSource": "us-geodata-aggregate-2",
 					"license": "unchecked-corpus-input-us-who-s-on-first",
 					"reads": "postcode, locality and region ancestor tuples"
+				},
+				{
+					"registerSource": "us-geodata-aggregate-1",
+					"license": "unchecked-corpus-input-us-overture-maps-foundation",
+					"reads": "Canadian locality and region names from the Overture Divisions rows of the admin gazetteer, which the postcode-to-locality parent join reads beside the Who's On First rows"
 				}
 			],
 			"authored": ["@mailwoman/codex CA and US region codes"]

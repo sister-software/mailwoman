@@ -28,7 +28,7 @@
 			"geometry": "Y",
 			"status": "VERIFIED_CORPUS",
 			"source_url": "https://docs.overturemaps.org/",
-			"notes": "The addresses theme is read by the overture adapter, the Singapore register recipe, the Japan and Taiwan corpora and their register alignment, and through the US situs databases behind the house-venue and sub-venue tuples; each upstream publisher's terms travel with its rows. The places theme is read for venue names by the venue and sub-venue recipes, through place-names/names.parquet and poi.db. One row holds both because the register scopes a decision to one publisher in one jurisdiction, and the two themes carry different terms, so a decision records each theme's terms separately.",
+			"notes": "The addresses theme is read by the overture adapter, the Singapore register recipe, the Japan and Taiwan corpora and their register alignment, and through the US situs databases behind the house-venue and sub-venue tuples; each upstream publisher's terms travel with its rows. The places theme is read for venue names by the venue and sub-venue recipes, through place-names/names.parquet and poi.db. One row holds both because the register scopes a decision to one publisher in one jurisdiction, and the two themes carry different terms, so a decision records each theme's terms separately. The divisions theme, ODbL 1.0, reaches the corpus through the admin gazetteer's Overture fold: the trailing-region recipes join postcodes to localities in that database, and for Canada and the other countries the fold covers, the locality and region names can be Overture rows.",
 			"origin": "2026-10-17_corpus_input_mapping"
 		},
 		{
