@@ -137,6 +137,12 @@ export interface WOFPlaceIndex {
 	 */
 	claimName(match: Pick<WOFMatch, "id" | "placetype">, country: string, name: string): boolean
 	/**
+	 * Answers whether a matched WOF record has no Wikidata id, recording the folded one as its id.
+	 *
+	 * A record that already has one answers false, so the fold writes at most one id per record.
+	 */
+	claimWikidata(match: Pick<WOFMatch, "id">): boolean
+	/**
 	 * Drops the name-key table from the staging database.
 	 */
 	dispose(): void
@@ -167,6 +173,11 @@ export function buildWOFPlaceIndex(db: DatabaseClient<WOFDatabase>): WOFPlaceInd
 		)
 
 	const byWikidata = concordance("wd:id")
+
+	/**
+	 * The WOF records with a Wikidata id, from WOF or claimed from a fold.
+	 */
+	const withWikidata = new Set([...byWikidata.values()].map((record) => record.id))
 	const byGeonames = concordance("gn:id")
 
 	const countryRecords = new Map(
@@ -298,6 +309,13 @@ export function buildWOFPlaceIndex(db: DatabaseClient<WOFDatabase>): WOFPlaceInd
 			if (claimed.has(claim) || hasName.get(country.toUpperCase(), key, match.id)) return false
 
 			claimed.add(claim)
+
+			return true
+		},
+		claimWikidata(match) {
+			if (withWikidata.has(match.id)) return false
+
+			withWikidata.add(match.id)
 
 			return true
 		},

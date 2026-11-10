@@ -103,6 +103,22 @@ describe("buildWOFPlaceIndex", () => {
 		).toEqual({ id: 102_049_925, placetype: "county", by: "name" })
 	})
 
+	it("claims a Wikidata id only for a record that has none", async () => {
+		using db = await stagingDatabase()
+
+		db.prepare(`INSERT INTO concordances (id, other_id, other_source) VALUES (?, ?, ?)`).run(
+			85_678_001,
+			"Q1186",
+			"wd:id"
+		)
+
+		const index = buildWOFPlaceIndex(db)
+
+		expect(index.claimWikidata({ id: 85_678_001 })).toBe(false)
+		expect(index.claimWikidata({ id: 421_168_573 })).toBe(true)
+		expect(index.claimWikidata({ id: 421_168_573 })).toBe(false)
+	})
+
 	it("claims a name once per record and refuses one the record already carries", async () => {
 		using db = await stagingDatabase()
 		const index = buildWOFPlaceIndex(db)

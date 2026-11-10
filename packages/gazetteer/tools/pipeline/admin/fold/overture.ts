@@ -353,6 +353,7 @@ export async function ingestOvertureDivisions(
 	let n = 0
 	let nWikidata = 0
 	let namesClaimed = 0
+	let wikidataClaimed = 0
 
 	for (const r of rows) {
 		const gers = String(r.id)
@@ -372,6 +373,14 @@ export async function ingestOvertureDivisions(
 				if (claim(wof.index, matched, country, alias, lang)) {
 					namesClaimed++
 				}
+			}
+
+			// The Wikidata id is how `gazetteer importance` joins a Wikipedia score,
+			// so a WOF record with none takes the division's, tagged with its source.
+			if (wikidata?.startsWith("Q") && wof.index.claimWikidata(matched)) {
+				concordancesInsert.run(matched.id, wikidata, "wd:id", 0, "overture")
+
+				wikidataClaimed++
 			}
 
 			continue
@@ -468,7 +477,8 @@ export async function ingestOvertureDivisions(
 	if (wof) {
 		console.error(
 			`  Overture divisions: ${matches.size.toLocaleString()} matched a WOF record and added ` +
-				`${namesClaimed.toLocaleString()} names to it; ${n.toLocaleString()} written as their own rows`
+				`${namesClaimed.toLocaleString()} names and ${wikidataClaimed.toLocaleString()} Wikidata ids to it; ` +
+				`${n.toLocaleString()} written as their own rows`
 		)
 	}
 
