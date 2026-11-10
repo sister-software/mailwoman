@@ -14,7 +14,7 @@ blocks you on a credential or costs a multi-gigabyte download for a single count
   `fetchOpenAddresses` reads `OA_BATCH_TOKEN`. Granularity is a whole country, and the US collection is several gigabytes.
 - **Per-source runs** — `https://results.openaddresses.io/latest/run/<path>.zip`, e.g.
   `.../latest/run/us/ia/statewide.zip`. **Anonymous access with no token**, and the endpoint honors range requests. `<path>`
-  is exactly the member path the recipe names, so `oa-cache/us__ia__statewide.zip` ⇄
+  is exactly the member path the recipe names, so `$MAILWOMAN_CACHE_ROOT/sources/openaddresses/us__ia__statewide.zip` ⇄
   `us/ia/statewide.csv` ⇄ `/latest/run/us/ia/statewide.zip`.
 
 The auth check is on collections only. If you need a handful of specific sources, use the per-source

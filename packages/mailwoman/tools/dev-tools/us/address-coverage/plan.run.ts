@@ -14,7 +14,7 @@
  *   adds are counted.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -63,7 +63,7 @@ console.log(
 
 if (values.previous) {
 	const added = plan.filter((entry) => !previousMembers.has(entry.member))
-	const cache = dataRootPath("oa-cache")
+	const cache = currentSourcePath("openaddresses")
 	const uncached: typeof added = []
 
 	for (const entry of added) {

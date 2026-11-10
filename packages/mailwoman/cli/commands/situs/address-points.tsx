@@ -76,7 +76,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const {
 			client: { DatabaseClient },
-			dataRoot: { dataRootPath },
+			dataRoot: { dataRootPath, snapshotSourcePath },
 			paths: { addressPointDatabasePath },
 			db: { swapDatabaseIntoPlace },
 		} = await allKeyed({
@@ -120,8 +120,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const STATE = options.state?.toUpperCase() ?? ""
 
 		const PARQUET = COUNTRY
-			? dataRootPath("overture", options.release, `addresses-${COUNTRY.toLowerCase()}.parquet`)
-			: dataRootPath("overture", options.release, "addresses-us.parquet")
+			? snapshotSourcePath("overture", options.release, `addresses-${COUNTRY.toLowerCase()}.parquet`)
+			: snapshotSourcePath("overture", options.release, "addresses-us.parquet")
 
 		const SCOPE = COUNTRY ?? STATE
 

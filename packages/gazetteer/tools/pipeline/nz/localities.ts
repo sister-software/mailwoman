@@ -8,7 +8,7 @@
  *   suburb) has no row and the resolver can only mis-answer or abstain.
  *
  *   Source and license: the LINZ-derived OpenAddresses NZ countrywide extract
- *   (`<data-root>/openaddresses/extracted/nz/countrywide.csv`), upstream LINZ "NZ Street Address" via
+ *   (`$MAILWOMAN_CACHE_ROOT/sources/openaddresses/extracted/nz/countrywide.csv`), upstream LINZ "NZ Street Address" via
  *   OpenAddresses, CC-BY 4.0 with attribution to Land Information New Zealand (the same lane the
  *   country-evidence runbook already ships pair-index data from). It isn't derived from any
  *   Nominatim import, so the ODbL comparison arm stays a comparison arm. The build refuses to run
@@ -28,7 +28,7 @@
  *   Run: mailwoman gazetteer build nz-localities [--csv <countrywide.csv>] [--out <localities-nz-linz.db>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
@@ -80,7 +80,7 @@ export interface BuildNZLocalitiesOptions {
 	/**
 	 * The linz-derived OpenAddresses NZ countrywide CSV.
 	 *
-	 * @defaultValue `<data-root>/openaddresses/extracted/nz/countrywide.csv`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/openaddresses/extracted/nz/countrywide.csv`
 	 */
 	csvPath?: PathBuilderLike
 	/**
@@ -137,7 +137,10 @@ export async function buildNZLocalitiesDatabase(
 		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
 	})
 
-	const csvPath = PathBuilder.from(opts.csvPath ?? dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"))
+	const csvPath = PathBuilder.from(
+		opts.csvPath ?? currentSourcePath("openaddresses", "extracted", "nz", "countrywide.csv")
+	)
+
 	const outPath = (opts.out ?? wofDatabasePath("localities-nz-linz.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 

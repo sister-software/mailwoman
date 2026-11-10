@@ -18,7 +18,7 @@
  * ({@link ortsteilSurface}) because WOF's `spr.name` for DE neighborhoods is the ascii-folded label.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -59,8 +59,8 @@ interface GermanSource {
  * The Saxony file is Sachsen.
  */
 const SOURCES: GermanSource[] = [
-	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
-	{ zip: dataRootPath("oa-cache", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
+	{ zip: currentSourcePath("openaddresses", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
+	{ zip: currentSourcePath("openaddresses", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
 ]
 
 /**
@@ -276,7 +276,7 @@ export const germanRecipe: CorpusRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error(`No German tuples found — are the cached zips present in ${dataRootPath("oa-cache")}?`)
+			throw new Error(`No German tuples found — are the cached zips present in ${currentSourcePath("openaddresses")}?`)
 		}
 
 		let emitted = 0

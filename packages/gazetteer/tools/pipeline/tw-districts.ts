@@ -34,7 +34,7 @@
  *   [--out <localities-tw-districts.db>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourcePath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { type LayerManifest, LayerTier } from "@mailwoman/core/layers"
@@ -185,7 +185,7 @@ export interface TaiwanDistrictGroup {
 
 export interface BuildTWDistrictsOptions {
 	/**
-	 * The Overture release directory under `<data-root>/overture/`.
+	 * The Overture release directory under `$MAILWOMAN_DATA_ROOT/snapshots/overture/`.
 	 *
 	 * @defaultValue {@linkcode OVERTURE_ADDRESSES_RELEASE}
 	 */
@@ -193,7 +193,7 @@ export interface BuildTWDistrictsOptions {
 	/**
 	 * The Taiwan addresses parquet.
 	 *
-	 * @defaultValue `<data-root>/overture/<release>/addresses-tw.parquet`
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/snapshots/overture/<release>/addresses-tw.parquet`
 	 */
 	parquetPath?: string
 	/**
@@ -322,7 +322,7 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 	})
 
 	const release = opts.release ?? OVERTURE_ADDRESSES_RELEASE
-	const parquetPath = opts.parquetPath ?? dataRootPath("overture", release, "addresses-tw.parquet")
+	const parquetPath = opts.parquetPath ?? snapshotSourcePath("overture", release, "addresses-tw.parquet")
 	const adminPath = opts.adminPath ?? wofDatabasePath(DEFAULT_ADMIN_DB)
 	const outPath = opts.out ?? wofDatabasePath("localities-tw-districts.db")
 	const tmpPath = `${outPath}.tmp`

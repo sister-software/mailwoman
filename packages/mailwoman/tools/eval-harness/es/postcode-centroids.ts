@@ -7,7 +7,7 @@
  *   `WOFPostcodeLookup` queries the resulting database.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourcePath } from "@mailwoman/core/data-root"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -61,7 +61,8 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 	const PC_LEN = options.pcLen ?? 5
 
 	const PARQUET = PathBuilder.from(
-		options.parquet || dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE, `addresses-${CC.toLowerCase()}.parquet`)
+		options.parquet ||
+			snapshotSourcePath("overture", OVERTURE_ADDRESSES_RELEASE, `addresses-${CC.toLowerCase()}.parquet`)
 	)
 
 	const OUT_DB = options.out || wofDatabasePath(`postalcode-${CC.toLowerCase()}-overture.db`)

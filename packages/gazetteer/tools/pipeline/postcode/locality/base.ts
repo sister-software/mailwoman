@@ -16,7 +16,7 @@
  *   from our own custom-built postalcode-intl.db.
  *
  *   Usage: node scripts/build-postcode-locality.ts --country DE\
- *   --admin-repo $MAILWOMAN_DATA_ROOT/src/wof-repos/whosonfirst-data-admin-de\
+ *   --admin-repo $MAILWOMAN_CACHE_ROOT/sources/wof-repos/whosonfirst-data-admin-de\
  *   --postcode-db $MAILWOMAN_DATA_ROOT/db/wof/postalcode-intl.db\
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-de.db\
  *   --radius-km 10 --max-candidates 4

@@ -34,7 +34,7 @@ export const spec = {
 	positionals: [
 		{
 			name: "local-repo-directory",
-			description: "Repository root. Default <data-root>/src/wof-repos",
+			description: "Repository root. Default <cache-root>/sources/wof-repos",
 		},
 	],
 	options: {

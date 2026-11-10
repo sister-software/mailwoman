@@ -27,7 +27,7 @@
  *   resolves off for en-nz until that extract is built.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import {
 	committedSoftFeedLinks,
 	materializeDevOverlay,
@@ -38,7 +38,7 @@ import {
 /**
  * The linz-derived OpenAddresses NZ countrywide CSV, the build's one source, md5-recorded in the header.
  */
-const NZ_SOURCE_CSV = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
+const NZ_SOURCE_CSV = currentSourcePath("openaddresses", "extracted", "nz", "countrywide.csv")
 
 const softFeed = await committedSoftFeedLinks()
 

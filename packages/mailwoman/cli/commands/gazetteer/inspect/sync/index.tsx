@@ -6,7 +6,7 @@
  *   `mailwoman gazetteer inspect sync` — clone or refresh the Who's On First repositories that the gazetteer builds
  *   read, every one from its `mailwoman` fork, directly under the repos root.
  *
- *   The destination defaults to `<data-root>/src/wof-repos`, matching every consumer of these repositories
+ *   The destination defaults to `<cache-root>/sources/wof-repos`, matching every consumer of these repositories
  *   (`gazetteer build admin`, `gazetteer build`, `build postcode-database`, `gazetteer polygons` all document that same
  *   default). The repositories already cloned there are always refreshed; `--repos`, `--countries` and `--all` add more.
  *   Which repositories to sync is decided in `plan.ts` before any network work, so a mistake is a message rather than
@@ -77,7 +77,7 @@ export const spec = {
 	positionals: [
 		{
 			name: "local-repo-directory",
-			description: "Repository root. Default <data-root>/src/wof-repos",
+			description: "Repository root. Default <cache-root>/sources/wof-repos",
 		},
 	],
 	options: {

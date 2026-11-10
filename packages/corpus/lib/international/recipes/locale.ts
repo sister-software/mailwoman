@@ -9,7 +9,7 @@
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
@@ -141,58 +141,62 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		source: defaultRecipeSource("synth-german"),
 		register: SourceRegister.OpenAddresses,
 		parts: [
-			{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
-			{ zip: dataRootPath("oa-cache", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
+			{ zip: currentSourcePath("openaddresses", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
+			{
+				zip: currentSourcePath("openaddresses", "de__sn__statewide.zip"),
+				csv: "de/sn/statewide.csv",
+				region: "Sachsen",
+			},
 		],
 	},
 	FR: {
 		source: defaultRecipeSource("synth-fr"),
 		register: SourceRegister.OpenAddresses,
-		parts: [{ zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }],
+		parts: [{ zip: currentSourcePath("openaddresses", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }],
 	},
 	NL: {
 		source: defaultRecipeSource("synth-nl"),
 		register: SourceRegister.OpenAddresses,
-		parts: [{ path: dataRootPath("openaddresses", "extracted", "nl", "countrywide.csv") }],
+		parts: [{ path: currentSourcePath("openaddresses", "extracted", "nl", "countrywide.csv") }],
 	},
 	IT: {
 		source: defaultRecipeSource("synth-it"),
 		register: SourceRegister.OpenAddresses,
-		parts: [{ zip: dataRootPath("oa-cache", "it__countrywide.zip"), csv: "it/countrywide.csv" }],
+		parts: [{ zip: currentSourcePath("openaddresses", "it__countrywide.zip"), csv: "it/countrywide.csv" }],
 	},
 	PT: {
 		source: defaultRecipeSource("synth-pt"),
 		register: SourceRegister.OpenAddresses,
-		parts: [{ path: dataRootPath("openaddresses", "extracted", "pt", "countrywide.csv") }],
+		parts: [{ path: currentSourcePath("openaddresses", "extracted", "pt", "countrywide.csv") }],
 	},
 	CH: {
 		source: defaultRecipeSource("synth-ch"),
 		register: SourceRegister.OpenAddresses,
-		parts: [{ path: dataRootPath("openaddresses", "extracted", "ch", "countrywide.csv") }],
+		parts: [{ path: currentSourcePath("openaddresses", "extracted", "ch", "countrywide.csv") }],
 	},
 	HR: {
 		source: defaultRecipeSource("synth-hr"),
 		register: SourceRegister.OpenAddresses,
-		parts: [{ path: dataRootPath("openaddresses", "extracted", "hr", "countrywide.csv") }],
+		parts: [{ path: currentSourcePath("openaddresses", "extracted", "hr", "countrywide.csv") }],
 	},
 	SK: {
 		source: defaultRecipeSource("synth-sk"),
 		register: SourceRegister.OpenAddresses,
-		parts: [{ path: dataRootPath("openaddresses", "extracted", "sk", "countrywide.csv") }],
+		parts: [{ path: currentSourcePath("openaddresses", "extracted", "sk", "countrywide.csv") }],
 	},
 	LU: {
 		source: defaultRecipeSource("synth-lu"),
 		register: SourceRegister.OpenAddresses,
-		parts: [{ path: dataRootPath("openaddresses", "extracted", "lu", "countrywide.csv") }],
+		parts: [{ path: currentSourcePath("openaddresses", "extracted", "lu", "countrywide.csv") }],
 	},
 	ES: {
 		source: defaultRecipeSource("synth-es"),
 		register: SourceRegister.OpenAddresses,
-		parts: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
+		parts: [{ path: currentSourcePath("openaddresses", "extracted", "es", "countrywide.csv") }],
 		// The raw CNIG file keeps pedanía names that the conformed OA file drops.
 		pedaniaParts: [
 			{
-				zip: dataRootPath("oa-cache", "es__countrywide.zip"),
+				zip: currentSourcePath("openaddresses", "es__countrywide.zip"),
 				csv: "es_addresses.csv",
 				cnigRaw: true,
 				districtAsLocality: true,
@@ -204,7 +208,9 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// The source has no postcodes.
 		source: defaultRecipeSource("synth-nz"),
 		register: SourceRegister.OpenAddresses,
-		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
+		parts: [
+			{ path: currentSourcePath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true },
+		],
 	},
 	GB: {
 		// The `gb-os-open` adapter supplies the rows.

@@ -7,7 +7,7 @@
  *
  *   Usage:
  *     node packages/corpus/lib/tools/fragment-assay.run.ts \
- *       --oa-root $MAILWOMAN_DATA_ROOT/openaddresses/extracted \
+ *       --oa-root $MAILWOMAN_CACHE_ROOT/sources/openaddresses/extracted \
  *       --corpus-parquet-glob "$MAILWOMAN_DATA_ROOT/corpus/versioned/v0.5.0/**\/train/part-000*.parquet" \
  *       --out-parquet out/part-fragment.parquet --out-dev out/fragment-dev.jsonl \
  *       [--famous-localities-file <names.txt>] [--locality-parquet-glob <glob>] [--ryhti-file <open_address.csv>]

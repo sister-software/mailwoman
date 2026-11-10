@@ -14,7 +14,7 @@
  *   seeded `<seed>-postcode`, one draw per register row.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, snapshotSourcePath } from "@mailwoman/core/data-root"
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
@@ -141,7 +141,7 @@ export const REGISTRY_LOCALES = {
 		vocab: "char-vocab-jp-registry.json",
 		candidates: async (options) => {
 			const index = await JPKeyIndex.fromParquet(
-				dataRootPath("overture", OVERTURE_RELEASE, "addresses-jp.parquet"),
+				snapshotSourcePath("overture", OVERTURE_RELEASE, "addresses-jp.parquet"),
 				options.maxRowGroups
 			)
 
@@ -158,7 +158,7 @@ export const REGISTRY_LOCALES = {
 		vocab: "char-vocab-tw-registry.json",
 		candidates: async (options) => {
 			const index = await TWKeyIndex.fromParquet(
-				dataRootPath("overture", OVERTURE_RELEASE, "addresses-tw.parquet"),
+				snapshotSourcePath("overture", OVERTURE_RELEASE, "addresses-tw.parquet"),
 				options.maxRowGroups
 			)
 

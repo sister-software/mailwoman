@@ -49,7 +49,7 @@ export interface BuildAdminOptions {
 	/**
 	 * WOF repos root.
 	 *
-	 * @defaultValue `<data-root>/src/wof-repos`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/wof-repos`
 	 */
 	dataDir?: PathBuilderLike
 	/**

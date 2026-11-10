@@ -54,7 +54,7 @@ country, clone its WOF postcode repo, build the extract, then backfill:
 ```bash
 # 1. clone the WOF postcode repo (small for most; GB is ~8 GB and deferred)
 git clone --depth 1 https://github.com/whosonfirst-data/whosonfirst-data-postalcode-fr.git \
-  $MAILWOMAN_DATA_ROOT/src/wof-repos/whosonfirst-data-postalcode-fr
+  $MAILWOMAN_CACHE_ROOT/sources/wof-repos/whosonfirst-data-postalcode-fr
 
 # 1b. (for GeoNames-filled locales) fetch the GeoNames postal dump (CC-BY 4.0)
 curl -sL https://download.geonames.org/export/zip/ES.zip -o /tmp/ES.zip && unzip -o /tmp/ES.zip ES.txt \
@@ -69,7 +69,7 @@ node scripts/build-unified-wof.ts \
 node scripts/backfill-postcode-centroids.ts \
   --db $MAILWOMAN_DATA_ROOT/db/wof/postalcode-intl.db \
   --geonames $MAILWOMAN_DATA_ROOT/geonames \
-  --repos $MAILWOMAN_DATA_ROOT/src/wof-repos
+  --repos $MAILWOMAN_CACHE_ROOT/sources/wof-repos
 
 # 4. functional check + accuracy
 node scripts/diagnostic/diag-postcode-anchor.ts

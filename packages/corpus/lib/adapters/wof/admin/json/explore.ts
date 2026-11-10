@@ -137,7 +137,7 @@ export interface ExploreOptions {
 	/**
 	 * Directory holding the `whosonfirst-data-*` repos.
 	 *
-	 * @defaultValue `$MAILWOMAN_DATA_ROOT/src/wof-repos`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/wof-repos`
 	 */
 	reposRoot?: PathBuilderLike
 }

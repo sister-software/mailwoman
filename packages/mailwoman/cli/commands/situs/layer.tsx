@@ -71,7 +71,7 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 		if (!options.plan) throw new CommandError("--plan is required: the OpenAddresses plan JSON")
 
 		const {
-			dataRoot: { dataRootPath },
+			dataRoot: { currentSourcePath, dataRootPath, snapshotSourcePath },
 			readers: { readLocalJSONFile },
 			paths: { repoRootPath },
 			stampManifest: { buildSHA },
@@ -95,8 +95,8 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 			version,
 			...(options.baseVersion ? { baseVersion: options.baseVersion } : {}),
 			nadParquet: await nadReleaseParquetPath(dataRootPath("corpus", "sources")),
-			overtureParquet: dataRootPath("overture", options.release, "addresses-us.parquet"),
-			openAddresses: { plan: await readLocalJSONFile(options.plan), cache: dataRootPath("oa-cache") },
+			overtureParquet: snapshotSourcePath("overture", options.release, "addresses-us.parquet"),
+			openAddresses: { plan: await readLocalJSONFile(options.plan), cache: currentSourcePath("openaddresses") },
 			...(options.states ? { states: extractDelimited(options.states) } : {}),
 			...(options.omit ? { omitFromManifest: extractDelimited(options.omit) } : {}),
 			buildSHA: buildSHA(repoRootPath()),

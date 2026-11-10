@@ -45,16 +45,6 @@ export function databaseRootPath<T extends PathBuilderLike>(source: T) {
 }
 
 /**
- * Path builder for the Who's On First git checkouts: `$MAILWOMAN_DATA_ROOT/src/wof-repos/<name>`.
- * They're cloned sources rather than built artifacts.
- *
- * `mailwoman gazetteer inspect sync` clones each repository here from its `mailwoman` fork.
- * Admin builds read here.
- * Postcode builds and polygon builds also read from here.
- */
-export const wofReposPath = dataRootPath("src", "wof-repos")
-
-/**
  * A vintage names one dated pull of a source: a year, month or day (`2026`, `2026-08`, `2026-08-31`),
  * or the publisher's release id (`2026-05-20.0`, `r24`, `fy23`).
  * It is one path segment.
@@ -82,6 +72,16 @@ export function currentSourcePath(source: string, ...segments: string[]): PathBu
 }
 
 /**
+ * The directory that holds every vintage of a snapshot source, `$MAILWOMAN_DATA_ROOT/snapshots/<source>/`.
+ *
+ * A reader that lists the vintages on disk, such as one that picks the newest Overture release, starts here.
+ * A path inside one vintage goes through {@link snapshotSourcePath}.
+ */
+export function snapshotSourceDirectory(source: string): PathBuilder {
+	return dataRootPath("snapshots", source)
+}
+
+/**
  * A path under one vintage of a snapshot source, `$MAILWOMAN_DATA_ROOT/snapshots/<source>/<vintage>/`.
  *
  * A snapshot is a dated pull that is read-only once written.
@@ -94,7 +94,7 @@ export function currentSourcePath(source: string, ...segments: string[]): PathBu
 export function snapshotSourcePath(source: string, vintage: string, ...segments: string[]): PathBuilder {
 	assertVintage(vintage)
 
-	return dataRootPath("snapshots", source, vintage, ...segments)
+	return snapshotSourceDirectory(source)(vintage, ...segments)
 }
 
 /**
@@ -149,3 +149,16 @@ export function mailwomanCacheRoot(): PathBuilder {
 export function cacheRootPath(...segments: string[]): string {
 	return cacheRootPathBuilder(...segments).toString()
 }
+
+/**
+ * Path builder for the Who's On First git checkouts: `$MAILWOMAN_CACHE_ROOT/sources/wof-repos/<name>`.
+ *
+ * They're current sources: `git pull` brings each one up to date, and a cleared cache root is cloned again.
+ *
+ * `mailwoman gazetteer inspect sync` clones each repository here from its `mailwoman` fork.
+ * Admin builds read here.
+ * Postcode builds and polygon builds also read from here.
+ *
+ * The constant follows `cacheRootPathBuilder` because it is evaluated when this module loads.
+ */
+export const wofReposPath = currentSourcePath("wof-repos")

@@ -8,7 +8,21 @@
 
 import { describe, expect, it } from "vitest"
 
-import { snapshotSourcePath } from "#data-root"
+import { cacheRootPath, snapshotSourceDirectory, snapshotSourcePath, wofReposPath } from "#data-root"
+
+describe("snapshotSourceDirectory", () => {
+	it("holds the vintages snapshotSourcePath places", () => {
+		expect(snapshotSourcePath("overture", "2026-05-20.0").toString()).toBe(
+			snapshotSourceDirectory("overture")("2026-05-20.0").toString()
+		)
+	})
+})
+
+describe("wofReposPath", () => {
+	it("is a current source under the cache root", () => {
+		expect(wofReposPath.toString()).toBe(cacheRootPath("sources", "wof-repos"))
+	})
+})
 
 describe("snapshotSourcePath", () => {
 	it("places a dated or released vintage under its source", () => {

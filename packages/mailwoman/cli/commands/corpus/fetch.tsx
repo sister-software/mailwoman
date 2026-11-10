@@ -98,7 +98,7 @@ export const spec = {
 		sources: {
 			type: "string",
 			description:
-				"openaddresses: source members, comma-separated (us/mi/statewide); caches each one's latest batch job output in the data root's oa-cache instead of a country collection",
+				"openaddresses: source members, comma-separated (us/mi/statewide); caches each one's latest batch job output in the cache root's sources/openaddresses instead of a country collection",
 		},
 		plan: {
 			type: "string",

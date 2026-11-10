@@ -41,7 +41,7 @@ export interface BuildPostcodeDatabaseOptions {
 	/**
 	 * WOF repos root.
 	 *
-	 * @defaultValue `<data-root>/src/wof-repos`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/wof-repos`
 	 */
 	reposDir?: PathBuilderLike
 	/**

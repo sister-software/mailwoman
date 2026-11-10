@@ -24,7 +24,7 @@ confirmation has gone to GEBCO, and if its reply restricts reuse, the layer move
 yarn workspace @mailwoman/undersea build:layer
 ```
 
-The run reads the three service layers into `$MAILWOMAN_DATA_ROOT/src/undersea/<date>/`, with a
+The run reads the three service layers into `$MAILWOMAN_DATA_ROOT/snapshots/undersea/<date>/`, with a
 `receipt.json` holding each file's record count and SHA-256. It refuses a pull whose count differs from the
 count the service declares. `--source <dir>` rebuilds from a kept download.
 

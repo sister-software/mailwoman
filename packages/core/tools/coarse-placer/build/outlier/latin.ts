@@ -19,13 +19,13 @@
  *   without rebuilding train/val).
  *
  *   Run: `mailwoman placer build-dataset --outliers latin [--per-country 6000] [--overture
- *   $MAILWOMAN_DATA_ROOT/overture/<release>]` (default: the addresses-theme pin, `OVERTURE_ADDRESSES_RELEASE`)
+ *   $MAILWOMAN_DATA_ROOT/snapshots/overture/<release>]` (default: the addresses-theme pin, `OVERTURE_ADDRESSES_RELEASE`)
  */
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
-import { dataRootPath } from "#data-root"
+import { snapshotSourcePath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { appendLocalTextFile, writeLocalJSONLFile } from "#fs/writers"
 import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
@@ -52,7 +52,7 @@ export interface BuildOutlierLatinOptions {
 	/**
 	 * Overture release dir.
 	 *
-	 * @defaultValue `$MAILWOMAN_DATA_ROOT/overture/<OVERTURE_ADDRESSES_RELEASE>`
+	 * @defaultValue `$MAILWOMAN_DATA_ROOT/snapshots/overture/<OVERTURE_ADDRESSES_RELEASE>`
 	 */
 	overture?: PathBuilderLike
 	/**
@@ -125,7 +125,7 @@ export async function buildOutlierLatin(
 	report?: (line: string) => void
 ): Promise<BuildOutlierLatinResult> {
 	const PER = options.perCountry ?? 6000
-	const overtureDir = options.overture || dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE)
+	const overtureDir = options.overture || snapshotSourcePath("overture", OVERTURE_ADDRESSES_RELEASE)
 	const dataDir = options.data || defaultDataDir()
 
 	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
