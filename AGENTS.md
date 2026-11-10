@@ -178,7 +178,8 @@ CLI adapter keys. `sister-software/no-title-case-acronym` enforces the conventio
 
 A `*.run.ts` tool or a `tools/` script parses its flags with `parseArgs` from `node:util`, declaring
 each switch as a `{ type: "boolean" }` option. A tri-state pin takes `--x` and `--no-x`. A `cli/`
-command declares its options through Pastel's option schema. The `restrictProcessGlobals` lint rule
+command declares its options in the `CommandSpec` its module exports
+(`packages/mailwoman/cli/native/spec.ts`). The `restrictProcessGlobals` lint rule
 refuses a scan of `process.argv`.
 
 Test for the presence of what the code needs, such as `typeof id === "number"` or `x != null`,

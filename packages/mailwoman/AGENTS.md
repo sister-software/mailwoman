@@ -19,14 +19,20 @@ exec that compiled entry through `execFileSync(process.execPath, …)`. Run `yar
 suite after a fresh checkout, a branch switch or a dependency change. A stale `out/` fails on a
 recently added flag (`option '--format' argument … is invalid`) or silently passes against old code.
 
-A zod boolean option needs `.default(false)`: `.default(true)` generates an automatic `--no-x`, and
-declaring a literal `--no-x` key collapses the tri-state through commander negation. Option keys
-arrive camelCase (`options.dryRun`), and `--version` collides with Commander's reserved flag. Pastel
-eagerly imports every command module, so an unpublished or heavy dependency must be a lazy
-`await import()` inside the branch that needs it, or the published CLI breaks. `percentile` and
-`median` in core use nearest-rank semantics matched to the promotion eval. Keep those semantics. For
-the native CLI, declare a boolean positively with `default: true`; `cli-native/spec.ts` parses with
-`allowNegative`, so an option declared as `no-x` never binds (`--no-x` sets `x: false`) and help
+A command module exports a `spec`, a `CommandSpec` from `cli/native/spec.ts`, and a default Ink
+component. The router in `cli/native/command/router.ts` resolves the typed command to one compiled
+module under `out/cli/commands/` and imports that module only. A command's top-level imports therefore
+load on every run of that command. An optional peer or a heavy dependency belongs behind an
+`await import()` in the branch that needs it, or a run that never reaches the branch pays for it, and
+an uninstalled optional peer fails the command at import. `mw --help` and a group's help list
+commands by reading each module's text for its declared name, without importing it. Option keys
+arrive camelCase (`options.dryRun`). When a command keeps several sibling modules behind one
+choice, such as `corpus fetch <source>`, it keeps a table of entries that each import their own
+module, and `satisfies Record<…>` keeps the table complete against the choices.
+
+`percentile` and `median` in core use nearest-rank semantics matched to the promotion eval. Keep
+those semantics. Declare a boolean positively with `default: true`; `cli/native/spec.ts` parses
+with `allowNegative`, so an option declared as `no-x` never binds (`--no-x` sets `x: false`) and help
 renders `--[no-]x`. A factory-built command `spec` is invisible to the static option-collision test.
 
 ## Terminal output tests
