@@ -14,6 +14,40 @@ import { type ChildProcess, spawnProcess } from "@mailwoman/core/process"
 
 export type JobState = "running" | "succeeded" | "failed" | "cancelled"
 
+/**
+ * What the registry observes about a job's child process.
+ *
+ * `error` is Node's `ChildProcess` event.
+ * It fires when the process could not be spawned and when `kill()` could not deliver its signal.
+ */
+export type JobEvent =
+	| { kind: "close"; code: number | null; signal: NodeJS.Signals | null }
+	| { kind: "error" }
+	| { kind: "cancel" }
+
+/**
+ * The state a job moves to on an event.
+ *
+ * Only `running` moves on a close or an error.
+ * A cancelled job stays cancelled through its close and through a failed kill,
+ * so a killed run never reads as a graded `fail`.
+ * `succeeded` and `failed` are terminal.
+ */
+export function nextJobState(state: JobState, event: JobEvent): JobState {
+	if (state !== "running") return state
+
+	switch (event.kind) {
+		case "cancel":
+			return "cancelled"
+		case "error":
+			return "failed"
+		case "close":
+			if (event.signal) return "cancelled"
+
+			return event.code === 0 ? "succeeded" : "failed"
+	}
+}
+
 export interface Job {
 	jobID: string
 	label: string
@@ -91,14 +125,20 @@ export class JobRegistry {
 			job.endedAt = Date.now()
 			job.exitCode = code
 			job.child = null
-			// A signaled exit is a cancellation.
-			// A failure verdict would let a killed run read as a graded `fail`.
-			job.state = job.state === "cancelled" || signal ? "cancelled" : code === 0 ? "succeeded" : "failed"
+			job.state = nextJobState(job.state, { kind: "close", code, signal })
 		})
 
 		child.on("error", (error) => {
+			// After a cancel, the error is a kill that failed, and the process may still run.
+			// The job keeps its child so `cancelAll` can kill it again.
+			if (job.state === "cancelled") {
+				job.stderr = appendCapped(job.stderr, `\n[jobs] kill failed: ${error.message}\n`)
+
+				return
+			}
+
 			job.endedAt = Date.now()
-			job.state = "failed"
+			job.state = nextJobState(job.state, { kind: "error" })
 			job.stderr = appendCapped(job.stderr, `\n[jobs] spawn failed: ${error.message}\n`)
 			job.child = null
 		})
@@ -134,7 +174,7 @@ export class JobRegistry {
 
 		if (!job?.child) return false
 
-		job.state = "cancelled"
+		job.state = nextJobState(job.state, { kind: "cancel" })
 		job.child.kill("SIGTERM")
 
 		return true
@@ -149,7 +189,7 @@ export class JobRegistry {
 
 		for (const job of this.#jobs.values()) {
 			if (job.child) {
-				job.state = "cancelled"
+				job.state = nextJobState(job.state, { kind: "cancel" })
 				job.child.kill("SIGTERM")
 
 				cancelled++
