@@ -42,6 +42,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { type AddressTree, flattenTreeNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { JSONSpliterator } from "spliterator"
@@ -132,9 +133,15 @@ async function main(): Promise<void> {
 
 	const rows: CalibRow[] = await JSONSpliterator.fromAsync<CalibRow>(setPath).take(limit).toArray()
 
-	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
-	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
+	const {
+		neural: { NeuralAddressClassifier },
+		onnxRunner: { ONNXRunner },
+		tokenizer: { MailwomanTokenizer },
+	} = await allKeyed({
+		neural: import("@mailwoman/neural"),
+		onnxRunner: import("@mailwoman/neural/onnx-runner"),
+		tokenizer: import("@mailwoman/neural/tokenizer"),
+	})
 
 	const modelCard = await readLocalJSONFile<{ labels: string[] }>(
 		values["model-card"] || "packages/neural-weights-en-us/model-card.json"

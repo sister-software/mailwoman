@@ -19,6 +19,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/entity-resolution"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/entity-resolution/tools/eval-geocoder"
@@ -121,18 +122,30 @@ export async function loadMapping(
  * @returns it plus a disposal hook for the database handles.
  */
 async function buildGeocoder(options: Options): Promise<{ geocodeAddress: GeocodeAddress } & Disposable> {
-	const { decodeAsJSON } = await import("@mailwoman/core/decoder")
-	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { geocodeAddressVia } = await import("@mailwoman/entity-resolution")
-	const { createWOFResolver } = await import("@mailwoman/resolver")
+	const {
+		decoder: { decodeAsJSON },
+		neural: { NeuralAddressClassifier },
+		entityResolution: { geocodeAddressVia },
+		resolver: { createWOFResolver },
+	} = await allKeyed({
+		decoder: import("@mailwoman/core/decoder"),
+		neural: import("@mailwoman/neural"),
+		entityResolution: import("@mailwoman/entity-resolution"),
+		resolver: import("@mailwoman/resolver"),
+	})
 
 	const [{ geocodeAddress }, { USStateDatabaseProvider }] = await Promise.all([
 		import("#geocode/core"),
 		import("#geocode/regions"),
 	])
 
-	const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
-	const { createResolverBackend } = await import("#resolver-backend")
+	const {
+		moduleinterpCalibration: { INTERP_RADIUS_CALIBRATION },
+		moduleresolverBackend: { createResolverBackend },
+	} = await allKeyed({
+		moduleinterpCalibration: import("#interp-calibration"),
+		moduleresolverBackend: import("#resolver-backend"),
+	})
 
 	const wofPath = await requireCommandWOFPath(options)
 
@@ -225,10 +238,17 @@ export interface EvalGeocoderFlags {
  */
 export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
 	return async (init): Promise<EvalGeocoder> => {
-		const { decodeAsJSON } = await import("@mailwoman/core/decoder")
-		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-		const { geocodeAddressVia } = await import("@mailwoman/entity-resolution")
-		const { createWOFResolver } = await import("@mailwoman/resolver")
+		const {
+			decoder: { decodeAsJSON },
+			neural: { NeuralAddressClassifier },
+			entityResolution: { geocodeAddressVia },
+			resolver: { createWOFResolver },
+		} = await allKeyed({
+			decoder: import("@mailwoman/core/decoder"),
+			neural: import("@mailwoman/neural"),
+			entityResolution: import("@mailwoman/entity-resolution"),
+			resolver: import("@mailwoman/resolver"),
+		})
 
 		const [{ geocodeAddress }, { USStateDatabaseProvider }] = await Promise.all([
 			import("#geocode/core"),

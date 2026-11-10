@@ -11,6 +11,8 @@
  *       `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`, build-on-copy).
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
+
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Build the Gauntlet data artifacts (fdic-holdout, regression-db)"
@@ -35,8 +37,13 @@ const EvalGauntletBuild: ParsedCommandComponent<Record<string, never>, ["fdic-ho
 	args,
 }) => {
 	const state = useCommandTask(async () => {
-		const { buildFDICHoldout } = await import("#tools/eval-harness/gauntlet/build/fdic-holdout")
-		const { buildRegressionDB } = await import("#tools/eval-harness/gauntlet/build/regression-db")
+		const {
+			fdicHoldout: { buildFDICHoldout },
+			regressionDb: { buildRegressionDB },
+		} = await allKeyed({
+			fdicHoldout: import("#tools/eval-harness/gauntlet/build/fdic-holdout"),
+			regressionDb: import("#tools/eval-harness/gauntlet/build/regression-db"),
+		})
 
 		switch (args[0]) {
 			case "fdic-holdout":

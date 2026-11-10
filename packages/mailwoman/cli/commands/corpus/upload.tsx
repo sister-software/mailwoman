@@ -10,6 +10,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { runProcess } from "@mailwoman/core/process"
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { BuildCorpusManifest } from "@mailwoman/corpus/build"
@@ -150,8 +151,10 @@ async function readRequiredManifest(version: string, path: PathBuilderLike): Pro
  * When neither does, the set is unrecorded and refuses unless `allow` is set.
  */
 export async function refuseShareAlike(version: string, upload: CorpusUploadSource, allow: boolean): Promise<void> {
-	const { stringifyJSON } = await import("@mailwoman/core/json")
-	const { shareAlikeFindings } = await import("@mailwoman/corpus/utils/license")
+	const {
+		json: { stringifyJSON },
+		license: { shareAlikeFindings },
+	} = await allKeyed({ json: import("@mailwoman/core/json"), license: import("@mailwoman/corpus/utils/license") })
 
 	const uploadedPath = PathBuilder.from(upload.source)("MANIFEST.json")
 	const uploaded = await readRequiredManifest(version, uploadedPath)

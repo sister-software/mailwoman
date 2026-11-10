@@ -22,6 +22,7 @@
  *   be promoted. That is the correct failure rather than a convenience.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Text } from "ink"
 
@@ -60,10 +61,13 @@ function parseExtracts(extractSpec: string | null | undefined): Array<{ path: st
 
 const CorpusSubVenueLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { generateSubVenueLexicon } = await import("@mailwoman/corpus/tools/sub/venue/lexicon")
-
-		const { readOvertureLayerVintage, readOvertureSubVenues } =
-			await import("@mailwoman/corpus/tools/overture-subvenue")
+		const {
+			lexicon: { generateSubVenueLexicon },
+			overtureSubvenue: { readOvertureLayerVintage, readOvertureSubVenues },
+		} = await allKeyed({
+			lexicon: import("@mailwoman/corpus/tools/sub/venue/lexicon"),
+			overtureSubvenue: import("@mailwoman/corpus/tools/overture-subvenue"),
+		})
 
 		const overtureRows = options.overtureDB ? await readOvertureSubVenues({ databasePath: options.overtureDB }) : null
 

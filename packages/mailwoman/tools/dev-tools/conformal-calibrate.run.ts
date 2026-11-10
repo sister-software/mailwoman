@@ -50,6 +50,7 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { makeGlibcLcgFloat64, shuffleBy } from "@mailwoman/core/random"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -205,9 +206,16 @@ async function buildCascade(paths: {
 	addressPointsDB: string
 	interpolationDB: string
 }) {
-	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
-	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
+	const {
+		neural: { NeuralAddressClassifier },
+		onnxRunner: { ONNXRunner },
+		tokenizer: { MailwomanTokenizer },
+	} = await allKeyed({
+		neural: import("@mailwoman/neural"),
+		onnxRunner: import("@mailwoman/neural/onnx-runner"),
+		tokenizer: import("@mailwoman/neural/tokenizer"),
+	})
+
 	const modelCard = await readLocalJSONFile<{ labels: string[] }>(paths.modelCardPath)
 
 	const [tokenizer, runner] = await Promise.all([

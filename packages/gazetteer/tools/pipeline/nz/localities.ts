@@ -34,6 +34,7 @@ import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { NZ_LOCALITY_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { isoDate } from "@mailwoman/core/utils"
@@ -128,8 +129,14 @@ function percentileSorted(sorted: readonly number[], p: number): number {
 export async function buildNZLocalitiesDatabase(
 	opts: BuildNZLocalitiesOptions = {}
 ): Promise<{ out: string; inserted: number; skippedGroups: number; sourceMD5: string }> {
-	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
+	const {
+		unifiedSchema: { createUnifiedIndexes, createUnifiedSchema },
+		resolverWofSqlite: { buildPlaceSearchFTS },
+	} = await allKeyed({
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+	})
+
 	const csvPath = PathBuilder.from(opts.csvPath ?? dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"))
 	const outPath = (opts.out ?? wofDatabasePath("localities-nz-linz.db")).toString()
 	const tmpPath = `${outPath}.tmp`

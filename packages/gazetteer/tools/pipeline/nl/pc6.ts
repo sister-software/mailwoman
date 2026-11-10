@@ -25,6 +25,7 @@
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { NL_PC6_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -58,9 +59,16 @@ export async function buildNLPC6Database(
 	opts: BuildNLPC6Options = {}
 ): Promise<{ out: string; inserted: number; skipped: number }> {
 	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
-	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
-	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
+	const {
+		resolverWofSqlite: { buildPlaceSearchFTS },
+		geonames: { normalizePostcodeName },
+		unifiedSchema: { createUnifiedIndexes, createUnifiedSchema },
+	} = await allKeyed({
+		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+		geonames: import("@mailwoman/resolver-wof-sqlite/geonames"),
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+	})
+
 	const csvPath = PathBuilder.from(opts.csvPath ?? dataRootPath("cbs", "pc6-centroids.csv"))
 	const outPath = (opts.out ?? wofDatabasePath("postalcode-nl-pc6.db")).toString()
 	const tmpPath = `${outPath}.tmp`

@@ -10,6 +10,7 @@
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
+import { allKeyed } from "@mailwoman/core/promises"
 import {
 	foldSourceAdminPath,
 	foldStaleness,
@@ -69,12 +70,21 @@ export const spec = {
 
 const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-
-		const { buildCandidate, DEFAULT_ADMIN_DB, foldGeonamesIntoAdmin, resolveImportanceDB, resolvePostcodeDatabases } =
-			await import("@mailwoman/gazetteer/tools/pipeline")
-
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			dataRoot: { dataRootPath },
+			pipeline: {
+				buildCandidate,
+				DEFAULT_ADMIN_DB,
+				foldGeonamesIntoAdmin,
+				resolveImportanceDB,
+				resolvePostcodeDatabases,
+			},
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const root = dataRootPath()
 		const adminIn = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)

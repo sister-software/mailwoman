@@ -29,6 +29,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/gazetteer/whosonfirst"
@@ -182,9 +183,15 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 
 const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
-		const { tryParsingJSON } = await import("@mailwoman/core/json")
+		const {
+			client: { DatabaseClient },
+			polygonSchema: { createPolygonsTable },
+			json: { tryParsingJSON },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			polygonSchema: import("@mailwoman/resolver-wof-sqlite/polygon-schema"),
+			json: import("@mailwoman/core/json"),
+		})
 
 		const out = options.out
 		const points = options.points ?? ""

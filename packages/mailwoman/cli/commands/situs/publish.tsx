@@ -6,6 +6,7 @@
  * Publishes one US address-layer version to the public bucket and verifies every object it uploaded.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 import {
@@ -62,18 +63,27 @@ const SitusPublish: CommandComponent<typeof spec> = ({ options }) => {
 			throw new CommandError("--layer-version is required, as an ISO date such as 2026-11-10")
 		}
 
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
-		const { pathExists } = await import("@mailwoman/core/fs/readers/stat")
-		const { temporaryDirectory } = await import("@mailwoman/core/fs/temporary")
-		const { createSymbolicLink, makeDirectories } = await import("@mailwoman/core/fs/writers")
-		const { addressLayerManifestPath } = await import("@mailwoman/resolver-wof-sqlite/address/keys/layout")
-
-		const { formatPublicBucketPublishResult, publishToPublicBucket, verifyPublicBucketUploads } =
-			await import("@mailwoman/gazetteer/tools/publish/public-bucket")
-
-		const { dirname, resolvePath } = await import("path-ts")
-		const { sleep } = await import("@mailwoman/core/utils/sleep")
+		const {
+			dataRoot: { dataRootPath },
+			readers: { readLocalJSONFile },
+			stat: { pathExists },
+			temporary: { temporaryDirectory },
+			writers: { createSymbolicLink, makeDirectories },
+			layout: { addressLayerManifestPath },
+			publicBucket: { formatPublicBucketPublishResult, publishToPublicBucket, verifyPublicBucketUploads },
+			pathTs: { dirname, resolvePath },
+			sleep: { sleep },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			readers: import("@mailwoman/core/fs/readers"),
+			stat: import("@mailwoman/core/fs/readers/stat"),
+			temporary: import("@mailwoman/core/fs/temporary"),
+			writers: import("@mailwoman/core/fs/writers"),
+			layout: import("@mailwoman/resolver-wof-sqlite/address/keys/layout"),
+			publicBucket: import("@mailwoman/gazetteer/tools/publish/public-bucket"),
+			pathTs: import("path-ts"),
+			sleep: import("@mailwoman/core/utils/sleep"),
+		})
 
 		type Manifest = import("@mailwoman/resolver-wof-sqlite/address/keys/layout").AddressLayerCountryManifest
 

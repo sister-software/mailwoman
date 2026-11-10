@@ -13,6 +13,7 @@
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
@@ -31,10 +32,10 @@ export const spec = {
 
 const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { AbbreviationToDirectional, DirectionalToAbbreviationMap, NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } =
-			await import("@mailwoman/codex/us")
-
-		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
+		const {
+			us: { AbbreviationToDirectional, DirectionalToAbbreviationMap, NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP },
+			paths: { repoRootPathBuilder },
+		} = await allKeyed({ us: import("@mailwoman/codex/us"), paths: import("@mailwoman/core/paths") })
 
 		const output = options.out ?? repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json")
 

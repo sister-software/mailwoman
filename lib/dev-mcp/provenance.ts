@@ -9,6 +9,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists, readLink, statLink, statPath } from "@mailwoman/core/fs/readers/stat"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { PathBuilderLike } from "path-ts"
 
 interface ArtifactState {
@@ -108,9 +109,15 @@ export interface ProvenanceOptions {
  * file as absent rather than defaulted.
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
-	const { dataRootPath } = await import("@mailwoman/core/data-root")
-	const { repoRootPath } = await import("@mailwoman/core/paths")
-	const { poiDatabasePath, wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+	const {
+		dataRoot: { dataRootPath },
+		paths: { repoRootPath },
+		paths2: { poiDatabasePath, wofDatabasePath },
+	} = await allKeyed({
+		dataRoot: import("@mailwoman/core/data-root"),
+		paths: import("@mailwoman/core/paths"),
+		paths2: import("@mailwoman/resolver-wof-sqlite/paths"),
+	})
 
 	const dataRoot = dataRootPath()
 

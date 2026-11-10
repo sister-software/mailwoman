@@ -12,6 +12,7 @@
  *   `mailwoman corpus overlay-manifest` to assemble the new corpus.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -34,9 +35,15 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
-		const { baseManifestFiles, localManifestFilePath } = await import("@mailwoman/corpus/tools/overlay/manifest")
-		const { migrateOverlayParquet } = await import("@mailwoman/corpus/tools/migrate/overlay-parquet")
+		const {
+			readers: { readLocalJSONFile },
+			manifest: { baseManifestFiles, localManifestFilePath },
+			overlayParquet: { migrateOverlayParquet },
+		} = await allKeyed({
+			readers: import("@mailwoman/core/fs/readers"),
+			manifest: import("@mailwoman/corpus/tools/overlay/manifest"),
+			overlayParquet: import("@mailwoman/corpus/tools/migrate/overlay-parquet"),
+		})
 
 		type Manifest = Parameters<typeof baseManifestFiles>[0]
 

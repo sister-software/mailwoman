@@ -23,6 +23,7 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { allRows } from "@mailwoman/core/utils"
 import type { GBGranularity } from "@mailwoman/gazetteer/tools/pipeline/postcode/binary"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -72,11 +73,15 @@ export const spec = {
  */
 const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { serializePostcodeBinary } = await import("@mailwoman/postcode/binary-resolver")
-
-		const { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES } =
-			await import("@mailwoman/gazetteer/tools/pipeline/postcode/binary")
+		const {
+			paths: { wofDatabasePath },
+			binaryResolver: { serializePostcodeBinary },
+			binary: { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES },
+		} = await allKeyed({
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			binaryResolver: import("@mailwoman/postcode/binary-resolver"),
+			binary: import("@mailwoman/gazetteer/tools/pipeline/postcode/binary"),
+		})
 
 		const outDir = resolvePathBuilder(options.out)
 

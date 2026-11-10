@@ -11,6 +11,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PolicyMode } from "@mailwoman/core/policy"
+import { allKeyed } from "@mailwoman/core/promises"
 import { RESOLVE_SWITCH_DEFAULTS, type ResolveOpts, type Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { percentile } from "@mailwoman/core/stats"
@@ -303,8 +304,10 @@ async function resolveWithCandidates(
 }
 
 async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) => Promise<T>): Promise<T> {
-	const { createWOFResolver } = await import("@mailwoman/resolver")
-	const { createResolverBackend, resolveCandidateDBPath } = await import("#resolver-backend")
+	const {
+		resolver: { createWOFResolver },
+		moduleresolverBackend: { createResolverBackend, resolveCandidateDBPath },
+	} = await allKeyed({ resolver: import("@mailwoman/resolver"), moduleresolverBackend: import("#resolver-backend") })
 
 	// `@mailwoman/resolver-wof-sqlite` is an optional peer, so it loads only when a resolver is needed.
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
@@ -714,9 +717,15 @@ async function runNeural(
 	options: ParseOptions,
 	policyOverrides: readonly PolicyOverride[]
 ): Promise<string> {
-	const { collectProposals, filterByPolicy, InMemoryPolicyRegistry } = await import("@mailwoman/core/policy")
-	const { proposalsToTree } = await import("@mailwoman/core/decoder")
-	const { createNeuralProposalClassifier, NeuralAddressClassifier } = await import("@mailwoman/neural")
+	const {
+		policy: { collectProposals, filterByPolicy, InMemoryPolicyRegistry },
+		decoder: { proposalsToTree },
+		neural: { createNeuralProposalClassifier, NeuralAddressClassifier },
+	} = await allKeyed({
+		policy: import("@mailwoman/core/policy"),
+		decoder: import("@mailwoman/core/decoder"),
+		neural: import("@mailwoman/neural"),
+	})
 
 	// Each invocation parses one input, so the script route is chosen once up front.
 	const routedClassifier = await NeuralAddressClassifier.loadRoutedFromWeights({

@@ -8,6 +8,7 @@
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
@@ -73,10 +74,17 @@ const BBOX_FIELDS = 4
  */
 const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { swapDatabaseIntoPlace } = await import("@mailwoman/sqlite/sealed/db")
+		const {
+			client: { DatabaseClient },
+			dataRoot: { dataRootPath },
+			paths: { addressPointDatabasePath },
+			db: { swapDatabaseIntoPlace },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			db: import("@mailwoman/sqlite/sealed/db"),
+		})
 
 		const OA_MODE = Boolean(options.oaCSV)
 		const COUNTRY = options.country?.toUpperCase()
@@ -369,9 +377,15 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		await kdb.destroy()
 
 		// The manifest is stamped on the temp file because the swap is the moment the database goes live.
-		const { buildSHA, stampLayerManifest } = await import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest")
-		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
-		const { repoRootPath } = await import("@mailwoman/core/paths")
+		const {
+			stampManifest: { buildSHA, stampLayerManifest },
+			layers: { LayerFreshnessPolicy, LayerTier },
+			paths: { repoRootPath },
+		} = await allKeyed({
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
+			layers: import("@mailwoman/core/layers"),
+			paths: import("@mailwoman/core/paths"),
+		})
 
 		await stampLayerManifest(tmpOut, {
 			name: COUNTRY ? `address-points-${COUNTRY.toLowerCase()}` : `address-points-us-${STATE.toLowerCase()}`,

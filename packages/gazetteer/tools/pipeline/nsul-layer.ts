@@ -45,6 +45,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CoverageBasis } from "@mailwoman/evidence"
 import type { NSULDatabase } from "@mailwoman/resolver-wof-sqlite/nsul"
 import { nsulDatabasePath, uprnDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -784,12 +785,15 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const item = itemRaw ? tryParsingJSON<NSULItemRecord>(itemRaw) : null
 
 	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { createUPRNPostcodeTable, createNSULMetaTable, createNSULIndexes, NSUL_COVERAGE_H3_RESOLUTION } =
-		await import("@mailwoman/resolver-wof-sqlite/nsul")
-
-	const { compactPostcode } = await import("@mailwoman/postcode/display-form")
-
-	const { UPRN_H3_RESOLUTION } = await import("@mailwoman/resolver-wof-sqlite/uprn")
+	const {
+		nsul: { createUPRNPostcodeTable, createNSULMetaTable, createNSULIndexes, NSUL_COVERAGE_H3_RESOLUTION },
+		displayForm: { compactPostcode },
+		uprn: { UPRN_H3_RESOLUTION },
+	} = await allKeyed({
+		nsul: import("@mailwoman/resolver-wof-sqlite/nsul"),
+		displayForm: import("@mailwoman/postcode/display-form"),
+		uprn: import("@mailwoman/resolver-wof-sqlite/uprn"),
+	})
 
 	// Record which Open UPRN release the coordinates came from.
 	using uprnDB = new DatabaseClient<UPRNDatabase>(uprnPath, { readOnly: true })

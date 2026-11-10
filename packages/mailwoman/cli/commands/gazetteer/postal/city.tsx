@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { allRows } from "@mailwoman/core/utils"
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 
@@ -35,18 +36,26 @@ export const spec = {
 
 const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			client: { DatabaseClient },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const candidateDB = options.candidateDB
 
 		const aliasDB = options.aliasDB ?? wofDatabasePath("postal-city-alias-us.db")
 		const postcodeLocalityDB = options.postcodeLocalityDB ?? wofDatabasePath("postcode-locality-us.db")
 
-		const { createPostalCityCandidateTable, POSTAL_CITY_CANDIDATE_COLUMNS, POSTAL_CITY_CANDIDATE_TABLE } =
-			await import("@mailwoman/resolver-wof-sqlite")
-
-		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street")
+		const {
+			resolverWofSqlite: { createPostalCityCandidateTable, POSTAL_CITY_CANDIDATE_COLUMNS, POSTAL_CITY_CANDIDATE_TABLE },
+			street: { normalizeLocalityForKey },
+		} = await allKeyed({
+			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+			street: import("@mailwoman/resolver-wof-sqlite/street"),
+		})
 
 		using db = new DatabaseClient<PostalCityCandidateDatabase>(candidateDB)
 

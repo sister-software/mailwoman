@@ -6,6 +6,7 @@
  *   Generate a corpus overlay manifest.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { DuckDBLimits } from "@mailwoman/corpus/parquet/duckdb"
@@ -102,13 +103,24 @@ export function overlayDuckDBLimits(options: { duckdbMemoryGib?: number; duckdbT
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools/overlay/manifest")
-		const { readDeletionRequests } = await import("@mailwoman/corpus/tools/overlay/deletions")
+		const {
+			manifest: { assembleOverlayManifest },
+			deletions: { readDeletionRequests },
+		} = await allKeyed({
+			manifest: import("@mailwoman/corpus/tools/overlay/manifest"),
+			deletions: import("@mailwoman/corpus/tools/overlay/deletions"),
+		})
 
 		const parquets = extractDelimited(options.parquet)
 		const sources = extractDelimited(options.source)
-		const { readSplitAttribute } = await import("@mailwoman/corpus/tools/overlay/split/attribute")
-		const { resolvePath } = await import("path-ts")
+
+		const {
+			attribute: { readSplitAttribute },
+			pathTs: { resolvePath },
+		} = await allKeyed({
+			attribute: import("@mailwoman/corpus/tools/overlay/split/attribute"),
+			pathTs: import("path-ts"),
+		})
 
 		if (parquets.length !== sources.length) {
 			throw new CommandError(

@@ -19,6 +19,7 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import { PathBuilder } from "path-ts"
 
@@ -57,11 +58,19 @@ export const spec = {
 
 const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { md5File } = await import("@mailwoman/core/utils")
-		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
-		const { PlacetypeCensusResolver, serializePlacetypeCensus } = await import("@mailwoman/neural/placetype")
-		const { buildPlacetypeCensus, toBaseRates } = await import("@mailwoman/gazetteer/tools/pipeline/placetype-census")
+		const {
+			paths: { wofDatabasePath },
+			utils: { md5File },
+			fstPrior: { normalizeFSTToken },
+			placetype: { PlacetypeCensusResolver, serializePlacetypeCensus },
+			placetypeCensus: { buildPlacetypeCensus, toBaseRates },
+		} = await allKeyed({
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			utils: import("@mailwoman/core/utils"),
+			fstPrior: import("@mailwoman/neural/fst-prior"),
+			placetype: import("@mailwoman/neural/placetype"),
+			placetypeCensus: import("@mailwoman/gazetteer/tools/pipeline/placetype-census"),
+		})
 
 		const country = options.country.toLowerCase()
 		const sourcePath = options.source ?? wofDatabasePath("admin-global-priority.db")

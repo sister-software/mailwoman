@@ -9,6 +9,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { AstNode } from "@sister.software/oxlint-config/plugin-types"
 
 import { reflowRule } from "./config/oxlint/comment-reflow/rule.ts"
+import { serialImportsRule } from "./config/oxlint/serial-imports/rule.ts"
 import { HELPER_HOMES, type HelperHome } from "./oxlint.helper-homes.ts"
 
 /**
@@ -1018,6 +1019,7 @@ const mailwomanPlugin: Plugin = {
 		"no-import-meta-resolve": noImportMetaResolveRule,
 		"no-raw-git-spawn": noRawGitSpawnRule,
 		"no-relative-dynamic-import": noRelativeDynamicImportRule,
+		"no-serial-dynamic-imports": serialImportsRule as unknown as Rule,
 		"no-sync-fs-in-async": noSyncFSInAsyncRule,
 		"prefer-home": preferHomeRule,
 		"prefer-spliterator": preferSpliteratorRule,

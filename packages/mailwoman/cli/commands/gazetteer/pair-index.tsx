@@ -8,6 +8,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
@@ -120,13 +121,23 @@ export const spec = {
 
 const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { md5File, md5Hex } = await import("@mailwoman/core/utils")
-		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
-		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
-		const { PairIndexBuilder, applyPairIndexHoldout } = await import("@mailwoman/gazetteer/tools/pipeline/pair")
-		const { CSVSpliterator, JSONSpliterator } = await import("spliterator")
-		const { extractBoroughPairs } = await import("@mailwoman/gazetteer/tools/pipeline/borough-pairs")
-		const { extractLieuDitPairs } = await import("@mailwoman/gazetteer/tools/pipeline/lieudit-pairs")
+		const {
+			utils: { md5File, md5Hex },
+			fstPrior: { normalizeFSTToken },
+			pair: { PairIndexResolver, serializePairIndex },
+			pair2: { PairIndexBuilder, applyPairIndexHoldout },
+			spliterator: { CSVSpliterator, JSONSpliterator },
+			boroughPairs: { extractBoroughPairs },
+			lieuditPairs: { extractLieuDitPairs },
+		} = await allKeyed({
+			utils: import("@mailwoman/core/utils"),
+			fstPrior: import("@mailwoman/neural/fst-prior"),
+			pair: import("@mailwoman/neural/pair"),
+			pair2: import("@mailwoman/gazetteer/tools/pipeline/pair"),
+			spliterator: import("spliterator"),
+			boroughPairs: import("@mailwoman/gazetteer/tools/pipeline/borough-pairs"),
+			lieuditPairs: import("@mailwoman/gazetteer/tools/pipeline/lieudit-pairs"),
+		})
 
 		const country = options.country.toLowerCase()
 

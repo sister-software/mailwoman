@@ -40,6 +40,7 @@ import { md5File } from "@mailwoman/core/hash"
 import { type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { TW_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { getRow } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -312,8 +313,14 @@ async function readDistrictGroups(
  * (optional-peer discipline, same as the NZ and CZ builders).
  */
 export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {}): Promise<BuildTWDistrictsResult> {
-	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
+	const {
+		unifiedSchema: { createUnifiedIndexes, createUnifiedSchema },
+		resolverWofSqlite: { buildPlaceSearchFTS },
+	} = await allKeyed({
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+	})
+
 	const release = opts.release ?? OVERTURE_ADDRESSES_RELEASE
 	const parquetPath = opts.parquetPath ?? dataRootPath("overture", release, "addresses-tw.parquet")
 	const adminPath = opts.adminPath ?? wofDatabasePath(DEFAULT_ADMIN_DB)

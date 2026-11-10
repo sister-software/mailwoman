@@ -11,6 +11,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CODEPOINT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -187,10 +188,13 @@ export async function buildPostcodeCodePoint(
 	)
 
 	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
-		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-
-	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
+	const {
+		unifiedSchema: { createUnifiedSchema, createUnifiedIndexes, populateAncestors },
+		geonames: { normalizePostcodeName },
+	} = await allKeyed({
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		geonames: import("@mailwoman/resolver-wof-sqlite/geonames"),
+	})
 
 	const ingestPath = `${out}.ingest`
 	await removeStagingArtifacts(ingestPath)

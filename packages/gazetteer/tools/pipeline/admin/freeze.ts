@@ -12,6 +12,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 import { OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -43,10 +44,14 @@ export async function freezeAdmin(
 	opts: FreezeAdminOptions = {}
 ): Promise<FreezeAdminResult> {
 	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
-		await import("@mailwoman/resolver-wof-sqlite/ancestry")
+	const {
+		ancestry: { backfillAncestorsFromHierarchy, discoverAdminDataRoots },
+		unifiedSchema: { createUnifiedIndexes, populateAncestors },
+	} = await allKeyed({
+		ancestry: import("@mailwoman/resolver-wof-sqlite/ancestry"),
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+	})
 
-	const { createUnifiedIndexes, populateAncestors } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const phase = opts.onPhase ?? (() => {})
 
 	// An in-memory fixture has no WAL to checkpoint (journal_mode reports `memory`).

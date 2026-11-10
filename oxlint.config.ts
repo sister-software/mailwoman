@@ -219,6 +219,13 @@ export default {
 			},
 		},
 		{
+			// A test may import modules in a set order, as when one evaluates only after an earlier one sets up a mock.
+			files: ["**/*.test.ts", "**/*.test.tsx"],
+			rules: {
+				"mailwoman/no-serial-dynamic-imports": "off",
+			},
+		},
+		{
 			// This file holds the JSON wrappers that the rule recommends.
 			files: ["packages/core/lib/json.ts"],
 			rules: {
@@ -318,6 +325,7 @@ export default {
 		"mailwoman/no-import-meta-resolve": "error",
 		"mailwoman/no-raw-git-spawn": "error",
 		"mailwoman/no-relative-dynamic-import": "error",
+		"mailwoman/no-serial-dynamic-imports": "error",
 		"mailwoman/no-sync-fs-in-async": "error",
 		"mailwoman/require-database-schema-argument": "error",
 		"mailwoman/require-disable-reason": "error",

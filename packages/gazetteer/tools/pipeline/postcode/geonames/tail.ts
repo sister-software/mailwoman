@@ -14,6 +14,7 @@ import { md5File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { LayerTier } from "@mailwoman/core/layers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { isoDate } from "@mailwoman/core/utils"
 import { EpistemicStatus } from "@mailwoman/evidence"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
@@ -168,10 +169,13 @@ export async function buildPostcodeGeonamesTail(
 	}
 
 	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
-	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
-		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-
-	const { ingestGeonamesPostal } = await import("@mailwoman/resolver-wof-sqlite/geonames")
+	const {
+		unifiedSchema: { createUnifiedSchema, createUnifiedIndexes, populateAncestors },
+		geonames: { ingestGeonamesPostal },
+	} = await allKeyed({
+		unifiedSchema: import("@mailwoman/resolver-wof-sqlite/unified-schema"),
+		geonames: import("@mailwoman/resolver-wof-sqlite/geonames"),
+	})
 
 	const ingestPath = out + ".ingest"
 	await removeStagingArtifacts(ingestPath)

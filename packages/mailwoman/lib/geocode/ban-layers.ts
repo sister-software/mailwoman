@@ -8,6 +8,7 @@
 
 import type { BANRegionDatabaseProvider } from "@mailwoman/ban/region-database-provider"
 import { ServingRole } from "@mailwoman/core/layers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import { LayerCatalog } from "#data/catalog"
@@ -29,8 +30,14 @@ export async function openBANRegionDatabases(
 	dataRoot: PathBuilderLike,
 	catalog?: LayerCatalog
 ): Promise<BANRegionDatabaseProvider> {
-	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/region-database-provider")
-	const { supportedBANCountries } = await import("@mailwoman/ban/street-locale")
+	const {
+		regionDatabaseProvider: { BANRegionDatabaseProvider },
+		streetLocale: { supportedBANCountries },
+	} = await allKeyed({
+		regionDatabaseProvider: import("@mailwoman/ban/region-database-provider"),
+		streetLocale: import("@mailwoman/ban/street-locale"),
+	})
+
 	const snapshot = catalog ?? (await LayerCatalog.read(dataRoot))
 	const addressPoints = new Map<string, string>()
 	const streetCentroids = new Map<string, string>()

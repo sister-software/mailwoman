@@ -13,6 +13,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  *     --golden data/eval/external/oa-pt-coord-150.jsonl --default-country PT --n 30
  */
 import { type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
+import { allKeyed } from "@mailwoman/core/promises"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -44,8 +45,13 @@ async function main() {
 
 	const rows = await loadGoldenRows(values["golden"] || "", n)
 
-	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const {
+		scorer: { createScorer },
+		resolverWofSqlite: { WOFSQLitePlaceLookup },
+	} = await allKeyed({
+		scorer: import("@mailwoman/neural/scorer"),
+		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+	})
 
 	const mk = (m: string) =>
 		createScorer({

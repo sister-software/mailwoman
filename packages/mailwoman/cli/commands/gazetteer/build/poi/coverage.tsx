@@ -21,6 +21,7 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import { stripCombiningMarks } from "@mailwoman/normalize"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
@@ -88,14 +89,23 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 			)
 		}
 
-		const { LayerTier } = await import("@mailwoman/core/layers")
-		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { getPOICategory } = await import("@mailwoman/poi-taxonomy/lookup")
-
-		const { buildPOIDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/poi")
-		const { buildExclusionCoverage } = await import("@mailwoman/gazetteer/tools/pipeline/poi/exclusion-coverage")
-		const { geometryBBox } = await import("@mailwoman/spatial")
-		const { readReferenceInventory } = await import("@mailwoman/gazetteer/tools/pipeline/poi/reference-inventory")
+		const {
+			layers: { LayerTier },
+			paths: { poiDatabasePath },
+			lookup: { getPOICategory },
+			poi: { buildPOIDatabase },
+			exclusionCoverage: { buildExclusionCoverage },
+			spatial: { geometryBBox },
+			referenceInventory: { readReferenceInventory },
+		} = await allKeyed({
+			layers: import("@mailwoman/core/layers"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			lookup: import("@mailwoman/poi-taxonomy/lookup"),
+			poi: import("@mailwoman/gazetteer/tools/pipeline/poi/build/poi"),
+			exclusionCoverage: import("@mailwoman/gazetteer/tools/pipeline/poi/exclusion-coverage"),
+			spatial: import("@mailwoman/spatial"),
+			referenceInventory: import("@mailwoman/gazetteer/tools/pipeline/poi/reference-inventory"),
+		})
 
 		const category = getPOICategory(options.category)
 

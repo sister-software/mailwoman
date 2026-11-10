@@ -26,6 +26,7 @@
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
@@ -70,13 +71,17 @@ const isShortCode = (s: string): boolean => {
 
 const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { wordNorm, wordNormLower } = await import("@mailwoman/codex")
-		const { COUNTRY_LOOKUP } = await import("@mailwoman/codex/country")
-
-		const { US_PO_BOX_DESIGNATORS, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION } =
-			await import("@mailwoman/codex/us")
-
-		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
+		const {
+			codex: { wordNorm, wordNormLower },
+			country: { COUNTRY_LOOKUP },
+			us: { US_PO_BOX_DESIGNATORS, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION },
+			paths: { repoRootPathBuilder },
+		} = await allKeyed({
+			codex: import("@mailwoman/codex"),
+			country: import("@mailwoman/codex/country"),
+			us: import("@mailwoman/codex/us"),
+			paths: import("@mailwoman/core/paths"),
+		})
 
 		const output = options.out ?? repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json")
 

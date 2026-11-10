@@ -14,6 +14,7 @@
  *   The run writes `source-names.json` beside the first input, recording every mapping it applied.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -37,10 +38,17 @@ export const spec = {
 
 const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { extractDelimited } = await import("@mailwoman/core/scripting/arguments")
-		const { movePath, writeLocalJSONFile } = await import("@mailwoman/core/fs/writers")
-		const { dirname, resolvePath } = await import("path-ts")
-		const { rewriteSourceNames } = await import("@mailwoman/corpus/tools/migrate/source-names")
+		const {
+			arguments: { extractDelimited },
+			writers: { movePath, writeLocalJSONFile },
+			pathTs: { dirname, resolvePath },
+			sourceNames: { rewriteSourceNames },
+		} = await allKeyed({
+			arguments: import("@mailwoman/core/scripting/arguments"),
+			writers: import("@mailwoman/core/fs/writers"),
+			pathTs: import("path-ts"),
+			sourceNames: import("@mailwoman/corpus/tools/migrate/source-names"),
+		})
 
 		const inputs = extractDelimited(options.parquet)
 

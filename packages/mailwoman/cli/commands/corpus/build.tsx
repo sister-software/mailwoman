@@ -17,6 +17,7 @@
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import type { BuildStage } from "@mailwoman/corpus"
@@ -212,11 +213,19 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
 
 	const state = useCommandTask(async () => {
-		const { parseJSONStrict } = await import("@mailwoman/core/json")
-		const { assertHeapForAdapters, buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
-		const { defaultBuildJobs } = await import("@mailwoman/corpus/build/budget")
-		const { readBuildInputs } = await import("@mailwoman/corpus/build/inputs")
-		const { compileLicenseExcludes } = await import("@mailwoman/corpus/utils/license")
+		const {
+			json: { parseJSONStrict },
+			corpus: { assertHeapForAdapters, buildCorpus, defaultAdapterRegistry },
+			budget: { defaultBuildJobs },
+			inputs: { readBuildInputs },
+			license: { compileLicenseExcludes },
+		} = await allKeyed({
+			json: import("@mailwoman/core/json"),
+			corpus: import("@mailwoman/corpus"),
+			budget: import("@mailwoman/corpus/build/budget"),
+			inputs: import("@mailwoman/corpus/build/inputs"),
+			license: import("@mailwoman/corpus/utils/license"),
+		})
 
 		// A record's `inputPath` is data-root-relative and a JSON map's is absolute,
 		// so the two forms are read by different functions rather than normalized into one.

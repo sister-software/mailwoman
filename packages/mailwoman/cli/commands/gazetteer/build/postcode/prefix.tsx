@@ -18,6 +18,7 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { PostcodePrefixLevel } from "@mailwoman/gazetteer/tools/pipeline/postcode/prefix"
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/postcode/prefix/index"
 import { PathBuilder } from "path-ts"
@@ -111,14 +112,19 @@ export const spec = {
 
 const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-		const { md5File, median } = await import("@mailwoman/core/utils")
-
-		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } =
-			await import("@mailwoman/postcode/prefix/index")
-
-		const { buildPostcodePrefixIndex } = await import("@mailwoman/gazetteer/tools/pipeline/postcode/prefix")
+		const {
+			dataRoot: { dataRootPath },
+			paths: { wofDatabasePath },
+			utils: { md5File, median },
+			index: { PostcodePrefixIndexResolver, serializePostcodePrefixIndex },
+			prefix: { buildPostcodePrefixIndex },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			utils: import("@mailwoman/core/utils"),
+			index: import("@mailwoman/postcode/prefix/index"),
+			prefix: import("@mailwoman/gazetteer/tools/pipeline/postcode/prefix"),
+		})
 
 		const database = args[0] as DatabaseName
 		const recipe: DatabaseRecipe = DATABASE_RECIPES[database]

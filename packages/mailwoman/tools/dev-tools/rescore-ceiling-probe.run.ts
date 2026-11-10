@@ -19,6 +19,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  */
 import { decodeAsJSON, firstNodeWhere } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { allKeyed } from "@mailwoman/core/promises"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -53,8 +54,14 @@ const LOCALES: [string, string][] = [
 ]
 
 async function main() {
-	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const {
+		scorer: { createScorer },
+		resolverWofSqlite: { WOFSQLitePlaceLookup },
+	} = await allKeyed({
+		scorer: import("@mailwoman/neural/scorer"),
+		resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+	})
+
 	using lookup = new WOFSQLitePlaceLookup({ databasePath: resolvePath(WOF) })
 	const resolver = createWOFResolver(lookup)
 

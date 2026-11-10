@@ -25,6 +25,7 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { GitClient } from "@mailwoman/core/git"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
+import { allKeyed } from "@mailwoman/core/promises"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { RepoSyncResult } from "@mailwoman/gazetteer/tools/pipeline/repos/sync"
@@ -194,8 +195,10 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				import("@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"),
 			])
 
-			const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-			const { parallelMap } = await import("spliterator")
+			const {
+				paths: { wofDatabasePath },
+				spliterator: { parallelMap },
+			} = await allKeyed({ paths: import("@mailwoman/resolver-wof-sqlite/paths"), spliterator: import("spliterator") })
 
 			const audit = await auditReposRoot(destination, { readCommits: false })
 

@@ -9,6 +9,7 @@
  *   the canonical `candidate-global.db`.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { Box, Text } from "ink"
 
@@ -30,9 +31,15 @@ export const spec = {
 
 const GazetteerPromote: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { promoteCandidate } = await import("@mailwoman/gazetteer/tools/pipeline")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			dataRoot: { dataRootPath },
+			pipeline: { promoteCandidate },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const root = dataRootPath()
 		const candidateDB = args[0] ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)

@@ -24,6 +24,7 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { allKeyed } from "@mailwoman/core/promises"
 import { DEFAULT_RELEASE } from "@mailwoman/gazetteer/tools/pipeline/poi/defaults"
 import { buildSHA as resolveBuildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
 import type { POISourceRow } from "@mailwoman/osm/sdk/extract/poi"
@@ -86,12 +87,19 @@ function parseBBoxFlag(raw: string): LatLonBounds {
 
 const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { LayerTier } = await import("@mailwoman/core/layers")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-
-		const { bboxCoverageCells, buildPOIDatabase } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/poi")
-		const { ingestPlaces } = await import("@mailwoman/gazetteer/tools/pipeline/poi/build/overture")
+		const {
+			layers: { LayerTier },
+			dataRoot: { dataRootPath },
+			paths: { poiDatabasePath },
+			poi: { bboxCoverageCells, buildPOIDatabase },
+			overture: { ingestPlaces },
+		} = await allKeyed({
+			layers: import("@mailwoman/core/layers"),
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			poi: import("@mailwoman/gazetteer/tools/pipeline/poi/build/poi"),
+			overture: import("@mailwoman/gazetteer/tools/pipeline/poi/build/overture"),
+		})
 
 		const buildSHA = resolveBuildSHA(repoRootPath())
 

@@ -11,6 +11,7 @@
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import {
 	type CommandSpec,
@@ -43,11 +44,15 @@ export const spec = {
 
 const GazetteerVerifyPostcodeCodePoint: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { isoDate } = await import("@mailwoman/core/utils")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-
-		const { runCodePointCheck, formatCodePointCheckReport } =
-			await import("@mailwoman/gazetteer/tools/pipeline/gb/codepoint/comparison")
+		const {
+			utils: { isoDate },
+			paths: { wofDatabasePath },
+			comparison: { runCodePointCheck, formatCodePointCheckReport },
+		} = await allKeyed({
+			utils: import("@mailwoman/core/utils"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			comparison: import("@mailwoman/gazetteer/tools/pipeline/gb/codepoint/comparison"),
+		})
 
 		const stamp = isoDate()
 

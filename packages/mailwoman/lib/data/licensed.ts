@@ -9,6 +9,7 @@
  */
 
 import { docsSiteURL, type LicenseKeyVerification, scopeAdmits } from "@mailwoman/core/license"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import type { BundleArtifact, DataBundle } from "#data/bundles"
 
@@ -93,8 +94,11 @@ export interface GrantedDownload {
  * with the worker's word in the message.
  */
 export async function requestGrantedDownload(token: string, artifact: string): Promise<GrantedDownload> {
-	const { requestDownload } = await import("@mailwoman/core/license/status")
-	const { readInstallationID } = await import("@mailwoman/core/license")
+	const {
+		status: { requestDownload },
+		license: { readInstallationID },
+	} = await allKeyed({ status: import("@mailwoman/core/license/status"), license: import("@mailwoman/core/license") })
+
 	const install = await readInstallationID()
 	const answer = await requestDownload({ token, artifact, ...(install ? { install } : {}) })
 

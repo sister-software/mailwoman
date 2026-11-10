@@ -25,6 +25,7 @@
  */
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { dirname } from "path-ts"
 
@@ -56,9 +57,15 @@ export const spec = {
 
 const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			client: { DatabaseClient },
+			dataRoot: { dataRootPath },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const out = options.out ?? wofDatabasePath("postal-city-alias-us.db")
 		const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")

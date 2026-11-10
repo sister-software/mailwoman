@@ -1,4 +1,5 @@
 import { stringifyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 
 /**
  * @copyright Sister Software
@@ -65,8 +66,13 @@ export function readMailwomanManifest(): Promise<MailwomanManifest> {
 }
 
 async function readManifestFile(): Promise<MailwomanManifest> {
-	const { resolvePackagePath } = await import("@mailwoman/core/module/resolvers")
-	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
+	const {
+		resolvers: { resolvePackagePath },
+		readers: { readLocalJSONFile },
+	} = await allKeyed({
+		resolvers: import("@mailwoman/core/module/resolvers"),
+		readers: import("@mailwoman/core/fs/readers"),
+	})
 
 	const manifestPath = resolvePackagePath("mailwoman", "package.json")
 

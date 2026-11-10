@@ -7,6 +7,7 @@
  *   stratified by failure shape, as JSONL rows for adjudication.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
@@ -39,8 +40,13 @@ const RegistryAddressPairSample: CommandComponent<typeof spec> = ({ options }) =
 
 		if (!options.regions) throw new CommandError("--regions is required")
 
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { addressPairSample } = await import("@mailwoman/entity-resolution/tools/address-pairs/sample")
+		const {
+			dataRoot: { dataRootPath },
+			sample: { addressPairSample },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			sample: import("@mailwoman/entity-resolution/tools/address-pairs/sample"),
+		})
 
 		const result = await addressPairSample(
 			{

@@ -29,6 +29,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
@@ -356,8 +357,13 @@ async function foldIntoCandidate(
 
 const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			dataRoot: { dataRootPath },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
 		const out = options.out ?? wofDatabasePath("postalcode-geonames-intl.db")

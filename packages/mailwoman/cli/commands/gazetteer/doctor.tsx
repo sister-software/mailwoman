@@ -12,6 +12,7 @@
 
 import { wofReposPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { PathBuilder } from "path-ts"
 
@@ -62,12 +63,17 @@ function topEntries(counts: Record<string, number>): string {
 const GazetteerDoctor: CommandComponent<typeof spec, [string?]> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
-			const { auditReposRoot } = await import("@mailwoman/gazetteer/tools/pipeline/repos/audit")
-
-			const { diagnoseClones, readDeprecatedMapping } = await import("@mailwoman/gazetteer/tools/pipeline/wof/doctor")
-			const { WOF_DEPRECATED_REPO } = await import("@mailwoman/gazetteer/tools/pipeline/wof/repo-origin")
-
-			const { PLACETYPES_REPO } = await import("@mailwoman/gazetteer/whosonfirst/placetypes/Placetype")
+			const {
+				audit: { auditReposRoot },
+				doctor: { diagnoseClones, readDeprecatedMapping },
+				repoOrigin: { WOF_DEPRECATED_REPO },
+				Placetype: { PLACETYPES_REPO },
+			} = await allKeyed({
+				audit: import("@mailwoman/gazetteer/tools/pipeline/repos/audit"),
+				doctor: import("@mailwoman/gazetteer/tools/pipeline/wof/doctor"),
+				repoOrigin: import("@mailwoman/gazetteer/tools/pipeline/wof/repo-origin"),
+				Placetype: import("@mailwoman/gazetteer/whosonfirst/placetypes/Placetype"),
+			})
 
 			const root = args[0] ? PathBuilder.from(args[0]) : wofReposPath()
 			const audit = await auditReposRoot(root, { readCommits: false })

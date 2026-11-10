@@ -9,6 +9,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
@@ -30,9 +31,16 @@ export const spec = {
 
 const GazetteerBuildStreets: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildStreetTable } = await import("@mailwoman/gazetteer/tools/pipeline/streets")
-		const { readOpenRoadsEdges } = await import("@mailwoman/gazetteer/tools/pipeline/streets/gb-os-open-roads")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			streets: { buildStreetTable },
+			gbOsOpenRoads: { readOpenRoadsEdges },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			streets: import("@mailwoman/gazetteer/tools/pipeline/streets"),
+			gbOsOpenRoads: import("@mailwoman/gazetteer/tools/pipeline/streets/gb-os-open-roads"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
+
 		const out = options.out ?? wofDatabasePath("streets-gb-os-open-roads.db")
 
 		const counts = await buildStreetTable({

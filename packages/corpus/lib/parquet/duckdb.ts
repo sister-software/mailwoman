@@ -9,6 +9,8 @@
  *   or write Parquet through DuckDB. A consumer that only needs the schema types never loads it.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
+
 /**
  * An open DuckDB connection, re-exported so consumers of {@link openDuckDB} can name
  * the type without their own static dependency on the optional peer.
@@ -127,10 +129,17 @@ export interface DuckDBLimits {
  * every process, including processes unrelated to the query that caused it.
  */
 export async function openDuckDB(limits: DuckDBLimits = {}): Promise<DisposableDuckDB> {
-	const { DuckDBInstance } = await import("@duckdb/node-api")
-	const { dataRootPath } = await import("@mailwoman/core/data-root")
-	const { ByteFormatter } = await import("@mailwoman/core/fs/formatters")
-	const { makeDirectories } = await import("@mailwoman/core/fs/writers")
+	const {
+		nodeApi: { DuckDBInstance },
+		dataRoot: { dataRootPath },
+		formatters: { ByteFormatter },
+		writers: { makeDirectories },
+	} = await allKeyed({
+		nodeApi: import("@duckdb/node-api"),
+		dataRoot: import("@mailwoman/core/data-root"),
+		formatters: import("@mailwoman/core/fs/formatters"),
+		writers: import("@mailwoman/core/fs/writers"),
+	})
 
 	const memoryLimitBytes = limits.memoryLimitBytes ?? (await defaultDuckDBMemoryLimitBytes())
 	const threads = limits.threads ?? (await defaultDuckDBThreads())

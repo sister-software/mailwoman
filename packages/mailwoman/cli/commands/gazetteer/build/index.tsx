@@ -11,6 +11,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers/stat"
+import { allKeyed } from "@mailwoman/core/promises"
 
 import {
 	type CommandSpec,
@@ -35,10 +36,13 @@ export const spec = {
 
 const GazetteerBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases } =
-			await import("@mailwoman/gazetteer/tools/pipeline")
-
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			pipeline: { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		console.error("▸ build admin (staging)")
 

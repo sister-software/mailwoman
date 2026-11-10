@@ -36,6 +36,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { spawnProcess } from "@mailwoman/core/process"
+import { allKeyed } from "@mailwoman/core/promises"
 import { stripANSI } from "@mailwoman/core/strings/terminal"
 import { isoDate } from "@mailwoman/core/utils"
 import { availableParallelism } from "@mailwoman/core/utils/system"
@@ -150,8 +151,13 @@ interface StateManifestEntry {
 
 const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { scriptEntryPath } = await import("@mailwoman/core/scripting/arguments")
-		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			arguments: { scriptEntryPath },
+			paths: { addressPointDatabasePath },
+		} = await allKeyed({
+			arguments: import("@mailwoman/core/scripting/arguments"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const outDir = PathBuilder.from(options.outDir ?? addressPointDatabasePath)
 

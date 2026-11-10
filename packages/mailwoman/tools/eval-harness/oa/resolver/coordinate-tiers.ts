@@ -7,6 +7,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { AddressPointLookup, InterpolationLookup, RegionDatabaseProvider } from "@mailwoman/core/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { TextSpliterator } from "spliterator"
@@ -83,8 +84,13 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	let cascadeProvider: RegionDatabaseProvider | null = null
 
 	if (cascadeOn) {
-		const { USStateDatabaseProvider } = await import("#geocode/regions")
-		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
+		const {
+			regions: { USStateDatabaseProvider },
+			resolverWofSqlite: { AddressPointSqliteLookup, StreetInterpolator },
+		} = await allKeyed({
+			regions: import("#geocode/regions"),
+			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+		})
 
 		cascadeProvider = await USStateDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
 	}

@@ -10,6 +10,7 @@ import { Spinner, StatusMessage } from "@inkjs/ui"
 import type { ServerHandle } from "@mailwoman/api-kit"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
+import { allKeyed } from "@mailwoman/core/promises"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 // Default import rather than `* as process`.
 // The ESM namespace object for `node:process` only reflects the process object's own
@@ -213,10 +214,17 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 		let disposed = false
 
 		void (async () => {
-			const { createMailwomanAPI, MAILWOMAN_API_DOC_INFO } = await import("@mailwoman/api")
-			const { serveNode } = await import("@mailwoman/api-kit")
-			const { $public } = await import("#env")
-			const { createServeEngine } = await import("#api-engine")
+			const {
+				api: { createMailwomanAPI, MAILWOMAN_API_DOC_INFO },
+				apiKit: { serveNode },
+				moduleenv: { $public },
+				moduleapiEngine: { createServeEngine },
+			} = await allKeyed({
+				api: import("@mailwoman/api"),
+				apiKit: import("@mailwoman/api-kit"),
+				moduleenv: import("#env"),
+				moduleapiEngine: import("#api-engine"),
+			})
 
 			const { engine, preflight } = await createServeEngine()
 

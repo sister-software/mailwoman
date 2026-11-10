@@ -35,7 +35,7 @@ import type {
 	ResolvedPlaceView,
 	ComponentMatch,
 } from "@mailwoman/core/pipeline/client-result"
-import { startEarly } from "@mailwoman/core/promises"
+import { allKeyed, startEarly } from "@mailwoman/core/promises"
 import type { LandmarkLookup } from "@mailwoman/core/resolver"
 import type { AssetsLoadContext, ReleaseManifest } from "@mailwoman/react"
 import { useReleaseRuntime } from "@mailwoman/react"
@@ -530,10 +530,13 @@ export function useGeocoderRuntime({
 
 			if (!p) {
 				p = (async () => {
-					const { openRangeDatabase } = await import("@mailwoman/resolver-wof-wasm/httpvfs/database")
-
-					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } =
-						await import("@mailwoman/resolver-wof-wasm/httpvfs/street")
+					const {
+						database: { openRangeDatabase },
+						street: { HTTPVFSAddressPointLookup, HTTPVFSInterpolator },
+					} = await allKeyed({
+						database: import("@mailwoman/resolver-wof-wasm/httpvfs/database"),
+						street: import("@mailwoman/resolver-wof-wasm/httpvfs/street"),
+					})
 
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
 						const situsDB = await openRangeDatabase(streetExtractURL(slug, "situs"), sqliteRuntimeBaseURL)

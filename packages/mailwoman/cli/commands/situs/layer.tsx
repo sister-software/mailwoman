@@ -7,6 +7,7 @@
  */
 
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
+import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
@@ -59,13 +60,23 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 
 		if (!options.plan) throw new CommandError("--plan is required: the OpenAddresses plan JSON")
 
-		const { dataRootPath } = await import("@mailwoman/core/data-root")
-		const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
-		const { repoRootPath } = await import("@mailwoman/core/paths")
-		const { buildSHA } = await import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest")
-		const { nadReleaseParquetPath } = await import("@mailwoman/corpus/us/tools/fetch/nad")
-		const { buildUSAddressLayer } = await import("@mailwoman/corpus/us/address-records/layer")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			dataRoot: { dataRootPath },
+			readers: { readLocalJSONFile },
+			paths: { repoRootPath },
+			stampManifest: { buildSHA },
+			nad: { nadReleaseParquetPath },
+			layer: { buildUSAddressLayer },
+			paths2: { wofDatabasePath },
+		} = await allKeyed({
+			dataRoot: import("@mailwoman/core/data-root"),
+			readers: import("@mailwoman/core/fs/readers"),
+			paths: import("@mailwoman/core/paths"),
+			stampManifest: import("@mailwoman/gazetteer/tools/pipeline/stamp-manifest"),
+			nad: import("@mailwoman/corpus/us/tools/fetch/nad"),
+			layer: import("@mailwoman/corpus/us/address-records/layer"),
+			paths2: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const lines: string[] = []
 

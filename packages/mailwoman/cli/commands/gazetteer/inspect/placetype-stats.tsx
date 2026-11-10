@@ -15,6 +15,7 @@
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { prettyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -80,8 +81,13 @@ const PLACETYPE_TO_TAG: Record<string, string> = {
 
 const GazetteerPlacetypeStats: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { COMPONENT_TAGS } = await import("@mailwoman/codex/component")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			component: { COMPONENT_TAGS },
+			paths: { wofDatabasePath },
+		} = await allKeyed({
+			component: import("@mailwoman/codex/component"),
+			paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const dbPath = options.db ?? wofDatabasePath("admin-global-priority.db").toString()
 		const country = options.country

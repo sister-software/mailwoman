@@ -26,6 +26,7 @@ import { cacheRootPath } from "@mailwoman/core/data-root"
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { allKeyed } from "@mailwoman/core/promises"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows, streamToDisk } from "@mailwoman/core/utils"
 import type { FanoutCandidate } from "@mailwoman/gazetteer/tools/pipeline/importance-fanout"
@@ -65,17 +66,19 @@ export const spec = {
 
 const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-
-		const { blendImportance, createPlaceImportanceTable } =
-			await import("@mailwoman/resolver-wof-sqlite/place-importance-schema")
-
-		const { referentialFromPopulation } = await import("@mailwoman/core/resolver")
-
-		const { TextSpliterator } = await import("spliterator")
-
-		const { emptyFanoutStats, recordFanout, resolveConcordanceFanout } =
-			await import("@mailwoman/gazetteer/tools/pipeline/importance-fanout")
+		const {
+			client: { DatabaseClient },
+			placeImportanceSchema: { blendImportance, createPlaceImportanceTable },
+			resolver: { referentialFromPopulation },
+			spliterator: { TextSpliterator },
+			importanceFanout: { emptyFanoutStats, recordFanout, resolveConcordanceFanout },
+		} = await allKeyed({
+			client: import("@mailwoman/sqlite/client"),
+			placeImportanceSchema: import("@mailwoman/resolver-wof-sqlite/place-importance-schema"),
+			resolver: import("@mailwoman/core/resolver"),
+			spliterator: import("spliterator"),
+			importanceFanout: import("@mailwoman/gazetteer/tools/pipeline/importance-fanout"),
+		})
 
 		const dbPath = options.db
 		const tsvPath = options.tsv

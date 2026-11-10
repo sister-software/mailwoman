@@ -12,6 +12,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { allKeyed } from "@mailwoman/core/promises"
 import { DEFAULT_CANDIDATE_OUT } from "@mailwoman/gazetteer/tools/pipeline/defaults"
 import { Box, Text } from "ink"
 
@@ -44,9 +45,15 @@ export const spec = {
 
 const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
-		const { defaultGazetteerVersion, publishGazetteer } = await import("@mailwoman/gazetteer/tools/pipeline")
-		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const {
+			paths: { repoRootPathBuilder },
+			pipeline: { defaultGazetteerVersion, publishGazetteer },
+			paths2: { wofDatabasePath },
+		} = await allKeyed({
+			paths: import("@mailwoman/core/paths"),
+			pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+			paths2: import("@mailwoman/resolver-wof-sqlite/paths"),
+		})
 
 		const candidateDB = args[0] ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())

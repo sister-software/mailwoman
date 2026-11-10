@@ -10,6 +10,7 @@
  *   visible in the process table to every user on the host.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 
 import {
@@ -71,8 +72,10 @@ const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
 				import("#tools/eval-harness/premise-linkage/report-writer"),
 			])
 
-		const { PremiseLinkageMode, PremiseLinkagePolicy } = await import("#tools/eval-harness/premise-linkage/schema")
-		const { $private } = await import("#env")
+		const {
+			schema: { PremiseLinkageMode, PremiseLinkagePolicy },
+			moduleenv: { $private },
+		} = await allKeyed({ schema: import("#tools/eval-harness/premise-linkage/schema"), moduleenv: import("#env") })
 
 		const controlled = typeof options.config === "string" && options.config.length > 0
 		const mode = controlled ? PremiseLinkageMode.Controlled : PremiseLinkageMode.Synthetic

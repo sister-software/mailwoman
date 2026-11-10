@@ -28,6 +28,7 @@
 import { Spinner } from "@inkjs/ui"
 import { prettyJSON } from "@mailwoman/core/json"
 import type { POIIntent, POIQueryResult, POIResult } from "@mailwoman/core/pipeline"
+import { allKeyed } from "@mailwoman/core/promises"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
@@ -97,9 +98,16 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 	}
 
 	try {
-		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		const { createResolverBackend } = await import("#resolver-backend")
-		const { createWOFResolver } = await import("@mailwoman/resolver")
+		const {
+			resolverWofSqlite: mod,
+			moduleresolverBackend: { createResolverBackend },
+			resolver: { createWOFResolver },
+		} = await allKeyed({
+			resolverWofSqlite: import("@mailwoman/resolver-wof-sqlite"),
+			moduleresolverBackend: import("#resolver-backend"),
+			resolver: import("@mailwoman/resolver"),
+		})
+
 		const lookup = await createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
 		return { resolver: createWOFResolver(lookup), [Symbol.dispose]: () => lookup[Symbol.dispose]() }

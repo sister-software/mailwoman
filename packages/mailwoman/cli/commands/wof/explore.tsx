@@ -11,6 +11,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { allKeyed } from "@mailwoman/core/promises"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -59,9 +60,15 @@ const ExploreWOF: CommandComponent<typeof spec, [string]> = ({ options, args }) 
 		if (/^\d+$/.test(query)) {
 			id = Number(query)
 		} else {
-			const { openBuiltClient } = await import("@mailwoman/sqlite/sealed")
-			const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
-			const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street/normalize")
+			const {
+				sealed: { openBuiltClient },
+				paths: { wofDatabasePath },
+				normalize: { normalizeLocalityForKey },
+			} = await allKeyed({
+				sealed: import("@mailwoman/sqlite/sealed"),
+				paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+				normalize: import("@mailwoman/resolver-wof-sqlite/street/normalize"),
+			})
 
 			type Database = import("@mailwoman/resolver-wof-sqlite/candidate/schema").CandidateDatabase
 			using db = await openBuiltClient<Database>(options.candidateDB ?? wofDatabasePath("candidate.db"))

@@ -7,6 +7,7 @@
  *   an artifact that fails here. The derived-FST freshness section is advisory and never affects the verdict.
  */
 
+import { allKeyed } from "@mailwoman/core/promises"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -28,10 +29,13 @@ export const spec = {
 const GazetteerVerify: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel } =
-				await import("@mailwoman/gazetteer/tools/pipeline")
-
-			const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+			const {
+				pipeline: { loadDefaultBaseline, verifyAdmin, verifyReversePanel },
+				paths: { wofDatabasePath },
+			} = await allKeyed({
+				pipeline: import("@mailwoman/gazetteer/tools/pipeline"),
+				paths: import("@mailwoman/resolver-wof-sqlite/paths"),
+			})
 
 			const dbPath = options.db ?? wofDatabasePath("admin-global-priority.db")
 
