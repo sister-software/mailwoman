@@ -11,6 +11,7 @@
  *   PlaceEntry at terminals → return FSTMatcher.
  */
 
+import { GEONAMES_ID_BASE, OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
@@ -85,6 +86,17 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 
 	const sprRows = allRows<SprRow>(sprStmt, ...countries, ...placetypes)
 	progress("spr", `Loaded ${sprRows.length} places`)
+
+	// An FST ships in npm packages whose license cannot include the Open Database License,
+	// so no place from the Overture Divisions fold may reach one.
+	const overturePlaces = sprRows.filter((row) => row.id >= OVERTURE_ID_BASE && row.id < GEONAMES_ID_BASE).length
+
+	if (overturePlaces) {
+		throw new Error(
+			`buildFSTFromWOF: ${overturePlaces} of ${sprRows.length} places for [${countries}] come from the Overture ` +
+				"Divisions fold, which is ODbL; build the FST from countries the fold does not cover"
+		)
+	}
 
 	const sprByID = new Map<number, SprRow>()
 
@@ -192,14 +204,23 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 
 	const allLanguages = languages.includes("*")
 
+	// A WOF record can hold an alias the Overture fold added to it.
+	// A database built before `names.source` existed holds no such alias,
+	// because the fold then wrote only its own places.
+	const hasSource = allRows<{ name: string }>(db.prepare("SELECT name FROM pragma_table_info('names')")).some(
+		(column) => column.name === "source"
+	)
+
+	const sourceFilter = hasSource ? " AND source != 'overture'" : ""
+
 	for (let i = 0; i < placeIDs.length; i += 500) {
 		const chunk = placeIDs.slice(i, i + 500)
 		const idPlaceholders = chunk.map(() => "?").join(",")
 
 		const nameStmt = allLanguages
-			? db.prepare(`SELECT id, name, language, privateuse FROM names WHERE id IN (${idPlaceholders})`)
+			? db.prepare(`SELECT id, name, language, privateuse FROM names WHERE id IN (${idPlaceholders})${sourceFilter}`)
 			: db.prepare(
-					`SELECT id, name, language, privateuse FROM names WHERE id IN (${idPlaceholders}) AND language IN (${languages.map(() => "?").join(",")})`
+					`SELECT id, name, language, privateuse FROM names WHERE id IN (${idPlaceholders}) AND language IN (${languages.map(() => "?").join(",")})${sourceFilter}`
 				)
 
 		const nameRows = allLanguages
