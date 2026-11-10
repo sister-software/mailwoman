@@ -353,6 +353,9 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 			manifest,
 			lookupPath: files.lookup,
 			detailPath: files.detail,
+			// The staging database is the build's largest file, so it goes in the scratch directory.
+			// `MAILWOMAN_TEMP_ROOT` can place that directory on a disk other than the layer's.
+			stagingDirectory: scratch.path,
 			refuseRecord: (record) => bounds.refuse(record),
 			duplicates: US_DUPLICATE_RULE,
 		})

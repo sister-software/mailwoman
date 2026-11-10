@@ -19,7 +19,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed/build"
 import { latLngToCell } from "@sister.software/h3"
 import { type Kysely, sql } from "kysely"
-import { dirname, type PathBuilderLike } from "path-ts"
+import { basename, dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
 import {
 	ADDRESS_DUPLICATE_STACK_LIMIT,
@@ -134,6 +134,13 @@ export interface BuildAddressLayerOptions {
 	lookupPath: PathBuilderLike
 	detailPath: PathBuilderLike
 	/**
+	 * Where the staging database is written, the largest file a build makes.
+	 *
+	 * It defaults to beside `lookupPath`.
+	 * A directory on another disk keeps that file off the layer's disk.
+	 */
+	stagingDirectory?: PathBuilderLike
+	/**
 	 * Called after every millionth record with the count staged so far.
 	 */
 	onProgress?: (records: number) => void
@@ -225,7 +232,15 @@ async function createStagingTables(db: Kysely<StagingDatabase>): Promise<void> {
  * row count differs from the rows staged for its level.
  */
 export async function buildAddressLayer(options: BuildAddressLayerOptions): Promise<AddressLayerBuildSummary> {
-	const stagingPath = `${options.lookupPath}.stage-${process.pid}`
+	const stagingName = `${basename(options.lookupPath.toString())}.stage-${process.pid}`
+
+	const stagingPath = options.stagingDirectory
+		? resolvePath(options.stagingDirectory, stagingName)
+		: `${options.lookupPath}.stage-${process.pid}`
+
+	if (options.stagingDirectory) {
+		await makeDirectories(options.stagingDirectory)
+	}
 
 	await Promise.all([makeDirectories(dirname(options.lookupPath)), makeDirectories(dirname(options.detailPath))])
 	await removePathIfPresent(stagingPath)
