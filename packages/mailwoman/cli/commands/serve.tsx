@@ -7,7 +7,6 @@
 import cluster, { type Worker } from "node:cluster"
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
-import type { ServerHandle } from "@mailwoman/api-kit"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { allKeyed } from "@mailwoman/core/promises"
@@ -22,6 +21,7 @@ import { useEffect, useState } from "react"
 
 import type { CommandSpec, ParsedCommandComponent } from "#cli-kit"
 import { primaryExitAfterWorkerExit } from "#cli/kit/cluster-exit"
+import { clusterReload, relayClusterReloads } from "#cli/kit/cluster-reload"
 import { printLicenseNotice, resolveEngineStamp } from "#cli/kit/engine-stamp"
 
 interface ServerConfig {
@@ -52,6 +52,8 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 	const [workers, setWorkers] = useState<Worker[]>()
 
 	useEffect(() => {
+		relayClusterReloads()
+
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot cluster bootstrap. refactor pending
 		setWorkers(Array.from({ length: cpus }, () => cluster.fork()))
 
@@ -210,7 +212,7 @@ const WorkerStatus: React.FC<{ worker: Worker }> = ({ worker }) => {
 
 const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, host } }) => {
 	useEffect(() => {
-		let handle: ServerHandle | null = null
+		let handle: AsyncDisposable | null = null
 		let disposed = false
 
 		void (async () => {
@@ -226,7 +228,13 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				apiEngine: import("#api-engine"),
 			})
 
-			const { engine, preflight } = await createServeEngine()
+			const serveEngine = await createServeEngine()
+			const { preflight } = serveEngine
+
+			// A reload in any worker reloads every worker.
+			const engine = serveEngine.engine.reload
+				? { ...serveEngine.engine, reload: clusterReload(serveEngine.engine.reload) }
+				: serveEngine.engine
 
 			if (!preflight.ok) {
 				// Every cluster worker runs createServeEngine() independently, so with --cpus N every
@@ -267,13 +275,19 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				onListen: () => cluster.worker?.send("HTTP server ready"),
 			})
 
-			if (disposed) {
+			// The listener drains its connections before the engine closes the sessions they read.
+			const closeAll = async () => {
 				await server[Symbol.asyncDispose]()
+				await serveEngine[Symbol.asyncDispose]()
+			}
+
+			if (disposed) {
+				await closeAll()
 
 				return
 			}
 
-			handle = server
+			handle = { [Symbol.asyncDispose]: closeAll }
 
 			// Duplicate signal deliveries (group signal + primary forward) must be no-ops — the drain runs once.
 			let draining = false
@@ -284,7 +298,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 
 				console.error(`[serve] worker ${process.pid} draining`)
 
-				void handle?.[Symbol.asyncDispose]().finally(() => process.exit(0))
+				void closeAll().finally(() => process.exit(0))
 			}
 
 			process.on("SIGINT", shutdown)

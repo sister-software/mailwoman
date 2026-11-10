@@ -202,6 +202,7 @@ export default {
 				"packages/mailwoman/cli/native/commands/geocode.ts",
 				"packages/mailwoman/cli/commands/gazetteer/importance.tsx",
 				"packages/mailwoman/cli/commands/serve.tsx",
+				"packages/mailwoman/cli/kit/cluster-reload.ts",
 				"packages/api-kit/test/fixtures/cluster-serve.ts",
 				"packages/mailwoman/cli/commands/situs/interpolation/index.tsx",
 				"packages/mailwoman/lib/geocode/worker.ts",

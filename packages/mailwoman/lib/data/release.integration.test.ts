@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Versioned data switchover: path resolution. It also tests the `USStateDatabaseProvider`'s zero-downtime atomic reload with a one-generation grace on old handles.
+ *   Versioned data switchover: path resolution, and the `USStateDatabaseProvider` reading the release a manifest
+ *   pins at construction.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -86,44 +87,34 @@ describe("resolveDatabasePath", () => {
 	})
 })
 
-describe("RegionDatabaseProvider atomic switchover", () => {
-	test("reload() flips to the new version + retires the old handle with one-gen grace", async () => {
+describe("USStateDatabaseProvider release pinning", () => {
+	test("a provider built after the manifest moves reads the new release, and disposal closes its handles", async () => {
 		const root = tmp()
 		const apDir = await dirEnsure(addressPointDatabaseRoot(await root))
 		await writeLocalTextFile("", apDir("address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, (await root)("releases.json"))
 
-		const provider = await USStateDatabaseProvider.create(factory, await root)
-		const v1 = provider.for("tx").addressPoints as FakeAddressPoints
+		const first = await USStateDatabaseProvider.create(factory, await root)
+		const v1 = first.for("tx").addressPoints as FakeAddressPoints
 		expect(v1.dbPath).toContain("address-points-us-tx-v1.db")
-		expect(provider.versions()).toEqual({ "address-points": "v1" })
+		expect(first.versions()).toEqual({ "address-points": "v1" })
 
 		await writeLocalTextFile("", apDir("address-points-us-tx-v2.db"))
 		await writeLocalJSONFile({ "address-points": "v2" }, (await root)("releases.json"))
-		await expect(provider.reload()).resolves.toEqual({ "address-points": "v2" })
 
-		const v2 = provider.for("tx").addressPoints as FakeAddressPoints
+		// The provider already built keeps reading the release it pinned.
+		expect((first.for("tx").addressPoints as FakeAddressPoints).dbPath).toContain("address-points-us-tx-v1.db")
+
+		const second = await USStateDatabaseProvider.create(factory, await root)
+		const v2 = second.for("tx").addressPoints as FakeAddressPoints
 		expect(v2.dbPath).toContain("address-points-us-tx-v2.db")
-		expect(v1.closed).toBe(false)
+		expect(second.versions()).toEqual({ "address-points": "v2" })
 
-		await provider.reload()
+		first[Symbol.dispose]()
 		expect(v1.closed).toBe(true)
+		expect(v2.closed).toBe(false)
 
-		provider[Symbol.dispose]()
+		second[Symbol.dispose]()
 		expect(v2.closed).toBe(true)
-	})
-
-	test("unchanged version keeps the same open handle (no churn)", async () => {
-		const root = tmp()
-		const apDir = await dirEnsure(addressPointDatabaseRoot(await root))
-
-		await writeLocalTextFile("", apDir("address-points-us-tx-v1.db"))
-		await writeLocalJSONFile({ "address-points": "v1" }, (await root)("releases.json"))
-
-		using provider = await USStateDatabaseProvider.create(factory, await root)
-
-		const first = provider.for("tx").addressPoints
-		await provider.reload()
-		expect(provider.for("tx").addressPoints).toBe(first)
 	})
 })
