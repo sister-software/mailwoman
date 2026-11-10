@@ -139,7 +139,15 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	ready: boolean
 
 	/**
-	 * The load progress line, empty once loading finishes or fails.
+	 * Whether the manifest loader answered with no manifest.
+	 *
+	 * The hook then loads no release and stays not ready, and a consumer shows no loading status.
+	 * A page that runs without a model, such as earth under `?no-model`, reaches this state.
+	 */
+	manifestAbsent: boolean
+
+	/**
+	 * The load progress line, empty once loading finishes, fails, or finds no manifest.
 	 */
 	loadingProgress: string
 
@@ -185,6 +193,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	const { initialProgress = "Loading releases…" } = config
 
 	const [manifest, setManifest] = useState<ReleaseManifest<TRelease> | null>(null)
+	const [manifestAbsent, setManifestAbsent] = useState(false)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [assets, setAssets] = useState<TAssets | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>(initialProgress)
@@ -221,10 +230,14 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 				if (data) {
 					setManifest(data)
 					setSelectedVersion(data.defaultVersion)
+				} else {
+					setManifestAbsent(true)
+					setLoadingProgress("")
 				}
 			} catch (error) {
 				if (controller.signal.aborted) return
 				setErrorMessage(error instanceof Error ? error.message : String(error))
+				setLoadingProgress("")
 			}
 		})()
 
@@ -322,6 +335,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		selectedRelease,
 		assets,
 		ready: assets !== null,
+		manifestAbsent,
 		loadingProgress,
 		loadingStepIndex,
 		loadingStepLabels,

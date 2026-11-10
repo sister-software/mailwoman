@@ -1014,12 +1014,15 @@ export function useGeocoderRuntime({
 			ready: rt.ready,
 			runParse,
 			parseStageLabels,
-			loading: {
-				progress: rt.loadingProgress,
-				stepLabels: rt.loadingStepLabels,
-				stepIndex: rt.loadingStepIndex,
-				byteFraction: rt.loadingByteFraction,
-			},
+			// `?no-model` answers no manifest, so no release loads and the footer shows no loading status.
+			loading: rt.manifestAbsent
+				? null
+				: {
+						progress: rt.loadingProgress,
+						stepLabels: rt.loadingStepLabels,
+						stepIndex: rt.loadingStepIndex,
+						byteFraction: rt.loadingByteFraction,
+					},
 			errorMessage: rt.errorMessage,
 			mapStyle,
 			overlays,
@@ -1037,6 +1040,7 @@ export function useGeocoderRuntime({
 	}, [
 		mapStyle,
 		rt.ready,
+		rt.manifestAbsent,
 		rt.loadingProgress,
 		rt.loadingStepLabels,
 		rt.loadingStepIndex,
