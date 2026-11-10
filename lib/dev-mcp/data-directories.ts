@@ -80,6 +80,15 @@ export const DATA_DIRECTORIES: readonly DataDirectory[] = [
 	{ path: "db/osm", holds: "OpenStreetMap-derived databases, including address points and places-osm.db. ODbL." },
 	{ path: "db/interpolation", holds: "US street segments with geometry, for house number interpolation." },
 	{ path: "db/ban", holds: "France's Base Adresse Nationale points and street centroids." },
+	{
+		path: "db/tiger",
+		holds:
+			"tiger.db: TIGER blocks, places and named street segments, with P.L. 94-171 block counts, built by tiger fetch.",
+	},
+	{
+		path: "corpus/staging/overture",
+		holds: "The corpus JSONL and fill-rate report overture-ingest derives from each Overture release snapshot.",
+	},
 	{ path: "db/poi", holds: "poi.db and the Wikidata landmarks.db." },
 	{ path: "gauntlet", holds: "regression.db and the gauntlet's other built rows." },
 ]

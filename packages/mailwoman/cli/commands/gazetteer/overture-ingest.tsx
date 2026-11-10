@@ -41,7 +41,7 @@ interface CountryProbe {
  * It copies Overture address rows into per-country Parquet files and writes a fill-rate report.
  *
  * The Parquet files land in the release's snapshot, `$MAILWOMAN_DATA_ROOT/snapshots/overture/<release>/`.
- * The corpus JSONL and the fill-rate report land in `$MAILWOMAN_DATA_ROOT/overture/<release>/`.
+ * The corpus JSONL and the fill-rate report land in `$MAILWOMAN_DATA_ROOT/corpus/staging/overture/<release>/`.
  *
  * With `--out`, every output lands under `<out>/<release>/`.
  * Rows from two releases never mix in one directory.
@@ -97,7 +97,8 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 
 const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, snapshotSourcePath } = await import("@mailwoman/core/data-root")
+		const { snapshotSourcePath } = await import("@mailwoman/core/data-root")
+		const { overtureStagingPath } = await import("@mailwoman/corpus/adapters/overture/paths")
 
 		if (!options.countries) {
 			throw new CommandError("--countries is required (ISO 3166-1 alpha-2, comma-separated, e.g. US,DE,FR)")
@@ -109,10 +110,10 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		// The default seed is fixed so that repeated samples of one release write the same rows.
 		const seed = options.seed ? Number.parseInt(options.seed, 10) : 20_260_922
 		// The Parquet copies are the release's snapshot.
-		// The corpus JSONL and the fill-rate report are derived from them and stay in
-		// the data root's `overture/<release>/` directory.
+		// The corpus JSONL and the fill-rate report are derived from them, so they are written
+		// beside the other corpus adapter inputs rather than inside the snapshot.
 		const snapshotDir = options.out ? PathBuilder.from(options.out)(release) : snapshotSourcePath("overture", release)
-		const outDir = options.out ? snapshotDir : dataRootPath("overture", release)
+		const outDir = options.out ? snapshotDir : overtureStagingPath(release)
 		await makeDirectories(snapshotDir)
 		await makeDirectories(outDir)
 

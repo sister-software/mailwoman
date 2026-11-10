@@ -67,7 +67,7 @@ contain a lab-specific path.
 A database under the data root's `db/` group is located by the package that owns it, through that
 package's `paths` export: `wofDatabasePath("admin-global-priority.db")` from
 `@mailwoman/resolver-wof-sqlite/paths`, `banDatabasePath` from `@mailwoman/ban/paths`, and the same
-pattern in `soil`, `flood`, `coastal`, `zoning`, `osm` and `timezone-lookup`. Each constant reads the
+pattern in `soil`, `flood`, `coastal`, `zoning`, `osm`, `tiger` and `timezone-lookup`. Each constant reads the
 data root when a path is requested. The matching `…DatabaseRoot(dataRoot)` function takes an explicit
 root. Core keeps only `databaseRootPath`, for a package that cannot depend on the owner.
 
