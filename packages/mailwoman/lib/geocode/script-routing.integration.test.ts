@@ -27,7 +27,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — a bare kanji line unde
 		: null
 
 	afterAll(async () => {
-		;(await sessionPromise)?.[Symbol.dispose]()
+		await (await sessionPromise)?.[Symbol.asyncDispose]()
 	})
 
 	it("parses on the CJK family and resolves the municipality without the locale's country scope", async () => {

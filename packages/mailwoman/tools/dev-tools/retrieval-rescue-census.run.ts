@@ -14,7 +14,7 @@ import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { probeForkEntity } from "#fork-entity"
-import { loadForkEntityDeps } from "#geocode/session"
+import { loadForkEntityDeps } from "#geocode/session-layers"
 import { loadRegressionCases } from "#tools/eval-harness/gauntlet/cases/load"
 import { buildGauntletDeps } from "#tools/eval-harness/gauntlet/harness"
 import { routeCountry } from "#tools/eval-harness/gauntlet/routing"

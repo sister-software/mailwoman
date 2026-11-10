@@ -41,7 +41,7 @@ export const daemonTool = (deps: DevToolDeps): DevTool => {
 					throw new Error(staleEngineMessage(registry.bootFingerprint, fingerprint))
 				}
 
-				const closed = registry.evictAll()
+				const closed = await registry.evictAll()
 
 				return {
 					action,
@@ -59,7 +59,7 @@ export const daemonTool = (deps: DevToolDeps): DevTool => {
 
 				if (!id) throw new Error("mwdev_daemon: `evict` needs an `engine_id` (see `status`).")
 
-				return { action, evicted: registry.evict(id), engine_id: id }
+				return { action, evicted: await registry.evict(id), engine_id: id }
 			}
 
 			return {

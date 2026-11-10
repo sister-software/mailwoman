@@ -69,8 +69,8 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 		}),
 		acquire: async () => engine,
 		summaries: () => [],
-		evict: () => true,
-		evictAll: () => 0,
+		evict: async () => true,
+		evictAll: async () => 0,
 	})
 }
 

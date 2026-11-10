@@ -65,7 +65,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 				expect(fstPath.startsWith(envOverlay.toString())).toBe(false)
 			}
 		} finally {
-			session.session[Symbol.dispose]()
+			await session.session[Symbol.asyncDispose]()
 		}
 	}, 60_000)
 })

@@ -324,8 +324,8 @@ export interface EngineRegistryLike {
 	 */
 	fingerprint(): Promise<TreeFingerprint>
 	acquire(config: EngineConfig): Promise<Engine>
-	evict(id: string): boolean
-	evictAll(): number
+	evict(id: string): Promise<boolean>
+	evictAll(): Promise<number>
 	summaries(): EngineSummary[]
 }
 
@@ -416,37 +416,41 @@ export class EngineRegistry implements EngineRegistryLike {
 		}
 
 		this.#engines.set(id, engine)
-		this.#evictToCap()
+		await this.#evictToCap()
 
 		return engine
 	}
 
-	#evictToCap(): void {
+	async #evictToCap(): Promise<void> {
 		while (this.#engines.size > this.#maxResident) {
 			const oldest = [...this.#engines.values()].toSorted((a, b) => a.lastUsed - b.lastUsed)[0]
 
 			if (!oldest) return
 
-			this.evict(oldest.engineID)
+			await this.evict(oldest.engineID)
 		}
 	}
 
-	evict(id: string): boolean {
+	/**
+	 * Drops the engine and waits for its session to close its handles.
+	 */
+	async evict(id: string): Promise<boolean> {
 		const engine = this.#engines.get(id)
 
 		if (!engine) return false
 
-		engine.session[Symbol.dispose]()
+		// The engine leaves the cache before its session closes, so a concurrent acquire builds a fresh one.
 		this.#engines.delete(id)
+		await engine.session[Symbol.asyncDispose]()
 
 		return true
 	}
 
-	evictAll(): number {
+	async evictAll(): Promise<number> {
 		const ids = [...this.#engines.keys()]
 
 		for (const id of ids) {
-			this.evict(id)
+			await this.evict(id)
 		}
 
 		return ids.length

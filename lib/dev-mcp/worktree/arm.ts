@@ -139,7 +139,8 @@ for (const input of request.inputs) {
 	}
 }
 
-session[Symbol.dispose]()
+// A ref from before the session's teardown became async declares Symbol.dispose instead.
+await (session[Symbol.asyncDispose] ? session[Symbol.asyncDispose]() : session[Symbol.dispose]())
 process.stdout.write(JSON.stringify({ answers }))
 `
 

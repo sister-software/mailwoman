@@ -89,8 +89,8 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				expect(withTrace.timing.trace).toBeGreaterThan(0)
 				expect(without.timing.trace).toBeUndefined()
 			} finally {
-				traced[Symbol.dispose]()
-				plain[Symbol.dispose]()
+				await traced[Symbol.asyncDispose]()
+				await plain[Symbol.asyncDispose]()
 			}
 		},
 		TEST_TIMEOUT_MS

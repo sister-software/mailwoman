@@ -163,12 +163,10 @@ async function openResources(options: GeocodeCommandOptions): Promise<Resources>
 function closeResources(resources: Resources | null): void {
 	if (!resources) return
 
-	resources.session[Symbol.dispose]()
-
-	void resources.source?.[Symbol.asyncDispose]().catch(() => {
-		// Teardown is best-effort: this runs after the terminal is restored and
-		// while the process exits, so no caller remains to receive a close error.
-	})
+	// Teardown is best-effort: this runs after the terminal is restored and
+	// while the process exits, so no caller remains to receive a close error.
+	void resources.session[Symbol.asyncDispose]().catch(() => {})
+	void resources.source?.[Symbol.asyncDispose]().catch(() => {})
 }
 
 /* oxlint-disable react-hooks/exhaustive-deps -- The mount effect runs once by interface. It opens the

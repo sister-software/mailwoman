@@ -39,8 +39,8 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
 			throw new Error("stubEngineRegistry: this case was not given an engine to acquire")
 		},
 		summaries: () => [],
-		evict: () => true,
-		evictAll: () => 0,
+		evict: async () => true,
+		evictAll: async () => 0,
 		...overrides,
 	}
 }

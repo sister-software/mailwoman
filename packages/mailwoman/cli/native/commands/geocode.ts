@@ -396,19 +396,16 @@ async function openSession(options: GeocodeOptions) {
 
 async function runOne(input: string, options: GeocodeOptions): Promise<void> {
 	const format = resolveFormat(options)
-	const session = await openSession(options)
 
-	try {
-		const geocoded = await session.geocode(input)
+	await using session = await openSession(options)
 
-		if (options.timing) {
-			reportTiming("geocode", geocoded.timing)
-		}
+	const geocoded = await session.geocode(input)
 
-		process.stdout.write(`${await formatResult(geocoded.result, format, false)}\n`)
-	} finally {
-		session[Symbol.dispose]()
+	if (options.timing) {
+		reportTiming("geocode", geocoded.timing)
 	}
+
+	process.stdout.write(`${await formatResult(geocoded.result, format, false)}\n`)
 }
 
 async function runStdin(options: GeocodeOptions): Promise<void> {
@@ -419,29 +416,27 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 	}
 
 	const { createInterface } = await import("node:readline")
-	const session = await openSession(options)
+
+	await using session = await openSession(options)
+
 	let index = 0
 
-	try {
-		for await (const line of createInterface({ input: process.stdin, crlfDelay: Infinity })) {
-			const input = line.trim()
+	for await (const line of createInterface({ input: process.stdin, crlfDelay: Infinity })) {
+		const input = line.trim()
 
-			if (!input) {
-				continue
-			}
-
-			const geocoded = await session.geocode(input)
-
-			index++
-
-			if (options.timing) {
-				reportTiming(`geocode[${index}]`, geocoded.timing)
-			}
-
-			process.stdout.write(`${await formatResult(geocoded.result, format, true)}\n`)
+		if (!input) {
+			continue
 		}
-	} finally {
-		session[Symbol.dispose]()
+
+		const geocoded = await session.geocode(input)
+
+		index++
+
+		if (options.timing) {
+			reportTiming(`geocode[${index}]`, geocoded.timing)
+		}
+
+		process.stdout.write(`${await formatResult(geocoded.result, format, true)}\n`)
 	}
 }
 

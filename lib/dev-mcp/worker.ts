@@ -93,9 +93,9 @@ process.on("message", (message: WorkerInbound) => {
 	}
 
 	if (message.type === "shutdown") {
-		registry.evictAll()
-		jobs.cancelAll()
-		process.exit(0)
+		shutdown()
+
+		return
 	}
 
 	if (message.type === "call") {
@@ -140,11 +140,22 @@ process.on("message", (message: WorkerInbound) => {
 	}
 })
 
+/**
+ * Cancels the running jobs, closes every engine's session, and exits.
+ *
+ * The process exits after the sessions close, so each releases its lease on the data generation.
+ * A session that fails to close still lets the process exit.
+ */
+function shutdown(): void {
+	jobs.cancelAll()
+
+	void registry
+		.evictAll()
+		.catch(() => {})
+		.finally(() => process.exit(0))
+}
+
 // The shim restarts by sigterm.
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
-	process.on(signal, () => {
-		registry.evictAll()
-		jobs.cancelAll()
-		process.exit(0)
-	})
+	process.on(signal, shutdown)
 }

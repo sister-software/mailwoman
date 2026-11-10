@@ -37,58 +37,50 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 
 	assertDebugSizeFloor(columns, rows)
 
-	const session = await createGeocodeSession({ ...options, trace: true })
+	await using session = await createGeocodeSession({ ...options, trace: true })
 
-	try {
-		const { result, tree, trace, timing } = await session.geocode(input)
-		const tilesPath = await resolveTilesPath(options.tiles)
-		let frame: MapFrame | null = null
-		let mapNote: string | null = null
+	const { result, tree, trace, timing } = await session.geocode(input)
+	const tilesPath = await resolveTilesPath(options.tiles)
+	let frame: MapFrame | null = null
+	let mapNote: string | null = null
 
-		if (result.lat == null || result.lon == null) {
-			mapNote = "unresolved: no coordinate"
-		} else if (!tilesPath) {
-			mapNote = "no tiles: set $MAILWOMAN_TILES or --tiles"
-		} else {
-			const source = await TileSource.open(tilesPath)
+	if (result.lat == null || result.lon == null) {
+		mapNote = "unresolved: no coordinate"
+	} else if (!tilesPath) {
+		mapNote = "no tiles: set $MAILWOMAN_TILES or --tiles"
+	} else {
+		await using source = await TileSource.open(tilesPath)
 
-			try {
-				const pane = mapPaneCellSize(columns, rows)
-				const renderer = new MapRenderer(source)
+		const pane = mapPaneCellSize(columns, rows)
+		const renderer = new MapRenderer(source)
 
-				frame = await renderer.renderFrame(
-					{
-						centerLon: result.lon,
-						centerLat: result.lat,
-						zoom: initialZoomForTier(result),
-						columns: pane.columns,
-						rows: pane.rows,
-					},
-					{
-						markers: [{ lon: result.lon, lat: result.lat }],
-						...(result.uncertainty_m != null
-							? { ring: { lon: result.lon, lat: result.lat, radiusMeters: result.uncertainty_m } }
-							: {}),
-					}
-				)
-			} finally {
-				await source[Symbol.asyncDispose]()
+		frame = await renderer.renderFrame(
+			{
+				centerLon: result.lon,
+				centerLat: result.lat,
+				zoom: initialZoomForTier(result),
+				columns: pane.columns,
+				rows: pane.rows,
+			},
+			{
+				markers: [{ lon: result.lon, lat: result.lat }],
+				...(result.uncertainty_m != null
+					? { ring: { lon: result.lon, lat: result.lat, radiusMeters: result.uncertainty_m } }
+					: {}),
 			}
-		}
-
-		return await renderInkToString(
-			<DebugFrame
-				columns={columns}
-				rows={rows}
-				focused={null}
-				color={!$public.NO_COLOR}
-				data={{ input, tree, result, frame, mapNote, ...(trace ? { trace } : {}), timing }}
-			/>,
-			columns
 		)
-	} finally {
-		session[Symbol.dispose]()
 	}
+
+	return await renderInkToString(
+		<DebugFrame
+			columns={columns}
+			rows={rows}
+			focused={null}
+			color={!$public.NO_COLOR}
+			data={{ input, tree, result, frame, mapNote, ...(trace ? { trace } : {}), timing }}
+		/>,
+		columns
+	)
 }
 
 function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptions }): React.ReactElement | null {

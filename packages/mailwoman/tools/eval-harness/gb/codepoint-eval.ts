@@ -166,7 +166,7 @@ for (const locale of ["en-US", "en-GB"]) {
 		}
 	}
 
-	session[Symbol.dispose]()
+	await session[Symbol.asyncDispose]()
 
 	console.log(`[gb-codepoint] ${locale}: ${sample.length * 3} runs complete`)
 }
