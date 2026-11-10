@@ -7,7 +7,7 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { memoizeResettable } from "@mailwoman/core/promises"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
 import { type LatLonBounds, latLonBoundsContain } from "@mailwoman/spatial/bbox"
 

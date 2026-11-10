@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { memoizeResettable } from "#promises"
+import { memoizeResettable } from "#memoize"
 
 describe("memoizeResettable", () => {
 	it("shares one in-flight call between concurrent callers and keeps a resolved value", async () => {

@@ -632,6 +632,11 @@
 			"node": "./lib/promises.ts",
 			"default": "./out/promises.js"
 		},
+		"./memoize": {
+			"types": "./out/memoize.d.ts",
+			"node": "./lib/memoize.ts",
+			"default": "./out/memoize.js"
+		},
 		"./stats": {
 			"types": "./out/stats.d.ts",
 			"node": "./lib/stats.ts",

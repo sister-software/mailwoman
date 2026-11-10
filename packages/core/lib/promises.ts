@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
+ *   Promise helpers with no runtime dependency, so a launcher graph can import them. `memoizeResettable` lives in
+ *   `@mailwoman/core/memoize` because it depends on `async-init`.
  */
-
-import { Service } from "async-init"
 
 /**
  * Marks a promise started ahead of the await that reads it as handled, and returns it unchanged.
@@ -17,23 +17,6 @@ export function startEarly<T>(promise: Promise<T>): Promise<T> {
 	promise.catch(() => {})
 
 	return promise
-}
-
-/**
- * Memoizes a zero-argument async load as its in-flight promise, so concurrent callers share one call.
- *
- * A resolved value stays cached.
- * A rejection clears the memo, so the next call loads again rather than receiving
- * the same failure for the rest of the process or page.
- *
- * The memo is an `async-init` `Service`, the lazy handle `FamilyBundles` keeps one of per weights family.
- * The value sits in a box, because a `Service` holds objects only and calls the
- * lifecycle hooks of an object that declares them.
- */
-export function memoizeResettable<T>(load: () => Promise<T>): () => Promise<T> {
-	const service = new Service(async () => ({ value: await load() }))
-
-	return () => service.resolve().then((box) => box.value)
 }
 
 /**

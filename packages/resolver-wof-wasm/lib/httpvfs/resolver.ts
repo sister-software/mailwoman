@@ -6,8 +6,8 @@
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import { isPresent } from "@mailwoman/core/objects"
-import { memoizeResettable } from "@mailwoman/core/promises"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate/schema"
 import {

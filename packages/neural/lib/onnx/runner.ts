@@ -5,7 +5,7 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { memoizeResettable } from "@mailwoman/core/promises"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import ort from "onnxruntime-node"
 import type { PathBuilderLike } from "path-ts"
 

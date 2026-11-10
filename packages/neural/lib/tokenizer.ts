@@ -10,7 +10,7 @@
  *   consumes from its native span.
  */
 
-import { memoizeResettable } from "@mailwoman/core/promises"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import { MTFRuntime, mtfWASMURL, type MTFModel, type MTFWasmSource } from "@mailwoman/mtf"
 import type { PathBuilderLike } from "path-ts"
 

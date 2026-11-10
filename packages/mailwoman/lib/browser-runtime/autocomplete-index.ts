@@ -10,8 +10,8 @@
  */
 
 import { Ancestrie, autocomplete } from "@mailwoman/ancestrie"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import { isPresent } from "@mailwoman/core/objects"
-import { memoizeResettable } from "@mailwoman/core/promises"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { z } from "zod"
 

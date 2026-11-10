@@ -11,7 +11,7 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { memoizeResettable } from "@mailwoman/core/promises"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,

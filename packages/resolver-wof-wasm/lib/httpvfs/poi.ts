@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { memoizeResettable } from "@mailwoman/core/promises"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import type { POIDistanceHit } from "@mailwoman/core/resolver"
 import { haversine, shortCellToInt } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "@sister.software/h3"

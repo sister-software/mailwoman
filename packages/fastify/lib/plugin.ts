@@ -23,7 +23,7 @@ import { RetrieveHealthOperation } from "@mailwoman/api/operations/retrieve/heal
 import { SearchPOIOperation } from "@mailwoman/api/operations/search-poi"
 import type { PipelineOpts } from "@mailwoman/core"
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
-import { memoizeResettable } from "@mailwoman/core/promises"
+import { memoizeResettable } from "@mailwoman/core/memoize"
 import type { Resolver } from "@mailwoman/core/resolver/types"
 import type { FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
