@@ -69,6 +69,11 @@ export const DATA_DIRECTORIES: readonly DataDirectory[] = [
 		holds: "Overture releases: addresses and places.",
 		caution: "No road network is held here.",
 	},
+	{
+		path: "snapshots/geofabrik",
+		holds:
+			"Geofabrik OpenStreetMap extracts, one directory per region path and one dated vintage per Last-Modified date, each with its receipt.",
+	},
 	{ path: "sub-venue/pbf", holds: "OpenStreetMap extracts: France, Germany, Hessen, Japan and Spain." },
 	{
 		path: "pelias-rig/data/photon",

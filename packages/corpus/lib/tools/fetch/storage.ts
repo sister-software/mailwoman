@@ -55,6 +55,10 @@ export interface MixedStorage {
  *
  * Every directory a fetch source writes appears here, along with the snapshot sources that have no fetcher.
  * `cn-units` is absent: it holds recipe splits, a built artifact that stays under the data root.
+ *
+ * Geofabrik extracts are absent too: they are a snapshot source, but `corpus fetch` does not reach them.
+ * `packages/osm/tools/fetch/extract.ts` writes them, one series of vintages per region, under
+ * `snapshots/geofabrik/<region>/`, so they have no single source directory for this table to key.
  */
 export const SOURCE_STORAGE_CLASSES = {
 	"acra-sg": StorageClass.current,

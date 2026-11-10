@@ -27,11 +27,13 @@ the license column. That match admitted a row whose license was prose mentioning
 ## Input
 
 A per-country line-delimited JSON file written by `@mailwoman/osm`'s `emit-corpus-jsonl` script from a
-Geofabrik extract. GDAL and the PBF stay in that package, and this one streams the result.
+Geofabrik extract. GDAL and the PBF stay in that package, and this one streams the result. `--region`
+reads the region's newest vintage under `$MAILWOMAN_DATA_ROOT/snapshots/geofabrik/<region>/`, and
+`--vintage` names another:
 
 ```bash
 node packages/osm/out/tools/emit-corpus-jsonl.js \
-  --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/pakistan-260819.osm.pbf \
+  --region asia/pakistan --vintage 2026-08-19 \
   --out $MAILWOMAN_DATA_ROOT/db/osm/corpus/osm-pk.corpus.jsonl
 ```
 
