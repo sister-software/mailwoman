@@ -13,7 +13,7 @@
  *   Open Government Licence as the other two products the adapter reads.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
@@ -24,7 +24,7 @@ import { createOpenNamesReadStats, readOpenNamesPostcodeCounties } from "#gb/os-
  * The Open Names product the `gb-os-open` fetch writes under the data root.
  */
 export function gbOpenNamesDirectory(): PathBuilder {
-	return dataRootPath("corpus", "sources", GB_OS_OPEN_ADAPTER_ID, GB_OS_OPEN_PRODUCT_DIRECTORIES.openNames)
+	return currentSourcePath(GB_OS_OPEN_ADAPTER_ID, GB_OS_OPEN_PRODUCT_DIRECTORIES.openNames)
 }
 
 /**

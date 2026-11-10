@@ -13,9 +13,9 @@
  *
  *   ```sh
  *   mailwoman corpus ingest-csv \
- *   --input /data/corpus/sources/usgov-nppes/npidata_pfile.csv \
+ *   --input $MAILWOMAN_DATA_ROOT/snapshots/usgov-nppes/2026-05/npidata_pfile.csv \
  *   --table nppes_providers \
- *   --output /data/corpus/sources/usgov-nppes/nppes.db
+ *   --output $MAILWOMAN_DATA_ROOT/db/nppes/nppes.db
  * ```
  *
  * Options:

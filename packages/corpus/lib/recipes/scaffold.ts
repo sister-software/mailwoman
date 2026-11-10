@@ -466,7 +466,7 @@ export interface RecipeOptions {
 	/**
 	 * `fr-lieudit`: BAN `adresses-<dept>.csv` directory.
 	 *
-	 * @defaultValue `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/ban`
 	 */
 	banDir?: PathBuilderLike
 	multilocaleCount?: number | null

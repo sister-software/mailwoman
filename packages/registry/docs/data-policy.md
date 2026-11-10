@@ -61,7 +61,7 @@ than hides: OurAirports lists `XK`, `XP` and `ZZ`, which are not ISO codes, and 
 ## How a source update moves through the repository
 
 1. `node packages/registry/sdk/fetch.run.ts --repin` downloads the sources into
-   `$MAILWOMAN_DATA_ROOT/corpus/sources/registry/` and rewrites the lock. Without `--repin`, a changed
+   `$MAILWOMAN_CACHE_ROOT/sources/registry/` and rewrites the lock. Without `--repin`, a changed
    publication fails the run.
 2. `node packages/registry/tools/normalize.run.ts` rewrites `data/normalized/*.json` and
    `data/manifests/coverage.json`. The normalized files hold one record per line so the diff reads by

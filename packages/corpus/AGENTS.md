@@ -138,7 +138,9 @@ the precedent.
 A base corpus build,
 `mailwoman corpus build --inputs packages/corpus/data/builds/<version>/inputs.json`,
 takes about 11.5 hours for roughly 680 M rows. The committed `inputs.json` records each adapter and its
-input path relative to `$MAILWOMAN_DATA_ROOT`. Budget a day, run the build in the background with
+input path relative to `$MAILWOMAN_DATA_ROOT`, or to `$MAILWOMAN_CACHE_ROOT` when the entry states
+`"root": "cache"`, as a current source under `sources/` does. A record from before the storage classes
+names no root and keeps the paths it recorded. Budget a day, run the build in the background with
 `NODE_OPTIONS="--max-old-space-size=20480"`, and smoke-build two small adapters first to prove a schema
 change end to end. `assertHeapForAdapters` in `lib/build/heap.ts` refuses a heap under 15 GiB when
 `--inputs` names `wof-admin` or `wof-postalcode`, because both hold every source record resident and

@@ -14,7 +14,7 @@
  *   seeded `<seed>-postcode`, one draw per register row.
  */
 
-import { dataRootPath, snapshotSourcePath } from "@mailwoman/core/data-root"
+import { currentSourcePath, snapshotSourcePath } from "@mailwoman/core/data-root"
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { orderedJSON } from "@mailwoman/core/json"
@@ -96,7 +96,7 @@ interface RegistryLocaleSpec {
 }
 
 async function* twCandidates(index: TWKeyIndex): AsyncGenerator<Candidate> {
-	for await (const row of iterTWRegisterRows(dataRootPath("corpus", "sources", TW_REGISTRY_SOURCE))) {
+	for await (const row of iterTWRegisterRows(currentSourcePath(TW_REGISTRY_SOURCE))) {
 		for (const text of [row.address, row.taxAddress]) {
 			if (!text) continue
 
@@ -110,10 +110,10 @@ async function* twCandidates(index: TWKeyIndex): AsyncGenerator<Candidate> {
 }
 
 /**
- * The nationwide corporate-number file the Japanese registry corpus reads.
+ * The nationwide corporate-number file the Japanese registry corpus reads: the 2026-08-31 snapshot.
  */
 export function houjinZipPath() {
-	return dataRootPath("corpus", "sources", JP_REGISTRY_SOURCE, "00_zenkoku_all_20260831.zip")
+	return snapshotSourcePath(JP_REGISTRY_SOURCE, "2026-08-31", "00_zenkoku_all_20260831.zip")
 }
 
 async function* jpCandidates(

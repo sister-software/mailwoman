@@ -47,6 +47,27 @@ export class SnapshotExistsError extends Error {
 }
 
 /**
+ * Throws unless {@link writeSnapshot} would accept `target` under `options`.
+ *
+ * A fetch whose download is long checks this before downloading, so a refused vintage costs no transfer.
+ *
+ * @returns Whether `target` exists.
+ * A `true` answer means the caller may replace it.
+ * @throws {SnapshotExistsError} When `target` exists, unless the caller stated
+ * the vintage and passed `force`.
+ */
+export async function assertSnapshotWritable(target: PathBuilderLike, options: SnapshotWriteOptions): Promise<boolean> {
+	const path = target.toString()
+	const exists = await pathExists(path)
+
+	if (exists && !(options.force && options.vintageFromCaller)) {
+		throw new SnapshotExistsError(path, options.vintageFromCaller)
+	}
+
+	return exists
+}
+
+/**
  * Writes the vintage directory `target` through `fill`, which writes into a staging directory beside it.
  *
  * The staging directory replaces `target` only after `fill` resolves, so a failed write
@@ -61,12 +82,7 @@ export async function writeSnapshot(
 	fill: (staging: string) => Promise<void>
 ): Promise<void> {
 	const path = target.toString()
-	const exists = await pathExists(path)
-
-	if (exists && !(options.force && options.vintageFromCaller)) {
-		throw new SnapshotExistsError(path, options.vintageFromCaller)
-	}
-
+	const exists = await assertSnapshotWritable(path, options)
 	const staging = `${path}.staging-${process.pid}`
 
 	await removePathIfPresent(staging)

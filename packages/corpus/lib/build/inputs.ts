@@ -10,17 +10,25 @@
  *   when the data root moved on 2026-09-23. A corpus `MANIFEST.json` records `skipped_adapters` without any
  *   adapter's input path, so a rebuild began by re-deriving the adapter set from that skip list.
  *
- *   Each `inputPath` is written relative to `$MAILWOMAN_DATA_ROOT` and resolved at launch, so the record
- *   survives a data-root move. A path that has to sit outside the data root is written absolute and used as
- *   written.
+ *   Each `inputPath` is written relative to a root and resolved at launch, so the record survives a root
+ *   move. The root is `$MAILWOMAN_DATA_ROOT` unless the entry states `"root": "cache"`, which a current
+ *   source under `$MAILWOMAN_CACHE_ROOT/sources/` takes. A path that has to sit outside both roots is
+ *   written absolute and used as written.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { cacheRootPathBuilder, dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { isAbsolute, type PathBuilderLike } from "path-ts"
 
 import type { AdapterOptions } from "#types"
+
+/**
+ * The roots a build input can be recorded relative to.
+ */
+export const BuildInputRoot = { cache: "cache", data: "data" } as const
+
+export type BuildInputRoot = (typeof BuildInputRoot)[keyof typeof BuildInputRoot]
 
 /**
  * One adapter's input as the committed record states it.
@@ -31,6 +39,16 @@ import type { AdapterOptions } from "#types"
  */
 export interface BuildInputRecord {
 	inputPath: string
+	/**
+	 * The root a relative `inputPath` resolves against: `"cache"` for a current source
+	 * under `$MAILWOMAN_CACHE_ROOT`, such as `sources/ban`, and `"data"` for a snapshot
+	 * or built artifact under `$MAILWOMAN_DATA_ROOT`, such as `snapshots/usgov-nppes/2026-05`.
+	 *
+	 * A record written before the storage classes names no root, and every path in it is under the data root.
+	 *
+	 * @defaultValue `"data"`
+	 */
+	root?: BuildInputRoot
 	country?: string
 	limit?: number
 	/**
@@ -80,14 +98,27 @@ export async function readBuildInputs(path: PathBuilderLike): Promise<Record<str
 				throw new Error(`${path.toString()}: adapter ${id} has no \`inputPath\`.`)
 			}
 
-			const resolve = (relative: string) => (isAbsolute(relative) ? relative : dataRootPath(relative).toString())
+			const { inputPath, streetIndex, root = BuildInputRoot.data, ...options } = input
+
+			if (root !== BuildInputRoot.cache && root !== BuildInputRoot.data) {
+				throw new Error(`${path.toString()}: adapter ${id} names root "${String(root)}", not "cache" or "data".`)
+			}
+
+			const under = (base: (relative: string) => PathBuilderLike, relative: string) =>
+				isAbsolute(relative) ? relative : base(relative).toString()
 
 			return [
 				id,
 				{
-					...input,
-					inputPath: resolve(input.inputPath),
-					...(input.streetIndex ? { streetIndex: resolve(input.streetIndex) } : {}),
+					...options,
+					inputPath: under(
+						root === BuildInputRoot.cache
+							? (relative) => cacheRootPathBuilder(relative)
+							: (relative) => dataRootPath(relative),
+						inputPath
+					),
+					// The street index is built from the previous corpus, a built artifact under the data root.
+					...(streetIndex ? { streetIndex: under((relative) => dataRootPath(relative), streetIndex) } : {}),
 				} satisfies AdapterOptions,
 			]
 		})

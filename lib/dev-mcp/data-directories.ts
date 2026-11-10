@@ -8,16 +8,23 @@
  *   describe is reported as undescribed.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { cacheRootPathBuilder, dataRootPath } from "@mailwoman/core/data-root"
 import { isDirectory } from "@mailwoman/core/fs/readers/stat"
 import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 export interface DataDirectory {
 	/**
-	 * The path under the data root.
+	 * The path under {@link DataDirectory.root}.
 	 */
 	path: string
+	/**
+	 * The root `path` is under: the cache root for current sources, the data root
+	 * for snapshots and built artifacts.
+	 *
+	 * @defaultValue `"data"`
+	 */
+	root?: "cache" | "data"
 	holds: string
 	/**
 	 * A way this directory has misled a search, stated so the next one looks elsewhere.
@@ -30,23 +37,38 @@ export interface DataDirectory {
  */
 export const DATA_DIRECTORIES: readonly DataDirectory[] = [
 	{
-		path: "src/wof-repos",
+		path: "sources/wof-repos",
+		root: "cache",
 		holds:
 			"Every Who's On First repository, admin and postcode, for every country, one clone per repository at " +
-			"src/wof-repos/<name>. Each record holds its polygon. The corpus builds read this directory too.",
+			"sources/wof-repos/<name> under the cache root. Each record holds its polygon. The corpus builds read this directory too.",
 	},
-	{ path: "corpus/sources", holds: "One directory per downloaded corpus source: national registers, NAD, BAN, TIGER." },
 	{
-		path: "corpus/sources/gb-os-open/open-roads/data",
+		path: "sources",
+		root: "cache",
+		holds:
+			"One directory per current corpus source, which a fetch brings up to date: national registers, BAN, OpenAddresses.",
+	},
+	{
+		path: "snapshots",
+		holds: "One directory per snapshot source, one dated vintage beside another: NAD releases, NPPES, TIGER, Overture.",
+	},
+	{
+		path: "sources/gb-os-open/open-roads/data",
+		root: "cache",
 		holds: "OS Open Roads GML: Great Britain's road links with start and end nodes.",
 	},
 	{
-		path: "corpus/sources/tiger",
-		holds: "TIGER addrfeat segments with names and ZIP Codes.",
+		path: "snapshots/tiger",
+		holds: "TIGER addrfeat segments with names and ZIP Codes, one directory per yearly release.",
 		caution: "addrfeat holds no node ids, so crossings cannot be read from it directly.",
 	},
 	{ path: "corpus/street-index", holds: "Street and town names per country, built from the premise registers." },
-	{ path: "overture", holds: "Overture releases: addresses and places.", caution: "No road network is held here." },
+	{
+		path: "snapshots/overture",
+		holds: "Overture releases: addresses and places.",
+		caution: "No road network is held here.",
+	},
 	{ path: "sub-venue/pbf", holds: "OpenStreetMap extracts: France, Germany, Hessen, Japan and Spain." },
 	{
 		path: "pelias-rig/data/photon",
@@ -93,7 +115,7 @@ export async function listDataDirectories(match?: string): Promise<DataDirectory
 
 	const directories = await Promise.all(
 		DATA_DIRECTORIES.map(async (directory): Promise<DataDirectoryListing> => {
-			const path = dataRootPath(directory.path)
+			const path = directory.root === "cache" ? cacheRootPathBuilder(directory.path) : dataRootPath(directory.path)
 
 			if (!(await isDirectory(path).catch(() => false))) return { ...directory, exists: false, entries: 0, sample: [] }
 
@@ -104,7 +126,10 @@ export async function listDataDirectories(match?: string): Promise<DataDirectory
 		})
 	)
 
-	const described = new Set(DATA_DIRECTORIES.map(({ path }) => path.split("/", 1)[0]!))
+	const described = new Set(
+		DATA_DIRECTORIES.filter(({ root }) => root !== "cache").map(({ path }) => path.split("/", 1)[0]!)
+	)
+
 	const topLevel = await entryNames(dataRootPath())
 
 	return {

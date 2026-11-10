@@ -106,6 +106,15 @@ async function validateDownloadCount(session: Session): Promise<boolean> {
 	return res.status !== HTTP_TOO_MANY_REQUESTS
 }
 
+/**
+ * Downloads each wanted category and writes a collection manifest after each file.
+ *
+ * Every run downloads every wanted category again.
+ * The portal states no version to compare: the category page states no date, and the
+ * download response, measured on 2026-11-10, sends no `ETag` or `Last-Modified` header.
+ *
+ * A file already on disk is replaced only once its new copy has arrived whole.
+ */
 export async function fetchLocaldataKR(
 	options: FetchLocaldataKROptions,
 	report?: (line: string) => void
@@ -122,27 +131,34 @@ export async function fetchLocaldataKR(
 
 	report?.(`=== ${SLUG}: ${wanted.length} of ${session.categories.length} categories`)
 
-	// A previous run's entries survive, keyed by file name, so a re-run
-	// after an interruption fetches only what's missing.
+	// Each earlier entry stands until its file's new copy arrives, so an interrupted
+	// or failed run leaves every file on disk described by the manifest.
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, SourceManifest>()
+
+	for (const [filename, entry] of previous) {
+		if (await pathExists(destDir(filename))) {
+			files.set(filename, entry)
+		}
+	}
+
 	let fetched = 0
-	let skipped = 0
 	const failedCodes: string[] = []
+
+	const record = () =>
+		writeManifest(manifestPath, {
+			source: SLUG,
+			source_url: INDEX_URL,
+			license: LICENSE,
+			attribution: ATTRIBUTION,
+			downloaded_at: new Date().toISOString(),
+			files: [...files.values()],
+		} satisfies SourceCollectionManifest)
 
 	for (const category of wanted) {
 		const filename = `${category.slug}.csv`
 		const dest = destDir(filename)
 		const url = `${PORTAL}/file/download/${category.slug}/info`
-		const before = previous.get(filename)
-
-		if (before && (await pathExists(dest))) {
-			files.set(filename, before)
-
-			skipped++
-
-			continue
-		}
 
 		report?.(`--- ${category.name} (${category.slug})`)
 
@@ -179,6 +195,9 @@ export async function fetchLocaldataKR(
 		if (bytes < BYTES_PER_KIB) {
 			report?.(`  ✗ ${bytes} bytes — an error page, not the register`)
 			failedCodes.push(category.slug)
+			// The page replaced the earlier copy, so the earlier entry no longer describes the file.
+			files.delete(filename)
+			await record()
 
 			continue
 		}
@@ -189,17 +208,8 @@ export async function fetchLocaldataKR(
 		fetched++
 		report?.(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)
 
-		const manifest: SourceCollectionManifest = {
-			source: SLUG,
-			source_url: INDEX_URL,
-			license: LICENSE,
-			attribution: ATTRIBUTION,
-			downloaded_at: new Date().toISOString(),
-			files: [...files.values()],
-		}
-
-		await writeManifest(manifestPath, manifest)
+		await record()
 	}
 
-	return { fetched, skipped, failed: failedCodes.length, failedCodes }
+	return { fetched, skipped: 0, failed: failedCodes.length, failedCodes }
 }

@@ -40,8 +40,9 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { FR_FINESS_ADAPTER_ID, FR_FINESS_ATTRIBUTION, FR_FINESS_LICENSE } from "#fr/adapters/finess/adapter"
-import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"
+import type { FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"
 import { downloadToFile, loadCollectionFiles, writeManifest } from "#tools/fetch/download"
+import { fetchSnapshot, type SnapshotFetchOptions } from "#tools/fetch/storage"
 
 /**
  * The dataset's slug on data.gouv.fr.
@@ -182,17 +183,26 @@ export interface DownloadFinessOptions {
 	 * Download even where the manifest records the same resource and the file is on disk.
 	 */
 	force?: boolean
+	/**
+	 * The dataset record a caller already read, so the record is not requested twice.
+	 */
+	dataset?: DataGouvDataset
 	retryDelayMs?: number
 	report?: (line: string) => void
 }
 
-export type FetchFinessOptions = BaseFetchOptions & Pick<DownloadFinessOptions, "force">
+export type FetchFinessOptions = SnapshotFetchOptions
 
 /**
- * The directory `#fr/adapters/finess/adapter` reads under a fetch root.
+ * The date an establishment extract's name states, as the vintage `YYYY-MM-DD`:
+ * `etalab-cs1100502-stock-20260512-0339.csv` is `2026-05-12`.
  */
-export function finessInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuilderLike {
-	return outRoot(FR_FINESS_ADAPTER_ID)
+export function finessVintage(filename: string): string {
+	const date = /-stock-(\d{4})(\d{2})(\d{2})-\d{4}\.csv$/u.exec(filename)
+
+	if (!date) throw new Error(`${FR_FINESS_ADAPTER_ID}: ${filename} states no extraction date`)
+
+	return `${date[1]}-${date[2]}-${date[3]}`
 }
 
 /**
@@ -213,7 +223,7 @@ export async function downloadFinessExtract(
 
 	report?.(`=== ${FR_FINESS_ADAPTER_ID}`)
 
-	const dataset = await readFinessDataset(client)
+	const dataset = options.dataset ?? (await readFinessDataset(client))
 	const resource = selectFinessExtract(dataset)
 	const manifestPath = destDir("MANIFEST.json")
 	const recorded = (await loadCollectionFiles(manifestPath)) as Map<string, FinessExtractManifest>
@@ -331,11 +341,13 @@ export async function downloadFinessExtract(
 }
 
 /**
- * Download the FINESS establishment extract into `<outRoot>/fr-finess-overseas/`.
+ * Download the newest FINESS establishment extract into its snapshot, `fr-finess-overseas/<YYYY-MM-DD>/`.
  *
  * The registry entry point.
- * `#fr/adapters/finess/adapter` is pointed at {@linkcode finessInputPath},
- * and reads the newest extract in it.
+ * The vintage is the extraction date in the extract's name, read from the
+ * dataset record before the download.
+ *
+ * `#fr/adapters/finess/adapter` is pointed at a vintage directory and reads the extract in it.
  */
 export async function fetchFinessOverseas(
 	options: FetchFinessOptions,
@@ -343,11 +355,15 @@ export async function fetchFinessOverseas(
 ): Promise<FetchSummary> {
 	await using client = new APIClient({ displayName: FR_FINESS_ADAPTER_ID, retry: true })
 
+	const dataset = await readFinessDataset(client)
+	const { filename } = selectFinessExtract(dataset)
+
 	// Awaited rather than returned: `await using` disposes the client when this scope exits.
-	return await downloadFinessExtract(client, {
-		outputDir: finessInputPath(options.outRoot),
-		force: options.force,
-		retryDelayMs: options.retryDelayMs,
-		report,
-	})
+	return await fetchSnapshot(
+		options.snapshots,
+		FR_FINESS_ADAPTER_ID,
+		finessVintage(filename),
+		(outputDir) => downloadFinessExtract(client, { outputDir, dataset, retryDelayMs: options.retryDelayMs, report }),
+		report
+	)
 }

@@ -14,10 +14,10 @@
  *       [--per-locale-cap 4000] [--unshippable-reason <why>]
  *
  *   `--locality-parquet-glob` defaults to `LOCALITY_PARQUET_GLOB` under the data root, and an empty value reads the
- *   main glob. `--ryhti-file` defaults to `RYHTI_FILE` under the data root, and an empty value writes no Finnish rows.
+ *   main glob. `--ryhti-file` defaults to `RYHTI_FILE` under the cache root's `sources/`, and an empty value writes no Finnish rows.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcesRoot, dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 import { dirname } from "path-ts"
 
@@ -58,7 +58,7 @@ await buildFragmentAssay({
 	corpusParquetGlob: requiredArgument(command, "--corpus-parquet-glob", values["corpus-parquet-glob"]),
 	famousLocalitiesFile: values["famous-localities-file"],
 	localityParquetGlob: values["locality-parquet-glob"] ?? dataRootPath(LOCALITY_PARQUET_GLOB).toString(),
-	ryhtiFile: values["ryhti-file"] ?? dataRootPath(RYHTI_FILE).toString(),
+	ryhtiFile: values["ryhti-file"] ?? currentSourcesRoot()(RYHTI_FILE).toString(),
 	outParquet,
 	outDev: requiredArgument(command, "--out-dev", values["out-dev"]),
 	perLocaleCap: cap,

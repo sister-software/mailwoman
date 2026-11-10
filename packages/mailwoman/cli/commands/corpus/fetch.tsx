@@ -8,13 +8,13 @@
  *   timestamp, byte count, sha256).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { allKeyed } from "@mailwoman/core/promises"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { FetchSourceID } from "@mailwoman/corpus/tools/fetch"
 import type { FetchSummary } from "@mailwoman/corpus/tools/fetch/download/network"
+import type { FetchDestinations } from "@mailwoman/corpus/tools/fetch/storage"
 import { Text } from "ink"
-import { PathBuilder } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -79,14 +79,23 @@ export const spec = {
 	description: "Fetch a corpus source",
 	positionals: [{ name: "source", required: true, choices: sources, description: "Corpus source ID" }],
 	options: {
-		// A fetched source is a data-root artifact, and `corpus build`'s manifest resolves every
-		// `inputPath` against `$MAILWOMAN_DATA_ROOT`, so the default writes where the build reads.
-		// The previous default, `data/corpus/sources`, sat inside a tracked repository directory with
-		// no ignore rule covering it, so one `corpus fetch ban` left 4.6 GB in the working tree.
+		// Each source writes by its storage class (`@mailwoman/corpus/tools/fetch/storage`):
+		// a current source under `$MAILWOMAN_CACHE_ROOT/sources/<source>/`, a snapshot
+		// under `$MAILWOMAN_DATA_ROOT/snapshots/<source>/<vintage>/`.
 		"out-root": {
 			type: "string",
-			default: dataRootPath("corpus", "sources").toString(),
-			description: "Destination root, under the data root unless this points elsewhere",
+			description:
+				"One root for both classes: a current source writes <root>/<source>/ and a snapshot <root>/<source>/<vintage>/ (default: the cache root's sources/ and the data root's snapshots/)",
+		},
+		vintage: {
+			type: "string",
+			description:
+				"Snapshot sources: the vintage to write, such as 2026-08 (default: the one the publisher serves); juso-kr fetches the month it names",
+		},
+		force: {
+			type: "boolean",
+			default: false,
+			description: "Snapshot sources: replace the vintage --vintage names when it already exists",
 		},
 		"nad-url": { type: "string", description: "NAD release archive link (default: DOT's open-data portal link)" },
 		concurrency: {
@@ -110,7 +119,6 @@ export const spec = {
 		"rate-sleep": { type: "number", description: "TIGER delay between downloads" },
 		"max-parallel": { type: "number", description: "TIGER concurrent downloads" },
 		"dry-run": { type: "boolean", default: false, description: "Print planned downloads" },
-		month: { type: "string", description: "juso-kr month as YYYYMM (default: the latest listed)" },
 		categories: { type: "string", description: "localdata-kr category slugs, comma-separated (default: all)" },
 		editions: {
 			type: "string",
@@ -145,11 +153,9 @@ export const spec = {
 type Options = OptionsOf<typeof spec>
 
 /**
- * The output root every fetcher writes under.
+ * Where a fetch writes: the current-source root, and the snapshot root with the vintage the caller stated.
  */
-interface FetchBase {
-	outRoot: PathBuilder
-}
+type FetchBase = FetchDestinations
 
 /**
  * One source's fetch: it loads that source's module and calls its fetcher with the options it reads.
@@ -216,11 +222,7 @@ const FETCHERS = {
 			{ ...base, editions: delimited(options.editions) },
 			reportToStderr
 		),
-	"juso-kr": async (base, options) =>
-		(await import("@mailwoman/corpus/kr/tools/fetch/juso")).fetchJusoKR(
-			{ ...base, month: options.month },
-			reportToStderr
-		),
+	"juso-kr": async (base) => (await import("@mailwoman/corpus/kr/tools/fetch/juso")).fetchJusoKR(base, reportToStderr),
 	"localdata-kr": async (base, options) =>
 		(await import("@mailwoman/corpus/kr/tools/fetch/localdata")).fetchLocaldataKR(
 			{ ...base, categories: delimited(options.categories) },
@@ -249,7 +251,13 @@ const FETCHERS = {
 	// Present dumps are skipped.
 	"geonames-dump": async (base, options) =>
 		(await import("@mailwoman/corpus/tools/fetch/geonames/dump")).fetchGeonamesDumps(
-			{ ...base, countries: delimited(options.countries) },
+			{
+				...base,
+				// The dump fetcher writes `<CC>.txt` straight into its root, beside any hand-fetched
+				// GeoNames files there, so its default root is its own current-source directory.
+				outRoot: options.outRoot ? base.outRoot : currentSourcePath("geonames-dump"),
+				countries: delimited(options.countries),
+			},
 			reportToStderr
 		),
 	// Null when the flag is absent takes the module's own default set, the countries the corpus wants.
@@ -325,8 +333,16 @@ const FETCHERS = {
 		),
 } as const satisfies Record<(typeof sources)[number], SourceFetcher>
 
-function runSource(source: (typeof sources)[number], options: Options): Promise<FetchSummary> {
-	return FETCHERS[source]({ outRoot: PathBuilder.from(options.outRoot) }, options)
+async function runSource(source: (typeof sources)[number], options: Options): Promise<FetchSummary> {
+	const { resolveFetchDestinations } = await import("@mailwoman/corpus/tools/fetch/storage")
+
+	const base = resolveFetchDestinations(source, {
+		outRoot: options.outRoot,
+		vintage: options.vintage,
+		force: options.force,
+	})
+
+	return FETCHERS[source](base, options)
 }
 
 const CorpusFetch: CommandComponent<typeof spec, [(typeof sources)[number]]> = ({ options, args }) => {

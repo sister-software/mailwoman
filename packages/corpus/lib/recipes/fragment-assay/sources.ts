@@ -101,10 +101,10 @@ export const OA_FILES: Readonly<Record<string, ReadonlyArray<readonly [file: str
 export const LOCALITY_PARQUET_GLOB = "corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-00*.parquet"
 
 /**
- * Ryhti's building address file, relative to `$MAILWOMAN_DATA_ROOT`, published by
- * the Finnish Environment Institute under CC BY 4.0.
+ * Ryhti's building address file, relative to the current-source root `$MAILWOMAN_CACHE_ROOT/sources/`,
+ * published by the Finnish Environment Institute under CC BY 4.0.
  */
-export const RYHTI_FILE = "corpus/sources/ryhti/open_address.csv"
+export const RYHTI_FILE = "ryhti/open_address.csv"
 
 /**
  * The register row Ryhti's file is read under.

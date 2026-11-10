@@ -68,7 +68,26 @@ export function assertVintage(vintage: string): void {
  * A customer who clears the cache root fetches the source again and loses no data.
  */
 export function currentSourcePath(source: string, ...segments: string[]): PathBuilder {
-	return cacheRootPathBuilder("sources", source, ...segments)
+	return currentSourcesRoot()(source, ...segments)
+}
+
+/**
+ * The directory that holds every current source, `$MAILWOMAN_CACHE_ROOT/sources/`.
+ *
+ * A fetch command that writes each source under `<root>/<source>/` takes this as its root,
+ * so `currentSourcesRoot()(source)` is {@link currentSourcePath}`(source)`.
+ */
+export function currentSourcesRoot(): PathBuilder {
+	return cacheRootPathBuilder("sources")
+}
+
+/**
+ * The directory that holds every snapshot source, `$MAILWOMAN_DATA_ROOT/snapshots/`.
+ *
+ * A fetch command that writes each vintage under `<root>/<source>/<vintage>/` takes this as its root.
+ */
+export function snapshotSourcesRoot(): PathBuilder {
+	return dataRootPath("snapshots")
 }
 
 /**
@@ -78,7 +97,7 @@ export function currentSourcePath(source: string, ...segments: string[]): PathBu
  * A path inside one vintage goes through {@link snapshotSourcePath}.
  */
 export function snapshotSourceDirectory(source: string): PathBuilder {
-	return dataRootPath("snapshots", source)
+	return snapshotSourcesRoot()(source)
 }
 
 /**

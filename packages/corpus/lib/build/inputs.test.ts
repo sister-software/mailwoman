@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { cacheRootPathBuilder, dataRootPath } from "@mailwoman/core/data-root"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -47,6 +47,41 @@ describe("readBuildInputs", () => {
 			country: "DE",
 			limit: 10,
 		})
+	})
+
+	it("resolves a current source's inputPath against the cache root and keeps every other input under the data root", async () => {
+		const path = scratch.path("inputs.json")
+
+		await writeLocalJSONFile(
+			{
+				corpusVersion: "v0.0.0-test",
+				adapters: {
+					ban: { inputPath: "sources/ban", root: "cache", streetIndex: "corpus/street-index/fr.json" },
+					"usgov-nppes": { inputPath: "snapshots/usgov-nppes/2026-05", root: "data" },
+				},
+			},
+			path
+		)
+
+		const inputs = await readBuildInputs(path)
+
+		expect(inputs.ban).toEqual({
+			inputPath: cacheRootPathBuilder("sources/ban").toString(),
+			streetIndex: dataRootPath("corpus/street-index/fr.json").toString(),
+		})
+
+		expect(inputs["usgov-nppes"]).toEqual({ inputPath: dataRootPath("snapshots/usgov-nppes/2026-05").toString() })
+	})
+
+	it("refuses a root it does not know rather than resolving the input against the data root", async () => {
+		const path = scratch.path("bad-root.json")
+
+		await writeLocalJSONFile(
+			{ corpusVersion: "v0.0.0-test", adapters: { ban: { inputPath: "sources/ban", root: "temp" } } },
+			path
+		)
+
+		await expect(readBuildInputs(path)).rejects.toThrow(/adapter ban names root "temp"/)
 	})
 
 	it("refuses a record that names no adapter, which would build an empty corpus and report success", async () => {

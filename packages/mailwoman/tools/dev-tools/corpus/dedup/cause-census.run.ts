@@ -47,8 +47,8 @@
  *
  *       node --max-old-space-size=8192 \
  *         packages/mailwoman/tools/dev-tools/corpus/dedup/cause-census.run.ts \
- *         --adapter ryhti --input /mnt/mw/corpus/sources/ryhti/open_address.csv \
- *         --source-csv /mnt/mw/corpus/sources/ryhti/open_address.csv --id-column address_key
+ *         --adapter ryhti --input $MAILWOMAN_CACHE_ROOT/sources/ryhti/open_address.csv \
+ *         --source-csv $MAILWOMAN_CACHE_ROOT/sources/ryhti/open_address.csv --id-column address_key
  *
  *       node --max-old-space-size=8192 \
  *         packages/mailwoman/tools/dev-tools/corpus/dedup/cause-census.run.ts \

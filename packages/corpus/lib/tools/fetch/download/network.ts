@@ -79,6 +79,13 @@ export interface SourceManifest {
 	filename: string
 	sha256: string
 	bytes: number
+	/**
+	 * The version the publisher stated for the file when it was fetched: an ETag,
+	 * a `Last-Modified` header or a metadata field such as data.gov.sg's `lastUpdatedAt`.
+	 *
+	 * A fetcher skips a file on disk only when the publisher still states this version.
+	 */
+	publisher_version?: string
 }
 
 /**

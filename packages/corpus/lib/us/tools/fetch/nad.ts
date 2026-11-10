@@ -7,8 +7,10 @@
  *   US Public Domain (17 U.S.C. § 105).
  *
  *   The release is one zip archive holding a delimited text file of every address point, about 99 million rows in
- *   release 24. The command downloads it to `<outRoot>/usgov-nad/bulk/nad.zip`, extracts the text, and writes
- *   `<member>.parquet` sorted by state and county beside the archive.
+ *   release 24. DOT serves it at an undated link, so the archive is a current download at
+ *   `$MAILWOMAN_CACHE_ROOT/sources/usgov-nad/bulk/nad.zip`. The command extracts the text and writes
+ *   `<member>.parquet`, sorted by state and county, into the release's snapshot,
+ *   `$MAILWOMAN_DATA_ROOT/snapshots/usgov-nad/<release>/`, where `<release>` is the `r24` the member's name states.
  *
  *   ## Usage
  *
@@ -20,17 +22,19 @@
  *   ```
  */
 
+import { snapshotSourceDirectory } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
 import { ResumeRefusedError, streamToDisk } from "@mailwoman/core/utils"
-import { type PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
 import { readManifest, writeManifest } from "#tools/fetch/download"
+import { fetchSnapshot, type SnapshotFetchOptions, snapshotVintagePath } from "#tools/fetch/storage"
 import { convertNADToParquet, readCurrentNADParquetRecord } from "#us/tools/fetch/nad/parquet"
 
 const SLUG = "usgov-nad"
@@ -40,7 +44,11 @@ const SLUG = "usgov-nad"
  */
 export const NAD_RELEASE_URL = "https://data.transportation.gov/download/fc2s-wawr/application%2Fx-zip-compressed"
 
-export interface FetchNADOptions extends BaseFetchOptions {
+/**
+ * The archive is a current download under `outRoot`, and each release's Parquet
+ * file a snapshot under `snapshots`.
+ */
+export interface FetchNADOptions extends BaseFetchOptions, Pick<SnapshotFetchOptions, "snapshots"> {
 	/**
 	 * The release archive's download link.
 	 *
@@ -50,26 +58,48 @@ export interface FetchNADOptions extends BaseFetchOptions {
 }
 
 /**
- * The release Parquet file {@link fetchNAD} wrote under `sourcesRoot`,
- * such as `usgov-nad/bulk/TXT_NAD_r24.parquet`.
+ * The release a text member's name states, as the vintage: `TXT_NAD_r24.txt` is `r24`.
  *
- * @throws When the bulk directory holds no Parquet file or more than one, naming each one found.
+ * @throws When the name states no `r<number>` release.
  */
-export async function nadReleaseParquetPath(sourcesRoot: PathBuilderLike): Promise<PathBuilder> {
-	const bulkDir = resolvePathBuilder(sourcesRoot, SLUG, "bulk")
+export function nadReleaseVintage(member: string): string {
+	const release = /_(r\d+)\.(?:txt|csv)$/iu.exec(member)?.[1]
 
-	const found = (await pathExists(bulkDir))
-		? await Globerator.files("parquet", { cwd: bulkDir, absolute: false, recursive: false }).toSorted()
+	if (!release) throw new Error(`${SLUG}: the archive member ${member} states no r<number> release`)
+
+	return release.toLowerCase()
+}
+
+/**
+ * The newest release Parquet file {@link fetchNAD} wrote, such as
+ * `usgov-nad/r24/TXT_NAD_r24.parquet` under the snapshot root.
+ *
+ * @param snapshotDirectory The directory holding the source's vintages.
+ * @defaultValue `snapshotSourceDirectory("usgov-nad")`
+ * @throws When no release vintage holds a Parquet file, or the newest holds
+ * more than one, naming each one found.
+ */
+export async function nadReleaseParquetPath(
+	snapshotDirectory: PathBuilderLike = snapshotSourceDirectory(SLUG)
+): Promise<PathBuilder> {
+	const root = PathBuilder.from(snapshotDirectory)
+
+	const found = (await pathExists(root))
+		? await Globerator.from("r*/*.parquet", { cwd: root, absolute: false }).toArray()
 		: []
 
-	if (found.length !== 1) {
+	const release = (entry: string) => Number(/^r(\d+)\//u.exec(entry)?.[1] ?? Number.NaN)
+	const newest = Math.max(...found.map(release).filter(Number.isFinite))
+	const inNewest = found.filter((entry) => release(entry) === newest).toSorted()
+
+	if (inNewest.length !== 1) {
 		throw new Error(
-			`${bulkDir} holds ${found.length} Parquet files (${found.join(", ") || "none"}); ` +
+			`${root} holds ${inNewest.length} Parquet files in its newest release (${found.join(", ") || "none"}); ` +
 				`run \`mailwoman corpus fetch nad\` or pass the file`
 		)
 	}
 
-	return bulkDir(found[0]!)
+	return root(inNewest[0]!)
 }
 
 /**
@@ -158,29 +188,41 @@ export async function fetchNAD(options: FetchNADOptions, report?: (line: string)
 		throw new Error(`${SLUG}: the archive holds no delimited text file (members: ${members.join(", ")})`)
 	}
 
-	const parquetPath = bulkDir(`${member.replace(/\.[^.]+$/u, "").replaceAll("/", "_")}.parquet`)
-	const current = await readCurrentNADParquetRecord(parquetPath, sha256, member)
+	const parquetName = `${member.replace(/\.[^.]+$/u, "").replaceAll("/", "_")}.parquet`
+	const vintage = nadReleaseVintage(member)
+	const target = snapshotVintagePath(options.snapshots, SLUG, vintage)
+	const current = await readCurrentNADParquetRecord(target(parquetName), sha256, member)
 
-	if (current) {
-		report?.(`  parquet current: ${current.rows.toLocaleString()} rows from ${member} in ${parquetPath}`)
+	// The release's Parquet file was converted from this same archive, so the fetch keeps it.
+	// A caller who states the release and passes --force converts it again.
+	if (current && !(options.snapshots.force && options.snapshots.vintage != null)) {
+		report?.(`  parquet current: ${current.rows.toLocaleString()} rows from ${member} in ${target(parquetName)}`)
 
 		return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
 	}
 
-	const extractedDir = bulkDir("extracted")
+	return fetchSnapshot(
+		options.snapshots,
+		SLUG,
+		vintage,
+		async (releaseDir) => {
+			const extractedDir = bulkDir("extracted")
 
-	await extractZipEntries(archivePath, extractedDir, { selector: member, skipExisting: true })
+			await extractZipEntries(archivePath, extractedDir, { selector: member, skipExisting: true })
 
-	const { record } = await convertNADToParquet({
-		textPath: extractedDir(member),
-		parquetPath,
-		sourceSHA256: sha256,
-		member,
-		report,
-	})
+			const { record } = await convertNADToParquet({
+				textPath: extractedDir(member),
+				parquetPath: releaseDir(parquetName),
+				sourceSHA256: sha256,
+				member,
+				report,
+			})
 
-	await removePathIfPresent(extractedDir)
-	report?.(`  ✓ wrote ${parquetPath}: ${record.rows.toLocaleString()} rows; removed ${extractedDir}`)
+			await removePathIfPresent(extractedDir)
+			report?.(`  ✓ wrote ${parquetName}: ${record.rows.toLocaleString()} rows; removed ${extractedDir}`)
 
-	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
+			return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
+		},
+		report
+	)
 }

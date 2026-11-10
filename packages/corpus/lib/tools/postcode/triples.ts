@@ -10,7 +10,7 @@
 
 import { officialLanguagesAlpha3, regionLanguagesAlpha3 } from "@mailwoman/codex/country"
 import { foldName } from "@mailwoman/codex/normalize"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcesRoot } from "@mailwoman/core/data-root"
 import { assertPathExists } from "@mailwoman/core/fs/readers/stat"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -549,11 +549,9 @@ export async function readTriplesFromGeonames(
 }
 
 /**
- * Resolve a GeoNames export path under the standard fetch out-root.
+ * Resolve a GeoNames postal export path under a fetch root, by default the current-source
+ * root `mailwoman corpus fetch geonames-postal` writes under.
  */
 export function geonamesPostalPath(country: string, sourcesRoot?: PathBuilderLike): PathBuilder {
-	return PathBuilder.from(sourcesRoot ?? dataRootPath("corpus", "sources"))(
-		"geonames-postal",
-		`${country.toUpperCase()}.txt`
-	)
+	return PathBuilder.from(sourcesRoot ?? currentSourcesRoot())("geonames-postal", `${country.toUpperCase()}.txt`)
 }

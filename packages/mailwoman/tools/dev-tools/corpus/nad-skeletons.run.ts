@@ -45,7 +45,7 @@ if (!Number.isInteger(seed)) throw new Error(`--seed must be an integer, read ${
 const states = values.states ? values.states.split(",").map((s) => s.trim().toUpperCase()) : [...NAD_SKELETON_STATES]
 
 const summary = await buildNADSkeletons({
-	parquetPath: values.input ?? (await nadReleaseParquetPath(dataRootPath("corpus", "sources"))),
+	parquetPath: values.input ?? (await nadReleaseParquetPath()),
 	states,
 	cap,
 	seed,

@@ -94,7 +94,7 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 			root: dataRootPath("db"),
 			version,
 			...(options.baseVersion ? { baseVersion: options.baseVersion } : {}),
-			nadParquet: await nadReleaseParquetPath(dataRootPath("corpus", "sources")),
+			nadParquet: await nadReleaseParquetPath(),
 			overtureParquet: snapshotSourcePath("overture", options.release, "addresses-us.parquet"),
 			openAddresses: { plan: await readLocalJSONFile(options.plan), cache: currentSourcePath("openaddresses") },
 			...(options.states ? { states: extractDelimited(options.states) } : {}),

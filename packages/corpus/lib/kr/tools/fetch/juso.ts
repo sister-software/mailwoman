@@ -18,15 +18,17 @@
  *   road-name DB), and `/api/jst/download` streams one by the parameters in the listing. The
  *   English DB accompanies it as the Latin-script half of the same register.
  *
- *   Invoke via `mailwoman corpus fetch juso-kr --out-root <path>`.
+ *   Invoke via `mailwoman corpus fetch juso-kr [--vintage YYYY-MM]`. Each month is a snapshot under
+ *   `$MAILWOMAN_DATA_ROOT/snapshots/juso-kr/<YYYY-MM>/`.
  */
 
-import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilder } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"
+import type { FetchSummary, SourceCollectionManifest, SourceManifest } from "#tools/fetch/download"
 import { resumableDownload, writeManifest } from "#tools/fetch/download"
+import { fetchSnapshot, type SnapshotFetchOptions } from "#tools/fetch/storage"
 
 const SLUG = "juso-kr"
 const PORTAL = "https://business.juso.go.kr"
@@ -62,13 +64,18 @@ interface ListResponse {
 	results?: { allMonthFileList?: ListedFile[] }
 }
 
-export interface FetchJusoKROptions extends BaseFetchOptions {
-	/**
-	 * The month to fetch as `yyyymm`.
-	 *
-	 * @defaultValue the latest month the portal lists as present.
-	 */
-	month?: string
+/**
+ * The month `--vintage` selects, `YYYY-MM`; the portal writes it as `yyyymm`.
+ */
+export type FetchJusoKROptions = SnapshotFetchOptions
+
+/**
+ * The vintage of a listed month: `202608` is `2026-08`.
+ */
+export function jusoVintage(crtrYm: string): string {
+	if (!/^\d{6}$/u.test(crtrYm)) throw new Error(`${SLUG}: the portal listed month ${crtrYm}, not yyyymm`)
+
+	return `${crtrYm.slice(0, 4)}-${crtrYm.slice(4)}`
 }
 
 const BROWSER_HEADERS = {
@@ -107,20 +114,55 @@ function downloadURL(file: ListedFile, regYmd: string): string {
 	return `${DOWNLOAD_URL}?${query.toString()}`
 }
 
+/**
+ * Downloads one month of both products into its snapshot, `juso-kr/<YYYY-MM>/`.
+ *
+ * The vintage is the month `--vintage` names, or else the latest month the address DB's listing holds.
+ * Both are known from the listing before any download, and the English DB is fetched for the same month.
+ */
 export async function fetchJusoKR(options: FetchJusoKROptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const destDir = options.outRoot(SLUG)
-	await makeDirectories(destDir)
-
 	const now = new Date()
+
+	const listings = await Promise.all(
+		PRODUCTS.map(async (product) => ({
+			product,
+			listed: await listMonthlyFiles(product.sn, now.getFullYear(), now.getMonth() + 1),
+		}))
+	)
+
+	const latest = listings[0]!.listed.at(-1)
+	const vintage = options.snapshots.vintage ?? (latest ? jusoVintage(latest.crtrYm) : null)
+
+	if (!vintage) {
+		report?.(`  ✗ ${PRODUCTS[0].name}: the portal lists no full file`)
+
+		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [PRODUCTS[0].name] }
+	}
+
+	return fetchSnapshot(
+		options.snapshots,
+		SLUG,
+		vintage,
+		(destDir) => downloadJusoMonth(listings, vintage, destDir, now, report),
+		report
+	)
+}
+
+async function downloadJusoMonth(
+	listings: ReadonlyArray<{ product: (typeof PRODUCTS)[number]; listed: ListedFile[] }>,
+	vintage: string,
+	destDir: PathBuilder,
+	now: Date,
+	report?: (line: string) => void
+): Promise<FetchSummary> {
 	const files: SourceManifest[] = []
 	const failedCodes: string[] = []
 
-	for (const product of PRODUCTS) {
-		const listed = await listMonthlyFiles(product.sn, now.getFullYear(), now.getMonth() + 1)
-		const file = options.month ? listed.find((entry) => entry.crtrYm === options.month) : listed.at(-1)
+	for (const { product, listed } of listings) {
+		const file = listed.find((entry) => jusoVintage(entry.crtrYm) === vintage)
 
 		if (!file) {
-			report?.(`  ✗ ${product.name}: no full file listed${options.month ? ` for ${options.month}` : ""}`)
+			report?.(`  ✗ ${product.name}: no full file listed for ${vintage}`)
 			failedCodes.push(product.name)
 
 			continue

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Downloads the open profile's sources into `$MAILWOMAN_DATA_ROOT/corpus/sources/registry/` and checks them
+ *   Downloads the open profile's sources into `$MAILWOMAN_CACHE_ROOT/sources/registry/` and checks them
  *   against `data/manifests/sources.lock.json`.
  *
  *   Usage: `node packages/registry/sdk/fetch.run.ts [--repin]`
