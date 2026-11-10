@@ -376,16 +376,20 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 
 	// Removes the records a temporary table lists from the staged keys and details,
 	// counts them under `reason`, and lowers the counts the build's checks compare to match.
+	// The rows are streamed: one state can drop tens of millions of repeats,
+	// more than fit in the heap as objects.
 	const drop = (table: string, reason: string) => {
-		const dropped = db
+		let dropped = 0
+
+		for (const row of db
 			.prepare(`SELECT a.source_id, a.lat, a.lon FROM ${table} t JOIN address a USING (address_id)`)
-			.all() as Array<{
+			.iterate() as Iterable<{
 			source_id: number
 			lat: number
 			lon: number
-		}>
+		}>) {
+			dropped++
 
-		for (const row of dropped) {
 			const source = sourceNames.get(row.source_id)!
 			const cell = shortCellToInt(latLngToCell(row.lat, row.lon, ADDRESS_LAYER_COVERAGE_RESOLUTION))
 			const remaining = (coverage.get(cell) ?? 0) - 1
@@ -411,7 +415,7 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 		db.exec(`DELETE FROM stage WHERE address_id IN (SELECT address_id FROM ${table})`)
 		db.exec(`DELETE FROM address WHERE address_id IN (SELECT address_id FROM ${table})`)
 		db.exec(`DROP TABLE ${table}`)
-		records -= dropped.length
+		records -= dropped
 	}
 
 	// A point one source shares among more than `stackLimit` addresses locates none of them.
