@@ -55,6 +55,49 @@ export function databaseRootPath<T extends PathBuilderLike>(source: T) {
 export const wofReposPath = dataRootPath("src", "wof-repos")
 
 /**
+ * A vintage names one dated pull of a source: a year, month or day (`2026`, `2026-08`, `2026-08-31`),
+ * or the publisher's release id (`2026-05-20.0`, `r24`, `fy23`).
+ * It is one path segment.
+ */
+const VINTAGE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u
+
+/**
+ * Throws unless `vintage` is one path segment a vintage can take.
+ */
+export function assertVintage(vintage: string): void {
+	if (!VINTAGE.test(vintage) || vintage.includes("..")) {
+		throw new Error(`"${vintage}" is not a vintage: use a date such as 2026-08-31 or a release id such as r24`)
+	}
+}
+
+/**
+ * A path under a current source's download directory, `$MAILWOMAN_CACHE_ROOT/sources/<source>/`.
+ *
+ * A current source is mutable, and fetching it again brings it up to date: a git clone,
+ * or a download the publisher serves under an undated name.
+ * A customer who clears the cache root fetches the source again and loses no data.
+ */
+export function currentSourcePath(source: string, ...segments: string[]): PathBuilder {
+	return cacheRootPathBuilder("sources", source, ...segments)
+}
+
+/**
+ * A path under one vintage of a snapshot source, `$MAILWOMAN_DATA_ROOT/snapshots/<source>/<vintage>/`.
+ *
+ * A snapshot is a dated pull that is read-only once written.
+ * A newer vintage sits beside it and supersedes it.
+ *
+ * Write one through `writeSnapshot` from `@mailwoman/core/fs/snapshot`.
+ *
+ * @throws When `vintage` is not one path segment a vintage can take.
+ */
+export function snapshotSourcePath(source: string, vintage: string, ...segments: string[]): PathBuilder {
+	assertVintage(vintage)
+
+	return dataRootPath("snapshots", source, vintage, ...segments)
+}
+
+/**
  * The dev-weights overlay for a locale is `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
  *
  * Multiple `link-dev-weights.ts` scripts write here.
