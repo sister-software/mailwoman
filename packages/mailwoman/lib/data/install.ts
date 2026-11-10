@@ -73,6 +73,7 @@ import {
 	ProblemKind,
 } from "#data/plan"
 import { PUBLISHED_SCHEMA_VERSION } from "#data/registry"
+import { dataClientHeaders } from "#data/remote"
 
 /**
  * What happened to one planned artifact.
@@ -352,8 +353,11 @@ async function acquire(
 		remotePath: planned.artifact.remotePath,
 		identity,
 		...(downloadURL ? { downloadURL } : {}),
-		// A plain GET against the public bucket answers Cloudflare's block page, while a ranged GET streams the object.
-		headers: { range: "bytes=0-" },
+		// A plain GET against the public bucket answers Cloudflare's block page,
+		// while a ranged GET streams the object.
+		// The client header is what the bucket's firewall rule admits from a request
+		// with no browser fetch headers.
+		headers: { range: "bytes=0-", ...(downloadURL ? {} : await dataClientHeaders()) },
 		...(options.signal ? { signal: options.signal } : {}),
 		...(options.onProgress ? { onProgress: options.onProgress } : {}),
 		...(options.onTransfer

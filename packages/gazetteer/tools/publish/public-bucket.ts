@@ -411,6 +411,43 @@ async function awsTransport(env: PublicBucketEnvironment): Promise<PublicBucketT
 }
 
 /**
+ * One object the public bucket stores, by key and size.
+ */
+export interface PublicBucketObject {
+	key: string
+	bytes: number
+}
+
+/**
+ * Lists every object the public bucket stores under a prefix, following continuation tokens to the end.
+ */
+export async function listPublicBucketObjects(
+	options: { prefix?: string; bucket?: string; env?: PublicBucketEnvironment } = {}
+): Promise<PublicBucketObject[]> {
+	const env = options.env ?? (await defaultEnvironment())
+	const bucket = options.bucket ?? $public.MAILWOMAN_PUBLIC_BUCKET
+	const [client, { ListObjectsV2Command }] = await Promise.all([publicBucketClient(env), import("@aws-sdk/client-s3")])
+	const objects: PublicBucketObject[] = []
+	let token: string | undefined
+
+	do {
+		const page = await client.send(
+			new ListObjectsV2Command({ Bucket: bucket, Prefix: options.prefix, ContinuationToken: token })
+		)
+
+		for (const object of page.Contents ?? []) {
+			if (object.Key) {
+				objects.push({ key: object.Key, bytes: object.Size ?? 0 })
+			}
+		}
+
+		token = page.IsTruncated ? page.NextContinuationToken : undefined
+	} while (token)
+
+	return objects
+}
+
+/**
  * Returns a reader of an object's stored size, or null for a key the bucket does not hold.
  */
 async function storedObjectSize(

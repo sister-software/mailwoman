@@ -3,35 +3,43 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Creates or updates the zone's custom firewall rule that keeps a bucket path browser-only.
+ *   Creates or updates the zone's custom firewall rule that keeps the public bucket's databases readable by the
+ *   demo's browser and the `mailwoman data` CLI.
  *
  *   Usage: node --env-file=.env packages/mailwoman/tools/dev-tools/cloudflare/firewall.run.ts --zone
- *   <zone name> --host <hostname> --path-prefix <prefix> --origins <origin,origin> [--apply]
+ *   <zone name> --host <hostname> --path-prefixes <prefix,prefix> --origins <origin,origin> [--apply]
  *
- *   Without `--apply` it only reads: it prints the zone's current rule and the rule it would write. The rule is found
- *   by its description, so a rerun replaces it in place.
+ *   Without `--apply` it only reads: it prints every custom rule the zone has and the rule it would write. The rule
+ *   is found by its description, so a rerun replaces it in place.
  */
 
 import { APIClient } from "@mailwoman/core/api"
 import { isPresent } from "@mailwoman/core/objects"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
+import { DATA_CLIENT_HEADER } from "#data/remote"
 import { $private } from "#env"
-import { browserOnlyAccessDescription, browserOnlyAccessExpression } from "#tools/dev-tools/cloudflare/firewall"
+import { bucketAccessDescription, bucketAccessExpression } from "#tools/dev-tools/cloudflare/firewall"
 
 const { values } = parseArguments({
 	options: {
 		zone: { type: "string" },
 		host: { type: "string" },
-		"path-prefix": { type: "string" },
+		"path-prefixes": { type: "string" },
 		origins: { type: "string" },
 		apply: { type: "boolean" },
 	},
 })
 
-if (!values.zone || !values.host || !values["path-prefix"] || !values.origins) {
-	throw new Error("--zone, --host, --path-prefix and --origins are required")
+if (!values.zone || !values.host || !values["path-prefixes"] || !values.origins) {
+	throw new Error("--zone, --host, --path-prefixes and --origins are required")
 }
+
+const list = (value: string) =>
+	value
+		.split(",")
+		.map((entry) => entry.trim())
+		.filter(isPresent)
 
 const token = $private.CLOUDFLARE_FIREWALL_TOKEN
 
@@ -43,16 +51,14 @@ if (!token) {
 
 const access = {
 	host: values.host,
-	pathPrefix: values["path-prefix"],
-	origins: values.origins
-		.split(",")
-		.map((origin) => origin.trim())
-		.filter(isPresent),
+	pathPrefixes: list(values["path-prefixes"]),
+	origins: list(values.origins),
+	clientHeader: DATA_CLIENT_HEADER,
 }
 
 const rule = {
-	description: browserOnlyAccessDescription(access),
-	expression: browserOnlyAccessExpression(access),
+	description: bucketAccessDescription(access),
+	expression: bucketAccessExpression(access),
 	action: "block",
 	enabled: true,
 }
@@ -132,7 +138,12 @@ const ruleset = await call<Ruleset>("GET", entrypoint).catch((error: { status?: 
 
 const existing = ruleset?.rules?.find((candidate) => candidate.description === rule.description) ?? null
 
-console.log(`zone ${zone.name} (${zone.id})`)
+console.log(`zone ${zone.name} (${zone.id}): ${ruleset?.rules?.length ?? 0} custom rules`)
+
+for (const other of ruleset?.rules ?? []) {
+	console.log(`  ${other.action}: ${other.description ?? "(no description)"}\n    when ${other.expression}`)
+}
+
 console.log(`current: ${existing ? `${existing.action} when ${existing.expression}` : "no rule with this description"}`)
 console.log(`wanted:  ${rule.action} when ${rule.expression}`)
 

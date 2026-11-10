@@ -39,7 +39,7 @@ import {
 import { LayerCatalog, type ResolvedSource } from "#data/catalog"
 import { availableDataEntry, selectionScopeOf } from "#data/registry"
 import { existingLocalPath, readReleaseManifest } from "#data/release"
-import { headContentLength } from "#data/remote"
+import { dataClientHeaders, headContentLength } from "#data/remote"
 import { type InterruptedAcquisition, readInstallationState } from "#data/state"
 
 /**
@@ -116,6 +116,7 @@ async function statusForBundles(
 				displayName: "mailwoman data status",
 				minRequestIntervalMs: 150,
 				retry: true,
+				axios: { headers: await dataClientHeaders() },
 			})
 		: null
 

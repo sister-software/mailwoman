@@ -299,11 +299,14 @@ async function pull(
 	// Its warnings and errors still print.
 	const logger: IRuntimeLogger = { ...createConsoleLogger("mailwoman data"), debug: () => {}, trace: () => {} }
 
+	const { dataClientHeaders } = await import("#data/remote")
+
 	await using client = new APIClient({
 		displayName: "mailwoman data",
 		logger,
 		minRequestIntervalMs: 150,
 		retry: true,
+		axios: { headers: await dataClientHeaders() },
 	})
 
 	const controller = new AbortController()

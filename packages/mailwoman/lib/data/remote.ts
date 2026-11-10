@@ -9,6 +9,23 @@
 import type { APIClient } from "@mailwoman/core/api"
 import { stringifyJSON } from "@mailwoman/core/json"
 
+import { readMailwomanVersion } from "#metadata"
+
+/**
+ * The header every `mailwoman data` request to the public bucket sends.
+ *
+ * The bucket's firewall rule admits a database request that sends a browser's fetch headers
+ * or this one, and refuses a plain download that sends neither.
+ */
+export const DATA_CLIENT_HEADER = "X-Mailwoman-Client"
+
+/**
+ * The headers a `mailwoman data` request to the public bucket sends, naming the CLI's version.
+ */
+export async function dataClientHeaders(): Promise<Record<string, string>> {
+	return { [DATA_CLIENT_HEADER]: `mailwoman/${await readMailwomanVersion()}` }
+}
+
 /**
  * Returns the `content-length` a HEAD request against `url` reports.
  *
