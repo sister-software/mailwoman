@@ -154,7 +154,10 @@ function runGeoJSON(cache: PathBuilderLike, member: string): string {
 /**
  * Where the cache holds a run, preferring the batch job output, or null when it holds neither form.
  */
-async function cachedRun(cache: PathBuilderLike, member: string): Promise<{ path: string; geojson: boolean } | null> {
+export async function cachedRun(
+	cache: PathBuilderLike,
+	member: string
+): Promise<{ path: string; geojson: boolean } | null> {
 	const geojson = runGeoJSON(cache, member)
 
 	if (await pathExists(geojson)) return { path: geojson, geojson: true }
