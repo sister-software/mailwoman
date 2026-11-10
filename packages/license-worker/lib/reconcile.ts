@@ -149,12 +149,22 @@ export async function reconcileLedger(
 
 			if (!next || next.state === license.license_state) continue
 
-			await setLicenseState(
+			const outcome = await setLicenseState(
 				deps.ledger,
 				license.lid,
-				next.state,
+				{ from: license.license_state, to: next.state },
 				next.paymentState ? { paymentState: next.paymentState } : {}
 			)
+
+			if (outcome === "conflict") {
+				report.failed.push({
+					stage: "state",
+					lid: license.lid,
+					reason: `the license left ${license.license_state} during the pass; the next pass decides from its new state`,
+				})
+
+				continue
+			}
 
 			report.corrected.push({ lid: license.lid, from: license.license_state, to: next.state })
 		} catch (error) {

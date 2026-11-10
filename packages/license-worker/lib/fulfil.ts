@@ -30,7 +30,7 @@ import {
 	setEmailState,
 	setPlanCode,
 } from "#ledger/licenses"
-import type { LicenseRow, LicenseTokenRow } from "#ledger/schema"
+import { type LicenseRow, LicenseState, type LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
 import { AGREEMENT_METADATA_KEY, AGREEMENT_VERSION, LICENSEE_FIELD_KEY } from "#shop/catalog"
 import { idOf, invoiceSubscriptionID, linePriceID } from "#stripe/shapes"
@@ -186,6 +186,12 @@ export async function fulfilInvoice(
 		if (!session) return { result: "refused", reason: `no Checkout Session found for subscription ${subscriptionID}` }
 
 		license = await ensureLicenseFromCheckoutSession(env, deps, session)
+	}
+
+	// A refund or dispute revoked this license, and the claim and refresh routes answer `revoked` for it.
+	// A later paid invoice on the same subscription leaves that decision to the operator.
+	if (license.license_state === LicenseState.Revoked) {
+		return { result: "refused", reason: `license ${license.lid} is revoked, so invoice ${invoiceID} mints no token` }
 	}
 
 	if (license.plan_code !== plan.code) {

@@ -49,9 +49,20 @@ describe("the license-state policy", () => {
 		expect(licenseStateAfterSubscription(LicenseState.Active, { status: "canceled" }, PAST_GRACE)).toBe("lapsed")
 	})
 
-	it("a full refund revokes, a partial refund is the operator's review, and a dispute revokes", () => {
-		expect(licenseStateAfterRefund({ amount: 25_000, amount_refunded: 25_000 })).toBe("revoked")
-		expect(licenseStateAfterRefund({ amount: 25_000, amount_refunded: 10_000 })).toBe("review")
+	it.each([
+		// current, amount refunded of 25,000, expected
+		["active", 25_000, "revoked"],
+		["active", 10_000, "review"],
+		["lapsed", 10_000, "review"],
+		["review", 10_000, "review"],
+		["review", 25_000, "revoked"],
+		["revoked", 10_000, "revoked"],
+		["revoked", 25_000, "revoked"],
+	] as const)("a %s license refunded %d of 25,000 reads %s", (current, refunded, expected) => {
+		expect(licenseStateAfterRefund(current, { amount: 25_000, amount_refunded: refunded })).toBe(expected)
+	})
+
+	it("a dispute revokes", () => {
 		expect(licenseStateAfterDispute()).toBe("revoked")
 	})
 

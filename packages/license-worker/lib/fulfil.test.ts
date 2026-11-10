@@ -20,6 +20,7 @@ import { envWithSigningKey } from "#test/support/keys"
 import { applyMigrations } from "#test/support/migrations"
 import { priceOf } from "#test/support/plans"
 import {
+	chargeDisputeCreatedEvent,
 	chargeObject,
 	chargeRefundedEvent,
 	checkoutCompletedEvent,
@@ -66,6 +67,7 @@ async function fixture(
 		subscriptionStatus?: string
 		agreementVersion?: string | null
 		renewalInvoiceID?: string
+		amountRefunded?: number
 	} = {}
 ) {
 	const bindings = {
@@ -119,7 +121,7 @@ async function fixture(
 			id: `ch_${suffix}`,
 			paymentIntentID: `pi_${suffix}`,
 			amount: 25_000,
-			refunded: 25_000,
+			refunded: options.amountRefunded ?? 25_000,
 		}),
 		[`GET /v1/invoice_payments?`]: invoicePaymentList({ invoiceID: `in_${suffix}`, paymentIntentID: `pi_${suffix}` }),
 	})
@@ -229,6 +231,57 @@ describe("fulfillment", () => {
 
 		expect((await findLicenseBySubscription(deps.ledger, "sub_5"))?.license_state).toBe("revoked")
 		await expect(findToken(deps.ledger, "in_5")).resolves.toBeDefined()
+	})
+
+	it("a partial refund on a license a dispute revoked leaves it revoked, with the dispute's payment state", async () => {
+		const { env: worker, deps } = await fixture("5p", { amountRefunded: 10_000 })
+
+		await fulfilInvoice(worker, deps, "in_5p")
+
+		await handleStripeEvent(
+			worker,
+			deps,
+			chargeDisputeCreatedEvent({ id: "evt_5pd", disputeID: "dp_5p", chargeID: "ch_5p" })
+		)
+
+		await handleStripeEvent(
+			worker,
+			deps,
+			chargeRefundedEvent({
+				id: "evt_5pr",
+				chargeID: "ch_5p",
+				paymentIntentID: "pi_5p",
+				amount: 25_000,
+				refunded: 10_000,
+			})
+		)
+
+		await expect(findLicenseBySubscription(deps.ledger, "sub_5p")).resolves.toMatchObject({
+			license_state: "revoked",
+			payment_state: "disputed",
+		})
+	})
+
+	it("refuses to mint a renewal for a revoked license, and sends no email", async () => {
+		const { env: worker, deps } = await fixture("5m", { renewalInvoiceID: "in_5m2" })
+
+		await fulfilInvoice(worker, deps, "in_5m")
+
+		await handleStripeEvent(
+			worker,
+			deps,
+			chargeDisputeCreatedEvent({ id: "evt_5md", disputeID: "dp_5m", chargeID: "ch_5m" })
+		)
+
+		sent.length = 0
+
+		await expect(fulfilInvoice(worker, deps, "in_5m2")).resolves.toMatchObject({
+			result: "refused",
+			reason: expect.stringContaining("revoked"),
+		})
+
+		await expect(findToken(deps.ledger, "in_5m2")).resolves.toBeNull()
+		expect(sent).toHaveLength(0)
 	})
 
 	it("a retry that finds the token with its email still pending sends it, once, under the invoice id", async () => {

@@ -72,9 +72,16 @@ export function licenseStateAfterSubscription(
  *
  * The operator reviews a partial refund.
  * The license reads `active` during that review.
+ *
+ * A partial refund leaves a revoked license revoked, because a revocation outranks a review.
  */
-export function licenseStateAfterRefund(charge: Pick<Stripe.Charge, "amount" | "amount_refunded">): LicenseState {
-	return charge.amount_refunded < charge.amount ? LicenseState.Review : LicenseState.Revoked
+export function licenseStateAfterRefund(
+	current: LicenseState,
+	charge: Pick<Stripe.Charge, "amount" | "amount_refunded">
+): LicenseState {
+	if (charge.amount_refunded >= charge.amount) return LicenseState.Revoked
+
+	return current === LicenseState.Revoked ? current : LicenseState.Review
 }
 
 /**

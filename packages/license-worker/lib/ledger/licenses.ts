@@ -89,22 +89,33 @@ export async function setPlanCode(ledger: Ledger, lid: string, planCode: string)
 		.execute()
 }
 
+/**
+ * Move a license from the state its caller read to the state the policy decided.
+ *
+ * The write applies only while the row still holds `transition.from`.
+ * `"conflict"` means another writer changed the state after the caller read it,
+ * and the row keeps that writer's values.
+ * The caller re-reads the row and decides again.
+ */
 export async function setLicenseState(
 	ledger: Ledger,
 	lid: string,
-	state: LicenseState,
+	transition: { from: LicenseState; to: LicenseState },
 	also: { subscriptionState?: string; paymentState?: string } = {}
-): Promise<void> {
-	await ledger
+): Promise<"updated" | "conflict"> {
+	const result = await ledger
 		.updateTable("licenses")
 		.set({
-			license_state: state,
+			license_state: transition.to,
 			updated_at: nowISO(),
 			...(also.subscriptionState ? { subscription_state: also.subscriptionState } : {}),
 			...(also.paymentState ? { payment_state: also.paymentState } : {}),
 		})
 		.where("lid", "=", lid)
-		.execute()
+		.where("license_state", "=", transition.from)
+		.executeTakeFirst()
+
+	return Number(result.numUpdatedRows ?? 0) > 0 ? "updated" : "conflict"
 }
 
 /**

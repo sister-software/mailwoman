@@ -14,7 +14,9 @@ import type Stripe from "stripe"
 import { todayUTC } from "#dates"
 import type { LicenseWorkerEnv } from "#env"
 import { ensureLicenseFromCheckoutSession, type FulfilDependencies, fulfilInvoice } from "#fulfil"
-import { currentToken, findLicenseBySubscription, findTokenLid, setLicenseState } from "#ledger/licenses"
+import type { Ledger } from "#ledger/client"
+import { currentToken, findLicense, findLicenseBySubscription, findTokenLid, setLicenseState } from "#ledger/licenses"
+import { LicenseState, type LicenseRow } from "#ledger/schema"
 import { licenseStateAfterDispute, licenseStateAfterRefund, licenseStateAfterSubscription } from "#policy"
 import { idOf, invoiceSubscriptionID } from "#stripe/shapes"
 
@@ -36,6 +38,28 @@ async function invoiceIDForCharge(stripe: Stripe, charge: Stripe.Charge): Promis
 	})
 
 	return idOf(payments.data[0]?.invoice)
+}
+
+/**
+ * Write the state a handler decided from the row it read.
+ *
+ * A conflict throws, so the webhook route answers 500 without recording the event.
+ * Stripe then redelivers it, and the handler decides again from the row as it stands.
+ */
+async function transitionLicense(
+	ledger: Ledger,
+	license: LicenseRow,
+	to: LicenseState,
+	also: { subscriptionState?: string; paymentState?: string },
+	event: Stripe.Event
+): Promise<void> {
+	const outcome = await setLicenseState(ledger, license.lid, { from: license.license_state, to }, also)
+
+	if (outcome === "conflict") {
+		throw new Error(
+			`license ${license.lid} left ${license.license_state} while ${event.type} ${event.id} was handled; Stripe redelivers the event`
+		)
+	}
 }
 
 export async function handleStripeEvent(
@@ -66,7 +90,7 @@ export async function handleStripeEvent(
 
 			if (!license) return { handled: "no license for invoice" }
 
-			await setLicenseState(deps.ledger, license.lid, license.license_state, { paymentState: "past_due" })
+			await transitionLicense(deps.ledger, license, license.license_state, { paymentState: "past_due" }, event)
 
 			return { handled: "payment state recorded" }
 		}
@@ -86,7 +110,7 @@ export async function handleStripeEvent(
 				today: todayUTC(deps.now),
 			})
 
-			await setLicenseState(deps.ledger, license.lid, next, { subscriptionState: subscription.status })
+			await transitionLicense(deps.ledger, license, next, { subscriptionState: subscription.status }, event)
 
 			return { handled: `subscription ${subscription.status}` }
 		}
@@ -100,16 +124,28 @@ export async function handleStripeEvent(
 			if (!charge || !invoiceID) return { handled: "no invoice on charge" }
 
 			const lid = await findTokenLid(deps.ledger, invoiceID)
+			const license = lid ? await findLicense(deps.ledger, lid) : null
 
-			if (!lid) return { handled: "no license for charge" }
+			if (!license) return { handled: "no license for charge" }
 
-			const next = event.type === "charge.refunded" ? licenseStateAfterRefund(charge) : licenseStateAfterDispute()
+			if (event.type === "charge.dispute.created") {
+				await transitionLicense(deps.ledger, license, licenseStateAfterDispute(), { paymentState: "disputed" }, event)
 
-			await setLicenseState(deps.ledger, lid, next, {
-				paymentState: event.type === "charge.refunded" ? "refunded" : "disputed",
-			})
+				return { handled: "revoked" }
+			}
 
-			return { handled: next === "review" ? "partial refund: review" : "revoked" }
+			const next = licenseStateAfterRefund(license.license_state, charge)
+
+			// A partial refund that leaves the state as it was also leaves the payment state.
+			// A license a dispute revoked keeps `disputed`, so reconcile restores it
+			// when Stripe rules the dispute won.
+			if (next === license.license_state && charge.amount_refunded < charge.amount) {
+				return { handled: `partial refund: ${next} unchanged` }
+			}
+
+			await transitionLicense(deps.ledger, license, next, { paymentState: "refunded" }, event)
+
+			return { handled: next === LicenseState.Review ? "partial refund: review" : "revoked" }
 		}
 
 		default:
