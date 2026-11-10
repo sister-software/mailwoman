@@ -204,9 +204,45 @@ function taggedResourceError(
 ): ResourceError {
 	const resourceError = ResourceError.from(status as StatusCodes, message, RESOURCE_ERROR_SOURCE, kind, reason)
 
-	resourceError.cause = cause
+	resourceError.cause = redactAxiosCredentials(cause)
 
 	return resourceError
+}
+
+/**
+ * The request headers whose values are credentials.
+ */
+const CREDENTIAL_HEADERS = ["authorization", "proxy-authorization", "cookie", "x-api-key"] as const
+
+/**
+ * Replaces credential header values on an Axios error's request configs, and drops its request objects.
+ *
+ * An uncaught error prints its `cause` in full, config included, so a bearer token
+ * in `config.headers` reached the terminal and the session log.
+ * The Node `ClientRequest` on `request` holds the sent header block as a string, so it is removed.
+ *
+ * Status, URL, method and the response body stay for a debugger.
+ */
+function redactAxiosCredentials(error: AxiosError): AxiosError {
+	for (const config of [error.config, error.response?.config]) {
+		const headers = config?.headers as Record<string, unknown> | undefined
+
+		if (!headers) continue
+
+		for (const name of Object.keys(headers)) {
+			if ((CREDENTIAL_HEADERS as readonly string[]).includes(name.toLowerCase())) {
+				headers[name] = "[redacted]"
+			}
+		}
+	}
+
+	error.request = undefined
+
+	if (error.response) {
+		error.response.request = undefined
+	}
+
+	return error
 }
 
 /**

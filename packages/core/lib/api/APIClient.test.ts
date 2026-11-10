@@ -14,6 +14,7 @@ import { isTransientResourceError, ResourceErrorKind, resourceErrorKind } from "
 import { createFakeClock, drainMicrotasks, maxCountInSlidingWindow, VirtualClock } from "#api/test/clocks"
 import { stubTransport } from "#api/test/transport"
 import { ResourceError } from "#errors/schema"
+import { stringifyJSON } from "#json"
 
 function get(url: string): AxiosRequestConfig {
 	return { url }
@@ -444,6 +445,22 @@ describe("APIClient: bounded retry (A3)", () => {
 		expect((caught as ResourceError).status).toBe(403)
 		expect(isTransientResourceError(caught)).toBe(false)
 		expect(calls).toHaveLength(1)
+	})
+
+	it("keeps a bearer token out of the mapped error's cause", async () => {
+		const { axios } = stubTransport([{ status: 403, statusText: "Forbidden" }])
+
+		const client = new APIClient({
+			displayName: "redact-403",
+			clock: createFakeClock(),
+			axios: { ...axios, headers: { Authorization: "Bearer cfat_secret_token" } },
+		})
+
+		const caught = await client.fetch(get("/forbidden.json")).catch((error: unknown) => error)
+		const cause = (caught as ResourceError).cause as { config?: unknown; request?: unknown }
+
+		expect(stringifyJSON(cause.config)).not.toContain("cfat_secret_token")
+		expect(cause.request).toBeUndefined()
 	})
 
 	it("does not retry a 404 either, and maps it to a skippable ResourceError", async () => {
