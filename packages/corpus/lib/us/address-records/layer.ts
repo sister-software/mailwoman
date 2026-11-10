@@ -56,6 +56,16 @@ import { readNADAddressRecords } from "#us/address-records/nad"
 export interface OpenAddressesPlanEntry {
 	member: string
 	license: unknown
+	/**
+	 * The job's layer name, such as `city`, `county` or `state`, which ranks the
+	 * run against the state's other runs.
+	 */
+	level?: string | null
+	/**
+	 * When the job last updated.
+	 * Runs of one level are ordered by it.
+	 */
+	updated?: string | null
 	skip?: boolean
 }
 
@@ -214,29 +224,84 @@ async function* stateRecords(
 }
 
 /**
- * The US layer's source ranking, highest first: NAD, then OpenAddresses runs
- * read directly, then Overture's datasets.
+ * The US layer's source ranking, highest first: NAD, then OpenAddresses runs by
+ * their publisher's level, then Overture's datasets.
+ *
+ * A city's address points rank above a county's, and a county's above a statewide file.
+ * Runs of one level rank newest job first.
  *
  * Overture's datasets rank last because most are copies of OpenAddresses runs from an earlier release.
  */
-export const US_ADDRESS_SOURCE_RANKING = ["usgov-nad", "openaddresses:*", "overture:*"] as const
+export const US_ADDRESS_SOURCE_RANKING = [
+	"usgov-nad",
+	"openaddresses:city",
+	"openaddresses:county",
+	"openaddresses:state",
+	"openaddresses:other",
+	"overture:*",
+] as const
 
 /**
- * A source id's place in {@linkcode US_ADDRESS_SOURCE_RANKING}, lowest first.
+ * The OpenAddresses layer names that state each publisher level, as source definitions spell them.
+ *
+ * A name outside the table, such as `parcels` or `condos`, ranks as `other`, below every listed level.
  */
-export function usAddressSourceRank(source: string): number {
-	if (source === "usgov-nad") return 0
-
-	if (source.startsWith("openaddresses:")) return 1
-
-	if (source.startsWith("overture:")) return 2
-
-	return 3
+const OPENADDRESSES_LAYER_LEVELS: Readonly<Record<string, "city" | "county" | "state">> = {
+	city: "city",
+	town: "city",
+	incorporated: "city",
+	county: "county",
+	"county-gis": "county",
+	"county-incorporated": "county",
+	parish: "county",
+	state: "state",
 }
 
-const US_DUPLICATE_RULE: AddressDuplicateRule = {
-	rank: usAddressSourceRank,
-	unitIdentifier: (unit, context) => usUnitIdentifier(unit, context),
+const OPENADDRESSES_LEVEL_ORDER = ["city", "county", "state", "other"] as const
+
+/**
+ * Ranks every source a state's build reads, lowest first, for the duplicate rule.
+ *
+ * NAD ranks 0.
+ * Each OpenAddresses run takes its own rank, ordered by its level in
+ * {@linkcode US_ADDRESS_SOURCE_RANKING}, then by newest job, then by member.
+ *
+ * Overture's datasets rank after every run, so one run's record repeated by another run,
+ * or by Overture, is dropped from the lower-ranked source.
+ */
+export function usAddressSourceRanks(runs: readonly OpenAddressesPlanEntry[]): (source: string) => number {
+	const levelIndex = (level: string | null | undefined) =>
+		OPENADDRESSES_LEVEL_ORDER.indexOf((level && OPENADDRESSES_LAYER_LEVELS[level]) || "other")
+
+	const ordered = runs.toSorted(
+		(a, b) =>
+			levelIndex(a.level) - levelIndex(b.level) ||
+			Date.parse(b.updated ?? "") - Date.parse(a.updated ?? "") ||
+			a.member.localeCompare(b.member)
+	)
+
+	const ranks = new Map(ordered.map(({ member }, index) => [`openaddresses:${member}`, index + 1]))
+	const overture = ordered.length + 1
+
+	return (source) => {
+		if (source === "usgov-nad") return 0
+
+		const run = ranks.get(source)
+
+		if (typeof run === "number") return run
+
+		return source.startsWith("overture:") ? overture : overture + 1
+	}
+}
+
+/**
+ * The duplicate rule for one state's build, ranking its sources by {@linkcode usAddressSourceRanks}.
+ */
+function usDuplicateRule(runs: readonly OpenAddressesPlanEntry[]): AddressDuplicateRule {
+	return {
+		rank: usAddressSourceRanks(runs),
+		unitIdentifier: (unit, context) => usUnitIdentifier(unit, context),
+	}
 }
 
 /**
@@ -252,7 +317,7 @@ function recordedRunTerms(plan: readonly OpenAddressesPlanEntry[]): Map<string, 
  *
  * A state takes NAD's rows when release 24 has any, Overture's rows from every dataset other than NAD,
  * and the plan's runs for the state that `isAdmittedSource` admits and the cache holds.
- * Rows that several sources hold for one address stay one record per source.
+ * A record that a higher-ranked source repeats, by {@linkcode usAddressSourceRanks}, is dropped.
  *
  * Territories are their own ISO 3166-1 countries and are not built here.
  */
@@ -305,19 +370,23 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 		const files = addressLayerFiles(options.root, region, options.version)
 		const hasNAD = (rowsByState[state] ?? 0) > 0
 		const datasets = await overtureDatasets(options.overtureParquet, state)
-		const runs: string[] = []
+		const admitted: OpenAddressesPlanEntry[] = []
 
-		for (const { member, license, skip } of options.openAddresses.plan) {
+		for (const entry of options.openAddresses.plan) {
+			const { member, license, skip } = entry
+
 			if (member.split("/")[0] !== "us" || member.split("/")[1] !== state.toLowerCase() || skip) continue
 
 			if (!isAdmittedSource(member, license)) {
 				refusedRuns++
 			} else if (await cachedRun(options.openAddresses.cache, member)) {
-				runs.push(member)
+				admitted.push(entry)
 			} else {
 				missingRuns++
 			}
 		}
+
+		const runs = admitted.map(({ member }) => member)
 
 		if (!hasNAD && !datasets.length && !runs.length) continue
 
@@ -357,7 +426,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 			// `MAILWOMAN_TEMP_ROOT` can place that directory on a disk other than the layer's.
 			stagingDirectory: scratch.path,
 			refuseRecord: (record) => bounds.refuse(record),
-			duplicates: US_DUPLICATE_RULE,
+			duplicates: usDuplicateRule(admitted),
 		})
 
 		let nad = 0

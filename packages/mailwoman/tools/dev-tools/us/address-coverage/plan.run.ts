@@ -49,6 +49,7 @@ const merged = [
 		license: entry.license,
 		job: null,
 		updated: null,
+		level: entry.level ?? null,
 		features: null,
 		bytes: null,
 	})),

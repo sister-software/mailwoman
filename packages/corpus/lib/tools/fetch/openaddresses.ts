@@ -50,12 +50,11 @@ const OA_COLLECTION_IDS: Record<string, number> = {
 export interface FetchOpenAddressesOptions extends BaseFetchOptions {
 	country?: string
 	/**
-	 * OpenAddresses source members, such as `us/mi/statewide`.
+	 * OpenAddresses source members, such as `us/mi/statewide`, each with the job a plan pins it to.
 	 *
-	 * When set, the fetch caches each source's latest batch job output in `cache`
-	 * instead of a country collection.
+	 * When set, the fetch caches each source's batch job output in `cache` instead of a country collection.
 	 */
-	sources?: readonly string[] | null
+	sources?: readonly OpenAddressesFetchTarget[] | null
 	/**
 	 * Where source job outputs are cached, the US address layer's OpenAddresses cache.
 	 */
@@ -72,6 +71,12 @@ export interface OaDataEntry {
 	source?: string
 	job?: number
 	layer?: string
+	/**
+	 * The name the source definition gives the layer.
+	 *
+	 * Most US names state the publisher's level, such as `city`, `county` or `state`.
+	 */
+	name?: string
 	/**
 	 * When the job last updated, as the ISO timestamp the API returns, such as `2026-10-30T15:01:55.655Z`.
 	 */
@@ -172,6 +177,10 @@ export interface OpenAddressesPlanSource {
 	job: number | null
 	updated: string | null
 	/**
+	 * The latest job's layer name, such as `county`, or null when the API states none.
+	 */
+	level: string | null
+	/**
 	 * The latest job's feature count, or null when its record states none.
 	 */
 	features: number | null
@@ -212,6 +221,7 @@ export async function buildOpenAddressesPlan(
 			license: record.license ?? null,
 			job: latest.job,
 			updated: latest.updated ?? null,
+			level: latest.name ?? null,
 			features: typeof record.count === "number" ? record.count : null,
 			bytes: typeof latest.size === "number" ? latest.size : null,
 		})
@@ -272,17 +282,37 @@ async function gunzipToFile(src: PathBuilderLike, dest: PathBuilderLike): Promis
 }
 
 /**
- * Caches each source's latest batch job output, `source.geojson.gz`, in `cache` under
+ * One source member to cache, with the job a plan pins it to.
+ */
+export interface OpenAddressesFetchTarget {
+	member: string
+	/**
+	 * The job to cache.
+	 *
+	 * When absent, the fetch asks the batch API for the member's latest job.
+	 */
+	job?: number | null
+	/**
+	 * When the pinned job last updated, as the plan records it.
+	 */
+	updated?: string | null
+}
+
+/**
+ * Caches each source's batch job output, `source.geojson.gz`, in `cache` under
  * {@linkcode openAddressesSourceCacheName}, with a `.RECORD.json` sidecar.
+ *
+ * A target that pins a job is cached at that job.
+ * Any other target is cached at the member's latest job.
  *
  * The file is stored compressed, as the batch API serves it, because the
  * address-layer reader decompresses while it streams.
- * A source whose sidecar records the latest job, and whose file still has the recorded size, is skipped.
+ * A source whose sidecar records the job, and whose file still has the recorded size, is skipped.
  *
  * A download whose feature count differs from the job's recorded count is refused and removed.
  */
 export async function fetchOpenAddressesSources(
-	options: { sources: readonly string[]; cache: PathBuilderLike },
+	options: { sources: readonly OpenAddressesFetchTarget[]; cache: PathBuilderLike },
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
 	const token = $private.OA_BATCH_TOKEN
@@ -306,18 +336,25 @@ export async function fetchOpenAddressesSources(
 
 	await makeDirectories(options.cache)
 
-	for (const member of options.sources) {
+	for (const target of options.sources) {
+		const { member } = target
 		const name = openAddressesSourceCacheName(member)
 		const destination = resolvePath(options.cache, name)
 		const recordPath = resolvePath(options.cache, `${name}.RECORD.json`)
 
-		const data = await client.fetch<OaDataEntry[]>({
-			url: `${OA_BASE}/api/data`,
-			params: { source: member, layer: "addresses" },
-			timeout: 30_000,
-		})
-
-		const latest = latestMemberJob(data.data, member)
+		const latest =
+			typeof target.job === "number"
+				? { job: target.job, updated: target.updated ?? undefined }
+				: latestMemberJob(
+						(
+							await client.fetch<OaDataEntry[]>({
+								url: `${OA_BASE}/api/data`,
+								params: { source: member, layer: "addresses" },
+								timeout: 30_000,
+							})
+						).data,
+						member
+					)
 
 		if (!latest?.job) {
 			fail(member, "the batch API lists no addresses job")

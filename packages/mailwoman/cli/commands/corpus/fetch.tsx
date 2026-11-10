@@ -102,7 +102,7 @@ export const spec = {
 		plan: {
 			type: "string",
 			description:
-				"openaddresses: a plan JSON from address-coverage/plan.run.ts; caches the latest batch job output of every member it lists with a job",
+				"openaddresses: a plan JSON from address-coverage/plan.run.ts; caches each member it lists with a job at the job the plan records",
 		},
 		countries: { type: "string", description: "GeoNames postal ISO alpha-2 codes, comma-separated" },
 		"skip-state-fips": { type: "string", description: "TIGER state FIPS codes to skip" },
@@ -314,17 +314,18 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 				? (
 						await (
 							await import("@mailwoman/core/fs/readers")
-						).readLocalJSONFile<Array<{ member: string; job: number | null }>>(options.plan)
+						).readLocalJSONFile<Array<{ member: string; job: number | null; updated: string | null }>>(options.plan)
 					)
 						.filter((entry) => entry.job != null)
-						.map((entry) => entry.member)
+						.map(({ member, job, updated }) => ({ member, job, updated }))
 				: null
 
 			return fetchOpenAddresses(
 				{
 					...base,
 					country: options.country,
-					sources: planned ?? (options.sources ? extractDelimited(options.sources) : null),
+					sources:
+						planned ?? (options.sources ? extractDelimited(options.sources).map((member) => ({ member })) : null),
 				},
 				reportToStderr
 			)
