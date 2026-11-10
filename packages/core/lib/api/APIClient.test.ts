@@ -316,6 +316,45 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 
 		expect(dispatchTimes).toEqual([0, 0, COOLDOWN_MS])
 	})
+
+	it("a superseded cooldown's timer leaves the current window's count alone", async () => {
+		class ExposedCooldown extends APIClient {
+			open(ms: number): void {
+				this.setCooldown(ms)
+			}
+		}
+
+		const clock = new VirtualClock()
+		const { axios, dispatchTimes } = stubTransport([{ body: { ok: true } }], { clock })
+
+		const client = new ExposedCooldown({
+			displayName: "cooldown-superseded",
+			requestsPerMinute: 3,
+			clock,
+			axios,
+		})
+
+		await client.fetch(get("/superseded/0.json"))
+
+		// The second cooldown replaces the first and ends first.
+		client.open(10_000)
+		client.open(5000)
+
+		await clock.advance(5000)
+		await Promise.all([client.fetch(get("/superseded/1.json")), client.fetch(get("/superseded/2.json"))])
+
+		// The first cooldown's timer fires here, inside the window the 5s dispatches opened.
+		await clock.advance(5000)
+
+		const later = [3, 4, 5].map((index) => client.fetch(get(`/superseded/${index}.json`)))
+
+		await drainMicrotasks()
+
+		// The window holds two dispatches, so one more spends the budget of three and the rest wait.
+		expect(dispatchTimes).toEqual([0, 5000, 5000, 10_000])
+
+		await clock.runUntilSettled(Promise.all(later))
+	})
 })
 
 describe("APIClient: minRequestIntervalMs strict pacing (A2)", () => {

@@ -369,9 +369,10 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			.then(() => {
 				if (this.#shutdown.signal.aborted) return
 
-				this.#requestCountWithinCooldown = 0
-
+				// A newer cooldown, or a window opened after it ended, owns the count.
+				// Only the current cooldown's timer resets it.
 				if (this.#cooldownWithResolvers === nextCooldownWithResolvers) {
+					this.#requestCountWithinCooldown = 0
 					this.#cooldownWithResolvers = null
 				}
 
