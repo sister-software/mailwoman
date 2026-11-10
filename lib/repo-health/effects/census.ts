@@ -14,14 +14,9 @@ import { parallelMap } from "spliterator"
 
 import type { RepoContext } from "#repo-health/check"
 import { parseContextSource } from "#repo-health/context"
-import {
-	type EffectEdge,
-	extractEffectEdges,
-	type ImportedPaths,
-	type RootedExport,
-	summarizeRootedExports,
-} from "#repo-health/effects/extract"
+import { type EffectEdge, extractEffectEdges } from "#repo-health/effects/extract"
 import type { EffectKind } from "#repo-health/effects/interfaces"
+import { type ImportedPaths, type RootedExport, summarizeRootedExports } from "#repo-health/effects/resolve"
 import { trackedSourcePaths } from "#repo-health/tracked-sources"
 
 /**
@@ -126,6 +121,15 @@ function importedPathsResolver(
 
 		return (specifier) => (specifier === "#paths" ? own : (byPackage.get(specifier) ?? null))
 	}
+}
+
+/**
+ * For each repository-relative file in `context`, the `paths` exports its import specifiers reach.
+ */
+export async function readImportedPaths(context: RepoContext): Promise<(file: string) => ImportedPaths> {
+	return importedPathsResolver(
+		await collectPathsModules(context, await trackedSourcePaths(context, { existingOnly: true }))
+	)
 }
 
 /**

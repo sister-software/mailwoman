@@ -298,6 +298,12 @@ export interface ReplayComparison {
 	equal: number
 	rows: ReplayCommitComparison[]
 	failures: ReplayFailureComparison[]
+	/**
+	 * Failed runs only one replay could check, as when `gh` answered an HTTP error for the other.
+	 *
+	 * The failure check leaves them out, and the list states that it did.
+	 */
+	unpairedRuns: Array<{ runID: number; checkedIn: "before" | "after" }>
 }
 
 const selectedFiles = (selection: ReplaySelection): Set<string> =>
@@ -327,6 +333,7 @@ export function compareCIReplays(before: CIReplay, after: CIReplay): ReplayCompa
 		equal: 0,
 		rows: [],
 		failures: [],
+		unpairedRuns: [],
 	}
 
 	for (const old of before.commits) {
@@ -366,11 +373,22 @@ export function compareCIReplays(before: CIReplay, after: CIReplay): ReplayCompa
 	}
 
 	const afterFailures = new Map(after.failures.map((failure) => [failure.runID, failure]))
+	const beforeRuns = new Set(before.failures.map((failure) => failure.runID))
+
+	for (const failure of after.failures) {
+		if (!beforeRuns.has(failure.runID)) {
+			comparison.unpairedRuns.push({ runID: failure.runID, checkedIn: "after" })
+		}
+	}
 
 	for (const failure of before.failures) {
 		const now = afterFailures.get(failure.runID)
 
-		if (!now) throw new Error(`Run ${failure.runID} is in the first replay only`)
+		if (!now) {
+			comparison.unpairedRuns.push({ runID: failure.runID, checkedIn: "before" })
+
+			continue
+		}
 
 		const oldFiles = selectedFiles(failure.selection)
 		const newFiles = selectedFiles(now.selection)

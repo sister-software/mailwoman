@@ -7,7 +7,8 @@
 import ts from "typescript"
 import { describe, expect, it } from "vitest"
 
-import { extractEffectEdges, type ImportedPaths, summarizeRootedExports } from "#repo-health/effects/extract"
+import { extractEffectEdges } from "#repo-health/effects/extract"
+import { type ImportedPaths, summarizeRootedExports } from "#repo-health/effects/resolve"
 
 const FILE = "packages/postcode/lib/shapes.ts"
 
@@ -320,6 +321,24 @@ describe("extractEffectEdges", () => {
 			["process.env", "environment", "identifier"],
 			["process.env", "environment", "*"],
 			["process.env", "environment", "*"],
+		])
+	})
+
+	it("records a spliterator reader's file and a glob's directory, and an absent cwd as unresolved", () => {
+		const found = edges(`
+			import { JSONSpliterator } from "spliterator"
+			import { Globerator } from "spliterator/node/fs"
+			import { repoRootPath } from "@mailwoman/core/paths"
+
+			await JSONSpliterator.fromAsync(repoRootPath("data", "rows.jsonl")).toArray()
+			await Globerator.files("ts", { cwd: repoRootPath("lib"), absolute: true }).toArray()
+			await Globerator.from("*.md").toArray()
+		`)
+
+		expect(found.map((edge) => [edge.interface, edge.kind, edge.target?.path ?? edge.unresolvedShape])).toEqual([
+			["JSONSpliterator.fromAsync", "read", "data/rows.jsonl"],
+			["Globerator.files", "read", "lib"],
+			["Globerator.from", "read", "other"],
 		])
 	})
 

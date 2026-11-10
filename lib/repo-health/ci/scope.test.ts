@@ -217,18 +217,49 @@ describe("selectCIScope", () => {
 })
 
 describe("readCIWorkspaces", () => {
-	it("records runtime-reader tests so their workspace inputs remain selected", async () => {
+	it("records what each module reads at runtime, from its effect edges and the paths a test builds", async () => {
 		await using directory = await temporaryDirectory("ci-runtime-inputs-")
 		const root = directory.path
 		await writeLocalJSONFile({ workspaces: ["packages/*"] }, root("package.json"))
 		await writeLocalJSONFile({ name: "reader" }, root("packages/reader/package.json"))
-		const readerFile = "packages/reader/lib/fixture.test.ts"
-		await writeLocalTextFile('import { readLocalJSONFile } from "@mailwoman/core/fs/readers"', root(readerFile))
-		const graph = await readCIWorkspaces(root.toString(), [readerFile])
-		expect(graph.find((workspace) => workspace.name === "reader")?.runtimeTests).toEqual([readerFile])
+		const testFile = "packages/reader/lib/fixture.test.ts"
+		const sourceFile = "packages/reader/lib/fixture.ts"
+
+		await writeLocalTextFile(
+			[
+				'import { readLocalJSONFile } from "@mailwoman/core/fs/readers"',
+				'import { repoRootPath } from "@mailwoman/core/paths"',
+				'import { resolvePath } from "path-ts"',
+				'await readLocalJSONFile(resolvePath(import.meta.dirname, "fixtures", "row.json"))',
+				'scan(repoRootPath("packages", "codex"))',
+			].join("\n"),
+			root(testFile)
+		)
+
+		await writeLocalTextFile(
+			[
+				'import { readLocalTextFile } from "@mailwoman/core/fs/readers"',
+				'import { repoRootPath } from "@mailwoman/core/paths"',
+				"export const load = (path = repoRootPath()) => readLocalTextFile(path)",
+			].join("\n"),
+			root(sourceFile)
+		)
+
+		const graph = await readCIWorkspaces(root.toString(), [sourceFile, testFile])
+
+		expect(graph.find((workspace) => workspace.name === "reader")?.runtimeReads).toEqual({
+			[testFile]: {
+				unbounded: null,
+				paths: ["packages/codex", "packages/reader/lib/fixtures/row.json"],
+				exact: [],
+				dataRoot: false,
+			},
+			// The library function reads what its caller passes, and its default is the repository root.
+			[sourceFile]: { unbounded: null, paths: [""], exact: [], dataRoot: false },
+		})
 	})
 
-	it("ignores runtime-access text in comments and non-test sources", async () => {
+	it("records no runtime reads for a module that imports an effect interface without calling it", async () => {
 		await using directory = await temporaryDirectory("ci-runtime-inputs-")
 		const root = directory.path
 		await writeLocalJSONFile({ workspaces: ["packages/*"] }, root("package.json"))
@@ -238,7 +269,7 @@ describe("readCIWorkspaces", () => {
 		await writeLocalTextFile('import { readLocalJSONFile } from "@mailwoman/core/fs/readers"', root(sourceFile))
 		await writeLocalTextFile("// readLocalJSONFile from @mailwoman/core/fs/readers", root(testFile))
 		const graph = await readCIWorkspaces(root.toString(), [sourceFile, testFile])
-		expect(graph.find((workspace) => workspace.name === "reader")?.runtimeTests).toBeUndefined()
+		expect(graph.find((workspace) => workspace.name === "reader")?.runtimeReads).toBeUndefined()
 	})
 
 	it("gives each root tool tree its own test selection", async () => {

@@ -164,6 +164,7 @@ export async function writeCIScope(root: string): Promise<CIScope> {
 					.map(([key, value]) => `| ${key} | ${value} |`),
 				"",
 				`Selected fast test files: ${scope.fastFiles.length}. Selected slow test files: ${scope.slowFiles.length}.`,
+				`Selected test files that read the data root, which only a \`mailwoman-data\` runner holds: ${scope.dataRootFiles.length}.`,
 				"Unselected suites did not run. Main and dispatched runs select every suite.",
 				"",
 			].join("\n"),

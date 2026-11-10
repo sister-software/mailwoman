@@ -52,6 +52,17 @@ interface PathParameter {
 	 * `new DatabaseClient(path, { readOnly: true })` opens for reading.
 	 */
 	option?: { argument: number; property: string; kind: EffectKind }
+	/**
+	 * The path is this property of the object literal at `index`,
+	 * as `Globerator.from(pattern, { cwd })` takes its directory.
+	 * An absent property leaves the edge unresolved.
+	 */
+	property?: string
+	/**
+	 * The call reads the path's own metadata: whether it exists, its size, its link target or its real path.
+	 * The answer depends on that path and on no file beneath it.
+	 */
+	exact?: boolean
 }
 
 /**
@@ -64,6 +75,7 @@ export interface EffectInterface {
 
 const readsFrom = (index: number, segments = false): PathParameter[] => [{ kind: EffectKind.Read, index, segments }]
 const writesFrom = (index: number, segments = false): PathParameter[] => [{ kind: EffectKind.Write, index, segments }]
+const inspects = (index: number): PathParameter[] => [{ kind: EffectKind.Read, index, exact: true }]
 
 const FS_READERS: readonly EffectInterface[] = [
 	{ name: "readFileHead", parameters: readsFrom(0) },
@@ -75,16 +87,13 @@ const FS_READERS: readonly EffectInterface[] = [
 	{ name: "readLocalBuffer", parameters: readsFrom(0, true) },
 	{ name: "directoryHasEntries", parameters: readsFrom(0) },
 	{ name: "sortedGlob", parameters: readsFrom(0) },
-	{ name: "readFileSize", parameters: readsFrom(0) },
-	{ name: "realPath", parameters: readsFrom(0) },
-	{ name: "tryRealPath", parameters: readsFrom(0) },
-	{ name: "readLink", parameters: readsFrom(0) },
 	{ name: "open", parameters: readsFrom(0) },
 ]
 
 /**
- * A stat answers whether a path exists and what it is, so a test that calls
- * one depends on that path as a read does.
+ * A stat answers whether a path exists and what it is.
+ *
+ * A test that calls one depends on that path, and on no file beneath a directory it stats.
  */
 const FS_STATS: readonly EffectInterface[] = [
 	"tryStat",
@@ -101,7 +110,11 @@ const FS_STATS: readonly EffectInterface[] = [
 	"isSymbolicLink",
 	"isWritable",
 	"isExecutable",
-].map((name) => ({ name, parameters: readsFrom(0) }))
+	"readFileSize",
+	"realPath",
+	"tryRealPath",
+	"readLink",
+].map((name) => ({ name, parameters: inspects(0) }))
 
 const FS_WRITERS: readonly EffectInterface[] = [
 	{ name: "makeDirectories", parameters: [{ kind: EffectKind.Write, index: 0, each: true }] },
@@ -192,6 +205,46 @@ const DATABASE_CONSTRUCTORS: readonly EffectInterface[] = ["DatabaseClient", "Da
 		{ kind: EffectKind.Write, index: 0, option: { argument: 1, property: "readOnly", kind: EffectKind.Read } },
 	],
 }))
+
+/**
+ * A class whose static methods reach the filesystem, with those methods.
+ */
+export interface StaticEffectClass {
+	name: string
+	methods: readonly EffectInterface[]
+}
+
+/**
+ * A spliterator reader's `fromAsync` reads the file its first argument resolves to.
+ *
+ * Its argument may also be a stream or an iterable.
+ * Such an argument leaves the edge unresolved.
+ */
+const SPLITERATOR_READERS: readonly StaticEffectClass[] = [
+	"JSONSpliterator",
+	"CSVSpliterator",
+	"TSVSpliterator",
+	"TextSpliterator",
+].map((name) => ({ name, methods: [{ name: "fromAsync", parameters: readsFrom(0) }] }))
+
+/**
+ * `Globerator.from` and `Globerator.files` list the directory their options' `cwd` resolves to.
+ */
+const GLOBERATOR: StaticEffectClass = {
+	name: "Globerator",
+	methods: ["from", "files"].map((name) => ({
+		name,
+		parameters: [{ kind: EffectKind.Read, index: 1, property: "cwd" }],
+	})),
+}
+
+/**
+ * Each module that exports a class with filesystem static methods, by the specifier that reaches it.
+ */
+export const STATIC_EFFECT_MODULES: ReadonlyMap<string, readonly StaticEffectClass[]> = new Map([
+	["spliterator", SPLITERATOR_READERS],
+	["spliterator/node/fs", [GLOBERATOR]],
+])
 
 /**
  * Each module that exports a class whose construction opens a file, by every specifier that reaches it.
