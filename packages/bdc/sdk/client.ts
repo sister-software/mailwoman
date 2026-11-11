@@ -32,7 +32,7 @@ export const BDC_API_BASE_URL = "https://broadbandmap.fcc.gov/api/public"
 /**
  * Default requests per minute.
  *
- * The value comes from FCC documentation and has not been verified against the live API.
+ * The value comes from FCC documentation and hasn't been verified against the live API.
  */
 export const BDC_DEFAULT_REQUESTS_PER_MINUTE = 10
 
@@ -165,7 +165,7 @@ export interface BDCThrottleStats {
 	/**
 	 * Wall-clock milliseconds during which at least one request was sleeping.
 	 *
-	 * Retry backoff is included because `APIClient` does not expose a way to separate it.
+	 * Retry backoff is included because `APIClient` doesn't expose a way to separate it.
 	 */
 	waitingMs: number
 	/**
@@ -210,7 +210,7 @@ type BDCRequestConfig = Parameters<APIClient["fetch"]>[0]
 /**
  * Request config with the cache interceptor's per-request `cache` switch.
  *
- * `APIClient.fetch` does not declare `cache`, so this intersection lets the field typecheck.
+ * `APIClient.fetch` doesn't declare `cache`, so this intersection lets the field typecheck.
  * With `cache: false`, the interceptor skips both the cache read and the cache write.
  */
 type UncachedBDCRequestConfig = BDCRequestConfig & {
@@ -407,7 +407,7 @@ function createMeteredClock(base: ClockLike): {
 			now: () => base.now(),
 			sleep: async (ms: number) => {
 				// `setCooldown` issues a zero-length sleep on each budget rollover.
-				// It is a yield and does not count.
+				// It is a yield and doesn't count.
 				if (ms <= 0) return base.sleep(ms)
 
 				if (inFlight === 0) {
@@ -484,7 +484,7 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 				validate: (value) => isBDCEnvelope(value.data?.data),
 			}),
 			ttl: options.cacheTTLMs ?? DEFAULT_CACHE_TTL_MS,
-			// The CDN's cache headers must not override the TTL above.
+			// The CDN's cache headers mustn't override the TTL above.
 			interpretHeader: false,
 			// A `cachePredicate` is unnecessary.
 			// Axios rejects non-2xx responses before the cache interceptor sees them,

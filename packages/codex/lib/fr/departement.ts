@@ -147,9 +147,9 @@ export type DepartementCode = keyof typeof FR_DEPARTEMENTS
  * Look up a département by code (case-insensitive for the Corsica `2A`/`2B` letters); null if unknown.
  */
 // Use `unknown` to accept any input.
-// This function returns null for anything that is not a departement code,
+// This function returns null for anything that's not a departement code,
 // Callers pass values from CSV rows or JSON bodies.
-// A narrower parameter did not make those callers safer — it made the guard
+// A narrower parameter didn't make those callers safer — it made the guard
 // test assert its way past the signature.
 export function departementInfo(code: unknown): DepartementInfo | null {
 	if (!code || typeof code !== "string") return null

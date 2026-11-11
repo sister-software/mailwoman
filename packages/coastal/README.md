@@ -13,10 +13,10 @@ Interface: [`docs/engineering/reference/layer-interface.mdx`](../../docs/enginee
 The layer has two readings. The reading it **lacks** is the main difference from
 `@mailwoman/flood`:
 
-| reading      | what it means                                                                                                              |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `designated` | the authority's mapping places the location inside an erosion zone under the scenario asked for                            |
-| `unknown`    | no polygon of that scenario contains the point. This reading does not claim absence, and this layer has no absence reading |
+| reading      | what it means                                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `designated` | the authority's mapping places the location inside an erosion zone under the scenario asked for                           |
+| `unknown`    | no polygon of that scenario contains the point. This reading doesn't claim absence, and this layer has no absence reading |
 
 **This layer has no `designated_absence` reading. The flood layer has one.** For
 flood zones the Environment Agency states England-wide coverage, and the Planning Practice Guidance
@@ -40,7 +40,7 @@ instead of answering as an absence, because "no such scenario" and "no zone here
 that would otherwise look identical.
 
 **No reading is a statement about a property.** The layer reports what the authority's map assigns
-at a location under a specified scenario. That is a fact about the map. The Environment Agency states
+at a location under a specified scenario. That's a fact about the map. The Environment Agency states
 that its data "cannot provide details for individual properties", and every reading is subject to the
 product's own exclusions. An erosion answer makes no statement about flooding or about foreshore features.
 
@@ -80,8 +80,8 @@ decisions below depend on them:
 The service and the file agree exactly on 89,371 features. The four bulk formats total 561.9 MB, and
 the geodatabase archive is 70,296,882 bytes.
 
-**`frontageid` is not a unique key, and this finding shaped the schema.** The survey proposed
-scoping `area_id` by scenario and keying it on the frontage. The measured frontage id is not unique
+**`frontageid` isn't a unique key, and this finding shaped the schema.** The survey proposed
+scoping `area_id` by scenario and keying it on the frontage. The measured frontage id isn't unique
 even **within** one layer. `NCERM_NFI_2055_0CC` holds 7,379 features over 7,369 distinct frontage
 ids, and frontage 39260 by itself appears ten times. Across the twelve layers, **835 rows would have
 collided**. `area_id` is therefore `<scenario key>:<OBJECTID>`, which uses the authority's own
@@ -103,7 +103,7 @@ single layer would throw on the day another layer contains its ninth value:
 | `published`                 |        2 | `2024` on 89,124 rows, `0` on 87                                                                                                                                                        |
 
 Membership for `def_type` is tested **case-folded**, and the value is stored **verbatim**. The case
-fold handles the source's own inconsistent capitalization and is not meant to accept a new defense
+fold handles the source's own inconsistent capitalization and isn't meant to accept a new defense
 type.
 
 **A blank field holds a single space.** The value `" "` appears on the same 87 rows
@@ -144,10 +144,10 @@ with primary-key probes and no ray cast. Only a `partial` cell falls through to 
 runs only against the polygons that the cell lists for that scenario.
 
 **The build has no build-time touch table, because of how the cell key works.** The flood build
-accumulates per zone code across features, so a cell's containment is not decided until the build has
+accumulates per zone code across features, so a cell's containment isn't decided until the build has
 seen every feature with that code. The flood build therefore resolves a temporary table at the end.
 An erosion cell row references one polygon, so the row is final as soon as that polygon is
-classified. Rows are written directly, memory use does not grow with row count, and no table needs
+classified. Rows are written directly, memory use doesn't grow with row count, and no table needs
 resolving afterwards.
 
 `coastal_ground_instability` holds NCERM's two ground-instability layers. Those layers describe a
@@ -195,7 +195,7 @@ The per-scenario figures at the chosen resolution 10 are the numbers a scenario-
 
 No feature was coarsened at any of the three candidates. The bounding box of NCERM's largest polygon
 fits h3's allocator budget at resolution 11, so the `coarsened` column is zero throughout and is
-omitted above. **The measurement's row count is a lower bound on the stored table** and is not the
+omitted above. **The measurement's row count is a lower bound on the stored table** and isn't the
 artifact's size. The measurement accumulates a set of cells per scenario, while the table keys
 `(cell, polygon)`. Two frontages of one scenario that reach one cell count as one cell in the
 measurement and two rows in the table. On this product the gap is small, because coastal frontages
@@ -211,7 +211,7 @@ Resolution 9 is rejected because its index answers only 0.5 % to 0.7 % of in-lay
 would only narrow candidates. Resolution 11 costs **3.9× the rows** (2.28 M against 0.59 M) to raise
 the index-answered share from about 5.5 % to about 24 %, and the ray cast remains the common path at
 either resolution. The candidate set per cell is tiny, because a coastal frontage is much simpler
-than a river network. The probe saving does not justify four times the cell tier. Resolution 10
+than a river network. The probe saving doesn't justify four times the cell tier. Resolution 10
 keeps that tier under 600 k rows and still narrows every probe to a handful of polygons.
 
 ## The build, as it ran
@@ -256,9 +256,9 @@ erosion. A layer that pooled the twelve scenarios would have to answer both with
 The third row is the ordinary case: the same frontage has a larger distance at the longer horizon.
 The fourth row shows the case that the coverage rules are designed for. An inland English coordinate
 gets no coverage row and no designation, and the reader reports that the product makes no statement there.
-The reader does not present it as reassurance.
+The reader doesn't present it as reassurance.
 
-## The footprint question — what is settled, and what would change it
+## The footprint question — what's settled, and what would change it
 
 **Settled as built:** This product has no mapped-footprint source, so `layer_coverage` stores
 `basis = source_present`, `coastal_mapped_extent` is empty, and the layer supports **presence only**.
@@ -272,11 +272,11 @@ verified**:
 - The **Shoreline Management Plan Mapping** record, a sibling dataset on the same platform. NCERM's
   own lineage states that it is derived from the Shoreline Management Plans, and every erosion feature
   has `smp_no`, `smp_name` and `smp_pu` fields. The measured `smp_no` runs 0–22 over 21 distinct values.
-  Its coverage statement, license, extent and schema were not read.
+  Its coverage statement, license, extent and schema weren't read.
 - The **frontage geometry behind `frontageid`**. It is unknown whether the Environment Agency
   publishes the frontages themselves or only their ids.
 
-**What is forbidden:** The build must not derive a footprint from the union of the erosion polygons.
+**What's forbidden:** The build mustn't derive a footprint from the union of the erosion polygons.
 The union of "at risk" areas differs from the mapped area, and that difference is exactly what a
 negative answer would need to report. The flood layer states the same rule for the same reason.
 
@@ -340,7 +340,7 @@ The reader runs on the geocode path only, after the resolver has produced a coor
 `authority_designation` marker with `mechanism: layer:coastal_erosion`. It is the third rule in the
 `layer` family. **The route is off by default and turns on when
 `$MAILWOMAN_DATA_ROOT/db/coastal/coastal-england.db` exists.** The file's presence is the only switch. Without the
-layer file the route does not run, and the geocode result is byte-identical to a build without the
+layer file the route doesn't run, and the geocode result is byte-identical to a build without the
 field.
 
 The artifact's filename states its **extent** instead of its subject, because products for other extents

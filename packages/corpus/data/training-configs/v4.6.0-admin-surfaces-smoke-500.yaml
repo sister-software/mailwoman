@@ -1,6 +1,6 @@
 # v4.6.0-admin-surfaces-smoke-500 is a 500-step feed smoke for v4.6.0-admin-surfaces.
 #
-# It checks that the v0.23.0-admin-surfaces overlay loads and that the loss falls. It does not measure
+# It checks that the v0.23.0-admin-surfaces overlay loads and that the loss falls. It doesn't measure
 # capability. Apart from the step count, warmup, Fisher capture and run names, it matches the 60k config.
 
 data:

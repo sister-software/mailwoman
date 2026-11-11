@@ -11,7 +11,7 @@ minutes away from the change.
 
 The boundary should be a resolution interface instead.
 
-## What is split today
+## What's split today
 
 |              | `@mailwoman/neural`                   | `@mailwoman/neural-web`                                               |
 | ------------ | ------------------------------------- | --------------------------------------------------------------------- |
@@ -24,7 +24,7 @@ The important thing: `NeuralRunner` (`classifier.ts`) is already a **structural 
 it has. The split is packaging rather than architecture — which is why merging is a repackaging job rather
 than a rewrite.
 
-## Why merging was previously wrong, and why it is not now
+## Why merging was previously wrong, and why it isn't now
 
 The standing objection was dependency weight: one package would put `onnxruntime-node` in every
 browser consumer's tree and `onnxruntime-web` in every server's, both heavyweight and one a native
@@ -55,8 +55,8 @@ rather than arriving transitively. Someone bundling for a browser now sees the r
 - `./web-onnx-runner` — `onnxruntime-web`, browser condition.
 - `.` — conditioned: `node` gets the full surface, `browser` gets the safe subset.
 
-Both are subpaths of one package, so there is no cross-package import to keep in sync and no
-`browser.ts` list to drift. A module that must not reach a Node builtin resolves to a counterpart
+Both are subpaths of one package, so there's no cross-package import to keep in sync and no
+`browser.ts` list to drift. A module that mustn't reach a Node builtin resolves to a counterpart
 instead of being policed by a rule.
 
 Verified before writing this:
@@ -79,7 +79,7 @@ this repo does nowhere today.
 This is a **major**. Three breaks, none subtle:
 
 1. **`onnxruntime-node` moves from `dependencies` to an optional peer.** Any Node consumer relying on
-   it arriving transitively gets a runtime failure on first inference. That is the intended
+   it arriving transitively gets a runtime failure on first inference. That's the intended
    correction. The dependency was always the consumer's to choose — but it is a break.
 2. **`@mailwoman/neural-web` stops being where the browser runtime lives.** It is published (8.6.0),
    so it becomes a thin re-export shim rather than disappearing: deprecated with a pointer, removed a
@@ -93,7 +93,7 @@ Export conditions do express the boundary. The confusion was about which compile
 
 Docusaurus builds two bundles. The **client** resolves under `browser` and picked the counterpart
 correctly from the first attempt. The **server** (SSR) resolves under `node`, correctly, because it
-targets Node — and that is the compile that failed. Its aggregated `[ERROR] Failed to compile` names
+targets Node — and that's the compile that failed. Its aggregated `[ERROR] Failed to compile` names
 neither side. The only signal is a `[webpackbar]` line two rows above reading
 `Client: Compiled successfully`.
 
@@ -110,7 +110,7 @@ needs a config-side change: a targeted alias for the one specifier.
 
 Two lessons cost four wrong diagnoses, and both apply to later work:
 
-- **A stale resolve cache.** `docs/node_modules/.cache/webpack` is not evicted when
+- **A stale resolve cache.** `docs/node_modules/.cache/webpack` isn't evicted when
   plugin-contributed `resolve` config changes: `buildDependencies.config` covers
   `docusaurus.config.ts` and the theme rather than the plugin files, and `ResolverCachePlugin` keys on
   pre-merge options encoding neither aliases nor `conditionNames`. It had reached 1.4 GB. **Clear it

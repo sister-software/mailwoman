@@ -168,7 +168,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 
 describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusion fixture)", () => {
 	/**
-	 * The path-fusion lattice on the fixture tokenizer: the emission-side δ (6.0) does not win
+	 * The path-fusion lattice on the fixture tokenizer: the emission-side δ (6.0) doesn't win
 	 * because "shoreditch"'s fused street run (8 + 7 + 7 = 22) outscores the biased
 	 * dependent_locality reading (6 + 6 + 6 = 18) by 4, so a beta-less decode keeps
 	 * the fused path and the transitionBeta artifact flips it.

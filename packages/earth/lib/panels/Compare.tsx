@@ -148,7 +148,7 @@ export const Compare: React.FC<CompareProps> = ({ primary, compareMode, compareV
 		const loaded = classifier
 
 		if (!compareMode || !loaded || !primaryInput) {
-			// oxlint-disable-next-line react/set-state-in-effect -- The prior result belongs to a classifier or input that is no longer active.
+			// oxlint-disable-next-line react/set-state-in-effect -- The prior result belongs to a classifier or input that's no longer active.
 			setCompareResult(null)
 
 			return

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   One query: the lexical rows, a vocabulary correction when they are empty, then one hit per section
+ *   One query: the lexical rows, a vocabulary correction when they're empty, then one hit per section
  *   with a cap per page, each with its snippet. A second ranked list, such as a vector arm, would merge here.
  */
 

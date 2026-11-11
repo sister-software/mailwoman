@@ -65,7 +65,7 @@ function asTemporaryDirectory(_path: PathBuilderLike, resources: AsyncDisposable
 /**
  * Create a new temporary directory under `$MAILWOMAN_TEMP_ROOT`, removed when the owning scope ends.
  *
- * The root is created if it does not exist, because `mkdtemp` fails on a missing parent.
+ * The root is created if it doesn't exist, because `mkdtemp` fails on a missing parent.
  */
 export async function temporaryDirectory(prefix = "mailwoman-"): Promise<TemporaryDirectory> {
 	const root = tempRootPathBuilder()

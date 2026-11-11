@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   La Poste's line 2 and line 3 designators for an individual's address. Line 2 holds what is
+ *   La Poste's line 2 and line 3 designators for an individual's address. Line 2 holds what's
  *   inside the building (the flat number or letter box, the floor, the corridor, the staircase) and
- *   line 3 what is outside it (the entrance, the building, the block, the tower, the residence, the
+ *   line 3 what's outside it (the entrance, the building, the block, the tower, the residence, the
  *   housing estate). Line 4 is the number and street, and line 6 the postcode and locality.
  *
  *   The document's example writes `Appartement 2` on line 2 and `ENTREE A BATIMENT JONQUILLE` on line
  *   3, so the flat, entrance and building designators are shown with an identifier after them. The
- *   document lists the other designators by name only. They are marked as taking an identifier by the
- *   same pattern. The document does not show that.
+ *   document lists the other designators by name only. They're marked as taking an identifier by the
+ *   same pattern. The document doesn't show that.
  *
  * @see {@link https://lastation.laposte.fr/sites/p8_u1/files/2026-07/SP8855-Volume%202_V1.14%20-%20Adressage%20des%20plis.pdf La Poste, SP 8855 Volume 2, Adressage des plis (v1.14)}
  */

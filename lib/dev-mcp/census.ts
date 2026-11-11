@@ -16,7 +16,7 @@
  *   channels.
  * - **L1 signaled** — it produced nonzero input to the next stage. This file computes L0 and L1 from one
  *   traced run.
- * - **L2 moved a result** — needs ablation pairs. This file does not compute L2.
+ * - **L2 moved a result** — needs ablation pairs. This file doesn't compute L2.
  *   The gauntlet's ablation layer owns that measurement. Reports mark it unmeasured so readers can
  *   distinguish L1 coverage from result relevance.
  *

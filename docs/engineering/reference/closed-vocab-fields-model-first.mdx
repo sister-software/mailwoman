@@ -35,7 +35,7 @@ positive-evidence-only rule.
 **The over-firing came from the training data.** The night-9
 `country` recipe produced almost entirely _trailing-country_ rows. The model learned the
 shortcut "trailing token ⇒ country" and tagged cities and regions as countries (49 F1, 23%
-precision). A skewed training distribution caused this result, and it does not show a
+precision). A skewed training distribution caused this result, and it doesn't show a
 limit of the transformer+CRF architecture. Context-sensitive token classifiers (BERT+CRF,
 LUKE, BLINK) routinely resolve gazetteer homographs from local context. A context-sensitive tagger labels "Atlanta,
 Georgia" as a region and "Tbilisi, Georgia" as a country is the _canonical_ task of a
@@ -56,7 +56,7 @@ post-parse override is exactly the substitution we ruled out.
 wrong _continent_ downstream, so a hard guarantee is a reasonable goal. The
 **resolver should enforce it using calibrated confidence** (we ship isotonic `conf=`). If
 the model has low confidence _and_ the gazetteer has an unambiguous match, the resolver may
-prefer the lookup as a candidate. That is a re-rank at the resolution layer instead of a
+prefer the lookup as a candidate. That's a re-rank at the resolution layer instead of a
 substitution in the parser, and it provides the same safety.
 
 ## Revised taxonomy (three tiers, all model-first)
@@ -138,7 +138,7 @@ Current systems follow one of two approaches:
 
 - **Parse-time structured tagging** produces an authoritative field-tagged record
   (Mailwoman, Pelias, libpostal, deepparse). Over-firing occurs in this approach.
-- **Index-time disambiguation** does not commit to a parse and lets retrieval decide
+- **Index-time disambiguation** doesn't commit to a parse and lets retrieval decide
   (Airmail).
 
 | System                     | Approach to `country` / closed-vocab                                                                                                        | Lexicon used as                                                                   |

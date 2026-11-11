@@ -34,7 +34,7 @@ export type MultipleComparisonMethod = (typeof MultipleComparisonMethod)[keyof t
 /**
  * Every held-out provenance class, in report order.
  *
- * It lives here rather than beside the type so a spec reader does not load the scorer's model runtime.
+ * It lives here rather than beside the type so a spec reader doesn't load the scorer's model runtime.
  */
 export const HELDOUT_PROVENANCE_CLASSES = [
 	"verified_unseen",
@@ -163,7 +163,7 @@ export interface ReleaseRequirementSpec {
 		 * Whether the rows are declared independent, so that a row without grouping metadata is its own unit.
 		 *
 		 * `false` makes any check that reads an ungrouped row insufficient evidence.
-		 * There is no default: the reader refuses a specification that omits it.
+		 * There's no default: the reader refuses a specification that omits it.
 		 */
 		rowsIndependent: boolean
 		groupingAssumption: string

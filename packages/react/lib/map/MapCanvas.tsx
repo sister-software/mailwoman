@@ -35,7 +35,7 @@ import { StarfieldLayer } from "#map/StarfieldLayer"
 export type MapCanvasStyle = NonNullable<MapProps["mapStyle"]>
 
 /**
- * Override for the `<Map>` props `<MapCanvas>` does not surface explicitly
+ * Override for the `<Map>` props `<MapCanvas>` doesn't surface explicitly
  * (e.g. `minZoom`, `attributionControl`, `maplibreLogo`).
  *
  * The controlled fields MapCanvas owns are omitted so they can't be set twice.
@@ -90,7 +90,7 @@ export interface MapCanvasProps {
 	 */
 	style?: CSSProperties
 	/**
-	 * Other `<Map>` props that MapCanvas does not surface explicitly.
+	 * Other `<Map>` props that MapCanvas doesn't surface explicitly.
 	 */
 	mapProps?: MapCanvasExtraProps
 	/**

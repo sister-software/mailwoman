@@ -17,13 +17,13 @@ territories, and a semantic layer.
 The knowledge graph turns that naming problem into a structural one. We need answers to four questions before
 adding more databases:
 
-1. What is installed with the engine, the model, and the atlas?
+1. What's installed with the engine, the model, and the atlas?
 2. How can every installation retain worldwide coverage while a consumer chooses where to provide disk
    and precision?
 3. Where do country-specific address systems live when the atlas is globally partitioned?
 4. How does the CLI explain, plan, fetch, verify, and diagnose the resulting installation?
 
-This design answers those questions. It does not choose the physical H3 extract resolution, publish a
+This design answers those questions. It doesn't choose the physical H3 extract resolution, publish a
 new catalog, or estimate final artifact sizes. Those require measured build prototypes.
 
 ## Decision
@@ -51,7 +51,7 @@ do not dictate the physical shape of every downloaded database.
 
 ## Models and address systems stay scoped
 
-The global atlas does not imply a universal address grammar. Component order, postcode semantics,
+The global atlas doesn't imply a universal address grammar. Component order, postcode semantics,
 dependent-locality use, numbering, formatting, and omission rules vary by address system. The model
 and resolver continue to record that distinction.
 
@@ -76,7 +76,7 @@ make that relationship explicit. An ISO country code without other evidence shou
 country has one language.
 
 The CLI diagnoses model availability and prints a package-manager command. `mailwoman data pull`
-does not edit `package.json` or fetch model weights.
+doesn't edit `package.json` or fetch model weights.
 
 ## Atlas depth
 
@@ -93,7 +93,7 @@ The installed atlas is a coverage pyramid:
 | POI         | venues, businesses, landmarks, categories, brands                                   | place with a name                |
 | domain      | infrastructure, BDC, parcels, hazards, private records                              | layer-specific claim             |
 
-"Worldwide coverage" describes the surviving spatial claim. It does not promise every locality
+"Worldwide coverage" describes the surviving spatial claim. It doesn't promise every locality
 name, postcode, street, or rooftop in the starter download. An installation with only the global
 core can still bound a query to a country or region. Each additional layer narrows the candidate
 space when its coverage permits that claim.
@@ -207,12 +207,12 @@ broker that:
 2. opens only the relevant databases;
 3. keeps a bounded connection cache;
 4. queries the finest eligible layer;
-5. falls through to the next installed depth when coverage or retrieval does not support the claim.
+5. falls through to the next installed depth when coverage or retrieval doesn't support the claim.
 
 ## Catalog and embedded manifests
 
 The remote catalog answers what can be installed. Each SQLite database's embedded layer manifest
-answers what is installed. Both are required.
+answers what's installed. Both are required.
 
 ```ts
 interface AtlasArtifact {

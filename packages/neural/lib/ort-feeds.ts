@@ -201,7 +201,7 @@ function packChannelFeed(
 
 /**
  * Pack every soft-feed channel the graph declares, in feed-name order: a supplied
- * channel the graph does not declare is never fed (an undeclared feed crashes ORT),
+ * channel the graph doesn't declare is never fed (an undeclared feed crashes ORT),
  * and a declared channel the caller omitted gets the zero-fill confidence=0 identity.
  */
 export function packSoftChannelFeeds(
@@ -262,7 +262,7 @@ export function packSoftChannelFeeds(
 export const NO_LOCALE_HINT = -1
 
 /**
- * Pack the `locale_hint` input when the graph declares one, or return null when it does not.
+ * Pack the `locale_hint` input when the graph declares one, or return null when it doesn't.
  *
  * A caller without an id gets {@linkcode NO_LOCALE_HINT}, the trained "no hint" behavior.
  */

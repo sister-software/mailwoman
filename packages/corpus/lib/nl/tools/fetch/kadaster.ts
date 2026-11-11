@@ -8,7 +8,7 @@
  *   ## One feed and one file
  *
  *   PDOK serves an ATOM download service with a single entry, and that entry's one data link is the
- *   whole country. There is no service document above it and no dataset feed below it, so the
+ *   whole country. There's no service document above it and no dataset feed below it, so the
  *   resolution is one request:
  *
  *       adressen_inspire_geharmoniseerd.xml  →  addresses.gml.gz
@@ -74,7 +74,7 @@ const SLUG = NL_KADASTER_ADAPTER_ID
  * `feed_updated` is the entry's own `<updated>`.
  * A later run downloads again when that value changes.
  *
- * That is the freshness signal the ATOM feed offers in place of an HTTP validator.
+ * That's the freshness signal the ATOM feed offers in place of an HTTP validator.
  *
  * `rights` is the license URL the feed states, recorded so a change of terms is
  * visible in the artifact rather than only in the register.

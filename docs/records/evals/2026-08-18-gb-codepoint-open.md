@@ -9,10 +9,10 @@ license v3, acquisition 2026-08-05).
 ## What this measures, and what it cannot
 
 1. **The truth and the gazetteer share a source.** Mailwoman's GB postcode tier is built from
-   Code-Point Open (`codepoint-extract.ts`), so grading answers against Code-Point centroids does not
+   Code-Point Open (`codepoint-extract.ts`), so grading answers against Code-Point centroids doesn't
    measure independent coordinate accuracy — it measures the **pipeline end to end**: does a messy,
    real-shaped postcode string come back as the right unit-postcode point through
-   parse → retrieval → resolution? That is the engine's claim. The coordinates' accuracy is
+   parse → retrieval → resolution? That's the engine's claim. The coordinates' accuracy is
    Ordnance Survey's.
 2. **The OSGB36 → WGS84 conversion cancels.** Truth is converted by the same `@mailwoman/spatial`
    routine the extract build uses (pinned against the OSTN15 test set in its own suite), so a
@@ -25,8 +25,8 @@ license v3, acquisition 2026-08-05).
 ## Method
 
 - **Sample:** 600 unit postcodes — a seeded draw (`mulberry32(20260818)`), 5 from each of the 120
-  Code-Point area files, so London does not drown Orkney. Positional-quality-90 rows (no
-  coordinate available) are excluded, matching the extract build. Northern Ireland is not in
+  Code-Point area files, so London doesn't drown Orkney. Positional-quality-90 rows (no
+  coordinate available) are excluded, matching the extract build. Northern Ireland isn't in
   Code-Point Open and is therefore not in this record.
 - **Legs per postcode:** as published (`SW10 0AA`); lowercased and unspaced (`sw100aa` — the user
   register); country-suffixed (`SW10 0AA, UK`); and a **typo leg** — the final letter stepped to

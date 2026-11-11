@@ -11,7 +11,7 @@
  *   first digit maps to a **Leitzone** — a postal routing region that deliberately **crosses
  *   Bundesland borders** (Leitzone 6 covers Frankfurt in Hessen, Saarbrücken in Saarland and Mainz
  *   in Rheinland-Pfalz). The PLZ prior narrows geography to a postal routing region.
- *   It does not identify a Bundesland as a US ZIP does. Code must not derive a German region from a postcode
+ *   It doesn't identify a Bundesland as a US ZIP does. Code mustn't derive a German region from a postcode
  *   by itself.
  */
 
@@ -39,7 +39,7 @@ export const PLZ_PATTERN = /^\d{5}$/
  * Normalize a PLZ surface form to the bare five digits: strip the `D-` / `DE-` country
  * courtesy prefix and surrounding whitespace (`D-68161` → `68161`).
  *
- * @returns Null if the result is not a PLZ.
+ * @returns Null if the result isn't a PLZ.
  */
 export function normalizePLZ(raw: unknown): Postleitzahl | null {
 	if (typeof raw !== "string") return null
@@ -81,7 +81,7 @@ export interface LeitzoneInfo {
  * A coarse, postal-routing prior: these zones cross Bundesland borders, so the label is
  * "which corner of Germany", not "which state".
  * Anchor cities are the safe, well-known way to pin a zone without over-claiming
- * a boundary the routing geography does not follow.
+ * a boundary the routing geography doesn't follow.
  */
 export const PLZ_LEITZONEN = {
 	0: { digit: 0, region: "Sachsen / Ostthüringen", cities: ["Leipzig", "Dresden", "Chemnitz"] },
@@ -101,7 +101,7 @@ export const PLZ_LEITZONEN = {
 } as const satisfies Record<LeitzoneDigit, LeitzoneInfo>
 
 /**
- * The Leitzone of a PLZ (its first digit's routing region), or null if the input is not a PLZ.
+ * The Leitzone of a PLZ (its first digit's routing region), or null if the input isn't a PLZ.
  */
 export function leitzoneOf(plz: unknown): LeitzoneInfo | null {
 	const normalized = normalizePLZ(plz)

@@ -84,7 +84,7 @@ test("readCodePointCSV keeps a quoted multiline field in one logical record and 
 test("normalizeCodePointSpacing collapses the fixed-width padded form", () => {
 	// Code-Point is specified as a 7-character field with the outward code left-justified,
 	// so a short postcode is padded to `B1 1AA`.
-	// Unchanged, that is a different string from `B1 1AA` and would land as a second, duplicate place.
+	// Unchanged, that's a different string from `B1 1AA` and would land as a second, duplicate place.
 	expect(normalizeCodePointSpacing('"B1  1AA"'.replaceAll('"', ""))).toBe("B1 1AA")
 	expect(normalizeCodePointSpacing("sw1a 1aa")).toBe("SW1A 1AA")
 	expect(normalizeCodePointSpacing("  EC1A 1BB  ")).toBe("EC1A 1BB")

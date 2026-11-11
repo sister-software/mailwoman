@@ -98,7 +98,7 @@ describe("createMatchFeaturizer", () => {
 		expect(t[4]).toBe(1) // officialAgree × orgDisagree — the roll-up core
 		expect(t[5]).toBe(1) // …at the same place
 
-		// Same officials but org names agree → the roll-up features must not fire.
+		// Same officials but org names agree → the roll-up features mustn't fire.
 		const agreeingOrg = { canonical: "sunrise home care", raw: "Sunrise Home Care", designations: [], dba: null }
 		const c = { ...b, organization: agreeingOrg }
 

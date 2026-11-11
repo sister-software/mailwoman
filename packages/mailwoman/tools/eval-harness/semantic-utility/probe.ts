@@ -21,7 +21,7 @@ import {
 /**
  * Result shapes derived from `PipelineResult.path` and `POIQueryResult.type`.
  *
- * - `no_poi_branch`: the coordinator did not take the POI branch.
+ * - `no_poi_branch`: the coordinator didn't take the POI branch.
  * - `poi_abstain`: the POI branch declined.
  *   The abstain reason is recorded beside the shape.
  * - `poi_intent_no_results`: the POI branch formed an intent and the executor returned no row.
@@ -126,7 +126,7 @@ export type ProbeControlGroup = (typeof PROBE_CONTROL_GROUPS)[number]
 
 /**
  * A frozen control row that refers by ID to a row in a committed fixture file, repeating
- * the fixture's contents so {@linkcode resolveControlRows} can detect one that has changed.
+ * the fixture's contents so {@linkcode resolveControlRows} can detect one that's changed.
  */
 export interface ProbeControlRow {
 	id: string
@@ -200,7 +200,7 @@ export interface ProbeBaseline {
 	controlHoldNumerator: number
 	receipt: string
 	/**
-	 * A prose description of the tree state and run conditions that the commit hash does not capture.
+	 * A prose description of the tree state and run conditions that the commit hash doesn't capture.
 	 */
 	note: string
 }

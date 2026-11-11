@@ -38,7 +38,7 @@ function asStringArray(raw: unknown): string[] | null {
 /**
  * A friendly html landing page for `GET /`.
  *
- * Upstream komoot/photon serves no root page, so there is no wire interface to match.
+ * Upstream komoot/photon serves no root page, so there's no wire interface to match.
  * Relative example URLs resolve against whatever host and port serve this.
  */
 const ROOT_HTML = `<!doctype html>

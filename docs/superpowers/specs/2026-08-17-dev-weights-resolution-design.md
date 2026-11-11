@@ -20,7 +20,7 @@ CommandError: geocode requires the neural weights. Install @mailwoman/neural-wei
 ```
 
 This error appeared while building the dev-MCP worktree arm (2026-08-17). A child process in a fresh
-worktree could not build an engine until the farm stopped re-pointing the weights workspaces.
+worktree couldn't build an engine until the farm stopped re-pointing the weights workspaces.
 
 ### Which registers hold "which model is the dev model"
 
@@ -44,8 +44,8 @@ template is a defect generator"), and the 9.0.0 lockstep miss is an instance of 
 
 A config file was considered and rejected. `scratchpad/add-a-country-runbook.md` Addendum A argues three
 points: a JSON recipe is "the same shape as the thing that lagged" in #1015, it adds a register, and JSON
-cannot hold the reasoning a code comment does. The first two objections rule out a new file. The third does
-not apply here, because `release.config.json` already holds more prose in `lineage` than the code comment
+cannot hold the reasoning a code comment does. The first two objections rule out a new file. The third doesn't
+apply here, because `release.config.json` already holds more prose in `lineage` than the code comment
 it would replace.
 
 So this design adds no file and no configuration system. It deletes the third register and points the dev
@@ -70,13 +70,13 @@ The lockstep instruction then covers two registers instead of three. It moves to
 Populate `$MAILWOMAN_DATA_ROOT/weights/<locale>/` with the shipped filenames, using the same layout
 `resolveFromPackageDir` already reads. It resolves ~13 sibling artifacts (model, tokenizer, model-card, CRF
 and semi-CRF transitions, anchor lookup, four lexicons, pair index, per-locale FST, street-morphology FST),
-every one as `resolve(packageDir, "<fixed-name>")`. That function does not change.
+every one as `resolve(packageDir, "<fixed-name>")`. That function doesn't change.
 
 The new rung sits between the installed-package rung and the user cache. When the package directory
 resolves but has no binaries, the resolver probes the overlay before throwing.
 
 `@mailwoman/neural` ships to npm, so it knows the directory convention and never the recipe. It knows the
-directory layout but does not know that `release.config.json` exists. The dev link command exists only
+directory layout but doesn't know that `release.config.json` exists. The dev link command exists only
 in the monorepo. It reads the recipe and writes the weights overlay.
 
 The weights overlay is a derived artifact rather than a register. It is rebuilt from the recipe and verified against
@@ -96,7 +96,7 @@ Only `model` and `tokenizer` throw. The other ~11 siblings resolve `existsSync �
 absence by design. A checkout that finds those two files therefore parses successfully without lexicons,
 the FST, or the pair index. It scores worse and reports no problem.
 
-The rung introduces this risk, so it must not ship without a report.
+The rung introduces this risk, so it mustn't ship without a report.
 
 `ResolvedWeights` gains a per-artifact resolution report: which siblings resolved, and from which directory
 (`package`, `base`, `overlay`, `cache`). `mailwoman doctor` renders it. The question
@@ -116,7 +116,7 @@ assertion covers one of ten packages and none of the files an overlay ships: `po
 The link command refuses to link an overlay-owned artifact that has no recorded digest, rather than linking
 it unchecked. This applies the runbook's closing recommendation, "promote the warning to a check".
 
-## What is not in scope
+## What's not in scope
 
 - The layered config file from `scratchpad/config-file-plan.md`. This design supersedes it (see "Why not a
   config file").
@@ -136,7 +136,7 @@ Unit, against a temporary data root and a fake package directory:
 - overlay model present, tokenizer absent → throws rather than half-resolving
 - sibling report distinguishes a sibling resolved from `package` versus `overlay` versus absent
 - overlay artifact whose digest is absent from `files_md5` → link refuses
-- overlay artifact whose digest does not match `files_md5` → link refuses and prints both digests
+- overlay artifact whose digest doesn't match `files_md5` → link refuses and prints both digests
 - `MAILWOMAN_DEV_MODEL` set → digest assertion relaxed, and the relaxation is reported
 
 Integration:
@@ -161,7 +161,7 @@ Regression:
    through `release.config.json`, and that works. The smaller change is to leave it unchanged. A change to point it at the
    overlay would make the release ship exactly the bytes dev ran. The current preference is to leave it
    unchanged for phase 0 and revisit when phase 3 gives artifacts manifests.
-3. **What populates the overlay on a machine that has never trained?** The recipe gives a path under
+3. **What populates the overlay on a machine that's never trained?** The recipe gives a path under
    `$MAILWOMAN_DATA_ROOT/models/`, which exists only because someone trained there. A fresh lab has no such
    file. Phases 1–3 address this reproducibility gap, so phase 0 should fail with an explicit error that
    prints the path it wanted rather than appear to work.

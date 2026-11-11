@@ -15,9 +15,9 @@ the FS baseline (the recall-correct baseline the flows currently pin) and the bu
 across link thresholds from −8 up through its dedup threshold (2.71). The GBT logit **replaces** the
 FS weight, so lowering the threshold is the only knob.
 
-**Precision proxy (label-free):** there is no cross-source ground truth. No shared key across the
+**Precision proxy (label-free):** there's no cross-source ground truth. No shared key across the
 three datasets is the whole premise. So we use **phone corroboration**: of the cross-source entities
-whose records include a phone in ≥2 different sources, the fraction whose phones **match**. Phone is not
+whose records include a phone in ≥2 different sources, the fraction whose phones **match**. Phone isn't
 the join key, so a match is independent evidence of same-facility. (Small-N + noisy — see caveats.)
 
 ## Result (cap 2000, TX)
@@ -51,7 +51,7 @@ The config-independent signal that settles the question is the **total-entity co
    below it, and the result links (thr ≤ 0) do so at 19–27% — lower precision _and_ more
    over-merging.
 
-There is no GBT link threshold that matches FS's cross-source links at ≥ FS precision **without**
+There's no GBT link threshold that matches FS's cross-source links at ≥ FS precision **without**
 over-merging. This is structural rather than a tuning miss: the GBT's strongest features
 (`spatial-exact × name/org-disagree`) **replace** the FS weight, so a true cross-source pair (same
 place, names differ across sources) lands in the same logit band as an actual dedup over-merge (same
@@ -61,9 +61,9 @@ opposite — which is the definition of needing a different model rather than a 
 **FS stays pinned for the cross-source flows**. It is the recall-correct _and_ best-precision tool
 here, by design. The only way to "do better than FS" (#655) is a **cross-objective retrain**
 (option 2): a GBT trained on the cross-source objective, where `spatial-exact × name-disagree` has
-the _opposite_ sign. That is blocked on cross-source labels. Those labels don't exist (no shared key), so
+the _opposite_ sign. That's blocked on cross-source labels. Those labels don't exist (no shared key), so
 it needs a weak-label pipeline (e.g. phone/NPI-corroborated FS-high-confidence links as positive seeds,
-non-co-located pairs as negatives). That is a project rather than a tweak, and it is **not** started here.
+non-co-located pairs as negatives). That's a project rather than a tweak, and it **isn't** started here.
 
 ## Caveats
 
@@ -80,7 +80,7 @@ non-co-located pairs as negatives). That is a project rather than a tweak, and i
 
 ## Bottom line
 
-Option 1 (re-threshold the dedup GBT) **does not work** — measured rather than assumed. Keep FS pinned for
+Option 1 (re-threshold the dedup GBT) **doesn't work** — measured rather than assumed. Keep FS pinned for
 cross-source discovery. #655's remaining content is option 2 (a weak-label cross-objective retrain),
 which is a scoped project blocked on building cross-source weak labels — or, equally defensible, close
 #655 as "the GBT is dedup-only by design, and FS is the correct cross-source tool."

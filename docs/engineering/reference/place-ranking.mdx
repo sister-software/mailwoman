@@ -8,7 +8,7 @@ description: How the resolver orders gazetteer candidates that share a name. It 
 For each admin span (`locality`, `region`, `country`, or another admin tag), the resolver finds
 matching rows in `candidate.db`. A match has the same `name_key` as the normalized span text.
 
-The resolver then applies a fixed sequence of sorting and grouping steps. There is no single score
+The resolver then applies a fixed sequence of sorting and grouping steps. There's no single score
 that combines population, importance, country, and containment.
 
 Venue rows in `poi.db` use a separate ranking process. See [The venue tier](#the-venue-tier).
@@ -163,7 +163,7 @@ candidate has `matchedAlias: true`, so a caller can see that the input matched a
 `candidate.db` stores `importance`, a blended value from 0 to 1. It is `NULL` when unmeasured.
 Within each `exactMatch` tier, measured rows are ordered by importance.
 
-There is one exception: same-country rows whose importance values differ by no more than
+There's one exception: same-country rows whose importance values differ by no more than
 `SAME_COUNTRY_IMPORTANCE_TIE_BAND = 0.02` are ordered by size instead. Populated places come
 first. Rows with no importance value keep their existing positions.
 
@@ -232,7 +232,7 @@ Each example below gives the input, the competing `candidate.db` rows, and the p
 geocode` returned under the default `en-US` locale on 2026-10-11. The rows come from
 `mwdev_lookup source=candidate` against `/mnt/mw/db/wof/candidate.db`, in fetch order
 (`neg_rank`, population first). The pass listed as deciding each case is read from the rows and the
-pass order. These runs did not record per-pass traces.
+pass order. These runs didn't record per-pass traces.
 
 ### A bare name across countries: `Saint-Denis`
 
@@ -365,14 +365,14 @@ unanchored venue instead.
 
 ## The landmark layer
 
-`<data root>/db/poi/landmarks.db` holds Wikidata places under every name and alias they are written with, plus IATA
+`<data root>/db/poi/landmarks.db` holds Wikidata places under every name and alias they're written with, plus IATA
 codes from property P238. The source is CC0. `tools/dev-tools/landmarks/build.run.ts` builds it from the vital-places
 inventory. `applyLandmark` reads it after the admin walk, for an input with no house number, postcode, unit or PO box.
 
 The rule, as a caller reads it:
 
-> A query that is only a name, with no city, region or country, answers the place of that name with the most Wikipedia
-> language editions (Wikidata sitelinks). When the leader's count does not exceed the runner-up's by the published
+> A query that's only a name, with no city, region or country, answers the place of that name with the most Wikipedia
+> language editions (Wikidata sitelinks). When the leader's count doesn't exceed the runner-up's by the published
 > margin, the response still returns the leader but marks it `declared_ambiguity` and lists the alternatives with their
 > counts. Add a qualifier, a country, or a focus point to choose a namesake.
 
@@ -381,7 +381,7 @@ The prominence is `log10(sitelinks + 1)`, so the published margin is `DECISIVE_M
 
 Five rules decide what the layer may answer:
 
-- An input that is only a country code of three or more capitals answers the country, so `USA` is the United States and
+- An input that's only a country code of three or more capitals answers the country, so `USA` is the United States and
   `FRA` is France. A country's codes are its ISO 3166-1 alpha-3 code and the abbreviations the codex curates, such as
   `UAE` and `PNG`. An airport holding the same IATA code is listed as the country's alternative: `AUS` answers Australia
   and lists Austin–Bergstrom International Airport, and `FRA, Germany` reaches Frankfurt Airport. A code no country

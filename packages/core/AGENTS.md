@@ -13,7 +13,7 @@ Inject a clock and use `@mailwoman/core/api/test-clocks` in timing tests.
 `packages/filer/sdk/sec-client.ts` is the primary example. `packages/bdc/sdk/client.ts` shows
 binary responses and per-request `cache: false`.
 
-`requestsPerMinute` computes a cooldown of `60000 / N` after the previous dispatch. It does not enforce
+`requestsPerMinute` computes a cooldown of `60000 / N` after the previous dispatch. It doesn't enforce
 a full-minute window: a measured configuration of 10 dispatched 100 requests per minute. Set
 `minRequestIntervalMs` to `60000 / N` when the host requires that interval.
 
@@ -55,7 +55,7 @@ Use `path-ts` for path composition. Use `import.meta.dirname` and `import.meta.f
 module. Convert another `file:` URL through `@mailwoman/core/module/file-url`.
 
 The tokenizer in `@mailwoman/neural` is the one documented exception. It dynamically imports
-`node:fs/promises` with `webpackIgnore` so the browser bundle does not acquire core's Node graph.
+`node:fs/promises` with `webpackIgnore` so the browser bundle doesn't acquire core's Node graph.
 `browser-slo.test.ts` detects a static replacement that makes esbuild resolve `fs`.
 
 ## Data, package, and repository roots
@@ -132,7 +132,7 @@ Check these homes before adding a helper:
 - `@mailwoman/spatial`: geographic distance, polygon containment, and bounding-box helpers.
 - `packages/match/lib/comparators.ts`: string similarity functions.
 
-There is no `@mailwoman/core/utils/jsonl` implementation. Read JSONL with
+There's no `@mailwoman/core/utils/jsonl` implementation. Read JSONL with
 `Array.fromAsync(JSONSpliterator.fromAsync<T>(path))`.
 
 `mailwoman/prefer-home` reports repeated implementation shapes. The
@@ -140,7 +140,7 @@ There is no `@mailwoman/core/utils/jsonl` implementation. Read JSONL with
 function. A justified local implementation uses
 `// repo-health-ignore private-name-shadows-export -- <reason>`.
 
-When a shared helper does not fit a caller, determine whether its performance, asynchronous interface,
+When a shared helper doesn't fit a caller, determine whether its performance, asynchronous interface,
 or dependency graph caused the local implementation. Fix the shared interface when appropriate. Keep a
 documented local implementation when the dependency cost is larger than the duplication.
 
@@ -163,7 +163,7 @@ the module itself declares.
 A bundler that reads `sideEffects: false` drops a module whose exports go unused, and with it whatever
 the module runs at evaluation. A workspace that declares the field lists each module that runs an
 import-time effect, by its source path and its `out/` path. A `*.run.ts` script and `cli/main.ts` are
-entry points whose module-scope statements are the program, so they are listed by glob. An `if
+entry points whose module-scope statements are the program, so they're listed by glob. An `if
 (import.meta.main)` block runs only for the entry point and needs no listing. The `side-effects`
 repository check reads every declaring workspace's sources and reports a module the declaration
 misses.
@@ -193,5 +193,5 @@ distinguishes, and the effects register prints the machine's transition table fr
 When one core test imports both `@mailwoman/core` and a core subpath, Vite can interleave the barrel and
 subpath graphs before the barrel finishes binding its exports. Base classes can then evaluate as
 `undefined`. A side-effect `import "@mailwoman/core"` at the start of the affected test forces the barrel
-to initialize first. This is a structural import-graph issue tracked on #481. Top-level await is not its
+to initialize first. This is a structural import-graph issue tracked on #481. Top-level await isn't its
 cause.

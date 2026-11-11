@@ -45,7 +45,7 @@ export interface PlanetaryMapConfig {
 	 */
 	terrainCredit: string
 	/**
-	 * Features offered as chips under the search field, so a visitor who does not
+	 * Features offered as chips under the search field, so a visitor who doesn't
 	 * know the nomenclature has somewhere to start.
 	 *
 	 * Each string is searched exactly as typed, so it must match a feature name in the body's search artifact.

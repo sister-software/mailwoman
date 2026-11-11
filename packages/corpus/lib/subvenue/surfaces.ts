@@ -27,7 +27,7 @@ const CASE_FOLDING_SCRIPT = /^[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Gree
  * Hangul is excluded because Korean does space its words.
  *
  * The Germanic-compound argument that keeps {@link nameContainsSurfaces}
- * token-bounded for Latin does not transfer here.
+ * token-bounded for Latin doesn't transfer here.
  */
 const NON_SPACING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
 

@@ -52,7 +52,7 @@ function officialNameHoldersByRegion(
  * Pass 2: explode each place's `place_search.alt_names` bag into distinct-key alias rows
  * (`is_primary = 0`), and count each place's distinct staged keys with the primary included.
  *
- * With `regionPlacetypeID` and `ccID` given, a region's alias that is another same-country region's
+ * With `regionPlacetypeID` and `ccID` given, a region's alias that's another same-country region's
  * official name is refused and counted rather than staged (see {@link officialNameHoldersByRegion}).
  * Without them the pass stages every alias.
  */

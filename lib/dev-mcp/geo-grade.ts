@@ -20,7 +20,7 @@ import { wilsonInterval } from "#dev-mcp/power"
 
 /**
  * The pre-registered distance thresholds: a threshold chosen after seeing
- * where the arms landed is not a threshold.
+ * where the arms landed isn't a threshold.
  */
 export const DISTANCE_THRESHOLDS_KM = [1, 5, 25] as const
 
@@ -44,7 +44,7 @@ const Z_CRITICAL_95_ONE_SIDED = 1.645
 const PERCENT = 100
 
 /**
- * `null` is not infinity: it flows into {@link hitAt} as a miss at every threshold
+ * `null` isn't infinity: it flows into {@link hitAt} as a miss at every threshold
  * while staying distinguishable from an arm that missed by 400 km.
  */
 export function distanceKm(answer: NullableLatLon, truthLat: number, truthLon: number): number | null {
@@ -69,7 +69,7 @@ export function thresholdKey(thresholdKm: number): string {
 
 /**
  * Deliberately a HIT/miss comparison rather than "whichever arm is closer":
- * an arm that moves a result from 40 km to 30 km still has not found the address.
+ * an arm that moves a result from 40 km to 30 km still hasn't found the address.
  *
  * A metric that rewards this change would report progress on rows where no usable result changed.
  */
@@ -146,7 +146,7 @@ function wilsonHalfWidth(successes: number, n: number): number {
 }
 
 /**
- * An equivalence-test failure does not mean the arms differ: an estimate already outside the bound
+ * An equivalence-test failure doesn't mean the arms differ: an estimate already outside the bound
  * is a difference, while a small difference with too wide an interval is an underpowered run.
  */
 function equivalence(
@@ -215,7 +215,7 @@ export function tostEquivalence(
 	const standardErrorPP = Math.sqrt(variance) * PERCENT
 
 	if (standardErrorPP === 0) {
-		// A zero standard error is not zero uncertainty: both arms sat exactly at 0
+		// A zero standard error isn't zero uncertainty: both arms sat exactly at 0
 		// or 1, where the normal approximation has no variance, so the Wilson interval
 		// bounds the difference conservatively instead.
 		const halfWidthPP = (wilsonHalfWidth(successesA, n) + wilsonHalfWidth(successesB, n)) * PERCENT

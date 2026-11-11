@@ -45,7 +45,7 @@ export interface ConstraintAccountInput {
 	country: string | null
 	/**
 	 * The expected reading, echoed beside the observed one for a reader to compare.
-	 * The account does not grade it.
+	 * The account doesn't grade it.
 	 */
 	expected: string | null
 }

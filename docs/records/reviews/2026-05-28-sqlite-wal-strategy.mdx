@@ -6,7 +6,7 @@
 
 ## 1. What we're building
 
-Upgrade Mailwoman's existing WOF SQLite build path. This is **not a greenfield schema**.
+Upgrade Mailwoman's existing WOF SQLite build path. This **isn't a greenfield schema**.
 
 Repo entry points:
 
@@ -100,14 +100,14 @@ Keep the phases separate. Do not interleave them.
 - **Keep the `geojson`-only schema out.** Resolver code expects WOF-style tables.
 - **Don't create secondary indexes before bulk insert.** Every row insert updates every index. Defer.
 - **Don't hold the SQLite writer lock while reading files or parsing JSON.** Parse first, then `BEGIN IMMEDIATE`, then insert.
-- **Don't flip `journal_mode = DELETE` while workers might still be open.** It returns `wal` when the switch did not happen.
+- **Don't flip `journal_mode = DELETE` while workers might still be open.** It returns `wal` when the switch didn't happen.
 - **Don't skip final validation.** `integrity_check`, no sidecars, and a read-only open are part of the build.
 
 ---
 
 ## 4. `DatabaseSync` + pragmas: mental model
 
-`node:sqlite` is a thin wrapper around the SQLite C API. There is **no `db.pragma()` helper** like `better-sqlite3`. Apply pragmas via SQL:
+`node:sqlite` is a thin wrapper around the SQLite C API. There's **no `db.pragma()` helper** like `better-sqlite3`. Apply pragmas via SQL:
 
 ```js
 db.exec("PRAGMA journal_mode = WAL")
@@ -321,9 +321,9 @@ const row = db.prepare("SELECT name, latitude, longitude FROM spr WHERE id = ?")
 
 ## 6. Critical gotchas
 
-### This is not a new schema
+### This isn't a new schema
 
-Mailwoman's resolver expects WOF-style tables (`spr`, `names`, `concordances`, and optional `geojson` / `ancestors` / derived FTS/R\*Tree/population tables). The official WOF SQLite distributions use these table names. Mirror them unless there is a documented reason not to.
+Mailwoman's resolver expects WOF-style tables (`spr`, `names`, `concordances`, and optional `geojson` / `ancestors` / derived FTS/R\*Tree/population tables). The official WOF SQLite distributions use these table names. Mirror them unless there's a documented reason not to.
 
 ### `BEGIN IMMEDIATE` after parsing rather than before
 
@@ -333,7 +333,7 @@ But don't grab that lock while reading files or parsing JSON. The writer lock sh
 
 ### Wait for all tasks, then destroy the pool
 
-Use `Promise.allSettled(...)`, then `await pool.destroy()`, then rethrow the first failure. `Promise.all(...)` rejects on the first failure while other tasks may still be running. The freeze phase must not start until every worker task has returned and the pool is destroyed.
+Use `Promise.allSettled(...)`, then `await pool.destroy()`, then rethrow the first failure. `Promise.all(...)` rejects on the first failure while other tasks may still be running. The freeze phase mustn't start until every worker task has returned and the pool is destroyed.
 
 ### `journal_mode` is per-file rather than per-connection
 
@@ -345,11 +345,11 @@ If set later, it is ignored unless you `VACUUM`. Set it before `createUnifiedSch
 
 ### `synchronous = NORMAL` in WAL mode is the safe default
 
-WAL + `NORMAL` remains consistent and safe from database corruption, but can lose the last committed transactions on OS crash or power loss. That is acceptable for a rebuildable ingest artifact. If you choose `OFF`, document that interrupted builds must be discarded.
+WAL + `NORMAL` remains consistent and safe from database corruption, but can lose the last committed transactions on OS crash or power loss. That's acceptable for a rebuildable ingest artifact. If you choose `OFF`, document that interrupted builds must be discarded.
 
 ### `DatabaseSync` is synchronous
 
-Every query blocks the event loop of whichever thread called it. That is acceptable in workers. On the main thread, keep setup and freeze explicit and bounded.
+Every query blocks the event loop of whichever thread called it. That's acceptable in workers. On the main thread, keep setup and freeze explicit and bounded.
 
 ### One `DatabaseSync` per worker task
 
@@ -395,7 +395,7 @@ The resolver already supports multi-extract ATTACH (`extract routing.ts`, `multi
 
 **Skip.**
 
-The existing builder already excludes `-alt-*` GeoJSON files. Alt geometries are alternate polygon representations for the same WOF ID. They are useful for cartography but irrelevant for address parsing. If included with INSERT OR REPLACE, the `-alt-*` geometries would add duplicate rows or replace the primary lat/lon/bbox.
+The existing builder already excludes `-alt-*` GeoJSON files. Alt geometries are alternate polygon representations for the same WOF ID. They're useful for cartography but irrelevant for address parsing. If included with INSERT OR REPLACE, the `-alt-*` geometries would add duplicate rows or replace the primary lat/lon/bbox.
 
 ### 5. Resumability
 
@@ -440,4 +440,4 @@ This design fixes the database lock bug that blocked the current `wof/prepare` c
   - Name lookup via `place_search` if FTS is shipped.
   - Parent/country/placetype filters for current resolver behavior.
 - File size is reasonable after `VACUUM INTO`.
-- Build failure does not leave worker threads running or connections open.
+- Build failure doesn't leave worker threads running or connections open.

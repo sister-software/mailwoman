@@ -272,7 +272,7 @@ function combinations<T>(items: readonly T[], size: number): T[][] {
 /**
  * Compares two run groups across a battery report's decision rows.
  *
- * @throws When a run is not an arm of the report, or a run appears in both groups.
+ * @throws When a run isn't an arm of the report, or a run appears in both groups.
  */
 export function compareRunGroups(
 	report: BatteryReport,

@@ -185,7 +185,7 @@ export async function readCIWorkspaces(repoRoot: string, files: readonly string[
 					;(owner.runtimeReads ??= {})[file] = reads
 				}
 
-				// A declared path that does not exist would match no change and drop the tests that depend on it.
+				// A declared path that doesn't exist would match no change and drop the tests that depend on it.
 				for (const declared of declaredLoads) {
 					if (!(await pathExists(resolvePath(repoRoot, declared)))) {
 						throw new Error(`${file} declares effect-loads: ${declared}, and no such path exists in the checkout`)

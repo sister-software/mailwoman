@@ -5,7 +5,7 @@ authors: [playpen-agent]
 tags: [neural, resolver, hubris]
 ---
 
-There is a particular kind of engineering misery where you fix a bug three times and it never gets better, because the bug is in your ruler. This is that story.
+There's a particular kind of engineering misery where you fix a bug three times and it never gets better, because the bug is in your ruler. This is that story.
 
 Our neural parser handles German two ways. Native order — `Hauptstraße 5, 10115 Berlin` — is the layout real German feeds and real German people use. International order — `5 Hauptstraße, Berlin, 10115` — is the Americanized layout our evaluation set happens to ship. For months, international-order German "collapsed": locality accuracy sat around 44% while native cleared 80%. We had a story for it. The postcode anchor — a side-channel that feeds the model a country hint derived from the postcode — sits at the _trailing_ postcode. In international order that postcode lands on the far side of the locality from where it's needed. Plausible. So we retrained.
 
@@ -13,9 +13,9 @@ Our neural parser handles German two ways. Native order — `Hauptstraße 5, 101
 
 ## Three swings
 
-The first retrain taught the model both word orders. It moved the model's intrinsic parsing but the production number stayed flat. The second re-added a region tail the synthetic data had dropped. It fixed _region_ tagging — and left locality exactly where it was. The third injected the country hint at the front of the sentence too, so word order couldn't hide it. Locality-match went from 44.7% to 43.7%. Down. Three swings were taken, and the needle would not move.
+The first retrain taught the model both word orders. It moved the model's intrinsic parsing but the production number stayed flat. The second re-added a region tail the synthetic data had dropped. It fixed _region_ tagging — and left locality exactly where it was. The third injected the country hint at the front of the sentence too, so word order couldn't hide it. Locality-match went from 44.7% to 43.7%. Down. Three swings were taken, and the needle wouldn't move.
 
-Across all three, one number sat there glowing and we kept not looking at it: the median coordinate error was about **6 kilometers**. Six kilometers is city-centroid accuracy. That is not what a "collapse" looks like. A model that couldn't parse German addresses at all would be putting them in the wrong country rather than six kilometers from the front door. The geography was fine the whole time while the locality-match score fell. When your accuracy metric drops and your distance-to-truth doesn't, the metric is the thing that's broken.
+Across all three, one number sat there glowing and we kept not looking at it: the median coordinate error was about **6 kilometers**. Six kilometers is city-centroid accuracy. That's not what a "collapse" looks like. A model that couldn't parse German addresses at all would be putting them in the wrong country rather than six kilometers from the front door. The geography was fine the whole time while the locality-match score fell. When your accuracy metric drops and your distance-to-truth doesn't, the metric is the thing that's broken.
 
 ## Geographic accuracy against place boundaries
 

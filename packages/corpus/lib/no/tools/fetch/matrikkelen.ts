@@ -27,7 +27,7 @@
  *   publisher's own file name is kept.
  *
  *   The archive is kept rather than removed, because its sha256 is the value the address-source
- *   register records for the publication and the member's is not.
+ *   register records for the publication and the member's isn't.
  *
  *   ## Freshness
  *
@@ -41,7 +41,7 @@
  *   A renamed column reaches the adapter as an empty string on every row rather than as an error, so
  *   the extract's header is read through the same `CSVSpliterator` the adapter uses and checked
  *   against the nine columns the adapter indexes by name. The file's first column name has a
- *   byte-order mark, and none of the nine is that column, so the check does not depend on stripping
+ *   byte-order mark, and none of the nine is that column, so the check doesn't depend on stripping
  *   the mark.
  */
 
@@ -415,7 +415,7 @@ export async function downloadMatrikkelenArea(
  * Downloads every requested area and writes the collection manifest beside them.
  *
  * An area that fails is counted and the rest are still taken, because the two areas are
- * separate publications and Svalbard's 57 KiB does not depend on the mainland's 145 MiB.
+ * separate publications and Svalbard's 57 KiB doesn't depend on the mainland's 145 MiB.
  */
 export async function downloadMatrikkelen(
 	client: Pick<APIClient, "fetch">,

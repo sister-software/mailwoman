@@ -26,7 +26,7 @@ export function normalizeDuckDBValue(value: unknown): unknown {
 	// A DuckDB STRUCT arrives as `{ entries: { field: value } }` rather than as
 	// the plain object its fields describe.
 	// The raw value makes `row.address_levels[0].value` read `undefined` on every row.
-	// A consumer counting values then reports that the file does not populate the column.
+	// A consumer counting values then reports that the file doesn't populate the column.
 	// Overture's `address_levels` and `sources` are both lists of structs.
 	// Unwrapped values made the audit report all 25,914,431 Italian rows as lacking locality.
 	if (value && typeof value === "object" && "entries" in value && value.entries && typeof value.entries === "object") {

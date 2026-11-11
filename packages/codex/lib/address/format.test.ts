@@ -235,7 +235,7 @@ describe("formatAddressRow", () => {
 
 	it("reads the alignment rather than inferring it from the string", () => {
 		// A substring test answers `street` here because `Paris` sits inside `Rue de Paris`.
-		// The render knows the layout placed both, so it does not have to guess.
+		// The render knows the layout placed both, so it doesn't have to guess.
 		const components: ComponentDict = {
 			house_number: "5",
 			street: "Rue de Paris",
@@ -446,7 +446,7 @@ describe("the script a row renders in", () => {
 	})
 
 	it("abstains on a dict with no letters rather than reading digits as Latin", () => {
-		// The meaning-of-zero rule: no letters is not evidence of a register, so the country's own default stands.
+		// The meaning-of-zero rule: no letters isn't evidence of a register, so the country's own default stands.
 		const digits = formatAddressRow({ house_number: "21", postcode: "100-0005" }, "JP", { singleLine: true })
 
 		expect(digits?.script).toBe("local")

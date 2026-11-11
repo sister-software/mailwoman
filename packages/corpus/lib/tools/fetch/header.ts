@@ -50,11 +50,11 @@ export async function readDelimitedHeader(path: PathBuilderLike, columnDelimiter
 }
 
 /**
- * Refuse a header that does not name every column a caller reads.
+ * Refuse a header that doesn't name every column a caller reads.
  *
  * @param columns The header {@linkcode readDelimitedHeader} returned.
  * @param required The columns the adapter indexes by name.
- * @param context What is being checked.
+ * @param context What's being checked.
  * This value opens the message.
  * @throws Naming the columns that are absent, so a renamed column is a reported failure
  * rather than an empty string on every row the adapter emits.

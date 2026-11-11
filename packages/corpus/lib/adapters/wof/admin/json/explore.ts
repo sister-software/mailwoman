@@ -98,7 +98,7 @@ export interface ExploredRow {
 	components: CanonicalRow["components"]
 	source_id: string
 	/**
-	 * The country whose order and join rendered the row, when it is not the record's own.
+	 * The country whose order and join rendered the row, when it isn't the record's own.
 	 */
 	country: string
 }
@@ -145,7 +145,7 @@ export interface ExploreOptions {
 /**
  * Render every row the `wof-admin` adapter emits for one record.
  *
- * @throws When no repo holds the record, or its file is not a record the adapter reads.
+ * @throws When no repo holds the record, or its file isn't a record the adapter reads.
  */
 export async function exploreWOFRecord(id: number, options: ExploreOptions = {}): Promise<WOFExploration> {
 	const reposRoot = options.reposRoot ?? wofReposPath
@@ -179,7 +179,7 @@ export async function exploreWOFRecord(id: number, options: ExploreOptions = {})
 		const file = await findWOFFeaturePath(ancestorID, reposRoot, repos)
 		const ancestor = file ? await readFeatureRecord(file) : null
 
-		// A record the build does not index never enters its `byID`, so the parent walk stops there.
+		// A record the build doesn't index never enters its `byID`, so the parent walk stops there.
 		if (!ancestor || !adapterTag(ancestor.placetype)) {
 			if (!unresolvedAncestors.includes(ancestorID)) {
 				unresolvedAncestors.push(ancestorID)
@@ -259,7 +259,7 @@ export interface AugmentedExploredRow {
 /**
  * Apply every registered augmentation to a row, keeping those that produce a row different from it.
  *
- * An augmentation that does not apply to the row returns `null` and is left out.
+ * An augmentation that doesn't apply to the row returns `null` and is left out.
  */
 export function augmentExploredRow(row: ExploredRow): AugmentedExploredRow[] {
 	const canonical: CanonicalRow = {

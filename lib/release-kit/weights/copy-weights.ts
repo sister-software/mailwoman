@@ -369,7 +369,7 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
  * The data root holds dated builds under `postcode-prefix/`, and the copy takes the
  * newest of each scope by modification time under the scope's shipped name.
  * An index whose header records tier `build-local` is refused rather than skipped, because a package
- * whose `files` array lists the file would otherwise publish bytes its license does not allow.
+ * whose `files` array lists the file would otherwise publish bytes its license doesn't allow.
  */
 async function materializePostcodePrefix(context: MaterializationContext, workspace: string, dir: string) {
 	const country = workspace.replace(/^packages\/neural-weights-[a-z]+-/, "")

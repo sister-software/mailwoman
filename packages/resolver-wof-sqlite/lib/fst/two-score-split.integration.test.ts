@@ -119,7 +119,7 @@ describe("two-score split — format v5", () => {
 	})
 
 	it("the freshness guard reports a v4 artifact as format-stale", () => {
-		// A pre-split binary's single float is unattributable, so it must not read as
+		// A pre-split binary's single float is unattributable, so it mustn't read as
 		// current merely because its source md5 still matches.
 		const stale = fstStaleReason({ formatVersion: 4, provenance: null }, { source: { md5: "0".repeat(32), bytes: 1 } })
 

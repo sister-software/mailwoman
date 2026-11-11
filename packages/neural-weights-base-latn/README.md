@@ -11,7 +11,7 @@ locale packages. Its manifest sets `private: true`, and it has no root library
 entry. The `./*` export exposes individual files when those files are present.
 
 The workspace's version is independent of whether any local model files have
-been materialized. Its presence in the monorepo does not establish that a model
+been materialized. Its presence in the monorepo doesn't establish that a model
 has been evaluated or published.
 
 ## Expected artifacts
@@ -27,7 +27,7 @@ has been evaluated or published.
 | `country-surface-lexicon-v1.json` | Country-name vocabulary.                   |
 
 The manifest lists these files as intended package contents. They may be absent
-in a checkout. This README does not imply that they were generated or verified.
+in a checkout. This README doesn't imply that they were generated or verified.
 
 ## Materialize development files
 

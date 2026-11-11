@@ -13,17 +13,17 @@ This track is for readers who want to understand **why** Mailwoman exists, **wha
 
 These articles cover the fundamentals of postal addressing: the things a parser parses and a resolver resolves.
 
-1. **[What is an address?](./the-problem/what-is-an-address.mdx)** — the data model, moved from concepts.
+1. **[What's an address?](./the-problem/what-is-an-address.mdx)** — the data model, moved from concepts.
 2. **[How mail delivery works](./the-problem/how-mail-delivery-works.mdx)** — the postal system is already fuzzy. It tolerates ambiguity through human intervention.
-3. **[What is a postcode?](./the-problem/what-is-a-postcode.mdx)** — postcodes are routing instructions rather than geographic areas. International comparison.
-4. **[What is a ZIP Code and how is it structured?](./the-problem/what-is-a-zip-code.mdx)** — the US 11-digit system in detail. Why US-trained parsers fail on non-US postcodes.
+3. **[What's a postcode?](./the-problem/what-is-a-postcode.mdx)** — postcodes are routing instructions rather than geographic areas. International comparison.
+4. **[What's a ZIP Code and how is it structured?](./the-problem/what-is-a-zip-code.mdx)** — the US 11-digit system in detail. Why US-trained parsers fail on non-US postcodes.
 5. **[How can a building have two addresses?](./the-problem/how-can-a-building-have-two-addresses.mdx)** — mailing vs 911 vs utility vs management. An address is a protocol rather than a property.
-6. **[What is an intersection address?](./the-problem/what-is-an-intersection.mdx)** — crossing streets as locations. Why not all addresses have building numbers.
-7. **[What is a concordance?](./the-problem/what-is-a-concordance.mdx)** — how the resolver validates that parsed components form a coherent real-world place.
+6. **[What's an intersection address?](./the-problem/what-is-an-intersection.mdx)** — crossing streets as locations. Why not all addresses have building numbers.
+7. **[What's a concordance?](./the-problem/what-is-a-concordance.mdx)** — how the resolver validates that parsed components form a coherent real-world place.
 
 ### Why It's Hard (articles 8–20)
 
-Why the domain resists rules. If you are skeptical that address parsing needs a neural model, start here.
+Why the domain resists rules. If you're skeptical that address parsing needs a neural model, start here.
 
 8. **[Addresses that break geocoders](./why-its-hard/addresses-that-break-geocoders.mdx)** — concrete failure examples, moved from concepts.
 9. **[How humans break addresses](./why-its-hard/how-humans-break-addresses.mdx)** — the failure taxonomy. Real input is messier than any database expects.
@@ -41,8 +41,8 @@ _Inspired by and citing Michael Tandy's [original catalogue](https://www.mjt.me.
 16. **[Numbers in addresses](./why-its-hard/falsehoods/falsehoods-numbers.mdx)** — zero, negative, fractions, duplicates, ranges.
 17. **[Postcodes](./why-its-hard/falsehoods/falsehoods-postcodes.mdx)** — leading zeros, multi-city, per-building, missing postcodes.
 18. **[Administrative hierarchy](./why-its-hard/falsehoods/falsehoods-hierarchy.mdx)** — countries without states or counties, duplicate cities, city-states.
-19. **[Shapes and dimensions](./why-its-hard/falsehoods/falsehoods-shapes.mdx)** — an address is not necessarily a point, a polygon, or a building, and it is not necessarily at ground level or unique per coordinate.
-20. **[Precision and frontages](./why-its-hard/falsehoods/falsehoods-proximity.mdx)** — an address has more than one correct coordinate, "close enough" is not always close enough, and the right point is not necessarily the front door.
+19. **[Shapes and dimensions](./why-its-hard/falsehoods/falsehoods-shapes.mdx)** — an address isn't necessarily a point, a polygon, or a building, and it isn't necessarily at ground level or unique per coordinate.
+20. **[Precision and frontages](./why-its-hard/falsehoods/falsehoods-proximity.mdx)** — an address has more than one correct coordinate, "close enough" isn't always close enough, and the right point isn't necessarily the front door.
 
 ### Alternatives (articles 21–30)
 
@@ -94,17 +94,17 @@ _A large fraction of real-world geocoder searches ask for points of interest ins
 
 ## Read in this order
 
-If you are **skeptical about the whole project**, read The Problem and the first five entries of Why It's Hard in order (articles 1–12), then jump to [Why a neural parser?](./our-approach/why-a-neural-parser.mdx) (article 31). Those articles cover the domain, the failures, and the proposed design in under an hour. If you are still skeptical after that, the project has failed to make its case, so please open an issue.
+If you're **skeptical about the whole project**, read The Problem and the first five entries of Why It's Hard in order (articles 1–12), then jump to [Why a neural parser?](./our-approach/why-a-neural-parser.mdx) (article 31). Those articles cover the domain, the failures, and the proposed design in under an hour. If you're still skeptical after that, the project has failed to make its case, so please open an issue.
 
-If you are **new to geocoding but curious**, start with The Problem (articles 1–7) in order. It grounds the domain vocabulary everything after it assumes.
+If you're **new to geocoding but curious**, start with The Problem (articles 1–7) in order. It grounds the domain vocabulary everything after it assumes.
 
-If you are **from the Pelias world**, read [From Pelias to Mailwoman](./our-approach/from-pelias-to-mailwoman.mdx) (article 35), then [How it works now](./our-approach/how-it-works-now.mdx) (article 33). Those two articles bridge your existing knowledge to the current system.
+If you're **from the Pelias world**, read [From Pelias to Mailwoman](./our-approach/from-pelias-to-mailwoman.mdx) (article 35), then [How it works now](./our-approach/how-it-works-now.mdx) (article 33). Those two articles bridge your existing knowledge to the current system.
 
 If you want to **go deeper**, see the [`concepts/`](../concepts/README.mdx) track. It has per-topic deep dives into tokenization, BIO labels, the CRF decoder, ONNX runtime, training pipeline, corpus construction, and more.
 
 ## A note on language
 
-The team behind Mailwoman speaks several languages, and English is a second language for several readers. Our goal in these docs is **plain English with technical terms defined on first use**. If a sentence is hard to follow, that is a documentation bug, so please open an issue.
+The team behind Mailwoman speaks several languages, and English is a second language for several readers. Our goal in these docs is **plain English with technical terms defined on first use**. If a sentence is hard to follow, that's a documentation bug, so please open an issue.
 
 ## Where this lives in the repo
 

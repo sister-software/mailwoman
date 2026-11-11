@@ -192,7 +192,7 @@ function withReversedKeys(value: unknown): unknown {
 }
 
 /**
- * The same document, authored in the opposite order everywhere an order is not meaningful.
+ * The same document, authored in the opposite order everywhere an order isn't meaningful.
  */
 function permuted(document: GeographicModelDocument): unknown {
 	return withReversedKeys({

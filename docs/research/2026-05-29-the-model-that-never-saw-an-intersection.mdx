@@ -15,11 +15,11 @@ This post describes how we optimized the wrong metric and which diagnostics poin
 
 Across the v0.6.x training cycle, one pattern kept surfacing: when the model was wrong, it was _confidently_ wrong. On a held-out test set, **86% of its incorrect predictions were made at ≥0.9 confidence**, and most of those at a flat 1.00. We reasoned that a model that hedged appropriately would stop overriding good answers with bad high-confidence ones.
 
-The standard tool for that is **label smoothing**. Instead of training toward a one-hot target (1.0 for the right tag, 0 for the rest), you train toward a softer target (0.9 for the right tag, with the rest spread across the others). This caps how peaked the model's outputs can get. We ran a single-variable experiment (the v0.6.0 recipe plus `label_smoothing=0.1`, with no other variable changed) and measured.
+The standard tool for that's **label smoothing**. Instead of training toward a one-hot target (1.0 for the right tag, 0 for the rest), you train toward a softer target (0.9 for the right tag, with the rest spread across the others). This caps how peaked the model's outputs can get. We ran a single-variable experiment (the v0.6.0 recipe plus `label_smoothing=0.1`, with no other variable changed) and measured.
 
 Label smoothing did what it is designed to do. Overconfidence-on-wrong dropped **86% → 67%**, and the mass at 1.00 confidence disappeared, with confidence capped around 0.95. Postcode recall rose slightly.
 
-The metric we ship on, **harness pass rate**, did not improve. It went from 14.6% to 13.8%. Two tags (house numbers and streets) _regressed_.
+The metric we ship on, **harness pass rate**, didn't improve. It went from 14.6% to 13.8%. Two tags (house numbers and streets) _regressed_.
 
 ## The evidence
 
@@ -31,7 +31,7 @@ We categorized every failure, and the results changed the direction of the work:
 - The most-missed tags were `street` (×197) and `house_number` (×100).
 - One cluster stood out: **intersections**: addresses like `Broadway & W 42nd St`. They're 17% of our harness, and the model scored **0%** on them.
 
-Calibration softens the confidence of labels the model _does_ emit. It cannot produce a label the model never emits. That is why the harness pass rate stayed flat.
+Calibration softens the confidence of labels the model _does_ emit. It cannot produce a label the model never emits. That's why the harness pass rate stayed flat.
 
 ## The probe
 
@@ -41,7 +41,7 @@ The maximum, across every token, was **~0.0001**.
 
 An uncertain model still puts _some_ probability on the right tag. A maximum of ~0.0001 means the model has _no representation of intersections_. The labels existed in its output vocabulary, but it had never learned to use them.
 
-We checked the corpus pipeline. It has synthesizers for streets, venues without a street, PO boxes, and house+venue combinations, and **no synthesizer that generates intersections**. The real-world adapters don't emit them in that form either. The training signal for intersections was approximately zero, so the model never learned the category. A different loss function, calibration method, or larger model cannot recover a category that is absent from the data.
+We checked the corpus pipeline. It has synthesizers for streets, venues without a street, PO boxes, and house+venue combinations, and **no synthesizer that generates intersections**. The real-world adapters don't emit them in that form either. The training signal for intersections was approximately zero, so the model never learned the category. A different loss function, calibration method, or larger model cannot recover a category that's absent from the data.
 
 ## A different coverage gap, a different fix
 
@@ -53,12 +53,12 @@ This fix needed no training. A **deterministic regex repair** runs _after_ the m
 
 ## What we learned
 
-We are keeping these lessons:
+We're keeping these lessons:
 
 - **Pick a metric that the change you're testing cannot inflate on its own.** Per-tag F1 looked fine while the product was stuck. Harness pass rate asks whether the _whole_ address comes out right, and it showed the real state.
 - **A confidently wrong model and a model missing training data need different fixes.** We assumed the first case, and the data showed the second. Calibration addresses overconfidence, and coverage addresses missing data.
 - **Structural validity is a separate signal.** A checker that flags incoherent parses, such as a house number without a street or an orphaned unit, caught a mid-training regression that the headline accuracy number hid.
-- **A model cannot learn a category that is absent from its training data.** The problem that looked most expensive had the cheapest cause: a missing synthesizer.
+- **A model cannot learn a category that's absent from its training data.** The problem that looked most expensive had the cheapest cause: a missing synthesizer.
 
 The fix for intersections is a couple thousand synthetic `X & Y St` examples, labeled and added to the corpus as a small targeted supplement, plus a retrain. That run is training as we publish this.
 

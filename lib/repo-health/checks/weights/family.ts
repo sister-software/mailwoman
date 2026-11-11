@@ -9,7 +9,7 @@
  *   The `neural-weights-*` workspaces are the artifacts that claim must describe.
  *   The two sources can disagree in four ways. A locale package can be assigned to no family or
  *   assigned to two families. A family graph package can omit `model.onnx` or ship the wrong
- *   vocabulary artifact. Package manifests are data, so the compiler does not catch these cases.
+ *   vocabulary artifact. Package manifests are data, so the compiler doesn't catch these cases.
  *
  *   The check reads manifests because `model.onnx` and `tokenizer.model` are not in git.
  *   A package's `files` array states what it publishes.
@@ -247,7 +247,7 @@ export const weightsFamilyCheck: RepoCheck = {
 			if (family?.family === locale) continue
 
 			// An overlay's `baseWeights` and its family must name the same graph,
-			// since they are written in different files and no other check compares them.
+			// since they're written in different files and no other check compares them.
 			if (!declaresGraph(manifest) && family && base !== family.graphPackage) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,

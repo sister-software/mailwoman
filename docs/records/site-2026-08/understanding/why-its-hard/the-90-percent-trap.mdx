@@ -10,7 +10,7 @@ tags:
 
 # The 90% trap
 
-A geocoder that correctly parses 90% of addresses sounds good. It sounds especially good when the alternative — building or buying a better one — costs engineering time or API fees. The trap is that the 10% tail is not random. It is concentrated in the populations you most need to serve: rural areas, developing economies, multifamily housing, and anyone whose address doesn't look like a suburban US single-family home.
+A geocoder that correctly parses 90% of addresses sounds good. It sounds especially good when the alternative — building or buying a better one — costs engineering time or API fees. The trap is that the 10% tail isn't random. It is concentrated in the populations you most need to serve: rural areas, developing economies, multifamily housing, and anyone whose address doesn't look like a suburban US single-family home.
 
 This article is an economic argument rather than a technical one. It explains why 90% coverage is deceptively expensive — and why owning your parser so you can fix your own failure modes is cheaper long-term than renting someone else's.
 
@@ -58,7 +58,7 @@ This is the inverse of the Pareto principle: the **last 10% of coverage costs mo
 | Privacy       | Your queries are Google's data          |
 | Customization | None — you get Google's ontology        |
 
-At $5/1K requests, geocoding 1 million addresses per month costs $5,000. That is not a large line item for a logistics company — $60,000/year. But the dependency is total: you cannot audit the results, you cannot fix failures, you cannot cache your own correctness corrections, and your query logs train Google's model rather than yours. If Google changes its pricing (it has, multiple times) or its terms (it has), you have no alternative.
+At $5/1K requests, geocoding 1 million addresses per month costs $5,000. That's not a large line item for a logistics company — $60,000/year. But the dependency is total: you cannot audit the results, you cannot fix failures, you cannot cache your own correctness corrections, and your query logs train Google's model rather than yours. If Google changes its pricing (it has, multiple times) or its terms (it has), you have no alternative.
 
 ### geocode.earth / Pelias
 
@@ -78,7 +78,7 @@ If you run your own parser + resolver:
 
 - You can fix your own failure modes. When a specific address format repeatedly fails — a customer's regional addressing convention, a data source with idiosyncratic formatting — you can add training data, adjust weights, or tune the reconciler.
 - You can audit correctness. When the parser returns a result, you can trace which stage produced it and which evidence supported it.
-- You can improve over time. Every correction you make to your own data stays yours. You are not paying recurring rent on someone else's model.
+- You can improve over time. Every correction you make to your own data stays yours. You're not paying recurring rent on someone else's model.
 - You can choose your resolver. If WOF's coverage is weak for your region, you can plug in a different gazetteer without changing the parser.
 
 The cost is engineering time — building the parser, maintaining the corpus pipeline, training models, integrating with downstream systems. Mailwoman exists to make that cost lower.
@@ -87,13 +87,13 @@ The cost is engineering time — building the parser, maintaining the corpus pip
 
 This is the most common architecture: call Google/geocode.earth for the 90% that parses directly, fall back to manual review for the 10% that doesn't. But the fallback cost dominates the total.
 
-Manual address correction costs between $0.50 and $5.00 per address depending on the complexity (a call center agent, a field visit, a returned package). If the geocoder fails on 10% of 1 million addresses, that is 100,000 manual corrections at $0.50-$5.00 each — $50,000 to $500,000 per month. The API cost for the 90% is $4,500 per month (at Google's rate). The fallback cost is 10-100× the API cost.
+Manual address correction costs between $0.50 and $5.00 per address depending on the complexity (a call center agent, a field visit, a returned package). If the geocoder fails on 10% of 1 million addresses, that's 100,000 manual corrections at $0.50-$5.00 each — $50,000 to $500,000 per month. The API cost for the 90% is $4,500 per month (at Google's rate). The fallback cost is 10-100× the API cost.
 
 A failure-rate drop from 10% to 5% halves the manual-correction cost. For 1 million addresses, a 2% failure rate means 20,000 manual corrections, 80,000 fewer than the 100,000 corrections at 10%; the correction cost falls by 80%. The payoff is measured in manual reviews avoided. Every percentage point of parser accuracy past 90% shrinks the pile of addresses a human has to touch — which is where the thousands of dollars per month come from.
 
 ## What Mailwoman's approach means for this problem
 
-Mailwoman does not target 100% accuracy. No parser does. It targets:
+Mailwoman doesn't target 100% accuracy. No parser does. It targets:
 
 - **[Calibrated confidence](../../concepts/confidence-calibration.mdx).** When the parser is uncertain, it reports a low confidence instead of returning a confident wrong answer. The downstream system can decide: escalate to manual review, surface the ambiguity to the user, or accept the best guess with a caveat.
 - **Retrainability.** When a specific address class fails, you can add it to the corpus and retrain. The corpus pipeline is designed for this. The adapter pattern makes adding a new data source a few hundred lines of TypeScript.

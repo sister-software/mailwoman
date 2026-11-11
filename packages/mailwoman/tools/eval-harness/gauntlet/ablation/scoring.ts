@@ -70,7 +70,7 @@ export function scoreAblation(
 
 	return {
 		displacementKm,
-		// A row whose own anchor never resolved is not gradable — reporting it as held
+		// A row whose own anchor never resolved isn't gradable — reporting it as held
 		// would be the meaning-of-zero trap one level down.
 		// A resolved anchor with an unresolved ablated arm is broken: the answer is gone.
 		broken: !anchorResolved ? null : !ablatedResolved ? true : displacementKm! > toleranceKm,

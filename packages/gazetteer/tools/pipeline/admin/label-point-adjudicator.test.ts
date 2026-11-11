@@ -59,7 +59,7 @@ describe("choosePoint (#1905)", () => {
 		const geom = { latitude: 48.8566, longitude: 2.3522 }
 		const lbl = { latitude: 48.86, longitude: 2.35 }
 		// An anchor that would pick geom if consulted.
-		// It must not be.
+		// It mustn't be.
 		const chosen = choosePoint(geom, lbl, geom)
 
 		expect(chosen.choice).toBe("lbl")
@@ -67,7 +67,7 @@ describe("choosePoint (#1905)", () => {
 	})
 
 	it(`an anchor separating at less than ${ANCHOR_DECISIVE_RATIO}x keeps the label`, () => {
-		// Both points ~equidistant from the anchor: the anchor does not decide.
+		// Both points ~equidistant from the anchor: the anchor doesn't decide.
 		const geom = { latitude: 50, longitude: 10 }
 		const lbl = { latitude: 50, longitude: 10.2 }
 		const anchor = { latitude: 50, longitude: 10.1 }

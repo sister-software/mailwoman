@@ -29,7 +29,7 @@ export interface VitalPlace extends VitalEntity {
 }
 
 /**
- * Why a ranked record is not in the places file.
+ * Why a ranked record isn't in the places file.
  */
 export const EXCLUSION_REASONS = {
 	missing: "missing",

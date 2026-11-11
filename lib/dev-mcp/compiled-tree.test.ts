@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The RULE these two functions apply is `@mailwoman/core/module/compiled-freshness` and is tested there. What is
+ *   The RULE these two functions apply is `@mailwoman/core/module/compiled-freshness` and is tested there. What's
  *   tested here is what this package adds: the workspace SET a spawned CLI loads and the refusal.
  */
 

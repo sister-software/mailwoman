@@ -25,7 +25,7 @@ export const SWEEP_ROWS: Array<{
 	probeSurface: string
 	note: string
 }> = [
-	// `country_structure` rows use national addressing structures that the corpus does not cover.
+	// `country_structure` rows use national addressing structures that the corpus doesn't cover.
 	// Every one lies outside the FST countries.
 	{
 		cc: "br",
@@ -99,7 +99,7 @@ export const SWEEP_ROWS: Array<{
 	},
 
 	// `fst_out_of_reach` rows are namesakes in countries that no shipped FST covers.
-	// No arm can win them, so they are reported apart to keep a tie from reading as a harmless change.
+	// No arm can win them, so they're reported apart to keep a tie from reading as a harmless change.
 	{
 		cc: "bw",
 		caseID: "bw-cs-gaborone",

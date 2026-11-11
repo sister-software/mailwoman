@@ -79,7 +79,7 @@ package's view. That view holds `MAILWOMAN_DATA_ROOT` and `MAILWOMAN_VOLUME_MOUN
 
 The default GPU is the A100-40GB. On the 29.6 M-parameter model at batch 128 in bf16, the Rust trainer ran 15.46
 steps/s on it, 9.95 on an A10 and 6.96 on an L4, in sandboxes of 8 CPUs and 32 GiB. The A100-80GB costs $0.40 per
-hour more for memory this model does not use. `launch/wall-clock.ts` records each rate.
+hour more for memory this model doesn't use. `launch/wall-clock.ts` records each rate.
 
 Modal billed a GPU training sandbox's CPU and memory on the request: $0.142 per requested CPU-hour and $0.024 per
 GiB-hour on 2026-10-31, three times the per-core and per-GiB rates on Modal's pricing page. An hour of #2884's

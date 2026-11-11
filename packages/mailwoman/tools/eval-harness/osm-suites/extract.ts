@@ -222,7 +222,7 @@ interface ExtractStats {
  * A sidecar or receipt the build listed and that cannot be read throws with its path,
  * because a suite without its source's digest records no lineage.
  *
- * @throws When the sidecar is missing, or lists a receipt that is missing or records no SHA-256.
+ * @throws When the sidecar is missing, or lists a receipt that's missing or records no SHA-256.
  */
 export async function readExtractLineage(path: string): Promise<OSMExtractLineage> {
 	const statsPath = `${path}.stats.json`

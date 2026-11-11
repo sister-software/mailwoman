@@ -87,14 +87,14 @@ const BULK_TEXT_MEMBER = /\.(?:txt|csv)$/iu
  * Downloads the release archive, extracts its text, and converts it to Parquet sorted by state and county.
  *
  * Each step keeps its output when the step before it is unchanged.
- * An archive whose manifest records the same URL and whose hash still matches is not downloaded again.
+ * An archive whose manifest records the same URL and whose hash still matches isn't downloaded again.
  *
  * A Parquet file whose record holds the archive's hash and member is kept,
  * and the text is then never extracted.
  *
  * The extracted text, 42 GB for release 24, is removed once its Parquet file is written.
  * An interrupted download resumes from its `.part` file when the host honors
- * byte ranges, and starts over when it does not.
+ * byte ranges, and starts over when it doesn't.
  */
 export async function fetchNAD(options: FetchNADOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const url = options.nadURL ?? NAD_RELEASE_URL

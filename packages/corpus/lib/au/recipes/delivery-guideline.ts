@@ -8,7 +8,7 @@
  *   postcode in capitals.
  *
  *   The leg writes only CARE PO, MS and RMS. The table's PO BOX and LOCKED BAG rows are cited too,
- *   but the `invented-po-box-cedex` training recipe already writes both, so rows using them could not
+ *   but the `invented-po-box-cedex` training recipe already writes both, so rows using them couldn't
  *   show that a model reads a form it was not taught.
  */
 

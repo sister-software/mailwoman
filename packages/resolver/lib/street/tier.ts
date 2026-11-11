@@ -247,14 +247,14 @@ export async function applyAddressPoint(
 
 /**
  * Stamps the street with an interpolated house-number coordinate when the
- * address-point tier did not already place it.
+ * address-point tier didn't already place it.
  *
  * It writes `interpolated_point` rather than `address_point`, so an estimate
  * never overwrites a real situs point.
  *
  * A query without a postcode is scoped only by its locality, so its estimate must lie inside the resolved
  * locality's bounding box, and an estimate outside it is refused as a namesake street elsewhere.
- * A postcode-scoped estimate is not checked, because a mailing city's postcode
+ * A postcode-scoped estimate isn't checked, because a mailing city's postcode
  * can reach past the WOF place's extent.
  */
 export function applyInterpolation(

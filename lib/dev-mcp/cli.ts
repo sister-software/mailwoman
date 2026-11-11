@@ -25,7 +25,7 @@ const { values } = parseArguments({
 	},
 })
 
-// The repository root does not depend on the MCP client's working directory.
+// The repository root doesn't depend on the MCP client's working directory.
 const repoRoot = values["repo-root"] ? resolvePath(values["repo-root"]) : repoRootPath()
 
 const host = new WorkerHost({

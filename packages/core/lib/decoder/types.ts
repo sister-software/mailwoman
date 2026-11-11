@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Types for decoded address trees and the labeled tokens they are built from.
+ *   Types for decoded address trees and the labeled tokens they're built from.
  */
 
 import { type BIOLabel, COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
@@ -76,7 +76,7 @@ export interface AddressNode {
 	 * Runner-up places in score order.
 	 * The selected place is in `placeID`, `lat` and `lon`.
 	 *
-	 * The type is `unknown` so this module does not import the resolver's `ResolvedPlace`.
+	 * The type is `unknown` so this module doesn't import the resolver's `ResolvedPlace`.
 	 */
 	alternatives?: ReadonlyArray<unknown>
 	/**

@@ -34,7 +34,7 @@ describe("GB's single-line form", () => {
 	it("moves the postcode's separator when the post town is absent, and nothing else", () => {
 		// The soft break belongs to the postcode line, so it follows whichever line precedes the postcode.
 		// This case records current behavior.
-		// Real usage without a post town has not been measured.
+		// Real usage without a post town hasn't been measured.
 		expect(
 			formatAddress({ house_number: "27", street: "Minories", postcode: "EC3N 1DE" }, "GB", {
 				singleLine: true,

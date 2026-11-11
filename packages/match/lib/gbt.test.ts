@@ -16,7 +16,7 @@ import { buildThresholds, type GBT, gbtScore, trainGBT } from "#gbt"
  *
  * `@mailwoman/match` has no `@mailwoman/core` dependency.
  * A test-only import for `makeLcg` would pull core's ~11 MB of shipped data into
- * a package that is otherwise pure comparator math.
+ * a package that's otherwise pure comparator math.
  * Same trade recorded in nuts-lookup and timezone-lookup.
  *
  * See `makeLcg` in `@mailwoman/core/random` for the shared implementation.

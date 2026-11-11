@@ -7,13 +7,13 @@
  *
  *   The required pair is `whitespaceBlindKey` and `whitespaceApplicability`. This test gives the reason for both:
  *   the key refuses a pair that changed anything besides whitespace. The applicability rules refuse a pair the
- *   key accepts when its spacing could not result from the transformation. A space swapped for a newline clears
+ *   key accepts when its spacing couldn't result from the transformation. A space swapped for a newline clears
  *   the first check and passes the second. No listed whitespace transformation produces it, so the law keeps the
  *   segmentation grammar out.
  *
  *   Every exclusion uses a real committed board row. The bare GB unit code has a space that belongs to the
  *   code. The single-token Polish row has no internal space. A rule demonstrated only on a synthetic input
- *   has not been shown to apply to any text in the repository.
+ *   hasn't been shown to apply to any text in the repository.
  */
 
 import { describe, expect, it } from "vitest"

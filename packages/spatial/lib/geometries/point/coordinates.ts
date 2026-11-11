@@ -5,7 +5,7 @@
  * @file The shapes a point can arrive in, and the reading of their coordinates.
  *
  *   This module imports no runtime geometry class. `GeoPoint` imports `@sister.software/h3`, and a caller that only needs
- *   the coordinates of a `GeoPointInput` must not load its embedded WebAssembly binary.
+ *   the coordinates of a `GeoPointInput` mustn't load its embedded WebAssembly binary.
  */
 
 /// <reference types="google.maps" />
@@ -104,7 +104,7 @@ export type GeoPointInput =
  * Reads the `[longitude, latitude(, altitude)]` coordinates out of a point of any accepted shape.
  *
  * It only dispatches on shape: no range check applies, and `null` answers an input
- * that is none of them. {@link readPointCoordinates} adds the validation.
+ * that's none of them. {@link readPointCoordinates} adds the validation.
  */
 export function pointInputCoordinates(input: unknown): Point2DCoordinates | Point3DCoordinates | null {
 	if (isCoordPairLiteral(input)) return input

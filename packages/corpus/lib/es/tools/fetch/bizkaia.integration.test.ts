@@ -71,7 +71,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestESBizkaia against apli.bizkaia.eus"
 			expect(archive?.feed_updated).not.toBe("")
 
 			// The host states a modification time for the archive.
-			// That is the record against which the feed's single `<updated>` reads as a per-municipality signal.
+			// That's the record against which the feed's single `<updated>` reads as a per-municipality signal.
 			expect(archive?.last_modified).not.toBeNull()
 
 			const members = await listZipEntries(scratch.path(archive?.filename ?? ""))

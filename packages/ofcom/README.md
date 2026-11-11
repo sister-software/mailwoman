@@ -15,7 +15,7 @@ withholds full-fiber availability at both.
 A postcode file publishes seventeen percentages and no premises count. Ofcom's guide lists
 `All Premises`, `All Matched Premises` and every `Number of premises…` field as present in "all
 except pc". The output-area file is the finest level with a premises denominator. A request for a
-field that the file does not publish throws `OfcomCoverageFieldError`, which names each missing field
+field that the file doesn't publish throws `OfcomCoverageFieldError`, which names each missing field
 and the level. A request for a premises count at postcode level therefore throws rather than returning
 an absent or zero count.
 

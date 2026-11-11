@@ -5,7 +5,7 @@
  *
  *   Loads a directory of JSON files into one {@link GeographicModelDocument}.
  *
- *   File layout does not assign meaning to a file. Any file may hold any subset of the tables.
+ *   File layout doesn't assign meaning to a file. Any file may hold any subset of the tables.
  *   Only `model.json` may declare the document's `version`.
  *
  *   The loader sorts files by path before reading them, so directory enumeration order never affects
@@ -59,7 +59,7 @@ const RECORD_PATH_PATTERN = /^\$\.([A-Za-z]+)\[(\d+)\](?:\.assertions\[(\d+)\])?
 export const LoadIssueCode = {
 	...ValidationIssueCode,
 	/**
-	 * A source file is not valid JSON.
+	 * A source file isn't valid JSON.
 	 */
 	MalformedJSON: "malformed_json",
 } as const
@@ -111,7 +111,7 @@ export function formatSourcedIssues(issues: readonly SourcedIssue[]): string {
 }
 
 /**
- * The error thrown when a model directory does not load.
+ * The error thrown when a model directory doesn't load.
  * Its message lists every issue.
  */
 export class GeographicModelLoadError extends Error {

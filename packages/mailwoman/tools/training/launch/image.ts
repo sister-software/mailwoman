@@ -49,7 +49,7 @@ export const LIBTORCH_ARCHIVE_SHA256: Readonly<Record<TrainerVariant, string>> =
 /**
  * libtorch 2.13.0+cu130 loads the CUDA libraries.
  *
- * Its archive does not hold them: the `Requires-Dist` set of the `torch-2.13.0+cu130` manylinux wheel.
+ * Its archive doesn't hold them: the `Requires-Dist` set of the `torch-2.13.0+cu130` manylinux wheel.
  *
  * The CUDA image installs them with pip into the base image's interpreter,
  * the install the Python launcher's image ran on Modal.
@@ -188,7 +188,7 @@ export async function trainerSourceFiles(): Promise<string[]> {
 	const trainer = await workingTreeFiles(["packages/trainer"])
 
 	// Every workspace member's crate, beside the trainer's own: cargo loads the whole workspace
-	// the root manifest declares, refuses a `default-members` entry that is no member,
+	// the root manifest declares, refuses a `default-members` entry that's no member,
 	// and under `--locked` refuses a lockfile that lists crates the workspace lacks.
 	// `-p trainer-cli` compiles only the trainer and what it depends on.
 	const mtf = await workingTreeFiles(["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", ":(glob)packages/*/crates/**"])

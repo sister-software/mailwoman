@@ -14,7 +14,7 @@
  *
  * Most rows have tags that every family can emit, so they get no label.
  * For those rows the tool prints where the routers disagree, for a human to label.
- * Router agreement does not imply a correct route.
+ * Router agreement doesn't imply a correct route.
  *
  * Two routers run:
  *

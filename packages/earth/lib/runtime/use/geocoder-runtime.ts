@@ -183,7 +183,7 @@ let earlyManifest: Promise<ReleasesManifest | null> | null = null
 export function prefetchReleasesManifest(): void {
 	if (modelDisabled()) return
 
-	// The hook awaits and reports a failure, so the early promise must not report it a second time.
+	// The hook awaits and reports a failure, so the early promise mustn't report it a second time.
 	earlyManifest ??= startEarly(fetchReleasesManifest())
 }
 
@@ -201,7 +201,7 @@ function modelDisabled(): boolean {
  * The basemap's TileJSON: the tileset `?basemap=` asks for on the tile worker, or the configured basemap.
  */
 /**
- * Reads one landmark layer, and keeps a search working when the Worker does not answer.
+ * Reads one landmark layer, and keeps a search working when the Worker doesn't answer.
  *
  * The layers improve a bare place name, and the page geocodes offline without them.
  * A failed read goes to the console with its layer, and the gazetteer's own answer stands.

@@ -54,7 +54,7 @@ describe("readServiceException", () => {
 	it("answers in linear time on a report whose exception element is never closed", () => {
 		// The shape a lazy `[\\s\\S]*?` scan backtracks polynomially over: an opening tag
 		// with no closing partner, in a body a network service produced.
-		// It must return the "could not read" reading rather than spend the document.
+		// It must return the "couldn't read" reading rather than spend the document.
 		const unclosed = `<ServiceExceptionReport xmlns="http://www.opengis.net/ogc"><ServiceException>${"x".repeat(200_000)}`
 		const started = performance.now()
 

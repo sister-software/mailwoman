@@ -15,17 +15,17 @@ A locality-only geocoder parses only the locality (the city, town, or village) a
 
 ## The approach
 
-1. **Find the locality.** Tokenize the input. Try each token and bigram against a gazetteer of locality names. "Springfield" matches. "New York" matches as a bigram. "West 26th" does not match and is ignored. The approach is a targeted version of gazetteer-first geocoding that skips everything except locality names.
+1. **Find the locality.** Tokenize the input. Try each token and bigram against a gazetteer of locality names. "Springfield" matches. "New York" matches as a bigram. "West 26th" doesn't match and is ignored. The approach is a targeted version of gazetteer-first geocoding that skips everything except locality names.
 2. **Disambiguate if possible.** If the input also contains a state abbreviation or postcode, use it to filter candidates. `Springfield, IL` → Springfield, IL. `Springfield` with no qualifier → 34 candidates, ranked by population.
 3. **Return the locality centroid.** The centroid is the geographic center of the city. It is off by up to several miles for large cities (Los Angeles is 500 square miles) and within a few hundred meters for small towns.
-4. **Ignore the rest.** City-level geocoding does not need the street, building number, apartment, or venue. The raw input keeps them for display.
+4. **Ignore the rest.** City-level geocoding doesn't need the street, building number, apartment, or venue. The raw input keeps them for display.
 
 This is the minimum viable geocoder: city-level accuracy from a gazetteer lookup. It handles every country and every script that the gazetteer covers. It handles ambiguous names such as Springfield by surfacing the ambiguity rather than picking the wrong candidate.
 
 ## When it works
 
 - **Statistical aggregation.** Customer distribution by city, sales by metropolitan area, and disease incidence by municipality all aggregate at the city level. City-level accuracy is the unit of analysis for most public health, marketing, and demographic applications.
-- **Regional routing.** To route a delivery to the Los Angeles warehouse, you need to know that the address is in Los Angeles, and the building does not matter. The street address serves the last mile, and the locality serves the regional sort.
+- **Regional routing.** To route a delivery to the Los Angeles warehouse, you need to know that the address is in Los Angeles, and the building doesn't matter. The street address serves the last mile, and the locality serves the regional sort.
 - **Market analysis.** To count the customers in the Bay Area, city-level geocoding places customers in San Francisco, Oakland, San Jose, and other cities. Street-level accuracy adds detail but doesn't change the regional answer.
 - **Gazetteer coverage is good for localities.** WOF has ~200,000 locality records globally. OSM has millions of place nodes. GeoNames has ~12 million populated places. For most of the world's population, the locality they live in is in a gazetteer.
 - **You serve countries without street-level addressing.** Japan uses block-based addressing without street names. Rural India, sub-Saharan Africa, and informal settlements use descriptive addresses without standard street names. Locality-only geocoding works where street-level geocoding has no street data to work with.

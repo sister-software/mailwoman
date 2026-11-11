@@ -20,7 +20,7 @@
  *   column isn't withheld and asserts the suburb still wins.
  *
  *   The suburb wins because referential likelihood is what the ranking reads.
- * 	 There is no hand-written rule, pin, or safelist anywhere in the path.
+ * 	 There's no hand-written rule, pin, or safelist anywhere in the path.
  *
  *   The second half measures the D-rule prediction for the split (§2 R1's "expected resolver delta is zero").
  *   Each ranking assertion runs against a gazetteer without the encyclopedic column and one with it.
@@ -197,13 +197,13 @@ describe("Saint-Denis — ranking is referential", () => {
 		// Réunion (wof 9000000590797, pop 154,765 — a French overseas department, so `country = FR` too).
 		// Ranked referentially, an unscoped bare "Saint-Denis" answers Réunion.
 		//
-		// That is the policy behaving exactly as specified rather than failing.
+		// That's the policy behaving exactly as specified rather than failing.
 		// What it exposes is an assumption in the ROAD_TO_V9 §3 board row `fr-wpc-saint-denis-suburb`,
 		// which pins the Seine-Saint-Denis suburb as truth: that row encodes "Metropolitan
 		// France", which is a different claim from "referentially dominant".
 		// The row fails identically under all four FST arms including no-FST,
 		// so it is a board-authoring question for §3 rather than a regression here,
-		// but a test that omitted Réunion would be asserting a world that does not exist.
+		// but a test that omitted Réunion would be asserting a world that doesn't exist.
 		const withReunion: FixturePlace[] = [
 			...SAINT_DENIS,
 			{ id: 9_000_000_590_797, name: "Saint-Denis", country: "FR", lat: -20.8823, lon: 55.4504, population: 154_765 },

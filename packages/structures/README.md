@@ -39,7 +39,7 @@ console.log(problems)
 missing license records and jurisdiction mismatches.
 `publishProblems` reports the recorded reasons a source cannot be included in a
 published layer. An empty result means the register's decision permits all
-requested operations. It is not a new review of the publisher's terms.
+requested operations. It isn't a new review of the publisher's terms.
 
 The default publication operations are `fetch`, `convert`, `adapt`,
 `redistribute` and `commercial-sublicense`. The register keeps these decisions

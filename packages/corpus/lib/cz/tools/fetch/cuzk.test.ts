@@ -79,7 +79,7 @@ function datasetFeedXML(code: string): string {
 }
 
 /**
- * A body that is a zip archive as far as the fetcher reads it: the local-file-header
+ * A body that's a zip archive as far as the fetcher reads it: the local-file-header
  * signature and some payload.
  *
  * The fetcher stores the archive for the adapter rather than opening it,
@@ -340,7 +340,7 @@ describe("harvestCzCuzk", () => {
 		expect(summary).toMatchObject({ fetched: 1, failed: 1, failedCodes: ["584061"] })
 		await expect(tryStat(scratch.path("584061.zip"))).resolves.toBeNull()
 
-		// The municipality that answered an archive is still recorded, so one failure does not lose the run.
+		// The municipality that answered an archive is still recorded, so one failure doesn't lose the run.
 		const manifest = await readManifest<CzCuzkHarvestManifest>(scratch.path("MANIFEST.json"))
 
 		expect(manifest?.files.map((file) => file.municipality_code)).toEqual(["584282"])

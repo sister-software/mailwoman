@@ -12,14 +12,14 @@
  *   `packages/mailwoman/tools/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
  *
  *   Expects a countrywide CSV with `LON,LAT,number,street,city,postcode[,region]` (IT/FR/most OA
- *   collections). The Spanish dump uses a cadastral schema and is not handled here.
+ *   collections). The Spanish dump uses a cadastral schema and isn't handled here.
  *
  *   Rows are bucketed by region, or by the postcode's first two characters when region is absent, so
- *   the set spans the country. They are rendered in three natural orders so the model does not see one
+ *   the set spans the country. They're rendered in three natural orders so the model doesn't see one
  *   rigid template.
  *
- *   The seeded shuffle matches the Python original in distribution. It is not bit-identical to CPython
- *   (see `@mailwoman/core/random`), so a set rebuilt here will not match one built by the retired script
+ *   The seeded shuffle matches the Python original in distribution. It isn't bit-identical to CPython
+ *   (see `@mailwoman/core/random`), so a set rebuilt here won't match one built by the retired script
  *   row for row.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/build/oa-coord-golden.run.ts --country IT

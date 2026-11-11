@@ -60,7 +60,7 @@ import { publishToPublicBucket } from "#tools/publish/public-bucket"
  * The canonical postcode-database set (filenames under `<data-root>/db/wof/`);
  * missing databases are skipped rather than fatal.
  *
- * Every member is spelled `postalcode-` because that is a routing interface: `deriveSchemaName`
+ * Every member is spelled `postalcode-` because that's a routing interface: `deriveSchemaName`
  * turns the filename into the attached SQL schema name and `pickExtractsForPlacetype`
  * tests it against the placetype, so a database stored as `postcode-<cc>.db` builds fine
  * and is then unreachable to `findPlace({ placetype: "postalcode" })`.
@@ -78,7 +78,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// Northern Ireland is excluded from every permissive UK grant.
 	"postalcode-gb-codepoint.db",
 	// Northern Ireland (BT), the hole Code-Point Open leaves.
-	// A miss on a BT code means not attested in OSM rather than that the code does not exist.
+	// A miss on a BT code means not attested in OSM rather than that the code doesn't exist.
 	// ODbL 1.0 is share-alike, so this artifact is never published and folds
 	// only under `includeBuildLocalFolds`.
 	"postalcode-ni-osm.db",
@@ -219,7 +219,7 @@ export interface FoldOptions {
 	 */
 	alternateDir?: PathBuilderLike
 	/**
-	 * Override to proceed when `adminIn` already contains alias rows for countries this run does not list.
+	 * Override to proceed when `adminIn` already contains alias rows for countries this run doesn't list.
 	 *
 	 * The fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
 	 */
@@ -401,7 +401,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build/candidate")
 
 	// `undefined` means "use the convention"; `false` means "the caller chose an empty column".
-	// Only the second may skip the resolve, so a missing artifact is not indistinguishable
+	// Only the second may skip the resolve, so a missing artifact isn't indistinguishable
 	// from a deliberate opt-out in the build log.
 	const importance = opts.importanceDB === false ? undefined : (opts.importanceDB ?? (await resolveImportanceDB()))
 
@@ -554,7 +554,7 @@ export interface PublishOptions {
  * An absent or unreadable manifest refuses as well: an artifact that states no
  * tier cannot be said to permit publication.
  *
- * @throws When a refusal stands and `overrideRefusals` is not set.
+ * @throws When a refusal stands and `overrideRefusals` isn't set.
  */
 function assertCandidatePublishable(candidateDB: PathBuilderLike, key: string, overrideRefusals: boolean): void {
 	const probed = probeManifest(candidateDB)

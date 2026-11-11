@@ -35,7 +35,7 @@ Here is the neural parser on real German addresses, next to the rule-based `v0`:
 | `Hauptstraße 5`                     | street=`Hauptstraße 5` | house number swallowed into the street  |
 | `Prenzlauer Allee 36, 10405 Berlin` | postcode=`36`          | the house number tagged as the postcode |
 
-None of these are random. They are all one thing: **order**. The model learned addresses where the
+None of these are random. They're all one thing: **order**. The model learned addresses where the
 house number comes _first_ (`350 5th Ave`) and the postcode comes _after_ the city (`New York, NY
 10118`). German runs the other way: house number _after_ the street (`Hauptstraße 5`), postcode
 _before_ the city (`10405 Berlin`). Shown a German address, the model keeps applying the American
@@ -109,7 +109,7 @@ The retrain itself is staged but not run as of this writing. A retrain run mutat
 training corpus manifest, the kind of irreversible, shared-state change that deserves a human's yes
 rather than an autonomous one. Everything is one approval away: the extract is built and
 uploaded, the config is committed, the before/after harness is wired. When it runs, the test is
-simple and pre-registered: street and house_number should climb, US and French should not move more
+simple and pre-registered: street and house_number should climb, US and French shouldn't move more
 than a point (the interference regression check), and the German resolver coordinate error should hold.
 
 If German costs US accuracy, the extract comes back out. That's the whole discipline: you don't get to

@@ -34,7 +34,7 @@ export const dataRootPath = createPathBuilderResolver<"~env/data-root">(() => $p
  *
  * The group name is a bare string in every path a caller composes,
  * so the compiler reports no error when a call site keeps a pre-grouping prefix:
- * such a call site resolves to a directory that does not exist.
+ * such a call site resolves to a directory that doesn't exist.
  * Every reader of a layer database treats an absent file as an absent layer.
  *
  * Compose a database path through this function — via the owning package's `paths` export, for example
@@ -46,7 +46,7 @@ export function databaseRootPath<T extends PathBuilderLike>(source: T) {
 
 /**
  * Path builder for the Who's On First git checkouts: `$MAILWOMAN_DATA_ROOT/src/wof-repos/<name>`.
- * They are cloned sources rather than built artifacts.
+ * They're cloned sources rather than built artifacts.
  *
  * `mailwoman gazetteer inspect sync` clones each repository here from its `mailwoman` fork.
  * Admin builds read here.

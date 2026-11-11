@@ -5,7 +5,7 @@
  *
  *   The two comparison arms outside live geocoders: a metered reference oracle and a stored past run.
  *
- *   Separate from `compare.test.ts` because neither test touches HTTP transport. Both cover comparisons that must not
+ *   Separate from `compare.test.ts` because neither test touches HTTP transport. Both cover comparisons that mustn't
  *   produce a verdict for different reasons.
  */
 
@@ -122,7 +122,7 @@ const BOARD_AD = { kind: "board", country: "AD" }
 describe("mwdev_compare — an oracle arm", () => {
 	it("refuses to grade even when every row carries a truth coordinate", async () => {
 		// The board's AD rows all pin expectLat/expectLon, so this comparison could be graded on distance.
-		// It is not, because the board's coordinates were pinned by hand with these
+		// It isn't, because the board's coordinates were pinned by hand with these
 		// same geocoders open as a second opinion.
 		const oracle = oracleAt(ANDORRA_LA_VELLA)
 
@@ -148,8 +148,8 @@ describe("mwdev_compare — an oracle arm", () => {
 
 	it('honors `grade: "truth"` by refusing rather than by grading', async () => {
 		// `resolveGradeMode` throws for a request it cannot meet.
-		// The oracle refusal must not turn that into a silent downgrade either.
-		// The caller asked for a verdict and gets a stated reason there is none.
+		// The oracle refusal mustn't turn that into a silent downgrade either.
+		// The caller asked for a verdict and gets a stated reason there's none.
 		const result = (await runCompare(
 			registryAt(ANDORRA_LA_VELLA),
 			{

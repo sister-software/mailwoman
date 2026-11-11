@@ -36,7 +36,7 @@ test("parseCodePointMetadata reads the header fields and the per-area row manife
 
 test("parseCodePointMetadata survives an unknown header field", () => {
 	// OS has added header rows before (RM update date postdates the product).
-	// A new one must not be fatal and must not be mistaken for an area count.
+	// A new one mustn't be fatal and mustn't be mistaken for an area count.
 	const metadata = parseCodePointMetadata(
 		["PRODUCT: OS CODE-POINT_03.02", "SOME NEW FIELD: whatever", "      AB\t17403"].join("\n")
 	)

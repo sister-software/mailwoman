@@ -53,7 +53,7 @@ export interface BaseFetchOptions {
 	 * which is the whole cost of that file.
 	 * The retry count is the behavior under test there.
 	 *
-	 * The pause between attempts is not, so it is a caller's to shorten.
+	 * The pause between attempts isn't, so it is a caller's to shorten.
 	 */
 	retryDelayMs?: number
 }

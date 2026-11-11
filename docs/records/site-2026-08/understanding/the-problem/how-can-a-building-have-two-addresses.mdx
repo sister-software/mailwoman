@@ -12,7 +12,7 @@ tags:
 
 # How can a building have two addresses?
 
-A single physical building can have multiple valid addresses. For commercial buildings, multifamily housing, corner properties, and any structure that touches more than one administrative system, that is the normal state of affairs. A parser that assumes "one building = one address" will fail silently on a large fraction of real-world queries.
+A single physical building can have multiple valid addresses. For commercial buildings, multifamily housing, corner properties, and any structure that touches more than one administrative system, that's the normal state of affairs. A parser that assumes "one building = one address" will fail silently on a large fraction of real-world queries.
 
 ## The address is a protocol rather than a property
 
@@ -35,7 +35,7 @@ The ZIP codes differ (10118 vs 10001) because USPS assigns delivery-specific ZIP
 | Con Edison (electric utility) | 350 5th Ave, New York, NY 10001-0001    |
 | Property management           | Empire State Building, 350 Fifth Avenue |
 
-The utility company uses its own ZIP+4 extension (the `-0001` suffix). The building management uses the building's brand name as the primary identifier. A delivery driver looking for "350 5th Ave" will find the building. A tourist looking for "Empire State Building" will also find it. But a geocoder that only indexes the USPS form will not match the tourist's query, even though the building is in its database under a different label.
+The utility company uses its own ZIP+4 extension (the `-0001` suffix). The building management uses the building's brand name as the primary identifier. A delivery driver looking for "350 5th Ave" will find the building. A tourist looking for "Empire State Building" will also find it. But a geocoder that only indexes the USPS form won't match the tourist's query, even though the building is in its database under a different label.
 
 ### Corner buildings
 
@@ -78,14 +78,14 @@ All four administrative labels refer to the same location at different levels of
 Some buildings literally cross administrative boundaries:
 
 - **State line buildings**: A building with one entrance in Kansas and another in Missouri. Different state tax rates, different ZIP codes, same physical structure.
-- **Municipal boundary**: A building in an annexed area whose mailing address still reflects the pre-annexation municipality. USPS has not updated the delivery name, but the legal municipality has changed.
+- **Municipal boundary**: A building in an annexed area whose mailing address still reflects the pre-annexation municipality. USPS hasn't updated the delivery name, but the legal municipality has changed.
 - **Postcode boundary**: A building whose units on different floors map to different postcodes because the postcode boundary follows the building's vertical axis (rare but real in dense urban cores).
 
-In each case, the "correct" address depends on who is asking and why. The tax assessor wants the legal municipality. The postal carrier wants the USPS delivery city. The emergency dispatcher wants the 911 response zone. A geocoder that picks one and calls it "the address" is making an administrative choice the user did not ask for.
+In each case, the "correct" address depends on who's asking and why. The tax assessor wants the legal municipality. The postal carrier wants the USPS delivery city. The emergency dispatcher wants the 911 response zone. A geocoder that picks one and calls it "the address" is making an administrative choice the user didn't ask for.
 
 ## What this means for a parser
 
-The parser should not resolve ambiguity between address forms. It should **surface it**.
+The parser shouldn't resolve ambiguity between address forms. It should **surface it**.
 
 When the input is `Empire State Building, NYC`, the parser should emit:
 
@@ -94,7 +94,7 @@ venue: Empire State Building
 locality: New York City
 ```
 
-And let the resolver return candidates for "Empire State Building" in New York City — including the 350 5th Ave location with high confidence. The parser does not need to know that "Empire State Building" and "350 5th Ave" are the same place. WOF stores both as names for the same `wof:id`, so the resolver maps both names to one place.
+And let the resolver return candidates for "Empire State Building" in New York City — including the 350 5th Ave location with high confidence. The parser doesn't need to know that "Empire State Building" and "350 5th Ave" are the same place. WOF stores both as names for the same `wof:id`, so the resolver maps both names to one place.
 
 When the input is `350 5th Ave, New York, NY 10118` and the resolver returns the WOF record for the Empire State Building, the output should include the WOF ID and coordinates, but also preserve the raw parsed address. The user might need the mailing address form rather than the building name.
 
@@ -119,7 +119,7 @@ The `unit` tag is optional — several addresses do not have units. But its pres
 
 ## See also
 
-- [What is a postcode?](./what-is-a-postcode.mdx) — why mailing postcodes and geographic postcodes diverge
+- [What's a postcode?](./what-is-a-postcode.mdx) — why mailing postcodes and geographic postcodes diverge
 - [The database fallacy](../why-its-hard/the-database-fallacy.mdx) — why no database captures all address forms for a building
 - [How humans break addresses](../why-its-hard/how-humans-break-addresses.mdx) — the postal city ≠ municipal city failure mode
 - [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) — how the gazetteer stores alternate names

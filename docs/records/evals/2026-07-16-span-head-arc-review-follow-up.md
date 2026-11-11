@@ -66,7 +66,7 @@ Tier A sources (authoritative street/address registers: BAN, BAG-like systems) c
 augmentation, and positive name-index bias. Tier B sources (road/address-range data: TIGER) can
 support scoped evidence only. Global `"Main St"` evidence is weak, while `"Main St" + state/ZIP`
 may be useful. Tier C sources (admin gazetteers such as WOF) support locality/region/country
-evidence rather than street existence. They are the famous-street-as-place trap. Tier D sources (OSM-like
+evidence rather than street existence. They're the famous-street-as-place trap. Tier D sources (OSM-like
 broad data) are useful for experiments and coverage gaps, but licensing, attribution, and local
 quality must check product use. No tier supplies global negative evidence.
 
@@ -127,7 +127,7 @@ offset is hand-fit to the known failures.
 Unanimous across reviews: the span decode ships **behind a flag**, valued for the list and the
 target class (+23.8pp Paris, oracle@5 0.905, +0.5% latency) rather than for rank-1 parity (+0.75pp, inside
 noise). It becomes the default path when a consumer collects the headroom — and Tier 1a decides
-whether the flag has a regression cost that has not been identified yet.
+whether the flag has a regression cost that's not been identified yet.
 
 ---
 
@@ -137,4 +137,4 @@ proposal sketch, and a framing sentence. The instrument checks in §7, the pre-r
 the digit-atomicity kill are the opposite of not knowing the fundamentals. The blocker was never
 "encoder too small": it's three interacting issues — a training distribution that underrepresents
 bare streets, an objective that rewards token correctness over span utility, and resolver evidence
-that is blind exactly where arbitration is needed. The plan above tests them in that order.
+that's blind exactly where arbitration is needed. The plan above tests them in that order.

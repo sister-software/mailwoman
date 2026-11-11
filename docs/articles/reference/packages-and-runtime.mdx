@@ -33,7 +33,7 @@ The published `mailwoman@11.0.0` manifest declares `type: "module"` and Node.js 
 | `MAILWOMAN_DATA_ROOT`    | Root for downloaded data and runtime artifacts. The default is the platform data directory.                                                                                                                                                                                              |
 | `MAILWOMAN_CANDIDATE_DB` | Pins a candidate database path. Candidate resolution checks an explicit call option first, then this variable, then the active selection, then the conventional path under the data root. A pinned missing path returns no candidate path. The value `none` selects the WOF FTS backend. |
 | `MAILWOMAN_WOF_DB`       | Supplies WOF admin database paths when an explicit path list is absent. Otherwise the resolver uses its default WOF extract paths under the data root.                                                                                                                                   |
-| `MW_LOCALE`              | Supplies an environment locale hint to the runtime pipeline when a caller does not supply a locale.                                                                                                                                                                                      |
+| `MW_LOCALE`              | Supplies an environment locale hint to the runtime pipeline when a caller doesn't supply a locale.                                                                                                                                                                                       |
 | `MAILWOMAN_MODEL_CARD`   | Supplies a model-card path for the native server's health report.                                                                                                                                                                                                                        |
 
 These variables configure different interfaces. `MAILWOMAN_DATA_ROOT` selects a directory. `MAILWOMAN_CANDIDATE_DB` and `MAILWOMAN_WOF_DB` pin database paths. An explicit database path takes precedence over its environment variable where the published resolver accepts one. Check resolved paths with `mailwoman doctor`. The [release status](/product/limits-and-status) records the verification host's installed-data state. Check the data root of each deployment separately.
@@ -49,7 +49,7 @@ These are local apparent file and directory sizes from the published 11.0.0 inst
 | `node_modules/@mailwoman/neural-weights-en-us`            | `du -sb`     | 65,018,687 |
 | `node_modules/@mailwoman/neural-weights-en-us/model.onnx` | `stat -c %s` | 29,829,842 |
 
-The total size of a clean install containing only the three first-parse packages has not been measured for this page. Runtime memory, browser download size, and server capacity are also unknown here. The bundle registry's declared data estimates are on [limits and release status](/product/limits-and-status).
+The total size of a clean install containing only the three first-parse packages hasn't been measured for this page. Runtime memory, browser download size, and server capacity are also unknown here. The bundle registry's declared data estimates are on [limits and release status](/product/limits-and-status).
 
 ## Published sources
 

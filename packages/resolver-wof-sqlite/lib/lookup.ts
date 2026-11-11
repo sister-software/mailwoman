@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `WOFSQLitePlaceLookup` — the resolver implementation backed by `node:sqlite` plus a Kysely-typed query layer where the queries are non-trivial and raw SQL where they are not.
+ * `WOFSQLitePlaceLookup` — the resolver implementation backed by `node:sqlite` plus a Kysely-typed query layer where the queries are non-trivial and raw SQL where they're not.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
@@ -550,7 +550,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	/**
 	 * Coordinate-first locality resolution: union the postcode's containing
 	 * and closest neighboring localities with the FTS name candidates and soft-score them,
-	 * returning null when the postcode is not in the table.
+	 * returning null when the postcode isn't in the table.
 	 */
 	async #findLocalityCoordFirst(
 		query: FindPlaceQuery,
@@ -583,7 +583,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		}
 
 		// Observed postal-city aliases for this postcode keyed by geographic locality name,
-		// empty when the reader is not supplied.
+		// empty when the reader isn't supplied.
 		const postalAliasByGeo = new Map<string, string[]>()
 
 		if (this.#postalCityAliases) {
@@ -635,7 +635,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		// with the soft score breaking ties within a tier.
 		scored.sort((a, b) => Number(b.exact) - Number(a.exact) || b.score - a.score)
 
-		// When the chosen locality is not the postcode's containing locality and sits far
+		// When the chosen locality isn't the postcode's containing locality and sits far
 		// from it, flag `mismatch` rather than overriding the name.
 		const top = scored[0]
 

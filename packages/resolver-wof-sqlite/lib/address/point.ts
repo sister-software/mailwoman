@@ -309,11 +309,11 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	/**
 	 * Returns whether the row's own postcode or locality differs from the query's.
 	 *
-	 * A row field that is empty never contradicts.
+	 * A row field that's empty never contradicts.
 	 * The locality is compared only when the extract's `localityKeys` is `"full"`,
 	 * because abbreviated keys would reject correct rows.
 	 *
-	 * Two locality keys agree when they are equal or when one is the leading words of the other.
+	 * Two locality keys agree when they're equal or when one is the leading words of the other.
 	 * A German disambiguated name such as `Lauta b Hoyerswerda` or `Freiberg Sachs` begins with the place
 	 * name that OSM's `addr:city` records, and a word boundary keeps `lauta` apart from `lautabach`.
 	 */

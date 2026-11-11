@@ -63,7 +63,7 @@ export async function foldGeonames(
 	db: DatabaseClient<WOFDatabase>,
 	opts: FoldGeonamesOptions
 ): Promise<FoldGeonamesResult> {
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { ingestGeonamesAliases } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 	const geonamesDir = opts.geonamesDir ?? dataRootPath("geonames")
 	const alternateDir = opts.alternateDir ?? dataRootPath("geonames-alternate")

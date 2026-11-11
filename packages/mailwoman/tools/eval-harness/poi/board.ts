@@ -54,7 +54,7 @@ export interface POIBoardFixture {
 	rowRef?: string
 	/**
 	 * A note for the board author.
-	 * The board does not grade it.
+	 * The board doesn't grade it.
 	 */
 	note?: string
 }
@@ -485,7 +485,7 @@ export interface POIBoardReport {
 	/**
 	 * Number of tracked rows.
 	 *
-	 * They are graded and reported and never count toward the floors.
+	 * They're graded and reported and never count toward the floors.
 	 */
 	trackedCases: number
 	/**

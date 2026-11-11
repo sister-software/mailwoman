@@ -124,7 +124,7 @@ async function buildAgainstFixture(
 	countries: string[],
 	placetypes: string[]
 ): Promise<{ built: BuiltLexicon; surfaces: Record<string, number> }> {
-	// A fresh DB per call, because `create table` is not idempotent and two tests build twice.
+	// A fresh DB per call, because `create table` isn't idempotent and two tests build twice.
 	const seq = buildSeq++
 	const dbPath = scratch.path(`admin-${seq}.db`)
 	const output = scratch.path(`lexicon-${seq}.json`)

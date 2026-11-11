@@ -11,7 +11,7 @@
 #      #511 spread-scan measured recipe-output street surfaces ~46% street-family / ~54% admin in the base,
 #      so street-only rows would have taught "context-free name = street").
 #   2. source_weights += synth-fragment: 6.0 (the synth-nl-postcode moderate precedent rather than the 12.0
-#      targeted-fix weight — an assay must not outvote the base).
+#      targeted-fix weight — an assay mustn't outvote the base).
 #   3. init_from → the shipped v241 step-012000 (same vocab, so the same-vocab fine-tune LR 1e-5 —
 #      v230 precedent — not the 5e-5 splice-adaptation LR. there are no new embedding rows to move).
 #   4. short run, tight cadence (the v196 scar: long constant-LR fine-tunes overfit late. 40k was

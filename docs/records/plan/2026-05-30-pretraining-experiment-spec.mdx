@@ -6,7 +6,7 @@ neural parser. The operator asked to spec it before committing GPU.
 
 ## The problem it targets
 
-The encoder is trained **from scratch on labeled synthetic data only**. There is
+The encoder is trained **from scratch on labeled synthetic data only**. There's
 no self-supervised pre-training. Two diagnosed pathologies are the _known
 signature_ of exactly that:
 
@@ -113,14 +113,14 @@ pre-training on 50–100M strings, still ~1 GPU-day.
 1. **Calibration** — fraction-of-wrong-predictions-at-≥0.9 (the 81% number) and
    ECE. _Primary_ — this is the pathology we're attacking.
 2. **OOD robustness** — accuracy on a comma-stripped / non-canonical held-out set.
-3. **Resolver end-to-end Acc@1** — the product metric. It must not regress, and it ideally
+3. **Resolver end-to-end Acc@1** — the product metric. It mustn't regress, and it ideally
    improves via fewer confident-wrong parses).
 4. Harness pass-rate as a regression check (not the promote bar — see the
    harness-lineage doc).
 
 ### Pre-registered revert
 
-If Stage A does not improve calibration (the ≥0.9-wrong fraction) **and** resolver
+If Stage A doesn't improve calibration (the ≥0.9-wrong fraction) **and** resolver
 Acc@1 doesn't move ≥1.5pp, stop — the from-scratch model stands and we've learned
 pre-training isn't the change at this scale.
 

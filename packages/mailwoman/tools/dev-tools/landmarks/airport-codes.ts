@@ -40,7 +40,7 @@ export interface AirportCode {
  * Reads the query's answer, keeping an airport's first row, because a second coordinate
  * or country repeats its item.
  *
- * A row with an unreadable coordinate or a code that is not one is left out.
+ * A row with an unreadable coordinate or a code that's not one is left out.
  */
 export function readAirportCodes(results: SPARQLResults): AirportCode[] {
 	const airports = new Map<string, AirportCode>()

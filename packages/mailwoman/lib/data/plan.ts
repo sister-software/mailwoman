@@ -76,7 +76,7 @@ export const PlannedAction = {
 export type PlannedAction = (typeof PlannedAction)[keyof typeof PlannedAction]
 
 /**
- * Why a requested installation did not complete, kept distinct in human and structured output.
+ * Why a requested installation didn't complete, kept distinct in human and structured output.
  */
 export const ProblemKind = {
 	/**
@@ -93,12 +93,12 @@ export const ProblemKind = {
 	 */
 	RefusedObligation: "refused-obligation",
 	/**
-	 * A bundle the request needs first is not installed.
+	 * A bundle the request needs first isn't installed.
 	 * The request still installs.
 	 */
 	MissingDependency: "missing-dependency",
 	/**
-	 * The artifact's schema or normalization is one this release's reader does not open.
+	 * The artifact's schema or normalization is one this release's reader doesn't open.
 	 */
 	Unsupported: "unsupported",
 	/**
@@ -112,7 +112,7 @@ export const ProblemKind = {
 	Transfer: "transfer",
 	Cancelled: "cancelled",
 	/**
-	 * The artifact installed and stays unselected because another artifact of its bundle did not.
+	 * The artifact installed and stays unselected because another artifact of its bundle didn't.
 	 */
 	SiblingFailed: "sibling-failed",
 	/**
@@ -120,7 +120,7 @@ export const ProblemKind = {
 	 */
 	Activation: "activation",
 	/**
-	 * The recorded transfer does not fit in the free space of the data root's filesystem.
+	 * The recorded transfer doesn't fit in the free space of the data root's filesystem.
 	 */
 	InsufficientDisk: "insufficient-disk",
 } as const
@@ -142,7 +142,7 @@ export interface PlanProblem {
 /**
  * Every problem a plan states before any transfer, by kind.
  *
- * A missing dependency is listed and does not stop the installation.
+ * A missing dependency is listed and doesn't stop the installation.
  */
 export function planProblems(plan: InstallationPlan): PlanProblem[] {
 	const problems: PlanProblem[] = []
@@ -292,7 +292,7 @@ export interface PlannedTransfer {
 	 */
 	basis: typeof SizeBasis.Estimated | typeof SizeBasis.Verified
 	/**
-	 * Artifacts to download whose size is not recorded.
+	 * Artifacts to download whose size isn't recorded.
 	 */
 	unknownCount: number
 }
@@ -311,7 +311,7 @@ export interface InstallationPlan {
 	bundles: PlannedBundle[]
 	transfer: PlannedTransfer
 	/**
-	 * The filesystem the data root is on, or `null` with {@link diskError} when it could not be read.
+	 * The filesystem the data root is on, or `null` with {@link diskError} when it couldn't be read.
 	 */
 	disk: FilesystemSpace | null
 	diskError: string | null

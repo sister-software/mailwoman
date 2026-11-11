@@ -9,7 +9,7 @@
 import { getPOICategory, lookupPOICategory } from "@mailwoman/poi-taxonomy"
 
 /**
- * Returns whether a word is a POI category, as `Airport` is and `London` is not.
+ * Returns whether a word is a POI category, as `Airport` is and `London` isn't.
  */
 export function isVenueCategoryWord(word: string): boolean {
 	return lookupPOICategory(word).length > 0

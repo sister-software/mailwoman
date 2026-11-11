@@ -297,7 +297,7 @@ export class AncestrieBuilder {
 	 * It then serializes the result.
 	 *
 	 * @throws on a primary-parent cycle.
-	 * Does not consume the builder — sealing twice yields identical bytes.
+	 * Doesn't consume the builder — sealing twice yields identical bytes.
 	 */
 	seal(options: SealOptions = {}): Uint8Array {
 		const states = canonicalizeTrie(this.root)

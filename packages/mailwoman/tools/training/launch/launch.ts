@@ -340,7 +340,7 @@ async function startSandbox(record: LaunchRecord, deps: LaunchDependencies): Pro
  *
  * A refused name held by a running sandbox of the run is a duplicate launch.
  *
- * A refused name with no running sandbox is one Modal has not yet released,
+ * A refused name with no running sandbox is one Modal hasn't yet released,
  * so the start waits and tries again.
  */
 async function startNamedSandbox(record: LaunchRecord, deps: LaunchDependencies) {

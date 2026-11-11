@@ -2,7 +2,7 @@
 #
 # Diagnostic-before-fix: 2,000 steps to prove the recipe runs before committing 60,000. Not a check —
 # no threshold here is pre-registered. It answers four mechanical questions the 60,000-step
-# from-scratch run should not be the first place to discover:
+# from-scratch run shouldn't be the first place to discover:
 #
 #   1. Does `load_anchor_lookup` survive the v2 artifact at scale? 1.32 GB resident / 1.37 GB peak
 #      measured locally — the loader pays it once per worker at init. An OOM or a silent fallback

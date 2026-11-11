@@ -18,7 +18,7 @@ The bars are fixed before results, following the PIX1 preregistration practice.
 ## The house term the sketch was reaching for
 
 The operator called it "placetype concordance validation". The project already has a name for this
-idea, and the name is not concordance.
+idea, and the name isn't concordance.
 
 - **`coherence`** is the mechanism name. Four passes use it. All are default-on, and all live in
   `resolver/resolve.ts` or beside it: `applyAdminCoherence` (`resolver/resolve.ts:345`),
@@ -35,7 +35,7 @@ idea, and the name is not concordance.
   `core/pipeline/runtime-pipeline.ts:479`) and (b) the unrelated WOF external-ID table
   (`resolver-wof-sqlite/unified-schema.ts`). The reader-facing definition at
   `docs/records/site-2026-08/understanding/the-problem/what-is-a-concordance.mdx:16` still describes
-  the operator's concept exactly. That is why the word came to mind. A new mechanism with this name
+  the operator's concept exactly. That's why the word came to mind. A new mechanism with this name
   would collide with both existing uses.
 
 **New work in this arc therefore uses the name `*Coherence` and described as joint-consistency.** The name
@@ -44,7 +44,7 @@ a mechanism `concordance` counts as a defect.
 ## Part A — Inventory
 
 Every row describes something that already exists. The last column gives the operator direction it
-covers, so the design in Part C proposes only what is missing.
+covers, so the design in Part C proposes only what's missing.
 
 ### A.1 Shape rules per country (direction 1)
 
@@ -106,7 +106,7 @@ that such a table is close to useless as a spatial prior. The FR table is also t
 | **The GB hole in PCB1**                     | `docs/records/evals/2026-08-05-en-gb-anchor-off.md`                          | Every training config points at one `pilot-anchor-lookup.json` holding 67,708 keys, **zero letter-containing**, covering US/DE/FR only. GB slot 4 never took a gradient. `postcode-gb.bin` fired on 106/120 gb-golden rows and cost exact postcode 318/318 → 294/318. Fixed #1467 by not shipping the artifact          | GB channel now resolves OFF        | —             |
 | PCN1 census                                 | `neural/placetype-census.ts`, wired `neural/placetype-pair-prior.ts:836-859` | Per-parent child-tag distribution with per-tag lift. **Observability only: no consumer reads it back**, and the header holds no `delta` until a calibration measures one                                                                                                                                                | Opt-in, zero-cost when off         | 2             |
 | Convention strategy weights                 | `resolver-wof-sqlite/convention.ts:63-67`                                    | Built-in default `["postcode_area_resolution", "fallback_fuzzy_name_match"]` at 0.6/0.3/0.1 (postcode/name/population)                                                                                                                                                                                                  | Effectively on in the FTS backend  | 2             |
-| `coincident-roles`                          | `resolver-wof-sqlite/coincident-roles.ts`                                    | **No postcode relationship at all** — build-time (admin, locality) same-name pairs, REGION tier, ~124 places. Listed here only to record that it is not part of this arc                                                                                                                                                | build-time                         | —             |
+| `coincident-roles`                          | `resolver-wof-sqlite/coincident-roles.ts`                                    | **No postcode relationship at all** — build-time (admin, locality) same-name pairs, REGION tier, ~124 places. Listed here only to record that it isn't part of this arc                                                                                                                                                 | build-time                         | —             |
 
 Two docstrings are stale, and whoever touches these files next should correct them.
 `resolver/resolve.ts:263` still states that `postcodeConsistency` is default-off, although it was promoted
@@ -126,7 +126,7 @@ negative.
   `findPostcodeCountryScope`, and only for the country decision.
 - **Direction 2 reverse (the postcode confirms an ambiguous name) exists once**, as the #741
   short-circuit, and only for US postal cities through a side-index table.
-- **Direction 3 (partial codes encode ancestry) is not implemented anywhere.** The strip
+- **Direction 3 (partial codes encode ancestry) isn't implemented anywhere.** The strip
   implementation deletes the postcode from the pair key, and no mechanism reads a prefix as a prior. One
   corpus recipe consumes the codex prefix tables, and no runtime consumer reads them.
 
@@ -176,7 +176,7 @@ shape alone vs the system, on the 110 asserted codes
    shape or the `"15 07691"` two-token window that matches the JP `NNN-NNNN` shape. None is a
    within-country confusion. An exclusion mechanism that runs after the country is known has 6 spans
    of headroom here. The Gauntlet is a regression board, and its pass rate is never a ship gauge. The
-   count is therefore a ceiling on what the board can show. It does not measure the rate of the
+   count is therefore a ceiling on what the board can show. It doesn't measure the rate of the
    defect in real input.
 2. **Shape by itself cannot identify the system for half the codes.** More than one system accepts 49
    of the 100 asserted codes, and no system accepts 10 of them (IE Eircode, SI, IM, and the other
@@ -213,12 +213,12 @@ BT unit postcodes                          0
 ```
 
 **An outward code localizes tightly.** The median p95 radius is 3.22 km, so half of all outward
-codes hold 95% of their units inside a 3.2 km circle. That is well inside both the 25 km
+codes hold 95% of their units inside a 3.2 km circle. That's well inside both the 25 km
 country-coherence check and the 50 km consistency check, so an outward-only prior is sharper than
 either check the resolver already trusts. The area letters are about 7× coarser (23 km median p95)
 but still limit the answer to one metro area.
 
-The BT zero is not an artifact of the query. The database's own metadata records it: `coverage_gap_northern_ireland`
+The BT zero isn't an artifact of the query. The database's own metadata records it: `coverage_gap_northern_ireland`
 = "ZERO Northern Ireland (BT) postcodes — measured rather than assumed", and
 `coverage_gap_northern_ireland_options` = BT centroids "CANNOT be filled from a free source" (ONSPD/NSPL
 take them from LPS Pointer but carve them out of OGL).
@@ -279,13 +279,13 @@ codex band vs the gazetteer's state (CONUS)
   checked 38,229   agree 35,193 (92.1%)
 ```
 
-**The shipped ZIP-prefix table does not work as a spatial prior.** A leading digit narrows a ZIP to
+**The shipped ZIP-prefix table doesn't work as a spatial prior.** A leading digit narrows a ZIP to
 a median of 12 states and a 696 km p95 radius. By comparison, M-2 shows that a GB outward code gives
-3.2 km. Three digits, the USPS sectional-center level that the codex does not model, reach a 145 km
+3.2 km. Three digits, the USPS sectional-center level that the codex doesn't model, reach a 145 km
 p95 radius and identify one state 36% of the time. The useful US artifact would be a 3-digit table,
-and that table does not exist.
+and that table doesn't exist.
 
-**The 7.9% disagreement is not noise, and it rules out the obvious build path.** A sample:
+**The 7.9% disagreement isn't noise, and it rules out the obvious build path.** A sample:
 
 ```
 60683 → gazetteer says MN (band 5), parent "Minneapolis"
@@ -299,7 +299,7 @@ These are unique or firm ZIPs. Each code is assigned to one high-volume recipien
 processed somewhere outside the code's numbering range. The two sources answer different questions
 correctly. The codex band describes the code's range, and the gazetteer parent describes the
 organization. Two counts support this reading. 13.2% of ZIPs share an exact coordinate with ≥5 other
-ZIPs. That is the pattern expected when facility-assigned codes collapse onto one point. Only 979 of
+ZIPs. That's the pattern expected when facility-assigned codes collapse onto one point. Only 979 of
 42,319 rows have a `census-zcta-2024` centroid stamp, and the rest have none.
 
 **Consequence for the design:** a prefix→region artifact must be built from the numbering authority
@@ -315,7 +315,7 @@ three ship opt-in. A default-on promotion is a separate decision with its own ev
 
 ### Mechanism 1 — `applyPostcodeShapeCoherence`: shape as exclusion, downstream of the siblings
 
-**Change shape.** This is not a model change. It falls under the "cross-locale grammar leakage" row
+**Change shape.** This isn't a model change. It falls under the "cross-locale grammar leakage" row
 of the taxonomy. That row calls for a conventions-plus-mask change. It is implemented as a fifth member
 of the joint-consistency coherence family, alongside the four in A.3. It needs no GPU and no
 retrain.
@@ -371,7 +371,7 @@ the full check set.
 
 **Kill condition.** The mechanism is killed if B1-3 fails at every exclusion δ, or if B1-1 shows
 diffs that cannot be resolved without a per-country exception. In that case the M-1 verdict stands:
-the curated board has only 6 within-country exclusion spans, and that headroom does not justify the risk
+the curated board has only 6 within-country exclusion spans, and that headroom doesn't justify the risk
 of turning the mechanism on by default. Record the result as a negative and stop.
 
 ### Mechanism 2 — `applyPostcodeContainmentCoherence`: the reverse arrow, generalized
@@ -394,7 +394,7 @@ ranking chooses by population. `applyPostcodeConsistency` makes the same correct
 against `node.alternatives` (`resolve.ts:298-305`). This mechanism moves it earlier, so the
 alternatives list is built correctly in the first place instead of repaired afterward.
 
-**Artifact.** No new artifact. It reuses the postcode gazetteer that is already loaded. It does need the
+**Artifact.** No new artifact. It reuses the postcode gazetteer that's already loaded. It does need the
 postal-city side-index extended beyond the US, since `postal-city-alias-us.db` is the only one that
 exists.
 
@@ -412,8 +412,8 @@ outcome may be that mechanism 2 replaces #370 instead of running alongside it.
   disambiguates: `Paris TX 75460` / `Paris 75001`, `Athens GA 30601` / `Athens 10431`,
   `Berlin NH 03570` / `Berlin 10117`, `Springfield` across its US instances, and `Boulogne 92100`.
   Four of these are already Gauntlet cases. Bar: **≥85% correct locality at ≤5 km**. Report beside it
-  the rate with the postcode span removed from the input. If removing the postcode does not change
-  the number, the mechanism is not doing what this document claims.
+  the rate with the postcode span removed from the input. If removing the postcode doesn't change
+  the number, the mechanism isn't doing what this document claims.
 - **B2-3 (the double-repair confound).** Run the same board with `postcodeConsistency` on and off.
   Bar: **the two arms agree on ≥98% of cases.** Disagreement means the two passes conflict, and the
   promotion question becomes whether mechanism 2 replaces #370 or only checks it.
@@ -516,7 +516,7 @@ and US are separate decisions with separate evidence, because their radius profi
 
 - **B3-1 (the artifact reproduces its own measurement).** Build `postcode-prefix-gb.bin` and read it
   back. Bar: **`radiusP95Km` matches M-2's per-outward p95 within 1%, and `unitCount` sums to
-  1,746,976.** A round trip that does not reproduce the number it was built from indicates a build
+  1,746,976.** A round trip that doesn't reproduce the number it was built from indicates a build
   bug. This bar costs one command, so run it first.
 - **B3-2 (the prior beats the abstention it replaces).** Use a board of GB queries whose full unit
   postcode is absent from the gazetteer, built by holding out units and adding the real set of codes
@@ -533,17 +533,17 @@ and US are separate decisions with separate evidence, because their radius profi
   mechanism that invents a BT centroid reproduces the `BT3 9QQ` → Sheffield defect that #1480
   fixed. Report the district-level accuracy against the 80/80 census, and separately report the number
   of inputs the prior fired on.
-- **B3-4 (the US tier is not oversold).** Build `postcode-prefix-us.bin` at 3 digits from ZCTA and
+- **B3-4 (the US tier isn't oversold).** Build `postcode-prefix-us.bin` at 3 digits from ZCTA and
   grade a US board the same way as B3-2. Bar: **≥40% within 100 km**. The bar is deliberately weak,
   because M-3 measured a 145 km median p95, and a bar tighter than the data allows cannot be met. A
-  tighter US bar would require a 5-digit artifact. That is a different artifact.
+  tighter US bar would require a 5-digit artifact. That's a different artifact.
 - **B3-5 (no channel receives an untrained value).** Before any decode wiring, confirm that no
   shipped weights bundle declares a channel this artifact would populate. Bar: **the offline probe
   path touches zero model inputs.** The GB hole cost 24 exact postcodes on gb-golden because slot 4
-  received a value it was never trained on. That is why this bar is written before the wiring exists.
+  received a value it was never trained on. That's why this bar is written before the wiring exists.
 
 **Kill condition.** The mechanism is killed if B3-2 misses at every prefix length. That would mean
-the prefix does not localize well enough to beat abstention, and the GB outward number reflected
+the prefix doesn't localize well enough to beat abstention, and the GB outward number reflected
 Code-Point Open rather than postcodes in general. It is also stopped if B3-3 shows that the
 ancestry-only tier cannot be represented without some part of the pipeline defaulting a coordinate
 to `0,0`. In that case, fix the plumbing before the artifact ships.
@@ -574,7 +574,7 @@ the anchor channel (mechanism 3's second consumer). That requires a channel that
 values during training, and the GB hole shows the cost of shipping it untrained. If a batch is
 being prepared anyway, a cheap addition would extend `pilot-anchor-lookup.json` beyond its 67,708
 US/DE/FR keys, none of which contain letters, so the letter-containing systems get a gradient at
-all. That is a corpus decision with its own preregistration, and adding it to this arc would change
+all. That's a corpus decision with its own preregistration, and adding it to this arc would change
 more than one variable per run.
 
 ## Explicitly out of scope
@@ -584,7 +584,7 @@ more than one variable per run.
 - **The three divergent shape tables.** A.1 lists them and the four missing codex modules that
   caused them. Their merge is the right fix, and it is a codex task rather than a mechanism.
 - **Fix the two stale docstrings** (`resolve.ts:263`, `postcode-country-coherence.ts:71-72`) and
-  the `runtime-flags.mdx:49` row. They are listed here so they are not lost. Whoever next touches
+  the `runtime-flags.mdx:49` row. They're listed here so they're not lost. Whoever next touches
   those files should fix them.
 - **`coincident-roles`.** It was read and has no postcode relationship.
 - **A 5-digit US artifact.** M-3 shows that 3 digits is the longest prefix that still generalizes.

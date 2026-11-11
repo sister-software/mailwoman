@@ -22,14 +22,14 @@
  * service answers `ad:ThoroughfareName` with `numberMatched="6921"`, `ad:PostalDescriptor` with
  * `96` and `ad:AdminUnitName` with `113`, and a `GetFeature` with `COUNT=10000` returns each type
  * whole: 6,921 thoroughfare names arrive in one 13,916,056-byte document. One request per type is
- * also the only way to read them. The capabilities document does not advertise
+ * also the only way to read them. The capabilities document doesn't advertise
  * `ImplementsResultPaging` and its `CountDefault` is 1,000, so a reader that paged a type would
  * receive the first page again. Acquisition saves those three documents and the adapter reads a
  * directory holding them beside the municipality archives.
  *
  * The join is therefore across files, and the index is complete before the first address is read:
  * the first pass reads every input for component features and the second reads every input for
- * addresses. An unresolved reference is a value the reader asked for and could not read, and it
+ * addresses. An unresolved reference is a value the reader asked for and couldn't read, and it
  * raises.
  *
  * Two of the publisher's own spellings decide what a row records.
@@ -56,10 +56,10 @@
  *
  * The first three are an ordinary Spanish number, a number with a letter, and a number with a
  * *bis*, *izquierda* or *derecha* qualifier. The fourth is two fields concatenated and what its
- * second field designates is not established: it is three digits wide like the number itself, and
+ * second field designates isn't established: it is three digits wide like the number itself, and
  * no document the publisher publishes states what it counts. The row therefore writes the
  * publisher's own concatenation with its padding removed. A split on a guessed separator would
- * state a number the cadastre does not hold.
+ * state a number the cadastre doesn't hold.
  *
  * The municipality is `ad:AdminUnitName` at `3rdOrder`, which is the only level the service
  * publishes: 113 of 113 of its administrative-unit features state it, and their names are padded
@@ -123,7 +123,7 @@ export const ES_BIZKAIA_COUNTRIES: readonly string[] = ["ES"]
  * publisher's own words. Its INSPIRE metadata states the controlled values `No limitations to
  * public access` and `No conditions to access and use`, and its feed-level `rights` adds the
  * condition that authorship and ownership of the BFA be stated as «©Bizkaiko Foru Aldundia». The
- * register records two contradictions it did not resolve: all 112 municipality entries also read
+ * register records two contradictions it didn't resolve: all 112 municipality entries also read
  * `Copyright (c) 2017", ES.BFA; all rights reserved`, and Catastro's national feed labels this
  * publisher `CC BY 3.0 ES`. No document Bizkaia publishes states that label.
  */
@@ -148,7 +148,7 @@ const COMPONENT_ELEMENTS = [
 ] as const
 
 /**
- * The administrative level that is the municipality.
+ * The administrative level that's the municipality.
  *
  * The only level the service publishes, on 113 of 113 `ad:AdminUnitName` features.
  */
@@ -215,7 +215,7 @@ export function bizkaiaStreetCode(feature: MarkupElement): string | null {
  *
  * This module's header tabulates the four shapes it takes, with their counts.
  *
- * @returns The number, or null where the designator is absent or does not have four fields.
+ * @returns The number, or null where the designator is absent or doesn't have four fields.
  */
 export function bizkaiaHouseNumber(byType: ReadonlyMap<string, readonly string[]>): string | null {
 	const code = designator(byType, HOUSE_NUMBER_TYPE)

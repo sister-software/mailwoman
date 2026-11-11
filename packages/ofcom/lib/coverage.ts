@@ -152,7 +152,7 @@ export interface OfcomCoverageRow<F extends OfcomCoverageField> {
 /**
  * A parsed file: its source facts and one row per area, keyed by {@linkcode OfcomCoverageRow.area}.
  *
- * An area with no row is an area the file does not report.
+ * An area with no row is an area the file doesn't report.
  * That case differs from an area whose premises have no coverage.
  */
 export interface OfcomCoverageFile<F extends OfcomCoverageField> {
@@ -161,7 +161,7 @@ export interface OfcomCoverageFile<F extends OfcomCoverageField> {
 }
 
 /**
- * A requested field that the file does not publish.
+ * A requested field that the file doesn't publish.
  */
 export class OfcomCoverageFieldError extends Error {
 	readonly file: string
@@ -203,7 +203,7 @@ const POSTCODE_AREA = "postcode area"
 const OUTPUT_AREA_KEY = "output_area"
 
 /**
- * Derives the source facts from a published file name, or throws when the name does not state them.
+ * Derives the source facts from a published file name, or throws when the name doesn't state them.
  */
 export function parseOfcomCoverageFileName(file: string): OfcomCoverageSource {
 	const groups = FILE_NAME.exec(file)?.groups

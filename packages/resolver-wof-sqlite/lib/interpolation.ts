@@ -134,7 +134,7 @@ export class StreetInterpolator<
 	/**
 	 * Resources this instance opened.
 	 *
-	 * A caller-supplied connection is not in here, so disposal cannot reach it.
+	 * A caller-supplied connection isn't in here, so disposal cannot reach it.
 	 */
 	readonly #resources: DisposableStack
 	readonly #byPostcode:

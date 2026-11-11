@@ -28,7 +28,7 @@ letter-containing, and its country posteriors name exactly three countries: US (
 FR (27,119). A GB outward code is letter-containing by construction, so no training example ever put a
 non-zero value in slot 4.
 
-`postcode-gb.bin` is the only artifact that does — and it is not a rare event. A replay of
+`postcode-gb.bin` is the only artifact that does — and it isn't a rare event. A replay of
 `buildAnchorFeatures`'s recognizer (alphanumeric run → `lookup.get(UPPER)`) over the golden board showed:
 
 ```
@@ -41,8 +41,8 @@ All 106 of the 120 rows on that board contain a postcode. The binary pushed esse
 GB parse along an input direction the encoder has no learned response to.
 
 This case inverts a general rule, and the overlay's own README used to state only the other
-half of it: zeroing a **trained** channel is out-of-distribution. That is why `createScorer` fails
-closed. The GB slot was never trained, so there is no distribution to leave. Zero is what the encoder
+half of it: zeroing a **trained** channel is out-of-distribution. That's why `createScorer` fails
+closed. The GB slot was never trained, so there's no distribution to leave. Zero is what the encoder
 saw for every GB example it has ever been shown. A non-zero value is the out-of-distribution case.
 
 ## The boards
@@ -63,7 +63,7 @@ to uppercase with whitespace stripped.
 | the same, comma-STRIPPED                | 207 |            201/207 |              198/207 |
 
 Per register, anchor off: postcode 106/106 · 106/106 · 106/106; `dependent_locality` 69/69 · 69/69 ·
-69/69. The outcome is uniform across registers. It is not a casing artifact.
+69/69. The outcome is uniform across registers. It isn't a casing artifact.
 
 **The comma-stripped row is the cost, and it is one row.** A Telford row (its street, quoted here until
 2026-10-17, was a Price Paid Data address field and was removed, #2635)
@@ -93,7 +93,7 @@ anchor fired on 20/100 rows
 ```
 
 The hash changes when the artifact is removed (`8505fdee…` over the same 300 parses), so the channel is required for
-`en-us` and this change did not touch it.
+`en-us` and this change didn't touch it.
 
 **FR, byte-stable too.** Same instrument, the 46 FR rows × 3 registers, graded with `postcode-gb.bin`
 present and then absent — the direct test of whether the en-gb edit leaks sideways:

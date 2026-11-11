@@ -35,9 +35,9 @@ const ACHEMINEMENT = /^(\d{5}) (.+)$/u
 /**
  * Split a La Poste routing line into postcode, locality and an optional trailing `CEDEX`.
  *
- * Returns `null` when the line does not open with a five-digit postcode,
- * holds no locality after it, or holds `CEDEX` anywhere but at its end, because none
- * of those is a routing line the French layout can print.
+ * Returns `null` when the line doesn't open with a five-digit postcode, holds no locality
+ * after it, or holds `CEDEX` anywhere but at its end, because none of those is
+ * a routing line the French layout can print.
  */
 export function parseAcheminementLine(line: string): AcheminementLine | null {
 	const collapsed = line.replaceAll(/\s+/gu, " ").trim()

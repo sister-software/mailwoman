@@ -22,8 +22,8 @@ tracked xfails**, the Chevaleret comma-drop among them (`address_point→admin`,
 A decode-time prior can only add a constant to `B-locality` at the terminal piece. It flips the piece
 from `I-street` to `B-locality` when the bias exceeds the model's own emission gap
 (`max(I-street, B-street) − B-locality`). So the prior works iff a single bias threshold separates the
-class that should flip (terminal token is the locality) from the class that must not (the street
-legitimately ends in a place-word). It does not:
+class that should flip (terminal token is the locality) from the class that mustn't (the street
+legitimately ends in a place-word). It doesn't:
 
 | class                                    |                           example | terminal gap |
 | ---------------------------------------- | --------------------------------: | -----------: |
@@ -41,7 +41,7 @@ legitimately ends in a place-word). It does not:
 Flip-class gaps span **[2.18, 5.03]**; keep-class gaps span **[3.66, 6.13]**. They **overlap on
 [3.66, 5.03]**. A bias set to flip all ten targets (5.04) wrongly flips **3/10** real
 `Rue de <City>` streets. A bias set at the flip-class median (~3.2) already breaks `Rue de Rome`.
-There is no threshold that flips `…Paix **Lyon**` (3.15, locality) without also flipping
+There's no threshold that flips `…Paix **Lyon**` (3.15, locality) without also flipping
 `Rue de **Rome**` (3.66, street) or `Rue de **Lyon**` (4.84, street). This is the same
 constant-vs-context-mass defeat that beat the word-consistency heal on digit ownership: an additive
 prior cannot outvote a distribution it is added to uniformly.
@@ -65,18 +65,18 @@ prior cannot outvote a distribution it is added to uniformly.
 3. **A shippable-small index can't be complete, and completeness wouldn't help.** The anchor lexicon is
    11 KB. The WOF locality set is millions of surfaces. A population-thresholded subset is both
    coverage-limited (misses the long tail the defect also hits) and — per wall 1 — useless where it does
-   hit, because `Paris` is in it for both the target and the false-positive. There is no small index,
+   hit, because `Paris` is in it for both the target and the false-positive. There's no small index,
    and no complete index, that separates the two.
 
 Two practical failures compound these: the terminal-single-token scope misses multi-word localities
-(`Mountain View` — terminal `"View"` is not a locality), and the fix is necessary-not-sufficient anyway
+(`Mountain View` — terminal `"View"` isn't a locality), and the fix is necessary-not-sufficient anyway
 (`15 Rue de Paris **Lyon**` parses `street="de Paris Lyon"` — the model sweeps the real trailing
 locality into the street too, so flipping one terminal piece leaves a broken street tail).
 
 ## The direct fix — the resolver-as-arbiter, with its evidence interface
 
 The split is decidable, just not from token identity. It is decidable from **whole-parse atlas
-consistency**. That is the registry-backed doctrine's positive-evidence street/locality existence.
+consistency**. That's the registry-backed doctrine's positive-evidence street/locality existence.
 Only the k-best arbiter (#727 stage-2) can consume it. The arbiter generates the two competing
 parses and scores each against the atlas:
 

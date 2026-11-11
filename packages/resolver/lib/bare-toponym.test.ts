@@ -109,7 +109,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 5.06,
 		exactMatch: true,
 	},
-	// Weimar / Thüringen: a 2-token span containing a real exact match must not outrank the 1-token gold.
+	// Weimar / Thüringen: a 2-token span containing a real exact match mustn't outrank the 1-token gold.
 	{
 		...EMPTY_PLACE_FIELDS,
 		id: 8,
@@ -235,7 +235,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 	})
 
 	it("does NOT fire when the span is only PART of the raw input", async () => {
-		// A partial span is not a bare toponym: 'Weimar Thüringen' keeps the DE-scoped 'Weimar' probe.
+		// A partial span isn't a bare toponym: 'Weimar Thüringen' keeps the DE-scoped 'Weimar' probe.
 		const raw = "Weimar Thüringen"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
 		const calls: Array<{ text: string; country?: string }> = []
@@ -252,7 +252,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		const hit = await findRescoreCandidate(raw, roots, await makeBackend(calls), {})
 
 		expect(hit?.place.country).toBe("DE")
-		// One probe per span: no widened re-probe when there is no filter to soften.
+		// One probe per span: no widened re-probe when there's no filter to soften.
 		expect(calls).toHaveLength(1)
 	})
 

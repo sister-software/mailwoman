@@ -77,7 +77,7 @@ export function exactMatchIDs<DB>(
 			}
 		}
 	} catch {
-		// Extract without place_search either, so there is no exact-match tier.
+		// Extract without place_search either, so there's no exact-match tier.
 		// The caller falls back to weighted-sum order.
 	}
 

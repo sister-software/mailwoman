@@ -8,7 +8,7 @@
  *   terms, conditions and open questions per bundle as prose. `published-bundles.json` holds the served size
  *   and, where it could be read, the `tier` and flat expression of each artifact's own `layer_manifest`. A
  *   `layer_manifest` row on disk holds `license`, `attribution`, `source`, `source_vintage` and `build_sha`
- *   for a database that is present. `sbom.ts` writes the npm closure and lists no data file. A customer
+ *   for a database that's present. `sbom.ts` writes the npm closure and lists no data file. A customer
  *   asking what governs a downloaded database had to read three of those and join them by hand.
  *
  *   CycloneDX 1.5 rather than a schema of this repository's own, because the existing validators run against
@@ -18,7 +18,7 @@
  *   the run's own clock. No `serialNumber` is emitted, so re-running over an unchanged snapshot produces
  *   identical bytes and the committed file diffs only when a measurement changed.
  *
- *   **What it does not establish.** An artifact whose `layer_manifest` could not be read reports the
+ *   **What it doesn't establish.** An artifact whose `layer_manifest` couldn't be read reports the
  *   expression this repository's bundle registry assigns from the publishers' stated terms. The component
  *   records which of the two it is under `mailwoman:licenseBasis`. The 177 databases under the data root that
  *   have no `layer_manifest` row are counted in the metadata and are not emitted as components, because a
@@ -47,7 +47,7 @@ export const LicenseBasis = {
 
 	/**
 	 * The expression `bundles.ts` assigns from the publishers' stated terms, used
-	 * where the artifact's own row could not be read.
+	 * where the artifact's own row couldn't be read.
 	 *
 	 * It is this repository's reading rather than the artifact's statement.
 	 */
@@ -95,7 +95,7 @@ export interface DataBOMOptions {
 	 *
 	 * The bundle registry ships inside that package, so its version is what identifies
 	 * the set of artifacts the document describes.
-	 * There is no separate bundle-manifest version: `releases.json` pins one version per database family.
+	 * There's no separate bundle-manifest version: `releases.json` pins one version per database family.
 	 * Those versions appear per component.
 	 */
 	mailwomanVersion: string
@@ -109,7 +109,7 @@ export interface DataBOMOptions {
 	 * The data root's databases, when the caller took an inventory.
 	 *
 	 * Its manifested entries are the only source of `attribution`, `source_vintage`
-	 * and `build_sha` in this document, because a published artifact's own row could not
+	 * and `build_sha` in this document, because a published artifact's own row couldn't
 	 * be read for any of the 106 bundle artifacts measured 2026-09-27.
 	 */
 	inventory?: InventoryReport

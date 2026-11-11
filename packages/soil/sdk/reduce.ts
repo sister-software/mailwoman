@@ -110,7 +110,7 @@ export function mapUnitProfile(
 		}
 
 		// A miscellaneous area, such as rock outcrop or water, cannot take a capability rating.
-		// Any other component with a NULL rating is a soil that the survey did not rate.
+		// Any other component with a NULL rating is a soil that the survey didn't rate.
 		if (component.compkind === "Miscellaneous area") {
 			notRateable += weight
 		} else {

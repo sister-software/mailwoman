@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests that `regionSlugFromTree` yields a US state slug only for trees the resolver did not place outside the US.
+ * @file Tests that `regionSlugFromTree` yields a US state slug only for trees the resolver didn't place outside the US.
  *
  *   The slug selects an `address-points-us-<slug>.db` database. Some non-US region codes (Italian "MI", Australian
  *   "WA") collide with US state codes.

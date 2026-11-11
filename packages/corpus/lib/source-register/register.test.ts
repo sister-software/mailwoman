@@ -73,7 +73,7 @@ describe("the committed address-source register", () => {
 
 	it("carries the researched sources and none of the repeated discovery lookups", () => {
 		// The count moves whenever a pass splits a row or a jurisdiction gains a source,
-		// so what is held here is that every row is a researched source with a distinct id
+		// so what's held here is that every row is a researched source with a distinct id
 		// and a status from the vocabulary, rather than a total.
 		expect(register.sources.length).toBeGreaterThan(0)
 		expect(new Set(register.sources.map((row) => row.sourceID)).size).toBe(register.sources.length)
@@ -155,7 +155,7 @@ describe("the committed address-source register", () => {
 
 	it("states a reason on every refused decision, and refuses the sources pointing at one", () => {
 		// A refusal records that the terms were read and no grant was found.
-		// That is a different fact from `unchecked`.
+		// That's a different fact from `unchecked`.
 		// The reason is what a later request to the publisher starts from, so the audit
 		// requires it and this holds that the committed refusals have one.
 		const refused = register.licenses.filter((decision) => decision.state === LicenseReviewState.Refused)
@@ -268,7 +268,7 @@ describe("auditAddressSourceRegister", () => {
 		registerID: "test",
 		version: "0.0.0",
 		// A literal without a generating source has no meaningful digest.
-		// The structural audit does not read the field.
+		// The structural audit doesn't read the field.
 		contentDigest: "",
 		provenance: { source: "test" },
 		unresolved: ["addressRoles", "upstreamLineage", "coverage", "personalDataReview"],
@@ -679,7 +679,7 @@ describe("permission by operation", () => {
 
 	/**
 	 * Whether records are about identifiable people is governed by different law and reached through a
-	 * different analysis, so an elected grant must not admit a source with no personal-data review.
+	 * different analysis, so an elected grant mustn't admit a source with no personal-data review.
 	 */
 	describe("personal data", () => {
 		const { personalDataReview: _reviewed, ...unreviewed } = source

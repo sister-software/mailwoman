@@ -37,7 +37,7 @@ measure the size of the gap, write the recipe, and add it to the corpus.
 
 The first version drew from a thin vocabulary of sixteen street names and a handful of cities.
 Twenty thousand rows from sixteen streets means the model sees `Country Club Rd` a thousand
-times, so it learns the word and not the boundary. We expected that. We did not expect the
+times, so it learns the word and not the boundary. We expected that. We didn't expect the
 baseline result: the current model scored 48% on the suffix boundary and 70% on the French
 prefix against that thin data. Those scores looked reasonable.
 
@@ -52,7 +52,7 @@ To teach the Australian slash convention, where `4/2A` means unit 4, number 2A, 
 Australian addresses. The base-consistency lint blocked it. In our training corpus the token
 `3000` appears thousands of times, always as a US house number, and the extract labeled it as an
 Australian postcode. A coverage extract cannot outweigh the base corpus it is added to. It can
-only conflict with the base corpus and degrade results slowly over one to three releases. That has
+only conflict with the base corpus and degrade results slowly over one to three releases. That's
 happened to us before. The lint caught the conflict before we spent any GPU-hours on it. We
 removed Australia, the extract now covers base locales only, and the slash convention became a
 separate task that must also add base coverage for its locale.
@@ -63,7 +63,7 @@ With the extract limited to the locales we train on, the lint found another prob
 corpus, tokens like Paris, Springfield, and Burlington are mostly streets (Paris Avenue,
 Springfield Street) and only rarely cities. Our extract labels them as localities. Either label
 can be correct depending on context, and the model may be context-aware enough to handle it. The
-lint does not assume that. It flagged the minority sense, because the last time we let a similar
+lint doesn't assume that. It flagged the minority sense, because the last time we let a similar
 case through, a theater on 5th Avenue caused an extract to label `5th Avenue` as a venue. The
 retrain will track this number, and a cleaner extract will draw its cities from names that the corpus
 already labels as cities.
@@ -72,7 +72,7 @@ already labels as cities.
 
 At the end of the night, the extract was built and the baseline measured. The recipe was written
 and approved, the corpus assembled, and the manifest tested against the real base. Every
-checklist item was complete, and a training run needed one more command. We deliberately did not
+checklist item was complete, and a training run needed one more command. We deliberately didn't
 run it.
 
 The three checks were the main work of the night. The taxonomy identified the weakness. The

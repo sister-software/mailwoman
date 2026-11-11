@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-address-system parsing conventions: what is and isn't grammatical in the address system the
+ *   Per-address-system parsing conventions: what's and isn't grammatical in the address system the
  *   model's locale head detects, so the decoder can obey the detection rather than merely being
  *   nudged by it.
  *
@@ -27,7 +27,7 @@ export interface AddressSystemConventions {
 	/**
 	 * The system's canonical postcode shape.
 	 *
-	 * A decoded span that is a strict sub-match of a pattern-valid string in the raw text is shape-invalid
+	 * A decoded span that's a strict sub-match of a pattern-valid string in the raw text is shape-invalid
 	 * and eligible for the snap-only repair (extend/clip to the valid match, never invent a span).
 	 */
 	readonly postcodePattern?: RegExp

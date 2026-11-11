@@ -16,7 +16,7 @@ import { isPresent } from "#objects"
 
 /**
  * Shortest raw string kept as an outlier example.
- * Below it there is no example to learn from.
+ * Below it there's no example to learn from.
  */
 const MIN_OUTLIER_LENGTH = 6
 

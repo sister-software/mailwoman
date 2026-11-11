@@ -92,7 +92,7 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
 
 	/**
-	 * Releases resources the garbage collector does not own, such as an ONNX
+	 * Releases resources the garbage collector doesn't own, such as an ONNX
 	 * session's WASM heap or a GPU buffer.
 	 *
 	 * The hook calls it when replacing a bundle.

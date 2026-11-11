@@ -68,7 +68,7 @@ function harness() {
 	const preflightTimeouts: number[] = []
 	const sleeps: number[] = []
 	const locked = new Set<string>()
-	// The count of further starts Modal refuses for a name an exited sandbox has not yet released.
+	// The count of further starts Modal refuses for a name an exited sandbox hasn't yet released.
 	const releasing = { refusals: 0 }
 
 	const boundary: ModalBoundary = {
@@ -288,7 +288,7 @@ describe("the training launch lifecycle", () => {
 		const spec = sandboxes.get(second.sandboxes[1]!)!.spec
 
 		expect(spec.env).toMatchObject({ MW_FRESH: "0", MW_FAIL_AT_STEP: "0" })
-		// A restart is a new launch, so an earlier launch's fault-injection marker does not apply to it.
+		// A restart is a new launch, so an earlier launch's fault-injection marker doesn't apply to it.
 		expect(spec.env?.["MW_LAUNCH_ID"]).not.toBe(first.environment.MW_LAUNCH_ID)
 		await expect(restartLaunch(runKey, deps)).rejects.toThrow(/is running/)
 

@@ -43,7 +43,7 @@ const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
  * That result was indistinguishable from a country absent from the source.
  * This tool uses a concurrency-wide burst and has no `minRequestIntervalMs` setting.
  *
- * The host has not objected to that request pattern.
+ * The host hasn't objected to that request pattern.
  * A rate limit without supporting measurements would slow the tool.
  */
 const sslAddressClient = new APIClient({

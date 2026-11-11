@@ -18,7 +18,7 @@
  *   touches. Inside a covered cell an empty answer is evidence of absence: no GB uprn by that number
  *   has a Code-Point postcode, or no UPRN has that postcode. Two absences the reader cannot
  *   tell from those are recorded in `nsul_meta` as counts rather than as rows. A uprn whose `pcds` is
- *   null (its postcode is not in Code-Point Open) and one Open uprn publishes no coordinate for — so a
+ *   null (its postcode isn't in Code-Point Open) and one Open uprn publishes no coordinate for — so a
  *   caller building negative evidence reads the coverage table and those counts rather than this reader
  *   by itself. Outside coverage (Northern Ireland, the Isle of Man, the Channel Islands) the answer is
  *   unknown, per the meaning-of-zero rule.

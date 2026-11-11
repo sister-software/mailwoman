@@ -44,7 +44,7 @@ const CACHE_BYTES = 512 * 1024 * 1024
 
 /**
  * Above this globe-to-mercator transition the map draws as a globe, where the
- * layer's flat frame would not line up, so the layer waits.
+ * layer's flat frame wouldn't line up, so the layer waits.
  * Street zooms are fully mercator.
  */
 const MAX_PROJECTION_TRANSITION = 0.01

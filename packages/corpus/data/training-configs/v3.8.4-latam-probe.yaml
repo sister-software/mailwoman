@@ -1,7 +1,7 @@
 # v3.8.4-latam-probe is a 2k-step probe that adds Canada and Mexico as trained countries.
 #
 # The run starts from v381 and reads the v0.13.0-latam corpus. The new overture-latam source holds the
-# CA and MX Overture rows apart from the existing overture source, so its weight does not change the
+# CA and MX Overture rows apart from the existing overture source, so its weight doesn't change the
 # exposure of the countries already trained. The dependent_locality class weights are back at 0.3.
 #
 # The guards are the golden set, the US comma-free board, the FR fragment board and the Norway digit board.

@@ -82,7 +82,7 @@ describe("case transformations", () => {
 describe("caseFoldKey", () => {
 	it("matches the German sharp s against its uppercase expansion", () => {
 		expect(caseFoldKey(DE_SHARP_S)).toBe(caseFoldKey("FRIEDRICHSTRASSE"))
-		// A bare lowercase fold does not match the sharp s to its expansion.
+		// A bare lowercase fold doesn't match the sharp s to its expansion.
 		expect(DE_SHARP_S.toLowerCase()).not.toBe("FRIEDRICHSTRASSE".toLowerCase())
 	})
 

@@ -12,7 +12,7 @@ import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from 
  * postcode-prefix hit with ancestry only.
  *
  * A missing coordinate stays `undefined`.
- * An invented centroid would place the postcode at a point the data does not support.
+ * An invented centroid would place the postcode at a point the data doesn't support.
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
@@ -82,7 +82,7 @@ export function probePostcodePrefix(
 }
 
 /**
- * Builds the synthetic `postalcode` place for a prefix hit, with `id: 0` because it is not a gazetteer row.
+ * Builds the synthetic `postalcode` place for a prefix hit, with `id: 0` because it isn't a gazetteer row.
  * It includes a coordinate only when the prefix node has one.
  */
 export function postcodePrefixResolvedPlace(

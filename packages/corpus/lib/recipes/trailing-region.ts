@@ -34,7 +34,7 @@ import { SurfaceOrigin } from "#types"
  * The region code an address line in this country writes, or `null` where the region name is written out.
  *
  * A subdivision belongs here only when its code is a posted surface: Canadian province
- * and US state codes are, a Bundesland or a région is not.
+ * and US state codes are, a Bundesland or a région isn't.
  *
  * Several Canadian codes collide with ISO alpha-2 country codes (`NL`, `PE`),
  * so a code left unattested here reads as the country.

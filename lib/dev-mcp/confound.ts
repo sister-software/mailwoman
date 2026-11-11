@@ -206,7 +206,7 @@ type ResolvedByName = Map<string, Pick<RoutedArtifactRecord, "origin" | "path" |
  *
  * Two recorded digests that differ make isolation ambiguous.
  * A `null` on either side leaves the comparison unable to establish whether the bytes agree.
- * That is a different reading from agreement.
+ * That's a different reading from agreement.
  */
 function readArtifacts(value: unknown): RoutedArtifactRecord[] | null {
 	if (!Array.isArray(value)) return null

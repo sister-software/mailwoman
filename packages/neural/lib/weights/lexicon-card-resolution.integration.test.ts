@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The evidence-bundle lexicons resolve from the model-card rather than a hard-coded filename: a
- *   card naming a generation the package does not ship must refuse rather than silently serve a
+ *   card naming a generation the package doesn't ship must refuse rather than silently serve a
  *   different one.
  *
  *   These tests build synthetic package layouts under a `cacheRoot.path` so they need no model

@@ -6,7 +6,7 @@ the shipped model before the run):** targets move, guards hold.
 **Verdict: the candidate passes both boards. Every target moved, and the two contextful guards
 improved.** The house-number-license diagnosis (T1c) is confirmed by the fix working.
 
-This is **not** a promote check — see §5.
+This **isn't** a promote check — see §5.
 
 |           |                                                                      |
 | --------- | -------------------------------------------------------------------- |
@@ -50,11 +50,11 @@ broken prior for another.
 new default. The discriminating evidence is the designator. The designator is the only feature that
 separates the two classes.
 
-That is what the counter-distribution was for. 20% of the extract is bare communes without a street
+That's what the counter-distribution was for. 20% of the extract is bare communes without a street
 label. Without them, the cheapest way to satisfy every other row is to start calling bare toponyms
 streets. The guard is why we can say the model learned rather than swapped.
 
-**The contextful guards did not merely hold — they improved** (+2.3pp, +3.5pp). The extract did not buy
+**The contextful guards didn't merely hold — they improved** (+2.3pp, +3.5pp). The extract didn't buy
 fragments with full addresses.
 
 ## 3. Board 1 — the global parity floor (the guard)
@@ -66,10 +66,10 @@ fragments with full addresses.
 | postcode     |   71/72 = 0.9861 |   **71/72 = 0.9861** |  identical |
 
 No label regressed. Street gained **+8 fixtures** on the broad corpus. The `FAIL` verdicts printed by
-`eval parity` are the **v7 campaign floors** (street 0.90 / hn 0.97) — v264 fails them too. They are a
+`eval parity` are the **v7 campaign floors** (street 0.90 / hn 0.97) — v264 fails them too. They're a
 target rather than a regression check.
 
-## 4. What the in-training eval said, and why it is not the verdict
+## 4. What the in-training eval said, and why it isn't the verdict
 
 |          |   v264 |  @2000 |  @4000 |  @6000 |     @8000 |
 | -------- | -----: | -----: | -----: | -----: | --------: |
@@ -89,7 +89,7 @@ Two things survive from it:
 - **region found a new lower equilibrium at ~0.830 (−1.0pp) and plateaued** across four evals. It
   looked like the open item — **#1102** is titled _"fragment/twin training mass erodes US
   region+locality recall (~2.5pp) — the promote blocker"_, the same failure shape at a larger
-  magnitude, and it blocked a promote before. **It did not reproduce on the canonical check (§4.1).**
+  magnitude, and it blocked a promote before. **It didn't reproduce on the canonical check (§4.1).**
 
 **The precision confound, caught in the act.** The first read graded an **fp32** export against
 **int8** baselines — the shipped weights package ships int8 (39.4 MB), a fresh `export_onnx` is fp32
@@ -119,12 +119,12 @@ ship config, int8 both sides):
 
 So the val split's −1.0pp region was a **false positive** rather than a preview. This inverts the arc's usual failure. The other instruments here missed
 problems that were real. This one reported a problem that was not. The root is the same: a metric on
-a distribution the check did not ask about. The rule is also the same: read the instrument the check names.
+a distribution the check didn't ask about. The rule is also the same: read the instrument the check names.
 
-That does not make `region` uninteresting. It is the tag the fragment mass pulls on, #1102 is real,
+That doesn't make `region` uninteresting. It is the tag the fragment mass pulls on, #1102 is real,
 and a heavier weight or a second locale's extract could push −0.2pp into −2pp. It is a thing to watch rather than a thing to ignore, and it is cheap to watch: this table is one command.
 
-### 4.2 The pre-registered "ALSO" — which did not come out as predicted
+### 4.2 The pre-registered "ALSO" — which didn't come out as predicted
 
 The check had a third clause: _"`hallucination_rate@v301-span` 0.352 should FALL if T1c's diagnosis
 holds."_ Measured on the 54 street-free parity rows — the MESSY population (venues, all-caps junk,
@@ -136,7 +136,7 @@ French zone names), as distinct from the fragment board's clean BAN communes:
 | v310 (fr-fragment) | 17/54 = 0.315 | [0.207, 0.447] |
 
 **It rose.** 6 introduced, 1 removed. The intervals overlap heavily and McNemar on the paired
-discordants (6 vs 1) gives p ≈ 0.125, so the rate change is **not established** — but the direction is
+discordants (6 vs 1) gives p ≈ 0.125, so the rate change **isn't established** — but the direction is
 against the prediction, and two of the six share one mechanism:
 
 ```
@@ -154,38 +154,38 @@ The two populations do not contradict each other. They partition as follows:
 
 - **Clean French communes** (board, n=400): `bare-locality` **held at 0.980**. The counter-distribution
   worked exactly where it was aimed.
-- **French zone names**: a **new, narrow class** the counter-distribution does not cover, because it
+- **French zone names**: a **new, narrow class** the counter-distribution doesn't cover, because it
   mints only communes.
 - **Non-French junk**: noise.
 
-The fix is a sibling of what is already there — extend the counter-distribution to French zone
+The fix is a sibling of what's already there — extend the counter-distribution to French zone
 designators (`ZAC`, `ZA`, `Lotissement`, `Résidence` as NOT-street). That widens an existing mechanism.
 It is an extract change, so it belongs to the next run rather than to this verdict.
 
 **This is what pre-registration is for.** Two of the three check clauses passed with non-overlapping
 intervals. The third went the other way and is on the page at the same size as the wins.
 
-## 5. What this does and does not establish
+## 5. What this does and doesn't establish
 
 **Establishes:** the failure was the training distribution, exactly as T1c diagnosed. A model that read
 `Rue Montmartre` as a locality now reads it as a street, and does so without giving up the contextful
 case or starting to hallucinate streets on bare communes. The BAN registry as a **soft prior +
 synthetic coverage** source — the doctrine's whole claim — works on its first real test.
 
-**Does not establish:**
+**Doesn't establish:**
 
 - **Promotion.** The 2pp pre-publish check passes (§4.1), which clears the largest single hurdle — but
-  that is one leg rather than the battery. A promote still wants `mailwoman eval check --check <spec>` (the
+  that's one leg rather than the battery. A promote still wants `mailwoman eval check --check <spec>` (the
   per-locale floors, the int8↔fp32 delta cap, the cascade smoke, the mask-regression lock) and an
   operator GO. This page ships no model.
-- **The v7 floors.** street 0.6067 vs a 0.90 floor. +3.0pp is real and it is not 32pp.
+- **The v7 floors.** street 0.6067 vs a 0.90 floor. +3.0pp is real and it isn't 32pp.
 - **`date-name`.** 0.158 is +10.3pp and still 84% wrong. BAN holds only ~1,418 date-name streets and
-  the extractor already takes every one. The extract has 655 rows of it. The change there is **extract
+  the extractor already takes every one. The extract has 655 rows of it. The change there's **extract
   weight** rather than more data — and, per T1c, the underlying confusion (a digit inside a street name vs a
   house number) is the same one the span decode shows from the other side.
 - **Other locales.** FR only. Generalization goes **by tier** (BAN → BAG → TIGER-with-scope), never
   folded into one step.
-- **Hallucination.** §4.2: it did not fall, and on the messy population it rose (n.s.). The FR-zone
+- **Hallucination.** §4.2: it didn't fall, and on the messy population it rose (n.s.). The FR-zone
   class is real, narrow, and uncovered. Anyone reading the +50pp should read that too.
 
 ---

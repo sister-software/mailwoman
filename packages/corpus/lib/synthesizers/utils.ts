@@ -345,7 +345,7 @@ const STATE_ABBR_TO_NAME: Record<string, string> = Object.fromEntries(
  * Expand state abbreviation to full name.
  */
 /**
- * Replace the last whole-word occurrence of `region` in `raw`, or return null when it does not occur.
+ * Replace the last whole-word occurrence of `region` in `raw`, or return null when it doesn't occur.
  *
  * The region follows the street and the locality in every US rendering,
  * so the last occurrence is the region's.

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `mailwoman data prune` on the compiled CLI refuses a `--retain` that is not a positive whole number
+ * @file `mailwoman data prune` on the compiled CLI refuses a `--retain` that's not a positive whole number
  *   before it plans, and keeps the active generation's files. Run `yarn compile` before this suite.
  */
 

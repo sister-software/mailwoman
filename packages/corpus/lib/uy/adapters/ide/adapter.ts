@@ -85,7 +85,7 @@ const PRESENT_OPTIONS = { absentValues: [ABSENT] } as const
  * `BIS` and a single letter.
  *
  * The two-letter values (`DU`, `CC`, `TR`) are codes the dataset's metadata
- * does not define, so they are left off.
+ * doesn't define, so they're left off.
  */
 const LETTER_SUFFIX = /^(?:BIS|[A-Z])$/u
 

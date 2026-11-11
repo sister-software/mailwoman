@@ -111,7 +111,7 @@ export interface FloodZoneCellTable {
 	h3_cell: number
 	/**
 	 * The cell's resolution.
-	 * A short cell does not encode its own resolution.
+	 * A short cell doesn't encode its own resolution.
 	 */
 	resolution: number
 	zone_code: string

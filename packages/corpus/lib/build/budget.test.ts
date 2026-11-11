@@ -19,7 +19,7 @@ describe("defaultBuildJobs", () => {
 	})
 
 	it("builds serially when a resident adapter would not fit in a worker", () => {
-		// Two standard workers fit and a resident one does not.
+		// Two standard workers fit and a resident one doesn't.
 		const hostMemoryBytes = HOST_RESERVE_BYTES + Math.min(2 * standard, resident - 1)
 
 		expect(resident).toBeGreaterThan(2 * standard)

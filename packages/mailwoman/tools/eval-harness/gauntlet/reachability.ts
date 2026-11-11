@@ -8,7 +8,7 @@
  *   The resolver looks a tag up in one placetype band (`locality` queries `locality`, `borough` and
  *   `localadmin`). A gazetteer that holds the expected value only in another band, such as a GB town typed
  *   `neighbourhood`, makes the row's coordinate assertion unreachable through that component under every
- *   parse. That is a data condition, and this module reads it from `candidate.db` so a diagnosis names it
+ *   parse. That's a data condition, and this module reads it from `candidate.db` so a diagnosis names it
  *   instead of grading it as a model failure.
  */
 
@@ -27,7 +27,7 @@ const POSTCODE_PLACETYPE = "postalcode"
  * The placetype band the resolver queries for an expected tag in a country.
  *
  * The band is the codex placetype for the tag, expanded through the resolver's filter groups.
- * A tag the placetype map does not route to the candidate table, such as `street`,
+ * A tag the placetype map doesn't route to the candidate table, such as `street`,
  * `venue` or `postcode`, returns `null`.
  */
 export function placetypeBand(tag: string, country: string | null): readonly string[] | null {
@@ -55,7 +55,7 @@ export type CandidateBandProbe = (value: string, country: string) => PlacetypeCo
  * - `reachable`: the band holds at least one row for the value.
  * - `unreachable`: the band holds none while another placetype does, so the resolver can never pick it.
  * - `absent`: no placetype holds the value in this country.
- * - `unprobed`: the row states no country, so the band could not be queried.
+ * - `unprobed`: the row states no country, so the band couldn't be queried.
  */
 export interface ComponentReachability {
 	tag: string
@@ -79,7 +79,7 @@ export interface ComponentReachability {
  * A component without a band, such as a street or a venue, is left out.
  *
  * A row without a country is read as `unprobed` rather than as reachable,
- * because an unread condition is not a passing one.
+ * because an unread condition isn't a passing one.
  */
 export function readExpectationReachability(
 	expected: Readonly<Record<string, string>>,

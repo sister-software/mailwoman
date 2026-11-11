@@ -48,14 +48,14 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("readRyhtiHead against paikkatiedot.ymparis
 			const head = await readRyhtiHead(client)
 
 			// Both are what the skip decision rests on.
-			// A measured value is not asserted: the publisher rewrites the file daily
+			// A measured value isn't asserted: the publisher rewrites the file daily
 			// and the length moves with it.
 			expect(head.contentLength).toBeGreaterThan(0)
 			expect(head.lastModified).not.toBeNull()
 			expect(Number.isNaN(new Date(head.lastModified ?? "").getTime())).toBe(false)
 
 			// `application/x-gzip;charset=UTF-8` as served on 2026-10-02.
-			// The check is that it is not a page, since an html body under http 200 is
+			// The check is that it isn't a page, since an html body under http 200 is
 			// what a portal answers when the file is gone.
 			expect(head.contentType ?? "").not.toContain("text/html")
 		},

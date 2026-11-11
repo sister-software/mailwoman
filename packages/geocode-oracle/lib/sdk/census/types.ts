@@ -110,7 +110,7 @@ export interface CensusTigerLine {
 /**
  * The Census geocoder's decomposition of a matched street address.
  *
- * Every value comes back uppercase because that is the provider's form (USPS Publication 28),
+ * Every value comes back uppercase because that's the provider's form (USPS Publication 28),
  * not a normalization this package applies.
  *
  * The provider returns seven slots.

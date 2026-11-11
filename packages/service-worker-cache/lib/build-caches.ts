@@ -16,7 +16,7 @@ export function buildCacheName(prefix: string, role: string, build: string): str
 }
 
 /**
- * Deletes every cache whose name starts with `prefix` and is not in `keep`, and returns the names deleted.
+ * Deletes every cache whose name starts with `prefix` and isn't in `keep`, and returns the names deleted.
  *
  * A cache outside the prefix is kept.
  * Workbox's precache is one, and Workbox replaces its entries by revision.

@@ -69,7 +69,7 @@ export interface AutocompleteOpts {
 	 *
 	 * Off by default, because the CLI surfaces distinct same-name places such as
 	 * New York the city and New York the county.
-	 * A typeahead wants it on so the dropdown does not show four "New London"s.
+	 * A typeahead wants it on so the dropdown doesn't show four "New London"s.
 	 */
 	dedupeByName?: boolean
 }

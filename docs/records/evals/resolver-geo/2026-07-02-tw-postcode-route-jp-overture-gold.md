@@ -96,7 +96,7 @@ resolver's current operating point is ~98%, and `postcode-locality-jp.db`'s meta
 be re-stamped at its next rebuild. Coord p50/p90 vs the Overture point: 4.69 / 13.21 km
 (municipality-centroid scale, as expected).
 
-**Refresh-source note (for the convention-table provenance):** Overture is not viable as a JP
+**Refresh-source note (for the convention-table provenance):** Overture isn't viable as a JP
 postcode refresh source (0% fill). KEN_ALL (rescued copy at `$MAILWOMAN_DATA_ROOT/KEN_ALL_ROME`)
 remains the only keying source, and Overture serves as the independent admin + coordinate gold.
 

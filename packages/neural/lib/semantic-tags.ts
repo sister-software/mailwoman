@@ -36,7 +36,7 @@ export const SEMANTIC_TAG_REGISTRY_VERSION = 1
 /**
  * The tags `COMPONENT_TAGS` in `@mailwoman/codex/component` declares and no label set trains.
  *
- * They are registered so the registry covers the parser's whole vocabulary.
+ * They're registered so the registry covers the parser's whole vocabulary.
  */
 export const JS_ONLY_TAGS = ["street_prefix_particle", "attention"] as const
 
@@ -93,7 +93,7 @@ export const UNREFINED: ReadonlySet<string> = new Set([
 /**
  * The global semantic id of each head tag of `name`, in head order.
  *
- * @throws When the set holds a tag the registry does not know.
+ * @throws When the set holds a tag the registry doesn't know.
  * The refusal catches a tag that skipped registration.
  */
 export function headMapping(name: LabelSetName): number[] {
@@ -157,7 +157,7 @@ export function splitBIOLabel(label: string): [prefix: "B" | "I", tag: string] |
 }
 
 /**
- * What projecting a family's labels changed and what it could not represent, as the ledger reports it.
+ * What projecting a family's labels changed and what it couldn't represent, as the ledger reports it.
  */
 export interface ProjectionReport extends LabelSetContract {
 	projected: Record<string, number>
@@ -165,10 +165,10 @@ export interface ProjectionReport extends LabelSetContract {
 }
 
 /**
- * Counts what projecting labels into one family changed and what it could not represent.
+ * Counts what projecting labels into one family changed and what it couldn't represent.
  *
  * A loader that projects through it reports, per run, the spans of each concept that
- * became a coarser tag and the spans the family could not emit.
+ * became a coarser tag and the spans the family couldn't emit.
  */
 export class ProjectionLedger {
 	readonly labelSet: LabelSetName
@@ -208,8 +208,8 @@ export class ProjectionLedger {
 	/**
 	 * Projects a row's labels, merging adjacent spans that refine the same target into one span.
 	 *
-	 * `2丁目3番16号` is three spans (`block`, `sub_block`, `building_number`) on a head that
-	 * has them and one `house_number` span on a head that does not.
+	 * `2丁目3番16号` is three spans (`block`, `sub_block`, `building_number`) on a head
+	 * that has them and one `house_number` span on a head that doesn't.
 	 * Rule D4 labels the compact form `2-3-16` the same way.
 	 *
 	 * A span that projects to the target it already holds is never merged with its neighbor,

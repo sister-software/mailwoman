@@ -6,7 +6,7 @@
  *   Block-device inspection and the guards that stand between `storage prepare` and someone's root filesystem.
  *
  *   Each check reads a claim the operator states up front: the serial they expect, the transport they expect.
- *   The device has to match all of them. A device that has drifted (re-enumerated as a different node,
+ *   The device has to match all of them. A device that's drifted (re-enumerated as a different node,
  *   swapped for another enclosure) fails the claim rather than getting formatted, because `/dev/sdX` names are
  *   assigned in discovery order and are not stable across reboots.
  */
@@ -123,7 +123,7 @@ export function claimFailures(device: BlockDevice, claim: DeviceClaim): readonly
 /**
  * The device backing `/`, so a claim can never be satisfied by the boot disk.
  *
- * Returned as a bare device name (`nvme0n1`) because that is what `lsblk --output NAME` reports.
+ * Returned as a bare device name (`nvme0n1`) because that's what `lsblk --output NAME` reports.
  */
 export async function rootDeviceName(): Promise<string | null> {
 	const probe = await runHostCommand("findmnt", ["--noheadings", "--output", "SOURCE", "--target", "/"])

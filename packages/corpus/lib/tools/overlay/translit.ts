@@ -64,7 +64,7 @@ export interface TranslitOverlayOptions {
 	 * to {@link TranslitOverlayOptions.canonicalPathPrefix}.
 	 *
 	 * Pass it explicitly when translating a manifest generated under a different
-	 * `$MAILWOMAN_DATA_ROOT` than the one you are running with.
+	 * `$MAILWOMAN_DATA_ROOT` than the one you're running with.
 	 *
 	 * @defaultValue `dataRootPath()` with a trailing slash — the root that wrote those paths.
 	 */

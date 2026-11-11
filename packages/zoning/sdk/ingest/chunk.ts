@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The streaming pass, bounded to one process per range of the authority's own feature ids because h3's wasm heap cannot be reset from JavaScript and a build that completes only by luck is not reproducible.
+ * The streaming pass, bounded to one process per range of the authority's own feature ids because h3's wasm heap cannot be reset from JavaScript and a build that completes only by luck isn't reproducible.
  */
 
 import {

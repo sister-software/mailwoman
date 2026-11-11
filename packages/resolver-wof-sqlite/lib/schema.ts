@@ -111,7 +111,7 @@ export interface NamesTable {
  * Per-place GeoJSON blob.
  *
  * Centroid lat/lon are already exposed via `spr.{latitude,longitude}`,
- * so the resolver does not need to parse this.
+ * so the resolver doesn't need to parse this.
  * The table stays modeled so a caller that wants the full geometry for bbox or polygon work can read it.
  */
 export interface GeojsonTable {

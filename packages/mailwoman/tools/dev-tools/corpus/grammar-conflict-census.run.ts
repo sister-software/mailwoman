@@ -9,7 +9,7 @@
  *   A shape is the sequence of token character classes — `alpha alpha digit punct alpha punct digit`
  *   for `Main Street 12, Springfield, 62701`. A labeling is the tag sequence the corpus assigns those
  *   same tokens. One shape with two labelings across two countries is a pattern a single decoder
- *   has to resolve from context. A row whose context does not settle it is a row the decoder can
+ *   has to resolve from context. A row whose context doesn't settle it is a row the decoder can
  *   only get right for one of the two systems.
  *
  *   This measures that conflict rather than corpus volume. When rows are added to a country, the

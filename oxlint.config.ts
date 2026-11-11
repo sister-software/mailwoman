@@ -105,10 +105,10 @@ const NODE_TIER_NEURAL_FILES = [
 ]
 
 /**
- * Node-only modules that the browser tier must not import as values.
+ * Node-only modules that the browser tier mustn't import as values.
  *
  * Export conditions do not apply to relative specifiers.
- * `@mailwoman/neural/onnx-runner` resolves to a browser build, but `./onnx-runner.ts` does not.
+ * `@mailwoman/neural/onnx-runner` resolves to a browser build, but `./onnx-runner.ts` doesn't.
  */
 const NODE_ONLY_NEURAL_MODULES = [
 	"./onnx-runner.ts",
@@ -172,7 +172,7 @@ export default {
 		},
 		{
 			// The files the Node-builtin restriction points at, and the call sites using
-			// builtins core does not wrap yet — each may import its builtin directly.
+			// builtins core doesn't wrap yet — each may import its builtin directly.
 			files: [
 				// `@mailwoman/sqlite` opens connections, so it may import `node:sqlite`.
 				"packages/sqlite/**/*.ts",
@@ -195,7 +195,7 @@ export default {
 				// Corpus tests sit beside their modules and start local HTTP and TCP servers.
 				"packages/corpus/lib/**/*.test.ts",
 				"packages/corpus/lib/**/*.test.tsx",
-				// These files use builtins that core does not wrap yet, such as readline,
+				// These files use builtins that core doesn't wrap yet, such as readline,
 				// worker_threads, cluster, http and https.
 				"packages/filer/sdk/form499.ts",
 				"packages/filer/sdk/provider-list.ts",

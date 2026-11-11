@@ -302,7 +302,7 @@ export interface JurisdictionTileResult {
 /**
  * Builds the jurisdiction coverage PMTiles.
  *
- * @throws When the exposure report is not a `mailwoman.exposure/v1` report, or tippecanoe fails.
+ * @throws When the exposure report isn't a `mailwoman.exposure/v1` report, or tippecanoe fails.
  */
 export async function buildJurisdictionTiles(options: JurisdictionTileOptions): Promise<JurisdictionTileResult> {
 	const exposure = await readLocalJSONFile<ExposureReport>(options.exposurePath)

@@ -15,9 +15,9 @@
  *   for. an administrative region needs its own outline or the cells along its edge claim coverage
  *   the source never had.
  *
- *   The extractor rejects multiple matches because `name` is not unique in OSM even within one
+ *   The extractor rejects multiple matches because `name` isn't unique in OSM even within one
  *   admin level. Silently taking the first row would key a completeness claim to whichever feature
- *   the driver happened to emit first. Downstream code could not distinguish it from the region the caller meant.
+ *   the driver happened to emit first. Downstream code couldn't distinguish it from the region the caller meant.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

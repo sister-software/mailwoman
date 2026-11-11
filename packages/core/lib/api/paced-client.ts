@@ -7,7 +7,7 @@
  *   It provides courtesy pacing and bounded retries.
  *   It also stores response cache entries under the data root.
  *
- *   The `@mailwoman/core/api` barrel does not export this factory because it reaches `#api/disk-storage`.
+ *   The `@mailwoman/core/api` barrel doesn't export this factory because it reaches `#api/disk-storage`.
  *   That module imports `node:fs/promises`. The barrel serves a browser bundle. Import the factory from the
  *   `@mailwoman/core/api/paced-client` subpath.
  */

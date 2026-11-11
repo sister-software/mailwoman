@@ -18,7 +18,7 @@ import { headMapping, REFINES, SEMANTIC_TAG_REGISTRY_VERSION, SEMANTIC_TAGS, UNR
 /**
  * The version of {@linkcode LabelSchema}'s layout.
  *
- * A consumer refuses a schema whose version it does not read.
+ * A consumer refuses a schema whose version it doesn't read.
  * A section added beside the existing ones keeps the version, because every
  * reader looks its sections up by name.
  */

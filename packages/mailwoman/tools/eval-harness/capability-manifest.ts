@@ -166,7 +166,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<CapabilityManifest> 
 
 			for (const t of TAGS) {
 				// Skip tags the model never emits and never sees in gold under either mask.
-				// A 0/0 F1 is not a capability claim, just noise.
+				// A 0/0 F1 isn't a capability claim, just noise.
 				// (maskOffF1 0 with the tag present in gold is a real claim and is kept.)
 				if (off[t] === 0 && on[t] === 0 && !rowsHaveTag(rows, t)) continue
 				const cap: TagCapability = { maskOffF1: off[t]! }

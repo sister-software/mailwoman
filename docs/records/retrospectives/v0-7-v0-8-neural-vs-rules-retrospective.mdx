@@ -105,7 +105,7 @@ parser, run through the _same_ WOF resolver, lands on the right locality. On 10,
 locality, on real addresses). The north-star claim — "a parser superior to Pelias's
 regex/rules system" — is demonstrated here rather than merely asserted.
 
-(Coordinate accuracy is still admin-centroid tier: p50 2.4 km, p90 10.6 km. That is the
+(Coordinate accuracy is still admin-centroid tier: p50 2.4 km, p90 10.6 km. That's the
 _geometry_ gap rather than a parsing gap — addressed in the roadmap below.)
 
 ## Where neural is worse at parsing — and why
@@ -127,7 +127,7 @@ After removing the harness bias, the real neural deficits are:
    **DC directional quadrants** (`…Street Ne` → tags `Ne` as a locality), and literal
    `<Null>` tokens in dirty input that `v0` shrugs off.
 
-Every one of these is **corpus-addressable**. They are gaps in what the model was shown rather than architectural limits.
+Every one of these is **corpus-addressable**. They're gaps in what the model was shown rather than architectural limits.
 
 ## Where neural wins — and why we run it
 
@@ -162,10 +162,10 @@ possible future larger model. The negative result is specific to this 29M-param 
 1. **Don't let a Pelias-derived suite judge a non-Pelias parser.** A test suite ported from
    the system you're trying to beat scores that system at 100% by construction. Use it as a
    regression check. Judge quality on independent arenas + the product metric.
-2. **Pick the metric that matches the product.** Per-tag agreement is not geocoding
+2. **Pick the metric that matches the product.** Per-tag agreement isn't geocoding
    accuracy. The resolver-on-real-points number is the one that tracks the metric that matters, and
    it ranks the two parsers in the opposite order from the harness.
-3. **Pre-register kill-points.** The MLM track stayed alive on a 40k gain that did not hold. The
+3. **Pre-register kill-points.** The MLM track stayed alive on a 40k gain that didn't hold. The
    pre-registered "ship only if the gains hold at ceiling" rule is what killed it directly
    instead of inviting another speculative round.
 

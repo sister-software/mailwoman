@@ -56,7 +56,7 @@ export interface ActiveSubscriptions {
 	count: number
 	events: readonly CommercialEvent[]
 	/**
-	 * Subscriptions without a date cannot be placed at the query date, so they are listed and never counted.
+	 * Subscriptions without a date cannot be placed at the query date, so they're listed and never counted.
 	 */
 	undated: readonly CommercialEvent[]
 }

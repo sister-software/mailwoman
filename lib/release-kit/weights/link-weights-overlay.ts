@@ -166,7 +166,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 		// Report these artifacts.
 		// The per-locale `link-dev-weights.ts` scripts build them into the overlay.
 		// Each channel degrades to `undefined` at resolve time, so this step reports
-		// an absent channel because resolution does not.
+		// an absent channel because resolution doesn't.
 		const buildable: BuildableArtifact[] = recipe.buildableFor(locale)
 
 		for (const { shippedName, buildCommand, inputPath } of buildable) {

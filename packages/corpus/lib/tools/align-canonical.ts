@@ -7,7 +7,7 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
  *
  * Most synthetic recipe outputs are generated on demand by a recipe (parametrized by --count),
  * so re-emitting them in a new label format is a re-run.
- * A few are fixed corpora with a hand/DeepSeek-authored canonical source that is never regenerated.
+ * A few are fixed corpora with a hand/DeepSeek-authored canonical source that's never regenerated.
  *
  * They include `deepseek-kryptonite` (the adversarial hard-case set) and the `deepseek-translit-*` variants.
  *
@@ -18,7 +18,7 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
  * Feed the canonical source back through the same `alignRow` the from-source build uses,
  * so the spans land in the new format with zero drift.
  *
- * That is what this does.
+ * That's what this does.
  * Canonical jsonl in → labeled jsonl out, one `alignRow` per row, quarantine on miss.
  *
  * It is the uniform counterpart to `tools/overlay/kryptonite.ts`

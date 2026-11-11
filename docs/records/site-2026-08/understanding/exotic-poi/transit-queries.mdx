@@ -48,9 +48,9 @@ Several cities have stations with the same name:
 - "Central Station" exists in most major cities worldwide.
 - "Metro Center" is a station name in the DC Metro, but "metro center" is also a generic term for a transit hub.
 
-The station name by itself is not unique. The geocoder needs the city context to distinguish "Union Station, Washington DC" from "Union Station, Los Angeles." This is the same problem as "Springfield" ambiguity, but for transit infrastructure.
+The station name by itself isn't unique. The geocoder needs the city context to distinguish "Union Station, Washington DC" from "Union Station, Los Angeles." This is the same problem as "Springfield" ambiguity, but for transit infrastructure.
 
-Airport codes (JFK, LHR, NRT, CDG, DXB) are globally unique three-letter IATA codes. A query for "JFK" unambiguously means John F. Kennedy International Airport in New York. Airport codes are the most machine-friendly transit identifiers because they are short, globally unique, and standardized.
+Airport codes (JFK, LHR, NRT, CDG, DXB) are globally unique three-letter IATA codes. A query for "JFK" unambiguously means John F. Kennedy International Airport in New York. Airport codes are the most machine-friendly transit identifiers because they're short, globally unique, and standardized.
 
 ## Implicit-station problem
 
@@ -70,7 +70,7 @@ Airport codes (JFK, LHR, NRT, CDG, DXB) are globally unique three-letter IATA co
 
 Mailwoman's resolver indexes WOF administrative places plus a limited set of WOF venues. Only transit stations that exist in WOF are resolvable. Airport codes (JFK, LHR) are not in WOF's name index because WOF stores full names ("John F. Kennedy International Airport") instead of codes.
 
-The parser treats transit queries as a mixed case. A station query like "Grand Central Terminal" looks like a venue query. An unnamed transit query like "bus stop" looks like an amenity query. The amenity-query path (the `poi_query` kind, the [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy) lexicon, and `poi.db` resolution) is working infrastructure now. See [Amenity queries](./amenity-queries.mdx). That path does not cover transit yet. The taxonomy's 23-category seed has no `bus_stop`, `train_station`, or `airport` entries, so the lexicon cannot match an unnamed transit query.
+The parser treats transit queries as a mixed case. A station query like "Grand Central Terminal" looks like a venue query. An unnamed transit query like "bus stop" looks like an amenity query. The amenity-query path (the `poi_query` kind, the [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy) lexicon, and `poi.db` resolution) is working infrastructure now. See [Amenity queries](./amenity-queries.mdx). That path doesn't cover transit yet. The taxonomy's 23-category seed has no `bus_stop`, `train_station`, or `airport` entries, so the lexicon cannot match an unnamed transit query.
 
 **Transit queries are partially in scope**, as landmarks are, but underserved. The venue classifier and WOF venue records cover stations with proper names in well-populated WOF regions. Station entrance data, airport code resolution, and numbered-stop resolution are not supported, and transit categories haven't been added to the POI taxonomy yet.
 

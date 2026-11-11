@@ -151,7 +151,7 @@ describe("brussels adapter against the fixture member", () => {
 		["21019 (Woluwe-Saint-Pierre)", "Woluwe-Saint-Pierre"],
 		["01000 (Belgique)", "Belgique"],
 		["21000 (Bruxelles-Capitale)", "Bruxelles-Capitale"],
-		// A name not of that shape is the publisher's own value rather than a guess at what is inside.
+		// A name not of that shape is the publisher's own value rather than a guess at what's inside.
 		["Woluwe-Saint-Pierre", "Woluwe-Saint-Pierre"],
 		["21004", "21004"],
 	])("reads the place name of %s as %s", (value, expected) => {
@@ -178,7 +178,7 @@ describe("brussels adapter against the fixture member", () => {
 
 		const rows = await readCanonicalRows(scratch.path, BRUSSELS_ADAPTER_ID)
 
-		// The province the file names is `20001 (Brabant flamand)`, which this region is not in.
+		// The province the file names is `20001 (Brabant flamand)`, which this region isn't in.
 		expect(rows.some((row) => /Belgique|Bruxelles-Capitale|Brabant/u.test(row.raw))).toBe(false)
 	})
 
@@ -194,7 +194,7 @@ describe("brussels adapter against the fixture member", () => {
 		expect(isVoid(validFrom)).toBe(true)
 		expect(voidReason(validFrom)).toBeNull()
 
-		// An element the publisher populated is not void, so `isVoid` does not answer true for every element.
+		// An element the publisher populated isn't void, so `isVoid` doesn't answer true for every element.
 		expect(isVoid(childElement(address!, "ad:beginLifespanVersion"))).toBe(false)
 	})
 

@@ -32,7 +32,7 @@ export function conventionCandidateDBPath(dataRoot: PathBuilderLike = dataRootPa
  * Resolves the candidate gazetteer path from an explicit option, then `$MAILWOMAN_CANDIDATE_DB`,
  * then the candidate the active selection names, then the default path.
  *
- * An explicit or environment path that does not exist yields `null` without trying the default path.
+ * An explicit or environment path that doesn't exist yields `null` without trying the default path.
  * The value `none` selects the FTS backend.
  *
  * A data root without `active.json` resolves as it did before the selection existed.
@@ -183,7 +183,7 @@ export function conventionCapitalsPath(): PathBuilder {
  * How a geocode treats the national-capital promotion among same-name bare-toponym candidates.
  *
  * - `"auto"` promotes when the capitals reference exists and degrades to no
- *   promotion (one stderr line) when it does not.
+ *   promotion (one stderr line) when it doesn't.
  * - `"required"` promotes and throws when the reference is missing.
  * - `"off"` never promotes.
  */

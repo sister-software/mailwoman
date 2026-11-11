@@ -6,7 +6,7 @@
  *   `traceParse` returns two readings of a token. `logits` is the model's raw emission.
  *   `emissions` is what viterbi decoded after every prior wrote into it. A row whose raw
  *   emission already refuses the locality is a training result while one whose raw emission
- *   favors it and whose post-prior matrix does not favor it reveals the prior that took it.
+ *   favors it and whose post-prior matrix doesn't favor it reveals the prior that took it.
  */
 
 import { matchSubdivisionIn } from "@mailwoman/codex/country"
@@ -167,8 +167,8 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 	for (const subject of bucket) {
 		const spelled = values["spell-region"] ? matchSubdivisionIn(subject.country, subject.region)?.name : null
 
-		// A region the codex cannot spell is skipped rather than rendered under its code: leaving
-		// it in would put coded rows inside an arm whose whole claim is that they are spelled.
+		// A region the codex cannot spell is skipped rather than rendered under its code:
+		// leaving it in would put coded rows inside an arm whose whole claim is that they're spelled.
 		if (values["spell-region"] && !spelled) {
 			entry.unlocated++
 

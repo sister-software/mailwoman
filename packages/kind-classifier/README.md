@@ -5,7 +5,7 @@ the query kind.
 
 It assigns an input to one of seven `QueryKind`s by combining rule-based scorers
 over the `QueryShape` output. It returns alternatives alongside the top pick, so
-the coordinator can fall back when the winning kind is not actionable.
+the coordinator can fall back when the winning kind isn't actionable.
 
 ```ts
 import { classifyKind } from "@mailwoman/kind-classifier"

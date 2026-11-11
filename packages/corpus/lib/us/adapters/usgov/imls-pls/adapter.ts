@@ -105,7 +105,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 					// No subregion: US postal addresses don't surface the county, so emitting subregion
 					// creates a phantom component with no raw-span to align to, quarantining ~21% of rows.
 					// The county is still available in the source CSV.
-					// It is not a postal-surface component here.
+					// It isn't a postal-surface component here.
 				}
 
 				const rendered = formatAddressRow(components, "US", { singleLine: true })

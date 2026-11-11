@@ -48,17 +48,17 @@ export function normalizeGauntletSurface(surface: string): string {
  * Reads the whole corpus once.
  * Callers retain the output.
  *
- * A row that does not parse is skipped.
+ * A row that doesn't parse is skipped.
  * The gauntlet loader validates the corpus.
  *
  * A recipe that refused to build over a malformed board row would stop a build
- * for a check that is advisory to it.
+ * for a check that's advisory to it.
  */
 export async function readGauntletInputs(dir: PathBuilderLike = GAUNTLET_CASES_DIR): Promise<ReadonlySet<string>> {
 	const inputs = new Set<string>()
 
 	// Each immediate subdirectory is read independently so `generalization/` parked
-	// passes remain board inputs a recipe must not train on.
+	// passes remain board inputs a recipe mustn't train on.
 	const entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 	const directories = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name)
 

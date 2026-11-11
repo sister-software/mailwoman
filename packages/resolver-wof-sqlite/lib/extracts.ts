@@ -66,7 +66,7 @@ export interface ExtractConfig {
 	/**
 	 * Override the auto-derived schema name.
 	 *
-	 * Useful when the filename does not match WOF convention or when you want a memorable handle.
+	 * Useful when the filename doesn't match WOF convention or when you want a memorable handle.
 	 * Must be a valid SQLite identifier matching `[a-zA-Z_][a-zA-Z0-9_]*`.
 	 */
 	schemaName?: string
@@ -205,7 +205,7 @@ export function pickExtractsForPlacetype(
  *    (e.g. `postalcode_us` matches `postalcode`), use it.
  * 3. Otherwise, fall back to `main`.
  *
- * This deliberately does not union across extracts.
+ * This deliberately doesn't union across extracts.
  * BM25 scores are not comparable across separately indexed corpora.
  * A typical mailwoman query has one placetype.
  *

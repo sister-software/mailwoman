@@ -44,7 +44,7 @@ is a license grant rather than an assignment.
    employer has rights to work you create, you have permission to make the
    contribution, or your employer has waived those rights.
 
-If you are contributing on behalf of a company and need a signed corporate CLA
+If you're contributing on behalf of a company and need a signed corporate CLA
 rather than the DCO certification, contact teffen@sister.software.
 
 <details>
@@ -150,7 +150,7 @@ changing anything structural. The short version:
 | `yarn lint:spelling:fix`               | applies unambiguous spelling corrections                            |
 | `yarn workspace @mailwoman/docs start` | the docs site at http://localhost:7770                              |
 
-`yarn install` downloads the `typos` binary through `@ocular-d/typos-bin`; a Rust toolchain is not
+`yarn install` downloads the `typos` binary through `@ocular-d/typos-bin`; a Rust toolchain isn't
 required. The wrapper supports Linux and macOS on x64 and arm64. CI runs spelling through `yarn lint`.
 
 `typos.toml` selects American English and checks authored source, comments, documentation, and

@@ -74,7 +74,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 }
 
 /**
- * The parent tag for each source that does not report one itself: the `--source` CSV's
+ * The parent tag for each source that doesn't report one itself: the `--source` CSV's
  * `district` column is the town above the suburb in NZ, while `--borough-db` and `--ban-dir`
  * supply a tag per pair and a `--pairs-jsonl` line may override its default with `parentTag`.
  */
@@ -171,7 +171,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		let cityIx = -1
 		let districtIx = -1
 
-		// The parser does not consume the header row, so the first row supplies the column indexes.
+		// The parser doesn't consume the header row, so the first row supplies the column indexes.
 		if (sourcePath) {
 			for await (const cells of CSVSpliterator.fromAsync<string[]>(openReadStream(sourcePath), {
 				mode: "array",

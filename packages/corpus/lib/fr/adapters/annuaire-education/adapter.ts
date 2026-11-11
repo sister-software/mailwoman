@@ -20,7 +20,7 @@
  * `978` Saint-Martin, `986` Wallis-et-Futuna, `987` French Polynesia and `988` New Caledonia. The
  * jurisdiction is read through `COUNTRY_BY_INSEE_DEPARTMENT`, the table the BAN adapter uses. A
  * metropolitan row is refused under {@linkcode AnnuaireRefusal.NotOverseas}, and a row whose `etat`
- * is not `OUVERT` under {@linkcode AnnuaireRefusal.NotOpen}.
+ * isn't `OUVERT` under {@linkcode AnnuaireRefusal.NotOpen}.
  *
  * ## Organizations only
  *
@@ -40,7 +40,7 @@
  *   street types for the words it lacks (`quartier`, `lotissement`, `ZAC`). A number of `0` is the
  *   publisher's placeholder for none. `Bourg` or `Village` written by itself refers to the
  *   settlement's center and is read as a place.
- * - **A district under a street.** A complement after a street line whose type word is not a
+ * - **A district under a street.** A complement after a street line whose type word isn't a
  *   thoroughfare (`Quartier d'Orléans`, `BOIS DE NEFLES`, `Plaine Adam`) refers to the district the
  *   street is in, and becomes `dependent_locality`.
  * - **A place.** `MATA UTU`, `Gustavia`, `ATOLL DE TAKAROA` hold no number and no street-type word.
@@ -166,7 +166,7 @@ export interface AnnuaireRecord {
 }
 
 /**
- * Why a record did not become a row.
+ * Why a record didn't become a row.
  */
 export const AnnuaireRefusal = {
 	/**
@@ -174,7 +174,7 @@ export const AnnuaireRefusal = {
 	 */
 	NotOverseas: "row:not-overseas",
 	/**
-	 * The establishment's `etat` is not `OUVERT`.
+	 * The establishment's `etat` isn't `OUVERT`.
 	 */
 	NotOpen: "row:not-open",
 	/**
@@ -198,7 +198,7 @@ export const AnnuaireRefusal = {
 	 */
 	StreetNameAbsent: "row:street-name-absent",
 	/**
-	 * The two lines give two different places, and the record does not mark either one as the lieu-dit.
+	 * The two lines give two different places, and the record doesn't mark either one as the lieu-dit.
 	 */
 	PlaceLinesConflict: "row:place-lines-conflict",
 	/**
@@ -206,7 +206,7 @@ export const AnnuaireRefusal = {
 	 */
 	DeliveryLineAbsent: "row:delivery-line-absent",
 	/**
-	 * The jurisdiction's layout does not print every component the row holds.
+	 * The jurisdiction's layout doesn't print every component the row holds.
 	 */
 	Unrenderable: "row:unrenderable",
 	/**
@@ -364,7 +364,7 @@ export function readAnnuaireLine(line: string): LineReading {
 		return { kind: "street", ...split, ...(house ? { house_number: house } : {}) }
 	}
 
-	// A number before a word that is not a street type still opens a street line.
+	// A number before a word that's not a street type still opens a street line.
 	if (numbered) {
 		if (/\d/u.test(body)) return { kind: "refused", reason: AnnuaireRefusal.DigitUnplaced }
 
@@ -440,7 +440,7 @@ export function readAnnuaireRecord(record: AnnuaireRecord): AnnuaireReading {
 				if (components.street) {
 					const written = `${reading.street_prefix ?? ""} ${reading.street}`.trim()
 
-					// A complement under a street line that is not itself a thoroughfare gives the district the
+					// A complement under a street line that's not itself a thoroughfare gives the district the
 					// street is in: `Quartier d'Orléans`, `ZAC de Moudong`, `BOIS DE NEFLES`, `Plaine Adam`.
 					if (!reading.house_number && !isThoroughfareWord(reading.street_prefix ?? "")) {
 						places.push(written)

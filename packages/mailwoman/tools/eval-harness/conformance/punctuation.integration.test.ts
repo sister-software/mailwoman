@@ -5,16 +5,16 @@
  *
  *   The punctuation law against the live pipeline — the leg that geocodes.
  *
- *   It is an `.integration.test.ts` file because that is the suite the `mailwoman-data` runner runs,
+ *   It is an `.integration.test.ts` file because that's the suite the `mailwoman-data` runner runs,
  *   with `MAILWOMAN_DATA_ROOT` set and the weights materialized. The fast leg is portable by construction. A
  *   data-dependent test placed there would skip its way to green. The guard is the resolver-based
  *   `weightsPresent()` idiom the other integration suites use: ask the resolver for the model the loader will
- *   open, never a path literal. A skip guard that stops matching does not fail — it skips.
+ *   open, never a path literal. A skip guard that stops matching doesn't fail — it skips.
  *   The suite then disappears from the run reporting success.
  *   suite disappears from the run reporting success.
  *
  *   this LEG cannot GO RED on A known defect. `runConformanceCommand` blocks on `status: pass` rows and
- *   reports tracked ones without blocking, so a tracked violation is printed in full and does not fail CI —
+ *   reports tracked ones without blocking, so a tracked violation is printed in full and doesn't fail CI —
  *   and a tracked row that starts holding prints a promotion instruction rather than sitting in the list
  *   forever. What it does fail on is a new violation on a row that held, or a suite that stopped stating this
  *   law.

@@ -692,7 +692,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 	}
 
 	/**
-	 * Evicts the least recently drawn tiles that the current frame did not draw,
+	 * Evicts the least recently drawn tiles that the current frame didn't draw,
 	 * until the layer is within its budget.
 	 */
 	#evict(gl: WebGL2RenderingContext): void {

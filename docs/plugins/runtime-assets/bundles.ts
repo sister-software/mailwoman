@@ -93,7 +93,7 @@ export interface RuntimeAssetsGlobalData {
 }
 
 /**
- * A fixed locale so the rendered figure does not follow the build host's locale.
+ * A fixed locale so the rendered figure doesn't follow the build host's locale.
  */
 const SIZE_LOCALE = "en-US"
 

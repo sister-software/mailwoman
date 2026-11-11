@@ -380,7 +380,7 @@ function printAdopted(parsed: ParsedCommand, adopted: AdoptedKey, extraLines: re
 }
 
 /**
- * The exit code for a worker that did not answer.
+ * The exit code for a worker that didn't answer.
  * It differs from refusal (1) and success (0).
  */
 const EXIT_UNREACHABLE = 2

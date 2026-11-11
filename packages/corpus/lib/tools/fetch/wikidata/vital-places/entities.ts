@@ -22,7 +22,7 @@
  *   authenticated, you can raise the concurrency to 3 overall, and the number of requests per second to
  *   10." "Avoid using expensive API endpoints: if your request takes more than 1 second to serve, please
  *   wait 5 seconds before making another request."
- * - https://www.mediawiki.org/wiki/API:Etiquette: "If your task is not interactive, i.e. a user is not
+ * - https://www.mediawiki.org/wiki/API:Etiquette: "If your task isn't interactive, i.e. a user isn't
  *   waiting for the result, you should use the `maxlag` parameter." "Use GZip compression when making API
  *   calls by setting `Accept-Encoding: gzip` to reduce bandwidth usage."
  * - https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits: "limit the number of concurrent requests
@@ -674,7 +674,7 @@ export function claimItemIDs(entity: WikidataEntityBody, property: string): stri
 /**
  * The best-ranked coordinate on Earth, or `null`.
  *
- * A coordinate on another globe, such as a Martian crater's, is not a place an address refers to.
+ * A coordinate on another globe, such as a Martian crater's, isn't a place an address refers to.
  */
 export function readEarthCoordinate(entity: WikidataEntityBody): LatLon | null {
 	for (const claim of rankedClaims(entity, PROPERTY.coordinate)) {
@@ -800,7 +800,7 @@ export interface FetchVitalEntitiesOptions {
 /**
  * The concurrency a run uses: the one asked for, capped by the mode.
  *
- * @throws When the request is not a positive integer.
+ * @throws When the request isn't a positive integer.
  */
 export function resolveConcurrency(mode: WikimediaRequestMode, requested?: number | null): number {
 	const cap = ACTION_API_LIMITS[mode].concurrency
@@ -840,7 +840,7 @@ function describeMode(client: Pick<WikidataAPIClient, "loggedInAs">): string {
  * Append a record for every ranked id the entities file lacks, one batch per request,
  * with up to the mode's concurrency of workers taking the remaining batches in turn.
  *
- * An id already on disk is not requested again.
+ * An id already on disk isn't requested again.
  * Each worker's records are appended through one write queue, a batch's lines together,
  * so the file holds whole lines in the order the batches finished.
  *

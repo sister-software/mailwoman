@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The registry of repository health checks — the only executable entry point of this package. Knip
- *   treats as such. A check that is not listed here is dead code and knip reports it. `mwops health <id>` and
+ *   treats as such. A check that's not listed here is dead code and knip reports it. `mwops health <id>` and
  *   `mwops health all` iterate this array.
  */
 

@@ -23,7 +23,7 @@ pre-registered floors for each. Intersections scored 100 and cedex scored 96. `p
 scored 60.4 against a floor of 70.
 
 We expected the failure to come from a thin layout class or an under-weighted extract.
-Instead, the failures sorted by a key we had never graded by: punctuation. Plain leaders
+Instead, the failures sorted by a key we'd never graded by: punctuation. Plain leaders
 like `PO Box 19` passed at 84%. Dotted leaders (`P.O. Box`, `C.P.`, `B.P.`) failed at
 **98%**, and every failure was a truncation at the first period. The model would emit
 `p` and stop.
@@ -56,10 +56,10 @@ The third battery passed 17 floors out of 17, and the release shipped before sun
 
 ## Where the knowledge lives
 
-We have learned this more than once. The transformer is one layer of a system, and an
+We've learned this more than once. The transformer is one layer of a system, and an
 eval failure points at the _system_. The cause may or may not be in the weights. Last month a
 stubborn tag turned out to be contradictory labels in the corpus. Last night it was a
-label format that could not represent what the model already knew. In both cases, scaling
+label format that couldn't represent what the model already knew. In both cases, scaling
 the model or the data would have cost a week and changed no outcome, because the constraint
 was in a different layer. A review of forty failing rows exposed it.
 

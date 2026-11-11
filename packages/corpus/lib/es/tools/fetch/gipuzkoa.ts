@@ -20,7 +20,7 @@
  *   first link of any relation downloads the metadata record instead of 7,959,103 bytes of
  *   addresses. {@linkcode resolveGipuzkoaArchive} asks for the alternate by name.
  *
- *   ## The entry's `<updated>` is not a freshness signal
+ *   ## The entry's `<updated>` isn't a freshness signal
  *
  *   The entry states `<updated>2017-01-01T08:08:00Z</updated>` while the archive it links was last
  *   modified 2026-08-08, and the entry's own summary states a weekly refresh. The feed's value has
@@ -75,7 +75,7 @@ const SLUG = ES_GIPUZKOA_ADAPTER_ID
  *
  * `last_modified` is the header the download was decided on.
  * `feed_updated` is the entry's own `<updated>`, recorded rather than compared,
- * because this publisher's value has not moved since 2017.
+ * because this publisher's value hasn't moved since 2017.
  */
 export interface GipuzkoaManifest extends SourceManifest {
 	service_url: string

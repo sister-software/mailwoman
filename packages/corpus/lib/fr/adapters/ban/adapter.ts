@@ -21,7 +21,7 @@
  *
  * The adapter streams with `CSVSpliterator.fromAsync`, so a 25M-row file never sits in memory. It
  * honors `opts.limit` and `opts.signal`. `opts.country` is optional: when set it both rejects a
- * jurisdiction BAN does not publish and keeps only the rows of the one requested.
+ * jurisdiction BAN doesn't publish and keeps only the rows of the one requested.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address/format"

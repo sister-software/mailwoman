@@ -34,7 +34,7 @@ interface Reference {
 
 /**
  * The fixture's source rows: prefecture, municipality, street, number. 神戸市
- * and 宮崎市 both hash to bucket 98, so they are the held-out board.
+ * and 宮崎市 both hash to bucket 98, so they're the held-out board.
  */
 const SOURCE_ROWS = [
 	["東京都", "八王子市", "八島町二丁目", "3-16"],

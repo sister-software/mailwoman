@@ -6,7 +6,7 @@ receipts, and the parked CJK char-encoder decision blocking the acquired JP/KR d
 
 ## The one-sentence fit
 
-The from-scratch retrain is not a competitor to the enterprise fine-tune product. It is its
+The from-scratch retrain isn't a competitor to the enterprise fine-tune product. It is its
 **first deliverable**: the golden master every customer fine-tune starts from, the training run
 where forgetting-protection gets built in at the only point it is cheap, and the base whose QA
 harness becomes the per-customer acceptance battery.
@@ -15,7 +15,7 @@ harness becomes the per-customer acceptance battery.
 
 1. **Every fine-tune inherits the base's debt.** The v8.2.0 arc measured this precisely: every
    fine-tune off v385 — bundle or not, either feed — pays ~−5pp on Canadian PO-box rows
-   (fr.cedex 85.6→~80.5, replay-boost plateau ~83.4). That is _rare-class forgetting_, and it is
+   (fr.cedex 85.6→~80.5, replay-boost plateau ~83.4). That's _rare-class forgetting_, and it is
    structural to fine-tuning rather than to our recipes. A customer fine-tuning on their address stock
    will hit the same class of erosion on whatever _their_ rare classes are — invisible until the
    right instrument reads it. If fine-tuning is the product, the base model's own debts (the cedex

@@ -36,7 +36,7 @@ export const SANCTIONED_RELEASE_ABSENCES = await import("@mailwoman/universe/rel
  * Refuse to publish a workspace this repository holds out of the release, naming the recorded reason.
  *
  * Every entry is refused rather than only the rights-held ones, so one rule cannot
- * drift from a classification it does not include.
+ * drift from a classification it doesn't include.
  */
 export function assertWorkspacePublishable(workspacePath: string): void {
 	const workspace = workspacePath.replace(/^\.\//, "").replace(/\/$/, "")
@@ -150,8 +150,8 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: PathBuilde
 /**
  * One workspace's pack-and-audit result.
  *
- * A pack that could not produce a tarball reports the thrown message as its
- * single failure rather than aborting the sweep.
+ * A pack that couldn't produce a tarball reports the thrown message as its single
+ * failure rather than aborting the sweep.
  */
 export interface WorkspaceAuditResult {
 	workspace: string

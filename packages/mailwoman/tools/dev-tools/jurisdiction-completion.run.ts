@@ -8,9 +8,9 @@
  *   inherit its sovereign state's parser.
  *
  *   This enumerates every ISO 3166-1 alpha-2 code first and joins the registers onto it, so a jurisdiction absent
- *   from all of them is a row reading zero rather than a row that does not exist.
+ *   from all of them is a row reading zero rather than a row that doesn't exist.
  *
- *   Each dimension is reported on its own, because they are missing in different combinations.
+ *   Each dimension is reported on its own, because they're missing in different combinations.
  *
  *   Run:
  *

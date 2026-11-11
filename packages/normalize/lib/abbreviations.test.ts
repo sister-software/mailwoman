@@ -95,7 +95,7 @@ describe("expandAbbreviations — es-ES / es-MX", () => {
 
 	it("leaves the English suffixes alone under a Spanish locale", () => {
 		// `Ave`/`St`/`Blvd` are en-US table entries.
-		// A Spanish address that happens to contain one is not an invitation to expand it into English.
+		// A Spanish address that happens to contain one isn't an invitation to expand it into English.
 		expect(expandAbbreviations("Calle 5 Ave", "es-MX").text).toBe("Calle 5 Ave")
 	})
 })
@@ -103,7 +103,7 @@ describe("expandAbbreviations — es-ES / es-MX", () => {
 describe("expandAbbreviations — the Av collision across locales", () => {
 	it("keeps en-US and fr-FR readings intact", () => {
 		// English abbreviates Avenue as "Ave", never "Av".
-		// So en-US must not touch it.
+		// So en-US mustn't touch it.
 		expect(expandAbbreviations("100 Av. Los Meros", "en-US").text).toBe("100 Av. Los Meros")
 		expect(expandAbbreviations("1600 Pennsylvania Ave NW", "en-US").text).toBe("1600 Pennsylvania Avenue Northwest")
 		expect(expandAbbreviations("1 Av. de la Convention", "fr-FR").text).toBe("1 Avenue de la Convention")
@@ -114,7 +114,7 @@ describe("expandAbbreviations — the Av collision across locales", () => {
 	// (`normalize(input, { locale: "und" })` in mailwoman/geocode-core.ts),
 	// because Stage 1 runs before the parse that would establish the locale.
 	// `Av` is in that set on the claim that it "reads Avenue in both" — true of en/fr, false of es/pt.
-	// That is how Spanish input acquires an English street type.
+	// That's how Spanish input acquires an English street type.
 	// It cannot be dropped here: the gauntlet row fr-op3-halles-market-bonneuil is a
 	// `pass` that asserts street "Avenue de la Convention" and an address_point tier,
 	// so removing the entry needs a resolver-gauntlet run rather than a table edit.

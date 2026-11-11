@@ -39,7 +39,7 @@ export interface WhitespaceResult {
 	 *
 	 * A run longer than one character, or a one-character run that was not already an ascii space.
 	 *
-	 * A run that was already a single space is not one of them.
+	 * A run that was already a single space isn't one of them.
 	 */
 	runs: number
 }
@@ -72,9 +72,9 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 				i += 1
 			}
 
-			// A one-character run counts too when the character is not already an
-			// ascii space, since the tab-to-space rewrite emitted above is a real edit
-			// and `changed` decides whether the caller receives it.
+			// A one-character run counts too when the character isn't already an ascii space,
+			// since the tab-to-space rewrite emitted above is a real edit and `changed` decides
+			// whether the caller receives it.
 			// The early return below otherwise hands back the untouched input.
 			if (i - start > 1 || ch !== " ") {
 				changed = true

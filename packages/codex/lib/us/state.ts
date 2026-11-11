@@ -113,7 +113,7 @@ export function isUSStateAbbreviation(input: unknown): input is USStateAbbreviat
 }
 
 /**
- * Normalize a USPS state-or-territory abbreviation, or return `undefined` when `value` is not one.
+ * Normalize a USPS state-or-territory abbreviation, or return `undefined` when `value` isn't one.
  */
 export function formatAsUSStateAbbreviation(value: string): USStateAbbreviation | null {
 	const code = value.trim().toUpperCase()
@@ -197,7 +197,7 @@ export const US_STATE_NAMES: readonly string[] = Object.values(US_STATE_BY_ABBRE
  * Folded state/territory name, or the abbreviation itself, → the USPS abbreviation.
  *
  * Built diacritic-insensitive so a source that writes the name without diacritics
- * resolves the same as one that does not.
+ * resolves the same as one that doesn't.
  */
 const US_STATE_NAME_TO_ABBREVIATION: ReadonlyMap<string, USStateAbbreviation> = (() => {
 	const out = new Map<string, USStateAbbreviation>()

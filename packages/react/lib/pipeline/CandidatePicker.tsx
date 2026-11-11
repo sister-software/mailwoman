@@ -14,7 +14,7 @@
  *   `docs/records/reviews/2026-08-04-resolver-score-abstention.md` measures this in full.
  *
  *   The raw value stays on the button's `title`, at full precision, because it is exactly the right thing to have
- *   when you are debugging a ranking and exactly the wrong thing to put in a visitor's eyeline.
+ *   when you're debugging a ranking and exactly the wrong thing to put in a visitor's eyeline.
  */
 
 import type { ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"

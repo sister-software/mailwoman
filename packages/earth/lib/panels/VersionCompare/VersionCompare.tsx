@@ -156,7 +156,7 @@ function computeCompareRows(primary: ParseResult, compare: ParseResult): Compare
 		})
 	}
 
-	// Spanned compare nodes that the span did not match.
+	// Spanned compare nodes that the span didn't match.
 	for (const [spanKey, cn] of cBySpan) {
 		if (handledSpans.has(spanKey)) continue
 

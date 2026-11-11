@@ -9,7 +9,7 @@ tags:
 # Record-matcher source-data catalog
 
 This page lists the public datasets that [the record-matcher](../../records/site-2026-08/concepts/geocode-first-record-matching.mdx)
-resolves, with their schemas, column mappings, and join keys. They are **real public compliance and reporting
+resolves, with their schemas, column mappings, and join keys. They're **real public compliance and reporting
 datasets**. They have **no shared entity key across them**, and each one repeats entities heavily. The matcher
 deduplicates and cross-links these records. Those links make cross-dataset analysis possible. Our scope is the **resolution**, and the
 data consumer interprets any correlations that appear.
@@ -102,5 +102,5 @@ certification data.
 
 All files are public downloads. NPPES comes from the NPPES NPI Registry, FCC RHC from the USAC/FCC open-data
 portal, and TX HHSC from the Texas Health and Human Services open-data site. The dates in the filenames are
-download dates. The downloads need no credentials and involve no scraping. They are public compliance
-disclosures published in a form that is hard to analyze, and the matcher exists to solve that problem.
+download dates. The downloads need no credentials and involve no scraping. They're public compliance
+disclosures published in a form that's hard to analyze, and the matcher exists to solve that problem.

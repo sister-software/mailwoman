@@ -11,7 +11,7 @@ Every number below was measured before any result was read. Bar 5 and the donor-
 on were added after the run launched. The record states this where they appear. The result section is empty
 on purpose.
 
-## What is being tested
+## What's being tested
 
 v5.7.0 already trains on the bare `locality, REGION postcode` surface: `synth-trailing-region-us`
 added 16,000 rows to `v0.31.0-region-code-and-unit`. It reads 555/603 (92.0%) on the 603-city bare
@@ -67,8 +67,8 @@ Read through `diagnoseParse`, the leading token of every failure is labeled `B-s
 | `Chicago, IL 60639`      | `▁Chicago`    | `B-locality` |       0.87 | `Chicago`       |
 | `Burlington, VT 05401`   | `▁Burlington` | `B-locality` |       0.91 | `Burlington`    |
 
-Word count does not separate the groups: `Sparta` and `Oxford` are single words and fail,
-`Forrest City` is two words and passes at 0.10. The suffix word does not separate them
+Word count doesn't separate the groups: `Sparta` and `Oxford` are single words and fail,
+`Forrest City` is two words and passes at 0.10. The suffix word doesn't separate them
 either: `Sparta`, `Oxford` and `Saint Louis` end in no suffix word. What the table establishes is the competing label: the
 decode is choosing `B-street` confidently rather than failing to choose. The next section separates
 the two candidate causes it cannot.
@@ -79,7 +79,7 @@ the two candidate causes it cannot.
 this record defers to it: dropping the postcode takes all 51 regions to 100.0%, spread 0.0 points,
 with the region code unchanged. Missouri goes 0.0% → 100.0% and Arkansas 5.0% → 100.0%. The postcode flips the kind
 verdict from `locality_only` to `structured_address`, and under `structured_address` the decode
-expects a street. There is no region effect independent of that frame.
+expects a street. There's no region effect independent of that frame.
 
 Everything below is a reading of the coded-plus-postcode frame — `«locality», «CODE» «postcode»`,
 which is the surface this arm's corpus teaches and the one a user types.
@@ -101,7 +101,7 @@ six names:
 `Sparta` reads as a street before `TN` and as a locality before `VT`, so inside the frame the
 label depends on the region code as well as the name. A swap ranks the values a component takes and
 cannot show that the component's presence accounts for the effect. For that reason the removal arm
-settles the attribution and this table does not. The per-region rate on this panel has a
+settles the attribution and this table doesn't. The per-region rate on this panel has a
 96.6-point spread, from MO 1/29 (3.4%) to MA 21/21 and KS 24/24 (100.0%) over the 23 states holding
 20 or more rows — a reading of the frame rather than a property of the regions.
 
@@ -110,13 +110,13 @@ Name shape also moves inside the frame, measured on #2311's 240-place arms with 
 Remove the postcode and all three read 100.0% at margins near zero. The suffix-tail bucket being the
 worst of the three inside the frame is what this arm's added exposure targets.
 
-The reading that is ruled out is corpus coverage: `synth-trailing-region-us` gives TN 347 rows,
+The reading that's ruled out is corpus coverage: `synth-trailing-region-us` gives TN 347 rows,
 MO 347 and AR 347 of 16,000, the same allocation Illinois gets, because `applyCountryBudget` already
 round-robins over `(cc, region)`. Eleven per-region corpus statistics on #2311 predict none of the
 spread either, the strongest at r = +0.304.
 
-The locality-surface lexicon does not separate the groups either, and its direction is inverted, so
-extending it is not the action this reading calls for:
+The locality-surface lexicon doesn't separate the groups either, and its direction is inverted, so
+extending it isn't the action this reading calls for:
 
 | `locality-surface-lexicon-v7.json` value |  rows | matched |  rate |
 | ---------------------------------------- | ----: | ------: | ----: |
@@ -187,7 +187,7 @@ on the 603-city panel.
 
 ## Result
 
-v5.9.0 does not replace the shipped model. Bars 1, 2 and 3 pass. Bar 5 fails on Massachusetts and
+v5.9.0 doesn't replace the shipped model. Bars 1, 2 and 3 pass. Bar 5 fails on Massachusetts and
 Kansas. Bar 5 is a stated requirement rather than a watch, so the arm fails whatever bar 4 reads.
 `release.config.json` still names `models/quantized/model-v440-suffix-boundary-v2-step-060000-int8.onnx`.
 
@@ -240,7 +240,7 @@ different stages.
 
 Bar 2 separates a shape result from a row-count result, and it separates them. The corpus change
 added 1,922 suffix-word rows and zero rows to the other two buckets. Suffix-word rose 43.5pp, other
-multi-word rose 33.0pp and single word rose 1.7pp, so the buckets did not move together and the
+multi-word rose 33.0pp and single word rose 1.7pp, so the buckets didn't move together and the
 stratification gives a result of its own.
 
 ### What the pooled rate hides

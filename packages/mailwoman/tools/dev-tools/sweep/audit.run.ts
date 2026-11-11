@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Lists every key or value line a commit added to a data file, so a reviewer can check whether a vocabulary sweep
- *   rewrote a stored string such as a corpus `source` id or a `source_weights` key. The tool reports and does not
+ *   rewrote a stored string such as a corpus `source` id or a `source_weights` key. The tool reports and doesn't
  *   judge: a rewritten prose field in a JSON document can be correct.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/sweep/audit.run.ts --commit <rev> [--lines 6]

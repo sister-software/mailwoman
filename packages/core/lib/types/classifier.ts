@@ -143,7 +143,7 @@ export interface ProposalClassifier {
 	/**
 	 * Classify a section.
 	 *
-	 * Implementations must not throw.
+	 * Implementations mustn't throw.
 	 * They return an empty array on failure and log via the project logger.
 	 */
 	classify(section: Section, context: ClassifierContext): Promise<ClassificationProposal[]>

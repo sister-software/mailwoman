@@ -17,7 +17,7 @@ Specifically:
 
 Neither artifact can state its own provenance. Phase 3 closes that gap going forward. So
 where this document states "the gazetteer does X", read it as "this build does X". A rebuild may already
-have changed it, and there is currently no way to tell from the file.
+have changed it, and there's currently no way to tell from the file.
 
 Three evidence markers are used throughout:
 
@@ -42,7 +42,7 @@ _containing_ the token — `City of Port of Spain`, `Isle of Grain`, `Municipali
 17 US postcodes matching on `alt_names`, and `The place of impact of the spear` (IR), which is an actual
 WOF row.
 
-**Mechanism (observation):** the FTS5 index runs token-AND over `name + alt_names`, and **`of` is not a
+**Mechanism (observation):** the FTS5 index runs token-AND over `name + alt_names`, and **`of` isn't a
 stopword**. A single-token query for a common function word therefore retrieves every multi-word name
 containing it.
 
@@ -72,7 +72,7 @@ competing places. With `neg_rank` equal to the bit, their order fell out of the 
 
 ### Root cause, and a correction to my own first answer
 
-I initially reported this as a WOF data property. **It is not.** Both ids are ≥ 8e12. That value is
+I initially reported this as a WOF data property. **It isn't.** Both ids are ≥ 8e12. That value is
 `OVERTURE_ID_BASE`. Turkey has no WOF repo cloned, so the Overture `divisions` backfill serves it.
 `fold-overture.ts` copies `d.population` per row with no parent→child propagation, so the duplication
 arrived from Overture's own data.
@@ -90,7 +90,7 @@ population **31,951** and has no seat-town duplicate.
 pulled from WOF. It is an acquisition gap rather than a modeling error, and it closes the moment
 `whosonfirst-data-admin-tr` is synced.
 
-### What shipped, and what is still unverified
+### What shipped, and what's still unverified
 
 A **seat preference** now breaks the tie: on an exact `neg_rank` tie, a `locality` carrying a _real_
 population outranks other placetypes. Both checks are required and were measured rather than reasoned:
@@ -139,7 +139,7 @@ is the tail.
 
 ### The mechanism
 
-**Observation.** Lake County has **364 `names` rows**. They are the translated common noun _lake_ in
+**Observation.** Lake County has **364 `names` rows**. They're the translated common noun _lake_ in
 every language WOF has: `Meer` (afr), `بحيرة` (ara), `Laco` (arg), `Quta` (aym), `Göl` (aze), `Sø` (dan),
 `See` (deu), `Lac` (fra), `adagun`, `aintzira`, `Tó` (hun). These are dictionary entries for the word rather than
 names of a county in Minnesota.
@@ -170,7 +170,7 @@ Bird             US  neighbourhood  221 keys   pop          63
 Lake             US  county         134 keys   pop      10,855
 ```
 
-A country with 428 exonyms is correct. **A neighborhood of 63 people with 221 name keys is not.**
+A country with 428 exonyms is correct. **A neighborhood of 63 people with 221 name keys isn't.**
 
 The split of 4,000 records on that basis is:
 
@@ -194,11 +194,11 @@ near-unique. **Wrong, and measurably so:**
 | `Meer` (afr, "lake")      | 18                          |
 | `Wien` (an actual exonym) | **14**                      |
 
-The actual exonym is shared across _more_ places than the offending noun. The overlap does not separate them.
+The actual exonym is shared across _more_ places than the offending noun. The overlap doesn't separate them.
 
 **What does look separable** — and this is a hypothesis rather than a finding — is the mismatch between key count
 and prominence. 221 keys on a 63-person neighborhood is anomalous in a way 428 keys on the United States
-is not. Any change based on it needs a board to measure it, rather than a decision from one example.
+isn't. Any change based on it needs a board to measure it, rather than a decision from one example.
 
 ### Why this survived
 
@@ -209,7 +209,7 @@ Three reasons, each of which applies beyond this case:
 2. **The bad rows are shaped exactly like the good ones.** Both are alt-names with a language code and
    `privateuse=preferred`. Toledo shows why the alias rows are required: abbreviation aliases are how
    `TO` → Toledo works. `is_primary=0` rows therefore cannot be dropped wholesale.
-3. **It is not the stopword problem.** I expected the stopword problem going in. That problem belongs to the FTS
+3. **It isn't the stopword problem.** I expected the stopword problem going in. That problem belongs to the FTS
    route (976 hits). The candidate route returns 19, and its bad rows arrive through legitimate-looking
    alias data. The small count makes the failure harder to see.
 

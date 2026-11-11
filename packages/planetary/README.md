@@ -25,7 +25,7 @@ its body. When a project serves the wrong build, the app renders an error instea
 | `yarn workspace @mailwoman/planetary deploy:dry-run`                   | validates `wrangler.toml` and the asset manifest                |
 
 The preview serves on port 7771, the same port as the Earth preview, and the public data bucket's CORS rule must admit
-`http://localhost:7771`. The docs dev server holds port 7770. On a port the rule does not admit, the browser refuses the
+`http://localhost:7771`. The docs dev server holds port 7770. On a port the rule doesn't admit, the browser refuses the
 glyph and search-artifact fetches, so labels never draw and search never loads. The smoke test fetches the published archives, so it needs the network.
 `MAILWOMAN_PLANETARY_URL` points it at a deployment instead of the preview server.
 
@@ -61,6 +61,6 @@ hostname with its compiled body at startup and renders an error instead of the o
 ### On a push to main
 
 `.github/workflows/deploy.yml` runs the same two commands per body when a push changes this workspace or one of its
-dependencies. The workflow does not use a path list. `mwops release deploy-targets` maps the changed files to
+dependencies. The workflow doesn't use a path list. `mwops release deploy-targets` maps the changed files to
 workspaces. It deploys a body when one of those workspaces lies in the app's dependency closure, computed from the
 manifests, or when a root build file changed. The Worker table the workflow deploys from is `lib/release-kit/deploy/targets.ts`.

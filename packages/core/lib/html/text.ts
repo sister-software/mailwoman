@@ -82,7 +82,7 @@ export const BLOCK_ELEMENTS: ReadonlySet<string> = new Set([
  * A run of markup is one separation rather than one per tag: `</p><p>` inserts a single break.
  *
  * An element in `lineBreakElements` makes that separator a newline, unconditionally,
- * because a line boundary the document states is not a spacing judgment.
+ * because a line boundary the document states isn't a spacing judgment.
  */
 export function htmlToLayoutText(html: string, lineBreakElements?: ReadonlySet<string>): string {
 	let text = ""

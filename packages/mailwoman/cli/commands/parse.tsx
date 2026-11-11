@@ -357,7 +357,7 @@ async function serializeTree(
 /**
  * Prints the degraded-mode banner to stderr when the weights guard declines the encoder.
  *
- * A failed encoder load is reported by `tryLoadNeural` instead, so that path does not print this banner.
+ * A failed encoder load is reported by `tryLoadNeural` instead, so that path doesn't print this banner.
  */
 function emitDegradedBanner(options: ParseOptions): void {
 	console.error(
@@ -440,7 +440,7 @@ async function runDegraded(input: string, options: ParseOptions): Promise<string
 /**
  * Parses with the runtime pipeline and serializes the tree in the requested format.
  *
- * A plain parse falls back to the structural pipeline when the encoder does not load.
+ * A plain parse falls back to the structural pipeline when the encoder doesn't load.
  */
 async function runPipeline(input: string, options: ParseOptions): Promise<string> {
 	// `--resolve` resolves a fast-path tree too, so it keeps the full pipeline with its resolver.
@@ -469,7 +469,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	// The default country keeps a bare region abbreviation such as `NY` from resolving to a foreign homonym.
 	if (options.resolve) {
-		// An input routed to another script family's classifier does not inherit the locale's country.
+		// An input routed to another script family's classifier doesn't inherit the locale's country.
 		// An explicit `--default-country` still applies.
 		const routedAway = classifier ? (await classifier.forInput(input)) !== classifier.primary : false
 
@@ -544,7 +544,7 @@ function formatMs(ms: number): string {
  * Warmup iterations are excluded from the statistics so that JIT compilation and lazy imports settle first.
  */
 async function runBenchmark(input: string, options: ParseOptions, iterations: number): Promise<string> {
-	// The weights guard does not run for benchmarks, so `--degraded` is handled here.
+	// The weights guard doesn't run for benchmarks, so `--degraded` is handled here.
 	const classifier = options.degraded ? undefined : await tryLoadNeural(options)
 
 	const runOne = async (
@@ -694,7 +694,7 @@ async function serializeResult(
 	return {
 		input: result.input,
 		normalized: result.normalized,
-		// Token classes are omitted because they are verbose.
+		// Token classes are omitted because they're verbose.
 		queryShape: { ...result.queryShape, tokenClasses: null },
 		locale: result.locale,
 		kind: result.kind,
@@ -735,7 +735,7 @@ async function runNeural(
 	})
 
 	const neural = await routedClassifier.forInput(input)
-	// An input routed to another script family does not inherit the locale's country.
+	// An input routed to another script family doesn't inherit the locale's country.
 	const routedAway = neural !== routedClassifier.primary
 
 	// Without policy overrides or resolution, the classifier's own projections keep containment nesting.

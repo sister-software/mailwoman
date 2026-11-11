@@ -40,7 +40,7 @@ records the `mechanism` that produced it.** The tree already has a convention fo
 `resolver:postal_city_alias`, `codex:postcode_shape`.
 
 Avoid two words in this arc. **"Correction"** misstates what the layer does, because the layer is
-advisory and a completion is not a correction. **"Validation"** already refers to the
+advisory and a completion isn't a correction. **"Validation"** already refers to the
 shape/containment family in the postcode arc, and reusing it would make the two arcs hard to read
 together.
 
@@ -70,7 +70,7 @@ build a string from components and then use `reconcileComponents` as a containme
 lines: `docs/engineering/reference/ARCHITECTURE.mdx:352` and
 `docs/superpowers/plans/2026-07-22-placetype-pair-implementation.md:111`.
 
-**`formatter/README.md:30-52` documents a signature the code does not have**. That signature will mislead a
+**`formatter/README.md:30-52` documents a signature the code doesn't have**. That signature will mislead a
 reader. It shows `formatAddress(components: ClassificationMap, opts?)` and describes the key as
 "abbreviation-expanded", but `key.ts:16-19` states that expansion is deliberately not done.
 
@@ -86,7 +86,7 @@ reader. It shows `formatAddress(components: ClassificationMap, opts?)` and descr
 | `minWinningScore`                   | `core/resolver/types.ts:383`, default `resolve.ts:762`, check `:1112`                         | Default 0. Set by exactly one caller in the tree: `resolver/resolve.test.ts:306`. Built, uncalled                       |
 | Postcode abstention (#1480)         | `resolver-wof-sqlite/candidate-lookup.ts:437-443`, cause `:433-436`                           | Skips the trigram rung for postcode-typed queries. **Stamps no metadata** — a silent empty return                       |
 | The stamp idiom                     | `resolver/resolve.ts:329`, `:1155`, `:1168`, `:1175`, `postcode-country-coherence.ts:289-290` | ~20 `metadata` keys, without a registry or a type. The deletion list at `resolve.ts:509-517` is the closest thing       |
-| The one stamp that reaches a caller | `mailwoman/geocode-core.ts:868`, `:144`, `api/schema.ts:153`                                  | `postcode_country_scope`. Its sibling `postcode_country_scope_km` does not                                              |
+| The one stamp that reaches a caller | `mailwoman/geocode-core.ts:868`, `:144`, `api/schema.ts:153`                                  | `postcode_country_scope`. Its sibling `postcode_country_scope_km` doesn't                                               |
 
 The 2026-08-04 characterization
 (`docs/articles/reviews/2026-08-04-resolver-score-abstention.md`) is the standing evidence and its
@@ -167,7 +167,7 @@ The mailfail fixture's commit message states that it was committed "so these cas
 No commit has built that check. The repo has no `mailfail-board.ts` beside `digit-board.ts` /
 `fragment-board.ts` / `poi-board.ts`. The only related executable code is
 `core/pipeline/runtime-pipeline.test.ts:803-882`, which asserts the fault interface against
-synthetic throwing stubs and does not use the 105 rows.
+synthetic throwing stubs and doesn't use the 105 rows.
 
 The Gauntlet's shared runner has no way to express abstention either. `GauntletResult`
 (`gauntlet/harness.ts:316-342`) holds resolved values only, `checkCase` has no must-not-resolve
@@ -233,7 +233,7 @@ the 39 non-identical rows under the shipped default, re-split by cause:
    inertness population. A suggestion layer that emits anything on them is broken, so they give a
    free bar.
 2. **`appendCountry` is a policy choice, and neither default is right.** With it off, 13 rows lose
-   only the country line the user typed. With it on, 50 rows gain a country line the user did not
+   only the country line the user typed. With it on, 50 rows gain a country line the user didn't
    type. A suggestion layer must set the flag based on whether the input contained a country at all.
    A grade for one fixed setting across every row measures the flag rather than the layer.
 3. **The canonicalization class is real and small (7 rows), and the fold hid a parse defect in one
@@ -339,7 +339,7 @@ Per locale (the ablation map's first row):
    6,240 km), and two of them drop from rooftop to admin. The postcode is the only evidence #42's
    coherence pass can use to override a wrong country prior, so deleting it removes the override. A
    completion nudge therefore has the largest effect where the country prior is least trustworthy.
-3. **Postcode removal does not leave the postcode slot empty.** 16 of 139 rows emit a different
+3. **Postcode removal doesn't leave the postcode slot empty.** 16 of 139 rows emit a different
    token as the postcode, and 0 of 139 recover the deleted one. The substitutes:
 
 ```
@@ -527,7 +527,7 @@ states that the layer checked.
 
 **Change shape.** This is a render-time change that leaves the model unchanged: `normalize` + parse +
 `formatAddress` + `codex`. It runs without a GPU, a retrain, or a gazetteer. This tier runs in a browser
-with only the weights. That is why it is the default tier.
+with only the weights. That's why it is the default tier.
 
 **Where it lives.** `suggest/format-nudge.ts` consumes `PipelineResult` and the formatter. It never
 calls the resolver.
@@ -598,7 +598,7 @@ node's coordinate. It has three sources, in ascending order of what they can ass
    contains no postcode, the layer looks up the postcode covering that coordinate. Confidence comes
    from the code's own dispersion. The arc's PFX1 `radiusP95Km` provides that dispersion
    (`2026-08-05-postcode-structure-arc.md`, Mechanism 3). A rooftop-tier resolve yields a unit code.
-   An admin-tier resolve yields whatever level the dispersion supports, and when that is a district,
+   An admin-tier resolve yields whatever level the dispersion supports, and when that's a district,
    the suggestion states that level.
 2. **The arc's B2 containment coherence**, for the case where a postcode is present and disagrees
    with the street. That mechanism produces "the nearest consistent completion", and this layer
@@ -608,7 +608,7 @@ node's coordinate. It has three sources, in ascending order of what they can ass
    source will supply them.
 
 **Artifact.** None new. The mechanism consumes the postcode gazetteer, `postal-city-alias-us.db`
-where present, and PFX1 once the arc's B3-1 lands. It does not build anything.
+where present, and PFX1 once the arc's B3-1 lands. It doesn't build anything.
 
 **D-rule.** The mechanism is opt-in behind `postcodeCompletion`, off by default, and **blocked on the
 arc's Mechanism 1 or an equivalent shape guard.** S-2's finding 3 is the reason. On 16 of 139 rows, a
@@ -631,14 +631,14 @@ this board.
   same board. Bar: **zero rows where the completed code moves the assembled coordinate further from
   ground truth than the no-completion arm.** An abstention is never worse than a wrong answer, so any
   regression here violates the D-rule.
-- **B2-4 (the slot is not already wrongly filled).** The 16 S-2 substitution rows. Bar: **on ≥ 14 of
+- **B2-4 (the slot isn't already wrongly filled).** The 16 S-2 substitution rows. Bar: **on ≥ 14 of
   16, the layer emits a `replace` op identifying the substitution or abstains with
   `code: "ambiguous_completion"`. It never confirms the house number as a postcode.** This bar
-  couples the mechanism to the arc, and it fails if the shape guard is not in place first.
+  couples the mechanism to the arc, and it fails if the shape guard isn't in place first.
 - **B2-5 (cost).** One coordinate-to-postcode lookup per suggestion, on a resolve that already
   happened. Bar: **≤ 10% p95 latency increase** on the demo preset, measured rather than asserted.
 
-**Kill condition.** B2-1 misses at every locale. That would mean the resolved coordinate does not
+**Kill condition.** B2-1 misses at every locale. That would mean the resolved coordinate doesn't
 localize a postcode well enough to complete it, and the completion premise depended on the
 gazetteer's density rather than on postcodes. Record the result as a negative next to the arc's own
 kill conditions and stop.
@@ -658,7 +658,7 @@ threshold becomes `replace` ops with `mechanism: "match:fellegi_sunter"`. A snap
 grey band becomes an abstention with the score as evidence. The snap never overwrites silently.
 
 **Artifact.** The snap needs an index to match against, either the registry's own corpus or a
-customer's. That is a deployment question rather than a mechanism question. The term-frequency table
+customer's. That's a deployment question rather than a mechanism question. The term-frequency table
 (`match/tf.ts:83`) is fitted on the corpus, so the single-record path either ships a prebuilt table
 or drops the adjustment and declares that in the result.
 
@@ -676,15 +676,15 @@ document is designed to avoid that failure.
 - **B3-2 (precision on the operator set).** The 55 `operator:2026-08-05` rows. Bar: **≥ 90% of
   emitted `replace` ops are correct against the case's asserted components, on the rows that assert
   any.** Report the abstention rate beside it, because a layer that abstains on 54 of 55 rows and
-  gets the last one right has not passed.
+  gets the last one right hasn't passed.
 - **B3-3 (no new confident false positive).** The whole Gauntlet, with the snap on and off. Bar:
   **zero rows where the snap moves an assembled coordinate outside its existing tolerance.**
 
 **Kill condition.** B3-2's precision cannot clear 90% without an abstention rate that makes the tier
 useless. In that case the entity tier stays a batch-only capability. `resolveEntities` already
-covers that capability, and the single-record path does not justify the added API surface.
+covers that capability, and the single-record path doesn't justify the added API surface.
 
-### C.4 Diff attribution — the part that is not free
+### C.4 Diff attribution — the part that's not free
 
 The three mechanisms above are cheap because parse, resolve and render all ship. Attribution needs
 new work, as S-1 finding 4 shows. `Park Slope` disappears from the render because the US template
@@ -771,7 +771,7 @@ a component whose `substitutedCount / support` exceeds the mechanism's own guard
 B2-4 expressed as data instead of as a board.
 
 The reverse map benefits the ablation runner and is out of scope here. A
-component with high `support` and near-zero `brokenCount` in a locale is one the resolver is not
+component with high `support` and near-zero `brokenCount` in a locale is one the resolver isn't
 using. It is either a correct redundancy or a dead channel, and the runner should tell the two apart.
 
 ### C.6 What needs a retrain
@@ -779,12 +779,12 @@ using. It is either a correct redundancy or a dead channel, and the runner shoul
 **No mechanism in this design needs a retrain.** Every mechanism above is a render-time or resolve-time
 change. The only model-side dependency is span confidence. The shipped model already emits it on
 every node (`core/decoder/types.ts:74`). The taxonomy in `CONTRIBUTING_MODEL_WORK.mdx` reserves a
-retrain for open-vocab distributional tags, and a diff between two strings is not one.
+retrain for open-vocab distributional tags, and a diff between two strings isn't one.
 
-Two model-adjacent items are listed here so that a reader does not mistake them for part of this arc:
+Two model-adjacent items are listed here so that a reader doesn't mistake them for part of this arc:
 
 - The venue/locality slot swaps S-1b found (`MR & MRS CRAB` → locality `MR`) are parse defects. They
-  make the diff noisier, and they are a corpus question rather than a suggestion-layer question.
+  make the diff noisier, and they're a corpus question rather than a suggestion-layer question.
 - The `Calibrator` boundary (`core/decoder/calibration.ts:9-49`) exists, but no caller supplies a bin
   table. Every confidence threshold in this document is therefore a threshold on a raw
   mean-of-softmax, and the 2026-08-04 review's caveat about the 0.918–0.945 band still applies.
@@ -828,7 +828,7 @@ Mechanism 1 of this document can still ship, because the format nudge needs no g
   fix as this arc's work.
 - **Span confidence calibration.** The `Calibrator` boundary is empty. A useful implementation needs its own
   preregistration with its own held-out set.
-- **`formatter/README.md`'s wrong signatures.** A.1 records them so they are not lost. Whoever next
+- **`formatter/README.md`'s wrong signatures.** A.1 records them so they're not lost. Whoever next
   works on that package should fix them.
 - **The Gauntlet's missing "expect no coordinate" column.**
   `us-op3-island-lake-duplicate-degenerate` describes the schema gap in its own note

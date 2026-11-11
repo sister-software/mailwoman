@@ -369,7 +369,7 @@ export interface WriteParquetSplitsOptions {
 	 * Each file holds one source's rows, so its derivation covers only that source's inputs and code.
 	 * The writer adds the file's source, split, part and row cap to the config.
 	 *
-	 * Rows hold no corpus version, so the version is not a derivation input.
+	 * Rows hold no corpus version, so the version isn't a derivation input.
 	 * It calls this once per source.
 	 */
 	derivationFor: (source: string) => FileDerivation | Promise<FileDerivation>
@@ -439,7 +439,7 @@ export interface WriteParquetSplitsOptions {
  *
  * `counts` and `total_rows` are summed from the descriptors rather than from a running row counter,
  * so a manifest written between two files never claims the rows of the file being written.
- * Files are listed by split, then path, so the order does not depend on which file finished first.
+ * Files are listed by split, then path, so the order doesn't depend on which file finished first.
  */
 export function parquetManifestOf(
 	files: readonly ParquetFileDescriptor[],

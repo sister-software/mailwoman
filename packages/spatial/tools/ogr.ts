@@ -7,7 +7,7 @@
  *   polygon-layer ingest opens with.
  *
  *   OGR is build tooling, never A serve dependency (scope invariant 6). The check refuses a source whose
- *   declared authority code is not the one the ingest was written for, because reading one projection's
+ *   declared authority code isn't the one the ingest was written for, because reading one projection's
  *   coordinates as another's is silent — and it runs the datum-transformation guard even where no shift is
  *   needed, because skipping it on the reasoning that a source needs no shift makes the guard fire on the day
  *   a source arrives that does.
@@ -104,7 +104,7 @@ const OGRINFO_MAX_BUFFER = 32 * 1024 * 1024
 /**
  * Ordinates in a 2D extent: `minLon, minLat, maxLon, maxLat`.
  *
- * A shorter array is a 3D or degenerate extent this reader does not understand
+ * A shorter array is a 3D or degenerate extent this reader doesn't understand
  * rather than a 2D one with something missing.
  */
 const EXTENT_ORDINATES = 4

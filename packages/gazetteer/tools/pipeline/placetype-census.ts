@@ -95,7 +95,7 @@ export const WOF_PLACETYPES = [
  * This applies to context-only placetypes: metroarea, timezone, plus out-of-grammar continent/ocean rows.
  *
  * It differs from a placetype missing from this map entirely.
- * That is an unmapped placetype the builder will refuse to count silently.
+ * That's an unmapped placetype the builder will refuse to count silently.
  *
  * `county`/`macrocounty` project onto `subregion` here, the US reading.
  * Ireland writes county as an address line ("Co. Kerry"), where the same rows project onto
@@ -187,7 +187,7 @@ export interface PlacetypeCensusBuildResult {
 	/**
 	 * Placetypes seen in the source but absent from {@link PLACETYPE_PROJECTION}.
 	 *
-	 * A build that reports any of these is reading a source the projection table has not been extended for.
+	 * A build that reports any of these is reading a source the projection table hasn't been extended for.
 	 */
 	unmappedPlacetypes: string[]
 }

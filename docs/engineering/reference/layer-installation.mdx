@@ -134,7 +134,7 @@ Each output's manifest records `recipe: "osm-address-points"`, the extract as `s
 SHA-256, and a `derivation`: the policy name and version, the outline's SHA-256 when the build clipped,
 the row filter, and the counts (rows read, kept, outside the outline, without a street). A country is
 clipped when its region holds another country or only part of it. A country built from its own extract
-is not clipped, as the command-line builder has never clipped one.
+isn't clipped, as the command-line builder has never clipped one.
 
 `lib/data/build.integration.test.ts` builds Germany and the Netherlands from one fixture region through
 a local registry: the extract transfers once, each country keeps only its own points, a repeated build
@@ -200,9 +200,9 @@ explains how to read the plan in that release.
 ## Diagnostics
 
 `readInstallationState` (`packages/mailwoman/lib/data/state.ts`) reads three lists: artifacts the
-active generation selects, installed artifacts it does not select, and transfers that stopped with
+active generation selects, installed artifacts it doesn't select, and transfers that stopped with
 partial bytes. `data status`, `data inventory`, `data bom` and `doctor` read it, so they report the
-same generation the geocoder reads. `ProblemKind` in `plan.ts` names each reason a request did not
+same generation the geocoder reads. `ProblemKind` in `plan.ts` names each reason a request didn't
 complete (unavailable, insufficient access, refused obligation, missing dependency, unsupported,
 corrupt, transfer, cancelled, sibling failed, activation, insufficient disk), in human output and in
 `--json`.
@@ -245,10 +245,10 @@ from an installed, selected artifact, and every difference list it records is em
 
 Three providers serve the address-point role: BAN, national Overture and the OpenStreetMap tier. One
 selection entry may list sources of more than one of them. A national provider reads the entry's first
-source that the OpenStreetMap recipe did not build (`isNationalAddressPointArtifact`), and the
+source that the OpenStreetMap recipe didn't build (`isNationalAddressPointArtifact`), and the
 OpenStreetMap tier reads the first one it did build (`isOSMBuiltArtifact`, the manifest's `recipe`). The
 session still consults the national tier first and the OpenStreetMap tier only when the national tier has
-no database for the country. That is the order the two had when each read its own file.
+no database for the country. That's the order the two had when each read its own file.
 
 The WOF lookup names each attached schema after its file and routes placetypes by that name, so an
 installed WOF extract keeps its conventional file name (`admin-global-priority.db`, `postalcode-us.db`).
@@ -267,4 +267,4 @@ Still on their conventional paths, with the reason:
 - The promotion battery's priors (`tools/eval-harness/production-priors.ts`) take a classifier without a
   data root, and read the files beside its weights.
 - A country with two locales, such as `CA`, has one `gazetteer-fst` entry per country. A second locale's FST
-  for that country needs a locale scope the selection does not have.
+  for that country needs a locale scope the selection doesn't have.

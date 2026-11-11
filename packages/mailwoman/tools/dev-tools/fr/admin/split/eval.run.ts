@@ -122,7 +122,7 @@ const { values: args } = parseArguments({
  *
  * A migration changes this eval's verdict on any row that resolves a `localadmin`
  * or `borough`, so it needs that count on this eval's own panel first.
- * A promoted convention does not move on an argument.
+ * A promoted convention doesn't move on an argument.
  */
 const PLACETYPE_RANK: Record<string, number> = {
 	locality: 6,

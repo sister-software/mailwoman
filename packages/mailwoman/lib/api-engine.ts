@@ -36,7 +36,7 @@ async function wofPaths(): Promise<string[]> {
 	const env = $public.MAILWOMAN_WOF_DB
 
 	// The env override is comma-split and probed like the convention set: a listed database
-	// that is not on disk is dropped here rather than handed to the resolver to fail on open.
+	// that's not on disk is dropped here rather than handed to the resolver to fail on open.
 	const explicit = env ? extractDelimited(env) : null
 
 	return existingWOFDatabasePaths(explicit)
@@ -68,7 +68,7 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 		// `pathExists` below therefore checks every candidate.
 		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
-		// A weights package that does not resolve here falls through to the next candidate.
+		// A weights package that doesn't resolve here falls through to the next candidate.
 	}
 
 	candidates.push("packages/neural-weights-en-us/model-card.json")

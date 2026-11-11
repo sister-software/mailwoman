@@ -27,7 +27,7 @@ const UnderseaLayerID = LayerID.bind(null, UnderseaTileSetID)
  * The label color: a pale blue.
  *
  * Undersea names sit over deep water, where the depth shading is darkest,
- * so a light color reads where a dark one would not.
+ * so a light color reads where a dark one wouldn't.
  */
 const UNDERSEA_LABEL_COLOR = "#dff1fb"
 

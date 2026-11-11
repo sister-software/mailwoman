@@ -8,13 +8,13 @@
  *   committed fixture and grades the assembled answer (matched category + coordinate), not label F1.
  *
  *   Floors (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`.
- *   They are graded and printed on every run. Pass `--enforce` to turn a breach into a non-zero exit
+ *   They're graded and printed on every run. Pass `--enforce` to turn a breach into a non-zero exit
  *   (the CI-check mode). Without `--enforce` the command stays report-only — it exits 0 on case
  *   failures. A non-zero exit means the harness broke (missing fixtures, missing db, or a pipeline
  *   construction error), never a graded case failing.
  *
  *   `--semantic-observation` injects `mailwoman/observations`' semantic route as an additional phrase
- *   rung. That is the only arm where the committed activity-phrased rows are reachable. It is off by
+ *   rung. That's the only arm where the committed activity-phrased rows are reachable. It is off by
  *   default and the floors are registered against the off arm: the board grades the construction that
  *   ships.
  */

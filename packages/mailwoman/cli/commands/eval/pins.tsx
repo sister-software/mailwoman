@@ -8,7 +8,7 @@
  *   committed constants and exit nonzero with the exact replacement values. `--update`: rewrite
  *   only the three constants (the test's dated history comments survive byte-identically), then
  *   re-check. `--report-issue` is `--check` for the main-branch audit: on drift it additionally
- *   opens or updates one deduplicated issue through `gh`. That is the backstop for a stale pin reaching
+ *   opens or updates one deduplicated issue through `gh`. That's the backstop for a stale pin reaching
  *   `main` through an admin-merge that bypassed `mailwoman release merge-admin` or a web edit. The
  *   calculation lives in `eval-harness/gauntlet/cases/pins.ts` so the admin-merge command calls it
  *   without Ink.

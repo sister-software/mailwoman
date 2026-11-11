@@ -187,7 +187,7 @@ export function familyByID(family: string): WeightsFamily | null {
  *
  * A packaged locale matches first.
  * Otherwise the language subtag decides, so `ko-KR` and `zh-TW` reach the character family.
- * Callers must not treat `null` as the Latin family.
+ * Callers mustn't treat `null` as the Latin family.
  */
 export function familyForLocale(locale: string): WeightsFamily | null {
 	const code = locale.toLowerCase()
@@ -238,7 +238,7 @@ export function familyForScript(script: string): WeightsFamily | null {
 /**
  * Returns whether the first token that has a script is written in one of the given scripts.
  *
- * This experimental rule is not used by {@linkcode routeFamilyForText}.
+ * This experimental rule isn't used by {@linkcode routeFamilyForText}.
  * It catches a Han line followed by a Latin province without a comma, such as `六分场七队 Hunan`,
  * which {@linkcode carriesFamilySegmentFor} misses.
  *

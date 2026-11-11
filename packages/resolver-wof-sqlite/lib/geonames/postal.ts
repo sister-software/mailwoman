@@ -77,7 +77,7 @@ export interface MedoidSupport {
 	 * Distinct coordinates among them.
 	 *
 	 * One means every row refers to the same point.
-	 * In a dump whose coordinates are computed, that is one value inherited N times
+	 * In a dump whose coordinates are computed, that's one value inherited N times
 	 * rather than N sources agreeing.
 	 */
 	distinctPoints: number

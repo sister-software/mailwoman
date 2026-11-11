@@ -132,7 +132,7 @@ describe("profiles", () => {
 	})
 
 	it("never mixes harnesses within one profile", async () => {
-		// A profile must not mix harnesses.
+		// A profile mustn't mix harnesses.
 		// The token@1 row is the one legitimate crossover, so `js-ship-config` is shared
 		// and everything else is single-harness.
 		for (const name of await listProfiles()) {

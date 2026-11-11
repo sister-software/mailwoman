@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Fulfillment turns one paid invoice into one signed token. The worker re-reads the invoice and its subscription
- *   from Stripe by id. When the license row does not exist, it also re-reads the Checkout Session. A webhook body
+ *   from Stripe by id. When the license row doesn't exist, it also re-reads the Checkout Session. A webhook body
  *   never grants an entitlement. The ledger's unique keys make minting idempotent: a second mint for one invoice
  *   returns `already_minted`. Two events for one payment produce one token in either order. Two callers racing
  *   for one invoice or subscription receive defined answers, with one row between them. The keys do not prevent
@@ -121,7 +121,7 @@ export async function ensureLicenseFromCheckoutSession(
 
 /**
  * One paid invoice to one token: refused with a reason when the invoice, its Price
- * or its subscription is not one this worker mints for, `already_minted` when the ledger
+ * or its subscription isn't one this worker mints for, `already_minted` when the ledger
  * holds the token, `minted` once the token is inserted and the email attempted.
  */
 export async function fulfilInvoice(

@@ -26,7 +26,7 @@ three different kinds of knowledge, and they have very different shapes:
    and "St" ends a street name but starts "St Petersburg".
    Grammar generalizes, because these rules stay mostly stable even for streets that no dataset has recorded yet.
 2. **Tokenization** turns raw text into units a model can read, such as subwords, characters, or bytes.
-3. **The world** is which places exist, where they are, and what they contain.
+3. **The world** is which places exist, where they're, and what they contain.
    This knowledge is enormous and ambiguous ("Washington" is a state, dozens of cities, and thousands of streets),
    and it changes every month.
 
@@ -58,12 +58,12 @@ it doesn't know a place, it can invent one. The other architectures structurally
 **Mailwoman's choice is the factoring itself.** Each kind of knowledge goes where it generalizes
 best, and _only_ structure lives in parameters:
 
-| Knowledge    | Where it lives                                                                                                          | Why there                                                                                                                                                                              |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Grammar      | a ~39 MB encoder ([why neural](./why-a-neural-parser.mdx))                                                              | structure generalizes, and a small model trained on hundreds of millions of addresses learns the game's rules rather than its roster                                                   |
-| Tokenization | a [SentencePiece subword vocabulary](../../concepts/tokenization.mdx) with byte fallback                                | learned from the address corpus itself, and byte fallback means no input is unrepresentable (measured: 0.155% of pieces over a 684M-row feed fall back to bytes)                       |
-| The world    | swappable data files — the gazetteer, [FST evidence channels](../../concepts/fst-gazetteer-prior.mdx), curated lexicons | the atlas changes monthly and must not require retraining, and it reaches the model as _graded evidence_, so an unknown place is a normal input rather than an out-of-vocabulary error |
-| Query idiom  | small curated tables (brand aliases, regional variants)                                                                 | "Macca's" → McDonald's is human knowledge with a maintainer rather than a statistical fact                                                                                             |
+| Knowledge    | Where it lives                                                                                                          | Why there                                                                                                                                                                             |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Grammar      | a ~39 MB encoder ([why neural](./why-a-neural-parser.mdx))                                                              | structure generalizes, and a small model trained on hundreds of millions of addresses learns the game's rules rather than its roster                                                  |
+| Tokenization | a [SentencePiece subword vocabulary](../../concepts/tokenization.mdx) with byte fallback                                | learned from the address corpus itself, and byte fallback means no input is unrepresentable (measured: 0.155% of pieces over a 684M-row feed fall back to bytes)                      |
+| The world    | swappable data files — the gazetteer, [FST evidence channels](../../concepts/fst-gazetteer-prior.mdx), curated lexicons | the atlas changes monthly and mustn't require retraining, and it reaches the model as _graded evidence_, so an unknown place is a normal input rather than an out-of-vocabulary error |
+| Query idiom  | small curated tables (brand aliases, regional variants)                                                                 | "Macca's" → McDonald's is human knowledge with a maintainer rather than a statistical fact                                                                                            |
 
 At inference time, the model consults the world through evidence channels. A channel reports that a
 span matches a known locality surface with a given ambiguity class. During training, the model

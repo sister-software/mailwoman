@@ -362,7 +362,7 @@ describe("findRescoreCandidate", () => {
 			const hit = await findRescoreCandidate(raw, venueTree(raw), backend, { thresholdKm: 0, isVenueCategoryWord })
 
 			expect(hit?.text).toBe("London")
-			// `Tower of` is part of the name, so `London` may scope the venue lookup but is not the answer.
+			// `Tower of` is part of the name, so `London` may scope the venue lookup but isn't the answer.
 			expect(hit?.dropsName).toBe(true)
 		})
 

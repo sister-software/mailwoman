@@ -7,7 +7,7 @@ description: How the PFX1 postcode-prefix index travels from the data root into 
 
 PR #2584 added the anchor-region prior reading the data root's `postcode-prefix` directory, so the
 geocode session, the runtime pipeline, the gauntlet and the battery ran it and the browser runtime
-did not. This record moves the index into the weights packages (#2585) so every runtime reads the
+didn't. This record moves the index into the weights packages (#2585) so every runtime reads the
 same artifact.
 
 ## The artifact
@@ -35,7 +35,7 @@ open.
 The Node weights resolver lists `postcode-prefix-*.bin` in the resolved package directory as
 `postcodePrefixPaths`, the classifier exposes them, and `loadParsePriors` reads those before the
 data-root directory. A checkout whose package directory holds no index still reads the data root,
-and that fallback also reads the `gb-ni` build-local file. That is the dev posture the resolver's
+and that fallback also reads the `gb-ni` build-local file. That's the dev posture the resolver's
 own prefix prior has.
 
 The browser loader takes `postcodePrefixURLs`, fetches each index beside the postcode binaries,

@@ -20,7 +20,7 @@ import { dirname, PathBuilder, resolvePath } from "path-ts"
  * For a workspace package, the result is the real workspace directory
  * because `import.meta.resolve` follows the symlink.
  *
- * @throws `ERR_MODULE_NOT_FOUND` when the package is not installed.
+ * @throws `ERR_MODULE_NOT_FOUND` when the package isn't installed.
  */
 export function resolvePackageDirectory<Name extends string = string>(packageName: Name): PathBuilder<Name> {
 	const manifestPath = fileURLToPath(import.meta.resolve(`${packageName}/package.json`))
@@ -35,7 +35,7 @@ export function resolvePackageDirectory<Name extends string = string>(packageNam
  * `out/` tree and a published tarball.
  * For example, `resolvePackagePath("mailwoman", "tools", "eval-harness", "baselines.json")`.
  *
- * @throws `ERR_MODULE_NOT_FOUND` when the package is not installed.
+ * @throws `ERR_MODULE_NOT_FOUND` when the package isn't installed.
  */
 export function resolvePackagePath(packageName: string, ...segments: string[]): string {
 	return resolvePath(resolvePackageDirectory(packageName), ...segments)
@@ -51,14 +51,14 @@ export function resolvePackagePath(packageName: string, ...segments: string[]): 
  * It cannot find a package installed only in a nested `node_modules`.
  * Use `resolve-from.ts` for that case.
  *
- * @throws `ERR_MODULE_NOT_FOUND` when the specifier does not resolve.
+ * @throws `ERR_MODULE_NOT_FOUND` when the specifier doesn't resolve.
  */
 export function resolveModulePath(specifier: string): string {
 	return fileURLToPath(import.meta.resolve(specifier))
 }
 
 /**
- * Behaves like {@link resolveModulePath} but returns `null` when the specifier does not resolve.
+ * Behaves like {@link resolveModulePath} but returns `null` when the specifier doesn't resolve.
  */
 export function tryResolveModulePath(specifier: string): string | null {
 	try {
@@ -69,7 +69,7 @@ export function tryResolveModulePath(specifier: string): string | null {
 }
 
 /**
- * Behaves like {@link resolvePackageDirectory} but returns `null` when the package is not installed.
+ * Behaves like {@link resolvePackageDirectory} but returns `null` when the package isn't installed.
  */
 export function tryResolvePackageDirectory<Name extends string = string>(packageName: Name): PathBuilder<Name> | null {
 	try {

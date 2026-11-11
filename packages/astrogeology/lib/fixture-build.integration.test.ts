@@ -124,7 +124,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 /**
  * `runFile` decodes a tool's output as UTF-8, so the PNG signature's first byte (0x89)
  * reads as the replacement character and the seven bytes after it survive verbatim.
- * That is enough to tell a PNG from anything else.
+ * That's enough to tell a PNG from anything else.
  */
 const PNG_SIGNATURE_AS_UTF8 = "�PNG\r\n\n"
 
@@ -156,7 +156,7 @@ test("the fixture DEM builds a hillshade archive of PNG tiles with relief", asyn
 	])
 
 	// Overviews must decimate.
-	// An average of base-256 numerals gives a height that is not a terrain sample.
+	// An average of base-256 numerals gives a height that's not a terrain sample.
 	const overviews = commands.find((command) => command[0] === "gdaladdo")
 	expect(overviews).toContain("nearest")
 	expect(overviews).not.toContain("average")

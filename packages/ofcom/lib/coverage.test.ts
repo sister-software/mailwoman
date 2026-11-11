@@ -286,7 +286,7 @@ describe("parseOfcomCoverage refusals", () => {
 		)
 	})
 
-	// A quote closed on a later line is not an error to the reader: it joins the lines into one
+	// A quote closed on a later line isn't an error to the reader: it joins the lines into one
 	// record of the header's width, and only the record count tells that read from a shorter file.
 	test("a quote closed on a later line joins the lines and throws rather than reading short", async () => {
 		const text = await readLocalTextFile(fixture(POSTCODE_ALL))

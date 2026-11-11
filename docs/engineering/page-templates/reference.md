@@ -22,7 +22,7 @@ source-of-truth: api/routes.ts, api/schema.ts, api/app.ts
 ## Section order
 
 1. `# Title`: the surface, spelled as it is spelled in code.
-2. **Scope.** One paragraph: what this surface is and what it is not.
+2. **Scope.** One paragraph: what this surface is and what it isn't.
 3. **Interface.** The tables. Endpoints, parameters, return shapes, defaults.
 4. **Errors.** One closed table: stable code, one-line meaning, next step.
 5. **Examples.** Full request and full literal response, together.

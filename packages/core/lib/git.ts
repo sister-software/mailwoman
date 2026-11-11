@@ -130,7 +130,7 @@ export interface GitTransferOptions extends Pick<ProcessTaskOptions, "stdin" | "
  *
  * Initialize it with `construct(GitClient, options)` from `async-init` to resolve
  * {@linkcode GitClient.root} and {@linkcode GitClient.commonDirectory} before use.
- * A client that will clone into a directory that does not exist yet is used without initialization.
+ * A client that will clone into a directory that doesn't exist yet is used without initialization.
  */
 export class GitClient extends TypedEventTarget<GitClientEventMap> implements AsyncDisposable {
 	public readonly cwd: PathBuilderLike
@@ -413,7 +413,7 @@ export async function dirtyTrackedFiles(
  * This answers a cache's question: has anything at all changed since a derived artifact was built.
  *
  * A key built from the narrower reading goes stale after a staged edit or a new file.
- * and a stale index reports that a helper written an hour ago does not exist.
+ * and a stale index reports that a helper written an hour ago doesn't exist.
  */
 export async function workingTreeStatus(
 	repoRoot: PathBuilderLike = repoRootPathBuilder,
@@ -525,10 +525,10 @@ export async function* streamTrackedFiles(
 
 /**
  * Every path in the working tree that Git includes, repo-relative: the tracked ones
- * and the untracked ones an ignore rule does not cover, optionally narrowed by git pathspecs.
+ * and the untracked ones an ignore rule doesn't cover, optionally narrowed by git pathspecs.
  *
  * This is the set a checker over repository contents needs. {@linkcode trackedFiles}
- * answers what is committed.
+ * answers what's committed.
  * A newly written file is absent from that set, so a checker could report a clean result without opening it.
  *
  * `--exclude-standard` applies `.gitignore`, so a build output stays out
@@ -562,7 +562,7 @@ export async function workingTreeFiles(
  * The old path never appears, so the result contains only paths that still exist.
  *
  * Disabled rename detection reports every move as a deletion of the old path.
- * That is the path a stale literal holds.
+ * That's the path a stale literal holds.
  *
  * Measured on this repository: 11,696 paths over 4,398 commits in 205 ms,
  * against 11,483 for the reading that answers the wrong set.

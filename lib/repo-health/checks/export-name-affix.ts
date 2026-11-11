@@ -121,7 +121,7 @@ function exportedFunctionSites(file: string, source: ts.SourceFile): ExportSite[
 
 /**
  * The package a repo-relative path belongs to, so a family inside one workspace
- * is not reported against itself.
+ * isn't reported against itself.
  */
 function packageOf(file: string): string {
 	return file.split("/").slice(0, 2).join("/")

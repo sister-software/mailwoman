@@ -7,7 +7,7 @@
 /**
  * The count a build may check a stream against when `limit` bounds the read.
  *
- * A limit above the layer's own count reads every feature there is, so the declaration is
+ * A limit above the layer's own count reads every feature there's, so the declaration is
  * the layer's count rather than the limit's: a builder that compares streamed count to
  * the limit as strict equality would otherwise refuse a complete download as short.
  */

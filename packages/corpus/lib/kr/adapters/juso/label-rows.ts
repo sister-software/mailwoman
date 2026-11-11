@@ -141,7 +141,7 @@ async function loadRoadCodes(archivePath: PathBuilderLike, member: string): Prom
 }
 
 /**
- * A house or lot number as the register writes it: leading zeros dropped, a `-<부번>` only when there is one.
+ * A house or lot number as the register writes it: leading zeros dropped, a `-<부번>` only when there's one.
  */
 function joinNumber(main: string, sub: string): string {
 	const head = main.replace(/^0+/u, "") || "0"

@@ -139,8 +139,7 @@ export interface ElectedLicense<Operation extends string = string> {
 	 * rather than one reading presented as settled.
 	 *
 	 * The engineering policy elects the strictest grant for what a release may include.
-	 * It does not establish which grant governs, and `electedBecause` states
-	 * the substantive ground separately.
+	 * It doesn't establish which grant governs, and `electedBecause` states the substantive ground separately.
 	 */
 	candidateGrants?: readonly string[]
 	termsVersion?: string
@@ -194,7 +193,7 @@ export function electedTermsLabel(decision: LicenseDecision): string | null {
 /**
  * Returns the recorded permission for one operation under a license decision.
  *
- * The result is `unreviewed` when the decision is not elected or does not mention the operation.
+ * The result is `unreviewed` when the decision isn't elected or doesn't mention the operation.
  * The selected terms establish which terms apply.
  * Each operation still needs its own review.
  */
@@ -218,11 +217,11 @@ export function permissionFor<Operation extends string>(
 }
 
 /**
- * Returns a reason for every operation the decision does not permit,
+ * Returns a reason for every operation the decision doesn't permit,
  * or an empty array when it permits them all.
  *
  * `licenseID` is the id the source row points at.
- * A decision that is absent, unchecked or refused yields one reason naming that state.
+ * A decision that's absent, unchecked or refused yields one reason naming that state.
  */
 export function operationProblems<Operation extends string>(
 	licenseID: string,

@@ -210,14 +210,14 @@ export async function planModuleMoves(
 	}
 
 	// Candidates are derived from the maps the plan leaves rather than the ones it found:
-	// a target that has moved would otherwise offer a replacement naming the old path, or none at all.
+	// a target that's moved would otherwise offer a replacement naming the old path, or none at all.
 	const planned = manifests.map((manifest) => {
 		const text = rewrittenManifests.get(`${manifest.dir}/package.json`)
 
 		if (!text) return manifest
 
 		// A manifest this operation spliced must parse.
-		// If it does not, the splice was wrong and the plan is void.
+		// If it doesn't, the splice was wrong and the plan is void.
 		const parsed = parseJSONStrict<Pick<PackageManifest, "imports" | "exports">>(text)
 
 		return { ...manifest, imports: parsed.imports, exports: parsed.exports }

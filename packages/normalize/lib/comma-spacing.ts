@@ -41,8 +41,8 @@ function isNumericSeparator(input: string, commaIndex: number): boolean {
 }
 
 /**
- * Insert one space after every comma that is directly followed by a letter
- * or digit, unless the comma is a numeric separator.
+ * Insert one space after every comma that's directly followed by a letter or digit,
+ * unless the comma is a numeric separator.
  *
  * Offset-map-correct: the inserted space maps to the comma.
  */

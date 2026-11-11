@@ -16,8 +16,8 @@
  *   outcome includes the row's `group`. `release/evaluate.ts` uses that group for resampling.
  *
  *   The optional provenance file is `{ "rows": { "<rowID>": { "provenance": "verified_unseen" |
- *   "unseen_by_candidate" | "known_overlap", "evidence": "<where the history was recorded>" } } }`. A row it does
- *   not name is classed `unknown`.
+ *   "unseen_by_candidate" | "known_overlap", "evidence": "<where the history was recorded>" } } }`. A row it doesn't
+ *   name is classed `unknown`.
  *
  *   `--spec` names the release specification (default: the current one) whose capability requirements select
  *   the capability-probe sources. Their rows are reported in a `<country>/capability` entry rather than in the
@@ -28,7 +28,7 @@
  *
  *   Rows are parsed on `--workers` worker threads (`heldout/per/parse-cache`). Parses are kept under
  *   `$MAILWOMAN_DATA_ROOT/models/arms/heldout-parses/` and read back when the rows, the weights files and the commit
- *   all match, so a rerun or an added arm parses only what is new. The report's `parses` entry records, per arm,
+ *   all match, so a rerun or an added arm parses only what's new. The report's `parses` entry records, per arm,
  *   the cache file read or written, or why the cache was left unused. `--no-parse-cache` parses every arm again.
  *
  *   After the per-country table it prints the exact-parse difference split by row kind, by provenance, by both,

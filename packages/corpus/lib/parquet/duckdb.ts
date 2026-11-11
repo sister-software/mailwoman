@@ -28,7 +28,7 @@ export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Dis
 /**
  * The share of host memory one DuckDB instance may hold.
  *
- * DuckDB allocates outside the V8 heap, so `--max-old-space-size` does not bound it and a query
+ * DuckDB allocates outside the V8 heap, so `--max-old-space-size` doesn't bound it and a query
  * over a corpus with hundreds of millions of rows will exhaust the host rather than spill.
  * A `COUNT(DISTINCT …)` over `v0.6.0-register-surface`'s 697,675,170 train rows did
  * that twice on 2026-09-28, with a second corpus tool running beside it.
@@ -41,7 +41,7 @@ export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Dis
  *
  * Past its limit DuckDB spills to `temp_directory`.
  * The query finishes slower.
- * That is the failure to prefer.
+ * That's the failure to prefer.
  *
  * A caller that knows it holds the host by itself passes a larger `memoryLimitBytes`.
  *
@@ -181,7 +181,7 @@ export function escapeSQLString(value: string): string {
 /**
  * Escape `value` as a double-quoted SQL identifier, for a column name that reaches a statement from data.
  *
- * A projection names columns the caller chose, so the name is not a literal this module wrote.
+ * A projection names columns the caller chose, so the name isn't a literal this module wrote.
  * Quotes preserve a column whose name collides with a keyword — or includes a space —
  * from re-parsing as syntax.
  */

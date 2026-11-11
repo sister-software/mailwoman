@@ -54,7 +54,7 @@ if a future distribution does include them they flow through unchanged.
 Ancestor names (locality, region, country) always come from the canonical
 `wof:name` field on the ancestor record. Cross-product over ancestor
 `name:*` variants (e.g. emitting `"75008 Париж"` because Paris has a
-`name:rus_x_preferred`) is **not** done here — that's a synthesis-step
+`name:rus_x_preferred`) **isn't** done here — that's a synthesis-step
 augmentation rather than an adapter responsibility. A multiplication of postcode rows by
 ancestor locale would inflate the corpus by an order of magnitude without
 a clear training-value story. If it turns out we need it, the synthesis
@@ -81,4 +81,4 @@ superseded postcode (`5099`, `mz:is_current = 0`) to exercise the filter.
 
 The Saint Petersburg admin record in the fixture has
 `name:eng_x_colloquial = ["St. Petersburg"]` to verify that the postcode
-adapter does **not** cross-multiply over ancestor name variants.
+adapter **doesn't** cross-multiply over ancestor name variants.

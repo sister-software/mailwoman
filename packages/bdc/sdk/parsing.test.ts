@@ -115,7 +115,7 @@ test("readAvailabilityRows: provider_id always comes from the function parameter
 test("readAvailabilityRows: a quoted brand_name with an embedded comma doesn't desync column alignment", () => {
 	const rows = parseFixture()
 	// Row 3 (index 2) has `"Frontera, Inc."` as its quoted brand_name.
-	// The comma inside must not be mistaken for a field delimiter, or every
+	// The comma inside mustn't be mistaken for a field delimiter, or every
 	// subsequent column on that row would shift.
 	const quotedRow = rows[2]!
 

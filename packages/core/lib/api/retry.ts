@@ -144,7 +144,7 @@ function retryAfterFrom(error: AxiosError): number | null {
  *
  * The standalone SEC client treated dropped sockets as terminal.
  *
- * A caller-initiated cancel (`ERR_CANCELED`, i.e. the caller's own `AbortSignal` fired) is not retryable.
+ * A caller-initiated cancel (`ERR_CANCELED`, i.e. the caller's own `AbortSignal` fired) isn't retryable.
  * The caller asked us to stop.
  *
  * The retry classification treats caller cancellation as terminal.

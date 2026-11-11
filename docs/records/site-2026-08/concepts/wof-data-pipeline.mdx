@@ -137,7 +137,7 @@ The reasons for writing to memory first:
 - Workers are fully independent, without shared file handles or lock contention during processing.
 - Consolidation is a single bulk operation after all workers finish, and SQLite handles it efficiently with `ATTACH`.
 
-This design never went past the design stage. The Redis target was good enough for prototyping. By the time it was clear that Redis would not be used in production, other work (the neural classifier, corpus pipeline, and resolver integration) took priority.
+This design never went past the design stage. The Redis target was good enough for prototyping. By the time it was clear that Redis wouldn't be used in production, other work (the neural classifier, corpus pipeline, and resolver integration) took priority.
 
 ### `PlacetypeDataSource` — the target schema
 
@@ -205,7 +205,7 @@ This pipeline produces item 3. Specifically:
 
 The WOF spot-check (2026-05-24) found the raw `spr` table's parent_id chains reliable (18/20 correct). It also found two problems that the prepare pipeline needs to address:
 
-1. **Name aliasing**: a bare `name` lookup does not find "Saint Petersburg", because WOF stores it as "St. Petersburg". This is [a known WOF failure mode](./whosonfirst-gotchas.mdx). The `variant`/`short` columns in `PlacetypeDataSource` are designed for this case, and they still need to be populated.
+1. **Name aliasing**: a bare `name` lookup doesn't find "Saint Petersburg", because WOF stores it as "St. Petersburg". This is [a known WOF failure mode](./whosonfirst-gotchas.mdx). The `variant`/`short` columns in `PlacetypeDataSource` are designed for this case, and they still need to be populated.
 2. **Disambiguation**: a bare-name lookup without `parent_id` filtering picks the wrong record. A Nebraska village called "New York" outranks NYC because of alphabetical ID ordering. The `find` query needs a `parent_id` filter or population-weighted ranking.
 
 The prepare pipeline populates the variant columns and fixes the first problem. A `PlacetypeDataSource.find` call with criteria that filter by parent_id or placetype fixes the second.

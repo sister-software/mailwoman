@@ -11,7 +11,7 @@
 #    supplies the other countries, one osm-<cc> source each. Each source is sampled by the variety of its address
 #    forms (at most 2 rows per street and 100 per place, 50,000 rows at most), as recorded in the
 #    .variety.json file beside each recipe output. osm-ae, osm-bn and osm-rs are #2665's rebuilds. They replace
-#    #2663's files of the same name. Svalbard's matrikkelen-sj is left out, and SJ is not in `country_weights`.
+#    #2663's files of the same name. Svalbard's matrikkelen-sj is left out, and SJ isn't in `country_weights`.
 #
 # 2. Each added source takes `source_reps` 1.0, one pass over its train rows across the run's 7,680,000 draws
 #    (60,000 steps of 128). Together they take 518,799 draws, 6.75% of the run, out of the other sources' share.
@@ -489,7 +489,7 @@ data:
   augment_exclude_sources:
     - spliced-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
-    # must not contain.
+    # mustn't contain.
     - codex-bare-postcode
   train_rows_per_epoch: 1000000
   val_rows: 4096

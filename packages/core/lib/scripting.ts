@@ -18,7 +18,7 @@ export * from "#scripting/operation"
 export async function runIfScript(meta: ImportMeta, scriptCallback: ScriptCallback): Promise<void> {
 	if (typeof meta.main !== "boolean") {
 		// Vite/vitest module graphs define import.meta.env but never import.meta.main.
-		// A module imported there is not the entry script, so importing it must stay side-effect-free.
+		// A module imported there's not the entry script, so importing it must stay side-effect-free.
 		if ((meta as { env?: unknown }).env) return
 
 		throw new Error("Expected import.meta.main to be a boolean. Are we on Node.js 24+?")

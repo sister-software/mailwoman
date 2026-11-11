@@ -5,7 +5,7 @@
  *
  *   Stages a corpus from the R2 bucket onto the training volume, inside a sandbox that mounts the volume.
  *
- *   A file a host writes into the volume is not visible to a mounted container, so the corpus travels R2 → `rclone`
+ *   A file a host writes into the volume isn't visible to a mounted container, so the corpus travels R2 → `rclone`
  *   in a sandbox → `sync <mount>`. `mailwoman corpus upload` writes the bucket side. The bucket holds an entry either
  *   nested, `corpus/<entry>/corpus-<entry>/`, or wrapped, `corpus/<entry>/`; both land at
  *   `<mount>/corpus/versioned/<entry>/corpus-<entry>/`, the path a training config's `corpus_dir` names.

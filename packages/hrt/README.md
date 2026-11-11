@@ -1,7 +1,7 @@
 # hrt, the Hilbert Rust Tiler
 
 `hrt` is a Rust rewrite of the Earth basemap builder, the Planetiler profile in
-[`mailwoman/basemaps`](https://github.com/mailwoman/basemaps). The tile worker and Earth should not be able to tell
+[`mailwoman/basemaps`](https://github.com/mailwoman/basemaps). The tile worker and Earth shouldn't be able to tell
 its archives from the Java build's. Issue #2902 holds the specification: the parity contract, the stages, the
 performance items and the phases.
 
@@ -45,7 +45,7 @@ With an OpenStreetMap file as well, OpenStreetMap contributes only the address p
 address points, for an OpenStreetMap archive whose footprints come from a separate Overture archive.
 
 The fork's Java build of 2026-10-23 (`planet.v4`) read the Overture release that was latest that day, and its archive
-does not record which one, so this comparison checks counts rather than bytes. On a 4 km Osaka box (135.48–135.52° E, 34.66–34.70° N) from release
+doesn't record which one, so this comparison checks counts rather than bytes. On a 4 km Osaka box (135.48–135.52° E, 34.66–34.70° N) from release
 2026-10-21.0, with 35,223 buildings and 379 building parts, tile `15/28718/13015` held 3,855 buildings, 4 building
 parts and 2,810 heights in both archives. `planet.v4` predates the fork's `height_src`, `district` and `class`
 attributes, so only the `hrt` tile has them.
@@ -255,7 +255,7 @@ On 2026-11-02, every tile was equal without a vertex tolerance:
 | `luxembourg-latest.osm.pbf` | 6,350 |  131,136 | 6,350 |
 
 Without post-processing, the 6,350 Luxembourg tiles and their 649,223 features were also equal. The Overture
-transportation source of the Java layer is not ported.
+transportation source of the Java layer isn't ported.
 
 ## Earth, infrastructure, facilities and trees parity
 
@@ -330,7 +330,7 @@ encoding, a tree's crown sorted ahead of its trunk in 3,121 Luxembourg tiles, be
 record decoder reproduces. One difference stays: Planetiler writes attribute keys as numbers assigned in first-use
 order across worker threads, so ties between features with different key sets order by thread scheduling in Java.
 
-The `trees` layer's canopy-raster source, `pm:treetops`, is a Parquet file `hrt` does not read yet.
+The `trees` layer's canopy-raster source, `pm:treetops`, is a Parquet file `hrt` doesn't read yet.
 
 Island labels sit at the center of each island's maximum inscribed circle. `hrt-render`'s `inscribed` module ports
 the JTS 1.20 search Planetiler calls, seeded at GEOS's interior point. GEOS's own port of the search placed one Kii
@@ -381,7 +381,7 @@ as `hrt`, and `hrt`'s tile holds the forest clipped to that piece.
 
 Four equal landuse tiles hold the same features in another order. In the three `hrt clock` printed, the first feature
 out of order is a forest relation that the clip split into several polygons, which suggests GEOS's overlay lists a
-multipolygon's members in a different order from JTS's. That cause is not yet tested.
+multipolygon's members in a different order from JTS's. That cause isn't yet tested.
 
 ## Devanagari name encoding parity
 
@@ -478,7 +478,7 @@ The remaining count difference is the building merge at 12/3578/1635 described b
 13/7208/3197, holds 42 features in both builds and matched Java in the first run, so the relation-order change moved
 it. A roads-only build of Geofabrik's `chubu-latest.osm.pbf` was byte-identical to Java's in all 93,277 tiles,
 including this one. A build of one region fills the membership table with that region's relations only, and where a
-lookup lands depends on every key in the table, so this tile's cause is not established.
+lookup lands depends on every key in the table, so this tile's cause isn't established.
 
 The differing polygons in `water`, `buildings`, `landuse` and `landcover` are the polygon merges recorded for
 Luxembourg: GEOS's buffer, union and precision reducer in `hrt`, JTS's in Planetiler. In the 200 tiles `clock`

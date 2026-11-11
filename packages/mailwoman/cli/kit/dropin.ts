@@ -103,7 +103,7 @@ export interface GazetteerPaths {
 }
 
 /**
- * Find gazetteer databases, or exit with a clear error if they are unavailable.
+ * Find gazetteer databases, or exit with a clear error if they're unavailable.
  */
 export async function resolveGazetteerOrExit(candidateDBFlag: string | null): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {

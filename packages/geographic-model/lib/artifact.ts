@@ -130,7 +130,7 @@ const ARTIFACT_TABLES = [
 ] as const
 
 /**
- * Returns the reason `value` is not a compiled artifact, or `null` when it is one.
+ * Returns the reason `value` isn't a compiled artifact, or `null` when it is one.
  */
 function artifactProblem(value: unknown): string | null {
 	if (!isPlainObject(value)) return "a compiled geographic model must be an object"
@@ -154,8 +154,7 @@ function artifactProblem(value: unknown): string | null {
  * Reads a value from `JSON.parse` as a {@link CompiledGeographicModel}.
  *
  * The reader checks the format version, the model version and the presence of every table.
- * It does not revalidate records, because the compiler accepts only documents
- * that already passed validation.
+ * It doesn't revalidate records, because the compiler accepts only documents that already passed validation.
  */
 export function parseCompiledGeographicModel(input: unknown): CompiledGeographicModel {
 	const problem = artifactProblem(input)

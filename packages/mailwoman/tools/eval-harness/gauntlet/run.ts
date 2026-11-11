@@ -39,7 +39,7 @@ import type { SwitchPin } from "#tools/eval-harness/switch-pin"
  * The first three make up the combined verdict.
  * `ablation` and `clarity` are reachable only via `--layer`.
  *
- * They are absent from the combined check and cannot block a ship.
+ * They're absent from the combined check and cannot block a ship.
  */
 export type GauntletLayer = "regression" | "metamorphic" | "holdout" | "ablation" | "clarity"
 

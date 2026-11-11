@@ -36,7 +36,7 @@ export type StructureBoardResult = SpanBoardResult
  */
 export interface StructureFixture extends SpanBoardFixture {
 	/**
-	 * When true, the row fails on any tag the parse emits that its expectation does not name.
+	 * When true, the row fails on any tag the parse emits that its expectation doesn't name.
 	 *
 	 * Query-shaped rows set it, so a category word tagged `street` or `region` fails in every class alike.
 	 */

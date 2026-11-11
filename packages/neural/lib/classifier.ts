@@ -257,10 +257,10 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
-	 * The required channels `loadFromWeights` could not feed, so parses run with them off.
+	 * The required channels `loadFromWeights` couldn't feed, so parses run with them off.
 	 *
 	 * Empty when every required channel is fed or the instance was constructed directly.
-	 * An evaluator that must not grade a degraded configuration refuses a non-empty list.
+	 * An evaluator that mustn't grade a degraded configuration refuses a non-empty list.
 	 */
 	get unfedChannels(): readonly UnfedChannelReport[] {
 		return this.cfg.unfedChannels ?? []
@@ -553,7 +553,7 @@ export class NeuralAddressClassifier {
 		// These lists are null when not tracing so a plain parse allocates no trace arrays.
 		const tracePriors: TracePrior[] | null = trace ? [] : null
 		const traceRepairs: TraceRepair[] | null = trace ? [] : null
-		// The emission priors in the order they are added, kept only when tracing for the decode explanation.
+		// The emission priors in the order they're added, kept only when tracing for the decode explanation.
 		const traceEmissionPriors: DecodeObjective["emissionPriors"][number][] | null = trace ? [] : null
 
 		const recordRepair = (pass: TraceRepairPass, before: string[], after: string[]): void => {

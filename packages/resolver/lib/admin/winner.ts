@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Which resolved admin place answers the query: the one ordering whose postcode rung is not a constant.
+ * @file Which resolved admin place answers the query: the one ordering whose postcode rung isn't a constant.
  *
  *   `postalcode` is the only placetype whose specificity depends on the resolved hit.
  *   `PLACETYPE_SPECIFICITY` cannot express that split.
@@ -77,7 +77,7 @@ export interface ResolvedPostcodeHit {
 	 * ISO-3166 alpha-2 code where the resolver placed the postcode.
 	 *
 	 * The code is independent of the caller's requested scope.
-	 * It is absent when the postcode did not resolve to a country.
+	 * It is absent when the postcode didn't resolve to a country.
 	 * The ladder then defaults to locality-first.
 	 */
 	country?: string | null

@@ -48,7 +48,7 @@ const ALL_O_RATIO_CEILING = 0.9
 /**
  * Default `lint-rules.json` path — the rules ship beside this module in the source tree.
  *
- * Tsc does not emit readFileSync'd JSON into `out/`, so the compiled tree falls back
+ * Tsc doesn't emit readFileSync'd JSON into `out/`, so the compiled tree falls back
  * to the source-tree copy (corpus/out/src/tools/ → corpus/src/tools/).
  *
  * In-repo the `node` exports condition loads this module from source anyway,

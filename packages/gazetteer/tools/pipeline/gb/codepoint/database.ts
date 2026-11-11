@@ -156,7 +156,7 @@ export async function buildPostcodeCodePoint(
 	const sourceDir = PathBuilder.from(options.sourceDir ?? dataRootPath("codepoint", stamp))
 	const out = (options.out ?? wofDatabasePath(`postalcode-gb-codepoint-${stamp}.db`)).toString()
 
-	// An offline build must not record blank provenance.
+	// An offline build mustn't record blank provenance.
 	// The `acquisition.json` sidecar supplies the release label and MD5.
 	// The build records a missing sidecar in words rather than an empty string.
 	let archiveMD5: string
@@ -187,7 +187,7 @@ export async function buildPostcodeCodePoint(
 		`${extracted.metadata.totalRows.toLocaleString()} rows claimed across ${extracted.csvPaths.length} areas`
 	)
 
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const {
 		unifiedSchema: { createUnifiedSchema, createUnifiedIndexes, populateAncestors },
 		geonames: { normalizePostcodeName },

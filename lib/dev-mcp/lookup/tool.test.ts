@@ -13,7 +13,7 @@ import type { EngineRegistryLike } from "#dev-mcp/engine/registry"
 import { runLookup } from "#dev-mcp/lookup/tool"
 
 /**
- * Fail if a source that should not use the engine registry tries to access it.
+ * Fail if a source that shouldn't use the engine registry tries to access it.
  */
 const noRegistry = new Proxy({} as EngineRegistryLike, {
 	get() {

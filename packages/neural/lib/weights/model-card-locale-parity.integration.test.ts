@@ -74,7 +74,7 @@ describe("fr-fr ↔ en-us model-card parity (#721 — fr-fr ships en-us's model 
  * Every overlay shares the base `model.onnx` byte-for-byte, so an overlay that declares
  * a `requires` block at all must declare the base's evidence channels within it:
  * a declared block suppresses the graph-inference back-compat path, so a missing channel
- * is not inferred and `required` defaulting to false means no check fails closed.
+ * isn't inferred and `required` defaulting to false means no check fails closed.
  *
  * An overlay with no block is deliberately exempt, because `ProductionScorer`
  * then infers the channels from the ONNX graph and the base supplies the right set.

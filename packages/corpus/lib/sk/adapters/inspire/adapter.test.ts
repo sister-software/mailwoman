@@ -175,7 +175,7 @@ describe("sk-inspire adapter against the fixture WFS pages", () => {
 		const { rows } = await rowsFrom(fixtureDir)
 
 		// `PostalDescriptor.4018` states `<ad:postCode>04018</ad:postCode>`,
-		// so the code is five digits and the feature's own id is not.
+		// so the code is five digits and the feature's own id isn't.
 		expect(rows.find((r) => r.source_id.endsWith("Address.4208424"))?.components.postcode).toBe("04018")
 
 		expect(rows.find((r) => r.source_id.endsWith("Address.4208424"))?.raw).toBe("Skalická 1771/4, 04018 Košice-Krásna")

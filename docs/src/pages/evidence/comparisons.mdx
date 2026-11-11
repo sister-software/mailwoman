@@ -23,7 +23,7 @@ Mailwoman also serves Nominatim-, Photon- and libpostal-compatible APIs, so a cl
 
 ## The measured comparison
 
-The project has published one comparison that ran Mailwoman beside other geocoders: the [open-truth three-arm report of 18 August 2026](https://github.com/sister-software/mailwoman/blob/v11.0.0/docs/records/evals/competitive-parity/2026-08-18-open-truth-three-arm.md). It used Mailwoman model 9.1.0, and Pelias and Photon results captured in August 2026. Photon is a geocoder built on OpenStreetMap data. Google and Nominatim were not measured.
+The project has published one comparison that ran Mailwoman beside other geocoders: the [open-truth three-arm report of 18 August 2026](https://github.com/sister-software/mailwoman/blob/v11.0.0/docs/records/evals/competitive-parity/2026-08-18-open-truth-three-arm.md). It used Mailwoman model 9.1.0, and Pelias and Photon results captured in August 2026. Photon is a geocoder built on OpenStreetMap data. Google and Nominatim weren't measured.
 
 The [panel](/benchmarks/open-truth-panel.jsonl) has 297 addresses in six groups, each with a rooftop coordinate from an open address register. Every arm received the same 297 strings. The scorer counts a row as a hit when the returned coordinate lies within 1, 5 or 25 km of the reference, and counts a missing result as a miss at every distance.
 
@@ -43,7 +43,7 @@ By group, the largest differences were in New Zealand, where Mailwoman led by 24
 
 Three limits apply to these numbers:
 
-- They describe model 9.1.0 and the data of August 2026. Release 11.0.0 ships model 10.8.0 and has not been measured on this panel.
+- They describe model 9.1.0 and the data of August 2026. Release 11.0.0 ships model 10.8.0 and hasn't been measured on this panel.
 - Mailwoman and Pelias use some of the same open registers that supplied the reference coordinates. The distance partly measures how well each one retrieves that register's row.
 - 297 rows in six groups describe those groups. They do not estimate the error rate for every address.
 
@@ -56,6 +56,6 @@ cd docs/static/benchmarks
 node open-truth-three-arm.mjs
 ```
 
-It prints the per-group table, the pooled table, the paired bootstrap and the rows where an arm returned no result. It was run again for this page and exited 0 with the counts shown. A fresh run of the three geocoders needs Pelias and Photon servers with their own data. This page does not cover setting them up.
+It prints the per-group table, the pooled table, the paired bootstrap and the rows where an arm returned no result. It was run again for this page and exited 0 with the counts shown. A fresh run of the three geocoders needs Pelias and Photon servers with their own data. This page doesn't cover setting them up.
 
 The [benchmark index](/evidence/benchmarks) lists the other dated measurements and explains how to read each metric.

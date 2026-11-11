@@ -75,7 +75,7 @@ export interface OSMCorpusJSONLStats {
 	outsideOutline: number | null
 	/**
 	 * Rows written without an `addr:street`.
-	 * They are a subset of `written`.
+	 * They're a subset of `written`.
 	 */
 	noStreet: number
 	/**

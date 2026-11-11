@@ -11,7 +11,7 @@
  *
  *   A head's bias is the natural log of its venue rate over the higher of its place rate and street
  *   rate. Each rate adds half a name to its count, so a head absent from a population has a finite
- *   rate. A head that is the complete name of an admin place in the country is excluded, because a
+ *   rate. A head that's the complete name of an admin place in the country is excluded, because a
  *   city name ends venue names such as `Hotel Adlon Berlin` without marking them. The exclusion
  *   reads the candidate database's admin names, every language's name for each admin place in the
  *   Who's On First admin database together with its abbreviations, and the country's names in every
@@ -87,7 +87,7 @@ const MIN_ALPHABETIC_SUFFIX_LENGTH = 4
  * Who's On First leaves population and importance empty on most localities, so neither
  * field can tell a town from a hamlet, and a hamlet called `Palace` removes that word too.
  *
- * A head word that is also a place name is then left to the model rather than the prior.
+ * A head word that's also a place name is then left to the model rather than the prior.
  */
 const ADMIN_PLACETYPES = [
 	"country",
@@ -138,7 +138,7 @@ export function wordSuffixes(word: string): string[] {
  * and is the source of the suffix counts.
  *
  * `words` counts the names that contain a word at any position, once per name, and is the
- * comparison rate for a first-word or last-word head: a word that is common anywhere in
+ * comparison rate for a first-word or last-word head: a word that's common anywhere in
  * place names, such as `on` in `Walton on the Naze`, is weak evidence wherever it sits.
  */
 export class HeadCounts {

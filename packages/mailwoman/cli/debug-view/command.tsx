@@ -102,7 +102,7 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
  * renders rather than mounting a second renderer.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- One-shot by interface, like `useCommandTask`: the handoff happens
-	 once at mount. A fresh `options` object per render must not repeat it. The empty deps array is the point. */
+	 once at mount. A fresh `options` object per render mustn't repeat it. The empty deps array is the point. */
 
 function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOptions }): React.ReactElement | null {
 	const { exit } = useApp()
@@ -123,7 +123,7 @@ function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOpti
 			})
 
 			// A fatal is reported on stderr because Ink discards alternate-screen teardown output,
-			// so a message rendered inside the session would not survive the switch.
+			// so a message rendered inside the session wouldn't survive the switch.
 			void session.waitUntilExit().then(
 				() => process.exit(process.exitCode ?? 0),
 				(error: unknown) => {

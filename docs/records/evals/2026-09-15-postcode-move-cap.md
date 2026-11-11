@@ -6,7 +6,7 @@ Date: 2026-09-15. Record for #2301. The record is point-in-time, and its numbers
 
 #370's postcode-disambiguated locality selection was operator-promoted on a measured panel, and
 #2301's tradeoff paragraph reads: _"A cap set below the distances that earned #370's promotion would
-undo them."_ That is a claim about which of the pass's two steps produces its wins, and it had not
+undo them."_ That's a claim about which of the pass's two steps produces its wins, and it hadn't
 been measured.
 
 The pass (`applyPostcodeConsistency`, `packages/resolver/lib/resolve/passes.ts`) does two separable
@@ -56,7 +56,7 @@ Read through `admin-global-priority.db` + `postcode-locality-intl.db` with
 `--candidate-db candidate.db`, weights `weights/en-us` (npm 9.1.0). `--default-country none` for the
 three European sets, `US` for the American one.
 
-**FI and SI are absent, and they are two of the three locales #370's promotion cited.** No FI or SI
+**FI and SI are absent, and they're two of the three locales #370's promotion cited.** No FI or SI
 coordinate set survives on disk. Only the four above survive. FR is the substitute and is the locale
 #370's motivating example came from (`06260 Saint-Pierre`, 617 km off).
 
@@ -87,15 +87,15 @@ Týn 8, 47201 Luka                                189.5 km → 0.9 km
 Vysoká, 58001, Čistá č.ev. 11                    122.4 km → 7.4 km
 ```
 
-Each is a re-pick: the same name, a different instance, and the cap does not reach it.
+Each is a re-pick: the same name, a different instance, and the cap doesn't reach it.
 
-## What this settles and what it does not
+## What this settles and what it doesn't
 
 **Settles**: a cap cannot undo #370's promotion on this population, because #370's wins on it do not
-come from the step a cap bounds. The tradeoff paragraph's premise does not hold here.
+come from the step a cap bounds. The tradeoff paragraph's premise doesn't hold here.
 
-**Does not settle**: this population prices no cap VALUE against another, because step 3 never fires
-on it. That is the same limit the frozen same-data fixture has, reached from the other side. There
+**Doesn't settle**: this population prices no cap VALUE against another, because step 3 never fires
+on it. That's the same limit the frozen same-data fixture has, reached from the other side. There
 the fallback fires and never helps. Here the pass helps and the fallback never fires. Neither holds a
 row where the fallback is the thing that produced a win, and after 5,300 real addresses across four
 countries no such row has been observed.
@@ -124,7 +124,7 @@ wrong-area points on the same-data panel.
 The residual is FI and SI: their #370 counts (231/0 and 37/6) cannot be re-run from surviving
 artifacts, so if either locale's wins came from the coordinate fallback rather than the re-pick, this
 default would reduce them. 300 km above a p99 of 153.3 km is the margin that bounds that risk. A
-tighter value does not have it.
+tighter value doesn't have it.
 
 ## Reproduction
 

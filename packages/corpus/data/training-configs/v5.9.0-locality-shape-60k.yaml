@@ -27,16 +27,16 @@
 # Pre-registered bars, graded in order against v5.7.0 baselines:
 #
 #   1. On `us-shape-stratified.jsonl`, the bare-arm suffix-word bucket (123/379 under v5.7.0) must rise.
-#   2. On the same panel, the other multi-word (189/358) and single-word (321/395) buckets must not fall.
+#   2. On the same panel, the other multi-word (189/358) and single-word (321/395) buckets mustn't fall.
 #      If they rise as much as bucket 1, the extra rows explain the result and the shape split adds no measured gain.
-#   3. On `us.jsonl`, bare (555/603) and `street_only` (594/603) must not fall.
+#   3. On `us.jsonl`, bare (555/603) and `street_only` (594/603) mustn't fall.
 #   4. `mwdev_promotion_eval --spec v9.0.0-base` must pass every floor with no FR, GB or DE row
 #      regression, and US `postcode` per-tag F1 must stay at 95.6%.
 #
 # `packages/mailwoman/tools/dev-tools/locality/stratified-panel.run.ts --stratify shape --per-region 400`
 # rebuilds `$MAILWOMAN_DATA_ROOT/eval/coord/us-shape-stratified.jsonl`.
 #
-# The receipts below stop the run before the GPU starts if the US source does not draw.
+# The receipts below stop the run before the GPU starts if the US source doesn't draw.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.32.0-locality-shape/corpus-v0.32.0-locality-shape
@@ -301,7 +301,7 @@ data:
   augment_exclude_sources:
     - synth-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
-    # must not contain.
+    # mustn't contain.
     - synth-bare-postcode
   train_rows_per_epoch: 1000000
   val_rows: 4096

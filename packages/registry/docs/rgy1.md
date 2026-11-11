@@ -84,8 +84,8 @@ Sections appear in directory order, each starting at a multiple of 8 at or after
 end, with zero bytes in any gap. The first section starts at the first payload offset. Fewer than eight
 zero bytes may follow the last section, so the total length is a multiple of 8.
 
-A reader refuses an unknown kind marked required and skips an unknown kind that is not. A known kind
-with an encoding the reader does not implement is refused.
+A reader refuses an unknown kind marked required and skips an unknown kind that's not. A known kind
+with an encoding the reader doesn't implement is refused.
 
 ## Keys
 

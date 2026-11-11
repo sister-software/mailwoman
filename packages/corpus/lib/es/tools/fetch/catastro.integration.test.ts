@@ -7,11 +7,11 @@
  *
  *   `./catastro.test.ts` proves the harvest's decisions against stubbed bodies, and
  *   `#es/adapters/catastro/adapter`'s suite proves the adapter against captured bytes. Neither
- *   proves that a harvest of the real service writes a directory that adapter reads. That is the
+ *   proves that a harvest of the real service writes a directory that adapter reads. That's the
  *   one claim captured bytes cannot make.
  *
  *   The bounded run takes Ceuta. Ceuta is one municipality in one province feed, so the run makes
- *   three requests. It does not skip when the service is unreachable: a test that passes on a failed
+ *   three requests. It doesn't skip when the service is unreachable: a test that passes on a failed
  *   request is indistinguishable from one that passed on an answer.
  */
 

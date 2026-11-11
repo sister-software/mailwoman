@@ -5,7 +5,7 @@
  *
  *   Compare decoded component maps without loading a model or data.
  *   Critical-tag changes or hallucinations are `LOST`; other component drift is `DEGRADED`.
- *   Equal maps are `INVARIANT`. Map order does not affect the result.
+ *   Equal maps are `INVARIANT`. Map order doesn't affect the result.
  */
 
 /**

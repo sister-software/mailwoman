@@ -8,7 +8,7 @@
  *   read, download, build and verify steps all live in `@mailwoman/coastal/sdk`, so each stays unit-testable without Ink
  *   or the network in the loop. Mirrors `flood.tsx`'s progress (stderr) / summary (stdout) split.
  *
- *   `--measure-resolutions` does not build. The index resolution is measured for this layer.
+ *   `--measure-resolutions` doesn't build. The index resolution is measured for this layer.
  *   The measurement costs a full pass over the chosen scenarios per candidate and produces a table
  *   instead of an artifact. The table reports each scenario separately. Twelve layers cover the same
  *   frontages with different extents. A pooled share would average a
@@ -116,7 +116,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		// The catalogue read supplies the product's ISO revision date and the direct file URL.
 		// Both are read rather than assembled: the EA's file service keys on an opaque
 		// id with no relationship to the dataset id, so a hard-coded URL survives a
-		// republish by pointing at a file that is no longer the product.
+		// republish by pointing at a file that's no longer the product.
 		const catalogue = options.offline ? undefined : await client.readCatalogueRecord()
 		const sourceVintage = options.sourceVintage ?? catalogue?.revisionDate
 

@@ -5,7 +5,7 @@
  * @file `parseMapURL` — reading a place PIN out of an expanded Google Maps URL.
  *
  *   The URLs below are real, captured from the 2026-08-23 authoring batch, because the whole risk here is reading the
- *   wrong one of two coordinate pairs and a hand-written fixture would not include both.
+ *   wrong one of two coordinate pairs and a hand-written fixture wouldn't include both.
  */
 
 import { describe, expect, it } from "vitest"

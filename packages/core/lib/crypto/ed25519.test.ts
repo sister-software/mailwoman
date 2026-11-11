@@ -7,7 +7,7 @@
  *   the reference signature, produced by the old module over `mwl1.<payload>`. The new module must verify it.
  *   Ed25519 is deterministic, so the same key and bytes must produce the same signature. The key ID is the first eight
  *   hex digits of SHA-256 over the spki DER. The fixture therefore checks the DER decoder and digest. The test
- *   imports no builtin. That is the property under test.
+ *   imports no builtin. That's the property under test.
  */
 
 import { describe, expect, it } from "vitest"

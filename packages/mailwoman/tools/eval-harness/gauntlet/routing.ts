@@ -64,7 +64,7 @@ export function overlayLocale(country: string | null): string {
  * given the overlay locales that failed to load.
  *
  * A country with no declared overlay answers `false`: it grades through the base package by design.
- * That is its production path.
+ * That's its production path.
  *
  * Therefore, calling that degraded would withhold a suggestion the run is entitled to make.
  *

@@ -31,7 +31,7 @@ Every word matters:
 
 - **Sequence labeler.** The model is a small transformer encoder doing BIO
   token classification, in the entity-recognition (NER) lineage
-  (BiLSTM-CRF → BERT token classification → this). It is not an LLM and
+  (BiLSTM-CRF → BERT token classification → this). It isn't an LLM and
   no part of it is generative. For a closed label set over short strings,
   this is a well-tested architecture for NLP. Its suitability comes from the
   closed label set and short inputs.
@@ -88,7 +88,7 @@ matched rather than how likely the reading is to be correct. A sieve cannot say 
 input doesn't get a hedged answer. It gets a hole.
 
 A calibrated model inverts this. Mailwoman doesn't ask _"which of my patterns
-does this string match?"_ — it asks _"what is the most probable reading of
+does this string match?"_ — it asks _"what's the most probable reading of
 this string as an address, given what the atlas records as existing?"_ This approach treats parsing as
 inference instead of template matching. The practical consequence is that
 uncertainty becomes an actionable measurement: the resolver can
@@ -107,7 +107,7 @@ machines encoded the world's structure into the rules themselves. That design is
 why every novel input was a hole. Mailwoman puts the grammar in weights and
 the atlas in a database — knowledge engineering on the _outside_, where it
 belongs, as data with provenance rather than as code with exceptions. The
-anchor channels are the interface between the two, and they are deliberately
+anchor channels are the interface between the two, and they're deliberately
 soft: features, never overrides.
 
 ## The pocket budget
@@ -133,7 +133,7 @@ payloads**. Tier A ("pocket") is parser + anchors + the slim hot gazetteer, with
 full parse quality, coarse resolution, offline, address data never leaves the
 device. Tier B ("library"): the identical pipeline with full SQLite payloads
 on a server or desktop, where street-level data lives. The pocket claim stays
-true because it's scoped rather than because we stopped checking. There is also
+true because it's scoped rather than because we stopped checking. There's also
 headroom: the model could grow severalfold before challenging a
 conservative mobile budget. The constraint that binds is iteration
 cost, and we keep iteration cost low on purpose.

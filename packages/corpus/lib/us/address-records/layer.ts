@@ -95,7 +95,7 @@ export interface BuildUSAddressLayerOptions {
 	version: string
 	/**
 	 * The published version whose regions a new version's first build keeps,
-	 * for the states it does not rebuild.
+	 * for the states it doesn't rebuild.
 	 */
 	baseVersion?: string
 	nadParquet: PathBuilderLike

@@ -1,6 +1,6 @@
 # v5.0.0 — the from-scratch base that passed the check and failed the board
 
-**Verdict: hold.** The model is not published. The model clears the promotion check 18/18 and is blocked by iron
+**Verdict: hold.** The model isn't published. The model clears the promotion check 18/18 and is blocked by iron
 rule 6 on the 649-row board.
 
 ## What was run
@@ -17,7 +17,7 @@ from the shipped 25 countries to 134.
 | shipped comparand | `98a49b5ca2948cdbe1dd981d60ef637d` (v4.4.0 step-60000 int8)    |
 
 The tokenizer identity was checked rather than assumed. A from-scratch run is exactly where a tokenizer
-change hides, and F1 is not comparable across tokenizer versions — had these differed, both the
+change hides, and F1 isn't comparable across tokenizer versions — had these differed, both the
 staging and the comparison would have been invalid while still producing numbers.
 
 ## The board
@@ -54,7 +54,7 @@ Selected floors, all cleared, several by wide margins:
 
 **A check-only promotion would have shipped this model.** `us.street` reads 73.8 — an improvement —
 while `Unter den Linden` splits in half. Per-tag F1 over a golden set aggregates away seven specific
-addresses in three tier-1 countries. That is the argument for the board being part of the promotion
+addresses in three tier-1 countries. That's the argument for the board being part of the promotion
 path rather than an adjunct to it.
 
 ## The failure has one shape
@@ -103,8 +103,8 @@ wrong**, recorded here because each was stated confidently before being checked:
    rejection sampler is `if weight < max_weight`, which never fires when every weight is 1.0. The
    mixture stays proportional to row counts.
 
-What is measured: four newly-admitted countries contribute rows with **zero street rows** — CN 11,357,947,
-JP 2,092,821, KR 1,083,156, TW 678,660. That is 15,212,584 rows, **2.23%** of the admitted pool by ROW
+What's measured: four newly-admitted countries contribute rows with **zero street rows** — CN 11,357,947,
+JP 2,092,821, KR 1,083,156, TW 678,660. That's 15,212,584 rows, **2.23%** of the admitted pool by ROW
 COUNT, and the US row share moves 73.13% → 71.50%. The config's 34-source `source_weights` reweighting
 shifts effective sampler shares, so the row arithmetic is approximate — the falsification below
 rests on the config diff rather than on these share numbers. A ~2% share is small for the damage observed,
@@ -122,7 +122,7 @@ Pre-registered reading, in the config header:
 > not re-run this with a different amount.
 
 The falsification clause is the required half. The 2026-08-23 trailing-region arc spent four runs
-re-weighting a change that could not work. A weight change is not a fix when the mechanism is wrong.
+re-weighting a change that couldn't work. A weight change isn't a fix when the mechanism is wrong.
 
 ## Defects found by running the controls first
 
@@ -148,10 +148,10 @@ v5.1.0 (130, CJK dropped)                  37         43   -6   193/649
 ```
 
 D-rule: v5.0.0 FR 2 / GB 4 / DE 1 → v5.1.0 **FR 3 / GB 13 / DE 0**. The v5.1.0 run excluded
-countries without streets but did not clear the regressions — GB got worse. **The admission hypothesis is falsified**,
+countries without streets but didn't clear the regressions — GB got worse. **The admission hypothesis is falsified**,
 per the pre-registered clause, and no re-weight follows.
 
-Two facts survive the falsification, and they are the yield of the arc:
+Two facts survive the falsification, and they're the yield of the arc:
 
 **1. A 19-row persistent core regresses under both candidates.** The St Mary Axe cluster, `Milford
 on Sea Parish Council…`, `Passeig de Gràcia` / `Passeig de Sant Joan`, `Rua Augusta` (both rows),
@@ -164,7 +164,7 @@ confounded variables against the shipped model, and no run so far separates them
 two runs use seed 42, but v5.1.0 removes 15,212,584 training rows from four of v5.0.0's 134 admitted
 countries. Those rows are 2.23% of v5.0.0's admitted training-row pool. Sixteen board rows regress
 only under v5.0.0 and 24 regress only under v5.1.0, for 16 + 24 = 40 rows whose regression outcome differs.
-That comparison measures the admission change plus any training nondeterminism. It does not measure
+That comparison measures the admission change plus any training nondeterminism. It doesn't measure
 seed-to-seed variance. The changed outcomes concentrate in bare multi-word streets and GB venues,
 including rows the shipped model holds near 0.5 confidence: `Calle de Alcalá`, `Paseo de la
 Castellana`, `Via Laietana`, and `Corso Vittorio Emanuele II` regress under v5.1.0 while `Bloor Street
@@ -207,12 +207,12 @@ Three findings:
    and the three healed rows are `Passeig de Gràcia`, `Passeig de Sant Joan`, and the
    `…Queen St Unit 1…` unit-swallow: the street-prefix/boundary class the suffix-boundary extract
    teaches. Mechanism-consistent, small, and directly attributed. (Null↔fix share the same base
-   init, seed, and steps, so the treatment comparison is not confounded by the separate country-admission change.)
+   init, seed, and steps, so the treatment comparison isn't confounded by the separate country-admission change.)
 3. **The D-rule core is base-inherited and unchanged at every weight.** FR 2 / GB 4 / DE 1 are identical across
    base, null, and fix: the GB venue cluster (`St Andrew Undershaft…`, `30 St Mary Axe…`,
    `Cafe at St Mary's…`, `Milford on Sea…`), `Unter den Linden`, and the bare-street coin flips. More
-   suffix-boundary weight is not the change for these. The venue-boundary class needs its own treatment
-   (#1366's territory), or this lineage does not ship default-on.
+   suffix-boundary weight isn't the change for these. The venue-boundary class needs its own treatment
+   (#1366's territory), or this lineage doesn't ship default-on.
 
 Artifacts: null int8 `f52ceaf164c4e01d1682dd80f3c6ac8c`, fix int8 `f2d264f09b7d6f269158ab97d1843346`.
 Run IDs in the store: control `0bb3f465`, null `e0b9491c`, candidate `c85ef830`.
@@ -230,11 +230,11 @@ measurements live in `scratchpad/HANDOFF-2026-08-24.md` and the run store.
 
 - The self-controls (0 differed of 649) — the rig was quiet on the path it measured.
 - The CJK-admission falsification — v5.0.0 vs v5.1.0 ran the same single-config path on both arms,
-  so the matched comparison stands: dropping CN/JP/KR/TW did not clear the regressions.
+  so the matched comparison stands: dropping CN/JP/KR/TW didn't clear the regressions.
 - The ~40-row churn floor — a same-path variance measurement between two matched arms.
 - The check-vs-board divergence — the promotion check is package-shaped en-US by design.
 
-**What is superseded:**
+**What's superseded:**
 
 - Every absolute net/regressed count. Grades apply to the **372 of 649 rows with coordinate
   truth** rather than to 649, and foreign-row grades from the unrouted path are not production behavior.
@@ -247,7 +247,7 @@ measurements live in `scratchpad/HANDOFF-2026-08-24.md` and the run store.
 - The v5.0.1-null / v5.0.2-fix row-level readings, including "the fix healed exactly its 3 target
   rows" — same unrouted path. The parse-level diffs (the deleted `locality="London"`, the Passeig
   retags) remain real observations of the SINGLE-CONFIG en-US parse and stay useful as mechanism
-  illustrations of the grammar interface. They are not statements about the production route.
+  illustrations of the grammar interface. They're not statements about the production route.
 
 **The corrected campaign table** (board SHA-256 `e3063ff5faebdf2f…`, fingerprint `ddc60394d5c41471`,
 commit `ff4bb076c`):
@@ -264,6 +264,6 @@ reviewed Venezuela target class. hold stands on two separate grounds the handoff
 D-rule (4 blocking rows, shared with the placebo — inherited rather than treatment-caused), and
 measurement power (296 vs 292 of 372 at 25 km, p = 0.7187 — no global-accuracy claim).
 
-The lesson to keep beside the D-rule itself: **a per-country breakdown of a score is not
+The lesson to keep beside the D-rule itself: **a per-country breakdown of a score isn't
 evidence that the per-country path ran.** This session audited corpus identity, artifact identity,
 and rig quietness — and graded five models through a route production never uses.

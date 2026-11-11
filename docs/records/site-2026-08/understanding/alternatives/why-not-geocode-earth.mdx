@@ -43,9 +43,9 @@ It also has the same limitations that motivated Mailwoman's neural classifier:
 - **The tokenization tautology.** Rules classify tokens independently, so context-dependent decisions (multi-word place names, venue-vs-address ambiguity) require solver post-processing.
 - **The exception pile.** Each new address format adds a new rule, and rules accumulate and conflict.
 - **International fragility.** Every locale needs its own rule set, hand-written by someone who reads the language.
-- **No graceful degradation.** Rules match or don't — binary. There is no confidence gradient between "confident" and "guess."
+- **No graceful degradation.** Rules match or don't — binary. There's no confidence gradient between "confident" and "guess."
 
-For geocode.earth's use case, these are acceptable tradeoffs: Pelias on hosted infrastructure is fast, reliable, and good enough for most address formats. They are also why Mailwoman exists as a separate project, built to learn from data rather than encode every address shape as a rule.
+For geocode.earth's use case, these are acceptable tradeoffs: Pelias on hosted infrastructure is fast, reliable, and good enough for most address formats. They're also why Mailwoman exists as a separate project, built to learn from data rather than encode every address shape as a rule.
 
 ## Why not self-host Pelias?
 
@@ -58,7 +58,7 @@ If the parser is open-source, why not run your own Pelias instance and avoid the
 - Data updates arrive on different schedules (WOF weekly, OSM continuously).
 - Infrastructure management (Elasticsearch tuning, monitoring, failover).
 
-The team at Geocode Earth estimates that running a production Pelias instance costs **$500-2,000 per month** in infrastructure, plus engineering time for maintenance and updates. For a company with one or two full-time geospatial engineers, this is viable. For a team without dedicated infrastructure staff, it is not.
+The team at Geocode Earth estimates that running a production Pelias instance costs **$500-2,000 per month** in infrastructure, plus engineering time for maintenance and updates. For a company with one or two full-time geospatial engineers, this is viable. For a team without dedicated infrastructure staff, it isn't.
 
 Geocode.earth's hosted service abstracts this cost: you pay per request instead of managing infrastructure. For most organizations, this is a better deal than self-hosting.
 
@@ -66,7 +66,7 @@ Geocode.earth's hosted service abstracts this cost: you pay per request instead 
 
 Whether you use geocode.earth's hosted service or self-host Pelias, the parser is the same rule engine. If a specific address class fails — a regional addressing convention, a non-Western format, a venue-vs-address ambiguity — you cannot fix it by paying geocode.earth more or by tuning Elasticsearch. The parser is the bottleneck, and the parser is rules.
 
-Mailwoman exists because the parser ceiling is real and the only fix is a different parser architecture. A neural model that learns from data can handle the long tail of address formats without accumulating rules. The neural parser can coexist with Pelias — the policy registry lets you use the neural model for components where it outperforms rules and keep the rule classifiers for components where they are already correct.
+Mailwoman exists because the parser ceiling is real and the only fix is a different parser architecture. A neural model that learns from data can handle the long tail of address formats without accumulating rules. The neural parser can coexist with Pelias — the policy registry lets you use the neural model for components where it outperforms rules and keep the rule classifiers for components where they're already correct.
 
 ## When geocode.earth is the right choice
 
@@ -76,7 +76,7 @@ Geocode.earth is the right choice when:
 - You value open data and auditability over the highest possible accuracy.
 - Your address volume is moderate (under 1M requests per month) and the API cost is lower than infrastructure cost.
 - You need to self-host eventually but want to start with a hosted service.
-- You are already in the Pelias ecosystem and want a managed version.
+- You're already in the Pelias ecosystem and want a managed version.
 
 ## When Mailwoman is the right choice
 
@@ -85,10 +85,10 @@ Mailwoman is the right choice when:
 - You need to fix specific address failure modes that the Pelias rule engine cannot handle.
 - You want a parser that improves over time as you add training data.
 - You need browser-side or edge deployment (the ONNX runtime runs in environments where Elasticsearch cannot).
-- You are building a new geocoding product and want a parser with an explicit policy registry for component-level migration.
+- You're building a new geocoding product and want a parser with an explicit policy registry for component-level migration.
 - You want structured candidate output with concordance scoring rather than a single best-guess coordinate.
 
-Mailwoman is not a geocode.earth competitor — it addresses a different layer of the stack. Geocode.earth could run Mailwoman as its parser in the future. The projects are complementary: geocode.earth solves the infrastructure problem, Mailwoman solves the parser problem.
+Mailwoman isn't a geocode.earth competitor — it addresses a different layer of the stack. Geocode.earth could run Mailwoman as its parser in the future. The projects are complementary: geocode.earth solves the infrastructure problem, Mailwoman solves the parser problem.
 
 ## See also
 

@@ -4,7 +4,7 @@ Answers [#1446](https://github.com/sister-software/mailwoman/issues/1446)'s open
 postal-city builder's source in fact lack NYC rows, or contain them and drop them?
 
 **Neither. The question was aimed at the wrong artifact.** Overture's US addresses have no
-`postal_city` for New York City, but that is a source-mix fact rather than a gap to close in Overture.
+`postal_city` for New York City, but that's a source-mix fact rather than a gap to close in Overture.
 The delivery-city data has been in the data root since 2026-06-23, under a license this repo already
 uses for ten other countries, and it closes 99.9975% of the hole.
 
@@ -62,7 +62,7 @@ availability. FL and MA are not postal deserts.
 `address_levels` is `STRUCT("value" VARCHAR)[]` with arity exactly 2 on all 126,511,623 rows, and no
 `type` discriminator — so position is the only thing distinguishing the levels. `[1]` is the state.
 `[2]` is the **administrative municipality** (census place / town), which the top NY values give
-away: Hempstead, Brookhaven, Islip, Oyster Bay, Greece, Colonie. USPS does not deliver mail addressed to "Greece,
+away: Hempstead, Brookhaven, Islip, Oyster Bay, Greece, Colonie. USPS doesn't deliver mail addressed to "Greece,
 NY". The two fields determine the result when both are present:
 
 | `address_levels[2]` | `postal_city` |      n |
@@ -74,25 +74,25 @@ NY". The two fields determine the result when both are present:
 
 So "the boroughs appear nowhere as `address_levels[2]` in NY state" is **correct and unremarkable**.
 The City of New York is one municipality spanning all five boroughs. A borough is sub-municipal and
-could not appear in that field. A correct administrative value was read as a missing postal one.
+couldn't appear in that field. A correct administrative value was read as a missing postal one.
 
 The same investigation fell into two smaller traps:
 
 - `substr(postcode, 1, 3) IN ('100', …)` to select NYC pulls in rows whose postcode is malformed or
   belongs to another state entirely (a Gainesville TX row, a row whose postcode is literally `111`).
   `@mailwoman/codex/us/zipcode` ships `isZipCode` and `StateAbbreviationZipCodePrefixRecord` for
-  exactly this. A hand-typed prefix list in a SQL string is not the tool.
+  exactly this. A hand-typed prefix list in a SQL string isn't the tool.
 - The filter correction scopes on `address_levels[1].value = 'NY'` and rests on the _same_
   unverified schema reading it was meant to correct. Confirm what a column means before using it to
   validate another column.
 
-## What is not yet established
+## What's not yet established
 
 `ingestGeonamesPostal` (`resolver-wof-sqlite/geonames-postal.ts`) exists and is reachable from
 `foldGeonames` via an optional `postalCountries` parameter — which **no caller anywhere in the tree
 supplies**. The ten countries already present in `postalcode-geonames-tail.db` (GB/PL/SE/NO/FI/SK/
 CZ/DK/SI/HR) therefore arrived by some other path, and that path is where a US entry has to go. It
-has not been traced yet. Do not assume the fix is adding `"US"` to a list until the list is found.
+hasn't been traced yet. Do not assume the fix is adding `"US"` to a list until the list is found.
 
 ## Other candidates, checked
 
@@ -115,5 +115,5 @@ All inherit the same hole or hold no city name at all:
 
 Several sources here hold US postcodes at different vintages, and freshness matters unevenly by
 granularity: the leading digits (sectional center) are near-static, while individual 5-digit
-assignments and their delivery-city labels turn over. Coverage does not settle the source choice by
+assignments and their delivery-city labels turn over. Coverage doesn't settle the source choice by
 itself. See the follow-up survey.

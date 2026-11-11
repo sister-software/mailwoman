@@ -53,7 +53,7 @@ export function sortedByKey<V>(entries: Iterable<[string, V]>): Array<[string, V
 }
 
 /**
- * A floor a config declares that the measured corpus does not meet.
+ * A floor a config declares that the measured corpus doesn't meet.
  *
  * The report travels with the error, so a reader has the numbers that failed.
  */

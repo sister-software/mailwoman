@@ -114,7 +114,7 @@ describe("the checked read", () => {
 	it("raises rather than answering short, naming both counts", async () => {
 		const missing = dir.path("gone.txt")
 
-		// A read that cannot happen at all must not answer with an empty array.
+		// A read that cannot happen at all mustn't answer with an empty array.
 		// That would hide the read failure as an empty result.
 		await expect(readUnquotedTSVChecked(missing)).rejects.toThrow(/Cannot read from the provided source/)
 	})

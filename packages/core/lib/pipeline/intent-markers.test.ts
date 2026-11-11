@@ -5,7 +5,7 @@
  *
  *   Tests the coordinator's half of the ROAD_TO_V9 §4 interface. `intentMarkers` is always an array
  *   on every return path. The coordinator lifts markers rather than inventing them. It never adds
- *   a marker the classifier did not raise or drops one the classifier did raise.
+ *   a marker the classifier didn't raise or drops one the classifier did raise.
  */
 
 import type { NormalizedInputLite } from "@mailwoman/query-shape"

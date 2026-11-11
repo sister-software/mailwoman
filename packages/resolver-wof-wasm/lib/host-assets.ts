@@ -114,7 +114,7 @@ export async function stageSQLiteRuntimeAssets(destDir: PathBuilderLike): Promis
 		// An unconditional copy rewrites the file (fresh mtime) even when the bytes are identical,
 		// the watcher sees a "change" and reloads, loadContent() re-runs and re-copies… a
 		// reload loop that shows up as the /demo page flickering during `start`.
-		// A no-op copy breaks the cycle when the host does not skip it.
+		// A no-op copy breaks the cycle when the host doesn't skip it.
 		// (Prod `build` runs loadContent once, so the loop is a dev-server-only hazard.)
 		if (await syncArtifact(src, dest, `range reader ${f}`)) {
 			copied++

@@ -1,7 +1,7 @@
 # Data policy
 
 This package compiles identifier data from published sources into lookup artifacts. This document states
-where the data comes from, under what terms, what the open profile does and does not hold, and how a
+where the data comes from, under what terms, what the open profile does and doesn't hold, and how a
 source update moves through the repository.
 
 ## Profiles
@@ -51,7 +51,7 @@ pinned bytes. At the pinned publication:
   when the code is a current alpha-2 entry, `source-extension` for a code such as `XK`, `unstated` when
   the column is empty. The `airport-located-in-country` relation holds only the first kind.
 
-A miss means `not-found-in-snapshot`: the source holds no such code. It is not a claim that the issuing
+A miss means `not-found-in-snapshot`: the source holds no such code. It isn't a claim that the issuing
 authority never assigned it.
 
 OurAirports and Wikidata disagree on the country list in a way the coverage declaration records rather
@@ -74,7 +74,7 @@ than hides: OurAirports lists `XK`, `XP` and `ZZ`, which are not ISO codes, and 
 
 Network access happens only in step 1. A build never fetches.
 
-## What is not committed
+## What's not committed
 
 The raw source files live under the data root and are not committed. The lock's digests identify them.
 `PROVENANCE.md` conventions for the corpus do not apply here because no row of these sources trains a

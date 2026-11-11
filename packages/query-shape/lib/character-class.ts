@@ -13,7 +13,7 @@ export type CodepointClass = TokenCharacterClass | "whitespace" | "connector" | 
 
 const CJK_RANGES: ReadonlyArray<[number, number]> = [
 	// These are the Han characters inside the CJK symbols block.
-	// The iteration mark `々` appears inside names such as 代々木, so the tokenizer must not break a token at it.
+	// The iteration mark `々` appears inside names such as 代々木, so the tokenizer mustn't break a token at it.
 	[0x30_05, 0x30_05],
 	[0x30_07, 0x30_07],
 	[0x30_21, 0x30_29],
@@ -166,7 +166,7 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
  * Codepoints that Unicode assigns to `Common` inside blocks that otherwise belong to one script.
  *
  * These codepoints map to `Zyyy`, so script shares ignore them.
- * For example, the prolonged sound mark `ー` in `ブロードウェイ` does not count.
+ * For example, the prolonged sound mark `ー` in `ブロードウェイ` doesn't count.
  * The word reads as `Kana` 1.00.
  */
 const COMMON_RANGES: ReadonlyArray<[number, number]> = [
@@ -281,7 +281,7 @@ export function classifyCodepoint(cp: number): CodepointClass {
  * `Zyyy` (Common) covers characters shared by more than one script, such as digits, commas and spaces.
  * `Zzzz` (Unknown) covers scripts that this file has no ranges for.
  *
- * Script shares skip `Zyyy` so that punctuation does not dominate every ranking.
+ * Script shares skip `Zyyy` so that punctuation doesn't dominate every ranking.
  */
 export function scriptForCodepoint(cp: number): ScriptCode {
 	if (inRange(cp, COMMON_RANGES)) return "Zyyy"

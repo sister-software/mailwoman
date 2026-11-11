@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Refuse a workspace manifest whose `license` field is not the repository's expression in an admissible SPDX
+ *   Refuse a workspace manifest whose `license` field isn't the repository's expression in an admissible SPDX
  *   form.
  *
  *   The `license` field states the terms shipped in a release. Two failure classes reach consumers
@@ -64,8 +64,8 @@ function admissibilityDiagnostic(expression: string, file: string): Diagnostic |
 }
 
 /**
- * The `package-license` check: one error per workspace whose manifest declares no license, declares
- * an identifier the obligations table does not know, or declares an expression other than the root's.
+ * The `package-license` check: one error per workspace whose manifest declares no license, declares an
+ * identifier the obligations table doesn't know, or declares an expression other than the root's.
  */
 export const packageLicenseCheck: RepoCheck = {
 	id: "package-license",

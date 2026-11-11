@@ -128,7 +128,7 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
 	base_source_id: "VARCHAR",
 }
 
-/* oxlint-disable unicorn/text-encoding-identifier-case -- `"UTF8"` below is a ParquetType enum member rather than a text-encoding identifier. A lowercase spelling does not type-check against ParquetSchemaDefinition.
+/* oxlint-disable unicorn/text-encoding-identifier-case -- `"UTF8"` below is a ParquetType enum member rather than a text-encoding identifier. A lowercase spelling doesn't type-check against ParquetSchemaDefinition.
    The rule cannot distinguish the enum member from a text-encoding identifier. */
 
 /**
@@ -162,7 +162,7 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
  * Project a labeled row to the Parquet schema.
  *
  * The span triple is required because `alignRow` emits it on every labeled row.
- * A row without it came from a producer that has not migrated.
+ * A row without it came from a producer that's not migrated.
  *
  * The writer would drop the labels from the file if it wrote that row.
  * A thrown error identifies the row instead.

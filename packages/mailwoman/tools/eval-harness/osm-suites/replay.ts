@@ -62,7 +62,7 @@ function bioParts(label: string): { prefix: string; tag: string | null } {
  * Labels with each street affix folded into `street`: a folded B that continues a street becomes an I.
  *
  * A `null` position (a piece with no text, excluded from comparison) passes through
- * and does not break a street run.
+ * and doesn't break a street run.
  */
 export function foldStreetLabels(labels: ReadonlyArray<string | null>): Array<string | null> {
 	const folded: Array<string | null> = []

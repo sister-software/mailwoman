@@ -4,7 +4,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The opt-in `dropped` surface reports spans that the flat projection could not represent.
+ *   The opt-in `dropped` surface reports spans that the flat projection couldn't represent.
  *
  *   `decodeAsJSON` holds one value per tag, so a tree carrying two `locality` spans emits one and
  *   drops the other. Without a report, `region: null` means both that the input had no region

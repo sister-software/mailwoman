@@ -15,7 +15,7 @@
 # to an empty string. An empty path then resolves relative to the checkout.
 #
 # publish.yml's prepare phase dispatches this workflow on the release branch because a PR opened
-# with GITHUB_TOKEN does not trigger `on: pull_request`.
+# with GITHUB_TOKEN doesn't trigger `on: pull_request`.
 name: Test
 
 on:
@@ -125,7 +125,7 @@ jobs:
           # failure — bad credentials, 403, 404 — returns a JSON object with a `message` and no
           # `runners` key, so a tolerant expression like `.runners // []` counts it as zero online
           # runners and reports the fleet down. A count of zero cannot tell "zero runners are online" from
-          # "the API refused the request". Only the shape of the response can. Anything that is not
+          # "the API refused the request". Only the shape of the response can. Anything that's not
           # an array yields a non-numeric sentinel. The guard below fails closed on that sentinel.
           online=$(curl -sS --max-time 30 \
             -H "Authorization: Bearer ${PROBE_TOKEN}" \
@@ -138,10 +138,10 @@ jobs:
                      else "unanswered: " + ((.message // "unrecognized response") | tostring)
                      end' 2>/dev/null) || online=""
 
-          # Anything that is not a plain integer — an empty body, `null`, an API error object — is a
-          # probe that did not answer rather than a fleet that is down. Fail closed.
+          # Anything that's not a plain integer — an empty body, `null`, an API error object — is a
+          # probe that didn't answer rather than a fleet that's down. Fail closed.
           if ! [[ "$online" =~ ^[0-9]+$ ]]; then
-            echo "::warning::could not read the runners API (got '${online}') — assuming the data fleet is up (failing closed to the full check)"
+            echo "::warning::couldn't read the runners API (got '${online}') — assuming the data fleet is up (failing closed to the full check)"
             emit true
           elif [ "$online" -gt 0 ]; then
             echo "::notice::${online} mailwoman-data runner(s) online"
@@ -416,7 +416,7 @@ jobs:
 
   # unit-slow runs the database-dependent half of the Vitest sweep. Its suites use
   # `describe.skipIf(!HAS_WOF)`, so it must run on a `mailwoman-data` runner. On a hosted runner
-  # they would skip and pass.
+  # they'd skip and pass.
   unit-slow:
     needs: [data-fleet, scope]
     if: needs.data-fleet.outputs.up == 'true' && needs.scope.outputs.slow == 'true'
@@ -619,7 +619,7 @@ jobs:
   # The Earth smoke builds the app and loads its model and gazetteer in Chromium. Its Playwright
   # configuration runs one worker, so the suite runs serially inside this job.
   #
-  # The job is disabled: its map-idle waits time out on runs whose change does not touch Earth. To enable
+  # The job is disabled: its map-idle waits time out on runs whose change doesn't touch Earth. To enable
   # it, restore `if: needs.scope.outputs.earth == 'true'` here and the `earth` entry in `summary`'s
   # `selected` map. Run the suite locally with `yarn workspace @mailwoman/earth test:browser`.
   earth:
@@ -756,7 +756,7 @@ jobs:
           const scope = jobs.scope.outputs;
           for (const key of ['full', 'fast', 'slow', 'earth', 'react', 'planetary', 'opportunity', 'worker', 'smoke', 'lexicon', 'docs', 'rust']) {
             if (!['true', 'false'].includes(scope[key])) {
-              throw new Error('Scope did not report a boolean for ' + key);
+              throw new Error("Scope didn't report a boolean for " + key);
             }
           }
           const fleet = jobs['data-fleet'].outputs.up === 'true';
@@ -778,16 +778,16 @@ jobs:
             (selected[name] && job.result !== 'success')
           );
           if (failed.length) {
-            console.error('Selected CI jobs did not succeed:', failed.map(([name, job]) => [name, job.result]));
+            console.error("Selected CI jobs didn't succeed:", failed.map(([name, job]) => [name, job.result]));
             process.exit(1);
           }
-          console.log('Every selected job succeeded. Unselected jobs did not run.');
+          console.log("Every selected job succeeded. Unselected jobs didn't run.");
           JS
 
       - name: Green, but without the data legs
         if: ${{ needs.data-fleet.outputs.up != 'true' }}
         run: |
-          echo "::warning title=PARTIAL CHECK::Selected hosted jobs passed. Data-dependent jobs did not run. No mailwoman-data runner was online, and they read ~10 GB of databases that exist only on the lab host. This run did not exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not publish a release off it."
+          echo "::warning title=PARTIAL CHECK::Selected hosted jobs passed. Data-dependent jobs didn't run. No mailwoman-data runner was online, and they read ~10 GB of databases that exist only on the lab host. This run didn't exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not publish a release off it."
           {
             echo "## test: GREEN (partial — no data fleet)"
             echo ""
@@ -806,4 +806,4 @@ jobs:
 
       - name: Selected jobs passed
         if: ${{ needs.data-fleet.outputs.up == 'true' }}
-        run: echo "Every selected suite passed. See the scope job summary for suites that did not run."
+        run: echo "Every selected suite passed. See the scope job summary for suites that didn't run."

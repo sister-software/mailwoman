@@ -13,7 +13,7 @@
 #    that arm divided the inherited reps by 15 for its 4,000 steps. The v7.3.1 arm at this share graded net
 #    +6 attributable on the 1,226-row board with 18 of 18 promotion floors. The v7.3.2 arm over this corpus
 #    graded net +10 attributable and missed `us.region` and `fr.region` by about one point, a fine-tune
-#    cost that a from-scratch run does not inherit.
+#    cost that a from-scratch run doesn't inherit.
 #
 # 4. The inherited receipt floors are the base's times 0.97 for the venue share and times 0.9 again, the
 #    margin the v7.3.2 arm needed after `ve-locality-postcode-region` drew 185 against 194. The two venue

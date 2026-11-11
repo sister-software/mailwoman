@@ -57,7 +57,7 @@ import {
  * The schema version of the domain tables.
  *
  * It changes when a column changes meaning.
- * An added column that readers can ignore does not change it.
+ * An added column that readers can ignore doesn't change it.
  */
 export const SOIL_SCHEMA_VERSION = 1
 
@@ -191,7 +191,7 @@ export interface BuildSoilResult {
 	topClassUnderHalfCells: number
 	topClassUnderHalfShare: number
 	/**
-	 * The number of cells that the survey mapped but did not rate.
+	 * The number of cells that the survey mapped but didn't rate.
 	 */
 	classlessCells: number
 	/**
@@ -642,7 +642,7 @@ function buildCoverageCells(
 		}
 
 		// The cell's center decides its survey area, so each cell counts for one area only.
-		// This per-area count is informational and does not affect the coverage rows.
+		// This per-area count is informational and doesn't affect the coverage rows.
 		const [latitude, longitude] = cellToLatLng(cell)
 		const owner = options.areas.find((input) => geometryContains(input.outline, longitude, latitude))
 
@@ -659,7 +659,7 @@ function buildCoverageCells(
 /**
  * Returns an outline's polygons in `MultiPolygon` coordinate form.
  *
- * @throws {TypeError} When the outline is not a polygon or multipolygon.
+ * @throws {TypeError} When the outline isn't a polygon or multipolygon.
  * The build would silently drop that survey area's coverage if it skipped the outline.
  */
 function outlinePolygons(outline: ParsedGeometry): MultiPolygonRings {

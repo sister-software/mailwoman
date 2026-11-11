@@ -60,8 +60,8 @@ export interface PruneOptions {
 }
 
 /**
- * The pieces to keep: every piece the training corpus or the evaluation surface used, every
- * piece that is not a normal piece (control, unknown, user-defined, unused and byte pieces),
+ * The pieces to keep: every piece the training corpus or the evaluation surface used,
+ * every piece that's not a normal piece (control, unknown, user-defined, unused and byte pieces),
  * and every piece of at most one code point once a leading `▁` is removed.
  * This keeps every character reachable.
  */

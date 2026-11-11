@@ -149,8 +149,8 @@ describe("resolveOvertureCategories", () => {
 	it("fans a mismatched seed id out over its Overture leaves", () => {
 		const supermarket = resolveOvertureCategories("supermarket")
 		expect(supermarket).toContain("grocery_store")
-		// The curated seed id itself is not a stored Overture leaf.
-		// It must not leak into the probe list.
+		// The curated seed id itself isn't a stored Overture leaf.
+		// It mustn't leak into the probe list.
 		expect(supermarket).not.toContain("supermarket")
 
 		const trail = resolveOvertureCategories("trail")

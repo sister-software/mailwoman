@@ -131,7 +131,7 @@ const BBOX_MARGIN_DEGREES = 0.01
 /**
  * Reads one layer's EPSG code, feature count and field names before any feature is streamed.
  *
- * @throws {Error} When the layer is missing, or its declared EPSG code is not `expectEPSG`.
+ * @throws {Error} When the layer is missing, or its declared EPSG code isn't `expectEPSG`.
  */
 export async function readCoastalSourceIdentity(layer: string, options: CoastalIngestOptions): Promise<OGRLayerSchema> {
 	const identity = await readOGRLayerIdentity({
@@ -325,7 +325,7 @@ function numberOf(value: number | string | null | undefined): number | null {
 /**
  * Streams one scenario's erosion zones.
  *
- * The layer identity is read here when the caller does not pass one.
+ * The layer identity is read here when the caller doesn't pass one.
  */
 export async function* readCoastalScenarioFeatures(
 	scenario: CoastalScenario,

@@ -106,7 +106,7 @@ function canonicalizeMap(components: Record<string, string>): Record<string, str
  * Compares component maps.
  *
  * For `abbreviation-swap`, both maps are canonicalized first so the expected
- * spelling change does not count as a difference.
+ * spelling change doesn't count as a difference.
  */
 function compareForTransform(
 	transformID: string,

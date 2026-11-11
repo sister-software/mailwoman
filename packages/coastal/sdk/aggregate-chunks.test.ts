@@ -8,7 +8,7 @@
  *
  *   A chunk represents one scenario. Every scenario covers the same coast, so a coverage cell appears in
  *   twelve chunks and the counts must be added. The last chunk's value would report one scenario's
- *   polygons as the full cell value. That is one twelfth of the actual count and could look plausible on a receipt.
+ *   polygons as the full cell value. That's one twelfth of the actual count and could look plausible on a receipt.
  */
 
 import { describe, expect, it } from "vitest"

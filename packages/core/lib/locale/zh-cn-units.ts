@@ -13,7 +13,7 @@ import { stringifyJSON } from "#json"
  */
 
 /**
- * The rungs a generic can name, coarsest first, where `headquarters` is not a further level
+ * The rungs a generic can name, coarsest first, where `headquarters` isn't a further level
  * but the central settlement of the unit it follows.
  * It stays inside the span.
  */
@@ -95,7 +95,7 @@ export function isCNUnitChain(span: string): boolean {
 /**
  * Read a `locality_unit` span into its rungs, outermost first.
  *
- * @throws On a span that is not a chain, because reading part of it would report an unrecorded hierarchy.
+ * @throws On a span that's not a chain, because reading part of it would report an unrecorded hierarchy.
  */
 export function readCNUnits(span: string): CNUnit[] {
 	if (!isCNUnitChain(span)) {

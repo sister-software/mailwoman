@@ -20,7 +20,7 @@
  * A leading house number on a US-style street line contains digits and an optional hyphenated range
  * (Queens `40-12`), an optional single alpha suffix (`101A`), then whitespace, then the rest.
  *
- * The remainder must stay `(\S.*)` and must not become `(.+)`: `\s+` and `.` both match a tab,
+ * The remainder must stay `(\S.*)` and mustn't become `(.+)`: `\s+` and `.` both match a tab,
  * so `\s+(.+)$` lets the engine split a run of tabs between the two groups every possible way
  * before failing — quadratic backtracking on attacker-shaped input.
  * The required non-space start removes the overlap.
@@ -48,9 +48,9 @@ export interface SplitStreetLine {
  * numbering. Hawaii uses it island-wide — `"47-470 Hui Aeko Place"`).
  *
  * @returns `null` for blank input.
- * An input that does not match the prefix shape, including `"PO Box 1234"`,
- * `"RR 2 Box 67"` and `"HC 1"`, becomes a single `street` value rather than being mangled,
- * so the model sees the original surface form and downstream classifiers pick it up.
+ * An input that doesn't match the prefix shape, including `"PO Box 1234"`, `"RR 2 Box 67"`
+ * and `"HC 1"`, becomes a single `street` value rather than being mangled, so the model
+ * sees the original surface form and downstream classifiers pick it up.
  * A caller that needs those forms recognized as something other than a street
  * (see `usgov-irs-bmf`) tests for them before calling this.
  */
@@ -78,7 +78,7 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
  *
  * Group 1 starts at `\S` and the lazy `.*?` is bounded by that required separator,
  * so a run of whitespace between the two groups has one split rather than every possible split.
- * That is the same backtracking argument {@linkcode HOUSE_NUMBER_PREFIX} records, read from the other end.
+ * That's the same backtracking argument {@linkcode HOUSE_NUMBER_PREFIX} records, read from the other end.
  */
 export const HOUSE_NUMBER_SUFFIX = /^(\S.*?)[\s,]+(\d+[A-Za-z]?(?:\s*[/-]\s*[0-9A-Za-z]{1,4})?)$/u
 
@@ -116,7 +116,7 @@ export function splitTrailingStreetLine(line: string): SplitStreetLine | null {
  * Several registers split a house number across two columns: BAN writes `10`
  * and `bis`, Kartverket writes `12` and `B`.
  * The separator differs per publisher, so the caller states it, and the two values are
- * trimmed here because a publisher's padding is not part of the number.
+ * trimmed here because a publisher's padding isn't part of the number.
  *
  * @param number The numeric part, from the publisher's number column.
  * @param suffix The letter or word that follows it, from the publisher's suffix column.

@@ -92,7 +92,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 
 	// Medoid law: the centroid is one of the three member points.
 	// The selected medoid is 50.2/14.2, the member nearest the (50.2333, 14.2333) mean.
-	// The mean itself is not a member.
+	// The mean itself isn't a member.
 	// A mean-of-members build would store the mean and put the postcode on no settlement at all.
 	const cz = db.prepare("SELECT latitude, longitude FROM spr WHERE country='CZ' AND name='11000'").get() as {
 		latitude: number

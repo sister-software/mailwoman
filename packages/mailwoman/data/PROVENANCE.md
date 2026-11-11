@@ -9,7 +9,7 @@ tier and flat license expression. The command generates the file. To change it, 
 result rather than editing it by hand.
 
 A reader checks it with `yarn mwops health published-bundles`, which compares each artifact's
-`contentLength` against the registry's `approxBytes` and reports a bundle the snapshot does not cover.
+`contentLength` against the registry's `approxBytes` and reports a bundle the snapshot doesn't cover.
 `measuredAt` is the instant the writer ran, and the docs site renders it beside the table it draws from
 this file.
 
@@ -52,5 +52,5 @@ close it by freezing a manifest the way `buildCorpus` now writes `TRAINING_SOURC
 
 Read by `lib/commands/situs/interpolation/index.tsx` as `RANKED_FILE`. It moved here from the retired
 root `scripts/data/` directory (`docs/superpowers/specs/2026-07-07-scripts-drawer-to-zero.md`), and no
-command in this repository regenerates it. An edit to it is a hand change to a record whose writer is
-not on file.
+command in this repository regenerates it. An edit to it is a hand change to a record whose writer isn't
+on file.

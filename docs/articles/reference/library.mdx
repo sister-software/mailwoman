@@ -124,7 +124,7 @@ function createCalibrator(table: CalibrationTable | CalibrationBin[]): Calibrato
 type Calibrator = (rawConfidence: number) => number
 ```
 
-`createCalibrator` from `@mailwoman/core/decoder` makes a function from a supplied calibration table. Pass that function as `ParseOpts.calibrate` on a direct classifier call. The default parse path does not apply a calibration table. The caller supplies a table fitted for the model being used. This function does not select one.
+`createCalibrator` from `@mailwoman/core/decoder` makes a function from a supplied calibration table. Pass that function as `ParseOpts.calibrate` on a direct classifier call. The default parse path doesn't apply a calibration table. The caller supplies a table fitted for the model being used. This function doesn't select one.
 
 ## Errors and absence
 

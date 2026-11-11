@@ -27,8 +27,8 @@
  *   52 provinces. `es-bizkaia`, `es-gipuzkoa` and `es-navarra` read the foral cadastres. Those
  *   cadastres state their own terms. The national feed links them rather than serving them.
  *
- *   An adapter reading a publisher that is not any one country's lives here, at `lib/adapters/<id>/`.
- *   That is the aggregators, `./openaddresses/`, `./osm/`, `./overture/`, `./geonames/` and `./wof/`,
+ *   An adapter reading a publisher that's not any one country's lives here, at `lib/adapters/<id>/`.
+ *   That's the aggregators, `./openaddresses/`, `./osm/`, `./overture/`, `./geonames/` and `./wof/`,
  *   plus `./po-box/`.
  *
  *   A new adapter joins the `BUILTIN_ADAPTERS` list below. A test that needs a pristine registry

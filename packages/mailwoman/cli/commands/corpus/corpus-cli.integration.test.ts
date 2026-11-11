@@ -5,7 +5,7 @@
  *
  *   Integration test for `npx mailwoman corpus list` + `corpus run`. Spawns the compiled CLI binary
  *   and verifies exit codes + output shape. While the database registry ships empty, the only behavior
- *   there is to assert is the empty-registry messaging.
+ *   there's to assert is the empty-registry messaging.
  */
 
 import { runFile } from "@mailwoman/core/process"

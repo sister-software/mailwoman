@@ -8,10 +8,10 @@ every exclusion records, and how the GB prototype is built and graded.
 
 | Input                                         | Result                                                                                                                                                                                                                                                                                                                                         |
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| #1684 experiment 3 (GHSL habitability mask)   | NO-GO on the pre-registered rule: the only mask with a clean control excludes 7 of 46 FIRST_PASS tail rows and 0 of 5 on the current tail. The mask with power also excludes 50 of 420 truth points, all rural rooftops. A habitability mask does not warrant a place as a candidate filter. Recorded on #1975.                                |
+| #1684 experiment 3 (GHSL habitability mask)   | NO-GO on the pre-registered rule: the only mask with a clean control excludes 7 of 46 FIRST_PASS tail rows and 0 of 5 on the current tail. The mask with power also excludes 50 of 420 truth points, all rural rooftops. A habitability mask doesn't warrant a place as a candidate filter. Recorded on #1975.                                 |
 | License position (operator, 2026-09-03)       | Exploration and validation of these inputs are free. Packages ship separately, so a customer chooses which data-license posture to engage with; `mailwoman doctor` reports the posture of every attached layer (PR #2117). Counsel review stays the condition for shipping beyond `build-local`.                                               |
 | #1571 (inferential resolution)                | Physical plausibility is its fourth constraint source. Its prohibitions bind here: positive evidence only, soft priors, never an inferred point served as retrieved, a bounded region with stated confidence rather than a fabricated coordinate.                                                                                              |
-| Exclusion-grade coverage (PR #1973)           | `supportsExclusion` is true only for `basis = designated` or `surveyed`. `source_present` supports presence and no exclusion. A cell with no footprint data is not a cell excluded by physics.                                                                                                                                                 |
+| Exclusion-grade coverage (PR #1973)           | `supportsExclusion` is true only for `basis = designated` or `surveyed`. `source_present` supports presence and no exclusion. A cell with no footprint data isn't a cell excluded by physics.                                                                                                                                                  |
 | Geographic-model boundary (2026-08-26 record) | No ranking weight, boost, penalty, or candidate order may be authored by a world-model record. First production integration of any world fact is diagnostic and observational only.                                                                                                                                                            |
 | Postcode-structure arc (2026-08-05 plan)      | Code-Point Open contains 1,746,976 unit postcodes and zero `BT` (Northern Ireland) units. Its M-2b note cites an NI "census file"; that file is the OSM Overpass acquisition described in section 7, and the 4,758 it counted included one malformed row. GB unit postcodes already build `postcode-gb.bin` and the outward-district ancestry. |
 
@@ -35,7 +35,7 @@ runtime reads a register.
 
 **An open register exists, and it answers the GB assignment directly.** The ONS National
 Statistics UPRN Lookup (NSUL) publishes, for every GB UPRN in AddressBase, the unit postcode as field
-`PCDS` (null when the postcode is not in Code-Point Open), the OSGB grid reference, and the
+`PCDS` (null when the postcode isn't in Code-Point Open), the OSGB grid reference, and the
 statistical geographies, as a CSV collection of about 487 MB, every six weeks, under OGL-UK-3.0 with
 four attribution lines (section 8). Falsifier F1 is therefore answered, and it reshapes the
 prototype:
@@ -65,7 +65,7 @@ placetype-pair prior, or any decode-time term in `@mailwoman/neural`. `plausibil
 post-resolve guard for country-centroid answers, stays as it is. This prior runs earlier and answers
 a different question.
 
-The first deliverable does not build the runtime surface at all. The artifact and its grade come
+The first deliverable doesn't build the runtime surface at all. The artifact and its grade come
 first, per #1571's rule that measurement precedes mechanism.
 
 ## 4. What the prior may express
@@ -129,9 +129,9 @@ rate, `unassigned` rate, and the confusion between adjacent unit postcodes. Each
 denominator (UPRNs in `PO` present in both inputs). The `nearest-centroid` baseline is graded first, then the two-rule
 model, and the difference is the footprint input's measured contribution.
 
-**Pre-registered rule.** If rule 2 does not lift exact assignment by at least 5 percentage points
+**Pre-registered rule.** If rule 2 doesn't lift exact assignment by at least 5 percentage points
 over rule 1 on `PO`, the footprint input is dropped from the design and the artifact is the `nearest-centroid`
-baseline with its measured error. If that baseline itself is under 80% exact, the assignment does not warrant a
+baseline with its measured error. If that baseline itself is under 80% exact, the assignment doesn't warrant a
 runtime surface at any tier and the artifact stays a measurement.
 
 ## 7. Northern Ireland — the hard test

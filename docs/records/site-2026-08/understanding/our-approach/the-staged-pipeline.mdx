@@ -43,7 +43,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 **Failures it owns.**
 
 - Tokenization and whitespace traps ([#3 in the failure catalogue](../why-its-hard/addresses-that-break-geocoders.mdx#3-tokenization-and-whitespace-traps)): `"12 1/2 Main St"` and `"12½ Main St"` collapse to a canonical form before the tokenizer sees them.
-- The encoding half of Unicode/transliteration traps ([#6](../why-its-hard/addresses-that-break-geocoders.mdx#6-unicode-and-transliteration-traps)): NFC ensures the resolver does not miss `"São"` because the input was NFD-encoded.
+- The encoding half of Unicode/transliteration traps ([#6](../why-its-hard/addresses-that-break-geocoders.mdx#6-unicode-and-transliteration-traps)): NFC ensures the resolver doesn't miss `"São"` because the input was NFD-encoded.
 
 **Today.** The `@mailwoman/normalize` workspace shipped 2026-05-23. Its public `normalize(raw, opts?)` function always applies NFC, punctuation normalization, and whitespace collapse, and optionally applies case folding and abbreviation expansion. The output includes an `offsetMap` so downstream stages can map normalized spans back to raw characters.
 
@@ -70,9 +70,9 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 - Street/locality collisions ([#4](../why-its-hard/addresses-that-break-geocoders.mdx#4-streetlocality-collisions)): the encoder sees the whole sequence and learns that `"Paris"` near `"Cafe"` is part of a venue, while `"Paris"` between `","` and `"Ontario"` is a locality.
 
-**Today.** Shipped at v3.0.0. The model is small (~9M parameters) and that is by design. Address parsing is not a problem where bigger LLMs help.
+**Today.** Shipped at v3.0.0. The model is small (~9M parameters) and that's by design. Address parsing isn't a problem where bigger LLMs help.
 
-**Future.** The planned changes are a larger context window (128 tokens today, while 256 would cover longer addresses without truncation), more locales, and continued corpus expansion. The model itself does not need to change fundamentally. It needs better data and better decoding.
+**Future.** The planned changes are a larger context window (128 tokens today, while 256 would cover longer addresses without truncation), more locales, and continued corpus expansion. The model itself doesn't need to change fundamentally. It needs better data and better decoding.
 
 ## Stage 4 — Sequence correct (CRF + span re-reader)
 
@@ -87,7 +87,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 - Repeated admin names ([#2](../why-its-hard/addresses-that-break-geocoders.mdx#2-repeated-admin-names)): BIO structure and the re-reader together handle `"New York, New York"` as two adjacent localities.
 - Numeric chaos ([#5](../why-its-hard/addresses-that-break-geocoders.mdx#5-numeric-chaos)): the CRF prevents structurally impossible label combinations, and the re-reader can revisit `"12345 123rd St"` after the rest of the sequence is labeled.
 
-**Today.** The Viterbi decoder shipped to the JavaScript runtime on 2026-05-23 as `neural/viterbi.ts`, with the BIO structural transition mask. Orphan-`I-*` sequences are now structurally impossible in the JS runtime, even on the v3.0.0 weights, because the structural mask is built from the labels list without retraining. The mask composes additively with learned CRF transitions when a future weights release ships them. The span re-reader is not built and is a v0.6.0 candidate.
+**Today.** The Viterbi decoder shipped to the JavaScript runtime on 2026-05-23 as `neural/viterbi.ts`, with the BIO structural transition mask. Orphan-`I-*` sequences are now structurally impossible in the JS runtime, even on the v3.0.0 weights, because the structural mask is built from the labels list without retraining. The mask composes additively with learned CRF transitions when a future weights release ships them. The span re-reader isn't built and is a v0.6.0 candidate.
 
 **Future.** The re-reader can be a fine-tuned head on the same encoder (cheap) or a small dedicated model (more expensive, higher ceiling). Either way it stays additive. It can only propose new alternatives and never deletes existing ones.
 
@@ -102,7 +102,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **Today.** The v1 solver implements this stage in hand-coded TypeScript, and it works fine.
 
-**Future.** This stage could be learned (a tiny reranker) but probably should not be. Rule-based solvers are explainable and easy to debug, and the current implementation is not the bottleneck.
+**Future.** This stage could be learned (a tiny reranker) but probably shouldn't be. Rule-based solvers are explainable and easy to debug, and the current implementation isn't the bottleneck.
 
 ## Stage 6 — Resolve with candidates (deterministic + retrieval)
 

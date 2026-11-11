@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The board id is content-addressed over sorted `id`+`input`, so reorganizing rows into per-country
- *   files does not move it and artifacts measured before and after stay comparable.
+ *   files doesn't move it and artifacts measured before and after stay comparable.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -91,7 +91,7 @@ describe("the row schema", () => {
 	it("rejects an unknown key rather than ignoring it", () => {
 		// A typo'd `expectLon` that parses as "coordinate not asserted" still runs
 		// and passes while asserting half the row.
-		// That is what the strictness is for.
+		// That's what the strictness is for.
 		const result = SeedCaseSchema.safeParse({ ...SAMPLE, expectLonn: 2.3 })
 
 		expect(result.success).toBe(false)

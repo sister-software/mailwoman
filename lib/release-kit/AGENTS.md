@@ -18,7 +18,7 @@ The `neural-weights-<locale>` workspaces ship binary artifacts (`model.onnx`, `t
 
 ## Pitfall: the overlay `link-dev-weights.ts` is a copy-paste template
 
-Each locale overlay has its own `scripts/link-dev-weights.ts`, cloned from a sibling. A copy localizes the code and leaves the prose behind, and the working script does not reveal a docstring that describes the wrong country. If you add an overlay, rewrite the docstring for the locale you are adding as well as the paths. The shared implementation is `materializeDevOverlay` in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`, so each script is a manifest plus a call (#2035). The one step no manifest expresses, en-gb's card-conditional postcode binary, stays in en-gb's file. Membership in `LEADING_POSTCODE_COUNTRIES` (`packages/neural/lib/pair/prior-windows.ts`) is earned by a codex postcode shape plus a confound board. A country's absence there is not always a gap, and the file's comments state which absences are deliberate.
+Each locale overlay has its own `scripts/link-dev-weights.ts`, cloned from a sibling. A copy localizes the code and leaves the prose behind, and the working script doesn't reveal a docstring that describes the wrong country. If you add an overlay, rewrite the docstring for the locale you're adding as well as the paths. The shared implementation is `materializeDevOverlay` in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`, so each script is a manifest plus a call (#2035). The one step no manifest expresses, en-gb's card-conditional postcode binary, stays in en-gb's file. Membership in `LEADING_POSTCODE_COUNTRIES` (`packages/neural/lib/pair/prior-windows.ts`) is earned by a codex postcode shape plus a confound board. A country's absence there's not always a gap, and the file's comments state which absences are deliberate.
 
 ## Pitfall: symlinks in the publish tarball
 
@@ -31,7 +31,7 @@ To make publish work regardless of repo state, `mwops release publish-workspace`
 
 ## Pitfall: provenance attestation needs the CI identity as well as a public repo
 
-`mwops release publish-workspace` adds `--provenance` to `npm publish` when `GITHUB_ACTIONS` is set and `MAILWOMAN_NPM_PROVENANCE` is not `0`. Two things decide it and they are easy to conflate. The repo must be public, because a sigstore attestation links to source third parties have to be able to verify. The public repository satisfies that requirement. The publish must also run on a CI provider npm supports, because the attestation is signed against an OIDC identity: a local `yarn release` passing `--provenance` fails. For that reason the predicate is `GITHUB_ACTIONS` and not the generic `CI`. Trusted Publishing works either way. Only the attestation needs the CI identity. Set `MAILWOMAN_NPM_PROVENANCE=0` to publish without one when sigstore or the registry is down.
+`mwops release publish-workspace` adds `--provenance` to `npm publish` when `GITHUB_ACTIONS` is set and `MAILWOMAN_NPM_PROVENANCE` isn't `0`. Two things decide it and they're easy to conflate. The repo must be public, because a sigstore attestation links to source third parties have to be able to verify. The public repository satisfies that requirement. The publish must also run on a CI provider npm supports, because the attestation is signed against an OIDC identity: a local `yarn release` passing `--provenance` fails. For that reason the predicate is `GITHUB_ACTIONS` and not the generic `CI`. Trusted Publishing works either way. Only the attestation needs the CI identity. Set `MAILWOMAN_NPM_PROVENANCE=0` to publish without one when sigstore or the registry is down.
 
 ## Pitfall: `workspace:*` doesn't survive `npm publish`
 
@@ -43,9 +43,9 @@ Every workspace's committed `exports` map is the DEV map only: one `*` pattern p
 
 ## Pitfall: a workspace missing from the release list freezes — silently, and at consumer expense
 
-`.release-it.json`'s workspaces list is the publish set and the bump set. A workspace outside it is not merely unpublished: release-it never rewrites its `version` either, so it holds whatever number it had when it dropped out — in the repo and on npm — while every sibling moves on. `yarn release` reports success because release-it did not select that workspace. The latent hazard is ordering: `yarn pack` freezes `workspace:*` to whatever the sibling reads AT PACK TIME, so a package packed before a release bump pins a base the weights overlay is behind.
+`.release-it.json`'s workspaces list is the publish set and the bump set. A workspace outside it isn't merely unpublished: release-it never rewrites its `version` either, so it holds whatever number it had when it dropped out — in the repo and on npm — while every sibling moves on. `yarn release` reports success because release-it didn't select that workspace. The latent hazard is ordering: `yarn pack` freezes `workspace:*` to whatever the sibling reads AT PACK TIME, so a package packed before a release bump pins a base the weights overlay is behind.
 
-A `private: true` flag is checkable. Membership in a JSON array is not, so check the arithmetic whenever you add or move a workspace:
+A `private: true` flag is checkable. Membership in a JSON array isn't, so check the arithmetic whenever you add or move a workspace:
 
 ```bash
 node --input-type=module -e "import { readWorkspaceDirectories } from '@mailwoman/core/workspaces'; import r from './.release-it.json' with { type: 'json' }; const w = await readWorkspaceDirectories('.'); console.log(w.filter((x) => !r.plugins['@release-it-plugins/workspaces'].workspaces.includes(x)))"
@@ -53,24 +53,24 @@ node --input-type=module -e "import { readWorkspaceDirectories } from '@mailwoma
 
 Every name it prints needs a reason you can state. `mwops release scaffold-weights-overlay` registers a new overlay in both lists for exactly this reason — a locale added by hand skips that step.
 
-A new workspace joins SIX registers, and only the first one fails loudly. The root `workspaces` array is what `yarn install` reads, so missing it breaks immediately. The others do not: the release list above, or — when the workspace is held out — `SANCTIONED_RELEASE_ABSENCES` in `lib/release-kit/release/stage.ts`, which is where "a reason you can state" stops being prose and starts being data (`checkReleaseListIdentity` refuses an absence that is in neither, and its `publishCount` pin in `lib/release-kit/release/stage.integration.test.ts` moves with either edit); both root `tsconfig.json` reference entries — `./packages/<name>` and `./packages/<name>/tsconfig.test.json`; and, for a brand-new npm name, the `bless-package` first publish before the name may enter the release list at all (an unblessed name fails the whole release at that workspace with a bare `E404`). `mwops release smoke-clean-install` derives its pack set from the release list (`lib/release-kit/release/smoke/clean-install.ts`), so it is not a register of its own. Skip the tsconfig pair and `tsc -b` never builds the workspace, so `out/` stays empty and every test-project reference to it fails with `TS6305: Output file has not been built from source file` — which reads as a broken test rather than an unregistered project.
+A new workspace joins SIX registers, and only the first one fails loudly. The root `workspaces` array is what `yarn install` reads, so missing it breaks immediately. The others do not: the release list above, or — when the workspace is held out — `SANCTIONED_RELEASE_ABSENCES` in `lib/release-kit/release/stage.ts`, which is where "a reason you can state" stops being prose and starts being data (`checkReleaseListIdentity` refuses an absence that's in neither, and its `publishCount` pin in `lib/release-kit/release/stage.integration.test.ts` moves with either edit); both root `tsconfig.json` reference entries — `./packages/<name>` and `./packages/<name>/tsconfig.test.json`; and, for a brand-new npm name, the `bless-package` first publish before the name may enter the release list at all (an unblessed name fails the whole release at that workspace with a bare `E404`). `mwops release smoke-clean-install` derives its pack set from the release list (`lib/release-kit/release/smoke/clean-install.ts`), so it isn't a register of its own. Skip the tsconfig pair and `tsc -b` never builds the workspace, so `out/` stays empty and every test-project reference to it fails with `TS6305: Output file has not been built from source file` — which reads as a broken test rather than an unregistered project.
 
 ## Every published weights workspace ships two generated rights files
 
 `LICENSE.md` and `PROVENANCE.json` are written by `mwops release write-rights-files`
 (`lib/release-kit/weights/rights/`) from the workspace's `package.json` and `model-card.json`, and both are
-committed. `LICENSE.md` states the terms this repository grants and what the commercial branch does not reach.
+committed. `LICENSE.md` states the terms this repository grants and what the commercial branch doesn't reach.
 `PROVENANCE.json` records each declared artifact with its digest or `unrecorded`, the card's attribution entries with
 the license each one names, and the questions the record leaves open.
 
 A model-card edit changes what a package owes and what it can show, and the compiler reads neither file. The
 `weights-rights` repository check holds the committed bytes equal to the writer's output. It also refuses a workspace
 whose `files` array omits either name, so a card edit either regenerates them or fails. A new weights overlay requires a
-run of the writer and a commit of what it produces. `scaffold-weights-overlay` does not write them.
+run of the writer and a commit of what it produces. `scaffold-weights-overlay` doesn't write them.
 
 A record is retained by being committed. `PROVENANCE.json` records its package's version, and git
 history holds the record every published version shipped with, so the `10.0.0` record survives the `10.1.0`
-regeneration. That is the retention, and it holds only while no maintainer rewrites a record for a version
+regeneration. That's the retention, and it holds only while no maintainer rewrites a record for a version
 already on npm. If a source's terms change after a release, the change moves the next version's record rather than the
 description of a release that already went out. A correction to a published release is a new release
 with a new record, or a separately documented notice.
@@ -109,9 +109,9 @@ stating why a release accepts it. A new corpus source joins the input table and 
 reads it (`packages/corpus/AGENTS.md`), so the audit never meets an unmapped source in a model trained after
 this rule.
 
-The per-check invariants stay where they are. `weights-rights` holds the generated files equal to their writer's
+The per-check invariants stay where they're. `weights-rights` holds the generated files equal to their writer's
 output, `third-party-notices` holds the three notice copies equal, and `rights-chain` holds every rights document to
-naming the licensor. This operation composes their inputs into one report. It does not replace them, and a release
+naming the licensor. This operation composes their inputs into one report. It doesn't replace them, and a release
 still runs `yarn lint`.
 
 A corpus's frozen `TRAINING_SOURCES.json` states what the corpus holds rather than what trained a model: overlays

@@ -80,9 +80,9 @@ regime made house*number near-trivial. On the diversified golden (#563, 56 local
 hard-case analog (~90–91%), **87.4% is at the frontier rather than below a reasonable bar.** Both the
 literature and the independent DeepSeek consult judged the 91% floor mis-calibrated and 87.4%
 respectable for this stratum. DeepSeek stated that 87.4% on the hardest subfield in the hardest order
-permutation is not a miss and may be state-of-the-art for that stratum.
+permutation isn't a miss and may be state-of-the-art for that stratum.
 
-This **does not** mean re-baseline silently. That would violate the no-silent-check-drift discipline.
+This **doesn't** mean re-baseline silently. That would violate the no-silent-check-drift discipline.
 It means: if we lower the floor, do it as a _stated, reasoned_ decision anchored to this literature
 (a defensible bar is ~85–90% for the postcode-first stratum), recorded in the check config and the ledger.
 

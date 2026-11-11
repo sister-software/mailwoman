@@ -36,7 +36,7 @@ import { resolveHierarchyRunInputs } from "#tools/pipeline/pair/index/hierarchy/
 
 /**
  * Mirror of the builder's per-country WOF parent-placetype sets, restated here on purpose
- * so the verifier does not share the builder's extraction code.
+ * so the verifier doesn't share the builder's extraction code.
  */
 const PARENT_PLACETYPES_BY_COUNTRY: Readonly<Record<string, string[]>> = {
 	us: ["region"],
@@ -56,7 +56,7 @@ const NAMED_PROBES_BY_COUNTRY: Readonly<Record<string, readonly NamedProbe[]>> =
 		{ child: "Portland", parent: "Maine", expect: "present" },
 		// Cross-country negative control: a US child under an FR parent must miss.
 		{ child: "Springfield", parent: "Bretagne", expect: "absent" },
-		// A real pairing the hierarchy does not contain: Springfield exists, Ontario is not a US region.
+		// A real pairing the hierarchy doesn't contain: Springfield exists, Ontario isn't a US region.
 		{ child: "Springfield", parent: "Ontario", expect: "absent" },
 	],
 	fr: [
@@ -253,7 +253,7 @@ async function main(): Promise<void> {
 				wrongTag++
 			} else if (edge.parentTag !== "region") {
 				// PIX2: the sweep grades both ends, so an entry whose parent tag is anything
-				// else is a builder bug the pre-PIX2 sweep could not have seen.
+				// else is a builder bug the pre-PIX2 sweep couldn't have seen.
 				wrongParentTag++
 			}
 		}

@@ -7,7 +7,7 @@
  *   `.osm.pbf` and write the rows as jsonl, the input `mailwoman corpus sub-venue-lexicon` reads.
  *
  *   Wave 1 used an ad-hoc script because it ran once. Wave 2 runs the extractor per locale.
- *   The file does not encode its country, so the caller must provide the country stamp. A Geofabrik
+ *   The file doesn't encode its country, so the caller must provide the country stamp. A Geofabrik
  *   extract's country belongs to the invocation rather than to a feature. A flag records it explicitly.
  *
  *   ```sh

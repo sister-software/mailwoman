@@ -151,7 +151,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 			}
 
 			if (!(await adminDBAvailable(adminDB))) {
-				// Absence reported as absence: without the artifact there is no current state to move from.
+				// Absence reported as absence: without the artifact there's no current state to move from.
 				// This command reads the artifact instead of guessing from the lists.
 				lines.push(
 					"",
@@ -214,7 +214,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 
 			let writeFailures = 0
 
-			// `--write` edits the working tree and stops there — it does not stage, commit
+			// `--write` edits the working tree and stops there — it doesn't stage, commit
 			// or build, so the change stays a diff a person reviews.
 			if (options.write && plan.edits.length && !plan.blockers.length) {
 				const defaultsPath = repoRootPath("packages", "mailwoman", "tools", "gazetteer-pipeline", "defaults.ts")

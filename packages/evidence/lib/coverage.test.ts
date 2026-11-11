@@ -39,7 +39,7 @@ describe("requireExclusionBasis", () => {
 	})
 
 	// An unsurveyed cell is unknown.
-	// Unknown does not mean that the layer is absent.
+	// Unknown doesn't mean that the layer is absent.
 	it("refuses when the cell is missing from layer_coverage", () => {
 		expect(requireExclusionBasis({ ...BASE, cell: null })).toBeNull()
 	})

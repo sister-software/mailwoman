@@ -78,7 +78,7 @@ branch, same day:
 | 30757682542 | 16:54 | 61.0s (MISS) |          ~83s |
 
 The 16:54 run's Setup Node log prints `yarn cache is not found`. Whether the cache hits or misses therefore
-moves install time by ~59s on each of three hosted legs. No part of the yarn configuration is wrong. There is no room.
+moves install time by ~59s on each of three hosted legs. No part of the yarn configuration is wrong. There's no room.
 
 Note the Link step is a flat **20.7–22.7s regardless** of cache state: yarn writing 74,244 files and
 10,444 directories.
@@ -92,8 +92,8 @@ documented-degraded path to GitHub's cache service.
 Meanwhile `release.config.json` points the source model at
 `$MAILWOMAN_DATA_ROOT/models/quantized/model-v3230-guard-step-004000-int8.onnx` — local disk,
 on the same host the leg runs on. Only the derived `postcode-*.bin` / `pair-index-*.bin` need
-building, via `spawnSync` of `mailwoman gazetteer postcode-binary` and `gazetteer pair-index`. That
-is the "~5 min" the cache exists to avoid rather than the copy.
+building, via `spawnSync` of `mailwoman gazetteer postcode-binary` and `gazetteer pair-index`. That's
+the "~5 min" the cache exists to avoid rather than the copy.
 
 ### The runner
 
@@ -135,7 +135,7 @@ agent-worktree flake rather than a CI cost.
 ## Design
 
 Six pieces. (e2) was spiked first at the operator's direction and is closed negative. Its receipt is
-kept here so it is not re-proposed.
+kept here so it isn't re-proposed.
 
 ### e2 — `nodeLinker: pnpm` — CLOSED NEGATIVE
 
@@ -158,10 +158,10 @@ The 7 failures are a separate latent bug that should be fixed in either case: `v
 `resolve(here, "node_modules/onnxruntime-web/dist/ort.node.min.mjs")` instead of resolving the
 specifier, so it breaks under any layout change.
 
-**This does not bear on migrating to pnpm the package manager**. pnpm is a different mechanism with
+**This doesn't bear on migrating to pnpm the package manager**. pnpm is a different mechanism with
 its own resolver and lockfile, and a machine-wide content-addressed store with hardlinks rather than
 a per-project `.store`. That migration is approved on ecosystem-direction grounds and has its own
-spec: `2026-08-02-pnpm-migration-design.md`. It is **not** justified on speed (Fetch is already 0.4s
+spec: `2026-08-02-pnpm-migration-design.md`. It **isn't** justified on speed (Fetch is already 0.4s
 warm locally and 0.6s on a warm CI cache), and it sequences **before** (e1) here, because (e1) has to
 be built against whatever layout wins.
 
@@ -190,7 +190,7 @@ on `node_modules`, key = runner OS + Node version + `yarn.lock` + `.yarnrc.yml` 
 their own 612 MB copy). Those per-branch copies account for the whole 3024 MB line in Finding 3.
 
 Measured: the archive is **736 MB** and extracts in **3.59s** for 74,226 files. On a hosted runner
-that is roughly 3–8s download plus 3.6s extract ≈ **10s, deterministic**, replacing an install that
+that's roughly 3–8s download plus 3.6s extract ≈ **10s, deterministic**, replacing an install that
 takes 24s on a warm cache and 83s on a cold one. It removes both Fetch and Link in one move.
 
 **Hosted only.** At the lab's measured 1.6 MB/s to the cache service (Finding 4), a 736 MB restore
@@ -216,7 +216,7 @@ using `gh cache list --json` → `gh cache delete`:
 accessed within the last hour so it cannot race a live write.
 
 **Decision taken:** keep newest CodeQL overlay-base per language rather than deleting all of them.
-They are CodeQL's incremental-analysis cache. A prune to zero reclaims another ~240 MB and costs
+They're CodeQL's incremental-analysis cache. A prune to zero reclaims another ~240 MB and costs
 CodeQL time on every run. Revisit only if quota gets tight again.
 
 ### b — weights from the data root rather than GitHub's
@@ -262,12 +262,12 @@ drive the prominence and parent-inheritance math.
 
 The scale assertions do not migrate. They get stronger. A seeded below-floor row lets the fixture
 assert `skippedProminence === 1` where real data only supports `> 0`. `built.entries > 10_000` stays
-a full-build assertion, because that is a claim about the gazetteer rather than about the laws.
+a full-build assertion, because that's a claim about the gazetteer rather than about the laws.
 
 Memoize `computeSurfaceCountryCounts` and `loadPersonNameSurfaces` by `dbPath` + mtime so the FR and
 US builds in one process share the scan: 237s → ~130s (estimate) wherever the full build runs.
 
-**Decision taken:** when the path-conditional full build does not run, `unit-slow`'s step summary must report
+**Decision taken:** when the path-conditional full build doesn't run, `unit-slow`'s step summary must report
 the skip, in the style of the existing PARTIAL CHECK annotation. Otherwise the leg reports the same while
 meaning less. `test.yml`'s header explicitly refuses that outcome.
 
@@ -280,17 +280,17 @@ Keep independent loads for the tests that are _about_ load behavior — `resolve
 the tolerant-loader paths, the error cases.
 
 The file contains no `vi.mock`, so the `isolate: false` reset interface documented in the root config
-does not bind here.
+doesn't bind here.
 
 Target **96.6s → ~45s** (estimate) rather than lower — some of those loads are the assertion.
 
 ### e3 — cache `out/` + `*.tsbuildinfo`
 
 `out/` is 274 MB across 4104 files; `tsc -b` cold is 32.9s, and 13.0s with `out/` and the
-`.tsbuildinfo` files present but `node_modules` freshly reinstalled (measured — that is the restore
+`.tsbuildinfo` files present but `node_modules` freshly reinstalled (measured — that's the restore
 scenario). So this is 33s → ~13s per leg rather than → 0s: `tsc -b` still stats the project graph.
 
-Key = a hash of workspace `.ts` sources plus the tsconfigs. Lands after (a) so there is quota for it.
+Key = a hash of workspace `.ts` sources plus the tsconfigs. Lands after (a) so there's quota for it.
 
 ### Free items
 
@@ -320,7 +320,7 @@ This section orders the remaining work by the certainty of its expected benefit:
 5. **e3** — `out/` cache.
 
 **(e1) is out of scope** — deferred with the migration. (a) already removes the cache hit-or-miss variance and lands
-install at a reliable ~24s warm. (e1)'s remaining ~14s does not justify building it twice against
+install at a reliable ~24s warm. (e1)'s remaining ~14s doesn't justify building it twice against
 two different layouts.
 
 Free items ride along with whichever step touches the same file — except the `vitest.config.ts:82`
@@ -340,7 +340,7 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
 - Hosted-leg install ≤ 30s on all three legs across those same three runs — the point is that the
   cache hit-or-miss variance is gone rather than that one run was fast. (e1) later tightens this to ≤ 15s.
 - `active_caches_size_in_bytes` < 8 GB.
-- `unit-slow` test step ≤ 120s on a PR that does not touch the gazetteer pipeline.
+- `unit-slow` test step ≤ 120s on a PR that doesn't touch the gazetteer pipeline.
 - The full-scale locality-surface build still runs, and still asserts `entries > 10_000`, in at least
   the nightly and release layers. A run that skips it reports the skip in its step summary.
 - `evidence-lexicons.test.ts` on the PR path is invariant to gazetteer size — re-running it after a
@@ -350,14 +350,14 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
 
 ## Non-goals
 
-- Machine-cost reduction as an end in itself. It falls out of (a)/(e1)/(e3) but is not what this is
+- Machine-cost reduction as an end in itself. It falls out of (a)/(e1)/(e3) but isn't what this is
   optimizing.
 - Replace vitest. The fifth finding shows the Vite transform pipeline costs ~17× plain node for the same
   graph, but changing runners is a different project with a different risk profile.
 - The pnpm migration. Approved, but its own project with its own driver (ecosystem direction rather than
   speed) — `2026-08-02-pnpm-migration-design.md`. It checks only (e1).
 - Make the fast/slow split declarative (vitest projects instead of the hand-maintained exclude list
-  in `package.json`). The change is useful but does not reduce wall-clock time, so it is deliberately
+  in `package.json`). The change is useful but doesn't reduce wall-clock time, so it is deliberately
   deferred.
 
 ## Risks
@@ -371,6 +371,6 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
   key must include the generating CLI modules, and the parity guard stays as the backstop.
 - **(c) fixture drift.** A fixture that stops representing the real data is a check that passes while
   asserting no fact. The nightly full build is the control for exactly this. If the nightly build is disabled,
-  the fixture layer is not sufficient by itself.
+  the fixture layer isn't sufficient by itself.
 - **(a) pruning something live.** The prune skips caches accessed within the last hour, and deletes
   no entry whose key prefix is unrecognized.

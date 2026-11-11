@@ -104,7 +104,7 @@ Run from the worktree root: `node /tmp/claude-1000/-home-lab-Projects-mailwoman/
 node packages/mailwoman/out/cli.js license verify --key "$(python3 -c 'import json;print(json.load(open("packages/core/test/fixtures/license/legacy-token.json"))["token"])')"
 ```
 
-Expected: `status: unknown_key`, because the fixture key is not in the shipped trust map. That is the correct result. The test in Task 2 injects the fixture's public key as trusted.
+Expected: `status: unknown_key`, because the fixture key isn't in the shipped trust map. That's the correct result. The test in Task 2 injects the fixture's public key as trusted.
 
 - [ ] **Step 4: Commit**
 
@@ -589,7 +589,7 @@ describe("license key", () => {
 - [ ] **Step 2: Run to verify they fail**
 
 Run: `yarn vitest run packages/core/lib/license/key/key.test.ts`
-Expected: fail — `isSelfServicePayload` is not exported; `await licenseKeyID(...)` on a string still passes, the `lid` case fails on the schema stripping the key (`toMatchObject` on `payload: selfService` fails).
+Expected: fail — `isSelfServicePayload` isn't exported; `await licenseKeyID(...)` on a string still passes, the `lid` case fails on the schema stripping the key (`toMatchObject` on `payload: selfService` fails).
 
 - [ ] **Step 3: Rewrite `key.ts`**
 
@@ -1132,7 +1132,7 @@ Check that `makeTemporaryDirectory` is the name `@mailwoman/core/fs/temporary` e
 - [ ] **Step 2: Run to verify it fails**
 
 Run: `yarn compile && yarn vitest run packages/mailwoman/lib/cli/kit/license-cli.integration.test.ts`
-Expected: the `register` test fails with an unknown action. The other two may fail because `license.ts` does not compile against the async API. The next step fixes the compile.
+Expected: the `register` test fails with an unknown action. The other two may fail because `license.ts` doesn't compile against the async API. The next step fixes the compile.
 
 - [ ] **Step 3: Update the command**
 

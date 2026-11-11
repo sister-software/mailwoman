@@ -58,7 +58,7 @@ const DEVICE_LOCATION_BIAS_WEIGHT = 0.6
 
 function resolveMapPlace(candidate: ResolvedPlaceView): ResolvedMapPlace {
 	// TODO: A hosted answer renders as a point, because the crisp admin polygon the browser
-	// runtime draws comes from the release's `wof-polygons.db`, which this runtime does not load.
+	// runtime draws comes from the release's `wof-polygons.db`, which this runtime doesn't load.
 	// Either a `/v1/place/{id}/geometry` route on the API, or a byte-range read of
 	// `wof-polygons.db` keyed by the candidate's Who's On First ID, would supply it.
 	return { ...candidate }

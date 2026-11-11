@@ -8,12 +8,12 @@
  * The Open Contracting Partnership's Data Registry serves publication 117 at
  * `https://data.open-contracting.org/en/publication/117/download?name=<edition>.jsonl.gz`, where an
  * edition is a year, `undated`, or `full` for every year in one file. Each file is JSON Lines, one
- * OCDS release per line. That is the shape `#it/adapters/anac/adapter` reads.
+ * OCDS release per line. That's the shape `#it/adapters/anac/adapter` reads.
  *
  * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
  * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`, so
- * this module sits beside `#fi/tools/fetch/ryhti` rather than in an `sdk/` root the workspace does
- * not declare.
+ * this module sits beside `#fi/tools/fetch/ryhti` rather than in an `sdk/` root the workspace doesn't
+ * declare.
  *
  * Three host behaviors decide what this module does:
  *
@@ -112,7 +112,7 @@ export interface ANACEditionHead {
  * Through `APIClient`, which is the interface for a repeated request with a small response.
  * The bodies are not taken this way: `APIClient` buffers a response, and the `full` edition is 184 MB.
  *
- * A header the host does not send is reported as `null` rather than raised on,
+ * A header the host doesn't send is reported as `null` rather than raised on,
  * and the caller then downloads rather than reading the absence as a match.
  */
 export async function readANACEditionHead(client: Pick<APIClient, "fetch">, edition: string): Promise<ANACEditionHead> {
@@ -178,7 +178,7 @@ export function itANACInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBuild
  * The `HEAD` decides first, because ANAC republishes the publication monthly
  * and the host states a new length and modification time when it does.
  * The file's own length is then checked, so a truncated local copy is re-fetched even
- * where the host has not changed.
+ * where the host hasn't changed.
  *
  * Exported so a test can exercise the decision without a transfer: the alternative is
  * letting {@linkcode downloadITANAC} reach the host to find out which branch it took.

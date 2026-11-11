@@ -65,7 +65,7 @@ function parseBool(raw: unknown): boolean {
 /**
  * A friendly html landing page for `GET /`.
  *
- * Nominatim itself has no root page, just `/status`, so there is no wire interface to match.
+ * Nominatim itself has no root page, just `/status`, so there's no wire interface to match.
  * A browser visitor who pastes the bare host gets a one-glance orientation with
  * clickable example queries rather than Express's `Cannot GET /` 404.
  *

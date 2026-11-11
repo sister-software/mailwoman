@@ -88,15 +88,15 @@ The geocode session reads these rows the same way. A two-arm `mwdev_compare` on 
 `venue_head_prior` off against on (run `27d8b991-890a-4337-9f32-f6a7891b8dc1`) differs on 11, and
 `500 W 7th St Ste 1100, Cincinnati, OH 45203-1234` falls from the address-point tier to the admin tier
 because the street loses its suffix. The venue-head prior ships on by default in the session since
-#2511, graded on the regression board. The golden dev split had not been graded against it, because the
-battery did not feed it.
+#2511, graded on the regression board. The golden dev split hadn't been graded against it, because the
+battery didn't feed it.
 
 ## Decision
 
 The runtime pipeline runs the street-morphology prior by default and keeps the venue-head stage
 opt-in, so the API and the release smoke parse the Rockefeller rows as streets and keep the 57 bare-street
-rows as they are. The
+rows as they're. The
 geocode session keeps both priors on, as shipped. The battery legs run the session's defaults, so the
 floors above are the first readings of the parse the session ships. The venue-head prior's bare-street
-cost is filed as its own issue, with the rows above as its board. A fix there is graded on both the
+cost is filed as its own issue, with the rows above as its board. A fix there's graded on both the
 board and this split before the pipeline's default moves.

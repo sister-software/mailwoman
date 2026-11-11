@@ -43,7 +43,7 @@ export type CaseNormalization = "title-case" | "preserve"
  * How a caller sources an optional stage.
  *
  * - `"auto"` loads the bundled default when it is first needed.
- *   For a typical caller that is the first parse.
+ *   For a typical caller that's the first parse.
  * - `"none"` disables the stage.
  * - Any other value is the stage itself.
  */
@@ -459,7 +459,7 @@ const POICategorySubjectSchema = z.object({
 	kind: z.literal("category"),
 	/**
 	 * Category IDs to search together.
-	 * The order does not rank these values.
+	 * The order doesn't rank these values.
 	 */
 	categoryIDs: z.array(z.string()),
 	matched: z.string(),
@@ -744,7 +744,7 @@ export interface ClassifierOpts {
 	 * Venue-head lookups for the input's country.
 	 *
 	 * Their prior biases a venue head word and the words of its phrase toward `venue`.
-	 * Absent, the prior does not run.
+	 * Absent, the prior doesn't run.
 	 */
 	venueHead?: VenueHeadLexiconLike
 	/**

@@ -246,7 +246,7 @@ function assertPairIndexManifests(relativePaths: readonly string[]): void {
 const GZIP_SIGNATURE = [0x1f, 0x8b] as const
 
 /**
- * Refuses a staged file that is already gzip data when the upload gzip-encodes its extension.
+ * Refuses a staged file that's already gzip data when the upload gzip-encodes its extension.
  *
  * The browser removes one encoding layer, so a twice-compressed object reaches its reader as gzip bytes.
  * A copy downloaded from the bucket without decoding is the usual source.
@@ -448,7 +448,7 @@ export async function listPublicBucketObjects(
 }
 
 /**
- * Returns a reader of an object's stored size, or null for a key the bucket does not hold.
+ * Returns a reader of an object's stored size, or null for a key the bucket doesn't hold.
  */
 async function storedObjectSize(
 	env: PublicBucketEnvironment
@@ -522,7 +522,7 @@ export async function publishToPublicBucket(
 }
 
 /**
- * One staged file whose stored object does not match it.
+ * One staged file whose stored object doesn't match it.
  */
 export interface PublicBucketMismatch {
 	key: string

@@ -19,7 +19,7 @@
  *   import.
  *
  *   The hash reads the checkout: its config, its `yarn.lock` and its workspace sources. `dependency-cruiser` and
- *   `yaml` are development dependencies of this package, imported only here. A published install does not include
+ *   `yaml` are development dependencies of this package, imported only here. A published install doesn't include
  *   them. A corpus build runs from the checkout.
  */
 
@@ -84,7 +84,7 @@ function packageDirectoryOf(resolved: string): string {
 /**
  * The repository-relative directory of an installed package a bare specifier names,
  * searched from the importing module's directory up to the repository root, or `null`
- * when the specifier is not bare or names no installed package.
+ * when the specifier isn't bare or names no installed package.
  */
 async function installedPackageDirectory(
 	specifier: string,
@@ -111,7 +111,7 @@ async function installedPackageDirectory(
 /**
  * Cruise the graph from `roots`, which are absolute paths or paths relative to `repositoryRoot`.
  *
- * @throws When a root lies outside `packages/` or an import does not resolve, because a hash
+ * @throws When a root lies outside `packages/` or an import doesn't resolve, because a hash
  * over a graph with a missing edge would leave an edit to the unresolved module unseen.
  */
 export async function cruiseModuleGraph(roots: readonly string[], repositoryRoot: string): Promise<ModuleGraph> {
@@ -235,7 +235,7 @@ async function lockedResolutions(repositoryRoot: string): Promise<Set<string>> {
 /**
  * The `name@npm:version` of each reached third-party package.
  *
- * @throws When the installed version is one `yarn.lock` does not record, since the install
+ * @throws When the installed version is one `yarn.lock` doesn't record, since the install
  * then differs from the lockfile a reader would rebuild from.
  */
 async function pinPackages(

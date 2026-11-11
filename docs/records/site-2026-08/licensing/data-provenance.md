@@ -21,13 +21,13 @@ Measured 2026-09-27 from the artifacts themselves. The `candidate` bundle serves
 `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0`, `source = admin-global-priority@2026-08-25`
 and `build_sha = 2b9894111`.
 
-The admin gazetteer that name refers to is not published, and the copy on the lab host is a later build
+The admin gazetteer that name refers to isn't published, and the copy on the lab host is a later build
 (`2026-09-15`). That later one records `whosonfirst+overture-divisions+geonames` as its sources with the
 Overture Divisions release `2026-07-22.0`, and the builder that produced both folds Overture Divisions the
 same way. Which Overture release reached the published 2026-08-25 chain is unmeasured. Overture's
 attribution page gives its Divisions theme `License for theme: ODbL`.
 
-So the core gazetteer reads a share-alike source, and this page stated that it does not. What the Open Database License then requires of a redistributor depends on whether the combination is a Derivative Database, a Collective Database, a Produced Work, or an extraction below the threshold the license sets. **That reading is with counsel and this correction states no conclusion about it.**
+So the core gazetteer reads a share-alike source, and this page stated that it doesn't. What the Open Database License then requires of a redistributor depends on whether the combination is a Derivative Database, a Collective Database, a Produced Work, or an extraction below the threshold the license sets. **That reading is with counsel and this correction states no conclusion about it.**
 
 Both quantities that bear on the answer were measured on 2026-09-27, over the lab host's `2026-09-15`
 chain. `spr` has no source column, but each fold mints ids from its own base in
@@ -41,7 +41,7 @@ carrying 2,539,196 of its 16,307,416 candidate rows. The fields that survive are
 longitude, the bounding box taken from the matching `division_area`, the parent division, the population
 and the Wikidata concordance.
 
-The GERS id does not survive. `fold-overture` writes a concordance under `wd:id` only, so no row in
+The GERS id doesn't survive. `fold-overture` writes a concordance under `wd:id` only, so no row in
 either artifact can be traced back to the Overture record it came from. Counsel should know that before
 considering whether an alteration file is producible.
 
@@ -60,7 +60,7 @@ the Northern Ireland OpenStreetMap fold at 4,757.
 
 :::caution[Legal sign-off: ☐ not cleared (as of 2026-06-30)]
 
-The OpenStreetMap precision tier is **built but not enabled** in any published artifact. It is not on npm, on R2, or in the demo. Counsel must review the [questions below](#what-counsel-needs-to-confirm) before release. After the review, change this banner to **☑ cleared**, name the reviewing counsel, and add the date.
+The OpenStreetMap precision tier is **built but not enabled** in any published artifact. It isn't on npm, on R2, or in the demo. Counsel must review the [questions below](#what-counsel-needs-to-confirm) before release. After the review, change this banner to **☑ cleared**, name the reviewing counsel, and add the date.
 
 :::
 
@@ -86,7 +86,7 @@ of 4,757 of the 50,032 live Northern Ireland postcodes, 9.5%.
 
 So a reader who relied on this banner to conclude that the published gazetteer contains no share-alike data
 was misinformed on that point. The artifact's own `layer_manifest` records `tier = build-local` and a license
-expression including `ODbL-1.0`, so the file states its own terms correctly while this page does not.
+expression including `ODbL-1.0`, so the file states its own terms correctly while this page doesn't.
 
 **What the share-alike obligation then requires of a redistributor is with counsel, and this correction
 states no conclusion about it.** The engineering options are recorded, and the choice between them is the
@@ -116,14 +116,14 @@ The first row records the deliberate design choice. **WOF is the anchor and the 
 
 OpenStreetMap is licensed under the [ODbL](https://opendatacommons.org/licenses/odbl/). The ODbL requires share-alike **on a Derivative Database** but treats what it calls a _Produced Work_ differently. For a geocoder, that distinction decides the obligations, so it needs a precise statement:
 
-- A **Derivative Database** is a database built from ODbL data. For Mailwoman, that is the OSM rooftop extract (`address-points-<cc>-<slug>.db`). A distributor must provide attribution, share alike, and keep the database open.
-- A **Produced Work** is something _algorithmically derived_ from the database that is not itself a database. Examples are a rendered map, a report, or, in the case that matters here, a single resolved coordinate returned from a lookup. ODbL does **not** impose share-alike on a Produced Work and requires only attribution.
+- A **Derivative Database** is a database built from ODbL data. For Mailwoman, that's the OSM rooftop extract (`address-points-<cc>-<slug>.db`). A distributor must provide attribution, share alike, and keep the database open.
+- A **Produced Work** is something _algorithmically derived_ from the database that's not itself a database. Examples are a rendered map, a report, or, in the case that matters here, a single resolved coordinate returned from a lookup. ODbL **doesn't** impose share-alike on a Produced Work and requires only attribution.
 
 Our working position, pending counsel's confirmation, is that **serving a resolved coordinate is a Produced Work** (attribution without copyleft), while **distributing the extract itself is a Derivative Database** (full ODbL). The architecture assumes that this distinction holds.
 
 ## How the boundary is enforced
 
-The separation is built into the structure of the code and data, so it does not depend on a runtime flag that someone could forget to set. Four mechanisms keep ODbL data out of the permissive core:
+The separation is built into the structure of the code and data, so it doesn't depend on a runtime flag that someone could forget to set. Four mechanisms keep ODbL data out of the permissive core:
 
 1. **Per-row provenance.** Every address point stores a `source` string ([`address-point-schema.ts:41`](https://github.com/sister-software/mailwoman/blob/main/resolver-wof-sqlite/address-point-schema.ts)). OSM points are marked `openstreetmap:<cc>` ([`build-rooftop-extract.ts:88`](https://github.com/sister-software/mailwoman/blob/main/osm/scripts/build-rooftop-extract.ts)), and permissive points are `overture:*` or `openaddresses`. The license of every row can be identified.
 
@@ -136,7 +136,7 @@ The separation is built into the structure of the code and data, so it does not 
 :::danger[Correction, 2026-09-27: mechanism 4 above describes a flag that never existed]
 
 This page records the state as of 2026-08 and its text is left as it was written. Mechanism 4 above cites
-a command-line flag and a filter that a reader could not have used.
+a command-line flag and a filter that a reader couldn't have used.
 
 `--exclude-share-alike` was never a flag on `mw corpus build` or on any other command. Its underlying
 option, `buildCorpus({ excludeLicenses })`, was reachable only from the library, and the only caller in
@@ -171,13 +171,13 @@ ODbL requires attribution wherever the data is used. For Mailwoman, that means *
 - any geocoding result that resolved through an OSM extract, and
 - the distribution of any extract itself, as a `LICENSE` and attribution file beside the `.db`.
 
-Three gaps remain before that is true. They must be closed before the tier is enabled:
+Three gaps remain before that's true. They must be closed before the tier is enabled:
 
 - The Nominatim-compatible `licence` string ([`nominatim/index.ts:307`](https://github.com/sister-software/mailwoman/blob/main/nominatim/index.ts)) credits WOF, Overture, OpenAddresses, and TIGER, but **it omits OpenStreetMap.** It needs an ODbL clause that appears whenever a result comes from OSM.
 - The public `GeocodeResult` ([`geocode-core.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-core.ts)) has **no field for per-result attribution**. The `source` reaches the resolver node metadata but is dropped before the result is returned. That field must be added before ODbL attribution can appear on each result.
-- `THIRD_PARTY_NOTICES.md` credits OSM only as data that reaches us _via WOF and Overture_ (development-time). When first-party OSM extracts ship, it needs a new entry for the `@mailwoman/osm` distribution. We are holding that edit until the extracts ship, because adding it sooner would document a distribution that does not exist.
+- `THIRD_PARTY_NOTICES.md` credits OSM only as data that reaches us _via WOF and Overture_ (development-time). When first-party OSM extracts ship, it needs a new entry for the `@mailwoman/osm` distribution. We're holding that edit until the extracts ship, because adding it sooner would document a distribution that doesn't exist.
 
-The note in [`osm/README.md`](https://github.com/sister-software/mailwoman/blob/main/osm/README.md) that "the resolver surfaces © OpenStreetMap contributors on any result that resolved through one" describes the target state. The current code has not reached it yet. The `source` tag reaches the resolver node but is not yet shown to users.
+The note in [`osm/README.md`](https://github.com/sister-software/mailwoman/blob/main/osm/README.md) that "the resolver surfaces © OpenStreetMap contributors on any result that resolved through one" describes the target state. The current code hasn't reached it yet. The `source` tag reaches the resolver node but isn't yet shown to users.
 
 ## What counsel needs to confirm
 

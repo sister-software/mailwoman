@@ -100,7 +100,7 @@ describe("universal augmentations", () => {
 
 		expect(out.raw).toBe("Champs  Élysées,  Paris,  France")
 		// Components must double-space too: alignment substring-searches each component in raw,
-		// so single-spaced "Champs Élysées" would not appear in the double-spaced raw.
+		// so single-spaced "Champs Élysées" wouldn't appear in the double-spaced raw.
 		expect(out.components.street).toBe("Champs  Élysées")
 		expect(out.components.locality).toBe("Paris")
 		expect(out.components.country).toBe("France")

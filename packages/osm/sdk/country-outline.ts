@@ -12,7 +12,7 @@
  *   the outline comes from a separate source and this module tests points against it.
  *
  *   A full country outline has tens of thousands of vertices, and a ray cast per point over twelve
- *   million points does not finish. The test grids the outline's bounding box. A cell that no edge of
+ *   million points doesn't finish. The test grids the outline's bounding box. A cell that no edge of
  *   the outline crosses lies wholly inside or wholly outside, so the first point tested in it decides
  *   every later point. Only points in a cell an edge crosses take the exact ray cast.
  */
@@ -54,7 +54,7 @@ function markRing(ring: number[][], key: (lon: number, lat: number) => number, c
 /**
  * Returns a containment test for one `Polygon` or `MultiPolygon` outline.
  *
- * @throws when the geometry is not areal.
+ * @throws when the geometry isn't areal.
  */
 export function createOutlineContainment(geometry: ParsedGeometry): (lon: number, lat: number) => boolean {
 	const polygons =

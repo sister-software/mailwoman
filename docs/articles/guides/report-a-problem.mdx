@@ -8,7 +8,7 @@ verified-with: mailwoman v11.0.0, GitHub bug-report.yml and SECURITY.md checked 
 
 # Report a parsing or geocoding problem
 
-You will have a reproducible report with the exact input, expected and observed results, the first visible mismatch, package and data versions, and a safe submission route.
+You'll have a reproducible report with the exact input, expected and observed results, the first visible mismatch, package and data versions, and a safe submission route.
 
 ## Prerequisites
 
@@ -43,7 +43,7 @@ If the problem is a geocoding result, also capture the exact `mailwoman geocode`
 
 Compare the stages in order. Start with `normalized.normalized`, then `locale` and `kind`, then the labels and spans in `tree`. For geocoding, compare the parse tree before the resolver's candidates, selected coordinate, and `resolution_tier`. Use [the schema reference](../reference/schema.mdx) to identify each field.
 
-In the fictional example, `normalized.normalized` preserves the input and `kind.kind` is `structured_address`. The first visible mismatch is in `tree`: the returned top-level node tags `ZZ` as `locality`, and its child tags `Exampletown` as `dependent_locality`. The CLI trace does not establish whether classification, decoding, or a repair caused that label choice. Select **Unknown** for the issue form's **First stage that diverges** field and explain the visible tree difference under **Evidence and scope**. Choose a specific stage only when the captured evidence identifies it.
+In the fictional example, `normalized.normalized` preserves the input and `kind.kind` is `structured_address`. The first visible mismatch is in `tree`: the returned top-level node tags `ZZ` as `locality`, and its child tags `Exampletown` as `dependent_locality`. The CLI trace doesn't establish whether classification, decoding, or a repair caused that label choice. Select **Unknown** for the issue form's **First stage that diverges** field and explain the visible tree difference under **Evidence and scope**. Choose a specific stage only when the captured evidence identifies it.
 
 ## 4. Record the environment
 
@@ -55,7 +55,7 @@ node -p "require('mailwoman/package.json').version"
 npx --no-install mailwoman doctor --json > doctor.json 2> doctor.stderr
 ```
 
-For the verification run, `node --version` returned `v24.22.1`, the package version command returned `11.0.0`, and `doctor.json` reported the en-US weights package as available and the admin gazetteer as missing. The missing gazetteer prevents this installation from verifying a coordinate. It does not explain the fictional parse's node labels. Record the model or weights version, configured locale, operating system, relevant data bundle and its vintage, and any runtime flags that affect the call. Review `doctor.json` and the trace before sharing them because they can contain local paths, configuration details, and the input address.
+For the verification run, `node --version` returned `v24.22.1`, the package version command returned `11.0.0`, and `doctor.json` reported the en-US weights package as available and the admin gazetteer as missing. The missing gazetteer prevents this installation from verifying a coordinate. It doesn't explain the fictional parse's node labels. Record the model or weights version, configured locale, operating system, relevant data bundle and its vintage, and any runtime flags that affect the call. Review `doctor.json` and the trace before sharing them because they can contain local paths, configuration details, and the input address.
 
 ## 5. Fill the bug-report form
 
@@ -69,7 +69,7 @@ The fictional example fills the core fields as follows. Paste the complete `trac
 | `Failing input`           | `17 Imaginary Lane, Exampletown, ZZ 00000`                                                                                                                                                        |
 | Expected result           | For this exercise, `Exampletown` is `locality` and `ZZ` is `region`. These are fixture expectations for invented names.                                                                           |
 | Observed result           | `tree.roots[0]` has `tag: "locality", value: "ZZ"`. Its child has `tag: "dependent_locality", value: "Exampletown"`. Include the full trace.                                                      |
-| First stage that diverges | `Unknown`. The tree is the first visible mismatch. The trace does not isolate the model or decoder.                                                                                               |
+| First stage that diverges | `Unknown`. The tree is the first visible mismatch. The trace doesn't isolate the model or decoder.                                                                                                |
 | Evidence and scope        | The input, normalized text, and `structured_address` kind appear in the trace. The tree differs from the exercise expectation. This is one synthetic reproduction, with no accuracy rate claimed. |
 | Artifacts under test      | `mailwoman@11.0.0`, `@mailwoman/neural-weights-en-us@11.0.0`, Node.js `v24.22.1`, Linux x64, `--locale en-US`. `doctor.json` reports the admin gazetteer missing.                                 |
 | Reproduction              | `npx --no-install mailwoman parse --locale en-US --debug '17 Imaginary Lane, Exampletown, ZZ 00000'`                                                                                              |

@@ -303,7 +303,7 @@ describe("planPrune's reading of session leases", () => {
 	it("plans when a lease file disappears between listing and reading", async () => {
 		await threeGenerations()
 
-		// A link to a file that does not exist is listed by name and reads as ENOENT,
+		// A link to a file that doesn't exist is listed by name and reads as ENOENT,
 		// the state of a lease its session removed after the directory was listed.
 		const leases = catalogPaths(scratch.path).root("leases")
 

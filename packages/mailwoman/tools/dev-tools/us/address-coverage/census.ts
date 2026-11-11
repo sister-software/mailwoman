@@ -56,7 +56,7 @@ export const UNITS_PER_STRUCTURE: ReadonlyArray<readonly [variable: string, unit
 ]
 
 /**
- * One county's housing as B25024 states it: its total units and the structures they are estimated to occupy.
+ * One county's housing as B25024 states it: its total units and the structures they're estimated to occupy.
  */
 export interface CountyHousing {
 	name: string
@@ -76,7 +76,7 @@ export interface CountyCoverage extends CountyHousing {
 /**
  * Reads the ACS API's table rows, header first, into housing per county keyed by its five-digit FIPS code.
  *
- * @throws When a column this reader needs is absent, or a count is not a number.
+ * @throws When a column this reader needs is absent, or a count isn't a number.
  */
 export function readCountyHousing(rows: ReadonlyArray<readonly string[]>): Map<string, CountyHousing> {
 	const [header, ...body] = rows

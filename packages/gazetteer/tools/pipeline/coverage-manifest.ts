@@ -27,7 +27,7 @@
 
 import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resolver"
 // resolver-wof-sqlite's runtime modules are imported inside the functions,
-// so loading this module does not evaluate them.
+// so loading this module doesn't evaluate them.
 // Type-only imports are erased.
 import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite/coverage-manifest-schema"
 import { COUNTRY_BBOX } from "@mailwoman/resolver/plausibility"
@@ -144,7 +144,7 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	},
 	// AU joined with the AU placer class.
 	// The hard filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20).
-	// The receipt has no single-rate number, so there is no `hardResolveRate` (never invent a magnitude).
+	// The receipt has no single-rate number, so there's no `hardResolveRate` (never invent a magnitude).
 	{
 		country: "AU",
 		hardFilterSafe: true,

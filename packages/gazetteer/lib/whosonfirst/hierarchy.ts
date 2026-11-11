@@ -9,7 +9,7 @@
  *   several parents has `wof:parent_id` -4 and several hierarchies: New York City lists five, one per
  *   county, that agree on everything else. Two consumers read them under different rules. The
  *   gazetteer's ancestry table takes every ancestor that any hierarchy lists. A rendered address takes only
- *   the ancestors every hierarchy shares, so it never writes a county the city does not have.
+ *   the ancestors every hierarchy shares, so it never writes a county the city doesn't have.
  */
 
 /**

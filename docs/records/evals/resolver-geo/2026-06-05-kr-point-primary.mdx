@@ -35,7 +35,7 @@ The first build reported 56% name-confirmed — and it was wrong. Korean place n
 
 Korea is a partial, and labeling it anything else would be dishonest. Province and coordinate resolve at 100%; the administrative name resolves at 26%, capped by WOF KR's Hangul-name coverage — the ri-granularity offset and the absent 구 districts. The architecture transferred intact: a point-primary build, the same strategy, and zero resolver code changes. The "less special" mandate was testing exactly that transfer. What it can't manufacture is admin names WOF doesn't hold.
 
-The path to a Japan-grade KR name tier runs through a better source — Korea's 도로명주소 (Juso) road-name address database. That database holds the 구/동 names natively. It's key-walled behind a government API, so it's a deliberate acquisition rather than a scrape. Until then, Korea ships as an **experimental** point-primary table: trustworthy for province and coordinate, explicit about the 26% name tier. It is not promoted into the default resolver bundle.
+The path to a Japan-grade KR name tier runs through a better source — Korea's 도로명주소 (Juso) road-name address database. That database holds the 구/동 names natively. It's key-walled behind a government API, so it's a deliberate acquisition rather than a scrape. Until then, Korea ships as an **experimental** point-primary table: trustworthy for province and coordinate, explicit about the 26% name tier. It isn't promoted into the default resolver bundle.
 
 Taiwan is the next CJK locale and a harder start: no GeoNames postal file at all, and `admin-tw.db` isn't even built yet (only the WOF repo is on disk). That one begins one rung lower, by building the admin DB.
 

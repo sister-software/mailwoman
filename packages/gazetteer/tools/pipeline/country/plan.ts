@@ -38,7 +38,7 @@ export interface SourceCensus {
 /**
  * Reads the per-source row counts for one country from an admin gazetteer.
  *
- * The source is inferred from the ID range, because `spr` does not record which fold wrote a row.
+ * The source is inferred from the ID range, because `spr` doesn't record which fold wrote a row.
  */
 export function censusForCountry(adminDBPath: string, country: string): SourceCensus {
 	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })

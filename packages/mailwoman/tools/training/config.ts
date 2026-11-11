@@ -109,7 +109,7 @@ export function rerootToHost(config: TrainingConfig): TrainingConfig {
 /**
  * The config a record was captured with: its recorded path, or the committed config of the same name.
  *
- * When the committed file's SHA-256 is not the recorded one, the revision of it
+ * When the committed file's SHA-256 isn't the recorded one, the revision of it
  * with the recorded bytes is read from the file's git history, across its renames,
  * and written once under `<data root>/cache/recorded-configs/`.
  *

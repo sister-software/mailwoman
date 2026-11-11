@@ -9,7 +9,7 @@
  *   ledger has retained across eras and emits one table per locale.
  *
  *   Lives beside `ledger-append` because it is that command's second half: a row appended to the
- *   ledger is not visible in the docs until this regenerates the page.
+ *   ledger isn't visible in the docs until this regenerates the page.
  *
  *   The number formatting reproduces Python's `%g` and round-half-to-even to the digit, inherited from
  *   the retired Python generator that wrote the committed page's earlier columns. A different rounding method

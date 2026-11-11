@@ -50,7 +50,7 @@ describe("weightsPackageByCountry", () => {
 
 	it("contributes nothing for a tag with no region, rather than a blank key", () => {
 		// The census would report a blank key as a country.
-		// A blank key does not identify a country.
+		// A blank key doesn't identify a country.
 		expect([...weightsPackageByCountry({ locales: ["en", "fr-fr"] }).keys()]).toEqual(["FR"])
 	})
 

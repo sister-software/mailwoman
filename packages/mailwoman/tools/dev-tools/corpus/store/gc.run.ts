@@ -113,7 +113,7 @@ for (const entry of reach) {
 	}
 }
 
-// A store root is `<version>/store`, read off the files inside one so an empty store is not listed.
+// A store root is `<version>/store`, read off the files inside one so an empty store isn't listed.
 const stores = values.store ?? [
 	...new Set(
 		(await Globerator.from("*/store/**/*", { cwd: versionedRoot, onlyFiles: true }).toArray()).map((relative) =>

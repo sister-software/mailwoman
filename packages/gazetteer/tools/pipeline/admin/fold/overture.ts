@@ -98,7 +98,7 @@ const HEX_RADIX = 16
  * Each ID is `idBase + (hash(gers) mod span)`.
  *
  * On a collision, the later ID probes forward to the next free slot.
- * The input is sorted first so the probing does not depend on query order.
+ * The input is sorted first so the probing doesn't depend on query order.
  */
 export function assignSyntheticIDs(gersIDs: readonly string[], idBase: number = OVERTURE_ID_BASE): Map<string, number> {
 	const idmap = new Map<string, number>()

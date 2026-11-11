@@ -64,7 +64,7 @@ export type BuildFloodInput =
 			/**
 			 * The published geodatabase, ingested in bounded chunks, one child process per
 			 * range of the authority's own feature ids, because h3's wasm heap cannot be reset
-			 * from JavaScript and does not survive an unbounded number of polyfill calls.
+			 * from JavaScript and doesn't survive an unbounded number of polyfill calls.
 			 */
 			batched: {
 				geodatabasePath: string
@@ -190,7 +190,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			// The touch table exists only for this build and is dropped before the artifact is sealed.
 			// The loader uses no primary key.
 			// The resolution queries use indexes created after loading.
-			// A clustered key would sort every insert against an ingest order that this code does not control.
+			// A clustered key would sort every insert against an ingest order that this code doesn't control.
 			kdb.exec(
 				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, zone_code TEXT NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 			)
@@ -321,7 +321,7 @@ export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): Stream
 			zoneCounts[zone] = (zoneCounts[zone] ?? 0) + count
 		}
 
-		// A range of feature ids is not a region, so a coverage cell straddles chunks
+		// A range of feature ids isn't a region, so a coverage cell straddles chunks
 		// and the counts add rather than replace.
 		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
 	}
@@ -368,7 +368,7 @@ async function runBatchedIngest(
 						String(from),
 						"--object-id-to",
 						String(to),
-						// A range's own count is not knowable up front, so the chunk declares zero
+						// A range's own count isn't knowable up front, so the chunk declares zero
 						// and the parent checks the sum against the whole file.
 						"--declared-feature-count",
 						String(0),
@@ -386,7 +386,7 @@ async function runBatchedIngest(
 /**
  * Resolve the touch table into the two stored cell tiers, compacting only the whole side:
  * a zone's uniform interior collapses parent-ward while the fringe stays fine, because a partial cell's
- * parent is not partial in any useful sense and compacting it would claim ground it does not cover.
+ * parent isn't partial in any useful sense and compacting it would claim ground it doesn't cover.
  */
 function resolveCells(database: DatabaseClient<FloodDatabase>): {
 	wholeRows: number

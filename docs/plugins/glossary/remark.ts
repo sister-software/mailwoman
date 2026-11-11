@@ -62,7 +62,7 @@ const STARTS_WITH_CAPITALIZED_WORD = /^\s*[A-Z]/
  * Generated forward from the entry.
  * The matcher also runs in this direction.
  *
- * An inverse ("strip a trailing es, else strip a trailing s") is not the inverse:
+ * An inverse ("strip a trailing es, else strip a trailing s") isn't the inverse:
  * it takes "states" to "stat", and the first build with one shipped a guard that
  * suppressed `state` on every page while leaving `states` linking on 26.
  */

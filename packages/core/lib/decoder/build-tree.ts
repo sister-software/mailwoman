@@ -8,7 +8,7 @@
  *   Two passes:
  *
  *   1. Span emission — walk the token stream, group `B-X` followed by `I-X*` into one span. Lenient on
- *        hanging `I-X` (treat as new span). A `B-X` that is whitespace-adjacent to an already-open
+ *        hanging `I-X` (treat as new span). A `B-X` that's whitespace-adjacent to an already-open
  *        `X` span is also folded in (spurious-boundary repair for multi-word values the model
  *        fragments, e.g. "Saint Paul" → B-locality B-locality); a comma/separator between them
  *        keeps them distinct. Span `value` is taken from `raw` by [start, end), not concatenated
@@ -190,7 +190,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// A zero-width or whitespace-only `O` piece is a tokenizer artifact — SentencePiece
 			// emits a standalone `▁` word-boundary marker between words and the model labels it
 			// `O` (e.g. "Saint Paul" → "▁Saint"[B-loc], "▁"[O, zero-width], "Paul"[B-loc]).
-			// It is not a real component boundary, so it must not flush the open span.
+			// It isn't a real component boundary, so it mustn't flush the open span.
 			// The span stays open so the following same-tag `B-` token can merge in
 			// (see the spurious-boundary repair below).
 			// A non-whitespace `O` (comma, slash, …) is a real separator and still flushes.
@@ -201,9 +201,9 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 		}
 
 		if (prefix === "B" || !open || open.tag !== tag) {
-			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to an
-			// already-open `X` span is the model fragmenting a multi-word value, e.g. "Saint
-			// Paul" emitted as B-locality B-locality, where the second tag continues the first.
+			// Spurious-boundary repair: a `B-X` token that's whitespace-adjacent to an already-open
+			// `X` span is the model fragmenting a multi-word value, e.g. "Saint Paul" emitted
+			// as B-locality B-locality, where the second tag continues the first.
 			// Fold it into the open span.
 			//
 			// Guard: only merge when the text in `raw` between the two spans is whitespace-only.

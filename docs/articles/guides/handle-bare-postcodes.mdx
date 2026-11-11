@@ -8,7 +8,7 @@ verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights
 
 # Require country context for a bare postcode
 
-Use this guide when a user enters only a postcode and your application needs to decide whether it has enough context to attempt a geographic lookup. Keep the country supplied by your application or user beside the original input. A postcode's shape can match several national formats, and a shape match does not establish where the postcode refers.
+Use this guide when a user enters only a postcode and your application needs to decide whether it has enough context to attempt a geographic lookup. Keep the country supplied by your application or user beside the original input. A postcode's shape can match several national formats, and a shape match doesn't establish where the postcode refers.
 
 ## Install the parser packages
 
@@ -78,6 +78,6 @@ Run `node route-postcodes.mjs`. Published 11.0.0 returned this complete output:
 {"input":"10118-1234","applicationCountry":null,"resolverPreference":null,"path":"fast-path","kind":"postcode_only","formats":["us_zip4"],"tree":[{"tag":"postcode","value":"10118-1234","start":0,"end":10}],"decision":{"route":"request-country","coordinate":"unknown","deliverability":"unknown"}}
 ```
 
-Both `10118` runs returned kind `postcode_only` and the same `postcode` node. Both listed `us_zip`, `fr_postcode`, and `de_postcode` as format matches. The application record supplied `US`. The parser did not select a country from those three shapes. `10118-1234` matched only `us_zip4` and took the fast path, yet this policy still requests an application-supplied country. A format match identifies text shape. It does not verify postcode assignment or place identity.
+Both `10118` runs returned kind `postcode_only` and the same `postcode` node. Both listed `us_zip`, `fr_postcode`, and `de_postcode` as format matches. The application record supplied `US`. The parser didn't select a country from those three shapes. `10118-1234` matched only `us_zip4` and took the fast path, yet this policy still requests an application-supplied country. A format match identifies text shape. It doesn't verify postcode assignment or place identity.
 
 All three records keep coordinate and deliverability as `unknown` because no geographic lookup or postal-authority check ran. With a [verified data bundle](../reference/data-and-locales.mdx), run the country-scoped lookup and inspect its candidate evidence, `resolution_tier`, and `epistemic_status`. A country preference supplies no coordinate by itself. Keep `lat` and `lon` as `null` if a later lookup returns them as `null`. The [result schema](../reference/schema.mdx) defines the fields, and the [confidence and ambiguity explanation](../explanation/confidence-and-limits.mdx) separates format, place, and coordinate evidence.

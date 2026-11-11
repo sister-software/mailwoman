@@ -111,7 +111,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 	const zoneB = exteriorRing(lon + FIXTURE_SIDE, lat, lon + 2 * FIXTURE_SIDE, lat + FIXTURE_SIDE)
 
 	// The real service encodes the hole as a separate part.
-	// It does not nest the hole ring.
+	// It doesn't nest the hole ring.
 	const holed: MultiPolygonRings = [
 		[exteriorRing(lon, lat + 2 * FIXTURE_SIDE, lon + FIXTURE_SIDE, lat + 3 * FIXTURE_SIDE)],
 		[
@@ -152,7 +152,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 			crosswalkCode: "N1.1",
 			crosswalkDescription: "Road",
 		}),
-		// The authority marks land as unzoned with a code its own domain does not declare.
+		// The authority marks land as unzoned with a code its own domain doesn't declare.
 		fixtureFeature(5, [[unzoned]], {
 			localCode: GZT_UNZONED_LOCAL_CODE,
 			localDescription: "Unzoned",

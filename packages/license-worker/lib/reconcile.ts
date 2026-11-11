@@ -22,7 +22,7 @@ import { licenseStateAfterSubscription } from "#policy"
 export type ReconcileStage = "mint" | "email" | "state"
 
 /**
- * One item the pass could not finish, with the id the next operator action needs for that stage.
+ * One item the pass couldn't finish, with the id the next operator action needs for that stage.
  */
 export type ReconcileFailure =
 	| { stage: "mint"; invoiceID: string; reason: string }

@@ -6,7 +6,7 @@
  *   Reports whether the GB postcode-anchor binary fires on the GB golden board and by which route,
  *   replaying the `collectMatches` shaped recognizer that `parse` uses. Each register is reported
  *   separately. It reports three failure modes: no shaped span, a span whose key the lookup
- *   does not include. The third is a hit through the GB outward fallback.
+ *   doesn't include. The third is a hit through the GB outward fallback.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/gb/anchor-fire.run.ts --bin <postcode-gb.bin>
  */
@@ -16,7 +16,7 @@ import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 // `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode reads.
 // `normalizeInputCase` transforms the text before the anchor sees it.
 // `parse` applies this transformation by default.
-// These must not drift from `parse`, so this repo-local diagnostic imports the same modules.
+// These mustn't drift from `parse`, so this repo-local diagnostic imports the same modules.
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"

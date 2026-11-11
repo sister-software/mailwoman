@@ -5,23 +5,23 @@
 the test-suite performance work focused. The two are independent except for step (e1) there, and that step is
 deferred alongside it. Circle back when the performance ladder is done.
 **Driver:** operator direction — pnpm is where the ecosystem is going. This is a **direction call rather than
-a performance claim** (see "What this is not" below).
+a performance claim** (see "What this isn't" below).
 **Deliverable:** the repo installs, builds, tests, packs, and publishes under pnpm, with the publish
 pipeline verified against a real tarball before anything else lands.
 **Blocks:** `2026-08-02-test-suite-performance-design.md` step (e1) — the `node_modules` cache has to
 be built against whatever layout wins.
 
-## What this is not
+## What this isn't
 
 A spike of yarn's `nodeLinker: pnpm` was run first (2026-08-02, full receipt in
 `2026-08-02-test-suite-performance-design.md` § e2). It measured **slower** than `node-modules` on
 both install (48.4s vs 41.6s) and cold compile (40.5s vs 32.9s) and broke 7 test files.
 
-That result refutes **yarn's pnpm linker as a performance change**. It does not bear on migrating to
+That result refutes **yarn's pnpm linker as a performance change**. It doesn't bear on migrating to
 pnpm the package manager. The package manager is a different mechanism: its own resolver, lockfile, and a
 machine-wide content-addressed store with hardlinks rather than a per-project `.store`.
 
-So this migration is not justified on speed, and should not be sold as such. Any speed it delivers
+So this migration isn't justified on speed, and shouldn't be sold as such. Any speed it delivers
 is a bonus, and (e1) in the sibling spec is the change that removes install from the
 critical path either way.
 
@@ -30,7 +30,7 @@ critical path either way.
 ### Constraint 1 — strict resolution costs three packages rather than a long tail
 
 The predicted blocker was phantom dependencies: pnpm's default layout is non-hoisted, so any module
-importing a package it does not declare breaks. Full scan of every workspace's `.ts`/`.tsx` bare
+importing a package it doesn't declare breaks. Full scan of every workspace's `.ts`/`.tsx` bare
 imports against that workspace's declared deps (`docs/` excluded — its `@theme/*`, `@docusaurus/*`,
 `@site/*` and `#e2e` specifiers are build-time aliases rather than packages):
 
@@ -131,7 +131,7 @@ backstop, and it stays.
 Step (e1) there caches `node_modules` as a single archive. Under pnpm the natural equivalent is
 caching the **store** and running `pnpm install --offline`, which should beat yarn's numbers because
 the store is content-addressed and the install is hardlinks rather than copies. (e1) is therefore
-specified against whichever layout this migration lands, and is not built until then.
+specified against whichever layout this migration lands, and isn't built until then.
 
 ## Acceptance criteria
 
@@ -150,7 +150,7 @@ specified against whichever layout this migration lands, and is not built until 
 
 - **Pack substitution divergence.** The check. Failure mode is a fully-broken published package, the
   v7.2.0 class. Mitigated by blocking first and by the existing exports-target guard.
-- **`@release-it-plugins/workspaces` compatibility.** The plugin is yarn/npm oriented. If it does not
+- **`@release-it-plugins/workspaces` compatibility.** The plugin is yarn/npm oriented. If it doesn't
   cooperate, the fallback is driving `publish-workspace.ts` per workspace directly — a path AGENTS.md
   already documents for partial-release recovery, so it is known-good.
 - **postinstall blocking.** pnpm 10 refuses build scripts unless allowlisted. One missing allowlist entry produces a
@@ -161,11 +161,11 @@ specified against whichever layout this migration lands, and is not built until 
   worktree isolation is a known-sensitive area here.
 - **No speed win.** A plausible outcome: `2026-08-02-test-suite-performance-design.md` § Finding 3
   shows Fetch is already 0.6s on a warm CI cache, and the local control measured 0.4s. Accepted going
-  in, because the driver is direction rather than speed. Step 8 records the result either way, and does not
+  in, because the driver is direction rather than speed. Step 8 records the result either way, and doesn't
   drop it if it regresses.
 
 ## Non-goals
 
-- Speed. See "What this is not".
+- Speed. See "What this isn't".
 - Changes to the workspace layout, the `exports` dev-map convention, or the pack-then-`npm publish`
-  split. Those stay exactly as they are. Only the tool invoking them changes.
+  split. Those stay exactly as they're. Only the tool invoking them changes.

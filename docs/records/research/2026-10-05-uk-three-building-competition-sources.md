@@ -202,7 +202,7 @@ buildings. Each term was read on 2026-10-05.
 
 | Source                                | Key it takes                                        | Status                                                       | Term that governs reuse                                                                                                                                                 | Withheld or unknown                                                                     |
 | ------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Ofcom broadband checker               | postcode, then one address                          | unattempted: consumer checker                                | Ofcom site terms: reproduction "provided that it is reproduced accurately and not used in a misleading context" (`ofcom.org.uk/about-ofcom/our-website/terms-of-use`)   | names of networks that have not consented to identification                             |
+| Ofcom broadband checker               | postcode, then one address                          | unattempted: consumer checker                                | Ofcom site terms: reproduction "provided that it is reproduced accurately and not used in a misleading context" (`ofcom.org.uk/about-ofcom/our-website/terms-of-use`)   | names of networks that haven't consented to identification                              |
 | Ofcom Connected Nations Broadband API | postcode (`GET /coverage/{PostCode}`), per UPRN     | unattempted: needs a registered key and approval             | Ofcom API terms of use 2025, clause 4.3.6: it bars storing the information "to build a partial or full dataset of your own" and limits a performance cache to one month | every network's name: the schema has no such field                                      |
 | thinkbroadband API                    | postcode, and a UPRN for some networks [unverified] | unattempted: needs a license, and its page returned HTTP 403 | unread                                                                                                                                                                  | fields, coverage, price and report rights                                               |
 | Openreach checker                     | address                                             | unattempted: consumer checker                                | "not designed for managing automated process such as macros and robots"; content "provided solely for your own use", republication prohibited (`openreach.com`)         | other networks, per-record dates                                                        |
@@ -233,7 +233,7 @@ privately.
 | thinkbroadband Broadband Availability API                               | a postcode, and a UPRN for some networks [unverified]    | unknown: the API page returned HTTP 403                                                                                                            | a commercial license whose terms are unread                                                                                                                                                                  | price, coverage of the nine postcodes and report rights unknown                                                                                                                                                             |
 
 BDUK's UPRN-level release is the first UK broadband adapter [decided, 2026-10-05]. It is the one source
-in the table that is open, keyed by UPRN and gives a premises denominator, so the premises near a
+in the table that's open, keyed by UPRN and gives a premises denominator, so the premises near a
 building can be counted from its rows with BDUK's gigabit view of each. Ofcom's output-area file stays
 as area context. Network names stay a manual lookup, because no open source in the table identifies
 the network at a premises. `packages/bduk` reads the release's files, and its download step stores one
@@ -256,7 +256,7 @@ four columns on the right count only the UPRNs within 50 m.
 `packages/opportunity-map/lib/london-three-buildings.full.test.ts` recomputes every count.
 
 A row's link to a building is inferred: it rests on the postcode's link in section 3 and on the 50 m
-rule [inferred]. Section 3 does not infer the three planning-row postcodes as postcodes of the
+rule [inferred]. Section 3 doesn't infer the three planning-row postcodes as postcodes of the
 dwellings, so a premises listed with one of them is linked to the building by only the 50 m rule.
 
 | Site | Postcode | Postcode's link | UPRNs BDUK lists | UPRNs NSUL holds | Distance of the listed UPRNs' points | Within 50 m | `current_gigabit` true | Gigabit White | Gigabit Under Review | In BDUK's premises base |
@@ -287,7 +287,7 @@ percent of all premises and of residential premises with that postcode. BDUK's M
 UPRNs with NW2 2DL, all at one NSUL point 7.6 m from the grid reference and all in its premises base, and
 it classes 5 of them Gigabit White with `current_gigabit` false. The two sources differ in date, in
 premises base and in method. Ofcom's snapshot is January 2026 and BDUK's OMR is May 2026. BDUK's guide
-states that its premises base includes child premises and Ofcom's does not. Ofcom aggregates operators'
+states that its premises base includes child premises and Ofcom's doesn't. Ofcom aggregates operators'
 declarations, and BDUK classes premises from suppliers' OMR returns and its delivery data, with gaps
 where a supplier sent no return. Which source describes the five premises correctly is unknown
 [unknown]. CR0 5LP shows a smaller difference: Ofcom gives 0.0 percent gigabit availability for its

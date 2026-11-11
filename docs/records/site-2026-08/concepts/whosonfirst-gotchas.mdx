@@ -14,7 +14,7 @@ For how Mailwoman's resolver queries WOF at runtime, see [Resolver and Who's On 
 
 ## What WOF is
 
-WOF is a gazetteer, a structured database of **places**. It does not contain addresses, roads, or buildings. Its _places_ are countries, regions, counties, cities, neighborhoods, and venues. Each record has:
+WOF is a gazetteer, a structured database of **places**. It doesn't contain addresses, roads, or buildings. Its _places_ are countries, regions, counties, cities, neighborhoods, and venues. Each record has:
 
 - A stable numeric ID
 - A parent-child hierarchy
@@ -23,7 +23,7 @@ WOF is a gazetteer, a structured database of **places**. It does not contain add
 
 [Mapzen](https://en.wikipedia.org/wiki/Mapzen) created it (2018) as the successor to GeoPlanet, Yahoo's gazetteer. The data lives on GitHub in approximately 100 repositories under the [`whosonfirst-data`](https://github.com/whosonfirst-data) org, as several million individual GeoJSON files. [Geocode Earth](https://data.geocode.earth/wof/dist/sqlite/) maintains the canonical SQLite distributions.
 
-WOF provides something no other open dataset does: **a consistent hierarchy with stable IDs**. You can take a locality (`Houston`, id `85922029`), follow its `parent_id` to a region (`Texas`, id `85688753`), follow _that_ to a country (`United States`, id `85633793`), and rely on the chain being consistent. OpenStreetMap does not provide this, and GeoNames provides only part of it. WOF provides the full hierarchy, with its own decisions about how the world's administrative boundaries nest.
+WOF provides something no other open dataset does: **a consistent hierarchy with stable IDs**. You can take a locality (`Houston`, id `85922029`), follow its `parent_id` to a region (`Texas`, id `85688753`), follow _that_ to a country (`United States`, id `85633793`), and rely on the chain being consistent. OpenStreetMap doesn't provide this, and GeoNames provides only part of it. WOF provides the full hierarchy, with its own decisions about how the world's administrative boundaries nest.
 
 ## The gotchas
 
@@ -71,7 +71,7 @@ Key observations:
 - **Every key is namespaced.** Each prefix (`wof:`, `name:`, `src:`, `edtf:`, `geom:`, `mz:`) marks a different source or concern. The schema is a single flat object without nesting, and the key name encodes the meaning.
 - **Name variants are language-coded.** `name:eng_x_preferred` is the preferred English name, `name:fra_x_preferred` is French, and `name:zho_x_preferred` is Chinese. The `_x_` separator divides the language code from the name kind.
 - **Name kinds vary.** The kinds are `preferred`, `variant`, `colloquial`, `abbr`, and `short`, and a place can have entries for several of them per language. A major city like Paris has `name:` entries in 50+ languages, while a rural US neighborhood might have only one.
-- **The hierarchy is precomputed.** WOF stores the full ancestry chain in each record, so a query does not need to walk `parent_id` up the tree. This is convenient for display, redundant for storage, and occasionally stale when a parent is reclassified.
+- **The hierarchy is precomputed.** WOF stores the full ancestry chain in each record, so a query doesn't need to walk `parent_id` up the tree. This is convenient for display, redundant for storage, and occasionally stale when a parent is reclassified.
 
 ### Brooklyn Integers
 
@@ -79,7 +79,7 @@ WOF IDs come from [Brooklyn Integers](https://brooklynintegers.com/), a distribu
 
 ### Supersession chains
 
-Places get deprecated. A neighborhood is absorbed by its neighbor, a county boundary changes, or a locality is merged. WOF records this in `wof:superseded_by` arrays. A query that ignores supersession may return a place that has not existed since 2015. Every consumer must follow the supersession chain to the current record.
+Places get deprecated. A neighborhood is absorbed by its neighbor, a county boundary changes, or a locality is merged. WOF records this in `wof:superseded_by` arrays. A query that ignores supersession may return a place that's not existed since 2015. Every consumer must follow the supersession chain to the current record.
 
 ### Parent ID holes
 
@@ -130,7 +130,7 @@ Each name variant gets its own row. "Saint Petersburg", "St. Petersburg", and "S
 
 Each of the 120K GeoJSON files can be processed independently, so the work parallelizes easily. Mailwoman's WOF ingest pipeline uses [Piscina](https://github.com/piscinajs/piscina), a Node.js worker-thread pool, to spread files across all available CPU cores. Each worker reads a GeoJSON file, calls `pluckPlacetypeSpec` to extract structured fields and name variants, and upserts them into the matching `PlacetypeDataSource`.
 
-When the data arrives as a single bulk NDJSON dump instead of individual files, `AsyncSpliterator.asMany(source, delimiter, concurrency)` splits the file into N byte-range chunks aligned to delimiter boundaries. It returns N independent async iterators for parallel processing. It is built but has not yet run at scale.
+When the data arrives as a single bulk NDJSON dump instead of individual files, `AsyncSpliterator.asMany(source, delimiter, concurrency)` splits the file into N byte-range chunks aligned to delimiter boundaries. It returns N independent async iterators for parallel processing. It is built but hasn't yet run at scale.
 
 For full details on the ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.mdx).
 
@@ -142,7 +142,7 @@ Every geocoder needs a gazetteer. The options are:
 - **Use an open one**: WOF, GeoNames, OSM Nominatim
 - **Build your own**: BAN (France), NAD (US), TIGER (US)
 
-WOF is the best open option for hierarchy and multilingual names, but it is hard to use in raw form. The per-file layout, flat namespace, supersession chains, and `parent_id: -1` holes can each break a consumer that does not account for them. Mailwoman's tooling (`WOFPlacenameCache`, `PlacetypeDataSource`, the Piscina pipeline, and `AsyncSpliterator.asMany`) turns the raw WOF data into a usable geocoder component.
+WOF is the best open option for hierarchy and multilingual names, but it is hard to use in raw form. The per-file layout, flat namespace, supersession chains, and `parent_id: -1` holes can each break a consumer that doesn't account for them. Mailwoman's tooling (`WOFPlacenameCache`, `PlacetypeDataSource`, the Piscina pipeline, and `AsyncSpliterator.asMany`) turns the raw WOF data into a usable geocoder component.
 
 ## See also
 

@@ -26,7 +26,7 @@ describe("checkCLIAllowlist", () => {
 	it("refuses the ledger write even though `eval` is allowed", () => {
 		// The one that matters: it is nested under an allowed verb and it writes the score ledger.
 		// mwdev_promotion_eval reports this command pre-filled precisely so an operator runs it.
-		// The passthrough must not be the back door.
+		// The passthrough mustn't be the back door.
 		const verdict = checkCLIAllowlist(["eval", "ledger-append", "--out-dir", "/tmp/x"])
 
 		expect(verdict.allowed).toBe(false)
@@ -66,7 +66,7 @@ describe("checkCLIAllowlist", () => {
 	})
 
 	it("does not let a prefix match a longer unrelated verb", () => {
-		// `gazetteer stats` is allowed; `gazetteer` by itself is not, because the allowed thing is the pair.
+		// `gazetteer stats` is allowed; `gazetteer` by itself isn't, because the allowed thing is the pair.
 		expect(checkCLIAllowlist(["gazetteer"]).allowed).toBe(false)
 	})
 

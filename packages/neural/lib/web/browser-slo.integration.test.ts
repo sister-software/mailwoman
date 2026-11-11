@@ -801,7 +801,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 
 		// An inline route is matched before a mount, so the bundled worker is served from
 		// the same directory as the runtime files the mount below provides.
-		// That is the layout a host stages.
+		// That's the layout a host stages.
 		inlineRoutes.set(`${SQLITE_RUNTIME_PREFIX}range-worker.js`, {
 			body: await bundleBrowserEntry(RANGE_WORKER_ENTRY_SOURCE, "range-worker-entry.ts", BUNDLE_RESOLVE_DIR),
 			contentType: javascript,
@@ -889,7 +889,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 
 /**
  * URLs for every evidence artifact the shipped web loader fetches beside the model —
- * skipping the ones this weights package does not ship, since an overlay's absence
+ * skipping the ones this weights package doesn't ship, since an overlay's absence
  * is a packaging fact rather than a failure.
  */
 async function evidenceURLsFor(resolved: ResolvedWeights, weightsDirectory: string, origin: string): Promise<string[]> {
@@ -1030,7 +1030,7 @@ function formatReceipt(m: Measurement): string {
 /**
  * The whole probe runs once.
  *
- * A browser launch plus a 39 MB model load is not something to repeat per assertion.
+ * A browser launch plus a 39 MB model load isn't something to repeat per assertion.
  *
  * Generous rather than a performance target.
  */

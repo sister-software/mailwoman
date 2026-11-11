@@ -54,7 +54,7 @@ const GazetteerVerify: CommandComponent<typeof spec> = ({ options }) => {
 
 			if (options.fstFreshness) {
 				// Lazy: the FST module pulls the resolver and libpostal dictionaries a
-				// skipped section should not pay for.
+				// skipped section shouldn't pay for.
 				const { checkAdminDerivedFSTFreshness } = await import("@mailwoman/gazetteer/tools/pipeline/fst")
 				const rows = await checkAdminDerivedFSTFreshness(dbPath)
 				const stale = rows.filter((row) => row.staleReason)

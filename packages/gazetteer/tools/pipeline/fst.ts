@@ -103,7 +103,7 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 ])
 
 /**
- * Every FST artifact that is a projection of the WOF admin DB, relative to the wof data-root dir.
+ * Every FST artifact that's a projection of the WOF admin DB, relative to the wof data-root dir.
  *
  * `fst-street-morphology.bin` and the retired `fst-global-priority.bin` are deliberately absent
  * so they cannot generate freshness rows that read as a rebuild obligation.
@@ -142,7 +142,7 @@ export interface FSTFreshnessRow {
  * A stale FST makes no statement about whether the database is sound, so this reports
  * rather than fails and leaves the exit code to the caller.
  * The exclusion-policy expectation applies only to locales the current builder can produce,
- * so a frozen artifact is not reported against a policy it cannot rebuild.
+ * so a frozen artifact isn't reported against a policy it cannot rebuild.
  */
 export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Promise<FSTFreshnessRow[]> {
 	const source = await readWOFSourceIdentity(dbPath)
@@ -197,7 +197,7 @@ export async function loadDegenerateSurfaces(
 	stopwordTokens: Set<string>
 }> {
 	// Keyed by fold identity then language set, because the FST and painter worlds
-	// fold differently by design and must not share an entry.
+	// fold differently by design and mustn't share an entry.
 	// The returned sets are shared and `buildLocalitySurfaceLexicon` mutates its copy,
 	// so this hands back a fresh shallow copy per call and caches only the parse.
 	let byLanguages = degenerateSurfacesMemo.get(fold)

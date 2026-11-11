@@ -110,7 +110,7 @@ export interface OverlayMigrationSummary {
 }
 
 /**
- * The register for one overlay source, refusing a source this map does not name.
+ * The register for one overlay source, refusing a source this map doesn't name.
  */
 export function registerForSource(source: string): string | null {
 	// The map keys on the retired spelling.

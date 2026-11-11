@@ -43,7 +43,7 @@ export function requestLocationOf(request: Request): GeocodeBiasPoint | null {
 /**
  * The geocode body with `location` appended to its `bias`, as UTF-8 bytes.
  *
- * The body is returned unchanged when it is not a JSON object, when its `bias` is present
+ * The body is returned unchanged when it isn't a JSON object, when its `bias` is present
  * and not an array, or when the array already holds the most points a request may send.
  * The engine then validates it as sent.
  */

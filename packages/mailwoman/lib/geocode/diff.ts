@@ -64,7 +64,7 @@ export interface GeocodeDiff {
 	/**
 	 * The span-level difference between the two parses.
 	 *
-	 * When `parse.identical` is false the resolver was asked a different question and is not the suspect.
+	 * When `parse.identical` is false the resolver was asked a different question and isn't the suspect.
 	 */
 	parse: ParseDiff
 	spanGeo: SpanGeoDelta[]
@@ -78,7 +78,7 @@ export interface GeocodeDiff {
 	 * Kilometers the final answer moved.
 	 *
 	 * Null when either arm returned no coordinate.
-	 * This differs from a zero-kilometer move and must not be read as one.
+	 * This differs from a zero-kilometer move and mustn't be read as one.
 	 */
 	movedKm: number | null
 	uncertaintyBefore: number | null

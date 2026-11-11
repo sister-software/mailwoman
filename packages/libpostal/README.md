@@ -29,7 +29,7 @@ curl -s "http://localhost:8081/parse?query=1600 Pennsylvania Ave NW, Washington 
 natively, so you do not need to mount middleware.
 
 **Note on `/expand`:** Mailwoman's normalization is deterministic, so `/expand` returns the
-original plus its normalized and abbreviation-expanded forms. It does not reproduce libpostal's
+original plus its normalized and abbreviation-expanded forms. It doesn't reproduce libpostal's
 probabilistic multi-variant expansion, and it returns one canonical alternative instead of a set
 of hypotheses.
 

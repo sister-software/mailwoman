@@ -31,7 +31,7 @@ import {
  * Returns the family that claims a comma segment of the input, or `null`.
  *
  * The `weights-family` repository check rejects a script claimed by two families,
- * so declaration order does not affect the result.
+ * so declaration order doesn't affect the result.
  */
 function familyForSegment(shape: Pick<QueryShape, "tokenClasses" | "segments">): string | null {
 	for (const entry of FAMILIES) {

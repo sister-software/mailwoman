@@ -8,8 +8,8 @@
  *
  * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
  * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`, so
- * this module sits beside `#fi/tools/fetch/ryhti` rather than in an `sdk/` root the workspace does
- * not declare.
+ * this module sits beside `#fi/tools/fetch/ryhti` rather than in an `sdk/` root the workspace doesn't
+ * declare.
  *
  * `data.public.lu` states `cc-zero` for this dataset. The address-source register elects
  * `CC0-1.0` for it under `lu-property-building-1`. CC0 asks for no attribution, and crediting the ACT

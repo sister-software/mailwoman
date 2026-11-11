@@ -7,13 +7,13 @@
  *
  * Denmark is one of the member states that serves the Addresses (AD) theme as a predefined-dataset
  * ATOM feed rather than as a WFS, so `#tools/fetch/inspire-addresses` — which pages a WFS and joins
- * its feature types locally — does not reach it. This module reads the feed, downloads the one
+ * its feature types locally — doesn't reach it. This module reads the feed, downloads the one
  * dataset it offers and extracts the GeoPackage.
  *
  * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
  * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`, so
- * this module sits beside `#fr/tools/fetch/ban` rather than in an `sdk/` root the workspace does
- * not declare.
+ * this module sits beside `#fr/tools/fetch/ban` rather than in an `sdk/` root the workspace doesn't
+ * declare.
  *
  * Klimadatastyrelsen states CC BY 4.0 for this theme, and the address-source register elects it. The
  * model card must attribute Klimadatastyrelsen.
@@ -35,7 +35,7 @@
  *    module compares the downloaded zip's sha256 against its manifest instead.
  *
  * The linked OpenSearch description parameterises only `spatial_dataset_identifier_code`, `crs` and
- * `language`, and offers no spatial subsetting, so there is no way to fetch part of Denmark. The
+ * `language`, and offers no spatial subsetting, so there's no way to fetch part of Denmark. The
  * feed holds one entry covering the whole country.
  */
 
@@ -168,7 +168,7 @@ export async function readAddressesFeed(xml: string, feedURL: string): Promise<A
  * Name the zip member on a weblink URL, so the host serves the file instead of its landing page.
  *
  * A URL that already names one is answered unchanged, so a publisher that starts writing
- * the complete URL into the feed does not get the parameter twice.
+ * the complete URL into the feed doesn't get the parameter twice.
  */
 export function datasetURLOf(href: string): string {
 	if (href.includes(`${REAL_FILENAME_PARAMETER}=`)) return href

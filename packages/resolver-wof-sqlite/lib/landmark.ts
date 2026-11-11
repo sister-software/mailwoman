@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The landmark layer: Wikidata places keyed by every name and alias they are written with, ranked by the number of
+ *   The landmark layer: Wikidata places keyed by every name and alias they're written with, ranked by the number of
  *   Wikipedia language editions that describe them. The source is CC0, so the database may ship.
  */
 

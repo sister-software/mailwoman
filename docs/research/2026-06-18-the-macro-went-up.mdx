@@ -8,7 +8,7 @@ tags: [neural, evals, training, corpus]
 
 Here's a number that should make you nervous: our validation macro-F1 climbed from 0.71 to 0.73 on a retrain we were ready to ship. Instinct reads that as a win: the aggregate went up, so the model must be better, so publish the release.
 
-It wasn't, and it took three probes to prove it. The same model that scored higher on the average had gotten **worse at the most basic address there is — a town and a state.** This post describes how the average lied to us, and how we caught it.
+It wasn't, and it took three probes to prove it. The same model that scored higher on the average had gotten **worse at the most basic address there's — a town and a state.** This post describes how the average lied to us, and how we caught it.
 
 {/* truncate */}
 
@@ -52,7 +52,7 @@ Yes, on the labels — and in a way that drove the lesson home twice. We built e
 
 That's the whole point, restated from the other direction. The aggregate that almost fooled us into shipping the broken model was the same aggregate that wouldn't have told us the fix landed, either. Both times, the truth was in the held-out core (the town, the street, the house number a real user hands us), and both times the averageshrugged. So we read the core.
 
-And then the lesson came back for a third helping. Before promoting the new model we graded the one thing we hadn't: the assembled coordinate, the actual point on the map a user receives, measured against the model already in production. It was flat. Locality F1 had climbed, but locality-match on real addresses and the median coordinate error did not move. the result never reached the map. We had done the very thing this post opens by warning against, one level down: graded the assembled labels and called it a win without grading the assembled coordinate. So we left the production model where it was.
+And then the lesson came back for a third helping. Before promoting the new model we graded the one thing we hadn't: the assembled coordinate, the actual point on the map a user receives, measured against the model already in production. It was flat. Locality F1 had climbed, but locality-match on real addresses and the median coordinate error didn't move. the result never reached the map. We'd done the very thing this post opens by warning against, one level down: graded the assembled labels and called it a win without grading the assembled coordinate. So we left the production model where it was.
 
 The flatness pointed somewhere we hadn't been looking. The addresses still wrong on the map are small rural towns the gazetteer itself resolves poorly (a third of Vermont's, in one sample), places no amount of model training reaches. For now the model has caught up to its own database, and the result is in the atlas. That's a different post, and we'll grade it on the coordinate.
 

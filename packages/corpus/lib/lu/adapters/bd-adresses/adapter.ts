@@ -20,13 +20,13 @@
  * every row.
  *
  * Luxembourg writes the house number before the street. `STREET_ORDERS` records that order as
- * `number-first`, and `COMMA_JOINED_STREET_COUNTRIES` does not list it. `formatAddressRow` therefore
+ * `number-first`, and `COMMA_JOINED_STREET_COUNTRIES` doesn't list it. `formatAddressRow` therefore
  * renders `20 Kaesfurterstrooss, L-9755 Hupperdange`.
  *
  * ## The file holds one street name, in no single language
  *
  * Luxembourg is trilingual, and the CSV declares one street column.
- * There is no `rue_fr`, `rue_de` or `rue_lb` to choose between, so the adapter emits `rue` as the
+ * There's no `rue_fr`, `rue_de` or `rue_lb` to choose between, so the adapter emits `rue` as the
  * publisher wrote it.
  *
  * What that column holds is mixed.
@@ -38,13 +38,13 @@
  * No column marks a row's language, so `locale` reads `und-LU`.
  * `und` is BCP-47's undetermined language subtag, and the repository already stores it in
  * `#recipes/bare/country` and `#tools/postcode/triples`.
- * A `fr-LU` or `lb-LU` label would assert a language for a name the publisher did not
+ * A `fr-LU` or `lb-LU` label would assert a language for a name the publisher didn't
  * tag.
  *
  * ## The number comes from `numero`, and never from the street line
  *
  * `rue` and `numero` are separate columns and the publisher never composes them, so neither
- * `splitStreetLine` nor `composeHouseNumber` applies here: there is no line to split and no second
+ * `splitStreetLine` nor `composeHouseNumber` applies here: there's no line to split and no second
  * column to join.
  * A street split would also be wrong in both directions.
  * 175 `rue` values end in a digit, among them `Route Nationale 1`, `Rue du 9 août 2019` and

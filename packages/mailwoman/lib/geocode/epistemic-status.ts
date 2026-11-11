@@ -20,7 +20,7 @@ import { CoverageBasis, EpistemicStatus } from "@mailwoman/evidence"
  *   (a stated rule computed the point, such as the centroid of a street's or a postcode's delivery points)
  * - Everything else → `observed` (an identified source recorded it without claiming authority)
  *
- * `inferred` is not producible here and stays defined and unused rather than repurposed.
+ * `inferred` isn't producible here and stays defined and unused rather than repurposed.
  */
 export function epistemicStatusFor(
 	tier: ResolutionTier,

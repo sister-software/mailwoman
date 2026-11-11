@@ -8,7 +8,7 @@
  *
  *   The category uses a label rather than a number. `poi.category_id` is a per-build dictionary code.
  *   `pharmacy` maps to 72 in the 2026-07-22 build. A later build can assign another code.
- *   The lookup uses `poi_category_codes` and refuses a class the artifact does not hold.
+ *   The lookup uses `poi_category_codes` and refuses a class the artifact doesn't hold.
  *   A numeric literal could read another class's rows under this class's name.
  */
 

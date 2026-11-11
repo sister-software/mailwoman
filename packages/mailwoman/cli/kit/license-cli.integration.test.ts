@@ -86,7 +86,7 @@ describe("mailwoman license", () => {
 	const SECRET = "s".repeat(43)
 
 	/**
-	 * A token the self-service worker would have minted, under a key this build does not trust.
+	 * A token the self-service worker would have minted, under a key this build doesn't trust.
 	 */
 	async function selfServiceToken() {
 		const pair = await generateLicenseSigningKeyPair()

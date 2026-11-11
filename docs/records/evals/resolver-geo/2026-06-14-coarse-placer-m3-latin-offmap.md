@@ -4,9 +4,9 @@ _2026-06-14. The #244 coarse-placer's M2 OTHER class was trained on non-Latin sc
 Arabic, …), so it abstains well on those but still confidently mis-places off-map COUNTRIES written in
 Latin script — Poland, Brazil, Mexico — onto a trained Latin country. This milestone tested the
 obvious fix: feed it real off-map addresses (not synthetic name variants — see #564) as other. The
-mechanism works directly and at zero in-map cost, but it does not generalize past the countries you
+mechanism works directly and at zero in-map cost, but it doesn't generalize past the countries you
 train on, and Overture's addresses theme doesn't currently have the breadth to train on enough of
-them. This record documents a directional win with a data-availability ceiling. The model is not promoted._
+them. This record documents a directional win with a data-availability ceiling. The model isn't promoted._
 
 ## The residual, measured
 
@@ -46,7 +46,7 @@ Pareto improvement.
 The mechanism is real: train a country on other and it goes to **100%** handled, at **zero** in-map
 cost. But the model learns _those countries' n-grams → OTHER_ rather than a general "off my map" concept —
 the held-out countries barely move (+1.7pp overall), and the near-twins (CA looks like US, and for a
-_coarse_ placer that's arguably not even wrong) stay where they are. General Latin off-map handling
+_coarse_ placer that's arguably not even wrong) stay where they're. General Latin off-map handling
 needs **broad country coverage** — dozens of off-map countries in the other class rather than four.
 
 That breadth is the wall. Of the 12 off-map countries requested from Overture's addresses theme
@@ -56,7 +56,7 @@ plateau (real-data realism is the change, and we don't have enough of it yet).
 
 ## Decision
 
-- **Do not promote.** `model-m3` is a strict improvement but does not meet the ≥90% general target. The
+- **Do not promote.** `model-m3` is a strict improvement but doesn't meet the ≥90% general target. The
   coarse-placer isn't bundled anywhere yet, so no shipped artifact needs a check. This is a recorded finding,
   and the canonical fp32 model stands.
 - **The next change is breadth rather than weight or recipe.** Broad off-map address coverage — a full

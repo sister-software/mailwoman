@@ -44,7 +44,7 @@ export async function readCompiledGeographicModel(): Promise<CompiledGeographicM
 	const text = await readLocalTextFile((await packagedModelPaths()).artifact)
 
 	// A corrupt committed artifact is a broken build and the `SyntaxError` names the offset.
-	// The package's parse wrappers live in `@mailwoman/core`, which this package deliberately does not depend on.
+	// The package's parse wrappers live in `@mailwoman/core`, which this package deliberately doesn't depend on.
 	// oxlint-disable-next-line no-restricted-properties -- see the note above.
 	return parseCompiledGeographicModel(JSON.parse(text))
 }

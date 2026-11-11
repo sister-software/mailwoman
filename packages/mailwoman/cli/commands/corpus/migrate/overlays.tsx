@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman corpus migrate-overlays` — rewrite every overlay parquet of a corpus onto the current row
- *   schema, where an overlay parquet is a file the corpus manifest lists and its base manifest does not, compared
+ *   schema, where an overlay parquet is a file the corpus manifest lists and its base manifest doesn't, compared
  *   by `sha256`.
  *
  *   Each migrated file is written beside its original as `<name>.migrated.parquet` and no file is swapped, so the

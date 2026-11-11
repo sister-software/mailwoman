@@ -181,7 +181,7 @@ describe("fr-lieudit recipe", () => {
 
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), () => {})
 
-		// Must not read both — exactly the one row from the uncompressed adresses-48.csv survives.
+		// Mustn't read both — exactly the one row from the uncompressed adresses-48.csv survives.
 		expect(stats.emitted).toBe(1)
 	})
 })

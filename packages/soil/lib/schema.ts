@@ -173,8 +173,8 @@ export interface SoilComponentTable {
 	compname: string | null
 	/**
 	 * `Miscellaneous area` is what separates not-rateable from unrated: a rock outcrop
-	 * or a water body is a component the capability rating does not apply to,
-	 * while an unrated series is one the survey did not rate.
+	 * or a water body is a component the capability rating doesn't apply to,
+	 * while an unrated series is one the survey didn't rate.
 	 */
 	compkind: string | null
 	/**
@@ -191,7 +191,7 @@ export interface SoilComponentTable {
 	 * The irrigated rating.
 	 *
 	 * Populated only where irrigation is a considered use, so its absence states that
-	 * the rating does not apply rather than anything about the land.
+	 * the rating doesn't apply rather than anything about the land.
 	 * The build stores it without reducing it.
 	 */
 	irrcapcl: string | null
@@ -229,11 +229,11 @@ export interface SoilCapabilityCellTable {
 	class_shares: string
 	/**
 	 * Mapped soil components carrying a NULL rating.
-	 * The survey did not rate them.
+	 * The survey didn't rate them.
 	 */
 	unrated_share: number
 	/**
-	 * Miscellaneous areas (rock outcrop, water) the rating does not apply to.
+	 * Miscellaneous areas (rock outcrop, water) the rating doesn't apply to.
 	 */
 	notrateable_share: number
 	/**
@@ -268,7 +268,7 @@ export interface SoilCapabilityCellTable {
 	 * NULL when the cell has no class.
 	 * This is a valid result.
 	 *
-	 * A cell that is 100% `unrated_share` is complete and has no capability reading.
+	 * A cell that's 100% `unrated_share` is complete and has no capability reading.
 	 */
 	top_class: string | null
 	top_class_share: number | null
@@ -295,7 +295,7 @@ export interface SoilCapabilityCellTable {
  * The survey's §3.2 identifies rated polygons as an invalid source for this footprint.
  * `notcom` and access-denied map units are inside the footprint and have no rating,
  * so a footprint taken from the rated set would report them as unmapped even
- * though the authority has declared exactly what they are.
+ * though the authority has declared exactly what they're.
  */
 export interface SoilSurveyAreaTable {
 	areasymbol: string
@@ -312,7 +312,7 @@ export interface SoilSurveyAreaTable {
 	 * This date differs from `saverest`.
 	 * `IA153` records a 2025-09-09 refresh over a field survey published in 1960.
 	 *
-	 * The dataset's time-period-of-content ends at the refresh, so it does not state
+	 * The dataset's time-period-of-content ends at the refresh, so it doesn't state
 	 * when the field survey occurred.
 	 */
 	survey_source_date: string | null

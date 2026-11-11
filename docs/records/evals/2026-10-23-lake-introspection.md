@@ -15,7 +15,7 @@ Both run under the current runtime with staged data files, as every comparison i
 
 Can we explain which evidence was available, test which evidence changed the interpretation, and identify which
 training experiences supported or failed to support that behavior, without claiming a reasoning history the model
-does not expose? The answer is yes on all three parts, and each part has a tool now. The trace records what was fed.
+doesn't expose? The answer is yes on all three parts, and each part has a tool now. The trace records what was fed.
 A channel pin tests what changed the reading. The support index counts what the corpus held.
 
 ## The twelve starting questions
@@ -37,7 +37,7 @@ A channel pin tests what changed the reading. The support index counts what the 
 The deployed parser is `MailwomanCoarseEncoder`: a 6-layer encoder with hidden size 384 over a 73,143-piece
 SentencePiece vocabulary, a 33-label BIO head, and a Viterbi pass over emissions that are the head's logits plus
 priors (the FST prior over Who's On First admin names, the venue-head prior, the street-morphology prior, the
-placetype-pair prior and the conventions mask). There is no autoregressive decoder and no output over the text
+placetype-pair prior and the conventions mask). There's no autoregressive decoder and no output over the text
 vocabulary. The `forward_mlm` path is defined and was never trained or exported.
 
 Five soft channels enter before the first block: anchor (postcode), gazetteer (a 333-entry cue lexicon), country,
@@ -195,7 +195,7 @@ pass begins, and the seven-arm run with two resident engines reads 0 errors in 5
 
 ## Open
 
-- #2800: how the gauntlet grades a coordinate assertion that is unreachable by data.
+- #2800: how the gauntlet grades a coordinate assertion that's unreachable by data.
 - The GB `dependent_locality|locality` shape, the CN farm-unit shapes and the 114 covered-country absent values, for a
   corpus lane.
 - The CJK weights family in the staged roots, so a CN comparison across arms reads the same model family on every arm.

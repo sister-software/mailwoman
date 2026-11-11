@@ -416,7 +416,7 @@ export interface NeuralClassifierLoadURLs {
 /**
  * The loader URL configuration of a character-encoder release.
  *
- * The graph reads code points indexed by `char-vocab.json` beside `model.onnx`, so there is no tokenizer.
+ * The graph reads code points indexed by `char-vocab.json` beside `model.onnx`, so there's no tokenizer.
  * The character family ships no postcode binaries, prefix indexes or pair indexes,
  * so each of those lists is empty.
  */

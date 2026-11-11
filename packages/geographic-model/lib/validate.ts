@@ -36,7 +36,7 @@ import {
 import { checkReferences } from "#validation/references"
 
 /**
- * The whole document, or every reason it is not one.
+ * The whole document, or every reason it isn't one.
  */
 export type ValidationResult =
 	| { ok: true; document: GeographicModelDocument }

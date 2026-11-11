@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `build_cmd` a script-driven layer build stamps into its manifest, derived from the module
- *   that is running rather than written as a literal. A literal outlives a rename inside every
+ *   that's running rather than written as a literal. A literal outlives a rename inside every
  *   artifact built before it, beyond the reach of lint. `mailwoman data inventory` then reports
  *   an artifact that cannot be rebuilt from its recorded command.
  */

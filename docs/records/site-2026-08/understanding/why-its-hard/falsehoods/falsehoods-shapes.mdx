@@ -10,7 +10,7 @@ tags:
 
 # Falsehoods programmers believe about address shapes and dimensions
 
-_An address is not always a point on a map, a polygon, or a discrete building. It may not sit at ground level, may not be the only address at its coordinates, and may not stay in one place._
+_An address isn't always a point on a map, a polygon, or a discrete building. It may not sit at ground level, may not be the only address at its coordinates, and may not stay in one place._
 
 ## Falsehoods
 
@@ -18,7 +18,7 @@ _An address is not always a point on a map, a polygon, or a discrete building. I
 
 Postcodes, rural routes, and descriptive addresses all represent areas or paths rather than points. A ZIP code centroid in rural Montana is off by 10-15 miles from any actual delivery point. The centroid is a convenience for map rendering rather than a geographic truth about the address.
 
-The US Census Bureau's ZIP Code Tabulation Areas (ZCTAs) generalize ZIP codes into polygons, but ZCTAs are explicitly NOT USPS ground truth. USPS does not publish ZIP code boundaries as polygons. ZIP codes are carrier routes rather than areas, and a ZIP code follows the path a carrier walks.
+The US Census Bureau's ZIP Code Tabulation Areas (ZCTAs) generalize ZIP codes into polygons, but ZCTAs are explicitly NOT USPS ground truth. USPS doesn't publish ZIP code boundaries as polygons. ZIP codes are carrier routes rather than areas, and a ZIP code follows the path a carrier walks.
 
 UK postcodes cover ~15 addresses on average. That size makes them effectively points. UK postcode sectors (the first half of the postcode, e.g., `SW1A`) cover neighborhoods. The same postcode system produces both point-level and area-level resolution depending on which part you use.
 
@@ -79,33 +79,33 @@ A building at the corner of Main St and Elm St might have address `123 Main St` 
 
 ## How traditional geocoders handled these
 
-**libpostal** operates exclusively on text strings. It does not produce spatial output such as coordinates, polygons, or elevation. The spatial questions are downstream of libpostal's parser. This is the correct architecture, because the parser labels tokens and the resolver turns labels into spatial objects. The parser should not need to know about shapes.
+**libpostal** operates exclusively on text strings. It doesn't produce spatial output such as coordinates, polygons, or elevation. The spatial questions are downstream of libpostal's parser. This is the correct architecture, because the parser labels tokens and the resolver turns labels into spatial objects. The parser shouldn't need to know about shapes.
 
-**Pelias** resolves addresses to point coordinates via Elasticsearch. Multi-address buildings (apartments, malls) all resolve to the same building centroid unless the data source includes unit-level coordinates. Pelias has no concept of vertical position, so Floor 50 and the basement of the same building get the same coordinate. Pelias does not model mobile addresses (houseboats, ships) or non-building addresses (rural route boxes, grid coordinates).
+**Pelias** resolves addresses to point coordinates via Elasticsearch. Multi-address buildings (apartments, malls) all resolve to the same building centroid unless the data source includes unit-level coordinates. Pelias has no concept of vertical position, so Floor 50 and the basement of the same building get the same coordinate. Pelias doesn't model mobile addresses (houseboats, ships) or non-building addresses (rural route boxes, grid coordinates).
 
-**Google's API** returns a location type with each geocode: `ROOFTOP` (precise to the building entrance), `RANGE_INTERPOLATED` (estimated along a street segment), `GEOMETRIC_CENTER` (centroid of a region), or `APPROXIMATE` (best guess). This is the right taxonomy, because it tells the consumer the spatial precision of the result. Google's Places API returns `latitude`, `longitude`, and an optional `viewport` (bounding box) for each place, distinguishing point-level from area-level results. Google does not return elevation data for addresses.
+**Google's API** returns a location type with each geocode: `ROOFTOP` (precise to the building entrance), `RANGE_INTERPOLATED` (estimated along a street segment), `GEOMETRIC_CENTER` (centroid of a region), or `APPROXIMATE` (best guess). This is the right taxonomy, because it tells the consumer the spatial precision of the result. Google's Places API returns `latitude`, `longitude`, and an optional `viewport` (bounding box) for each place, distinguishing point-level from area-level results. Google doesn't return elevation data for addresses.
 
 ## What the neural approach changes
 
 **The resolver (Stage 6) returns each candidate's placetype alongside its coordinates.** A WOF record has a `placetype` (country, region, locality, neighborhood, venue) and optionally a bounding box. The resolver returns the placetype alongside the coordinate, so the downstream system knows whether it received a point for a building, a centroid for a city, or an approximate coordinate for a postcode.
 
-**The resolver returns top-K candidates rather than a single coordinate.** `Springfield` returns 34 candidates, each with a coordinate and placetype. The downstream system can display them on a map, offer a selection UI, or aggregate them statistically. The resolver does not pretend that there is one correct coordinate for an ambiguous address.
+**The resolver returns top-K candidates rather than a single coordinate.** `Springfield` returns 34 candidates, each with a coordinate and placetype. The downstream system can display them on a map, offer a selection UI, or aggregate them statistically. The resolver doesn't pretend that there's one correct coordinate for an ambiguous address.
 
-**Vertical resolution is outside Mailwoman's scope.** The schema has a `unit` tag for apartment and suite numbers, but the resolver does not model elevation. A `unit=4B` address resolves to the building centroid rather than Floor 4, Unit B. Vertical resolution requires building-interior data (floor plans, unit layouts) that no open gazetteer provides. This is a commercial address verification problem (SmartyStreets, Melissa Data) rather than an open-source parser problem.
+**Vertical resolution is outside Mailwoman's scope.** The schema has a `unit` tag for apartment and suite numbers, but the resolver doesn't model elevation. A `unit=4B` address resolves to the building centroid rather than Floor 4, Unit B. Vertical resolution requires building-interior data (floor plans, unit layouts) that no open gazetteer provides. This is a commercial address verification problem (SmartyStreets, Melissa Data) rather than an open-source parser problem.
 
 **Current address lookup is outside Mailwoman's scope.** A houseboat's current berth is a resolver question. The parser correctly extracts `Berth 42, Marina del Rey` as a location component, but the resolver needs a current marina database to map that to coordinates. The parser identifies that the text is a location reference, and it cannot know where the houseboat currently is.
 
 ## What Mailwoman still can't do
 
-- **Vertical disambiguation.** Two addresses in the same building on different floors resolve to the same coordinate. The `unit` tag preserves the floor/apartment information in the output, but the resolver does not use it for spatial disambiguation.
-- **Non-building addresses.** For `50 miles West of Socorro`, the parser can identify "Socorro" as a locality reference, but "50 miles West of" is a relative offset that requires spatial computation rather than gazetteer lookup. Mailwoman's resolver does not compute relative offsets from gazetteer points.
-- **Shape output.** The resolver returns a coordinate and optionally a bounding box from WOF. It does not return the building footprint, the parcel boundary, or the ZIP code area. Shape-level output requires a spatial database (PostGIS, Elasticsearch with geo_shape) rather than a SQLite point-in-polygon index.
-- **Elevation data.** WOF does not include elevation. Address-level elevation requires a DEM (Digital Elevation Model) lookup at the coordinate. That lookup is a GIS operation rather than a resolver operation.
+- **Vertical disambiguation.** Two addresses in the same building on different floors resolve to the same coordinate. The `unit` tag preserves the floor/apartment information in the output, but the resolver doesn't use it for spatial disambiguation.
+- **Non-building addresses.** For `50 miles West of Socorro`, the parser can identify "Socorro" as a locality reference, but "50 miles West of" is a relative offset that requires spatial computation rather than gazetteer lookup. Mailwoman's resolver doesn't compute relative offsets from gazetteer points.
+- **Shape output.** The resolver returns a coordinate and optionally a bounding box from WOF. It doesn't return the building footprint, the parcel boundary, or the ZIP code area. Shape-level output requires a spatial database (PostGIS, Elasticsearch with geo_shape) rather than a SQLite point-in-polygon index.
+- **Elevation data.** WOF doesn't include elevation. Address-level elevation requires a DEM (Digital Elevation Model) lookup at the coordinate. That lookup is a GIS operation rather than a resolver operation.
 
 ## References
 
 - [Series overview: Falsehoods about addresses](./falsehoods-about-addresses.mdx)
 - [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
-- [What is a postcode?](../../the-problem/what-is-a-postcode.mdx) — postcodes as routing instructions rather than polygons
-- [What is a ZIP Code and how is it structured?](../../the-problem/what-is-a-zip-code.mdx) — why ZIP codes don't have boundaries
+- [What's a postcode?](../../the-problem/what-is-a-postcode.mdx) — postcodes as routing instructions rather than polygons
+- [What's a ZIP Code and how is it structured?](../../the-problem/what-is-a-zip-code.mdx) — why ZIP codes don't have boundaries
 - [How can a building have two addresses?](../../the-problem/how-can-a-building-have-two-addresses.mdx) — the vertical dimension of addressing

@@ -336,7 +336,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", { timeo
 
 	it("aligns one intermediate to the same four digests twice, which is what makes a resumed align safe", async () => {
 		// A resumed build reuses an adapter's canonical rows and re-runs the align phase over them.
-		// That is sound only where the phase is a function of its input: the split routing,
+		// That's sound only where the phase is a function of its input: the split routing,
 		// the augmentation draw and the write order all have to land the same way on a second pass.
 		// This pins the four files the phase writes rather than the row counts,
 		// because a count matches across two runs that ordered their rows differently.
@@ -691,7 +691,7 @@ describe("buildCorpus resume", () => {
 		const trainPath = outDir("intermediate", "labeled-train.jsonl")
 		const digest = await sha256File(trainPath)
 
-		// Stands for rows a fresh build must not keep.
+		// Stands for rows a fresh build mustn't keep.
 		await appendLocalTextFile(`${stringifyJSON({ raw: "row from the earlier build" })}\n`, trainPath)
 
 		const stages: string[] = []

@@ -19,7 +19,7 @@
  *   covers this via its optional `(?:-\d+)?` group.
  *
  *   The `island` and `district` columns are hidoe administrative labels (Honolulu, Central, Leeward,
- *   Windward, Hilo, Hawaii, Maui, Kauai) — they are not US counties and intentionally are not
+ *   Windward, Hilo, Hawaii, Maui, Kauai) — they're not US counties and intentionally are not
  *   surfaced as `subregion`.
  *
  *   Output: one row per school with `venue` (school name), `(house_number?, street, locality,
@@ -62,7 +62,7 @@ function normalizeZip(raw: HiSchoolRow["zip"]): string {
 
 	// xlsx → CSV conversion may emit numeric ZIPs without leading zeros.
 	// HI ZIPs all begin with 96, so a 4-digit value indicates a leading-zero stripped during
-	// numeric coercion (defensive — has not been observed in the published file as of 2026-05).
+	// numeric coercion (defensive — hasn't been observed in the published file as of 2026-05).
 	if (/^\d{4}$/.test(trimmed)) return `0${trimmed}`
 
 	return trimmed

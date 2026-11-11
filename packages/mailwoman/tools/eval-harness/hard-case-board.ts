@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The hard-case board contains curated inputs for measuring FST and importance changes. It includes the schema
- *   shadow in Zod and a loader for `fixtures/hard-case-board.jsonl`. A well-formed address does not put the decoder
+ *   shadow in Zod and a loader for `fixtures/hard-case-board.jsonl`. A well-formed address doesn't put the decoder
  *   in a state where a soft gazetteer bias changes the argmax. Each row therefore exercises that bias with a bare
  *   toponym, comma-free fragment, or namesake confound.
  *
@@ -57,7 +57,7 @@ export const HARD_CASE_CLASSES = [
 	 */
 	"country_structure",
 	/**
-	 * A toponym in street-head position that must not be pulled to locality.
+	 * A toponym in street-head position that mustn't be pulled to locality.
 	 */
 	"street_head_control",
 	/**
@@ -218,7 +218,7 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 // A file probe would send the first build to the compiled-tree fallback.
 /**
  * Resolves the committed board from the package root.
- * `tsc` does not emit `.jsonl` files into `out/`.
+ * `tsc` doesn't emit `.jsonl` files into `out/`.
  */
 export const HARD_CASE_BOARD_PATH: string = resolvePackagePath(
 	"mailwoman",

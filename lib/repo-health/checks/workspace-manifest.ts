@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   A workspace that compiles `lib/` to `out/` exposes its modules through one `"./*"` pattern. An explicit subpath key
- *   remains only when the pattern cannot express it: the `"."` entry, a module that is not `.ts`, a non-code file, or
+ *   remains only when the pattern cannot express it: the `"."` entry, a module that's not `.ts`, a non-code file, or
  *   an entry with conditions other than `types`, `node` and `default`.
  *
  *   An importer writes the module's path under `lib/`, so `@mailwoman/zoning/sdk/cells` names `lib/sdk/cells.ts`.

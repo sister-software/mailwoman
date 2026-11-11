@@ -200,7 +200,7 @@ function revertResolverDecoration(node: AddressNode): void {
 	node.sourceID = typeof priorSourceID === "string" ? priorSourceID : null
 
 	for (const key of ["classifier_source", "classifier_source_id", ...PICK_METADATA_KEYS]) {
-		// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object is not on a hot path
+		// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object isn't on a hot path
 		delete meta[key]
 	}
 
@@ -247,7 +247,7 @@ async function reconcileExplicitCountry(
 	backend: ResolverBackend
 ): Promise<void> {
 	// A span tagged `country` may hold a constituent country such as `England`.
-	// That is a subdivision of GB rather than a sovereign state, and it still fixes the country.
+	// That's a subdivision of GB rather than a sovereign state, and it still fixes the country.
 	const iso2 = matchCountry(countryNode.value)?.iso2 ?? matchSubdivision(countryNode.value)?.country
 
 	if (!iso2) return

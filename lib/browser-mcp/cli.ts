@@ -47,7 +47,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 	process.once(signal, close)
 }
 
-// The SDK's stdio transport does not close itself when its input reaches EOF.
+// The SDK's stdio transport doesn't close itself when its input reaches EOF.
 process.stdin.once("end", close)
 
 try {

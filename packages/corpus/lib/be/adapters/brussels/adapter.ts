@@ -12,7 +12,7 @@
  * download below. Every row this adapter emits is `BE`, and any other `opts.country` raises
  * {@linkcode UnsupportedCountryError}.
  *
- * The schema-level reading is `#inspire/address`. This module holds only what is Brussels' own: the
+ * The schema-level reading is `#inspire/address`. This module holds only what's Brussels' own: the
  * NIS code embedded in every place name, and the empty component reference nine addresses write.
  *
  * ## The publication
@@ -21,7 +21,7 @@
  * bytes, holding one member `UrbAdm_Adresses.gml` of 474,245,978 bytes. The member is streamed and
  * never buffered.
  *
- * Brussels publishes no INSPIRE ATOM feed for this theme, so there is no `<updated>` to poll and the
+ * Brussels publishes no INSPIRE ATOM feed for this theme, so there's no `<updated>` to poll and the
  * download is a bare URL. The archive's `last-modified` is `Thu, 01 Dec 2022 07:57:50 GMT`, against
  * Wallonia's 2025-12-11, so this is the older of the two Belgian regional publications by three
  * years.
@@ -52,8 +52,8 @@
  * no postcode: `BE.BRUSSELS.BRIC.ADM.ADPT.220623`, `.220631`, `.220635`, `.256972`, `.257005` and
  * four more, in Bruxelles and Schaerbeek. `componentHrefs` skips an empty href, so an unwary reader
  * yields those rows with no postcode and no error. This adapter refuses them and
- * counts them under {@link Refusals.noPostcode}, because a postcode the publisher left unstated is
- * not a postcode this repository may read as absent from the address.
+ * counts them under {@link Refusals.noPostcode}, because a postcode the publisher left unstated isn't
+ * a postcode this repository may read as absent from the address.
  *
  * ## The NIS code embedded in every place name
  *
@@ -84,7 +84,7 @@
  *
  * Brussels declares `srsName="http://www.opengis.net/def/crs/EPSG/0/3035"`, whose authority order is
  * northing then easting, and writes easting then northing. `BE.BRUSSELS.BRIC.ADM.ADPT.169731` states
- * `gml:pos` `3928985.14831507 3095401.17112511`. Read in the declared order that is latitude
+ * `gml:pos` `3928985.14831507 3095401.17112511`. Read in the declared order that's latitude
  * 56.877382, longitude −10.402355, in the Atlantic west of Ireland. Swapped it is latitude 50.835742,
  * longitude 4.429144, in Woluwe-Saint-Pierre, the municipality the same address's own
  * components name. The file's `gml:boundedBy` lower corner, `3916355.39160602 3088216.44803091`, puts
@@ -109,7 +109,7 @@
  * The publisher is reported to state CC BY 4.0 in its GeoNetwork record. This file records that as
  * reported rather than as observed, because the catalogue was not reached from here on 2026-10-02:
  * `datastore.brussels/geonetwork/srv/...` answered HTTP 404 on both the API and CSW paths and
- * `geocatalog.brussels` did not resolve. The register elects the terms, and that election needs the
+ * `geocatalog.brussels` didn't resolve. The register elects the terms, and that election needs the
  * record itself.
  */
 
@@ -148,7 +148,7 @@ export const BRUSSELS_ADAPTER_ID = "brussels"
  *
  * It belongs in `SourceRegister` beside `be-vlaanderen-inspire-ad`, and this constant
  * stands in until that entry lands, because a built corpus stores the id on every row
- * and the id must not change afterwards.
+ * and the id mustn't change afterwards.
  * Replace the constant with the `SourceRegister` member on integration.
  */
 export const BRUSSELS_SOURCE_REGISTER = SourceRegister.BrusselsInspireAddresses
@@ -172,7 +172,7 @@ export const BRUSSELS_COUNTRIES: readonly string[] = ["BE"]
  *
  * The value is the SPDX identifier rather than the license's title, because
  * `licenseVerdict` resolves an identifier and reads a title as unrecognized.
- * The constant must not hold a placeholder such as `unreviewed-be-brussels-urbis`.
+ * The constant mustn't hold a placeholder such as `unreviewed-be-brussels-urbis`.
  *
  * That value resolves to no expression, so these rows would reach a build as unknown obligations.
  */
@@ -211,7 +211,7 @@ const MUNICIPALITY_LEVEL = "5thOrder"
  * The component feature types the first pass indexes.
  *
  * Three rather than four, because this publisher writes no `ad:AddressAreaName`.
- * They are read in one pass, because the publisher writes them interleaved ahead
+ * They're read in one pass, because the publisher writes them interleaved ahead
  * of the addresses rather than grouped by type.
  */
 const COMPONENT_TYPES = ["ad:ThoroughfareName", "ad:PostalDescriptor", "ad:AdminUnitName"] as const
@@ -224,7 +224,7 @@ const COMPONENT_TYPES = ["ad:ThoroughfareName", "ad:PostalDescriptor", "ad:Admin
  * An address reaching the reader with fewer readable references has written one of them empty.
  *
  * That count is how the nine postcode-less addresses are told apart from an
- * address whose reference does not resolve.
+ * address whose reference doesn't resolve.
  */
 const COMPONENTS_PER_ADDRESS = 7
 
@@ -388,7 +388,7 @@ interface Refusals {
 	 */
 	absentHouseNumber: number
 	/**
-	 * The publisher marked the house number void, so the value could not be read.
+	 * The publisher marked the house number void, so the value couldn't be read.
 	 */
 	voidHouseNumber: number
 	/**
@@ -404,7 +404,7 @@ interface Refusals {
 	 */
 	unjoined: number
 	/**
-	 * An address the codex could not render into a line.
+	 * An address the codex couldn't render into a line.
 	 */
 	unrendered: number
 }
@@ -455,8 +455,8 @@ export function createBrusselsAdapter(): CorpusAdapter {
 					const house = designator(designatorsByType(address), HOUSE_NUMBER_DESIGNATOR)
 
 					if (!house) {
-						// A void number is a value this run could not read and an absent one is
-						// a number the publisher states the address has none of.
+						// A void number is a value this run couldn't read and an absent one is a
+						// number the publisher states the address has none of.
 						// Neither is emitted, and the two are counted apart so a run reports which it met.
 						if (voidDesignatorTypes(address).has(HOUSE_NUMBER_DESIGNATOR)) {
 							refused.voidHouseNumber++
@@ -491,13 +491,13 @@ export function createBrusselsAdapter(): CorpusAdapter {
 					if (!postcode && slots.length < COMPONENTS_PER_ADDRESS) {
 						// The publisher wrote the postal-zone reference empty.
 						// The row is refused and reported rather than yielded with the postcode missing,
-						// because an unstated value is not an address without a postcode.
+						// because an unstated value isn't an address without a postcode.
 						refused.noPostcode++
 
 						continue
 					}
 
-					// A component the index cannot answer is a street, postcode or locality this run could not read.
+					// A component the index cannot answer is a street, postcode or locality this run couldn't read.
 					// A row emitted without it would record an absence the publisher never stated.
 					if (!street || !postcode || !locality) {
 						refused.unjoined++

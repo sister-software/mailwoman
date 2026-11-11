@@ -10,7 +10,7 @@
  *   on commas and a user-defined symbol may itself be a comma. `minloglevel` sets only the wheel's log level and has
  *   no CLI flag, so it is left off the command line.
  *
- *   `spm_train` sets every trainer flag on its spec, so the model records defaults the caller did not supply.
+ *   `spm_train` sets every trainer flag on its spec, so the model records defaults the caller didn't supply.
  *   The wheel's spec holds only fields supplied in the call. After training, the rewrite drops trainer and normalizer
  *   fields absent from the flags. This produces the same bytes the wheel produces for that call.
  */

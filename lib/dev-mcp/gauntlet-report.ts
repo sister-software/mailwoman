@@ -49,8 +49,8 @@ export interface GauntletReport {
 	 */
 	unreachable_by_data: string[] | null
 	/**
-	 * The layer's own statement that it could not read reachability, verbatim,
-	 * or `null` when it read the table or printed no section.
+	 * The layer's own statement that it couldn't read reachability, verbatim, or `null`
+	 * when it read the table or printed no section.
 	 */
 	unreachable_by_data_unread: string | null
 	unparsed: string[]

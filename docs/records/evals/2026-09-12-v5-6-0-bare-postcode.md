@@ -27,7 +27,7 @@ each emitting only a postcode.
 | SE      |  3,058 |  1,529 |   1,529 |
 | SK      |  2,112 |  1,056 |   1,056 |
 
-Every surface is checked through `computeQueryShape` at build time, so a surface the detector will not
+Every surface is checked through `computeQueryShape` at build time, so a surface the detector won't
 read as a postcode cannot ship. All 56 held-out evaluation strings are excluded from the recipe
 globally by normalized form, verified against the BUILT parquet rather than its source jsonl: 0 of 56
 present.
@@ -49,7 +49,7 @@ train parquet files resolved with 0 re-rooted):
 | emitted |              2,049 | 0.2049% | 0.77                        |
 
 The emitted level runs 23% under the draw level because augmentation expands long addresses, so a
-short-row source keeps a smaller part of a fixed budget. That is not the `augment_exclude_sources`
+short-row source keeps a smaller part of a fixed budget. That's not the `augment_exclude_sources`
 entry: `synth-no-fragment` (0.7696) and `synth-fr-fragment` (0.7708) are not excluded and show the
 same ratio.
 
@@ -107,7 +107,7 @@ losing NL" meant holding 19/24. It reached 24/24.
 
 `fr.bare_street_intact: 100 (floor 75)` — unchanged from v5.5.0, so the D-condition is true on the tier-1
 locale this arm most risked. `mask-regression` is SKIPPED because the spec declares no
-`requires_conventions`; that is a spec property rather than a result.
+`requires_conventions`; that's a spec property rather than a result.
 
 The int8 delta cap failed an earlier arm where fp32 passed. It is clear here: the largest
 divergence across 17 compared checks is **0.3pp** (`us.street`), with 11 of 17 at exactly 0.
@@ -123,7 +123,7 @@ divergence across 17 compared checks is **0.3pp** (`us.street`), with 11 of 17 a
 Board-wide the arm is net positive — 522/578 → 537/578, 33 newly passing and 18 newly failing — but
 **that net cannot be attributed**. 51 rows moved, and the recorded noise floor for a from-scratch arm
 is 58 rows moved by a seed change with the corpus fixed
-(`feedback-board-row-counts-are-noise-for-from-scratch-arms`). The board decides shipping. It does not
+(`feedback-board-row-counts-are-noise-for-from-scratch-arms`). The board decides shipping. It doesn't
 attribute.
 
 Two of the 33 "fixes" are `cz-bare-postcode-100-00` and `cz-bare-postcode-110-00`. Both are real
@@ -170,4 +170,4 @@ rows until that data exists, and the tolerance is a ceiling rather than slack.
 - The two VE rows fail on a diagnosed upstream cascade rather than on anything this corpus changed.
 - `SK 010 01` and `Praha 100 00, Czechia` remain open. The in-context CZ form still splits into
   `postcode "00"` with `cz_postcode "100 00" matched: false`, so the bare form is fixed and the
-  in-context form is not.
+  in-context form isn't.

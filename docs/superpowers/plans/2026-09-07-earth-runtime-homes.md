@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript under Node type stripping. vitest (fast leg for core, react, mailwoman unit tests, and the slow leg where a test opens a SQLite fixture). The docs Docusaurus build and its two Playwright specs as the parity proof; `bundle-graph` for the browser condition on every new subpath.
 
-**Spec:** `docs/superpowers/specs/2026-09-06-earth-app-design.md` ("The move map"). Three placements differ from the spec's table and are recorded in Task 8: the runtime assembly stays application code (react must not depend on the runtime graph), the loader lives in `mailwoman` rather than `neural` (it composes neural and the gazetteer), and the sql.js staging stays in docs because the docs explainers resolve against the gazetteer.
+**Spec:** `docs/superpowers/specs/2026-09-06-earth-app-design.md` ("The move map"). Three placements differ from the spec's table and are recorded in Task 8: the runtime assembly stays application code (react mustn't depend on the runtime graph), the loader lives in `mailwoman` rather than `neural` (it composes neural and the gazetteer), and the sql.js staging stays in docs because the docs explainers resolve against the gazetteer.
 
 ## Global Constraints
 
@@ -22,7 +22,7 @@
 - Dependency ranges match existing declarations (`sherif`): `sql.js-httpvfs` `^0.8.12`.
 - Comments state invariants rather than history. The move is recorded in the commit rather than in the file.
 - The docs geocoder page keeps working after every task: `cd docs && yarn build` exits 0 and the two Playwright specs `100-demo-cold-load` and `200-demo-resolve` pass.
-- Branch: `git fetch origin main && git checkout -b feat/earth-runtime-homes origin/main`. Land the shell plan first or rebase onto it. This plan does not touch `packages/earth`.
+- Branch: `git fetch origin main && git checkout -b feat/earth-runtime-homes origin/main`. Land the shell plan first or rebase onto it. This plan doesn't touch `packages/earth`.
 
 ## Move map
 
@@ -410,7 +410,7 @@ git commit -m "refactor(resolver-wof-wasm): the httpvfs readers, resolveStreet, 
   - `mailwoman/browser-runtime/resources`: `assetURL`, `releasesManifestURL`, `sqljsBaseURL`, `streetExtractURL`, `adminGazetteerURL`, `poiLayerURL`, `regionToStateSlug`, `neuralClassifierLoadURLs`, `pairIndexBaseURL`, `pairIndexURLs`, `loadFSTGazetteer`, `loadStreetMorphologyFST`, and the pins `NATIONAL_STREET_SLUGS`, `NATIONAL_STREET_EXTRACT_VERSION`, `NATIONAL_STREET_FALLBACK_SLUG`, `ADMIN_GAZETTEER_VERSION`, `POI_LAYER_VERSION`, `HOSTED_STREET_SLUGS`, `PAIR_INDEX_COUNTRIES`, `PAIR_INDEX_VERSION`.
   - `mailwoman/browser-runtime/manifest`: `ReleaseInfo`, `ReleasesManifest`, `WireReleaseEntry`, `normalizeReleasesManifest`, `fetchReleasesManifest`.
   - `mailwoman/browser-runtime/classify`: `runClassifyStage`, `ClassifyStageDeps`, `ClassifyStageHooks`, `ClassifyStageResult`, `SelectPairIndex`, `resolveDualRoles`, `projectCascadeHits`, `parseStageLabelsFor`, `pairCountryForInput`, `createCalibrator`, `Calibrator`, `DEFAULT_LOCALE`, `DEFAULT_ADDRESS`, `EXAMPLE_ADDRESSES`, `ParsedNode`, `TreeNode`, `FlatNode`.
-  - `mailwoman/browser-runtime/load-assets`: `loadReleaseAssets(release: ReleaseInfo, progress: AssetLoadProgress, options: { gazetteer?: { sqljsBaseURL: string } }): Promise<ReleaseAssets>` and `ReleaseAssets` (the former `DocsDemoAssets`, its `wofLookup` field `null` when `gazetteer` is not passed).
+  - `mailwoman/browser-runtime/load-assets`: `loadReleaseAssets(release: ReleaseInfo, progress: AssetLoadProgress, options: { gazetteer?: { sqljsBaseURL: string } }): Promise<ReleaseAssets>` and `ReleaseAssets` (the former `DocsDemoAssets`, its `wofLookup` field `null` when `gazetteer` isn't passed).
   - `mailwoman/browser-runtime` (index): re-exports no name. It is the subpath a bundler resolves for the row and exports `loadReleaseAssets` and `fetchReleasesManifest` directly by importing them, so a host has one entry.
 
 - [ ] **Step 1: Move the three modules into the split**
@@ -609,7 +609,7 @@ yarn ci:test:fast > /tmp/fast.log 2>&1; echo "EXIT=$?" >> /tmp/fast.log; grep -E
 yarn workspace @mailwoman/react test:browser
 ```
 
-`health:knip` decides which docs dependencies are now unused. Remove each one it names from `docs/package.json` in this task (the spec's list is a prediction, and knip is the measurement), run `yarn install`, and rebuild the docs once more. `health:debt` failing only on counters `main` already fails is not this branch's.
+`health:knip` decides which docs dependencies are now unused. Remove each one it names from `docs/package.json` in this task (the spec's list is a prediction, and knip is the measurement), run `yarn install`, and rebuild the docs once more. `health:debt` failing only on counters `main` already fails isn't this branch's.
 
 - [ ] **Step 2: Push and open the PR**
 

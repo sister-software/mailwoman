@@ -52,7 +52,7 @@ describe("Phase 0 §8 — JP forward-compat", () => {
 		expect(policy.lookup("prefecture", "ja-JP").mode).toBe("both")
 		// The global default stays neural_only.
 		expect(policy.lookup("prefecture").mode).toBe("neural_only")
-		// The en-US locale does not inherit the JP override.
+		// The en-US locale doesn't inherit the JP override.
 		expect(policy.lookup("prefecture", "en-US").mode).toBe("neural_only")
 	})
 

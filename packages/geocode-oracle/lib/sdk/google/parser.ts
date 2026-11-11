@@ -99,7 +99,7 @@ function indexByType(components: readonly GoogleAddressComponent[]): Map<string,
 
 	for (const component of components) {
 		for (const type of component.types) {
-			// Google does not return two components of one type, but if it did, first wins keeps this deterministic.
+			// Google doesn't return two components of one type, but if it did, first wins keeps this deterministic.
 			if (!index.has(type)) {
 				index.set(type, component)
 			}
@@ -214,7 +214,7 @@ export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeo
 
 	const geocode: AddressGeocode = {
 		coordinate,
-		// `admin` is the weakest claim available for "Google did not say";
+		// `admin` is the weakest claim available for "Google didn't say";
 		// `raw.geometry.location_type` is the ground truth when this matters.
 		tier: toResolutionTier(result) ?? "admin",
 		uncertaintyMeters: null,

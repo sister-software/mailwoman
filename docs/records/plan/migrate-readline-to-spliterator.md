@@ -268,7 +268,7 @@ for await (const line of TextSpliterator.fromAsync(jsonl)) {
 4. **`split.ts` write path.** `corpus/src/split.ts:219` uses `createInterface` for
    reading and `createWriteStream` for writing. Only the **read** phase migrates to
    spliterator. The write path stays on `node:fs` streams, because spliterator's `writer`
-   module is a separate concern that this migration does not touch.
+   module is a separate concern that this migration doesn't touch.
 
 ## Validation
 
@@ -291,7 +291,7 @@ installed spliterator v3.1.0 (live probes rather than docs). Everything above ma
    Headerless sites (`fr-admin-split.ts` communes TSV, `postcode-intl.tsx` GeoNames) took
    `header: false`; without it each would have silently dropped its first record.
 2. **`delimiter` ≠ column separator.** `delimiter` splits rows, and `columnDelimiter` splits columns.
-3. **CRLF is not normalized** (readline's `crlfDelay: Infinity` normalized it). JSONL sites are unaffected
+3. **CRLF isn't normalized** (readline's `crlfDelay: Infinity` normalized it). JSONL sites are unaffected
    because `\r` is JSON whitespace. Each Text/CSV site was checked individually. In the one affected case,
    `cms-pos_hospital-other_2026q1.csv` is CRLF, and without a `\r` strip the trainer's last
    column (`ZIP_CD`) mis-keys. `importance.tsx` (remote nominatim gz) strips defensively, because its

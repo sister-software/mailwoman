@@ -100,7 +100,7 @@ export interface IncumbentOnlyBreakdown {
 	 */
 	crownDependencies: number
 	/**
-	 * Everything else: postcodes the incumbent has and the current OS register does not.
+	 * Everything else: postcodes the incumbent has and the current OS register doesn't.
 	 *
 	 * These are terminated postcodes.
 	 * The incumbent snapshot never dropped them.
@@ -174,7 +174,7 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * The three city-center probes near 500-900 m use loose bounds because each landmark is a district.
  * Both databases agree there to within 3 m.
  *
- * `CF99 1SN` is not a typo: the Senedd's postcode changed from `CF99 1NA`
+ * `CF99 1SN` isn't a typo: the Senedd's postcode changed from `CF99 1NA`
  * and the incumbent GeoNames snapshot still lists the retired one.
  * This is a small example of the terminated-postcode residual.
  */

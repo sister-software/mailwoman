@@ -10,12 +10,12 @@
  * GeoServer at {@linkcode SK_INSPIRE_WFS}. Its register record,
  * `https://rpi.gov.sk/api/collection_record/86dea70e-a55b-4241-bd63-4024b3f76b72`, names a WMS and
  * this WFS as the theme's only distributions and states one condition of use, `Neuplatňujú sa žiadne
- * podmienky (CC0 Voľné dielo)`, which the address-source register elected. There is no INSPIRE ATOM
+ * podmienky (CC0 Voľné dielo)`, which the address-source register elected. There's no INSPIRE ATOM
  * download service for this theme: the feeds under `inspirews.skgeodesy.sk` belong to the
- * Geodetický a kartografický ústav. That is a different publisher and a different record.
+ * Geodetický a kartografický ústav. That's a different publisher and a different record.
  *
  * `#tools/fetch/wfs-harvest` owns the page read, the appending, the manifest and the resumption.
- * What is particular to Slovakia is that an address is assembled from five feature types rather
+ * What's particular to Slovakia is that an address is assembled from five feature types rather
  * than read from one. That shapes the layout this writes.
  *
  * ## Five types, five documents, one directory
@@ -103,7 +103,7 @@ export const SK_INSPIRE_SORT_BY = "ad:inspireId"
 export const SK_INSPIRE_PAGE_SIZE = 5000
 
 /**
- * The feature types harvested, in the order they are taken.
+ * The feature types harvested, in the order they're taken.
  *
  * The four component types come first, each in the thousands, so an interrupted run
  * leaves the index side of the adapter's join complete.
@@ -162,8 +162,8 @@ export function skInspireHarvestFile(type: SKInspireType): string {
  * constant here, because a service's prefix is its own: this one publishes `ad:Address`
  * and Estonia's publishes `AD_Address:AD.Address`.
  *
- * @throws When the service stops publishing one of the five types, does not advertise
- * the GML format the adapter reads, or does not advertise result paging.
+ * @throws When the service stops publishing one of the five types, doesn't advertise
+ * the GML format the adapter reads, or doesn't advertise result paging.
  */
 export async function readSKInspireCapabilities(client: Pick<APIClient, "fetch">): Promise<WFSCapabilities> {
 	const capabilities = await readWFSCapabilities(client, { wfsURL: SK_INSPIRE_WFS, context: CONTEXT })
@@ -338,7 +338,7 @@ export function skInspireInputPath(outRoot: BaseFetchOptions["outRoot"]): PathBu
  * Harvests Slovakia's five AD feature types under `<outRoot>/sk-inspire/<type>/`,
  * for `mailwoman corpus fetch sk-inspire`.
  *
- * Each type is reported separately and a type that fails does not stop the rest, because the
+ * Each type is reported separately and a type that fails doesn't stop the rest, because the
  * documents are read together by the adapter and a resumed run completes a partial directory.
  * Re-runnable per type: a complete harvest whose file still hashes to its manifest's digest
  * makes no request, and an interrupted one resumes at the page after the last that reached disk.

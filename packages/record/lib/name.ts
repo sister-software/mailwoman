@@ -350,7 +350,7 @@ export function parsePersonName(input: string | null): PersonName | null {
  * The order a person name prints in.
  *
  * Western / romanized only, the same scope {@linkcode parsePersonName} declares.
- * A family-first system does not use this order in reverse.
+ * A family-first system doesn't use this order in reverse.
  * An invented order here would be worse than having none.
  */
 const NAME_ORDER: readonly (keyof PersonName)[] = ["prefix", "given", "middle", "familyParticle", "family", "suffix"]

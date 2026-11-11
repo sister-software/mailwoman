@@ -10,7 +10,7 @@
  *   populations apart and reports the second by component tag, country and source.
  *
  *   It reads the train mixture the trainer samples, with the configured affix relabel. Augmentations create no new
- *   writing system, so they are left off. A letter's script is read from CPython 3.12's Unicode names through the
+ *   writing system, so they're left off. A letter's script is read from CPython 3.12's Unicode names through the
  *   `mtf-node` addon, because Node has no character-name table.
  */
 
@@ -38,7 +38,7 @@ function isBoundary(text: string, offset: number): boolean {
  *
  * It derives the components from span triples with UTF-16 offsets or from BIO token runs.
  *
- * @throws When a span offset does not fall on a character boundary.
+ * @throws When a span offset doesn't fall on a character boundary.
  */
 export function* goldComponents(row: SampledRow): Generator<[string, string]> {
 	const { spanStarts, spanEnds, spanTags } = row

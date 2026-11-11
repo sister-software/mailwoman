@@ -163,7 +163,7 @@ cdp.on("Network.loadingFailed", (event) => {
 	record.failed = event.errorText
 })
 
-// The page's CDP session does not see requests made from MapLibre's web workers (vector tiles, TileJSON).
+// The page's CDP session doesn't see requests made from MapLibre's web workers (vector tiles, TileJSON).
 // Playwright's page events include them, so a finished request whose URL the CDP
 // session never recorded came from a worker.
 const workerRecords = new Map<object, RequestRecord>()

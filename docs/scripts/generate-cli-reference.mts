@@ -450,7 +450,7 @@ export function renderCLIReference(surface: CLISurface): string {
 		"",
 		`The CLI has ${surface.totalCommands} commands. This page documents the ${documentedCount} that a consumer of the published`,
 		"package runs. The rest build the datasets and train the models inside a checkout of the repository,",
-		"and they are listed by group under [Commands this page does not cover](#commands-this-page-does-not-cover).",
+		"and they are listed by group under [Commands this page omits](#commands-this-page-omits).",
 		"",
 		"Three conventions apply to every table below.",
 		"",
@@ -489,14 +489,14 @@ export function renderCLIReference(surface: CLISurface): string {
 			]
 		),
 		"",
-		"Two behaviors are exceptional because they are not failures.",
+		"Two behaviors are exceptional, and neither one is a failure.",
 		"",
 		"- `mailwoman doctor` exits `0` when the core checks pass, even when every optional data layer is",
 		"  missing. The parser runs without the optional data layers.",
 		"- `mailwoman parse` degrades to the structural stages when the neural weights are absent, prints a",
 		"  warning on `stderr`, and still exits `0`. Standard output stays machine-parseable.",
 		"",
-		"## Commands this page does not cover",
+		"## Commands this page omits",
 		"",
 		"These groups build the data and the models. They read paths and databases that only exist inside a",
 		"checkout of the repository, and they are documented in the repository rather than here. The two build",
@@ -577,7 +577,7 @@ export function renderRebuildCLIReference(surface: CLISurface): string {
 			]
 		),
 		"",
-		"The `data status` result describes the empty test directory. The published `serve` help command was executed, while starting a data-backed server and geocoding an address were not run for this page. [Data and locales](/docs/reference/data-and-locales) lists the bundle prerequisites. [Packages and runtime](/docs/reference/packages-and-runtime) lists the Node requirement and database settings.",
+		"The `data status` result describes the empty test directory. The published `serve` help command was executed. This page didn't start a data-backed server or geocode an address. [Data and locales](/docs/reference/data-and-locales) lists the bundle prerequisites. [Packages and runtime](/docs/reference/packages-and-runtime) lists the Node requirement and database settings.",
 		"",
 	].join("\n")
 
@@ -624,8 +624,8 @@ export function renderRebuildCLIReference(surface: CLISurface): string {
 		]
 	)
 
-	const oldSummary = `The CLI has ${surface.totalCommands} commands. This page documents the ${documentedCount} that a consumer of the published\npackage runs. The rest build the datasets and train the models inside a checkout of the repository,\nand they are listed by group under [Commands this page does not cover](#commands-this-page-does-not-cover).`
-	const newSummary = `The current checkout's generated tree contains ${surface.totalCommands} commands. This page gives full flags for ${documentedCount} of those ${surface.totalCommands} commands. The remaining ${groupedCount} commands appear by group under [Commands this page does not cover](#commands-this-page-does-not-cover). Some documented commands require repository inputs.`
+	const oldSummary = `The CLI has ${surface.totalCommands} commands. This page documents the ${documentedCount} that a consumer of the published\npackage runs. The rest build the datasets and train the models inside a checkout of the repository,\nand they are listed by group under [Commands this page omits](#commands-this-page-omits).`
+	const newSummary = `The current checkout's generated tree contains ${surface.totalCommands} commands. This page gives full flags for ${documentedCount} of those ${surface.totalCommands} commands. The remaining ${groupedCount} commands appear by group under [Commands this page omits](#commands-this-page-omits). Some documented commands require repository inputs.`
 	const oldRationale = `This page is generated rather than written because a hand-maintained flag table is wrong the day a\nflag changes, and no check catches it. The generator reads the same command specifications that\nbuild the binary, so a flag string here is the flag string \`--help\` prints. A test asserts the\ncommitted page against a fresh render. A stale page therefore fails the build.\n\nThe scope split is deliberate. A page that covers all ${surface.totalCommands} commands would bury the ${documentedCount} that run against\nan installed package under training and dataset tooling that requires the repository, its data root,\nand hours of wall clock. The generator refuses to run if it meets a command group it has never been\ntold about, so the boundary is a decision someone makes rather than an omission.`
 	const newRationale = `The build regenerates this page from the current checkout's compiled command specifications. The exact-generation test compares the page with a fresh render. The published 11.0.0 checks above were run separately against an installed package. The generated tables describe the checkout and may differ from that release.`
 

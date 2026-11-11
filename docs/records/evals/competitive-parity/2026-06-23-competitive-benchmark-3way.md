@@ -3,7 +3,7 @@
 Same-harness, three-system comparison on real held-out OpenAddresses coordinates, run after the
 #193 GeoNames postcode extract landed PL/CZ coverage in the candidate gazetteer (`candidate-global-20i.db`).
 This supersedes the night's two-system (mailwoman vs Nominatim) e2e numbers. That run used a different
-grader (`span-rescore-e2e.ts`, tag-rank `bestCoord`) on `-20h`, so its numbers were not directly comparable to the
+grader (`span-rescore-e2e.ts`, tag-rank `bestCoord`) on `-20h`, so its numbers weren't directly comparable to the
 incumbents.
 
 ## How we scored

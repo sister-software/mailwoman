@@ -42,7 +42,7 @@ const KEYED_FIELDS = new Set(["source_weights", "source_reps"])
 const LISTED_FIELD = "augment_exclude_sources"
 
 /**
- * The config field whose list entries contain a `source:` value that is a source id.
+ * The config field whose list entries contain a `source:` value that's a source id.
  */
 const RECEIPTS_FIELD = "required_corpus_receipts"
 

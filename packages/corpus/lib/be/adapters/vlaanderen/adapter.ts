@@ -58,7 +58,7 @@
  * harvest reproduces its own bytes even though a second harvest need not match it.
  *
  * A bare `resultType=hits` answers `numberMatched="10000"` and stays there under `count=1000000`:
- * that is a per-request cap rather than a count. The same request with `startIndex=1` answers
+ * that's a per-request cap rather than a count. The same request with `startIndex=1` answers
  * `numberMatched="4563062"`, which agrees with the bisected tail — `startIndex=4563061` returns one
  * feature and `startIndex=4563062` returns none. Every results page reports
  * `numberMatched="unknown"`. Page size caps at 10,000, so a full harvest is 457 pages.
@@ -258,8 +258,8 @@ export class VlaanderenHarvestError extends Error {
  * `gml:id` built from the URI's last two path segments joined with `_`.
  * A fragment is dropped, because `…/refnis1995/1000#id` addresses `refnis1995_1000`.
  *
- * @returns The id, or `null` when the href is not a URL with at least two path segments.
- * A caller treats `null` as a reference it could not read rather than as a
+ * @returns The id, or `null` when the href isn't a URL with at least two path segments.
+ * A caller treats `null` as a reference it couldn't read rather than as a
  * reference the publisher left blank.
  */
 export function componentResourceID(href: string): string | null {
@@ -282,7 +282,7 @@ export function componentResourceID(href: string): string | null {
  * A Flemish street name read apart from the homonym discriminator that follows it.
  *
  * `gn:text` on an `ad:ThoroughfareName` states more than the street name: the name,
- * an underscore, and a discriminator that is empty in most identifiers.
+ * an underscore, and a discriminator that's empty in most identifiers.
  * Over 20,000 values at twenty offsets, 19,979 end with `_` and the remaining
  * 21 have a discriminator after it.
  *
@@ -483,7 +483,7 @@ interface Refusals {
 	 */
 	lostCharacter: number
 	/**
-	 * An address the codex could not render into a line.
+	 * An address the codex couldn't render into a line.
 	 */
 	unrendered: number
 }
@@ -573,12 +573,12 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 							}
 
 							// A country-level `ad:AdminUnitName` is indexed out, so `refnis1995_1000`
-							// reaches here with no municipality and is not a defect.
+							// reaches here with no municipality and isn't a defect.
 							locality = index.municipalities.get(id) ?? locality
 						}
 
 						// A reference the harvest cannot answer is a street, postcode
-						// or locality this run could not read.
+						// or locality this run couldn't read.
 						// A row emitted without it would record an absence the publisher never stated.
 						if (unreadable || !street || !postcode || !locality) {
 							refused.unjoined++
@@ -632,7 +632,7 @@ export function createVlaanderenAdapter(): CorpusAdapter {
 						emitted++
 					}
 
-					// A short page is a page this run could not read whole.
+					// A short page is a page this run couldn't read whole.
 					// A smaller-page read would drop its tail silently, and a harvest of
 					// 457 pages hides one missing tail.
 					const bounded = opts.limit || Boolean(opts.signal?.aborted)

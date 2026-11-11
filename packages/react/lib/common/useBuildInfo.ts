@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `useBuildInfo()` — reads the deployment's own `build.json`, resolving a failed fetch to `null` because a dev server has no such file and the page must not show an error strip.
+ * `useBuildInfo()` — reads the deployment's own `build.json`, resolving a failed fetch to `null` because a dev server has no such file and the page mustn't show an error strip.
  */
 
 import { useEffect, useState } from "react"

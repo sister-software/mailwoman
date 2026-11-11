@@ -26,7 +26,7 @@ export function foldName(s: string): string {
 /**
  * Normalize a word list without folding case or non-Latin scripts — `"Кыргызстан,"` and `"日本 。"`
  * survive with their content intact — for surface lexicons whose entries must remain renderable.
- * Unlike {@link foldName} this is not a match key.
+ * Unlike {@link foldName} this isn't a match key.
  */
 export function wordNorm(s: string): string {
 	return s

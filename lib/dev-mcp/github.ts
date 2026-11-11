@@ -138,7 +138,7 @@ const BODY_LINES = { trim: false, skipEmpty: false } as const
  *
  * A rule that lands after an issue is written makes every line of that issue's body a finding.
  * A whole-body check therefore refuses an edit until the author's earlier prose is rewritten
- * to rules it predates, and an edit that appends a task list should not require that rewrite.
+ * to rules it predates, and an edit that appends a task list shouldn't require that rewrite.
  *
  * Only a line absent from `previous` reaches Vale here.
  * A finding reports its line number in `next`, so the message points at the line the

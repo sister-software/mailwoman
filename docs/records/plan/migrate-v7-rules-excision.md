@@ -14,11 +14,11 @@ implementation) is gone from the monorepo and deprecated on npm.
   the supported path and is unchanged.
 - **If you used the full rule parser (`createAddressParser`):** pin `mailwoman@6`. Verified to
   construct and parse cold outside the workspace (`createAddressParser().parse(…)` returns the
-  expected components). It is frozen. There is no v7 equivalent — the capability moved into the neural model.
+  expected components). It is frozen. There's no v7 equivalent — the capability moved into the neural model.
 - **If you imported classifier classes from `@mailwoman/classifiers` directly:** pin
   `@mailwoman/classifiers@6` **and add `zx` to your dependencies**. The 6.x `@mailwoman/core` has an
   undeclared `zx` import, so a bare `@mailwoman/classifiers@6` install crashes on load; `mailwoman@6`
-  bundles `zx`, a standalone classifiers install does not. (v7's `@mailwoman/core` drops the `zx`
+  bundles `zx`, a standalone classifiers install doesn't. (v7's `@mailwoman/core` drops the `zx`
   usage entirely and installs standalone.)
 - `createAddressParser()` was already removed in v7's predecessor (the rules-parser deletion). The
   `mailwoman` umbrella no longer re-exports `@mailwoman/classifiers`.

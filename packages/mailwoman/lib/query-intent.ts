@@ -112,8 +112,8 @@ export interface DeclaredAmbiguityOpts {
  * Returns a `declared_ambiguity` marker when a bare place-name query has no
  * candidate that leads by the winning margin.
  *
- * @returns `null` when the query is not a bare toponym, when fewer than two distinct
- * places can be ranked, or when the margin reaches {@linkcode DECISIVE_MARGIN_LOG10}.
+ * @returns `null` when the query isn't a bare toponym, when fewer than two distinct places
+ * can be ranked, or when the margin reaches {@linkcode DECISIVE_MARGIN_LOG10}.
  */
 export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryIntentMarker | null {
 	if (!opts.kinds.includes("bare_toponym")) return null
@@ -137,7 +137,7 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 	const places = ranked.map(toAblationPlace).filter((p): p is AblationPlace => p !== null)
 
 	// With fewer than two rankable places the margin is unmeasured.
-	// The FTS path does not always stamp a prominence.
+	// The FTS path doesn't always stamp a prominence.
 	if (places.length < 2) return null
 
 	const distinct = collapseCoincident(places)

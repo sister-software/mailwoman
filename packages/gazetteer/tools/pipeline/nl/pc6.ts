@@ -58,7 +58,7 @@ export interface BuildNLPC6Options {
 export async function buildNLPC6Database(
 	opts: BuildNLPC6Options = {}
 ): Promise<{ out: string; inserted: number; skipped: number }> {
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const {
 		resolverWofSqlite: { buildPlaceSearchFTS },
 		geonames: { normalizePostcodeName },

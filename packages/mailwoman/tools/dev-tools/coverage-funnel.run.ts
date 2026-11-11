@@ -142,7 +142,7 @@ console.log(
 )
 
 // The union across shipped graphs prints beside the single-config `admitted` stage
-// so an in-flight config is not mistaken for a released model.
+// so an in-flight config isn't mistaken for a released model.
 const shippedAdmitted = await admittedByShippedGraphs(scope)
 const shippedByFamily = new Map<string, number>()
 

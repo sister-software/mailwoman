@@ -7,16 +7,16 @@ stays off-by-default."_
 
 **Verdict: the kill condition is met. The flag stays off by default.**
 
-The span decode invents streets on inputs that have none. A failure class the shipped decode does not
+The span decode invents streets on inputs that have none. A failure class the shipped decode doesn't
 have to this degree, and one that **every street metric in the arc is structurally incapable of
 measuring**.
 
 :::caution[Corrected 2026-07-16, after publication — read §4.1 before quoting a rate]
 This doc first said the span decode hallucinates **"58% more frequently"** (12/54 → 19/54). That framing
 overstates what n=54 can support: the two intervals overlap, and McNemar on the paired discordants
-(11 vs 4) gives **p = 0.12**. The **rate difference is not established**. What is established is that
+(11 vs 4) gives **p = 0.12**. The **rate difference isn't established**. What's established is that
 the 11 new hallucinations are real, individually inspectable failures — `New York, NY` → street=`new
-york` is not a statistical claim — and the pre-registered condition turns on the failure CLASS
+york` isn't a statistical claim — and the pre-registered condition turns on the failure CLASS
 existing rather than on its rate being by a measured margin worse. The verdict stands on those grounds. The rate
 question is settled by the T1c fragment board. Its `bare-locality` class has n=400 (±4.0pp).
 The same discipline that produced the finding caught this error. The correction is left visible rather
@@ -32,7 +32,7 @@ than edited out.
 
 ---
 
-## 1. The tie is not a tie — it's 17-for-17 churn
+## 1. The tie isn't a tie — it's 17-for-17 churn
 
 |                  | v301 seg ✓ | v301 seg ✗          |
 | ---------------- | ---------- | ------------------- |
@@ -77,7 +77,7 @@ SE "Ångermannagatan 80, Vällingby"     gold="ångermannagatan"         seg="å
 
 **The street span swallows the first digit of the adjacent house number or postcode** — never the whole
 number, always the first piece. The tokenizer splits numbers into digit pieces (`▁8|1|0`), and the
-segment ends one piece late. Eight locales, one shape. This is not noise. It is a boundary off-by-one at
+segment ends one piece late. Eight locales, one shape. This isn't noise. It is a boundary off-by-one at
 a digit run, and it looks fixable independently of everything else here.
 
 Three more are truncations (`"bulevardul iuliu maniu"` → `"bulevardul i"`, reducing mid-word), which is
@@ -95,7 +95,7 @@ construction**. 321 live fixtures, 267 street-gold ⇒ **54 rows where this hide
 | v301 token@1              | 12/54 = 0.222                       | [0.132, 0.349] |
 | **v301 seg@1 (the flag)** | **19/54 = 0.352**                   | [0.238, 0.485] |
 
-**11 new hallucinations introduced, 4 removed. Net +7.** They are not marginal:
+**11 new hallucinations introduced, 4 removed. Net +7.** They're not marginal:
 
 ```
 US "New York, NY"          → street="new york"
@@ -115,7 +115,7 @@ chooses street anyway. This is **learned miscalibration** rather than a structur
 
 ### 4.1 What n=54 can and cannot support
 
-The intervals above **overlap**. If we treat the two rates as independent samples, 0.222 vs 0.352 is not a
+The intervals above **overlap**. If we treat the two rates as independent samples, 0.222 vs 0.352 isn't a
 distinguishable difference at this n. The right test is paired — same 54 rows, two decodes — so McNemar
 on the discordants:
 
@@ -124,13 +124,13 @@ b = 11 (v264 silent, seg hallucinates)      exact two-sided p = 0.1185
 c =  4 (v264 hallucinates, seg silent)      => direction consistent rather than significant at 0.05
 ```
 
-So: **the rate difference is not established.** Anyone quoting "+58%" from this page is quoting noise
+So: **the rate difference isn't established.** Anyone quoting "+58%" from this page is quoting noise
 with a decimal point — the same sin the fragment board exists to stop, committed here first.
 
-Three things survive that arithmetic, and they are what the verdict rests on:
+Three things survive that arithmetic, and they're what the verdict rests on:
 
 1. **The 11 failures are real rather than inferred.** `New York, NY` → street=`new york` is a defect you can
-   read, reproduce, and fix. Its existence is not a statistical claim and no p-value bears on it.
+   read, reproduce, and fix. Its existence isn't a statistical claim and no p-value bears on it.
 2. **The pre-registered condition turns on the class rather than the rate.** It reads: _"if the regression
    class is 'street hallucinated where none exists', that's a new failure mode and the flag stays
    off-by-default."_ The class exists. The condition fires as written.
@@ -144,7 +144,7 @@ the detection.
 
 ## 5. One property, three consequences
 
-the observed class, the digit-eating, and the hallucination are not three findings. They are one:
+the observed class, the digit-eating, and the hallucination are not three findings. They're one:
 
 > **The span decode is over-eager to emit and extend a street segment.**
 
@@ -166,7 +166,7 @@ is separated from §2's win.
 **For the instrument:** the street metric's `expect.street` filter is a blind spot that **flatters the
 span decode specifically**, because the decode's failure mode lives exactly in the rows the filter drops.
 This is the third instrument failure in one arc (Phase 1's starved channels, Phase 4a's dark resolver,
-now this), and the pattern is the same every time: _the harness could not see the thing that was wrong._
+now this), and the pattern is the same every time: _the harness couldn't see the thing that was wrong._
 `baselines.json` cannot catch it either — a baseline over a filtered corpus is self-consistent forever.
 The two-board structure (#43) needs a third question: **what does the board not score?**
 

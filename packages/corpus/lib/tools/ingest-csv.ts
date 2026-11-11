@@ -349,7 +349,7 @@ export interface IngestCSVOptions {
 /**
  * Ingest a CSV into SQLite: infer column types from a sample, create the table, import the rows.
  *
- * @throws When `input` does not exist.
+ * @throws When `input` doesn't exist.
  */
 export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	if (!(await pathExists(options.input))) {

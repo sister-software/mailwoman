@@ -11,7 +11,7 @@
  *   A share link provides a check against another result. It records the pin its author clicked.
  *   That pin may identify a car park, a mall's centroid, or the wrong branch.
  *
- *   ## `!3d`/`!4d` is the pin. `@lat,lng` is not.
+ *   ## `!3d`/`!4d` is the pin. `@lat,lng` isn't.
  *
  *   A resolved link contains two coordinate pairs. Each pair represents a different quantity:
  *
@@ -23,7 +23,7 @@
  *   That distance can consume a rooftop case's full tolerance budget. The resolver uses the viewport only as a
  *   labeled fallback. A fallback row records that source explicitly.
  *
- *   ## A link that does not resolve is reported
+ *   ## A link that doesn't resolve is reported
  *
  *   `resolved: false` with a reason, never a coordinate of `0,0` and never a silent drop. A batch that loses rows
  *   without a report produces a case file whose denominator cannot be reconstructed.
@@ -35,7 +35,7 @@ import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@m
  *
  * This reads a public redirect on somebody else's service for the sake of authoring OUR
  * test data, so the interval is deliberately unhurried rather than tuned.
- * `requestsPerMinute` does not determine the dispatch rate because its cooldown subtracts the elapsed gap.
+ * `requestsPerMinute` doesn't determine the dispatch rate because its cooldown subtracts the elapsed gap.
  *
  * Without that adjustment, N requests dispatched every 60/N seconds would exceed the configured rate.
  * The interval therefore sets the actual spacing directly.
@@ -46,7 +46,7 @@ export const MAP_LINK_MIN_INTERVAL_MS = 1200
  * The status range this resolver treats as a successful answer: 2xx and 3xx.
  *
  * A share link answers with a redirect, so the usual "2xx only" predicate would
- * classify the one status we are here for as a failure.
+ * classify the one status we're here for as a failure.
  * Written as plain constants rather than taken from axios's `HttpStatusCode`, because pulling
  * a runtime dependency into this package for two integers is a worse trade than naming them.
  */
@@ -208,7 +208,7 @@ export function createMapLinkResolver(options: CreateMapLinkResolverOptions = {}
 		 * Resolve one link.
 		 *
 		 * Never throws for an unresolvable link.
-		 * That is a reported row, because a batch that drops rows silently produces a
+		 * That's a reported row, because a batch that drops rows silently produces a
 		 * case file whose denominator cannot be reconstructed.
 		 */
 		async resolve(url: string): Promise<MapLinkResolution> {

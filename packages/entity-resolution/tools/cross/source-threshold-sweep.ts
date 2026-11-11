@@ -86,7 +86,7 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
  * Label-free precision proxy: does this cross-source entity have the same phone
  * in records from two different sources?
  *
- * Phone is not the join key, so a match is independent corroboration of one facility.
+ * Phone isn't the join key, so a match is independent corroboration of one facility.
  * Entities without phone numbers on two cross-source records are unknown.
  * Only checkable entities count.
  */

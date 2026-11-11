@@ -128,7 +128,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const client = createSoilDataAccessClient()
 
 		// `--verify-only` checks an existing artifact because a full-region build takes hours,
-		// so re-running the check must not cost a rebuild.
+		// so re-running the check mustn't cost a rebuild.
 		if (options.verifyOnly) {
 			return runVerification(
 				PathBuilder.from(options.out ?? soilDatabasePath("soil.db")),

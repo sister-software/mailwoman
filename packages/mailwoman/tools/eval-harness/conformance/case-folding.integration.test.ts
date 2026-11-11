@@ -5,7 +5,7 @@
  *
  *   The case-folding law against the live pipeline — the leg that geocodes.
  *
- *   It is an `.integration.test.ts` file because that is the suite the `mailwoman-data` runner runs, with
+ *   It is an `.integration.test.ts` file because that's the suite the `mailwoman-data` runner runs, with
  *   `MAILWOMAN_DATA_ROOT` set and the weights materialized. the fast leg is portable by construction and a
  *   data-dependent test placed there would skip its way to green. The guard is the resolver-based
  *   `weightsPresent()` idiom the other integration suites use: ask the resolver which model the loader will open.
@@ -14,7 +14,7 @@
  *
  *   this LEG cannot GO RED on A known defect. `runConformanceCommand` checks on `status: pass` rows and
  *   reports tracked ones without blocking, so a case-folding violation the pipeline currently has is printed
- *   in full and does not fail CI — and a tracked row that starts holding prints a promotion instruction
+ *   in full and doesn't fail CI — and a tracked row that starts holding prints a promotion instruction
  *   rather than sitting in the list forever. It fails on a new violation in a row that previously passed.
  *   It also fails if the suite stops asserting this rule.
  *

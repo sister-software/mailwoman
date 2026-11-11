@@ -13,7 +13,7 @@
  *
  *   The withheld-gold stratum is filtered during recording rather than subtracted from a finished one,
  *   because without the gold the walk picks a different candidate and asks questions the recording
- *   would not hold.
+ *   wouldn't hold.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -123,7 +123,7 @@ export interface RecordInputs {
 	panel: readonly SameDataPanelRow[]
 	backend: ResolverBackend
 	/**
-	 * Turn one raw query into the frozen parse, injected so the recorder does not decide which model runs.
+	 * Turn one raw query into the frozen parse, injected so the recorder doesn't decide which model runs.
 	 */
 	parse: (query: string) => Promise<AddressTree>
 	/**
@@ -134,7 +134,7 @@ export interface RecordInputs {
 	 */
 	armOptions: ReadonlyArray<ResolveOpts>
 	/**
-	 * Withhold every row that denotes the gold place, including rows whose ids the concordance did not link.
+	 * Withhold every row that denotes the gold place, including rows whose ids the concordance didn't link.
 	 *
 	 * The option defaults to `false`, keeping frozen definitions byte-stable on a re-record.
 	 * It exists because the gold identity set comes from the `gn:id` concordance

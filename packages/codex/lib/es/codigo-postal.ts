@@ -37,7 +37,7 @@ export const CODIGO_POSTAL_PATTERN = /^\d{5}$/
  * Normalize a código-postal surface form to the bare five digits: trim surrounding
  * whitespace (`" 28001 "` → `"28001"`).
  *
- * @returns Null when the result is not a five-digit code.
+ * @returns Null when the result isn't a five-digit code.
  */
 export function normalizeCodigoPostal(raw: unknown): CodigoPostal | null {
 	if (typeof raw !== "string") return null
@@ -54,7 +54,7 @@ export function isCodigoPostal(input: unknown): input is CodigoPostal {
 }
 
 /**
- * Narrow a string to a {@link CodigoPostal}, or `null` when it is not one.
+ * Narrow a string to a {@link CodigoPostal}, or `null` when it isn't one.
  *
  * @deprecated Use {@link normalizeCodigoPostal}.
  */
@@ -66,7 +66,7 @@ export function parseCodigoPostal(input: string): CodigoPostal | null {
  * The two-digit province prefix (`"28001"` → `"28"`), or `null` for a non-postcode.
  *
  * Callers map it through their own province table.
- * This module deliberately does not ship one, since the campaign that needed it only needs the shape.
+ * This module deliberately doesn't ship one, since the campaign that needed it only needs the shape.
  */
 export function codigoPostalProvincePrefix(input: string): string | null {
 	const code = normalizeCodigoPostal(input)

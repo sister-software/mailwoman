@@ -83,7 +83,7 @@ export interface ConformanceLawMeasurement {
 
 /**
  * What one conformance run measured, with `measured` absent exactly when `problems` is
- * non-empty so a refused run is not read as a suite that passed no case.
+ * non-empty so a refused run isn't read as a suite that passed no case.
  */
 export interface ConformanceMeasurement {
 	laws: string[]

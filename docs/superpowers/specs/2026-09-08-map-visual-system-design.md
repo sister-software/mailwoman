@@ -16,7 +16,7 @@ desktop control panel with map chrome, and repairs the rendering defects measure
 
 Every number here was read from the deployed apps or from the tracked source rather than inferred.
 
-### The stylesheet reads a vocabulary it does not own
+### The stylesheet reads a vocabulary it doesn't own
 
 `packages/react/styles.css` is 1,195 lines. It reads 22 distinct `--ifm-*` custom properties and defines
 zero. Four files each hold a partial copy of the values:
@@ -47,9 +47,9 @@ rule beneath it is scoped `:global([data-theme="dark"])`. Neither `packages/eart
 production never enters. For that reason the defect shipped.
 
 The same file offsets the panel and the MapLibre control stack by `var(--ifm-navbar-height, 60px)` for a
-navbar that does not exist outside Docusaurus.
+navbar that doesn't exist outside Docusaurus.
 
-### Two shipped styles request a glyph stack the bucket does not serve
+### Two shipped styles request a glyph stack the bucket doesn't serve
 
 `packages/cartographer/lib/planetary/layers.ts:93` and `packages/cartographer/lib/base/buildings.ts:117`
 both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mailwoman.post/protomaps/fonts/<stack>/0-255.pbf` returned:
@@ -65,7 +65,7 @@ both set `"text-font": ["Fira Sans Regular"]`. A request to `https://public.mail
 | `Open Sans Regular` (MapLibre's default stack)              | 404               |
 
 MapLibre renders no text at all when a glyph range fails, so requesting an absent stack is a defect in
-itself, and `#styles/fonts` now holds the served names. It does not explain the missing planetary labels,
+itself, and `#styles/fonts` now holds the served names. It doesn't explain the missing planetary labels,
 because after the repair deployed on `9504425c7`, `mars.mailwoman.post` still draws none.
 
 ### No nomenclature tile is ever requested, and the cause is above the style
@@ -90,7 +90,7 @@ opening camera. It rendered **131 labels** from 591 source features, with all fo
 requests, 2 glyph requests and no error events. The spaced-capital region treatment rendered as intended.
 
 The cause is the MapLibre web worker. `packages/planetary/lib/main.tsx` never called `setWorkerUrl`, so
-MapLibre derived the worker's script URL from `import.meta.url`, which does not resolve in a bundled
+MapLibre derived the worker's script URL from `import.meta.url`, which doesn't resolve in a bundled
 build. The derived path points at a file the build never emitted, and the Worker's SPA fallback answers it
 with `index.html` at status 200. The web worker then starts, fails to parse HTML as a module, and exits
 without logging anything.
@@ -119,7 +119,7 @@ the opening view and 96 after framing Olympus Mons.
 ### Mars and the Moon render as the same picture
 
 `PALETTES` in `packages/cartographer/lib/planetary/layers.ts` colors space, labels, label halos and the
-selection ring. It does not reach the hillshade, so `hillshadeLayer()` draws both bodies' DEMs through
+selection ring. It doesn't reach the hillshade, so `hillshadeLayer()` draws both bodies' DEMs through
 MapLibre's default grey ramp.
 
 ### The brand palette exists and never left the docs site
@@ -178,9 +178,9 @@ above the address field. The right-hand panel lists internal style-layer counts 
 8. **Base UI is deferred until a specific need arises.** None of the 74 workspaces uses a UI library
    today. The whole inventory across `@mailwoman/react`, `packages/earth` and `packages/planetary` is six
    element types: 13 `<button>`, 10 `<label>`, 10 `<input>`, 6 `<summary>`, 6 `<select>`, 6 `<details>`.
-   Two places need behavior that should not be hand-rolled. The layers panel needs a popover with
+   Two places need behavior that shouldn't be hand-rolled. The layers panel needs a popover with
    dismissal and focus return, and the result view needs a sheet. When Phase 2 reaches either, use
-   `@base-ui/react` for those two only, behind the project's own component names. This is not a
+   `@base-ui/react` for those two only, behind the project's own component names. This isn't a
    fourteen-component build-out.
 9. **Every control stays usable without glass.** Every material has an opaque fallback under
    `@supports not (backdrop-filter: blur(1px))` and under `prefers-reduced-transparency`. Text contrast
@@ -270,13 +270,13 @@ to a scale role, and each scale role maps to a face role. A typeface change edit
 
 ### Face roles
 
-| Role                  | Holds                                                       | Requirement of any face bound to it                                                   |
-| --------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `font.family.display` | Wordmark, large titles                                      | —                                                                                     |
-| `font.family.text`    | Titles, body, captions                                      | —                                                                                     |
-| `font.family.number`  | Coordinates, diameters, confidence values                   | Tabular lining figures, so a column of coordinates does not shift width as it updates |
-| `font.family.code`    | Identifiers, JSON, file paths                               | Monospaced, with `0`/`O` and `1`/`l` distinguishable                                  |
-| `font.family.glyph`   | Control glyphs — close, chevron, compass letter, microphone | Monochrome, inherits color and size, sits on the text baseline                        |
+| Role                  | Holds                                                       | Requirement of any face bound to it                                                  |
+| --------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `font.family.display` | Wordmark, large titles                                      | —                                                                                    |
+| `font.family.text`    | Titles, body, captions                                      | —                                                                                    |
+| `font.family.number`  | Coordinates, diameters, confidence values                   | Tabular lining figures, so a column of coordinates doesn't shift width as it updates |
+| `font.family.code`    | Identifiers, JSON, file paths                               | Monospaced, with `0`/`O` and `1`/`l` distinguishable                                 |
+| `font.family.glyph`   | Control glyphs — close, chevron, compass letter, microphone | Monochrome, inherits color and size, sits on the text baseline                       |
 
 Bliss Pro covers `display` and `text`. Its default figures are proportional and it has no `tnum` feature,
 so `number` binds to Fira Code with `code` and `glyph`. The role bindings make a future swap an edit to
@@ -312,7 +312,7 @@ differently per platform and cannot take the accent color, so the glyph role rep
 ### Map labels are a separate binding
 
 MapLibre draws a map label from a signed-distance-field glyph range, while the browser draws DOM text from
-a `@font-face`. `font.family.*` therefore does not reach the map, and a face bound in the DOM does not
+a `@font-face`. `font.family.*` therefore doesn't reach the map, and a face bound in the DOM doesn't
 appear on the globe until an SDF range for it exists in the bucket. Map labels use their own token,
 `font.family.map`, whose value must be a stack the bucket serves.
 
@@ -345,7 +345,7 @@ component. Both apps ship as installable PWAs through `vite-plugin-pwa` and neit
 - A tiered treatment matching the reference: region-scale features (`ME`, `PL`, `OC`, `TA`) uppercase and
   letterspaced, as `layers.ts` already does. Water-analogue and basin names in `Bliss Pro Italic`.
   point features in `Bliss Pro Regular`. Size continues to interpolate on `diameterKm`.
-- A `repo-health` check refuses a `text-font` value that is not in the bucket's served set, so the class
+- A `repo-health` check refuses a `text-font` value that's not in the bucket's served set, so the class
   of defect above cannot ship again.
 
 ### Mars
@@ -356,7 +356,7 @@ takes the cool ramp, Mars the warm oxide ramp. The two bodies stop being the sam
 ### Space
 
 A star field sits behind the globe, matching the reference: small light points at varied opacity on the
-body's space color. It renders behind a transparent map canvas so it does not rotate with the body.
+body's space color. It renders behind a transparent map canvas so it doesn't rotate with the body.
 
 ### Frame design
 
@@ -405,4 +405,4 @@ Each phase is deployable on its own.
 ## Open items
 
 - Whether Earth's basemap gains category color and icon markers for POI labels, in the Google register.
-  That is a basemap style change in `@mailwoman/cartographer` and a larger piece than the chrome work.
+  That's a basemap style change in `@mailwoman/cartographer` and a larger piece than the chrome work.

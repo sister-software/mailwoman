@@ -102,7 +102,7 @@ describe("rerankByStreetEvidence", () => {
 	})
 
 	test("anchor check: an argmax region anchor makes the rerank stand down even with a confirmed move", async () => {
-		// The rerank must not steal the region-labeled token.
+		// The rerank mustn't steal the region-labeled token.
 		const t = trace(tunedSpanScores())
 		t.tokens[1] = { ...t.tokens[1]!, label: "B-region" }
 		const res = await rerankByStreetEvidence(mockClassifier(t), "Rue Corsier", mockEvidence(["Rue Corsier"]), grammar())

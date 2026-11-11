@@ -13,7 +13,7 @@ import type { ResolvedPlace } from "@mailwoman/core/resolver"
 import type { CoordinateOptionalPlace } from "#postcode/prefix"
 
 /**
- * The widest stored extent, in degrees, that is a single point: about 10 meters, narrower than any place.
+ * The widest stored extent, in degrees, that's a single point: about 10 meters, narrower than any place.
  */
 const POINT_EXTENT_DEGREES = 0.0001
 

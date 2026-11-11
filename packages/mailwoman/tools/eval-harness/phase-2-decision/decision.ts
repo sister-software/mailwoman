@@ -82,7 +82,7 @@ export type Phase2LaneStatus = (typeof PHASE2_LANE_STATUSES)[number]
 /**
  * Check roles.
  *
- * A `control` check asserts that existing behavior did not regress.
+ * A `control` check asserts that existing behavior didn't regress.
  * A `target` check asserts a new capability.
  */
 export const PHASE2_CHECK_ROLES = ["target", "control"] as const
@@ -206,7 +206,7 @@ export interface Phase2Lane {
 	issue: string
 	claim: string
 	/**
-	 * Work that has merged for the lane.
+	 * Work that's merged for the lane.
 	 * A blocked lane can still have some.
 	 */
 	landed: string
@@ -263,7 +263,7 @@ export interface Phase2Thresholds {
 
 /**
  * Artifact versions used to report comparability.
- * They are not decision inputs.
+ * They're not decision inputs.
  */
 export interface Phase2ArtifactPins {
 	poiLayerManifestVersion: string

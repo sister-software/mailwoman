@@ -345,7 +345,7 @@ describe("candidate_admissibility", () => {
 		expect(reading.differences[0]).toContain("tracing being off")
 	})
 
-	// An empty walk is a reading and an absent trace is not, so two runs that performed no lookup are undecidable.
+	// An empty walk is a reading and an absent trace isn't, so two runs that performed no lookup are undecidable.
 	it("keeps an empty walk apart from an absent trace", () => {
 		const reading = compareResults(REFINEMENT, traced([]), traced([]))
 

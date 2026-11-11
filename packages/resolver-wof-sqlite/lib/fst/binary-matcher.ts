@@ -324,7 +324,7 @@ export class BinaryFSTMatcher {
 	}
 
 	/**
-	 * Returns the state the edge labeled `token` leads to from `stateID`, or 0 when there is no such edge.
+	 * Returns the state the edge labeled `token` leads to from `stateID`, or 0 when there's no such edge.
 	 */
 	#target(stateID: number, token: string): number {
 		const stringIndex = this.#tokenIndex(token)

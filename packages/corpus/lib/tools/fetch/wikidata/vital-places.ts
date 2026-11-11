@@ -18,7 +18,7 @@
  *    ({@linkcode readCountryCodes}, {@linkcode classifyClasses}).
  * 4. `places.jsonl`, `counts.json` and `MANIFEST.json`: the inventory, rewritten from the files above.
  *
- * A world-scale selection by class through the query service is not possible: on 2026-11-03, 27 of 29
+ * A world-scale selection by class through the query service isn't possible: on 2026-11-03, 27 of 29
  * per-class `GROUP BY` counts timed out after about 135 s each, as did the per-country selection queries,
  * while `wbgetentities` described 5,171 items without a timeout.
  */

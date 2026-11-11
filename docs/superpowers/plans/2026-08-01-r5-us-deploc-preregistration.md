@@ -8,7 +8,7 @@ has been carrying as an assumption since the placetype-evidence doc was written:
 
 ## Both answers are in, and both overturn the doc
 
-**There is no per-country suppression anywhere in the runtime.** A full read of the conventions,
+**There's no per-country suppression anywhere in the runtime.** A full read of the conventions,
 decoder, resolver, normalize, kind-classifier, phrase-grouper and geocode paths finds exactly one
 hard emission mask (`-1e9`) — FR `street_suffix` — and `dependent_locality` appears in no
 `forbiddenTags` row in either the TS table or its Python training mirror. `componentsSupported`
@@ -28,7 +28,7 @@ cases that parse correctly today:
 | "Manhattan"  | en-US  | 0.18% (rank 11)          | locality 91.9% |
 
 US surfaces have more raw dependent-locality mass than the GB ones that work. The shipped GB
-behaviour is not the model preferring the tag. It is the pair index at δ=10 clearing a deficit the
+behaviour isn't the model preferring the tag. It is the pair index at δ=10 clearing a deficit the
 en-GB model card already measured as "large but UNIFORM (~7.0 logits mean)". The origin is a
 training-side class weight of 0.3 on `B/I-dependent_locality` kept from v0.5.1 through v0.8.0
 ("penalize hallucination of rare tags"), since corrected to 1.0 but not retrained into the shipped
@@ -46,9 +46,9 @@ neighborhoods to the locality) dropped beside the en-US weights flips all three 
 | `123 Main St, Park Slope, Brooklyn, NY 11215`             | locality=Park Slope, **"Brooklyn" dropped**            | dependent_locality=Park Slope, locality=Brooklyn        |
 
 Note the silent information loss in the "before" column: the second admin level was not mislabeled,
-it was **discarded**. That is a live US recall defect today, independent of any tag question.
+it was **discarded**. That's a live US recall defect today, independent of any tag question.
 
-## What is not yet established — the pre-registered bars
+## What's not yet established — the pre-registered bars
 
 The three positives above are hand-picked. A 49,033-entry US index is a far larger ambiguity
 surface than GB's curated set, and US neighborhood surfaces are heavily homonymous with street and
@@ -92,9 +92,9 @@ against the same artifacts removed.
   `detectPairIndexCountry` fallback routes bare Latin postcode-less queries to `us`, where they take
   US pair bias instead of none. Probed against the GB canonical set — Shoreditch/London,
   Nine Elms/London, Clapham/London, Camden/London, Didsbury/Manchester — the US index **misses all
-  five** while the GB index hits all five. The fallback does not manufacture GB bias.
+  five** while the GB index hits all five. The fallback doesn't manufacture GB bias.
 
-## Verdict, and what is not being done unilaterally
+## Verdict, and what's not being done unilaterally
 
 The mechanism is proven and every pre-registered bar passed. Three things land from this rung:
 the diagnosis above, the `us` entry in the pair-index command's `PROBE_PAIRS_BY_COUNTRY` (its guard
@@ -105,9 +105,9 @@ correctly refused to build a US index without one), and both boards as reusable 
 decision rather than taken here.** The bars were the technical check and they passed. What they do not
 settle is that this changes DEFAULT parse output for the flagship package — every US address with a
 neighborhood or borough line starts emitting `dependent_locality` where it previously emitted
-no such tag and silently dropped the second admin level. That is an improvement and a behaviour change
+no such tag and silently dropped the second admin level. That's an improvement and a behaviour change
 at once, it wants a model-card note and a version, and the GB/NZ precedent (a locale overlay
-package that a user does not install by accident) does not cover it.
+package that a user doesn't install by accident) doesn't cover it.
 
 ## The finding that applies beyond this rung
 
@@ -115,7 +115,7 @@ The doc's claim that the US instance is blocked on "the tag's _contextual_ alive
 **wrong, and was wrong for GB too**. The tag is dead uniformly. The en-GB model card had already
 measured the deficit as "large but UNIFORM (~7.0 logits mean)" — and no locale's dependent-locality
 emission comes from the model preferring it. GB emits because an artifact clears a uniform deficit.
-The US does not emit because no artifact exists. Every other locale in the campaign's wave 2–4 list
+The US doesn't emit because no artifact exists. Every other locale in the campaign's wave 2–4 list
 (FR lieu-dit, ES pedanía, BR bairro, MX colonia, and the borough instances in Paris/Tokyo/Amsterdam)
 is therefore an ARTIFACT question rather than a training question — which moves them out of R5's
 training-conditional column and into the same decode-time lane R2–R4b already ran.
@@ -136,8 +136,8 @@ states: of the 40 probe-set-2 improvement targets carrying an expected venue str
 [US] for a London row, "Ginza" [FR] for a Dhaka row), so true coverage rounds to near zero. The
 residual is "A Bar with Shapes for a Name", "Art4Space", "B.indulged", "Paws 4 A Rest", "Tricky's @
 The Tolgus Inn" — small, new, deliberately odd commercial names that no gazetteer enumerates. **No
-retrieval artifact can supply what does not exist in any source.** This class is where the model
-has to generalize. That is why #1366's fine-tune shape was right even though V1 missed, and why its
+retrieval artifact can supply what doesn't exist in any source.** This class is where the model
+has to generalize. That's why #1366's fine-tune shape was right even though V1 missed, and why its
 three stated residual mechanisms are the actual work.
 
 **Class 3 — compositional sub-venue structure (`building`, `campus`, `wing`, `concourse`, `arcade`,
@@ -156,10 +156,10 @@ Measured behaviour, and the reason for it:
 | `West Wing, St Thomas' Hospital, …`                     | `locality="West Wing"`, hospital folded into `street`        |
 | `Concourse B, O'Hare International Airport, …`          | `street="O'Hare International Airport"`                      |
 
-The asymmetry is not random. The span proposer's designator lexicon
+The asymmetry isn't random. The span proposer's designator lexicon
 (`neural/span-proposer-lexicon.ts`) reads `codex/us/unit-designator.ts`, which is **USPS Publication
 28** — a mail-delivery standard. It stocks BUILDING, HANGAR, PIER, LOBBY because mail is delivered
-there, and omits TERMINAL, CHECK, CONCOURSE, WING because mail is not. The postal source is correct
+there, and omits TERMINAL, CHECK, CONCOURSE, WING because mail isn't. The postal source is correct
 about postal reality and silent about venue interiors — the same source-shaped gap the
 dependent-locality arc hit when PPD turned out to have no US analogue.
 
@@ -182,9 +182,9 @@ had. That coverage is the precondition for fixing it.
 measured at, inherited from GB rather than re-swept because the classifier deficit is uniform).
 
 **The non-regression guarantee, verified rather than assumed.** The concern with a default change
-to the flagship package was ordinary US addresses. They are untouched, and the reason is structural:
+to the flagship package was ordinary US addresses. They're untouched, and the reason is structural:
 the prior fires only when child and parent are both present in the query. `Astoria, NY 11103` — a
-USPS-valid city/state/ZIP with no parent in the string — keeps `locality=Astoria`. That is why the
+USPS-valid city/state/ZIP with no parent in the string — keeps `locality=Astoria`. That's why the
 19 candidate rows in the US golden boards needed **no edit**. Both halves are now conditional gauntlet
 cases (`us-r5-park-slope-brooklyn`, `us-r5-astoria-no-parent-unchanged`).
 
@@ -206,5 +206,5 @@ cases (`us-r5-park-slope-brooklyn`, `us-r5-astoria-no-parent-unchanged`).
 (`mailwoman release hf … --pair-indexes neural-weights-en-us/pair-index-us.bin,…`) — CI fetches it
 from the bucket and the preflight now names it, so an unstaged file fails loud rather than
 publishing an empty package. The demo repoint (`STAGED_PAIR_INDEX_COUNTRIES`, `stagePairIndexes`)
-stays a separate follow-up per the country-evidence-layer runbook. An entry for `us` there is what turns
+stays a separate follow-up per the country-evidence-layer runbook. An entry for `us` there's what turns
 on US pair bias for bare postcode-less browser queries (D-R5.4).

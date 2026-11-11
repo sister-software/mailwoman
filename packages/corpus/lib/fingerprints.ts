@@ -89,7 +89,7 @@ export class FingerprintSet {
 
 	/**
 	 * Bytes the table occupies outside the V8 heap.
-	 * They are absent from `--max-old-space-size`.
+	 * They're absent from `--max-old-space-size`.
 	 */
 	get bytes(): number {
 		return this.#words.byteLength

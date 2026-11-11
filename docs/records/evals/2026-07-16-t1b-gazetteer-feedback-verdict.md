@@ -50,8 +50,8 @@ The table supports three findings:
    bias a house number toward an admin tag.
 
 Only 3 surfaces were inert at importance 0 (`avenue`, `budapest`, `paix`) — so the
-[meaning-of-zero](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/registry-backed-structured-prediction.mdx) inertia is **not** what
-is protecting us here. The prior is live and it fires.
+[meaning-of-zero](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/registry-backed-structured-prediction.mdx) inertia **isn't** what's
+protecting us here. The prior is live and it fires.
 
 ## 2. The effect is nil
 
@@ -81,8 +81,8 @@ consistent with noise in both directions rather than with a systematic drag.
 
 ## 3. What this closes and what it opens
 
-**Closes:** the feedback loop is not the cause of the bare-fragment failures. Every Paris and parity
-number in the arc was measured with this prior off (see below), and turning it on does not rescue the
+**Closes:** the feedback loop isn't the cause of the bare-fragment failures. Every Paris and parity
+number in the arc was measured with this prior off (see below), and turning it on doesn't rescue the
 class. `Rue Montmartre → locality` is the model's own prior, learned from a corpus where bare street
 fragments are rare and bare localities are not.
 
@@ -91,7 +91,7 @@ explanation standing between the evidence and the training-distribution hypothes
 bare-street extract) was already ranked highest-EV by all three reviewers. It is now the only live
 explanation with a change attached.
 
-**Opens — the harness does not run production's configuration.** Found while setting this up:
+**Opens — the harness doesn't run production's configuration.** Found while setting this up:
 
 - `core/pipeline/runtime-pipeline.ts:426` — production's joint branch calls
   `parseWithLogits(normalized, { queryShape, fst: stages.fst })`. Production runs the FST prior **and**
@@ -101,7 +101,7 @@ explanation with a change attached.
 - `parity-corpus.ts` can wire the street-morphology prior, but only behind `--street-morphology`.
   That flag defaults to **false** and is labeled "Probe 0".
 
-So the standing parity floors and the whole span-head arc grade a configuration production does not
+So the standing parity floors and the whole span-head arc grade a configuration production doesn't
 run. On this fixture the FST half of that gap measures **+0**. That bounds the concern for Paris,
 but the gap is unmeasured for parity and every other locale. It is tracked as its own item. The fix
 is a measurement rather than a guess.
@@ -116,8 +116,8 @@ self-consistent. **The registry pins reproducibility rather than validity.**
 
 `applyBias` collects `allPieceIndices` across every word group and applies the winning per-tag bias to
 **all of them** — the bias is global to the input rather than positional. That may be why 37 firing surfaces
-move two fixtures. This probe did not test it. It bears on whether the FST prior is useful at all.
-That is a different question from whether the prior does harm.
+move two fixtures. This probe didn't test it. It bears on whether the FST prior is useful at all.
+That's a different question from whether the prior does harm.
 
 ---
 

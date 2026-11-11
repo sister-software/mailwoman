@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   ArcGIS REST services return errors with HTTP 200 as a JSON `error` envelope. Layer products pass every ArcGIS
- *   JSON body through {@link assertNoArcGISError} before reading fields, so an error is not read as an empty layer.
+ *   JSON body through {@link assertNoArcGISError} before reading fields, so an error isn't read as an empty layer.
  */
 
 /**

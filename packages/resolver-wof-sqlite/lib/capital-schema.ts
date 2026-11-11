@@ -7,7 +7,7 @@
  *   consumer who pulled the artifact can run `capital_tier` without the repo's
  *   `data/gazetteer/capitals-v1.json`, which published packages do not ship. One row per reference
  *   entry. The loader reads the whole table once into a `CapitalIndex` at session construction, so
- *   there is no per-probe query and no index beyond the rowid.
+ *   there's no per-probe query and no index beyond the rowid.
  *
  *   `keys` holds the entry's folded name set as a JSON array, the name-membership conjunct that keeps
  *   the coordinate radius from promoting a capital's same-name neighbors (`capitals.ts`).

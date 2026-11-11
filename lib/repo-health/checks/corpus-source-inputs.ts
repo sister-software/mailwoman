@@ -19,7 +19,7 @@ import { declaredSourceNames } from "#repo-health/checks/wire-identifiers"
 const TABLE = "packages/corpus/data/corpus-source-inputs.json"
 
 /**
- * The `corpus-source-inputs` check: one error per declared source the table does not map.
+ * The `corpus-source-inputs` check: one error per declared source the table doesn't map.
  */
 export const corpusSourceInputsCheck: RepoCheck = {
 	id: "corpus-source-inputs",

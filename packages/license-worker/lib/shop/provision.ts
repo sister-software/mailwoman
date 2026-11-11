@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The provisioner finds objects by catalog keys such as lookup keys, metadata marks or URLs. It does not use stored Stripe IDs.
+ * The provisioner finds objects by catalog keys such as lookup keys, metadata marks or URLs. It doesn't use stored Stripe IDs.
  * Stripe fixes a Payment Link's agreement version and consent collection at creation, so the provisioner replaces a link when either differs.
  * A Price amount or webhook API version mismatch is reported as drift. A signing secret returned by Stripe at creation appears only in the report.
  */

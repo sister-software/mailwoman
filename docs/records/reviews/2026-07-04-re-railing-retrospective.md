@@ -213,7 +213,7 @@ after the tolerant reader deployed, and interface tests pinning all of it. Verif
 Playwright: an address-point rooftop hit and an SI village through the browser cascade, markers
 on both — all three tiers working together in production **for the first time since July 1**.
 
-The corrected R3 verdict is that the code converged, but production did not run the converged
+The corrected R3 verdict is that the code converged, but production didn't run the converged
 code. The caveat this review already stated, "the process still depends on the next careful
 actor", now has four examples instead of one. #894-class structural checks are overdue.
 
@@ -246,9 +246,9 @@ measurement. That catch is the discipline working exactly as this review describ
 
 - **#894** — correction upon checking: closed on 07-02 (#902, `version-parity.yml` + daily
   schedule, verified passing against the live surfaces today). What the demo outage
-  exposes is the adjacent gap: version parity is checked, **functional** parity is not — a
+  exposes is the adjacent gap: version parity is checked, **functional** parity isn't — a
   scheduled live-demo Playwright smoke is the missing structural check, filed in today's triage.
-- **The #942 insurance leg in the standing battery** — this review recommended it. It has not landed yet.
+- **The #942 insurance leg in the standing battery** — this review recommended it. It hasn't landed yet.
 - **#949's fr.street check floor** — the convention epoch gave FR standing baselines. The check-spec
   floor remains unwritten.
 - #897, the calibration re-fit, #727/CharCNN — unchanged.

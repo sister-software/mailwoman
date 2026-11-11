@@ -21,13 +21,13 @@
  * address's references are `ad:AdminUnitName` features whose titles are a region, a district and a
  * municipality, and only the resolved feature's `ad:level` separates the three.
  *
- * That is why the reader takes two passes over the input rather than one. A component page is a
+ * That's why the reader takes two passes over the input rather than one. A component page is a
  * different document from an address page, so a single pass would have to defer an address until the
  * page holding its municipality arrived, and with 1,704,196 addresses against 35,514 component
  * features the deferred list is the wrong side of the join to hold. The first pass indexes the four
  * component types from every document, and the second streams `ad:Address`. The index is therefore
  * complete before the first address is read, so a reference resolving to no feature is a value the
- * reader asked for and could not read, and it raises.
+ * reader asked for and couldn't read, and it raises.
  *
  * The locator vocabulary is two types, and the publisher's own rendering fixes how they compose.
  * `ad:designator` repeats and states no position, so selection goes by `ad:type/@xlink:href`:
@@ -46,7 +46,7 @@
  * | `142` | (absent) | (absent) | `142,Sikenička,94359` |
  *
  * So the number is `addressNumber` by itself, or `addressNumber/buildingIdentifier` where the
- * orientation number exists. That is the publisher's own `annotation` field verbatim. A street-less
+ * orientation number exists. That's the publisher's own `annotation` field verbatim. A street-less
  * address is ordinary rather than a defect: 666 of those 1,000 referenced no `ad:ThoroughfareName`.
  *
  * The place names come from two types. `ad:AdminUnitName` at `4thOrder` is the municipality and is
@@ -56,7 +56,7 @@
  * repeat the municipality and 101 state another place, such as `Lidér Tejed` in the municipality
  * of `Povoda`, so the adapter writes a dependent locality only where the two differ. The publisher's
  * own `fulladdress` omits the settlement part in both cases, so a row holding one states a component
- * that string does not.
+ * that string doesn't.
  *
  * The postcode is `ad:PostalDescriptor/ad:postCode`, written as five digits with its leading zero
  * intact (`04018`). Slovak usage splits it as `040 18`. The publisher writes it closed up, and the
@@ -139,7 +139,7 @@ const COMPONENT_TYPES = [
 ] as const
 
 /**
- * The administrative level that is the municipality.
+ * The administrative level that's the municipality.
  *
  * Measured over 1,080 addresses, every one references exactly one `ad:AdminUnitName` at this level.
  * The `3rdOrder` district and the `2ndOrder` region are referenced beside it, so the level

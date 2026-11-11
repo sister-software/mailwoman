@@ -84,7 +84,7 @@ export interface BuildStreetMorphologyFSTOpts {
 	/**
 	 * Variant surface forms, in joined post-normalization form, that the trie never holds.
 	 *
-	 * A two-character street type that is also a region abbreviation, `ct` for court
+	 * A two-character street type that's also a region abbreviation, `ct` for court
 	 * and Connecticut or `la` for lane and Louisiana, reads as the region at parse time.
 	 * The artifact is locale-general, so the variant stays out for every locale.
 	 *
@@ -245,7 +245,7 @@ export async function buildStreetMorphologyFST(
 			// (Avenue is almost never anything but street-typing).
 			// The morphology prior caps bias separately.
 			// This value only feeds the cap formula `referential * cap`.
-			// No encyclopedic score — a street affix is not a place and has no article.
+			// No encyclopedic score — a street affix isn't a place and has no article.
 			referential: 1,
 			encyclopedic: null,
 			lat: 0,

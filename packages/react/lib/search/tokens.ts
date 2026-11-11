@@ -12,7 +12,7 @@
  *
  * The index drops term positions, so a quoted FTS5 string must hold one token.
  * The text is split where the `unicode61` tokenizer splits it, at any character
- * that is neither a letter nor a digit.
+ * that's neither a letter nor a digit.
  */
 export function queryTokens(text: string): string[] {
 	return text.split(/[^\p{L}\p{N}]+/u).filter((token) => token !== "")

@@ -62,7 +62,7 @@ export const FRAGMENT_ROWS: Curated[] = [
 	// #region comma_free
 	// The FST prior's design register: a two-toponym fragment with no punctuation. Each is paired with its
 	// `comma_control` twin below — same truth, comma restored. A `comma_free` row that moves while its
-	// control does not is the bias acting exactly where it was designed to.
+	// control doesn't is the bias acting exactly where it was designed to.
 	{
 		id: "us-cf-moscow-idaho",
 		input: "Moscow Idaho",
@@ -269,7 +269,7 @@ export const FRAGMENT_ROWS: Curated[] = [
 	// #endregion
 
 	// #region comma_control
-	// The byte-stability twins. These must not be where an arm warrants its score.
+	// The byte-stability twins. These mustn't be where an arm warrants its score.
 	{
 		id: "us-cc-moscow-idaho",
 		input: "Moscow, Idaho",

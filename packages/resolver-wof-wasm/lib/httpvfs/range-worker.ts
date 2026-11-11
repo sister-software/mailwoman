@@ -86,7 +86,7 @@ function fetchRange(file: RemoteFile, start: number, end: number): Uint8Array {
 /**
  * Returns chunk `index` of the file, fetching it on first use.
  *
- * Every request covers one whole chunk at an offset that is a multiple of the chunk size, so the same
+ * Every request covers one whole chunk at an offset that's a multiple of the chunk size, so the same
  * read always produces the same `Range` header and an HTTP or service-worker cache can answer it.
  */
 function chunkAt(file: RemoteFile, index: number): Uint8Array {

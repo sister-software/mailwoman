@@ -58,7 +58,7 @@ jobs:
             value="${RELEASE_TAG#v}"
           fi
           if [ -z "$value" ]; then
-            echo "::error::could not resolve a version tag"
+            echo "::error::couldn't resolve a version tag"
             exit 1
           fi
           echo "value=$value" >> "$GITHUB_OUTPUT"

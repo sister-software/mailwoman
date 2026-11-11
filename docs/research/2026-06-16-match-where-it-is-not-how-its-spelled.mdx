@@ -13,14 +13,14 @@ Here are two addresses. Tell me if they're the same place.
 123 Main St #400, Springfield, Illinois
 ```
 
-They are. Now compare these two:
+They're. Now compare these two:
 
 ```
 Jyllandsgade 15, 9000 Aalborg
 Jyllandsgade 75, 9000 Aalborg
 ```
 
-They are different places, 650 meters apart.
+They're different places, 650 meters apart.
 
 A string-similarity matcher scores the first pair, the _same_ place, low because of different punctuation, "Street" vs "St", and a reordered unit. It scores the second pair, _different_ places, at 0.96 because they differ by one character. The usual tool gets both pairs wrong. A threshold change cannot fix this, because string similarity measures the wrong thing.
 
@@ -44,7 +44,7 @@ Three things change as a result.
 
 **Distance becomes a feature you can calibrate.** Records for the same building are typically ~30 meters apart, and records on the same block ~300 meters. The geocoder knows its own error. Rooftop points are tight, interpolated points are looser, and centroids are looser still, so distance evidence can be weighted by placement quality. A string matcher has no equivalent. It can report that two street names are spelled similarly, but it cannot tell whether they refer to the same building.
 
-**A shared address is weighted by how rare it is.** Two records agreeing on the address of a clinic tower is weak evidence that they are the same entity, because fifty providers share that building. Two records agreeing on a rural address with one occupant is strong evidence. This is TF-IDF for places: an address agreement is weighted by the count of distinct entities sharing that address. On a real provider-registry deduplication, enabling this weighting raised F1 by roughly twenty points in a single change. Most of the F1 increase came from recall, because a provider's rare address rejoined records that name variations had split apart. We had expected precision to supply most of the increase, and we adjusted our understanding to the data.
+**A shared address is weighted by how rare it is.** Two records agreeing on the address of a clinic tower is weak evidence that they're the same entity, because fifty providers share that building. Two records agreeing on a rural address with one occupant is strong evidence. This is TF-IDF for places: an address agreement is weighted by the count of distinct entities sharing that address. On a real provider-registry deduplication, enabling this weighting raised F1 by roughly twenty points in a single change. Most of the F1 increase came from recall, because a provider's rare address rejoined records that name variations had split apart. We'd expected precision to supply most of the increase, and we adjusted our understanding to the data.
 
 ## The receipts
 
@@ -52,11 +52,11 @@ We ran this on real public data: the national provider registry (NPPES), the FCC
 
 Within the provider registry, we used the registry's own entity ID as held-out ground truth. The resulting score was low, and a later section explains why that score was misleading. We also recorded which changes fixed real errors and which made results worse, including the negative results.
 
-Across the three datasets, the matcher links records without a shared ID, using only geocoded location plus name agreement. It links rural Texas hospitals across the funding program and the provider registry: Hunt Memorial Hospital District, Uvalde County Hospital Authority, and Winkler County Memorial Hospital. Each hospital has a registration record in one dataset and a funding record in another. The matcher joins them because they are at the same building. That join requires geocoding first.
+Across the three datasets, the matcher links records without a shared ID, using only geocoded location plus name agreement. It links rural Texas hospitals across the funding program and the provider registry: Hunt Memorial Hospital District, Uvalde County Hospital Authority, and Winkler County Memorial Hospital. Each hospital has a registration record in one dataset and a funding record in another. The matcher joins them because they're at the same building. That join requires geocoding first.
 
 Once the records are joined, you can ask which entities appear in the eligibility sources but not in the funding sources. Today someone finds that anti-join by inspecting a map by hand. We produce it as a layer that loads directly onto the map.
 
-That result needs careful interpretation. We produce the reconciliation, and the analyst draws the conclusion. An entity in the "eligible rather than enrolled" set is a candidate for review and does not imply wrongdoing. A gap can mean the entity did not apply, applied under a name we did not resolve, is not eligible, or has some other ordinary explanation. The tool resolves public records into an analyzable shape and surfaces candidates. The analyst decides what a correlation means.
+That result needs careful interpretation. We produce the reconciliation, and the analyst draws the conclusion. An entity in the "eligible rather than enrolled" set is a candidate for review and doesn't imply wrongdoing. A gap can mean the entity didn't apply, applied under a name we didn't resolve, isn't eligible, or has some other ordinary explanation. The tool resolves public records into an analyzable shape and surfaces candidates. The analyst decides what a correlation means.
 
 ## The ground truth changed the score
 
@@ -68,13 +68,13 @@ We graded the identical cluster output, from the same model, against a ground tr
 
 ![Dedup F1 climbing across four truth grains — NPI 53.6%, site 55.3%, org-name 60.7%, coordinate 68.1% — for the shipped scorer, on identical clusters. The climb is the ruler getting more precise rather than the model changing.](/img/dedup-yardstick.svg)
 
-We froze the hardest cases (co-located records with near-identical names that the registration ID separates) and adjudicated them one at a time: **120 of 120 were the same real-world organization.** None were two unrelated organizations merged by mistake. The class we had logged as our largest source of error was almost entirely the matcher being correct and the ground truth being too literal.
+We froze the hardest cases (co-located records with near-identical names that the registration ID separates) and adjudicated them one at a time: **120 of 120 were the same real-world organization.** None were two unrelated organizations merged by mistake. The class we'd logged as our largest source of error was almost entirely the matcher being correct and the ground truth being too literal.
 
-We trusted the first number and spent time building corroboration features to reduce apparent over-merging. Those features left precision unchanged because the over-merging did not exist.
+We trusted the first number and spent time building corroboration features to reduce apparent over-merging. Those features left precision unchanged because the over-merging didn't exist.
 
 A matching F1 is uninterpretable unless it states its truth grain. Report the ground truth next to the number every time. When the number is low, check the ground truth before blaming the model.
 
-At 68.1%, F1 is still mediocre. The ground-truth analysis explains part of the low number, but it does not make the number good. The matcher still misclusters. Rural route addresses and PO boxes defeat the geocoder: a shared box at a post office resolves to the same rooftop coordinate for every resident, so the distance feature provides no information. Rooftop interpolation can place a strip-mall suite on the wrong unit. The performance table includes those rows, and we are working on them.
+At 68.1%, F1 is still mediocre. The ground-truth analysis explains part of the low number, but it doesn't make the number good. The matcher still misclusters. Rural route addresses and PO boxes defeat the geocoder: a shared box at a post office resolves to the same rooftop coordinate for every resident, so the distance feature provides no information. Rooftop interpolation can place a strip-mall suite on the wrong unit. The performance table includes those rows, and we're working on them.
 
 ## Why a single Node process matters
 

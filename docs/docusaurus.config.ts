@@ -83,7 +83,7 @@ const config: Config = {
 		v4: true,
 		// rspack bundles the site.
 		// Both bundlers report maplibre-gl's dynamic `import()` of an expression as a
-		// "Critical dependency" warning, so that is not a bundler difference.
+		// "Critical dependency" warning, so that's not a bundler difference.
 		// The persistent cache stays off until a build has been measured with it.
 		faster: {
 			rspackBundler: true,

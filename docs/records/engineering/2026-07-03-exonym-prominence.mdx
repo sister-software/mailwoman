@@ -1,12 +1,12 @@
 ---
 title: "Design note: exonym prominence in the exact tier (the Åbo problem)"
-description: How the name-exact vs alias-exact sub-tier handles bilingual official names. The note compares three candidate rules and recommends one. The recommended rule is not yet implemented.
+description: How the name-exact vs alias-exact sub-tier handles bilingual official names. The note compares three candidate rules and recommends one. The recommended rule isn't yet implemented.
 status: active-decision
 ---
 
 # Exonym prominence in the exact tier
 
-**Status: design note for review (2026-07-03). This note has not been implemented. The concrete
+**Status: design note for review (2026-07-03). This note hasn't been implemented. The concrete
 failing row is the `global-abo-alias` gauntlet case (tracked as `improvement_target`, #912).**
 
 ## The tension, made concrete
@@ -27,7 +27,7 @@ A naive fix could break two cases that must keep working. `ME → Maine` is alia
 name-exact competitor. `Paris → Paris, France` is name-exact and correctly beats a more populous
 alias holder.
 
-## Why "Åbo" is not an alias
+## Why "Åbo" isn't an alias
 
 Finland is officially bilingual. "Åbo" is Turku's **official Swedish name**, in the same class as
 Karjaa/Karis. The #743 bilingual-recall fix already treats those as first-class names on ingest. Our

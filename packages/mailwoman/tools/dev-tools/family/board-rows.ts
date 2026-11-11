@@ -68,7 +68,7 @@ const QUALIFIER_TOLERANCE_M = 10_000
 /**
  * Builds an id suffix by lowercasing the input and replacing each run of non-alphanumerics with one dash.
  *
- * An input that is already lowercase gets `-lower`, so it and its cased twin keep distinct ids.
+ * An input that's already lowercase gets `-lower`, so it and its cased twin keep distinct ids.
  */
 function slugOf(input: string): string {
 	const slug = input

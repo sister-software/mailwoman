@@ -9,7 +9,7 @@
  *
  *   This module uses a package subpath rather than a `test/` file, like `packages/mailwoman/lib/test-kit`.
  *   The observation route's suite lives in another workspace. TypeScript rejects a relative import across projects
- *   with `TS2878` because the compiled layout does not match the source layout.
+ *   with `TS2878` because the compiled layout doesn't match the source layout.
  *
  *   The fixture uses no network or GDAL. The builder accepts a {@linkcode FloodFeatureSource}, so fixtures can supply
  *   feature lists. This lets every machine exercise the vocabulary checks and cell classification.

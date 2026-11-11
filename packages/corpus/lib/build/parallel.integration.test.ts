@@ -316,9 +316,9 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 		const hrsaDir = sourceStateDirectory(outDir("intermediate"), "usgov-hrsa-fqhc")
 		const hrsa = await readLocalJSONFile<SourceCompletionRecord>(hrsaDir(SOURCE_RECORD_FILE))
 
-		// Every ban part is on disk, and the record that would make them a source is not.
+		// Every ban part is on disk, and the record that would make them a source isn't.
 		await removePath(banDir(SOURCE_RECORD_FILE))
-		// The hrsa record stands and one of the parts it lists does not.
+		// The hrsa record stands and one of the parts it lists doesn't.
 		await removePath(hrsa.parts[0]!.path)
 
 		const messages: string[] = []

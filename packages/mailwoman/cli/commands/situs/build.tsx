@@ -17,7 +17,7 @@
  *   scan, so N concurrent inserts is where the wall-clock saving comes from. Sequentialise via `--concurrency 1`.
  *
  *   Each per-state child owns its own DB's atomic write. this driver only spawns children (skipping
- *   complete databases) and writes the small `attribution.json` manifest incrementally — so there is
+ *   complete databases) and writes the small `attribution.json` manifest incrementally — so there's
  *   no national-DB temp-then-rename here, the large-artifact atomicity lives one level down in the
  *   database builder. Progress streams to stderr. the final summary lands on stdout.
  *

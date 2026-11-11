@@ -17,7 +17,7 @@
  *   A region contributes fewer rows when the source holds fewer. The run reports regions that came up short.
  *
  *   The coordinate is the postcode's, straight from the export's own columns. It is good enough to place a row on a
- *   map and to reject a gross mis-geocode. It is not a locality centroid, so a probe grading rooftop distance against
+ *   map and to reject a gross mis-geocode. It isn't a locality centroid, so a probe grading rooftop distance against
  *   it is grading the wrong thing. Each row records that in `coordinate_basis`.
  *
  *   Run:
@@ -151,8 +151,8 @@ let keptSourceForm = 0
 for (const triple of quotaed) {
 	if (!coordinateOf.has(triple.postcode)) continue
 
-	// A country whose subdivisions codex does not list keeps the source's form, counted so the
-	// run reports how much of the panel that is rather than writing two kinds of row silently.
+	// A country whose subdivisions codex doesn't list keeps the source's form, counted so the
+	// run reports how much of the panel that's rather than writing two kinds of row silently.
 	const subdivision = matchSubdivisionIn(triple.cc, triple.region)
 
 	if (!subdivision) {
@@ -188,9 +188,9 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 
 	// The bucket head preserves source order.
 	// The source orders postcodes within each state.
-	// For a region stratum that is harmless.
+	// For a region stratum that's harmless.
 	// The stratum already fixes the state.
-	// For a shape stratum it is not: the first 400 suffix-tail names in US.txt are all Alaskan,
+	// For a shape stratum it isn't: the first 400 suffix-tail names in US.txt are all Alaskan,
 	// so a shape draw taken from the head measures one state per bucket.
 	// A seeded shuffle spreads each shape across the country.
 	// The region draw keeps its existing order so the numbers already published against

@@ -9,11 +9,11 @@ verified-with: mailwoman v11.0.0, Claude Code v2.1.319
 
 The published `mailwoman@11.0.0` package contains `skills/mailwoman/SKILL.md`. Its `mailwoman skill install` command copies that directory into a project's <code>.claude/skills/mailwoman/</code> directory. [Claude Code's project-skill documentation](https://code.claude.com/docs/en/skills#choose-where-skills-load) identifies that location as a project skill. This procedure was tested with Node.js 24.22.1, npm 11.19.1, and Claude Code 2.1.319 in a disposable project directory. Claude Code skill validation passed there. Interactive skill use was not tested.
 
-The installer **removes the entire destination skill directory before copying the packaged version**. It does not merge local edits and has no built-in rollback command. Back up an existing <code>.claude/skills/mailwoman/</code> directory before either installation or update. The published 11.0.0 skill also gives confidence-calibration advice based on older artifacts. Its bundled `calibration.json` identifies model version 5.3.0, while the published en-US model card identifies model 10.8.0. Use [the current confidence explanation](../explanation/confidence-and-limits.mdx) for score decisions.
+The installer **removes the entire destination skill directory before copying the packaged version**. It doesn't merge local edits and has no built-in rollback command. Back up an existing <code>.claude/skills/mailwoman/</code> directory before either installation or update. The published 11.0.0 skill also gives confidence-calibration advice based on older artifacts. Its bundled `calibration.json` identifies model version 5.3.0, while the published en-US model card identifies model 10.8.0. Use [the current confidence explanation](../explanation/confidence-and-limits.mdx) for score decisions.
 
 ## Prerequisites
 
-Use a project that runs Claude Code and has Node.js matching the published `mailwoman@11.0.0` engine declaration, `^24.22.1 || >=26.12.1`. Run the commands from that project's root. Install the pinned package if the project does not already have it:
+Use a project that runs Claude Code and has Node.js matching the published `mailwoman@11.0.0` engine declaration, `^24.22.1 || >=26.12.1`. Run the commands from that project's root. Install the pinned package if the project doesn't already have it:
 
 ```bash
 npm install mailwoman@11.0.0
@@ -30,7 +30,7 @@ else
 fi
 ```
 
-Skip those backup commands on a first install, when <code>.claude/skills/mailwoman/</code> does not exist. Keep the backup until you have checked the replacement. A failed copy can leave the destination absent because removal happens first.
+Skip those backup commands on a first install, when <code>.claude/skills/mailwoman/</code> doesn't exist. Keep the backup until you've checked the replacement. A failed copy can leave the destination absent because removal happens first.
 
 ## 1. Install the packaged skill
 
@@ -57,7 +57,7 @@ Both commands exited 0 in the disposable test. The installed file begins with `n
 claude plugin validate .claude/skills
 ```
 
-Claude Code 2.1.319 printed `Validation passed` for the disposable installation. Validation checks the skill's structure. It does not verify the Mailwoman advice against the current model or run the skill in an interactive session. Claude Code can load the project skill in sessions started in this repository. Commit the reviewed skill file if the project should share it with other contributors.
+Claude Code 2.1.319 printed `Validation passed` for the disposable installation. Validation checks the skill's structure. It doesn't verify the Mailwoman advice against the current model or run the skill in an interactive session. Claude Code can load the project skill in sessions started in this repository. Commit the reviewed skill file if the project should share it with other contributors.
 
 ## 3. Update or restore it
 
@@ -81,4 +81,4 @@ When a replacement exists, the commands keep it in <code>.claude/skills/mailwoma
 
 ## What the skill covers
 
-The packaged file describes `mailwoman doctor`, a parse call, geocoding setup, and the fields to include in a bug report. It supplies instructions to Claude Code rather than an executable Mailwoman tool. [Report a problem](./report-a-problem.mdx) gives the current reporting procedure. The skill's confidence paragraph cites an older score study and recommends a bundled calibrator whose metadata does not match the 10.8.0 model. Treat that specific guidance as unverified for release 11.0.0.
+The packaged file describes `mailwoman doctor`, a parse call, geocoding setup, and the fields to include in a bug report. It supplies instructions to Claude Code rather than an executable Mailwoman tool. [Report a problem](./report-a-problem.mdx) gives the current reporting procedure. The skill's confidence paragraph cites an older score study and recommends a bundled calibrator whose metadata doesn't match the 10.8.0 model. Treat that specific guidance as unverified for release 11.0.0.

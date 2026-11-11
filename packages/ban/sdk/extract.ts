@@ -5,7 +5,7 @@
  *
  *   Stream rooftop address records out of a BAN `adresses-<dept>.csv` dump (adresse.data.gouv.fr). The
  *   dump is a `;`-delimited, header-first CSV in which every row already contains the full tuple —
- *   `numero`, `rep`, `nom_voie`, `code_postal`, `nom_commune`, `lon`/`lat` — so there is no OSM-style
+ *   `numero`, `rep`, `nom_voie`, `code_postal`, `nom_commune`, `lon`/`lat` — so there's no OSM-style
  *   "association gap" (a point with no street): BAN is a structured government register rather than a
  *   community tag soup. We stream line-by-line (the national set is 26M rows / ~5 GB uncompressed);
  *   `.csv.gz` inputs are transparently gunzipped.
@@ -68,7 +68,7 @@ export interface BANAddrRecord {
 	 */
 	codeInsee: string | null
 	/**
-	 * `certification_commune` — 1 when the commune certified the address, 0 when it did not.
+	 * `certification_commune` — 1 when the commune certified the address, 0 when it didn't.
 	 * Null when the column is blank.
 	 *
 	 * Preserved verbatim so a coverage basis can be computed per commune rather than inferred from a share.
@@ -168,7 +168,7 @@ export function cleanLieuDit(raw: string | null, commune: string | null): string
 
 /**
  * Throw if the dump's header is missing a required column.
- * A rename upstream must not silently skip every row.
+ * A rename upstream mustn't silently skip every row.
  */
 function assertRequiredColumns(row: Record<string, unknown>): void {
 	for (const name of REQUIRED_COLUMNS) {

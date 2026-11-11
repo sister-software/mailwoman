@@ -24,7 +24,7 @@ import { wholePostcodeShape } from "#shapes"
 /**
  * Shapes that identify a country unambiguously, by their codex label.
  *
- * They are a stronger signal than the language-based coarse placer.
+ * They're a stronger signal than the language-based coarse placer.
  * That placer conflates GB and US and routes some GB addresses to US namesakes.
  * Letters-first formats never match a US ZIP.
  *
@@ -50,8 +50,8 @@ const SINGLE_COUNTRY_SHAPE_LABELS: ReadonlyArray<readonly [label: string, countr
 /**
  * The compiled form of {@linkcode SINGLE_COUNTRY_SHAPE_LABELS}, resolved once at module load.
  *
- * A label this module states and codex does not define therefore throws on first import,
- * where resolving per call would instead let that label refuse every postcode it was meant to accept.
+ * A label this module states and codex doesn't define therefore throws on first import, where
+ * resolving per call would instead let that label refuse every postcode it was meant to accept.
  */
 const SINGLE_COUNTRY_SHAPES: ReadonlyArray<readonly [re: RegExp, country: string]> = SINGLE_COUNTRY_SHAPE_LABELS.map(
 	([label, country]) => [wholePostcodeShape(label), country]
@@ -86,7 +86,7 @@ const SHARED_NNN_NN = /^\d{3} \d{2}$/
  * NL PC6 `1012 LG` — digits-first then two letters, read through codex's NL shape.
  *
  * It is NL-unique as a postcode shape and too forgeable for {@linkcode SINGLE_COUNTRY_SHAPE_LABELS},
- * so it belongs only here, where every consumer checks on a tree that is already a bare postcode.
+ * so it belongs only here, where every consumer checks on a tree that's already a bare postcode.
  */
 const NL_PC6: RegExp = wholePostcodeShape("NL")
 
@@ -99,8 +99,8 @@ const NL_PC6: RegExp = wholePostcodeShape("NL")
  * five-digit format that US, FR, DE and others share.
  * Such an input stays with the locale prior on purpose.
  *
- * Unlike {@linkcode countryFromPostcodeFormat} this is not an unforgeable-in-any-context
- * claim, so a consumer applies it only to a tree that is a bare postcode, where the
+ * Unlike {@linkcode countryFromPostcodeFormat} this isn't an unforgeable-in-any-context
+ * claim, so a consumer applies it only to a tree that's a bare postcode, where the
  * street-fragment collision the single-country list must exclude cannot arise.
  */
 export function countriesFromPostcodeFormat(postcode: string | null | undefined): readonly string[] {

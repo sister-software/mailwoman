@@ -55,10 +55,10 @@ Mailwoman's tag schema lives in two files:
 
 **These files remain the authoritative schema.** One alternative would store our extensions in WOF placetype JSON format (`wof:id`, `wof:name`, `wof:role`, `wof:parent`), so that tooling that reads WOF placetypes would work unchanged. We rejected that alternative for four reasons:
 
-1. **Ontology mismatch.** WOF placetypes describe what kind of geographical feature something is. Mailwoman component tags describe the role a span plays in an address. `street` is a linear feature without a WOF identity, and WOF has no placetype for it. `house_number` is not a place at all. `unit` is a building subdivision rather than a geographic feature.
+1. **Ontology mismatch.** WOF placetypes describe what kind of geographical feature something is. Mailwoman component tags describe the role a span plays in an address. `street` is a linear feature without a WOF identity, and WOF has no placetype for it. `house_number` isn't a place at all. `unit` is a building subdivision rather than a geographic feature.
 2. **ID-space fragility.** WOF issue #246 explored adding `lane`, `block`, and `parish`. Any "private" ID range could collide with a future WOF allocation.
-3. **TypeScript exhaustiveness.** With the `ComponentTag` discriminated union, the compiler flags every code path that does not handle every tag. Runtime-loaded JSON has no such check, and the schema will change.
-4. **DAG direction.** WOF's `wof:parent_id` and mailwoman's `PARENT_OF` both encode child→parent. The WOF format has no native "valid children" field, so you would compute children from parents anyway. `PARENT_OF` already does that.
+3. **TypeScript exhaustiveness.** With the `ComponentTag` discriminated union, the compiler flags every code path that doesn't handle every tag. Runtime-loaded JSON has no such check, and the schema will change.
+4. **DAG direction.** WOF's `wof:parent_id` and mailwoman's `PARENT_OF` both encode child→parent. The WOF format has no native "valid children" field, so you'd compute children from parents anyway. `PARENT_OF` already does that.
 
 When tooling needs WOF-format output, such as the `wof tree` command or external consumers, use a serialization shim:
 
@@ -102,7 +102,7 @@ The current schema cannot express `6 Elm Avenue, Runcorn Road, Birmingham`, whic
 
 ### Venue + po_box stay as siblings
 
-In `CULLEN INSULATION INC, POBOX 3211 FARGO ND 58108`, the venue is the addressee and the po_box is the delivery endpoint. The containment should not make the venue a parent of the po_box. Both remain siblings under locality, and the resolver cross-references them at lookup time.
+In `CULLEN INSULATION INC, POBOX 3211 FARGO ND 58108`, the venue is the addressee and the po_box is the delivery endpoint. The containment shouldn't make the venue a parent of the po_box. Both remain siblings under locality, and the resolver cross-references them at lookup time.
 
 ## Locality-conditional hierarchy blocking
 
@@ -163,7 +163,7 @@ Country-level granularity is the right v0.7 scope. Variation within a country (U
 
 **Classifier wiring:** `neural/classifier.ts` adds `fstStreetMorphology?: FSTMatcherLike` to `ParseOpts`. The classifier applies it with `addEmissionMatrix` after the existing admin FST bias, using the same 3.0-logit cap.
 
-**Locale handling:** Build one combined FST for all locales. The morphology data is small enough (60 locales × ~30 affix lines × ~5 variants = ~9K entries) that per-locale extract routing is unnecessary. The `PlaceEntry` payload encodes the position (prefix vs suffix), so it is not derived per entry at query time.
+**Locale handling:** Build one combined FST for all locales. The morphology data is small enough (60 locales × ~30 affix lines × ~5 variants = ~9K entries) that per-locale extract routing is unnecessary. The `PlaceEntry` payload encodes the position (prefix vs suffix), so it isn't derived per entry at query time.
 
 ### Layer 1.5: Street candidacy lookup
 
@@ -189,7 +189,7 @@ Country-level granularity is the right v0.7 scope. Variation within a country (U
 
 **Build:** Reuse the existing `fst-builder.ts` infrastructure and extend `PlacetypeId` with `"street"`. Entries use the same `PlaceEntry` shape as admin places, with `wof_id` synthesized from the OSM way ID and `parentChain` pointing to the WOF locality.
 
-**Inference:** Layer 2 reuses Layer 1's `fstStreetMorphology` integration point, with the same `addEmissionMatrix` call and a different binary. Layer 2 replaces Layer 1 for streets the FST knows. Layer 1 stays active for new street names whose suffixes the FST does not cover.
+**Inference:** Layer 2 reuses Layer 1's `fstStreetMorphology` integration point, with the same `addEmissionMatrix` call and a different binary. Layer 2 replaces Layer 1 for streets the FST knows. Layer 1 stays active for new street names whose suffixes the FST doesn't cover.
 
 **Scope:** The system routes extracts per metro. The NYC POC validates the approach, and metro expansion waits on its results.
 
@@ -210,7 +210,7 @@ No new tags are needed. The locality-conditional blocking described above activa
 
 ### Layer 4: Brand FST (franchise venues)
 
-**Status:** This work belongs to the resolver. The parser does not change. The parser keeps classifying brand-name spans as `venue`. A brand FST, structurally identical to the street identity FST, maps known brand names to venue-confidence boosts at resolver lookup time.
+**Status:** This work belongs to the resolver. The parser doesn't change. The parser keeps classifying brand-name spans as `venue`. A brand FST, structurally identical to the street identity FST, maps known brand names to venue-confidence boosts at resolver lookup time.
 
 **Brand-alias problem:** McDonald's = Macca's = マクド = McDo = Mek. These names are co-referential aliases rather than translations. The brand FST entries should encode alias equivalence at build time so the resolver matches any variant.
 
@@ -242,7 +242,7 @@ The penalty applies only to span-level confidence scores. It leaves the emission
 | v0.7.x           | Layer 2 metro expansion, Layer 4 brand FST                        | per-metro / per-brand |
 | v0.8+            | Mannheim grid, Nicaragua landmarks, dependent_street              | scope work            |
 
-**Caveat from the 2026-05-28 Layer 1 eval:** Layer 1 without a retrain, applied as a decoder-only fix on v0.6.1 weights, does not suppress v0.6.1's 1066 dep_locality hallucinations. Hallucinations drop monotonically as the dep_locality penalty is strengthened. The model is so overconfident on predictions induced by synthetic streets, though, that no practical decoder-time bias flips them. **Layer 1 should be deployed together with a v0.6.2 retrain that includes O-tagged street slots in the corpus.** The prior then adds inference-time bias on top of a better-trained base. The infrastructure added during v0.6.x polish supports that retrain. Full eval data: [Layer 1 eval (2026-05-28)](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-05-28-layer-1-morphology-fst.mdx).
+**Caveat from the 2026-05-28 Layer 1 eval:** Layer 1 without a retrain, applied as a decoder-only fix on v0.6.1 weights, doesn't suppress v0.6.1's 1066 dep_locality hallucinations. Hallucinations drop monotonically as the dep_locality penalty is strengthened. The model is so overconfident on predictions induced by synthetic streets, though, that no practical decoder-time bias flips them. **Layer 1 should be deployed together with a v0.6.2 retrain that includes O-tagged street slots in the corpus.** The prior then adds inference-time bias on top of a better-trained base. The infrastructure added during v0.6.x polish supports that retrain. Full eval data: [Layer 1 eval (2026-05-28)](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-05-28-layer-1-morphology-fst.mdx).
 
 The intersection restructure is independent of the layers and can land in any shift.
 

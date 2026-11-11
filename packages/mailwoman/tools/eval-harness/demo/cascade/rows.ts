@@ -21,12 +21,12 @@ export interface SmokeRowExpect {
 	id: number | null
 	/**
 	 * Place name for human cross-checking.
-	 * The eval does not grade it.
+	 * The eval doesn't grade it.
 	 */
 	name: string | null
 	/**
 	 * Placetype for human cross-checking.
-	 * The eval does not grade it.
+	 * The eval doesn't grade it.
 	 */
 	placetype: string | null
 	/**

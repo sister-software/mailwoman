@@ -77,7 +77,7 @@ Properties:
    LOSSLESS upward — every existing label maps to the chars its token occupies). A converter +
    spot-audit rather than a re-alignment.
 6. **Corpus-conversion invariance check**: corpus conversion must produce a BIT-IDENTICAL piece-label
-   stream for rows with no intra-span punctuation (the overwhelming majority) — that is the
+   stream for rows with no intra-span punctuation (the overwhelming majority) — that's the
    regression check for the migration itself.
 7. **Unicode discipline** (consult keeper): char offsets over raw carrying é/ß/accented text are
    only meaningful under one normalization. The converter must assert the raw's normalization

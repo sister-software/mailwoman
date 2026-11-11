@@ -32,7 +32,7 @@ const PAGE_ROOT =
  * It answers a page of at most `pageCap` of them.
  *
  * The features differ by index, so two pages are never byte-identical and the harvest's
- * repeated-page check is not satisfied by the fixture itself.
+ * repeated-page check isn't satisfied by the fixture itself.
  */
 function fakeService(options: { total: number; pageCap?: number; header?: string; footer?: string }) {
 	const asked: number[] = []

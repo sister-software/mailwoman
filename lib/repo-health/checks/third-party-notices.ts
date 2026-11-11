@@ -11,7 +11,7 @@
  *
  *   The check reads the module paths in each notice and compares the three sets.
  *   It verifies that every listed file exists and that each file header records the derivation.
- *   It does not assess how much of a module comes from the original project.
+ *   It doesn't assess how much of a module comes from the original project.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

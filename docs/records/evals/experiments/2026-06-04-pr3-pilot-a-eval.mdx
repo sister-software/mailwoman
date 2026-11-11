@@ -3,7 +3,7 @@
 **Date:** 2026-06-04
 **Model:** `v0.9.0-pilot-selfcond-s42`, step-20000 (early check), fp32 ONNX
 **Baseline:** v0.7.2 (`/tmp/v072-eval/model.onnx`), fp32, same v0.6.0-a0 tokenizer, same 33-label schema
-**Verdict:** **Do not promote. Clean negative result.** Self-conditioning did not prevent the German end-of-string locality collapse.
+**Verdict:** **Do not promote. Clean negative result.** Self-conditioning didn't prevent the German end-of-string locality collapse.
 
 ## What the pilot tested
 
@@ -60,7 +60,7 @@ Bautzner Straße 101, 01099 Dresden
   v072 : locality="Dresden"  street="Bautzner Straße 101"  postcode="01099"
 ```
 
-The pilot drops the **trailing city** (locality → O) once it has committed to `street house [postcode]`. The aux locale head correctly identifies German (locale_acc 0.95–0.97 throughout training) — but a FiLM scale/shift over per-token features never imposes "a locality must still live at the end of this string." A country label does not ensure that the model preserves the city.
+The pilot drops the **trailing city** (locality → O) once it has committed to `street house [postcode]`. The aux locale head correctly identifies German (locale_acc 0.95–0.97 throughout training) — but a FiLM scale/shift over per-token features never imposes "a locality must still live at the end of this string." A country label doesn't ensure that the model preserves the city.
 
 ## US — healthy, the failure is German-specific
 
@@ -99,13 +99,13 @@ Two blind spots let training look healthy to the dashboard while German was brea
 
 ## Decisions made
 
-- **Did not promote** the pilot to `releases.json` / HF. Check failed by ~45pp on the headline metric. The model is not on disk anywhere a consumer would pick it up.
-- **Did not launch the 100k follow-up.** That was conditional on the check passing. At 25.6% (vs a 70% bar), and with the 10k-vs-20k slope flat (German locality pinned — see above), extending to 100k would not cross the bar. Not justified by this data.
-- **Did not launch another from-scratch German pilot autonomously.** This is the 2nd reproduction of the same end-of-string locality collapse via a _new_ mechanism (v0.8.0 continue-train was the 1st), on correct data. The evidence now points away from recipe/conditioning tweaks. The next direction is the operator's call.
+- **Didn't promote** the pilot to `releases.json` / HF. Check failed by ~45pp on the headline metric. The model isn't on disk anywhere a consumer would pick it up.
+- **Didn't launch the 100k follow-up.** That was conditional on the check passing. At 25.6% (vs a 70% bar), and with the 10k-vs-20k slope flat (German locality pinned — see above), extending to 100k wouldn't cross the bar. Not justified by this data.
+- **Didn't launch another from-scratch German pilot autonomously.** This is the 2nd reproduction of the same end-of-string locality collapse via a _new_ mechanism (v0.8.0 continue-train was the 1st), on correct data. The evidence now points away from recipe/conditioning tweaks. The next direction is the operator's call.
 
-## The slope: flat rather than rising — the recipe is not salvageable by more steps
+## The slope: flat rather than rising — the recipe isn't salvageable by more steps
 
-Exported step-10000 and re-ran the same DE evals to test whether German locality is climbing across steps. It is not:
+Exported step-10000 and re-ran the same DE evals to test whether German locality is climbing across steps. It isn't:
 
 | metric                     | step-10000 | step-20000 |    Δ |
 | -------------------------- | ---------: | ---------: | ---: |
@@ -114,7 +114,7 @@ Exported step-10000 and re-ran the same DE evals to test whether German locality
 | Berlin locality            |      34.2% |      34.2% |  0.0 |
 | Sachsen locality           |      16.8% |      16.9% | +0.1 |
 
-A twofold increase in training barely moved German locality — Berlin remained at 34.2% at _both_ checkpoints. The collapse is a **converged failure mode** the model reached by step-10000 rather than an undertraining artifact. A 100k run of this recipe would not cross the 70% bar. So "just train longer" is off the table, and the fix has to be structural.
+A twofold increase in training barely moved German locality — Berlin remained at 34.2% at _both_ checkpoints. The collapse is a **converged failure mode** the model reached by step-10000 rather than an undertraining artifact. A 100k run of this recipe wouldn't cross the 70% bar. So "just train longer" is off the table, and the fix has to be structural.
 
 ## Open questions for the operator
 

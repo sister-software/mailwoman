@@ -78,7 +78,7 @@ export function findNestedIndexes(trackedFiles: readonly string[]): NestedIndex[
 	const indexes: NestedIndex[] = []
 
 	for (const entry of byDirectory.values()) {
-		// A directory holding only index tests has no module to rename, so it is not reported here.
+		// A directory holding only index tests has no module to rename, so it isn't reported here.
 		if (entry.files.every((file) => TEST_SUFFIX.test(file.suffix))) continue
 
 		// A test with the directory's name covers the index when no module of that name sits beside it.

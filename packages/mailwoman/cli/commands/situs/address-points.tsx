@@ -65,7 +65,7 @@ const BBOX_FIELDS = 4
  * `--state` builds one US state from the Overture addresses parquet.
  * `--country` builds one national database for `OvertureNationalDatabaseProvider`.
  *
- * `--oa-csv` builds from OpenAddresses CSVs for states that Overture does not cover.
+ * `--oa-csv` builds from OpenAddresses CSVs for states that Overture doesn't cover.
  *
  * Keys come from the shared normalizer in `@mailwoman/resolver-wof-sqlite`,
  * which the lookup tier also applies at query time.
@@ -139,7 +139,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					: addressPointDatabasePath(`address-points-us-${STATE.toLowerCase()}.db`))
 		)
 
-		// Both imports are dynamic so the published CLI does not require these optional dependencies.
+		// Both imports are dynamic so the published CLI doesn't require these optional dependencies.
 		let pointSchema: typeof import("@mailwoman/resolver-wof-sqlite/address")
 		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
 

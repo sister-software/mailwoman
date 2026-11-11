@@ -135,7 +135,7 @@ export function farmlandScope(value: string | null | undefined): FarmlandScope {
 export const SSURGO_NO_MAPPING_SYMBOLS: ReadonlySet<string> = new Set(["NOTCOM", "NOTPUB"])
 
 /**
- * The lower-case map-unit names that mark a delineation without soil mapping when its symbol does not.
+ * The lower-case map-unit names that mark a delineation without soil mapping when its symbol doesn't.
  *
  * The match uses the whole name, since a prefix could also match a real soil name.
  */
@@ -147,7 +147,7 @@ export const SSURGO_NO_MAPPING_NAMES: ReadonlySet<string> = new Set([
 
 /**
  * The `cointerp.mrulename` of the productivity index this layer stores, kept apart from the capability
- * class because a combination of the two would be a number NRCS does not publish.
+ * class because a combination of the two would be a number NRCS doesn't publish.
  */
 export const NCCPI_V3_RULE_NAME = "NCCPI - National Commodity Crop Productivity Index (Ver 3.0)"
 

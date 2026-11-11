@@ -23,9 +23,9 @@ export const ObligationRefusal = {
 	 */
 	ShareAlike: "share-alike",
 	/**
-	 * An identifier whose obligations this repository has not recorded.
+	 * An identifier whose obligations this repository hasn't recorded.
 	 *
-	 * The repository has not recorded the identifier's obligations.
+	 * The repository hasn't recorded the identifier's obligations.
 	 */
 	Unresolved: "unresolved",
 } as const
@@ -83,7 +83,7 @@ export interface ObligationFinding {
  * Every identifier in `expression` with one of the refused classes.
  *
  * An empty list means no identifier has a refused class.
- * It does not mean the expression was verified against the upstream terms.
+ * It doesn't mean the expression was verified against the upstream terms.
  */
 export function obligationFindings(expression: string, refuse: readonly ObligationRefusal[]): ObligationFinding[] {
 	const findings: ObligationFinding[] = []

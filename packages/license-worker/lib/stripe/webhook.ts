@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Webhook verification uses the official constructor with the untouched raw body and Workers' SubtleCrypto provider.
- *   It allows a five-minute timestamp tolerance and checks two conditions the SDK does not check.
+ *   It allows a five-minute timestamp tolerance and checks two conditions the SDK doesn't check.
  *   The event must be one this worker handles. Its Stripe mode must match this environment.
  *   The refusals have different results. Reject an invalid signature.
- *   Acknowledge and log a verified event this worker does not handle. Stripe retries each non-2xx answer for three days.
+ *   Acknowledge and log a verified event this worker doesn't handle. Stripe retries each non-2xx answer for three days.
  *   A retry cannot change either refusal.
  */
 
@@ -19,7 +19,7 @@ import { stripeClient } from "#stripe/client"
 /**
  * The event types the destination is subscribed to and this worker acts on.
  *
- * A closed dispute is not here: the reconciliation pass reads Stripe's current
+ * A closed dispute isn't here: the reconciliation pass reads Stripe's current
  * dispute state for a disputed license instead.
  */
 export const ACCEPTED_EVENT_TYPES = [

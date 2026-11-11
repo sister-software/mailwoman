@@ -51,7 +51,7 @@ export interface BoroughPair {
 	 *
 	 * The child's tag cannot represent the borough-parent relationship under the pre-PIX2 containment
 	 * approach. the borough-parent relationship at all: `WESTERN_PARENT_OF` gives `dependent_locality`
-	 * exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" is not that.
+	 * exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" isn't that.
 	 */
 	parentTag: ComponentTag
 }
@@ -102,7 +102,7 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 	DE: { children: ["borough", "neighbourhood"], parents: ["locality", "localadmin", "borough"] },
 	// India is the one country where parent aliases are enabled.
 	// The team measured the behavior there.
-	// Indian cities have official renames that WOF has not promoted: it stores Bangalore
+	// Indian cities have official renames that WOF hasn't promoted: it stores Bangalore
 	// while addresses today use Bengaluru (renamed 2014, present as an `eng` variant).
 	// Without expansion the pair exists and never fires — "12 MG Road, Indiranagar,
 	// Bengaluru" emitted no dependent locality at all.
@@ -120,7 +120,7 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 	},
 	// ES and IT need aliases for the reason India did, in their own languages rather than English:
 	// WOF stores `Rome` for a city written `Roma`, and `Cordoba` for one written `Córdoba`.
-	// The fold does not strip accents, so `cordoba` and `córdoba` are different keys
+	// The fold doesn't strip accents, so `cordoba` and `córdoba` are different keys
 	// and the unaccented WOF form would never match a real address.
 	ES: {
 		children: ["borough", "neighbourhood"],
@@ -209,7 +209,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 		// and folding all of them in would bloat the artifact with scripts this Latin
 		// model never sees and surfaces no English-written address uses.
 		// The existing surface-expansion probe (`pair-index-hierarchy-probe.ts`) checks
-		// on `official = 1`; that is right for name-exactness checks but too strict here,
+		// on `official = 1`; that's right for name-exactness checks but too strict here,
 		// because it is exactly the rows a rename leaves behind.
 		// Positive evidence only: an extra parent key can only create a match where the writer used that name.
 		const aliasRows = !expandParentAliases

@@ -15,7 +15,7 @@ import type { CoverageCell } from "#layers/manifest"
  * It has no rows elsewhere.
  *
  * `observedRows` counts the polygons reaching the cell.
- * There is no zero-row cell here and there cannot be one, because a `source_present` layer
+ * There's no zero-row cell here and there cannot be one, because a `source_present` layer
  * publishes no evidence that would let an empty cell be distinguished from unmapped ground.
  *
  * A layer whose absence has meaning (flood's Zone 1) emits its rows from the designated extent instead.
@@ -93,7 +93,7 @@ export function assertNoNegativeClaim(scope: string, cells: ReadonlyArray<Covera
  * Refuse a layer holding no coverage rows at all.
  *
  * Every location would read as unknown.
- * A reader could not distinguish that artifact from unmapped ground.
+ * A reader couldn't distinguish that artifact from unmapped ground.
  *
  * @param indistinguishableFrom The product's own words for what the empty answer would be mistaken for.
  */
@@ -205,11 +205,11 @@ const M2_PER_KM2 = 1_000_000
 
 /**
  * An {@link AreaAgreement} whose witness is stated: either the source published a figure
- * and the gap is against it, or it published none and there is no figure TO agree with.
+ * and the gap is against it, or it published none and there's no figure TO agree with.
  *
  * The no-witness case has its own type rather than a zero.
  * A `relativeGap` of 0 is indistinguishable from a pass.
- * A check that never ran must not read as a pass.
+ * A check that never ran mustn't read as a pass.
  */
 export type AreaAgreementReading =
 	| (AreaAgreement & { witness: "source" })

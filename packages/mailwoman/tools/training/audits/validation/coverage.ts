@@ -6,7 +6,7 @@
  *   Counts the countries the validation and test splits hold, and each country's street-carrying rows.
  *
  *   `evaluate()` reports `val_loss`, `val_rows` and `macro_f1` over a whole split, so a country with no row in it
- *   changes none of them: a run cannot tell a locale it validates well from one it does not validate. A per-locale
+ *   changes none of them: a run cannot tell a locale it validates well from one it doesn't validate. A per-locale
  *   metric is read with its denominator beside it.
  *
  *   The scan reads every row of each split's parquet files through the manifest's row filters, rather than the
@@ -146,7 +146,7 @@ export function expandRequirements(required: readonly CoverageEntry[], admitted:
  * Each declared floor the measured splits miss, with both numbers beside it.
  *
  * A country absent from a split counts as zero rows.
- * A split the report does not hold is its own finding.
+ * A split the report doesn't hold is its own finding.
  */
 export function failingRequirements(splits: Record<string, SplitScan>, required: readonly CoverageEntry[]) {
 	const failures: Array<Record<string, unknown>> = []

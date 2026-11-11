@@ -24,7 +24,7 @@ B produces one.
 
 - **Do not use `enum`, constructor parameter properties, or runtime namespaces.** `erasableSyntaxOnly: true` is enforced repo-wide. Use `const X = {…} as const` plus `type X = (typeof X)[keyof typeof X]`.
 - **Relative imports include explicit `.ts` extensions.** Source runs directly under `node`.
-- **Acronyms capitalize as whole camelCase components**, as in `parseJSON`, `readID` and `WOFPlacetype`, not `parseJson` / `readId`. This rule does not apply to `snake_case` DB columns.
+- **Acronyms capitalize as whole camelCase components**, as in `parseJSON`, `readID` and `WOFPlacetype`, not `parseJson` / `readId`. This rule doesn't apply to `snake_case` DB columns.
 - **Data-root paths go through `@mailwoman/core/utils`**, for example `dataRootPath("wof", "admin-global-priority.db")`. Never hardcode `$MAILWOMAN_DATA_ROOT`. Reference `$MAILWOMAN_DATA_ROOT` in prose and help text.
 - **Databases are read-only artifacts.** This plan opens the admin DB only with `{ readOnly: true }`.
 - **The data structure encodes the meaning of zero.** A rung that was measured and found empty is a present row with a zero count. A rung that was never measured is an absent row. The two must never share a representation.
@@ -44,7 +44,7 @@ B produces one.
 
 **Interfaces:**
 
-- Consumes: `ComponentTag` from `@mailwoman/core/types` — the 26-member union in `core/types/component.ts:30-61`. There is **no** `intersection` tag. The union contains `intersection_a` and `intersection_b`.
+- Consumes: `ComponentTag` from `@mailwoman/core/types` — the 26-member union in `core/types/component.ts:30-61`. There's **no** `intersection` tag. The union contains `intersection_a` and `intersection_b`.
 - Produces: `WOF_PLACETYPES` (a `readonly string[]` of all 34), and a `PLACETYPE_PROJECTION` whose key set equals it. PR B's `placetypesForRung()` reads both.
 
 **Context the implementer needs.** `PLACETYPE_PROJECTION` is the executable copy of the projection
@@ -59,14 +59,14 @@ has 25 keys against a 34-placetype vocabulary, so deepening the gazetteer past t
 `intersection`, `address` → "`intersection`; house_number/street grounding". Neither can map to a
 single `ComponentTag`. An intersection is a two-span construct (`intersection_a` +
 `intersection_b`), and a WOF `address` is a whole address record rather than a span role. Both
-therefore map to `null`, which means they are measured and deliberately uncounted, and comments
+therefore map to `null`, which means they're measured and deliberately uncounted, and comments
 explain why. Do not invent a tag for either.
 
 - [ ] **Step 1: Write the failing completeness test**
 
 Replace the whole `describe("PLACETYPE_PROJECTION", …)` block at `placetype-census.test.ts:62-76`.
 Note the third test: the old file asserted `expect("wing" in PLACETYPE_PROJECTION).toBe(false)`,
-which this task deliberately makes false. The new test uses a placetype that is not in the WOF
+which this task deliberately makes false. The new test uses a placetype that's not in the WOF
 vocabulary instead.
 
 ```typescript
@@ -123,7 +123,7 @@ import { PLACETYPE_PROJECTION, WOF_PLACETYPES, buildPlacetypeCensus, toBaseRates
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest --run mailwoman/gazetteer-pipeline/placetype-census.test.ts`
-Expected: fail. The import of `WOF_PLACETYPES` does not resolve, so the whole file errors before any
+Expected: fail. The import of `WOF_PLACETYPES` doesn't resolve, so the whole file errors before any
 assertion runs.
 
 - [ ] **Step 3: Add the vocabulary constant**
@@ -205,7 +205,7 @@ Then, in the context-only block after `planet: null,`, insert:
 - [ ] **Step 5: Update the module docstring**
 
 The header at `placetype-census.ts:12-17` states that the projection table "also names
-macrohood/microhood/venue/building rows that this source does not stock." Replace that sentence with:
+macrohood/microhood/venue/building rows that this source doesn't stock." Replace that sentence with:
 
 ```
  *   The census counts what the source can actually answer. `admin-global-priority.db` carries nine
@@ -288,7 +288,7 @@ vocabulary in both directions."
 ordering. Rung _membership_ is derived from `PLACETYPE_PROJECTION`, so the scorecard and the census
 always agree about what projects where. `postcode` is deliberately excluded. It is an orthogonal
 channel rather than a containment rung, and including it would make "bottoms out at" meaningless.
-Context-only placetypes project to `null`, so they are always excluded.
+Context-only placetypes project to `null`, so they're always excluded.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -461,7 +461,7 @@ postcode is excluded: an orthogonal channel rather than a containment rung."
 
 1. `spr` has the columns `id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, …`. Every query filters `is_current != 0 AND is_deprecated = 0`, matching `verifyAdmin`.
 2. `ancestors(id, ancestor_id)` is the transitive closure the freeze phase builds. `buildPlacetypeCensus` joins through it, and so does this.
-3. Rows with `id >= OVERTURE_ID_BASE` (8e12) are Overture-backfilled rather than real WOF. They are counted **separately** and never merged into the WOF counts. For the 86-country backfill set, the locality rung and above already contain some Overture data, so those cells compare Overture with itself, and the report must say so.
+3. Rows with `id >= OVERTURE_ID_BASE` (8e12) are Overture-backfilled rather than real WOF. They're counted **separately** and never merged into the WOF counts. For the 86-country backfill set, the locality rung and above already contain some Overture data, so those cells compare Overture with itself, and the report must say so.
 
 **Why the projection happens in SQL.** A parent with both a `borough` child and a `neighbourhood`
 child must count **once** toward `dependent_locality` parent-coverage. The distinct-parent count per
@@ -805,7 +805,7 @@ for (const cc of ["GB", "IE", "JP", "DE"]) {
 
 Expected: `countries: 244`. GB `depLoc nodes 13177`, IE `depLoc nodes 0`, JP `depLoc nodes 7759`,
 DE `depLoc nodes 67162`. These must match the design-stage probe exactly. Sanity-check GB's coverage
-share against the census probe's 33.2% reading. It will not match exactly, because the census
+share against the census probe's 33.2% reading. It won't match exactly, because the census
 measured distinct _surfaces_ and this measures distinct _nodes_. A very different figure means the
 join is wrong. **If the counts do not match the probe, stop and diagnose before Task 4.**
 
@@ -1291,7 +1291,7 @@ starting. The required shape has four parts:
   `null`)
 
 Pastel binds a kebab flag to a lowercase-acronym prop, so option keys must match its derivation.
-`--out`, `--source` and `--floor` are all single words, so this rule does not affect them.
+`--out`, `--source` and `--floor` are all single words, so this rule doesn't affect them.
 
 - [ ] **Step 1: Create the command**
 
@@ -1408,7 +1408,7 @@ export default GazetteerGranularity
 ```
 
 Only `dirname` is imported from `node:path`. The command builds no paths and only creates the output
-file's parent directory. Do not add imports the file does not use, because oxlint flags them.
+file's parent directory. Do not add imports the file doesn't use, because oxlint flags them.
 
 - [ ] **Step 2: Run the command**
 
@@ -1416,7 +1416,7 @@ Run: `yarn mailwoman gazetteer granularity --out /tmp/scorecard-smoke.md`
 Expected: exit 0, and the summary reports 244 countries measured with a `bottoms out at`
 distribution dominated by `locality`.
 
-If `yarn mailwoman` is not the invocation this repo uses, check `package.json`'s `bin`/scripts and
+If `yarn mailwoman` isn't the invocation this repo uses, check `package.json`'s `bin`/scripts and
 the sibling command's usage before improvising.
 
 - [ ] **Step 3: Verify the report against the design-stage probe**
@@ -1470,4 +1470,4 @@ Before opening the PR:
 - [ ] The committed scorecard's GB/DE/JP row counts match the spec's Finding 1 and Finding 3 tables exactly.
 - [ ] IE and NZ render `0` at `dependent_locality`, never `—`.
 - [ ] `rg -n "/mnt/" mailwoman/gazetteer-pipeline/granularity*.ts mailwoman/commands/gazetteer/granularity.tsx` returns no match.
-- [ ] `mailwoman gazetteer census --country gb` still succeeds. PR A widened the projection map, and this checks that it did not break the command.
+- [ ] `mailwoman gazetteer census --country gb` still succeeds. PR A widened the projection map, and this checks that it didn't break the command.

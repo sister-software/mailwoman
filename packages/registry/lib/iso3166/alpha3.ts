@@ -31,7 +31,7 @@ export function alpha3Membership(): BitsetView {
  * `AUS` is one.
  * `aus` and `AU` are not.
  *
- * A former code such as `DDR` is not: the records artifact still describes it.
+ * A former code such as `DDR` isn't: the records artifact still describes it.
  */
 export function isCountryCodeAlpha3(input: string): input is ISO.CountryCode_3166_1_Alpha3 {
 	return alpha3Membership().test(encode3(input))

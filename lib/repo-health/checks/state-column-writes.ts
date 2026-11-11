@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Reports an update of a state column that does not compare the state it moves from.
+ * @file Reports an update of a state column that doesn't compare the state it moves from.
  *
  *   A column whose name ends in `_state` stores a state machine's state, such as the license ledger's
  *   `license_state` and `email_state`. A step is decided from the state its caller read, so its write applies only
@@ -34,7 +34,7 @@ const SQL_UPDATE = /\bUPDATE\s+\w+\s+SET\s+([\s\S]*?)(?:\bWHERE\b([\s\S]*))?$/iu
 const SQL_ASSIGNED_STATE = /\b([a-z][a-z0-9_]*_state)\s*=/giu
 
 /**
- * One write of a state column that does not compare a state.
+ * One write of a state column that doesn't compare a state.
  */
 export interface UncomparedStateWrite {
 	line: number
@@ -121,7 +121,7 @@ function sqlShapeOf(node: ts.StringLiteralLike | ts.TemplateExpression): string 
 }
 
 /**
- * Every write of a `_state` column in one source that does not compare a `_state` column.
+ * Every write of a `_state` column in one source that doesn't compare a `_state` column.
  */
 export function uncomparedStateWrites(source: ts.SourceFile): UncomparedStateWrite[] {
 	const found: UncomparedStateWrite[] = []

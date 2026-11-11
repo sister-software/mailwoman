@@ -43,7 +43,7 @@ export interface ParsedSubsidiary {
 export interface ParsedExhibit21 {
 	subsidiaries: ParsedSubsidiary[]
 	/**
-	 * Rows/lines this parser recognized as an entry but could not confidently reduce to a subsidiary name.
+	 * Rows/lines this parser recognized as an entry but couldn't confidently reduce to a subsidiary name.
 	 *
 	 * Decision 6 counts and drops them.
 	 * Criterion 3 forbids throwing.
@@ -110,7 +110,7 @@ function headerColumnMapping(
  *
  * Distinctness is the separating condition: a jurisdiction column repeats
  * (Charter 0.07, Comcast 0.05, Uniti 0.13, T-Mobile 0.15, Lumen 0.26) while a second
- * name column does not (IDT 1.00), and Charter's `"Delaware limited liability company"`
+ * name column doesn't (IDT 1.00), and Charter's `"Delaware limited liability company"`
  * makes all 135 values include a designation on a true jurisdiction list.
  */
 const MINIMUM_NAME_OVER_NAME_ROWS = 4
@@ -126,7 +126,7 @@ const DESIGNATED_SECOND_VALUE_RATIO = 0.5
  * More than 70% of the second values must be distinct.
  *
  * A jurisdiction column repeats (Charter 0.07, Comcast 0.05, Uniti 0.13, T-Mobile 0.15, Lumen 0.26)
- * while a second name column does not (IDT 1.00), and dropping this condition
+ * while a second name column doesn't (IDT 1.00), and dropping this condition
  * loses all 135 Charter subsidiaries.
  */
 const DISTINCT_SECOND_VALUE_RATIO = 0.7
@@ -445,7 +445,7 @@ const TITLE_LINE_PATTERNS = [
 /**
  * A candidate line longer than this number of whitespace-separated tokens is abstained on
  * rather than split, because the longest legitimate name in the real-filing corpus
- * is 8 tokens and a preamble sentence is not a name at all.
+ * is 8 tokens and a preamble sentence isn't a name at all.
  */
 const MAX_ENTITY_NAME_WORDS = 12
 

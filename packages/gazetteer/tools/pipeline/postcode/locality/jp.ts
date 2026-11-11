@@ -6,7 +6,7 @@
  *   Build a CJK postcode → WOF locality table by authoritative name match.
  *
  *   WOF admin geometry in CJK (JP/KR/TW) is point-based at the municipality/locality level, so the
- *   European coordinate-first point-in-polygon build in build-postcode-locality.ts does not apply.
+ *   European coordinate-first point-in-polygon build in build-postcode-locality.ts doesn't apply.
  *   This is the CJK substitute:
  *
  *   Postcode --(national postal authority)--> municipality name (romanized) postcode --(GeoNames)-->
@@ -27,7 +27,7 @@
  *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db\
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-jp.db
  *
- *   With no polygons there is no point-in-polygon step, so matching is name plus haversine
+ *   With no polygons there's no point-in-polygon step, so matching is name plus haversine
  *   proximity through `@mailwoman/spatial`'s `haversine` (asin form, matching Python). The
  *   output is written directly to `--output` as a full single-country rebuild.
  */

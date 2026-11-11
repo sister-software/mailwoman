@@ -28,7 +28,7 @@ await runIngestChunkScript({
 				exportPath: requiredArgument("zoning ingest-chunk", "export", values.export ?? null),
 				...(values["object-id-from"] ? { objectIDFrom: Number(values["object-id-from"]) } : {}),
 				...(values["object-id-to"] ? { objectIDTo: Number(values["object-id-to"]) } : {}),
-				// A range's count is not knowable up front: the source reports only the layer total,
+				// A range's count isn't knowable up front: the source reports only the layer total,
 				// so the parent checks the sum against the whole file.
 				declaredFeatureCount: 0,
 			}),

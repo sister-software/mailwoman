@@ -555,9 +555,9 @@ async function measure(
 /**
  * Every pinned artifact whose observed identity differs, with both values included.
  *
- * A measurement not taken is not a deviation, because a definition registering no
+ * A measurement not taken isn't a deviation, because a definition registering no
  * absence check leaves the absence pins unmeasured and reporting that would turn
- * "this ruler did not ask" into "the artifact moved".
+ * "this ruler didn't ask" into "the artifact moved".
  */
 function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts): string[] {
 	const deviations: string[] = []
@@ -592,7 +592,7 @@ function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts
  * with the registered code and mechanism.
  *
  * This is the only instrument that builds its own pipeline.
- * The probe runner grades the answer but does not return the query-kind verdict attached to the marker.
+ * The probe runner grades the answer but doesn't return the query-kind verdict attached to the marker.
  * The definition supplies all data this check reads.
  */
 async function measureMarker(

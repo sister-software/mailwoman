@@ -7,8 +7,8 @@
  *
  *   The symbol precheck hook runs only on the Write and Edit tools, so this guard steers file edits
  *   away from Bash. It also refuses Modal launches that a shell signal could cancel. The guard is an
- *   allowlist because the shell accepts aliases, quoting, redirection, and heredocs. A denylist cannot cover every form. It does
- *   not sandbox anything: an admitted program such as `node script.js` can still write any file.
+ *   allowlist because the shell accepts aliases, quoting, redirection, and heredocs. A denylist cannot cover every form. It doesn't
+ *   sandbox anything: an admitted program such as `node script.js` can still write any file.
  *
  *   Quoted text and heredoc bodies are removed before any decision, because their words are data.
  */
@@ -96,7 +96,7 @@ const ADMITTED = new Set([
 	"gh",
 	"git",
 	// `mkdir` creates no file content and cannot overwrite a file.
-	// Git does not track empty directories.
+	// Git doesn't track empty directories.
 	"mkdir",
 	// `cargo` builds and tests the Rust crates under `packages/mtf`.
 	// Its outputs are compiled from the crate sources into `target/`.
@@ -170,7 +170,7 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
  *
  * Only {@link REMOVER} gets this exemption.
  * The hook can remove these paths safely, but a hand-written file such as
- * `out/<subpath>.d.ts` would stand in for source that does not exist.
+ * `out/<subpath>.d.ts` would stand in for source that doesn't exist.
  */
 const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules|scratchpad|\.claude\/state)(?:\/|$)|\.tsbuildinfo$/u
 
@@ -275,7 +275,7 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 		// The stash stack is shared by every worktree, so a bare drop could remove another session's entry.
 		//
 		// `git apply` stays admitted.
-		// A patch fails when its context does not match, rather than overwriting files.
+		// A patch fails when its context doesn't match, rather than overwriting files.
 		// It can also apply a large mechanical change exactly.
 		pattern: /(?:^|\s)(?:restore\b|stash\s+(?!list\b|show\b|drop\s+stash@\{\d+\}\s*$)|checkout\s+[^\n]*--\s)/u,
 		because: "this `git` subcommand overwrites the working tree",
@@ -339,7 +339,7 @@ function withoutQuotedText(command: string): string {
 		command
 			.replaceAll(/<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1[\s\S]*?^\t*\2$/gmu, " HEREDOC ")
 			// A placeholder stays glued to a preceding character, so `path="$PWD/bin" node x.ts` keeps
-			// one assignment word. The glued character must not be a quote, or it would consume an
+			// one assignment word. The glued character mustn't be a quote, or it would consume an
 			// opening delimiter and mispair every later quote.
 			.replaceAll(/([^\s'"`]?)(?:'[^']*'|"(?:[^"\\]|\\.)*"|`[^`]*`)/gu, (_match, glued: string) =>
 				glued ? `${glued}QUOTED` : " QUOTED "
@@ -358,10 +358,10 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 	const expanded = stripped
 		// A braced expansion stays glued to its word, so `FOO=${home}/data` remains one assignment.
 		.replaceAll(/\$\{[^}]*\}/gu, "$VAR")
-		// Redirects are removed so `2>&1` does not split on `&`. Their targets are checked later
+		// Redirects are removed so `2>&1` doesn't split on `&`. Their targets are checked later
 		// against the unmasked text.
 		.replaceAll(REDIRECT, " ")
-		// An opener starts a new command. A closer does not. Otherwise `comm -12 <(sort a) b`
+		// An opener starts a new command. A closer doesn't. Otherwise `comm -12 <(sort a) b`
 		// would produce a segment headed by the filename `b`.
 		//
 		// A brace opens a group only when whitespace follows it. It closes one after whitespace or a separator, as in bash.
@@ -432,7 +432,7 @@ function expandHome(path: string): string {
 /**
  * Returns the absolute path of a target, or null when the target is a placeholder or a variable.
  *
- * `resolvePath` normalizes `..`, so `out/../lib` does not count as derived output.
+ * `resolvePath` normalizes `..`, so `out/../lib` doesn't count as derived output.
  */
 function resolveTarget(raw: string, cwd: string): string | null {
 	if (!raw || raw === "QUOTED" || raw === "HEREDOC" || raw.includes("$")) return null
@@ -461,7 +461,7 @@ function insideRepository(raw: string, repoRoot: string, cwd: string): boolean {
  * Returns true when a path's part below the repository root matches {@link DERIVED_PATH}.
  *
  * The match reads the path relative to the root, so a checkout that itself sits under
- * a `scratchpad/` or `out/` directory does not make every file in it derived.
+ * a `scratchpad/` or `out/` directory doesn't make every file in it derived.
  * An unreadable target never counts as derived.
  */
 function isDerivedPath(raw: string, repoRoot: string, cwd: string): boolean {
@@ -499,7 +499,7 @@ export function judgeCommand(command: string, repoRoot: string, sessionCwd: stri
 	const cwd = workingDirectory(stripped, sessionCwd)
 	const segments = commandSegments(stripped)
 
-	// Python is not part of this toolchain, whatever it would do.
+	// Python isn't part of this toolchain, whatever it would do.
 	// This runs first so its message is the one shown.
 	if (segments.some(({ head }) => PYTHON_HEAD.test(head))) {
 		return { reason: "Python is not allowed.", guidance: "Use TypeScript via Node" }

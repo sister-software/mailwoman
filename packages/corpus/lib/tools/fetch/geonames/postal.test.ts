@@ -2,10 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `fetchGeonamesPostal` — and specifically what it does with a country GeoNames does not publish.
+ * @file `fetchGeonamesPostal` — and specifically what it does with a country GeoNames doesn't publish.
  *
  *   This file tests that behavior. GeoNames covers ~80 countries rather than all of them, so a caller planning a postcode
- *   recipe output needs "this country does not exist upstream" kept apart from "the transfer failed". The first is an
+ *   recipe output needs "this country doesn't exist upstream" kept apart from "the transfer failed". The first is an
  *   acquisition question and the second is a retry. Venezuela is the live instance: it 404s and the country the
  *   gauntlet evidence for the `«locality» «postcode»` defect comes from.
  */
@@ -45,7 +45,7 @@ async function readManifest(): Promise<{
 beforeAll(async () => {
 	server = createServer((req, res) => {
 		// PT is published.
-		// VE is not.
+		// VE isn't.
 		// Anything else is a 500, so a transfer failure stays distinguishable from both.
 		if (req.url === "/PT.zip") {
 			res.writeHead(200)
@@ -56,7 +56,7 @@ beforeAll(async () => {
 		} else if (req.url === "/v404/ZZ.zip") {
 			// The regression route: a 500 whose URL contains the substring "404".
 			// CI drew an ephemeral server port containing "404" and the prose-matching classifier
-			// filed a transfer failure as "GeoNames does not publish this country".
+			// filed a transfer failure as "GeoNames doesn't publish this country".
 			// The path plants the same substring deterministically.
 			res.writeHead(500)
 			res.end("boom")
@@ -93,14 +93,14 @@ describe("fetchGeonamesPostal", () => {
 			countries: ["pt", "ve"],
 		})
 
-		// One absent country must not cost the run — the whole point of naming several at once.
+		// One absent country mustn't cost the run — the whole point of naming several at once.
 		expect(summary.fetched).toBe(1)
 		expect(summary.failed).toBe(1)
 		expect(summary.failedCodes).toEqual(["VE"])
 
 		const manifest = await readManifest()
 
-		// The durable half: a later reader learns VE is not published without spending the fetch to rediscover it.
+		// The durable half: a later reader learns VE isn't published without spending the fetch to rediscover it.
 		expect(manifest.unavailable).toEqual(["VE"])
 		expect(manifest.files).toHaveLength(1)
 

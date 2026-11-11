@@ -9,7 +9,7 @@ Last updated: September 21, 2026.
 
 Sister Software is currently operated by **Nirrus LLC**, a Delaware limited liability company.
 
-Mailwoman is self-hosted software. We do not operate a hosted geocoding service, and ordinary use of Mailwoman does not send your addresses, coordinates, queries, customer records, or other workload data to us.
+Mailwoman is self-hosted software. We do not operate a hosted geocoding service, and ordinary use of Mailwoman doesn't send your addresses, coordinates, queries, customer records, or other workload data to us.
 
 ## Your workload stays on your infrastructure
 
@@ -45,13 +45,13 @@ A third-party network provider or content-delivery network in front of any of th
 
 The records Mailwoman is trained on are separate from anything you send us, and this section is about the former.
 
-We obtain address records from public and third-party sources to build training corpora and the pretrained models we publish. Those records are not customer queries. Ordinary self-hosted use transmits no query to us, so no customer query can reach a corpus. That fact does not establish that a corpus contains no personal data, so this section states the two claims separately.
+We obtain address records from public and third-party sources to build training corpora and the pretrained models we publish. Those records are not customer queries. Ordinary self-hosted use transmits no query to us, so no customer query can reach a corpus. That fact doesn't establish that a corpus contains no personal data, so this section states the two claims separately.
 
 The register of candidate sources is public, at `packages/corpus/data/address-source-register.json`. It holds 426 sources. As of this update, the register records a reviewed license decision for 54 of them and marks twenty-nine of the 426 as eligible for ingest. Eligibility permits a future corpus to draw on a source, and it describes that source's terms and fields rather than the contents of any corpus already built. No source in that register has contributed to a published model.
 
-**A corpus we build from now on contains the addresses of organizations and no address of an identifiable natural person.** We decided that on 2026-09-30 and the register enforces it. Some candidate registers, such as the French SIRENE enterprise register, contain records about sole traders that identify a natural person at a business address. That class of source is excluded rather than analyzed: we have not completed a purpose, category, role, lawful-basis, retention, and individual-rights analysis for it, and this Policy does not assert one.
+**A corpus we build from now on contains the addresses of organizations and no address of an identifiable natural person.** We decided that on 2026-09-30 and the register enforces it. Some candidate registers, such as the French SIRENE enterprise register, contain records about sole traders that identify a natural person at a business address. That class of source is excluded rather than analyzed: we've not completed a purpose, category, role, lawful-basis, retention, and individual-rights analysis for it, and this Policy doesn't assert one.
 
-The ingest process enforces that exclusion. Each source in the register has a personal-data review with one of three outcomes: a review that found no record about an identifiable person, a review that found such records, or a completed analysis that states where it is recorded. The first and third outcomes admit a source for ingest. The second refuses it, and so does a missing review, because an unexamined publication has not been found clear. 394 of the 426 sources are refused on that ground today: 15 have a review that found records about identifiable people, and 379 have no review at all. One source has a completed analysis: the Italian public-contracts database. Its suppliers include identified individuals, and its published addresses all belong to public bodies. This rule keeps a source carrying personal addresses out of any corpus built from now on. It makes no statement about a model already published.
+The ingest process enforces that exclusion. Each source in the register has a personal-data review with one of three outcomes: a review that found no record about an identifiable person, a review that found such records, or a completed analysis that states where it is recorded. The first and third outcomes admit a source for ingest. The second refuses it, and so does a missing review, because an unexamined publication hasn't been found clear. 394 of the 426 sources are refused on that ground today: 15 have a review that found records about identifiable people, and 379 have no review at all. One source has a completed analysis: the Italian public-contracts database. Its suppliers include identified individuals, and its published addresses all belong to public bodies. This rule keeps a source carrying personal addresses out of any corpus built from now on. It makes no statement about a model already published.
 
 We cannot at present recover an individual record from the trained weights of a published model trained
 on address records. We make no claim that the weights are anonymous within the meaning of any particular
@@ -104,7 +104,7 @@ We do not use tracking cookies or behavioral advertising cookies.
 
 If you participate in a design-partner program, support engagement, evaluation, or other commercial project, you may choose to provide data to us directly.
 
-That is separate from ordinary Mailwoman operation.
+That's separate from ordinary Mailwoman operation.
 
 Any customer data provided for such an engagement remains subject to the applicable agreement. We do not acquire ownership of customer address lists, subscriber records, network data, or other business information merely because it is supplied to us for a project.
 
@@ -147,7 +147,7 @@ Those providers receive only the information necessary to provide the relevant s
 
 We retain information provided directly to us only for as long as reasonably necessary for the purpose for which it was collected or as required for legal, accounting, security, or contractual reasons.
 
-Mailwoman workload data processed entirely on your infrastructure is not subject to our retention practices because we never receive it.
+Mailwoman workload data processed entirely on your infrastructure isn't subject to our retention practices because we never receive it.
 
 ## Your rights
 

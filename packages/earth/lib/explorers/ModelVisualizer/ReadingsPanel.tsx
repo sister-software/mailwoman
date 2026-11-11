@@ -47,7 +47,7 @@ const CHANNEL_FAMILIES: Record<string, readonly string[]> = {
 /**
  * The index of the `country_ambiguous` flag in the country channel's per-piece feature.
  *
- * A hit flagged ambiguous, such as a surname that is also a country, is no disagreement under another label.
+ * A hit flagged ambiguous, such as a surname that's also a country, is no disagreement under another label.
  */
 const COUNTRY_AMBIGUOUS_FEATURE = 1
 

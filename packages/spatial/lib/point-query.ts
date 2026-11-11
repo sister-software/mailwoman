@@ -8,7 +8,7 @@
  *   Who's On First id beside ordinary addresses. {@link parsePointQuery} reads the whole text as one of those shapes or
  *   answers `null`, so a caller sends only an address to the classifier. It reads text and decodes no cell: decoding a cell
  *   to a coordinate belongs to the module that owns the format, and the H3 reader loads a WebAssembly binary
- *   that a text test must not pay for.
+ *   that a text test mustn't pay for.
  */
 
 import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
@@ -212,7 +212,7 @@ function parseCoordinatePair(text: string): PointQuery | null {
  * degrees-minutes-seconds, `geo:` or Google Maps form, a full or short plus code,
  * an H3 cell, a prefixed geohash, or a Who's On First id.
  *
- * Returns `null` for text that is none of these.
+ * Returns `null` for text that's none of these.
  * Every address is such a text.
  *
  * A coordinate outside the valid range in both axis orders is also `null`, never clamped.

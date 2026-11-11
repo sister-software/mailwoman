@@ -128,7 +128,7 @@ describe("readWOFSourceIdentity", () => {
 		const path = TMP.path("stale-sidecar.db")
 		await writeLocalTextFile("one", path)
 		await writeLocalTextFile("00000000000000000000000000000000  stale-sidecar.db\n", `${path}.md5`)
-		// Sidecar predates the source: the guard must not trust it.
+		// Sidecar predates the source: the guard mustn't trust it.
 		await setTimestamps(`${path}.md5`, new Date(1000), new Date(1000))
 
 		expect((await readWOFSourceIdentity(path)).md5).toBe(await md5File(path))
@@ -211,8 +211,8 @@ describe("fstStaleReason", () => {
 	})
 
 	it("distinguishes 'no stamp at all' from 'stamp without a checksum'", async () => {
-		// The meaning-of-zero rule, applied to the stamp: these are different states and the operator
-		// does different things about them (rebuild vs. rebuild-to-stamp), so they must not share prose.
+		// The meaning-of-zero rule, applied to the stamp: these are different states and the operator does
+		// different things about them (rebuild vs. rebuild-to-stamp), so they mustn't share prose.
 		expect(fstStaleReason(await peekFSTStampFields(await writeFST("bare.bin")), expected)).toBe(
 			"carries no build stamp"
 		)

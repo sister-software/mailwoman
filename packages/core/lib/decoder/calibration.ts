@@ -5,7 +5,7 @@
  *
  *   Opt-in confidence calibration for decoded spans.
  *
- *   The decoder emits a per-span `confidence` that is the mean of the span's per-token softmax
+ *   The decoder emits a per-span `confidence` that's the mean of the span's per-token softmax
  *   probabilities (`build-tree.ts`). Softmax probabilities are not calibrated. A CE-trained model
  *   is systematically over-confident or under-confident in bands. An isotonic-regression calibrator
  *   is fitted on a held-out OpenAddresses + corpus set

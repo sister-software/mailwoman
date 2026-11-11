@@ -44,7 +44,7 @@
  * | `…address.0003200000134593` | `4` | (empty) | `01` | `4-01` |
  *
  * So the extension joins the number with no separator and the second extension follows a hyphen.
- * 305,542 of 345,309 addresses in the prefix write an `addressNumberExtension` that is present and
+ * 305,542 of 345,309 addresses in the prefix write an `addressNumberExtension` that's present and
  * empty, spelled `<ad:designator/>`. That states an address with no extension. That condition differs
  * from void.
  *
@@ -237,7 +237,7 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 				// The published document writes 300,318 referenced features ahead of its first address
 				// and held 0 of 345,309 measured, so the driver's holding list stays empty here.
 				// It exists because only the document's own ordering separates a reference
-				// that has not arrived yet from one the publisher never wrote.
+				// that's not arrived yet from one the publisher never wrote.
 				for await (const row of streamInspireRows<ReferencedValue>({
 					chunks: documentChunks(documentPath),
 					componentElements: COMPONENT_TYPES,
@@ -258,10 +258,10 @@ export function createNLKadasterAdapter(): CorpusAdapter {
 
 /**
  * One address's row, `null` when it holds too little to render, or `"deferred"`
- * when a reference it states is not indexed yet.
+ * when a reference it states isn't indexed yet.
  *
  * With `final` set the document has ended, so an unresolved reference is a value the reader
- * asked for and could not read, and it raises rather than rendering the address without it.
+ * asked for and couldn't read, and it raises rather than rendering the address without it.
  */
 function composeRow(
 	address: MarkupElement,

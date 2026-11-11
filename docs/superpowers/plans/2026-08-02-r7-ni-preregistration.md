@@ -7,7 +7,7 @@ then because "the pair parent needs post towns. An outcode→post-town table is 
 
 The post-town framing came from the GB source: PPD's parent column is the post town, so an NI
 extension seemed to require the same field for NI. Royal Mail licenses that field rather than publishing it.
-But R5 established that the parent side does not have to come from a postal register at all. The US
+But R5 established that the parent side doesn't have to come from a postal register at all. The US
 instance takes WOF localities as parents and passes every bar. The same rule applied here: WOF's NI
 neighborhoods hang off **Belfast, Newtownabbey, Londonderry, Lisburn** — localities that are the
 post towns for those addresses. No licensed table is needed. The deferral was reasoning from GB's
@@ -44,11 +44,11 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
   any that collapse — an artifact whose count silently differs from its source's is how a fold bug
   hides.
 
-## Ireland stays open, and the reason is not data
+## Ireland stays open, and the reason isn't data
 
 The Republic needs a **carrier package** (`en-IE`) before any artifact can reach it. The pair index
 is hard-blocked on the resolved locale's country, so an IE artifact inside en-GB would never fire.
-That is a packaging decision plus the still-open license survey (Tailte Éireann / logainm) rather than a
+That's a packaging decision plus the still-open license survey (Tailte Éireann / logainm) rather than a
 rung that can be executed off the shelf like this one.
 
 ## The readings

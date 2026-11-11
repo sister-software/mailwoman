@@ -132,7 +132,7 @@ provenance vocabulary. A layer database already embeds `layer_manifest` (`source
 ## The address-source register
 
 `data/address-source-register.json`, read through `@mailwoman/corpus/source-register`, records which
-jurisdictions exist, what research has resolved for each, and what is known about every source's
+jurisdictions exist, what research has resolved for each, and what's known about every source's
 terms. It is a backlog made checkable: **twenty-nine rows of 426 are ingest-eligible today**, and
 `ingestEligibilityProblems()` answers for the other 397 with the reasons rather than a bare `false`.
 
@@ -149,7 +149,7 @@ and the three fields no row resolved.
 
 The research pass recorded eight global discovery lookups once per jurisdiction — 2,000 of the
 2,389 rows it produced, collapsing to eight distinct bodies. They name a lookup to perform rather
-than a national source, so they are this procedure and not register rows. Work them in order for a
+than a national source, so they're this procedure and not register rows. Work them in order for a
 jurisdiction the register calls `unexamined`, and promote what you resolve into a source row.
 
 | Sector               | Lookup                                                                                                                                         |

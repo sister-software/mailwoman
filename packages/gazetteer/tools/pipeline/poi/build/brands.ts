@@ -229,7 +229,7 @@ export interface BuildBrandTableOptions {
 /**
  * Builds a {@link POIBrandTable} in memory: read (or take injected) rows →
  * {@link aggregateBrands} → wrap with the source layer's manifest identity.
- * Does not write anything — see {@link writeBrandTable}.
+ * Doesn't write anything — see {@link writeBrandTable}.
  */
 export async function buildBrandTable(opts: BuildBrandTableOptions = {}): Promise<POIBrandTable> {
 	if (!opts.rows && !opts.dbPath) {

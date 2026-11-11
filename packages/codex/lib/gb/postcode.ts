@@ -14,13 +14,13 @@
  *       such as `SW1A`. The **inward code** contains the sector and unit in the final three characters, such as `1AA`.
  *       Royal Mail sorts the outward
  *       code to a delivery office. It then sorts the inward code to a walk.
- *   - It does **not align with administrative geography**. A postcode area is a Royal Mail routing construct derived
- *       from a sorting town such as south-west London (`SW`) or Edinburgh (`EH`). It does not identify a county or
- *       constituent country. A UK postcode does not identify a county as a French code postal identifies a département.
+ *   - It **doesn't align with administrative geography**. A postcode area is a Royal Mail routing construct derived
+ *       from a sorting town such as south-west London (`SW`) or Edinburgh (`EH`). It doesn't identify a county or
+ *       constituent country. A UK postcode doesn't identify a county as a French code postal identifies a département.
  *       `postcode-area.ts` maps postcodes to countries because they have no administrative hierarchy to inherit.
  *
  *   The hard work here is validating the shape and normalizing its internal space. It also separates outward from
- *   inward codes. The implementation does not use a prefix-to-administration lookup.
+ *   inward codes. The implementation doesn't use a prefix-to-administration lookup.
  */
 
 import type { Tagged } from "type-fest"
@@ -29,7 +29,7 @@ import type { Tagged } from "type-fest"
  * A UK postcode: variable-length alphanumeric, outward + inward (`SW1A 1AA`, `M1 1AE`).
  *
  * The canonical form has exactly one space before the final three characters.
- * Unlike a US/DE/FR postcode, the shape is not a fixed-width numeric string —
+ * Unlike a US/DE/FR postcode, the shape isn't a fixed-width numeric string —
  * see {@link UK_POSTCODE_PATTERN}.
  *
  * @category Postal
@@ -62,7 +62,7 @@ export const UK_POSTCODE_PATTERN = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i
  * It ensures exactly one space before the final three characters (the inward code).
  *
  * `sw1a1aa` → `SW1A 1AA`, `M11AE` → `M1 1AE`, `b33 8th` → `B33 8TH`.
- * Returns null if the result is not a valid postcode.
+ * Returns null if the result isn't a valid postcode.
  */
 export function normalizeUkPostcode(raw: unknown): Postcode | null {
 	if (typeof raw !== "string") return null
@@ -115,7 +115,7 @@ export function inwardCode(pc: unknown): string | null {
  * region derived from a sorting town: `SW1A 1AA` → `SW`, `M1 1AE` → `M`, `B33 8TH` → `B`.
  *
  * This is the key into `postcode-area.ts`'s area→country map.
- * Null if the input is not a valid postcode.
+ * Null if the input isn't a valid postcode.
  */
 export function postcodeArea(pc: unknown): string | null {
 	const outward = outwardCode(pc)

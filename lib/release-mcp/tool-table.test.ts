@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The release tool table over a synthetic registry: which operations become tools, what they are called, what a
+ * @file The release tool table over a synthetic registry: which operations become tools, what they're called, what a
  *   writing tool gains and what a call answers.
  */
 

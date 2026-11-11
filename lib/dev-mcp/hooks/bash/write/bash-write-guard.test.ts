@@ -169,7 +169,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["git staging", `git add -A && git status --porcelain`],
 		// A patch is an artifact the author produced and can dry-run.
-		// It preserves the target when the context does not match.
+		// It preserves the target when the context doesn't match.
 		// It also applies a bulk deletion without requiring every removed line to be retyped.
 		["applying a patch", `git apply /tmp/prune.patch`],
 		["dry-running a patch", `git apply --check /tmp/prune.patch`],
@@ -193,7 +193,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["dropping a named stash entry further down the stack", `git stash drop stash@{12}`],
 		// A brace glued to a word is part of that word. The splitter would read each example as two segments, with the second
 		// The next segment started with a digit. The guard refused the read-only command with
-		// "`1` is not on the admitted command list".
+		// "`1` isn't on the admitted command list".
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["a reflog selector", `git rev-parse HEAD@{1}`],
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.

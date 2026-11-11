@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A declared file with no artifact behind it is reported rather than silently skipped and is not
+ *   A declared file with no artifact behind it is reported rather than silently skipped and isn't
  *   fatal, because the data root legitimately lacks some declared siblings.
  */
 
@@ -105,7 +105,7 @@ for (const locale of locales) {
 
 	const manifest = await readPackageJSON(manifestPath)
 	// `weightsCachePackageDir` defines the npm-prefix layout used by every caller.
-	// The target directory does not exist yet, so there is no path to resolve.
+	// The target directory doesn't exist yet, so there's no path to resolve.
 	const packageDirectory = weightsCachePackageDir(outRoot, locale)
 
 	// The manifest's `files` field may contain concrete siblings and pattern entries.

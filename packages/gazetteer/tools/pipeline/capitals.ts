@@ -15,7 +15,7 @@
  *   capital) stay out. `countryInfo.txt`, the same source's own catalog, grades the extraction: a
  *   catalog country whose dump yields no `pplc` row. It also records a catalog capital name that matches none
  *   of the extracted rows' names, are both recorded in the coverage block rather than silently
- *   absorbed (the partial-reader rule: a reference that could not measure a country must say so).
+ *   absorbed (the partial-reader rule: a reference that couldn't measure a country must say so).
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -69,14 +69,14 @@ export interface CapitalsReference {
 		admin1: number
 		/**
 		 * Catalog countries with no dump file on disk.
-		 * This reference could not measure them.
+		 * This reference couldn't measure them.
 		 */
 		missing_dumps: string[]
 		/**
-		 * Catalog countries whose `<CC>.txt` is not a 19-column gazetteer dump
+		 * Catalog countries whose `<CC>.txt` isn't a 19-column gazetteer dump
 		 * (GeoNames' postal exports share the basename).
 		 *
-		 * A wrong-format file cannot answer the capital question, so it does not count as scanned.
+		 * A wrong-format file cannot answer the capital question, so it doesn't count as scanned.
 		 * A "scanned, found none" result would falsely claim the reader had complete evidence.
 		 */
 		wrong_format: string[]
@@ -253,7 +253,7 @@ export async function buildCapitalsReference(options: BuildCapitalsOptions): Pro
 
 		if (!nationals.length) {
 			// A stated capital with no pplc row is a gap.
-			// A catalog row with no capital (AQ, BV) is not.
+			// A catalog row with no capital (AQ, BV) isn't.
 			if (capital) {
 				missingNational.push(country)
 			}

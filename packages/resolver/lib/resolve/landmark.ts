@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Answers a query that is a place's name, with no street or postcode, from the landmark layer.
+ *   Answers a query that's a place's name, with no street or postcode, from the landmark layer.
  *
  *   The place of that name with the most Wikipedia language editions answers, and the others stay as alternatives. A
  *   prominence of log10(sitelinks) puts the lead on the scale the admin tier's `declared_ambiguity` margin reads, so a
@@ -102,7 +102,7 @@ function placeOf(hit: LandmarkHit): ResolvedPlace {
  * `AUS` answers Australia, and Austin–Bergstrom International Airport is the
  * reading a caller can pick instead.
  * A word spelled like the code, such as the town of Usa under `USA`,
- * is not a holder of the code and stays out.
+ * isn't a holder of the code and stays out.
  *
  * The list sits on a resolved country node, so a country the gazetteer left unresolved keeps its parse.
  *

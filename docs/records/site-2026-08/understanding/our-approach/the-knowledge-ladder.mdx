@@ -44,7 +44,7 @@ This layer performs Unicode normalization, locale-aware case folding, and whites
 
 ### Locale check — language / script family
 
-This layer detects whether input is en-US, fr-FR, ja-JP, and so on. It has two sources today. The first is the rule-based scorer at Stage 2. It uses script-class and postcode-format hits with a caller-trust fallback. The second, since v4.3.0, is the classifier's own locale head, exported as the `locale_logits` ONNX output (~98% held-out accuracy, threshold-conditional). The head was trained from PR3 onward, but inference could not read it until the conventions work needed it. It now drives the Stage 4.2 conventions mask. The layer knows enough to bias the kind classifier, resolver weighting, and per-system grammar, but it holds no knowledge of specific places.
+This layer detects whether input is en-US, fr-FR, ja-JP, and so on. It has two sources today. The first is the rule-based scorer at Stage 2. It uses script-class and postcode-format hits with a caller-trust fallback. The second, since v4.3.0, is the classifier's own locale head, exported as the `locale_logits` ONNX output (~98% held-out accuracy, threshold-conditional). The head was trained from PR3 onward, but inference couldn't read it until the conventions work needed it. It now drives the Stage 4.2 conventions mask. The layer knows enough to bias the kind classifier, resolver weighting, and per-system grammar, but it holds no knowledge of specific places.
 
 ### Kind classifier — overall query category
 
@@ -102,7 +102,7 @@ and this rung applies it at the input layer.
 
 Three properties make this the right place to give the model knowledge of place names:
 
-- **The knowledge lives outside the weights, so the model does not overfit to it.**
+- **The knowledge lives outside the weights, so the model doesn't overfit to it.**
   If you add a place to the gazetteer, the clue fires without a retrain.
   The model learns to _use_ the clue rather than to memorize the list.
   (Putting every country and city in the token vocabulary would work against the tokenizer's job.
@@ -163,9 +163,9 @@ The implementation is beam search over `(span × tag × resolver)` with incremen
 
 Concrete cases this addresses:
 
-- **["NY-NY Steakhouse, Houston, TX"](../../concepts/joint-decoding-walkthrough.mdx)**: the classifier tags NY as a region twice, because it appears twice in the venue brand. The resolver can't find a hierarchy where Houston, TX coexists with NY as a region. Stage 5 reweights the NY tokens toward `venue` (the classifier's second-best interpretation) because that is the only joint-coherent interpretation.
+- **["NY-NY Steakhouse, Houston, TX"](../../concepts/joint-decoding-walkthrough.mdx)**: the classifier tags NY as a region twice, because it appears twice in the venue brand. The resolver can't find a hierarchy where Houston, TX coexists with NY as a region. Stage 5 reweights the NY tokens toward `venue` (the classifier's second-best interpretation) because that's the only joint-coherent interpretation.
 - **"Paris, Texas"** vs **"Paris, France"**: the classifier's locality output is the same, and the hierarchy resolution differs. Stage 5's concordance scoring picks the Texas reading because the joint TX-region assignment matches Paris-TX's parent chain.
-- **"Saint Petersburg, FL"**: the CRF prevents the orphan-I split. Stage 5 resolves the joint span to St Pete, FL rather than the Russian city, because FL is in St-Pete-FL's parent chain and Russia is not.
+- **"Saint Petersburg, FL"**: the CRF prevents the orphan-I split. Stage 5 resolves the joint span to St Pete, FL rather than the Russian city, because FL is in St-Pete-FL's parent chain and Russia isn't.
 
 Each case is asserted in `core/pipeline/reconcile.test.ts` (grep for `kryptonite catalogue —`).
 
@@ -175,7 +175,7 @@ This layer is WOF SQLite today (Phase 4.3). It knows place IDs, parent_id chains
 
 ## Why this decomposition is bitter-lesson aligned
 
-Sutton's bitter-lesson essay argues that "general methods that use computation" prevail over the long run. It does not argue for one model that does everything. It argues against hand-engineering domain knowledge where the system could learn it from data.
+Sutton's bitter-lesson essay argues that "general methods that use computation" prevail over the long run. It doesn't argue for one model that does everything. It argues against hand-engineering domain knowledge where the system could learn it from data.
 
 We want to learn two things from data: the per-token semantic type distribution (Stage 3) and structural transition validity (Stage 4, if a learned CRF replaces the structural mask).
 
@@ -194,7 +194,7 @@ The v0.4.0 ablation campaign's failure modes mapped almost directly to two missi
 | **Kryptonite cases** (`NY-NY Steakhouse`, `Paris, Texas`, `St. Petersburg`) | Reconcile (Stage 5) — no joint-coherence check                     | `reconcile.ts` beam search with WOF concordance scoring catches joint-incoherent parses |
 | **92% adversarial transliteration** on country FN                           | Tokenizer (separate concern)                                       | A1 tokenizer halves byte-fallback on multi-script eval (36.7% → 18.2%)                  |
 
-The missing rungs were _information layers_. v0.4.0 did not do the joint reasoning that the architecture's interface implied. v0.5.0's scaffolding adds those rungs. The remaining work is training stable classifier weights that exercise them end-to-end.
+The missing rungs were _information layers_. v0.4.0 didn't do the joint reasoning that the architecture's interface implied. v0.5.0's scaffolding adds those rungs. The remaining work is training stable classifier weights that exercise them end-to-end.
 
 ## What v0.5.0's training divergence is teaching us
 
@@ -216,8 +216,8 @@ When a rung underperforms, audit what the data teaches it before resizing it.
 
 - [The staged pipeline](./the-staged-pipeline.mdx) — narrative framing
 - [The staged pipeline interface](../../concepts/staged-pipeline-interface.mdx) — runtime mechanics for integrators
-- [What is a concordance?](../the-problem/what-is-a-concordance.mdx) — how Stage 5's concordance scoring works
-- [What is a postcode?](../the-problem/what-is-a-postcode.mdx) — why the resolver can't treat postcodes as polygons
+- [What's a concordance?](../the-problem/what-is-a-concordance.mdx) — how Stage 5's concordance scoring works
+- [What's a postcode?](../the-problem/what-is-a-postcode.mdx) — why the resolver can't treat postcodes as polygons
 - [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/reference/STAGES.mdx) — formal per-stage type interfaces
 - [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) — the process-side companion
 - [v0.4.0 ablation campaign retrospective](https://github.com/sister-software/mailwoman/blob/main/docs/records/retrospectives/v0-4-0-ablation-campaign.mdx) — the failures that exposed the missing rungs

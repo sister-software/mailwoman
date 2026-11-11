@@ -209,7 +209,7 @@ export function translitWorker(
 }
 
 /**
- * Generates every planned transliteration batch the checkpoint does not already hold.
+ * Generates every planned transliteration batch the checkpoint doesn't already hold.
  */
 export async function emitTransliteration(
 	options: TranslitOptions,

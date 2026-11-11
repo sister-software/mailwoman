@@ -14,7 +14,7 @@
  *      readings of one of the building's checks hold records. A dossier records availability for a
  *      building or its extent, and no record establishes service to every unit, so no state claims a
  *      fully served building. For a record that states an extent, the reason states that the provider is
- *      recorded as available over that extent, because such a record does not say which premises in
+ *      recorded as available over that extent, because such a record doesn't say which premises in
  *      the extent are served.
  *   4. `known_unserved`: the building has a check, the latest readings of every check establish absence,
  *      and no provider is recorded as available.

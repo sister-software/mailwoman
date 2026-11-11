@@ -11,7 +11,7 @@ tags: [training, retrospective]
 
 :::
 
-v0.5.0 was the **fresh-slate release**, with a new tokenizer, an expanded corpus, a new architecture, and a new reconcile stage. The plan was to bundle several months of structural improvements into one big iteration and pay the integration cost once. Most of it landed as planned, but the classifier did not.
+v0.5.0 was the **fresh-slate release**, with a new tokenizer, an expanded corpus, a new architecture, and a new reconcile stage. The plan was to bundle several months of structural improvements into one big iteration and pay the integration cost once. Most of it landed as planned, but the classifier didn't.
 
 This post walks through the four training attempts the v0.5.0 C-train made overnight, the bisect that ruled out three plausible explanations, and what we think the remaining cause is. It is a companion to [the v0.4.0 retrospective](/research/v0-4-0-ablation-campaign). That retrospective describes the same failure shape with a different sequence of diagnostics.
 
@@ -32,7 +32,7 @@ C-train was the first experiment to use all of these together.
 
 ## The recipe we tried first
 
-Before starting, the operator explicitly confirmed these settings: hidden_size=384 (up from v0.4.0's 256), effective batch 128 via batch=16 grad_accum=8, constant LR, starting LR=1.5e-4 (the same lr v0.3.0 had to drop to), top-k inference and phrase-prior conditioning ON (PR #128). The corpus was A1 tokenizer + corpus-v0.4.0. Recipe knobs §1 (per_token CRF normalization) and §3 (class_weights) were copied from the C-s scaffold. They came from a host-side YAML-drafting decision, and the operator had not confirmed them.
+Before starting, the operator explicitly confirmed these settings: hidden_size=384 (up from v0.4.0's 256), effective batch 128 via batch=16 grad_accum=8, constant LR, starting LR=1.5e-4 (the same lr v0.3.0 had to drop to), top-k inference and phrase-prior conditioning ON (PR #128). The corpus was A1 tokenizer + corpus-v0.4.0. Recipe knobs §1 (per_token CRF normalization) and §3 (class_weights) were copied from the C-s scaffold. They came from a host-side YAML-drafting decision, and the operator hadn't confirmed them.
 
 The 50-step constant-LR smoke passed. val_macro_f1 climbed from 0.121 to 0.187 across 50 steps, and the recipe looked stable.
 
@@ -76,11 +76,11 @@ The only difference between runs is **how low the loss gets before the climb sta
 
 We made three knob changes between v1 and h256-bisect, each testing a different hypothesis. The data ruled out all three.
 
-**The learning rate is not the cause.** v0.4.0's bisect already showed that halving the LR delays the collapse by only a factor of 1.3. That result ruled out "we picked too high an LR" as a full explanation. v1 → v2 showed the same pattern. The lower LR, from 1.5e-4 to 1e-4, moved the divergence from step 700 to step 1000 without changing the curve's shape. The LR controls _when_ the model diverges rather than _whether_ it does.
+**The learning rate isn't the cause.** v0.4.0's bisect already showed that halving the LR delays the collapse by only a factor of 1.3. That result ruled out "we picked too high an LR" as a full explanation. v1 → v2 showed the same pattern. The lower LR, from 1.5e-4 to 1e-4, moved the divergence from step 700 to step 1000 without changing the curve's shape. The LR controls _when_ the model diverges rather than _whether_ it does.
 
 **Recipe knobs §1+§3 are not the cause.** v0.4.0's retrospective concluded that the destabilizer was in the recipe rather than the LR, and v0.4.0 shipped with §1 (per_token CRF) and §3 (class_weights) OFF. v3 reverted those knobs and dropped back to LR=1.5e-4, the canonical v0.4.0-stable recipe. v3 trained better than v1 and v2 (a bottom of 0.41 against 0.61 and 0.51) and had zero GPU hangs against v2's six, but it still diverged at step 900.
 
-**Hidden size is not the cause.** h256-bisect reverted the only architectural change still in the recipe: 384 → 256 hidden, 6 → 4 heads, 1536 → 1024 intermediate. With everything else at v0.4.0-shipped settings (`eff_batch=128`, LR=1.5e-4, §1+§3 OFF), this configuration is _identical to v0.4.0's shipped recipe_ except for two architectural pieces we haven't changed yet. h256-bisect was the best-performing run of the four (peak val_macro_f1=0.399, train_loss=0.31), and it diverged anyway.
+**Hidden size isn't the cause.** h256-bisect reverted the only architectural change still in the recipe: 384 → 256 hidden, 6 → 4 heads, 1536 → 1024 intermediate. With everything else at v0.4.0-shipped settings (`eff_batch=128`, LR=1.5e-4, §1+§3 OFF), this configuration is _identical to v0.4.0's shipped recipe_ except for two architectural pieces we haven't changed yet. h256-bisect was the best-performing run of the four (peak val_macro_f1=0.399, train_loss=0.31), and it diverged anyway.
 
 ## The remaining suspects
 
@@ -114,13 +114,13 @@ Both lessons will go into `VERDICT_SMOKES.md` as a follow-up. The current text d
 Most of the v0.5.0 fresh-slate work survives this episode intact:
 
 - **The A1 tokenizer's byte-fallback improvements are real.** Multi-script eval went from 36.7% to 18.2%, and B2's targeted scripts (CJK, Cyrillic, Hangul, Han, Armenian) all met or beat their v0.1.0 leakage baselines. The tokenizer is fit for non-Latin addresses. It works fine for inference even though the classifier trained on top of it diverges.
-- **`corpus-v0.4.0` is sound.** corpus-audit passes, the substring-match validator caught the LLM's alignment failures, and both adapter additions load without errors through the new MANIFEST.json-driven harness. Whatever destabilizes training, corpus integrity is not the cause.
+- **`corpus-v0.4.0` is sound.** corpus-audit passes, the substring-match validator caught the LLM's alignment failures, and both adapter additions load without errors through the new MANIFEST.json-driven harness. Whatever destabilizes training, corpus integrity isn't the cause.
 - **Stage 5 reconcile, the phrase grouper, and the verdict-smoke process** all shipped and are live in `main`. They run on v0.4.0 weights right now and produce correct output on the kryptonite catalogue. They'll keep working when v0.5.0 weights land.
 - **`TRAINING_ENV.md`** documents the lab container's ROCm bootstrap recipe so the next training run doesn't have to rediscover it. The one-time setup takes ~15min and took us most of an hour to work out the first time.
 
 ## Where v0.5.0 stands
 
-We spent roughly four hours of GPU time on four diverging training runs, learned what the destabilizer is not, and stopped before spending a fifth run on it. v0.5.0's classifier weights aren't shipping today.
+We spent roughly four hours of GPU time on four diverging training runs, learned what the destabilizer isn't, and stopped before spending a fifth run on it. v0.5.0's classifier weights aren't shipping today.
 
 The outcome is still useful. We have a smaller hypothesis space (two architectural pieces left to bisect), better infrastructure than we started with (TRAINING_ENV, MANIFEST harness fix, longer smokes), and a concrete recommendation for v0.5.0.1's first step. The v0.4.0 model continues to ship in production, and no downstream work is blocked.
 

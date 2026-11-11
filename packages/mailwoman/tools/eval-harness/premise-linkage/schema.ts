@@ -109,8 +109,8 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
  * What one arm did with one row: `refused` and `ambiguous` are first-class
  * and never recorded as `wrong`, and an ambiguous answer is never `exact`.
  *
- * `errored` is not a result the arm produced.
- * It marks a row that could not be graded at all — and is excluded from every rate
+ * `errored` isn't a result the arm produced.
+ * It marks a row that couldn't be graded at all — and is excluded from every rate
  * and reported as its own count.
  */
 export const PremiseLinkageResult = {
@@ -138,7 +138,7 @@ export const PremiseLinkageFailureCategory = {
 	 */
 	ProviderRefused: "provider_refused",
 	/**
-	 * The provider returned candidates it would not decide between.
+	 * The provider returned candidates it wouldn't decide between.
 	 */
 	ProviderAmbiguous: "provider_ambiguous",
 	/**
@@ -175,7 +175,7 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	result: PremiseLinkageResult
 	/**
 	 * Lets the report writer omit a coordinate when the row's terms forbid publication.
-	 * A permission flag does not supply a licensed coordinate.
+	 * A permission flag doesn't supply a licensed coordinate.
 	 */
 	coordinatePublishable: boolean
 	/**
@@ -291,7 +291,7 @@ export interface PremiseLinkageReport {
 	 * The number of cells the writer removed.
 	 *
 	 * Zero means the writer removed no cells.
-	 * The report includes this value to distinguish that result from a run that did not measure small cells.
+	 * The report includes this value to distinguish that result from a run that didn't measure small cells.
 	 */
 	suppressedCells: number
 	arms: PremiseLinkageArmReport[]

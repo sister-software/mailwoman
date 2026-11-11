@@ -351,7 +351,7 @@ async function routedLists(
 		// The manifest records the name held by the corpus.
 		// A corpus copy drops the `.migrated` infix that marks files from an older corpus.
 		// `overlay-manifest` resolves the file under `<newDir>`, so a list carrying the
-		// staged spelling resolves to a path the corpus does not have.
+		// staged spelling resolves to a path the corpus doesn't have.
 		parquet.push(name.replace(".migrated", ""))
 		source.push(label)
 	}

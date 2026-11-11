@@ -66,7 +66,7 @@ export const ADS_ADAPTER_ID = "ads"
  * The one jurisdiction this adapter emits.
  *
  * The service covers Estonia whole, so the set has one member and `opts.country` either
- * matches `EE` or asks for a jurisdiction the dataset does not publish.
+ * matches `EE` or asks for a jurisdiction the dataset doesn't publish.
  */
 export const ADS_COUNTRIES: readonly string[] = ["EE"]
 
@@ -205,7 +205,7 @@ export function createADSAdapter(): CorpusAdapter {
 				} else if (locatorName) {
 					// With no thoroughfare the locator name is the site or building name
 					// that designates the addressable unit.
-					// That is how a rural Estonian address works.
+					// That's how a rural Estonian address works.
 					components.venue = locatorName
 				}
 

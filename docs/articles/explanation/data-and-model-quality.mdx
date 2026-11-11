@@ -7,7 +7,7 @@ verified-with: mailwoman v11.0.0 and release specification v7, inspected 2026-11
 
 # How data and evaluation support quality claims
 
-A parser can produce a plausible answer for an address it has seen during training. That answer does not show how it handles an independent address. Mailwoman records where training examples came from, what reached a model, and which evaluation addresses can support a release comparison. Each record answers a different part of the quality question.
+A parser can produce a plausible answer for an address it has seen during training. That answer doesn't show how it handles an independent address. Mailwoman records where training examples came from, what reached a model, and which evaluation addresses can support a release comparison. Each record answers a different part of the quality question.
 
 ## Source records explain what an example represents
 
@@ -25,9 +25,9 @@ The same specification marks some safeguards as implemented and others as open. 
 
 The release procedure compares a candidate with the weights in the published package users install, identified by the `model.onnx` SHA-256 digest. It scores paired rows from one frozen dataset and reports exact-parse outcomes by required country and capability. A release report also records measured losses against the published model. The [model-work runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx) identifies the freeze, overlap, per-country scoring, and verdict tools.
 
-The [current v7 specification](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v7.json) registers nine country minima, four capability minima, an equal-country objective, and confidence settings. Its dataset ID and digest, candidate digest, and development and confirmation evaluation IDs are unset. Its published comparator identity describes model 10.7.0, while the 11.0.0 package contains model 10.8.0. The inspected specification therefore does not establish a `pass` verdict for the published 11.0.0 model. The runbook states that a verdict remains `insufficient_evidence` until a frozen, overlap-audited dataset covers every required country. Earlier promotion checks continue to decide meanwhile.
+The [current v7 specification](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v7.json) registers nine country minima, four capability minima, an equal-country objective, and confidence settings. Its dataset ID and digest, candidate digest, and development and confirmation evaluation IDs are unset. Its published comparator identity describes model 10.7.0, while the 11.0.0 package contains model 10.8.0. The inspected specification therefore doesn't establish a `pass` verdict for the published 11.0.0 model. The runbook states that a verdict remains `insufficient_evidence` until a frozen, overlap-audited dataset covers every required country. Earlier promotion checks continue to decide meanwhile.
 
-The [held-out specification's current-state table](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/HOLDOUT_AND_EVALUATION.mdx#10-current-state-against-this-specification) also records proposed or incomplete work, including a first split under its registered retention floor. Those entries describe work to complete. They are not measurements of the published model. Dated evaluation simulations test the evaluator's behavior under chosen inputs. Their simulated rates are not release results.
+The [held-out specification's current-state table](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/HOLDOUT_AND_EVALUATION.mdx#10-current-state-against-this-specification) also records proposed or incomplete work, including a first split under its registered retention floor. Those entries describe work to complete. They're not measurements of the published model. Dated evaluation simulations test the evaluator's behavior under chosen inputs. Their simulated rates are not release results.
 
 ## What a reader can conclude
 

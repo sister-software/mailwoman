@@ -9,13 +9,13 @@ description: "Consolidated record of the parser, geocoder, matching, and evaluat
 
 This retrospective condenses 34 dated reports from May 27 through July 13, 2026. The reports contain
 overlapping sessions, duplicate night numbers, daytime continuations, and corrections written after
-their initial verdicts. They are not 34 independent experiments. Later corrections take precedence
+their initial verdicts. They're not 34 independent experiments. Later corrections take precedence
 over earlier recommendations and summary tables.
 
 **Observed** below means reported in those records and not independently rerun for this consolidation.
 **Decision** identifies a historical choice. **Inference** identifies an interpretation. **Unknown**
 identifies evidence the records do not establish. Release names, coverage, and outstanding work are
-historical. This document does not describe the current production system or replace current release
+historical. This document doesn't describe the current production system or replace current release
 and evaluation requirements.
 
 The complete source is recoverable from the
@@ -37,7 +37,7 @@ tests of the assembled pipeline, independent data, geographic coverage, and inpu
 | June 9–13      | Unit/affix and boundary work reached v4.2.0 and v4.4.0, and character-offset corpus work supported bridge retirement. FR order recovery shipped as v4.6.0 after an explicit floor change.                             | Corpus and evaluation composition changed. The v0.5.0 corpus rebuild also incorporated more WOF data, so it was not a pure format comparison.                                                        |
 | June 14–18     | US address points and national interpolation, geocoding/batch APIs, browser street lookup, record-matching experiments, and evaluation-integrity repairs.                                                             | Raw-neural scoring missed a destructive reconcile stage. A browser-correctness check missed full-file downloads. A model promotion recommendation was retracted after checking the shipped baseline. |
 | June 19–28     | FR admin splitting shipped as v4.11.0, and multi-locale and AU models followed. Candidate gazetteer coverage, postal-city lookup, confidence routing, and Nominatim/Photon/libpostal compatibility surfaces advanced. | Coverage depended on artifact and backend. Comparative claims required matching configurations and valid competitor responses. Some database changes were staged before later promotion.             |
-| June 29–July 5 | Regression, metamorphic, and held-out tests formed the Gauntlet, and normalization, explicit-country coherence, and postcode coverage addressed measured failures without retraining.                                 | New locale panels exposed regressions that earlier model checks could not see. Several country and namesake fixes remained conditional on data and default settings.                                 |
+| June 29–July 5 | Regression, metamorphic, and held-out tests formed the Gauntlet, and normalization, explicit-country coherence, and postcode coverage addressed measured failures without retraining.                                 | New locale panels exposed regressions that earlier model checks couldn't see. Several country and namesake fixes remained conditional on data and default settings.                                  |
 | July 13        | Fragment-data experiments improved parity on the existing architecture, and tokenizer consolidation and locality counterexamples produced a Gauntlet-passing candidate.                                               | v2.5.3 remained staged. Per-locale F1 and error-analysis checks were outstanding, and the stated house-number and street parity floors were still unmet.                                             |
 
 ## Results to retain
@@ -54,7 +54,7 @@ Vermont addresses, name-match was 93.7% while region-match was 0%. The addition 
 raised region-match to 99.9%. However, `350 5th Ave, New York, NY` then selected New York Mills
 instead of New York City: NYC's multiple-parent hierarchy had been lost by a parent-pointer closure.
 A rebuild of ancestry from `wof:hierarchy` restored the preset. The full-US 10,000-row abbreviation-only
-arm reduced coordinate p90 from 2,763.5 km to 10.3 km. The report did not finish the corresponding
+arm reduced coordinate p90 from 2,763.5 km to 10.3 km. The report didn't finish the corresponding
 full-US combined-arm table. Do not attribute that exact number to an unreported combined run.
 
 **Observed — assembled-pipeline evaluation reversed model conclusions.** The June 14 audit found
@@ -73,7 +73,7 @@ See the retained [model comparison](../model-versions/2026-06-18-v150-vs-v170-he
 3,000-row golden with disjoint communes and anchor-on inference. Against v1.5.0, median coordinate
 error fell from 42.52 km to 2.17 km and resolve rate rose from 59.5% to 78.5%. The historical release
 accepted disclosed US locality and FR country label regressions with operator approval. A supplied
-country hint made the latter invisible to that coordinate test, but it did not establish harmlessness for
+country hint made the latter invisible to that coordinate test, but it didn't establish harmlessness for
 all parser consumers. The later v1.8.1 country-data experiment was shelved: it barely improved country
 F1 and regressed other labels. These historical exceptions do not override today's regression rules.
 
@@ -81,16 +81,16 @@ F1 and regressed other labels. These historical exceptions do not override today
 experiment fixed 500 of 10,155 divergent postal-city edges, with zero regressions under the report's
 50 km criterion. Its p90 fell from 278.1 km to 10.1 km. A candidate-backend experiment used a different
 population of 9,688 edges: 2,221 fixes and three regressions, with p90 still 768 km. Those results are
-not interchangeable. Aliases cloned into ordinary name ranking could not preserve both bare-name
+not interchangeable. Aliases cloned into ordinary name ranking couldn't preserve both bare-name
 behavior and postcode disambiguation. A `(name_key, postcode)` side index supplied the missing scope.
 
-**Observed — broader retrieval needed complete data flow.** The addition of 843,739 Canadian postcodes did
-not fix `100 Queen Street West, Toronto, ON M5H 2N2`: the missing Canadian admin layer selected
+**Observed — broader retrieval needed complete data flow.** The addition of 843,739 Canadian postcodes didn't
+fix `100 Queen Street West, Toronto, ON M5H 2N2`: the missing Canadian admin layer selected
 Toronto, Ohio, then rejected the correct Canadian postcode. Added admin places, rebuilt alias
 indexes, and supplied population evidence repaired the cascade. Later GeoNames builds expanded
 coverage beyond the 97-country artifact. On the June 28 matched frontier experiment, hinted resolve
 rate rose from 51.0% to 94.1%; existing supported-case coordinates stayed identical. That frontier
-sampled major cities, so it could not validate village-level coverage. Historical “244 countries” counts
+sampled major cities, so it couldn't validate village-level coverage. Historical “244 countries” counts
 describe source country-code coverage, including territories, rather than 244 independently validated locales.
 
 **Observed — postcode availability could eliminate a purported ranking problem.** On July 2,
@@ -131,17 +131,17 @@ Current repository skills and runbooks remain the operational authority.
    model card, data versions, compiled code, backend, flags, and supplied country hints. Reproduce the
    baseline in that exact environment. The latest training run, development symlink, npm release, and
    demo default repeatedly referred to different models. Incremental compilation also left old code
-   in place, and a source-level unit test did not establish what a compiled evaluator executed.
+   in place, and a source-level unit test didn't establish what a compiled evaluator executed.
 
 2. **Grade the public entry point and retain component checks.** Follow normalization, tokenization,
-   classification, grouping, resolution, serialization, and browser delivery. Coordinate success does
-   not excuse lost parser components, and per-tag success does not establish correct geocoding. Test Node
+   classification, grouping, resolution, serialization, and browser delivery. Coordinate success doesn't
+   excuse lost parser components, and per-tag success doesn't establish correct geocoding. Test Node
    and browser paths when their implementations differ. Measure bytes transferred as well as a correct
    browser pin: the HTTP VFS once fetched an entire 3.2 GB extract merely to discover its length.
 
 3. **State denominators and measurement conditions.** Report resolved fraction alongside correctness
    over all inputs and precision among resolved inputs. Separate name equivalence from geographic
-   correctness. Use distance only where the evaluation defines it. A 25 km success threshold does not
+   correctness. Use distance only where the evaluation defines it. A 25 km success threshold doesn't
    demonstrate rooftop precision. Venue support of one FR row and unit support of zero were missing
    evidence rather than established model failures. Keep representative inputs separate from adversarial tests.
 
@@ -179,7 +179,7 @@ Current repository skills and runbooks remain the operational authority.
 
 9. **Match evidence to the claimed scope.** A region-limited OSM extract needs an in-region evaluation, because
    an all-France sample hid an Île-de-France improvement. Japan's KEN_ALL construction-source result
-   needed a GeoNames cross-check. Major-city lookup does not prove national address coverage. Competitor
+   needed a GeoNames cross-check. Major-city lookup doesn't prove national address coverage. Competitor
    403/429 responses are failed measurements rather than geocoding misses. OA-based competitor tests must
    disclose that a competitor may index the same source.
 
@@ -198,7 +198,7 @@ Current repository skills and runbooks remain the operational authority.
 
 ## Final recorded stopping point
 
-**Observed, July 13:** routing could not reliably distinguish fragments. Street-morphology bias
+**Observed, July 13:** routing couldn't reliably distinguish fragments. Street-morphology bias
 regressed AU formats. Bolt-on CRF transitions harmed parity at both tested scales. The subsequent
 fragment-data assay improved street parity from approximately 0.40 to 0.53. Tokenizer consolidation
 reduced diacritic fragmentation but introduced postcode and locality regressions. Later extract
@@ -208,7 +208,7 @@ four training runs occurred, and total final spend is unknown.
 **Decision at that cutoff:** v2.5.2 was not promotable because of the Dublin regression. v2.5.3 passed
 the full Gauntlet but remained staged with per-locale F1 and error-analysis legs outstanding. Its parity
 scores were house_number 0.7403, postcode 0.9861, and street 0.5233, against stated floors of 0.97,
-0.97, and 0.90. A passing Gauntlet therefore did not establish the campaign's parity goal or release
+0.97, and 0.90. A passing Gauntlet therefore didn't establish the campaign's parity goal or release
 readiness. The next proposed data change was deterministic locality counterexamples from the
 gazetteer, rather than repeatedly patching sampled famous cities. Subsequent July records outside
 the deleted directory own what happened next.

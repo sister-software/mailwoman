@@ -99,7 +99,7 @@ export function fillPlaceholderCentroids(
  * Parses a headerless GeoNames postal TSV into a map from postcode to the mean
  * of its place coordinates, skipping `(0,0)` rows.
  *
- * It deliberately does not reuse `geonamesPostalRows`, whose different number
+ * It deliberately doesn't reuse `geonamesPostalRows`, whose different number
  * parsing would shift the stored mean centroids.
  */
 export function parseGeonamesCentroids(text: string): Map<string, LatLon> {

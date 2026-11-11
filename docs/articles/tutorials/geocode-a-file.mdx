@@ -1,13 +1,13 @@
 ---
 title: Geocode a file of addresses
-description: Geocode six addresses in one run, then read each result's tier, coordinate source and place candidates, and find the rows that did not resolve.
+description: Geocode six addresses in one run, then read each result's tier, coordinate source and place candidates, and find the rows that didn't resolve.
 role: tutorial
 verified-with: mailwoman v11.0.0
 ---
 
 # Geocode a file of addresses
 
-In this tutorial you geocode a six-line file of addresses in one command. You then read three things from each result: how precise the coordinate is, which record supplied it, and whether the address resolved at all. The file mixes US and French street addresses, a city without a street, and two inputs that should not resolve.
+In this tutorial you geocode a six-line file of addresses in one command. You then read three things from each result: how precise the coordinate is, which record supplied it, and whether the address resolved at all. The file mixes US and French street addresses, a city without a street, and two inputs that shouldn't resolve.
 
 ## Before you start
 
@@ -192,7 +192,7 @@ The third line of `results.jsonl` shows how the geocoder chose that Springfield.
 
 The geocoder weighed three Illinois places called Springfield and selected the highest-scoring locality, Who's On First place `wof:85940429`. `hierarchy` lists that locality and the Illinois region it sits in. When two candidates score close together, the input is ambiguous, and your application can ask for more detail instead of accepting the first result.
 
-## 6. Find the rows that did not resolve
+## 6. Find the rows that didn't resolve
 
 The last two inputs have no coordinate. Their `epistemic_status` is `unresolved`, and `lat` and `lon` are `null`. Their `resolution_tier` still reads `admin`, so filter on `epistemic_status` or on a `null` coordinate rather than on the tier.
 

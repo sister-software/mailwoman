@@ -49,11 +49,11 @@ export const SyncAction = {
 	 */
 	RefuseDirty: "refuse-dirty",
 	/**
-	 * Commits present that the fork does not have: unpushed work.
+	 * Commits present that the fork doesn't have: unpushed work.
 	 */
 	RefuseLocalCommits: "refuse-local-commits",
 	/**
-	 * A directory exists but is not a git checkout, such as an extracted archive.
+	 * A directory exists but isn't a git checkout, such as an extracted archive.
 	 */
 	RefuseNotAClone: "refuse-not-a-clone",
 } as const
@@ -76,7 +76,7 @@ export const Remote = {
 /**
  * The observable state of one checkout.
  *
- * `null` means the checkout could not answer the question.
+ * `null` means the checkout couldn't answer the question.
  * A negative answer has a known value.
  */
 export interface CloneState {
@@ -147,7 +147,7 @@ export interface RepoSyncResult {
  *
  * GitHub is reachable as `ssh://git@github.com/org/repo`, `git@github.com:org/repo`
  * and `https://github.com/org/repo`, with or without a `.git` suffix.
- * A string comparison would rewrite a remote that is already correct.
+ * A string comparison would rewrite a remote that's already correct.
  */
 export function sameRemote(a: string | null | undefined, b: string | null | undefined): boolean {
 	if (!a || !b) return false

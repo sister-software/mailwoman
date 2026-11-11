@@ -129,7 +129,7 @@ export function assertedStratum(by: string): StratumKey {
  * A different claim about the answer even under a stable coordinate, because the
  * tier is what `epistemic_status` reads from.
  *
- * Null when either arm did not answer or does not state a tier (external engines and oracles do not),
+ * Null when either arm didn't answer or doesn't state a tier (external engines and oracles do not),
  * so an absent tier is incomparable, never "same".
  */
 export function tierDiffered(a: ExternalAnswer, b: ExternalAnswer): boolean | null {

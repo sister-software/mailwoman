@@ -18,15 +18,15 @@ Mailwoman's [corpus address-role vocabulary](https://github.com/sister-software/
 
 ## A mailing address may use a different route
 
-USPS [Publication 28](https://pe.usps.com/text/pub28/28c2_036.htm) standardizes a Post Office Box line as `PO BOX` followed by its box identifier. USPS also documents an option at some locations to use the [Post Office street address with a box designation](https://pe.usps.com/text/pub28/28c2_039.htm). These are mailing forms. A street-looking line in that option does not turn the box into the recipient's building location.
+USPS [Publication 28](https://pe.usps.com/text/pub28/28c2_036.htm) standardizes a Post Office Box line as `PO BOX` followed by its box identifier. USPS also documents an option at some locations to use the [Post Office street address with a box designation](https://pe.usps.com/text/pub28/28c2_039.htm). These are mailing forms. A street-looking line in that option doesn't turn the box into the recipient's building location.
 
 In the synthetic input `PO Box 1234, Springfield, IL 62701`, published `mailwoman@11.0.0` returned kind `po_box` and a `po_box` node containing `PO Box 1234`. The [PO box guide](../guides/handle-po-boxes.mdx) shows the full executed result. It routes the record to a mailing review under an explicit application policy and keeps box existence, delivery status, and a building coordinate unknown.
 
 ## Country and purpose change what a postcode check means
 
-Canada Post [defines](https://www.canadapost-postescanada.ca/cpc/en/support/articles/addressing-guidelines/postal-codes.page) a six-character alphanumeric postcode in the `ANA NAN` form. Its first three characters identify a forward sortation area. The last three identify a local delivery unit. The same guidance states that a local delivery unit can describe a city block, one building, a large-volume receiver, or a rural community depending on context. A postcode supplies routing evidence. Its shape does not identify a building point.
+Canada Post [defines](https://www.canadapost-postescanada.ca/cpc/en/support/articles/addressing-guidelines/postal-codes.page) a six-character alphanumeric postcode in the `ANA NAN` form. Its first three characters identify a forward sortation area. The last three identify a local delivery unit. The same guidance states that a local delivery unit can describe a city block, one building, a large-volume receiver, or a rural community depending on context. A postcode supplies routing evidence. Its shape doesn't identify a building point.
 
-The published Mailwoman parse of bare `10118` matched the `us_zip`, `fr_postcode`, and `de_postcode` shapes. That observed list describes three format matches for one five-digit string. It does not identify three destinations or select a country. The [bare-postcode guide](../guides/handle-bare-postcodes.mdx) keeps an application-supplied country separate from the parse and leaves the geographic result unknown until suitable data is available.
+The published Mailwoman parse of bare `10118` matched the `us_zip`, `fr_postcode`, and `de_postcode` shapes. That observed list describes three format matches for one five-digit string. It doesn't identify three destinations or select a country. The [bare-postcode guide](../guides/handle-bare-postcodes.mdx) keeps an application-supplied country separate from the parse and leaves the geographic result unknown until suitable data is available.
 
 ## Four questions need four kinds of evidence
 

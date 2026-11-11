@@ -11,7 +11,7 @@ to be accounted for before the D-rule replacement becomes the release authority.
 
 It is a dated record under `docs/records/evals/` rather than a file beside the release specification. The
 specification directory `packages/mailwoman/tools/eval-harness/release/` belongs to a concurrent lane, and a
-migration table states the tree on one date. That is what `docs/records/` holds. The Docusaurus build reads
+migration table states the tree on one date. That's what `docs/records/` holds. The Docusaurus build reads
 `docs/articles/` only, so this page needs no sidebar entry. A later specification version that registers a
 replacement updates the row it settles and names that version.
 
@@ -32,7 +32,7 @@ replacement updates the row it settles and names that version.
 | D-rule: any board regression in DE or GB (`dRuleProtected`) blocks | replaced | Same as above. The recorded reasons (thin DE board, GB's checking-row count) describe board detectability rather than a product requirement.                                                | Same as above. `dRuleProtected` is removed from `scope.config.json`.                                                                                                                                          |
 | Board net must be positive to ship                                 | replaced | The board is a curated failure-finding collection whose row counts do not decide promotion.                                                                                                 | Board regressions are `findings` with the input, both arms' output and the checker's issues. The objective improvement `Q_candidate - Q_published` in the release verdict decides improvement.                |
 | Attributable net (candidate minus null) must be positive to ship   | replaced | Training attribution and release eligibility are distinct answers.                                                                                                                          | Still computed and reported as `attribution.net` and `attribution.regressions`, and it no longer decides release eligibility.                                                                                 |
-| Self-control leg must show zero differing rows                     | retained | A rig that disagrees with itself produces no evidence about the candidate.                                                                                                                  | Unchanged. A dirty control sets `attribution.attributable` to false. It does not set release eligibility. That comes from the held-out verdict rather than this rig.                                          |
+| Self-control leg must show zero differing rows                     | retained | A rig that disagrees with itself produces no evidence about the candidate.                                                                                                                  | Unchanged. A dirty control sets `attribution.attributable` to false. It doesn't set release eligibility. That comes from the held-out verdict rather than this rig.                                           |
 | Null leg absent on a fine-tune: regression count is an upper bound | retained | Attribution arithmetic.                                                                                                                                                                     | Unchanged, reported under `attribution.reasons`.                                                                                                                                                              |
 | Verdict `ship / hold / unattributable`                             | replaced | One word combined attribution and eligibility.                                                                                                                                              | `release.outcome` (`pass`, `fail`, `insufficient_evidence`) and `attribution.attributable`. A missing verdict is `insufficient_evidence`. A verdict for another model.onnx sha256 or spec version is refused. |
 
@@ -108,7 +108,7 @@ That record's section 6 settles the retained-pending rows above:
   are retired as deciders and stay as diagnostics.
 - The 1.5 pp int8-vs-fp32 cap is retired, because the verdict is tied to the int8 artifact's sha256.
 - The mask-regression lock is retained as a configuration check outside the specification. It compares the
-  candidate with and without the ship config's conventions mask and does not read the published model's
+  candidate with and without the ship config's conventions mask and doesn't read the published model's
   answers, so the row above that describes it as a comparison against the published model is inaccurate.
 
 The floors stay in `v9.0.0-base.json` and `mwdev_promotion_eval` until the first v3 verdict runs on a frozen,

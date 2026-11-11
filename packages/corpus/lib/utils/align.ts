@@ -109,7 +109,7 @@ export function locateComponentSpans(
 
 	const haystack = caseInsensitive ? raw.toLowerCase() : raw
 
-	// Longest value first: a short component must not claim a word that a longer,
+	// Longest value first: a short component mustn't claim a word that a longer,
 	// more specific component owns.
 	// Emit order is unaffected, since spans are re-sorted by start below.
 	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).toSorted(
@@ -258,7 +258,7 @@ function locateSpan(args: {
 	// Pass 1: verbatim substring.
 	// Word-boundary-aligned matches are preferred over intra-word ones, so a short
 	// value cannot claim the inside of an earlier word.
-	// Intra-word matches stay allowed as the fallback because they are essential for affix
+	// Intra-word matches stay allowed as the fallback because they're essential for affix
 	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence).
 	let intraWord: { start: number; end: number } | null = null
 	let from = 0

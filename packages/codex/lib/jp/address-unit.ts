@@ -55,7 +55,7 @@ export type JapaneseAdminSuffix = (typeof JP_ADMIN_SUFFIXES)[number]
 /**
  * The markers that close the numbered tail of an address.
  *
- * Japan's stand-in for a house number, since there is no street name to hang one on:
+ * Japan's stand-in for a house number, since there's no street name to hang one on:
  *
  * - 丁目 (chōme) — a district block within a neighborhood.
  * - 番地 (banchi) — a lot number.
@@ -75,7 +75,7 @@ const ADMIN_SUFFIX_SET: ReadonlySet<string> = new Set(JP_ADMIN_SUFFIXES)
  * True when a single kanji is one of the {@link JP_ADMIN_SUFFIXES} admin-area markers (`都`, `市`, `区`, …).
  *
  * Strictly single-character: a multi-character input (even one ending in a suffix)
- * is not a suffix on its own.
+ * isn't a suffix on its own.
  */
 export function isJapaneseAdminSuffix(ch: unknown): ch is JapaneseAdminSuffix {
 	return typeof ch === "string" && ADMIN_SUFFIX_SET.has(ch)
@@ -85,7 +85,7 @@ export function isJapaneseAdminSuffix(ch: unknown): ch is JapaneseAdminSuffix {
  * Strip a trailing admin-area suffix kanji from a place name, exposing the bare
  * name (`東京都` → `東京`, `大阪市` → `大阪`, `千代田区` → `千代田`).
  *
- * Leaves a name untouched if it does not end in an admin suffix.
+ * Leaves a name untouched if it doesn't end in an admin suffix.
  *
  * Hokkaido (`北海道`) is the deliberate exception: its name ends in 道 but is indivisible, so it is
  * returned whole rather than clipped to `北海` — mirroring the same carve-out in `prefecture.ts`.

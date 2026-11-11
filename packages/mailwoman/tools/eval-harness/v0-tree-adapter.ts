@@ -30,7 +30,7 @@ import { buildAddressTree, type AddressTree, type DecoderToken } from "@mailwoma
 export interface AdaptResult {
 	tree: AddressTree
 	/**
-	 * Component values that could not be located in raw and were dropped.
+	 * Component values that couldn't be located in raw and were dropped.
 	 */
 	dropped: number
 }

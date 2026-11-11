@@ -28,13 +28,13 @@ export const ROW_SOURCES = ["wof", "overture", "geonames", "libaddressinput", "m
 export type RowSource = (typeof ROW_SOURCES)[number]
 
 export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Promise<void> {
-	// PRAGMAs run raw because Kysely does not model them.
+	// PRAGMAs run raw because Kysely doesn't model them.
 	// They tune the bulk build.
 	db.exec("PRAGMA journal_mode = WAL")
 	db.exec("PRAGMA busy_timeout = 10000")
 	db.exec("PRAGMA synchronous = OFF")
 
-	// The caller owns `db`'s lifecycle, so this function does not destroy it.
+	// The caller owns `db`'s lifecycle, so this function doesn't destroy it.
 	// The bulk INSERTs (populateAncestors + build-unified-wof) run on the raw handle.
 
 	await db.schema
@@ -72,7 +72,7 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 	//
 	// `source` on `names` and `concordances` is the dataset the row came from, one of {@link ROW_SOURCES}.
 	// A name another source adds to a WOF record keeps that source, so a license filter can find it.
-	// The empty default marks a writer that has not stated a source, and the admin verify step refuses it.
+	// The empty default marks a writer that's not stated a source, and the admin verify step refuses it.
 	await db.schema
 		.createTable("names")
 		.ifNotExists()

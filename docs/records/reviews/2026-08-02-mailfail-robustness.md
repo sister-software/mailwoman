@@ -1,6 +1,6 @@
 # mailfail — robustness on garbage, malformed and hostile input
 
-**Date:** 2026-08-02 · **Scope:** what the shipped stack does with input that is not an address.
+**Date:** 2026-08-02 · **Scope:** what the shipped stack does with input that's not an address.
 Read-only investigation. No production code changed. 111 probe inputs across seven classes, run on
 four paths, with the fixture committed at
 `mailwoman/eval-harness/fixtures/mailfail.jsonl` so these cases can become a regression test.
@@ -9,9 +9,9 @@ four paths, with the fixture committed at
 
 ## Verdict
 
-Three findings need action, and one of them is not a garbage-input problem at all.
+Three findings need action, and one of them isn't a garbage-input problem at all.
 
-The stack is well-behaved on the input classes you would expect to break it. Empty
+The stack is well-behaved on the input classes you'd expect to break it. Empty
 strings, whitespace, punctuation runs, emoji, ZWJ sequences, box drawing, unpaired surrogates,
 embedded NUL, BOM, zalgo, RTL overrides, CJK and Devanagari all pass through without a throw and
 mostly without emitting anything. The "What held up" section below records that result in full.
@@ -30,7 +30,7 @@ real coordinate somewhere in the world, with a resolver score indistinguishable 
 
 Four paths, because they behave differently and pose different risk:
 
-| Path         | How it was driven                                                                                                                                                                                 | Who is on it                                                |
+| Path         | How it was driven                                                                                                                                                                                 | Who's on it                                                 |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | **stages**   | `normalize` → `computeQueryShape` → `detectLocale` → `classifyKindSync` → `groupPhrasesSync`, timed individually. No model.                                                                       | everything downstream                                       |
 | **parse**    | `NeuralAddressClassifier.parse` with the exact opts `parseForGeocode` uses: `postcodeRepair: true`, `normalizeCase: true`, `queryShape`, `enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT`. | `geocode-core.ts` — the drop-in servers and the geocode CLI |
@@ -50,7 +50,7 @@ the shipped CLI (`mailwoman parse --resolve`) rather than the eval script.
 A second eval-script bug is recorded here because it produced a number that briefly went into this
 report. The 1 MB run was watched with a shell loop whose own command line contained the string
 `mailfail-e2e`, so `pgrep -f mailfail-e2e` matched **the watcher rather than the job** — and
-`ps -o etimes` was reporting the watcher's age as if it were the measurement. That is how ">5.5
+`ps -o etimes` was reporting the watcher's age as if it were the measurement. That's how ">5.5
 minutes, still running" got written down for a job that had in fact been killed. The real figure
 was recovered from the log file's mtime and the job's own wall-clock cap. Any process-liveness
 check whose pattern can match the checker is measuring itself.
@@ -83,7 +83,7 @@ let tokens: DecoderToken[] = pieces.map((p, i) => {
 `softmax(undefined)` reads `row[0]` at `neural/viterbi.ts:280` and throws
 `TypeError: Cannot read properties of undefined (reading '0')`.
 
-There is a second, earlier throw site on the same desync. `enforceWordConsistency` — default-ON in
+There's a second, earlier throw site on the same desync. `enforceWordConsistency` — default-ON in
 production — iterates piece indices but indexes `emissions`:
 
 ```ts
@@ -113,7 +113,7 @@ first THROW   : 325 chars (131 pieces)
 This length is common. Address fields in shipping systems, CRMs and government forms routinely combine
 lines to well past 325 characters.
 
-**The 512-character drop-in cap does not guard against this.** `nominatim/cli.ts:67` and
+**The 512-character drop-in cap doesn't guard against this.** `nominatim/cli.ts:67` and
 `photon/cli.ts:60` both cap at `MAX_QUERY_LEN = 512`, with a comment explaining the cap exists
 because a long query "would exceed the model's input window." The cap is roughly 4× too loose: a
 415-character query — comfortably under it — tokenizes to 178 pieces and throws.
@@ -176,7 +176,7 @@ for (const seg of segments) {
         ...
 ```
 
-At 1 MB that is 60,609 × 212,170 ≈ 12.9 billion iterations.
+At 1 MB that's 60,609 × 212,170 ≈ 12.9 billion iterations.
 
 A comma-dense input with no whitespace (`"a,"` repeated) hits the same quadratic through segment
 count, with no other growth factor: 3.8 ms → 103.4 ms across a 16× size increase.
@@ -243,7 +243,7 @@ Where the two quadratics and the 128-piece throw can be reached:
 The single highest-value mitigation is a `.max()` on the API `address` field. It closes the
 quadratics on the most exposed surface without touching the parser.
 
-I did **not** stand up a server and issue HTTP requests. The timings above are of the parse the
+I **didn't** stand up a server and issue HTTP requests. The timings above are of the parse the
 endpoint performs, measured in-process. The exposure column is read from the code rather than observed
 over the wire.
 
@@ -326,9 +326,9 @@ adv-null-words   locality="null undefined NaN None" @ 0.830
 
 A phone number is read as a locality at **0.964**. On the resolver side, the correct control
 (`New York`) scored 29.2 while `Apt` → Apt, France scored 27.0 and `Null` → Null, India scored
-27.0. There is no threshold on either signal that separates these from a correct hit.
+27.0. There's no threshold on either signal that separates these from a correct hit.
 
-**Assessment.** This is not straightforwardly a bug — `Boom` is a real Belgian municipality and a
+**Assessment.** This isn't straightforwardly a bug — `Boom` is a real Belgian municipality and a
 geocoder should find it. The defect is that no downstream check can tell the two cases apart. A
 plausible mitigation is a population/importance floor for single-token localities that lack any
 corroborating component (a house number, postcode, or region). That floor would drop the whole
@@ -340,7 +340,7 @@ ships it.
 
 ## What held up
 
-These results are recorded because they are real results. Across all four paths, none of the
+These results are recorded because they're real results. Across all four paths, none of the
 following threw, hung, or emitted anything:
 
 - **Degenerate input is clean.** Empty string, single/multiple spaces, tab, newline, CRLF, only
@@ -367,22 +367,22 @@ One untidy case: `\\x01\\x02\\x03\\x07\\x1b[31m` (control characters plus an ANS
 color escape) emits `{"postcode":"31m"}`. Cosmetic, low severity, but the control bytes should
 have been stripped in Stage 1.
 
-**A predicted problem that is not real.** The static pass flagged
+**A predicted problem that's not real.** The static pass flagged
 `neural/span-proposer-lexicon.ts:138` as polynomial-ReDoS-shaped — `\s*#?\s*` before a required
 digit, on a default-ON path. Measured against `"PO Box" + " ".repeat(n) + "x"` for n up to 8,000,
 the time is flat at 0.1–0.6 ms with no growth. The concern is ruled out, and it is recorded here so
-a later reviewer does not re-derive it.
+a later reviewer doesn't re-derive it.
 
 ---
 
-## What I did not test
+## What I didn't test
 
 - **No HTTP-level testing.** No server was started and no request was issued. Timings are of the
   parse the endpoint performs. The exposure map is read from source.
 - **No concurrency or sustained-load testing.** Every measurement is a single call on an idle
   process. Event-loop blocking is inferred from wall time on a single-threaded runtime rather than
   observed under load.
-- **No memory-pressure measurement.** RSS and GC behavior were not instrumented. The
+- **No memory-pressure measurement.** RSS and GC behavior weren't instrumented. The
   `pieces.length × labels.length` allocations noted in Finding 1 are read from source rather than measured.
 - **No locale coverage beyond en-US.** The classifier is `loadFromWeights({ locale: "en-US" })`
   throughout. The two quadratics are locale-independent (both are in pre-model stages), but the
@@ -392,7 +392,7 @@ a later reviewer does not re-derive it.
   population-first and may behave differently on Finding 5.
 - **The 1 MB end-to-end pipeline case never completed.** It ran for **~2,220 s (37 minutes)** and
   was killed by a 2,400 s wall-clock cap without producing a result, so the defensible statement is
-  ">37 minutes," not a figure. That is 20× the 110.6 s `computeQueryShape` cost. The gap indicates that the
+  ">37 minutes," not a figure. That's 20× the 110.6 s `computeQueryShape` cost. The gap indicates that the
   stages after query-shape also degrade badly at 60,609 segments. That degradation needs its own
   measurement, and I do not have one. The 1 MB row in Finding 2 is the stage-level number, and it
   stands on its own.

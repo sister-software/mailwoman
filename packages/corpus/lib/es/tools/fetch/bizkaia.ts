@@ -12,7 +12,7 @@
  *   one entry per municipality, each offering that municipality's addresses as a zipped GML through a
  *   `rel="enclosure"` link. Those archives hold no `ad:ThoroughfareName`, `ad:PostalDescriptor` or
  *   `ad:AdminUnitName` feature: every `ad:component` reference an address writes is a stored-query
- *   URL on the publisher's WFS that the ATOM service does not republish. An adapter handed only those
+ *   URL on the publisher's WFS that the ATOM service doesn't republish. An adapter handed only those
  *   archives therefore reads every address in the province without its street, its postcode or
  *   its municipality. This harvest acquires both services into one directory for that reason.
  *
@@ -328,7 +328,7 @@ export interface HarvestESBizkaiaOptions {
 	/**
 	 * Harvest only these five-digit municipality codes, for a probe or to repair specific ones.
 	 *
-	 * A code the service document does not list is reported as a failure rather than ignored.
+	 * A code the service document doesn't list is reported as a failure rather than ignored.
 	 */
 	municipalities?: readonly string[]
 	/**
@@ -518,7 +518,7 @@ export async function harvestESBizkaia(
 	const recordedManifest = await readManifest<ESBizkaiaHarvestManifest>(manifestPath)
 	const files = new Map<string, ESBizkaiaArchiveEntry>()
 
-	// An entry for a municipality this run does not consider is kept, so a bounded
+	// An entry for a municipality this run doesn't consider is kept, so a bounded
 	// run never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as ESBizkaiaArchiveEntry)
@@ -629,10 +629,10 @@ export async function harvestESBizkaia(
 }
 
 /**
- * The municipalities this run considers, and the codes a caller asked for that the feed does not list.
+ * The municipalities this run considers, and the codes a caller asked for that the feed doesn't list.
  *
- * A code the caller asked for and the service document does not list is returned
- * rather than dropped, because a municipality that is not published is a different
+ * A code the caller asked for and the service document doesn't list is returned
+ * rather than dropped, because a municipality that's not published is a different
  * condition from a selection that holds no municipality.
  */
 function selectMunicipalities(
@@ -670,7 +670,7 @@ function selectMunicipalities(
  * Download one municipality's archive and answer the manifest entry for it.
  *
  * The transfer runs on the harvest's own client through {@linkcode downloadZipArchive},
- * which refuses a body that does not begin with a zip signature.
+ * which refuses a body that doesn't begin with a zip signature.
  */
 async function fetchArchive(
 	client: Pick<APIClient, "fetch">,

@@ -157,7 +157,7 @@ export interface UnitDesignatorRangeMatch {
 	 * The secondary range/identifier token immediately following the designator, i.e. "4B" in "Apt 4B".
 	 *
 	 * `null` when the designator appears standalone (e.g. a bare "Basement").
-	 * This module does not validate the range's own shape.
+	 * This module doesn't validate the range's own shape.
 	 *
 	 * Numeric, letter and alphanumeric ranges are all USPS-valid.
 	 */
@@ -167,7 +167,7 @@ export interface UnitDesignatorRangeMatch {
 	 * range (see {@link US_UNIT_DESIGNATOR_REQUIRES_RANGE}).
 	 *
 	 * Informational only.
-	 * This matcher does not enforce it.
+	 * This matcher doesn't enforce it.
 	 */
 	requiresRange: boolean
 }
@@ -250,7 +250,7 @@ export interface UnitContext {
  * so `BLDG 25 FL 1` and `25 1` both yield `251`.
  *
  * Zeros that open a numeric word are dropped, so `0807` and `807` agree.
- * A unit that is only designators, such as `Basement`, yields its first canonical
+ * A unit that's only designators, such as `Basement`, yields its first canonical
  * designator, so `BSMT` and `Basement` agree.
  *
  * Other words are folded and kept, so `North Wing` yields `northwing`.

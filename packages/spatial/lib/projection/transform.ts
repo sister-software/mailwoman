@@ -15,8 +15,8 @@ import { TextSpliterator } from "spliterator"
  *   The check found eight disagreements among 59 points against the authority's OGC service. Each point fell into a
  *   neighboring sliver.
  *
- *   GDAL 3.8 does not pass `--config PROJ_NETWORK on` through to PROJ. Tests also showed that `PROJ_ONLY_BEST=on`
- *   does not refuse a ballpark shift. `projinfo` provides the usable check. Its output identifies the best candidate
+ *   GDAL 3.8 doesn't pass `--config PROJ_NETWORK on` through to PROJ. Tests also showed that `PROJ_ONLY_BEST=on`
+ *   doesn't refuse a ballpark shift. `projinfo` provides the usable check. Its output identifies the best candidate
  *   operation and reports a missing grid.
  *
  *   The check runs even when a source needs no transformation. A source already in EPSG:4326 returns
@@ -88,7 +88,7 @@ export interface AssertDatumTransformationOptions {
  * Refuse an ingest whose best available datum transformation is a ballpark one, or is missing its grid.
  *
  * @throws {Error} When proj names no candidate, would use a ballpark offset,
- * or would use an operation whose grid is not installed.
+ * or would use an operation whose grid isn't installed.
  */
 export async function assertDatumTransformationAvailable(
 	sourceEPSG: number,

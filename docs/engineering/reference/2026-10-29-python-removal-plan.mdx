@@ -75,7 +75,7 @@ The issue's prerequisite list is confirmed against the tree (**observed**):
   `corpora/builder.py`, `corpora/registry.py`, `corpora/secondary.py`, `corpora/fragment/build.py`,
   `corpora/deepseek/cli.py`, `countries/cjk/overlay.py`, `countries/jp/corpora/assemble.py`,
   `countries/jp/probe_corpora.py`, `countries/kr/corpora/assemble.py`, `countries/tw/corpora/assemble.py`,
-  `countries/us/tuples.py` and `launch/train.py`. That is fifteen importers, where the earlier draft counted one.
+  `countries/us/tuples.py` and `launch/train.py`. That's fifteen importers, where the earlier draft counted one.
 - `corpus-python/src/mailwoman_train/data/masking.py` is imported by `train/pretrain.py` (`mask_tokens`, line 35)
   for MLM pretraining. That loop reuses `unk_id` as the mask token (line 242).
 - `corpus-python/src/mailwoman_train/audits/encoder_parity.py` constructs
@@ -196,14 +196,14 @@ with `takeEvents()`. `cancel()` ends a stream with the `Cancelled` status.
   requested rows (99,980 yielded after the astral skip), RSS was 1,955 MB at 10,000 rows and 1,988 MB at 90,000 rows,
   and peak RSS was 1,988 MB. Over 1,000,000 rows, RSS went from 1,996 MB at 100,000 rows to 2,096 MB at 900,000 rows,
   and peak RSS was 2,096 MB. The stream takes 28 to 29 s to open, and what it opens holds most of that memory: the source index and
-  the 131,072-row shuffle buffer. RSS does not grow with the rows read.
+  the 131,072-row shuffle buffer. RSS doesn't grow with the rows read.
 - Browser artifact: `cargo tree -p mtf-wasm --target wasm32-unknown-unknown` lists `mtf-wasm` → `mtf-core` with and
   without `mtf-node` in the workspace. The wasm build gives SHA-256 `6ee2b5b7…` (86,713 bytes) both ways. The
   committed `wasm/mtf.wasm` (`4f3c9bd4…`) is already stale on `origin/main` at `7b69d33ce`, before this change.
 
 ## 3. Preservation classification
 
-Universal byte identity is not the bar. Each capability states what stays identical, what changes deliberately, and
+Universal byte identity isn't the bar. Each capability states what stays identical, what changes deliberately, and
 how it is verified.
 
 | Capability                                                                       | Must stay identical                                                                                                                                                                                                                                                                                                                                                           | Deliberately changes                                                                                                                                                   | Verification                                                                                                                                                                                                    |
@@ -263,7 +263,7 @@ and `grad_accum_steps` 1 and 4.
 6. Save and restore a checkpoint in the Rust format, with forward equality after restore and the
    `find_latest_checkpoint` semantics (`training_state.json` marks completeness) preserved.
 7. 2,000 deterministic CPU steps from the reference checkpoint with batches from the Rust sampler: the loss column
-   of `train_log.csv` within 1e-3 relative at every logged step. Divergence beyond that is investigated and
+   of `train_log.csv` within 1e-3 relative at every logged step. Divergence beyond that's investigated and
    classified before acceptance.
 8. One approved GPU run of a current recipe, graded by `training-arc` and `eval-model` against the registered
    release requirements in `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` and the split rules in
@@ -306,15 +306,15 @@ the same either way. The shipped `tokenizer.model` and its weights are untouched
 Each check states what it must demonstrate. Checks marked **spend** need the operator's authorization before they
 run. None runs as part of this plan's commit.
 
-| Id  | Check                                    | Must demonstrate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Spend                                                     |
-| --- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| F1  | `tch-rs` runtime                         | A `tch` version whose libtorch matches `torch==2.12.0`, or a recorded decision to upgrade. A CPU build on the lab host. Forward and backward of one pre-norm block with `MultiheadAttention`, `LayerNorm`, GELU. AdamW and a `LambdaLR`-equivalent schedule. A CUDA image build with its build minutes and size. **Result (observed 2026-10-29):** no `tch` release links 2.12, so `tch` 0.26.0 and libtorch 2.13.0 run against a torch 2.13.0 reference. The block, AdamW and the schedule are bit-identical on the lab CPU. The CUDA image (`trainer_image("cu130")` in `corpus-python/launch/app.py`, libtorch `2.13.0+cu130` and torch 2.13.0+cu130's CUDA wheels) built on Modal on 2026-10-29: about 134 s of layer build time, 4,910 MB. See §4.2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | image build on Modal: **spend** (approval). Lab CPU: none |
-| F2  | Python-free ONNX export and quantization | A hand-written opset-17 graph writer (`prost`) for the reference checkpoint that `onnxruntime-node` 1.30.0 loads. Inputs, outputs and dynamic axes equal to the pinned exporter's. Logits within 1e-4 on the 1,000-sample probe. An int8 graph reproducing `quantize_dynamic(QInt8)` within 1e-3 and passing the stale-`value_info` case. The browser SLO suite `packages/neural/lib/web/browser-slo.integration.test.ts` on the new artifact. The WebGPU constraint checked on a real iOS device before any promotion (per the image comment in `corpus-python/launch/app.py`). **Result (observed 2026-10-29):** met on both checkpoints, the int8 graphs equal to `quantize_dynamic`'s on every probe element. The iOS device check was not run. See §4.1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | none                                                      |
-| F3  | Node sampler binding                     | `mtf-node` (napi-rs) builds with the pinned toolchain, opens a parquet manifest, streams rows with bounded memory (RSS recorded over 100k rows), and matches `c6-train-2k`. The browser `mtf.wasm` is unchanged in size and dependencies. **Passed 2026-10-29** (§2.1): `c6-train-2k` at 0 differing rows, RSS 1,955 → 1,988 MB from 10k to 90k rows                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | none                                                      |
-| F4  | TypeScript launcher lifecycle            | Through the `modal` npm SDK (Sandboxes and calls to deployed Functions, where Python is the only Function runtime, **observed** in the SDK intro): CPU preflight writing the receipt and the GPU step refusing without it. Execution continuing after the client exits. GPU and resource overrides, secrets, an image built from a Dockerfile. Retries in fresh containers resuming from the newest complete checkpoint. A Volume written by one container readable from another. Status, logs, identifiers and dashboard links. Cancellation. Timeout. Duplicate-launch detection by output directory lock. A controlled failure (kill at step N), persisted checkpoint, restart and artifact recovery are run end to end on a small CPU job. If the SDK cannot provide a behavior, the orchestration moves to a Python-free alternative (a Rust `trainer` supervisor inside the Sandbox for retries and resume, and a TS poller for status) and the result is recorded. **Result (observed 2026-10-29), through the temporary Python shell-out rather than the SDK:** every listed behavior ran on a CPU job of the 200-step parity config. Resume continues from the newest complete checkpoint but does not reproduce the uninterrupted `train_log.csv` after it. See "Phase 7 status" | CPU Sandbox minutes: **spend** (approval)                 |
-| F5  | Native SentencePiece                     | `spm_train` built from the `v0.2.2` tag reproduces the recorded tokenizer model hash on the recorded inputs with one thread. The Rust `sentencepiece` 0.14.0 crate's trainer exposure is checked. The proto writer round-trips the shipped model byte for byte                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | none                                                      |
-| F6  | Bounded CPython RNG                      | `pyrandom.rs` matches `cpython-random.json` for every method and seed form in §1.3, including string seeds and `_randbelow` rejection. The mixed-call sequence test (the JP assembler's draw order) matches                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | none                                                      |
-| F7  | Config resolver                          | The dump comparison over every committed config and the `NO` key refusal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | none                                                      |
+| Id  | Check                                    | Must demonstrate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Spend                                                     |
+| --- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| F1  | `tch-rs` runtime                         | A `tch` version whose libtorch matches `torch==2.12.0`, or a recorded decision to upgrade. A CPU build on the lab host. Forward and backward of one pre-norm block with `MultiheadAttention`, `LayerNorm`, GELU. AdamW and a `LambdaLR`-equivalent schedule. A CUDA image build with its build minutes and size. **Result (observed 2026-10-29):** no `tch` release links 2.12, so `tch` 0.26.0 and libtorch 2.13.0 run against a torch 2.13.0 reference. The block, AdamW and the schedule are bit-identical on the lab CPU. The CUDA image (`trainer_image("cu130")` in `corpus-python/launch/app.py`, libtorch `2.13.0+cu130` and torch 2.13.0+cu130's CUDA wheels) built on Modal on 2026-10-29: about 134 s of layer build time, 4,910 MB. See §4.2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | image build on Modal: **spend** (approval). Lab CPU: none |
+| F2  | Python-free ONNX export and quantization | A hand-written opset-17 graph writer (`prost`) for the reference checkpoint that `onnxruntime-node` 1.30.0 loads. Inputs, outputs and dynamic axes equal to the pinned exporter's. Logits within 1e-4 on the 1,000-sample probe. An int8 graph reproducing `quantize_dynamic(QInt8)` within 1e-3 and passing the stale-`value_info` case. The browser SLO suite `packages/neural/lib/web/browser-slo.integration.test.ts` on the new artifact. The WebGPU constraint checked on a real iOS device before any promotion (per the image comment in `corpus-python/launch/app.py`). **Result (observed 2026-10-29):** met on both checkpoints, the int8 graphs equal to `quantize_dynamic`'s on every probe element. The iOS device check was not run. See §4.1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | none                                                      |
+| F3  | Node sampler binding                     | `mtf-node` (napi-rs) builds with the pinned toolchain, opens a parquet manifest, streams rows with bounded memory (RSS recorded over 100k rows), and matches `c6-train-2k`. The browser `mtf.wasm` is unchanged in size and dependencies. **Passed 2026-10-29** (§2.1): `c6-train-2k` at 0 differing rows, RSS 1,955 → 1,988 MB from 10k to 90k rows                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | none                                                      |
+| F4  | TypeScript launcher lifecycle            | Through the `modal` npm SDK (Sandboxes and calls to deployed Functions, where Python is the only Function runtime, **observed** in the SDK intro): CPU preflight writing the receipt and the GPU step refusing without it. Execution continuing after the client exits. GPU and resource overrides, secrets, an image built from a Dockerfile. Retries in fresh containers resuming from the newest complete checkpoint. A Volume written by one container readable from another. Status, logs, identifiers and dashboard links. Cancellation. Timeout. Duplicate-launch detection by output directory lock. A controlled failure (kill at step N), persisted checkpoint, restart and artifact recovery are run end to end on a small CPU job. If the SDK cannot provide a behavior, the orchestration moves to a Python-free alternative (a Rust `trainer` supervisor inside the Sandbox for retries and resume, and a TS poller for status) and the result is recorded. **Result (observed 2026-10-29), through the temporary Python shell-out rather than the SDK:** every listed behavior ran on a CPU job of the 200-step parity config. Resume continues from the newest complete checkpoint but doesn't reproduce the uninterrupted `train_log.csv` after it. See "Phase 7 status" | CPU Sandbox minutes: **spend** (approval)                 |
+| F5  | Native SentencePiece                     | `spm_train` built from the `v0.2.2` tag reproduces the recorded tokenizer model hash on the recorded inputs with one thread. The Rust `sentencepiece` 0.14.0 crate's trainer exposure is checked. The proto writer round-trips the shipped model byte for byte                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | none                                                      |
+| F6  | Bounded CPython RNG                      | `pyrandom.rs` matches `cpython-random.json` for every method and seed form in §1.3, including string seeds and `_randbelow` rejection. The mixed-call sequence test (the JP assembler's draw order) matches                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | none                                                      |
+| F7  | Config resolver                          | The dump comparison over every committed config and the `NO` key refusal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | none                                                      |
 
 ### 4.1 F2 result: the Rust exporter and quantizer
 
@@ -359,7 +359,7 @@ tokenizer. Every tenth probe is also run trimmed to its real length, so the `seq
 
 The initializer row was re-measured on 2026-10-30 and recorded in
 `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/quantizer-initializers/` (`record.json`, `FINDINGS.md`, one diff report
-per arm). en-us reproduces at 189 of 189. Arm B's reference fp32 graph is not on disk: the `model-fp32.onnx` beside
+per arm). en-us reproduces at 189 of 189. Arm B's reference fp32 graph isn't on disk: the `model-fp32.onnx` beside
 its int8 was written later and its float initializers differ, so arm B's 189 of 189 rests on the 2026-10-29 run only.
 
 The shipped en-us int8 measured 43.7 ms p50 and 46.1 ms p95 on the same host in the same session. The SLO suite
@@ -367,7 +367,7 @@ has no WebGPU arm, so the WebGPU constraint is untested. The quantizer's unit te
 case: an annotation that contradicts the graph is dropped and the output is identical to the one without it. The
 dynamo graph's 514 annotations pass through the same path.
 
-What does not match, and why:
+What doesn't match, and why:
 
 1. **Graph bytes, node names and initializer names** differ, as §3 permits. The Rust fp32 graph has 105
    initializers and 18 `Reshape` nodes, against 115 and 72.
@@ -375,7 +375,7 @@ What does not match, and why:
    `SkipLayerNormalization` in the reference fp32 graph and only `final_ln` in the Rust one (observed in each
    session's optimized graph). That fusion is inferred to cause the difference. The int8 graphs get the same single
    fusion and agree exactly.
-3. **Shape annotations change int8 numerics.** Without `value_info`, onnxruntime does not fuse `final_ln`, and the
+3. **Shape annotations change int8 numerics.** Without `value_info`, onnxruntime doesn't fuse `final_ln`, and the
    int8 `logits` move by up to 2.68e-2 for en-us and 3.49e-2 for arm B. The reference int8 with its `value_info`
    removed gives the same numbers, and the Rust quantizer's output without annotations equals it exactly. So the
    quantizer writes the shapes onnx's inference would write (`trainer-export/src/shape.rs`, including onnx's `unk__`
@@ -397,7 +397,7 @@ Observed on 2026-10-29 on the lab host (Ryzen 9 8945HS, AVX-512, `torch.backends
 `AVX512`).
 
 **Version.** No `tch` release links libtorch 2.12: `tch` 0.24.0 pins 2.11.0 and 0.26.0 pins 2.13.0 (`torch-sys`'s
-`TORCH_VERSION`, observed in both crates), and there is no 0.25 release on crates.io. **Decided:** the Rust trainer uses
+`TORCH_VERSION`, observed in both crates), and there's no 0.25 release on crates.io. **Decided:** the Rust trainer uses
 `tch` 0.26.0 with libtorch 2.13.0, and the Python reference for every comparison runs on `torch==2.13.0+cpu` in a
 separate environment, so the language comparison is same-runtime. The repository pin stays `torch==2.12.0` until the
 upgrade is made as its own change with its own export and runtime checks (§3.3).
@@ -409,7 +409,7 @@ including `torch-sys`'s C++ wrapper and the shim, with the crate sources already
 `cargo -j 4` and a host load average of 5.7. The `trainer` binary is 17.6 MB and links the libtorch shared objects at
 run time (`LD_LIBRARY_PATH` or an rpath).
 
-**What `tch` does not expose.** `trainer-model/csrc/autocast.cpp` is a C++ shim compiled against the same headers. It
+**What `tch` doesn't expose.** `trainer-model/csrc/autocast.cpp` is a C++ shim compiled against the same headers. It
 provides per-device autocast (`tch::autocast` switches CUDA only), `torch.is_grad_enabled()` for the
 `MultiheadAttention` fast-path choice, `grad = None` for `zero_grad(set_to_none=True)` (AdamW skips a parameter without
 a gradient, so a zero gradient would decay it), `linalg_vector_norm` for `clip_grad_norm_`, and a private CPU
@@ -593,7 +593,7 @@ capture. `index.json` lists every verdict, and `inputs/` keeps both config copie
 Notes on the records:
 
 - `config-keys` audits each checkout's own committed configs. `ae90ae7a2` holds 264, and `main` holds 268. Both
-  report no junk keys and no other load error, so this record does not compare the two ports on one input.
+  report no junk keys and no other load error, so this record doesn't compare the two ports on one input.
 - `label-support`: neither the earlier capture nor this one is a byte reference, because `rows_with_label`'s order
   follows the hash seed.
 - `release-check` and `exposure-canonical`: the 2026-10-29 capture recorded no command. The arguments were read back
@@ -632,7 +632,7 @@ Classified differences (**decided**):
   trainer samples. Given the folded weights, the Python `audit_feed` writes the port's bytes. The same holds for
   `mixed_script`: unchanged, it stops on C6 with `ValueError: 130 source(s) in the 'train' split are absent from
 source_weights`. Its `main` given `resolve_config_reps`'s weights (200,000 rows, seed 1569, the committed
-  `data/gazetteer/affix-relabel-lexicon-v2.json`, because the lexicon path in the host copy of the config does not
+  `data/gazetteer/affix-relabel-lexicon-v2.json`, because the lexicon path in the host copy of the config doesn't
   exist on the host) writes the port's bytes. It took 254 s, including a `mailwoman_mtf` rebuild, and the port took 40 s. The
   port reads letter scripts from the generated `LETTER_SCRIPT` table through `mtf-node`. That table is
   `character_script` evaluated at every scalar value (0 of 1,112,064 differ from the audit's function), so the
@@ -686,7 +686,7 @@ record under `$MAILWOMAN_DATA_ROOT/audits/port-parity/<builder>/` holds both out
 | `cjk-foreign-places`          | 8,793 rows equal. Report and vocabulary byte-equal. The manifest differs only in the output directory's name (`FINDINGS.md`)                                      |
 | `fragment-assay`              | 216,570 rows (schema equal) and 24,063 dev lines. 2,000 differ (1,803 and 197), each an NZ row ending `Aotearoa` where Python wrote `New Zealand` (`FINDINGS.md`) |
 
-The TW and JP registry counts (25,006 and 176,544 aligned) were not re-measured: that run read a scratch data root
+The TW and JP registry counts (25,006 and 176,544 aligned) weren't re-measured: that run read a scratch data root
 assembled by hand. That root no longer exists, and the record states its inputs only by name.
 
 Classified differences (**decided**):
@@ -749,7 +749,7 @@ Classified differences (**decided**):
 - `cjk_share` identified a CJK letter by `unicodedata.name`. JavaScript has no character names, so the port freezes the 32
   code-point ranges CPython 3.12 (Unicode 15.0) names, and counts letters by general category `L`. Node's tables are
   Unicode 17.0 and hold 9,568 letters Python's `isalpha` refuses. A row holding one has a larger denominator here.
-- The overlay's `--volume-root` defaults to `/data/corpus/versioned`, and `MAILWOMAN_VOLUME_MOUNT` is not read. A caller
+- The overlay's `--volume-root` defaults to `/data/corpus/versioned`, and `MAILWOMAN_VOLUME_MOUNT` isn't read. A caller
   on another mount passes the flag.
 - The overlay takes the first `char-vocab-*.json` in code-point order where Python took the first the directory listed.
   Every corpus on the volume holds one.
@@ -784,7 +784,7 @@ through `@mailwoman/core/api/test-transport` and a fake clock, so no request is 
 - `generate.test.ts` runs both modes end to end. It covers the validated rows, the reject tally, a truncated batch
   that stays pending and is the only request of the rerun, and the source-rights refusal before the key is read or
   the output directory is made. That last case was `test_source_rights.py`'s DeepSeek case.
-- `batches.test.ts` gains the Python test's invariants that `deepseek-reference.json` did not already pin: id
+- `batches.test.ts` gains the Python test's invariants that `deepseek-reference.json` didn't already pin: id
   non-collision, the tables' well-formedness, and a French seed staying French.
 
 The Python package `corpora/` and its tests are deleted. The differences are decided:
@@ -803,7 +803,7 @@ The Python package `corpora/` and its tests are deleted. The differences are dec
 Python's `json.loads` accepts `NaN` and `Infinity` in a completion line, but `JSON.parse` drops them.
 
 After the deletion, `source_rights.py` has no importer outside the config loader (`config/load.py` and
-`config/dump.py`) and the tests. `add_unshippable_flag` and `write_rights_record` had no other caller, so they are
+`config/dump.py`) and the tests. `add_unshippable_flag` and `write_rights_record` had no other caller, so they're
 deleted. `launch/train.py` reaches the module only through `load_training_config`.
 
 Once these ports landed, `corpora/builder.py` had no importer but three training tests that wrote fixture parquet
@@ -843,8 +843,8 @@ Caller checklist: `data/loader/*` ← `train/loop.py`, `train/validation.py`, `t
 `augment_grouping_prob=0.5`, the sampler stream stopped after 250 rows with `corrupt row: insert position 18 is not
 a token edge (raw="{114, СНТ «Пчёлка»")`. The row is `osm-ru`'s `114, СНТ «Пчёлка»`, and its corpus tokens are
 `114`, `СНТ` and `Пчёлка`. The comma and the guillemets are in no token, so `raw` ends one character past the last
-token, and `wrap_row`'s closing insert has no token to join. `wrap_row` now answers `None` for a row whose text does
-not begin and end on a token edge, in `mtf-sampler` and in `data/augment/grouping.py`. The variant and pair draws
+token, and `wrap_row`'s closing insert has no token to join. `wrap_row` now answers `None` for a row whose text doesn't
+begin and end on a token edge, in `mtf-sampler` and in `data/augment/grouping.py`. The variant and pair draws
 are taken before it, so the stream draws what it drew before, and only that row's grouped copy is missing.
 
 - After the fix, the same stream reads 5,000 rows at 0.5 and at 0.05.
@@ -853,7 +853,7 @@ are taken before it, so the stream draws what it drew before, and only that row'
 - `tests/grouping.rs` and `test_grouping.py` hold the `osm-ru` row, a row with a guillemet before its first token,
   and a 40-seed `group_row` check. Both new Rust tests failed with the recorded message before the fix.
 - No committed config sets `augment_grouping_prob` (0 of 268), so no committed config's sampled rows change.
-- The two grouping records were not recaptured past the failing rows. The only Python stream left is the Rust
+- The two grouping records weren't recaptured past the failing rows. The only Python stream left is the Rust
   sampler through `mtf-py`, so a recapture would compare the Rust sampler with itself.
 
 ### Phase 4 — Tokenizer tooling
@@ -872,7 +872,7 @@ Caller checklist: `tokenizer/train.py` ← `cli/commands/tokenizer.py`. `splice.
   `sentencepiece` pin.
 
 Status, 2026-10-29 (**observed** on the lab host): the tools are `packages/mtf/tools/tokenizer/*.run.ts` over the
-`mtf-tokenizer` binary in `packages/mtf/crates/mtf-tools`. The `mailwoman tokenizer` subcommands were not added,
+`mtf-tokenizer` binary in `packages/mtf/crates/mtf-tools`. The `mailwoman tokenizer` subcommands weren't added,
 because each tool is a standalone run and the CLI wiring adds a Pastel schema per tool and no behavior.
 `tokenizer/{train,splice,byte_fallback,legacy_train,uds}.py`, `tokenizer/vocab/`, the two CLI commands, their tests and
 the two fixture generators are deleted. Three items remain:
@@ -930,7 +930,7 @@ time, from `Cargo.lock`. `trainer-loop/tests/runtime.rs` covers the reader. The 
 `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/run-cells.ts`, writes both sides' blocks into each cell's summary entry.
 Two records were backfilled as `rust-report-2026-10-30.json`, `f1/` and `cells/sup-all-crf/`. Both still compare at
 0 on every stage. Each holds `tch` 0.26.0, `libtorch` 2.13.0 (`2.13.0+cpu`), 4 threads and `AVX512`, which matches the
-Python side's `torch`, `threads` and `cpu_capability`. The other records were not rerun.
+Python side's `torch`, `threads` and `cpu_capability`. The other records weren't rerun.
 
 The 200-step reference run itself, from scratch, was reproduced by `trainer train` on the same config: every
 `train_log.csv` loss, rate and eval cell is equal, the step-200 weights are equal on all 115 tensors, and the Fisher
@@ -960,7 +960,7 @@ no difference at all. Two findings on the way, both in the comparison rather tha
 at libtorch's default 8 threads against the reference's 4. That moved the char path's logits by up to 2.4e-5 relative
 and its convolution gradients by up to 3.8e-6 absolute, and one LayerNorm bias gradient by 1.46e-4 relative. Together these
 failed 3 of the 16 cells on gradients (the other 13 stayed inside the tolerances). At 4 threads every cell is equal, so the thread count is part of a record. And
-the first MLM capture applied the supervised curricula in its train-mode pass, and the MLM loop does not. The
+the first MLM capture applied the supervised curricula in its train-mode pass, and the MLM loop doesn't. The
 corrected capture is the one above. Stage 6 also checks that `find_latest_checkpoint` passes over a later
 `step-*` directory without `training_state.json`.
 
@@ -1035,7 +1035,7 @@ graph is fp32 at opset 18, so it is outside the repository's opset invariant. Th
 quantizer still refuses `Conv` by name. An int8 char graph would need `ConvInteger`, which `quantize_dynamic` would
 write.
 
-**Span scorer: blocked.** The Rust model has no span scorer (Phase 5, "Not built"), so there is no forward pass to
+**Span scorer: blocked.** The Rust model has no span scorer (Phase 5, "Not built"), so there's no forward pass to
 check a `span_scores` output against. The exporter refuses `use_span_scorer` by name, as it refuses the affix and
 dependent-locality heads and `inject_first_token`. `launch/artifacts.py::export_onnx` and its
 `semi-crf-transitions.json` sidecar stay on the Python exporter until the scorer is ported. The "Trainer gaps
@@ -1077,7 +1077,7 @@ step-200 checkpoint gives the same fp32 and int8 bytes as before (SHA-256 `f5122
 `DynamicQuantizeLinear` with `MatMulInteger`, served through the native `onnxruntime-web/webgpu` provider. The Rust
 char graph, the Rust int8 graph and the Rust split encoder are opset 17, and each uses only operator types the
 shipped graph it replaces uses. The repository has no operator allowlist, and the browser SLO suite has no WebGPU
-arm. The token-path bytes did not change, so F2's SLO result (11 of 11 on the wasm arm) still describes them. The
+arm. The token-path bytes didn't change, so F2's SLO result (11 of 11 on the wasm arm) still describes them. The
 real iOS device check was not run. It is required before any promotion.
 
 **Callers and deletions.** Deleted: `export/split_embeddings.py`,
@@ -1174,7 +1174,7 @@ now a step after training: the launcher (Phase 7) runs `realized.run.ts` before 
 
 **fp16 and ROCm parameter casts: retired (decided).** No committed config sets `train.precision: fp16` (0 of 264. All
 264 are `bf16`). The Python fp16 path cast the parameters to fp16 and ran with no gradient scaler. `resolve_precision`'s
-docstring gives the missing scaler as the reason it does not autocast fp16. Fp16 parameters also lose any AdamW update
+docstring gives the missing scaler as the reason it doesn't autocast fp16. Fp16 parameters also lose any AdamW update
 below half the fp16 spacing at a weight's magnitude, the failure that docstring gives for bf16 parameters. That loss is
 inferred for fp16 and was not measured. `resolve_precision` refuses fp16 on a CUDA device by name, and the CPU still
 runs fp32, as Python did. The ROCm bf16
@@ -1221,7 +1221,7 @@ Caller checklist: `launch/*` ← operator commands in `corpus-python/launch/AGEN
 #### Phase 7 status: the temporary Rust launch (2026-10-29)
 
 Observed on Modal and the lab host, branch `feat/2874-rust-launch`. This is the smallest launcher that runs
-`trainer train` on Modal: a Python shell-out the TypeScript launcher replaces, so stage 8 does not wait on Phase 7. The
+`trainer train` on Modal: a Python shell-out the TypeScript launcher replaces, so stage 8 doesn't wait on Phase 7. The
 records are under `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/f4/`.
 
 (2026-10-30: this temporary Python launcher is deleted; `packages/mailwoman/tools/training/launch/` replaced it, #2879
@@ -1268,7 +1268,7 @@ to `/data`. They differ only in `train.output_dir`. All ran with `--trainer rust
 | Timeout                               | `f4-timeout-cpu.yaml --fresh --timeout-seconds 150 --retries 1`                  | attempt 1 timed out at 150 s. The retry started in a new container, saved `step-000100` (still on the volume), and timed out. Verdict `FunctionTimeoutError`, status `TIMEOUT`                   | `fc-01M64QTK2N11DSXFN97GJZ6Z8J` |
 | Lock takeover after a finished holder | `f4-cancel-cpu.yaml --fresh` after D was cancelled                               | `Run lock: take_over`; finished                                                                                                                                                                  | `fc-01M64RGB9HC9V9P854Y11N2HHW` |
 
-**Resume does not reproduce the uninterrupted run after the checkpoint.** Compared with the reference
+**Resume doesn't reproduce the uninterrupted run after the checkpoint.** Compared with the reference
 (`compare-train-logs.json`), the resumed run's effective log (the last row of each step, since the CSV is appended on a
 resume) equals it through step 100, including the step-100 evaluation row, except one cell. From step 110 on, every
 `train_loss` differs (step 110: 2.385463 against 2.364570. Step 200: 2.102011 against 2.095606), and so does the
@@ -1276,10 +1276,10 @@ step-200 evaluation (`val_loss` 1.900138 against 1.895484, macro F1 0.370858 aga
 22 rows, so the schedule restored. The killed attempt's own rows 110 to 150 equal the reference's. The one cell is
 step 50's `train_loss`, 3.250855 against 3.250856. A third uninterrupted run, the takeover run F, shows the same
 difference against the reference and no other. So two Modal CPU containers differ in that last digit, and the resume
-does not cause it. Inferred cause of the divergence: a resume restores the weights, the optimizer and the scheduler,
+doesn't cause it. Inferred cause of the divergence: a resume restores the weights, the optimizer and the scheduler,
 skips the consumed batches, and reseeds the generator from `train.seed`. The dropout, locale-hint and evidence-noise
 draws after the checkpoint therefore differ from the uninterrupted run's, as in the Python trainer (§1.2, "the data
-stream is not saved"). The smallest test that separates it from a data-stream cause is the same pair with dropout,
+stream isn't saved"). The smallest test that separates it from a data-stream cause is the same pair with dropout,
 `locale_hint_drop_prob`, `locale_hint_noise_prob` and `evidence_noise_prob` set to 0: equal rows after step 100 would
 confirm the generator.
 
@@ -1305,12 +1305,12 @@ generator restore as the change, because the data stream was already identical. 
 `packages/mailwoman/tools/training/` repeats the experiment for any resolved config and exits 1 on a difference. The
 comparison ran on the CPU device only. A CUDA run's nondeterministic kernels can still differ between attempts, and no
 CUDA resume has been compared. Every future two-seed comparison inherits the restored generators. The Python
-trainer's runs did not have them.
+trainer's runs didn't have them.
 
 **Stage 8's first run.** `$MAILWOMAN_DATA_ROOT/audits/trainer-parity/stage8/v8.3.0-probe-rust-trainer-2k.yaml`
 (SHA-256 `59035f19…308f5a`) is `v8.3.0-probe-rust-loader-2k.yaml` with `train.output_dir` and `train.trackio_run_name`
 renamed, so its rate compares with that probe's 6.50 s per 100 steps on the A100-40GB. It resolves (170 admitted
-sources, shippable), and its output directory is empty on the volume. A Rust launch must not reuse a Python run's
+sources, shippable), and its output directory is empty on the volume. A Rust launch mustn't reuse a Python run's
 config unchanged: `--fresh` would clear that run's checkpoints, and without it the Rust trainer would try to resume
 from them.
 
@@ -1455,7 +1455,7 @@ on an unresolved feasibility check are marked.
 | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | No `tch` release pins libtorch 2.12, so the runtime and language changes cannot be separated | F1's version lookup, and otherwise the Python reference run on torch 2.13 in Phase 0                 |
 | The Modal JS SDK cannot express retries, resume or detached execution for a Sandbox          | F4's controlled-failure run. The fallback is a Rust supervisor in the Sandbox                        |
-| `spm_train` with one thread is not deterministic across builds                               | F5's hash reproduction on two builds of the same tag                                                 |
+| `spm_train` with one thread isn't deterministic across builds                                | F5's hash reproduction on two builds of the same tag                                                 |
 | CPython string seeding or `_randbelow` rejection differs in the port                         | F6's string-seed and mixed-call sequences                                                            |
 | The `parquet` crate orders row groups differently from pyarrow                               | `c6-train-2k` before any larger record in Phase 3                                                    |
 | A hand-written ONNX graph is refused by `onnxruntime-web` WebGPU on Safari                   | F2's browser SLO suite and the iOS device check                                                      |

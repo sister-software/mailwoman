@@ -22,7 +22,7 @@ A per-country **line-delimited JSON** dump of the corpus-relevant fields:
 ```
 
 The scripts-side ingest tool produces the dump and does the DuckDB / S3 work. The tool stays out of
-`@mailwoman/corpus` because corpus is a **runtime dep of the `mailwoman` CLI** and must not pull the
+`@mailwoman/corpus` because corpus is a **runtime dep of the `mailwoman` CLI** and mustn't pull the
 heavy native `@duckdb/node-api`.
 
 ```bash

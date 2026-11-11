@@ -26,8 +26,8 @@ export const PrivateFilerEnvSchema = z.object({
 	/**
 	 * Descriptive User-Agent for the FCC cores lookup (`filer/lib/sdk/cores-client.ts`).
 	 *
-	 * Optional in a way `SEC_EDGAR_USER_AGENT` is not: SEC 403s a request that
-	 * fails to identify itself, FCC does not.
+	 * Optional in a way `SEC_EDGAR_USER_AGENT` isn't: SEC 403s a request that
+	 * fails to identify itself, FCC doesn't.
 	 * Falls back to `SEC_EDGAR_USER_AGENT` — the same contact address — when unset.
 	 */
 	FCC_CORES_USER_AGENT: z.string().optional().meta({

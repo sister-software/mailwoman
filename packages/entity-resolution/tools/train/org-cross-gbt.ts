@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Train the organization-level cross-source link scorer. The practitioner cross-source GBT does
- *   not transfer to organization records because its person-name features go dark. The organization
+ *   Train the organization-level cross-source link scorer. The practitioner cross-source GBT doesn't
+ *   transfer to organization records because its person-name features go dark. The organization
  *   cross-dataset flows therefore pin the FS baseline. CMS Provider of Services joins Care Compare
  *   by CCN. Each system represents the same facility and maintains its name and address separately.
  *

@@ -13,7 +13,7 @@ import { ResourceError } from "#errors/schema"
 /**
  * What a client knows about its connection, from two independent sources.
  *
- * `null` means the source is unavailable or has not reported yet.
+ * `null` means the source is unavailable or hasn't reported yet.
  * A reading of `false` means the source reported a failure.
  */
 export interface ConnectivityReading {

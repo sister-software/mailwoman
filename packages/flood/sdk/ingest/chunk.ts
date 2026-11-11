@@ -9,7 +9,7 @@
  *   This work runs in chunks because h3's wasm heap cannot be reset from JavaScript.
  *   It also fails after an unbounded number of polyfill calls. In the production input, runs died after
  *   roughly 510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process.
- *   A build that completes only when fragmentation happens to stay low is not a reproducible build, so
+ *   A build that completes only when fragmentation happens to stay low isn't a reproducible build, so
  *   {@linkcode buildFloodDatabase} bounds classification by running one chunk for each range of authority feature ids.
  *   It runs each chunk in a separate process, so each starts with an empty heap. The call-removal shortcuts in `cells.ts`
  *   improve speed. Chunks provide the correctness guarantee.

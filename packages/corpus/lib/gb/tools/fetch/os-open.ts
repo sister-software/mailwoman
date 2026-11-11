@@ -49,7 +49,7 @@ export interface OSOpenProduct {
 }
 
 /**
- * The three products, in the order they are fetched.
+ * The three products, in the order they're fetched.
  */
 export const GB_OS_OPEN_PRODUCTS: readonly OSOpenProduct[] = [
 	{ productID: "CodePointOpen", format: "CSV", directory: GB_OS_OPEN_PRODUCT_DIRECTORIES.codePointOpen },

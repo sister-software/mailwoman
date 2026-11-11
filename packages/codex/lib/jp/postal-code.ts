@@ -48,7 +48,7 @@ export const JP_POSTAL_CODE_PATTERN = /^\d{3}-?\d{4}$/
  * strip a leading 〒 mark and any whitespace, then re-insert the hyphen if the input gave
  * the bare seven digits (`〒100-0001` → `100-0001`, `1000001` → `100-0001`).
  *
- * @returns Null if the result is not seven digits.
+ * @returns Null if the result isn't seven digits.
  */
 export function normalizeJpPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
@@ -94,7 +94,7 @@ export const JP_FIRST_DIGIT_REGION: Record<string, string> = {
 }
 
 /**
- * The coarse region label for a postcode's first digit, or null if the input is not a Japanese postcode.
+ * The coarse region label for a postcode's first digit, or null if the input isn't a Japanese postcode.
  *
  * A weak, approximate prior (see {@link JP_FIRST_DIGIT_REGION}); the full code anchors the address.
  */

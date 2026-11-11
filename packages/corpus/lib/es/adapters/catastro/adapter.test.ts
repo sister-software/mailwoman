@@ -98,7 +98,7 @@ describe("es-catastro adapter against the fixture member", () => {
 
 		// The thoroughfare feature's text is ` CL SANTIAGO APOSTOL`, leading space included,
 		// and the Cadastre's `ldt` opens `CL SANTIAGO APOSTOL`.
-		// An expansion of `CL` to `Calle` would state something the publisher does not.
+		// An expansion of `CL` to `Calle` would state something the publisher doesn't.
 		expect(rows.every((row) => /^[A-Z]{2} /u.test(row.components.street ?? ""))).toBe(true)
 	})
 
@@ -145,7 +145,7 @@ describe("es-catastro adapter against the fixture member", () => {
 
 		// The committed fixture writes every high byte as a numeric character reference so it reads as text.
 		// The publisher writes the byte, so this test writes the byte too: `Ñ` is 0xD1 in ISO-8859-1
-		// and is not valid UTF-8, and the markup reader's own `TextDecoder("utf-8")` answers it with U+FFFD.
+		// and isn't valid UTF-8, and the markup reader's own `TextDecoder("utf-8")` answers it with U+FFFD.
 		// Node's `latin1` encoding is ISO-8859-1's single-byte mapping,
 		// so no transcoder is needed to write one.
 		const bytes = Buffer.from(utf8.replaceAll("&#209;", "Ñ"), "latin1")

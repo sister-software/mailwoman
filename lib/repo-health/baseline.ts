@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The one mutation this package performs is not a check: rewriting `baseline.json` after a reviewed reduction, called only by `mwops health baseline debt`.
+ *   The one mutation this package performs isn't a check: rewriting `baseline.json` after a reviewed reduction, called only by `mwops health baseline debt`.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

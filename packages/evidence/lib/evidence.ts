@@ -5,7 +5,7 @@
  * @file The typed evidence union. The difference between the kinds is what each is allowed to do:
  *
  *   - `observation` — retrieved from an identified source at a recorded vintage. Has no score. A source either stated it or
- *     did not.
+ *     didn't.
  *   - `relation` — structural compatibility between entities. It contains an assertion.
  *     It contains a score only when that assertion is `inferred`.
  *   - `prior` — moves probability. Can never, by itself, prove or exclude.
@@ -29,10 +29,10 @@ export const ObservationSchema = z.object({
 	/**
 	 * The vintage the source recorded this at.
 	 *
-	 * `null` when the record does not include one — the gazetteer trace, for instance,
+	 * `null` when the record doesn't include one — the gazetteer trace, for instance,
 	 * identifies the row the source picked.
-	 * It does not identify the extract's date.
-	 * A `null` means the source did not record a date.
+	 * It doesn't identify the extract's date.
+	 * A `null` means the source didn't record a date.
 	 */
 	vintage: z.string().nullable(),
 	value: z.unknown(),

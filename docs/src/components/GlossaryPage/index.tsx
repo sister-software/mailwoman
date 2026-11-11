@@ -36,7 +36,7 @@ interface GlossaryPageProps {
 }
 
 /**
- * Upstream anchor slug scheme — must not change or remark tooltip links break.
+ * Upstream anchor slug scheme — mustn't change or remark tooltip links break.
  */
 function anchorSlug(text: string): string {
 	return text.toLowerCase().replaceAll(/\s+/g, "-")

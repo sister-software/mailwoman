@@ -65,7 +65,7 @@ The extractor finds a postcode wherever a human put it (resilient to positional 
 counts: it feeds the candidate's confidence, because some house numbers do look like postcodes. The
 collision is narrow (only purely-numeric-postcode countries, and house numbers typically run 1-4 digits)
 but real. `12345` is at once a valid US ZIP (Schenectady) and a plausible house number, so gazetteer
-membership by itself does not always decide. The extractor therefore leaves that call to the parser. An ambiguous
+membership by itself doesn't always decide. The extractor therefore leaves that call to the parser. An ambiguous
 candidate gets low confidence, the anchor channel propagates the doubt, and the parser plus its
 surrounding context makes the final decision. The extractor's job is high-_recall_ candidate generation
 with calibrated confidence rather than a high-precision hard ruling.
@@ -88,7 +88,7 @@ The **router** (see coarse placer) chooses one of three pipeline placements by q
    places would grow one rule at a time, so we exclude it.
 2. **Ambiguity-aware.** Champs-Élysées is near-unique (sharp prior); Broadway, Main Street, and Fifth
    Avenue exist in dozens of towns (weak, multi-modal prior). Anchors emit a posterior over candidates
-   and must not over-commit on a common name ("Broadway Avenue, Springfield" must not anchor to NYC).
+   and mustn't over-commit on a common name ("Broadway Avenue, Springfield" mustn't anchor to NYC).
 3. **Concepts are outside the parser's scope.** "The Hajj" refers to a place (Mecca) without being a place
    name. Its resolution is semantic entity-linking, or concept-aliasing. That work belongs to a different subsystem near the
    resolver (where "Macca's → McDonald's" alias logic conceptually lives). The parser stays out of it.
@@ -100,7 +100,7 @@ The **router** (see coarse placer) chooses one of three pipeline placements by q
 
 The routing check has to be cheap _and_ reliable, and **script** is both: a Unicode-block regex, free and exact.
 Address-system similarity is the _right_ clustering for the model's job (UK and US share a script but
-differ in system, and DE and AT share a system across a language border). It is **not detectable
+differ in system, and DE and AT share a system across a language border). It **isn't detectable
 pre-parse**, because knowing the system is most of the parse. A router that used it would be circular. So the
 Pareto-optimal point is to **route by script and specialize by address-system inside each extract via
 conditioning.** One Latin extract (US, UK, DE, FR, ES, IT, NL, BR, MX… as conditioned locales), one CJK+
@@ -145,11 +145,11 @@ estimates.** The same source overestimated the tokenizer limit, and our own
 
 - **Parser-F1 by itself never promotes a model.** Resolver accuracy decides promotion. German's pre-experiment resolver
   locality-match was already 77.4% (v0 79.4%), a weak parser that the resolver absorbed, so a from-scratch
-  retrain for _only_ German is not justified. Keep v0.7.2 and **batch** the locale expansion.
+  retrain for _only_ German isn't justified. Keep v0.7.2 and **batch** the locale expansion.
 - **Retrain trigger (resolver terms):** a locale's resolver utility falls below ~80% city match, or
   adding a locale drops an existing one's resolver utility by more than 2pp (the 77→43 collapse).
 - **Cross-pollution / capacity regression check:** per-locale, the rate of city-start tokens mis-tagged as
-  postcode must fall below 1% by 20k steps with balanced data and conditioning present. If it will not
+  postcode must fall below 1% by 20k steps with balanced data and conditioning present. If it won't
   clear 1%, that extract has hit its interference ceiling, and we split it **by address-system** (not by
   more script).
 - **Coarse placer:** abstain below the calibrated confidence threshold rather than emit a confident wrong

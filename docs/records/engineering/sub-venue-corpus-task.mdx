@@ -5,7 +5,7 @@ title: Sub-venue structure is a corpus gap rather than a decode gap
 # Sub-venue structure is a corpus gap rather than a decode gap
 
 `West Wing`, `North Terminal`, `Concourse B`, `Check 12` — the interior structure of a large venue.
-The span proposer finds these correctly and the decoder discards most of them, and the reason is not
+The span proposer finds these correctly and the decoder discards most of them, and the reason isn't
 a weight that needs turning up.
 
 ## What the measurements say
@@ -34,11 +34,11 @@ ordering, and at 11 nats a prior stops being a prior: it overrides the model whe
 the strength of a six-row confound board.
 
 The distribution is the tell. 5.87 is a model with a weak score for the correct tag. 10.65 is a model
-confident in a different tag. That is the signature of a tag it was never taught, and it matches the
+confident in a different tag. That's the signature of a tag it was never taught, and it matches the
 campaign's aliveness finding — `B-unit` ranks 11th–15th of 25 in raw pre-prior logits across every
 locale, at 0.15–0.42% even for `Apt` and `Suite`.
 
-## What is already in place
+## What's already in place
 
 Shipped, and not to be redone:
 
@@ -79,8 +79,8 @@ name).
 ## Get real data first, and get enough of it
 
 Do not synthesize these from a template list. Airports and transit terminals are the densest real
-source of sub-venue structure in existence, they are globally distributed, and the naming is
-varied in ways an invented list will not be — `Concourse B`, `Terminal 2F`, `Pier C`,
+source of sub-venue structure in existence, they're globally distributed, and the naming is
+varied in ways an invented list won't be — `Concourse B`, `Terminal 2F`, `Pier C`,
 `Satellite 4`, `Hall M`, `Check A12`, `North Terminal`, `Terminal Sur`.
 
 This is also the class of query a geocoder is expected to answer and currently answers badly. "Which
@@ -98,7 +98,7 @@ Sources to pull, roughly in order of value:
   Good for the venue side of each pair, weaker on interior structure.
 - **Overture Places** — already ingested for `poi.db`; filter to transport categories for venue names
   with coordinates.
-- **Wikidata** — terminal and concourse entities have multilingual labels. They are the cheapest
+- **Wikidata** — terminal and concourse entities have multilingual labels. They're the cheapest
   route to non-English sub-venue naming (`Terminal Sur`, `Halle 2`, `ターミナル1`).
 
 The interior structure is the scarce part. Airport `terminal` and `check` data is the densest source of it
@@ -109,9 +109,9 @@ source into the corpus is the natural next step rather than a new dependency.
 
 Whatever the corpus recipe produces has to hold the existing board: 30 confound rows, zero `unit` emissions,
 and the shipped designator+identifier cases (`Concourse B`, `Terminal 5`, `Check 12`, `Wing B`) stay
-correct. The five modifier cases above are the target; `West Wing` already passes and must not
+correct. The five modifier cases above are the target; `West Wing` already passes and mustn't
 regress.
 
 Success is the required-scale table collapsing — the modifier class winning at the shipped 6.0
-rather than needing 11. If a retrained model still needs 9+, the recipe output did not teach the structure
+rather than needing 11. If a retrained model still needs 9+, the recipe output didn't teach the structure
 and the data is the thing to look at rather than the scale.

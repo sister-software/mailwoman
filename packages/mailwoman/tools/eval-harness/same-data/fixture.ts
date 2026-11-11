@@ -9,7 +9,7 @@
  *   Evidence is keyed per lookup. Each row holds a map from canonical query to answer and the pool. The pool is the
  *   deduplicated union of every answer. `assertEqualEvidence` checks that arms read equal pools.
  *
- *   `replayBackend` raises on a key it does not hold rather than answering `[]`, because an empty
+ *   `replayBackend` raises on a key it doesn't hold rather than answering `[]`, because an empty
  *   answer is a state the resolver absorbs silently and the arm would report an abstention the
  *   fixture produced.
  */
@@ -25,7 +25,7 @@ import { definitionContentHash } from "#tools/eval-harness/preregistration"
  * The row interface's version.
  *
  * Changes to a fixture row's shape require a version bump.
- * A scorer rejects versions it does not recognize.
+ * A scorer rejects versions it doesn't recognize.
  */
 export const SAME_DATA_SCHEMA_VERSION = 1
 
@@ -376,7 +376,7 @@ export function observeEvidence(arm: string, row: SameDataFixtureRow): ArmEviden
 /**
  * A backend that answers only from the fixture.
  *
- * A key it does not hold raises and is appended to `misses`, because `resolveTree` catches a backend
+ * A key it doesn't hold raises and is appended to `misses`, because `resolveTree` catches a backend
  * throw on purpose and records `backend_error`; a raise by itself reaches the arm as an abstention,
  * so the caller reads `misses` after the walk and turns a non-empty list into a harness error.
  */

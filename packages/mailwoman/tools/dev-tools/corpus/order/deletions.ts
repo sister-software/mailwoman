@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Find corpus rows whose postcode sits on the side of the locality-and-region block that the row's
- *   country does not print it on, as libaddressinput's `fmt` states the placement.
+ *   country doesn't print it on, as libaddressinput's `fmt` states the placement.
  *
  *   `order-deletions.run.ts` reads a parquet file through this module and writes the matching `source_id`s
  *   as a deletion sidecar (#2750).

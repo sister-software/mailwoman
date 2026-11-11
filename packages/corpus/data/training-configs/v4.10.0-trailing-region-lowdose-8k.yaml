@@ -1,6 +1,6 @@
 # v4.10.0-trailing-region-lowdose-8k is an 8k-step fine-tune of synth-trailing-region-structured at low exposure.
 #
-# The only change from v4.9.0 is the source weight, lowered from 15.93 to 5.02. That is about one pass over
+# The only change from v4.9.0 is the source weight, lowered from 15.93 to 5.02. That's about one pass over
 # the source's rows instead of three, and about 3% of draws instead of 9%. The corpus is still v0.26.0.
 #
 # The source holds only admin segments, without venues or streets. At a large share it teaches whatever
@@ -15,7 +15,7 @@
 # from column 3. The triples come from packages/corpus/lib/tools/postcode/triples.ts.
 #
 # The country_weights map lists 134 codes, because the loader drops rows from any country missing from it.
-# Admitting a country does not change source draw shares, because country_weights filters rows inside
+# Admitting a country doesn't change source draw shares, because country_weights filters rows inside
 # each source's stream. JP rows here teach toponym recognition only.
 #
 # The checks:

@@ -188,7 +188,7 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 /**
  * Read the inline `--inputs` JSON map.
  *
- * @throws {CommandError} When the text is not JSON, or an entry is not an input path or options object.
+ * @throws {CommandError} When the text isn't JSON, or an entry isn't an input path or options object.
  */
 function readInlineAdapterInputs(
 	text: string,

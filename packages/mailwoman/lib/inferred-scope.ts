@@ -61,7 +61,7 @@ function verdictContradicts(verdict: string, inferred: string): boolean {
  * The format signal speaks only on distinctive shapes, so an ambiguous bare 5-digit
  * postcode yields the empty set and keeps the scope.
  *
- * An absent verdict on both signals keeps the scope: unknown is not foreign.
+ * An absent verdict on both signals keeps the scope: unknown isn't foreign.
  */
 export function shouldDropInferredScope(
 	tree: AddressTree,

@@ -79,7 +79,7 @@ describe("enforceWordConsistency only arbitrates DISAGREEING words (the document
 	it("never flips a single-piece word (no intra-word inconsistency exists)", () => {
 		// `▁Broadway` B-street via viterbi.
 		// Local mass prefers O. A one-piece word has one label, so it is consistent.
-		// The heal must not override the decoder.
+		// The heal mustn't override the decoder.
 		// (The `East Broadway` golden regression.)
 		const r = enforceWordConsistency([{ piece: "▁Broadway" }], [peak(0, 8)], LABELS, [1])
 		expect(r.healedWords).toBe(0)
@@ -91,7 +91,7 @@ describe("enforceWordConsistency confidence checks (#727 conditional variant)", 
 	it("minMeanConfidence skips a low-confidence heal (noise-amplification guard)", () => {
 		// Near-flat emissions: the vote has no conviction.
 		// Unrestricted it still heals.
-		// Conditional it must not.
+		// Conditional it mustn't.
 		const flat = (idx: number): number[] => LABELS.map((_l, i) => (i === idx ? 0.1 : 0))
 		const pieces = [{ piece: "▁VER" }, { piece: "MONT" }]
 		const unrestricted = enforceWordConsistency(pieces, [flat(1), flat(3)], LABELS, [1, 3])

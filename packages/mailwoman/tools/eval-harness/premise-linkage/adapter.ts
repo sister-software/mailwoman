@@ -35,7 +35,7 @@ import { type PremiseLinkageInputRow, PremiseLinkageInputShapeClass } from "#too
 /**
  * Where a run's rows come from.
  *
- * Exposes one asynchronous method that does not depend on licensed data.
+ * Exposes one asynchronous method that doesn't depend on licensed data.
  * The controlled implementation reads a provider file.
  *
  * This implementation reads a constant.

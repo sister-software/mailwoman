@@ -31,7 +31,7 @@ column. Column names and file names stay as written, because `NamesVerb` refuses
 The higher score wins. The hand-authored entries take precedence.
 The guard rejects requests with a mismatched port. The API interface requires `message.id`.
 The invariant `candidate.distance <= radius` holds for every returned candidate.
-The hypothesis that 4-5 digit pieces cause the postcode drop is not yet supported.
+The hypothesis that 4-5 digit pieces cause the postcode drop isn't yet supported.
 The 2,000-step probe kept parity postcode at 0.986 after it excluded 4–5 digit tokens.
 FR date-name rises from 0.351 to 0.369.
 MessageBus delivered the message. The test suite now passes.

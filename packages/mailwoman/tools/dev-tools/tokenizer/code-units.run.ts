@@ -32,7 +32,7 @@ if (!values.manifest) throw new Error("--manifest is required")
 const rowLimit = Number(values.rows)
 const manifest = await readLocalJSONFile<object>(values.manifest)
 // A corpus whose files hold every split assigns rows through split attributes.
-// A unit's shape does not depend on the split, so every listed file is read.
+// A unit's shape doesn't depend on the split, so every listed file is read.
 const files = baseManifestFiles<{ path: string }>(manifest).map((file) => localManifestFilePath(file.path))
 
 if (!files.length) throw new Error(`${values.manifest} lists no file`)

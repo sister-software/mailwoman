@@ -58,7 +58,7 @@ interface ProbedRow {
  * `ORDER BY RANDOM()` scans the whole table, so the sample is drawn by rowid probe.
  * A row missing a field is skipped.
  *
- * @throws When `path` does not exist, naming it.
+ * @throws When `path` doesn't exist, naming it.
  */
 export async function sampleAddressPoints(
 	path: PathBuilderLike,

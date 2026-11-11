@@ -82,7 +82,7 @@ async function fetchComplete(
 			headers: response.headers,
 		})
 	} catch (error) {
-		// A browser rejects an aborted read with the abort reason, but the platform does not guarantee it.
+		// A browser rejects an aborted read with the abort reason, but the platform doesn't guarantee it.
 		throw stall.signal.aborted ? stall.signal.reason : error
 	} finally {
 		clearTimeout(timer)
@@ -203,7 +203,7 @@ function requestURL(input: Parameters<typeof fetch>[0]): string {
  * Any other request goes to `fetchImpl` unchanged, a repeat request included.
  *
  * A failed prefetch rejects, with its own error, at the request that reads it.
- * It is not unhandled before then.
+ * It isn't unhandled before then.
  */
 export function prefetchingFetch(fetchImpl: typeof fetch, urls: readonly string[]): typeof fetch {
 	const started = new Map<string, Promise<Response>>()

@@ -49,7 +49,7 @@ async function loadCorpusFile(source: PathBuilder, expectedCC: string): Promise<
 	let line = 0
 
 	// `skipEmpty: false` makes the line number true.
-	// Blank lines are dropped below after they are counted.
+	// Blank lines are dropped below after they're counted.
 	for await (const text of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
 		line++
 

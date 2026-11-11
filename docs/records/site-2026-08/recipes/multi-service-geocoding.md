@@ -10,7 +10,7 @@ verified-with: mailwoman v6.1.0
 
 You have a table of addresses and a hosted geocoder that bills per request — every request, easy row or hard. Current list rates run from twenty cents to five dollars per thousand requests, depending on the provider and your volume. Multiply it out: a million-row table is $200 to $5,000 **per pass**, and if the table refreshes nightly, you pay that amount again every night. The no-cost route caps you on rate instead. The public Nominatim server asks for at most one request per second, so the same million rows take eleven days.
 
-None of that is a complaint about the services. OpenCage wraps aggregated open data in a pleasant API with friendly storage terms. Google's rooftop coverage is hard to beat. The public Nominatim instance is a donation to the commons that deserves the gentle use its policy asks for. The waste is on your side of the wire: most rows in a real table are ordinary, well-formed addresses that don't need a premium answer, and each one bills like the hard ones.
+None of that's a complaint about the services. OpenCage wraps aggregated open data in a pleasant API with friendly storage terms. Google's rooftop coverage is hard to beat. The public Nominatim instance is a donation to the commons that deserves the gentle use its policy asks for. The waste is on your side of the wire: most rows in a real table are ordinary, well-formed addresses that don't need a premium answer, and each one bills like the hard ones.
 
 So don't send them. Run Mailwoman on your own hardware as the first pass over everything, and spend money only on the residual. By the end of this recipe you'll have that cascade wired up: geocode everything locally first, then route only what the free pass couldn't pin well enough to a paid API. What makes it practical is that Mailwoman's result tells you, per row, how good its answer is.
 
@@ -31,7 +31,7 @@ A local pass costs CPU time and no other resource, so "geocode all of it, twice 
 
 ## The routing decision
 
-the result is a [`resolution_tier` plus a calibrated `uncertainty_m` radius](../concepts/how-close-is-close-enough.mdx). The tier is one of `address_point` (a rooftop or parcel point), `interpolated` (a house-number estimate along the street), `street` (a street centroid: the query gave a street but no house number), or `admin` (a locality or region centroid) — see the [API reference](../api.mdx#drop-in-server-specifications-openapi-31) for the full response shape. Together they are the routing decision, made explicit per row. Partition on it:
+the result is a [`resolution_tier` plus a calibrated `uncertainty_m` radius](../concepts/how-close-is-close-enough.mdx). The tier is one of `address_point` (a rooftop or parcel point), `interpolated` (a house-number estimate along the street), `street` (a street centroid: the query gave a street but no house number), or `admin` (a locality or region centroid) — see the [API reference](../api.mdx#drop-in-server-specifications-openapi-31) for the full response shape. Together they're the routing decision, made explicit per row. Partition on it:
 
 ```ts
 const kept = []

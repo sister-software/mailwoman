@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `mailwoman data sources` over planted databases. Cases include a bundle with no publisher column, one with no download record, one whose stamps match the record and one that could not be read.
+ * @file `mailwoman data sources` over planted databases. Cases include a bundle with no publisher column, one with no download record, one whose stamps match the record and one that couldn't be read.
  */
 
 import { databaseRootPath } from "@mailwoman/core/data-root"

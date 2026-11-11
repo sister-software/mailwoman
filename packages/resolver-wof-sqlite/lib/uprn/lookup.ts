@@ -70,8 +70,7 @@ interface UPRNRow {
 export class UPRNLookup implements Disposable {
 	#db: DatabaseClient<UPRNDatabase>
 	/**
-	 * Ownership is membership: a connection handed in by a caller is not in here,
-	 * so disposal cannot reach it.
+	 * Ownership is membership: a connection handed in by a caller isn't in here, so disposal cannot reach it.
 	 */
 	readonly #resources: DisposableStack
 
@@ -105,7 +104,7 @@ export class UPRNLookup implements Disposable {
 	 * The single nearest uprn within `radiusM` meters of the query point, or `null`
 	 * when no uprn lies inside the radius.
 	 *
-	 * @throws {RangeError} When `radiusM` is not a positive finite number, or exceeds the cap.
+	 * @throws {RangeError} When `radiusM` isn't a positive finite number, or exceeds the cap.
 	 */
 	nearestUPRN(latitude: number, longitude: number, radiusM: number): UPRNNearestHit | null {
 		if (!Number.isFinite(radiusM) || radiusM <= 0) {

@@ -50,7 +50,7 @@ export interface OSMExtractionPolicy {
 	 * The outline that clips the country out of a region holding other countries,
 	 * by its publisher's ISO 3166-1 alpha-3 key.
 	 *
-	 * A region whose only country is this one is not clipped, as the rooftop builder has never clipped one.
+	 * A region whose only country is this one isn't clipped, as the rooftop builder has never clipped one.
 	 */
 	outline: { publisher: "geoBoundaries"; iso3: string }
 }

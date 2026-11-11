@@ -84,7 +84,7 @@ export const SOIL_DESIGNATION_REFUSALS = [
 	/**
 	 * The layer has no coverage row for the location.
 	 *
-	 * The capability there is unknown.
+	 * The capability there's unknown.
 	 * Never report it as low.
 	 */
 	"outside_surveyed_area",

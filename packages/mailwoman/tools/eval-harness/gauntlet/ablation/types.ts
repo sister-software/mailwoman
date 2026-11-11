@@ -79,7 +79,7 @@ export interface AblationCell {
 	toleranceKm: number
 	/**
 	 * Which board this was measured on and when.
-	 * A cell without both is not a measurement.
+	 * A cell without both isn't a measurement.
 	 */
 	boardID: string
 	measuredAt: string
@@ -108,7 +108,7 @@ export interface AblationCell {
 	 */
 	grades: Record<AblationGrade, number>
 	/**
-	 * Everything {@linkcode PASSING_GRADES} does not cover.
+	 * Everything {@linkcode PASSING_GRADES} doesn't cover.
 	 */
 	trueFailCount: number
 	correctlyDegradedCount: number
@@ -153,7 +153,7 @@ export interface AblationRowResult {
 	displacementKm: number | null
 	toleranceKm: number
 	/**
-	 * `null` when the anchor never resolved — 'not gradable', which is not the same as 'held'.
+	 * `null` when the anchor never resolved — 'not gradable', which isn't the same as 'held'.
 	 */
 	broken: boolean | null
 	tierDrop: boolean
@@ -202,7 +202,7 @@ export interface AblationRowResult {
 	grade: AblationGrade
 	/**
 	 * The ladder this row was graded against, one entry per rung, plus the rungs
-	 * the ancestry could not support.
+	 * the ancestry couldn't support.
 	 */
 	ladder: string[]
 	ladderGaps: string[]

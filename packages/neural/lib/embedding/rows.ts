@@ -58,7 +58,7 @@ export interface EmbeddingHeader {
 /**
  * Parses an MWE1 header from at least its first 32 bytes.
  *
- * @throws When the magic, header length or layout does not match the format.
+ * @throws When the magic, header length or layout doesn't match the format.
  */
 export function parseEmbeddingHeader(bytes: Uint8Array): EmbeddingHeader {
 	if (bytes.byteLength < EMBEDDING_HEADER_BYTES) {
@@ -128,7 +128,7 @@ export type EmbeddingRangeReader = (offset: number, length: number) => Promise<U
 /**
  * Returns a range reader that fetches byte ranges of `url` with HTTP `Range` requests.
  *
- * @throws From the returned reader when the response is not a 206 of exactly the requested length.
+ * @throws From the returned reader when the response isn't a 206 of exactly the requested length.
  */
 export function httpEmbeddingRangeReader(url: string, fetchImpl: typeof fetch = fetch): EmbeddingRangeReader {
 	return async (offset, length) => {

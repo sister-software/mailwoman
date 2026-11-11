@@ -31,7 +31,7 @@ await runIngestChunkScript({
 				areaSymbol: requiredArgument("soil ingest-chunk", "area-symbol", values["area-symbol"] ?? null),
 				fidFrom: Number(requiredArgument("soil ingest-chunk", "fid-from", values["fid-from"] ?? null)),
 				fidTo: Number(requiredArgument("soil ingest-chunk", "fid-to", values["fid-to"] ?? null)),
-				// A range's own count is not knowable up front — `ogrinfo` reports the layer's total
+				// A range's own count isn't knowable up front — `ogrinfo` reports the layer's total
 				// and no narrower count — so the chunk makes no assertion about its size
 				// and the parent checks the per-area sum against the shapefile's.
 				declaredFeatureCount: 0,

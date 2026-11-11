@@ -67,7 +67,7 @@ export type AuDeliveryServiceAbbreviation = (typeof AU_DELIVERY_SERVICE_DESIGNAT
 /**
  * Designator patterns in match order.
  *
- * `MS` requires an identifier that starts with a digit, so "Ms Smith" does not match.
+ * `MS` requires an identifier that starts with a digit, so "Ms Smith" doesn't match.
  */
 const DESIGNATOR_PATTERNS: ReadonlyArray<readonly [AuDeliveryServiceAbbreviation, string]> = [
 	["GPO BOX", String.raw`general\s+post\s+office\s+box|g\.?\s*p\.?\s*o\.?\s*box`],
@@ -161,7 +161,7 @@ export function isAuDeliveryService(input: unknown): boolean {
 /**
  * Normalizes a delivery-service line to its canonical form, so `"g.p.o. Box 123"` becomes `"GPO BOX 123"`.
  *
- * @returns The input unchanged when it is not a delivery-service line.
+ * @returns The input unchanged when it isn't a delivery-service line.
  */
 export function normalizeAuDeliveryService(input: string): string {
 	const m = matchAuDeliveryService(input)

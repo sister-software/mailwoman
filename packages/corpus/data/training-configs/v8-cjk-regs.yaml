@@ -14,7 +14,7 @@
 #
 # --- what the RUN must show (pre-registered) ---------------------------------------------------------------------
 #   * JP board (`v8-jp-kana-2026-09-06/jp-board.jsonl`, scorer `--resolve-tags prefecture,municipality`): blended
-#     ≥ 0.9924 − 0.005 and municipality macro ≥ 0.9821 − 0.005 — the new sources must not cost JP.
+#     ≥ 0.9924 − 0.005 and municipality macro ≥ 0.9821 − 0.005 — the new sources mustn't cost JP.
 #   * KR board (`v8-kr-2026-09-08/kr-board.jsonl`, `--resolve-tags region,subregion --centroids kr-sigungu-centroids.json`):
 #     per-tag span exact-match `street` and `house_number` ≥ 0.99, `subregion` ≥ 0.97, `dependent_locality` ≥ 0.95,
 #     `region` ≥ 0.99, `postcode` ≥ 0.99, read per register — the lot-number register (`jibun`) is new and reads

@@ -63,7 +63,7 @@ export interface AttributionReport {
 	 */
 	notInstalled: string[]
 	/**
-	 * What this report does not cover, stated rather than left to be inferred from its absence.
+	 * What this report doesn't cover, stated rather than left to be inferred from its absence.
 	 */
 	notCovered: string[]
 }
@@ -88,7 +88,7 @@ export const KNOWN_WEIGHTS_PACKAGES: readonly string[] = [
 ]
 
 /**
- * One installed package's provenance record, or `null` when the package is not installed:
+ * One installed package's provenance record, or `null` when the package isn't installed:
  * a package that resolves but has no `PROVENANCE.json` is reported absent
  * rather than as installed with no declaration to make.
  */

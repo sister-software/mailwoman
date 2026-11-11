@@ -7,7 +7,7 @@
  *   box number literals `bus`, `bte` and `box`, the building, floor and room words, and the relation words of a
  *   query.
  *
- *   The bpost sheet lists `n°` and `nr` as marks that must not stand between a street number and its box number.
+ *   The bpost sheet lists `n°` and `nr` as marks that mustn't stand between a street number and its box number.
  *   The rows record them as number marks. The German premise words have no row, because the sheet lists German
  *   thoroughfare types only.
  *

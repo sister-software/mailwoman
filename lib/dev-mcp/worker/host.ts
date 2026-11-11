@@ -110,7 +110,7 @@ export interface RestartReport {
 	 * Empty when the worker held no running job.
 	 *
 	 * A failure to ask is reported in {@link killed_jobs_note} rather than as an empty list,
-	 * because "no job was running" and "I could not find out" are different facts.
+	 * because "no job was running" and "I couldn't find out" are different facts.
 	 */
 	killed_jobs: KilledJob[]
 	killed_jobs_note: string | null
@@ -239,7 +239,7 @@ export class WorkerHost implements AsyncDisposable {
 		// changes what a client may send and a name-only compare would suppress the
 		// tools/list_changed it needs to drop its stale schema.
 		const previousTools = stringifyJSON(this.tools)
-		// Asked before the kill, while there is still a registry to ask, since
+		// Asked before the kill, while there's still a registry to ask, since
 		// after the kill the id resolves to no job.
 		const { jobs: killedJobs, note: killedJobsNote } = await this.#runningJobs()
 
@@ -346,7 +346,7 @@ export class WorkerHost implements AsyncDisposable {
 		}
 
 		// One immediate respawn, because a lazily-booted worker is cheap to bring back
-		// and a transient OOM kill during a heavy board run should not take the whole surface down.
+		// and a transient OOM kill during a heavy board run shouldn't take the whole surface down.
 		void this.start().catch((error: unknown) => {
 			this.#degraded = `respawn failed: ${error instanceof Error ? error.message : String(error)}`
 		})

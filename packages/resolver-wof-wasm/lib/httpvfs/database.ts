@@ -62,7 +62,7 @@ export const DEFAULT_CHUNK_SIZE = 65_536
 const SQLITE_IOERR = 10
 
 /**
- * A statement the range worker could not run, with SQLite's extended result code
+ * A statement the range worker couldn't run, with SQLite's extended result code
  * when SQLite raised the failure.
  */
 export class RangeWorkerError extends Error {
@@ -76,9 +76,9 @@ export class RangeWorkerError extends Error {
 }
 
 /**
- * Whether a range-database failure is a page read SQLite could not complete, as when a range request fails.
+ * Whether a range-database failure is a page read SQLite couldn't complete, as when a range request fails.
  *
- * In a page under a caching service worker that is offline, it means the pages
+ * In a page under a caching service worker that's offline, it means the pages
  * a query needs were never cached.
  */
 export function isSQLiteReadFailure(error: unknown): boolean {

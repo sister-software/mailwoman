@@ -43,7 +43,7 @@ export const ConventionSource = {
 	/**
 	 * The country's UPU S42 template.
 	 *
-	 * S42 is not the domestic system.
+	 * S42 isn't the domestic system.
 	 * The template maps the country's existing structure into a common set of international
 	 * elements, and UPU builds it with that country's own representative, tests it against
 	 * representative address forms, and has the country approve it before publication.
@@ -138,8 +138,8 @@ export const KIND_BY_SOURCE: Readonly<Record<ConventionSource, ObservationKind>>
  * Three of the four values distinguish states that a two-valued field would merge.
  * `Silent` means the source was read and addresses something else.
  *
- * `Unread` means a statement exists on record and this repository has not retrieved it.
- * That state tells a reader there is a document to go and read.
+ * `Unread` means a statement exists on record and this repository hasn't retrieved it.
+ * That state tells a reader there's a document to go and read.
  *
  * A source with no statement at all contributes no observation, so it cannot be mistaken for either.
  */
@@ -214,7 +214,7 @@ export const ConventionClaimID = {
 	 *
 	 * The claim is about presence.
 	 * A hierarchy needs two semantically distinct premise levels or source-proven nesting,
-	 * and a claim about that is a separate, stronger proposition.
+	 * and a claim about that's a separate, stronger proposition.
 	 */
 	PremiseSubdivisionPresent: "premise-subdivision-present",
 	/**
@@ -225,7 +225,7 @@ export const ConventionClaimID = {
 	 * token by its surrounding grammar rather than by its shape is a contrast between contexts.
 	 *
 	 * The contrast board tests that.
-	 * This claim does not.
+	 * This claim doesn't.
 	 */
 	FixedWidthNumericPostcode: "fixed-width-numeric-postcode",
 	/**
@@ -314,7 +314,7 @@ export interface ConventionClaim {
 /**
  * Whether the observations disagree: at least one supports the claim and at least one contradicts it.
  *
- * The function reports the disagreement and does not resolve it.
+ * The function reports the disagreement and doesn't resolve it.
  * A caller that needs one answer decides which {@link ObservationKind} it trusts for its purpose.
  *
  * That choice differs per purpose: a validator wants the implementation's belief
@@ -388,11 +388,11 @@ export function stanceFromLayout(
 		default: {
 			// A layout is one rendering in one script, so it answers a claim about
 			// component order or presence within itself.
-			// The remaining four claims need evidence a layout does not contain.
+			// The remaining four claims need evidence a layout doesn't contain.
 			// They read as unexamined rather than as agreement until such a source is read.
 			//
 			// `ordering-reverses-with-script` compares two layouts of one jurisdiction.
-			// `conventionClaimForCountry` holds those and this function does not.
+			// `conventionClaimForCountry` holds those and this function doesn't.
 			// `fixed-width-numeric-postcode` asks about a postcode's shape rather than its place in a line.
 			// `@mailwoman/postcode/shapes` answers that.
 			// `premise-subdivision-present` and `planning-word-names-locality` are propositions

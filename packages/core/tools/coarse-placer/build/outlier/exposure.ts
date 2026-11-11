@@ -7,7 +7,7 @@
  *
  *   Without these rows the model assigns unseen scripts to an in-map country with high confidence. The rows come
  *   from native-script names in the WOF `names` table, sampled evenly per language and kept only when the name is
- *   mostly in a script other than Latin or CJK. They are appended to the existing splits, so run this after
+ *   mostly in a script other than Latin or CJK. They're appended to the existing splits, so run this after
  *   `mailwoman placer build-dataset`.
  */
 

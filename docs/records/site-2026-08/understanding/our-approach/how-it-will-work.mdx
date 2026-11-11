@@ -54,9 +54,9 @@ The v0.5.0 "fresh-slate" bundle shipped five of six planned threads to `main`:
 
 The A1 tokenizer halved byte-fallback on multi-script addresses (36.7% → 18.2%). The phrase grouper and joint decoder close the two architectural gaps v0.4.0 exposed. The kryptonite catalogue gives the training pipeline an adversarial validation set.
 
-## What is in progress: training stability
+## What's in progress: training stability
 
-The C-train — the full classifier training run that would produce v0.5.0 weights — has not converged. Four training attempts using the v0.5.0 recipe all diverged with the same fingerprint seen in v0.4.0: loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate.
+The C-train — the full classifier training run that would produce v0.5.0 weights — hasn't converged. Four training attempts using the v0.5.0 recipe all diverged with the same fingerprint seen in v0.4.0: loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate.
 
 The May 2026 diagnostic work identified that the **CRF-NLL term dominates the CE term** by 8-20× in gradient magnitude. This is the opposite of what the v0.4.0 campaign assumed (it hypothesized CRF gradient collapse rather than CRF gradient dominance). The current experiment is **CE-only training**: remove the CRF loss term entirely, train on cross-entropy only, keep the CRF as an inference-time structural decoder with the frozen mask.
 
@@ -96,10 +96,10 @@ The reconciler (Stage 5) currently operates behind an opt-in flag. The default p
 - **Browser support is a hard constraint.** The pipeline must stay under ~60MB cold load. The demo is the canary.
 - **Locale parity is tracked but not urgent.** The en-us model has had the most attention. fr-fr will catch up, ja-jp is the validation stress test.
 
-## What we are not doing
+## What we're not doing
 
-- **Multi-language understanding.** We are not training a model that reads prose in 50 languages. We are training one that labels tokens in addresses for the locales we ship.
-- **Generative output.** The neural classifier labels existing tokens. It does not write text.
+- **Multi-language understanding.** We're not training a model that reads prose in 50 languages. We're training one that labels tokens in addresses for the locales we ship.
+- **Generative output.** The neural classifier labels existing tokens. It doesn't write text.
 - **Relationship to upstream projects.** Mailwoman uses Pelias, libpostal, OSM, WOF, and other open data as sources and inspiration. It complements those projects.
 
 ## See also

@@ -39,7 +39,7 @@ const PLUS_CODE_TOKEN = /(?:^|[\s,])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJ
  * uncertainty priced at the decoded cell's half-diagonal.
  *
  * A short code with no resolved reference stays an abstention.
- * A cell modulo 20° is not an answer.
+ * A cell modulo 20° isn't an answer.
  */
 export function applyPlusCodeOverride(result: GeocodeResult, input: string, resolved: AddressTree): void {
 	const token = PLUS_CODE_TOKEN.exec(input)?.[1]

@@ -170,7 +170,7 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		)
 	}
 
-	// The selection keeps discovery order so that plans are stable, then appends clones discovery did not list.
+	// The selection keeps discovery order so that plans are stable, then appends clones discovery didn't list.
 	const named = options.all
 		? [...discovered]
 		: discovered.filter((entry) => wanted.has(entry.name) || cloned.includes(entry.name))

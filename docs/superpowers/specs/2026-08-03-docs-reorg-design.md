@@ -6,17 +6,17 @@
 
 ## Problem
 
-The docs serve three audiences (developers, the managers who pay, and investors), but they are organized as one undifferentiated tree of ~400 published pages. `concepts/` and `understanding/` were merged in navigation, but their overlapping content was never merged. `plan/` mixes active interfaces, contributor runbooks, and obsolete history. We verified that the trial path a stranger takes is broken: there is no data-download command, and the photon drop-in crashed on a cold start. Some prose reads as machine-generated, and no writing standard is enforced.
+The docs serve three audiences (developers, the managers who pay, and investors), but they're organized as one undifferentiated tree of ~400 published pages. `concepts/` and `understanding/` were merged in navigation, but their overlapping content was never merged. `plan/` mixes active interfaces, contributor runbooks, and obsolete history. We verified that the trial path a stranger takes is broken: there's no data-download command, and the photon drop-in crashed on a cold start. Some prose reads as machine-generated, and no writing standard is enforced.
 
 ## Decisions (operator-approved)
 
-1. **One site, three tracks.** Developers, managers, and investors share mailwoman.post, each with a distinct entry point. There is no separate marketing site.
+1. **One site, three tracks.** Developers, managers, and investors share mailwoman.post, each with a distinct entry point. There's no separate marketing site.
 2. **Start over from scratch.** Every maintained page is written fresh. Old pages serve only as raw material.
 3. **Lab notebook: keep only the best material, rewritten for clarity.** Curated benchmark/eval material returns as fresh evidence pages. Raw dated records leave the published site, and git history and unpublished repo directories keep them.
 4. **Old links break.** The site gets no redirect infrastructure. The front page and search lead readers to the new material.
 5. **Docs and CLI land together.** Where a documented path needs a missing or broken command (data download, planet build, drop-in serve), building or fixing the command is in scope. Every tutorial is executed end-to-end before it ships.
 6. **Site shape: Ory-style top level.** The flat top nav holds doors that describe the company and its products, and the four-part manual (Diátaxis) lives inside the Developers door. The existing DocsSubHeader section-switcher provides per-door sub-navigation, so the site needs no mega menu.
-7. **Label notes:** the manager door is no longer called "Why Mailwoman", because the name stuttered next to the logo. The investor/trust door avoids the word "Company" because there is no company yet. Its working label is **About**, and drafting can try other words.
+7. **Label notes:** the manager door is no longer called "Why Mailwoman", because the name stuttered next to the logo. The investor/trust door avoids the word "Company" because there's no company yet. Its working label is **About**, and drafting can try other words.
 
 ## Target structure
 
@@ -55,7 +55,7 @@ Mission and open strategy (public-safe register) · security and compliance (pri
 
 ### Deliberately absent
 
-Case studies, webinars, whitepapers, customers/adopters, and jobs. The site does not pretend to be a bigger organization, and these sections can be added as the project grows.
+Case studies, webinars, whitepapers, customers/adopters, and jobs. The site doesn't pretend to be a bigger organization, and these sections can be added as the project grows.
 
 ## House style
 
@@ -67,7 +67,7 @@ The derivation tests this working hypothesis and may overturn it:
 - **Register per role.** Tutorials and how-to guides use a conversational colleague's voice ("Let's say you have a CSV of customer addresses…"). They use the second person, state the start and destination, and make every paragraph move the reader toward the goal. Reference pages use the controlled register derived from STE100: one instruction per sentence, active voice, plain language, and one term per concept. Explanations sit between the two. They use plain narrative prose, introduce a non-statistical concept before the statistical term, and avoid hype. Product pages make short declarative claims, and every number has a source.
 - **Terminology.** Each concept has one canonical term, taken from UPU S42 / ISO 19100 where those match the codebase's interface vocabulary (delivery point, postcode, address component, coordinate reference system…). The glossary (327 terms) is the term registry, and new docs link to terms instead of redefining them.
 - **Mechanical enforcement: Vale.** The repo holds `.vale.ini` and a Mailwoman style package. The rules cover filler and marketing intensifiers, the direct-word cluster, anthropomorphism (the parser "thinks"), weasel quantities outside deliberately qualitative prose, contrastive-negation stock phrases ("not X, it's Y"), heading case, and canonical-term substitutions. Vale runs on changed files in the docs CI job, and the whole new corpus passes Vale at launch.
-- **Machine-writing audit.** Before review, every drafted page is checked for signs of machine writing (inflated symbolism, rule-of-three padding, vague attribution, filler phrases). Numbers appear only with a source, and claims a reviewer could not check do not ship.
+- **Machine-writing audit.** Before review, every drafted page is checked for signs of machine writing (inflated symbolism, rule-of-three padding, vague attribution, filler phrases). Numbers appear only with a source, and claims a reviewer couldn't check do not ship.
 - **Frontmatter interface:** `role` (required, enum above) · `audience` (required on landing/solution pages) · `verified-with` (required on tutorial/guide: the version the examples ran against) · `source-of-truth` (required on reference: the code path or generator that owns the interface). The structure check script is rewritten to enforce these fields on every published page, replacing today's coverage of only 28 of 458 pages.
 
 ### Register rules for competitive and strategy content (house rules, binding)
@@ -77,7 +77,7 @@ The derivation tests this working hypothesis and may overturn it:
 - Competitor prose is kind and factual. Prices and claims appear only with dated public citations.
 - Business and personal details that are not already published stay unpublished.
 - Accuracy claims ship with re-runnable harnesses, and losses are published next to wins.
-- Data-refresh cadence: the docs state what is committed. The current commitment is _no cadence committed_.
+- Data-refresh cadence: the docs state what's committed. The current commitment is _no cadence committed_.
 
 ## Mechanics
 

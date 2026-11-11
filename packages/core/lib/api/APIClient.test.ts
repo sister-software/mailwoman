@@ -596,7 +596,7 @@ describe("APIClient: bounded retry (A3)", () => {
 
 describe("APIClient: the pacing check sits downstream of the cache (I2)", () => {
 	it("does not pace a cache HIT — only a request that actually reaches the network", async () => {
-		// A cache hit must not burn a pacer sleep: `/Archives/` documents are cached for a
+		// A cache hit mustn't burn a pacer sleep: `/Archives/` documents are cached for a
 		// century by design, so warm re-runs are the expected mode of a bulk crawl.
 		const REPEATS = 6
 

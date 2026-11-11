@@ -7,7 +7,7 @@
  *
  *   these are the only place three OF the four absences can be exercised. Every Iowa survey area is fully
  *   digitized, so `notcom`, `notpub` and access-denied map units never appear in the live build — which
- *   means the fixture is what pins `nodata_share`, and what proves a `notcom` polygon does not arrive as a
+ *   means the fixture is what pins `nodata_share`, and what proves a `notcom` polygon doesn't arrive as a
  *   low capability class.
  */
 
@@ -212,7 +212,7 @@ describe("the invariants that make the shares readable", () => {
 				delineations: 0,
 			})
 
-			// `other_share` is what makes this hold: truncating a long tail is legitimate, doing it silently is not.
+			// `other_share` is what makes this hold: truncating a long tail is legitimate, doing it silently isn't.
 			expect(total).toBeCloseTo(1, 4)
 		}
 	})

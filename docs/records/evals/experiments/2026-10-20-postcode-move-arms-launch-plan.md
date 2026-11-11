@@ -48,7 +48,7 @@ plus the single-source overlay files that `v0.7.10-gb-county` adds to v0.7.0. Ev
 
 The base build runs the eleven adapters of v0.7.0 under their v0.7.0 source names: `ban`, `state-ia-contractors`,
 `state-ny-notaries`, `state-tx-notaries`, `tiger`, `usgov-hrsa-fqhc`, `usgov-imls-pls`, `usgov-nad`, `usgov-nppes`,
-`wof-admin`, `wof-postalcode`. The build is expected to keep every config source name. That is inferred from the
+`wof-admin`, `wof-postalcode`. The build is expected to keep every config source name. That's inferred from the
 adapter keys, and the finished store's directory names confirm it.
 
 ## Order-pure overlays before assembly
@@ -92,7 +92,7 @@ In the first row group of the v0.7.10 train files (observed, 20,000 rows each), 
 
    The tool judges each row on its own. It compares the postcode span's start with the locality-and-region block's
    against `postcodePlacement` from `@mailwoman/postcode/country-formats`, and drops the row when the postcode sits on
-   the side the placement does not use. A native row that shares its id with a reversed row stays, and so does a row
+   the side the placement doesn't use. A native row that shares its id with a reversed row stays, and so does a row
    without a postcode or a locality. `writeParquetFile` writes the output with a `RECORD.json` whose derivation holds
    the input's sha256, the tool's import-graph code hash and the placement of every country in the file. The source
    label stays `overture`. Observed 2026-10-20: 1,851,471 rows out of 2,400,000. The rows removed per country equal the
@@ -135,7 +135,7 @@ report holds only `emitted_level.augmented_share` across all augmentations. The 
 
 What can be asserted before a GPU is allocated:
 
-1. Every receipt passes in each arm. The draw pass does not read the copy rate, so `draw_level` and
+1. Every receipt passes in each arm. The draw pass doesn't read the copy rate, so `draw_level` and
    `required_corpus_receipts` must be identical across the three reports.
 2. `emitted_level.augmented_share` rises from p000 to p005 to p015. The difference is the move's copies plus the
    effect of the shifted random stream, so it checks direction only. The rate comes from step 3.

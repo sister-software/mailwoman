@@ -13,7 +13,7 @@ This post is a beginner-friendly debugging story that needs no ML background. If
 
 :::
 
-This is the third post in a series about a training problem we've been chasing. The [first two](/research/v0-5-0-c-train-bisect) [were](/research/v0-5-0-bisect-by-elimination) written for software engineers. This one is for someone who is starting to learn about AI and machine learning. It assumes no jargon and no math beyond high-school algebra, and it uses a problem we ran into this week to show what ML debugging looks like.
+This is the third post in a series about a training problem we've been chasing. The [first two](/research/v0-5-0-c-train-bisect) [were](/research/v0-5-0-bisect-by-elimination) written for software engineers. This one is for someone who's starting to learn about AI and machine learning. It assumes no jargon and no math beyond high-school algebra, and it uses a problem we ran into this week to show what ML debugging looks like.
 
 If you've been programming for a while but ML feels opaque, this post is for you. Our core technique was to measure which of two training signals the model was following, and that turned out to be much closer to ordinary debugging than the field typically makes it sound.
 
@@ -81,7 +81,7 @@ loss
 
 The model descends steadily for 500 steps (warmup), stays at a low loss for a while, and then climbs back up. By the end, it's worse than when it started. We trained it on 50,000 examples, and it got _worse_.
 
-This curve means something is wrong, and the model gives no indication of what. There is no stack trace or exception, only a chart showing that the model learned and then unlearned.
+This curve means something is wrong, and the model gives no indication of what. There's no stack trace or exception, only a chart showing that the model learned and then unlearned.
 
 We saw this exact shape in nine different runs, with different learning speeds, model sizes, and feature combinations. Every run descended steadily and then climbed catastrophically.
 
@@ -105,7 +105,7 @@ The model has two scoring systems. We'll call them Voice A and Voice B.
 
 Both voices are useful, because a working geocoder needs both per-word accuracy _and_ sensible patterns. We'd been adding their feedback together, with Voice B's contribution scaled down to 5%, and using that combined signal to train the model.
 
-We had never asked whether **Voice A and Voice B were telling the model to do the same thing.**
+We'd never asked whether **Voice A and Voice B were telling the model to do the same thing.**
 
 ## The five-minute diagnostic
 
@@ -134,7 +134,7 @@ Imagine a hiker on a foggy hill, trying to walk to the lowest point in the lands
 
 When the devices disagree, the hiker mostly follows **whichever device gives the larger signal**. With Voice B's signal 16× larger than Voice A's, the hiker follows Voice B even though Voice A was pointing at the valley floor. The hiker climbs out of the valley toward a different point that Voice B prefers, and Voice A's loss (the per-word accuracy) gets worse.
 
-That is what happened to our model. Above loss 0.41, both voices agreed, and the model descended steadily. Below 0.41, they started to disagree, and Voice B's larger gradient pulled the model away from the basin Voice A had been guiding it toward. The model's per-word accuracy kept dropping. We observed that drop as the loss climbing back up.
+That's what happened to our model. Above loss 0.41, both voices agreed, and the model descended steadily. Below 0.41, they started to disagree, and Voice B's larger gradient pulled the model away from the basin Voice A had been guiding it toward. The model's per-word accuracy kept dropping. We observed that drop as the loss climbing back up.
 
 ## The fix
 
@@ -146,7 +146,7 @@ The code change is one line: when Voice B's weight is 0, the loop skips computin
 
 ## What we tell ourselves we learned
 
-1. **The two weighted losses looked simple to combine, but their gradients caused failure.** The loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A constant multiplier does not balance a loss's contribution to the optimizer. We watched the loss values and drew the wrong conclusion for nine training runs.
+1. **The two weighted losses looked simple to combine, but their gradients caused failure.** The loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A constant multiplier doesn't balance a loss's contribution to the optimizer. We watched the loss values and drew the wrong conclusion for nine training runs.
 2. **The five-minute diagnostic was more valuable than the previous month of retraining experiments.** Each experiment that changed a knob and retrained cost hours. The gradient-norm probe cost five minutes and gave a sharper answer than any of them, because it measured what the model was responding to instead of the end result.
 3. **ML debugging is more like programming debugging than the field admits.** Once you have words for what's happening, the techniques are familiar: bisect, isolate, instrument, hypothesize, test. The hard part is finding words for _what's happening inside the model_. After that, the bug is typically findable.
 4. **Run cheap experiments first.** A 5-minute probe should always run before a 25-hour retrain. We didn't run the probe earlier because we didn't know about it.

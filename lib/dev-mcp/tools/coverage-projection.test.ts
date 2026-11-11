@@ -62,7 +62,7 @@ describe("projectCoverage", () => {
 	it("puts the mismatch FIRST in the summary, ahead of every count it invalidates", () => {
 		// A caller reads the first sentence.
 		// If this follows "33 countries train", readers can mistake the counts for answers
-		// before the reader learns they are about a corpus the run never opens.
+		// before the reader learns they're about a corpus the run never opens.
 		const out = projectCoverage(
 			report({
 				configuredCorpusVersion: "0.27.0-house-venue-intl",
@@ -82,7 +82,7 @@ describe("projectCoverage", () => {
 
 	it("reports a requested country that exists nowhere, rather than returning an empty row set", () => {
 		// An empty `rows` value for an unknown country is indistinguishable from a country with no data.
-		// A separate label distinguishes "absent" from "I could not find it".
+		// A separate label distinguishes "absent" from "I couldn't find it".
 		const out = projectCoverage(report(), ["ZZ"])
 
 		expect(out["requested_but_absent_everywhere"]).toEqual(["ZZ"])

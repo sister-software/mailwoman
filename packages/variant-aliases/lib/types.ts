@@ -28,7 +28,7 @@ interface VariantAliasBase {
 	 * BCP-47 locale tags where this variant is in active use.
 	 *
 	 * Used to filter lookups: only consider an alias when the detected locale matches one of these.
-	 * A query in `en-US` won't match Australian "servo" because `en-AU` is not in `["en-US"]`.
+	 * A query in `en-US` won't match Australian "servo" because `en-AU` isn't in `["en-US"]`.
 	 */
 	locales: ReadonlyArray<string>
 	/**

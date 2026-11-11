@@ -30,7 +30,7 @@ type Story = StoryObj<typeof PipelineExplorer>
 export const Ready: Story = { args: { runtime: makePipelineRuntime() } }
 
 /**
- * A runtime that is still loading its bundle.
+ * A runtime that's still loading its bundle.
  */
 export const Loading: Story = {
 	args: {

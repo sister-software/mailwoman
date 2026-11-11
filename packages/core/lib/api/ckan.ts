@@ -7,7 +7,7 @@
  *
  *   The catalogue provides ISO reference dates, the license and direct file URLs. The EA landing pages render
  *   client-side and return no data to a fetch. Download URLs must come from the catalogue because the EA file
- *   service uses a `fileDataSetId` that is unrelated to the dataset ID and changes on republish.
+ *   service uses a `fileDataSetId` that's unrelated to the dataset ID and changes on republish.
  */
 
 import type { APIClient } from "#api/APIClient"

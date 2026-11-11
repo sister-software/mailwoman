@@ -1,13 +1,13 @@
 ---
 sidebar_position: 1
-title: What is an address?
+title: What's an address?
 tags:
   - domain
   - concepts
   - reference
 ---
 
-# What is an address?
+# What's an address?
 
 Addresses look obvious — you see one every day — but parsing them turns out to be one of the harder problems in natural language processing, because a single string can mean several places, and a single place can be written several ways.
 
@@ -99,7 +99,7 @@ Four ways to write the same address. The parser has to handle all of them, and t
 
 **5. Different locales have different rules.**
 
-US addresses put the postcode after the region. French addresses put it before the locality. Japanese addresses are essentially the reverse of European ones — country first, then prefecture, then municipality, then a building number. Mailwoman's model is trained on a combined multi-country corpus rather than a universal template, precisely because there is no universal address grammar. Japan today is resolver-route only, with no parser training claim (see [the scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) for the current locale tiers).
+US addresses put the postcode after the region. French addresses put it before the locality. Japanese addresses are essentially the reverse of European ones — country first, then prefecture, then municipality, then a building number. Mailwoman's model is trained on a combined multi-country corpus rather than a universal template, precisely because there's no universal address grammar. Japan today is resolver-route only, with no parser training claim (see [the scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) for the current locale tiers).
 
 ## The adversarial cases
 

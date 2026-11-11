@@ -11,7 +11,7 @@
  *   this product — the layer interface's polygon-builder section states them as requirements on every polygon
  *   builder — and a second copy of the zero-cell guard is a second place for it to stop guarding.
  *
- *   what stays here is what is scenario-shaped. The flood layer accumulates per zone code, because a flood
+ *   what stays here is what's scenario-shaped. The flood layer accumulates per zone code, because a flood
  *   answer is a code from a two-value domain. the soil layer accumulates per delineation and weights by
  *   covered area. An erosion answer is a specific frontage polygon carrying its own distance, policy and
  *   defense, under one of twelve scenarios that must never be pooled — so this accumulates per (scenario,
@@ -20,7 +20,7 @@
  *   the measurement is per scenario and never pooled. The twelve
  *   scenario layers cover the same frontages with different extents, so a pooled `partial` share would
  *   average a present-day designation together with a 2105 projection and describe neither. The number that
- *   decides the resolution is the share within one scenario, because that is the population a scenario-scoped
+ *   decides the resolution is the share within one scenario, because that's the population a scenario-scoped
  *   probe reads.
  */
 
@@ -83,7 +83,7 @@ export interface CellIndexMeasurement {
 	 *
 	 * This is the artifact's size.
 	 * It is a sum over scenarios rather than a union: two scenarios naming the same
-	 * cell are two rows, because they are two different claims.
+	 * cell are two rows, because they're two different claims.
 	 */
 	storedCellRows: number
 	/**

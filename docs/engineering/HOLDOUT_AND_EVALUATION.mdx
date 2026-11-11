@@ -55,11 +55,11 @@ measured scores. The registered floor at the time was 89.4.
 runs on the published model with the dataset the run will be graded on and answers three questions apart. First,
 can every required check read enough admissible evidence under the registered rules. Second, does the published
 model meet the absolute requirements. Third, what candidate identities are still pending. The first must be yes.
-The second informs the work and does not block a candidate meant to repair a published deficiency. The third is
+The second informs the work and doesn't block a candidate meant to repair a published deficiency. The third is
 recorded as pending and required before any verdict.
 
 Motivation: four from-scratch runs, about 17 GPU-hours, were trained before anyone checked that release
-specification v7 could return `pass` on this data. It could not. The candidate artifact was unregistered, and the
+specification v7 could return `pass` on this data. It couldn't. The candidate artifact was unregistered, and the
 comparison set for US, ES and IT was empty because the published model had trained on every row those countries
 hold in this corpus family.
 
@@ -106,7 +106,7 @@ choice, and every split record states the hash it was made under.
 ### 4.1 The declared holdout path
 
 A country may declare small places to hold out, as postcode districts or localities. A key is a place below the
-first-level region. A region name, or a postcode prefix that covers a whole region, is not a valid key. EG
+first-level region. A region name, or a postcode prefix that covers a whole region, isn't a valid key. EG
 `postcode:42` once held out 1,000 of Port Said's 1,008 rows and in effect the governorate. Keys are chosen by a
 deterministic walk over the corpus, never by hand. The walk targets the country's current held-out share and lets
 the share fall rather than adding places. No first-level region with at least `HOLDOUT_CAP_MIN_ROWS` rows may lose
@@ -118,8 +118,8 @@ spelling that matches a region's surface form is excluded from the candidates.
 A country without a declared list holds out one place in fifty, chosen by a hash of its key (venue, else
 locality, else postcode). The region cap applies to each hash-selected place on its own. Its rows inside one
 region are divided by that region's rows, and its rows with no region by the country's rows with no region. A
-denominator under `HOLDOUT_CAP_MIN_ROWS` is not checked. A place over `heldOutRegionCap(0.02)`, which is 0.06,
-trains instead and is not replaced. Measured on v0.8.1 this returns 9 places in 7 countries, 2,067 rows, both EG
+denominator under `HOLDOUT_CAP_MIN_ROWS` isn't checked. A place over `heldOutRegionCap(0.02)`, which is 0.06,
+trains instead and isn't replaced. Measured on v0.8.1 this returns 9 places in 7 countries, 2,067 rows, both EG
 governorate postcodes among them.
 
 ### 4.3 The source cap, sized by population
@@ -136,7 +136,7 @@ resolves to, read from the admin gazetteer. A postcode key takes the population 
 rows under that postcode. The country's population is `COUNTRY_POPULATION` in
 `packages/codex/lib/country/population.ts`, derived from GeoNames. A key with no population reading, or a
 country GeoNames declines to estimate, falls back to the flat quarter and is listed as unsized in the allocation
-report. A place over its ceiling trains instead and is not replaced.
+report. A place over its ceiling trains instead and isn't replaced.
 
 The two parameters, `floor` and `k`, are registered only after the allocation report in section 4.5 has been
 produced over every country for a candidate pair, with the newly returned places inspected. A threshold fitted
@@ -190,12 +190,12 @@ reduced supply stays visible when a derived floor passes.
 
 ## 5. Building a new split
 
-A split-policy change does not rebuild the corpus. The store holds every source's parsed rows as parquet, and a
+A split-policy change doesn't rebuild the corpus. The store holds every source's parsed rows as parquet, and a
 re-split writes a split-attribute file beside each parquet file and a new manifest. Measured: 853 files, 675.5
 million rows, 76 minutes on 8 workers, peak 937 MiB per worker, 391 MB of new files, against 4 h 04 min for the
 last full rebuild. The loader applies the attribute files as row filters at no measured throughput cost in that
 configuration, 21.2 batches per second on v0.8.1 against 20.6 on v0.8.0. That benchmark covers one loader and
-storage setup and does not establish equivalence under others.
+storage setup and doesn't establish equivalence under others.
 
 ### 5.1 Ordered shapes, closure supply, and the retention floor
 
@@ -322,7 +322,7 @@ read with `battery/groups.run.ts` over a battery report that holds all six runs.
   `k_a + k_b - 2` degrees of freedom.
 - A country counts as changed when its Holm-adjusted p, over every country with at least 200 decision rows, is
   below 0.05.
-- A difference that does not meet the bar is reported as unestablished, in place of a gain or a loss. A difference
+- A difference that doesn't meet the bar is reported as unestablished, in place of a gain or a loss. A difference
   smaller than the cell's smallest detectable difference for the runs used is unestablished by construction.
 - The tool lists the rows that move under the all-but-one agreement rule, and the difference of every regrouping
   of the pooled runs. A shape that moves in the observed split and also in splits that mix the two arms is noise.
@@ -343,7 +343,7 @@ difference a comparison detects (two-sided, alpha 0.05, power 0.8) is:
 | `osm-region-after-locality` |           30.2 |   17.1 |   13.4 |   11.4 |
 
 Two runs per arm therefore cannot resolve the 1.3-point difference the Phase 2 corpus change produced (p = 0.13 with
-three runs per arm). The earlier two-seed rule could not have either. `osm-region-after-locality` swings by more
+three runs per arm). The earlier two-seed rule couldn't have either. `osm-region-after-locality` swings by more
 than 10 points between control seeds (95.2%, 83.7% and 92.2%), so a single comparison cannot read that suite.
 
 A run on the Rust trainer costs about $4.30 on an A100-40GB (#2887). A comparison against a control whose three

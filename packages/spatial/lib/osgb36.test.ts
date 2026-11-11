@@ -131,7 +131,7 @@ test("osgb36ToWGS84 spans the GB extent without the series diverging", () => {
 
 test("the grid origin is a real Atlantic coordinate, not a sentinel", () => {
 	// Code-Point Open writes 0,0 for its no-coordinate rows, but 0,0 is a valid grid
-	// point the module must not treat as a sentinel.
+	// point the module mustn't treat as a sentinel.
 	const origin = osgb36ToWGS84({ easting: 0, northing: 0 })
 
 	expect(origin.latitude).toBeCloseTo(49.7668, 3)

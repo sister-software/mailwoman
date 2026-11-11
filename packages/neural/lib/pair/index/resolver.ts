@@ -42,7 +42,7 @@ export interface PairIndexEntry {
 	/**
 	 * The tag this pair resolves the parent to.
 	 *
-	 * A builder must derive it from its source data and must not substitute a default.
+	 * A builder must derive it from its source data and mustn't substitute a default.
 	 */
 	parentTag: ComponentTag
 }
@@ -365,7 +365,7 @@ export interface PairIndexLike {
 	/**
 	 * The ISO country code.
 	 *
-	 * Without it, or without a known postcode pattern for it, the prior does not
+	 * Without it, or without a known postcode pattern for it, the prior doesn't
 	 * strip postcodes from parent segments.
 	 */
 	readonly country?: string

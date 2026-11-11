@@ -10,4 +10,4 @@ returns a digest over HEAD, version, packages, artifacts and destinations, and `
 refuses a dirty or moved HEAD or a changed plan.
 
 Admission rule: an operation participates in the construction, verification, staging, or publication of a release
-artifact. Other content does not belong here.
+artifact. Other content doesn't belong here.

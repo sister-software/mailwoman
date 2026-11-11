@@ -51,7 +51,7 @@ function joinParts(...parts: Array<string | undefined>): string | null {
 /**
  * Fold the Census geocoder's seven-slot street decomposition into mailwoman's four `ComponentTag`s.
  *
- * - `street_prefix` ← `preDirection`; `preType` deliberately does not land here, because `avenue` in
+ * - `street_prefix` ← `preDirection`; `preType` deliberately doesn't land here, because `avenue` in
  *   `Avenue of the Americas` is part of how the street is written rather than a prefix modifier.
  * - `street` ← `preQualifier` + `preType` + `streetName` + `suffixQualifier`, in written order.
  * - `street_suffix` ← `suffixType` + `suffixDirection`, because mailwoman has no separate

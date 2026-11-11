@@ -6,7 +6,7 @@ log-population rank, so a floor of F rejects any place under 10^F people. The re
 > A `minWinningScore` floor reduces the withheld-gold false-selection rate against the default arm in EVERY
 > population band, without costing more than 5 points of selection accuracy in any band.
 
-**The claim does not hold, at any of the four registered floors.** Every floor provides refusal by discarding
+**The claim doesn't hold, at any of the four registered floors.** Every floor provides refusal by discarding
 correct answers, and the smaller the place the more it discards: at floor 4 the selection accuracy for
 villages under 1,000 people falls from 71.0% to 21.0%.
 
@@ -76,13 +76,13 @@ villages under 1,000, 55 points for 1,000–4,999, 47 points for 5,000–14,999,
 correct answer for every place smaller than 10,000, and the correct answer is most of what a small-place query
 has.
 
-A floor is not an abstention rule. It is a size filter that abstains as a side effect, and it cannot tell a
-place that should not be selected from a place that is merely small.
+A floor isn't an abstention rule. It is a size filter that abstains as a side effect, and it cannot tell a
+place that shouldn't be selected from a place that's merely small.
 
 ## A defect in this panel, found because a result was surprising
 
 The largest band reads worst at the default arm — 19.0% accuracy and 70.1% wrong-area, against 65% to 81% in
-every other band. That is backwards, and checking it found the reason.
+every other band. That's backwards, and checking it found the reason.
 
 The eligibility rule requires a name borne exactly once across the four registered countries. A large city
 typically shares its name with something — its own arrondissement, district or a namesake abroad — so it is
@@ -99,13 +99,13 @@ administrative noun in the four registers' languages:
 
 So `pop_50k_up` is 71% rows like `Arrondissement de Vannes` (295,698), `Kreis Lippe` (347,149) and
 `Vale of White Horse District` (128,738). Its numbers describe administrative-division resolution rather than city
-resolution, and should not be read as the latter.
+resolution, and shouldn't be read as the latter.
 
-**The verdict does not rest on those bands.** Each arm's disqualifying accuracy cost falls on a band with zero
+**The verdict doesn't rest on those bands.** Each arm's disqualifying accuracy cost falls on a band with zero
 administrative names: floor_1 and floor_2 lose 16.0 points at `pop_5k_14999`, floor_3 loses 49.0 at
 `pop_1_999`, floor_4 loses 55.0 at `pop_1k_4999`. Every floor fails on clean evidence.
 
-The panel is not being rebuilt to remove the contamination. The definition was frozen before any of this ran,
+The panel isn't being rebuilt to remove the contamination. The definition was frozen before any of this ran,
 and redrawing eligibility after seeing a result is the rule moving to fit the answer. A successor definition
 with a placetype condition is the right vehicle, and its numbers would be a separate record.
 
@@ -117,9 +117,9 @@ bar on evidence untouched by the panel's defect.
 
 Supported: the same-data benchmark's reading of this option was an artifact of its gold source. Same option,
 same code, 1.5 points of accuracy there against 55 points here — and the record that reported the favourable
-number already said its panel could not measure a floor. It could not.
+number already said its panel couldn't measure a floor. It couldn't.
 
-Refused: any claim about a fit-based abstention signal. This benchmark does not test one. The
+Refused: any claim about a fit-based abstention signal. This benchmark doesn't test one. The
 [abstention-threshold record](./2026-09-13-abstention-threshold.md) showed a margin threshold beats the
 deterministic baseline on both axes but floors at 28% invented selections, because the margin is a within-pool
 quantity that cannot see whether the pool holds the answer. This record leaves that result unchanged, and a signal reading

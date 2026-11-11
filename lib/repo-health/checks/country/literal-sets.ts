@@ -16,7 +16,7 @@
  *
  *   A finding is admitted in a per-country home (`isCountryHome`) or with a `country-branch: <reason>` comment on its
  *   statement or the comment block above it, stating why the list is a per-country fact and which source would replace
- *   it. Test sources are skipped. A list of subdivision codes held by a name such as `STATES` is not read as countries.
+ *   it. Test sources are skipped. A list of subdivision codes held by a name such as `STATES` isn't read as countries.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

@@ -9,7 +9,7 @@
  *
  *   Countries that share a region read one acquired extract. A country derived from a region that holds
  *   other countries is clipped to its outline, and the outline's digest is recorded in that country's
- *   derivation. A country derived from its own extract is not clipped, as the command-line builder has never
+ *   derivation. A country derived from its own extract isn't clipped, as the command-line builder has never
  *   clipped one.
  */
 

@@ -146,7 +146,7 @@ function layersFor(country: string): VenueHeadEntries[] {
 const SPACELESS_SCRIPT_RE = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]+$/u
 
 /**
- * Whether `word` is written wholly in a script that does not separate words with spaces.
+ * Whether `word` is written wholly in a script that doesn't separate words with spaces.
  *
  * The venue-head builder, the corpus venue recipe and this reader must classify a
  * word the same way, so all three call this function.

@@ -6,7 +6,7 @@
  *   Fog of war: each cell has `fog = 1 − coverage` in [0,1] (0 clear, 1 gray), plus
  *   `fog_opt = fog ** OPTIMISTIC_GAMMA` for the demo's optimistic toggle.
  *
- *   DuckDB is a dynamic import so the published CLI does not force a heavy native dependency on
+ *   DuckDB is a dynamic import so the published CLI doesn't force a heavy native dependency on
  *   users who only ever run parse/geocode.
  */
 
@@ -482,7 +482,7 @@ export async function buildCoverageTiles(
 		ndjsonPath,
 	]
 
-	// quiet: tippecanoe's stderr must not leak into the Ink render.
+	// quiet: tippecanoe's stderr mustn't leak into the Ink render.
 	// We surface it only on failure.
 	const tip = await runProcess("tippecanoe", tipArgs, { reject: false })
 

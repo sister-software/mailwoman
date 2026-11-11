@@ -6,7 +6,7 @@
  *   The check compares the artifact with a second path. A separate half tests locations outside its coverage.
  *
  *   The positive half samples points from the sealed artifact and asks the Department's feature service about them.
- *   The service supplies geometry through a separate distribution channel. This package has not touched that geometry.
+ *   The service supplies geometry through a separate distribution channel. This package hasn't touched that geometry.
  *   The check runs the point test on the service's rings. It compares two verdicts from the same authority.
  *   This measures our conversion against the authority's published geometry.
  *
@@ -19,7 +19,7 @@
  *   designation. A positive-only check could pass an artifact that reports the whole island as zoned. The layer treats
  *   a missing polygon as no zoning statement.
  *
- *   The channels use different coordinate precision. A boundary-point disagreement therefore does not establish a
+ *   The channels use different coordinate precision. A boundary-point disagreement therefore doesn't establish a
  *   conversion defect. The archive publishes nine decimals through this package's ingest. The service rounds its JSON.
  *   A point within roughly a meter of a zone boundary can fall on opposite sides of the two rendered edges. The check
  *   reports these cases as `boundary_tolerance` with the distance to the nearest edge. The receipt includes their count.
@@ -109,11 +109,11 @@ export interface VerifyZoningResult {
  * The check requires points from two populations.
  * The Donegal points are the case this layer's coverage posture exists for.
  *
- * The Department has not published that authority's zoning.
+ * The Department hasn't published that authority's zoning.
  * A builder that reads the absence as "unrestricted" would answer these points confidently.
  *
  * The Northern Irish points confirm the artifact is clipped to the Republic rather than to the
- * island: zoning there is a different jurisdiction's instrument under a different planning act.
+ * island: zoning there's a different jurisdiction's instrument under a different planning act.
  */
 export const OUTSIDE_PUBLICATION_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
 	{ label: "Letterkenny town centre, Donegal", latitude: 54.9503, longitude: -7.7345 },
@@ -255,7 +255,7 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 /**
  * Whether the service's own geometry contains the point, decided here with the same
  * ring-role resolution and the same even-odd rule the artifact's reader uses.
- * So what is compared is a verdict against a verdict.
+ * So what's compared is a verdict against a verdict.
  */
 async function readServiceContainment(
 	readServiceFeatures: ServiceFeatureReader,

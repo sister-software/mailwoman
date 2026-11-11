@@ -5,7 +5,7 @@
  *
  *   The worktree arm's interface, exercised against a throwaway git repo rather than this one.
  *
- *   This test does not geocode. An engine build takes minutes and requires the data root, so a test that ran one
+ *   This test doesn't geocode. An engine build takes minutes and requires the data root, so a test that ran one
  *   would be a slow integration test. The test checks the worktree-arm implementation.
  *   A ref arm runs the ref's source. A `worktree` arm runs the uncommitted source.
  *   Reported commits identify dirty trees. Both arms leave the caller's tree unchanged.
@@ -31,7 +31,7 @@ afterAll(() => fixtures.disposeAsync())
  *
  * `mailwoman/geocode` is stubbed as a real package directory so the runner's import
  * resolves without this test needing the monorepo.
- * That is the same resolution path the real arm uses.
+ * That's the same resolution path the real arm uses.
  *
  * A stub here exercises the farm and subprocess.
  * The calling tools exercise the engine against real data.
@@ -70,7 +70,7 @@ async function fakeRepo(marker: string): Promise<PathBuilder> {
 	// So an empty node_modules here would test neither path.
 	await makeDirectories(root("node_modules"))
 	await createSymbolicLink(root("packages", "mailwoman"), root("node_modules", "mailwoman"))
-	// Untracked and ignored, so the "does not touch the caller's tree" assertion compares
+	// Untracked and ignored, so the "doesn't touch the caller's tree" assertion compares
 	// a clean status to a clean status rather than to one this helper dirtied.
 	await writeLocalTextFile("node_modules\n", root(".gitignore"))
 
@@ -90,8 +90,8 @@ describe("runWorktreeArm — a ref arm runs THAT ref's source", () => {
 		const root = await fakeRepo("committed")
 
 		// Edit without committing.
-		// A ref arm must not see this.
-		// That is the whole distinction it sells.
+		// A ref arm mustn't see this.
+		// That's the whole distinction it sells.
 		await writeLocalTextFile(
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
@@ -125,8 +125,8 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 		})
 
 		expect(result.answers[0]!.tier).toBe("uncommitted")
-		// A dirty tree is not its head.
-		// A bare sha would let a result claim a commit it did not run.
+		// A dirty tree isn't its head.
+		// A bare sha would let a result claim a commit it didn't run.
 		expect(result.commit).toContain("+dirty")
 	})
 

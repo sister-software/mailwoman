@@ -132,7 +132,7 @@ const THOROUGHFARE_HREF = "thoroughfarename"
 const POSTAL_DESCRIPTOR_HREF = "postaldescriptor"
 
 /**
- * The stored-query id prefix of the administrative-unit reference that is the municipality.
+ * The stored-query id prefix of the administrative-unit reference that's the municipality.
  *
  * The other two are `AD_ADMINUNITNAME_PAI_`, the country, and `AD_ADMINUNITNAME_COM_`,
  * the autonomous community, and neither belongs to a written address.

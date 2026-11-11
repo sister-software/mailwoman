@@ -36,8 +36,8 @@ and B14's test fixtures.
 
 - **A1**, the nine `link-dev-weights.ts` files, waits on a decision only the operator can make (below).
 - **B7**, the docs↔react component forks, needs a decision on whether react's components take a
-  className/theme prop so that Docusaurus styling survives. That is a design decision rather than a dedupe.
-- **B12 and B14**, the byte formatters and test-fixture builders, are real and cheap to fix but have the lowest payoff. They are
+  className/theme prop so that Docusaurus styling survives. That's a design decision rather than a dedupe.
+- **B12 and B14**, the byte formatters and test-fixture builders, are real and cheap to fix but have the lowest payoff. They're
   left for whoever next works in those files.
 
 ### Four findings this audit got wrong, corrected by implementing them
@@ -46,12 +46,12 @@ and B14's test fixtures.
    documented adapter, and one was a deliberate variant for a different quantity.
 2. **B1** proposed moving all three point-in-polygon copies to `@mailwoman/spatial`. `nuts-lookup` and
    `timezone-lookup` each have one dependency (the zero-dependency `@mailwoman/annotations`), while spatial pulls in
-   `@mailwoman/core` and its ~11 MB of shipped data. That is three orders of magnitude of weight for fifteen lines.
+   `@mailwoman/core` and its ~11 MB of shipped data. That's three orders of magnitude of weight for fifteen lines.
    One copy moved, and the other two are documented in place.
 3. **A1** called nine files nine forks, citing a "4.3× size spread = divergence". Their
    `package.json` files show that two are base packages and seven declare `mailwoman.baseWeights` as
    overlays. The spread mostly reflects those two roles.
-4. **A4** counted 28 raw-`fetch` sites as one population. They are two populations. The ~23 API requests should migrate,
+4. **A4** counted 28 raw-`fetch` sites as one population. They're two populations. The ~23 API requests should migrate,
    and the 4–5 multi-gigabyte file transfers streamed to disk should stay. Response caching makes no sense at
    that size, and axios buffers any non-stream response type in memory.
 
@@ -76,13 +76,13 @@ grep-plus-read pass had skipped both.
 - B1: three point-in-polygon implementations in three published packages.
 - B6: a whole duplicated file whose written exit plan was never executed.
 
-**The common cause.** In three of the largest clusters, a home module exists, but the call sites could
-not use it in its current shape. A3 is the clearest case.
+**The common cause.** In three of the largest clusters, a home module exists, but the call sites couldn't
+use it in its current shape. A3 is the clearest case.
 `SeededRandom` in `core/utils/python-random.ts` is mulberry32 according to its docstring, but it is a class
 with a `.random()` method, and all sixteen call sites want a `() => number` thunk. The sixteen sites
 therefore rebuilt the generator instead of adapting to the class. A2 has the same problem from the other side: two
 functions are both called `percentile`, and one takes a percent while the other takes a fraction. When a home's interface
-does not match the call shape, pointing every call site at the home is the wrong fix. The
+doesn't match the call shape, pointing every call site at the home is the wrong fix. The
 home's interface has to change first.
 
 ## A — the home exists and the code bypasses it
@@ -113,7 +113,7 @@ Shared units the clone scan matched across them: `linkForce` (×5), `peekPairInd
 > `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and are overlays whose `files` ship only
 > locale artifacts. The four ~117-line scripts that link only `pair-index-<cc>.bin` are therefore
 > correct for their packages and do not show drift. The audit read nine different files as
-> nine forks of one thing, but they are two bases and seven overlays.
+> nine forks of one thing, but they're two bases and seven overlays.
 >
 > **A narrower question remains.** Among the seven overlays, three (`en-gb`, `en-nz`,
 > `fr-fr`) also link the base artifacts (`model.onnx`, `tokenizer.model`,
@@ -184,7 +184,7 @@ docstring also warns that check parity depends on its exact nearest-rank semanti
 `core/utils/python-random.ts` exports `SeededRandom`, and its docstring states it is "Backed by
 mulberry32". One caller uses it: `scripts/eval/build-oa-coord-golden.ts:149`.
 
-**Diagnosis: the home exists, but its shape does not fit.** `SeededRandom` is a class you call
+**Diagnosis: the home exists, but its shape doesn't fit.** `SeededRandom` is a class you call
 `.random()` on. Every call site above wants `() => number`, because the synthesizers and
 samplers take that shape as an injected `random` option. The authors likely knew about the home. A copy was still the
 cheapest way to get the shape the call site needs.
@@ -228,7 +228,7 @@ absolute: `codex/tools/{generate-country-reference.ts:100,generate-official-lang
 
 **Whatever is decided about the code, the closing sentence in `AGENTS.md` needs correcting.** When an
 instruction file claims that unfinished work is finished, the next agent learns that the
-rule is not enforced.
+rule isn't enforced.
 
 **Cost of leaving it: medium** for the SDK fetchers, because without pacing the lab can be rate-limited on
 a re-fetch. **Low** for the one-shot tools.
@@ -289,7 +289,7 @@ gets a silently wrong path rewrite.
 ### A8. String comparators — `@mailwoman/match` is the home; `jaccard` lives outside it ×3
 
 `match/comparators.ts` exports `jaro`, `jaroWinkler`, `levenshteinSimilarity`, `nameSimilarity`. It
-does not export `jaccard`, so three copies grew in `registry/tools`:
+doesn't export `jaccard`, so three copies grew in `registry/tools`:
 
 ```
 registry/tools/dedup-ceiling.ts:103          jaccard
@@ -322,7 +322,7 @@ resolver-wof-sqlite/geo.ts:89,111   pointInRing + pointInPolygonRings  (readonly
 > callers have one import.
 
 It then keeps its own point-in-polygon twenty lines below, because `@mailwoman/spatial` lacks
-one. The author knew the rule and could not follow it for PIP.
+one. The author knew the rule and couldn't follow it for PIP.
 
 **Proposed home:** `spatial/geometries/polygon.ts`. `AGENTS.md` already calls spatial "the math
 home", and the missing PIP function makes that claim untrue.
@@ -332,8 +332,8 @@ home", and the missing PIP function makes that claim untrue.
 
 > **Corrected on implementation.** Only the resolver moved. `nuts-lookup` and `timezone-lookup` each
 > have exactly one dependency (the zero-dependency `@mailwoman/annotations`). A direct spatial import to reach the
-> ray cast would pull `@mailwoman/core` and its ~11 MB of shipped data into two leaf packages. That
-> is a weight increase of three orders of magnitude for fifteen lines, so both packages keep their copies, with the
+> ray cast would pull `@mailwoman/core` and its ~11 MB of shipped data into two leaf packages. That's
+> a weight increase of three orders of magnitude for fifteen lines, so both packages keep their copies, with the
 > measurement recorded in place. The audit counted the duplicated lines but not the added dependency weight, and reading the
 > dependency graph before moving the code caught the problem.
 
@@ -551,11 +551,11 @@ Four of the five conventions checked have **zero violations**:
 `NZ_DELIVERY_SERVICE_TYPES` at line 73 and `NzDeliveryServiceTypeName` at line 97. The same acronym
 appears in two casings twenty-four lines apart.
 
-**Why another sweep will not fix it.** `AGENTS.md` states: "There's no lint
+**Why another sweep won't fix it.** `AGENTS.md` states: "There's no lint
 rule for this (oxlint can't express it); it's reviewer discipline." When only review enforces a convention,
 and sweeps check only a fixed acronym list, violations will keep appearing for every acronym missing from the
 list. The durable fix is a CI check: a small script that checks exported identifiers against a project acronym
-list. Another sweep would not last.
+list. Another sweep wouldn't last.
 
 **Cost of leaving it: low** (cosmetic), **except for `POI`**, where the drift goes against 250+
 occurrences of the opposite form in the same repo.
@@ -566,7 +566,7 @@ occurrences of the opposite form in the same repo.
 
 ## D — altitude (observation rather than a verdict)
 
-I did not read each file, and a boundary finding requires that read. The table shows the size ranking,
+I didn't read each file, and a boundary finding requires that read. The table shows the size ranking,
 with a quick characterization of each file's shape:
 
 | file                                                  | lines | exports | fns | reading                             |
@@ -581,17 +581,17 @@ with a quick characterization of each file's shape:
 
 `geocode-core.ts` is the outlier, with seventeen exported symbols and eleven functions in a thousand
 lines. A broad exported surface suggests that a module serves several callers for
-several reasons. **This is a prompt for a closer read rather than a finding.** Confirmation needs the per-file read I did
-not do.
+several reasons. **This is a prompt for a closer read rather than a finding.** Confirmation needs the per-file read I didn't
+do.
 
 ## Appendix — rejected candidates
 
-Grep found each of these, and reading ruled each one out. They are recorded so that the next sweep does not propose
+Grep found each of these, and reading ruled each one out. They're recorded so that the next sweep doesn't propose
 them again.
 
 1. **`match/distance.ts:31 haversineKm`** is a documented adapter from
    `match`'s `LatLon` shape onto `spatial`'s scalar `haversineKm`, aliased on import as
-   `greatCircleKm`. Its docstring states that. It is not a second implementation.
+   `greatCircleKm`. Its docstring states that. It isn't a second implementation.
 
 2. **The whole great-circle cluster.** Grep found lat/lon trigonometry in seven files outside
    `spatial/`. The file showed that `resolver-wof-sqlite/geo.ts:23` **re-exports** spatial's function,
@@ -609,7 +609,7 @@ them again.
    stays out of A2's mechanical sweep.
 
 5. **`libpostal` / `nominatim` / `photon` error envelopes** have `{ error: "…" }` shapes that look like
-   they should use `api-kit`'s `apiError`. They must not use it, because these are drop-in replacements and their
+   they should use `api-kit`'s `apiError`. They mustn't use it, because these are drop-in replacements and their
    wire shape is the upstream project's interface. `libpostal/app.ts:21` records the decision
    explicitly ("a recorded free choice, shaped to match"). Route _plumbing_ can still be shared
    (see B10).
@@ -620,7 +620,7 @@ them again.
 
 7. **`docs/src/components/{SpanHighlight,TreeView,…} tier()` ×5** matched as a 5-copy clone group,
    but each copy already delegates to a shared `confidenceTier`. Only a two-line null check repeats.
-   That is at best a marginal finding.
+   That's at best a marginal finding.
 
 8. **`mailwoman/types/node.d.ts:7 namespace NodeJS`** is the only `namespace` in the repo, and it is allowed as
    an ambient declaration in a `.d.ts`, which `erasableSyntaxOnly` permits.
@@ -631,7 +631,7 @@ them again.
    decisions with stated reasons, and migrating any of them would make it worse.
 
 10. **`gauntlet/cases/regression.ts` at 2291 lines** is a data table with two exports and zero
-    functions. Its length by itself does not show that it does more than one job.
+    functions. Its length by itself doesn't show that it does more than one job.
 
 11. **`nuts-lookup` / `timezone-lookup` point-in-ring, and `match/gbt.test.ts`'s LCG** are real,
     verified duplicates of code that now has a shared home, and they stay duplicated. Each package
@@ -641,7 +641,7 @@ them again.
     finds it next to the copy. **A duplicate kept for a measured reason is a decision rather than a
     defect.** The audit's B axis lacked this category.
 
-## What this audit did not cover
+## What this audit didn't cover
 
 - `corpus-python`, which the charter puts out of scope.
 - Bug hunting. Where duplicated code is also wrong, the defect is noted but not investigated.
@@ -697,9 +697,9 @@ neither a rebuild nor a re-pin.
 
 **Corrected conclusion: no extract in the checkable set changes.** An earlier revision of
 this appendix claimed that ES needed re-pinning. That claim came from finding the file that reads the ES CSV
-and stopping there. It did not check whether that reader was on the changed code path (it is not,
+and stopping there. It didn't check whether that reader was on the changed code path (it isn't,
 because none of the eight `readCSVRecords` callers reads an ES source) or whether the artifact predated the fix (it
-does not). Each check takes one command. The wrong claim would have cost someone an 800,000-row rebuild
+doesn't). Each check takes one command. The wrong claim would have cost someone an 800,000-row rebuild
 before they found the fix was already in place.
 
 **Still unscanned:** the seven `us__*` zips and the GeoNames dumps. Both are absent from this host. The same

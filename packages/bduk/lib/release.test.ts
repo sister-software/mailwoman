@@ -334,7 +334,7 @@ describe("parseBDUKRelease refusals", () => {
 		)
 	})
 
-	// A quote that opens on one line and closes on a later one is not an error to
+	// A quote that opens on one line and closes on a later one isn't an error to
 	// the reader: it joins the lines into one record.
 	// Only the width check and the record count tell that read from a shorter file.
 	test("a quote closed on a later line joins the lines and throws rather than reading short", async () => {

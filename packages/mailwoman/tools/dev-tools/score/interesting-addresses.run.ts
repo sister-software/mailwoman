@@ -4,7 +4,7 @@
  *
  * Exact component-span recall for venue-heavy GB addresses and a bilingual JP pair.
  * Reviewed Google normalization lives on each gauntlet row's source/coordinate/note
- * and is not treated as parser gold.
+ * and isn't treated as parser gold.
  *
  * Usage: node packages/mailwoman/tools/dev-tools/score/interesting-addresses.run.ts --country
  * GB --label shipped node packages/mailwoman/tools/dev-tools/score/interesting-addresses.run.ts

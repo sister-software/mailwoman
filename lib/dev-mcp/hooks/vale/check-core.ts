@@ -15,8 +15,8 @@
  *   Severity picks the mechanism. Error-severity findings render a `block` verdict. The tier is
  *   curated to near-zero legitimate use. The correction must replace the judgment with the
  *   concrete claim rather than merely delete the flagged word. Warning-only findings render a `context`
- *   verdict: those rules (opaque IDs, minted metaphors, vague praise) need judgment a regex does
- *   not have, so the agent weighs them.
+ *   verdict: those rules (opaque IDs, minted metaphors, vague praise) need judgment a regex doesn't
+ *   have, so the agent weighs them.
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -43,7 +43,7 @@ export async function lintReply(reply: string): Promise<ValeAlert[]> {
 	const vale = await valeCommand(import.meta.url)
 	const configPath = repoRootPath("config", "vale", ".vale-chat.ini")
 
-	// Vale exits 1 when error-severity alerts exist, so the exit code does not indicate a tool failure.
+	// Vale exits 1 when error-severity alerts exist, so the exit code doesn't indicate a tool failure.
 	// Unparseable stdout indicates failure.
 	// The silence interface would otherwise treat it as "no findings".
 	const result = spawnProcessSync(vale.file, [...vale.argv, "--config", configPath, "--output=JSON", "--ext=.md"], {

@@ -155,7 +155,7 @@ export class StageCounter {
 	}
 
 	/**
-	 * A row the stage holds but the predicates could not read.
+	 * A row the stage holds but the predicates couldn't read.
 	 * It counts toward the total.
 	 */
 	addUnreadable(country: string): void {

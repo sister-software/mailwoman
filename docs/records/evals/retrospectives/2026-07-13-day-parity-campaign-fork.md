@@ -21,7 +21,7 @@ NPM-promote bar); the full gauntlet.
 The twins fix bare-locality robustness and erode US admin recall. The counterweight
 repairs US recall and re-breaks bare-locality. That oscillation is a capacity/stability constraint at 29M params
 under the 5e-5/8k fine-tune idiom rather than an extract-composition problem. Per the treadmill guard, a
-seventh solo run does not follow, and the fork goes to the operator (documented on #1102):
+seventh solo run doesn't follow, and the fork goes to the operator (documented on #1102):
 (a) dynamics probe (v255 composition, gentler LR/warmup, 2k steps), (b) ship v254 experimental
 (the only gauntlet-green candidate, with default blocked by the 2pp check), (c) the #727 span-head arc,
 (d) hold for night-2.
@@ -65,7 +65,7 @@ only because 2k ≪ 8k, and the diagnostic wasn't a candidate.
 
 Residual (persists under gentle schedule): the 5 flips are all postcode-adjacent VT cases where
 "VT" absorbs into the street span — the **#727 boundary-digit-absorption class**. The schedule
-change does not touch that class, and #727 is now the last remaining change.
+change doesn't touch that class, and #727 is now the last remaining change.
 
 **Caveat RESOLVED (same day):** the coordinate-level check was the open question — "pins clean"
 was PARSE-level, and the v255 FAIL was a COORDINATE assertion. Rather than the #718-trap `--model`
@@ -94,7 +94,7 @@ loss 0.75→0.70) and graded package-shaped. It is the campaign's **first stable
 | US flip census          | 5 region / 0 locality per 600  | preserved  | better than v255      |
 
 v257 trades ~6pp of v255's unstable street peak for full gauntlet stability + preserved US recall —
-the schedule fix at 8k scale. It does **not** clear the SWAPS street floor (0.90), so the v7 swaps
+the schedule fix at 8k scale. It **doesn't** clear the SWAPS street floor (0.90), so the v7 swaps
 stay conditional. The residual is the #727 boundary-absorption class (golden confused-tags confirm it:
 "05770 VT DELONG LN" → street got "VT Delong"). **not promoted:** doesn't unblock v7, needs card
 regen, and the golden 2pp check is schema-confounded (golden v0.1.2 uses the flat pre-split street
@@ -103,7 +103,7 @@ Full grade: `models/candidates/v257-fragment-v5-gentle-full/MANIFEST.md`.
 
 ## Decisions under the standing grant
 
-Merged/pushed directly to main throughout (docs, tooling, codex tables, configs). Did not
+Merged/pushed directly to main throughout (docs, tooling, codex tables, configs). Didn't
 exercise the promote/publish grant: v253/v254 fail the 2pp default check, v255 fails the gauntlet
 — experimental-shipping a blocked-for-default artifact would be superseded by the fork decision
 in every case. Treadmill compliance outranked grant flexing.

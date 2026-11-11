@@ -15,7 +15,7 @@
  * fetcher follows a republication without a code change.
  *
  * The publisher froze the extract at data dated 2026-05-04 and states on the dataset page that it
- * will not be updated again, so a re-run normally finds the recorded file current and makes no
+ * won't be updated again, so a re-run normally finds the recorded file current and makes no
  * transfer.
  *
  * The transfer is checked against the record: the byte count against `filesize` and the SHA-1

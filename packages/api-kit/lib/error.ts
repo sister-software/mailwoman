@@ -14,7 +14,7 @@ import { z } from "zod"
 
 /**
  * The native error envelope: a short machine-stable `error` string plus a human
- * `detail`, `null` when there is none.
+ * `detail`, `null` when there's none.
  */
 export const APIErrorSchema = z
 	.object({

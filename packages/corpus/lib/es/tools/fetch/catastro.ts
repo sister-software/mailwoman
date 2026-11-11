@@ -31,7 +31,7 @@
  *    answers an html error page under http 200 rather than the archive. Both levels are therefore
  *    read as bytes and decoded through {@linkcode decodeDeclaredXML}. That function reads each
  *    document's own declaration.
- * 3. **An archive URL cannot be composed, and the href it is read from is not request-ready.** The
+ * 3. **An archive URL cannot be composed, and the href it is read from isn't request-ready.** The
  *    directory segment is the municipality's own name, so Madrid sits under `28900-MADRID` while
  *    the composable `28079` answers an html page. The publisher writes that segment with literal
  *    spaces and with non-ASCII letters, and {@linkcode archiveRequestURL} percent-encodes both.
@@ -53,7 +53,7 @@
  * and Madrid 7,104,627, measured 2026-10-03. The harvest is dispatched serially through one
  * `APIClient` at {@linkcode ES_CATASTRO_REQUEST_INTERVAL_MS}, and
  * {@linkcode HarvestESCatastroOptions.provinces} and {@linkcode HarvestESCatastroOptions.limit}
- * bound a run that is not harvesting the whole country.
+ * bound a run that's not harvesting the whole country.
  *
  * The archives stay compressed. `#es/adapters/catastro/adapter` reads the GML member through
  * `inspireGMLChunks`, which inflates from the archive, and Ceuta's member is 11,861,975 bytes
@@ -249,7 +249,7 @@ export function readESCatastroServiceFeed(feed: AtomFeed): readonly ESCatastroPr
 	for (const entry of feed.entries) {
 		const titled = TERRITORIAL_OFFICE_TITLE.exec(entry.title.trim())
 
-		// An entry that is not a territorial office belongs to a foral cadastre with its own
+		// An entry that's not a territorial office belongs to a foral cadastre with its own
 		// register row, license and adapter, so it is left out rather than refused.
 		if (!titled) continue
 
@@ -442,7 +442,7 @@ export interface HarvestESCatastroOptions {
 	/**
 	 * Harvest only these two-digit province codes.
 	 *
-	 * A code the service document does not list is reported as a failure rather than ignored.
+	 * A code the service document doesn't list is reported as a failure rather than ignored.
 	 * Without this every one of the 52 province feeds is read, at one request each.
 	 */
 	provinces?: readonly string[] | null
@@ -695,7 +695,7 @@ export async function harvestESCatastro(
 	}
 
 	// A municipality a caller requested and no selected province feed listed is reported rather than dropped.
-	// A municipality that is not published is a different condition from a
+	// A municipality that's not published is a different condition from a
 	// selection that lists no municipality.
 	for (const code of requested ?? []) {
 		if (found.has(code)) continue

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The US situs reader admits a database `source` value only on its register rows' decisions.
  *
- *   OpenAddresses does not relicense the county and state bodies it collects, so each body's rows reach the tuples
+ *   OpenAddresses doesn't relicense the county and state bodies it collects, so each body's rows reach the tuples
  *   only when that body's own decision permits transform and train.
  */
 

@@ -509,7 +509,7 @@ describe("the unmeasured verdict bucket", () => {
 		expect(summary.unmeasured).toHaveLength(1)
 		expect(summary.failures).toHaveLength(0)
 		expect(summary.decided).toBe(0)
-		// A suite that measured no row is not a clean suite, the same refusal an empty suite gets.
+		// A suite that measured no row isn't a clean suite, the same refusal an empty suite gets.
 		expect(summary.pass).toBe(false)
 	})
 

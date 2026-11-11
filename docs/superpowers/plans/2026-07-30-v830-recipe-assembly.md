@@ -54,8 +54,8 @@ projection absmax = the xavier bound). The trainer fix + a structural key-parity
 - **The three-law selectivity receipts survive as PAINTING HYGIENE** (they made a blind marker
   net-positive by restricting it to discriminative hits) rather than as evidence of trained-channel
   behavior. Keep the laws in the v7 lexicon build unchanged.
-- **This run is the locality channel's first actual training.** Pre-registered expectations must
-  not cite the fine-tune heals as trained-channel evidence. Floor: the trained channel must beat
+- **This run is the locality channel's first actual training.** Pre-registered expectations mustn't
+  cite the fine-tune heals as trained-channel evidence. Floor: the trained channel must beat
   the accidental marker's own readings (homonym-lower +0.270 fed-vs-zeroed is the number to beat);
   target: the bare-locality damage class (the marker's cost) goes to ~0 under the now--
   reaching-the-channel absence/false-evidence curricula.
@@ -68,7 +68,7 @@ projection absmax = the xavier bound). The trainer fix + a structural key-parity
 **Keep `v0.9.0-multisplice`.** Reasons: (a) every check reference, calibration, and fixture in the
 battery assumes it — retraining SP invalidates the F1 comparability the whole verdict rests on
 (the eval-protocol rule: never compare F1 across tokenizer versions); (b) the #825 postmortem
-shows SP-vocab changes are their own arc with their own failure modes; (c) CJK does not need it —
+shows SP-vocab changes are their own arc with their own failure modes; (c) CJK doesn't need it —
 Arc 2's char path bypasses SP entirely. A tokenizer retrain is a v9-class decision that would ride
 the unification question rather than this base.
 

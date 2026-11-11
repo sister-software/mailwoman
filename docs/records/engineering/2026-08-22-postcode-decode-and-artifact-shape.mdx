@@ -20,7 +20,7 @@ normative layout).
 
 ## The claim
 
-A postcode is not an opaque key. It is **compressed, locale-specific information about where it
+A postcode isn't an opaque key. It is **compressed, locale-specific information about where it
 is**, and much of it is readable without asking a gazetteer anything.
 
 This matters exactly where retrieval helps least. `800 E Monroe St, Springfield, IL 62701` is
@@ -29,7 +29,7 @@ over-specified: retrieval disambiguates and any decode is redundant. Strip it to
 evidence a decoder can read with no database.
 
 Pelias penalizes numeric spans positionally: is this five-digit run a house number or a postcode,
-given where it sits? That is a prior on the SPAN. No prior asks whether the code's own content
+given where it sits? That's a prior on the SPAN. No prior asks whether the code's own content
 **corroborates** the neighboring spans, or lets that corroboration move confidence.
 
 ## What already exists
@@ -74,7 +74,7 @@ The US is the awkward case because it straddles three levels at once — 5-digit
 
 ## Five findings, measured — the first pass
 
-### 1. There is no postcode parentage to consult
+### 1. There's no postcode parentage to consult
 
 The natural fix for #1773 — ask the hierarchy whether this postcode is finer than this locality — has
 no data behind it:
@@ -109,7 +109,7 @@ USPS **Unique ZIPs** — assigned to an organization by mail volume, `00501` is 
 General Electric, `10118` is the Empire State Building — describe a mail route rather than an area. Their
 gazetteer parentage is whatever the source could attach them to.
 
-The detectable signature is not the unique-ness but the **placeholder coordinate**: a coordinate
+The detectable signature isn't the unique-ness but the **placeholder coordinate**: a coordinate
 shared by codes from different SCFs.
 
 ```
@@ -134,7 +134,7 @@ reduce     kept   plausible   implausible   precision
 
 **554 of 749 minority state entries (74%) are flatly contradicted by the numbering plan**, and the
 plausible and implausible share distributions overlap (medians 6.9% and 5.1%). A weighted array would
-ship mostly noise with a number attached. That is worse than shipping no array, because it looks
+ship mostly noise with a number attached. That's worse than shipping no array, because it looks
 calibrated.
 
 ### 5. Point-in-polygon beats parentage by 12×, and needs no license
@@ -175,7 +175,7 @@ the place where the note above is wrong.
 The note framed the granularity spectrum as a problem for `PLACETYPE_SPECIFICITY`. It is also a
 problem for the ladder. The ladder had two arms and was using one of them as a global default. Whether a
 postal zone is coarser than its locality is a fact about a country's **administrative** geography, and
-code length does not predict it — FR and DE are both 5-digit and disagree.
+code length doesn't predict it — FR and DE are both 5-digit and disagree.
 
 Coordinate p50, locality-first against the postcode point, OpenAddresses panels through the
 production result assembly:
@@ -200,7 +200,7 @@ The US rooftop cascade is US-only **by construction** — `selectAddressPointsDB
 result tier:  address_point 8,434   interpolated 989   admin 577
 ```
 
-So only 577 panel rows reach an admin decision at all, and they are the rows no rooftop or
+So only 577 panel rows reach an admin decision at all, and they're the rows no rooftop or
 interpolation extract could place: rural, sparsely covered, exactly where a locality centroid sits close
 and a ZIP zone is wide. Graded over all 10,000 the US reads as a postcode-first country (2.41 vs
 3.63 km) — **a selection effect, measured on a population production never sends to the ladder.**
@@ -224,11 +224,11 @@ Urban CA is GB's tier — 78 m against GB's 38 m — on a sample fifty times lar
 GB was admitted on. Rural CA is a delivery route rather than a block face.
 
 Canada Post puts a `0` in the **second position** of a rural forward sortation area, so the code
-contains the answer: `T0H 1M0` is rural, `M1J 1A8` is not. The urban half shipped into
+contains the answer: `T0H 1M0` is rural, `M1J 1A8` isn't. The urban half shipped into
 `UNIT_GRADE_POSTCODE`; the rural half is excluded by that one character.
 
 **The pooled number would have been a trap.** Across both populations CA reads 0.10 km p50. That figure
-looks like a uniform win and is not one. The character-level block beats promotion of the country
+looks like a uniform win and isn't one. The character-level block beats promotion of the country
 _measurably_ — the shipped result now beats blanket postcode-first on every percentile (p90 1.88 km
 vs 3.26, ≤1 km 86.2% vs 82.3%), because rural keeps the locality.
 
@@ -253,10 +253,10 @@ mid-query instead. Neither is live (these are build inputs, and the candidate ta
 codes at placetype 11), but the first CA measurement of this run reported _"974 of 1,000 rows resolve
 no postcode node"_, which reads as a coverage catastrophe and was an extract-selection artifact. #1791.
 
-### 11. The currency flags are not empty, they are CONSTANT
+### 11. The currency flags are not empty, they're CONSTANT
 
 The note recorded ZIP currency as unanswerable. It is, but the reason matters: the columns that would
-answer it are not missing and not sparse. They are **constants written by the builder**, and they
+answer it are not missing and not sparse. They're **constants written by the builder**, and they
 look exactly like data.
 
 Across all 42,319 rows of `postalcode-us.db`:
@@ -291,14 +291,14 @@ which have the same three flags and differ only in having a coordinate.
 answers a different question (when the upstream record was last touched) and it stops at
 **2021-01-21**, so the extract's provenance is four and a half years old.
 
-#### Why the obvious free substitute does not work
+#### Why the obvious free substitute doesn't work
 
 Census ZCTAs are the free, permissive approximation of ZIP areas, and the extract already has a
 `centroid_source` table with **979 rows stamped `census-zcta-2024`** — so someone has already reached
 for exactly that. Two facts kill it as a currency source:
 
 - Every one of those 979 is a **territory** code (969xx Guam and neighbors). The enrichment was
-  scoped to the places WOF could not place rather than to currency.
+  scoped to the places WOF couldn't place rather than to currency.
 - **Zero of the 414 null-island ZIPs were enriched by it.** Those 414 spread across 210 sectional
   centers with no concentration — 100xx (Manhattan PO boxes) is the densest at twelve — which is the
   signature of PO-box-only and organization codes. ZCTAs are built from populated address blocks and
@@ -311,7 +311,7 @@ The cautious posture is the one the artifact already takes elsewhere: **do not c
 cannot say.** Concretely —
 
 1. **Never read these five columns for US postcodes.** A filter on `is_current` selects everything and
-   reads as though it selected something. That is worse than no filter at all.
+   reads as though it selected something. That's worse than no filter at all.
 2. **A retired code answers like a live one.** Treat a US ZIP hit as "this code existed in a 2021-era
    register" rather than as "this code is deliverable today".
 3. **The absent coordinate is the closest thing to a signal we hold**. The 414 unplaceable codes are
@@ -327,7 +327,7 @@ HUD's quarterly USPS crosswalk is free and covers active codes. Neither has been
 **Built 2026-08-22 (#1784)** — 915 nodes, 42,313 units, 906 carrying a centroid, median
 `radiusP95Km` 53.56 km, 25,773 bytes. Leave-one-out against the arm a caller otherwise gets, 40,004
 units: SCF centroid p50 **29.9 km** against the region centroid's **154.6 km**, closer on 94.9%. It
-does not meet the GB ≥60%-within-10 km bar (17.7%) and should not. That bar is calibrated for outward
+doesn't meet the GB ≥60%-within-10 km bar (17.7%) and shouldn't. That bar is calibrated for outward
 codes with a 3.24 km median p95 radius.
 
 - **US SCF coordinate + `radiusP95Km`**: buildable now. Median p95 radius **53.7 km** on placed codes
@@ -335,7 +335,7 @@ codes with a 3.24 km median p95 radius.
   neither existing consumer was designed around — which is exactly why PFX1 makes the radius
   mandatory beside a coordinate.
 - **US SCF → state**: from PIP, single-state for 877 of 902 SCFs. Not an array.
-- **US SCF → locality**: from PIP where a polygon exists, county where it does not, and **no locality**
+- **US SCF → locality**: from PIP where a polygon exists, county where it doesn't, and **no locality**
   where neither does. PFX1 already treats empty ancestry as a legitimate answer.
 
 ## Two decisions that block the next artifact
@@ -362,7 +362,7 @@ identifier belongs in the payload.
 ### Decision 2 — a seventh hand-rolled format, or a shared header
 
 Six formats exist: `PCN1`, `PCB1`, `PIX1`, `PFX1`, `ANCT`, and the FST. Each follows a per-file
-"this file owns both ends" discipline and no shared code. That has held — but the conventions have
+"this file owns both ends" discipline and no shared code. That's held — but the conventions have
 already forked:
 
 - header: `u32 headerLen` + UTF-8 JSON (`PCN1`/`PIX1`/`PFX1`) vs a fixed 48-byte binary (`ANCT`);
@@ -416,7 +416,7 @@ version, section table, source-md5 stamp. The per-file discipline stays for the 
   outward), LDU the unit tier — and no FSA index has been built.
 - **The decode can feed back into span confidence.** `postcode_prefix_ancestors` records what a prefix
   asserts, as metadata on a resolved node. No mechanism lets it raise or lower confidence that a
-  neighboring span is really a locality. This is the piece that does not exist, and it is
+  neighboring span is really a locality. This is the piece that doesn't exist, and it is
   what the Pelias observation addresses.
 
 ## Appendix — reproducing the numbers
@@ -440,6 +440,6 @@ All under `scripts/diagnostic/` (gitignored), run against
 | `ca-ldu-grade.ts`                                                   | finding 8 — the CA LDU against rooftop truth, split urban/rural                      |
 
 `ladder-arm-ab.ts` is the one to reach for first. Two flags matter and both change the conclusion
-rather than the precision: `--cascade` decides whether you are measuring the ladder's own population
+rather than the precision: `--cascade` decides whether you're measuring the ladder's own population
 or the whole panel (finding 7), and `--candidate-db` decides whether non-FTS extracts are reachable at
 all (finding 10).

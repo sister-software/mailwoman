@@ -79,7 +79,7 @@ export function createOpenRoadsReadStats(): OpenRoadsReadStats {
 const LINE_PATH = ["net:centrelineGeometry", "gml:LineString"] as const
 
 /**
- * Reads a link described by a `road:RoadLink` element or returns the reason it could not read one.
+ * Reads a link described by a `road:RoadLink` element or returns the reason it couldn't read one.
  */
 export function readOpenRoadsLink(element: MarkupElement): OpenRoadsLink | "unnamed" | "malformed-geometry" {
 	const name1 = (textAtPath(element, "road:name1") ?? "").trim()

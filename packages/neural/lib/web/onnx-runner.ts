@@ -142,7 +142,7 @@ export class WebONNXRunner implements NeuralRunner {
 			const generation = this.#generation
 
 			// A release() during the load increments the generation and frees this session,
-			// so a stale load must not store it.
+			// so a stale load mustn't store it.
 			const adopt = (session: ort.InferenceSession) => {
 				if (generation !== this.#generation) return session
 

@@ -14,7 +14,7 @@
  *   measured case with margin.
  *
  *   An unhandled script (Arabic, Hebrew, CJK, since the romanizer covers Cyrillic only) answers NULL,
- *   never "different name". Absence of a verdict must not stamp anything.
+ *   never "different name". Absence of a verdict mustn't stamp anything.
  */
 
 import { levenshteinSimilarity } from "@mailwoman/match/comparators"

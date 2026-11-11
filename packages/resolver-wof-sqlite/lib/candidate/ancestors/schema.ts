@@ -15,7 +15,7 @@
  *      A fixed-slot `[id.8]` chain returns ids. Each id would then need a name lookup, but the artifact has no
  *      per-id table. That design requires up to 8 indirections. The closure row requires none.
  *   2. The account layer needs every candidate under a `name_key` enumerable with its chain from
- *      one artifact probe ("present-but-outranked, discriminated by containment"). That is the
+ *      one artifact probe ("present-but-outranked, discriminated by containment"). That's the
  *      candidate probe (contiguous) followed by one `spr_id`-clustered closure probe per candidate
  *      — each a handful of adjacent pages.
  *

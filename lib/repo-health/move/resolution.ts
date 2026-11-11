@@ -31,7 +31,7 @@ const BUILD_OUTPUT = /(?:^|\/)out\//u
 export interface MoveResolver {
 	/**
 	 * Returns the repo-relative file that `specifier` resolves to from the repo-relative
-	 * `containingFile`, or `undefined` when it does not resolve.
+	 * `containingFile`, or `undefined` when it doesn't resolve.
 	 */
 	resolve(specifier: string, containingFile: string): string | undefined
 }

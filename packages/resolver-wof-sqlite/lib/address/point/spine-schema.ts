@@ -52,7 +52,7 @@ export async function createSpineAddressPointTables(db: Kysely<SpineAddressPoint
 }
 
 /**
- * Build after the bulk load so the spine index is not updated on every streaming insert.
+ * Build after the bulk load so the spine index isn't updated on every streaming insert.
  */
 export async function createSpineAddressPointIndexes(db: Kysely<SpineAddressPointDatabase>): Promise<void> {
 	await db.schema.createIndex("idx_ap_h3").on("address_point").column("h3_cell").execute()

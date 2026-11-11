@@ -11,7 +11,7 @@
  *   empty symbol list, and explicit trainer defaults. The test makes the same calls through `trainSentencePiece`.
  *
  *   The test needs a built `spm_train`. It runs when the cache root holds one (`spmTrainBinary` builds it on first
- *   use) and is skipped otherwise, so a host without CMake does not fail the suite.
+ *   use) and is skipped otherwise, so a host without CMake doesn't fail the suite.
  */
 
 import { cacheRootPath } from "@mailwoman/core/data-root"

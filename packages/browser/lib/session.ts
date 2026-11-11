@@ -45,7 +45,7 @@ export async function createBrowserSession(options: BrowserSessionOptions = {}):
 	const { locale, userAgent } = options.contextOptions ?? {}
 
 	// The plugin applies its own locale and user agent after Playwright creates the context.
-	// Pass caller settings to both implementations so the plugin does not replace them with defaults.
+	// Pass caller settings to both implementations so the plugin doesn't replace them with defaults.
 	if (locale || userAgent) {
 		launcher.plugins.setDependencyDefaults("stealth/evasions/user-agent-override", {
 			...(locale ? { locale } : {}),

@@ -77,7 +77,7 @@ toolchain. A repository check will rebuild it and compare hashes.
 - A loaded model is a `Disposable` processor object. Its encode and decode methods are synchronous.
 - Results are ordinary JavaScript values. The caller never handles WASM vectors or pointers.
 - A model file records its format version, normalization policy, special IDs and vocabulary hash. The
-  loader refuses a model whose semantics it does not implement.
+  loader refuses a model whose semantics it doesn't implement.
 
 ### Risks to test early
 
@@ -200,7 +200,7 @@ repository root with `node`:
 
 Training runs native `spm_train`, built from google/sentencepiece `v0.2.2` under the cache root on first use. It
 reproduces the Python wheel's model byte for byte: the CLI records every trainer default it set, and the tool drops
-the spec fields the training call did not name. That is the form the wheel writes. `tools/tokenizer/sentencepiece.integration.test.ts`
+the spec fields the training call didn't name. That's the form the wheel writes. `tools/tokenizer/sentencepiece.integration.test.ts`
 checks five recorded wheel trainings against `test/fixtures/spm-recipes/`.
 
 The proto edits, parquet reads, CPython-compatible sampling, the byte-fallback count and the ONNX initializer

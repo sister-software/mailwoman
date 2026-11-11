@@ -71,7 +71,7 @@ export const POSTCODE_SHAPES_VERSION: string = postcodeShapeData.version
  * {@linkcode POSTCODE_SHAPES} answers whether a line contains a postcode-shaped span.
  * This map answers whether a whole string is one.
  *
- * That is the question a caller asks once it already holds a span and wants to know what the span is.
+ * That's the question a caller asks once it already holds a span and wants to know what the span is.
  *
  * A row states a `whole` pattern only where the anchored form differs from its scan form,
  * and its `wholeNote` gives the reason.

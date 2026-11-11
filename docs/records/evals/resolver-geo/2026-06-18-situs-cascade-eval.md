@@ -82,12 +82,12 @@ retrain and not more gazetteer breadth.
 - **The cascade needs the data layer.** The bare `@mailwoman/neural-weights-*` weights plus the admin
   gazetteer give the admin centroid. The meter-grade coordinate requires the per-state situs +
   interpolation extracts wired in (the server's `RegionDatabaseProvider`, the CLI's `--address-points` /
-  `--interpolation`, or `--cascade` here). The extracts are not in the npm package. They are the data
+  `--interpolation`, or `--cascade` here). The extracts are not in the npm package. They're the data
   release the geocoder consumes.
 - **Ship-config parity is partial.** The eval feeds the postcode **anchor** (the dominant channel for
-  admin recovery, and the channel that reproduces the 98.0% headline) but builds the classifier manually, so it does
-  not yet feed the gazetteer/conventions channels. The canonical `createScorer` path would
-  for full ship-config parity is a tracked follow-up. It does not affect the coordinate result here.
+  admin recovery, and the channel that reproduces the 98.0% headline) but builds the classifier manually, so it doesn't
+  yet feed the gazetteer/conventions channels. The canonical `createScorer` path would
+  for full ship-config parity is a tracked follow-up. It doesn't affect the coordinate result here.
 - **Locality-match residual is separate.** The ~2% locality miss is mostly civic-suffix /
   coincident-municipality naming rather than absent places. It is a metric-fairness item rather than a coverage hole.
 

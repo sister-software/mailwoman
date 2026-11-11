@@ -11,7 +11,7 @@
  *   Each row is keyed by `location_id` and includes:
  *   `address_primary`, `city`, `state`, `zip`, and `zip_suffix`.
  *
- *   This adapter does not download raw BDC files.
+ *   This adapter doesn't download raw BDC files.
  *
  *   It converts each source row into one CanonicalRow by:
  *   - splitting `address_primary` into `house_number` + `street`

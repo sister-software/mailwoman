@@ -121,7 +121,7 @@ const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
 	"Garden Lane Florist",
 ]
 
-// Compile-time guard: every venue must not start with the digit+ordinal pattern
+// Compile-time guard: every venue mustn't start with the digit+ordinal pattern
 // that confuses house_number recognition.
 // If a future contributor adds a "5th Avenue Theatre"- style entry,
 // this assertion will fire at module load time.

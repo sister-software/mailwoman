@@ -398,7 +398,7 @@ function droppedRow(run: GeocodeRun): string[] {
  * every empty component to the #1649 tier check.
  * That sentence appeared on rows whose components were populated and on markers with
  * no connection to that check, such as `poi_category` and `authority_designation`,
- * and a reader acting on it attributed a parse failure to a stage that had not run.
+ * and a reader acting on it attributed a parse failure to a stage that hadn't run.
  */
 function intentAdvisoryRow(run: GeocodeRun): string[] {
 	const markers = (run.result as { intent_markers?: QueryIntentMarker[] }).intent_markers
@@ -575,7 +575,7 @@ const STRATUM_KEYS: readonly StratumKey[] = ["country", "address_kind", "status"
 /**
  * Asserts that `by` is a known {@linkcode StratumKey}.
  *
- * @throws If `by` is not a known stratum.
+ * @throws If `by` isn't a known stratum.
  */
 export function assertStratumKey(by: string): asserts by is StratumKey {
 	if (!STRATUM_KEYS.includes(by as StratumKey)) {

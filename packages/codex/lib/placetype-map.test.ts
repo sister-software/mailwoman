@@ -89,7 +89,7 @@ describe("isPlacetypeFallback", () => {
 
 	it("is true only for a MACRO widening inside the request's own group", () => {
 		expect(isPlacetypeFallback("region", "macroregion")).toBe(true)
-		// A same-group sibling that is not a macro level is a match rather than a widening.
+		// A same-group sibling that's not a macro level is a match rather than a widening.
 		expect(isPlacetypeFallback("locality", "borough")).toBe(false)
 	})
 
@@ -108,7 +108,7 @@ describe("DEFAULT_PLACETYPE_MAP", () => {
 
 	it("routes postcode to WOF's own placetype name", () => {
 		// The tags and the taxonomy disagree on the spelling.
-		// The map is where that is reconciled.
+		// The map is where that's reconciled.
 		expect(DEFAULT_PLACETYPE_MAP.postcode).toBe("postalcode")
 	})
 })

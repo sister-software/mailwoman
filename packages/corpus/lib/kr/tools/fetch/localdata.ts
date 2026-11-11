@@ -123,7 +123,7 @@ export async function fetchLocaldataKR(
 	report?.(`=== ${SLUG}: ${wanted.length} of ${session.categories.length} categories`)
 
 	// A previous run's entries survive, keyed by file name, so a re-run
-	// after an interruption fetches only what is missing.
+	// after an interruption fetches only what's missing.
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, SourceManifest>()
 	let fetched = 0

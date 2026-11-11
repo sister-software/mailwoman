@@ -71,7 +71,7 @@ MCowBQYDK2VwAyEAv0e7Yn028V/BS2AT0tW5a/reOLpWnGiaOxwoscegolQ=
 ]
 
 /**
- * Key id → PEM public key for offline verification: every key that is not revoked.
+ * Key id → PEM public key for offline verification: every key that's not revoked.
  */
 export function trustedLicenseSigningKeys(): Readonly<Record<string, string>> {
 	return Object.fromEntries(

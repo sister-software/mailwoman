@@ -16,7 +16,7 @@ The first five articles in this track established the problem:
 
 - [How mail delivery works](../the-problem/how-mail-delivery-works.mdx): the postal system is already fuzzy. It tolerates ambiguity.
 - [How humans break addresses](../why-its-hard/how-humans-break-addresses.mdx): real input is messier than any database expects.
-- [The database fallacy](../why-its-hard/the-database-fallacy.mdx): there is no master list of correct addresses.
+- [The database fallacy](../why-its-hard/the-database-fallacy.mdx): there's no master list of correct addresses.
 - [The tokenization tautology](../why-its-hard/the-tokenization-tautology.mdx): traditional parsers hit a structural ceiling.
 - [The 90% trap](../why-its-hard/the-90-percent-trap.mdx): the tail of failures is the expensive part.
 
@@ -35,7 +35,7 @@ Applied to address parsing:
 
 The rule-based approach won the first decade of geocoding (2008-2018) because the cost of training a neural model was high and the cost of writing one more regex was low. The neural approach wins now because the cost of training has dropped (HuggingFace Transformers, ONNX export, cloud GPUs) and the cost of maintaining rule sets has grown (international expansion, long-tail address formats, user-generated content).
 
-Mailwoman is not the first project to notice this. Deepparse (a 2020 academic project from Université Laval) showed that a BiLSTM encoder-decoder could match libpostal's accuracy on structured addresses. The academic literature since has confirmed that transformers beat CRFs on noisy and multilingual address data. What Mailwoman adds is **productization**: a TypeScript-first runtime, browser deployability, per-component policy migration, and a corpus pipeline designed for retraining rather than one-shot publication.
+Mailwoman isn't the first project to notice this. Deepparse (a 2020 academic project from Université Laval) showed that a BiLSTM encoder-decoder could match libpostal's accuracy on structured addresses. The academic literature since has confirmed that transformers beat CRFs on noisy and multilingual address data. What Mailwoman adds is **productization**: a TypeScript-first runtime, browser deployability, per-component policy migration, and a corpus pipeline designed for retraining rather than one-shot publication.
 
 ## What "neural" means: a small transformer rather than a large one
 
@@ -54,7 +54,7 @@ A small model is:
 
 ### Why from scratch
 
-The model is trained from scratch on Mailwoman's corpus rather than fine-tuned from a pretrained general-English model. This is an explicit choice that is currently under empirical validation as of May 2026 — the training stability experiments described in the [v0.5.0 blog post](pathname:///research/2026-05-24-v0-5-0-c-train-bisect) are testing whether this choice is correct.
+The model is trained from scratch on Mailwoman's corpus rather than fine-tuned from a pretrained general-English model. This is an explicit choice that's currently under empirical validation as of May 2026 — the training stability experiments described in the [v0.5.0 blog post](pathname:///research/2026-05-24-v0-5-0-c-train-bisect) are testing whether this choice is correct.
 
 Address text differs from natural language, so a general-English BERT starts with co-occurrence statistics from Wikipedia and BookCorpus ("'bank' appears near 'river' and 'money'") that do not distinguish "Saint" (street prefix) from "Saint" (part of a locality name). Street names are not sentences, and postcodes are not words. A model trained from scratch can learn co-occurrence patterns specific to addresses.
 
@@ -64,10 +64,10 @@ The argument against: a pretrained model already knows what a token IS — how c
 
 The model takes a tokenized address string and produces, for each token, a probability distribution over 21 BIO labels (B-country, I-country, B-region, I-region, ..., O). The labels mark span boundaries: a contiguous sequence of `B-venue, I-venue, I-venue` means "this three-token span is a venue name."
 
-The model does **not**:
+The model **doesn't**:
 
-- Generate text. It is not a chatbot. It labels existing tokens.
-- Look up gazetteers. It does not know that "Portland" is in Oregon. That is the resolver's job.
+- Generate text. It isn't a chatbot. It labels existing tokens.
+- Look up gazetteers. It doesn't know that "Portland" is in Oregon. That's the resolver's job.
 - Memorize addresses. It learns the _structure_ of addresses — what ordering patterns are likely, what tokens co-occur with what labels — not the contents of any specific database.
 
 The model is the **contextual parser** half of a "contextual parser + constraint solver" system. The resolver is the constraint solver half. This split is the most important architectural decision in Mailwoman.
@@ -124,7 +124,7 @@ The model conditions on the surrounding tokens because the transformer's [self-a
 
 Rule classifiers can identify that "Saint" looks like a street prefix and "Petersburg" looks like a locality. They cannot identify that "Saint Petersburg" is a single multi-word locality — the dictionaries don't contain multi-word entries for every combination, and the combinatorial explosion of possible multi-word place names is too large for explicit enumeration.
 
-The neural model learns that tokens labeled `B-locality, I-locality` tend to co-occur when the sequence forms a known place-name pattern. It does not memorize "Saint Petersburg" — it learns that adjacent capitalized tokens in a certain position relative to a region abbreviation are likely a multi-word locality.
+The neural model learns that tokens labeled `B-locality, I-locality` tend to co-occur when the sequence forms a known place-name pattern. It doesn't memorize "Saint Petersburg" — it learns that adjacent capitalized tokens in a certain position relative to a region abbreviation are likely a multi-word locality.
 
 ### 3. Graceful degradation
 
@@ -139,7 +139,7 @@ This is the **graceful failure** that the operator's Paris, Texas talk described
 ## What the neural parser doesn't change
 
 - **The tokenizer is still deterministic.** SentencePiece is a trained subword tokenizer, but it produces the same output for the same input every time.
-- **The resolver is still a lookup.** The model emits labels, and the resolver turns labels into coordinates via a gazetteer. The resolver does not use the model.
+- **The resolver is still a lookup.** The model emits labels, and the resolver turns labels into coordinates via a gazetteer. The resolver doesn't use the model.
 - **The solver is still a constraint system.** The reconciler picks coherent interpretations from the model's candidates. The model proposes, and the solver disposes.
 - **You can still debug failures.** When the model misclassifies a span, you can examine the per-token confidence distribution, the phrase grouper's boundary proposals, and the reconciler's alternative candidates. The system is more opaque than a rule set but more inspectable than a black-box LLM.
 
@@ -147,7 +147,7 @@ This is the **graceful failure** that the operator's Paris, Texas talk described
 
 :::info[Historical planning note — May 2026]
 
-This section is a roadmap snapshot from the training-stability crisis of May 2026, superseded by everything that has shipped since. For current state, see [the scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) and [Releases & capabilities](../../../../engineering/releases.mdx). Kept for the historical record.
+This section is a roadmap snapshot from the training-stability crisis of May 2026, superseded by everything that's shipped since. For current state, see [the scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) and [Releases & capabilities](../../../../engineering/releases.mdx). Kept for the historical record.
 
 :::
 

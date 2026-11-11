@@ -90,7 +90,7 @@ export function* enumerateCountryDisplayNames(
 			try {
 				return { locale, formatter: new Intl.DisplayNames([locale], { type: "region", style }) }
 			} catch {
-				// The runtime does not support this locale.
+				// The runtime doesn't support this locale.
 				return null
 			}
 		}).filter((f) => f !== null)

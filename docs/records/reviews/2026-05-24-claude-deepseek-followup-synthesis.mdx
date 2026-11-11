@@ -61,7 +61,7 @@ Two checks, applied after running joint-reconcile against the kryptonite catalog
 | &lt; +15pp               | ≤ −1pt            | Architecture isn't earning its complexity. Revisit scoring/algorithm before any training experiments.                             |
 | &lt; +15pp               | &gt; −1pt         | Both broken. Step back and diagnose why before any further work.                                                                  |
 
-**Why kryptonite exact-match is the primary signal:** the 4,771 rows were built for exactly the cases argmax gets wrong (`NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`). If joint decode doesn't lift exact-match by at least 15 absolute percentage points there, a lift below 15 points does not justify the architectural complexity.
+**Why kryptonite exact-match is the primary signal:** the 4,771 rows were built for exactly the cases argmax gets wrong (`NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`). If joint decode doesn't lift exact-match by at least 15 absolute percentage points there, a lift below 15 points doesn't justify the architectural complexity.
 
 **Why golden ≤1pt as a guard rail:** concordance scoring should be a no-op on already-correct parses. A >1pt regression on golden means the scoring function is making correct → wrong flips. Such flips indicate a scoring bug rather than an architectural failure.
 
@@ -87,7 +87,7 @@ The reconciler works by re-ranking — it takes the classifier's top-K, then con
 
 4,535 entries. A 1pt macro_F1 regression is ~45 entries flipping. At typical 1% annotator error rate in human-labeled NER data, that's another ~45 entries of noise. The "regression" signal has a ~10% false-positive rate from annotation noise, with no real regression — you could ship joint decode that's better and still "fail" the golden check.
 
-**Mitigation:** if golden regression appears in the 0.5–1.5pt band, manually inspect all disagreement entries before deciding. If >half are debatable or the result shows wrong in golden, expand the check tolerance. If they are actual (concordance damage), the matrix stands.
+**Mitigation:** if golden regression appears in the 0.5–1.5pt band, manually inspect all disagreement entries before deciding. If >half are debatable or the result shows wrong in golden, expand the check tolerance. If they're actual (concordance damage), the matrix stands.
 
 ## Updated validation sprint plan
 
@@ -117,10 +117,10 @@ Execution order — all but the final step run against v0.4.0 weights or existin
 
 A few principles apply beyond this specific sprint:
 
-- **A go/no-go decision rule must exist before the experiment runs.** A 10-metric report with no decision criterion is not an experiment. It's a data-collection exercise. The Codex review's eval-matrix list is correct but operationally incomplete without DeepSeek's threshold matrix.
+- **A go/no-go decision rule must exist before the experiment runs.** A 10-metric report with no decision criterion isn't an experiment. It's a data-collection exercise. The Codex review's eval-matrix list is correct but operationally incomplete without DeepSeek's threshold matrix.
 - **Agreement across reviewers ≠ correctness.** Both Codex and DeepSeek converged on similar conclusions, but converging reviewers can share blind spots. The three blind spots listed above are evidence that pushing past consensus is sometimes the only way to find what's missing.
 - **Cheap diagnostics first.** A 5-minute gradient-norm probe answers more about the v0.5.0 divergence than a 25-hour retrain. Always exhaust the zero-GPU diagnostic ladder before any retrain.
-- **The integration test is the architectural test.** v0.5.0's thesis is that joint decoding beats argmax on kryptonite. That thesis can be measured today, against v0.4.0 weights, with zero GPU time. There is no good reason to defer it behind any training experiment.
+- **The integration test is the architectural test.** v0.5.0's thesis is that joint decoding beats argmax on kryptonite. That thesis can be measured today, against v0.4.0 weights, with zero GPU time. There's no good reason to defer it behind any training experiment.
 
 ## Postscript — what the probe revealed (and how the plan changed)
 
@@ -168,7 +168,7 @@ This is the same destination DeepSeek's earlier review pointed at, with a sharpe
 
 - Loss stable past step 2000 (no climb &gt; 20% from basin minimum).
 - val_macro_F1 ≥ 0.35 at step 2000.
-- Per-tag F1 trajectory does not show single-tag collapse.
+- Per-tag F1 trajectory doesn't show single-tag collapse.
 
 If all three pass, promote to a full 50K-step CE-only training run. **Stability is the result.** Any quality improvements come from recipe knobs (class weights, source rebalance, longer schedules) that were unsafe under dual-loss but become safe once the aggressive loss term is gone.
 

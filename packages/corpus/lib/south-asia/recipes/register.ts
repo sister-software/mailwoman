@@ -120,7 +120,7 @@ export function renderSouthAsiaRegister(
 
 function makeRecipe(name: string, country: "PK" | "BD", locale: string, description: string): CorpusRecipe {
 	// The value is composed and read through the table rather than written out in the composition.
-	// so the vocabulary flip is one constant and a name the table does not record refuses here.
+	// so the vocabulary flip is one constant and a name the table doesn't record refuses here.
 	const source = defaultRecipeSource(`synth-${name}`)
 
 	return {

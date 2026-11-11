@@ -21,7 +21,7 @@
  *     `fixtures/gb/os-open-golden.jsonl`, comes from OS OpenData. OS OpenData records no dependent locality.
  *     This shape therefore needs a `--fixtures` board that includes one.
  *
- *   Rows whose fragment does not classify as `fragmented` are skipped and counted rather than silently
+ *   Rows whose fragment doesn't classify as `fragmented` are skipped and counted rather than silently
  *   graded in the wrong register.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/gb/fragment-board.run.ts --cache-root <dir> --label <name>

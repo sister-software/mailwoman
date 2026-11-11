@@ -15,7 +15,7 @@
 /**
  * Reloads the page once when a new service worker takes control of a page an earlier worker served.
  *
- * A first visit has no controlling worker, so its first worker's takeover does not reload the page.
+ * A first visit has no controlling worker, so its first worker's takeover doesn't reload the page.
  */
 export function reloadOnServiceWorkerTakeover(): void {
 	if (!("serviceWorker" in navigator)) return

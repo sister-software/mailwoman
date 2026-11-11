@@ -19,7 +19,7 @@ import type { WOFDatabase } from "#schema"
 async function buildAliasDB(): Promise<DatabaseClient<PostalCityAliasDatabase>> {
 	const kdb = DatabaseClient.temp<PostalCityAliasDatabase>()
 	// The caller owns this handle and destroys it after the test.
-	// This function does not.
+	// This function doesn't.
 
 	await createPostalCityAliasTable(kdb)
 
@@ -62,7 +62,7 @@ function buildMainDB(): DatabaseClient<WOFDatabase> {
 	spr.run(2, 0, "Antioch", "locality", "US", 38, -121.8, 37.9, 38.1, -121.9, -121.7)
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(1, 700_000)
 	// 37013's centroid falls in Nashville, its containing locality.
-	// The parsed name "Antioch" does not match it.
+	// The parsed name "Antioch" doesn't match it.
 	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("37013", "US", 1, "Nashville", "", 0, 1)
 
 	return db

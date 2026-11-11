@@ -59,7 +59,7 @@ flowchart LR
     B --> C["['▁350', '▁5', 'th', '▁Ave', ',', '▁New', '▁York', ',', '▁NY', '▁101', '18']"]
 ```
 
-Each subword piece is mapped to an integer ID. That is what the model consumes. The mapping is fixed, and the tokenizer is part of the model package (`tokenizer.model`).
+Each subword piece is mapped to an integer ID. That's what the model consumes. The mapping is fixed, and the tokenizer is part of the model package (`tokenizer.model`).
 
 ## The span-realignment problem
 
@@ -92,8 +92,8 @@ If the input contains a character the tokenizer has never seen, it falls back to
 
 This matters in two cases:
 
-1. **Non-Latin scripts.** The tokenizer was trained on en-US and fr-FR text. Japanese kanji, Cyrillic, Arabic — all fall back to bytes. The model has not been trained on those scripts, so the output is unreliable, but the pipeline does not crash.
-2. **Emoji.** Sometimes addresses contain stray emoji from text-message inputs. Byte fallback means the tokenizer does not fail.
+1. **Non-Latin scripts.** The tokenizer was trained on en-US and fr-FR text. Japanese kanji, Cyrillic, Arabic — all fall back to bytes. The model hasn't been trained on those scripts, so the output is unreliable, but the pipeline doesn't crash.
+2. **Emoji.** Sometimes addresses contain stray emoji from text-message inputs. Byte fallback means the tokenizer doesn't fail.
 
 The byte fallback comes from SentencePiece's `byte_fallback: true` setting in the tokenizer training script.
 
@@ -116,6 +116,6 @@ Expand the **Subword tokens & pipeline stages** section to see per-stage word to
 
 ## See also
 
-- [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — what tokens get labeled
+- [What's an address?](../understanding/the-problem/what-is-an-address.mdx) — what tokens get labeled
 - [BIO labels](./bio-labels.mdx) — how subword-level labels become character-level spans
 - [How the model reasons](./how-the-model-reasons.mdx) — what the model does with tokens

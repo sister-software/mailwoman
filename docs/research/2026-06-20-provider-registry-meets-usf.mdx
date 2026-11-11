@@ -22,7 +22,7 @@ Every dot is an entity that resolved across at least two of those datasets. Thei
 
 The trick is to stop matching strings and start matching places. Each record's address goes through the neural parser, resolves to a coordinate and a place in the hierarchy, and gets blocked by _where it is_. Only then do the names come in, canonicalized — legal-form noise stripped, abbreviations expanded — and scored with label-free Fellegi-Sunter weights ([the geocode-first record-matching post](/research/same-building-different-company) walks through this). "Baylor Coll. of Medicine" and "Baylor College of Medicine" stop being different strings; "123 Main St" and "123 Main Street, Ste 400" stop being different places. The geocode does the blocking, the normalized name does the deciding, and neither file had to store the other's ID.
 
-## The numbers, and exactly what they are
+## The numbers, and exactly what they're
 
 219 entities resolved across two or more of these sources. Twenty-eight of them span different _agencies_ — CMS's provider registry, the FCC's funding program, Texas's licensing list — and those are the hard ones, because inside a single agency you can sometimes lean on an internal ID, while across agencies you have only the place and the name. (The other 191 links are FCC-internal: Rural Health Care filings matched back to their own commitment records.) You can see the cross-agency subset on its own in the [interactive map](pathname:///maps/provider-registry-usf-crossagency.html). The [full set is here](pathname:///maps/provider-registry-usf.html).
 

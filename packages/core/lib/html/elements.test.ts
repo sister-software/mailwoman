@@ -166,7 +166,7 @@ describe("streamMarkupElements", () => {
 		const found = await Array.fromAsync(streamMarkupElements(once(GML), ["ad:Address", "ad:component"], { xml: true }))
 
 		// The addresses' own components nest inside a captured address, so capture runs
-		// to the outermost close and they are not yielded again.
+		// to the outermost close and they're not yielded again.
 		expect(found.map((e) => e.name)).toEqual(["ad:Address", "ad:Address"])
 	})
 

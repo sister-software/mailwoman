@@ -50,7 +50,7 @@ interface ReplayFailure {
 }
 
 /**
- * A failed `Test` run the replay could not check, and why.
+ * A failed `Test` run the replay couldn't check, and why.
  */
 interface UncheckedRun {
 	runID: number

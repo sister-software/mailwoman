@@ -111,7 +111,7 @@ export function latestMemberJob(entries: readonly OaDataEntry[], member: string)
 /**
  * A batch API client authenticated with `OA_BATCH_TOKEN`.
  *
- * @throws When `OA_BATCH_TOKEN` is not set.
+ * @throws When `OA_BATCH_TOKEN` isn't set.
  */
 export function createOpenAddressesClient(): APIClient {
 	const token = $private.OA_BATCH_TOKEN
@@ -495,7 +495,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 			retry: true,
 			axios: { headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" } },
 		})
-			// `validateStatus` keeps a non-2xx as a response rather than a throw: the caller reports the status and returns `fail(country)`, a graceful path this must not turn into an exception.
+			// `validateStatus` keeps a non-2xx as a response rather than a throw: the caller reports the status and returns `fail(country)`, a graceful path this mustn't turn into an exception.
 			.fetch<OaCollection[]>({
 				url: `${OA_BASE}/api/collections`,
 				timeout: 30_000,

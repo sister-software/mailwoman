@@ -7,8 +7,8 @@
  * (locality, region) pairs from the WOF admin DB's `ancestors` table and writes one PIX1 binary per
  * country to `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/`.
  *
- * This build does not produce a shipped artifact. Three safety properties keep an accidental wire-up inert: `delta: 0`,
- * a filename that does not match the loader's auto-wire pattern, plus output under the data root
+ * This build doesn't produce a shipped artifact. Three safety properties keep an accidental wire-up inert: `delta: 0`,
+ * a filename that doesn't match the loader's auto-wire pattern, plus output under the data root
  * rather than any `neural-weights-*` workspace.
  *
  * Format is PIX1 verbatim, with extra header keys `edge`, `source` and `probeArtifact`; old readers

@@ -21,7 +21,7 @@ were called out as hygiene risks are no longer merely recommendations:
 - `scripts/eval/promotion-check.sh` now centralizes the standard eval battery, and the current
   head commit extends the runner/verdict parser for the v4.4.0 boundary floors.
 
-That is the good news. The remaining risks are narrower and more operational than architectural:
+That's the good news. The remaining risks are narrower and more operational than architectural:
 the v4.4.0 plan is disciplined but dense, some docs now lag the code by one round-trip, and parts
 of #480/#481 are only partially closed while their issues still read as fully open. Tonight's
 priority is to keep the v4.4.0 boundary run clean rather than start another broad refactor. The
@@ -42,7 +42,7 @@ glue augmentation, real-TIGER intersection rows, and the rebuilt po_box/cedex ex
 
 The night-shift plan is coherent: it starts from the v4.4.0 verdict fork, allows publication on a
 clean check pass, and constrains further GPU work with the single-variable and DeepSeek-consult
-guardrails. I would not reorder the plan. I would tighten the stop conditions around two specific
+guardrails. I'd not reorder the plan. I'd tighten the stop conditions around two specific
 surfaces: po_box punctuation truncation and the perturb arena floor.
 
 ## Findings
@@ -56,8 +56,8 @@ and its comment explicitly states that reconcile should see the same repaired to
 `rule_preferred`, `neural_preferred`, merged proposals, and threshold-before-preference behavior.
 
 The remaining high-value piece is still `core/utils/repo.ts`: `__isCompiledTree` is path sniffing
-for `/out/`. That is less urgent than the old `parseWithLogits()` divergence, but it is still a
-runtime fragility surface. The issue body for #481 should be edited or split so the team does not
+for `/out/`. That's less urgent than the old `parseWithLogits()` divergence, but it is still a
+runtime fragility surface. The issue body for #481 should be edited or split so the team doesn't
 spend time re-checking work that already landed.
 
 ### 2. #480 improved, but the "all missing manifest falls back to glob" case still preserves the old trap
@@ -69,11 +69,11 @@ The remaining edge is explicit in `corpus-python/src/mailwoman_train/test_extrac
 `test_all_missing_falls_through_to_glob` enshrines a fallback where a manifest can resolve zero
 declared extracts and still train from `corpus_dir/<split>/*.parquet`. That may be needed for legacy
 corpora, but for versioned overlay corpora it is exactly the shape of "measured the wrong data."
-The fix does not have to be a big-bang removal. Add an explicit manifest mode or config flag:
+The fix doesn't have to be a big-bang removal. Add an explicit manifest mode or config flag:
 legacy glob is allowed only when the manifest declares it legacy, or when no manifest exists.
 
 Curriculum stamping also remains open. The current v4.4.0 config has `gazetteer_curriculum: false`,
-so it is not an immediate ship blocker tonight, but the resume-assertion gap still matters for any
+so it isn't an immediate ship blocker tonight, but the resume-assertion gap still matters for any
 future ramped run.
 
 ### 3. The v4.4.0 check is much better than yesterday's check discipline, but the parser is brittle to scorer output
@@ -84,7 +84,7 @@ the unfolded scorer, int8 delta enforcement, and arena.perturb when the spec dec
 
 The brittle point is `scripts/eval/promotion-check-verdict.ts`: it extracts numbers from markdown
 tables with regexes. It fails closed when a declared floor is missing. That default is correct,
-but the regex extraction still means harmless scorer formatting changes can turn into check failures. That is
+but the regex extraction still means harmless scorer formatting changes can turn into check failures. That's
 acceptable for tonight. Longer-term, the scorers should emit JSON sidecars and the markdown should
 be presentation only.
 
@@ -113,7 +113,7 @@ the per-tag health section links `parity-scorecard-2026-06-10.md`. The latest sc
 `parity-scorecard-2026-06-11.md` and records the v4.3.0 arena dip, affix closeout, and FR region
 tail. This is a one-line fix, but it is the first page readers will use to understand the release.
 
-There is also a small size mismatch: the model table lists 29.8 MB int8, while the browser demo
+There's also a small size mismatch: the model table lists 29.8 MB int8, while the browser demo
 section lists 28.4 MB. If both are true for different served artifacts, state that. Otherwise pick the
 release artifact number.
 
@@ -125,7 +125,7 @@ zero false fires. The floor is conservative at 50.
 
 po_box is more delicate. The v4.4.0 config records that the rebuilt extract passed cedex but the po_box probe
 was still 57.5 because of punctuation truncation, and the complete v4.4.0 training run is expected to answer that with
-more exposure. That is a reasonable experiment, but it should be treated as an experiment. If
+more exposure. That's a reasonable experiment, but it should be treated as an experiment. If
 po_box misses the 70 floor, do not reinterpret it as "close enough" because cedex passed. A miss
 means the punctuation class needs its own corrective.
 
@@ -141,13 +141,13 @@ known unfixed regression.
 ## Night Shift Watch List
 
 1. Treat `scripts/eval/checks/v4.4.0-boundary.json` as immutable for this candidate. If a floor
-   needs to move, that is a new candidate or a written rebaseline rather than an edit during verdict.
+   needs to move, that's a new candidate or a written rebaseline rather than an edit during verdict.
 2. On pass, verify the artifact identity end-to-end: fp32 path, quantized md5, HF label, R2 served
    md5, npm package version.
 3. On fail, classify to row before spending GPU. For tonight, likely classes are po_box
    punctuation truncation, perturb glue rows, and any FR region tail movement.
 4. Do not spend the train-time conventions probe until the v4.4.0 verdict is stable. It is a good
-   next change, but it is not part of the current check's proof.
+   next change, but it isn't part of the current check's proof.
 5. Keep #481/#480 cleanup as issue hygiene after the model decision rather than during the ship fork.
 
 ## Suggested Follow-ups
@@ -158,7 +158,7 @@ known unfixed regression.
   versioned corpora.
 - Update status/API/STAGES docs for joint reconcile's actual default behavior.
 - Point `status.mdx` at `parity-scorecard-2026-06-11.md` and reconcile the int8 size number.
-- After v4.4.0, add JSON outputs for eval scorers so `promotion-check-verdict.ts` does not depend
+- After v4.4.0, add JSON outputs for eval scorers so `promotion-check-verdict.ts` doesn't depend
   on markdown table parsing.
 
 ## Bottom Line
@@ -166,7 +166,7 @@ known unfixed regression.
 Claude's review was directionally right, but the repo has already acted on several of the highest
 ROI items. The current project risk is no longer "the architecture is under-documented and checks
 are scattered"; it is "the team is moving fast enough that issues/docs lag code, and the v4.4.0
-boundary candidate must not be allowed to blur experimental probe results into ship claims."
+boundary candidate mustn't be allowed to blur experimental probe results into ship claims."
 
 Ship v4.4.0 only on a clean pre-registered check pass. If it passes, it closes the v4.3.0 arena dip
 and brings po_box/cedex/intersections alive. If it fails, the right output is a short, row-classed
@@ -176,7 +176,7 @@ postmortem and one single-variable corrective rather than a widened release.
 
 ## Context for the next phase
 
-What currently keeps Mailwoman from v0 parser parity is not raw model capacity anymore. The recent affix work in practice proved that: the model was not too small to learn street-prefix/suffix boundaries. The corpus was teaching contradictory
+What currently keeps Mailwoman from v0 parser parity isn't raw model capacity anymore. The recent affix work in practice proved that: the model was not too small to learn street-prefix/suffix boundaries. The corpus was teaching contradictory
 labels. The blocker is now the long tail of component-specific boundary conventions and rare address shapes where v0’s hand-built rules still have very sharp local knowledge.
 
 The main remaining parser-parity gaps look like this:
@@ -185,7 +185,7 @@ The main remaining parser-parity gaps look like this:
    po_box, cedex, and intersections are the clearest examples. These are not conceptually hard for the model, but they need enough real or high-fidelity rows to stop being dead labels. v4.4.0 is aimed directly at this.
 
 2. Adjacent-boundary instability
-   A fix to one boundary can loosen the next one. v4.3.0 closed affixes, but exposed glue/post-directional/unit-junction wobble: NY14201, Pennsylvania Ave NW, Main St Apt #456. That is the current parity frontier: not “can the model parse
+   A fix to one boundary can loosen the next one. v4.3.0 closed affixes, but exposed glue/post-directional/unit-junction wobble: NY14201, Pennsylvania Ave NW, Main St Apt #456. That's the current parity frontier: not “can the model parse
    streets,” but “can it hold all neighboring boundaries simultaneously under degraded input.”
 
 3. Locale convention leakage
@@ -196,17 +196,17 @@ The main remaining parser-parity gaps look like this:
    v0 will continue to win on clean canonical formats and edge formats it explicitly knows. The model beats v0 on noisy/degraded input, but whole-parse-strict parity means losing one small deterministic field can zero the row. That makes
    parity more about removing tail failures than raising average F1.
 
-5. The arbitration layer is not fully harvested yet
-   The model-first approach does not require neural-only output. If v0 is better for a component in a specific context, the model-first system should be able to accept that candidate through policy/reconcile without becoming rule-first again.
-   That is why #478 matters: parity may come from learned parsing plus disciplined arbitration rather than from forcing the neural model to imitate every v0 trick.
+5. The arbitration layer isn't fully harvested yet
+   The model-first approach doesn't require neural-only output. If v0 is better for a component in a specific context, the model-first system should be able to accept that candidate through policy/reconcile without becoming rule-first again.
+   That's why #478 matters: parity may come from learned parsing plus disciplined arbitration rather than from forcing the neural model to imitate every v0 trick.
 
-My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary check resolves directly, or after one more tightly scoped corrective if v4.4.0 fails for one identified class. I would not wait for perfect parser
+My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary check resolves directly, or after one more tightly scoped corrective if v4.4.0 fails for one identified class. I'd not wait for perfect parser
 parity.
 
 The reason is that the model already exceeds v0 in the situations that matter most for a modern geocoder: noisy, partial, degraded, mixed-format, and user-entered queries. Further polish on parser tail cases has diminishing returns unless
 the resolver/geocoder side can turn those better parses into better coordinates.
 
-I would sequence it like this:
+I'd sequence it like this:
 
 Now: finish v4.4.0 or characterize its failure. Do not start broad geocoder work mid-candidate.
 

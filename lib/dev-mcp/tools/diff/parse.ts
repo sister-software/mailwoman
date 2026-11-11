@@ -73,7 +73,7 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 		// Which event dominates is the diagnosis.
 		// A run whose changes are mostly `retagged` is mislabelling.
 		// One whose changes are mostly `moved` has a boundary problem.
-		// One that is mostly `confidence` has not decided anything yet.
+		// One that's mostly `confidence` hasn't decided anything yet.
 		const events: Record<string, number> = {}
 
 		for (const d of shown) {

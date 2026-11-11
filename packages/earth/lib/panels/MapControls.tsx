@@ -10,7 +10,7 @@
  *
  *   `?no-3d` leaves out the deck.gl scene, so the geocoder's browser tests run without the 3D overlay.
  *
- *   The layer control is not here. It reaches the chrome's top column through `GeocoderPanels.layers`, where the
+ *   The layer control isn't here. It reaches the chrome's top column through `GeocoderPanels.layers`, where the
  *   layout puts it under the example chips. a MapLibre corner control cannot sit in that column.
  */
 

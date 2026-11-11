@@ -161,7 +161,7 @@ on C6 rows whose tokens do not reach the end of `raw`, in the Python sampler and
 probability 0.5, seed 43, the stream raised after 250 rows on `insert position 18 is not a token edge
 (raw='{114, СНТ «Пчёлка»')`; at 0.05 it raised after 1,994 rows on `'(22 Whampoa East S(338527)'`. The `osm-ru`
 row's tokens are `114`, `СНТ` and `Пчёлка`, so its closing guillemet ends `raw` past the last token. Since #2878,
-`wrap_row` skips a row whose text does not begin and end on a token edge, in both samplers, and the stream runs on.
+`wrap_row` skips a row whose text doesn't begin and end on a token edge, in both samplers, and the stream runs on.
 The skip takes no draw, so every row before the first such row is unchanged, and both grouping records still
 verify at 0 differing rows. No training config sets `augment_grouping_prob`. The two grouping records were captured by replacing `iter_batch_rows` with
 the composition the Python loader ran, `random.Random(seed)` over `stream.iter_rows` with the astral skip. That composition

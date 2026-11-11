@@ -6,7 +6,7 @@
  *   Construction cost, charged once per asset. A selection of buildings pays for each distinct route segment
  *   its buildings need once, regardless of the count of buildings that share it. Mobilization and shared engineering are project
  *   costs, charged once when the selection holds any building. Each selected building adds its own works in
- *   the months they are paid. Per-customer activation belongs to the monthly cash flow.
+ *   the months they're paid. Per-customer activation belongs to the monthly cash flow.
  *
  *   The common cost is the route plus the project costs. A building's direct cost is its own works. The
  *   incremental cost of adding a building to a set is the set's total with the building minus the total
@@ -78,7 +78,7 @@ export interface IncrementalCost {
 	after: MinorUnits
 	incremental: MinorUnits
 	/**
-	 * Segments the added building needs that the base set does not.
+	 * Segments the added building needs that the base set doesn't.
 	 */
 	newSegments: readonly string[]
 }

@@ -70,7 +70,7 @@ export type MapCameraTarget =
  */
 export interface MapPlaceRenderSpec {
 	/**
-	 * The marker positions as `[lon, lat]`; there is always exactly one marker.
+	 * The marker positions as `[lon, lat]`; there's always exactly one marker.
 	 */
 	markers: LngLat[]
 

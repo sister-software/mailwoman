@@ -208,7 +208,7 @@ test.describe("Demo — resolution cascade", () => {
 		// Cascade filters it.
 		// Raw text + locality may also miss.
 		// The test isn't asserting the resolution succeeds.
-		// It's asserting that the "Style is not done loading" race + bbox-on-empty-result paths stay clean.
+		// It's asserting that the "Style isn't done loading" race + bbox-on-empty-result paths stay clean.
 		await demo.goto()
 		await demo.clickExample("White House")
 		await demo.submit()
@@ -229,7 +229,7 @@ test.describe("Demo — resolution cascade", () => {
 		await demo.submitForUpdate()
 		await expect(page).toHaveURL(/q=Moscow/u)
 		// The title reads the resolved place's own name.
-		// For Moscow that is its Russian primary name.
+		// For Moscow that's its Russian primary name.
 		await expect(page).toHaveTitle(/^Москва · /u)
 
 		await page.goBack()

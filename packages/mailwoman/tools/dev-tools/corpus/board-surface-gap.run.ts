@@ -10,7 +10,7 @@
  *   row's `source` field records an operator sweep or an issue instead, so a person wrote that line.
  *   Those are two different written surfaces. A decoder fitted on the first is graded on the second.
  *
- *   This reports how far apart they are, per country, without a parser and without a GPU. A row whose
+ *   This reports how far apart they're, per country, without a parser and without a GPU. A row whose
  *   `input` matches its rendered twin sits inside the surface the training rows teach. A row that
  *   differs is a form no adapter or recipe emits.
  *

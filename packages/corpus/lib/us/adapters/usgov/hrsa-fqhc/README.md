@@ -90,7 +90,7 @@ Rows are silently dropped when:
 - `Site Address` is empty.
 - `Site City` is empty.
 - `Site Postcode` is empty.
-- `Site State Abbreviation` is not a recognized USPS abbreviation (50
+- `Site State Abbreviation` isn't a recognized USPS abbreviation (50
   states + DC + 5 primary territories).
 
 ## License

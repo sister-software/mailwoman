@@ -196,7 +196,7 @@ interface HoldoutRow {
  *
  * Mirrors `oa-resolver-eval.ts`'s construction exactly.
  * The whole point of a conformal threshold is that it was fitted against the same
- * stack that will later apply it, so the two must not drift.
+ * stack that will later apply it, so the two mustn't drift.
  */
 async function buildCascade(paths: {
 	modelPath: string

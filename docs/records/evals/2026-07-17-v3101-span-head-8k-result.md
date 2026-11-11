@@ -47,15 +47,15 @@ the same 2k≈8k plateau the B4b digit arc hit. The 8k is the "complete" run (lo
 schedule) and the better-provenance model for phase-4c, but 2k would have served equally on the decode metrics.
 
 **P3 all-caps is inert — closed.** The augment failed its +5pp bar at 2k and at 8k (48.0 vs 48.3 both
-times). More steps didn't help. The augment does not teach all-caps robustness at rate 0.15. The
+times). More steps didn't help. The augment doesn't teach all-caps robustness at rate 0.15. The
 #690 title-case shim stays (it adds +12.4pp raw-case today). A separate higher-rate probe is the only
 open path, and the operator decides whether to run it. This augment, as configured, is a measured negative.
 
 ## Status — a decode base for phase-4c rather than a ship
 
-This model **does not ship by itself.** The span head is dormant until phase-4c wires the k-best
+This model **doesn't ship by itself.** The span head is dormant until phase-4c wires the k-best
 decode + the name-evidence rerank (`docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`).
-The token path is byte-stable, so there is no BIO regression to check and no promote decision to make
+The token path is byte-stable, so there's no BIO regression to check and no promote decision to make
 tonight. What this run produces is the **phase-4c decode model**: an int8 model that exports
 `span_scores` + the `semi-crf-transitions.json` sidecar (the `export_onnx` path was extended tonight
 to emit it), staged at `scratchpad/v3101-cache` + the checkpoint on the training volume.

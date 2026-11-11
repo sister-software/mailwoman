@@ -41,7 +41,7 @@ const TEST_FILE = /\.(?:test|spec)\.(?:ts|tsx)$/u
  * or box-drawing has a label between its two rules.
  *
  * Both runs are at least two characters long.
- * A comment whose text continues on the next line has no trailing run and does not form a divider.
+ * A comment whose text continues on the next line has no trailing run and doesn't form a divider.
  */
 const SECTION_DIVIDER = /^\s*\/\/\s*[-─]{2,}\s+[^\n]+[-─]{2,}\s*$/gmu
 

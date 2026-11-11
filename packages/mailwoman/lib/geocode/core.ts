@@ -188,7 +188,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	isVenueCategoryWord?: (word: string) => boolean
 	/**
 	 * The landmark layer.
-	 * It answers an input that is a place's name.
+	 * It answers an input that's a place's name.
 	 */
 	landmarks?: import("@mailwoman/core/resolver").LandmarkLookup
 	/**
@@ -211,12 +211,12 @@ export interface GeocodeDeps extends LayerDesignationRoutes, Partial<GeocodeSwit
 	streetMorphologyPrior?: boolean
 	/**
 	 * The admin ancestry of an anchored postcode, for the anchor-region prior.
-	 * Absent, the prior does not run.
+	 * Absent, the prior doesn't run.
 	 */
 	anchorRegions?: import("@mailwoman/core/pipeline").AnchorRegionLookupLike
 	/**
 	 * Venue-head lookups for the session's locale.
-	 * Absent, the venue-head prior does not run.
+	 * Absent, the venue-head prior doesn't run.
 	 */
 	venueHead?: import("@mailwoman/core/pipeline").VenueHeadLexiconLike
 	/**
@@ -658,7 +658,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			const dominantDisagreesWithPlacer =
 				dominantBearer !== null && dominantBearer.toUpperCase() !== placed.country.toUpperCase()
 
-			// Apply anchor only when placer does not contradict dominant locality bearer.
+			// Apply anchor only when placer doesn't contradict dominant locality bearer.
 			if (!dominantDisagreesWithPlacer) {
 				opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
 				opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT

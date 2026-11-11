@@ -191,7 +191,7 @@ export async function countTokens(ledger: Ledger, lid: string): Promise<number> 
 }
 
 /**
- * The token that is current for a license: the one with the latest expiry.
+ * The token that's current for a license: the one with the latest expiry.
  */
 export async function currentToken(ledger: Ledger, lid: string): Promise<LicenseTokenRow | null> {
 	return (
@@ -207,7 +207,7 @@ export async function currentToken(ledger: Ledger, lid: string): Promise<License
 
 /**
  * Move a token's email from the state its caller read to another, recording the
- * provider's message id when there is one.
+ * provider's message id when there's one.
  *
  * The write applies only while the row still holds `transition.from`.
  * `"conflict"` means another send recorded its outcome first.
@@ -229,7 +229,7 @@ export async function setEmailState(
 }
 
 /**
- * Tokens whose email has not been confirmed sent: `pending` covers a crash
+ * Tokens whose email hasn't been confirmed sent: `pending` covers a crash
  * between the insert and the send, or between the provider accepting the message
  * and the ledger recording it; `failed` is a provider refusal.
  *

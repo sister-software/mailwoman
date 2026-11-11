@@ -14,7 +14,7 @@ test("NZ_POSTCODE_PATTERN: matches exactly four digits, nothing else", () => {
 	expect(NZ_POSTCODE_PATTERN.test("794")).toBe(false) // too short
 	expect(NZ_POSTCODE_PATTERN.test("79420")).toBe(false) // too long
 	expect(NZ_POSTCODE_PATTERN.test("79A2")).toBe(false) // letters
-	expect(NZ_POSTCODE_PATTERN.test(" 7942")).toBe(false) // pattern does not tolerate whitespace
+	expect(NZ_POSTCODE_PATTERN.test(" 7942")).toBe(false) // pattern doesn't tolerate whitespace
 })
 
 test("normalizeNZPostcode: trims and returns a valid four-digit postcode", () => {
@@ -39,7 +39,7 @@ test("normalizeNZPostcode: rejects wrong-shape / non-string → null", () => {
 test("isNZPostcode: predicate is true only for an already-normalized four-digit string", () => {
 	expect(isNZPostcode("7942")).toBe(true)
 	expect(isNZPostcode("0110")).toBe(true)
-	// the predicate does not trim — it tests the shape verbatim
+	// the predicate doesn't trim — it tests the shape verbatim
 	expect(isNZPostcode(" 7942 ")).toBe(false)
 	expect(isNZPostcode("794")).toBe(false)
 	expect(isNZPostcode("ABCD")).toBe(false)

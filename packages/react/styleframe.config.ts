@@ -8,7 +8,7 @@
  *
  *   The brand comes from `@sister.software/theme`: color roles, type, spacing, shape and motion are the shared
  *   `--ss-*` tokens, including the dark theme the map apps select with `data-theme="dark"` on `<html>`. This file adds
- *   only what is Mailwoman's own, under `--mw-*`: the confidence and pipeline-stage colors, the app type scale, the
+ *   only what's Mailwoman's own, under `--mw-*`: the confidence and pipeline-stage colors, the app type scale, the
  *   glass material, the safe-area insets and the map's label font.
  *
  *   Component rules read `--ss-*` roles or `--mw-*` tokens, never a palette color.

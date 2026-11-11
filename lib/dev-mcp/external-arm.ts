@@ -58,7 +58,7 @@ const REQUEST_TIMEOUT_MS = 20_000
 
 /**
  * The query sent to read the endpoint's identity.
- * Its result is not scored.
+ * Its result isn't scored.
  */
 const IDENTITY_PROBE_QUERY = "Paris"
 
@@ -80,7 +80,7 @@ export interface ExternalAnswer {
 	label: string | null
 	/**
 	 * Place IDs from mailwoman results, finest first.
-	 * They are compared only when both arms provide IDs.
+	 * They're compared only when both arms provide IDs.
 	 */
 	place_ids?: string[]
 	/**
@@ -103,7 +103,7 @@ export interface ExternalArmIdentity {
 	 * Where the version came from.
 	 *
 	 * A `caller-declared` version comes from the caller.
-	 * The endpoint did not confirm it.
+	 * The endpoint didn't confirm it.
 	 */
 	version_source: "endpoint" | "caller-declared" | null
 	data_vintage: string | null
@@ -134,7 +134,7 @@ interface EngineProtocol {
 }
 
 /**
- * Returns the value as a record, or an empty object when it is not one.
+ * Returns the value as a record, or an empty object when it isn't one.
  */
 function fields(value: unknown): Record<string, unknown> {
 	return isRecordLike(value) ? (value as Record<string, unknown>) : {}
@@ -298,7 +298,7 @@ export function assertScorableEndpoint(endpoint: string): string {
 /**
  * A paced client that requests one result per query from an external geocoder.
  *
- * The client does not cache responses.
+ * The client doesn't cache responses.
  */
 export class ExternalGeocoderClient extends APIClient {
 	readonly engine: ExternalEngine

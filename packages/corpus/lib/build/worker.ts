@@ -175,7 +175,7 @@ async function runAlignTask(task: AlignTask): Promise<void> {
 }
 
 /**
- * Why the per-source parquet manifest cannot be resumed from, or `null` when it can or does not exist.
+ * Why the per-source parquet manifest cannot be resumed from, or `null` when it can or doesn't exist.
  */
 async function finishedPartProblem(manifestPath: PathBuilder): Promise<string | null> {
 	const manifest = await tryReadLocalJSONFile<ParquetManifest>(manifestPath).catch(() => null)

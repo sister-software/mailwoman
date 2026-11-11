@@ -65,7 +65,7 @@ export const stageWeightsCacheOperation = defineOperation({
 		})
 
 		// `outputSchema` serializes the report to JSON.
-		// That is the boundary where the two directory builders become strings.
+		// That's the boundary where the two directory builders become strings.
 		// `stageWeightsCache` returns them intact so a library caller derives an artifact
 		// path from `packageDir` rather than rebuilding the cache layout.
 		return {

@@ -28,7 +28,7 @@ export interface PlaceImportanceTable {
 	/**
 	 * The fan-out-guarded Wikipedia importance in [0, 1], or NULL when the place has no surviving concordance.
 	 *
-	 * NULL means absence, so consumers must not coalesce it to 0 or rank on it.
+	 * NULL means absence, so consumers mustn't coalesce it to 0 or rank on it.
 	 */
 	encyclopedic: number | null
 
@@ -85,7 +85,7 @@ export const ENCYCLOPEDIC_BOOST_CAP = 0.25
 
 /**
  * Blends the two channels into the legacy `importance` column: the referential score
- * when there is no article, only the encyclopedic score when population is unknown
+ * when there's no article, only the encyclopedic score when population is unknown
  * (`referential` 0), and otherwise the encyclopedic score clamped between the
  * referential score and {@link ENCYCLOPEDIC_BOOST_CAP} above it.
  */
@@ -181,7 +181,7 @@ export interface ImportanceSplit {
 	referential: Map<number, number>
 
 	/**
-	 * Encyclopedic importance by WOF ID, where a missing ID means no score and must not be filled with 0.
+	 * Encyclopedic importance by WOF ID, where a missing ID means no score and mustn't be filled with 0.
 	 */
 	encyclopedic: Map<number, number>
 	source: ImportanceSplitSource

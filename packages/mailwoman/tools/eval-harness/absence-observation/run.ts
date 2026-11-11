@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The live half of the absence-observation probe does not inject a route into the runtime pipeline.
+ *   The live half of the absence-observation probe doesn't inject a route into the runtime pipeline.
  *   The pipeline answers first. The absence route reads the finished answer afterward.
  */
 
@@ -147,8 +147,8 @@ async function gradeRow(
 	const runOpts: PipelineOpts = row.locale ? { locale: row.locale } : {}
 	const result = await pipeline(row.query, runOpts)
 
-	// Drain the semantic route's per-row firings so they are neither attributed
-	// to the next row nor accumulated unbounded.
+	// Drain the semantic route's per-row firings so they're neither attributed to
+	// the next row nor accumulated unbounded.
 	semanticRoute?.takeObservations()
 
 	const decision = await absenceRoute.observe(result.poiIntent ?? null)

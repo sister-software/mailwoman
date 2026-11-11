@@ -434,7 +434,7 @@ export function formatNormalized(collection: NormalizedCountries | NormalizedAir
 }
 
 /**
- * Reads the three pinned sources and normalizes them, refusing bytes the lock does not describe.
+ * Reads the three pinned sources and normalizes them, refusing bytes the lock doesn't describe.
  */
 export async function normalizeFromLock(lock: SourceLock): Promise<{
 	countries: NormalizedCountries

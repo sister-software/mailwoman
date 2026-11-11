@@ -39,7 +39,7 @@ export interface StratumFillCensus {
 	 */
 	droppedUngradeableGold: number
 	/**
-	 * Rows the stratum's own rule could not render.
+	 * Rows the stratum's own rule couldn't render.
 	 *
 	 * Counted apart from the gold drop because the two name different holes —
 	 * one in the gazetteer, one in the source register.

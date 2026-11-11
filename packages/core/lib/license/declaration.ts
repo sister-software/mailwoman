@@ -70,7 +70,7 @@ export interface DownloadRequest {
 /**
  * What the download route answers.
  *
- * `unavailable` is a worker whose bucket is not yet provisioned.
+ * `unavailable` is a worker whose bucket isn't yet provisioned.
  */
 export type DownloadAnswer =
 	| { status: "granted"; url: string; expires: string; bytes: number | null }

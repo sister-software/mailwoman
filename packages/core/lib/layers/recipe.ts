@@ -52,7 +52,7 @@ export interface BuildPrerequisite {
 	name: string
 	satisfied: boolean
 	/**
-	 * What was found, or what is missing and how to install it.
+	 * What was found, or what's missing and how to install it.
 	 */
 	detail: string
 }

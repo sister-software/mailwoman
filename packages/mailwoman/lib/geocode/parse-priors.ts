@@ -89,7 +89,7 @@ export interface LoadParsePriorsOptions {
 	 */
 	label?: string
 	/**
-	 * Receives one message for each requested prior that could not be loaded.
+	 * Receives one message for each requested prior that couldn't be loaded.
 	 *
 	 * @defaultValue `console.warn`
 	 */
@@ -107,11 +107,11 @@ export interface LoadParsePriorsOptions {
  */
 export interface ParsePriors {
 	/**
-	 * The gazetteer FST, or `null` when it was not requested or its artifact did not load.
+	 * The gazetteer FST, or `null` when it was not requested or its artifact didn't load.
 	 */
 	fst: FSTMatcherLike | null
 	/**
-	 * The street-morphology matcher, or `null` when the FST is absent or the matcher did not load.
+	 * The street-morphology matcher, or `null` when the FST is absent or the matcher didn't load.
 	 *
 	 * The street-context check needs both matchers, so the matcher is loaded only beside an FST.
 	 */

@@ -6,7 +6,7 @@
  *   The strings a trained tokenizer keeps whole, and how they reach SentencePiece.
  *
  *   A user-defined symbol bypasses unigram inference and is always emitted as one piece. The literal a caller writes
- *   is not the literal SentencePiece matches: it turns whitespace into `▁` before matching, so `PO Box` is passed as
+ *   isn't the literal SentencePiece matches: it turns whitespace into `▁` before matching, so `PO Box` is passed as
  *   `PO▁Box`. The symbols also compete with the vocabulary budget, so a list longer than a quarter of the vocabulary
  *   is truncated.
  */
@@ -22,7 +22,7 @@ import { splitLines } from "@mailwoman/core/strings/unicode"
  * Postal markers (`PO Box`, `Cedex`, `BP`) are fixed surface forms that are
  * cheaper to add once than to learn.
  *
- * A hyphen is not listed because it already tokenizes as one piece.
+ * A hyphen isn't listed because it already tokenizes as one piece.
  * Whole Japanese postcodes come from mined postcode literals.
  *
  * The list keeps its duplicates (`CA`, `DE`), which the trainer removes.

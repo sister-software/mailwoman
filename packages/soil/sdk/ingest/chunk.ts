@@ -9,7 +9,7 @@
  *   H3's wasm heap cannot be reset from JavaScript. It also cannot sustain unlimited polyfill calls.
  *   Two runs over the flood layer's real product stopped after roughly 510,000 and 798,000 features.
  *   The same geometries classify in milliseconds in a fresh process. A build that completes only when
- *   fragmentation stays low is not reproducible. {@linkcode buildSoilDatabase} bounds each process to a range
+ *   fragmentation stays low isn't reproducible. {@linkcode buildSoilDatabase} bounds each process to a range
  *   of the shapefile's FIDs. Each range gets a separate process with a fresh heap. Iowa's 99 survey areas
  *   contain far more delineations together than each area contains by itself. The bound therefore applies per range.
  *

@@ -26,11 +26,11 @@ import {
  *
  * It answers only with a row inside the box the resolver passes around the resolved locality,
  * and only with a row whose record states no postcode and no locality, read from `detail.db`.
- * A row that states either would have matched its own scope, so its place is not the one the parse states.
+ * A row that states either would have matched its own scope, so its place isn't the one the parse states.
  *
  * This is the rule the `address_point` reader applies to its bounding-box scope.
  *
- * With no box, or with no `detail.db` to read, a region key does not answer.
+ * With no box, or with no `detail.db` to read, a region key doesn't answer.
  */
 export class AddressKeyPointLookup implements AddressPointLookup {
 	readonly #runner: AddressStatementRunner

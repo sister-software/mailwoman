@@ -129,7 +129,7 @@ function spliceStreetTree(
 ): AddressTree {
 	const tokens: DecoderToken[] = trace.tokens.map((t) => ({ ...t }))
 	// Argmax street-family token indices, cleared as the segmentation's street is installed
-	// so a shrunk or moved span does not leave orphaned argmax street tokens behind.
+	// so a shrunk or moved span doesn't leave orphaned argmax street tokens behind.
 	const argmaxStreetIdx = new Set<number>()
 
 	for (let i = 0; i < tokens.length; i++) {
@@ -160,7 +160,7 @@ function spliceStreetTree(
 		}
 	}
 
-	// An argmax street token the new span does not cover is stale and drops to O:
+	// An argmax street token the new span doesn't cover is stale and drops to O:
 	// the reranked span is authoritative for the street.
 	for (const idx of argmaxStreetIdx) {
 		tokens[idx]!.label = "O"
@@ -201,7 +201,7 @@ export async function rerankByStreetEvidence(
 	// The rerank arbitrates a street only on an anchorless fragment, the class it was
 	// measured on: with a country or region anchor the model is on structured input
 	// and a name-index collision steals a correct token.
-	// Postcode is not an anchor, because treating a 4-digit year as one kills the date-name board.
+	// Postcode isn't an anchor, because treating a 4-digit year as one kills the date-name board.
 	if (trace.tokens.some((t) => ANCHOR_TAGS.has(bareBIOTag(t.label)))) {
 		return {
 			tree: buildAddressTree(trace.text, trace.tokens, { country: trace.containmentCountry }),

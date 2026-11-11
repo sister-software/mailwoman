@@ -20,7 +20,7 @@
  * therefore selects the metadata record. That record holds no `AD:Address` at all, so
  * {@linkcode GML_MEMBER} matches the extension that holds the features.
  *
- * The GML declares `<?xml version="1.0" encoding="ISO-8859-1"?>` and is not valid UTF-8. Ceuta's
+ * The GML declares `<?xml version="1.0" encoding="ISO-8859-1"?>` and isn't valid UTF-8. Ceuta's
  * 11,861,975-byte member holds 26 bytes above 0x7F, one of which is the `Ñ` of a street name.
  * `streamMarkupElements` decodes with a UTF-8 `TextDecoder`. That decoder answers those bytes with
  * U+FFFD. The bytes therefore pass through `decodeByteStream` first. {@linkcode assertLatin1Declaration}
@@ -55,7 +55,7 @@
  * So the designator is `pnp` with `plp` appended, and the street is `tv` followed by `nv`. That
  * street matches the `AD:ThoroughfareName` text verbatim once its leading space is trimmed. The
  * abbreviation stays in the street component because the publisher writes it in its own rendered
- * line. `Calle` would state something the Cadastre did not.
+ * line. `Calle` would state something the Cadastre didn't.
  *
  * `S-N` is *sin número*, the publisher stating that the address has no number, and it is 856 of
  * Ceuta's 8,126 designators. A row carrying it writes no `house_number`, because the string is a
@@ -158,7 +158,7 @@ const COMPONENT_ELEMENTS = [
 const ADDRESS_ELEMENT = "AD:Address"
 
 /**
- * The administrative level that is the municipality.
+ * The administrative level that's the municipality.
  *
  * The publisher writes `<AD:level>4</AD:level>` as text where the other INSPIRE publishers
  * write the `AdministrativeHierarchyLevel/4thOrder` codelist URI, so both spellings
@@ -268,7 +268,7 @@ export function createESCatastroAdapter(): CorpusAdapter {
  * One address's row, or null when it holds too little to render.
  *
  * The reference index is complete before this is called, so a reference resolving to no
- * feature is a value the reader asked for and could not read, and it raises.
+ * feature is a value the reader asked for and couldn't read, and it raises.
  */
 function composeRow(address: MarkupElement, referenced: ReadonlyMap<string, MarkupElement>): CanonicalRow | null {
 	const addressID = address.attributes["gml:id"]?.trim() ?? null

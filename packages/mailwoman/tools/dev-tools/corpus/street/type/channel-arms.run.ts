@@ -19,8 +19,8 @@
  *   lexicon covers. The extended arm is the one that reaches a locale the lexicon omits.
  *
  *   The extended arm sits out of distribution in the opposite direction. It feeds a positive feature
- *   where training fed zero. A row it fixes does not predict the number of rows a retrain would fix. A row
- *   it breaks does not refuse a retrain either. The count states whether the signal reaches the
+ *   where training fed zero. A row it fixes doesn't predict the number of rows a retrain would fix. A row
+ *   it breaks doesn't refuse a retrain either. The count states whether the signal reaches the
  *   decision under the current weights. That answer decides whether to start a codex authoring pass and a
  *   training run.
  *

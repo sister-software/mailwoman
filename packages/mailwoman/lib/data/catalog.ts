@@ -81,7 +81,7 @@ export function catalogPaths(dataRoot: PathBuilderLike) {
 /**
  * Read a JSON record, separating an absent file from one that cannot be read or parsed.
  *
- * @returns Null when the file does not exist.
+ * @returns Null when the file doesn't exist.
  * @throws {@link UnreadableArtifactError} naming the file when it exists and cannot be read or parsed.
  */
 async function readRecord<T>(path: PathBuilderLike): Promise<T | null> {
@@ -253,7 +253,7 @@ export class LayerCatalog {
 	 * so the next selected source can answer.
 	 * When every selected source is missing, the call raises instead of returning an empty list.
 	 *
-	 * The selection did not choose the caller's conventional path.
+	 * The selection didn't choose the caller's conventional path.
 	 * An empty list would make the caller use it.
 	 *
 	 * A file whose size differs from its manifest, or a manifest that cannot be read, always raises.
@@ -323,7 +323,7 @@ export class LayerCatalog {
 	 * can try the selection's next source and raise only when none answers.
 	 *
 	 * @throws {@link UnreadableArtifactError} when the file is present and its manifest
-	 * is absent or does not identify it, or its size differs from the manifest's.
+	 * is absent or doesn't identify it, or its size differs from the manifest's.
 	 */
 	async #resolveSource(source: SelectedSource): Promise<ResolvedSource | UnreadableArtifactError> {
 		const installation = this.installations.get(source.installationID)
@@ -423,7 +423,7 @@ export function mergeSelectionEntries(
 /**
  * Check that every source a selection names resolves to an installed file with its recorded size.
  *
- * @throws {@link ActiveSelectionError} listing every source that does not.
+ * @throws {@link ActiveSelectionError} listing every source that doesn't.
  */
 async function assertSelectedFilesInstalled(
 	dataRoot: string,
@@ -534,7 +534,7 @@ export interface SelectionWriteOptions {
  * An entry of the same role and scope is replaced.
  * Other entries are kept.
  *
- * @throws {@link ActiveSelectionError} when the installation is not installed
+ * @throws {@link ActiveSelectionError} when the installation isn't installed
  * or an artifact fails validation.
  */
 export async function activateInstallation(
@@ -571,7 +571,7 @@ export async function activateInstallation(
 /**
  * Restore the generation the active selection replaced, as a new generation.
  *
- * @throws {@link ActiveSelectionError} when there is no earlier generation,
+ * @throws {@link ActiveSelectionError} when there's no earlier generation,
  * its record is missing, or one of its artifacts is no longer installed.
  */
 export async function rollbackActiveSelection(

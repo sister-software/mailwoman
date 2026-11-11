@@ -7,7 +7,7 @@ verified-with: mailwoman v11.0.0
 
 # Inspect the decisions behind a parse
 
-You will save a parser trace for the same address used in [the first-parse tutorial](../start.mdx), then run a short script that checks every returned span and prints the decisions leading to the tree. The exercise takes about ten minutes after that tutorial's packages are installed.
+You'll save a parser trace for the same address used in [the first-parse tutorial](../start.mdx), then run a short script that checks every returned span and prints the decisions leading to the tree. The exercise takes about ten minutes after that tutorial's packages are installed.
 
 ## Prerequisites
 
@@ -89,7 +89,7 @@ Find `"New York"` in `tree.raw`. Its `[19, 27)` span starts at 19 and ends befor
 
 The three `shape` lines are proposed format matches for the same five-digit text. They show that `10118` fits several postcode shapes. These matches describe the token's form. The `locale` field records the parser's choice for the full input, and the final `postcode` node is its selected tag for that span.
 
-`path: full` records that the input used the full parser path. `kind: structured_address` is the query-kind decision. The CLI supplies `en-US` as its default `--locale`, so this trace records `locale.source` as `caller`. The library call in the first tutorial did not pass a locale and reported the same locale as a detected choice.
+`path: full` records that the input used the full parser path. `kind: structured_address` is the query-kind decision. The CLI supplies `en-US` as its default `--locale`, so this trace records `locale.source` as `caller`. The library call in the first tutorial didn't pass a locale and reported the same locale as a detected choice.
 
 Each node's `score` is its returned `confidence` rounded to three decimal places for display. These values describe this model's output for this address. They do not measure the fraction of correct labels in other addresses. The trace also contains per-stage timing values. Their values depend on the host and run conditions, so this exercise leaves them out of its fixed output.
 

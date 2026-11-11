@@ -109,7 +109,7 @@ function percent(value: number): string {
 /**
  * Turn a count into a reading that states its own limits.
  *
- * A zero is not a measurement of absence unless the denominator is large enough to have detected the thing.
+ * A zero isn't a measurement of absence unless the denominator is large enough to have detected the thing.
  */
 export function describeObservedRate(observed: ObservedRate): PowerReading {
 	const { events, n, selection, eventLabel, populationN } = observed

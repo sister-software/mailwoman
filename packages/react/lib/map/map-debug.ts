@@ -6,7 +6,7 @@
  *
  *   `DashboardMap`'s inspector and the demo page's `_debug.tsx` panel each need an `IControl` whose
  *   only job is to own a container element for `createPortal`. The class was duplicated in both.
- *   the position and container class are the only differences, so they are parameters here.
+ *   the position and container class are the only differences, so they're parameters here.
  */
 
 import type { ControlPosition } from "maplibre-gl"

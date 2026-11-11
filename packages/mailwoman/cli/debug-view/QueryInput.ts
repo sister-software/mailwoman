@@ -97,7 +97,7 @@ function deleteRange(state: InputState, start: number, end: number): InputState 
 }
 
 /**
- * Applies one keypress to the field, or returns the state unchanged when the field does not handle the key.
+ * Applies one keypress to the field, or returns the state unchanged when the field doesn't handle the key.
  *
  * Ink reports ctrl+letter as the bare letter with `key.ctrl` set.
  * An unhandled ctrl or meta chord is therefore dropped, because inserting it
@@ -189,7 +189,7 @@ const CURSOR_PAD = " "
  * Renders the query field as one Ink `<Text>`.
  *
  * The module avoids JSX so the pty test can run it from source under plain Node.
- * Node strips types but does not transform JSX.
+ * Node strips types but doesn't transform JSX.
  */
 export function QueryInput(props: QueryInputProps): ReactElement {
 	const { value, cursor, focus, onChange, onSubmit } = props

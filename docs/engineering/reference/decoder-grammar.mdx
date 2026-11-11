@@ -113,7 +113,7 @@ Standard toponymy decomposes a place name into:
 - **modifier / qualifier** — `New`, `North`, `Greater`, `People's`
 
 In this vocabulary, `New York` is modifier + specific. `People's Republic of China` is modifier +
-generic + `of` + specific. It has real internal grammatical structure and is **not** one opaque
+generic + `of` + specific. It has real internal grammatical structure and **isn't** one opaque
 prefix lexeme. `Port of Spain` is generic + `of` + specific. `Elephant and Castle Road` contains a
 coordinator inside its specific element. A token-level reading therefore misparses it as a
 junction.
@@ -176,7 +176,7 @@ coherence record applies the same rule to the resolver-side checker.
 | C1  | spans disjoint, uncovered tokens are O                                                                                                              | parse                                       | implemented (post-hoc, greedy)                                                                                                                               |
 | C2  | tags nest as a tree under `PARENT_OF`                                                                                                               | parse, containment table                    | implemented (build + validator)                                                                                                                              |
 | C3  | BIO well-formedness                                                                                                                                 | label sequence                              | implemented (structural mask)                                                                                                                                |
-| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector built** (below) — the grouper computes the units and does not bind the decode                                                                     |
+| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector built** (below) — the grouper computes the units and doesn't bind the decode                                                                      |
 | C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/lib/address/system/conventions.ts` is the natural home, but templates are not yet stated as machine-readable sequences |
 | C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector built** (below) — walks the FST for covering entries over every decoded boundary                                                                  |
 
@@ -225,13 +225,13 @@ the US urban form beside the rural route, is the known gap.
    `Passeig de Gràcia`, `Passeig de Sant Joan`, and the swallowed `Unit 1` in
    `Somewhere In Bangkok Thai Restaurant, 1103 Queen St Unit 1, Southington, CT 06489`. These 3 rows
    were attributed against a placebo run with the same base, seed, and steps. `Unter den Linden`,
-   the city splits, and the GB venue cluster did not change, although they produce the same kinds of invalid tag sequences in other surface families. The emissions memorize instances of a
+   the city splits, and the GB venue cluster didn't change, although they produce the same kinds of invalid tag sequences in other surface families. The emissions memorize instances of a
    constraint. Models transfer constraints only across inputs with similar representations, so transfer
    reaches a narrower set than the rule's scope.
 3. **The data route also over-generalizes along the wrong axis.** The trailing-region corpus rows
    taught the model that _text in the trailing position is administrative_. v4.8.0 applied that
    lesson by position and broke venues (`Ye Three Lords, 27 Minories, London EC3N 1DE` →
-   `locality="Ye Three Lords"`). Four weight adjustments could not separate the intended lesson
+   `locality="Ye Three Lords"`). Four weight adjustments couldn't separate the intended lesson
    from the damage, because both use the same representational axis.
 
 ## 8. implementation map
@@ -239,7 +239,7 @@ the US urban form beside the rural route, is the known gap.
 | target-grammar object           | existing artifact                                                                | status                                      |
 | ------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------- |
 | span + type + confidence decode | the #727 span head; `semi-crf-transitions.json` parse path (`classifier.ts:132`) | trained experimentally and unshipped        |
-| candidate spans                 | phrase-grouper (pipeline stage 2.7)                                              | exists, but output does not bind the decode |
+| candidate spans                 | phrase-grouper (pipeline stage 2.7)                                              | exists, but output doesn't bind the decode  |
 | `HEAD/REL` tree                 | `AddressTree` + `PARENT_OF` (`build-tree.ts`, `containment.ts`)                  | built post-decode, unscored                 |
 | POI-under-POI (`located_at`)    | none — `venue` parents are `["street", "locality"]`                              | schema decision open                        |
 | `G_c` segment templates         | `packages/codex/lib/address/system/conventions.ts`                               | home exists, templates not machine-readable |
@@ -283,5 +283,5 @@ evidence can then raise the scores of parses it should rule out.
      `ParseOpts.cardinalityFilter: true` turns it on under Viterbi decoding, and the trace records the rank it took as
      `cardinalityFilter`.
    - Label-bigram transitions fitted from 199,967 training rows (`fit-transitions.run.ts`) added to the BIO masks at
-     0.5, 1 and 2 times break 508, 884 and 3,974 of the 18,517 control rows' decoded paths. They are not offered as a
+     0.5, 1 and 2 times break 508, 884 and 3,974 of the 18,517 control rows' decoded paths. They're not offered as a
      switch.

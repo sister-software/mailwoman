@@ -282,7 +282,7 @@ export const GeocodeResultSchema = z
 		 * The locality key and postcode stored on the matched address-point row.
 		 *
 		 * These values describe the rooftop rather than the query.
-		 * Consumers may display them but must not filter on them.
+		 * Consumers may display them but mustn't filter on them.
 		 */
 		rooftop: RooftopSchema.nullable(),
 
@@ -389,7 +389,7 @@ export const GeocodeResultSchema = z
 		 * check the parsed `region` and `country`.
 		 *
 		 * It is non-null whenever a winner resolved.
-		 * Downstream ranking does not read it.
+		 * Downstream ranking doesn't read it.
 		 */
 		admin_coherence: AdminCoherenceReportSchema.nullable(),
 

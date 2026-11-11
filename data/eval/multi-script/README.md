@@ -41,5 +41,5 @@ the rate measured here is the A0 baseline, and the A1 retrain on `corpus-v0.4.0`
 Thread B's synthetic transliterations) should drive it down. The A0→A1 delta is the
 headline tokenizer KPI for v0.5.0.
 
-Target: <5% byte-fallback overall on the fixture **after** A1 lands. If A0 misses 5%, that
-is expected. A0's job is to establish the baseline + validate the harness.
+Target: <5% byte-fallback overall on the fixture **after** A1 lands. If A0 misses 5%, that's
+expected. A0's job is to establish the baseline + validate the harness.

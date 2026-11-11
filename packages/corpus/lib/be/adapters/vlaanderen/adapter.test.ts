@@ -179,7 +179,7 @@ describe("vlaanderen adapter against the fixture harvest", () => {
 
 		const rows = await readCanonicalRows(scratch.path, VLAANDEREN_ADAPTER_ID)
 
-		// `straatnaam_999999` is in no component file, so the street could not be read.
+		// `straatnaam_999999` is in no component file, so the street couldn't be read.
 		expect(rows.some((r) => r.source_id === "vlaanderen-adres_90000003")).toBe(false)
 		expect(rows.every((r) => Boolean(r.components.street))).toBe(true)
 	})

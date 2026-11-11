@@ -157,7 +157,7 @@ export const RelationSemantics = {
 	 */
 	Hard: "hard",
 	/**
-	 * An exception is expected and does not falsify the relation.
+	 * An exception is expected and doesn't falsify the relation.
 	 */
 	Defeasible: "defeasible",
 } as const
@@ -289,7 +289,7 @@ export interface ConceptRecord {
 	kind: ConceptKind
 	/**
 	 * Broader concepts that this concept is a kind of.
-	 * The list may be empty but must not form a cycle.
+	 * The list may be empty but mustn't form a cycle.
 	 */
 	isA: ConceptID[]
 	assertions: RelationAssertion[]

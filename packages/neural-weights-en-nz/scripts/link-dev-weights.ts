@@ -22,7 +22,7 @@
  *       has 2.12M rows. `--delta 10` is the calibrated value and the artifact header records it.
  *       This locale ships without a `transitionBeta` because none was measured there.
  *
- *   There is no postcode binary to build, since no WOF NZ postcode extract exists and
+ *   There's no postcode binary to build, since no WOF NZ postcode extract exists and
  *   `release.config.json`'s `softFeed.postcodeDBByCountry` has no `nz` entry, so the anchor channel
  *   resolves off for en-nz until that extract is built.
  */

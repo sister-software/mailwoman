@@ -191,7 +191,7 @@ export function designatorsByType(address: MarkupElement): ReadonlyMap<string, r
 		const value = inspireChild(locatorDesignator, "ad:designator")
 
 		// A void designator is reported by `voidDesignatorTypes` rather than here, because a
-		// value the publisher marked unknown is not a value and must not reach a component.
+		// value the publisher marked unknown isn't a value and mustn't reach a component.
 		if (!value || isVoid(value)) continue
 
 		const existing = byType.get(name)
@@ -223,7 +223,7 @@ export function designatorsByType(address: MarkupElement): ReadonlyMap<string, r
  *
  * A caller reads this when the difference changes what it does.
  * An adapter that refuses a row with no house number should report a void `buildingIdentifier` as
- * a value it could not read, and an absent one as an address the publisher states has no number.
+ * a value it couldn't read, and an absent one as an address the publisher states has no number.
  */
 export function voidDesignatorTypes(address: MarkupElement): ReadonlySet<string> {
 	const voided = new Set<string>()
@@ -351,10 +351,10 @@ const REFERENCE_ID_PARAMETERS = new Set(["id", "featureid", "resourceid"])
  * A URI with no id parameter is its own key.
  * Flanders publishes that form on both sides of the join.
  *
- * Its fragment is dropped, because a reference may hold one where the identifier does not:
+ * Its fragment is dropped, because a reference may hold one where the identifier doesn't:
  * `http://vocab.belgif.be/auth/refnis1995/1000#id` addresses the same term as that URI without it.
  *
- * Whether a key joins is not a property of its spelling, so this reads a key
+ * Whether a key joins isn't a property of its spelling, so this reads a key
  * and the caller decides joinability against the features the publisher served.
  * A check based on the URL's shape once reported 15 of Flanders' 20 references as belonging
  * to another register, when every one of them addressed a feature of the same service.

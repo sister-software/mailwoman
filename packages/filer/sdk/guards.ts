@@ -17,7 +17,7 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
  * A vintage label such as "2026-Q2" would sort after every ISO date in its year.
  */
 // repo-health-ignore export-name-affix -- The function rejects malformed input.
-// `isoDate` does not.
+// `isoDate` doesn't.
 export function assertISODate(value: string, context: string, caller = "buildFilerDatabase"): string {
 	if (!ISO_DATE_PATTERN.test(value)) {
 		throw new Error(

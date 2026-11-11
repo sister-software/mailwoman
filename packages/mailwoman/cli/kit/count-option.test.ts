@@ -26,7 +26,7 @@ describe("countOption", () => {
 
 	it("REFUSES a value that is not a non-negative integer rather than falling back", () => {
 		// A typo that falls back invents a row count.
-		// That is the same defect one step further away.
+		// That's the same defect one step further away.
 		for (const bad of ["", "  ", "two", "1.5", "-1", "NaN", "1e3x"]) {
 			expect(() => countOption(bad, 1), bad).toThrow(/non-negative integer/u)
 		}

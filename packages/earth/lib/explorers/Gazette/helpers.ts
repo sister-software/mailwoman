@@ -102,7 +102,7 @@ export interface NameGroup {
  * Groups search rows by name key, keeping the lowest-ranked row of each key as its face.
  *
  * Groups keep the order their keys first appear in.
- * For a prefix scan that is key order.
+ * For a prefix scan that's key order.
  */
 export function groupByNameKey(rows: readonly PlaceRow[]): NameGroup[] {
 	const groups = new Map<string, NameGroup>()

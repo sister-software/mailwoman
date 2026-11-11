@@ -14,12 +14,12 @@
  * in EPSG:27700 meters. The street is the Open Names `NAME1` for that link's TOID. The locality is its
  * `POPULATED_PLACE`. The GB layout has no region field, so each row omits a region. OS supplies every
  * component except `house_number`. No open GB product publishes a house number. This adapter draws the
- * number from local bands seeded by the postcode and TOID. The generated number does not come from the source.
+ * number from local bands seeded by the postcode and TOID. The generated number doesn't come from the source.
  *
  * A postcode is dropped when:
  *
  * - its Code-Point coordinate has no position, `Positional_quality_indicator` 90;
- * - its coordinate is shared with another postcode, so the point does not locate this postcode's street;
+ * - its coordinate is shared with another postcode, so the point doesn't locate this postcode's street;
  * - no road link with a name lies within 100 m;
  * - the joined road's `POSTCODE_DISTRICT` differs from the postcode's own outward code.
  *
@@ -150,7 +150,7 @@ export interface GBOSOpenSummary {
 		 */
 		noOpenNamesRow: number
 		/**
-		 * The road's `POSTCODE_DISTRICT` is not the postcode's outward code.
+		 * The road's `POSTCODE_DISTRICT` isn't the postcode's outward code.
 		 */
 		districtMismatch: number
 	}

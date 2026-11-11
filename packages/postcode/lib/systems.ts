@@ -112,7 +112,7 @@ export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 
 /**
  * Strip everything but letters and digits, upper-cased: `N7 0BT` and `N70BT` are
- * the same code, while the stem `N7` is not.
+ * the same code, while the stem `N7` isn't.
  */
 const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
 
@@ -136,7 +136,7 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | nu
  * the third granularity tier, between {@link UNIT_GRADE_POSTCODE} and the locality-first default.
  *
  * Whether a postal zone is coarser than its locality depends on the country's administrative geography.
- * Postcode length does not predict it.
+ * Postcode length doesn't predict it.
  *
  * FR and DE both use five-digit codes, but those codes fall on opposite sides of this comparison.
  * France has ~35,000 communes and one code postal can span several, so the commune is finer.

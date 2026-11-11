@@ -104,7 +104,7 @@ export async function sealDatabase(path: PathBuilderLike): Promise<void> {
 }
 
 /**
- * Verify a freshly-built database is not corrupt, immediately before it is sealed and published.
+ * Verify a freshly-built database isn't corrupt, immediately before it is sealed and published.
  *
  * Belongs beside {@link sealDatabase} for the same reason `swapDatabaseIntoPlace` does.
  * The check is part of the built-artifact lifecycle.
@@ -174,8 +174,7 @@ export async function swapDatabaseIntoPlace(tmpPath: PathBuilderLike, finalPath:
 		await movePath(tmpPathString, finalPathString)
 	} catch (error) {
 		// The prior version is already aside at this point.
-		// A failed forward rename must not leave the slot empty while a restorable
-		// artifact sits one rename away.
+		// A failed forward rename mustn't leave the slot empty while a restorable artifact sits one rename away.
 		if ((await pathExists(aside)) && !(await pathExists(finalPathString))) {
 			await movePath(aside, finalPathString)
 		}

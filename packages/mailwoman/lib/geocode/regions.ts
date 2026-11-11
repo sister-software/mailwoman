@@ -97,7 +97,7 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 /**
  * Returns the per-state address-point database path under `<dataRoot>/db/address-points/`.
  *
- * It returns null when the slug is null or the file does not exist.
+ * It returns null when the slug is null or the file doesn't exist.
  */
 export async function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
@@ -109,7 +109,7 @@ export async function selectAddressPointsDB(dataRoot: string, stateSlug: string 
 /**
  * Returns the per-state interpolation database path under `<dataRoot>/db/interpolation/`.
  *
- * It returns null when the slug is null or the file does not exist.
+ * It returns null when the slug is null or the file doesn't exist.
  */
 export async function selectInterpolationDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null

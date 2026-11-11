@@ -74,7 +74,7 @@ async function runChecks(countries: readonly string[]): Promise<SetupReport> {
 	const dataRoot = dataRootPath()
 	const configRoot = configRootPath()
 
-	// The plan `data pull --dry-run` prints for these bundles, so setup and the pull agree on what is installed.
+	// The plan `data pull --dry-run` prints for these bundles, so setup and the pull agree on what's installed.
 	const plan = await readInstallationPlan(
 		dataRoot,
 		bundlesFor(countries).map((bundle) => bundle.name)

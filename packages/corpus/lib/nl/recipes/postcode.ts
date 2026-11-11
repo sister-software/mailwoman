@@ -8,7 +8,7 @@
  * The model reads the digits-first NL postcode "1012 LG" as a house number plus a two-letter
  * street, so "1012 LG Amsterdam" becomes house_number 1012, street "LG", locality Amsterdam. That
  * spurious street context then pulls the locality into the US situs tier. The `\d{4} [A-Z]{2}`
- * shape does not parse natively. The soft query-shape prior cannot overcome the strong
+ * shape doesn't parse natively. The soft query-shape prior cannot overcome the strong
  * house-number reading of a leading four-digit token.
  *
  * This recipe is the model-first fix as data. It supplies real NL (street, number, postcode, city)

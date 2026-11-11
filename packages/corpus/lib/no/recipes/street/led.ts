@@ -48,7 +48,7 @@ export const noStreetLedRecipe: CorpusRecipe = {
 
 		// The split excludes every surface the digit board reserves, so a retrain
 		// grades the boundary form on unseen streets.
-		// There is no safe default, so the flag throws.
+		// There's no safe default, so the flag throws.
 		const excludePath = opts.excludeSurfaces
 
 		if (!excludePath) {

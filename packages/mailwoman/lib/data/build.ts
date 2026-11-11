@@ -243,7 +243,7 @@ export interface BuildResult {
 	outputs: BuiltOutput[]
 	installation: LayerInstallation
 	/**
-	 * The generation the build activated, or `null` when it did not activate.
+	 * The generation the build activated, or `null` when it didn't activate.
 	 */
 	activatedGeneration: number | null
 }

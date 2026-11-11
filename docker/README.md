@@ -41,7 +41,7 @@ curl -s -X POST localhost:3000/v1/geocode \
 ```
 
 If you do not have a gazetteer yet, pull the worldwide candidate DB (~1.65 GB, population-first
-ranking) with the same image. The host does not need Node or npm for this step:
+ranking) with the same image. The host doesn't need Node or npm for this step:
 
 ```bash
 mkdir -p mailwoman-data
@@ -51,7 +51,7 @@ docker run --rm -v "$(pwd)/mailwoman-data:/data" \
 ```
 
 `data pull` writes the file under the container's `$MAILWOMAN_DATA_ROOT` (`/data`, set by the image),
-at `/data/wof/candidate.db`. That is the path the read-only mount above expects. This one run needs
+at `/data/wof/candidate.db`. That's the path the read-only mount above expects. This one run needs
 the volume **without** `:ro`. Every later `docker run` that only reads the gazetteer keeps `:ro`.
 
 ### Read-only mounts

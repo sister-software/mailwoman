@@ -36,7 +36,7 @@ weights, same grouper, only the `jointReconcile` flag differs):
   `street` + `house_number` + `postcode` (the geocoder precondition), on the Travis/OpenAddresses
   holdout (`/tmp/ood-truth.jsonl`, n=1965). This holdout is the same non-circular real-points file used
   in the retirement audit — E-911 / parcel-centroid provenance, disjoint from training and from grouper
-  tuning, so the precondition number is not gamed.
+  tuning, so the precondition number isn't gamed.
 
 ### Per-tag recall — reconcile is worse, everywhere it isn't flat
 
@@ -93,7 +93,7 @@ argmax missed. The break pattern is consistent — multi-word residential street
 #565 fixed the grouper's house-number bundling — the structural break that the retirement blamed. What
 this re-check shows is that reconcile's harm was never only structural. By **merging** tokens into one
 candidate span rather than **selecting** the neural argmax, reconcile destroys internal street
-structure that argmax keeps intact. On FR that is the `Rue de la <X>` / `Chemin du <X>` prefix +
+structure that argmax keeps intact. On FR that's the `Rue de la <X>` / `Chemin du <X>` prefix +
 particle + core pattern — the merge collapses it and the street value falls apart (−13.7pp). On US
 multi-word residential streets it drops the span entirely (the 5.6% precondition break). Argmax avoids
 both failure modes for the same reason: it commits to the model's per-token decision instead of
@@ -103,15 +103,15 @@ second bundling bug to patch.
 ## Verdict — keep reconcile retired
 
 Both checks fail. Reconcile loses tag-value accuracy on US and FR with no locale where it wins overall,
-and it still breaks the geocoder precondition on 5.6% of rows where argmax never does. There is no subset
+and it still breaks the geocoder precondition on 5.6% of rows where argmax never does. There's no subset
 — not even FR — where re-promotion is net-positive. **Argmax stays the default. Joint-reconcile remains
 opt-in (`jointReconcile: true`) and undefaulted. This report is the record of why.** The #427 "reconcile
 helps FR" claim was an artifact of grading raw neural — the same blind spot that hid the original
 regression.
 
 Independent of the reconcile decision, the **argmax-FR street ceiling of 79.4%** is its own open
-question (and the FR street/region recall generally) — that is a model + FR-grouper matter rather than a
-reconcile one, and is left to the FR parity track. It belongs in the learning items. It is not a
+question (and the FR street/region recall generally) — that's a model + FR-grouper matter rather than a
+reconcile one, and is left to the FR parity track. It belongs in the learning items. It isn't a
 prerequisite for this verdict.
 
 ## Resolved parked decision

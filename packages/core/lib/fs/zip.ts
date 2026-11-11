@@ -5,8 +5,8 @@
  * @file Zip readers for archives already in memory or stored on disk.
  *
  *   {@link extractZip} and {@link extractSingleFileZip} take the whole archive as a `Buffer`.
- *   That suits a client that has downloaded one into memory (`bdc/sdk/download.ts`).
- *   It does not suit large archives because adm-zip keeps both the archive and decompressed member in memory.
+ *   That suits a client that's downloaded one into memory (`bdc/sdk/download.ts`).
+ *   It doesn't suit large archives because adm-zip keeps both the archive and decompressed member in memory.
  *   National address dumps under `$MAILWOMAN_DATA_ROOT` range from 0.5–2.9 GB compressed and reach 9 GB unpacked.
  *   The path-based readers stream them. Yauzl seeks the central directory through a file handle and inflates one member on demand.
  *   Memory use stays constant regardless of archive size.
@@ -44,7 +44,7 @@ async function openStreamingArchive(
 	options?: ZipNameOptions
 ): Promise<StreamingArchive & AsyncDisposable> {
 	// `decodeStrings: false` returns the central directory's raw name bytes.
-	// This lets the caller read a name when the archive does not declare its encoding.
+	// This lets the caller read a name when the archive doesn't declare its encoding.
 	// See {@link ZipNameOptions}. yauzl's own name check is off because it throws on a
 	// leading slash. {@link memberPath} checks every name instead.
 	const archive = await openArchive(archivePath.toString(), {
@@ -56,7 +56,7 @@ async function openStreamingArchive(
 }
 
 /**
- * How to read member names that the archive does not declare an encoding for.
+ * How to read member names that the archive doesn't declare an encoding for.
  *
  * A ZIP flags UTF-8 names with bit 11.
  * Yauzl decodes those names correctly.
@@ -88,7 +88,7 @@ export interface ZipNameOptions {
  *
  * `iconv-lite` rather than `TextDecoder` for the reason `decodeByteStream` gives: Node's whatwg
  * `euc-kr` is EUC-KR proper and reads 8,824 of CP949's 17,048 two-byte sequences differently,
- * so a member whose name uses the UHC extension would be looked for under a name that does not exist.
+ * so a member whose name uses the UHC extension would be looked for under a name that doesn't exist.
  */
 function entryName(entry: Entry, options?: ZipNameOptions): string {
 	const raw = entry.filename as unknown
@@ -149,7 +149,7 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 			// so waiting for that event here would wait forever.
 			// `readableEnded` separates the two paths: true after a full read, false
 			// after a `take` or a `break`.
-			// `closed` is not the test, because Node sets it when the close event is queued
+			// `closed` isn't the test, because Node sets it when the close event is queued
 			// rather than delivered, so a guard on it skips the wait on the path that needs it.
 			if (contents.readableEnded) return
 
@@ -246,7 +246,7 @@ async function openMemberContents(
 
 			// The inflater stops at the final block without reading the raw stream's end, and the generator's
 			// return destroys it, so the close may already have been delivered by now.
-			// `finished` settles on a stream that has already closed, where waiting
+			// `finished` settles on a stream that's already closed, where waiting
 			// on the `close` event would hang.
 			// The wait matters for the reason `openEntryStream` gives: the archive cannot close during a read.
 			raw.destroy()

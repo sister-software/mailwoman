@@ -35,7 +35,7 @@ const isCommitSHA = (sha: string | undefined): sha is string => typeof sha === "
  * A new branch reports an all-zero previous head, and a force-push passes one the clone lacks.
  * A dispatched run runs every suite.
  *
- * @throws When a pull request does not name both commits.
+ * @throws When a pull request doesn't name both commits.
  */
 export async function scopesByDiff(
 	event: string | undefined,

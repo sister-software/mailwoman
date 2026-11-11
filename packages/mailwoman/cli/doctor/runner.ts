@@ -143,12 +143,12 @@ export interface DoctorDeps {
 	installationID(): Promise<string | null>
 	/**
 	 * Asks mailwoman.post's well-known register whether a key id is still listed,
-	 * answering `unreachable` rather than throwing when there is no route.
+	 * answering `unreachable` rather than throwing when there's no route.
 	 */
 	confirmLicenseKeyPublished(kid: string): Promise<LicenseKeyPublication>
 	/**
-	 * Asks the license worker whether a self-service license still stands, answering
-	 * `unreachable` rather than throwing when there is no route.
+	 * Asks the license worker whether a self-service license still stands,
+	 * answering `unreachable` rather than throwing when there's no route.
 	 */
 	checkLicenseStatus(lid: string): Promise<LicenseStatusAnswer>
 	/**

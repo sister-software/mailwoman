@@ -157,7 +157,7 @@ function pythonYAMLTags(defaults: Tags): Tags {
  *
  * A repeated key keeps its first position and its last value, as a Python dict assignment does.
  *
- * @throws When the document does not parse, or holds a timestamp or a bare `=`.
+ * @throws When the document doesn't parse, or holds a timestamp or a bare `=`.
  */
 export function parsePythonYAML(text: string, source = "<string>"): PythonValue {
 	const document = parseDocument(text, {

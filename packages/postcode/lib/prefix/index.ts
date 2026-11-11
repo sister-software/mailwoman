@@ -82,7 +82,7 @@ export interface PostcodePrefixHeader {
 	/**
 	 * What a missing prefix means for this file.
 	 *
-	 * A miss in a complete register means the prefix does not exist.
+	 * A miss in a complete register means the prefix doesn't exist.
 	 * A miss in a partial register may mean only that the prefix was not observed.
 	 */
 	coverageNote: string

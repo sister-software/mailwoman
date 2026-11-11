@@ -40,7 +40,7 @@ export interface OpenAddressesRunRecord {
 /**
  * The ISO 3166-1 alpha-2 code a run's member path opens with, such as `US` for `us/wi/statewide`.
  *
- * @throws When the path's first segment is not two letters.
+ * @throws When the path's first segment isn't two letters.
  */
 export function openAddressesRunCountry(member: string): string {
 	const segment = member.split("/")[0] ?? ""

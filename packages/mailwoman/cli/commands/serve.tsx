@@ -45,7 +45,7 @@ export const spec = {
 
 // note(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code sequence
 // to move: the process deliberately never exits. WorkerStatus is event-subscription UI with
-// cleanup. ChildThread's effect boots the @mailwoman/api Hono app over a node listener. There is
+// cleanup. ChildThread's effect boots the @mailwoman/api Hono app over a node listener. There's
 // no `setImmediate(process.exit)` here — sigint/sigterm now dispose the server after it drains).
 
 const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus = availableParallelism() } }) => {
@@ -94,7 +94,7 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		// Graceful shutdown: a term/INT delivered to the primary pid (docker stop, systemctl stop)
 		// never reaches worker JS handlers — Node's cluster teardown bypasses them.
 		// Forward the signal explicitly so each worker's serveNode drain runs, then exit
-		// once they're gone (bounded — a hung worker must not wedge the shutdown).
+		// once they're gone (bounded — a hung worker mustn't wedge the shutdown).
 		const forward = (signal: NodeJS.Signals) => {
 			shuttingDown = true
 
@@ -120,7 +120,7 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 			}
 
 			setTimeout(() => {
-				// A wedged worker must not survive the primary holding the port.
+				// A wedged worker mustn't survive the primary holding the port.
 				for (const worker of alive) {
 					if (!worker.isDead()) {
 						worker.process.kill("SIGKILL")

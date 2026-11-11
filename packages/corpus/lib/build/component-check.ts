@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Checks a row's component values against its country's rules and against its own other components.
  *
- *   A row that aligns can still hold a wrong value: a postcode that is a state code (`1811 Hayes Avenue, Hull, IA IA`),
+ *   A row that aligns can still hold a wrong value: a postcode that's a state code (`1811 Hayes Avenue, Hull, IA IA`),
  *   a street line repeated where the city belongs (`56 East Chase Street, 56 East Chase Street, FL 32502`), or a
  *   street that ends in the row's own postcode (`655 MAPLE AVE # 90014, LOS ANGELES, CA 900142211`). Every rule reads
  *   per-country data or the row itself, so the same rules hold in every country.
@@ -19,7 +19,7 @@ import type { CanonicalRow } from "#types"
  */
 export const ComponentRule = {
 	/**
-	 * The postcode does not have the form the country's postcode syntax states.
+	 * The postcode doesn't have the form the country's postcode syntax states.
 	 */
 	PostcodeFormat: "postcode:format",
 	/**

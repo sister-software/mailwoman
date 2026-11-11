@@ -5,7 +5,7 @@
  *
  *   A cardinality filter over the decoder's k best label paths: an address has at most one street, house number,
  *   locality, postcode, venue and region, so a path that opens a second span of one of them is passed over for the
- *   next path that does not.
+ *   next path that doesn't.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

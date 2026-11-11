@@ -71,7 +71,7 @@ function serviceKey<T>(description: string): ServiceKey<T> {
 }
 
 /**
- * Releases a value that is a disposable handle or `null`.
+ * Releases a value that's a disposable handle or `null`.
  */
 function disposeHandle(handle: Disposable | null | undefined): void {
 	handle?.[Symbol.dispose]()
@@ -359,7 +359,7 @@ export function registerGenerationServices(
 		disposeHandle
 	)
 
-	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS is not caught: it stops the session.
+	// A refusal under MAILWOMAN_REFUSE_OBLIGATIONS isn't caught: it stops the session.
 	provide(
 		registry,
 		timings,

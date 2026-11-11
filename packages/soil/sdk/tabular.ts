@@ -93,7 +93,7 @@ const MSTABCOL_WIDTH = 14
 /**
  * Read the archive's table and column dictionaries.
  *
- * @throws {Error} When either bootstrap file is missing or is not the declared width.
+ * @throws {Error} When either bootstrap file is missing or isn't the declared width.
  */
 export async function readTabularDictionary(tabularDirectory: PathBuilderLike): Promise<TabularDictionary> {
 	const directory = PathBuilder.from(tabularDirectory)
@@ -160,7 +160,7 @@ export interface TabularTable {
 /**
  * Read a logical ssurgo table, projecting `wanted` columns.
  *
- * @throws {Error} When the archive declares no file for the table, when a requested column is not in
+ * @throws {Error} When the archive declares no file for the table, when a requested column isn't in
  * the shipped dictionary, or when a record is narrower than the position a requested column sits at.
  */
 export async function readTable(
@@ -232,7 +232,7 @@ export interface DomainMember {
  *
  * Declared in `mstabcol.txt` under table `msdomdet`, so unlike the two bootstrap
  * files above these could be looked up.
- * They are listed here because the domain read runs before any dictionary-driven read
+ * They're listed here because the domain read runs before any dictionary-driven read
  * and the file is five columns wide by its own declaration.
  */
 const MSDOMDET_WIDTH = 5
@@ -240,7 +240,7 @@ const MSDOMDET_WIDTH = 5
 /**
  * Read the authority's declared domains out of the archive.
  *
- * @throws {Error} When the file is not the declared width.
+ * @throws {Error} When the file isn't the declared width.
  */
 export async function readDeclaredDomains(tabularDirectory: PathBuilderLike): Promise<DomainMember[]> {
 	const rows = await readPipeDelimited(resolvePathBuilder(tabularDirectory, "msdomdet.txt"))
@@ -279,7 +279,7 @@ export function domainCodes(members: ReadonlyArray<DomainMember>, domain: string
  * The download URL needs `2025-09-09`.
  * Both channels agree only when the code parses the value as a date instead of slicing the string.
  *
- * @throws {Error} When the value is not one of those shapes.
+ * @throws {Error} When the value isn't one of those shapes.
  * An incorrect freshness date requests a nonexistent file.
  * The host returns 400 for the request.
  * A 404 would identify a missing file.

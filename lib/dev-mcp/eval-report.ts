@@ -30,7 +30,7 @@ export interface FloorReading {
 	 * The measured value, or `null` when the battery produced none.
 	 *
 	 * `null` means the metric was never measured.
-	 * It does not mean zero or a failure to clear the bar.
+	 * It doesn't mean zero or a failure to clear the bar.
 	 *
 	 * The eval marks it failing so an unmeasured floor cannot pass by default.
 	 * Reported separately from `pass` so a reader can tell "missed the bar" from "never ran".
@@ -48,7 +48,7 @@ export interface FloorReading {
 export interface EvalReport {
 	/**
 	 * `pass` / `fail` from `verdict.json`, or `null` when the file is absent, as after a run
-	 * that crashed before assembling one, or when the file predates the job that is read.
+	 * that crashed before assembling one, or when the file predates the job that's read.
 	 */
 	verdict: string | null
 	label: string | null
@@ -64,8 +64,8 @@ export interface EvalReport {
 	int8_vs_fp32_deltas: Record<string, number>
 	out_dir: string
 	/**
-	 * Contents of `provenance.txt`, or `null` when the run did not get far enough to
-	 * write one or the file predates the job that is read.
+	 * Contents of `provenance.txt`, or `null` when the run didn't get far enough to
+	 * write one or the file predates the job that's read.
 	 */
 	provenance: string | null
 	/**
@@ -122,8 +122,8 @@ type ArtifactCurrency = "absent" | "current" | "stale"
 /**
  * Reports whether a battery artifact was written by the job being read.
  *
- * An out-dir can hold a complete battery from an earlier run, and a job that has not
- * written its own verdict yet would otherwise report that run's floors as its own.
+ * An out-dir can hold a complete battery from an earlier run, and a job that's not written
+ * its own verdict yet would otherwise report that run's floors as its own.
  */
 async function artifactCurrency(path: PathBuilderLike, startedAt: number | undefined): Promise<ArtifactCurrency> {
 	const stat = await tryStat(path)
@@ -207,7 +207,7 @@ export async function readEvalReport(
 		)
 	}
 
-	// The log is already buffered and capped at 8 MB by the job registry, so there is no stream to consume lazily.
+	// The log is already buffered and capped at 8 MB by the job registry, so there's no stream to consume lazily.
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded, already in memory
 	const lines = `${stdout}\n${stderr}`.split("\n")
 
@@ -217,7 +217,7 @@ export async function readEvalReport(
 	for (const [index, line] of lines.entries()) {
 		if (!ledgerCommand && line.includes(LEDGER_MARKER)) {
 			// The command spans a couple of continued lines.
-			// Take them until one does not end in a backslash.
+			// Take them until one doesn't end in a backslash.
 			const collected = [line.trim()]
 
 			for (let next = index + 1; next < lines.length && collected.at(-1)!.endsWith("\\"); next++) {
@@ -322,7 +322,7 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
  * The layout comes from `weightsCachePackageDir`, the resolver's own function,
  * rather than a re-typed `node_modules/@mailwoman/…` literal.
  *
- * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that is
+ * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that's
  * under-staged — the two need different fixes — and `paths` is empty when well-formed.
  */
 export async function missingWeightsCacheArtifacts(

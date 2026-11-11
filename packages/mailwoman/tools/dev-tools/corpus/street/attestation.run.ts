@@ -9,7 +9,7 @@
  *   #2399's first task. A candidate assigned a leading venue name to `street` on rows where the real
  *   street sits second. The decode path holds no index of street names to separate the two. This
  *   measures whether such an index would have answered the question before one is built: a street the
- *   register attests is separable from a venue name the register does not.
+ *   register attests is separable from a venue name the register doesn't.
  *
  *   The registers read here are the ones the corpus adapters already read. GB comes from the `gb-os-open`
  *   adapter's canonical rows (Code-Point Open, OS Open Names and OS Open Roads, OGL v3.0). It read HM Land

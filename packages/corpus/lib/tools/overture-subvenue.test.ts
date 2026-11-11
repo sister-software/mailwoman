@@ -42,7 +42,7 @@ interface FixtureDatabase {
 		/**
 		 * Mirrors the shipped column so a rename fails here, but not the fold:
 		 * the real `poi.name_key` is minted by `normalizeLocalityForKey`, and the value
-		 * expression below must not be copied as if it were.
+		 * expression below mustn't be copied as if it were.
 		 */
 		name_key: string | null
 		brand_wikidata: string | null

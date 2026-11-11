@@ -85,7 +85,7 @@ const REPORT_KEY_ALLOWLIST: ReadonlySet<string> = new Set<string>([
 
 /**
  * Matches a house number followed by a word.
- * That is the shape of a street address.
+ * That's the shape of a street address.
  */
 const ADDRESS_SHAPE = /\d+\s+\p{L}/u
 

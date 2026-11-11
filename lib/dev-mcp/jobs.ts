@@ -18,7 +18,7 @@ export type JobState = "running" | "succeeded" | "failed" | "cancelled"
  * What the registry observes about a job's child process.
  *
  * `error` is Node's `ChildProcess` event.
- * It fires when the process could not be spawned and when `kill()` could not deliver its signal.
+ * It fires when the process couldn't be spawned and when `kill()` couldn't deliver its signal.
  */
 export type JobEvent =
 	| { kind: "close"; code: number | null; signal: NodeJS.Signals | null }
@@ -181,7 +181,7 @@ export class JobRegistry {
 	}
 
 	/**
-	 * Called on shutdown so a killed server does not leave orphaned gauntlets
+	 * Called on shutdown so a killed server doesn't leave orphaned gauntlets
 	 * holding multi-gigabyte SQLite handles.
 	 */
 	cancelAll(): number {

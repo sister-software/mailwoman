@@ -22,7 +22,7 @@ export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
 /**
  * The Kumi Systems Overpass mirror.
  *
- * It is not the default because it has timed out on queries that the main instance answered.
+ * It isn't the default because it has timed out on queries that the main instance answered.
  */
 export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpreter"
 

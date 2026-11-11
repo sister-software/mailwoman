@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests the well-known register check over a scripted transport. The check distinguishes a site that answers without a register from a site that does not answer because each requires a different action.
+ *   Tests the well-known register check over a scripted transport. The check distinguishes a site that answers without a register from a site that doesn't answer because each requires a different action.
  */
 
 import { describe, expect, it } from "vitest"

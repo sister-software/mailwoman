@@ -12,7 +12,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
  *
  * A new specification version moves this path in the same change.
  *
- * Resolved from the package root because `tsc` does not emit `.json` specs into `out/`.
+ * Resolved from the package root because `tsc` doesn't emit `.json` specs into `out/`.
  */
 export const CURRENT_RELEASE_SPEC: string = resolvePackagePath(
 	"mailwoman",

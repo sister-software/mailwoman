@@ -90,7 +90,7 @@ export interface GrantedDownload {
 /**
  * Trade the token for a presigned URL of one licensed artifact.
  *
- * @throws When the worker refuses, is not provisioned, or does not answer,
+ * @throws When the worker refuses, isn't provisioned, or doesn't answer,
  * with the worker's word in the message.
  */
 export async function requestGrantedDownload(token: string, artifact: string): Promise<GrantedDownload> {

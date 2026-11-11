@@ -61,21 +61,21 @@ Tier-1 is US and FR.
 
 - Under **en-US** weights: US +3 full-agreement, spurious street −3. No regression.
 - Under **fr-FR** weights: the FR bucket is unchanged. The −1 is the **US bucket parsed with FR
-  weights** — a configuration production does not route.
+  weights** — a configuration production doesn't route.
 
 No tier-1 regression in any shipping configuration. The residual −1 is accepted deliberately and recorded
 here rather than waived. Every floor is identical in that run, so the row moved on a non-floor tag
 (locality, region or country). A gazetteer prior acts on exactly those tags. The −1 was not traced to a
-specific row. An independent reimplementation of parity's full-agreement rule did not reproduce it, so
-what is reported is parity's own metric.
+specific row. An independent reimplementation of parity's full-agreement rule didn't reproduce it, so
+what's reported is parity's own metric.
 
 ## The objection this had to answer
 
 The register's `fst` row records that the pipeline ships the street-context check with the emission
 prior **zeroed**, because unconditional it measured **US-golden −48**. That number is about the
-**street-morphology** prior (`ZEROED_MORPHOLOGY_OPTS`) rather than the gazetteer FST. This change does not affect it: `geocode-core.ts` already calls `streetContextRequirementFor` — the same helper `runPipeline` calls, on
+**street-morphology** prior (`ZEROED_MORPHOLOGY_OPTS`) rather than the gazetteer FST. This change doesn't affect it: `geocode-core.ts` already calls `streetContextRequirementFor` — the same helper `runPipeline` calls, on
 purpose, so the two paths cannot drift (#1669) — so both ship `fstStreetContextPositiveScale = 0`
-identically. The gazetteer prior does not re-open the morphology question.
+identically. The gazetteer prior doesn't re-open the morphology question.
 
 ## Bounds
 

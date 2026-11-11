@@ -200,7 +200,7 @@ export interface LoadFromURLsOptions {
 	 *
 	 * `"auto"` (the default) uses `anchor-lexicon-v1.json` beside `modelURL`,
 	 * `"none"` skips the fetch and `{ url }` names the file.
-	 * A failed fetch does not throw.
+	 * A failed fetch doesn't throw.
 	 *
 	 * A model trained with this channel then runs on zero-filled features.
 	 * The loader logs an error.
@@ -212,7 +212,7 @@ export interface LoadFromURLsOptions {
 	 *
 	 * `"auto"` (the default) uses `country-surface-lexicon-v1.json` beside `modelURL`,
 	 * `"none"` skips the fetch and `{ url }` names the file.
-	 * A failed fetch does not throw.
+	 * A failed fetch doesn't throw.
 	 *
 	 * A model trained with this channel then runs without it.
 	 * The loader logs an error.
@@ -224,7 +224,7 @@ export interface LoadFromURLsOptions {
 	 *
 	 * `"auto"` (the default) uses the card's declared file beside `modelURL`,
 	 * `"none"` skips the fetch and `{ url }` names the file.
-	 * A failed fetch does not throw.
+	 * A failed fetch doesn't throw.
 	 *
 	 * A model trained with this channel then runs without it.
 	 * The loader logs an error.

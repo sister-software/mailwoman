@@ -146,7 +146,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 
 		const finalOut = resolvePath(options.out ?? interpolationDatabasePath(`interpolation-us-${STATE.toLowerCase()}.db`))
 
-		// Both packages load dynamically because the published CLI does not depend on them.
+		// Both packages load dynamically because the published CLI doesn't depend on them.
 		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street")
 		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
 

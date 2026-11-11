@@ -78,7 +78,7 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=33): min 0.
 **5 of 6 new brand cases pass.** The 4 brand+anchor cases (`brand-us-01` Chevron/Houston,
 `brand-fr-01` Crédit Agricole/Lyon, `brand-ca-01` Tim Hortons/Toronto — all pass; `brand-us-02`
 Applebee's/Dallas — fails, below) + the locale-hintd slang case (`brand-slang-01`, "mcdo" →
-McDonald's under `fr-FR`, chained through `variant-aliases`, since "mcdo" is not one of
+McDonald's under `fr-FR`, chained through `variant-aliases`, since "mcdo" isn't one of
 McDonald's own `brands.json` aliases — verified empty) + the bare-brand abstain (`brand-bare-01`,
 "chevron" without an anchor → `anchor_required`) all pass.
 
@@ -94,7 +94,7 @@ brief's own fallback ("else skip, note").
     expected ≥1 result (brandWikidata=Q621532), got 0
 ```
 
-Traced live — this is not a subject-match or anchor-resolution miss (both work correctly):
+Traced live — this isn't a subject-match or anchor-resolution miss (both work correctly):
 `matchPOISubject` resolves "Applebee's" → `Q621532` directly, and the anchor resolves to
 `(32.79398, -96.765692)` — within ~4 km of the fixture's `anchorGold` (32.7767, -96.7970), a
 good lock on Dallas. The miss is in the READER's k-ring search radius. `poi-lookup.ts`'s

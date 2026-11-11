@@ -64,7 +64,7 @@ const { localities } = await readCoordPanel(values.eval!, { country: values.coun
 
 /**
  * Each region keeps one real postcode, so a crossed row uses a code that exists even
- * though its pairing does not.
+ * though its pairing doesn't.
  */
 const postcodeOf = new Map<string, string>()
 

@@ -74,7 +74,7 @@ const LEGACY_RUN_DEPTH = 3
 const SHARED_ROOTS = new Set(["corpus", "corpus-python", "models", "audits", "gazetteer", "eval", "launch"])
 
 /**
- * Refuses an `output_dir` a fresh start must not clear: one outside the mount, or a shared root inside it.
+ * Refuses an `output_dir` a fresh start mustn't clear: one outside the mount, or a shared root inside it.
  *
  * An older config's `<mount>/models/checkpoints/<run>` is one run's directory and stays clearable.
  *

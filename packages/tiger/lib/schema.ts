@@ -57,7 +57,7 @@ export interface PLBlockTable {
 	/**
 	 * Occupied housing units from table H1.
 	 *
-	 * `occupied + vacant` always equals `housing_units`, because the reader refuses any row where it does not.
+	 * `occupied + vacant` always equals `housing_units`, because the reader refuses any row where it doesn't.
 	 */
 	occupied: number
 

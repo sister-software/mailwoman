@@ -15,7 +15,7 @@
  *   const { x: { a }, y: { b } } = await allKeyed({ x: import("x"), y: import("y") })
  *   ```
  *
- *   The rule does not report a side-effect `await import()` with no binding, because the order modules evaluate in
+ *   The rule doesn't report a side-effect `await import()` with no binding, because the order modules evaluate in
  *   may matter to it. A run stops at a comment between declarations, so the fix never deletes one.
  */
 

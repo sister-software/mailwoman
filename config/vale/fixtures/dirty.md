@@ -114,4 +114,6 @@ This is a test, not a production system.
 
 The resolver returns nothing when the query names no candidate.
 
+`Contractions.yml` must fire on the rest of this line: the loader does not retry, and we have one copy.
+
 # Parsing the response before validation hides malformed fields.

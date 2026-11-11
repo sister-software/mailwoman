@@ -196,7 +196,7 @@ for (const file of files) {
 			if (!postcode) {
 				withoutPostcode += points
 			}
-			// In layer mode every record is placed by location below, so the postcode split is not used.
+			// In layer mode every record is placed by location below, so the postcode split isn't used.
 			else if (!reverse) {
 				pointsByPostcode.set(postcode, points)
 			}

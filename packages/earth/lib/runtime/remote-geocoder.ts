@@ -22,7 +22,7 @@ import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/cl
 export const REMOTE_PARSE_STAGE_LABELS = ["Sending the address to the geocoder API…", "Reading the response…"]
 
 /**
- * A native API response the client could not use: a non-2xx status or a body that is not JSON.
+ * A native API response the client couldn't use: a non-2xx status or a body that's not JSON.
  */
 export class RemoteGeocoderError extends Error {
 	readonly status: number
@@ -45,7 +45,7 @@ async function postJSON<T>(apiURL: URL, route: string, body: unknown, signal?: A
 	})
 
 	const text = await response.text()
-	// Every native response body is a JSON object, so `null` means the body did not parse.
+	// Every native response body is a JSON object, so `null` means the body didn't parse.
 	const parsed = tryParsingJSON(text)
 
 	if (parsed == null) {
@@ -100,7 +100,7 @@ function candidateView(candidate: GeocodeCandidate): ResolvedPlaceView {
  * Project a native geocode answer onto Earth's candidate list, with the answer's coordinate first.
  *
  * A gazetteer answer keeps its winning candidate's score.
- * A street, venue or plus-code answer is a point the gazetteer did not rank, so it reads `null`.
+ * A street, venue or plus-code answer is a point the gazetteer didn't rank, so it reads `null`.
  */
 export function candidatesFromGeocode(response: GeocodeResponse): ResolvedPlaceView[] {
 	const ranked = response.candidates.map(candidateView)

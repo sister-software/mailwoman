@@ -31,7 +31,7 @@ import type { AttributionRecord, WeightsRightsRecord } from "#release-kit/weight
 const README_NOTICE = "© OpenStreetMap contributors"
 
 /**
- * Why ancestry through fine-tuning is not part of this check, stated in the audit's unresolved list.
+ * Why ancestry through fine-tuning isn't part of this check, stated in the audit's unresolved list.
  */
 export const INITIALIZATION_ANCESTRY_UNREAD =
 	"No model card records the checkpoint its model was initialized from as a field: `model_lineage` is prose, and " +

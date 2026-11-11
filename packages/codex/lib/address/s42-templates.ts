@@ -5,7 +5,7 @@
  *
  *   Which jurisdictions have a UPU S42 addressing template, and when the template group grew.
  *
- *   S42 is not a country's domestic addressing system. USPS Publication 28, Royal Mail's addressing rules, La
+ *   S42 isn't a country's domestic addressing system. USPS Publication 28, Royal Mail's addressing rules, La
  *   Poste's NF Z 10-011 and the South African Post Office's system each exist independently of it. What S42 does
  *   is map an existing national structure into a common set of international elements, and UPU builds each
  *   template with that country's own representative, tests it against representative address forms, and has the
@@ -15,7 +15,7 @@
  *   recommendation. For a jurisdiction in {@linkcode S42_TEMPLATE_JURISDICTIONS} there exists a
  *   crosswalk of that country's own address semantics which the country approved, whether or not anybody in that
  *   country posts mail by it. A jurisdiction absent from the list has no such crosswalk. That differs from
- *   a crosswalk this repository has not yet read.
+ *   a crosswalk this repository hasn't yet read.
  */
 
 /**
@@ -29,7 +29,7 @@
  *
  * UPU's list required one repair first.
  * The selector answers `ROU` for Romania, and codex's alpha-3 table had filed Romania under `ROM`,
- * the code ISO replaced in 2002, so Romania was the single entry that would not resolve.
+ * the code ISO replaced in 2002, so Romania was the single entry that wouldn't resolve.
  */
 export const S42_TEMPLATE_JURISDICTIONS: readonly string[] = [
 	"AU",
@@ -111,7 +111,7 @@ export const S42_TEMPLATE_JURISDICTIONS: readonly string[] = [
  *
  * These eleven are the 2010 group of seventeen minus {@linkcode S42_COHORT_2010_ADDITIONS},
  * so the retrieved 2010 list is what attests them jointly.
- * UPU's own 2006 statement has not been retrieved.
+ * UPU's own 2006 statement hasn't been retrieved.
  */
 export const S42_COHORT_2006: readonly string[] = ["AU", "BR", "CL", "FI", "FR", "GB", "MA", "NL", "NZ", "US", "VE"]
 
@@ -164,7 +164,7 @@ const COHORT_2010 = new Set(S42_COHORT_2010_ADDITIONS)
  * when the inventory covers no template for it.
  *
  * `null` states that no approved crosswalk exists for that country.
- * It does not state that the country lacks an addressing system.
+ * It doesn't state that the country lacks an addressing system.
  */
 export function s42CohortForJurisdiction(iso2: string | null): S42Cohort | null {
 	if (!iso2) return null

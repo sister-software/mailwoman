@@ -96,7 +96,7 @@ export interface StateCarrier<TState extends string, TRecord extends object> {
  *   and the carrier was not called.
  * - `applied`: the carrier wrote the step, and every effect ran.
  * - `conflict`: the store left `from` before the write.
- *   The row keeps the other writer's values, and the effects did not run.
+ *   The row keeps the other writer's values, and the effects didn't run.
  *   The caller reads the state again and decides from it.
  */
 export interface StepOutcome<TState extends string, TRecord extends object, TEffect extends MachineEffect> {

@@ -364,7 +364,7 @@ export function isImportMeta(expression: ts.Expression, property: string): boole
 }
 
 /**
- * The literal text of every argument, or `null` when one is not a literal.
+ * The literal text of every argument, or `null` when one isn't a literal.
  */
 export function literalSegments(args: readonly ts.Expression[], depth: number): string[] | null {
 	const segments: string[] = []
@@ -480,7 +480,7 @@ function holdsScratchValue(scope: FileScope, identifier: ts.Identifier, depth = 
 
 /**
  * The scratch path a call on a scratch value names: the segments of that call,
- * or `*` when one is not a literal.
+ * or `*` when one isn't a literal.
  */
 function scratchTarget(args: readonly ts.Expression[], depth: number): ResolvedTarget {
 	const segments = literalSegments(args, depth)
@@ -693,7 +693,7 @@ function resolveCall(scope: FileScope, call: ts.CallExpression, depth: number): 
 }
 
 /**
- * The rooted path `expression` names, or `null` when its value depends on something the file does not state.
+ * The rooted path `expression` names, or `null` when its value depends on something the file doesn't state.
  */
 export function targetOfExpression(scope: FileScope, expression: ts.Expression, depth = 0): ResolvedTarget | null {
 	if (depth > CONSTANT_DEPTH * 2) return null

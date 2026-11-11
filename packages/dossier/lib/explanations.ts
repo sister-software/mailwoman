@@ -109,7 +109,7 @@ export interface AvailabilityCheck {
 }
 
 /**
- * A source's statement that one explanation applies, or does not apply, to a building.
+ * A source's statement that one explanation applies, or doesn't apply, to a building.
  *
  * A provider's survey that reports a full cabinet is one example.
  * A landlord's letter that grants access is another.
@@ -122,7 +122,7 @@ export interface BlockerObservation {
 	 * `true` when the source states that the blocker applies.
 	 * Such a statement supports the explanation.
 	 *
-	 * `false` when the source states that the blocker does not apply.
+	 * `false` when the source states that the blocker doesn't apply.
 	 * Such a statement conflicts with the explanation.
 	 */
 	applies: boolean
@@ -216,7 +216,7 @@ export interface Investigation {
 	 */
 	ifHolds: string
 	/**
-	 * The next action if the investigation finds it does not hold.
+	 * The next action if the investigation finds it doesn't hold.
 	 */
 	ifFails: string
 }
@@ -709,7 +709,7 @@ function openWindowText(window: ConstructionWindow, date: ISODate): string {
 /**
  * Where an availability record states its provider's service, in the words of a statement.
  *
- * A record with an extent states availability over that extent, and it does not say
+ * A record with an extent states availability over that extent, and it doesn't say
  * which premises in the extent are served.
  * The statement then gives the extent in place of the building's label.
  */
@@ -718,8 +718,7 @@ function availabilityPlace(record: ProviderAvailability, label: string): string 
 }
 
 /**
- * Installation is supported by a construction window of the building that had
- * not closed on the check's date.
+ * Installation is supported by a construction window of the building that hadn't closed on the check's date.
  *
  * It conflicts with a window that had closed, a completed unit count, and any
  * provider's availability recorded for the building on that date.

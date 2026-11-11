@@ -66,15 +66,15 @@ Do not re-run these:
 
 - **Venue pairs (#1287)** and **street pairs (#1288)** were filed with probe designs and measured
   open. Venue/street surfaces are _generative_ (`Queens Park Cafe`, `North Cadbury Village Stores
-Ltd`) — they are BUILT from real place names, so a place-pair index matches fragments of them and
+Ltd`) — they're BUILT from real place names, so a place-pair index matches fragments of them and
   floods false positives. The confound is the mechanism's shadow rather than an edge case.
 - The related **healthy-tag reassignment** hypothesis (re-tagging namesakes) was also FALSIFIED:
   the parse was never wrong there (189/189 region tagging held). A prior that fires where the model
   is already right adds no benefit and risks regressions.
 
 The dividing line: a pair index biases a span the model _reads as one place_. If the target span is
-routinely embedded inside a longer generative name, you are on the open-vocab side of the wall and
-this recipe does not apply. The one change that graduated to a build proposal beyond
+routinely embedded inside a longer generative name, you're on the open-vocab side of the wall and
+this recipe doesn't apply. The one change that graduated to a build proposal beyond
 `dependent_locality` is **transition-level evidence** (β on the boundary transition) rather than a new tag
 class — see the Calibrate section.
 
@@ -253,7 +253,7 @@ knob iteration inside a pre-registration, and no dropped failing rows. The batte
 | Board                                  | What it measures                                         | Bar shape                                              |
 | -------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------ |
 | Golden dep-loc board                   | emit + tag-correct recall, prior on at δ\*               | materially above the `0/N` floor, tag-correct majority |
-| Golden no-DL FP                        | false emission where there is no dependent locality      | **0** at every δ                                       |
+| Golden no-DL FP                        | false emission where there's no dependent locality       | **0** at every δ                                       |
 | Comma-stripped metamorphic             | the anchored path on comma-free input                    | ≥ ~50/69 emit, ≥ 90% tag-correct (GB); do not regress  |
 | Venue-confound FP (real data)          | fragments of real venue names embedding real place names | ≤ 5% at δ\* (segment floor ~3.3%)                      |
 | Invariance `--baseline v385`           | label-preserving perturbations don't move the coordinate | no new drift, profile no worse than baseline           |
@@ -367,14 +367,14 @@ The invariants (§5 of the road-to-v8 roadmap) plus what the arc added:
 - **The closed-vs-open-vocab wall is structural.** Place names (closed) work. Venue/street spans
   (open, generative) do not, and no amount of suppression tuning crosses it. The marker-word list
   (`house`, `road`, `street`, `flat`, `court`) and the title-preposition list (`at`, `of`) are
-  narrow, per-entry-justified lexical defenses, never a general venue-boundary detector. That is
+  narrow, per-entry-justified lexical defenses, never a general venue-boundary detector. That's
   why the segment restriction exists _alongside_ them rather than instead of them. Grow either list only
   with a per-word rationale line.
 - **The postcode-in-parent-field segment gap (#1308).** Free-text and idiomatic addresses write the
   postcode in the same comma-field as the post town with no comma between them (`…Plimmerton,
 Porirua 5026`). Strip a trailing postcode-shaped run from a parent-candidate segment key (per the
   header country's codex shape) before probing, on the segment path only. The anchored path already
-  anchors left of the whole postcode span. Only a trailing run, never a segment that is only a
+  anchors left of the whole postcode span. Only a trailing run, never a segment that's only a
   postcode, and only for a country with a known codex shape (else byte-stable).
 - **Provenance is loud or it lies.** Per-country self-check probes (#1283), the `serializePairIndex`
   duplicate throw, the header md5s, and the freshness guard all exist because a reassuring-looking

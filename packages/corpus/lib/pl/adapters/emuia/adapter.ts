@@ -13,7 +13,7 @@
  * yields one member subtree at a time, so neither a page nor a whole extract sits in memory.
  *
  * The payload is the Polish register's own schema rather than the harmonized INSPIRE model: a member's
- * element names are the register's columns and every address value is inline, so there is no
+ * element names are the register's columns and every address value is inline, so there's no
  * `ad:ThoroughfareName` to join to and no `xlink:href` to resolve. Read with that same function over
  * 500 members across ten windows spread through the service, a member holds 21 children and never a
  * twenty-second. The children are `gml:boundedBy`, `ms:msGeometry` and these nineteen columns: `ms:id`,
@@ -33,7 +33,7 @@
  *
  * `ms:jednostkaadmnistracyjna` holds the administrative path as a PostgreSQL array literal,
  * `{Polska,łódzkie,"Piotrków Trybunalski","Piotrków Trybunalski"}`, whose second element is the
- * voivodeship. It is left unread: a Polish postal address does not include the voivodeship, the codex
+ * voivodeship. It is left unread: a Polish postal address doesn't include the voivodeship, the codex
  * layout for `PL` leaves a `region` component unplaced, and parsing a quoted array literal to reach a
  * value the layout leaves unplaced would cost a parse and reach no rendered component.
  *

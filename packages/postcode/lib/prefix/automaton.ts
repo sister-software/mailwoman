@@ -20,7 +20,7 @@
  *   `postcodeSyntax` compiles it.
  *
  *   One assertion is approximated. A `\b` or `$` reached at the end of the prefix depends on the character that
- *   follows. The prefix does not contain that character, so the automaton lets the assertion pass. That can only widen the answer:
+ *   follows. The prefix doesn't contain that character, so the automaton lets the assertion pass. That can only widen the answer:
  *   no completable prefix is refused. Bahrain's pattern is the one that uses `\b`, at its two ends.
  */
 

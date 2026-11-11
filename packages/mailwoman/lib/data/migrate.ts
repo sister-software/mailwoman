@@ -12,7 +12,7 @@
  *
  *   The plan registers each importable file in place as a `legacy` installation, without moving or copying
  *   it, and selects it for the role and scope its reader already resolves. The geocoder therefore reads the
- *   same file before and after. A field the file does not record stays unrecorded. The rollback restores the
+ *   same file before and after. A field the file doesn't record stays unrecorded. The rollback restores the
  *   generation the migration replaces, or removes `active.json` when none existed.
  *
  *   This module plans only and writes no file.

@@ -13,7 +13,7 @@ duplicate-helper pattern that `AGENTS.md` describes for TypeScript and that no c
 
 Two requirements shape the target. First, a reader can find where a thing lives. Second, the tree can hold every
 country. The per-country Python code today is eight modules for three countries, and the plan covers every country,
-so a layout that adds one top-level entry per country would not scale.
+so a layout that adds one top-level entry per country wouldn't scale.
 
 ## 2. What exists, measured
 
@@ -247,7 +247,7 @@ them against the literal strings extracted from the current file. The collapse l
 `modal run -m launch.sync --version v5.6.0`. The old string appears in `REPRODUCIBILITY.md:28,31`,
 `packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts:24`, `modal/AGENTS.md`, the `night-shift` and
 `training-arc` skills, and the fixture strings in `packages/dev-mcp/lib/hooks/bash/write/bash-write-guard.test.ts`. The compiler
-reads none of them, so they are updated as quoted literals per the "Moving a workspace" rule in `AGENTS.md`.
+reads none of them, so they're updated as quoted literals per the "Moving a workspace" rule in `AGENTS.md`.
 
 The Bash write guard is unaffected, because `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196` matches
 `head: "modal"` rather than a filename.
@@ -303,7 +303,7 @@ Steps 1 through 7 touch no file a Modal run reads before merge. Step 8 changes e
 - No intra-package import inside a function body imports a module that transitively imports the module holding it.
   This detects a regression of §3.1, and it flags a cycle rather than every deferred import.
 
-  A deferred import is not a defect on its own. Measured on this branch, `mailwoman_train.cli` imports in 22,340 µs
+  A deferred import isn't a defect on its own. Measured on this branch, `mailwoman_train.cli` imports in 22,340 µs
   while `mailwoman_train.train` takes 1,458,740 µs, so the 32 deferred imports in `cli.py` keep torch's 1.46 s off
   every `--help`. Of the 63 deferred intra-package imports in the tree, five exist to avoid a cycle (`tokenizer.py`
   at 541, 550, 566, 583 and 598), and the other 58 reduce startup time.
@@ -313,7 +313,7 @@ Steps 1 through 7 touch no file a Modal run reads before merge. Step 8 changes e
 
 ## 12. Deliberately out of scope
 
-- `config.py`'s loader semantics. It moves and is not rewritten.
+- `config.py`'s loader semantics. It moves and isn't rewritten.
 - The `configs/*.yaml` recipe files. Active and queued jobs refer to them by name.
 - `corpus-python/` as a directory name. It appears as a string in `package.json`, `.husky/pre-commit`,
   `.github/workflows/test.yml`, `knip.json`, `oxlint.config.ts`, `.github/dependabot.yml`, `REPRODUCIBILITY.md`, and

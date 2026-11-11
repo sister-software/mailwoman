@@ -13,7 +13,7 @@
  *   module to a shared home only with a parity test over that family's own lexicon.
  *
  *   A `Map<string, number>` keeps one JavaScript string and one table entry per key. For a lexicon of a few hundred
- *   thousand place names that is tens of MiB of heap. This table keeps the keys' UTF-8 bytes in one buffer, their offsets
+ *   thousand place names that's tens of MiB of heap. This table keeps the keys' UTF-8 bytes in one buffer, their offsets
  *   and values beside them, and an open-addressing slot table, so the heap holds a handful of objects.
  *
  *   For the 392,653-entry locality-surface lexicon the four buffers take about 10 MiB, against about 18 MiB of heap for

@@ -156,8 +156,8 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 			options.out ?? dataRootPath("postcode-prefix", `postcode-prefix-${recipe.scope}-${day}.bin`)
 		)
 
-		// The database's own meta is the authority on where it came from and what it does
-		// not cover, so re-deriving that prose here would let the two drift.
+		// The database's own meta is the authority on where it came from and what it doesn't
+		// cover, so re-deriving that prose here would let the two drift.
 		const source = built.meta.source ?? "(unrecorded — the database's meta carries no `source`)"
 		const attribution = built.meta.attribution ?? "(unrecorded — the database's meta carries no `attribution`)"
 		const tier: PostcodePrefixTier = built.meta.tier === "build-local" ? "build-local" : "shipped"

@@ -27,10 +27,10 @@ before comparing two training arms. A comparison uses three instruments from it:
 1. **Build a real-OOD eval before training.** Build (or find) the held-out real-world eval for your
    tag _first_. Pre-register the acceptance bar, including target numbers and no-regression bounds,
    as a comment in the training config before step 1 runs. If you cannot define the acceptance bar,
-   you are not ready to train.
+   you're not ready to train.
 2. **Never compare F1 across tokenizer versions.** A comparison is valid only with the same
    tokenizer (`per-locale-f1.ts --tokenizer` enforces this, and the model card records the version).
-3. **Compare fp32-to-fp32.** Int8 is a release artifact and should not be used to compare
+3. **Compare fp32-to-fp32.** Int8 is a release artifact and shouldn't be used to compare
    experiments.
 4. **Change one variable per run.** Prove each change on its own, then consolidate. A single 20k run that stacks corpus
    recipes in one 20k run dilutes every tag. This was measured twice. See the cumulative-dilution
@@ -73,7 +73,7 @@ before comparing two training arms. A comparison uses three instruments from it:
    earlier check as retained, replaced, retired or retained-pending.
 
    _History._ The D-rule (adopted 2026-07-26, ROAD_TO_MAILWOMAN_V8_1_0 §2/§5) stated that a
-   default-on mechanism must not ship with a known regression against the shipped model on any tier-1
+   default-on mechanism mustn't ship with a known regression against the shipped model on any tier-1
    locale, with DE and GB added through `dRuleProtected`. It was adopted because #1318 shipped
    default-on with a −6.8pp FR admin-street-homonym regression behind a bar revision. From
    2026-10-18 a model promotion measured it on held-out address-row span recall against the gap
@@ -133,7 +133,7 @@ before comparing two training arms. A comparison uses three instruments from it:
    Most of the tree already follows this rule: of 15 boolean `ResolveOpts` flags, 12 have a test
    that sets them to `true`. The rule is written down so that the remaining three (`parentFallback`,
    `addressPointBboxFallback`, `diagnoseUnreachable`) are recognized as a gap, and so that the next
-   mechanism behind a flag does not join them.
+   mechanism behind a flag doesn't join them.
 
 ## Which tool for which tag (the change-shape taxonomy)
 
@@ -144,7 +144,7 @@ before comparing two training arms. A comparison uses three instruments from it:
   model and never overrides it. We measured the override version and reversed it. Read
   [Closed-vocab fields: model-first](./reference/closed-vocab-fields-model-first.mdx) before
   proposing a deterministic tagger.
-- **A closed-vocab place-hierarchy tag the model does not emit** (`dependent_locality`, a child
+- **A closed-vocab place-hierarchy tag the model doesn't emit** (`dependent_locality`, a child
   place under a parent): restore it at decode time with a
   **retrieval-augmented pair-index overlay** on the unchanged base model, without retraining. This
   is now a repeatable per-country recipe. Follow
@@ -167,7 +167,7 @@ effective gradient mass). Every weight and architecture change failed because th
 determined the outcome. First audit what the base corpus contains for your tag's surfaces
 (`packages/mailwoman/tools/dev-tools/audit-affix-misses.run.ts` is the template, with per-row miss
 classification and an absorption check). If the base contradicts the recipe output, fix it with a
-relabel pass that makes the mix agree. A bigger weight does not fix it. A related result, measured on
+relabel pass that makes the mix agree. A bigger weight doesn't fix it. A related result, measured on
 v4.3.0: relabeling one boundary loosens its neighbors, so pre-register watches on the adjacent
 classes (#513).
 
@@ -180,8 +180,8 @@ Four mechanisms specialize a locale, from least to most parameter isolation:
    and never the posterior, so the graph holds no in-graph delegate and zero parameters per locale.
 2. **A data-only weights overlay** that declares `mailwoman.baseWeights` and ships no `model.onnx`.
 3. **The script-routed second graph**, the `cjk` family in
-   `packages/neural/lib/weights/families.ts`. The Latin family declares no routing predicate. That
-   is what keeps every Latin request on `en-us`.
+   `packages/neural/lib/weights/families.ts`. The Latin family declares no routing predicate. That's
+   what keeps every Latin request on `en-us`.
 4. **A second Latin graph.** This rung is empty: `base-latn` is a parked deduplication package
    that symlinks the `en-us` card rather than a trained base.
 
@@ -239,7 +239,7 @@ Run the battery for _every_ candidate, regardless of what you changed. This is w
 | Autocomplete ladder | `mailwoman eval autocomplete --country <CC>` (#2154)                                                         | report-only: first-hit rung, churn, latency per band |
 
 The input-robustness check is the metamorphic layer of the Gauntlet: label-preserving
-perturbations that must not move the assembled coordinate. See
+perturbations that mustn't move the assembled coordinate. See
 [Input robustness](../records/site-2026-08/concepts/input-robustness.mdx) for the absorption layers
 behind it and the coverage matrix.
 
@@ -282,7 +282,7 @@ libpostal clean arena −6), which per-promote batteries cannot catch by design.
 ### Floor policy — floors ratchet at re-scores, never drift on promotes ([#899](https://github.com/sister-software/mailwoman/issues/899))
 
 This policy complements the cadence rule. It was decided _before_ a promote needed it, so promotion
-pressure did not shape it:
+pressure didn't shape it:
 
 1. **Between re-scores, floors are fixed.** A measured value equal to the floor is a `PASS`, and a
    zero margin is legal. A promote that dips below a floor fails. A promotion below the floor requires a spec
@@ -305,7 +305,7 @@ pressure did not shape it:
 and `fr.postcode` 99.3, are **knife-edge accepted**. Both were set to measured values at the
 operator-approved v4.15.0 revision (the #723 anchor-pollution trade), and both stayed byte-exact
 across the v5.1.0 tokenizer swap. The anchor-fed postcode channel is structurally stable, so the
-zero margin comes from how the floors were set and does not indicate fragility. Any dip triggers
+zero margin comes from how the floors were set and doesn't indicate fragility. Any dip triggers
 rule 1, and the [#901](https://github.com/sister-software/mailwoman/issues/901) campaign acceptance
 bar must list both postcode floors explicitly.
 
@@ -314,14 +314,14 @@ bar must list both postcode floors explicitly.
 The floor policy above governs floors on a fixed answer key. A golden version bump that changes the
 labeling convention is a different case. It produces numbers that look like the old ones and appear
 in the same cell, but they measure something else. A floor kept across such a bump can produce a
-confident verdict that is wrong in either direction.
+confident verdict that's wrong in either direction.
 
 The worked example is `us.street`. Golden through **v0.1.2** wrote a US street as one folded span
 (`"Main St"`), while the corpus splits it (`street: "Main"`, `street_suffix: "St"`; see
 [SCHEMA](./reference/SCHEMA.mdx#the-us-street-split-is-canonical--street_suffix-is-its-own-span)).
 `per-locale-f1.ts` joined the model's spans back together so the two could be compared. The v9.0.0
 candidate read `us.street` **87.4** against v7.0.0-base's **87.8** floor and failed the battery. The
-street tag had not regressed. The answer key and the corpus disagreed, and the scorer hid the
+street tag hadn't regressed. The answer key and the corpus disagreed, and the scorer hid the
 difference. Golden **v0.1.3** moves the key onto the corpus convention
 (`mailwoman corpus golden-relabel`). The key declares the convention in its `MANIFEST.json`, and the
 scorer reads the declaration per row. On the corrected key, the same two artifacts score **71.7**
@@ -335,13 +335,13 @@ When a golden version changes a convention:
    in a scorer conceals that.
 2. **Derive a new spec, and never edit floors in place.** `v9.0.0-base.json` is the precedent.
 3. **Re-anchor the affected floors on a fresh reading of the shipped baseline**, on the new key,
-   through the ship config. Floors on metrics the bump did not change still only move up
+   through the ship config. Floors on metrics the bump didn't change still only move up
    (`max(old, re-derived)`). Floors whose metric changed are re-anchored directly, and their
    `$derivation` records that. In v9.0.0-base, exactly two floors are re-anchored: `us.street` and
    `us.micro`.
 4. **The answer key records its own convention.** A key that declares its convention cannot be
    graded under the wrong one by accident. This rule exists to prevent that failure, and a flag that
-   someone has to remember to pass would not have prevented it.
+   someone has to remember to pass wouldn't have prevented it.
 5. **The relabel ships a review deck.** The deck contains every changed row with before/after
    labels, the rows the tool declined to change, and a flagged subset for the operator to decide. A
    mechanical relabel of an answer key is a claim about ground truth, so it is reviewed as one.
@@ -373,7 +373,7 @@ tokenizer-training time.
 
 ### Eval design rules
 
-The battery grades a candidate. The rules below govern the design of a probe or an eval that is
+The battery grades a candidate. The rules below govern the design of a probe or an eval that's
 meant to attribute an effect.
 
 1. **A withheld-gold stratum is complete only under the identity relation the data has.** A
@@ -387,7 +387,7 @@ meant to attribute an effect.
 2. **A crossed design that swaps a component's value between rows ranks values and cannot detect
    that the component's presence is the carrier**, because every cell, the control included,
    contains one. Run the absence arm (present against removed) before attributing an effect to the
-   varied axis, and compare graded row counts between arms so that a degenerate arm is not read as
+   varied axis, and compare graded row counts between arms so that a degenerate arm isn't read as
    a result.
 3. **A crossed probe with one donor value per axis cannot separate "changing the value releases
    the span" from "this donor value is special".** Use at least three donors per axis drawn across
@@ -406,7 +406,7 @@ meant to attribute an effect.
    breakdown of a score is no evidence that the per-country path ran. Verify the route, the
    resolved artifacts per row, rather than the grouping key.
 6. **An eval that grades a resolver tier grades the population production sends to that tier.**
-   Without the cascade every row lands at the admin tier. That is right for studying a mechanism
+   Without the cascade every row lands at the admin tier. That's right for studying a mechanism
    and wrong for sizing its effect. The US ladder reads postcode-first over 10,000 panel rows but
    decides only the roughly 577 rows the rooftop cascade cannot place, and on that population
    locality-first wins. Before promoting a per-country tier, split the population on whatever the
@@ -461,7 +461,7 @@ resolver mechanism ships.
   per-register table, and `--all-municipalities` for every held-out name. A row-weighted number moves 2 pp on one
   held-out municipality, so the pre-registration lists the municipalities it targets. `gold-exact` counts rows the
   kanji-keyed table cannot key (a kana-register surface) whose prediction equals the gold span. It is reported but is
-  never part of the check. Score the arm you are replacing with the same scorer in the same run. If the scorer is
+  never part of the check. Score the arm you're replacing with the same scorer in the same run. If the scorer is
   patched between two reads, the comparison measures the scorer change.
 - **The served read.** `packages/mailwoman/tools/dev-tools/served-board-resolve.run.ts` geocodes board rows through the
   installed package and the candidate gazetteer and grades the resolver's coordinate on the board's own point, under
@@ -491,8 +491,8 @@ rate controls how far the weights can move, and a fine-tune deliberately lowers 
 (5e-4 peak, tens of thousands of high-LR steps under a cosine anneal) can move any weight anywhere,
 and rare classes receive enough visits and gradient updates to be learned. A fine-tune (1e-5, ~8k
 steps) can move the weights only a short distance from their starting point. That limit is
-intended, because a fine-tune must not destroy the base. It has two structural consequences. They
-are opposite sides of the same effect:
+intended, because a fine-tune mustn't destroy the base. It has two structural consequences. They're
+opposite sides of the same effect:
 
 - **Rare-class forgetting:** the base had learned fr.cedex. Each fine-tune's gradient mass pulled
   toward its own objective, and the small cedex classes eroded (~10/430 CA rows, measured across
@@ -510,7 +510,7 @@ The same run produced three more results:
    ancestor bases on feeds that no longer exist persist without any record. The v4.0.0 run
    exposed one: FR venue-led parsing ("MR & MRS CRAB, 20 Rue de la Huchette…") existed only by
    inheritance. The current feed's `source_weights` never admitted a venue source
-   (`synth-house-venue` is not in the map, and an unlisted source is dropped), so the from-scratch
+   (`synth-house-venue` isn't in the map, and an unlisted source is dropped), so the from-scratch
    model never saw the class and regressed on it. Audit rule: **before any base run, diff the
    feed's `source_weights` against the capabilities you expect.** A source missing from the map is
    missing from the model.
@@ -519,7 +519,7 @@ The same run produced three more results:
    cosine anneal, and the decay never appears. A grade for every save is still cheap insurance, but the
    decay belonged to the recipe class rather than to the bundle.
 3. **Floor-support calibration.** The v6.0.0 spec's margin rule falls back to 2.0pp "where a
-   scorer's support is not exposed". us.street_prefix's floor (96.0) was derived with that fallback
+   scorer's support isn't exposed". us.street_prefix's floor (96.0) was derived with that fallback
    on a metric whose true support is n=25 (2σ ≈ ±12pp). A 3-row recall dip then fails the floor.
    When a floor trips, check where its margin came from against the metric's actual support before
    spending a contingency run.
@@ -528,7 +528,7 @@ The same run produced three more results:
 scheduler and step restore exactly (the v4.0.0 run was resumed across a Modal timeout at 59,900 and
 completed with the same behavior). You cannot "just continue" past the end of a cosine schedule. The
 anneal ends at LR 0 by design, so extending a finished run requires a new schedule. The new schedule makes it a
-new training process with new dynamics. A fine-tune is not a resume either. It is a new process
+new training process with new dynamics. A fine-tune isn't a resume either. It is a new process
 initialized from old weights, with the learning rate ~50x lower. Resume, extend, and fine-tune are
 three distinct operations, and a recipe must state which one it uses.
 

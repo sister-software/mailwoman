@@ -128,7 +128,7 @@ Each scenario in the spec is one `describe` block in the test beside the module 
 
 `packages/dossier/tsconfig.json` is `packages/evidence/tsconfig.json` with `"references": [{ "path": "../evidence" }, { "path": "../record" }]`. `packages/dossier/tsconfig.test.json` is `packages/evidence/tsconfig.test.json` unchanged.
 
-`packages/dossier/README.md`: three paragraphs. What a dossier is (the spec's definition). What the package does and does not do (validates and projects supplied records, acquires no source, computes no cost). Where the scenarios live (`lib/*.test.ts`, fixtures in `test/fixtures/example-house.ts`).
+`packages/dossier/README.md`: three paragraphs. What a dossier is (the spec's definition). What the package does and doesn't do (validates and projects supplied records, acquires no source, computes no cost). Where the scenarios live (`lib/*.test.ts`, fixtures in `test/fixtures/example-house.ts`).
 
 - [ ] **Step 2: Register the workspace**
 
@@ -141,7 +141,7 @@ Root `tsconfig.json`: add `{ "path": "./packages/dossier" }` after the `./packag
 		"published package awaiting the bless-package first publish of its npm name; move it to .release-it.json once blessed",
 ```
 
-`packages/release-kit/lib/release/smoke/clean-install.ts`: add `"@mailwoman/dossier": "packages/dossier",` beside the `@mailwoman/evidence` entry at line 19, and read the file's header to confirm the pack set admits a workspace that is held out of the release list. If it refuses one, leave the entry out and say so in the report.
+`packages/release-kit/lib/release/smoke/clean-install.ts`: add `"@mailwoman/dossier": "packages/dossier",` beside the `@mailwoman/evidence` entry at line 19, and read the file's header to confirm the pack set admits a workspace that's held out of the release list. If it refuses one, leave the entry out and say so in the report.
 
 `docs/engineering/reference/workspaces.mdx`: one row after `packages/evidence/`:
 

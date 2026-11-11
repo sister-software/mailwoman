@@ -8,7 +8,7 @@
  *   It writes the overlay files and updates the required registration lists so
  *   setup is consistent and less error-prone.
  *
- *   It intentionally does not edit `.github/workflows/publish.yml` because
+ *   It intentionally doesn't edit `.github/workflows/publish.yml` because
  *   artifact lines there are explicit and should stay a manual choice.
  *
  *   Usage:
@@ -99,7 +99,7 @@ export async function scaffoldWeightsOverlay(
 			license: "AGPL-3.0",
 			type: "module",
 			// `directory` names this package.
-			// It is the field that has been wrong every time a weights overlay was created by copying a sibling.
+			// It is the field that's been wrong every time a weights overlay was created by copying a sibling.
 			repository: {
 				type: "git",
 				url: "https://github.com/sister-software/mailwoman.git",

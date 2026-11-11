@@ -106,7 +106,7 @@ export interface StubTransportOptions {
 	/**
 	 * Records a timestamp into {@linkcode StubTransport.dispatchTimes} on every dispatch.
 	 *
-	 * Omit when timing is not under test.
+	 * Omit when timing isn't under test.
 	 */
 	clock?: { now(): number }
 	/**
@@ -125,7 +125,7 @@ export interface StubTransportOptions {
  * that field only rather than building headers and a config.
  * Several bodies script a reader that asks twice, such as a count checked against a page.
  *
- * This lives beside {@linkcode stubTransport} so that a workspace which does not
+ * This lives beside {@linkcode stubTransport} so that a workspace which doesn't
  * depend on `axios` can still stub the method: the axios type is stated here,
  * in core, rather than by the test that calls this.
  */

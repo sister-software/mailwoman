@@ -26,10 +26,14 @@ a request",
 Status codes are a closed enumerable table, one line each. A reader can match a status string without
 reading prose.
 
+<!-- verbatim-quote -->
+
 Take: version forks that stay side-by-side with a migration pointer, and errors as a closed set. Refuse: the
 same product under two names by page ("v3" in one nav, "Legacy products" in another), an error entry that
 restates its own name and stops (`UNKNOWN_ERROR`, "could not be processed due to a server error"), and cost
 facts split across a doc page, a calculator and a console with no single worked total.
+
+<!-- /verbatim-quote -->
 
 ### Mapbox
 
@@ -74,7 +78,7 @@ with a stable message-code string.
 Take: a reading-time estimate at the top of each guide, the URL-anatomy diagram, and an error table whose codes
 are grep targets. Refuse an attribution block repeated byte-identically across every SDK page. Refuse a typo
 inside a shipped JSON example (`souce_id`). Such a typo propagates into the reader's own type definitions where a
-prose typo would not. Refuse the full site-tree sidebar rendered on every page regardless of where a reader landed.
+prose typo wouldn't. Refuse the full site-tree sidebar rendered on every page regardless of where a reader landed.
 
 ### Felt
 
@@ -83,7 +87,7 @@ Felt runs three separately-branded properties: [help.felt.com](https://help.felt
 split means a GIS analyst troubleshooting a shapefile upload never reads code-flavored prose unless they
 click through. Limits arrive as ceiling plus next action in one sentence pair ("up to 10,000 addresses per
 upload. If you need a higher limit, contact sales"), and hard constraints are stated ahead of the procedure
-they would break: [wms-wmts](https://help.felt.com/data-sources/cloud-sources/wms-wmts) states that HTTP is
+they'd break: [wms-wmts](https://help.felt.com/data-sources/cloud-sources/wms-wmts) states that HTTP is
 unsupported before its six-step connect walkthrough rather than partway through it.
 
 Take: caveats that state a next action as well as a limit, a small reused noun chain (source → layer → map) taught
@@ -180,10 +184,10 @@ rather than by reordering the negation.
    reader comparing two pages should find them different where the subjects differ.
 3. **Code examples use real places.** Use London or an address from the test corpus, never lorem placeholders.
    Examples on `reference` pages are generated or executed, because a typo inside copy-pasteable code
-   propagates into the reader's own code where a prose typo would not.
+   propagates into the reader's own code where a prose typo wouldn't.
 4. **Admissions take the flat-fact plus next-step form.** Do not put bare FAQ fragments in flowing prose.
 5. **Quoted third-party voice is typographically separated from house voice.** A reader must be able to tell
-   whose claim they are evaluating.
+   whose claim they're evaluating.
 6. **Version forks stay navigable side by side** with one migration pointer, and the old version keeps one
    name in every nav and on every page.
 7. **Keep marketing and legal content outside the technical tree**, as siblings rather than nodes inside it.
@@ -201,12 +205,12 @@ rather than by reordering the negation.
 
 `docs/glossary/glossary.json` is the term registry: 327 terms, each with a definition, tags, aliases and
 related terms. A remark plugin auto-links occurrences in published pages, guarded against proper-noun false
-positives (`docs/plugins/glossary/remark.ts`), so a term does not need a manual link to acquire a tooltip.
+positives (`docs/plugins/glossary/remark.ts`), so a term doesn't need a manual link to acquire a tooltip.
 
 **Define, then link.** On first use in a page, define the term in one sentence in the running prose, and let
 the registry link provide the depth. Do not send a first-time reader to the registry mid-sentence for the
-concept the page is about. That is the recursive-hop failure the Mapbox survey records. Do not re-derive a
-definition on the third page that needs it either. That is the repetition cost the Felt survey records. One
+concept the page is about. That's the recursive-hop failure the Mapbox survey records. Do not re-derive a
+definition on the third page that needs it either. That's the repetition cost the Felt survey records. One
 sentence locally, the registry for the rest.
 
 **A new term.** A concept used on two or more pages warrants a registry entry. Add it to
@@ -252,9 +256,9 @@ structural, and a rule that matched them would also match correct prose.
 2. **Rule-of-three padding.** Two short clauses then a longer one, or three adjectives where the third
    restates the first two. Fix: keep the one precise descriptor.
 3. **Vague attribution.** `Developers find`, `it is widely considered`. Fix: state who, or remove the sentence.
-4. **Filler intensifiers.** Words that prop up a claim the evidence does not support. Vale catches the common
+4. **Filler intensifiers.** Words that prop up a claim the evidence doesn't support. Vale catches the common
    ones. The pattern is the target rather than the token list.
-5. **Contrastive negation.** A topic framed by what it is not, especially when no one proposed the
+5. **Contrastive negation.** A topic framed by what it isn't, especially when no one proposed the
    negated thing. Fix: state the positive claim.
 6. **Manufactured cadence.** Strings of clipped sentences, or a paragraph ending on a quotable line rather
    than an informative one. Fix: end on the sentence that states information.
@@ -263,7 +267,7 @@ structural, and a rule that matched them would also match correct prose.
 8. **Uniform paragraph shape.** Every paragraph the same length, topic sentence plus three supports plus a
    kicker. Fix: let a short thought be one line.
 9. **Restatement.** The same point in a heading, the first sentence, and a summary box. Fix: keep one.
-10. **Expansion.** A draft that is longer than the facts require. Fix: shorten it. This is the most reliable
+10. **Expansion.** A draft that's longer than the facts require. Fix: shorten it. This is the most reliable
     single improvement available to any draft on this list.
 
 Two habits sit under the checklist. Rewrite the thought rather than swapping the flagged word, because a
@@ -317,10 +321,10 @@ pull request touches `docs/`.
 
 Inline code spans and fenced code blocks are excluded from linting, so a banned token can appear in
 backticks — which is how the canonical terms table above states the spellings it forbids. Frontmatter is
-stripped before linting, so a `source-of-truth:` key is not read as prose.
+stripped before linting, so a `source-of-truth:` key isn't read as prose.
 
 The exemption applies to Markdown only. Inside a `.ts` or `.py` file, Vale reads a code comment as plain
-text: there is no inline-code exemption, and a `vale off` marker has no effect there, so a code-sense hit
+text: there's no inline-code exemption, and a `vale off` marker has no effect there, so a code-sense hit
 in a comment (`BE`, `ON`, a SQL keyword) is written around rather than excused. The capitals rule's word
 list is finite. Its two-letter words match only before a lowercase word, and `FROM` is absent from the
 list. Each is a measured false-positive class.

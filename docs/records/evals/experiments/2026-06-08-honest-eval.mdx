@@ -6,14 +6,14 @@ geographic split + #373 PIP-containment). Numbers are written by the harness, ne
 ## Why a new yardstick
 
 Every resolver number we have ever quoted shares a flaw: the eval set and the training corpus
-cover the same places. A model that has seen Springfield, Illinois a thousand times in training
-will "resolve" it on the eval — but that is recall of a memorized place rather than generalization. And
+cover the same places. A model that's seen Springfield, Illinois a thousand times in training
+will "resolve" it on the eval — but that's recall of a memorized place rather than generalization. And
 the headline metric made it worse. We graded resolution by **locality name-match**: did the
 resolved place have the same name string as the gold? That question is blind to the failure that
 matters — resolving the right _name_ in the wrong _place_. "New York" matches "New York"
 whether the point lands in Manhattan or in a village 280km upstate.
 
-So this harness measures two things the old one could not:
+So this harness measures two things the old one couldn't:
 
 1. **A leakage-free set.** Evaluate only on OpenAddresses rows whose geography the training
    corpus held out (`corpus/src/split.ts` `defaultHoldouts()`: US = VT/WY/ND, FR = Corse/Lozère/
@@ -38,7 +38,7 @@ The first run on the held-out Vermont set:
 
 A 93.7% name-match next to a 326km median coordinate error is the whole argument for this harness
 in one line. The resolver was finding the right _name_ and the wrong _place_ nearly nine times in
-ten, and the metric we had been quoting could not see it.
+ten, and the metric we'd been quoting couldn't see it.
 
 ### Root cause
 
@@ -68,20 +68,20 @@ We ran `add-region-abbrevs.ts`, rebuilt the FTS index, and remeasured the identi
 | locality PIP (polygon-coverage-adjusted) |    15.1% |           47.1% |
 
 Region resolution goes from broken to near-perfect. The median coordinate error collapses from
-326km to 3.4km. Name-match does not move — confirming the model was always emitting the right name.
+326km to 3.4km. Name-match doesn't move — confirming the model was always emitting the right name.
 The fix makes the resolver pick the right _instance_.
 
 Note the PIP-containment numbers. Even after the fix, locality-PIP is 29.7%, because 37% of the
 correctly-resolved Vermont localities are WOF **point geometry** (no polygon can contain a point),
 and WOF's small-town polygons are tight while OpenAddresses ascribes rural addresses to the town
-they are nearest rather than the town whose boundary encloses them. That is why the scorecard leads with
+they're nearest rather than the town whose boundary encloses them. That's why the scorecard leads with
 region-match and coordinate error — both checkable for 100% of rows — and reports locality-PIP only
 alongside its polygon-coverage denominator. Raw locality-PIP would silently count un-PIP-able points
 as failures.
 
 ## The catch — and why functional checks come before verdicts
 
-The fix is not a clean win, and the demo presets caught why. On four populous US presets the
+The fix isn't a clean win, and the demo presets caught why. On four populous US presets the
 abbreviation enrichment moved region-match from 25% to 100% but **regressed locality name-match from
 100% to 75%**, with one preset's coordinate error jumping to 283km:
 
@@ -133,7 +133,7 @@ it never trained on:
 | neural                |    93.7% |  99.9% |       3.4 |       7.4 |       277 |
 | v0 (Pelias)           |    91.9% |  99.5% |       3.3 |       7.2 |      2120 |
 
-The medians tie. The neural parser's p99 tail (277km vs 2120km) is far tighter. That is the
+The medians tie. The neural parser's p99 tail (277km vs 2120km) is far tighter. That's the
 beat-Pelias-on-the-hard-cases result we want on a held-out set.
 
 ## Status

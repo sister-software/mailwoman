@@ -27,8 +27,8 @@
  * No row publishes inline address text with both name columns empty, so the part columns lose no
  * address.
  *
- * `address_number` is not a house number. It is a 1-based ordinal over the addresses that share one
- * `building_key`. That is how a corner building's several frontages are numbered. The adapter
+ * `address_number` isn't a house number. It is a 1-based ordinal over the addresses that share one
+ * `building_key`. That's how a corner building's several frontages are numbered. The adapter
  * ignores it.
  *
  * The file is bilingual, and which column holds which language depends on the municipality. On
@@ -40,11 +40,11 @@
  * `locale` states the language of the name it emitted rather than the language of the column that
  * name came from. That gives three values.
  * `fi-FI` is a mainland record whose name came from `address_name_fin`.
- * `sv-FI` is a mainland record that populates `address_name_swe` only. That is the form a
+ * `sv-FI` is a mainland record that populates `address_name_swe` only. That's the form a
  * Swedish-speaking municipality publishes.
  * `sv-AX` is every Åland record, because the Swedish columns are the populated ones there and the
- * `*_fin` columns hold the Swedish name where they are populated at all.
- * A mainland record's Swedish name, where the record publishes both, is not emitted as a second
+ * `*_fin` columns hold the Swedish name where they're populated at all.
+ * A mainland record's Swedish name, where the record publishes both, isn't emitted as a second
  * row: a record is one premise, and `CanonicalRow` holds one written surface.
  *
  * SYKE's metadata record `{DBD610F4-3392-44CD-B601-BAE8FA547A57}` grants CC BY 4.0 for its open data
@@ -185,11 +185,11 @@ interface NamedSurface {
  * The surface to emit for one record, or `null` for a record with no street.
  *
  * On Åland the Swedish columns are preferred, and the Finnish ones are read as Swedish.
- * That is the language they hold there.
+ * That's the language they hold there.
  *
  * On the mainland the Finnish columns are preferred.
  * The Swedish ones stand in where `address_name_fin` is empty.
- * That is the form a Swedish-speaking municipality publishes.
+ * That's the form a Swedish-speaking municipality publishes.
  *
  * A language whose name column is empty has no street.
  * Seven mainland rows publish an `address_swe` of a bare number with an empty `address_name_swe`.

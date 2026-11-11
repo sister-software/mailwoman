@@ -7,7 +7,7 @@
  *   operator's key. The clients return normalized addresses and untouched provider responses for comparison with
  *   manually authored expectations.
  *
- *   These providers are not ground truth and must not determine release decisions. Results can disagree with each
+ *   These providers are not ground truth and mustn't determine release decisions. Results can disagree with each
  *   other or with the address. A human reviews them before changing an expectation.
  *
  * @example

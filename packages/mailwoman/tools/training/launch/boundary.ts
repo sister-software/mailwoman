@@ -94,7 +94,7 @@ export interface OneShotSandboxSpec extends SandboxResources {
  */
 export interface ModalBoundary {
 	/**
-	 * The published image under `build.name`, building and publishing it first when there is none.
+	 * The published image under `build.name`, building and publishing it first when there's none.
 	 */
 	ensureTrainerImage(build: TrainerImageBuild): Promise<string>
 	start(spec: TrainingSandboxSpec): Promise<SandboxState>

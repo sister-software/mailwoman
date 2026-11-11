@@ -69,7 +69,7 @@ One `CanonicalRow` per NAD record where the address quad is populated:
 
 Rows are dropped (silently) when:
 
-- `State` is not a recognized USPS abbreviation or territory code
+- `State` isn't a recognized USPS abbreviation or territory code
 - All locality alternates are empty (`Post_City`, `Inc_Muni`, `Census_Plc`,
   `Uninc_Comm`)
 - `Zip_Code` is empty (postcode is required — NAD records always have one

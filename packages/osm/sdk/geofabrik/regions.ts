@@ -61,7 +61,7 @@ const REGIONS: readonly GeofabrikRegion[] = [
 const BY_ID = new Map(REGIONS.map((region) => [region.id, region]))
 
 /**
- * The region with this identity, or `null` when the registry does not list it.
+ * The region with this identity, or `null` when the registry doesn't list it.
  */
 export function geofabrikRegion(id: string): GeofabrikRegion | null {
 	return BY_ID.get(id.replaceAll(/^\/+|\/+$/g, "")) ?? null

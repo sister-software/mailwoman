@@ -85,7 +85,7 @@ describe("rerankByResolution", () => {
 	})
 
 	it("falls back to the model's rank-1 when EVERY candidate is implausible", async () => {
-		// "All my evidence identifies these as bad" is not grounds to invent a different answer.
+		// "All my evidence identifies these as bad" isn't grounds to invent a different answer.
 		const resolve = vi.fn(async () => resolvedTree("country"))
 
 		const out = await rerankByResolution(

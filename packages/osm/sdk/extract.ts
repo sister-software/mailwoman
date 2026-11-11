@@ -181,7 +181,7 @@ async function* runLayer(pbfPath: string, layer: string, tally?: OSMExtractTally
  * A `points` feature is a node.
  *
  * A `multipolygons` feature is a closed way or relation that GDAL's OSM driver reads as an area.
- * A house number on an unclosed way is outside both layers and is not counted.
+ * A house number on an unclosed way is outside both layers and isn't counted.
  */
 export type OSMExtractTally = Record<string, { matched: number; emptyHouseNumber: number; noGeometry: number }>
 

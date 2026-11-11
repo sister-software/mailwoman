@@ -9,7 +9,7 @@
  *
  *   The fixture mirrors the production source shape. It contains `spr`, `names`, and a pre-built
  *   `place_population` auxiliary table. It has no `geojson` table. `scripts/build-unified-wof.ts`
- *   extracts `wof:population` into `place_population` during ingest. The builder does not persist
+ *   extracts `wof:population` into `place_population` during ingest. The builder doesn't persist
  *   geojson, so the slim builder reads population directly from `place_population`.
  */
 

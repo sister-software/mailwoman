@@ -166,7 +166,7 @@ export function classifyWhitespaceTransformation(base: string, variant: string):
 /**
  * Rules that exclude a transformation.
  *
- * The first applies when the text does not change.
+ * The first applies when the text doesn't change.
  * The second applies when every internal run sits inside a postcode.
  */
 export const WHITESPACE_APPLICABILITY_RULES = ["identity-transformation", "structural-identifier-space"] as const

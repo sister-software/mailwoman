@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Proposes spans for balanced punctuation, designator phrases and ambiguous numeric forms. Downstream stages choose
- *   among the proposals. The caller supplies the designator lexicon, so core does not depend on codex data.
+ *   among the proposals. The caller supplies the designator lexicon, so core doesn't depend on codex data.
  */
 
 /**
@@ -95,7 +95,7 @@ export interface SpanProposerLexicon {
 	/**
 	 * Venue-interior designators.
 	 *
-	 * They are kept apart from postal unit designators so consumers can weight them differently.
+	 * They're kept apart from postal unit designators so consumers can weight them differently.
 	 */
 	venueStructureDesignators: ReadonlySet<string>
 	/**
@@ -645,7 +645,7 @@ function proposeNumericReadings(
  * Proposes typed spans for the input.
  *
  * Results may overlap.
- * They are sorted by start offset, then by descending confidence.
+ * They're sorted by start offset, then by descending confidence.
  *
  * A confident annotation suppresses the designator and numeric proposals inside it.
  */

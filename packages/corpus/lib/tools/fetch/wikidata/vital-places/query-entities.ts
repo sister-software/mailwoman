@@ -192,7 +192,7 @@ export interface FetchVitalEntitiesFromQueriesOptions {
  * Append a record for every ranked id the entities file lacks, one query per batch,
  * with a few queries in flight.
  *
- * An id already on disk is not asked for again, and a failed query is reported and left for a rerun.
+ * An id already on disk isn't asked for again, and a failed query is reported and left for a rerun.
  */
 export async function fetchVitalEntitiesFromQueries(
 	client: Pick<WikidataClient, "query">,

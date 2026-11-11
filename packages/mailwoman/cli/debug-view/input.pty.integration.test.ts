@@ -10,7 +10,7 @@
  *
  *   - `\x17` (ctrl+W — the tty's `werase`, and what iTerm2 sends for ⌥⌫ by default) arrives as
  *       `input: "w", key.ctrl: true`, because Ink resolves ctrl+letter to the letter. `ink-text-input` guards only
- *       ctrl+C, so its insert branch typed the `w`: `hello world` → `hello worldw`. That is the reported
+ *       ctrl+C, so its insert branch typed the `w`: `hello world` → `hello worldw`. That's the reported
  *       "alt+backspace inserts a w".
  *   - `\x1b\x7f` (meta+backspace) arrives as `input: "", key.backspace + key.meta`, and was treated as a plain
  *       backspace — one character deleted rather than one word.
@@ -121,7 +121,7 @@ describe.skipIf(!HAS_LINUX_SCRIPT)("debug-view input field (pty)", () => {
 			expect(samples).toContain("VALUE=[hello ]")
 			expect(samples).toContain("VALUE=[hello there]")
 			// Ctrl+W deletes a word.
-			// Ink's resolved letter does not reach the value.
+			// Ink's resolved letter doesn't reach the value.
 			expect(samples.at(-1)).toBe("VALUE=[hello ]")
 			expect(samples).not.toContain("VALUE=[hello worldw]")
 			expect(samples).not.toContain("VALUE=[hello therew]")

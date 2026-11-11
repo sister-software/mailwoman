@@ -13,8 +13,8 @@
  *   beside it, by artifact identity and schema version. A set's identity is a digest of its members, so
  *   two sets with the same members are the same set wherever they were installed.
  *
- *   Identity and scope come from recorded fields and digests, never from a filename. A field a build did
- *   not record stays `null`.
+ *   Identity and scope come from recorded fields and digests, never from a filename. A field a build didn't
+ *   record stays `null`.
  */
 
 import { sha256Hex } from "#hash"
@@ -60,7 +60,7 @@ export type ArtifactSetID = `set-sha256:${string}`
 /**
  * The artifact identity of a file whose SHA-256 is `hex`.
  *
- * @throws When `hex` is not 64 lowercase hex characters, such as a 32-character MD5.
+ * @throws When `hex` isn't 64 lowercase hex characters, such as a 32-character MD5.
  */
 export function artifactIDFromSHA256(hex: string): ArtifactID {
 	if (!SHA256_HEX.test(hex)) {
@@ -271,7 +271,7 @@ export interface ArtifactScope {
 	/**
 	 * ISO 3166-1 alpha-2 codes, uppercase.
 	 *
-	 * An empty list means the artifact is not scoped by country, as a global gazetteer is not.
+	 * An empty list means the artifact isn't scoped by country, as a global gazetteer isn't.
 	 */
 	countries: readonly string[]
 	/**
@@ -284,7 +284,7 @@ export interface ArtifactScope {
 /**
  * One input an artifact was built from.
  *
- * Every digest the build did not record stays `null`.
+ * Every digest the build didn't record stays `null`.
  * A migration never fills one in afterwards.
  */
 export interface ArtifactSourceInput {
@@ -311,7 +311,7 @@ export interface ArtifactSourceInput {
  * What one immutable artifact contains.
  *
  * The manifest validates the artifact.
- * It does not select it: only the active selection does that.
+ * It doesn't select it: only the active selection does that.
  */
 export interface ArtifactManifest {
 	id: ArtifactID
@@ -328,8 +328,8 @@ export interface ArtifactManifest {
 	normalization: NormalizationIdentity | null
 	scope: ArtifactScope
 	/**
-	 * The countries the build observed rows for, or `null` when the build did not record them.
-	 * An observed country is not a claim of complete coverage.
+	 * The countries the build observed rows for, or `null` when the build didn't record them.
+	 * An observed country isn't a claim of complete coverage.
 	 */
 	observedCountries: readonly string[] | null
 	/**
@@ -339,11 +339,11 @@ export interface ArtifactManifest {
 	coverageEvidence: boolean
 	sources: readonly ArtifactSourceInput[]
 	/**
-	 * The build recipe's name, or `null` when the build did not record one.
+	 * The build recipe's name, or `null` when the build didn't record one.
 	 */
 	recipe: string | null
 	/**
-	 * The commit the builder ran from, or `null` when the build did not record it.
+	 * The commit the builder ran from, or `null` when the build didn't record it.
 	 */
 	builderSHA: string | null
 	/**
@@ -613,7 +613,7 @@ export function artifactSetID(members: readonly ArtifactSetMember[]): ArtifactSe
  *
  * A set is incompatible when a member is missing or duplicated, when a member's role
  * or schema version differs from its manifest, when street-keyed members were normalized
- * differently, or when its identity is not the digest of its members.
+ * differently, or when its identity isn't the digest of its members.
  */
 export function artifactSetProblems(set: ArtifactSetManifest, manifests: readonly ArtifactManifest[]): string[] {
 	const problems: string[] = []

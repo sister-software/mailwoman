@@ -19,13 +19,13 @@ providers in the same markets).
 Every input was public. None of it was assembled from a durable, sourced dataset. It was web fetches plus
 arithmetic plus recall. That method is unreproducible, unsourced, and unauditable. **The product is that
 assembly made systematic.** Not the conclusion: the conclusion stays the customer's, per doctrine.
-What the customer provides is not having to spend a day in EDGAR, FCC dockets, and trade press to reach
+What the customer provides isn't having to spend a day in EDGAR, FCC dockets, and trade press to reach
 the point where judgment can start.
 
 ## 2. The concrete gap: a transaction layer, and where family-edge dates come from
 
 `2026-07-31-evidence-axes-beyond-filings.md` §2.1 established that crosswalk edges must record
-`valid_from`/`valid_to`. It did not state where those dates come from. They come from here:
+`valid_from`/`valid_to`. It didn't state where those dates come from. They come from here:
 
 | Source                                                | What it yields                                                                                 | Notes                                                                                                                                                                                                                                                                                                  |
 | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -45,7 +45,7 @@ Two consequences:
 
 ## 3. The portability thesis: regulated monopolies share this shape
 
-The four-layer decomposition is not telecom-specific. Every regulated natural monopoly publishes:
+The four-layer decomposition isn't telecom-specific. Every regulated natural monopoly publishes:
 identity (a regulator-assigned ID), physical plant (geocoded, because siting requires permission),
 claims (service territory or availability), and transactions (because transfers need approval). The
 layers join badly on purpose, and geocoded entity resolution is what makes them join.
@@ -74,11 +74,11 @@ This note is a thesis with one actionable extraction. To keep it from becoming a
 
 - **Actionable now:** the transaction layer (§2) folds into Phase 3b, because it makes an already-
   ratified requirement (temporal validity) implementable. No other item here changes any phase.
-- **Not actionable:** the second vertical. Electric/gas is not started, scoped, or promised until the
+- **Not actionable:** the second vertical. Electric/gas isn't started, scoped, or promised until the
   telecom vertical has a paying customer or a published artifact proving the thesis. One vertical
   proven beats two half-built, and the discipline that got 2a and 2b shipped was narrow phases with
   pre-registered checks.
 - **The delivery shape is already right.** The BDC spec's "the interface is an agent rather than a form"
   holds here: the customer-facing product is an agent with a deterministic, provenance-carrying tool
-  belt. This analysis is what that workflow looks like when the sourced dataset exists. That is evidence
+  belt. This analysis is what that workflow looks like when the sourced dataset exists. That's evidence
   that the MCP surface is the correct delivery mechanism rather than a reason to build something new.

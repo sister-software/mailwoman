@@ -123,7 +123,7 @@ export const MIN_SPACELESS_BARE_CHARACTERS = 3
  * In a script written without spaces a name is one word, so it qualifies when it has three or more
  * characters and ends in a venue head the table holds for the country, as `国立西洋美術館` ends in `館`.
  *
- * A spaceless name the table does not recognize is written beside a locality only.
+ * A spaceless name the table doesn't recognize is written beside a locality only.
  */
 export function isBareVenueName(name: string, heads?: VenueHeadSuffixLookup): boolean {
 	const words = name.trim().split(/\s+/u)

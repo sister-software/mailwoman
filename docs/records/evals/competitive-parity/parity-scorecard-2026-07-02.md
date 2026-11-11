@@ -67,7 +67,7 @@ last full baseline).
 
 † The two documented v4.15.0 check revisions — the drop is the priced-in #723 trade rather than new
 drift. Note both now sit **exactly at their revised floors** (us.postcode 95.005/95.0,
-fr.postcode 99.341/99.3): the floors have zero slack left. That is the correct design (the floor
+fr.postcode 99.341/99.3): the floors have zero slack left. That's the correct design (the floor
 is the shipped level), but any further postcode loss, however small, fails the check.
 
 ⚠ `fr.cedex_real` 96.1 → 89.4 is the one >2pp real-OOD move with no written justification in any
@@ -76,7 +76,7 @@ promotion doc between v4.4.0 and v4.15.0 — the exact pattern #885 exists to ca
 drift rather than silently absorbed. (Plausible source: the multi-locale/AU/anchor retrains between
 06-11 and 06-25 rebalancing FR postal-format mass. The diagnosis is a follow-up rather than this doc's job.)
 
-fp32 ↔ int8: max per-tag delta 0.8pp, on fr.region (cap 1.5) — quantization is not distorting
+fp32 ↔ int8: max per-tag delta 0.8pp, on fr.region (cap 1.5) — quantization isn't distorting
 any floor.
 
 ## Lens 1 — capability arenas (int8, TRUE ship config, whole-parse-strict)

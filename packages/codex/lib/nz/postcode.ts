@@ -6,7 +6,7 @@
  *   New Zealand postcodes: four digits, after the town/city on the last line (`Timaru 7942`).
  *   Verbatim from NZ Post's Address Standards (ADV358, June 2011, accessed 2026-06-11): "Postcode is
  *   mandatory and is four digits. It follows the city or town." Note NZ has no state/region line —
- *   "The province, region, district or territory is not to be used."
+ *   "The province, region, district or territory isn't to be used."
  *
  *   The shape collides with Australia's (also 4 digits) — `candidateSystemsForPostcode` returns both,
  *   by design (shape test rather than membership test).

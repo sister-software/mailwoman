@@ -6,8 +6,8 @@
  *   The span diff is where a parse comparison can report a wrong result without an error.
  *
  *   Both parsers speak libpostal's label vocabulary. Mailwoman's route into it maps several tags to one label.
- *   The comparison can mislead in two opposite ways: it can report a disagreement that is really a case or segmentation difference,
- *   or report an agreement that is really two different tags landing on one label.
+ *   The comparison can mislead in two opposite ways: it can report a disagreement that's really a case or segmentation difference,
+ *   or report an agreement that's really two different tags landing on one label.
  */
 
 import { describe, expect, it } from "vitest"
@@ -39,7 +39,7 @@ describe("diffSpans", () => {
 
 	it("marks a label several mailwoman tags collapse onto", () => {
 		// `road` represents street, intersection_a and intersection_b, so agreeing
-		// on it is not agreeing on what was asserted.
+		// on it isn't agreeing on what was asserted.
 		// Without the marker a reader takes the label at face value.
 		const [diff] = diffSpans([span("road", "Main St", "street")], [span("road", "main st")])
 

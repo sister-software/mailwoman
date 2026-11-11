@@ -47,7 +47,7 @@
  * with the postcode `ATRIB` last. A building on a street writes the street name and the house number
  * as one part, and a building with its own name writes it inside ASCII double quotes. The adapter composes
  * that string from the chain and compares it with `STD`. Over the 550,637 active records the adapter
- * does not refuse first, the two are equal on 550,637. A record where they differ is refused, so every
+ * doesn't refuse first, the two are equal on 550,637. A record where they differ is refused, so every
  * row's `raw` is `STD` unchanged and every component's position in it is known. The row's surface is
  * `attested`. `alignRow` aligns the 550,637 rows at edit distance 0, quarantines none, and places
  * every component in the order above.
@@ -58,7 +58,7 @@
  *
  * The codex renderer cannot produce this order. libaddressinput's Latvian layout prints the region
  * line before the locality, `Siguldas nov., Sigulda, LV-2150`, where the register writes `Sigulda,
- * Siguldas nov., LV-2150`, so `formatAddressRow` is not called.
+ * Siguldas nov., LV-2150`, so `formatAddressRow` isn't called.
  *
  * ## Which tag each part takes
  *
@@ -67,13 +67,13 @@
  * - The house number is `house_number`, its building-block suffix included: `195 k-1` is house 195,
  *   block (`korpuss`) 1, one address in the register. Over the 323,316 street addresses, 249,783 are
  *   bare digits and 56,374 digits and a letter. 15 hold no digit, such as `Bauskas iela Ozoli`, where
- *   a house name stands in the number's place. Those are refused, because the name is not a number
+ *   a house name stands in the number's place. Those are refused, because the name isn't a number
  *   and labeling it a venue would place a venue after a street. No other Latvian row does that.
  * - A building's name is `venue`. SCHEMA.mdx defines `venue` as a place with a name and keeps
  *   `building_name` for Japan, and the Estonian register adapter labels a farm name `venue` for the same
  *   reason. The quotes are punctuation and lie outside the span. 236 names hold a quote of their own,
  *   such as `Stacija "Biksti"`, which the register writes `"Stacija "Biksti""`.
- * - A city and a parish are `locality`. Both are direct parts of a municipality, so they are the same
+ * - A city and a parish are `locality`. Both are direct parts of a municipality, so they're the same
  *   tier, and a rural address without a village still writes the parish it lies in. The
  *   parish is written with the register's abbreviation, `Vecates pag.`, and the span includes it, as a
  *   `subregion` of `Multnomah County` includes `County`.
@@ -180,7 +180,7 @@ export type VarisObjectType = (typeof VarisObjectType)[keyof typeof VarisObjectT
 const ACTIVE = "EKS"
 
 /**
- * Why a building record did not become a row.
+ * Why a building record didn't become a row.
  */
 export const VarisRefusal = {
 	/**
@@ -192,7 +192,7 @@ export const VarisRefusal = {
 	 */
 	Erroneous: "row:status-erroneous",
 	/**
-	 * `STATUSS` holds a value the register's documentation does not list.
+	 * `STATUSS` holds a value the register's documentation doesn't list.
 	 */
 	UnknownStatus: "row:status-unknown",
 	/**
@@ -200,7 +200,7 @@ export const VarisRefusal = {
 	 */
 	ParentUnresolved: "row:parent-unresolved",
 	/**
-	 * An object in the parent chain is not active.
+	 * An object in the parent chain isn't active.
 	 */
 	AncestorInactive: "row:ancestor-inactive",
 	/**

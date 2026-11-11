@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman eval score-trends` — regenerate `docs/records/evals/score-trends.md` from the eval
- *   ledger. Run it after `eval ledger-append`: the new row is not visible in the docs until the page
+ *   ledger. Run it after `eval ledger-append`: the new row isn't visible in the docs until the page
  *   is rebuilt.
  */
 

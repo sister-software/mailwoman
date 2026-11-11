@@ -41,7 +41,7 @@ export interface GeoBiasRowProps {
 /**
  * The chip avoids `.mw-map-chiprow` (whose overflow-scroll and edge-fade mask is built for a dozen chips)
  * and gives a failure its own line, because a denial turns the chip back off identically
- * to a manual toggle and the browser will not prompt again.
+ * to a manual toggle and the browser won't prompt again.
  */
 export const GeoBiasRow: React.FC<GeoBiasRowProps> = ({ active, error, onToggle }) => (
 	<div className={styles.biasRow}>

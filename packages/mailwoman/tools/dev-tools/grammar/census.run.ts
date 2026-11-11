@@ -1,7 +1,7 @@
 /**
  * Report-only C6 census over the committed Gauntlet corpus.
  *
- * This command is not a release eval.
+ * This command isn't a release eval.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

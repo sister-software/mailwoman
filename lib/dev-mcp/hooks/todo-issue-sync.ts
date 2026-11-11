@@ -132,7 +132,7 @@ export async function workerMain(
 	const dir = stateDir(cwd)("todo-sync")
 	const lock = dir("lock")
 
-	// Wait for the lock so this worker's payload is not left unsynced.
+	// Wait for the lock so this worker's payload isn't left unsynced.
 	if (!(await acquireLock(lock, wait))) return
 
 	try {
@@ -198,7 +198,7 @@ async function main(): Promise<void> {
 	try {
 		await (values.worker ? workerMain(values.cwd ?? process.cwd(), values["dry-run"] ?? false) : hookMain())
 	} catch {
-		// Hook failures must not interrupt the caller's turn.
+		// Hook failures mustn't interrupt the caller's turn.
 	}
 }
 

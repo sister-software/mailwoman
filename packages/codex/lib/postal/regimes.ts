@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Postal regimes whose addressing does not follow their ISO 3166-1 country code.
+ *   Postal regimes whose addressing doesn't follow their ISO 3166-1 country code.
  *
  *   Most code keys addressing behavior by country. This table records exceptions to that model.
  *   Examples include one code shared across postal systems, routing codes shaped like geography,
@@ -22,7 +22,7 @@ export const RegimeCoverage = {
 	 */
 	Modeled: "modeled",
 	/**
-	 * Some support exists, but it does not cover the regime's own addressing.
+	 * Some support exists, but it doesn't cover the regime's own addressing.
 	 * The record's note lists the gaps.
 	 */
 	Partial: "partial",
@@ -92,7 +92,7 @@ export interface PostalRegime {
 	 */
 	shape: string
 	/**
-	 * How the repository currently handles these addresses and what is missing.
+	 * How the repository currently handles these addresses and what's missing.
 	 */
 	note: string
 }

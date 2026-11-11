@@ -80,7 +80,7 @@ const optionalFloatMap = () => ({
 })
 
 /**
- * The zod object a section's resolved values form, refusing a key the section does not declare.
+ * The zod object a section's resolved values form, refusing a key the section doesn't declare.
  */
 function sectionOutput<Fields extends Record<string, ConfigFieldSpec>>(fields: Fields) {
 	const shape = Object.fromEntries(Object.entries(fields).map(([name, field]) => [name, field.output])) as {

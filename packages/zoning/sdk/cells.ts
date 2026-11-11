@@ -62,7 +62,7 @@ export interface CellIndexMeasurement {
 	multiCandidateShare: number
 	/**
 	 * Features a center-in-polygon polyfill would have returned no cell for —
-	 * see {@link polyfillFindsNothing} — and `null` where the measurement did not run it.
+	 * see {@link polyfillFindsNothing} — and `null` where the measurement didn't run it.
 	 */
 	polyfillZeroCellFeatures: number | null
 	/**

@@ -92,7 +92,7 @@ describe("parseForGeocode", () => {
 		const tree = await parseForGeocode("x", { classifier })
 		await geocodeAddress("x", { classifier, resolver, placeCountry: "none", parsedTree: tree })
 
-		// parseForGeocode parsed once. geocodeAddress did not parse again.
+		// parseForGeocode parsed once. geocodeAddress didn't parse again.
 		expect(classifier.parse).toHaveBeenCalledTimes(1)
 		expect(seen.at(-1)).toBe(tree)
 	})

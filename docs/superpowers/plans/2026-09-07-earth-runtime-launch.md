@@ -14,7 +14,7 @@
 
 - Lands after the shell plan and the runtime-homes plan. Rebase onto both.
 - A moved or renamed name gets no compatibility re-export.
-- The move keeps behavior and does not redesign it. The seven browser specs that pass on the docs page pass on the app, on the real assets, before the docs page is retired.
+- The move keeps behavior and doesn't redesign it. The seven browser specs that pass on the docs page pass on the app, on the real assets, before the docs page is retired.
 - `packages/earth` never imports `@mailwoman/docs` or `docs/**`; `packages/**` never imports `@mailwoman/docs`.
 - Docs keep working after every task: `cd docs && yarn build` exits 0.
 - `process.env` never read directly; `node:*` only under `core/lib/fs`.
@@ -69,7 +69,7 @@ git mv docs/src/shared/register-range-sw.ts  packages/earth/lib/runtime/range-ca
 
 In `use-geocoder-runtime.ts`: `#shared/demo-helpers` → `mailwoman/browser-runtime/classify` or `…/manifest` by name; `#shared/demo-loader` → `mailwoman/browser-runtime/load-assets` (`loadReleaseAssets(release, ctx, { gazetteer: { sqljsBaseURL } })`); `#shared/httpvfs-street` → `@mailwoman/resolver-wof-wasm/httpvfs/street`; `#shared/register-range-sw` → `#runtime/range-cache`; `#shared/resources` → `mailwoman/browser-runtime/resources` or `…/types`; `./_map-helpers.ts` → `#runtime/basemap`. Rename `useDemoMapRuntime` → `useGeocoderRuntime`, `UseDemoMapRuntime` → `GeocoderRuntimeHandle`, `UseDemoMapRuntimeOptions` → `GeocoderRuntimeOptions`. The `sqljsBaseURL` option is replaced by the app's `EarthConfig`: add `sqljsBaseURL: "/sqljs"` to `PRODUCTION_CONFIG` (the app serves the staged files at that path, per Task 1 Step 3).
 
-In `basemap.ts`: delete `TILE_WORKER_URL` and `BASEMAP_TILEJSON_URL` (they are `EarthConfig.tileWorkerURL` and `basemapTileJSONURL`); delete `fetchBasemapSource` and its caller composes `{ type: "vector", url: String(config.basemapTileJSONURL) }` instead. MapLibre handles a TileJSON URL that way (cartographer's race-dots source is the precedent). `loadPolygonDB` imports `loadHTTPVFSDatabase` and `makeHTTPVFSPolygonLookup` from `@mailwoman/resolver-wof-wasm/httpvfs/resolver`. In `use-browser-geolocation.ts`: the `/geolocate` URL composes from `config.tileWorkerURL`. In `range-cache.ts`: the worker URL is the app's own `/sw.js` (vite-plugin-pwa registers it, and the range-cache module only posts the prune message to `navigator.serviceWorker.ready`), so `registerRangeCacheServiceWorker(baseURL)` becomes a no-op removed in favor of `registerSW()` in `main.tsx`, and only `pruneDBRangeCache` stays.
+In `basemap.ts`: delete `TILE_WORKER_URL` and `BASEMAP_TILEJSON_URL` (they're `EarthConfig.tileWorkerURL` and `basemapTileJSONURL`); delete `fetchBasemapSource` and its caller composes `{ type: "vector", url: String(config.basemapTileJSONURL) }` instead. MapLibre handles a TileJSON URL that way (cartographer's race-dots source is the precedent). `loadPolygonDB` imports `loadHTTPVFSDatabase` and `makeHTTPVFSPolygonLookup` from `@mailwoman/resolver-wof-wasm/httpvfs/resolver`. In `use-browser-geolocation.ts`: the `/geolocate` URL composes from `config.tileWorkerURL`. In `range-cache.ts`: the worker URL is the app's own `/sw.js` (vite-plugin-pwa registers it, and the range-cache module only posts the prune message to `navigator.serviceWorker.ready`), so `registerRangeCacheServiceWorker(baseURL)` becomes a no-op removed in favor of `registerSW()` in `main.tsx`, and only `pruneDBRangeCache` stays.
 
 Read each moved file's header and rewrite the sentences that name Docusaurus, `/demo` or "docs-side".
 
@@ -137,7 +137,7 @@ git commit -m "feat(earth): the real geocoder runtime is application code; the s
 **Files:**
 
 - Move: `docs/src/pages/demo/{_compare,_controls,_debug,_devDrawer,_mapControls}.tsx`, `styles.module.css`, `geocoder.module.css`, `_debug.module.css` → `packages/earth/lib/panels/`; `docs/src/components/{AboutDemo,PermalinkButton,VersionCompare,LayerToggleControl}/` → `packages/earth/lib/panels/<name>/`; `docs/src/components/ModelVisualizer/` (both visualizers, styles, helpers) and `docs/src/components/DashboardMap/map-debug.ts` → `packages/earth/lib/explorers/`; the docs tests of those components (`grep -rl "components/ModelVisualizer\|VersionCompare\|LayerToggleControl" docs`) → `packages/earth/lib/`
-- Delete: `docs/src/components/ResultPanel/` (the app uses `@mailwoman/react/map`'s `ResultPanel`; if the docs copy renders something the react one does not, that difference moves into the react component as a prop, once)
+- Delete: `docs/src/components/ResultPanel/` (the app uses `@mailwoman/react/map`'s `ResultPanel`; if the docs copy renders something the react one doesn't, that difference moves into the react component as a prop, once)
 - Modify: `packages/earth/lib/App.tsx` (the `panels` composition from `docs/src/pages/demo/index.tsx` lines 35–108), `packages/earth/lib/routes.ts` (`/debug` opens the drawer; `/trace` mounts `LiveModelVisualizer`)
 
 - [ ] **Step 1: Move, rename, rewire**
@@ -245,7 +245,7 @@ FILES=$(grep -rlE "GeocoderDemo|DemoMap|DemoControls|useDemoGeocode|DemoRuntime|
 sed -i -E 's/\bGeocoderDemoProps\b/GeocoderProps/g; s/\bGeocoderDemo\b/Geocoder/g; s/\bDemoMapExtraProps\b/MapCanvasExtraProps/g; s/\bDemoMapProps\b/MapCanvasProps/g; s/\bDemoMapStyle\b/MapCanvasStyle/g; s/\bDemoMap\b/MapCanvas/g; s/\bDemoControlsProps\b/GeocoderControlsProps/g; s/\bDemoControls\b/GeocoderControls/g; s/\bUseDemoGeocodeOptions\b/UseGeocodeOptions/g; s/\bUseDemoGeocode\b/UseGeocode/g; s/\buseDemoGeocode\b/useGeocode/g; s/\bDemoRuntimeConfig\b/ReleaseRuntimeConfig/g; s/\bDemoRuntime\b/GeocoderRuntime/g; s/\bDemoPanels\b/GeocoderPanels/g; s/\bDemoVersionOption\b/VersionOption/g; s/\bDemoBackend\b/InferenceBackend/g; s/\bDemoCompareContext\b/CompareContext/g; s/\bDemoResultContext\b/ResultContext/g; s/\buseDemoRuntime\b/useReleaseRuntime/g; s/\bDemoManifest\b/ReleaseManifest/g; s/\bDemoReleaseBase\b/ReleaseBase/g; s/\bDemoLoaderState\b/ReleaseLoaderState/g; s/\bDemoAssetsLoadContext\b/AssetsLoadContext/g; s/\bmakeDemoRuntime\b/makeFakeGeocoderRuntime/g; s#map/GeocoderDemo#map/Geocoder#g; s#map/DemoMap#map/MapCanvas#g; s#runtime/useDemoRuntime#runtime/useReleaseRuntime#g' $FILES
 ```
 
-`ReleaseManifest` collides with `mailwoman/browser-runtime/manifest`'s `ReleaseManifest` (the wire manifest) where a file imports both. In that file the react one is the generic `ReleaseManifest<TRelease>` and the browser-runtime one is the concrete wire type, so import the wire one as `WireReleasesManifest` there, and rename the browser-runtime export to `ReleasesManifest` (plural, its name in docs before the move) to keep them apart. Run `grep -rn "Demo" packages/react/lib packages/earth/lib --include='*.ts' --include='*.tsx' | grep -v "fake\|Fake"` afterwards. What remains must be prose that uses "demo" for something that is a demo, and the stories' titles (`"Map/Geocoder"`).
+`ReleaseManifest` collides with `mailwoman/browser-runtime/manifest`'s `ReleaseManifest` (the wire manifest) where a file imports both. In that file the react one is the generic `ReleaseManifest<TRelease>` and the browser-runtime one is the concrete wire type, so import the wire one as `WireReleasesManifest` there, and rename the browser-runtime export to `ReleasesManifest` (plural, its name in docs before the move) to keep them apart. Run `grep -rn "Demo" packages/react/lib packages/earth/lib --include='*.ts' --include='*.tsx' | grep -v "fake\|Fake"` afterwards. What remains must be prose that uses "demo" for something that's a demo, and the stories' titles (`"Map/Geocoder"`).
 
 - [ ] **Step 2: Verify and commit**
 
@@ -339,7 +339,7 @@ export default function DemoRedirect() {
 
 - [ ] **Step 2: Config, plugin, dependencies**
 
-`docusaurus.config.ts`: the navbar CTA and the footer item point at `https://earth.mailwoman.post`; the `demo-assets` plugin path becomes `runtime-assets`; the sitemap ignore patterns keep `/debug` and `/trace` (they are redirect pages) and add `/demo`. `docs/plugins/runtime-assets/plugin.ts` keeps the maplibre worker staging (for `DashboardMap`), the sql.js staging through `stageSQLJSAssets` (for the explainers that resolve), the workspace aliases, and the SSR policy; `stagePairIndexes` goes if no code in docs reads a pair index any more (`grep -rn "pair-index" docs/src`). Then:
+`docusaurus.config.ts`: the navbar CTA and the footer item point at `https://earth.mailwoman.post`; the `demo-assets` plugin path becomes `runtime-assets`; the sitemap ignore patterns keep `/debug` and `/trace` (they're redirect pages) and add `/demo`. `docs/plugins/runtime-assets/plugin.ts` keeps the maplibre worker staging (for `DashboardMap`), the sql.js staging through `stageSQLJSAssets` (for the explainers that resolve), the workspace aliases, and the SSR policy; `stagePairIndexes` goes if no code in docs reads a pair index any more (`grep -rn "pair-index" docs/src`). Then:
 
 ```bash
 yarn install

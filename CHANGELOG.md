@@ -104,14 +104,14 @@ interface: moving `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/
 `mailwoman gazetteer build postcode-codepoint` — a name written into built databases as their `builder` provenance —
 stopped existing. The router now resolves a typed name against the literal path first and then against its
 prefix-directory readings, and the docs generator's tree takes each command's declared `spec.name`. A PREFIX
-DIRECTORY is transparent to the command path. A namespace like `gazetteer/inspect/` is not, and only the declared
+DIRECTORY is transparent to the command path. A namespace like `gazetteer/inspect/` isn't, and only the declared
 names tell them apart. Group help reads the compiled file's text rather than importing it. That read keeps group help side-effect free.
 
 ### Changed — the prefix-directory rule covers the whole tree, files and directories alike
 
 `recipe-prefix-directories` is now `prefix-directories`: three or more siblings sharing a hyphen-delimited prefix, in
 any directory, counting a subdirectory as a sibling beside a `.ts` file. Measured over the tracked tree: 163 groups
-at a threshold of two, 43 at three. Two kinds of name are excluded because they are interfaces rather than layout, and
+at a threshold of two, 43 at three. Two kinds of name are excluded because they're interfaces rather than layout, and
 both are derived rather than listed. A workspace directory is an npm package name. A directory holding no
 tracked TypeScript belongs to whoever it mirrors (`hf-publish/mailwoman-cjk/` is a Hugging Face repository,
 `fixtures/…/whosonfirst-data-admin-fr/` an upstream one). The fix renamed 186 files: 43 groups in the first
@@ -126,7 +126,7 @@ corpus recipe into its prefix directory. The move operation under it re-derives 
 owning package's own `imports`/`exports` patterns and writes it only once it RESOLVES to the moved file, so a
 replacement stays in the family the author wrote and a specifier that no resolution proves refuses the whole plan.
 
-TypeScript's own `getEditsForFileRename` was measured first and is not the mechanism. Asked to move a corpus recipe,
+TypeScript's own `getEditsForFileRename` was measured first and isn't the mechanism. Asked to move a corpus recipe,
 it rewrote a test file's `@mailwoman/corpus/recipes/fr/fragment` to `#lib/recipes/fr-fragment` — a public export
 subpath turned into a package-private import, naming `packages/corpus/lib/lib/recipes/…`, a path no checkout has.
 
@@ -263,7 +263,7 @@ locality-first answered 185 and sent the rest to the "Singapore" locality centro
 and `S(NNNNNN)` register forms still wait on the Latin model (#2204 §4). The centroid builder's `source` stamp now
 records the Overture release the parquet came from. It had written the pinned default's release on every row.
 
-### Fixed — one registry of synthetic place-id ranges, and a region's variant name that is another region's official name is refused
+### Fixed — one registry of synthetic place-id ranges, and a region's variant name that's another region's official name is refused
 
 Two builders claimed the same synthetic id base each, and each kept its own docstring of the ranges it believed taken:
 the NZ locality database and Code-Point Open both minted from 9.7e12, the Prague districts and the Northern Ireland OSM
@@ -298,7 +298,7 @@ address-point tier and 1,958 within 100 m of the row's own point. The same probe
 121.5124584 at 1 m. `OGDL-Taiwan-1.0` joins the obligations table, and the situs manifest records an SPDX expression:
 the string it stamped before was refused by the manifest check, so the US per-state build had been failing at its last
 step. The pre-commit hook read its CLI-freshness reference after the formatter had touched every staged source, so a
-commit staging a command file failed with an instruction `yarn compile` could not satisfy. The comparison now runs
+commit staging a command file failed with an instruction `yarn compile` couldn't satisfy. The comparison now runs
 first.
 
 ### Added — Taiwan's 鄉鎮市區 as register-derived localities, scoped to their 縣市
@@ -357,7 +357,7 @@ overlay over `@mailwoman/neural-weights-cjk`: its locale FST plus a card, with t
 
 ### Removed — `@mailwoman/neural-web`
 
-The workspace is deleted and the package will not publish again. 9.3.0 is its last version on npm. Since 9.0.0 it
+The workspace is deleted and the package won't publish again. 9.3.0 is its last version on npm. Since 9.0.0 it
 was a re-export shim over `@mailwoman/neural/web-loader` and `@mailwoman/neural/web-onnx-runner`, the two subpaths
 the browser runtime moved to, and re-exporting another package's names is what `mailwoman/no-cross-package-reexport`
 refuses everywhere else. A consumer on the shim imports the same names from those two subpaths.
@@ -396,7 +396,7 @@ The Stripe objects the license worker depends on are defined once, in `packages/
 the Product, the two Prices (by lookup key), the Payment Links' shape (the licensee field, the agreement-version
 metadata, the success URL, consent collection), the Customer Portal's features and the webhook's events.
 `mwops shop status --mode test|live` reads a Stripe account against it; `mwops shop provision --mode … --apply` creates
-what is missing, idempotently, and writes the Price ids into `wrangler.toml` and, live, the Payment Links into
+what's missing, idempotently, and writes the Price ids into `wrangler.toml` and, live, the Payment Links into
 `docs/src/license/shop.ts`. The webhook signing secret is answered once and written nowhere. `mwops` is now a view over
 three registries. New env: `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`, so a live write is a deliberate act with its own key.
 `mwops shop rehearse` and `mwops shop rehearse-renewal` run the renewal path against a deployed worker in test mode: a
@@ -411,13 +411,13 @@ with whether the renewed expiry is the new period end plus the grace.
 offline until its date. `/license/issued` is the page Stripe returns a buyer to: it polls the worker's claim route and
 shows the key, the one-time refresh secret, the `.env` fragment and the two commands to run. `mailwoman license adopt
 <token> --secret <s>` writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key` and the credentials to `refresh.json`
-(mode 0600). `mailwoman license refresh` fetches the current key after a renewal. Neither writes a token this build does
-not trust. `verifyConfiguredLicenseKey` reads the key file when `MAILWOMAN_LICENSE_KEY` is unset. `license verify
+(mode 0600). `mailwoman license refresh` fetches the current key after a renewal. Neither writes a token this build doesn't
+trust. `verifyConfiguredLicenseKey` reads the key file when `MAILWOMAN_LICENSE_KEY` is unset. `license verify
 --online` and `mailwoman doctor` report the per-license status as a fifth word beside the key-id publication: `active`,
 `lapsed`, `revoked`, `unknown`, or `unreachable`. New in core: `@mailwoman/core/license/status` (the worker client),
 `decodeLicenseKeyPayload`, and the env var `MAILWOMAN_LICENSE_URL`. `mailwoman --version` loads 136 modules, from 132.
 The key-id publication gains a word: `unpublished`, when mailwoman.post answers and has no register at the well-known
-path (a 4xx, or a body that is not a register), kept apart from `unreachable`, which stays a network answer. Neither
+path (a 4xx, or a body that's not a register), kept apart from `unreachable`, which stays a network answer. Neither
 changes the branch. The doctor reports which one it saw.
 
 ### Added — `@mailwoman/license-worker` (private)
@@ -428,7 +428,7 @@ unique constraints so replayed and reordered events mint one token per invoice, 
 id, and the claim, refresh and status routes the site and `mailwoman license refresh` call. A six-hourly reconciliation
 mints what the webhook missed, re-sends what failed, and corrects a license's state against Stripe, including a dispute
 ruled in the customer's favor. Sandbox and production are separate Wrangler environments. Issuance is off until
-`ISSUANCE_ENABLED` is flipped, and refuses whenever the signing key is not an active entry of the shipped register.
+`ISSUANCE_ENABLED` is flipped, and refuses whenever the signing key isn't an active entry of the shipped register.
 Deploys by manual dispatch only (`.github/workflows/license-worker.yml`), which refuses a bundle that imports a Node
 builtin. `GET /health` reports `email: ok | failing`, the latter when a token's email has stayed `failed` for over an
 hour, so one external check covers the ledger alert and the email alert. The reconciliation's drift sweep reads the
@@ -492,7 +492,7 @@ with no deprecated re-export. Replacements:
 | `@mailwoman/spatial/sdk` (barrel)        | import the module you want, by name  |
 
 `sdk/` in this repository means **data acquisition** (`AGENTS.md`), and neither module acquires anything: one is a
-pure WKT/WKB codec, the other shells out to `ogrinfo` to read what a source declares about itself. The barrel is not
+pure WKT/WKB codec, the other shells out to `ogrinfo` to read what a source declares about itself. The barrel isn't
 replaced by a combined entry on purpose — `@mailwoman/spatial` is imported by browser-facing packages, the root
 barrel deliberately excludes both modules, and a combined subpath would put a `node:child_process` reach one
 `export *` away from a browser graph.
@@ -523,7 +523,7 @@ holds the tree at zero so it cannot return.
 `@mailwoman/filer/frn`, `@mailwoman/filer/family-rollup` and `@mailwoman/filer/filer-lookup`. No shims. All three
 are also re-exported from the package root, so `@mailwoman/filer` itself keeps resolving them.
 
-They are identity and corporate-family readers rather than acquisition — and they were exactly the symbols a request path
+They're identity and corporate-family readers rather than acquisition — and they were exactly the symbols a request path
 needed: `@mailwoman/mcp`'s CLI imported `familyRollup`, `filerLookup`, `toFRN` and `FRN` from the `./sdk` barrel.
 That barrel `export *`s seventeen modules. Therefore, an MCP request path loaded the SEC and CORES HTTP clients and the EDGAR
 ingest to reach three functions. That import now points at the three modules, and `dependency-cruiser`'s
@@ -546,7 +546,7 @@ The shipped model is unchanged at 9.1.0 — this is a code release.
 
 ### 4.15.0 — postcode-anchor fix (`v1.9.3a3-anchor-absorption`)
 
-A leading 5-digit token that is a US house number shaped
+A leading 5-digit token that's a US house number shaped
 like a ZIP (`12345 Main St`) is now labeled `house_number` with the
 postcode anchor on (the `SLICE-H` case: 20 → 100), at zero coordinate cost
 (#220/#723). Trades a coordinate-invisible −2 us.postcode label-F1 on the rare

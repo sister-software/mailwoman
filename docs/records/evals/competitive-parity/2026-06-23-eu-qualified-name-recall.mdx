@@ -17,7 +17,7 @@ This measures it.
 
 For each EU coord-golden row (the same 7-locale panel #370 ran on), take the gold locality and exact-match it against the candidate gazetteer, country-constrained. For a miss, strip the qualifier and re-match — but grade the recovery by **coordinate** rather than string (the #566 discipline): the recovered place must land ≤25 km from the row's truth point. A near hit is a real recovery. A far hit is a same-name collision where the strip removed too much and matched a different place. A string-only score would count both as wins. "Measure first" guards against exactly that failure mode.
 
-Two normalization tiers, measured separately because their risk is not the same:
+Two normalization tiers, measured separately because their risk isn't the same:
 
 - **Structural** — strip `/X`, ` b.X` (German _bei_), ` im/an der/ob der X`. Unambiguous Austrian/Swiss disambiguation suffixes. The base token survives intact.
 - **Trailing-token** — additionally strip a trailing short capitalized token (`VD`, `S`, `Viz`, `Ohp`), bounded to ≤3 characters. This is the one #734 called risky: it recovers `Roche VD` but could eat a real name part (`Santa Cruz` → `Santa`).

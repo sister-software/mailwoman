@@ -1,5 +1,5 @@
 # This 8k run repeats the v310 recipe from v264 with Norwegian rows in the training mix.
-# A 2k fine-tune from v310 did not change how v310 reads Norwegian streets, so this run starts from v264 instead.
+# A 2k fine-tune from v310 didn't change how v310 reads Norwegian streets, so this run starts from v264 instead.
 #
 # Launch the run:
 #   node packages/mailwoman/tools/training/launch/launch.run.ts start --config v3.4.1-norway-full.yaml --fresh

@@ -99,7 +99,7 @@ export function isJoinedHouseNumber(number: string): boolean {
 
 /**
  * Reads a house number such as `12`, `12A`, `12 1/2` or `12-14` into its parts,
- * or `null` when it does not start with digits.
+ * or `null` when it doesn't start with digits.
  *
  * A hyphenated number that {@link isJoinedHouseNumber} reads as one number,
  * such as Hawaii's `19-4074`, is read as its joined digits, `194074`, with no range.

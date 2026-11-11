@@ -26,7 +26,7 @@ const TRAILING_PARENTHETICAL = /\s*\([^)]*\)\s*$/
 /**
  * `name` with a trailing parenthetical qualifier removed, or `name` unchanged when it has none.
  *
- * A name that is only a parenthetical comes back unchanged rather than emptied,
+ * A name that's only a parenthetical comes back unchanged rather than emptied,
  * because an empty locality is a row the caller drops silently.
  */
 export function stripParentheticalQualifier(name: string): string {

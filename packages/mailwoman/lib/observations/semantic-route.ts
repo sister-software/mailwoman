@@ -30,7 +30,7 @@ import { localeToCountry } from "#country-scope"
 import { readCommittedModel } from "#observations/committed-model"
 
 /**
- * The only relation this route reads, with construction failing when the model does not
+ * The only relation this route reads, with construction failing when the model doesn't
  * define it so a missing relation is never reported as an absence of affordances.
  */
 const AFFORDS_RELATION = "affords"
@@ -124,8 +124,8 @@ export interface SemanticRouteIdentity {
  */
 export interface SemanticObservationRoute {
 	/**
-	 * Matches a phrase against the lexicon, returning `[]` for a phrase that does
-	 * not end in a declared phrase admitted by the locale.
+	 * Matches a phrase against the lexicon, returning `[]` for a phrase that doesn't
+	 * end in a declared phrase admitted by the locale.
 	 */
 	lookup: POIPhraseLookup
 	identity: SemanticRouteIdentity
@@ -262,7 +262,7 @@ function attestationOf(entry: ActivityPhraseEntry): { kind: string; reference: s
 /**
  * Builds the route from the committed model and activity lexicon, or from the injected ones.
  *
- * @throws When the lexicon does not resolve against the model.
+ * @throws When the lexicon doesn't resolve against the model.
  */
 export async function createSemanticObservationRoute(
 	options: SemanticObservationRouteOptions = {}
@@ -286,7 +286,7 @@ export async function createSemanticObservationRoute(
 		)
 	}
 
-	// Longer phrases match first, with ties broken on the phrase text so lexicon order does not matter.
+	// Longer phrases match first, with ties broken on the phrase text so lexicon order doesn't matter.
 	const ordered = resolved.toSorted(
 		(left, right) =>
 			right.normalized.length - left.normalized.length || compareByCodePoint(left.normalized, right.normalized)

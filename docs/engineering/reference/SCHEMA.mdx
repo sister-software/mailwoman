@@ -37,7 +37,7 @@ This document defines the canonical `ComponentTag` union. Where another document
 #### The US street split is canonical — `street_suffix` is its own span
 
 > **The terminal-suffix rule (operator-ratified 2026-08-06).** Apply only the terminal street suffix.
-> Earlier suffix-like tokens remain part of the street name unless they are the final suffix element.
+> Earlier suffix-like tokens remain part of the street name unless they're the final suffix element.
 > Preserve post-directionals separately. So `Finel Hollow Road` → street `Finel Hollow` + suffix `Road`,
 > while `Sutton Hollow` → street `Sutton` + suffix `Hollow` (terminal there) — the arrival of a later
 > suffix reverts the earlier ambiguous token to the name. Suffix spans never extend beyond one word.
@@ -56,10 +56,10 @@ depend on the suffix being its own span. If the suffix is folded into `street`, 
 Two conventions follow from the table, and measurement established both:
 
 - A trailing **post-directional joins the suffix**: `Pennsylvania Avenue NW` is
-  `street: "Pennsylvania"`, `street_suffix: "Avenue NW"`. There is no post-directional tag, and this
+  `street: "Pennsylvania"`, `street_suffix: "Avenue NW"`. There's no post-directional tag, and this
   is what the corpus adapter emits (`corpus/src/adapters/tiger/street-decompose.ts`).
-- A **bare** post-directional with no type before it is not a suffix: `Seymour East` stays folded.
-  A directional is not a Pub-28 suffix, and the rows in that class are unit-contaminated
+- A **bare** post-directional with no type before it isn't a suffix: `Seymour East` stays folded.
+  A directional isn't a Pub-28 suffix, and the rows in that class are unit-contaminated
   (`1ST AVE SW BOX E`, where the trailing `E` is a box letter).
 
 This section deliberately leaves the FR convention open. French street typology comes first
@@ -73,7 +73,7 @@ Three components read this convention, and they must agree with each other:
    from v0.1.2 by `mailwoman corpus golden-relabel`). The version's `MANIFEST.json` declares it in
    `convention.street_convention`.
 3. **The scorer** reads that declaration. `packages/mailwoman/tools/dev-tools/per-locale-f1.run.ts` folds
-   `street_prefix`/`street`/`street_suffix` back into one string only for rows whose country is not
+   `street_prefix`/`street`/`street_suffix` back into one string only for rows whose country isn't
    declared split. A split-convention key is therefore graded on the separate spans.
 
 Golden v0.1.2 and earlier folded the street, and per-locale-f1 joined the model's spans to match. That

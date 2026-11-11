@@ -133,7 +133,7 @@ describe("readWriteIntent", () => {
 	})
 
 	it("reads only the replacement text from an Edit", () => {
-		// The surrounding file is not the author's current intent.
+		// The surrounding file isn't the author's current intent.
 		// A scan would report every existing declaration against itself.
 		const intent = readWriteIntent({
 			tool_name: "Edit",

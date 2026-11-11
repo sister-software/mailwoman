@@ -7,7 +7,7 @@ verified-with: mailwoman v11.0.0
 
 # Batch geocode a file of records
 
-Use this procedure to geocode a file of records that each have an ID. The script on this page runs one geocoder process for the whole file. It writes one output record per input row, marks rows it could not geocode, and skips rows already finished when you run it again.
+Use this procedure to geocode a file of records that each have an ID. The script on this page runs one geocoder process for the whole file. It writes one output record per input row, marks rows it couldn't geocode, and skips rows already finished when you run it again.
 
 [Geocode a file of addresses](../tutorials/geocode-a-file.mdx) introduces the result fields this guide reads.
 
@@ -45,7 +45,7 @@ a5,12 Rue de Rivoli, 75001 Paris, France
 a6,Main Street
 ```
 
-Row `a3` has no address. The script reads everything after the first comma as the address, so addresses may contain commas. It does not parse quoted CSV fields or line breaks inside a field. Convert such a file to one record per line first.
+Row `a3` has no address. The script reads everything after the first comma as the address, so addresses may contain commas. It doesn't parse quoted CSV fields or line breaks inside a field. Convert such a file to one record per line first.
 
 ## 2. Save the batch script
 
@@ -178,7 +178,7 @@ If a run stops partway, the rows written before it stopped keep their records, a
 
 ## Resource use
 
-The script runs one geocoder process for the whole file. One run on the host used for this page geocoded a 300-row file in 7.5 seconds of wall-clock time, including model and data loading. It used 186% of one CPU core on average, and its peak resident memory was 601,540 kB. Those 300 rows repeated six addresses, so that run is not a throughput estimate for varied data. Measure your own file on your own hardware before planning a large batch.
+The script runs one geocoder process for the whole file. One run on the host used for this page geocoded a 300-row file in 7.5 seconds of wall-clock time, including model and data loading. It used 186% of one CPU core on average, and its peak resident memory was 601,540 kB. Those 300 rows repeated six addresses, so that run isn't a throughput estimate for varied data. Measure your own file on your own hardware before planning a large batch.
 
 To use more cores, split the input into separate files and run one script per file, each with its own output file. Each process loads its own copy of the model and data, so memory use grows with the number of processes.
 

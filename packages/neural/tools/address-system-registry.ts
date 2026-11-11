@@ -46,7 +46,7 @@ export interface AddressSystemRegistry {
 }
 
 /**
- * Reads the committed registry, or null when it has not been generated.
+ * Reads the committed registry, or null when it hasn't been generated.
  */
 export async function readAddressSystemRegistry(path = ADDRESS_SYSTEMS_PATH): Promise<AddressSystemRegistry | null> {
 	return readLocalJSONFile<AddressSystemRegistry>(path).catch((error: NodeJS.ErrnoException) => {
@@ -59,7 +59,7 @@ export async function readAddressSystemRegistry(path = ADDRESS_SYSTEMS_PATH): Pr
 /**
  * The committed registry's systems, as the label schema references them.
  *
- * @throws When the registry has not been generated.
+ * @throws When the registry hasn't been generated.
  */
 export async function readAddressSystemsReference(): Promise<LabelSchemaAddressSystems> {
 	const registry = await readAddressSystemRegistry()

@@ -21,12 +21,12 @@
 #
 #   source_reps    the six new sources name their exposure in reps PER row (#1677) and the weight is
 #                  derived at launch from each source's row count and this run's sample budget. Weight
-#                  is not reps per row: the 277-row source that took 165 passes per row was picked at 1.0, the
+#                  isn't reps per row: the 277-row source that took 165 passes per row was picked at 1.0, the
 #                  smallest number in its config. The derivation prints at launch. read it.
 #
 #   receipts       one per family, so the audit fails if a family draws zero rows. The
 #                  seventh, `ve-locality-postcode-region`, is inherited from v5.3.0 and guards that
-#                  arm riding along. it is not a target of this one.
+#                  arm riding along. it isn't a target of this one.
 #
 # The audit's reps outlier warning on this config lists seven sources and none of them is new here:
 # six keep v5.0.0's weights unchanged, and `synth-reviewed-postcode-tail` at 12.8 reps/row over 22
@@ -45,7 +45,7 @@
 #                    The three older generations (`trailing-region-{structured,placement-v25,
 #                    leftcontext-v26}-tuples.jsonl`, ~83,000 rows, ~8,489 of them ES rows carrying the
 #                    English exonyms) were built for the 2026-08-23 arc that closed do-not-ship, and
-#                    they are in neither this corpus lineage nor any shipped config's mixture: no
+#                    they're in neither this corpus lineage nor any shipped config's mixture: no
 #                    v0.29.0 parquet file is labeled `synth-trailing-region*`, and neither v5.0.0 nor v5.3.0
 #                    weights that source, so a row carrying it would be dropped at load anyway. The
 #                    corrected recipe output therefore replaces no source and competes with no source. Read a

@@ -47,9 +47,9 @@ describe("the geographic model's recorded dependency direction", () => {
 			.map(([name]) => name)
 
 		// Core ships the pipeline interface and its reference data to every consumer,
-		// so a world-semantics dependency there is one every drop-in API inherits.
+		// so a world-semantics dependency there's one every drop-in API inherits.
 		// A reversed direction amends the boundary record.
-		// It is not a convenience during implementation.
+		// It isn't a convenience during implementation.
 		expect(declaring).toEqual([])
 	})
 })

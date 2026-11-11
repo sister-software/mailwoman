@@ -86,7 +86,7 @@ export function geocodeSessionSettings(options: Partial<GeocodeSessionSettings>)
 
 /**
  * The parsed geocode command options that a session reads, structural
- * so this module does not import the CLI specification.
+ * so this module doesn't import the CLI specification.
  */
 export interface GeocodeSessionOptions {
 	/**
@@ -397,7 +397,7 @@ export async function createGeocodeSession(
 		services = await resolveGenerationServices(registry)
 		bias = parseBiasPoints(options.bias ?? null)
 	} catch (error) {
-		// The caller needs the construction failure, so a failure to close a half-built scope does not replace it.
+		// The caller needs the construction failure, so a failure to close a half-built scope doesn't replace it.
 		await registry[Symbol.asyncDispose]().catch(() => {})
 
 		throw error

@@ -99,7 +99,7 @@ describe("readCheckedWFSFeatureCount", () => {
 	})
 
 	it("accepts a count whose index answers an absent numberReturned rather than a feature", async () => {
-		// A service that states no `numberReturned` on the probe past the count has not shown a
+		// A service that states no `numberReturned` on the probe past the count hasn't shown a
 		// feature there, so the count stands rather than being refused on a missing attribute.
 		const count = await readCheckedWFSFeatureCount(
 			stubFetchingBodies(
@@ -143,7 +143,7 @@ describe("countWFSFeaturesByPaging", () => {
 	/**
 	 * A service holding `extent` features that answers a page correctly and states no usable count.
 	 *
-	 * That is the shape Poland's service takes.
+	 * That's the shape Poland's service takes.
 	 * It records every `startIndex` it was asked for.
 	 */
 	const servingExtent = (extent: number, asked: number[] = []): Pick<APIClient, "fetch"> => ({

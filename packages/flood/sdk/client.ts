@@ -225,7 +225,7 @@ export class ONSBoundaryClient extends APIClient<APIClientConfig> {
 /**
  * Creates an {@link ONSBoundaryClient} with a one-year cache.
  *
- * ONS publishes each boundary vintage under a new service name, so the content at one URL does not change.
+ * ONS publishes each boundary vintage under a new service name, so the content at one URL doesn't change.
  */
 export function createONSBoundaryClient(options: CreateFloodClientOptions = {}): ONSBoundaryClient {
 	return createPacedCachedClient(

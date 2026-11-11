@@ -99,7 +99,7 @@ export interface PlaceCandidate {
 	/**
 	 * Whether the ancestors sidecar places this candidate under the query's
 	 * {@link FindPlaceQuery.regionQualifier}, with `false` meaning the check ran
-	 * and an absent value meaning it did not.
+	 * and an absent value meaning it didn't.
 	 */
 	containedByQualifier: boolean | null
 

@@ -201,7 +201,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/u
 
 /**
  * Reads decimal text as a whole count of `10^-digits` units, or `null` when the text
- * is not a decimal or has more fractional digits than `digits`.
+ * isn't a decimal or has more fractional digits than `digits`.
  * The conversion is exact: `12.34` with two digits is 1234.
  */
 function parseDecimal(text: string, digits: number): number | null {
@@ -243,7 +243,7 @@ export type ParsedControls =
 /**
  * Reads the controls' text as values.
  *
- * Each field that does not hold its unit's format gets a message, and no value
+ * Each field that doesn't hold its unit's format gets a message, and no value
  * is returned until every field reads.
  */
 export function parseControls(text: ControlText, currency: string): ParsedControls {

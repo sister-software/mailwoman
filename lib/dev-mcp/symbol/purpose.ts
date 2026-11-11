@@ -6,7 +6,7 @@
  *   Indexes the first docstring sentence of each exported function, so a search can match on behavior.
  *
  *   A name search in `symbol/index.ts` misses a function whose name shares no words with the query. The TypeScript
- *   parser reads each statement's modifiers and leading comment. A declaration without a docstring is not indexed.
+ *   parser reads each statement's modifiers and leading comment. A declaration without a docstring isn't indexed.
  */
 
 import { cacheRootPath } from "@mailwoman/core/data-root"
@@ -219,7 +219,7 @@ function cachePath(): string {
 }
 
 /**
- * Returns the purpose index, from cache when the working tree has not changed since the cache was built.
+ * Returns the purpose index, from cache when the working tree hasn't changed since the cache was built.
  */
 export async function loadPurposeIndex(repoRoot: PathBuilder): Promise<PurposeEntry[]> {
 	const head = await gitHead(repoRoot)

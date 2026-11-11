@@ -53,7 +53,7 @@ arrives at inference as a retrieval rather than a weight.
 - **Base model:** none of its own — see `@mailwoman/neural-weights-en-us`.
 - **Postcode anchor:** not shipped, deliberately — see the note above and
   `model-card.json`'s `gb_artifacts.no_postcode_bin`. The neural parser and
-  the gazetteer resolver still handle full unit-postcode text. What is absent
+  the gazetteer resolver still handle full unit-postcode text. What's absent
   is the soft anchor feature rather than postcode support.
 - **Placetype-pair index:** a retrieval-augmented `dependent_locality` prior
   built from real (child, parent) place-name pairs (e.g. "Didsbury" is a real
@@ -81,16 +81,16 @@ input zero-filled.
 The postcode anchor is the one channel where GB deviates. The general rule
 assumes the channel was trained, and that condition holds for every other
 channel: zeroing a trained input is out-of-distribution. The
-GB anchor slot was never trained, so there is no distribution to leave —
+GB anchor slot was never trained, so there's no distribution to leave —
 zeroing it is what the encoder saw for every GB example it has ever been shown,
-and supplying a value is the out-of-distribution case. That is why the numbers
+and supplying a value is the out-of-distribution case. That's why the numbers
 run the other way here, and why the fix is a retrain rather than more data.
 
 ## Evaluation
 
 **First graded GB story, 2026-07-23.** Previously this package was packaging
 scaffolding only — the runtime resolution path was exercised and tested, but
-no GB-specific numbers existed. That has changed: the base encoder was
+no GB-specific numbers existed. That's changed: the base encoder was
 fine-tuned on a `dependent_locality`-feed corpus that includes a real GB
 subset, and this package's own `pair-index-gb.bin` supplies a calibrated
 retrieval prior on top. Full-pipeline `dependent_locality` recall, GB golden
@@ -133,7 +133,7 @@ output is byte-stable when calibration is omitted.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
 - **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
-  and quality there is unmeasured.
+  and quality there's unmeasured.
 
 ## Attribution
 

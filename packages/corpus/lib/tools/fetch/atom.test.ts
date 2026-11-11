@@ -106,7 +106,7 @@ describe("readAtomFeed", () => {
 		const service = await readAtomFeed(feedChunks(CZ_SERVICE_XML))
 
 		// The service document states no length on any link.
-		// That is not a length of zero.
+		// That's not a length of zero.
 		expect(service.links.every((link) => link.length === null)).toBe(true)
 	})
 

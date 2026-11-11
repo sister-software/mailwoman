@@ -12,8 +12,7 @@ const platformPaths = envPaths("mailwoman", { suffix: "" })
 /**
  * Platform-native filesystem defaults used by the typed environment schema.
  *
- * No log root: Mailwoman writes no persistent log of its own, so the platform
- * log directory is not a setting.
+ * No log root: Mailwoman writes no persistent log of its own, so the platform log directory isn't a setting.
  */
 export const DefaultMailwomanPaths: Omit<Paths, "log"> = {
 	data: resolvePath(platformPaths.data),

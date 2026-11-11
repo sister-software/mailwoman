@@ -18,7 +18,7 @@ describe("attributionReport", () => {
 	it("reads the installed weights packages rather than the source register", async () => {
 		// The register lists the sources research resolved.
 		// The installation includes its own set.
-		// A register report here would claim attribution for rows the operator does not have.
+		// A register report here would claim attribution for rows the operator doesn't have.
 		const report = await attributionReport("AGPL-3.0-only OR LicenseRef-Commercial")
 
 		expect(report.engineLicense).toBe("AGPL-3.0-only OR LicenseRef-Commercial")

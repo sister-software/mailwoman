@@ -23,7 +23,7 @@ export function ResolvedPlace({ place }: ResolvedPlaceProps): ReactNode {
 				<dt>placetype</dt>
 				<dd>{place.placetype}</dd>
 				{place.tier ? (
-					// A street-tier answer is not a gazetteer place: it has a precision instead of an id.
+					// A street-tier answer isn't a gazetteer place: it has a precision instead of an id.
 					<>
 						<dt>precision</dt>
 						<dd>

@@ -99,7 +99,7 @@ export interface CORDISArchiveHead {
 /**
  * Read what the host states about one archive.
  *
- * A header the host does not send is reported as `null` rather than raised on,
+ * A header the host doesn't send is reported as `null` rather than raised on,
  * and the caller then downloads rather than reading the absence as a match.
  */
 export async function readCORDISArchiveHead(

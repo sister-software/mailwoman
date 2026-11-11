@@ -41,7 +41,7 @@ export interface LieuDitPair {
 	 * The commune is the French postal locality line.
 	 * Every FR address writes it after the postcode.
 	 *
-	 * There is no per-row variation to read here: BAN has exactly one commune column
+	 * There's no per-row variation to read here: BAN has exactly one commune column
 	 * and every row's parent comes from it.
 	 */
 	parentTag: "locality"

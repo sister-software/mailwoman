@@ -33,7 +33,7 @@ const SITUS_PREFIX = "address-points-us-"
  * The table mapping each situs `source` value to the register rows its data comes from.
  *
  * `overture:NAD` maps to NAD and Overture, and each `overture:OpenAddresses/<state>/<body>` to
- * that body's own row and Overture, because OpenAddresses does not relicense what it collects.
+ * that body's own row and Overture, because OpenAddresses doesn't relicense what it collects.
  */
 export function usSitusSourcesPath() {
 	return resolvePackagePath("@mailwoman/corpus", "data", "us-situs-sources.json")
@@ -53,9 +53,9 @@ interface SitusSourcesFile {
 /**
  * The situs `source` values whose every register row holds a decision permitting transform and train.
  *
- * A value the table does not map, such as the bare `openaddresses` of the Hawaii database, is not admitted.
+ * A value the table doesn't map, such as the bare `openaddresses` of the Hawaii database, isn't admitted.
  *
- * @throws When the table does not exist, naming it.
+ * @throws When the table doesn't exist, naming it.
  */
 export async function admittedSitusSources(
 	register?: RegisterDecisions,

@@ -245,7 +245,7 @@ describe("harvestSKInspireType", () => {
 		//
 		// The third body is the zero page `readCheckedWFSFeatureCount` asks for at `startIndex = reported`.
 		// A features answer would make core refuse the count as a floor.
-		// That is a different finding and would never reach the cap comparison this covers.
+		// That's a different finding and would never reach the cap comparison this covers.
 		const client = stubClient([
 			hits(5000),
 			postalPage(0, 5, 5000),

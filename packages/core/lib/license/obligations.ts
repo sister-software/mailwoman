@@ -195,7 +195,7 @@ export function summarizeLicense(expression: string): LicenseSummary {
  * Returns the branch of mailwoman's license expression that applies to this installation.
  *
  * The commercial branch applies only when the key is `valid` and the published
- * key register has not marked it retired or unlisted.
+ * key register hasn't marked it retired or unlisted.
  * The doctor passes both the key and the register status.
  * The stamp runs offline and passes only the key.
  */
@@ -212,7 +212,7 @@ export function appliedLicenseBranch(
 /**
  * Chooses the applicable branch of an `A OR B` expression.
  *
- * The first `LicenseRef-` branch applies when there is a commercial agreement.
+ * The first `LicenseRef-` branch applies when there's a commercial agreement.
  * Otherwise the first open-source branch applies.
  * An expression without `OR` is returned unchanged.
  */

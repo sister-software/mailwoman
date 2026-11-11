@@ -19,7 +19,7 @@ import { relative, resolvePathBuilder, type PathBuilder, type PathBuilderLike } 
 /**
  * The row count above which a country is written one file per first-level subdivision.
  *
- * At 10 M, France (26.0 M rows) and Germany (20.3 M) split and Taiwan (9.7 M) does not.
+ * At 10 M, France (26.0 M rows) and Germany (20.3 M) split and Taiwan (9.7 M) doesn't.
  */
 export const ADDRESS_LAYER_SPLIT_ROWS = 10_000_000
 

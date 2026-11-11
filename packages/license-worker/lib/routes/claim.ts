@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `GET /v1/checkout-sessions/:sessionID/license`: the success page's claim. The page arrives with the session id
- *   before Stripe's webhooks do, so a session the ledger has not seen is re-read from Stripe by id and its license row
- *   created here, the same way the webhook would. a session Stripe does not know is the only 404. The refresh secret is
+ *   before Stripe's webhooks do, so a session the ledger hasn't seen is re-read from Stripe by id and its license row
+ *   created here, the same way the webhook would. a session Stripe doesn't know is the only 404. The refresh secret is
  *   answered by exactly one claim: the plaintext is read, then cleared by an update conditioned on the value read, so
  *   of two claims racing only the one whose clear lands a row answers it. Rate limited per client address. cors is the
  *   site's exact origin, set by the app.

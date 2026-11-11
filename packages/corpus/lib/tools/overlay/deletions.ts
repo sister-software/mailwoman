@@ -101,7 +101,7 @@ export interface PreparedDeletion {
 /**
  * Read the distinct `source_id` values of a deletion sidecar.
  *
- * @throws When the file is missing, lacks the column, or a row's `source_id` is not a non-empty string.
+ * @throws When the file is missing, lacks the column, or a row's `source_id` isn't a non-empty string.
  */
 export async function readDeletionIDs(path: string, limits?: DuckDBLimits): Promise<Set<string>> {
 	const rows = await readParquetRows<{ source_id: unknown }>(path, { columns: ["source_id"], limits })
@@ -197,7 +197,7 @@ export async function matchedSourceIDs(
 /**
  * Read a JSON file of deletion requests, as the `overlay-manifest` command takes them.
  *
- * @throws When the file does not hold an array.
+ * @throws When the file doesn't hold an array.
  */
 export async function readDeletionRequests(path: string): Promise<DeletionRequest[]> {
 	const requests = await readLocalJSONFile<unknown>(path)

@@ -203,15 +203,15 @@ This design passes the bitter-lesson framing test, because the regex is locale-b
 
 ## Open questions for implementation
 
-These decisions need to be made when implementation starts. They are recorded here so they do not have to be worked out again.
+These decisions need to be made when implementation starts. They're recorded here so they do not have to be worked out again.
 
-1. **Where is `QueryShape` computed?** It could be computed eagerly at parse entry, always paying the microsecond cost, or lazily for the first downstream consumer, because some inputs may not need it. The recommendation is eager computation, because computing it costs less than threading lazy evaluation through the pipeline.
+1. **Where's `QueryShape` computed?** It could be computed eagerly at parse entry, always paying the microsecond cost, or lazily for the first downstream consumer, because some inputs may not need it. The recommendation is eager computation, because computing it costs less than threading lazy evaluation through the pipeline.
 2. **Should the known-format regex set be extensible?** The options are hardcoded or registerable. The recommendation is hardcoded for v1, because the postcode set rarely changes. Re-evaluate if community adapters want to register country-specific formats.
-3. **What confidence threshold should fast-path routing use?** Choose a conservative value (~0.95) and tune it from real-world data. A threshold that is too low returns wrong answers instead of running the full pipeline. That failure is severe. A threshold that is too high only slows inference.
+3. **What confidence threshold should fast-path routing use?** Choose a conservative value (~0.95) and tune it from real-world data. A threshold that's too low returns wrong answers instead of running the full pipeline. That failure is severe. A threshold that's too high only slows inference.
 4. **Should the segment id be an additive or a concatenated encoder feature?** A concatenated feature on the input embeddings is simplest and avoids an architecture change. Decide when the encoder is retrained.
 5. **How does `QueryShape` interact with `LocaleDetector`?** The detector will probably use `QueryShape.characterClass` and `QueryShape.tokenClasses` as input features. `LocaleDetector` then runs _after_ `QueryShape.compute()`. Document this dependency.
 
-## What this is not
+## What this isn't
 
 - **Not the gazetteer.** Place-name lookup lives in Stage 6 / Resolver. QueryShape never asks "is this a city name?".
 - **Not the kind classifier.** The kind classifier (Stage 2.5) consumes QueryShape, but it is a separate component that may or may not use ML.

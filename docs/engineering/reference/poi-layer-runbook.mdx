@@ -20,7 +20,7 @@ page records the failures that the build and publish path produce.
 poi.db is layer #1. The schema every layer database embeds — the `layer_manifest` /
 `layer_coverage` interface, the spine keys, tiers, and the meaning-of-zero rule this build
 follows — is specified in the [spatial-layer interface](./layer-interface.mdx). Read that first if
-you are authoring a new layer rather than rebuilding poi.db.
+you're authoring a new layer rather than rebuilding poi.db.
 
 ## Build
 
@@ -36,8 +36,8 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
 
 ### Overture Places schema gotchas
 
-- **There is no top-level `country` column** in the Places theme (the addresses theme has
-  one, and Places does not). Country lives at `addresses[1].country` (1-based DuckDB list
+- **There's no top-level `country` column** in the Places theme (the addresses theme has
+  one, and Places doesn't). Country lives at `addresses[1].country` (1-based DuckDB list
   index). The builder probes `DESCRIBE` output and picks the right expression
   (`chooseCountryExpression`); rows with no address struct are **excluded from per-country
   subsets** under the addresses-based filter — this is the accepted v1 limitation.
@@ -78,7 +78,7 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
   [runtime-flag register](./runtime-flags.mdx).
 - **ODbL never ships.** Infrastructure categories (`source: "mailwoman-infra"` in the
   taxonomy) abstain with `requires_build_local_layer`; Overture's _base_ theme is ODbL too
-  (Overture does not launder OSM's license), so there is no permissive source to "just
+  (Overture doesn't launder OSM's license), so there's no permissive source to "just
   use." We ship the builder.
 
 ## Verify
@@ -134,7 +134,7 @@ uploader (`packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts`
 `set -a; . ./.env; set +a; node packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts --src <staged-dir>`
 (source the repo `.env` first — the R2 credentials live there). Then bump the browser runtime's
 version constant (`POI_LAYER_VERSION` in `packages/mailwoman/lib/browser-runtime/resources.ts`). Note:
-`gazetteer publish` is admin-gazetteer-shaped — it uploads as `candidate.db` — and is **not**
+`gazetteer publish` is admin-gazetteer-shaped — it uploads as `candidate.db` — and **isn't**
 the poi path. It would land the file at the wrong key. The docs tester
 (`understanding/exotic-poi/try-it.mdx`) is intent-only until the layer is published.
 
@@ -149,5 +149,5 @@ indexed brand fetch, full ~2,110-category snapshot) the board stands at **50/51 
 against the rebuilt `poi/2026-07-20a/poi.db` — `nm-04` the sole holdout (a ring-budget case rather than a coverage gap), both hard floors green (see the 2026-07-20 standing update in
 [`2026-07-19-poi-query-board-v1-baseline.md`](../../records/evals/2026-07-19-poi-query-board-v1-baseline.md)). `undefined`/`true` is intent/abstain-only
 (no db); pass `false` to restore the pre-flag, byte-identical address-only classification.
-`forceFullPipeline` does not bypass the poi branch (routing branch rather than a fast-path —
+`forceFullPipeline` doesn't bypass the poi branch (routing branch rather than a fast-path —
 decided, documented on `PipelineOpts`).

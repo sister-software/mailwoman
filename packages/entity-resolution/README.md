@@ -96,7 +96,7 @@ A nonexistent path satisfies that requirement.
 
 So: set `$MAILWOMAN_CANDIDATE_DB` and pass anything to `--resolve-db`. Do not pass `candidate.db` to
 `--resolve-db` with the environment variable unset. The flag is believed on that path, and the admin
-backend queries `place_search`/`spr`, which a candidate gazetteer does not have.
+backend queries `place_search`/`spr`, which a candidate gazetteer doesn't have.
 
 An argument required only to discard it is a defect in this command. Documented rather than fixed.
 

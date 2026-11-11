@@ -33,7 +33,7 @@ export interface RoundedCoordinates {
 	/**
 	 * Whether two neighboring positions of a ring or line became equal that differed before.
 	 *
-	 * The rounded geometry then holds a repeated vertex the source did not.
+	 * The rounded geometry then holds a repeated vertex the source didn't.
 	 */
 	collapsed: boolean
 }

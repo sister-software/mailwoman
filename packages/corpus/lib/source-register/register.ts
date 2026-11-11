@@ -134,7 +134,7 @@ export function ingestEligibilityProblems(
 /**
  * Returns the personal-data problems that block ingest of a source.
  *
- * A missing review blocks ingest, because an unexamined publication has not been found clear.
+ * A missing review blocks ingest, because an unexamined publication hasn't been found clear.
  */
 function personalDataProblems(source: AddressSourceRecord): string[] {
 	const review = source.personalDataReview
@@ -401,7 +401,7 @@ function auditUnresolvedClaim(register: AddressSourceRegister): string[] {
 /**
  * Reads the committed register and checks its digest and structure.
  *
- * @throws When the file does not parse or the audit reports a problem.
+ * @throws When the file doesn't parse or the audit reports a problem.
  * The message lists every problem.
  */
 export async function readAddressSourceRegister(path?: PathBuilderLike): Promise<AddressSourceRegister> {

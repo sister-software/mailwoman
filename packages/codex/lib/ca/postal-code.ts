@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Canadian postcodes: the branded type, shape, normalization and FSA-letter →
- *   province/territory prior. They are the only alphanumeric postcodes among the systems the codex models.
+ *   province/territory prior. They're the only alphanumeric postcodes among the systems the codex models.
  *
  *   The informative contrast across `us/zipcode.ts`, `de/postleitzahl.ts`, `fr/code-postal.ts`, and
  *   here:
@@ -62,7 +62,7 @@ export const CA_POSTAL_CODE_PATTERN = /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?
  * exactly one space between the FSA (first three chars) and the LDU (last three) —
  * `K1A0B1` → `K1A 0B1`, `k1a 0b1` → `K1A 0B1`.
  *
- * @returns Null if the input is not a valid Canadian postcode.
+ * @returns Null if the input isn't a valid Canadian postcode.
  */
 export function normalizeCaPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
@@ -115,7 +115,7 @@ export const FSA_LETTER_TO_PROVINCE: Record<string, CanadianProvinceCode | Canad
  * The province/territory a postcode belongs to, via its FSA first letter.
  *
  * @returns The single code for the clean letters, the `["NT", "NU"]` pair
- * for the shared `X`, and null if the input is not a valid Canadian postcode
+ * for the shared `X`, and null if the input isn't a valid Canadian postcode
  * (or its first letter has no province. The pattern already forbids that case).
  */
 export function provinceOfPostalCode(postalCode: unknown): CanadianProvinceCode | CanadianProvinceCode[] | null {

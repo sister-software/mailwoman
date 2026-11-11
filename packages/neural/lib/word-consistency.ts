@@ -79,7 +79,7 @@ function labelType(label: string): string {
  * @param emissions Per-piece label scores after all priors and masks have been applied.
  * @param labels The BIO label vocabulary, indexed like `emissions`.
  * @param labelIndices The current per-piece decision.
- * The function does not mutate it.
+ * The function doesn't mutate it.
  * @param opts Optional conditions that limit which words are relabelled.
  */
 export function enforceWordConsistency(

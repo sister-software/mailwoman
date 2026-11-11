@@ -29,7 +29,7 @@ console.log(decodeAsJSON(tree))
 
 ## What it does
 
-Mailwoman is **not** an LLM and none of it is generative. It is a small
+Mailwoman **isn't** an LLM and none of it is generative. It is a small
 transformer encoder (~30M params) doing BIO token classification over a 33-label
 address schema. That plain NER design suits short, structured strings.
 
@@ -175,7 +175,7 @@ for database prerequisites and installation checks.
 
 ### Which place the coordinate comes from
 
-When no place finer than an administrative centroid resolved, result assembly walks a ladder and takes the first rung that has a coordinate. That ladder is **not fixed** — it leads with the postcode when the postcode is the finer thing, and with the locality otherwise:
+When no place finer than an administrative centroid resolved, result assembly walks a ladder and takes the first rung that has a coordinate. That ladder **isn't fixed** — it leads with the postcode when the postcode is the finer thing, and with the locality otherwise:
 
 ```
 GB unit / NL PC6 / CA urban LDU   →   postcode, locality, dependent_locality, region, country
@@ -185,7 +185,7 @@ everything else                    →   locality, dependent_locality, postcode,
 
 Both routes to the first arm live in `@mailwoman/codex` and are read by `@mailwoman/resolver`'s `adminLadderForNodes`. The second arm is the #945 convention, adopted for France where one _code postal_ can span several communes.
 
-The distinction is a fact about a country's **administrative** geography rather than its postal system, and code length does not predict it — France and Germany are both five digits and disagree. Germany's Gemeinden are large enough that Berlin is a single locality, so its PLZ is finer by a wide margin: on 2,997 OpenAddresses rows the coordinate p50 goes 5.84 km → 1.24 km, better on every percentile including p99, and the within-5-km population doubles.
+The distinction is a fact about a country's **administrative** geography rather than its postal system, and code length doesn't predict it — France and Germany are both five digits and disagree. Germany's Gemeinden are large enough that Berlin is a single locality, so its PLZ is finer by a wide margin: on 2,997 OpenAddresses rows the coordinate p50 goes 5.84 km → 1.24 km, better on every percentile including p99, and the within-5-km population doubles.
 
 Membership is earned by a full-panel measurement, never by a shape that looks tight. See [`@mailwoman/codex`](../codex) for the tier table and what each member measured.
 
@@ -204,7 +204,7 @@ package is the umbrella that wires them together as a single `npm install`.
 
 | Package                           | Role                                               |
 | --------------------------------- | -------------------------------------------------- |
-| `mailwoman`                       | CLI + `AddressParser` (you are here)               |
+| `mailwoman`                       | CLI + `AddressParser` (you're here)                |
 | `@mailwoman/core`                 | Types, pipeline coordinator, decoder, dictionaries |
 | `@mailwoman/neural`               | SentencePiece tokenizer + ONNX runtime             |
 | `@mailwoman/neural-weights-en-us` | Trained model bundle (en-US)                       |

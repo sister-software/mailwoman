@@ -110,7 +110,7 @@ The output is `AddressTree { raw, roots: AddressNode[] }`. Each
 ### It's deterministic, given the labels
 
 The encoder + FST priors + Viterbi produce the labels. Everything after
-that is rule-table application. Two different runs that produce the same
+that's rule-table application. Two different runs that produce the same
 BIO sequence will produce bit-identical trees. This makes the decoder
 behavior easy to reason about and easy to test.
 
@@ -152,7 +152,7 @@ into either ontology directly.
 
 - **Multi-parent.** Each span has exactly one parent. The DAG-like
   fact that a `borough` can nest under both `locality` and `localadmin`
-  in WOF is not reproduced. The decoder picks one parent.
+  in WOF isn't reproduced. The decoder picks one parent.
 - **Cross-address linkage.** The tree is per-address. If you parse a
   list of addresses and want to detect that they all share the same
   locality, that's a resolver concern rather than a decoder one.

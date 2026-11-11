@@ -168,7 +168,7 @@ export async function buildPostcodeGeonamesTail(
 		)
 	}
 
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const {
 		unifiedSchema: { createUnifiedSchema, createUnifiedIndexes, populateAncestors },
 		geonames: { ingestGeonamesPostal },
@@ -302,7 +302,7 @@ async function collectSourceFacts(
 const GEONAMES_ATTRIBUTION = "Contains data from GeoNames (geonames.org), © GeoNames contributors, CC-BY 4.0"
 
 /**
- * GB is not plain GeoNames provenance: the GB rows derive from Ordnance Survey Code-Point Open under OGL v3.
+ * GB isn't plain GeoNames provenance: the GB rows derive from Ordnance Survey Code-Point Open under OGL v3.
  *
  * A redistributor must include the OS attribution block.
  * The ~48,990 `BT` rows plus IM/GY/JE have no documented provenance.

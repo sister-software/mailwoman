@@ -65,9 +65,9 @@ from `v0.7.0-de-holdout` on stores, so `synth-unit-v30.jsonl` holds rows whose `
 | `kryptonite-train.jsonl`   |   4,822 |
 | `german-val.jsonl`         |   4,000 |
 
-## What this answers, and what it does not
+## What this answers, and what it doesn't
 
-**GB's 800,000 street rows are a `--count 800000`.** They are not a cap the reader imposes.
+**GB's 800,000 street rows are a `--count 800000`.** They're not a cap the reader imposes.
 `RESERVOIR_CAP` in `packages/corpus/lib/international/recipes/locale.ts` is 1,200,000 and bounds the
 pool held in memory while a source is streamed. That bound never constrains a draw of 800,000. The four
 largest locale outputs — ES pedanía, GB, NZ and the FR lieu-dit recipe — were each drawn at that
@@ -78,7 +78,7 @@ that reached its target. `synth-fr-lieudit-v1.jsonl` at 799,997 is three short o
 one either ran with a different flag or exhausted its pool.
 
 **The invocation is still unrecorded.** An artifact count recovers what a
-recipe emitted. It does not recover the invocation, the seed, or the flags beside `--count`, and no
+recipe emitted. It doesn't recover the invocation, the seed, or the flags beside `--count`, and no
 file on this machine records them. A recipe output rebuilt from a different seed would count the
 same and contain different rows.
 
@@ -127,7 +127,7 @@ column states the file's own count.
 PT, CH and HR each sampled 1,200,000 rows because `RESERVOIR_CAP` bounds the pool at that number and
 each country supplies more. SK and LU supply fewer rows than the cap, so their pool is the whole
 file and their draw is 68.3% and 91.2% of it. A country whose draw approaches its supply teaches
-that country's addresses close to exhaustively. That is a different regime from PT's 13.5%.
+that country's addresses close to exhaustively. That's a different regime from PT's 13.5%.
 
 Croatia's 1,003 city-noise drops are the only ones among the five. `cleanCityNoise` removes a row whose
 city value contains a comma, and those rows are excluded from the 1,680,503 the reservoir saw.

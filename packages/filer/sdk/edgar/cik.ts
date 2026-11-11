@@ -134,7 +134,7 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
  *
  *     company name:0001234567:
  *
- * There is no ticker column (the empty third field is always blank). ~1,054,085 entries covering 40 MB.
+ * There's no ticker column (the empty third field is always blank). ~1,054,085 entries covering 40 MB.
  * Read the file once and keep the result rather than reparsing it per query.
  *
  * An entry whose CIK cannot be parsed is skipped without throwing.
@@ -150,7 +150,7 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
  * This is fast enough for a tool that runs once per vintage.
  *
  * A caller running thousands of queries should build a prefix index instead.
- * That is not this.
+ * That's not this.
  */
 export function parseCIKLookupData(text: string): CompanyTickerEntry[] {
 	const entries: CompanyTickerEntry[] = []
@@ -206,8 +206,8 @@ export interface CIKCandidate {
 	 * ({@linkcode nameSimilarity}, `@mailwoman/match`).
 	 *
 	 * `1` means the two names are identical once legal designations are stripped.
-	 * That is exactly the case that can still mean two different companies
-	 * (see the module docstring), so a score of `1` is not itself a license to pick.
+	 * That's exactly the case that can still mean two different companies
+	 * (see the module docstring), so a score of `1` isn't itself a license to pick.
 	 */
 	score: number
 }

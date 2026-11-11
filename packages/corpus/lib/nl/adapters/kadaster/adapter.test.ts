@@ -74,7 +74,7 @@ describe("nl-kadaster adapter against the fixture GML", () => {
 		// Kadaster's Locatieserver serves `weergavenaam` for the same `nummeraanduiding` ids,
 		// and these twelve strings are that field.
 		// They agreed with the reader on 12 of 12 when measured on 2026-10-02.
-		// They are recorded here rather than fetched, so the suite needs no network.
+		// They're recorded here rather than fetched, so the suite needs no network.
 		expect(rows.map((r) => r.raw)).toEqual([
 			"Snelgersmastraat 3, 9901AA Appingedam",
 			"Snelgersmastraat 5, 9901AA Appingedam",
@@ -226,7 +226,7 @@ describe("nl-kadaster adapter against the fixture GML", () => {
 		const text = (await readLocalBuffer(fixture)).toString("utf8")
 		const area = /<gml:featureMember><ad:AddressAreaName[\s\S]*?<\/gml:featureMember>/.exec(text)![0]
 		// The woonplaats moved behind every address.
-		// That is the one ordering that separates a reference that has not arrived
+		// That's the one ordering that separates a reference that's not arrived
 		// yet from one the publisher never wrote.
 		// The published document deferred 0 of 345,309 addresses, so only a rewrite reaches this path.
 		const reordered = scratch.path("reordered.gml")

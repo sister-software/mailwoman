@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Registry of committed conformance suites. It lives apart from `command.ts` so that importing it does not load an
+ *   Registry of committed conformance suites. It lives apart from `command.ts` so that importing it doesn't load an
  *   engine. The `conformance-suites.test.ts` test fails when a suite file in this directory is unregistered.
  */
 

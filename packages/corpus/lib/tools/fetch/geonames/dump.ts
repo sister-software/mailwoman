@@ -15,7 +15,7 @@
  *   absent from disk then counts as a gap in the source's own catalog.
  *   The dump directory may contain files this tool never fetched. The tool keeps present files unchanged.
  *   It checks each present `<CC>.txt` for the 19-column gazetteer format. GeoNames postal exports share
- *   the basename, so a postal export receives `wrong_format_present` and does not count as coverage.
+ *   the basename, so a postal export receives `wrong_format_present` and doesn't count as coverage.
  */
 
 import { readFileHead, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -29,7 +29,7 @@ import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
 import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download"
 
 /**
- * The one status that means "the source does not publish this country" rather than "the transfer failed".
+ * The one status that means "the source doesn't publish this country" rather than "the transfer failed".
  */
 const HTTP_NOT_FOUND = 404
 
@@ -86,14 +86,14 @@ export interface GeonamesDumpManifest {
 	/**
 	 * Countries in the source catalog that the source's dump directory nonetheless 404s.
 	 *
-	 * A fact about the source, recorded so a later reader does not spend the fetch to rediscover it.
+	 * A fact about the source, recorded so a later reader doesn't spend the fetch to rediscover it.
 	 */
 	unavailable: string[]
 	/**
 	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps.
 	 * GeoNames' postal exports share the same basename.
 	 *
-	 * Left in place (this tool never overwrites data it did not fetch).
+	 * Left in place (this tool never overwrites data it didn't fetch).
 	 * The fix is to move the file to its own home and rerun.
 	 */
 	wrong_format_present: string[]

@@ -26,7 +26,7 @@ import { streetNumberPairs } from "#street/tier"
  * A bare region stays a region, because only a street and number or a district
  * say the input means somewhere inside a city.
  *
- * A locality the gazetteer did not resolve leaves the region as the only place,
+ * A locality the gazetteer didn't resolve leaves the region as the only place,
  * and Bristol's region point lies in the Bristol Channel, so the city answers there too.
  */
 export async function applyRegionCity(roots: AddressNode[], backend: ResolverBackend): Promise<void> {

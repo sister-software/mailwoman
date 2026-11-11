@@ -98,7 +98,7 @@ export function literalFilesEntries(files: unknown): string[] {
 }
 
 /**
- * Returns the literal `files` entries that the tarball does not contain.
+ * Returns the literal `files` entries that the tarball doesn't contain.
  */
 export function collectMissingFileEntries(files: unknown, shipped: Set<string>): string[] {
 	return literalFilesEntries(files).filter((entry) => !isShipped(normalizeEntry(entry), shipped))
@@ -131,7 +131,7 @@ function isPatternShipped(target: string, shipped: Set<string>): boolean {
 }
 
 /**
- * Returns the `exports` targets that the tarball does not contain.
+ * Returns the `exports` targets that the tarball doesn't contain.
  *
  * A concrete target must be shipped, and a `*` pattern target must match at least one shipped file.
  */
@@ -143,7 +143,7 @@ export function collectMissingExportTargets(exports: unknown, shipped: Set<strin
 }
 
 /**
- * Returns the package-import targets that the tarball does not contain, under the same rules as exports.
+ * Returns the package-import targets that the tarball doesn't contain, under the same rules as exports.
  */
 export function collectMissingImportTargets(imports: unknown, shipped: Set<string>): string[] {
 	return [
@@ -161,7 +161,7 @@ function collectBinTargets(bin: unknown): string[] {
 }
 
 /**
- * Returns the `bin` targets the tarball does not contain.
+ * Returns the `bin` targets the tarball doesn't contain.
  *
  * Since no other check reconciles `bin` with `files`, an unbuilt target would otherwise
  * publish without error and fail only when a user runs it.

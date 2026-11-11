@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Zod schemas for the Photon-compatible API. Key names and envelopes match Photon and must not
+ *   Zod schemas for the Photon-compatible API. Key names and envelopes match Photon and mustn't
  *   change. The query schemas accept any string or string array, so validation never fails. The
  *   handlers in `routes.ts` do the actual parsing.
  */
@@ -66,7 +66,7 @@ export const PhotonFeatureCollectionSchema =
 
 /**
  * The error envelope is an empty FeatureCollection with a message.
- * Photon does not use an `{ error }` body.
+ * Photon doesn't use an `{ error }` body.
  */
 export const PhotonMessageCollectionSchema = z
 	.object({

@@ -12,7 +12,7 @@
  * reference features before its first address.
  *
  * Either way a reader has to index as it goes, because a 32 GB document cannot be read twice from
- * one stream and the references are local. An address naming a feature the pass has not reached yet
+ * one stream and the references are local. An address naming a feature the pass hasn't reached yet
  * is held rather than refused, since until the document ends an unresolved reference and an absent
  * one are the same observation. That distinction is what the repository's partial-read rule turns on.
  *
@@ -38,7 +38,7 @@ import type { CanonicalRow } from "#types"
  * `null` refuses the address.
  * The caller counts each refusal.
  *
- * `deferred` states that the address holds a reference the pass has not indexed yet,
+ * `deferred` states that the address holds a reference the pass hasn't indexed yet,
  * so the driver holds it and asks again once the document has ended.
  */
 export type InspireRowResult = CanonicalRow | null | "deferred"
@@ -139,7 +139,7 @@ export async function* streamInspireRows<Indexed>(
 	 */
 	const referenced = new Map<string, Indexed>()
 	/**
-	 * Addresses naming a reference the pass had not indexed when they arrived.
+	 * Addresses naming a reference the pass hadn't indexed when they arrived.
 	 */
 	const held: MarkupElement[] = []
 	let emitted = 0
@@ -208,15 +208,15 @@ export interface StreamIndexedInspireRowsOptions<Indexed> extends Omit<
 	 * A factory rather than an iterable, because a byte stream is consumed by the first pass.
 	 * `inspireGMLChunks` inflates the archive member again.
 	 *
-	 * That is what makes the second pass cheap relative to holding every address.
+	 * That's what makes the second pass cheap relative to holding every address.
 	 */
 	chunks: () => AsyncIterable<string | Uint8Array>
 
 	/**
 	 * Builds a row from an address and the complete reference index.
 	 *
-	 * There is no `final` argument and no deferral: the first pass has read the whole document,
-	 * so a reference resolving to no feature is a value the reader asked for and could not read.
+	 * There's no `final` argument and no deferral: the first pass has read the whole document,
+	 * so a reference resolving to no feature is a value the reader asked for and couldn't read.
 	 * The caller raises on one rather than writing the address without it.
 	 */
 	compose: (address: MarkupElement, referenced: ReadonlyMap<string, Indexed>) => CanonicalRow | null

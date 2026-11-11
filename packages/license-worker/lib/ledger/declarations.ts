@@ -123,7 +123,7 @@ export async function clearDeclarationPendingSecret(ledger: Ledger, lid: string,
  * `pending` covers a crash between the mint and the send.
  * `failed` is a provider refusal.
  *
- * Only the highest `seq` per declaration is listed, so a resend sends the token that is current.
+ * Only the highest `seq` per declaration is listed, so a resend sends the token that's current.
  */
 export async function issuancesAwaitingEmail(
 	ledger: Ledger

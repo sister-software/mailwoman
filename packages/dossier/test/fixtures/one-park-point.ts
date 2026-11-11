@@ -37,11 +37,11 @@
  *     reading's subject, as `bdcLayerReadings` in `@mailwoman/bdc` writes a reading of a building's block.
  *
  *   PLUTO's `bctcb2020` (30504012000) and `bct2020` (3050401) place the tax lot in census block
- *   360470504012000 and census tract 36047050401. They are the building's memberships, admitted from
+ *   360470504012000 and census tract 36047050401. They're the building's memberships, admitted from
  *   PLUTO 26v2's availability date.
  *
  *   Claims in a dossier are scoped to record fields dated on or before the cutoff, so a row retrieved
- *   today does not leak its later statuses into an earlier `asOf`.
+ *   today doesn't leak its later statuses into an earlier `asOf`.
  *
  *   The fiber check is the demonstration's question rather than a public record. It asks whether the
  *   FCC's fiber-to-the-premises filings hold service at the building's census block, the extent at

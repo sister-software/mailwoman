@@ -5,7 +5,7 @@
  *
  *   The constraint census, tested against a fake engine and a fake candidate table.
  *
- *   What is under test is the accounting — reachability kept apart from coverage, an eval called inert only when it
+ *   What's under test is the accounting — reachability kept apart from coverage, an eval called inert only when it
  *   never accompanied a pick — not whether the resolver is right about any particular place. A test that loaded the
  *   real gazetteer would take minutes and fail for reasons this file has no opinion about.
  */
@@ -109,7 +109,7 @@ describe("constraint census", () => {
 		}
 
 		// A second check fires the same number of times but accompanies some picks.
-		// It must not be called inert.
+		// It mustn't be called inert.
 		byInput["alive"] = [
 			{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["live_check"], picked: true },
 		]

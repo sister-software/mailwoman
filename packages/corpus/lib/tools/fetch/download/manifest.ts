@@ -52,7 +52,7 @@ export async function writeManifest(path: PathBuilderLike, manifest: unknown): P
 }
 
 /**
- * The sibling `manifest.json` shape for a source that is a collection of files behind one
+ * The sibling `manifest.json` shape for a source that's a collection of files behind one
  * portal (a monthly register published per region, per industry, or per first letter).
  *
  * It records what a trained artifact has to be able to cite later: the license the portal labels
@@ -70,9 +70,9 @@ export interface SourceCollectionManifest {
 /**
  * Pipe a response body to `dest` and answer the byte count.
  *
- * The one primitive the portal fetchers share when the request is not a bare GET.
+ * The one primitive the portal fetchers share when the request isn't a bare GET.
  * A session cookie, a csrf header, or a form post stands between the listing
- * and the file, so {@link streamDownload}'s URL-only interface does not fit
+ * and the file, so {@link streamDownload}'s URL-only interface doesn't fit
  * and each module builds its own `Response` first.
  *
  * Writes a `.tmp` sibling and renames, so an interrupted transfer never lands
@@ -99,9 +99,9 @@ export async function streamBodyToFile(res: Response, dest: PathBuilderLike): Pr
 /**
  * The per-file entries of a {@link SourceCollectionManifest} keyed by file name,
  * or an empty map when the manifest is missing or not in the collection shape,
- * so a re-run after an interruption fetches only what is missing.
+ * so a re-run after an interruption fetches only what's missing.
  *
- * The single-file modules' `loadManifestEntries` reads a bare array and is not this.
+ * The single-file modules' `loadManifestEntries` reads a bare array and isn't this.
  */
 export async function loadCollectionFiles(path: PathBuilderLike): Promise<Map<string, SourceManifest>> {
 	const parsed = await readManifest<SourceCollectionManifest>(path)

@@ -6,7 +6,7 @@
  *
  *   An installation is one artifact set placed under the data root, with the origin it came from. The
  *   active selection is one document, replaced whole, that lists which installed artifacts each role reads
- *   for each scope and in what order. A file a directory scan finds is not selected until this document
+ *   for each scope and in what order. A file a directory scan finds isn't selected until this document
  *   names it.
  *
  *   Each replacement records the next generation number and the generation it replaced. A writer that
@@ -14,7 +14,7 @@
  *   apart. A session reads one generation and keeps it until it reloads.
  *
  *   Order means: the first entry whose artifact is installed and readable answers the lookup. An
- *   unsuccessful lookup in that artifact does not fall through to the next entry. That is the behavior of
+ *   unsuccessful lookup in that artifact doesn't fall through to the next entry. That's the behavior of
  *   today's national, Overture and OpenStreetMap provider chain, and falling through after a miss is a
  *   behavior change that needs its own evaluation.
  */
@@ -104,7 +104,7 @@ export function layerInstallationID(artifactSet: ArtifactSetID, origin: LayerIns
  */
 export interface SelectionScope {
 	/**
-	 * An uppercase ISO 3166-1 alpha-2 code, or `null` for an entry that is not scoped by country.
+	 * An uppercase ISO 3166-1 alpha-2 code, or `null` for an entry that's not scoped by country.
 	 */
 	country: string | null
 	/**
@@ -128,7 +128,7 @@ export interface SelectionEntry {
 	role: ServingRole
 	scope: SelectionScope
 	/**
-	 * The sources in the order they are consulted.
+	 * The sources in the order they're consulted.
 	 *
 	 * The first installed and readable source answers.
 	 * The file comment defines what order means.
@@ -350,7 +350,7 @@ export function assertActiveSelection(
  * and the replacement is refused rather than overwriting that writer's selection.
  *
  * @param current The document on disk at the moment of replacement, or `null` when none exists yet.
- * @throws {@link ActiveSelectionError} when `next` does not succeed `current`.
+ * @throws {@link ActiveSelectionError} when `next` doesn't succeed `current`.
  */
 export function assertSelectionSuccessor(current: ActiveSelection | null, next: ActiveSelection): void {
 	const expected = (current?.generation ?? 0) + 1

@@ -64,7 +64,7 @@ export type GermanStreetType = keyof typeof DE_STREET_TYPE_VARIANTS
  *
  * Deliberately excludes the suffixes that also end German city names — `-berg`,
  * `-burg`, `-dorf`, `-feld`, `-hof`, `-stadt`, `-heim`, `-bach`, `-tal` —
- * so a city token in a `PLZ City` segment is not mistaken for a street.
+ * so a city token in a `PLZ City` segment isn't mistaken for a street.
  */
 export const DE_STREET_SUFFIXES = [
 	"straße",

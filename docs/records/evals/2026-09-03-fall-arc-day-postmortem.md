@@ -1,7 +1,7 @@
 # Day shift postmortem — 2026-09-03 (07:05–16:00 UTC)
 
 The first shift of the Fall arc, driven from the git-ignored `scratchpad/HANDOFF-2026-09-03_fall-arc.md`
-after a week of structural cleanup. The handoff's first item was a live demo that did not render. The
+after a week of structural cleanup. The handoff's first item was a live demo that didn't render. The
 rest was pre-authorized housekeeping and a proposed order of measurements. Modal spend: $0.
 
 ## What shipped
@@ -94,8 +94,8 @@ Decision packages posted without a build: #1998, #1999, #2048, and step 4 (#1684
 ## Concrete next steps
 
 - Step 4's cheap half is measured (11 of 119 visit rows move, 2 cross tolerance, 0 regress, and the
-  deliver population does not move). The remaining build is inferred intent. The measurement
-  does not yet justify it.
+  deliver population doesn't move). The remaining build is inferred intent. The measurement
+  doesn't yet justify it.
 - The venue-tier default-on decision has its issue (#2110). The routed battery through the new
   `poiVenueTier` pin (PR #2109) read 4 improve, 1 regress, `University of Chichester, The Dome, Upper
   Bognor Rd, Bognor Regis PO21 1HR` landing on the Chichester campus 9.87 km away: the 30 km reach was

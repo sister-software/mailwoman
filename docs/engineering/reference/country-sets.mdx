@@ -38,8 +38,8 @@ trainAll(countriesOfScript("Latn")) // refused: a script set is not the world se
 The address-system and weights-family constructors take their source as an argument because the packages
 that own it, the weights packages and `@mailwoman/neural`, depend on the codex.
 
-`union`, `intersect` and `minus` keep the brand and record the operation in the spec, so a union is
-not assignable where a single source is required. The sovereign states are
+`union`, `intersect` and `minus` keep the brand and record the operation in the spec, so a union isn't
+assignable where a single source is required. The sovereign states are
 `minus(worldCountries(), dependentTerritories())`. `hasCountry(set, code)` tests an unvalidated string.
 
 Script and address system are separate axes. A script set describes the script an input is written in. An
@@ -74,4 +74,4 @@ test files and per-country homes:
 A list that records a per-country fact rather than a rule, such as an index-pinned label map or an
 ingest order that assigns ids, keeps a `// country-branch: <reason>` comment on its statement or above
 its doc comment, naming the source that would replace it. A list of subdivision codes held by a name such
-as `STATES` is not read as countries.
+as `STATES` isn't read as countries.

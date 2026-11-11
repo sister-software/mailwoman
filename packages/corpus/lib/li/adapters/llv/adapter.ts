@@ -18,7 +18,7 @@
  *
  * `STATUS` reads `real` or `planned`. A planned address is one assigned to a building not yet built, so
  * the adapter refuses it. `OFFICIAL` reads `TRUE` or `FALSE`; an address the register marks as not
- * official is refused too, because its text is not the designation the municipality assigned.
+ * official is refused too, because its text isn't the designation the municipality assigned.
  *
  * The publisher grants reproduction, redistribution, enrichment, editing, combination and commercial use
  * under its `ABI/OGD-Version 2 vom 5.2.2021` terms, on condition that the source

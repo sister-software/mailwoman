@@ -7,7 +7,7 @@
  *   own manifest records. A selected artifact of another size raises an unreadable-artifact error with its path.
  *
  *   The command runs offline by default. It reports an on-disk artifact as "present" when its size matches
- *   the registry's surveyed `approxBytes`. This size-only integrity check catches truncation and does not
+ *   the registry's surveyed `approxBytes`. This size-only integrity check catches truncation and doesn't
  *   compare versions. `--check-remote` adds a live head `Content-Length` probe through `APIClient`.
  */
 

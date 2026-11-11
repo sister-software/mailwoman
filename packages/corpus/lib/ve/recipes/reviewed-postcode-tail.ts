@@ -87,7 +87,7 @@ export function defaultReviewedPostcodeTuplePath(): string {
 /**
  * Reads and validates the reviewed tuples.
  *
- * @throws When the file does not hold the expected number of complete, unique,
+ * @throws When the file doesn't hold the expected number of complete, unique,
  * reviewed tuples as its `tupleCount` declares.
  */
 export async function readReviewedPostcodeTuples(
@@ -146,7 +146,7 @@ const foldAccents = (value: string): string => stripCombiningMarks(value).normal
  * Returns the surface variants of one tuple.
  *
  * Every variant reuses the tuple's own locality, postcode and region, so no variant
- * pairs a postcode with a place the review did not cover.
+ * pairs a postcode with a place the review didn't cover.
  */
 export function reviewedPostcodeTailVariants(tuple: ReviewedPostcodeTuple): Variant[] {
 	const tail = `${tuple.locality} ${tuple.postcode}, ${tuple.region}`

@@ -126,7 +126,7 @@ export const SourceUse = {
 	Tokenizer: "tokenizer",
 	Evaluation: "evaluation",
 	/**
-	 * The entry does not say how the source was used.
+	 * The entry doesn't say how the source was used.
 	 */
 	Unstated: "unstated",
 } as const
@@ -252,7 +252,7 @@ function readDataAccessOffers(value: unknown, cardPath: string): DataAccessOffer
 /**
  * The attribution that an overlay inherits from the package that owns its model graph,
  * repeated so a consumer of the overlay by itself can read it and labeled as the base's
- * because the overlay's own artifacts did not contribute to that model.
+ * because the overlay's own artifacts didn't contribute to that model.
  */
 interface InheritedLineage {
 	package: string
@@ -328,7 +328,7 @@ export interface WeightsRightsRecord {
 	/**
 	 * The corpus version that the card states.
 	 *
-	 * It does not prove which records reached the model, because no frozen per-release corpus manifest exists.
+	 * It doesn't prove which records reached the model, because no frozen per-release corpus manifest exists.
 	 */
 	corpusVersion: string | null
 	/**

@@ -57,7 +57,7 @@ export interface LicenseWorkerClientOptions {
 }
 
 /**
- * Bounded so a doctor run on a machine without a route to the worker does not hang on it.
+ * Bounded so a doctor run on a machine without a route to the worker doesn't hang on it.
  */
 const DEFAULT_TIMEOUT_MS = 5000
 
@@ -77,7 +77,7 @@ function client(options: LicenseWorkerClientOptions): APIClient {
 	return new APIClient({
 		displayName: "license-worker",
 		// The doctor and `license refresh --json` own stdout.
-		// The client's request line must not land in the document.
+		// The client's request line mustn't land in the document.
 		logger: silentLogger(),
 		axios: {
 			baseURL: licenseWorkerURL(options.url),
@@ -205,8 +205,8 @@ export async function declareLicense(
 /**
  * Request a thirty-day evaluation for an address.
  *
- * The worker's 409, an address that has received its evaluation, reads back
- * as the `evaluation_exists` refusal.
+ * The worker's 409, an address that's received its evaluation, reads back as
+ * the `evaluation_exists` refusal.
  */
 export async function requestEvaluation(
 	request: { email: string; name: string; install?: string },

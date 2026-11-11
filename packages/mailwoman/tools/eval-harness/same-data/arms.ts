@@ -73,7 +73,7 @@ export interface ArmRowResult {
 	 * True when the selection lies more than {@link WRONG_AREA_KM} from the gold coordinate.
 	 *
 	 * Null when the arm abstained or the selected candidate has no coordinate,
-	 * since absence of a distance is not a distance of zero.
+	 * since absence of a distance isn't a distance of zero.
 	 */
 	wrongArea: boolean | null
 	distanceKm: number | null

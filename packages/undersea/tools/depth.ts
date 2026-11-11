@@ -96,7 +96,7 @@ export interface DepthSampleRequest {
 	positions: ReadonlyArray<readonly [number, number]>
 	/**
 	 * True when the positions are points whose surroundings should be searched.
-	 * A line's vertices are read as they are.
+	 * A line's vertices are read as they're.
 	 */
 	window: boolean
 	kind: UnderseaDepthKind

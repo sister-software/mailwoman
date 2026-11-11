@@ -22,7 +22,7 @@ import { isNationalAddressPointArtifact } from "#geocode/osm-layers"
  * `@mailwoman/ban` is a runtime dependency of this package, so a failure to load
  * it is a broken installation rather than an absent layer.
  *
- * The import stays dynamic so a parse-only command does not load the provider.
+ * The import stays dynamic so a parse-only command doesn't load the provider.
  *
  * @throws When the package fails to load, or when the provider cannot read the extract directory.
  */

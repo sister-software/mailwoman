@@ -8,7 +8,7 @@
  *
  *   Each artifact gets two readings. A HEAD request against its public URL reports `content-length` without downloading it.
  *   The tier and license come from `layer_manifest` in the local copy under the data root.
- *   Only a host that has pulled the bundle can supply that copy. An artifact this host does not hold
+ *   Only a host that's pulled the bundle can supply that copy. An artifact this host doesn't hold
  *   gets its manifest recorded as unmeasured with the path that was looked for, so a reader of the snapshot can
  *   tell a tier with a read record from one without a read record.
  *

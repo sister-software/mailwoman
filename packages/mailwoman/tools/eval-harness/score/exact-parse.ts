@@ -16,7 +16,7 @@
  *
  *   Street convention. Each row is scored under its country's street span convention, read from
  *   `streetSpanConventionFor` in `@mailwoman/codex/street-convention`. Under the `split` convention (US),
- *   `street_prefix`, `street_prefix_particle`, `street` and `street_suffix` spans are compared as they are,
+ *   `street_prefix`, `street_prefix_particle`, `street` and `street_suffix` spans are compared as they're,
  *   so a gold row that splits the street requires the split and a gold row that keeps it whole refuses it.
  *   Under the `whole` convention (every other country), {@linkcode joinStreetSpans} first joins each run of
  *   those spans that touch or are separated only by whitespace into one `street` span from the first start
@@ -29,7 +29,7 @@
  *   once as matched and once as additional.
  *
  *   Ignored labels. No component tag is ignored. The parse tree's nodes, parents and children alike, all
- *   count as predicted spans. Unlabeled text, the `O` label, is not a span on either side.
+ *   count as predicted spans. Unlabeled text, the `O` label, isn't a span on either side.
  *
  *   Validity. {@linkcode validateAnnotatedSpans} refuses a row when its span columns differ in length or its
  *   offsets are not integers inside `raw` with `start < end`. It also refuses spans containing only whitespace and tags that are not
@@ -97,7 +97,7 @@ const KNOWN_TAGS: ReadonlySet<string> = new Set(COMPONENT_TAGS)
 
 /**
  * Trims whitespace at both edges of a span.
- * A span that is only whitespace trims to `start === end`.
+ * A span that's only whitespace trims to `start === end`.
  */
 export function trimSpan(raw: string, span: ComponentSpan): ComponentSpan {
 	let { start, end } = span

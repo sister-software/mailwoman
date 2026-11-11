@@ -248,7 +248,7 @@ export async function runLookup(
 /**
  * Resolves the candidate database path.
  *
- * An explicit path that does not resolve is returned as given, so opening it reports why it is unavailable.
+ * An explicit path that doesn't resolve is returned as given, so opening it reports why it is unavailable.
  */
 async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | null> {
 	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)

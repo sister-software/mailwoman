@@ -18,7 +18,7 @@ import { type KenAllIndex, loadKenAllPostcodes } from "#jp/corpus/sources"
  * `fixtures/builders/jp/kenall-tiers.csv.b64`: four KEN_ALL_ROME rows in cp932,
  * as Japan Post writes the file, encoded with CPython's cp932 codec.
  *
- * They are Sapporo's catch-all, a town, a town with a parenthetical annotation,
+ * They're Sapporo's catch-all, a town, a town with a parenthetical annotation,
  * and an Ishigaki town KEN_ALL spells without 字.
  *
  * Sapporo's municipality is written with an ideographic space, shown here as [U+3000].

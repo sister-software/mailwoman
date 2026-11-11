@@ -28,10 +28,10 @@ interface Evidence {
 ```
 
 [`StreetNameEvidenceProvider`](./registry-backed-structured-prediction.mdx) is the shape done right:
-`exists` answers "is there evidence", `confidence` answers "how much". They are never the same
+`exists` answers "is there evidence", `confidence` answers "how much". They're never the same
 question.
 
-**Re-encoding the domain does not fix it.** A proposal to move `importance` to `[-1, 1]` with `0` as
+**Re-encoding the domain doesn't fix it.** A proposal to move `importance` to `[-1, 1]` with `0` as
 the default and `-1` as "unknown" was considered and rejected against the data: it still collapses
 absence onto the value axis, and 82% of places would land on `-1`, so the axis would encode mostly
 one thing. The split is the fix. The range is a detail.
@@ -51,7 +51,7 @@ confidence: number
 
 So `confidence: 0` means **either**:
 
-- `27` is not a postcode at all, **or**
+- `27` isn't a postcode at all, **or**
 - `75008` absolutely is a postcode, and it exists in most countries that the posterior is uniform.
 
 Those are opposite claims. The first means "ignore this token". The second means "this is a postcode,
@@ -83,7 +83,7 @@ An unknown place and a known-but-unimportant place are both perfectly inert, and
 `0`. The change looks configured and has no effect. Tracked on #1142.
 
 Measured on the Paris fixtures: only 3 of 43 surfaces were inert this way — so on that corpus the
-inertia is not what's protecting us, but the ambiguity is still live everywhere else.
+inertia isn't what's protecting us, but the ambiguity is still live everywhere else.
 
 ### 3. Zero-valued baselines — the same shape, caught in the act
 
@@ -112,5 +112,5 @@ The tell, every time: the docstring reads "`0` when …". Grep for it.
 Every instance costs a wrong verdict or a dead change, and none of them announce themselves. Phase 4a's
 rerank was VOID because a resolver reading `0.000` street evidence looked exactly like a resolver with
 no street evidence to give — the instrument was dark, the number was well-formed, and the report read
-as a finding. That is the whole failure mode: **a magnitude carrying its own absence is a lie the type
+as a finding. That's the whole failure mode: **a magnitude carrying its own absence is a lie the type
 system will typecheck.**

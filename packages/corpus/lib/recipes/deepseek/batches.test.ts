@@ -207,7 +207,7 @@ describe("the DeepSeek generator's deterministic halves", async () => {
 		for (const [label, language, script, slug] of TRANSLIT_SCRIPTS) {
 			expect([label, language, script, slug].every(Boolean)).toBe(true)
 			expect(slug).toMatch(/^[a-z]+$/)
-			// A script does not identify a territory.
+			// A script doesn't identify a territory.
 			// The language subtag has no region.
 			expect(language).not.toContain("-")
 			// An ISO 15924 code: four letters, title case.

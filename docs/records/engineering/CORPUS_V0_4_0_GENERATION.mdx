@@ -30,7 +30,7 @@ Hebrew + Devanagari + Thai). Thread B's smoke testing validated the prompt + ali
 pipeline against five (`cyrl`, `jpan`, `hans`, `hang`, `armn`); those five ship in Thread B2.
 The remaining scripts (`grek`, `arab`, `hebr`, `deva`, `thai`) are additive — extending
 `TRANSLIT_SCRIPTS` + `KNOWN_SOURCE_PREFIXES` is sufficient — but the prompt + substring
-invariant should be re-smoked per-script before a production run, so they are deferred.
+invariant should be re-smoked per-script before a production run, so they're deferred.
 
 ## Pipeline
 
@@ -148,8 +148,8 @@ prompt or substring-match regression and should be investigated before commit.
 ## Split policy
 
 All kryptonite rows land in **train**. Synthetic adversarial data is augmentation. It
-must not appear in val or test where it would inflate the eval against itself. The
-v0.3.0 splitter's locality-holdout policy (`corpus/src/split.ts`) does not apply —
+mustn't appear in val or test where it would inflate the eval against itself. The
+v0.3.0 splitter's locality-holdout policy (`corpus/src/split.ts`) doesn't apply —
 kryptonite rows have no natural locality boundary and are not produced by the holdout
 regions anyway.
 

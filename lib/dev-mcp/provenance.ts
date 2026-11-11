@@ -27,7 +27,7 @@ interface ArtifactState {
 	 * The link target when the path is a symlink.
 	 *
 	 * `candidate.db` is a pointer `gazetteer promote` swaps, so the target name
-	 * identifies the build and the path by itself does not.
+	 * identifies the build and the path by itself doesn't.
 	 */
 	linkTarget: string | null
 	/**
@@ -59,8 +59,8 @@ export interface ProvenanceReport {
 	dataRoot: string
 	artifacts: ArtifactState[]
 	/**
-	 * Read from the stamp `gazetteer inspect sync` writes, or `null` when that has never
-	 * been run here — absence is reported rather than read as "the repos are current".
+	 * Read from the stamp `gazetteer inspect sync` writes, or `null` when that's never been
+	 * run here — absence is reported rather than read as "the repos are current".
 	 */
 	repos: RepoVintage[] | null
 	reposStampPath: string

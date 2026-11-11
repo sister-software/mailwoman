@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Every number a published weights package states about itself agrees with the others.
  *
- * A card version and a manifest version are two series by design, so this check does not compare them.
+ * A card version and a manifest version are two series by design, so this check doesn't compare them.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -32,7 +32,7 @@ export const weightsReconciliationCheck: RepoCheck = {
 		for (const record of records) {
 			const file = `${record.workspace}/package.json`
 
-			// A consumer cannot resolve a base that this repository does not publish.
+			// A consumer cannot resolve a base that this repository doesn't publish.
 			// The overlay's inherited lineage reports it as unresolved instead of empty.
 			if (record.baseWeights && !versionByPackage.has(record.baseWeights)) {
 				diagnostics.push({
@@ -55,7 +55,7 @@ export const weightsReconciliationCheck: RepoCheck = {
 			}
 
 			// Every workspace releases in lockstep, so an overlay pinned to a base at
-			// another version means the release did not land whole and a tarball would
+			// another version means the release didn't land whole and a tarball would
 			// freeze `workspace:*` against the wrong sibling.
 			if (record.baseWeights) {
 				const baseVersion = versionByPackage.get(record.baseWeights)

@@ -95,7 +95,7 @@ interface RowRecord {
 	matches: boolean[]
 	stage: ReplayStage
 	/**
-	 * The 1-based rank of the gold labels among the 20 best paths, or null when they are not among them.
+	 * The 1-based rank of the gold labels among the 20 best paths, or null when they're not among them.
 	 */
 	goldRank: number | null
 	/**

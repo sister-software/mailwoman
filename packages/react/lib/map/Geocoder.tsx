@@ -38,7 +38,7 @@ export interface GeocoderProps {
 	panels?: GeocoderPanels
 	/**
 	 * The address that pre-fills the search field.
-	 * It is not run automatically.
+	 * It isn't run automatically.
 	 */
 	defaultAddress?: string
 	/**
@@ -55,7 +55,7 @@ export interface GeocoderProps {
 	 * Each new value is submitted once the runtime is ready, so a host that reads its URL
 	 * on `popstate` lets the back and forward buttons re-run earlier searches.
 	 *
-	 * A value equal to the last submitted query is not submitted again.
+	 * A value equal to the last submitted query isn't submitted again.
 	 */
 	query?: string | null
 	/**

@@ -14,7 +14,7 @@
  *
  * Four properties of this service decide the harvest's shape.
  *
- * 1. **The archive link is the `enclosure` link, and the `alternate` link is not it.** Each entry
+ * 1. **The archive link is the `enclosure` link, and the `alternate` link isn't it.** Each entry
  *    lists six links, three of which address the same archive under `enclosure`, `section` and
  *    `alternate`. The entry's *first* `alternate` link is the relative href
  *    `Addresses_DatasetATOM_Navarra.xml`, which is the dataset feed, so a reader taking the first
@@ -135,7 +135,7 @@ export interface ESNavarraPartition {
  * The partitions the service document lists.
  *
  * @throws When the document holds no entry, when an entry lists no `enclosure` link, when a linked
- * archive's file name is not `AD_Navarra_<n>.gml.zip`, or when two entries point to one archive.
+ * archive's file name isn't `AD_Navarra_<n>.gml.zip`, or when two entries point to one archive.
  * Each of those would otherwise write zero archives while reporting a completed run.
  */
 export function readESNavarraServiceFeed(feed: AtomFeed): readonly ESNavarraPartition[] {
@@ -234,7 +234,7 @@ export interface HarvestESNavarraOptions {
 	/**
 	 * Harvest only these partition numbers, for a probe or to repair specific partitions.
 	 *
-	 * A number the service document does not list is reported as a failure rather than ignored.
+	 * A number the service document doesn't list is reported as a failure rather than ignored.
 	 */
 	partitions?: readonly string[] | null
 	/**
@@ -280,10 +280,10 @@ async function isCurrent(
 }
 
 /**
- * The partitions this run considers, and the numbers a caller supplied that the feed does not list.
+ * The partitions this run considers, and the numbers a caller supplied that the feed doesn't list.
  *
- * A number the caller asked for and the service document does not list is returned
- * rather than dropped, because a partition that is not published is a different
+ * A number the caller asked for and the service document doesn't list is returned
+ * rather than dropped, because a partition that's not published is a different
  * condition from a selection that holds no partition.
  */
 function selectPartitions(
@@ -365,8 +365,8 @@ export async function harvestESNavarra(
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, ESNavarraArchiveEntry>()
 
-	// An entry for a partition this run does not consider is kept, so a bounded
-	// run never drops what an earlier run recorded.
+	// An entry for a partition this run doesn't consider is kept, so a bounded run
+	// never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as ESNavarraArchiveEntry)
 	}

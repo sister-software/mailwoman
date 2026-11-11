@@ -8,7 +8,7 @@
  *
  *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`), derived
  *   after the sorting town Royal Mail routes it through rather than after a county or a constituent
- *   country. There is no clean postcode→admin hierarchy to inherit the way France gives you a
+ *   country. There's no clean postcode→admin hierarchy to inherit the way France gives you a
  *   département from the first two digits. The only fact we _can_ derive is which of the
  *   four UK countries an area predominantly falls in — and even that has border exceptions:
  *
@@ -114,7 +114,7 @@ function isAreaShape(area: unknown): area is string {
  * England is by far the largest, so the default is transparent and the non-England
  * exceptions live in {@link GB_POSTCODE_AREA_COUNTRY}.
  * Returns null for invalid input (not one-or-two letters), so a malformed
- * token is not silently called England.
+ * token isn't silently called England.
  */
 export function countryOfPostcodeArea(area: unknown): UkCountryCode | null {
 	if (!isAreaShape(area)) return null

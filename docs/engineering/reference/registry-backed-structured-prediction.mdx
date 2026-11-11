@@ -13,7 +13,7 @@ to streets. That page decided `country` / `po_box` / `cedex`: the gazetteer ente
 feature and never substitutes for the model. This page decides street names. The temptation
 to substitute is much stronger here, because a national register does contain every street.
 
-## What this is not
+## What this isn't
 
 This design sits between two architectures, and both have already failed in this project.
 The page describes them because future conveniences will tend to move the design toward one
@@ -27,11 +27,11 @@ cannot propose a phrase that its dictionaries do not contain. The dictionaries t
 show this. In `pelias/parser/resources/pelias/dictionaries`, each file records a synonym or
 word fragment that broke something. Some entries are fixes for past failures and others are
 reasonable design choices, and it is hard to tell which is which. That ambiguity is a cost
-of the architecture itself, and better maintenance would not remove it.
+of the architecture itself, and better maintenance wouldn't remove it.
 
 A register used as a veto behaves like a dictionary parser with probabilities attached. It
-fails on the same input for the same reason: it penalizes a street because the register has
-not seen it.
+fails on the same input for the same reason: it penalizes a street because the register hasn't
+seen it.
 
 ### Not resolver-as-arbiter
 
@@ -82,7 +82,7 @@ interface StreetNameEvidence {
 }
 ```
 
-`sourceTier` is part of the return value, so a consumer does not have to derive it by
+`sourceTier` is part of the return value, so a consumer doesn't have to derive it by
 pattern-matching `source`. Confidence depends on tier and scope, so the tier must be
 available where the bias is applied.
 
@@ -100,7 +100,7 @@ register lacks, everywhere, and the penalty is hard to see because it looks like
 probability instead of a missing dictionary entry. No tier supplies global negative
 evidence, including the tiers that are complete in principle.
 
-Rule 5 addresses a problem we have already encountered in a similar form. A row-disjoint
+Rule 5 addresses a problem we've already encountered in a similar form. A row-disjoint
 split lets the same street surface appear on both sides of the boundary. The eval then
 measures memorization of `Rue de Rivoli` while appearing to measure generalization to
 unseen streets.
@@ -124,7 +124,7 @@ source against which the augmentation can be graded with real data. Other locale
 ### Tier B — scope is the whole rule
 
 `Main St` without scope is weak evidence. It exists in nearly every US locality, so its
-existence does not distinguish anything. `Main St` with `CA`, `Santa Clara`, or a ZIP is
+existence doesn't distinguish anything. `Main St` with `CA`, `Santa Clara`, or a ZIP is
 useful.
 
 This tier has a trap that must be stated explicitly, because the same problem ended Phase
@@ -136,7 +136,7 @@ evidence is usable only when the scope is present in the input.
 
 WOF stores admin polygons. It also stores famous streets **as places**, and `rue`,
 `boulevard`, and `place` are gazetteer entries themselves. A WOF hit shows that the street name
-is a gazetteer entry. It does not prove that a street exists. `Rue Montmartre` then looks like evidence for
+is a gazetteer entry. It doesn't prove that a street exists. `Rue Montmartre` then looks like evidence for
 `locality`, which is the error this work is trying to fix.
 
 This was measured. The shipped FST (`fst-global-priority.bin`) returns the following when run over the Paris
@@ -164,11 +164,11 @@ produces the locality reading on its own, because it learned from a corpus where
 street fragments are rare and bare localities are common. The cause is the training
 distribution, so the BAN corpus recipe takes priority over every inference-time change.
 
-Keep the tier rule anyway. The rule follows from what the data encodes, and it does not depend
+Keep the tier rule anyway. The rule follows from what the data encodes, and it doesn't depend
 on a measured harm. A channel that answers "is this a locality" must never be read as answering "is this
 a street," and a future consumer that did so would be reading the table above.
 
-Tier C answers locality/region/country. It does not answer "is this a street."
+Tier C answers locality/region/country. It doesn't answer "is this a street."
 
 ### Tier D — licensing decides product use
 
@@ -187,10 +187,10 @@ Each locale samples these recipes from its Tier A register:
 5. **date-name** — `Rue du 11-Novembre-1918`
 6. **alphanumeric house number**
 
-**Recipe ratios stay capped** so that full-address performance does not regress. The cap
+**Recipe ratios stay capped** so that full-address performance doesn't regress. The cap
 prevents the regression, and the regression guard on full addresses checks that it did. A
 recipe that fixes fragments by degrading normal addresses has only moved the failure to
-rows the fragment board does not score.
+rows the fragment board doesn't score.
 
 Label policy for street recipes: the **full street phrase** is labeled `street`, including
 affix, particle, apostrophe, hyphenated compound, and date-name material.
@@ -244,7 +244,7 @@ fix.
 
 Apply this check generally. This work hit three measurement failures of this kind: starved
 channels, a resolver without evidence, and a filtered corpus. Before trusting a board, ask
-which rows it drops. A registered baseline does not prevent this. A baseline over a
+which rows it drops. A registered baseline doesn't prevent this. A baseline over a
 filtered corpus stays self-consistent indefinitely. It guarantees reproducibility and makes
 no statement about validity.
 
@@ -253,7 +253,7 @@ no statement about validity.
 This work addresses three interacting causes: a training distribution that
 underrepresents bare streets, an objective that rewards token correctness over useful
 spans, and a resolver that has no evidence where a choice between readings is needed.
-Registries address the first cause. They must not be used to hide the second or the third.
+Registries address the first cause. They mustn't be used to hide the second or the third.
 A parser turns into a dictionary one convenience at a time. Each step looks defensible on
 its own until the hypothesis space is closed again and messy addresses fail.
 

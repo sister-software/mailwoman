@@ -11,7 +11,7 @@
  *   never published to npm, to R2 or to the demo. It reaches the resolver only because
  *   `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered on the machine that built it.
  *
- *   Coverage is partial by construction — roughly 9.5 % of live NI postcodes — and that is the point of
+ *   Coverage is partial by construction — roughly 9.5 % of live NI postcodes — and that's the point of
  *   shipping it: an unknown postcode abstains, so every code the database contains is a new answer and
  *   every code it lacks behaves exactly as it did before.
  *

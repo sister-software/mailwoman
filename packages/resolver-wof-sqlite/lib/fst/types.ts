@@ -150,7 +150,7 @@ export interface BuildFSTOpts {
 	 */
 	excludeSurfaces?: ReadonlySet<string>
 	/**
-	 * Tokens that a name must not consist of entirely, such as "de la".
+	 * Tokens that a name mustn't consist of entirely, such as "de la".
 	 *
 	 * Build this set from stopwords only.
 	 * A street-type word can be part of a real name, as in "Avenue Road".

@@ -53,11 +53,11 @@ const clauses: string[] = []
  * One predicate per country, kept so an offending row can be read back after the count.
  *
  * A count reports the number of rows the policy names.
- * It does not say which rows matched.
+ * It doesn't say which rows matched.
  *
  * The cases differ: a row whose `region` span holds a holdout name is the policy
  * working on data the split missed, while a row whose `locality` happens to equal
- * one is the policy matching a name that is not a region.
+ * one is the policy matching a name that's not a region.
  */
 const predicates = new Map<string, string>()
 

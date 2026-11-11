@@ -8,7 +8,7 @@ next model promotion ships the evidence bundle end to end.
 
 The recipe is retrieval-augmented encoding on v385's lineage. Two evidence channels enter as learned
 input features: `street_type` (1-dim, codex street vocabulary) and `locality_surface` (2-dim
-`[locality, locality_homograph]`, WOF-derived). They are trained under the **absence curriculum**.
+`[locality, locality_homograph]`, WOF-derived). They're trained under the **absence curriculum**.
 That curriculum zeroes them out per row on a ramp with independent draws per channel. The lexicons use
 **three-law selectivity**:
 

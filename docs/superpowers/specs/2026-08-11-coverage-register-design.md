@@ -15,7 +15,7 @@ were fixed before it ran.
    mailwoman arm missed by >25 km, **35 fall where we hold no street set at all**, so exclusion has
    no set to check against. In 7 more, the queried street exists near the wrong answer. Exactly
    one candidate set shrinks (`LOT 373 Clifton Street, Sandstone WA 6639`, where we hold 11 streets and
-   none is Clifton). The design doc's kill condition, "the coverage register is not complete enough for
+   none is Clifton). The design doc's kill condition, "the coverage register isn't complete enough for
    this to bite yet", is met on its own terms.
 2. **The CPT density prior cannot be graded without coverage** (falsifier 3). Grocery fits at 59.8%
    holdout median error (WEAK) and pharmacy at 75.3% (KILLED). However, poi.db's own register asserts
@@ -42,7 +42,7 @@ missing:
 - poi.db ships `completeness = 1.0` for every cell (board #26). The value was a default and was never
   measured.
 - The address-point DBs (US per-state, 124.9M points) store no per-locality completeness at all.
-  That is why falsifier 1 had to improvise its "held street set" from row counts.
+  That's why falsifier 1 had to improvise its "held street set" from row counts.
 - The candidate gazetteer cannot record that a country's locality tier is unsurveyed. The NZ
   gap looks the same as a fully covered country without a matching name.
 
@@ -86,7 +86,7 @@ and the same basis / vintage / source-release fields as cell coverage:
 ```
 
 A resolver reads the scope row before it has a coordinate. `(candidate, NZ, locality)` →
-`surveyed_partial` means the region and locality tiers exist but the suburb tier does not. That answer differs
+`surveyed_partial` means the region and locality tiers exist but the suburb tier doesn't. That answer differs
 from `(candidate, US, locality)` → `surveyed_partial` with a miss, and both differ from a
 namespace that no build ever extracted. The #1585 fuzzy-scope mechanism (shipped 2026-08-11) performs the
 abstention. Scope coverage will let it abstain with a stated reason, where today it abstains only
@@ -109,7 +109,7 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
 ## What it unlocks, in dependency order
 
 1. **Runtime abstention** (the interface half of #1585). Consider a locale-hinted query whose scoped fuzzy probe
-   targets a namespace whose `layer_scope_coverage` row is not `surveyed_complete`. That query abstains at that
+   targets a namespace whose `layer_scope_coverage` row isn't `surveyed_complete`. That query abstains at that
    tier with a stated reason instead of falling through to world-fuzzy. It reads the scope row rather than a cell,
    because the query has no coordinate to key a cell with. This change, with no other change, turns the NZ failure from a
    silently wrong answer into an explicitly empty one before any new data ships. (The abstention mechanism shipped as the

@@ -1,6 +1,6 @@
 # Proposed public information architecture
 
-This is a clean-sheet navigation and page contract for [issue #2979](https://github.com/sister-software/mailwoman/issues/2979). The current `docs/articles/` tree contains 82 MDX article pages. The proposal below names destinations by reader need. The old article count does not set a target page count. Destination IDs are stable planning keys used by `page-briefs.md` and `source-to-target.md`. Publication will create these routes after review.
+This is a clean-sheet navigation and page contract for [issue #2979](https://github.com/sister-software/mailwoman/issues/2979). The current `docs/articles/` tree contains 82 MDX article pages. The proposal below names destinations by reader need. The old article count doesn't set a target page count. Destination IDs are stable planning keys used by `page-briefs.md` and `source-to-target.md`. Publication will create these routes after review.
 
 ## Editorial rule
 
@@ -65,6 +65,6 @@ Product pages link to `P05` for current availability and to `V01` for measured c
 
 ## Route and publication rules
 
-The old article URLs are an editorial inventory. The new site does not preserve them as public routes. `source-to-target.md` records where each old topic belongs, including topics whose new pages still need data-backed verification. When the new navigation replaces the old tree, remove the old article pages. An old URL without a new route will return the site's ordinary not-found response.
+The old article URLs are an editorial inventory. The new site doesn't preserve them as public routes. `source-to-target.md` records where each old topic belongs, including topics whose new pages still need data-backed verification. When the new navigation replaces the old tree, remove the old article pages. An old URL without a new route will return the site's ordinary not-found response.
 
-Before publishing, verify every new route against the Docusaurus build and check internal links against the new route set. Remove links to retired article URLs from navigation, customer pages, and site metadata. Keep dated engineering records and research posts at their existing source paths when they are still cited for their historical evidence.
+Before publishing, verify every new route against the Docusaurus build and check internal links against the new route set. Remove links to retired article URLs from navigation, customer pages, and site metadata. Keep dated engineering records and research posts at their existing source paths when they're still cited for their historical evidence.

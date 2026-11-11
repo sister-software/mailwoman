@@ -112,11 +112,11 @@ describe("matchMilitaryCityLine", () => {
 	it("rejects invalid structural forms (non-5-digit ZIPs, bad region codes)", () => {
 		// ZIP must be 5 digits (or 5+4 with hyphen); region code must be one of AA/AE/AP.
 		expect(matchMilitaryCityLine("APO AE 0916")).toBeNull() // only 4 digits
-		expect(matchMilitaryCityLine("APO AB 09165")).toBeNull() // AB is not a valid region
+		expect(matchMilitaryCityLine("APO AB 09165")).toBeNull() // AB isn't a valid region
 	})
 
 	it("rejects invalid region codes", () => {
-		expect(matchMilitaryCityLine("APO AB 09165")).toBeNull() // AB is not a valid region
+		expect(matchMilitaryCityLine("APO AB 09165")).toBeNull() // AB isn't a valid region
 		expect(matchMilitaryCityLine("APO CA 09165")).toBeNull() // CA is a state code rather than armed forces
 	})
 

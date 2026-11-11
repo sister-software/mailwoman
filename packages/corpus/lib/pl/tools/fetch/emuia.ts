@@ -13,7 +13,7 @@
  * the label, and that statement grants the reproduction a paged harvest performs.
  *
  * `#tools/fetch/wfs-harvest` owns the page read, the appending, the manifest and the resumption.
- * What is particular to Poland is five measurements, taken on 2026-10-02:
+ * What's particular to Poland is five measurements, taken on 2026-10-02:
  *
  * 1. `ms:AD.Address` is the only feature type the service publishes, and the payload is the Polish
  *    register's own schema with every address value inline, so the harvest takes that one type and
@@ -163,7 +163,7 @@ export interface HarvestEMUiAOptions {
 	 *
 	 * Off by default.
 	 * The measurement costs about 2·log2(n) requests — 51 for a register of this size — and the
-	 * harvest does not need it: paging to the first empty page reads the type whole either way.
+	 * harvest doesn't need it: paging to the first empty page reads the type whole either way.
 	 *
 	 * It supplies a denominator for the progress lines and a figure for the manifest,
 	 * and it rests on the monotone-presence assumption this module's header states.
@@ -223,8 +223,8 @@ export async function readEMUiAFeatureCount(
  * from this file's constants, so a service that stops publishing either raises here
  * instead of producing a harvest of something else.
  *
- * @throws When the service publishes no Addresses type, does not advertise the GML
- * format the adapter reads, or does not advertise result paging.
+ * @throws When the service publishes no Addresses type, doesn't advertise the GML
+ * format the adapter reads, or doesn't advertise result paging.
  */
 export async function readEMUiACapabilities(client: Pick<APIClient, "fetch">): Promise<WFSCapabilities> {
 	const capabilities = await readWFSCapabilities(client, { wfsURL: PL_EMUIA_WFS, context: CONTEXT })

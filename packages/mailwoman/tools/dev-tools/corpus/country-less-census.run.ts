@@ -15,7 +15,7 @@
  *   The gazetteer is asked through `WOFCandidateTableLookup.findPlace`, the reader the resolver itself
  *   calls, so a row this reports as unattributable is one the request path would also fail to place. A row
  *   whose name resolves to more than one country is reported as ambiguous rather than attributed, because
- *   picking the first would stamp a country the evidence does not settle.
+ *   picking the first would stamp a country the evidence doesn't settle.
  *
  *   Usage:
  *   node packages/mailwoman/tools/dev-tools/corpus/country-less-census.run.ts \

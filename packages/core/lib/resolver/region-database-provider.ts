@@ -31,7 +31,7 @@ export interface RegionDatabases {
  * The key is a slug such as a US state or an ISO 3166-1 alpha-2 country.
  * `for` is synchronous because the resolution ladder is synchronous.
  *
- * A provider therefore learns what is on disk during `warm` and answers `for` from that record.
+ * A provider therefore learns what's on disk during `warm` and answers `for` from that record.
  * A provider constructed directly must be warmed before its first `for`.
  *
  * Each implementation exposes a static `create` that constructs and warms.

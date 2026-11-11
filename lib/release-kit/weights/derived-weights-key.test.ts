@@ -100,7 +100,7 @@ describe("derivedWeightsKeyFrom", () => {
 		const empty = scratch.path("empty.json")
 		await writeLocalTextFile("", empty)
 
-		// Absence is not zero: a file that is gone must not hash like a file that is empty.
+		// Absence isn't zero: a file that's gone mustn't hash like a file that's empty.
 		expect(absent).not.toBe(present)
 		expect(absent).not.toBe(await derivedWeightsKeyFrom([at(empty)]))
 	})

@@ -60,7 +60,7 @@ The research also found that the main competitor has improved. Senzing retrained
 4. **Overlay extract resolution fails silently.** Overlay manifests cross-reference base corpora by absolute path. The loader's glob fallback means a moved base corpus trains on the wrong data without erroring (the v0.7.1 trap, still open). Add strict mode + explicit `base_corpus_version` lineage.
 5. **Int8 toolchain pinning is undocumented.** The value_info-strip fix and the Safari-WebGPU opset≤17 invariant live in code comments. A well-meaning dep bump re-breaks iOS undetected. Add a version-verification script + a toy export/quant CI check.
 
-Eval-hygiene lore (tokenizer-F1 incomparability, name-match vs coordinate truth, German native-order rendering) is _partially_ encoded in tooling (`--tokenizer` flag, `de-order-eval.sh`, direct-eval) . That is better than relying on memory, but the promotion-check consolidation is what keeps it from being lost.
+Eval-hygiene lore (tokenizer-F1 incomparability, name-match vs coordinate truth, German native-order rendering) is _partially_ encoded in tooling (`--tokenizer` flag, `de-order-eval.sh`, direct-eval) . That's better than relying on memory, but the promotion-check consolidation is what keeps it from being lost.
 
 ---
 
@@ -82,7 +82,7 @@ Capability checklist (evidence-based, from the resolver/data layer pass):
 | Service abstraction / multi-instance     | No support — in-process sync SQLite; `RemoteResolver` adapter pattern declared in `core/resolver/types.ts` but unimplemented                                                                                                                                                                     |
 | Data update pipeline                     | Operator-driven builds. No delta sync                                                                                                                                                                                                                                                            |
 
-**Data strategy (new input from research):** Overture's address theme is nearing GA — 455M pre-conflated address points (OpenAddresses + agencies) under permissive terms, with stable GERS UUIDs, plus a divisions theme. Overture could serve as the conflation layer for the _address/street_ tier (keeping WOF for hierarchy), sidestep both bespoke OA ingestion and the ODbL share-alike question, and make results joinable to the ecosystem (Esri/Precisely already link via GERS). Design the gazetteer schema so a place row can store a GERS ID alongside the WOF ID. License note: per the OSMF guideline, serving geocode results from OSM-derived data does _not_ infect customer databases (insubstantial extracts) — only systematic bulk extraction re-triggers ODbL.
+**Data strategy (new input from research):** Overture's address theme is nearing GA — 455M pre-conflated address points (OpenAddresses + agencies) under permissive terms, with stable GERS UUIDs, plus a divisions theme. Overture could serve as the conflation layer for the _address/street_ tier (keeping WOF for hierarchy), sidestep both bespoke OA ingestion and the ODbL share-alike question, and make results joinable to the ecosystem (Esri/Precisely already link via GERS). Design the gazetteer schema so a place row can store a GERS ID alongside the WOF ID. License note: per the OSMF guideline, serving geocode results from OSM-derived data _doesn't_ infect customer databases (insubstantial extracts) — only systematic bulk extraction re-triggers ODbL.
 
 ---
 

@@ -36,7 +36,7 @@ Throughput stays at 1.00x from one worker to sixteen, for both parse and full ge
 
 Two things block the thread, and either one by itself is enough to prevent overlap:
 
-- **`onnxruntime-node`'s `session.run()` blocks the JavaScript thread.** It does not hand work to the
+- **`onnxruntime-node`'s `session.run()` blocks the JavaScript thread.** It doesn't hand work to the
   libuv pool. `Promise.all` over N inferences runs them one after another, for any N.
 - **`node:sqlite` reads are synchronous** by design, because the resolution ladder is a sync
   interface (see `packages/sqlite/AGENTS.md`). The resolve half of a geocode also blocks.
@@ -51,14 +51,14 @@ same throughput to three digits. `POST /v1/batch` is now an explicit sequential 
 had always behaved that way in practice.
 
 The same change works in Python, where `intra_op=1` plus 16 threads gives 1.64x, because Python's ORT
-binding releases the GIL during a run. That result does not transfer to Node, because the Node
+binding releases the GIL during a run. That result doesn't transfer to Node, because the Node
 binding behaves differently.
 
 ## Batch requests do not improve throughput
 
 The obvious counterexample is [deepparse](https://deepparse.org/). It parses at 3.1 ms/addr
 batched against 32.5 ms sequential, a 10x improvement. That 10x comes from amortizing per-call Python
-and torch overhead. Mailwoman does not have that overhead, so batching has no such overhead to amortize. Our
+and torch overhead. Mailwoman doesn't have that overhead, so batching has no such overhead to amortize. Our
 sequential path (~300 addr/s) already matches deepparse's batched throughput (320 addr/s) and has
 4.7x lower latency than its sequential path.
 
@@ -127,7 +127,7 @@ database. Measure the worker count on your own data and machine instead of defau
 
 Parse-only threading has no database and no contention, so it should scale further than geocoding.
 That scaling is unmeasured. In Python, `intra_op=2` with 8 threads reached 1.57x. That result suggests
-the likely shape of the curve, but it is not a figure to quote.
+the likely shape of the curve, but it isn't a figure to quote.
 
 ## Before you re-measure
 
@@ -148,7 +148,7 @@ The probes live in `scratchpad/` on the branch that produced this page: `batch-e
 ## CLI cold start versus a warm stream
 
 Measure the installed executable directly when profiling Mailwoman, because `npx` adds package-runner startup time
-that is not part of `mw` itself. `hyperfine` repeats whole-process launches (process-cold, normally
+that's not part of `mw` itself. `hyperfine` repeats whole-process launches (process-cold, normally
 filesystem-cache-warm):
 
 ```bash
@@ -189,4 +189,4 @@ hyperfine --runs 5 \
   './node_modules/.bin/mw geocode --stdin < addresses.txt >/dev/null'
 ```
 
-`xargs -P` measures capacity under concurrency. That is a different quantity from warm sequential throughput.
+`xargs -P` measures capacity under concurrency. That's a different quantity from warm sequential throughput.

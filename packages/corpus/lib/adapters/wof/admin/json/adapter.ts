@@ -136,7 +136,7 @@ export function layoutCountryForLanguage(language: string): string | null {
 		.map(([code]) => code)
 
 	// The local-script layout's order, because a language's own hierarchies are written in its script.
-	// A country whose local layout states no order (Macau, Singapore) does not vote.
+	// A country whose local layout states no order (Macau, Singapore) doesn't vote.
 	const layoutOf = (code: string): string | null => {
 		const layout = layoutForCountry(code, "local")
 		const largestFirst = layout ? layoutPrintsLargestFirst(layout) : null

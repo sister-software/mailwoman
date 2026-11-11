@@ -10,7 +10,7 @@
  *
  *   The tuples used to come from HM Land Registry Price Paid Data. Royal Mail and Ordnance Survey license its address
  *   fields for personal or non-commercial use only (#2635). This reader refuses any row whose source and license are not the adapter's,
- *   and any input that is not JSONL.
+ *   and any input that's not JSONL.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -35,7 +35,7 @@ interface CanonicalRow {
 }
 
 /**
- * The input is not the `gb-os-open` adapter's rows, so it may contain Price Paid Data address fields.
+ * The input isn't the `gb-os-open` adapter's rows, so it may contain Price Paid Data address fields.
  */
 export class RefusedGBTupleSourceError extends Error {
 	override name = "RefusedGBTupleSourceError"
@@ -48,9 +48,9 @@ const field = (components: Record<string, unknown>, key: string): string => Stri
  *
  * The GB layout prints no region, so `region` is empty.
  *
- * @throws {RefusedGBTupleSourceError} When `path` is not a `.jsonl` file,
- * or a row's source or license is not the adapter's.
- * @throws When `path` does not exist, naming it.
+ * @throws {RefusedGBTupleSourceError} When `path` isn't a `.jsonl` file,
+ * or a row's source or license isn't the adapter's.
+ * @throws When `path` doesn't exist, naming it.
  */
 export async function sampleGBHouseVenueTuples(
 	count: number,

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A range of feature IDs is not a region, so a coverage cell is reached by several chunks and their
+ *   A range of feature IDs isn't a region, so a coverage cell is reached by several chunks and their
  *   counts must add.
  */
 

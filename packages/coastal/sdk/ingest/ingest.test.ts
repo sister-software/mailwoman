@@ -15,8 +15,8 @@
  *   not.
  *
  *   the policy asymmetry is the other shape. It is regular rather than irregular. The six NFI layers omit
- *   all four Shoreline Management Plan columns because under a no-intervention scenario there is no policy to
- *   record. That is a documented property of the product, so a layer disagreeing with its own scenario throws
+ *   all four Shoreline Management Plan columns because under a no-intervention scenario there's no policy to
+ *   record. That's a documented property of the product, so a layer disagreeing with its own scenario throws
  *   rather than being absorbed into a NULL.
  */
 
@@ -105,7 +105,7 @@ describe("the per-layer SELECT", () => {
 	it("tolerates the one layer that publishes no smp_name, rather than refusing it", async () => {
 		// `NCERM_SMP_2105_0CC` is the real case.
 		// The `select` substitutes `NULL AS smp_name` and the ingest proceeds.
-		// The caller receives an ogr2ogr error because the path does not exist.
+		// The caller receives an ogr2ogr error because the path doesn't exist.
 		// This proves the query was built.
 		const fields = FULL_SMP_FIELDS.filter((field) => field !== "smp_name").map((field) =>
 			field === "smp2105_95" ? "smp2105_0" : field

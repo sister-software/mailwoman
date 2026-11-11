@@ -105,7 +105,7 @@ export interface BuildPostcodePrefixResult {
 	 */
 	radiiP95Km: number[]
 	/**
-	 * Units the US arm dropped because their coordinate is not a location, by reason.
+	 * Units the US arm dropped because their coordinate isn't a location, by reason.
 	 *
 	 * The GB arm drops no units, so this record is empty for that arm.
 	 * Reported separately from {@link BuildPostcodePrefixResult.skippedShort}
@@ -137,7 +137,7 @@ const MIN_COMPACT_POSTCODE_LENGTH = 5
 /**
  * The outward code of a compact unit postcode: everything but the last three characters.
  *
- * See the module docstring for why this is not a regex.
+ * See the module docstring for why this isn't a regex.
  */
 export function outwardOf(compact: string): string | null {
 	if (compact.length < MIN_COMPACT_POSTCODE_LENGTH) return null

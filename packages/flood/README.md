@@ -14,18 +14,18 @@ Three readings, and keeping them apart is the whole job:
 | reading              | what it means                                                                             |
 | -------------------- | ----------------------------------------------------------------------------------------- |
 | `designated`         | the authority's map assigns a zone here — `FZ2` or `FZ3`, in the authority's own spelling |
-| `designated_absence` | the authority determined here and assigns no zone. Inside England that is Flood Zone 1    |
+| `designated_absence` | the authority determined here and assigns no zone. Inside England that's Flood Zone 1     |
 | `unknown`            | no coverage row. Unmapped by this authority, and never a low-hazard reading               |
 
 Readings 2 and 3 are the same empty answer from the geometry and opposite answers from the reader.
 Zone 1 is defined by the Planning Practice Guidance as "all land outside Zones 2, 3a and 3b" — an
 absence rather than a polygon — so inside England a location with no polygon is a designation, while
 outside England the same emptiness is unknown. Wales, Scotland and Northern Ireland each have a
-different authority and a different zone scheme. Wales's four-zone TAN15 scheme is not
+different authority and a different zone scheme. Wales's four-zone TAN15 scheme isn't
 interchangeable with England's.
 
 **This layer makes no statement about a property.** The layer reports which zone the authority's map
-assigns at a location. That is a fact about the map. The EA states that its data is "not suitable
+assigns at a location. That's a fact about the map. The EA states that its data is "not suitable
 for showing whether an individual property is at risk of flooding", and every reading is subject to the
 product's own exclusions. A Zone 1 answer is silent about surface water, groundwater, sewer
 failure and defended-area residual risk.
@@ -53,7 +53,7 @@ The index has to handle both ends: a center-containment polyfill loses the first
 column entirely, and a fixed fine resolution overruns h3's allocator on the last.
 
 **The rings are stored as `float64` pairs, unsimplified — 16 bytes a vertex, so the geometry tier
-is about 5.3 GB before SQLite's own overhead.** That is the size the two-tier interface accepts:
+is about 5.3 GB before SQLite's own overhead.** That's the size the two-tier interface accepts:
 geometry is the truth table, and a rooftop answer at a zone boundary has no cheaper defensible source.
 A fixed-point encoding at 1e-7° would halve it, and is deliberately not done here — the source
 publishes 0.1 mm precision, and quantizing to 11 mm is a change to the authority's data. That change needs
@@ -99,8 +99,8 @@ date, the license field and the direct file URL, and the archive is cached per v
 
 **`--measure-resolutions` is single-process, and a build is the authoritative instrument.** The
 measurement compares candidate resolutions in one pass, so one h3 heap serves all of them. That
-heap does not survive the whole file at the finer candidates (see the section below). It
-completed at resolution 7 over all 813,627 features and did not at 8 or 9. Use it with `--limit` to
+heap doesn't survive the whole file at the finer candidates (see the section below). It
+completed at resolution 7 over all 813,627 features and didn't at 8 or 9. Use it with `--limit` to
 compare candidates on a prefix, and take the number that describes a shipped artifact from the
 BUILD's own receipt: `resolveCells` reports exactly the same whole / partial / candidate-pair counts,
 and the build is bounded by construction.
@@ -132,7 +132,7 @@ and the build is bounded by construction.
   only in the two-path agreement check, as 8 disagreements out of 59 against the authority's own OGC
   service, every one a point that had fallen into a neighboring sliver: at this product's scale
   3 m changes the answer, because 38.8% of its polygons are under 11 m across. With the grid
-  installed the same check reads **59/59**. `--config PROJ_NETWORK ON` does not reach PROJ through
+  installed the same check reads **59/59**. `--config PROJ_NETWORK ON` doesn't reach PROJ through
   GDAL 3.8 and `PROJ_ONLY_BEST=ON` was observed not to refuse, so the build asks `projinfo` what PROJ
   would choose and stops when the answer is a ballpark.
 
@@ -146,20 +146,20 @@ Three full builds over all 813,627 polygons. Every column is from the build's ow
 |   8 |                   1,207 |       205,049 |         99.4% |                      1,310,706 |                     6.4 | 5,776,105,472 B |
 |   9 |                  18,037 |       766,114 |         97.7% |                      2,330,261 |                     3.0 | 5,814,308,864 B |
 
-**Resolution 9, and the number that decided it is not the one the survey expected.**
+**Resolution 9, and the number that decided it isn't the one the survey expected.**
 
-The `partial` share barely moves — 99.8% to 99.4% to 97.7% across three resolutions. That is not a
+The `partial` share barely moves — 99.8% to 99.4% to 97.7% across three resolutions. That's not a
 property of the index. It is the polygon size distribution showing through. 38.8% of this product's
-features are under 11 m across, so they are `partial` at every resolution a national layer could
-use, and no resolution choice can change that. **The `partial` share would have been a constant, so it could not guide the resolution choice.**
+features are under 11 m across, so they're `partial` at every resolution a national layer could
+use, and no resolution choice can change that. **The `partial` share would have been a constant, so it couldn't guide the resolution choice.**
 
 What does move is the size of the candidate list a `partial` cell hands to the ray cast: 19.7
-polygons at resolution 7, 6.4 at 8, 3.0 at 9. That is the runtime cost the two-tier design exists to
+polygons at resolution 7, 6.4 at 8, 3.0 at 9. That's the runtime cost the two-tier design exists to
 bound, and it improves by 6.5× from 7 to 9.
 
 The price is 38 MB — resolution 9's artifact is **0.66% larger** than resolution 8's, because the
 index tier is small against 5.5 GB of geometry either way. Six times the ray-cast work saved for
-two-thirds of one percent of the artifact is not a close call.
+two-thirds of one percent of the artifact isn't a close call.
 
 Resolution 7 is excluded: 75 whole cells over the whole of England means the index
 has almost no cells to summarize.
@@ -187,7 +187,7 @@ The finding every polygon builder on this spine inherits, stated with what it co
 The runs below used h3-js 4.5.0, before the switch to `@sister.software/h3`. The zero-cell guard and
 the process bound stay in place for every polygon builder.
 
-**The mechanism.** h3's WASM heap cannot be reset from JavaScript, and it does not survive an
+**The mechanism.** h3's WASM heap cannot be reset from JavaScript, and it doesn't survive an
 unbounded number of `polygonToCells` calls. h3-js frees every buffer it allocates, so what
 accumulates is fragmentation across millions of interleaved tiny and large allocations. What makes it
 dangerous is how it fails: `polygonToCellsExperimental` sizes its output with `_calloc`, a failing
@@ -201,21 +201,21 @@ through 4 in a fresh process. A fourth died at feature 798284 after 798,000. Bot
 features. Neither failure is a property of the geometry.
 
 **The invariant, and where it lives.** A part with a non-degenerate bounding box touches at least one
-cell, so zero is not an answer it can have. `classifyFeatureCells` checks that **per part** rather than per
+cell, so zero isn't an answer it can have. `classifyFeatureCells` checks that **per part** rather than per
 feature: a per-feature check passes any multi-part feature whose other parts answered, and indexes it
 short with no error anywhere — the silent-absence shape this layer exists to refuse.
 
-**The build does not rely on staying under the ceiling.** The classification runs in bounded child
+**The build doesn't rely on staying under the ceiling.** The classification runs in bounded child
 processes, one per range of the authority's own feature ids (`--chunk-size`, default 100,000 against
 a measured ceiling five times larger), so every chunk gets a heap that starts empty. The
 call-removal shortcuts — a part inside one cell, a part too narrow to contain one — make the build
 faster and are **not** what makes it correct. A build that completed only when fragmentation happened
-to stay low would not be reproducible.
+to stay low wouldn't be reproducible.
 
 **Both live in `@mailwoman/spatial` rather than here.** `classifyFeatureCells`, the zero-cell guard and the
 ring blob under it are properties of h3-js and of byte layout rather than of this product, and
 `@mailwoman/soil` needs them unchanged — so they moved, and `sdk/cells.ts` and `rings.ts` re-export
-them. What stays in this package is what is zone-shaped: `FloodCellIndex` accumulates per zone code,
+them. What stays in this package is what's zone-shaped: `FloodCellIndex` accumulates per zone code,
 because the question asked of this layer is about the ZONE.
 
 ## License
@@ -227,7 +227,7 @@ acknowledgement. The attribution string is the license condition rather than dec
 > © Environment Agency copyright and/or database right 2025. All rights reserved.
 
 The footprint is clipped to an ONS Open Geography country boundary, because the EA states its mapping
-covers all of England and does not publish where England is. That boundary has its own OGL attribution,
+covers all of England and doesn't publish where England is. That boundary has its own OGL attribution,
 recorded in `flood_map_extent`:
 
 > Contains National Statistics data © Crown copyright and database right 2025. Contains OS data ©

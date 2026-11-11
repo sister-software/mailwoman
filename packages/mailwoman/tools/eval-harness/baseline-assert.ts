@@ -42,7 +42,7 @@ export interface RegisteredBaseline {
 /**
  * Maps a harness's own metric keys to baseline ids.
  *
- * The mapping is not derivable because one model can include both a real and a stand-in artifact id.
+ * The mapping isn't derivable because one model can include both a real and a stand-in artifact id.
  */
 export interface BaselineProfile {
 	description: string
@@ -91,7 +91,7 @@ export interface BaselineVerdict {
 let cachedFile: BaselineFile | null = null
 
 /**
- * Anchored at the package root because tsc does not emit `baselines.json` into `out/`,
+ * Anchored at the package root because tsc doesn't emit `baselines.json` into `out/`,
  * so the file path derives from the package root rather than this module's location.
  */
 function resolveBaselineFilePath(): string {
@@ -138,7 +138,7 @@ export async function resolveProfile(name: string): Promise<BaselineProfile> {
 }
 
 /**
- * Checks a harness's readings against a profile, ignoring metric keys the profile does not map.
+ * Checks a harness's readings against a profile, ignoring metric keys the profile doesn't map.
  */
 export async function assertProfile(name: string, readings: Record<string, number>): Promise<BaselineVerdict> {
 	const profile = await resolveProfile(name)

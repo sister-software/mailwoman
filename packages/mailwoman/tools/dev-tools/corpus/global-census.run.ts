@@ -150,7 +150,7 @@ interface Census {
 	/**
 	 * Null when no `--config` was given.
 	 *
-	 * That is a census without an admission reading rather than a census reporting no deficit.
+	 * That's a census without an admission reading rather than a census reporting no deficit.
 	 */
 	deficits: Deficits | null
 }

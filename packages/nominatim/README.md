@@ -115,7 +115,7 @@ field. See the [HTTP interfaces reference](https://mailwoman.post/docs/reference
 ## Status
 
 Shipped. `/search` and `/reverse` resolve over the live engine and return the enriched block; `/lookup`
-is not yet implemented (returns `501`). `addressdetails` goes down to the house number and road when the
+isn't yet implemented (returns `501`). `addressdetails` goes down to the house number and road when the
 query contains them. For example, `1600 Pennsylvania Avenue NW, Washington, DC 20500` resolves to the rooftop
 (`38.897, -77.037`) with `house_number`, `road`, `city`, `state`, `postcode`, and `country_code`.
 

@@ -352,7 +352,7 @@ export function zoningDesignationMarker(
 export interface LayerDesignationRoutes {
 	/**
 	 * The EA Flood Map for Planning route reports a designated absence inside England
-	 * where a location has no flood polygon because that is Flood Zone 1.
+	 * where a location has no flood polygon because that's Flood Zone 1.
 	 */
 	authorityDesignationRoute?: AuthorityDesignationRoute
 	soilCapabilityRoute?: SoilCapabilityRoute

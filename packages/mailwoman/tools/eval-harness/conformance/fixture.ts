@@ -128,7 +128,7 @@ export interface ConformanceFixture {
 	toleranceM: number | null
 	/**
 	 * A note for the fixture author.
-	 * The suite does not grade it.
+	 * The suite doesn't grade it.
 	 */
 	note: string | null
 }

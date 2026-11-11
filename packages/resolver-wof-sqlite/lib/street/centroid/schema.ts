@@ -69,7 +69,7 @@ export interface StreetCentroidTable {
 	 * to check that a street name exists.
 	 *
 	 * The name-evidence rerank folds the model's street text with the same function, so this
-	 * column must use `foldStreetSurface` and must not follow the `street_norm` normalizer.
+	 * column must use `foldStreetSurface` and mustn't follow the `street_norm` normalizer.
 	 * The type is a plain string because `foldStreetSurface` differs from the
 	 * {@link NameKey} fold that other `name_key` columns use.
 	 *

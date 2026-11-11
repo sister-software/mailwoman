@@ -24,7 +24,7 @@ const { lat, lon } = FIXTURE_ORIGIN
 
 /**
  * Half the width of each fixture county, wide enough that resolution-6 cells fit
- * wholly inside one, so a per-area build is not vacuously empty.
+ * wholly inside one, so a per-area build isn't vacuously empty.
  */
 const COUNTY_HALF_WIDTH = 0.9
 
@@ -137,7 +137,7 @@ describe("the coverage footprint over adjacent survey areas", () => {
 		const lookup = new SoilCapabilityLookup({ databasePath })
 
 		try {
-			// Well outside the single county built, where there is no coverage row —
+			// Well outside the single county built, where there's no coverage row —
 			// the truthful answer rather than a low capability reading.
 			const reading = lookup.lookup(lat + 5, lon + 5)
 

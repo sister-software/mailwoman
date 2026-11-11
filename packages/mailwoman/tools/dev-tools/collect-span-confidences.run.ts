@@ -13,7 +13,7 @@
  *   used only to label them.
  *
  *   The span confidence is the decoder's own per-node value (`AddressNode.confidence`, the mean of
- *   the span's per-token softmax probabilities, in `core/decoder/build-tree.ts`). That is exactly the
+ *   the span's per-token softmax probabilities, in `core/decoder/build-tree.ts`). That's exactly the
  *   `conf=` a resolver or a human reads off the XML, so it is the quantity to calibrate.
  *
  *   The model is constructed exactly as `oa-resolver-eval.ts` builds it (same parseOpts), so the
@@ -22,7 +22,7 @@
  *   The `correct?` score uses these rules:
  *
  *   - OA rows (`partial:true`) grade only {locality, region, postcode}, the tags in OA gold. A
- *       predicted tag OA can't see is unlabelable and skipped, since OA's silence is not a negative.
+ *       predicted tag OA can't see is unlabelable and skipped, since OA's silence isn't a negative.
  *   - Corpus rows (`partial:false`) grade every predicted span against the full BIO gold. A predicted
  *       tag the address lacks is wrong.
  *   - The street family {street, street_prefix, street_suffix} is one equivalence class so the model's

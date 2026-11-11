@@ -319,7 +319,7 @@ describe("residualWords — the corpus types less than the input carries", () =>
 	})
 
 	// A row whose only asserted component is deleted leaves an empty component set.
-	// The words left in the input still identify a place, so the model must not require abstention.
+	// The words left in the input still identify a place, so the model mustn't require abstention.
 	it("turns an otherwise-ABSTAIN expectation into an unconstrained one", () => {
 		const gz = fakeGazetteer()
 

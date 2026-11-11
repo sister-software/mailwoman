@@ -32,8 +32,8 @@ the built databases.** The design exists, and the rollout is unfinished.
 
 Two smaller facts also shape what "reproducible" can mean:
 
-- A third of the data root (258 GB) is `pelias-rig`, a comparison rig for a geocoder this repo did not
-  build. This repo does not need to reproduce it, and any inventory must report it as external rather than
+- A third of the data root (258 GB) is `pelias-rig`, a comparison rig for a geocoder this repo didn't
+  build. This repo doesn't need to reproduce it, and any inventory must report it as external rather than
   counting it as debt.
 - The live candidate gazetteer is recorded only as a **symlink** (`candidate.db` →
   `candidate-global-2026-08-15-icu.db`, one of about ten builds in that directory). The selection is real
@@ -53,7 +53,7 @@ Every artifact this strategy adds must pass one test: **can it be re-derived fro
 A file that can is a log and cannot lag, because a stale entry fails its own check. A file that cannot is a
 register, and registers can disagree without any error.
 
-That test is why the layered config file from `scratchpad/config-file-plan.md` is **not** being built. Its
+That test is why the layered config file from `scratchpad/config-file-plan.md` **isn't** being built. Its
 five-layer precedence stack (CLI → env → project → global → defaults) would add four new places to look
 when a geocode comes out wrong. The product's tutorial (`ten-minute-trial.mdx`) highlights _"Right country,
 right city, and no flag asked for either"_ and tells the reader to **ignore** the one `export` the CLI
@@ -103,17 +103,17 @@ The design left three questions open. This section resolves them.
    A `base/` directory would have held one copy and had every locale link into it. A direct link to the recipe's
    source also holds one copy (the source itself), with one fewer indirection and no second record of which model
    is in use. `base/` would have provided a self-contained overlay that survives deletion of the training output.
-   That benefit does not justify a 40 MB copy while the recipe remains the authority and the writer is idempotent.
+   That benefit doesn't justify a 40 MB copy while the recipe remains the authority and the writer is idempotent.
 
    `resolveFromPackageDir` is unchanged either way. It sees an ordinary directory with every artifact present, and
    `existsSync` follows the link. Symlinks are safe _here_ because their publish hazard (`YN0035`, a tarball
    refusing symlinks) applies only to package directories, and no packaging step tars the data root.
 
 2. **`copy-weights.ts` keeps reading the data root directly.** An overlay path would make the
-   release ship exactly the bytes dev ran. That is useful but outside phase 0. Revisit it at phase 3, when
+   release ship exactly the bytes dev ran. That's useful but outside phase 0. Revisit it at phase 3, when
    artifacts have manifests and the claim can be checked rather than asserted.
 
-3. **A machine that has never trained fails with an explicit error that prints the path it wanted.** The
+3. **A machine that's never trained fails with an explicit error that prints the path it wanted.** The
    recipe gives a file under `$MAILWOMAN_DATA_ROOT/models/`, which exists only because someone trained there.
    Phases 1–3 address that gap. If phase 0 appeared to work on a fresh machine, it would hide the gap this
    strategy exists to close.
@@ -135,7 +135,7 @@ with the rung rather than after it.
 ## Phase 1 — `mw data inventory` — DONE
 
 `mw data inventory` walks the data root read-only. For each artifact it reports size, kind, its manifest if
-it has one, and **"no provenance — unreproducible"** where it does not.
+it has one, and **"no provenance — unreproducible"** where it doesn't.
 
 This phase is the cheapest and comes second on purpose. It replaces a vague concern with the count
 `8 / 60`, gives every later phase a baseline, and shows where the gaps are. It also has to report the two
@@ -190,26 +190,26 @@ had moved. Phase 1 found that defect.
 
 **The interface gained a third spine shape.** `SpineKeys` offered `h3`, `wofID` and `addressID`, which
 covered the two layer shapes that existed when it was written: a cellular one and an id-joined one.
-`address_point` and `street_segment` have none of the three. They are probed on
+`address_point` and `street_segment` have none of the three. They're probed on
 `(postcode | locality, street_norm, number)`. A first draft declared `addressID: "address_id"`, a column
-that does not exist. The table caught the mistake that the schema module missed. `street` is
+that doesn't exist. The table caught the mistake that the schema module missed. `street` is
 additive, and existing layers are unaffected.
 
-**The number does not move until each artifact is rebuilt.** Artifacts are rebuilt, never patched, so the
+**The number doesn't move until each artifact is rebuilt.** Artifacts are rebuilt, never patched, so the
 shipped databases stay unprovenanced and `data inventory` will keep reporting them as such. This is the
 intended behavior of the rebuild rule.
 
-### What phase 3 did not cover, and why
+### What phase 3 didn't cover, and why
 
 The `wof/` family is 79 databases, and four of its sub-families are still unstamped: the 24 `postcode-*`
 extracts, the 13 `postalcode-*` WOF ingests, the 2 `wof-polygons`, and assorted one-offs. None is on the
 resolution path a geocode takes. The resolver reads `candidate.db`, and the postcode extracts are inputs to
 the candidate build rather than databases it reads at query time. A stamp on them would still help, but the
-acceptance criterion did not require them.
+acceptance criterion didn't require them.
 
 ## Invariants to preserve
 
-These rules come from the repo's own documents. They are restated here because every phase can violate one.
+These rules come from the repo's own documents. They're restated here because every phase can violate one.
 
 1. **Rebuild, never patch.** A built database is a read-only artifact. The sequence is build, verify, swap.
    A failed verify leaves the artifact unsealed, and an unsealed artifact is never swapped in.

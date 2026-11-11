@@ -92,7 +92,7 @@ WOF tags each record's `mz:is_current` as one of:
 
 - `1` — current, in service.
 - `-1` — unknown, treated as active. The official Pelias importer accepts
-  these. The Phase 1.5 SQLite adapter did not, and it silently emitted **zero
+  these. The Phase 1.5 SQLite adapter didn't, and it silently emitted **zero
   rows** from the production distribution as a result.
 - `0` — superseded. Skipped.
 
@@ -116,7 +116,7 @@ rows look like `Paris, Île-de-France, France`.
   alternative would require resolving parents lazily. That alternative is more code
   and saves no meaningful memory at corpus-build scale.
 - Alternate-geometry sibling files (`<id>-alt-<source>-<lang>.geojson`) are
-  identified by the `-alt-` substring in the filename and skipped. They are
+  identified by the `-alt-` substring in the filename and skipped. They're
   not separate records.
 - The adapter walks `**/*.geojson` from `inputPath`, so it doesn't care about
   the directory structure WOF uses internally (`data/XXX/YYY/ZZZ/`). Tests

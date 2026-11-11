@@ -110,7 +110,7 @@ function topLevelValues(source: ts.SourceFile): ValueDeclaration[] {
 
 /**
  * Maps every value binding that an import introduces to its module specifier. type-only
- * imports are skipped because they are erased at compile time.
+ * imports are skipped because they're erased at compile time.
  */
 function importedBindings(source: ts.SourceFile): Map<string, string> {
 	const bindings = new Map<string, string>()

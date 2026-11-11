@@ -3,7 +3,7 @@
 > ⚠ **Config caveat + correction (added after the fact).** These numbers were measured on the
 > **default drop-in config — the admin gazetteer (`admin-global-priority.db`) with no candidate-ranking
 > DB** (`MAILWOMAN_CANDIDATE_DB` unset, as `npx @mailwoman/nominatim serve` runs it).
-> They are valid for that config, but resolution is **highly config-dependent** and I over-framed them
+> They're valid for that config, but resolution is **highly config-dependent** and I over-framed them
 > as the general non-US recall truth. With a candidate DB loaded, large distinctive cities that read as
 > "coverage" misses here resolve (London 553→2 km, Beijing 1661→9 km), so the "residual
 > coverage" framing below conflated true coverage with a missing candidate table. The candidate backend

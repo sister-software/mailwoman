@@ -18,7 +18,7 @@
 # the change (one variable): the synth-fr-bare-street recipe output — 10.8k real BAN (street, number, city) tuples
 # rendered as the missing distribution: bare comma form "<n> Rue <proper-noun name>, <City>", no postcode.
 # BAN-sourced (Licence Ouverte / permissive) on purpose — the model must stay clean of the ODbL OSM data
-# (that is quarantined to the opt-in rooftop sources). Weight 6.0 = the targeted-fix precedent
+# (that's quarantined to the opt-in rooftop sources). Weight 6.0 = the targeted-fix precedent
 # (synth-german / synth-fr-admin-split / gnaf all 6.0).
 #
 # check (the probe — falsifies coverage-imbalance vs modeling-deficit, per DeepSeek): re-run
@@ -27,7 +27,7 @@
 # confirmed: scale to the full-length resumed run within the $20 cap. If it stays at 90%, the deficit is in the model
 # (comma-boundary feature / decoder), a different fix. conventions-loss-mask is off in this lineage
 # already (v193a3), and FR street_prefix is taught by synth-fr-admin-split today, so the
-# v1.6.0 ~7M-loss mask blow-up does not apply here. Not promoted without operator GO + the check.
+# v1.6.0 ~7M-loss mask blow-up doesn't apply here. Not promoted without operator GO + the check.
 # Launch: node packages/mailwoman/tools/training/launch/launch.run.ts start --config v1.9.4-fr-bare-street.yaml
 data:
   # v0.9.4 overlay = v0.9.3a3's 694 parquet files verbatim (re-rooted to /data) + the 1 fr-bare-street parquet file.

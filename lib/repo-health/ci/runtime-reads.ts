@@ -208,10 +208,10 @@ function normalizeRepositoryPath(path: string): string {
 const CODE_RUNNERS = new Set(["node", "yarn", "npm", "npx", "pnpm", "tsx", "bun", "deno", "sh", "bash", "zsh"])
 
 /**
- * Whether an edge may let the module reach a file it does not name.
+ * Whether an edge may let the module reach a file it doesn't name.
  *
  * A child process that runs repository code may load any module, in a test or in library code.
- * In a test, a command that does not resolve may be such a process.
+ * In a test, a command that doesn't resolve may be such a process.
  *
  * In library code it is one the caller supplies, as `chunk-process.ts` runs the script
  * its caller passes, and the caller's own edges and built paths account for it.

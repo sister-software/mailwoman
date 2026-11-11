@@ -138,7 +138,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 	// Turn a locality whose whole value is a state into a region, with sibling
 	// city localities nested under it.
 	// This fires only when exactly one state-name locality is in the container,
-	// the unambiguous "City, State" shape, so a multi-locality list is not reparented.
+	// the unambiguous "City, State" shape, so a multi-locality list isn't reparented.
 	const stateIdxs = afterSplit
 		.map((n, i) => (n.tag === "locality" && usStateSlug(n.value) ? i : -1))
 		.filter((i) => i >= 0)
@@ -160,7 +160,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 		}
 	}
 
-	// Only convert when there is a sibling city to nest, the unambiguous "City, State" shape.
+	// Only convert when there's a sibling city to nest, the unambiguous "City, State" shape.
 	// A lone state-name locality ("Washington", "Florida") can be a city or a state in
 	// this context, so leave it untouched rather than risk a mis-fire.
 	if (!region.children.length) return afterSplit

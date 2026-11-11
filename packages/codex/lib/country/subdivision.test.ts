@@ -61,7 +61,7 @@ describe("matchSubdivision", () => {
 
 describe("matchSubdivisionIn — country-scoped", () => {
 	it("resolves the collisions the unscoped table cannot hold", () => {
-		// WA and NT are exactly why AU is not in the combined lookup: same code, different subdivision per country.
+		// WA and NT are exactly why AU isn't in the combined lookup: same code, different subdivision per country.
 		expect(matchSubdivisionIn("AU", "WA")).toEqual({ code: "WA", name: "Western Australia", country: "AU" })
 		expect(matchSubdivisionIn("US", "WA")).toEqual({ code: "WA", name: "Washington", country: "US" })
 		expect(matchSubdivisionIn("AU", "NT")).toEqual({ code: "NT", name: "Northern Territory", country: "AU" })

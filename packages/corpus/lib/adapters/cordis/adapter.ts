@@ -45,7 +45,7 @@
  * 3. **A sole-trader legal form.** German `e.K.`, `e.Kfm.` and `e.Kfr.`, and `Inh.` (owner), in either
  *    the name or the short name, as in `Melina Bucher e.Kfr.`. 3 records.
  *
- * Neither name rule fires on a name holding a word that is a country's name, so `ERICSSON FRANCE` and
+ * Neither name rule fires on a name holding a word that's a country's name, so `ERICSSON FRANCE` and
  * `IDEMIA Public Security France` are admitted.
  *
  * The check is a refusal rule rather than a classifier. A sole trader trading under a business name
@@ -61,7 +61,7 @@
  * ## Country codes
  *
  * CORDIS writes EU country codes, and those differ from ISO 3166-1 in two places: `EL` is Greece and
- * `UK` is the United Kingdom. Both are mapped, to `GR` and `GB`. Any other value that is not an ISO
+ * `UK` is the United Kingdom. Both are mapped, to `GR` and `GB`. Any other value that's not an ISO
  * alpha-2 code refuses the row: `XK` (Kosovo, a user-assigned code, 34 records), `ZZ` (1), an empty
  * value (323), and `DE;HU` (1), two countries in one field.
  *
@@ -78,7 +78,7 @@
  * `house-number-precedes-street` claim. A country whose observations disagree, or state no side,
  * has no unambiguous side, and its lines are kept only where they hold no digit.
  *
- * **A street line holding a digit the split could not place refuses the row**, as `it-anac` does, and
+ * **A street line holding a digit the split couldn't place refuses the row**, as `it-anac` does, and
  * so does a line whose remainder still holds a digit once the number is split off. `C GRAN DE GRACIA
  * NUM 1, PLANTA 4, PUERTA 3` would otherwise label `3`, the door, as the house number, and `TRIERSTRAAT
  * 49 STRATENPLAN BUS 7` would label the box. The cost is the street whose name holds a digit, `PLACE DU
@@ -200,11 +200,11 @@ export const CORDIS_COUNTRY_ALIASES: Readonly<Record<string, string>> = {
 const ISO_ALPHA2: ReadonlySet<string> = new Set(Object.values(CountryISO2))
 
 /**
- * Why a published record did not become a row.
+ * Why a published record didn't become a row.
  */
 export const CORDISRefusal = {
 	/**
-	 * `country` is not an ISO 3166-1 alpha-2 code once `EL` and `UK` are mapped.
+	 * `country` isn't an ISO 3166-1 alpha-2 code once `EL` and `UK` are mapped.
 	 */
 	CountryNotISO: "country-not-iso",
 	/**
@@ -474,7 +474,7 @@ const KILOMETRE_POINT = /(?<!\p{L})km\.?[\s,]*\d/iu
 
 /**
  * A leading number joined to the street by a comma, `12, MG Road`,
- * which {@linkcode splitStreetLine} does not read.
+ * which {@linkcode splitStreetLine} doesn't read.
  */
 const LEADING_NUMBER_COMMA = /^(\d+[\p{L}]?),\s*/u
 

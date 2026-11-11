@@ -395,7 +395,7 @@ export function deriveExpectedRung(
 
 	// Evidence this model cannot evaluate.
 	// The case keeps the model's answer.
-	// The test does not force abstention.
+	// The test doesn't force abstention.
 	const unevaluable = [
 		remaining["venue"]?.trim(),
 		remaining["street"]?.trim(),

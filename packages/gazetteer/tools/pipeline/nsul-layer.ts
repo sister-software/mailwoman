@@ -115,7 +115,7 @@ const NSUL_COLUMN_COUNT = 29
 /**
  * Column positions read from each line.
  *
- * Every other column is a statistical geography this layer does not include.
+ * Every other column is a statistical geography this layer doesn't include.
  */
 const UPRN_COLUMN = 0
 const PCDS_COLUMN = 3
@@ -207,9 +207,9 @@ export type NSULLineClass =
  * or the last column repeats it in every value (the G-NAF lesson).
  * A line is malformed in four cases:
  *
- * - its field count is not {@link NSUL_COLUMN_COUNT}
- * - its `uprn` is not a literal digit string within the safe-integer range
- * - its non-empty `pcds` does not have a unit-postcode shape
+ * - its field count isn't {@link NSUL_COLUMN_COUNT}
+ * - its `uprn` isn't a literal digit string within the safe-integer range
+ * - its non-empty `pcds` doesn't have a unit-postcode shape
  * - its `CTRY25CD` identifies no UK constituent country
  *
  * A postcode-shaped column holding anything else is a defect to count.
@@ -272,7 +272,7 @@ export interface NSULVintage {
 }
 
 /**
- * Parse the vintage out of an archive (or region file) name, or `null` when the name is not nsul's.
+ * Parse the vintage out of an archive (or region file) name, or `null` when the name isn't nsul's.
  */
 export function parseNSULVintage(name: string): NSULVintage | null {
 	const match = ARCHIVE_NAME.exec(name) ?? REGION_ENTRY.exec(name)
@@ -329,7 +329,7 @@ interface NSULItemRecord {
 
 /**
  * Locate the archive in `sourceDir` and turn its eleven region members into streaming sources,
- * refusing a region set that is not exactly {@link NSUL_REGIONS}.
+ * refusing a region set that's not exactly {@link NSUL_REGIONS}.
  */
 export async function openNSULArchive(sourceDir: PathBuilderLike): Promise<{
 	archivePath: string
@@ -498,7 +498,7 @@ export interface BuildNSULLayerResult {
 	skippedDuplicate: number
 	/**
 	 * Lines whose `pcds` is empty.
-	 * The postcode is not in Code-Point Open.
+	 * The postcode isn't in Code-Point Open.
 	 *
 	 * Expected non-zero.
 	 * Recorded, never a defect.
@@ -537,7 +537,7 @@ export interface BuildNSULLayerResult {
 }
 
 /**
- * Read the `<archive>.md5` sidecar's digest, or `null` when there is none.
+ * Read the `<archive>.md5` sidecar's digest, or `null` when there's none.
  */
 async function readMD5Sidecar(archivePath: string): Promise<string | null> {
 	const text = await readLocalTextFile(`${archivePath}.md5`).catch(() => null)
@@ -705,7 +705,7 @@ async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSU
 /**
  * The checks, in words.
  *
- * ONS publishes no row-count manifest for the collection, so they are internal
+ * ONS publishes no row-count manifest for the collection, so they're internal
  * consistency plus the truncation floor.
  * Empty on a clean build.
  */
@@ -784,7 +784,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	const itemRaw = await readLocalTextFile(sourceDir("item.json")).catch(() => null)
 	const item = itemRaw ? tryParsingJSON<NSULItemRecord>(itemRaw) : null
 
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const {
 		nsul: { createUPRNPostcodeTable, createNSULMetaTable, createNSULIndexes, NSUL_COVERAGE_H3_RESOLUTION },
 		displayForm: { compactPostcode },

@@ -164,7 +164,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 
 		/**
 		 * Writes the flattened JSONL that the `overture` corpus adapter reads,
-		 * so `@mailwoman/corpus` does not need DuckDB.
+		 * so `@mailwoman/corpus` doesn't need DuckDB.
 		 *
 		 * The `locality` field is `postal_city` when present and otherwise the deepest `address_levels` value.
 		 *

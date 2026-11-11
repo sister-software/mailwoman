@@ -8,7 +8,7 @@
  *   erosion question.
  *
  *   A package subpath rather than a `test/` file: a relative import across two TypeScript projects is refused
- *   (`TS2878`) when the compiled layout would not match the source layout.
+ *   (`TS2878`) when the compiled layout wouldn't match the source layout.
  *
  *   No network and no gdal: the builder takes a {@linkcode CoastalFeatureSource}, so a fixture is a list of
  *   features and every rung runs on every machine rather than only the ones with ogr2ogr.

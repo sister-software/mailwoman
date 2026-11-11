@@ -30,7 +30,7 @@ const OPEN_LICENSE_URL = /creativecommons\.org\/(?:publicdomain|licenses\/by\/)/
  * terms is elected, so a definition that records no terms is admitted.
  * A definition that records terms is admitted only when those terms are an open grant.
  *
- * Share-alike, restricting text and a terms page this reader has not read are refused.
+ * Share-alike, restricting text and a terms page this reader hasn't read are refused.
  */
 export function isAdmittedLicense(license: unknown): boolean {
 	if (license == null) return true

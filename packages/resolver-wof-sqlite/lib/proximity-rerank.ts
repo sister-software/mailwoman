@@ -8,8 +8,8 @@
  *   without a hard filter. With no bias the order is plain population order, byte-identical.
  *
  *   This lives in its own platform-free module because it has to run identically in two places, the
- *   Node candidate reader and the browser byte-range twin. That is the server and demo parity
- *   interface held by construction. Constants by themselves were not enough, since the two copies agreed on
+ *   Node candidate reader and the browser byte-range twin. That's the server and demo parity
+ *   interface held by construction. Constants by themselves weren't enough, since the two copies agreed on
  *   every literal and still diverged on which field the population term reads and on whether the
  *   combined value is written back.
  *
@@ -51,7 +51,7 @@ export const POP_SCALE_LOG10 = 6
  * This weakens the population signal relative to the bias.
  *
  * At around 30 km the boost reaches only candidates the user is looking at,
- * so an in-view namesake still wins and a distant one does not.
+ * so an in-view namesake still wins and a distant one doesn't.
  */
 export const PROX_SCALE_KM = 30
 
@@ -110,7 +110,7 @@ export function combinedProminence(candidate: ProximityRerankable, bias: readonl
  * sort preserves the bias order rather than undoing it.
  *
  * Stable within equal prominence, preserving the population order the index already gave.
- * A caller with no bias hints must not call this.
+ * A caller with no bias hints mustn't call this.
  * The no-bias path is plain population order by construction.
  */
 export function applyProximityRerank<T extends ProximityRerankable>(

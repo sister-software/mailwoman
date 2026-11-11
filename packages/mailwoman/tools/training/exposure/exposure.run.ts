@@ -7,7 +7,7 @@
  *
  *   `--canonical` measures the `canonical_rows` stage over canonical JSONL files, compressed or not. `--config`
  *   measures `eligible_training_rows` over the config's `train` split and `replayed_draws` over epoch 1 of its
- *   mixture, at the trainer's seed `train.seed + 1`. A stage whose input is not given is written as `null`. The
+ *   mixture, at the trainer's seed `train.seed + 1`. A stage whose input isn't given is written as `null`. The
  *   corpus is read through the `mtf-node` addon, so a config's `/data` paths are its host copies under
  *   `$MAILWOMAN_DATA_ROOT`, or a copy of the config states host paths.
  *

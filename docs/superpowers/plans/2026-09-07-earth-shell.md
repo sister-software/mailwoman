@@ -20,7 +20,7 @@
 - Source lives under `lib/` and tests under `test/`, with `rootDir: ./lib`. Relative imports use explicit `.ts`/`.tsx` extensions, and the code uses no `enum`.
 - Comments state invariants rather than history.
 - Every commit passes the pre-commit hook. Branch: `git fetch origin main && git checkout -b feat/earth-shell origin/main`.
-- No file in `docs/` changes in this plan except the three-origin CORS edit in the tile worker. The tile worker is not in `docs/`.
+- No file in `docs/` changes in this plan except the three-origin CORS edit in the tile worker. The tile worker isn't in `docs/`.
 
 ## File Structure
 
@@ -881,7 +881,7 @@ git commit -m "feat(earth,site-kit): Vite build with the PWA manifest, a precach
 - Consumes: `GeocoderDemo`, `DemoPanels` from `@mailwoman/react/map`; `makeDemoRuntime` from `@mailwoman/react/map/fake-runtime` (Task 1); `routeForPath`, `queryFromSearch`, `Route` from `#routes` (Task 3).
 - Produces: the DOM the smoke in Task 7 drives: the input `#mw-pipeline-input` and the submit button `GeocoderDemo` already renders, a `<main data-route="…">` wrapper, a `[data-testid="not-found"]` view.
 
-The component names (`GeocoderDemo`, `DemoPanels`, `DemoRuntime`) are renamed in the second Earth plan, when the real runtime lands. This plan uses them as they are exported today.
+The component names (`GeocoderDemo`, `DemoPanels`, `DemoRuntime`) are renamed in the second Earth plan, when the real runtime lands. This plan uses them as they're exported today.
 
 - [ ] **Step 1: Write the app**
 
@@ -1047,7 +1047,7 @@ yarn workspace @mailwoman/earth build
 yarn workspace @mailwoman/earth deploy:dry-run 2>&1 | tail -8
 ```
 
-Expected: wrangler reports the asset upload plan for `dist/` and ends with `--dry-run: exiting now.` with no error. A `wrangler` login prompt means the dry run tried to authenticate. A dry run expects `WRANGLER_SEND_METRICS=false` and an unset `CLOUDFLARE_API_TOKEN=`, and it must not need a token.
+Expected: wrangler reports the asset upload plan for `dist/` and ends with `--dry-run: exiting now.` with no error. A `wrangler` login prompt means the dry run tried to authenticate. A dry run expects `WRANGLER_SEND_METRICS=false` and an unset `CLOUDFLARE_API_TOKEN=`, and it mustn't need a token.
 
 - [ ] **Step 4: The tile worker's tests**
 
@@ -1195,7 +1195,7 @@ yarn workspace @mailwoman/earth exec playwright install chromium
 yarn workspace @mailwoman/earth test:browser 2>&1 | tail -12
 ```
 
-Expected: 4 passed. If `#mw-pipeline-input` is not the input's id, `grep -rn "mw-pipeline-input" packages/react/lib` names the current one.
+Expected: 4 passed. If `#mw-pipeline-input` isn't the input's id, `grep -rn "mw-pipeline-input" packages/react/lib` names the current one.
 
 - [ ] **Step 4: The CI step**
 
@@ -1230,7 +1230,7 @@ yarn workspace @mailwoman/react test:browser
 yarn workspace @mailwoman/earth test:browser
 ```
 
-Expected: `health` passes every step (if `health:debt` fails on counters this branch did not move, compare with `main` before touching the baseline). `typecheck:tests` passes, the fast leg passes with the two new unit files counted, and both browser suites pass.
+Expected: `health` passes every step (if `health:debt` fails on counters this branch didn't move, compare with `main` before touching the baseline). `typecheck:tests` passes, the fast leg passes with the two new unit files counted, and both browser suites pass.
 
 - [ ] **Step 2: Push and open the PR**
 
@@ -1256,4 +1256,4 @@ EOF
 
 - [ ] **Step 3: Record the one operator step**
 
-The Cloudflare dashboard project cannot be created from the repository. State this in the PR and in the handoff: someone must create the Workers Builds project for `mailwoman-earth` with the README's settings and the custom domain `earth.mailwoman.post`. The first build tests the assumption that the build runs from the yarn root, and the README documents the fallback if it does not.
+The Cloudflare dashboard project cannot be created from the repository. State this in the PR and in the handoff: someone must create the Workers Builds project for `mailwoman-earth` with the README's settings and the custom domain `earth.mailwoman.post`. The first build tests the assumption that the build runs from the yarn root, and the README documents the fallback if it doesn't.

@@ -357,7 +357,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	// at that path, because the admin database is sealed and replaced by a rebuild
 	// so the path is constant across every generation.
 	// `sourceIdentity` lets a caller that already knows the digest, or is building
-	// from something that is not a file at all, supply it instead.
+	// from something that's not a file at all, supply it instead.
 	progress("stamp", `Reading source identity for ${dbPath}`)
 	const source = opts.sourceIdentity ?? (await readWOFSourceIdentity(dbPath))
 

@@ -92,7 +92,7 @@ export interface ConstraintCensusResult {
 	n_lookups: number
 	n_resolved_nothing: number
 	/**
-	 * The gazetteer contains the row in another band, but the query could not reach it.
+	 * The gazetteer contains the row in another band, but the query couldn't reach it.
 	 * A cross-band retry can move this count.
 	 */
 	n_reachability: number
@@ -220,7 +220,7 @@ export async function runConstraintCensus(
 				fired.set(key, (fired.get(key) ?? 0) + 1)
 
 				if (rec.picked) {
-					// A constraint that ever accompanies a pick is not inert, whatever its miss rate.
+					// A constraint that ever accompanies a pick isn't inert, whatever its miss rate.
 					for (const check of rec.checks) {
 						pickedUnder.add(check)
 					}

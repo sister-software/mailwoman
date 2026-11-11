@@ -301,7 +301,7 @@ export interface GenerateSubVenueLexiconOptions {
 	/**
 	 * Overture rows that the caller already read with `readOvertureSubVenues`.
 	 *
-	 * The caller opens `poi.db`, so this function does not depend on the database.
+	 * The caller opens `poi.db`, so this function doesn't depend on the database.
 	 */
 	overtureRows?: readonly (SubVenueHarvestRow & { country: string })[] | null
 	/**

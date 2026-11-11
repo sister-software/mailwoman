@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The rows of the map's right-click menu: the clicked point in each encoding {@link describePoint} offers.
- *   The encodings arrive after the H3 encoder loads, so the rows render once they are read.
+ *   The encodings arrive after the H3 encoder loads, so the rows render once they're read.
  */
 
 import type { MapContextMenuPoint, MapContextMenuRowProps } from "@mailwoman/react/map"

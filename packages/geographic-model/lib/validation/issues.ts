@@ -94,7 +94,7 @@ export function listVocabulary(allowed: readonly string[]): string {
 }
 
 /**
- * Refuse any field the schema does not declare, naming the ranking-policy ones under their own code.
+ * Refuse any field the schema doesn't declare, naming the ranking-policy ones under their own code.
  */
 export function checkFieldNames(
 	issues: ValidationIssue[],

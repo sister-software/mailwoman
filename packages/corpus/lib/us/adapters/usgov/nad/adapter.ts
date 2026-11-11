@@ -167,7 +167,7 @@ export async function* readNADRecords(
  * The USPS abbreviations a NAD row's `State` must match, taken from codex rather than restated.
  *
  * `US_STATE_ABBREVIATIONS` holds the 50 states, the District of Columbia and the five primary territories.
- * That is the set NAD publishes under, so this adapter keeps no list of its own.
+ * That's the set NAD publishes under, so this adapter keeps no list of its own.
  *
  * The two had identical membership when they were reconciled, at 56 entries each.
  */
@@ -241,7 +241,7 @@ export interface DecomposedNADStreet {
  * The street a NAD record states.
  *
  * Structured street fields take precedence.
- * If they are empty, `StNam_Full` supplies the whole street.
+ * If they're empty, `StNam_Full` supplies the whole street.
  */
 export function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | null {
 	const name = (r.St_Name ?? "").toString().trim()

@@ -14,7 +14,7 @@
  * answer-neutral on the bare-city-name register. Their intent travels on the marker.
  *
  * `near_me` does win its top slot (0.91), because no incumbent reading competes for the slot: a query
- * ending "near me" is not a locality.
+ * ending "near me" isn't a locality.
  */
 
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
@@ -194,9 +194,9 @@ function hasDeicticTail(lowercased: string): boolean {
  * The conditions `bare_toponym` and `route_pair` share: no address grammar of any kind,
  * one segment, alpha throughout.
  *
- * @returns the word list when the input clears them, `null` when it does not.
+ * @returns the word list when the input clears them, `null` when it doesn't.
  * The conditions are deliberately a superset of `scoreLocalityOnly`'s, so `bare_toponym` is
- * a strict refinement of `locality_only` and can never fire where `locality_only` did not.
+ * a strict refinement of `locality_only` and can never fire where `locality_only` didn't.
  */
 function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): string[] | null {
 	const text = input.normalized.trim()
@@ -211,7 +211,7 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
 	// beside it because `foldInputClass` answers `alpha` for input carrying no classified token.
 	if (shape.characterClass !== "alpha" || !carriesLetter(text)) return null
 
-	// A comma is the admin-context marker ("Paris, FR"), so one segment or the name is not bare.
+	// A comma is the admin-context marker ("Paris, FR"), so one segment or the name isn't bare.
 	if ((shape.segments?.length ?? 1) !== 1) return null
 
 	const lowercased = text.toLowerCase()
@@ -231,7 +231,7 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
 
 /**
  * `bare_toponym` rule: a single coherent place-name carrying no address grammar, feeding the
- * declared-ambiguity path without asserting which place — that is the resolver's question,
+ * declared-ambiguity path without asserting which place — that's the resolver's question,
  * decided by the answer's dominance margin in `mailwoman/query-intent.ts`.
  */
 export function scoreBareToponym(input: NormalizedInputLite, shape: QueryShapeLike): number {
@@ -294,7 +294,7 @@ export function scoreNearMe(input: NormalizedInputLite, _shape: QueryShapeLike):
 /**
  * The subject of a `near_me` query is the requested category or thing with the locator stripped.
  *
- * It is empty when the rule would not have fired.
+ * It is empty when the rule wouldn't have fired.
  * The subject builds marker evidence and never a route.
  */
 export function nearMeSubject(input: NormalizedInputLite): string {

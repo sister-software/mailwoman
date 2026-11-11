@@ -17,7 +17,7 @@
  *
  *   Address systems disagree on hierarchy: a US street address nests `house_number → street →
  *   locality`, while a Japanese block address nests `building_number → sub_block → block →
- *   district` — there is no `street` parent at all. Today a single global map suffices only because
+ *   district` — there's no `street` parent at all. Today a single global map suffices only because
  *   the tag sets don't collide, but the moment the resolver or tree builder hardcodes the Western
  *   shape, retrofitting a second system gets expensive (DeepSeek resolver consult, 2026-05-30).
  *

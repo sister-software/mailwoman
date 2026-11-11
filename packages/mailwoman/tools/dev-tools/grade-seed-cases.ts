@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Grade seed cases before they are committed by using the gauntlet's own grader.
+ *   Grade seed cases before they're committed by using the gauntlet's own grader.
  *   Stamp each one's `status` with
- *   what the shipped pipeline does today: `pass` when it passes, `improvement_target` when it does not. A board author
+ *   what the shipped pipeline does today: `pass` when it passes, `improvement_target` when it doesn't. A board author
  *   that writes statuses by hand writes what it hopes. This command writes what was measured.
  *   The regression layer then
  *   holds the passes as pins and reports the targets as tracked.

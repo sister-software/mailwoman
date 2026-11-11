@@ -23,10 +23,10 @@
  *    `@mailwoman/core/layers`, and an expected-but-absent observation becomes negative evidence only
  *    where `supportsExclusion` permits it there.
  * 4. Empirical affordance statistics — this package owns the stable activity and affordance identifiers.
- *    It does not own numeric values fitted against those identifiers.
+ *    It doesn't own numeric values fitted against those identifiers.
  *
- * `@mailwoman/core` must not depend on this package: core ships the pipeline interface and roughly
- * 9 MB of reference data to every consumer, so a world-semantics dependency there is one every
+ * `@mailwoman/core` mustn't depend on this package: core ships the pipeline interface and roughly
+ * 9 MB of reference data to every consumer, so a world-semantics dependency there's one every
  * drop-in API inherits without asking.
  */
 

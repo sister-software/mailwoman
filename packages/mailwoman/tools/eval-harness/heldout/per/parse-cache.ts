@@ -8,8 +8,8 @@
  *
  *   A cached parse file is keyed by four values: the inference rule, the rows (identity, text and country of each), a
  *   digest of every file in the weights packages the rows are parsed with, and the commit. A working tree with any
- *   change under `packages/` neither reads nor writes the cache, because the parse depends on source the commit does
- *   not then describe. Inputs outside the weights cache, such as the gazetteer under the data root, are not keyed.
+ *   change under `packages/` neither reads nor writes the cache, because the parse depends on source the commit doesn't
+ *   then describe. Inputs outside the weights cache, such as the gazetteer under the data root, are not keyed.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

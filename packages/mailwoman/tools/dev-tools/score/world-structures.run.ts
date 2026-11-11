@@ -1,5 +1,5 @@
 /**
- * This measures the parse only, so a clean score here is not a claim that the row resolves.
+ * This measures the parse only, so a clean score here isn't a claim that the row resolves.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

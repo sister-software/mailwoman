@@ -31,7 +31,7 @@ import type { OverpassElement, OverpassResponse } from "#tools/pipeline/postcode
  * `BT1` `BT1` and `BT47` are both legal forms with different outward structures.
  * The pattern requires the system-wide inward-code shape.
  *
- * The `[A-Z0-9]?` slot cannot fire for a real BT district (they are `BT1`–`BT94`, all-numeric),
+ * The `[A-Z0-9]?` slot cannot fire for a real BT district (they're `BT1`–`BT94`, all-numeric),
  * and is kept rather than tightened to `[0-9]?` so the pattern stays recognizably the national one.
  *
  * A narrower check would encode today's district list into the format validation.
@@ -53,7 +53,7 @@ export interface NIOSMParseStats {
 	/**
 	 * Elements carrying an `addr:postcode` tag.
 	 *
-	 * Below {@link elements} only if Overpass ever returns an element the tag filter did not select.
+	 * Below {@link elements} only if Overpass ever returns an element the tag filter didn't select.
 	 */
 	tagged: number
 	/**
@@ -62,7 +62,7 @@ export interface NIOSMParseStats {
 	 */
 	skippedNoCoordinate: number
 	/**
-	 * Elements dropped because the tag value is not a BT unit postcode.
+	 * Elements dropped because the tag value isn't a BT unit postcode.
 	 */
 	skippedMalformed: number
 	/**
@@ -174,7 +174,7 @@ function elementPoint(element: OverpassElement): PostcodePoint | null {
  * but it would be deterministic through the file's element order.
  *
  * The sort makes the database's synthetic ids a function only of the postcode set,
- * so a rebuild of OSM that adds one building does not renumber every place after it.
+ * so a rebuild of OSM that adds one building doesn't renumber every place after it.
  */
 export function parseNIPostcodes(response: OverpassResponse, stats: NIOSMParseStats): NIPostcodeRecord[] {
 	const groups = new Map<string, { display: string; points: PostcodePoint[] }>()

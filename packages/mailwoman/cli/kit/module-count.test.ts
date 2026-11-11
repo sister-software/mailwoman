@@ -9,8 +9,8 @@
  *   and data-pipeline dependencies are selected only after dispatch.
  *
  *   The counter is `module.registerHooks()`, which sees ESM and CJS alike, injected as a `data:` URL. Therefore, the guard
- *   needs no committed helper. It runs against the compiled CLI (`out/cli/main.js`) because that is what ships and what
- *   the bin points at. the suite skips when the tree has not been built.
+ *   needs no committed helper. It runs against the compiled CLI (`out/cli/main.js`) because that's what ships and what
+ *   the bin points at. the suite skips when the tree hasn't been built.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -45,7 +45,7 @@ const MODULE_COUNT_CEILING = 200
  * `registerHooks` covers ESM and CJS.
  *
  * `node:` builtins are excluded.
- * They are resident before the CLI starts and counting them would make the number
+ * They're resident before the CLI starts and counting them would make the number
  * depend on the Node version rather than on this repo.
  */
 const COUNTING_HOOK =

@@ -18,7 +18,7 @@ import type { LicenseWorkerEnv } from "#env"
 export const STRIPE_API_VERSION = "2026-10-28.endive"
 
 /**
- * The http status Stripe answers for an id it does not know.
+ * The http status Stripe answers for an id it doesn't know.
  */
 const STRIPE_NOT_FOUND = 404
 

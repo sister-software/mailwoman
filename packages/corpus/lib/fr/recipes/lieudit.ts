@@ -224,7 +224,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 
 			// The envelope form is the house and street line, the lieu-dit by itself on
 			// its own line, then the postcode and commune line.
-			// That is La Poste's line 5.
+			// That's La Poste's line 5.
 			let raw = formatAddress(components, country)
 
 			if (!raw) {

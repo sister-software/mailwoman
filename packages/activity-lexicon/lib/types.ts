@@ -31,7 +31,7 @@ export interface CommittedQueryAttestation {
 export type ActivityPhraseDerivation = "plural" | "nominalization" | "verb-phrase" | "possessive"
 
 /**
- * Attestation for a phrase that is a regular transformation of another entry.
+ * Attestation for a phrase that's a regular transformation of another entry.
  *
  * The base entry supplies the evidence.
  */
@@ -39,7 +39,7 @@ export interface DerivedFormAttestation {
 	kind: "derived-form"
 	/**
 	 * Another entry's `phrase`.
-	 * The base entry must not itself be derived.
+	 * The base entry mustn't itself be derived.
 	 */
 	base: string
 	derivation: ActivityPhraseDerivation

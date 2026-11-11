@@ -84,12 +84,12 @@ CREATE INDEX idx_seg_street   ON street_segment (street_norm, min_hn);
 ```
 
 The key uses `resolver-wof-sqlite/street-normalize.ts`, the same function the
-address-point extract and lookup use. There is one normalizer, never two, as the PLACETYPE_ORDER
+address-point extract and lookup use. There's one normalizer, never two, as the PLACETYPE_ORDER
 bug showed. The key also uses `canonicalizeRouteKey`, a route-designator fold applied by both the
 builder and the lookup. The fold is needed because TIGER spells routes `State Rte 100` / `US Hwy 5`
 where E911/Overture say `VT ROUTE 100` / `US ROUTE 5`. That mismatch was the largest street-name
 miss class in the VT eval, and the fold by itself added +3.1pp coverage without a tail cost. The
-address-point tier does not apply the fold yet, because adopting it there needs a #476 extract
+address-point tier doesn't apply the fold yet, because adopting it there needs a #476 extract
 rebuild (follow-up). Geometry is a plain JSON polyline: segments are short, the per-row
 cost is small at state scale, and the reader stays dependency-free. Revisit the encoding
 only if a national build makes the size a problem.
@@ -106,7 +106,7 @@ multiple postcodes and no signal distinguishes them.
 Given `{ street, number, postcode? }`:
 
 1. **Normalize** street via `normalizeStreetForKey`; parse `number` as a non-negative
-   integer. A non-numeric number gets no answer, because this tier does not guess.
+   integer. A non-numeric number gets no answer, because this tier doesn't guess.
 2. **Candidate fetch:** rows with `street_norm` equal and `min_hn ≤ n ≤ max_hn`,
    postcode-scoped when a postcode is given. A given ZIP that scopes to no candidate is a
    miss rather than a statewide guess. The statewide retry was built and measured (2026-06-11
@@ -140,7 +140,7 @@ tier slots in immediately after it as the fall-through: same `(street, number, p
 locality)` extraction, consulted only when the exact tier missed, stamping
 `resolution_tier: "interpolated"` + the uncertainty metadata.
 
-**This increment ships the module standalone and does not wire core.** The wiring needs a
+**This increment ships the module standalone and doesn't wire core.** The wiring needs a
 second `ResolveOpts` member (or a widening of `addressPoints` into an ordered tier list)
 and that interface decision deserves its own review. It is noted as a follow-up on #483
 rather than included in the pilot. The module's `find()` signature is deliberately
@@ -175,7 +175,7 @@ where the truth is unknown, so measuring on known points is the only direct prox
 - **Coord error vs truth: p50 66 m, p90 249 m** (p99 1.0 km, parity-matched n=3927 p50
   65 m / fallback n=173 p50 116 m). Median claimed uncertainty (half segment length)
   137 m, so the p50 error sits inside the claimed radius.
-- **Check: MISS.** The pilot does not meet the pre-registered #483 check (p50 ≤ 50 m, p90 ≤ 150 m),
+- **Check: MISS.** The pilot doesn't meet the pre-registered #483 check (p50 ≤ 50 m, p90 ≤ 150 m),
   and the check was not re-baselined. The shortfall tracks rural Vermont's long sparse
   segments (median claimed uncertainty 137 m, so the geometry itself caps precision) and
   TIGER's uniform-spacing assumption. The next changes, measurement first: re-run on a
@@ -201,7 +201,7 @@ rural-geometry artifact rather than a method error.** TIGER uniform-spacing inte
 the check where segments are short. Long sparse rural segments cap precision below the
 check. Per the resolution-ladder plan this keeps Method 2 (address-point interpolation) as
 the corrective for the sparse stratum, and any county-stratified check re-baseline requires
-operator sign-off and is not made here.
+operator sign-off and isn't made here.
 
 ## Method 2 — address-point interpolation (2026-06-12, resolution-ladder Phase 1 step 2)
 
@@ -252,7 +252,7 @@ Method 2 clear the check on its bracketed stratum?
    interface). No item in this increment blocks either answer.
 2. **Odd/even fidelity.** Vermont measures 99.99% of address-carrying sides
    parity-consistent (8 `mixed` of 137,256), but a clean from/to pair doesn't prove the
-   real houses obey it, and TIGER does not guarantee it nationally. The `mixed` bucket and
+   real houses obey it, and TIGER doesn't guarantee it nationally. The `mixed` bucket and
    the opposite-parity fallback absorb violations. The eval's parity-split
    reporting measures this. If fallback hits dominate the error tail in a denser
    state, revisit before national rollout.

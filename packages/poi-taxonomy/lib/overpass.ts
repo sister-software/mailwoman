@@ -7,11 +7,11 @@ import { escapeRegExp } from "@mailwoman/core/strings/regexp"
  * @author Teffen Ellis, et al.
  *
  *   OverpassQL export emitter over a POI intent (spec §1: "we print the query. we never run it").
- *   Overpass is not a serving backend — this exists so users who live in Overpass-turbo can take
+ *   Overpass isn't a serving backend — this exists so users who live in Overpass-turbo can take
  *   a mailwoman intent there. The category→OSM-tag mapping is the caller's input (from
  *   `@mailwoman/poi-taxonomy`'s `osmTag`); the emitter is a pure string builder.
  *
- *   This package must not depend on `@mailwoman/core`, so `OverpassIntentLike` below is a local
+ *   This package mustn't depend on `@mailwoman/core`, so `OverpassIntentLike` below is a local
  *   structural type covering exactly what the emitter reads. `POIIntent` (`@mailwoman/core/pipeline`)
  *   is structurally assignable to it — callers pass a real `POIIntent` without a cast.
  *   `mailwoman/poi-overpass.ts` is a thin re-export of this module, kept for backward compatibility.

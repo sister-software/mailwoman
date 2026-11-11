@@ -5,11 +5,11 @@
  *
  *   The whitespace law against the live pipeline — the leg that geocodes.
  *
- *   It is an `.integration.test.ts` file because that is the suite the `mailwoman-data` runner runs, with
+ *   It is an `.integration.test.ts` file because that's the suite the `mailwoman-data` runner runs, with
  *   `MAILWOMAN_DATA_ROOT` set and the weights materialized. the fast leg is portable by construction and a
  *   data-dependent test placed there would skip its way to green. The guard is the resolver-based
  *   `weightsPresent()` idiom the other integration suites use: ask the resolver for the model the loader will
- *   open, never a path literal. A skip guard that stops matching does not fail — it skips.
+ *   open, never a path literal. A skip guard that stops matching doesn't fail — it skips.
  *   The suite then disappears from the run reporting success.
  *   suite disappears from the run reporting success.
  *

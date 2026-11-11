@@ -34,7 +34,7 @@ const DEBOUNCE_MS = 120
 export interface LiveModelVisualizerProps {
 	/**
 	 * Trace an input through the decode path, resolving null when the classifier
-	 * is not ready or the trace fails.
+	 * isn't ready or the trace fails.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	/**

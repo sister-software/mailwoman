@@ -17,7 +17,7 @@ import type { PathBuilderLike } from "path-ts"
  * The admin database a fold output was made from, by name: `<x>-geonames.db`
  * or `<x>-geonames-<stamp>.db` → `<x>.db`.
  *
- * Null when the path does not look like a fold output.
+ * Null when the path doesn't look like a fold output.
  */
 export function foldSourceAdminPath(foldPath: PathBuilderLike): string | null {
 	const match = /^(.*)-geonames(?:-[^/]*)?\.db$/u.exec(foldPath.toString())

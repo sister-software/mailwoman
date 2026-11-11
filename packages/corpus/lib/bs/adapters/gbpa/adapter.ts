@@ -88,7 +88,7 @@ const ADDRESS_NUMBER = /^[A-Z\d]+(?:-[A-Z\d]+)*$/iu
 const REPEATED_NAME = /^(.+?) \1(?= |$)/u
 
 /**
- * A street value that is only a type word, with no name before it.
+ * A street value that's only a type word, with no name before it.
  */
 const TYPE_WORD_ONLY = /^(?:road|lane|drive|avenue|street|court|close|way|place|circle|terrace|crescent)$/iu
 

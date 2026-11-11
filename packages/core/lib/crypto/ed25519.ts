@@ -105,7 +105,7 @@ export async function signEd25519(
 /**
  * Answers `false` for a bad signature and never throws on one.
  *
- * A malformed KEY still throws, because that is a caller error rather than an untrusted input.
+ * A malformed KEY still throws, because that's a caller error rather than an untrusted input.
  */
 export async function verifyEd25519(
 	data: Uint8Array<ArrayBuffer>,

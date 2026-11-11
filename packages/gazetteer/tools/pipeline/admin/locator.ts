@@ -10,7 +10,7 @@
  *   containing region polygon contradicts it on 0.69%.
  *
  *   A uniform grid over polygon bounding boxes keeps a lookup to a few ring tests. The naive cross
- *   product does not finish at gazetteer scale.
+ *   product doesn't finish at gazetteer scale.
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -73,7 +73,7 @@ export class AdminLocator {
 	 */
 	readonly located: number
 	/**
-	 * Places present in the admin DB whose geometry the polygon DB does not contain.
+	 * Places present in the admin DB whose geometry the polygon DB doesn't contain.
 	 *
 	 * Only this number separates a point outside every polygon from a containing place with no polygon.
 	 */

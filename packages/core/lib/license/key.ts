@@ -64,7 +64,7 @@ export const LicenseIntent = {
 export type LicenseIntent = (typeof LicenseIntent)[keyof typeof LicenseIntent]
 
 /**
- * The prefix of a scope entry that is an atlas tier rather than a package.
+ * The prefix of a scope entry that's an atlas tier rather than a package.
  */
 export const TIER_SCOPE_PREFIX = "tier:"
 
@@ -87,7 +87,7 @@ export const LicenseKeyPayloadSchema = z.object({
 	issued: CalendarDate,
 	/**
 	 * The last valid date, inclusive.
-	 * A key without it does not expire.
+	 * A key without it doesn't expire.
 	 */
 	expires: CalendarDate.nullable().optional(),
 	/**

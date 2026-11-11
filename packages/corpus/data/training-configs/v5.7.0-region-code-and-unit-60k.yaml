@@ -15,7 +15,7 @@
 #
 # Run separately these are three 60,000-step runs answering three questions that share no metric.
 #
-# what is being fixed, and the count behind each.
+# what's being fixed, and the count behind each.
 #
 # 1. `Washington, DC 20003` answers a locality 53.2% of the time (309/581 distinct US cities through
 #    the production path) against 99.7% for `123 Main St, Washington, DC 20003` (579/581). Every US
@@ -32,10 +32,10 @@
 #    two-letter uppercase token by the tag it opens over one epoch of the v5.6.0 mixture: `NL` appears
 #    45 times per million emitted rows and every one is `country`; `PE` never opens a span at all;
 #    only `DE` and `CA` occur with both readings. So the region reading of a Canadian province code is
-#    at zero. That count has the same shape as v5.6.0's bare postcode and is not a margin to beat.
+#    at zero. That count has the same shape as v5.6.0's bare postcode and isn't a margin to beat.
 #
 # 3. `301 College Ave, 101, Athens, GA 30601` drops the `101` entirely. `census_comma_segment_number`
-#    counted a digit group that is the only token in its comma segment: 2,923 per million in the leading
+#    counted a digit group that's the only token in its comma segment: 2,923 per million in the leading
 #    position, every one a postcode, and zero in a later segment at either level. No competing reading
 #    exists in the mixture. But `Athens, GA, 30601` puts a postcode in exactly that position and is right
 #    today only by generalization, so the rebuilt recipe writes both readings rather than only the unit.
@@ -72,7 +72,7 @@
 #      v5.6.0: bare 53.2% (309/581), with-country 61.4% (357/581), with-street 99.7% (579/581). The
 #      bare arm must approach the street arm. the reverse is the same measurement: `street_only`
 #      renders each city's own street where the city would sit, and 579 of 581 correctly answer no
-#      locality today. That number may not fall — teaching `«city», «ST» «ZIP»` must not turn a street
+#      locality today. That number may not fall — teaching `«city», «ST» «ZIP»` mustn't turn a street
 #      before a state code into a locality.
 #
 #   3. #2299's thirteen-province probe. `Gander, NL A1V 1M6, Canada` must answer `country: Canada` and
@@ -83,10 +83,10 @@
 #   4. #2298's ablation, and a PO-BOX arm beside it. `301 College Ave #101, Athens, GA 30601` must
 #      reach `address_point` at 33.959694 / -83.3763072, and `301 College Ave, 101, Athens, GA 30601`
 #      must tag `101` as a unit. `Athens, GA, 30601` must still answer `postcode: 30601` and not a
-#      unit — that is the counter-reading the recipe writes for exactly this check. A gain on units
+#      unit — that's the counter-reading the recipe writes for exactly this check. A gain on units
 #      may not be paid for with a loss on `PMB #`.
 #
-# The three receipts below fail the run before the GPU starts if any added source does not draw.
+# The three receipts below fail the run before the GPU starts if any added source doesn't draw.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.31.0-region-code-and-unit/corpus-v0.31.0-region-code-and-unit

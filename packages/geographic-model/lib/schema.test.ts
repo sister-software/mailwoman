@@ -532,7 +532,7 @@ describe("relation refusals", () => {
 		})
 
 		// Both records declare the pairing, so the validator identifies both.
-		// Either could be the wrong half and the validator does not decide which.
+		// Either could be the wrong half and the validator doesn't decide which.
 		expect(refusalPairs(input)).toEqual([
 			["$.relations[0].inverse", ValidationIssueCode.InverseKindsMismatch],
 			["$.relations[1].inverse", ValidationIssueCode.InverseKindsMismatch],

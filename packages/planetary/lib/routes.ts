@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The app's routes, read from `location.pathname` with no router. A path the app does not know is a not-found
+ *   The app's routes, read from `location.pathname` with no router. A path the app doesn't know is a not-found
  *   view, so a stale link fails visibly rather than showing the globe.
  */
 
@@ -20,7 +20,7 @@ export type PlanetaryRoute = { kind: "map" } | { kind: "feature"; id: string }
 const FEATURE_PATH = /^\/feature\/([0-9]+)$/u
 
 /**
- * The route a pathname names, with a trailing slash forgiven, or null for a path the app does not serve.
+ * The route a pathname names, with a trailing slash forgiven, or null for a path the app doesn't serve.
  */
 export function routeForPath(pathname: string): PlanetaryRoute | null {
 	const normalized = withoutTrailingSlashes(pathname) || "/"

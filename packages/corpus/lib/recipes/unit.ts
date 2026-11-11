@@ -108,7 +108,7 @@ export function makeUnit(random: () => number, oaUnit: string): string {
 	const id = oaUnit && oaUnit.length <= MAX_REAL_UNIT_ID_LENGTH ? oaUnit : sample(SYNTH_IDS, random)
 
 	// Both spacings are emitted: attesting one leaves the other reachable only by
-	// generalization the model does not make here.
+	// generalization the model doesn't make here.
 	if (random() < SIGIL_WEIGHT) return random() < 0.5 ? `#${id}` : `# ${id}`
 
 	return `${designator} ${id}`

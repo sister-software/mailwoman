@@ -22,7 +22,7 @@ const scratch = useScratchDir("adressur-fo")
 
 /**
  * Feature properties copied from the `us_adr_husanr` layer, keeping the columns the
- * adapter reads beside `house_no` and `municipality`, which it does not.
+ * adapter reads beside `house_no` and `municipality`, which it doesn't.
  */
 const RECORDS = [
 	{

@@ -128,7 +128,7 @@ export interface ScenarioReport {
 	 */
 	erroneousApproval: Rate | null
 	/**
-	 * Fail while the truth meets every requirement; `null` when it does not.
+	 * Fail while the truth meets every requirement; `null` when it doesn't.
 	 */
 	erroneousFail: Rate | null
 	/**
@@ -138,7 +138,7 @@ export interface ScenarioReport {
 	checks: CheckCoverage[]
 	/**
 	 * Evaluations in which some check had no bounds, such as ungrouped rows the
-	 * specification does not declare independent.
+	 * specification doesn't declare independent.
 	 * Such a check counts as not covering its truth.
 	 */
 	unbounded: number

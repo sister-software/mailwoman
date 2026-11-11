@@ -82,7 +82,7 @@ function serviceXML(...entries: string[]): string {
 const SERVICE_XML = serviceXML(entryXML("48001", "ABADIÑO", "001"), entryXML("48915", "ZIORTZA-BOLIBAR", "915"))
 
 /**
- * A body that is a zip archive as far as the harvest reads it.
+ * A body that's a zip archive as far as the harvest reads it.
  *
  * The harvest stores the archive for the adapter rather than opening it,
  * so what its members hold is the adapter's test's business.
@@ -219,7 +219,7 @@ describe("fetchBizkaiaComponentDocument", () => {
 		await expect(readLocalTextFile(dest)).resolves.toContain('gml:id="adComponent.3"')
 
 		// One hits request and one feature request: this service advertises
-		// ImplementsResultPaging=FALSE, so there is no second page to ask for.
+		// ImplementsResultPaging=FALSE, so there's no second page to ask for.
 		expect(client.calls).toHaveLength(2)
 	})
 
@@ -311,7 +311,7 @@ describe("harvestESBizkaia", () => {
 		const summary = await harvestESBizkaia(second, { outputDir: temporary.path })
 
 		expect(summary.skipped).toBe(2)
-		// The component documents state no version, so they are read again on every run.
+		// The component documents state no version, so they're read again on every run.
 		expect(summary.fetched).toBe(ES_BIZKAIA_COMPONENT_TYPES.length)
 		expect(summary.failed).toBe(0)
 	})

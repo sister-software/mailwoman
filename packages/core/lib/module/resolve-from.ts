@@ -23,7 +23,7 @@ import { readLocalJSONFile } from "#fs/readers"
  * Returns the path to a package's `package.json`.
  *
  * @param base The caller's `import.meta.url`.
- * @throws When the package is not installed where `base` can see it.
+ * @throws When the package isn't installed where `base` can see it.
  */
 export function resolvePackageJSON(base: string, packageName: string): string {
 	try {
@@ -96,7 +96,7 @@ export async function readPackageJSON<D extends object = MailwomanManifestFields
  * Resolves a package subpath to a filesystem path through the package's `exports` map.
  *
  * @param base The caller's `import.meta.url`.
- * @throws `ERR_MODULE_NOT_FOUND` when the specifier does not resolve.
+ * @throws `ERR_MODULE_NOT_FOUND` when the specifier doesn't resolve.
  */
 export function resolvePackageSpecifier(base: string, packageName: string, ...subpaths: (string | null)[]): string {
 	return createRequire(base).resolve(
@@ -105,7 +105,7 @@ export function resolvePackageSpecifier(base: string, packageName: string, ...su
 }
 
 /**
- * Behaves like {@link resolvePackageSpecifier} but returns `null` when the specifier does not resolve.
+ * Behaves like {@link resolvePackageSpecifier} but returns `null` when the specifier doesn't resolve.
  */
 export function tryResolvePackageSpecifier(
 	base: string,

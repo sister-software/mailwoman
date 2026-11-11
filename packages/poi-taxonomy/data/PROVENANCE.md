@@ -74,7 +74,7 @@ hand. The builder compares three populations of names per country:
 The table records each population's size per country, so a country with no street spans is visible.
 It holds words and rates only, and it contains no OpenStreetMap data.
 
-A head is admitted when it is two or more characters long, when it is not an administrative name of
+A head is admitted when it is two or more characters long, when it isn't an administrative name of
 the country, and when its venue rate exceeds its rate at any position in the country's place names
 and street names. The administrative names come from the candidate database's admin rows, from the
 admin database `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db` (every language's

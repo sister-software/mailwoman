@@ -91,7 +91,7 @@ describe("reading an INSPIRE Addresses WFS", () => {
 
 	it("takes a type only from the feature-type list", async () => {
 		// `Name` also labels operation parameters and service contacts.
-		// One of those matching would publish a feature type the service does not serve,
+		// One of those matching would publish a feature type the service doesn't serve,
 		// and every page of it would fail.
 		const decoy = `<?xml version="1.0"?>
 <WFS_Capabilities version="2.0.0">

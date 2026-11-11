@@ -7,7 +7,7 @@ tags: [corpus, training, multilocale, overture, testing, methodology]
 date: 2026-07-18
 ---
 
-A month ago I wrote about adding Canada to the geocoder and seeing it put Toronto in Ohio. In that case, 843,000 correct postcodes never affected the result, because the layer I had built was not the layer that shipped. This post describes a related problem. Last night I added three new countries to the _parser_. Two of them worked. The third failed a regression check I trusted, and the investigation showed that the addresses were teaching the model something I had not intended.
+A month ago I wrote about adding Canada to the geocoder and seeing it put Toronto in Ohio. In that case, 843,000 correct postcodes never affected the result, because the layer I'd built was not the layer that shipped. This post describes a related problem. Last night I added three new countries to the _parser_. Two of them worked. The third failed a regression check I trusted, and the investigation showed that the addresses were teaching the model something I'd not intended.
 
 {/* truncate */}
 
@@ -29,18 +29,18 @@ The earlier run explained the pattern. The run with only Canada and Mexico had l
 
 I then inspected the training rows themselves instead of the model. None of the 666,000 new Canadian, Mexican, and Brazilian rows contained a country.
 
-That is normal for the source. An Overture address is `street, city, postcode`. The country is implied by the file it came from, in the same way that a domestic letter omits the country from the envelope. Each row is correct on its own. A model, however, learns from the whole set. I had given it two-thirds of a million addresses, and none of them included a country. Trained on that data at the weight I had given it, the model learned that _addresses do not include their country_, in addition to learning three new countries. When the graded set gives it `1600 Pennsylvania Ave NW, Washington, DC, USA`, which does include a country, the model has learned to skip the `USA` token.
+That's normal for the source. An Overture address is `street, city, postcode`. The country is implied by the file it came from, in the same way that a domestic letter omits the country from the envelope. Each row is correct on its own. A model, however, learns from the whole set. I'd given it two-thirds of a million addresses, and none of them included a country. Trained on that data at the weight I'd given it, the model learned that _addresses do not include their country_, in addition to learning three new countries. When the graded set gives it `1600 Pennsylvania Ave NW, Washington, DC, USA`, which does include a country, the model has learned to skip the `USA` token.
 
-I had checked that the new rows had the tags I wanted: street, city, and postcode, all present and correct. I never checked for the tag that was missing, and the missing tag caused the regression.
+I'd checked that the new rows had the tags I wanted: street, city, and postcode, all present and correct. I never checked for the tag that was missing, and the missing tag caused the regression.
 
 ## The fix is old, and we already own it
 
-We built the fix for this a year ago and did not apply it to the new pipeline. Our older locale recipe, the one behind the European countries, renders addresses in their native form and also renders a share of them in an _international_ form, the kind written on a parcel crossing a border: `12 Rue de Rivoli, Paris, France`. That form includes the country deliberately, and it is why adding France never taught the model to drop France. The new Overture pipeline skipped that step and used the addresses exactly as given, without countries.
+We built the fix for this a year ago and didn't apply it to the new pipeline. Our older locale recipe, the one behind the European countries, renders addresses in their native form and also renders a share of them in an _international_ form, the kind written on a parcel crossing a border: `12 Rue de Rivoli, Paris, France`. That form includes the country deliberately, and it is why adding France never taught the model to drop France. The new Overture pipeline skipped that step and used the addresses exactly as given, without countries.
 
-Brazil therefore needs only a small change, and the design stays as it is. The change is to render a fraction of the new rows with the country included, so the training set stops teaching the model to omit it. Canada and Mexico ship as they are, because that run passed. Brazil waits for the next build, and the fix is smaller than it seemed at 4 a.m.
+Brazil therefore needs only a small change, and the design stays as it is. The change is to render a fraction of the new rows with the country included, so the training set stops teaching the model to omit it. Canada and Mexico ship as they're, because that run passed. Brazil waits for the next build, and the fix is smaller than it seemed at 4 a.m.
 
 ## The lesson, in a sentence
 
-June's lesson was to _grade the coordinate the user sees rather than the layer you happened to build._ This one is related: **a model also learns from what your training data consistently omits.** Every field you consistently leave out is a field you are teaching the model to leave out. Coverage includes what you put in the corpus and also what you leave out. The model can learn an omission as a rule when the omission repeats across a million rows.
+June's lesson was to _grade the coordinate the user sees rather than the layer you happened to build._ This one is related: **a model also learns from what your training data consistently omits.** Every field you consistently leave out is a field you're teaching the model to leave out. Coverage includes what you put in the corpus and also what you leave out. The model can learn an omission as a rule when the omission repeats across a million rows.
 
 A simple two-point regression check caught this before any user saw it. The same check has now caught two different problems of this kind.

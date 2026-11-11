@@ -70,7 +70,7 @@ podman run -d --name mailwoman -p 127.0.0.1:3000:3000 \
 	mailwoman:11.0.0
 ```
 
-The run used for this page mounted the DC address points from a pulled data root, and mounted the candidate database from a separate path with `-v <candidate.db>:/candidate/candidate.db:ro -e MAILWOMAN_CANDIDATE_DB=/candidate/candidate.db`. When `candidate` is pulled into the same data root, the server should find it without that variable. This page did not run that layout in a container. A symbolic link inside the mounted directory must point to a path that also exists inside the container. A link to a host path appears missing inside the container.
+The run used for this page mounted the DC address points from a pulled data root, and mounted the candidate database from a separate path with `-v <candidate.db>:/candidate/candidate.db:ro -e MAILWOMAN_CANDIDATE_DB=/candidate/candidate.db`. When `candidate` is pulled into the same data root, the server should find it without that variable. This page didn't run that layout in a container. A symbolic link inside the mounted directory must point to a path that also exists inside the container. A link to a host path appears missing inside the container.
 
 `:ro` works with the published data files. The published DC and US Virgin Islands address-point files use SQLite's rollback journal, and the server opened them read-only. A database in write-ahead-log (WAL) mode cannot be read from a read-only mount without its `-shm` file. On the host used for this page, a locally built DC file in WAL mode answered at the `admin` tier instead of `address_point`, with no error. If you build your own data, check that each file uses a rollback journal before mounting it read-only.
 
@@ -84,13 +84,13 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3000/health
 200
 ```
 
-A 200 from `/health` means the server answered. It does not prove that geocoding reaches address points, so send one known address after each deployment:
+A 200 from `/health` means the server answered. It doesn't prove that geocoding reaches address points, so send one known address after each deployment:
 
 ```bash
 curl -s -X POST http://127.0.0.1:3000/v1/geocode -H "content-type: application/json" -d '{"address":"1600 Pennsylvania Ave NW, Washington, DC 20500"}'
 ```
 
-The container returned `"resolution_tier":"address_point"` with `"coordinate_source":{"source":"overture:NAD","release":"2026-05-20.0"}`. A result at the `admin` tier for an address your data covers means the server did not read the address points. [Run the Mailwoman HTTP server](../tutorials/run-a-server.mdx) shows complete responses.
+The container returned `"resolution_tier":"address_point"` with `"coordinate_source":{"source":"overture:NAD","release":"2026-05-20.0"}`. A result at the `admin` tier for an address your data covers means the server didn't read the address points. [Run the Mailwoman HTTP server](../tutorials/run-a-server.mdx) shows complete responses.
 
 ## 5. Size the container
 
@@ -98,4 +98,4 @@ After one geocode, `podman stats` reported 452.5 MB of memory for the running co
 
 ## Not covered
 
-This page did not run a serverless deployment or the compatibility servers in a container. To run the Nominatim, Photon or libpostal server, install its package in the Dockerfile and change `CMD`. [Point a Nominatim, Photon or libpostal client at Mailwoman](./use-a-compatible-http-client.mdx) gives each server's command. [Choose a deployment](/product/deployment) compares the library, browser and server options.
+This page didn't run a serverless deployment or the compatibility servers in a container. To run the Nominatim, Photon or libpostal server, install its package in the Dockerfile and change `CMD`. [Point a Nominatim, Photon or libpostal client at Mailwoman](./use-a-compatible-http-client.mdx) gives each server's command. [Choose a deployment](/product/deployment) compares the library, browser and server options.

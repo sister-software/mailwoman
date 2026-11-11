@@ -3,7 +3,7 @@
 ## `model/` — the authored records
 
 The authoring source for the frozen pharmacy record set and the wave-1 breadth records amended onto it. Seven concepts, one
-relation, two external mappings, two assertions. They are authored by hand. Edit these and regenerate the artifact below.
+relation, two external mappings, two assertions. They're authored by hand. Edit these and regenerate the artifact below.
 
 - **Authority:** [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](../../../docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md)
   §4 holds the frozen first record set (#1917). The Scope block of issue #1927 lists the concepts and the relation
@@ -60,7 +60,7 @@ The wave-1 sibling `poi-taxonomy-drugstore` reads the same way, onto `{ "id": "d
 "drugstore"], "source": "overture" }` at the same table version. Its leaf is DISJOINT from
 `health_and_medical > pharmacy`, which is the whole reason the second mapping reaches rows the first cannot: 7,168 rows
 under `retail > drugstore` against 82,168 under the pharmacy leaf, 6,679 of them in the US, measured on `poi.db` at
-manifest `2026-07-22.0`. Two mappings for one activity is not a preference. The schema has no field to state one
+manifest `2026-07-22.0`. Two mappings for one activity isn't a preference. The schema has no field to state one
 with, and the POI branch searches the union rather than choosing between them.
 
 ## `geographic-model.json` — the generated, committed artifact
@@ -81,5 +81,5 @@ failure message prints the command in the block above. Byte determinism is asser
 compiles of the same records, and between the committed artifact and a fresh compile once both have been run back
 through `serializeCompiledModel`.
 
-The artifact does not record its build time. `modelVersion` is the authored document's own `version`, so a
+The artifact doesn't record its build time. `modelVersion` is the authored document's own `version`, so a
 regenerate is a diff only when the records changed.

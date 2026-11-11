@@ -25,7 +25,7 @@ const DEFAULT_PROGRESS_EVERY = 5000
 /**
  * Measure every candidate resolution over the real source.
  *
- * @throws {Error} When the streamed feature count does not match the count the source declares.
+ * @throws {Error} When the streamed feature count doesn't match the count the source declares.
  */
 export async function measureZoningCellResolutions(
 	options: MeasureResolutionsOptions

@@ -254,8 +254,8 @@ export const MailwomanBaseFlavor: Flavor = {
 	italic: MAP_FONT_ITALIC,
 
 	// #region Base
-	// The `earth` layer fills every landmass, so the background shows only where a tile has not loaded.
-	// On the globe that is mostly open sea, and the deep-water color hides the loading tile.
+	// The `earth` layer fills every landmass, so the background shows only where a tile hasn't loaded.
+	// On the globe that's mostly open sea, and the deep-water color hides the loading tile.
 	background: "#597eb0",
 	earth: GuideMapPalette.ground,
 

@@ -118,7 +118,7 @@ export interface ReverseGeocodeOpts {
 	 *
 	 * Current measurements show that this covers a dense metro.
 	 *
-	 * The most bbox-overlapping point we have measured is a few dozen neighborhoods plus the admin chain.
+	 * The most bbox-overlapping point we've measured is a few dozen neighborhoods plus the admin chain.
 	 *
 	 * @defaultValue `128`
 	 */
@@ -236,7 +236,7 @@ export class WOFReverseGeocoder implements Disposable {
 		this.#ownsPolygons = !opts.polygonDatabase && Boolean(opts.polygonDBPath)
 
 		// Fail loudly up front.
-		// The R*Tree is a build artifact and is not part of the upstream WOF distribution,
+		// The R*Tree is a build artifact and isn't part of the upstream WOF distribution,
 		// so a missing index would otherwise surface as an opaque SQL error per query.
 		if (!tableExists(this.#admin, PLACE_BBOX_TABLE)) {
 			throw new Error(
@@ -367,7 +367,7 @@ export class WOFReverseGeocoder implements Disposable {
 				currentConfirmed = nextConfirmed
 				currentDistanceKm = nextKm
 			}
-			// An empty tier is not terminal.
+			// An empty tier isn't terminal.
 			// Counties without localadmins jump straight to locality.
 		}
 
@@ -505,7 +505,7 @@ export class WOFReverseGeocoder implements Disposable {
 
 		const row = this.#polygons.prepare(`SELECT geom FROM polygons WHERE id = ?`).get(id) as { geom: string } | undefined
 		// Malformed row parses to null.
-		// Treat it as no-polygon so the query does not fail.
+		// Treat it as no-polygon so the query doesn't fail.
 		const geometry = row ? tryParsingJSON<ParsedGeometry>(row.geom) : null
 
 		this.#geometryCache.set(id, geometry)

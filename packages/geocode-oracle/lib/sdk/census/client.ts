@@ -93,7 +93,7 @@ export interface CreateCensusGeocoderClientOptions {
 	cacheTTLMs?: number
 	/**
 	 * Maximum attempts for a transient failure.
-	 * The client does not retry a 404 response.
+	 * The client doesn't retry a 404 response.
 	 */
 	maxAttempts?: number
 	/**

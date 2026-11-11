@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Base-consistency lint: a synthetic recipe output must not label a token a tag the base dominantly labels
+ * Base-consistency lint: a synthetic recipe output mustn't label a token a tag the base dominantly labels
  * something else, or training gets conflicting gradients on the same token and the minority (the recipe output)
  * loses. This reads a recipe output's own (token -> tag) and checks each token against the base.
  *
@@ -46,7 +46,7 @@ function stripBIO(label: string): string {
  * Python `str.isdigit()`: non-empty and every character a Unicode digit.
  *
  * Pure-numeric tokens (house_number and postcode) are context-determined
- * rather than lexical vocab, so they are excluded.
+ * rather than lexical vocab, so they're excluded.
  * `\p{Nd}` covers the decimal digits these address corpora contain.
  */
 function isDigit(token: string): boolean {

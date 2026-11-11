@@ -8,8 +8,8 @@ This spec adds a pure leaf workspace that holds the typed-evidence vocabulary, t
 axis, the coverage-basis exclusion check, and the derivation graph. It also covers the workspace's
 first four consumers.
 
-The scope is deliberately narrow, and it does not build an inference engine. It expresses the evidence
-the repository **already has** in one vocabulary, and it wires in the one check that is already built
+The scope is deliberately narrow, and it doesn't build an inference engine. It expresses the evidence
+the repository **already has** in one vocabulary, and it wires in the one check that's already built
 but has never been called.
 
 ---
@@ -34,7 +34,7 @@ constraint "filer_family_match_score_inferred_only"
   check (match_score is null or assertion = 'inferred')
 ```
 
-A score may attach only to an inference. That is the epistemic-status axis, already working in a
+A score may attach only to an inference. That's the epistemic-status axis, already working in a
 package that shares no code with the other two. The 2026-08-07 build measured these contents:
 
 ```
@@ -187,7 +187,7 @@ The type enforces these rules:
 | -------- | ------------------------------------------------------------------- | --------------------------------------------------------- |
 | Question | how was the coordinate produced                                     | what may we claim about it                                |
 | Values   | `address_point` `interpolated` `street` `admin` `venue` `plus_code` | `designated` `observed` `derived` `inferred` `unresolved` |
-| Today    | present, doing both jobs                                            | **does not exist anywhere in the tree**                   |
+| Today    | present, doing both jobs                                            | **doesn't exist anywhere in the tree**                    |
 
 A UPRN-matched rooftop is `address_point` + `designated`. An OSM-matched rooftop is `address_point` +
 `observed`. The mechanism is the same and the authority differs. A merged value would upgrade a
@@ -285,7 +285,7 @@ at all. A new value requires an answer to an empirical question first:
 Our extract holds 32,539 communes against roughly 34,900 in France, and BAN aggregates per-commune
 Base Adresse Locale publications of varying completeness. A blanket `designated` would be false. The
 probe's output is a per-commune basis assignment or a decision that BAN supports only
-`source_present`, in which case this arm does not ship.
+`source_present`, in which case this arm doesn't ship.
 
 **Do not write coverage for this extract before the probe returns.**
 
@@ -317,11 +317,11 @@ independent likelihoods would overstate confidence.
 
 Run these before building the arms.
 
-1. **The 187 decomposition.** Of the coverage-class misses on the board, what is the split between
+1. **The 187 decomposition.** Of the coverage-class misses on the board, what's the split between
    mis-tag (an exclusion would be correct) and fold failure (an exclusion would be wrong)? The
    denominator is 187, and `mwdev_constraints` already produces the rows. **If fold failures
    dominate, fold repair ships before negative evidence does.** In that case the spec has falsified
-   its own first arm. That is the intended outcome.
+   its own first arm. That's the intended outcome.
 2. **GB arm on the board.** Compare negative mode on and off, demote-only. The bar is the strata table
    rather than a pooled headline.
 3. **Gauntlet 369:** no regression.
@@ -342,7 +342,7 @@ Run these before building the arms.
 - **Provenance reporting is available in every tier.** Provenance, epistemic status, uncertainty and
   abstention are in the AGPL surface, and no tier hides them.
 - **Every assertion keeps its source and license through projection.** Permissively licensed combining
-  code does not make the output permissively licensed.
+  code doesn't make the output permissively licensed.
 
 ---
 
@@ -374,15 +374,15 @@ Run these before building the arms.
 
 Task 1 (the falsifier) returned PROCEED on 2026-09-03: 44 of 61 locality-band coverage misses were mis-tags, and 4 were fold failures (#1571). The remaining tasks landed on `main` directly, each after local tests:
 
-| Commit      | What                                                                                             |
-| ----------- | ------------------------------------------------------------------------------------------------ |
-| `765c33704` | feat(evidence): one vocabulary for what is known and how well it is known                        |
-| `64008930c` | feat(evidence): own CoverageBasis, and refuse an exclusion whose fold does not match the layer's |
-| `893f87c9f` | refactor(bdc): say plausibility's evidence in the shared vocabulary, same answers                |
-| `b033d3faf` | feat(resolver-wof-sqlite): separate uprn's two nulls                                             |
-| `690dc28d1` | feat(resolver): let a coverage-licensed absence demote a sibling, never delete one               |
-| `1458916f8` | feat(geocode): report what the evidence permits, beside how the coordinate was made              |
-| `c9e0cb73a` | feat(evidence): project the derivation from the trace we already record                          |
-| `b83600c2b` | feat(tiger): P.L. 94-171 H1 housing counts join pl_block, read from segment 2                    |
+| Commit      | What                                                                                            |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| `765c33704` | feat(evidence): one vocabulary for what's known and how well it is known                        |
+| `64008930c` | feat(evidence): own CoverageBasis, and refuse an exclusion whose fold doesn't match the layer's |
+| `893f87c9f` | refactor(bdc): say plausibility's evidence in the shared vocabulary, same answers               |
+| `b033d3faf` | feat(resolver-wof-sqlite): separate uprn's two nulls                                            |
+| `690dc28d1` | feat(resolver): let a coverage-licensed absence demote a sibling, never delete one              |
+| `1458916f8` | feat(geocode): report what the evidence permits, beside how the coordinate was made             |
+| `c9e0cb73a` | feat(evidence): project the derivation from the trace we already record                         |
+| `b83600c2b` | feat(tiger): P.L. 94-171 H1 housing counts join pl_block, read from segment 2                   |
 
 Task 10's answer is in `docs/records/evals/2026-09-05-ban-designation-probe.md`. Three items remain open after the plan. `@mailwoman/evidence` is in the release list, but its npm name is unblessed. The FR designated basis waits on the extract carrying `certification_commune`. No address-point lookup stamps a coverage basis yet, so every rooftop reads `observed`.

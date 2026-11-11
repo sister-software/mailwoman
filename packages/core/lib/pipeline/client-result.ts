@@ -56,7 +56,7 @@ export interface FSTProvenance {
  * The query kind as a client shows it.
  *
  * `kind` is any string here, while the pipeline's own `QueryKindResult` contains the typed union,
- * because a renderer must show a kind it does not know rather than refuse the result.
+ * because a renderer must show a kind it doesn't know rather than refuse the result.
  */
 export interface KindView {
 	kind: string

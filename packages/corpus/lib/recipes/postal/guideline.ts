@@ -41,7 +41,7 @@ export const POSTAL_GUIDELINE_LEGS: readonly PostalGuidelineLeg[] = [
 ]
 
 /**
- * Rows written per leg when `--count` is not given.
+ * Rows written per leg when `--count` isn't given.
  */
 export const POSTAL_GUIDELINE_DEFAULT_COUNT = 2000
 

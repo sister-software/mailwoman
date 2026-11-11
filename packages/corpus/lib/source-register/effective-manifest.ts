@@ -6,7 +6,7 @@
  *
  *   `freezeTrainingManifest` records the sources that contributed rows to a corpus. A run reads that
  *   corpus through a config. Four stages between them remove rows: `country_weights` rejects a row
- *   whose country it does not list. `source_weights` draws only the sources it lists. A source set to `0.0`
+ *   whose country it doesn't list. `source_weights` draws only the sources it lists. A source set to `0.0`
  *   is drawn zero times. `augment_exclude_sources` withholds a source from augmentation. A model card
  *   quoting the corpus manifest therefore attributes sources the checkpoint never saw.
  *
@@ -15,8 +15,8 @@
  *   in total. The config admits 136 countries. Forty countries drew rows, so 96 admitted countries drew zero of
  *   the 1,000,000 rows the epoch emitted.
  *
- *   **What this establishes and what it does not.** The counts come from one audited epoch at one seed.
- *   A source drawn zero times here is one the sampler did not reach in that epoch. The measurement does not show
+ *   **What this establishes and what it doesn't.** The counts come from one audited epoch at one seed.
+ *   A source drawn zero times here is one the sampler didn't reach in that epoch. The measurement doesn't show
  *   that no epoch can reach it. The audit reports its seed and draw count. This record stores both. A source the corpus holds
  *   and the config omits is excluded by construction. The record reports that exclusion instead of a zero draw.
  */
@@ -189,7 +189,7 @@ const ATTRIBUTION_STATEMENTS: Readonly<Record<string, string>> = {
  * That license is free text.
  * The OpenStreetMap venue names in the source are under ODbL 1.0.
  *
- * The free-text license does not identify the source in the ODbL group.
+ * The free-text license doesn't identify the source in the ODbL group.
  * The ODbL group records the OpenStreetMap statement.
  *
  * The source keeps its own group as well, because that text also credits the
@@ -324,7 +324,7 @@ export interface EffectiveTrainingManifest {
 	excludedSources: Record<string, ExclusionReason>
 
 	/**
-	 * Sources the epoch emitted that the corpus's frozen manifest does not name, with their emitted rows.
+	 * Sources the epoch emitted that the corpus's frozen manifest doesn't name, with their emitted rows.
 	 *
 	 * `freezeTrainingManifest` runs inside `buildCorpus` and records the base build's sources.
 	 * A corpus overlay is merged into the corpus afterwards by `overlay-manifest`,

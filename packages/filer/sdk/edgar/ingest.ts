@@ -78,7 +78,7 @@ export interface EdgarIngestResult {
 	filingDate: string | null
 	subsidiaries: number
 	/**
-	 * What `parseExhibit21` recognized as an entry but could not confidently reduce.
+	 * What `parseExhibit21` recognized as an entry but couldn't confidently reduce.
 	 *
 	 * A high count against a low `subsidiaries` signals an unhandled layout.
 	 */
@@ -103,7 +103,7 @@ export interface EdgarIngestReport {
 export interface EdgarIngestOptions extends CIKCorroborationOptions {
 	/**
 	 * Minimum name score a candidate must clear, passed straight to `resolveCIKCandidates`;
-	 * raising it is not a substitute for corroboration.
+	 * raising it isn't a substitute for corroboration.
 	 */
 	minScore?: number
 	/**

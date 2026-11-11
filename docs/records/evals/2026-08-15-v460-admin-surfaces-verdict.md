@@ -3,7 +3,7 @@
 **Recommendation: DO NOT PROMOTE. The run trades a real +11.0 pp gain on US `country` for the
 collapse of the bare-toponym class — 21 net new counted board failures, several placing the answer
 thousands of kilometers out. The cause is identified and a rebuilt extract can fix it, but this
-artifact should not ship in any posture.**
+artifact shouldn't ship in any posture.**
 
 **DECIDED 2026-08-15: NOT PROMOTED.** The operator accepted the recommendation. v4.4.0 remains the
 shipped model. `release.config.json`, the weights cards and the demo stay unchanged.
@@ -19,7 +19,7 @@ Both, together. Either fix without the other fails for the reason the other one 
 
 1. **#1677 — re-weight `synth-bare-country-v23`.** Weight 1.0 gave its 277 rows **165 repetitions each**
    against 5× for the 53,078-row Spanish extract weighted six times higher. 0.030 puts it at parity.
-   The sampler allocates by weight normalized across sources and ignores row count, so weight is not
+   The sampler allocates by weight normalized across sources and ignores row count, so weight isn't
    reps per row. Neither the config nor the launch output displays reps per row, the number people reason in.
 2. **#1673 — rebuilt the ES extract on official-language names.** It teaches English exonyms:
    461 `Balearic Islands` rows against **4** containing `Illes`, and zero `Portopetro`. `spr.name` is
@@ -38,7 +38,7 @@ surfaces across 280 regions from the runtime's own ICU. #1687 folded them into t
 fixed every non-Latin bare-country query — 格鲁吉亚, 沙特阿拉伯, 巴布亚新几内亚, 多米尼加共和国,
 布基纳法索 — at **zero** board regressions and no training at all.
 
-That is the retrieval-over-memorisation principle with a receipt: a fact the atlas can hold should be
+That's the retrieval-over-memorisation principle with a receipt: a fact the atlas can hold should be
 retrieved rather than memorised into weights.
 
 Promote was the operator's call. This document is the evidence.
@@ -48,14 +48,14 @@ Promote was the operator's call. This document is the evidence.
 `ap-doym9ibZZMBVquBibF3ftz`, from-scratch 60k cosine s42 — the v4.4.0 recipe verbatim — on corpus
 `v0.23.0-admin-surfaces`. Completed clean 2026-08-15 06:15 UTC.
 
-|              |                                                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------------------------ |
-| final        | 60,000/60,000, `train_loss` 0.6193                                                                           |
-| val          | `val_loss` 0.7203, `macro_f1` 0.9198 over 4,096 rows                                                         |
-| locale probe | `cross_pollution` 0.00% (DE 0.00 / US 0.00), `locale_acc` 1.000                                              |
-| fisher       | artifact written, 2,000 batches — the smoke's `finalize() with zero accumulated batches` crash did not recur |
-| fp32         | 157.1 MB, md5 `f2dbf4a85f845068234a1a565c323682`                                                             |
-| int8         | 39.4 MB, md5 `afb8ca11bc1e2952b049d437bba611ef`                                                              |
+|              |                                                                                                             |
+| ------------ | ----------------------------------------------------------------------------------------------------------- |
+| final        | 60,000/60,000, `train_loss` 0.6193                                                                          |
+| val          | `val_loss` 0.7203, `macro_f1` 0.9198 over 4,096 rows                                                        |
+| locale probe | `cross_pollution` 0.00% (DE 0.00 / US 0.00), `locale_acc` 1.000                                             |
+| fisher       | artifact written, 2,000 batches — the smoke's `finalize() with zero accumulated batches` crash didn't recur |
+| fp32         | 157.1 MB, md5 `f2dbf4a85f845068234a1a565c323682`                                                            |
+| int8         | 39.4 MB, md5 `afb8ca11bc1e2952b049d437bba611ef`                                                             |
 
 Baseline arm throughout: v4.4.0 fp32, md5 `0f9273a37db14fdd86a6d2c8806f8494`, matching
 `release.config.json`. Both arms graded through the identical battery on caches differing only in
@@ -179,7 +179,7 @@ i.e. less inter-locale interference.
 **`synth-bare-country-v23` is the result**: +11.0 pp on US `country`, the largest single movement
 in the run, exactly the class it was built for (#1651's parse half).
 
-FR macro-F1 reads −5.0 but that is an averaging artifact — `unit` appears in the FR column at 0.0%
+FR macro-F1 reads −5.0 but that's an averaging artifact — `unit` appears in the FR column at 0.0%
 where it was previously absent, while FR micro moved −0.4 and the unit floor's own leg reads 97.0
 against a 95 bar.
 
@@ -187,7 +187,7 @@ against a 95 bar.
 
 Only one of the two pre-registered rows was ever live. **`gb-op2-st-margarets-hope` already passed on the
 shipped model** when re-measured at 06:00 UTC — most likely fixed by #1662's dominance race — so it
-is not creditable to this run.
+isn't creditable to this run.
 
 The live row, `es-op3-southeast-portopetro`, criterion registered before the candidate existed:
 _passes iff the parse emits `locality: "Portopetro"` AND `region: "Illes Balears"`; partial credit is
@@ -200,7 +200,7 @@ v4.4.0   locality "Illes Balears"   street "Portopetro"   venue "Southeast"   co
 v4.6.0   locality "Portopetro" ✓    street "Southeast"    region — ✗          country —
 ```
 
-**The locality moved and the region did not appear** — verbatim the partial-credit case registered as
+**The locality moved and the region didn't appear** — verbatim the partial-credit case registered as
 a failure. The extract taught the tail without teaching the boundary. v4.6.0 additionally drops
 `country: "Spain"` and mislabels the venue as street on this row.
 
@@ -211,8 +211,8 @@ failed hypothesis about the trailing-region extract.
 
 ## Recommendation
 
-1. **Do not promote, in any posture.** This is not a D-rule blocking question. 21 counted board
-   failures with multi-thousand-kilometer coordinate errors on bare city names is not a regression
+1. **Do not promote, in any posture.** This isn't a D-rule blocking question. 21 counted board
+   failures with multi-thousand-kilometer coordinate errors on bare city names isn't a regression
    to check behind a flag. It is an artifact to rebuild.
 2. **Fix #1673 and rebuilt the ES extract on official-language names**, then rerun. The acceptance row
    is one surface away, and the mechanism is understood.
@@ -220,7 +220,7 @@ failed hypothesis about the trailing-region extract.
    stale, every future candidate reports a phantom failure.
 4. **Re-weight `synth-bare-country-v23` before the next run.** 277 rows at weight 1.0 repeat ~20× an
    epoch under the per-source sampler, and they taught "bare capitalized name → country" strongly
-   enough to erase the bare-locality and bare-street classes. The mechanism works — that is what
+   enough to erase the bare-locality and bare-street classes. The mechanism works — that's what
    +11.0 pp shows — but the weight is the change, and the next attempt should have a pre-registered
    watch on the bare-toponym board rows, per the #513 adjacent-class rule.
 5. **The measurement lesson.** The board's counted pass/fail header prints above the promote-flag

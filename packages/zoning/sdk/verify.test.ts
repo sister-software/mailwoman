@@ -14,7 +14,7 @@
  *   channels. A checker that read the service's rings as nested GeoJSON would answer "inside" for a point in a
  *   hole and report the artifact as wrong at exactly the locations the hole handling exists for.
  *
- *   The test also pins the negative case. The Department does not publish Donegal, one of 31 local authorities.
+ *   The test also pins the negative case. The Department doesn't publish Donegal, one of 31 local authorities.
  *   Northern Ireland is a separate jurisdiction. Both cases must read `unknown` with no designation. The test
  *   catches a builder that applies the flood layer's Zone-1-by-absence rule to these cases.
  */

@@ -9,13 +9,13 @@ Every one of the 158,813 coverage cells in the shipped `poi.db` stores `basis = 
 `completeness = 1.0`, exactly as `build-poi.ts` writes them. `supportsExclusion` is therefore false
 everywhere, and the program's rule — missing data becomes negative evidence only through
 exclusion-grade coverage — has no cell to act on. This record is what it took to produce cells that
-answer true, and what it deliberately did not do.
+answer true, and what it deliberately didn't do.
 
 ## What ships
 
 One build-local layer database, `poi-coverage-pharmacy-ile-de-france.db`, holding 3,308
 `amenity=pharmacy` features from the Île-de-France OSM extract, with 290 res-6 `layer_coverage` rows
-at `basis = surveyed`, `completeness = 0.6665`. The shipped `poi.db` is not touched: it is sealed
+at `basis = surveyed`, `completeness = 0.6665`. The shipped `poi.db` isn't touched: it is sealed
 0444, and no part of this work reopens it.
 
 ## Why a separate artifact and not a rebuild
@@ -30,7 +30,7 @@ different layer's table. That settles the artifact shape on its own:
   `observed_rows` a claim about somebody else's rows.
 
 So the pilot builds a complete layer of its own — manifest, domain rows, coverage — and its coverage
-describes its own rows. That is the shape the interface already supports, and no schema change was needed
+describes its own rows. That's the shape the interface already supports, and no schema change was needed
 to reach an exclusion-grade basis, only a builder willing to write one.
 
 ## The completeness basis
@@ -45,8 +45,8 @@ bounded region.** Identified datasets on both sides, with provenance:
 | region    | OSM relation 8649, `boundary=administrative`, `admin_level=4`, Île-de-France | 2026-06-27   | ODbL-1.0            |
 
 The two inventories are independently built, and the licenses are the evidence: Overture Places is
-CDLA-Permissive-2.0. It could not hold that license if OSM were in its lineage. The class correspondence is
-not improvised either — `@mailwoman/poi-taxonomy` already declares `pharmacy` with
+CDLA-Permissive-2.0. It couldn't hold that license if OSM were in its lineage. The class correspondence isn't
+improvised either — `@mailwoman/poi-taxonomy` already declares `pharmacy` with
 `osmTag: "amenity=pharmacy"`, so both sides are selected by one shipped declaration rather than by
 two hand-written predicates.
 
@@ -60,7 +60,7 @@ test catches a boundary that re-enters between two neighbors. Measured: 371 poly
 interior.
 
 A bounding rectangle would have been simpler and wrong — it claims survey over every corner the
-outline does not reach, and Île-de-France is not a rectangle.
+outline doesn't reach, and Île-de-France isn't a rectangle.
 
 ### Arithmetic
 
@@ -106,11 +106,11 @@ a different pharmacy.
 
 ### Uniform completeness across the region, and the measurement that licenses it
 
-One estimate covers all 290 cells. Per-cell capture-recapture is not available at this sample size —
+One estimate covers all 290 cells. Per-cell capture-recapture isn't available at this sample size —
 290 cells over 3,248 subject rows is ~11 rows a cell — so a per-cell number would be noise dressed as
 precision.
 
-Uniform application of a regional number is direct only if the region is not a mixture. We measured
+Uniform application of a regional number is direct only if the region isn't a mixture. We measured
 rather than assumed that condition, stratifying on an external variable neither inventory can influence:
 the eight départements. We compare the per-stratum Chapman estimates against the pooled one:
 
@@ -120,27 +120,27 @@ the eight départements. We compare the per-stratum Chapman estimates against th
 | primary  | 4,042.3  | 4,055.4             | +0.32%     |
 | loose    | 3,793.4  | 3,800.6             | +0.19%     |
 
-Under 0.7% at every point of the grid. That licenses the uniform value **here**, and is not a result
+Under 0.7% at every point of the grid. That licenses the uniform value **here**, and isn't a result
 that transfers to another region unmeasured.
 
 ## The meaning-of-zero rule
 
 - 88 of the 290 cells hold **zero** subject rows and are written anyway, at
-  `basis = surveyed, observed_rows = 0`. That row is the storable form of "surveyed, and there is no
+  `basis = surveyed, observed_rows = 0`. That row is the storable form of "surveyed, and there's no
   pharmacy here" — the exclusion payload, and the reason the pilot exists.
 - Cells outside the region get **no row at all**. Not completeness 0: the measurement makes no statement
   about the region's outside, and a missing row is the interface's word for unknown.
-- 60 subject rows and 138 reference rows fell outside the interior cell set. They are counted and
+- 60 subject rows and 138 reference rows fell outside the interior cell set. They're counted and
   reported rather than silently dropped.
 - The shipped `poi.db` is unchanged — 158,813 cells, all `source_present`, `supportsExclusion` false,
   file mtime and size as they were.
 
-## What this basis does not establish
+## What this basis doesn't establish
 
 Two-source capture-recapture bounds **sampling error only**. It cannot see **dependence between the
 sources**: if a pharmacy is more likely to be in both inventories than chance would have it — a chain
 branch on a high street against a single officine on a village lane — then `m` runs high, `N̂` runs
-low, and completeness runs **high**. That is the direction that turns a data gap into confident
+low, and completeness runs **high**. That's the direction that turns a data gap into confident
 negative evidence. Confident negative evidence from a data gap is the worst failure this system has. The conservative reading (a lower
 confidence bound, minimized across the grid) controls the sampling half and addresses no part of this
 half.
@@ -148,7 +148,7 @@ half.
 Two smaller limits, both measured rather than argued:
 
 - **Class tail.** 8 features in the extract have `healthcare=pharmacy` without `amenity=pharmacy`
-  (0.24% of 3,308). The taxonomy's declared predicate is `amenity=pharmacy` and that is what both
+  (0.24% of 3,308). The taxonomy's declared predicate is `amenity=pharmacy` and that's what both
   sides use. `shop=chemist` (83 features — a parapharmacie rather than an officine) is correctly outside the
   class on the OSM side, and Overture's sibling `drugstore` category holds 0 rows in the region, so
   the class boundary agrees on both sides.
@@ -164,7 +164,7 @@ Not a wider run of this command. Either:
    rather than assumed. Or:
 2. **An authoritative register** — for French pharmacies the Ordre national des pharmaciens' roll is
    the obvious candidate, and would license `basis = designated` rather than `surveyed`. A register we
-   cannot obtain is not a basis. This pilot cannot obtain that roll, so the roll is not its basis.
+   cannot obtain isn't a basis. This pilot cannot obtain that roll, so the roll isn't its basis.
 
 Until one of those lands, more region-class pairs multiply an unquantified bias rather than extending
 a measurement. The command is parameterized so the claim can be **re-run and audited** — falsifier 7
@@ -175,7 +175,7 @@ not so coverage can be widened by pointing it somewhere else.
 
 `tier: build-local`, `license: ODbL-1.0`, attribution to OpenStreetMap contributors. The subject
 inventory is OSM, so the built artifact is a Derived Database: we ship the builder and the user builds
-on their own disk. It is not published and not in the data-bundles registry.
+on their own disk. It isn't published and not in the data-bundles registry.
 
 ## Where the code is
 

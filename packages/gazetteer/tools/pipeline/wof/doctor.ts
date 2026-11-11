@@ -64,7 +64,7 @@ export interface RecordReferences {
  * The references and retirement facts of one record's properties, or `null`
  * when the properties hold no numeric `wof:id`.
  *
- * IDs at or below zero are WOF's placeholders for an unknown or ambiguous parent, so they are left out.
+ * IDs at or below zero are WOF's placeholders for an unknown or ambiguous parent, so they're left out.
  */
 export function recordReferences(properties: Record<string, unknown>): RecordReferences | null {
 	const id = properties["wof:id"]
@@ -97,7 +97,7 @@ export function recordReferences(properties: Record<string, unknown>): RecordRef
  *
  * `wholeFile` reports a record that had to be parsed whole.
  *
- * @throws When the file cannot be read or does not parse as a GeoJSON feature with properties.
+ * @throws When the file cannot be read or doesn't parse as a GeoJSON feature with properties.
  */
 export async function readRecordProperties(
 	path: PathBuilderLike
@@ -121,7 +121,7 @@ export async function readRecordProperties(
 
 				if (feature.properties) return { properties: feature.properties, wholeFile: false }
 			} catch {
-				// The text before the marker is not a feature without its geometry, so the file is parsed whole.
+				// The text before the marker isn't a feature without its geometry, so the file is parsed whole.
 			}
 
 			break
@@ -253,7 +253,7 @@ export function finalSuccessors(id: number, mapping: ReadonlyMap<number, readonl
  * Reads every record the clones track and reports retired records still present,
  * references to IDs no clone holds, and listed successors no clone holds.
  *
- * `mapping` is the content of `whosonfirst-data-deprecated`, or `null` when it could not be read.
+ * `mapping` is the content of `whosonfirst-data-deprecated`, or `null` when it couldn't be read.
  * With `null`, the report's `mapping.read` is false and every dangling ID's `successors` is `null`.
  */
 export async function diagnoseClones(
@@ -409,7 +409,7 @@ export async function diagnoseClones(
  * Each file under `data/` takes its file name from an ID and holds one successor ID per line.
  * The file is empty for an ID deprecated without a successor.
  *
- * @throws When a file name or line is not a positive integer.
+ * @throws When a file name or line isn't a positive integer.
  */
 export async function readDeprecatedMapping(
 	directory: PathBuilderLike,

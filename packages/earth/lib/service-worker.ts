@@ -12,7 +12,7 @@
  * - The staged SQLite runtime is stale-while-revalidate, because its file names have no content hash.
  * - A range read of a `.db` file goes to the range-chunk handler, and the handler stores each validated chunk. A `?cb=` retry
  *   from the readers asks for fresh bytes, so a URL with a query string bypasses it.
- * - A whole-file read on the data origin is cache-first. Every path there is versioned, apart from `releases.json`.
+ * - A whole-file read on the data origin is cache-first. Every path there's versioned, apart from `releases.json`.
  * - `releases.json` and a tileset's TileJSON are network-first, so an offline page reads the last copy.
  * - A tile is cache-first, with an entry cap. A tile with no cached copy that the network cannot fetch answers 404.
  *   MapLibre reads a 404 as a missing tile: it logs no error and draws the nearest loaded parent tile in its place.

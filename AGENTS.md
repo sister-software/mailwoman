@@ -47,7 +47,7 @@ Use repository skills for procedures rather than copying their steps into this f
 - `mailwoman-release` for every npm publish or model promotion.
 - `wof-build` for rebuilding WOF SQLite and FST artifacts.
 - `task-intake` for implementation or training work expected to produce a PR or handoff.
-- `five-whys` when a failure's cause is not directly established.
+- `five-whys` when a failure's cause isn't directly established.
 
 ## Read before changing behavior
 
@@ -149,7 +149,7 @@ rather than a name already chosen: `mwdev_symbol` with `describes` matches a sen
 exported declaration's docstring, and with `query` returns the declaration site, signature and export
 status in one call. Fall back to LSP `workspaceSymbol` anchored on the file being edited and on the
 package where such a helper would live, then to a repository-wide grep for the type or artifact rather
-than the verb. A `@see {@linkcode name}` tag that does not resolve means route reads to the existing
+than the verb. A `@see {@linkcode name}` tag that doesn't resolve means route reads to the existing
 helper. At the end of a sprint whose lanes ran as separate subagents, triage the sprint's commits for
 re-typed helpers below jscpd's 80-token floor.
 
@@ -194,8 +194,8 @@ Run `yarn lint` for lint, formatting, prose, dependency, and repository-health c
 `yarn typecheck` for build and test type checking. Run the narrow package tests during iteration and
 the affected workspace's complete tests before handoff. Do not claim a command passed unless it ran.
 When reporting lint results, state the command's exit status and distinguish errors from warnings. A
-zero exit status does not mean the run had zero warnings. Read the per-file findings for changed files
-before saying they are clear. If output was truncated, inspect the saved log for those paths.
+zero exit status doesn't mean the run had zero warnings. Read the per-file findings for changed files
+before saying they're clear. If output was truncated, inspect the saved log for those paths.
 Run `yarn compile` before `yarn lint`: two `#` imports in `packages/mailwoman` map the `node`
 condition to `out/`, so knip and the bundle-graph check fail on an uncompiled tree. Run
 `mwops release copy-weights` after `yarn compile`, or the FST, postcode and pair-index files are left
@@ -205,7 +205,7 @@ the next step. Redirect its output to a log, chain the next step on its exit cod
 
 ## Vocabulary rules across the tree
 
-A vocabulary rule governs how this repository writes prose. It does not govern a string the repository
+A vocabulary rule governs how this repository writes prose. It doesn't govern a string the repository
 stores, quotes, or sends. Before applying one beyond the file in front of you, decide which of those
 each match is.
 
@@ -227,8 +227,8 @@ and `packages/corpus/data/PROVENANCE.md` records which of those inputs are not c
 ## Workspace moves
 
 After moving a workspace, search quoted path literals whose first segment is the old workspace name.
-The compiler does not inspect CI commands, CLI defaults, hook patterns, and test skip conditions. Keep
-data-root-relative paths and package specifiers unchanged when they are not filesystem references.
+The compiler doesn't inspect CI commands, CLI defaults, hook patterns, and test skip conditions. Keep
+data-root-relative paths and package specifiers unchanged when they're not filesystem references.
 CodeQL raises existing findings at their new paths. Restore justified dismissals after merge. The
 required `test` context decides merge eligibility.
 
@@ -241,7 +241,7 @@ paths.
 
 For an address failure, place the exact input beside the expected and observed results. Identify the
 first stage that diverges. If the cause remains unknown, state the smallest test that distinguishes the
-remaining explanations. Use the `five-whys` skill before proposing a change when the evidence does not
+remaining explanations. Use the `five-whys` skill before proposing a change when the evidence doesn't
 directly establish the cause.
 
 A reader that can return part of a requested result must report what it read or throw. Do not translate
@@ -279,7 +279,7 @@ defines the procedure.
 
 Flag a reader that converts an unreadable or omitted requested value into a valid-looking absence. The
 safe path is to return the requested value with its provenance or raise an error that identifies what
-could not be read.
+couldn't be read.
 
 ### Data-derived thresholds
 
@@ -304,7 +304,7 @@ when the factory that produced it is async: `using db = await openBuiltClient(pa
 belongs to a teardown that itself awaits, such as `TemporaryDirectory` removing its directory.
 `mailwoman/no-await-using-sync-disposable` reports the database handles that get it backwards.
 
-There is no root `scripts/` directory. Executables enter through a package registry, a `mailwoman`
+There's no root `scripts/` directory. Executables enter through a package registry, a `mailwoman`
 command, or `packages/mailwoman/tools/dev-tools/*.run.ts`. The `no-root-scripts` repository check enforces
 this structure.
 

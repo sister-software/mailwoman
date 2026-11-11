@@ -14,11 +14,11 @@ Not every application needs sub-meter accuracy. For most applications, "in the r
 
 ## The approach
 
-1. **Define your precision requirement.** Not "as accurate as possible." A specific distance that is sufficient for your use case. Market analysis: within the correct city. Sales territory: within the correct ZIP code. Regional logistics: within the correct metro area. Last-mile delivery: within the correct block.
+1. **Define your precision requirement.** Not "as accurate as possible." A specific distance that's sufficient for your use case. Market analysis: within the correct city. Sales territory: within the correct ZIP code. Regional logistics: within the correct metro area. Last-mile delivery: within the correct block.
 2. **Choose the cheapest geocoder that meets the requirement.** City-level accuracy → locality-only geocoding (free, a few hundred lines of code). ZIP-level accuracy → postcode-only geocoding plus a ZIP-to-centroid table (free, and updated by replacing one table). Block-level accuracy → a geocoding API (Google, geocode.earth — costs money but requires zero infrastructure).
-3. **Stop.** Don't optimize past your requirement. A geocode that is accurate to 5 meters when your application needs 5 kilometers is wasted engineering effort. The last 10% of accuracy costs 90% of the infrastructure.
+3. **Stop.** Don't optimize past your requirement. A geocode that's accurate to 5 meters when your application needs 5 kilometers is wasted engineering effort. The last 10% of accuracy costs 90% of the infrastructure.
 
-This is the economic argument for "close enough". The cost of higher precision is not linear, and the value of higher precision drops off sharply after you meet your application's requirement.
+This is the economic argument for "close enough". The cost of higher precision isn't linear, and the value of higher precision drops off sharply after you meet your application's requirement.
 
 ## When it works
 
@@ -26,7 +26,7 @@ This is the economic argument for "close enough". The cost of higher precision i
 - **Market analysis.** You're deciding where to open a new store. You need to know which ZIP codes have high customer density rather than which buildings they're in. ZIP-level geocoding answers this.
 - **Regional routing.** A package bound for "Springfield" goes to the Springfield distribution center. The street address is for the last-mile carrier rather than the regional sort. The regional sort only needs city-level accuracy.
 - **You have a known address universe.** A utility company with 500,000 service addresses. The addresses are already in a database. You don't need to geocode them — you need to verify that an input address matches one in the database. Normalize-to-match handles this.
-- **You can't get finer data anyway.** WOF's coordinate for a rural locality may be the best data available. The building doesn't exist in any gazetteer. The street is not mapped. The locality centroid is the closest approximation that exists. Higher precision would require new data collection rather than better algorithms.
+- **You can't get finer data anyway.** WOF's coordinate for a rural locality may be the best data available. The building doesn't exist in any gazetteer. The street isn't mapped. The locality centroid is the closest approximation that exists. Higher precision would require new data collection rather than better algorithms.
 
 ## What you lose
 
@@ -59,9 +59,9 @@ Pick the cheapest level that meets your requirement. Don't spend entrance-level 
 
 Mailwoman targets the block-to-building level of the spectrum. The parser extracts street and building number components. The resolver matches them against WOF and OSM data to return building-level coordinates where available, and street-segment coordinates where not.
 
-Mailwoman is not the right choice for city-level or ZIP-level geocoding. Those problems are solved by simpler, cheaper approaches. Mailwoman is the right choice when you need finer precision than a locality centroid and can't or won't pay for a commercial API.
+Mailwoman isn't the right choice for city-level or ZIP-level geocoding. Those problems are solved by simpler, cheaper approaches. Mailwoman is the right choice when you need finer precision than a locality centroid and can't or won't pay for a commercial API.
 
-Mailwoman is also the right choice when you need to **improve your precision over time.** The corpus pipeline accepts new training data. The resolver can be swapped for a better gazetteer. The parser improves with more data without changes to the downstream system. A deployment that is close enough at the block level now can reach building level later with the same infrastructure.
+Mailwoman is also the right choice when you need to **improve your precision over time.** The corpus pipeline accepts new training data. The resolver can be swapped for a better gazetteer. The parser improves with more data without changes to the downstream system. A deployment that's close enough at the block level now can reach building level later with the same infrastructure.
 
 ## See also
 

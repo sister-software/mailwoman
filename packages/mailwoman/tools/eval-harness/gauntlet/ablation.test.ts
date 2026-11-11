@@ -348,7 +348,7 @@ describe("aggregateCells", () => {
 		}
 	})
 
-	// An unmeasured pair must not exist as a zero-support cell a consumer could average into a ranking.
+	// An unmeasured pair mustn't exist as a zero-support cell a consumer could average into a ranking.
 	it("emits no cell at all for a (component, locale) pair with no rows", () => {
 		const cells = aggregateCells([row({ component: "postcode", locale: "GB" })], meta)
 
@@ -376,7 +376,7 @@ describe("the support-0-is-absence rendering rule", () => {
 		const [cell] = aggregateCells([row({ broken: false }), row({ caseID: "b", broken: false })], meta)
 
 		// 0 of 2 broken is a measurement.
-		// It must not read like the unmeasured cell above.
+		// It mustn't read like the unmeasured cell above.
 		expect(formatAblationCell(cell ?? null)).toBe("0/2")
 		expect(formatAblationCell(cell ?? null)).not.toBe(ABLATION_ABSENT)
 	})
@@ -458,7 +458,7 @@ describe("ablationBoardID — a cell without a board is not a measurement", () =
 })
 
 /**
- * A dropped option does not throw, so a dropped `--components` would run the whole corpus
+ * A dropped option doesn't throw, so a dropped `--components` would run the whole corpus
  * and a dropped `--limit` would turn a smoke run into a forty-minute one.
  */
 describe("runAblationOptions — a CLI flag reaches the layer", () => {

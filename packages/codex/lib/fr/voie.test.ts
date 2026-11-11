@@ -27,9 +27,9 @@ describe("isFrenchStreetWord", () => {
 
 	it("matches the boulevard, passage and sentier variants a writer actually uses", () => {
 		// `@mailwoman/resolver`'s street-centroid tier recognized these.
-		// This table did not.
+		// This table didn't.
 		// That difference put the two lists out of step.
-		// They are abbreviations of a canonical type, so they belong here rather than in the recognizer.
+		// They're abbreviations of a canonical type, so they belong here rather than in the recognizer.
 		expect(isFrenchStreetWord("bld")).toBe(true)
 		expect(isFrenchStreetWord("bvd")).toBe(true)
 		expect(isFrenchStreetWord("pas")).toBe(true)

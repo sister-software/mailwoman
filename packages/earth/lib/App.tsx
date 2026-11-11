@@ -192,7 +192,7 @@ function TracePage({ query }: { query: string | null }) {
  * Each submitted query is a history entry, as on Google Maps, so the back
  * button returns to the previous search.
  *
- * An emptied field is not a search, so it rewrites the entry instead, and a query
+ * An emptied field isn't a search, so it rewrites the entry instead, and a query
  * equal to the URL's leaves the history as it is.
  */
 function writeQueryToURL(query: string): void {

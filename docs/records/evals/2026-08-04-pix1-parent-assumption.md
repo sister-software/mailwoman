@@ -8,18 +8,18 @@ because the trailing `ny` re-anchors "New York" to the state. The prior is logit
 construction — `buildPlacetypePairPriors(opts, pieces, labels)` never receives the emissions. No
 code checks whether the assumption it rests on held.
 
-## This is not a suppression problem
+## This isn't a suppression problem
 
-I record this because the session that found it started from the opposite premise. There is **no
+I record this because the session that found it started from the opposite premise. There's **no
 `dependent_locality` suppression** anywhere in the runtime. R5
 (`docs/superpowers/plans/2026-08-01-r5-us-deploc-preregistration.md`) went looking for one and
 overturned the doc that asserted it. The tag is dead **in the model, uniformly**, from a training-side
 class weight of 0.3 on `B/I-dependent_locality` that configs v0.5.1 → v0.8.0 kept to "penalize hallucination of
 rare tags". The weight was corrected to 1.0 but never retrained into the shipped lineage. PIX1 exists precisely to
-clear that ~7.0-logit deficit. That is the same enrichment direction as the venue / terminal / wing /
+clear that ~7.0-logit deficit. That's the same enrichment direction as the venue / terminal / wing /
 sub-venue work rather than against it.
 
-So the finding below is not an argument for firing PIX1 less. It is that one of its firings inverts
+So the finding below isn't an argument for firing PIX1 less. It is that one of its firings inverts
 its own purpose: it removes an admin level instead of adding one.
 
 ## The measurement
@@ -35,7 +35,7 @@ Raw pre-prior argmax per piece, shipped en-US weights (`model-v401-base-step-060
 | `Brooklyn, NY`           | brooklyn | B-locality (0.952)     |                 5.48 nats |
 
 `priors` on the three-segment input: `{"kind":"placetypePair","applied":true,"probePath":"segment"}`.
-On `Brooklyn, NY` it does not fire. Post-prior labels:
+On `Brooklyn, NY` it doesn't fire. Post-prior labels:
 
 ```
 brooklyn, new york, ny  ->  B-dependent_locality  I-dependent_locality  B-region I-region  O O  B-region
@@ -73,17 +73,17 @@ the pair prior assumes it landed there.
 ## Two fixes, different philosophies
 
 1. **Check the child bias on the parent's reading.** Thread the emissions into
-   `buildPlacetypePairPriors` and skip the hit when the parent window's argmax is not in the
+   `buildPlacetypePairPriors` and skip the hit when the parent window's argmax isn't in the
    locality family. Restriction-only: byte-identical wherever the assumption already holds. That covers
    every pre-registered case above. Leaves `brooklyn, new york, ny` at the pre-prior tree
-   (`locality=Brooklyn`), which grades at 0 km — correct, but it does not recover `New York` as the
+   (`locality=Brooklyn`), which grades at 0 km — correct, but it doesn't recover `New York` as the
    locality.
 2. **Bias the parent toward locality too, when a pair fires.** The pair index asserts a
    (child, parent) admin relation. The prior asserts only half of it, and that half-assertion produces the zero-locality tree.
    Reaches the R5-intended shape (`dep_loc=Brooklyn, locality=New York`) rather than merely avoiding
    the bad one. Larger surface: it can now move a span the model was confident about, so it needs its
    own δ and its own confound board — a region whose name equals a city's name ("New York",
-   "Washington", "Québec") is the confound class, and it is not small.
+   "Washington", "Québec") is the confound class, and it isn't small.
 
 Both are default-on changes on a tier-1 locale, so either needs the full gauntlet plus the GB/NZ pair
 boards to show byte-stability where the assumption holds, per the D-rule.

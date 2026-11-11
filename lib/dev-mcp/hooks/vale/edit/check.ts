@@ -9,7 +9,7 @@
  *
  *   The surface follows the extension and is the one `config/vale/lint-prose.ts` already owns — this hook passes the
  *   path and reads the verdict rather than carrying its own copy of the pathspecs, the exclusions or the config choice.
- *   A path the surface excludes, or one git does not track, reports clean.
+ *   A path the surface excludes, or one git doesn't track, reports clean.
  *
  *   Every failure path is silence, the same interface as `symbol-precheck.ts`: a hook that throws on an unanticipated
  *   payload is a broken session rather than a missing hint.
@@ -55,7 +55,7 @@ function editedPath(payload: Record<string, unknown> | null): string | null {
 
 	const repoRelative = relative(repoRootPath(), resolvePath(filePath))
 
-	// A scratch file outside the checkout is not a prose surface.
+	// A scratch file outside the checkout isn't a prose surface.
 	// After resolution, `..` marks a path outside the checkout.
 	return repoRelative.startsWith("..") ? null : repoRelative
 }
@@ -82,7 +82,7 @@ async function main(): Promise<void> {
 	const output = (report?.stdout ?? "").trim()
 	// The COUNT off Vale's summary, never the word: a clean run ends `✔ 0 errors, 0 warnings …`,
 	// so a substring test for "error" blocks on every clean file.
-	// Absent summary means absent output means there is no report.
+	// Absent summary means absent output means there's no report.
 	const errorCount = Number(/^[✔✖]\s+(\d+)\s+error/mu.exec(output)?.[1] ?? 0)
 
 	if (!errorCount) return

@@ -109,7 +109,7 @@ export interface NonNativeOrderTuple {
  *
  * The first span of each tag is read, by the UTF-16 offsets `alignRow` wrote.
  *
- * @throws When the span triple is not three parallel arrays.
+ * @throws When the span triple isn't three parallel arrays.
  * A malformed row read as one without the components would hide a corrupt file behind a smaller sample.
  */
 export function nonNativeOrderTupleOf(row: NonNativeOrderCorpusRow): NonNativeOrderTuple | null {

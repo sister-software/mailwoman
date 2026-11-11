@@ -52,6 +52,8 @@
 // `CommaNo.yml` and `NamesVerb.yml` must each fire on this line: the build runs in
 // one process, no server, and the flag names the output file.
 
+// `Contractions.yml` must fire on the rest of this line: the loader does not retry, and we have one copy.
+
 // Nobody named the field; the row carries one value alone, the decoder rides that value, and the report says it passed.
 
 /**

@@ -23,7 +23,7 @@ SEARCH address_point USING INDEX idx_ap_postcode (postcode=? AND street_norm=? A
 ```
 
 The index B-tree is depth 4, so a lookup descends ~6 pages ≈ **24 KB**, out of 3.3 GB (0.0007%). The
-total file size is irrelevant to lookup cost. That is the entire point of byte-range over an indexed
+total file size is irrelevant to lookup cost. That's the entire point of byte-range over an indexed
 SQLite. **If CA works, every state works**, exactly as the plan predicted. A full geocode fires a few
 such lookups (situs by postcode, situs by locality fallback, interp), so the data-fetch cost is a
 handful of round-trips ≈ low-hundreds of KB, RTT-bound (~350 ms/query same-region from the spike) rather than
@@ -50,7 +50,7 @@ A first reading of `geocode-core.ts` suggests a hard constraint: `geocodeAddress
 would force "run the whole cascade inside a worker against synchronous sql.js handles," because
 sql.js-httpvfs's fetches are sync XHR only _inside_ the worker.
 
-**But the demo does not use `geocodeAddress`/`resolveTree`.** It has its own **async** cascade —
+**But the demo doesn't use `geocodeAddress`/`resolveTree`.** It has its own **async** cascade —
 `runCascade()` in `docs/src/shared/demo-helpers.ts` — that already `await`s `lookup.findPlace(...)` over
 the Comlink-proxied httpvfs worker on the main thread. So the street tiers slot in as **async** lookups
 (mirroring the existing `WofHTTPVFSPlaceLookup`), with no sync-interface problem and no
@@ -130,7 +130,7 @@ demo's region constraint already biases the WOF resolve, and the same slug selec
 ## The autocomplete nuance (per the DeepSeek hint)
 
 The shipped `mailwoman autocomplete` (#547) walks the **WOF FST** → it suggests _places_ (localities,
-counties: "San Diego", "San Juan"), ranked by importance. That is the right typeahead for the
+counties: "San Diego", "San Juan"), ranked by importance. That's the right typeahead for the
 _locality_ field, but a Google-Maps-grade box also wants **address-level** suggestions (from "350 5th Ave"
 to "350 5th Avenue, New York, NY"). Those are a different index — street-name prefixes over the situs
 extracts rather than the admin FST. Three direct options, in increasing cost:
@@ -172,7 +172,7 @@ extract with `node:sqlite` (the httpvfs version runs the identical SQL). Steps 3
 whose correctness is only observable in a browser (Range requests fired, WASM loaded, map render) and
 need extracts served with byte-range. The two architectural risks — does byte-range survive the 3.3 GB
 stress extract, and does the sync `find()` interface force a worker — are **both retired here**. Byte-range survives,
-and the interface does not force a worker, because the demo's cascade is already async). So the remaining work is execution against a
+and the interface doesn't force a worker, because the demo's cascade is already async). So the remaining work is execution against a
 de-risked spec rather than open questions.
 
 ## Sources

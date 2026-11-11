@@ -56,7 +56,7 @@ export interface VocabularyReport {
 	control: VocabularyReport["totals"] | null
 	/**
 	 * Per-character coverage over every letter in the input, the actionable half:
-	 * a list of codepoints is a decision, a percentage is not.
+	 * a list of codepoints is a decision, a percentage isn't.
 	 */
 	characters: {
 		inVocabulary: string[]

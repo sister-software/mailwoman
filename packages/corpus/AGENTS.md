@@ -1,7 +1,7 @@
 # AGENTS.md — `@mailwoman/corpus`
 
 Scope notes for the training-corpus pipeline. The repo-wide rules live in the root `AGENTS.md`; this
-file covers what is specific to acquiring source data and turning it into recipe outputs, and it exists
+file covers what's specific to acquiring source data and turning it into recipe outputs, and it exists
 because each item below cost a real investigation to establish.
 
 ## OpenAddresses acquisition
@@ -23,10 +23,10 @@ endpoint — all seven `us__*` sources the recipes read total ~117 MB.
 `HEAD` against the per-source endpoint returns no `Content-Length` (it redirects). To size one
 without downloading it, issue a one-byte range GET and read `Content-Range`.
 
-## A file's mtime is not its data's vintage
+## A file's mtime isn't its data's vintage
 
 `$MAILWOMAN_DATA_ROOT/openaddresses/europe.zip` has a 2021 mtime. That date reads as five-year-old data,
-and the file has been proposed for refresh on that basis. It is not stale: `fr/countrywide.csv`,
+and the file has been proposed for refresh on that basis. It isn't stale: `fr/countrywide.csv`,
 `de/berlin.csv` and `de/sn/statewide.csv` are **byte-identical** to what OA's current run serves
 (`bf624492…`, `9903d438…`, `623b099b…`). The date records when someone downloaded the archive.
 
@@ -78,7 +78,7 @@ Recipe outputs are build outputs under `$MAILWOMAN_DATA_ROOT/corpus/slices/` rat
 artifacts. Two checks, one command each, before asserting that a code change invalidates one:
 
 1. **Is that reader on the changed path?** Several recipes read the same source through different
-   readers. `locale.ts` has its own `CSVSpliterator` reader and is not among `readCSVRecords`' callers.
+   readers. `locale.ts` has its own `CSVSpliterator` reader and isn't among `readCSVRecords`' callers.
 2. **Does the artifact predate the fix?** Compare the recipe output's mtime against the commit date of
    the change. A recipe output built after a fix already contains it.
 
@@ -106,7 +106,7 @@ rows, with the `licenseID` each one points at. A derived or synthetic source lis
 publication with no register row gets one in `data/source-additions.json` under an `unchecked` decision, so
 the gap shows in the register rather than hiding as an absence. Add both entries in the change that adds the
 adapter, recipe, inherited overlay or generator, before any build reads the source. The
-`corpus-source-inputs` repository check reports an emitted source the table does not map.
+`corpus-source-inputs` repository check reports an emitted source the table doesn't map.
 
 `buildCorpus`, `corpus overlay-manifest`, `corpus recipe`, every `lib/tools/*.run.ts` builder, the `train` command
 and the Modal launcher's local entry point refuse a source unless each register source it reads has an
@@ -142,7 +142,7 @@ input path relative to `$MAILWOMAN_DATA_ROOT`. Budget a day, run the build in th
 `NODE_OPTIONS="--max-old-space-size=20480"`, and smoke-build two small adapters first to prove a schema
 change end to end. `assertHeapForAdapters` in `lib/build/heap.ts` refuses a heap under 15 GiB when
 `--inputs` names `wof-admin` or `wof-postalcode`, because both hold every source record resident and
-peaked together at 14,883 MiB on 2026-09-26. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and is not hung:
+peaked together at 14,883 MiB on 2026-09-26. `wof-admin` writes zero bytes to `canonical.jsonl` for a long opening stretch and isn't hung:
 `rows()` first passes over every GeoJSON file in `wof/repos` (121 GB) to build an in-memory index.
 
 A build refuses an `--out` that holds an align checkpoint, a non-empty align output or a finished
@@ -199,7 +199,7 @@ API and match on `organization` rather than `title`; a third party's copy may ha
 with `license_id: notspecified` while the publisher's entry holds the grant under another name.
 Compare the entry's `resources` against the file to be fetched to prove the two records describe one
 artifact. A portal also returns third parties' datasets about a country, and a third party's license
-is not the publisher's. Record an unstated license version as unstated: leave `spdx` out and let
+isn't the publisher's. Record an unstated license version as unstated: leave `spdx` out and let
 `electedTerms` hold the publisher's words, because `electedTermsLabel` feeds the share-alike
 filter.
 

@@ -100,11 +100,11 @@ export interface RankingWeights {
 	 * Its job is to break ties among candidates that match the query equally well,
 	 * as in "Springfield" → Springfield IL over Springfield MA.
 	 *
-	 * It does not promote a place that matches the query worse.
+	 * It doesn't promote a place that matches the query worse.
 	 * Tiers keep match quality as the primary key and prominence as the secondary key within each tier.
 	 *
 	 * Note: tiering re-ranks within the over-fetched candidate window (`limit * 4`),
-	 * so a pathological exact match outside that window is not rescued.
+	 * so a pathological exact match outside that window isn't rescued.
 	 *
 	 * @defaultValue `true`
 	 */

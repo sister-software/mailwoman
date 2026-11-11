@@ -167,7 +167,7 @@ export interface CanonicalFormCoverage {
 	 */
 	transformed: number
 	/**
-	 * Eligible inputs grouped by the canonical form they are written in.
+	 * Eligible inputs grouped by the canonical form they're written in.
 	 */
 	eligibleByState: Record<CanonicalFormState, number>
 }

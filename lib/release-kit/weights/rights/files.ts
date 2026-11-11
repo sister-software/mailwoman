@@ -122,7 +122,7 @@ export interface ProvenanceDocument {
 		 */
 		excluded: Array<{ source: string; because: string }>
 		/**
-		 * Sources the epoch emitted that the corpus manifest does not name, each at its three stages.
+		 * Sources the epoch emitted that the corpus manifest doesn't name, each at its three stages.
 		 *
 		 * `corpus_rows` counts rows of the source in the corpus.
 		 * `drawn_rows` counts rows sampled by the epoch.
@@ -148,7 +148,7 @@ export interface ProvenanceDocument {
 	 * A `null` statement means the label requires attribution and the text is written
 	 * from each source's register entry or the card's own attribution entries.
 	 *
-	 * A label this repository does not recognize is listed too, because an unrecognized
+	 * A label this repository doesn't recognize is listed too, because an unrecognized
 	 * license's obligations are unknown rather than absent.
 	 *
 	 * `null` when no effective training manifest is committed for the corpus the card records.

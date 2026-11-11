@@ -85,7 +85,7 @@ export const DESIGNATION_REFUSALS = [
 	/**
 	 * The layer has no coverage row for the location.
 	 *
-	 * The hazard there is unknown.
+	 * The hazard there's unknown.
 	 * Never report it as low.
 	 */
 	"outside_authority_footprint",

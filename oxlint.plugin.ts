@@ -158,7 +158,7 @@ function containsNeverCast(node: AstNode | null | undefined): boolean {
 }
 
 /**
- * Get a called member's name when it is not computed.
+ * Get a called member's name when it isn't computed.
  */
 function calledMethod(node: AstNode): string | null {
 	const callee = node.callee

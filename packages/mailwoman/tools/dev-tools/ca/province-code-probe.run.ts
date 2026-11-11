@@ -131,7 +131,7 @@ interface PostcodePick {
 }
 
 // Without `--weights-cache`, this grades the installed model.
-// That is the arm used to measure the change.
+// That's the arm used to measure the change.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const report: ProbeRow[] = []
 

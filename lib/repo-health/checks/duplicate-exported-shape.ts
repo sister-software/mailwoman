@@ -91,7 +91,7 @@ function headerKey(node: ts.InterfaceDeclaration | ts.TypeAliasDeclaration, sour
 }
 
 /**
- * The key of an exported interface or alias, or undefined for a body this does not compare.
+ * The key of an exported interface or alias, or undefined for a body this doesn't compare.
  *
  * An interface and a type-literal alias with the same members share a key,
  * since the two spellings declare one shape.

@@ -468,7 +468,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const runBattery = async (m: string, tag: string, wc: string = WC): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 
-		// A paired run treats fp32 as the arm that does not ship.
+		// A paired run treats fp32 as the arm that doesn't ship.
 		// An unpaired run ships this arm.
 		const pairedNonShipArm = tag === "fp32" && Boolean(WC8 || INT8)
 

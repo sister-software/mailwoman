@@ -31,7 +31,7 @@ export interface ConformanceResult {
 	result: GauntletResult
 	/**
 	 * The mechanism-account shapes this run matched, in the account's own stage order,
-	 * where `undefined` means no account was attached and is not an empty account.
+	 * where `undefined` means no account was attached and isn't an empty account.
 	 */
 	mechanismShapes?: readonly string[]
 	/**
@@ -42,7 +42,7 @@ export interface ConformanceResult {
 }
 
 /**
- * What a comparator observed, where `undecidable` means it could not read its axis
+ * What a comparator observed, where `undecidable` means it couldn't read its axis
  * and `unmeasured` that the axis was read but its window was too small to decide.
  */
 export type ObservedRelation = ConformanceRelation | "undecidable" | "unmeasured"
@@ -55,7 +55,7 @@ export interface ComparatorReading {
 	observed: ObservedRelation
 	/**
 	 * What the comparator read on each side, stated whatever the verdict
-	 * so an absence is not reported as an agreement.
+	 * so an absence isn't reported as an agreement.
 	 */
 	basis: string
 	/**
@@ -84,7 +84,7 @@ function populatedComponents(result: GauntletResult): Record<string, string> {
 
 /**
  * The resolved admin chain as namespaced stable identity keys, finest first,
- * with entries lacking a `placeID` counted apart because a name is not an identity.
+ * with entries lacking a `placeID` counted apart because a name isn't an identity.
  */
 function identityChain(result: GauntletResult): { keys: string[]; unverifiable: number } {
 	const keys: string[] = []
@@ -205,7 +205,7 @@ function compareAssembledCoordinate(
 		}
 	}
 
-	// Inside tolerance is not enough: a tier change is reported as a divergence with both
+	// Inside tolerance isn't enough: a tier change is reported as a divergence with both
 	// tiers listed separately rather than absorbed by the distance bar.
 	if (a.tier !== b.tier) {
 		return {
@@ -287,7 +287,7 @@ function compareComponentMap(base: ConformanceResult, variant: ConformanceResult
 	}
 
 	// Use the invariance suite's severity reading.
-	// This module must not redefine its critical-tag rule.
+	// This module mustn't redefine its critical-tag rule.
 	const { verdict, diff } = compareComponents(a, b)
 	const basis = `compareComponents verdict ${verdict} · base {${aKeys.toSorted().join(", ") || "empty"}} · variant {${bKeys.toSorted().join(", ") || "empty"}}`
 

@@ -7,7 +7,7 @@ verified-with: mailwoman v11.0.0
 
 # Handle landmark and relative-place queries
 
-Use this procedure when users type a place name, such as `Empire State Building`, or a description, such as `Behind the gas station`, where your application expects an address. The geocoder can return a coordinate for both. This guide shows how to tell a matched place from a coordinate that does not locate what the user asked for.
+Use this procedure when users type a place name, such as `Empire State Building`, or a description, such as `Behind the gas station`, where your application expects an address. The geocoder can return a coordinate for both. This guide shows how to tell a matched place from a coordinate that doesn't locate what the user asked for.
 
 The rule this guide applies: use a coordinate only when the result's `resolution_tier` is `venue` and its `entity` field holds the matched place. Show that entity to a person before relying on it. For every other result, ask for an address.
 
@@ -55,11 +55,11 @@ Each line of `landmarks.jsonl` has a `components.venue` value, because the parse
 
 The confidence values in the table are rounded to two places.
 
-## 2. Recognize a coordinate that does not locate the query
+## 2. Recognize a coordinate that doesn't locate the query
 
 The third result is a wrong answer that looks valid. The parser read the whole input as a venue and also tagged the last word, `station`, as a locality. No point of interest matched the venue. The geocoder then matched the locality to a town called Station in Kentucky, Who's On First place `wof:1343272895`, and returned that town's point at the `admin` tier with `epistemic_status: "observed"`.
 
-That coordinate locates a town in Kentucky, which the user did not describe. A relative description such as "behind", "near" or "across from" depends on where the user is, and no gazetteer entry holds it. When a query has a `venue` component and the result's tier is anything other than `venue`, the coordinate does not locate the venue.
+That coordinate locates a town in Kentucky, which the user didn't describe. A relative description such as "behind", "near" or "across from" depends on where the user is, and no gazetteer entry holds it. When a query has a `venue` component and the result's tier is anything other than `venue`, the coordinate doesn't locate the venue.
 
 ## 3. Check the matched place
 
@@ -74,7 +74,7 @@ A `venue` result is a point-of-interest record whose name matched the query. Rea
 }
 ```
 
-The matched record is called `Eiffel tower`, in the `monument` category. Its coordinate, `48.87296739, 2.29785971`, lies about 1.6 km north of the Eiffel Tower on the Champ de Mars, near `48.8583, 2.2945`. The name match succeeded and the record's location still differs from the landmark's. `confidence` scores the name match. It does not measure the coordinate's position. Show the entity's name and category, and a map pin when you can, so a person can confirm the place.
+The matched record is called `Eiffel tower`, in the `monument` category. Its coordinate, `48.87296739, 2.29785971`, lies about 1.6 km north of the Eiffel Tower on the Champ de Mars, near `48.8583, 2.2945`. The name match succeeded and the record's location still differs from the landmark's. `confidence` scores the name match. It doesn't measure the coordinate's position. Show the entity's name and category, and a map pin when you can, so a person can confirm the place.
 
 ## 4. Route each result
 
@@ -124,4 +124,4 @@ The geocoder also reads an optional `landmarks.db` file from the directory that 
 
 - [Result schema](../reference/schema.mdx) describes `resolution_tier`, `entity` and `coordinate_source`.
 - [Handle PO boxes](./handle-po-boxes.mdx), [intersections](./handle-intersections.mdx) and [bare postcodes](./handle-bare-postcodes.mdx) cover the other inputs that are not street addresses.
-- [Confidence and its limits](../explanation/confidence-and-limits.mdx) explains why a match score is not evidence that a place exists at the returned coordinate.
+- [Confidence and its limits](../explanation/confidence-and-limits.mdx) explains why a match score isn't evidence that a place exists at the returned coordinate.

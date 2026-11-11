@@ -46,7 +46,7 @@ interface LocaleSource {
 
 /**
  * Binary size above which the command prints a note suggesting the browser granularity.
- * The command does not enforce it.
+ * The command doesn't enforce it.
  */
 const BROWSER_BUDGET_BYTES = 4 * 1024 * 1024
 

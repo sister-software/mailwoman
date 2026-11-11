@@ -78,7 +78,7 @@ function pythonValue(value: unknown, options: Required<PythonJSONOptions>): stri
 /**
  * `json.dumps(value, sort_keys=…, ensure_ascii=…)` on one line, byte for byte.
  *
- * @throws When a number is not an integer.
+ * @throws When a number isn't an integer.
  */
 export function pythonJSONDumps(value: unknown, options: PythonJSONOptions = {}): string {
 	return pythonValue(value, { sortKeys: options.sortKeys ?? false, ensureASCII: options.ensureASCII ?? true })

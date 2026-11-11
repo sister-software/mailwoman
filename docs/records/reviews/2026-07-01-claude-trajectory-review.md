@@ -1,12 +1,12 @@
 # Mailwoman trajectory review and re-railing plan — 2026-07-01
 
-**Date:** 2026-07-01 · **Scope:** project trajectory at v5.0.0 — where the last two months went versus where the plan said they would go, and a concrete plan to get the project back on rails. Produced from git-history analysis plus a doc/eval synthesis pass over `docs/articles/plan/`, `docs/articles/evals/`, `docs/articles/releases.mdx`, `evals/scores-by-version.json`, and the open issue queue. This review is about direction rather than code quality — the [2026-06-25 mile-marker review](./2026-06-25-claude-review.md) covers code quality and remains largely current.
+**Date:** 2026-07-01 · **Scope:** project trajectory at v5.0.0 — where the last two months went versus where the plan said they'd go, and a concrete plan to get the project back on rails. Produced from git-history analysis plus a doc/eval synthesis pass over `docs/articles/plan/`, `docs/articles/evals/`, `docs/articles/releases.mdx`, `evals/scores-by-version.json`, and the open issue queue. This review is about direction rather than code quality — the [2026-06-25 mile-marker review](./2026-06-25-claude-review.md) covers code quality and remains largely current.
 
 ---
 
 ## Verdict
 
-The project's question moved from "does the model parse" to "does the system geocode", and that transition succeeded. The current risk is outside the code. The measurement system, the public demo, and the roadmap have all fallen behind what the pipeline can do, and the hardest remaining model problem is stalled behind a budget decision the operator has not made.
+The project's question moved from "does the model parse" to "does the system geocode", and that transition succeeded. The current risk is outside the code. The measurement system, the public demo, and the roadmap have all fallen behind what the pipeline can do, and the hardest remaining model problem is stalled behind a budget decision the operator hasn't made.
 
 Three facts frame everything below:
 
@@ -14,7 +14,7 @@ Three facts frame everything below:
 2. **The wins moved downstream of the model.** The largest recent gains came from resolver logic and data relabeling rather than weights: #822 lifted bare "City, Country" resolve from 54.2% → 77.9% with no retrain. The v4.13.0 multi-locale extract lifted EU resolve (IT 79 → 92.7%, PT 52 → 82%, AT 50 → 81.3%). This is healthy, and it is what the parse/resolve split was _for_. It also changed what "progress" means, and neither the measurement nor the roadmap was updated to match.
 3. **Users outside the lab cannot see any of it.** The public demo runs its own `runCascade` that skips the shared joint-consistency resolver passes entirely (#861), and it has trailed the npm model by multiple versions before (#203). The +23.7pp resolve win is invisible at the exact URL the project points people to.
 
-The process discipline that got the project here — pre-registered checks, falsified changes reverted rather than shipped (#305: measured −21pp, rolled back), documented check revisions, ~30 postmortems — is strong and should not change. What needs to change is where the effort points next.
+The process discipline that got the project here — pre-registered checks, falsified changes reverted rather than shipped (#305: measured −21pp, rolled back), documented check revisions, ~30 postmortems — is strong and shouldn't change. What needs to change is where the effort points next.
 
 ---
 
@@ -30,7 +30,7 @@ Against the original plan, three drifts need to be stated explicitly:
 
 **Whole workstreams appeared that the plan never mentioned.** Record matching (Fellegi-Sunter scorer, NPPES dedup benchmarks, epics #602/#603/#615/#625/#655), the client-side WASM geocoder demo, competitive benchmarks against Nominatim/Pelias/Photon. Each is justified on its own, but together they form a second product growing inside the first one's roadmap.
 
-This is not a criticism. Scope expansion driven by real wins is how solo projects find their product. But an expanded scope with a frozen plan means every new contributor (and every future autonomous shift) orients against a map that is wrong.
+This isn't a criticism. Scope expansion driven by real wins is how solo projects find their product. But an expanded scope with a frozen plan means every new contributor (and every future autonomous shift) orients against a map that's wrong.
 
 ---
 
@@ -38,7 +38,7 @@ This is not a criticism. Scope expansion driven by real wins is how solo project
 
 **R1 — Metric substitution without a re-anchor.** The north-star moved from label-F1 to "grade the coordinate, never label-F1" (v4.15.0 promotion doc). The change is defensible because the coordinate is what users get. Since the switch, however, five label-F1 regressions shipped as "coordinate-invisible" (three in v4.13.0, two postcode floors lowered in v4.15.0, each with written justification). Each call was individually sound and documented. The pattern is the risk: the label metric can now erode indefinitely as long as each step is small, because no check forces a periodic full re-score. The ledger that would catch drift (`evals/scores-by-version.json`) stopped being populated at v4.4.0, and `AGENTS.md` still calls it authoritative.
 
-**R2 — The hardest model problem is stalled with no probe.** Slavic/accented diacritic tokenization is the dominant open defect: CZ 84% and PL 77% content-gap rates root-caused to mis-tokenization (`Grudziądz` splits at `ą` and eats trailing digits; `Montréal, QC` drops the `C`; `ß` splits). No CPU-only fix exists. The fix is a rendering/retrain change (#825) that has been deferred twice, and the shift notes themselves concluded "only the RENDERING fixes it." Every locale past the original scope makes this defect more expensive to leave open, and there is currently no cheap probe defined that would inform the go/no-go.
+**R2 — The hardest model problem is stalled with no probe.** Slavic/accented diacritic tokenization is the dominant open defect: CZ 84% and PL 77% content-gap rates root-caused to mis-tokenization (`Grudziądz` splits at `ą` and eats trailing digits; `Montréal, QC` drops the `C`; `ß` splits). No CPU-only fix exists. The fix is a rendering/retrain change (#825) that's been deferred twice, and the shift notes themselves concluded "only the RENDERING fixes it." Every locale past the original scope makes this defect more expensive to leave open, and there's currently no cheap probe defined that would inform the go/no-go.
 
 **R3 — The demo lies about the product.** #861 (browser cascade skips the joint-consistency passes) means the marquee resolver wins do not execute in the browser at all. #203 showed the demo can silently trail npm by two model versions. The stated long-term goal is that the demo _becomes_ the geocoder. Today it is the least accurate rendition of the system that exists anywhere.
 
@@ -66,7 +66,7 @@ This is the most valuable item in the backlog, because every win already shipped
 
 R1 and R5 have the same fix: one full re-score and one documentation truth-pass.
 
-- **Run a full per-tag parity re-score** against the current shipped model (v5.0.0 line) on the same golden sets as the v4.4.0 check, and publish it as `parity-scorecard-2026-07-xx.md`. This re-baselines the "coordinate-invisible" ledger of deferred label-F1 debt in one shot: either the erosion is bounded (likely) and the pattern is vindicated, or it is not and we learn that now, cheaply.
+- **Run a full per-tag parity re-score** against the current shipped model (v5.0.0 line) on the same golden sets as the v4.4.0 check, and publish it as `parity-scorecard-2026-07-xx.md`. This re-baselines the "coordinate-invisible" ledger of deferred label-F1 debt in one shot: either the erosion is bounded (likely) and the pattern is vindicated, or it isn't and we learn that now, cheaply.
 - **Decide the ledger's fate explicitly.** Either repopulate `evals/scores-by-version.json` from the re-score and commit to updating it at every promote, or formally deprecate it and update `AGENTS.md` to name the actual authority (the latest parity scorecard + per-release model-cards). The current state, documented as canonical but filled with nulls, is worse than either option.
 - **Truth-pass the three stale records:** `releases.mdx` current-version line, `status.mdx` (still quoting v4.4.0 tables per the 06-25 review), and the plan `README.mdx` — see Track 5.
 - **Add the standing rule:** every N promotes (suggest 5) or any promote that lowers a check floor triggers a full re-score. Write it into `CONTRIBUTING_MODEL_WORK.mdx` so it is enforced rather than left to good intentions.
@@ -121,7 +121,7 @@ Between this review and the next morning, the night shift answered the #825 ques
 
 **What happened.** The extract retrain the plan was blocking (v196-slavic-anchor, correctly built on the v4.15.0 base) ran and was falsified: it held US but regressed CZ at convergence (wrong-city 44 → 58%, resolved-p50 5.24 → 82.89 km). Root-causing the failure found the bottleneck was never training data: the 48k SentencePiece unigram vocab contains the diacritic _characters_ but no multi-char _subwords_ containing them. Every diacritic therefore isolates its own piece (`Vysoká → [▁V, ys, ok, á]`), and a unigram model cannot emit a subword absent from its table, so no volume of data fixes it. The fix is a **training-free tokenizer vocab-splice + embedding mean-init** (#884): CZ wrong-city 44 → 28%, PL 30 → 11%, US coordinate output byte-for-byte identical by construction (bootstrap diff 0, CI [0, 0]). No GPU. The ship candidate is the mean-init model. A 2k fine-tune was ablated and retired as slightly harmful.
 
-**What this confirms.** Two of the practices this review said to keep worked as intended in one night. The falsified-change rule stopped the retrain instead of shipping it, and coordinate-first grading caught a regression that label-F1 would have promoted — the retrain's content-gap label metric _improved_ 100 → 17 while the coordinate regressed. That is the sharpest evidence yet for the R1 nuance: the re-score in #885 is a drift _backstop_ rather than an argument for re-anchoring on label-F1.
+**What this confirms.** Two of the practices this review said to keep worked as intended in one night. The falsified-change rule stopped the retrain instead of shipping it, and coordinate-first grading caught a regression that label-F1 would have promoted — the retrain's content-gap label metric _improved_ 100 → 17 while the coordinate regressed. That's the sharpest evidence yet for the R1 nuance: the re-score in #885 is a drift _backstop_ rather than an argument for re-anchoring on label-F1.
 
 **R2 is closed as written.** "Stalled with no probe" no longer describes the state. The probe ran, the hypothesis changed from data to representation, and the fix is committed and reproducible (branch `feat/825-v196-slavic-anchor`, `tokenizer_splice.py`, day eval `2026-07-01-day-825-tokenizer-fix.md`). The residual risk moves downstream: shipping it.
 
@@ -138,7 +138,7 @@ The remaining work is mechanical and tracked on #884:
 ### Consequent edits to the standing plan
 
 - **Track 3 decision table:** the "#825 GPU budget ceiling" row is moot. Replace with two calls: the #295 promote go/no-go (after #291 + #293 land), and the #293 fallback (prune vs server-only) if int8 exceeds the browser SLO.
-- **Locale freeze:** the rule "no new locales before the rendering fix lands" becomes "no new locales until #295 ships the coordinated bump" — the fix exists but is not shipped, and every pre-#295 locale extract would train against the old vocab.
+- **Locale freeze:** the rule "no new locales before the rendering fix lands" becomes "no new locales until #295 ships the coordinated bump" — the fix exists but isn't shipped, and every pre-#295 locale extract would train against the old vocab.
 - **Track 2 sequencing gains a hard edge:** run #885's full re-score on the _current shipped line_ before #295 promotes, so the splice lands with a clean pre/post baseline. The post-#295 scorecard then becomes the first entry of the new re-score cadence.
 - **The handoff's grading hygiene:** baseline grades use the explicit `model-v193a3-step-80000-int8.onnx`; the dev symlink drifts (#259).
 

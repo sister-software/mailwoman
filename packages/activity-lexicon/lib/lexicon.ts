@@ -45,7 +45,7 @@ export function normalizeActivityPhrase(phrase: string): string {
  * Decide whether an entry answers under a locale, delegating to `@mailwoman/variant-aliases`'
  * {@linkcode resolveLocaleScope} — the owner of these semantics.
  *
- * A scoped entry does not match when the locale is unknown.
+ * A scoped entry doesn't match when the locale is unknown.
  */
 export function resolveActivityPhraseLocale(
 	entry: ActivityPhraseEntry,

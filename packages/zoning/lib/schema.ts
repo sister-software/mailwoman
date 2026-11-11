@@ -49,7 +49,7 @@ export interface ZoningAreaTable {
 	 */
 	jurisdiction_id: string
 	/**
-	 * The plan this zone belongs to, keyed to `zoning_plan`: a zone without its plan is not a claim.
+	 * The plan this zone belongs to, keyed to `zoning_plan`: a zone without its plan isn't a claim.
 	 */
 	plan_id: string
 	/**
@@ -139,7 +139,7 @@ export interface ZoningPlanTable {
 	/**
 	 * `CURRENT_PLAN`, stored as published.
 	 *
-	 * `1` means the publisher has not superseded the plan.
+	 * `1` means the publisher hasn't superseded the plan.
 	 * `valid_to` records whether it remains in force today.
 	 */
 	current_plan: number
@@ -203,7 +203,7 @@ export interface ZoningVocabularyTable {
 /**
  * A publisher's own mapping between two schemes, where it publishes one as a table.
  *
- * Empty for Ireland: the mapping is not a function of the (authority, local code) pair, so it lives on
+ * Empty for Ireland: the mapping isn't a function of the (authority, local code) pair, so it lives on
  * `zoning_area` per row and {@linkcode assertCrosswalkIsNotATable} refuses a build that writes edges.
  */
 export interface ZoningCrosswalkEdgeTable {

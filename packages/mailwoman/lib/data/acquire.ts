@@ -96,8 +96,7 @@ export class AcquisitionCancelledError extends Error {
  *
  * A head that fails leaves the identity unknown rather than throwing, because the
  * transfer that follows is the evidence of whether the object exists.
- * A sidecar that is declared and cannot be read is an error, because the
- * transfer could then not be verified.
+ * A sidecar that's declared and cannot be read is an error, because the transfer could then not be verified.
  */
 export async function readRemoteIdentity(
 	client: APIClient,
@@ -234,7 +233,7 @@ export async function acquireRemoteObject(options: {
 
 	await writeLocalJSONFileAtomically(receipt, receiptPath)
 
-	// The transfer's own response states the object's length when the head did not:
+	// The transfer's own response states the object's length when the head didn't:
 	// `Content-Range` states the total, and `Content-Length` the bytes after the offset.
 	let answeredLength: number | null = null
 
@@ -275,7 +274,7 @@ export async function acquireRemoteObject(options: {
 	}
 
 	let verifiedBy: AcquisitionReceipt["verifiedBy"]
-	// The closure above assigns it, and TypeScript does not widen a type for a closure's assignment.
+	// The closure above assigns it, and TypeScript doesn't widen a type for a closure's assignment.
 	const expectedLength = identity.contentLength ?? (answeredLength as number | null)
 
 	if (identity.md5) {

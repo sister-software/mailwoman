@@ -1,13 +1,13 @@
-# B4 — the no fragment probe did not clear its pre-registered bar
+# B4 — the no fragment probe didn't clear its pre-registered bar
 
 2026-07-16. The 2k falsifier for the Norwegian house-number-license change.
 
-**Verdict: the probe did not clear the pre-registered MOVE criterion, and the do-no-harm guard on
+**Verdict: the probe didn't clear the pre-registered MOVE criterion, and the do-no-harm guard on
 the French board drifted the wrong way. Per the config header's own pre-registration, the full 8k
-run is not auto-warranted. The decision to run it anyway is the operator's — with the direct caveat
+run isn't auto-warranted. The decision to run it anyway is the operator's — with the direct caveat
 below on the threshold.**
 
-The 2k probe cost ~$1–2 of A100 and saved a full 8k run from being launched on a hunch. That is
+The 2k probe cost ~$1–2 of A100 and saved a full 8k run from being launched on a hunch. That's
 exactly what the probe-before-fix discipline is for.
 
 ---
@@ -35,9 +35,9 @@ bare-street-hn rises materially... clear motion rather than the complete improve
 does not move at 2k, the license-transfer hypothesis is wrong and a full run is not warranted.
 ```
 
-**+1.7pp with the two intervals almost entirely overlapping is not clear motion.** The bar is not
-met. The `bare-pc` score stayed pinned at 1.000, and the three ceiling classes did not regress —
-so there is no trade, but there is also no target win.
+**+1.7pp with the two intervals almost entirely overlapping isn't clear motion.** The bar isn't
+met. The `bare-pc` score stayed pinned at 1.000, and the three ceiling classes didn't regress —
+so there's no trade, but there's also no target win.
 
 **Board 2 — the FR do-no-harm guard drifted:**
 
@@ -64,30 +64,30 @@ ratio _and_ the no-fragment weight relative to fr-fragment — and they must be 
 
 ## There are two reasons not to escalate, and one caveat applies
 
-1. The target did not clear its pre-registered bar.
+1. The target didn't clear its pre-registered bar.
 2. The French guard drifted the wrong way across every cell.
 
 **The caveat, stated because integrity requires it:** "material move at 2k" was a quantitative
-prediction I could not strongly ground. fr-fragment's +50pp was measured at its **8k** final. I do
+prediction I couldn't strongly ground. fr-fragment's +50pp was measured at its **8k** final. I do
 not have its own 2k-vs-8k trajectory on a board, so I cannot say whether +1.7pp at 2k is "flat" or
-"early but real." That is precisely the class of threshold prediction that should not, by itself,
+"early but real." That's precisely the class of threshold prediction that shouldn't, by itself,
 check a decision — so the call goes to the operator rather than being made by a bar I cannot defend.
-What I will not do is _relax_ the bar I wrote in order to launch the 8k myself.
+What I'll not do is _relax_ the bar I wrote in order to launch the 8k myself.
 
 ## The likely reason it barely moved — a stated hypothesis rather than a knob spun
 
 B0 showed that the implementation worked: the failing Norwegian rows have the **street mistagged as a locality**,
 and the digit follows it (`Hallingrudveien 32` → locality + postcode). The fix is therefore the same
-as the French bare-street polarity fix: teach that a **bare street is not a bare locality** — which
+as the French bare-street polarity fix: teach that a **bare street isn't a bare locality** — which
 requires the street to appear _without a number at all_, so the model cannot lean on the number.
 
 This extract's `--bare-street-prob` defaults to **0.30**: only 30% of its signal rows are pure bare
 streets. The other 70% are `{street} {number}`, a form the model mostly already handles (board 3's
 bare-street-hn is already 0.693 rather than 0.215 like French was). So the extract spends most of its weight
-on a class that is not broken and little on the one that is.
+on a class that's not broken and little on the one that's.
 
 **The testable next move is to raise the bare-street ratio** so the extract hits the street→locality
-confusion directly, the way fr-fragment did. That is one config knob. Per the treadmill guard I am
+confusion directly, the way fr-fragment did. That's one config knob. Per the treadmill guard I'm
 not spinning it solo at 2k — it is a hypothesis for the operator or the next shift, to be
 pre-registered and probed rather than tuned in the dark.
 
@@ -95,7 +95,7 @@ pre-registered and probed rather than tuned in the dark.
 
 - The instrument (board 3) and the recipe (`no-fragment`, tested, split-disciplined) are correct and
   reusable. The probe _worked_ — it gave a clean, cheap read that stopped an unjustified 8k run.
-- `bare-pc` holding at 1.000 confirms the counter-distribution does its job: the model did not learn
+- `bare-pc` holding at 1.000 confirms the counter-distribution does its job: the model didn't learn
   to stop emitting postcode to chase the digit. The extract's shape is sound. Its ratio is the change.
 - The Norway YAML fix (#1145) is the required result of the night regardless of this probe —
   Norway now trains at all, and this probe is the first read that could ever have measured it.

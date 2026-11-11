@@ -290,7 +290,7 @@ describe("artifactSetWarnings", () => {
 
 	it("stays silent when one name resolves from the same bytes at different paths", () => {
 		// Two staged caches hold the same artifact at their own paths.
-		// That is the ordinary shape of a candidate comparison rather than a confound.
+		// That's the ordinary shape of a candidate comparison rather than a confound.
 		const armA = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/a/model.onnx", "same-digest"]])] }
 		const armB = { artifacts_by_locale: [digested("en-US", [["model.onnx", "/b/model.onnx", "same-digest"]])] }
 

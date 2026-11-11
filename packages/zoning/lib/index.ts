@@ -96,7 +96,7 @@ export interface ZoningJurisdiction {
 /**
  * The plan that a zone belongs to, with its stated validity window.
  *
- * The caller must compare the window with the current date, because a plan that is
+ * The caller must compare the window with the current date, because a plan that's
  * not superseded can still have a `validTo` in the past.
  */
 export interface ZoningPlan {
@@ -197,7 +197,7 @@ export interface ZoningReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * The authority's own statements of what the product does not state.
+	 * The authority's own statements of what the product doesn't state.
 	 */
 	limits: ReadonlyArray<string>
 	/**

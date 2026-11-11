@@ -16,7 +16,7 @@ The pipeline failed at the matching step. Pelias and libpostal parsed the addres
 
 ## What it is
 
-The matcher is **a calibrated, geocode-first entity-resolution layer**. It first resolves every record to a coordinate and a hierarchy. It then links records by _where they are_ and _who they are_, instead of by how their address strings are spelled.
+The matcher is **a calibrated, geocode-first entity-resolution layer**. It first resolves every record to a coordinate and a hierarchy. It then links records by _location_ and _identity_, instead of by how their address strings are spelled.
 
 Each term in that description has a specific meaning:
 
@@ -26,7 +26,7 @@ Each term in that description has a specific meaning:
 
 ## Why it imploded — and what changed under it
 
-The v0 matcher was **string-first**. It classified the address into components, placed them in templates, and compared the strings. Strings are the wrong key for addresses. `Jyllandsgade 15` and `Jyllandsgade 75` differ by one character, with a Levenshtein similarity of **0.963**, and they are **650 meters apart** (Isaj et al., SSTD 2019). String similarity has the wrong _topology_. It pulls different buildings together and pushes different spellings of the same building apart. Our matcher produced false pairs and missed real ones.
+The v0 matcher was **string-first**. It classified the address into components, placed them in templates, and compared the strings. Strings are the wrong key for addresses. `Jyllandsgade 15` and `Jyllandsgade 75` differ by one character, with a Levenshtein similarity of **0.963**, and they're **650 meters apart** (Isaj et al., SSTD 2019). String similarity has the wrong _topology_. It pulls different buildings together and pushes different spellings of the same building apart. Our matcher produced false pairs and missed real ones.
 
 ![Two decision surfaces — string-first vs geocode-first — for P(match) over string similarity × geographic distance. String-first is a vertical wall blind to geography. Geocode-first is a basin carved by distance, with the two canonical traps annotated.](./img/geocode-first-surface.png)
 
@@ -65,7 +65,7 @@ Distance enters again at the **scoring** stage in two forms, and both help:
 - **Bucketed**, as ordinary Fellegi-Sunter comparison levels ("within X m", "within Y m", "farther"), each with its own learned m/u (Splink's `DistanceInKMAtThresholds`). This form is the simplest to calibrate and is the established default.
 - **Continuous**, as a numeric feature. This form is measurably stronger. Geo-ER beats text-only matching by 2.7–7.2% F1, with the _largest_ gains where the address text is sparse, and it generalizes across regions far better than a text model.
 
-We have not seen this approach published. It runs this on a parser and geocoder we _own and calibrate_. The matcher can then condition on the geocode's stated uncertainty. That uncertainty has a cost. Geocoder error is large, heavy-tailed, and non-Gaussian, with a steep urban-to-rural gradient (street-interpolation median ~38 m urban, ~201 m rural, per Cayo & Talbot, Zimmerman et al.). Two rules follow:
+We've not seen this approach published. It runs this on a parser and geocoder we _own and calibrate_. The matcher can then condition on the geocode's stated uncertainty. That uncertainty has a cost. Geocoder error is large, heavy-tailed, and non-Gaussian, with a steep urban-to-rural gradient (street-interpolation median ~38 m urban, ~201 m rural, per Cayo & Talbot, Zimmerman et al.). Two rules follow:
 
 1. **Distance buckets are density-aware.** A 50 m "same building" bucket fits downtown and is far too tight in the country. Mailwoman knows the density context, and the matcher uses it.
 2. **Geocode quality weights the evidence.** Two records at the same _rooftop_ point agree strongly. Two at the same _interpolated street centroid_ agree weakly. Two at the same _PO-box or multi-unit_ coordinate barely agree on location. NAACCR's cancer-registry geocoder already propagates this information: interpolation type, feature-match geography, PO-box and rural-route flags, and a Match/Review/Non-Match triage. It maps directly onto our situs → interp → admin tier cascade and conformal radii. The geocoder already reports the quality class, and the matcher has to use it.
@@ -77,9 +77,9 @@ Calibrate the thresholds against mailwoman's _own_ measured error distribution r
 The classical core is v1. Models are added selectively where the evidence shows they help, and none of them replaces the core:
 
 - **Org-name embeddings** for fuzzy blocking and similarity. A regex cannot match `Comcast Cable Communications LLC` to `Xfinity` (a DBA) or tolerate OCR noise, and an embedding with an ANN index can. These embeddings and ANN blocks help _specifically_ on noisy text fields and are not a general replacement (DeepBlocker).
-- **A gradient-boosted matcher** over the comparison vector once labels exist. A tree over `{distance, name-sim, street-sim}` already reaches ~90% matched-class F1 in production (Grab). It is a strong, interpretable upgrade from hand-set weights that needs no neural model. **This scorer is shipped and on by default.** It is a pure-Node gradient-boosted tree over the agreement pattern plus the over-merge interaction (co-located × name-disagree), trained on the NPPES NPI-truth set. It beat the Fellegi-Sunter core by ~5pp dedup F1 on held-out data within a state and by ~+22pp on states it never trained on (TX→CA, TX→NY), and it reduced co-located over-merges. It therefore ships as the default with a calibrated link threshold, because its logit is not in FS-weight units. The model is trained on US NPPES data. For a very different domain, A/B test it or fall back to the hand-weighted core with `resolveEntities({ learnedScorer: false })`. We measured one important limitation. The GBT is calibrated for **dedup**, where "same address, different name" means distinct co-located providers, so it is trained to _reject_ that pattern. **Cross-dataset link discovery has the opposite objective.** Across sources, the same pattern typically indicates one facility under different operating names. The cross-dataset and reconciliation flows therefore pin the FS core (`learnedScorer: false`), because recall matters more there than over-merge precision. Choose the scorer according to the question being asked.
+- **A gradient-boosted matcher** over the comparison vector once labels exist. A tree over `{distance, name-sim, street-sim}` already reaches ~90% matched-class F1 in production (Grab). It is a strong, interpretable upgrade from hand-set weights that needs no neural model. **This scorer is shipped and on by default.** It is a pure-Node gradient-boosted tree over the agreement pattern plus the over-merge interaction (co-located × name-disagree), trained on the NPPES NPI-truth set. It beat the Fellegi-Sunter core by ~5pp dedup F1 on held-out data within a state and by ~+22pp on states it never trained on (TX→CA, TX→NY), and it reduced co-located over-merges. It therefore ships as the default with a calibrated link threshold, because its logit isn't in FS-weight units. The model is trained on US NPPES data. For a very different domain, A/B test it or fall back to the hand-weighted core with `resolveEntities({ learnedScorer: false })`. We measured one important limitation. The GBT is calibrated for **dedup**, where "same address, different name" means distinct co-located providers, so it is trained to _reject_ that pattern. **Cross-dataset link discovery has the opposite objective.** Across sources, the same pattern typically indicates one facility under different operating names. The cross-dataset and reconciliation flows therefore pin the FS core (`learnedScorer: false`), because recall matters more there than over-merge precision. Choose the scorer according to the question being asked.
 - **An LLM for the gray zone, never for the easy 95%.** When the task is framed as in-context _clustering_ rather than all-pairs classification, an LLM uses ~5× fewer API calls and improves quality (LLM-CER, 2025). Use it only on the clerical-review band where the calibrated scorer abstained.
-- **An LLM for ingest.** Source data arrives in forms such as a SQLite dump. An LLM reads a header row and a few samples, infers the column-to-field mapping, and caches it. That is one call per _source schema_ rather than one per row, and it removes the most painful onboarding step.
+- **An LLM for ingest.** Source data arrives in forms such as a SQLite dump. An LLM reads a header row and a few samples, infers the column-to-field mapping, and caches it. That's one call per _source schema_ rather than one per row, and it removes the most painful onboarding step.
 
 ## Four rules from the parser work
 
@@ -87,8 +87,8 @@ The matcher follows the same four rules as the geocoder:
 
 - **Configuration matters more than the model.** Across ~40,000 pipeline configs, F1 spans nearly the full [0,1] range, and cheap sampling-based auto-tuning recovers >95% of an exhaustive search in under 100 trials (AutoER, 2025). We therefore build a _tunable_ matcher and a small tuner instead of searching for one perfect model.
 - **Calibrate, then abstain.** A link is a probability, and ambiguous pairs go to review.
-- **Grade the full pipeline against truth, never a stage in isolation.** The reconcile regression showed why. Match quality is measured on linked entities against reality. A scorer's pairwise F1 does not measure it.
-- **Report every cap.** When blocking drops a region or a tier, the matcher reports the drop. If it silently skips a comparison, the result reads as "no match found". That is the most misleading output an ER system can give.
+- **Grade the full pipeline against truth, never a stage in isolation.** The reconcile regression showed why. Match quality is measured on linked entities against reality. A scorer's pairwise F1 doesn't measure it.
+- **Report every cap.** When blocking drops a region or a tier, the matcher reports the drop. If it silently skips a comparison, the result reads as "no match found". That's the most misleading output an ER system can give.
 
 ## The address-frequency change needs a corpus
 
@@ -110,7 +110,7 @@ The formatter is the small base layer. This work started with the formatter, bef
 
 ## Why you can't find the comparable project
 
-Spatial entity resolution, calibrated probabilistic linkage, and neural address parsing appear in the literature as three separate fields with separate citation graphs. We have not found a system that owns the parser and the geocoder, calibrates both, and feeds the calibrated location and its uncertainty into a Fellegi-Sunter matcher as a quality-weighted feature. That gap could be an opportunity or a sign that the approach fails. The way to find out is to build the matcher and grade it against real clinic data.
+Spatial entity resolution, calibrated probabilistic linkage, and neural address parsing appear in the literature as three separate fields with separate citation graphs. We've not found a system that owns the parser and the geocoder, calibrates both, and feeds the calibrated location and its uncertainty into a Fellegi-Sunter matcher as a quality-weighted feature. That gap could be an opportunity or a sign that the approach fails. The way to find out is to build the matcher and grade it against real clinic data.
 
 ## See also
 

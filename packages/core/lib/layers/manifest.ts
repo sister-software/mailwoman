@@ -59,7 +59,7 @@ export interface LayerManifest {
 	 * Overture removes a release from its bucket once a newer one lands.
 	 * A build that filtered its input leaves no way to count what the input held.
 	 *
-	 * `null` means the build did not record it.
+	 * `null` means the build didn't record it.
 	 * Every artifact built before this field has that state.
 	 *
 	 * A reader distinguishes that from a recorded zero and never reports the two the same way.
@@ -68,7 +68,7 @@ export interface LayerManifest {
 	/**
 	 * The URL the build downloaded its input file from, such as a Geofabrik extract's address.
 	 *
-	 * `null` or absent means the build did not record it.
+	 * `null` or absent means the build didn't record it.
 	 * A build whose input has a share-alike license records it, because the license's database-access
 	 * terms are met by pointing a recipient at the exact input that produced the artifact.
 	 */
@@ -76,7 +76,7 @@ export interface LayerManifest {
 	/**
 	 * The SHA-256 of the build's input file as lowercase hex.
 	 *
-	 * `null` or absent means the build did not record it.
+	 * `null` or absent means the build didn't record it.
 	 * With {@link LayerManifest.sourceURL}, it identifies the artifact's input bytes.
 	 *
 	 * The URL cannot identify those bytes if the publisher replaces the file at the same address.

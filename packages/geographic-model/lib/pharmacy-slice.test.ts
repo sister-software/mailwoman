@@ -91,7 +91,7 @@ describe("the authored pharmacy records", () => {
 		expect(mapping?.vocabulary).toBe(ExternalVocabulary.POITaxonomy)
 		expect(mapping?.externalID).toBe(POI_CATEGORY)
 
-		// The vocabulary owner rejects an identifier the taxonomy does not define.
+		// The vocabulary owner rejects an identifier the taxonomy doesn't define.
 		// Such a mapping would otherwise appear to work inside this package.
 		const category = getPOICategory(String(POI_CATEGORY))
 

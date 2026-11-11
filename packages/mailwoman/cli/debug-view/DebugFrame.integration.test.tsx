@@ -144,7 +144,7 @@ const BASE_DATA = {
 }
 
 /**
- * Ink's raw write ends with a trailing `\n` that is an empty final split element rather than an extra row.
+ * Ink's raw write ends with a trailing `\n` that's an empty final split element rather than an extra row.
  */
 function frameLines(text: string): string[] {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one small fixed-size rendered frame rather than a stream

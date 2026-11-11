@@ -121,7 +121,7 @@ export function selectPostcodes(codes: Iterable<string>, limit: number, seed: nu
 }
 
 /**
- * Return every required input path that is absent, preserving declaration order for diagnostics.
+ * Return every required input path that's absent, preserving declaration order for diagnostics.
  */
 export async function findMissingPostcodeSources<P extends PathBuilderLike>(
 	paths: readonly P[],
@@ -134,7 +134,7 @@ export async function findMissingPostcodeSources<P extends PathBuilderLike>(
 
 /**
  * Every surface a country writes for one postcode, spaced form first, or `[]`
- * when this recipe defines no form for that country or the code does not fit.
+ * when this recipe defines no form for that country or the code doesn't fit.
  *
  * Exported so a test can pin that every rendered surface is one {@linkcode detectedAsPostcode} accepts.
  */
@@ -149,7 +149,7 @@ export function renderBarePostcode(country: string, postcode: string): string[] 
 /**
  * Whether `known-formats.ts` reads this surface as a postcode across its whole span.
  *
- * A surface the detector does not recognize would train the model on a string
+ * A surface the detector doesn't recognize would train the model on a string
  * the query-shape prior cannot then support.
  */
 export function detectedAsPostcode(surface: string): boolean {
@@ -257,7 +257,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 				for (const surface of surfaces) {
 					if (perCountry.get(country)! >= budget) break
 
-					// A surface the detector does not read as a postcode is a disagreement
+					// A surface the detector doesn't read as a postcode is a disagreement
 					// between this table and `known-formats.ts`.
 					if (!detectedAsPostcode(surface)) {
 						unrecognized++

@@ -24,7 +24,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, parseRoles,
 const BATCH_SIZE = availableParallelism()
 
 /**
- * Categorical scales (`scheme*`) are deliberately excluded because they are `string[]`s
+ * Categorical scales (`scheme*`) are deliberately excluded because they're `string[]`s
  * rather than `(t) => string`.
  */
 async function loadD3Interpolators(): Promise<Record<string, InterpolateColorCallback>> {
@@ -115,8 +115,8 @@ const WOFMermaid: CommandComponent<typeof spec, [string, string]> = ({ args, opt
 		if (options.out) {
 			await writeLocalFile(chart + "\n", options.out)
 		} else {
-			// Write Mermaid directly to stdout so Ink's <Text> renderer does not
-			// word-wrap long classDef / linkStyle lines.
+			// Write Mermaid directly to stdout so Ink's <Text> renderer doesn't word-wrap
+			// long classDef / linkStyle lines.
 			// Mermaid cannot parse wrapped definitions.
 			process.stdout.write(chart + "\n")
 		}

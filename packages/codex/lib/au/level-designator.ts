@@ -195,7 +195,7 @@ export function isAuLevelDesignator(input: unknown): boolean {
 /**
  * Normalizes a level designator to its canonical abbreviation, so `"level 3"` becomes `"L 3"`.
  *
- * @returns The input unchanged when it is not a level designator.
+ * @returns The input unchanged when it isn't a level designator.
  */
 export function normalizeAuLevelDesignator(input: string): string {
 	const m = matchAuLevelDesignator(input)

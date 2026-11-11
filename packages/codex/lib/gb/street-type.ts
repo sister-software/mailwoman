@@ -87,7 +87,7 @@ const STREET_TYPE_SET: ReadonlySet<string> = new Set(GB_STREET_TYPES)
  * `Crescent`, `Mews`, `Close`, `Road`.
  *
  * Matches the whole token rather than a suffix, so an unrelated place name
- * (`Tokyo`, `Bordeaux`) is not flagged the way an `-endsWith` test might.
+ * (`Tokyo`, `Bordeaux`) isn't flagged the way an `-endsWith` test might.
  */
 export function isBritishStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false

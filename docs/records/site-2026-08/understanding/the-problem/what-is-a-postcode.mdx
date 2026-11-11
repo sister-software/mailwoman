@@ -1,6 +1,6 @@
 ---
 sidebar_position: 3
-title: What is a postcode?
+title: What's a postcode?
 tags:
   - domain
   - concepts
@@ -10,9 +10,9 @@ tags:
   - multilingual
 ---
 
-# What is a postcode?
+# What's a postcode?
 
-A postcode is a **routing instruction** rather than a geographic area. It tells a postal service how to sort and deliver mail. It does not tell a geocoder where a building is, what municipality it belongs to, or what polygon contains it. A geocoder that treats the postcode as an area makes one of the most common errors in address geocoding — and causes a surprising fraction of production bugs.
+A postcode is a **routing instruction** rather than a geographic area. It tells a postal service how to sort and deliver mail. It doesn't tell a geocoder where a building is, what municipality it belongs to, or what polygon contains it. A geocoder that treats the postcode as an area makes one of the most common errors in address geocoding — and causes a surprising fraction of production bugs.
 
 ## What postcodes encode
 
@@ -31,14 +31,14 @@ The hierarchy is for sorting mail rather than for describing geography. A US 5-d
 
 ## Why postcodes are not polygons
 
-The US Postal Service does not publish ZIP code boundaries. The ZIP code is a route rather than a shape. A single ZIP can contain:
+The US Postal Service doesn't publish ZIP code boundaries. The ZIP code is a route rather than a shape. A single ZIP can contain:
 
 - Multiple municipalities (a rural route that crosses town lines).
 - Gaps (a building served by a different post office than the surrounding area).
 - Overlaps (different carriers serve different sides of the same street).
 - Non-geographic assignments (PO boxes, military APO/FPO addresses, unique large-volume mailers).
 
-When you see a ZIP code displayed as a polygon on a map, you are almost certainly looking at a **ZIP Code Tabulation Area** (ZCTA) — a statistical approximation produced by the US Census Bureau. ZCTAs are generalized from census blocks rather than from USPS delivery routes. USPS explicitly disclaims them. The Census Bureau's own documentation states that ZCTAs "are not exact representations of USPS ZIP Code service areas."
+When you see a ZIP code displayed as a polygon on a map, you're almost certainly looking at a **ZIP Code Tabulation Area** (ZCTA) — a statistical approximation produced by the US Census Bureau. ZCTAs are generalized from census blocks rather than from USPS delivery routes. USPS explicitly disclaims them. The Census Bureau's own documentation states that ZCTAs "are not exact representations of USPS ZIP Code service areas."
 
 This matters because the errors are systematic:
 
@@ -54,7 +54,7 @@ A geocoder should treat a postcode as **supplementary evidence** rather than as 
 2. Use the postcode to validate the parse (if the parsed locality and the postcode's known municipality disagree, flag the ambiguity).
 3. Do not return coordinates from only a postcode unless the postcode is a delivery-point code (Eircode, UK postcode with full unit, US ZIP+4+2). Even then, flag it as "postcode-level resolution," not "address-level."
 
-A user who types `90210` into a geocoder is not asking "where is ZIP code 90210?" They are asking "where is the place I associate with 90210?" The correct answer is "Beverly Hills, CA" with a note that the ZIP covers multiple municipalities and the precise location cannot be determined from the postcode by itself. The incorrect answer is a pin dropped at the ZCTA centroid with the label "Beverly Hills."
+A user who types `90210` into a geocoder isn't asking "where's ZIP code 90210?" They're asking "where's the place I associate with 90210?" The correct answer is "Beverly Hills, CA" with a note that the ZIP covers multiple municipalities and the precise location cannot be determined from the postcode by itself. The incorrect answer is a pin dropped at the ZCTA centroid with the label "Beverly Hills."
 
 ## Why the postal system does this
 
@@ -68,6 +68,6 @@ A postcode is built to move mail rather than to locate things. The geocoder's jo
 
 ## See also
 
-- [What is a ZIP Code and how is it structured?](./what-is-a-zip-code.mdx) — the US system in detail
-- [The database fallacy](../why-its-hard/the-database-fallacy.mdx) — why there is no master list of postcode-to-place mappings
+- [What's a ZIP Code and how is it structured?](./what-is-a-zip-code.mdx) — the US system in detail
+- [The database fallacy](../why-its-hard/the-database-fallacy.mdx) — why there's no master list of postcode-to-place mappings
 - [How mail delivery works](./how-mail-delivery-works.mdx) — the system postcodes were designed for

@@ -10,7 +10,7 @@
  *   passthrough with no allowlist would hand back every build, publish and ledger write the boundary excludes.
  *
  *   allow-list rather than deny-list, on purpose. A deny-list is wrong by default: the day someone adds
- *   `mw gazetteer nuke`, a deny-list permits it and an allow-list does not. The cost is that a new read-only verb has
+ *   `mw gazetteer nuke`, a deny-list permits it and an allow-list doesn't. The cost is that a new read-only verb has
  *   to be added here before it can be used. This makes an omitted entry fail closed.
  */
 

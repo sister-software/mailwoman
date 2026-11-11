@@ -126,14 +126,14 @@ export interface KindClassifierOpts {
 	 * POI phrase lexicon (spec §3.1); when present the `poi_query`
 	 * and `poi_category` scorers join the rule set.
 	 *
-	 * They are injected rather than imported so this package stays dictionary-free.
+	 * They're injected rather than imported so this package stays dictionary-free.
 	 * When absent, the returned classifier behaves identically to {@link classifyKind}.
 	 */
 	poiLexicon?: POIPhraseLookup
 }
 
 /**
- * Build a kind classifier that is exactly {@link classifyKind} without options,
+ * Build a kind classifier that's exactly {@link classifyKind} without options,
  * or that additionally scores `poi_query` + `poi_category` (ROAD_TO_V9 §4.4)
  * and merges them into the ranked result when given a `poiLexicon`.
  */

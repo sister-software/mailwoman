@@ -129,7 +129,7 @@ describe("explodeAliasBags", () => {
 
 		expect(nAlias).toBe(2)
 		// toledo + tolete + toletum.
-		// The repeat does not inflate the gloss detector's signal.
+		// The repeat doesn't inflate the gloss detector's signal.
 		expect(keyCounts.get(204)).toBe(3)
 	})
 

@@ -58,7 +58,7 @@ A geocoder resolves a parsed address to coordinates through a gazetteer or resol
 The Mailwoman model expects the soft anchor and gazetteer channels to be fed at
 inference. Construct the scorer through `@mailwoman/neural`'s `createScorer`
 (the canonical `ProductionScorer`). It reads the bundle's `requires`/channel
-interface and **fails closed** if a declared channel is not fed. Do not
+interface and **fails closed** if a declared channel isn't fed. Do not
 hand-wire the raw ONNX session with the anchor input zero-filled.
 
 ## Evaluation
@@ -85,7 +85,7 @@ synthetic board, because no real NZ venue-name source exists on disk yet (issue
 - **All-caps input degrades** the admin tags, because training used mixed case.
   `@mailwoman/neural`'s `normalizeCase` option recovers detected all-caps ASCII.
 - **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens,
-  and quality there is unmeasured.
+  and quality there's unmeasured.
 
 ## Attribution
 

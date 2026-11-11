@@ -269,7 +269,7 @@ async function compareMailwomanArms(
 		ungradeable: rows.filter((row) => row.grade === "ungradeable").length,
 	}
 
-	// If there is no truth, this run can only report differences.
+	// If there's no truth, this run can only report differences.
 	const mode = resolveGradeMode(options.grade, gradeable.length > 0, "no row in this set carries expectations")
 
 	const test = significance(
@@ -534,7 +534,7 @@ async function externalRunner(
 }
 
 /**
- * Compare two arms when at least one is not mailwoman.
+ * Compare two arms when at least one isn't mailwoman.
  */
 async function compareAcrossEngines(
 	registry: EngineRegistryLike,

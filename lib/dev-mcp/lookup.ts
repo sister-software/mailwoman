@@ -8,7 +8,7 @@
  *   A resolve returning no result has two causes that look identical from the outside — the parser never asked, or the
  *   gazetteer has no answer — so this module keeps the readings apart:
  *
- *   - `hit: false, entries: null` — the source does not know the string. Absence.
+ *   - `hit: false, entries: null` — the source doesn't know the string. Absence.
  *   - `hit: true` with a zero-valued entry — the source knows it and scores it zero. A measured zero.
  *   - `hit: true, entries: []` — accepted, but with no data the consumer can act on (for the FST: no BIO-mapped placetype).
  *
@@ -26,7 +26,7 @@ import type { PathBuilderLike } from "path-ts"
 /**
  * Sources a lookup can address.
  *
- * Each answers a different "does it know this?" and they are not interchangeable: a surface the
+ * Each answers a different "does it know this?" and they're not interchangeable: a surface the
  * FST accepts can still be absent from the candidate table, the shape most resolve failures take.
  */
 export const LookupSource = {
@@ -107,15 +107,15 @@ export interface LookupResult {
 	 */
 	provenance: Record<string, unknown> | null
 	/**
-	 * Non-null when the artifact could not be opened — reported rather than degraded, because
+	 * Non-null when the artifact couldn't be opened — reported rather than degraded, because
 	 * answering "no" to every query because a file is missing is the worst possible answer.
 	 */
 	unavailable_reason: string | null
 	/**
 	 * Non-null instead of `rows` for a sweep.
 	 *
-	 * A locale whose artifact is missing includes its own `unavailable_reason` rather than dropping
-	 * out, because a locale absent from the map would read as one the source did not know.
+	 * A locale whose artifact is missing includes its own `unavailable_reason` rather than
+	 * dropping out, because a locale absent from the map would read as one the source didn't know.
 	 */
 	by_locale: Record<string, LocaleLookup> | null
 	notes: string[]

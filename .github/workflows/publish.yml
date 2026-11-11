@@ -213,7 +213,7 @@ jobs:
         run: yarn install --immutable
 
       # Every workspace manifest on main must match the root version. A mismatch means the release
-      # PR has not merged. After the check passes, the root manifest supplies the version.
+      # PR hasn't merged. After the check passes, the root manifest supplies the version.
       - name: Verify version sync on main
         id: version
         run: | # shell
@@ -226,7 +226,7 @@ jobs:
         run: yarn mwops release rights-audit
 
       # The fetch reads the public Hugging Face bucket without credentials. It downloads each weights
-      # package's declared `files` that git does not track, and checks them against the model card
+      # package's declared `files` that git doesn't track, and checks them against the model card
       # md5s. It probes every remote object first, so an unstaged version reports all missing
       # objects in one run. Dry runs skip this step because the preflight step fetches into a
       # staging tree.
@@ -236,7 +236,7 @@ jobs:
 
       # A stale pair index left on the bucket can pass the fetch check and still disagree with its
       # model card. This parity test checks the fetched files against the cards. The package script
-      # selects the test by name, so moving the test file does not break this step.
+      # selects the test by name, so moving the test file doesn't break this step.
       - name: Verify staged pair indexes match their model cards
         run: yarn ci:test:pair-index-parity
 

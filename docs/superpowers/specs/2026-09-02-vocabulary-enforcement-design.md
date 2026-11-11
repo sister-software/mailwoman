@@ -68,7 +68,7 @@ By word family, in the rule's listing order, the counts are 1,741, 158, 114, and
 retired word. That one occurrence is `scripts/repo-health.ts`'s own `BANNED_VOCABULARY` constant. That constant
 must contain the word it counts.
 
-This paragraph deliberately does not spell that word, for the reason its counter's docstring gives: the
+This paragraph deliberately doesn't spell that word, for the reason its counter's docstring gives: the
 ratchet is written in the language it polices, so prose that spells the word raises the count.
 
 ## Order of work

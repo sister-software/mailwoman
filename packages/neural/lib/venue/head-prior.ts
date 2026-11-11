@@ -80,7 +80,7 @@ export function buildVenueHeadEmissionPriors(
 	const isCountryName = opts.isCountryName ?? (() => false)
 	const words = wordsWithSegments(groupPiecesIntoWords(pieces), pieces)
 
-	// A segment that is a country name holds no venue head: `america` heads `Bank of America`,
+	// A segment that's a country name holds no venue head: `america` heads `Bank of America`,
 	// and `United States of America` is the country.
 	const segmentTexts = new Map<number, string[]>()
 
@@ -132,7 +132,7 @@ export function buildVenueHeadEmissionPriors(
 		if (sameSegment(following) && isStreetAffix(following!.group.fstToken)) continue
 		const scaled = (bias: number | null): number | null => (bias === null ? null : Math.min(maxBias, bias * biasScale))
 
-		// A head that is itself a street type closes a street name when a house number
+		// A head that's itself a street type closes a street name when a house number
 		// opens the span, as `Plaza` does in `30 Rockefeller Plaza`.
 		// The table measured `plaza` and `center` as venue heads on names without a number,
 		// so its rate applies to an unnumbered name only.

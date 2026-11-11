@@ -168,7 +168,7 @@ function coordinateErrorFor(
 ): number | null {
 	// Three independent conditions exclude a row from the coordinate table: terms forbid
 	// publication, the row lacks a truth coordinate, or the arm produced no coordinate.
-	// The aggregate does not count these cases as zero.
+	// The aggregate doesn't count these cases as zero.
 	if (!row.coordinatePublishable) return null
 
 	if (row.expectedLat === null || row.expectedLon === null) return null

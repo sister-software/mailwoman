@@ -63,7 +63,7 @@ export interface Unresolved {
 	/**
 	 * The admitted records the question rests on.
 	 *
-	 * They are the records of its candidates, or the record that raises the question.
+	 * They're the records of its candidates, or the record that raises the question.
 	 * The list is empty when no admitted record bears on the question.
 	 */
 	sources: readonly SourceRecordID[]

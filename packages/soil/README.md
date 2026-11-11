@@ -34,10 +34,10 @@ The layer never represents an absence with a small number. A consumer can tell a
 | reading                                              | where it lives                                     |
 | ---------------------------------------------------- | -------------------------------------------------- |
 | the survey rated this land as precluding cultivation | class `"8"` in `class_shares`, a determination     |
-| the survey did not rate it                           | `unrated_share`                                    |
-| the rating does not apply to it (rock, water)        | `notrateable_share`                                |
-| the polygon exists, the soil mapping does not        | `nodata_share` (`NOTCOM`, `NOTPUB`, access denied) |
-| there is no survey here at all                       | **no `layer_coverage` row, and no summary row**    |
+| the survey didn't rate it                            | `unrated_share`                                    |
+| the rating doesn't apply to it (rock, water)         | `notrateable_share`                                |
+| the polygon exists, the soil mapping doesn't         | `nodata_share` (`NOTCOM`, `NOTPUB`, access denied) |
+| there's no survey here at all                        | **no `layer_coverage` row, and no summary row**    |
 
 Class 8 is a determination and is a class share like any other. A merge with the absence readings
 produces a well-formed wrong answer, and 67,547 national components have class 8. The irrigated rating shows
@@ -130,7 +130,7 @@ contain it, the license has changed, and a build that accepted the change would 
 that no reviewer checked. The acknowledgement that the same metadata requests is stored in
 `layer_manifest.attribution`: _U.S. Department of Agriculture, Natural Resources Conservation Service._
 
-## Two dates are stored, and they are not the same fact
+## Two dates are stored, and they're not the same fact
 
 `sacatalog.saverest` is the refresh date. NRCS runs one coordinated Annual Soils Refresh each October 1.
 The catalogue grouped by year returns 2016: 1, 2025: 3,323, 2026: 56, so a region's areas share a
@@ -219,7 +219,7 @@ that a geocode without the layer is byte-identical to one with it, apart from th
   derived Crop Frequency Layer's value domain runs from `"1"` (planted once in 18 years) through `"18"`
   (planted every year), then **`"255"` means planted zero times**, while **`"0"` is No Data**. A reader
   that takes 0 as "never planted" reads _we have no data here_ as _no crop was ever grown here_. That reading
-  is the opposite of the truth. This vocabulary uses no numeric sentinel for either state and should not
+  is the opposite of the truth. This vocabulary uses no numeric sentinel for either state and shouldn't
   start.
 - **The layer computes no suitability score.** It repeats what an authority states, in the authority's
   vocabulary, with the authority's dates. The consumer converts that value into a number.

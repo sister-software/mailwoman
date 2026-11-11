@@ -66,7 +66,7 @@ describe("the anchor-artifact presence assertion", () => {
 
 	it("stays silent for a package that declares no anchor artifact — the #1476 en-gb posture", async () => {
 		// The en-gb card sets `requires.anchor.required` true while `files` contains only a comment,
-		// so a guard keyed on `requires` would call it broken and one keyed on `files` would not.
+		// so a guard keyed on `requires` would call it broken and one keyed on `files` wouldn't.
 		const root = await fixtureWeights("zz-zz", {
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-zz.bin (deliberate)" },

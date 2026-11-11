@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The registry of storage operations — the only executable entry point of this package. Knip treats it as
- *   such. An operation that is not listed here is dead code. The `mwops` adapter iterates this array and
+ *   such. An operation that's not listed here is dead code. The `mwops` adapter iterates this array and
  *   never import an operation module directly.
  */
 

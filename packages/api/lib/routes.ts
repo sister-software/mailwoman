@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Handlers for the native operations. Each operation is defined in `#operations/*`. The
- *   OpenAPI document is emitted from those definitions, so there is no handwritten spec.
+ *   OpenAPI document is emitted from those definitions, so there's no handwritten spec.
  */
 
 import type { OpenAPIHono } from "@hono/zod-openapi"

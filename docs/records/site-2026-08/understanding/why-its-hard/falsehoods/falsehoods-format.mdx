@@ -21,7 +21,7 @@ The Greek tax office: `Χανδρή 1 & Θεσσαλονίκης, Τ.Κ. 18346, 
 
 Rule-based parsers that operate on ASCII character ranges (`[a-zA-Z]` for street names, `\d` for numbers) are blind to non-Latin scripts. The tokenizer must handle multi-byte characters, the classifier must recognize script-specific patterns, and the resolver must match names in the script they were written in.
 
-Mailwoman's SentencePiece tokenizer uses `byte_fallback=true` — when a character is not in the trained vocabulary, the tokenizer falls back to byte-level encoding. This means the tokenizer can handle any Unicode character, even scripts it was not explicitly trained on. The A1 tokenizer (v0.5.0) halved the byte-fallback rate from 36.7% to 18.2% by training on a corpus that includes CJK, Cyrillic, Hangul, Han, and Armenian scripts.
+Mailwoman's SentencePiece tokenizer uses `byte_fallback=true` — when a character isn't in the trained vocabulary, the tokenizer falls back to byte-level encoding. This means the tokenizer can handle any Unicode character, even scripts it was not explicitly trained on. The A1 tokenizer (v0.5.0) halved the byte-fallback rate from 36.7% to 18.2% by training on a corpus that includes CJK, Cyrillic, Hangul, Han, and Armenian scripts.
 
 ### "Addresses follow a fixed ordering."
 
@@ -67,7 +67,7 @@ Middlesex, Scunthorpe, Penistone, and several others are real English place name
 
 ## How traditional geocoders handled these
 
-**libpostal** handles multi-script addresses through its CRF's character-level features. The model operates on character n-grams rather than words, so it can handle any script without script-specific tokenization. libpostal's `normalize` step handles Unicode normalization (NFD → NFC) and transliteration, but it does not handle mixed-script addresses (different scripts in different components).
+**libpostal** handles multi-script addresses through its CRF's character-level features. The model operates on character n-grams rather than words, so it can handle any script without script-specific tokenization. libpostal's `normalize` step handles Unicode normalization (NFD → NFC) and transliteration, but it doesn't handle mixed-script addresses (different scripts in different components).
 
 **Pelias** tokenizes on whitespace and punctuation. Non-ASCII characters are preserved in the token stream. Pelias's rule classifiers operate on the token text directly. If a token matches a dictionary entry, it classifies. If not, it moves on. This means Pelias can handle non-ASCII names that appear in its dictionaries (WOF gazetteer entries, OpenStreetMap tags) but not names in scripts that are not well-represented in open data.
 
@@ -77,11 +77,11 @@ Middlesex, Scunthorpe, Penistone, and several others are real English place name
 
 **The normalizer (Stage 1)** handles Unicode normalization (NFD → NFC), case folding, and whitespace collapsing. The normalizer operates on bytes rather than semantics — it cleans the input for downstream stages without making classification decisions.
 
-**[The tokenizer](../../../concepts/tokenization.mdx)** uses SentencePiece with byte-fallback. Characters in the trained vocabulary (16K for A0, 48K for A1) produce subword tokens with known embeddings. Characters outside the vocabulary fall back to byte-level encoding — the model sees raw bytes and learns byte-level patterns. This means the tokenizer can handle any Unicode character, even scripts that were not in the training data, without crashing or producing garbage.
+**[The tokenizer](../../../concepts/tokenization.mdx)** uses SentencePiece with byte-fallback. Characters in the trained vocabulary (16K for A0, 48K for A1) produce subword tokens with known embeddings. Characters outside the vocabulary fall back to byte-level encoding — the model sees raw bytes and learns byte-level patterns. This means the tokenizer can handle any Unicode character, even scripts that weren't in the training data, without crashing or producing garbage.
 
-**The locale check (Stage 2)** detects the script family before classification. CJK characters → `ja-JP`, Cyrillic → `ru`, Arabic → `ar`. The locale detection biases the classifier's expectations: a Japanese-formatted address triggers Japanese ordering expectations, a Cyrillic address triggers Russian postcode patterns. The classifier does not need to handle every script's ordering simultaneously.
+**The locale check (Stage 2)** detects the script family before classification. CJK characters → `ja-JP`, Cyrillic → `ru`, Arabic → `ar`. The locale detection biases the classifier's expectations: a Japanese-formatted address triggers Japanese ordering expectations, a Cyrillic address triggers Russian postcode patterns. The classifier doesn't need to handle every script's ordering simultaneously.
 
-**The phrase grouper (Stage 2.7)** uses structural cues (punctuation, whitespace, capitalization) that are script-agnostic. An apostrophe in `Bo'ness` does not confuse the grouper — it proposes `Bo'ness` as a single span because the apostrophe is word-internal punctuation rather than a token boundary. An exclamation mark in `Westward Ho!` is similarly treated as part of the token rather than a separator.
+**The phrase grouper (Stage 2.7)** uses structural cues (punctuation, whitespace, capitalization) that are script-agnostic. An apostrophe in `Bo'ness` doesn't confuse the grouper — it proposes `Bo'ness` as a single span because the apostrophe is word-internal punctuation rather than a token boundary. An exclamation mark in `Westward Ho!` is similarly treated as part of the token rather than a separator.
 
 **The classifier (Stage 3)** learns from the corpus: tokens appearing in address contexts with certain structural features (position, surrounding tokens, phrase grouper kind hypothesis) are classified based on learned distributions rather than dictionary matches. A Cyrillic street name is classified as `street` because the training data contains Cyrillic street names in street positions — not because a Cyrillic dictionary exists.
 
@@ -89,12 +89,12 @@ Middlesex, Scunthorpe, Penistone, and several others are real English place name
 
 - **Mixed-script addresses.** An address like `Moscow, ул. Тверская 12` — English city, Cyrillic street — requires the model to handle two scripts in one input. The tokenizer can handle both scripts, but the model's per-token embeddings may not have strong representations for tokens in scripts that are sparse in the training corpus.
 - **Character encoding recovery.** A parcel label where Cyrillic was mangled by the wrong character encoding (latin1 instead of UTF-8) produces garbage text. A Russian postal worker might reverse the mapping and deliver the parcel. A parser cannot — this is a pre-parsing input-quality problem.
-- **Addresses that have changed since the corpus was built.** The model learns from the training data's address formats. If an administrative region was renamed after the corpus freeze, the model will not recognize the new name. It will classify it based on structural features (position, surrounding tokens) rather than semantic knowledge. This is acceptable because the model's job is structural parsing rather than gazetteer lookup.
+- **Addresses that have changed since the corpus was built.** The model learns from the training data's address formats. If an administrative region was renamed after the corpus freeze, the model won't recognize the new name. It will classify it based on structural features (position, surrounding tokens) rather than semantic knowledge. This is acceptable because the model's job is structural parsing rather than gazetteer lookup.
 
 ## References
 
 - [Series overview: Falsehoods about addresses](./falsehoods-about-addresses.mdx)
 - [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
 - [How humans break addresses](../how-humans-break-addresses.mdx) — the failure taxonomy organized by root cause
-- [What is a postcode?](../../the-problem/what-is-a-postcode.mdx) — why postcode formats vary by country
+- [What's a postcode?](../../the-problem/what-is-a-postcode.mdx) — why postcode formats vary by country
 - [The database fallacy](../the-database-fallacy.mdx) — why addresses change and databases don't keep up

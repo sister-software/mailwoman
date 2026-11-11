@@ -74,7 +74,7 @@ export const CZ_CUZK_LICENSE = "no conditions apply to access and use"
  * The adapter indexes them as they arrive.
  *
  * `ad:Address` holds its number inline and is read by the driver rather than listed here.
- * These four hold the street, the postcode and the two place names, and they are read in the same pass
+ * These four hold the street, the postcode and the two place names, and they're read in the same pass
  * because an archive writes them interleaved with the addresses rather than ahead of them.
  */
 const COMPONENT_TYPES = [
@@ -123,12 +123,12 @@ const DESCRIPTIVE_NUMBER_PREFIX = "č.p."
  *
  * So the descriptive prefix is dropped only when a street name already places the number.
  * A number with no street keeps its prefix, because the two series overlap
- * and the digits by themselves would not say which building is meant.
+ * and the digits by themselves wouldn't say which building is meant.
  *
  * An earlier rule that dropped `č.p.` everywhere disagreed with the publisher on 254 of those 1,669 rows.
  *
  * A prefix other than `č.p.` is kept in every case, including one these two municipalities
- * did not show, because the observed values come from 2 of 6,258 municipalities.
+ * didn't show, because the observed values come from 2 of 6,258 municipalities.
  * An unrecognized prefix stays.
  *
  * That preserves a distinction the publisher drew rather than discarding it.
@@ -194,7 +194,7 @@ export function createCzCuzkAdapter(): CorpusAdapter {
 
 /**
  * One address's row, `null` when it holds too little to render, or `"deferred"`
- * when a reference it cites is not indexed yet.
+ * when a reference it cites isn't indexed yet.
  *
  * The caller defers rather than drops because an unresolved reference and an absent one
  * are different conditions, and only the archive's own ordering tells them apart.

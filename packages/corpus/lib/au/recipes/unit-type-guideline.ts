@@ -9,7 +9,7 @@
  *
  *   The leg writes only the surface forms no training recipe uses as a unit designator. APARTMENT,
  *   APT, OFFICE, ROOM, RM, SUITE, UNIT and PENTHOUSE are Pub 28 designators that `spliced-unit` and
- *   `synthetic-secondary` write, so they are left out. SE is left out because training writes it as a
+ *   `synthetic-secondary` write, so they're left out. SE is left out because training writes it as a
  *   directional. The slash form (`2/100 SMITH ST`) is left out too: G-NAF rows in training write a
  *   flat number with a slash inside `house_number`, so a row labeling it `unit` would contradict
  *   the training convention rather than test a form the model was not taught.

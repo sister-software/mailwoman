@@ -5,7 +5,7 @@
  * @file Both bases, at every tier.
  *
  *   The test pins the locale explicitly because `Intl.NumberFormat` otherwise follows the host.
- *   A runner's default is not a property of the formatter.
+ *   A runner's default isn't a property of the formatter.
  */
 
 import { describe, expect, it } from "vitest"

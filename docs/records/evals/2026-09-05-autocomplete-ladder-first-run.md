@@ -13,7 +13,7 @@
 | US      | 35 / 40 / 37                                    | `parse_resolve` |              26 of 35 |                                      91% |          2 |                              48 of 69 |         26 of 35 |
 | US      | 35 / 40 / 37                                    | `fst`           |               4 of 35 |                                      18% |          4 |                              65 of 69 |          0 of 35 |
 
-The two arms show different behavior. The FST tier is a PLACE autocomplete. It holds localities and neighborhoods, so a rooftop row with a 100 m tolerance cannot be hit by any suggestion, and its hits are the bare-toponym rows (`Whitby` at 6 characters, `Londonderry` at 2, `Newport, Wales` at 2). It answers on almost every one- and two-character rung. A suggestion menu does that, and the parse → resolve path mostly does not. Parse → resolve reaches the truth on most rows only near the end of the string — median 80–91% of the characters typed — because a partial address parses as something else until the locality arrives.
+The two arms show different behavior. The FST tier is a PLACE autocomplete. It holds localities and neighborhoods, so a rooftop row with a 100 m tolerance cannot be hit by any suggestion, and its hits are the bare-toponym rows (`Whitby` at 6 characters, `Londonderry` at 2, `Newport, Wales` at 2). It answers on almost every one- and two-character rung. A suggestion menu does that, and the parse → resolve path mostly doesn't. Parse → resolve reaches the truth on most rows only near the end of the string — median 80–91% of the characters typed — because a partial address parses as something else until the locality arrives.
 
 ## Latency per rung length, ms (p50 / p95)
 
@@ -41,7 +41,7 @@ Every one of these is `improvement_target` except **`us-addison-zip-75001`** (`4
 - The first FR run read the US FST for French rows, because the FST arm followed the weights-overlay routing (`OVERLAY_LOCALE_BY_COUNTRY` has no FR) and reported `Paris` as never reached. That was fixed before this receipt (`FST_LOCALE_BY_COUNTRY`), and a country with no FST is now counted out of the arm's denominator instead of graded as a miss.
 - Excluded rows have no truth coordinate (GB 82 of 122 read, FR 17, US 37). The ladder authors no truth.
 - Rows with a tolerance above 25 km are read but kept out of every summary (FR 5, US 5, GB 0).
-- `mwdev_compare` does not yet accept a ladder input. The per-country JSON reports are in the session scratchpad and the next run should land beside this file.
+- `mwdev_compare` doesn't yet accept a ladder input. The per-country JSON reports are in the session scratchpad and the next run should land beside this file.
 
 https://claude.ai/code/session_019mAe7AK8EQYwGmnJcctW2N
 

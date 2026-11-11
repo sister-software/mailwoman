@@ -35,7 +35,7 @@ confidence = exists ? (1 - log2(k) / log2(10)) : 0      // k = distinct member c
 ```
 
 So a real single-country code scores 1.0, a real two-country code about 0.70, and a regex-shaped string
-that is in no gazetteer scores 0. The zero score keeps a bare `99999` or a 5-digit house number
+that's in no gazetteer scores 0. The zero score keeps a bare `99999` or a 5-digit house number
 from being treated as a postcode.
 
 Pass `{ fuzzy: true }` to absorb typos and OCR slips. When an exact lookup returns no match, the anchor
@@ -84,7 +84,7 @@ a coordinate for every coordinate-less postcode, in priority order:
 
 1. **Own coordinate** — the record's own `geom:latitude/longitude` from the build (US/NL, ~22% of FR). Most authoritative.
 2. **GeoNames postal** (`--geonames <dir>`) — the postcode's own centroid, matched by string from the GeoNames `zip` dump (CC-BY 4.0, ~80+ countries). It fills ES/IT and ~half of DE with the fewest wrong links of the three passes. It is _finer_ than the WOF parent-borrow (the postcode's point rather than a borrowed locality's), and it corrects WOF's mis-linked Italian parents (`20121` → central Milan rather than a Liguria village). WOF ids stay canonical, and only the coordinate comes from GeoNames.
-3. **WOF parent-borrow / ancestor fallback** (`--admin`, `--repos`) — a coarse "which city/region" approximation from the admin hierarchy, last resort for postcodes GeoNames does not cover.
+3. **WOF parent-borrow / ancestor fallback** (`--admin`, `--repos`) — a coarse "which city/region" approximation from the admin hierarchy, last resort for postcodes GeoNames doesn't cover.
 
 Postcodes neither GeoNames nor WOF can place keep `latitude=0` (membership only — the country posterior still works). **License:** an extract shipping GeoNames-sourced coordinates must attribute "GeoNames (CC-BY 4.0)".
 

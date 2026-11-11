@@ -48,9 +48,9 @@ test("matchLeadingDirectional: matches the first word only, preserving its surfa
 		matched: "Northeast",
 	})
 
-	// a street whose first word is not a directional
+	// a street whose first word isn't a directional
 	expect(matchLeadingDirectional("Main St")).toBeNull()
-	// a directional that is not at the start is not a leading match
+	// a directional that's not at the start isn't a leading match
 	expect(matchLeadingDirectional("Old North Rd")).toBeNull()
 	expect(matchLeadingDirectional("   ")).toBeNull()
 })

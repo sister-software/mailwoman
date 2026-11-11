@@ -5,9 +5,9 @@ The release-kit registry as an MCP server, for a maintainer's agent session. The
 Every operation `release-kit` registers becomes one tool. The tool's name comes from the operation's id (`release.verify-metadata` →
 `release_verify_metadata`), and its description states the effect the registry declares: `[read]`, `[local-write]` or
 `[external-write]`. A writing tool takes a `dry_run` argument. `release_operations` lists the whole registry, including
-the operations this server is not exposing, so an absence is visible rather than silent.
+the operations this server isn't exposing, so an absence is visible rather than silent.
 
-**The two publishing operations are off by default.** A session that receives this server must not thereby receive npm
+**The two publishing operations are off by default.** A session that receives this server mustn't thereby receive npm
 authority. Start the server with `--allow-external-write` to expose `release_publish_workspace` and
 `release_bless_package`; they still run the plan → execute interface the operations themselves enforce — a plan file from
 `release_plan` whose digest must match on an unmoved, clean HEAD.

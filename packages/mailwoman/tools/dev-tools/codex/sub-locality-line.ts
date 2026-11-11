@@ -17,7 +17,7 @@
  *   a sub-locality slot that never renders. Germany names no sub-locality slot, yet the old formatter printed one.
  *   It inserted a line after rendering for that case. Render each country below through the old engine with a
  *   `suburb` value and an otherwise full dictionary. Include a country only when the value disappears even though
- *   its template has the slot. That is the combination the splice did not cover.
+ *   its template has the slot. That's the combination the splice didn't cover.
  *
  *   The line goes directly above the locality. Every template with a sub-locality line uses that position.
  *

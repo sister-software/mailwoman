@@ -6,7 +6,7 @@ This is a design record rather than a plan of record. No work here is scheduled.
 
 ## The idea in one paragraph
 
-When a parsed component does not resolve, the miss still contains information. Today we discard it:
+When a parsed component doesn't resolve, the miss still contains information. Today we discard it:
 an unmatched street falls back to the locality centroid and the reason is gone. The proposal is to
 treat every unresolved component as a **constraint** rather than a null — narrowing where the thing
 can be, even when no evidence states where it is — and to report the resulting answer with its
@@ -22,8 +22,8 @@ chose a place with the same name on another continent. Pelias fails differently:
 hundreds-to-few-thousand km range, because full-text ranking degrades into plausible-but-wrong.
 
 an incorrect inference is the better failure mode for a user to catch. It is also a symptom of throwing
-information away: a system that knew "this street is not any street we hold in this locality" would
-not have crossed an ocean. The constraint that was already in hand went unused.
+information away: a system that knew "this street isn't any street we hold in this locality" wouldn't
+have crossed an ocean. The constraint that was already in hand went unused.
 
 ## Four sources of constraint
 
@@ -31,7 +31,7 @@ not have crossed an ocean. The constraint that was already in hand went unused.
    We partially do this. It is the least novel piece.
 
 2. **Negative evidence.** An unknown street inside a locality whose street set we hold _completely_
-   is known **not to be** any of them. That is categorically different from "no match", and today
+   is known **not to be** any of them. That's categorically different from "no match", and today
    both produce the same null. Requires the coverage register to state completeness per locality —
    the meaning-of-zero rule (`docs/engineering/reference/the-meaning-of-zero.mdx`) already
    establishes that a magnitude never encodes its own absence. This proposal depends on
@@ -51,7 +51,7 @@ not have crossed an ocean. The constraint that was already in hand went unused.
 ## Provenance is what makes this safe
 
 The hazard is stated directly: this inverts our failure mode. Today we fail at 10,000 km and the
-user notices. An inference engine fails at 2 km and the user does not — which is the Pelias failure
+user notices. An inference engine fails at 2 km and the user doesn't — which is the Pelias failure
 mode wecalled worse.
 
 The resolution is to make the derivation part of the answer. the result not only a coordinate
@@ -92,8 +92,8 @@ observations + coverage-qualified exclusions + relations + priors
 ```
 
 The epistemic status is likewise explicit: `designated` (assigned by an authority), `observed`,
-`derived`, `inferred`, or `unresolved`. `Retrieved` describes the resolution mechanism. It does
-not silently upgrade a source's observation into an authoritative designation. `resolution_tier`
+`derived`, `inferred`, or `unresolved`. `Retrieved` describes the resolution mechanism. It doesn't
+silently upgrade a source's observation into an authoritative designation. `resolution_tier`
 and the response geometry should be derived from the graph so they cannot disagree with its evidence.
 
 Evidence sources that observe the same latent factor are not independent. Population, road
@@ -112,7 +112,7 @@ for things we hold no record of.
 Christaller's central place theory gives _threshold_ (minimum population sustaining a good) and
 _range_ (maximum distance traveled for it). The prediction: a settlement of a given size supports
 approximately N of a facility class, spatially distributed across its service area. So a query for
-a grocery store in a suburb where we hold no POI row is not unanswerable — density and settlement
+a grocery store in a suburb where we hold no POI row isn't unanswerable — density and settlement
 size give a rough count of them and roughly where they concentrate (arterial roads, commercial
 zoning), which is a bounded region with a stated basis.
 
@@ -162,14 +162,14 @@ identical corpus. Version, scope, source lineage and snapshot date belong in eve
 
 ## The unifying thesis — physical constraint as claim verification
 
-Operator addition, same session. The FCC broadband work (`bdc/`, `filer/`) is not adjacent to this
+Operator addition, same session. The FCC broadband work (`bdc/`, `filer/`) isn't adjacent to this
 idea. It is the same idea already in production on a different claim type.
 
 Its central thesis: carriers submit availability claims they frequently cannot substantiate, and
-**physical plant determines what is possible**. A fiber claim at a location implies a fiber hut
+**physical plant determines what's possible**. A fiber claim at a location implies a fiber hut
 within reach, poles or conduit along the route, and a serving terminal. Absent that plant, the
-claim is not merely unverified. It is physically implausible, and the implausibility is
-measurable. That is constraint-based verification of a claim against the built world.
+claim isn't merely unverified. It is physically implausible, and the implausibility is
+measurable. That's constraint-based verification of a claim against the built world.
 
 The geocoding case is the same shape with the claim swapped:
 
@@ -178,7 +178,7 @@ The geocoding case is the same shape with the claim swapped:
 | BDC     | "we serve this location with fiber"  | fiber hut / pole route / terminal reach     | implausible if no plant         |
 | Geocode | "this address is at this coordinate" | development, road class, terrain, utilities | implausible if no built context |
 
-One mechanism, two applications. Which means the implementation is not speculative in the way the rest
+One mechanism, two applications. Which means the implementation isn't speculative in the way the rest
 of this record is. A version of it is already ingested, provenanced and `asOf`-scoped.
 
 **Constraint sources this opens**, beyond the four above:
@@ -199,8 +199,8 @@ of this record is. A version of it is already ingested, provenanced and `asOf`-s
   The most speculative source here and the one with the widest expected residual — but the
   direction is sound, and it is the same fit-then-assert discipline as the CPT parameters.
 
-**What this makes the product.** A geocoder answers _where is this string_. A system that applies
-physical constraint and reports its derivation answers _where is this, how do we know, and is the
+**What this makes the product.** A geocoder answers _where's this string_. A system that applies
+physical constraint and reports its derivation answers _where's this, how do we know, and is the
 claim even possible_ — which is address intelligence rather than address lookup. The BDC
 verification case is the proof that the second question has customers.
 
@@ -216,7 +216,7 @@ source observations, fitted artifacts and runtime outputs are separate objects a
 different distribution rights. Every assertion retains its source and license metadata through
 projection. A permissive output cannot be claimed merely because the combining code is open source.
 
-A source that is unavailable for a proposed use is not an observation the engine may consume. The
+A source that's unavailable for a proposed use isn't an observation the engine may consume. The
 resolver must behave identically whether that source was never acquired or was deliberately excluded:
 it reports the remaining public evidence and abstains where that evidence is insufficient. Likewise,
 an inferred or derived relationship never acquires the designation status of an authority merely
@@ -252,7 +252,7 @@ loaded. Only a separately justified completeness claim can power hard negative e
 crowdsourced absence almost never supplies that completeness by itself.
 
 Source assertions remain plural. OSM, TIGER, BAN, Overture and future public address sources retain
-their own provenance and may disagree. Ingestion does not overwrite them into one allegedly
+their own provenance and may disagree. Ingestion doesn't overwrite them into one allegedly
 authoritative row. Reconciliation happens in the derivation graph. Users consume sealed artifacts
 and verified deltas rather than running the acquisition pipeline, while the build recipe remains
 reproducible subject to the source license and the existing ODbL counsel check on `@mailwoman/osm`.
@@ -264,7 +264,7 @@ still needs:
 
 - required source URL/hash/size, extract polygon, OSM timestamp or replication sequence and builder
   Git SHA (`--release unknown` must fail rather than ship);
-- an embedded layer manifest plus surveyed-extent coverage whose completeness does not default to
+- an embedded layer manifest plus surveyed-extent coverage whose completeness doesn't default to
   1 merely because the PBF was traversed;
 - a companion assertion table retaining OSM type/id/version, geometry method (node versus polygon
   centroid), street method (explicit versus recovered), and recovery distance/confidence;
@@ -297,7 +297,7 @@ tables and the sealed artifact manifest rather than widening every lookup row.
 
 1. **Does negative evidence change any answer?** Take the benchmark's missed rows, apply "not any
    street we hold in this locality", and count the candidate sets that shrink enough to change the answer. When few sets shrink, the
-   coverage register is not complete enough for this to bite yet.
+   coverage register isn't complete enough for this to bite yet.
 2. **Do naming families exist at measurable rates?** Sample localities from the situs data and test
    for schemes (presidents, trees, states, numbered grids). A low hit rate kills source 3.
 3. **Does CPT fit our own POI data?** Fit threshold/range against poi.db in covered metros, predict
@@ -313,6 +313,6 @@ tables and the sealed artifact manifest rather than widening every lookup row.
   backed by a hard rule and an explicitly complete coverage scope may remove a candidate
   (`registry-backed-structured-prediction` doctrine).
 - **A bounded region with stated confidence, never a fabricated coordinate.** If the direct output
-  is a 40 km² polygon, that is the output.
+  is a 40 km² polygon, that's the output.
 - **Fit before assert.** No CPT parameter ships without its residual measured against held-out POI
   coverage.

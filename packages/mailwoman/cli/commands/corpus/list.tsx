@@ -18,8 +18,8 @@ import { type CommandSpec, CommandTaskResult, useCommandTask } from "#cli-kit"
 export const spec = { name: "list", description: "List registered corpus adapters" } as const satisfies CommandSpec
 
 /**
- * Per-line output is one `Text` node so Ink does not column-wrap the adapter id on a
- * non-TTY stdout (CI, spawned tests), keeping the list grep-friendly rather than pretty.
+ * Per-line output is one `Text` node so Ink doesn't column-wrap the adapter id on a non-TTY
+ * stdout (CI, spawned tests), keeping the list grep-friendly rather than pretty.
  */
 const CorpusList = () => {
 	const state = useCommandTask(async () => {

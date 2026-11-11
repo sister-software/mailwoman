@@ -9,7 +9,7 @@
  *
  *   The leg writes Kiosk, Shop, Villa and Flat, in full or abbreviated. Apartment, Room, Suite and
  *   Unit and their abbreviations Apt, Rm and Ste are Pub 28 designators that `spliced-unit` and
- *   `synthetic-secondary` write, so they are left out. The slash form on the delivery line
+ *   `synthetic-secondary` write, so they're left out. The slash form on the delivery line
  *   (`2/153 Grange Road`) is left out for the reason the Australian leg gives: training writes a
  *   slashed flat number inside `house_number`.
  *

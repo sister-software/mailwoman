@@ -123,7 +123,7 @@ export class MTFRuntime {
 	/**
 	 * Loads a serialized SentencePiece unigram model.
 	 *
-	 * @throws When the bytes are malformed or the model uses a feature the runtime does not implement.
+	 * @throws When the bytes are malformed or the model uses a feature the runtime doesn't implement.
 	 */
 	loadModel(bytes: Uint8Array): MTFModel {
 		const handle = this.#withInput(bytes, (ptr, len) => this.#exports.mtf_model_load(ptr, len))

@@ -23,7 +23,7 @@ import type { PlacetypeID } from "#fst/types"
  *
  * It later stayed at 4 through the v5 two-score split until someone updated it by hand.
  *
- * A check that is the writer's version cannot drift from it.
+ * A check that's the writer's version cannot drift from it.
  */
 export const FST_FORMAT_VERSION = 5
 

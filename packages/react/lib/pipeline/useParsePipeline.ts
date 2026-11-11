@@ -41,7 +41,7 @@ export interface UseParsePipeline {
 	selectedCandidate: ResolvedPlaceView | null
 	/**
 	 * Parse and resolve the current text, safe to bind to a form's `onSubmit`;
-	 * pass `query` to submit a value the field has not re-rendered with yet.
+	 * pass `query` to submit a value the field hasn't re-rendered with yet.
 	 *
 	 * A submit during a parse queues its query, and the latest queued query runs when that parse settles.
 	 */
@@ -70,7 +70,7 @@ export function useParsePipeline({ runtime, defaultText }: UseParsePipelineOptio
 	// It runs when that parse settles, and an earlier one it replaced is dropped.
 	const queuedRef = useRef<string | null>(null)
 
-	// `setText` does not reach this closure before the call after it runs,
+	// `setText` doesn't reach this closure before the call after it runs,
 	// so a caller that already knows the query passes it.
 	const submit = useCallback(
 		async (query?: string) => {

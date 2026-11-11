@@ -197,7 +197,7 @@ export const GZT_PLAN_LEVEL_SET: ReadonlySet<string> = new Set(GZT_PLAN_LEVELS.m
 
 /**
  * The `CURRENT_PLAN` domain, verbatim, keyed by the published integer, where 1 means the
- * plan is not superseded and its validity window is stored separately on `zoning_plan`.
+ * plan isn't superseded and its validity window is stored separately on `zoning_plan`.
  */
 export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 	[1, "Current plan"],

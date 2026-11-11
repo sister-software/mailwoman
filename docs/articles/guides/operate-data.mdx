@@ -19,7 +19,7 @@ Use Node.js 24.22.1 or a later 24.x release, and install the published packages:
 npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
 ```
 
-Choose a data root and create its directory. In 11.0.0, `data pull` stops with `ENOENT ... mkdir '<data root>/.install.lock'` when the directory does not exist yet:
+Choose a data root and create its directory. In 11.0.0, `data pull` stops with `ENOENT ... mkdir '<data root>/.install.lock'` when the directory doesn't exist yet:
 
 ```bash
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
@@ -86,7 +86,7 @@ The data root's `active.json` file records the active selection. After a second 
 
 The `scope` objects are reformatted onto one line each here. Each pull adds its files to the selection and creates the next generation. Each entry identifies an installed file by `installationID` and by the digest of its contents in `artifactID`.
 
-`npx mailwoman data status` reports each artifact of each bundle as `active` or `missing`, with its path. Add `--json` for the same report as JSON, including the active `generation`. The command exits 1 while any requested artifact is missing, so name the bundles you installed, for example `npx mailwoman data status us`. The US bundle still exits 1 when you have installed only some states. Add `--check-remote` to compare installed files with the published sizes.
+`npx mailwoman data status` reports each artifact of each bundle as `active` or `missing`, with its path. Add `--json` for the same report as JSON, including the active `generation`. The command exits 1 while any requested artifact is missing, so name the bundles you installed, for example `npx mailwoman data status us`. The US bundle still exits 1 when you've installed only some states. Add `--check-remote` to compare installed files with the published sizes.
 
 ## 3. Roll back to the previous selection
 
@@ -125,7 +125,7 @@ generation 3; keeping generations 3 and 0 running session lease(s)
 1 artifact(s), 7.6 MB reclaimable; run with --yes to delete them
 ```
 
-Neither command above deleted anything. Add `--yes` to delete the planned files. After a prune, select a deleted file again by pulling it. This page did not test `--rollback` to a generation whose files were pruned.
+Neither command above deleted anything. Add `--yes` to delete the planned files. After a prune, select a deleted file again by pulling it. This page didn't test `--rollback` to a generation whose files were pruned.
 
 ## 5. Select an installation by ID
 

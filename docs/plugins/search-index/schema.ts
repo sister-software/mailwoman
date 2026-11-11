@@ -31,7 +31,7 @@ export interface SearchIndexDatabase {
  * Creates the tables and the FTS5 virtual tables, all empty.
  *
  * A record is identified by its rowid.
- * The extractor's hash id serves the duplicate check at build time and is not stored,
+ * The extractor's hash id serves the duplicate check at build time and isn't stored,
  * because 32 random hex characters per row compress poorly.
  *
  * `detail=column` keeps a term's count per column for `bm25` ranking.

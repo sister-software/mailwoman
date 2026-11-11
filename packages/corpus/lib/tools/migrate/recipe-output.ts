@@ -86,7 +86,7 @@ export interface MigrationSummary {
 }
 
 /**
- * The surface for one source id, refusing a source the table does not name.
+ * The surface for one source id, refusing a source the table doesn't name.
  */
 export function surfaceForSource(source: string): SurfaceOrigin {
 	// The table keys on the retired spelling.

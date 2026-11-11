@@ -10,7 +10,7 @@
  *   selection, using only facts the production arm also received.
  *
  *   `mcnemarExactP` builds its terms by ratio rather than forming a factorial, so the cases check it
- *   against the binomial directly: a 6/0 split is 2 × 2⁻⁶, a 5/0 split is 2 × 2⁻⁵ and does not
+ *   against the binomial directly: a 6/0 split is 2 × 2⁻⁶, a 5/0 split is 2 × 2⁻⁵ and doesn't
  *   reject. The arithmetic is 12/3 = 2 × (1 + 15 + 105 + 455) / 2¹⁵.
  */
 

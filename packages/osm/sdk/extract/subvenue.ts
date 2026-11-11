@@ -158,7 +158,7 @@ export interface SubVenueSourceRow {
 	/**
 	 * The country code.
 	 *
-	 * The extractor always leaves it empty because a PBF feature does not include its country.
+	 * The extractor always leaves it empty because a PBF feature doesn't include its country.
 	 * The caller fills it in.
 	 */
 	country: string

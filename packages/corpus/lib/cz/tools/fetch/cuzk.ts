@@ -14,8 +14,8 @@
  *
  * The acquisition belongs under a `tools/` root. `@mailwoman/corpus` is one of the
  * `TOOLING_PACKAGES` in `dependency-cruiser.config.mjs`, which keep their tooling under `lib/`, so
- * this module sits beside `#fr/tools/fetch/ban` rather than in an `sdk/` root the workspace does
- * not declare.
+ * this module sits beside `#fr/tools/fetch/ban` rather than in an `sdk/` root the workspace doesn't
+ * declare.
  *
  * Every one of the service document's `rights` elements reads `žádné podmínky neplatí`, INSPIRE's
  * controlled value for no conditions applying to access and use, and the address-source register
@@ -36,7 +36,7 @@
  *    `…/epsg-5514`, and a dataset feed's `alternate` link for the same municipality is that base
  *    plus `/<code>.zip`. The harvest composes from the declared base instead of reading 6,258
  *    dataset feeds. That halves its requests. {@linkcode HarvestCzCuzkOptions.resolveThroughDatasetFeed}
- *    reads the publisher's own href instead, for a run that will not compose a URL.
+ *    reads the publisher's own href instead, for a run that won't compose a URL.
  * 3. **The `type` attribute describes the data rather than the file.** A dataset feed's link
  *    advertises `application/gml+xml` while the host serves `application/zip`, so the GML is inside
  *    the archive and the advertised type cannot decide what to write. The archive is stored as it
@@ -50,7 +50,7 @@
  * from 5,236 to 1,642,586 bytes with a median of 16,591 — so the harvest is bound by round trips
  * rather than by bandwidth, and it is dispatched serially through one `APIClient`. ČÚZK publishes
  * no rate limit. {@linkcode CZ_CUZK_REQUEST_INTERVAL_MS} holds the harvest to four requests per
- * second against one government host. A caller that has asked ČÚZK for more raises it.
+ * second against one government host. A caller that's asked ČÚZK for more raises it.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -327,7 +327,7 @@ export interface CzCuzkArchiveEntry extends SourceManifest {
 	/**
 	 * The `<updated>` the service document stated when this archive was fetched.
 	 *
-	 * A later run that reads the same value for this municipality does not fetch the archive.
+	 * A later run that reads the same value for this municipality doesn't fetch the archive.
 	 * This is the field that makes the harvest resumable without a request per municipality.
 	 */
 	feed_updated: string
@@ -375,7 +375,7 @@ export interface HarvestCzCuzkOptions {
 	/**
 	 * Harvest only these municipality codes, for a probe or to repair specific municipalities.
 	 *
-	 * A code the service document does not list is reported as a failure rather than ignored.
+	 * A code the service document doesn't list is reported as a failure rather than ignored.
 	 */
 	municipalities?: readonly string[]
 	/**
@@ -478,7 +478,7 @@ export async function harvestCzCuzk(
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, CzCuzkArchiveEntry>()
 
-	// An entry for a municipality this run does not consider is kept, so a bounded
+	// An entry for a municipality this run doesn't consider is kept, so a bounded
 	// run never drops what an earlier run recorded.
 	for (const [filename, entry] of previous) {
 		files.set(filename, entry as CzCuzkArchiveEntry)
@@ -555,10 +555,10 @@ export async function harvestCzCuzk(
 }
 
 /**
- * The municipalities this run considers, and the codes a caller supplied that the feed does not list.
+ * The municipalities this run considers, and the codes a caller supplied that the feed doesn't list.
  *
- * A code the caller asked for and the service document does not list is returned
- * rather than dropped, because a municipality that is not published is a different
+ * A code the caller asked for and the service document doesn't list is returned
+ * rather than dropped, because a municipality that's not published is a different
  * condition from a selection that holds no municipality.
  */
 function selectMunicipalities(
@@ -599,7 +599,7 @@ function selectMunicipalities(
  * The adapter opens it, because ČÚZK writes the ZIP64 sentinel into at least one central
  * directory and `adm-zip` inflates the member instead of trusting it.
  *
- * @throws When the body does not begin with a zip signature.
+ * @throws When the body doesn't begin with a zip signature.
  * An error page served under http 200 is the body that fails this check.
  * An html page is therefore never written to disk under a `.zip` name.
  */

@@ -55,7 +55,7 @@ recovers more. It does — without over-softening (precision + hallucination hel
 Both scales beat v263 on every axis. The split: **0.25 maximizes the narrow homograph probe** (n=54,
 synthetic), **0.5 maximizes the broad WOF-admin country** (n=224, the #1104 target) **and aggregate**
 (n=4255), by ~1 row each. Precision (0 false-positives) and hallucination (1%) held at every scale — 0.25
-did not over-soften. **Decision (operator, 2026-07-15): promote v264 (0.5)** — the balanced default,
+didn't over-soften. **Decision (operator, 2026-07-15): promote v264 (0.5)** — the balanced default,
 strongest on the larger-sample metrics. The homograph edge of 0.25 is on a small synthetic subset. 0.25
 stays a graded candidate should the homograph lens ever be weighted higher.
 

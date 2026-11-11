@@ -210,7 +210,7 @@ describe("isCorpusVersion", () => {
 describe("isCorpusDirectory", () => {
 	test("accepts every entry name under corpus/versioned, including the three that carry a label", () => {
 		// `corpus upload --corpus-directory` and `corpus("…")` in `launch/corpora.py` pass the same string.
-		// An operator supplies it through `corpus build --out`; code does not derive its shape.
+		// An operator supplies it through `corpus build --out`; code doesn't derive its shape.
 		expect(isCorpusDirectory("v0.7.0-de-holdout")).toBe(true)
 		expect(isCorpusDirectory("v0.6.0-register-surface")).toBe(true)
 		expect(isCorpusDirectory("v8-cjk-2026-09-05")).toBe(true)

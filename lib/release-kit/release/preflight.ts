@@ -63,7 +63,7 @@ export interface ReleasePreflightReport {
 
 /**
  * Stage, materialize, pack and audit every release workspace, returning a report whose
- * verdict is `FAIL` when any workspace does not pack to a tarball honoring its manifest
+ * verdict is `FAIL` when any workspace doesn't pack to a tarball honoring its manifest
  * or when the release list and its computed absence set do not match.
  */
 export async function releasePreflight(options: ReleasePreflightOptions): Promise<ReleasePreflightReport> {

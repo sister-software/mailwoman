@@ -176,7 +176,7 @@ test("the issuances awaiting email are each emailed declaration's current issuan
 	await insertIssuance(ledger, issuance(emailed.lid, 1, "2027-01-01"))
 	await setIssuanceEmailState(ledger, `iss_m1`, { from: "pending", to: "failed" }, null)
 	await insertIssuance(ledger, issuance(emailed.lid, 2, "2027-04-01"))
-	// An open-source declaration has no address, so its pending issuance is not mail to resend.
+	// An open-source declaration has no address, so its pending issuance isn't mail to resend.
 	await insertIssuance(ledger, issuance(answered.lid, 1, "2027-01-01"))
 
 	const awaiting = await issuancesAwaitingEmail(ledger)

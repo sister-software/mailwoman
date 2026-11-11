@@ -256,7 +256,7 @@ function artifactKey(installationID: string, artifactID: string): string {
  * The history record of a generation the plan keeps.
  *
  * The plan keeps the artifacts a kept generation's record selects.
- * A record that is missing, unparsable or without an entries list stops the plan,
+ * A record that's missing, unparsable or without an entries list stops the plan,
  * because reading it as empty would list that generation's artifacts for deletion.
  *
  * @throws When the record is missing, cannot be read or parsed, or has no `entries` array.
@@ -285,7 +285,7 @@ async function readRetainedGeneration(dataRoot: string, generation: number): Pro
 /**
  * The number of generations a prune keeps, refused unless it is a positive safe integer.
  *
- * @throws When `retain` is not a whole number from 1 to `Number.MAX_SAFE_INTEGER`.
+ * @throws When `retain` isn't a whole number from 1 to `Number.MAX_SAFE_INTEGER`.
  */
 function assertRetainCount(retain: number): number {
 	if (!Number.isSafeInteger(retain) || retain < 1) {
@@ -320,7 +320,7 @@ function assertActiveArtifactsKept(selection: ActiveSelection | null, candidates
  *
  * @param options.retain The number of generations to keep, counting the active one.
  * A positive whole number.
- * @throws When `retain` is not a positive safe integer, or when a selection,
+ * @throws When `retain` isn't a positive safe integer, or when a selection,
  * installation, manifest or lease record cannot be read.
  */
 export async function planPrune(dataRoot: PathBuilderLike, options: { retain?: number } = {}): Promise<PrunePlan> {
@@ -446,16 +446,16 @@ const INSTALLATION_RECORDS = ["manifest.json", "receipt.json"]
 const SQLITE_SIDECAR_SUFFIXES = ["-wal", "-shm", "-journal"]
 
 /**
- * Delete what a plan lists, after checking that the selection and the leases it read have not changed.
+ * Delete what a plan lists, after checking that the selection and the leases it read haven't changed.
  *
  * An installation record whose every artifact is deleted is removed with them.
- * `kept` lists the candidates whose directory still held a file prune did not install,
+ * `kept` lists the candidates whose directory still held a file prune didn't install,
  * and their bytes are not counted.
  *
  * @throws When another installer holds a lock, when the selection generation
  * or the live leases differ from the plan's, when the plan lists an artifact the
- * active generation selects, or when a candidate's directory is not content-addressed
- * or its file is not directly inside it, before any file is deleted.
+ * active generation selects, or when a candidate's directory isn't content-addressed
+ * or its file isn't directly inside it, before any file is deleted.
  */
 export async function executePrune(
 	plan: PrunePlan
@@ -501,7 +501,7 @@ export async function executePrune(
 	// If interrupted, it leaves a directory without a manifest.
 	// Readers treat that directory as no artifact, rather than finding a manifest for a deleted file.
 	// The directory is removed only when that left it empty.
-	// Prune keeps a directory that still contains a file it did not install.
+	// Prune keeps a directory that still contains a file it didn't install.
 	// It also keeps the installation record, so a later prune can inspect the directory again.
 	for (const candidate of plan.candidates) {
 		if (!(await tryStat(candidate.directory))) continue

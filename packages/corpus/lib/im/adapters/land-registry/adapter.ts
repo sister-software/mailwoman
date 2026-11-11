@@ -13,7 +13,7 @@
  * `SubUnit_Name` is the flat or apartment (`Flat 2`, `Apartment 5`), `House_Number` the door number,
  * `House_Name` the house's given name (`Ballacain Farm`) or the building's (`Spectrum Apartments`),
  * `Street_Name` the street, `Locality` the estate or village inside the town, and `Town` the post town.
- * The IM layout prints no region, so `Parish_` is not read.
+ * The IM layout prints no region, so `Parish_` isn't read.
  *
  * The register also records sales of land that has no postal address. Such a row describes the land
  * (`Field North Of Ballawhannel Farm`, `Parcel Of Land`, `Land Adjacent To Mostyn Ville`) in place of
@@ -49,7 +49,7 @@ import {
 export const LANDREGISTRY_IM_ADAPTER_ID = "landregistry-im"
 
 /**
- * The Isle of Man Open Government Licence (the dataset page does not state its version).
+ * The Isle of Man Open Government Licence (the dataset page doesn't state its version).
  * It has no SPDX identifier.
  */
 export const LANDREGISTRY_IM_LICENSE = "LicenseRef-IM-OGL"
@@ -125,7 +125,7 @@ const UNIT_DESIGNATOR =
 const HOUSE_NUMBER = /^\d+[A-Z]?(?:\s*-\s*\d+[A-Z]?)?$/iu
 
 /**
- * A second-line value that is a thoroughfare (`Main Road`, `Off Clifton Drive`) rather than a place.
+ * A second-line value that's a thoroughfare (`Main Road`, `Off Clifton Drive`) rather than a place.
  */
 const THOROUGHFARE =
 	/^off\b|\b(?:road|street|lane|avenue|drive|promenade|terrace|crescent|quay|way|close|parade|square)$/iu

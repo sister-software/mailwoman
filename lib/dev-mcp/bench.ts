@@ -6,9 +6,9 @@
  *   Latency and throughput, with cold and warm kept apart.
  *
  *   A warm daemon makes it very easy to publish a throughput number no user will ever see. The measured gap on this box
- *   is not subtle — ~1.37 s of fixed cost before a cold process answers at all, against ~115 ms per query once warm —
+ *   isn't subtle — ~1.37 s of fixed cost before a cold process answers at all, against ~115 ms per query once warm —
  *   so a figure that averages the two describes neither mode. The report keeps cold and warm fields separate.
- *   `cold: null` means the caller did not request a cold measurement. It does not mean the operation was free.
+ *   `cold: null` means the caller didn't request a cold measurement. It doesn't mean the operation was free.
  *
  *   Concurrency is fixed at 1 and reported. `session.run()` in `onnxruntime-node` blocks its thread.
  *   `geocode-stream.ts` records the measurement that settles the rest: on a shared multi-GB WOF SQLite, throughput
@@ -59,9 +59,9 @@ export function summarizeLatency(samplesMs: number[]): LatencyReading {
 
 export interface BenchReading {
 	/**
-	 * The one-time construction cost, or `null` when the caller did not ask for it.
+	 * The one-time construction cost, or `null` when the caller didn't ask for it.
 	 *
-	 * Never zero — a cold start that was not measured is not a cold start that was free.
+	 * Never zero — a cold start that was not measured isn't a cold start that was free.
 	 */
 	cold: { engine_build_ms: number; first_query_ms: number; total_ms: number } | null
 	warm: LatencyReading
@@ -87,7 +87,7 @@ export const CONCURRENCY_NOTE =
 /**
  * Assemble the reading, with the sentence a caller will relay.
  *
- * The summary states the cold cost first when it was measured, because that is the number
+ * The summary states the cold cost first when it was measured, because that's the number
  * a user experiences and the one a warm benchmark is most likely to leave out.
  */
 export function assembleBench(cold: BenchReading["cold"], warm: LatencyReading): BenchReading {

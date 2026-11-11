@@ -7,7 +7,7 @@
  *   resolution, read through the layer interface's shared row mapping.
  *
  *   Not exported from this package's main barrel on purpose — it reaches `@mailwoman/core/layers`, and the
- *   barrel serves browser bundles that must not include the layer interface's Kysely graph. Import it from the
+ *   barrel serves browser bundles that mustn't include the layer interface's Kysely graph. Import it from the
  *   `@mailwoman/spatial/h3/coverage` subpath.
  */
 

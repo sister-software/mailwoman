@@ -67,7 +67,7 @@ describe("prominence-floor ruler (#2264)", () => {
 	it("refuses a band whose ceiling sits below its floor", () => {
 		const problems = auditProminenceDefinition(
 			withChange((draft) => {
-				// Use the second band so the inverted ceiling is not 0.
+				// Use the second band so the inverted ceiling isn't 0.
 				// Zero means unbounded, so another check would refuse that value first.
 				draft.populationBands[1]!.max = draft.populationBands[1]!.min - 1
 			})

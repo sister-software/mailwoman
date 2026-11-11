@@ -74,7 +74,7 @@ export interface PipelineResult {
 	 * so an empty array states that the vocabulary examined this query and made no
 	 * statement — a different claim from a missing field.
 	 *
-	 * They are advisory by construction and did not change which answer won.
+	 * They're advisory by construction and didn't change which answer won.
 	 */
 	intentMarkers: QueryIntentMarker[]
 	/**

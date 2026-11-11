@@ -12,7 +12,7 @@
  *   Each cell row refers to one polygon, so rows are final when written and need no resolve pass.
  *   The ingest still runs in bounded child processes because h3's wasm heap cannot be reset.
  *   It fails after enough polyfill calls. The area cross-check catches a hole read as an exterior ring.
- *   That error would cover ground the source did not map.
+ *   That error would cover ground the source didn't map.
  */
 
 import { readFileSize } from "@mailwoman/core/fs/readers/stat"

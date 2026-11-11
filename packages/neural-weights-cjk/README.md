@@ -15,7 +15,7 @@ The manifest lists `model.onnx`, which `mwops release copy-weights` materializes
 - `model-card.json` — the `encoder: "char"` block (`char_vocab`, `max_units`, `max_unit_width`, `char_ctx`), the 49
   BIO labels, the training provenance, and the board reads.
 
-## What this package does not ship
+## What this package doesn't ship
 
 - **No `tokenizer.model`.** A char graph has no SentencePiece vocabulary, so weights resolution requires
   `char-vocab.json` in its place (`packages/neural/lib/weights.ts`, the card's `encoder` block).
@@ -57,7 +57,7 @@ Decision record: `docs/superpowers/specs/2026-09-05-cjk-serving-path.md`; the ru
 
 ## Dev setup
 
-The graph is not committed. Link it into the data-root overlay from `release.config.json`'s `charWeights.cjk`:
+The graph isn't committed. Link it into the data-root overlay from `release.config.json`'s `charWeights.cjk`:
 
 ```bash
 node packages/neural-weights-cjk/scripts/link-dev-weights.ts

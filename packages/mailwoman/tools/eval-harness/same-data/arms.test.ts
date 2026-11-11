@@ -149,7 +149,7 @@ describe("same-data synthetic smoke (#2261)", () => {
 		expect(result.error).toMatch(/replay miss/)
 		expect(result.selection).toBeNull()
 
-		// The scorer must not count the row as an abstention.
+		// The scorer mustn't count the row as an abstention.
 		const metrics = armMetrics("mailwoman", "unambiguous", new Map([[panel.id, panel]]), [result])
 
 		expect(metrics.errors).toBe(1)

@@ -60,7 +60,7 @@ data:
     synth-fr-order: 3.0
     synth-fr-admin-split: 6.0
     synth-unit: 1.5
-    # A from-scratch base learns PO box and CEDEX natively, so it does not need the 3.0 fine-tune boost.
+    # A from-scratch base learns PO box and CEDEX natively, so it doesn't need the 3.0 fine-tune boost.
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0

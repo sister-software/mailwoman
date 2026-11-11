@@ -33,7 +33,7 @@ export class BitsetView {
 
 	/**
 	 * Whether `key` is a member.
-	 * A key outside the space is not.
+	 * A key outside the space isn't.
 	 */
 	test(key: number): boolean {
 		if (key < 0) return false
@@ -45,7 +45,7 @@ export class BitsetView {
 
 	/**
 	 * Whether a code in its canonical spelling is a member.
-	 * A code outside the grammar is not.
+	 * A code outside the grammar isn't.
 	 */
 	contains(code: string): boolean {
 		return this.test(encodeForArity(this.arity, code))

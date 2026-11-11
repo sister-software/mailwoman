@@ -42,7 +42,7 @@ from it, the ODbL's terms apply to you as the party using it:
 
 The OpenStreetMap Foundation's [Geocoding Guideline](https://osmfoundation.org/wiki/Licence/Community_Guidelines/Geocoding_-_Guideline)
 treats an individual geocoding result as an insubstantial extract, so storing a result beside your own
-records does not by itself place those records under ODbL. Systematically copying OpenStreetMap data into
+records doesn't by itself place those records under ODbL. Systematically copying OpenStreetMap data into
 another database can.
 
 `mailwoman doctor` lists every `address-points-*.db` under `$MAILWOMAN_DATA_ROOT/db/osm` with the license and
@@ -163,9 +163,9 @@ The repaired 420-row Mailwoman/Pelias/Photon panel shows that coverage should be
 2. **Great Britain and Germany** are next (20/60 versus 51/60, and 19/60 versus 55/60).
 3. **Australia** should use the sanctioned OpenAddresses countrywide feed first. After the WA country-scope
    repair, its remaining misses are predominantly absent rooftop data rather than resolver leakage.
-4. **France is not the first OSM target.** BAN already gives Mailwoman 47/60 at 1 km versus Photon’s 38/60.
+4. **France isn't the first OSM target.** BAN already gives Mailwoman 47/60 at 1 km versus Photon’s 38/60.
 
-These comparisons set the investigation order. They are not promises that every Photon hit came from an OSM
+These comparisons set the investigation order. They're not promises that every Photon hit came from an OSM
 rooftop. Each country still needs a source-composition census and a held-out precision measurement before a full build.
 
 The first local NZ build (Geofabrik source vintage 2026-08-06) contains 2,325,228 directly tagged address

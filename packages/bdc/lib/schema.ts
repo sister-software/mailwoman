@@ -56,7 +56,7 @@ export interface BDCAvailabilityTable {
  * Provider dictionary keyed on `provider_id`, populated only when `BuildBDCOptions.providers` is supplied.
  * The default leaves it empty.
  *
- * No FK against `bdc_availability.provider_id`, since SQLite does not enforce FKs
+ * No FK against `bdc_availability.provider_id`, since SQLite doesn't enforce FKs
  * without `pragma foreign_keys` and the join happens at read time.
  *
  * An explicitly lossy denormalization rather than the canonical record.

@@ -37,7 +37,7 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 
 /**
  * The kind the mock classifier reports: a designation marker must name the verdict's
- * own top kind because a designation is not raised by intent.
+ * own top kind because a designation isn't raised by intent.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 

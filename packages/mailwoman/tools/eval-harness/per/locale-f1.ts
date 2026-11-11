@@ -437,7 +437,7 @@ export async function perLocaleF1(
 
 		// Anchor + gazetteer feed, default-on so an anchor-trained model is scored
 		// in-distribution; `--no-anchor` opts out and explicit paths override,
-		// while the runner harmlessly skips inputs a plainer ONNX does not declare.
+		// while the runner harmlessly skips inputs a plainer ONNX doesn't declare.
 		const anchorLookupPath = args.noAnchor ? undefined : (args.modelAnchorLookupPath ?? DEFAULT_ANCHOR_LOOKUP)
 		const gazetteerLexiconPath = args.noAnchor ? undefined : (args.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON)
 
@@ -509,7 +509,7 @@ export async function perLocaleF1(
 			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY ?? null)
 
 			// Production parses feed the query-shape prior + `postcodeRepair` on every path,
-			// so this battery must too or it scores a config production does not run.
+			// so this battery must too or it scores a config production doesn't run.
 			const rowShape = computeQueryShape(row.raw)
 
 			const tree = await neural.parse(row.raw, {

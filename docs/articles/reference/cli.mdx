@@ -16,7 +16,7 @@ This page lists the current checkout's `mailwoman` command tree. The command tab
 from compiled command specifications. Published 11.0.0 behavior is recorded separately above
 because checkout commands can change after release.
 
-The current checkout's generated tree contains 191 commands. This page gives full flags for 32 of those 191 commands. The remaining 159 commands appear by group under [Commands this page does not cover](#commands-this-page-does-not-cover). Some documented commands require repository inputs.
+The current checkout's generated tree contains 191 commands. This page gives full flags for 32 of those 191 commands. The remaining 159 commands appear by group under [Commands this page omits](#commands-this-page-omits). Some documented commands require repository inputs.
 
 Three conventions apply to every table below.
 
@@ -40,7 +40,7 @@ The command tables below come from the current checkout's compiled command speci
 | `mailwoman doctor --verbose`                                           | Reported `PASS — core checks ok (runtime + weights); parse is ready` while the optional admin gazetteer was missing. | `0`         |
 | `mailwoman serve --help`                                               | Printed `Usage: mw serve [options]` with `--port`, `--host`, and `--cpus`.                                           | `0`         |
 
-The `data status` result describes the empty test directory. The published `serve` help command was executed, while starting a data-backed server and geocoding an address were not run for this page. [Data and locales](/docs/reference/data-and-locales) lists the bundle prerequisites. [Packages and runtime](/docs/reference/packages-and-runtime) lists the Node requirement and database settings.
+The `data status` result describes the empty test directory. The published `serve` help command was executed. This page didn't start a data-backed server or geocode an address. [Data and locales](/docs/reference/data-and-locales) lists the bundle prerequisites. [Packages and runtime](/docs/reference/packages-and-runtime) lists the Node requirement and database settings.
 
 ## Top-level commands
 
@@ -106,7 +106,7 @@ mailwoman geocode [options] [address...]
 | `--no-street-morphology-prior`                        | boolean                       | `true`    | Bias a trailing street-type affix toward the street labels when its segment opens with a house number; --no-street-morphology-prior disables it.       |
 | `--no-place-country`                                  | boolean                       | `true`    | Use the coarse-placer country prior; --no-place-country disables it.                                                                                   |
 | `--no-postcode-country-coherence`                     | boolean                       | `true`    | Allow coherent postcode/locality evidence to override a wrong country scope.                                                                           |
-| `--no-fork-entity`                                    | boolean                       | `true`    | Probe POI data for exact entities when a fork parse does not resolve.                                                                                  |
+| `--no-fork-entity`                                    | boolean                       | `true`    | Probe POI data for exact entities when a fork parse doesn't resolve.                                                                                   |
 | `--no-postcode-shape-coherence`                       | boolean                       | `true`    | Exclude a postcode span whose shape fits no postcode syntax of a country the address mentions.                                                         |
 | `--postcode-containment-coherence`                    | boolean                       | `false`   | Opt into postcode-centroid locality reranking.                                                                                                         |
 | `--no-admin-containment-rerank`                       | boolean                       | `true`    | Region-qualifier containment reranking of locality candidates; --no-admin-containment-rerank disables it.                                              |
@@ -277,7 +277,7 @@ mailwoman setup [options]
 
 ### `mailwoman data`
 
-Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data --list` shows what exists, `data pull &lt;bundle&gt;` downloads one, `data status` reports what is already on disk, and `mailwoman doctor` reports the one you are missing.
+Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data --list` shows what exists, `data pull &lt;bundle&gt;` downloads one, `data status` reports what's already on disk, and `mailwoman doctor` reports which ones you still need.
 
 ```
 mailwoman data [options]
@@ -699,14 +699,14 @@ The current checkout defines these command completion statuses. Check the publis
 | `0`  | The command completed. A command with a verdict returns `0` for a pass.                | None.                                                                      |
 | `1`  | The command failed or returned a failing verdict. Check stdout and stderr for details. | Read the message. Guidance-grade failures print one line and name the fix. |
 
-Two behaviors are exceptional because they are not failures.
+Two behaviors are exceptional, and neither one is a failure.
 
 - `mailwoman doctor` exits `0` when the core checks pass, even when every optional data layer is
   missing. The parser runs without the optional data layers.
 - `mailwoman parse` degrades to the structural stages when the neural weights are absent, prints a
   warning on `stderr`, and still exits `0`. Standard output stays machine-parseable.
 
-## Commands this page does not cover
+## Commands this page omits
 
 These groups build data and models using repository tooling and inputs. Their flags are summarized by group here. Read the repository's engineering documentation before using them.
 

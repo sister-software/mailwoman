@@ -15,7 +15,7 @@
  *   feature differ.
  *
  *   The emitted per-piece feature is `[country_surface, country_ambiguous]`. `country_surface` marks
- *   a piece inside a recognized country surface phrase. `country_ambiguous` marks a homograph that is
+ *   a piece inside a recognized country surface phrase. `country_ambiguous` marks a homograph that's
  *   also a US region, such as "Georgia", or a curated common-word name such as "America". The model
  *   learns to trust unambiguous long and code forms strongly. It trusts ambiguous forms weakly,
  *   preserving recall on phrases such as "Republic of Georgia".

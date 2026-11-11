@@ -38,7 +38,7 @@ export const Form499CessationReason = {
 	OutOfBusiness: "out-of-business",
 	/**
 	 * `All assets of this company have been sold to another party.`, with no field
-	 * for the party the FCC does not name.
+	 * for the party the FCC doesn't name.
 	 */
 	AssetsSold: "assets-sold",
 	/**
@@ -101,7 +101,7 @@ const REPLACED_BY_FILER_PATTERN = /^replaced by filer (\d+)$/i
 /**
  * The six templates carrying no payload beyond their own meaning, matched on the
  * whole trimmed string case-insensitively so a substring test for "bankruptcy"
- * or "sold" cannot fire on a sentence the FCC has not written yet.
+ * or "sold" cannot fire on a sentence the FCC hasn't written yet.
  */
 const FIXED_NOTE_PATTERNS = [
 	[
@@ -130,7 +130,7 @@ function pad2(value: string): string {
 
 /**
  * Parses one filer's note cells into its lifecycle, skipping blank cells and counting
- * rather than guessing at a note it does not recognize.
+ * rather than guessing at a note it doesn't recognize.
  */
 export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefined>): Form499Lifecycle {
 	const notes: string[] = []

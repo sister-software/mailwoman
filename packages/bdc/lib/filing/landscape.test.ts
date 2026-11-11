@@ -12,20 +12,20 @@
  *   res-6 cell differs from its res-9 cell's H3 hierarchy parent. SF and NY each have two providers with distinct
  *   technologies and speeds across three speed buckets. The fixture also has one geoid the builder never receives.
  *   Criteria 1–4 query
- *   only `[GEOID_SF, GEOID_NY]` (or subsets), so the divergent block does not perturb their
+ *   only `[GEOID_SF, GEOID_NY]` (or subsets), so the divergent block doesn't perturb their
  *   hand-counts. It is exercised only by the coverage-cell unification tests.
  *
  *   Three properties the four criteria do not pin on their own, each with its own describe block below:
  *
- *   - Builder and reader must derive a block's res-6 coverage cell the same way. H3's cell hierarchy is
- *     not geometrically exact: `latLngToCell(centroid, 6)` and `cellToParent(latLngToCell(centroid, 9),
+ *   - Builder and reader must derive a block's res-6 coverage cell the same way. H3's cell hierarchy isn't
+ *     geometrically exact: `latLngToCell(centroid, 6)` and `cellToParent(latLngToCell(centroid, 9),
  *     6)` disagree for some real points. Independent derivations could make a surveyed block read as unknown
  *     while its rows still populate `filings`.
  *   - Criterion 2 must exercise `readLayerCoverage`, not the zero-rows shortcut: a geoid absent from the
  *     fixture derives no candidate cell, so it is classified unknown before the coverage check is
  *     reached. The extended block adds a geoid with rows but a deleted coverage row, plus an `h3Cells`
  *     query against a cell that was never surveyed.
- *   - The SQL `case` and the JS `speedBucketForDownloadSpeed` mirror must not drift. The boundary table
+ *   - The SQL `case` and the JS `speedBucketForDownloadSpeed` mirror mustn't drift. The boundary table
  *     and the SQL-vs-JS agreement test verify that both implementations match. The criteria otherwise leave
  *     the "100-1000" bucket untested.
  */
@@ -257,7 +257,7 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 		expect(withUnknown.surveyed_block_count).toBe(knownOnly.surveyed_block_count)
 		expect(withUnknown.surveyed_block_count).toBe(2)
 
-		// The unknown geoid must not silently appear as a zero-count entry in filings either.
+		// The unknown geoid mustn't silently appear as a zero-count entry in filings either.
 		// It contributes no entry, so the filings for the two known blocks are identical either way.
 		expect(withUnknown.filings).toEqual(knownOnly.filings)
 	})
@@ -306,7 +306,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 		expect(result.unknown_block_count).toBe(1)
 		expect(result.surveyed_block_count).toBe(1)
 
-		// SF's rows must not leak into filings now that SF is unknown: the SF-only The
+		// SF's rows mustn't leak into filings now that SF is unknown: the SF-only The
 		// SF-only PROVIDER_B/tech40/25-100 entry is absent.
 		// The shared PROVIDER_A/tech50 gigabit entry has block_count 1 instead of 2
 		// because SF no longer counts as surveyed.

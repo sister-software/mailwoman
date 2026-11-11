@@ -45,7 +45,7 @@ It worked, mostly. On that harder eval the shipped model scores 54.5%. It's blin
 every reordered row. The retrain came back at **87.4%**. A thirty-two point swing from a
 single extract is the kind of number that makes you want to ship before coffee.
 
-Except the bar was 91, and 87.4 is not 91. Every miss was the same shape, too: `47110
+Except the bar was 91, and 87.4 isn't 91. Every miss was the same shape, too: `47110
 Sainte-Livrade-sur-Lot, 69 …` with `47110` labeled as the house number. The model had
 learned the back-half number existed. Ithadn't learned to stop grabbing the
 postcode out front. The signal was there and slightly too quiet.
@@ -84,8 +84,8 @@ bigger number in a config file.
 
 So we held. The 87% model is a solid gain over what's live, and we'll likely put
 it in front of people once we decide whether a number that beats the old one but
-misses its own bar is enough to ship. The recovery itself waits for the right change. We now know this change is
-not it. Two training runs and about ten dollars of GPU produced a clean _no_ —
+misses its own bar is enough to ship. The recovery itself waits for the right change. We now know this change isn't
+it. Two training runs and about ten dollars of GPU produced a clean _no_ —
 weight is the wrong knob, and we have the fragmented postcodes to prove it.
 
 That's the unglamorous half of training a model in the open: half the runs exist to tell

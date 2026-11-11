@@ -150,7 +150,7 @@ export function fetchSearchRows<DB>(options: {
 	// Bbox and near-with-radius are SQL-level filters via the R*Tree.
 	// The join is emitted only when the active extract has the R*Tree.
 	// A requested filter on a legacy extract is silently treated as no bbox filter
-	// so the query does not crash.
+	// so the query doesn't crash.
 	const extractHasBbox = hasBboxIndex.get(sch) === true
 	const useBboxJoin = (query.bbox || query.near?.maxDistanceKm) && extractHasBbox
 	let joinClause = `JOIN ${sch}.spr ON spr.id = place_search.wof_id`
@@ -240,7 +240,7 @@ export function fetchSearchRows<DB>(options: {
 	// by the row's alias bulk (measured ~15 pts, against a +4.0 boost cap).
 	// This fetch includes prominent holders of a name in the candidate pool.
 	// The exact-tier sort below decides whether they win.
-	// It is skipped without a population index, since there is no column to order by.
+	// It is skipped without a population index, since there's no column to order by.
 	if (extractHasPopulation) {
 		const popStmt = db.prepare(`
 			SELECT

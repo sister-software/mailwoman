@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A manifest field that is wrong misleads its reader, so each field must be true of the build that produced it
+ *   A manifest field that's wrong misleads its reader, so each field must be true of the build that produced it
  *   rather than merely populated.
  */
 
@@ -16,7 +16,7 @@ const BASE = { buildSHA: "abc1234", createdAt: "2026-08-17T00:00:00.000Z", versi
 
 describe("adminLayerManifest — source is derived from the run", () => {
 	it("names only the folds that actually ingested rows", () => {
-		// A build that read no Overture rows must not claim Overture, whatever the recipe lists.
+		// A build that read no Overture rows mustn't claim Overture, whatever the recipe lists.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 100, overture: 0, geonames: 0 } })
 
 		expect(manifest.source).toBe("whosonfirst")
@@ -78,7 +78,7 @@ describe("adminLayerManifest — the license is a conjunction", () => {
 	})
 
 	it("is never `shipped`, because the Overture Divisions grant is share-alike", () => {
-		// The same reason packages/osm is held out of the release list: the builder ships, the artifact does not.
+		// The same reason packages/osm is held out of the release list: the builder ships, the artifact doesn't.
 		expect(adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 0, geonames: 0 } }).tier).toBe(
 			LayerTier.BuildLocal
 		)

@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests value handling in {@link readCSVRecords}, including line-break collapse.
- *   Quote-aware parsing can return line breaks that the previous hand-rolled splitter could not.
+ *   Quote-aware parsing can return line breaks that the previous hand-rolled splitter couldn't.
  *   The fixtures use real rows from `us/ia/statewide.csv`. That file contains 12 such cases.
  *
  *   Fixtures arrive one byte per chunk, so a value's opening and closing quote never land in the same
- *   read. That is the shape a real source has — the recipes read members of multi-gigabyte archives —
+ *   read. That's the shape a real source has — the recipes read members of multi-gigabyte archives —
  *   and the case where a scanner that loses quote state across a chunk boundary splits a record in two.
  */
 

@@ -95,7 +95,7 @@ export interface NearestLinkMatch<T> {
 /**
  * Joins each point to the nearest line offered to it within `radius`.
  *
- * A line offered at exactly the same distance as the current nearest does not replace it,
+ * A line offered at exactly the same distance as the current nearest doesn't replace it,
  * so the first-offered line wins a tie and the answer follows the order the lines are read in.
  */
 export class NearestLinkJoin<T> {

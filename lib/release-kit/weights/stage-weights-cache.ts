@@ -124,7 +124,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 			const source = fromDir(entry)
 
 			// Stage files only.
-			// A loader does not read package directories as artifacts.
+			// A loader doesn't read package directories as artifacts.
 			// A symlinked directory in the layout could make its walk stale.
 			if (await isFile(source)) {
 				staged.set(entry, source)

@@ -51,7 +51,7 @@ const CODE_BY_FOLDED_NAME = new Map(
 )
 
 /**
- * Maps parsed country forms that the codex does not resolve, such as `UK` to `GB`.
+ * Maps parsed country forms that the codex doesn't resolve, such as `UK` to `GB`.
  */
 const SURFACE_ALIASES: Readonly<Record<string, string>> = {
 	uk: "GB",

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Find the rows whose postcode sits on the side of the locality-and-region block that the row's country does not
+ *   Find the rows whose postcode sits on the side of the locality-and-region block that the row's country doesn't
  *   use, as `postcodePlacement` from `@mailwoman/postcode/country-formats` states it (#2750).
  *
  *   With `--write-native <out.parquet>` the tool writes the input's rows minus the reversed ones, judged row by row,

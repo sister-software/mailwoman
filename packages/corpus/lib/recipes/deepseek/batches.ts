@@ -44,8 +44,8 @@ export function deterministicID(prefix: string, payload: string): string {
 /**
  * The JSON object lines of a completion.
  *
- * A fence line and a line that does not begin with `{` are not records and are skipped.
- * A line that begins with `{` and does not parse, such as one holding `NaN`,
+ * A fence line and a line that doesn't begin with `{` are not records and are skipped.
+ * A line that begins with `{` and doesn't parse, such as one holding `NaN`,
  * which Python's `json.loads` accepted and `JSON.parse` refuses, is a failed record:
  * `onUnparsed` receives it so the caller can count it.
  */
@@ -73,7 +73,7 @@ export function parseJSONLResponse(content: string | null | undefined, onUnparse
 const MAX_RAW_CHARS = 250
 
 /**
- * Whether every component value is a non-empty substring of `raw`, with the reason when one is not.
+ * Whether every component value is a non-empty substring of `raw`, with the reason when one isn't.
  */
 export function validateComponents(raw: string, components: unknown): readonly [boolean, string | null] {
 	if (typeof components !== "object" || components === null || Array.isArray(components)) {
@@ -96,7 +96,7 @@ export function validateComponents(raw: string, components: unknown): readonly [
 }
 
 /**
- * @throws When a batch size is not a positive whole number.
+ * @throws When a batch size isn't a positive whole number.
  * Such a size would plan no batch or loop without end.
  */
 function assertBatchSize(batchSize: number): void {

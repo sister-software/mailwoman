@@ -54,7 +54,7 @@ describe("ReachabilityProbe", () => {
 			"fetch",
 			(_url: string, init: RequestInit) =>
 				new Promise<Response>((resolve, reject) => {
-					// `fetch` rejects at once on a signal that is already aborted.
+					// `fetch` rejects at once on a signal that's already aborted.
 					if (init.signal?.aborted) {
 						reject(init.signal.reason)
 

@@ -56,7 +56,7 @@ export async function walkWorkspaceClosure(
 
 		const dir = byName.get(name)
 
-		// The private root package supplies shared tooling to workspaces, but it is not a workspace to pack.
+		// The private root package supplies shared tooling to workspaces, but it isn't a workspace to pack.
 		if (name === rootManifest.name) continue
 
 		if (!dir) throw new Error(`workspace closure: ${name} names no workspace in the root package.json`)

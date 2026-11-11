@@ -18,7 +18,7 @@ _Trust the full-population number. Smaller "first-N in file order" samples badly
 | 0.3–0.7           |  13428 |  6.3% | partial — separable with a good model         |
 | < 0.3             | 185662 | 87.5% | different names → separable                   |
 
-Of the 12989 collision pairs, **8715** (67.1%) also share a phone — so phone (a shared institutional switchboard) does not separate them either. If anything it over-links. This is why the benchmark found phone an unreliable secondary identifier.
+Of the 12989 collision pairs, **8715** (67.1%) also share a phone — so phone (a shared institutional switchboard) doesn't separate them either. If anything it over-links. This is why the benchmark found phone an unreliable secondary identifier.
 
 ## Collision sources: NPI over-segmentation and distinct providers
 

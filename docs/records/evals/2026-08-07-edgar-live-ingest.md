@@ -9,7 +9,7 @@ that `company_tickers.json` omits for private carriers.
 ## Result
 
 **23 of 24 registrants recovered, 2,897 subsidiary rows.** One skip: Telephone and Data Systems
-has no Exhibit 21 in its most recent 10-K. That is the filer's choice rather than a code defect.
+has no Exhibit 21 in its most recent 10-K. That's the filer's choice rather than a code defect.
 
 |                           |             count |
 | ------------------------- | ----------------: |

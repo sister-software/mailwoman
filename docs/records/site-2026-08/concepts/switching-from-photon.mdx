@@ -34,7 +34,7 @@ Both endpoints return a GeoJSON `FeatureCollection` of `Point` features with `pr
 
 ## What's different
 
-- **It does not use Elasticsearch.** Resolution runs over the same SQLite gazetteer as the rest of Mailwoman, and `/api` uses the FST autocomplete tier plus the neural parser.
+- **It doesn't use Elasticsearch.** Resolution runs over the same SQLite gazetteer as the rest of Mailwoman, and `/api` uses the FST autocomplete tier plus the neural parser.
 - **Properties** come from the Who's On First / Overture placetype chain, mapped to Photon's key names, rather than from raw OSM tags.
 
 ## What's missing
@@ -44,6 +44,6 @@ Both endpoints return a GeoJSON `FeatureCollection` of `Point` features with `pr
 
 ## Photon in the wild
 
-[Cartes](https://cartes.app), an open-source French web map we admire, shows Photon in production. It runs its own Photon instance and adds France's [BAN](https://adresse.data.gouv.fr) address API for house-number queries. The combination works well for them. A parser-first geocoder does not need that kind of per-country addition. Mailwoman reads the house number in the query and resolves it directly against the same BAN rooftop data.
+[Cartes](https://cartes.app), an open-source French web map we admire, shows Photon in production. It runs its own Photon instance and adds France's [BAN](https://adresse.data.gouv.fr) address API for house-number queries. The combination works well for them. A parser-first geocoder doesn't need that kind of per-country addition. Mailwoman reads the house number in the query and resolves it directly against the same BAN rooftop data.
 
 See [how Mailwoman compares](./how-mailwoman-compares.mdx#what-about-the-map-apps) for the full capability matrix and a longer note on Cartes. For structured lookup (the Nominatim shape) instead of autocomplete, see [Switching from Nominatim](./switching-from-nominatim.mdx).

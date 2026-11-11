@@ -85,7 +85,7 @@ export function readAttribution(metadata: unknown): string {
  * The parser's own entity decoding covers the full set of labels supported by the metadata field.
  *
  * Local rather than `@mailwoman/core`'s `htmlToText` because this package stays standalone by design.
- * One attribution string should not add core's shipped data to every consumer.
+ * One attribution string shouldn't add core's shipped data to every consumer.
  */
 function htmlText(html: string): string {
 	let text = ""

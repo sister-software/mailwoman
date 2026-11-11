@@ -10,7 +10,7 @@
  *
  *   The resolver consumes this at resolve time: postcode → candidate localities → soft-score by
  *   postcode proximity and name match → pick. It supplies the coordinate candidate that a name
- *   match by itself cannot generate when a small town is not well indexed.
+ *   match by itself cannot generate when a small town isn't well indexed.
  *
  *   Locality polygons come from the whosonfirst-data-admin-<cc> GeoJSON repos and postcode centroids
  *   from our own custom-built postalcode-intl.db.
@@ -115,7 +115,7 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
  *
  * The other uses `Math.round` at 0.5°.
  * Each builder passes its keying function to the constructor.
- * A builder's keying must not be aligned with a sibling's.
+ * A builder's keying mustn't be aligned with a sibling's.
  */
 export class ProximityGrid<Entry> {
 	readonly #cells = new Map<string, Entry[]>()

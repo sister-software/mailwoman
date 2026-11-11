@@ -29,7 +29,7 @@ const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/u
  * Every interpolated value is checked against its closed form first.
  * The statement then holds only a license id, two state names and a timestamp from the caller.
  *
- * @throws When the id, either state or the instant is not one of the forms the ledger writes.
+ * @throws When the id, either state or the instant isn't one of the forms the ledger writes.
  */
 export function declarationStateStatement(lid: string, from: string, to: string, at: string): string {
 	if (!LICENSE_ID.test(lid)) throw new Error(`${lid} is not a license id`)

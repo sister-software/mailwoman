@@ -29,9 +29,9 @@ We spent hours on each of these before finding the real cause:
 
 ## Why Playwright couldn't catch it
 
-Every automated test we ran passed, because headless Chromium does not have a WebGPU adapter. When you request `executionProviders: ["webgpu", "wasm"]`, the runtime silently falls back to WASM. WASM handles int8 correctly, so the test passes.
+Every automated test we ran passed, because headless Chromium doesn't have a WebGPU adapter. When you request `executionProviders: ["webgpu", "wasm"]`, the runtime silently falls back to WASM. WASM handles int8 correctly, so the test passes.
 
-We had a `verify` skill that launched a real headless browser, navigated to the live demo, typed an address, and checked the parse output. It ran after every deployment and passed every time. It could not catch this bug, because it never exercised the broken code path.
+We had a `verify` skill that launched a real headless browser, navigated to the live demo, typed an address, and checked the parse output. It ran after every deployment and passed every time. It couldn't catch this bug, because it never exercised the broken code path.
 
 ## The cause
 

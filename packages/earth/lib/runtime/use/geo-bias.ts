@@ -7,7 +7,7 @@
 import { useCallback, useRef, useState, type RefObject } from "react"
 
 /**
- * Why a device location could not be used.
+ * Why a device location couldn't be used.
  */
 export type GeoBiasError = "denied" | "unavailable" | "unsupported"
 

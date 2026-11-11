@@ -11,7 +11,7 @@
  *   weights the same emissions, path and tokens — so an accidental wiring fails loudly.
  *
  *   The census side uses the real `serializePlacetypeCensus` → `PlacetypeCensusResolver` round trip
- *   because the fold agreement between the two artifacts (`foldVersion`) is part of what is under
+ *   because the fold agreement between the two artifacts (`foldVersion`) is part of what's under
  *   test.
  */
 

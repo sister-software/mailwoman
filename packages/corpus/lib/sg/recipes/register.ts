@@ -115,9 +115,9 @@ export interface SGRegisterRendering {
  * Renders one source row in a sampled or requested form.
  *
  * All randomness comes from `random`.
- * A requested `building_led` form falls back to `official` when the row's `unit` is not a building name.
+ * A requested `building_led` form falls back to `official` when the row's `unit` isn't a building name.
  *
- * A requested `block` form falls back to `bracket_postcode` when the row's number is not a block number.
+ * A requested `block` form falls back to `bracket_postcode` when the row's number isn't a block number.
  * `Blk` and the `S(` and `)` around a postcode stay untagged.
  */
 export function renderSGRegister(row: SGRow, random: () => number, register?: SGRegister): SGRegisterRendering {

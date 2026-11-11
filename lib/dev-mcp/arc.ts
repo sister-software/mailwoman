@@ -212,7 +212,7 @@ export interface ArcResult {
 		/**
 		 * False when the self-control leg disagreed with itself.
 		 *
-		 * The candidate numbers are still reported, but they are not evidence.
+		 * The candidate numbers are still reported, but they're not evidence.
 		 */
 		attributable: boolean
 		/**

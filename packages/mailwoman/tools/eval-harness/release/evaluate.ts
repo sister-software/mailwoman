@@ -45,7 +45,7 @@
  *   (in practice, when no unit is discordant) is degenerate: its variance is replaced by the exact zero-event bound,
  *   `q / G` with `q = 1 - tail^(1/G)` the Clopper–Pearson upper bound on the share of discordant units, since
  *   a unit's mean paired difference lies in [-1, 1]. A degenerate sample therefore never reports zero width,
- *   and it decides only once its unit count makes that bound narrow enough. A bound that is still zero width
+ *   and it decides only once its unit count makes that bound narrow enough. A bound that's still zero width
  *   is insufficient evidence.
  *
  *   Boundary comparisons are inclusive on the passing side. A check passes when its lower bound is at least

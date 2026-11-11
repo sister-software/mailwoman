@@ -100,7 +100,7 @@ async function loadGolden(dir: string): Promise<GoldenEntry[]> {
 				entries.push(entry)
 			}
 		} catch {
-			// A missing golden file is not an error.
+			// A missing golden file isn't an error.
 		}
 	}
 

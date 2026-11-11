@@ -95,7 +95,7 @@ export async function createNSULMetaTable(db: Kysely<NSULDatabase>): Promise<voi
 /**
  * The `pcds_compact` index the `uprnsForPostcode` probe reads.
  *
- * There is no index on the spaced `pcds` because `compactPostcode` from
+ * There's no index on the spaced `pcds` because `compactPostcode` from
  * `@mailwoman/postcode/display-form` derives the compact column from it.
  */
 export async function createNSULIndexes(db: Kysely<NSULDatabase>): Promise<void> {

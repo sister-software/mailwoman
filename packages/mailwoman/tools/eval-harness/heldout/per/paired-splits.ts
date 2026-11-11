@@ -19,11 +19,11 @@ import type { HeldoutProvenance, HeldoutRowKind, HeldoutRowOutcome } from "#tool
 export interface PairedSplitArm {
 	exact: number
 	/**
-	 * Rows the candidate parses exactly and the baseline does not.
+	 * Rows the candidate parses exactly and the baseline doesn't.
 	 */
 	fixes: number
 	/**
-	 * Rows the baseline parses exactly and the candidate does not.
+	 * Rows the baseline parses exactly and the candidate doesn't.
 	 */
 	breaks: number
 }

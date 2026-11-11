@@ -129,7 +129,7 @@ export const spec = {
 		"fork-entity": {
 			type: "boolean",
 			default: true,
-			description: "Probe POI data for exact entities when a fork parse does not resolve.",
+			description: "Probe POI data for exact entities when a fork parse doesn't resolve.",
 		},
 		"postcode-shape-coherence": {
 			type: "boolean",

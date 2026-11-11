@@ -91,7 +91,7 @@ describe("three-law selectivity — pure units", () => {
 			expect(directionals.has(s), s).toBe(true)
 		}
 
-		// The set stays out of the shipped FST policy — loadDegenerateSurfaces by itself must not include
+		// The set stays out of the shipped FST policy — loadDegenerateSurfaces by itself mustn't include
 		// "northeast" (policy separation: degenerate-surface-exclusion v1.1 is baked into FST trailers).
 		expect((await loadDegenerateSurfaces(undefined, painterFold)).surfaces.has("northeast")).toBe(false)
 	})
@@ -143,11 +143,11 @@ describe("three-law selectivity — pure units", () => {
 		expect(isSubPhraseAlias(painterFold("East"), painterFold("East Nashville"))).toBe(true)
 		expect(isSubPhraseAlias(painterFold("Washington"), painterFold("Mount Washington"))).toBe(true)
 		expect(isSubPhraseAlias(painterFold("Nashville"), painterFold("East Nashville"))).toBe(true)
-		// Equality is not a sub-phrase (re-adding the primary through names is harmless)…
+		// Equality isn't a sub-phrase (re-adding the primary through names is harmless)…
 		expect(isSubPhraseAlias(painterFold("Frisco"), painterFold("Frisco"))).toBe(false)
 		// …and real nicknames survive.
 		expect(isSubPhraseAlias(painterFold("Frisco"), painterFold("San Francisco"))).toBe(false)
-		// Contiguity required — a scattered subsequence is not a sub-phrase.
+		// Contiguity required — a scattered subsequence isn't a sub-phrase.
 		expect(isSubPhraseAlias(painterFold("East Village"), painterFold("East Nashville Village Green"))).toBe(false)
 	})
 })

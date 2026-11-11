@@ -22,7 +22,7 @@ responsibilities listed in §3 and no responsibilities beyond them.
 > **Corrected 2026-08-27 (#1961).** The workspace now exists at `packages/geographic-model/`. It is
 > in the root `workspaces` array (58 entries) and in `.release-it.json`'s publish list (52 of those
 > 58). Its `package.json` reads `version: 0.0.0` and has no `private` flag. §3's ownership row is
-> updated to match. The package's existence does not change what it owns and must not own.
+> updated to match. The package's existence doesn't change what it owns and mustn't own.
 
 ---
 
@@ -93,7 +93,7 @@ single-valued synonym cannot hold a set. The program fills this gap, and §3 ass
 
 `supportsExclusion(cell)` returns true only for `CoverageBasis.Designated` or
 `CoverageBasis.Surveyed`. `CoverageBasis.SourcePresent` supports only presence, because a
-source that looked has not necessarily found everything. A missing `layer_coverage` row means
+source that looked hasn't necessarily found everything. A missing `layer_coverage` row means
 unmapped, never surveyed-and-empty.
 
 **Measured against the shipped layer** (`poi.db`, manifest `name: poi`, `version: 2026-07-22.0`,
@@ -105,7 +105,7 @@ comment stating that the `1.0` means "Overture returned rows here" rather than "
 
 This constrains the increment in §4: **`supportsExclusion` is false for every cell of the shipped POI
 layer today.** Any coverage-aware negative fact the program authors therefore has no effect against
-`poi.db` until that register is rebuilt with an earned basis. That behavior is correct and should not
+`poi.db` until that register is rebuilt with an earned basis. That behavior is correct and shouldn't
 be worked around. It is also why the increment states the coverage rule as a check rather than as a
 capability.
 
@@ -134,7 +134,7 @@ The path runs in three steps:
 Two properties of that path matter to §5. The lexicon probe is **positive evidence only**. On a miss
 it returns `[]`, `matchPOISubject` returns `null`, `createScorePOIQuery` returns `0`, and the input
 never takes the POI branch at all. The backend probe is **exact set membership** over Overture leaf
-ids. `#searchKRing` resolves each seed id through `poi_category_codes` and drops ids the layer does not
+ids. `#searchKRing` resolves each seed id through `poi_category_codes` and drops ids the layer doesn't
 contain without reporting them.
 
 The abstain vocabulary is small and already structured: `POIIntentOutcome` is
@@ -150,7 +150,7 @@ The abstain vocabulary is small and already structured: `POIIntentOutcome` is
 | Inference + decode-time priors | `packages/neural/` (`scorer.ts`, `viterbi.ts`, `semi-markov-decode.ts`, `placetype-pair-prior.ts`, `fst-prior.ts`, `gazetteer-inference.ts`) |
 | Candidate ordering             | `packages/resolver/lib/toponym-prior.ts` (`rankByImportance`), `packages/resolver/lib/admin-containment.ts`                                  |
 
-The program must not reach into this boundary. The standing rule is that registries are soft priors
+The program mustn't reach into this boundary. The standing rule is that registries are soft priors
 supplying **positive evidence only**, and the decoder grammar interface states which terms the shipped
 decoder maximizes. A world-model record that emitted a boost, a penalty, or a candidate order would
 hand-author policy in the one place where the system is supposed to learn it.
@@ -182,10 +182,10 @@ satisfy. A row also has a `status`. `pass` checks the run, and `known_fail` / `i
 report without blocking. This follows the Gauntlet regression layer's three-way reading: a violated
 row is tracked rather than deleted, and it is never re-stated as `expect: diverges`, which would make
 the suite assert the defect. Each law declares an applicability interface beside its transformations.
-When a row lacks an arm, the row records the rule that refuses it, so the arm is not silently missing.
+When a row lacks an arm, the row records the rule that refuses it, so the arm isn't silently missing.
 Case folding excludes a locale-conditional casing (Turkish dotted/dotless `i`), and whitespace excludes
 a space that belongs to a structured identifier (`N7 0BT`). The module's `mechanism_shape` comparator
-reads the `DIAGNOSE_SHAPES` vocabulary in the row above but does not import it. `@mailwoman/dev-mcp`
+reads the `DIAGNOSE_SHAPES` vocabulary in the row above but doesn't import it. `@mailwoman/dev-mcp`
 depends on `mailwoman`, so the labels arrive as an observer's output rather than as a second copy of
 the vocabulary.
 
@@ -200,7 +200,7 @@ mechanism-account vocabulary. An address-path shape has no meaning for a POI que
 
 ## 3. The package boundary
 
-| Owner                                                             | Owns                                                                                                                                                                                                                                                                     | Must not own                                                                                                 |
+| Owner                                                             | Owns                                                                                                                                                                                                                                                                     | Mustn't own                                                                                                  |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
 | `@mailwoman/poi-taxonomy`                                         | External and curated POI category vocabulary, category hierarchy, the Overture-leaf translation, query phrase → category lexicon, brands                                                                                                                                 | Relations other than containment, activities, affordances, per-assertion provenance                          |
 | `@mailwoman/geographic-model` (`packages/geographic-model/`)      | Stable concepts beyond the POI vocabulary, relation definitions, activities and affordances, rule modality, source observations, derived facts, derivation provenance, deterministic compilation and validation, mappings from external vocabularies into world concepts | Weights, boosts, penalties, or any candidate-ordering API, a second POI taxonomy, a second coverage register |
@@ -211,7 +211,7 @@ mechanism-account vocabulary. An address-path shape has no meaning for a POI que
 
 The following dependency rules are required:
 
-- **`@mailwoman/core` must not depend on `@mailwoman/geographic-model`** without a later integration
+- **`@mailwoman/core` mustn't depend on `@mailwoman/geographic-model`** without a later integration
   decision that demonstrates the direction is necessary. Core ships the pipeline interface and ~9 MB of
   reference data to every consumer. A world-semantics dependency in core would be inherited by every
   drop-in API, whether or not it needs one.
@@ -221,7 +221,7 @@ The following dependency rules are required:
   from gradually becoming a weight.
 - **The ownership row states a category of record rather than a license to author freely** (added
   2026-08-27, #1961). The compiled model may contain only the concepts, activities, assertions and
-  mappings in the frozen set in §4, plus whatever an amendment admits. Today that is §4.1's wave-1 set
+  mappings in the frozen set in §4, plus whatever an amendment admits. Today that's §4.1's wave-1 set
   and no more. A record outside both would widen this table without review. Stop
   condition 5 refuses that widening.
 
@@ -251,7 +251,7 @@ Each line constrains the increment as follows:
 - **entity kind: `pharmacy`** — the only establishment class the first increment requires. No sibling
   class is added to make the proposition read better.
 - **activity: `obtain_medication`** — the only activity. It is an identifier the geographic model
-  owns. #1683 may later fit statistics against it, and this record does not.
+  owns. #1683 may later fit statistics against it, and this record doesn't.
 - **external vocabulary** — the mapping target is the category with id **`pharmacy`** (a
   `POICategoryID`), record `{ id: "pharmacy", label: "Pharmacy", hierarchy: ["health_and_medical",
   "pharmacy"], basicLabel: "Pharmacy", osmTag: "amenity=pharmacy", source: "overture" }`, authored in
@@ -263,19 +263,19 @@ Each line constrains the increment as follows:
 - **coverage rule** — a missing expected observation becomes negative evidence only where
   `supportsExclusion(...)` from `packages/core/lib/layers/manifest.ts` permits it. As measured in §2.3,
   that permits no exclusion against today's `poi.db`. The rule is written as a check so the first increment
-  cannot accidentally ship an exclusion the data does not support.
+  cannot accidentally ship an exclusion the data doesn't support.
 - **ranking behavior: unchanged** — no ordering, score term, boost, or penalty changes anywhere in
   `packages/resolver/` or `packages/neural/` as a consequence of this increment. The first production
   integration is diagnostic and observational only.
 
-The following are explicitly deferred, even where they would be convenient during implementation: roads, utilities and electrification,
+The following are explicitly deferred, even where they'd be convenient during implementation: roads, utilities and electrification,
 population context, environmental statistics, water/land compatibility, mapping breadth beyond the one
 category above **and §4.1's wave-1 set**, and any production decoder integration.
 
 ### 4.1 Amendment 1: mapping-breadth wave 1 (2026-08-27)
 
 **Issue:** #1961 · **Permitted by:** #1930's recorded GO · **Required by:** stop condition 5 ·
-**Authored by:** #1963 (the semantics) — the query-phrase surface is #1962's and is not admitted here.
+**Authored by:** #1963 (the semantics) — the query-phrase surface is #1962's and isn't admitted here.
 
 §4 froze one proposition. #1930 recorded GO. That verdict allows mapping breadth to be _proposed_. Stop
 condition 5 requires the boundary to be widened here, in a reviewed change, before a record is authored
@@ -312,7 +312,7 @@ class a retail ancestor.
 #### The one vocabulary correction: `affords` becomes defeasible
 
 W1-2 cannot be `necessary`. The attested material states that a US drugstore characteristically dispenses. It
-does not say every premises under `retail > drugstore` does, and neither a locale-scoped synonym nor a
+doesn't say every premises under `retail > drugstore` does, and neither a locale-scoped synonym nor a
 row count is a census of dispensing. The evidence supports `strongly_expected`.
 
 Under the `affords` relation as §4 froze it, that modality has no defined reading.
@@ -334,12 +334,12 @@ amendment admits that change. The change has three consequences:
 - **No executable code depends on the field.** `semantics` is validated as a closed-vocabulary member
   (`ValidationIssueCode.UnknownRelationSemantics`), and no other code in the package reads it.
   `compile.ts` computes the closure over `isA` only, and its comments state that `transitive` and
-  `inverse` are vocabulary it does not materialize. The correction changes what the record means to a
+  `inverse` are vocabulary it doesn't materialize. The correction changes what the record means to a
   reader and to a reviewer, and it changes no compiled byte beyond the field itself.
 
 #### What the closed vocabularies do not need
 
-- **`ConceptKind` gains no member, and this review does not modify
+- **`ConceptKind` gains no member, and this review doesn't modify
   `packages/geographic-model/lib/schema.ts`.** `drugstore` is a class of premises a person can go to.
   That kind is `establishment`, and `affords` already accepts that kind on the asserting side. Wave 1
   authors no `place`-kind concept and no `activity`-kind concept beyond the two §4 froze.
@@ -356,18 +356,18 @@ amendment admits that change. The change has three consequences:
 | A second activity, any                                               | No committed input set holds an activity-phrased query for any activity but `obtain_medication`; the four rows that exist (`sem-act-us-01`, `sem-act-us-02`, `sem-act-fr-01`, `sem-act-mx-01`) all register that one. §5.5's first bound therefore still stands for every other activity: no committed input exists to measure against. |
 | Concept `hospital`, from board row `syn-01` (`er near Denver CO`)    | The row **passes** today. A passing row is a control rather than a target — stop condition 4 wants a mechanism the observation can address, and no observation measures a missing `obtain_medication` affordance for a hospital.                                                                                                        |
 | Concept `chemist` for en-GB / en-AU / en-NZ                          | Not a class. `curated-overlay.json` contains `{ "phrase": "chemist", "categoryID": "pharmacy", "locales": ["en-GB", "en-AU", "en-NZ"] }`, and §5.2 measured `chemist near London` under `en-GB` reaching `cat=pharmacy` at confidence 1. The existing `pharmacy` concept and W1-3's sibling mapping already cover it.                   |
-| `chemist` with no locale supplied — §5.2 measured `NO SUBJECT MATCH` | A real measured gap and not a semantic one. The phrase index is locale-scoped and the miss is in recognition. The phrase surface belongs to `@mailwoman/poi-taxonomy` and to #1962. A new concept would not change that result.                                                                                                         |
+| `chemist` with no locale supplied — §5.2 measured `NO SUBJECT MATCH` | A real measured gap and not a semantic one. The phrase index is locale-scoped and the miss is in recognition. The phrase surface belongs to `@mailwoman/poi-taxonomy` and to #1962. A new concept wouldn't change that result.                                                                                                          |
 | Concepts `supermarket` / `convenience_store` as further afforders    | Plausible and unattested. Both ids exist in the table. Neither has a committed row, a measurement, or a filed defect reporting that a dispensing counter is unreachable. Plausibility is the thing stop condition 4 exists to refuse.                                                                                                   |
 | W1-2's claim extended to `CA`, `GB` or `MX`                          | §5.3's counts there (CA 369, GB 117, MX 3) bound a population and assert no fact about what those premises afford — the record states that limit in place. No committed curator statement scopes the class to those countries the way the en-US entry does.                                                                             |
-| W1-2's claim extended to `FR`                                        | Additionally refuted by the data: §5.3's FR `drugstore` count is a **measured zero**, from a group-by that scanned every row. There is no row for the mapping to reach.                                                                                                                                                                 |
+| W1-2's claim extended to `FR`                                        | Additionally refuted by the data: §5.3's FR `drugstore` count is a **measured zero**, from a group-by that scanned every row. There's no row for the mapping to reach.                                                                                                                                                                  |
 | Board row `cat-ca-02` (`gas station near Ottawa ON`) as a target     | A pre-existing board failure with no affordance content. `docs/records/evals/2026-08-03-backend-parity.md` traces it: the candidate backend anchors on Ottawa, **Illinois**, 1,151 km out, while `Ottawa, ON` with the comma passes. An anchor-resolution defect on the POI path, owned by the runtime and resolver per §3.             |
 | Board row `brand-us-02` (`applebee's near Dallas TX`) as a target    | The other pre-existing failure, also without affordance content. `docs/records/evals/2026-07-20-poi-query-board-v1.1-brand-lexicon.md` traces it: subject match and anchor both succeed, and the miss is `#searchKRing`'s `DEFAULT_MAX_RINGS = 12` (≈ 4 km) against a nearest matching row at 13.2 km. A reader search radius.          |
-| Probe row `sem-act-fr-01` as a target for new semantics              | Its blocker is not semantic. #1930's caveat 1 and #1039 both record it: a `poi.db` entry with the name `Somewhere` claims the prefix before the `near` split is considered, so `matchPOISubject` never reaches the activity phrase. No concept, assertion or mapping changes that.                                                      |
+| Probe row `sem-act-fr-01` as a target for new semantics              | Its blocker isn't semantic. #1930's caveat 1 and #1039 both record it: a `poi.db` entry with the name `Somewhere` claims the prefix before the `near` split is considered, so `matchPOISubject` never reaches the activity phrase. No concept, assertion or mapping changes that.                                                       |
 | A second relation — `isa` as a relation record, `partOf`, `sells`    | §4 keeps relations unminted until an executable need names one. Wave 1's need is one further asserting concept under the relation that already exists.                                                                                                                                                                                  |
 | A second external vocabulary — Wikidata QIDs, OSM tags               | The board's `brandWikidata` values identify **brands** rather than concept classes, and the one brand row that fails does so on search radius. No attested target, and the member addition is a schema revision.                                                                                                                        |
-| Concept `retail_establishment` as an intermediate above `drugstore`  | Symmetry with `healthcare_facility` is not a target. That intermediate exists because §4's frozen increment declared one. No record declares this one, and an intermediate with no assertion adds a review obligation and states no fact.                                                                                               |
+| Concept `retail_establishment` as an intermediate above `drugstore`  | Symmetry with `healthcare_facility` isn't a target. That intermediate exists because §4's frozen increment declared one. No record declares this one, and an intermediate with no assertion adds a review obligation and states no fact.                                                                                                |
 
-#### What this amendment does not change
+#### What this amendment doesn't change
 
 - **Rank ordering**, exactly as §4 froze it. No wave-1 record emits an ordering, a score term, a boost
   or a penalty, and the schema has no numeric field that could hold one.
@@ -385,7 +385,7 @@ amendment admits that change. The change has three consequences:
 
 §8's instruction applies to this amendment's numbers too, and not all of them were re-measured. The
 §5.3 row counts quoted above are that section's measurement at `poi.db` manifest `2026-07-22.0`.
-**No `poi.db` was reachable from the checkout this amendment was written in**, so they are quoted
+**No `poi.db` was reachable from the checkout this amendment was written in**, so they're quoted
 from that measurement rather than re-verified. Two of them affect decisions, so #1963 re-runs §8's
 `group by category_id, country` pass and compares the manifest version before freezing any wave-1
 provenance. An FR count above zero would reopen the FR exclusion, and a changed US count would change
@@ -413,13 +413,13 @@ model moves to `0.2.0`.
 It was held for one release cycle because of an interim rule that the companion decision record's §8.1
 authorizes: a declared phrase whose activity reaches more than one mapped kind is refused at
 construction. That rule merged ahead of the semantics in PR #1979. With W1-3 authored, all eleven
-declared phrases would have been refused, the semantic route could not have been built, and the
+declared phrases would have been refused, the semantic route couldn't have been built, and the
 capability #1930 recorded GO on would have been lost. `reachKinds` counts only mapped kinds, so an
-asserted but unmapped `drugstore` recorded the full semantics while leaving the route intact. That is
+asserted but unmapped `drugstore` recorded the full semantics while leaving the route intact. That's
 why only the mapping was held. #1980 replaced the interim refusal with §8.1's decided shape: **the POI
 branch searches the union of the categories the subject reaches, and the resolver's existing candidate
 ordering ranks the results.** A plural affordance is now answered rather than refused. The compiled
-model moves to `0.3.0`. The deferral did not widen wave 1: no record outside the admitted table was
+model moves to `0.3.0`. The deferral didn't widen wave 1: no record outside the admitted table was
 authored, and no admitted record was withdrawn.
 
 **Attested target for the set:** board row `sem-act-us-03` (`where can i pick up a prescription near
@@ -431,13 +431,13 @@ reachable. The row states no preference between the classes, because at that anc
 results. The row stays TRACKED and is re-pointed from #1980 to #1967. Its subject reaches no committed
 lexicon entry, so without the opt-in route injected the query takes no POI branch at all. Whether the
 route reaches the default path is #1967's question rather than this record's. The POI board's floors
-are registered against the construction with the route off, and they have not changed.
+are registered against the construction with the route off, and they've not changed.
 
 ---
 
 ## 5. The failure class for the utility probe (#1928)
 
-The probe must not feed `pharmacy affords obtain_medication` back into a query the system already
+The probe mustn't feed `pharmacy affords obtain_medication` back into a query the system already
 recognizes as `pharmacy`. That observation is redundant there, and a null result would leave the question open.
 The class below was chosen because the affordance edge supplies information that the baseline path
 lacks entirely.
@@ -533,7 +533,7 @@ a _set_ rather than a missing phrase.
 > Which entity kinds afford `obtain_medication`, in which country, with what modality, and on whose
 > authority.
 
-That is a one-activity-to-several-kinds edge carrying scope and provenance, and no structure on HEAD can
+That's a one-activity-to-several-kinds edge carrying scope and provenance, and no structure on HEAD can
 hold it. `SynonymEntry.categoryID` is single-valued and has no relation. `CategoryRecord.hierarchy` is
 containment. `CategoryRecord.overtureCategories` is a namespace translation authored per seed, without
 a relation type, country scope, or per-assertion provenance.
@@ -547,11 +547,11 @@ a relation type, country scope, or per-assertion provenance.
   (graded on outcomes only, per the anti-Pelias commitment in
   `docs/superpowers/specs/2026-08-17-mechanism-accounts.md` §2), or pre-register on the §5.3 recall
   gap. That gap's control rows are already committed. An artificial passing fixture triggers a stop
-  condition and is not an acceptable workaround.
+  condition and isn't an acceptable workaround.
 - **The board's grader cannot see the §5.3 gap.** `gradeCase` checks `results[0].categoryID` and the
   nearest distance, and it never measures recall. `cat-us-05` passes today and would still pass with
   every `drugstore` row missing. A probe on §5.3 needs its own recall metric.
-- **The baseline failure shape is not a `DIAGNOSE_SHAPES` value.** See §2.6.
+- **The baseline failure shape isn't a `DIAGNOSE_SHAPES` value.** See §2.6.
 - **A hand-authored board over-represents the defect it was written for.** Whatever rows #1928 freezes,
   the delta they measure describes those rows. The control set keeps that delta from being read as a
   statement about production traffic.
@@ -579,7 +579,7 @@ a relation type, country scope, or per-assertion provenance.
   `@mailwoman/core/layers`.
 - Law tests extend the existing gauntlet, board, trace, and dev-MCP implementation instead of a
   separate test system.
-- The program must not create a second POI taxonomy, a second `layer_manifest`/`layer_coverage`, a
+- The program mustn't create a second POI taxonomy, a second `layer_manifest`/`layer_coverage`, a
   second POI intent pipeline, or a second affordance vocabulary independent of #1683.
 
 **Deferred by name:** roads, utilities and electrification, population context, environmental
@@ -592,23 +592,23 @@ statistics, water/land compatibility, coverage inference, spatial statistics, ma
    exists, #1928 records exactly one of **GO**, **DIAGNOSTIC-ONLY**, or **STOP/REDESIGN**, against a
    ruler frozen before any probe code is written. No work beyond the design proposal's C4 begins
    before GO, except separately justified evidence and provenance work after a DIAGNOSTIC-ONLY result.
-2. **A failed probe does not convert into a diagnostics mandate.** A large downstream phase still needs
+2. **A failed probe doesn't convert into a diagnostics mandate.** A large downstream phase still needs
    a concrete product requirement — diagnosis, explainability, inferential resolution, or a measured
    failure class — on its own evidence.
 3. **DIAGNOSTIC-ONLY requires a pre-registered structured metric.** A free-form claim of better
-   diagnosis or better abstention does not satisfy the check.
+   diagnosis or better abstention doesn't satisfy the check.
 4. **A probe requires a real target.** If no defensible target exposes a mechanism the first
    affordance observation can address, record that the first increment lacks one, then choose a
    different observation or stop. Do not author a fixture whose only purpose is to pass.
 5. **This record's boundary is amended explicitly.** A change that needs a second relation, a second
    activity, a second entity kind, or a `@mailwoman/core` dependency amends §3 or §4 in a reviewed
-   change. It does not widen them in passing.
+   change. It doesn't widen them in passing.
 6. **Refresh before filing.** The repository changes. An implementer who finds that a §2 path moved or
    a listed boundary already landed updates the inventory before opening work against it.
 
 ---
 
-## 7. What this record does not settle
+## 7. What this record doesn't settle
 
 - The authored-record format, the compiled-artifact format, and the validation rules for
   `@mailwoman/geographic-model`. This record freezes ownership and leaves the shape open.

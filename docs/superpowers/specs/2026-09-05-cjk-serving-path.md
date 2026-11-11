@@ -23,7 +23,7 @@ on supply: 126 labeled rows. Korean joins the same package when its corpus is bu
 | Decoder grammar                | containment for the JP ladder and `locality_unit`                                                                                                                                                                                         | `packages/core/lib/decoder/containment.ts`                                                                                    |
 | Script detection               | `CharacterClass` includes `cjk` per token and per input                                                                                                                                                                                   | `packages/query-shape/lib/types.ts`                                                                                           |
 
-## 3. What is missing — the package cannot be exported, resolved, or run today
+## 3. What's missing — the package cannot be exported, resolved, or run today
 
 1. **ONNX export.** `export_onnx.py` wraps the model behind inputs `input_ids` + `attention_mask` (plus the anchor,
    gazetteer and span variants). No wrapper takes `char_ids`. The char model's forward reads `char_ids (B, S, W)`
@@ -61,10 +61,10 @@ Of the CJK corpus's 166 Han characters from the Chinese rows, 102 are code point
 and every one of the 102 has a different majority label in the two languages (一: JP `block` 68%, CN
 `locality_unit` 89%). The 24k read split the JP board's municipality failures by whether the name contains a shared
 character: names with one read 0.9947 on the shared head against 0.9909 on the JP-only model. Names without one read
-0.9217 against 0.9997, and 598 of those 598 are `かすみがうら市`. The shared code points did not cost the JP tags.
-One held-out hiragana municipality did, and the control run decides whether that is the mixture or run variance.
+0.9217 against 0.9997, and 598 of those 598 are `かすみがうら市`. The shared code points didn't cost the JP tags.
+One held-out hiragana municipality did, and the control run decides whether that's the mixture or run variance.
 
-## 6. What this does not decide
+## 6. What this doesn't decide
 
 Two items this section first listed have since landed: the CJK FST builders (#1493, `fst-{ja-jp,zh-cn,ko-kr}.bin` in
 `wof/fst-per-locale-curated/`) and the browser char runner (`web-onnx-runner.ts` `inferChars`, under `browser-graph.test.ts`).

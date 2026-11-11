@@ -63,7 +63,7 @@ const FIELD: Readonly<Record<string, string>> = {
 const AUTHORED_SLOTS = new Set(["country", "dependent_locality"])
 
 function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): string[][] {
-	// A slot counts as authored only when the source does not define it.
+	// A slot counts as authored only when the source doesn't define it.
 	// The 14 `fmt` strings that include `%D` are compared like any other line,
 	// so a transcription error there still fails.
 	const inSource = new Set(source.flat())
@@ -84,7 +84,7 @@ function nameOf(atom: AddressAtom): string[] {
 }
 
 /**
- * A placeholder this project does not model drops out.
+ * A placeholder this project doesn't model drops out.
  *
  * A country whose `fmt` contains only such fields is reported as unusable rather than as a mismatch.
  */
@@ -174,7 +174,7 @@ describe("the generated layout table matches libaddressinput", () => {
 
 		// A country the dataset leaves unusable may still have an approved S42 template.
 		// Its Standardized Address Format Description states an order this repository read.
-		// That is a second source rather than a second reading of the same one.
+		// That's a second source rather than a second reading of the same one.
 		// A UPU Postal Addressing Systems description is a third: the postal operator's printed examples.
 		for (const country of unusable) {
 			const layout = layoutForCountry(country)

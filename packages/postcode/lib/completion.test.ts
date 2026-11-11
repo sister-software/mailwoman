@@ -61,7 +61,7 @@ describe("canComplete over libaddressinput's examples", async () => {
 
 	test.each(COUNTRIES)("%s accepts every prefix of each of its own examples", (country) => {
 		for (const example of examples.get(country)!) {
-			// The example must be whole under the syntax, or the prefix test below is not about this rule.
+			// The example must be whole under the syntax, or the prefix test below isn't about this rule.
 			expect(acceptPostcode(example, country), example).not.toBeNull()
 
 			for (const prefix of prefixes(example)) {

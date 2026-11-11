@@ -63,7 +63,7 @@ Both layouts returned the same result for all four lookups. The file grew from 7
 
 ## Limits
 
-- The Earth Playwright suite and the ported gazetteer probe in `browser-slo.integration.test.ts` did not
+- The Earth Playwright suite and the ported gazetteer probe in `browser-slo.integration.test.ts` didn't
   complete on the development host. Every failure stopped at the model download, on this branch and
   against the deployed application.
 - The published interpolation extracts keep the old layout until each state is rebuilt and uploaded.

@@ -410,7 +410,7 @@ export function regionLayoutForCountry(countryCode: string | null, script?: Addr
  * A gazetteer hierarchy string represents a query and belongs to this API.
  *
  * Of the 197 layouts, 122 omit both a region and a street.
- * They are absent here.
+ * They're absent here.
  * Callers treat them as small-first.
  */
 export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
@@ -469,7 +469,7 @@ export function layoutForCountry(countryCode: string | null, script?: AddressScr
  *
  * A jurisdiction in UPU's S42 template inventory contributes an `upu-s42` observation
  * whose stance is `unread`: an approved crosswalk of its address semantics exists,
- * and this repository has not retrieved it.
+ * and this repository hasn't retrieved it.
  * A jurisdiction outside that inventory contributes none.
  *
  * That states that no crosswalk exists, rather than that one went unread.
@@ -738,7 +738,7 @@ export function addressSystemMembers(): AddressSystemMember[] {
 }
 
 /**
- * Returns the script used by {@link layoutForCountry} when the caller does not choose one.
+ * Returns the script used by {@link layoutForCountry} when the caller doesn't choose one.
  *
  * It returns `local` except for Hong Kong.
  * Hong Kong's default layout follows the order from its Latin skeleton.

@@ -47,7 +47,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("resolveGipuzkoaArchive against b5m.gipuzko
 			const publication = await readGipuzkoaPublication(client, reference.archiveURL)
 
 			// The freshness decision rests on this header, because the entry's own `<updated>`
-			// has not moved since 2017 while the archive refreshes weekly.
+			// hasn't moved since 2017 while the archive refreshes weekly.
 			expect(publication.lastModified).not.toBeNull()
 			expect(publication.reportedBytes).toBeGreaterThan(0)
 		},

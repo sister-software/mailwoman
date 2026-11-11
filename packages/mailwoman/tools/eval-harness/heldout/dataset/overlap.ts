@@ -6,7 +6,7 @@
  *   Audits a held-out dataset against the training and development data of the compared models. The audit assigns
  *   each row `known_overlap`, `verified_unseen`, `unseen_by_candidate` or `unknown` for
  *   `heldout/per/country.run.ts --provenance`. A row is `unseen_by_candidate` when the candidate model card is listed,
- *   the audit reads its corpus and finds no match, and the row is not `verified_unseen`. The published model trained
+ *   the audit reads its corpus and finds no match, and the row isn't `verified_unseen`. The published model trained
  *   on the row or its history is unestablished. Release minimum checks may read these rows.
  *
  *   DuckDB reads the train and val files from each corpus manifest and projects only `source`, `source_id` and
@@ -19,7 +19,7 @@
  *   The audit refuses a partial read: a missing file, a file lacking an id column, a row count that differs
  *   from the manifest's record, an attribute file whose sha256 differs, or a file entry with no split throws,
  *   naming the file. A row is `verified_unseen` only when no corpus read contains it and each model card's
- *   model card's `training.corpus_version` identifies a corpus that was read. For a model whose card does not
+ *   model card's `training.corpus_version` identifies a corpus that was read. For a model whose card doesn't
  *   record its corpus, the caller passes its training config instead. The config's `data.corpus_dir` must then
  *   identify a corpus that was read. Otherwise a row without overlap is `unknown`, and the audit records why.
  *
@@ -63,7 +63,7 @@ export interface OverlapFileRecord {
 	sha256: string | null
 	sha256Verified: boolean
 	/**
-	 * Rows the split attribute assigned to `test` and the audit therefore did not count as training data.
+	 * Rows the split attribute assigned to `test` and the audit therefore didn't count as training data.
 	 */
 	excludedTestRows?: number
 	/**
@@ -90,7 +90,7 @@ export const OverlapModelSource = {
 	ModelCard: "model-card",
 	/**
 	 * The training config's `data.corpus_dir` and `train.init_from`, for a model
-	 * whose card does not record its corpus.
+	 * whose card doesn't record its corpus.
 	 */
 	TrainingConfig: "training-config",
 } as const
@@ -230,7 +230,7 @@ async function readModelCard(path: string, corporaRead: ReadonlySet<string>): Pr
  * Reads one training config's corpus identity: `data.corpus_dir`'s version and
  * whether `train.init_from` is set.
  *
- * @throws {TrainingConfigError} When the config does not load as the trainer loads it.
+ * @throws {TrainingConfigError} When the config doesn't load as the trainer loads it.
  */
 async function readTrainingConfigCorpus(
 	path: string,

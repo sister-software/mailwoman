@@ -15,12 +15,12 @@ import type { MapInstance } from "react-map-gl/maplibre"
 export interface UseMapBearing {
 	/**
 	 * Degrees off north, as MapLibre reports it.
-	 * Zero while there is no map.
+	 * Zero while there's no map.
 	 */
 	bearing: number
 	/**
 	 * Rotate the map back to north.
-	 * A no-op while there is no map.
+	 * A no-op while there's no map.
 	 */
 	resetNorth: () => void
 }

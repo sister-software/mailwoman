@@ -7,7 +7,7 @@
  *
  * A description is a few pages UPU collects from the designated postal operator: the postcode, where
  * the address sits on the envelope, and printed examples with each line labeled (`thoroughfare +
- * premises`, `post office + postcode`). It is not an S42 template and specifies no approved crosswalk.
+ * premises`, `post office + postcode`). It isn't an S42 template and specifies no approved crosswalk.
  * It states what the operator prints.
  *
  * This table includes a country only where libaddressinput states no `fmt`, or where its `fmt` omits the

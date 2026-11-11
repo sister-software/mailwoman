@@ -403,7 +403,7 @@ function rewrite(raw: string, lines: readonly string[]): string {
  * Strips the indentation every non-empty line shares.
  *
  * `scanLines` reads a four-space indent as a structural line.
- * That is right for a markdown code block and wrong for the body of an indented docstring.
+ * That's right for a markdown code block and wrong for the body of an indented docstring.
  *
  * The function removes the common prefix first, so an indented paragraph groups as a paragraph.
  */
@@ -429,7 +429,7 @@ function dedent(lines: readonly string[]): string[] {
  * Vale strips it before linting.
  *
  * A dash inside it was never reported.
- * A key there is data rather than a sentence.
+ * A key there's data rather than a sentence.
  *
  * `scanLines` handles the fenced blocks, list items and indented code that remain in the body.
  */
@@ -471,7 +471,7 @@ const HASH_RUN = /(?:^[\t ]*#[^\n]*\n?)+/gm
  * Python has prose in two places.
  * Vale lints both: a `#` run and a docstring.
  *
- * A docstring is swept first, because sweeping the `#` runs afterwards must not
+ * A docstring is swept first, because sweeping the `#` runs afterwards mustn't
  * read the lines of a triple-quoted block as comments.
  */
 function sweepHashLanguages(source: string, fileName: string): string {

@@ -13,7 +13,7 @@
 #     `region` ≥ 0.99, `postcode` ≥ 0.99. The untrained base reads 0.0000 on every tag but house_number (0.0428).
 #     Coordinate-acceptability @15 km through the 시군구 centroid is the reading beside those, per register.
 #   * JP board (`v8-jp-kana-2026-09-06/jp-board.jsonl`, the same scorer): blended ≥ 0.9924 − 0.005 and municipality
-#     macro ≥ 0.9821 − 0.005 — the KR rows must not cost JP; `かすみがうら市` failed rows ≤ 5 and `中新川郡上市町` beside it.
+#     macro ≥ 0.9821 − 0.005 — the KR rows mustn't cost JP; `かすみがうら市` failed rows ≤ 5 and `中新川郡上市町` beside it.
 #   * CN board: `locality_unit` ≥ 11 of 14.
 #   * Score both arms (this run and v8-cjk-kana) on the same scorer in the same session. a scorer patch between two
 #     reads is a comparison of scorers.

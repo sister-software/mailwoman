@@ -19,23 +19,23 @@ export const LayerOutcome = {
 	 */
 	Answered: "answered",
 	/**
-	 * No artifact is selected for the role and scope, or the selected artifact is not installed.
+	 * No artifact is selected for the role and scope, or the selected artifact isn't installed.
 	 *
 	 * The next source in the selection order is consulted, and after the last one
 	 * resolution continues at a coarser tier.
-	 * An absent layer is not evidence about the address.
+	 * An absent layer isn't evidence about the address.
 	 */
 	Absent: "absent",
 	/**
 	 * The artifact opened and the lookup found no match.
 	 *
-	 * The next source in the order is not consulted, because the first readable source answers.
-	 * Without coverage evidence for the location, a miss supports no claim that the address does not exist.
+	 * The next source in the order isn't consulted, because the first readable source answers.
+	 * Without coverage evidence for the location, a miss supports no claim that the address doesn't exist.
 	 */
 	Unsuccessful: "unsuccessful",
 	/**
-	 * The selected artifact exists and cannot be used: it does not open, fails integrity
-	 * or digest checks, or has a schema or normalization the reader does not support.
+	 * The selected artifact exists and cannot be used: it doesn't open, fails integrity
+	 * or digest checks, or has a schema or normalization the reader doesn't support.
 	 *
 	 * This is an error whose message includes the artifact's path.
 	 * It is never reported as an absent layer.
@@ -45,7 +45,7 @@ export const LayerOutcome = {
 	 * A configured obligation refusal applies to the selected artifact's license.
 	 *
 	 * The refusal stops the caller and repeats the artifact's recorded provenance.
-	 * It is never reported as an absent layer, because the customer chose to refuse data that is present.
+	 * It is never reported as an absent layer, because the customer chose to refuse data that's present.
 	 */
 	Refused: "refused",
 } as const
@@ -57,7 +57,7 @@ export type LayerOutcome = (typeof LayerOutcome)[keyof typeof LayerOutcome]
  */
 export const UnreadableReason = {
 	/**
-	 * The file could not be opened or read, such as a permission failure.
+	 * The file couldn't be opened or read, such as a permission failure.
 	 */
 	Unopenable: "unopenable",
 	/**
@@ -69,7 +69,7 @@ export const UnreadableReason = {
 	 */
 	Unmanifested: "unmanifested",
 	/**
-	 * The schema version or normalization is one the reader does not support.
+	 * The schema version or normalization is one the reader doesn't support.
 	 */
 	Unsupported: "unsupported",
 } as const

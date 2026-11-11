@@ -94,7 +94,7 @@ export function isDuplicateAddress(
  * Without a shared postcode, a locality agreement can join two towns' `100 Main Street`, so this
  * needs the points within {@linkcode ADDRESS_DUPLICATE_DISTANCE_KM} whatever the localities say.
  * A point stacked past {@linkcode ADDRESS_DUPLICATE_STACK_LIMIT} addresses gives
- * no distance, so a pair touching one is not a repeat.
+ * no distance, so a pair touching one isn't a repeat.
  */
 export function isNearbyDuplicateAddress(
 	rule: AddressDuplicateRule,

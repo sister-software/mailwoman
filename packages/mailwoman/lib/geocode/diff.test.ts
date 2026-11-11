@@ -53,7 +53,7 @@ const INPUT = "27 Minories, London EC3N 1DE"
 describe("diffGeocode", () => {
 	it("attributes a move to the PARSE when the parse changed", () => {
 		// The resolver was asked a different question.
-		// Retrieval is not the suspect and a distance delta by itself would have pointed at it.
+		// Retrieval isn't the suspect and a distance delta by itself would have pointed at it.
 		const before: GeocodeArm = {
 			tree: tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5, -0.12, 3]),
 			lat: 51.5,
@@ -131,7 +131,7 @@ describe("diffGeocode", () => {
 
 	it("reports retrieval BREADTH even when the span kept its place", () => {
 		// Same answer from 40 candidates instead of 2 is one gazetteer edit from moving.
-		// An answer that has not changed yet is not the same as an answer that is stable.
+		// An answer that's not changed yet isn't the same as an answer that's stable.
 		const before: GeocodeArm = {
 			tree: tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5, -0.12, 2]),
 			lat: 51.5,

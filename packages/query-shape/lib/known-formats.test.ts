@@ -90,7 +90,7 @@ describe("detectKnownFormats — postcodes", () => {
 
 	it("detects a JP postcode written with its postal mark, which is how Japan writes one", () => {
 		// `〒150-0001 Tokyo, Shibuya` read as carrying no known format while `Tokyo 150-0001` scored
-		// 0.95, so the more explicitly Japanese spelling was the one the detector could not see.
+		// 0.95, so the more explicitly Japanese spelling was the one the detector couldn't see.
 		// The mark is U+3012 and the tokenizer keeps it attached to the digits.
 		expect(formatsOf("〒150-0001")).toContain("jp_postcode")
 		expect(formatsOf("Japan, 〒150-0001 Tokyo, Shibuya")).toContain("jp_postcode")
@@ -98,7 +98,7 @@ describe("detectKnownFormats — postcodes", () => {
 
 	it("does not admit a postal mark in front of another country's postcode shape", () => {
 		// The optional mark belongs only to the JP pattern.
-		// A five-digit group behind it is not a Japanese postcode.
+		// A five-digit group behind it isn't a Japanese postcode.
 		// A five-digit group would route a US or FR address based on a character
 		// that happens to appear in the input.
 		expect(formatsOf("〒10118")).not.toContain("jp_postcode")

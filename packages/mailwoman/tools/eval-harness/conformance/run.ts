@@ -95,7 +95,7 @@ export interface ConformanceSummary {
 	 */
 	newlyHolding: ConformanceFinding[]
 	/**
-	 * Rows whose comparator read its axis but could not decide, left out of the hold ratio
+	 * Rows whose comparator read its axis but couldn't decide, left out of the hold ratio
 	 * because the run has no evidence the law broke or held.
 	 */
 	unmeasured: ConformanceFinding[]
@@ -120,7 +120,7 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 	for (const finding of findings) {
 		const blocking = (finding.fixture.status ?? "pass") === "pass"
 
-		// Read before the status split and on tracked rows too, since an unmeasured tracked row has not started holding.
+		// Read before the status split and on tracked rows too, since an unmeasured tracked row hasn't started holding.
 		if (finding.reading.observed === "unmeasured") {
 			unmeasured.push(finding)
 
@@ -145,7 +145,7 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 
 /**
  * Renders one finding as the line a law suite prints, naming the row it came from
- * so a violation is not a claim about a synthetic pair.
+ * so a violation isn't a claim about a synthetic pair.
  */
 export function formatConformanceFinding(finding: ConformanceFinding): string {
 	const { fixture, reading, held } = finding

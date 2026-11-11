@@ -47,7 +47,7 @@ const DEFAULT_PROGRESS_EVERY = 2000
 /**
  * Measure every candidate resolution over the real source, keeping the scenarios apart.
  *
- * @throws {Error} When a layer's streamed feature count does not match the count it declares.
+ * @throws {Error} When a layer's streamed feature count doesn't match the count it declares.
  * A short read produces a well-formed table describing a shorter coastline.
  * That partial result must throw.
  */

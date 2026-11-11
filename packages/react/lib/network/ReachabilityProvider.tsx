@@ -31,7 +31,7 @@ import {
 export const REACHABLE_PROBE_INTERVAL_MS = 60_000
 
 /**
- * The milliseconds between probes while the service does not answer,
+ * The milliseconds between probes while the service doesn't answer,
  * so a recovered service is noticed sooner.
  */
 export const UNREACHABLE_PROBE_INTERVAL_MS = 10_000

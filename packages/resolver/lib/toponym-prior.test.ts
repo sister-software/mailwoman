@@ -46,7 +46,7 @@ describe("rankByImportance", () => {
 
 	it("ABSTAINS when only ONE candidate carries a measured score (positive evidence only)", () => {
 		// A missing importance means the score source never measured the place, never 0,
-		// so a lone measured 0.55 must not be read as beating an unmeasured megacity.
+		// so a lone measured 0.55 mustn't be read as beating an unmeasured megacity.
 		const partial = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -192,7 +192,7 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 
 	it("#2272: the partition is SAME-COUNTRY — an uncounted foreign bearer still wins on fame", () => {
 		// The partition is same-country deliberately: across borders an article-only score
-		// is the only evidence there is, so that branch stays uncapped.
+		// is the only evidence there's, so that branch stays uncapped.
 		const crossBorder: ResolvedPlace[] = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, population: 128_377, importance: 0.5089 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -202,8 +202,8 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("#2272: two uncounted same-country bearers still separate on importance", () => {
-		// The partition must not touch two uncounted same-country bearers:
-		// neither was measured, so importance is all there is.
+		// The partition mustn't touch two uncounted same-country bearers:
+		// neither was measured, so importance is all there's.
 		const neitherCounted: ResolvedPlace[] = [
 			place({ id: 1, name: "Bonito", country: "BR", prominence: 0, importance: 0.31 }),
 			place({ id: 2, name: "Bonito", country: "BR", prominence: 0, importance: 0.44 }),

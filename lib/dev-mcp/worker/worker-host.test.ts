@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The stub advertises tool metas from a sidecar, so a schema can change between forks without a name
- *   changing. That is the restart a name-only `tools_changed` compare would leave clients stale on.
+ *   changing. That's the restart a name-only `tools_changed` compare would leave clients stale on.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

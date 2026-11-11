@@ -27,7 +27,7 @@ import {
 import { SizeBasis } from "#data/registry"
 
 /**
- * The installation inventory could not be read, naming the input that failed.
+ * The installation inventory couldn't be read, naming the input that failed.
  */
 export class InstallationReadError extends CommandError {
 	readonly path: string
@@ -362,7 +362,7 @@ export interface SetupInstallation {
 /**
  * The lines the non-interactive run prints.
  *
- * They are the roots, the parsed sample, one line per tier, what works now, the next smallest
+ * They're the roots, the parsed sample, one line per tier, what works now, the next smallest
  * installation, and the routes to a token when a licensed tier is among the tiers not installed.
  */
 export function setupSummary(

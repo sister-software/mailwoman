@@ -183,7 +183,7 @@ export function countriesOfWeightsFamily<Family extends string>(
  *
  * `source` names the declaration in the brand and in a refusal.
  *
- * @throws When a code is not an ISO 3166-1 alpha-2 code in `CountryISO2`.
+ * @throws When a code isn't an ISO 3166-1 alpha-2 code in `CountryISO2`.
  */
 export function countriesDeclaredBy<Source extends string>(
 	source: Source,

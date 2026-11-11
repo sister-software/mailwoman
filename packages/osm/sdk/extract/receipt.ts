@@ -6,7 +6,7 @@
  *   The identity of the Geofabrik extract a build reads: the URL it came from, the SHA-256 of its bytes,
  *   and the date of the OpenStreetMap snapshot inside it.
  *
- *   A Geofabrik `-latest` URL serves a new file every day, so the URL does not identify the input by itself.
+ *   A Geofabrik `-latest` URL serves a new file every day, so the URL doesn't identify the input by itself.
  *   The digest does. `tools/fetch/extract.ts` writes a receipt beside each download, and this module reads
  *   it back and checks the file still has the bytes the receipt recorded.
  */

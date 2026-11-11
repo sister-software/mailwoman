@@ -34,7 +34,7 @@ export class GeocoderFixture {
 	/**
 	 * Navigate to the geocoder and wait until the classifier is loaded.
 	 *
-	 * Network-idle is not the signal because the gazetteer's warm-up range reads keep
+	 * Network-idle isn't the signal because the gazetteer's warm-up range reads keep
 	 * the network busy past readiness, so the enabled address field is.
 	 */
 	async goto(query?: string): Promise<void> {

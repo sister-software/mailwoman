@@ -6,7 +6,7 @@
  *   Compares two paths and checks locations outside the layer's coverage.
  *
  *   The positive half samples points from the sealed artifact and asks the EA's OGC API Features service about them.
- *   The service provides geometry through a separate distribution channel. This package has not touched that
+ *   The service provides geometry through a separate distribution channel. This package hasn't touched that
  *   geometry. The point test runs again on the service's rings, so the comparison uses two verdicts from the same
  *   authority. This measures our conversion against the authority's published geometry.
  *
@@ -197,7 +197,7 @@ export async function verifyCoastalDatabase(options: VerifyCoastalOptions): Prom
 /**
  * Whether the service's own geometry contains the point, decided here with the
  * same even-odd rule the artifact's reader uses.
- * So what is compared is a verdict against a verdict.
+ * So what's compared is a verdict against a verdict.
  */
 async function readServiceContainment(
 	readServiceFeatures: ServiceFeatureReader,

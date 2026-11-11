@@ -64,7 +64,7 @@ interface ContextSources {
  * Held by the context object, so the cache lives exactly as long as the context.
  * A context built by spreading another starts empty.
  *
- * A cached read assumes the tree does not change while its context is in use.
+ * A cached read assumes the tree doesn't change while its context is in use.
  * A check only reads, and `mwops health fix` builds a new context for each pass.
  *
  * A source written and read again through one context reads as it was before the write.

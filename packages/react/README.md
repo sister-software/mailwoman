@@ -6,7 +6,7 @@ packages the parse/geocode/POI explorers from the docs site as smaller parts for
 ## What's in the box
 
 The package contains two composed explorers, plus the small presentational units and headless hooks
-they are built from:
+they're built from:
 
 - **`POIExplorer`** is a self-contained POI-intent tester (classify → subject → OverpassQL). The intent
   path runs entirely offline over `@mailwoman/kind-classifier`, `@mailwoman/poi-taxonomy`, and
@@ -43,7 +43,7 @@ load from `public.sister.software`. No component imports CSS, so the bare packag
   (Playwright / headless Chromium).
 
 New React code uses hooks and current idioms: derive values during render, and use refs and reducers
-where they are idiomatic. Legacy context is out. A lint finding is answered by restructuring the
+where they're idiomatic. Legacy context is out. A lint finding is answered by restructuring the
 component, never by a disable comment.
 
 ## License

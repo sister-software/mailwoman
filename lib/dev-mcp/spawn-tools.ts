@@ -279,7 +279,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				try {
 					parsed = parseJSONStrict(finished.stdout)
 				} catch {
-					// Not JSON — ordinary for most verbs, so this is not reported as an error.
+					// Not JSON — ordinary for most verbs, so this isn't reported as an error.
 				}
 
 				return {
@@ -346,7 +346,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				return {
 					...summary,
 					// A running job still reports what it has produced so far, marked as partial,
-					// because a partial log is useful and a silent "not ready" is not.
+					// because a partial log is useful and a silent "not ready" isn't.
 					partial: job.state === "running",
 					// A graded `fail` exits 1, so `state: "failed"` is what a completed-and-failing
 					// A completed failing gauntlet has `state: "failed"`.

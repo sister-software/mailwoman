@@ -71,7 +71,7 @@ export function noEvalReport(): EvalReport {
 }
 
 /**
- * Parses an eval report and refuses one that is not a JSON object.
+ * Parses an eval report and refuses one that's not a JSON object.
  */
 export function parseEvalReport(text: string): EvalReport {
 	const report: unknown = parseJSONStrict(text)

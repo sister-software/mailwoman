@@ -10,7 +10,7 @@ import { type DerivationNode, type DerivationProjection, observation, projectDer
 /**
  * The source name on observations built from a resolve trace.
  *
- * Its vintage is `null` because the trace does not record the gazetteer extract's version.
+ * Its vintage is `null` because the trace doesn't record the gazetteer extract's version.
  */
 export const TRACE_SOURCE = "gazetteer"
 

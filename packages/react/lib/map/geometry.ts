@@ -41,7 +41,7 @@ function circleRing(lat: number, lon: number, radiusKM: number): number[][] {
 
 /**
  * Returns a circle approximating the extent of a place that has no polygon, with a radius
- * of half the bbox diagonal clamped to 0.5–50 km, or 3 km when there is no bbox.
+ * of half the bbox diagonal clamped to 0.5–50 km, or 3 km when there's no bbox.
  */
 export function approxCircleGeometry(lat: number, lon: number, bbox?: LatLonBounds): PlaceGeometry {
 	const halfDiagKm = bbox

@@ -121,7 +121,7 @@ compares a commune centroid (0.5 km from the address) against a postcode-area ce
 French communes are small, and one postcode spans several of them. Choose one specific tier and grade
 both arms at that tier.
 
-To reproduce, pass the model, tokenizer and model card explicitly, because the eval does not resolve
+To reproduce, pass the model, tokenizer and model card explicitly, because the eval doesn't resolve
 installed weights:
 
 ```bash
@@ -132,11 +132,11 @@ mailwoman eval oa-resolver \
   [--candidate-db <path>]
 ```
 
-## What the candidate backend does not implement
+## What the candidate backend doesn't implement
 
-`ResolverBackend` marks `ancestors()` as optional, and `WOFCandidateTableLookup` does not
+`ResolverBackend` marks `ancestors()` as optional, and `WOFCandidateTableLookup` doesn't
 implement it. Its public surface is `findPlace` and `close`. The published `candidate.db` holds a
-`candidate_ancestor` table that the Earth Gazette explorer reads, but the lookup does not answer
+`candidate_ancestor` table that the Earth Gazette explorer reads, but the lookup doesn't answer
 `ancestors()` from it. On the candidate backend, `includeAncestors` (default off) therefore leaves
 `metadata.ancestors` unset, and the Nominatim and Photon drop-ins cannot expose a containment
 lineage.
@@ -158,7 +158,7 @@ back.
 ## Scores are not comparable across backends
 
 `node.metadata.resolver_score` is derived from bm25 on FTS (≈19–41) and from population/`neg_rank`
-on candidate (≈5–7). A consumer must not keep a hardcoded threshold across a backend switch.
+on candidate (≈5–7). A consumer mustn't keep a hardcoded threshold across a backend switch.
 
 Within either backend, the score also **cannot screen out errors**. On 40 gold rows, the range of
 scores for wrong answers falls inside the range for correct answers, and their mean is _higher_ (FTS

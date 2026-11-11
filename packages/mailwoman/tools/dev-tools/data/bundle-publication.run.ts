@@ -12,7 +12,7 @@
  *
  *   `refusalsForPublication` reads manifests and makes no judgment about their source.
  *   This command supplies manifests from databases on disk and prints the values it read,
- *   including the artifacts it could not read: an absent database is an unanswered question rather than
+ *   including the artifacts it couldn't read: an absent database is an unanswered question rather than
  *   a pass. The command reports it as unanswered.
  *
  *   Usage:

@@ -35,7 +35,7 @@ The native schema declares these operations. A response name refers to a schema 
 | `GET /health`      | No request fields declared.                                             | `HealthResponse`         | None listed.            |
 | `GET /metrics`     | No request fields declared.                                             | `MetricsSnapshot`        | None listed.            |
 
-The parse response schema contains `input`, `components`, `tree`, and `debug`. The `GeocodeResponse` schema defines `lat`, `lon`, `resolution_tier`, and other coordinate and evidence fields. [Result schema](./schema.mdx) explains the fields at their owning interfaces. `GET /health` declares `status` and `uptime_s`. A successful health response reports that the HTTP app answered. It does not verify the presence of geocoding data.
+The parse response schema contains `input`, `components`, `tree`, and `debug`. The `GeocodeResponse` schema defines `lat`, `lon`, `resolution_tier`, and other coordinate and evidence fields. [Result schema](./schema.mdx) explains the fields at their owning interfaces. `GET /health` declares `status` and `uptime_s`. A successful health response reports that the HTTP app answered. It doesn't verify the presence of geocoding data.
 
 The native `APIError` schema requires `error` as a string and `detail` as either a string or `null`. The OpenAPI document assigns 400 to invalid native inputs, 413 to a batch over its configured cap, 501 to an unwired parse method, and 503 to unavailable geocoding or resolution methods where the relevant route declares it. The schema lists no 500 response for the native operations in the table. Runtime failures may have additional status codes. No data-backed native request was run for this page.
 

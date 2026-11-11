@@ -12,7 +12,7 @@ import type { FRN } from "#frn"
  * One cores registration record exactly as the detail page states it.
  *
  * Every field is optional because the page omits a row instead of emitting an empty one.
- * The reader does not interpret, derive or classify fields.
+ * The reader doesn't interpret, derive or classify fields.
  */
 export interface CORESRegistration {
 	frn: FRN

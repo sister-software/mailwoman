@@ -26,7 +26,7 @@ It is an **H3 hexbin** tileset. Each cell stores **two baked fog values** in `[0
 
 The demo's two fill layers (`coverage-opt-fog`, `coverage-honest-fog`) just point `fill-opacity` at one prop or the other — **no rebake needed to switch readings**. Each H3 resolution is baked in its own non-overlapping zoom band. The finest is baked at a single tile-max zoom and MapLibre **overzooms** above it (hexes are identical geometry at every zoom).
 
-**The tile worker serves XYZ. Client-side PMTiles is not the serving path.** The `.pmtiles` archive lives at `mailwoman-tiles/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.mailwoman.post/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — that path was removed (`524f78a8`). Don't bring it back.
+**The tile worker serves XYZ. Client-side PMTiles isn't the serving path.** The `.pmtiles` archive lives at `mailwoman-tiles/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.mailwoman.post/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — that path was removed (`524f78a8`). Don't bring it back.
 
 The **global holes layer** is decoupled from the US rooftop pipeline (its own DuckDB stage, US-excluded) but uses the SAME `coverage` source-layer + `fog`/`fog_opt` props, so the demo's two fill layers render it with zero wiring changes. It emits res-domain hexes at `[onset…max]` + a res-4 low-zoom rollup. The US tiers are untouched.
 
@@ -129,7 +129,7 @@ The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible
 - **DuckDB multi-ATTACH mis-binds.** `ATTACH`ing N sqlite DBs and `UNION ALL`-ing structurally-identical _aggregating_ subqueries (`h3_latlng_to_cell(…) … GROUP BY 1` per arm) silently binds every arm to the **first** attached DB (a 49-state build reported 3× CA's points in CA's cells). **Fix:** `UNION ALL` the **raw** columns, aggregate **once** in the outer query. (Already done in `mailwoman/coverage/core.ts` — don't undo it.)
 - **`.gitignore` bare `coverage` rule** (the vitest report dir) matches any dir called `coverage` at any depth. It was silently ignoring `mailwoman/commands/coverage/` and `cartographer/coverage/`. Scoped `!`-negations are in `.gitignore`; keep them or the command + module vanish from git/npm-publish.
 - **Don't serve PMTiles client-side.** XYZ via the tile worker only.
-- **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale. It does not subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — accurate, since a postcode is coarse. Don't "finish" it to street level.
+- **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale. It doesn't subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — accurate, since a postcode is coarse. Don't "finish" it to street level.
 
 ## The jurisdiction layer
 
@@ -137,7 +137,7 @@ The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible
 v5.1.2 map unit per jurisdiction, 281 units carrying the register's 250 jurisdictions. Natural Earth
 is public domain, so its polygons can be published. The map-units file gives the French overseas
 departments, the US Minor Outlying Islands and Taiwan polygons of their own. The countries file
-does not.
+doesn't.
 
 Each feature records what a training run drew from the jurisdiction (`draws`, `draw_share`), the
 address-shape forms among those rows (`shape_forms`, `postcode_first_share`,

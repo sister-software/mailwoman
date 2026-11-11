@@ -7,7 +7,7 @@
  *   domains and OGL v3.0 attribution.
  *
  *   Every stored row and every reading records its scenario, because the twelve layers answer different
- *   questions and must not be pooled.
+ *   questions and mustn't be pooled.
  *
  *   The domains are closed. The builder throws on an unknown value because it signals a source-schema change.
  *   These domains cover all twelve layers of the 2024 geodatabase.
@@ -213,7 +213,7 @@ export const NCERM_SCENARIOS_BY_KEY: ReadonlyMap<string, CoastalScenario> = new 
 )
 
 /**
- * The scenario used when a caller does not specify one.
+ * The scenario used when a caller doesn't specify one.
  *
  * It is the least projected scenario: no future works, present-day allowance and the nearer horizon.
  * Every reading records the scenario it used.
@@ -225,7 +225,7 @@ export const DEFAULT_NCERM_SCENARIO = "NFI_2055_0CC"
  *
  * These layers describe a different hazard with its own schema.
  * They have no erosion distance or scenario.
- * They are stored in a separate table from the erosion zones.
+ * They're stored in a separate table from the erosion zones.
  */
 export const NCERM_GROUND_INSTABILITY_LAYERS: ReadonlyArray<{ layer: string; kind: string; label: string }> = [
 	{

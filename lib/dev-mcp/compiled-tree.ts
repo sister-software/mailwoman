@@ -16,7 +16,7 @@
  *
  *   `@mailwoman/core/module/compiled-freshness` compares the newest source with the newest emit. It excludes
  *   `out/*.d.ts` and the test tree. The promotion battery uses the same check. Its previous copy compared source
- *   mtimes with the `out/` directory. `tsc` does not advance that directory's timestamp when it overwrites files in place.
+ *   mtimes with the `out/` directory. `tsc` doesn't advance that directory's timestamp when it overwrites files in place.
  *   This module defines the workspace set because that set depends on what this server spawns.
  */
 

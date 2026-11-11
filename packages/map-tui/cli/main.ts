@@ -22,7 +22,7 @@ import { type CLIArgs, CLIArgsError, HELP_TEXT, parseCLIArgs } from "#cli/args"
 import { TileSource } from "#tile-source"
 
 /**
- * Exit code for a command line that could not be parsed.
+ * Exit code for a command line that couldn't be parsed.
  */
 const EXIT_USAGE = 1
 

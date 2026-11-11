@@ -18,7 +18,7 @@
  *   name and appears in the release list, so it cannot join a group. A subdirectory counts only when it contains a
  *   tracked TypeScript file. That distinguishes code families from data directories that mirror external names.
  *   `hf-publish/mailwoman-cjk/` is a Hugging Face repository. `fixtures/.../whosonfirst-data-admin-fr/` is an upstream
- *   repository. This check does not arrange either external repository.
+ *   repository. This check doesn't arrange either external repository.
  */
 
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
@@ -204,17 +204,17 @@ export function findPrefixGroups(
  *
  * A directory member expands into one move per tracked file beneath it,
  * because the move operation works in files.
- * That is what lets it repoint the specifiers naming each one.
+ * That's what lets it repoint the specifiers naming each one.
  */
 export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: readonly string[]): ModuleMove[] {
 	const moves: ModuleMove[] = []
 
-	// A directory that is itself moving includes its contents, so a group inside one
+	// A directory that's itself moving includes its contents, so a group inside one
 	// would claim the same file twice with two destinations.
 	// `lib/cli-native/command-router.ts` is both a `cli-` member through its directory
 	// and a `command-` member in its own right.
 	// The outer move wins this pass and the check re-reads afterwards.
-	// That is what the fix's repeated passes are for.
+	// That's what the fix's repeated passes are for.
 	const movingDirectories = groups.flatMap((group) =>
 		group.members.filter((member) => member.kind === "directory" && member.name !== group.prefix).map((m) => m.path)
 	)

@@ -110,7 +110,7 @@ const LETTER = /\p{L}/u
  * Returns the rows of `table` whose spelling or an abbreviation occurs in `text`.
  *
  * A spelling that starts or ends with a letter must meet a non-letter on that side,
- * so `Rm` matches `Rm 12` and does not match inside `Rmx`.
+ * so `Rm` matches `Rm 12` and doesn't match inside `Rmx`.
  * A spelling of symbols, such as `#` or `/F`, matches wherever it occurs.
  *
  * The match folds case, periods and whitespace as {@linkcode foldDesignatorSpelling} does.

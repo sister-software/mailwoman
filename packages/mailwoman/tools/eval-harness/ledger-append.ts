@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Ledger-append. It turns a promotion-eval out-dir into one row of
- *   `evals/scores-by-version.json`, so the per-version score ledger updates itself and does not
+ *   `evals/scores-by-version.json`, so the per-version score ledger updates itself and doesn't
  *   rely on discipline.
  *
  *   Metric values come from the out-dir's `verdict.json` (the eval spec's own floor readings, the

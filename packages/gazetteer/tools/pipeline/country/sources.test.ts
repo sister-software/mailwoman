@@ -218,7 +218,7 @@ describe("planCountryMove", () => {
 describe("planCountryMove — a move that is already done", () => {
 	it("plans nothing for a country the target already serves", () => {
 		// US is already WOF-served, so an add edit would have a reader touch a list
-		// the country is on and describe work that is done.
+		// the country is on and describe work that's done.
 		const plan = planCountryMove({
 			country: "US",
 			target: AdminSource.WOF,

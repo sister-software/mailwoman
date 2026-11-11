@@ -116,5 +116,5 @@ the train stream with seed 11 and a shuffle buffer of 6, as `source|country|raw`
 validation split; `encoded` is one pass of the char path in word mode with the default shuffle buffer, as each row's
 labels, attention and first three units of char ids; `source_row_counts` is the rows per source. The Python loader
 wrote it before the Rust sampler replaced it, and `tests/loader_split_reference.rs` requires the Rust sampler to
-reproduce every value in order. It is a record of the Python sampler's output and is not regenerated from the Rust
+reproduce every value in order. It is a record of the Python sampler's output and isn't regenerated from the Rust
 sampler.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A dropped resolver pin does not throw: it produces a check log identical to the unpinned one, so every
+ *   A dropped resolver pin doesn't throw: it produces a check log identical to the unpinned one, so every
  *   hop from run options to geocode deps is pinned here rather than by running the check.
  */
 
@@ -83,7 +83,7 @@ describe("runResolverPins — CLI options → pin set", () => {
 	})
 
 	// The on pin now restates production, so grading the pre-promotion configuration
-	// requires an off pin that is believed.
+	// requires an off pin that's believed.
 	it("carries an OFF pin", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: "off" })).toEqual(pinned({ postcodeCountryCoherence: "off" }))
 	})

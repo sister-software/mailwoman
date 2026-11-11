@@ -10,7 +10,7 @@
  *   Source and license: the LINZ-derived OpenAddresses NZ countrywide extract
  *   (`<data-root>/openaddresses/extracted/nz/countrywide.csv`), upstream LINZ "NZ Street Address" via
  *   OpenAddresses, CC-BY 4.0 with attribution to Land Information New Zealand (the same lane the
- *   country-evidence runbook already ships pair-index data from). It is not derived from any
+ *   country-evidence runbook already ships pair-index data from). It isn't derived from any
  *   Nominatim import, so the ODbL comparison arm stays a comparison arm. The build refuses to run
  *   unless the source's MD5 sidecar matches. It stamps the source MD5 and vintage into the database's
  *   `database_meta` table so provenance travels with the artifact.
@@ -21,8 +21,8 @@
  *   address point. A few depot-coded outliers cannot move a median. The bbox is the group's p5–p95 envelope.
  *   Placetype is `locality`, the tier NZ addressing uses for suburbs and bare
  *   parsed toponyms. A `neighbourhood` row would be invisible to the locality filter group.
- *   and widening that group is a global ranking change this database must not smuggle in. Population
- *   is deliberately 0/unmeasured (meaning-of-zero: an address-point count is not a population), so
+ *   and widening that group is a global ranking change this database mustn't smuggle in. Population
+ *   is deliberately 0/unmeasured (meaning-of-zero: an address-point count isn't a population), so
  *   a database row ranks behind any populated namesake and wins only where its key is the answer.
  *
  *   Run: mailwoman gazetteer build nz-localities [--csv <countrywide.csv>] [--out <localities-nz-linz.db>]

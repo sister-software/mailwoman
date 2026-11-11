@@ -93,7 +93,7 @@ export interface SmokeGetStartedOptions {
 	 */
 	full?: boolean
 	/**
-	 * A persistent data root for the heavy leg, so the ~2.88 GB pull is not repeated.
+	 * A persistent data root for the heavy leg, so the ~2.88 GB pull isn't repeated.
 	 *
 	 * @defaultValue a scratch directory.
 	 */
@@ -138,7 +138,7 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	await using tmp = await temporaryDirectory("mw-get-started-")
 	const tarDir = tmp.path("tarballs")
 	const project = tmp.path("project")
-	// doctor's own "data root does not exist" branch needs the directory to be missing rather than empty.
+	// doctor's own "data root doesn't exist" branch needs the directory to be missing rather than empty.
 	const doctorRoot = tmp.path("doctor-root-absent").toString()
 
 	await makeDirectories(tarDir, project)
@@ -172,7 +172,7 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 		doctor = run("node", [cli, "doctor"], project, { MAILWOMAN_DATA_ROOT: doctorRoot })
 	} catch (error) {
 		// doctor exits non-zero when a check fails.
-		// That is the cold state the page shows.
+		// That's the cold state the page shows.
 		// The transcript is what counts.
 		doctor = error instanceof Error && "stdout" in error ? String((error as { stdout: unknown }).stdout) : String(error)
 	}

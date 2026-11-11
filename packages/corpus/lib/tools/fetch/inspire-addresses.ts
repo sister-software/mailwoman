@@ -104,7 +104,7 @@ export interface WFSCapabilities {
 	/**
 	 * Whether the service advertises `ImplementsResultPaging`.
 	 *
-	 * A service that does not cannot be paged, so a caller has to take the whole
+	 * A service that doesn't cannot be paged, so a caller has to take the whole
 	 * type in one request or decline it.
 	 * A request past the first page of such a service silently repeats page one.
 	 */
@@ -216,7 +216,7 @@ export async function readWFSCapabilities(
 
 	// `application/json` is GeoServer's GeoJSON writer, and `application/geo+json` is
 	// the alias a service may advertise without implementing.
-	// The other JSON-ish formats have a different envelope, so they are left out rather than tried.
+	// The other JSON-ish formats have a different envelope, so they're left out rather than tried.
 	const jsonFormats = ["application/json", "application/geo+json"].filter((format) => outputFormats.includes(format))
 
 	const countDefault = /<(?:\w+:)?Constraint\s+name="CountDefault"[\s\S]{0,240}?<(?:\w+:)?DefaultValue>\s*(\d+)\s*</iu
@@ -377,7 +377,7 @@ const FLATTENED_COMPONENT = /^component\d*_xlink_href$/iu
  *
  * A reference may leave the service: Estonia's first three slots address its Administrative
  * Units theme at `AU_haldusyksused` rather than its Addresses theme.
- * That is a reference this module reads. {@linkcode resolveComponents} reports it as
+ * That's a reference this module reads. {@linkcode resolveComponents} reports it as
  * unjoined against Addresses features rather than dropping it.
  */
 export function componentReferences(feature: GeoJSONFeature): readonly string[] {
@@ -448,7 +448,7 @@ export interface ComponentResolution {
 	unjoined: number
 	unjoinedExample: string | null
 	/**
-	 * References this module could not read a key from at all.
+	 * References this module couldn't read a key from at all.
 	 */
 	unreadable: number
 }

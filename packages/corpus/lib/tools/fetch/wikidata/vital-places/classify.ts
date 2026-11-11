@@ -9,7 +9,7 @@
  * The query service cannot walk `P279*` over every item of a class at world scale (every per-class count
  * timed out on 2026-11-03), but it answers the walk for a batch of about 150 class ids within its limit,
  * and the kept entities use a few thousand distinct classes. Each class's roots are cached in a JSON file,
- * so a rerun asks only about classes it has not seen.
+ * so a rerun asks only about classes it hasn't seen.
  */
 
 import { errorMessage } from "@mailwoman/core/errors/schema"
@@ -93,7 +93,7 @@ export type PlaceVerdict = (typeof PLACE_VERDICTS)[keyof typeof PLACE_VERDICTS]
 /**
  * The SPARQL that names, for each class in the batch, every root it descends from.
  *
- * `wdt:P279*` includes the zero-length path, so a class that is itself a root descends from it.
+ * `wdt:P279*` includes the zero-length path, so a class that's itself a root descends from it.
  */
 export function buildClassDescentQuery(classQIDs: readonly string[], roots: readonly string[] = DESCENT_ROOTS): string {
 	if (!classQIDs.length || classQIDs.length > CLASS_QUERY_BATCH) {

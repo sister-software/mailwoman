@@ -191,7 +191,7 @@ export class ClassificationsMatchMap extends Map<Classification, ClassificationM
 	}
 
 	/**
-	 * Predicate to determine if the map contains a classification that is visible.
+	 * Predicate to determine if the map contains a classification that's visible.
 	 */
 	public hasVisibleClassification(classification?: VisibleClassification): boolean {
 		return classification ? this.has(classification) : Iterator.from(this.keys()).some(isVisibleClassification)

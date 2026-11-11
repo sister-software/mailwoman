@@ -5,7 +5,7 @@ alias mechanism India motivated, in their own languages rather than English.
 
 ## Two things measured before building
 
-**The fold does not strip accents.** `Córdoba` → `córdoba`, `Cordoba` → `cordoba`: different keys.
+**The fold doesn't strip accents.** `Córdoba` → `córdoba`, `Cordoba` → `cordoba`: different keys.
 WOF stores the unaccented form for several Spanish cities, so a bare WOF surface would never match
 a real Spanish address.
 
@@ -19,7 +19,7 @@ Alias expansion now selects names whose language is **official for the country**
 `isOfficialLanguage`, the same table the WOF ingest consults) **plus English** as the lingua franca,
 and requires the surface be **Latin-script**.
 
-The script filter is not cosmetic: India has 22 official languages, and WOF stores Devanagari,
+The script filter isn't cosmetic: India has 22 official languages, and WOF stores Devanagari,
 Tamil and Bengali forms this model never sees. Without it, generalizing from `eng` would have
 bloated the Indian artifact with scripts no input can contain. The check is on the ALIAS rather than
 the language tag, because a language can be written in more than one script.

@@ -30,7 +30,7 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
 
 /**
  * {@linkcode stableSourceID} over arbitrary disambiguator keys, such as a variant index
- * or a slot number that is not a `ComponentTag`.
+ * or a slot number that's not a `ComponentTag`.
  *
  * Both functions sort and hash every key handed in, so only the key vocabulary differs.
  * The narrower signature above stops an adapter from hashing a misspelled component name.

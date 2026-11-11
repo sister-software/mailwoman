@@ -5,7 +5,7 @@
  *
  *   `<CompactBuildings>` draws the compact building tiles that `?buildings3d=<tileset>` asks for with
  *   {@link CompactBuildingsLayer}, and the converted city models with {@link CityModelsLayer}. It hides the
- *   vector-tile building footprints while they draw, and the compact buildings inside each city model that has drawn.
+ *   vector-tile building footprints while they draw, and the compact buildings inside each city model that's drawn.
  */
 
 import { type CityTileset, cityTilesetPath } from "@mailwoman/structures/city-tilesets"

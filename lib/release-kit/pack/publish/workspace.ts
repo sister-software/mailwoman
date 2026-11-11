@@ -9,11 +9,11 @@
  *   Three-step flow:
  *
  *   1. `yarn pack -o <tmpfile>` — yarn 4 translates `workspace:*` deps to the concrete sibling version
- *        while building the tarball. npm's publish step does not translate these dependencies.
+ *        while building the tarball. npm's publish step doesn't translate these dependencies.
  *        A published `workspace:*` dependency breaks consumer `npm install` (eunsupportedprotocol).
  *   2. Derive the publish exports map from the dev map inside the tarball — every `node → .ts`
  *        condition is rewritten to emitted JavaScript. The repo runs source under Node. Consumers get `out/`.
- *        The dev `exports` in each workspace's package.json is the only exports map a workspace commits. There is no
+ *        The dev `exports` in each workspace's package.json is the only exports map a workspace commits. There's no
  *        hand-maintained `publishConfig.exports`. That removal left the v7.2.0 publish fully broken.
  *        This transform replaces it. A guard
  *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points to a

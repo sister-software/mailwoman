@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The address shapes the OpenStreetMap suites test, read from a rendered row's annotated spans. Each is a
- *   shape the publisher-labeled comparison sources could not supply with mapper-written answers: a secondary
+ *   shape the publisher-labeled comparison sources couldn't supply with mapper-written answers: a secondary
  *   unit, a dependent locality written before its city, a region written after the locality, and a house
  *   number within a place, such as an estate, where no street exists.
  */

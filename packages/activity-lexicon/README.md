@@ -6,7 +6,7 @@ Recognition only. This package makes no statement about the world — which esta
 
 ## Provenance discipline
 
-Every entry belongs to one of four attestation classes — a committed query, a derived form of one, a clause quoted from the compiled concept's description, or a regional register copied from a committed synonym — and the test suite re-checks each attestation against its source on every run. [`data/PROVENANCE.md`](./data/PROVENANCE.md) records the rules. An entry without a checkable attestation does not load.
+Every entry belongs to one of four attestation classes — a committed query, a derived form of one, a clause quoted from the compiled concept's description, or a regional register copied from a committed synonym — and the test suite re-checks each attestation against its source on every run. [`data/PROVENANCE.md`](./data/PROVENANCE.md) records the rules. An entry without a checkable attestation doesn't load.
 
 ## Release posture
 

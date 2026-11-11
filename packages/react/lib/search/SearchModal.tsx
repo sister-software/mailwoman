@@ -351,7 +351,7 @@ export function SearchModal({ open, onClose, onNavigate, search, recentKey }: Se
 	}
 
 	function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-		// A key that commits or edits an IME composition is not a command.
+		// A key that commits or edits an IME composition isn't a command.
 		if (event.nativeEvent.isComposing) return
 
 		// The options on screen, if any, answer an earlier query, so the Enter waits for the field's query to settle.

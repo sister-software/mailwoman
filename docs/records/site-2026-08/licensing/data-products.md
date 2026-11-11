@@ -9,7 +9,7 @@ hide_footer: true
 
 Mailwoman consists of an engine and a set of databases. The engine is one npm install, and its terms are on the [licensing overview](./index.md). The databases are separate artifacts with their own provenance, sizes, and terms. Their terms differ because each database inherits obligations from its source register. Maintainers who expect one license to cover every database can be surprised by those differences.
 
-This page lists the databases, with one entry per artifact. Each entry covers what the artifact contains, where the data came from, what the upstream license requires, whether we distribute the artifact or ship you the builder, and how current it is. If you are deciding what to load into a product, read this page alongside [data licensing & provenance](./data-provenance.md). That page covers the same sources from the legal side.
+This page lists the databases, with one entry per artifact. Each entry covers what the artifact contains, where the data came from, what the upstream license requires, whether we distribute the artifact or ship you the builder, and how current it is. If you're deciding what to load into a product, read this page alongside [data licensing & provenance](./data-provenance.md). That page covers the same sources from the legal side.
 
 ## How to read an entry
 
@@ -20,7 +20,7 @@ This page lists the databases, with one entry per artifact. Each entry covers wh
 - **private**: your own data, conforming to the same schema, loaded from `$MAILWOMAN_DATA_ROOT`. It never leaves your machine.
 - **planned**: designed but not built. These entries show the roadmap and are marked so that no reader or integrator depends on them.
 
-**Cadence** describes current practice rather than a goal. Most of these artifacts are rebuilt when coverage changes or an ingest bug is fixed. They have no fixed schedule. Each entry states when that is the case.
+**Cadence** describes current practice rather than a goal. Most of these artifacts are rebuilt when coverage changes or an ingest bug is fixed. They have no fixed schedule. Each entry states when that's the case.
 
 Every artifact is a **sealed** SQLite file. The build writes it to a temporary path. The process verifies
 the file before swapping it into place, then sets its permissions to `chmod 0444`. Updates are full
@@ -43,7 +43,7 @@ rebuilds. None of these artifacts is a live database you write to.
 | [Neural weights bundles](#neural-weights-bundles)                                                   | the parser itself                        | shipped (npm) | AGPL-3.0-only OR commercial |
 | [Broadband filings](#broadband-filings--bdcdb-planned) (`bdc.db`)                                   | who filed what service where             | planned       | US public record            |
 
-Each entry gives sizes and counts. They are the numbers this repository records, dated where the repository dates them, and a rebuild changes them.
+Each entry gives sizes and counts. They're the numbers this repository records, dated where the repository dates them, and a rebuild changes them.
 
 ---
 
@@ -73,9 +73,9 @@ and the Hugging Face dataset card both say **CC-BY 4.0** and ask for an attribut
 
 :::
 
-**Tier:** shipped. It is published to Cloudflare R2 and served from `https://public.mailwoman.post/mailwoman/gazetteer/<version>/candidate.db`. The docs demo loads it directly with byte-range requests, so the demo uses the same artifact you would.
+**Tier:** shipped. It is published to Cloudflare R2 and served from `https://public.mailwoman.post/mailwoman/gazetteer/<version>/candidate.db`. The docs demo loads it directly with byte-range requests, so the demo uses the same artifact you'd.
 
-**Version / cadence.** The demo currently serves `2026-07-07a`. The path is dated and immutable, so every rebuild gets a new URL. There is **no fixed rebuild schedule**. The gazetteer is rebuilt when locale coverage is added or a source-ingest bug is fixed.
+**Version / cadence.** The demo currently serves `2026-07-07a`. The path is dated and immutable, so every rebuild gets a new URL. There's **no fixed rebuild schedule**. The gazetteer is rebuilt when locale coverage is added or a source-ingest bug is fixed.
 
 **Approximate size.** ~1.39 GB for the 2026-07-07 build, with 12,160,584 rows across 244 countries. An earlier note in `RELEASING.md` records ~490 MB, from before the postcode and GeoNames folds.
 
@@ -87,9 +87,9 @@ and the Hugging Face dataset card both say **CC-BY 4.0** and ask for an attribut
 
 This is the canonical local build that `candidate.db` is derived from. It is listed here because the FST priors and every offline eval read it, and because the repository contains a Hugging Face dataset card for it.
 
-**Contents.** Tables `spr` (one row per place), `names` (multi-language variants), `concordances` (cross-source ids), `place_population`, and `ancestors`, plus a `place_search` FTS5 index and a separately built `place_bbox` R\*Tree. It is deliberately **not** the off-the-shelf geocode.earth WOF dump. Those dumps assign different WOF ids to the same place. A switch to them would break every id we have published.
+**Contents.** Tables `spr` (one row per place), `names` (multi-language variants), `concordances` (cross-source ids), `place_population`, and `ancestors`, plus a `place_search` FTS5 index and a separately built `place_bbox` R\*Tree. It is deliberately **not** the off-the-shelf geocode.earth WOF dump. Those dumps assign different WOF ids to the same place. A switch to them would break every id we've published.
 
-**Tier:** internal. It is not part of the npm release and is not currently published anywhere. Its published derivative is `candidate.db` above.
+**Tier:** internal. It isn't part of the npm release and isn't currently published anywhere. Its published derivative is `candidate.db` above.
 
 :::note[The Hugging Face dataset card is stale]
 
@@ -121,7 +121,7 @@ This is layer #1 on the [spatial-layer interface](https://github.com/sister-soft
 
 :::info[The ODbL half of POI is a different artifact]
 
-Infrastructure categories such as fiber huts, telephone exchanges, and street cabinets have no permissive source. They exist in OpenStreetMap and in Overture's `base` theme, both ODbL, and Overture's distribution does not remove OSM's license terms. A **second**, `build-local` POI layer is therefore built from OSM, separate from this shipped `poi.db`. Queries that need infrastructure abstain with `requires_build_local_layer` instead of guessing. We ship that layer's builder but not its output.
+Infrastructure categories such as fiber huts, telephone exchanges, and street cabinets have no permissive source. They exist in OpenStreetMap and in Overture's `base` theme, both ODbL, and Overture's distribution doesn't remove OSM's license terms. A **second**, `build-local` POI layer is therefore built from OSM, separate from this shipped `poi.db`. Queries that need infrastructure abstain with `requires_build_local_layer` instead of guessing. We ship that layer's builder but not its output.
 
 :::
 
@@ -139,11 +139,11 @@ This is the precision tier for the United States. It returns an exact building c
 
 **Tier:** shipped. The extracts are served with byte-range requests from R2 at `https://public.mailwoman.post/mailwoman/street/us/<slug>/situs.db` for 52 slugs: all 50 states plus DC and the US Virgin Islands.
 
-**Version / cadence.** Release `2026-05-20.0`, pinned per artifact family in a `releases.json` manifest at the data root. There is no fixed rebuild schedule.
+**Version / cadence.** Release `2026-05-20.0`, pinned per artifact family in a `releases.json` manifest at the data root. There's no fixed rebuild schedule.
 
 **Approximate size.** Size varies widely by state population. The only figure this repository records is DC, at 119,889,920 bytes (~114 MB). A demo lookup against it reads about 280 KB of that file. That access pattern is why the extracts are served with byte-range requests.
 
-**Coverage gaps.** Hawaii is built from OpenAddresses (348K rooftop points) because the primary source does not cover it. New Hampshire has **no** rooftop source and resolves at street level through interpolation only.
+**Coverage gaps.** Hawaii is built from OpenAddresses (348K rooftop points) because the primary source doesn't cover it. New Hampshire has **no** rooftop source and resolves at street level through interpolation only.
 
 **Build.** `mailwoman situs address-points --state VT` builds one state, and `mailwoman situs build` builds all states.
 
@@ -163,7 +163,7 @@ This is the fallback below the situs tier. Where no rooftop point exists, the re
 
 **Version / cadence.** Release `TIGER2023`. TIGER publishes annually, and the extracts are rebuilt when we adopt a new vintage.
 
-**Approximate size.** This repository does not record per-state sizes.
+**Approximate size.** This repository doesn't record per-state sizes.
 
 **Build.** `mailwoman situs interpolation-extract --state VT` builds one state, and `mailwoman situs interpolation` downloads and builds all states.
 
@@ -189,13 +189,13 @@ This is France's national address register in the same situs schema as the US ex
 
 **Build.** `node ban/out/scripts/build-address-point-extract.js --csv-dir <dir> --release 2026-05-18`. The `--depts` flag builds a temporary sample to validate first.
 
-**Not included.** France has no interpolation extract. The exact-point tier covers France, and house numbers that BAN does not list are not interpolated.
+**Not included.** France has no interpolation extract. The exact-point tier covers France, and house numbers that BAN doesn't list are not interpolated.
 
 ---
 
 ## OSM rooftop extracts — `address-points-<cc>-<slug>.db`
 
-These extracts provide rooftop coverage for countries without a permissive national register. They are complete and benchmarked, and **we do not distribute them**.
+These extracts provide rooftop coverage for countries without a permissive national register. They're complete and benchmarked, and **we do not distribute them**.
 
 **Contents.** The same situs schema, built from address points: the exact `addr:housenumber` coordinate of a node, or the centroid of a building polygon. Interpolation is deliberately excluded. The build reads only OSM's explicit `addr:interpolation` ways and never synthesizes a house-number line from scattered points. Street locales exist for FR, DE, and NL.
 
@@ -221,7 +221,7 @@ Measured extracts, from the 2026-06-29 build session:
 
 **Contents.** A single `timezone_polygons` table with one row per boundary feature. Each row has the IANA tzid, a bounding box for the prefilter, and MultiPolygon coordinates as JSON. Point-in-polygon lookup runs on `node:sqlite`, server-side only.
 
-**Upstream source.** The `combined-with-oceans.json` release artifact of [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder). The repository does not pin an upstream release.
+**Upstream source.** The `combined-with-oceans.json` release artifact of [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder). The repository doesn't pin an upstream release.
 
 **License.** **ODbL.** Attribution and share-alike apply to the database you build and distribute.
 
@@ -243,7 +243,7 @@ Walkthrough: [looking up a timezone](../recipes/timezones.md).
 
 **License.** The repository describes it as a **public domain** code list without a share-alike obligation. It gives no formal identifier, CC0 or otherwise.
 
-**Tier:** build-local. `@mailwoman/un-locode-lookup` is published to npm at 8.3.0, and the `.db` is not published.
+**Tier:** build-local. `@mailwoman/un-locode-lookup` is published to npm at 8.3.0, and the `.db` isn't published.
 
 **Row counts.** 116k entries, of which roughly 93k have coordinates. An older docstring in the package states that about a third have coordinates. Use the README and recipe figures given here.
 
@@ -270,7 +270,7 @@ Walkthrough: [UN/LOCODE lookup](../recipes/un-locode-lookup.md).
 
 ## Neural weights bundles
 
-These packages are the parser itself, distributed as data-only npm packages that `@mailwoman/neural` loads at runtime. Unlike everything else on this page, they ship on npm rather than R2, and they are a **first-party artifact**. We trained them, so we set their license.
+These packages are the parser itself, distributed as data-only npm packages that `@mailwoman/neural` loads at runtime. Unlike everything else on this page, they ship on npm rather than R2, and they're a **first-party artifact**. We trained them, so we set their license.
 
 **License.** `AGPL-3.0-only OR LicenseRef-Commercial`, the same dual license as the engine. The Hugging Face READMEs list only the AGPL half. The `package.json` and model card state the dual form and are authoritative.
 
@@ -299,7 +299,7 @@ released corpus was built with it. `SHARE_ALIKE_PATTERN` was an anchored prefix 
 citing ODbL rather than the identifier.
 
 The paragraph's third and fourth sentences are about the model card's own attribution list and are
-unaffected. What is corrected is the mechanism the second sentence offers as the reason to believe them.
+unaffected. What's corrected is the mechanism the second sentence offers as the reason to believe them.
 [The data licensing page](./data-provenance.md) makes the same correction and identifies the replacement.
 
 Its third sentence also gives `CDLA-Permissive-2.0` for Overture Addresses. That identifier is the
@@ -321,7 +321,7 @@ country instead, so those rows take the register's terms. The model card now rea
 
 **Status: designed but not built.** This is Phase 2a of the broadband-plausibility vertical. It is listed so the design is public. No artifact is available to download.
 
-**Intended contents.** FCC Broadband Data Collection availability filings at census-block grain. Each row would have the provider id, technology code, advertised up/down speeds, latency flag, business/residential code, the 15-character block GEOID, and the Fabric BSL `location_id` as an **opaque join key only**. The spine keys would be `wof_id` and res-9 `h3` from the block centroid. They would deliberately **not** include `address_id`, because a block-grained filing does not describe an individual address. Any per-address answer would be an inference across the block and flagged as such.
+**Intended contents.** FCC Broadband Data Collection availability filings at census-block grain. Each row would have the provider id, technology code, advertised up/down speeds, latency flag, business/residential code, the 15-character block GEOID, and the Fabric BSL `location_id` as an **opaque join key only**. The spine keys would be `wof_id` and res-9 `h3` from the block centroid. They'd deliberately **not** include `address_id`, because a block-grained filing doesn't describe an individual address. Any per-address answer would be an inference across the block and flagged as such.
 
 **Upstream source.** FCC BDC availability data, a US government public record in the public domain.
 
@@ -333,7 +333,7 @@ country instead, so those rows take the register's terms. The model card now rea
 
 ---
 
-## What is not on this shelf
+## What's not on this shelf
 
 - **Build inputs.** Postcode extracts, `tiger.db`, the durable GeoNames alias fold, and the raw Overture parquet extracts are intermediates that feed the artifacts above. The build runbooks document them.
 - **Demo assets.** The map-highlight polygons and the address-coverage tile overlay exist for the demo. See the [coverage overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).

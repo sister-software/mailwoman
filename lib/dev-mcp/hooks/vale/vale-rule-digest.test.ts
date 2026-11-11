@@ -38,7 +38,7 @@ async function tokenPatterns(rule: string): Promise<RegExp[]> {
 		try {
 			patterns.push(new RegExp(`\\b(?:${token})\\b`, "iu"))
 		} catch {
-			// A token Vale's engine accepts and JavaScript's does not is skipped rather than failing the test.
+			// A token Vale's engine accepts and JavaScript's doesn't is skipped rather than failing the test.
 		}
 	}
 

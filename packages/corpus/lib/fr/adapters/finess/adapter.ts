@@ -9,15 +9,15 @@
  * Input is the publisher's `etalab-cs1100502-stock-<date>.csv`, the resource titled `Extraction
  * Finess des Etablissements` on `https://www.data.gouv.fr/datasets/finess-extraction-du-fichier-des-etablissements`.
  * The file is UTF-8 and semicolon-separated with RFC 4180 quoting. The publisher's description
- * (`etalab_cs1100502.pdf`) states tab-separated, and the file does not follow it. Line 1 is a comment
+ * (`etalab_cs1100502.pdf`) states tab-separated, and the file doesn't follow it. Line 1 is a comment
  * (`finess;etalab;111;2026-05-12`) and every other line opens with `structureet`. The adapter reads
  * the positional columns the description numbers: 4 `rs`, 5 `rslongue`, 8 `numvoie`, 9 `typvoie`, 10
  * `voie`, 11 `compvoie`, 12 `lieuditbp`, 14 `departement`, 16 `ligneacheminement` and 19
  * `categetab`, counted from 1. {@linkcode FinessColumn} holds them counted from 0.
  *
  * The publisher froze this extract at data dated 2026-05-04 and states on the dataset page that it
- * will not be updated again. Its successor is the Agence du Numérique en Santé's `FINESS -
- * Structures` JSON flow, a different schema this adapter does not read.
+ * won't be updated again. Its successor is the Agence du Numérique en Santé's `FINESS -
+ * Structures` JSON flow, a different schema this adapter doesn't read.
  *
  * ## Which rows are read
  *
@@ -34,7 +34,7 @@
  * service office. Three categories house the people they serve in a private dwelling. In `462`
  * Lieux de vie et d'accueil the staff live with the people they receive. A FINESS category `238`
  * establishment, specialized family reception, places patients with host families, as a `236` Service de placement familial
- * does. An address in those three can be a family's home, so they are refused under
+ * does. An address in those three can be a family's home, so they're refused under
  * {@linkcode FinessRefusal.FamilyPlacement}, as is an establishment whose name states family
  * placement or a lieu de vie under another category. A row whose street type is TRE-R35's `CHEZ`,
  * or whose line opens with `CHEZ`, gives the person whose premises it is and is refused under
@@ -46,12 +46,12 @@
  * `voie` the name. The code is expanded by {@linkcode expandFinessVoieType} and written first, as
  * French addresses write it: `R` and `DE PARIS` print `RUE DE PARIS`. The word takes the name's
  * case, so an all-capitals name keeps an all-capitals line. A name that already opens with the type
- * word (`CHE` and `CHEMIN SAFER MORANGE`) is not given it twice, and a name with no code is split by
+ * word (`CHE` and `CHEMIN SAFER MORANGE`) isn't given it twice, and a name with no code is split by
  * {@linkcode splitFrenchStreetType}, which reads the BAN adapter's street-type dictionary first.
  *
  * `compvoie` is one of `B`, `T`, `Q` or `C`. The first three are bis, ter and quater. `C` is
  * refused under {@linkcode FinessRefusal.RepetitionIndexAmbiguous}: INSEE's coding reads it as
- * quinquies, and the national extract holds 133 `C` against 31 `Q`, which is not the ratio of a
+ * quinquies, and the national extract holds 133 `C` against 31 `Q`, which isn't the ratio of a
  * fifth repetition to a fourth and reads as a letter suffix entered in the index field.
  *
  * A digit in `voie` is refused under {@linkcode FinessRefusal.StreetDigitUnplaced} unless the digits
@@ -80,7 +80,7 @@
  *
  * data.gouv.fr publishes the dataset under the license whose id is `fr-lo`, titled `Licence Ouverte /
  * Open Licence`, and links its text at
- * `https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf`. That is version 1.0
+ * `https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf`. That's version 1.0
  * of October 2011. It grants the reuser the right to « Adapter, modifier, extraire et
  * transformer à partir de « l'Information », notamment pour créer des « Informations dérivées » »,
  * « Sous réserve de : Mentionner la paternité de « l'Information » : sa source (a minima le nom du
@@ -235,11 +235,11 @@ export const FinessColumn = {
 export type FinessColumn = (typeof FinessColumn)[keyof typeof FinessColumn]
 
 /**
- * Why a line did not become a row.
+ * Why a line didn't become a row.
  */
 export const FinessRefusal = {
 	/**
-	 * The line is not a `structureet` record, as the comment on line 1 is not.
+	 * The line isn't a `structureet` record, as the comment on line 1 isn't.
 	 */
 	NotEstablishment: "row:not-establishment",
 	/**
@@ -255,7 +255,7 @@ export const FinessRefusal = {
 	 */
 	CareOfPerson: "row:care-of-person",
 	/**
-	 * The routing line is not a five-digit postcode followed by a locality and an optional `CEDEX`.
+	 * The routing line isn't a five-digit postcode followed by a locality and an optional `CEDEX`.
 	 */
 	RoutingLineUnparsed: "row:routing-line-unparsed",
 	/**
@@ -275,11 +275,11 @@ export const FinessRefusal = {
 	 */
 	StreetNameAbsent: "row:street-name-absent",
 	/**
-	 * The street name holds a digit that does not name the street.
+	 * The street name holds a digit that doesn't name the street.
 	 */
 	StreetDigitUnplaced: "row:street-digit-unplaced",
 	/**
-	 * The lieu-dit holds a digit, as a floor, a building or a lot does and a place does not.
+	 * The lieu-dit holds a digit, as a floor, a building or a lot does and a place doesn't.
 	 */
 	LieuDitDigitUnplaced: "row:lieu-dit-digit-unplaced",
 	/**
@@ -287,7 +287,7 @@ export const FinessRefusal = {
 	 */
 	DeliveryLineAbsent: "row:delivery-line-absent",
 	/**
-	 * The jurisdiction's layout does not print every component the row holds.
+	 * The jurisdiction's layout doesn't print every component the row holds.
 	 */
 	Unrenderable: "row:unrenderable",
 	/**
@@ -303,7 +303,7 @@ export type FinessRefusal = (typeof FinessRefusal)[keyof typeof FinessRefusal]
  */
 export const FinessTrim = {
 	/**
-	 * The lieu-dit line names part of a building or a landmark (`IMMEUBLE SEMAFA`), which is not a place.
+	 * The lieu-dit line names part of a building or a landmark (`IMMEUBLE SEMAFA`), which isn't a place.
 	 */
 	LieuDitPremiseDescriptor: "component:dependent_locality:premise-descriptor",
 } as const
@@ -403,7 +403,7 @@ function readStreet(
 		return out
 	}
 
-	// A name that already opens with its own type word, or with the code, is not given the word twice.
+	// A name that already opens with its own type word, or with the code, isn't given the word twice.
 	const [firstToken = "", ...rest] = name.split(" ")
 
 	if (rest.length && (isSamePlace(firstToken, word) || isSamePlace(firstToken, code))) {

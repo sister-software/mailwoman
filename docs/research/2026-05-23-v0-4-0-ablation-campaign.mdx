@@ -71,7 +71,7 @@ The verdict-smoke ran each ablation for 3000 steps with a cosine learning-rate s
 
 The smoke was testing stability at low LR rather than at peak LR. By the step where divergence would have appeared, the smoke's own LR schedule had already dropped the LR near zero.
 
-We had not anticipated this. Future smokes should use a constant LR for the verdict window, or set max_steps large enough that the cosine tail doesn't dominate. For example, max_steps=10000 keeps LR > 60% of peak through the relevant range.
+We'd not anticipated this. Future smokes should use a constant LR for the verdict window, or set max_steps large enough that the cosine tail doesn't dominate. For example, max_steps=10000 keeps LR > 60% of peak through the relevant range.
 
 ## What we shipped
 

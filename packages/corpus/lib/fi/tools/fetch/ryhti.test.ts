@@ -117,7 +117,7 @@ describe("assertRyhtiColumns", () => {
 
 	it("accepts a header carrying columns the adapter ignores", () => {
 		// The live file publishes 24 columns and the adapter consults a subset,
-		// so an added column is not a failure.
+		// so an added column isn't a failure.
 		expect(() =>
 			assertRyhtiColumns([...FI_RYHTI_REQUIRED_COLUMNS, "address_fin", "location_srid"], "ctx")
 		).not.toThrow()
@@ -150,7 +150,7 @@ describe("readRyhtiHead", () => {
 	it("reports a header the host does not send as null rather than as zero", async () => {
 		await using client = stubClient([{ headers: {} }])
 
-		// A missing length is not a length of zero: the caller downloads rather than comparing.
+		// A missing length isn't a length of zero: the caller downloads rather than comparing.
 		await expect(readRyhtiHead(client)).resolves.toMatchObject({ contentLength: null, lastModified: null })
 	})
 
@@ -204,7 +204,7 @@ describe("downloadRyhti", () => {
 		})
 
 		// The aborted signal refuses the transfer rather than skipping it.
-		// That proves the re-run check did not match.
+		// That proves the re-run check didn't match.
 		expect(summary).toMatchObject({ fetched: 0, skipped: 0, failed: 1, failedCodes: ["ryhti"] })
 	})
 
@@ -249,7 +249,7 @@ describe("downloadRyhti", () => {
 		})
 
 		// A host that states neither value gives the check no term to compare.
-		// That is not agreement.
+		// That's not agreement.
 		expect(summary).toMatchObject({ skipped: 0, failed: 1 })
 	})
 })
@@ -283,8 +283,8 @@ describe("decompressToCSV", () => {
 
 		await writeLocalFile("<html><body>Service unavailable</body></html>", source)
 
-		// `DecompressionStream` rejects a body that is not gzip with a bare `TypeError`,
-		// so the class is what there is to assert on.
+		// `DecompressionStream` rejects a body that's not gzip with a bare `TypeError`,
+		// so the class is what there's to assert on.
 		await expect(decompressToCSV(source, destination)).rejects.toThrow(TypeError)
 
 		// What matters is that the page's own bytes are not written through as though they were the CSV.

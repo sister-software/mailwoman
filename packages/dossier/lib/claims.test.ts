@@ -53,8 +53,8 @@ describe("admittedClaims", () => {
 	const base = { subject: HOUSE, axis: ClaimAxis.Engineering, predicate: "riser_route", value: "unknown" }
 
 	// The late record supplies `parent`.
-	// `child` infers from it and `grandchild` derives from `child` and `own`, both on the
-	// early record, and they are listed before the claims they derive from.
+	// `child` infers from it and `grandchild` derives from `child` and `own`,
+	// both on the early record, and they're listed before the claims they derive from.
 	const grandchild: Claim = {
 		...base,
 		id: "grandchild",

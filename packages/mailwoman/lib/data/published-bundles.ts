@@ -12,7 +12,7 @@
  *   the measurement and `dev-tools/data/published-bundles.run.ts` is its one writer. The `published-bundles` check in
  *   The repository-health check compares it against the registry. The docs site renders it beside its date.
  *
- *   A value that could not be measured is recorded as unmeasured with the reason. It is never defaulted, because a
+ *   A value that couldn't be measured is recorded as unmeasured with the reason. It is never defaulted, because a
  *   default reads the same as a measurement to everyone downstream.
  */
 
@@ -24,7 +24,7 @@ import { isPlainObject } from "@mailwoman/core/objects"
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * Whether a snapshot value was read from the artifact or the server, or could not be.
+ * Whether a snapshot value was read from the artifact or the server, or couldn't be.
  */
 export const MeasurementStatus = {
 	Measured: "measured",
@@ -34,7 +34,7 @@ export const MeasurementStatus = {
 export type MeasurementStatus = (typeof MeasurementStatus)[keyof typeof MeasurementStatus]
 
 /**
- * A value the writer could not read, with the reason it records in place of a number.
+ * A value the writer couldn't read, with the reason it records in place of a number.
  */
 export interface UnmeasuredValue {
 	status: typeof MeasurementStatus.Unmeasured
@@ -121,12 +121,12 @@ export interface RightsComponent {
 }
 
 /**
- * What is known about a bundle's rights beyond its artifacts' flat expressions.
+ * What's known about a bundle's rights beyond its artifacts' flat expressions.
  *
  * `components` is empty when none was measured.
  * A component without a read record is absent.
  *
- * The code does not synthesize it from the flat expression.
+ * The code doesn't synthesize it from the flat expression.
  * This follows the same rule as an absent artifact.
  */
 export interface BundleRightsRecord {

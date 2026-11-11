@@ -118,7 +118,7 @@ export interface OutputLinesInput {
 	 */
 	timing?: Record<string, number>
 	/**
-	 * A failed re-run's message, rendered first and red above a result that is
+	 * A failed re-run's message, rendered first and red above a result that's
 	 * deliberately still the previous one.
 	 */
 	errorNote?: string | null
@@ -158,7 +158,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 	}
 
 	// Advisories, never a second opinion about the answer, included in the result
-	// so they survive even when there is no kind verdict above them.
+	// so they survive even when there's no kind verdict above them.
 	for (const marker of result.intent_markers ?? []) {
 		lines.push({ kind: "field", label: `  ${marker.code}`, value: marker.mechanism, detail: marker.message })
 	}

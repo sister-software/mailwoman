@@ -1,6 +1,6 @@
 # Template: how-to (`role: guide`)
 
-A `guide` takes a reader who already has a goal from where they are to where they want to be. It skips
+A `guide` takes a reader who already has a goal from where they're to where they want to be. It skips
 scenario storytelling and teaching detours. Register rules are in [`../writing-system.md`](../writing-system.md) under
 Register by role.
 
@@ -22,11 +22,11 @@ verified-with: mailwoman v8.7.0
 ## Section order
 
 1. `# Title`: the outcome, phrased as a task.
-2. **Outcome.** One sentence: what is true when the reader finishes.
+2. **Outcome.** One sentence: what's true when the reader finishes.
 3. **Prerequisites.** A list. Include the constraints that would break a step below.
 4. **Steps.** Numbered `##` sections, one action each.
 5. **Verify.** The command that proves it worked, with its output.
-6. **Limits.** What this does not cover, each with the next action.
+6. **Limits.** What this doesn't cover, each with the next action.
 7. **Related.** Links out.
 
 ## Start here
@@ -38,7 +38,7 @@ first line instead of at the fourth step.
 
 > `@mailwoman/nominatim` speaks the Nominatim HTTP interface over the Mailwoman engine, so an existing client
 > keeps working after you change its host. Forward geocoding (`/search`) and reverse geocoding (`/reverse`)
-> are implemented, along with `/status` and an emitted `/openapi.json`. `/lookup` is planned and does not
+> are implemented, along with `/status` and an emitted `/openapi.json`. `/lookup` is planned and doesn't
 > return useful results yet, so a client that resolves known place identifiers cannot move yet. The server
 > needs neither PostgreSQL nor an `osm2pgsql` import. It reads a candidate gazetteer database that you pass
 > on the command line.
@@ -62,6 +62,6 @@ geo.geocode("1600 Pennsylvania Ave NW, Washington DC", addressdetails=True)
 
 - The outcome sentence describes a state rather than an activity.
 - Every command was executed, and the verify step's output is pasted from a real run.
-- Unsupported cases appear in Limits with a next action, so the reader does not discover them mid-procedure.
+- Unsupported cases appear in Limits with a next action, so the reader doesn't discover them mid-procedure.
 - The page contains no marketing language.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

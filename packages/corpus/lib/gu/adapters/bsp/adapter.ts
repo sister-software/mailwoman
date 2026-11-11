@@ -140,7 +140,7 @@ export const GUAM_PLACE_NAMES: ReadonlySet<string> = new Set([
 
 /**
  * Whether every part of a place value, split at commas, slashes, hyphens and parentheses,
- * is a listed place: `CHALAN PAGO - ORDOT` and `AGANA HEIGHTS (PAASAN)` are, `RADIO, BARRIGADA` is not.
+ * is a listed place: `CHALAN PAGO - ORDOT` and `AGANA HEIGHTS (PAASAN)` are, `RADIO, BARRIGADA` isn't.
  */
 export function isGuamPlaceName(value: string): boolean {
 	const parts = upperFold(value)
@@ -164,7 +164,7 @@ const PERMIT_NUMBER = /^[A-Z]{1,2}\d{2}-?\d{3,}$/iu
 
 /**
  * The house number `HOUSE_NUM` states, with a building-permit number written beside
- * it removed, or null when the value is not a house number.
+ * it removed, or null when the value isn't a house number.
  */
 export function guamHouseNumber(value: string): string | null {
 	if (HOUSE_NUMBER.test(value)) return value
@@ -264,7 +264,7 @@ export function componentsForGuamRecord(
 
 	const components: CanonicalRow["components"] = { house_number: houseNumber, street }
 
-	// `FullRdNm` already holds the direction and the type, so they are read beside `STREETNAME` only.
+	// `FullRdNm` already holds the direction and the type, so they're read beside `STREETNAME` only.
 	if (name) {
 		const direction = present(record.PRE_DIR)?.toUpperCase()
 

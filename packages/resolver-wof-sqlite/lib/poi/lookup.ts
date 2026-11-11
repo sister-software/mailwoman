@@ -373,7 +373,7 @@ function toHit(
  * then phrase-quote each whitespace-separated token (and-joined).
  *
  * `lookup.ts` already has this discipline in `sanitizeFTSQuery`, but that function is
- * module-private there and is not re-exported from `fts.ts` or the package's `index.ts`.
+ * module-private there and isn't re-exported from `fts.ts` or the package's `index.ts`.
  * This replicates the discipline locally rather than reach across the module boundary for a private helper.
  */
 function sanitizePOINameQuery(text: string): string {

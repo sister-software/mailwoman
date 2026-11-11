@@ -58,7 +58,7 @@ The solver receives:
 
 The solver tries to build a valid address from these pieces. It can produce:
 
-- `street_prefix=Saint, locality=Petersburg, region=FL` (wrong, because "Saint" is not a directional)
+- `street_prefix=Saint, locality=Petersburg, region=FL` (wrong, because "Saint" isn't a directional)
 - `locality=Saint Petersburg, region=FL` (correct, but it requires merging two tokens the classifier already labeled differently)
 
 Option 2 requires the solver to **override the classifier's decisions** and treat "Saint" as part of `locality` even though the classifier labeled it `street_prefix`. The solver does this through a penalty system that allows spans to be reassigned. That penalty system was tuned for the US address shapes the developers tested against. Every new address shape that requires a different reassignment pattern needs new penalty tuning.
@@ -136,7 +136,7 @@ Input:  "350 5th Ave, New York, NY 10118"
 Spans:  [350] [5th Ave] [New York] [NY] [10118]
 ```
 
-The grouper uses structural cues such as punctuation, capitalization, numeric patterns, and token proximity, and it does not use dictionaries. It does not know what the spans mean. It only knows where the boundaries are.
+The grouper uses structural cues such as punctuation, capitalization, numeric patterns, and token proximity, and it doesn't use dictionaries. It doesn't know what the spans mean. It only knows where the boundaries are.
 
 The **neural classifier** (Stage 3) then types each proposed span. Because the classifier sees the full token sequence simultaneously (it's a transformer rather than a per-token classifier), it conditions each span's type on the surrounding spans:
 
@@ -157,7 +157,7 @@ The staged pipeline doesn't eliminate ambiguity. It moves the ambiguity to where
 - The classifier can still mis-type a span, but it has the full context of the input rather than one token in isolation.
 - The reconciler can still pick a wrong joint interpretation, but it has resolver feedback. The world hierarchy is a constraint the traditional solver never had.
 
-The traditional pipeline has a structural ceiling: **it makes context-free decisions that later context-sensitive stages cannot reverse.** Mailwoman is not perfect, but it moves the context-sensitive decisions upstream, where they belong.
+The traditional pipeline has a structural ceiling: **it makes context-free decisions that later context-sensitive stages cannot reverse.** Mailwoman isn't perfect, but it moves the context-sensitive decisions upstream, where they belong.
 
 ## See also
 

@@ -258,7 +258,7 @@ describe("a rendering says what it placed and what it could not", () => {
 
 		expect(rendering.placed).toContain("locality")
 		// France's layout prints no region — the postcode line absorbs it — and the render holds that fact,
-		// where a substring search over the output could not tell it from a value that never arrived.
+		// where a substring search over the output couldn't tell it from a value that never arrived.
 		expect(rendering.unplaced).toEqual(["region"])
 	})
 

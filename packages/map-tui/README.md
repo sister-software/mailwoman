@@ -69,5 +69,5 @@ node map-tui/out/cli/main.js \
   --lat 45.5034 --lon -122.6023 --zoom 12
 ```
 
-The fixture is not published: `test/` stays out of the tarball, so an installed
+The fixture isn't published: `test/` stays out of the tarball, so an installed
 copy needs a real archive.

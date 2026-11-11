@@ -138,7 +138,7 @@ export async function demoCascadeSmoke(
 	report: (line: string) => void = console.log,
 	reportError: (line: string) => void = console.error
 ): Promise<DemoCascadeSmokeResult> {
-	// Lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`,
+	// Lazy, deliberately: `mailwoman` doesn't depend on `@mailwoman/resolver-wof-wasm`,
 	// and the CLI's module walk (`mailwoman --help`) loads this file in every clean install.
 	// The cascade leg is dev-only (it needs a local wof-hot.db), so the dependency
 	// loads only when the leg runs.

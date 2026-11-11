@@ -189,7 +189,7 @@ interface BDCStageRow {
  * Reads `provider_id` from the first data row of an FCC BDC availability CSV.
  * Every row in a file shares one provider.
  *
- * It throws on a value that is not a safe integer.
+ * It throws on a value that's not a safe integer.
  * A `NaN` would bind as NULL.
  *
  * `INSERT OR IGNORE` would then drop every row as a duplicate.

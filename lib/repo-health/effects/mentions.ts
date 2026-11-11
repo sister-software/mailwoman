@@ -22,7 +22,7 @@ import {
 } from "#repo-health/effects/resolve"
 
 /**
- * The literal arguments of `args` up to the first argument that is not one.
+ * The literal arguments of `args` up to the first argument that's not one.
  */
 function literalPrefix(args: readonly ts.Expression[]): string[] {
 	const prefix: string[] = []
@@ -42,7 +42,7 @@ function literalPrefix(args: readonly ts.Expression[]): string[] {
  * The deepest rooted directory a path-building call is known to stay under when its later
  * arguments do not resolve, as `repoRootPath("packages", name)` stays under `packages`.
  *
- * `null` when the call builds no path or its root does not resolve.
+ * `null` when the call builds no path or its root doesn't resolve.
  */
 function partialTarget(scope: FileScope, call: ts.CallExpression): ResolvedTarget | null {
 	const callee = call.expression
@@ -133,7 +133,7 @@ function isModuleURL(node: ts.Node): node is ts.NewExpression {
  *
  * The edge records whether the call reads the path's content or only its metadata.
  *
- * An effect argument that does not resolve contributes the directory its literal segments reach.
+ * An effect argument that doesn't resolve contributes the directory its literal segments reach.
  *
  * Each path is the outermost one an expression builds: `resolvePath(dir, "x.json")`
  * contributes `x.json` under `dir` and leaves `dir` out.

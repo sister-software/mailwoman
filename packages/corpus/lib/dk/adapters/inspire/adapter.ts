@@ -7,9 +7,9 @@
  *
  * Input is a local `ad_inspire.gpkg`, the one member of the `DK_INSPIRE_Addresses.zip` that
  * Denmark's ATOM download service serves. The download belongs to
- * `#dk/tools/fetch/inspire`; this module reads a file that is already on disk, as the CSV adapters do.
+ * `#dk/tools/fetch/inspire`; this module reads a file that's already on disk, as the CSV adapters do.
  *
- * Denmark serves the Addresses (AD) theme as a GeoPackage rather than as GML, so there is no XML to
+ * Denmark serves the Addresses (AD) theme as a GeoPackage rather than as GML, so there's no XML to
  * parse. A GeoPackage is a SQLite database, and this adapter reads it through
  * `@mailwoman/sqlite`'s Kysely client. The file is a published artifact and is opened read-only.
  *
@@ -41,7 +41,7 @@
  * Denmark proper, and Greenland and the Faroe Islands are their own jurisdictions and are absent
  * from it.
  *
- * The measured file holds 599,999 `address` rows. That is one short of a round 600,000, while the
+ * The measured file holds 599,999 `address` rows. That's one short of a round 600,000, while the
  * national register is several times larger, so treat the file as a possible export cap rather than
  * as Denmark's address count.
  */
@@ -86,8 +86,8 @@ export const DK_INSPIRE_COUNTRIES: readonly string[] = ["DK"]
  * It requires `gpkg_contents` to declare them.
  *
  * The GeoPackage declares five.
- * `addressareaname` holds a supplementary locality that a Danish address line does
- * not state, and `adminunitname` holds the region and municipality the adapter
+ * `addressareaname` holds a supplementary locality that a Danish address line
+ * doesn't state, and `adminunitname` holds the region and municipality the adapter
  * leaves to cross-reference, so neither is read.
  */
 export const DK_INSPIRE_REQUIRED_TABLES: readonly string[] = ["address", "postaldescriptor", "thoroughfarename"]
@@ -98,7 +98,7 @@ export const DK_INSPIRE_REQUIRED_TABLES: readonly string[] = ["address", "postal
 const STREAM_CHUNK_ROWS = 2000
 
 /**
- * Raised when the input is not a GeoPackage this adapter can read.
+ * Raised when the input isn't a GeoPackage this adapter can read.
  *
  * The message lists the tables that were declared, so a caller reads which file it opened
  * rather than receiving zero rows from a database with a different schema.
@@ -223,7 +223,7 @@ export function createDKInspireAdapter(): CorpusAdapter {
 			}
 
 			// Left joins, deliberately: an inner join would drop an address whose
-			// component reference does not resolve.
+			// component reference doesn't resolve.
 			// That absence has to be reported rather than applied.
 			const stream = db
 				.selectFrom("address as a")
@@ -326,7 +326,7 @@ export function createDKInspireAdapter(): CorpusAdapter {
 					emitted++
 				}
 			} finally {
-				// A row the layout could not render is a drop, so the count is stated
+				// A row the layout couldn't render is a drop, so the count is stated
 				// rather than left to be read off a smaller total.
 				if (unaligned > 0) {
 					process.stderr.write(

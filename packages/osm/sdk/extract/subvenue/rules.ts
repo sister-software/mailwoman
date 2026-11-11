@@ -64,7 +64,7 @@ export interface SubVenueTagRule {
  * In every such case the colliding rules share a `designatorID`, so the first-wins resolution is harmless.
  * It picks the same answer either way.
  *
- * There is no pair of rules with different designators that a single real feature can satisfy,
+ * There's no pair of rules with different designators that a single real feature can satisfy,
  * because each pair requires a different value for a key that appears once on a feature.
  *
  * Provenance, per rule, all documented OSM tags:
@@ -143,7 +143,7 @@ export function distinctSubVenueTagKeys(rules: readonly SubVenueTagRule[]): stri
  * Selects `name` and `ref` (the identifier half of `Gate A12` lives in `ref` far more reliably than in `name`).
  * It selects every key the rule table references and `other_tags` wholesale for the `name:<lang>` harvest.
  *
- * The where is an `or` of the table's and-groups, pushed down so gdal scans rather than this process.
+ * The where's an `or` of the table's and-groups, pushed down so gdal scans rather than this process.
  *
  * The pushdown is an optimization only: a gdal dialect quirk could narrow what it matches but never
  * widen it. {@link matchSubVenueTagRule} re-checks the same table in JS before yielding any row.

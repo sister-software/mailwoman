@@ -86,7 +86,7 @@ export interface BDUKRegionDownload {
  * Every CSV member lands directly in the extracted directory under its own name,
  * where `readBDUKReleaseDirectory` reads it.
  *
- * @throws When the response is not OK, the archive's size differs from `expectedBytes`,
+ * @throws When the response isn't OK, the archive's size differs from `expectedBytes`,
  * the archive holds no CSV file, or two CSV members share a name.
  */
 export async function downloadBDUKRegion(options: DownloadBDUKRegionOptions): Promise<BDUKRegionDownload> {

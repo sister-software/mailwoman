@@ -108,7 +108,7 @@ function softSeparatorFor(opts: FormatAddressOptions): string {
 }
 
 /**
- * The components consulted to decide the script, in the order they are asked, with the postcode
+ * The components consulted to decide the script, in the order they're asked, with the postcode
  * never asked because it is digits in both registers and would abstain on every input.
  */
 const SCRIPT_WITNESSES: readonly ComponentTag[] = ["street", "locality", "dependent_locality", "region", "venue"]
@@ -136,7 +136,7 @@ export function isLatinScriptText(value: string): boolean {
 /**
  * The script `components` are written in for `country`, read from the first witness that contains a letter.
  *
- * A witness without letters does not identify a script.
+ * A witness without letters doesn't identify a script.
  * All-digit or absent witnesses return `null`.
  * The country default then determines the address order.
  *
@@ -220,7 +220,7 @@ export interface AddressRow {
 	/**
 	 * The subset of the input dict the layout printed, with the caller's original values.
 	 *
-	 * This is the half a corpus row needs: a label whose text is not in `raw` cannot be aligned against it.
+	 * This is the half a corpus row needs: a label whose text isn't in `raw` cannot be aligned against it.
 	 */
 	readonly components: ComponentDict
 	/**

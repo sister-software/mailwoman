@@ -19,7 +19,7 @@ import type { FSTProvenance } from "#fst/types"
 /**
  * Opens an FST binary for matching, answering queries from the bytes in place.
  *
- * The matcher keeps a reference to `input`, so the caller must not modify it afterward.
+ * The matcher keeps a reference to `input`, so the caller mustn't modify it afterward.
  */
 export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): BinaryFSTMatcher {
 	return new BinaryFSTMatcher(input)

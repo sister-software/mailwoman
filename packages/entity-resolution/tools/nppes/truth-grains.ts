@@ -76,7 +76,7 @@ export function collectPrimaryCoordinates(records: readonly SourceRecord[]): Map
  * at the same address KEY whose primary org names agree.
  *
  * The address-string block provides a conservative lower bound.
- * `1504 Taub loop` and `1504 Taub LP STE 100` key apart even though they are one building,
+ * `1504 Taub loop` and `1504 Taub LP STE 100` key apart even though they're one building,
  * so a correct merge across them is still charged as an error.
  * The coordinate grain below is the tighter reading.
  *

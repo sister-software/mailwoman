@@ -115,7 +115,7 @@ export function rangeChunkKey(href: string, start: number, end: number): string 
  * Creates the range-chunk route handler.
  *
  * Register it on a route that matches only GET range requests of immutable files without a query string.
- * A request whose `Range` header is not a closed range goes to the network unchanged.
+ * A request whose `Range` header isn't a closed range goes to the network unchanged.
  *
  * A failure inside the cache, such as a quota error, also sends the request to the network.
  */

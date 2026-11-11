@@ -103,7 +103,7 @@ function phraseToPattern(phrase: string): string {
 export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "au", "nz"]): SpanProposerLexicon {
 	const sys = new Set<string>(systems)
 	// Venue-interior designators (WOF placetypes + OSM aeroway) join the unit vocabulary
-	// unconditionally: unlike the postal tables above they are not a property of any mail
+	// unconditionally: unlike the postal tables above they're not a property of any mail
 	// system, so keying them on a codex `system` would make "Terminal 5" parse in the US
 	// and not in the UK for no reason anyone could defend.
 	// The formatter still renders through Pub 28.

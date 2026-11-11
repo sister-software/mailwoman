@@ -69,7 +69,7 @@ function bboxOf(
 
 /**
  * Parses the resolver's `placeID` URI back to a WOF id, returning `null` for anything else
- * so a future non-WOF backend is not silently read as one.
+ * so a future non-WOF backend isn't silently read as one.
  */
 export function wofIDFromPlaceID(placeID: string | null): number | null {
 	if (!placeID) return null
@@ -82,7 +82,7 @@ export function wofIDFromPlaceID(placeID: string | null): number | null {
 /**
  * The number of candidate rows one name probe reads before collapsing,
  * sized at 2000 well above the corpus's worst key (886 rows for `San José`)
- * so no corpus name is truncated and ambiguity is not understated.
+ * so no corpus name is truncated and ambiguity isn't understated.
  */
 const NAME_PROBE_LIMIT = 2000
 

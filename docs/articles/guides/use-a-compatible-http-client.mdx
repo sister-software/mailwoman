@@ -126,7 +126,7 @@ curl --get http://127.0.0.1:7803/search --data-urlencode "city=Springfield" --da
 
 That capture came from a data root with additional local databases. Those databases add `timezone` and `UN_LOCODE` to `annotations`. Your `annotations` can omit them.
 
-`/lookup` is not implemented and returns status 501:
+`/lookup` isn't implemented and returns status 501:
 
 ```bash
 curl -i "http://127.0.0.1:7803/lookup?osm_ids=W5013364"

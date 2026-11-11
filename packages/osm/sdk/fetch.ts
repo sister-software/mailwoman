@@ -36,7 +36,7 @@ export function geofabrikURL(regionPath: string): string {
  * It dates the OSM snapshot inside the file.
  * `retrieved_at` dates the download.
  *
- * A `-latest` URL serves a different file every day, so the URL does not identify
+ * A `-latest` URL serves a different file every day, so the URL doesn't identify
  * the bytes by itself; `sha256` does.
  */
 export interface GeofabrikExtractReceipt {
@@ -49,7 +49,7 @@ export interface GeofabrikExtractReceipt {
 	readonly sha256: string
 	readonly md5: string
 	/**
-	 * The checksum Geofabrik publishes at `<url>.md5`, or null when that file could not be read.
+	 * The checksum Geofabrik publishes at `<url>.md5`, or null when that file couldn't be read.
 	 */
 	readonly published_md5: string | null
 	readonly license: "ODbL-1.0"

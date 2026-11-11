@@ -14,8 +14,8 @@ paths, `core/env` for environment access, `cli-kit` for CLI components, Kysely's
 DDL, `@mailwoman/spatial` for geo math, `@mailwoman/annotations` for the annotation interface,
 `api-kit` for HTTP plumbing.
 
-An agent implementing a feature sees the file it was pointed at and its immediate neighbors. It does
-not see the workspace three directories over that already solved the same problem. The agent then
+An agent implementing a feature sees the file it was pointed at and its immediate neighbors. It doesn't
+see the workspace three directories over that already solved the same problem. The agent then
 rebuilds the implementation locally as a second haversine, a second env reader, or a second retry loop,
 and each copy drifts independently.
 
@@ -46,7 +46,7 @@ match/distance.ts
 ```
 
 The code at `match/distance.ts:25` shows that this is a documented adapter
-from `match`'s `LatLon` shape onto `greatCircleKm` in `spatial`, and its docstring states that. It does not reimplement the formula. Grep
+from `match`'s `LatLon` shape onto `greatCircleKm` in `spatial`, and its docstring states that. It doesn't reimplement the formula. Grep
 without a reading pass would have produced a false finding from its first candidate.
 
 That result sets the method for the whole sweep: **grep generates candidates, and reading produces
@@ -60,7 +60,7 @@ Three options were considered:
 | -------------------------- | -------------------------------------------------- | ------------------------------------------------------------------ |
 | A — declared-home spine    | precise, complete for every home `AGENTS.md` names | blind wherever no home was ever declared                           |
 | B — clone/similarity sweep | recall on duplication no one anticipated           | noisy, flags fixtures, generated blobs, deliberately-parallel code |
-| C — read every workspace   | best judgment                                      | 286k LOC does not fit                                              |
+| C — read every workspace   | best judgment                                      | 286k LOC doesn't fit                                               |
 
 **Chosen: A and B generate candidates, and C's close reading covers only the ranked shortlist.** A gives
 precision, B gives recall on duplication without a declared home, and the expensive read happens only where a candidate
@@ -86,7 +86,7 @@ already exists.
 
 ## Out of scope
 
-- **Bug hunting**. That is the job of `/code-review`. A duplicated function that is also wrong is
+- **Bug hunting**. That's the job of `/code-review`. A duplicated function that's also wrong is
   reported as duplication, and the defect is noted without being investigated.
 - Performance work, prose and docs style, `data/`, generated model blobs, and `corpus-python`.
 - Everything on the `AGENTS.md` "What deliberately stays raw" list: FTS5 `MATCH`, ogr2ogr dialect
@@ -98,7 +98,7 @@ already exists.
 
 Each cluster gets two independent scores, reported separately rather than combined:
 
-- **Cost of leaving it**: the number of copies multiplied by how likely they are to drift apart. Seven copies of a
+- **Cost of leaving it**: the number of copies multiplied by how likely they're to drift apart. Seven copies of a
   formula that will never change cost less to leave than two copies of a rule that changes per
   locale.
 - **Cost of fixing it**: lines touched, packages crossed, whether a public export moves, and whether

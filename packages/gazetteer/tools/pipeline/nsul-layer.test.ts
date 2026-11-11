@@ -258,10 +258,10 @@ describe("buildNSULLayer (fixture)", () => {
 				line(14_000_003, "RG40 4HR"),
 				line(14_000_005, "RG40 4HR"),
 				line(100_062_353_961, "PO21 1HR"),
-				// pcds empty: the postcode is not in Code-Point Open.
+				// pcds empty: the postcode isn't in Code-Point Open.
 				line(14_000_007, ""),
 			],
-			// A register row for a uprn uprn.db does not hold.
+			// A register row for a uprn uprn.db doesn't hold.
 			LN: [line(5, "SW1A 1AA")],
 		})
 

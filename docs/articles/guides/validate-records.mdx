@@ -76,7 +76,7 @@ for (const record of records) {
 }
 ```
 
-The recursive `collect` function reads nested nodes without discarding repeated tags. The policy treats a missing or repeated required tag as unknown because this parse has not supplied one unambiguous value for that requirement. A parser stage fault also produces unknown. An exception while loading or running the parser stops the script and needs operational investigation. The example does not turn an exception into a valid-looking policy result.
+The recursive `collect` function reads nested nodes without discarding repeated tags. The policy treats a missing or repeated required tag as unknown because this parse hasn't supplied one unambiguous value for that requirement. A parser stage fault also produces unknown. An exception while loading or running the parser stops the script and needs operational investigation. The example doesn't turn an exception into a valid-looking policy result.
 
 ## 2. Run the check
 
@@ -92,7 +92,7 @@ bad-shape: fail — postcode 1011 fails US ZIP Code shape
 no-postcode: unknown — required component is missing or repeated: postcode
 ```
 
-The parser returned all five required tags for `350 5th Ave, New York, NY 10118`. It returned `postcode: "1011"` for `350 5th Ave, New York, NY 1011`, and `isZipCode("1011")` returned `false`. It returned no `postcode` node for `350 5th Ave, New York, NY`, so the policy could not evaluate that requirement.
+The parser returned all five required tags for `350 5th Ave, New York, NY 10118`. It returned `postcode: "1011"` for `350 5th Ave, New York, NY 1011`, and `isZipCode("1011")` returned `false`. It returned no `postcode` node for `350 5th Ave, New York, NY`, so the policy couldn't evaluate that requirement.
 
 ## 3. Apply the result to your workflow
 

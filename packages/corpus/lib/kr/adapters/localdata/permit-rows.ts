@@ -85,7 +85,7 @@ function firstColumn(row: Record<string, string | undefined>, ...names: readonly
 /**
  * A coordinate field as a number, or `null` when the field is empty.
  *
- * A non-empty field that is not a number, such as `198,000`, raises: Python's `float` did,
+ * A non-empty field that's not a number, such as `198,000`, raises: Python's `float` did,
  * and reading it as absent would drop the row from its district's centroid without a count.
  *
  * @throws Naming the value and the field.

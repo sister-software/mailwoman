@@ -12,9 +12,9 @@
 
 Three independent reasons:
 
-1. **Optional dependency.** Not every mailwoman user wants geocoding. `npm install mailwoman` should not pull in a SQLite loader they're not going to use. `@mailwoman/resolver-wof-sqlite` is opt-in.
+1. **Optional dependency.** Not every mailwoman user wants geocoding. `npm install mailwoman` shouldn't pull in a SQLite loader they're not going to use. `@mailwoman/resolver-wof-sqlite` is opt-in.
 2. **WOF data versioning is independent from parser versioning.** The SQLite distributions update on their own cadence at [data.geocode.earth/wof/dist/sqlite/](https://data.geocode.earth/wof/dist/sqlite/). Decoupling the package version from `@mailwoman/core` means we can ship a resolver patch without bumping core.
-3. **License separation.** WOF data is **CC-BY 4.0** — attribution required in any redistribution. The separate loader package keeps the attribution surface clean: anyone shipping the resolver inherits the obligation, and anyone shipping the parser does not.
+3. **License separation.** WOF data is **CC-BY 4.0** — attribution required in any redistribution. The separate loader package keeps the attribution surface clean: anyone shipping the resolver inherits the obligation, and anyone shipping the parser doesn't.
 
 ## What's in scope for 4.2
 
@@ -30,7 +30,7 @@ Three independent reasons:
 - Parser pipeline wiring — that's Phase 4.3.
 - `AddressTree` decoration with WOF ids / lat / lon / `src="wof-admin:..."` — that's Phase 4.3.
 - CLI `--resolve` flag — that's Phase 4.3.
-- The actual WOF distribution — an operator-side `mkdir` + `curl` (documented in the README). The package does not automate it.
+- The actual WOF distribution — an operator-side `mkdir` + `curl` (documented in the README). The package doesn't automate it.
 - Whether to publish a separate `wof-sqlite-data-*` weights-style package — defer. For v0.1 the operator points the loader at a path on disk.
 
 ## Architecture sketch

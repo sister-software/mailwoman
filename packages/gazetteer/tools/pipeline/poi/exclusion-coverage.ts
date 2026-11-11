@@ -85,7 +85,7 @@ export interface ExclusionCoverageResult {
  *
  * Derived as `cellToParent(res-9 cell)` rather than by a direct `latLngToCell` at the
  * coverage resolution, matching `bboxCoverageCells` and every reader.
- * H3's hierarchy is not geometrically exact.
+ * H3's hierarchy isn't geometrically exact.
  *
  * The two derivations disagree for some points.
  * A row landing on a neighboring cell here would move its observed count away

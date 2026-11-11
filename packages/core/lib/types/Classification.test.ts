@@ -8,7 +8,7 @@ import { expect, test } from "vitest"
 
 import { Classifications, ClassificationsMatchMap, isVisibleClassification } from "#types"
 
-// A classification that is valid but not in the visible set — derived through the public API
+// A classification that's valid but not in the visible set — derived through the public API
 // so the test doesn't couple to the (unexported) VisibleClassification set's contents.
 const PRIVATE_CLASSIFICATION = [...Classifications].find((c) => !isVisibleClassification(c))!
 
@@ -69,7 +69,7 @@ test("ClassificationsMatchMap.hasVisibleClassification", () => {
 	expect(map.hasVisibleClassification()).toBe(false)
 
 	map.add(PRIVATE_CLASSIFICATION, 0.9)
-	// a private classification does not count as a visible one
+	// a private classification doesn't count as a visible one
 	expect(map.hasVisibleClassification()).toBe(false)
 
 	map.add("locality", 0.8)

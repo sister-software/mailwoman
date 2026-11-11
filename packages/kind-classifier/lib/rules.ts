@@ -324,7 +324,7 @@ export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryS
 	if (len === 0) return 0
 	const segCount = shape.segments?.length ?? 1
 
-	// Digits outside the postcode are required, so a locality with a postcode does not score here.
+	// Digits outside the postcode are required, so a locality with a postcode doesn't score here.
 	if (
 		segCount >= 2 &&
 		shape.characterClass === "alphanumeric" &&

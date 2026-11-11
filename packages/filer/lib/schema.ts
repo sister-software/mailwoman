@@ -24,7 +24,7 @@
  * single-column text PK stays a rowid table for the same lack of a second column to fold in.
  *
  * Strength and kind are orthogonal columns: {@link FilerEdgeAssertion} grades how strongly an assertion is evidenced
- * and {@link FilerRelationship} defines what it means. `relationship` is not part of either primary key, because one
+ * and {@link FilerRelationship} defines what it means. `relationship` isn't part of either primary key, because one
  * source asserting two relationship kinds for the same pair at the same instant is a contradiction to reject rather
  * than a plurality to store.
  *
@@ -34,7 +34,7 @@
  *
  * `naming_node_id` stores a family fact's naming provenance. `family_id` is a canonicalized slug. Re-running the
  * canonicalizer at read time would make a sealed, versioned artifact depend on designation-list edits in another
- * workspace. The manifest does not pin the canonicalizer's identity, so such an edit could remove every display name.
+ * workspace. The manifest doesn't pin the canonicalizer's identity, so such an edit could remove every display name.
  * See {@link FilerFamilyTable}.
  *
  * `filer_family` also stores `assertion` and `match_score`. Criterion 2 requires inferred rows to remain distinct
@@ -107,7 +107,7 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  *   an identity-continuity fact rather than ownership or control.
  *   The edge is directional in time (the source is always the older registration)
  *   and `linkage-eval.ts`'s `OWNERSHIP_BY_RELATIONSHIP` pins it `false`,
- *   because a supersession chain is not evidence of a corporate family.
+ *   because a supersession chain isn't evidence of a corporate family.
  */
 export const FilerRelationship = {
 	SameEntity: "same_entity",
@@ -311,7 +311,7 @@ export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<v
  * a contradiction the composite `unique` index makes SQLite reject.
  *
  * A check constraint additionally rejects a blank/whitespace-only `relationship`,
- * which `not NULL` by itself does not.
+ * which `not NULL` by itself doesn't.
  *
  * Call {@link createFilerEdgeToNodeIndex} separately after bulk load for the reverse traversal path.
  */

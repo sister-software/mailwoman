@@ -72,7 +72,7 @@ export const CITED_SETTLEMENT_HOUSE_NUMBER_COUNTRIES: Readonly<Record<string, st
  * Whether a country's addresses number a building inside a settlement that has no street.
  *
  * Only a country with a cited source is listed. #2880 records, for each country whose held-out
- * suite rows show the form, the source that admitted it or the documents that did not show it.
+ * suite rows show the form, the source that admitted it or the documents that didn't show it.
  */
 export function numbersHousesInSettlements(country: string | null | undefined): boolean {
 	return typeof country === "string" && Object.hasOwn(CITED_SETTLEMENT_HOUSE_NUMBER_COUNTRIES, country.toUpperCase())

@@ -562,7 +562,7 @@ class WOFResolver implements Resolver {
 					rec.reachable(await this.#probeOtherBands(query, placetype))
 				}
 			} catch (error) {
-				// Defensive: backend errors should not abort the whole tree walk.
+				// Defensive: backend errors shouldn't abort the whole tree walk.
 				rec.check(`backend_error: ${(error as Error).message}`)
 				rec.emit(null)
 

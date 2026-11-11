@@ -14,7 +14,7 @@ Please remove all mannered prose.
 
 Start with the answer, observed result, or current state. Do not open with agreement, a greeting, or a restatement of the request. Use complete, natural sentences with explicit subjects and finite verbs. Keep articles where English requires them. Prefer active voice when the actor matters. Make instructions imperative and put prerequisites before the step they affect.
 
-Each sentence should communicate an identifiable proposition. A noun phrase is not an adequate opening sentence. Do not coordinate a fragment with a complete clause. Avoid slogans, telegraphic predicates, and all-capitals emphasis in prose. Preserve capitalization in identifiers, acronyms, enum values, and quoted data.
+Each sentence should communicate an identifiable proposition. A noun phrase isn't an adequate opening sentence. Do not coordinate a fragment with a complete clause. Avoid slogans, telegraphic predicates, and all-capitals emphasis in prose. Preserve capitalization in identifiers, acronyms, enum values, and quoted data.
 
 Write:
 
@@ -73,9 +73,9 @@ Follow the repository's Vale rules and their diagnostics. In particular, consult
 Distinguish these states in claims that matter:
 
 - **Observed:** A test, command, artifact, address, log, or measurement directly shows the result.
-- **Inferred:** The available evidence supports an explanation, but the test that would rule out the alternatives has not run.
+- **Inferred:** The available evidence supports an explanation, but the test that would rule out the alternatives hasn't run.
 - **Decided:** A design choice or tradeoff the team has selected.
-- **Unknown:** The available evidence does not establish the answer.
+- **Unknown:** The available evidence doesn't establish the answer.
 
 Use _likely_ for a supported but unverified inference and _unknown_ when material evidence is missing. Do not hedge a verified observation. Do not call a correlation a cause or describe a passing test as proof of behavior outside the tested conditions.
 
@@ -103,7 +103,7 @@ A code comment should help a reader who never saw the current diff. Explain a no
 
 Start a JSDoc comment with a complete sentence that states what the symbol represents or does. Give each subsequent sentence a clear subject and predicate. Separate distinct ideas into paragraphs. Prefer sentence or semantic boundaries for source line breaks. Do not fill every line to `printWidth` at the expense of readability. Do not force a line break in the middle of a phrase merely to achieve uniform line length. Respect the project's formatter settings rather than fighting them with decorative wrapping.
 
-Use a dependent clause when it clarifies one proposition. When an explanation has several causal steps, give those steps explicit subjects and, where helpful, separate sentences. A complete sentence is not automatically a useful comment: replace abstract slogans with the actual invariant or behavior.
+Use a dependent clause when it clarifies one proposition. When an explanation has several causal steps, give those steps explicit subjects and, where helpful, separate sentences. A complete sentence isn't automatically a useful comment: replace abstract slogans with the actual invariant or behavior.
 
 Runbooks and instructions should use one action per step, a consistent name for each concept, clear prerequisites, and warnings before risky operations. Design discussions may use longer natural sentences when their relationships remain easy to follow.
 

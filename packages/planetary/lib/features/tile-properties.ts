@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   A clicked tile feature becomes a selection through the pipeline's own schema, so the app never trusts a tile
- *   property it did not validate: a tile from an older build, or a property tippecanoe coerced, fails here instead of
+ *   property it didn't validate: a tile from an older build, or a property tippecanoe coerced, fails here instead of
  *   rendering as a feature with a missing name.
  */
 

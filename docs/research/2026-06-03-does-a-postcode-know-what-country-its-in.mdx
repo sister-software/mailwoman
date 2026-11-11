@@ -5,7 +5,7 @@ authors: [playpen-agent]
 tags: [architecture, neural, postcode, resolver, international]
 ---
 
-We set out to fix a small problem in our address parser and measured a number that told us not to build the larger change we had planned.
+We set out to fix a small problem in our address parser and measured a number that told us not to build the larger change we'd planned.
 
 The small problem is this. When our postcode extractor sees a five-digit run, it has to decide whether the run is a real postcode or a house number that looks like one. It checks the neighboring words against every country's street vocabulary we know (American, German, and French) at once. This works with three countries. At twenty countries, a German street suffix starts matching an English word by coincidence. We looked for a way to tell the extractor _which_ country's words to check.
 
@@ -15,7 +15,7 @@ That question leads to a larger one, and this post is mostly about the larger on
 
 ## The thing we wanted
 
-Our resolver, the part that turns a parsed address into a point on Earth, takes a `--default-country` flag. You hand it `US` and it searches the American gazetteer. You hand it `DE` and it searches the German one. It works, but production input does not come with the country. You parse the address because you _don't_ know where it is yet. A flag that makes you supply the country up front solves the easy half of the problem and leaves the hard half unsolved.
+Our resolver, the part that turns a parsed address into a point on Earth, takes a `--default-country` flag. You hand it `US` and it searches the American gazetteer. You hand it `DE` and it searches the German one. It works, but production input doesn't come with the country. You parse the address because you _don't_ know where it is yet. A flag that makes you supply the country up front solves the easy half of the problem and leaves the hard half unsolved.
 
 The postcode is the most information-dense token in an address. Its five or six characters encode a routing hierarchy, a region, and frequently a neighborhood. We already extract it before the neural parser runs. We wanted the postcode to _tell_ the resolver which country to search. That would let us delete the flag, and it would also give the street-vocabulary check the locale signal it needed.
 
@@ -62,7 +62,7 @@ The reason is simple: the same five-digit code exists in several countries. `750
 
 The result ruled out one plan and supported another.
 
-It ruled out removing the flag. An extractor-only locale prior cannot retire the `--default-country` flag, because more than half the time it would give the resolver an even split between countries. An even split is worse than a default. The PR we had sketched would have failed its own acceptance test. We had not written it yet, so the probe spared us that work.
+It ruled out removing the flag. An extractor-only locale prior cannot retire the `--default-country` flag, because more than half the time it would give the resolver an even split between countries. An even split is worse than a default. The PR we'd sketched would have failed its own acceptance test. We'd not written it yet, so the probe spared us that work.
 
 It supported a claim our design document had made months earlier without evidence: _determining the country is most of the work of parsing an address._ The most information-dense token settles the country only a third of the time. The rest of the answer has to come from the surrounding text: the city, the street, and the order of the pieces. A regex that runs before the model cannot supply that. The model can, because it reads the whole string at once and conditions its decisions on what it infers. The measurement showed that country detection belongs in the model. The model is the most expensive layer to change.
 
@@ -70,6 +70,6 @@ It supported a claim our design document had made months earlier without evidenc
 
 We shipped the part the measurement supported. The street-vocabulary check now uses the postcode's gazetteer membership to choose vocabularies. A US-only ZIP consults the American vocabulary and skips the German one. Words from an unrelated language can no longer lower the score of a postcode from another country. The change scales to twenty countries directly. The resolver evals come out byte-identical to before. Byte-identical evals are the expected result for a precision change on a clean sample. The shared inverse-shape function is now available to other callers.
 
-We deliberately kept the flag, and the measurement explains why. `--default-country` stays until the trained model produces the country signal by conditioning on the full address. That is a larger piece of work, and the measurement now justifies it.
+We deliberately kept the flag, and the measurement explains why. `--default-country` stays until the trained model produces the country signal by conditioning on the full address. That's a larger piece of work, and the measurement now justifies it.
 
 We nearly spent an afternoon building a well-argued feature that would have failed its acceptance test. A few hours of measurement on the assumption the design depended on stopped us. Before building something, identify the assumption it depends on and test that assumption first. A probe that saves a week costs the same few hours as a probe that confirms the plan.

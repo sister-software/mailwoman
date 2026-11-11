@@ -5,9 +5,9 @@
  *
  *   Venue-interior structural designators, sourced from the Who's On First placetype vocabulary.
  *
- *   These words are not a postal table and that is the point: the span proposer's other designator
+ *   These words are not a postal table and that's the point: the span proposer's other designator
  *   sources are mail-delivery standards (USPS Publication 28 C2, Australia Post amas, NZ Post
- *   ADV358) and correctly omit them, because mail is not delivered to a concourse, while the
+ *   ADV358) and correctly omit them, because mail isn't delivered to a concourse, while the
  *   decoder's job is to pull an address apart with the richest vocabulary available. This module
  *   feeds `neural/span-proposer-lexicon.ts` and no module in `formatter/` reads it.
  *
@@ -15,7 +15,7 @@
  *   are WOF placetypes. `terminal` and `gate` are OpenStreetMap `aeroway` tag values absent from WOF's vocabulary.
  *
  *   The pin is a type-only import (`satisfies readonly WhosOnFirstPlacetype[]`) erased at build, so
- *   the compiler refuses an entry WOF does not define at zero bundle cost. A value import of the
+ *   the compiler refuses an entry WOF doesn't define at zero bundle cost. A value import of the
  *   vocabulary would pull `node:sqlite` through `PlacetypeDataSource` into the span proposer.
  */
 

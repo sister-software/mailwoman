@@ -17,7 +17,7 @@
  *      extraction parameters its stats sidecar states, the country's OpenStreetMap extraction policy and
  *      version where `@mailwoman/osm` has one, the shape filter, the sampling rule, and a summary of the audit: each
  *      compared model's training corpus and where it was read (a model card, or the training config of a model
- *      whose card does not record it), and each corpus manifest's digest and rows read. The full audit lists every
+ *      whose card doesn't record it), and each corpus manifest's digest and rows read. The full audit lists every
  *      training file. It is written once as `osm-suites.audit.json`, and each lineage cites it by digest.
  *
  *   The builder reads the extracts and writes only under the output directory it is given.

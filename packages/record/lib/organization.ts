@@ -127,7 +127,7 @@ const BASE_DESIGNATIONS = new Set([
 
 /**
  * Jurisdiction-conditional legal forms (ISO 3166-1 alpha-2 → forms) added only when the jurisdiction
- * is known, holding the collision-prone tokens (`pt`, `sca`, `scs`) that the base must not strip.
+ * is known, holding the collision-prone tokens (`pt`, `sca`, `scs`) that the base mustn't strip.
  */
 const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 	ID: ["pt", "tbk", "ud"], // Perseroan Terbatas / Terbuka (listed) / Usaha Dagang

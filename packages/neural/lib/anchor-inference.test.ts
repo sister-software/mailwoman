@@ -300,7 +300,7 @@ describe("buildAnchorFeatures — span modes", () => {
 	})
 
 	it("(c) an unknown GB unit falls back to its outward district, painting the WHOLE unit span", () => {
-		// SW1A 1AA is not in V2 but its outward SW1A is.
+		// SW1A 1AA isn't in V2 but its outward SW1A is.
 		// NI codes behave the same way.
 		const text = "London SW1A 1AA"
 		const spanStart = text.indexOf("SW1A 1AA")
@@ -406,8 +406,8 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 
 /**
  * The ship obligation check: a lookup carrying keys only the shaped keyer can reach,
- * next to a card that does not declare `span_mode: "shaped"`, is a channel that
- * loads clean and feeds zeros on every row it exists for.
+ * next to a card that doesn't declare `span_mode: "shaped"`, is a channel that loads clean
+ * and feeds zeros on every row it exists for.
  */
 describe("shapedKeyerObligationViolation", () => {
 	const withUnits: AnchorLookup = new Map<string, AnchorEntry>([

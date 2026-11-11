@@ -11,7 +11,7 @@ import { titleCase } from "spliterator/casing"
 /**
  * These particles stay lowercase inside a commune name: `Saint-Jean-de-Luz`, `Méry-sur-Oise`.
  *
- * A leading particle is not a joiner and is capitalized (`Le Mans`).
+ * A leading particle isn't a joiner and is capitalized (`Le Mans`).
  */
 export const FR_COMMUNE_PARTICLES: ReadonlySet<string> = new Set([
 	"le",

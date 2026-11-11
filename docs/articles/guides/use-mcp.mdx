@@ -17,7 +17,7 @@ Use Node.js 24.22.1 or a later 24.x release. Install the server with the parser 
 npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/mcp@11.0.0
 ```
 
-The parse and geocode tools need the global place candidates, even for a parse. Install them, plus address points for the places you will geocode. The example geocodes a Washington, DC address:
+The parse and geocode tools need the global place candidates, even for a parse. Install them, plus address points for the places you'll geocode. The example geocodes a Washington, DC address:
 
 ```bash
 export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
@@ -134,7 +134,7 @@ The full message ends with the server's own list of which tools need the gazette
 | `mailwoman_parse`, `mailwoman_geocode`, `mailwoman_poi_search`, `mailwoman_overpass_export`                      | The gazetteer in the data root. `mailwoman_geocode` also uses address points for street addresses. |
 | `mailwoman_layer_manifest`, `mailwoman_bdc_filing_landscape`, `mailwoman_filer_lookup`, `mailwoman_filer_family` | No gazetteer. Each one takes a path to the layer database it reads.                                |
 
-The server's message does not place `mailwoman_plausibility_check`. That tool takes optional `bdc_database_path` and `poi_database_path` arguments and reports no evidence for a layer it cannot open. When it receives an `address` without a `point`, it geocodes the address. The published 11.0.0 message links to a documentation page that has moved. This page replaces it.
+The server's message doesn't place `mailwoman_plausibility_check`. That tool takes optional `bdc_database_path` and `poi_database_path` arguments and reports no evidence for a layer it cannot open. When it receives an `address` without a `point`, it geocodes the address. The published 11.0.0 message links to a documentation page that's moved. This page replaces it.
 
 `mailwoman_parse` also accepts `poi: true` to detect a point-of-interest request, such as a category or brand near a place. `mailwoman_overpass_export` builds an OverpassQL query string for such a request and never runs it.
 

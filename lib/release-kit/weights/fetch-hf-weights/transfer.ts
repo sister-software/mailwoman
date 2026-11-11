@@ -19,7 +19,7 @@ const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: t
  * or the failure message otherwise.
  *
  * The message is returned instead of a boolean because a throttled or unroutable
- * probe must not be reported as a missing artifact.
+ * probe mustn't be reported as a missing artifact.
  */
 export async function probeRemote(url: string): Promise<string | null> {
 	try {

@@ -18,7 +18,7 @@ const SELECTION_ZOOM_STEPS: ReadonlyArray<readonly [minDiameterKm: number, zoom:
 ]
 
 /**
- * The zoom for a feature smaller than every step or one whose diameter the source does not give.
+ * The zoom for a feature smaller than every step or one whose diameter the source doesn't give.
  */
 const SMALL_FEATURE_ZOOM = 9
 
@@ -62,7 +62,7 @@ function framingZoomForDiameter(diameterKm: number | null): number {
  * Whether the viewer asked for reduced motion.
  * A camera move then jumps instead of flying.
  *
- * Answers false where `matchMedia` does not exist, so a test environment without
+ * Answers false where `matchMedia` doesn't exist, so a test environment without
  * a window gets the animated default.
  */
 export function prefersReducedMotion(): boolean {

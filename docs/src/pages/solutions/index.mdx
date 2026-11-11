@@ -11,7 +11,7 @@ These workflows start from tasks that have an executed guide for published Mailw
 
 **Use this when:** You need to separate a line into components and show the user what the parser read. Install the published parser and en-US model, then run [the first parse](/docs/start). [Inspect a parse](/docs/tutorials/inspect-a-parse) shows the query kind, labeled spans, and stage trace for one exact input. Both exercises run without a geographic database.
 
-**Limit:** A labeled house number or postcode is evidence about the text. It does not establish that the address exists or accepts mail. [Confidence and ambiguity](/docs/explanation/confidence-and-limits) explains why a raw node score cannot make that decision.
+**Limit:** A labeled house number or postcode is evidence about the text. It doesn't establish that the address exists or accepts mail. [Confidence and ambiguity](/docs/explanation/confidence-and-limits) explains why a raw node score cannot make that decision.
 
 ## Prepare irregular records for review
 
@@ -29,13 +29,13 @@ These workflows start from tasks that have an executed guide for published Mailw
 
 **Use this when:** You have candidate pairs and known examples of the same and different addresses. [Match candidate records](/docs/guides/match-records) shows an executed blocking and scoring policy, with separate pairs for tuning and evaluation. Its checked fixture needs no parser or geographic database.
 
-**Limit:** The fixture contains false matches and missed matches. Its selected threshold is an example policy for those pairs, and an address match does not identify an occupant. The guide reports each error beside its exact pair. [Limits and release status](/product/limits-and-status) separates published interfaces from evaluated claims for the release.
+**Limit:** The fixture contains false matches and missed matches. Its selected threshold is an example policy for those pairs, and an address match doesn't identify an occupant. The guide reports each error beside its exact pair. [Limits and release status](/product/limits-and-status) separates published interfaces from evaluated claims for the release.
 
 ## Add fields to a coordinate you already have
 
 **Use this when:** A consumer needs coordinate formats or country reference fields. [Annotate a result](/docs/guides/annotate-results) executes published 11.0.0 annotators on a supplied coordinate and country code, then shows two output projections. The checked annotators need no geographic database.
 
-**Limit:** Annotation does not obtain or verify the coordinate. A projection can omit repeated parse components and geocode provenance. [Result schema](/docs/reference/schema) describes the source fields to retain if that evidence matters.
+**Limit:** Annotation doesn't obtain or verify the coordinate. A projection can omit repeated parse components and geocode provenance. [Result schema](/docs/reference/schema) describes the source fields to retain if that evidence matters.
 
 ## Workflows that need geographic data
 

@@ -86,7 +86,7 @@ export interface CounterfactualFlip {
 }
 
 /**
- * A setting that could not be flipped for a row, plus the reason.
+ * A setting that couldn't be flipped for a row, plus the reason.
  */
 export interface SettingSkip {
 	setting: CounterfactualSetting

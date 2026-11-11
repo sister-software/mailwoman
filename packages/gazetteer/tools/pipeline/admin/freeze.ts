@@ -43,7 +43,7 @@ export async function freezeAdmin(
 	db: DatabaseClient<WOFDatabase>,
 	opts: FreezeAdminOptions = {}
 ): Promise<FreezeAdminResult> {
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const {
 		ancestry: { backfillAncestorsFromHierarchy, discoverAdminDataRoots },
 		unifiedSchema: { createUnifiedIndexes, populateAncestors },

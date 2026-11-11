@@ -144,7 +144,7 @@ const nextConfig = values["next-config"]
 const nextAdmitted = nextConfig ? await readAdmittedCountries(nextConfig) : null
 const newlyAdmitted = nextAdmitted ? sorted.filter((code) => nextAdmitted.has(code) && !shippedFamilies.has(code)) : []
 /**
- * Jurisdictions a shipped graph admits that the second config does not.
+ * Jurisdictions a shipped graph admits that the second config doesn't.
  *
  * A code here is a regression the config's author has to have intended.
  */
@@ -230,7 +230,7 @@ no rows either, by the other route.
 **Gazetteer** counts admin places available to resolve, and \`rooftop\` marks the two jurisdictions
 whose rooftop database a consumer can obtain. Every other rooftop database is build-local.
 
-**Weights package** existing is not training. One model graph serves every locale. The other packages
+**Weights package** existing isn't training. One model graph serves every locale. The other packages
 are data-only overlays over it.
 
 **Board** counts rows that check rather than merely track, over rows present. A jurisdiction reading
@@ -284,19 +284,19 @@ It stops admitting ${nextDrops.length} of the jurisdictions a shipped graph admi
 		: ""
 }## Separately modelled postal jurisdictions
 
-A postal regime is a way of writing an address that does not follow its ISO code's own hierarchy.
+A postal regime is a way of writing an address that doesn't follow its ISO code's own hierarchy.
 Each row states what the repository models rather than what the regime is.
 
 | regime | kind | codes | coverage |
 | --- | --- | --- | --- |
 ${regimeRows.join("\n")}
 
-### A corpus row whose country is not a jurisdiction
+### A corpus row whose country isn't a jurisdiction
 
-\`XK\` is an operational code the register enumerates, so it holds a row in the table above. \`ZZ\` is not:
+\`XK\` is an operational code the register enumerates, so it holds a row in the table above. \`ZZ\` holds none:
 it is the ISO 3166-1 user-assigned range, the register enumerates no jurisdiction for it, and
 \`mailwoman data coverage\` reports its rows under \`countryLess\` rather than as a jurisdiction. A reader
-counting the census's countries must not count it as one.
+counting the census's countries mustn't count it as one.
 
 ${countryLessLines}`
 

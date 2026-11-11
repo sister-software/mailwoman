@@ -1,7 +1,7 @@
 # Documentation review — audience, structure, and direction
 
 **Date:** 2026-05-25
-**Scope:** All documentation under `docs/` — articles, blog posts, reviews, and site structure. Does not evaluate code quality or model accuracy except where docs reference them.
+**Scope:** All documentation under `docs/` — articles, blog posts, reviews, and site structure. Doesn't evaluate code quality or model accuracy except where docs reference them.
 
 ---
 
@@ -11,11 +11,11 @@ The Mailwoman documentation is **strong in depth** but **confused about who it's
 
 But the docs oscillate between beginning-friendly explainers and dense operator-internal logs, with no clear boundary between the two. Status information is scattered across a dozen files with contradictory markers. The naming conventions — Tier vs Stage vs Phase vs Thread — require a decoder ring to follow. And the blog posts, while individually strong, form a narrative that only makes sense if read in sequence by someone already immersed in the project.
 
-The fix is not to rewrite everything. It's to add **curatorial structure**: a status page, clearer audience segmentation, terminology reconciliation, and three specific new pages that bridge the gap between "Ifound this project" and "I understand the deep-dive articles."
+The fix isn't to rewrite everything. It's to add **curatorial structure**: a status page, clearer audience segmentation, terminology reconciliation, and three specific new pages that bridge the gap between "Ifound this project" and "I understand the deep-dive articles."
 
 ---
 
-## What is strong
+## What's strong
 
 ### 1. The domain-education material (Tier 0 / Tier 0.5)
 
@@ -35,7 +35,7 @@ The policy registry — per-component, per-locale authority with explicit fallba
 
 The five blog posts are an unusually direct public engineering log. The v0.4.0 retrospective doesn't hide the regressions behind aggregate metrics — it buckets false negatives, identifies the cosine-LR meta-bug, and separates real regressions from adversarial eval artifacts. The "two voices arguing" post is the best piece of beginner-friendly ML communication in the repository — it explains gradient dominance, dual-loss conflict, and bisect-by-elimination debugging in terms a curious software engineer can follow.
 
-The "taming WOF" post fills an actual gap: there is no other developer-facing guide to the practical gotchas of using Who's On First as a geocoder component. It's the kind of content that attracts inbound traffic from search.
+The "taming WOF" post fills an actual gap: there's no other developer-facing guide to the practical gotchas of using Who's On First as a geocoder component. It's the kind of content that attracts inbound traffic from search.
 
 ### 5. Browser-first constraint as a forcing function
 
@@ -49,7 +49,7 @@ The ~60MB cold-load budget is used as an architectural guardrail throughout the 
 
 ## What needs work
 
-### 1. There is no canonical status page
+### 1. There's no canonical status page
 
 A reader arriving at the docs has no way to answer "what works right now?" The information exists but is scattered across:
 
@@ -65,10 +65,10 @@ A reader arriving at the docs has no way to answer "what works right now?" The i
 - What ships in the npm packages today
 - What model weights exist and what their F1 limits are
 - What works in the browser demo
-- What is behind a feature flag
-- What is scaffold-only with no training run
-- What is in active experimentation
-- What is planned but not started
+- What's behind a feature flag
+- What's scaffold-only with no training run
+- What's in active experimentation
+- What's planned but not started
 
 This page should be the first thing linked from the "Docs" navbar. It replaces the scattered status fragments and becomes the single place to update when something ships or regresses.
 
@@ -171,9 +171,9 @@ There are several pages a new reader would expect that don't exist:
 
 ### `understanding/README.md`
 
-- **Good:** The reading-order guidance ("if you are skeptical about the whole project, read Tier 0") is excellent onboarding.
+- **Good:** The reading-order guidance ("if you're skeptical about the whole project, read Tier 0") is excellent onboarding.
 - **Issue:** The article numbering is fragile — numbers 1-38 will need updating every time an article is added or reordered.
-- **Issue:** Article 13 "What is an address?" is listed as "moved from concepts" but the reader doesn't benefit from knowing the editorial history.
+- **Issue:** Article 13 "What's an address?" is listed as "moved from concepts" but the reader doesn't benefit from knowing the editorial history.
 
 ### `understanding/glossary.md`
 
@@ -280,7 +280,11 @@ There are several pages a new reader would expect that don't exist:
 
 The most direct sentence in the entire documentation is in `CONTEXT.md`:
 
+{/* verbatim-quote */}
+
 > "The gap: there is no widely adopted neural address parser shipped as a library. Everyone either uses 2018-era CRF (libpostal) or rolls their own."
+
+{/* /verbatim-quote */}
 
 That gap is the project's reason to exist. The docs should make this sentence louder — it's the answer to the first question every visitor has: "why should I care about this project?"
 

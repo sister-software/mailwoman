@@ -128,8 +128,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 				)
 			}
 
-			// The export URL is read from the Hub job rather than assembled from the item id, because
-			// a hard-coded URL would survive a republish pointing at a file that is no longer the product.
+			// The export URL is read from the Hub job rather than assembled from the item id, because a
+			// hard-coded URL would survive a republish pointing at a file that's no longer the product.
 			exportPath = await downloadZoningExport({
 				url: await client.readExportURL(),
 				vintage,

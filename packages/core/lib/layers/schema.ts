@@ -88,18 +88,18 @@ export interface LayerManifestTable {
 	/**
 	 * JSON object of publisher name to input record count, or NULL when the build recorded none.
 	 *
-	 * `NULL` means the build did not record a count.
+	 * `NULL` means the build didn't record a count.
 	 * `{}` means the build counted records and found no publishers.
 	 * See `LayerManifest.sourceRecords` in `manifest.ts`.
 	 */
 	source_records?: string | null
 	/**
-	 * The URL the build's input file was downloaded from, or NULL when the build did not record it.
+	 * The URL the build's input file was downloaded from, or NULL when the build didn't record it.
 	 * See `LayerManifest.sourceURL` in `manifest.ts`.
 	 */
 	source_url?: string | null
 	/**
-	 * The SHA-256 of the build's input file as lowercase hex, or NULL when the build did not record it.
+	 * The SHA-256 of the build's input file as lowercase hex, or NULL when the build didn't record it.
 	 * See `LayerManifest.sourceSHA256` in `manifest.ts`.
 	 */
 	source_sha256?: string | null
@@ -152,7 +152,7 @@ export interface LayerCoverageTable {
 	 * NULL means the row predates this column.
 	 * Read it as {@link CoverageBasis.SourcePresent}.
 	 *
-	 * The weakest reading, because that is what every layer built before the column was writing.
+	 * The weakest reading, because that's what every layer built before the column was writing.
 	 */
 	basis: CoverageBasis | null
 	/**
@@ -175,13 +175,13 @@ export interface layerschemadatabase {
  * The subset of a Kysely handle the interface helpers touch.
  * The parameter type every one of them takes.
  *
- * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is not assignable
+ * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` isn't assignable
  * to `Kysely<layerschemadatabase>` even when `POIDatabase extends layerschemadatabase`.
  * The incompatibility comes from `transaction()` and `with()`.
  * The interface never calls those methods.
  *
  * A layer can pass its own handle directly when it declares only the members it calls.
- * The alternative — a cast at every call site — does not merely skip one check: it disarms
+ * The alternative — a cast at every call site — doesn't merely skip one check: it disarms
  * every column-level guarantee these two tables provide, including any added later.
  */
 export type layerschemahandle = Pick<Kysely<layerschemadatabase>, "insertInto" | "schema" | "selectFrom">

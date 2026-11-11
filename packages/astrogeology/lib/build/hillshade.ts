@@ -49,7 +49,7 @@ interface DEMGrid {
 /**
  * The unit and width of a DEM's grid, from `gdalinfo`.
  *
- * A source that does not span the whole body is refused, because the extent
+ * A source that doesn't span the whole body is refused, because the extent
  * assigned below is the whole body's.
  */
 async function readDEMGrid(demPath: PathBuilderLike, body: BuildableBodyID): Promise<DEMGrid> {
@@ -171,7 +171,7 @@ export async function buildHillshadePMTiles(
 
 	await runFile("gdal_translate", declare)
 
-	// Read the range from the resampled raster because that is the data to encode.
+	// Read the range from the resampled raster because that's the data to encode.
 	// The resampled raster is much smaller than the source.
 	await assertWithinTerrariumEnvelope(resampled)
 
@@ -258,7 +258,7 @@ export async function buildHillshadePMTiles(
 	}
 
 	// Overviews run from that zoom down to 0, resampled nearest: the bytes are a base-256 numeral
-	// by now, so averaging two neighbors' high bytes answers an elevation that is neither of them.
+	// by now, so averaging two neighbors' high bytes answers an elevation that's neither of them.
 	const overviews = ["-r", "nearest", mbtiles, ...Array.from({ length: zoom }, (_, index) => String(2 ** (index + 1)))]
 
 	if (zoom > 0) {

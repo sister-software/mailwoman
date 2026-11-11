@@ -127,7 +127,7 @@ v720 and v440 are old graphs with 10.7.0 overlays and their own en-us cards (inf
 not the packages as they shipped. Observed: every one of ES's 180 rows is `spliced-sub-venue`, AU's 32 and NZ's 28 are
 all `invented-po-box-cedex`, and IT's 3 are `spliced-affix` (2) and `spliced-country` (1). These countries therefore
 measure one capability source each rather than the country's address forms. Inferred: ES at 0.000 for both older graphs means
-they lack the sub-venue split that 10.7.0 learned. It does not show an ES regression. The scorer's printed table covers
+they lack the sub-venue split that 10.7.0 learned. It doesn't show an ES regression. The scorer's printed table covers
 all 104 cells, including the gazetteer cells, and is in `score.log`.
 
 ### Rows by locale package
@@ -164,7 +164,7 @@ Inferred: the candidate identity reason would block a pass on its own even with 
 
 ## Not run
 
-- Overlap audit: not requested. Observed estimate: the manifest's 859 train files total 78.8 GB. That is under the
+- Overlap audit: not requested. Observed estimate: the manifest's 859 train files total 78.8 GB. That's under the
   100 GB ceiling. Test and val files add 0.36 GB each.
 
 ## Problems found in the tools and the corpus
@@ -179,10 +179,10 @@ Inferred: the candidate identity reason would block a pass on its own even with 
    the text into the identity broke the audit's join and was reverted.
 2. Observed: the rows file was written in DuckDB's run-dependent window order. Two freezes of one sample recorded
    different rows sha256 values over the same sorted row set. Fixed: the sample query now has an `ORDER BY`.
-3. Observed: the dataset version did not change when the sampler's membership rule changed (`d44adaed98bef74f` before
-   and after fix 1, with different rows). The version hashes the sampling rule, and the method name had not changed.
+3. Observed: the dataset version didn't change when the sampler's membership rule changed (`d44adaed98bef74f` before
+   and after fix 1, with different rows). The version hashes the sampling rule, and the method name hadn't changed.
    Fixed: the method is now `per-record-country-kind-hash-order`. Unfixed: any later change to the sampler code must
-   rename the method by hand, or the version will not change.
+   rename the method by hand, or the version won't change.
 4. Observed: `freeze.run.ts` opened DuckDB at its default memory share of host memory. Fixed: it now takes
    `--duckdb-memory-gib` and `--duckdb-threads`.
 5. Observed: spec v6's grouping assumption is that the dataset quota counts groups against 1,000 per country, but

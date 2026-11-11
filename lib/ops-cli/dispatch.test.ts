@@ -75,7 +75,7 @@ describe("mwops dispatch", () => {
 		const h = io()
 		// A real root, because the fix reads the `workspaces` field to know
 		// which directory names are package names.
-		// The tracked-file list stays empty, so there is no repeated prefix and the fix plans no move.
+		// The tracked-file list stays empty, so there's no repeated prefix and the fix plans no move.
 		const withRealRoot = { ...h.io, repoRoot: repoRootPath() }
 
 		await expect(dispatch(["health", "fix", "prefix-directories"], withRealRoot)).resolves.toBe(0)

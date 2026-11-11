@@ -126,7 +126,7 @@ export function ortsteilSurface(sprName: string, deuNames: readonly string[], lo
  * Every current DE neighborhood with a locality ancestor, keyed by the folded
  * locality name → Ortsteil surfaces.
  *
- * Empty when the admin database is not readable.
+ * Empty when the admin database isn't readable.
  * The recipe then emits no Ortsteil rows and reports that result, rather than
  * failing a build over an optional register.
  */
@@ -289,7 +289,7 @@ export const germanRecipe: CorpusRecipe = {
 
 		while (emitted < count && guard++ < count * 6) {
 			const drawn = pool[Math.floor(random() * N)]!
-			// OA does not provide these two registers.
+			// OA doesn't provide these two registers.
 			// Each is drawn independently, so every combination occurs.
 			// One is an Ortsteil borrowed from the tuple's own locality, the other a line with no commas.
 			const localOrtsteile = ortsteile.get(drawn.locality.toLowerCase())

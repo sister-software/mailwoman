@@ -122,7 +122,7 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 
 	// A partially-mappable case keeps its mapped gold.
 	// The converter must preserve an unmapped tag such as `unit_designator`
-	// so it does not discard the case's house_number or street expectations.
+	// so it doesn't discard the case's house_number or street expectations.
 	if (!Object.keys(expect).length) {
 		fixtures.push({ ...fixture, dropped: `unmapped legacy tags: ${unmapped.join(", ")}` })
 

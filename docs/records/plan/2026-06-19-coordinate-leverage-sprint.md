@@ -14,7 +14,7 @@ same rule to deciding what to build next, and the answer is to **measure before 
 A single zero-GPU diagnostic decides the direction of the cycle, and the one strategic choice goes to
 the operator explicitly rather than resting on an assumption.
 
-## The reframe — what we are not doing, and why
+## The reframe — what we're not doing, and why
 
 The research-romp triage's main finding was a principled fix for the #727 admin-token
 fragmentation: a span-level head (GLiNER / Filtered Semi-Markov CRF) plus a lower-fertility
@@ -22,7 +22,7 @@ multilingual vocabulary (EuroBERT). The papers are sound. **The fix is also
 invisible in the coordinate metric.** We shipped v4.11.0 _carrying_ the #727 fragmentation with zero coordinate
 delta. The diacritic break affects ~1% of emitted régions, and the resolver already recovers from it. A
 span-head + vocab-prune + full retrain + int8/WASM requantisation is a multi-week architecture
-overhaul aimed at a defect that does not move the metric we ship on. It is another instance of the #566 trap.
+overhaul aimed at a defect that doesn't move the metric we ship on. It is another instance of the #566 trap.
 
 **Decision: the span-head / tokenizer thread is parked as future work** for CJK/Cyrillic locales
 (where byte-fallback fertility blocks coverage we do not yet serve) rather than next-cycle work. If
@@ -47,7 +47,7 @@ gap that caused it, because each gap routes to a different (and mutually exclusi
 
 For each query, join truth → WOF id (nearest-neighbor + name match), then classify the error:
 
-1. **coverage-gap:** the true WOF id is **not in the gazetteer at all**. Only data ingest helps, and a
+1. **coverage-gap:** the true WOF id **isn't in the gazetteer at all**. Only data ingest helps, and a
    reranker or better retrieval has no effect.
 2. **recall-gap:** the true id is in the gazetteer but **not in the resolver's top-k candidates**.
    Fix retrieval (raise _k_, relax the FTS/trigram threshold) rather than ranking.
@@ -118,8 +118,8 @@ duplicate ids for one place).
 | coverage-gap                   | **2.05%**  |
 | at-rank-1 among covered        | **100%**   |
 
-The results are identical at k = 5 / 10 / 20, so the retrieval beam is not the constraint. **Route: EXPAND_COVERAGE.
-A reranker would not help** (ranking-gap 0.01% ≪ the 10% bar). DeepSeek's structural bet
+The results are identical at k = 5 / 10 / 20, so the retrieval beam isn't the constraint. **Route: EXPAND_COVERAGE.
+A reranker wouldn't help** (ranking-gap 0.01% ≪ the 10% bar). DeepSeek's structural bet
 (coverage > reranker) is **confirmed, with smaller numbers**: ranking headroom is ~0 (it bet 3–5%), and the US
 coverage gap is ~2% on this sample (it bet 12–15%).
 
@@ -128,7 +128,7 @@ coverage gap is ~2% on this sample (it bet 12–15%).
 `Saylor Twp`, `Bertram Twp` (Iowa civil townships); `Barre City` vs `Barre Town`, `Essex Town` vs
 `Essex Junction Village`, `Saint Albans City` vs `Saint Albans Town` (VT town/city/village splits);
 `Dakota Dunes`, `Pennco` (SD CDPs); `Yankton County`. OpenAddresses' "city" field is frequently a civil
-township / village / CDP that WOF does not model as a `locality`. **So the first, lowest-cost US
+township / village / CDP that WOF doesn't model as a `locality`. **So the first, lowest-cost US
 coverage change is a granularity/alias mapping (OA-city → WOF place, plus CDP/localadmin resolution) rather than a
 WOF re-ingest**, because the places mostly exist but are modeled at a different granularity.
 
@@ -141,7 +141,7 @@ WOF re-ingest**, because the places mostly exist but are modeled at a different 
   disambiguating context. A reranker would also have that context. Clean OA does **not** exercise the consult's
   case where a reranker helps on ambiguity (missing postcode / wrong region). If real traffic is noisier,
   ranking headroom could be higher. A degraded-input probe is worthwhile before ruling out the reranker
-  entirely, but on clean data it would not help.
+  entirely, but on clean data it wouldn't help.
 
 **Net:** for US, do not build a reranker. The coordinate change is coverage, and specifically the
 township/CDP granularity mapping. Whether US-coverage or EU-coverage is the sprint's priority is the
@@ -152,7 +152,7 @@ strategic fork below.
 Ran `scripts/eval/eu-parse-blocker.ts` on the in-repo OA samples (1500 rows/locale, ship-config
 v4.11.0 parse, `normalizeCase` on). The proxy is **conditioned on whether the admin token appears in the
 input**. The first version was not, and it wrongly flagged ES/IT/NL as parser-blocked. OA writes "street,
-postcode locality", and the postcode implies the province without a separate token, so there is no token to
+postcode locality", and the postcode implies the province without a separate token, so there's no token to
 split. The corrected results:
 
 | locale | region-in-input     | admin-split (when in input) | **loc-emit → loc-correct** | route                           |
@@ -173,7 +173,7 @@ and only FR got a dedicated extract. Per locale:
   locality on the city-state / `City, Region PLZ` format (loc-correct 36%). **DE is already in
   the resolver DB** (US/DE/FR), so a DE admin-split / `City,Region` extract (the FR template) improves the
   DE coordinate immediately without any ingest. This overlaps the known German city-state work.
-- **ES — a specific, likely-cheap parser bug.** loc-correct is 21% because the parser does not recognize the Spanish street keyword
+- **ES — a specific, likely-cheap parser bug.** loc-correct is 21% because the parser doesn't recognize the Spanish street keyword
   `CALLE`, which bleeds into the locality (`CALLE HUERTA…` → locality `ALLE CA`). ES is
   also zero-DB, so it needs coverage too, but the locality must parse first.
 - **IT / NL — coverage (zero-DB) primary**, with modest locality-parse polish (59% / 64%).
@@ -196,7 +196,7 @@ positioned as a **sovereign, EU-first, multi-locale** alternative to Google geoc
 computed **twice**: weighted by current volume (optimizing for current users) **and** weighted by EU strategy
 (optimizing for the users we want). The two weightings will likely route to different changes: US toward
 "reranker or US-coverage" and EU toward "gazetteer ingest". That divergence is the strategic decision, and
-the operator makes it. The diagnostic makes the choice explicit and does not pick.
+the operator makes it. The diagnostic makes the choice explicit and doesn't pick.
 
 ## Workstream B (conditional, post-diagnostic): the chosen change
 
@@ -223,7 +223,7 @@ pipeline per the existing national-situs / Overture work, or the FR-admin-split 
 
 - **Span-head + lower-fertility vocab (#727):** future-enablement for CJK/Cyrillic rather than this sprint.
   Coordinate-invisible today.
-- **The `enforceWordConsistency` decode-fix:** already shipped default-OFF, and this sprint does not revive it.
+- **The `enforceWordConsistency` decode-fix:** already shipped default-OFF, and this sprint doesn't revive it.
 - **A transformer reranker:** blocked behind the cheap LightGBM falsifier showing ranking-gap signal.
 
 ## Exit criteria

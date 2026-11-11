@@ -262,7 +262,7 @@ describe("the conjunction's other half — the artifact", () => {
 	})
 
 	// An activity afforded by two classes puts both in one search while the layer's completeness
-	// covers one, so the whole searched set must be the surveyed class or the cell is not decidable.
+	// covers one, so the whole searched set must be the surveyed class or the cell isn't decidable.
 	it("refuses a searched union that reaches past the surveyed class", async () => {
 		const route = await routeOver()
 		const poiResult = answered("pharmacy", POINTS.surveyedEmpty)

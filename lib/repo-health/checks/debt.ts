@@ -674,7 +674,7 @@ async function readBaseline(): Promise<DebtCounters> {
 }
 
 /**
- * Cap listed sites so one counter does not flood output.
+ * Cap listed sites so one counter doesn't flood output.
  */
 function listSites(sites: readonly string[]): string[] {
 	if (sites.length <= SITE_CEILING) return [...sites]

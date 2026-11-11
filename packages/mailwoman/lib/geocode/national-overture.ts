@@ -35,7 +35,7 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
 }
 
 /**
- * What is known about the grant on one country's national address-point rows.
+ * What's known about the grant on one country's national address-point rows.
  *
  * Two documents can describe the same rows and disagree.
  * The stricter reading would state an unverified grant.
@@ -55,7 +55,7 @@ export interface OvertureCountryLicense {
 	 */
 	candidates?: readonly string[]
 	/**
-	 * What each reading rests on, so a later reader does not repeat the research.
+	 * What each reading rests on, so a later reader doesn't repeat the research.
 	 */
 	evidence: readonly string[]
 	/**
@@ -75,7 +75,7 @@ export interface OvertureCountryLicense {
  * For addresses, Overture states only that the sources use permissive open licenses
  * before listing the upstream register per country.
  *
- * An expression carrying a second Overture grant would assert a grant Overture does not make.
+ * An expression carrying a second Overture grant would assert a grant Overture doesn't make.
  *
  * `sources[].license` reads NULL on every row of every country here, so the identifier
  * comes from Overture's entry for the register that `sources[].dataset` records.
@@ -129,11 +129,11 @@ const COUNTRY_LICENSES = new Map<string, OvertureCountryLicense>([
 ])
 
 /**
- * Returns what is known about a country's grant, or `undefined` for a country with no entry.
+ * Returns what's known about a country's grant, or `undefined` for a country with no entry.
  *
  * A caller that needs to reason about an unsettled grant reads this.
  * A caller that needs an expression to record uses {@link licenseForOvertureCountry},
- * which refuses one that is unsettled.
+ * which refuses one that's unsettled.
  */
 export function overtureCountryLicense(countryCode: string): OvertureCountryLicense | null {
 	return COUNTRY_LICENSES.get(countryCode.toLowerCase()) ?? null
@@ -255,7 +255,7 @@ export class OvertureNationalDatabaseProvider implements RegionDatabaseProvider<
 
 	/**
 	 * Returns the rooftop lookup for an ISO 3166-1 alpha-2 country, or `{}`
-	 * when the country is unsupported or its database is not on disk.
+	 * when the country is unsupported or its database isn't on disk.
 	 */
 	readonly for = (country: string): RegionDatabases => {
 		const cc = country.toLowerCase()

@@ -319,7 +319,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 
 		// FORM499_D has no legal name, so it is skipped.
 		expect(inferredResult.recordsConsidered).toBe(3)
-		// The Acme records share no identifier, so their name match does not link them.
+		// The Acme records share no identifier, so their name match doesn't link them.
 		expect(inferredResult.linkedClusters).toBe(0)
 		expect(inferredResult.links).toBe(0)
 
@@ -677,7 +677,7 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 		expect(edgesAfterV1[0]?.valid_from).toBe("2026-01-01")
 		expect(edgesAfterV1[0]?.valid_to).toBeNull()
 
-		// A later filing renames node B, so the next run does not link it.
+		// A later filing renames node B, so the next run doesn't link it.
 		await db
 			.insertInto("filer_attribute")
 			.values({

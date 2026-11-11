@@ -53,7 +53,7 @@ const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
  * / 916,517, the published CA 2020 figures.
  *
  * `occupied + vacant === housing_units` is the invariant that distinguishes a correct
- * offset from a plausible one. {@link parseH1} refuses a row when it does not hold.
+ * offset from a plausible one. {@link parseH1} refuses a row when it doesn't hold.
  */
 export const SEG2_FIELD_COUNT = 152
 /**

@@ -24,7 +24,7 @@
  * in this release belongs to a contracting authority or to the office that pays.
  * Both of those are Italian public entities, and a contracting counterparty holds none.
  *
- * That is what makes this source admissible under the policy that admits the addresses of
+ * That's what makes this source admissible under the policy that admits the addresses of
  * organizations and no address of an identifiable natural person. The two admitted roles are held by
  * public bodies, and the one role whose parties can be sole traders publishes no address.
  * {@linkcode readANACParty} still applies a name check and refuses a party whose name takes the
@@ -56,7 +56,7 @@
  * `S.S. 7 APPIA KM 671` does. That number stays in the street line, and the rule below refuses the
  * row.
  *
- * **A street line holding a digit the split could not place refuses the row.**
+ * **A street line holding a digit the split couldn't place refuses the row.**
  * {@linkcode ANACRefusal.StreetNumberUnplaced} covers 194 of those 11,930 lines, where the publisher
  * appends a qualifier after the number: `VIA CIRCONVALLAZIONE, 1 PARCO IDROSCALO`, `VIA FELTRE 57
  * 32100 BELLUNO (BL)`, `VIA SAN SECONDO 29 BIS`. The adapter refuses that line, because emitting it
@@ -93,7 +93,7 @@
  * street lines on the 2025 edition. {@linkcode isPlaceholderValue} treats it as absent, so no row
  * records `N.A.` as a postcode.
  *
- * An Italian CAP is five digits. A postcode that is neither a placeholder nor five digits is not a
+ * An Italian CAP is five digits. A postcode that's neither a placeholder nor five digits isn't a
  * CAP, and the row is refused rather than stripped of the field: the one such value on the 2025
  * edition is `01238-000`, a São Paulo CEP on the payer `ISTITUTO ITALIANO DI CULTURA DI SAN PAOLO`,
  * whose address is in Brazil rather than Italy. A `countryName` naming any country but Italy refuses
@@ -166,7 +166,7 @@ export const IT_ANAC_ATTRIBUTION = "Autorità Nazionale Anticorruzione (ANAC), v
 export const IT_ANAC_PARTY_ROLES: readonly string[] = ["buyer", "payer"]
 
 /**
- * Why a party's address did not become a row.
+ * Why a party's address didn't become a row.
  *
  * The reading returns one of these rather than an empty result, so a caller counting
  * refusals knows which condition each party met.
@@ -187,7 +187,7 @@ export const ANACRefusal = {
 	 */
 	LocalityAbsent: "locality-absent",
 	/**
-	 * The street line holds a digit that the split could not read as a house number.
+	 * The street line holds a digit that the split couldn't read as a house number.
 	 */
 	StreetNumberUnplaced: "street-number-unplaced",
 	/**
@@ -308,7 +308,7 @@ const KILOMETRE_POINT = /[\s,]+km\.?[\s,]*\d+(?:[.,]\d+)?$/iu
  * each side of the comma is rare: `PARCO NAZIONALE DEL CILENTO, VALLO DI DIANO E ALBURNI`
  * has eight words after the comma.
  * The single word on each side is what the inverted personal form has
- * and what a department or authority name does not.
+ * and what a department or authority name doesn't.
  */
 const PERSONAL_NAME_FORM = /^\p{L}[\p{L}'’.-]*\s*,\s*\p{L}[\p{L}'’.-]*$/u
 

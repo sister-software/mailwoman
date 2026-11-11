@@ -8,7 +8,7 @@
  *   ## What the publisher offers
  *
  *   One archive at a bare HTTPS URL, `URBIS_ADM_Adresses.zip`, holding a single member
- *   `UrbAdm_Adresses.gml`. Paradigm publishes no INSPIRE ATOM feed for this theme, so there is no
+ *   `UrbAdm_Adresses.gml`. Paradigm publishes no INSPIRE ATOM feed for this theme, so there's no
  *   `<updated>` element to poll and no dataset feed to resolve: the URL is the whole acquisition
  *   path. `last-modified` is the one freshness signal the service offers, and this fetcher records it
  *   in the manifest so a later run can tell a refreshed archive from the one it already holds.

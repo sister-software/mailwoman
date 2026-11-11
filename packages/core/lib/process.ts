@@ -66,7 +66,7 @@ export interface ProcessOutput {
 
 /**
  * The rejection {@linkcode runFile} answers for a command that started
- * but did not exit 0: the builtin's error.
+ * but didn't exit 0: the builtin's error.
  *
  * That error includes the streams and the exit code or signal that ended it.
  */
@@ -90,8 +90,8 @@ export function isProcessError(error: unknown): error is ProcessError {
 export type RunFileOptions = Omit<ExecFileOptions, "cwd"> & { cwd?: PathBuilderLike }
 
 /**
- * Run a command to completion and answer what it wrote: rejects with a {@linkcode ProcessError} on a
- * non-zero exit but with the plain spawn error when the command could not start (enoent, eacces).
+ * Run a command to completion and answer what it wrote: rejects with a {@linkcode ProcessError}
+ * on a non-zero exit but with the plain spawn error when the command couldn't start (enoent, eacces).
  */
 export async function runFile(
 	file: PathBuilderLike,
@@ -145,7 +145,7 @@ export function runFileSync(
  * Run a shell command line synchronously and answer stdout.
  *
  * Reach for {@linkcode runFileSync} unless the command needs the shell, because an
- * argument list does not get re-parsed, quoted or expanded.
+ * argument list doesn't get re-parsed, quoted or expanded.
  */
 export function runShellSync(command: string, options: ExecSyncOptions & { cwd?: PathBuilderLike } = {}): string {
 	return execSync(command, { ...options, cwd: options.cwd?.toString(), encoding: "utf8" }) ?? ""
@@ -207,7 +207,7 @@ export type SpawnProcessSyncOptions = Omit<SpawnSyncOptions, "cwd"> & { cwd?: Pa
 
 /**
  * {@linkcode spawnProcess} run to completion in a synchronous slot where,
- * unlike {@linkcode runFileSync}, a non-zero exit does not throw but comes back in
+ * unlike {@linkcode runFileSync}, a non-zero exit doesn't throw but comes back in
  * the result with the status, signal and both streams.
  */
 export function spawnProcessSync(
@@ -297,7 +297,7 @@ export interface ProcessTaskOptions extends Omit<SpawnOptions, "cwd" | "stdio" |
 	 *
 	 * With `false`, `result` resolves with the {@linkcode ProcessResult}, and the caller reads `exitCode`.
 	 *
-	 * A command that could not start always rejects with the spawn error.
+	 * A command that couldn't start always rejects with the spawn error.
 	 *
 	 * @defaultValue `true`
 	 */
@@ -480,7 +480,7 @@ export class ProcessTask extends TypedEventTarget<ProcessTaskEventMap> implement
 			this.#signal?.removeEventListener("abort", this.#onAbort)
 		})
 
-		// A task that is only disposed, never awaited, must not raise an unhandled rejection.
+		// A task that's only disposed, never awaited, mustn't raise an unhandled rejection.
 		// Callers that await `result` still receive the rejection.
 		this.result.catch(() => undefined)
 
@@ -488,7 +488,7 @@ export class ProcessTask extends TypedEventTarget<ProcessTaskEventMap> implement
 	}
 
 	/**
-	 * Disposal sends SIGTERM to a running process, sends SIGKILL if it has not exited
+	 * Disposal sends SIGTERM to a running process, sends SIGKILL if it hasn't exited
 	 * after `killGraceMs`, and resolves once it has exited.
 	 * If the process has exited, disposal sends no signal.
 	 *

@@ -12,7 +12,7 @@
  *   on the address line and whose homonymous localities collide across the border — US states
  *   (`us/state.ts`) and Canadian provinces (`ca/province.ts`). Both directions are covered: the ISO
  *   code (`QC` → Quebec) and the full name (`Quebec` / `Québec` → the `QC` record), so a resolver
- *   can expand the abbreviation the gazetteer FTS index lacks ("QC" is not an alt-name of Québec)
+ *   can expand the abbreviation the gazetteer FTS index lacks ("QC" isn't an alt-name of Québec)
  *   into the full name it does contain. This is a soft prior rather than a routing decision. The gazetteer
  *   still does the geographic confirmation (per the registry-backed-soft-prior doctrine).
  *

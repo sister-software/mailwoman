@@ -34,18 +34,18 @@ that shipped labels correctly, region → `""`. Mechanism: the dedicated country
 `suppress_gazetteer_near_postcode`) fires on the trailing country surface and out-competes the adjacent
 region tag on that boundary. It is an actual v263 behavior rather than a near-miss.
 
-**But it does not move the assembled coordinate.** The #566-correct measure — the held-out coordinate
+**But it doesn't move the assembled coordinate.** The #566-correct measure — the held-out coordinate
 z-test on 300 fresh real US/FDIC and 300 fresh real FR/BAN addresses — is flat in both locales (z −0.16 /
 −0.17, PASS). The golden region misses are on redundant-trailing-country formats that real-address draws
 don't emphasize. The resolver still pins those without the region. This is the same class as v261's
-documented country exception, in the opposite tag: a per-tag delta that the coordinate does not see.
+documented country exception, in the opposite tag: a per-tag delta that the coordinate doesn't see.
 
 ## The homograph trade — the country channel reduces both ways (surfaced 2026-07-14 by the ledger tooling)
 
 The `--weights-cache` promotion-check path added for the ledger backfill graded v263 package-shaped on the
 `country-homograph-real` probe (n=54) and exposed a **second, country-side** trade the golden grade above
-did not measure. v263's country channel is a 2-dim `[country_surface, country_ambiguous]` feature. The
-`country_ambiguous` bit is a learnable false-positive guard for homograph surfaces (a country name that is
+didn't measure. v263's country channel is a 2-dim `[country_surface, country_ambiguous]` feature. The
+`country_ambiguous` bit is a learnable false-positive guard for homograph surfaces (a country name that's
 also a US state, a city, or a common word). It works — but on this all-homographs-are-countries test it is
 _too_ conservative: v263 (country-ON) misses exactly three rows country-OFF emits — **Georgia** (US state),
 **Jordan** (given name), **Jamaica** (NYC neighborhood) — and gains none, so country F1 drops **89.8 → 82.6**.
@@ -54,7 +54,7 @@ This is the mirror image of the preceding finding. On the leading-long-form WOF-
 #1104 target) the channel _lifts_ country recall 84.8→89.3%; on the trailing-homograph distribution it
 _trades_ recall for precision. The net is coordinate-invisible — the held-out coordinate z-test passed on
 both locales, and the `country_ambiguous` guard's whole purpose is fewer false "Georgia → country" emissions
-on real mixed input. The homograph-recall test cannot credit that gain. It does not change the v263 ship
+on real mixed input. The homograph-recall test cannot credit that gain. It doesn't change the v263 ship
 (coordinate is the ship check, #566), but it narrows the country result: **v263 helps admin-hierarchy country
 and trades a little homograph-country recall for homograph precision.** A future tune could soften the
 guard (a lower `country_ambiguous` weight) if the homograph-recall lens is judged to matter more than the

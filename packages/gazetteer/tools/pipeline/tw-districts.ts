@@ -28,7 +28,7 @@
  *   That step lets 桃園市 reach the region WOF still names 桃園縣. The build writes the match as an `ancestors` row.
  *   The candidate build then stamps the row with the region's scope. `names`
  *   stores the register's spelling as the official name and its 臺/台 twin as an alias. Population is 0 (unmeasured:
- *   an address-point count is not a population), so a row wins only where its key is the answer.
+ *   an address-point count isn't a population), so a row wins only where its key is the answer.
  *
  *   Run: mailwoman gazetteer build tw-districts [--release <overture release>] [--parquet <path>] [--admin <path>]
  *   [--out <localities-tw-districts.db>]
@@ -126,7 +126,7 @@ export interface TaiwanRegionName {
  * Every comparison runs through the `zh` locality fold, so 臺 and 台 spellings meet.
  * `null` is a real absence.
  *
- * A 縣市 the admin artifact does not know — and the caller reports it rather than guessing.
+ * A 縣市 the admin artifact doesn't know — and the caller reports it rather than guessing.
  */
 export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRegionName[]): number | null {
 	const fold = (name: string): string => normalizeLocalityForKeyLocale(name, "zh")

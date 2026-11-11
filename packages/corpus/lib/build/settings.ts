@@ -77,7 +77,7 @@ export function derivationConfig(
  * row keeps its ancestor's `source`, and the runner deduplicates within one adapter's run.
  * A source's files therefore read only that adapter's input.
  *
- * `outputDir` is left out: it locates an adapter's side state and does not change a row.
+ * `outputDir` is left out: it locates an adapter's side state and doesn't change a row.
  */
 export async function adapterExtractHash(options: AdapterOptions): Promise<string> {
 	const { inputPath, outputDir: _outputDir, ...rest } = options

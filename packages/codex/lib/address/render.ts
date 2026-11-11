@@ -157,7 +157,7 @@ function evaluateLines(layout: AddressLayout, components: ComponentDict): readon
  * or `CH-` in `CH-8001`, into the postcode piece.
  *
  * The prefix belongs to the written code, so a label that stops at `600` marks a
- * span that does not appear in the reader's input.
+ * span that doesn't appear in the reader's input.
  * A connector that holds whitespace separates two values and stays a connector.
  */
 function absorbPostcodePrefixes(pieces: readonly AddressPiece[]): readonly AddressPiece[] {

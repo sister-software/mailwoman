@@ -24,7 +24,7 @@ console.log(preference.kind) // "prior"
 ```
 
 The source names above are illustrative. An observation's `vintage: null` means
-the source did not record a date.
+the source didn't record a date.
 
 ## Evidence kinds
 
@@ -38,7 +38,7 @@ the source did not record a date.
 Use `relation()` to enforce the rule that an authoritative relationship has no
 score. The constructor throws if an authoritative input supplies a score.
 An inferred relationship may supply one. The Zod schemas describe the serialized
-shapes, but `RelationSchema` does not enforce this constructor check.
+shapes, but `RelationSchema` doesn't enforce this constructor check.
 
 ## Coverage and exclusions
 
@@ -50,7 +50,7 @@ supplied country set.
 
 A normalization identity records a function's outputs over `FOLD_PROBE_CORPUS`.
 Compute it with `foldIdentity(normalize)` for both the build and lookup functions.
-The helper compares these identities. It does not independently measure coverage
+The helper compares these identities. It doesn't independently measure coverage
 or establish that two functions agree on every possible input.
 
 ## Claims and derivations

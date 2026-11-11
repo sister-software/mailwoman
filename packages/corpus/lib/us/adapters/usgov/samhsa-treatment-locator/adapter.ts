@@ -12,7 +12,7 @@
  *   primary + secondary street lines. Phase 1.6 §1.2 selects this source for the same reason
  *   it selects HRSA: facility names are hand-typed venue strings and the addresses pass through
  *   enough human + system hands to accumulate the suite-designator + sub-tenant chaos ("Suite C,
- *   behind main building") that pure gazetteer data does not.
+ *   behind main building") that pure gazetteer data doesn't.
  *
  *   samhsa writes an address on two lines. `street1` holds the postal street line (`"123 Main St"`)
  *   and `street2` the suite or floor (`"Suite 300"`). `splitUSStreetLine` splits `street1`, and

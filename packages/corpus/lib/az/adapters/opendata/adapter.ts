@@ -17,7 +17,7 @@
  * `STRT_ADDR` writes `0` where the point has no number. Some street values put the number after a
  * comma (`Zarifa Aliyeva,38`) or a building's name in parentheses (`Azadlig Avenue(Hilton Baku)`). The
  * adapter reads the number from the street when `STRT_ADDR` has none and removes the parenthetical. A block
- * code (`558-ci0mehelle030`) is not a house number. A row with neither a number nor a venue is refused.
+ * code (`558-ci0mehelle030`) isn't a house number. A row with neither a number nor a venue is refused.
  *
  * `NAME` names a point of interest of the type `TYPE` states (`Cafe Gorush`, `School 93`, `Library by
  * A. P. Chekhov`). Of the three values shaped `<Word> <surname-ending>` in the 2025-08-05 file, each
@@ -58,7 +58,7 @@ export const OPENDATA_AZ_ADAPTER_ID = "opendata-az"
 
 /**
  * Creative Commons Attribution is the publisher's license.
- * The record does not state its version.
+ * The record doesn't state its version.
  */
 export const OPENDATA_AZ_LICENSE = "LicenseRef-CC-BY-unstated-version"
 

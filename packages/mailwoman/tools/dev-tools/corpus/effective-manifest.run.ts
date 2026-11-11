@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Write the effective training manifest. It records which of a corpus's sources one config's audited epoch reached
- *   and why each remaining source did not reach the trainer.
+ *   and why each remaining source didn't reach the trainer.
  *
  *   The corpus's own `TRAINING_SOURCES.json` records what the corpus holds. A run reads it through a
  *   config. `country_weights`, `source_weights`, a `0.0` weight and `augment_exclude_sources` each remove

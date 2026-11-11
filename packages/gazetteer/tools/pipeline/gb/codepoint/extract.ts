@@ -95,7 +95,7 @@ export interface CodePointMetadata {
  * Lines without that shape are skipped.
  *
  * OS has added header fields before (the `RM update date` row is newer than the product),
- * and a new one must not break the build.
+ * and a new one mustn't break the build.
  */
 export function parseCodePointMetadata(text: string): CodePointMetadata {
 	const field = (label: string): string => {

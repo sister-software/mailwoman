@@ -7,7 +7,7 @@ verified-with: mailwoman v11.0.0
 
 # Reverse-geocode a coordinate
 
-Use this procedure to find the places that contain a coordinate, such as the neighborhood, city, region and country of a GPS reading. Mailwoman's reverse geocoder returns a Who's On First administrative hierarchy. It does not return a street address or a house number for the coordinate.
+Use this procedure to find the places that contain a coordinate, such as the neighborhood, city, region and country of a GPS reading. Mailwoman's reverse geocoder returns a Who's On First administrative hierarchy. It doesn't return a street address or a house number for the coordinate.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ npx mailwoman gazetteer build admin --data /path/to/whosonfirst-repos --out admi
 npx mailwoman gazetteer build fts admin-global-priority.db
 ```
 
-The two commands above match the published `--help` output, but this page did not run them. The global gazetteer used for this page was built earlier on the same host and occupies 7,316,430,848 bytes.
+The two commands above match the published `--help` output, but this page didn't run them. The global gazetteer used for this page was built earlier on the same host and occupies 7,316,430,848 bytes.
 
 Point the reverse geocoder at the result:
 
@@ -217,7 +217,7 @@ ship-1: -, - (approximate, 0 places)
 
 ## Read the result
 
-- The hierarchy states which administrative places contain the coordinate. It is not a postal address, and it does not identify a building or a street.
+- The hierarchy states which administrative places contain the coordinate. It isn't a postal address, and it doesn't identify a building or a street.
 - `containment: "polygon"` means each place's boundary contains the point. `approximate` means the places were estimated from centroids, and `distanceKm` on the finest place gives that centroid's distance.
 - An empty hierarchy means the coordinate lies outside every place in the gazetteer.
 

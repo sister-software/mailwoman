@@ -156,7 +156,7 @@ export function holdoutSources(): Record<string, SourceDef> {
  * A seeded default would turn the generalization measure into a fixed set.
  *
  * It also returns `drawnFrom`, the count of parseable rows the reservoir saw,
- * since the sample size by itself does not identify what it was drawn from.
+ * since the sample size by itself doesn't identify what it was drawn from.
  */
 export async function drawHoldoutSample(
 	src: SourceDef,

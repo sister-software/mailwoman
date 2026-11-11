@@ -78,7 +78,7 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 				raw = `${city}, ${postcodeSurface}, ${street} ${number}`
 			} else {
 				// The street-less form `«city» «pc», Česko` omits street and number from the
-				// components because the surface does not include them.
+				// components because the surface doesn't include them.
 				raw = `${city} ${postcodeSurface}, Česko`
 			}
 

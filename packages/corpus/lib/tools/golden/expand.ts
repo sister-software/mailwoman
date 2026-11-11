@@ -38,13 +38,13 @@
  *   - `DEEPSEEK_API_KEY` — required for provider `deepseek`
  *   - `ANTHROPIC_API_KEY` — required for provider `anthropic`
  *
- *   ## What this module does not do
+ *   ## What this module doesn't do
  *
- *   - Does not commit anything or modify the versioned golden dir. Candidates land in
+ *   - Doesn't commit anything or modify the versioned golden dir. Candidates land in
  *       `data/eval/golden/candidates/` for operator review (skim, prune, then run
  *       `mailwoman corpus golden promote`).
- *   - Does not score the LLM's quality — that's an eyeball job after pilot lands.
- *   - Does not retry hallucinated candidates. Cost of wasted tokens is trivial (~$0.0006/each).
+ *   - Doesn't score the LLM's quality — that's an eyeball job after pilot lands.
+ *   - Doesn't retry hallucinated candidates. Cost of wasted tokens is trivial (~$0.0006/each).
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
@@ -560,7 +560,7 @@ export async function expandGolden(
 
 						// Remove dropped components from the components map
 						for (const tag of goldenCandidate.dropped_components) {
-							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object is not on a hot path
+							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object isn't on a hot path
 							delete goldenCandidate.components[tag]
 						}
 

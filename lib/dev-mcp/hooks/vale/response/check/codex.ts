@@ -19,7 +19,7 @@
  *     The next Stop in that session consumes it and passes unchecked. That approximates Claude's semantics
  *     — the reply after a block goes unlinted whatever produced it — and caps a false positive at
  *     one corrective turn.
- *   - There is no transcript fallback: Codex's `transcript_path` is nullable and its transcript
+ *   - There's no transcript fallback: Codex's `transcript_path` is nullable and its transcript
  *     schema is Codex's own rather than the jsonl shape the Claude adapter parses. A missing
  *     `last_assistant_message` here is silence rather than a parse attempt.
  *

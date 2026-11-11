@@ -46,7 +46,7 @@ export interface DebugDrawerProps {
  */
 export const DebugDrawer: React.FC<DebugDrawerProps> = ({ result, devMode, traceParse, onClose }) => {
 	const [storedTrace, setStoredTrace] = useState<{ input: string; trace: ParseTraceLike | null } | null>(null)
-	// A point query never reached the classifier, so there is no decode path to draw for it.
+	// A point query never reached the classifier, so there's no decode path to draw for it.
 	const input = result && !isPointResult(result) ? result.input : null
 	const trace = storedTrace?.input === input ? storedTrace.trace : null
 

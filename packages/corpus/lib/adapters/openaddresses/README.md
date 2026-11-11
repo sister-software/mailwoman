@@ -53,7 +53,7 @@ Downstream training code can stratify or exclude by license via the
 OpenAddresses includes a non-trivial fraction of **ODbL** and
 **CC-BY-SA** rows (parts of Canada and several European
 countries among them). Per the licensing strategy in [#26][licensing], those rows
-must not enter the training corpus for the proprietary
+mustn't enter the training corpus for the proprietary
 `@mailwoman/neural-weights-*` packages. A model trained on share-alike data
 would create a copyleft obligation on the weights themselves.
 
@@ -76,7 +76,7 @@ import { createOpenaddressesAdapter } from "@mailwoman/corpus"
 const adapter = createOpenaddressesAdapter({ allowShareAlike: true })
 ```
 
-A CLI `--allow-share-alike` flag is **not yet wired through
+A CLI `--allow-share-alike` flag **isn't yet wired through
 `mailwoman corpus run`** — it lands with the global corpus-build
 filter from [#26][licensing]. Until then, override via a custom
 build script that calls `createOpenaddressesAdapter()` directly.
@@ -96,7 +96,7 @@ build script that calls `createOpenaddressesAdapter()` directly.
 | `hash`, `id`            | `source_id` seed (`hash` preferred)            |
 | `LICENSE` / `license`   | per-row `license` (overrides `defaultLicense`) |
 
-`district` is **not** mapped. In US data it holds a borough or
+`district` **isn't** mapped. In US data it holds a borough or
 county. Neither is part of a postal address, and mapping them would inflate the
 alignment quarantine pile. A future Phase 6+ adapter for non-US locales
 (where district names do appear on the envelope) can revisit.

@@ -8,7 +8,7 @@
  *
  *   Two things are measured, because one without the other misleads:
  *
- *   1. rows: `placetype = 'postalcode'` counts per country, read straight off the backend's own table. A count is not
+ *   1. rows: `placetype = 'postalcode'` counts per country, read straight off the backend's own table. A count isn't
  *      reachability (an indexed row the query path never returns is still zero evidence), so it is reported as a bound rather than as coverage.
  *   2. reachability: one real (postcode, locality) pair per codex system, run through the same `findPlace` calls the
  *      pass itself makes. It reports whether the postcode resolved and whether an exact same-name locality came back.

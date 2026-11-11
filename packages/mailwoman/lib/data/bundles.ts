@@ -463,7 +463,7 @@ function describeExpression(expression: string): string {
  * The prose contains publisher names and conditions no manifest holds.
  * The expression line states the implication of {@link BundleRights.expression}.
  *
- * A pull uses it to decide when the artifact is not yet on disk.
+ * A pull uses it to decide when the artifact isn't yet on disk.
  */
 export function describeBundleRights(bundle: DataBundle): string[] {
 	const { rights } = bundle
@@ -525,7 +525,7 @@ export function summarizeBundleRights(bundle: DataBundle): BundleRightsSummary {
 export interface ArtifactTermsObservation {
 	path: string
 	/**
-	 * `absent` means the file is not on disk.
+	 * `absent` means the file isn't on disk.
 	 *
 	 * `unmanifested` means it has no `layer_manifest`.
 	 * `unreadable` means opening it failed.

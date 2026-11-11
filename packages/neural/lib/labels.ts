@@ -14,8 +14,8 @@
  *   `labels` field and read by `loadFromWeights` (see `weights.readLabelsFromModelCard`). These
  *   constants remain the compile-time fallback for legacy bundles whose cards predate the field —
  *   safe because such bundles are by construction Stage 1 or Stage 2. Stage 2 prefix-extends
- *   Stage 1. A future Stage 3 ship will not be safe under the fallback. The loader treats a missing
- *   `labels` field as "you are loading a pre-v0.4.0 bundle" rather than "unknown stage".
+ *   Stage 1. A future Stage 3 ship won't be safe under the fallback. The loader treats a missing
+ *   `labels` field as "you're loading a pre-v0.4.0 bundle" rather than "unknown stage".
  */
 
 import type { BIOLabel } from "@mailwoman/codex/component"

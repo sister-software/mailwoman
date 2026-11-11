@@ -13,7 +13,7 @@
 #     07691 Portopetro, Illes Balears, Spain       locality ok   region discarded
 #     15, 07691 Portopetro, Illes Balears, Spain   locality displaced by the region
 #
-# what is added: synth-trailing-region-structured v24 — 17,908 real (postcode, locality, region)
+# what's added: synth-trailing-region-structured v24 — 17,908 real (postcode, locality, region)
 # triples (FR 10,208, DE 3,538, ES 3,289, IT 873), joined from postalcode-intl.db parents through admin
 # localities to their region ancestors, hub-filtered at the p99. Eight catch-all localities
 # (Schwedt/Oder claims 9,222 postcodes against a p50 of 1) held 47% of the raw join. House numbers are
@@ -28,7 +28,7 @@
 # PRE-registered watch (#513, and the discipline #1677 reports as missing):
 #   expected to move   — es/it/de/fr *-trailing-region cohort rows, es-op3-southeast-portopetro
 #   expected not to    — pt-cs-lagos-trailing-region (no PT triples in the corpus)
-#   must not regress   — bz-cs-belize-city, kh-cs-phnom-penh, tt-cs-port-of-spain,
+#   mustn't regress   — bz-cs-belize-city, kh-cs-phnom-penh, tt-cs-port-of-spain,
 #                        bn-cs-bandar-seri-begawan, il-cs-tel-aviv-yafo, my-cs-petaling-jaya,
 #                        and the *-street-name-* family. These are the classes v4.6.0 broke.
 data:

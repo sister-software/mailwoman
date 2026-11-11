@@ -104,8 +104,8 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		f.push(Math.min(1, freq * 1000))
 		// Roll-up signature: a shared corporate address can host differently-branded
 		// operating entities whose authorized official also agrees.
-		// The official is not in the comparison set, so these three features express that evidence directly.
-		// They are appended at the end, so models trained without them keep scoring unchanged.
+		// The official isn't in the comparison set, so these three features express that evidence directly.
+		// They're appended at the end, so models trained without them keep scoring unchanged.
 		const offA = a.attributes?.["authorizedOfficial"]?.trim()
 		const offB = b.attributes?.["authorizedOfficial"]?.trim()
 		const officialAgree = offA && offB && nameSimilarity(offA, offB) >= OFFICIAL_NAME_AGREEMENT ? 1 : 0

@@ -150,7 +150,7 @@ export function scriptRenderings(value: string): string[] {
  *
  * Exact case-folded equality with no other rule for every ordinary `expect_components` key. a
  * global fallback over {@linkcode scriptRenderings} was removed because two renderings of a value
- * cannot say whether they are two writings of the same element or two elements that ran together,
+ * cannot say whether they're two writings of the same element or two elements that ran together,
  * so the relaxation lives in the per-row `expect_component_renderings` opt-in instead.
  */
 export function componentMatches(got: string, expected: string): boolean {

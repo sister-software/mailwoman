@@ -36,7 +36,7 @@ test("the globe loads for the built body, search finds a known feature, selectio
 		.click()
 
 	// Read the panel by role and name to verify that it belongs to this feature.
-	// A text match by itself would not establish that.
+	// A text match by itself wouldn't establish that.
 	await expect(page).toHaveURL(/\/feature\/\d+$/u)
 	await expect(page.getByRole("complementary", { name: known.name })).toBeVisible()
 

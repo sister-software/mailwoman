@@ -5,7 +5,7 @@
  *
  *   Stream one large file to disk through a `.part` rename, so an interrupted transfer can never present as a complete file.
  *
- *   Raw `fetch` is deliberate. `APIClient` serves small, repeated requests. A multi-hundred-megabyte stream does not fit that use.
+ *   Raw `fetch` is deliberate. `APIClient` serves small, repeated requests. A multi-hundred-megabyte stream doesn't fit that use.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -54,7 +54,7 @@ export interface StreamToDiskOptions {
 	progressStrideBytes?: number
 	/**
 	 * What this host's non-OK status means, appended to the refusal: the soil download service answers 400
-	 * rather than 404 for a version date it does not hold, so a bare status would misdirect a reader.
+	 * rather than 404 for a version date it doesn't hold, so a bare status would misdirect a reader.
 	 */
 	describeStatus?: (status: number) => string | undefined
 	/**
@@ -99,7 +99,7 @@ export class ResumeRefusedError extends Error {
  * Follows redirects: a job endpoint that answers with a generated result URL routinely redirects again.
  * The downloader would write a redirect page to disk and report success if it stopped at the redirect.
  *
- * @throws {Error} When the response is not OK or contains no body.
+ * @throws {Error} When the response isn't OK or contains no body.
  * A partial file is removed on any failure unless `retainPartial` is set.
  */
 export async function streamToDisk(options: StreamToDiskOptions): Promise<number> {

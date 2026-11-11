@@ -69,7 +69,7 @@ const config = await readLocalJSONFile<{ num_labels?: number; num_address_system
 	join(checkpoint, "config.json")
 )
 
-// The card writes the active set's labels, so a head of another width would ship a label map it does not emit.
+// The card writes the active set's labels, so a head of another width would ship a label map it doesn't emit.
 if (config.num_labels !== ACTIVE_BIO_LABELS.length) {
 	throw new Error(
 		`${checkpoint}/config.json has num_labels ${config.num_labels}; the card writes ${ACTIVE_BIO_LABELS.length} labels`

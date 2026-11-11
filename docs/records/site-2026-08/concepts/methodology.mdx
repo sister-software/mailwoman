@@ -53,7 +53,7 @@ controls: ablation, with the control group most ablation studies skip.
 ## Per-locale floors
 
 Coverage grows one locale at a time, and each locale gets its own floor — a panel and a
-threshold that later changes must not sink. A change that lifts French while taxing
+threshold that later changes mustn't sink. A change that lifts French while taxing
 English would pass any aggregate metric, but it cannot pass a per-locale check. This is what lets
 the system take on new address conventions without silently spending the quality budget of the
 old ones. (For why aggregates mislead in this domain specifically, see
@@ -75,7 +75,7 @@ baseline, the softened threshold, the deleted test. Three structural rules close
   re-broke a namesake case the suite had guarded for weeks.
 
 Promotion runs through three layers: the regression log, metamorphic invariants (uppercasing
-an address, adding a trailing dot, or a one-letter typo must not move the pin — properties
+an address, adding a trailing dot, or a one-letter typo mustn't move the pin — properties
 that need no answer key and so can't be overfit), and a held-out draw where candidate and
 production models compete on addresses neither has seen, judged by a z-test. The held-out
 layer wins every conflict with a prettier metric.

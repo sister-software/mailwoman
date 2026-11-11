@@ -116,7 +116,7 @@ export interface PublicationSubject {
  * Every reason the given layers may not be published, in the order they were given.
  *
  * An empty array means each layer's tier permits publication and no license expression contradicts it.
- * The array does not state whether anyone verified the expression against the upstream terms.
+ * The array doesn't state whether anyone verified the expression against the upstream terms.
  *
  * Code in this repository cannot decide whether those terms support the expression.
  */

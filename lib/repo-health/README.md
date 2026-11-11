@@ -8,11 +8,11 @@ belong elsewhere. Code that needs to write something is a release operation or a
 the registry and are never registered in it: `lib/baseline.ts` writes the debt baseline, and `lib/fixes.ts` plus
 `lib/move/` apply the mechanical repair that a check's diagnostic describes.
 
-`lib/registry.ts` is the package's only executable entry point. A check file that is not registered is dead code, and
+`lib/registry.ts` is the package's only executable entry point. A check file that's not registered is dead code, and
 knip reports it.
 
 Every check enumerates `RepoContext.trackedFiles` from git, so an untracked file is invisible: `git add` a new file
-before running a check on it, or a green local run means only that git has not been told about the file. The
+before running a check on it, or a green local run means only that git hasn't been told about the file. The
 tracked-only walk is deliberate, so a scratchpad or an agent worktree never fails a run.
 
 ## Source-comment triage
@@ -49,7 +49,7 @@ changing code.
 
 `debt` reports a counter that grew as an error and a counter that fell as a warning. The new reading is a
 mutation, so no check does it. `mwops health baseline debt` rewrites `baseline.json` through `lib/baseline.ts`, which
-the registry does not list.
+the registry doesn't list.
 
 ## Fixes
 
@@ -68,7 +68,7 @@ so the replacement keeps the form the author wrote. A `#` import stays private, 
 relative path stays relative. If any specifier has no candidate that resolves, the whole plan is refused.
 
 A move rewrites three kinds of reference. It rewrites module specifiers. It rewrites `exports`/`imports` targets but
-never a subpath key, because the key is the package's interface and consumers should not see a file move underneath
+never a subpath key, because the key is the package's interface and consumers shouldn't see a file move underneath
 it. It also rewrites repo-relative paths written as text in a hook command, a lint glob or a `Usage:` line. Dated
 records under `docs/superpowers/` keep their paths, because a plan describes what was true on its date.
 
@@ -80,8 +80,8 @@ The fix runs to a fixpoint. When `build-outlier-oa.ts` moves into `build/`, `out
 now share `outlier-`, so `mwops health fix` recomputes the plan until the check reports no findings.
 
 Build output is excluded from resolution intentionally. Every subpath map lists `types` first, so a stale
-`out/<subpath>.d.ts` can satisfy an import of a source file that has already moved. In one case this let `tsc` report
-zero errors on a tree with three imports that Node could not resolve.
+`out/<subpath>.d.ts` can satisfy an import of a source file that's already moved. In one case this let `tsc` report
+zero errors on a tree with three imports that Node couldn't resolve.
 
 The checks share these helpers: `lib/tracked-sources.ts` (a filter over `RepoContext.trackedFiles` that reproduces
 `git ls-files` pathspec matching), `lib/ts-ast.ts` (the import-specifier walk, by node for a rewriter and by text for a

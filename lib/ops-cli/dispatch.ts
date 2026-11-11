@@ -52,7 +52,7 @@ import { storageOperations, type StorageContext } from "#storage-kit"
 
 /**
  * The number of times `health fix` re-takes a plan before giving up.
- * See {@link runFix} for why one pass is not enough.
+ * See {@link runFix} for why one pass isn't enough.
  */
 const MAXIMUM_FIX_PASSES = 8
 

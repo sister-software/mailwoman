@@ -30,7 +30,7 @@ rejects `st` and `rd`. The US venue-head table holds `st` as a first-word head a
 
 Two readings follow. In `6th St SW, ND`, `St` takes the first-word bias and the extension spreads it to
 `SW`, so the decoder reads `6th St` as the street and `SW` as a venue. In `Mountain School Rd, VT`, the
-guard that skips a head before a street type does not fire for `Rd`, so `School` takes its last-word
+guard that skips a head before a street type doesn't fire for `Rd`, so `School` takes its last-word
 bias and the extension reaches `Mountain`. In `United States of America, Vermont, …`, `america` is a
 last-word head from names such as `Bank of America`, and the extension reads `of America` as a venue.
 
@@ -43,7 +43,7 @@ combines it with the FST's test and adds the codex's country-name test. Every pa
 lexicon passes both: the session, the gauntlet harness, the runtime pipeline and the battery legs.
 
 In the prior, a street type takes the first-word bias only when it opens its segment, so `St Mary's
-Church` keeps it and `6th St SW` does not. A segment whose words are a country name holds no head, so
+Church` keeps it and `6th St SW` doesn't. A segment whose words are a country name holds no head, so
 `United States of America` keeps its country reading and `Bank of America` keeps its venue.
 
 ## The golden dev split, each arm against the pipeline without a venue-head lexicon
@@ -94,4 +94,4 @@ as the geocode session does. On the golden dev split the prior now moves 14 rows
 5 away, with the exact-row count 3 under the arm without it, and on the board it changes no row. The
 five rows above are the prior's remaining cost on this split. The sealed morphology FST still omits
 the two-letter street types, so the street-context check and the street-morphology prior read `St`
-and `Rd` as names. That is a separate change to the FST build and its collision guard.
+and `Rd` as names. That's a separate change to the FST build and its collision guard.

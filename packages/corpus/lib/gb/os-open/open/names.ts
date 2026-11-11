@@ -98,7 +98,7 @@ export interface OpenNamesRoad {
 }
 
 /**
- * Counts from a read, with a reason for each row that did not yield.
+ * Counts from a read, with a reason for each row that didn't yield.
  */
 export interface OpenNamesReadStats {
 	/**

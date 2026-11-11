@@ -158,7 +158,7 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("FAILS the negative half on a point the footprint does cover — the check has teeth", async () => {
-		// The negative half must not pass on a point the footprint covers: an artifact
+		// The negative half mustn't pass on a point the footprint covers: an artifact
 		// that answered a designation everywhere would slip through a check that only
 		// ever asked about places it happened to be silent.
 		const result = await verifyFloodDatabase({

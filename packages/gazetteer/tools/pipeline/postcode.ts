@@ -100,7 +100,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		)
 	}
 
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
 	const ingestPath = out + ".ingest"

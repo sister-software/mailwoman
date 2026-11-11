@@ -6,7 +6,7 @@ fixture suite that was fully green.
 
 On 2026-08-03 we ran the assembled chain against 24 public telecom registrants for the first
 time. Across the 21 filings it reached, the parser emitted **245 subsidiaries from documents
-that state roughly 2,640**. Ten of the 21 yielded zero subsidiaries. Several of the 245 were not
+that state roughly 2,640**. Ten of the 21 yielded zero subsidiaries. Several of the 245 weren't
 subsidiaries.
 
 This page records what the filings contain, what the parser did with them, and what
@@ -46,7 +46,7 @@ The one remaining zero is correct. AlTi Global's exhibit separates entries with 
 double space, so no name/jurisdiction boundary exists to be found without inventing one.
 The parser must abstain there, and the regression suite asserts that behavior.
 
-## Six ways the fixtures were not representative
+## Six ways the fixtures weren't representative
 
 **The SGML envelope.** EDGAR's archive serves an exhibit inside its submission wrapper:
 `<TYPE>EX-21.1`, `<SEQUENCE>3` and `<FILENAME>…` precede the real `<TEXT>` payload. The
@@ -78,7 +78,7 @@ were emitted as subsidiaries.
 name(s) under which entity does business", EchoStar adds both "% of Ownership" and
 "Name Doing Business As". A three-value row abstained. The parser now reads the columns that the
 document's own header row labels. The header states which column holds which value, so the
-parser does not guess.
+parser doesn't guess.
 
 **Footnote tables.** The parser must inspect footnote tables that follow the
 list. WidePoint's is `["(1)", "In January 2019, WidePoint Solutions Corp. was merged into…"]`.
@@ -93,7 +93,7 @@ A per-row test for "this jurisdiction looks like a company name" removes the cas
 two-across list of entity names is misread as name-and-jurisdiction. It also removes 135 of
 Charter Communications' 139 subsidiaries, because Charter writes its jurisdiction column as
 "Delaware limited liability company". What separates the two cases is repetition rather than
-vocabulary. A jurisdiction column repeats its values, and a second name column does not.
+vocabulary. A jurisdiction column repeats its values, and a second name column doesn't.
 Charter has 9 distinct values over 135 rows. The distinct-value ratios are Comcast 0.05, Uniti
 0.13, T-Mobile 0.15 and Lumen 0.26. IDT's second name column has 5 distinct values over 5 rows. The test is now a table-level one requiring both a designation majority and high
 distinctness.
@@ -105,16 +105,16 @@ column between the labeled name column and the labeled jurisdiction column.
 The parser discards the nesting depth. An Exhibit 21 row becomes a registrant→subsidiary
 edge at any depth, so the output is unchanged.
 
-## What the substring invariant does and does not catch
+## What the substring invariant does and doesn't catch
 
 `exhibit21.ts` has held one invariant since it was written: every emitted name and
 jurisdiction must appear in the document as a contiguous string once tags are stripped,
 entities decoded and whitespace collapsed. The parser may not assemble a value from pieces
-the source kept apart, and may not truncate one at a boundary the source did not put there.
+the source kept apart, and may not truncate one at a boundary the source didn't put there.
 
 It held throughout. `EX-21.1`, `3`, `q42025exh211listofsubsidia.htm`, `Document`, `•`,
 `Entity Name` and `Full Legal Name` are all contiguous substrings of their documents. The
-invariant is necessary and it is not sufficient, and the real-filing suite now holds a
+invariant is necessary and it isn't sufficient, and the real-filing suite now holds a
 separate set of assertions naming each of those shapes.
 
 One case does violate it, and only structure catches it. Ooma's last table row is a single
@@ -122,7 +122,7 @@ One case does violate it, and only structure catches it. Ooma's last table row i
 `Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC FluentStream
 Technologies, LLC Phone.Com, Inc.` The rule that catches it looks at the cell's raw markup
 for a block boundary with text on both sides — the source kept those apart, so the parser
-must not join them.
+mustn't join them.
 
 ## Ground truth
 
@@ -136,7 +136,7 @@ That distinction is the whole point of this exercise. An `expected.json` generat
 parser would have recorded, as the interface, the eight zero-yield documents and the eighteen
 fabricated names — all of which the hand-written fixture suite was perfectly happy with.
 
-## Name resolution is not solved, and is out of scope here
+## Name resolution isn't solved, and is out of scope here
 
 `resolveCIKCandidates` deliberately returns every candidate above a threshold rather than a
 winner, because two different companies can canonicalize to the same name. The corpus run
@@ -148,7 +148,7 @@ Both are vendored under their true registrant names, as evidence rather than as 
 Anything that writes EDGAR rows into `filer.db` has to corroborate a candidate against
 something other than its name. The cheapest check available is the registrant's SIC code.
 The submissions payload already includes it. That work, and the ingest path it checks,
-is not part of this change.
+isn't part of this change.
 
 A related defect was measured separately. `company_tickers.json` has
 one row per _ticker_, so a registrant with several share classes appears several times under

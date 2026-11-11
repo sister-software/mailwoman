@@ -117,11 +117,11 @@ Run `node annotate.mjs`. Published 11.0.0 produced the following complete output
 }
 ```
 
-`toNative(set)` returns the full `AnnotationSet`, including keys whose annotator supplied no value. `toOpenCage(set)` emits populated fields under its consumer's key names. It maps `dms.lon` to `DMS.lng`, `qiblaBearing` to `qibla`, and `currency.isoCode` to `currency.iso_code`. The OpenCage projection has no slot for `iso3166` or `sun.noon`, so those values from this run are absent. A `null` native `timezone` here means the chosen annotators did not supply it. It does not assert that the coordinate has no timezone.
+`toNative(set)` returns the full `AnnotationSet`, including keys whose annotator supplied no value. `toOpenCage(set)` emits populated fields under its consumer's key names. It maps `dms.lon` to `DMS.lng`, `qiblaBearing` to `qibla`, and `currency.isoCode` to `currency.iso_code`. The OpenCage projection has no slot for `iso3166` or `sun.noon`, so those values from this run are absent. A `null` native `timezone` here means the chosen annotators didn't supply it. It doesn't assert that the coordinate has no timezone.
 
 ## Build a schema.org Place from address fields
 
-`toSchemaOrg` accepts a separate `SchemaOrgInput`. It does not accept an `AnnotationSet`. Supply a coordinate and address fields that your application has already chosen. Save this as `place.mjs`:
+`toSchemaOrg` accepts a separate `SchemaOrgInput`. It doesn't accept an `AnnotationSet`. Supply a coordinate and address fields that your application has already chosen. Save this as `place.mjs`:
 
 ```js
 import { composeStreetAddress, toSchemaOrg } from "@mailwoman/annotations"
@@ -215,10 +215,10 @@ Run `node repeated.mjs`. Published 11.0.0 returned:
 }
 ```
 
-The flat object has one `locality` value. `includeDropped: true` reports the omitted span and the value that occupied its slot. Retain `tree` when the exact spans and their relationships matter. A geocode result has additional provenance fields that these annotation serializers do not accept. This page did not run a data-backed geocode, so it shows no invented `coordinate_source` value.
+The flat object has one `locality` value. `includeDropped: true` reports the omitted span and the value that occupied its slot. Retain `tree` when the exact spans and their relationships matter. A geocode result has additional provenance fields that these annotation serializers do not accept. This page didn't run a data-backed geocode, so it shows no invented `coordinate_source` value.
 
 ## Add database-backed annotations only when ready
 
-Published 11.0.0 source also declares `makeTimezoneAnnotator`, `makeUNLocodeAnnotator`, and `makeNUTSAnnotator` in their respective lookup packages. They require their lookup databases. These annotators were not run for this page because no verified local timezone, UN/LOCODE, or NUTS database was available. Check each expected output field after composing an annotator, since `composeAnnotators` skips a thrown annotator and leaves its fields `null`.
+Published 11.0.0 source also declares `makeTimezoneAnnotator`, `makeUNLocodeAnnotator`, and `makeNUTSAnnotator` in their respective lookup packages. They require their lookup databases. These annotators weren't run for this page because no verified local timezone, UN/LOCODE, or NUTS database was available. Check each expected output field after composing an annotator, since `composeAnnotators` skips a thrown annotator and leaves its fields `null`.
 
 The published [annotation serializer](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/annotations/lib/index.ts), [coordinate annotator](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/spatial/lib/coordinate/formats.ts), [country annotator](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/codex/lib/country/reference.ts), and [tree-to-JSON projection](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/core/lib/decoder/serialize/json.ts) define the interfaces exercised above. [The library reference](../reference/library.mdx) covers the parser and geocoder calls that produce an address result.

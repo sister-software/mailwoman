@@ -61,7 +61,7 @@ export interface SubVenuePromotion {
  * Rejections stay in the ledger so the system can reject duplicate proposals until new evidence arrives.
  *
  * The span proposer in `packages/neural/lib/venue/structure.ts` ships its English designators without
- * a locale restriction, so a rejection here guides recipes only and does not stop the proposer.
+ * a locale restriction, so a rejection here guides recipes only and doesn't stop the proposer.
  */
 export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 	// wing

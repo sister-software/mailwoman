@@ -55,6 +55,6 @@ createPostalAddressID({
 - The definition sentence is repeatable without the page open.
 - Every number on the page is sourced.
 - A superlative appears only where the same sentence pair cashes it out.
-- There is one call to action, and cost or limit facts are answered on this page rather than assembled from
+- There's one call to action, and cost or limit facts are answered on this page rather than assembled from
   three others.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

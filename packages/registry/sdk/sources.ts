@@ -60,7 +60,7 @@ export type SourceID = (typeof SOURCE_IDS)[number]
  * The SPARQL query that reads every item holding an ISO 3166-1 alpha-2, alpha-3 and numeric code.
  *
  * `wdt:` reads the best-rank claim.
- * A state that has ended, such as the German Democratic Republic (`DD`) or the Netherlands Antilles
+ * A state that's ended, such as the German Democratic Republic (`DD`) or the Netherlands Antilles
  * (`AN`), keeps its codes as best-rank claims, so the query also reads the dissolution date (P576)
  * and the normalizer records such an entry as `formerly-used` rather than `officially-assigned`.
  *
@@ -82,7 +82,7 @@ export const WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 /**
  * The open profile's sources.
  *
- * The UN Statistics Division's M49 crosswalk is not among them.
+ * The UN Statistics Division's M49 crosswalk isn't among them.
  * The UN terms of use (https://www.un.org/en/about-us/terms-of-use, read 2026-11-06)
  * grant "personal, non-commercial use, without any right to resell or redistribute"
  * and exclude the right "to compile or create derivative works therefrom".

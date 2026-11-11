@@ -103,7 +103,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	const geonamesCountries = opts.geonamesCountries ?? DEFAULT_GEONAMES_COUNTRIES
 	const overtureRelease = opts.overtureRelease ?? DEFAULT_OVERTURE_RELEASE
 
-	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
+	// Imported here so loading this module doesn't evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
 	const ingestPath = out + ".ingest"
@@ -285,8 +285,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	await stampLayerManifest(
 		out,
 		adminLayerManifest({
-			// The counts the build produced rather than the lists it was given, so a fold that
-			// ingested no places does not appear as a source — see manifest.ts.
+			// The counts the build produced rather than the lists it was given, so a fold
+			// that ingested no places doesn't appear as a source — see manifest.ts.
 			counts: contributed,
 			buildSHA: sha,
 			vintages: { overture: overtureRelease },

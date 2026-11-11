@@ -27,8 +27,8 @@ const IDLE_BUDGET_MS = 5000
 /**
  * Idle turns to spin on {@linkcode drainMicrotasks} before backing off to real sleeps.
  *
- * The spin is the fast path — work that is one promise-chain away settles within
- * a few turns and should not pay a timer.
+ * The spin is the fast path — work that's one promise-chain away settles within
+ * a few turns and shouldn't pay a timer.
  * Past that point, the wait is on real work.
  *
  * More spin turns monopolize the event loop and starve the I/O that the work awaits.
@@ -187,7 +187,7 @@ export class VirtualClock implements ClockLike {
 	 * A too-short drain lets the clock run ahead of an in-flight dispatch.
 	 * The request then records a later deadline's timestamp.
 	 *
-	 * Two dispatches can appear to share an instant when they did not.
+	 * Two dispatches can appear to share an instant when they didn't.
 	 */
 	public async advance(ms: number): Promise<void> {
 		const target = this.#now + ms
@@ -278,7 +278,7 @@ export class VirtualClock implements ClockLike {
 				}
 
 				// Past the spin window the wait is on something real: back off so it can be serviced,
-				// since spinning here starves the I/O we are waiting for.
+				// since spinning here starves the I/O we're waiting for.
 				if (idleTurns > IDLE_SPIN_TURNS) {
 					await realDelay(IDLE_BACKOFF_MS)
 				}

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The `data/` provenance guard over a planted tree: an artifact the record names, one it does not and the files
+ * @file The `data/` provenance guard over a planted tree: an artifact the record names, one it doesn't and the files
  *   that document a directory rather than live in it.
  */
 
@@ -101,7 +101,7 @@ describe("dataProvenanceCheck", () => {
 	})
 
 	it("leaves a data directory with no record alone", async () => {
-		// Deliberately does not require a `PROVENANCE.md` in every `data/` directory.
+		// Deliberately doesn't require a `PROVENANCE.md` in every `data/` directory.
 		const context = await plant({ "packages/example/data/table.json": "{}\n" })
 
 		await expect(dataProvenanceCheck.run(context)).resolves.toEqual([])

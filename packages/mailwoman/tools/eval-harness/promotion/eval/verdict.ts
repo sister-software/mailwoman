@@ -65,7 +65,7 @@ function tableCells(line: string): string[] {
 /**
  * Read one column for one arena row from the arena summary pipe-table, by header, never a fixed offset.
  *
- * The table shape is not stable across the arena's own history.
+ * The table shape isn't stable across the arena's own history.
  * `summarize-arenas.ts` emits the neural-only shape (`| arena | n | neural | fail | tree-valid |`),
  * and an earlier shape included the v0 comparison columns (`| arena | n | v0 | neural | both | … |`).
  *
@@ -283,7 +283,7 @@ export async function assemblePromotionVerdict(
 	let failed = false
 
 	// A leg-handled floor is enforced by its leg but would otherwise be absent from `results` entirely.
-	// A floor missing from a report looks like a floor that did not run.
+	// A floor missing from a report looks like a floor that didn't run.
 	// Enforcement stays with the leg.
 	// This only completes the record, from the sidecar the leg already writes.
 	// The leg passed before it reached this function because it returns non-zero otherwise.

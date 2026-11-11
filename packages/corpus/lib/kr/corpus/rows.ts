@@ -241,7 +241,7 @@ export function chooseShortRegion(rng: SeededRandom, region: string): string | n
 /**
  * Why a register row is dropped, or `null` when it renders.
  *
- * 시군구 is not required, because 세종특별자치시 has none.
+ * 시군구 isn't required, because 세종특별자치시 has none.
  */
 export function krIneligibility(row: JusoLabelRow, maxFieldChars: number): string | null {
 	if (!(row.region && row.road && row.number && row.postcode)) return "missing_field"

@@ -421,7 +421,7 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 /**
  * Caps the length of a proposed locality phrase in tokens.
  *
- * It also caps the forward walk so a long capitalized run does not cost quadratic time.
+ * It also caps the forward walk so a long capitalized run doesn't cost quadratic time.
  */
 export const MAX_LOCALITY_PHRASE_TOKENS = 6
 

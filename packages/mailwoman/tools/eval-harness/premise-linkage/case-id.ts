@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   The salted case identifier, the only field a published premise-linkage result includes
- *   that is derived from the address.
+ *   that's derived from the address.
  *
  *   A bare hash of the input would be reversible in practice: the address space a provider grants
  *   access to is enumerable, so anyone holding the register can hash every row and read the published
  *   identifiers straight back. The salt breaks that. It has to be run-specific rather than
  *   repository-wide. Two reports under one salt can be joined row-for-row into a longer record of the
- *   same premises. That is the linkage the identifier prevents.
+ *   same premises. That's the linkage the identifier prevents.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"

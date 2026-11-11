@@ -14,18 +14,18 @@
 #
 # Those ten regressions are a function of how far the weights travel, and 4,000 steps at lr 1e-5 is a long way for an
 # additive surface. If the fine-tune's regression count falls with distance faster than the gains do, a shorter run lands
-# net-positive where every longer one could not. None of the six runs tested it: they were all 4,000 or
+# net-positive where every longer one couldn't. None of the six runs tested it: they were all 4,000 or
 # 8,000 steps.
 #
-# The check is unchanged and it is against the shipped model, because that is what publishing costs a
-# user. The v4.13.0 control run is the right baseline for attributing a regression. it is not a license to ship
+# The check is unchanged and it is against the shipped model, because that's what publishing costs a
+# user. The v4.13.0 control run is the right baseline for attributing a regression. it isn't a license to ship
 # one.
 #   1. net improved-minus-regressed >= 0 on the 649-row board;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. the venue-led rows unique to the treated arms — gb-venue-ye-three-lords, gb-lex-cafe-st-marys,
 #      gb-op2-four-seasons-cjk — must hold, since those are the data's doing and not the fine-tune's.
 #
-# If this is also net-negative, steps is not the change either and the fine-tune route is closed on
+# If this is also net-negative, steps isn't the change either and the fine-tune route is closed on
 # measurement rather than on judgment: the rows the fine-tune regresses exceed what an additive source can recover at every
 # distance tried.
 

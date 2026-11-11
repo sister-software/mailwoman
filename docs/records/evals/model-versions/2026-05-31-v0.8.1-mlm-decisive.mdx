@@ -34,7 +34,7 @@ Both arms are identical except the encoder initialization:
 | **B scratch**    | fresh random init                                                  |
 
 Tokenizer + corpus are held constant, so the "never compare F1 across tokenizer versions"
-rule is not in play. This is a clean single-variable comparison.
+rule isn't in play. This is a clean single-variable comparison.
 
 ## Held-out metrics
 
@@ -49,7 +49,7 @@ hand-typed — see #211/#212):
 
 ## Kill-point rule (DeepSeek turn-4 consult, 2026-05-31)
 
-- pretrained **does not** ≥ scratch resolver (within ±0.5pp) **and** harness+calibration
+- pretrained **doesn't** ≥ scratch resolver (within ±0.5pp) **and** harness+calibration
   gains disappear/reverse → **DROP pretraining** (v0.7.2 stays default).
 - pretrained **matches/slightly beats** scratch resolver (even +0.3pp) **and** retains the
   calibration/harness gains → **SHIP with pretraining**.
@@ -77,7 +77,7 @@ Both arms use the post-#222 gazetteer-alias matching, and both clear shipped v0.
 and v0/Pelias (95.8%) on real points.
 
 **Calibration note:** the metric here is the 90th-percentile confidence of WRONG predictions
-(lower = better calibrated), identical for both arms (0.949). It is not the "fraction of
+(lower = better calibrated), identical for both arms (0.949). It isn't the "fraction of
 wrong preds at ≥0.9" the auto-runner's column label implied — that label conflated a
 percentile and has been corrected. Either way the init-attributable calibration delta is zero.
 
@@ -102,7 +102,7 @@ pre-trained init looked better. Given enough steps, scratch catches up and the g
 
 **Drop pre-training. v0.7.2 stays the default, and the MLM track is closed as a clean negative
 result.** This is exactly DeepSeek's pre-registered kill-point (turn-4): the SHIP branch
-required pre-training to _retain_ the calibration/harness gains, and at ceiling it does not.
+required pre-training to _retain_ the calibration/harness gains, and at ceiling it doesn't.
 The product metric being a tie (not a loss) means the direct conclusion is "no benefit," not
 "actively worse" — but a +1 training stage (20k MLM pre-train) and the attendant pipeline
 complexity cost more than a statistical tie plus a slightly-worse harness returns.

@@ -60,7 +60,7 @@ export async function removeIfPresent(dest: PathBuilder): Promise<void> {
 /**
  * Symlinks one optional soft-feed artifact into an overlay and returns whether the source existed.
  *
- * A missing source prints `consequenceIfMissing` and does not throw, because the
+ * A missing source prints `consequenceIfMissing` and doesn't throw, because the
  * runtime has a fallback for every soft-feed artifact.
  */
 export async function linkSoftFeedSibling(
@@ -295,7 +295,7 @@ export const REQUIRED_PAIR_INDEX_SCHEMA = 3
 /**
  * Warns when a linked per-locale FST was built from a different admin database than the one on disk.
  *
- * It does not rebuild, because an FST rebuild writes to a staging directory
+ * It doesn't rebuild, because an FST rebuild writes to a staging directory
  * and an operator swaps it in after evaluation.
  */
 export async function warnIfFSTStale(fstPath: PathBuilder, locale: string): Promise<void> {
@@ -358,7 +358,7 @@ export async function linkPostcodePrefixIndexes(destDir: PathBuilder, scopes: re
 
 /**
  * Symlinks the prebuilt street-morphology FST into an overlay so that the
- * street-context check does not rebuild it from dictionaries.
+ * street-context check doesn't rebuild it from dictionaries.
  */
 export async function linkStreetMorphologyFST(destDir: PathBuilder): Promise<void> {
 	await linkSoftFeedSibling(

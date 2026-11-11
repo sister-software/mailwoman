@@ -92,7 +92,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-// The layers narrate their own verdict lines on stdout, so there is no `json` output.
+// The layers narrate their own verdict lines on stdout, so there's no `json` output.
 const EvalGauntlet = harnessCommand(
 	spec,
 	async (options) => {

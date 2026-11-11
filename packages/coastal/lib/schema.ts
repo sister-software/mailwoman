@@ -168,7 +168,7 @@ export interface CoastalZoneCellTable {
 	/**
 	 * The resolution this row's cell was captured at.
 	 *
-	 * A short cell does not encode its resolution.
+	 * A short cell doesn't encode its resolution.
 	 * A table that mixes resolutions requires this column for probes.
 	 */
 	resolution: number
@@ -231,7 +231,7 @@ export interface CoastalGroundInstabilityTable {
  * That empty state is the recorded claim.
  *
  * The Environment Agency publishes no coverage statement for NCERM.
- * There is no footprint to record.
+ * There's no footprint to record.
  *
  * `layer_coverage` therefore stores `basis = source_present`.
  *

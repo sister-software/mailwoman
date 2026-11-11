@@ -14,7 +14,7 @@
  *
  * `#tools/fetch/inspire-addresses` owns the capabilities read and the GeoJSON page read, and
  * `#tools/fetch/wfs-harvest` owns the appending, the manifest and the resumption. This module states
- * what is particular to Estonia: four measurements taken on 2026-10-02:
+ * what's particular to Estonia: four measurements taken on 2026-10-02:
  *
  * 1. The payload needs no component resolution. GeoServer flattens the application schema here, so
  *    each `component<n>_xlink_href` has a sibling `component<n>_xlink_title` carrying the referenced
@@ -29,7 +29,7 @@
  *    applied rather than accepted and dropped. `sortBy=gml:identifier` and `sortBy=inspireId` answer
  *    HTTP 400 `Illegal property name`, so the sort property is one of the flattened names.
  * 4. A `count=10000` page of `application/json` is 31,198,909 bytes and takes about 6 seconds. At
- *    729,973 features that is 73 pages and about 2.3 GB, plus three requests for the capabilities and
+ *    729,973 features that's 73 pages and about 2.3 GB, plus three requests for the capabilities and
  *    the checked count.
  *
  * The harvest writes one feature per line. The adapter can then stream the whole extract
@@ -104,7 +104,7 @@ const LICENSE = "CC0-1.0"
 /**
  * The spacing between requests.
  *
- * The service answers a 10,000-feature page in about 6 seconds, so this is not what limits the harvest.
+ * The service answers a 10,000-feature page in about 6 seconds, so this isn't what limits the harvest.
  * It bounds the harvest to one request per second against a government host
  * whose published terms state no rate.
  *

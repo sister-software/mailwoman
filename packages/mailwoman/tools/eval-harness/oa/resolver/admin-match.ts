@@ -35,7 +35,7 @@ const MIN_QUALIFIER_LENGTH = 3
  *
  * Lowercases, strips diacritics + punctuation, expands the universal US place abbreviations
  * (St→Saint, Mt→Mount, Ft→Fort, Ste→Sainte), and de-spaces "Mc X" → "McX".
- * Deliberately does not strip civic suffixes (City/Town/Township/Village):
+ * Deliberately doesn't strip civic suffixes (City/Town/Township/Village):
  * in New England "Barre City" and "Barre Town" are distinct municipalities,
  * so collapsing them would over-credit real wrong-place misses.
  *
@@ -96,7 +96,7 @@ const STATE_NAME_TO_ABBR: Record<string, string> = Object.fromEntries(
  *    code on both sides, the same diacritic-insensitive fix for `Île-de-France` vs `Ile-de-France`.
  *
  * Real inputs keep these code spaces disjoint.
- * A USPS abbreviation does not occur as a German or French region name.
+ * A USPS abbreviation doesn't occur as a German or French region name.
  *
  * German and French region names also do not overlap.
  * The matcher can try each lookup regardless of the row's country.
@@ -185,7 +185,7 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 	// credit the qualifier only when it matches the resolved place's own WOF ancestry:
 	// `Vogtl`→county `Vogtland`, `Sachs`→region `Sachsen`.
 	// List-free and non-gameable.
-	// A wrong place will not have the gold's qualifier among its ancestors.
+	// A wrong place won't have the gold's qualifier among its ancestors.
 	// `und` and non-latin ancestor names normalize to empty under normName
 	// (Cyrillic and CJK are stripped), so the token set is latin-only without a language filter.
 	const ancestorNamesStmt = adminDB.prepare(

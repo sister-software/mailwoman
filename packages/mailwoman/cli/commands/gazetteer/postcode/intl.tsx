@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer postcode-intl` — build a postcode → point database from GeoNames postal data
- *   for countries WhosOnFirst does not cover. The canonical pipeline treats GeoNames as a coordinate
- *   source keyed by string onto WOF-sourced postcode records. Where WOF ships no postcode records there
- *   is no record to backfill onto, so GeoNames must supply the record as well as the coordinate.
+ *   for countries WhosOnFirst doesn't cover. The canonical pipeline treats GeoNames as a coordinate
+ *   source keyed by string onto WOF-sourced postcode records. Where WOF ships no postcode records there's
+ *   no record to backfill onto, so GeoNames must supply the record as well as the coordinate.
  *
  *   It emits a standalone `spr` database in the exact schema `build-candidate`'s `--postcodes` pass
  *   consumes (placetype='postalcode', real centroid + bbox), so it drops into a candidate rebuild
@@ -280,7 +280,7 @@ async function foldIntoCandidate(
 	if (!ptRow) throw new Error("candidate DB has no 'postalcode' placetype_code")
 	const pcPtid = ptRow.id
 
-	// country code → id, inserting any code the candidate DB does not already contain.
+	// country code → id, inserting any code the candidate DB doesn't already contain.
 	const ccCache = new Map<string, number>()
 	const getCc = out.prepare("SELECT id FROM country_codes WHERE code=?")
 	const maxCc = getRow<{ m: number }>(out.prepare("SELECT COALESCE(MAX(id),0) m FROM country_codes"))!

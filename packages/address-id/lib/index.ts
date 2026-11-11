@@ -28,7 +28,7 @@ export const ADDRESS_H3_RESOLUTION = 9
 
 /**
  * A stable address primary key, `<state>.<H3-cell>.<hash>`.
- * Branded so it is not confused with a plain string.
+ * Branded so it isn't confused with a plain string.
  */
 export type PostalAddressID = string & { readonly __postalAddressID: unique symbol }
 

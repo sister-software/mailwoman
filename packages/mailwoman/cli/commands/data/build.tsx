@@ -104,7 +104,7 @@ interface BuildCommandResult {
 /**
  * Load the recipe's implementation from its optional package.
  *
- * @returns Null when the package is not installed.
+ * @returns Null when the package isn't installed.
  */
 async function loadRecipe(
 	name: string,

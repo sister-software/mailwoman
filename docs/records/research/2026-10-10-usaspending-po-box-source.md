@@ -68,14 +68,14 @@ Australia 12 of 143, Cameroon 9 of 99. The forms are `P.O. BOX 2356`, `PO BOX 36
 `13 BP 1885 ABIDJAN 13` and `BP 2720`; the West African `NN BP NNNN <city> NN` form, with the box
 district before and after, is the one the invented rows never produced. The measurement script and
 the pattern lists are `usaspending-measure.py` in the session scratchpad. The patterns are a lower
-bound, because a box written without a marker is not matched.
+bound, because a box written without a marker isn't matched.
 
 ## Decision
 
 Admitted as a source. Its yield is too small to supply `po_box` without the invented rows: 411 distinct PO box lines
 against the 2,135 invented PO box rows a 200,000-row training draw holds. Its value is the real West
 African `BP` forms and the unit lines. No register in the corpus states them. The adapter reads the
-three fiscal-year downloads, keeps record type 2 rows whose business type is not `P` or `21`, refuses
+three fiscal-year downloads, keeps record type 2 rows whose business type isn't `P` or `21`, refuses
 `USA` recipients, and labels the box with the span rules the GLEIF adapter already applies to
 `PO BOX 309`. The register row `us-procurement-grants-1` moves to elected through the research input
 with this record as its reading. The adapter is the next corpus-side task after the from-scratch run's

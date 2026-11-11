@@ -113,7 +113,7 @@ export function isTagLabel(label: string, tag: string): boolean {
 
 /**
  * The mutate-and-count label writer both passes thread through their repair loop:
- * a no-op write (same label) does not count as a change.
+ * a no-op write (same label) doesn't count as a change.
  */
 export function createLabelSetter(tokens: DecoderToken[]): {
 	setLabel: (i: number, label: DecoderToken["label"]) => void

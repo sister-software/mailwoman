@@ -118,7 +118,7 @@ const COMPONENT_FLOOR = 2
 /**
  * Returns the shorter names contained in a name — every contiguous run of at least `floor`
  * components, excluding the whole name, because a duplicate can add an affix to an existing
- * name. the search runs one way only, so writing a shorter name does not report a longer one.
+ * name. the search runs one way only, so writing a shorter name doesn't report a longer one.
  */
 export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): string[] {
 	const components = nameComponents(name)
@@ -226,7 +226,7 @@ function collectSites(output: string, accept: (name: string) => boolean): Map<st
 
 /**
  * Returns every declared function whose name contains `query`, ignoring case. a query
- * that is not a bare identifier fragment returns no results.
+ * that's not a bare identifier fragment returns no results.
  */
 export function searchDeclarations(
 	query: string,
@@ -339,7 +339,7 @@ function readStringField(input: Record<string, unknown>, key: string): string | 
 }
 
 /**
- * Returns the text a Write or Edit call is about to add, or `null` when there is none.
+ * Returns the text a Write or Edit call is about to add, or `null` when there's none.
  *
  * An Edit contributes only its replacement text.
  * An unrecognized payload returns `null` because this runs in a hook.

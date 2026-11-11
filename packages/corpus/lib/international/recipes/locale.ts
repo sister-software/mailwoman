@@ -222,7 +222,7 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// OS Open Names writes a Welsh county as `<Welsh> - <English>`, as in `Caerdydd - Cardiff`
 		// or `Gwynedd - Gwynedd`, and an address writes one of the two.
 		regionPairSeparator: " - ",
-		// The adapter does not set a region on its rows.
+		// The adapter doesn't set a region on its rows.
 		// The county comes from OS Open Names and the constituent country from NSUL, both by postcode.
 		parts: [
 			{

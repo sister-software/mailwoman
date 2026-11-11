@@ -21,7 +21,7 @@ export interface Tokenizer {
  * Whitespace + punctuation tokenizer (pure JS).
  *
  * Tokens are maximal runs of unicode word characters (`\p{L}`, `\p{N}`, `\p{M}`, plus `'`, `-`, `_`);
- * everything else is a separator and is not emitted, so the spans cover only token regions.
+ * everything else is a separator and isn't emitted, so the spans cover only token regions.
  * The lossiness at the edges is intentional, because alignment can still label every meaningful span.
  */
 export function whitespaceTokenizer(): Tokenizer {
@@ -73,7 +73,7 @@ export function cjkAwareTokenizer(): Tokenizer {
 				}
 
 				// A Han run may contain Latin letters or digits (`3分场2队`); those stay glued
-				// to their neighbors only if they are Han too, so every code point of a
+				// to their neighbors only if they're Han too, so every code point of a
 				// Han-containing token becomes its own token.
 				let offset = token.start
 

@@ -27,7 +27,7 @@ test("buildDefaultPolicies: returns a fresh, mutable array each call", () => {
 	const b = buildDefaultPolicies()
 	expect(a).not.toBe(b) // distinct references — callers may mutate freely
 	a[0]!.mode = "both"
-	expect(b[0]!.mode).toBe("neural_only") // mutating one does not leak into another
+	expect(b[0]!.mode).toBe("neural_only") // mutating one doesn't leak into another
 })
 
 test("defaultPolicyFor: a single component default (neural_only unless overridden)", () => {

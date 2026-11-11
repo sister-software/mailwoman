@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Reports quoted repository paths in source that refer to a file that has moved.
+ * @file Reports quoted repository paths in source that refer to a file that's moved.
  *
  *   The compiler catches stale import specifiers.
  *   Code reads path strings only at runtime and may treat a missing file as a valid negative answer.

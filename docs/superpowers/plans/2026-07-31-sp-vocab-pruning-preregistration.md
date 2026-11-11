@@ -10,7 +10,7 @@ piece.
 
 1. **Measure the fired set over the full v0.15.0-venue feed** (684,103,970 rows, all 704 train
    extracts) and over every eval surface (eval-harness fixtures, golden sets, gauntlet cases, P0
-   boards). The measurement does not sample, because a sampled fired set could prune a rare piece
+   boards). The measurement doesn't sample, because a sampled fired set could prune a rare piece
    that training still uses, and this probe exists to keep that tail. Counts are taken at the unit
    the model reads: `encode()` output ids.
 2. **Keep set** `K` = specials (pad/unk/bos/eos) ∪ all 256 byte-fallback pieces ∪ every
@@ -35,7 +35,7 @@ piece.
 - **B2 — logit bit-parity:** the original and pruned ONNX models, with ids remapped, produce
   **bitwise equal** logits on at least 200 eval inputs. Only the gather table changes in the graph,
   and the kept rows are byte-identical. Any difference means the surgery changed something it
-  should not have.
+  shouldn't have.
 - **B3 — the full battery:** the gauntlet (regression + metamorphic) and the `v7.0.0-base` check
   run on the pruned pair. The pruned pair must **pass with scores identical** to the shipped pair. Scores
   within margins are not enough. B1 and B2 imply identical parses, so any score delta is a defect.
@@ -45,7 +45,7 @@ piece.
 
 ## What this probe is NOT
 
-This probe does not ship anything. The deliverable is the verdict, the staged artifact pair and
+This probe doesn't ship anything. The deliverable is the verdict, the staged artifact pair and
 this record. A pruned pair is a model-artifact change and an operator decision. It would
 go out on a release train with its own model-card updates (files_md5, link-dev pins), HF/R2
 staging, and the browser loader's size expectations. The WASM runtime (task #26) is unaffected,

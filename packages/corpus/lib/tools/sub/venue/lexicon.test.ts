@@ -68,7 +68,7 @@ const wikidataFixture = {
 }
 
 /**
- * A surface, with the fields a test does not care about filled in.
+ * A surface, with the fields a test doesn't care about filled in.
  */
 function surface(partial: Partial<SubVenueSurface> & Pick<SubVenueSurface, "phrase" | "recordID">): SubVenueSurface {
 	return {
@@ -84,7 +84,7 @@ function surface(partial: Partial<SubVenueSurface> & Pick<SubVenueSurface, "phra
 }
 
 test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue/structure.ts's VENUE_STRUCTURE_DESIGNATORS", () => {
-	// The drift pin: `@mailwoman/corpus` does not depend on `@mailwoman/neural`,
+	// The drift pin: `@mailwoman/corpus` doesn't depend on `@mailwoman/neural`,
 	// so this list is a copy and the copy is what this test exists to catch.
 	expect(SHIPPED_DESIGNATOR_SEED.map((d) => d.id).toSorted()).toEqual([
 		"arcade",
@@ -307,7 +307,7 @@ test("extractAttestedPhrases harvests localized names under their own language t
 })
 
 test("extractAttestedPhrases stamps the source family it was given", () => {
-	// Overture needed a parameter because its row shape fits but its `osm:name` stamp does not.
+	// Overture needed a parameter because its row shape fits but its `osm:name` stamp doesn't.
 	// A mislabelled ODbL provenance changes the license record.
 	const index = buildSurfaceIndex([surface({ phrase: "concourse", recordID: "concourse" })])
 
@@ -469,7 +469,7 @@ test("applyPromotions reaches a region-free Wikidata surface through the locale'
 })
 
 test("every committed promotion carries a confound note and a census", () => {
-	// A bare number is not a board.
+	// A bare number isn't a board.
 	// This is the rule the ledger exists to enforce.
 	for (const promotion of SUBVENUE_PROMOTIONS) {
 		expect(promotion.confoundNote.length, `${promotion.designatorID}/${promotion.locale}`).toBeGreaterThan(0)

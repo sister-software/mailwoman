@@ -4,7 +4,7 @@ Status: proposal, revised after operator review on 2026-09-04. The diagnosis (se
 unchanged, and the destination model (sections 3 to 7) is the revised one. No file moves until section 8's decisions
 are confirmed. Measured on `main` at 86f050d99.
 
-## 1. What is in the drawer
+## 1. What's in the drawer
 
 | Family                             | Files                         | Lines  | Referenced by                                                                           | Referenced by no file                                                                         |
 | ---------------------------------- | ----------------------------- | ------ | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -137,7 +137,7 @@ One implementation and one interface serve two consumers. CI's publish workflow 
 plus `mwops release preflight`, in place of eight `node scripts/…` invocations.
 
 `dev-mcp` stays non-publishing. Its package description covers a warm geocoder and measurement, and an
-ordinary agent session that receives it must not also receive npm, Hugging Face or R2 publishing
+ordinary agent session that receives it mustn't also receive npm, Hugging Face or R2 publishing
 authority. `release-mcp` is enabled separately, and every one of its tools declares `effect`.
 
 ## 6. Destinations, file by file
@@ -151,7 +151,7 @@ re-export of `@mailwoman/core/release-config`), `link-weights-overlay`, `stage-w
 registered operation with an `effect`; the six workflows and `.release-it.json` call `mwops release …`.
 `mailwoman release hf` (`commands/release/hf.tsx`), which publishes a release to Hugging Face from
 inside the public CLI, moves under the same registry as `release.publish-weights`: an external write
-does not belong on the installed product's help tree. RELEASING.md's nine `scripts/` paths and
+doesn't belong on the installed product's help tree. RELEASING.md's nine `scripts/` paths and
 AGENTS.md's release-pipeline pitfalls follow the operations.
 
 **Health (13) → `repo-health` checks.** `repo-health` (the debt counters), `verify-exports`,

@@ -23,7 +23,7 @@ import { type AddressNode, type AddressTree, ComponentTagSchema } from "#decoder
 import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
 
 /**
- * A span the flat projection could not represent.
+ * A span the flat projection couldn't represent.
  * This type records why.
  *
  * The flat map holds one value per tag.
@@ -126,7 +126,7 @@ export function decodeAsJSON(
 	}
 
 	// Always emitted when asked, `[]` included, so a caller that has to presence-check
-	// cannot tell "no field was dropped" from "this build does not report drops".
+	// cannot tell "no field was dropped" from "this build doesn't report drops".
 	if (opts.includeDropped) {
 		out.dropped = dropped
 	}

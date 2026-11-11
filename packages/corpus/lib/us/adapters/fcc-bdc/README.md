@@ -25,7 +25,7 @@ NTIA-conformant fields. Compared to the WOF / TIGER / BAN baseline:
 ## Input
 
 A SQLite database the operator pre-builds from the BDC distribution.
-The mailwoman side does **not** download the raw FCC ZIPs or parse the
+The mailwoman side **doesn't** download the raw FCC ZIPs or parse the
 CSVs — any external pipeline can produce the SQLite this adapter
 consumes, as long as it lands a `bdc_locations` table with the schema below.
 
@@ -79,7 +79,7 @@ downstream classifiers and the Phase 1.6 §2.1 synthesis primitive.
 
 Rows are dropped (silently) when:
 
-- `state` is not a recognized USPS 2-letter abbreviation (50 states + DC
+- `state` isn't a recognized USPS 2-letter abbreviation (50 states + DC
   - the five primary territories).
 - `city` is empty.
 - `zip` is empty.
@@ -91,7 +91,7 @@ Rows are dropped (silently) when:
 
 The "unrecognized state" case is the most interesting one — it covers
 the BDC fixture's `"ZZ"` row and the real-world cases of partial / draft
-fabric entries that should not become training rows.
+fabric entries that shouldn't become training rows.
 
 ## License
 

@@ -229,7 +229,7 @@ export interface AbsenceRowResult {
 	observationLine: string | null
 	/**
 	 * POI route result.
-	 * The value `none` means the POI route did not run.
+	 * The value `none` means the POI route didn't run.
 	 */
 	poiResult: "none" | "abstain" | "intent"
 	abstainReason: string | null

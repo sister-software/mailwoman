@@ -27,7 +27,7 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	ingest: (database: DatabaseClient<DB>) => Promise<Streamed | null>
 	/**
 	 * The bounded child-process ingest, run while the parent holds no handle: each child opens the
-	 * temp file and appends one chunk at a time, so there is exactly one writer at every instant.
+	 * temp file and appends one chunk at a time, so there's exactly one writer at every instant.
 	 */
 	batched?: (tmpPath: string) => Promise<Streamed>
 	/**

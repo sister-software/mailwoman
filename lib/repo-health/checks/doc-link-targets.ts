@@ -47,7 +47,7 @@ const HUMP = /(?<=[a-z0-9])[A-Z]|(?<=[A-Z])[A-Z](?=[a-z])/gu
 const HUMP_FLOOR = 2
 
 /**
- * A target this cannot judge: a URL, a path, a file, or anything that is not a plain dotted identifier.
+ * A target this cannot judge: a URL, a path, a file, or anything that's not a plain dotted identifier.
  */
 function isJudgeable(target: string): boolean {
 	if (/^(?:https?:|\.|\/|#)/u.test(target)) return false
@@ -56,7 +56,7 @@ function isJudgeable(target: string): boolean {
 }
 
 /**
- * A dotted tail that is a file extension rather than a member: `` `admin1CodesASCII.txt` `` is a file.
+ * A dotted tail that's a file extension rather than a member: `` `admin1CodesASCII.txt` `` is a file.
  */
 const FILE_EXTENSION_TAIL = /\.[a-z0-9]{1,4}$/u
 
@@ -191,7 +191,7 @@ export interface DanglingLink {
 
 /**
  * This module's own repo-relative path, excluded from the sweep it performs because the
- * header spells the tag shapes it looks for and an example there is not a promise.
+ * header spells the tag shapes it looks for and an example there's not a promise.
  */
 const SELF = "lib/repo-health/checks/doc-link-targets.ts"
 
@@ -237,7 +237,7 @@ interface DocLinkSweep {
 }
 
 /**
- * Every doc target the tree does not declare and every register entry the tree no longer needs.
+ * Every doc target the tree doesn't declare and every register entry the tree no longer needs.
  */
 async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
 	// The vocabulary is read from every tracked TypeScript file, tests included,
@@ -311,7 +311,7 @@ export async function findDanglingLinks(context: RepoContext): Promise<DanglingL
 }
 
 /**
- * Each dangling link as a warning, because a tag promising a symbol that does not
+ * Each dangling link as a warning, because a tag promising a symbol that doesn't
  * exist is how a name gets implemented instead of imported.
  */
 export const docLinkTargetsCheck: RepoCheck = {

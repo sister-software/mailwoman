@@ -19,7 +19,7 @@
  *   `--extracts` takes `region=path` pairs because the region is the axis every curation decision is
  *   taken on and no extract filename identifies it reliably (`ile-de-france` is FR, `great-britain` is
  *   GB). A bare path is accepted and lands region `""`, which means the surfaces it produces can never
- *   be promoted. That is the correct failure rather than a convenience.
+ *   be promoted. That's the correct failure rather than a convenience.
  */
 
 import { allKeyed } from "@mailwoman/core/promises"

@@ -117,7 +117,7 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
 /**
  * {@link readCSVRecords} over one member of a zip archive.
  *
- * A source a checkout has not cached yields no rows after warning, while a recipe
+ * A source a checkout hasn't cached yields no rows after warning, while a recipe
  * that ends up with no tuples at all still throws.
  */
 export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: string): AsyncSequence<CSVRecord> {
@@ -331,7 +331,7 @@ export interface RecipeProvenance {
 	 * `null` is a statement rather than an omission.
 	 *
 	 * A `composed` row reorders fields from a real record, so it has an underlying record by definition.
-	 * `null` means the recipe did not preserve that record's id.
+	 * `null` means the recipe didn't preserve that record's id.
 	 *
 	 * The cost of `null` is measurable.
 	 * Over `v0.6.0-register-surface` it is `null` for 4,176,539 of the 4,206,561 `composed` rows,

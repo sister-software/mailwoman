@@ -7,7 +7,7 @@
  *   Each workspace's `out/` modules are bundled as bare imports in one esbuild build, minified, with every module
  *   treated as effectful, pure annotations honored and legal comments dropped. Third-party packages, Node builtins and
  *   `.wasm`, `.css` and `.node` files stay external. A module that keeps bytes holds a statement esbuild cannot prove
- *   pure. That is where a `/* @__PURE__ *\/` annotation or a `sideEffects` declaration would let a bundler drop it.
+ *   pure. That's where a `/* @__PURE__ *\/` annotation or a `sideEffects` declaration would let a bundler drop it.
  *
  *   The report sets no exit status. The `side-effects` check decides whether a declaration is true.
  */

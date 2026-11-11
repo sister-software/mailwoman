@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regression test for the 2026-07 demo outage: an optional postcode-anchor binary that 404s must
- *   not block the whole classifier load.
+ *   Regression test for the 2026-07 demo outage: an optional postcode-anchor binary that 404s mustn't
+ *   block the whole classifier load.
  *
  *   `postcode-de.bin` returned 404 from production R2 for every shipped version. `postcode-us/fr`
  *   returned 200. The loader fetched postcode binaries with a throwing `Promise.all(...fetchBytes)`.
@@ -77,7 +77,7 @@ vi.resetModules()
 afterAll(() => vi.resetModules())
 
 // Import after the mock declarations + reset.
-// `postcode-binary-resolver.ts` is not mocked, so the binaries we build here decode through the real reader.
+// `postcode-binary-resolver.ts` isn't mocked, so the binaries we build here decode through the real reader.
 const { serializePostcodeBinary } = await import("@mailwoman/postcode/binary-resolver")
 const { loadNeuralClassifierFromURLs } = await import("#web/loader")
 

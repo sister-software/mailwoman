@@ -6,7 +6,7 @@
 **Artifacts:** `$MAILWOMAN_DATA_ROOT/models/v420-base-anchor-v2-s42/` — `step-060000/` (pytorch_model.bin,
 config.json, `fisher-diag-v1.npz` + `fisher-diag-v1.json`, training_state.json), `model.onnx` (fp32, 157 MB),
 `model-int8.onnx` (39.4 MB). Tokenizer `models/tokenizer/v0.9.0-multisplice/tokenizer.model`.
-**Baseline everywhere below:** `model-v401-base-step-060000-int8.onnx` — the v4.0.1 base. That is the file
+**Baseline everywhere below:** `model-v401-base-step-060000-int8.onnx` — the v4.0.1 base. That's the file
 `link-dev-weights.ts` puts in `neural-weights-en-us/model.onnx` on this worktree. Every baseline number
 was re-measured here on the same instrument rather than quoted from a prior record, except where a prior
 record's number is cited explicitly as a replication target.
@@ -40,7 +40,7 @@ GB: 0 codes (0 placed) → postcode-gb.bin (0.00 MB)
 Its GB branch (`aggregateGbOutward` → `gbOutward`) derives the outward district by splitting `name` on a
 SPACE, because it was written against `postalcode-gb.db`. That database stores the spaced display form in `name`.
 The license-clean Code-Point Open extract stores `name` already space-stripped (`AB101AB`), so the split
-returns null on all 1,746,976 rows. It also aggregates to outward codes only. That is the wrong
+returns null on all 1,746,976 rows. It also aggregates to outward codes only. That's the wrong
 granularity for a model trained against `pilot-anchor-lookup-v2` (unit keys with unit centroids).
 
 `mailwoman/dev-tools/build-gb-anchor-bin.run.ts` builds the train-faithful artifact instead — a verbatim
@@ -101,7 +101,7 @@ arm produced its one loud warning as designed.
 ## Anchor ablation — the delta is zero because the board is at ceiling
 
 Both arms of the ablation (same model, `postcode-gb.bin` present vs absent) score **318/318, 207/207,
-207/207**. The sheet reads a zero delta as "slot 4 still took no gradient". That inference does not hold
+207/207**. The sheet reads a zero delta as "slot 4 still took no gradient". That inference doesn't hold
 here, and two independent measurements say so.
 
 **The parses are not identical.** Full span serialization over all 567 parses: anchor ON `92fdb3fc…`,
@@ -123,7 +123,7 @@ replaced with placeholders on 2026-10-17 (#2635).
 **The Fisher artifact determines the result directly.** The diagonal empirical Fisher over the final 2,000 steps is
 per-parameter squared-gradient mass, so `anchor_projection.weight` column _j_ answers "did LOCALE_ORDER
 slot _j_ take gradient". The within-run control is exact: the widened lookup covers DE/FR/US/GB/NL/ES/IT,
-so CA (slot 3) and JP (slot 5) could not have taken any.
+so CA (slot 3) and JP (slot 5) couldn't have taken any.
 
 ```
 slot  feature   fisher-col-sum   share
@@ -149,9 +149,9 @@ Column L2 norms are not a usable instrument here and were checked first: every c
 including the two zero-Fisher controls. The projection barely moves in magnitude. Only the Fisher
 separates the slots.
 
-What the sheet wanted — evidence the channel is not inert — is present. What it cannot get from
+What the sheet wanted — evidence the channel isn't inert — is present. What it cannot get from
 this board is a SCORE delta, because the postcode board saturated at 106/106 per register in both arms.
-A board that can measure the anchor's contribution on this model does not exist yet.
+A board that can measure the anchor's contribution on this model doesn't exist yet.
 
 ## US / FR parity
 
@@ -190,8 +190,8 @@ Per-country full-agreement: US 50/99 → 52/99, FR 23/43 → 24/43, GB 1/3 → 3
 
 ## FR fragment board (`mailwoman eval fragment-board`, 2,800 BAN fixtures)
 
-Not G1 — this is the standing FR board, run because G1's harness does not exist. Reported as the nearest
-existing instrument, the measured output is not a substitute for the pre-registered bars.
+Not G1 — this is the standing FR board, run because G1's harness doesn't exist. Reported as the nearest
+existing instrument, the measured output isn't a substitute for the pre-registered bars.
 
 | class                | baseline  | candidate |
 | -------------------- | --------- | --------- |
@@ -216,7 +216,7 @@ candidate  regression 84/90 conditional, 91 tracked
 ```
 
 Shared counted failures (2): `de-r9-nippes-koeln`, `us-subvenue-googleplex-building`. **Four NEW conditional
-failures, and they are one family — Caribbean / US-territory:**
+failures, and they're one family — Caribbean / US-territory:**
 
 ```
 ✗ pr-op3-venezuela-san-juan       "Venezuela, San Juan, 00926, Puerto Rico"        coord 9.72km off (tol 500m)
@@ -285,7 +285,7 @@ structure. Every head has nonzero mass.
 
 1. **`mailwoman gazetteer postcode-binary` cannot build a GB bin from the license-clean extract, and fails
    silently.** Space-split outward derivation vs a space-stripped `name` column → 0 codes, exit 0, a valid
-   empty PCB1 written. It is also outward-only. That is the wrong granularity for an anchor-v2-trained model.
+   empty PCB1 written. It is also outward-only. That's the wrong granularity for an anchor-v2-trained model.
 2. **`resolveWeights` hard-codes `locality-surface-lexicon-v6.json`.** Both v4.0.1 and v4.2.0 train against
    **v7**. The dev-link puts v6 in `neural-weights-en-us/`, and the en-us card declares v6. So the shipped
    configuration feeds a v7-trained model the v6 lexicon. The candidate arms here stage the **v7 content
@@ -297,7 +297,7 @@ structure. Every head has nonzero mass.
    that the block is a verbatim copy of the base card's. GB parses therefore run those two channels off on a
    model trained with them. The baseline board above inherits that posture (which is why it is the correct
    comparison instrument), but it is a real divergence from the base card.
-4. **G1's harness does not exist.** The sheet specifies a P0 grid taking `--lexicon` / `--street-lexicon`.
+4. **G1's harness doesn't exist.** The sheet specifies a P0 grid taking `--lexicon` / `--street-lexicon`.
    Neither `mailwoman eval fragment-board` nor `eval fragment-dev` accepts those flags, and no other command in
    `mailwoman/commands/eval/` does. The FR fragment board above is the nearest existing instrument rather than a
    substitute.

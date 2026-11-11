@@ -9,7 +9,7 @@
  * Input is the publisher's own workbook, one sheet titled `Export`, as data.gov.ro serves it for the
  * dataset `69392a50-5750-4a54-90c1-d461de44da6d`. Three rows precede the header. The adapter finds the
  * header by its `Strada` cell rather than by position, because the preamble is a generation timestamp
- * whose length the publisher does not fix.
+ * whose length the publisher doesn't fix.
  *
  * ## Which fields make the address
  *
@@ -18,7 +18,7 @@
  *
  * - `Strada` is the street name as the school writes it, in most rows without the street-type word:
  *   `REPUBLICII`, `PRINCIPALA`, `Piața 1848`. 198 values begin with `STR.` and 247 with `CALEA`.
- *   The value is copied unchanged, because a street type the publisher did not write is not evidence.
+ *   The value is copied unchanged, because a street type the publisher didn't write isn't evidence.
  * - `Numar` holds the house number. `FN` (`fără număr`, "without number") and `-` state that the premise
  *   has none, on 601 and 180 units. Both are read as absent. A range such as `12-14` is a house number.
  * - `Cod postal` holds a six-digit Romanian postcode on 17,484 units. A value of any other length is
@@ -37,7 +37,7 @@
  * ## Identity and license
  *
  * The row id is content-addressed over the aligned components. A school and its kindergarten can share
- * one address under two names, so they are two rows.
+ * one address under two names, so they're two rows.
  *
  * data.gov.ro publishes the dataset under `CC-BY-4.0`, the license its CKAN record names for the
  * publisher `Ministerul Educației`. CC BY 4.0 requires credit, a link to the license and a statement that
@@ -82,7 +82,7 @@ export const RO_RETEA_SCOLARA_LICENSE = "CC-BY-4.0"
 export const RO_RETEA_SCOLARA_ATTRIBUTION = "Ministerul Educației, Rețea școlară, via data.gov.ro"
 
 /**
- * Why a unit did not become a row.
+ * Why a unit didn't become a row.
  */
 export const ReteaScolaraRefusal = {
 	/**

@@ -77,7 +77,7 @@ export function isSupersededRecord(record: WOFRecordShape): boolean {
  * Whether a parsed record is deprecated and lists no successor.
  *
  * A deprecated record's `edtf:deprecated` holds a date.
- * The values `""` and `"uuuu"` mean the record is not deprecated.
+ * The values `""` and `"uuuu"` mean the record isn't deprecated.
  */
 export function isDeprecatedWithoutSuccessor(record: WOFRecordShape): boolean {
 	const deprecated = record.properties?.["edtf:deprecated"]

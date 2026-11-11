@@ -14,11 +14,11 @@ The docs site bundles the browser geocoder through webpack, and the only way it 
 Docusaurus plugin, `docs/plugins/demo-assets/`, whose `webpack-policy.ts` rewrites module resolution for
 `@mailwoman/*`. Counted on 2026-09-06 against `c79757bdf`:
 
-| Entry kind                                                                                                                   | Count | What it hides                                                              |
-| ---------------------------------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------------- |
-| `node:` builtins stubbed with a shim (`fs`, `path`, `worker_threads`, `stream/web`, `fs/promises`)                           | 5     | A `@mailwoman/core` subpath the client reaches imports a Node builtin.     |
-| `node:` builtins set to `false` (`module`, `url`, `crypto`, `stream`, `buffer`, `util`, `perf_hooks`, `os`, `child_process`) | 9     | The same, on subpaths whose builtin use is dead on the browser path.       |
-| Aliases (`@mailwoman/neural/onnx-runner` and `#onnx-runner` to the browser runner, and two `*-excel-file/node` shims)        | 4     | The package's `exports` map does not answer the browser bundler by itself. |
+| Entry kind                                                                                                                   | Count | What it hides                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------- |
+| `node:` builtins stubbed with a shim (`fs`, `path`, `worker_threads`, `stream/web`, `fs/promises`)                           | 5     | A `@mailwoman/core` subpath the client reaches imports a Node builtin.    |
+| `node:` builtins set to `false` (`module`, `url`, `crypto`, `stream`, `buffer`, `util`, `perf_hooks`, `os`, `child_process`) | 9     | The same, on subpaths whose builtin use is dead on the browser path.      |
+| Aliases (`@mailwoman/neural/onnx-runner` and `#onnx-runner` to the browser runner, and two `*-excel-file/node` shims)        | 4     | The package's `exports` map doesn't answer the browser bundler by itself. |
 
 Each of the eighteen entries is a packaging defect in the package it refers to, and none of them is
 visible to that package's own tests. The Earth app moves the same runtime under Vite, and without this
@@ -27,7 +27,7 @@ bundler is unlikely ever to be removed.
 
 `rspack` stays disabled in `docs/docusaurus.config.ts` for the same reason: it refuses the `node:`
 imports webpack is told to stub. The docs build is slower than necessary because of packaging defects
-in the packages, and Docusaurus is not the cause.
+in the packages, and Docusaurus isn't the cause.
 
 ## Decisions taken
 
@@ -76,7 +76,7 @@ subpath that imported it is fixed under fix 1 or 3.
 
 The `imports` map takes conditions the same way `exports` does, and `@mailwoman/neural` already declares
 `"browser"` on `#onnx-runner`. The docs alias for it applies only to the SSR bundle. That bundle resolves the
-`node` condition and would otherwise bundle `onnxruntime-node`. That is a Docusaurus property and is out
+`node` condition and would otherwise bundle `onnxruntime-node`. That's a Docusaurus property and is out
 of scope here. The `imports` entry that did need a condition is `#classifier/loader`. esbuild and Vite
 follow the classifier's lazy `import("#classifier/loader")` regardless of `webpackIgnore`, so under
 `browser` it now resolves to `classifier/loader-browser.ts`, a module that throws a refusal.
@@ -93,7 +93,7 @@ to include or to omit. The same table now holds the two license-key rows under
 the classifier row that `packages/neural/lib/browser-graph.test.ts` held. Both files are gone, so
 the repository has one esbuild walk rather than three. `packages/neural/lib/web/browser-slo.integration.test.ts`
 keeps its reduced graph because it measures timing, and it remains the size budget. Subpaths in packages
-that `neural` does not depend on (`react`, `spatial`, `cartographer`, `resolver-wof-wasm`,
+that `neural` doesn't depend on (`react`, `spatial`, `cartographer`, `resolver-wof-wasm`,
 `resolver-wof-sqlite`) measured clean, and the Earth app's Vite build guards them.
 
 ## Definition of done

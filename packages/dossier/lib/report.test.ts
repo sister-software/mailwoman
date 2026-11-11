@@ -360,7 +360,7 @@ function uncitedConclusions(dossier: Dossier): string[] {
 }
 
 /**
- * The texts of a report's conclusions that cite a record the dossier did not admit,
+ * The texts of a report's conclusions that cite a record the dossier didn't admit,
  * or whose text omits a record the line cites.
  */
 function misattributedConclusions(dossier: Dossier): string[] {

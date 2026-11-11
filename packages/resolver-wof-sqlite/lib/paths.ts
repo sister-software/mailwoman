@@ -75,7 +75,7 @@ export const uprnDatabasePath: PathBuilder = databaseRootPath(dataRootPath())("u
 export const nsulDatabasePath: PathBuilder = databaseRootPath(dataRootPath())("nsul")
 
 /**
- * Default WOF extracts for FTS when `--wof-db` is not provided.
+ * Default WOF extracts for FTS when `--wof-db` isn't provided.
  *
  * Includes the global admin-priority extract plus postcode extracts.
  * The routing in `pickExtractForPlacetype` sends each postcode query to the

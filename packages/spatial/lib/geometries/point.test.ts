@@ -31,10 +31,10 @@ test("GeoPoint.from: an out-of-lat-range longitude is still just the longitude",
 
 // The axis order is fixed rather than inferred.
 // Until 2026-08-05 the constructor ran a 2-tuple through `inferGeoJSONCoordOrder`,
-// which transposes the pair when the first magnitude is in [-90, 90] and the second is not.
+// which transposes the pair when the first magnitude is in [-90, 90] and the second isn't.
 // That fires on a [latitude, longitude] pair only where |longitude| > 90 — the Americas and the
 // Pacific — so the same caller mistake was silently repaired in Dallas and silently kept in Berlin.
-// An interface that depends on which continent the data is from is not an interface.
+// An interface that depends on which continent the data is from isn't an interface.
 test("GeoPoint.from: a [latitude, longitude] pair is never silently transposed, on any continent", () => {
 	// Berlin written lat-first.
 	// The literal GeoJSON reading is 52.52°E 13.4°N — the Arabian Sea.
@@ -72,7 +72,7 @@ test("GeoPoint: the constructor throws on an out-of-range coordinate", () => {
 	expect(() => new GeoPoint([Number.NaN, 0])).toThrow(RangeError)
 })
 
-// The compatibility receipt for dropping the inference: for a pair that is valid GeoJSON,
+// The compatibility receipt for dropping the inference: for a pair that's valid GeoJSON,
 // the heuristic was already a no-op in every case.
 // It transposes only when the second magnitude is outside [-90, 90] — i.e. when the pair
 // claims a latitude off the globe — so no well-formed input changes meaning.
@@ -176,8 +176,8 @@ test("GeoPoint.from: falsy and unparseable input resolves to null", () => {
 	expect(GeoPoint.from(undefined)).toBeNull()
 	expect(GeoPoint.from("")).toBeNull()
 	expect(GeoPoint.from(0)).toBeNull()
-	// A garbage string that is neither valid JSON nor a wrappable pair falls
-	// back to the default 0/0 coordinate.
+	// A garbage string that's neither valid JSON nor a wrappable pair falls back
+	// to the default 0/0 coordinate.
 	// The `(0, 0)` sentinel rejects that coordinate.
 	expect(GeoPoint.from("not-a-coordinate")).toBeNull()
 })

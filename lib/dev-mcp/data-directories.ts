@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Lists what the data root holds, so a claim that a source is absent starts from the directory that would hold it.
- *   The table states each directory's purpose. The listing reads the disk, and a top-level directory the table does not
+ *   The table states each directory's purpose. The listing reads the disk, and a top-level directory the table doesn't
  *   describe is reported as undescribed.
  */
 
@@ -72,7 +72,7 @@ export interface DataDirectoryReport {
 	root: string
 	directories: DataDirectoryListing[]
 	/**
-	 * Top-level data-root directories the table does not describe.
+	 * Top-level data-root directories the table doesn't describe.
 	 */
 	undescribed: string[]
 }

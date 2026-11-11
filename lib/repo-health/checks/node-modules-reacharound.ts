@@ -7,7 +7,7 @@
  *   For example, `resolve(root, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")` embeds an install path.
  *   Callers can ask Node where a package lives or expose the file through an `exports` subpath.
  *
- *   The assembled path relies on an install layout the package owner has not promised.
+ *   The assembled path relies on an install layout the package owner hasn't promised.
  *   A package move, scope rename, hoist, or `files` change can make it point nowhere.
  *   The caller may then report a missing artifact even though it looked in the wrong place.
  *
@@ -93,7 +93,7 @@ const ALLOWED: Record<string, string> = {
 	"packages/mailwoman/cli/kit/invocation.test.ts":
 		"builds a scratch project with an installed bin for the probe under test",
 	// Builds the node_modules symlink farm a git worktree lacks rather than reading one,
-	// so there is no path to resolve until this code creates the directory.
+	// so there's no path to resolve until this code creates the directory.
 	"lib/dev-mcp/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
 	// The oracle for that farm: a fixture built with the implementation's own helper
 	// cannot fail when the implementation is wrong.
@@ -134,7 +134,7 @@ const ALLOWED: Record<string, string> = {
 	"lib/release-kit/release/stage.ts":
 		"symlinks the checkout's node_modules into the staging tree; not a package lookup",
 	// `weightsCachePackageDir` is the inverse of a resolution rather than a substitute for one:
-	// the directory does not exist yet when the layout is needed, so there is no path to resolve.
+	// the directory doesn't exist yet when the layout is needed, so there's no path to resolve.
 	"packages/neural/lib/weights.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
 }
 
@@ -216,7 +216,7 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 					const text = argumentText(argument)
 
 					// A `node_modules` path segment rather than the bare word, so an exclude
-					// glob like `**/node_modules/**` inside a `join` does not fire.
+					// glob like `**/node_modules/**` inside a `join` doesn't fire.
 					if (isInstallPath(text)) {
 						report(node)
 					}

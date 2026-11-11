@@ -5,7 +5,7 @@
  *
  *   The end-to-end receipt for the ROAD_TO_V9 §4 intent vocabulary: run real queries through the
  *   real geocode cascade. The probe prints each answer beside its markers.
- *   It needs the ~9 GB database set to measure candidate-table populations. CI does not hold that data.
+ *   It needs the ~9 GB database set to measure candidate-table populations. CI doesn't hold that data.
  *   The probe reads `$MAILWOMAN_DATA_ROOT` in read-only mode.
  *   Link the dev weights with `node neural-weights-en-us/scripts/link-dev-weights.ts` after `yarn compile`.
  */

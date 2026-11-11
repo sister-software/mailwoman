@@ -72,8 +72,8 @@ async function matchers(locale: string): Promise<{ pop: unknown; imp: unknown }>
 }
 
 /**
- * The per-BIO-tag max collapse `applyBias` performs, where a surface the FST does
- * not accept returns an empty map (absence) rather than a zero.
+ * The per-BIO-tag max collapse `applyBias` performs, where a surface the FST doesn't
+ * accept returns an empty map (absence) rather than a zero.
  */
 function biasOf(matcher: unknown, surface: string): Map<string, number> {
 	const walk = (matcher as { walk(t: string[]): { stateID: number; accepted: boolean } | null }).walk(

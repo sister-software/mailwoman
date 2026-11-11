@@ -7,7 +7,7 @@ title: Dual-loss curvature conflict — when CRF is the aggressor
 
 :::tip[No ML background needed]
 
-If you are a software engineer without machine learning experience, start with the **[Beginner's companion](#beginners-companion--the-cooperative-vs-conflict-model)** below. It explains the problem without math.
+If you're a software engineer without machine learning experience, start with the **[Beginner's companion](#beginners-companion--the-cooperative-vs-conflict-model)** below. It explains the problem without math.
 
 :::
 
@@ -25,7 +25,7 @@ Every recipe variant showed the same training curve. The variants covered differ
 
 Validation macro-F1 followed the train loss curve. It peaked when loss bottomed and fell to roughly the random baseline as loss climbed. A lower learning rate moved the collapse later, but halving the LR delayed it by only ~1.3×. That response is too sub-linear to fit a learning rate that was too high.
 
-The bisect ruled out learning rate, per-token CRF normalization (§1), class-weighted cross-entropy (§3), hidden size (h384 vs h256), and phrase-prior input features. The remaining suspects were the tokenizer and corpus pair, plus one we had not yet considered: the dual loss itself.
+The bisect ruled out learning rate, per-token CRF normalization (§1), class-weighted cross-entropy (§3), hidden size (h384 vs h256), and phrase-prior input features. The remaining suspects were the tokenizer and corpus pair, plus one we hadn't yet considered: the dual loss itself.
 
 ## The diagnostic technique
 
@@ -59,8 +59,8 @@ The probe sampled two checkpoints. One sat at the inflection point (loss settled
 
 The probe produced two unexpected results:
 
-1. **The CRF gradient is 8-20× larger than the CE gradient.** With `crf_loss_weight=0.05`, the effective CE:CRF contribution to the backward pass is roughly 1:0.8. The hand-tuned `crf_loss_weight` did not reduce CRF to the light regularization it was meant to provide.
-2. **The ratio shrinks during divergence (16 → 8).** The CRF gradient stays at 30-45, so the CRF term is not collapsing. The CE gradient grows relative to it as the model moves away from the CE basin.
+1. **The CRF gradient is 8-20× larger than the CE gradient.** With `crf_loss_weight=0.05`, the effective CE:CRF contribution to the backward pass is roughly 1:0.8. The hand-tuned `crf_loss_weight` didn't reduce CRF to the light regularization it was meant to provide.
+2. **The ratio shrinks during divergence (16 → 8).** The CRF gradient stays at 30-45, so the CRF term isn't collapsing. The CE gradient grows relative to it as the model moves away from the CE basin.
 
 ## The cooperative vs conflict regime model
 
@@ -82,7 +82,7 @@ Three recipe changes that should address this failed in mailwoman's v0.5.0 attem
 - **Per-token CRF normalization** (§1) was meant to make CRF NLL magnitude comparable to per-token CE. The probe shows that the _gradient_ magnitudes still differ widely after the _loss_ magnitudes are normalized. Balanced loss magnitudes do not imply balanced gradient magnitudes.
 - **Global gradient clipping** to norm 1.0 applies to the combined gradient after the dual-loss sum. The operation preserves the _relative_ dominance, so CRF keeps its 16× share.
 
-Loss-value scaling does not correct asymmetric _curvature_. Below the cooperative-regime boundary, small parameter changes produce large CRF NLL gradients on this data. A multiplier cannot balance those gradients against the gentler CE surface.
+Loss-value scaling doesn't correct asymmetric _curvature_. Below the cooperative-regime boundary, small parameter changes produce large CRF NLL gradients on this data. A multiplier cannot balance those gradients against the gentler CE surface.
 
 ## The repair
 
@@ -161,8 +161,8 @@ One configuration line makes the change: `crf_loss_weight = 0.0`. The hand-encod
 
 ### Three lessons that generalize
 
-1. **Two weighted losses can fail badly.** Two loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A loss-value multiplier does not balance their contributions to the optimizer.
-2. **Run cheap diagnostics first.** The gradient-norm probe took 5 minutes and answered a question that more than a month of retraining experiments had not. Exhaust the diagnostics that need no GPU before a retrain.
+1. **Two weighted losses can fail badly.** Two loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. A loss-value multiplier doesn't balance their contributions to the optimizer.
+2. **Run cheap diagnostics first.** The gradient-norm probe took 5 minutes and answered a question that more than a month of retraining experiments hadn't. Exhaust the diagnostics that need no GPU before a retrain.
 3. **ML debugging resembles ordinary program debugging.** It uses the same steps: bisect, isolate, instrument, hypothesize, and test. The hard part is describing what happens inside the model precisely enough. Those steps make the remaining bug easier to locate.
 
 ## See also

@@ -42,7 +42,7 @@ test("departementInfo: unknown / malformed / non-string → null", () => {
 	expect(departementInfo("975")).toBeNull()
 	expect(departementInfo("00")).toBeNull()
 	expect(departementInfo("999")).toBeNull()
-	expect(departementInfo("Ain")).toBeNull() // name is not a key
+	expect(departementInfo("Ain")).toBeNull() // name isn't a key
 	expect(departementInfo("")).toBeNull()
 	expect(departementInfo(null)).toBeNull()
 	expect(departementInfo(undefined)).toBeNull()

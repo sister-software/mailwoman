@@ -8,7 +8,7 @@
  * Both files are derived, so this check holds the committed bytes equal to `mwops release write-rights-files`'s output
  * so a model card edit regenerates them or fails here.
  *
- * A generated file the manifest's `files` array does not declare never reaches the tarball, so that array is checked
+ * A generated file the manifest's `files` array doesn't declare never reaches the tarball, so that array is checked
  * alongside.
  */
 

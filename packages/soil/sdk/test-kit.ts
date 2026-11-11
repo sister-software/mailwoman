@@ -107,10 +107,10 @@ export function fixtureComponents(): SoilComponentTable[] {
 		component("co-mixed-2", "mu-mixed", 35, "Series", "3", "e"),
 		component("co-mixed-3", "mu-mixed", 20, "Series", "6", "s"),
 		component("co-class8", "mu-class8", 100, "Series", "8", "s"),
-		// A miscellaneous area with no rating is not rateable.
+		// A miscellaneous area with no rating isn't rateable.
 		// That differs from unrated soil and class 8.
 		component("co-water", "mu-water", 100, "Miscellaneous area", null, null),
-		// A soil type the survey did not rate: unrated.
+		// A soil type the survey didn't rate: unrated.
 		component("co-unrated", "mu-unrated", 100, "Series", null, null),
 		// A minority component small enough to fall under the truncation floor once the lattice splits it.
 		component("co-tail", "mu-mixed", 1, "Series", "7", "e"),

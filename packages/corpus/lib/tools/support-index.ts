@@ -450,7 +450,7 @@ export interface SupportRowReading {
 	tag_set: string
 	/**
 	 * Train rows of the country whose tag set is exactly `tag_set`, or `null`
-	 * when the row states no country and could not be probed.
+	 * when the row states no country and couldn't be probed.
 	 */
 	shape_rows: number | null
 	shape_sources: Array<{ source: string; rows: number }>

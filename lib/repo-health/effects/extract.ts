@@ -32,7 +32,7 @@ import {
 /**
  * One effect at one call site.
  *
- * `target` is `null` exactly when the path could not be resolved, and `unresolved` then holds
+ * `target` is `null` exactly when the path couldn't be resolved, and `unresolved` then holds
  * the argument's source text, truncated to {@linkcode UNRESOLVED_TEXT_LENGTH} characters.
  */
 export interface EffectEdge {
@@ -43,7 +43,7 @@ export interface EffectEdge {
 	target: ResolvedTarget | null
 	unresolved: string | null
 	/**
-	 * Why the path did not resolve, or `null` when it did.
+	 * Why the path didn't resolve, or `null` when it did.
 	 *
 	 * `parameter` is a parameter of the enclosing function.
 	 * Only that function's callers can resolve it.
@@ -338,7 +338,7 @@ function edgeOfEnvironmentRead(scope: FileScope, node: ts.Node): EffectEdge | nu
 
 /**
  * The environment edges of `node` when it evaluates to `process.env` outside a
- * property read, or `null` when it does not.
+ * property read, or `null` when it doesn't.
  *
  * A destructuring declaration reads each property it names, and a rest element reads every variable.
  * A fixed binding such as `const env = process.env` adds no edge at its declaration,

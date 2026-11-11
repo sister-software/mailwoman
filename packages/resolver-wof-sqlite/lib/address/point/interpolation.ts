@@ -71,7 +71,7 @@ export class AddressPointInterpolator<
 	/**
 	 * Resources this instance opened.
 	 *
-	 * A connection handed in by a caller is not in here, so disposal cannot reach it.
+	 * A connection handed in by a caller isn't in here, so disposal cannot reach it.
 	 * Ownership is membership rather than a flag a later branch checks.
 	 */
 	readonly #resources: DisposableStack

@@ -6,7 +6,7 @@
  *   Where a Who's On First clone fetches from, and the GitHub operations that keep that source current.
  *
  *   Every clone's `origin` is the `mailwoman` fork of its repository, and its `upstream` remote is the original.
- *   Corrections are committed to the fork and proposed upstream from there. A GitHub fork does not follow its parent,
+ *   Corrections are committed to the fork and proposed upstream from there. A GitHub fork doesn't follow its parent,
  *   so the sync merges upstream into each fork on GitHub before a clone fetches from it.
  */
 
@@ -44,7 +44,7 @@ export interface RepoOrigin {
 	 */
 	upstreamOrg: string | null
 	/**
-	 * The `upstream` remote: the original repository, or `null` when there is none.
+	 * The `upstream` remote: the original repository, or `null` when there's none.
 	 */
 	upstreamURL: string | null
 }
@@ -98,7 +98,7 @@ export type ForkUpdate =
  */
 export interface ForkHost {
 	/**
-	 * Creates `mailwoman/<repo>` as a fork of the original when it does not exist.
+	 * Creates `mailwoman/<repo>` as a fork of the original when it doesn't exist.
 	 *
 	 * @returns `true` when this call created the fork.
 	 */

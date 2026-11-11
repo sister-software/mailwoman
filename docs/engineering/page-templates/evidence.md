@@ -22,7 +22,7 @@ role: evidence
 2. **What ran.** Candidate, baseline, dataset, date. One paragraph.
 3. **Method.** Enough for someone else to run it again.
 4. **Numbers.** A table. Deltas state their units.
-5. **Losses.** What got worse. This section is not optional and does not go last by accident.
+5. **Losses.** What got worse. This section isn't optional and doesn't go last by accident.
 6. **Caveats.** Mechanism first. Circularity caveats are mandatory.
 7. **Reproduce.** The command, and a link to the run.
 

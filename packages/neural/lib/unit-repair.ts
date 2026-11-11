@@ -29,7 +29,7 @@ import {
 /**
  * A detected secondary-unit substring with its char range.
  *
- * Every pattern requires an explicit designator, so there is no `kind` split as in postcode-repair.
+ * Every pattern requires an explicit designator, so there's no `kind` split as in postcode-repair.
  */
 type UnitMatch = SpanMatch
 

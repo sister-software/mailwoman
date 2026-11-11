@@ -193,11 +193,11 @@ export interface PairedComparison {
 	 */
 	n: number
 	/**
-	 * Rows the first arm got right and the second did not.
+	 * Rows the first arm got right and the second didn't.
 	 */
 	firstOnly: number
 	/**
-	 * Rows the second arm got right and the first did not.
+	 * Rows the second arm got right and the first didn't.
 	 */
 	secondOnly: number
 	bothCorrect: number

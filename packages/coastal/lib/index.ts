@@ -61,7 +61,7 @@ export const CoastalReadingKind = {
 	Designated: "designated",
 	/**
 	 * No erosion polygon of that scenario contains the point.
-	 * This does not mean the location is safe.
+	 * This doesn't mean the location is safe.
 	 */
 	Unknown: "unknown",
 } as const
@@ -121,7 +121,7 @@ export interface CoastalDesignation {
 	 * Publication year as published.
 	 *
 	 * Some source rows contain 0 with blank policy and defense fields.
-	 * The source does not explain them.
+	 * The source doesn't explain them.
 	 */
 	publishedYear: number | null
 	/**
@@ -162,7 +162,7 @@ export interface CoastalErosionReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * What the product does not cover, in the authority's own words.
+	 * What the product doesn't cover, in the authority's own words.
 	 */
 	limits: ReadonlyArray<string>
 	/**
@@ -308,7 +308,7 @@ export class CoastalErosionLookup implements Disposable {
 	/**
 	 * Return the erosion reading at a coordinate under one scenario.
 	 *
-	 * @throws {Error} When the layer does not hold `scenarioKey`.
+	 * @throws {Error} When the layer doesn't hold `scenarioKey`.
 	 * An empty reading would hide the typo.
 	 */
 	public lookup(latitude: number, longitude: number, scenarioKey: string): CoastalErosionReading {

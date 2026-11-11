@@ -51,7 +51,7 @@ const EVAL_BUILD_SHA = "filer-linkage-eval"
 export interface LeakageCensus {
 	holdingCompanyNodes: number
 	/**
-	 * The prediction reads only `filer_family`, so an ownership edge by itself does not change a score.
+	 * The prediction reads only `filer_family`, so an ownership edge by itself doesn't change a score.
 	 */
 	ownershipEdges: number
 	/**
@@ -236,7 +236,7 @@ export interface LinkageEvalRun {
 	score: PairwiseGroupingScore
 	/**
 	 * Counters from the entity-resolution pass that the report shows as context
-	 * and the prediction does not read.
+	 * and the prediction doesn't read.
 	 */
 	inferred: InferredClusterResult
 	census: LeakageCensus

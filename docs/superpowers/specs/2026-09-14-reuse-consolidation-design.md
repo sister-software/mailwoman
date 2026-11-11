@@ -42,7 +42,7 @@ can be re-derived.
 |  **0.45** |   **77** |  **22,829** | largest cluster is 61 files, all one family — no cross-workspace chaining    |
 |      0.30 |      129 |      50,129 | artifact: single-linkage chains 94 files across `astrogeology` + `mailwoman` |
 
-The 0.30 row is the only one that reaches 15%, and it reaches it by merging unrelated files. It is not counted.
+The 0.30 row is the only one that reaches 15%, and it reaches it by merging unrelated files. It isn't counted.
 
 ## The finding
 
@@ -51,7 +51,7 @@ The 0.30 row is the only one that reaches 15%, and it reaches it by merging unre
 The four authority-layer packages each write their own `sdk/cells.ts`, `sdk/client.ts`, and
 `sdk/ingest/chunk.ts`. The files have the same responsibilities and call order, with four different types, four
 different vocabularies, and four different table names. The files are parallel, and no two declarations inside them
-are the same. That is why `jscpd` reports 0.66% on files that look like twins, and why a declaration-level sweep
+are the same. That's why `jscpd` reports 0.66% on files that look like twins, and why a declaration-level sweep
 without a size floor finds 520 cross-package lines in a 538,264-line tree.
 
 The hypothesis that `core`, `codex` and `corpus` should absorb scattered code was tested directly. The table below
@@ -66,12 +66,12 @@ assigns each cross-package family a proposed owner:
 | `core` _(designated home)_   |        6 |    22 |
 | `codex` _(designated home)_  |        1 |     7 |
 
-The three designated homes total 95 lines, because they have already absorbed the shared code. The strongest
+The three designated homes total 95 lines, because they've already absorbed the shared code. The strongest
 package pairs are the layer packages (`coastal ~ zoning` 98L, `coastal ~ flood` 91L, `flood ~ zoning` 75L) and the
 drop-in servers (`nominatim ~ photon` 69L).
 
 Consequence for the campaign: consolidation here means writing one generic implementation that several packages
-instantiate. It does not mean moving constants into `core`, because there are almost no shared constants to move.
+instantiate. It doesn't mean moving constants into `core`, because there are almost no shared constants to move.
 
 ## Scope
 
@@ -82,8 +82,8 @@ hand-written one, a helper moved to the package that already owns the concept.
 out of TypeScript. That would reach 15%, but it is a different project, and the operator chose reuse at its
 measured size.
 
-**Non-goals.** The project retains existing features and docstrings. It does not split files solely
-because they are long. The mechanical cleanup lane stays closed except where this campaign's work
+**Non-goals.** The project retains existing features and docstrings. It doesn't split files solely
+because they're long. The mechanical cleanup lane stays closed except where this campaign's work
 touches a file.
 
 ## Lanes
@@ -118,7 +118,7 @@ The kebab-to-property derivation already exists as `optionPropertyName` in `@mai
 with an `OPTION_INITIALISMS` table listing the segments that capitalize a whole acronym. A mapped type that mirrors
 that derivation lets `Options` be derived instead of hand-written.
 
-The runtime table and the type-level table must not drift, and matching constants would not prevent drift. This
+The runtime table and the type-level table mustn't drift, and matching constants wouldn't prevent drift. This
 repository's rule is to share the function rather than the constants. The fix is one declaration: keep
 `OPTION_INITIALISMS` as a single `as const` object, derive the type side with `typeof`, and derive the runtime side
 with `Object.entries`.
@@ -219,7 +219,7 @@ counts what remains after a finished consolidation as if it were available work.
 product's own vocabulary (flood's flags and feature source, and the same for soil, coastal and zoning), and it
 cannot be reduced further.
 
-The declaration census does not have this bias, because a call is not a declaration. Its 2,974 lines is the figure
+The declaration census doesn't have this bias, because a call isn't a declaration. Its 2,974 lines is the figure
 to trust. The two instruments disagree for a known reason: one measures duplication, the other measures
 parallelism, and parallelism is the correct state for four products built on one kit.
 
@@ -270,15 +270,15 @@ work.
    trades per-command legibility for fewer lines.
 6. **A3** — **taken** under #2280 (`f2ebed800`) as `harnessCommand` in `packages/mailwoman/lib/cli/kit/`.
    Twenty-two of the twenty-six `commands/eval/` files use it, at 404 insertions against 480 deletions across 24
-   files. Four keep the hook for a reason the factory does not cover: `pins` and `premise-linkage` pass extra props to
+   files. Four keep the hook for a reason the factory doesn't cover: `pins` and `premise-linkage` pass extra props to
    `CommandTaskResult`, `score-trends` renders its own done frame, `gauntlet/build` has a custom shape.
 
 A2 is the only remaining reuse work with more than a few hundred lines in it, and it trades legibility for a lower
-count. It needs a decision and is not a backlog item.
+count. It needs a decision and isn't a backlog item.
 
 **The 15% target is dropped**, because of the arithmetic above: the reuse ceiling across the tree is ~4,400 lines,
 1.4% of the 317,429-line denominator, of which #2270 delivered 1,208. A move of 47,614 lines would require relocating
-the 36,088 lines of declared table literals out of TypeScript. That is a real project, and it should be chosen to
+the 36,088 lines of declared table literals out of TypeScript. That's a real project, and it should be chosen to
 conform with the rule that reference data is provenance-tracked immutable SQLite, never to reduce a line count.
 
 Of A2's two naming findings, one was a drift. `out` (56 commands) beside `output` (22) was the same option spelled

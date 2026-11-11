@@ -158,7 +158,7 @@ if (written.size !== files.length) throw new Error(`split ${written.size} of ${f
 
 // The base manifest's split counts and policy hashes describe the base's split,
 // so both are recomputed from the attributes written here.
-// A deleted row's split under the new policy is not recorded anywhere,
+// A deleted row's split under the new policy isn't recorded anywhere,
 // so a base with deletions is refused rather than counted.
 if (manifest.deletions?.length) {
 	throw new Error(`${args.manifest} lists ${manifest.deletions.length} deletions, whose rows' new splits are unknown`)

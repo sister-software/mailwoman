@@ -69,9 +69,9 @@ export type CodeMatch =
 /**
  * Every namespace that holds the spelling, in namespace order: country first, then airport.
  *
- * The order is the namespace list's and is not a ranking.
+ * The order is the namespace list's and isn't a ranking.
  * An empty array is `not-found-in-snapshot` in every namespace, and a former country code
- * is not an interpretation here because the current-assignment brand leaves it out.
+ * isn't an interpretation here because the current-assignment brand leaves it out.
  */
 export function interpretCountryOrAirportCode(input: string): CodeMatch[] {
 	const matches: CodeMatch[] = []

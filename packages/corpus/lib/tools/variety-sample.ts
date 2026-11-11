@@ -493,7 +493,7 @@ export interface VarietySampleReport {
 	limits: VarietySampleLimits
 	streetTypeLanguages: readonly string[] | "all"
 	/**
-	 * Lines that did not parse as a canonical row of the requested country.
+	 * Lines that didn't parse as a canonical row of the requested country.
 	 */
 	skipped: Record<string, number>
 	full: VarietyMeasures

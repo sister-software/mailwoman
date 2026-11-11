@@ -5,7 +5,7 @@
  *
  *   The plan → execute interface for external writes. `computeReleasePlan` describes what a release of
  *   this checkout would publish — head, version, each release workspace's manifest version,
- *   weights artifacts the checkout does not contain, plus destinations — then seals it under a
+ *   weights artifacts the checkout doesn't contain, plus destinations — then seals it under a
  *   digest. An external-write operation reads the plan file and recomputes the plan from its checkout.
  *   It refuses when head is dirty, head moved, or the digest
  *   differs: the tree being published is then not the tree that was planned.
@@ -52,7 +52,7 @@ export interface ReleasePlan {
 		filename: string
 		origin: ArtifactOrigin["kind"]
 		/**
-		 * The bucket directory a `hf` artifact is read from when it is not `destinations.hfBase` —
+		 * The bucket directory a `hf` artifact is read from when it isn't `destinations.hfBase` —
 		 * a character-path family's own directory.
 		 */
 		base: string | null

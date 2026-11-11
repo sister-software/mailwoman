@@ -52,7 +52,7 @@ const FIELD: Readonly<Record<string, string>> = {
 
 /**
  * The countries whose hand-authored layout a generated skeleton never overwrites,
- * read from `ADDRESS_LAYOUTS` itself so the membership is not stated twice.
+ * read from `ADDRESS_LAYOUTS` itself so the membership isn't stated twice.
  */
 const HAND_AUTHORED = new Set(Object.keys(ADDRESS_LAYOUTS))
 
@@ -266,7 +266,7 @@ const emitted = `/**
  *   street order read once from the OpenCage templates (which slot leads). The \`fmt\` each was derived from is quoted
  *   above it, so a reader can compare the two without opening the dataset.
  *
- *   The locales this project publishes weights for are not here: those are hand-authored in the sibling \`index.ts\` and
+ *   A locale this project publishes weights for isn't here. Its layout is hand-authored in the sibling \`index.ts\` and
  *   checked against real addresses on a board, because a generated skeleton is a starting point rather than a verdict.
  *
  *   The Latin table below is the exception to that split. A hand-authored entry states one order per country, so a

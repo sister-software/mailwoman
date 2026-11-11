@@ -8,8 +8,8 @@
  *   needs.
  *
  *   The bodies are the shapes `filescartografia.navarra.es` served on 2026-10-03, reduced to the
- *   elements this harvest reads. Each entry keeps all six of its links, because the one that must
- *   not be downloaded is among them: the entry's first `alternate` link is the dataset feed rather
+ *   elements this harvest reads. Each entry keeps all six of its links, because the one that mustn't
+ *   be downloaded is among them: the entry's first `alternate` link is the dataset feed rather
  *   than the archive.
  *
  *   `./navarra.integration.test.ts` reads the live service. This suite stubs the transport and runs
@@ -52,7 +52,7 @@ function archiveURL(partition: number): string {
  * One partition's entry, with the six links the publisher writes.
  *
  * The `length` is the same 34,987 the publisher states on every entry.
- * That is why no byte count here is read from it.
+ * That's why no byte count here is read from it.
  */
 function entryXML(partition: number, updated = PUBLICATION): string {
 	const archive = archiveURL(partition)
@@ -83,7 +83,7 @@ function serviceXML(entries = entryXML(1) + entryXML(100)): string {
 }
 
 /**
- * A body that is a zip archive as far as the harvest reads it.
+ * A body that's a zip archive as far as the harvest reads it.
  */
 function archiveBody(payload: string): Buffer {
 	return Buffer.concat([Buffer.from("PK\u0003\u0004", "latin1"), Buffer.from(payload, "utf8")])
@@ -294,7 +294,7 @@ describe("harvestESNavarra", () => {
 		expect(summary).toMatchObject({ fetched: 1, failed: 1, failedCodes: ["1"] })
 		await expect(tryStat(scratch.path("AD_Navarra_1.gml.zip"))).resolves.toBeNull()
 
-		// The partition that answered an archive is still recorded, so one failure does not lose the run.
+		// The partition that answered an archive is still recorded, so one failure doesn't lose the run.
 		const manifest = await readManifest<ESNavarraHarvestManifest>(scratch.path("MANIFEST.json"))
 
 		expect(manifest?.files.map((file) => file.partition)).toEqual(["100"])

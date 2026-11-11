@@ -13,7 +13,7 @@ export type MutuallyAssignable<A, B> = [A] extends [B] ? ([B] extends [A] ? true
 /**
  * `true` only when A and B have the same keys and the same value types.
  *
- * Assignability by itself is not enough.
+ * Assignability by itself isn't enough.
  * The difference is exactly the drift a corpus schema suffers: an optional field
  * added to one side and not the other keeps both sides mutually assignable
  * (a value missing an optional key is still assignable), so a pure {@link MutuallyAssignable}

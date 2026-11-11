@@ -74,7 +74,7 @@ describe("validateTree", () => {
 	})
 
 	test("an illegal containment edge is detected", () => {
-		// Hand-built: house_number is not in `PARENT_OF[postcode]`, so nesting a postcode under one is an illegal edge.
+		// Hand-built: house_number isn't in `PARENT_OF[postcode]`, so nesting a postcode under one is an illegal edge.
 		const tree = {
 			raw: "x",
 			roots: [node("house_number", "100", [node("postcode", "90210")])],

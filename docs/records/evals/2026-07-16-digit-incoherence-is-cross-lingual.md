@@ -1,12 +1,12 @@
 # The digit-ownership defect is cross-lingual, coverage-independent, and length-conditioned
 
-2026-07-16. The measurement that unifies H3, B0, and the one PL failure B1's coverage story could
-not explain — and that explains why B4's probe barely moved.
+2026-07-16. The measurement that unifies H3, B0, and the one PL failure B1's coverage story couldn't
+explain — and that explains why B4's probe barely moved.
 
 **Result: the intra-word digit incoherence B0 measured on Norwegian is the same defect on
-correctly-parsed Polish streets that are in-corpus and admitted by the filter. It is not coverage, it
-is not the street→locality leak, and it is length-conditioned — the model reproduces a real corpus
-prior on long digit-run continuations. A targeted fragment extract works against that prior. That is
+correctly-parsed Polish streets that are in-corpus and admitted by the filter. It isn't coverage, it
+isn't the street→locality leak, and it is length-conditioned — the model reproduces a real corpus
+prior on long digit-run continuations. A targeted fragment extract works against that prior. That's
 why B4 (weight 12, 2k steps) moved the target only +1.7pp.**
 
 ---
@@ -43,9 +43,9 @@ continuations flip to `I-postcode`, so Viterbi's legality mask resolves the inco
 (3 digits, same street) fails. The only variable is run length, and the continuation postcode mass
 climbs with it (`I-pc` 0.417 → 0.735 across the two continuations of `178`).
 
-That is precisely what the [H3 piece-prior](./2026-07-16-trackb-digit-ownership-h3-verdict.md)
+That's precisely what the [H3 piece-prior](./2026-07-16-trackb-digit-ownership-h3-verdict.md)
 measured in the _corpus_: `P(I-postcode | digit-run continuation)` rises with length — 0.043 at 2
-digits, 0.879 at 5. **The model is not malfunctioning. It is reproducing its corpus prior faithfully,
+digits, 0.879 at 5. **The model isn't malfunctioning. It is reproducing its corpus prior faithfully,
 and that prior labels a long digit run's continuations as postcode.** Postcodes are long, house
 numbers are short, digits tokenize one piece per character, so length is the signal the model has,
 and it uses it.
@@ -63,7 +63,7 @@ Three measurements, one mechanism:
 B4's verdict identified `--bare-street-prob 0.30` as the likely reason its target moved only +1.7pp. This
 probe adds the deeper reason: **a fragment extract is fighting a real, strong, length-conditioned
 corpus prior.** At 3+ digits the corpus itself pushes continuations toward postcode with mass up to
-0.879. A targeted signal at weight 12 for 2k steps dents that but does not overturn it. That is why
+0.879. A targeted signal at weight 12 for 2k steps dents that but doesn't overturn it. That's why
 the guards held (no harm) but the target barely moved — the extract and the prior are pulling against
 each other on the same pieces.
 
@@ -75,7 +75,7 @@ each other on the same pieces.
 2. **The representation direction is the real change.** The #727 research places a lower-fertility vocab
    upstream of any head, and this is the digit-specific evidence: a 3-digit number is 3 pieces
    with 2 postcode-leaning continuations _because_ digits tokenize one-per-character. A vocab where
-   `178` is one piece removes the continuation-postcode mass entirely. That is a bigger change than an
+   `178` is one piece removes the continuation-postcode mass entirely. That's a bigger change than an
    extract, and it is the operator's call whether Track B justifies re-opening the vocab work.
 
 ## The vocab change, quantified
@@ -91,7 +91,7 @@ pieces** — `▁10` and `▁16` — and **none at 3+ digits**. So:
 ```
 
 Digit fertility ≡ digit count. **The model's only length signal is the continuation count**, and the
-continuation is where the postcode mass lives. That is not a tuning accident. It is the root of the
+continuation is where the postcode mass lives. That's not a tuning accident. It is the root of the
 mechanism. `178` fails and `24` succeeds because `178` has two postcode-leaning continuations and `24` has
 one.
 
@@ -109,14 +109,14 @@ gradient (the init_from fine-tune path the multisplice used). It is a bigger, co
 an extract — a tokenizer + model bump rather than a corpus edit — so whether Track B justifies it is squarely
 the operator's call. But it attacks the root the extract only dents.
 
-## What this does not change
+## What this doesn't change
 
 - **The fix is still an extract or the vocab — not a validator.** The house condition is true: this is
   positive evidence and representation, never a hard postcode veto. The model's first-piece
   `B-house_number` is typically _right_. The fix is to stop the continuations from overriding it rather than
   to forbid postcodes.
 - **B4b is still the operator's call.** This sharpens the hypothesis (oversample long numbers, or go
-  to vocab) but does not license a solo 3am run.
+  to vocab) but doesn't license a solo 3am run.
 
 ## Reproduce
 

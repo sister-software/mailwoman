@@ -26,7 +26,7 @@ export interface ServingRooftopProviders extends Disposable {
 	generation: number | null
 	national: BANRegionDatabaseProvider
 	/**
-	 * `null` when `@mailwoman/osm` is not installed.
+	 * `null` when `@mailwoman/osm` isn't installed.
 	 */
 	osm: RegionDatabaseProvider | null
 }

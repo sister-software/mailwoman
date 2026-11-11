@@ -21,7 +21,7 @@ US coverage:
 ## Input
 
 A SQLite database the operator pre-builds from the raw TIGER/Line
-shapefiles. The mailwoman side does **not** parse Shapefile binary
+shapefiles. The mailwoman side **doesn't** parse Shapefile binary
 directly — the ecosystem has mature tools for that and forcing one as a
 mailwoman dep would be opinionated. Pick whichever fits your pipeline.
 
@@ -35,7 +35,7 @@ Build `tiger.db` with the CLI. It downloads, extracts, and loads `tiger_streets`
 1. **ADDRFEAT is published per-COUNTY** (`tl_2024_<5-digit-FIPS>_addrfeat.zip`,
    ~3 county zips for DC to ~250 for Texas), so the CLI discovers a state's
    counties from the Census directory listing and fans out. PLACE is per-state.
-2. **`STATEFP` is not an ADDRFEAT column** (it's in PLACE but not ADDRFEAT), so
+2. **`STATEFP` isn't an ADDRFEAT column** (it's in PLACE but not ADDRFEAT), so
    the CLI injects `statefp` from the state being fetched.
 
 ```sh
@@ -114,7 +114,7 @@ for consistency):
 ## License
 
 Every emitted row has `license: "Public Domain"` per the Census
-Bureau's TIGER/Line terms. There is no per-row override — TIGER is
+Bureau's TIGER/Line terms. There's no per-row override — TIGER is
 single-license throughout.
 
 ## Country filter
@@ -124,7 +124,7 @@ Any other country value is rejected with a clear error.
 
 ## Known limitations
 
-- The adapter does **not** join streets to places. TIGER ADDRFEAT has
+- The adapter **doesn't** join streets to places. TIGER ADDRFEAT has
   no place_id column, and a join requires the FACES + EDGES
   cross-reference. That cross-reference is heavy. Street rows therefore lack a
   `locality` component. The model still learns the `street + region`

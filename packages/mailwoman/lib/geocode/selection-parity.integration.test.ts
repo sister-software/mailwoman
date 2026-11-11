@@ -230,7 +230,7 @@ describe("overlapping national sources", () => {
 
 			expect(provider.for("fr").addressPoints?.find(FR_QUERIES[0]!)).toMatchObject({ source: "ban:fr" })
 			// A miss in the first source is its answer.
-			// The second is not consulted.
+			// The second isn't consulted.
 			expect(provider.for("fr").addressPoints?.find(FR_QUERIES[2]!) ?? null).toBeNull()
 		}
 

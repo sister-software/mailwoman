@@ -40,7 +40,7 @@ export interface PostalGuidelineCitation {
 	 */
 	quote: string
 	/**
-	 * How the quote was transcribed when it is not one contiguous run of the copy's text,
+	 * How the quote was transcribed when it isn't one contiguous run of the copy's text,
 	 * such as table cells whose column padding was collapsed to one space.
 	 * Null when the quote is contiguous.
 	 */

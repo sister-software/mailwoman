@@ -18,7 +18,7 @@ import { repoRootPathBuilder } from "#paths"
 
 /**
  * The tier keys, numbered as in `scope.mdx`.
- * They are strings because JSON object keys are strings.
+ * They're strings because JSON object keys are strings.
  */
 export const SCOPE_TIER_KEYS = ["1", "2", "3", "4", "5"] as const
 

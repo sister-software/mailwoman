@@ -12,7 +12,7 @@
  *
  *   The source has three parts, each aimed at a Deflate64 path that Deflate lacks or rarely takes. A random block
  *   recurs 48 KiB after its first copy, beyond Deflate's 32 KiB window and inside Deflate64's 64 KiB one. A long run
- *   of one repeated kilobyte invites matches longer than Deflate's 258-byte limit. The random block itself does not
+ *   of one repeated kilobyte invites matches longer than Deflate's 258-byte limit. The random block itself doesn't
  *   compress, so the encoder may store it.
  */
 

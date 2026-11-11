@@ -34,7 +34,7 @@ import type { UnfedChannel, UnfedChannelReport } from "#weights/channels"
  * Loads the classifier for the caller's locale and routes inputs in another script,
  * such as CJK, to that weights family's classifier, loaded on first use.
  *
- * If that family's weights package is not installed, a warning is logged once
+ * If that family's weights package isn't installed, a warning is logged once
  * and those inputs stay on the primary classifier.
  */
 export async function loadScriptRoutedClassifier(

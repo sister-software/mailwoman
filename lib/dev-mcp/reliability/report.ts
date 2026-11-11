@@ -184,7 +184,7 @@ function summarize(
 	}
 
 	// The most useful single row: the highest threshold that still admits a majority of what it could,
-	// prioritized because a table gives each row equal prominence while the threshold does not.
+	// prioritized because a table gives each row equal prominence while the threshold doesn't.
 	const workable = check.toReversed().find((row) => row.admitted_share >= 0.5)
 
 	const thresholdSentence = workable

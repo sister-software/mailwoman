@@ -6,7 +6,7 @@
  *   This function reads a place from a cloned Who's On First data repository.
  *
  *   WOF stores each record at a path derived from its own ID. The decimal ID is split into three-character directories,
- *   followed by `<id>.geojson`. `85977539` lives at `859/775/39/85977539.geojson`. The data does not state this rule.
+ *   followed by `<id>.geojson`. `85977539` lives at `859/775/39/85977539.geojson`. The data doesn't state this rule.
  *   It is layout knowledge every reader needs, so it lives here beside the {@link WOFFeature} type for parsed records.
  */
 
@@ -29,7 +29,7 @@ export const WOF_DATA_OWNER = "whosonfirst-data"
  * The repository name for a country's data of one theme — `whosonfirst-data-admin-tr`.
  *
  * Four call sites used to build this string themselves, each with its own `toLowerCase()`,
- * which is how a country code arriving uppercase became a directory that silently does not exist.
+ * which is how a country code arriving uppercase became a directory that silently doesn't exist.
  */
 export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: string): string {
 	return `${WOF_DATA_OWNER}-${theme}-${country.toLowerCase()}`
@@ -47,7 +47,7 @@ export function wofClonePath(reposRoot: PathBuilderLike, name: string): string {
 }
 
 /**
- * Find a cloned repository under a repositories root, or `null` when it is not cloned.
+ * Find a cloned repository under a repositories root, or `null` when it isn't cloned.
  */
 export async function resolveWOFRepo(reposRoot: PathBuilderLike, name: string): Promise<string | null> {
 	const candidate = wofClonePath(reposRoot, name)
@@ -56,7 +56,7 @@ export async function resolveWOFRepo(reposRoot: PathBuilderLike, name: string): 
 }
 
 /**
- * The `data` directory of a country's repository, or `null` when the repository is not cloned.
+ * The `data` directory of a country's repository, or `null` when the repository isn't cloned.
  *
  * The pairing every reader needs: {@link readWOFFeature} takes roots that already point into `data`.
  */
@@ -99,7 +99,7 @@ export function wofIDPathSegments(id: number): string[] {
 
 /**
  * Read a place's GeoJSON from the first `root` that holds it, or `null`
- * when no root does or the file will not parse.
+ * when no root does or the file won't parse.
  *
  * `null` conflates "absent" with "unparseable" on purpose: every caller
  * so far treats both as "no evidence for this place" and continues.
@@ -114,7 +114,7 @@ export async function readWOFFeature(id: number, roots: readonly PathBuilderLike
 		if (!(await pathExists(path))) continue
 
 		// Unreadable or unparseable — the file vanished between the probe and the read,
-		// or is not JSON — is the same "no evidence" verdict as absent.
+		// or isn't JSON — is the same "no evidence" verdict as absent.
 		return readLocalJSONFile<WOFFeature>(path).catch(() => null)
 	}
 

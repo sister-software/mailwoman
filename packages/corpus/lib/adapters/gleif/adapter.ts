@@ -19,16 +19,16 @@
  * Service as the facility for looking up or downloading single LEIs, their related reference data,
  * or the whole LEI set or a subset of it. The golden copy falls under that definition. GLEIF's open-data page
  * also places the data on GLEIF's website under CC0. The same terms ask a user not to create the
- * impression that derived data or services are provided or endorsed by GLEIF. That is why
+ * impression that derived data or services are provided or endorsed by GLEIF. That's why
  * {@linkcode GLEIF_ATTRIBUTION} credits the source rather than the corpus.
  *
  * ## Organization addresses only
  *
- * The register holds legal entities, and three of its fields identify an entity that is a natural
+ * The register holds legal entities, and three of its fields identify an entity that's a natural
  * person trading in their own name. {@linkcode readGLEIFEntity} refuses each:
  *
  * 1. `Entity.EntityCategory` = `SOLE_PROPRIETOR`.
- * 2. `Entity.LegalForm.EntityLegalFormCode` naming an ISO 20275 form that is a sole
+ * 2. `Entity.LegalForm.EntityLegalFormCode` naming an ISO 20275 form that's a sole
  *    proprietorship, from {@linkcode GLEIF_SOLE_PROPRIETOR_LEGAL_FORMS}. A registrant can file the
  *    form without the category, and the form is the registrar's own statement of what the entity is.
  * 3. `Entity.LegalForm.OtherLegalForm`, the free-text form a registrant writes where no ELF code
@@ -58,7 +58,7 @@
  * as Hungary writes `Bagoly utca 23.`, is removed. A whole line of the form `PO BOX 309` then
  * becomes `po_box` rather than a street.
  *
- * **A line holding a digit the split could not place refuses the address**, and so does a line with
+ * **A line holding a digit the split couldn't place refuses the address**, and so does a line with
  * no digit at all: in this register a digitless first line is a building about as frequently (`UGLAND HOUSE`,
  * `KYDD BUILDING`) as a street, and no field separates the two. An English ordinal inside a street name
  * (`5TH AVENUE`) is a name rather than a number.
@@ -75,7 +75,7 @@
  *
  * ## Region
  *
- * `Region` is an ISO 3166-2 code such as `SK-KI`, which is not how an address writes the region.
+ * `Region` is an ISO 3166-2 code such as `SK-KI`, which isn't how an address writes the region.
  * It reaches a row only where the code's suffix is the written form.
  * `matchSubdivisionIn` answers for the United States, Canada and Australia. A code whose
  * country prefix differs from `Country` refuses the address as contradicting it.
@@ -214,7 +214,7 @@ const SOLE_PROPRIETOR_FORM_TEXT =
 	/\b(?:sole\s+(?:trader|proprietor(?:ship)?)|individuals?\s+acting\s+in\s+a\s+business\s+capacity|ditta\s+individuale|impresa\s+individuale|entreprise\s+individuelle|empresario\s+individual|einzel(?:unternehmen|unternehmer(?:in)?|kauf(?:mann|frau))|enkeltmandsvirksomhed|enskild\s+(?:firma|näringsidkare)|enkeltpersonforetak|eenmanszaak|egyéni\s+vállalkozó)\b/iu
 
 /**
- * Why an entity or one of its addresses did not become a row.
+ * Why an entity or one of its addresses didn't become a row.
  */
 export const GLEIFRefusal = {
 	/**
@@ -238,7 +238,7 @@ export const GLEIFRefusal = {
 	 */
 	CountryAbsent: "country-absent",
 	/**
-	 * The country is not an ISO 3166-1 alpha-2 code.
+	 * The country isn't an ISO 3166-1 alpha-2 code.
 	 */
 	CountryNotAlpha2: "country-not-alpha-2",
 	/**
@@ -266,7 +266,7 @@ export const GLEIFRefusal = {
 	 */
 	StreetLineWithoutNumber: "street-line-without-number",
 	/**
-	 * The first line holds a digit the split could not place as a house number.
+	 * The first line holds a digit the split couldn't place as a house number.
 	 */
 	StreetNumberUnplaced: "street-number-unplaced",
 	/**
@@ -363,7 +363,7 @@ const REQUIRED_COLUMNS = [
 const CARE_OF = /^(?:c\s*\/\s*o\b|c\/-|care\s+of\b|attn\b|attention\b)/iu
 
 /**
- * A whole line that is a post-office box, as `PO BOX 309`, `P.O. Box 10240` or `P O BOX 472`.
+ * A whole line that's a post-office box, as `PO BOX 309`, `P.O. Box 10240` or `P O BOX 472`.
  */
 const PO_BOX_LINE = /^(?:p\.?\s?o\.?\s?box|post\s+office\s+box)\s*(?:no\.?\s*)?\d+[a-z]?$/iu
 
@@ -402,7 +402,7 @@ const PREMISE_WORD =
 const ZERO_NUMBER = /^0+$/u
 
 /**
- * A street name that is only a generic word, as a number-first split of `910 Street` leaves it.
+ * A street name that's only a generic word, as a number-first split of `910 Street` leaves it.
  */
 const GENERIC_ONLY = /^(?:street|road|avenue|st|rd|ave)\.?$/iu
 
@@ -680,7 +680,7 @@ function placeStreetNumber(
 }
 
 /**
- * Why a value about to be labeled `street` is not a street name, or `null` where it may be one.
+ * Why a value about to be labeled `street` isn't a street name, or `null` where it may be one.
  */
 function streetRefusal(street: string): GLEIFRefusal | null {
 	if (street.includes(",")) return GLEIFRefusal.StreetLineSegmented

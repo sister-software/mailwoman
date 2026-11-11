@@ -2,11 +2,11 @@
 
 **Date:** 2026-09-05. **Task:** evidence-derivation plan Task 10
 (`docs/superpowers/plans/2026-08-21-evidence-derivation.md`). **Deliverable:** an answer rather than a coverage table.
-This probe does not write `layer_coverage`.
+This probe doesn't write `layer_coverage`.
 
 ## Verdict: designated, per commune — the signal exists upstream and is recoverable, but the current extract drops it
 
-`CoverageBasis`'s docstring uses BAN as its `designated` example ("BAN holding every address in a commune"). That is
+`CoverageBasis`'s docstring uses BAN as its `designated` example ("BAN holding every address in a commune"). That's
 true of some communes and false of others, and the source records which.
 
 ## What was measured
@@ -38,11 +38,11 @@ One département read end to end (Ain, `01`, 9,040,886 bytes gzipped):
 - Inference: `certification_commune = 1` marks an address the commune itself asserted through its Base Adresse Locale
   (the upstream field name and the `source_position = commune` co-occurrence support this, and the BAN documentation
   states it as the field's meaning). A commune whose every address is certified has designated its set. A mixed or
-  uncertified commune has not, and its rows are `source_present`.
+  uncertified commune hasn't, and its rows are `source_present`.
 - Decision the plan asked for: the FR arm can record a per-commune `designated` basis, but only after the extract keeps
   `certification_commune` and the coverage build writes `designated` for wholly certified communes and
   `source_present` for the rest. Until then the FR layer is `source_present` everywhere, and `requireExclusionBasis`
-  refuses every FR exclusion — which is the correct answer for a layer that has not yet said which communes are whole.
+  refuses every FR exclusion — which is the correct answer for a layer that hasn't yet said which communes are whole.
 
 ## Follow-up (not this task)
 

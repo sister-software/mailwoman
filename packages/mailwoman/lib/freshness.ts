@@ -9,7 +9,7 @@
  *   This reader uses the artifact's `layer_manifest` row. The builder writes that row before sealing.
  *
  *   The report includes every artifact the caller names. An artifact without a manifest reports that state explicitly.
- *   The reader does not infer a date from file modification time or filename.
+ *   The reader doesn't infer a date from file modification time or filename.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -35,7 +35,7 @@ export const ManifestState = {
 	 */
 	Absent: "absent",
 	/**
-	 * The artifact could not be opened, or its manifest could not be dated, reported apart from
+	 * The artifact couldn't be opened, or its manifest couldn't be dated, reported apart from
 	 * {@link ManifestState.Absent} because it is a fault to chase rather than a rebuild to schedule.
 	 */
 	Unreadable: "unreadable",

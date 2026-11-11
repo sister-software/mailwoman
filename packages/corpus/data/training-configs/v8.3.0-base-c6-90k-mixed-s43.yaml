@@ -3,7 +3,7 @@
 # 1. `train.init_from` is removed: the run starts from random weights (arm B).
 # 2. `train.max_steps` is 90,000, arm A's 30,000 primer steps plus its 60,000 base steps.
 # 3. `source_weights` for wof-admin and wof-postalcode are 115.0 and 57.5. Those values draw WOF at about 38.3% of
-#    rows against 7.5% at 15.0 and 7.5. Over 90,000 steps at 128 rows that is 4.42 M WOF rows and 7.10 M others,
+#    rows against 7.5% at 15.0 and 7.5. Over 90,000 steps at 128 rows that's 4.42 M WOF rows and 7.10 M others,
 #    the rows arm A reads (3.84 M in the primer, then 0.58 M WOF and 7.10 M others in the base), so the arms
 #    differ in when WOF is read and not in how much of each source is read.
 # 4. Every `min_draws` receipt is 0.6 of the base's, rounded down. Every source but WOF draws 0.67 of its base share
@@ -561,7 +561,7 @@ data:
   augment_exclude_sources:
     - spliced-suffix-boundary
     # This source teaches a postcode with no other token, such as `119 00`, so augmentation would add tokens the row
-    # must not contain.
+    # mustn't contain.
     - codex-bare-postcode
     # On WOF rows the region and directional rewrites expand a word inside a place name (`AL MANĀMAH` to
     # `Alabama MANĀMAH`) under the original label, and the build already renders a `drop-commas` variant.

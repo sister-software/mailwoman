@@ -21,7 +21,7 @@
  *     case-insensitive, proper-noun guard, homonym guard — see remark.ts) so the backlink list
  *     tracks the pages that render tooltips for the term. The homonym guard shares
  *     `isSuppressedSurface` with remark.ts rather than re-implementing it: a suppressed surface that
- *     still produced a backlink would advertise a tooltip the page does not render.
+ *     still produced a backlink would advertise a tooltip the page doesn't render.
  */
 
 import type { LoadContext, Plugin } from "@docusaurus/types"

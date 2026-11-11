@@ -61,7 +61,7 @@ export function loneValueNode(tree: AddressTree): AddressNode | null {
  * One flattened node, projected for display.
  *
  * A structural copy rather than the `AddressNode` itself: a consumer rendering
- * a span list must not be handed the live node.
+ * a span list mustn't be handed the live node.
  * Its `children` and `metadata` invite a walk it has already been given the result of.
  */
 export interface FlatTreeNode {
@@ -84,7 +84,7 @@ export interface FlatTreeNode {
 	 *
 	 * Included for the same reason `source` is.
 	 * A projection that keeps only the text and the tag cannot tell a span that resolved
-	 * to a different place from one that did not move at all.
+	 * to a different place from one that didn't move at all.
 	 *
 	 * `alternatives` is reduced to its length.
 	 * Consumers read the retrieval breadth.
@@ -102,7 +102,7 @@ export interface FlatTreeNode {
  *
  * A traversal-order walk is the obvious implementation and is wrong here.
  * It coincides with source order only while every parent's span precedes its children's.
- * The decoder does not promise that ordering.
+ * The decoder doesn't promise that ordering.
  *
  * The tuple projection already sorts the results, so the same order makes a rendered
  * span list and `decodeAsTuples` agree by construction.

@@ -11,7 +11,7 @@
  * Marks a promise started ahead of the await that reads it as handled, and returns it unchanged.
  *
  * A rejection still reaches the later await.
- * Before that await, or when the result goes unused, it is not reported as unhandled.
+ * Before that await, or when the result goes unused, it isn't reported as unhandled.
  */
 export function startEarly<T>(promise: Promise<T>): Promise<T> {
 	promise.catch(() => {})

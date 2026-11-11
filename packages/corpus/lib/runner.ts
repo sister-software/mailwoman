@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Adapter runner — drives a `CorpusAdapter` to completion and writes `canonical.jsonl` plus a
- *   `MANIFEST.json` per adapter. It does not align, tokenize, synthesize, or write Parquet.
+ *   `MANIFEST.json` per adapter. It doesn't align, tokenize, synthesize, or write Parquet.
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
@@ -153,7 +153,7 @@ export interface AdapterRunManifest {
 	 * Input records the adapter refused or trimmed before yielding, keyed by reason.
 	 *
 	 * See {@link AdapterOptions.dropped} for the key shapes.
-	 * An empty object means the adapter does not count its drops, so the number it dropped is unmeasured.
+	 * An empty object means the adapter doesn't count its drops, so the number it dropped is unmeasured.
 	 */
 	dropped: Record<string, number>
 	/**
@@ -394,7 +394,7 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 
 	// `country_weights` and every country filter use this value.
 	// Validate its ISO 3166-1 alpha-2 shape.
-	// `ZZ` and `XK` are legitimate codes even though ISO membership does not list them.
+	// `ZZ` and `XK` are legitimate codes even though ISO membership doesn't list them.
 	if (!isAlpha2CodeShape(row.country)) {
 		throw new Error(
 			`adapter ${adapter.id}: row.country ${stringifyJSON(row.country)} is not two upper-case letters ` +
@@ -428,7 +428,7 @@ export function flushStream(stream: WriteStream): Promise<void> {
 
 /**
  * Promise-ify a single `drain` or `close` emission, detaching the loser listener
- * so a long-lived stream does not accumulate an orphan handler per wait.
+ * so a long-lived stream doesn't accumulate an orphan handler per wait.
  */
 export function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
 	return new Promise((resolve, reject) => {

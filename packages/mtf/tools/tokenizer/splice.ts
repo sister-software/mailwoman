@@ -9,7 +9,7 @@
  *   An appended piece contains a code point outside ASCII, so it cannot match any span of an ASCII string, and ASCII
  *   text tokenizes exactly as before. `verifySourceIdentical` checks that on a probe rather than assuming it. A
  *   trained locale that shares a code point with the new pieces can re-tokenize. `checkCodepointOverlap`
- *   reports and refuses unless the locale is accepted. The method does not scale to CJK.
+ *   reports and refuses unless the locale is accepted. The method doesn't scale to CJK.
  */
 
 import { readFileRange, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -56,7 +56,7 @@ function core(piece: string): string {
 const NON_ASCII = 0x80
 
 /**
- * Corpus lines this long or longer, in code points, are left out: they are run-on records rather than names.
+ * Corpus lines this long or longer, in code points, are left out: they're run-on records rather than names.
  */
 const MAX_LINE_CODE_POINTS = 80
 
@@ -284,7 +284,7 @@ export interface OverlapReport {
 
 /**
  * Report the code points outside ASCII that the new pieces share with each trained locale's
- * sample, write the report, and raise when an overlapping locale is not in `acceptedOverlap`.
+ * sample, write the report, and raise when an overlapping locale isn't in `acceptedOverlap`.
  *
  * The evaluation for an accepted locale must meet a registered per-locale non-inferiority
  * comparison for it before the first measurement.

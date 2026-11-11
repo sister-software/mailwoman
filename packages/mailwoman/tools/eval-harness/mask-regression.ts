@@ -21,7 +21,7 @@
  *       interaction harms the per-tag 5pp delta check would miss.
  *
  *   It is weight-dependent (it runs the model), so it is a release check to run with weights on disk
- *   before publishing. It is not a weightless CI step, since weight-dependent tests do not run in CI.
+ *   before publishing. It isn't a weightless CI step, since weight-dependent tests do not run in CI.
  *   Hook it into the release path (`mailwoman eval promote` / the publish flow) rather than Test CI.
  *
  *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim, `createScorer` (so

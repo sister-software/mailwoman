@@ -1,5 +1,5 @@
 ---
-title: "#727 Phase 4a — rerank built, but the measurement was invalid and is not a verdict"
+title: "#727 Phase 4a — rerank built, but the measurement was invalid and isn't a verdict"
 ---
 
 # Phase 4a — the reranker exists, its first measurement was confounded, and I nearly shipped the false negative
@@ -44,15 +44,15 @@ Both results are explained by the confound rather than by the thesis:
 - **The guard was inert** because country-centroid garbage is rare on this corpus — the fixtures land
   on a _locality_ centroid whether the street parse is right or wrong. Identical evidence for both.
 - **Specificity actively hurt** because "finer" among `{country, region, locality}` rewards the
-  hypothesis that produces a **locality** reading. For a bare street fragment, that is precisely the
+  hypothesis that produces a **locality** reading. For a bare street fragment, that's precisely the
   wrong parse (`Rue Montmartre` → locality). It fired 44 times and broke 18 by _rewarding the failure
   mode the arc exists to fix_.
 
-The extracts exist locally and I only did not wire them: `$MAILWOMAN_DATA_ROOT/db/interpolation/`
+The extracts exist locally and I only didn't wire them: `$MAILWOMAN_DATA_ROOT/db/interpolation/`
 (per-state US), `/ban/` (FR rooftop), `/osm/`. A valid test runs the **geocode cascade**
 (`geocodeAddress` / `parseForGeocode` + a `RegionDatabaseResolver`) rather than the bare WOF admin resolver.
 
-## What is supported
+## What's supported
 
 - `resolver/rerank.ts` — `rerankByResolution`, deliberately minimal: **veto implausible resolutions,
   otherwise keep the model's ranking**. It has no score blend and no per-class weights. The reason for that
@@ -60,14 +60,14 @@ The extracts exist locally and I only did not wire them: `$MAILWOMAN_DATA_ROOT/d
   overrides with extra steps (94 of 276 lines, each resolving a collision by hand).
 - **7 unit tests**, including the three that encode the judgement calls: rank-2 promotes over a
   country-centroid rank-1 (the arc's whole claim); **all-implausible falls back to rank-1** (evidence
-  that everything is bad is not grounds to invent a different answer); **a resolver exception does not
-  veto** (an outage is not evidence).
+  that everything is bad isn't grounds to invent a different answer); **a resolver exception doesn't
+  veto** (an outage isn't evidence).
 - `maxResolve` defaults to 5 rather than 10 — oracle@5 (0.723) captures nearly all of oracle@10's (0.775)
   ceiling for half the resolver round-trips.
 
 ## What Phase 4a still owes
 
-1. **Re-run on the geocode cascade with street-level extracts.** Until then there is no evidence either
+1. **Re-run on the geocode cascade with street-level extracts.** Until then there's no evidence either
    way about resolution reranking. The headroom (seg@1 0.577 → oracle@5 0.723) is measured and real.
    Whether _this_ signal collects it is untested.
 2. Expect the answer to be **locale-split**: the US has situs/TIGER street coverage, so the resolver
@@ -79,8 +79,8 @@ The extracts exist locally and I only did not wire them: `$MAILWOMAN_DATA_ROOT/d
 ## The same lesson twice in two days
 
 The v3.0.0 probe looked like a falsified architecture and was a mis-specified LR. This looked like a
-falsified rerank and was an unwired resolver. **Both times the tell was a number that could not
+falsified rerank and was an unwired resolver. **Both times the tell was a number that couldn't
 reproduce something already known** — there, `token@1` 0.348 against a known 0.573. Here, it was a resolver
 that never once produced the tier the whole experiment depends on.
 
-Check the instrument before the hypothesis. The per-fixture evidence decides the verdict, and the aggregate does not.
+Check the instrument before the hypothesis. The per-fixture evidence decides the verdict, and the aggregate doesn't.

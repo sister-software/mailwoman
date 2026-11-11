@@ -71,7 +71,7 @@ import { CSVSpliterator, JSONSpliterator } from "spliterator"
 /**
  * The `CanonicalRow` fields that sit outside the dedup key.
  *
- * `raw`, `components`, `country` and `augmentation` are the key, so they are identical across
+ * `raw`, `components`, `country` and `augmentation` are the key, so they're identical across
  * a collapsed group by construction and reporting them would state the definition back.
  */
 const TRACKED_FIELDS = ["source", "source_id", "license", "locale", "addressRole", "register", "surface"] as const
@@ -504,7 +504,7 @@ function csvRecords(plan: CensusPlan): AsyncIterable<Record<string, string>> {
 async function readColumns(plan: CensusPlan): Promise<readonly string[]> {
 	// Every record holds the header's columns, so the first one answers this and the rest are left unread.
 	// The iterator is taken directly rather than through a loop that returns on its first pass.
-	// The loop form would read as a full iteration and is not one.
+	// The loop form would read as a full iteration and isn't one.
 	const records = csvRecords(plan)[Symbol.asyncIterator]()
 	const first = await records.next()
 

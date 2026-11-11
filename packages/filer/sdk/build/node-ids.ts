@@ -96,7 +96,7 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
  * `filer_edge.source_vintage`/`valid_from` and every attribute's `source_vintage` for this row.
  *
  * It is a raw, unvalidated TSV string.
- * SQLite's `not NULL` does not reject an empty string.
+ * SQLite's `not NULL` doesn't reject an empty string.
  *
  * A `valid_from <= asOf` read would treat an empty string as valid since forever.
  */
@@ -131,7 +131,7 @@ export function assertProviderValidFrom(validFrom: string | null | undefined): s
 }
 
 /**
- * Mints the `bdc_provider_id:` node id, throwing when `providerID` is not a safe integer.
+ * Mints the `bdc_provider_id:` node id, throwing when `providerID` isn't a safe integer.
  *
  * The `providerRows` injection point bypasses {@linkcode parseProviderList}, so a `NaN` would
  * otherwise mint `"bdc_provider_id:NaN"` and merge every malformed row under that identity.

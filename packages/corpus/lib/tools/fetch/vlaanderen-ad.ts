@@ -205,7 +205,7 @@ interface PageOnDisk {
  * from the page size, so a page the service answered short is recorded as short.
  * A file whose opening bytes state no `numberReturned` is left out.
  *
- * The harvest then requests that index again: a page of unknown extent is not a page
+ * The harvest then requests that index again: a page of unknown extent isn't a page
  * this harvest can count, and a run killed mid-write leaves exactly that.
  *
  * A group small enough for one page is written under `<stem>.gml` with no index,
@@ -302,7 +302,7 @@ export async function harvestVlaanderenAD(
 		}
 
 		// A component type read short leaves every address referencing its tail unjoinable,
-		// and the adapter would refuse those rows as if the publisher had not published them.
+		// and the adapter would refuse those rows as if the publisher hadn't published them.
 		if (read !== count) {
 			throw new Error(
 				`vlaanderen ad wfs: ad:${typeName} answered ${read} features over ` +
@@ -316,7 +316,7 @@ export async function harvestVlaanderenAD(
 	const addressPages: Array<{ startIndex: number; file: string; numberReturned: number }> = []
 	let retrievedAt = ""
 
-	// A page already on disk is not requested again.
+	// A page already on disk isn't requested again.
 	// The service answered HTTP 400 on one page of a whole-region harvest after 105 pages
 	// and 1.8 GB, and that page answered 200 on a later attempt, so the refusal was transient.
 	// Without this the next run starts at index 0 and re-downloads every page it already holds.

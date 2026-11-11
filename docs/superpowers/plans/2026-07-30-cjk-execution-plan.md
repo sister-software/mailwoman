@@ -5,7 +5,7 @@
 few times… I think it's time").
 
 This memo **promotes** the standing design work into the committed plan set. The full technical
-substance lives in two documents this memo does not duplicate:
+substance lives in two documents this memo doesn't duplicate:
 
 - `scratchpad/v8-cjk-architecture-plan.md` — the A/C architecture decision (char-level CharCNN
   internally, script-routing at the boundary, B rejected on the #825 receipt), schema activation
@@ -28,7 +28,7 @@ substance lives in two documents this memo does not duplicate:
 | Leg-1/Leg-2 probes (specced, conditional, ~2 A100-hours total)             | **NEVER RUN** ← the punt                                          |
 
 The direct summary: everything cheap and hard was done in July. The two one-hour training probes
-that convert the design into a verdict were never launched. That is what changes now.
+that convert the design into a verdict were never launched. That's what changes now.
 
 ## The committed schedule
 

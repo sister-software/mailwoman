@@ -43,7 +43,7 @@ A region's bounding box is no substitute: New York's box covers every Vermont po
 Montana's covers Sheridan County. The issue's distance leg, every region within reach of the point,
 needs the polygon pass the index builder already runs, and stays open.
 
-## Why a boost by itself is not enough
+## Why a boost by itself isn't enough
 
 On `05448 New St Vermont` the model's logits on `Vermont` read `B-locality` 6.92 against `B-region`
 1.20, a margin of 5.72. The street-context check scales the FST's locality bias to zero beside `St`,
@@ -119,7 +119,7 @@ The prior reads the data root's indexes and the browser runtime loads only packa
 parses without it. The next step for the demo is to ship the index in the weights package. The
 distance leg of #2582 stays open.
 
-The resolver's `postcodeContainmentCoherence` check does not reach these rows. On main with the
+The resolver's `postcodeContainmentCoherence` check doesn't reach these rows. On main with the
 check on, the six inputs above resolve the same as with it off, 0 of 6 changed (run
 `84a02700-a94a-4562-b774-dddd80c1868b`): the parse reads the state as a locality, the resolver picks
 the locality of that name in Illinois, and the postcode under it records a `region_scope_miss`

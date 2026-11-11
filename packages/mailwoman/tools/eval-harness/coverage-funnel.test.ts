@@ -233,7 +233,7 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("reads a country the config never admitted as absent rather than blaming the sampler", async () => {
-		// AQ has no census row, so it is not admitted and cannot draw.
+		// AQ has no census row, so it isn't admitted and cannot draw.
 		// A sampling-failure report would blame the admission filter.
 		const report = await funnel({
 			sampledRows: new Map([["US", 250_000]]),
@@ -255,7 +255,7 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("surfaces a verified source with no corpus rows, and skips one that has rows", async () => {
-		// US has corpus rows so it is not a candidate, while KE has none and is reached
+		// US has corpus rows so it isn't a candidate, while KE has none and is reached
 		// by widening the filter past its backbone `C`.
 		const report = await funnel()
 

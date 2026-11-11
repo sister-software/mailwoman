@@ -67,16 +67,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * are siblings, so both trees put this file at the same depth and one constant serves both.
  *
  * If this file moves to a different depth, update {@link PathReflection} with it.
- * A constant that counts the wrong depth resolves every repository path to a directory that does not exist.
+ * A constant that counts the wrong depth resolves every repository path to a directory that doesn't exist.
  *
  * If a future layout change breaks that equality — moving this file to a different
- * depth under `lib/`, or pointing `outDir` somewhere that is not a sibling of
+ * depth under `lib/`, or pointing `outDir` somewhere that's not a sibling of
  * `lib/`. the fix is to restore the equality rather than to reintroduce the flag.
  * {@link PathReflection} is the single declaration of that shared depth.
  *
  * Why not native resolution (2026-08-05 triage, still current).
  * `node:module`'s `findPackageJSON` would compute this package's directory without any
- * arithmetic, but it cannot name {@link RepoRootAbsolutePath} — the monorepo root is not
+ * arithmetic, but it cannot name {@link RepoRootAbsolutePath} — the monorepo root isn't
  * a package on any resolution path from here — so the arithmetic survives regardless.
  *
  * It would also break the demo bundle: this module is reachable from a bundled graph

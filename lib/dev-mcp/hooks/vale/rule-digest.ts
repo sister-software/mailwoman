@@ -105,7 +105,7 @@ function disabledRules(config: string): Set<string> {
 /**
  * Returns every tracked rule file under the style directory, including the `Grammar/` subdirectory.
  *
- * The list comes from git, so an untracked rule file does not appear in the digest.
+ * The list comes from git, so an untracked rule file doesn't appear in the digest.
  */
 function ruleFiles(repoRoot: PathBuilderLike): Promise<string[]> {
 	// A git pathspec `*` crosses `/`, so this pattern also matches `Grammar/`.

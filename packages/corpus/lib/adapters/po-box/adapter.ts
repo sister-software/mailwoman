@@ -120,7 +120,7 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 				}
 
 				// Region is required except for region-less locales (NZ: `Private Bag 12, Auckland 1010` has
-				// no region token), where the guard must not discard the tuple as missing region.
+				// no region token), where the guard mustn't discard the tuple as missing region.
 				const regionOptional = input.country ? REGION_OPTIONAL_LOCALES.has(poBoxTemplateLocale(input.country)) : false
 
 				if (!input.locality || !input.postcode || !input.country || (!input.region && !regionOptional)) {
@@ -162,7 +162,7 @@ export function createPoBoxAdapter(opts: PoBoxAdapterOptions = {}): CorpusAdapte
 
 				// US military/diplomatic rows are self-contained and off by default,
 				// so the default random stream and output stay byte-identical.
-				// They are US-only and count against `limit`. country-branch: APO/FPO/DPO
+				// They're US-only and count against `limit`. country-branch: APO/FPO/DPO
 				// rows exist in the US postal system only.
 				// A postal-regime flag in the codex would replace this.
 				const militaryAllowed = !options.country || options.country === "US"

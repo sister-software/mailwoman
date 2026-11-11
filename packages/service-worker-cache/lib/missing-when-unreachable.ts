@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A Workbox plugin that answers 404 when a strategy has no cached copy and the network fails, as on a device that is
- *   offline. MapLibre treats a 404 tile as one that does not exist: it fires no error event, and it draws the nearest
+ *   A Workbox plugin that answers 404 when a strategy has no cached copy and the network fails, as on a device that's
+ *   offline. MapLibre treats a 404 tile as one that doesn't exist: it fires no error event, and it draws the nearest
  *   loaded parent or child tile in its place. A failed fetch instead reaches the map as an error, and MapLibre logs
  *   one for every tile it requests.
  */

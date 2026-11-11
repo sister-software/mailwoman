@@ -30,7 +30,7 @@ import { TextSpliterator } from "spliterator"
 const MIN_TABLE_CELLS = 3
 
 /**
- * A word-boundary matcher for an exact version token (so `6.5.0` does not match `6.5.01`).
+ * A word-boundary matcher for an exact version token (so `6.5.0` doesn't match `6.5.01`).
  */
 function versionMatcher(version: string): RegExp {
 	return new RegExp(`(?<![\\w.])${escapeRegExp(version)}(?![\\w.])`)

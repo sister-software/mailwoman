@@ -6,8 +6,8 @@
  * one with no public constructor: {@link requireExclusionBasis} is the sole way to make one, and it refuses
  * more requests than it admits.
  *
- * Fold parity is a precondition. A key that "exists nowhere" may exist under a surface the probe did
- * not check. The probe must identify the fold it used. The layer must identify the fold its builder wrote.
+ * Fold parity is a precondition. A key that "exists nowhere" may exist under a surface the probe didn't
+ * check. The probe must identify the fold it used. The layer must identify the fold its builder wrote.
  * A mismatch causes refusal rather than exclusion.
  */
 
@@ -18,7 +18,7 @@ import * as z from "zod"
  *
  * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support
  * an exclusion. {@link CoverageBasis.SourcePresent} records that the source looked.
- * It does not establish that the source found everything.
+ * It doesn't establish that the source found everything.
  */
 export const CoverageBasis = {
 	/**

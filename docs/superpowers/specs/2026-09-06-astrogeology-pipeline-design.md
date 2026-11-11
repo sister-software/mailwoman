@@ -33,7 +33,7 @@ an `astrogeology` bin built on `mailwoman/cli-kit` (`useCommandTask`, `CheckList
 types), the same helpers `mailwoman` commands use.
 
 **Hillshade before DEM.** v1 ships the vector archive and a pre-rendered hillshade raster per body. The
-DEM archive for MapLibre terrain is a later product, in `terrarium` encoding because that is the encoding
+DEM archive for MapLibre terrain is a later product, in `terrarium` encoding because that's the encoding
 `packages/cartographer/lib/base/terrain.ts` already reads for Earth.
 
 **Normalize once, at build.** Rendered coordinates use east-positive longitude in −180..180 and

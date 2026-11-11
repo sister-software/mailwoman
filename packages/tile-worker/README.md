@@ -59,7 +59,7 @@ extend that key with their route directories.
 Database requests read `db/<file>` independently of `PMTILES_PATH`.
 
 A database GET requires a supported `Range` header and returns HTTP 206.
-A database HEAD advertises range support without reading R2, so it does not
+A database HEAD advertises range support without reading R2, so it doesn't
 confirm that the object exists. Database responses bypass the response cache.
 Tile and TileJSON responses use the Worker cache.
 

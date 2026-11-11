@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Identifies the body for this build. The build compiles this value into the client.
- *   A running app does not read configuration to identify its body.
+ *   A running app doesn't read configuration to identify its body.
  *   A production host serving the wrong body's build fails at startup instead of showing the other world.
  */
 

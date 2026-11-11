@@ -8,7 +8,7 @@
  *   the check that matters is the directory walk. Everything else here restates something a suite's own test
  *   already asserts. The directory walk finds suite files absent from the registry. The runner loads only
  *   registered suites, so the check reports each omitted file as an absent audit rather than a failed test.
- *   That is the shape a law suite exists to refuse, so the register gets the same treatment.
+ *   That's the shape a law suite exists to refuse, so the register gets the same treatment.
  *
  *   Artifact-free by construction: the register imports the law modules and the fixture interface, never the
  *   Gauntlet harness, so this leg runs wherever the repo does.

@@ -22,11 +22,11 @@
 ## Global Constraints
 
 - Every command runs from `corpus-python/` unless the step states otherwise.
-- Run tests with `uv run --extra dev --extra train pytest corpus-python/tests -q`. The baseline is **983 passed, 11 skipped** in ~30 s. A task is not done below 983.
+- Run tests with `uv run --extra dev --extra train pytest corpus-python/tests -q`. The baseline is **983 passed, 11 skipped** in ~30 s. A task isn't done below 983.
 - Never launch a training run. No step in this plan calls `modal run` against a GPU function.
 - Source lives under `src/mailwoman_train/`, and tests mirror it under `tests/mailwoman_train/`.
 - Acronyms capitalize as whole components in identifiers: `parseJSON` rather than `parseJson`. Python `snake_case` keeps its own convention (`onnx_path`), but a class is `ONNXExporter` rather than `OnnxExporter`.
-- Run `uv run --extra dev ruff check --fix corpus-python` and `uv run --extra dev ruff format corpus-python` after every move. Ruff's `I` rule re-sorts imports, and CI fails if they are left unsorted.
+- Run `uv run --extra dev ruff check --fix corpus-python` and `uv run --extra dev ruff format corpus-python` after every move. Ruff's `I` rule re-sorts imports, and CI fails if they're left unsorted.
 - A comment states an invariant, a constraint, or why an obvious implementation is unsafe. Move history to the commit message. When moving a docstring that states a measured number, the number travels with it.
 - No module in `src/mailwoman_train/` exceeds 500 lines, and no function exceeds 120.
 - Commit after every task. Use `--no-verify` only when the pre-commit hook's Node half is unavailable in the worktree.
@@ -296,7 +296,7 @@ These are the names that cross a builder boundary today, as measured:
 | `tw_registry.py:29`                                   | `build_tw_slice`    | `ascii_digits`, `normalize_text`                                                                                                       |
 | `build_kr_slice.py:52`, `build_registry_corpus.py:34` | `build_cjk_overlay` | `verify_cn_record`                                                                                                                     |
 
-`BOARD_BUCKET_MIN` does not move. It is 90 in `build_tw_slice.py` and a different value in `build_jp_slice.py`, and the two importers alias the two values apart (`JP_BOARD_BUCKET_MIN`, `TW_BOARD_BUCKET_MIN`). It is a per-country constant and stays with its country in Task 13.
+`BOARD_BUCKET_MIN` doesn't move. It is 90 in `build_tw_slice.py` and a different value in `build_jp_slice.py`, and the two importers alias the two values apart (`JP_BOARD_BUCKET_MIN`, `TW_BOARD_BUCKET_MIN`). It is a per-country constant and stays with its country in Task 13.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -618,7 +618,7 @@ def test_forward_is_deterministic_under_a_fixed_seed() -> None:
     assert first_logits.shape == (1, 8, model.config.num_labels)
 ```
 
-If `load_config(None, strict=False)` does not yield a usable default, read `config/schema.py`'s `ModelConfig` defaults and construct `Config` directly. Do not weaken the assertion to make it pass.
+If `load_config(None, strict=False)` doesn't yield a usable default, read `config/schema.py`'s `ModelConfig` defaults and construct `Config` directly. Do not weaken the assertion to make it pass.
 
 - [ ] **Step 2: Run it and record the baseline**
 
@@ -642,7 +642,7 @@ PY
 
 - [ ] **Step 3: Extract `CharCNNEmbedding` and `EncoderBlock`**
 
-`git mv` is not usable here. These are classes inside a file. Move `CharCNNEmbedding` (former `model.py:133-194`) into `nn/char_cnn.py` and `EncoderBlock` (former `model.py:84-132`) into `nn/blocks.py`, each with its docstring. Add to `nn/encoder.py`:
+`git mv` isn't usable here. These are classes inside a file. Move `CharCNNEmbedding` (former `model.py:133-194`) into `nn/char_cnn.py` and `EncoderBlock` (former `model.py:84-132`) into `nn/blocks.py`, each with its docstring. Add to `nn/encoder.py`:
 
 ```python
 from .blocks import EncoderBlock
@@ -676,7 +676,7 @@ The 405-line `__init__` assembles five independent pieces. Extract each into a p
         self._init_weights()
 ```
 
-Each `_build_*` method holds the lines it already held, unchanged. Keep the attribute names exactly as they are. `save_pretrained` writes a state dict keyed on them, so a rename silently invalidates every checkpoint on the Modal volume.
+Each `_build_*` method holds the lines it already held, unchanged. Keep the attribute names exactly as they're. `save_pretrained` writes a state dict keyed on them, so a rename silently invalidates every checkpoint on the Modal volume.
 
 - [ ] **Step 6: Split `forward` into staged helpers**
 
@@ -1025,7 +1025,7 @@ Expected: at least 994 passed. `train()` should now be under 120 lines.
 uv run python -m mailwoman_train smoke --help
 ```
 
-If `cmd_smoke` (former `cli.py:270`) offers a CPU-only smoke path, run it. This exercises the rewritten loop without touching Modal. If it requires a corpus that is not on this machine, say so in the commit message rather than skipping silently.
+If `cmd_smoke` (former `cli.py:270`) offers a CPU-only smoke path, run it. This exercises the rewritten loop without touching Modal. If it requires a corpus that's not on this machine, say so in the commit message rather than skipping silently.
 
 - [ ] **Step 7: Commit**
 
@@ -1146,7 +1146,7 @@ git mv src/mailwoman_train/build_tw_slice.py src/mailwoman_train/countries/tw/co
 git mv src/mailwoman_train/build_cjk_overlay.py src/mailwoman_train/countries/cjk/overlay.py
 ```
 
-`countries/cjk/` is a regional grouping, matching `packages/corpus/lib/south-asia/`. It declares no `country_code` and is not in `COUNTRY_MODULES`.
+`countries/cjk/` is a regional grouping, matching `packages/corpus/lib/south-asia/`. It declares no `country_code` and isn't in `COUNTRY_MODULES`.
 
 - [ ] **Step 5: Write the registry**
 
@@ -1223,7 +1223,7 @@ git commit -m "refactor(train): key per-country code by country under countries/
 - Consumes: every role module.
 - Produces: `cli.main(argv=None)`, and one `cli/commands/<name>.py` per subcommand, each exporting `add_parser(subparsers) -> None` and `run(args) -> int`.
 
-`scripts/verify_toolchain.py` does not move. It imports only the standard library (`importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib`), and `.husky/pre-commit:63` and `package.json:54` invoke it as bare `python3` without `uv run`. A move into the CLI would make the pre-commit hook depend on a synced venv.
+`scripts/verify_toolchain.py` doesn't move. It imports only the standard library (`importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib`), and `.husky/pre-commit:63` and `package.json:54` invoke it as bare `python3` without `uv run`. A move into the CLI would make the pre-commit hook depend on a synced venv.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1334,7 +1334,7 @@ git commit -m "refactor(cli): one file per subcommand, absorbing the one-off scr
 - Consumes: no input.
 - Produces: `tests/launch/extract_current.py`, holding `extract_sync_functions(source: str) -> dict[str, SyncSpec]` where `SyncSpec` holds `rclone_commands: list[str]`, `check_paths: list[str]` and `pycache_paths: list[str]`.
 
-No test imports `modal/train_remote.py` today. So a passing suite after the collapse would not show that the sync functions survived it. This task writes the instrument first.
+No test imports `modal/train_remote.py` today. So a passing suite after the collapse wouldn't show that the sync functions survived it. This task writes the instrument first.
 
 - [ ] **Step 1: Write the extractor**
 
@@ -1355,7 +1355,7 @@ print(sum(len(s.check_paths) for s in specs.values()), 'check paths')
 
 Expected: **57** sync functions. Put the three counts in the commit message. Task 13 diffs against them.
 
-If the count is not 57, stop and report. The extractor is missing a shape, and a missing shape means a corpus version whose sync would silently vanish.
+If the count isn't 57, stop and report. The extractor is missing a shape, and a missing shape means a corpus version whose sync would silently vanish.
 
 - [ ] **Step 3: Write the parity test**
 
@@ -1526,7 +1526,7 @@ for name, spec in sorted(extract_sync_functions(Path('launch/train_remote.py').r
 "
 ```
 
-Transcribe each into a `CorpusVersion`. Read every one, because the generator produces the rows but does not review them.
+Transcribe each into a `CorpusVersion`. Read every one, because the generator produces the rows but doesn't review them.
 
 - [ ] **Step 3: Write the single sync function**
 
@@ -1551,11 +1551,11 @@ git rm launch/train_remote.py
 uv run python -c "import launch; print(len(launch.app.registered_functions), 'functions registered')"
 ```
 
-Expected: a count covering every surviving function. If the Modal version does not expose `registered_functions`, use `modal app list` against a dry parse, or confirm by importing each module without error.
+Expected: a count covering every surviving function. If the Modal version doesn't expose `registered_functions`, use `modal app list` against a dry parse, or confirm by importing each module without error.
 
 - [ ] **Step 7: Rewrite `launch/AGENTS.md` step 4**
 
-Step 4 currently reads "Add a `sync_v0XX` to `train_remote.py`, mirroring `sync_v050`". Rewrite it to describe adding a row to `launch/corpora.py`, and update every `modal run scripts/modal/train_remote.py::…` command in that file to `modal run -m launch.<module>`. That path prefix was already stale before this change, because `scripts/modal/` has not existed since the 2026-07-09 regroup.
+Step 4 currently reads "Add a `sync_v0XX` to `train_remote.py`, mirroring `sync_v050`". Rewrite it to describe adding a row to `launch/corpora.py`, and update every `modal run scripts/modal/train_remote.py::…` command in that file to `modal run -m launch.<module>`. That path prefix was already stale before this change, because `scripts/modal/` hasn't existed since the 2026-07-09 regroup.
 
 - [ ] **Step 8: Run everything and commit**
 
@@ -1622,7 +1622,7 @@ Expected: the grep prints no match before the delete. If it prints a hit, stop. 
 
 `packages/repo-health/lib/checks/python-prefix-directories.ts` mirrors `prefix-directories.ts` with `_` as the delimiter and `.py` as the source extension, scoped to `corpus-python/`. Register it in `packages/repo-health/lib/registry.ts`.
 
-The TypeScript check excludes workspace directories because a directory name is an npm package name. There is no Python equivalent, so that exclusion does not apply. `__init__.py` and `__main__.py` are excluded: both are Python's own names rather than this repository's to arrange.
+The TypeScript check excludes workspace directories because a directory name is an npm package name. There's no Python equivalent, so that exclusion doesn't apply. `__init__.py` and `__main__.py` are excluded: both are Python's own names rather than this repository's to arrange.
 
 - [ ] **Step 6: Run the check and the repo's own suites**
 

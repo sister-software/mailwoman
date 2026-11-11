@@ -29,7 +29,7 @@ describe.runIf(LIVE_PUBLISHER_TESTS)("harvestEMUiAPL against the live service", 
 
 		const manifest = await harvestEMUiAPL(client, { outputDir: scratch.path, maxPages: 1, pageSize: 25 })
 
-		// The service reports its 1,000-feature page cap as `numberMatched`, which is not a count.
+		// The service reports its 1,000-feature page cap as `numberMatched`, which isn't a count.
 		expect(manifest.feature_count).toBeNull()
 		expect(manifest.feature_count_source).toMatch(/CountDefault|no usable count/u)
 		expect(manifest.pages).toHaveLength(1)

@@ -118,7 +118,7 @@ export const ResourceErrorKind = {
 	 */
 	Request: "request",
 	/**
-	 * A response arrived with a success status, but its body could not be decoded into the requested
+	 * A response arrived with a success status, but its body couldn't be decoded into the requested
 	 * type — the classic case being an upstream that serves an html error page under a 200.
 	 *
 	 * This failure is terminal because retrying an unchanged bad body cannot help.
@@ -279,7 +279,7 @@ function responseReason(status: number): string {
  *   `etimedout`, `ERR_CANCELED`) used to collapse into a uniform 500.
  *   They now split into 503 / 504 / 400 by cause.
  *   `ERR_CANCELED` changes from transient to terminal.
- *   A caller who cancelled should not requeue.
+ *   A caller who cancelled shouldn't requeue.
  * - Every non-401 http status used to rethrow the raw `AxiosError`, so `status`-based branching
  *   (404 → skip, 403 → abort) had to reach into `error.response`. 401's own message and URN changed too.
  *
@@ -311,7 +311,7 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 
 		// A success status that still produced an error means the status was fine and the body was
 		// not — Axios's `transformResponse` rejecting an unparseable JSON payload, for example.
-		// That is a different failure from "the server said 500", and a different retry answer.
+		// That's a different failure from "the server said 500", and a different retry answer.
 		if (status >= HttpStatusCode.Ok && status < HttpStatusCode.MultipleChoices) {
 			throw taggedResourceError(
 				error,
@@ -354,7 +354,7 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 	if (networkErrorCode === "ENOTFOUND") {
 		// deliberately no connectivity probe.
 		// An earlier version issued a live `head` here to word the message as "are we
-		// connected to the internet?" rather than "could not resolve host".
+		// connected to the internet?" rather than "couldn't resolve host".
 		// It cost one unbounded, un-timed-out request per exhausted DNS failure —
 		// with a never-settling `fetch` the client never settled at all —
 		// and no test could reach it: deleting the whole branch caused 0 of 269 failures,

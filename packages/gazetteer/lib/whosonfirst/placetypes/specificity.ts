@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   How specific a placetype is, the ordering `Placetype.ts` deliberately does not give you.
+ *   How specific a placetype is, the ordering `Placetype.ts` deliberately doesn't give you.
  *
  *   WOF placetype IDs follow assignment order. `Placetype.ts` states this in place.
  *   Consumers that compare placetypes use the ranks here.

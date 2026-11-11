@@ -14,7 +14,7 @@
  * where a real street before a region code is read as a locality.
  * The reverse arm measures it by putting a street in that position and counting
  * the rate at which it comes back tagged `locality`.
- * A row whose locality is null there is correct.
+ * A row whose locality is null there's correct.
  *
  * Three arms render through `formatAddress` and the codex layouts.
  * They differ only in which components the dict includes.
@@ -125,8 +125,8 @@ if (!panel.length) {
 /**
  * Defines the four surfaces and the correct answer for each.
  *
- * `street_only` is the reverse arm and is graded inverted: the street must not be
- * read as a locality, so a row with no locality at all is the pass.
+ * `street_only` is the reverse arm and is graded inverted: the street mustn't be read
+ * as a locality, so a row with no locality at all is the pass.
  */
 const ARMS = [
 	{
@@ -145,7 +145,7 @@ const ARMS = [
 		render: (row: ArmRow) => renderAdmin(row, { house_number: "123", street: "Main St" }),
 	},
 	{
-		// This arm puts a street name where a locality belongs, to check the model does not read it as one.
+		// This arm puts a street name where a locality belongs, to check the model doesn't read it as one.
 		// A layout renders well-formed addresses and cannot express that, so this arm keeps a literal.
 		name: "street_only",
 		inverted: true,
@@ -184,7 +184,7 @@ interface RowResult {
 
 // A probe written to measure a corpus change has to be able to point at the model that change produced.
 // Without this option, the run grades only the installed model.
-// That is the comparison arm for a candidate change.
+// That's the comparison arm for a candidate change.
 const depsOptions: GauntletDepsOptions = {
 	...(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {}),
 	...(values["force-kind"] ? { forceQueryKind: values["force-kind"] as QueryKind } : {}),

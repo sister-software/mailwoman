@@ -55,7 +55,7 @@ const DOCS_DIRECTORIES_OUTSIDE_GIT: readonly string[] = ["scratchpad"]
 /**
  * Markdown under {@link DOCS_DIRECTORIES_OUTSIDE_GIT}, as repository-relative paths.
  *
- * A directory that does not exist contributes no path, because a clone without a scratchpad is ordinary.
+ * A directory that doesn't exist contributes no path, because a clone without a scratchpad is ordinary.
  */
 async function documentsOutsideGit(): Promise<string[]> {
 	const found: string[] = []

@@ -97,7 +97,7 @@ describe("the default release falls back to one this runtime can load", () => {
 describe("no consumer reads raw legacy wire keys outside the boundary", () => {
 	// Every other consumer reads through `ReleaseInfo`.
 	// It contains no legacy key.
-	// Therefore, a raw read there is a type error.
+	// Therefore, a raw read there's a type error.
 	// These two are the writer and the loader.
 	// The type cannot see their string literals.
 	for (const rel of ["lib/browser-runtime/load-assets.ts", "tools/release-tools/publish/hf.ts"]) {

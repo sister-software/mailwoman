@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Diagnostic over the US region/locality recall flips between the shipped weights and a candidate
- *   (package-shaped cache dir). A "flip" = baseline extracted the gold value, candidate did not.
+ *   (package-shaped cache dir). A "flip" = baseline extracted the gold value, candidate didn't.
  *   Buckets label the mechanism so the counterweight change is one variable.
  *   Run from the repo root: `node packages/mailwoman/tools/dev-tools/us/recall-flip-census.run.ts <candidateCacheRoot> [sampleN]`
  */

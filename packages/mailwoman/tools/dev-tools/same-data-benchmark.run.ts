@@ -191,7 +191,7 @@ async function recordPhase(): Promise<void> {
 			benchmarkID: withholdEveryDenotingRow ? `${definition.benchmarkID}-denoting` : definition.benchmarkID,
 			definitionVersion: definition.version,
 			// Which withheld-gold rule produced this fixture.
-			// The two rules define different strata, so the benchmark id by itself does not identify a run.
+			// The two rules define different strata, so the benchmark id by itself doesn't identify a run.
 			withheldGoldRule: withholdEveryDenotingRow ? "every-denoting-row" : "concorded-ids",
 			recordedAt: isoSeconds(),
 			gitHead: await gitHead(repoRootPath()),
@@ -344,7 +344,7 @@ async function scorePhase(): Promise<void> {
 		...renderLosses(panel, results, 25),
 	]
 
-	// `lines` must not end with an empty element: `oxfmt` strips a trailing blank line,
+	// `lines` mustn't end with an empty element: `oxfmt` strips a trailing blank line,
 	// so a generated file carrying one fails `yarn lint`.
 	await writeLocalTextFile(lines, SCORE_PATH)
 

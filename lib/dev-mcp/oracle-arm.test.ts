@@ -31,7 +31,7 @@ describe("readOracleConfig", () => {
 	})
 
 	it("treats a MALFORMED config as off, never as enabled", async () => {
-		// The failure that matters: a truncated or half-written file must not read as an opt-in to spend money.
+		// The failure that matters: a truncated or half-written file mustn't read as an opt-in to spend money.
 		await expect(readOracleConfig(await configFile("{ not json"))).resolves.toEqual({})
 	})
 
@@ -98,7 +98,7 @@ describe("OracleMeter — google", () => {
 	})
 
 	it("counts every issued query, cache hit or not", () => {
-		// The client does not report which answers came from disk, so the meter over-counts a warm run.
+		// The client doesn't report which answers came from disk, so the meter over-counts a warm run.
 		// A false refusal is the safer error when the cap could have afforded the run.
 		const meter = new OracleMeter({ google: { enabled: true } })
 

@@ -5,7 +5,7 @@
  * @file Builds a noisy registry corpus for Taiwan (GCIS) or Japan (法人番号) from the typed addresses of a company
  *   register, aligned against the label corpus's key sets and kept only where the whole key matches (#2204 §5).
  *
- *   The alignment rate is measured over every string and written to the build report. A string that does not align
+ *   The alignment rate is measured over every string and written to the build report. A string that doesn't align
  *   is a board row, never a training row. Hold-out follows the label corpus of the same locale: Taiwan holds out a
  *   (縣市, 鄉鎮市區) unit by its hash bucket, Japan a municipality.
  *
@@ -58,8 +58,8 @@ import {
 const OVERTURE_RELEASE = "2026-06-17.0"
 
 /**
- * One aligned string with its hold-out unit, or `null` for a string that did
- * not align, beside the typed text.
+ * One aligned string with its hold-out unit, or `null` for a string that
+ * didn't align, beside the typed text.
  */
 type Candidate = readonly [aligned: readonly [record: CJKRecord, unit: string] | null, text: string]
 

@@ -62,12 +62,12 @@ export interface GauntletDeps extends Disposable {
 	 * Report-only access to the exact classifier, overlay, parse options
 	 * and FST selected by the Gauntlet path.
 	 *
-	 * It performs no resolution and does not alter the check's geocode path.
+	 * It performs no resolution and doesn't alter the check's geocode path.
 	 */
 	diagnoseParse(input: string, opts?: GauntletGeocodeOpts): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
 	/**
 	 * Whether a row routed to `caseCountry` graded without that country's weights overlay. a
-	 * base-only pass is not evidence that the production path passes, so a caller turning a passing
+	 * base-only pass isn't evidence that the production path passes, so a caller turning a passing
 	 * row into a durable claim must ask this first and withhold the claim when it answers true.
 	 *
 	 * Overlays load lazily on the first row of their country, so ask after grading that row.
@@ -192,7 +192,7 @@ export interface GauntletResolverPins {
 	/**
 	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
-	 * Three readings exist and the shipped brake is the absence of all of them, so there is no off pin.
+	 * Three readings exist and the shipped brake is the absence of all of them, so there's no off pin.
 	 */
 	spanRescoreWeakResolution: "production" | WeakResolutionReading
 }
@@ -242,7 +242,7 @@ export function resolverPinDeps(pins: GauntletResolverPins): {
  * One-line description of the pins for the run banner.
  *
  * It prints on the unpinned run too, so two gauntlet logs can be told apart,
- * because an off/on pair whose logs are indistinguishable is not evidence about the pin.
+ * because an off/on pair whose logs are indistinguishable isn't evidence about the pin.
  * Only pins away from `"production"` are listed.
  */
 export function describeResolverPins(pins: GauntletResolverPins): string {
@@ -318,7 +318,7 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
 
 	if (!(await pathExists(cardPath))) return
 
-	// Soft-return on an unparseable card too: a card-format problem is not this guard's job.
+	// Soft-return on an unparseable card too: a card-format problem isn't this guard's job.
 	const card = tryParsingJSON<{ version?: string; files_md5?: Record<string, string> }>(
 		await readLocalTextFile(cardPath)
 	)
@@ -347,12 +347,12 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
  * Assert that every locale this run can route to has the anchor binary its own weights card declares.
  *
  * A grading environment states its artifact expectations up front because a
- * missing `postcode-us.bin` does not error.
+ * missing `postcode-us.bin` doesn't error.
  * The anchor channel resolves to off and the operator reads a model regression.
  *
  * Expectations come from each package's own card, never a hardcoded list, so en-gb's
  * deliberate absence and en-nz's missing source are not called broken. a package that
- * does not resolve at all is `classifierFor`'s base-only fallback instead.
+ * doesn't resolve at all is `classifierFor`'s base-only fallback instead.
  */
 export async function assertDeclaredAnchorBins(locales: readonly string[], cacheRoot?: PathBuilderLike): Promise<void> {
 	const missing: string[] = []

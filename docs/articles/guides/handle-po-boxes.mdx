@@ -8,7 +8,7 @@ verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights
 
 # Route PO box records for mailing review
 
-Use this guide when a US mailing-address intake needs to separate PO box records from records intended for a building-coordinate workflow. The example records a complete PO box parse as a mailing-address candidate for review and requests more input when the box has no locality, region, or postcode. These are application choices. A parse does not check that the box exists or that mail can be delivered to it.
+Use this guide when a US mailing-address intake needs to separate PO box records from records intended for a building-coordinate workflow. The example records a complete PO box parse as a mailing-address candidate for review and requests more input when the box has no locality, region, or postcode. These are application choices. A parse doesn't check that the box exists or that mail can be delivered to it.
 
 ## Install the parser packages
 
@@ -57,7 +57,7 @@ for (const input of ["PO Box 1234, Springfield, IL 62701", "PO Box 1234"]) {
 }
 ```
 
-The code flattens the returned tree for display, while retaining each component's tag, value, and offsets. It requires both the `po_box` query kind and a `po_box` node. It also checks for a locality, region, postcode, and an empty `faults` array before placing a record in this application's mailing-review queue. A missing field sends the record to a request for more input. The application supplies the US mailing-intake context. The parser locale does not establish the destination country.
+The code flattens the returned tree for display, while retaining each component's tag, value, and offsets. It requires both the `po_box` query kind and a `po_box` node. It also checks for a locality, region, postcode, and an empty `faults` array before placing a record in this application's mailing-review queue. A missing field sends the record to a request for more input. The application supplies the US mailing-intake context. The parser locale doesn't establish the destination country.
 
 Run `node route-po-box.mjs`. The published 11.0.0 packages returned this complete output:
 

@@ -54,7 +54,7 @@ whose locality evidence channel trained (#1349).
 - The operator's 9-probe set was first "graded" against a stale regression DB — absence of
   failure was misread as passing. True intake: the 3 bare directional rows pass on both models;
   **all 6 venue-led rows fail on BOTH** (the GB tail "London EC3N 1DE" matches neither trained
-  venue template) → filed #1366 as improvement targets. They are the natural first exercise of the B11
+  venue template) → filed #1366 as improvement targets. They're the natural first exercise of the B11
   fine-tune template (init_from 7.0.0 + the Fisher brake + these six as the target board).
 
 ## Follow-ups for the next releases

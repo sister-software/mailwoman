@@ -13,7 +13,7 @@ commands in the repo. Where we were wrong, the correction is in place rather tha
 Mailwoman is a ~29M-param encoder that emits per-subword BIO tags over 33 address tags, decoded by
 Viterbi under a structural BIO mask. Downstream, a WOF-backed resolver geocodes the parse tree.
 
-**Classification is solved. Segmentation is not.** On the rescued v1 parity corpus (321 hand-written
+**Classification is solved. Segmentation isn't.** On the rescued v1 parity corpus (321 hand-written
 fixtures, 20 countries, deliberately fragment-heavy):
 
 | tag          | shipped v264 | floor    |
@@ -38,17 +38,17 @@ It knows there's a street and a number. It puts the boundary inside the number.
 Under flat BIO, the output **factorizes** into T per-token decisions. The encoder is shared, so the
 tokens are not independent in any representational sense — but the loss and the decode treat them as
 separable. "These five subwords are one street" is therefore not a decision the model is ever scored
-on. It is an emergent property of five separate votes that happen to agree. There is no object anywhere
+on. It is an emergent property of five separate votes that happen to agree. There's no object anywhere
 in the objective or the decode that represents _the solution_.
 
 This has two consequences we can point at in the data:
 
 **(a) The objective scores tokens only.** `Rue` is deterministic in French. It can only be a street
 prefix, governing what follows. A transformer's attention can propagate that implication forward.
-The representation is not the constraint, and we should not claim it is. The gap is narrower and
+The representation isn't the constraint, and we shouldn't claim it is. The gap is narrower and
 more fixable: **the objective and the decode score each token separately and never score
 segment-level coherence, and the prior on bare toponyms is wrong.** Cross-entropy over T positions
-pays for each token being individually right. A reading that is locally reasonable everywhere and
+pays for each token being individually right. A reading that's locally reasonable everywhere and
 incoherent as a whole incurs zero extra loss. So:
 
 ```
@@ -79,7 +79,7 @@ the useful artifact is a ranked list of readings rather than one answer.
 This project abandoned a **token-level** CRF at v0.5.0
 (bf16 NaN, `crf_loss_weight=0.0` ever since). That scar was treated as "CRF diverged" for ~200 model
 versions. It doesn't transfer: at subword granularity, transitions are noise — _"must `1` follow `▁8`"_
-is not grammar. At segment granularity (5–8 segments rather than 40 subwords), "house_number is adjacent to
+isn't grammar. At segment granularity (5–8 segments rather than 40 subwords), "house_number is adjacent to
 street", "one postcode per reading" is well-posed. Same table, right altitude.
 
 ---
@@ -100,7 +100,7 @@ contextful controls), shipped v264:
 | **bare/famous**        | `Avenue des Champs-Élysées`       | **3/15**          |
 | date-name              | `Avenue du 11-Novembre-1918`      | 1/4               |
 
-**The exotic morphology is not the problem.** Apostrophe elisions, hyphenated compounds, date-based
+**The exotic morphology isn't the problem.** Apostrophe elisions, hyphenated compounds, date-based
 names, accented capitals — `12 Rue du Chat-qui-Pêche, Paris` parses correctly. Meanwhile
 `Avenue des Champs-Élysées` returns the **empty string**.
 
@@ -145,7 +145,7 @@ schema anticipated the structure. Flat BIO can't execute it.
 Additive-biaffine span scorer over start/end projections → per-type scores for every span ≤8 tokens,
 a segment transition table, and an fp32 semi-Markov CRF loss co-trained alongside the untouched BIO
 head. Both DP routines (log-partition, Viterbi) were verified against **brute-force enumeration of
-every valid segmentation**. A DP that is subtly wrong still trains, toward the wrong target.
+every valid segmentation**. A DP that's subtly wrong still trains, toward the wrong target.
 
 **The pre-registered check:** `seg@1 > token@1`, plus a secondary read (oracle@10 must rise).
 
@@ -180,7 +180,7 @@ What survives, and matters:
 2. **The secondary read passed**: oracle@10 rose 0.749 → 0.775, oracle@5 0.663 → 0.723. The _list_
    improved — the config had pre-registered "if seg@1 crosses but oracle@10 is flat, the
    scorer reshuffled without learning."
-3. **On the target class it is not close.** Paris fixture: `token@1` byte-identical to v264 (33/63),
+3. **On the target class it isn't close.** Paris fixture: `token@1` byte-identical to v264 (33/63),
    `seg@1` **48/63 — +23.8pp**, oracle@5 **0.905**.
 
 And the archetype is fixed:
@@ -229,7 +229,7 @@ _any_ hypothesis reaches street tier:
 On the Paris fixture with the FR street-centroid DB loaded: **314 hypothesis geocodes → admin 314,
 street 1.**
 
-It is not a noisy signal. **There is no signal.** Resolution evidence can only adjudicate addresses
+It isn't a noisy signal. **There's no signal.** Resolution evidence can only adjudicate addresses
 that are already resolvable — which are the ones the parse mostly gets right anyway.
 
 ---
@@ -252,7 +252,7 @@ list with no arbiter to collect it.
 
 ### The direction we think is right, and haven't tested
 
-The resolver answers _"where is this?"_ The question a bare fragment needs is **"is this a street name
+The resolver answers _"where's this?"_ The question a bare fragment needs is **"is this a street name
 at all?"** — an existence check against the BAN/gazetteer **name index**. It requires neither a locality nor a
 house number, so it sidesteps the circularity entirely. `ban/street-centroids-fr.db` contains every
 French street name. A check of whether `Rue de Rome` is in it is a lexicon lookup rather than a geocode.
@@ -263,7 +263,7 @@ third goes to review before it goes to a branch.
 
 ### The other half, still unbuilt
 
-The span head does **not** fix the 17 locality-refusals. That was never its job. That's
+The span head **doesn't** fix the 17 locality-refusals. That was never its job. That's
 `option C`: feed the kind-classifier posterior as a soft channel (established plumbing — the postcode
 anchor and country lexicon work this way) plus a recall-weighted street loss. The kind posterior is a
 synthetic anchor standing in for the missing house number.

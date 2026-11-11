@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The reference-geocoder clients. `sdk/` means data acquisition in this repo (`ban/sdk`,
- *   `osm/sdk`, `tiger/sdk`, `bdc/sdk`, `filer/sdk`), and that is what these are: two http clients that
+ *   `osm/sdk`, `tiger/sdk`, `bdc/sdk`, `filer/sdk`), and that's what these are: two http clients that
  *   fetch someone else's opinion about an address.
  */
 

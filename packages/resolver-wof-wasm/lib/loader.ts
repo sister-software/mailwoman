@@ -106,7 +106,7 @@ export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 /**
  * The lifecycle boundary for sqlite-wasm.
  *
- * Its database exposes `close()` and does not use explicit resource management.
+ * Its database exposes `close()` and doesn't use explicit resource management.
  */
 export function disposeSlimWOFDatabase(db: Database): void {
 	db.close()

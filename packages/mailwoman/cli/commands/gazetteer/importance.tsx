@@ -8,7 +8,7 @@
  *   table and writes two scores per place.
  *
  *   The two-score split keeps `referential` (population-anchored, the ranking backbone) and
- *   `encyclopedic` (the Wikipedia join, NULL when there is no article) in their own columns, plus the
+ *   `encyclopedic` (the Wikipedia join, NULL when there's no article) in their own columns, plus the
  *   legacy `importance` column via `blendImportance`. Schema, DDL, the referential derivation and the
  *   blend live in `@mailwoman/resolver-wof-sqlite/place-importance-schema` — read it before changing
  *   either score.
@@ -16,7 +16,7 @@
  *   The table is added to the `--db` in place. The WOF DB must already contain `concordances` and
  *   `place_population` for the fallback. Run `mailwoman gazetteer build admin` first.
  *
- *   A Wikidata id can map to more than one current WOF place. The join is not a function.
+ *   A Wikidata id can map to more than one current WOF place. The join isn't a function.
  *   `gazetteer-pipeline/importance-fanout.ts` resolves the candidates. It keeps coincident candidates,
  *   selects a winner when population distinguishes them and drops the id when neither condition applies.
  *   Dropped places fall through to the population fallback instead of remaining blank.

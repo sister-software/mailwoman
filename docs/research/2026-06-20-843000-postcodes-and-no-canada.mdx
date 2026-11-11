@@ -16,7 +16,7 @@ So, the questions for the morning. How does a database that passes every check s
 
 The task was simple enough: add Canada to the map. The obvious change is postcodes — they're precise, they're public, and Overture ships them. I'd done exactly this for a dozen European countries the night before, same tool, same shape: read the country's address points, group by postcode, take a trimmed centroid, write one row per code. Canada came back with 843,000 of them, alphanumeric `A1A 1A1` codes that survive the build intact, each pinned to its own block. I spot-checked Toronto's financial district and it sat exactly where it should. I diffed the new gazetteer against the old — US postcodes untouched, every European set intact, 843,000 new Canadian rows. Every number I could check, I checked, and every one was right.
 
-That is the trap. I had checked everything I'd built.
+That's the trap. I'd checked everything I'd built.
 
 ## The check that grades the pin
 
@@ -40,4 +40,4 @@ This keeps happening to us, in different forms. A model's per-tag F1 climbs whil
 
 The accounting: the night wasn't wasted. The 843,000 centroids are correct and sitting ready, and the tooling that made them is the same tooling that'll make the next country. But the premise was half a country short. A country, it turns out, is its admin skeleton first — the cities and regions that anchor a name to a place — and a postcode only means something once that skeleton is there to hang it on. Fold Canada's divisions into the gazetteer the way we folded Europe's, and the postcodes I built light up at no added cost. Ship them on their own and all you've done is hand the resolver a stack of right answers to a question it can't ask.
 
-So we didn't promote it. The map still doesn't have Canada — but it knows it doesn't now, and so do we. Build the test that grades the pin your user sees, and run it before you trust the green checkmarks upstream of it. They'll tell you the data is right. The pin tells you whether you are.
+So we didn't promote it. The map still doesn't have Canada — but it knows it doesn't now, and so do we. Build the test that grades the pin your user sees, and run it before you trust the green checkmarks upstream of it. They'll tell you the data is right. The pin tells you whether you're.

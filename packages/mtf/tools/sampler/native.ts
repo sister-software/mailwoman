@@ -134,7 +134,7 @@ export interface SplitColumnChunk {
 
 /**
  * The rows a split read keeps: those whose string column `column`, uppercased, is one of `values`.
- * A row whose value is null is not kept.
+ * A row whose value is null isn't kept.
  */
 export interface SplitKeep {
 	column: string
@@ -284,7 +284,7 @@ export interface PythonText {
 	 */
 	casefold(text: string): string
 	/**
-	 * The consecutive runs of letter scripts, every character that is not a letter skipped,
+	 * The consecutive runs of letter scripts, every character that's not a letter skipped,
 	 * as the mixed-script audit's `script_runs` names them.
 	 */
 	scriptRuns(text: string): string[]

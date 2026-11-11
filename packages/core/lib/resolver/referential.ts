@@ -6,7 +6,7 @@
  *   The referential score and its comparator implement the ranking half of the two-score split.
  *   ROAD_TO_V9 §2 R1 ratified the split on 2026-08-06.
  *
- *   the policy. "The importance of a knowledge-base article is not the probability that this is the
+ *   the policy. "The importance of a knowledge-base article isn't the probability that this is the
  *   place the user means." A geocoder ranks by referential likelihood.
  *   Encyclopedic importance is stored as data and never serves as a ranking key.
  *   Saint-Denis demonstrates the distinction.

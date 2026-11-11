@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file `fetchGeonamesDumps` — catalog-driven coverage, the zip→txt extraction and the two presence traps: a country
- *   the source does not publish (404 ≠ transfer failure, the geonames-postal lesson) and a present `<CC>.txt` that is
+ *   the source doesn't publish (404 ≠ transfer failure, the geonames-postal lesson) and a present `<CC>.txt` that's
  *   not a gazetteer dump at all (GeoNames' postal exports share the basename. seven tier-1 postal files sat at these
  *   paths reading as coverage until the capitals build found them capital-less).
  */
@@ -153,7 +153,7 @@ describe("fetchGeonamesDumps", () => {
 		expect(manifest.wrong_format_present).toEqual(["BB"])
 
 		// The wrong-format file is reported, never clobbered.
-		// This tool does not overwrite data it did not fetch.
+		// This tool doesn't overwrite data it didn't fetch.
 		await expect(readLocalTextFile(outRoot("BB.txt"))).resolves.toContain("Be City")
 	})
 })

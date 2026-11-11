@@ -25,7 +25,7 @@ const BUCKET_URL = "https://overturemaps-us-west-2.s3.amazonaws.com"
  * Narrower than {@link APIClient} on purpose.
  * A parameter shaped like the whole client makes a test double an assertion instead of an object.
  *
- * That assertion can survive a signature change the double does not.
+ * That assertion can survive a signature change the double doesn't.
  */
 export interface OvertureListingClient {
 	fetch(request: {
@@ -105,8 +105,8 @@ export interface ReleaseCheck {
 	/**
 	 * `undefined` when the listing itself failed.
 	 *
-	 * An unreachable bucket does not show that a release was pruned.
-	 * A build must not refuse to start because the network blinked.
+	 * An unreachable bucket doesn't show that a release was pruned.
+	 * A build mustn't refuse to start because the network blinked.
 	 */
 	reachable: boolean
 	message: string
@@ -118,7 +118,7 @@ export interface ReleaseCheck {
  * A failed listing reports `reachable: false` and `present: true` — deliberately permissive.
  * This is a pre-flight whose only job is to turn a 30-minute failure into an immediate one.
  *
- * A build should not block on a network failure from this check.
+ * A build shouldn't block on a network failure from this check.
  * That would trade a slow failure for a spurious one.
  */
 export async function checkOvertureRelease(release: string, client?: OvertureListingClient): Promise<ReleaseCheck> {
@@ -136,7 +136,7 @@ export async function checkOvertureRelease(release: string, client?: OvertureLis
 		}
 	}
 
-	// An empty listing is not an empty bucket — Overture has never held zero releases —
+	// An empty listing isn't an empty bucket — Overture has never held zero releases —
 	// so zero is treated as no answer, never as absence.
 	if (!available.length) {
 		return {

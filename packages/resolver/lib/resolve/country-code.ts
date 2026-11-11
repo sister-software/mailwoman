@@ -37,8 +37,8 @@ const ABBREVIATIONS: ReadonlySet<string> = new Set(Object.values(COUNTRY_ABBREVI
  * `SFO`, `Aus` and `IN` are not.
  *
  * The codex holds the ISO 3166-1 alpha-3 codes and the curated abbreviations.
- * The registry's country records stay out of this module, because they would add
- * 51 KB to every browser bundle that holds the resolver.
+ * The registry's country records stay out of this module, because they'd add 51
+ * KB to every browser bundle that holds the resolver.
  */
 export function writtenCountryCode(written: string): string | null {
 	const value = written.trim()
@@ -70,7 +70,7 @@ export function readRegionCodeAsCountry(tree: AddressTree): AddressTree {
 }
 
 /**
- * Answers an input that is only a country code with that country, ahead of any reading the parse gave it.
+ * Answers an input that's only a country code with that country, ahead of any reading the parse gave it.
  */
 export async function applyCountryCode(roots: AddressNode[], raw: string, backend: ResolverBackend): Promise<void> {
 	const written = raw.trim()
@@ -78,7 +78,7 @@ export async function applyCountryCode(roots: AddressNode[], raw: string, backen
 
 	if (!iso2) return
 
-	// The gazetteer does not hold every code, so the country's English names follow the written form.
+	// The gazetteer doesn't hold every code, so the country's English names follow the written form.
 	for (const text of [written, ...countryDisplayNames(iso2, ["en"])]) {
 		const places = await backend.findPlace({ text, placetype: "country", country: iso2 })
 		const place = places.find((candidate) => candidate.country === iso2)

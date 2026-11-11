@@ -67,7 +67,7 @@ export function deriveIntentMarkers(
 				 *
 				 * The order is stable: pair first, then the admin reading.
 				 * A consumer can index it.
-				 * This order does not rank the entries.
+				 * This order doesn't rank the entries.
 				 */
 				interpretations: ["two_toponyms", "locality_with_admin_context"],
 			},

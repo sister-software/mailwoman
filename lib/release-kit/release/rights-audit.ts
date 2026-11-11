@@ -10,8 +10,8 @@
  * Generated files match their writer's output. The register digest matches its contents. Those checks do not answer
  * whether a source's terms can be traced to a published tarball. This pass identifies gaps in that chain.
  *
- * This report does not establish clearance. A clean report also does not establish clearance. Each section states when
- * it establishes no fact. The report separates observations from unreadable records. The rights record does not grant
+ * This report doesn't establish clearance. A clean report also doesn't establish clearance. Each section states when
+ * it establishes no fact. The report separates observations from unreadable records. The rights record doesn't grant
  * permission to use data.
  */
 
@@ -96,20 +96,20 @@ interface PackageRightsAudit {
 	 * Entries whose text names no license this reader could find.
 	 *
 	 * The entry may state terms outside a parenthetical.
-	 * The audit counts entries and does not declare them unlicensed.
+	 * The audit counts entries and doesn't declare them unlicensed.
 	 */
 	entriesNamingNoLicense: number
 	/**
-	 * Entries stating a use that is evaluation or tokenizer text rather than training rows.
+	 * Entries stating a use that's evaluation or tokenizer text rather than training rows.
 	 *
-	 * These attribute data the model did not learn from.
+	 * These attribute data the model didn't learn from.
 	 */
 	entriesNotTraining: number
 	/**
 	 * Entries stating no use at all.
 	 *
 	 * The records do not establish whether the source trained the model.
-	 * That differs from a record stating the source did not train it.
+	 * That differs from a record stating the source didn't train it.
 	 *
 	 * A combined result would report missing evidence as a measurement.
 	 */
@@ -125,7 +125,7 @@ interface PackageRightsAudit {
 	 */
 	lineage: string[]
 	/**
-	 * Why the lineage could not be resolved, when it could not.
+	 * Why the lineage couldn't be resolved, when it couldn't.
 	 */
 	lineageUnresolved: string | null
 	/**
@@ -145,7 +145,7 @@ interface TrainingRecordAudit {
 	/**
 	 * The corpus the card names as prose, or `null`.
 	 *
-	 * It is not an identifier and cannot be joined to a manifest.
+	 * It isn't an identifier and cannot be joined to a manifest.
 	 */
 	corpusNamed: string | null
 	/**
@@ -173,7 +173,7 @@ interface TrainingRecordAudit {
 		trainingSources: number
 		excludedSources: number
 		/**
-		 * Sources the epoch emitted that the frozen manifest does not record, plus their row totals.
+		 * Sources the epoch emitted that the frozen manifest doesn't record, plus their row totals.
 		 *
 		 * A non-zero count means the frozen manifest covers part of what trained the model.
 		 */
@@ -188,7 +188,7 @@ interface TrainingRecordAudit {
 	/**
 	 * Why a release may not assert that this package's declared provenance equals what trained it.
 	 *
-	 * An empty array does not state agreement.
+	 * An empty array doesn't state agreement.
 	 * A model card's attribution entries are prose that identifies publishers.
 	 *
 	 * An effective manifest's entries are corpus source IDs.
@@ -234,7 +234,7 @@ interface DataBOMAudit {
 	/**
 	 * Components whose expression is this repository's reading of the publishers' stated terms.
 	 *
-	 * The artifact's own `layer_manifest` could not be read for these, so the expression is
+	 * The artifact's own `layer_manifest` couldn't be read for these, so the expression is
 	 * this repository's assertion rather than a reading of the bytes a consumer downloads.
 	 */
 	fromBundleRegistry: number
@@ -260,7 +260,7 @@ interface TrainingRightsViolation {
 	source: string
 	/**
 	 * The register sources lacking the permission, sorted, or `["unmapped"]` for
-	 * a source the table does not map.
+	 * a source the table doesn't map.
 	 */
 	registerSources: string[]
 	gaps: SourceRightsGap[]
@@ -291,7 +291,7 @@ interface KnownTrainingRightsViolationsFile {
 export const KNOWN_TRAINING_RIGHTS_VIOLATIONS = "lib/release-kit/release/known-training-rights-violations.json"
 
 /**
- * What the published models trained on that a register row does not permit.
+ * What the published models trained on that a register row doesn't permit.
  */
 export interface TrainingRightsAudit {
 	/**
@@ -299,7 +299,7 @@ export interface TrainingRightsAudit {
 	 */
 	violations: TrainingRightsViolation[]
 	/**
-	 * Violations the committed list does not record.
+	 * Violations the committed list doesn't record.
 	 * Each one stops a release.
 	 */
 	unrecorded: TrainingRightsViolation[]
@@ -311,7 +311,7 @@ export interface TrainingRightsAudit {
 	 */
 	stale: KnownTrainingRightsViolation[]
 	/**
-	 * Graph packages whose training sources could not be read, so no violation was measured for them.
+	 * Graph packages whose training sources couldn't be read, so no violation was measured for them.
 	 */
 	unread: string[]
 }
@@ -331,7 +331,7 @@ export interface RightsAudit {
 	 */
 	established: string[]
 	/**
-	 * What it could not, each with why.
+	 * What it couldn't, each with why.
 	 *
 	 * A release decision reads this list rather than the absence of errors.
 	 */
@@ -364,7 +364,7 @@ const EXPRESSIONS_SHOWN = 8
  * `readAddressSourceRegister` resolves the committed path itself and throws
  * when the register's digest or its own audit fails, so reaching the loop below means
  * the counts describe a register that was regenerated rather than hand-edited.
- * There is no field for that here because a failure never returns.
+ * There's no field for that here because a failure never returns.
  */
 async function auditRegister(): Promise<SourceRegisterAudit> {
 	const register = await readAddressSourceRegister()
@@ -658,7 +658,7 @@ export async function auditTrainingRights(
 /**
  * Reads the committed list of accepted violations.
  *
- * @throws When the file is missing or does not parse, because reading it as empty would
+ * @throws When the file is missing or doesn't parse, because reading it as empty would
  * turn every accepted violation into a release failure reporting the wrong cause.
  */
 export async function readKnownTrainingRightsViolations(

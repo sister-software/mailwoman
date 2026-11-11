@@ -11,7 +11,7 @@
  *   admits a source. For the INSPIRE Addresses schema that reading rests on one fact:
  *   `ad:locatorName` is the free-text `GeographicalName` through which a family name or a business name
  *   reaches an address, so a publisher that never writes it holds no party on an address. A count of
- *   zero over a sample does not establish absence, so this reads the whole member.
+ *   zero over a sample doesn't establish absence, so this reads the whole member.
  *
  *   It reads the archive through {@linkcode inspireGMLChunks}, the same entry every INSPIRE adapter
  *   uses, so the census and the adapters read the same bytes. It counts element names over the decoded
@@ -114,7 +114,7 @@ for await (const chunk of chunks) {
 	bytes += buffer.length
 
 	// `stream: true` holds a partial multi-byte character until its remaining bytes arrive,
-	// so a boundary inside one character does not decode to U+FFFD.
+	// so a boundary inside one character doesn't decode to U+FFFD.
 	const text = carry + decoder.decode(buffer, { stream: true })
 
 	// A tag starting before the boundary may not have ended yet, so everything from

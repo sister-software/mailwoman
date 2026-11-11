@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The star sky's generator and camera math are pure, so they are tested here rather than in the browser suite.
+ *   The star sky's generator and camera math are pure, so they're tested here rather than in the browser suite.
  */
 
 import { describe, expect, test } from "vitest"

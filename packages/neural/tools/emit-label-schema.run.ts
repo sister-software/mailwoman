@@ -30,7 +30,7 @@ const schema = buildLabelSchema(await readAddressSystemsReference())
 if (values.check) {
 	const committed = await readLocalJSONFile<LabelSchema>(target)
 
-	// Both sides go through one serializer, so oxfmt's layout of the committed file does not affect the comparison.
+	// Both sides go through one serializer, so oxfmt's layout of the committed file doesn't affect the comparison.
 	if (prettyJSON(committed) === prettyJSON(schema)) {
 		console.log(`${target} matches the label constants`)
 	} else {

@@ -40,7 +40,7 @@ What the loader (`neural-web/loader.ts`) fetches and runs before the first parse
 
 Per-keystroke floor (node native EP, measured): **warm parse 5.7 ms**. The browser WASM EP runs ~3–5× slower,
 so a ~15–30 ms in-browser parse is the realistic estimate — comfortably inside the 50 ms parse budget. The
-resolve half (the candidate-table SQLite probe) is the half we have not measured in-browser and is the
+resolve half (the candidate-table SQLite probe) is the half we've not measured in-browser and is the
 suspected per-keystroke bottleneck (DeepSeek S45).
 
 ## The bottleneck the numbers already name

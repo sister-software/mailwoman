@@ -31,10 +31,10 @@ doesn't.
 | **the real weighted marginal** |   **0.4765** | **0.4453** |
 
 The real aggregate is a coin flip. It is also **meaningless**. The signal is entirely in the shape
-conditional, and averaging over shapes destroys it. (The house rule: [the aggregate is not the
+conditional, and averaging over shapes destroys it. (The house rule: [the aggregate isn't the
 verdict][verify].)
 
-## 2. The token-level count: postcode is not rare, it is absent
+## 2. The token-level count: postcode isn't rare, it is absent
 
 Reduce by country and token shape — 400k rows, 563,197 bare digit tokens:
 
@@ -109,18 +109,18 @@ variable, because length is held fixed across the split.
 So the marginal hypothesis is refuted: a model that had learned the marginal would read 0.66 everywhere rather than
 0.027 on 351 rows and 0.52 on 25.
 
-## 5. What is eliminated
+## 5. What's eliminated
 
-| hypothesis                                        | status                  | evidence                                                       |
-| ------------------------------------------------- | ----------------------- | -------------------------------------------------------------- |
-| the corpus prior favours postcode (H3)            | **dead**                | zero postcodes on 2-3 digit tokens, every country              |
-| the model contradicts its corpus                  | **dead**                | it matches the length conditional on 351/376 rows              |
-| the model learned the length-marginal             | **dead**                | 0.027 vs 0.524 at identical length                             |
-| the tokenizer's length-weighting is the mechanism | **dead as a mechanism** | the imbalance is real (4.2×) and the model is not fooled by it |
-| postcode-anchor channel teaches it                | dead                    | true runtime ablation, delta 0                                 |
-| `postcodeRepair` regex adds it                    | dead                    | 25/249 both arms                                               |
-| class weights                                     | dead                    | identical (B/I = 1.5) in v264's config                         |
-| deepparse schema/field-order prior                | dead                    | it tags bare `39A` as StreetNumber with no street field        |
+| hypothesis                                        | status                  | evidence                                                      |
+| ------------------------------------------------- | ----------------------- | ------------------------------------------------------------- |
+| the corpus prior favours postcode (H3)            | **dead**                | zero postcodes on 2-3 digit tokens, every country             |
+| the model contradicts its corpus                  | **dead**                | it matches the length conditional on 351/376 rows             |
+| the model learned the length-marginal             | **dead**                | 0.027 vs 0.524 at identical length                            |
+| the tokenizer's length-weighting is the mechanism | **dead as a mechanism** | the imbalance is real (4.2×) and the model isn't fooled by it |
+| postcode-anchor channel teaches it                | dead                    | true runtime ablation, delta 0                                |
+| `postcodeRepair` regex adds it                    | dead                    | 25/249 both arms                                              |
+| class weights                                     | dead                    | identical (B/I = 1.5) in v264's config                        |
+| deepparse schema/field-order prior                | dead                    | it tags bare `39A` as StreetNumber with no street field       |
 
 Eight hypotheses, eight refutations. **Three of them were mine**, and the two in this document died to
 the same control that killed the five stories the span-head arc lost: split the population and look.
@@ -131,14 +131,14 @@ The one variable that moves with the failures is the **street token**, and the e
 
 - Recognized streets (`Main St`, `Broad St`) → house_number **14/16**. Unrecognized (`Epleskogen`,
   `Kájovská`) → **1/16**.
-- But it is not a clean law: `Tindvegen 44B` → house_number while `Tindvegen nedre 44B` → postcode.
+- But it isn't a clean law: `Tindvegen 44B` → house_number while `Tindvegen nedre 44B` → postcode.
   One added word flipped it.
 - Position is refuted: `14 Main St` → hn and `Main St 14` → hn, but `14 Epleskogen` → pc while
   `Epleskogen 14` → hn — opposite directions.
 
-Every failing row is Norwegian, Polish, Dutch, or New Zealand. **Norway does not appear in the
+Every failing row is Norwegian, Polish, Dutch, or New Zealand. **Norway doesn't appear in the
 country census at all** at the ≥30-sample threshold. For those rows the question may not be "what did
-the corpus teach" but "the corpus has no Norwegian rows to teach from". That is coverage rather than prior, and it
+the corpus teach" but "the corpus has no Norwegian rows to teach from". That's coverage rather than prior, and it
 needs a different fix. That census read is unfinished and is the next measurement rather than a conclusion.
 
 ### A symmetry between the two defects
@@ -148,20 +148,20 @@ reading_, so a street with no number read as a locality. The Track B lead is its
 street licenses the house_number reading_, so a number after an unknown street reads as a postcode.
 
 Both are the model refusing to read one component without its co-occurring partner. If that holds,
-they are one defect seen twice, and the fix that worked on the first half — a phenomenon extract
+they're one defect seen twice, and the fix that worked on the first half — a phenomenon extract
 teaching the component **without** its partner, plus a counter-distribution so the model learns the
 distinction instead of flipping its default — is the same shape as the fix for the second.
 
-That is a hypothesis with a strong prior and no measurement. It gets tested rather than assumed. The
+That's a hypothesis with a strong prior and no measurement. It gets tested rather than assumed. The
 registry tiers say the extract would be BAN/BAG-sourced (tier A) with OSM (tier D) only as an
 experiment, and it stays **positive evidence only**, without a validator or a veto.
 
-## 7. What this does not touch
+## 7. What this doesn't touch
 
 The Dutch minimal pairs (`1234SA`, `1234SS`, `0123AB`) are a **different problem**. NL 4-digit runs
 map to postcode at 0.9875, so the model is _following_ its corpus correctly there. The missing piece
 is the validity rule (the `SS`/`SD`/`SA` exclusion and the 1000 floor). No component in the system
-encodes it, and deepparse does not have it either. That is not digit ownership and should not be bundled with
+encodes it, and deepparse doesn't have it either. That's not digit ownership and shouldn't be bundled with
 it.
 
 ## Reproduce

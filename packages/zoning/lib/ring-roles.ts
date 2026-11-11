@@ -35,7 +35,7 @@ export interface ResolvedRingRoles {
 	nestedHoles: number
 	/**
 	 * Holes no exterior contains a majority of, placed under the smallest exterior
-	 * of the same feature and counted here: they are retained rather than dropped,
+	 * of the same feature and counted here: they're retained rather than dropped,
 	 * because dropping one would add ground the plan carved out.
 	 */
 	adjacentHoles: number

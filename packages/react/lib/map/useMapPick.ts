@@ -70,7 +70,7 @@ export interface MapPick {
 /**
  * The style's label layer ids.
  *
- * An empty result must stay unqueried, since an empty `layers` option is not the
+ * An empty result must stay unqueried, since an empty `layers` option isn't the
  * same as an absent one in `queryRenderedFeatures`.
  */
 function labelLayerIDs(map: MapInstance): string[] {
@@ -151,7 +151,7 @@ function polygonContains(feature: MapGeoJSONFeature, [lon, lat]: LngLat): boolea
  * that falls inside it: the tiles name a lake on its label point and not on its water polygon.
  *
  * The label layers of a feature layer share its id as a prefix, `water_label_lakes` for `water`.
- * A label in another tile than the clicked piece is not found, and the polygon then stays unnamed.
+ * A label in another tile than the clicked piece isn't found, and the polygon then stays unnamed.
  */
 function nameFromLabelInside(map: MapInstance, polygon: MapGeoJSONFeature, layers: string[]): string | null {
 	const ownLabels = layers.filter((id) => id.startsWith(`${polygon.layer.id}_label`))

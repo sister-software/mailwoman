@@ -88,7 +88,7 @@ export function responseDescription(schema: z.ZodType, key: APIResponseKey): str
  * The registered schema a response refers to.
  *
  * `.meta({ description })` clones the schema, and the clone has no `id`.
- * A generator that does not follow the clone back to its parent inlines it.
+ * A generator that doesn't follow the clone back to its parent inlines it.
  *
  * This function walks back to the nearest ancestor registered with an `id`.
  */

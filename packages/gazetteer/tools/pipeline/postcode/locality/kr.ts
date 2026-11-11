@@ -30,7 +30,7 @@
  *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/dbs-per-country/admin-kr.db\
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-kr.db
  *
- *   With no polygons there is no point-in-polygon step. The matcher uses point-nearest distance through
+ *   With no polygons there's no point-in-polygon step. The matcher uses point-nearest distance through
  *   `@mailwoman/spatial`'s `haversine` (asin form, matching Python), with
  *   proximity-constrained Hangul name confirmation. The output is written directly to
  *   `--output` as a full single-country rebuild.
@@ -194,7 +194,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 				provinceOk++
 			}
 
-			// Hangul name confirmation: a name-matched locality that is also within MATCH_RADIUS_KM, the
+			// Hangul name confirmation: a name-matched locality that's also within MATCH_RADIUS_KM, the
 			// same proximity-constrained match the JP builder uses. is_containing=1 marks the precise tier.
 			const nameIDs = nameIdx.get(bare(place)) ?? new Set<number>()
 			const named = nb.find(({ pid }) => nameIDs.has(pid))

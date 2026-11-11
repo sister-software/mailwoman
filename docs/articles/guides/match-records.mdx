@@ -8,9 +8,9 @@ verified-with: published @mailwoman/match v11.0.0 on Node.js 24.22.1
 
 # Match candidate address records
 
-Use this procedure when you have labeled address pairs and need to inspect a matching policy before linking records. This example compares street text and postcode exactly. It deliberately leaves apartment units out of the score so that a false match is visible in the evaluation. The addresses below are synthetic, and the exercise needs no parser or geographic database.
+Use this procedure when you've labeled address pairs and need to inspect a matching policy before linking records. This example compares street text and postcode exactly. It deliberately leaves apartment units out of the score so that a false match is visible in the evaluation. The addresses below are synthetic, and the exercise needs no parser or geographic database.
 
-The procedure scores pairs of address records. It does not resolve people or organizations into entities. If that is your task, include evidence that distinguishes occupants at a shared address and evaluate the resulting clusters separately.
+The procedure scores pairs of address records. It doesn't resolve people or organizations into entities. If that's your task, include evidence that distinguishes occupants at a shared address and evaluate the resulting clusters separately.
 
 ## Install the matcher
 
@@ -124,7 +124,7 @@ Misses: 2/3 positive pairs (blocking 1; threshold 1)
 False matches: 1/3 negative pairs
 ```
 
-The evaluation contains three labeled positive pairs and three labeled negative pairs. At the selected 2-bit threshold, one of the three positive pairs misses because the street abbreviation changes the exact comparison. One more positive pair misses before scoring because its postcodes differ. One of the three negative pairs falsely matches because the example model ignores apartment units. The six-pair result describes only this synthetic fixture. It is not a product accuracy estimate or a recommended threshold for another dataset.
+The evaluation contains three labeled positive pairs and three labeled negative pairs. At the selected 2-bit threshold, one of the three positive pairs misses because the street abbreviation changes the exact comparison. One more positive pair misses before scoring because its postcodes differ. One of the three negative pairs falsely matches because the example model ignores apartment units. The six-pair result describes only this synthetic fixture. It isn't a product accuracy estimate or a recommended threshold for another dataset.
 
 For your own records, label pairs before choosing a threshold. Keep the pairs used to evaluate the selected threshold separate from those used to select it. Inspect every block that was dropped and sample pairs omitted by blocking, since changing the score threshold cannot recover a pair the blocker never proposed. Add the fields that distinguish records in your domain, then rerun the evaluation and inspect false matches and misses with their original inputs.
 

@@ -18,7 +18,7 @@
  *   sub-venue names (ODbL, © OpenStreetMap contributors) …" is share-alike-derived and starts with
  *   neither `ODbL` nor `CC-BY-SA`, so `/^ODbL/` admitted it.
  *
- *   Three refusal classes exist because they are different claims. A value that resolves to an
+ *   Three refusal classes exist because they're different claims. A value that resolves to an
  *   expression carrying share-alike states the obligation. A value whose prose mentions a share-alike
  *   license while resolving to no expression is share-alike-derived without stating its own grant. A
  *   value that resolves to no expression has unknown obligations. Unknown obligations differ from an empty
