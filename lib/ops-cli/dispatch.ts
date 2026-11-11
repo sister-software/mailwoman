@@ -45,6 +45,7 @@ import { writeCIScope } from "#repo-health/actions-output"
 import { type CIReplay, compareCIReplays, replayCIScope } from "#repo-health/ci/replay"
 import { isCITestSuite, runCITests } from "#repo-health/ci/test"
 import { effectCensusPath, writeEffectCensus } from "#repo-health/effects/census"
+import { importSizesPath, writeImportSizes } from "#repo-health/effects/import-sizes"
 import { planPathLiteralRewrites } from "#repo-health/move/literals"
 import { storageOperations, type StorageContext } from "#storage-kit"
 
@@ -120,6 +121,7 @@ function usage(io: DispatchIO): number {
 			"  mwops ci-replay --compare <before> <after>                          (pair two replays row by row)",
 			"  mwops ci-test <fast|slow>        (run a root Vitest suite with ci-scope's selected files)",
 			"  mwops effects                    (write every source's read, write, network and process edges to out/repo-health/effects/edges.json)",
+			"  mwops side-effects               (write the bytes a bare import of each compiled module keeps to out/repo-health/effects/import-sizes.json)",
 			"  mwops health baseline debt        (rewrite lib/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
 			"  mwops health move <from> <to> [<from> <to> …] [--dry-run]   (or --moves <file.json> listing {from, to})",
@@ -694,6 +696,27 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 						kind,
 						resolved: rows.reduce((sum, row) => sum + row.resolved, 0),
 						unresolved: rows.reduce((sum, row) => sum + row.unresolved, 0),
+					})),
+				})
+			)
+
+			return 0
+		}
+		case "side-effects": {
+			const rows = await writeImportSizes(io.repoRoot)
+
+			// The written file holds every kept module.
+			// The terminal shows one line per workspace.
+			io.stdout(
+				prettyJSON({
+					written: importSizesPath(io.repoRoot),
+					workspaces: rows.map((row) => ({
+						workspace: row.workspace,
+						sideEffects: row.sideEffects,
+						modules: row.modules,
+						keptModules: row.kept.length,
+						keptBytes: row.keptBytes,
+						...(row.error ? { error: row.error } : {}),
 					})),
 				})
 			)
