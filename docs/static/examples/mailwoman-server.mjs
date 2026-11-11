@@ -27,7 +27,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 // That last position is why an image needs only its volume mount, and the existence check is
 // why a first run without one still boots: a truthiness check on the variable would open a
 // file that is not there and kill the process with SQLITE_CANTOPEN before it bound a port.
-// Same guard the published image's server.mjs uses.
+// Same guard the published image's server.ts uses.
 const candidateDB = await resolveCandidateDBPath()
 
 let resolver

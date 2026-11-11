@@ -6,9 +6,16 @@ container runs the same code an npm consumer gets. The gazetteer (the large geog
 kept out of the image and mounts at `/data`.
 
 The image is built from the repo-root [`Dockerfile`](../Dockerfile),
-[`docker/package.json`](./package.json) (the exact dependency set), and
-[`docker/server.mjs`](./server.mjs) (the entrypoint). CI publishes it with
-[`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml).
+[`docker/package.json`](./package.json) (the package set), and
+[`docker/server.ts`](./server.ts) (the entrypoint). Node runs the entrypoint as source. The
+`MAILWOMAN_VERSION` build argument sets the version of every package. CI publishes the image with
+[`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml). The workflow passes the
+release version, so the `11.0.0` image holds the `11.0.0` packages. A local build without the argument
+installs `latest`:
+
+```bash
+docker build --build-arg MAILWOMAN_VERSION=11.0.0 -t mailwoman:11.0.0 .
+```
 
 ## First run — parse works with no data
 

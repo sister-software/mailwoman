@@ -1,8 +1,8 @@
 # Builds and pushes the ghcr.io/sister-software/mailwoman container image.
 #
 # The Dockerfile installs the published @mailwoman/* packages from npm instead of building the
-# monorepo, so this build also tests the published packages. The image bakes in the model weights.
-# The gazetteer is mounted as a volume at /data.
+# monorepo, at the version the image is tagged with, through the MAILWOMAN_VERSION build argument.
+# The image bakes in the model weights. The gazetteer is mounted as a volume at /data.
 #
 # A manual run takes an explicit `tag` input. A published GitHub release tags the image with the
 # release version. The `latest` tag is skipped for prereleases.
@@ -100,6 +100,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # The image installs the npm packages of the version it is tagged with.
+          build-args: |
+            MAILWOMAN_VERSION=${{ steps.version.outputs.value }}
           provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
