@@ -53,7 +53,15 @@ const ADMITTED = new Set([
 	// kernel logs (an OOM kill), cores and load.
 	// A heavy job on the shared lab host is checked against them, and each writes only to stdout.
 	"free",
+	// `getent`, `ip`, `ping`, `tracepath`, `traceroute` and `mtr` trace why a remote host doesn't answer:
+	// name resolution, the routing table and the hop where packets stop. Each writes only to stdout.
+	"getent",
 	"grep",
+	"ip",
+	"mtr",
+	"ping",
+	"tracepath",
+	"traceroute",
 	"head",
 	"java",
 	"journalctl",
