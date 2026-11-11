@@ -59,7 +59,7 @@ The confidence values in the table are rounded to two places.
 
 The third result is a wrong answer that looks valid. The parser read the whole input as a venue and also tagged the last word, `station`, as a locality. No point of interest matched the venue. The geocoder then matched the locality to a town called Station in Kentucky, Who's On First place `wof:1343272895`, and returned that town's point at the `admin` tier with `epistemic_status: "observed"`.
 
-That coordinate locates a town in Kentucky, which the user didn't describe. A relative description such as "behind", "near" or "across from" depends on where the user is, and no gazetteer entry holds it. When a query has a `venue` component and the result's tier is anything other than `venue`, the coordinate doesn't locate the venue.
+That coordinate locates a town in Kentucky. The user didn't describe that town. A relative description such as "behind", "near" or "across from" depends on where the user is, and no gazetteer entry holds it. When a query has a `venue` component and the result's tier is anything other than `venue`, the coordinate doesn't locate the venue.
 
 ## 3. Check the matched place
 

@@ -35,7 +35,7 @@ Terrain requests support zoom levels 0 through 15.
 one vector source that holds the planet tile template, zoom range and attribution read from the archive, and the
 `@protomaps/basemaps` layers. `<style>` is `light`, `dark`, `white`, `grayscale`, `black`, `mailwoman` or
 `mailwoman-dark`; an unknown name answers HTTP 404. The optional `lang` query parameter sets the label language
-(default `en`); a malformed tag answers HTTP 400. Because the style carries the tile template itself, a client that
+(default `en`); a malformed tag answers HTTP 400. Because the style holds the tile template itself, a client that
 cannot read TileJSON, such as QGIS, needs only this URL. In QGIS, add a generic vector tile connection with the URL
 `https://tiles.mailwoman.post/planet.v4/{z}/{x}/{y}.mvt`, zoom 0 to 15, and this style URL.
 

@@ -6,7 +6,7 @@ source update moves through the repository.
 
 ## Profiles
 
-A profile is a named set of pinned sources. An artifact's header states its profile, and every
+A profile is a set of pinned sources with an identifier such as `open-2026-11`. An artifact's header states its profile, and every
 predicate in this package answers for one profile. The built profile is `open-2026-11`.
 
 | Profile             | Sources                                                | Where                                |

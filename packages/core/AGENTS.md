@@ -104,8 +104,8 @@ Normal path composition under a caller-supplied root, scratch directory, or user
 valid. A clean-install probe may inspect a foreign install layout because resolving from the monorepo
 would invalidate the probe.
 
-`repoRootPath` names the checkout `@mailwoman/core` was loaded from, which is another checkout when a
-worktree has no install of its own. `@mailwoman/core/module/checkout-locality` compares that checkout with
+`repoRootPath` names the checkout `@mailwoman/core` was loaded from. When a worktree has no install of its
+own, that's another checkout. `@mailwoman/core/module/checkout-locality` compares that checkout with
 the entry point's. A repository entry point calls `assertCheckoutLocality(import.meta.dirname)` before it
 loads the rest of its graph.
 

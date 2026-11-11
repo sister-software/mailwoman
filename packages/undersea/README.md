@@ -38,8 +38,8 @@ It writes two files under `$MAILWOMAN_DATA_ROOT/db/undersea/`:
 
 ## Depths
 
-The service records no depth. The build reads one from the terrarium elevation tiles the map draws, which
-hold NOAA ETOPO1 bathymetry offshore at about 1.8 km per sample, through the tile worker at z8. Only a
+The service records no depth. The build reads one through the tile worker at z8, from the terrarium elevation tiles the map draws.
+Those tiles hold NOAA ETOPO1 bathymetry offshore at about 1.8 km per sample. Only a
 depression gets a depth: a deep, hole, trench, trough, basin, plain, canyon, valley or caldera reports its
 deepest sample. The grid reads Challenger Deep at −10,763 m against about −10,920 m surveyed, so a depth is
 the grid's value rather than a sounding. A rise gets none, because the grid smooths a summit away: Vema

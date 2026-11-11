@@ -123,7 +123,7 @@ From a checkout of this repository, run the same tools from `packages/osm/out/to
 `--build-sha "$(git rev-parse HEAD)"`. An extract downloaded by hand has no receipt, and the builder then
 requires `--source-url` with the address it came from.
 
-An older checkout kept extracts in one flat directory, named `<leaf>-<YYMMDD>.osm.pbf`.
+An older checkout kept extracts in one flat directory, each file called `<leaf>-<YYMMDD>.osm.pbf`.
 `tools/fetch/move-flat-extracts.ts --from <that directory>` prints the vintage and region it would give each
 file and where each one came from, and `--apply` moves them.
 

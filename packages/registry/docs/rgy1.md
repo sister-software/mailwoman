@@ -14,7 +14,7 @@ no reader compares strings and no comparator has to agree across languages.
 
 Every integer is unsigned little-endian. Version 1 limits every offset and length to `u32`, so an
 artifact is smaller than 4 GiB. Every offset is relative to byte 0 of the artifact, never to a backing
-buffer. A reader given a subarray behaves as it would given the same bytes alone.
+buffer. A reader given a subarray behaves as it would given a buffer that holds only those bytes.
 
 `align8(x)` is `x` rounded up to a multiple of 8.
 
@@ -42,10 +42,10 @@ The header is one JSON object serialized without whitespace, with its keys in by
 nested object's keys in byte order. Numbers are integers. Strings are UTF-8 with JSON's mandatory escapes
 only. The writer produces this form by serializing a `serde_json::Map`, which is a `BTreeMap`.
 
-The header carries no wall-clock time, host path or hash of the artifact itself. The artifact's SHA-256
+The header stores no wall-clock time, host path or hash of the artifact itself. The artifact's SHA-256
 lives in `data/manifests/artifacts.json`, written by `tools/generate.run.ts` after the bytes exist.
 
-Fields every artifact carries:
+Fields every artifact stores:
 
 | Key                    | Meaning                                                                      |
 | ---------------------- | ---------------------------------------------------------------------------- |
