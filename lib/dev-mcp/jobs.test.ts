@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { type JobEvent, JobRegistry, type JobState, nextJobState } from "#dev-mcp/jobs"
+import { type JobEvent, jobMachine, JobRegistry, type JobState } from "#dev-mcp/jobs"
 
 describe("the job lifecycle", () => {
 	it.each([
@@ -24,7 +24,7 @@ describe("the job lifecycle", () => {
 		["failed", { kind: "close", code: 0, signal: null }, "failed"],
 		["failed", { kind: "cancel" }, "failed"],
 	] as Array<[JobState, JobEvent, JobState]>)("%s on %o reads %s", (state, event, expected) => {
-		expect(nextJobState(state, event)).toBe(expected)
+		expect(jobMachine.transition(state, event).next).toBe(expected)
 	})
 
 	it("a cancelled job whose kill fails stays cancelled and keeps its child for a later kill", () => {

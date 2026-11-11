@@ -34,7 +34,7 @@ export type JobEvent =
  * so a killed run never reads as a graded `fail`.
  * `succeeded` and `failed` are terminal.
  */
-export function nextJobState(state: JobState, event: JobEvent): JobState {
+function nextJobState(state: JobState, event: JobEvent): JobState {
 	return jobMachine.transition(state, event).next
 }
 

@@ -50,7 +50,7 @@ swap:
   '[Ss]he had(?= (?:(?:not|already|never|just|also|now|always|only|all|both|recently|since|long) )*(?:been|got|gotten|gone|done|made|had|seen|known|shown|begun|written|taken|given|found|kept|left|lost|met|said|sent|spent|built|meant|held|told|won|grown|drawn|broken|chosen|fallen|forgotten|hidden|risen|spoken|stolen|thrown|\w+(?<!e)ed)\b)|[Ss]he would': she'd
   '[Ss]he is|[Ss]he has(?= (?:(?:not|already|never|just|also|now|always|only|all|both|recently|since|long) )*(?:been|got|gotten|gone|done|made|had|seen|known|shown|begun|written|taken|given|found|kept|left|lost|met|said|sent|spent|built|meant|held|told|won|grown|drawn|broken|chosen|fallen|forgotten|hidden|risen|spoken|stolen|thrown|\w+(?<!e)ed)\b)': she's
   "[Ss]he will|[Ss]he shall": she'll
-  "[Ss]hould not": shouldn't
+  "Should not|should not": shouldn't
   '[Tt]hat is(?![,:;])|[Tt]hat has(?= (?:(?:not|already|never|just|also|now|always|only|all|both|recently|since|long) )*(?:been|got|gotten|gone|done|made|had|seen|known|shown|begun|written|taken|given|found|kept|left|lost|met|said|sent|spent|built|meant|held|told|won|grown|drawn|broken|chosen|fallen|forgotten|hidden|risen|spoken|stolen|thrown|\w+(?<!e)ed)\b)': that's
   '[Tt]here is|[Tt]here has(?= (?:(?:not|already|never|just|also|now|always|only|all|both|recently|since|long) )*(?:been|got|gotten|gone|done|made|had|seen|known|shown|begun|written|taken|given|found|kept|left|lost|met|said|sent|spent|built|meant|held|told|won|grown|drawn|broken|chosen|fallen|forgotten|hidden|risen|spoken|stolen|thrown|\w+(?<!e)ed)\b)': there's
   "[Tt]hey are": they're

@@ -669,7 +669,7 @@ async function buildStatesInWorkers(
 	scratch: PathBuilder,
 	onRegion: (record: USRegionBuildRecord) => void
 ): Promise<USStateWorkerResult> {
-	const workerModule = fileURLToPath(import.meta.resolve("#us/address-records/layer-worker"))
+	const workerModule = fileURLToPath(import.meta.resolve("#us/address-records/layer/worker"))
 
 	const size = (state: string) =>
 		(rowsByState[state] ?? 0) +
