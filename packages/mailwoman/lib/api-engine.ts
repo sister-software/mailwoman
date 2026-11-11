@@ -27,7 +27,7 @@ import { createGeocodeCommandOptions } from "#geocode/command-options"
 import { deriveGeocodeRegister } from "#geocode/core"
 import { need, ProcessServices } from "#geocode/services"
 import { createGeocodeProcessScope, createGeocodeSession, type GeocodeSessionOptions } from "#geocode/session"
-import { GeocodeSessionSlot } from "#geocode/session-slot"
+import { GeocodeSessionSlot } from "#geocode/session/slot"
 import { buildNoGazetteerMessage, existingWOFDatabasePaths } from "#resolver-backend"
 
 const DATA_ROOT = dataRootPath()

@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { primaryExitAfterWorkerExit } from "#cli/kit/cluster-exit"
+import { primaryExitAfterWorkerExit } from "#cli/kit/cluster/exit"
 
 describe("the serve primary's exit after a worker exits", () => {
 	it("keeps running while any worker is alive", () => {

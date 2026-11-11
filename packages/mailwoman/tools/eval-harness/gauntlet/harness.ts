@@ -31,7 +31,7 @@ import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import { loadParsePriors, type ParsePriorArtifacts, venueHeadOptsFor } from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
 import { GEOCODE_SESSION_DEFAULTS } from "#geocode/session"
-import { loadForkEntityDeps } from "#geocode/session-layers"
+import { loadForkEntityDeps } from "#geocode/session/layers"
 import { poiTaxonomyLookup } from "#poi/intent"
 import {
 	capitalIndexFor,

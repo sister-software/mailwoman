@@ -20,8 +20,8 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 
 import type { CommandSpec, ParsedCommandComponent } from "#cli-kit"
-import { primaryExitAfterWorkerExit } from "#cli/kit/cluster-exit"
-import { clusterReload, relayClusterReloads } from "#cli/kit/cluster-reload"
+import { primaryExitAfterWorkerExit } from "#cli/kit/cluster/exit"
+import { clusterReload, relayClusterReloads } from "#cli/kit/cluster/reload"
 import { printLicenseNotice, resolveEngineStamp } from "#cli/kit/engine-stamp"
 
 interface ServerConfig {

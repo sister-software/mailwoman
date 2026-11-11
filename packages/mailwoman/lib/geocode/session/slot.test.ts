@@ -8,7 +8,7 @@ import { sleep } from "@mailwoman/core/utils/sleep"
 import { describe, expect, it } from "vitest"
 
 import type { GeocodeSession } from "#geocode/session"
-import { GeocodeSessionSlot } from "#geocode/session-slot"
+import { GeocodeSessionSlot } from "#geocode/session/slot"
 
 /**
  * A session that records whether it was disposed, asserted to the interface

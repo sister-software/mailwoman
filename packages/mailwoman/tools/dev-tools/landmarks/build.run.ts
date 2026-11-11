@@ -24,7 +24,7 @@ import { poiDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { PathBuilder, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import { LANDMARK_DATABASE_FILE } from "#geocode/session-layers"
+import { LANDMARK_DATABASE_FILE } from "#geocode/session/layers"
 import { AIRPORT_CODES_QUERY, type AirportCode, readAirportCodes } from "#tools/dev-tools/landmarks/airport-codes"
 import { buildLandmarkDatabase } from "#tools/dev-tools/landmarks/build"
 

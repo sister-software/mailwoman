@@ -38,7 +38,7 @@ import { openOSMRegionDatabases } from "#geocode/osm-layers"
 import type { ParsePriorArtifacts, ParsePriors } from "#geocode/parse-priors"
 import { USStateDatabaseProvider } from "#geocode/regions"
 import type { GeocodeSessionOptions, GeocodeSessionSettings } from "#geocode/session"
-import { type ForkEntityProbe, type LayerRoutes, loadForkEntityDeps, loadLayerRoutes } from "#geocode/session-layers"
+import { type ForkEntityProbe, type LayerRoutes, loadForkEntityDeps, loadLayerRoutes } from "#geocode/session/layers"
 import { createStopwordPOIPhraseLookup } from "#poi/intent"
 import {
 	capitalIndexFor,
