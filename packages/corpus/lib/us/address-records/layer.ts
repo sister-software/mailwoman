@@ -17,6 +17,7 @@ import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writ
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { fileURLToPath } from "@mailwoman/core/module/file-url"
 import { forkProcess } from "@mailwoman/core/process"
+import { availableParallelism } from "@mailwoman/core/utils/system"
 import {
 	ADDRESS_DUPLICATE_DISTANCE_KM,
 	ADDRESS_DUPLICATE_STACK_LIMIT,
@@ -129,6 +130,12 @@ export interface BuildUSAddressLayerOptions {
 	 * One builds them in this process.
 	 */
 	jobs?: number
+	/**
+	 * SQLite sorter helper threads for each state's build.
+	 *
+	 * @defaultValue The host's cores divided by `jobs`, between 1 and 8.
+	 */
+	sortThreads?: number
 	/**
 	 * Keep each region this version already holds, read from its `build.json`, and build only the others.
 	 *
@@ -441,6 +448,10 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 	}
 
 	const omitted = new Set(options.omitFromManifest)
+
+	const sortThreads =
+		options.sortThreads ?? Math.min(8, Math.max(1, Math.floor(availableParallelism() / (options.jobs ?? 1))))
+
 	const recorded = recordedRunTerms(options.openAddresses.plan)
 	const units = await createUnitSplitter()
 
@@ -520,6 +531,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 			// The staging database is the build's largest file, so it goes in the scratch directory.
 			// `MAILWOMAN_TEMP_ROOT` can place that directory on a disk other than the layer's.
 			stagingDirectory: scratch.path,
+			sortThreads,
 			refuseRecord: (record) => bounds.refuse(record),
 			duplicates: usDuplicateRule(admitted),
 		})
@@ -571,14 +583,20 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 	}
 
 	if ((options.jobs ?? 1) > 1 && toBuild.length > 1) {
-		const counts = await buildStatesInWorkers(options, toBuild, rowsByState, scratch.path, (record) => {
-			builds.push(record.build)
-			options.onState?.(record.build)
+		const counts = await buildStatesInWorkers(
+			{ ...options, sortThreads },
+			toBuild,
+			rowsByState,
+			scratch.path,
+			(record) => {
+				builds.push(record.build)
+				options.onState?.(record.build)
 
-			if (!omitted.has(record.region.region)) {
-				regions.push(record.region)
+				if (!omitted.has(record.region.region)) {
+					regions.push(record.region)
+				}
 			}
-		})
+		)
 
 		refusedRuns += counts.refusedRuns
 		missingRuns += counts.missingRuns
@@ -673,6 +691,7 @@ async function buildStatesInWorkers(
 		states: [state],
 		buildSHA: options.buildSHA,
 		adminDatabase: options.adminDatabase.toString(),
+		...(typeof options.sortThreads === "number" ? { sortThreads: options.sortThreads } : {}),
 	})
 
 	const runOne = async (state: string) => {

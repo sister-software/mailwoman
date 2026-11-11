@@ -142,6 +142,17 @@ export interface BuildAddressLayerOptions {
 	 */
 	stagingDirectory?: PathBuilderLike
 	/**
+	 * Helper threads SQLite may use for each large sort: the staged key groups
+	 * and every key table's `INSERT … SELECT … ORDER BY`.
+	 *
+	 * SQLite starts each connection with none and caps the count at its compile-time
+	 * `SQLITE_MAX_WORKER_THREADS`, 8 in Node's build.
+	 * The sorted output is the same with any count.
+	 *
+	 * @defaultValue 0
+	 */
+	sortThreads?: number
+	/**
 	 * Called after every millionth record with the count staged so far.
 	 */
 	onProgress?: (records: number) => void
@@ -248,14 +259,31 @@ export async function buildAddressLayer(options: BuildAddressLayerOptions): Prom
 
 	try {
 		const summary = await stageRecords(options, stagingPath)
+		const threads = sortThreadsPragma(options.sortThreads)
 
-		await writeLookup(options.lookupPath, stagingPath, summary, options.sources, options.manifest, options.checks ?? [])
-		await writeDetail(options.detailPath, stagingPath, summary)
+		await writeLookup(
+			options.lookupPath,
+			stagingPath,
+			summary,
+			options.sources,
+			options.manifest,
+			options.checks ?? [],
+			threads
+		)
+
+		await writeDetail(options.detailPath, stagingPath, summary, threads)
 
 		return summary
 	} finally {
 		await removePathIfPresent(stagingPath)
 	}
+}
+
+/**
+ * The `PRAGMA threads` statement for `count` sorter helper threads, a whole number from 0.
+ */
+function sortThreadsPragma(count: number | undefined): string {
+	return `PRAGMA threads = ${Math.max(0, Math.floor(count ?? 0))}`
 }
 
 async function stageRecords(options: BuildAddressLayerOptions, stagingPath: string): Promise<AddressLayerBuildSummary> {
@@ -264,6 +292,8 @@ async function stageRecords(options: BuildAddressLayerOptions, stagingPath: stri
 	db.exec(
 		`PRAGMA page_size = ${ADDRESS_LAYER_PAGE_SIZE}; PRAGMA journal_mode = OFF; PRAGMA synchronous = OFF; PRAGMA cache_size = -400000;`
 	)
+
+	db.exec(sortThreadsPragma(options.sortThreads))
 
 	await createStagingTables(db)
 
@@ -568,12 +598,14 @@ async function writeLookup(
 	summary: AddressLayerBuildSummary,
 	terms: ReadonlyMap<string, AddressSourceTerms>,
 	manifest: AddressLayerManifest,
-	checks: readonly AddressLayerReadCheck[]
+	checks: readonly AddressLayerReadCheck[],
+	threads: string
 ): Promise<void> {
 	await buildSealedArtifact<AddressLookupDatabase, true, void>({
 		out: lookupPath,
 		createTables: async (db) => {
 			db.exec(`PRAGMA page_size = ${ADDRESS_LAYER_PAGE_SIZE}`)
+			db.exec(threads)
 			await createLayerManifestTable(db)
 			await createLayerCoverageTable(db)
 			await createAddressSourceTable(db)
@@ -676,11 +708,17 @@ async function writeLookup(
 	})
 }
 
-async function writeDetail(detailPath: PathBuilderLike, stagingPath: string, summary: AddressLayerBuildSummary) {
+async function writeDetail(
+	detailPath: PathBuilderLike,
+	stagingPath: string,
+	summary: AddressLayerBuildSummary,
+	threads: string
+) {
 	await buildSealedArtifact<AddressDetailDatabase, true, void>({
 		out: detailPath,
 		createTables: async (db) => {
 			db.exec(`PRAGMA page_size = ${ADDRESS_LAYER_PAGE_SIZE}`)
+			db.exec(threads)
 			await createAddressDetailTable(db)
 		},
 		ingest: async (db) => {
