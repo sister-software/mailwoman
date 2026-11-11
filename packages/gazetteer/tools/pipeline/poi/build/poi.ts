@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Builds and seals the `poi.db` layer from Overture Places or OSM rows.
+ *   Builds and seals the `poi.db` layer from Overture Places or OSM rows, and any POI-shaped layer
+ *   whose caller states its own manifest terms.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -141,6 +142,31 @@ const SOURCE_MANIFEST_DEFAULTS = {
 } as const satisfies Record<string, { license: string; attribution: string; tier: LayerTier }>
 
 /**
+ * The manifest terms of a layer built from sources other than one of the defaults above,
+ * such as a layer that folds several publishers' rows into one file.
+ */
+export interface POILayerTerms {
+	/**
+	 * The manifest `name`.
+	 */
+	name: string
+	source: string
+	/**
+	 * An SPDX expression.
+	 *
+	 * A layer with several contributing sources states their conjunction (`A AND B`).
+	 */
+	license: string
+	attribution: string
+	tier: LayerTier
+	buildCmd: string
+	/**
+	 * The number of input records each contributing source supplied, keyed by source.
+	 */
+	sourceRecords: Readonly<Record<string, number>>
+}
+
+/**
  * Options for {@link buildPOIDatabase}.
  */
 export interface BuildPOIOptions {
@@ -194,6 +220,18 @@ export interface BuildPOIOptions {
 	 * @defaultValue `"overture-places"`
 	 */
 	source?: "overture-places" | "osm"
+
+	/**
+	 * Manifest terms that replace the ones `source` selects.
+	 *
+	 * `tier` in these terms replaces {@link BuildPOIOptions.tier}.
+	 */
+	terms?: POILayerTerms
+
+	/**
+	 * Writes the layer's own tables into the database after its POI rows and coverage, before it is sealed.
+	 */
+	writeTables?: (kdb: DatabaseClient<POIDatabase>) => Promise<void>
 
 	/**
 	 * The manifest distribution tier.
@@ -269,9 +307,20 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 	const source = opts.source ?? "overture-places"
 	const sourceManifestDefaults = SOURCE_MANIFEST_DEFAULTS[source]
-	const tier = opts.tier ?? sourceManifestDefaults.tier
 
-	assertTierMatchesLicense({ tier, license: sourceManifestDefaults.license }, `buildPOIDatabase: ${source}`)
+	const terms: POILayerTerms = opts.terms ?? {
+		name: "poi",
+		source,
+		license: sourceManifestDefaults.license,
+		attribution: sourceManifestDefaults.attribution,
+		tier: opts.tier ?? sourceManifestDefaults.tier,
+		buildCmd: "mailwoman gazetteer build poi",
+		sourceRecords: {},
+	}
+
+	const { tier } = terms
+
+	assertTierMatchesLicense({ tier, license: terms.license }, `buildPOIDatabase: ${terms.source}`)
 
 	if (await pathExists(opts.out)) {
 		await removePath(opts.out)
@@ -400,20 +449,21 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		progress("manifest", "writing layer manifest + coverage")
 
 		await writeLayerManifest(kdb, {
-			name: "poi",
+			name: terms.name,
 			version: opts.version ?? opts.release,
 			schemaVersion: 1,
 			tier,
-			license: sourceManifestDefaults.license,
-			attribution: sourceManifestDefaults.attribution,
-			source,
+			license: terms.license,
+			attribution: terms.attribution,
+			source: terms.source,
 			sourceVintage: opts.release,
-			buildCmd: "mailwoman gazetteer build poi",
+			buildCmd: terms.buildCmd,
 			buildSHA: opts.buildSHA,
 			freshnessPolicy: "sealed",
 			spineKeys: { h3: { column: "h3_cell", resolution: POI_H3_RESOLUTION } },
 			createdAt: opts.createdAt ?? new Date().toISOString(),
-			sourceRecords: null,
+			// The default sources record no per-source count, as before this field was filled.
+			sourceRecords: opts.terms ? terms.sourceRecords : null,
 		})
 
 		coverageCells = opts.coverageCellsOverride
@@ -431,6 +481,11 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 				}))
 
 		await writeLayerCoverage(kdb, coverageCells)
+
+		if (opts.writeTables) {
+			progress("tables", "writing the layer's own tables")
+			await opts.writeTables(kdb)
+		}
 
 		progress("finalize", "ANALYZE + VACUUM")
 		kdb.exec("ANALYZE")

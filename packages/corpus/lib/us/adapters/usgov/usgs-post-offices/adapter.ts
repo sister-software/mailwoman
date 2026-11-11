@@ -23,7 +23,7 @@
 import { formatAddressRow } from "@mailwoman/codex/address/format"
 import { JSONSpliterator } from "spliterator"
 
-import { createUnitSplitter } from "#adapters/street/unit"
+import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import { SourceRegister } from "#registers"
 import { streetIndexOpener } from "#street-index/reader"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
@@ -77,12 +77,31 @@ export interface USGSPostOfficeFeature {
 }
 
 /**
- * Creates the post-office adapter.
+ * A post office's address as labeled components, or `null` when it lacks a street
+ * address, city, recognized state or ZIP Code.
  *
- * A post office with no street address or no ZIP Code yields no row, because the
- * row's purpose is the venue beside a full address.
  * `splitUSStreetLine` moves a trailing suite into `unit` when the remainder still reads as a street:
  * by a street-type word, a number, or the street index scoped to the row's city and ZIP Code.
+ */
+export function usgsPostOfficeAddress(
+	properties: USGSPostOfficeProperties,
+	units: UnitSplitter
+): CanonicalRow["components"] | null {
+	const { address, city, state: stateCode, zipcode } = properties
+	const place = { ...(city ? { locality: city } : {}), ...(zipcode ? { postcode: zipcode } : {}) }
+	const line = address ? splitUSStreetLine(address, units, place) : null
+	const state = lookupStateAbbreviation(stateCode)
+
+	if (!line || !city || !state || !zipcode) return null
+
+	return { ...line, locality: city, region: state.abbreviation, postcode: zipcode }
+}
+
+/**
+ * Creates the post-office adapter.
+ *
+ * A post office with no name or no full address ({@linkcode usgsPostOfficeAddress})
+ * yields no row, because the row's purpose is the venue beside a full address.
  */
 export function createUSGovUSGSPostOfficesAdapter(): CorpusAdapter {
 	return {
@@ -108,21 +127,13 @@ export function createUSGovUSGSPostOfficesAdapter(): CorpusAdapter {
 
 				if (typeof opts.limit === "number" && emitted >= opts.limit) break
 
-				const { permanent_identifier: id, name, address, city, state: stateCode, zipcode } = feature.properties
-				const place = { ...(city ? { locality: city } : {}), ...(zipcode ? { postcode: zipcode } : {}) }
-				const line = address ? splitUSStreetLine(address, units, place) : null
-				const state = lookupStateAbbreviation(stateCode)
+				const { permanent_identifier: id, name } = feature.properties
+				const address = usgsPostOfficeAddress(feature.properties, units)
 
-				if (!id || !name || !line || !city || !state || !zipcode) continue
+				if (!id || !name || !address) continue
 
 				// `venue` first, so alignment claims its span before `locality` searches for its own.
-				const components: CanonicalRow["components"] = {
-					venue: name,
-					...line,
-					locality: city,
-					region: state.abbreviation,
-					postcode: zipcode,
-				}
+				const components: CanonicalRow["components"] = { venue: name, ...address }
 
 				const rendered = formatAddressRow(components, "US", { singleLine: true })
 

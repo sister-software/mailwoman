@@ -261,6 +261,9 @@ Still on their conventional paths, with the reason:
 
 - The rail-station database stays beside the conventional `poi.db` path. No published bundle contains it,
   so no installation can select it, and the fork-entity probe opens it where the station build writes it.
+- The post-office database, `post-offices.db`, stays beside the conventional `poi.db` path for the same
+  reason. `mailwoman gazetteer build post-offices` writes it there from every registered country's official
+  post-office list, and the fork-entity probe searches it with `poi.db` and the rail-station database.
 - The placetype-pair index (`pair-index-<cc>.bin`) is read inside the weights loader in
   `@mailwoman/neural`, which reads no data-root records.
 - The promotion battery's priors (`tools/eval-harness/production-priors.ts`) take a classifier without a

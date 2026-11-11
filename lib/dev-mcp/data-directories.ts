@@ -96,7 +96,11 @@ export const DATA_DIRECTORIES: readonly DataDirectory[] = [
 		path: "corpus/staging/overture",
 		holds: "The corpus JSONL and fill-rate report overture-ingest derives from each Overture release snapshot.",
 	},
-	{ path: "db/poi", holds: "poi.db and the Wikidata landmarks.db." },
+	{
+		path: "db/poi",
+		holds:
+			"poi.db, the rail-station stations.db, the official post-office lists' post-offices.db, and the Wikidata landmarks.db.",
+	},
 	{ path: "gauntlet", holds: "regression.db and the gauntlet's other built rows." },
 ]
 

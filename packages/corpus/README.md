@@ -179,6 +179,32 @@ keep the national publisher's provenance — the register has `publisher` and `s
 exactly that, and the one `verified-corpus-stale` row is what happens when an aggregator's copy
 stops updating and no researcher checked the national portal behind it.
 
+## Official post-office lists
+
+`mailwoman gazetteer build post-offices` folds every country's official post-office list into one
+`post-offices.db` beside `poi.db`, and the geocoder searches it with `poi.db`. The same lists feed the
+post-office parse suite. `lib/post-offices/sources.ts` registers the lists, and the United States'
+USGS National Map entry is the first.
+
+A new country's list joins with three pieces of work:
+
+1. **A fetcher and a reader under the country's directory.** The fetcher writes the publisher's file
+   under `$MAILWOMAN_CACHE_ROOT/sources/<source>/` with a `MANIFEST.json`. The reader is a
+   `PostOfficeSource` (`lib/post-offices/source.ts`) under `lib/<cc>/post-offices/`. The shared layer
+   builder reads only the entry's fields and never branches on a country.
+2. **Each record the reader yields** has the publisher's own identifier, the facility's name, its point
+   or `null`, and its address as the components the parser labels (`house_number`, `street`, `unit`,
+   `locality`, `region`, `postcode`), split by the country's own rules, or `null`.
+3. **The entry's terms**: the ISO 3166-1 alpha-2 country, the publisher, the attribution the layer
+   credits, an SPDX identifier or a `LicenseRef-` this repository defines, the source's
+   `address-source-register.json` row, and its provenance class. A postal operator's own facility list is
+   `postal-operator`. Another body's compilation, such as the USGS structures layer, is `mapping-agency`.
+   The register row needs an elected decision before the list is registered, as for any corpus source.
+
+The layer's manifest states the conjunction of the contributing licenses and each source's input
+count. Its `post_office_source` table holds each source's terms, provenance class and counts, and each
+row's `gers_id` reads `<source id>:<record id>`.
+
 ## Related
 
 - [`@mailwoman/neural`](../neural) — the runtime that loads and runs the trained model

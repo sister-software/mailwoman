@@ -4,7 +4,7 @@
 /**
  *   The optional layers a geocode session opens from the data root: the observation
  *   routes over the sealed flood, soil, coastal and zoning layers, and the fork-to-entity
- *   probe over `poi.db`, the rail-station layer and the landmark layer.
+ *   probe over `poi.db`, the rail-station layer, the post-office layer and the landmark layer.
  *
  *   Each loader answers an absent layer with `null` or an empty dependency set.
  */
@@ -28,6 +28,12 @@ import type { ZoningDesignationRoute } from "#observations/zoning-route"
  * `gazetteer build poi --source osm --rules stations` into the directory that holds `poi.db`.
  */
 export const STATIONS_DATABASE_FILE = "stations.db"
+
+/**
+ * The file name of the post-office layer, built by `gazetteer build post-offices` from every
+ * registered country's official post-office list into the directory that holds `poi.db`.
+ */
+export const POST_OFFICES_DATABASE_FILE = "post-offices.db"
 
 /**
  * The file name of the landmark layer, built by `tools/dev-tools/landmarks/build.run.ts`
@@ -130,9 +136,12 @@ export async function loadForkEntityDeps(
 	// because it is built from OSM under a different license and tier than the Overture places in poi.db.
 	// It has no registry entry, so it stays at that path when the selection lists a POI database elsewhere.
 	const stationsDBPath = resolvePath(dirname(layerDatabasePath(options.dataRoot, "poi")), STATIONS_DATABASE_FILE)
+	// The post-office layer sits beside poi.db under the same convention, as its own
+	// sealed database whose manifest states its contributing sources' licenses.
+	const postOfficesDBPath = resolvePath(dirname(layerDatabasePath(options.dataRoot, "poi")), POST_OFFICES_DATABASE_FILE)
 	const paths = []
 
-	for (const path of [poiDBPath, stationsDBPath]) {
+	for (const path of [poiDBPath, stationsDBPath, postOfficesDBPath]) {
 		if (await pathExists(path)) {
 			paths.push(path)
 		}
