@@ -451,7 +451,8 @@ describe("buildCorpus keeps sources independent", { timeout: 60_000 }, () => {
 	})
 })
 
-describe("buildCorpus resume", () => {
+// Each test runs two builds, so the block takes the end-to-end tests' limit.
+describe("buildCorpus resume", { timeout: 60_000 }, () => {
 	const options = {
 		corpusVersion: "0.1.0",
 		adapters: [wofAdminAdapter],
@@ -588,6 +589,21 @@ describe("buildCorpus resume", () => {
 		await expect(
 			buildCorpus({ ...options, outputDir: outDir, synthesize: false, priorOutput: PriorOutput.Resume })
 		).rejects.toThrow(/resume refused.*align-checkpoint\.json/s)
+	})
+
+	it("refuses to resume onto an adapter run made from other adapter options", async () => {
+		const outDir = scratch.path("build")
+
+		await buildCorpus({ ...options, outputDir: outDir })
+
+		await expect(
+			buildCorpus({
+				...options,
+				adapterInputs: { "wof-admin": { inputPath: fixtureRoot, country: "US" } },
+				outputDir: outDir,
+				priorOutput: PriorOutput.Resume,
+			})
+		).rejects.toThrow(/resume refused for wof-admin.*other inputs/s)
 	})
 
 	it("refuses to resume when a recorded parquet file is no longer on disk", async () => {

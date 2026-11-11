@@ -85,6 +85,13 @@ export interface AdapterTask extends TaskBase {
 	adapterModule: string
 	adapterOptions: Omit<AdapterOptions, "signal" | "dropped" | "inputPath"> & { inputPath: string }
 	corpusVersion: string
+	/**
+	 * The run's derivation digest.
+	 *
+	 * Its manifest records the digest.
+	 * See `adapterRunInputs` in `#build/adapters`.
+	 */
+	inputs: string
 	intermediateDir: string
 }
 
@@ -159,6 +166,7 @@ async function runAdapterTask(task: AdapterTask): Promise<void> {
 		adapterOptions: task.adapterOptions,
 		outputDir: task.intermediateDir,
 		corpusVersion: task.corpusVersion,
+		inputs: task.inputs,
 	})
 }
 
