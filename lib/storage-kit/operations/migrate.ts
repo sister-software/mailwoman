@@ -46,11 +46,16 @@ const migrateOutput = z.object({
 
 /**
  * The mount point that holds `path`, as the kernel reports it.
+ *
+ * A systemd automount stacks its `autofs` mount under the filesystem it mounts, and `findmnt`
+ * prints one line per stacked mount, so the last line holds the mount the path resolves through.
  */
 async function mountTarget(path: string): Promise<string | null> {
 	const probe = await runHostCommand("findmnt", ["--noheadings", "--output", "TARGET", "--target", path])
 
-	return probe.exitCode === 0 ? probe.stdout.trim() : null
+	if (probe.exitCode !== 0) return null
+
+	return /([^\n]+)\s*$/u.exec(probe.stdout)?.[1]?.trim() ?? null
 }
 
 /**
