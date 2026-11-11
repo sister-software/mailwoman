@@ -391,7 +391,7 @@ test("Root: GET / serves a friendly HTML banner, not a bare 404", async () => {
 	const body = await res.text()
 	expect(body).toContain("@mailwoman/photon")
 	expect(body).toContain("/api?q=")
-	expect(body).toContain("what-mailwoman-is")
+	expect(body).toContain('href="https://mailwoman.post/product"')
 })
 
 test("Repeated q answers the legacy 400 envelope (express array shape preserved)", async () => {
