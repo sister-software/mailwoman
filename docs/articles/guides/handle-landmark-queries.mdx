@@ -1,0 +1,127 @@
+---
+title: Handle landmark and relative-place queries
+description: Route a query that gives a place name instead of an address, check the matched place before using its coordinate, and send relative descriptions back for an address.
+role: guide
+verified-with: mailwoman v11.0.0
+---
+
+# Handle landmark and relative-place queries
+
+Use this procedure when users type a place name, such as `Empire State Building`, or a description, such as `Behind the gas station`, where your application expects an address. The geocoder can return a coordinate for both. This guide shows how to tell a matched place from a coordinate that does not locate what the user asked for.
+
+The rule this guide applies: use a coordinate only when the result's `resolution_tier` is `venue` and its `entity` field holds the matched place. Show that entity to a person before relying on it. For every other result, ask for an address.
+
+## Prerequisites
+
+Use Node.js 24.22.1 or a later 24.x release, and install the published 11.0.0 packages:
+
+```bash
+npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+Place names resolve against the point-of-interest database. Download it with the global place candidates:
+
+```bash
+export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
+mkdir -p "$MAILWOMAN_DATA_ROOT"
+npx mailwoman data pull candidate poi
+```
+
+The two bundles download about 6.8 GB: `candidate` 2.9 GB and `poi` 3.9 GB. The `poi` bundle covers the US, Canada, Mexico and France. The output below was captured on Node.js 24.22.1 with local builds of both bundles that are newer than the 11.0.0 registry entries, so your coordinates and confidence values can differ.
+
+## 1. Geocode the queries
+
+Save these three queries as `landmarks.txt`:
+
+```text
+Empire State Building
+Eiffel Tower, Paris
+Behind the gas station
+```
+
+Geocode them:
+
+```bash
+npx mailwoman geocode --stdin < landmarks.txt > landmarks.jsonl
+```
+
+Each line of `landmarks.jsonl` has a `components.venue` value, because the parser read each query as a place name. The geocoder's answers differ:
+
+| Input                    | `resolution_tier` | Coordinate                | `entity`                                                           |
+| ------------------------ | ----------------- | ------------------------- | ------------------------------------------------------------------ |
+| `Empire State Building`  | `venue`           | `40.749143, -73.986621`   | `Empire State Building`, category `historic_site`, confidence 0.95 |
+| `Eiffel Tower, Paris`    | `venue`           | `48.87296739, 2.29785971` | `Eiffel tower`, category `monument`, confidence 0.93               |
+| `Behind the gas station` | `admin`           | `37.44304, -87.24574`     | `null`                                                             |
+
+The confidence values in the table are rounded to two places.
+
+## 2. Recognize a coordinate that does not locate the query
+
+The third result is a wrong answer that looks valid. The parser read the whole input as a venue and also tagged the last word, `station`, as a locality. No point of interest matched the venue. The geocoder then matched the locality to a town called Station in Kentucky, Who's On First place `wof:1343272895`, and returned that town's point at the `admin` tier with `epistemic_status: "observed"`.
+
+That coordinate locates a town in Kentucky, which the user did not describe. A relative description such as "behind", "near" or "across from" depends on where the user is, and no gazetteer entry holds it. When a query has a `venue` component and the result's tier is anything other than `venue`, the coordinate does not locate the venue.
+
+## 3. Check the matched place
+
+A `venue` result is a point-of-interest record whose name matched the query. Read its `entity` before using the coordinate:
+
+```json
+{
+	"name": "Eiffel tower",
+	"categoryID": "monument",
+	"confidence": 0.9292718768119812,
+	"country": "FR"
+}
+```
+
+The matched record is called `Eiffel tower`, in the `monument` category. Its coordinate, `48.87296739, 2.29785971`, lies about 1.6 km north of the Eiffel Tower on the Champ de Mars, near `48.8583, 2.2945`. The name match succeeded and the record's location still differs from the landmark's. `confidence` scores the name match. It does not measure the coordinate's position. Show the entity's name and category, and a map pin when you can, so a person can confirm the place.
+
+## 4. Route each result
+
+Save this script as `route-landmarks.mjs`. It applies the rule from the start of this guide to each result:
+
+```js
+import { readFileSync } from "node:fs"
+
+const rows = readFileSync("landmarks.jsonl", "utf8")
+	.trim()
+	.split("\n")
+	.map((line) => JSON.parse(line))
+
+function route(row) {
+	const asked = row.components?.venue
+	if (!asked) return "not a place-name query: geocode as an address"
+	if (row.resolution_tier === "venue" && row.entity) {
+		const { name, categoryID, confidence } = row.entity
+		return `candidate place: ${name} (${categoryID ?? "no category"}, confidence ${confidence.toFixed(2)}) at ${row.lat}, ${row.lon} — confirm before use`
+	}
+	return `no place found for "${asked}": the ${row.resolution_tier} coordinate does not locate it — ask for an address`
+}
+
+for (const row of rows) console.log(`${row.input}\n  ${route(row)}`)
+```
+
+```bash
+node route-landmarks.mjs
+```
+
+```text
+Empire State Building
+  candidate place: Empire State Building (historic_site, confidence 0.95) at 40.749143, -73.986621 — confirm before use
+Eiffel Tower, Paris
+  candidate place: Eiffel tower (monument, confidence 0.93) at 48.87296739, 2.29785971 — confirm before use
+Behind the gas station
+  no place found for "Behind the gas station": the admin coordinate does not locate it — ask for an address
+```
+
+Keep the user's original text with each routed result. When you ask for an address, show what was typed so the user can correct it.
+
+## When a landmark layer is installed
+
+The geocoder also reads an optional `landmarks.db` file from the directory that holds `poi.db`. The 11.0.0 data bundles do not include it. When it is present, a matched landmark sets `coordinate_source` to the layer's source, such as `wikidata`, with `release: null`. With a landmark layer on the host used for this page, `Eiffel Tower, Paris` returned `48.858296, 2.294479` and `Empire State Building` returned `40.748333333333335, -73.98555555555555`. `Behind the gas station` returned the same Kentucky town either way. The routing rule above applies to both setups, because it reads `resolution_tier` and `entity` rather than the coordinate's source.
+
+## Related
+
+- [Result schema](../reference/schema.mdx) describes `resolution_tier`, `entity` and `coordinate_source`.
+- [Handle PO boxes](./handle-po-boxes.mdx), [intersections](./handle-intersections.mdx) and [bare postcodes](./handle-bare-postcodes.mdx) cover the other inputs that are not street addresses.
+- [Confidence and its limits](../explanation/confidence-and-limits.mdx) explains why a match score is not evidence that a place exists at the returned coordinate.

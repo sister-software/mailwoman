@@ -1,0 +1,170 @@
+---
+title: Run the Mailwoman HTTP server
+description: Start the native server against local data, check its health, parse and geocode one address over HTTP, read an error response, and stop the server.
+role: tutorial
+verified-with: mailwoman v11.0.0
+---
+
+# Run the Mailwoman HTTP server
+
+In this tutorial you start the native Mailwoman HTTP server on your machine and send it four requests: a health check, a parse, a geocode, and a request with a missing field. You then stop the server. Each step shows the complete response the server returned.
+
+## Before you start
+
+Use Node.js 24.22.1 or a later 24.x release. In an empty directory, install the published 11.0.0 packages:
+
+```bash
+npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+The server refuses to start without geographic data. It exits with status 1 before listening when it finds neither a candidate database nor Who's On First databases. Download the global place candidates and the address points for Washington, DC:
+
+```bash
+export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
+mkdir -p "$MAILWOMAN_DATA_ROOT"
+npx mailwoman data pull candidate
+npx mailwoman data pull us --only us-dc
+```
+
+The two pulls download about 3 GB: `candidate` 2.9 GB and DC 127.5 MB. If you completed [Geocode a file of addresses](./geocode-a-file.mdx), you already have both. The responses below were captured on Node.js 24.22.1 with local builds of these bundles that are newer than the 11.0.0 registry entries, so a coordinate or source release in your responses can differ.
+
+## 1. Start the server
+
+Start the server on port 7801 with one worker process, bound to your own machine only:
+
+```bash
+npx mailwoman serve --port 7801 --host 127.0.0.1 --cpus 1
+```
+
+The server reads its data from `$MAILWOMAN_DATA_ROOT`. It prints the database it opened, then the process IDs of its manager and worker once the worker is listening:
+
+```text
+[resolver] candidate-table backend (demo-parity, population-first): /home/you/mailwoman-data/db/wof/candidate.db
+mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source.
+A commercial license waives that obligation: https://mailwoman.post/license
+
+Manager process: 3934763
+Workers:
+ℹ Listening (3934800) "HTTP server ready"
+```
+
+Your process IDs will differ. Leave this terminal running and open a second terminal for the next steps. Without `--cpus`, the server starts one worker per CPU core.
+
+## 2. Check its health
+
+```bash
+curl -i http://127.0.0.1:7801/health
+```
+
+```http
+HTTP/1.1 200 OK
+access-control-allow-origin: *
+content-type: application/json
+link: <https://mailwoman.post/license>; rel="license"
+server: mailwoman/11.0.0 (AGPL-3.0-only)
+content-length: 861
+Date: Wed, 11 Nov 2026 04:01:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"status":"ok","uptime_s":10,"model":{"name":"neural-weights-en-us","version":"10.8.0","locale":"en-us","labels":33,"format":{"model":"ONNX int8 dynamic (quantized from fp32, opset 17)","tokenizer":"SentencePiece unigram, byte_fallback=true, vocab_size=73143 (v0.9.0-multisplice; ships WITH the model, both runtimes load it from this bundle)","max_sequence_length":128,"opset":17,"fp32_size_mb":146.6,"int8_size_mb":37.6,"pair_index_us_bin":"PIX1 binary (schema 3), 1,341,264 bytes, 47,878 pairs, δ=10, β=5, parentDelta=5"}},"data":{"data_root":"/home/you/mailwoman-data","versions":null,"wof_dbs":["/home/you/mailwoman-data/db/wof/admin-global-priority.db","/home/you/mailwoman-data/db/wof/postalcode-us.db","/home/you/mailwoman-data/db/wof/postalcode-geonames-tail.db","/home/you/mailwoman-data/db/wof/postalcode-intl.db","/home/you/mailwoman-data/db/wof/postalcode-nl-pc6.db","/home/you/mailwoman-data/db/wof/postalcode-ni-osm.db"],"situs_states":0,"interpolation_states":0}}
+```
+
+This page shows the data directory as `/home/you/mailwoman-data`, so the body is longer than the captured `content-length`. `status: "ok"` means the server answered. `model` identifies the loaded en-US model, version 10.8.0. `data` lists the data root and the place databases the server found there. This health response does not prove that a geocode will succeed. The next two steps check that directly.
+
+On the host used for this page, the health route answered 13 seconds after the start command. The manager and worker processes then held 133,192 kB and 474,140 kB of resident memory after one geocode, about 607 MB in total. Those are single measurements from one Linux host. A server with more workers uses more memory.
+
+## 3. Parse an address
+
+Send an address to `GET /v1/parse`:
+
+```bash
+curl -i --get http://127.0.0.1:7801/v1/parse --data-urlencode "address=1 Main St, Burlington, VT 05401"
+```
+
+```http
+HTTP/1.1 200 OK
+access-control-allow-origin: *
+content-type: application/json
+link: <https://mailwoman.post/license>; rel="license"
+server: mailwoman/11.0.0 (AGPL-3.0-only)
+content-length: 1288
+Date: Wed, 11 Nov 2026 04:01:15 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"input":"1 Main St, Burlington, VT 05401","components":[{"tag":"house_number","value":"1"},{"tag":"street","value":"Main"},{"tag":"street_suffix","value":"St"},{"tag":"locality","value":"Burlington"},{"tag":"region","value":"VT"},{"tag":"postcode","value":"05401"}],"tree":{"raw":"1 Main St, Burlington, VT 05401","roots":[{"tag":"region","start":23,"end":25,"value":"VT","confidence":0.9226666048278145,"children":[{"tag":"locality","start":11,"end":21,"value":"Burlington","confidence":0.9404526283967346,"children":[{"tag":"street","start":2,"end":6,"value":"Main","confidence":0.9411343728470462,"children":[{"tag":"house_number","start":0,"end":1,"value":"1","confidence":0.922763171600838,"children":[]},{"tag":"street_suffix","start":7,"end":9,"value":"St","confidence":0.9155597718291063,"children":[]}]},{"tag":"postcode","start":26,"end":31,"value":"05401","confidence":0.9149451157238078,"children":[]}]}]}],"country":"US","localeCountry":{"country":"US","confidence":0.9999990244989009}},"debug":null,"engine":{"name":"mailwoman","version":"11.0.0","license":"AGPL-3.0-only","license_url":"https://mailwoman.post/license","notice":"mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. A commercial license waives that obligation."}}
+```
+
+`components` lists the tagged parts in input order. `tree` nests them from region down to house number, and each node's `start` and `end` give its character offsets in the input. A parse reads only the text. It does not look up any place, so it answers for a Vermont address even though this server has no Vermont address points.
+
+## 4. Geocode an address
+
+Send a JSON body to `POST /v1/geocode`:
+
+```bash
+curl -i -X POST http://127.0.0.1:7801/v1/geocode -H "content-type: application/json" -d '{"address":"1600 Pennsylvania Ave NW, Washington, DC 20500"}'
+```
+
+```http
+HTTP/1.1 200 OK
+access-control-allow-origin: *
+content-type: application/json
+link: <https://mailwoman.post/license>; rel="license"
+server: mailwoman/11.0.0 (AGPL-3.0-only)
+content-length: 1680
+Date: Wed, 11 Nov 2026 04:01:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"input":"1600 Pennsylvania Ave NW, Washington, DC 20500","components":{"region":"DC","locality":"Washington","postcode":"20500","street":"Pennsylvania Ave NW","house_number":"1600"},"dropped_components":null,"unfollowed_components":null,"lat":38.89767510742324,"lon":-77.03654697024702,"resolution_tier":"address_point","epistemic_status":"observed","uncertainty_m":1,"locality":"Washington","region":"DC","postcode":"20500","house_number":"1600","street":"Pennsylvania Ave NW","venue":null,"dependent_locality":null,"unit":null,"countryCode":"US","hierarchy":[{"tag":"locality","value":"Washington","name":"Washington","lat":38.904831,"lon":-77.016216,"placeID":"wof:85931779","in_winner_lineage":true},{"tag":"region","value":"DC","name":"District of Columbia","lat":38.912097,"lon":-77.014683,"placeID":"wof:85688741","in_winner_lineage":true}],"candidates":[{"name":"District of Columbia","tag":"region","lat":38.912097,"lon":-77.014683,"countryCode":"US","placeID":"wof:85688741","score":5.831852504495296,"matchedAlias":true}],"rooftop":{"localityNorm":"washington","postcode":"20500"},"coordinate_source":{"source":"overture:NAD","release":"2026-05-20.0"},"admin_coherence":{"region":"confirmed","country":"unstated"},"postcode_country_scope":"US","capital_promotion":null,"variant_alias_exemption":"not_applied","intent_markers":[],"derivation":null,"entity":null,"authoritative":null,"tree":null,"engine":{"name":"mailwoman","version":"11.0.0","license":"AGPL-3.0-only","license_url":"https://mailwoman.post/license","notice":"mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. A commercial license waives that obligation."}}
+```
+
+The server returned an `address_point` coordinate from the US National Address Database (`coordinate_source.source: "overture:NAD"`). This is the same result shape that `mailwoman geocode` prints on the command line. [Geocode a file of addresses](./geocode-a-file.mdx) walks through each of its fields.
+
+## 5. Read an error response
+
+Send a geocode request without an `address`:
+
+```bash
+curl -i -X POST http://127.0.0.1:7801/v1/geocode -H "content-type: application/json" -d '{}'
+```
+
+```http
+HTTP/1.1 400 Bad Request
+access-control-allow-origin: *
+content-type: application/json
+link: <https://mailwoman.post/license>; rel="license"
+server: mailwoman/11.0.0 (AGPL-3.0-only)
+content-length: 45
+Date: Wed, 11 Nov 2026 04:01:17 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"address is required","detail":null}
+```
+
+A request error returns a 4xx status with an `error` message. Check the status code in your client before reading the body as a result.
+
+## 6. Stop the server
+
+Send a termination signal to the manager process that the server printed at startup:
+
+```bash
+kill 3934763
+```
+
+The server drains its worker and exits with status 0. Its terminal prints:
+
+```text
+[serve] worker 3934800 draining
+```
+
+## What you learned
+
+- `mailwoman serve` needs geographic data in `$MAILWOMAN_DATA_ROOT` before it will start.
+- `GET /health` reports that the server is up and which model and databases it loaded.
+- `GET /v1/parse` reads text without looking up places. `POST /v1/geocode` returns a coordinate and its source.
+- A request error returns a 4xx status with an `error` message.
+
+The [HTTP reference](../reference/http.mdx) lists every native route and the Nominatim, Photon and libpostal compatibility routes. [Choose a deployment](/product/deployment) compares running this server with the library and browser options.

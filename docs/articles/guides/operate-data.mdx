@@ -1,0 +1,148 @@
+---
+title: Install, check, roll back and prune local data
+description: Pull data bundles into a data root, read which generation is active, roll back to the previous selection, select an installation by ID, and reclaim unused files.
+role: guide
+verified-with: mailwoman v11.0.0
+---
+
+# Install, check, roll back and prune local data
+
+Use this procedure to manage the geographic data a Mailwoman installation reads. Each `mailwoman data pull` installs files into a data root and records the new selection as a numbered generation. You can return to the previous generation, select an installed file by its ID, and delete files that no kept generation uses.
+
+This guide uses the smallest US files so each step finishes in seconds. The same commands apply to every bundle.
+
+## Prerequisites
+
+Use Node.js 24.22.1 or a later 24.x release, and install the published packages:
+
+```bash
+npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+Choose a data root and create its directory. In 11.0.0, `data pull` stops with `ENOENT ... mkdir '<data root>/.install.lock'` when the directory does not exist yet:
+
+```bash
+export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
+mkdir -p "$MAILWOMAN_DATA_ROOT"
+```
+
+Every `data` command reads `$MAILWOMAN_DATA_ROOT`, and each one also accepts `--data-root <path>` for a single run. To practice these steps without touching data you use, point `--data-root` at an empty directory.
+
+## 1. Preview and pull a bundle
+
+`data --list` prints the bundles: `candidate`, `poi`, `fr` and `us`. Add `--dry-run` to a pull to print its plan, licensing terms and download size without downloading anything. `--only` limits a pull to files whose path contains the given text:
+
+```bash
+npx mailwoman data pull us --only us-vi --dry-run
+```
+
+Run the same command without `--dry-run` to install the US Virgin Islands address points. The output ends with these lines. The terms and plan lines before them are omitted here:
+
+```text
+✓ us: street/us/vi/situs.db: installed: installed and selected at
+$MAILWOMAN_DATA_ROOT/db/address-points/4b03016a0e9f9bda35759d3da8ee5f9fadd7cba78caa7fa40f2f28300586023e/address-points-us-vi.db
+✓ selection: generation 1 is active ($MAILWOMAN_DATA_ROOT/active.json);
+`mailwoman data status` lists it
+✓ next: mailwoman geocode "<an address in the installed area>" --format text
+PASS (17/17 checks)
+```
+
+The data root path is shown here as `$MAILWOMAN_DATA_ROOT`. Each file is installed under a directory whose name is its SHA-256 digest, so a new release of a file is installed beside the old one rather than over it. The plan also printed `us needs candidate, which is not installed`. The address points install without it, but geocoding needs `candidate` as well.
+
+## 2. Read the active generation
+
+The data root's `active.json` file records the active selection. After a second pull of the DC interpolation file, `npx mailwoman data pull us --only dc/2026-10-02`, it reads:
+
+```json
+{
+	"format": 1,
+	"generation": 2,
+	"previousGeneration": 1,
+	"createdAt": "2026-11-11T04:18:54.936Z",
+	"entries": [
+		{
+			"role": "address-points",
+			"scope": { "country": "US", "subdivision": "US-VI" },
+			"order": [
+				{
+					"installationID": "inst-c84b9e3fb59c6483",
+					"artifactID": "sha256:4b03016a0e9f9bda35759d3da8ee5f9fadd7cba78caa7fa40f2f28300586023e"
+				}
+			]
+		},
+		{
+			"role": "interpolation",
+			"scope": { "country": "US", "subdivision": "US-DC" },
+			"order": [
+				{
+					"installationID": "inst-ef88aea8b6c19743",
+					"artifactID": "sha256:27d02570e495da70b57e242e3fc363bdde16382453a43e281f9f81dc30f1a8cd"
+				}
+			]
+		}
+	]
+}
+```
+
+The `scope` objects are reformatted onto one line each here. Each pull adds its files to the selection and creates the next generation. Each entry identifies an installed file by `installationID` and by the digest of its contents in `artifactID`.
+
+`npx mailwoman data status` reports each artifact of each bundle as `active` or `missing`, with its path. Add `--json` for the same report as JSON, including the active `generation`. The command exits 1 while any requested artifact is missing, so name the bundles you installed, for example `npx mailwoman data status us`. The US bundle still exits 1 when you have installed only some states. Add `--check-remote` to compare installed files with the published sizes.
+
+## 3. Roll back to the previous selection
+
+```bash
+npx mailwoman data activate --rollback
+```
+
+```text
+generation 3 is active, replacing generation 2
+```
+
+A rollback records a new generation whose entries are those of the generation that the active one replaced. Generation 3 holds only the US Virgin Islands entry, as generation 1 did. The DC interpolation file stays on disk, and no command removes it until you prune.
+
+## 4. Plan a prune
+
+`data prune` deletes installed files that no kept generation and no running geocoder session uses. Without `--yes`, it prints its plan and leaves every file in place. By default it keeps two generations, counting the active one. With generation 3 active, the default plan kept generations 2 and 3, and both of them still used every installed file:
+
+```bash
+npx mailwoman data prune
+```
+
+```text
+generation 3; keeping generations 2, 3 and 0 running session lease(s)
+0 artifact(s), 0 byte reclaimable; run with --yes to delete them
+```
+
+With `--retain 1`, the plan keeps only the active generation and lists the DC interpolation file for deletion:
+
+```bash
+npx mailwoman data prune --retain 1
+```
+
+```text
+generation 3; keeping generations 3 and 0 running session lease(s)
+  would delete    7.6 MB  $MAILWOMAN_DATA_ROOT/db/interpolation/27d02570e495da70b57e242e3fc363bdde16382453a43e281f9f81dc30f1a8cd
+1 artifact(s), 7.6 MB reclaimable; run with --yes to delete them
+```
+
+Neither command above deleted anything. Add `--yes` to delete the planned files. After a prune, select a deleted file again by pulling it. This page did not test `--rollback` to a generation whose files were pruned.
+
+## 5. Select an installation by ID
+
+To select an installed file again, pass its installation ID to `data activate`. The ID appears in `active.json`, and the command's help points to `data status --json` for it:
+
+```bash
+npx mailwoman data activate inst-ef88aea8b6c19743
+```
+
+```text
+generation 4 is active, replacing generation 3
+```
+
+Generation 4 holds both entries again.
+
+## Related
+
+- [Data and locales](../reference/data-and-locales.mdx) lists each bundle, its size, and what it adds.
+- [Data and licensing](/product/data-and-licensing) explains the terms that each pull prints.
+- `mailwoman doctor` reports which data an installation is missing.

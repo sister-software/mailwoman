@@ -1,0 +1,220 @@
+---
+title: Geocode a file of addresses
+description: Geocode six addresses in one run, then read each result's tier, coordinate source and place candidates, and find the rows that did not resolve.
+role: tutorial
+verified-with: mailwoman v11.0.0
+---
+
+# Geocode a file of addresses
+
+In this tutorial you geocode a six-line file of addresses in one command. You then read three things from each result: how precise the coordinate is, which record supplied it, and whether the address resolved at all. The file mixes US and French street addresses, a city without a street, and two inputs that should not resolve.
+
+## Before you start
+
+Use Node.js 24.22.1 or a later 24.x release. Create an empty directory and install the published 11.0.0 packages:
+
+```bash
+npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+The geocoder reads geographic data from a local directory. Choose a data directory, then download the global place candidates, the French address points, and the address points for Washington, DC and Vermont:
+
+```bash
+export MAILWOMAN_DATA_ROOT="$HOME/mailwoman-data"
+mkdir -p "$MAILWOMAN_DATA_ROOT"
+npx mailwoman data pull candidate fr
+npx mailwoman data pull us --only us-dc
+npx mailwoman data pull us --only us-vt
+```
+
+The four pulls download about 10.2 GB: `candidate` 2.9 GB, `fr` 7 GB, DC 127.5 MB and Vermont 132.2 MB. The `candidate` bundle resolves places such as cities and regions worldwide. The `fr` and `us` files add individual address points. Add `--dry-run` to any pull to see its plan and size first. [Data and locales](../reference/data-and-locales.mdx) lists every bundle.
+
+The output below was captured on Node.js 24.22.1 with local builds of these bundles that are newer than the 11.0.0 registry entries. A coordinate or source release in your output can differ.
+
+## 1. Write the address file
+
+Save these six lines as `addresses.txt`:
+
+```text
+1600 Pennsylvania Ave NW, Washington, DC 20500
+1 Main St, Burlington, VT 05401
+Springfield, IL
+12 Rue de Rivoli, 75001 Paris, France
+Main Street
+qwerty asdf
+```
+
+## 2. Geocode the file
+
+Run the geocoder over the file. `--stdin` reads one address per line and loads the model and data once for the whole file. It writes one JSON object per line:
+
+```bash
+npx mailwoman geocode --stdin < addresses.txt > results.jsonl
+```
+
+The command exits 0, and `results.jsonl` has six lines, one for each input line, in the same order.
+
+## 3. Read one result
+
+Open the first line of `results.jsonl`. These are the fields that describe its coordinate. The full object has 31 fields, and the [result schema](../reference/schema.mdx#geocode-result-and-provenance) describes each one:
+
+```json
+{
+	"input": "1600 Pennsylvania Ave NW, Washington, DC 20500",
+	"components": {
+		"region": "DC",
+		"locality": "Washington",
+		"postcode": "20500",
+		"street": "Pennsylvania Ave NW",
+		"house_number": "1600"
+	},
+	"lat": 38.89767510742324,
+	"lon": -77.03654697024702,
+	"resolution_tier": "address_point",
+	"epistemic_status": "observed",
+	"uncertainty_m": 1,
+	"countryCode": "US",
+	"coordinate_source": {
+		"source": "overture:NAD",
+		"release": "2026-05-20.0"
+	},
+	"rooftop": {
+		"localityNorm": "washington",
+		"postcode": "20500"
+	}
+}
+```
+
+`components` is what the parser read from the text. `resolution_tier: "address_point"` means the coordinate is one recorded address point for this house number and street. `coordinate_source` names the register that supplied that point and its release: the US National Address Database, as distributed in the Overture Maps release `2026-05-20.0`. `rooftop` holds the locality and postcode stored on that address-point record. Those values describe the matched record rather than your input.
+
+## 4. Compare the six results
+
+Save this script as `summarize-results.mjs`. It prints the tier, status, coordinate and source of each result:
+
+```js
+import { readFileSync } from "node:fs"
+
+const rows = readFileSync("results.jsonl", "utf8")
+	.trim()
+	.split("\n")
+	.map((line) => JSON.parse(line))
+
+for (const row of rows) {
+	const where = row.lat == null ? "no coordinate" : `${row.lat.toFixed(5)}, ${row.lon.toFixed(5)}`
+	const source = row.coordinate_source ? `${row.coordinate_source.source} ${row.coordinate_source.release}` : "-"
+	console.log(`${row.input}\n  ${row.resolution_tier} / ${row.epistemic_status} · ${where} · source: ${source}`)
+}
+```
+
+Run it:
+
+```bash
+node summarize-results.mjs
+```
+
+```text
+1600 Pennsylvania Ave NW, Washington, DC 20500
+  address_point / observed · 38.89768, -77.03655 · source: overture:NAD 2026-05-20.0
+1 Main St, Burlington, VT 05401
+  address_point / observed · 44.47572, -73.21949 · source: overture:NAD 2026-05-20.0
+Springfield, IL
+  admin / observed · 39.79733, -89.64555 · source: -
+12 Rue de Rivoli, 75001 Paris, France
+  address_point / observed · 48.85560, 2.35995 · source: ban:fr 2026-05-18
+Main Street
+  admin / unresolved · no coordinate · source: -
+qwerty asdf
+  admin / unresolved · no coordinate · source: -
+```
+
+Three street addresses resolved to address points. The two US points came from the National Address Database (`overture:NAD`). The Paris point came from France's Base Adresse Nationale (`ban:fr`). The source tells you which public register to check if a point looks wrong.
+
+`Springfield, IL` resolved at the `admin` tier. The input gives a city and a state without a street, so the coordinate is a representative point for the city. Its `coordinate_source` is `null` because no address record supplied the coordinate.
+
+## 5. Inspect the place candidates
+
+The third line of `results.jsonl` shows how the geocoder chose that Springfield. Its `hierarchy` and `candidates` fields are reformatted onto fewer lines here:
+
+```json
+{
+	"hierarchy": [
+		{
+			"tag": "locality",
+			"value": "Springfield",
+			"name": "Springfield",
+			"lat": 39.797328,
+			"lon": -89.645547,
+			"placeID": "wof:85940429",
+			"in_winner_lineage": true
+		},
+		{
+			"tag": "region",
+			"value": "IL",
+			"name": "Illinois",
+			"lat": 40.265028,
+			"lon": -89.191575,
+			"placeID": "wof:85688697",
+			"in_winner_lineage": true
+		}
+	],
+	"candidates": [
+		{
+			"name": "Springfield",
+			"tag": "locality",
+			"lat": 39.797328,
+			"lon": -89.645547,
+			"countryCode": "US",
+			"placeID": "wof:85940429",
+			"score": 5.0513262055058465
+		},
+		{
+			"name": "Springfield",
+			"tag": "locality",
+			"lat": 39.860743,
+			"lon": -89.695816,
+			"countryCode": "US",
+			"placeID": "wof:1729438673",
+			"score": 0
+		},
+		{
+			"name": "Springfield Township",
+			"tag": "localadmin",
+			"lat": 39.860743,
+			"lon": -89.695743,
+			"countryCode": "US",
+			"placeID": "wof:404498567",
+			"score": 3.737987326333431,
+			"matchedAlias": true
+		}
+	]
+}
+```
+
+The geocoder weighed three Illinois places called Springfield and selected the highest-scoring locality, Who's On First place `wof:85940429`. `hierarchy` lists that locality and the Illinois region it sits in. When two candidates score close together, the input is ambiguous, and your application can ask for more detail instead of accepting the first result.
+
+## 6. Find the rows that did not resolve
+
+The last two inputs have no coordinate. Their `epistemic_status` is `unresolved`, and `lat` and `lon` are `null`. Their `resolution_tier` still reads `admin`, so filter on `epistemic_status` or on a `null` coordinate rather than on the tier.
+
+Each unresolved row records its reason in `intent_markers`. For `Main Street`, the marker states that a street needs at least street precision and that the lookup reached only the `admin` tier:
+
+```json
+{
+	"kind": "locality_only",
+	"code": "declared_coarser_answer",
+	"mechanism": "resolver:tier_shortfall",
+	"message": "The query supplied street, which is located no coarser than street, and the walk reached admin. The coordinate below is the admin-grade one; it does not locate the street.",
+	"evidence": { "unusedComponents": ["street"], "requiredTier": "street", "reachedTier": "admin" }
+}
+```
+
+For `qwerty asdf`, the parser read the text as the locality `Qwerty Asdf`, and no place matches it. Its marker states that the two words can be read as two places or as one place with its region. Keep unresolved rows in your output and send them to review. Do not fill them with a default coordinate or the coordinate of another row.
+
+## What you learned
+
+- One `--stdin` run geocodes a whole file with one model and data load.
+- `resolution_tier` states how precise the coordinate is. `coordinate_source` identifies the register behind an address point, and it is `null` for a place-level answer.
+- `candidates` lists the places the geocoder weighed, so you can spot an ambiguous input.
+- An unresolved row has `epistemic_status: "unresolved"`, a `null` coordinate, and an `intent_markers` entry giving the reason.
+
+Read [how geocoding chooses a coordinate](../explanation/geocoding.mdx) for what each tier means, and the [CLI reference](../reference/cli.mdx) for every `geocode` flag.

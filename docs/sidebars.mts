@@ -11,11 +11,21 @@ const sidebars: SidebarsConfig = {
 	solutions: [{ type: "link", label: "Choose a workflow", href: "/solutions" }],
 	developers: [
 		{ type: "category", label: "Get started", items: ["start"] },
-		{ type: "category", label: "Tutorials", items: ["tutorials/inspect-a-parse"] },
+		{
+			type: "category",
+			label: "Tutorials",
+			items: ["tutorials/inspect-a-parse", "tutorials/geocode-a-file", "tutorials/run-a-server"],
+		},
 		{
 			type: "category",
 			label: "How-to guides",
 			items: [
+				"guides/batch-geocode",
+				"guides/reverse-geocode",
+				"guides/operate-data",
+				"guides/deploy",
+				"guides/use-a-compatible-http-client",
+				"guides/use-mcp",
 				"guides/report-a-problem",
 				"guides/validate-records",
 				"guides/install-coding-skill",
@@ -25,6 +35,7 @@ const sidebars: SidebarsConfig = {
 				"guides/handle-po-boxes",
 				"guides/handle-intersections",
 				"guides/handle-bare-postcodes",
+				"guides/handle-landmark-queries",
 				"guides/review-parse-results",
 				"guides/parse-in-browser",
 				"guides/add-autocomplete",
@@ -57,6 +68,7 @@ const sidebars: SidebarsConfig = {
 	about: [{ type: "link", label: "About Mailwoman", href: "/about" }],
 	resources: [
 		{ type: "link", label: "Benchmark evidence", href: "/evidence/benchmarks" },
+		{ type: "link", label: "Compare geocoders", href: "/evidence/comparisons" },
 		{ type: "link", label: "Field notes", href: "/research" },
 	],
 }

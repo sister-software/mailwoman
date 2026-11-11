@@ -1,0 +1,224 @@
+---
+title: Reverse-geocode a coordinate
+description: Turn a latitude and longitude into the administrative places that contain it, from the command line or a script, and read whether containment was exact or approximate.
+role: guide
+verified-with: mailwoman v11.0.0
+---
+
+# Reverse-geocode a coordinate
+
+Use this procedure to find the places that contain a coordinate, such as the neighborhood, city, region and country of a GPS reading. Mailwoman's reverse geocoder returns a Who's On First administrative hierarchy. It does not return a street address or a house number for the coordinate.
+
+## Prerequisites
+
+Use Node.js 24.22.1 or a later 24.x release, and install the published 11.0.0 packages:
+
+```bash
+npm install mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0 @mailwoman/resolver-wof-sqlite@11.0.0
+```
+
+The reverse geocoder reads an admin gazetteer: a Who's On First SQLite database with a `place_bbox` spatial index. The 11.0.0 data bundles do not include one, and the `candidate.db` file from `mailwoman data pull candidate` lacks that index. Build the gazetteer from local clones of the Who's On First repositories, then add its search and spatial indexes:
+
+```bash
+npx mailwoman gazetteer build admin --data /path/to/whosonfirst-repos --out admin-global-priority.db
+npx mailwoman gazetteer build fts admin-global-priority.db
+```
+
+The two commands above match the published `--help` output, but this page did not run them. The global gazetteer used for this page was built earlier on the same host and occupies 7,316,430,848 bytes.
+
+Point the reverse geocoder at the result:
+
+```bash
+export MAILWOMAN_WOF_ADMIN_DB="$PWD/admin-global-priority.db"
+```
+
+An optional polygon sidecar, read from `$MAILWOMAN_WOF_POLYGONS_DB`, holds place boundaries. With it, the geocoder tests whether the coordinate lies inside each place's boundary. Without it, the geocoder estimates containment from place centroids and bounding boxes. Step 2 shows the difference. The published CLI has no command that builds the sidecar.
+
+The output below was captured on Node.js 24.22.1 with locally built admin and polygon databases. Place IDs and names in your output come from your own Who's On First build and can differ.
+
+## 1. Reverse-geocode one coordinate
+
+```bash
+npx mailwoman reverse 38.8977 -77.0365
+```
+
+```json
+{
+	"lat": 38.8977,
+	"lon": -77.0365,
+	"containment": "approximate",
+	"hierarchy": [
+		{
+			"id": 1108724059,
+			"name": "White House Grounds",
+			"placetype": "neighbourhood",
+			"country": "US",
+			"lat": 38.897087,
+			"lon": -77.036539,
+			"distanceKm": 0.0682459965296924
+		},
+		{
+			"id": 1108723661,
+			"name": "Northwest Washington",
+			"placetype": "macrohood",
+			"country": "US",
+			"lat": 38.94299,
+			"lon": -77.052654,
+			"distanceKm": null
+		},
+		{
+			"id": 85931779,
+			"name": "Washington",
+			"placetype": "locality",
+			"country": "US",
+			"lat": 38.904831,
+			"lon": -77.016216,
+			"distanceKm": null
+		},
+		{
+			"id": 1377370667,
+			"name": "District of Columbia",
+			"placetype": "county",
+			"country": "US",
+			"lat": 38.912097,
+			"lon": -77.014683,
+			"distanceKm": null
+		},
+		{
+			"id": 85688741,
+			"name": "District of Columbia",
+			"placetype": "region",
+			"country": "US",
+			"lat": 38.912097,
+			"lon": -77.014683,
+			"distanceKm": null
+		},
+		{
+			"id": 85633793,
+			"name": "United States",
+			"placetype": "country",
+			"country": "US",
+			"lat": 39.71614,
+			"lon": -96.999246,
+			"distanceKm": null
+		}
+	],
+	"engine": {
+		"name": "mailwoman",
+		"version": "11.0.0",
+		"license": "AGPL-3.0-only",
+		"license_url": "https://mailwoman.post/license",
+		"notice": "mailwoman is licensed AGPL-3.0-only: modified or network-served copies must offer their source. A commercial license waives that obligation."
+	}
+}
+```
+
+The output above is reformatted with one place per line. `hierarchy` runs from the smallest containing place to the country. Each entry's `id` is its Who's On First ID, and its `lat` and `lon` are that place's own representative point. The `lat` and `lon` at the top of the result echo your coordinate.
+
+`containment: "approximate"` means no polygon sidecar was set. The finest place was chosen by its centroid, and `distanceKm` gives the distance from your coordinate to that centroid, 0.07 km here.
+
+## 2. Use place boundaries
+
+Set the polygon sidecar and repeat the command:
+
+```bash
+export MAILWOMAN_WOF_POLYGONS_DB="$PWD/wof-polygons.db"
+npx mailwoman reverse 38.8977 -77.0365
+```
+
+The hierarchy is the same six places. The result now reads `containment: "polygon"`, and every `distanceKm` is `null`, because each place was confirmed by its boundary rather than estimated from its centroid.
+
+`--format text` prints one place per line. For a coordinate in Arlington, Virginia, with and then without the sidecar:
+
+```bash
+npx mailwoman reverse 38.8816 -77.0910 --format text
+```
+
+```text
+containment: polygon
+  neighbourhood    Lyon Park [wof:420546549]
+  locality         Arlington [wof:101729469]
+  county           Arlington [wof:102085953]
+  region           Virginia [wof:85688747]
+  country          United States [wof:85633793]
+```
+
+```text
+containment: approximate
+  neighbourhood    Lyon Park [wof:420546549] (~0.3 km from centroid)
+  locality         Arlington [wof:101729469]
+  county           Arlington [wof:102085953]
+  region           Virginia [wof:85688747]
+  country          United States [wof:85633793]
+```
+
+Both runs returned the same places for this coordinate. The approximate method chooses the finest place by centroid distance, so close to a boundary it can choose the neighboring place. This page observed no such case. Use the sidecar when the finest place matters, and treat an `approximate` answer as an estimate.
+
+## 3. Handle coordinates outside every place
+
+A point in open ocean returns an empty hierarchy:
+
+```bash
+npx mailwoman reverse 35 -40 --format text
+```
+
+```text
+containment: approximate
+(no admin hierarchy — point may be in open ocean or outside the gazetteer coverage)
+```
+
+In JSON output, `hierarchy` is an empty array. The command still exits 0, so check the hierarchy's length rather than the exit status. The result reads `approximate` even with the sidecar set, because no boundary contained the point.
+
+## 4. Reverse-geocode a list of points in a script
+
+For a list of coordinates, such as a fleet's GPS readings, open the geocoder once and reuse it. Save this script as `reverse-points.mjs`:
+
+```js
+import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite"
+
+const geocoder = new WOFReverseGeocoder({
+	adminDBPath: process.env.MAILWOMAN_WOF_ADMIN_DB,
+	polygonDBPath: process.env.MAILWOMAN_WOF_POLYGONS_DB,
+})
+
+const points = [
+	{ id: "truck-1", lat: 38.8977, lon: -77.0365 },
+	{ id: "truck-2", lat: 38.8816, lon: -77.091 },
+	{ id: "truck-3", lat: 48.8584, lon: 2.2945 },
+	{ id: "ship-1", lat: 35, lon: -40 },
+]
+
+try {
+	for (const point of points) {
+		const result = geocoder.reverseGeocodeSync(point.lat, point.lon)
+		const locality = result.hierarchy.find((place) => place.placetype === "locality")
+		const country = result.hierarchy.find((place) => place.placetype === "country")
+		console.log(
+			`${point.id}: ${locality?.name ?? "-"}, ${country?.name ?? "-"} (${result.containment}, ${result.hierarchy.length} places)`
+		)
+	}
+} finally {
+	geocoder[Symbol.dispose]()
+}
+```
+
+```bash
+node reverse-points.mjs
+```
+
+```text
+truck-1: Washington, United States (polygon, 6 places)
+truck-2: Arlington, United States (polygon, 5 places)
+truck-3: Paris, France (polygon, 7 places)
+ship-1: -, - (approximate, 0 places)
+```
+
+`reverseGeocodeSync` answers each point from the open database. `reverseGeocode` is its promise-returning form. Close the geocoder when the batch is done so its database handles are released. A point with no hierarchy, like `ship-1`, has no locality or country, so record it as unplaced instead of assigning the previous point's place.
+
+## Read the result
+
+- The hierarchy states which administrative places contain the coordinate. It is not a postal address, and it does not identify a building or a street.
+- `containment: "polygon"` means each place's boundary contains the point. `approximate` means the places were estimated from centroids, and `distanceKm` on the finest place gives that centroid's distance.
+- An empty hierarchy means the coordinate lies outside every place in the gazetteer.
+
+The [result schema](../reference/schema.mdx) describes the forward geocode result and its own `hierarchy` field. [How geocoding chooses a coordinate](../explanation/geocoding.mdx) explains reverse containment beside forward resolution.
