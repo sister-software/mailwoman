@@ -4,6 +4,7 @@ description: Find the dated address parsing and geocoding evaluations, their com
 ---
 
 import { EvidenceIntro } from "#components/MarketingLanding/MarketingLanding"
+import "./benchmarks.css"
 
 <EvidenceIntro />
 
@@ -12,6 +13,8 @@ The published `mailwoman@11.0.0` package contains an en-US model identified as v
 ## Dated artifacts
 
 Each row identifies the tested version, denominator, comparison, and scoring method before linking to its result. These measurements describe their listed artifacts and inputs. The current release needs its own recorded run before one of their figures can describe 11.0.0.
+
+<div className="benchmark-table" role="region" aria-label="Dated benchmark artifacts" tabIndex="0">
 
 {/* prettier-ignore */}
 | Record and version | Sample and denominator | Comparison and method | What it can establish |
@@ -22,6 +25,8 @@ Each row identifies the tested version, denominator, comparison, and scoring met
 | [Same-data resolver report, 13 September 2026](https://github.com/sister-software/mailwoman/blob/v11.0.0/docs/records/evals/competitive-parity/2026-09-13-same-data.md), with [panel](/benchmarks/same-data-panel.jsonl), [results](/benchmarks/same-data-results.jsonl), and [generated report](https://github.com/sister-software/mailwoman/blob/v11.0.0/docs/static/benchmarks/same-data-report.md). The frozen parses came from model 9.1.0. | A 453-row fixture has five strata. Selection accuracy compares 353 rows with an available gold place. A separate 100-row stratum withholds the gold place. | Mailwoman, a registered baseline resolver, and an ablation receive identical candidate sets and frozen parses. The scorer compares selected Who's On First identities and refusal behavior. | Admin-candidate selection under equal candidate evidence. It doesn't measure end-to-end parsing, geographic coverage, or building-coordinate accuracy. |
 | [Held-out development replay, 20 October 2026](https://github.com/sister-software/mailwoman/blob/v11.0.0/docs/records/evals/2026-10-20-heldout-replay.md). The arms use models 10.7.0, 10.1.0–10.6.0, and 9.1.0–10.0.0. | A 26,610-row development dataset drawn from corpus `v0.7.10-gb-county`, with country and kind strata. The report prints each country's row and group denominator. | Three model arms scored against annotated spans under release specification version 6. Older graph arms used 10.7.0 overlays, so they're not replicas of their shipped packages. | A development comparison. Every row's provenance class was `unknown` to that specification, and its verdicts were `insufficient_evidence`. It isn't an 11.0.0 release verdict. |
 | [Historical throughput note](https://github.com/sister-software/mailwoman/blob/v11.0.0/docs/engineering/reference/performance.mdx), measured 16 July 2026 on a 16-core host with model 6.3.0. | The published note compares worker counts of 1, 2, 4, 8, and 16. Its committed page doesn't identify the parsed-address denominator or a committed replay fixture for that sweep. | Worker-count and batch-size arms on that host. The note describes warm inference and separate model-loading conditions. | Historical host behavior only. A current 11.0.0 throughput or memory budget needs a new run with a versioned fixture and host record. |
+
+</div>
 
 The historical [Belgium result](/benchmarks/be-results.json) illustrates the difference between a result and a correct place: the `base` arm returned a coordinate on 27 of 30 queries, while 24 of those same 30 queries landed inside the recorded Belgium bounding box. The `country-pinned` arm placed 30 of 30 inside that box. Every answered row in these arms used an administrative tier. A bounding-box hit doesn't verify a street or building coordinate.
 
