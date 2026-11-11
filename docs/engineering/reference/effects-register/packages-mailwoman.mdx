@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/mailwoman`
 
 The manifest at `packages/mailwoman/package.json` has no `sideEffects` field.
-This page lists 374 of the group's 739 library and tool modules.
+This page lists 378 of the group's 745 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -172,6 +172,12 @@ The others hold neither an effect edge nor an import-time effect.
 | read | `buildSHA` | `repo:` | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/build/poi/index.tsx`
+
+| Kind | Interface  | Target  | Calls |
+| ---- | ---------- | ------- | ----- |
+| read | `buildSHA` | `repo:` | 1     |
+
+## `packages/mailwoman/cli/commands/gazetteer/build/post-offices.tsx`
 
 | Kind | Interface  | Target  | Calls |
 | ---- | ---------- | ------- | ----- |
@@ -3098,6 +3104,31 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | Kind | Interface    | Target                   | Calls |
 | ---- | ------------ | ------------------------ | ----- |
 | read | `pathExists` | `unresolved (parameter)` | 1     |
+
+## `packages/mailwoman/tools/eval-harness/post-offices/build.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `runs a statement at module scope`, 3 times
+- `awaits at module scope`
+
+## `packages/mailwoman/tools/eval-harness/post-offices/build.ts`
+
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
+
+## `packages/mailwoman/tools/eval-harness/post-offices/grade.run.ts`
+
+The manifest marks no module side-effect-free, so a bundler keeps this one. Its import-time effects:
+
+- `runs a statement at module scope`, 6 times
+- `awaits at module scope`, 2 times
+
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| write | `writeLocalJSONFile` | `unresolved (template)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/premise-linkage/report-writer.ts`
 

@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/gazetteer`
 
 The manifest at `packages/gazetteer/package.json` has no `sideEffects` field.
-This page lists 60 of the group's 98 library and tool modules.
+This page lists 61 of the group's 100 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -375,6 +375,14 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | read | `DatabaseClient`    | `unresolved (parameter)` | 3     |
 | read | `Globerator.from`   | `unresolved (other)`     | 1     |
 | read | `readLocalTextFile` | `unresolved (parameter)` | 1     |
+
+## `packages/gazetteer/tools/pipeline/post-offices/build.ts`
+
+| Kind  | Interface               | Target                  | Calls |
+| ----- | ----------------------- | ----------------------- | ----- |
+| write | `removePathIfPresent`   | `unresolved (template)` | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (call)`     | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (template)` | 1     |
 
 ## `packages/gazetteer/tools/pipeline/postcode.ts`
 

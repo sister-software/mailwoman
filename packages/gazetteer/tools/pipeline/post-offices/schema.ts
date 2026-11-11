@@ -37,7 +37,13 @@ export interface PostOfficeSourceTable {
 	records_without_point: number
 }
 
-export interface PostOfficeSourceDatabase {
+/**
+ * The post-office layer's own table beside the POI tables.
+ *
+ * It's a type alias rather than an interface, so it satisfies `withTables`'s index-signature constraint.
+ */
+// oxlint-disable-next-line typescript/consistent-type-definitions -- needs the implicit index signature `withTables` requires
+export type PostOfficeSourceDatabase = {
 	post_office_source: PostOfficeSourceTable
 }
 

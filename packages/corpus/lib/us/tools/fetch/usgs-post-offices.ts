@@ -113,9 +113,10 @@ interface ArcGISErrorBody {
  */
 async function readServiceJSON<T>(client: Pick<APIClient, "fetch">, url: string, signal?: AbortSignal): Promise<T> {
 	const { data } = await client.fetch<T & ArcGISErrorBody>({ url, timeout: 120_000, signal })
+	const body: unknown = data
 
-	if (data == null || typeof data !== "object") {
-		throw new Error(`${SLUG}: ${url} answered a body that is not JSON: ${String(data).slice(0, 200)}`)
+	if (body == null || typeof body !== "object") {
+		throw new Error(`${SLUG}: ${url} answered a body that is not JSON: ${String(body).slice(0, 200)}`)
 	}
 
 	if (data.error) {

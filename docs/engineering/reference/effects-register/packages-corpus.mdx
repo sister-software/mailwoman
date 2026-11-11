@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/corpus`
 
 The manifest at `packages/corpus/package.json` has no `sideEffects` field.
-This page lists 231 of the group's 395 library and tool modules.
+This page lists 234 of the group's 400 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -1692,6 +1692,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ---- | -------------------------- | ----------------------- | ----- |
 | read | `CSVSpliterator.fromAsync` | `unresolved (property)` | 1     |
 
+## `packages/corpus/lib/us/adapters/usgov/usgs-post-offices/adapter.ts`
+
+| Kind | Interface                   | Target                  | Calls |
+| ---- | --------------------------- | ----------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (property)` | 1     |
+
 ## `packages/corpus/lib/us/address-records/layer.ts`
 
 | Kind  | Interface             | Target                    | Calls |
@@ -1712,6 +1718,12 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | ----- | -------------------- | ------------------------- | ----- |
 | read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
 | write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+
+## `packages/corpus/lib/us/post-offices/usgs-national-map.ts`
+
+| Kind | Interface                   | Target              | Calls |
+| ---- | --------------------------- | ------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/us/recipes/house-venue-tuples.ts`
 
@@ -1790,6 +1802,17 @@ The manifest marks no module side-effect-free, so a bundler keeps this one. Its 
 | write   | `removePath`          | `unresolved (parameter)`                                        | 1     |
 | write   | `removePathIfPresent` | `unresolved (parameter)`                                        | 1     |
 | network | `APIClient.fetch`     | `literal:https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT/` | 1     |
+
+## `packages/corpus/lib/us/tools/fetch/usgs-post-offices.ts`
+
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `statPath`            | `unresolved (call)` | 1     |
+| write | `appendLocalTextFile` | `unresolved (call)` | 2     |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `movePath`            | `unresolved (call)` | 2     |
+| write | `removePathIfPresent` | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile`  | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/us/tools/nad-skeletons.ts`
 
