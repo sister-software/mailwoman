@@ -14,6 +14,31 @@ import {
 	ZipCodePrefixAbbreviationMap,
 } from "#us"
 import { isUSStateAbbreviation } from "#us/state"
+import { normalizeZIPCode } from "#us/zipcode"
+
+describe("normalizeZIPCode", () => {
+	it("restores the leading zeros a numeric column dropped, when the state's codes begin with zero", () => {
+		expect(normalizeZIPCode("612", "PR")).toBe("00612")
+		expect(normalizeZIPCode("6103", "CT")).toBe("06103")
+	})
+
+	it("refuses a padded code another state's first digit would need", () => {
+		expect(normalizeZIPCode("7341", "TX")).toBeNull()
+	})
+
+	it("refuses a short value that kept its leading zero, which lost its trailing digits", () => {
+		expect(normalizeZIPCode("0494", "ME")).toBeNull()
+	})
+
+	it("keeps a five-digit ZIP Code and a ZIP+4, and refuses placeholders", () => {
+		expect(normalizeZIPCode("95678", "CA")).toBe("95678")
+		expect(normalizeZIPCode("95678-1234", "CA")).toBe("95678-1234")
+
+		for (const placeholder of ["0", "-", "N/A", "PA", "0.0", null]) {
+			expect(normalizeZIPCode(placeholder, "PA")).toBeNull()
+		}
+	})
+})
 
 describe("isZipCode", () => {
 	it("accepts 5-digit and ZIP+4 forms", () => {

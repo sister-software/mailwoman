@@ -192,6 +192,33 @@ export function isZipCode(input: unknown): input is ZipCode | ZipCodePlusFour {
 	return typeof input === "string" && ZipCodePatterns.Standard.test(input)
 }
 
+/**
+ * A published postcode for an address in `state`, as a five-digit ZIP Code
+ * or ZIP+4, or `null` when the value isn't one.
+ *
+ * A source that stored the ZIP Code as a number dropped its leading zeros, so a three-
+ * or four-digit value that doesn't begin with zero is padded back to five digits.
+ * The padded code is kept only when its first digit is the state's
+ * ({@linkcode StateAbbreviationZipCodePrefixRecord}): Puerto Rico's `612` is `00612`,
+ * and Texas's `7341` is `null`.
+ *
+ * A short value that already begins with zero lost its trailing digits rather than its
+ * leading zeros, so it's `null`, as is a placeholder such as `0`, `-` or `N/A`.
+ */
+export function normalizeZIPCode(value: string | null, state: USStateAbbreviation): string | null {
+	const trimmed = value?.trim()
+
+	if (!trimmed) return null
+
+	if (isZipCode(trimmed)) return trimmed
+
+	if (!/^[1-9]\d{2,3}$/u.test(trimmed)) return null
+
+	const padded = trimmed.padStart(5, "0")
+
+	return Number(padded[0]) === StateAbbreviationZipCodePrefixRecord[state] ? padded : null
+}
+
 export interface PluckedStateZIPCodeResult {
 	stateAbbreviation: USStateAbbreviation | null
 	zipCode: ZipCode | ZipCodePlusFour
