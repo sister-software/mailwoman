@@ -71,11 +71,51 @@ export interface LicenseRecord {
 export const LICENSE_STATES: readonly LicenseState[] = Object.values(LicenseState)
 
 /**
+ * The date the example subscription events treat as today.
+ */
+const EXAMPLE_TODAY = "2026-11-11"
+
+/**
+ * One license event for each case the license transition distinguishes, keyed by its row label.
+ *
+ * The grace window of each subscription example is relative to {@link EXAMPLE_TODAY}.
+ */
+export const LICENSE_EVENTS = {
+	"subscription active": {
+		kind: "subscription",
+		status: "active",
+		deleted: false,
+		graceUntil: null,
+		today: EXAMPLE_TODAY,
+	},
+	"subscription canceled, in grace": {
+		kind: "subscription",
+		status: "canceled",
+		deleted: false,
+		graceUntil: "2026-11-20",
+		today: EXAMPLE_TODAY,
+	},
+	"subscription deleted, past grace": {
+		kind: "subscription",
+		status: "active",
+		deleted: true,
+		graceUntil: "2026-11-01",
+		today: EXAMPLE_TODAY,
+	},
+	"payment failed": { kind: "payment-failed" },
+	"dispute opened": { kind: "dispute-opened" },
+	"full refund": { kind: "refund", amount: 1000, amountRefunded: 1000 },
+	"partial refund": { kind: "refund", amount: 1000, amountRefunded: 200 },
+	"dispute won": { kind: "correction", to: LicenseState.Active, paymentState: PaymentState.DisputeWon },
+} as const satisfies Record<string, LicenseEvent>
+
+/**
  * A commercial license's state machine.
  */
 export const licenseMachine = defineStateMachine<LicenseState, LicenseEvent, LicenseRecord>({
 	name: "license",
 	states: LICENSE_STATES,
+	events: LICENSE_EVENTS,
 	transition(state, event) {
 		switch (event.kind) {
 			case "subscription":
@@ -143,6 +183,9 @@ export interface DeclarationEvent {
 export const declarationMachine = defineStateMachine<LicenseState, DeclarationEvent>({
 	name: "declaration",
 	states: LICENSE_STATES,
+	events: Object.fromEntries(
+		LICENSE_STATES.map((to): [string, DeclarationEvent] => [`operator sets ${to}`, { kind: "operator-set", to }])
+	),
 	transition(_state, event) {
 		return { next: event.to, record: {}, effects: [] }
 	},
@@ -168,6 +211,14 @@ export interface EmailRecord {
 export const EMAIL_STATES: readonly EmailState[] = ["pending", "sent", "failed"]
 
 /**
+ * The two send outcomes the email machine takes, keyed by their row labels.
+ */
+export const EMAIL_EVENTS = {
+	sent: { kind: "sent", messageID: "msg_1" },
+	failed: { kind: "failed" },
+} as const satisfies Record<string, EmailEvent>
+
+/**
  * The email state machine of a token or an issuance.
  *
  * A sent email stays sent.
@@ -177,6 +228,7 @@ export const EMAIL_STATES: readonly EmailState[] = ["pending", "sent", "failed"]
 export const emailMachine = defineStateMachine<EmailState, EmailEvent, EmailRecord>({
 	name: "email",
 	states: EMAIL_STATES,
+	events: EMAIL_EVENTS,
 	transition(state, event) {
 		if (state === "sent") return { next: state, record: {}, effects: [] }
 

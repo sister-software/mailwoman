@@ -290,6 +290,26 @@ function compiledPathOf(sourcePath: string): string {
 	return `out/${withoutRoot.replace(/\.[cm]?[jt]sx?$/u, ".js")}`
 }
 
+/**
+ * A workspace's `sideEffects` declaration as a test of whether it lists one module.
+ *
+ * `declared` is the manifest's field.
+ * `relative` is the module's path relative to the workspace.
+ *
+ * An entry matches the module by its source path or by its `out/` path.
+ *
+ * A workspace that declares `true` or no field lists every module, and `false` lists none.
+ */
+export function sideEffectsListing(declared: boolean | readonly string[] | undefined): (relative: string) => boolean {
+	if (declared === false) return () => false
+
+	if (!Array.isArray(declared)) return () => true
+
+	const patterns = declared.map((entry) => tsconfigGlob(entry))
+
+	return (relative) => patterns.some((pattern) => pattern.test(relative) || pattern.test(compiledPathOf(relative)))
+}
+
 function diagnostic(message: string, file: string | null, line: number | null = null): Diagnostic {
 	return { severity: DiagnosticSeverity.Error, message, file, line, details: null }
 }
@@ -320,7 +340,7 @@ export const sideEffectsCheck: RepoCheck = {
 				return SOURCE_ROOT.test(relative) && SOURCE_FILE.test(relative) && !relative.endsWith(".d.ts")
 			})
 
-			const listed = Array.isArray(declared) ? declared.map((entry) => tsconfigGlob(entry)) : []
+			const lists = sideEffectsListing(declared)
 			const checksDeclaration = declared === false || Array.isArray(declared)
 
 			for (const file of sources) {
@@ -330,9 +350,7 @@ export const sideEffectsCheck: RepoCheck = {
 				const relative = file.slice(directory.length + 1)
 				const annotated = PURE_ANNOTATION.test(text)
 
-				const audited =
-					checksDeclaration &&
-					!listed.some((pattern) => pattern.test(relative) || pattern.test(compiledPathOf(relative)))
+				const audited = checksDeclaration && !lists(relative)
 
 				// A file is parsed only when it holds a pure annotation or its import-time effects need listing.
 				// The other sources of an undeclaring workspace are most of the tree.

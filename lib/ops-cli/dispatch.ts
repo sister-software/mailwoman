@@ -46,6 +46,7 @@ import { type CIReplay, compareCIReplays, replayCIScope } from "#repo-health/ci/
 import { isCITestSuite, runCITests } from "#repo-health/ci/test"
 import { effectCensusPath, writeEffectCensus } from "#repo-health/effects/census"
 import { importSizesPath, writeImportSizes } from "#repo-health/effects/import-sizes"
+import { writeEffectsRegister } from "#repo-health/effects/register"
 import { planPathLiteralRewrites } from "#repo-health/move/literals"
 import { storageOperations, type StorageContext } from "#storage-kit"
 
@@ -121,6 +122,7 @@ function usage(io: DispatchIO): number {
 			"  mwops ci-replay --compare <before> <after>                          (pair two replays row by row)",
 			"  mwops ci-test <fast|slow>        (run a root Vitest suite with ci-scope's selected files)",
 			"  mwops effects                    (write every source's read, write, network and process edges to out/repo-health/effects/edges.json)",
+			"  mwops effects-register           (write docs/engineering/reference/effects-register.mdx and its per-workspace pages)",
 			"  mwops side-effects               (write the bytes a bare import of each compiled module keeps to out/repo-health/effects/import-sizes.json)",
 			"  mwops health baseline debt        (rewrite lib/repo-health/baseline.json from the current readings)",
 			"  mwops health fix <check> [--dry-run] [--json]",
@@ -699,6 +701,14 @@ export async function dispatch(args: readonly string[], io: DispatchIO): Promise
 					})),
 				})
 			)
+
+			return 0
+		}
+		case "effects-register": {
+			const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
+			const result = await writeEffectsRegister(context)
+
+			io.stdout(prettyJSON({ pages: result.pages, written: result.stale, removed: result.extra }))
 
 			return 0
 		}

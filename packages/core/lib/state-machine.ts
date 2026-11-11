@@ -53,6 +53,13 @@ export interface StateMachine<
 	readonly name: string
 	readonly states: readonly TState[]
 	/**
+	 * One event for each case the transition distinguishes, keyed by a label for that case.
+	 *
+	 * The effects register applies every event to every state to print the machine's
+	 * transition table, and a test can assert the same table.
+	 */
+	readonly events?: Readonly<Record<string, TEvent>>
+	/**
 	 * The step from `state` on `event`.
 	 *
 	 * It reads only its arguments, and its caller performs every write.

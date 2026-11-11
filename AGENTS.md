@@ -66,6 +66,9 @@ Use repository skills for procedures rather than copying their steps into this f
   `packages/mailwoman/tools/eval-harness/heldout/dataset/coverage/register.run.ts` from a dataset manifest
   (`freeze.run.ts`) and an overlap audit (`overlap.run.ts`) in the same directory. It is first written once
   the v0.8.0 test split exists.
+- The effects register, `docs/engineering/reference/effects-register.mdx`, answers what each module reads,
+  writes, fetches, launches and runs at import, one page per workspace, and prints each state machine's
+  transition table. `yarn mwops effects-register` regenerates it from `lib/repo-health/effects/register.ts`.
 - `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` defines model evaluation requirements and the
   release-quality procedure: a default-on model or decoder change ships only on a `pass` verdict
   against the registered release requirements. Those requirements replaced the D-rule on 2026-10-20. The current

@@ -169,9 +169,24 @@ repository check reads every declaring workspace's sources and reports a module 
 misses.
 
 `/* @__PURE__ */` tells a bundler it may delete a call whose result goes unused. Put it only on a call
-whose callee you have read, never on an effect interface, which the same check reports.
+whose callee you have read, never on an effect interface. The same check reports an annotated
+effect-interface call.
 `mwops side-effects` reports the bytes a bare import of each module keeps when every module counts as
 effectful. Those bytes show where an annotation would shrink a bundle.
+
+`docs/engineering/reference/effects-register.mdx` lists each module's import-time effects and runtime
+effect edges, one page per workspace. Regenerate it with `yarn mwops effects-register` after a change
+that adds, removes or moves an effect. The `effects-register` check fails while a page is stale.
+
+## State machines
+
+A lifecycle whose state is stored, such as a ledger column, is declared with `defineStateMachine` from
+`@mailwoman/core/state-machine`. Its transition is a pure function from a state and an event to a step:
+the next state, the columns written with it, and the effects to run after the write. `applyStep`
+writes the step through a carrier's compare-and-set, so a step decided from a state another writer has
+since left fails as a conflict. A machine's `events` table holds one event per case its transition
+distinguishes, and the effects register prints the machine's transition table from it.
+`packages/license-worker/lib/ledger/machines.ts` holds the first three machines.
 
 ## Core tests and Vite
 

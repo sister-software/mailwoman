@@ -9,43 +9,15 @@ import { describe, expect, it } from "vitest"
 
 import {
 	declarationMachine,
+	EMAIL_EVENTS,
 	EMAIL_STATES,
-	type EmailEvent,
 	emailMachine,
+	LICENSE_EVENTS,
 	LICENSE_STATES,
-	type LicenseEvent,
 	licenseMachine,
 	PaymentState,
 } from "#ledger/machines"
-import { type EmailState, LicenseState } from "#ledger/schema"
-
-const TODAY = "2026-11-11"
-
-/**
- * One event of each shape the license machine takes, keyed by the row label the table below uses.
- */
-const LICENSE_EVENTS = {
-	"subscription active": { kind: "subscription", status: "active", deleted: false, graceUntil: null, today: TODAY },
-	"subscription canceled, in grace": {
-		kind: "subscription",
-		status: "canceled",
-		deleted: false,
-		graceUntil: "2026-11-20",
-		today: TODAY,
-	},
-	"subscription deleted, past grace": {
-		kind: "subscription",
-		status: "active",
-		deleted: true,
-		graceUntil: "2026-11-01",
-		today: TODAY,
-	},
-	"payment failed": { kind: "payment-failed" },
-	"dispute opened": { kind: "dispute-opened" },
-	"full refund": { kind: "refund", amount: 1000, amountRefunded: 1000 },
-	"partial refund": { kind: "refund", amount: 1000, amountRefunded: 200 },
-	"dispute won": { kind: "correction", to: LicenseState.Active, paymentState: PaymentState.DisputeWon },
-} as const satisfies Record<string, LicenseEvent>
+import type { EmailState, LicenseState } from "#ledger/schema"
 
 type LicenseEventName = keyof typeof LICENSE_EVENTS
 
@@ -144,11 +116,6 @@ describe("declarationMachine", () => {
 		}
 	)
 })
-
-const EMAIL_EVENTS = {
-	sent: { kind: "sent", messageID: "msg_1" },
-	failed: { kind: "failed" },
-} as const satisfies Record<string, EmailEvent>
 
 const EMAIL_TABLE: Record<EmailState, Record<keyof typeof EMAIL_EVENTS, EmailState>> = {
 	pending: { sent: "sent", failed: "failed" },
