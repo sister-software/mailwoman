@@ -364,6 +364,10 @@ export interface PathRootBuilder {
 	root: PathRoot
 	packageFirst?: boolean
 	rebases?: readonly string[]
+	/**
+	 * Segments the builder joins before its arguments, as `workspacePath` roots its arguments at `packages/`.
+	 */
+	prefix?: readonly string[]
 }
 
 const DATA_ROOT_BUILDERS: readonly PathRootBuilder[] = [
@@ -375,6 +379,29 @@ const DATA_ROOT_BUILDERS: readonly PathRootBuilder[] = [
 ]
 
 /**
+ * The builders `@mailwoman/core/paths` exports.
+ *
+ * `workspacePath` and `workspacePathBuilder` join their arguments under the
+ * repository's `packages/` directory.
+ */
+const REPOSITORY_BUILDERS: readonly PathRootBuilder[] = [
+	{ name: "repoRootPath", root: PathRoot.Repository },
+	{ name: "workspacePath", root: PathRoot.Repository, prefix: ["packages"] },
+	{ name: "workspacePathBuilder", root: PathRoot.Repository, prefix: ["packages"] },
+]
+
+/**
+ * The builders `@mailwoman/core/module/resolvers` exports.
+ *
+ * Each takes a package name first.
+ * `resolvePackageDirectory(name)` answers a builder that a second call extends.
+ */
+const PACKAGE_BUILDERS: readonly PathRootBuilder[] = [
+	{ name: "resolvePackagePath", root: PathRoot.Package, packageFirst: true },
+	{ name: "resolvePackageDirectory", root: PathRoot.Package, packageFirst: true },
+]
+
+/**
  * Each module that exports a root path builder, by every specifier that reaches it,
  * with the builders it exports.
  *
@@ -382,10 +409,10 @@ const DATA_ROOT_BUILDERS: readonly PathRootBuilder[] = [
  * route repository paths through.
  */
 export const PATH_BUILDER_MODULES: ReadonlyMap<string, readonly PathRootBuilder[]> = new Map([
-	["@mailwoman/core/paths", [{ name: "repoRootPath", root: PathRoot.Repository }]],
-	["#paths", [{ name: "repoRootPath", root: PathRoot.Repository }]],
+	["@mailwoman/core/paths", REPOSITORY_BUILDERS],
+	["#paths", REPOSITORY_BUILDERS],
 	["@mailwoman/core/data-root", DATA_ROOT_BUILDERS],
 	["#data-root", DATA_ROOT_BUILDERS],
-	["@mailwoman/core/module/resolvers", [{ name: "resolvePackagePath", root: PathRoot.Package, packageFirst: true }]],
-	["#module/resolvers", [{ name: "resolvePackagePath", root: PathRoot.Package, packageFirst: true }]],
+	["@mailwoman/core/module/resolvers", PACKAGE_BUILDERS],
+	["#module/resolvers", PACKAGE_BUILDERS],
 ])

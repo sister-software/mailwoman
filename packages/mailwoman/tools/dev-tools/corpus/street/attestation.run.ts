@@ -27,7 +27,7 @@
  *     --ids es-op3-label-cabestreros,gb-op2-east-west-fortess [--release 2026-05-20.0] [--json <out>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourceDirectory } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -96,7 +96,7 @@ if (missing.length) throw new Error(`No board row for: ${missing.join(", ")}`)
  * The most recent release on this host holds extracts truncated at 800,000 rows,
  * so a measurement against it reads zero for a street the full extract attests.
  */
-const overtureRoot = dataRootPath("overture")
+const overtureRoot = snapshotSourceDirectory("overture")
 const releases = new Set<string>()
 
 for await (const entry of Globerator.from("*/addresses-*.parquet", { cwd: overtureRoot, absolute: false })) {

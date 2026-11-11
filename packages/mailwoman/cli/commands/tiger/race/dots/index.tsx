@@ -22,7 +22,7 @@ export const spec = {
 	options: {
 		db: {
 			type: "string",
-			description: "TIGER SQLite DB (tabblock20 ⋈ pl_block; default $MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db)",
+			description: "TIGER SQLite DB (tabblock20 ⋈ pl_block; default $MAILWOMAN_DATA_ROOT/db/tiger/tiger-oc.db)",
 		},
 		out: {
 			type: "string",

@@ -382,6 +382,9 @@ export async function executeInstallation(
 ): Promise<InstallationResult> {
 	const installLock = catalogPaths(plan.dataRoot).installLock
 
+	// A first pull may name a data root that doesn't exist yet, and the lock is a directory inside it.
+	await makeDirectories(plan.dataRoot)
+
 	// One installer runs per data root.
 	// A second refuses before any transfer, so the first completes rather than both
 	// failing on each other's staging directories.

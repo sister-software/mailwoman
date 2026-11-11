@@ -386,7 +386,7 @@ Five rules decide what the layer may answer:
   `UAE` and `PNG`. An airport holding the same IATA code is listed as the country's alternative: `AUS` answers Australia
   and lists Austin–Bergstrom International Airport, and `FRA, Germany` reaches Frankfurt Airport. A code no country
   claims answers the airport: `SFO`, `LHR`, `DTW`.
-- A settlement that leads a name stays with the admin ladder, which ranks settlements.
+- A settlement that leads a name stays with the admin ladder. The admin ladder ranks settlements.
 - A place's own English or local name ranks ahead of a translation or an alias. `Hamburg` is an alias of Hamburg Airport
   and the name of a city.
 - A translation or alias answers only a name the admin walk left unresolved.
@@ -397,7 +397,7 @@ Context beside the name narrows the hits to the stated country, and to 50 km aro
 
 ## The OpenStreetMap place layer
 
-`<data root>/db/osm/places-osm.db` holds named parks, attractions, civic buildings, aerodromes and islets from OpenStreetMap
+`<data root>/db/osm/places-osm.db` holds the parks, attractions, civic buildings, aerodromes and islets that have a name in OpenStreetMap
 in the same table as the landmark layer. `tools/dev-tools/landmarks/osm/places.run.ts` scrolls them out of a Photon index's
 embedded OpenSearch. The data is ODbL, so the database is build-local and `MAILWOMAN_REFUSE_OBLIGATIONS` refuses it.
 

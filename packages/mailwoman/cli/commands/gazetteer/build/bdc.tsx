@@ -138,7 +138,9 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 
 		const out = resolvePath(options.out ?? dataRootPath("bdc", "bdc.db"))
 		const buildSHA = resolveBuildSHA(repoRootPath())
-		const tigerDBPath = resolvePath(dataRootPath("tiger", "tiger.db"))
+		// `@mailwoman/tiger` is an optional dependency of this package, so its paths load only here.
+		const { tigerDatabasePath } = await import("@mailwoman/tiger/paths")
+		const tigerDBPath = resolvePath(tigerDatabasePath("tiger.db"))
 
 		console.error(`▸ build: ${out}`)
 

@@ -99,23 +99,33 @@ instead, from an extract you download yourself:
 ```bash
 OSM="$(npm root)/@mailwoman/osm/out/tools"
 
-# 1. Download a Geofabrik extract. The tool dates the file name from the server's Last-Modified header and
-#    writes <file>.receipt.json beside it with the URL, the date and the SHA-256:
+# 1. Download a Geofabrik extract as a dated snapshot. The vintage is the date of the server's
+#    Last-Modified header, and <file>.receipt.json beside the extract records the URL, the date and the SHA-256:
 node "$OSM/fetch/extract.js" --region australia-oceania/new-zealand
-#    → $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/new-zealand-260806.osm.pbf (+ .receipt.json)
+#    → $MAILWOMAN_DATA_ROOT/snapshots/geofabrik/australia-oceania/new-zealand/2026-08-06/new-zealand.osm.pbf
 
-# 2. Build the database. The default slug is the country code, which is the file name the geocode
-#    session attaches (writes $MAILWOMAN_DATA_ROOT/db/osm/address-points-nz-nz.db):
+# 2. Build the database from the region's newest vintage, or the one --vintage names. The default slug
+#    is the country code, which is the file name the geocode session attaches
+#    (writes $MAILWOMAN_DATA_ROOT/db/osm/address-points-nz-nz.db):
 node "$OSM/build-rooftop-database.js" \
-  --country nz --release 260806 \
+  --country nz \
   --created-at "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
   --build-sha "@mailwoman/osm@$(node -p 'require(process.argv[1]).version' "$(npm root)/@mailwoman/osm/package.json")" \
-  --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/new-zealand-260806.osm.pbf
+  --region australia-oceania/new-zealand
 ```
+
+Each region keeps its own vintages under `$MAILWOMAN_DATA_ROOT/snapshots/geofabrik/<region>/`. A vintage
+on disk is never replaced: the fetch tool skips it, unless you state it with `--vintage` and pass
+`--force`. `--release` defaults to the vintage the builder read. `--pbf <file>` builds from any other
+extract.
 
 From a checkout of this repository, run the same tools from `packages/osm/out/tools/` and pass
 `--build-sha "$(git rev-parse HEAD)"`. An extract downloaded by hand has no receipt, and the builder then
 requires `--source-url` with the address it came from.
+
+An older checkout kept extracts in one flat directory, each file called `<leaf>-<YYMMDD>.osm.pbf`.
+`tools/fetch/move-flat-extracts.ts --from <that directory>` prints the vintage and region it would give each
+file and where each one came from, and `--apply` moves them.
 
 The build reports an **association gap**: the share of `addr:housenumber` points it had to skip because
 they have no `addr:street`. A point with no street is unqueryable, so we count it rather than guess. When

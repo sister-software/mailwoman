@@ -30,7 +30,7 @@
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
-import { dataRootPath } from "#data-root"
+import { currentSourcePath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { appendLocalTextFile, writeLocalJSONLFile } from "#fs/writers"
 import { COUNTRIES } from "#tools/coarse-placer/country-sets"
@@ -52,7 +52,7 @@ export interface BuildOutlierOAOptions {
 	/**
 	 * Extracted OpenAddresses root.
 	 *
-	 * @defaultValue `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/openaddresses/extracted`
 	 */
 	oaDir?: PathBuilderLike
 	/**
@@ -128,7 +128,7 @@ export async function buildOutlierOA(
 	options: BuildOutlierOAOptions = {},
 	report?: (line: string) => void
 ): Promise<BuildOutlierOAResult> {
-	const oaDir = options.oaDir || dataRootPath("openaddresses", "extracted")
+	const oaDir = options.oaDir || currentSourcePath("openaddresses", "extracted")
 	const PER = options.perCountry ?? 6000
 	const dataDir = options.data || defaultDataDir()
 

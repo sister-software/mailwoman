@@ -10,7 +10,7 @@
 import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
-import { dataRootPath } from "#data-root"
+import { dataRootPath, snapshotSourcePath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { makeDirectories, writeLocalJSONLFile } from "#fs/writers"
 import { OVERTURE_ADDRESSES_RELEASE } from "#overture-pins"
@@ -101,7 +101,7 @@ export async function buildDataset(
 		"*.parquet"
 	)
 
-	const OVERTURE_DIR = dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE)
+	const OVERTURE_DIR = snapshotSourcePath("overture", OVERTURE_ADDRESSES_RELEASE)
 	await makeDirectories(OUT_DIR)
 
 	const { DuckDBInstance } = await import("@duckdb/node-api")

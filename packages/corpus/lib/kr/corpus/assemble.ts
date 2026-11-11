@@ -11,7 +11,7 @@
  *   (`countries/kr/corpora/assemble.py`), so hoisting one draw above another re-renders both corpora.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, snapshotSourcePath } from "@mailwoman/core/data-root"
 import { directoryHasEntries } from "@mailwoman/core/fs/readers"
 import { isDirectory, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -64,17 +64,17 @@ import {
 export const KR_BOARD_BUCKET_MIN = 90
 
 /**
- * The monthly 주소DB edition the corpus reads.
+ * The monthly 주소DB edition the corpus reads: the 2026-08 snapshot.
  */
 export function jusoZipPath() {
-	return dataRootPath("corpus", "sources", "juso-kr", "202608ALLMTCHG00.zip")
+	return snapshotSourcePath("juso-kr", "2026-08", "202608ALLMTCHG00.zip")
 }
 
 /**
- * The directory of permit-registry CSVs.
+ * The directory of permit-registry CSVs, a current source.
  */
 export function permitDirectoryPath() {
-	return dataRootPath("corpus", "sources", "localdata-kr")
+	return currentSourcePath("localdata-kr")
 }
 
 /**

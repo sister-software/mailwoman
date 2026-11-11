@@ -89,7 +89,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const {
 			layers: { LayerTier },
-			dataRoot: { dataRootPath },
+			dataRoot: { snapshotSourcePath },
 			paths: { poiDatabasePath },
 			poi: { bboxCoverageCells, buildPOIDatabase },
 			overture: { ingestPlaces },
@@ -179,7 +179,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 		if (options.skipIngest) {
 			console.error(`▸ skipping ingest — reading already-materialized Parquet for ${countries.join(",")} @ ${release}`)
 
-			const outDir = dataRootPath("overture", release, "places")
+			const outDir = snapshotSourcePath("overture", release, "places")
 			parquetPaths = countries.map((cc) => `${outDir}/places-${cc.toLowerCase()}.parquet`)
 		} else {
 			console.error(`▸ ingest: Overture places @ ${release} (${countries.join(",")})`)

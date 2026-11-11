@@ -8,10 +8,11 @@
  *   Usage:
  *   node packages/mailwoman/tools/dev-tools/landmarks/build.run.ts [--source-root <fetch root>] [--out <path>]
  *
- *   `--source-root` is the `--out` root `mailwoman corpus fetch wikidata-vital-places` wrote under.
+ *   `--source-root` is the `--out-root` `mailwoman corpus fetch wikidata-vital-places` wrote under,
+ *   by default the current-source root `$MAILWOMAN_CACHE_ROOT/sources/`.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcesRoot, dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -39,7 +40,7 @@ const { values } = parseArguments({
 const AIRPORT_CODES_FILE = "airport-codes.json"
 
 const sourceDir = vitalPlacesPath(
-	PathBuilder.from(values["source-root"] ? resolvePath(values["source-root"]) : dataRootPath("corpus", "sources"))
+	PathBuilder.from(values["source-root"] ? resolvePath(values["source-root"]) : currentSourcesRoot())
 )
 
 const roots = await readLocalJSONFile<ClassRoots>(sourceDir(VITAL_PLACES_FILES.classRoots))

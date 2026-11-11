@@ -7,7 +7,7 @@
  *   places, from a road network source. Sealed 0444.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { allKeyed } from "@mailwoman/core/promises"
 
@@ -23,7 +23,7 @@ export const spec = {
 		out: { type: "string", description: "Output database. Default <data-root>/db/wof/streets-gb-os-open-roads.db" },
 		input: {
 			type: "string",
-			description: "Directory of Open Roads GML. Default <data-root>/corpus/sources/gb-os-open/open-roads/data",
+			description: "Directory of Open Roads GML. Default <cache-root>/sources/gb-os-open/open-roads/data",
 		},
 		boundaries: { type: "string", description: "Boundary file. Default <data-root>/db/wof/wof-polygons.db" },
 	},
@@ -44,7 +44,7 @@ const GazetteerBuildStreets: CommandComponent<typeof spec> = ({ options }) => {
 		const out = options.out ?? wofDatabasePath("streets-gb-os-open-roads.db")
 
 		const counts = await buildStreetTable({
-			edges: readOpenRoadsEdges(options.input ?? dataRootPath("corpus/sources/gb-os-open/open-roads/data")),
+			edges: readOpenRoadsEdges(options.input ?? currentSourcePath("gb-os-open", "open-roads", "data")),
 			countries: ["GB"],
 			boundariesPath: options.boundaries ?? wofDatabasePath("wof-polygons.db"),
 			out,

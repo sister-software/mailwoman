@@ -7,8 +7,9 @@
  *   OpenAddresses source runs the plan admits.
  */
 
-import { US_STATE_ABBREVIATIONS, US_TERRITORY_ABBREVIATIONS } from "@mailwoman/codex/us/state"
+import { isUSStateAbbreviation, US_STATE_ABBREVIATIONS, US_TERRITORY_ABBREVIATIONS } from "@mailwoman/codex/us/state"
 import { usUnitIdentifier } from "@mailwoman/codex/us/unit/designator"
+import { normalizeZIPCode } from "@mailwoman/codex/us/zipcode"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
@@ -244,7 +245,26 @@ export async function cachedRun(
 	return (await pathExists(archive)) ? { path: archive, geojson: false } : null
 }
 
+/**
+ * Every source's records for `state`, each with its postcode read as a ZIP Code
+ * or `null` by {@linkcode normalizeZIPCode}.
+ */
 async function* stateRecords(
+	options: BuildUSAddressLayerOptions,
+	state: string,
+	hasNAD: boolean,
+	runs: readonly string[],
+	scratch: PathBuilder,
+	units: UnitSplitter
+): AsyncGenerator<AddressRecord> {
+	if (!isUSStateAbbreviation(state)) throw new Error(`${state} is not a US state or territory abbreviation`)
+
+	for await (const record of sourceRecords(options, state, hasNAD, runs, scratch, units)) {
+		yield { ...record, postcode: normalizeZIPCode(record.postcode, state) }
+	}
+}
+
+async function* sourceRecords(
 	options: BuildUSAddressLayerOptions,
 	state: string,
 	hasNAD: boolean,
@@ -669,7 +689,7 @@ async function buildStatesInWorkers(
 	scratch: PathBuilder,
 	onRegion: (record: USRegionBuildRecord) => void
 ): Promise<USStateWorkerResult> {
-	const workerModule = fileURLToPath(import.meta.resolve("#us/address-records/layer-worker"))
+	const workerModule = fileURLToPath(import.meta.resolve("#us/address-records/layer/worker"))
 
 	const size = (state: string) =>
 		(rowsByState[state] ?? 0) +

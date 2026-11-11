@@ -37,7 +37,7 @@ export const spec = {
 			description: "Also print each row under every synthesizer augmentation that changes it",
 		},
 		"candidate-db": { type: "string", description: "Candidate database. Default <data-root>/db/wof/candidate.db" },
-		"repos-root": { type: "string", description: "WOF repos directory. Default <data-root>/src/wof-repos" },
+		"repos-root": { type: "string", description: "WOF repos directory. Default <cache-root>/sources/wof-repos" },
 		limit: { type: "number", default: 20, description: "Most name matches listed" },
 	},
 } as const satisfies CommandSpec

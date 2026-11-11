@@ -21,7 +21,7 @@ import {
 	type SourceID,
 	type SourceLock,
 	type SourceLockEntry,
-	sourcePath,
+	pinnedSourceFile,
 	SOURCES,
 } from "#sdk/sources"
 
@@ -69,7 +69,7 @@ export interface DownloadedSource {
  */
 export async function retrieveRegistrySource(source: SourceDefinition, client: APIClient): Promise<DownloadedSource> {
 	const response = await client.fetch<string>({ url: source.url })
-	const path = sourcePath(source)
+	const path = pinnedSourceFile(source)
 	const body = typeof response.data === "string" ? response.data : stringifyJSON(response.data)
 
 	await writeLocalFile(body, path)

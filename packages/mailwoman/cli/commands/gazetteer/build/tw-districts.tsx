@@ -21,7 +21,7 @@ export const spec = {
 		release: { type: "string", description: "Overture release directory. Default 2026-06-17.0" },
 		parquet: {
 			type: "string",
-			description: "Taiwan addresses parquet. Default <data-root>/overture/<release>/addresses-tw.parquet",
+			description: "Taiwan addresses parquet. Default <data-root>/snapshots/overture/<release>/addresses-tw.parquet",
 		},
 		admin: { type: "string", description: "Admin WOF database. Default <data-root>/db/wof/admin-global-priority.db" },
 		out: { type: "string", description: "Output database. Default <data-root>/db/wof/localities-tw-districts.db" },

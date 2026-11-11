@@ -15,20 +15,21 @@
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { statPath } from "@mailwoman/core/fs/readers/stat"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
-import { basename, type PathBuilderLike } from "path-ts"
+import { basename, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
-import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
+import type { FetchSummary, SourceManifest } from "#tools/fetch/download"
+import { downloadToFile, writeManifest } from "#tools/fetch/download"
+import { fetchSnapshot, type SnapshotFetchOptions } from "#tools/fetch/storage"
 
 const INDEX_URL = "https://download.cms.gov/nppes/NPI_Files.html"
 const BASE_URL = "https://download.cms.gov/nppes"
 const SLUG = "usgov-nppes"
 
-export type FetchNPPESOptions = BaseFetchOptions
+export type FetchNPPESOptions = SnapshotFetchOptions
 
 /**
  * Scrape the NPI_Files.html index for the latest full monthly ZIP: full-replacement
@@ -63,11 +64,42 @@ async function findNpidataCSV(zipPath: PathBuilderLike): Promise<string | null> 
 	return entries.find((entry) => /npidata_pfile\S+\.csv/i.test(entry.name))?.name ?? null
 }
 
-export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const destDir = options.outRoot(SLUG)
-	await makeDirectories(destDir)
-	const manifestPath = destDir("MANIFEST.json")
+const MONTHS = [
+	"january",
+	"february",
+	"march",
+	"april",
+	"may",
+	"june",
+	"july",
+	"august",
+	"september",
+	"october",
+	"november",
+	"december",
+] as const
 
+/**
+ * The month a full-replacement archive's name states, as the vintage `YYYY-MM`:
+ * `NPPES_Data_Dissemination_May_2026.zip` is `2026-05`.
+ *
+ * @throws When the name states no month and year.
+ */
+export function nppesVintage(zipFilename: string): string {
+	const match = /NPPES_Data_Dissemination_([A-Za-z]+)_(\d{4})/u.exec(zipFilename)
+	const month = match ? MONTHS.indexOf(match[1]!.toLowerCase() as (typeof MONTHS)[number]) : -1
+
+	if (!match || month < 0) throw new Error(`${SLUG}: ${zipFilename} states no month and year`)
+
+	return `${match[2]}-${String(month + 1).padStart(2, "0")}`
+}
+
+/**
+ * Downloads the latest full-replacement file into its snapshot, `usgov-nppes/<YYYY-MM>/`.
+ *
+ * The vintage is the month the index's archive name states, so it is known before the download.
+ */
+export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	report?.(`=== ${SLUG}`)
 	report?.(`  Discovering latest full-replacement ZIP from ${INDEX_URL} ...`)
 
@@ -79,21 +111,25 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}
 
-	const zipURL = `${BASE_URL}/${zipFilename}`
-	const zipDest = destDir(zipFilename)
 	report?.(`  Latest full file: ${zipFilename}`)
 
-	const recorded = await readManifest<Partial<SourceManifest>>(manifestPath)
+	return fetchSnapshot(
+		options.snapshots,
+		SLUG,
+		nppesVintage(zipFilename),
+		(destDir) => downloadNPPES(zipFilename, destDir, report),
+		report
+	)
+}
 
-	if (recorded?.sha256 && recorded.filename) {
-		const recordedPath = destDir(recorded.filename)
-
-		if ((await pathExists(recordedPath)) && (await sha256File(recordedPath)) === recorded.sha256) {
-			report?.("  ✓ Already current (sha256 matches MANIFEST) — skipping download.")
-
-			return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
-		}
-	}
+async function downloadNPPES(
+	zipFilename: string,
+	destDir: PathBuilder,
+	report?: (line: string) => void
+): Promise<FetchSummary> {
+	const zipURL = `${BASE_URL}/${zipFilename}`
+	const zipDest = destDir(zipFilename)
+	const manifestPath = destDir("MANIFEST.json")
 
 	// MARK: Download ZIP
 

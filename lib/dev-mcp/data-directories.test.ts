@@ -19,6 +19,6 @@ describe("DATA_DIRECTORIES", () => {
 	it("points every Who's On First search at the one repositories root", () => {
 		const wof = DATA_DIRECTORIES.filter(({ holds }) => holds.includes("Who's On First"))
 
-		expect(wof.map(({ path }) => path)).toEqual(["src/wof-repos"])
+		expect(wof.map(({ path, root }) => [root, path])).toEqual([["cache", "sources/wof-repos"]])
 	})
 })

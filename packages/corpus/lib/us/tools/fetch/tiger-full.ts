@@ -8,29 +8,40 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
  * `https://www2.census.gov/geo/tiger/TIGER2024/addrfeat/`, where files use the pattern
  * `tl_2024_<statefips><countyfips>_addrfeat.zip`.
  *
- * Each state's ZIPs land in `<outRoot>/tiger/addrfeat/state-<statefips>/` with a per-state
+ * The release is a snapshot with vintage `2024`. Each state's ZIPs land in
+ * `tiger/2024.partial/addrfeat/state-<statefips>/` under the snapshot root with a per-state
  * `manifest.json` recording filename, sha256 and bytes so re-runs skip already-verified files.
+ * A run with no failed county moves the directory into the vintage, `tiger/2024/`.
  * Extraction and ogr2ogr ingestion happen later, in the `tiger` adapter.
  */
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { assertSnapshotWritable, writeSnapshot } from "@mailwoman/core/fs/snapshot"
+import { makeDirectories, movePath, removePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import type { PathBuilder } from "path-ts"
+import { PathBuilder } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import type { FetchSummary } from "#tools/fetch/download"
 import { readManifest, streamDownload, writeManifest } from "#tools/fetch/download"
+import { type SnapshotFetchOptions, snapshotVintagePath, snapshotWriteOptions } from "#tools/fetch/storage"
 
 const HTTP_OK = 200
 const HTTP_REDIRECT = 300
 
-const TIGER_BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT"
+/**
+ * The TIGER release this module fetches, and the vintage of the snapshot it writes.
+ */
+const TIGER_YEAR = "2024"
 
-export interface FetchTigerFullOptions extends BaseFetchOptions {
+const TIGER_BASE_URL = `https://www2.census.gov/geo/tiger/TIGER${TIGER_YEAR}/ADDRFEAT`
+
+const SLUG = "tiger"
+
+export interface FetchTigerFullOptions extends SnapshotFetchOptions {
 	skipStateFips?: string
 	rateSleep?: number
 	maxParallel?: number
@@ -98,8 +109,20 @@ export async function fetchTigerFull(
 	const maxParallel = options.maxParallel ?? 4
 	const dryRun = options.dryRun ?? false
 
-	const addrfeatDir = options.outRoot("tiger", "addrfeat")
+	// The release year is the vintage, known before any download.
+	// The download of every county takes hours and is retried county by county.
+	// The counties land in `tiger/2024.partial/`, and that directory survives a failed run.
+	// They move into the vintage only once no county failed.
+	const target = snapshotVintagePath(options.snapshots, SLUG, TIGER_YEAR)
+	const writeOptions = snapshotWriteOptions(options.snapshots)
+
+	await assertSnapshotWritable(target, writeOptions)
+
+	const partialDir = PathBuilder.from(`${target}.partial`)
+	const addrfeatDir = partialDir("addrfeat")
+
 	await makeDirectories(addrfeatDir)
+	report?.(`  vintage ${TIGER_YEAR} → ${target}, downloading into ${partialDir}`)
 
 	// MARK: Step 1 — discover the county file list
 
@@ -114,7 +137,7 @@ export async function fetchTigerFull(
 		.then(pluckResponseData)
 
 	const html = listingRes
-	const allZips = [...new Set(html.match(/tl_2024_[0-9]{5}_addrfeat\.zip/g))].toSorted()
+	const allZips = [...new Set(html.match(new RegExp(`tl_${TIGER_YEAR}_[0-9]{5}_addrfeat\\.zip`, "g")))].toSorted()
 	const totalCounties = allZips.length
 	report?.(`  Found ${totalCounties} county ZIPs in the TIGER 2024 ADDRFEAT index.`)
 
@@ -249,7 +272,14 @@ export async function fetchTigerFull(
 	}
 
 	if (totalFailed > 0) {
-		report?.(`WARNING: ${totalFailed} download(s) failed. Re-run to retry.`)
+		report?.(`WARNING: ${totalFailed} download(s) failed. Re-run to retry; ${partialDir} keeps the counties fetched.`)
+	} else if (!dryRun) {
+		await writeSnapshot(target, writeOptions, async (staging) => {
+			await removePath(staging)
+			await movePath(partialDir, staging)
+		})
+
+		report?.(`  ✓ wrote vintage ${TIGER_YEAR} to ${target}`)
 	}
 
 	return { fetched: totalFetched, skipped: totalSkipped + totalSkippedState, failed: totalFailed, failedCodes }

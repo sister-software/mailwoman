@@ -30,7 +30,7 @@ node mailwoman/out/cli.js gazetteer build poi --countries US,CA,MX,FR \
 ```
 
 Two phases: DuckDB ingest (Overture Places S3 → per-country parquet under
-`<data-root>/overture/<release>/`) then the SQLite build (staged bulk load → clustered
+`<data-root>/snapshots/overture/<release>/places/`) then the SQLite build (staged bulk load → clustered
 materialize → FTS → `poi_name_key` index → layer manifest + coverage → seal). `--limit N`
 caps rows for smoke builds. `--skipIngest` reuses existing parquet.
 

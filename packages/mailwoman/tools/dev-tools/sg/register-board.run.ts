@@ -6,7 +6,7 @@
  * Builds the Singapore register board, `gauntlet/cases/sg/register.jsonl`, from a seeded draw of Overture rows.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourcePath } from "@mailwoman/core/data-root"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { isoDate, mulberry32 } from "@mailwoman/core/utils"
@@ -31,7 +31,7 @@ const N = Number(values.n)
 const SEED = Number(values.seed)
 
 const PARQUET = PathBuilder.from(
-	values.parquet ?? dataRootPath("overture", OVERTURE_ADDRESSES_RELEASE, "addresses-sg.parquet")
+	values.parquet ?? snapshotSourcePath("overture", OVERTURE_ADDRESSES_RELEASE, "addresses-sg.parquet")
 )
 
 const OUT = PathBuilder.from(values.out ?? CASES_DIR("sg", "register.jsonl"))

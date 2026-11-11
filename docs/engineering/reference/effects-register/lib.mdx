@@ -42,10 +42,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/dev-mcp/data-directories.ts`
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `Globerator.from` | `unresolved (call)`       | 1     |
-| read | `isDirectory`     | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target               | Calls |
+| ---- | ----------------- | -------------------- | ----- |
+| read | `Globerator.from` | `unresolved (call)`  | 1     |
+| read | `isDirectory`     | `unresolved (other)` | 1     |
 
 ## `lib/dev-mcp/engine/rigs.ts`
 
@@ -55,13 +55,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/dev-mcp/eval-report.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 3     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 2     |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
-| read | `tryStat`           | `unresolved (identifier)` | 1     |
-| read | `tryStat`           | `unresolved (parameter)`  | 1     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `pathExists`        | `unresolved (call)`      | 3     |
+| read | `readLocalJSONFile` | `unresolved (call)`      | 2     |
+| read | `readLocalTextFile` | `unresolved (call)`      | 1     |
+| read | `tryStat`           | `unresolved (call)`      | 1     |
+| read | `tryStat`           | `unresolved (parameter)` | 1     |
 
 ## `lib/dev-mcp/external-arm.ts`
 
@@ -71,13 +71,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/dev-mcp/github.ts`
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `gitCommonDirectory` | `unresolved (parameter)`  | 2     |
-| read    | `workingTreeRoot`    | `unresolved (parameter)`  | 1     |
-| write   | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write   | `writeLocalTextFile` | `unresolved (call)`       | 1     |
-| process | `runFile`            | `literal:gh`              | 1     |
+| Kind    | Interface            | Target                   | Calls |
+| ------- | -------------------- | ------------------------ | ----- |
+| read    | `gitCommonDirectory` | `unresolved (parameter)` | 2     |
+| read    | `workingTreeRoot`    | `unresolved (parameter)` | 1     |
+| write   | `makeDirectories`    | `unresolved (call)`      | 1     |
+| write   | `writeLocalTextFile` | `unresolved (call)`      | 1     |
+| process | `runFile`            | `literal:gh`             | 1     |
 
 ## `lib/dev-mcp/github/ci-monitor.ts`
 
@@ -109,8 +109,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind    | Interface            | Target                    | Calls |
 | ------- | -------------------- | ------------------------- | ----- |
-| read    | `pathExists`         | `unresolved (identifier)` | 2     |
-| read    | `readLocalJSONFile`  | `unresolved (identifier)` | 2     |
+| read    | `pathExists`         | `unresolved (call)`       | 1     |
+| read    | `pathExists`         | `unresolved (identifier)` | 1     |
+| read    | `readLocalJSONFile`  | `unresolved (call)`       | 1     |
+| read    | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
 | write   | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
 | process | `runFile`            | `literal:gh`              | 1     |
 
@@ -136,18 +138,17 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind    | Interface                | Target                    | Calls |
-| ------- | ------------------------ | ------------------------- | ----- |
-| read    | `pathExists`             | `unresolved (identifier)` | 1     |
-| read    | `readLocalTextFile`      | `unresolved (call)`       | 1     |
-| read    | `readLocalTextFile`      | `unresolved (identifier)` | 1     |
-| write   | `makeDirectories`        | `unresolved (identifier)` | 1     |
-| write   | `makeDirectoryExclusive` | `unresolved (parameter)`  | 1     |
-| write   | `movePath`               | `unresolved (identifier)` | 2     |
-| write   | `removePath`             | `unresolved (identifier)` | 1     |
-| write   | `writeLocalJSONFile`     | `unresolved (identifier)` | 1     |
-| process | `runFileSync`            | `literal:gh`              | 2     |
-| process | `spawnProcess`           | `unresolved (property)`   | 1     |
+| Kind    | Interface                | Target                   | Calls |
+| ------- | ------------------------ | ------------------------ | ----- |
+| read    | `pathExists`             | `unresolved (call)`      | 1     |
+| read    | `readLocalTextFile`      | `unresolved (call)`      | 2     |
+| write   | `makeDirectories`        | `unresolved (call)`      | 1     |
+| write   | `makeDirectoryExclusive` | `unresolved (parameter)` | 1     |
+| write   | `movePath`               | `unresolved (call)`      | 2     |
+| write   | `removePath`             | `unresolved (call)`      | 1     |
+| write   | `writeLocalJSONFile`     | `unresolved (call)`      | 1     |
+| process | `runFileSync`            | `literal:gh`             | 2     |
+| process | `spawnProcess`           | `unresolved (property)`  | 1     |
 
 ## `lib/dev-mcp/hooks/vale/edit/check.ts`
 
@@ -165,9 +166,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target                  | Calls |
+| ---- | ------------------- | ----------------------- | ----- |
+| read | `readLocalTextFile` | `unresolved (property)` | 1     |
 
 ## `lib/dev-mcp/hooks/vale/response/check/codex.ts`
 
@@ -175,11 +176,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| write | `removePath`         | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| read  | `pathExists`         | `unresolved (other)` | 1     |
+| write | `removePath`         | `unresolved (other)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (other)` | 1     |
 
 ## `lib/dev-mcp/hooks/vale/rule-digest.ts`
 
@@ -196,12 +197,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/dev-mcp/input-sets.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `pathExists`        | `unresolved (parameter)`  | 1     |
-| read | `pathExists`        | `unresolved (property)`   | 1     |
-| read | `readLocalTextFile` | `unresolved (parameter)`  | 1     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `pathExists`        | `unresolved (parameter)` | 1     |
+| read | `pathExists`        | `unresolved (property)`  | 1     |
+| read | `pathExists`        | `unresolved (template)`  | 1     |
+| read | `readLocalTextFile` | `unresolved (parameter)` | 1     |
 
 ## `lib/dev-mcp/jobs.ts`
 
@@ -219,12 +220,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/dev-mcp/lookup/tool.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `DatabaseClient`    | `unresolved (identifier)` | 1     |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalBuffer`   | `unresolved (property)`   | 1     |
-| read | `readLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind | Interface           | Target                  | Calls |
+| ---- | ------------------- | ----------------------- | ----- |
+| read | `DatabaseClient`    | `unresolved (call)`     | 1     |
+| read | `pathExists`        | `unresolved (call)`     | 1     |
+| read | `readLocalBuffer`   | `unresolved (property)` | 1     |
+| read | `readLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `lib/dev-mcp/oracle-arm.ts`
 
@@ -235,22 +236,22 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/dev-mcp/postcode.ts`
 
-| Kind | Interface                  | Target                    | Calls |
-| ---- | -------------------------- | ------------------------- | ----- |
-| read | `pathExists`               | `unresolved (identifier)` | 2     |
-| read | `TSVSpliterator.fromAsync` | `unresolved (call)`       | 1     |
+| Kind | Interface                  | Target              | Calls |
+| ---- | -------------------------- | ------------------- | ----- |
+| read | `pathExists`               | `unresolved (call)` | 2     |
+| read | `TSVSpliterator.fromAsync` | `unresolved (call)` | 1     |
 
 ## `lib/dev-mcp/provenance.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 2     |
-| read | `pathExists`        | `unresolved (parameter)`  | 1     |
-| read | `readLink`          | `unresolved (parameter)`  | 1     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 2     |
-| read | `statLink`          | `unresolved (parameter)`  | 1     |
-| read | `statPath`          | `unresolved (identifier)` | 1     |
-| read | `statPath`          | `unresolved (parameter)`  | 1     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `pathExists`        | `unresolved (call)`      | 2     |
+| read | `pathExists`        | `unresolved (parameter)` | 1     |
+| read | `readLink`          | `unresolved (parameter)` | 1     |
+| read | `readLocalJSONFile` | `unresolved (call)`      | 2     |
+| read | `statLink`          | `unresolved (parameter)` | 1     |
+| read | `statPath`          | `unresolved (call)`      | 1     |
+| read | `statPath`          | `unresolved (parameter)` | 1     |
 
 ## `lib/dev-mcp/reliability/surfaces.ts`
 
@@ -261,24 +262,24 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/dev-mcp/run-store.ts`
 
-| Kind  | Interface              | Target                    | Calls |
-| ----- | ---------------------- | ------------------------- | ----- |
-| read  | `Globerator.files`     | `unresolved (parameter)`  | 1     |
-| read  | `readLocalTextFile`    | `unresolved (call)`       | 1     |
-| read  | `tryReadLocalJSONFile` | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`      | `unresolved (parameter)`  | 1     |
-| write | `removePathIfPresent`  | `unresolved (call)`       | 2     |
-| write | `writeLocalJSONFile`   | `unresolved (call)`       | 1     |
+| Kind  | Interface              | Target                   | Calls |
+| ----- | ---------------------- | ------------------------ | ----- |
+| read  | `Globerator.files`     | `unresolved (parameter)` | 1     |
+| read  | `readLocalTextFile`    | `unresolved (call)`      | 1     |
+| read  | `tryReadLocalJSONFile` | `unresolved (call)`      | 1     |
+| write | `makeDirectories`      | `unresolved (parameter)` | 1     |
+| write | `removePathIfPresent`  | `unresolved (call)`      | 2     |
+| write | `writeLocalJSONFile`   | `unresolved (call)`      | 1     |
 
 ## `lib/dev-mcp/source-census.ts`
 
-| Kind | Interface          | Target                    | Calls |
-| ---- | ------------------ | ------------------------- | ----- |
-| read | `DatabaseClient`   | `unresolved (parameter)`  | 1     |
-| read | `Globerator.files` | `unresolved (identifier)` | 1     |
-| read | `pathExists`       | `unresolved (identifier)` | 1     |
-| read | `pathExists`       | `unresolved (parameter)`  | 1     |
-| read | `statPath`         | `unresolved (parameter)`  | 1     |
+| Kind | Interface          | Target                   | Calls |
+| ---- | ------------------ | ------------------------ | ----- |
+| read | `DatabaseClient`   | `unresolved (parameter)` | 1     |
+| read | `Globerator.files` | `unresolved (call)`      | 1     |
+| read | `pathExists`       | `unresolved (call)`      | 1     |
+| read | `pathExists`       | `unresolved (parameter)` | 1     |
+| read | `statPath`         | `unresolved (parameter)` | 1     |
 
 ## `lib/dev-mcp/symbol.ts`
 
@@ -306,10 +307,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/dev-mcp/tree-fingerprint.ts`
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `Globerator.from` | `unresolved (identifier)` | 1     |
-| read | `statPath`        | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target               | Calls |
+| ---- | ----------------- | -------------------- | ----- |
+| read | `Globerator.from` | `unresolved (other)` | 1     |
+| read | `statPath`        | `unresolved (call)`  | 1     |
 
 ## `lib/dev-mcp/worker.ts`
 
@@ -320,15 +321,14 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/dev-mcp/worktree/arm.ts`
 
-| Kind    | Interface             | Target                    | Calls |
-| ------- | --------------------- | ------------------------- | ----- |
-| read    | `Globerator.from`     | `unresolved (call)`       | 1     |
-| read    | `Globerator.from`     | `unresolved (identifier)` | 1     |
-| write   | `createSymbolicLink`  | `unresolved (call)`       | 2     |
-| write   | `makeDirectories`     | `unresolved (identifier)` | 2     |
-| write   | `removePathIfPresent` | `unresolved (identifier)` | 1     |
-| write   | `writeLocalFile`      | `unresolved (identifier)` | 1     |
-| process | `runFileSync`         | `unresolved (property)`   | 1     |
+| Kind    | Interface             | Target                  | Calls |
+| ------- | --------------------- | ----------------------- | ----- |
+| read    | `Globerator.from`     | `unresolved (call)`     | 2     |
+| write   | `createSymbolicLink`  | `unresolved (call)`     | 2     |
+| write   | `makeDirectories`     | `unresolved (call)`     | 2     |
+| write   | `removePathIfPresent` | `unresolved (call)`     | 1     |
+| write   | `writeLocalFile`      | `unresolved (call)`     | 1     |
+| process | `runFileSync`         | `unresolved (property)` | 1     |
 
 ## `lib/ops-cli/cli.ts`
 
@@ -344,22 +344,24 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | read  | `readLocalJSONFile`  | `unresolved (identifier)` | 2     |
 | read  | `readLocalTextFile`  | `unresolved (call)`       | 2     |
 | read  | `renamesSince`       | `unresolved (property)`   | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
 
 ## `lib/release-kit/operations/clean.ts`
 
 | Kind  | Interface         | Target                    | Calls |
 | ----- | ----------------- | ------------------------- | ----- |
 | read  | `Globerator.from` | `unresolved (identifier)` | 1     |
-| read  | `tryStat`         | `unresolved (identifier)` | 4     |
-| write | `removeDirectory` | `unresolved (identifier)` | 2     |
+| read  | `tryStat`         | `unresolved (call)`       | 2     |
+| read  | `tryStat`         | `unresolved (identifier)` | 2     |
+| write | `removeDirectory` | `unresolved (call)`       | 1     |
+| write | `removeDirectory` | `unresolved (identifier)` | 1     |
 
 ## `lib/release-kit/operations/cloudflare-tokens.ts`
 
-| Kind  | Interface              | Target                    | Calls |
-| ----- | ---------------------- | ------------------------- | ----- |
-| read  | `tryStat`              | `unresolved (identifier)` | 1     |
-| write | `writePrivateTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface              | Target              | Calls |
+| ----- | ---------------------- | ------------------- | ----- |
+| read  | `tryStat`              | `unresolved (call)` | 1     |
+| write | `writePrivateTextFile` | `unresolved (call)` | 1     |
 
 ## `lib/release-kit/operations/deploy-targets.ts`
 
@@ -369,36 +371,36 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/release-kit/pack/pack-workspace.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `copyFileTo`         | `unresolved (identifier)` | 1     |
-| read  | `readLink`           | `unresolved (identifier)` | 1     |
-| read  | `readLocalTextFile`  | `unresolved (identifier)` | 1     |
-| read  | `tryStatLink`        | `unresolved (identifier)` | 1     |
-| write | `copyFileTo`         | `unresolved (identifier)` | 1     |
-| write | `removePath`         | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile`     | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| read  | `copyFileTo`         | `unresolved (call)` | 1     |
+| read  | `readLink`           | `unresolved (call)` | 1     |
+| read  | `readLocalTextFile`  | `unresolved (call)` | 1     |
+| read  | `tryStatLink`        | `unresolved (call)` | 1     |
+| write | `copyFileTo`         | `unresolved (call)` | 1     |
+| write | `removePath`         | `unresolved (call)` | 1     |
+| write | `writeLocalFile`     | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `lib/release-kit/release/bless-package.ts`
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 1     |
+| Kind | Interface    | Target              | Calls |
+| ---- | ------------ | ------------------- | ----- |
+| read | `pathExists` | `unresolved (call)` | 1     |
 
 ## `lib/release-kit/release/check-parity.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `readLocalJSONFile` | `unresolved (call)` | 1     |
+| read | `readLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `lib/release-kit/release/generated-surfaces.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `dirtyTrackedFiles` | `unresolved (parameter)`  | 1     |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `dirtyTrackedFiles` | `unresolved (parameter)` | 1     |
+| read | `pathExists`        | `unresolved (call)`      | 1     |
 
 ## `lib/release-kit/release/plan.ts`
 
@@ -412,9 +414,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind  | Interface            | Target                    | Calls |
 | ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalTextFile`  | `unresolved (identifier)` | 1     |
+| read  | `readLocalTextFile`  | `unresolved (call)`       | 1     |
 | write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (call)`       | 1     |
 
 ## `lib/release-kit/release/rights-audit.ts`
 
@@ -426,11 +428,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind    | Interface            | Target                           | Calls |
 | ------- | -------------------- | -------------------------------- | ----- |
-| write   | `makeDirectories`    | `unresolved (identifier)`        | 1     |
+| write   | `makeDirectories`    | `unresolved (other)`             | 1     |
 | write   | `movePath`           | `scratch:mailwoman`              | 1     |
 | write   | `movePath`           | `scratch:package`                | 1     |
 | write   | `writeLocalJSONFile` | `scratch:mailwoman/package.json` | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (identifier)`        | 2     |
+| write   | `writeLocalJSONFile` | `unresolved (call)`              | 2     |
 | process | `runFileSync`        | `unresolved (parameter)`         | 1     |
 
 ## `lib/release-kit/release/smoke/clean-install.ts`
@@ -443,16 +445,16 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | write   | `writeLocalJSONFile` | `scratch:*/package.json`    | 1     |
 | write   | `writeLocalJSONFile` | `scratch:proj/package.json` | 1     |
 | process | `runFileSync`        | `unresolved (parameter)`    | 1     |
-| process | `spawnProcess`       | `unresolved (identifier)`   | 1     |
+| process | `spawnProcess`       | `unresolved (call)`         | 1     |
 
 ## `lib/release-kit/release/smoke/get-started.ts`
 
 | Kind        | Interface            | Target                         | Calls |
 | ----------- | -------------------- | ------------------------------ | ----- |
-| read        | `pathExists`         | `unresolved (identifier)`      | 2     |
+| read        | `pathExists`         | `unresolved (call)`            | 2     |
 | write       | `makeDirectories`    | `scratch:project`              | 1     |
 | write       | `makeDirectories`    | `scratch:tarballs`             | 1     |
-| write       | `makeDirectories`    | `unresolved (identifier)`      | 1     |
+| write       | `makeDirectories`    | `unresolved (call)`            | 1     |
 | write       | `writeLocalJSONFile` | `scratch:project/package.json` | 1     |
 | write       | `writeLocalTextFile` | `scratch:project/parse.mjs`    | 1     |
 | process     | `runFileSync`        | `unresolved (parameter)`       | 1     |
@@ -464,15 +466,15 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `awaits at module scope`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `copyPath`            | `unresolved (identifier)` | 1     |
-| read  | `pathExists`          | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`   | `unresolved (call)`       | 1     |
-| write | `copyPath`            | `unresolved (call)`       | 1     |
-| write | `createSymbolicLink`  | `unresolved (call)`       | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 2     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `copyPath`            | `unresolved (call)` | 1     |
+| read  | `pathExists`          | `unresolved (call)` | 1     |
+| read  | `readLocalJSONFile`   | `unresolved (call)` | 1     |
+| write | `copyPath`            | `unresolved (call)` | 1     |
+| write | `createSymbolicLink`  | `unresolved (call)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)` | 2     |
+| write | `removePathIfPresent` | `unresolved (call)` | 1     |
 
 ## `lib/release-kit/release/verify-metadata.ts`
 
@@ -483,35 +485,39 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/release-kit/weights/address-system-width.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 2     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 2     |
+| read | `readLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `lib/release-kit/weights/copy-weights.ts`
 
 | Kind  | Interface               | Target                    | Calls |
 | ----- | ----------------------- | ------------------------- | ----- |
-| read  | `pathExists`            | `unresolved (identifier)` | 7     |
+| read  | `pathExists`            | `unresolved (call)`       | 4     |
+| read  | `pathExists`            | `unresolved (identifier)` | 2     |
+| read  | `pathExists`            | `unresolved (other)`      | 1     |
 | read  | `readLocalBuffer`       | `unresolved (property)`   | 1     |
-| read  | `tryStat`               | `unresolved (identifier)` | 4     |
+| read  | `tryStat`               | `unresolved (identifier)` | 2     |
+| read  | `tryStat`               | `unresolved (other)`      | 2     |
 | read  | `tryStat`               | `unresolved (property)`   | 1     |
-| write | `makeDirectories`       | `unresolved (identifier)` | 4     |
+| write | `makeDirectories`       | `unresolved (call)`       | 4     |
 | write | `makeDirectories`       | `unresolved (property)`   | 1     |
-| write | `movePath`              | `unresolved (identifier)` | 2     |
-| write | `removePathIfPresent`   | `unresolved (call)`       | 2     |
-| write | `removePathIfPresent`   | `unresolved (identifier)` | 2     |
-| write | `replaceFileAtomically` | `unresolved (call)`       | 9     |
-| write | `replaceFileAtomically` | `unresolved (identifier)` | 9     |
+| write | `movePath`              | `unresolved (call)`       | 2     |
+| write | `removePathIfPresent`   | `unresolved (call)`       | 4     |
+| write | `replaceFileAtomically` | `unresolved (call)`       | 14    |
+| write | `replaceFileAtomically` | `unresolved (identifier)` | 2     |
+| write | `replaceFileAtomically` | `unresolved (other)`      | 2     |
 | write | `replaceFileAtomically` | `unresolved (property)`   | 2     |
 
 ## `lib/release-kit/weights/derived-weights-key.ts`
 
 | Kind | Interface          | Target                    | Calls |
 | ---- | ------------------ | ------------------------- | ----- |
-| read | `Globerator.files` | `unresolved (identifier)` | 1     |
+| read | `Globerator.files` | `unresolved (call)`       | 1     |
 | read | `Globerator.from`  | `unresolved (identifier)` | 1     |
-| read | `pathExists`       | `unresolved (identifier)` | 2     |
+| read | `pathExists`       | `unresolved (call)`       | 1     |
+| read | `pathExists`       | `unresolved (identifier)` | 1     |
 | read | `readLocalBuffer`  | `unresolved (identifier)` | 1     |
 | read | `readLocalBuffer`  | `unresolved (parameter)`  | 1     |
 | read | `statPath`         | `unresolved (identifier)` | 1     |
@@ -525,11 +531,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/release-kit/weights/fetch-hf-weights/plan.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 4     |
-| read | `trackedFiles`      | `unresolved (parameter)`  | 1     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `pathExists`        | `unresolved (call)`      | 1     |
+| read | `readLocalJSONFile` | `unresolved (call)`      | 4     |
+| read | `trackedFiles`      | `unresolved (parameter)` | 1     |
 
 ## `lib/release-kit/weights/fetch-hf-weights/transfer.ts`
 
@@ -542,16 +548,16 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/release-kit/weights/link-weights-overlay.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `copyFileTo`          | `unresolved (identifier)` | 1     |
-| read  | `pathExists`          | `unresolved (call)`       | 1     |
-| read  | `pathExists`          | `unresolved (identifier)` | 5     |
-| read  | `readLocalTextFile`   | `unresolved (identifier)` | 1     |
-| write | `copyFileTo`          | `unresolved (call)`       | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 2     |
-| write | `removePathIfPresent` | `unresolved (call)`       | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target                          | Calls |
+| ----- | --------------------- | ------------------------------- | ----- |
+| read  | `copyFileTo`          | `repo:packages/model-card.json` | 1     |
+| read  | `pathExists`          | `repo:packages/model-card.json` | 2     |
+| read  | `pathExists`          | `unresolved (call)`             | 2     |
+| read  | `pathExists`          | `unresolved (identifier)`       | 2     |
+| read  | `readLocalTextFile`   | `repo:packages/model-card.json` | 1     |
+| write | `copyFileTo`          | `unresolved (call)`             | 1     |
+| write | `makeDirectories`     | `unresolved (call)`             | 2     |
+| write | `removePathIfPresent` | `unresolved (call)`             | 2     |
 
 ## `lib/release-kit/weights/rights/model-graph.ts`
 
@@ -561,17 +567,17 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/release-kit/weights/rights/osm-ancestry.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 1     |
+| read | `readLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `lib/release-kit/weights/rights/record.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 2     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 2     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 2     |
+| read | `readLocalJSONFile` | `unresolved (call)` | 2     |
 
 ## `lib/release-kit/weights/rights/write.ts`
 
@@ -584,36 +590,35 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/release-kit/weights/scaffold-weights-overlay.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 2     |
-| read  | `readLocalTextFile`  | `unresolved (call)`       | 1     |
-| read  | `readLocalTextFile`  | `unresolved (identifier)` | 2     |
-| read  | `tryStat`            | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`    | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 4     |
-| write | `writeLocalTextFile` | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 5     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (call)` | 2     |
+| read  | `readLocalTextFile`  | `unresolved (call)` | 3     |
+| read  | `tryStat`            | `unresolved (call)` | 1     |
+| write | `makeDirectories`    | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 4     |
+| write | `writeLocalTextFile` | `unresolved (call)` | 6     |
 
 ## `lib/release-kit/weights/stage-weights-cache.ts`
 
 | Kind  | Interface             | Target                    | Calls |
 | ----- | --------------------- | ------------------------- | ----- |
 | read  | `copyFileTo`          | `unresolved (identifier)` | 1     |
-| read  | `Globerator.from`     | `unresolved (identifier)` | 1     |
-| read  | `isFile`              | `unresolved (identifier)` | 1     |
-| read  | `pathExists`          | `unresolved (identifier)` | 2     |
+| read  | `Globerator.from`     | `unresolved (call)`       | 1     |
+| read  | `isFile`              | `unresolved (call)`       | 1     |
+| read  | `pathExists`          | `unresolved (call)`       | 1     |
+| read  | `pathExists`          | `unresolved (identifier)` | 1     |
 | write | `copyFileTo`          | `unresolved (call)`       | 1     |
 | write | `createSymbolicLink`  | `unresolved (call)`       | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)`       | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`       | 1     |
 
 ## `lib/release-kit/weights/weights-recipe.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 1     |
+| read | `readLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `lib/release-mcp/cli.ts`
 
@@ -692,10 +697,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/repo-health/checks/manifest-targets.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 1     |
+| read | `readLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `lib/repo-health/checks/no-root-scripts.ts`
 
@@ -824,10 +829,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/repo-health/checks/workspace-manifest.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalTextFile` | `unresolved (call)`       | 1     |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `readLocalTextFile` | `unresolved (call)` | 2     |
 
 ## `lib/repo-health/ci/replay.ts`
 
@@ -845,10 +849,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/repo-health/comment/triage.ts`
 
-| Kind  | Interface           | Target                    | Calls |
-| ----- | ------------------- | ------------------------- | ----- |
-| read  | `readLocalTextFile` | `unresolved (identifier)` | 1     |
-| write | `DatabaseClient`    | `unresolved (parameter)`  | 1     |
+| Kind  | Interface           | Target                   | Calls |
+| ----- | ------------------- | ------------------------ | ----- |
+| read  | `readLocalTextFile` | `unresolved (call)`      | 1     |
+| write | `DatabaseClient`    | `unresolved (parameter)` | 1     |
 
 ## `lib/repo-health/comment/triage/inventory.ts`
 
@@ -859,10 +863,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/repo-health/context.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
-| read | `trackedFiles`      | `unresolved (parameter)`  | 1     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `readLocalTextFile` | `unresolved (call)`      | 1     |
+| read | `trackedFiles`      | `unresolved (parameter)` | 1     |
 
 ## `lib/repo-health/effects/census.ts`
 
@@ -880,27 +884,25 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/repo-health/effects/register.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 2     |
-| read  | `readLocalTextFile`  | `unresolved (identifier)` | 1     |
-| read  | `sortedGlob`         | `unresolved (identifier)` | 1     |
-| write | `removeFile`         | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile` | `unresolved (call)`       | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| read  | `pathExists`         | `unresolved (call)` | 2     |
+| read  | `readLocalTextFile`  | `unresolved (call)` | 1     |
+| read  | `sortedGlob`         | `unresolved (call)` | 1     |
+| write | `removeFile`         | `unresolved (call)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `lib/repo-health/move/apply.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `Globerator.from`     | `unresolved (identifier)` | 1     |
-| read  | `pathExists`          | `unresolved (call)`       | 1     |
-| read  | `pathExists`          | `unresolved (identifier)` | 1     |
-| read  | `readLocalTextFile`   | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`     | `unresolved (call)`       | 1     |
-| write | `removePath`          | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile`  | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile`  | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `Globerator.from`     | `unresolved (call)` | 1     |
+| read  | `pathExists`          | `unresolved (call)` | 2     |
+| read  | `readLocalTextFile`   | `unresolved (call)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `removePath`          | `unresolved (call)` | 1     |
+| write | `removePathIfPresent` | `unresolved (call)` | 1     |
+| write | `writeLocalTextFile`  | `unresolved (call)` | 2     |
 
 ## `lib/repo-health/move/literals.ts`
 
@@ -950,14 +952,14 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/storage-kit/operations/migrate.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `isDirectory`        | `unresolved (identifier)` | 1     |
-| read  | `isSymbolicLink`     | `unresolved (identifier)` | 1     |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| write | `createSymbolicLink` | `unresolved (identifier)` | 1     |
-| write | `movePath`           | `unresolved (identifier)` | 2     |
-| write | `removePath`         | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `isDirectory`        | `unresolved (call)`     | 1     |
+| read  | `isSymbolicLink`     | `unresolved (call)`     | 1     |
+| read  | `pathExists`         | `unresolved (template)` | 1     |
+| write | `createSymbolicLink` | `unresolved (call)`     | 1     |
+| write | `movePath`           | `unresolved (call)`     | 1     |
+| write | `movePath`           | `unresolved (template)` | 1     |
 
 ## `lib/storage-kit/sudo.ts`
 

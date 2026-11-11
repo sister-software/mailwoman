@@ -9,7 +9,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { sample } from "@mailwoman/core/random"
@@ -74,28 +74,28 @@ const SOURCE_GROUPS: readonly (readonly CountrySource[])[] = [
 	})),
 	[
 		{
-			zip: dataRootPath("oa-cache", "de__sn__statewide.zip"),
+			zip: currentSourcePath("openaddresses", "de__sn__statewide.zip"),
 			csv: "de/sn/statewide.csv",
 			iso2: "DE",
 			region: "",
 			order: "eu",
 		},
 		{
-			zip: dataRootPath("oa-cache", "fr__countrywide.zip"),
+			zip: currentSourcePath("openaddresses", "fr__countrywide.zip"),
 			csv: "fr/countrywide.csv",
 			iso2: "FR",
 			region: "",
 			order: "fr",
 		},
 		{
-			zip: dataRootPath("oa-cache", "it__countrywide.zip"),
+			zip: currentSourcePath("openaddresses", "it__countrywide.zip"),
 			csv: "it/countrywide.csv",
 			iso2: "IT",
 			region: "",
 			order: "eu",
 		},
 		{
-			zip: dataRootPath("oa-cache", "nl__countrywide.zip"),
+			zip: currentSourcePath("openaddresses", "nl__countrywide.zip"),
 			csv: "nl/countrywide.csv",
 			iso2: "NL",
 			region: "",
@@ -117,7 +117,15 @@ const EVAL_SOURCE_GROUPS: readonly (readonly CountrySource[])[] = [
 			order: "us",
 		},
 	],
-	[{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" }],
+	[
+		{
+			zip: currentSourcePath("openaddresses", "de__berlin.zip"),
+			csv: "de/berlin.csv",
+			iso2: "DE",
+			region: "",
+			order: "eu",
+		},
+	],
 ]
 
 /**
@@ -413,7 +421,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 		const abbrevRegions = usAbbrevRegions()
 
 		if (!pool.length) {
-			throw new Error(`No tuples — are the cached OA zips present in ${dataRootPath("oa-cache")}?`)
+			throw new Error(`No tuples — are the cached OA zips present in ${currentSourcePath("openaddresses")}?`)
 		}
 
 		let emitted = 0

@@ -8,7 +8,7 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readFileRange, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -57,6 +57,8 @@ export interface FetchOpenAddressesOptions extends BaseFetchOptions {
 	sources?: readonly OpenAddressesFetchTarget[] | null
 	/**
 	 * Where source job outputs are cached, the US address layer's OpenAddresses cache.
+	 *
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/openaddresses`
 	 */
 	cache?: PathBuilderLike
 }
@@ -442,7 +444,7 @@ export async function fetchOpenAddresses(
 ): Promise<FetchSummary> {
 	if (options.sources?.length) {
 		return fetchOpenAddressesSources(
-			{ sources: options.sources, cache: options.cache ?? dataRootPath("oa-cache") },
+			{ sources: options.sources, cache: options.cache ?? currentSourcePath("openaddresses") },
 			report
 		)
 	}

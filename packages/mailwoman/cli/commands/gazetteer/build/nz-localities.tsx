@@ -20,7 +20,8 @@ export const spec = {
 	options: {
 		csv: {
 			type: "string",
-			description: "LINZ-derived OA NZ countrywide CSV. Default <data-root>/openaddresses/extracted/nz/countrywide.csv",
+			description:
+				"LINZ-derived OA NZ countrywide CSV. Default <cache-root>/sources/openaddresses/extracted/nz/countrywide.csv",
 		},
 		out: { type: "string", description: "Output database. Default <data-root>/db/wof/localities-nz-linz.db" },
 	},

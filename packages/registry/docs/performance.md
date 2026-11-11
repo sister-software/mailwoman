@@ -111,7 +111,7 @@ decode and validation of the three bitsets costs 0.6 ms.
 ## What the run shows
 
 - On strings, the JavaScript `Set` is the fastest arm at every batch size: 5 to 14 ns per code against 23
-  to 25 ns for the TypeScript bitset, which pays for `charCodeAt` and the key arithmetic that the `Set`'s
+  to 25 ns for the TypeScript bitset. The bitset pays for `charCodeAt` and the key arithmetic that the `Set`'s
   interned string hash avoids. The bitset's advantage is memory and startup rather than per-probe time: 2,197
   bytes decoded in 0.6 ms against a `Set` of 201 strings built from a 2.6 MB JSON parse.
 - The wasm batch over packed bytes reaches 5.9 to 7.7 ns per code from 256 codes up, with the simd build 0.5

@@ -19,14 +19,17 @@
  *   `event=download` and the file number of the nationwide Unicode CSV answers the zip. The file
  *   number is read off the page rather than pinned, because the agency re-issues the files monthly.
  *
- *   Invoke via `mailwoman corpus fetch houjin-jp --out-root <path>`.
+ *   Invoke via `mailwoman corpus fetch houjin-jp`. Each monthly file is a snapshot under
+ *   `$MAILWOMAN_DATA_ROOT/snapshots/houjin-jp/<YYYY-MM-DD>/`.
  */
 
-import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { makeDirectories, movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import type { PathBuilder } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary, SourceCollectionManifest } from "#tools/fetch/download"
+import type { FetchSummary, SourceCollectionManifest } from "#tools/fetch/download"
 import { attachmentFilename, cookieHeader, streamBodyToFile, withRetries, writeManifest } from "#tools/fetch/download"
+import { fetchSnapshot, type SnapshotFetchOptions } from "#tools/fetch/storage"
 
 const SLUG = "houjin-jp"
 const PAGE_URL = "https://www.houjin-bangou.nta.go.jp/download/zenken/"
@@ -36,7 +39,7 @@ const LICENSE = "国税庁法人番号公表サイト — the three published fi
 const ATTRIBUTION = "国税庁 法人番号公表サイト (National Tax Agency, Corporate Number Publication Site)"
 const USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) mailwoman-corpus-fetch"
 
-export type FetchHoujinJPOptions = BaseFetchOptions
+export type FetchHoujinJPOptions = SnapshotFetchOptions
 
 /**
  * The nationwide row of the "CSV形式・Unicode" table stores the file number in its `doDownload(N)` handler.
@@ -51,11 +54,60 @@ function nationwideUnicodeFileNumber(html: string): string | null {
 	return row?.[1] ?? null
 }
 
+/**
+ * The date a nationwide file's attachment name states, as the vintage `YYYY-MM-DD`:
+ * `00_zenkoku_all_20260831.zip` is `2026-08-31`.
+ *
+ * @throws When the name states no date, as the fallback name `zenkoku_all_<file number>.zip` does.
+ */
+export function houjinVintage(filename: string): string {
+	const date = /_(\d{4})(\d{2})(\d{2})\.zip$/u.exec(filename)
+
+	if (!date) throw new Error(`${SLUG}: the download's name ${filename} states no date, so its vintage is unknown`)
+
+	return `${date[1]}-${date[2]}-${date[3]}`
+}
+
+/**
+ * Downloads the nationwide Unicode CSV into its snapshot, `houjin-jp/<YYYY-MM-DD>/`.
+ *
+ * The date is known only from the download's attachment header, so the file is first
+ * written to `houjin-jp/.download-<pid>/` beside the vintages.
+ * The vintage is then read off its name, and the file moves into the vintage through `writeSnapshot`.
+ * A refused vintage removes the download.
+ */
 export async function fetchHoujinJP(
 	options: FetchHoujinJPOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = options.outRoot(SLUG)
+	const downloadDir = options.snapshots.root(SLUG, `.download-${process.pid}`)
+
+	try {
+		const downloaded = await downloadHoujinJP(downloadDir, report)
+
+		if (!("filename" in downloaded)) return downloaded
+
+		return await fetchSnapshot(
+			options.snapshots,
+			SLUG,
+			houjinVintage(downloaded.filename),
+			async (destDir) => {
+				await movePath(downloadDir(downloaded.filename), destDir(downloaded.filename))
+				await writeManifest(destDir("MANIFEST.json"), downloaded.manifest)
+
+				return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
+			},
+			report
+		)
+	} finally {
+		await removePathIfPresent(downloadDir)
+	}
+}
+
+async function downloadHoujinJP(
+	destDir: PathBuilder,
+	report?: (line: string) => void
+): Promise<FetchSummary | { filename: string; manifest: SourceCollectionManifest }> {
 	await makeDirectories(destDir)
 
 	const page = await fetch(PAGE_URL, { headers: { "user-agent": USER_AGENT, accept: "text/html" } })
@@ -133,7 +185,5 @@ export async function fetchHoujinJP(
 		files: [{ source_url: FORM_URL, downloaded_at: new Date().toISOString(), filename, sha256: sha, bytes }],
 	}
 
-	await writeManifest(destDir("MANIFEST.json"), manifest)
-
-	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }
+	return { filename, manifest }
 }

@@ -45,9 +45,9 @@ is the explicit step that trims and upper-cases, and it reports what it did. A m
 `not-found-in-snapshot`: the source holds no such code, and the issuing authority may still have assigned
 it. `inspectArtifact` reads an artifact's profile, sources and coverage.
 
-Each subpath retains its own artifact and no other. `iso3166/alpha2` carries an 85-byte bitset;
-`overlap/country-airport`'s `isCountryAirportCollision` carries the 2,197-byte collision bitset;
-`interpretCountryOrAirportCode` carries the two record artifacts (51 KB and 1.1 MB). The root entry
+Each subpath retains its own artifact and no other. `iso3166/alpha2` loads an 85-byte bitset;
+`overlap/country-airport`'s `isCountryAirportCollision` loads the 2,197-byte collision bitset;
+`interpretCountryOrAirportCode` loads the two record artifacts (51 KB and 1.1 MB). The root entry
 re-exports the subpaths and decodes an artifact at its first call.
 
 ## Brands

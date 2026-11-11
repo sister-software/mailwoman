@@ -9,7 +9,7 @@
  */
 
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { SeededRandom } from "@mailwoman/core/utils"
 import { compactPostcode } from "@mailwoman/postcode/display-form"
@@ -52,7 +52,7 @@ interface PostcodeSource {
 	country: string
 }
 
-const EXTRACTED = dataRootPath("openaddresses", "extracted")
+const EXTRACTED = currentSourcePath("openaddresses", "extracted")
 
 /**
  * Each file's publisher has a register row whose elected decision permits transform
@@ -185,7 +185,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		if (missing.length) {
 			throw new Error(
 				`bare-postcode is missing ${missing.length} of ${SOURCES.length} required OpenAddresses files, ` +
-					`starting with ${missing[0]}. Fetch the per-source runs into \`openaddresses/extracted/\` ` +
+					`starting with ${missing[0]}. Fetch the per-source runs into ${EXTRACTED} ` +
 					"(anonymous, see packages/corpus/CLAUDE.md)."
 			)
 		}

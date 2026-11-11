@@ -20,11 +20,12 @@ A directory containing one or more cloned `whosonfirst-data-admin-*` repos:
     └── data/...
 ```
 
-`<inputPath>` is the repositories root, `$MAILWOMAN_DATA_ROOT/src/wof-repos`,
-which every recorded corpus build names in its `inputs.json`. Each repository
-is cloned once there, from its `mailwoman` fork, by
+`<inputPath>` is the repositories root, `$MAILWOMAN_CACHE_ROOT/sources/wof-repos`.
+Each repository is cloned once there, from its `mailwoman` fork, by
 `mailwoman gazetteer inspect sync`, and the adapter walks that root
-recursively (`**/*.geojson`). To add the repositories one country needs:
+recursively (`**/*.geojson`). The `inputs.json` of each corpus build recorded
+before 2026-11-10 records the earlier root, `src/wof-repos` under the data root.
+To add the repositories one country needs:
 
 ```sh
 mailwoman gazetteer inspect sync --countries us,fr

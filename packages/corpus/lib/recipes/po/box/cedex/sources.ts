@@ -4,7 +4,7 @@
 
 import { isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"
 import { isNZPostcode } from "@mailwoman/codex/nz"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import type { PathBuilderLike } from "path-ts"
@@ -17,7 +17,7 @@ import type { USSkeletonSource } from "#us/recipes/skeleton-sources"
 /**
  * Countrywide French OpenAddresses source.
  */
-export const FR_SOURCE = { zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
+export const FR_SOURCE = { zip: currentSourcePath("openaddresses", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
 /**
  * GeoNames Canada feature dump.
  */

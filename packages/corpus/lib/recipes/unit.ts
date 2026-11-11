@@ -12,7 +12,7 @@
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -257,7 +257,7 @@ export const unitRecipe: CorpusRecipe = {
 
 		if (!pool.length) {
 			throw new Error(
-				`No US tuples found — are the cached OA zips present in ${dataRootPath("oa-cache")} and the NAD ` +
+				`No US tuples found — are the cached OA zips present in ${currentSourcePath("openaddresses")} and the NAD ` +
 					`skeletons in ${dataRootPath(NAD_SKELETON_DIRECTORY)}?`
 			)
 		}

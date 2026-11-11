@@ -7,17 +7,17 @@
  *
  *   Usage:
  *     node packages/corpus/lib/tools/fragment-assay.run.ts \
- *       --oa-root $MAILWOMAN_DATA_ROOT/openaddresses/extracted \
+ *       --oa-root $MAILWOMAN_CACHE_ROOT/sources/openaddresses/extracted \
  *       --corpus-parquet-glob "$MAILWOMAN_DATA_ROOT/corpus/versioned/v0.5.0/**\/train/part-000*.parquet" \
  *       --out-parquet out/part-fragment.parquet --out-dev out/fragment-dev.jsonl \
  *       [--famous-localities-file <names.txt>] [--locality-parquet-glob <glob>] [--ryhti-file <open_address.csv>]
  *       [--per-locale-cap 4000] [--unshippable-reason <why>]
  *
  *   `--locality-parquet-glob` defaults to `LOCALITY_PARQUET_GLOB` under the data root, and an empty value reads the
- *   main glob. `--ryhti-file` defaults to `RYHTI_FILE` under the data root, and an empty value writes no Finnish rows.
+ *   main glob. `--ryhti-file` defaults to `RYHTI_FILE` under the cache root's `sources/`, and an empty value writes no Finnish rows.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcesRoot, dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 import { dirname } from "path-ts"
 
@@ -58,7 +58,7 @@ await buildFragmentAssay({
 	corpusParquetGlob: requiredArgument(command, "--corpus-parquet-glob", values["corpus-parquet-glob"]),
 	famousLocalitiesFile: values["famous-localities-file"],
 	localityParquetGlob: values["locality-parquet-glob"] ?? dataRootPath(LOCALITY_PARQUET_GLOB).toString(),
-	ryhtiFile: values["ryhti-file"] ?? dataRootPath(RYHTI_FILE).toString(),
+	ryhtiFile: values["ryhti-file"] ?? currentSourcesRoot()(RYHTI_FILE).toString(),
 	outParquet,
 	outDev: requiredArgument(command, "--out-dev", values["out-dev"]),
 	perLocaleCap: cap,

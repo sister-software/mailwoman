@@ -13,6 +13,7 @@ import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr/stream"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder } from "path-ts"
 
+import { tigerDatabaseRoot } from "#paths"
 import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "#schema"
 import { initializeTIGERSchema, TIGER_PRAGMAS } from "#schema"
 import { downloadIfNeeded } from "#sdk/download"
@@ -66,7 +67,7 @@ export interface FetchTIGEROptions {
 	/**
 	 * The output SQLite path.
 	 *
-	 * @defaultValue `<dataRoot>/tiger/tiger.db`, which the corpus `tiger` adapter reads.
+	 * @defaultValue `<dataRoot>/db/tiger/tiger.db`, which the corpus `tiger` adapter reads.
 	 */
 	outPath?: string
 
@@ -204,7 +205,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 	const cacheDir = dataRoot("tiger", String(vintage), state)
 
-	const outPath = PathBuilder.from(options.outPath ?? dataRoot("tiger", "tiger.db"))
+	const outPath = PathBuilder.from(options.outPath ?? tigerDatabaseRoot(dataRoot)("tiger.db"))
 	await makeDirectories(cacheDir)
 	await makeDirectories(outPath.dirname())
 

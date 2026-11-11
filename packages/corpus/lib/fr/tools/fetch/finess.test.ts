@@ -10,7 +10,6 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { silentLogger } from "@mailwoman/core/logging"
-import { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -18,7 +17,7 @@ import {
 	downloadFinessExtract,
 	FINESS_DATASET_API_URL,
 	type FinessExtractManifest,
-	finessInputPath,
+	finessVintage,
 	readServedMD5,
 	selectFinessExtract,
 } from "#fr/tools/fetch/finess"
@@ -120,8 +119,8 @@ describe("downloadFinessExtract", () => {
 	})
 })
 
-describe("finessInputPath", () => {
-	it("answers the directory the adapter reads", () => {
-		expect(finessInputPath(PathBuilder.from("/tmp/sources")).toString()).toBe("/tmp/sources/fr-finess-overseas")
+describe("finessVintage", () => {
+	it("dates the snapshot by the extraction date the extract's name states", () => {
+		expect(finessVintage(selectFinessExtract(DATASET).filename)).toBe("2026-05-12")
 	})
 })

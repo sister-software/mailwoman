@@ -23,7 +23,7 @@
  *   gauntlet board, is refused.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourcePath } from "@mailwoman/core/data-root"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { isSpacelessScriptWord, venueHeadLexicon } from "@mailwoman/poi-taxonomy/venue-heads"
@@ -47,7 +47,7 @@ import { SurfaceOrigin } from "#types"
 /**
  * The Overture release the venue-head table is built from, so the two read one name population.
  */
-export const DEFAULT_VENUE_NAMES: PathBuilderLike = dataRootPath(
+export const DEFAULT_VENUE_NAMES: PathBuilderLike = snapshotSourcePath(
 	"overture",
 	"2026-09-23.1",
 	"place-names",

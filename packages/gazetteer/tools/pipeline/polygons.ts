@@ -27,7 +27,7 @@ export interface BuildPolygonsOptions {
 	/**
 	 * The directory that holds the `whosonfirst-data-*` clones.
 	 *
-	 * @defaultValue `<data-root>/src/wof-repos/whosonfirst-data`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/wof-repos`
 	 */
 	reposDir?: PathBuilderLike
 	/**

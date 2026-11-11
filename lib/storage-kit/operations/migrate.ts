@@ -11,7 +11,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { isDirectory, isSymbolicLink, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { createSymbolicLink, movePath, removePath } from "@mailwoman/core/fs/writers"
+import { createSymbolicLink, movePath } from "@mailwoman/core/fs/writers"
 import { relative, resolvePath } from "path-ts"
 import { z } from "zod"
 
@@ -46,11 +46,16 @@ const migrateOutput = z.object({
 
 /**
  * The mount point that holds `path`, as the kernel reports it.
+ *
+ * A systemd automount stacks its `autofs` mount under the filesystem it mounts, and `findmnt`
+ * prints one line per stacked mount, so the last line holds the mount the path resolves through.
  */
 async function mountTarget(path: string): Promise<string | null> {
 	const probe = await runHostCommand("findmnt", ["--noheadings", "--output", "TARGET", "--target", path])
 
-	return probe.exitCode === 0 ? probe.stdout.trim() : null
+	if (probe.exitCode !== 0) return null
+
+	return /([^\n]+)\s*$/u.exec(probe.stdout)?.[1]?.trim() ?? null
 }
 
 /**
@@ -162,7 +167,12 @@ export const migrateOperation = defineOperation({
 			return { source, destination, steps, kept: aside }
 		}
 
-		await removePath(aside)
+		// The host's `rm` removes a tree of millions of files outside the Node heap.
+		// Node's recursive `rm` grows the heap with the tree and runs out of memory on the WOF clones.
+		const removal = await runHostCommand("rm", ["-r", "--one-file-system", "--", aside])
+
+		if (removal.exitCode !== 0) throw new Error(`remove: rm exited ${removal.exitCode}: ${removal.stderr.trim()}`)
+
 		step(`removed ${aside}`)
 
 		return { source, destination, steps, kept: null }

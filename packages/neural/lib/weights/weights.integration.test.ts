@@ -1,4 +1,4 @@
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { isFile, pathExists } from "@mailwoman/core/fs/readers/stat"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -48,7 +48,7 @@ const haveCLI = await pathExists(CLI_PATH)
 const GB_PAIR_ADMIN_DB_PATH = dataRootPath("db", "wof", "admin-global-priority.db")
 const haveGBPairSources = await pathExists(GB_PAIR_ADMIN_DB_PATH)
 
-const NZ_SOURCE_CSV_PATH = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
+const NZ_SOURCE_CSV_PATH = currentSourcePath("openaddresses", "extracted", "nz", "countrywide.csv")
 const haveNZSource = await pathExists(NZ_SOURCE_CSV_PATH)
 
 const LINK_SCRIPT_TIMEOUT_MS = 600_000

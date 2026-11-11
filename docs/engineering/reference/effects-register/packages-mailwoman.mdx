@@ -23,13 +23,13 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/mailwoman/cli/commands/corpus/recipe/index.tsx`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| write | `movePath`            | `unresolved (identifier)` | 1     |
-| write | `movePath`            | `unresolved (property)`   | 1     |
-| write | `openWriteStream`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`  | `unresolved (template)`   | 1     |
+| Kind  | Interface             | Target                  | Calls |
+| ----- | --------------------- | ----------------------- | ----- |
+| write | `movePath`            | `unresolved (property)` | 1     |
+| write | `movePath`            | `unresolved (template)` | 1     |
+| write | `openWriteStream`     | `unresolved (template)` | 1     |
+| write | `removePathIfPresent` | `unresolved (template)` | 1     |
+| write | `writeLocalJSONFile`  | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/cli/commands/corpus/tuples.tsx`
 
@@ -41,8 +41,9 @@ The others hold neither an effect edge nor an import-time effect.
 
 | Kind        | Interface         | Target                                    | Calls |
 | ----------- | ----------------- | ----------------------------------------- | ----- |
-| read        | `Globerator.from` | `unresolved (identifier)`                 | 1     |
-| read        | `pathExists`      | `unresolved (identifier)`                 | 4     |
+| read        | `Globerator.from` | `unresolved (call)`                       | 1     |
+| read        | `pathExists`      | `unresolved (call)`                       | 3     |
+| read        | `pathExists`      | `unresolved (other)`                      | 1     |
 | read        | `pathExists`      | `unresolved (property)`                   | 1     |
 | environment | `$private`        | `environment:RCLONE_S3_ACCESS_KEY_ID`     | 1     |
 | environment | `$private`        | `environment:RCLONE_S3_ENDPOINT`          | 1     |
@@ -50,10 +51,10 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/mailwoman/cli/commands/data/bom.tsx`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| read  | `pathExists`         | `unresolved (other)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/cli/commands/data/build.tsx`
 
@@ -69,9 +70,9 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/mailwoman/cli/commands/data/status.tsx`
 
-| Kind | Interface  | Target                    | Calls |
-| ---- | ---------- | ------------------------- | ----- |
-| read | `statPath` | `unresolved (identifier)` | 1     |
+| Kind | Interface  | Target              | Calls |
+| ---- | ---------- | ------------------- | ----- |
+| read | `statPath` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/cli/commands/eval/absence-observation-probe.tsx`
 
@@ -111,17 +112,17 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/mailwoman/cli/commands/gazetteer/affix-relabel.tsx`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `makeDirectories`    | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| write | `makeDirectories`    | `unresolved (call)`  | 1     |
+| write | `writeLocalJSONFile` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/anchor-lexicon.tsx`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `makeDirectories`    | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| write | `makeDirectories`    | `unresolved (call)`  | 1     |
+| write | `writeLocalJSONFile` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/build/bdc.tsx`
 
@@ -133,9 +134,10 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/mailwoman/cli/commands/gazetteer/build/candidate.tsx`
 
-| Kind | Interface | Target                    | Calls |
-| ---- | --------- | ------------------------- | ----- |
-| read | `tryStat` | `unresolved (identifier)` | 2     |
+| Kind | Interface | Target               | Calls |
+| ---- | --------- | -------------------- | ----- |
+| read | `tryStat` | `unresolved (call)`  | 1     |
+| read | `tryStat` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/build/coastal.tsx`
 
@@ -179,12 +181,13 @@ The others hold neither an effect edge nor an import-time effect.
 
 | Kind  | Interface         | Target                    | Calls |
 | ----- | ----------------- | ------------------------- | ----- |
-| read  | `pathExists`      | `unresolved (identifier)` | 2     |
-| read  | `readLocalBuffer` | `unresolved (identifier)` | 1     |
-| write | `changeMode`      | `unresolved (identifier)` | 1     |
+| read  | `pathExists`      | `unresolved (call)`       | 1     |
+| read  | `pathExists`      | `unresolved (identifier)` | 1     |
+| read  | `readLocalBuffer` | `unresolved (call)`       | 1     |
+| write | `changeMode`      | `unresolved (call)`       | 1     |
 | write | `makeDirectories` | `unresolved (call)`       | 1     |
-| write | `movePath`        | `unresolved (identifier)` | 2     |
-| write | `writeLocalFile`  | `unresolved (identifier)` | 1     |
+| write | `movePath`        | `unresolved (call)`       | 2     |
+| write | `writeLocalFile`  | `unresolved (call)`       | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/build/soil.tsx`
 
@@ -200,16 +203,16 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/mailwoman/cli/commands/gazetteer/census.tsx`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| read  | `pathExists`     | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| read  | `pathExists`     | `unresolved (other)` | 1     |
+| write | `writeLocalFile` | `unresolved (call)`  | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/conventions.tsx`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target                  | Calls |
+| ---- | ------------------- | ----------------------- | ----- |
+| read | `readLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/country-plan.tsx`
 
@@ -235,7 +238,8 @@ The others hold neither an effect edge nor an import-time effect.
 
 | Kind  | Interface         | Target                    | Calls |
 | ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (identifier)` | 2     |
+| read  | `tryStat`         | `unresolved (identifier)` | 1     |
+| read  | `tryStat`         | `unresolved (property)`   | 1     |
 | write | `makeDirectories` | `unresolved (call)`       | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/inspect/graph.tsx`
@@ -252,17 +256,17 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/mailwoman/cli/commands/gazetteer/inspect/placetype-stats.tsx`
 
-| Kind | Interface        | Target                    | Calls |
-| ---- | ---------------- | ------------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (identifier)` | 1     |
+| Kind | Interface        | Target               | Calls |
+| ---- | ---------------- | -------------------- | ----- |
+| read | `DatabaseClient` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/inspect/sync/index.tsx`
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| write   | `makeDirectories`    | `unresolved (call)`       | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
-| process | `runFile`            | `literal:gh`              | 1     |
+| Kind    | Interface            | Target              | Calls |
+| ------- | -------------------- | ------------------- | ----- |
+| write   | `makeDirectories`    | `unresolved (call)` | 1     |
+| write   | `writeLocalJSONFile` | `unresolved (call)` | 1     |
+| process | `runFile`            | `literal:gh`        | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/inspect/tree.tsx`
 
@@ -272,35 +276,37 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/mailwoman/cli/commands/gazetteer/overture-ingest.tsx`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| write | `makeDirectories`    | `unresolved (other)` | 2     |
+| write | `writeLocalJSONFile` | `unresolved (other)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/pair-index.tsx`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| read  | `openReadStream` | `unresolved (identifier)` | 1     |
-| read  | `pathExists`     | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target                  | Calls |
+| ----- | ---------------- | ----------------------- | ----- |
+| read  | `openReadStream` | `unresolved (property)` | 1     |
+| read  | `pathExists`     | `unresolved (property)` | 1     |
+| write | `writeLocalFile` | `unresolved (call)`     | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/polygons.tsx`
 
 | Kind  | Interface               | Target                    | Calls |
 | ----- | ----------------------- | ------------------------- | ----- |
-| read  | `pathExists`            | `unresolved (identifier)` | 2     |
-| read  | `readLocalTextFile`     | `unresolved (identifier)` | 1     |
+| read  | `pathExists`            | `unresolved (call)`       | 1     |
+| read  | `pathExists`            | `unresolved (identifier)` | 1     |
+| read  | `readLocalTextFile`     | `unresolved (call)`       | 1     |
 | write | `removePath`            | `unresolved (identifier)` | 1     |
-| write | `swapDatabaseIntoPlace` | `unresolved (identifier)` | 2     |
+| write | `swapDatabaseIntoPlace` | `unresolved (property)`   | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (template)`   | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/postal/alias.tsx`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| write | `makeDirectories`     | `unresolved (call)`       | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target               | Calls |
+| ----- | --------------------- | -------------------- | ----- |
+| write | `makeDirectories`     | `unresolved (call)`  | 1     |
+| write | `removePathIfPresent` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/postcode/binary.tsx`
 
@@ -308,35 +314,36 @@ The others hold neither an effect edge nor an import-time effect.
 | ----- | ---------------- | ------------------------- | ----- |
 | read  | `DatabaseClient` | `unresolved (identifier)` | 1     |
 | read  | `pathExists`     | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| write | `writeLocalFile` | `unresolved (call)`       | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/postcode/intl.tsx`
 
-| Kind  | Interface    | Target                    | Calls |
-| ----- | ------------ | ------------------------- | ----- |
-| read  | `copyFileTo` | `unresolved (parameter)`  | 1     |
-| read  | `pathExists` | `unresolved (identifier)` | 2     |
-| read  | `pathExists` | `unresolved (parameter)`  | 1     |
-| write | `copyFileTo` | `unresolved (parameter)`  | 1     |
+| Kind  | Interface    | Target                   | Calls |
+| ----- | ------------ | ------------------------ | ----- |
+| read  | `copyFileTo` | `unresolved (parameter)` | 1     |
+| read  | `pathExists` | `unresolved (other)`     | 1     |
+| read  | `pathExists` | `unresolved (parameter)` | 1     |
+| read  | `pathExists` | `unresolved (property)`  | 1     |
+| write | `copyFileTo` | `unresolved (parameter)` | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/triage.tsx`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| write | `makeDirectories`     | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONLFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `writeLocalJSONLFile` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/cli/commands/gazetteer/verify/index.tsx`
 
-| Kind | Interface        | Target                    | Calls |
-| ---- | ---------------- | ------------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (identifier)` | 1     |
+| Kind | Interface        | Target               | Calls |
+| ---- | ---------------- | -------------------- | ----- |
+| read | `DatabaseClient` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/cli/commands/parse.tsx`
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 1     |
+| Kind | Interface    | Target               | Calls |
+| ---- | ------------ | -------------------- | ----- |
+| read | `pathExists` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/cli/commands/registry/run.tsx`
 
@@ -361,54 +368,55 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/mailwoman/cli/commands/situs/attribution-manifest.tsx`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `DatabaseClient`     | `unresolved (call)`       | 1     |
-| read  | `Globerator.files`   | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| read  | `DatabaseClient`     | `unresolved (call)` | 1     |
+| read  | `Globerator.files`   | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/cli/commands/situs/build.tsx`
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `DatabaseClient`     | `unresolved (parameter)`  | 1     |
-| read    | `pathExists`         | `unresolved (parameter)`  | 1     |
-| write   | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
-| process | `spawnProcess`       | `unresolved (property)`   | 1     |
+| Kind    | Interface            | Target                   | Calls |
+| ------- | -------------------- | ------------------------ | ----- |
+| read    | `DatabaseClient`     | `unresolved (parameter)` | 1     |
+| read    | `pathExists`         | `unresolved (parameter)` | 1     |
+| write   | `makeDirectories`    | `unresolved (call)`      | 1     |
+| write   | `writeLocalJSONFile` | `unresolved (call)`      | 1     |
+| process | `spawnProcess`       | `unresolved (property)`  | 1     |
 
 ## `packages/mailwoman/cli/commands/situs/interpolation/database.tsx`
 
-| Kind  | Interface               | Target                    | Calls |
-| ----- | ----------------------- | ------------------------- | ----- |
-| read  | `buildSHA`              | `repo:`                   | 1     |
-| read  | `Globerator.from`       | `unresolved (other)`      | 1     |
-| write | `makeDirectories`       | `unresolved (call)`       | 1     |
-| write | `removePathIfPresent`   | `unresolved (other)`      | 1     |
-| write | `swapDatabaseIntoPlace` | `unresolved (identifier)` | 2     |
+| Kind  | Interface               | Target                  | Calls |
+| ----- | ----------------------- | ----------------------- | ----- |
+| read  | `buildSHA`              | `repo:`                 | 1     |
+| read  | `Globerator.from`       | `unresolved (other)`    | 1     |
+| write | `makeDirectories`       | `unresolved (call)`     | 1     |
+| write | `removePathIfPresent`   | `unresolved (other)`    | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (call)`     | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/cli/commands/situs/interpolation/index.tsx`
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `Globerator.files`   | `unresolved (identifier)` | 1     |
-| read    | `pathExists`         | `unresolved (identifier)` | 3     |
-| read    | `pathExists`         | `unresolved (property)`   | 1     |
-| read    | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write   | `makeDirectories`    | `unresolved (call)`       | 1     |
-| write   | `makeDirectories`    | `unresolved (identifier)` | 2     |
-| write   | `makeDirectories`    | `unresolved (parameter)`  | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
-| network | `fetch`              | `unresolved (parameter)`  | 1     |
+| Kind    | Interface            | Target                   | Calls |
+| ------- | -------------------- | ------------------------ | ----- |
+| read    | `Globerator.files`   | `unresolved (call)`      | 1     |
+| read    | `pathExists`         | `unresolved (call)`      | 3     |
+| read    | `pathExists`         | `unresolved (property)`  | 1     |
+| read    | `readLocalJSONFile`  | `unresolved (call)`      | 1     |
+| write   | `makeDirectories`    | `unresolved (call)`      | 2     |
+| write   | `makeDirectories`    | `unresolved (other)`     | 1     |
+| write   | `makeDirectories`    | `unresolved (parameter)` | 1     |
+| write   | `writeLocalJSONFile` | `unresolved (call)`      | 1     |
+| network | `fetch`              | `unresolved (parameter)` | 1     |
 
 ## `packages/mailwoman/cli/commands/skill/install.tsx`
 
 | Kind  | Interface             | Target                               | Calls |
 | ----- | --------------------- | ------------------------------------ | ----- |
-| read  | `copyPath`            | `unresolved (identifier)`            | 1     |
+| read  | `copyPath`            | `unresolved (call)`                  | 1     |
 | read  | `pathExists`          | `package:mailwoman/skills/mailwoman` | 1     |
-| write | `copyPath`            | `unresolved (identifier)`            | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)`            | 1     |
+| write | `copyPath`            | `unresolved (call)`                  | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`                  | 1     |
 
 ## `packages/mailwoman/cli/commands/tiles/publish.tsx`
 
@@ -441,7 +449,7 @@ The others hold neither an effect edge nor an import-time effect.
 | Kind        | Interface        | Target                                     | Calls |
 | ----------- | ---------------- | ------------------------------------------ | ----- |
 | read        | `DatabaseClient` | `unresolved (parameter)`                   | 1     |
-| read        | `pathExists`     | `unresolved (identifier)`                  | 1     |
+| read        | `pathExists`     | `unresolved (call)`                        | 1     |
 | read        | `statPath`       | `unresolved (parameter)`                   | 1     |
 | environment | `$public`        | `environment:MAILWOMAN_CANDIDATE_DB`       | 3     |
 | environment | `$public`        | `environment:MAILWOMAN_DATA_ROOT`          | 1     |
@@ -479,22 +487,23 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/cli/native/command/router.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `Globerator.from`   | `unresolved (identifier)` | 1     |
-| read | `Globerator.from`   | `unresolved (parameter)`  | 1     |
-| read | `readLocalTextFile` | `unresolved (other)`      | 1     |
-| read | `tryStat`           | `unresolved (call)`       | 2     |
-| read | `tryStat`           | `unresolved (identifier)` | 2     |
-| read | `tryStat`           | `unresolved (other)`      | 1     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `Globerator.from`   | `unresolved (other)`     | 1     |
+| read | `Globerator.from`   | `unresolved (parameter)` | 1     |
+| read | `readLocalTextFile` | `unresolved (other)`     | 1     |
+| read | `tryStat`           | `unresolved (call)`      | 4     |
+| read | `tryStat`           | `unresolved (other)`     | 1     |
 
 ## `packages/mailwoman/cli/native/commands/license.ts`
 
 | Kind        | Interface              | Target                                                     | Calls |
 | ----------- | ---------------------- | ---------------------------------------------------------- | ----- |
 | read        | `pathExists`           | `config-root:license/signing-key.pem`                      | 1     |
-| read        | `pathExists`           | `unresolved (identifier)`                                  | 2     |
-| read        | `readLocalTextFile`    | `unresolved (identifier)`                                  | 2     |
+| read        | `pathExists`           | `unresolved (call)`                                        | 1     |
+| read        | `pathExists`           | `unresolved (other)`                                       | 1     |
+| read        | `readLocalTextFile`    | `unresolved (call)`                                        | 1     |
+| read        | `readLocalTextFile`    | `unresolved (other)`                                       | 1     |
 | write       | `writeLocalTextFile`   | `config-root:license/signing-key.pub.pem`                  | 1     |
 | write       | `writeLocalTextFile`   | `repo:docs/static/.well-known/mailwoman/license-keys.json` | 1     |
 | write       | `writePrivateTextFile` | `config-root:license/signing-key.pem`                      | 1     |
@@ -502,10 +511,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/cli/native/commands/license/attribution.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 1     |
+| read | `readLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/cli/setup/plan.ts`
 
@@ -539,60 +548,62 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/lib/data/acquire.ts`
 
-| Kind  | Interface                      | Target                    | Calls |
-| ----- | ------------------------------ | ------------------------- | ----- |
-| read  | `tryReadLocalJSONFile`         | `unresolved (identifier)` | 1     |
-| read  | `tryStat`                      | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`              | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent`          | `unresolved (identifier)` | 5     |
-| write | `writeLocalJSONFileAtomically` | `unresolved (identifier)` | 2     |
+| Kind  | Interface                      | Target              | Calls |
+| ----- | ------------------------------ | ------------------- | ----- |
+| read  | `tryReadLocalJSONFile`         | `unresolved (call)` | 1     |
+| read  | `tryStat`                      | `unresolved (call)` | 1     |
+| write | `makeDirectories`              | `unresolved (call)` | 1     |
+| write | `removePathIfPresent`          | `unresolved (call)` | 5     |
+| write | `writeLocalJSONFileAtomically` | `unresolved (call)` | 2     |
 
 ## `packages/mailwoman/lib/data/build.ts`
 
-| Kind  | Interface                      | Target                    | Calls |
-| ----- | ------------------------------ | ------------------------- | ----- |
-| read  | `Globerator.from`              | `unresolved (identifier)` | 1     |
-| read  | `tryReadLocalJSONFile`         | `unresolved (call)`       | 2     |
-| read  | `tryStat`                      | `unresolved (call)`       | 1     |
-| read  | `tryStat`                      | `unresolved (identifier)` | 2     |
-| read  | `tryStat`                      | `unresolved (property)`   | 1     |
-| write | `makeDirectories`              | `unresolved (identifier)` | 3     |
-| write | `movePath`                     | `unresolved (identifier)` | 1     |
-| write | `movePath`                     | `unresolved (property)`   | 1     |
-| write | `removePathIfPresent`          | `unresolved (call)`       | 1     |
-| write | `removePathIfPresent`          | `unresolved (identifier)` | 2     |
-| write | `writeLocalJSONFileAtomically` | `unresolved (call)`       | 3     |
+| Kind  | Interface                      | Target                  | Calls |
+| ----- | ------------------------------ | ----------------------- | ----- |
+| read  | `Globerator.from`              | `unresolved (call)`     | 1     |
+| read  | `tryReadLocalJSONFile`         | `unresolved (call)`     | 2     |
+| read  | `tryStat`                      | `unresolved (call)`     | 3     |
+| read  | `tryStat`                      | `unresolved (property)` | 1     |
+| write | `makeDirectories`              | `unresolved (call)`     | 1     |
+| write | `makeDirectories`              | `unresolved (property)` | 1     |
+| write | `makeDirectories`              | `unresolved (template)` | 1     |
+| write | `movePath`                     | `unresolved (call)`     | 1     |
+| write | `movePath`                     | `unresolved (property)` | 1     |
+| write | `removePathIfPresent`          | `unresolved (call)`     | 1     |
+| write | `removePathIfPresent`          | `unresolved (template)` | 2     |
+| write | `writeLocalJSONFileAtomically` | `unresolved (call)`     | 3     |
 
 ## `packages/mailwoman/lib/data/catalog.ts`
 
-| Kind  | Interface                      | Target                    | Calls |
-| ----- | ------------------------------ | ------------------------- | ----- |
-| read  | `Globerator.from`              | `unresolved (identifier)` | 1     |
-| read  | `tryReadLocalJSONFile`         | `unresolved (parameter)`  | 1     |
-| read  | `tryStat`                      | `unresolved (identifier)` | 3     |
-| write | `writeLocalJSONFileAtomically` | `unresolved (identifier)` | 1     |
+| Kind  | Interface                      | Target                   | Calls |
+| ----- | ------------------------------ | ------------------------ | ----- |
+| read  | `Globerator.from`              | `unresolved (property)`  | 1     |
+| read  | `tryReadLocalJSONFile`         | `unresolved (parameter)` | 1     |
+| read  | `tryStat`                      | `unresolved (call)`      | 3     |
+| write | `writeLocalJSONFileAtomically` | `unresolved (call)`      | 1     |
 
 ## `packages/mailwoman/lib/data/install.ts`
 
-| Kind  | Interface                      | Target                    | Calls |
-| ----- | ------------------------------ | ------------------------- | ----- |
-| read  | `DatabaseClient`               | `unresolved (parameter)`  | 1     |
-| read  | `readFileHead`                 | `unresolved (parameter)`  | 1     |
-| read  | `tryStat`                      | `unresolved (identifier)` | 2     |
-| read  | `tryStat`                      | `unresolved (parameter)`  | 1     |
-| read  | `tryStat`                      | `unresolved (property)`   | 1     |
-| write | `makeDirectories`              | `unresolved (call)`       | 1     |
-| write | `makeDirectories`              | `unresolved (identifier)` | 1     |
-| write | `movePath`                     | `unresolved (call)`       | 1     |
-| write | `movePath`                     | `unresolved (identifier)` | 6     |
-| write | `movePath`                     | `unresolved (parameter)`  | 1     |
-| write | `removePathIfPresent`          | `unresolved (call)`       | 2     |
-| write | `removePathIfPresent`          | `unresolved (identifier)` | 3     |
-| write | `removePathIfPresent`          | `unresolved (parameter)`  | 1     |
-| write | `removePathIfPresent`          | `unresolved (property)`   | 1     |
-| write | `sealDatabase`                 | `unresolved (property)`   | 1     |
-| write | `swapDatabaseIntoPlace`        | `unresolved (property)`   | 2     |
-| write | `writeLocalJSONFileAtomically` | `unresolved (call)`       | 2     |
+| Kind  | Interface                      | Target                   | Calls |
+| ----- | ------------------------------ | ------------------------ | ----- |
+| read  | `DatabaseClient`               | `unresolved (parameter)` | 1     |
+| read  | `readFileHead`                 | `unresolved (parameter)` | 1     |
+| read  | `tryStat`                      | `unresolved (call)`      | 2     |
+| read  | `tryStat`                      | `unresolved (parameter)` | 1     |
+| read  | `tryStat`                      | `unresolved (property)`  | 1     |
+| write | `makeDirectories`              | `unresolved (call)`      | 1     |
+| write | `makeDirectories`              | `unresolved (property)`  | 1     |
+| write | `makeDirectories`              | `unresolved (template)`  | 1     |
+| write | `movePath`                     | `unresolved (call)`      | 4     |
+| write | `movePath`                     | `unresolved (parameter)` | 1     |
+| write | `movePath`                     | `unresolved (template)`  | 3     |
+| write | `removePathIfPresent`          | `unresolved (call)`      | 2     |
+| write | `removePathIfPresent`          | `unresolved (parameter)` | 1     |
+| write | `removePathIfPresent`          | `unresolved (property)`  | 1     |
+| write | `removePathIfPresent`          | `unresolved (template)`  | 3     |
+| write | `sealDatabase`                 | `unresolved (property)`  | 1     |
+| write | `swapDatabaseIntoPlace`        | `unresolved (property)`  | 2     |
+| write | `writeLocalJSONFileAtomically` | `unresolved (call)`      | 2     |
 
 ## `packages/mailwoman/lib/data/inventory.ts`
 
@@ -631,79 +642,78 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/lib/data/release.ts`
 
-| Kind | Interface              | Target                    | Calls |
-| ---- | ---------------------- | ------------------------- | ----- |
-| read | `pathExists`           | `unresolved (identifier)` | 2     |
-| read | `pathExists`           | `unresolved (parameter)`  | 1     |
-| read | `tryReadLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface              | Target                   | Calls |
+| ---- | ---------------------- | ------------------------ | ----- |
+| read | `pathExists`           | `unresolved (call)`      | 2     |
+| read | `pathExists`           | `unresolved (parameter)` | 1     |
+| read | `tryReadLocalJSONFile` | `unresolved (call)`      | 1     |
 
 ## `packages/mailwoman/lib/data/retention.ts`
 
 | Kind  | Interface                      | Target                    | Calls |
 | ----- | ------------------------------ | ------------------------- | ----- |
-| read  | `Globerator.from`              | `unresolved (identifier)` | 1     |
-| read  | `tryReadLocalJSONFile`         | `unresolved (identifier)` | 1     |
+| read  | `Globerator.from`              | `unresolved (call)`       | 1     |
+| read  | `tryReadLocalJSONFile`         | `unresolved (call)`       | 1     |
 | read  | `tryReadLocalJSONFile`         | `unresolved (parameter)`  | 1     |
 | read  | `tryStat`                      | `unresolved (property)`   | 1     |
 | write | `removeEmptyDirectory`         | `unresolved (property)`   | 1     |
-| write | `removePathIfPresent`          | `unresolved (call)`       | 1     |
-| write | `removePathIfPresent`          | `unresolved (identifier)` | 3     |
-| write | `writeLocalJSONFileAtomically` | `unresolved (identifier)` | 1     |
+| write | `removePathIfPresent`          | `unresolved (call)`       | 2     |
+| write | `removePathIfPresent`          | `unresolved (identifier)` | 2     |
+| write | `writeLocalJSONFileAtomically` | `unresolved (call)`       | 1     |
 
 ## `packages/mailwoman/lib/data/sources.ts`
 
-| Kind | Interface        | Target                    | Calls |
-| ---- | ---------------- | ------------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (parameter)`  | 1     |
-| read | `pathExists`     | `unresolved (identifier)` | 1     |
+| Kind | Interface        | Target                   | Calls |
+| ---- | ---------------- | ------------------------ | ----- |
+| read | `DatabaseClient` | `unresolved (parameter)` | 1     |
+| read | `pathExists`     | `unresolved (call)`      | 1     |
 
 ## `packages/mailwoman/lib/data/state.ts`
 
-| Kind | Interface              | Target                    | Calls |
-| ---- | ---------------------- | ------------------------- | ----- |
-| read | `Globerator.from`      | `unresolved (identifier)` | 1     |
-| read | `tryReadLocalJSONFile` | `unresolved (identifier)` | 1     |
-| read | `tryStat`              | `unresolved (call)`       | 1     |
+| Kind | Interface              | Target                  | Calls |
+| ---- | ---------------------- | ----------------------- | ----- |
+| read | `Globerator.from`      | `unresolved (property)` | 1     |
+| read | `tryReadLocalJSONFile` | `unresolved (call)`     | 1     |
+| read | `tryStat`              | `unresolved (call)`     | 1     |
 
 ## `packages/mailwoman/lib/default/reverse-geocoder.ts`
 
 | Kind        | Interface    | Target                                  | Calls |
 | ----------- | ------------ | --------------------------------------- | ----- |
-| read        | `pathExists` | `unresolved (identifier)`               | 1     |
+| read        | `pathExists` | `unresolved (property)`                 | 1     |
 | environment | `$public`    | `environment:MAILWOMAN_WOF_POLYGONS_DB` | 1     |
 
 ## `packages/mailwoman/lib/default/street-evidence.ts`
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 1     |
+| Kind | Interface    | Target              | Calls |
+| ---- | ------------ | ------------------- | ----- |
+| read | `pathExists` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/lib/freshness.ts`
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 1     |
+| Kind | Interface    | Target              | Calls |
+| ---- | ------------ | ------------------- | ----- |
+| read | `pathExists` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/lib/geocode/layer-paths.ts`
 
-| Kind | Interface          | Target                    | Calls |
-| ---- | ------------------ | ------------------------- | ----- |
-| read | `Globerator.files` | `unresolved (call)`       | 1     |
-| read | `Globerator.files` | `unresolved (identifier)` | 1     |
-| read | `pathExists`       | `unresolved (identifier)` | 1     |
+| Kind | Interface          | Target              | Calls |
+| ---- | ------------------ | ------------------- | ----- |
+| read | `Globerator.files` | `unresolved (call)` | 2     |
+| read | `pathExists`       | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/lib/geocode/national-overture.ts`
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 1     |
+| Kind | Interface    | Target              | Calls |
+| ---- | ------------ | ------------------- | ----- |
+| read | `pathExists` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/lib/geocode/osm-layers.ts`
 
 | Kind        | Interface        | Target                                     | Calls |
 | ----------- | ---------------- | ------------------------------------------ | ----- |
-| read        | `DatabaseClient` | `unresolved (identifier)`                  | 1     |
-| read        | `pathExists`     | `unresolved (identifier)`                  | 1     |
+| read        | `DatabaseClient` | `unresolved (call)`                        | 1     |
+| read        | `pathExists`     | `unresolved (call)`                        | 1     |
 | environment | `$public`        | `environment:MAILWOMAN_REFUSE_OBLIGATIONS` | 2     |
 
 ## `packages/mailwoman/lib/geocode/parse-priors.ts`
@@ -715,9 +725,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/lib/geocode/regions.ts`
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 2     |
+| Kind | Interface    | Target              | Calls |
+| ---- | ------------ | ------------------- | ----- |
+| read | `pathExists` | `unresolved (call)` | 2     |
 
 ## `packages/mailwoman/lib/geocode/services.ts`
 
@@ -729,7 +739,8 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind | Interface    | Target                    | Calls |
 | ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 2     |
+| read | `pathExists` | `unresolved (call)`       | 1     |
+| read | `pathExists` | `unresolved (identifier)` | 1     |
 | read | `pathExists` | `unresolved (parameter)`  | 1     |
 
 ## `packages/mailwoman/lib/geocode/worker.ts`
@@ -749,9 +760,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind        | Interface           | Target                                       | Calls |
 | ----------- | ------------------- | -------------------------------------------- | ----- |
 | read        | `DatabaseClient`    | `unresolved (property)`                      | 1     |
-| read        | `pathExists`        | `unresolved (identifier)`                    | 5     |
+| read        | `pathExists`        | `unresolved (call)`                          | 1     |
+| read        | `pathExists`        | `unresolved (identifier)`                    | 1     |
+| read        | `pathExists`        | `unresolved (other)`                         | 3     |
 | read        | `pathExists`        | `unresolved (property)`                      | 1     |
-| read        | `readLocalJSONFile` | `unresolved (identifier)`                    | 1     |
+| read        | `readLocalJSONFile` | `unresolved (other)`                         | 1     |
 | environment | `$public`           | `environment:MAILWOMAN_CANDIDATE_DB`         | 1     |
 | environment | `$public`           | `environment:MAILWOMAN_POSTAL_CITY_ALIAS_DB` | 1     |
 | environment | `$public`           | `environment:MAILWOMAN_WOF_DB`               | 2     |
@@ -764,31 +777,31 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/lib/test-kit/cli-spawn-lock.ts`
 
-| Kind  | Interface                | Target                    | Calls |
-| ----- | ------------------------ | ------------------------- | ----- |
-| read  | `readLocalTextFile`      | `unresolved (identifier)` | 1     |
-| write | `makeDirectoryExclusive` | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile`     | `unresolved (identifier)` | 1     |
+| Kind  | Interface                | Target              | Calls |
+| ----- | ------------------------ | ------------------- | ----- |
+| read  | `readLocalTextFile`      | `unresolved (call)` | 1     |
+| write | `makeDirectoryExclusive` | `unresolved (call)` | 1     |
+| write | `removePathIfPresent`    | `unresolved (call)` | 1     |
+| write | `writeLocalTextFile`     | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/lib/test-kit/fixture-registry.ts`
 
-| Kind  | Interface                      | Target                    | Calls |
-| ----- | ------------------------------ | ------------------------- | ----- |
-| write | `DatabaseClient`               | `unresolved (parameter)`  | 2     |
-| write | `writeLocalBuffer`             | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFileAtomically` | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile`           | `unresolved (identifier)` | 1     |
+| Kind  | Interface                      | Target                   | Calls |
+| ----- | ------------------------------ | ------------------------ | ----- |
+| write | `DatabaseClient`               | `unresolved (parameter)` | 2     |
+| write | `writeLocalBuffer`             | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFileAtomically` | `unresolved (call)`      | 1     |
+| write | `writeLocalTextFile`           | `unresolved (call)`      | 1     |
 
 ## `packages/mailwoman/tools/coverage/census.ts`
 
 | Kind  | Interface                   | Target                                  | Calls |
 | ----- | --------------------------- | --------------------------------------- | ----- |
 | read  | `DatabaseClient`            | `unresolved (parameter)`                | 1     |
-| read  | `Globerator.files`          | `unresolved (identifier)`               | 1     |
+| read  | `Globerator.files`          | `unresolved (call)`                     | 1     |
 | read  | `Globerator.from`           | `data-root:corpus/versioned`            | 1     |
 | read  | `Globerator.from`           | `unresolved (parameter)`                | 1     |
-| read  | `isDirectory`               | `unresolved (identifier)`               | 1     |
+| read  | `isDirectory`               | `unresolved (call)`                     | 1     |
 | read  | `pathExists`                | `data-root:corpus/coverage-census.json` | 1     |
 | read  | `pathExists`                | `data-root:corpus/versioned`            | 1     |
 | read  | `pathExists`                | `unresolved (parameter)`                | 4     |
@@ -801,32 +814,32 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/coverage/core.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `Globerator.from`     | `unresolved (property)`   | 1     |
-| read  | `pathExists`          | `unresolved (identifier)` | 1     |
-| read  | `statPath`            | `unresolved (property)`   | 1     |
-| write | `makeDirectories`     | `unresolved (call)`       | 1     |
-| write | `openWriteStream`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target                  | Calls |
+| ----- | --------------------- | ----------------------- | ----- |
+| read  | `Globerator.from`     | `unresolved (property)` | 1     |
+| read  | `pathExists`          | `unresolved (other)`    | 1     |
+| read  | `statPath`            | `unresolved (property)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)`     | 1     |
+| write | `openWriteStream`     | `unresolved (other)`    | 1     |
+| write | `removePathIfPresent` | `unresolved (other)`    | 1     |
 
 ## `packages/mailwoman/tools/coverage/jurisdictions.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (property)`   | 1     |
-| read  | `statPath`           | `unresolved (property)`   | 1     |
-| write | `makeDirectories`    | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (property)` | 1     |
+| read  | `statPath`           | `unresolved (property)` | 1     |
+| write | `makeDirectories`    | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/coverage/natural-earth.ts`
 
 | Kind  | Interface            | Target                    | Calls |
 | ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
+| read  | `pathExists`         | `data-root:natural-earth` | 1     |
 | read  | `readLocalJSONFile`  | `unresolved (parameter)`  | 1     |
 | write | `makeDirectories`    | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile` | `unresolved (call)`       | 1     |
+| write | `writeLocalJSONFile` | `data-root:natural-earth` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/activity-phrase-collision-census.run.ts`
 
@@ -835,10 +848,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `calls the effect interface DatabaseClient at module scope`
 - `runs a statement at module scope`, 2 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `DatabaseClient`     | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `DatabaseClient`     | `unresolved (other)`    | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/apply-board-promotions.run.ts`
 
@@ -850,10 +863,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind | Interface                   | Target                    | Calls |
 | ---- | --------------------------- | ------------------------- | ----- |
-| read | `Globerator.files`          | `unresolved (identifier)` | 1     |
+| read | `Globerator.files`          | `unresolved (call)`       | 1     |
 | read | `Globerator.from`           | `unresolved (identifier)` | 1     |
-| read | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read | `TextSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)`       | 1     |
+| read | `TextSpliterator.fromAsync` | `unresolved (property)`   | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/audit-affix-misses.run.ts`
 
@@ -875,11 +888,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`
 - `runs a statement at module scope`, 14 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `DatabaseClient`     | `unresolved (identifier)` | 1     |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `DatabaseClient`     | `unresolved (call)`     | 1     |
+| read  | `pathExists`         | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/boundary-stress-eval.run.ts`
 
@@ -895,12 +908,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `calls the effect interface DatabaseClient at module scope`
 - `runs a statement at module scope`, 6 times
 
-| Kind  | Interface                   | Target                                                 | Calls |
-| ----- | --------------------------- | ------------------------------------------------------ | ----- |
-| read  | `DatabaseClient`            | `data-root:db/wof/admin-global-priority-importance.db` | 1     |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (property)`                                | 1     |
-| read  | `readLocalBuffer`           | `unresolved (call)`                                    | 2     |
-| write | `writeLocalTextFile`        | `unresolved (identifier)`                              | 1     |
+| Kind  | Interface                   | Target                                                         | Calls |
+| ----- | --------------------------- | -------------------------------------------------------------- | ----- |
+| read  | `DatabaseClient`            | `data-root:db/wof/admin-global-priority-importance.db`         | 1     |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (property)`                                        | 1     |
+| read  | `readLocalBuffer`           | `data-root:db/wof/fst-per-locale`                              | 1     |
+| read  | `readLocalBuffer`           | `data-root:db/wof/fst-staging-2026-08-05-importance-fanoutfix` | 1     |
+| write | `writeLocalTextFile`        | `unresolved (other)`                                           | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/build/oa-coord-golden.run.ts`
 
@@ -909,13 +923,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 5 times
 - `awaits at module scope`
 
-| Kind  | Interface                  | Target                    | Calls |
-| ----- | -------------------------- | ------------------------- | ----- |
-| read  | `CSVSpliterator.fromAsync` | `unresolved (call)`       | 2     |
-| read  | `Globerator.from`          | `unresolved (other)`      | 1     |
-| read  | `openReadStream`           | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`          | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile`       | `unresolved (identifier)` | 1     |
+| Kind  | Interface                  | Target                   | Calls |
+| ----- | -------------------------- | ------------------------ | ----- |
+| read  | `CSVSpliterator.fromAsync` | `unresolved (call)`      | 2     |
+| read  | `Globerator.from`          | `unresolved (other)`     | 1     |
+| read  | `openReadStream`           | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`          | `unresolved (call)`      | 1     |
+| write | `writeLocalTextFile`       | `unresolved (other)`     | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/ca/province-code-probe.run.ts`
 
@@ -978,11 +992,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 3 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `Globerator.files`   | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                                                      | Calls |
+| ----- | -------------------- | ----------------------------------------------------------- | ----- |
+| read  | `Globerator.files`   | `unresolved (call)`                                         | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (call)`                                         | 1     |
+| write | `writeLocalTextFile` | `package:@mailwoman/codex/lib/address/layouts/generated.ts` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/codex/address/systems.ts`
 
@@ -994,14 +1008,14 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind    | Interface            | Target                                                              | Calls |
 | ------- | -------------------- | ------------------------------------------------------------------- | ----- |
-| write   | `writeLocalTextFile` | `unresolved (identifier)`                                           | 1     |
+| write   | `writeLocalTextFile` | `unresolved (other)`                                                | 1     |
 | network | `APIClient.fetch`    | `literal:https://download.geonames.org/export/dump/countryInfo.txt` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/codex/country/reference.ts`
 
 | Kind    | Interface            | Target                                                                              | Calls |
 | ------- | -------------------- | ----------------------------------------------------------------------------------- | ----- |
-| write   | `writeLocalTextFile` | `unresolved (identifier)`                                                           | 1     |
+| write   | `writeLocalTextFile` | `unresolved (other)`                                                                | 1     |
 | network | `APIClient.fetch`    | `literal:https://raw.githubusercontent.com/mledoze/countries/master/countries.json` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/codex/country/surface-lexicon.ts`
@@ -1021,19 +1035,19 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `readLocalJSONFile`  | `unresolved (call)`       | 1     |
-| write   | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
-| network | `APIClient.fetch`    | `unresolved (identifier)` | 1     |
+| Kind    | Interface            | Target                  | Calls |
+| ------- | -------------------- | ----------------------- | ----- |
+| read    | `readLocalJSONFile`  | `unresolved (call)`     | 1     |
+| write   | `writeLocalTextFile` | `unresolved (call)`     | 1     |
+| network | `APIClient.fetch`    | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/codex/official-languages.ts`
 
-| Kind    | Interface           | Target                    | Calls |
-| ------- | ------------------- | ------------------------- | ----- |
-| read    | `readLocalJSONFile` | `unresolved (call)`       | 1     |
-| write   | `writeLocalFile`    | `unresolved (identifier)` | 1     |
-| network | `APIClient.fetch`   | `unresolved (identifier)` | 1     |
+| Kind    | Interface           | Target                  | Calls |
+| ------- | ------------------- | ----------------------- | ----- |
+| read    | `readLocalJSONFile` | `unresolved (call)`     | 1     |
+| write   | `writeLocalFile`    | `unresolved (other)`    | 1     |
+| network | `APIClient.fetch`   | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/collect-span-confidences.run.ts`
 
@@ -1041,12 +1055,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`         | `unresolved (identifier)` | 2     |
-| read  | `readLocalJSONFile`         | `unresolved (other)`      | 1     |
-| write | `writeLocalJSONLFile`       | `unresolved (identifier)` | 1     |
+| Kind  | Interface                   | Target               | Calls |
+| ----- | --------------------------- | -------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (other)` | 1     |
+| read  | `readLocalJSONFile`         | `unresolved (other)` | 3     |
+| write | `writeLocalJSONLFile`       | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/compare-candidate-caches.run.ts`
 
@@ -1060,7 +1073,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | read | `isFile`            | `unresolved (identifier)` | 1     |
 | read | `isSymbolicLink`    | `unresolved (identifier)` | 1     |
 | read | `readLocalJSONFile` | `unresolved (call)`       | 1     |
-| read | `sortedGlob`        | `unresolved (identifier)` | 1     |
+| read | `sortedGlob`        | `unresolved (call)`       | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/conformal-calibrate.run.ts`
 
@@ -1068,10 +1081,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile`         | `unresolved (property)`   | 1     |
+| Kind | Interface                   | Target                  | Calls |
+| ---- | --------------------------- | ----------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (other)`    | 1     |
+| read | `readLocalJSONFile`         | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/convert-parity-fixtures.run.ts`
 
@@ -1130,10 +1143,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 2 times
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 2     |
-| read | `pathExists`                | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target              | Calls |
+| ---- | --------------------------- | ------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)` | 2     |
+| read | `pathExists`                | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/effective-manifest.run.ts`
 
@@ -1142,12 +1155,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 13 times
 - `awaits at module scope`, 3 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (property)`   | 1     |
-| read  | `readLocalTextFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (other)`    | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (property)` | 1     |
+| read  | `readLocalTextFile`  | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (other)`    | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/freeze-overlay-manifest.run.ts`
 
@@ -1158,8 +1171,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind  | Interface            | Target                    | Calls |
 | ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 2     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
+| read  | `pathExists`         | `unresolved (call)`       | 1     |
+| read  | `pathExists`         | `unresolved (identifier)` | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (call)`       | 1     |
 | read  | `readLocalJSONFile`  | `unresolved (property)`   | 2     |
 | write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
 
@@ -1182,10 +1196,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 15 times
 - `awaits at module scope`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `Globerator.from`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `Globerator.from`    | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/holdout/leakage.run.ts`
 
@@ -1213,11 +1227,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`, 2 times
 - `calls the effect interface openReadStream at module scope`
 
-| Kind    | Interface         | Target                    | Calls |
-| ------- | ----------------- | ------------------------- | ----- |
-| read    | `openReadStream`  | `unresolved (identifier)` | 1     |
-| write   | `openWriteStream` | `scratch:*`               | 1     |
-| network | `APIClient.fetch` | `unresolved (property)`   | 1     |
+| Kind    | Interface         | Target                  | Calls |
+| ------- | ----------------- | ----------------------- | ----- |
+| read    | `openReadStream`  | `unresolved (call)`     | 1     |
+| write   | `openWriteStream` | `scratch:*`             | 1     |
+| network | `APIClient.fetch` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/jurisdiction-coverage.run.ts`
 
@@ -1226,16 +1240,16 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`, 5 times
 - `runs a statement at module scope`, 4 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| write | `writeLocalTextFile` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/mixture.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 1     |
+| read | `readLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/nad-skeletons.run.ts`
 
@@ -1264,9 +1278,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind  | Interface                   | Target                    | Calls |
 | ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read  | `readLocalBuffer`           | `unresolved (identifier)` | 2     |
-| write | `writeLocalJSONFile`        | `unresolved (identifier)` | 1     |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`       | 1     |
+| read  | `readLocalBuffer`           | `unresolved (call)`       | 1     |
+| read  | `readLocalBuffer`           | `unresolved (identifier)` | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (call)`       | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/order/deletions.run.ts`
 
@@ -1286,7 +1301,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | ----- | -------------------- | ------------------------- | ----- |
 | read  | `Globerator.from`    | `unresolved (identifier)` | 1     |
 | read  | `Globerator.from`    | `unresolved (parameter)`  | 2     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (property)`   | 1     |
 | write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/overture-address-census.run.ts`
@@ -1298,7 +1313,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind  | Interface            | Target                  | Calls |
 | ----- | -------------------- | ----------------------- | ----- |
-| read  | `Globerator.from`    | `data-root:overture`    | 1     |
+| read  | `Globerator.from`    | `unresolved (call)`     | 1     |
 | write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/projection-drops.run.ts`
@@ -1336,11 +1351,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 14 times
 - `awaits at module scope`, 3 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (property)`   | 1     |
-| write | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (property)` | 1     |
+| write | `makeDirectories`    | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)`     | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/shape/retention.run.ts`
 
@@ -1349,12 +1364,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 11 times
 - `awaits at module scope`, 4 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (call)`       | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (property)`   | 1     |
-| write | `openWriteStream`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (call)`     | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (property)` | 1     |
+| write | `openWriteStream`    | `scratch:splits.jsonl`  | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/shape/split-table.run.ts`
 
@@ -1363,13 +1378,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 10 times
 - `awaits at module scope`, 5 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (call)`       | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (property)`   | 2     |
-| write | `openWriteStream`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
-| write | `writeLocalTextFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (call)`     | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (property)` | 2     |
+| write | `openWriteStream`    | `scratch:splits.jsonl`  | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/store/gc.run.ts`
 
@@ -1381,20 +1396,20 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind  | Interface         | Target                    | Calls |
 | ----- | ----------------- | ------------------------- | ----- |
 | read  | `Globerator.from` | `unresolved (call)`       | 1     |
-| read  | `Globerator.from` | `unresolved (identifier)` | 1     |
+| read  | `Globerator.from` | `unresolved (other)`      | 1     |
 | read  | `isDirectory`     | `unresolved (identifier)` | 1     |
 | write | `removeDirectory` | `unresolved (property)`   | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/store/gc.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `Globerator.from`   | `unresolved (call)`       | 1     |
-| read | `Globerator.from`   | `unresolved (parameter)`  | 1     |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile` | `unresolved (parameter)`  | 2     |
-| read | `statPath`          | `unresolved (call)`       | 1     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `Globerator.from`   | `unresolved (call)`      | 1     |
+| read | `Globerator.from`   | `unresolved (parameter)` | 1     |
+| read | `pathExists`        | `unresolved (call)`      | 1     |
+| read | `readLocalJSONFile` | `unresolved (call)`      | 1     |
+| read | `readLocalJSONFile` | `unresolved (parameter)` | 2     |
+| read | `statPath`          | `unresolved (call)`      | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/street/attestation.run.ts`
 
@@ -1403,11 +1418,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 11 times
 - `awaits at module scope`, 3 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `Globerator.from`    | `data-root:overture`      | 1     |
-| read  | `pathExists`         | `unresolved (identifier)` | 2     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `Globerator.from`    | `unresolved (call)`     | 1     |
+| read  | `pathExists`         | `unresolved (call)`     | 2     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/street/type/channel-arms.run.ts`
 
@@ -1418,7 +1433,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind  | Interface            | Target                                   | Calls |
 | ----- | -------------------- | ---------------------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)`                | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (call)`                      | 1     |
 | write | `writeLocalJSONFile` | `scratch:street-type-lexicon-probe.json` | 1     |
 | write | `writeLocalJSONFile` | `unresolved (property)`                  | 1     |
 
@@ -1429,9 +1444,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 12 times
 - `awaits at module scope`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `readLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/support-index.run.ts`
 
@@ -1447,10 +1462,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 14 times
 - `awaits at module scope`, 4 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `Globerator.from`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `Globerator.from`    | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/two-letter-token-census.run.ts`
 
@@ -1466,10 +1481,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/dev-tools/corpus/us-abbrev-region-samples.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `DatabaseClient`     | `unresolved (other)`      | 2     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| read  | `DatabaseClient`     | `unresolved (other)` | 2     |
+| write | `writeLocalTextFile` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/corpus/variety-sample.run.ts`
 
@@ -1509,13 +1524,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`, 8 times
 - `runs a statement at module scope`, 33 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `dirtyTrackedFiles`  | `repo:`                   | 1     |
-| read  | `gitHead`            | `repo:`                   | 1     |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (parameter)`  | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                   | Calls |
+| ----- | -------------------- | ------------------------ | ----- |
+| read  | `dirtyTrackedFiles`  | `repo:`                  | 1     |
+| read  | `gitHead`            | `repo:`                  | 1     |
+| read  | `pathExists`         | `unresolved (other)`     | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (parameter)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)`  | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/data/autocomplete-index.run.ts`
 
@@ -1548,11 +1563,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`
 - `runs a statement at module scope`, 14 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (parameter)`  | 1     |
-| read  | `statPath`           | `unresolved (parameter)`  | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                   | Calls |
+| ----- | -------------------- | ------------------------ | ----- |
+| read  | `pathExists`         | `unresolved (parameter)` | 1     |
+| read  | `statPath`           | `unresolved (parameter)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)`      | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/de/order-eval.run.ts`
 
@@ -1592,7 +1607,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind | Interface           | Target                            | Calls |
 | ---- | ------------------- | --------------------------------- | ----- |
 | read | `Globerator.files`  | `literal:packages/mailwoman/test` | 1     |
-| read | `readLocalTextFile` | `unresolved (identifier)`         | 1     |
+| read | `readLocalTextFile` | `literal:packages/mailwoman/test` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/failure/census.run.ts`
 
@@ -1616,7 +1631,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | read  | `Globerator.files`          | `unresolved (call)`           | 1     |
 | read  | `JSONSpliterator.fromAsync` | `unresolved (call)`           | 1     |
 | read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)`     | 1     |
-| write | `writeLocalFile`            | `unresolved (identifier)`     | 1     |
+| write | `writeLocalFile`            | `unresolved (other)`          | 1     |
 | write | `writeLocalJSONFile`        | `scratch:failure-report.json` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/family/board.run.ts`
@@ -1626,9 +1641,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `calls the effect interface DatabaseClient at module scope`
 - `runs a statement at module scope`, 3 times
 
-| Kind | Interface        | Target                    | Calls |
-| ---- | ---------------- | ------------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (identifier)` | 1     |
+| Kind | Interface        | Target               | Calls |
+| ---- | ---------------- | -------------------- | ----- |
+| read | `DatabaseClient` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/fr/admin/split/eval.run.ts`
 
@@ -1638,9 +1653,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind        | Interface                   | Target                                   | Calls |
 | ----------- | --------------------------- | ---------------------------------------- | ----- |
-| read        | `JSONSpliterator.fromAsync` | `unresolved (identifier)`                | 1     |
-| write       | `writeLocalJSONFile`        | `unresolved (identifier)`                | 1     |
-| write       | `writeLocalJSONLFile`       | `unresolved (identifier)`                | 1     |
+| read        | `JSONSpliterator.fromAsync` | `unresolved (other)`                     | 1     |
+| write       | `writeLocalJSONFile`        | `unresolved (other)`                     | 1     |
+| write       | `writeLocalJSONLFile`       | `unresolved (other)`                     | 1     |
 | environment | `$public`                   | `environment:MAILWOMAN_WORD_CONSISTENCY` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/fr/admin/split/selfvalidation.run.ts`
@@ -1651,10 +1666,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`, 3 times
 - `runs a statement at module scope`, 3 times
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| read  | `DatabaseClient` | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| read  | `DatabaseClient` | `unresolved (call)`  | 1     |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/fr/parse-recall.run.ts`
 
@@ -1692,17 +1707,17 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 5 times
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONLFile`       | `unresolved (identifier)` | 1     |
+| Kind  | Interface                   | Target               | Calls |
+| ----- | --------------------------- | -------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (other)` | 1     |
+| write | `writeLocalJSONLFile`       | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/generate-trace-fixture.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `makeDirectories`    | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| write | `makeDirectories`    | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/grade-seed-cases.ts`
 
@@ -1729,10 +1744,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `calls the effect interface DatabaseClient at module scope`
 - `runs a statement at module scope`, 6 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `DatabaseClient`     | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `DatabaseClient`     | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/grammar/number-shape-census.run.ts`
 
@@ -1751,15 +1766,15 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `Globerator.files`          | `unresolved (identifier)` | 1     |
-| read  | `Globerator.from`           | `unresolved (identifier)` | 1     |
-| read  | `readLocalBuffer`           | `unresolved (property)`   | 2     |
-| read  | `readLocalJSONFile`         | `unresolved (property)`   | 3     |
-| read  | `readLocalTextFile`         | `unresolved (parameter)`  | 1     |
-| read  | `TextSpliterator.fromAsync` | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (property)`   | 1     |
+| Kind  | Interface                   | Target                   | Calls |
+| ----- | --------------------------- | ------------------------ | ----- |
+| read  | `Globerator.files`          | `unresolved (call)`      | 1     |
+| read  | `Globerator.from`           | `unresolved (call)`      | 1     |
+| read  | `readLocalBuffer`           | `unresolved (property)`  | 2     |
+| read  | `readLocalJSONFile`         | `unresolved (property)`  | 3     |
+| read  | `readLocalTextFile`         | `unresolved (parameter)` | 1     |
+| read  | `TextSpliterator.fromAsync` | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (property)`  | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/heldout-geography-eval.run.ts`
 
@@ -1770,13 +1785,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind  | Interface             | Target                    | Calls |
 | ----- | --------------------- | ------------------------- | ----- |
 | read  | `pathExists`          | `unresolved (parameter)`  | 1     |
-| read  | `readLocalTextFile`   | `unresolved (identifier)` | 1     |
 | read  | `readLocalTextFile`   | `unresolved (parameter)`  | 1     |
-| write | `appendLocalTextFile` | `unresolved (identifier)` | 1     |
+| read  | `readLocalTextFile`   | `unresolved (template)`   | 1     |
+| write | `appendLocalTextFile` | `unresolved (template)`   | 1     |
 | write | `makeDirectories`     | `unresolved (identifier)` | 1     |
 | write | `writeLocalFile`      | `unresolved (identifier)` | 1     |
 | write | `writeLocalFile`      | `unresolved (template)`   | 3     |
-| write | `writeLocalTextFile`  | `unresolved (identifier)` | 1     |
+| write | `writeLocalTextFile`  | `unresolved (template)`   | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/jurisdiction-completion.run.ts`
 
@@ -1796,13 +1811,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`, 4 times
 - `runs a statement at module scope`, 2 times
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`       | 1     |
-| read  | `pathExists`                | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`         | `unresolved (call)`       | 1     |
-| read  | `readLocalJSONFile`         | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (identifier)` | 1     |
+| Kind  | Interface                   | Target              | Calls |
+| ----- | --------------------------- | ------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (call)` | 1     |
+| read  | `pathExists`                | `unresolved (call)` | 1     |
+| read  | `readLocalJSONFile`         | `unresolved (call)` | 2     |
+| write | `writeLocalJSONFile`        | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/landmarks/osm/places.run.ts`
 
@@ -1901,13 +1915,15 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 8 times
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `dirtyTrackedFiles`         | `repo:`                   | 1     |
-| read  | `gitHead`                   | `repo:`                   | 1     |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 2     |
-| read  | `pathExists`                | `unresolved (identifier)` | 2     |
-| write | `writeLocalJSONFile`        | `unresolved (property)`   | 1     |
+| Kind  | Interface                   | Target                             | Calls |
+| ----- | --------------------------- | ---------------------------------- | ----- |
+| read  | `dirtyTrackedFiles`         | `repo:`                            | 1     |
+| read  | `gitHead`                   | `repo:`                            | 1     |
+| read  | `JSONSpliterator.fromAsync` | `data-root:eval/coord`             | 1     |
+| read  | `JSONSpliterator.fromAsync` | `repo:data/eval/golden/v0.1.3/dev` | 1     |
+| read  | `pathExists`                | `data-root:eval/coord`             | 1     |
+| read  | `pathExists`                | `repo:data/eval/golden/v0.1.3/dev` | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (property)`            | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/per-locale-f1.run.ts`
 
@@ -1921,12 +1937,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `Globerator.files`   | `unresolved (identifier)` | 1     |
-| read  | `readLocalTextFile`  | `unresolved (call)`       | 1     |
-| write | `makeDirectories`    | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| read  | `Globerator.files`   | `unresolved (call)` | 1     |
+| read  | `readLocalTextFile`  | `unresolved (call)` | 1     |
+| write | `makeDirectories`    | `unresolved (call)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/pip-containment.run.ts`
 
@@ -1935,11 +1951,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`
 - `runs a statement at module scope`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `Globerator.from`    | `unresolved (other)`      | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| read  | `Globerator.from`    | `unresolved (other)` | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (other)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/postcode/anchor-accuracy.run.ts`
 
@@ -1971,7 +1987,8 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind | Interface        | Target                    | Calls |
 | ---- | ---------------- | ------------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (identifier)` | 2     |
+| read | `DatabaseClient` | `unresolved (call)`       | 1     |
+| read | `DatabaseClient` | `unresolved (identifier)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/postcode/coherence/scale.run.ts`
 
@@ -1980,10 +1997,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 10 times
 - `awaits at module scope`, 4 times
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `JSONSpliterator.fromAsync` | `unresolved (property)`   | 1     |
-| read | `pathExists`                | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target                  | Calls |
+| ---- | --------------------------- | ----------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (property)` | 1     |
+| read | `pathExists`                | `unresolved (call)`     | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/postcode/country-formats.ts`
 
@@ -1991,11 +2008,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 7 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `Globerator.files`   | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 3     |
+| Kind  | Interface            | Target                                                    | Calls |
+| ----- | -------------------- | --------------------------------------------------------- | ----- |
+| read  | `Globerator.files`   | `unresolved (call)`                                       | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (call)`                                       | 1     |
+| write | `writeLocalTextFile` | `package:@mailwoman/postcode/lib/country-formats/data.ts` | 1     |
+| write | `writeLocalTextFile` | `package:@mailwoman/postcode/lib/subregions.json`         | 1     |
+| write | `writeLocalTextFile` | `unresolved (call)`                                       | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/probe/comma-free-locality.run.ts`
 
@@ -2015,10 +2034,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 3 times
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `pathExists`      | `unresolved (identifier)` | 1     |
-| read | `readLocalBuffer` | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target              | Calls |
+| ---- | ----------------- | ------------------- | ----- |
+| read | `pathExists`      | `unresolved (call)` | 1     |
+| read | `readLocalBuffer` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/probe/query-intent.run.ts`
 
@@ -2045,13 +2064,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `gitHead`                   | `repo:`                   | 1     |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 5     |
-| write | `writeLocalJSONFile`        | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONLFile`       | `unresolved (identifier)` | 3     |
-| write | `writeLocalTextFile`        | `unresolved (identifier)` | 1     |
+| Kind  | Interface                   | Target                  | Calls |
+| ----- | --------------------------- | ----------------------- | ----- |
+| read  | `gitHead`                   | `repo:`                 | 1     |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (template)` | 5     |
+| write | `writeLocalJSONFile`        | `unresolved (template)` | 1     |
+| write | `writeLocalJSONLFile`       | `unresolved (template)` | 3     |
+| write | `writeLocalTextFile`        | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/relay-interpolation-extracts.run.ts`
 
@@ -2059,14 +2078,14 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `DatabaseClient`      | `unresolved (parameter)`  | 2     |
-| read  | `Globerator.files`    | `unresolved (parameter)`  | 1     |
-| read  | `statPath`            | `unresolved (identifier)` | 2     |
-| write | `DatabaseClient`      | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (template)`   | 1     |
+| Kind  | Interface             | Target                   | Calls |
+| ----- | --------------------- | ------------------------ | ----- |
+| read  | `DatabaseClient`      | `unresolved (parameter)` | 2     |
+| read  | `Globerator.files`    | `unresolved (parameter)` | 1     |
+| read  | `statPath`            | `unresolved (call)`      | 2     |
+| write | `DatabaseClient`      | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)`      | 1     |
+| write | `removePathIfPresent` | `unresolved (template)`  | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/rescore-ceiling-probe.run.ts`
 
@@ -2104,8 +2123,8 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | read  | `Globerator.files`          | `unresolved (call)`       | 1     |
 | read  | `Globerator.from`           | `unresolved (identifier)` | 1     |
 | read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read  | `pathExists`                | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`         | `unresolved (identifier)` | 1     |
+| read  | `pathExists`                | `repo:packages`           | 1     |
+| read  | `readLocalJSONFile`         | `repo:packages`           | 1     |
 | write | `writeLocalJSONFile`        | `unresolved (property)`   | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/router-kind-probe.run.ts`
@@ -2124,14 +2143,17 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `gitHead`                   | `repo:`                   | 1     |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 9     |
-| read  | `tryReadLocalJSONFile`      | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONLFile`       | `unresolved (identifier)` | 3     |
-| write | `writeLocalTextFile`        | `unresolved (identifier)` | 3     |
+| Kind  | Interface                   | Target                  | Calls |
+| ----- | --------------------------- | ----------------------- | ----- |
+| read  | `gitHead`                   | `repo:`                 | 1     |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (other)`    | 5     |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (template)` | 4     |
+| read  | `tryReadLocalJSONFile`      | `unresolved (template)` | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (template)` | 1     |
+| write | `writeLocalJSONLFile`       | `unresolved (other)`    | 1     |
+| write | `writeLocalJSONLFile`       | `unresolved (template)` | 2     |
+| write | `writeLocalTextFile`        | `unresolved (other)`    | 1     |
+| write | `writeLocalTextFile`        | `unresolved (template)` | 2     |
 
 ## `packages/mailwoman/tools/dev-tools/score/affix.run.ts`
 
@@ -2167,12 +2189,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 21 times
 - `awaits at module scope`, 4 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| read  | `readLocalBuffer`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
-| write | `writeLocalTextFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `pathExists`         | `unresolved (other)`    | 1     |
+| read  | `readLocalBuffer`    | `unresolved (other)`    | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/score/interesting-addresses.run.ts`
 
@@ -2201,10 +2223,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (property)`   | 1     |
+| Kind  | Interface                   | Target                  | Calls |
+| ----- | --------------------------- | ----------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (other)`    | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/sg/register-board.run.ts`
 
@@ -2220,13 +2242,15 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 11 times
 - `calls the effect interface from at module scope`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `copyFileTo`         | `unresolved (parameter)`  | 1     |
-| read  | `pathExists`         | `unresolved (identifier)` | 4     |
-| write | `copyFileTo`         | `unresolved (parameter)`  | 1     |
-| write | `createSymbolicLink` | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`    | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                       | Calls |
+| ----- | -------------------- | ---------------------------- | ----- |
+| read  | `copyFileTo`         | `unresolved (parameter)`     | 1     |
+| read  | `pathExists`         | `repo:packages/package.json` | 1     |
+| read  | `pathExists`         | `unresolved (call)`          | 1     |
+| read  | `pathExists`         | `unresolved (other)`         | 2     |
+| write | `copyFileTo`         | `unresolved (parameter)`     | 1     |
+| write | `createSymbolicLink` | `unresolved (parameter)`     | 1     |
+| write | `makeDirectories`    | `unresolved (call)`          | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/street-recall-full-probe.run.ts`
 
@@ -2293,8 +2317,8 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind        | Interface            | Target                                      | Calls |
 | ----------- | -------------------- | ------------------------------------------- | ----- |
+| read        | `DatabaseClient`     | `data-root:db/interpolation`                | 1     |
 | read        | `DatabaseClient`     | `data-root:db/wof/admin-global-priority.db` | 1     |
-| read        | `DatabaseClient`     | `unresolved (call)`                         | 1     |
 | read        | `DatabaseClient`     | `unresolved (identifier)`                   | 2     |
 | read        | `Globerator.files`   | `data-root:db/interpolation`                | 1     |
 | read        | `pathExists`         | `unresolved (identifier)`                   | 1     |
@@ -2326,13 +2350,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 6 times
 - `awaits at module scope`, 2 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (call)`       | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (property)`   | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `pathExists`         | `data-root:db`          | 1     |
+| read  | `readLocalJSONFile`  | `data-root:db`          | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (call)`     | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (property)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/us/address-coverage/openaddresses.run.ts`
 
@@ -2341,22 +2365,25 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 5 times
 - `awaits at module scope`, 2 times
 
-| Kind    | Interface                  | Target                    | Calls |
-| ------- | -------------------------- | ------------------------- | ----- |
-| read    | `CSVSpliterator.fromAsync` | `scratch:*`               | 1     |
-| read    | `DatabaseClient`           | `unresolved (call)`       | 1     |
-| read    | `DatabaseClient`           | `unresolved (identifier)` | 1     |
-| read    | `pathExists`               | `unresolved (identifier)` | 2     |
-| read    | `readLocalJSONFile`        | `unresolved (property)`   | 1     |
-| write   | `DatabaseClient`           | `unresolved (identifier)` | 1     |
-| write   | `makeDirectories`          | `data-root:oa-cache`      | 1     |
-| write   | `movePath`                 | `unresolved (identifier)` | 2     |
-| write   | `openWriteStream`          | `unresolved (identifier)` | 1     |
-| write   | `removePathIfPresent`      | `scratch:*`               | 1     |
-| write   | `removePathIfPresent`      | `unresolved (identifier)` | 2     |
-| write   | `sealDatabase`             | `unresolved (identifier)` | 1     |
-| write   | `swapDatabaseIntoPlace`    | `unresolved (identifier)` | 2     |
-| network | `fetch`                    | `unresolved (template)`   | 1     |
+| Kind    | Interface                  | Target                        | Calls |
+| ------- | -------------------------- | ----------------------------- | ----- |
+| read    | `CSVSpliterator.fromAsync` | `scratch:*`                   | 1     |
+| read    | `DatabaseClient`           | `data-root:db/address-points` | 1     |
+| read    | `DatabaseClient`           | `data-root:db/interpolation`  | 1     |
+| read    | `pathExists`               | `data-root:db/address-points` | 1     |
+| read    | `pathExists`               | `unresolved (call)`           | 1     |
+| read    | `readLocalJSONFile`        | `unresolved (property)`       | 1     |
+| write   | `DatabaseClient`           | `unresolved (template)`       | 1     |
+| write   | `makeDirectories`          | `unresolved (call)`           | 1     |
+| write   | `movePath`                 | `unresolved (call)`           | 1     |
+| write   | `movePath`                 | `unresolved (template)`       | 1     |
+| write   | `openWriteStream`          | `unresolved (template)`       | 1     |
+| write   | `removePathIfPresent`      | `scratch:*`                   | 1     |
+| write   | `removePathIfPresent`      | `unresolved (template)`       | 2     |
+| write   | `sealDatabase`             | `data-root:db/address-points` | 1     |
+| write   | `swapDatabaseIntoPlace`    | `data-root:db/address-points` | 1     |
+| write   | `swapDatabaseIntoPlace`    | `unresolved (template)`       | 1     |
+| network | `fetch`                    | `unresolved (template)`       | 1     |
 
 ## `packages/mailwoman/tools/dev-tools/us/address-coverage/plan.run.ts`
 
@@ -2415,17 +2442,17 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind | Interface           | Target                    | Calls |
 | ---- | ------------------- | ------------------------- | ----- |
-| read | `Globerator.files`  | `unresolved (identifier)` | 1     |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
+| read | `Globerator.files`  | `unresolved (call)`       | 1     |
+| read | `pathExists`        | `unresolved (call)`       | 1     |
 | read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/autocomplete-ladder.ts`
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `DatabaseClient`  | `unresolved (identifier)` | 1     |
-| read | `pathExists`      | `unresolved (identifier)` | 1     |
-| read | `readLocalBuffer` | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target                  | Calls |
+| ---- | ----------------- | ----------------------- | ----- |
+| read | `DatabaseClient`  | `unresolved (other)`    | 1     |
+| read | `pathExists`      | `unresolved (template)` | 1     |
+| read | `readLocalBuffer` | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/baseline-assert.ts`
 
@@ -2439,15 +2466,16 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`       | 1     |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (other)`      | 1     |
-| read  | `pathExists`                | `unresolved (identifier)` | 2     |
-| read  | `readLocalJSONFile`         | `unresolved (property)`   | 1     |
-| write | `makeDirectories`           | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (template)`   | 1     |
-| write | `writeLocalTextFile`        | `unresolved (template)`   | 1     |
+| Kind  | Interface                   | Target                          | Calls |
+| ----- | --------------------------- | ------------------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`             | 1     |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (other)`            | 1     |
+| read  | `pathExists`                | `data-root:models/arms`         | 1     |
+| read  | `pathExists`                | `data-root:models/arms/battery` | 1     |
+| read  | `readLocalJSONFile`         | `unresolved (property)`         | 1     |
+| write | `makeDirectories`           | `data-root:models/arms/battery` | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (template)`         | 1     |
+| write | `writeLocalTextFile`        | `unresolved (template)`         | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/battery/groups.run.ts`
 
@@ -2470,12 +2498,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/battery/parse/rows.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
-| write | `movePath`                  | `unresolved (identifier)` | 1     |
-| write | `movePath`                  | `unresolved (parameter)`  | 1     |
-| write | `openWriteStream`           | `unresolved (identifier)` | 1     |
+| Kind  | Interface                   | Target                   | Calls |
+| ----- | --------------------------- | ------------------------ | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
+| write | `movePath`                  | `unresolved (parameter)` | 1     |
+| write | `movePath`                  | `unresolved (template)`  | 1     |
+| write | `openWriteStream`           | `unresolved (template)`  | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/battery/parse/worker.ts`
 
@@ -2527,50 +2555,52 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 11 times
 - `awaits at module scope`, 6 times
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`         | `unresolved (identifier)` | 2     |
-| read  | `readLocalJSONFile`         | `unresolved (other)`      | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (property)`   | 1     |
-| write | `writeLocalTextFile`        | `unresolved (property)`   | 1     |
+| Kind  | Interface                   | Target                  | Calls |
+| ----- | --------------------------- | ----------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (other)`    | 1     |
+| read  | `readLocalJSONFile`         | `unresolved (call)`     | 2     |
+| read  | `readLocalJSONFile`         | `unresolved (other)`    | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (property)` | 1     |
+| write | `writeLocalTextFile`        | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/conformance/fixture.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target              | Calls |
+| ---- | --------------------------- | ------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/de/order-eval.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalTextFile`  | `unresolved (call)`       | 1     |
-| write | `makeDirectories`    | `unresolved (identifier)` | 2     |
-| write | `writeLocalTextFile` | `unresolved (call)`       | 2     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| read  | `readLocalTextFile`  | `unresolved (call)`  | 1     |
+| write | `makeDirectories`    | `unresolved (call)`  | 1     |
+| write | `makeDirectories`    | `unresolved (other)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (call)`  | 2     |
 
 ## `packages/mailwoman/tools/eval-harness/demo/cascade/smoke.ts`
 
 | Kind  | Interface            | Target                    | Calls |
 | ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 2     |
-| read  | `readLocalBuffer`    | `unresolved (identifier)` | 1     |
+| read  | `pathExists`         | `unresolved (call)`       | 1     |
+| read  | `pathExists`         | `unresolved (identifier)` | 1     |
+| read  | `readLocalBuffer`    | `unresolved (other)`      | 1     |
 | read  | `readLocalBuffer`    | `unresolved (parameter)`  | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 2     |
-| read  | `readLocalTextFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (other)`      | 2     |
+| read  | `readLocalTextFile`  | `unresolved (other)`      | 1     |
+| write | `writeLocalJSONFile` | `unresolved (other)`      | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/error-analysis.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target              | Calls |
+| ---- | --------------------------- | ------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/es/postcode-centroids.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `DatabaseClient` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| write | `DatabaseClient` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/external-arenas.ts`
 
@@ -2579,8 +2609,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | read  | `copyFileTo`      | `literal:data/eval/external/libpostal-cases.jsonl` | 1     |
 | read  | `copyFileTo`      | `literal:data/eval/external/postal-cases.jsonl`    | 1     |
 | write | `copyFileTo`      | `unresolved (call)`                                | 2     |
-| write | `makeDirectories` | `unresolved (call)`                                | 2     |
-| write | `makeDirectories` | `unresolved (identifier)`                          | 2     |
+| write | `makeDirectories` | `unresolved (call)`                                | 4     |
 | write | `writeLocalFile`  | `unresolved (call)`                                | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/famous-places/answers.run.ts`
@@ -2592,10 +2621,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/famous-places/answers.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (property)`   | 2     |
+| Kind  | Interface                   | Target                  | Calls |
+| ----- | --------------------------- | ----------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (other)`    | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (property)` | 2     |
 
 ## `packages/mailwoman/tools/eval-harness/famous-places/build.run.ts`
 
@@ -2603,17 +2632,17 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 8 times
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| write   | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
-| network | `fetch`              | `unresolved (template)`   | 1     |
+| Kind    | Interface            | Target                  | Calls |
+| ------- | -------------------- | ----------------------- | ----- |
+| write   | `writeLocalTextFile` | `unresolved (other)`    | 1     |
+| network | `fetch`              | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/famous-places/score.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (property)`   | 1     |
+| Kind  | Interface                   | Target                  | Calls |
+| ----- | --------------------------- | ----------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (other)`    | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/fr/parse-recall.ts`
 
@@ -2622,7 +2651,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | read  | `DatabaseClient`     | `data-root:osm/address-points-fr-fr.db` | 1     |
 | read  | `pathExists`         | `unresolved (parameter)`                | 1     |
 | read  | `readLocalBuffer`    | `unresolved (other)`                    | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)`               | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (call)`                     | 1     |
 | read  | `readLocalJSONFile`  | `unresolved (property)`                 | 1     |
 | read  | `readLocalTextFile`  | `unresolved (property)`                 | 1     |
 | write | `writeLocalTextFile` | `unresolved (property)`                 | 1     |
@@ -2638,16 +2667,16 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind  | Interface            | Target                             | Calls |
 | ----- | -------------------- | ---------------------------------- | ----- |
 | read  | `DatabaseClient`     | `data-root:gauntlet/regression.db` | 1     |
-| write | `makeDirectories`    | `unresolved (identifier)`          | 1     |
+| write | `makeDirectories`    | `unresolved (call)`                | 1     |
 | write | `writeLocalFile`     | `unresolved (call)`                | 1     |
 | write | `writeLocalJSONFile` | `unresolved (call)`                | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/gauntlet/ablation/gazetteer.ts`
 
-| Kind | Interface        | Target                    | Calls |
-| ---- | ---------------- | ------------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (identifier)` | 2     |
-| read | `pathExists`     | `unresolved (identifier)` | 2     |
+| Kind | Interface        | Target               | Calls |
+| ---- | ---------------- | -------------------- | ----- |
+| read | `DatabaseClient` | `unresolved (other)` | 2     |
+| read | `pathExists`     | `unresolved (other)` | 2     |
 
 ## `packages/mailwoman/tools/eval-harness/gauntlet/build/fdic-holdout.ts`
 
@@ -2655,32 +2684,33 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | ------- | ----------------- | -------------------------------------------- | ----- |
 | read    | `pathExists`      | `data-root:corpus/staging/fdic-us.csv`       | 1     |
 | read    | `pathExists`      | `data-root:corpus/staging/fdic-us.csv/.prev` | 1     |
-| read    | `pathExists`      | `unresolved (identifier)`                    | 1     |
+| read    | `pathExists`      | `unresolved (template)`                      | 1     |
 | write   | `movePath`        | `data-root:corpus/staging/fdic-us.csv`       | 2     |
 | write   | `movePath`        | `data-root:corpus/staging/fdic-us.csv/.prev` | 1     |
-| write   | `movePath`        | `unresolved (identifier)`                    | 1     |
-| write   | `openWriteStream` | `unresolved (identifier)`                    | 1     |
+| write   | `movePath`        | `unresolved (template)`                      | 1     |
+| write   | `openWriteStream` | `unresolved (template)`                      | 1     |
 | write   | `removePath`      | `data-root:corpus/staging/fdic-us.csv/.prev` | 1     |
-| write   | `removePath`      | `unresolved (identifier)`                    | 1     |
-| network | `APIClient.fetch` | `unresolved (identifier)`                    | 1     |
+| write   | `removePath`      | `unresolved (template)`                      | 1     |
+| network | `APIClient.fetch` | `unresolved (template)`                      | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/gauntlet/build/regression-db.ts`
 
-| Kind  | Interface               | Target                    | Calls |
-| ----- | ----------------------- | ------------------------- | ----- |
-| read  | `pathExists`            | `unresolved (identifier)` | 1     |
-| write | `DatabaseClient`        | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`       | `unresolved (call)`       | 1     |
-| write | `removePath`            | `unresolved (identifier)` | 1     |
-| write | `swapDatabaseIntoPlace` | `unresolved (identifier)` | 2     |
+| Kind  | Interface               | Target                  | Calls |
+| ----- | ----------------------- | ----------------------- | ----- |
+| read  | `pathExists`            | `unresolved (template)` | 1     |
+| write | `DatabaseClient`        | `unresolved (template)` | 1     |
+| write | `makeDirectories`       | `unresolved (call)`     | 1     |
+| write | `removePath`            | `unresolved (template)` | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (call)`     | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/gauntlet/cases/load.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `Globerator.files`          | `unresolved (identifier)` | 1     |
-| read | `Globerator.from`           | `unresolved (parameter)`  | 1     |
-| read | `TextSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target                   | Calls |
+| ---- | --------------------------- | ------------------------ | ----- |
+| read | `Globerator.files`          | `unresolved (call)`      | 1     |
+| read | `Globerator.from`           | `unresolved (parameter)` | 1     |
+| read | `TextSpliterator.fromAsync` | `unresolved (call)`      | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/gauntlet/cases/pins.ts`
 
@@ -2701,8 +2731,8 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind | Interface           | Target                                                  | Calls |
 | ---- | ------------------- | ------------------------------------------------------- | ----- |
 | read | `pathExists`        | `literal:packages/neural-weights-en-us/model-card.json` | 1     |
-| read | `pathExists`        | `unresolved (identifier)`                               | 1     |
-| read | `readLocalBuffer`   | `unresolved (identifier)`                               | 1     |
+| read | `pathExists`        | `unresolved (other)`                                    | 1     |
+| read | `readLocalBuffer`   | `unresolved (other)`                                    | 1     |
 | read | `readLocalTextFile` | `literal:packages/neural-weights-en-us/model-card.json` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/gauntlet/holdout.ts`
@@ -2716,7 +2746,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind | Interface        | Target                             | Calls |
 | ---- | ---------------- | ---------------------------------- | ----- |
 | read | `DatabaseClient` | `data-root:gauntlet/regression.db` | 1     |
-| read | `DatabaseClient` | `unresolved (identifier)`          | 1     |
+| read | `DatabaseClient` | `unresolved (call)`                | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/gauntlet/routing.ts`
 
@@ -2731,11 +2761,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`, 2 times
 - `runs a statement at module scope`, 6 times
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `Globerator.files`    | `unresolved (parameter)`  | 2     |
-| read  | `readLocalTextFile`   | `unresolved (call)`       | 2     |
-| write | `writeLocalJSONLFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target                   | Calls |
+| ----- | --------------------- | ------------------------ | ----- |
+| read  | `Globerator.files`    | `unresolved (parameter)` | 2     |
+| read  | `readLocalTextFile`   | `unresolved (call)`      | 2     |
+| write | `writeLocalJSONLFile` | `unresolved (other)`     | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/hard-case-board.ts`
 
@@ -2780,13 +2810,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/heldout/dataset/manifest.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`         | `unresolved (parameter)`  | 1     |
-| read  | `readLocalTextFile`         | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (parameter)`  | 1     |
-| write | `writeLocalTextFile`        | `unresolved (call)`       | 1     |
+| Kind  | Interface                   | Target                   | Calls |
+| ----- | --------------------------- | ------------------------ | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`      | 1     |
+| read  | `readLocalJSONFile`         | `unresolved (parameter)` | 1     |
+| read  | `readLocalTextFile`         | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (parameter)` | 1     |
+| write | `writeLocalTextFile`        | `unresolved (call)`      | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/heldout/dataset/overlap.run.ts`
 
@@ -2803,7 +2833,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind | Interface           | Target                    | Calls |
 | ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
+| read | `pathExists`        | `unresolved (call)`       | 1     |
 | read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
 | read | `readLocalJSONFile` | `unresolved (parameter)`  | 1     |
 
@@ -2852,10 +2882,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind  | Interface                   | Target                    | Calls |
 | ----- | --------------------------- | ------------------------- | ----- |
 | read  | `JSONSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
-| read  | `pathExists`                | `unresolved (identifier)` | 2     |
-| read  | `sortedGlob`                | `unresolved (identifier)` | 1     |
+| read  | `pathExists`                | `unresolved (call)`       | 1     |
+| read  | `pathExists`                | `unresolved (template)`   | 1     |
+| read  | `sortedGlob`                | `unresolved (call)`       | 1     |
 | read  | `workingTreeStatus`         | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`           | `unresolved (identifier)` | 1     |
+| write | `makeDirectories`           | `unresolved (other)`      | 1     |
 | write | `writeLocalJSONFile`        | `unresolved (template)`   | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/invariance/fixtures.ts`
@@ -2867,20 +2898,21 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/ledger-append.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 3     |
-| read  | `readLocalJSONFile`  | `unresolved (template)`   | 1     |
-| write | `movePath`           | `unresolved (identifier)` | 2     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `pathExists`         | `unresolved (other)`    | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (other)`    | 2     |
+| read  | `readLocalJSONFile`  | `unresolved (template)` | 2     |
+| write | `movePath`           | `unresolved (other)`    | 1     |
+| write | `movePath`           | `unresolved (template)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/mask-regression.ts`
 
 | Kind  | Interface            | Target                    | Calls |
 | ----- | -------------------- | ------------------------- | ----- |
 | read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (other)`      | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/oa/resolver/admin-match.ts`
 
@@ -2904,9 +2936,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/oa/resolver/report.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| write | `writeLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/oa/resolver/rows.ts`
 
@@ -2928,17 +2960,17 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 8 times
 - `awaits at module scope`, 4 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `Globerator.files`   | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (call)`       | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| read  | `Globerator.files`   | `unresolved (call)` | 1     |
+| write | `makeDirectories`    | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/osm-suites/build.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 2     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 2     |
 
 ## `packages/mailwoman/tools/eval-harness/osm-suites/decoder-arms.run.ts`
 
@@ -2958,12 +2990,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/osm-suites/extract.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `JSONSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
-| read | `pathExists`                | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile`         | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile`         | `unresolved (property)`   | 2     |
+| Kind | Interface                   | Target                   | Calls |
+| ---- | --------------------------- | ------------------------ | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
+| read | `pathExists`                | `unresolved (template)`  | 1     |
+| read | `readLocalJSONFile`         | `unresolved (property)`  | 2     |
+| read | `readLocalJSONFile`         | `unresolved (template)`  | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/osm-suites/failure-families.ts`
 
@@ -2978,11 +3010,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 6 times
 - `awaits at module scope`, 2 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (template)`   | 1     |
-| write | `writeLocalTextFile` | `unresolved (template)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (template)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/osm-suites/replay.run.ts`
 
@@ -3000,18 +3032,21 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/parity-corpus.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `JSONSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
-| read | `readLocalBuffer`           | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target                   | Calls |
+| ---- | --------------------------- | ------------------------ | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
+| read | `readLocalBuffer`           | `unresolved (property)`  | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/per/locale-f1.ts`
 
 | Kind        | Interface                   | Target                                   | Calls |
 | ----------- | --------------------------- | ---------------------------------------- | ----- |
-| read        | `JSONSpliterator.fromAsync` | `unresolved (identifier)`                | 1     |
-| read        | `pathExists`                | `unresolved (identifier)`                | 4     |
-| read        | `readLocalJSONFile`         | `unresolved (identifier)`                | 3     |
+| read        | `JSONSpliterator.fromAsync` | `unresolved (call)`                      | 1     |
+| read        | `pathExists`                | `unresolved (call)`                      | 1     |
+| read        | `pathExists`                | `unresolved (identifier)`                | 1     |
+| read        | `pathExists`                | `unresolved (other)`                     | 2     |
+| read        | `readLocalJSONFile`         | `unresolved (identifier)`                | 1     |
+| read        | `readLocalJSONFile`         | `unresolved (other)`                     | 2     |
 | read        | `readLocalJSONFile`         | `unresolved (property)`                  | 1     |
 | write       | `writeLocalJSONFile`        | `unresolved (property)`                  | 1     |
 | environment | `$public`                   | `environment:MAILWOMAN_DUMP_MISS_TAG`    | 1     |
@@ -3030,10 +3065,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/phase-2-decision/run.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `buildSHA`          | `repo:`                   | 1     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target               | Calls |
+| ---- | ------------------- | -------------------- | ----- |
+| read | `buildSHA`          | `repo:`              | 1     |
+| read | `readLocalJSONFile` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/pipeline-parse/worker.ts`
 
@@ -3043,9 +3078,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/poi/board.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target               | Calls |
+| ---- | --------------------------- | -------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/poi/board/runtime.ts`
 
@@ -3063,27 +3098,29 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind | Interface           | Target                    | Calls |
 | ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 3     |
+| read | `readLocalJSONFile` | `unresolved (identifier)` | 2     |
+| read | `readLocalJSONFile` | `unresolved (other)`      | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/promotion/eval.ts`
 
 | Kind  | Interface            | Target                                       | Calls |
 | ----- | -------------------- | -------------------------------------------- | ----- |
 | read  | `Globerator.from`    | `package:mailwoman/tools/eval-harness/specs` | 1     |
-| read  | `pathExists`         | `unresolved (identifier)`                    | 2     |
+| read  | `pathExists`         | `package:mailwoman/tools/eval-harness/specs` | 1     |
+| read  | `pathExists`         | `unresolved (call)`                          | 1     |
 | read  | `pathExists`         | `unresolved (parameter)`                     | 1     |
 | read  | `readLocalBuffer`    | `unresolved (parameter)`                     | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)`                    | 2     |
+| read  | `readLocalJSONFile`  | `unresolved (other)`                         | 2     |
 | write | `makeDirectories`    | `unresolved (identifier)`                    | 1     |
 | write | `writeLocalFile`     | `unresolved (template)`                      | 9     |
 | write | `writeLocalTextFile` | `unresolved (template)`                      | 5     |
 
 ## `packages/mailwoman/tools/eval-harness/promotion/eval/compare.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `Globerator.from`   | `unresolved (parameter)`  | 1     |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 2     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `Globerator.from`   | `unresolved (parameter)` | 1     |
+| read | `readLocalTextFile` | `unresolved (call)`      | 2     |
 
 ## `packages/mailwoman/tools/eval-harness/promotion/eval/leg-profile.ts`
 
@@ -3093,11 +3130,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/promotion/eval/verdict.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (property)`   | 1     |
-| read  | `readLocalTextFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (property)` | 1     |
+| read  | `readLocalTextFile`  | `unresolved (property)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/release/evaluate.run.ts`
 
@@ -3149,31 +3186,31 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/eval-harness/score/affix.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (property)`   | 1     |
+| Kind  | Interface                   | Target                  | Calls |
+| ----- | --------------------------- | ----------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (other)`    | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/score/country-homograph.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (property)`   | 1     |
+| Kind  | Interface                   | Target                  | Calls |
+| ----- | --------------------------- | ----------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (other)`    | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/score/trends.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (other)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/semantic-utility/run.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `buildSHA`                  | `repo:`                   | 1     |
-| read | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target               | Calls |
+| ---- | --------------------------- | -------------------- | ----- |
+| read | `buildSHA`                  | `repo:`              | 1     |
+| read | `JSONSpliterator.fromAsync` | `unresolved (other)` | 1     |
 
 ## `packages/mailwoman/tools/eval-harness/span-board.ts`
 
@@ -3190,21 +3227,19 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/generate-clients.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `copyFileTo`          | `unresolved (call)`       | 1     |
-| read  | `copyFileTo`          | `unresolved (property)`   | 1     |
-| read  | `Globerator.from`     | `unresolved (identifier)` | 1     |
-| read  | `pathExists`          | `unresolved (identifier)` | 1     |
-| read  | `pathExists`          | `unresolved (other)`      | 1     |
-| write | `copyFileTo`          | `unresolved (call)`       | 2     |
-| write | `makeDirectories`     | `unresolved (call)`       | 2     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 3     |
-| write | `makeDirectories`     | `unresolved (parameter)`  | 1     |
-| write | `removePathIfPresent` | `unresolved (call)`       | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 2     |
-| write | `writeLocalFile`      | `unresolved (call)`       | 7     |
-| write | `writeLocalTextFile`  | `unresolved (call)`       | 1     |
+| Kind  | Interface             | Target                   | Calls |
+| ----- | --------------------- | ------------------------ | ----- |
+| read  | `copyFileTo`          | `unresolved (call)`      | 1     |
+| read  | `copyFileTo`          | `unresolved (property)`  | 1     |
+| read  | `Globerator.from`     | `unresolved (call)`      | 1     |
+| read  | `pathExists`          | `unresolved (call)`      | 1     |
+| read  | `pathExists`          | `unresolved (other)`     | 1     |
+| write | `copyFileTo`          | `unresolved (call)`      | 2     |
+| write | `makeDirectories`     | `unresolved (call)`      | 5     |
+| write | `makeDirectories`     | `unresolved (parameter)` | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`      | 3     |
+| write | `writeLocalFile`      | `unresolved (call)`      | 7     |
+| write | `writeLocalTextFile`  | `unresolved (call)`      | 1     |
 
 ## `packages/mailwoman/tools/release-tools/package/weights.run.ts`
 
@@ -3229,24 +3264,27 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/release-tools/publish/autocomplete-index.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `openBuiltClient`    | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile`     | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile` | `unresolved (call)`       | 1     |
+| Kind  | Interface            | Target                   | Calls |
+| ----- | -------------------- | ------------------------ | ----- |
+| read  | `openBuiltClient`    | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`    | `unresolved (call)`      | 1     |
+| write | `writeLocalFile`     | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)`      | 1     |
 
 ## `packages/mailwoman/tools/release-tools/publish/hf.ts`
 
 | Kind    | Interface            | Target                    | Calls |
 | ------- | -------------------- | ------------------------- | ----- |
-| read    | `pathExists`         | `unresolved (identifier)` | 3     |
+| read    | `pathExists`         | `unresolved (identifier)` | 1     |
+| read    | `pathExists`         | `unresolved (other)`      | 1     |
+| read    | `pathExists`         | `unresolved (property)`   | 1     |
 | read    | `readLocalJSONFile`  | `unresolved (parameter)`  | 3     |
-| read    | `statPath`           | `unresolved (identifier)` | 3     |
-| read    | `statPath`           | `unresolved (other)`      | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
-| network | `APIClient.fetch`    | `unresolved (identifier)` | 1     |
+| read    | `statPath`           | `unresolved (identifier)` | 1     |
+| read    | `statPath`           | `unresolved (other)`      | 2     |
+| read    | `statPath`           | `unresolved (property)`   | 1     |
+| write   | `writeLocalJSONFile` | `scratch:`                | 1     |
 | network | `APIClient.fetch`    | `unresolved (parameter)`  | 1     |
+| network | `APIClient.fetch`    | `unresolved (template)`   | 1     |
 
 ## `packages/mailwoman/tools/tiles/publish.ts`
 
@@ -3268,9 +3306,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`
 - `runs a statement at module scope`, 5 times
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target                  | Calls |
+| ---- | ------------------- | ----------------------- | ----- |
+| read | `readLocalTextFile` | `unresolved (template)` | 1     |
 
 ## `packages/mailwoman/tools/training/audits/epoch/mixture.run.ts`
 
@@ -3310,10 +3348,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind  | Interface            | Target                    | Calls |
 | ----- | -------------------- | ------------------------- | ----- |
-| read  | `isFile`             | `unresolved (identifier)` | 2     |
+| read  | `isFile`             | `unresolved (template)`   | 2     |
 | read  | `readLocalBuffer`    | `unresolved (identifier)` | 1     |
 | read  | `readLocalBuffer`    | `unresolved (parameter)`  | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 2     |
+| read  | `readLocalJSONFile`  | `unresolved (call)`       | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (template)`   | 1     |
 | write | `writeLocalTextFile` | `unresolved (call)`       | 1     |
 | write | `writeLocalTextFile` | `unresolved (parameter)`  | 1     |
 
@@ -3346,11 +3385,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/training/config.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `isFile`             | `unresolved (identifier)` | 1     |
-| read  | `isFile`             | `unresolved (property)`   | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                             | Calls |
+| ----- | -------------------- | ---------------------------------- | ----- |
+| read  | `isFile`             | `data-root:cache/recorded-configs` | 1     |
+| read  | `isFile`             | `unresolved (property)`            | 1     |
+| write | `writeLocalTextFile` | `data-root:cache/recorded-configs` | 1     |
 
 ## `packages/mailwoman/tools/training/exposure/exposure.run.ts`
 
@@ -3370,10 +3409,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 7 times
 - `awaits at module scope`, 4 times
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile`         | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target                  | Calls |
+| ---- | --------------------------- | ----------------------- | ----- |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)`     | 1     |
+| read | `readLocalJSONFile`         | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/training/exposure/release/check.run.ts`
 
@@ -3437,14 +3476,15 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind    | Interface              | Target                    | Calls |
-| ------- | ---------------------- | ------------------------- | ----- |
-| read    | `isFile`               | `unresolved (property)`   | 1     |
-| read    | `readLocalBuffer`      | `unresolved (identifier)` | 2     |
-| read    | `tryReadLocalJSONFile` | `unresolved (call)`       | 1     |
-| write   | `writeLocalJSONFile`   | `unresolved (call)`       | 1     |
-| write   | `writeLocalTextFile`   | `unresolved (identifier)` | 1     |
-| process | `runFile`              | `literal:tar`             | 1     |
+| Kind    | Interface              | Target                   | Calls |
+| ------- | ---------------------- | ------------------------ | ----- |
+| read    | `isFile`               | `unresolved (property)`  | 1     |
+| read    | `readLocalBuffer`      | `scratch:trainer.tar.gz` | 1     |
+| read    | `readLocalBuffer`      | `unresolved (other)`     | 1     |
+| read    | `tryReadLocalJSONFile` | `unresolved (call)`      | 1     |
+| write   | `writeLocalJSONFile`   | `unresolved (call)`      | 1     |
+| write   | `writeLocalTextFile`   | `scratch:files.txt`      | 1     |
+| process | `runFile`              | `literal:tar`            | 1     |
 
 ## `packages/mailwoman/tools/training/launch/modal-boundary.ts`
 
@@ -3454,12 +3494,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/mailwoman/tools/training/launch/preflight.ts`
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `readLocalBuffer`    | `unresolved (template)`   | 1     |
-| read    | `readLocalTextFile`  | `unresolved (property)`   | 1     |
-| write   | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
-| process | `runFile`            | `unresolved (property)`   | 1     |
+| Kind    | Interface            | Target                  | Calls |
+| ------- | -------------------- | ----------------------- | ----- |
+| read    | `readLocalBuffer`    | `unresolved (template)` | 1     |
+| read    | `readLocalTextFile`  | `unresolved (property)` | 1     |
+| write   | `writeLocalTextFile` | `scratch:*`             | 1     |
+| process | `runFile`            | `unresolved (property)` | 1     |
 
 ## `packages/mailwoman/tools/training/libtorch.run.ts`
 
@@ -3467,14 +3507,14 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 2 times
 
-| Kind    | Interface             | Target                    | Calls |
-| ------- | --------------------- | ------------------------- | ----- |
-| read    | `pathExists`          | `unresolved (identifier)` | 1     |
-| write   | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write   | `removePathIfPresent` | `unresolved (identifier)` | 2     |
-| write   | `writeLocalBuffer`    | `unresolved (identifier)` | 2     |
-| network | `fetch`               | `unresolved (identifier)` | 1     |
-| process | `runFile`             | `literal:unzip`           | 1     |
+| Kind    | Interface             | Target               | Calls |
+| ------- | --------------------- | -------------------- | ----- |
+| read    | `pathExists`          | `unresolved (call)`  | 1     |
+| write   | `makeDirectories`     | `unresolved (other)` | 1     |
+| write   | `removePathIfPresent` | `unresolved (call)`  | 2     |
+| write   | `writeLocalBuffer`    | `unresolved (call)`  | 2     |
+| network | `fetch`               | `unresolved (call)`  | 1     |
+| process | `runFile`             | `literal:unzip`      | 1     |
 
 ## `packages/mailwoman/tools/training/resume-parity.run.ts`
 
@@ -3483,15 +3523,15 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 9 times
 - `awaits at module scope`, 6 times
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `readLocalBuffer`    | `unresolved (call)`       | 2     |
-| read    | `readLocalTextFile`  | `unresolved (call)`       | 1     |
-| write   | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (call)`       | 1     |
-| write   | `writeLocalTextFile` | `unresolved (call)`       | 1     |
-| process | `runFile`            | `unresolved (call)`       | 1     |
-| process | `spawnProcess`       | `unresolved (call)`       | 1     |
+| Kind    | Interface            | Target              | Calls |
+| ------- | -------------------- | ------------------- | ----- |
+| read    | `readLocalBuffer`    | `unresolved (call)` | 2     |
+| read    | `readLocalTextFile`  | `unresolved (call)` | 1     |
+| write   | `makeDirectories`    | `unresolved (call)` | 1     |
+| write   | `writeLocalJSONFile` | `unresolved (call)` | 1     |
+| write   | `writeLocalTextFile` | `unresolved (call)` | 1     |
+| process | `runFile`            | `unresolved (call)` | 1     |
+| process | `spawnProcess`       | `unresolved (call)` | 1     |
 
 ## `packages/mailwoman/tools/training/sampler.ts`
 
@@ -3507,11 +3547,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind  | Interface            | Target                   | Calls |
-| ----- | -------------------- | ------------------------ | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (call)`      | 1     |
-| write | `writeLocalJSONFile` | `unresolved (parameter)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`  | 1     |
+| Kind  | Interface            | Target                                        | Calls |
+| ----- | -------------------- | --------------------------------------------- | ----- |
+| read  | `readLocalJSONFile`  | `data-root:audits/encoder-parity/record.json` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (parameter)`                      | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)`                       | 1     |
 
 ## `packages/mailwoman/tools/training/step/rates.run.ts`
 

@@ -18,8 +18,8 @@ now require a free registered account. Use the `fetch-openaddresses.ts`
 script which handles auth via `OA_BATCH_TOKEN` — see
 `packages/corpus/scripts/fetch-sources/README.md` for setup steps.
 
-Files land at:
-`$OUT_ROOT/openaddresses/<country>/collection.geojsonl`
+`mailwoman corpus fetch openaddresses --country <cc>` writes a current source, so files land at:
+`$MAILWOMAN_CACHE_ROOT/sources/openaddresses/<country>/collection.geojsonl`
 
 Point `--input` at that `.geojsonl`. The runner is invoked with
 `--country US|CA|FR|...` to stamp the country on every row —
@@ -28,9 +28,9 @@ flag is required.
 
 ```sh
 npx mailwoman corpus run openaddresses \
-  --input /data/oa/us-northeast.geojsonl \
+  --input $MAILWOMAN_CACHE_ROOT/sources/openaddresses/us-northeast/collection.geojsonl \
   --country US \
-  --output /data/corpus/sources/
+  --output $MAILWOMAN_DATA_ROOT/corpus/staging/
 ```
 
 ## Per-row license

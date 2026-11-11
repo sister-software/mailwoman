@@ -192,6 +192,22 @@ describe("the published installation path", () => {
 		await expect(pathExists(scratch.path("db", "wof", "candidate.db"))).resolves.toBe(false)
 	})
 
+	it("installs into a data root that doesn't exist yet", async () => {
+		const missing = scratch.path("not", "created", "yet")
+
+		await expect(pathExists(missing)).resolves.toBe(false)
+
+		const plan = await planInstallation({ ...request(["candidate"]), dataRoot: missing })
+
+		await using client = new APIClient({ displayName: "fixture", retry: false })
+
+		const result = await executeInstallation(plan, { client })
+
+		expect(result.ok).toBe(true)
+		expect(result.selection?.generation).toBe(1)
+		await expect(resolveCandidateDBPath(undefined, missing)).resolves.toMatch(/candidate\.db$/u)
+	})
+
 	it("adds the District of Columbia without transferring another state, and the street reader resolves it", async () => {
 		await pull(["candidate"])
 		registry.requests.length = 0

@@ -10,7 +10,7 @@
  *   from the data root and refuses bytes whose digest differs, so a moving `latest` never enters an artifact unnoticed.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import type { PathBuilder } from "path-ts"
 
 /**
@@ -155,8 +155,10 @@ export interface SourceLock {
 }
 
 /**
- * Where the pinned bytes of a source live.
+ * Where the pinned bytes of a source live: a current source under the cache root.
+ *
+ * A fetch checks the bytes against the lock, and fetches them again after the cache root is cleared.
  */
-export function sourcePath(source: SourceDefinition): PathBuilder {
-	return dataRootPath("corpus", "sources", "registry", source.file)
+export function pinnedSourceFile(source: SourceDefinition): PathBuilder {
+	return currentSourcePath("registry", source.file)
 }

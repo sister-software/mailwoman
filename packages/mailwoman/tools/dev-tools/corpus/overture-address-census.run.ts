@@ -23,7 +23,7 @@
  *     [--release 2026-06-17.0] [--min-street-rows 50000] [--json <out>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { snapshotSourceDirectory } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
@@ -46,7 +46,10 @@ interface CountryCensus {
 
 const { values } = parseArguments({
 	options: {
-		release: { type: "string", description: "Release directory under <data root>/overture (default: the newest)" },
+		release: {
+			type: "string",
+			description: "Release directory under <data root>/snapshots/overture (default: the newest)",
+		},
 		"min-street-rows": { type: "string", description: "Street-row floor a country must clear (default 50000)" },
 		json: { type: "string", description: "Write the per-country census to this path" },
 	},
@@ -58,7 +61,7 @@ if (!Number.isFinite(minStreetRows) || minStreetRows < 0) {
 	throw new Error(`--min-street-rows must be a non-negative number, read ${values["min-street-rows"]}`)
 }
 
-const overtureRoot = dataRootPath("overture")
+const overtureRoot = snapshotSourceDirectory("overture")
 
 /**
  * Release directory → the `addresses-<cc>.parquet` names it holds.

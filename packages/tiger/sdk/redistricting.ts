@@ -23,6 +23,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { tigerDatabaseRoot } from "#paths"
 import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "#schema"
 import { downloadIfNeeded } from "#sdk/download"
 import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "#state"
@@ -135,7 +136,7 @@ export interface FetchRedistrictingOptions {
 	/**
 	 * Output SQLite path.
 	 *
-	 * @defaultValue `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`).
+	 * @defaultValue `<dataRoot>/db/tiger/tiger.db` (same DB as `fetchTIGER`).
 	 */
 	outPath?: string
 	/**
@@ -202,7 +203,7 @@ export async function* fetchRedistricting(
 
 	const cacheDir = dataRoot("census", "redistricting", String(vintage), state)
 	// Same stable `tiger.db` default as fetchTIGER — pl_block lives alongside tabblock20 in one DB.
-	const outPath = PathBuilder.from(options.outPath ?? dataRoot("tiger", "tiger.db"))
+	const outPath = PathBuilder.from(options.outPath ?? tigerDatabaseRoot(dataRoot)("tiger.db"))
 	await makeDirectories(cacheDir)
 	await makeDirectories(outPath.dirname())
 

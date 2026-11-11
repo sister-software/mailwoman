@@ -76,6 +76,29 @@ resolver and rule-based classifiers:
 
 The dictionaries are ~9 MB total and are loaded lazily.
 
+## Where data lives
+
+`@mailwoman/core/data-root` resolves four kinds of data, and each kind has one root.
+
+| Kind            | Root                                                 | What it promises                                                         | Examples                                        |
+| --------------- | ---------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------- |
+| Temporary       | `$MAILWOMAN_TEMP_ROOT`                               | The system may remove it at any time, including on reboot                | A build's staging database                      |
+| Current source  | `$MAILWOMAN_CACHE_ROOT/sources/<source>/`            | A fetch brings it up to date, and clearing it costs a fetch              | OpenAddresses runs, Who's On First clones, BAN  |
+| Snapshot source | `$MAILWOMAN_DATA_ROOT/snapshots/<source>/<vintage>/` | A dated pull, read-only once written, beside the vintages that follow it | An Overture release, a monthly register extract |
+| Built artifact  | `$MAILWOMAN_DATA_ROOT`                               | A build reproduces it at the cost of compute                             | Gazetteer and address databases, corpora        |
+
+`mailwoman corpus fetch` writes each source under its kind's root. A snapshot fetch refuses to replace a
+vintage already on disk unless you state the vintage with `--vintage` and pass `--force`. A forced fetch
+that fails leaves the existing vintage in place.
+
+A build writes its staging database under `$MAILWOMAN_TEMP_ROOT` and moves only finished files under the
+data root. A RAM-backed `/tmp`, the default on some Linux distributions, holds as much as memory allows,
+so point `$MAILWOMAN_TEMP_ROOT` at a disk when a build's staging is larger than that.
+
+Any subdirectory of the data root or the cache root may be a symbolic link to another volume, such as an
+external drive for snapshots and current sources. Mount that volume before a build. The US address-layer
+build stops with an error naming its OpenAddresses cache when that directory is missing.
+
 ## Related
 
 - [`mailwoman`](../mailwoman) — the user-facing CLI + `AddressParser`

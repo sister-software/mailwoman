@@ -22,7 +22,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `awaits at module scope`, 2 times
 - `runs a statement at module scope`
 
-| Kind  | Interface    | Target                    | Calls |
-| ----- | ------------ | ------------------------- | ----- |
-| read  | `pathExists` | `unresolved (identifier)` | 1     |
-| write | `removePath` | `unresolved (identifier)` | 1     |
+| Kind  | Interface    | Target              | Calls |
+| ----- | ------------ | ------------------- | ----- |
+| read  | `pathExists` | `unresolved (call)` | 1     |
+| write | `removePath` | `unresolved (call)` | 1     |

@@ -10,33 +10,15 @@ import ts from "typescript"
 
 import { PathRoot } from "#repo-health/effects/interfaces"
 import {
-	constantLiteral,
 	type FileScope,
 	type ImportedPaths,
 	isImportMeta,
 	joinTarget,
-	literalText,
+	literalPrefix,
 	type ResolvedTarget,
 	targetOfExpression,
 	bindSourceScope,
 } from "#repo-health/effects/resolve"
-
-/**
- * The literal arguments of `args` up to the first argument that's not one.
- */
-function literalPrefix(args: readonly ts.Expression[]): string[] {
-	const prefix: string[] = []
-
-	for (const arg of args) {
-		const text = literalText(arg) ?? constantLiteral(arg, 0)
-
-		if (text === null) break
-
-		prefix.push(text)
-	}
-
-	return prefix
-}
 
 /**
  * The deepest rooted directory a path-building call is known to stay under when its later
@@ -52,7 +34,7 @@ function partialTarget(scope: FileScope, call: ts.CallExpression): ResolvedTarge
 	const binding = scope.bindings.get(callee.text)
 
 	if (binding?.kind === "builder" && !binding.builder.rebases) {
-		const segments = literalPrefix(call.arguments)
+		const segments = literalPrefix(call.arguments, 0)
 
 		if (!binding.builder.packageFirst) return { root: binding.builder.root, path: segments.join("/") }
 
@@ -68,11 +50,11 @@ function partialTarget(scope: FileScope, call: ts.CallExpression): ResolvedTarge
 		const [first, ...rest] = call.arguments
 		const base = first ? targetOfExpression(scope, first) : null
 
-		return base ? joinTarget(base, literalPrefix(rest)) : null
+		return base ? joinTarget(base, literalPrefix(rest, 0)) : null
 	}
 
 	if (binding?.kind === "rooted" && binding.rooted.kind === "constant") {
-		return joinTarget(binding.rooted.target, literalPrefix(call.arguments))
+		return joinTarget(binding.rooted.target, literalPrefix(call.arguments, 0))
 	}
 
 	return null

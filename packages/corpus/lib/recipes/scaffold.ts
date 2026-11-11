@@ -466,7 +466,7 @@ export interface RecipeOptions {
 	/**
 	 * `fr-lieudit`: BAN `adresses-<dept>.csv` directory.
 	 *
-	 * @defaultValue `$MAILWOMAN_DATA_ROOT/corpus/sources/ban`
+	 * @defaultValue `$MAILWOMAN_CACHE_ROOT/sources/ban`
 	 */
 	banDir?: PathBuilderLike
 	multilocaleCount?: number | null
@@ -525,7 +525,7 @@ export interface RecipeOptions {
 	 * `venue` and `sub-venue`: the Overture place-names Parquet file with `name`,
 	 * `category` and `country` columns.
 	 *
-	 * @defaultValue the release the venue-head table is built from, under `$MAILWOMAN_DATA_ROOT/overture`
+	 * @defaultValue the release the venue-head table is built from, under `$MAILWOMAN_DATA_ROOT/snapshots/overture`
 	 */
 	venueNames?: PathBuilderLike
 	/**

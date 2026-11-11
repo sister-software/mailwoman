@@ -27,7 +27,7 @@ import { extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
 import { formatAddress } from "@mailwoman/codex/address/format"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample, shuffleWith } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -158,7 +158,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 	options: [
 		{
 			flag: "--ban-dir <dir>",
-			description: "BAN adresses-<dept>.csv directory. Default $MAILWOMAN_DATA_ROOT/corpus/sources/ban",
+			description: "BAN adresses-<dept>.csv directory. Default $MAILWOMAN_CACHE_ROOT/sources/ban",
 		},
 		{
 			flag: "--country-fraction <f>",
@@ -169,7 +169,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? defaultRecipeSource("synth-fr-lieudit")
 		const count = opts.count ?? 800_000
-		const banDir = opts.banDir ?? dataRootPath("corpus", "sources", "ban")
+		const banDir = opts.banDir ?? currentSourcePath("ban")
 		const countryFraction = opts.countryFraction ?? 0
 
 		if (!(countryFraction >= 0 && countryFraction <= 1)) {

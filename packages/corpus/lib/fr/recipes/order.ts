@@ -9,7 +9,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { sample } from "@mailwoman/core/random"
@@ -21,7 +21,7 @@ import { defaultRecipeSource } from "#recipes/sources"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-const SOURCE = { zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
+const SOURCE = { zip: currentSourcePath("openaddresses", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
 
 /**
  * French house-number ordinal suffixes.

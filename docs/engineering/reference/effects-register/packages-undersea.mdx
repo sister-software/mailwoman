@@ -32,21 +32,20 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/undersea/tools/depth.ts`
 
-| Kind    | Interface | Target                    | Calls |
-| ------- | --------- | ------------------------- | ----- |
-| network | `fetch`   | `unresolved (identifier)` | 1     |
+| Kind    | Interface | Target              | Calls |
+| ------- | --------- | ------------------- | ----- |
+| network | `fetch`   | `unresolved (call)` | 1     |
 
 ## `packages/undersea/tools/undersea-layer.ts`
 
-| Kind  | Interface               | Target                    | Calls |
-| ----- | ----------------------- | ------------------------- | ----- |
-| read  | `pathExists`            | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`     | `unresolved (call)`       | 1     |
-| read  | `readLocalJSONFile`     | `unresolved (identifier)` | 1     |
-| write | `DatabaseClient`        | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`       | `unresolved (call)`       | 1     |
-| write | `removePath`            | `unresolved (identifier)` | 2     |
-| write | `sealDatabase`          | `unresolved (property)`   | 1     |
-| write | `swapDatabaseIntoPlace` | `unresolved (identifier)` | 1     |
-| write | `swapDatabaseIntoPlace` | `unresolved (property)`   | 1     |
-| write | `writeLocalJSONFile`    | `unresolved (property)`   | 1     |
+| Kind  | Interface               | Target                  | Calls |
+| ----- | ----------------------- | ----------------------- | ----- |
+| read  | `pathExists`            | `unresolved (template)` | 1     |
+| read  | `readLocalJSONFile`     | `unresolved (call)`     | 2     |
+| write | `DatabaseClient`        | `unresolved (template)` | 1     |
+| write | `makeDirectories`       | `unresolved (call)`     | 1     |
+| write | `removePath`            | `unresolved (template)` | 2     |
+| write | `sealDatabase`          | `unresolved (property)` | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (property)` | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (template)` | 1     |
+| write | `writeLocalJSONFile`    | `unresolved (property)` | 1     |

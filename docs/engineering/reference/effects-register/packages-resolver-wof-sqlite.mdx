@@ -17,29 +17,30 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/resolver-wof-sqlite/lib/address/keys/attribution.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `DatabaseClient`     | `unresolved (property)`   | 2     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `DatabaseClient`     | `unresolved (property)` | 2     |
+| write | `writeLocalJSONFile` | `unresolved (call)`     | 1     |
 
 ## `packages/resolver-wof-sqlite/lib/address/keys/build.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| write | `DatabaseClient`      | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`     | `unresolved (call)`       | 2     |
-| write | `makeDirectories`     | `unresolved (property)`   | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 2     |
+| Kind  | Interface             | Target                   | Calls |
+| ----- | --------------------- | ------------------------ | ----- |
+| read  | `statPath`            | `unresolved (parameter)` | 1     |
+| write | `DatabaseClient`      | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)`      | 2     |
+| write | `makeDirectories`     | `unresolved (property)`  | 1     |
+| write | `removePathIfPresent` | `unresolved (other)`     | 2     |
 
 ## `packages/resolver-wof-sqlite/lib/address/keys/layout.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| read  | `sortedGlob`         | `unresolved (identifier)` | 1     |
-| read  | `statPath`           | `unresolved (parameter)`  | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                   | Calls |
+| ----- | -------------------- | ------------------------ | ----- |
+| read  | `pathExists`         | `unresolved (call)`      | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (call)`      | 1     |
+| read  | `sortedGlob`         | `unresolved (call)`      | 1     |
+| read  | `statPath`           | `unresolved (parameter)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)`      | 1     |
 
 ## `packages/resolver-wof-sqlite/lib/address/keys/open.ts`
 
@@ -109,33 +110,36 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/resolver-wof-sqlite/lib/fst/builder.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `DatabaseClient` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target              | Calls |
+| ----- | ---------------- | ------------------- | ----- |
+| write | `DatabaseClient` | `unresolved (call)` | 1     |
 
 ## `packages/resolver-wof-sqlite/lib/fst/freshness.ts`
 
 | Kind  | Interface            | Target                    | Calls |
 | ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 3     |
+| read  | `pathExists`         | `unresolved (identifier)` | 2     |
 | read  | `pathExists`         | `unresolved (parameter)`  | 1     |
+| read  | `pathExists`         | `unresolved (template)`   | 1     |
 | read  | `readFileRange`      | `unresolved (parameter)`  | 3     |
-| read  | `readLocalTextFile`  | `unresolved (identifier)` | 1     |
-| read  | `statPath`           | `unresolved (identifier)` | 2     |
+| read  | `readLocalTextFile`  | `unresolved (template)`   | 1     |
+| read  | `statPath`           | `unresolved (call)`       | 1     |
 | read  | `statPath`           | `unresolved (parameter)`  | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| read  | `statPath`           | `unresolved (template)`   | 1     |
+| write | `writeLocalTextFile` | `unresolved (template)`   | 1     |
 
 ## `packages/resolver-wof-sqlite/lib/geonames/aliases.ts`
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 2     |
+| Kind | Interface    | Target               | Calls |
+| ---- | ------------ | -------------------- | ----- |
+| read | `pathExists` | `unresolved (call)`  | 1     |
+| read | `pathExists` | `unresolved (other)` | 1     |
 
 ## `packages/resolver-wof-sqlite/lib/geonames/postal.ts`
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 1     |
+| Kind | Interface    | Target              | Calls |
+| ---- | ------------ | ------------------- | ----- |
+| read | `pathExists` | `unresolved (call)` | 1     |
 
 ## `packages/resolver-wof-sqlite/lib/interpolation.ts`
 
@@ -170,19 +174,19 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/resolver-wof-sqlite/lib/street/morphology/fst/builder.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `Globerator.from`   | `unresolved (identifier)` | 1     |
-| read | `isDirectory`       | `unresolved (identifier)` | 1     |
-| read | `isFile`            | `unresolved (call)`       | 1     |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `Globerator.from`   | `unresolved (call)` | 1     |
+| read | `isDirectory`       | `unresolved (call)` | 1     |
+| read | `isFile`            | `unresolved (call)` | 1     |
+| read | `readLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `packages/resolver-wof-sqlite/lib/street/morphology/fst/loader.ts`
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `pathExists`      | `unresolved (identifier)` | 1     |
-| read | `readLocalBuffer` | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target               | Calls |
+| ---- | ----------------- | -------------------- | ----- |
+| read | `pathExists`      | `unresolved (other)` | 1     |
+| read | `readLocalBuffer` | `unresolved (other)` | 1     |
 
 ## `packages/resolver-wof-sqlite/lib/uprn/lookup.ts`
 
@@ -192,22 +196,27 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/resolver-wof-sqlite/lib/weights-overlay-linker.ts`
 
-| Kind        | Interface            | Target                                | Calls |
-| ----------- | -------------------- | ------------------------------------- | ----- |
-| read        | `pathExists`         | `unresolved (identifier)`             | 14    |
-| read        | `pathExists`         | `unresolved (parameter)`              | 2     |
-| read        | `readLocalBuffer`    | `unresolved (parameter)`              | 1     |
-| read        | `readLocalJSONFile`  | `unresolved (identifier)`             | 2     |
-| read        | `readLocalTextFile`  | `unresolved (identifier)`             | 1     |
-| read        | `statLink`           | `unresolved (parameter)`              | 1     |
-| read        | `statPath`           | `unresolved (identifier)`             | 1     |
-| read        | `statPath`           | `unresolved (parameter)`              | 3     |
-| write       | `createSymbolicLink` | `unresolved (identifier)`             | 1     |
-| write       | `makeDirectories`    | `unresolved (identifier)`             | 2     |
-| write       | `movePath`           | `unresolved (identifier)`             | 1     |
-| write       | `movePath`           | `unresolved (parameter)`              | 1     |
-| write       | `removePath`         | `unresolved (identifier)`             | 1     |
-| write       | `removePath`         | `unresolved (parameter)`              | 1     |
-| write       | `writeLocalTextFile` | `unresolved (identifier)`             | 1     |
-| environment | `$public`            | `environment:MAILWOMAN_DEV_MODEL`     | 1     |
-| environment | `$public`            | `environment:MAILWOMAN_DEV_TOKENIZER` | 1     |
+| Kind        | Interface            | Target                                    | Calls |
+| ----------- | -------------------- | ----------------------------------------- | ----- |
+| read        | `pathExists`         | `repo:packages`                           | 2     |
+| read        | `pathExists`         | `repo:packages/mailwoman/out/cli/main.js` | 1     |
+| read        | `pathExists`         | `unresolved (call)`                       | 5     |
+| read        | `pathExists`         | `unresolved (identifier)`                 | 3     |
+| read        | `pathExists`         | `unresolved (other)`                      | 1     |
+| read        | `pathExists`         | `unresolved (parameter)`                  | 2     |
+| read        | `pathExists`         | `unresolved (template)`                   | 2     |
+| read        | `readLocalBuffer`    | `unresolved (parameter)`                  | 1     |
+| read        | `readLocalJSONFile`  | `repo:packages`                           | 2     |
+| read        | `readLocalTextFile`  | `unresolved (template)`                   | 1     |
+| read        | `statLink`           | `unresolved (parameter)`                  | 1     |
+| read        | `statPath`           | `unresolved (parameter)`                  | 3     |
+| read        | `statPath`           | `unresolved (template)`                   | 1     |
+| write       | `createSymbolicLink` | `unresolved (template)`                   | 1     |
+| write       | `makeDirectories`    | `unresolved (call)`                       | 2     |
+| write       | `movePath`           | `unresolved (parameter)`                  | 1     |
+| write       | `movePath`           | `unresolved (template)`                   | 1     |
+| write       | `removePath`         | `unresolved (parameter)`                  | 1     |
+| write       | `removePath`         | `unresolved (template)`                   | 1     |
+| write       | `writeLocalTextFile` | `unresolved (template)`                   | 1     |
+| environment | `$public`            | `environment:MAILWOMAN_DEV_MODEL`         | 1     |
+| environment | `$public`            | `environment:MAILWOMAN_DEV_TOKENIZER`     | 1     |

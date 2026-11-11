@@ -17,7 +17,7 @@
  *   admin-DB borough recipe ~1.9 kB).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	committedSoftFeedLinks,
@@ -32,7 +32,7 @@ import {
  *
  * A directory belongs in `inputs` (existence only), not `sources` (md5).
  */
-const BAN_DIR = dataRootPath("corpus", "sources", "ban")
+const BAN_DIR = currentSourcePath("ban")
 
 const softFeed = await committedSoftFeedLinks()
 

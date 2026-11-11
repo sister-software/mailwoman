@@ -60,12 +60,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`
 
-| Kind    | Interface         | Target                    | Calls |
-| ------- | ----------------- | ------------------------- | ----- |
-| read    | `Globerator.from` | `unresolved (identifier)` | 1     |
-| read    | `pathExists`      | `unresolved (call)`       | 1     |
-| read    | `pathExists`      | `unresolved (identifier)` | 1     |
-| process | `runFile`         | `unresolved (property)`   | 1     |
+| Kind    | Interface         | Target                  | Calls |
+| ------- | ----------------- | ----------------------- | ----- |
+| read    | `Globerator.from` | `unresolved (call)`     | 1     |
+| read    | `pathExists`      | `unresolved (call)`     | 2     |
+| process | `runFile`         | `unresolved (property)` | 1     |
 
 ## `config/vale/shared.ts`
 

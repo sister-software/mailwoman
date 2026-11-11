@@ -46,6 +46,9 @@ mailwoman tiger fetch --state 50 --level addrfeat --out tiger.db
 # Repeat per state. Re-running a state replaces its rows (idempotent).
 ```
 
+Without `--out`, `tiger fetch` writes `$MAILWOMAN_DATA_ROOT/db/tiger/tiger.db`, the path
+`tigerDatabasePath("tiger.db")` from `@mailwoman/tiger/paths` names.
+
 (Internally the CLI still shells out to `ogr2ogr` for the shapefile read +
 column mapping. The CLI owns the discovery, schema, and idempotency.)
 

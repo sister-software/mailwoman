@@ -5,7 +5,7 @@
  * @file Reads address context and derives street-side negatives for the sub-venue recipe.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
@@ -32,10 +32,10 @@ import type { LocaleBaseTuple } from "#surfaces/locale"
  */
 const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 	DE: [
-		{ path: dataRootPath("openaddresses", "extracted", "de", "berlin.csv"), region: "Berlin" },
-		{ path: dataRootPath("openaddresses", "extracted", "de", "sn", "statewide.csv"), region: "Sachsen" },
+		{ path: currentSourcePath("openaddresses", "extracted", "de", "berlin.csv"), region: "Berlin" },
+		{ path: currentSourcePath("openaddresses", "extracted", "de", "sn", "statewide.csv"), region: "Sachsen" },
 	],
-	ES: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
+	ES: [{ path: currentSourcePath("openaddresses", "extracted", "es", "countrywide.csv") }],
 }
 
 /**

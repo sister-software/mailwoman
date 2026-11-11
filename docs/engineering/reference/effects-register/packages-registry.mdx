@@ -24,12 +24,12 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 
 ## `packages/registry/sdk/fetch.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile`     | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (call)`       | 1     |
+| Kind  | Interface            | Target                                                    | Calls |
+| ----- | -------------------- | --------------------------------------------------------- | ----- |
+| read  | `pathExists`         | `repo:packages/registry/data/manifests/sources.lock.json` | 1     |
+| read  | `readLocalJSONFile`  | `repo:packages/registry/data/manifests/sources.lock.json` | 1     |
+| write | `writeLocalFile`     | `unresolved (call)`                                       | 1     |
+| write | `writeLocalJSONFile` | `repo:packages/registry/data/manifests/sources.lock.json` | 1     |
 
 ## `packages/registry/tools/bench.run.ts`
 
@@ -38,10 +38,12 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 - `awaits at module scope`, 4 times
 - `runs a statement at module scope`, 8 times
 
-| Kind | Interface           | Target              | Calls |
-| ---- | ------------------- | ------------------- | ----- |
-| read | `readLocalBuffer`   | `unresolved (call)` | 1     |
-| read | `readLocalJSONFile` | `unresolved (call)` | 3     |
+| Kind | Interface           | Target                                                      | Calls |
+| ---- | ------------------- | ----------------------------------------------------------- | ----- |
+| read | `readLocalBuffer`   | `unresolved (call)`                                         | 1     |
+| read | `readLocalJSONFile` | `repo:packages/registry/data/manifests/artifacts.json`      | 1     |
+| read | `readLocalJSONFile` | `repo:packages/registry/data/normalized/iata-airports.json` | 1     |
+| read | `readLocalJSONFile` | `repo:packages/registry/data/normalized/iso3166-1.json`     | 1     |
 
 ## `packages/registry/tools/build-wasm.run.ts`
 
@@ -49,11 +51,12 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 
 - `runs a statement at module scope`
 
-| Kind    | Interface               | Target                    | Calls |
-| ------- | ----------------------- | ------------------------- | ----- |
-| read    | `statPath`              | `unresolved (identifier)` | 1     |
-| write   | `replaceFileAtomically` | `unresolved (identifier)` | 2     |
-| process | `runFile`               | `literal:cargo`           | 1     |
+| Kind    | Interface               | Target                        | Calls |
+| ------- | ----------------------- | ----------------------------- | ----- |
+| read    | `statPath`              | `unresolved (template)`       | 1     |
+| write   | `replaceFileAtomically` | `repo:packages/registry/wasm` | 1     |
+| write   | `replaceFileAtomically` | `unresolved (template)`       | 1     |
+| process | `runFile`               | `literal:cargo`               | 1     |
 
 ## `packages/registry/tools/generate-sections.run.ts`
 
@@ -64,7 +67,7 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 
 | Kind  | Interface           | Target                    | Calls |
 | ----- | ------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile` | `unresolved (call)`       | 1     |
+| read  | `readLocalJSONFile` | `repo:packages/registry`  | 1     |
 | read  | `readLocalTextFile` | `unresolved (identifier)` | 1     |
 | write | `writeLocalFile`    | `unresolved (identifier)` | 1     |
 
@@ -77,11 +80,10 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 
 | Kind    | Interface           | Target                               | Calls |
 | ------- | ------------------- | ------------------------------------ | ----- |
-| read    | `readLocalBuffer`   | `unresolved (call)`                  | 1     |
-| read    | `readLocalBuffer`   | `unresolved (identifier)`            | 1     |
+| read    | `readLocalBuffer`   | `repo:packages/registry`             | 1     |
 | read    | `readLocalBuffer`   | `unresolved (parameter)`             | 1     |
-| read    | `readLocalBuffer`   | `unresolved (template)`              | 1     |
-| read    | `readLocalJSONFile` | `unresolved (call)`                  | 1     |
+| read    | `readLocalBuffer`   | `unresolved (template)`              | 2     |
+| read    | `readLocalJSONFile` | `repo:packages/registry`             | 1     |
 | write   | `writeLocalFile`    | `unresolved (parameter)`             | 1     |
 | process | `runFile`           | `literal:cargo`                      | 1     |
 | process | `runFile`           | `repo:target/release/registry-build` | 1     |
@@ -93,10 +95,11 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 - `awaits at module scope`, 2 times
 - `runs a statement at module scope`, 7 times
 
-| Kind  | Interface            | Target              | Calls |
-| ----- | -------------------- | ------------------- | ----- |
-| write | `writeLocalFile`     | `unresolved (call)` | 2     |
-| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
+| Kind  | Interface            | Target                                                      | Calls |
+| ----- | -------------------- | ----------------------------------------------------------- | ----- |
+| write | `writeLocalFile`     | `repo:packages/registry/data/normalized/iata-airports.json` | 1     |
+| write | `writeLocalFile`     | `repo:packages/registry/data/normalized/iso3166-1.json`     | 1     |
+| write | `writeLocalJSONFile` | `repo:packages/registry/data/manifests/coverage.json`       | 1     |
 
 ## `packages/registry/tools/normalize.ts`
 

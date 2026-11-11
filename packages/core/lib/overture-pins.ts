@@ -19,6 +19,6 @@
  */
 
 /**
- * The addresses-theme release directory under `<data-root>/overture/`.
+ * The addresses-theme release directory under `<data-root>/snapshots/overture/`.
  */
 export const OVERTURE_ADDRESSES_RELEASE = "2026-06-17.0"

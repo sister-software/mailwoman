@@ -14,6 +14,46 @@ import {
 	ZipCodePrefixAbbreviationMap,
 } from "#us"
 import { isUSStateAbbreviation } from "#us/state"
+import { normalizeZIPCode } from "#us/zipcode"
+
+describe("normalizeZIPCode", () => {
+	it("restores the leading zeros a numeric column dropped, when the state's codes begin with zero", () => {
+		expect(normalizeZIPCode("612", "PR")).toBe("00612")
+		expect(normalizeZIPCode("6103", "CT")).toBe("06103")
+	})
+
+	it("refuses a padded code another state's first digit would need", () => {
+		expect(normalizeZIPCode("7341", "TX")).toBeNull()
+	})
+
+	it("refuses a short value that kept its leading zero, which lost its trailing digits", () => {
+		expect(normalizeZIPCode("0494", "ME")).toBeNull()
+	})
+
+	it("reads the other spellings sources write back to the code", () => {
+		expect(normalizeZIPCode("19311.0", "PA")).toBe("19311")
+		expect(normalizeZIPCode("368010028", "AL")).toBe("36801-0028")
+		expect(normalizeZIPCode("35175-", "AL")).toBe("35175")
+		expect(normalizeZIPCode("76442-*", "TX")).toBe("76442")
+		expect(normalizeZIPCode("6121234", "PR")).toBe("00612-1234")
+		expect(normalizeZIPCode("9300428", "CA")).toBeNull()
+	})
+
+	it("refuses a city name, a state code or a six-digit value written in the ZIP Code column", () => {
+		for (const value of ["CLEAR LAKE", "AL", "350062"]) {
+			expect(normalizeZIPCode(value, "AL")).toBeNull()
+		}
+	})
+
+	it("keeps a five-digit ZIP Code and a ZIP+4, and refuses placeholders", () => {
+		expect(normalizeZIPCode("95678", "CA")).toBe("95678")
+		expect(normalizeZIPCode("95678-1234", "CA")).toBe("95678-1234")
+
+		for (const placeholder of ["0", "-", "N/A", "PA", "0.0", null]) {
+			expect(normalizeZIPCode(placeholder, "PA")).toBeNull()
+		}
+	})
+})
 
 describe("isZipCode", () => {
 	it("accepts 5-digit and ZIP+4 forms", () => {

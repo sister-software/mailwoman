@@ -14,7 +14,7 @@
  *   `mailwoman corpus fetch openaddresses --sources <member>`, whose batch job the build then reads instead.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -34,7 +34,7 @@ const { values } = parseArguments({
 if (!values.plan || !values["layer-version"]) throw new Error("--plan and --layer-version are required")
 
 const root = dataRootPath("db")
-const cache = dataRootPath("oa-cache")
+const cache = currentSourcePath("openaddresses")
 
 const manifest = await readLocalJSONFile<AddressLayerCountryManifest>(
 	addressLayerManifestPath(root, "US", values["layer-version"])

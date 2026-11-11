@@ -30,7 +30,8 @@ export interface InputChangesOptions {
 	 */
 	source: string
 	/**
-	 * The directory holding the checkouts, as the build read it, such as `$MAILWOMAN_DATA_ROOT/src/wof-repos`.
+	 * The directory holding the checkouts, as the build read it, such
+	 * as `$MAILWOMAN_CACHE_ROOT/sources/wof-repos`.
 	 */
 	inputRoot: PathBuilderLike
 	/**

@@ -14,7 +14,7 @@ blocks you on a credential or costs a multi-gigabyte download for a single count
   `fetchOpenAddresses` reads `OA_BATCH_TOKEN`. Granularity is a whole country, and the US collection is several gigabytes.
 - **Per-source runs** — `https://results.openaddresses.io/latest/run/<path>.zip`, e.g.
   `.../latest/run/us/ia/statewide.zip`. **Anonymous access with no token**, and the endpoint honors range requests. `<path>`
-  is exactly the member path the recipe names, so `oa-cache/us__ia__statewide.zip` ⇄
+  is exactly the member path the recipe names, so `$MAILWOMAN_CACHE_ROOT/sources/openaddresses/us__ia__statewide.zip` ⇄
   `us/ia/statewide.csv` ⇄ `/latest/run/us/ia/statewide.zip`.
 
 The auth check is on collections only. If you need a handful of specific sources, use the per-source
@@ -138,7 +138,9 @@ the precedent.
 A base corpus build,
 `mailwoman corpus build --inputs packages/corpus/data/builds/<version>/inputs.json`,
 takes about 11.5 hours for roughly 680 M rows. The committed `inputs.json` records each adapter and its
-input path relative to `$MAILWOMAN_DATA_ROOT`. Budget a day, run the build in the background with
+input path relative to `$MAILWOMAN_DATA_ROOT`, or to `$MAILWOMAN_CACHE_ROOT` when the entry states
+`"root": "cache"`, as a current source under `sources/` does. A record from before the storage classes
+names no root and keeps the paths it recorded. Budget a day, run the build in the background with
 `NODE_OPTIONS="--max-old-space-size=20480"`, and smoke-build two small adapters first to prove a schema
 change end to end. `assertHeapForAdapters` in `lib/build/heap.ts` refuses a heap under 15 GiB when
 `--inputs` names `wof-admin` or `wof-postalcode`, because both hold every source record resident and

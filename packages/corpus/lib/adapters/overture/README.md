@@ -26,10 +26,15 @@ The scripts-side ingest tool produces the dump and does the DuckDB / S3 work. Th
 heavy native `@duckdb/node-api`.
 
 ```bash
-node scripts/ingest-overture-addresses.ts \
+mailwoman gazetteer overture-ingest \
   --release 2026-06-17.0 --countries ES,IT,NL,PT --corpus-jsonl
-# → $MAILWOMAN_DATA_ROOT/overture/2026-06-17.0/overture-<cc>.corpus.jsonl  (+ addresses-<cc>.parquet + fill-rates.{json,md})
+# → $MAILWOMAN_DATA_ROOT/snapshots/overture/2026-06-17.0/addresses-<cc>.parquet
+# → $MAILWOMAN_DATA_ROOT/corpus/staging/overture/2026-06-17.0/overture-<cc>.corpus.jsonl  (+ fill-rates.{json,md})
 ```
+
+The Parquet copies are the release's snapshot and hold only what the ingest fetched. The corpus JSONL and the
+fill-rate report are computed from them, so `overtureStagingPath(release)` in `paths.ts` places them beside the
+other corpus adapter inputs under `corpus/staging/`.
 
 ## Run
 
@@ -37,7 +42,7 @@ node scripts/ingest-overture-addresses.ts \
 
 ```bash
 mailwoman corpus run overture \
-  --input $MAILWOMAN_DATA_ROOT/overture/2026-06-17.0/overture-es.corpus.jsonl \
+  --input $MAILWOMAN_DATA_ROOT/corpus/staging/overture/2026-06-17.0/overture-es.corpus.jsonl \
   --country ES --output /data/corpus-staging
 ```
 

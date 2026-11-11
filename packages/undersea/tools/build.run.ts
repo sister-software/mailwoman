@@ -7,7 +7,7 @@
  *
  *   Usage: `node packages/undersea/tools/build.run.ts [--source <download dir>] [--out <db path>]`.
  *   Without `--source`, the run reads the service and keeps the download under
- *   `$MAILWOMAN_DATA_ROOT/src/undersea/<date>/`.
+ *   `$MAILWOMAN_DATA_ROOT/snapshots/undersea/<date>/`.
  */
 
 import { gitHead } from "@mailwoman/core/git"

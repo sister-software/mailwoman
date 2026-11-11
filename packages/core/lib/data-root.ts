@@ -45,14 +45,76 @@ export function databaseRootPath<T extends PathBuilderLike>(source: T) {
 }
 
 /**
- * Path builder for the Who's On First git checkouts: `$MAILWOMAN_DATA_ROOT/src/wof-repos/<name>`.
- * They're cloned sources rather than built artifacts.
- *
- * `mailwoman gazetteer inspect sync` clones each repository here from its `mailwoman` fork.
- * Admin builds read here.
- * Postcode builds and polygon builds also read from here.
+ * A vintage names one dated pull of a source: a year, month or day (`2026`, `2026-08`, `2026-08-31`),
+ * or the publisher's release id (`2026-05-20.0`, `r24`, `fy23`).
+ * It is one path segment.
  */
-export const wofReposPath = dataRootPath("src", "wof-repos")
+const VINTAGE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u
+
+/**
+ * Throws unless `vintage` is one path segment a vintage can take.
+ */
+export function assertVintage(vintage: string): void {
+	if (!VINTAGE.test(vintage) || vintage.includes("..")) {
+		throw new Error(`"${vintage}" is not a vintage: use a date such as 2026-08-31 or a release id such as r24`)
+	}
+}
+
+/**
+ * A path under a current source's download directory, `$MAILWOMAN_CACHE_ROOT/sources/<source>/`.
+ *
+ * A current source is mutable, and fetching it again brings it up to date: a git clone,
+ * or a download the publisher serves under an undated name.
+ * A customer who clears the cache root fetches the source again and loses no data.
+ */
+export function currentSourcePath(source: string, ...segments: string[]): PathBuilder {
+	return currentSourcesRoot()(source, ...segments)
+}
+
+/**
+ * The directory that holds every current source, `$MAILWOMAN_CACHE_ROOT/sources/`.
+ *
+ * A fetch command that writes each source under `<root>/<source>/` takes this as its root,
+ * so `currentSourcesRoot()(source)` is {@link currentSourcePath}`(source)`.
+ */
+export function currentSourcesRoot(): PathBuilder {
+	return cacheRootPathBuilder("sources")
+}
+
+/**
+ * The directory that holds every snapshot source, `$MAILWOMAN_DATA_ROOT/snapshots/`.
+ *
+ * A fetch command that writes each vintage under `<root>/<source>/<vintage>/` takes this as its root.
+ */
+export function snapshotSourcesRoot(): PathBuilder {
+	return dataRootPath("snapshots")
+}
+
+/**
+ * The directory that holds every vintage of a snapshot source, `$MAILWOMAN_DATA_ROOT/snapshots/<source>/`.
+ *
+ * A reader that lists the vintages on disk, such as one that picks the newest Overture release, starts here.
+ * A path inside one vintage goes through {@link snapshotSourcePath}.
+ */
+export function snapshotSourceDirectory(source: string): PathBuilder {
+	return snapshotSourcesRoot()(source)
+}
+
+/**
+ * A path under one vintage of a snapshot source, `$MAILWOMAN_DATA_ROOT/snapshots/<source>/<vintage>/`.
+ *
+ * A snapshot is a dated pull that's read-only once written.
+ * A newer vintage sits beside it and supersedes it.
+ *
+ * Write one through `writeSnapshot` from `@mailwoman/core/fs/snapshot`.
+ *
+ * @throws When `vintage` isn't one path segment a vintage can take.
+ */
+export function snapshotSourcePath(source: string, vintage: string, ...segments: string[]): PathBuilder {
+	assertVintage(vintage)
+
+	return snapshotSourceDirectory(source)(vintage, ...segments)
+}
 
 /**
  * The dev-weights overlay for a locale is `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
@@ -106,3 +168,16 @@ export function mailwomanCacheRoot(): PathBuilder {
 export function cacheRootPath(...segments: string[]): string {
 	return cacheRootPathBuilder(...segments).toString()
 }
+
+/**
+ * Path builder for the Who's On First git checkouts: `$MAILWOMAN_CACHE_ROOT/sources/wof-repos/<name>`.
+ *
+ * They're current sources: `git pull` brings each one up to date, and a cleared cache root is cloned again.
+ *
+ * `mailwoman gazetteer inspect sync` clones each repository here from its `mailwoman` fork.
+ * Admin builds read here.
+ * Postcode builds and polygon builds also read from here.
+ *
+ * The constant follows `cacheRootPathBuilder` because it is evaluated when this module loads.
+ */
+export const wofReposPath = currentSourcePath("wof-repos")

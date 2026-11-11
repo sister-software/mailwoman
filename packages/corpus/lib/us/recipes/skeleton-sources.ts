@@ -10,7 +10,7 @@
  *   `packages/mailwoman/tools/dev-tools/corpus/nad-skeletons.run.ts`.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import type { PathBuilderLike } from "path-ts"
 
 /**
@@ -106,7 +106,7 @@ export const OA_SKELETON_TRAIN_SOURCES: readonly USSkeletonSource[] = (
 		["us__sd__statewide.zip", "us/sd/statewide.csv", "SD"],
 	] as const
 ).map(([zip, csv, region]) => ({
-	zip: dataRootPath("oa-cache", zip),
+	zip: currentSourcePath("openaddresses", zip),
 	csv,
 	region,
 	register: USSkeletonRegister.OpenAddresses,
@@ -124,7 +124,7 @@ export const US_SKELETON_TRAIN_SOURCES: readonly USSkeletonSource[] = [
  * Vermont, the corpus holdout — `--golden` reads this and no other US source.
  */
 export const US_SKELETON_EVAL_SOURCE: USSkeletonSource = {
-	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
+	zip: currentSourcePath("openaddresses", "us__vt__statewide.zip"),
 	csv: "us/vt/statewide.csv",
 	region: "VT",
 	register: USSkeletonRegister.OpenAddresses,

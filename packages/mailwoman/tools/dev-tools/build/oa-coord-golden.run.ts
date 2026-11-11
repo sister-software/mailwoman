@@ -23,7 +23,7 @@
  *   row for row.
  *
  *   Usage: node packages/mailwoman/tools/dev-tools/build/oa-coord-golden.run.ts --country IT
- *   --zip $MAILWOMAN_DATA_ROOT/oa-cache/it__countrywide.zip
+ *   --zip $MAILWOMAN_CACHE_ROOT/sources/openaddresses/it__countrywide.zip
  *   --entry it/countrywide.csv --out data/eval/external/oa-it-coord-150.jsonl --n 150
  */
 

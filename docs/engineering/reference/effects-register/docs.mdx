@@ -25,9 +25,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `docs/plugins/glossary/plugin.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 2     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `readLocalTextFile` | `unresolved (call)` | 2     |
 
 ## `docs/plugins/navbar-menus.ts`
 
@@ -37,36 +37,36 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `docs/plugins/runtime-assets/artifacts.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 1     |
+| read | `readLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `docs/plugins/runtime-assets/plugin.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| write | `makeDirectories` | `unresolved (identifier)` | 3     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| write | `makeDirectories` | `unresolved (call)` | 3     |
 
 ## `docs/plugins/runtime-assets/workspace/resolution.ts`
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 2     |
-| read | `pathExists` | `unresolved (parameter)`  | 1     |
+| Kind | Interface    | Target                   | Calls |
+| ---- | ------------ | ------------------------ | ----- |
+| read | `pathExists` | `unresolved (call)`      | 2     |
+| read | `pathExists` | `unresolved (parameter)` | 1     |
 
 ## `docs/plugins/search-index/plugin.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `readLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `docs/plugins/search-index/write-index.ts`
 
 | Kind  | Interface         | Target                    | Calls |
 | ----- | ----------------- | ------------------------- | ----- |
-| read  | `readLocalBuffer` | `unresolved (identifier)` | 1     |
-| write | `DatabaseClient`  | `unresolved (identifier)` | 1     |
+| read  | `readLocalBuffer` | `scratch:search-index.db` | 1     |
+| write | `DatabaseClient`  | `scratch:search-index.db` | 1     |
 | write | `writeLocalFile`  | `unresolved (parameter)`  | 1     |
 
 ## `docs/scripts/list-stale-docs.ts`
@@ -124,9 +124,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind        | Interface            | Target                            | Calls |
 | ----------- | -------------------- | --------------------------------- | ----- |
-| read        | `DatabaseClient`     | `unresolved (identifier)`         | 1     |
+| read        | `DatabaseClient`     | `unresolved (call)`               | 1     |
 | read        | `readLocalJSONFile`  | `unresolved (property)`           | 2     |
-| read        | `realPath`           | `unresolved (identifier)`         | 2     |
+| read        | `realPath`           | `unresolved (call)`               | 2     |
 | read        | `realPath`           | `unresolved (property)`           | 1     |
 | write       | `writeLocalTextFile` | `unresolved (property)`           | 2     |
 | environment | `process.env`        | `environment:MAILWOMAN_DATA_ROOT` | 1     |

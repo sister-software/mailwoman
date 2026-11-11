@@ -59,7 +59,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const {
 			client: { DatabaseClient },
-			dataRoot: { dataRootPath },
+			dataRoot: { snapshotSourcePath },
 			paths: { wofDatabasePath },
 		} = await allKeyed({
 			client: import("@mailwoman/sqlite/client"),
@@ -68,7 +68,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		})
 
 		const out = options.out ?? wofDatabasePath("postal-city-alias-us.db")
-		const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")
+		const parquet = snapshotSourcePath("overture", options.release, "addresses-us.parquet")
 		const minCount = options.minCount
 
 		await makeDirectories(dirname(out))
