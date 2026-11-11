@@ -11,7 +11,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { isDirectory, isSymbolicLink, pathExists } from "@mailwoman/core/fs/readers/stat"
-import { createSymbolicLink, movePath, removePath } from "@mailwoman/core/fs/writers"
+import { createSymbolicLink, movePath } from "@mailwoman/core/fs/writers"
 import { relative, resolvePath } from "path-ts"
 import { z } from "zod"
 
@@ -167,7 +167,12 @@ export const migrateOperation = defineOperation({
 			return { source, destination, steps, kept: aside }
 		}
 
-		await removePath(aside)
+		// The host's `rm` removes a tree of millions of files outside the Node heap.
+		// Node's recursive `rm` grows the heap with the tree and runs out of memory on the WOF clones.
+		const removal = await runHostCommand("rm", ["-r", "--one-file-system", "--", aside])
+
+		if (removal.exitCode !== 0) throw new Error(`remove: rm exited ${removal.exitCode}: ${removal.stderr.trim()}`)
+
 		step(`removed ${aside}`)
 
 		return { source, destination, steps, kept: null }
