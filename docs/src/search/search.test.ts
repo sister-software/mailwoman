@@ -69,7 +69,7 @@ function record(url: string, anchor: string): SearchRecord {
 }
 
 describe("collapseBySection", () => {
-	test("keeps one hit per section and at most three per page, in rank order", () => {
+	test("shows distinct pages before further sections and keeps at most three hits per page", () => {
 		const ranked = [
 			record("/a", ""),
 			record("/a", "one"),
@@ -77,14 +77,18 @@ describe("collapseBySection", () => {
 			record("/a", "two"),
 			record("/a", "three"),
 			record("/b", ""),
+			record("/c", ""),
 		]
 
 		expect(collapseBySection(ranked, 10).map((hit) => `${hit.url}#${hit.anchor}`)).toEqual([
 			"/a#",
+			"/b#",
+			"/c#",
 			"/a#one",
 			"/a#two",
-			"/b#",
 		])
+
+		expect(collapseBySection(ranked, 3).map((hit) => hit.url)).toEqual(["/a", "/b", "/c"])
 	})
 })
 
