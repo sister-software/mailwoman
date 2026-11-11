@@ -23,14 +23,19 @@ test("a session that fails to start releases the lease it took on the active gen
 
 	await replaceActiveSelection(scratch.path, { basedOn: null, set: [candidate.entry] })
 
-	// No weights exist for this locale under either root, so the session fails after it leased generation 1.
+	// The session leases generation 1 and then starts its services together.
+	// Two of them fail: no weights exist for this locale under either root,
+	// and the fixture candidate database holds no SQLite header.
+	// The first failure to settle rejects the session, so either message proves a failure after the lease.
 	const options = {
 		dataRoot: scratch.path,
 		locale: "zz-ZZ",
 		weightsCacheRoot: weights.path.toString(),
 	} as GeocodeSessionOptions
 
-	await expect(createGeocodeSession(options)).rejects.toThrow(/geocode requires the neural weights/u)
+	await expect(createGeocodeSession(options)).rejects.toThrow(
+		/geocode requires the neural weights|file is not a database/u
+	)
 
 	// Disposal starts the lease file's removal without awaiting it, so the test waits for the file to go.
 	for (let attempt = 0; attempt < 50 && (await readLiveLeases(scratch.path)).length; attempt++) {
