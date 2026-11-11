@@ -6,10 +6,11 @@
  *   writing tool gains and what a call answers.
  */
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect, type ReleaseOperation } from "#release-kit"
+import { defineOperation, type ReleaseOperation } from "#release-kit"
 import { buildReleaseToolTable, registryTool, toolNameFor } from "#release-mcp"
 
 const read = defineOperation({

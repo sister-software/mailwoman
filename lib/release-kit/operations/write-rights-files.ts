@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { writeWeightsRightsFiles } from "#release-kit/weights/rights/write"
 
 const rightsFileState = z.object({ file: z.string(), changed: z.boolean() })

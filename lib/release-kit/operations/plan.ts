@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { computeReleasePlan, type ReleasePlanDestinations, type ReleasePlanPackage } from "#release-kit/release/plan"
 
 const planPackage: z.ZodType<ReleasePlanPackage> = z.object({

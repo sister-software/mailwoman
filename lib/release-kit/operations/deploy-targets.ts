@@ -5,6 +5,7 @@
  */
 
 import { changedFiles } from "@mailwoman/core/git"
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 
 import {
@@ -14,7 +15,7 @@ import {
 	type DeploySelection,
 	type DeployTargetID,
 } from "#release-kit/deploy/targets"
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { list, text } from "#release-kit/operations/inputs"
 
 const deployTargetID = z.enum(DEPLOY_TARGET_IDS as [DeployTargetID, ...DeployTargetID[]])

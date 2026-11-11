@@ -6,33 +6,12 @@
  *   The release family of operations: its effect union and its context, bound to the shared `Operation` shape from `@mailwoman/core/scripting`.
  */
 
-import { type Operation, type OperationContext, operationDefiner } from "@mailwoman/core/scripting"
-
-/**
- * What a release operation does to the world, declared rather than inferred;
- * `external-write` names the operations that publish (npm, Hugging Face, R2)
- * and are reachable only through the plan → execute interface.
- */
-export const OperationEffect = {
-	/**
-	 * Reads the checkout, data root, or a registry.
-	 * It makes no changes.
-	 */
-	Read: "read",
-	/**
-	 * Writes inside the checkout or the data root (a staging tree, a materialized binary, a generated surface).
-	 */
-	LocalWrite: "local-write",
-	/**
-	 * Writes to a system outside this machine.
-	 *
-	 * The operation is irreversible and credentialed.
-	 * Only the plan → execute interface can reach it.
-	 */
-	ExternalWrite: "external-write",
-} as const
-
-export type OperationEffect = (typeof OperationEffect)[keyof typeof OperationEffect]
+import {
+	type Operation,
+	type OperationContext,
+	type OperationEffect,
+	operationDefiner,
+} from "@mailwoman/core/scripting"
 
 /**
  * What every release operation receives beside its input.

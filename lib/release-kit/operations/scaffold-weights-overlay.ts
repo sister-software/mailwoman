@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { text } from "#release-kit/operations/inputs"
 import { scaffoldWeightsOverlay } from "#release-kit/weights/scaffold-weights-overlay"
 

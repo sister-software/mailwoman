@@ -4,10 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { resolvePath } from "path-ts"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { text } from "#release-kit/operations/inputs"
 import { copyWeights } from "#release-kit/weights/copy-weights"
 

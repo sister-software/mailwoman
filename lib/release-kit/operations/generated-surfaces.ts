@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z } from "zod"
 
-import { defineOperation, OperationEffect } from "#release-kit/operation"
+import { defineOperation } from "#release-kit/operation"
 import { releaseGeneratedSurfaces } from "#release-kit/release/generated-surfaces"
 
 const surfaceState = z.object({ file: z.string(), changed: z.boolean() })

@@ -19,9 +19,10 @@
  *   unmoved head. This table does not bypass those checks. It contains no release logic of its own.
  */
 
+import { OperationEffect } from "@mailwoman/core/scripting"
 import { z, type ZodObject, type ZodRawShape } from "zod"
 
-import { OperationEffect, type ReleaseContext, type ReleaseOperation } from "#release-kit"
+import type { ReleaseContext, ReleaseOperation } from "#release-kit"
 
 export interface ReleaseTool {
 	name: string

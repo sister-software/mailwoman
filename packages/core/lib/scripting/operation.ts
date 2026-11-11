@@ -22,6 +22,33 @@ import type { ZodType } from "zod"
 import type { ParseArgsOptionsConfig } from "#scripting/arguments"
 
 /**
+ * What an operation or a state machine's effect does to the world, declared rather than inferred.
+ *
+ * `external-write` marks the writes that leave this machine: a publish to npm,
+ * Hugging Face or R2, a ledger row, a Stripe call, an email.
+ */
+export const OperationEffect = {
+	/**
+	 * Reads the checkout, the data root, a database or a registry.
+	 * It makes no changes.
+	 */
+	Read: "read",
+	/**
+	 * Writes inside the checkout or the data root (a staging tree, a materialized binary, a generated surface).
+	 */
+	LocalWrite: "local-write",
+	/**
+	 * Writes to a system outside this machine.
+	 *
+	 * A release operation with this effect is irreversible and credentialed,
+	 * and only the plan → execute interface can reach it.
+	 */
+	ExternalWrite: "external-write",
+} as const
+
+export type OperationEffect = (typeof OperationEffect)[keyof typeof OperationEffect]
+
+/**
  * What every operation receives beside its input, whatever its family.
  *
  * A family extends this with the values its operations use, such as a repository root or privilege flag.
