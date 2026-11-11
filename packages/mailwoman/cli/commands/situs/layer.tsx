@@ -43,6 +43,16 @@ export const spec = {
 			description: "Overture release whose addresses-us.parquet supplies the non-NAD rows",
 		},
 		plan: { type: "string", description: "OpenAddresses plan JSON listing each run's member and recorded license" },
+		jobs: {
+			type: "number",
+			default: 1,
+			description: "States to build at once, each in its own worker process of up to 6 GB heap",
+		},
+		resume: {
+			type: "boolean",
+			default: false,
+			description: "Keep each region this version already holds, from its build.json, and build the others",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -91,6 +101,8 @@ const SitusAddressLayer: CommandComponent<typeof spec> = ({ options }) => {
 			...(options.omit ? { omitFromManifest: extractDelimited(options.omit) } : {}),
 			buildSHA: buildSHA(repoRootPath()),
 			adminDatabase: wofDatabasePath("admin-global-priority.db"),
+			jobs: options.jobs,
+			resume: options.resume,
 			onState: (build) => {
 				const refused: Record<string, number> = {}
 

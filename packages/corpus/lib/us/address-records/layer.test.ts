@@ -65,6 +65,29 @@ describe("buildUSAddressLayer", () => {
 		).rejects.toThrow("us-tx already built in 2026-11-10; build into a new version")
 	})
 
+	it("refuses to resume a region whose files have no build.json, because its counts cannot be read", async () => {
+		await using directory = await temporaryDirectory("us-layer-resume-")
+		const root = directory.path("db")
+		const nadParquet = directory.path("nad.parquet").toString()
+
+		await writeLocalJSONFile({ rowsByState: { TX: 1 } }, recordPathFor(nadParquet))
+		await writeLocalFile("", addressLayerFiles(root, "us-tx", "2026-11-12").lookup)
+
+		await expect(
+			buildUSAddressLayer({
+				root,
+				version: "2026-11-12",
+				nadParquet,
+				overtureParquet: directory.path("overture.parquet"),
+				openAddresses: { plan: [], cache: directory.path("oa-cache") },
+				states: ["TX"],
+				buildSHA: "test",
+				adminDatabase: directory.path("admin.db"),
+				resume: true,
+			})
+		).rejects.toThrow("us-tx built in 2026-11-12 with no build.json")
+	})
+
 	it("stops when the plan lists runs and the cache directory is absent, as an unmounted volume leaves it", async () => {
 		await using directory = await temporaryDirectory("us-layer-cache-")
 		const nadParquet = directory.path("nad.parquet").toString()

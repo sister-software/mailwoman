@@ -11,9 +11,12 @@ import { US_STATE_ABBREVIATIONS, US_TERRITORY_ABBREVIATIONS } from "@mailwoman/c
 import { usUnitIdentifier } from "@mailwoman/codex/us/unit/designator"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
+import { fileURLToPath } from "@mailwoman/core/module/file-url"
+import { forkProcess } from "@mailwoman/core/process"
 import {
 	ADDRESS_DUPLICATE_DISTANCE_KM,
 	ADDRESS_DUPLICATE_STACK_LIMIT,
@@ -36,7 +39,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/address/keys/layout"
 import type { AddressRecord } from "@mailwoman/resolver-wof-sqlite/address/record"
 import { openSubdivisionBoundsCheck } from "@mailwoman/resolver-wof-sqlite/address/subdivision-bounds"
-import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
+import { dirname, resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { createUnitSplitter, type UnitSplitter } from "#adapters/street/unit"
 import { isAdmittedSource } from "#address-records/admission"
@@ -49,6 +52,14 @@ import { readOvertureAddressRecords } from "#address-records/overture"
 import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import { recordPathFor } from "#parquet/record"
 import { readNADAddressRecords } from "#us/address-records/nad"
+
+/**
+ * The run counts a parallel build's worker reports for its state.
+ */
+export interface USStateWorkerResult {
+	refusedRuns: number
+	missingRuns: number
+}
 
 /**
  * One OpenAddresses run as a plan lists it, with the license its source definition records.
@@ -66,6 +77,12 @@ export interface OpenAddressesPlanEntry {
 	 * Runs of one level are ordered by it.
 	 */
 	updated?: string | null
+	/**
+	 * The job's feature count.
+	 *
+	 * A parallel build starts its states in descending order of it.
+	 */
+	features?: number | null
 	skip?: boolean
 }
 
@@ -107,7 +124,42 @@ export interface BuildUSAddressLayerOptions {
 	 * The Who's On First admin database a record's point is checked against its state's bounding box in.
 	 */
 	adminDatabase: PathBuilderLike
+	/**
+	 * The number of states to build at once, each in its own worker process.
+	 * One builds them in this process.
+	 */
+	jobs?: number
+	/**
+	 * Keep each region this version already holds, read from its `build.json`, and build only the others.
+	 *
+	 * A region with files and no `build.json` is refused, because its record
+	 * and refusal counts cannot be read.
+	 */
+	resume?: boolean
+	/**
+	 * Whether to write the US manifest.
+	 *
+	 * A parallel build's worker builds one state and leaves the manifest to the parent.
+	 *
+	 * @defaultValue true
+	 */
+	writeManifest?: boolean
 	onState?: (summary: USStateBuild) => void
+}
+
+/**
+ * What a region's `build.json` records: its manifest entry and its build summary.
+ */
+interface USRegionBuildRecord {
+	region: AddressLayerCountryManifest["regions"][number]
+	build: USStateBuild
+}
+
+/**
+ * Where a region's `build.json` sits, beside its `lookup.db`.
+ */
+function regionBuildRecordPath(root: PathBuilderLike, region: string, version: string): string {
+	return resolvePath(dirname(addressLayerFiles(root, region, version).lookup.toString()), "build.json").toString()
 }
 
 /**
@@ -128,7 +180,10 @@ export interface USStateBuild {
 }
 
 export interface USAddressLayerBuild {
-	manifest: PathBuilder
+	/**
+	 * The US manifest, or null for a build that was told to write none.
+	 */
+	manifest: PathBuilder | null
 	states: USStateBuild[]
 	refusedRuns: number
 	missingRuns: number
@@ -336,20 +391,42 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 	// so a region is built into a version once.
 	// A rebuild goes into a new version.
 	// Every earlier region's files stay under their own version's path.
+	// Under `resume`, a region already built in this version is kept from its `build.json`.
 	const built: string[] = []
+	const unrecorded: string[] = []
+	const resumed: USRegionBuildRecord[] = []
+	const toBuild: string[] = []
 
 	for (const state of states) {
-		const { lookup } = addressLayerFiles(options.root, `us-${state.toLowerCase()}`, options.version)
+		const region = `us-${state.toLowerCase()}`
+		const { lookup } = addressLayerFiles(options.root, region, options.version)
 
-		if (await pathExists(lookup)) {
-			built.push(`us-${state.toLowerCase()}`)
+		if (!(await pathExists(lookup))) {
+			toBuild.push(state)
+		} else if (!options.resume) {
+			built.push(region)
+		} else {
+			const recordPath = regionBuildRecordPath(options.root, region, options.version)
+
+			if (await pathExists(recordPath)) {
+				resumed.push(await readLocalJSONFile<USRegionBuildRecord>(recordPath))
+			} else {
+				unrecorded.push(region)
+			}
 		}
 	}
 
 	if (built.length) {
 		throw new Error(
 			`${built.join(", ")} already built in ${options.version}; build into a new version, ` +
-				"because a published version's files are cached as immutable"
+				"because a published version's files are cached as immutable, or pass resume to keep them"
+		)
+	}
+
+	if (unrecorded.length) {
+		throw new Error(
+			`${unrecorded.join(", ")} built in ${options.version} with no build.json, so their record and refusal ` +
+				"counts cannot be read; remove their files and build them again"
 		)
 	}
 
@@ -373,9 +450,17 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 	let refusedRuns = 0
 	let missingRuns = 0
 
+	for (const record of resumed) {
+		builds.push(record.build)
+
+		if (!omitted.has(record.region.region)) {
+			regions.push(record.region)
+		}
+	}
+
 	await using scratch = await temporaryDirectory("us-address-layer-")
 
-	for (const state of states.toSorted()) {
+	const buildState = async (state: string): Promise<void> => {
 		const region = `us-${state.toLowerCase()}`
 		const files = addressLayerFiles(options.root, region, options.version)
 		const hasNAD = (rowsByState[state] ?? 0) > 0
@@ -398,7 +483,7 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 
 		const runs = admitted.map(({ member }) => member)
 
-		if (!hasNAD && !datasets.length && !runs.length) continue
+		if (!hasNAD && !datasets.length && !runs.length) return
 
 		const sources = new Map<string, AddressSourceTerms>([
 			...datasets.map((dataset) => [`overture:${dataset}`, { license: null, authority: null }] as const),
@@ -463,19 +548,48 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 
 		await writeAddressLayerAttribution(options.root, region, options.version, recorded)
 
+		const entry: USRegionBuildRecord["region"] = {
+			region,
+			subdivision: `US-${state}`,
+			records: summary.records,
+			lookup: await describeAddressLayerFile(options.root, files.lookup),
+			detail: await describeAddressLayerFile(options.root, files.detail),
+			refused: summary.refused,
+		}
+
+		await writeLocalJSONFile(
+			{ region: entry, build } satisfies USRegionBuildRecord,
+			regionBuildRecordPath(options.root, region, options.version)
+		)
+
 		builds.push(build)
 		options.onState?.(build)
 
 		if (!omitted.has(region)) {
-			regions.push({
-				region,
-				subdivision: `US-${state}`,
-				records: summary.records,
-				lookup: await describeAddressLayerFile(options.root, files.lookup),
-				detail: await describeAddressLayerFile(options.root, files.detail),
-				refused: summary.refused,
-			})
+			regions.push(entry)
 		}
+	}
+
+	if ((options.jobs ?? 1) > 1 && toBuild.length > 1) {
+		const counts = await buildStatesInWorkers(options, toBuild, rowsByState, scratch.path, (record) => {
+			builds.push(record.build)
+			options.onState?.(record.build)
+
+			if (!omitted.has(record.region.region)) {
+				regions.push(record.region)
+			}
+		})
+
+		refusedRuns += counts.refusedRuns
+		missingRuns += counts.missingRuns
+	} else {
+		for (const state of toBuild.toSorted()) {
+			await buildState(state)
+		}
+	}
+
+	if (options.writeManifest === false) {
+		return { manifest: null, states: builds, refusedRuns, missingRuns }
 	}
 
 	// A build of some states keeps the regions an earlier build of this version listed, or,
@@ -511,4 +625,114 @@ export async function buildUSAddressLayer(options: BuildUSAddressLayerOptions): 
 	})
 
 	return { manifest, states: builds, refusedRuns, missingRuns }
+}
+
+/**
+ * Each worker's V8 heap ceiling.
+ *
+ * A state's staging lives in SQLite on disk, and the largest state built so far,
+ * Florida with 15 million records, peaked at 1.4 GB resident.
+ */
+const STATE_WORKER_HEAP_MB = 6144
+
+/**
+ * Builds `states` in worker processes, at most `options.jobs` at a time,
+ * and reports each built region as its worker finishes.
+ *
+ * States start largest first, by NAD rows plus the planned runs' feature counts,
+ * so the longest builds overlap the short ones.
+ * The first failure stops new workers from starting, waits for the running ones,
+ * and throws with the failed worker's log path.
+ */
+async function buildStatesInWorkers(
+	options: BuildUSAddressLayerOptions,
+	states: readonly string[],
+	rowsByState: Readonly<Record<string, number>>,
+	scratch: PathBuilder,
+	onRegion: (record: USRegionBuildRecord) => void
+): Promise<USStateWorkerResult> {
+	const workerModule = fileURLToPath(import.meta.resolve("#us/address-records/layer-worker"))
+
+	const size = (state: string) =>
+		(rowsByState[state] ?? 0) +
+		options.openAddresses.plan
+			.filter(({ member }) => member.split("/")[1] === state.toLowerCase())
+			.reduce((total, { features }) => total + (features ?? 0), 0)
+
+	const queue = states.toSorted((a, b) => size(b) - size(a))
+	const counts: USStateWorkerResult = { refusedRuns: 0, missingRuns: 0 }
+	const failures: Error[] = []
+
+	// The task file stores the options as JSON, so every path is written as a string.
+	const task = (state: string): BuildUSAddressLayerOptions => ({
+		root: options.root.toString(),
+		version: options.version,
+		nadParquet: options.nadParquet.toString(),
+		overtureParquet: options.overtureParquet.toString(),
+		openAddresses: { plan: options.openAddresses.plan, cache: options.openAddresses.cache.toString() },
+		states: [state],
+		buildSHA: options.buildSHA,
+		adminDatabase: options.adminDatabase.toString(),
+	})
+
+	const runOne = async (state: string) => {
+		const name = `state-${state.toLowerCase()}`
+		const taskPath = scratch(`${name}.task.json`).toString()
+		const resultPath = scratch(`${name}.result.json`).toString()
+		const logPath = scratch(`${name}.log`).toString()
+
+		await writeLocalJSONFile(task(state), taskPath)
+
+		const log = openWriteStream(logPath, { flags: "a" })
+
+		const child = forkProcess(workerModule, [taskPath, resultPath], {
+			execArgv: [`--max-old-space-size=${STATE_WORKER_HEAP_MB}`],
+			stdio: ["ignore", "pipe", "pipe", "ipc"],
+		})
+
+		child.stdout?.pipe(log, { end: false })
+		child.stderr?.pipe(log, { end: false })
+
+		const [exitCode, signal] = await new Promise<[number | null, NodeJS.Signals | null]>((resolve, reject) => {
+			child.on("error", reject)
+			child.on("close", (code, sig) => resolve([code, sig]))
+		})
+
+		log.end()
+
+		if (exitCode !== 0) {
+			throw new Error(
+				`the ${state} worker (pid ${child.pid}) exited with ${signal ? `signal ${signal}` : `code ${exitCode}`}; ` +
+					`its log is ${logPath}`
+			)
+		}
+
+		const result = await readLocalJSONFile<USStateWorkerResult>(resultPath)
+
+		counts.refusedRuns += result.refusedRuns
+		counts.missingRuns += result.missingRuns
+
+		const recordPath = regionBuildRecordPath(options.root, `us-${state.toLowerCase()}`, options.version)
+
+		// A state with no NAD rows, Overture rows or admitted runs writes no files and no record.
+		if (await pathExists(recordPath)) {
+			onRegion(await readLocalJSONFile<USRegionBuildRecord>(recordPath))
+		}
+	}
+
+	const lanes = Array.from({ length: Math.min(options.jobs ?? 1, queue.length) }, async () => {
+		for (let state = queue.shift(); state && !failures.length; state = queue.shift()) {
+			try {
+				await runOne(state)
+			} catch (error) {
+				failures.push(error as Error)
+			}
+		}
+	})
+
+	await Promise.all(lanes)
+
+	if (failures.length) throw failures[0]
+
+	return counts
 }
