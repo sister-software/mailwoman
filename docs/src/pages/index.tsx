@@ -70,11 +70,11 @@ function HomepageHeader(): ReactNode {
 				<div className={clsx(styles.heroPanel, "mw-glass-surface")}>
 					<p className={styles.heroEyebrow}>Open source · No API key · On your own devices</p>
 					<Heading as="h1" className={styles.heroTitle}>
-						Every address, resolved on your own machines.
+						Parse addresses. Find places. Run it yourself.
 					</Heading>
 					<p className={styles.heroSubtitle}>
-						A neural address parser and an open-data geocoder in one npm install. Nothing leaves your network, and
-						nothing is metered.
+						Install the parser and model from npm. Add local geographic data when you need coordinates. Run both in your
+						own application or server.
 					</p>
 
 					<HeroSearch
@@ -143,8 +143,8 @@ function Benefits(): ReactNode {
 		<section className={styles.benefits} aria-label="Why choose Mailwoman">
 			<div className={clsx("container", styles.benefitRow)}>
 				<div>
-					<h2>Your addresses stay private</h2>
-					<p>Parse and locate addresses on your own devices, without sending them to a third-party API.</p>
+					<h2>Keep address processing local</h2>
+					<p>Run the parser and local geocoder in your own application or server.</p>
 				</div>
 				<div>
 					<h2>More lookups. Same price.</h2>
@@ -169,27 +169,26 @@ function HowItWorks(): ReactNode {
 				<li>
 					<h3>Parse</h3>
 					<p>
-						A six-layer encoder labels each piece of the text: house number, street, unit, city, postcode and the rest,
-						each with a confidence. It runs on ONNX Runtime in Node or in a browser tab.
+						The parser labels parts of the address text and returns their positions in the normalized text. The
+						published model runs in Node.js or a browser.
 					</p>
 					<code>"apt 4b 350 5th ave" → unit · house_number · street</code>
 				</li>
 				<li>
 					<h3>Resolve</h3>
 					<p>
-						The components resolve against a gazetteer on your own disk, built from{" "}
-						<a href="https://whosonfirst.org">Who&apos;s On First</a>, OpenAddresses and national registers, down to the
-						address point where the data has one.
+						With local geographic data installed, the geocoder uses the parsed text to select a place or coordinate
+						where the data supports one.
 					</p>
-					<code>street + city + postcode → 40.7478, -73.9850</code>
+					<code>parsed text + local geographic data → place or coordinate</code>
 				</li>
 				<li>
 					<h3>Keep the receipt</h3>
 					<p>
-						Every answer names its tier and the dataset it came from, so a coarse match reads as coarse and you can
-						trace any coordinate back to its source.
+						Inspect the returned resolution tier and provenance fields before using a coordinate. A city or region
+						result does not identify a building.
 					</p>
-					<code>placetype: interpolated · precision: ±64 m</code>
+					<code>resolution tier · source · coordinate</code>
 				</li>
 			</ol>
 		</section>
@@ -203,8 +202,8 @@ function Coverage(): ReactNode {
 				Where it resolves
 			</Heading>
 			<p className={styles.sectionLead}>
-				The global download locates cities and regions across 244 countries. Add street data for individual addresses in
-				the United States and France. This table shows the available data and how address parsing has been tested.
+				Explore the published coverage table for available city, region, and street data, alongside the addresses used
+				to evaluate parsing.
 			</p>
 			<CoverageTable />
 		</section>
@@ -354,39 +353,45 @@ function QuickStart(): ReactNode {
 				<div className={clsx("row", styles.codeRow)}>
 					<div className="col col--6">
 						<h4>JavaScript &amp; TypeScript</h4>
-						<CodeBlock language="bash">
-							npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
-						</CodeBlock>
+						<CodeBlock language="bash">{`npm install \\
+  mailwoman@11.0.0 \\
+  @mailwoman/neural@11.0.0 \\
+  @mailwoman/neural-weights-en-us@11.0.0`}</CodeBlock>
 						<CodeBlock language="js">
 							{`import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
-const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const classifier = await NeuralAddressClassifier.loadFromWeights({
+  locale: "en-US",
+})
 const parse = createRuntimePipeline({ classifier })
 
-const result = await parse("apt 4b 350 5th ave new york ny 10118")
-// result.tree.roots — nested by geographic containment:
-//   region "NY" › locality "New York" › street "5TH"
-//     › unit "Apt 4B" · house_number "350" · street_suffix "Ave"
-//   …and postcode "10118" under the locality`}
+const result = await parse(
+  "apt 4b 350 5th ave new york ny 10118",
+)
+console.log("normalized:", result.tree.raw)
+
+function printNode(node, depth = 0) {
+  console.log("  ".repeat(depth) + node.tag + ": " + JSON.stringify(node.value))
+  for (const child of node.children) printNode(child, depth + 1)
+}
+
+for (const root of result.tree.roots) printNode(root)`}
 						</CodeBlock>
 					</div>
 					<div className="col col--6">
-						<h4>Command Line Interface</h4>
-						<CodeBlock language="bash">{`npx mailwoman parse "350 5th Ave, New York, NY 10118"`}</CodeBlock>
-						<CodeBlock language="json">
-							{`{
-  "region": "NY",
-  "locality": "New York",
-  "street": "5th",
-  "house_number": "350",
-  "street_suffix": "Ave",
-  "postcode": "10118"
-}`}
-						</CodeBlock>
+						<h4>Published 11.0.0 result</h4>
+						<CodeBlock language="text">{`normalized: Apt 4B 350 5TH Ave New York NY 10118
+region: "NY"
+  locality: "New York"
+    street: "5TH"
+      unit: "Apt 4B"
+      house_number: "350"
+      street_suffix: "Ave"
+    postcode: "10118"`}</CodeBlock>
 						<p>
-							Mailwoman&apos;s neural encoder turns address text into structured fields. Add open map data to match
-							those addresses to coordinates.
+							The first-parse tutorial prints the complete tree, including each label&apos;s position in the normalized
+							text. Geocoding needs a separate geographic data layer.
 						</p>
 						<p>
 							<Link to="/docs/start">Run the first parse →</Link>
@@ -407,7 +412,7 @@ export default function Home(): ReactNode {
 	return (
 		<Layout
 			title={title}
-			description="Parse and geocode addresses on your own devices. No API key or per-address fees. Use Mailwoman in Node.js or entirely in your browser."
+			description="Parse addresses with the published npm packages. Add local geographic data to find places and coordinates. Run Mailwoman in your own application or server."
 		>
 			<HomepageHeader />
 			<main>
