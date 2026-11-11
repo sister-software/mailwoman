@@ -184,7 +184,7 @@ export interface DownloadFinessOptions {
 	 */
 	force?: boolean
 	/**
-	 * The dataset record a caller already read, so the record is not requested twice.
+	 * The dataset record a caller already read, so the record isn't requested twice.
 	 */
 	dataset?: DataGouvDataset
 	retryDelayMs?: number

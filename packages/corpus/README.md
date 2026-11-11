@@ -79,7 +79,7 @@ mailwoman corpus fetch juso-kr --vintage 2026-08 --force
 
 Each source directory has a storage class, recorded in `lib/tools/fetch/storage.ts`. A current
 source, which a fetch brings up to date in place, is written under `$MAILWOMAN_CACHE_ROOT/sources/<source>/`.
-A snapshot, one dated vintage that is read-only once written, is written under
+A snapshot, one dated vintage that's read-only once written, is written under
 `$MAILWOMAN_DATA_ROOT/snapshots/<source>/<vintage>/`. The fetcher resolves the vintage from the
 publisher, such as the date in a file's name, and refuses to replace a vintage on disk unless the
 command states it with `--vintage` and passes `--force`. `--out-root <dir>` writes both classes under

@@ -16,7 +16,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
-import { type SourceDefinition, type SourceLock, sourcePath, SOURCES } from "#sdk/sources"
+import { pinnedSourceFile, type SourceDefinition, type SourceLock, SOURCES } from "#sdk/sources"
 
 /**
  * One ISO 3166-1 entry.
@@ -443,7 +443,7 @@ export async function normalizeFromLock(lock: SourceLock): Promise<{
 }> {
 	for (const definition of SOURCES.filter((candidate) => candidate.terms.elected)) {
 		const locked = lock.sources[definition.id]
-		const digest = await sha256File(sourcePath(definition))
+		const digest = await sha256File(pinnedSourceFile(definition))
 
 		if (!locked) throw new Error(`${definition.id} is outside the lock`)
 
@@ -452,7 +452,7 @@ export async function normalizeFromLock(lock: SourceLock): Promise<{
 		}
 	}
 
-	const results = await readLocalJSONFile<SPARQLResults>(sourcePath(sourceDefinition("wikidata-iso3166-1")))
+	const results = await readLocalJSONFile<SPARQLResults>(pinnedSourceFile(sourceDefinition("wikidata-iso3166-1")))
 	const countries = normalizeCountries(results, lock.profile)
 
 	const current = new Set(
@@ -460,14 +460,14 @@ export async function normalizeFromLock(lock: SourceLock): Promise<{
 	)
 
 	const airports = normalizeAirports(
-		await readLocalTextFile(sourcePath(sourceDefinition("ourairports-airports"))),
+		await readLocalTextFile(pinnedSourceFile(sourceDefinition("ourairports-airports"))),
 		current,
 		lock.profile
 	)
 
 	const comparison = compareCountryLists(
 		countries.records,
-		await readLocalTextFile(sourcePath(sourceDefinition("ourairports-countries")))
+		await readLocalTextFile(pinnedSourceFile(sourceDefinition("ourairports-countries")))
 	)
 
 	return { countries, airports, coverage: declareCoverage(countries, airports, comparison) }

@@ -159,6 +159,6 @@ export interface SourceLock {
  *
  * A fetch checks the bytes against the lock, and fetches them again after the cache root is cleared.
  */
-export function sourcePath(source: SourceDefinition): PathBuilder {
+export function pinnedSourceFile(source: SourceDefinition): PathBuilder {
 	return currentSourcePath("registry", source.file)
 }

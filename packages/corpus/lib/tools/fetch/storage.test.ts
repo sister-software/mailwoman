@@ -110,7 +110,7 @@ describe("a snapshot fetch through the command's options", () => {
 		await expect(run({ force: true }, writes("again"))).rejects.toThrow(/state the vintage with --vintage/)
 		await expect(run({ vintage: "2026-05" }, writes("again"))).rejects.toThrow(/pass --force/)
 
-		// A stated vintage the publisher does not serve would misdate the download.
+		// A stated vintage the publisher doesn't serve would misdate the download.
 		await expect(run({ vintage: "2026-04", force: true }, writes("april"))).rejects.toThrow(
 			/serves vintage 2026-05, not the --vintage 2026-04/
 		)

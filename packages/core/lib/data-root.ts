@@ -103,12 +103,12 @@ export function snapshotSourceDirectory(source: string): PathBuilder {
 /**
  * A path under one vintage of a snapshot source, `$MAILWOMAN_DATA_ROOT/snapshots/<source>/<vintage>/`.
  *
- * A snapshot is a dated pull that is read-only once written.
+ * A snapshot is a dated pull that's read-only once written.
  * A newer vintage sits beside it and supersedes it.
  *
  * Write one through `writeSnapshot` from `@mailwoman/core/fs/snapshot`.
  *
- * @throws When `vintage` is not one path segment a vintage can take.
+ * @throws When `vintage` isn't one path segment a vintage can take.
  */
 export function snapshotSourcePath(source: string, vintage: string, ...segments: string[]): PathBuilder {
 	assertVintage(vintage)

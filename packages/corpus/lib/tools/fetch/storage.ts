@@ -56,7 +56,7 @@ export interface MixedStorage {
  * Every directory a fetch source writes appears here, along with the snapshot sources that have no fetcher.
  * `cn-units` is absent: it holds recipe splits, a built artifact that stays under the data root.
  *
- * Geofabrik extracts are absent too: they are a snapshot source, but `corpus fetch` does not reach them.
+ * Geofabrik extracts are absent too: they're a snapshot source, but `corpus fetch` doesn't reach them.
  * `packages/osm/tools/fetch/extract.ts` writes them, one series of vintages per region, under
  * `snapshots/geofabrik/<region>/`, so they have no single source directory for this table to key.
  */
@@ -121,7 +121,7 @@ export const SOURCE_STORAGE_CLASSES = {
 	"wikidata-subvenue": StorageClass.current,
 	"wikidata-vital-places": StorageClass.current,
 
-	// No fetcher in the repository reproduces these, so a cleared copy could not be fetched again.
+	// No fetcher in the repository reproduces these, so a cleared copy couldn't be fetched again.
 	// Each one's vintage is in UNFETCHED_SNAPSHOT_VINTAGES.
 	"adressur-fo": StorageClass.snapshot,
 	"bsp-gu": StorageClass.snapshot,
@@ -295,7 +295,7 @@ export interface FetchDestinationOptions {
  * Resolve the command's options for `source` into the roots its fetcher writes under.
  *
  * @throws When `--vintage` or `--force` is given for a source that writes no snapshot,
- * or when `--vintage` is not one path segment a vintage can take.
+ * or when `--vintage` isn't one path segment a vintage can take.
  */
 export function resolveFetchDestinations(source: FetchSourceID, options: FetchDestinationOptions): FetchDestinations {
 	const vintage = options.vintage || null
@@ -365,7 +365,7 @@ class IncompleteSnapshotError extends Error {
  * A fetch that reports a failure leaves any existing vintage as it was, writes no partial
  * vintage, and its summary is returned so the command exits non-zero.
  *
- * @throws {SnapshotExistsError} When the vintage exists and the caller did not
+ * @throws {SnapshotExistsError} When the vintage exists and the caller didn't
  * both state it and pass `--force`.
  */
 export async function fetchSnapshot(

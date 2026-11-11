@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Where the national rooftop databases this package builds and serves live
- *   under the data root's `db/` group, and where each Geofabrik extract they are built from is kept.
+ *   under the data root's `db/` group, and where each Geofabrik extract they're built from is kept.
  */
 
 import { assertVintage, databaseRootPath, dataRootPath, snapshotSourcesRoot } from "@mailwoman/core/data-root"
@@ -37,7 +37,7 @@ const REGION_SEGMENT = /^[a-z0-9][a-z0-9-]*$/u
 /**
  * The segments of a Geofabrik region path, such as `["europe", "germany"]` for `europe/germany`.
  *
- * @throws When the path is empty or a segment is not a lowercase Geofabrik name.
+ * @throws When the path is empty or a segment isn't a lowercase Geofabrik name.
  */
 export function splitGeofabrikPath(region: string): string[] {
 	const segments = region.replaceAll(/^\/+|\/+$/g, "").split("/")
@@ -78,7 +78,7 @@ export function geofabrikSnapshotDirectory(
  *
  * Its receipt sits beside it at `<extract>.receipt.json`.
  *
- * @throws When `vintage` is not one path segment a vintage can take.
+ * @throws When `vintage` isn't one path segment a vintage can take.
  */
 export function geofabrikExtractPath(
 	region: string,

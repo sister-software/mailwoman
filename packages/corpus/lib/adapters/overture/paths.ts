@@ -14,10 +14,10 @@ import type { PathBuilder } from "path-ts"
  *
  * `gazetteer overture-ingest` writes the per-country corpus JSONL this package's `overture` adapter
  * reads, `overture-<cc>.corpus.jsonl`, and the fill-rate report, `fill-rates.{json,md}`, here.
- * They are computed from the release's snapshot, `snapshotSourcePath("overture", release)`,
+ * They're computed from the release's snapshot, `snapshotSourcePath("overture", release)`,
  * which holds only the Parquet copies the ingest fetched.
  *
- * @throws When `release` is not one path segment a vintage can take.
+ * @throws When `release` isn't one path segment a vintage can take.
  */
 export function overtureStagingPath(release: string, ...segments: string[]): PathBuilder {
 	assertVintage(release)

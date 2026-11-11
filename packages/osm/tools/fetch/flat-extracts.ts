@@ -79,7 +79,7 @@ export interface FlatExtractMove {
 	 */
 	target: string | null
 	/**
-	 * Why the file is not moved, or `null` when it would be.
+	 * Why the file isn't moved, or `null` when it would be.
 	 */
 	blocked: string | null
 }
@@ -116,7 +116,7 @@ function registryRegionsByLeaf(): Map<string, string> {
  * Reads only: it changes no file.
  *
  * @param regions Regions the caller states, keyed by leaf, for files with no receipt.
- * @throws When a file in the directory has a name that is neither dated nor `-latest`.
+ * @throws When a file in the directory has a name that's neither dated nor `-latest`.
  */
 export async function planFlatExtractMove(
 	flatDirectory: PathBuilderLike,
