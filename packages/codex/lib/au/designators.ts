@@ -74,13 +74,16 @@ function row(
 	}
 }
 
-const namesByAbbreviation = new Map<AuDeliveryServiceAbbreviation, string[]>()
-const requiresNumberByAbbreviation = new Map<AuDeliveryServiceAbbreviation, boolean>()
+const namesByAbbreviation = new Map<AuDeliveryServiceAbbreviation, string[]>(
+	[...Map.groupBy(AU_DELIVERY_SERVICE_DESIGNATORS, (designator) => designator.abbreviation)].map(
+		([abbreviation, designators]) => [abbreviation, designators.map((designator) => designator.name)]
+	)
+)
 
-for (const { name, abbreviation, requiresNumber } of AU_DELIVERY_SERVICE_DESIGNATORS) {
-	namesByAbbreviation.set(abbreviation, [...(namesByAbbreviation.get(abbreviation) ?? []), name])
-	requiresNumberByAbbreviation.set(abbreviation, requiresNumber)
-}
+// A later designator with the same abbreviation sets its flag, as `Map` keeps the last value per key.
+const requiresNumberByAbbreviation = new Map<AuDeliveryServiceAbbreviation, boolean>(
+	AU_DELIVERY_SERVICE_DESIGNATORS.map((designator) => [designator.abbreviation, designator.requiresNumber])
+)
 
 const DELIVERY_ROWS = [...namesByAbbreviation].map(([abbreviation, names]) =>
 	row(abbreviation, DELIVERY_CONCEPTS[abbreviation], BOOKLET, {

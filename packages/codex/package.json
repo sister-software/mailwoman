@@ -21,6 +21,7 @@
 		"out/us/street-suffix.json"
 	],
 	"type": "module",
+	"sideEffects": false,
 	"imports": {
 		"#*": {
 			"types": "./out/*.d.ts",

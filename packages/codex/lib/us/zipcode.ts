@@ -159,15 +159,14 @@ export const StateAbbreviationZipCodePrefixRecord = {
 /**
  * Map of ZIP code prefixes to their corresponding US state abbreviations.
  */
-const ZipCodePrefixAbbreviationMap = new Map<ZipCodeDigit, USStateAbbreviation[]>()
-
-for (const [state, prefix] of Object.entries(StateAbbreviationZipCodePrefixRecord) as [
-	USStateAbbreviation,
-	ZipCodeDigit,
-][]) {
-	const states = ZipCodePrefixAbbreviationMap.get(prefix) ?? []
-	ZipCodePrefixAbbreviationMap.set(prefix, [...states, state])
-}
+const ZipCodePrefixAbbreviationMap = new Map<ZipCodeDigit, USStateAbbreviation[]>(
+	[
+		...Map.groupBy(
+			Object.entries(StateAbbreviationZipCodePrefixRecord) as [USStateAbbreviation, ZipCodeDigit][],
+			([, prefix]) => prefix
+		),
+	].map(([prefix, entries]) => [prefix, entries.map(([state]) => state)])
+)
 
 export { ZipCodePrefixAbbreviationMap }
 

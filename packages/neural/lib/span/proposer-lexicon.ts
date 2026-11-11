@@ -17,7 +17,11 @@
  *   the AU matcher special-cases. the scan keeps only number-carrying forms.
  */
 
-import { au, nz, us, type SystemCode } from "@mailwoman/codex"
+import type { SystemCode } from "@mailwoman/codex"
+import { AU_DELIVERY_SERVICE_DESIGNATORS } from "@mailwoman/codex/au/delivery/service"
+import { NZ_DELIVERY_SERVICE_TYPES } from "@mailwoman/codex/nz/delivery-service"
+import { US_PO_BOX_DESIGNATORS } from "@mailwoman/codex/us/po-box"
+import { US_UNIT_DESIGNATOR_VARIANTS, type USUnitDesignator } from "@mailwoman/codex/us/unit/designator"
 import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
@@ -111,8 +115,8 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 	const deliveryPhrases = new Set<string>()
 
 	if (sys.has("us")) {
-		for (const canonical of Object.keys(us.US_UNIT_DESIGNATOR_VARIANTS)) {
-			const variants = [canonical, ...us.US_UNIT_DESIGNATOR_VARIANTS[canonical as us.USUnitDesignator]]
+		for (const canonical of Object.keys(US_UNIT_DESIGNATOR_VARIANTS)) {
+			const variants = [canonical, ...US_UNIT_DESIGNATOR_VARIANTS[canonical as USUnitDesignator]]
 			const target = LEVEL_CANONICALS.has(canonical) ? levelDesignators : unitDesignators
 
 			for (const v of variants) {
@@ -124,13 +128,13 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 			}
 		}
 
-		for (const phrase of us.US_PO_BOX_DESIGNATORS) {
+		for (const phrase of US_PO_BOX_DESIGNATORS) {
 			deliveryPhrases.add(phrase)
 		}
 	}
 
 	if (sys.has("au")) {
-		for (const row of au.AU_DELIVERY_SERVICE_DESIGNATORS) {
+		for (const row of AU_DELIVERY_SERVICE_DESIGNATORS) {
 			if (SCAN_EXCLUDED_DELIVERY.has(row.abbreviation)) continue
 
 			if (!row.requiresNumber) continue
@@ -140,7 +144,7 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 	}
 
 	if (sys.has("nz")) {
-		for (const row of nz.NZ_DELIVERY_SERVICE_TYPES) {
+		for (const row of NZ_DELIVERY_SERVICE_TYPES) {
 			if (SCAN_EXCLUDED_DELIVERY.has(row.type)) continue
 
 			if (row.identifier === "not-used") continue
