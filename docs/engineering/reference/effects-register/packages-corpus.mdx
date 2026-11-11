@@ -31,23 +31,23 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/adapters/geonames/adapter.ts`
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 2     |
+| Kind | Interface    | Target              | Calls |
+| ---- | ------------ | ------------------- | ----- |
+| read | `pathExists` | `unresolved (call)` | 2     |
 
 ## `packages/corpus/lib/adapters/geonames/features/adapter.ts`
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `Globerator.from` | `unresolved (call)`       | 1     |
-| read | `isDirectory`     | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target              | Calls |
+| ---- | ----------------- | ------------------- | ----- |
+| read | `Globerator.from` | `unresolved (call)` | 1     |
+| read | `isDirectory`     | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/adapters/gleif/adapter.ts`
 
-| Kind | Interface                  | Target                    | Calls |
-| ---- | -------------------------- | ------------------------- | ----- |
-| read | `CSVSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read | `Globerator.from`          | `unresolved (call)`       | 1     |
+| Kind | Interface                  | Target               | Calls |
+| ---- | -------------------------- | -------------------- | ----- |
+| read | `CSVSpliterator.fromAsync` | `unresolved (other)` | 1     |
+| read | `Globerator.from`          | `unresolved (call)`  | 1     |
 
 ## `packages/corpus/lib/adapters/libpostal-dictionary.ts`
 
@@ -87,28 +87,29 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/adapters/wof/admin/json/explore.ts`
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `Globerator.from` | `unresolved (identifier)` | 1     |
-| read | `pathExists`      | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target              | Calls |
+| ---- | ----------------- | ------------------- | ----- |
+| read | `Globerator.from` | `unresolved (call)` | 1     |
+| read | `pathExists`      | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/adapters/wof/admin/json/region-codes.ts`
 
-| Kind | Interface               | Target                    | Calls |
-| ---- | ----------------------- | ------------------------- | ----- |
-| read | `isFileSync`            | `unresolved (identifier)` | 1     |
-| read | `readLocalTextFileSync` | `unresolved (identifier)` | 1     |
+| Kind | Interface               | Target              | Calls |
+| ---- | ----------------------- | ------------------- | ----- |
+| read | `isFileSync`            | `unresolved (call)` | 1     |
+| read | `readLocalTextFileSync` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/adapters/wof/record-cache.ts`
 
 | Kind        | Interface                   | Target                                   | Calls |
 | ----------- | --------------------------- | ---------------------------------------- | ----- |
-| read        | `JSONSpliterator.fromAsync` | `unresolved (identifier)`                | 1     |
-| read        | `pathExists`                | `unresolved (identifier)`                | 1     |
+| read        | `JSONSpliterator.fromAsync` | `unresolved (call)`                      | 1     |
+| read        | `pathExists`                | `unresolved (call)`                      | 1     |
 | write       | `makeDirectories`           | `unresolved (call)`                      | 1     |
-| write       | `movePath`                  | `unresolved (identifier)`                | 2     |
-| write       | `openWriteStream`           | `unresolved (identifier)`                | 1     |
-| write       | `removePathIfPresent`       | `unresolved (identifier)`                | 1     |
+| write       | `movePath`                  | `unresolved (call)`                      | 1     |
+| write       | `movePath`                  | `unresolved (template)`                  | 1     |
+| write       | `openWriteStream`           | `unresolved (template)`                  | 1     |
+| write       | `removePathIfPresent`       | `unresolved (template)`                  | 1     |
 | environment | `$public`                   | `environment:MAILWOMAN_WOF_RECORD_CACHE` | 1     |
 
 ## `packages/corpus/lib/adapters/wof/sample.ts`
@@ -133,37 +134,37 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/au/adapters/gnaf/assemble.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `Globerator.from`           | `unresolved (identifier)` | 1     |
-| read | `TextSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
+| Kind | Interface                   | Target                   | Calls |
+| ---- | --------------------------- | ------------------------ | ----- |
+| read | `Globerator.from`           | `unresolved (call)`      | 1     |
+| read | `TextSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/az/adapters/opendata/adapter.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `readLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/be/adapters/vlaanderen/adapter.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `openReadStream`    | `unresolved (identifier)` | 2     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `openReadStream`    | `unresolved (call)` | 2     |
+| read | `readLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/be/tools/fetch/brussels.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (identifier)` | 1     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| read  | `tryStat`         | `unresolved (call)` | 1     |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/be/tools/fetch/wallonie.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (identifier)` | 1     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| read  | `tryStat`         | `unresolved (call)` | 1     |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/bs/adapters/gbpa/adapter.ts`
 
@@ -173,17 +174,17 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/build.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| write | `makeDirectories` | `unresolved (identifier)` | 2     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| write | `makeDirectories` | `unresolved (call)` | 2     |
 
 ## `packages/corpus/lib/build/adapters.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 2     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
-| read | `statPath`          | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 2     |
+| read | `readLocalJSONFile` | `unresolved (call)` | 1     |
+| read | `statPath`          | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/build/align.ts`
 
@@ -194,17 +195,17 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/build/align/range.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read  | `openReadStream`            | `unresolved (property)`   | 1     |
-| read  | `readFileRange`             | `unresolved (parameter)`  | 1     |
-| read  | `tryReadLocalJSONFile`      | `unresolved (call)`       | 1     |
-| read  | `tryStat`                   | `unresolved (call)`       | 1     |
-| read  | `tryStat`                   | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`           | `unresolved (identifier)` | 1     |
-| write | `openWriteStream`           | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (call)`       | 1     |
+| Kind  | Interface                   | Target                   | Calls |
+| ----- | --------------------------- | ------------------------ | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`      | 1     |
+| read  | `openReadStream`            | `unresolved (property)`  | 1     |
+| read  | `readFileRange`             | `unresolved (parameter)` | 1     |
+| read  | `tryReadLocalJSONFile`      | `unresolved (call)`      | 1     |
+| read  | `tryStat`                   | `unresolved (call)`      | 1     |
+| read  | `tryStat`                   | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`           | `unresolved (call)`      | 1     |
+| write | `openWriteStream`           | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/build/checkpoint.ts`
 
@@ -224,11 +225,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/build/holdout-check.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 3     |
-| write | `movePath`           | `unresolved (identifier)` | 4     |
-| write | `writeLocalJSONFile` | `unresolved (call)`       | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| read  | `pathExists`         | `unresolved (call)` | 3     |
+| write | `movePath`           | `unresolved (call)` | 4     |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/build/inputs.ts`
 
@@ -252,22 +253,20 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | read  | `tryStat`             | `unresolved (property)`   | 1     |
 | write | `makeDirectories`     | `unresolved (call)`       | 2     |
 | write | `makeDirectories`     | `unresolved (property)`   | 1     |
-| write | `openWriteStream`     | `unresolved (identifier)` | 1     |
+| write | `openWriteStream`     | `unresolved (call)`       | 1     |
 | write | `openWriteStream`     | `unresolved (parameter)`  | 1     |
-| write | `removePathIfPresent` | `unresolved (call)`       | 2     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`  | `unresolved (call)`       | 2     |
-| write | `writeLocalJSONFile`  | `unresolved (identifier)` | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`       | 3     |
+| write | `writeLocalJSONFile`  | `unresolved (call)`       | 3     |
 
 ## `packages/corpus/lib/build/prior-output.ts`
 
 | Kind  | Interface             | Target                    | Calls |
 | ----- | --------------------- | ------------------------- | ----- |
 | read  | `Globerator.from`     | `unresolved (call)`       | 1     |
-| read  | `isDirectory`         | `unresolved (identifier)` | 1     |
+| read  | `isDirectory`         | `unresolved (call)`       | 1     |
 | read  | `readLocalJSONFile`   | `unresolved (property)`   | 1     |
-| read  | `tryStat`             | `unresolved (call)`       | 1     |
-| read  | `tryStat`             | `unresolved (identifier)` | 2     |
+| read  | `tryStat`             | `unresolved (call)`       | 2     |
+| read  | `tryStat`             | `unresolved (identifier)` | 1     |
 | read  | `tryStat`             | `unresolved (property)`   | 1     |
 | write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
 | write | `removePathIfPresent` | `unresolved (property)`   | 3     |
@@ -280,11 +279,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/build/source-record.ts`
 
-| Kind | Interface              | Target                    | Calls |
-| ---- | ---------------------- | ------------------------- | ----- |
-| read | `tryReadLocalJSONFile` | `unresolved (identifier)` | 1     |
-| read | `tryStat`              | `unresolved (parameter)`  | 1     |
-| read | `tryStat`              | `unresolved (property)`   | 2     |
+| Kind | Interface              | Target                   | Calls |
+| ---- | ---------------------- | ------------------------ | ----- |
+| read | `tryReadLocalJSONFile` | `unresolved (call)`      | 1     |
+| read | `tryStat`              | `unresolved (parameter)` | 1     |
+| read | `tryStat`              | `unresolved (property)`  | 2     |
 
 ## `packages/corpus/lib/build/worker.ts`
 
@@ -295,7 +294,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | read  | `tryReadLocalJSONFile` | `unresolved (parameter)`  | 1     |
 | read  | `tryStat`              | `unresolved (parameter)`  | 1     |
 | read  | `tryStat`              | `unresolved (property)`   | 1     |
-| write | `removePathIfPresent`  | `unresolved (identifier)` | 1     |
+| write | `removePathIfPresent`  | `unresolved (call)`       | 1     |
 | write | `writeLocalJSONFile`   | `unresolved (call)`       | 1     |
 
 ## `packages/corpus/lib/cjk/builder.ts`
@@ -323,21 +322,21 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind  | Interface                   | Target                    | Calls |
 | ----- | --------------------------- | ------------------------- | ----- |
 | read  | `directoryHasEntries`       | `unresolved (identifier)` | 1     |
-| read  | `isDirectory`               | `unresolved (identifier)` | 1     |
+| read  | `isDirectory`               | `unresolved (call)`       | 1     |
 | read  | `JSONSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
 | read  | `pathExists`                | `unresolved (parameter)`  | 1     |
-| read  | `sortedGlob`                | `unresolved (identifier)` | 1     |
+| read  | `sortedGlob`                | `unresolved (call)`       | 1     |
 | read  | `sortedGlob`                | `unresolved (parameter)`  | 1     |
 | write | `makeDirectories`           | `unresolved (call)`       | 1     |
 | write | `writeLocalTextFile`        | `unresolved (call)`       | 3     |
 
 ## `packages/corpus/lib/cjk/registry.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `directoryHasEntries` | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`     | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile`  | `unresolved (call)`       | 2     |
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `directoryHasEntries` | `unresolved (call)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `writeLocalTextFile`  | `unresolved (call)` | 2     |
 
 ## `packages/corpus/lib/cz/adapters/cuzk/adapter.ts`
 
@@ -347,11 +346,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/cz/tools/fetch/cuzk.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile`  | `unresolved (property)`   | 1     |
+| Kind  | Interface         | Target                   | Calls |
+| ----- | ----------------- | ------------------------ | ----- |
+| read  | `tryStat`         | `unresolved (parameter)` | 1     |
+| write | `makeDirectories` | `unresolved (call)`      | 1     |
+| write | `writeLocalFile`  | `unresolved (property)`  | 1     |
 
 ## `packages/corpus/lib/de/fragment-board.ts`
 
@@ -371,18 +370,18 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/dk/adapters/inspire/adapter.ts`
 
-| Kind | Interface        | Target                    | Calls |
-| ---- | ---------------- | ------------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (identifier)` | 1     |
+| Kind | Interface        | Target              | Calls |
+| ---- | ---------------- | ------------------- | ----- |
+| read | `DatabaseClient` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/dk/tools/fetch/inspire.ts`
 
 | Kind    | Interface             | Target                                                     | Calls |
 | ------- | --------------------- | ---------------------------------------------------------- | ----- |
-| read    | `pathExists`          | `unresolved (identifier)`                                  | 1     |
-| read    | `statPath`            | `unresolved (identifier)`                                  | 1     |
-| write   | `makeDirectories`     | `unresolved (identifier)`                                  | 1     |
-| write   | `removePathIfPresent` | `unresolved (identifier)`                                  | 1     |
+| read    | `pathExists`          | `unresolved (call)`                                        | 1     |
+| read    | `statPath`            | `unresolved (call)`                                        | 1     |
+| write   | `makeDirectories`     | `unresolved (call)`                                        | 1     |
+| write   | `removePathIfPresent` | `unresolved (call)`                                        | 1     |
 | network | `fetch`               | `literal:https://www2.sdfe.dk/INSPIRE/feeds/Addresses.xml` | 1     |
 | network | `fetch`               | `unresolved (property)`                                    | 1     |
 
@@ -398,10 +397,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/es/adapters/bizkaia/adapter.ts`
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `Globerator.from` | `unresolved (call)`       | 1     |
-| read | `openReadStream`  | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target              | Calls |
+| ---- | ----------------- | ------------------- | ----- |
+| read | `Globerator.from` | `unresolved (call)` | 1     |
+| read | `openReadStream`  | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/es/adapters/catastro/adapter.ts`
 
@@ -423,32 +422,32 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/es/tools/fetch/bizkaia.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile`  | `unresolved (property)`   | 1     |
+| Kind  | Interface         | Target                   | Calls |
+| ----- | ----------------- | ------------------------ | ----- |
+| read  | `tryStat`         | `unresolved (parameter)` | 1     |
+| write | `makeDirectories` | `unresolved (call)`      | 1     |
+| write | `writeLocalFile`  | `unresolved (property)`  | 1     |
 
 ## `packages/corpus/lib/es/tools/fetch/catastro.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target                   | Calls |
+| ----- | ----------------- | ------------------------ | ----- |
+| read  | `tryStat`         | `unresolved (parameter)` | 1     |
+| write | `makeDirectories` | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/es/tools/fetch/gipuzkoa.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (identifier)` | 1     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| read  | `tryStat`         | `unresolved (call)` | 1     |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/es/tools/fetch/navarra.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target                   | Calls |
+| ----- | ----------------- | ------------------------ | ----- |
+| read  | `tryStat`         | `unresolved (parameter)` | 1     |
+| write | `makeDirectories` | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/fi/adapters/ryhti/adapter.ts`
 
@@ -461,11 +460,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind    | Interface             | Target                                                                        | Calls |
 | ------- | --------------------- | ----------------------------------------------------------------------------- | ----- |
 | read    | `openReadStream`      | `unresolved (parameter)`                                                      | 1     |
-| read    | `tryStat`             | `unresolved (identifier)`                                                     | 1     |
+| read    | `tryStat`             | `unresolved (call)`                                                           | 1     |
 | read    | `tryStat`             | `unresolved (parameter)`                                                      | 1     |
-| write   | `makeDirectories`     | `unresolved (identifier)`                                                     | 1     |
+| write   | `makeDirectories`     | `unresolved (call)`                                                           | 1     |
 | write   | `openWriteStream`     | `unresolved (parameter)`                                                      | 1     |
-| write   | `removePathIfPresent` | `unresolved (identifier)`                                                     | 3     |
+| write   | `removePathIfPresent` | `unresolved (call)`                                                           | 3     |
 | network | `fetch`               | `literal:https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz` | 1     |
 
 ## `packages/corpus/lib/fo/adapters/adressur/adapter.ts`
@@ -503,9 +502,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/fr/recipes/fragment.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `TextSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target                  | Calls |
+| ---- | --------------------------- | ----------------------- | ----- |
+| read | `TextSpliterator.fromAsync` | `unresolved (property)` | 1     |
 
 ## `packages/corpus/lib/fr/recipes/house-venue-tuples.ts`
 
@@ -516,9 +515,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/fr/recipes/lieudit.ts`
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `Globerator.from` | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target              | Calls |
+| ---- | ----------------- | ------------------- | ----- |
+| read | `Globerator.from` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/fr/street-decompose.ts`
 
@@ -528,41 +527,41 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/fr/tools/fetch/annuaire-education.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `TextSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
-| read  | `tryStat`                   | `unresolved (identifier)` | 2     |
-| write | `makeDirectories`           | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent`       | `unresolved (identifier)` | 1     |
+| Kind  | Interface                   | Target                   | Calls |
+| ----- | --------------------------- | ------------------------ | ----- |
+| read  | `TextSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
+| read  | `tryStat`                   | `unresolved (call)`      | 2     |
+| write | `makeDirectories`           | `unresolved (call)`      | 1     |
+| write | `removePathIfPresent`       | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/fr/tools/fetch/ban.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `isFile`          | `unresolved (identifier)` | 2     |
-| read  | `readLocalBuffer` | `unresolved (identifier)` | 1     |
-| read  | `tryStat`         | `unresolved (identifier)` | 2     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
-| write | `removePath`      | `unresolved (identifier)` | 4     |
-| write | `writeLocalFile`  | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| read  | `isFile`          | `unresolved (call)` | 2     |
+| read  | `readLocalBuffer` | `unresolved (call)` | 1     |
+| read  | `tryStat`         | `unresolved (call)` | 2     |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
+| write | `removePath`      | `unresolved (call)` | 4     |
+| write | `writeLocalFile`  | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/fr/tools/fetch/finess.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `readFileHead`        | `unresolved (identifier)` | 1     |
-| read  | `readLocalBuffer`     | `unresolved (parameter)`  | 1     |
-| read  | `tryStat`             | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target                   | Calls |
+| ----- | --------------------- | ------------------------ | ----- |
+| read  | `readFileHead`        | `unresolved (call)`      | 1     |
+| read  | `readLocalBuffer`     | `unresolved (parameter)` | 1     |
+| read  | `tryStat`             | `unresolved (call)`      | 1     |
+| write | `makeDirectories`     | `unresolved (call)`      | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/gauntlet-inputs.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `Globerator.files`          | `unresolved (identifier)` | 1     |
-| read | `Globerator.from`           | `unresolved (parameter)`  | 1     |
-| read | `JSONSpliterator.fromAsync` | `unresolved (call)`       | 1     |
+| Kind | Interface                   | Target                   | Calls |
+| ---- | --------------------------- | ------------------------ | ----- |
+| read | `Globerator.files`          | `unresolved (other)`     | 1     |
+| read | `Globerator.from`           | `unresolved (parameter)` | 1     |
+| read | `JSONSpliterator.fromAsync` | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/gb/adapters/os-open/adapter.ts`
 
@@ -598,9 +597,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/gb/tools/fetch/os-open.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/gu/adapters/bsp/adapter.ts`
 
@@ -618,18 +617,18 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/inspire/archive.ts`
 
-| Kind | Interface        | Target                    | Calls |
-| ---- | ---------------- | ------------------------- | ----- |
-| read | `openReadStream` | `unresolved (identifier)` | 1     |
+| Kind | Interface        | Target              | Calls |
+| ---- | ---------------- | ------------------- | ----- |
+| read | `openReadStream` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/international/recipes/locale.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `CSVSpliterator.fromAsync`  | `unresolved (identifier)` | 1     |
-| read | `JSONSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
-| read | `openReadStream`            | `unresolved (property)`   | 1     |
-| read | `pathExists`                | `unresolved (parameter)`  | 1     |
+| Kind | Interface                   | Target                   | Calls |
+| ---- | --------------------------- | ------------------------ | ----- |
+| read | `CSVSpliterator.fromAsync`  | `unresolved (other)`     | 1     |
+| read | `JSONSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
+| read | `openReadStream`            | `unresolved (property)`  | 1     |
+| read | `pathExists`                | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/it/adapters/anac/adapter.ts`
 
@@ -640,14 +639,14 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/it/tools/fetch/anac.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `openReadStream`      | `unresolved (parameter)`  | 1     |
-| read  | `tryStat`             | `unresolved (identifier)` | 1     |
-| read  | `tryStat`             | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `openWriteStream`     | `unresolved (parameter)`  | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 3     |
+| Kind  | Interface             | Target                   | Calls |
+| ----- | --------------------- | ------------------------ | ----- |
+| read  | `openReadStream`      | `unresolved (parameter)` | 1     |
+| read  | `tryStat`             | `unresolved (call)`      | 1     |
+| read  | `tryStat`             | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)`      | 1     |
+| write | `openWriteStream`     | `unresolved (parameter)` | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`      | 3     |
 
 ## `packages/corpus/lib/jp/adapters/wof-admin/adapter.ts`
 
@@ -657,10 +656,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/jp/corpus/assemble.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `directoryHasEntries` | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile`  | `unresolved (call)`       | 2     |
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `directoryHasEntries` | `unresolved (call)` | 1     |
+| write | `writeLocalTextFile`  | `unresolved (call)` | 2     |
 
 ## `packages/corpus/lib/jp/corpus/probe.ts`
 
@@ -694,7 +693,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind    | Interface         | Target                                                                   | Calls |
 | ------- | ----------------- | ------------------------------------------------------------------------ | ----- |
-| write   | `makeDirectories` | `unresolved (identifier)`                                                | 1     |
+| write   | `makeDirectories` | `unresolved (call)`                                                      | 1     |
 | network | `fetch`           | `literal:https://www.houjin-bangou.nta.go.jp/download/zenken/`           | 2     |
 | network | `fetch`           | `literal:https://www.houjin-bangou.nta.go.jp/download/zenken/index.html` | 1     |
 
@@ -727,18 +726,18 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind    | Interface         | Target                                                              | Calls |
 | ------- | ----------------- | ------------------------------------------------------------------- | ----- |
-| write   | `makeDirectories` | `unresolved (identifier)`                                           | 1     |
+| write   | `makeDirectories` | `unresolved (call)`                                                 | 1     |
 | network | `fetch`           | `literal:https://business.juso.go.kr/api/jst/selectAttrbDBDwldList` | 1     |
 
 ## `packages/corpus/lib/kr/tools/fetch/localdata.ts`
 
 | Kind    | Interface         | Target                                                               | Calls |
 | ------- | ----------------- | -------------------------------------------------------------------- | ----- |
-| read    | `pathExists`      | `unresolved (identifier)`                                            | 1     |
-| write   | `makeDirectories` | `unresolved (identifier)`                                            | 1     |
+| read    | `pathExists`      | `unresolved (call)`                                                  | 1     |
+| write   | `makeDirectories` | `unresolved (call)`                                                  | 1     |
 | network | `fetch`           | `literal:https://file.localdata.go.kr/file/general_restaurants/info` | 1     |
 | network | `fetch`           | `literal:https://file.localdata.go.kr/file/validate/download-count`  | 1     |
-| network | `fetch`           | `unresolved (identifier)`                                            | 1     |
+| network | `fetch`           | `unresolved (template)`                                              | 1     |
 
 ## `packages/corpus/lib/li/adapters/llv/adapter.ts`
 
@@ -754,11 +753,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/lu/tools/fetch/bd-adresses.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `tryStat`             | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 3     |
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `tryStat`             | `unresolved (call)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `removePathIfPresent` | `unresolved (call)` | 3     |
 
 ## `packages/corpus/lib/lv/adapters/varis/adapter.ts`
 
@@ -768,24 +767,24 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/lv/tools/fetch/varis.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (identifier)` | 1     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| read  | `tryStat`         | `unresolved (call)` | 1     |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/nl/adapters/kadaster/adapter.ts`
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `Globerator.from` | `unresolved (call)`       | 1     |
-| read | `openReadStream`  | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target              | Calls |
+| ---- | ----------------- | ------------------- | ----- |
+| read | `Globerator.from` | `unresolved (call)` | 1     |
+| read | `openReadStream`  | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/nl/tools/fetch/kadaster.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (identifier)` | 1     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| read  | `tryStat`         | `unresolved (call)` | 1     |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/no/adapters/matrikkelen/adapter.ts`
 
@@ -795,22 +794,22 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/no/recipes/fragment.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `TextSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target                  | Calls |
+| ---- | --------------------------- | ----------------------- | ----- |
+| read | `TextSpliterator.fromAsync` | `unresolved (property)` | 1     |
 
 ## `packages/corpus/lib/no/recipes/street/led.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `TextSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target                  | Calls |
+| ---- | --------------------------- | ----------------------- | ----- |
+| read | `TextSpliterator.fromAsync` | `unresolved (property)` | 1     |
 
 ## `packages/corpus/lib/no/tools/fetch/matrikkelen.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (identifier)` | 2     |
-| write | `makeDirectories` | `unresolved (identifier)` | 2     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| read  | `tryStat`         | `unresolved (call)` | 2     |
+| write | `makeDirectories` | `unresolved (call)` | 2     |
 
 ## `packages/corpus/lib/parquet/readers.ts`
 
@@ -822,32 +821,32 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind  | Interface              | Target                                   | Calls |
 | ----- | ---------------------- | ---------------------------------------- | ----- |
-| read  | `gitHead`              | `unresolved (identifier)`                | 1     |
+| read  | `gitHead`              | `unresolved (call)`                      | 1     |
 | read  | `Globerator.from`      | `unresolved (call)`                      | 2     |
 | read  | `isFile`               | `unresolved (parameter)`                 | 2     |
 | read  | `readLocalJSONFile`    | `package:@mailwoman/corpus/package.json` | 1     |
 | read  | `readLocalJSONFile`    | `unresolved (call)`                      | 1     |
 | read  | `statPath`             | `unresolved (call)`                      | 1     |
 | read  | `tryReadLocalJSONFile` | `unresolved (call)`                      | 1     |
-| read  | `workingTreeStatus`    | `unresolved (identifier)`                | 1     |
+| read  | `workingTreeStatus`    | `unresolved (call)`                      | 1     |
 | write | `writeLocalJSONFile`   | `unresolved (call)`                      | 1     |
 
 ## `packages/corpus/lib/parquet/writers.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `pathExists`          | `unresolved (parameter)`  | 1     |
-| read  | `readLocalJSONFile`   | `unresolved (parameter)`  | 1     |
-| read  | `tryStat`             | `unresolved (identifier)` | 2     |
-| read  | `tryStat`             | `unresolved (property)`   | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 3     |
-| write | `movePath`            | `unresolved (identifier)` | 2     |
-| write | `openWriteStream`     | `unresolved (identifier)` | 1     |
-| write | `removePath`          | `unresolved (identifier)` | 1     |
-| write | `removePath`          | `unresolved (property)`   | 2     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
-| write | `writeLocalBuffer`    | `unresolved (parameter)`  | 1     |
-| write | `writeLocalJSONFile`  | `unresolved (identifier)` | 2     |
+| Kind  | Interface             | Target                   | Calls |
+| ----- | --------------------- | ------------------------ | ----- |
+| read  | `pathExists`          | `unresolved (parameter)` | 1     |
+| read  | `readLocalJSONFile`   | `unresolved (parameter)` | 1     |
+| read  | `tryStat`             | `unresolved (call)`      | 2     |
+| read  | `tryStat`             | `unresolved (property)`  | 1     |
+| write | `makeDirectories`     | `unresolved (call)`      | 3     |
+| write | `movePath`            | `unresolved (call)`      | 2     |
+| write | `openWriteStream`     | `scratch:*`              | 1     |
+| write | `removePath`          | `unresolved (call)`      | 1     |
+| write | `removePath`          | `unresolved (property)`  | 2     |
+| write | `removePathIfPresent` | `unresolved (call)`      | 1     |
+| write | `writeLocalBuffer`    | `unresolved (parameter)` | 1     |
+| write | `writeLocalJSONFile`  | `unresolved (other)`     | 2     |
 
 ## `packages/corpus/lib/pl/adapters/emuia/adapter.ts`
 
@@ -928,7 +927,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | ----- | --------------------------- | ------------------------------------------------- | ----- |
 | read  | `JSONSpliterator.fromAsync` | `repo:data/eval/external/intersection-real.jsonl` | 1     |
 | read  | `pathExists`                | `repo:data/eval/external/intersection-real.jsonl` | 1     |
-| read  | `pathExists`                | `unresolved (identifier)`                         | 1     |
+| read  | `pathExists`                | `unresolved (call)`                               | 1     |
 | write | `writeLocalJSONFile`        | `unresolved (call)`                               | 1     |
 
 ## `packages/corpus/lib/recipes/po/box/cedex/sources.ts`
@@ -942,10 +941,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/recipes/postal/guideline.ts`
 
-| Kind | Interface                  | Target                    | Calls |
-| ---- | -------------------------- | ------------------------- | ----- |
-| read | `pathExists`               | `unresolved (identifier)` | 2     |
-| read | `TSVSpliterator.fromAsync` | `unresolved (call)`       | 1     |
+| Kind | Interface                  | Target                      | Calls |
+| ---- | -------------------------- | --------------------------- | ----- |
+| read | `pathExists`               | `data-root:geonames-postal` | 2     |
+| read | `TSVSpliterator.fromAsync` | `unresolved (call)`         | 1     |
 
 ## `packages/corpus/lib/recipes/scaffold.ts`
 
@@ -963,27 +962,27 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/ro/tools/fetch/retea-scolara.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (identifier)` | 1     |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| read  | `tryStat`         | `unresolved (call)` | 1     |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/runner.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write | `openWriteStream`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| write | `makeDirectories`    | `unresolved (call)` | 1     |
+| write | `openWriteStream`    | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/sg/tools/fetch/acra.ts`
 
-| Kind    | Interface         | Target                    | Calls |
-| ------- | ----------------- | ------------------------- | ----- |
-| read    | `pathExists`      | `unresolved (identifier)` | 1     |
-| write   | `makeDirectories` | `unresolved (identifier)` | 1     |
-| network | `fetch`           | `unresolved (identifier)` | 1     |
-| network | `fetch`           | `unresolved (parameter)`  | 1     |
+| Kind    | Interface         | Target                   | Calls |
+| ------- | ----------------- | ------------------------ | ----- |
+| read    | `pathExists`      | `unresolved (call)`      | 1     |
+| write   | `makeDirectories` | `unresolved (call)`      | 1     |
+| network | `fetch`           | `unresolved (call)`      | 1     |
+| network | `fetch`           | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/sk/adapters/inspire/adapter.ts`
 
@@ -994,16 +993,16 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/source-register/corpus-inputs.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (other)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (call)`  | 1     |
 
 ## `packages/corpus/lib/source-register/register.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target               | Calls |
+| ---- | ------------------- | -------------------- | ----- |
+| read | `readLocalJSONFile` | `unresolved (other)` | 1     |
 
 ## `packages/corpus/lib/source-register/row-license.ts`
 
@@ -1048,13 +1047,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/audit.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `Globerator.files`  | `unresolved (identifier)` | 1     |
-| read | `pathExists`        | `unresolved (identifier)` | 2     |
-| read | `pathExists`        | `unresolved (parameter)`  | 1     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
-| read | `readLocalTextFile` | `unresolved (parameter)`  | 1     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `Globerator.files`  | `unresolved (call)`      | 1     |
+| read | `pathExists`        | `unresolved (call)`      | 2     |
+| read | `pathExists`        | `unresolved (parameter)` | 1     |
+| read | `readLocalJSONFile` | `unresolved (call)`      | 1     |
+| read | `readLocalTextFile` | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/tools/cjk/foreign-places.run.ts`
 
@@ -1072,11 +1071,11 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/corpus-stats.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `Globerator.files`   | `unresolved (identifier)` | 1     |
-| read  | `statPath`           | `unresolved (parameter)`  | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                   | Calls |
+| ----- | -------------------- | ------------------------ | ----- |
+| read  | `Globerator.files`   | `unresolved (call)`      | 1     |
+| read  | `statPath`           | `unresolved (parameter)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)`  | 1     |
 
 ## `packages/corpus/lib/tools/de-fragment-board.run.ts`
 
@@ -1093,22 +1092,22 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/fetch/cordis.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `tryStat`             | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target                   | Calls |
+| ----- | --------------------- | ------------------------ | ----- |
+| read  | `tryStat`             | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)`      | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/tools/fetch/download/manifest.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (parameter)`  | 1     |
-| read  | `readLocalTextFile`  | `unresolved (parameter)`  | 1     |
-| write | `movePath`           | `unresolved (identifier)` | 1     |
-| write | `movePath`           | `unresolved (parameter)`  | 1     |
-| write | `openWriteStream`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (parameter)`  | 1     |
+| Kind  | Interface            | Target                   | Calls |
+| ----- | -------------------- | ------------------------ | ----- |
+| read  | `pathExists`         | `unresolved (parameter)` | 1     |
+| read  | `readLocalTextFile`  | `unresolved (parameter)` | 1     |
+| write | `movePath`           | `unresolved (other)`     | 1     |
+| write | `movePath`           | `unresolved (parameter)` | 1     |
+| write | `openWriteStream`    | `unresolved (other)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/tools/fetch/download/network.ts`
 
@@ -1124,36 +1123,36 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind    | Interface         | Target                    | Calls |
 | ------- | ----------------- | ------------------------- | ----- |
 | read    | `tryStat`         | `unresolved (parameter)`  | 1     |
-| write   | `movePath`        | `unresolved (identifier)` | 2     |
-| write   | `openWriteStream` | `unresolved (identifier)` | 1     |
+| write   | `movePath`        | `unresolved (identifier)` | 1     |
+| write   | `movePath`        | `unresolved (other)`      | 1     |
+| write   | `openWriteStream` | `unresolved (other)`      | 1     |
 | network | `fetch`           | `unresolved (identifier)` | 1     |
 
 ## `packages/corpus/lib/tools/fetch/geonames/dump.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `pathExists`          | `unresolved (identifier)` | 1     |
-| read  | `readFileHead`        | `unresolved (identifier)` | 1     |
-| read  | `readLocalBuffer`     | `unresolved (identifier)` | 1     |
-| read  | `readLocalTextFile`   | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`     | `unresolved (property)`   | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 2     |
+| Kind  | Interface             | Target                  | Calls |
+| ----- | --------------------- | ----------------------- | ----- |
+| read  | `pathExists`          | `unresolved (call)`     | 1     |
+| read  | `readFileHead`        | `unresolved (call)`     | 1     |
+| read  | `readLocalBuffer`     | `unresolved (call)`     | 1     |
+| read  | `readLocalTextFile`   | `unresolved (call)`     | 1     |
+| write | `makeDirectories`     | `unresolved (property)` | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`     | 2     |
 
 ## `packages/corpus/lib/tools/fetch/geonames/postal.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/tools/fetch/gleif.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `Globerator.from`     | `unresolved (call)`       | 1     |
-| read  | `tryStat`             | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (call)`       | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target                   | Calls |
+| ----- | --------------------- | ------------------------ | ----- |
+| read  | `Globerator.from`     | `unresolved (call)`      | 1     |
+| read  | `tryStat`             | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)`      | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`      | 2     |
 
 ## `packages/corpus/lib/tools/fetch/header.ts`
 
@@ -1165,15 +1164,15 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind        | Interface             | Target                                                   | Calls |
 | ----------- | --------------------- | -------------------------------------------------------- | ----- |
-| read        | `pathExists`          | `unresolved (identifier)`                                | 3     |
-| read        | `readFileRange`       | `unresolved (identifier)`                                | 1     |
-| read        | `readLocalJSONFile`   | `unresolved (identifier)`                                | 1     |
-| read        | `statPath`            | `unresolved (identifier)`                                | 3     |
-| write       | `makeDirectories`     | `unresolved (identifier)`                                | 1     |
+| read        | `pathExists`          | `unresolved (call)`                                      | 3     |
+| read        | `readFileRange`       | `unresolved (call)`                                      | 1     |
+| read        | `readLocalJSONFile`   | `unresolved (call)`                                      | 1     |
+| read        | `statPath`            | `unresolved (call)`                                      | 3     |
+| write       | `makeDirectories`     | `unresolved (call)`                                      | 1     |
 | write       | `makeDirectories`     | `unresolved (property)`                                  | 1     |
-| write       | `movePath`            | `unresolved (identifier)`                                | 8     |
+| write       | `movePath`            | `unresolved (call)`                                      | 8     |
 | write       | `openWriteStream`     | `unresolved (parameter)`                                 | 1     |
-| write       | `removePathIfPresent` | `unresolved (identifier)`                                | 6     |
+| write       | `removePathIfPresent` | `unresolved (call)`                                      | 6     |
 | network     | `APIClient.fetch`     | `literal:https://batch.openaddresses.io/api/collections` | 1     |
 | network     | `APIClient.fetch`     | `literal:https://batch.openaddresses.io/api/data`        | 1     |
 | network     | `APIClient.fetch`     | `unresolved (template)`                                  | 1     |
@@ -1183,52 +1182,52 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/fetch/ourairports.ts`
 
-| Kind    | Interface         | Target                    | Calls |
-| ------- | ----------------- | ------------------------- | ----- |
-| write   | `makeDirectories` | `unresolved (identifier)` | 1     |
-| network | `APIClient.fetch` | `unresolved (parameter)`  | 1     |
+| Kind    | Interface         | Target                   | Calls |
+| ------- | ----------------- | ------------------------ | ----- |
+| write   | `makeDirectories` | `unresolved (call)`      | 1     |
+| network | `APIClient.fetch` | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/tools/fetch/vlaanderen-ad.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `Globerator.from`    | `unresolved (call)`       | 1     |
-| write | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (call)`       | 1     |
-| write | `writeLocalTextFile` | `unresolved (call)`       | 2     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| read  | `Globerator.from`    | `unresolved (call)` | 1     |
+| write | `makeDirectories`    | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (call)` | 2     |
 
 ## `packages/corpus/lib/tools/fetch/wfs-harvest.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `readFileRange`       | `unresolved (identifier)` | 1     |
-| read  | `readFileRange`       | `unresolved (parameter)`  | 1     |
-| read  | `tryStat`             | `unresolved (identifier)` | 4     |
-| read  | `tryStat`             | `unresolved (parameter)`  | 1     |
-| write | `appendLocalTextFile` | `unresolved (identifier)` | 4     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 2     |
-| write | `removePathIfPresent` | `unresolved (parameter)`  | 1     |
-| write | `truncateFile`        | `unresolved (parameter)`  | 1     |
+| Kind  | Interface             | Target                   | Calls |
+| ----- | --------------------- | ------------------------ | ----- |
+| read  | `readFileRange`       | `unresolved (call)`      | 1     |
+| read  | `readFileRange`       | `unresolved (parameter)` | 1     |
+| read  | `tryStat`             | `unresolved (call)`      | 4     |
+| read  | `tryStat`             | `unresolved (parameter)` | 1     |
+| write | `appendLocalTextFile` | `unresolved (call)`      | 4     |
+| write | `makeDirectories`     | `unresolved (call)`      | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`      | 2     |
+| write | `removePathIfPresent` | `unresolved (parameter)` | 1     |
+| write | `truncateFile`        | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/tools/fetch/wikidata/subvenue.ts`
 
-| Kind    | Interface         | Target                    | Calls |
-| ------- | ----------------- | ------------------------- | ----- |
-| write   | `makeDirectories` | `unresolved (identifier)` | 1     |
-| write   | `writeLocalFile`  | `unresolved (identifier)` | 1     |
-| network | `APIClient.fetch` | `unresolved (call)`       | 1     |
+| Kind    | Interface         | Target              | Calls |
+| ------- | ----------------- | ------------------- | ----- |
+| write   | `makeDirectories` | `unresolved (call)` | 1     |
+| write   | `writeLocalFile`  | `unresolved (call)` | 1     |
+| network | `APIClient.fetch` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/tools/fetch/wikidata/vital-places.ts`
 
 | Kind        | Interface            | Target                              | Calls |
 | ----------- | -------------------- | ----------------------------------- | ----- |
 | read        | `Globerator.from`    | `unresolved (call)`                 | 1     |
-| read        | `pathExists`         | `unresolved (identifier)`           | 1     |
-| read        | `readLocalJSONFile`  | `unresolved (identifier)`           | 1     |
-| read        | `statPath`           | `unresolved (identifier)`           | 1     |
-| write       | `makeDirectories`    | `unresolved (identifier)`           | 1     |
-| write       | `writeLocalJSONFile` | `unresolved (identifier)`           | 1     |
+| read        | `pathExists`         | `unresolved (call)`                 | 1     |
+| read        | `readLocalJSONFile`  | `unresolved (call)`                 | 1     |
+| read        | `statPath`           | `unresolved (call)`                 | 1     |
+| write       | `makeDirectories`    | `unresolved (call)`                 | 1     |
+| write       | `writeLocalJSONFile` | `unresolved (call)`                 | 1     |
 | environment | `$private`           | `environment:WIKIDATA_BOT_PASSWORD` | 1     |
 | environment | `$private`           | `environment:WIKIDATA_BOT_USERNAME` | 1     |
 
@@ -1258,14 +1257,14 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/fetch/wikidata/vital-places/qrank.ts`
 
-| Kind  | Interface                  | Target                    | Calls |
-| ----- | -------------------------- | ------------------------- | ----- |
-| read  | `CSVSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read  | `openReadStream`           | `unresolved (parameter)`  | 1     |
-| read  | `pathExists`               | `unresolved (identifier)` | 1     |
-| read  | `pathExists`               | `unresolved (parameter)`  | 1     |
-| read  | `readLocalJSONFile`        | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`       | `unresolved (identifier)` | 1     |
+| Kind  | Interface                  | Target                   | Calls |
+| ----- | -------------------------- | ------------------------ | ----- |
+| read  | `CSVSpliterator.fromAsync` | `unresolved (call)`      | 1     |
+| read  | `openReadStream`           | `unresolved (parameter)` | 1     |
+| read  | `pathExists`               | `unresolved (call)`      | 1     |
+| read  | `pathExists`               | `unresolved (parameter)` | 1     |
+| read  | `readLocalJSONFile`        | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFile`       | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/tools/fetch/wikidata/vital-places/query-entities.ts`
 
@@ -1298,18 +1297,18 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/golden/promote.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `copyFileTo`                | `unresolved (call)`       | 1     |
-| read  | `Globerator.files`          | `unresolved (identifier)` | 1     |
-| read  | `Globerator.from`           | `unresolved (identifier)` | 1     |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`       | 1     |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (property)`   | 1     |
-| read  | `pathExists`                | `unresolved (identifier)` | 2     |
-| read  | `pathExists`                | `unresolved (property)`   | 1     |
-| write | `copyFileTo`                | `unresolved (call)`       | 1     |
-| write | `makeDirectories`           | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (call)`       | 1     |
+| Kind  | Interface                   | Target                  | Calls |
+| ----- | --------------------------- | ----------------------- | ----- |
+| read  | `copyFileTo`                | `unresolved (call)`     | 1     |
+| read  | `Globerator.files`          | `unresolved (call)`     | 1     |
+| read  | `Globerator.from`           | `unresolved (call)`     | 1     |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`     | 1     |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (property)` | 1     |
+| read  | `pathExists`                | `unresolved (call)`     | 2     |
+| read  | `pathExists`                | `unresolved (property)` | 1     |
+| write | `copyFileTo`                | `unresolved (call)`     | 1     |
+| write | `makeDirectories`           | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (call)`     | 1     |
 
 ## `packages/corpus/lib/tools/golden/relabel-street/directory.ts`
 
@@ -1317,15 +1316,15 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | ----- | --------------------- | ------------------------- | ----- |
 | read  | `Globerator.from`     | `unresolved (parameter)`  | 1     |
 | read  | `pathExists`          | `unresolved (identifier)` | 1     |
-| read  | `readLocalBuffer`     | `unresolved (identifier)` | 1     |
-| read  | `readLocalTextFile`   | `unresolved (identifier)` | 2     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
+| read  | `readLocalBuffer`     | `unresolved (call)`       | 1     |
+| read  | `readLocalTextFile`   | `unresolved (call)`       | 1     |
+| read  | `readLocalTextFile`   | `unresolved (identifier)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)`       | 1     |
 | write | `makeDirectories`     | `unresolved (parameter)`  | 1     |
-| write | `writeLocalFile`      | `unresolved (call)`       | 1     |
-| write | `writeLocalFile`      | `unresolved (identifier)` | 1     |
+| write | `writeLocalFile`      | `unresolved (call)`       | 2     |
 | write | `writeLocalJSONFile`  | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONLFile` | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile`  | `unresolved (identifier)` | 1     |
+| write | `writeLocalJSONLFile` | `unresolved (other)`      | 1     |
+| write | `writeLocalTextFile`  | `unresolved (call)`       | 1     |
 
 ## `packages/corpus/lib/tools/house-venue-tuples.run.ts`
 
@@ -1334,26 +1333,26 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 4 times
 - `awaits at module scope`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| write | `writeLocalTextFile` | `unresolved (other)` | 1     |
 
 ## `packages/corpus/lib/tools/ingest-csv.ts`
 
-| Kind  | Interface                  | Target                    | Calls |
-| ----- | -------------------------- | ------------------------- | ----- |
-| read  | `CSVSpliterator.fromAsync` | `unresolved (property)`   | 1     |
-| read  | `pathExists`               | `unresolved (property)`   | 1     |
-| read  | `tryStat`                  | `unresolved (property)`   | 1     |
-| write | `makeDirectories`          | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile`       | `unresolved (identifier)` | 1     |
+| Kind  | Interface                  | Target                  | Calls |
+| ----- | -------------------------- | ----------------------- | ----- |
+| read  | `CSVSpliterator.fromAsync` | `unresolved (property)` | 1     |
+| read  | `pathExists`               | `unresolved (property)` | 1     |
+| read  | `tryStat`                  | `unresolved (property)` | 1     |
+| write | `makeDirectories`          | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile`       | `unresolved (call)`     | 1     |
 
 ## `packages/corpus/lib/tools/input-changes.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `changedFiles`      | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind | Interface           | Target                  | Calls |
+| ---- | ------------------- | ----------------------- | ----- |
+| read | `changedFiles`      | `unresolved (call)`     | 1     |
+| read | `readLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/corpus/lib/tools/jp/corpus.run.ts`
 
@@ -1385,18 +1384,18 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/lint/recipe-output.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (property)`   | 1     |
-| write | `writeLocalFile`     | `unresolved (property)`   | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (other)`    | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (property)` | 1     |
+| write | `writeLocalFile`     | `unresolved (property)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |
 
 ## `packages/corpus/lib/tools/lint/recipe-output/vocab.ts`
 
-| Kind | Interface         | Target                    | Calls |
-| ---- | ----------------- | ------------------------- | ----- |
-| read | `Globerator.from` | `unresolved (identifier)` | 1     |
+| Kind | Interface         | Target              | Calls |
+| ---- | ----------------- | ------------------- | ----- |
+| read | `Globerator.from` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/tools/migrate/overlay-parquet.ts`
 
@@ -1413,12 +1412,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/overlay/deletions.ts`
 
-| Kind  | Interface           | Target                    | Calls |
-| ----- | ------------------- | ------------------------- | ----- |
-| read  | `copyFileTo`        | `unresolved (identifier)` | 1     |
-| read  | `pathExists`        | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile` | `unresolved (parameter)`  | 1     |
-| write | `copyFileTo`        | `unresolved (call)`       | 1     |
+| Kind  | Interface           | Target                   | Calls |
+| ----- | ------------------- | ------------------------ | ----- |
+| read  | `copyFileTo`        | `unresolved (other)`     | 1     |
+| read  | `pathExists`        | `unresolved (other)`     | 1     |
+| read  | `readLocalJSONFile` | `unresolved (parameter)` | 1     |
+| write | `copyFileTo`        | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/tools/overlay/held-out-spans.ts`
 
@@ -1428,24 +1427,25 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/overlay/kryptonite.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
-| read  | `pathExists`                | `unresolved (property)`   | 2     |
-| read  | `readLocalJSONFile`         | `unresolved (property)`   | 1     |
-| write | `makeDirectories`           | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile`        | `unresolved (identifier)` | 1     |
+| Kind  | Interface                   | Target                   | Calls |
+| ----- | --------------------------- | ------------------------ | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
+| read  | `pathExists`                | `unresolved (property)`  | 2     |
+| read  | `readLocalJSONFile`         | `unresolved (property)`  | 1     |
+| write | `makeDirectories`           | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (call)`      | 1     |
+| write | `writeLocalTextFile`        | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/tools/overlay/manifest.ts`
 
 | Kind  | Interface            | Target                    | Calls |
 | ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 2     |
-| read  | `readLocalBuffer`    | `unresolved (identifier)` | 1     |
+| read  | `pathExists`         | `unresolved (identifier)` | 1     |
+| read  | `pathExists`         | `unresolved (other)`      | 1     |
+| read  | `readLocalBuffer`    | `unresolved (call)`       | 1     |
 | read  | `readLocalJSONFile`  | `unresolved (property)`   | 1     |
 | read  | `statPath`           | `unresolved (parameter)`  | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 2     |
+| write | `writeLocalJSONFile` | `unresolved (call)`       | 2     |
 
 ## `packages/corpus/lib/tools/overlay/split/attribute.ts`
 
@@ -1455,21 +1455,21 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/overlay/split/overlay.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| write | `writeLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/tools/overlay/translit.ts`
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (property)`   | 1     |
-| read  | `pathExists`                | `unresolved (property)`   | 2     |
-| read  | `readLocalJSONFile`         | `unresolved (property)`   | 1     |
-| read  | `tryStat`                   | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`           | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile`        | `unresolved (identifier)` | 1     |
+| Kind  | Interface                   | Target                   | Calls |
+| ----- | --------------------------- | ------------------------ | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (property)`  | 1     |
+| read  | `pathExists`                | `unresolved (property)`  | 2     |
+| read  | `readLocalJSONFile`         | `unresolved (property)`  | 1     |
+| read  | `tryStat`                   | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`           | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (call)`      | 1     |
+| write | `writeLocalTextFile`        | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/tools/overture-subvenue.ts`
 
@@ -1480,12 +1480,12 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/postcode/triples.ts`
 
-| Kind | Interface                  | Target                    | Calls |
-| ---- | -------------------------- | ------------------------- | ----- |
-| read | `assertPathExists`         | `unresolved (identifier)` | 4     |
-| read | `assertPathExists`         | `unresolved (parameter)`  | 1     |
-| read | `DatabaseClient`           | `unresolved (identifier)` | 3     |
-| read | `TSVSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
+| Kind | Interface                  | Target                   | Calls |
+| ---- | -------------------------- | ------------------------ | ----- |
+| read | `assertPathExists`         | `unresolved (other)`     | 4     |
+| read | `assertPathExists`         | `unresolved (parameter)` | 1     |
+| read | `DatabaseClient`           | `unresolved (other)`     | 3     |
+| read | `TSVSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/tools/registry-corpus.run.ts`
 
@@ -1501,9 +1501,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 8 times
 - `awaits at module scope`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target              | Calls |
+| ----- | -------------------- | ------------------- | ----- |
+| write | `writeLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/tools/source-register/build.ts`
 
@@ -1536,13 +1536,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tools/support-index.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (parameter)`  | 1     |
-| write | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (call)`       | 1     |
+| Kind  | Interface            | Target                   | Calls |
+| ----- | -------------------- | ------------------------ | ----- |
+| read  | `pathExists`         | `unresolved (call)`      | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (call)`      | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (parameter)` | 1     |
+| write | `makeDirectories`    | `unresolved (other)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/tools/tw-corpus.run.ts`
 
@@ -1568,13 +1568,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 8 times
 - `awaits at module scope`, 3 times
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`       | 2     |
-| read  | `pathExists`                | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`         | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONLFile`       | `unresolved (call)`       | 1     |
+| Kind  | Interface                   | Target              | Calls |
+| ----- | --------------------------- | ------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (call)` | 2     |
+| read  | `pathExists`                | `unresolved (call)` | 1     |
+| read  | `readLocalJSONFile`         | `unresolved (call)` | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (call)` | 1     |
+| write | `writeLocalJSONLFile`       | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/training/config/load.ts`
 
@@ -1590,10 +1590,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/tw/corpus/assemble.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `directoryHasEntries` | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile`  | `unresolved (call)`       | 3     |
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `directoryHasEntries` | `unresolved (call)` | 1     |
+| write | `writeLocalTextFile`  | `unresolved (call)` | 3     |
 
 ## `packages/corpus/lib/tw/corpus/rows.ts`
 
@@ -1613,10 +1613,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind    | Interface         | Target                                                 | Calls |
 | ------- | ----------------- | ------------------------------------------------------ | ----- |
-| read    | `pathExists`      | `unresolved (identifier)`                              | 1     |
-| write   | `makeDirectories` | `unresolved (identifier)`                              | 1     |
+| read    | `pathExists`      | `unresolved (call)`                                    | 1     |
+| write   | `makeDirectories` | `unresolved (call)`                                    | 1     |
 | network | `fetch`           | `literal:https://data.gcis.nat.gov.tw/od/datacategory` | 1     |
-| network | `fetch`           | `unresolved (identifier)`                              | 1     |
+| network | `fetch`           | `unresolved (call)`                                    | 1     |
 | network | `fetch`           | `unresolved (template)`                                | 1     |
 
 ## `packages/corpus/lib/us/adapters/fcc-bdc/adapter.ts`
@@ -1627,9 +1627,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/us/adapters/state/hi-schools/adapter.ts`
 
-| Kind | Interface                  | Target                    | Calls |
-| ---- | -------------------------- | ------------------------- | ----- |
-| read | `CSVSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                  | Target              | Calls |
+| ---- | -------------------------- | ------------------- | ----- |
+| read | `CSVSpliterator.fromAsync` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/us/adapters/state/ia-contractors/adapter.ts`
 
@@ -1702,14 +1702,15 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind  | Interface             | Target                    | Calls |
 | ----- | --------------------- | ------------------------- | ----- |
-| read  | `pathExists`          | `unresolved (identifier)` | 7     |
+| read  | `pathExists`          | `unresolved (call)`       | 5     |
+| read  | `pathExists`          | `unresolved (identifier)` | 1     |
+| read  | `pathExists`          | `unresolved (other)`      | 1     |
 | read  | `pathExists`          | `unresolved (property)`   | 1     |
-| read  | `readLocalJSONFile`   | `unresolved (call)`       | 1     |
-| read  | `readLocalJSONFile`   | `unresolved (identifier)` | 4     |
-| write | `openWriteStream`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile`  | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile`  | `unresolved (identifier)` | 1     |
+| read  | `readLocalJSONFile`   | `unresolved (call)`       | 4     |
+| read  | `readLocalJSONFile`   | `unresolved (other)`      | 1     |
+| write | `openWriteStream`     | `unresolved (call)`       | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`       | 1     |
+| write | `writeLocalJSONFile`  | `unresolved (call)`       | 2     |
 
 ## `packages/corpus/lib/us/recipes/house-venue-tuples.ts`
 
@@ -1721,63 +1722,63 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/us/tools/fetch/hrsa.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target              | Calls |
+| ----- | ----------------- | ------------------- | ----- |
+| write | `makeDirectories` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/us/tools/fetch/imls-pls.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `pathExists`          | `unresolved (identifier)` | 1     |
-| read  | `statPath`            | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `pathExists`          | `unresolved (call)` | 1     |
+| read  | `statPath`            | `unresolved (call)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `removePathIfPresent` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/us/tools/fetch/nad.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `Globerator.files`    | `unresolved (identifier)` | 1     |
-| read  | `pathExists`          | `unresolved (identifier)` | 2     |
-| read  | `tryStat`             | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target                  | Calls |
+| ----- | --------------------- | ----------------------- | ----- |
+| read  | `Globerator.files`    | `unresolved (call)`     | 1     |
+| read  | `pathExists`          | `unresolved (call)`     | 2     |
+| read  | `tryStat`             | `unresolved (template)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)`     | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`     | 1     |
 
 ## `packages/corpus/lib/us/tools/fetch/nad/parquet.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `pathExists`         | `unresolved (identifier)` | 1     |
-| read  | `pathExists`         | `unresolved (parameter)`  | 1     |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target                   | Calls |
+| ----- | -------------------- | ------------------------ | ----- |
+| read  | `pathExists`         | `unresolved (call)`      | 1     |
+| read  | `pathExists`         | `unresolved (parameter)` | 1     |
+| read  | `readLocalJSONFile`  | `unresolved (call)`      | 1     |
+| write | `writeLocalJSONFile` | `unresolved (call)`      | 1     |
 
 ## `packages/corpus/lib/us/tools/fetch/nppes.ts`
 
 | Kind    | Interface             | Target                                                  | Calls |
 | ------- | --------------------- | ------------------------------------------------------- | ----- |
-| read    | `pathExists`          | `unresolved (identifier)`                               | 1     |
-| read    | `statPath`            | `unresolved (identifier)`                               | 1     |
-| write   | `makeDirectories`     | `unresolved (identifier)`                               | 1     |
-| write   | `removePathIfPresent` | `unresolved (identifier)`                               | 1     |
+| read    | `pathExists`          | `unresolved (call)`                                     | 1     |
+| read    | `statPath`            | `unresolved (call)`                                     | 1     |
+| write   | `makeDirectories`     | `unresolved (call)`                                     | 1     |
+| write   | `removePathIfPresent` | `unresolved (call)`                                     | 1     |
 | network | `APIClient.fetch`     | `literal:https://download.cms.gov/nppes/NPI_Files.html` | 1     |
 
 ## `packages/corpus/lib/us/tools/fetch/state/hi-schools.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| read  | `pathExists`          | `unresolved (identifier)` | 1     |
-| read  | `statPath`            | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`     | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)` | 2     |
+| Kind  | Interface             | Target              | Calls |
+| ----- | --------------------- | ------------------- | ----- |
+| read  | `pathExists`          | `unresolved (call)` | 1     |
+| read  | `statPath`            | `unresolved (call)` | 1     |
+| write | `makeDirectories`     | `unresolved (call)` | 1     |
+| write | `removePathIfPresent` | `unresolved (call)` | 2     |
 
 ## `packages/corpus/lib/us/tools/fetch/state/sources.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| write | `makeDirectories` | `unresolved (identifier)` | 1     |
-| write | `makeDirectories` | `unresolved (property)`   | 1     |
+| Kind  | Interface         | Target                  | Calls |
+| ----- | ----------------- | ----------------------- | ----- |
+| write | `makeDirectories` | `unresolved (call)`     | 1     |
+| write | `makeDirectories` | `unresolved (property)` | 1     |
 
 ## `packages/corpus/lib/us/tools/fetch/tiger-full.ts`
 
@@ -1785,7 +1786,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | ------- | --------------------- | --------------------------------------------------------------- | ----- |
 | read    | `pathExists`          | `unresolved (parameter)`                                        | 1     |
 | read    | `statPath`            | `unresolved (parameter)`                                        | 2     |
-| write   | `makeDirectories`     | `unresolved (identifier)`                                       | 2     |
+| write   | `makeDirectories`     | `unresolved (call)`                                             | 2     |
 | write   | `removePathIfPresent` | `unresolved (parameter)`                                        | 1     |
 | network | `APIClient.fetch`     | `literal:https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT/` | 1     |
 
@@ -1796,36 +1797,36 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | read  | `pathExists`         | `unresolved (identifier)` | 1     |
 | write | `writeLocalBuffer`   | `unresolved (identifier)` | 1     |
 | write | `writeLocalJSONFile` | `unresolved (parameter)`  | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (call)`       | 1     |
 
 ## `packages/corpus/lib/utils/golden.ts`
 
-| Kind | Interface                   | Target                    | Calls |
-| ---- | --------------------------- | ------------------------- | ----- |
-| read | `Globerator.files`          | `unresolved (identifier)` | 1     |
-| read | `TextSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                   | Target              | Calls |
+| ---- | --------------------------- | ------------------- | ----- |
+| read | `Globerator.files`          | `unresolved (call)` | 1     |
+| read | `TextSpliterator.fromAsync` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/utils/split.ts`
 
-| Kind    | Interface                   | Target                    | Calls |
-| ------- | --------------------------- | ------------------------- | ----- |
-| read    | `JSONSpliterator.fromAsync` | `unresolved (parameter)`  | 1     |
-| write   | `makeDirectories`           | `unresolved (parameter)`  | 1     |
-| write   | `makeDirectories`           | `unresolved (property)`   | 1     |
-| write   | `openWriteStream`           | `unresolved (identifier)` | 1     |
-| write   | `removePath`                | `unresolved (identifier)` | 1     |
-| write   | `writeLocalJSONFile`        | `unresolved (parameter)`  | 1     |
-| write   | `writeLocalJSONFile`        | `unresolved (property)`   | 1     |
-| write   | `writeLocalTextFile`        | `unresolved (parameter)`  | 2     |
-| process | `spawnProcess`              | `literal:sort`            | 1     |
+| Kind    | Interface                   | Target                   | Calls |
+| ------- | --------------------------- | ------------------------ | ----- |
+| read    | `JSONSpliterator.fromAsync` | `unresolved (parameter)` | 1     |
+| write   | `makeDirectories`           | `unresolved (parameter)` | 1     |
+| write   | `makeDirectories`           | `unresolved (property)`  | 1     |
+| write   | `openWriteStream`           | `unresolved (template)`  | 1     |
+| write   | `removePath`                | `unresolved (template)`  | 1     |
+| write   | `writeLocalJSONFile`        | `unresolved (parameter)` | 1     |
+| write   | `writeLocalJSONFile`        | `unresolved (property)`  | 1     |
+| write   | `writeLocalTextFile`        | `unresolved (parameter)` | 2     |
+| process | `spawnProcess`              | `literal:sort`           | 1     |
 
 ## `packages/corpus/lib/utils/wof-json.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `Globerator.from`   | `unresolved (parameter)`  | 1     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
-| read | `readLocalTextFile` | `unresolved (parameter)`  | 1     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `Globerator.from`   | `unresolved (parameter)` | 1     |
+| read | `readLocalJSONFile` | `unresolved (call)`      | 1     |
+| read | `readLocalTextFile` | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/uy/adapters/ide/adapter.ts`
 

@@ -348,7 +348,7 @@ function localFunctionOf(
 	return { parameters: declared.parameters, returned: only.expression }
 }
 
-export function literalText(expression: ts.Expression): string | null {
+function literalText(expression: ts.Expression): string | null {
 	if (ts.isStringLiteral(expression) || ts.isNoSubstitutionTemplateLiteral(expression)) return expression.text
 
 	return null
@@ -384,7 +384,7 @@ export function literalSegments(args: readonly ts.Expression[], depth: number): 
  * The literal a name's fixed binding holds, followed through bindings of bindings,
  * or `null` when it holds none.
  */
-export function constantLiteral(expression: ts.Expression, depth: number): string | null {
+function constantLiteral(expression: ts.Expression, depth: number): string | null {
 	if (!ts.isIdentifier(expression) || depth >= CONSTANT_DEPTH) return null
 
 	const initializer = initializerOf(expression)
@@ -479,6 +479,14 @@ function holdsScratchValue(scope: FileScope, identifier: ts.Identifier, depth = 
 }
 
 /**
+ * Whether `expression` evaluates to a scratch value: a name that holds one, or an expression that
+ * calls `temporaryDirectory` itself, as `fixtures.use(await temporaryDirectory("t-"))` does.
+ */
+function holdsScratch(scope: FileScope, expression: ts.Expression): boolean {
+	return ts.isIdentifier(expression) ? holdsScratchValue(scope, expression) : containsScratchCall(scope, expression)
+}
+
+/**
  * The scratch path a call on a scratch value names: the segments of that call,
  * or `*` when one isn't a literal.
  */
@@ -521,9 +529,49 @@ function pathBuilderOf(scope: FileScope, call: ts.CallExpression, depth: number)
 	if (!fromClass && !fromFunction) return null
 
 	const base = targetOfExpression(scope, first, depth + 1)
-	const segments = literalSegments(rest, depth)
 
-	return base && segments ? joinTarget(base, segments) : null
+	return base ? extendTarget(base, rest, depth) : null
+}
+
+/**
+ * `base` extended by the path segments `args` hold, or `null` when the extension names no directory.
+ *
+ * When every segment is literal, the target is the full path.
+ * When one isn't, the target is the directory the literal segments before it name,
+ * because the read stays under that directory whatever the runtime value is.
+ *
+ * A read under a directory matches a change to any file beneath it, so this target is
+ * wider than the real path and never misses a file the call can reach.
+ *
+ * A base the call leaves as its bare root, such as `repoRootPath(name)` with
+ * no literal segment, stays unresolved.
+ * A target at that bare root would make the read match every change in the repository.
+ *
+ * A scratch base takes any extension, because every path under it belongs to the run.
+ */
+function extendTarget(base: ResolvedTarget, args: readonly ts.Expression[], depth: number): ResolvedTarget | null {
+	const segments = literalPrefix(args, depth)
+
+	if (segments.length === args.length || base.root === PathRoot.Scratch) return joinTarget(base, segments)
+
+	return segments.length || base.path ? joinTarget(base, segments) : null
+}
+
+/**
+ * The literal arguments of `args` up to the first argument that isn't one.
+ */
+export function literalPrefix(args: readonly ts.Expression[], depth: number): string[] {
+	const prefix: string[] = []
+
+	for (const arg of args) {
+		const text = literalText(arg) ?? constantLiteral(arg, depth)
+
+		if (text === null) break
+
+		prefix.push(text)
+	}
+
+	return prefix
 }
 
 export function joinTarget(base: ResolvedTarget, segments: readonly string[]): ResolvedTarget {
@@ -617,21 +665,23 @@ function resolveBuilderCall(
 		return base ? joinTarget(base, builder.rebases) : null
 	}
 
-	const segments = literalSegments(args, depth)
-
-	if (!segments) return null
-
 	if (builder.packageFirst) {
-		const [packageName, ...rest] = segments
+		const [first, ...rest] = args
+		const packageName = first ? (literalText(first) ?? constantLiteral(first, depth)) : null
 
-		return packageName ? { root: PathRoot.Package, path: [packageName, ...rest].join("/") } : null
+		return packageName ? extendTarget({ root: PathRoot.Package, path: packageName }, rest, depth) : null
 	}
 
-	return { root: builder.root, path: segments.join("/") }
+	return extendTarget({ root: builder.root, path: (builder.prefix ?? []).join("/") }, args, depth)
 }
 
 function resolveCall(scope: FileScope, call: ts.CallExpression, depth: number): ResolvedTarget | null {
 	const callee = call.expression
+
+	// A `PathBuilder` and a string answer the same path from `toString()`.
+	if (ts.isPropertyAccessExpression(callee) && callee.name.text === "toString" && !call.arguments.length) {
+		return targetOfExpression(scope, callee.expression, depth + 1)
+	}
 
 	// `scratch.path("x")` on a temporary directory, or a call on a builder derived from one, names a file the run owns.
 	if (
@@ -650,9 +700,8 @@ function resolveCall(scope: FileScope, call: ts.CallExpression, depth: number): 
 	// A call on a call, as in `databaseRootPath(root)("wof")`: the inner call answers a builder the outer one extends.
 	if (ts.isCallExpression(callee)) {
 		const base = resolveCall(scope, callee, depth + 1)
-		const segments = literalSegments(call.arguments, depth)
 
-		return base && segments ? joinTarget(base, segments) : null
+		return base ? extendTarget(base, call.arguments, depth) : null
 	}
 
 	if (!ts.isIdentifier(callee)) return null
@@ -669,9 +718,8 @@ function resolveCall(scope: FileScope, call: ts.CallExpression, depth: number): 
 		if (!first) return null
 
 		const base = targetOfExpression(scope, first, depth + 1)
-		const segments = literalSegments(rest, depth)
 
-		return base && segments ? joinTarget(base, segments) : null
+		return base ? extendTarget(base, rest, depth) : null
 	}
 
 	if (binding?.kind === "rooted" && binding.rooted.kind === "function") {
@@ -687,9 +735,8 @@ function resolveCall(scope: FileScope, call: ts.CallExpression, depth: number): 
 
 	// A name holding a builder, such as a `paths` constant or `const wof = wofDatabaseRoot(root)`, extends it.
 	const base = pathBuilderBase(scope, callee, depth) ?? resolveIdentifier(scope, callee, depth + 1)
-	const segments = literalSegments(call.arguments, depth)
 
-	return base && base.root !== PathRoot.Literal && segments ? joinTarget(base, segments) : null
+	return base && base.root !== PathRoot.Literal ? extendTarget(base, call.arguments, depth) : null
 }
 
 /**
@@ -713,6 +760,15 @@ export function targetOfExpression(scope: FileScope, expression: ts.Expression, 
 	if (ts.isTemplateExpression(expression)) return resolveTemplate(scope, expression, depth)
 
 	if (ts.isIdentifier(expression)) return resolveIdentifier(scope, expression, depth)
+
+	// A temporary directory's `path` property is the directory itself, as a callable builder or as a string.
+	if (
+		ts.isPropertyAccessExpression(expression) &&
+		expression.name.text === "path" &&
+		holdsScratch(scope, expression.expression)
+	) {
+		return { root: PathRoot.Scratch, path: "" }
+	}
 
 	if (
 		ts.isNewExpression(expression) &&

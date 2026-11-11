@@ -37,8 +37,9 @@ The others hold neither an effect edge nor an import-time effect.
 
 | Kind    | Interface         | Target                    | Calls |
 | ------- | ----------------- | ------------------------- | ----- |
-| read    | `tryStat`         | `unresolved (identifier)` | 3     |
-| write   | `makeDirectories` | `unresolved (identifier)` | 1     |
+| read    | `tryStat`         | `unresolved (call)`       | 2     |
+| read    | `tryStat`         | `unresolved (identifier)` | 1     |
+| write   | `makeDirectories` | `unresolved (call)`       | 1     |
 | process | `runFile`         | `literal:unzip`           | 1     |
 
 ## `packages/soil/sdk/ingest/worker.ts`

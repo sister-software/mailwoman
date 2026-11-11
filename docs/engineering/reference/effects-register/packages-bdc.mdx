@@ -19,19 +19,19 @@ The others hold neither an effect edge nor an import-time effect.
 
 | Kind  | Interface               | Target                    | Calls |
 | ----- | ----------------------- | ------------------------- | ----- |
-| read  | `Globerator.from`       | `unresolved (identifier)` | 1     |
-| read  | `pathExists`            | `unresolved (identifier)` | 1     |
+| read  | `Globerator.from`       | `unresolved (call)`       | 1     |
 | read  | `pathExists`            | `unresolved (property)`   | 1     |
+| read  | `pathExists`            | `unresolved (template)`   | 1     |
 | read  | `readFileRange`         | `unresolved (identifier)` | 1     |
-| write | `DatabaseClient`        | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`       | `unresolved (identifier)` | 1     |
+| write | `DatabaseClient`        | `unresolved (template)`   | 1     |
+| write | `makeDirectories`       | `unresolved (call)`       | 1     |
 | write | `movePath`              | `unresolved (call)`       | 1     |
 | write | `movePath`              | `unresolved (property)`   | 1     |
-| write | `removePath`            | `unresolved (identifier)` | 1     |
-| write | `removePathIfPresent`   | `unresolved (identifier)` | 1     |
-| write | `sealDatabase`          | `unresolved (identifier)` | 1     |
-| write | `swapDatabaseIntoPlace` | `unresolved (identifier)` | 1     |
+| write | `removePath`            | `unresolved (template)`   | 1     |
+| write | `removePathIfPresent`   | `unresolved (template)`   | 1     |
+| write | `sealDatabase`          | `unresolved (template)`   | 1     |
 | write | `swapDatabaseIntoPlace` | `unresolved (property)`   | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (template)`   | 1     |
 
 ## `packages/bdc/sdk/client.ts`
 
@@ -43,11 +43,11 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/bdc/sdk/download.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| read  | `tryStat`         | `unresolved (identifier)` | 1     |
-| write | `makeDirectories` | `unresolved (parameter)`  | 1     |
-| write | `writeLocalFile`  | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target                   | Calls |
+| ----- | ----------------- | ------------------------ | ----- |
+| read  | `tryStat`         | `unresolved (call)`      | 1     |
+| write | `makeDirectories` | `unresolved (parameter)` | 1     |
+| write | `writeLocalFile`  | `unresolved (call)`      | 1     |
 
 ## `packages/bdc/sdk/geometry.ts`
 

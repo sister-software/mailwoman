@@ -58,8 +58,26 @@ export interface EffectEdge {
 
 type UnresolvedShape = "parameter" | "identifier" | "property" | "call" | "template" | "other"
 
-function unresolvedShapeOf(expression: ts.Expression): UnresolvedShape {
-	if (ts.isIdentifier(expression)) return enclosingParameter(expression) ? "parameter" : "identifier"
+/**
+ * The depth of bindings of bindings the shape follows before reporting the name itself.
+ */
+const SHAPE_DEPTH = 4
+
+/**
+ * Why `expression` didn't resolve, as the shape of the value it holds.
+ *
+ * A name is followed through the fixed bindings it holds, so `const path = pathFor(root)`
+ * reads as a `call` and `const copy = root` over a parameter reads as a `parameter`.
+ * A name without such a binding is an `identifier`.
+ */
+function unresolvedShapeOf(expression: ts.Expression, depth = 0): UnresolvedShape {
+	if (ts.isIdentifier(expression)) {
+		if (enclosingParameter(expression)) return "parameter"
+
+		const initializer = depth < SHAPE_DEPTH ? initializerOf(expression) : null
+
+		return initializer ? unresolvedShapeOf(initializer, depth + 1) : "identifier"
+	}
 
 	if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) return "property"
 

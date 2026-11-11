@@ -136,6 +136,98 @@ describe("extractEffectEdges", () => {
 		])
 	})
 
+	it("treats a temporary directory's `path` property, and a scratch path's string form, as scratch", () => {
+		const found = edges(`
+			import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+			import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+			import { resolvePath } from "path-ts"
+
+			let root
+
+			beforeAll(async () => {
+				root = await temporaryDirectory("t-")
+			})
+
+			it("reads", async () => {
+				await using scratch = await temporaryDirectory("u-")
+				const manifest = resolvePath(scratch.path, "manifest.json")
+				const out = root.path("districts.db").toString()
+
+				await readLocalJSONFile(manifest)
+				await readLocalTextFile(out)
+				await readLocalTextFile(\`\${scratch.path}/rows.txt\`)
+			})
+		`)
+
+		expect(found.map((edge) => edge.target)).toEqual([
+			{ root: "scratch", path: "manifest.json" },
+			{ root: "scratch", path: "districts.db" },
+			{ root: "scratch", path: "rows.txt" },
+		])
+	})
+
+	it("resolves a workspace path and a package directory builder", () => {
+		const found = edges(`
+			import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+			import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+			import { workspacePath, workspacePathBuilder } from "@mailwoman/core/paths"
+
+			const fixture = workspacePath("corpus", "fixtures", "es-catastro", "A.gml")
+			const fixtures = workspacePathBuilder("corpus", "fixtures")
+
+			await readLocalBuffer(fixture)
+			await readLocalBuffer(fixtures("nl", "B.gml"))
+			await readLocalTextFile(resolvePackageDirectory("@mailwoman/dictionaries")("data", "ssl-address"))
+		`)
+
+		expect(found.map((edge) => edge.target)).toEqual([
+			{ root: "repo", path: "packages/corpus/fixtures/es-catastro/A.gml" },
+			{ root: "repo", path: "packages/corpus/fixtures/nl/B.gml" },
+			{ root: "package", path: "@mailwoman/dictionaries/data/ssl-address" },
+		])
+	})
+
+	it("resolves a path with a runtime segment to the directory its literal segments name", () => {
+		const found = edges(`
+			import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+			import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+			import { repoRootPath } from "@mailwoman/core/paths"
+			import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+			import { PathBuilder } from "path-ts"
+
+			export async function load(name) {
+				await using scratch = await temporaryDirectory("t-")
+
+				await readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", "cores", name))
+				await readLocalTextFile(PathBuilder.from(scratch.path)(name))
+				await readLocalTextFile(repoRootPath(name))
+			}
+		`)
+
+		// A bare root with a runtime segment would match every change, so it stays unresolved.
+		expect(found.map((edge) => edge.target)).toEqual([
+			{ root: "package", path: "@mailwoman/filer/test-fixtures/cores" },
+			{ root: "scratch", path: "" },
+			null,
+		])
+	})
+
+	it("reports an unresolved name by the shape of the value it holds", () => {
+		const found = edges(`
+			import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+
+			export async function load(root) {
+				const path = sourcePathFor(root)
+				const copy = root
+
+				await readLocalTextFile(path)
+				await readLocalTextFile(copy)
+			}
+		`)
+
+		expect(found.map((edge) => edge.unresolvedShape)).toEqual(["call", "parameter"])
+	})
+
 	it("resolves a name declared in two functions to the declaration in scope at each use", () => {
 		const found = edges(`
 			import { readLocalTextFile } from "@mailwoman/core/fs/readers"

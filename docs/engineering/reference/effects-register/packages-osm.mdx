@@ -23,10 +23,10 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/osm/lib/region-database-provider.ts`
 
-| Kind | Interface        | Target                    | Calls |
-| ---- | ---------------- | ------------------------- | ----- |
-| read | `DatabaseClient` | `unresolved (identifier)` | 1     |
-| read | `pathExists`     | `unresolved (identifier)` | 1     |
+| Kind | Interface        | Target              | Calls |
+| ---- | ---------------- | ------------------- | ----- |
+| read | `DatabaseClient` | `unresolved (call)` | 1     |
+| read | `pathExists`     | `unresolved (call)` | 1     |
 
 ## `packages/osm/sdk/corpus-jsonl.ts`
 
@@ -36,10 +36,10 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/osm/sdk/extract/receipt.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 1     |
+| read | `readLocalJSONFile` | `unresolved (call)` | 1     |
 
 ## `packages/osm/sdk/fetch.ts`
 
@@ -63,9 +63,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 - `runs a statement at module scope`, 9 times
 - `awaits at module scope`, 2 times
 
-| Kind | Interface    | Target                    | Calls |
-| ---- | ------------ | ------------------------- | ----- |
-| read | `pathExists` | `unresolved (identifier)` | 1     |
+| Kind | Interface    | Target                  | Calls |
+| ---- | ------------ | ----------------------- | ----- |
+| read | `pathExists` | `unresolved (property)` | 1     |
 
 ## `packages/osm/tools/emit-corpus-jsonl.ts`
 
@@ -85,14 +85,14 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 3 times
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `pathExists`         | `unresolved (identifier)` | 1     |
-| write   | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (template)`   | 1     |
-| write   | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
-| network | `fetch`              | `unresolved (identifier)` | 1     |
-| network | `fetch`              | `unresolved (property)`   | 1     |
+| Kind    | Interface            | Target                  | Calls |
+| ------- | -------------------- | ----------------------- | ----- |
+| read    | `pathExists`         | `unresolved (template)` | 1     |
+| write   | `makeDirectories`    | `unresolved (other)`    | 1     |
+| write   | `writeLocalJSONFile` | `unresolved (template)` | 1     |
+| write   | `writeLocalTextFile` | `unresolved (template)` | 1     |
+| network | `fetch`              | `unresolved (property)` | 1     |
+| network | `fetch`              | `unresolved (template)` | 1     |
 
 ## `packages/osm/tools/fetch/extract.ts`
 
@@ -100,21 +100,21 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 3 times
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `pathExists`         | `unresolved (identifier)` | 1     |
-| write   | `makeDirectories`    | `unresolved (identifier)` | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
-| network | `fetch`              | `unresolved (call)`       | 1     |
+| Kind    | Interface            | Target                  | Calls |
+| ------- | -------------------- | ----------------------- | ----- |
+| read    | `pathExists`         | `unresolved (template)` | 1     |
+| write   | `makeDirectories`    | `unresolved (other)`    | 1     |
+| write   | `writeLocalJSONFile` | `unresolved (template)` | 1     |
+| network | `fetch`              | `unresolved (call)`     | 1     |
 
 ## `packages/osm/tools/rooftop-database.ts`
 
-| Kind  | Interface               | Target                    | Calls |
-| ----- | ----------------------- | ------------------------- | ----- |
-| read  | `pathExists`            | `unresolved (identifier)` | 1     |
-| write | `DatabaseClient`        | `unresolved (identifier)` | 1     |
-| write | `makeDirectories`       | `unresolved (call)`       | 1     |
-| write | `removePath`            | `unresolved (identifier)` | 2     |
-| write | `sealDatabase`          | `unresolved (property)`   | 1     |
-| write | `swapDatabaseIntoPlace` | `unresolved (identifier)` | 1     |
-| write | `swapDatabaseIntoPlace` | `unresolved (property)`   | 1     |
+| Kind  | Interface               | Target                  | Calls |
+| ----- | ----------------------- | ----------------------- | ----- |
+| read  | `pathExists`            | `unresolved (template)` | 1     |
+| write | `DatabaseClient`        | `unresolved (template)` | 1     |
+| write | `makeDirectories`       | `unresolved (call)`     | 1     |
+| write | `removePath`            | `unresolved (template)` | 2     |
+| write | `sealDatabase`          | `unresolved (property)` | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (property)` | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (template)` | 1     |

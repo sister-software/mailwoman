@@ -17,10 +17,10 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/dictionaries/lib/libpostal.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (identifier)` | 1     |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind | Interface           | Target              | Calls |
+| ---- | ------------------- | ------------------- | ----- |
+| read | `pathExists`        | `unresolved (call)` | 1     |
+| read | `readLocalTextFile` | `unresolved (call)` | 1     |
 
 ## `packages/dictionaries/sdk/libpostal-resources.ts`
 
@@ -28,17 +28,17 @@ The others hold neither an effect edge nor an import-time effect.
 | ----- | --------------------- | ------------------------------------------ | ----- |
 | read  | `copyPath`            | `scratch:libpostal/resources/dictionaries` | 1     |
 | read  | `Globerator.from`     | `scratch:libpostal/resources/dictionaries` | 1     |
-| read  | `isDirectory`         | `unresolved (identifier)`                  | 1     |
+| read  | `isDirectory`         | `unresolved (call)`                        | 1     |
 | read  | `readLocalTextFile`   | `unresolved (parameter)`                   | 1     |
-| write | `copyPath`            | `unresolved (identifier)`                  | 1     |
-| write | `removePathIfPresent` | `unresolved (identifier)`                  | 1     |
+| write | `copyPath`            | `unresolved (call)`                        | 1     |
+| write | `removePathIfPresent` | `unresolved (call)`                        | 1     |
 | write | `writeLocalTextFile`  | `unresolved (parameter)`                   | 1     |
 
 ## `packages/dictionaries/sdk/ssl-address.ts`
 
 | Kind    | Interface         | Target                                                       | Calls |
 | ------- | ----------------- | ------------------------------------------------------------ | ----- |
-| write   | `makeDirectories` | `unresolved (identifier)`                                    | 1     |
+| write   | `makeDirectories` | `unresolved (call)`                                          | 1     |
 | write   | `writeLocalFile`  | `unresolved (call)`                                          | 1     |
 | network | `APIClient.fetch` | `literal:https://chromium-i18n.appspot.com/ssl-address/data` | 1     |
 | network | `APIClient.fetch` | `unresolved (template)`                                      | 1     |

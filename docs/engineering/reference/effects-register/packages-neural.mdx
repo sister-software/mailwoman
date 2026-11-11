@@ -42,46 +42,46 @@ The others hold neither an effect edge nor an import-time effect.
 | Kind | Interface           | Target                                      | Calls |
 | ---- | ------------------- | ------------------------------------------- | ----- |
 | read | `pathExists`        | `data-root:anchor/pilot-anchor-lookup.json` | 2     |
-| read | `pathExists`        | `unresolved (identifier)`                   | 4     |
+| read | `pathExists`        | `unresolved (other)`                        | 4     |
 | read | `pathExists`        | `unresolved (parameter)`                    | 1     |
 | read | `pathExists`        | `unresolved (property)`                     | 4     |
-| read | `readLocalJSONFile` | `unresolved (identifier)`                   | 4     |
+| read | `readLocalJSONFile` | `unresolved (other)`                        | 4     |
 
 ## `packages/neural/lib/tokenizer.ts`
 
-| Kind    | Interface | Target                    | Calls |
-| ------- | --------- | ------------------------- | ----- |
-| network | `fetch`   | `unresolved (identifier)` | 1     |
+| Kind    | Interface | Target              | Calls |
+| ------- | --------- | ------------------- | ----- |
+| network | `fetch`   | `unresolved (call)` | 1     |
 
 ## `packages/neural/lib/weights.ts`
 
 | Kind | Interface         | Target                    | Calls |
 | ---- | ----------------- | ------------------------- | ----- |
 | read | `Globerator.from` | `unresolved (call)`       | 1     |
-| read | `pathExists`      | `unresolved (call)`       | 3     |
-| read | `pathExists`      | `unresolved (identifier)` | 22    |
-| read | `pathExists`      | `unresolved (other)`      | 1     |
+| read | `pathExists`      | `data-root:db/wof`        | 1     |
+| read | `pathExists`      | `unresolved (call)`       | 17    |
+| read | `pathExists`      | `unresolved (identifier)` | 1     |
+| read | `pathExists`      | `unresolved (other)`      | 7     |
 | read | `pathExists`      | `unresolved (property)`   | 3     |
-| read | `readLocalBuffer` | `unresolved (identifier)` | 1     |
+| read | `readLocalBuffer` | `unresolved (other)`      | 1     |
 
 ## `packages/neural/lib/weights/channels.ts`
 
-| Kind | Interface           | Target                    | Calls |
-| ---- | ------------------- | ------------------------- | ----- |
-| read | `pathExists`        | `unresolved (call)`       | 4     |
-| read | `pathExists`        | `unresolved (identifier)` | 4     |
-| read | `pathExists`        | `unresolved (parameter)`  | 2     |
-| read | `readLocalBuffer`   | `unresolved (property)`   | 1     |
-| read | `readLocalJSONFile` | `unresolved (property)`   | 1     |
-| read | `readLocalTextFile` | `unresolved (identifier)` | 1     |
-| read | `readLocalTextFile` | `unresolved (parameter)`  | 2     |
+| Kind | Interface           | Target                   | Calls |
+| ---- | ------------------- | ------------------------ | ----- |
+| read | `pathExists`        | `unresolved (call)`      | 8     |
+| read | `pathExists`        | `unresolved (parameter)` | 2     |
+| read | `readLocalBuffer`   | `unresolved (property)`  | 1     |
+| read | `readLocalJSONFile` | `unresolved (property)`  | 1     |
+| read | `readLocalTextFile` | `unresolved (call)`      | 1     |
+| read | `readLocalTextFile` | `unresolved (parameter)` | 2     |
 
 ## `packages/neural/lib/weights/lexicon.ts`
 
-| Kind | Interface          | Target                    | Calls |
-| ---- | ------------------ | ------------------------- | ----- |
-| read | `Globerator.files` | `unresolved (parameter)`  | 1     |
-| read | `pathExists`       | `unresolved (identifier)` | 2     |
+| Kind | Interface          | Target                   | Calls |
+| ---- | ------------------ | ------------------------ | ----- |
+| read | `Globerator.files` | `unresolved (parameter)` | 1     |
+| read | `pathExists`       | `unresolved (call)`      | 2     |
 
 ## `packages/neural/tools/address-system-registry.ts`
 
@@ -96,11 +96,11 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 - `awaits at module scope`
 - `runs a statement at module scope`
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
-| process | `runFile`            | `literal:yarn`            | 1     |
+| Kind    | Interface            | Target                                           | Calls |
+| ------- | -------------------- | ------------------------------------------------ | ----- |
+| read    | `readLocalJSONFile`  | `repo:packages/neural/data/label-schema.v1.json` | 1     |
+| write   | `writeLocalJSONFile` | `repo:packages/neural/data/label-schema.v1.json` | 1     |
+| process | `runFile`            | `literal:yarn`                                   | 1     |
 
 ## `packages/neural/tools/fixtures/evidence-parity.run.ts`
 
@@ -109,12 +109,14 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 - `runs a statement at module scope`, 9 times
 - `awaits at module scope`, 2 times
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (identifier)` | 3     |
-| write   | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
-| process | `runFile`            | `literal:yarn`            | 1     |
+| Kind    | Interface            | Target                                                       | Calls |
+| ------- | -------------------- | ------------------------------------------------------------ | ----- |
+| read    | `readLocalJSONFile`  | `scratch:painted.json`                                       | 1     |
+| write   | `writeLocalJSONFile` | `scratch:locality.json`                                      | 1     |
+| write   | `writeLocalJSONFile` | `scratch:street.json`                                        | 1     |
+| write   | `writeLocalJSONFile` | `scratch:texts.json`                                         | 1     |
+| write   | `writeLocalTextFile` | `repo:packages/neural/test/fixtures/evidence-parity-v2.json` | 1     |
+| process | `runFile`            | `literal:yarn`                                               | 1     |
 
 ## `packages/neural/tools/fixtures/tokenizer-parity.run.ts`
 
@@ -123,11 +125,11 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 - `runs a statement at module scope`, 4 times
 - `awaits at module scope`
 
-| Kind    | Interface            | Target                    | Calls |
-| ------- | -------------------- | ------------------------- | ----- |
-| read    | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
-| process | `runFile`            | `literal:yarn`            | 1     |
+| Kind    | Interface            | Target                | Calls |
+| ------- | -------------------- | --------------------- | ----- |
+| read    | `readLocalJSONFile`  | `scratch:sample.json` | 1     |
+| write   | `writeLocalJSONFile` | `unresolved (call)`   | 1     |
+| process | `runFile`            | `literal:yarn`        | 1     |
 
 ## `packages/neural/tools/onnx/export-parity.run.ts`
 
@@ -136,11 +138,11 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 - `runs a statement at module scope`, 7 times
 - `awaits at module scope`, 9 times
 
-| Kind  | Interface                   | Target                    | Calls |
-| ----- | --------------------------- | ------------------------- | ----- |
-| read  | `JSONSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
-| read  | `readLocalJSONFile`         | `unresolved (call)`       | 1     |
-| write | `writeLocalJSONFile`        | `unresolved (property)`   | 1     |
+| Kind  | Interface                   | Target                  | Calls |
+| ----- | --------------------------- | ----------------------- | ----- |
+| read  | `JSONSpliterator.fromAsync` | `unresolved (call)`     | 1     |
+| read  | `readLocalJSONFile`         | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile`        | `unresolved (property)` | 1     |
 
 ## `packages/neural/tools/onnx/model-check.run.ts`
 
@@ -149,7 +151,7 @@ Import-time effects, listed in the workspace's `sideEffects` declaration:
 - `runs a statement at module scope`, 6 times
 - `awaits at module scope`, 3 times
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (property)`   | 1     |
+| Kind  | Interface            | Target                  | Calls |
+| ----- | -------------------- | ----------------------- | ----- |
+| read  | `readLocalJSONFile`  | `unresolved (call)`     | 1     |
+| write | `writeLocalJSONFile` | `unresolved (property)` | 1     |

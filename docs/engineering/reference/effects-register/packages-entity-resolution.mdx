@@ -17,9 +17,9 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/entity-resolution/lib/ingest.ts`
 
-| Kind | Interface                  | Target                    | Calls |
-| ---- | -------------------------- | ------------------------- | ----- |
-| read | `CSVSpliterator.fromAsync` | `unresolved (identifier)` | 1     |
+| Kind | Interface                  | Target              | Calls |
+| ---- | -------------------------- | ------------------- | ----- |
+| read | `CSVSpliterator.fromAsync` | `unresolved (call)` | 1     |
 
 ## `packages/entity-resolution/tools/address-pairs/sample.ts`
 
@@ -30,71 +30,71 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/entity-resolution/tools/coverage-reconciliation.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `writeLocalFile`     | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| write | `writeLocalFile`     | `unresolved (other)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/cross/dataset-correlation.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `writeLocalFile`     | `unresolved (identifier)` | 1     |
-| write | `writeLocalJSONFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| write | `writeLocalFile`     | `unresolved (other)` | 1     |
+| write | `writeLocalJSONFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/cross/source-threshold-sweep.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/dedup-ceiling.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/geocoder/vs-provided-coords.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/gold-set-sample.ts`
 
-| Kind  | Interface             | Target                    | Calls |
-| ----- | --------------------- | ------------------------- | ----- |
-| write | `writeLocalJSONLFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface             | Target               | Calls |
+| ----- | --------------------- | -------------------- | ----- |
+| write | `writeLocalJSONLFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/learned/scorer/clustering-eval.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/learned/scorer/crossstate-eval.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/learned/scorer/eval.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/matcher-scale.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/nppes/dedup-benchmark.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/nppes/overmerge-packet.ts`
 
@@ -111,40 +111,40 @@ The others hold neither an effect edge nor an import-time effect.
 
 ## `packages/entity-resolution/tools/train/gbt.ts`
 
-| Kind  | Interface         | Target                    | Calls |
-| ----- | ----------------- | ------------------------- | ----- |
-| write | `makeDirectories` | `unresolved (call)`       | 1     |
-| write | `writeLocalFile`  | `unresolved (identifier)` | 1     |
+| Kind  | Interface         | Target               | Calls |
+| ----- | ----------------- | -------------------- | ----- |
+| write | `makeDirectories` | `unresolved (call)`  | 1     |
+| write | `writeLocalFile`  | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/txhhsc-to-oarow.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| read  | `readLocalTextFile`  | `unresolved (identifier)` | 1     |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| read  | `readLocalTextFile`  | `unresolved (other)` | 1     |
+| write | `writeLocalTextFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/viz/cross-dataset-map.ts`
 
-| Kind  | Interface           | Target                    | Calls |
-| ----- | ------------------- | ------------------------- | ----- |
-| read  | `readLocalJSONFile` | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile`    | `unresolved (identifier)` | 1     |
+| Kind  | Interface           | Target               | Calls |
+| ----- | ------------------- | -------------------- | ----- |
+| read  | `readLocalJSONFile` | `unresolved (other)` | 1     |
+| write | `writeLocalFile`    | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/viz/geocode-first-surface.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/viz/source-provenance-map.ts`
 
-| Kind  | Interface        | Target                    | Calls |
-| ----- | ---------------- | ------------------------- | ----- |
-| read  | `DatabaseClient` | `unresolved (identifier)` | 1     |
-| write | `writeLocalFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface        | Target               | Calls |
+| ----- | ---------------- | -------------------- | ----- |
+| read  | `DatabaseClient` | `unresolved (other)` | 1     |
+| write | `writeLocalFile` | `unresolved (other)` | 1     |
 
 ## `packages/entity-resolution/tools/viz/yardstick-figure.ts`
 
-| Kind  | Interface            | Target                    | Calls |
-| ----- | -------------------- | ------------------------- | ----- |
-| write | `writeLocalTextFile` | `unresolved (identifier)` | 1     |
+| Kind  | Interface            | Target               | Calls |
+| ----- | -------------------- | -------------------- | ----- |
+| write | `writeLocalTextFile` | `unresolved (other)` | 1     |

@@ -36,14 +36,14 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | Kind  | Interface               | Target                              | Calls |
 | ----- | ----------------------- | ----------------------------------- | ----- |
 | read  | `Globerator.from`       | `unresolved (parameter)`            | 1     |
-| read  | `pathExists`            | `unresolved (identifier)`           | 1     |
+| read  | `pathExists`            | `unresolved (call)`                 | 1     |
 | read  | `statPath`              | `unresolved (property)`             | 1     |
-| write | `DatabaseClient`        | `unresolved (identifier)`           | 1     |
+| write | `DatabaseClient`        | `unresolved (template)`             | 1     |
 | write | `makeDirectories`       | `unresolved (call)`                 | 1     |
 | write | `removePathIfPresent`   | `unresolved (other)`                | 1     |
 | write | `sealDatabase`          | `unresolved (property)`             | 1     |
-| write | `swapDatabaseIntoPlace` | `unresolved (identifier)`           | 1     |
 | write | `swapDatabaseIntoPlace` | `unresolved (property)`             | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (template)`             | 1     |
 | write | `writeLocalTextFile`    | `data-root:db/ban/ATTRIBUTION.json` | 1     |
 
 ## `packages/ban/tools/build/street-centroid-database.ts`
@@ -56,13 +56,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | ----- | ----------------------- | ----------------------------------- | ----- |
 | read  | `DatabaseClient`        | `unresolved (property)`             | 1     |
 | read  | `gitHead`               | `repo:`                             | 1     |
-| read  | `pathExists`            | `unresolved (identifier)`           | 1     |
+| read  | `pathExists`            | `unresolved (call)`                 | 1     |
 | read  | `readLocalTextFile`     | `data-root:db/ban/ATTRIBUTION.json` | 1     |
 | read  | `statPath`              | `unresolved (property)`             | 1     |
-| write | `DatabaseClient`        | `unresolved (identifier)`           | 1     |
+| write | `DatabaseClient`        | `unresolved (template)`             | 1     |
 | write | `makeDirectories`       | `unresolved (call)`                 | 1     |
 | write | `removePathIfPresent`   | `unresolved (other)`                | 1     |
 | write | `sealDatabase`          | `unresolved (property)`             | 1     |
-| write | `swapDatabaseIntoPlace` | `unresolved (identifier)`           | 1     |
 | write | `swapDatabaseIntoPlace` | `unresolved (property)`             | 1     |
-| write | `writeLocalTextFile`    | `unresolved (identifier)`           | 1     |
+| write | `swapDatabaseIntoPlace` | `unresolved (template)`             | 1     |
+| write | `writeLocalTextFile`    | `data-root:db/ban`                  | 1     |
