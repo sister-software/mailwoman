@@ -35,7 +35,7 @@ import { sleep } from "@mailwoman/core/utils/sleep"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { reusableRun } from "#build/adapters"
+import { adapterRunInputs, reusableRun } from "#build/adapters"
 import { alignSettings } from "#build/align"
 import { planAlignRanges, reusableAlignRange, type AlignRangePlan } from "#build/align/range"
 import { mergeAlignTotals } from "#build/align/totals"
@@ -475,7 +475,11 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 		// A directory input's size doesn't predict its rows, so it is ranked first and starts early.
 		const inputWeight = inputStat?.isFile() ? inputStat.size : Number.MAX_SAFE_INTEGER
 		const adapterDir = intermediateDir(source)
-		let run = settings.resume ? await reusableRun(source, adapterDir) : null
+		const inputs = adapterRunInputs(await sourceDerivation())
+
+		let run = settings.resume
+			? await reusableRun(source, adapterDir, { corpusVersion: opts.corpusVersion, inputs })
+			: null
 
 		if (run) {
 			onProgress("adapter-run", `[${source}] reused the adapter run (${run.yielded} canonical rows)`)
@@ -492,6 +496,7 @@ export async function runParallelBuild(ctx: ParallelBuildContext): Promise<Build
 					adapterModule: derivationFor.modules.get(source)!,
 					adapterOptions: { ...serializable, inputPath: options.inputPath.toString() },
 					corpusVersion: opts.corpusVersion,
+					inputs,
 					intermediateDir: intermediateDir.toString(),
 				},
 				adapterWorkerClass(source),

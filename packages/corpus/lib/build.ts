@@ -16,7 +16,7 @@ import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import { PathBuilder } from "path-ts"
 
 import { defaultAdapterRegistry } from "#adapters/registry"
-import { runAdapterPhase } from "#build/adapters"
+import { adapterRunInputs, runAdapterPhase } from "#build/adapters"
 import { runAlignPhase } from "#build/align"
 import { alignTotalsOf } from "#build/align/totals"
 import { planWorkerBudget } from "#build/budget"
@@ -138,16 +138,25 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		})
 	}
 
+	const holdouts = defaultHoldouts()
+
+	// The adapter phase records each run's derivation digest, and a resume compares it before reusing a run.
+	const derivationFor = await adapterDerivations(
+		adapters.filter((adapter) => configured.includes(adapter.id)),
+		opts.adapterInputs,
+		derivationConfig(settings, holdouts)
+	)
+
 	const { runs: adapterRuns, skipped } = await runAdapterPhase({
 		adapters,
 		adapterInputs: opts.adapterInputs,
 		corpusVersion: opts.corpusVersion,
 		intermediateDir,
+		inputsFor: async (adapterID) => adapterRunInputs(await derivationFor(adapterID)),
 		resume,
 		onProgress: opts.onProgress,
 	})
 
-	const holdouts = defaultHoldouts()
 	const decisionTable = await readSourceDecisionTable()
 
 	const align = await runAlignPhase({
@@ -196,12 +205,6 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		shuffleWindow > 1
 			? `shuffling each split within a ${shuffleWindow.toLocaleString("en-US")}-row window, seed ${shuffleSeed}`
 			: "writing rows in arrival order (shuffle window disabled)"
-	)
-
-	const derivationFor = await adapterDerivations(
-		adapters.filter((adapter) => configured.includes(adapter.id)),
-		opts.adapterInputs,
-		derivationConfig(settings, holdouts)
 	)
 
 	const corpusDir = outputDir(corpusDirectoryName(opts.corpusVersion))

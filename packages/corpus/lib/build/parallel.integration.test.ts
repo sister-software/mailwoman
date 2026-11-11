@@ -340,12 +340,17 @@ describe("parallel corpus build", { timeout: 300_000 }, () => {
 	it("fails a source whose worker fails, finishes the others and resumes to the serial bytes", async () => {
 		const outDir = scratch.path("failed")
 		const inputs = fixtureInputs()
+		// The coordinator fingerprints a directory by its listing, and the ban adapter fails
+		// to read it as a CSV, so the failure happens inside the adapter's worker.
+		const unreadable = scratch.path("ban-input-is-a-directory")
+
+		await makeDirectories(unreadable)
 
 		await expect(
 			buildCorpus(
 				baseOptions(outDir, {
 					jobs: 2,
-					adapterInputs: { ...inputs, ban: { inputPath: scratch.path("no-such-ban.csv") } },
+					adapterInputs: { ...inputs, ban: { inputPath: unreadable } },
 				})
 			)
 		).rejects.toThrow(

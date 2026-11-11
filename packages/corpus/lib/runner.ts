@@ -78,6 +78,14 @@ export interface RunAdapterOptions {
 	adapterOptions: AdapterOptions
 
 	/**
+	 * The digest of what produced the run's rows, from `adapterRunInputs` in `#build/adapters`.
+	 *
+	 * The manifest records it, and a resumed build reuses the run only when its own digest matches.
+	 * A run made without one records `null`, which no resumed build reuses.
+	 */
+	inputs?: string
+
+	/**
 	 * Hold dedup keys in a V8 `Set` capped at this number of keys, rather than in a fingerprint table.
 	 *
 	 * The cap is what the fingerprint table replaces.
@@ -144,6 +152,12 @@ export interface RunAdapterOptions {
 export interface AdapterRunManifest {
 	adapter_id: string
 	corpus_version: string
+	/**
+	 * The digest of the adapter's options, its input's fingerprint and its code,
+	 * or `null` for a run whose caller supplied none.
+	 * See {@linkcode RunAdapterOptions.inputs}.
+	 */
+	inputs: string | null
 	default_license: string
 	description: string
 	yielded: number
@@ -329,6 +343,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 	const manifest: AdapterRunManifest = {
 		adapter_id: adapter.id,
 		corpus_version: corpusVersion,
+		inputs: opts.inputs ?? null,
 		default_license: adapter.defaultLicense,
 		description: adapter.description,
 		yielded,

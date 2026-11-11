@@ -155,6 +155,13 @@ It reuses each finished adapter run, truncates the align outputs to the checkpoi
 aligns the remaining adapters, and keeps the parquet files the parquet manifest records. `--fresh`
 deletes that work and builds from the start. A build without one of the two flags deletes no file.
 
+An adapter run's `MANIFEST.json` records the corpus version and an `inputs` digest of the adapter's
+options, its input's fingerprint and its code (`adapterRunInputs` in `lib/build/adapters.ts`). A resume
+refuses a run whose corpus version or digest differs from the build's. The align checkpoint already
+records that adapter as aligned, so running it again would leave its old aligned rows in place. Rebuild
+it with `--fresh`, or with `--fresh-sources <id>` under `--jobs` above 1. A manifest written before the
+digest existed records none and is refused the same way.
+
 `--jobs K` above 1 runs each source's adapter, align and parquet work in worker processes
 (`lib/build/parallel.ts`) and writes the same parquet, split and manifest bytes as `--jobs 1`; only
 the timestamp fields differ. Each worker has its own heap, DuckDB limits and temporary root, and
