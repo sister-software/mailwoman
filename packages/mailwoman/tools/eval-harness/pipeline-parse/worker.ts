@@ -87,6 +87,7 @@ const parse = createRuntimePipeline({ classifier })
  */
 export async function handleItem(row: PipelineParseRow): Promise<PipelineParse> {
 	const started = performance.now()
+
 	const result = await parse(row.raw, {
 		lineBreaks,
 		caseNormalization,
