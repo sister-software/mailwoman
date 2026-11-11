@@ -3,11 +3,15 @@ title: Compare Mailwoman with other geocoders
 description: How Mailwoman differs from Google's Geocoding API, self-hosted Nominatim and Pelias on where data lives, what self-hosting needs and what results you may keep, with the one dated measured comparison and the command that reproduces it.
 ---
 
+import "./evidence-tables.css"
+
 # Compare Mailwoman with other geocoders
 
 This page compares Mailwoman with three alternatives: Google's Geocoding API, a self-hosted Nominatim server, and Pelias with libpostal. It covers where the data lives, what running each one requires, what you may keep from its results, and the one measured comparison this project has published. Third-party facts below were read from each project's own documentation on 11 November 2026. Check the linked pages before deciding, because their terms and requirements change.
 
 ## How they differ
+
+<div className="evidence-table evidence-table--wide" role="region" aria-label="Geocoder feature comparison" tabIndex="0">
 
 | Question                        | Mailwoman 11.0.0                                                                                                                                                                                                                   | Google Geocoding API                                                                                                                                                                                                             | Self-hosted Nominatim                                                                                                                                                                                                                                                                    | Pelias with libpostal                                                                                                                                                                                                                                                                  |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -19,6 +23,8 @@ This page compares Mailwoman with three alternatives: Google's Geocoding API, a 
 | Parser                          | Mailwoman's own model, also served through a libpostal-compatible API.                                                                                                                                                             | Not offered separately.                                                                                                                                                                                                          | Not offered separately.                                                                                                                                                                                                                                                                  | libpostal.                                                                                                                                                                                                                                                                             |
 | Software license                | AGPL-3.0-only, or a commercial license.                                                                                                                                                                                            | Proprietary service.                                                                                                                                                                                                             | [GPL version 3 or later](https://github.com/osm-search/Nominatim) for the Python code, with other files under GPLv2 or Apache 2.0.                                                                                                                                                       | [MIT](https://github.com/pelias/pelias) for Pelias. Check libpostal's own repository for its license.                                                                                                                                                                                  |
 
+</div>
+
 Mailwoman also serves Nominatim-, Photon- and libpostal-compatible APIs, so a client built for one of those can call it. [Point a compatible client at Mailwoman](/docs/guides/use-a-compatible-http-client) lists the fields those APIs return and the ones they lack.
 
 ## The measured comparison
@@ -27,11 +33,15 @@ The project has published one comparison that ran Mailwoman beside other geocode
 
 The [panel](/benchmarks/open-truth-panel.jsonl) has 297 addresses in six groups, each with a rooftop coordinate from an open address register. Every arm received the same 297 strings. The scorer counts a row as a hit when the returned coordinate lies within 1, 5 or 25 km of the reference, and counts a missing result as a miss at every distance.
 
+<div className="evidence-table evidence-table--wide" role="region" aria-label="Measured geocoder results" tabIndex="0">
+
 | Arm             | Within 1 km        | Within 5 km        | Within 25 km       | No result |
 | --------------- | ------------------ | ------------------ | ------------------ | --------- |
 | Mailwoman 9.1.0 | 258 of 297 (86.9%) | 286 of 297 (96.3%) | 295 of 297 (99.3%) | 1         |
 | Pelias          | 273 of 297 (91.9%) | 275 of 297 (92.6%) | 281 of 297 (94.6%) | 0         |
 | Photon          | 255 of 297 (85.9%) | 273 of 297 (91.9%) | 276 of 297 (92.9%) | 20        |
+
+</div>
 
 The scorer's paired bootstrap (seed 20260807, 1,000 resamples) gives the Mailwoman − Pelias difference over all 297 rows:
 
