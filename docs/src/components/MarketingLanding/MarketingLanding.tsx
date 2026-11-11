@@ -120,3 +120,109 @@ export function SolutionsIntro(): ReactNode {
 		</>
 	)
 }
+
+/**
+ * Introduces the project's maintainers and directs readers to the right contact path.
+ */
+export function AboutIntro(): ReactNode {
+	return (
+		<>
+			<header className={styles.hero}>
+				<p className={styles.eyebrow}>About · Sister Software</p>
+				<h1>Address software you can run yourself.</h1>
+				<p className={styles.lead}>
+					Sister Software builds Mailwoman to read postal addresses and resolve places. The parser and geocoder run in
+					your application or on your server, using the model and geographic data you install.
+				</p>
+				<div className={styles.actions}>
+					<Link className="button button--primary button--lg" to="/docs/start">
+						Run the first parse
+					</Link>
+					<Link className={styles.textAction} to="/product">
+						See how Mailwoman works →
+					</Link>
+				</div>
+			</header>
+
+			<div className={styles.cards} aria-label="About Mailwoman and contact routes">
+				<Link className={styles.cardLink} to="/product/data-and-licensing">
+					<strong className={styles.cardTitle}>Inspect the sources</strong>
+					<span className={styles.cardCopy}>Read the code and data terms before choosing what to install.</span>
+					<span className={styles.cardArrow} aria-hidden="true">
+						→
+					</span>
+				</Link>
+				<Link className={styles.cardLink} to="#contact-and-support">
+					<strong className={styles.cardTitle}>Ask a project question</strong>
+					<span className={styles.cardCopy}>Find the contact path for licensing, support, and public issues.</span>
+					<span className={styles.cardArrow} aria-hidden="true">
+						→
+					</span>
+				</Link>
+				<Link className={styles.cardLink} to="#report-a-vulnerability-privately">
+					<strong className={styles.cardTitle}>Report a vulnerability</strong>
+					<span className={styles.cardCopy}>Send security details privately to the maintainer.</span>
+					<span className={styles.cardArrow} aria-hidden="true">
+						→
+					</span>
+				</Link>
+			</div>
+		</>
+	)
+}
+
+/**
+ * Shows the scope of published benchmark evidence before readers inspect dated results.
+ */
+export function EvidenceIntro(): ReactNode {
+	return (
+		<>
+			<header className={styles.hero}>
+				<p className={styles.eyebrow}>Evidence · Mailwoman 11.0.0</p>
+				<h1>See what the measurements cover.</h1>
+				<p className={styles.lead}>
+					The published evaluations measure specific models, address panels, and data vintages. The records below show
+					their inputs, comparison arms, scoring methods, and limits.
+				</p>
+				<div className={styles.actions}>
+					<Link className="button button--primary button--lg" to="#dated-artifacts">
+						Inspect the evaluations
+					</Link>
+					<Link className={styles.textAction} to="/product/limits-and-status">
+						Check release status →
+					</Link>
+				</div>
+			</header>
+
+			<div className={styles.cards} aria-label="Choose an evidence question">
+				<Link className={styles.cardLink} to="/evidence/comparisons">
+					<strong className={styles.cardTitle}>Compare geocoders</strong>
+					<span className={styles.cardCopy}>
+						Read the dated Mailwoman, Pelias, and Photon result beside the source limits.
+					</span>
+					<span className={styles.cardArrow} aria-hidden="true">
+						→
+					</span>
+				</Link>
+				<Link className={styles.cardLink} to="#read-the-metrics-at-their-measured-scope">
+					<strong className={styles.cardTitle}>Understand each metric</strong>
+					<span className={styles.cardCopy}>
+						Separate returned results, exact parses, coordinate distance, and throughput.
+					</span>
+					<span className={styles.cardArrow} aria-hidden="true">
+						→
+					</span>
+				</Link>
+				<Link className={styles.cardLink} to="/docs/explanation/data-and-model-quality">
+					<strong className={styles.cardTitle}>Follow the evaluation path</strong>
+					<span className={styles.cardCopy}>
+						See how a versioned dataset and release verdict support a quality claim.
+					</span>
+					<span className={styles.cardArrow} aria-hidden="true">
+						→
+					</span>
+				</Link>
+			</div>
+		</>
+	)
+}
