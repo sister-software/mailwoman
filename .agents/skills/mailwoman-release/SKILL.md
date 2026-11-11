@@ -186,8 +186,8 @@ surfaces name the new model version. Commit all three on main before dispatching
 2. **The release matrix.** Add a row for `<target>` at the top of "## The matrix" in
    `docs/engineering/releases.mdx`, and move `(current)` to it.
 3. **The status page.** In `docs/src/pages/product/limits-and-status.mdx`, update the opening
-   summary table and the paragraph before the first `##` heading, which must state "model version
-   `<version>`". Update the bundle table when the registry changed. Change only figures you measured
+   summary table and the paragraph before the first `##` heading. That paragraph must state "model
+   version `<version>`". Update the bundle table when the registry changed. Change only figures you measured
    or can compute exactly, and say which.
 
 Run `yarn mwops release verify-metadata` locally before dispatching. The check keys on the card
