@@ -120,7 +120,7 @@ Calls with the same kind, interface and target share one row and are counted.
 ## State machines
 
 A state machine is declared with `defineStateMachine` from `@mailwoman/core/state-machine`.
-The register lists 3 machines.
+The register lists 4 machines.
 The `state-column-writes` check reports an update of a `_state` column that skips comparing the state it moves from.
 
 ### `declaration`
@@ -136,7 +136,7 @@ Each cell holds the state the transition moves to from the row's state on the co
 | `revoked` | `active`             | `lapsed`             | `revoked`             | `review`             |
 | `review`  | `active`             | `lapsed`             | `revoked`             | `review`             |
 
-Its steps describe zero effects. Every write is the carrier's compare-and-set.
+Its steps describe zero effects.
 
 ### `email`
 
@@ -150,7 +150,22 @@ Each cell holds the state the transition moves to from the row's state on the co
 | `sent`    | `sent` | `sent`   |
 | `failed`  | `sent` | `failed` |
 
-Its steps describe zero effects. Every write is the carrier's compare-and-set.
+Its steps describe zero effects.
+
+### `job`
+
+`jobMachine` in `lib/dev-mcp/jobs.ts` has 4 states: `running`, `succeeded`, `failed`, `cancelled`.
+
+Each cell holds the state the transition moves to from the row's state on the column's example event.
+
+| From        | exit 0      | exit 1      | killed by SIGTERM | spawn or kill error | cancel      |
+| ----------- | ----------- | ----------- | ----------------- | ------------------- | ----------- |
+| `running`   | `succeeded` | `failed`    | `cancelled`       | `failed`            | `cancelled` |
+| `succeeded` | `succeeded` | `succeeded` | `succeeded`       | `succeeded`         | `succeeded` |
+| `failed`    | `failed`    | `failed`    | `failed`          | `failed`            | `failed`    |
+| `cancelled` | `cancelled` | `cancelled` | `cancelled`       | `cancelled`         | `cancelled` |
+
+Its steps describe zero effects.
 
 ### `license`
 
@@ -165,4 +180,4 @@ Each cell holds the state the transition moves to from the row's state on the co
 | `revoked` | `revoked`           | `revoked`                       | `revoked`                        | `revoked`      | `revoked`      | `revoked`   | `revoked`      | `active`    |
 | `review`  | `review`            | `review`                        | `review`                         | `review`       | `revoked`      | `revoked`   | `review`       | `active`    |
 
-Its steps describe zero effects. Every write is the carrier's compare-and-set.
+Its steps describe zero effects.

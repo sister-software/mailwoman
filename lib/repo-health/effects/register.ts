@@ -324,7 +324,7 @@ function machineSection(entry: MachineEntry): string[] {
 		"",
 		effects.size
 			? `Its steps run these effects: ${[...effects].toSorted().map(code).join(", ")}.`
-			: "Its steps describe zero effects. Every write is the carrier's compare-and-set."
+			: "Its steps describe zero effects."
 	)
 
 	return lines

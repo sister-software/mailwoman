@@ -1,4 +1,5 @@
 import { type ChildProcess, spawnProcess } from "@mailwoman/core/process"
+import { defineStateMachine } from "@mailwoman/core/state-machine"
 
 /**
  * @copyright Sister Software
@@ -34,19 +35,42 @@ export type JobEvent =
  * `succeeded` and `failed` are terminal.
  */
 export function nextJobState(state: JobState, event: JobEvent): JobState {
-	if (state !== "running") return state
-
-	switch (event.kind) {
-		case "cancel":
-			return "cancelled"
-		case "error":
-			return "failed"
-		case "close":
-			if (event.signal) return "cancelled"
-
-			return event.code === 0 ? "succeeded" : "failed"
-	}
+	return jobMachine.transition(state, event).next
 }
+
+/**
+ * A dev-mcp job's lifecycle.
+ *
+ * Its state lives in the registry's memory.
+ * Each step holds an empty record and an empty effect list.
+ */
+export const jobMachine = defineStateMachine<JobState, JobEvent>({
+	name: "job",
+	states: ["running", "succeeded", "failed", "cancelled"],
+	events: {
+		"exit 0": { kind: "close", code: 0, signal: null },
+		"exit 1": { kind: "close", code: 1, signal: null },
+		"killed by SIGTERM": { kind: "close", code: null, signal: "SIGTERM" },
+		"spawn or kill error": { kind: "error" },
+		cancel: { kind: "cancel" },
+	},
+	transition(state, event) {
+		const step = (next: JobState) => ({ next, record: {}, effects: [] })
+
+		if (state !== "running") return step(state)
+
+		switch (event.kind) {
+			case "cancel":
+				return step("cancelled")
+			case "error":
+				return step("failed")
+			case "close":
+				if (event.signal) return step("cancelled")
+
+				return step(event.code === 0 ? "succeeded" : "failed")
+		}
+	},
+})
 
 export interface Job {
 	jobID: string
