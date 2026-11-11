@@ -42,10 +42,10 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `lib/dev-mcp/data-directories.ts`
 
-| Kind | Interface         | Target              | Calls |
-| ---- | ----------------- | ------------------- | ----- |
-| read | `Globerator.from` | `unresolved (call)` | 1     |
-| read | `isDirectory`     | `unresolved (call)` | 1     |
+| Kind | Interface         | Target               | Calls |
+| ---- | ----------------- | -------------------- | ----- |
+| read | `Globerator.from` | `unresolved (call)`  | 1     |
+| read | `isDirectory`     | `unresolved (other)` | 1     |
 
 ## `lib/dev-mcp/engine/rigs.ts`
 
@@ -960,7 +960,6 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | write | `createSymbolicLink` | `unresolved (call)`     | 1     |
 | write | `movePath`           | `unresolved (call)`     | 1     |
 | write | `movePath`           | `unresolved (template)` | 1     |
-| write | `removePath`         | `unresolved (template)` | 1     |
 
 ## `lib/storage-kit/sudo.ts`
 

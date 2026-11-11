@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/corpus`
 
 The manifest at `packages/corpus/package.json` declares an absent `sideEffects` field.
-This page lists 231 of the group's 393 library and tool modules.
+This page lists 231 of the group's 395 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -691,11 +691,13 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/jp/tools/fetch/houjin.ts`
 
-| Kind    | Interface         | Target                                                                   | Calls |
-| ------- | ----------------- | ------------------------------------------------------------------------ | ----- |
-| write   | `makeDirectories` | `unresolved (call)`                                                      | 1     |
-| network | `fetch`           | `literal:https://www.houjin-bangou.nta.go.jp/download/zenken/`           | 2     |
-| network | `fetch`           | `literal:https://www.houjin-bangou.nta.go.jp/download/zenken/index.html` | 1     |
+| Kind    | Interface             | Target                                                                   | Calls |
+| ------- | --------------------- | ------------------------------------------------------------------------ | ----- |
+| write   | `makeDirectories`     | `unresolved (parameter)`                                                 | 1     |
+| write   | `movePath`            | `unresolved (call)`                                                      | 2     |
+| write   | `removePathIfPresent` | `unresolved (call)`                                                      | 1     |
+| network | `fetch`               | `literal:https://www.houjin-bangou.nta.go.jp/download/zenken/`           | 2     |
+| network | `fetch`               | `literal:https://www.houjin-bangou.nta.go.jp/download/zenken/index.html` | 1     |
 
 ## `packages/corpus/lib/kr/adapters/juso/label-rows.ts`
 
@@ -724,10 +726,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 ## `packages/corpus/lib/kr/tools/fetch/juso.ts`
 
-| Kind    | Interface         | Target                                                              | Calls |
-| ------- | ----------------- | ------------------------------------------------------------------- | ----- |
-| write   | `makeDirectories` | `unresolved (call)`                                                 | 1     |
-| network | `fetch`           | `literal:https://business.juso.go.kr/api/jst/selectAttrbDBDwldList` | 1     |
+| Kind    | Interface | Target                                                              | Calls |
+| ------- | --------- | ------------------------------------------------------------------- | ----- |
+| network | `fetch`   | `literal:https://business.juso.go.kr/api/jst/selectAttrbDBDwldList` | 1     |
 
 ## `packages/corpus/lib/kr/tools/fetch/localdata.ts`
 
@@ -979,7 +980,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind    | Interface         | Target                   | Calls |
 | ------- | ----------------- | ------------------------ | ----- |
-| read    | `pathExists`      | `unresolved (call)`      | 1     |
+| read    | `pathExists`      | `unresolved (call)`      | 2     |
 | write   | `makeDirectories` | `unresolved (call)`      | 1     |
 | network | `fetch`           | `unresolved (call)`      | 1     |
 | network | `fetch`           | `unresolved (parameter)` | 1     |
@@ -1565,7 +1566,7 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 Import-time effects, kept by a bundler because the workspace counts every module as effectful:
 
-- `runs a statement at module scope`, 8 times
+- `runs a statement at module scope`, 7 times
 - `awaits at module scope`, 3 times
 
 | Kind  | Interface                   | Target              | Calls |
@@ -1730,16 +1731,14 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind  | Interface             | Target              | Calls |
 | ----- | --------------------- | ------------------- | ----- |
-| read  | `pathExists`          | `unresolved (call)` | 1     |
 | read  | `statPath`            | `unresolved (call)` | 1     |
-| write | `makeDirectories`     | `unresolved (call)` | 1     |
 | write | `removePathIfPresent` | `unresolved (call)` | 1     |
 
 ## `packages/corpus/lib/us/tools/fetch/nad.ts`
 
 | Kind  | Interface             | Target                  | Calls |
 | ----- | --------------------- | ----------------------- | ----- |
-| read  | `Globerator.files`    | `unresolved (call)`     | 1     |
+| read  | `Globerator.from`     | `unresolved (call)`     | 1     |
 | read  | `pathExists`          | `unresolved (call)`     | 2     |
 | read  | `tryStat`             | `unresolved (template)` | 1     |
 | write | `makeDirectories`     | `unresolved (call)`     | 1     |
@@ -1758,20 +1757,19 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 | Kind    | Interface             | Target                                                  | Calls |
 | ------- | --------------------- | ------------------------------------------------------- | ----- |
-| read    | `pathExists`          | `unresolved (call)`                                     | 1     |
 | read    | `statPath`            | `unresolved (call)`                                     | 1     |
-| write   | `makeDirectories`     | `unresolved (call)`                                     | 1     |
 | write   | `removePathIfPresent` | `unresolved (call)`                                     | 1     |
 | network | `APIClient.fetch`     | `literal:https://download.cms.gov/nppes/NPI_Files.html` | 1     |
 
 ## `packages/corpus/lib/us/tools/fetch/state/hi-schools.ts`
 
-| Kind  | Interface             | Target              | Calls |
-| ----- | --------------------- | ------------------- | ----- |
-| read  | `pathExists`          | `unresolved (call)` | 1     |
-| read  | `statPath`            | `unresolved (call)` | 1     |
-| write | `makeDirectories`     | `unresolved (call)` | 1     |
-| write | `removePathIfPresent` | `unresolved (call)` | 2     |
+| Kind    | Interface             | Target                   | Calls |
+| ------- | --------------------- | ------------------------ | ----- |
+| read    | `pathExists`          | `unresolved (call)`      | 1     |
+| read    | `statPath`            | `unresolved (call)`      | 1     |
+| write   | `makeDirectories`     | `unresolved (call)`      | 1     |
+| write   | `removePathIfPresent` | `unresolved (call)`      | 2     |
+| network | `fetch`               | `unresolved (parameter)` | 1     |
 
 ## `packages/corpus/lib/us/tools/fetch/state/sources.ts`
 
@@ -1787,6 +1785,9 @@ Import-time effects, kept by a bundler because the workspace counts every module
 | read    | `pathExists`          | `unresolved (parameter)`                                        | 1     |
 | read    | `statPath`            | `unresolved (parameter)`                                        | 2     |
 | write   | `makeDirectories`     | `unresolved (call)`                                             | 2     |
+| write   | `movePath`            | `unresolved (call)`                                             | 1     |
+| write   | `movePath`            | `unresolved (parameter)`                                        | 1     |
+| write   | `removePath`          | `unresolved (parameter)`                                        | 1     |
 | write   | `removePathIfPresent` | `unresolved (parameter)`                                        | 1     |
 | network | `APIClient.fetch`     | `literal:https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT/` | 1     |
 

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { currentSourcePath, dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers/stat"
 import {
@@ -411,7 +411,7 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		return
 	}
 
-	const source = entry.source ? resolvePath(context.dataRoot, entry.source) : null
+	const source = entry.source ? currentSourcePath(entry.source).toString() : null
 
 	const boroughDB = entry.boroughDB ? resolvePath(wofDatabaseRoot(context.dataRoot), entry.boroughDB) : null
 
@@ -420,7 +420,7 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		.map((path) => resolvePath(context.repoRoot, path.trim()))
 		.join(",")
 
-	const banDir = entry.banDir ? resolvePath(context.dataRoot, entry.banDir) : null
+	const banDir = entry.banDir ? currentSourcePath(entry.banDir).toString() : null
 
 	for (const path of pairsJsonl ? pairsJsonl.split(",") : []) {
 		if (!(await pathExists(path))) {

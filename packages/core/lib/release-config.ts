@@ -21,6 +21,10 @@ import { repoRootPathBuilder } from "#paths"
  * Unknown keys are allowed.
  */
 export interface PairIndexInputs {
+	/**
+	 * The tuple CSV, a current source under `$MAILWOMAN_CACHE_ROOT/sources/`,
+	 * such as `openaddresses/extracted/nz/countrywide.csv`.
+	 */
 	source?: string
 	delta: number
 	transitionBeta?: number
@@ -31,6 +35,9 @@ export interface PairIndexInputs {
 	boroughDB?: string
 	// oxlint-disable-next-line sister-software/no-title-case-acronym -- The member must match the `pairsJsonl` key in release.config.json.
 	pairsJsonl?: string
+	/**
+	 * The BAN download directory, a current source under `$MAILWOMAN_CACHE_ROOT/sources/`, such as `ban`.
+	 */
 	banDir?: string
 	[key: string]: unknown
 }

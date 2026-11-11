@@ -11,7 +11,7 @@ owner: engineering
 # Effects register: `packages/osm`
 
 The manifest at `packages/osm/package.json` declares an absent `sideEffects` field.
-This page lists 11 of the group's 41 library and tool modules.
+This page lists 14 of the group's 44 library and tool modules.
 The others hold neither an effect edge nor an import-time effect.
 [The index](../effects-register.mdx) explains the columns.
 
@@ -49,6 +49,13 @@ The others hold neither an effect edge nor an import-time effect.
 | write   | `movePath` | `unresolved (template)`  | 1     |
 | network | `fetch`    | `unresolved (template)`  | 1     |
 
+## `packages/osm/sdk/geofabrik/snapshot.ts`
+
+| Kind | Interface         | Target              | Calls |
+| ---- | ----------------- | ------------------- | ----- |
+| read | `Globerator.from` | `unresolved (call)` | 1     |
+| read | `pathExists`      | `unresolved (call)` | 2     |
+
 ## `packages/osm/tools/address-points-recipe.ts`
 
 | Kind    | Interface           | Target                  | Calls |
@@ -60,19 +67,19 @@ The others hold neither an effect edge nor an import-time effect.
 
 Import-time effects, kept by a bundler because the workspace counts every module as effectful:
 
+- `awaits at module scope`, 3 times
 - `runs a statement at module scope`, 9 times
-- `awaits at module scope`, 2 times
 
-| Kind | Interface    | Target                  | Calls |
-| ---- | ------------ | ----------------------- | ----- |
-| read | `pathExists` | `unresolved (property)` | 1     |
+| Kind | Interface    | Target                    | Calls |
+| ---- | ------------ | ------------------------- | ----- |
+| read | `pathExists` | `unresolved (identifier)` | 1     |
 
 ## `packages/osm/tools/emit-corpus-jsonl.ts`
 
 Import-time effects, kept by a bundler because the workspace counts every module as effectful:
 
+- `awaits at module scope`, 5 times
 - `runs a statement at module scope`, 3 times
-- `awaits at module scope`, 4 times
 
 | Kind  | Interface            | Target                   | Calls |
 | ----- | -------------------- | ------------------------ | ----- |
@@ -100,12 +107,33 @@ Import-time effects, kept by a bundler because the workspace counts every module
 
 - `runs a statement at module scope`, 3 times
 
-| Kind    | Interface            | Target                  | Calls |
-| ------- | -------------------- | ----------------------- | ----- |
-| read    | `pathExists`         | `unresolved (template)` | 1     |
-| write   | `makeDirectories`    | `unresolved (other)`    | 1     |
-| write   | `writeLocalJSONFile` | `unresolved (template)` | 1     |
-| network | `fetch`              | `unresolved (call)`     | 1     |
+| Kind    | Interface            | Target              | Calls |
+| ------- | -------------------- | ------------------- | ----- |
+| write   | `writeLocalJSONFile` | `unresolved (call)` | 1     |
+| network | `fetch`              | `unresolved (call)` | 1     |
+
+## `packages/osm/tools/fetch/flat-extracts.ts`
+
+| Kind  | Interface           | Target                    | Calls |
+| ----- | ------------------- | ------------------------- | ----- |
+| read  | `copyPath`          | `unresolved (parameter)`  | 1     |
+| read  | `copyPath`          | `unresolved (property)`   | 1     |
+| read  | `pathExists`        | `unresolved (call)`       | 2     |
+| read  | `readLocalJSONFile` | `unresolved (call)`       | 1     |
+| read  | `sortedGlob`        | `unresolved (parameter)`  | 1     |
+| read  | `statPath`          | `unresolved (identifier)` | 1     |
+| write | `copyPath`          | `unresolved (call)`       | 1     |
+| write | `copyPath`          | `unresolved (parameter)`  | 1     |
+| write | `movePath`          | `unresolved (parameter)`  | 2     |
+| write | `removePath`        | `unresolved (parameter)`  | 1     |
+| write | `removePath`        | `unresolved (property)`   | 1     |
+
+## `packages/osm/tools/fetch/move-flat-extracts.ts`
+
+Import-time effects, kept by a bundler because the workspace counts every module as effectful:
+
+- `runs a statement at module scope`, 4 times
+- `awaits at module scope`
 
 ## `packages/osm/tools/rooftop-database.ts`
 
