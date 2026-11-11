@@ -326,22 +326,27 @@ export const sideEffectsCheck: RepoCheck = {
 			for (const file of sources) {
 				if (isTestSource(file)) continue
 
-				const source = ts.createSourceFile(
-					file,
-					await readLocalTextFile(resolvePath(context.repoRoot, file)),
-					ts.ScriptTarget.Latest,
-					true
-				)
+				const text = await readLocalTextFile(resolvePath(context.repoRoot, file))
+				const relative = file.slice(directory.length + 1)
+				const annotated = PURE_ANNOTATION.test(text)
 
-				for (const annotated of pureAnnotatedEffects(source, file)) {
-					diagnostics.push(diagnostic(`${file}:${annotated.line} ${annotated.what}`, file, annotated.line))
+				const audited =
+					checksDeclaration &&
+					!listed.some((pattern) => pattern.test(relative) || pattern.test(compiledPathOf(relative)))
+
+				// A file is parsed only when it holds a pure annotation or its import-time effects need listing.
+				// The other sources of an undeclaring workspace are most of the tree.
+				if (!annotated && !audited) continue
+
+				const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true)
+
+				if (annotated) {
+					for (const found of pureAnnotatedEffects(source, file)) {
+						diagnostics.push(diagnostic(`${file}:${found.line} ${found.what}`, file, found.line))
+					}
 				}
 
-				if (!checksDeclaration) continue
-
-				const relative = file.slice(directory.length + 1)
-
-				if (listed.some((pattern) => pattern.test(relative) || pattern.test(compiledPathOf(relative)))) continue
+				if (!audited) continue
 
 				const effects = importTimeEffects(source, file)
 
