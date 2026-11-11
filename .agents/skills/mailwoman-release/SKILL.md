@@ -185,9 +185,10 @@ surfaces name the new model version. Commit all three on main before dispatching
    the D-rule's FR, GB and DE veto no longer applies.
 2. **The release matrix.** Add a row for `<target>` at the top of "## The matrix" in
    `docs/engineering/releases.mdx`, and move `(current)` to it.
-3. **The status page.** Update the `:::info[Verified as of …]` box, the version table and the model
-   artifact sizes in `docs/articles/developers/status.mdx`. Change only figures you measured or can
-   compute exactly, and say which in the box.
+3. **The status page.** In `docs/src/pages/product/limits-and-status.mdx`, update the opening
+   summary table and the paragraph before the first `##` heading, which must state "model version
+   `<version>`". Update the bundle table when the registry changed. Change only figures you measured
+   or can compute exactly, and say which.
 
 Run `yarn mwops release verify-metadata` locally before dispatching. The check keys on the card
 version, so a code-only release passes it with no ledger edit. Update the release matrix for a

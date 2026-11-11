@@ -656,8 +656,8 @@ captures run against the real shipped weights instead of a staging candidate:
    size, byte-verify each value against **the model card** `neural-weights-en-us/model-card.json`
    (`architecture`, `format`, `files_md5`), and do not trust the prose you are replacing. A fine-tune from
    the same lineage may change none of these values, so confirm through the card instead of assuming drift.
-   These values are a **different measurement** from the npm package download/unpacked size quoted in
-   `getting-started.mdx`. Get those sizes from the registry, never by arithmetic: `npm view
+   These values are a **different measurement** from an npm package's download or unpacked size. The
+   published pages quote no package size today. A page that adds one gets it from the registry, never by arithmetic: `npm view
    @mailwoman/neural-weights-en-us@<version> dist.unpackedSize` for the unpacked figure, and a
    `curl -r 0-0` range-request (`content-range: bytes 0-0/<total>`) against the tarball URL for the
    compressed download figure.
