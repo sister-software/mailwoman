@@ -35,16 +35,18 @@ import {
 import { openParquetRowStream } from "#parquet/streams"
 import { pythonRepr } from "#training/config/python-yaml"
 
-// country-branch: membership is the country list of the CJK family's own corpora,
-// which no table records yet.
+// country-branch: membership is the country list of the CJK family's own corpora.
+// No table records that list yet.
 // The CJK corpus manifests' country columns would replace it.
 /**
  * Countries whose rows the CJK family already reads from its own sources.
  *
  * Every member writes an official language in Han, Kana or Hangul
  * (`foreign-places.test.ts` checks it against `countriesOfScript`).
- * The script sets also hold SG, whose Chinese-script rows the CJK family reads from
- * no source of its own, so they stay foreign rows and route here.
+ * The script sets also hold SG.
+ *
+ * The CJK family has no source of its own for SG's Chinese-script rows,
+ * so they stay foreign rows and route here.
  */
 export const CJK_COUNTRIES = countriesDeclaredBy("CJK family corpora", ["JP", "CN", "TW", "HK", "MO", "KR", "KP"])
 

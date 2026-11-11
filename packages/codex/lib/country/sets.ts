@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Branded country sets, each derived from one named source.
+ *   Branded country sets, each derived from one source table.
  *
  *   A {@linkcode CountrySet} is a `ReadonlySet` of ISO 3166-1 alpha-2 codes whose type records where its members came
  *   from. The constructors here are the only code that produces one, and none of them accepts a literal list of codes:
@@ -14,7 +14,7 @@
  *
  *   A signature states the set it needs, as in `trainAll(countries: CountrySet<{ world: true }>)`, so a literal
  *   `["US", "FR"]` fails to compile. The `country-literal-sets` repository check reports a cast to `CountrySet` outside
- *   this module and test files, and an array or `Set` literal of country codes held by a country-named binding.
+ *   this module and test files, and an array or `Set` literal of country codes held by a binding whose name contains a country word.
  *
  *   Script and address system are separate axes. A script set describes the script an input is written in: RS is in both the
  *   `Latn` and `Cyrl` sets, JP in `Hani`, `Hira` and `Kana`. An address-system set selects the codex conventions that
@@ -179,7 +179,7 @@ export function countriesOfWeightsFamily<Family extends string>(
 }
 
 /**
- * The codes a named declaration lists, such as a training config's `country_weights` keys.
+ * The codes a config declares, such as a training config's `country_weights` keys.
  *
  * `source` names the declaration in the brand and in a refusal.
  *

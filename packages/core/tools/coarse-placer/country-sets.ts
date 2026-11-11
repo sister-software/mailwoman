@@ -31,7 +31,8 @@ const CoarseRowSource = {
 	 */
 	Overture: "overture",
 	/**
-	 * The G-NAF corpus, which `build/dataset.ts` reads on its own glob.
+	 * The G-NAF corpus.
+	 * `build/dataset.ts` reads it on its own glob.
 	 */
 	GNAF: "gnaf-corpus",
 } as const

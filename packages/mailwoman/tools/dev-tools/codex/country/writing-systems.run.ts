@@ -39,7 +39,8 @@ const DEFAULT_CLDR_VERSION = "47.0.0"
  *
  * ISO 15924 defines `Jpan` as Han with Hiragana and Katakana, `Kore` as Hangul with Han
  * and `Hanb` as Han with Bopomofo.
- * `Hans` and `Hant` are variants of Han, which the Unicode Script property writes `Hani`.
+ * `Hans` and `Hant` are variants of Han.
+ * The Unicode Script property writes Han as `Hani`.
  */
 const SCRIPT_COMBINATIONS: Readonly<Record<string, readonly string[]>> = {
 	Jpan: ["Hani", "Hira", "Kana"],

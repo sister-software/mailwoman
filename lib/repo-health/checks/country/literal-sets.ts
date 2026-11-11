@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file Reports a hand-typed collection of country codes in code that serves every country.
  *
- *   An array or `Set` literal of country codes held by a country-named binding, such as
+ *   An array or `Set` literal of country codes held by a binding whose name contains a country word, such as
  *   `const CJK_COUNTRIES = new Set(["JP", "CN", "TW", …])`, is a sample standing in for a rule. The branded sets in
- *   `@mailwoman/codex/country/sets` derive each collection from a named source, and this check makes a hand list
+ *   `@mailwoman/codex/country/sets` derive each collection from one source table, and this check makes a hand list
  *   declare itself. It reports three shapes:
  *
  *   - An array or `Set` literal of three or more two-letter codes assigned to a binding or property whose name
@@ -106,8 +106,8 @@ function isCountrySetType(type: ts.TypeNode): boolean {
 }
 
 /**
- * Returns every hand-typed country collection and `CountrySet` cast in the given sources
- * that sits outside a per-country home and carries no `country-branch:` marker.
+ * Returns every hand-typed country collection and `CountrySet` cast in the given sources that
+ * sits outside a per-country home and has no `country-branch:` comment on the line above.
  */
 export function findCountryLiteralSets(files: ReadonlyArray<{ file: string; text: string }>): CountryLiteralSet[] {
 	const found: CountryLiteralSet[] = []

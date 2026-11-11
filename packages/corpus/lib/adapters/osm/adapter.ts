@@ -55,7 +55,8 @@ export const OSM_TRAILING_COUNTRY_SHARE = 0.3
 const MIN_TRAILING_COUNTRY_LENGTH = 3
 
 /**
- * The number of values a 32-bit unsigned integer takes, which scales a hash prefix to the unit interval.
+ * The number of values a 32-bit unsigned integer takes.
+ * A hash prefix divided by it falls in the unit interval.
  */
 const UINT32_RANGE = 2 ** 32
 

@@ -6,7 +6,7 @@
 #    places whose class descends from road (`Q34442`) or street (`Q79007`), decides the place verdict per class, and
 #    stamps the `wikidata` register. 374 entities are held out by QID hash, the famous-places entities exempt.
 # 2. `data.source_reps` gives `wikidata-vital-places` 0.4, half of v8.6.0's 0.8. v8.6.0 regressed 119 of the 1,292
-#    regression-board rows against shipped 10.7.0 and improved 83. 35 of the 119 added a venue span: named streets
+#    regression-board rows against shipped 10.7.0 and improved 83. 35 of the 119 added a venue span: proper-name streets
 #    (`Calle de Alcalá`, `Avenida Paulista`), most of which the source never rendered, and bare settlement names
 #    (`ミュンヘン`, `Biggin Hill, United Kingdom`). The source drew 15,829 of 1,000,000 audited rows at 0.8, so 0.4 on
 #    220,379 train rows should draw about 7,700. `required_corpus_receipts` floors it at 5,000.
@@ -16,7 +16,7 @@
 #
 # Control: the v8.6.0 seed 42 run on v0.8.16, and the v8.4.0 seed 42 run on v0.8.12.
 #
-# Prediction: the famous-places test set's landmark exact match stays above shipped 10.7.0's 4 of 251, fewer named
+# Prediction: the famous-places test set's landmark exact match stays above shipped 10.7.0's 4 of 251, fewer proper-name
 # streets read as venues than in v8.6.0, and the regression-board net against shipped 10.7.0 rises above v8.6.0's −36.
 #
 # Launch with `--fresh --device A100-40GB`: 90,000 steps.

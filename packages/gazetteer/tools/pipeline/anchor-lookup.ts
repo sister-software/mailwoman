@@ -238,8 +238,8 @@ interface AnchorSource {
 	country: string
 	load: () => Map<string, Centroid>
 	/**
-	 * Whether the country was in the five-digit-postcode pilot, which
-	 * {@link buildAnchorLookup} builds by default.
+	 * Whether the country was in the five-digit-postcode pilot. {@link buildAnchorLookup}
+	 * builds the pilot's countries by default.
 	 */
 	pilot: boolean
 }
