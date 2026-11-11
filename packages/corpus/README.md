@@ -183,7 +183,8 @@ stops updating and no researcher checked the national portal behind it.
 
 `mailwoman gazetteer build post-offices` folds every country's official post-office list into one
 `post-offices.db` beside `poi.db`, and the geocoder searches it with `poi.db`. The same lists feed the
-post-office parse suite. `lib/post-offices/sources.ts` registers the lists, and the United States'
+post-office parse suite in `packages/mailwoman/tools/eval-harness/post-offices/`, a must-pass floor:
+`grade.run.ts` exits non-zero when any official address doesn't parse as expected. `lib/post-offices/sources.ts` registers the lists, and the United States'
 USGS National Map entry is the first.
 
 A new country's list joins with three pieces of work:

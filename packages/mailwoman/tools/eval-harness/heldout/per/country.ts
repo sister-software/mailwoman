@@ -302,9 +302,12 @@ export interface HeldoutSamplingRule {
 	 * first row of each group up to the quota, as `firstByTextHash` keeps them.
 	 * The trailing-country sample draws this way.
 	 *
+	 * `every-row`: no sample is drawn.
+	 * The dataset holds every row its sources yield, in source order, as the post-office suite does.
+	 *
 	 * The method enters the dataset version, so a change to which rows a sample reads changes the method name.
 	 */
-	method: "per-record-id-country-kind-hash-order" | "per-group-text-hash-order"
+	method: "per-record-id-country-kind-hash-order" | "per-group-text-hash-order" | "every-row"
 	/**
 	 * Rows drawn per country and row kind.
 	 */
