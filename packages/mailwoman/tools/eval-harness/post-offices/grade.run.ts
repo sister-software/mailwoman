@@ -8,7 +8,7 @@
  *
  *   Usage:
  *   node packages/mailwoman/tools/eval-harness/post-offices/grade.run.ts \
- *     --suite <directory build.run.ts wrote> [--out <report prefix>] [--weights-cache <cache>] [--workers 2]
+ *     --suite <directory build.run.ts wrote> [--out <report prefix>] [--weights-cache <cache>] [--workers <n>]
  *
  *   Rows are parsed per weights locale, as the release configuration maps each row's country, with the
  *   row's country as the locale hint. The report states the rows and each component's failures with their
@@ -18,6 +18,7 @@
 
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { availableParallelism } from "@mailwoman/core/utils/system"
 import { resolvePath } from "path-ts"
 
 import { readHeldoutDatasetRows } from "#tools/eval-harness/heldout/dataset/manifest"
@@ -37,7 +38,13 @@ const { values } = parseArguments({
 		suite: { type: "string", description: "The directory build.run.ts wrote the suite to" },
 		out: { type: "string", description: "Report prefix; writes <out>.json and <out>.txt" },
 		"weights-cache": { type: "string", description: "A package-shaped weights cache (default: installed packages)" },
-		workers: { type: "string", default: "2", description: "Parse worker threads" },
+		workers: {
+			type: "string",
+			// A parse is CPU-bound, so the pool scales to the core count.
+			// The main thread keeps one core.
+			default: String(Math.max(1, availableParallelism() - 1)),
+			description: "Parse worker threads (default: one per core, less one)",
+		},
 		threads: { type: "string", default: "1", description: "ONNX threads per parse worker" },
 	},
 })
@@ -47,13 +54,7 @@ if (!values.suite) throw new Error("--suite <directory> is required")
 const { manifest, rows } = await readHeldoutDatasetRows(resolvePath(values.suite, `${POST_OFFICE_SUITE_ID}.json`))
 const suiteRows = rows as PostOfficeSuiteRow[]
 const packages = await readHeldoutLocalePackages()
-const byLocale = new Map<string, PostOfficeSuiteRow[]>()
-
-for (const row of suiteRows) {
-	const locale = heldoutWeightsLocale(row.country, packages)
-
-	byLocale.set(locale, [...(byLocale.get(locale) ?? []), row])
-}
+const byLocale = Map.groupBy(suiteRows, (row) => heldoutWeightsLocale(row.country, packages))
 
 const grades: PostOfficeRowGrade[] = []
 
