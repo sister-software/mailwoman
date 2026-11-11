@@ -201,6 +201,21 @@ describe("applyLandmark", () => {
 			expect(roots[0]!.metadata?.["landmark_source"]).toBe("openstreetmap:planet")
 		})
 
+		it("leaves a bare name alone when several places hold it, as `bus stop` is held in India and Kiribati", async () => {
+			const roots = [node("venue", "Bus Stop", 0)]
+
+			await applyLandmark(
+				roots,
+				"bus stop",
+				lookup([
+					hit({ qid: "osm:N1", name: "Bus stop", country: "IN", lat: 10.274, lon: 76.245 }),
+					hit({ qid: "osm:N2", name: "BUS STOP", country: "KI", lat: 1.355, lon: 172.934 }),
+				])
+			)
+
+			expect(roots[0]!.placeID).toBeUndefined()
+		})
+
 		it("keeps a place with no measured population unless the parser read a park", async () => {
 			const vogel = [node("locality", "Vogel", 0, { placeID: "wof:6", metadata: { resolver_score: 0 } })]
 

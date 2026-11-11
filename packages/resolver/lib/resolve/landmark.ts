@@ -185,6 +185,11 @@ export async function applyLandmark(roots: AddressNode[], raw: string, landmarks
 		// OpenStreetMap holds a place spelled like a street in some other town: `Wall Street` also answers in Utah.
 		if (readsAsStreet) return
 
+		// A bare name that several OpenStreetMap places hold names none of them: `bus stop`
+		// is held in India and Kiribati, and `The Big Apple` in South Carolina and Australia.
+		// With no context to choose, the layer abstains.
+		if (!hasContext && candidates.length > 1) return
+
 		// A school or a park in OpenStreetMap can share its town's name,
 		// so a place holding the whole name keeps it.
 		// A park reading beats a row with no measured population, as `Piedmont Park`
