@@ -288,7 +288,7 @@ describe("fulfillment", () => {
 		const { env: worker, deps } = await fixture("6")
 
 		await fulfilInvoice(worker, deps, "in_6")
-		await setEmailState(deps.ledger, "in_6", "pending")
+		await setEmailState(deps.ledger, "in_6", { from: "sent", to: "pending" }, null)
 
 		await expect(fulfilInvoice(worker, deps, "in_6")).resolves.toMatchObject({ result: "already_minted" })
 		expect((await findToken(deps.ledger, "in_6"))?.email_state).toBe("sent")

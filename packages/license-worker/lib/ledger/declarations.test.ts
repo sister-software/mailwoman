@@ -93,7 +93,7 @@ test("an issuance inserts once per (lid, seq), and the current issuance is the h
 
 	expect(current).toMatchObject({ seq: 2, expires: "2027-06-10", email_state: "pending" })
 
-	await setIssuanceEmailState(ledger, current!.issuance_id, "sent", "msg_1")
+	await setIssuanceEmailState(ledger, current!.issuance_id, { from: "pending", to: "sent" }, "msg_1")
 
 	await expect(currentIssuance(ledger, row.lid)).resolves.toMatchObject({
 		email_state: "sent",
@@ -174,7 +174,7 @@ test("the issuances awaiting email are each emailed declaration's current issuan
 
 	// An earlier issuance that failed is superseded by the current one, so only the current one is resent.
 	await insertIssuance(ledger, issuance(emailed.lid, 1, "2027-01-01"))
-	await setIssuanceEmailState(ledger, `iss_m1`, "failed", null)
+	await setIssuanceEmailState(ledger, `iss_m1`, { from: "pending", to: "failed" }, null)
 	await insertIssuance(ledger, issuance(emailed.lid, 2, "2027-04-01"))
 	// An open-source declaration has no address, so its pending issuance is not mail to resend.
 	await insertIssuance(ledger, issuance(answered.lid, 1, "2027-01-01"))
@@ -184,7 +184,7 @@ test("the issuances awaiting email are each emailed declaration's current issuan
 	expect(awaiting.map((entry) => entry.issuance.issuance_id)).toEqual(["iss_m2"])
 	expect(awaiting[0]?.declaration.lid).toBe(emailed.lid)
 
-	await setIssuanceEmailState(ledger, "iss_m2", "sent", "msg_m2")
+	await setIssuanceEmailState(ledger, "iss_m2", { from: "pending", to: "sent" }, "msg_m2")
 
 	await expect(issuancesAwaitingEmail(ledger)).resolves.toEqual([])
 })

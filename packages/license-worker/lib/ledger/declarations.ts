@@ -84,17 +84,26 @@ export async function insertIssuance(ledger: Ledger, row: NewIssuance): Promise<
 	return Number(result.numInsertedOrUpdatedRows ?? 0) > 0 ? "inserted" : "present"
 }
 
+/**
+ * Move an issuance's email from the state its caller read to another, recording the provider's message id.
+ *
+ * The write applies only while the row still holds `transition.from`.
+ * `"conflict"` means another send recorded its outcome first.
+ */
 export async function setIssuanceEmailState(
 	ledger: Ledger,
 	issuanceID: string,
-	state: EmailState,
+	transition: { from: EmailState; to: EmailState },
 	messageID: string | null
-): Promise<void> {
-	await ledger
+): Promise<"updated" | "conflict"> {
+	const result = await ledger
 		.updateTable("issuances")
-		.set({ email_state: state, email_message_id: messageID })
+		.set({ email_state: transition.to, email_message_id: messageID })
 		.where("issuance_id", "=", issuanceID)
-		.execute()
+		.where("email_state", "=", transition.from)
+		.executeTakeFirst()
+
+	return Number(result.numUpdatedRows ?? 0) > 0 ? "updated" : "conflict"
 }
 
 /**

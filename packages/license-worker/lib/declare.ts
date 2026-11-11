@@ -13,6 +13,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { type DeclarationRequest, EXPIRY_NOTICE_DAYS } from "@mailwoman/core/license/declaration"
 import { encodeLicenseKey, type LicenseKeyPayload, LicenseTerms } from "@mailwoman/core/license/key"
+import { applyStep } from "@mailwoman/core/state-machine"
 
 import { todayUTC } from "#dates"
 import type { EmailProvider } from "#email/provider"
@@ -28,8 +29,8 @@ import {
 	findEvaluationByEmail,
 	insertIssuance,
 	setDeclarationVerification,
-	setIssuanceEmailState,
 } from "#ledger/declarations"
+import { emailMachine, issuanceEmailCarrier } from "#ledger/machines"
 import type { DeclarationRow, IssuanceRow } from "#ledger/schema"
 import { verifySourceURL } from "#verify-source"
 
@@ -138,6 +139,8 @@ async function emailIssuance(
 ): Promise<"sent" | "failed" | "skipped"> {
 	if (!declaration.email) return "skipped"
 
+	const carrier = issuanceEmailCarrier(deps.ledger, issuance.issuance_id)
+
 	let messageID: string
 
 	try {
@@ -156,12 +159,14 @@ async function emailIssuance(
 			issuance.issuance_id
 		))
 	} catch {
-		await setIssuanceEmailState(deps.ledger, issuance.issuance_id, "failed", null)
+		await applyStep(emailMachine, carrier, issuance.email_state, { kind: "failed" })
 
 		return "failed"
 	}
 
-	await setIssuanceEmailState(deps.ledger, issuance.issuance_id, "sent", messageID)
+	// A conflict means another send recorded its outcome first.
+	// The provider deduplicates on the issuance id, so this send's acceptance needs no second record.
+	await applyStep(emailMachine, carrier, issuance.email_state, { kind: "sent", messageID })
 
 	if (refreshSecret) {
 		await clearDeclarationPendingSecret(deps.ledger, declaration.lid, new Date((deps.now ?? Date.now)()).toISOString())

@@ -172,7 +172,7 @@ describe("reconciliation", () => {
 		expect(again.minted).toEqual([])
 		expect(email.sent).toEqual(["in_9"])
 
-		await setEmailState(ledger, "in_9", "failed")
+		await setEmailState(ledger, "in_9", { from: "sent", to: "failed" }, null)
 
 		const resent = await reconcileLedger(worker, deps, { sinceSeconds: WEEK })
 
@@ -180,7 +180,7 @@ describe("reconciliation", () => {
 		expect(email.sent).toEqual(["in_9", "in_9"])
 		expect((await findToken(ledger, "in_9"))?.email_state).toBe("sent")
 
-		await setEmailState(ledger, "in_9", "pending")
+		await setEmailState(ledger, "in_9", { from: "sent", to: "pending" }, null)
 
 		expect((await reconcileLedger(worker, deps, { sinceSeconds: WEEK })).resent).toEqual(["in_9"])
 		expect(email.sent).toEqual(["in_9", "in_9", "in_9"])
@@ -332,7 +332,7 @@ describe("reconciliation", () => {
 		const email = recordingEmail()
 		const deps = { stripe, ledger, email: email.provider }
 
-		await setEmailState(ledger, "in_14", "failed")
+		await setEmailState(ledger, "in_14", { from: "sent", to: "failed" }, null)
 
 		const report = await reconcileLedger(worker, deps, { sinceSeconds: WEEK })
 
@@ -385,7 +385,7 @@ describe("reconciliation", () => {
 		const license = await findLicenseBySubscription(ledger, "sub_17")
 		const refusing = recordingEmail("mailbox full")
 
-		await setEmailState(ledger, "in_17", "failed")
+		await setEmailState(ledger, "in_17", { from: "sent", to: "failed" }, null)
 
 		const refused = await reconcileLedger(worker, { stripe, ledger, email: refusing.provider }, { sinceSeconds: WEEK })
 

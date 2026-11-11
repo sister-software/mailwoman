@@ -14,6 +14,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { encodeLicenseKey, type LicenseKeyPayload } from "@mailwoman/core/license/key"
+import { applyStep } from "@mailwoman/core/state-machine"
 import type Stripe from "stripe"
 
 import { calendarDateUTC, plusDays } from "#dates"
@@ -27,9 +28,9 @@ import {
 	findLicenseBySubscription,
 	findToken,
 	insertTokenIfAbsent,
-	setEmailState,
 	setPlanCode,
 } from "#ledger/licenses"
+import { emailMachine, tokenEmailCarrier } from "#ledger/machines"
 import { type LicenseRow, LicenseState, type LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
 import { AGREEMENT_METADATA_KEY, AGREEMENT_VERSION, LICENSEE_FIELD_KEY } from "#shop/catalog"
@@ -234,7 +235,7 @@ export async function fulfilInvoice(
 		return alreadyMinted(deps, winner)
 	}
 
-	await sendTokenEmail(deps, license, { invoice_id: invoiceID, token, issued, expires })
+	await sendTokenEmail(deps, license, { invoice_id: invoiceID, token, issued, expires, email_state: "pending" })
 
 	return { result: "minted", lid: license.lid, invoiceID }
 }
@@ -277,8 +278,10 @@ export type SendResult = { state: "sent" } | { state: "failed"; reason: string }
 export async function sendTokenEmail(
 	deps: Pick<FulfilDependencies, "ledger" | "email">,
 	license: LicenseRow,
-	token: Pick<LicenseTokenRow, "invoice_id" | "token" | "issued" | "expires">
+	token: Pick<LicenseTokenRow, "invoice_id" | "token" | "issued" | "expires" | "email_state">
 ): Promise<SendResult> {
+	const carrier = tokenEmailCarrier(deps.ledger, token.invoice_id)
+
 	let messageID: string
 
 	try {
@@ -296,12 +299,14 @@ export async function sendTokenEmail(
 			token.invoice_id
 		))
 	} catch (error) {
-		await setEmailState(deps.ledger, token.invoice_id, "failed")
+		await applyStep(emailMachine, carrier, token.email_state, { kind: "failed" })
 
 		return { state: "failed", reason: error instanceof Error ? error.message : String(error) }
 	}
 
-	await setEmailState(deps.ledger, token.invoice_id, "sent", messageID)
+	// A conflict means another send recorded its outcome first.
+	// The provider deduplicates on the invoice id, so this send's acceptance needs no second record.
+	await applyStep(emailMachine, carrier, token.email_state, { kind: "sent", messageID })
 
 	return { state: "sent" }
 }

@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   The operator's write of a declared license's state. The worker exposes no administrative route, so the write
- *   reaches the remote ledger through `wrangler d1 execute` as one compare-and-set statement, the same condition
+ *   reaches the remote ledger through `wrangler d1 execute` as one compare-and-set statement. That statement is the
+ *   compare-and-set of the declaration machine's carrier in `shop.declaration-state`, the same condition
  *   `setDeclarationState` applies inside the worker.
  */
 

@@ -205,17 +205,27 @@ export async function currentToken(ledger: Ledger, lid: string): Promise<License
 	)
 }
 
+/**
+ * Move a token's email from the state its caller read to another, recording the
+ * provider's message id when there is one.
+ *
+ * The write applies only while the row still holds `transition.from`.
+ * `"conflict"` means another send recorded its outcome first.
+ */
 export async function setEmailState(
 	ledger: Ledger,
 	invoiceID: string,
-	state: EmailState,
-	messageID?: string
-): Promise<void> {
-	await ledger
+	transition: { from: EmailState; to: EmailState },
+	messageID: string | null
+): Promise<"updated" | "conflict"> {
+	const result = await ledger
 		.updateTable("license_tokens")
-		.set({ email_state: state, ...(messageID ? { email_message_id: messageID } : {}) })
+		.set({ email_state: transition.to, ...(messageID ? { email_message_id: messageID } : {}) })
 		.where("invoice_id", "=", invoiceID)
-		.execute()
+		.where("email_state", "=", transition.from)
+		.executeTakeFirst()
+
+	return Number(result.numUpdatedRows ?? 0) > 0 ? "updated" : "conflict"
 }
 
 /**

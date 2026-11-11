@@ -38,6 +38,7 @@ import { rightsChainCheck } from "#repo-health/checks/rights-chain"
 import { runtimeFlagsCheck } from "#repo-health/checks/runtime-flags"
 import { sideEffectsCheck } from "#repo-health/checks/side-effects"
 import { stalePathLiteralsCheck } from "#repo-health/checks/stale-path-literals"
+import { stateColumnWritesCheck } from "#repo-health/checks/state-column-writes"
 import { stylesheetCheck } from "#repo-health/checks/stylesheet-check"
 import { testLayoutCheck } from "#repo-health/checks/test-layout"
 import { thirdPartyNoticesCheck } from "#repo-health/checks/third-party-notices"
@@ -95,6 +96,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	debtCheck,
 	bundleGraphCheck,
 	sideEffectsCheck,
+	stateColumnWritesCheck,
 	vocabCensusCheck,
 	exportsCheck,
 	typecheckTestsCheck,

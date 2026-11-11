@@ -17,10 +17,12 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isIdentical } from "@mailwoman/core/identical"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { OperationEffect } from "@mailwoman/core/scripting"
+import { applyStep, type StateCarrier } from "@mailwoman/core/state-machine"
 import { defineOperation, type ReleaseOperation } from "@mailwoman/universe/release-kit/operation"
 import Stripe from "stripe"
 import { z } from "zod"
 
+import { declarationMachine } from "#ledger/machines"
 import { LicenseState } from "#ledger/schema"
 import { SHOP_PLAN_CODES, SHOP_PLANS } from "#shop/catalog"
 import { declarationStateStatement } from "#shop/declaration-state"
@@ -234,10 +236,13 @@ const declarationStateOperation = defineOperation({
 	}),
 	outputSchema: z.object({
 		statement: z.string(),
-		outcome: z.enum(["updated", "conflict"]).nullable(),
+		outcome: z.enum(["updated", "unchanged", "conflict"]).nullable(),
 	}),
 	async run(input, context) {
-		const statement = declarationStateStatement(input.lid, input.from, input.to, new Date().toISOString())
+		const at = new Date().toISOString()
+		const event = { kind: "operator-set", to: input.to } as const
+		const step = declarationMachine.transition(input.from, event)
+		const statement = declarationStateStatement(input.lid, input.from, step.next, at)
 
 		if (input.apply !== true || context.dryRun) {
 			context.log("dry run; pass --apply to run the statement against the remote ledger")
@@ -245,14 +250,22 @@ const declarationStateOperation = defineOperation({
 			return { statement, outcome: null }
 		}
 
-		const { changes } = await executeD1WithWrangler({
-			database: "LICENSE_LEDGER",
-			config: resolvePackagePath("@mailwoman/license-worker", "wrangler.toml").toString(),
-			command: statement,
-		})
+		const remoteLedger: StateCarrier<LicenseState, object> = {
+			async compareAndSet(from, to) {
+				const { changes } = await executeD1WithWrangler({
+					database: "LICENSE_LEDGER",
+					config: resolvePackagePath("@mailwoman/license-worker", "wrangler.toml").toString(),
+					command: declarationStateStatement(input.lid, from, to, at),
+				})
+
+				return changes > 0
+			},
+		}
+
+		const outcome = await applyStep(declarationMachine, remoteLedger, input.from, event)
 
 		// A conflict means the row no longer holds --from, or no declaration has the id.
-		return { statement, outcome: changes > 0 ? "updated" : "conflict" }
+		return { statement, outcome: outcome.status === "applied" ? "updated" : outcome.status }
 	},
 })
 

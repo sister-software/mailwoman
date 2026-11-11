@@ -6,6 +6,7 @@
  * A subscription the ledger has never seen is found only through the invoice list. Stripe filters that list by creation time, so the subscription is recovered only while its first invoice was created within `sinceSeconds`. Past that the action is to resend the `invoice.paid` event from the Stripe dashboard.
  */
 
+import { applyStep } from "@mailwoman/core/state-machine"
 import type Stripe from "stripe"
 
 import { todayUTC } from "#dates"
@@ -13,14 +14,8 @@ import { resendIssuanceEmail } from "#declare"
 import type { LicenseWorkerEnv } from "#env"
 import { type FulfilDependencies, fulfilInvoice, sendTokenEmail } from "#fulfil"
 import { issuancesAwaitingEmail } from "#ledger/declarations"
-import {
-	allLicenses,
-	currentToken,
-	findLicense,
-	findToken,
-	setLicenseState,
-	tokensAwaitingEmail,
-} from "#ledger/licenses"
+import { allLicenses, currentToken, findLicense, findToken, tokensAwaitingEmail } from "#ledger/licenses"
+import { licenseCarrier, licenseMachine, PaymentState } from "#ledger/machines"
 import { type LicenseRow, LicenseState, type LicenseTokenRow } from "#ledger/schema"
 import { licenseStateAfterSubscription } from "#policy"
 
@@ -60,10 +55,6 @@ export interface ReconcileOptions {
 	 */
 	sinceSeconds: number
 }
-
-const PAYMENT_STATE_DISPUTED = "disputed"
-const PAYMENT_STATE_DISPUTE_WON = "dispute_won"
-const PAYMENT_STATE_REFUNDED = "refunded"
 
 const EMAIL_ADDRESS = /[^\s@<>"']+@[^\s@<>"']+/gu
 const LONG_OPAQUE_VALUE = /[A-Za-z0-9_-]{40,}/gu
@@ -188,14 +179,13 @@ export async function reconcileLedger(
 
 			if (!next || next.state === license.license_state) continue
 
-			const outcome = await setLicenseState(
-				deps.ledger,
-				license.lid,
-				{ from: license.license_state, to: next.state },
-				next.paymentState ? { paymentState: next.paymentState } : {}
-			)
+			const outcome = await applyStep(licenseMachine, licenseCarrier(deps.ledger, license.lid), license.license_state, {
+				kind: "correction",
+				to: next.state,
+				paymentState: next.paymentState,
+			})
 
-			if (outcome === "conflict") {
+			if (outcome.status === "conflict") {
 				report.failed.push({
 					stage: "state",
 					lid: license.lid,
@@ -241,7 +231,7 @@ async function mintIfUnminted(
 
 interface Correction {
 	state: LicenseState
-	paymentState: string | null
+	paymentState: PaymentState | null
 }
 
 async function paymentIntentOf(stripe: Stripe, invoiceID: string): Promise<string | null> {
@@ -284,7 +274,7 @@ async function stateStripeSays(
 
 	if (license.license_state !== LicenseState.Revoked) {
 		if (token && (await fullyRefunded(stripe, token.invoice_id))) {
-			return { state: LicenseState.Revoked, paymentState: PAYMENT_STATE_REFUNDED }
+			return { state: LicenseState.Revoked, paymentState: PaymentState.Refunded }
 		}
 
 		return {
@@ -296,7 +286,7 @@ async function stateStripeSays(
 		}
 	}
 
-	if (license.payment_state !== PAYMENT_STATE_DISPUTED || !token) return null
+	if (license.payment_state !== PaymentState.Disputed || !token) return null
 
 	const paymentIntent = await paymentIntentOf(stripe, token.invoice_id)
 
@@ -311,6 +301,6 @@ async function stateStripeSays(
 	// A later pass then leaves the license to its subscription instead of rereading a settled dispute.
 	return {
 		state: licenseStateAfterSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today }),
-		paymentState: PAYMENT_STATE_DISPUTE_WON,
+		paymentState: PaymentState.DisputeWon,
 	}
 }
