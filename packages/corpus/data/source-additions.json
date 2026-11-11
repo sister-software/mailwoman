@@ -2445,6 +2445,21 @@
 			"source_url": "https://services2.arcgis.com/FPJlJZYRsD8OhCWA/arcgis/rest/services/Address_Point_(Public_View)/FeatureServer/0",
 			"notes": "Read by the bsp-gu adapter. 34,323 address points with house number, street, unit and village.",
 			"origin": "2026-10-17_corpus_input_mapping"
+		},
+		{
+			"iso2": "US",
+			"sector": "public_administration",
+			"source": "The National Map structures layer, Post Offices",
+			"owner": "U.S. Geological Survey",
+			"role": "OBSERVATION",
+			"authority_basis": "The USGS National Geospatial Program publishes the National Structures Dataset as part of The National Map",
+			"access": "ArcGIS MapServer `structures` layer 38 on carto.nationalmap.gov, queried for FCODE 78006, no key",
+			"license": "CORPUS INPUT, TERMS UNREAD",
+			"geometry": "Y",
+			"status": "VERIFIED_CORPUS",
+			"source_url": "https://carto.nationalmap.gov/arcgis/rest/services/structures/MapServer/38",
+			"notes": "Read by the usgov-usgs-post-offices adapter. 31,033 post offices in the 2026-11-09 pull, each with a name, street address, city, state, ZIP Code and point.",
+			"origin": "2026-10-17_corpus_input_mapping"
 		}
 	]
 }

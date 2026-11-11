@@ -50,6 +50,7 @@ import { fetchNPPES } from "#us/tools/fetch/nppes"
 import { fetchStateHISchools } from "#us/tools/fetch/state/hi-schools"
 import { fetchStateSources } from "#us/tools/fetch/state/sources"
 import { fetchTigerFull } from "#us/tools/fetch/tiger-full"
+import { fetchUSGSPostOffices } from "#us/tools/fetch/usgs-post-offices"
 
 /**
  * The fetcher for each source id that `mailwoman corpus fetch` accepts.
@@ -96,6 +97,7 @@ export const FETCH_SOURCES = {
 	"state-sources": fetchStateSources,
 	"state-hi-schools": fetchStateHISchools,
 	"tiger-full": fetchTigerFull,
+	"usgs-post-offices": fetchUSGSPostOffices,
 	"wikidata-subvenue": fetchWikidataSubVenue,
 	"wikidata-vital-places": fetchWikidataVitalPlaces,
 } as const

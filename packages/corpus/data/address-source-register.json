@@ -1,7 +1,7 @@
 {
 	"registerID": "address-source-register",
 	"version": "0.1.0",
-	"contentDigest": "33e26cee9fb62c6de96c6acb65833e00e551d1c3d9c1e82ca81d77e37d90e6d3",
+	"contentDigest": "23e37a852c129a3e01699d59596575cd8e29139d6fc12afaf3d8e7b238cc55ba",
 	"provenance": {
 		"source": "mailwoman-research",
 		"sourceVersion": "global-address-corpus-spec-v3",
@@ -9533,6 +9533,52 @@
 				}
 			},
 			"licenseID": "unchecked-corpus-input-us-u-s-department-of-transportation"
+		},
+		{
+			"state": "elected",
+			"electedTerms": "Work of the United States Government under 17 U.S.C. § 105, described by the publisher as public domain structures data",
+			"termsVersion": "the structures MapServer description as served on 2026-11-11, copyrightText `USGS TNM – National Structures Dataset. Data Refreshed October, 2026.`",
+			"retrievedCopy": "service.json beside post-offices.geojsonl under $MAILWOMAN_CACHE_ROOT/sources/usgov-usgs-post-offices/, which the usgs-post-offices fetcher writes on every fetch from https://carto.nationalmap.gov/arcgis/rest/services/structures/MapServer?f=json",
+			"retrievedAt": "2026-11-11",
+			"electedBecause": "The National Structures Dataset is compiled and published by the U.S. Geological Survey, an agency of the United States, as part of The National Map, so it is a work of the United States Government in which 17 U.S.C. § 105 denies copyright. The publisher's own description of the layer agrees: the structures MapServer's `serviceDescription`, read on 2026-11-11, states `The National Map download client allows free downloads of public domain structures data in either Esri File Geodatabase or Shapefile formats.`, and contains none of `license`, `restrict`, `copyright` or `use constraint`. Its `copyrightText` reads `USGS TNM – National Structures Dataset. Data Refreshed October, 2026.`, and layer 38, `Post Offices`, carries an empty `copyrightText` and no license or use-constraint field. USGS's site-wide page `https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits` answered HTTP 202 with an empty body on 2026-11-11, so its text is not part of this reading. The rows are facts about post offices (a name, a street address, a city, a state, a ZIP Code and a point), which the US factual-data reading in `packages/corpus/lib/us/AGENTS.md` also elects. Some structures are edited by The National Map Corps volunteers; the publisher distributes their edits in the same public-domain dataset and states no separate terms for them. The basis below is the statute rather than a grant, as for the IRS Business Master File.",
+			"operations": {
+				"fetch": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Section 105 of title 17 denies copyright to a work of the United States Government, and the service answers the query with no key and states no access condition."
+				},
+				"extract": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Reading fields out of a work no copyright protects is unrestricted by copyright."
+				},
+				"transform": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Adaptation is an exclusive right only where copyright subsists, and section 105 denies it here."
+				},
+				"train": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Fitting a model on the rows reproduces and adapts a work that no copyright protects, and the publisher calls the data public domain."
+				},
+				"redistribute-data": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "Distribution of a United States Government work needs no grant. Crediting the USGS National Map is courtesy rather than obligation."
+				},
+				"redistribute-model": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "The question whether trained weights are a derivative of the rows does not arise where the rows carry no copyright."
+				},
+				"commercial-sublicense": {
+					"permission": "permitted",
+					"basis": "statutory-exception",
+					"because": "No right subsists to sublicense, so a recipient needs no grant from this repository."
+				}
+			},
+			"licenseID": "unchecked-corpus-input-us-u-s-geological-survey"
 		},
 		{
 			"state": "elected",
@@ -24963,6 +25009,22 @@
 				"reading": "absent",
 				"because": "The layer's columns were read in full: an address-point identifier, the house number, directional prefix, street name and type, unit, full road name, village and full address, coordinates, and NG911 fields (postcode, place type, elevation, discrepancy agency) that are blank or coded. No column names an owner, occupant or contact."
 			}
+		},
+		{
+			"sourceID": "us-public-administration-3",
+			"iso2": "US",
+			"sector": "public-administration",
+			"name": "The National Map structures layer, Post Offices",
+			"status": "verified-corpus",
+			"asserts": ["observation"],
+			"authorityBasis": "The USGS National Geospatial Program publishes the National Structures Dataset as part of The National Map",
+			"geometry": "present",
+			"license": "unchecked-corpus-input-us-u-s-geological-survey",
+			"researchPass": "2026-10-17-corpus-input-mapping",
+			"access": "ArcGIS MapServer `structures` layer 38 on carto.nationalmap.gov, queried for FCODE 78006, no key",
+			"publisher": "U.S. Geological Survey",
+			"sourceURL": "https://carto.nationalmap.gov/arcgis/rest/services/structures/MapServer/38",
+			"note": "Read by the usgov-usgs-post-offices adapter. 31,033 post offices in the 2026-11-09 pull, each with a name, street address, city, state, ZIP Code and point."
 		}
 	]
 }

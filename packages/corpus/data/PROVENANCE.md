@@ -42,7 +42,7 @@ first three as the placeholders `varies`, `country-specific` and the empty strin
 non-rail rows, and has no column for a personal-data review, so a review records its findings here
 rather than by rewriting the record of what the research pass found on 2026-09-18 (#2323).
 
-`--additions` defaults to `source-additions.json` and holds 156 source rows in the research CSV's own columns,
+`--additions` defaults to `source-additions.json` and holds 164 source rows in the research CSV's own columns,
 read after the CSV's rows: the publications a corpus source reads that no research pass recorded, such as
 OpenStreetMap, Who's On First, TIGER/Line, the OpenAddresses files the recipes read, and the 118 county and
 state bodies whose OpenAddresses rows sit in the US situs databases (`us-situs-sources.json`). Each reads
@@ -95,7 +95,7 @@ concluding the publisher renamed itself.
 | ---------------------------------------------- | ----: | ---------------------------------------------------------------------- |
 | `global-address-jurisdiction-inventory-v3.csv` |   250 | all 250 rows — every ISO 3166-1 alpha-2 code plus the operational `XK` |
 | `global-functional-authority-corpora-v2.csv`   | 2,426 | the 426 rows naming a national source. 2,000 are dropped               |
-| `source-additions.json`                        |   156 | all 156 rows, after the CSV's                                          |
+| `source-additions.json`                        |   164 | all 164 rows, after the CSV's                                          |
 
 The 2,000 dropped rows have `origin = global_research_rail`. They're eight global discovery lookups the
 pass repeated once per jurisdiction. With the `iso2` and `jurisdiction` columns ignored, they collapse

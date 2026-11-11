@@ -109,11 +109,11 @@ separate columns of one row, and reading the file without the role field teaches
 registered-office grammar.
 
 The field is required on `CorpusAdapter` and has no default, because the answer is a property of
-the source that only the adapter's author has read. Ten of the 23 adapters here emit a non-premise
-role: four facility (`state-hi-schools`, `usgov-hrsa-fqhc`, `usgov-imls-pls`,
-`usgov-samhsa-treatment-locator`), three mailing (`invented-po-box`, `state-tx-notaries`,
-`usgov-irs-bmf`), two practice (`usgov-nppes`, `state-ny-notaries`) and one registered-office
-(`state-ia-contractors`). A defaulted field would record premise for all ten.
+the source that only the adapter's author has read. Eleven of the 24 adapters here emit a non-premise
+role: five facility (`state-hi-schools`, `usgov-hrsa-fqhc`, `usgov-imls-pls`,
+`usgov-samhsa-treatment-locator`, `usgov-usgs-post-offices`), three mailing (`invented-po-box`,
+`state-tx-notaries`, `usgov-irs-bmf`), two practice (`usgov-nppes`, `state-ny-notaries`) and one
+registered-office (`state-ia-contractors`). A defaulted field would record premise for all eleven.
 
 **Assertion per field.** `AssertedProposition` in
 [`@mailwoman/evidence`](../evidence/lib/status.ts) records what a publisher asserts, per field, in

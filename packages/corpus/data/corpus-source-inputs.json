@@ -4767,6 +4767,15 @@
 				}
 			]
 		},
+		"usgov-usgs-post-offices": {
+			"inputs": [
+				{
+					"registerSource": "us-public-administration-3",
+					"license": "unchecked-corpus-input-us-u-s-geological-survey",
+					"reads": "The National Map structures layer's post offices (FCODE 78006)"
+				}
+			]
+		},
 		"vlaanderen": {
 			"inputs": [
 				{
