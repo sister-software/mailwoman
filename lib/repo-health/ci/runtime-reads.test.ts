@@ -57,6 +57,29 @@ describe("summarizeRuntimeReads", () => {
 		expect(readsAnyOf(reads!, ["packages/codex/out"], [])).toBe(true)
 	})
 
+	it("reads only the checkout's git metadata for a commit query, and the whole tree for a listing", () => {
+		const stamp = summarize(`
+			import { gitHead } from "@mailwoman/core/git"
+			import { buildSHA } from "@mailwoman/gazetteer/tools/pipeline/stamp-manifest"
+			import { repoRootPath } from "@mailwoman/core/paths"
+
+			const commit = await gitHead(repoRootPath(), { short: true })
+			const stamped = buildSHA(repoRootPath())
+		`)
+
+		expect(stamp).toEqual({ unbounded: null, paths: [], exact: [""], dataRoot: false })
+		expect(readsAnyOf(stamp!, ["packages/postcode/lib/shapes.ts"], [])).toBe(false)
+
+		const listing = summarize(`
+			import { dirtyTrackedFiles } from "@mailwoman/core/git"
+			import { repoRootPath } from "@mailwoman/core/paths"
+
+			const dirty = await dirtyTrackedFiles(repoRootPath())
+		`)
+
+		expect(readsAnyOf(listing!, ["packages/postcode/lib/shapes.ts"], [])).toBe(true)
+	})
+
 	it("states why a module may read any file", () => {
 		expect(summarize("export const load = (name) => import(name)")?.unbounded).toBe(
 			"loads a module by a computed specifier"

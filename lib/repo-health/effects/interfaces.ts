@@ -172,6 +172,40 @@ const PROCESSES: readonly EffectInterface[] = ["spawnProcess", "runFile", "runFi
 }))
 
 /**
+ * The git queries in `@mailwoman/core/git`, by the checkout path each one takes.
+ *
+ * A query of commit identity, a ref's tree or the history reads the repository's git metadata.
+ * No tracked file holds that metadata, so the query reads the checkout path's own metadata only.
+ *
+ * A listing or status of the working tree reads every file under the path.
+ *
+ * `git` and `gitSync` run whichever git command the caller passes, in the checkout
+ * or in a scratch repository such as one a test builds.
+ * They stay undeclared, as a direct `runFile("git", …)` records a process edge
+ * and no read of its working directory.
+ */
+const GIT_QUERIES: readonly EffectInterface[] = [
+	{ name: "gitHead", parameters: inspects(0) },
+	{ name: "currentBranch", parameters: inspects(0) },
+	{ name: "gitCommonDirectory", parameters: inspects(0) },
+	{ name: "workingTreeRoot", parameters: inspects(0) },
+	{ name: "changedFiles", parameters: inspects(0) },
+	{ name: "renamesSince", parameters: inspects(1) },
+	{ name: "filesAtRef", parameters: inspects(1) },
+	{ name: "movedAwayPaths", parameters: inspects(0) },
+	{ name: "trackedFiles", parameters: readsFrom(0) },
+	{ name: "streamTrackedFiles", parameters: readsFrom(0) },
+	{ name: "dirtyTrackedFiles", parameters: readsFrom(0) },
+	{ name: "workingTreeStatus", parameters: readsFrom(0) },
+	{ name: "workingTreeFiles", parameters: readsFrom(1) },
+]
+
+/**
+ * `buildSHA` stamps a layer manifest with the checkout's short commit, a query of commit identity.
+ */
+const BUILD_STAMPS: readonly EffectInterface[] = [{ name: "buildSHA", parameters: inspects(0) }]
+
+/**
  * Each effect module by every specifier that reaches it: the public subpath, and inside core its `#` alias.
  */
 export const EFFECT_MODULES: ReadonlyMap<string, readonly EffectInterface[]> = new Map([
@@ -185,6 +219,10 @@ export const EFFECT_MODULES: ReadonlyMap<string, readonly EffectInterface[]> = n
 	["#fs/streams", FS_STREAMS],
 	["@mailwoman/core/process", PROCESSES],
 	["#process", PROCESSES],
+	["@mailwoman/core/git", GIT_QUERIES],
+	["#git", GIT_QUERIES],
+	["@mailwoman/gazetteer/tools/pipeline/stamp-manifest", BUILD_STAMPS],
+	["#tools/pipeline/stamp-manifest", BUILD_STAMPS],
 	["@mailwoman/sqlite", [...SQLITE_OPENERS, ...SQLITE_SEALS]],
 	["@mailwoman/sqlite/sealed", SQLITE_OPENERS],
 	["#sealed", SQLITE_OPENERS],
