@@ -292,6 +292,10 @@ export const GeocodeResultSchema = z
 		 * Set on the `address_point` and `interpolated` tiers.
 		 * Their coordinates come from one register row.
 		 *
+		 * A landmark answer also sets it, at the `venue` tier.
+		 * Its source is the landmark record's `landmark_source`, or `wikidata`
+		 * when the record names none, and its release is null.
+		 *
 		 * It is null on every other tier, including a coordinate a later pass moved to a venue
 		 * or a plus code, because that coordinate no longer comes from the row.
 		 */

@@ -74,11 +74,11 @@ D22 implementation status: Published `mailwoman`, `@mailwoman/neural`, and `@mai
 
 ## Evidence: dated measurements and comparisons
 
-| ID  | Evidence obligation                                                                                                                | Source leads and acceptance check                                                                                                                              |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| V01 | Index dated benchmark artifacts and explain resolve rate, exact parse, coordinate accuracy, sampling, circularity, and throughput. | Give each linked record's version, sample, denominator, comparison, and method. Mark release 11.0.0 evidence gaps.                                             |
-| V02 | Publish each current geocoding panel with method, source, sample, measured results, losses, reproducibility command, and caveats.  | France BAN and Belgium panel. Rerun or label the existing artifacts as historical. Check historical numbers against the current artifact before republication. |
-| V03 | Compare documented alternatives for a bounded use case with date, configuration, runnable method, and limitations.                 | Google Maps, Nominatim, Pelias/libpostal, and comparison index. Verify third-party claims from primary current sources at publication time.                    |
+| ID  | Evidence obligation                                                                                                                    | Source leads and acceptance check                                                                                                           |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| V01 | Index dated benchmark artifacts and explain resolve rate, exact parse, coordinate accuracy, sampling, circularity, and throughput.     | Give each linked record's version, sample, denominator, comparison, and method. Mark release 11.0.0 evidence gaps.                          |
+| V02 | Folded into V01. A geocoding panel rerun against a published release is added to V01 with method, source, sample, losses, and command. | V01 already labels the France BAN and Belgium panels as historical 8.7.0 runs and checks their numbers against the committed result files.  |
+| V03 | Compare documented alternatives for a bounded use case with date, configuration, runnable method, and limitations.                     | Google Maps, Nominatim, Pelias/libpostal, and comparison index. Verify third-party claims from primary current sources at publication time. |
 
 ## Draft and review sequence
 

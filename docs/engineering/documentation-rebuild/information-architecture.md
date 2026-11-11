@@ -51,11 +51,11 @@ Diátaxis separates learning, work, lookup, and understanding. A tutorial leads 
 | E04            | `/docs/explanation/confidence-and-limits`   | explanation | What confidence, ambiguity, and abstention mean for use decisions.                                  |
 | E05            | `/docs/explanation/data-and-model-quality`  | explanation | How corpus provenance, holdouts, and release evaluation support claims.                             |
 | V01            | `/evidence/benchmarks`                      | evidence    | Dated benchmark index and how to read the metrics.                                                  |
-| V02            | `/evidence/geocoding-panels`                | evidence    | Reproducible country/panel measurements with losses and caveats.                                    |
+| V02            | Folded into `V01`                           | evidence    | `V01` lists each country panel's version, sample, denominator, method, and caveats.                 |
 | V03            | `/evidence/comparisons`                     | evidence    | Dated, scoped alternatives and runnable comparison method.                                          |
 | A01            | `/about`                                    | landing     | Mission, contact, support, and security route.                                                      |
 
-This revised architecture proposes 44 destinations: 6 product/solution landing pages + 23 learning/work pages + 6 reference pages + 5 explanation pages + 3 evidence pages + 1 about page = 44. The five added guide destinations split the former D10 brief by reader outcome. These are proposed destinations, with no publication quota.
+This revised architecture proposes 43 routes: 6 product/solution landing pages + 23 learning/work pages + 6 reference pages + 5 explanation pages + 2 evidence pages + 1 about page = 43. The five added guide destinations split the former D10 brief by reader outcome. `V02` keeps its ID without a route. `V01` indexes the France BAN and Belgium panels with their versions, samples, denominators, methods, and caveats. A separate panel page would repeat that index until a panel is rerun against a published release, and a rerun panel joins `V01`. These are proposed destinations, with no publication quota.
 
 ## Navigation and cross-links
 
