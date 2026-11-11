@@ -20,7 +20,10 @@
 		"!**/*.test.tsx"
 	],
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": [
+		"./lib/lookup.ts",
+		"./out/lookup.js"
+	],
 	"imports": {
 		"#*": {
 			"types": "./out/*.d.ts",

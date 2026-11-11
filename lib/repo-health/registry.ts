@@ -36,6 +36,7 @@ import { privateNameShadowsCheck } from "#repo-health/checks/private-name-shadow
 import { publishedBundlesCheck } from "#repo-health/checks/published-bundles"
 import { rightsChainCheck } from "#repo-health/checks/rights-chain"
 import { runtimeFlagsCheck } from "#repo-health/checks/runtime-flags"
+import { sideEffectsCheck } from "#repo-health/checks/side-effects"
 import { stalePathLiteralsCheck } from "#repo-health/checks/stale-path-literals"
 import { stylesheetCheck } from "#repo-health/checks/stylesheet-check"
 import { testLayoutCheck } from "#repo-health/checks/test-layout"
@@ -93,6 +94,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	countryLiteralSetsCheck,
 	debtCheck,
 	bundleGraphCheck,
+	sideEffectsCheck,
 	vocabCensusCheck,
 	exportsCheck,
 	typecheckTestsCheck,

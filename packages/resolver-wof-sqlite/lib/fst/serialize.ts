@@ -53,11 +53,7 @@ const MAGIC = Buffer.from(FST_MAGIC_BYTES)
  */
 const MAX_CHAIN_LEN = 8
 
-const placetypeToIdx = new Map<string, number>()
-
-for (let i = 0; i < PLACETYPE_ORDER.length; i++) {
-	placetypeToIdx.set(PLACETYPE_ORDER[i]!, i)
-}
+const placetypeToIdx = new Map<string, number>(PLACETYPE_ORDER.map((placetype, index) => [placetype, index]))
 
 /**
  * Serializes a matcher, with optional provenance, into the current FST binary format.

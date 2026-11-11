@@ -20,7 +20,10 @@
 		"!**/*.test.tsx"
 	],
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": [
+		"./lib/plugin.ts",
+		"./out/plugin.js"
+	],
 	"imports": {
 		"#*": {
 			"types": "./out/*.d.ts",

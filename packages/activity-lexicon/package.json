@@ -32,7 +32,10 @@
 		"!**/*.test.tsx"
 	],
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": [
+		"./lib/lexicon.ts",
+		"./out/lexicon.js"
+	],
 	"imports": {
 		"#*": {
 			"types": "./out/*.d.ts",

@@ -38,7 +38,12 @@
 		"!**/*.test.tsx"
 	],
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": [
+		"./sdk/**/*.run.ts",
+		"./tools/**/*.run.ts",
+		"./out/sdk/**/*.run.js",
+		"./out/tools/**/*.run.js"
+	],
 	"imports": {
 		"#sdk/*": {
 			"types": "./out/sdk/*.d.ts",

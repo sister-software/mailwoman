@@ -153,6 +153,26 @@ under `--conditions=workerd,worker,browser`, in the shape of
 `packages/neural/lib/web/browser-slo.integration.test.ts`. When a name moves, every caller is
 repointed in the same change, and no forwarding export stays.
 
+## Import-time effects
+
+An import-time effect is work a module does when it is evaluated: it registers a listener, writes a
+global, mutates another module's state, imports CSS, or starts I/O. A value a module computes for its
+own constants, such as `new Set(Object.keys(TABLE))`, is no effect, and neither is a write to an object
+the module itself declares.
+
+A bundler that reads `sideEffects: false` drops a module whose exports go unused, and with it whatever
+the module runs at evaluation. A workspace that declares the field lists each module that runs an
+import-time effect, by its source path and its `out/` path. A `*.run.ts` script and `cli/main.ts` are
+entry points whose module-scope statements are the program, so they are listed by glob. An `if
+(import.meta.main)` block runs only for the entry point and needs no listing. The `side-effects`
+repository check reads every declaring workspace's sources and reports a module the declaration
+misses.
+
+`/* @__PURE__ */` tells a bundler it may delete a call whose result goes unused. Put it only on a call
+whose callee you have read, never on an effect interface, which the same check reports.
+`mwops side-effects` reports the bytes a bare import of each module keeps when every module counts as
+effectful. Those bytes show where an annotation would shrink a bundle.
+
 ## Core tests and Vite
 
 When one core test imports both `@mailwoman/core` and a core subpath, Vite can interleave the barrel and

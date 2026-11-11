@@ -22,7 +22,10 @@
 		"!**/*.test.tsx"
 	],
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": [
+		"./cli/main.ts",
+		"./out/cli/main.js"
+	],
 	"imports": {
 		"#cli/*": {
 			"types": "./out/cli/*.d.ts",
