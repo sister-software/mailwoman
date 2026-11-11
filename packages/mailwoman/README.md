@@ -170,8 +170,8 @@ Programmatically, build a `WOFSQLitePlaceLookup` backend (from
 `@mailwoman/resolver-wof-sqlite`), pass it to `createWOFResolver` (from `@mailwoman/resolver`),
 and hand the resolver to `createRuntimePipeline({ classifier, resolver })`. The resolved
 `result.tree` roots then have a `wof:id` and coordinate. See
-[Getting started → Adding resolution](https://mailwoman.post/docs/developers/get-started/install-and-first-parse)
-for the worked example.
+[Data and locales](https://mailwoman.post/docs/reference/data-and-locales)
+for database prerequisites and installation checks.
 
 ### Which place the coordinate comes from
 
@@ -226,7 +226,7 @@ package is the umbrella that wires them together as a single `npm install`.
 ## Related
 
 - [Documentation & blog](https://mailwoman.post)
-- [What Mailwoman Is](https://mailwoman.post/docs/developers/get-started/what-mailwoman-is)
+- [What Mailwoman Is](https://mailwoman.post/product)
 - [GitHub](https://github.com/sister-software/mailwoman)
 
 ## License

@@ -87,4 +87,4 @@ D22 implementation status: Published `mailwoman`, `@mailwoman/neural`, and `@mai
 3. Check each command against the owning code or released artifact. Check each measurement against its dated data source or executed example. Mark unsupported claims for omission or a labeled open question.
 4. Draft from a role template in `docs/engineering/page-templates/`. Use Good Docs prompts only where they serve the reader's task. Define terms on first use and follow `docs/engineering/writing-system.md`.
 5. Run the page's commands, inspect rendered output and links, and ask a reader in the target group to attempt the result. Record version, platform, data, and date.
-6. Publish the replacement route and its redirects together. Check inbound old links and the old section anchors before retiring the source page.
+6. Publish the new route after its checks pass. Remove the old article page from navigation and the public article tree at the site cutover, then check that internal links point to current routes.

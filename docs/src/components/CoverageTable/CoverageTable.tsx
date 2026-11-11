@@ -73,7 +73,7 @@ export const CoverageTable = (): ReactNode => (
 			Parsing tests measure how well Mailwoman reads address text. Local parsing data adds country-specific address
 			knowledge. City or region results mark the center of an area; rooftop results identify individual addresses where
 			the data includes them. Japan supports postcode lookup without a published parsing rating.{" "}
-			<Link to="/docs/developers/reference/locales-and-tiers">See evaluation methods and download options →</Link>
+			<Link to="/docs/reference/data-and-locales">See data and locale requirements →</Link>
 		</p>
 	</div>
 )

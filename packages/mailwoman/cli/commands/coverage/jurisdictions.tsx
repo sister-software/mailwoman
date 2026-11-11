@@ -27,8 +27,8 @@ const MAX_TILE_ZOOM = 22
 /**
  * The command specification for `mailwoman coverage jurisdictions`.
  *
- * The CLI reference page `docs/articles/developers/reference/cli.mdx` is generated
- * from these option names and descriptions.
+ * The generator reads these option names and descriptions.
+ * It writes `docs/articles/reference/cli.mdx`.
  * The docs check fails when the page is stale.
  */
 export const spec = {

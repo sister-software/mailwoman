@@ -148,9 +148,11 @@ describe("extractRecords", () => {
 
 describe("isIndexedRoute", () => {
 	test("admits pages and refuses the research listings and the 404 page", () => {
-		expect(
-			["/", "/docs/developers/reference/cli", "/research/2026/05/27/fst-ships-to-browser"].map(isIndexedRoute)
-		).toEqual([true, true, true])
+		expect(["/", "/docs/reference/cli", "/research/2026/05/27/fst-ships-to-browser"].map(isIndexedRoute)).toEqual([
+			true,
+			true,
+			true,
+		])
 
 		expect(
 			["/404", "/404.html", "/research/archive", "/research/tags", "/research/tags/hybrid", "/research/page/2"].map(

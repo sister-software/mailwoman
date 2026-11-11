@@ -66,7 +66,7 @@ async function wofPaths(): Promise<string[]> {
 function buildPreflightMessage(): string {
 	return buildNoGazetteerMessage({
 		dataRoot: DATA_ROOT,
-		docsPath: "/docs/developers/get-started/ten-minute-trial",
+		docsPath: "/docs/reference/data-and-locales",
 	})
 }
 

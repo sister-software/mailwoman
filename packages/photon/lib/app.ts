@@ -28,7 +28,7 @@ export const PHOTON_DOC_INFO: OpenAPIDocInfo = {
 	contact: { name: "Sister Software", url: "https://mailwoman.post" },
 	externalDocs: {
 		description: "What Mailwoman is",
-		url: "https://mailwoman.post/docs/developers/get-started/what-mailwoman-is",
+		url: "https://mailwoman.post/product",
 	},
 	servers: [
 		{

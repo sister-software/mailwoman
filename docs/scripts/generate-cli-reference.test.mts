@@ -16,8 +16,6 @@ import {
 	COMMANDS_DIRECTORY,
 	escapeCell,
 	OUTPUT_PATH,
-	REBUILD_OUTPUT_PATH,
-	renderCLIReference,
 	renderRebuildCLIReference,
 	renderDefault,
 	renderTable,
@@ -45,7 +43,7 @@ describe("generate-cli-reference", () => {
 		}
 
 		surface = await collectCLISurface()
-		page = renderCLIReference(surface)
+		page = renderRebuildCLIReference(surface)
 	}, 60_000)
 
 	it("renders `mailwoman doctor` exactly", () => {
@@ -97,20 +95,17 @@ describe("generate-cli-reference", () => {
 
 		expect(
 			committed,
-			"docs/articles/developers/reference/cli.mdx is stale — run `node docs/scripts/generate-cli-reference.mts`"
+			"docs/articles/reference/cli.mdx is stale — run `node docs/scripts/generate-cli-reference.mts`"
 		).toBe(page)
 	})
 
-	it("matches the new route and keeps published checks separate from checkout flags", async () => {
-		const generated = await readLocalTextFile(REBUILD_OUTPUT_PATH)
-
-		expect(generated).toBe(renderRebuildCLIReference(surface))
-		expect(generated).toContain("## Published 11.0.0 checks")
-		expect(generated).toContain("current checkout's compiled command specifications")
+	it("keeps published checks separate from checkout flags", () => {
+		expect(page).toContain("## Published 11.0.0 checks")
+		expect(page).toContain("current checkout's compiled command specifications")
 	})
 
 	it("renders deterministically and leaks no host path or timestamp", () => {
-		expect(renderCLIReference(surface)).toBe(page)
+		expect(renderRebuildCLIReference(surface)).toBe(page)
 
 		expect(page).not.toContain("/mnt/")
 		expect(page).not.toContain("/home/")

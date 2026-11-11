@@ -645,11 +645,10 @@ Every model promotion leaves the same three kinds of stale content behind, such 
 the old card or a CLI capture from the old weights. Do this after Step 4, once the model is live, so that
 captures run against the real shipped weights instead of a staging candidate:
 
-1. **Refresh the model-card-derived numbers** on the known pages. **This list predates the site
-   restructure, and most of it no longer points to a published page (see #2259).** The published tree is
-   `docs/articles/` (`docusaurus.config.ts` sets `path: "articles"`). `docs/records/site-2026-08/` is
-   the archived August site and must not be edited at release. The live pages today are
-   `docs/articles/developers/status.mdx` and the homepage (`docs/src/pages/index.tsx`).
+1. **Refresh the model-card-derived numbers** on the known pages. The public release status lives at
+   `docs/src/pages/product/limits-and-status.mdx`, and the homepage lives at `docs/src/pages/index.tsx`.
+   The published article tree is `docs/articles/` (`docusaurus.config.ts` sets `path: "articles"`).
+   `docs/records/site-2026-08/` is the archived August site and must not be edited at release.
    `docs/src/components/AboutDemo/AboutDemo.tsx` is gone from the tracked tree, and only a compiled
    remnant under `docs/out/` survives. The flagship concept pages, the tokenization page,
    and the from-Pelias page survive only under `docs/records/site-2026-08/`, so decide
@@ -675,7 +674,7 @@ captures run against the real shipped weights instead of a staging candidate:
    **If the demo is deliberately held on an older model** (because its runtime does not yet feed a new
    required input channel, as in the 6.2.0 precedent below), the demo's own captured screenshots and text
    stay on the old version. Only the library/CLI/server captures move to the new one. State this
-   explicitly in `status.mdx`, so the version mismatch does not look like an oversight.
+   explicitly in `limits-and-status.mdx`, so the version mismatch does not look like an oversight.
 3. **Check `evals/scores-by-version.json` for the new version's row.** `mailwoman eval
    ledger-append` writes it, and the promotion eval prints that command in its `PASS` output. The
    operator runs the command from the session that holds the promotion eval's `PASS` output. If your
@@ -683,15 +682,15 @@ captures run against the real shipped weights instead of a staging candidate:
    Verify whether the row is in the ledger and report it. Also flag any missing row for a prior version
    that you notice, because missing rows otherwise accumulate unnoticed.
 
-`status.mdx` and `releases.mdx` change together or not at all, as each page states. A model promotion
-always touches both: it adds a new row to the releases matrix and re-verifies the banner on status.
+`limits-and-status.mdx` and `releases.mdx` change together when a model promotion changes the shipped
+model version. Add a row to the releases matrix and update the public status page's release summary.
 
 ### The metadata check — `verify-release-metadata.ts` backstops Step 5
 
 Step 5 used to depend on people remembering it, and they sometimes forgot. When 6.4.0 shipped, the eval
 ledger, the `releases.mdx` `(current)` row, and the `status.mdx` info box were all left on 6.3.0. The
 mistake was caught only at 6.5.0, and all three were backfilled by hand during that release.
-`yarn mwops release verify-metadata` now fails the publish early if those three pages have not been
+`yarn mwops release verify-metadata` now fails the publish early if the ledger, releases matrix, or public status page has not been
 updated. The CI step **Verify release metadata is propagated** runs it after the Hugging Face weight
 preflight and before release-it, on both dry and real runs (it is skipped only on `publish_only`
 recovery). Run it locally at any time:
@@ -702,7 +701,7 @@ yarn mwops release verify-metadata   # exit 0 = propagated; exit 1 = one actiona
 
 It uses the **model** version. That version is the `version` field of `neural-weights-en-us/model-card.json` and not the npm/`package.json` version. It checks three things: (1) `evals/scores-by-version.json` has a run for that
 `model_version`, (2) `releases.mdx` has a matrix row for it with the `(current)` marker on that row, and
-(3) the `status.mdx` `:::info[Verified as of …]` box cites it. Because it reads the model card, a
+(3) `docs/src/pages/product/limits-and-status.mdx` identifies it as the model version before the first section. Because it reads the model card, a
 **code-only release** (npm bumps and the model card does not) passes without error. The `(current)` marker
 may sit on a newer row as long as every release above the model version is a documented "model unchanged"
 row. A dry run is the operator's last look before the real dispatch, and the check is meant to catch a

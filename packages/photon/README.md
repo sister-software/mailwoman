@@ -68,7 +68,7 @@ serves no OpenStreetMap data and never emits either. The OpenStreetMap Foundatio
 asks a public geocoder serving its data for a service-level credit, so a public deployment with a layer
 attached also states "© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright"
 in its own documentation or map attribution. `format=jsonld` includes neither field. See the
-[HTTP APIs reference](https://mailwoman.post/docs/developers/reference/http-apis#coordinate-provenance-and-the-openstreetmap-credit).
+[HTTP interfaces reference](https://mailwoman.post/docs/reference/http).
 
 ## Status
 

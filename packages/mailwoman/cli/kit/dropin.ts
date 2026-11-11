@@ -27,7 +27,7 @@ import { buildNoGazetteerMessage, existingWOFDatabasePaths, resolveCandidateDBPa
 /**
  * The documentation page linked by missing-gazetteer messages.
  */
-const GAZETTEER_DOCS_PATH = "/docs/developers/get-started/ten-minute-trial"
+const GAZETTEER_DOCS_PATH = "/docs/reference/data-and-locales"
 
 /**
  * Print an error and exit with a non-zero status.

@@ -627,7 +627,7 @@ export function renderRebuildCLIReference(surface: CLISurface): string {
 	const oldSummary = `The CLI has ${surface.totalCommands} commands. This page documents the ${documentedCount} that a consumer of the published\npackage runs. The rest build the datasets and train the models inside a checkout of the repository,\nand they are listed by group under [Commands this page does not cover](#commands-this-page-does-not-cover).`
 	const newSummary = `The current checkout's generated tree contains ${surface.totalCommands} commands. This page gives full flags for ${documentedCount} of those ${surface.totalCommands} commands. The remaining ${groupedCount} commands appear by group under [Commands this page does not cover](#commands-this-page-does-not-cover). Some documented commands require repository inputs.`
 	const oldRationale = `This page is generated rather than written because a hand-maintained flag table is wrong the day a\nflag changes, and no check catches it. The generator reads the same command specifications that\nbuild the binary, so a flag string here is the flag string \`--help\` prints. A test asserts the\ncommitted page against a fresh render. A stale page therefore fails the build.\n\nThe scope split is deliberate. A page that covers all ${surface.totalCommands} commands would bury the ${documentedCount} that run against\nan installed package under training and dataset tooling that requires the repository, its data root,\nand hours of wall clock. The generator refuses to run if it meets a command group it has never been\ntold about, so the boundary is a decision someone makes rather than an omission.`
-	const newRationale = `The build regenerates this page and the old CLI route from the current checkout's compiled command specifications. The exact-generation test compares both pages with a fresh render. The published 11.0.0 checks above were run separately against an installed package. The generated tables describe the checkout and may differ from that release.`
+	const newRationale = `The build regenerates this page from the current checkout's compiled command specifications. The exact-generation test compares the page with a fresh render. The published 11.0.0 checks above were run separately against an installed package. The generated tables describe the checkout and may differ from that release.`
 
 	const replacements = [
 		["title: CLI", "title: CLI command reference"],
@@ -669,12 +669,7 @@ export function renderRebuildCLIReference(surface: CLISurface): string {
 /**
  * The path of the generated page.
  */
-export const OUTPUT_PATH = repoRootPath("docs", "articles", "developers", "reference", "cli.mdx")
-
-/**
- * The new reference route generated from the same command specifications.
- */
-export const REBUILD_OUTPUT_PATH = repoRootPath("docs", "articles", "reference", "cli.mdx")
+export const OUTPUT_PATH = repoRootPath("docs", "articles", "reference", "cli.mdx")
 
 /**
  * Collect the command surface and render the page without writing it.
@@ -682,28 +677,20 @@ export const REBUILD_OUTPUT_PATH = repoRootPath("docs", "articles", "reference",
 export async function generateCLIReference(): Promise<string> {
 	const surface = await collectCLISurface()
 
-	return renderCLIReference(surface)
+	return renderRebuildCLIReference(surface)
 }
 
 if (import.meta.main) {
 	const surface = await collectCLISurface()
 
-	const outputs = [
-		{ path: OUTPUT_PATH, label: "docs/articles/developers/reference/cli.mdx", rendered: renderCLIReference(surface) },
-		{
-			path: REBUILD_OUTPUT_PATH,
-			label: "docs/articles/reference/cli.mdx",
-			rendered: renderRebuildCLIReference(surface),
-		},
-	]
+	const rendered = renderRebuildCLIReference(surface)
+	const existing = await readLocalTextFile(OUTPUT_PATH).catch(() => null)
 
-	for (const output of outputs) {
-		const existing = await readLocalTextFile(output.path).catch(() => null)
-
-		if (existing !== output.rendered) {
-			await writeLocalFile(output.rendered, output.path)
-		}
-
-		console.log(existing === output.rendered ? `${output.label} is current` : `Wrote ${output.label}`)
+	if (existing !== rendered) {
+		await writeLocalFile(rendered, OUTPUT_PATH)
 	}
+
+	console.log(
+		existing === rendered ? "docs/articles/reference/cli.mdx is current" : "Wrote docs/articles/reference/cli.mdx"
+	)
 }

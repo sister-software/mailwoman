@@ -24,7 +24,7 @@ export interface SearchRecord {
 	 */
 	id: string
 	/**
-	 * Site-relative path without the anchor, such as `/docs/developers/reference/cli`.
+	 * Site-relative path without the anchor, such as `/docs/reference/cli`.
 	 */
 	url: string
 	/**

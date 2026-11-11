@@ -16,7 +16,7 @@ This page lists the current checkout's `mailwoman` command tree. The command tab
 from compiled command specifications. Published 11.0.0 behavior is recorded separately above
 because checkout commands can change after release.
 
-The current checkout's generated tree contains 189 commands. This page gives full flags for 32 of those 189 commands. The remaining 157 commands appear by group under [Commands this page does not cover](#commands-this-page-does-not-cover). Some documented commands require repository inputs.
+The current checkout's generated tree contains 191 commands. This page gives full flags for 32 of those 191 commands. The remaining 159 commands appear by group under [Commands this page does not cover](#commands-this-page-does-not-cover). Some documented commands require repository inputs.
 
 Three conventions apply to every table below.
 
@@ -717,11 +717,11 @@ These groups build data and models using repository tooling and inputs. Their fl
 | `mailwoman dev`       | 14       | Repository maintenance: source generation, fixture capture, lint passes.              |
 | `mailwoman eval`      | 27       | Runs the evaluations that decide whether a model ships.                               |
 | `mailwoman filer`     | 2        | Record-linkage evaluation over regulatory filings.                                    |
-| `mailwoman gazetteer` | 60       | Builds every gazetteer artifact, including the candidate and admin databases.         |
+| `mailwoman gazetteer` | 61       | Builds every gazetteer artifact, including the candidate and admin databases.         |
 | `mailwoman gnaf`      | 1        | Assembles the Australian G-NAF address register.                                      |
 | `mailwoman placer`    | 5        | Trains and evaluates the coarse country placer.                                       |
 | `mailwoman release`   | 2        | Stages model weights for a release and admin-merges a pull request behind its guards. |
-| `mailwoman situs`     | 6        | Builds the US rooftop address-point and interpolation databases.                      |
+| `mailwoman situs`     | 7        | Builds the US rooftop address-point and interpolation databases.                      |
 | `mailwoman tiger`     | 4        | Processes US Census TIGER/Line road and boundary data.                                |
 | `mailwoman tiles`     | 1        | Publishes vector tiles to the demo map's bucket.                                      |
 | `mailwoman train`     | 1        | Resolves the training configurations the model trainer reads.                         |
@@ -729,7 +729,7 @@ These groups build data and models using repository tooling and inputs. Their fl
 
 ## Rationale
 
-The build regenerates this page and the old CLI route from the current checkout's compiled command specifications. The exact-generation test compares both pages with a fresh render. The published 11.0.0 checks above were run separately against an installed package. The generated tables describe the checkout and may differ from that release.
+The build regenerates this page from the current checkout's compiled command specifications. The exact-generation test compares the page with a fresh render. The published 11.0.0 checks above were run separately against an installed package. The generated tables describe the checkout and may differ from that release.
 
 ## See also
 

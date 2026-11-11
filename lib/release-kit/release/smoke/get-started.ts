@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The cold trial of the get-started pages: prove their pasted transcripts against a real consumer install rather than the
+ * @file The cold trial of the first-parse tutorial and related CLI commands against a real consumer install rather than the
  *   monorepo's hoisted `node_modules`. A workspace-linked dev tree resolves things a stranger's `npm install` never
  *   would (a sibling package, a locale overlay), which is the trap `smoke-clean-install` exists for too.
  *
@@ -11,13 +11,13 @@
  *   tarballs into a project outside the repo tree, then run the pages' commands verbatim and assert their claims.
  *
  *   The smoke test has two legs, split by whether a step needs network access beyond npm's registry fetch.
- *   The default leg runs the install-and-first-parse script and runs `mailwoman doctor` against an absent
+ *   The default leg runs the first-parse script and runs `mailwoman doctor` against an absent
  *   data root. It also checks the shell parse. The `full` leg runs `mailwoman data pull candidate` (~2.88 GB)
- *   and the two `mailwoman geocode` calls from step 5 of the ten-minute trial. The caller may supply a
+ *   and two `mailwoman geocode` calls. The caller may supply a
  *   data root to avoid repeating the pull.
  *
- *   Pages this proves: `docs/articles/developers/get-started/install-and-first-parse.mdx`,
- *   `docs/articles/developers/get-started/ten-minute-trial.mdx`.
+ *   The first script follows `docs/articles/start.mdx`. The CLI and geocode legs check package behavior
+ *   independently of that tutorial.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers/stat"
@@ -32,14 +32,14 @@ import { installedMailwomanBin } from "#release-kit/release/smoke/installed-bin"
 import { packWorkspaces, walkWorkspaceClosure } from "#release-kit/release/workspace-closure"
 
 /**
- * The packages the get-started pages tell a reader to install.
+ * The packages the first-parse tutorial tells a reader to install.
  *
  * Their closure is computed, never listed.
  */
 export const GET_STARTED_SEEDS = ["mailwoman", "@mailwoman/neural", "@mailwoman/neural-weights-en-us"] as const
 
 /**
- * Install-and-first-parse.mdx's script, verbatim.
+ * The script from `docs/articles/start.mdx`, verbatim.
  *
  * The page and this string must say the same thing.
  */
@@ -48,29 +48,28 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const parse = createRuntimePipeline({ classifier })
-
 const result = await parse("apt 4b 350 5th ave new york ny 10118")
 
 console.log("input:", result.input)
+console.log("normalized:", result.tree.raw)
 console.log("locale:", result.locale.locale)
 console.log("kind:", result.kind.kind)
-console.log()
 
-function print(node, depth = 0) {
-	const pad = "  ".repeat(depth)
-	console.log(\`\${pad}\${node.tag}: "\${node.value}"  (confidence \${node.confidence.toFixed(2)})\`)
-	for (const child of node.children) print(child, depth + 1)
+function printNode(node, depth = 0) {
+	const indent = "  ".repeat(depth)
+	console.log(\`\${indent}\${node.tag} [\${node.start}, \${node.end}): \${JSON.stringify(node.value)}\`)
+	for (const child of node.children) printNode(child, depth + 1)
 }
 
-for (const root of result.tree.roots) print(root)
+for (const root of result.tree.roots) printNode(root)
 `
 
 const FIRST_PARSE_NEEDLES = [
 	"locale: en-US",
 	"kind: structured_address",
-	'locality: "New York"',
-	'postcode: "10118"',
-	'house_number: "350"',
+	'locality [19, 27): "New York"',
+	'postcode [31, 36): "10118"',
+	'house_number [7, 10): "350"',
 ]
 
 const DOCTOR_NEEDLES = [
@@ -128,7 +127,7 @@ function assertNeedles(output: string, needles: readonly string[], page: string)
 
 /**
  * Pack the seeds' closure and install it into a throwaway project.
- * Then run the two pages' transcripts.
+ * Then run the tutorial's parser script and the CLI probes.
  *
  * @throws On the first claim that no longer holds, naming the page.
  */
@@ -160,12 +159,12 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 
 	const cli = await installedMailwomanBin(project)
 
-	log("[get-started] install-and-first-parse.mdx: the parse script…")
+	log("[get-started] start.mdx: the parse script…")
 	await writeLocalTextFile(FIRST_PARSE_SCRIPT, project("parse.mjs"))
-	assertNeedles(run("node", ["parse.mjs"], project), FIRST_PARSE_NEEDLES, "install-and-first-parse.mdx")
+	assertNeedles(run("node", ["parse.mjs"], project), FIRST_PARSE_NEEDLES, "start.mdx")
 	legs.push("first-parse")
 
-	log("[get-started] ten-minute-trial.mdx step 2: mailwoman doctor, cold, against an absent data root…")
+	log("[get-started] mailwoman doctor, cold, against an absent data root…")
 
 	let doctor: string
 
@@ -178,23 +177,19 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 		doctor = error instanceof Error && "stdout" in error ? String((error as { stdout: unknown }).stdout) : String(error)
 	}
 
-	assertNeedles(doctor, DOCTOR_NEEDLES, "ten-minute-trial.mdx (doctor)")
+	assertNeedles(doctor, DOCTOR_NEEDLES, "mailwoman doctor")
 
 	if (doctor.includes("export MAILWOMAN_CANDIDATE_DB")) {
 		throw new Error(
-			"ten-minute-trial.mdx (doctor): doctor prints an export line, but the page teaches the bare pull as the whole fix"
+			"mailwoman doctor prints an export line, but the data reference teaches the bare pull as the whole fix"
 		)
 	}
 
 	legs.push("doctor")
 
-	log("[get-started] ten-minute-trial.mdx step 3: mailwoman parse (shell)…")
+	log("[get-started] mailwoman parse (shell)…")
 
-	assertNeedles(
-		run("node", [cli, "parse", SHELL_PARSE_INPUT], project),
-		SHELL_PARSE_NEEDLES,
-		"ten-minute-trial.mdx (parse)"
-	)
+	assertNeedles(run("node", [cli, "parse", SHELL_PARSE_INPUT], project), SHELL_PARSE_NEEDLES, "mailwoman parse")
 
 	legs.push("shell-parse")
 
@@ -223,20 +218,20 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 		}
 	}
 
-	log("[get-started] ten-minute-trial.mdx step 5: mailwoman geocode, US…")
+	log("[get-started] mailwoman geocode, US…")
 
 	assertNeedles(
 		run("node", [cli, "geocode", SHELL_PARSE_INPUT], project, { MAILWOMAN_DATA_ROOT: dataRoot }),
 		['"locality": "New York"', '"region": "NY"', '"countryCode": "US"'],
-		"ten-minute-trial.mdx (geocode US)"
+		"mailwoman geocode US"
 	)
 
-	log("[get-started] ten-minute-trial.mdx step 5: mailwoman geocode, FR — the ledgered routing case…")
+	log("[get-started] mailwoman geocode, FR — the ledgered routing case…")
 
 	assertNeedles(
 		run("node", [cli, "geocode", "12 Rue de Rivoli, 75001 Paris"], project, { MAILWOMAN_DATA_ROOT: dataRoot }),
 		['"countryCode": "FR"'],
-		"ten-minute-trial.mdx (geocode FR — a US answer here is the candidate backend's Paris-Texas misroute)"
+		"mailwoman geocode FR (a US answer here is the candidate backend's Paris-Texas misroute)"
 	)
 
 	legs.push("geocode-us", "geocode-fr")

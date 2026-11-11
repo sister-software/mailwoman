@@ -16,7 +16,7 @@
  *       --card packages/neural-weights-en-us/model-card.json \
  *       --ledger evals/scores-by-version.json \
  *       --releases docs/engineering/releases.mdx \
- *       --status docs/articles/developers/status.mdx
+ *       --status docs/src/pages/product/limits-and-status.mdx
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -64,27 +64,18 @@ export interface VerifyReleaseMetadataOptions {
 }
 
 /**
- * The directory `docs/docusaurus.config.ts` publishes (`path: "articles"`); a status page outside it
- * is not a page a reader opens, so citing the shipped model there establishes no published fact.
+ * The public status page is a Docusaurus page module under `docs/src/pages/`.
  */
-const PUBLISHED_DOCS_ROOT = "docs/articles/"
+const PUBLISHED_STATUS_PAGE = "docs/src/pages/product/limits-and-status.mdx"
 
 /**
- * The page https://mailwoman.post serves as "What ships today".
- */
-const PUBLISHED_STATUS_PAGE = `${PUBLISHED_DOCS_ROOT}developers/status.mdx`
-
-/**
- * Refuse a status path outside the published tree, so a check cannot report success
- * by resolving a page the site does not publish.
+ * Refuse a different status path, so a checked historical page cannot substitute for the public page.
  */
 function assertPublishedStatusPage(statusPath: string): void {
-	if (statusPath.startsWith(PUBLISHED_DOCS_ROOT)) return
+	if (statusPath === PUBLISHED_STATUS_PAGE) return
 
 	throw new Error(
-		`verify-release-metadata: the status surface must be a page the site publishes, under ${PUBLISHED_DOCS_ROOT} ` +
-			`(received ${statusPath}). Only that tree is built — a page elsewhere can cite the shipped model while ` +
-			`the page a reader opens does not.`
+		`verify-release-metadata: the status surface must be ${PUBLISHED_STATUS_PAGE} (received ${statusPath}).`
 	)
 }
 
@@ -250,34 +241,21 @@ async function checkReleases(version: string, releasesPath: string): Promise<Sur
 }
 
 async function checkStatus(version: string, statusPath: string): Promise<SurfaceResult> {
-	const surface = "status-infobox"
+	const surface = "public-status-page"
 	const markdown = await readLocalTextFile(statusPath)
+	const firstSection = markdown.split(/^## /mu, 1)[0] ?? ""
+	const modelVersion = `model version \`${version}\``
 
-	const start = markdown.indexOf(":::info[")
-
-	if (start === -1) {
-		return {
-			surface,
-			ok: false,
-			message:
-				`docs/articles/developers/status.mdx has no ":::info[Verified as of …]" box.\n` +
-				`      Add / restore the info box and cite release ${version}.`,
-		}
-	}
-
-	const end = markdown.indexOf(":::", start + 1)
-	const infoBox = markdown.slice(start, end === -1 ? undefined : end)
-
-	if (versionMatcher(version).test(infoBox)) {
-		return { surface, ok: true, message: `status.mdx info box cites ${version}` }
+	if (firstSection.includes(modelVersion)) {
+		return { surface, ok: true, message: `limits-and-status.mdx identifies model version ${version}` }
 	}
 
 	return {
 		surface,
 		ok: false,
 		message:
-			`docs/articles/developers/status.mdx ":::info[Verified as of …]" box does NOT cite the shipped model ${version}.\n` +
-			`      Update the ":::info[Verified as of <date> — release ${version}]" header (and the body model paragraph) to ${version}.`,
+			`${PUBLISHED_STATUS_PAGE} does not identify the shipped model version ${version} before its first section.\n` +
+			`      Update the release summary to say "model version \`${version}\`".`,
 	}
 }
 
