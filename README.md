@@ -20,7 +20,7 @@
 <p align="center">
   <a href="https://mailwoman.post/demo"><strong>Live demo</strong></a> ·
   <a href="https://mailwoman.post">Docs & blog</a> ·
-  <a href="https://mailwoman.post/docs/developers/get-started/install-and-first-parse/">Getting started</a>
+  <a href="https://mailwoman.post/docs/start">Getting started</a>
 </p>
 
 <p align="center">
@@ -86,10 +86,10 @@ console.log(decodeAsJSON(tree))
 //   house_number: "1600", street_suffix: "Parkway", postcode: "94043" }
 ```
 
-The [`mailwoman` package README](./packages/mailwoman/README.md) and [Getting
-started](https://mailwoman.post/docs/developers/get-started/install-and-first-parse) document the
-full library API: confidence, the per-stage pipeline result, resolution, browser loading, and
-configuration.
+The [`mailwoman` package README](./packages/mailwoman/README.md) describes the package's
+library and CLI usage. The [first parse](https://mailwoman.post/docs/start) shows an executed
+parser call, and the [library reference](https://mailwoman.post/docs/reference/library) lists
+the published interfaces.
 
 ## Drop-in servers
 
@@ -154,7 +154,7 @@ calibrated probabilities. When it reports `0.88`, it is right about 88%
 of the time.
 
 For the longer version, read [What Mailwoman
-Is](https://mailwoman.post/docs/developers/get-started/what-mailwoman-is/).
+Is](https://mailwoman.post/product).
 
 ## Locale coverage
 

@@ -109,16 +109,10 @@ const config: Config = {
 	plugins: [
 		[
 			// `/docs` is `routeBasePath`, not a page, so a reader who trims the path to `/docs` gets a 404.
-			// This sends it to the first page of the get-started trio.
+			// This sends it to the new first-parse tutorial.
 			"@docusaurus/plugin-client-redirects",
 			{
-				redirects: [
-					{ from: "/docs", to: "/docs/developers/get-started/what-mailwoman-is" },
-					// The pricing page moved out of the docs to its own route.
-					{ from: "/docs/pricing", to: "/pricing" },
-					// The license page is the only route that can take money.
-					{ from: ["/licensing", "/licenses"], to: "/license" },
-				],
+				redirects: [{ from: "/docs", to: "/docs/start" }],
 			},
 		],
 		"./plugins/runtime-assets/plugin.ts",
@@ -250,6 +244,7 @@ const config: Config = {
 				sidebarMegaMenu("product", {
 					label: "Product",
 					descriptions: { Product: "Turn addresses into useful location data." },
+					footer: { label: "Product overview", to: "/product" },
 					featured: {
 						eyebrow: "Try it",
 						title: "Geocode an address in your browser",
@@ -271,40 +266,33 @@ const config: Config = {
 				}),
 				sidebarMegaMenu("developers", {
 					label: "Developers",
-					topGroup: "Build",
-					looseLabel: "Project",
+					topGroup: "Docs",
 					descriptions: {
-						"Get started": "Installed and parsing in ten minutes.",
-						Tutorials: "End-to-end walkthroughs on real data.",
+						"Get started": "Install the parser and inspect a first result.",
+						Tutorials: "Controlled exercises with observed results.",
 						"How-to guides": "One task, start to finish.",
-						Reference: "The APIs, the CLI and the figures.",
-						Localization: "Addresses across languages and scripts.",
-						"Postal systems": "How addresses work, country by country.",
-						Geocoding: "What a geocoder does and how it is judged.",
-						"Address intelligence": "How the model reads an address.",
-						Project: "Where the project stands and how to get help.",
+						Reference: "The APIs, the CLI, packages, and data.",
+						Explanation: "How addresses and the parser work.",
 					},
-					footer: { label: "Start here", to: "/docs/developers/get-started/what-mailwoman-is" },
+					footer: { label: "Start here", to: "/docs/start" },
 					featured: {
 						eyebrow: "Featured",
-						title: "Your first ten minutes",
-						body: "Install it and geocode an address against your own disk.",
-						to: "/docs/developers/get-started/ten-minute-trial",
+						title: "Your first parse",
+						body: "Install the parser and inspect its labeled result.",
+						to: "/docs/start",
 					},
 				}),
 				sidebarMegaMenu("resources", {
 					label: "Resources",
-					looseLabel: "Elsewhere",
+					looseLabel: "Evidence and field notes",
 					descriptions: {
-						Benchmarks: "Every number ships with its command.",
-						Compare: "Mailwoman beside the alternatives.",
-						OpenStreetMap: "How we credit the map data.",
-						Elsewhere: "Write-ups from the work.",
+						"Evidence and field notes": "Dated measurements and write-ups from the work.",
 					},
 				}),
 				sidebarMegaMenu("about", {
 					label: "About",
 					descriptions: { About: "Who makes Mailwoman and why." },
+					footer: { label: "About Mailwoman", to: "/about" },
 				}),
 				{
 					// A page of its own, outside the docs.

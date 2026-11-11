@@ -1,0 +1,87 @@
+---
+title: HTTP interfaces
+description: Published 11.0.0 native and compatibility routes, schemas, and declared error responses.
+role: reference
+source-of-truth: published 11.0.0 OpenAPI documents and packages/api/lib/routes.ts, packages/nominatim/lib/routes.ts, packages/photon/lib/routes.ts, packages/libpostal/lib/routes.ts
+verified-with: mailwoman v11.0.0 and @mailwoman/api, nominatim, photon, libpostal v11.0.0
+---
+
+# HTTP interfaces
+
+This reference covers the four HTTP surfaces exported by the published 11.0.0 packages. Each linked OpenAPI file was emitted from its package's `openapi` command on 9 November 2026. Each file is a fixed 11.0.0 snapshot. The unversioned OpenAPI files produced by this site's build were byte-identical to those four snapshots when this page was checked. The tables summarize routes and declared response statuses. Follow a schema link for complete parameter and response fields.
+
+| Surface              | Package                                               | OpenAPI 3.1 document                                |
+| -------------------- | ----------------------------------------------------- | --------------------------------------------------- |
+| Native               | `@mailwoman/api@11.0.0`, served by `mailwoman@11.0.0` | [Native schema](/openapi/v11.0.0/mailwoman.json)    |
+| Nominatim-compatible | `@mailwoman/nominatim@11.0.0`                         | [Nominatim schema](/openapi/v11.0.0/nominatim.json) |
+| Photon-compatible    | `@mailwoman/photon@11.0.0`                            | [Photon schema](/openapi/v11.0.0/photon.json)       |
+| libpostal-compatible | `@mailwoman/libpostal@11.0.0`                         | [libpostal schema](/openapi/v11.0.0/libpostal.json) |
+
+Each package registers `GET /openapi.json` on its own server. A running server serves its own document at that path. These four servers have separate base URLs. The native operation paths use the `/v1` prefix. The [CLI reference](./cli.mdx) records the checked `mailwoman serve --help` syntax. The published `mailwoman serve` command exits before listening when its preflight finds neither a candidate database nor suitable Who's On First databases. [Data and locales](./data-and-locales.mdx) lists the data prerequisites and installation checks. This worktree has no valid local database for a data-backed server response.
+
+## Native routes
+
+The native schema declares these operations. A response name refers to a schema under `components.schemas` in the [native OpenAPI document](/openapi/v11.0.0/mailwoman.json). The status column lists declared responses other than 200. Runtime faults can return additional statuses.
+
+| Method and path    | Request fields                                                          | 200 response schema      | Other declared statuses |
+| ------------------ | ----------------------------------------------------------------------- | ------------------------ | ----------------------- |
+| `GET /v1/parse`    | Query `address`, `debug`, `input_mode`.                                 | `StampedParseResponse`   | 400, 501                |
+| `POST /v1/parse`   | JSON `address` required; `debug`, `input_mode` optional.                | `StampedParseResponse`   | 400, 501                |
+| `POST /v1/geocode` | JSON `address` required; `bias`, `include_tree`, `input_mode` optional. | `StampedGeocodeResponse` | 400, 503                |
+| `POST /v1/batch`   | JSON `addresses` required; `input_mode` optional.                       | `StampedBatchResponse`   | 400, 413, 503           |
+| `POST /v1/resolve` | JSON `tree` required; `opts` optional.                                  | `StampedResolveResponse` | 400, 503                |
+| `POST /v1/format`  | JSON `components` and `country` required; `options` optional.           | `StampedFormatResponse`  | 400                     |
+| `POST /v1/reload`  | No request body declared.                                               | `ReloadResponse`         | 503                     |
+| `GET /health`      | No request fields declared.                                             | `HealthResponse`         | None listed.            |
+| `GET /metrics`     | No request fields declared.                                             | `MetricsSnapshot`        | None listed.            |
+
+The parse response schema contains `input`, `components`, `tree`, and `debug`. The `GeocodeResponse` schema defines `lat`, `lon`, `resolution_tier`, and other coordinate and evidence fields. [Result schema](./schema.mdx) explains the fields at their owning interfaces. `GET /health` declares `status` and `uptime_s`. A successful health response reports that the HTTP app answered. It does not verify the presence of geocoding data.
+
+The native `APIError` schema requires `error` as a string and `detail` as either a string or `null`. The OpenAPI document assigns 400 to invalid native inputs, 413 to a batch over its configured cap, 501 to an unwired parse method, and 503 to unavailable geocoding or resolution methods where the relevant route declares it. The schema lists no 500 response for the native operations in the table. Runtime failures may have additional status codes. No data-backed native request was run for this page.
+
+One complete error pair was observed through `createMailwomanAPI({})` from published `@mailwoman/api@11.0.0`. The in-process app had no geocoding method, and no network server or geographic database was involved:
+
+```json
+{
+	"method": "POST",
+	"path": "/v1/geocode",
+	"contentType": "application/json",
+	"body": { "address": "1600 Pennsylvania Avenue NW, Washington, DC 20500" }
+}
+```
+
+```json
+{
+	"status": 503,
+	"contentType": "application/json",
+	"body": {
+		"error": "geocoder not available",
+		"detail": "install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
+	}
+}
+```
+
+The in-process request returned status 503 and the displayed error body. The result contains no coordinate. Server startup with installed data was not tested.
+
+## Compatibility routes
+
+The published compatibility documents declare these routes. The key input column identifies the parameter used to choose an operation. Each linked schema lists the complete optional parameters and response fields. The response status column includes 200 and the other statuses declared by that route.
+
+| Surface   | Method and path | Key input                             | 200 response                                | Declared statuses  |
+| --------- | --------------- | ------------------------------------- | ------------------------------------------- | ------------------ |
+| Nominatim | `GET /search`   | `q` or structured place query fields. | Nominatim result array or requested format. | 200, 500, 501      |
+| Nominatim | `GET /reverse`  | `lat`, `lon`.                         | One result or `null`.                       | 200, 400, 500, 501 |
+| Nominatim | `GET /lookup`   | `osm_ids`.                            | Nominatim result array.                     | 200, 500, 501      |
+| Nominatim | `GET /status`   | None.                                 | `NominatimStatus`.                          | 200, 500           |
+| Photon    | `GET /api`      | `q`.                                  | `PhotonResponse` feature collection.        | 200, 400, 500, 501 |
+| Photon    | `GET /reverse`  | `lat`, `lon`.                         | `PhotonResponse` feature collection.        | 200, 400, 500, 501 |
+| libpostal | `GET /parse`    | `query` or `address`.                 | Ordered component array.                    | 200, 400, 500      |
+| libpostal | `POST /parse`   | JSON `query` or `address`.            | Ordered component array.                    | 200, 400, 500      |
+| libpostal | `GET /expand`   | `address`.                            | `ExpandResponse`.                           | 200, 400, 500, 501 |
+| libpostal | `POST /expand`  | JSON `address`.                       | `ExpandResponse`.                           | 200, 400, 500, 501 |
+
+Each compatibility document also declares `GET /` as an HTML landing page with status 200. The Nominatim and libpostal error schemas require an `error` string. Photon uses a feature collection with required `type`, `features`, and `message` fields for its declared error responses. These are schema declarations. No live compatibility response was executed for this page. The packages' route handlers read compatibility query parameters through their own request adapters, so the OpenAPI parameter lists describe the documented interface rather than every possible spelling a handler may accept.
+
+## Source and version boundaries
+
+The versioned JSON files were generated from published npm packages with `openapi --out` on Node.js 24.22.1. The site's ordinary `/openapi/*.json` files are rebuilt from the current checkout and can change after this release. The versioned files keep the checked 11.0.0 schemas available as the route definitions change. The [published native routes](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/api/lib/routes.ts), [Nominatim routes](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/nominatim/lib/routes.ts), [Photon routes](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/photon/lib/routes.ts), and [libpostal routes](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/libpostal/lib/routes.ts) define the handlers behind the schemas.

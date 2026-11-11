@@ -1,0 +1,224 @@
+---
+title: Annotate a result
+description: Compose coordinate and country annotators, choose a consumer shape, and retain source evidence.
+role: guide
+source-of-truth: packages/annotations/lib/index.ts, packages/spatial/lib/coordinate/formats.ts, packages/codex/lib/country/reference.ts, packages/core/lib/decoder/serialize/json.ts
+verified-with: published @mailwoman/annotations, spatial, codex, core v11.0.0 on Node.js 24.22.1
+---
+
+# Annotate a result
+
+Use this procedure when a consumer needs derived facts about a coordinate, such as coordinate formats or country reference data. Keep the address parse or geocode result separately when the consumer also needs repeated components, coordinate provenance, or resolution evidence. The examples use a fixed public coordinate and manually supplied address fields. They do not claim that Mailwoman geocoded the address.
+
+## Install the published packages
+
+The examples ran with Node.js 24.22.1 and these published packages at 11.0.0. Install them in an ECMAScript module project:
+
+```sh
+npm install --save-exact @mailwoman/annotations@11.0.0 @mailwoman/spatial@11.0.0 @mailwoman/codex@11.0.0 @mailwoman/core@11.0.0
+```
+
+The coordinate-format and country-reference annotators used below need no geographic database. The repeated-component check later uses `@mailwoman/core`.
+
+## Compose and check two annotators
+
+Save this as `annotate.mjs`. `composeAnnotators` runs each annotator and merges its partial `AnnotationSet`. It skips an annotator that throws, and later annotators replace earlier values on a shared key. The explicit check stops this example if either expected field is absent.
+
+```js
+import { composeAnnotators, toNative, toOpenCage } from "@mailwoman/annotations"
+import { countryReferenceAnnotator } from "@mailwoman/codex/country"
+import { coordinateFormatAnnotator } from "@mailwoman/spatial"
+
+const annotate = composeAnnotators([coordinateFormatAnnotator, countryReferenceAnnotator])
+const set = await annotate({
+	lat: 38.8977,
+	lon: -77.0365,
+	countryCode: "US",
+	date: new Date("2026-11-09T12:00:00Z"),
+})
+if (!set.dms || set.iso3166?.alpha2 !== "US") {
+	throw new Error("The coordinate or country annotator returned no expected value")
+}
+
+const native = toNative(set)
+const openCage = toOpenCage(set)
+console.log(JSON.stringify({ native, openCage }, null, 2))
+```
+
+Run `node annotate.mjs`. Published 11.0.0 produced the following complete output for this input:
+
+```json
+{
+	"native": {
+		"dms": {
+			"lat": "38° 53′ 51.72″ N",
+			"lon": "77° 2′ 11.40″ W"
+		},
+		"mgrs": "18SUJ2339407395",
+		"maidenhead": "FM18lv",
+		"geohash": "dqcjqcpex",
+		"mercator": {
+			"x": -8575663.95249602,
+			"y": 4707028.550805139
+		},
+		"qiblaBearing": 56.561521466160855,
+		"sun": {
+			"rise": 1794224722,
+			"set": 1794261676,
+			"noon": 1794243199
+		},
+		"callingCode": 1,
+		"currency": {
+			"isoCode": "USD",
+			"name": "United States dollar",
+			"symbol": "$"
+		},
+		"flag": "🇺🇸",
+		"timezone": null,
+		"iso3166": {
+			"alpha2": "US",
+			"alpha3": null,
+			"numeric": null
+		},
+		"nuts": null,
+		"unLocode": null,
+		"fips": null,
+		"wikidata": null
+	},
+	"openCage": {
+		"DMS": {
+			"lat": "38° 53′ 51.72″ N",
+			"lng": "77° 2′ 11.40″ W"
+		},
+		"MGRS": "18SUJ2339407395",
+		"Maidenhead": "FM18lv",
+		"Mercator": {
+			"x": -8575663.95249602,
+			"y": 4707028.550805139
+		},
+		"geohash": "dqcjqcpex",
+		"qibla": 56.561521466160855,
+		"sun": {
+			"rise": {
+				"apparent": 1794224722
+			},
+			"set": {
+				"apparent": 1794261676
+			}
+		},
+		"callingcode": 1,
+		"currency": {
+			"iso_code": "USD",
+			"name": "United States dollar",
+			"symbol": "$"
+		},
+		"flag": "🇺🇸"
+	}
+}
+```
+
+`toNative(set)` returns the full `AnnotationSet`, including keys whose annotator supplied no value. `toOpenCage(set)` emits populated fields under its consumer's key names. It maps `dms.lon` to `DMS.lng`, `qiblaBearing` to `qibla`, and `currency.isoCode` to `currency.iso_code`. The OpenCage projection has no slot for `iso3166` or `sun.noon`, so those values from this run are absent. A `null` native `timezone` here means the chosen annotators did not supply it. It does not assert that the coordinate has no timezone.
+
+## Build a schema.org Place from address fields
+
+`toSchemaOrg` accepts a separate `SchemaOrgInput`. It does not accept an `AnnotationSet`. Supply a coordinate and address fields that your application has already chosen. Save this as `place.mjs`:
+
+```js
+import { composeStreetAddress, toSchemaOrg } from "@mailwoman/annotations"
+
+const place = toSchemaOrg({
+	lat: 38.8977,
+	lon: -77.0365,
+	streetAddress: composeStreetAddress({ houseNumber: "1600", street: "Pennsylvania Avenue NW" }),
+	locality: "Washington",
+	region: "DC",
+	postalCode: "20500",
+	countryCode: "US",
+})
+
+console.log(JSON.stringify(place, null, 2))
+```
+
+Run `node place.mjs`. Published 11.0.0 returned:
+
+```json
+{
+	"@context": "https://schema.org",
+	"@type": "Place",
+	"geo": {
+		"@type": "GeoCoordinates",
+		"latitude": 38.8977,
+		"longitude": -77.0365
+	},
+	"address": {
+		"@type": "PostalAddress",
+		"streetAddress": "1600 Pennsylvania Avenue NW",
+		"addressLocality": "Washington",
+		"addressRegion": "DC",
+		"postalCode": "20500",
+		"addressCountry": "US"
+	}
+}
+```
+
+This serializer joins the supplied house number and street into one `streetAddress` string. Its input has no fields for the `AnnotationSet`, repeated address components, or geocode provenance. Keep the original parse tree or geocode result if the consumer needs those facts. [The result schema](../reference/schema.mdx) names `dropped_components`, `unfollowed_components`, and `coordinate_source` on a geocode result.
+
+## Check a flat projection before discarding the tree
+
+The following fixture constructs a tree with two `locality` nodes. It demonstrates `decodeAsJSON` on a known shape. The tree was constructed for this example and was not produced by the model. Save this as `repeated.mjs`:
+
+```js
+import { decodeAsJSON } from "@mailwoman/core/decoder"
+
+const raw = "07691 Portopetro, Illes Balears, Spain"
+const node = (tag, value, children = []) => {
+	const start = raw.indexOf(value)
+	return { tag, value, start, end: start + value.length, confidence: 1, children }
+}
+const tree = {
+	raw,
+	roots: [
+		node("country", "Spain", [
+			node("locality", "Portopetro", [node("postcode", "07691")]),
+			node("locality", "Illes Balears"),
+		]),
+	],
+}
+const flat = decodeAsJSON(tree, { includeDropped: true })
+
+console.log(
+	JSON.stringify(
+		{
+			treeLocalities: tree.roots[0].children.map((child) => child.value),
+			flatLocality: flat.locality,
+			dropped: flat.dropped,
+		},
+		null,
+		2
+	)
+)
+```
+
+Run `node repeated.mjs`. Published 11.0.0 returned:
+
+```json
+{
+	"treeLocalities": ["Portopetro", "Illes Balears"],
+	"flatLocality": "Portopetro",
+	"dropped": [
+		{
+			"tag": "locality",
+			"value": "Illes Balears",
+			"kept": "Portopetro"
+		}
+	]
+}
+```
+
+The flat object has one `locality` value. `includeDropped: true` reports the omitted span and the value that occupied its slot. Retain `tree` when the exact spans and their relationships matter. A geocode result has additional provenance fields that these annotation serializers do not accept. This page did not run a data-backed geocode, so it shows no invented `coordinate_source` value.
+
+## Add database-backed annotations only when ready
+
+Published 11.0.0 source also declares `makeTimezoneAnnotator`, `makeUNLocodeAnnotator`, and `makeNUTSAnnotator` in their respective lookup packages. They require their lookup databases. These annotators were not run for this page because no verified local timezone, UN/LOCODE, or NUTS database was available. Check each expected output field after composing an annotator, since `composeAnnotators` skips a thrown annotator and leaves its fields `null`.
+
+The published [annotation serializer](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/annotations/lib/index.ts), [coordinate annotator](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/spatial/lib/coordinate/formats.ts), [country annotator](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/codex/lib/country/reference.ts), and [tree-to-JSON projection](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/core/lib/decoder/serialize/json.ts) define the interfaces exercised above. [The library reference](../reference/library.mdx) covers the parser and geocoder calls that produce an address result.

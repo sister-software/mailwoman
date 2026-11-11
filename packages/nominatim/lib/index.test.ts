@@ -167,7 +167,7 @@ test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async 
 	const body = await res.text()
 	expect(body).toContain("@mailwoman/nominatim")
 	expect(body).toContain("/search?q=")
-	expect(body).toContain("what-mailwoman-is")
+	expect(body).toContain('href="https://mailwoman.post/product"')
 })
 
 test("/status without an engine method answers 200 OK, not 501 (the one non-501 absent-method default)", async () => {

@@ -1,0 +1,104 @@
+---
+title: Inspect the decisions behind a parse
+description: Capture one parser trace, check its tagged spans, and read its locale, query-kind, and score fields.
+role: tutorial
+verified-with: mailwoman v11.0.0
+---
+
+# Inspect the decisions behind a parse
+
+You will save a parser trace for the same address used in [the first-parse tutorial](../start.mdx), then run a short script that checks every returned span and prints the decisions leading to the tree. The exercise takes about ten minutes after that tutorial's packages are installed.
+
+## Prerequisites
+
+- Complete [Install Mailwoman and inspect a first parse](../start.mdx). Keep its project directory with `mailwoman@11.0.0`, `@mailwoman/neural@11.0.0`, and `@mailwoman/neural-weights-en-us@11.0.0`.
+- Use Node.js 24.22.1 and npm 11.19.1 to reproduce the output below. The trace in this page was captured on Linux x64.
+- Keep the exact input `apt 4b 350 5th ave new york ny 10118` for this exercise. The printed spans and scores belong to that input and the stated package versions.
+
+## 1. Save the parser trace
+
+Run the installed command from the project directory:
+
+```bash
+npx mailwoman parse --debug "apt 4b 350 5th ave new york ny 10118" > trace.json
+```
+
+The command writes the full JSON trace to `trace.json`. The verification run also printed a warning to standard error because it found no postcode-prefix index. The warning said the anchor-region prior was off. The command still returned the full parse shown below. Keep diagnostic messages visible when you run the command.
+
+## 2. Write a trace reader
+
+Save this file as `inspect-trace.mjs` beside `trace.json`:
+
+```js
+import { readFile } from "node:fs/promises"
+
+const trace = JSON.parse(await readFile("trace.json", "utf8"))
+const raw = trace.tree.raw
+
+console.log("input:", trace.input)
+console.log("tree.raw:", raw)
+console.log("path:", trace.path)
+console.log("locale:", trace.locale.locale, `(${trace.locale.source})`)
+console.log("kind:", trace.kind.kind)
+
+for (const match of trace.queryShape.knownFormats) {
+	const { start, end, body } = match.span
+	console.log(`shape: ${match.format} [${start}, ${end}): ${JSON.stringify(body)}`)
+}
+
+function printNode(node, depth = 0) {
+	const source = raw.slice(node.start, node.end)
+	if (source !== node.value) throw new Error(`Unexpected span for ${node.tag}`)
+	const indent = "  ".repeat(depth)
+	console.log(
+		`${indent}${node.tag} [${node.start}, ${node.end}): ${JSON.stringify(node.value)} score ${node.confidence.toFixed(3)}`
+	)
+	for (const child of node.children) printNode(child, depth + 1)
+}
+
+for (const root of trace.tree.roots) printNode(root)
+```
+
+The `raw.slice` check makes the displayed spans concrete for this address. It reads offsets against `tree.raw`, the text returned with the tree. For this input, each selected substring equals the node's displayed value.
+
+## 3. Read the result
+
+```bash
+node inspect-trace.mjs
+```
+
+```text
+input: apt 4b 350 5th ave new york ny 10118
+tree.raw: Apt 4B 350 5TH Ave New York NY 10118
+path: full
+locale: en-US (caller)
+kind: structured_address
+shape: us_zip [31, 36): "10118"
+shape: fr_postcode [31, 36): "10118"
+shape: de_postcode [31, 36): "10118"
+region [28, 30): "NY" score 0.915
+  locality [19, 27): "New York" score 0.935
+    street [11, 14): "5TH" score 0.941
+      unit [0, 6): "Apt 4B" score 0.920
+      house_number [7, 10): "350" score 0.919
+      street_suffix [15, 18): "Ave" score 0.910
+    postcode [31, 36): "10118" score 0.917
+```
+
+Find `"New York"` in `tree.raw`. Its `[19, 27)` span starts at 19 and ends before 27. The script checks that slicing those positions returns the displayed value. Every other node passes the same check in this run.
+
+The three `shape` lines are proposed format matches for the same five-digit text. They show that `10118` fits several postcode shapes. These matches describe the token's form. The `locale` field records the parser's choice for the full input, and the final `postcode` node is its selected tag for that span.
+
+`path: full` records that the input used the full parser path. `kind: structured_address` is the query-kind decision. The CLI supplies `en-US` as its default `--locale`, so this trace records `locale.source` as `caller`. The library call in the first tutorial did not pass a locale and reported the same locale as a detected choice.
+
+Each node's `score` is its returned `confidence` rounded to three decimal places for display. These values describe this model's output for this address. They do not measure the fraction of correct labels in other addresses. The trace also contains per-stage timing values. Their values depend on the host and run conditions, so this exercise leaves them out of its fixed output.
+
+## What you have now
+
+`trace.json` records the input, stage decisions, and full component tree for one parse. `inspect-trace.mjs` checks the spans and prints the fields needed to explain this result.
+
+## Next
+
+- [Parse and geocode result schema](../reference/schema.mdx) lists the available labels and defines the result fields.
+- [Library API](../reference/library.mdx) lists the import paths and parse options.
+- [How Mailwoman turns text into a parse](../explanation/parsing.mdx) explains how the stages and decoder produce this tree.

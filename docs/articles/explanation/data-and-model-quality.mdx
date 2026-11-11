@@ -1,0 +1,36 @@
+---
+title: How data and evaluation support quality claims
+description: How source records, training lineage, held-out addresses, and release checks contribute different evidence.
+role: explanation
+verified-with: mailwoman v11.0.0 and release specification v7, inspected 2026-11-10
+---
+
+# How data and evaluation support quality claims
+
+A parser can produce a plausible answer for an address it has seen during training. That answer does not show how it handles an independent address. Mailwoman records where training examples came from, what reached a model, and which evaluation addresses can support a release comparison. Each record answers a different part of the quality question.
+
+## Source records explain what an example represents
+
+The [address-source register](https://github.com/sister-software/mailwoman/blob/main/packages/corpus/data/address-source-register.json) records publishers, source URLs, research decisions, and terms. A corpus row stores source provenance, including a source ID, corpus version, and license. Its address role distinguishes, for example, a premise from a mailing address. Field-level assertion metadata distinguishes a publisher's claim about an address from a claim about identity or geometry. These distinctions matter because an accurately copied string can still be unsuitable evidence for a building location or a postal-delivery claim.
+
+The corpus build also records which sources its training draw used. For the published `@mailwoman/neural-weights-en-us@11.0.0` package, the [model card](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/model-card.json) identifies model version `10.8.0` and corpus `v0.8.18-retention-overlay`. The [effective training manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/corpus/data/training-manifests/v0.8.18-retention-overlay.effective.json) records what reached the trainer. The package's [provenance record](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/PROVENANCE.json) connects that corpus version to effective sources and attribution. These records establish lineage and obligations. They do not measure how accurately the model parses new addresses.
+
+## Held-out addresses test a different question
+
+An evaluation address supports a generalization claim only when its relationship to training data is known. Mailwoman's [held-out specification](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/HOLDOUT_AND_EVALUATION.mdx) calls for frozen samples, grouping variants of one address, label inspection, and an overlap audit against both the published and candidate training lineages. It distinguishes `verified_unseen`, `unseen_by_candidate`, `known_overlap`, and `unknown`. Minimum checks may use the first two classes. A comparison between models uses `verified_unseen` rows only.
+
+The same specification marks some safeguards as implemented and others as open. For example, its current-state table records a held-out span check in the manifest writer, while policy identity and loader rejections remain specified with implementation open. A specified check cannot establish that a particular dataset passed it. Likewise, a country or address form with no admitted evaluation rows has unmeasured quality, rather than a measured score of zero.
+
+## A release comparison needs an identified artifact and population
+
+The release procedure compares a candidate with the weights in the published package users install, identified by the `model.onnx` SHA-256 digest. It scores paired rows from one frozen dataset and reports exact-parse outcomes by required country and capability. A release report also records measured losses against the published model. The [model-work runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx) identifies the freeze, overlap, per-country scoring, and verdict tools.
+
+The [current v7 specification](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/tools/eval-harness/release/specs/release-requirements.v7.json) registers nine country minima, four capability minima, an equal-country objective, and confidence settings. Its dataset ID and digest, candidate digest, and development and confirmation evaluation IDs are unset. Its published comparator identity describes model 10.7.0, while the 11.0.0 package contains model 10.8.0. The inspected specification therefore does not establish a `pass` verdict for the published 11.0.0 model. The runbook states that a verdict remains `insufficient_evidence` until a frozen, overlap-audited dataset covers every required country. Earlier promotion checks continue to decide meanwhile.
+
+The [held-out specification's current-state table](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/HOLDOUT_AND_EVALUATION.mdx#10-current-state-against-this-specification) also records proposed or incomplete work, including a first split under its registered retention floor. Those entries describe work to complete. They are not measurements of the published model. Dated evaluation simulations test the evaluator's behavior under chosen inputs. Their simulated rates are not release results.
+
+## What a reader can conclude
+
+The published model's source and training records identify its lineage. The release specification states the acceptance rules. A release-quality claim for an exact candidate needs admitted, versioned evaluation rows and a verdict tied to that candidate's digest. The inspected records do not supply that verdict for `mailwoman@11.0.0`.
+
+This account concerns parsing quality. Coordinate accuracy needs separate geographic evaluation and data provenance. [Current product limits](/product/limits-and-status) report which release-matched evidence is available, and [confidence and ambiguity](./confidence-and-limits.mdx) explains why a node score cannot substitute for either evaluation.

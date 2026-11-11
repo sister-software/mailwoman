@@ -16,7 +16,7 @@ coordinates, a non-US locale, and geocoding, and they use a baseline from a mode
 
 Release eligibility comes from a release verdict against registered quality requirements (policy adopted
 2026-10-20, #2763). Iron rule 5 in `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` states the procedure, and
-`docs/articles/developers/knowledge-base/address-intelligence/release-quality.mdx` explains the policy. The D-rule and its FR, GB and DE
+`docs/articles/explanation/data-and-model-quality.mdx` explains the policy to readers. The D-rule and its FR, GB and DE
 veto are removed. The procedure:
 
 1. **Freeze the evaluation sample** with `packages/mailwoman/tools/eval-harness/heldout/dataset/freeze.run.ts`. Then

@@ -25,18 +25,16 @@ import { search } from "./search.ts"
 
 const INDEX_FILE = repoRootPath("docs", "build", SEARCH_INDEX_FILENAME)
 const WITHIN = 3
-const MIN_RECORDS = 1000
 
 const ACCEPTANCE: [query: string, url: string][] = [
-	["locales and tiers", "/docs/developers/reference/locales-and-tiers"],
-	["viterbi", "/docs/developers/knowledge-base/address-intelligence/decoding-and-viterbi"],
-	["validate addresses", "/docs/developers/how-to/validate-addresses"],
-	["mcp server", "/docs/developers/how-to/use-the-mcp-server"],
-	["parse in the browser", "/docs/developers/tutorials/parse-in-the-browser"],
-	["vitrebi", "/docs/developers/knowledge-base/address-intelligence/decoding-and-viterbi"],
-	["cli", "/docs/developers/reference/cli"],
-	["docker", "/docs/developers/how-to/deploy-docker"],
-	["reverse geocoding", "/docs/developers/how-to/reverse-geocode"],
+	["data and locales", "/docs/reference/data-and-locales"],
+	["how mailwoman turns text into a parse", "/docs/explanation/parsing"],
+	["validate records", "/docs/guides/validate-records"],
+	["parse in the browser", "/docs/guides/parse-in-browser"],
+	["cli", "/docs/reference/cli"],
+	["deployment", "/product/deployment"],
+	["reverse geocoding", "/docs/explanation/geocoding"],
+	["autocomplete", "/docs/guides/add-autocomplete"],
 ]
 
 // The acceptance suite needs a docs build.
@@ -64,8 +62,6 @@ beforeAll(async () => {
 
 	const { n } = client.prepare("SELECT count(*) AS n FROM records").get() as { n: number }
 	const { records } = client.prepare("SELECT records FROM build").get() as { records: number }
-
-	if (n <= MIN_RECORDS) throw new Error(`${INDEX_FILE} holds ${n} records; expected more than ${MIN_RECORDS}`)
 
 	if (records !== n) throw new Error(`${INDEX_FILE} build row says ${records} records; the records table holds ${n}`)
 

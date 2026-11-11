@@ -1,0 +1,35 @@
+---
+title: Why address rules depend on the destination
+description: Why street locations, units, postal routes, and country formats need different checks.
+role: explanation
+source-of-truth: packages/corpus/lib/types.ts, packages/codex/lib/postal/regimes.ts, packages/query-shape/lib/known-formats.ts
+verified-with: USPS Publication 28, Canada Post guidance checked 2026-11-10, and published mailwoman v11.0.0 parse examples
+---
+
+# Why address rules depend on the destination
+
+An address can describe a building, a unit inside it, a place where mail is collected, or a location someone wants to find. Those purposes overlap, but they do not ask the same question. A parser can label the text in each form. A rule that accepts one form for a street-level delivery workflow may reject a useful mailing or place-search form.
+
+## One street location can have several destinations
+
+The United States Postal Service [secondary-unit guidance](https://pe.usps.com/text/pub28/pub28c2_003.htm) requires an apartment or suite designator on mail for an address location that has one. A street number and building point can therefore be shared by units whose delivery details differ. A record without `APT` or `STE` may still identify the building while omitting the unit needed on the mailpiece. Two records at the same coordinate may therefore refer to different delivery destinations.
+
+Mailwoman's [corpus address-role vocabulary](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/corpus/lib/types.ts) records whether a source row describes a premise, mailing address, registered office, facility, or another role. A row that gives a company's registered office and a row that gives its premises can each be accurately copied from their sources while answering different questions. The role tells a reader what the source asserts. The text cannot establish that both rows identify the same entrance or mailbox.
+
+## A mailing address may use a different route
+
+USPS [Publication 28](https://pe.usps.com/text/pub28/28c2_036.htm) standardizes a Post Office Box line as `PO BOX` followed by its box identifier. USPS also documents an option at some locations to use the [Post Office street address with a box designation](https://pe.usps.com/text/pub28/28c2_039.htm). These are mailing forms. A street-looking line in that option does not turn the box into the recipient's building location.
+
+In the synthetic input `PO Box 1234, Springfield, IL 62701`, published `mailwoman@11.0.0` returned kind `po_box` and a `po_box` node containing `PO Box 1234`. The [PO box guide](../guides/handle-po-boxes.mdx) shows the full executed result. It routes the record to a mailing review under an explicit application policy and keeps box existence, delivery status, and a building coordinate unknown.
+
+## Country and purpose change what a postcode check means
+
+Canada Post [defines](https://www.canadapost-postescanada.ca/cpc/en/support/articles/addressing-guidelines/postal-codes.page) a six-character alphanumeric postcode in the `ANA NAN` form. Its first three characters identify a forward sortation area. The last three identify a local delivery unit. The same guidance states that a local delivery unit can describe a city block, one building, a large-volume receiver, or a rural community depending on context. A postcode supplies routing evidence. Its shape does not identify a building point.
+
+The published Mailwoman parse of bare `10118` matched the `us_zip`, `fr_postcode`, and `de_postcode` shapes. That observed list describes three format matches for one five-digit string. It does not identify three destinations or select a country. The [bare-postcode guide](../guides/handle-bare-postcodes.mdx) keeps an application-supplied country separate from the parse and leaves the geographic result unknown until suitable data is available.
+
+## Four questions need four kinds of evidence
+
+**Text parsing** asks which characters look like a house number, unit, PO box, locality, or postcode. **An application shape check** asks whether the returned components satisfy a stated policy for a particular country and address purpose. The [record-check guide](../guides/validate-records.mdx) runs one US street-address policy and preserves `unknown` when required evidence is missing.
+
+**Place identity** asks which geographic record a parsed name refers to. It needs a resolver and suitable local data. A matching postcode shape cannot supply that identity. **Delivery evidence** asks whether the intended postal operator accepts the address for that recipient or box. A parse, a component-presence check, and a coordinate do not answer that last question. [How geocoding selects a coordinate](./geocoding.mdx) explains what a place or point match can establish. [Data and locales](../reference/data-and-locales.mdx) identifies the published data layers and their installation requirements.

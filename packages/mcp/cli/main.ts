@@ -80,7 +80,7 @@ const loadCore = memoizeResettable(
 			throw new Error(
 				`${buildNoGazetteerMessage({
 					dataRoot: dataRootPath(),
-					docsPath: "/docs/developers/how-to/use-the-mcp-server",
+					docsPath: "/docs/reference/data-and-locales",
 				})}\n\n  Needs it: ${CORE_BACKED_TOOLS}\n  Works without it: ${CORE_FREE_TOOLS}`
 			)
 		}

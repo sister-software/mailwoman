@@ -52,13 +52,15 @@ const CODE_SPAN = /(`{1,2})([^`\n]+?)\1/g
 const DATED_FILENAME = /(^|\/)\d{4}-\d{2}-\d{2}[-.]/
 
 /**
- * Directories whose documents are point-in-time records even though their filenames have
- * no date, so a broken citation under one is refused rather than reported.
+ * This list identifies undated documents that record paths from earlier repository states.
+ *
+ * Missing files cited by these documents are recorded as historical.
  */
 const RECORD_TREES = new Map([
 	["docs/records/plan/", "the superseded implementation plan"],
 	["docs/records/retrospectives/", "retrospectives, written about a campaign that has ended"],
 	["docs/records/engineering/", "engineering notes that describe the tree on the date they were written"],
+	["docs/engineering/documentation-rebuild/source-to-target.md", "the inventory of retired article paths"],
 	["config/vale/fixtures/", "fixtures for the prose-rule tests"],
 ])
 

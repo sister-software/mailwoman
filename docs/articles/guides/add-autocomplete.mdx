@@ -1,0 +1,98 @@
+---
+title: Add place-name autocomplete
+description: Serve ranked place-name suggestions from a published FST and count requests for a fixed typing sequence.
+role: guide
+source-of-truth: packages/resolver-wof-sqlite/lib/fst.ts, packages/mailwoman/lib/autocomplete-core.ts, packages/mailwoman/cli/native/commands/autocomplete.ts
+verified-with: published @mailwoman/resolver-wof-sqlite and @mailwoman/neural-weights-en-us v11.0.0 on Node.js 26.2.0
+---
+
+# Add place-name autocomplete
+
+Use the published finite-state transducer (FST) to suggest **place names** as someone types. The FST in `@mailwoman/neural-weights-en-us@11.0.0` can be read without a geographic database. Its suggestions do not contain coordinates, street addresses, or delivery evidence. This example serves a small JSON endpoint and sends a fixed sequence of input events through it.
+
+## Install the packages
+
+Use an ECMAScript module project. The published 11.0.0 manifests for [`@mailwoman/resolver-wof-sqlite`](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/resolver-wof-sqlite/package.json) and [`@mailwoman/neural-weights-en-us`](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural-weights-en-us/package.json) declare no Node.js `engines` range. The complete example below ran on Node.js 26.2.0. The unscoped [`mailwoman@11.0.0` manifest](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/package.json) has a separate `^24.22.1 || >=26.12.1` requirement. This example installs the two scoped packages:
+
+```sh
+npm install --save-exact @mailwoman/resolver-wof-sqlite@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+Check that `node_modules/@mailwoman/neural-weights-en-us/fst-en-us.bin` exists in this project before starting the server. The path is relative to the project directory. The [data and locales reference](../reference/data-and-locales.mdx) distinguishes this place-name index from the geographic databases needed to resolve coordinates.
+
+## Serve suggestions and check the request count
+
+Save this code as `autocomplete.mjs`. It loads the FST once, exposes `GET /suggest?q=...`, and runs a local client against seven input events. The client skips inputs shorter than three trimmed characters and suppresses an event when trimming leaves the same query as the previous request. The application chooses these rules.
+
+```js
+import { createServer } from "node:http"
+import { readFile } from "node:fs/promises"
+import { autocomplete, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+
+const fst = deserializeFST(await readFile("node_modules/@mailwoman/neural-weights-en-us/fst-en-us.bin"))
+let requests = 0
+
+const server = createServer((request, response) => {
+	const url = new URL(request.url ?? "/", "http://localhost")
+	if (url.pathname !== "/suggest") {
+		response.writeHead(404).end()
+		return
+	}
+
+	requests++
+	const query = url.searchParams.get("q")?.trim() ?? ""
+	const entries =
+		query.length < 3
+			? []
+			: autocomplete(fst, query, { maxSuggestions: 2, dedupeByName: true }).suggestions.map(
+					({ name, placetype, wofID }) => ({ name, placetype, wofID })
+				)
+	response.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ entries }))
+})
+
+await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve))
+const address = server.address()
+if (typeof address === "string" || address === null) throw new Error("Expected TCP address")
+
+let lastQuery = ""
+for (const input of ["s", "sa", "san", "san ", "san f", "san fr", "san franc"]) {
+	const query = input.trim()
+	if (query.length < 3) {
+		console.log(`${JSON.stringify(input)}: skipped (short)`)
+		continue
+	}
+	if (query === lastQuery) {
+		console.log(`${JSON.stringify(input)}: skipped (unchanged)`)
+		continue
+	}
+
+	lastQuery = query
+	const response = await fetch(`http://127.0.0.1:${address.port}/suggest?q=${encodeURIComponent(query)}`)
+	if (!response.ok) throw new Error(`HTTP ${response.status}`)
+	const data = await response.json()
+	console.log(
+		`${JSON.stringify(input)}: ${data.entries.map(({ name, placetype }) => `${name} (${placetype})`).join("; ")}`
+	)
+}
+console.log(`HTTP requests: ${requests} of 7 input events`)
+server.close()
+```
+
+Run `node autocomplete.mjs`. The published 11.0.0 packages returned this complete output in the local check:
+
+```text
+"s": skipped (short)
+"sa": skipped (short)
+"san": San Antonio (locality); San Diego (locality)
+"san ": skipped (unchanged)
+"san f": San Francisco (locality); San Fernando (locality)
+"san fr": San Francisco (locality); San Francisco Township (localadmin)
+"san franc": San Francisco (locality); San Francisco Township (localadmin)
+HTTP requests: 4 of 7 input events
+```
+
+Four of the seven input events made HTTP requests: `san`, `san f`, `san fr`, and `san franc`. The first two events were below this example's three-character rule, and `san ` trimmed to the already-requested `san`. The server also checks short queries so a direct request cannot bypass the example's length rule. `dedupeByName: true` keeps only one entry per displayed name. It changes the second result for `san franc` from the CLI's default. The CLI example on the [capabilities page](/product/capabilities#what-the-autocomplete-check-established) leaves deduplication off.
+
+In an application, send the search field's current value to `/suggest` using the same trim, length, and unchanged-query checks. Render the returned `entries` as selectable place-name suggestions and retain each `wofID` as its place identifier. The example measures request count for one fixed typing sequence. It does not measure response latency or choose a debounce delay. Measure latency on your host and with your input mix before adding a timing rule.
+
+The FST returns ranked gazetteer names and a `wofID` for each suggestion. Coordinates require a separate geographic lookup. The index supplies no street address, building, or delivery evidence. See [geocoding](/docs/explanation/geocoding) for that lookup and [confidence and limits](/docs/explanation/confidence-and-limits) for evidence boundaries.

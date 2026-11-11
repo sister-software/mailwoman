@@ -1,0 +1,83 @@
+---
+title: Require country context for a bare postcode
+description: Parse a postcode-only input and request caller country context before a geographic lookup.
+role: guide
+source-of-truth: packages/mailwoman/lib/runtime-pipeline.ts, packages/core/lib/pipeline/types.ts, packages/core/lib/resolver/types.ts, packages/query-shape/lib/known-formats.ts
+verified-with: published mailwoman, @mailwoman/neural, @mailwoman/neural-weights-en-us v11.0.0 on Node.js 24.22.1
+---
+
+# Require country context for a bare postcode
+
+Use this guide when a user enters only a postcode and your application needs to decide whether it has enough context to attempt a geographic lookup. Keep the country supplied by your application or user beside the original input. A postcode's shape can match several national formats, and a shape match does not establish where the postcode refers.
+
+## Install the parser packages
+
+Use Node.js 24.22.1 in an ECMAScript module project. Install the published packages used here:
+
+```sh
+npm install --save-exact mailwoman@11.0.0 @mailwoman/neural@11.0.0 @mailwoman/neural-weights-en-us@11.0.0
+```
+
+This exercise parses text without a geographic database. Save the following file as `route-postcodes.mjs`.
+
+## Keep caller country separate from the parse
+
+```js
+import { createRuntimePipeline } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier, machinePreferences: "none" })
+const cases = [
+	{ input: "10118", applicationCountry: null },
+	{ input: "10118", applicationCountry: "US" },
+	{ input: "10118-1234", applicationCountry: null },
+]
+
+for (const example of cases) {
+	const resolverPreference = example.applicationCountry
+		? { country: example.applicationCountry, source: "caller" }
+		: null
+	const options = resolverPreference ? { resolveOpts: { defaultCountry: resolverPreference } } : undefined
+	const result = await parse(example.input, options)
+	const nodes = []
+	function visit(node) {
+		nodes.push({ tag: node.tag, value: node.value, start: node.start, end: node.end })
+		for (const child of node.children) visit(child)
+	}
+	for (const root of result.tree.roots) visit(root)
+	const hasPostcode = nodes.some((node) => node.tag === "postcode")
+	const route =
+		result.faults.length || result.kind.kind !== "postcode_only" || !hasPostcode
+			? "review-parse"
+			: example.applicationCountry
+				? "country-scoped-lookup-pending-data"
+				: "request-country"
+	console.log(
+		JSON.stringify({
+			input: example.input,
+			applicationCountry: example.applicationCountry,
+			resolverPreference,
+			path: result.path,
+			kind: result.kind.kind,
+			formats: result.queryShape.knownFormats.map((match) => match.format),
+			tree: nodes,
+			decision: { route, coordinate: "unknown", deliverability: "unknown" },
+		})
+	)
+}
+```
+
+The application owns `applicationCountry`. When it has `US`, the example also passes `{ country: "US", source: "caller" }` through `resolveOpts.defaultCountry`, the resolver's country preference. This parse-only exercise configures no resolver, so the returned parse cannot show whether a geographic lookup applied that preference. The policy reads the application field directly and marks a future country-scoped lookup as pending data. It requests a country when that field is absent, even if one format name looks specific to a country.
+
+Run `node route-postcodes.mjs`. Published 11.0.0 returned this complete output:
+
+```json
+{"input":"10118","applicationCountry":null,"resolverPreference":null,"path":"full","kind":"postcode_only","formats":["us_zip","fr_postcode","de_postcode"],"tree":[{"tag":"postcode","value":"10118","start":0,"end":5}],"decision":{"route":"request-country","coordinate":"unknown","deliverability":"unknown"}}
+{"input":"10118","applicationCountry":"US","resolverPreference":{"country":"US","source":"caller"},"path":"full","kind":"postcode_only","formats":["us_zip","fr_postcode","de_postcode"],"tree":[{"tag":"postcode","value":"10118","start":0,"end":5}],"decision":{"route":"country-scoped-lookup-pending-data","coordinate":"unknown","deliverability":"unknown"}}
+{"input":"10118-1234","applicationCountry":null,"resolverPreference":null,"path":"fast-path","kind":"postcode_only","formats":["us_zip4"],"tree":[{"tag":"postcode","value":"10118-1234","start":0,"end":10}],"decision":{"route":"request-country","coordinate":"unknown","deliverability":"unknown"}}
+```
+
+Both `10118` runs returned kind `postcode_only` and the same `postcode` node. Both listed `us_zip`, `fr_postcode`, and `de_postcode` as format matches. The application record supplied `US`. The parser did not select a country from those three shapes. `10118-1234` matched only `us_zip4` and took the fast path, yet this policy still requests an application-supplied country. A format match identifies text shape. It does not verify postcode assignment or place identity.
+
+All three records keep coordinate and deliverability as `unknown` because no geographic lookup or postal-authority check ran. With a [verified data bundle](../reference/data-and-locales.mdx), run the country-scoped lookup and inspect its candidate evidence, `resolution_tier`, and `epistemic_status`. A country preference supplies no coordinate by itself. Keep `lat` and `lon` as `null` if a later lookup returns them as `null`. The [result schema](../reference/schema.mdx) defines the fields, and the [confidence and ambiguity explanation](../explanation/confidence-and-limits.mdx) separates format, place, and coordinate evidence.

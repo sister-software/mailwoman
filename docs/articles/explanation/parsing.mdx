@@ -1,0 +1,48 @@
+---
+title: How Mailwoman turns text into a parse
+description: How normalization, query decisions, model labels, decoder constraints, and place evidence produce an address tree.
+role: explanation
+verified-with: mailwoman v11.0.0
+---
+
+# How Mailwoman turns text into a parse
+
+Why can Mailwoman identify the parts of an address when the input has no commas or uses unfamiliar place names? Why can a postcode-looking string match several formats before the final tree contains one `postcode` node?
+
+The parser combines evidence about the text's shape with a model that scores each possible component label in context. It then chooses a coherent sequence of labels and turns the selected spans into a tree. A place-name index can influence that choice. It supplies possible readings of names, while a separate resolver can later connect parsed places to geographic records.
+
+## A line has boundaries and roles
+
+A reader of `apt 4b 350 5th ave new york ny 10118` first notices groups such as `Apt 4B`, `350`, `5TH Ave`, and `New York`. The reader then assigns roles: unit, house number, street, and locality. Some strings can play several roles. `New York` can identify a city or a state. Its neighbors help decide which role fits this line.
+
+Mailwoman makes these decisions in stages. The stages do not each produce a final answer. They pass observations and proposals to the classifier and decoder. The decoder returns one labeled tree. The [first-parse tutorial](../start.mdx) shows the tree for this exact input.
+
+## The input becomes text the model can read
+
+The runtime pipeline normalizes the input before it computes query shape or runs the model. The classifier can then adjust letter case before labeling. In the published 11.0.0 library run, `input` and `normalized.normalized` both remain `apt 4b 350 5th ave new york ny 10118`, while `tree.raw` is `Apt 4B 350 5TH Ave New York NY 10118`. Node offsets index `tree.raw`, so the `locality` span `[19, 27)` selects `New York` from that returned text.
+
+The query-shape stage looks for structural clues such as segments and postcode-shaped spans. In the [published 11.0.0 trace](../tutorials/inspect-a-parse.mdx), `10118` matches the `us_zip`, `fr_postcode`, and `de_postcode` shapes. Those three matches describe how the five digits look. They do not identify three countries for the address. Locale detection and query-kind classification read the normalized input and shape together. The CLI trace reports `en-US` with `source: caller` because the CLI supplies that locale by default. A library call without a locale can arrive at `en-US` through detection. Both examples classify this input as `structured_address` and take the full parser path.
+
+The kind matters before model inference. A sufficiently clear postcode-only or locality-only input can take a fast path that builds a simple node without running the neural classifier. A point-of-interest query can take an intent branch. The example address takes the full path, where a phrase grouper proposes boundaries before the classifier. After classification, the pipeline can add a provisional root node for a proposal that overlaps no existing node.
+
+## The model scores labels and the decoder selects a reading
+
+The published en-US classifier uses SentencePiece to split model input into pieces. It scores labels for each piece while reading the surrounding address. A BIO label marks whether a component **begins** (`B-locality`), **continues** (`I-locality`), or is **outside** a component (`O`). The published en-US model card lists 16 component tags in its head. The broader result schema permits 26 tags across packages and stages. The [schema reference](../reference/schema.mdx#component-tags) lists both scopes.
+
+An optional finite-state transducer (FST) gazetteer matcher supplies another kind of evidence. The runtime pipeline loads it from the classifier's weights package when that artifact is available. A matched place name can adjust the scores of the relevant BIO labels before decoding. The matcher does not assign a place identity or coordinate. A match records that a string appears as a place name in the index. The neighboring text and model scores still determine whether that reading fits this address. A direct classifier call receives this matcher only if the caller supplies it.
+
+The default classifier decodes the scored pieces with Viterbi search. Its BIO transition mask prevents an `I-locality` label from starting a sequence or following a different component type. The search compares complete legal label paths using the scores and any configured transition adjustments. It can choose a lower-scoring label at one piece when that choice makes the whole reading legal and higher-scoring. After decoding, the word-consistency repair can change labels when pieces of one word disagree. Configured postcode and unit repairs can also change labels before the tree builder turns the final pieces into character spans and a containment hierarchy.
+
+## Place evidence after the parse
+
+The parse tree answers which text was read as `street`, `locality`, `postcode`, and other components. A resolver, when configured with geographic data, can match parsed place nodes to records and add identities or coordinates. That lookup happens after the classifier has made its label decision. A geocode result then projects the resolved tree into coordinate and provenance fields. The [library reference](../reference/library.mdx#geocode-and-batch-calls) describes the required resolver, and the [schema reference](../reference/schema.mdx#geocode-result-and-provenance) separates parsed components from coordinate evidence.
+
+## Limits of the parse
+
+The extra evidence can change a close label decision. Its availability depends on the place index supplied by the installed weights. A parser without that index can still label text, but it lacks that place-name signal. The BIO constraint prevents malformed continuation sequences. It cannot establish that the chosen place or street label is factually correct. A returned confidence score describes the parser's label decision for a span. Building existence and mail deliverability require other evidence. The resolver needs its own geographic data. The parse-only example does not install that data.
+
+## Related
+
+- [Install Mailwoman and inspect a first parse](../start.mdx) shows one complete parse result.
+- [Inspect the decisions behind a parse](../tutorials/inspect-a-parse.mdx) shows the normalized input, shape matches, kind, and tree for that result.
+- [Parse and geocode result schema](../reference/schema.mdx) defines the tags, spans, and provenance fields.

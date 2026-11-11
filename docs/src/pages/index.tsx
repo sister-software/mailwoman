@@ -213,34 +213,29 @@ function Coverage(): ReactNode {
 
 const SOLUTIONS: readonly { to: string; title: string; body: string }[] = [
 	{
-		to: "/docs/solutions/eliminate-the-per-request-bill",
-		title: "Keep geocoding costs predictable",
-		body: "Add customers and look up more addresses for the same flat license fee.",
+		to: "/solutions#inspect-an-address-entered-in-a-form",
+		title: "Inspect an address from a form",
+		body: "Show which components the published parser read from the entered text.",
 	},
 	{
-		to: "/docs/solutions/keep-addresses-inside",
-		title: "Keep sensitive addresses private",
-		body: "Process addresses inside your network, without sending them to another company.",
+		to: "/solutions#prepare-irregular-records-for-review",
+		title: "Review irregular records",
+		body: "Normalize input and route incomplete parses to a review queue.",
 	},
 	{
-		to: "/docs/solutions/resolve-a-messy-file",
-		title: "Make sense of messy address lists",
-		body: "Turn inconsistent customer records into structured addresses and match them by location.",
+		to: "/solutions#check-a-parsed-record-against-your-intake-policy",
+		title: "Check an intake policy",
+		body: "Apply explicit component and ZIP Code shape rules to parsed records.",
 	},
 	{
-		to: "/docs/solutions/fleet-reverse-geocoding",
-		title: "Put fleet locations into words",
-		body: "Turn GPS coordinates into locations using your own hardware, without API quotas.",
+		to: "/solutions#compare-candidate-duplicate-addresses",
+		title: "Compare candidate duplicates",
+		body: "Block and score address pairs, then inspect uncertain matches.",
 	},
 	{
-		to: "/docs/solutions/own-what-you-look-up",
-		title: "Keep and reuse your results",
-		body: "Store the locations you compute and use them across your applications.",
-	},
-	{
-		to: "/docs/solutions/research-and-teaching",
-		title: "Explore, research and teach",
-		body: "Study the code and build with open address data. Mailwoman is free under the AGPL.",
+		to: "/solutions#add-fields-to-a-coordinate-you-already-have",
+		title: "Annotate a supplied coordinate",
+		body: "Format a coordinate and country code your application already has.",
 	},
 ]
 
@@ -250,9 +245,7 @@ function SolutionFinder(): ReactNode {
 			<Heading as="h2" className={styles.sectionHeading}>
 				What will you build with Mailwoman?
 			</Heading>
-			<p className={styles.sectionLead}>
-				From a customer spreadsheet to a fleet of vehicles, start with your use case.
-			</p>
+			<p className={styles.sectionLead}>Choose a task with an executed guide and inspect the limits of its result.</p>
 			<div className={styles.solutions}>
 				{SOLUTIONS.map((solution) => (
 					<Link key={solution.to} to={solution.to} className={styles.solution}>
@@ -396,7 +389,7 @@ const result = await parse("apt 4b 350 5th ave new york ny 10118")
 							those addresses to coordinates.
 						</p>
 						<p>
-							<Link to="/docs/developers/get-started/ten-minute-trial">Set up geocoding in minutes →</Link>
+							<Link to="/docs/start">Run the first parse →</Link>
 						</p>
 					</div>
 				</div>

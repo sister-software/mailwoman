@@ -1,0 +1,70 @@
+---
+title: Data and locales
+description: Published 11.0.0 data bundles, weight families, locale classifications, and installation checks.
+role: reference
+source-of-truth: packages/mailwoman/lib/data/bundles.ts, packages/neural/lib/weights/families.ts, scope.config.json, docs/engineering/SCOPE.mdx, docs/engineering/reference/jurisdiction-coverage.mdx
+verified-with: mailwoman v11.0.0
+---
+
+# Data and locales
+
+This reference records the bundle registry and model-family declarations checked for published `mailwoman@11.0.0` on 9 November 2026. The registry describes files a user can obtain. The [release status](/product/limits-and-status) separates those declarations from installed files and evaluated results. [Packages and runtime](./packages-and-runtime.mdx) lists the Node requirements and database path settings.
+
+The [CLI reference](./cli.mdx) lists generated command and flag tables and selected checks against the published package.
+
+## Published data bundles
+
+The `mailwoman/data/bundles` export declares these bundles. Its country entries describe where a layer can add resolution after the required place lookup. They do not assert that a particular address has a matching record.
+
+| Bundle      | Role and declared reach                                                                                    | Required bundle | Artifacts and source                                                                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `candidate` | Administrative place candidates and postcode coverage described by the registry as spanning 244 countries. | None.           | One global candidate database assembled from geographic name and division sources.                                                                    |
+| `poi`       | Points of interest in US, CA, MX, and FR.                                                                  | None declared.  | One Overture Places database.                                                                                                                         |
+| `fr`        | French address points.                                                                                     | `candidate`.    | One Base Adresse Nationale situs database. The registry declares no interpolation layer.                                                              |
+| `us`        | United States address points and street interpolation.                                                     | `candidate`.    | Per-state situs and TIGER interpolation databases. The registry declares 103 files; `data pull us --only <slug>` selects one state or territory slug. |
+
+All four registry entries use active-selection installation. `data pull` stores a versioned artifact under the data root's `db/<role>/<artifact id>/` tree and updates its active selection. The registry's `localPath` is a conventional path that a reader may also resolve. The active selection identifies the file used after a successful pull. The [runtime reference](./packages-and-runtime.mdx#runtime-variables-and-path-precedence) gives candidate path precedence. [Data and licensing](/product/data-and-licensing) describes recorded source terms, while [release status](/product/limits-and-status#downloadable-data-in-the-published-registry) gives the registry's size estimates.
+
+The published CLI also exposes `osm-address-points` as a build recipe for CA, DE, FR, GB, ID, NL, NZ, PK, PL, and VN. A build recipe identifies eligible input countries. Its output requires a completed local build and installation. The four downloadable bundle entries cover a separate distribution path.
+
+## Model families and locale packages
+
+The published 11.0.0 family declaration names two model graphs. A locale overlay can supply retrieval or locale artifacts while using its family's model graph and vocabulary. A weights package supplies parser assets. Geographic databases require a separate installation.
+
+| Family graph package              | Input encoder           | Declared locale packages or ids                                                  | Selection mechanism                                                                                                                  |
+| --------------------------------- | ----------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `@mailwoman/neural-weights-en-us` | SentencePiece subwords. | `en-us`, `en-gb`, `en-au`, `en-in`, `en-nz`, `de-de`, `es-es`, `fr-fr`, `it-it`. | The caller's locale selects the Latin family and any installed locale overlay.                                                       |
+| `@mailwoman/neural-weights-cjk`   | Character ids.          | `cjk`, `ja-jp`, `zh-cn`.                                                         | Han, Kana, and Hiragana input can route to this graph. Its family declaration includes Japanese, Chinese, and Korean language codes. |
+
+Each listed locale id maps to an `@mailwoman/neural-weights-<id>` package. The `cjk` id names its family graph package. The family declaration lists no `ko-kr` or `zh-tw` overlay. KR and TW use the shared character graph through its script route. The [first parse](/docs/start) shows the installed en-US graph. [Inspect a parse](/docs/tutorials/inspect-a-parse) shows the parser's locale and kind trace.
+
+## Maintained scope classification
+
+The current [scope register](https://github.com/sister-software/mailwoman/blob/main/scope.config.json) records membership. Tiers 1–3 grade the strength of a project claim. Tiers 4–5 describe delivery mechanisms and can overlap the first three tiers. The [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) provides the dated evidence behind those claims.
+
+| Classification            | Countries                                              | Meaning in the register                                                                                  |
+| ------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Tier 1                    | FR, US                                                 | First-class project claim.                                                                               |
+| Tier 2                    | AT, AU, BE, CH, CZ, DE, DK, ES, FI, HR, IT, NL, PL, PT | Trained locales with dated coordinate panels.                                                            |
+| Tier 3                    | NO, SE                                                 | Trained exposure with thinner dated coordinate evidence.                                                 |
+| Tier 4                    | CZ, PL, SI, SK                                         | Diacritic-tokenizer delivery mechanism. CZ and PL also appear in tier 2.                                 |
+| Tier 5                    | JP, KR, TW                                             | Character-path delivery mechanism.                                                                       |
+| Untiered shipping locales | CN, GB, IN, NZ                                         | The register records a published weights package but no tier membership, with a reason for each country. |
+
+The generated [jurisdiction coverage register](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/jurisdiction-coverage.mdx) separately reports corpus rows, training admission, gazetteer entries, weight packages, and checking-board rows. Its corpus count is for version `0.7.6-venue-gb-region`, cached 17 October 2026. Its header identifies a different corpus version in the registered training config. The register reports no coordinate-grade measurements for the published 11.0.0 package with model 10.8.0 and its data bundles. The available evaluation ledger also contains no coordinate panel for that exact release. Its coordinate accuracy remains unknown.
+
+## Check an installation
+
+Run the published 11.0.0 commands in the same environment and with the same data root used by the application:
+
+```sh
+mailwoman data status
+mailwoman doctor --verbose
+```
+
+`data status` checks the four declared bundles against local files and exits 1 if any requested bundle is missing. To check one bundle or a specific data root, the published syntax is `mailwoman data status candidate --data-root /absolute/data/root`. `doctor --verbose` reports the resolved data root and database settings. It exited 0 on the verification host while optional geographic data was absent. Read its reported paths and missing-data lines to assess geocoding prerequisites. On the verification host, `data status candidate --data-root /tmp/mailwoman-r06-empty` exited 1 and reported `wof/candidate.db` missing. No geographic database was downloaded or geocode response run for this page.
+
+## Sources checked
+
+- Published [bundle registry](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/data/bundles.ts), [active-selection resolver](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/mailwoman/lib/data/release.ts), and [OSM address-point recipe](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/osm/tools/address-points-recipe.ts).
+- Published [weights-family declaration](https://github.com/sister-software/mailwoman/blob/v11.0.0/packages/neural/lib/weights/families.ts), plus the maintained [scope register](https://github.com/sister-software/mailwoman/blob/main/scope.config.json), [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx), [jurisdiction coverage register](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/jurisdiction-coverage.mdx), and [evaluation ledger](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json).
