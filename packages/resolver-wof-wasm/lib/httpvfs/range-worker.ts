@@ -395,7 +395,7 @@ async function answer(call: RangeWorkerCall): Promise<RangeWorkerResults[keyof R
 		case "query":
 			return query(call)
 		case "stats":
-			return { requests: remote?.requests ?? 0, bytes: remote?.bytes ?? 0 }
+			return { requests: remote?.requests ?? 0, bytes: remote?.bytes ?? 0, cachedBytes: remote?.cachedBytes ?? 0 }
 	}
 }
 

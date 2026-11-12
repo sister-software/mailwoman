@@ -13,6 +13,10 @@ import { loadReleaseAssets, openCandidateTableLookup } from "mailwoman/browser-r
 import type { ReleaseInfo } from "mailwoman/browser-runtime/manifest"
 import { useCallback, useMemo, useRef } from "react"
 
+import { HeavyPhase } from "#memory/crash-guard"
+import { reportModelBytes } from "#memory/ledger"
+import { guardHeavyPhase } from "#memory/profile"
+
 /**
  * The gazetteer a model-only reload hands from the outgoing bundle to the next load.
  */
@@ -82,11 +86,18 @@ export function useReleaseAssetLoader(
 		[keptGazetteer]
 	)
 
+	// The load marks the model phase, so a reload after the tab is killed mid-load finds the breadcrumb.
 	const loadAssets = useCallback(
 		(release: ReleaseInfo, ctx: AssetsLoadContext): Promise<ReleaseAssets> =>
-			loadReleaseAssets(release, ctx, {
-				gazetteer: { sqliteRuntimeBaseURL, lookup: keptGazetteer.take() },
-				ortWASMURL,
+			guardHeavyPhase(HeavyPhase.Model, async () => {
+				const assets = await loadReleaseAssets(release, ctx, {
+					gazetteer: { sqliteRuntimeBaseURL, lookup: keptGazetteer.take() },
+					ortWASMURL,
+				})
+
+				reportModelBytes(assets.modelBytes ?? null)
+
+				return assets
 			}),
 		[sqliteRuntimeBaseURL, ortWASMURL, keptGazetteer]
 	)

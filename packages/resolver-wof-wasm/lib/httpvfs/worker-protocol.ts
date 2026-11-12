@@ -68,6 +68,11 @@ export interface RangeStats {
 	 * The number of response-body bytes those requests returned.
 	 */
 	bytes: number
+
+	/**
+	 * The bytes the worker's chunk cache holds now.
+	 */
+	cachedBytes: number
 }
 
 /**

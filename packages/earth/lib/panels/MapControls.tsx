@@ -16,8 +16,11 @@
  */
 
 import type React from "react"
+import { useEffect } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
+import { registerMemoryMap } from "#memory/ledger"
+import { memoryProfile } from "#memory/profile"
 import { pageSearchParam } from "#routes"
 
 import { CompactBuildings } from "../scene/CompactBuildings.tsx"
@@ -30,17 +33,26 @@ import { DebugControl } from "./MapDebug.tsx"
  * Mounts the jurisdiction legend and hover card on the surrounding `<Map>`,
  * and the feature-inspector control in developer mode.
  */
-export const MapControls: React.FC<{ devMode: boolean }> = ({ devMode }) => {
+export const MapControls: React.FC<{ devMode: boolean; runtimeReady: boolean }> = ({ devMode, runtimeReady }) => {
 	// The controls need the raw maplibre map handle.
 	// `useMap().current` is set once the map instance exists.
 	// Track it in state so the controls re-render (and run their effects) when the map becomes ready.
 	const { current: mapRef } = useMap()
 	const map = mapRef?.getMap() ?? null
 
+	// A load that follows one which ended during a heavy phase leaves the deck.gl scene out.
+	const scene3D = pageSearchParam("no-3d") === null && memoryProfile().threeD
+
+	// The Developer sheet's memory readout counts this map's tiles.
+	useEffect(
+		() => (map ? registerMemoryMap(map as unknown as Parameters<typeof registerMemoryMap>[0]) : undefined),
+		[map]
+	)
+
 	return (
 		<>
-			{pageSearchParam("no-3d") === null ? <Scene3D /> : null}
-			<CompactBuildings />
+			{scene3D ? <Scene3D runtimeReady={runtimeReady} /> : null}
+			<CompactBuildings runtimeReady={runtimeReady} />
 			<CameraPermalink />
 			<JurisdictionInspector map={map} />
 			{devMode ? <DebugControl map={map} /> : null}

@@ -28,6 +28,8 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js"
 import dracoWasmURL from "three/examples/jsm/libs/draco/draco_decoder.wasm?url"
 import dracoWrapperURL from "three/examples/jsm/libs/draco/draco_wasm_wrapper.js?url"
 
+import { bytesPerTileset, type ThreeDBudget } from "#memory/device-tier"
+
 import { EARTH_CIRCUMFERENCE, mercatorWorld } from "../mercator-world.ts"
 import { type CityFrame, cityFrame, createCityModelMaterial, styleCityModel } from "./style.ts"
 
@@ -35,15 +37,6 @@ import { type CityFrame, cityFrame, createCityModelMaterial, styleCityModel } fr
  * The lowest map zoom the layer draws at.
  */
 const MIN_ZOOM = 14
-
-/**
- * The bytes of decoded geometry and textures each city's tile cache holds.
- *
- * The converter limits textures to 1,024 pixels on a side for leaf tiles and 512 for tiles with children.
- * A view at zoom 17 and 60 degrees pitch over Tokyo Station then loads 124 Chiyoda tiles,
- * leaves and their ancestors, and all of them fit.
- */
-const CACHE_BYTES = 512 * 1024 * 1024
 
 /**
  * Above this globe-to-mercator transition the map draws as a globe, where the
@@ -128,21 +121,29 @@ export class CityModelsLayer implements CustomLayerInterface {
 	#material = createCityModelMaterial()
 	#active = new Map<string, ActiveCity>()
 	#covered = ""
+	#budget: ThreeDBudget
+	#activating = true
 
 	/**
 	 * @param cities The converted tilesets the layer may draw.
 	 * @param tilesetURL The URL of a tileset's root `tileset.json`.
 	 * @param onCoverage Called with the tilesets that have drawn a model,
 	 * so other layers can stop drawing beneath them.
+	 * @param budget The bytes of decoded geometry and textures the cities' tile caches share.
+	 * A desktop gives each city 512 MiB.
+	 * At zoom 17 and 60 degrees pitch over Tokyo Station that holds the view's 124 Chiyoda tiles,
+	 * leaves and ancestors, with textures at most 1,024 pixels on a side.
 	 */
 	constructor(
 		cities: readonly CityTileset[],
 		tilesetURL: (city: CityTileset) => string,
-		onCoverage: (cities: readonly CityTileset[]) => void
+		onCoverage: (cities: readonly CityTileset[]) => void,
+		budget: ThreeDBudget
 	) {
 		this.#cities = cities
 		this.#tilesetURL = tilesetURL
 		this.#onCoverage = onCoverage
+		this.#budget = budget
 		this.#camera.matrixAutoUpdate = false
 		this.#camera.matrixWorldAutoUpdate = false
 	}
@@ -182,8 +183,6 @@ export class CityModelsLayer implements CustomLayerInterface {
 		// nearly fill the cache's byte budget.
 		// Siblings outside the view would take the room the visible leaves need.
 		tiles.loadSiblings = false
-		tiles.lruCache.maxBytesSize = CACHE_BYTES
-		tiles.lruCache.minBytesSize = CACHE_BYTES * 0.75
 		tiles.registerPlugin(new GLTFExtensionsPlugin({ dracoLoader: this.#draco, metadata: true }))
 		const scene = new Scene()
 
@@ -216,6 +215,31 @@ export class CityModelsLayer implements CustomLayerInterface {
 		return active
 	}
 
+	/**
+	 * Pauses or resumes loading a city that enters the view.
+	 *
+	 * Cities already loaded keep drawing and refining.
+	 */
+	setActivating(activating: boolean): void {
+		this.#activating = activating
+
+		if (activating) {
+			this.#map?.triggerRepaint()
+		}
+	}
+
+	/**
+	 * Divides the budget among the active cities' tile caches.
+	 */
+	#shareBudget(): void {
+		const bytes = bytesPerTileset(this.#budget, this.#active.size)
+
+		for (const { tiles } of this.#active.values()) {
+			tiles.lruCache.maxBytesSize = bytes
+			tiles.lruCache.minBytesSize = bytes * 0.75
+		}
+	}
+
 	#reportCoverage(): void {
 		const covered = [...this.#active.values()].filter((active) => active.loaded).map((active) => active.city)
 		const key = covered.map((city) => city.id).join(",")
@@ -238,13 +262,15 @@ export class CityModelsLayer implements CustomLayerInterface {
 			const wanted = drawing && inView(map, city.bounds)
 			const active = this.#active.get(city.id)
 
-			if (wanted && !active) {
+			if (wanted && !active && this.#activating) {
 				this.#active.set(city.id, this.#activate(city))
+				this.#shareBudget()
 			}
 
 			if (!wanted && active) {
 				active.tiles.dispose()
 				this.#active.delete(city.id)
+				this.#shareBudget()
 			}
 		}
 

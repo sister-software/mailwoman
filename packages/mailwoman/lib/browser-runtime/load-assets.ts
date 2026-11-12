@@ -90,6 +90,13 @@ export interface ReleaseAssets {
 	 */
 	gazetteerError: string | null
 	/**
+	 * The model file's size in bytes as the classifier reports it, or absent
+	 * when the classifier reports none.
+	 *
+	 * The ONNX session's working memory comes on top of it and isn't counted here.
+	 */
+	modelBytes?: number | null
+	/**
 	 * Give this bundle's native memory back.
 	 *
 	 * The ONNX session's weights and arenas live in the wasm heap outside the JavaScript heap
@@ -409,6 +416,7 @@ export async function loadReleaseAssets(
 			anchorRegions: anchorRegions ?? null,
 			lookup,
 			gazetteerError,
+			modelBytes: diagnostics?.modelBytes ?? null,
 			calibrator,
 			selectPairIndex: selectPairIndexForText ?? null,
 			release: async ({ keepLookup = false } = {}) => {

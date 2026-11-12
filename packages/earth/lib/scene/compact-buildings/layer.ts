@@ -424,6 +424,7 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 	#tiles = new Map<string, ResidentTile>()
 	#empty = new Set<string>()
 	#pending = new Map<string, AbortController>()
+	#fetching = true
 	#frame = 0
 	#created = performance.now()
 	#timer: { extension: { TIME_ELAPSED_EXT: number; GPU_DISJOINT_EXT: number }; queries: WebGLQuery[] } | null = null
@@ -735,6 +736,21 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 	}
 
 	/**
+	 * Pauses or resumes fetching tiles the view is missing.
+	 *
+	 * Resuming repaints the map, so the next frame requests what the view needs.
+	 */
+	setFetching(fetching: boolean): void {
+		if (fetching === this.#fetching) return
+
+		this.#fetching = fetching
+
+		if (fetching) {
+			this.#map?.triggerRepaint()
+		}
+	}
+
+	/**
 	 * Stops drawing the buildings inside each `[west, south, east, north]` area,
 	 * where another layer draws a city model in their place.
 	 * At most {@link MAX_HIDDEN_AREAS} areas count.
@@ -842,7 +858,8 @@ export class CompactBuildingsLayer implements CustomLayerInterface {
 		}
 
 		// Nearest first: coveringTiles lists the tiles nearest the camera first.
-		for (const [x, y] of missing) {
+		// While fetching is paused, the tiles already resident keep drawing and the missing ones wait.
+		for (const [x, y] of this.#fetching ? missing : []) {
 			this.#request(x, y)
 		}
 

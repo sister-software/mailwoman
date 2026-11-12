@@ -24,6 +24,7 @@ import { DebugDrawer } from "./DebugDrawer.tsx"
 import { EarthFooter } from "./EarthFooter.tsx"
 import { LayerToggleControl } from "./LayerToggleControl/LayerToggleControl.tsx"
 import { MapControls } from "./MapControls.tsx"
+import { MemoryPanel } from "./MemoryPanel.tsx"
 import { PermalinkButton } from "./PermalinkButton/PermalinkButton.tsx"
 import { PointFormats } from "./PointFormats.tsx"
 import { ResultExtras } from "./ResultExtras.tsx"
@@ -83,6 +84,8 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 	// A failed load and a release whose gazetteer failed to open each keep a status,
 	// because the page runs with less than its full stack in both.
 	const loading = runtime.loading
+	// The 3D layers wait for the runtime, so their downloads don't compete with the model's.
+	const runtimeReady = runtime.ready
 
 	const loadStatus = runtime.errorMessage
 		? "Model failed to load"
@@ -115,6 +118,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 					{supportsTrace ? <DevModeToggle checked={devMode} onChange={setDevMode} /> : null}
 					{loadLedger ? <LoadLedgerList ledger={loadLedger} /> : null}
 					<CachePanel reloadStack={reloadStack} reloadGazetteer={reloadGazetteer} reloadModel={reloadModel} />
+					<MemoryPanel />
 				</>
 			),
 			result: ({ result, selectedCandidateIndex, onSelectCandidate }) => {
@@ -151,7 +155,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			// The jurisdiction legend and hover card always mount.
 			// The feature inspector is developer tooling, shown under the same
 			// condition as the decode-path drawer.
-			mapControls: <MapControls devMode={devMode} />,
+			mapControls: <MapControls devMode={devMode} runtimeReady={runtimeReady} />,
 			layers: ({ map }) => <LayerToggleControl map={map} />,
 			// The right-click menu lists the point in each encoding the spatial package writes.
 			contextMenu: (point) => <PointFormats point={point} />,
@@ -183,6 +187,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			reloadStack,
 			reloadGazetteer,
 			reloadModel,
+			runtimeReady,
 		]
 	)
 	/* oxlint-enable react/no-unstable-nested-components */

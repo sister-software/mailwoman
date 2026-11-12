@@ -121,6 +121,34 @@ export const RANGE_WORKER_FILE = "range-worker.js"
  */
 export const SQLITE_RUNTIME_MODULE_FILE = "index.mjs"
 
+/**
+ * The range workers this page has open, so a memory readout can ask each for its cache.
+ */
+const liveClients = new Set<RangeWorkerClient>()
+
+/**
+ * The range workers open in this page, and the bytes their chunk caches hold.
+ *
+ * A worker that fails to answer is counted in `workers` and left out of `cachedBytes`,
+ * and `unanswered` counts it, so a partial sum doesn't read as a complete one.
+ */
+export async function rangeWorkerMemory(): Promise<{ workers: number; cachedBytes: number; unanswered: number }> {
+	const clients = [...liveClients]
+	const replies = await Promise.allSettled(clients.map((client) => client.call({ type: "stats" })))
+	let cachedBytes = 0
+	let unanswered = 0
+
+	for (const reply of replies) {
+		if (reply.status === "fulfilled") {
+			cachedBytes += reply.value.cachedBytes
+		} else {
+			unanswered++
+		}
+	}
+
+	return { workers: clients.length, cachedBytes, unanswered }
+}
+
 class RangeWorkerClient implements RangeDatabase {
 	readonly #worker: Worker
 	readonly #pending = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void }>()
@@ -136,6 +164,7 @@ class RangeWorkerClient implements RangeDatabase {
 
 	constructor(workerURL: string) {
 		this.#worker = new Worker(workerURL, { type: "module" })
+		liveClients.add(this)
 
 		this.#worker.addEventListener("message", (event: MessageEvent<RangeWorkerReply>) => {
 			const reply = event.data
@@ -194,12 +223,14 @@ class RangeWorkerClient implements RangeDatabase {
 	}
 
 	terminate(): void {
+		liveClients.delete(this)
 		this.#worker.terminate()
 	}
 
 	close(): void {
 		const error = new Error("The range database is closed")
 
+		liveClients.delete(this)
 		this.#failure ??= error
 		this.#worker.terminate()
 
