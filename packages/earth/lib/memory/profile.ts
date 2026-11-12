@@ -5,11 +5,11 @@
  *   The page's memory profile: its device tier, the crash guard's reading,
  *   and the 3D budget that follows from both.
  *
- *   The profile is read once per load, on first use.
+ *   The page reads the profile once per load, before its first render.
  *   A tripped crash guard steps the tier down one class and turns 3D off for the rest of the load.
  */
 
-import { CrashGuard, type CrashGuardReading, HeavyPhase, pageLocalStorage } from "#memory/crash-guard"
+import { CrashGuard, type CrashGuardReading, HeavyPhase, pageLocalStorage, pageLocks } from "#memory/crash-guard"
 import {
 	type DeviceSignals,
 	type DeviceTier,
@@ -56,29 +56,40 @@ export function buildMemoryProfile(signals: DeviceSignals, crashGuard: CrashGuar
 	}
 }
 
-const guard = new CrashGuard(pageLocalStorage())
+const guard = new CrashGuard(pageLocalStorage(), { locks: pageLocks() })
 let profile: MemoryProfile | null = null
+let loading: Promise<MemoryProfile> | null = null
+
+/**
+ * Takes the crash guard's earlier reading and fixes this load's profile.
+ *
+ * The page awaits it before its first render, because the reading asks the browser which locks are held.
+ */
+export function loadMemoryProfile(): Promise<MemoryProfile> {
+	loading ??= guard.takeEarlierReading().then((reading) => {
+		profile = buildMemoryProfile(readDeviceSignals(), reading)
+		globalThis.addEventListener?.("pagehide", () => guard.clear())
+
+		return profile
+	})
+
+	return loading
+}
 
 /**
  * This load's profile.
  *
- * The first call takes the crash guard's earlier reading and starts clearing the breadcrumbs
- * on `pagehide`, so it runs before any heavy phase writes a breadcrumb of its own.
+ * Until {@linkcode loadMemoryProfile} resolves, it returns the device tier
+ * and a clear guard, without caching that answer.
  */
 export function memoryProfile(): MemoryProfile {
-	if (!profile) {
-		profile = buildMemoryProfile(readDeviceSignals(), guard.takeEarlierReading())
-		globalThis.addEventListener?.("pagehide", () => guard.clear())
-	}
-
-	return profile
+	return profile ?? buildMemoryProfile(readDeviceSignals(), { tripped: false, phases: [] })
 }
 
 /**
  * Marks `phase` as running until `work` settles.
  */
 export async function guardHeavyPhase<T>(phase: HeavyPhase, work: () => Promise<T>): Promise<T> {
-	memoryProfile()
 	guard.begin(phase)
 
 	try {
@@ -92,7 +103,6 @@ export async function guardHeavyPhase<T>(phase: HeavyPhase, work: () => Promise<
  * Marks the 3D phase as running until the returned function is called.
  */
 export function beginThreeDPhase(): () => void {
-	memoryProfile()
 	guard.begin(HeavyPhase.ThreeD)
 
 	return () => guard.end(HeavyPhase.ThreeD)
