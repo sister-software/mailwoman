@@ -1,0 +1,45 @@
+/* SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors */
+/* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial */
+
+/* The service-worker update notice: one line centered at the top of the map, above the panels. */
+
+.notice {
+	position: fixed;
+	inset-block-start: calc(0.75rem + env(safe-area-inset-top));
+	inset-inline: 0;
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	width: max-content;
+	max-width: calc(100% - 2rem);
+	margin-inline: auto;
+	padding: 0.35rem 0.6rem;
+	border-radius: var(--ss-radius-global);
+	background: var(--ss-color-background-raised);
+	box-shadow: var(--mw-material-glass-shadow);
+	color: var(--ss-color-content);
+	font-size: var(--mw-font-size-caption);
+	line-height: 1.4;
+}
+
+.action {
+	padding: 0.15rem 0.5rem;
+	background: var(--ss-color-emphasis-100);
+	color: var(--ss-color-content);
+	border: 1px solid var(--ss-color-emphasis-300);
+	border-radius: var(--ss-radius-global);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+.action:hover {
+	background: var(--ss-color-emphasis-200);
+	border-color: var(--ss-color-primary);
+}
+
+.action:focus-visible {
+	outline: 2px solid var(--ss-color-primary);
+	outline-offset: 2px;
+}

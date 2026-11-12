@@ -3,7 +3,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { buildCacheName, deleteOtherBuildCaches } from "#build-caches"
+import { buildCacheName, deleteOtherBuildCaches, roleCacheName } from "#build-caches"
 
 import { MemoryCacheStorage } from "../test/memory-cache.ts"
 
@@ -32,5 +32,33 @@ describe("deleteOtherBuildCaches", () => {
 			"mailwoman-tiles-5b13e9a1c",
 			"workbox-precache-v2-https://earth.mailwoman.post/",
 		])
+	})
+
+	test("keeps role-named data caches across a deploy, and drops data caches an earlier worker named per build", async () => {
+		const storage = new MemoryCacheStorage()
+		const dataRoles = ["db-ranges", "release-assets", "manifests", "tiles"]
+
+		const current = new Set([
+			...dataRoles.map((role) => roleCacheName("mailwoman-", role)),
+			buildCacheName("mailwoman-", "app-assets", "5b13e9a1c"),
+		])
+
+		const legacy = [
+			...dataRoles.map((role) => buildCacheName("mailwoman-", role, "e1c124bd9")),
+			buildCacheName("mailwoman-", "app-assets", "e1c124bd9"),
+		]
+
+		for (const name of [...current, ...legacy]) {
+			await storage.open(name)
+		}
+
+		await expect(deleteOtherBuildCaches(storage, "mailwoman-", current)).resolves.toEqual(legacy)
+		await expect(storage.keys()).resolves.toEqual([...current])
+	})
+})
+
+describe("roleCacheName", () => {
+	test("names a cache by role alone", () => {
+		expect(roleCacheName("mailwoman-", "release-assets")).toBe("mailwoman-release-assets")
 	})
 })

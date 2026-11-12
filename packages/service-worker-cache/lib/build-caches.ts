@@ -2,19 +2,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Cache names scoped to one build.
+ *   Runtime cache names, and the cleanup a worker runs on activation.
  *
- *   A worker that labels its caches `<prefix><role>-<build>` and runs
- *   {@linkcode deleteOtherBuildCaches} on activation starts every cache empty after a deploy.
- *   A release asset or tile from an earlier build is fetched again once,
- *   so a deploy can never leave a stale copy behind.
+ *   A cache of the build's own files is named for one build, `<prefix><role>-<build>`,
+ *   because a file there may keep its URL while its bytes change between builds.
+ *
+ *   A cache of versioned data, such as release files or range chunks, is named for
+ *   its role alone, `<prefix><role>`, so a deploy keeps it.
+ *   Its entries leave through a release prune message or an entry cap rather than through a deploy.
+ *
+ *   {@linkcode deleteOtherBuildCaches} on activation deletes every other cache under the prefix.
+ *   That covers an earlier build's caches, including data caches that earlier workers named per build.
  */
 
 /**
- * The name of one role's cache for one build, such as `mailwoman-tiles-5b13e9a1c`.
+ * The name of one role's cache for one build, such as `mailwoman-app-assets-5b13e9a1c`.
  */
 export function buildCacheName(prefix: string, role: string, build: string): string {
 	return `${prefix}${role}-${build}`
+}
+
+/**
+ * The name of one role's cache that every build shares, such as `mailwoman-tiles`.
+ */
+export function roleCacheName(prefix: string, role: string): string {
+	return `${prefix}${role}`
 }
 
 /**
