@@ -5,9 +5,18 @@
  *   The page's memory profile: its device tier, the crash guard's reading,
  *   and the 3D budget that follows from both.
  *
- *   The page reads the profile once per load, before its first render.
+ *   The page reads the profile once per load.
+ *   The reading asks the browser which locks are held, so it settles after the first render.
+ *
+ *   Until then the profile is `null`.
+ *   The 3D layers mount only after it settles, and the memory readout prints "checking…" in its place.
+ *
  *   A tripped crash guard steps the tier down one class and turns 3D off for the rest of the load.
+ *   Heavy-phase breadcrumbs don't depend on the profile, so the model's breadcrumb is written
+ *   before its fetch whether or not the reading has settled.
  */
+
+import { useSyncExternalStore } from "react"
 
 import { CrashGuard, type CrashGuardReading, HeavyPhase, pageLocalStorage, pageLocks } from "#memory/crash-guard"
 import {
@@ -56,34 +65,73 @@ export function buildMemoryProfile(signals: DeviceSignals, crashGuard: CrashGuar
 	}
 }
 
+/**
+ * One load's profile, `null` until the crash guard's reading settles.
+ */
+export class MemoryProfileStore {
+	#guard: CrashGuard
+	#signals: () => DeviceSignals
+	#profile: MemoryProfile | null = null
+	#loading: Promise<MemoryProfile> | null = null
+	#listeners = new Set<() => void>()
+
+	constructor(guard: CrashGuard, signals: () => DeviceSignals) {
+		this.#guard = guard
+		this.#signals = signals
+	}
+
+	/**
+	 * Starts the reading once and returns its result.
+	 */
+	load(): Promise<MemoryProfile> {
+		this.#loading ??= this.#guard.takeEarlierReading().then((reading) => {
+			this.#profile = buildMemoryProfile(this.#signals(), reading)
+
+			for (const listener of this.#listeners) {
+				listener()
+			}
+
+			return this.#profile
+		})
+
+		return this.#loading
+	}
+
+	/**
+	 * The settled profile, or `null` while the reading runs.
+	 */
+	current = (): MemoryProfile | null => this.#profile
+
+	/**
+	 * Calls `listener` when the profile settles, in the shape `useSyncExternalStore` takes.
+	 */
+	subscribe = (listener: () => void): (() => void) => {
+		this.#listeners.add(listener)
+
+		return () => this.#listeners.delete(listener)
+	}
+}
+
 const guard = new CrashGuard(pageLocalStorage(), { locks: pageLocks() })
-let profile: MemoryProfile | null = null
-let loading: Promise<MemoryProfile> | null = null
+const store = new MemoryProfileStore(guard, readDeviceSignals)
 
 /**
- * Takes the crash guard's earlier reading and fixes this load's profile.
+ * Starts this load's crash-guard reading, and removes this load's breadcrumbs on a normal unload.
  *
- * The page awaits it before its first render, because the reading asks the browser which locks are held.
+ * The page calls it before its first render and doesn't wait for it.
  */
 export function loadMemoryProfile(): Promise<MemoryProfile> {
-	loading ??= guard.takeEarlierReading().then((reading) => {
-		profile = buildMemoryProfile(readDeviceSignals(), reading)
-		globalThis.addEventListener?.("pagehide", () => guard.clear())
+	globalThis.addEventListener?.("pagehide", () => guard.clear())
 
-		return profile
-	})
-
-	return loading
+	return store.load()
 }
 
 /**
- * This load's profile.
- *
- * Until {@linkcode loadMemoryProfile} resolves, it returns the device tier
- * and a clear guard, without caching that answer.
+ * This load's profile in a component, or `null` until {@linkcode loadMemoryProfile} settles.
+ * The component renders again when it settles.
  */
-export function memoryProfile(): MemoryProfile {
-	return profile ?? buildMemoryProfile(readDeviceSignals(), { tripped: false, phases: [] })
+export function useMemoryProfile(): MemoryProfile | null {
+	return useSyncExternalStore(store.subscribe, store.current, store.current)
 }
 
 /**

@@ -20,7 +20,7 @@ import { useEffect } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
 import { registerMemoryMap } from "#memory/ledger"
-import { memoryProfile } from "#memory/profile"
+import { useMemoryProfile } from "#memory/profile"
 import { pageSearchParam } from "#routes"
 
 import { CompactBuildings } from "../scene/CompactBuildings.tsx"
@@ -40,15 +40,17 @@ export const MapControls: React.FC<{ devMode: boolean; runtimeReady: boolean }> 
 	const { current: mapRef } = useMap()
 	const map = mapRef?.getMap() ?? null
 
-	// A load that follows one which ended during a heavy phase leaves the deck.gl scene out.
-	const scene3D = pageSearchParam("no-3d") === null && memoryProfile().threeD
+	// The deck.gl scene waits for the crash guard's reading.
+	// A load that follows one which ended during a heavy phase leaves it out.
+	const profile = useMemoryProfile()
+	const scene3D = pageSearchParam("no-3d") === null && profile?.threeD ? profile : null
 
 	// The Developer sheet's memory readout counts this map's tiles.
 	useEffect(() => (map ? registerMemoryMap(map) : undefined), [map])
 
 	return (
 		<>
-			{scene3D ? <Scene3D runtimeReady={runtimeReady} /> : null}
+			{scene3D ? <Scene3D runtimeReady={runtimeReady} budget={scene3D.budget} /> : null}
 			<CompactBuildings runtimeReady={runtimeReady} />
 			<CameraPermalink />
 			<JurisdictionInspector map={map} />

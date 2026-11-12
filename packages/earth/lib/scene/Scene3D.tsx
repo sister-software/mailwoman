@@ -33,8 +33,8 @@ import { useEffect, useMemo, useRef } from "react"
 import { useControl, useMap } from "react-map-gl/maplibre"
 
 import { PRODUCTION_CONFIG } from "#config"
-import { bytesPerTileset } from "#memory/device-tier"
-import { beginThreeDPhase, memoryProfile } from "#memory/profile"
+import { bytesPerTileset, type ThreeDBudget } from "#memory/device-tier"
+import { beginThreeDPhase } from "#memory/profile"
 import { pageTilesetParam } from "#routes"
 import { DWELL_MIN_PITCH, DWELL_MS, type DwellCriteria, useCameraDwell } from "#scene/camera-dwell"
 
@@ -236,7 +236,11 @@ const CITY_MODEL_SCREEN_SPACE_ERROR = 16
  *
  * Tile3DLayer reads the options once, so a tileset keeps the share it joined with.
  */
-function loadOptionsFor({ url, bounds: [west, south, east, north], geoidHeight }: PlateauTileset, drawing: number) {
+function loadOptionsFor(
+	{ url, bounds: [west, south, east, north], geoidHeight }: PlateauTileset,
+	drawing: number,
+	budget: ThreeDBudget
+) {
 	let options = cityModelLoadOptions.get(url)
 
 	if (!options) {
@@ -246,7 +250,7 @@ function loadOptionsFor({ url, bounds: [west, south, east, north], geoidHeight }
 		options = {
 			tileset: {
 				modelMatrix: new Matrix4().translate(offset),
-				maximumMemoryUsage: bytesPerTileset(memoryProfile().budget, drawing) / (1024 * 1024),
+				maximumMemoryUsage: bytesPerTileset(budget, drawing) / (1024 * 1024),
 				maximumScreenSpaceError: CITY_MODEL_SCREEN_SPACE_ERROR,
 				maxRequests: CITY_MODEL_MAX_REQUESTS,
 			},
@@ -479,7 +483,7 @@ function pruneDistant(map: MapInstance, cache: Map<string, { position: [number, 
  * and hides the extruded tree layers.
  * From z16 it also draws a street-furniture mesh at each `infrastructure` point that has a `prop`.
  */
-export const Scene3D: React.FC<{ runtimeReady: boolean }> = ({ runtimeReady }) => {
+export const Scene3D: React.FC<{ runtimeReady: boolean; budget: ThreeDBudget }> = ({ runtimeReady, budget }) => {
 	const { current: mapRef } = useMap()
 	const map = mapRef?.getMap() ?? null
 
@@ -727,7 +731,7 @@ export const Scene3D: React.FC<{ runtimeReady: boolean }> = ({ runtimeReady }) =
 								...placement,
 								data: tileset.url,
 								loader: Tiles3DLoader,
-								loadOptions: loadOptionsFor(tileset, cityModels.length),
+								loadOptions: loadOptionsFor(tileset, cityModels.length, budget),
 								opacity,
 							})
 					),
@@ -773,7 +777,7 @@ export const Scene3D: React.FC<{ runtimeReady: boolean }> = ({ runtimeReady }) =
 			map.off("moveend", schedule)
 			map.off("zoom", scheduleFade)
 		}
-	}, [map, overlay, meshes])
+	}, [map, overlay, meshes, budget])
 
 	return null
 }

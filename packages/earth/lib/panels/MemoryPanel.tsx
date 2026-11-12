@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState } from "react"
 
 import { loadedModelBytes, mapTileEstimate } from "#memory/ledger"
 import { estimatePressure, FrameWindow, type FrameStats } from "#memory/pressure"
-import { memoryProfile } from "#memory/profile"
+import { useMemoryProfile } from "#memory/profile"
 
 import styles from "./memory-panel.module.css"
 
@@ -166,16 +166,18 @@ export function MemoryPanel() {
 	const [open, setOpen] = useState(false)
 	const sample = useMemorySample(open)
 	const page = usePageMeasurement()
-	const profile = memoryProfile()
+	const profile = useMemoryProfile()
 	const modelBytes = loadedModelBytes()
 
-	const pressure = sample
-		? estimatePressure({
-				frames: sample.frames,
-				heapRatio: sample.heap ? sample.heap.usedJSHeapSize / sample.heap.jsHeapSizeLimit : null,
-				crashGuardTripped: profile.crashGuard.tripped,
-			})
-		: null
+	// The pressure estimate counts a tripped crash guard, so it waits for the guard's reading.
+	const pressure =
+		sample && profile
+			? estimatePressure({
+					frames: sample.frames,
+					heapRatio: sample.heap ? sample.heap.usedJSHeapSize / sample.heap.jsHeapSizeLimit : null,
+					crashGuardTripped: profile.crashGuard.tripped,
+				})
+			: null
 
 	return (
 		<details className={styles.panel} onToggle={(event) => setOpen(event.currentTarget.open)}>
@@ -183,20 +185,22 @@ export function MemoryPanel() {
 			<dl className={styles.list}>
 				<dt>Device tier</dt>
 				<dd>
-					{profile.tier}
-					{profile.tier === profile.detectedTier ? null : ` (detected ${profile.detectedTier})`}
+					{profile ? profile.tier : "checking…"}
+					{profile && profile.tier !== profile.detectedTier ? ` (detected ${profile.detectedTier})` : null}
 				</dd>
 
 				<dt>Crash guard</dt>
 				<dd>
-					{profile.crashGuard.tripped
-						? `tripped: the previous load ended during ${profile.crashGuard.phases.join(", ")}; 3D is off for this load`
-						: "clear"}
+					{!profile
+						? "checking…"
+						: profile.crashGuard.tripped
+							? `tripped: the previous load ended during ${profile.crashGuard.phases.join(", ")}; 3D is off for this load`
+							: "clear"}
 				</dd>
 
 				<dt>Pressure (estimate)</dt>
 				<dd>
-					{pressure ? pressure.level : "sampling…"}
+					{pressure ? pressure.level : profile ? "sampling…" : "checking…"}
 					{pressure?.reasons.length ? ` — ${pressure.reasons.join("; ")}` : null}
 				</dd>
 
@@ -232,9 +236,11 @@ export function MemoryPanel() {
 
 				<dt>3D budget</dt>
 				<dd className={styles.count}>
-					{profile.threeD
-						? `${mib(profile.budget.totalBytes)} total, ${mib(profile.budget.perTilesetBytes)} per tileset`
-						: "3D off"}
+					{!profile
+						? "checking…"
+						: profile.threeD
+							? `${mib(profile.budget.totalBytes)} total, ${mib(profile.budget.perTilesetBytes)} per tileset`
+							: "3D off"}
 				</dd>
 
 				<dt>MapLibre tiles (estimate)</dt>

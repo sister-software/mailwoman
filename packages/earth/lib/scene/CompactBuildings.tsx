@@ -22,7 +22,7 @@ import { useEffect, useRef } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
 import { PRODUCTION_CONFIG } from "#config"
-import { beginThreeDPhase, memoryProfile } from "#memory/profile"
+import { beginThreeDPhase, useMemoryProfile } from "#memory/profile"
 import { pageTilesetParam } from "#routes"
 import { DWELL_MIN_PITCH, DWELL_MS, type DwellCriteria, useCameraDwell } from "#scene/camera-dwell"
 import type { CityModelsLayer } from "#scene/city-models/layer"
@@ -104,7 +104,10 @@ function guardUntilIdle(map: MapLibreMap): () => void {
 export function CompactBuildings({ runtimeReady }: { runtimeReady: boolean }): null {
 	const { current: mapRef } = useMap()
 	const tileset = pageTilesetParam("buildings3d")
-	const map = tileset && memoryProfile().threeD ? (mapRef?.getMap() ?? null) : null
+	// The layers wait for the crash guard's reading, and stay off for a load whose guard tripped.
+	const profile = useMemoryProfile()
+	const budget = profile?.threeD ? profile.budget : null
+	const map = tileset && budget ? (mapRef?.getMap() ?? null) : null
 
 	const buildingsDwell = useCameraDwell(map, COMPACT_BUILDINGS_DWELL, runtimeReady)
 	const cityDwell = useCameraDwell(map, CITY_MODELS_DWELL, runtimeReady)
@@ -170,7 +173,7 @@ export function CompactBuildings({ runtimeReady }: { runtimeReady: boolean }): n
 	}, [map, tileset, buildingsDwell.everArmed])
 
 	useEffect(() => {
-		if (!map || !buildingsDwell.everArmed || !cityDwell.everArmed) return
+		if (!map || !budget || !buildingsDwell.everArmed || !cityDwell.everArmed) return
 
 		let removed = false
 		let endPhase: (() => void) | null = null
@@ -186,7 +189,7 @@ export function CompactBuildings({ runtimeReady }: { runtimeReady: boolean }): n
 				CITY_TILESETS,
 				(city) => new URL(cityTilesetPath(city), PRODUCTION_CONFIG.tileWorkerURL).href,
 				(covered) => buildingsRef.current?.setHiddenAreas([...LANDMARK_AREAS, ...covered.map((city) => city.bounds)]),
-				memoryProfile().budget
+				budget
 			)
 
 			cityModels.setActivating(cityArmedRef.current)
@@ -204,7 +207,7 @@ export function CompactBuildings({ runtimeReady }: { runtimeReady: boolean }): n
 				map.removeLayer(CITY_MODELS_LAYER_ID)
 			}
 		}
-	}, [map, buildingsDwell.everArmed, cityDwell.everArmed])
+	}, [map, budget, buildingsDwell.everArmed, cityDwell.everArmed])
 
 	// A layer already mounted keeps drawing what it loaded and fetches more only while the camera rests.
 	useEffect(() => {

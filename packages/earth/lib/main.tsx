@@ -37,8 +37,9 @@ setWorkerUrl(maplibreWorkerURL)
 // A deploy's worker waits until the reader picks "Reload" in the update notice.
 const updates = registerServiceWorkerUpdates(registerSW)
 
-// The crash guard's reading decides whether this load mounts 3D, so it settles before the first render.
-await loadMemoryProfile()
+// The crash guard's reading decides whether this load mounts 3D.
+// The page renders without waiting for it, and the 3D layers mount once it settles.
+void loadMemoryProfile()
 
 const root = document.getElementById("root")
 

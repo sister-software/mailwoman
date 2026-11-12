@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 
 import {
 	type BreadcrumbStorage,
@@ -9,9 +9,10 @@ import {
 	CrashGuard,
 	type CrashGuardLocks,
 	HeavyPhase,
+	LOCK_QUERY_TIMEOUT_MS,
 } from "#memory/crash-guard"
 import { DeviceTier } from "#memory/device-tier"
-import { buildMemoryProfile } from "#memory/profile"
+import { buildMemoryProfile, MemoryProfileStore } from "#memory/profile"
 
 class MemoryStorage implements BreadcrumbStorage {
 	#items = new Map<string, string>()
@@ -237,15 +238,73 @@ describe("CrashGuard with Web Locks", () => {
 	})
 })
 
-describe("buildMemoryProfile", () => {
-	const desktop = {
-		coarsePointer: false,
-		screenShortSide: 1080,
-		maxTouchPoints: 0,
-		userAgent: "Mozilla/5.0 (X11; Linux x86_64)",
-		deviceMemory: null,
+const desktop = {
+	coarsePointer: false,
+	screenShortSide: 1080,
+	maxTouchPoints: 0,
+	userAgent: "Mozilla/5.0 (X11; Linux x86_64)",
+	deviceMemory: null,
+}
+
+describe("MemoryProfileStore", () => {
+	/**
+	 * A lock manager whose snapshot never answers, as a slow browser's might.
+	 */
+	const hangingLocks: CrashGuardLocks = {
+		request: () => new Promise(() => {}),
+		query: () => new Promise(() => {}),
 	}
 
+	test("answers null without waiting while the lock snapshot hangs, then settles at the timeout", async () => {
+		vi.useFakeTimers()
+
+		try {
+			const storage = new MemoryStorage()
+
+			new CrashGuard(storage, { now: () => T0, ownerID: "tab-a" }).begin(HeavyPhase.Model)
+
+			const guard = new CrashGuard(storage, { now: () => T0 + 1000, ownerID: "tab-b", locks: hangingLocks })
+			const store = new MemoryProfileStore(guard, () => desktop)
+			const settled = vi.fn()
+
+			store.subscribe(settled)
+
+			const loading = store.load()
+
+			// A render reads the store synchronously and gets null rather than waiting on the reading.
+			expect(store.current()).toBeNull()
+
+			// The model's breadcrumb is written before the reading settles.
+			guard.begin(HeavyPhase.Model)
+			expect(storage.getItem("mailwoman:heavy-phase:model:tab-b")).toBe(String(T0 + 1000))
+
+			await vi.advanceTimersByTimeAsync(LOCK_QUERY_TIMEOUT_MS - 1)
+			expect(store.current()).toBeNull()
+			expect(settled).not.toHaveBeenCalled()
+
+			await vi.advanceTimersByTimeAsync(1)
+
+			const profile = await loading
+
+			expect(store.current()).toBe(profile)
+			expect(settled).toHaveBeenCalledOnce()
+			// Without a snapshot, tab-a's fresh breadcrumb counts, and this load's own doesn't.
+			expect(profile.crashGuard).toEqual({ tripped: true, phases: [HeavyPhase.Model] })
+			expect(storage.getItem("mailwoman:heavy-phase:model:tab-b")).toBe(String(T0 + 1000))
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	test("starts the reading once", async () => {
+		const store = new MemoryProfileStore(new CrashGuard(new MemoryStorage(), { ownerID: "a" }), () => desktop)
+
+		expect(store.load()).toBe(store.load())
+		expect((await store.load()).threeD).toBe(true)
+	})
+})
+
+describe("buildMemoryProfile", () => {
 	test("keeps the detected tier and 3D on a clean load", () => {
 		const profile = buildMemoryProfile(desktop, { tripped: false, phases: [] })
 
