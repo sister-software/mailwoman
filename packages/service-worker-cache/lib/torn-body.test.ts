@@ -53,4 +53,37 @@ describe("tornBodyPlugin", () => {
 		await expect(cacheWillUpdate!({ request: new Request(MODEL), response: whole, event })).resolves.toBe(whole)
 		await expect(cacheWillUpdate!({ request: new Request(MODEL), response: torn, event })).resolves.toBeNull()
 	})
+
+	test("checks a response without Content-Length against the expected-length lookup", async () => {
+		const lookups: string[] = []
+
+		const { cacheWillUpdate } = tornBodyPlugin({
+			expectedLength: (request) => {
+				lookups.push(request.url)
+
+				return 100
+			},
+		})
+
+		const event = {} as ExtendableEvent
+		const whole = respond(new Uint8Array(100), {})
+		const torn = respond(new Uint8Array(30), {})
+
+		await expect(cacheWillUpdate!({ request: new Request(MODEL), response: whole, event })).resolves.toBe(whole)
+		await expect(cacheWillUpdate!({ request: new Request(MODEL), response: torn, event })).resolves.toBeNull()
+		expect(lookups).toEqual([MODEL, MODEL])
+	})
+
+	test("prefers a checkable Content-Length to the lookup, and stores a response the lookup has no length for", async () => {
+		const { cacheWillUpdate } = tornBodyPlugin({ expectedLength: (request) => (request.url === MODEL ? 999 : null) })
+		const event = {} as ExtendableEvent
+		const declared = respond(new Uint8Array(100), { "content-length": "100" })
+		const unknown = respond(new Uint8Array(30), {})
+
+		await expect(cacheWillUpdate!({ request: new Request(MODEL), response: declared, event })).resolves.toBe(declared)
+
+		await expect(cacheWillUpdate!({ request: new Request(`${MODEL}.other`), response: unknown, event })).resolves.toBe(
+			unknown
+		)
+	})
 })

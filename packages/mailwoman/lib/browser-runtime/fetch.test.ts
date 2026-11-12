@@ -103,6 +103,34 @@ describe("fetchWithRetry", () => {
 		expect(impl).toHaveBeenCalledTimes(2)
 	})
 
+	test("the first attempt keeps the caller's cache mode, and each retry runs in reload mode", async () => {
+		const impl = vi
+			.fn<typeof fetch>()
+			.mockRejectedValueOnce(new TypeError("Failed to fetch"))
+			.mockRejectedValueOnce(new TypeError("Failed to fetch"))
+			.mockResolvedValueOnce(new Response("ok"))
+
+		vi.stubGlobal("fetch", impl)
+
+		await settle(fetchWithRetry("https://example.test/model.onnx", { credentials: "omit" }))
+
+		expect(impl.mock.calls.map(([, init]) => init?.cache)).toEqual([undefined, "reload", "reload"])
+		expect(impl.mock.calls.every(([, init]) => init?.credentials === "omit")).toBe(true)
+	})
+
+	test("a retry keeps a caller's no-store mode", async () => {
+		const impl = vi
+			.fn<typeof fetch>()
+			.mockRejectedValueOnce(new TypeError("Failed to fetch"))
+			.mockResolvedValueOnce(new Response("ok"))
+
+		vi.stubGlobal("fetch", impl)
+
+		await settle(fetchWithRetry("https://example.test/releases.json", { cache: "no-store" }))
+
+		expect(impl.mock.calls.map(([, init]) => init?.cache)).toEqual(["no-store", "no-store"])
+	})
+
 	test("a connection lost while the body streams is retried, and the answer carries the whole body", async () => {
 		const impl = vi.fn<typeof fetch>().mockResolvedValueOnce(resetMidBody()).mockResolvedValueOnce(new Response("ok"))
 
