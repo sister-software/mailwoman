@@ -156,6 +156,13 @@ export interface PostalDesignatorRow {
 	 * Brazil's `Quadra` and Mexico's `Lote` are block and lot words of that kind.
 	 */
 	partOfStreetLine?: boolean
+	/**
+	 * True where the postal operator lets the designator stand with no identifier
+	 * after it, as USPS Publication 28 lets `LOWR`, `OFC` and `REAR`.
+	 *
+	 * A unit splitter then reads the designator as a unit when it is the last word of a street line.
+	 */
+	identifierOptional?: boolean
 }
 
 /**

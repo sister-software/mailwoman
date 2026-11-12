@@ -25,6 +25,30 @@ describe("splitStreetLine", () => {
 		expect(splitStreetLine("40-12 Bell Blvd")).toEqual({ house_number: "40-12", street: "Bell Blvd" })
 	})
 
+	it("reads a grid house number with its directional letter before or inside the digits", () => {
+		expect(splitStreetLine("N8722 County Road W")).toEqual({ house_number: "N8722", street: "County Road W" })
+		expect(splitStreetLine("40W514 Illinois Route 64")).toEqual({ house_number: "40W514", street: "Illinois Route 64" })
+	})
+
+	it("reads a grid house number with its directional spelled out, when two words of street follow", () => {
+		expect(splitStreetLine("West 17194 Main Street")).toEqual({ house_number: "West 17194", street: "Main Street" })
+		expect(splitStreetLine("West 125 Street")).toEqual({ street: "West 125 Street" })
+		expect(splitStreetLine("South 400 East")).toEqual({ street: "South 400 East" })
+	})
+
+	it("keeps a range written with spaces, and a half, in the house number", () => {
+		expect(splitStreetLine("91 - 760 Papipi Road")).toEqual({ house_number: "91 - 760", street: "Papipi Road" })
+
+		expect(splitStreetLine("111 1 / 2 West 3rd Street")).toEqual({
+			house_number: "111 1 / 2",
+			street: "West 3rd Street",
+		})
+
+		expect(splitStreetLine("111 1/2 Main St")).toEqual({ house_number: "111 1/2", street: "Main St" })
+		// Any other fraction belongs to the street's name.
+		expect(splitStreetLine("12345 16 1/2 Mile Rd")).toEqual({ house_number: "12345", street: "16 1/2 Mile Rd" })
+	})
+
 	it("returns street-only for shapes lacking a leading digit", () => {
 		expect(splitStreetLine("PO Box 1234")).toEqual({ street: "PO Box 1234" })
 		expect(splitStreetLine("RR 2 Box 67")).toEqual({ street: "RR 2 Box 67" })

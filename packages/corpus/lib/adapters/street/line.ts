@@ -18,8 +18,15 @@
  */
 
 /**
- * A leading house number on a US-style street line contains digits and an optional hyphenated range
- * (Queens `40-12`), an optional single alpha suffix (`101A`), then whitespace, then the rest.
+ * A leading house number on a US-style street line, then whitespace, then the rest.
+ *
+ * The number is digits, or a grid number with a directional letter before
+ * or inside it (Wisconsin's `N8722`, Illinois' `40W514`).
+ * An optional hyphenated range may follow, written with or without spaces
+ * (Queens `40-12`, Hawaii `91 - 760`).
+ *
+ * Then come an optional single alpha suffix (`101A`) and an optional half (`111 1/2`, `111 1 / 2`).
+ * The half is only `1/2`, so a fractional street name stays in the street (`12345 16 1/2 Mile Rd`).
  *
  * The remainder must stay `(\S.*)` and mustn't become `(.+)`: `\s+` and `.` both match a tab,
  * so `\s+(.+)$` lets the engine split a run of tabs between the two groups every possible way
@@ -29,7 +36,15 @@
  * Group 2 is trimmed by the caller either way, so the two forms are indistinguishable on real input.
  * Only the failure cost differs.
  */
-export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(\S.*)$/
+export const HOUSE_NUMBER_PREFIX = /^((?:[NSEW]\d+|\d+(?:[NSEW]\d+)?)(?: ?- ?\d+)?[A-Za-z]?(?: 1 ?\/ ?2)?)\s+(\S.*)$/
+
+/**
+ * A grid house number written with its directional spelled out (Michigan's `West 17194 Main Street`).
+ *
+ * The rest must hold at least two words, so a numbered street keeps its directional
+ * (`West 125 Street`, `South 400 East`).
+ */
+const SPELLED_GRID_NUMBER = /^((?:North|South|East|West) \d+) +(\S+ +\S.*)$/i
 
 /**
  * A street line split into its house number and the remainder.
@@ -60,7 +75,7 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
 
 	if (!trimmed) return null
 
-	const match = HOUSE_NUMBER_PREFIX.exec(trimmed)
+	const match = HOUSE_NUMBER_PREFIX.exec(trimmed) ?? SPELLED_GRID_NUMBER.exec(trimmed)
 
 	if (match) return { house_number: match[1], street: match[2]!.trim() }
 

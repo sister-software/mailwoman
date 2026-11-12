@@ -28,6 +28,11 @@ export interface UnitVocabulary {
 	 */
 	prefix: ReadonlySet<string>
 	/**
+	 * The prefix designators the country lets stand with no identifier (`OFFICE`, `LOWER`, `REAR`),
+	 * from its designator table's `identifierOptional` rows.
+	 */
+	bare?: ReadonlySet<string>
+	/**
 	 * Designators written after their identifier with no space (`2楼`, `305号室`).
 	 */
 	suffix: ReadonlySet<string>
@@ -180,6 +185,7 @@ async function buildVocabulary(country: string): Promise<UnitVocabulary> {
 	)
 
 	const prefix = new Set<string>()
+	const bare = new Set<string>()
 	const suffix = new Set<string>()
 	const table = designatorTableFor(country)
 
@@ -189,18 +195,24 @@ async function buildVocabulary(country: string): Promise<UnitVocabulary> {
 				continue
 			}
 
-			const target = row.position === "prefix" ? prefix : row.position === "suffix" ? suffix : null
+			// A standalone unit row (`LOBBY`, `BASEMENT`) marks no identifier, so it reads as a bare prefix.
+			const standalone = row.position === "standalone"
+			const target = row.position === "prefix" || standalone ? prefix : row.position === "suffix" ? suffix : null
 
 			for (const spelling of [row.spelling, ...row.abbreviations]) {
 				const folded = foldDesignatorSpelling(spelling)
 
 				if (!SINGLE_LETTER.test(folded) || UNSPACED_SCRIPT.test(folded)) {
 					target?.add(folded)
+
+					if (target === prefix && (row.identifierOptional || standalone)) {
+						bare.add(folded)
+					}
 				}
 			}
 		}
 
-		return { country, prefix, suffix, streetTypes, directionals, origin: "codex" }
+		return { country, prefix, bare, suffix, streetTypes, directionals, origin: "codex" }
 	}
 
 	// libpostal lists some unit words among the street-line words too
@@ -334,6 +346,11 @@ function splitLastUnit(
 
 	if (tokens.length < 2) return null
 
+	// `MAIN STREET OFFICE`: a designator the country lets stand with no identifier.
+	if (vocabulary.bare?.has(foldDesignatorSpelling(last.replace(/[.,]$/u, ""))) && designatorAt(last)) {
+		return at(tokens.length - 1)
+	}
+
 	// `#120`: a number sign joined to its identifier, where the country writes `#` as a unit.
 	if (vocabulary.prefix.has("#") && /^#\S/u.test(last) && identifierAt(last)) {
 		return at(tokens.length - 1)
@@ -363,7 +380,12 @@ function streetEvidence(remainder: string, context: TrailingUnitContext): Traili
 	const words = remainder.split(/\s+/u).map((word) => word.replace(/[.,]$/u, "").toLowerCase())
 
 	// A directional after the street's type word or number (`HIGHWAY 6 N`, `IH 10 West`) is stepped over.
-	while (words.length > 1 && context.vocabulary.directionals.has(words.at(-1)!)) {
+	// A word that's both a directional and a street type (`center`) ends the street, as in `Cummings Center`.
+	while (
+		words.length > 1 &&
+		context.vocabulary.directionals.has(words.at(-1)!) &&
+		!context.vocabulary.streetTypes.has(words.at(-1)!)
+	) {
 		words.pop()
 	}
 

@@ -25,7 +25,11 @@
 import type { DesignatorConcept, PostalDesignatorRow, PostalDesignatorTable } from "#postal/designator"
 import { US_FLOOR_DESIGNATORS } from "#us/floor-designator"
 import { US_PO_BOX_DESIGNATORS } from "#us/po-box"
-import { US_UNIT_DESIGNATOR_VARIANTS, type USUnitDesignator } from "#us/unit/designator"
+import {
+	US_UNIT_DESIGNATOR_REQUIRES_RANGE,
+	US_UNIT_DESIGNATOR_VARIANTS,
+	type USUnitDesignator,
+} from "#us/unit/designator"
 
 const UNIT_SOURCE = "https://pe.usps.com/text/pub28/28apc_003.htm"
 const PO_BOX_SOURCE = "https://pe.usps.com/text/pub28/28c2_036.htm"
@@ -90,7 +94,7 @@ function row(
 	spelling: string,
 	concept: DesignatorConcept,
 	source: string,
-	options: Partial<Pick<PostalDesignatorRow, "abbreviations" | "position">> = {}
+	options: Partial<Pick<PostalDesignatorRow, "abbreviations" | "position" | "identifierOptional">> = {}
 ): PostalDesignatorRow {
 	return {
 		spelling,
@@ -100,6 +104,7 @@ function row(
 		concept,
 		language: "en",
 		source,
+		...(options.identifierOptional ? { identifierOptional: true } : {}),
 	}
 }
 
@@ -108,7 +113,10 @@ const UNIT_ROWS = (Object.keys(US_UNIT_DESIGNATOR_VARIANTS) as USUnitDesignator[
 	.map((name) => {
 		const [abbreviation, ...variants] = US_UNIT_DESIGNATOR_VARIANTS[name]
 
-		return row(abbreviation, UNIT_CONCEPTS[name], UNIT_SOURCE, { abbreviations: [name, ...variants] })
+		return row(abbreviation, UNIT_CONCEPTS[name], UNIT_SOURCE, {
+			abbreviations: [name, ...variants],
+			identifierOptional: !US_UNIT_DESIGNATOR_REQUIRES_RANGE[name],
+		})
 	})
 
 const FLOOR_ROWS = US_FLOOR_DESIGNATORS.map((floor) =>

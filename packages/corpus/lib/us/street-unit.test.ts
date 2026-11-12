@@ -140,7 +140,19 @@ describe("US street lines through the shared splitter", () => {
 		expect(split("PIER 39")).toBeNull()
 		expect(split("OLD FRONT ST")).toBeNull()
 		expect(split("KEY WEST AVE")).toBeNull()
-		expect(split("MAIN ST REAR")).toBeNull()
 		expect(split("WILBARGER ST")).toBeNull()
+	})
+
+	it("splits a designator Publication 28 lets stand without a number, when a street remains", () => {
+		expect(split("MAIN ST REAR")).toEqual({ street: "MAIN ST", unit: "REAR" })
+		expect(split("East Washington Avenue Lower")).toEqual({ street: "East Washington Avenue", unit: "Lower" })
+		expect(split("Main Street Office")).toEqual({ street: "Main Street", unit: "Office" })
+		expect(split("Chestnut Street Lobby")).toEqual({ street: "Chestnut Street", unit: "Lobby" })
+		// The remainder `Ocean` holds no street-type word, so `Front` stays in the street.
+		expect(split("OCEAN FRONT")).toBeNull()
+	})
+
+	it("ends the street at a word that's both a directional and a street type", () => {
+		expect(split("Cummings Center Suite 108F")).toEqual({ street: "Cummings Center", unit: "Suite 108F" })
 	})
 })
