@@ -30,7 +30,7 @@ afterEach(() => {
 })
 
 describe("curtainColor", () => {
-	test("takes the style's background colour", () => {
+	test("takes the style's background color", () => {
 		expect(curtainColor(stubMap("#0b1020"))).toBe("#0b1020")
 	})
 

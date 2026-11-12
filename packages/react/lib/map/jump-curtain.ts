@@ -6,7 +6,7 @@
  *
  *   The overlay fades in over the map, the camera jumps under it, and it fades
  *   out as the camera animates in.
- *   It takes the colour of the style's background layer.
+ *   It takes the color of the style's background layer.
  *
  *   A dark style therefore fades through its own dark background rather than through white.
  *
@@ -47,9 +47,9 @@ export interface CurtainMap {
 }
 
 /**
- * The colour the overlay fades through.
+ * The color the overlay fades through.
  *
- * It is the style's first background layer's colour when that colour is a literal.
+ * It is the style's first background layer's color when that color is a literal.
  * Otherwise it is the map container's computed background.
  * The page's theme sets that background.
  */
