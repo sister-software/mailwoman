@@ -6,6 +6,7 @@ import type { FitBoundsOptions, FlyToOptions, JumpToOptions, LngLatBoundsLike } 
 import { type ReactNode, useEffect } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
+import { createJumpCurtain, JUMP_FADE_MS, type JumpCurtain } from "#map/jump-curtain"
 import type { MapCameraTarget } from "#map/place-render"
 import { prefersReducedMotion } from "#map/reduced-motion"
 
@@ -67,26 +68,72 @@ export interface CameraMap {
 }
 
 /**
- * Moves `map` to `target`.
+ * The overview jump a move longer than {@linkcode LONG_MOVE_DEGREES} makes
+ * before it animates in, or `null` for a shorter move.
+ */
+function longMoveJump(map: CameraMap, target: MapCameraTarget): JumpToOptions | null {
+	const from = map.getCenter()
+	const [lon, lat] = cameraTargetCenter(target)
+
+	const arcDegrees = centralAngle(from.lat, from.lng, lat, lon) * ConversionFactor.RadiansToDegrees
+
+	if (arcDegrees <= LONG_MOVE_DEGREES) return null
+
+	return { center: [lon, lat], zoom: Math.min(map.getZoom(), LONG_MOVE_OVERVIEW_ZOOM) }
+}
+
+/**
+ * Moves `map` to `target`, and returns a function that cancels a move still waiting on its fade.
  *
  * A move animates unless `animate` is false or the reader prefers reduced motion.
  * An animated move longer than {@linkcode LONG_MOVE_DEGREES} first jumps to the target at
  * {@linkcode LONG_MOVE_OVERVIEW_ZOOM}, or at the current zoom when that's lower, then animates in.
+ *
+ * With a `curtain`, the jump happens under it.
+ * The curtain fades in over {@linkcode JUMP_FADE_MS}, then the camera jumps.
+ *
+ * The curtain fades out over the same time while the camera animates in, and is then removed.
+ * The returned function removes the curtain, and a move cancelled before its
+ * jump leaves the camera where it was.
  */
-export function applyCameraTarget(map: CameraMap, target: MapCameraTarget, animate = true): void {
+export function applyCameraTarget(
+	map: CameraMap,
+	target: MapCameraTarget,
+	animate = true,
+	curtain: JumpCurtain | null = null
+): () => void {
 	const animated = animate && !prefersReducedMotion()
+	const jump = animated ? longMoveJump(map, target) : null
 
-	if (animated) {
-		const from = map.getCenter()
-		const [lon, lat] = cameraTargetCenter(target)
-
-		const arcDegrees = centralAngle(from.lat, from.lng, lat, lon) * ConversionFactor.RadiansToDegrees
-
-		if (arcDegrees > LONG_MOVE_DEGREES) {
-			map.jumpTo({ center: [lon, lat], zoom: Math.min(map.getZoom(), LONG_MOVE_OVERVIEW_ZOOM) })
+	if (!jump || !curtain) {
+		if (jump) {
+			map.jumpTo(jump)
 		}
+
+		moveToTarget(map, target, animated)
+
+		return () => {}
 	}
 
+	curtain.cover()
+
+	let timer = setTimeout(() => {
+		map.jumpTo(jump)
+		curtain.reveal()
+		moveToTarget(map, target, true)
+		timer = setTimeout(() => curtain.remove(), JUMP_FADE_MS)
+	}, JUMP_FADE_MS)
+
+	return () => {
+		clearTimeout(timer)
+		curtain.remove()
+	}
+}
+
+/**
+ * Moves `map` the rest of the way to `target`, animated or not.
+ */
+function moveToTarget(map: CameraMap, target: MapCameraTarget, animated: boolean): void {
 	if (target.kind === "center") {
 		if (animated) {
 			map.flyTo({ center: target.center, zoom: target.zoom })
@@ -127,7 +174,8 @@ export function ResultCamera({ target, animate = true }: ResultCameraProps): Rea
 
 		if (!instance || !target) return
 
-		applyCameraTarget(instance, target, animate)
+		// A new target, or an unmount, cancels a fade still in progress.
+		return applyCameraTarget(instance, target, animate, createJumpCurtain(instance))
 	}, [map, target, animate])
 
 	return null

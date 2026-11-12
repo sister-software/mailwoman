@@ -19,6 +19,7 @@ import { act } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
+import { JUMP_FADE_MS, type JumpCurtain } from "#map/jump-curtain"
 import type { MapCameraTarget } from "#map/place-render"
 
 import { renderComponent } from "../../test/render.tsx"
@@ -131,6 +132,17 @@ function recordingCamera(center: { lng: number; lat: number }, zoom: number) {
 	return { calls, camera }
 }
 
+/**
+ * A curtain that records its steps into the same list as the camera's moves.
+ */
+function recordingCurtain(calls: Array<[method: string, ...args: unknown[]]>): JumpCurtain {
+	return {
+		cover: () => calls.push(["cover"]),
+		reveal: () => calls.push(["reveal"]),
+		remove: () => calls.push(["remove"]),
+	}
+}
+
 const TOKYO = { lng: 139.7671, lat: 35.6812 }
 
 describe("applyCameraTarget", () => {
@@ -163,6 +175,65 @@ describe("applyCameraTarget", () => {
 		applyCameraTarget(camera, BOUNDS_TARGET)
 
 		expect(calls.map(([method]) => method)).toEqual(["fitBounds"])
+	})
+
+	test("a long move with a curtain fades in, jumps, fades out while animating in, then removes the curtain", () => {
+		vi.useFakeTimers()
+
+		try {
+			const { calls, camera } = recordingCamera(TOKYO, 12)
+			const curtain = recordingCurtain(calls)
+
+			applyCameraTarget(camera, BOUNDS_TARGET, true, curtain)
+			expect(calls.map(([method]) => method)).toEqual(["cover"])
+
+			vi.advanceTimersByTime(JUMP_FADE_MS - 1)
+			expect(calls.map(([method]) => method)).toEqual(["cover"])
+
+			vi.advanceTimersByTime(1)
+			expect(calls.map(([method]) => method)).toEqual(["cover", "jumpTo", "reveal", "fitBounds"])
+			expect(calls[1]![1]).toEqual({ center: [-74, 40.7], zoom: LONG_MOVE_OVERVIEW_ZOOM })
+
+			vi.advanceTimersByTime(JUMP_FADE_MS)
+			expect(calls.map(([method]) => method)).toEqual(["cover", "jumpTo", "reveal", "fitBounds", "remove"])
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	test("cancelling during the fade-in removes the curtain and leaves the camera where it was", () => {
+		vi.useFakeTimers()
+
+		try {
+			const { calls, camera } = recordingCamera(TOKYO, 12)
+			const cancel = applyCameraTarget(camera, BOUNDS_TARGET, true, recordingCurtain(calls))
+
+			vi.advanceTimersByTime(JUMP_FADE_MS / 2)
+			cancel()
+			vi.advanceTimersByTime(JUMP_FADE_MS * 4)
+
+			expect(calls.map(([method]) => method)).toEqual(["cover", "remove"])
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	test("a short move with a curtain animates at once without fading", () => {
+		const { calls, camera } = recordingCamera({ lng: -73.5, lat: 41 }, 12)
+
+		applyCameraTarget(camera, BOUNDS_TARGET, true, recordingCurtain(calls))
+
+		expect(calls.map(([method]) => method)).toEqual(["fitBounds"])
+	})
+
+	test("reduced motion with a curtain lands without fading or animating", () => {
+		vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") }))
+
+		const { calls, camera } = recordingCamera(TOKYO, 12)
+
+		applyCameraTarget(camera, { kind: "center", center: [-73.9857, 40.7484], zoom: 17 }, true, recordingCurtain(calls))
+
+		expect(calls).toEqual([["jumpTo", { center: [-73.9857, 40.7484], zoom: 17 }]])
 	})
 
 	test("reduced motion lands without animating, however far the move", () => {

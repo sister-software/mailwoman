@@ -5,6 +5,7 @@ import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 import { type ReactNode, useCallback, useEffect, useEffectEvent, useRef, useState } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
+import { createJumpCurtain } from "#map/jump-curtain"
 import type { GeocoderPanels, GeocoderRuntime, MapBias } from "#map/types"
 import { useCompareState } from "#map/useCompareState"
 import { useGeocode } from "#map/useGeocode"
@@ -138,7 +139,7 @@ function GeocoderInner({
 
 		// Measurement tools move the camera through the same function a result uses.
 		Reflect.set(globalThis, "__mailwomanApplyCameraTarget", (target: Parameters<typeof applyCameraTarget>[1]) =>
-			applyCameraTarget(event.target, target)
+			applyCameraTarget(event.target, target, true, createJumpCurtain(event.target))
 		)
 
 		setMap(event.target)
