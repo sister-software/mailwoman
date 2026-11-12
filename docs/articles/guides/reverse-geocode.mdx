@@ -35,7 +35,7 @@ Point the reverse geocoder at the result:
 export MAILWOMAN_WOF_ADMIN_DB="$PWD/admin-global-priority.db"
 ```
 
-An optional polygon sidecar, read from `$MAILWOMAN_WOF_POLYGONS_DB`, holds place boundaries. With it, the geocoder tests whether the coordinate lies inside each place's boundary. Without it, the geocoder estimates containment from place centroids and bounding boxes. Step 2 shows the difference. The published CLI has no command that builds the sidecar.
+An optional polygon sidecar, read from `$MAILWOMAN_WOF_POLYGONS_DB`, holds place boundaries. With it, the geocoder tests whether the coordinate lies inside each place's boundary. Without it, the geocoder estimates containment from place centroids and bounding boxes. Step 2 shows the difference. `mailwoman gazetteer polygons` builds the sidecar. It reads the admin gazetteer passed as `--admin` and the Who's On First GeoJSON clones under `--repos`, and writes the database passed as `--out`. That command was read from the published 11.0.0 source and wasn't run for this guide.
 
 The output below was captured with locally built admin and polygon databases. Place IDs and names in your output come from your own Who's On First build and can differ.
 

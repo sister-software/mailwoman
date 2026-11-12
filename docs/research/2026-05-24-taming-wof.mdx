@@ -19,7 +19,7 @@ If you've ever tried to answer "what city is this address in?" programmatically 
 
 ## What Who's On First is
 
-WOF is a gazetteer, a structured database of places. It stores _places_ such as countries, regions, counties, cities, neighborhoods, and venues, rather than addresses, roads, or buildings. Each place gets a stable numeric ID, a parent-child hierarchy, multilingual name variants, and a polygon geometry.
+WOF is a gazetteer, a structured database of places. It stores _places_ such as countries, regions, counties, cities, neighborhoods, and venues. Its placetype spec also defines `address`, `building` and `intersection`, but this post works only with the admin data. Each place gets a stable numeric ID, a parent-child hierarchy, multilingual name variants, and a polygon geometry.
 
 It was created by Mapzen (RIP, 2018) as the successor to GeoPlanet (Yahoo's gazetteer, also RIP). The data lives on GitHub as approximately 100 repositories under the `whosonfirst-data` org, totaling several million individual GeoJSON files. Geocode Earth maintains the canonical SQLite distributions at `data.geocode.earth`.
 
@@ -73,7 +73,7 @@ A WOF GeoJSON feature's properties object looks like this:
 
 ### Brooklyn Integers
 
-WOF IDs are issued by a service called Brooklyn Integers, a distributed ID generator that guarantees uniqueness across the dataset. The IDs are only unique numbers. They're neither sequential, geographically meaningful, nor sortable. That works for lookup, but ID proximity makes no statement about geographic proximity.
+WOF IDs are issued by a service called Brooklyn Integers, a distributed ID generator that guarantees uniqueness across the dataset. The IDs are only unique numbers. They're neither sequential nor geographically meaningful, and their numeric order is arbitrary. That works for lookup, but ID proximity makes no statement about geographic proximity.
 
 ### Supersession chains
 
@@ -139,7 +139,7 @@ When the data arrives as a single bulk NDJSON dump rather than 120K files, the a
 
 `AsyncSpliterator.asMany(source, delimiter, concurrency)` was built for this case. Given a file handle and a desired concurrency, it seeks to N roughly-equal byte positions in the file, snaps each position to the nearest delimiter boundary (so no line gets split between workers), and returns N independent async iterators that each process their own byte range.
 
-We built it and marked it `@internal`. We haven't exercised it at scale because the per-file path was sufficient for the repos we use. It is the right primitive for processing the full Geocode Earth SQLite distribution (3+ GB of admin data across all countries).
+We built it and marked it `@internal`. We haven't exercised it at scale because the per-file path was sufficient for the repos we use. It is the right primitive once the data arrives as one bulk NDJSON dump. The full Geocode Earth distribution (3+ GB of admin data across all countries) is SQLite, and `asMany` can't split a SQLite file on a delimiter.
 
 ## What's next
 
@@ -167,4 +167,4 @@ If you're building a geocoder or any location-aware system and you need hierarch
 - [`docs/records/site-2026-08/concepts/whosonfirst-gotchas.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/concepts/whosonfirst-gotchas.mdx) — the stable reference version of this article (data model, gotchas, tooling architecture)
 - [`docs/records/site-2026-08/concepts/wof-data-pipeline.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/concepts/wof-data-pipeline.mdx) — our internal architecture doc for the ingest pipeline
 - [`docs/records/site-2026-08/concepts/resolver-and-wof.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/concepts/resolver-and-wof.mdx) — how the runtime resolver queries WOF
-- [`core/resources/whosonfirst/`](https://github.com/sister-software/mailwoman/tree/main/core/resources/whosonfirst) — the TypeScript tooling source
+- [`packages/gazetteer/lib/whosonfirst/`](https://github.com/sister-software/mailwoman/tree/main/packages/gazetteer/lib/whosonfirst) — the TypeScript tooling source

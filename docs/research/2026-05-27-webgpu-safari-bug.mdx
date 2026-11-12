@@ -21,7 +21,7 @@ We spent hours on each of these:
 
 **Stale browser cache.** We'd recently updated the model from 25 MB (old tokenizer) to 29 MB (new tokenizer). The old model with the wrong tokenizer produces exactly this symptom. We added cache-busting query params, migrated assets to a CDN, and verified file sizes. The served sizes matched.
 
-**Tokenizer mismatch.** The v0.5.3 model uses a 48K-vocab tokenizer but an older 24K-vocab tokenizer was briefly deployed. We verified hashes, and the deployed tokenizer was the 48K one.
+**Tokenizer mismatch.** The v0.5.3 model uses a 48K-vocab tokenizer but an older 16K-vocab tokenizer was briefly deployed. We verified hashes, and the deployed tokenizer was the 48K one.
 
 **Model version drift.** We have four model versions on the CDN, and the page might have loaded the wrong one. We added a version selector to the demo page and confirmed v0.5.3 was selected and loaded.
 

@@ -43,7 +43,7 @@ The **global holes layer** is decoupled from the US rooftop pipeline (its own Du
 | `earth/panels/LayerToggleControl/LayerToggleControl.tsx` | The toggle-group patterns (`coverage-opt`, `coverage-honest`).                                                                                              |
 | `mailwoman/commands/situs/address-points.tsx`            | `mailwoman situs address-points` — per-state situs address-point DB builder. `--oa-csv` mode reads OpenAddresses for states Overture omits (HI).            |
 
-Source data (not in git): the per-state US rooftop databases `$MAILWOMAN_DATA_ROOT/db/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `mailwoman gazetteer importance`).
+Source data (not in git): the per-state US rooftop databases `$MAILWOMAN_DATA_ROOT/db/address-points/address-points-us-<st>.db` (124.9M points counted before Hawaii's 348K were built, and 125,276,536 in the 2026-09-21 census the [rights inventory](./artifact-rights-inventory.mdx) records) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `mailwoman gazetteer importance`).
 
 ## Runbook: rebuild + republish
 
@@ -95,6 +95,8 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 | **HI**              | **OpenAddresses**                 | Overture omits Hawaii entirely (verified at the S3 source — 0 rows in both releases). Built via `mailwoman situs address-points --oa-csv <4 county CSVs>` → 348K rooftop points.                                                   |
 | **NH**              | TIGER interpolation only          | No rooftop source exists — OA's only NH run is coordinate-only (0 usable of 610K), Overture absent. NH renders **street-level** (visibly a less-covered region — measured). Real NH rooftop points = **NH GRANIT** (not yet done). |
 | AK                  | _excluded_                        | Antimeridian: `h3_cell_to_boundary_wkt` emits unwrapped lon for Aleutian cells. Needs antimeridian splitting before inclusion.                                                                                                     |
+
+The 48 are every state except Hawaii and New Hampshire, so they include Alaska. Alaska's address-point database is built and published (`ak` in `bundles.ts`), and the coverage build leaves it out with `--exclude-states AK`.
 
 To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s) from `results.openaddresses.io/latest/run/us/<st>/<source>.zip`, then `mailwoman situs address-points --state <ST> --oa-csv <csv1>,<csv2>,…`. The new state database is picked up automatically on the next `coverage build`.
 

@@ -207,12 +207,18 @@ The GB sweep on the untouched v385:
 | **10** | **69/69 · 69/69**                     |                **0** |                 **3.34%** |
 | 12–15  | flat                                  |                    0 |                      flat |
 
+This sweep dates from 2026-07-23 and ran on the 19,209-pair index. `neural-weights-en-gb`'s
+`model-card.json` records one measurement of the rebuilt 13,380-pair index: on the 190-row GB
+regression board, 7 rows changed, 1 improved and 1 regressed. It records no rerun of this sweep.
+
 **Because the deficit is uniform, δ≈10 holds across locales without per-country tuning.** v385's
 classifier deficit for the tag is large but uniform (~7.0 logits mean), so a δ that clears it clears
 the whole board at once — δ=10 saturates recall. NZ replicated the shape (gap mean 7.8 logits, same
 δ=10 works). Treat δ≈10 as the expected landing zone for a fresh country. A wildly different optimum
 is a signal to re-check the deficit-uniformity premise (step-0) rather than to keep sweeping. FP grows
-**monotonically** with δ (roughly 6–10× from δ=3 to δ=7), so δ is a working recall/FP dial. Use the
+**monotonically** with δ, so δ is a working recall/FP dial. On v385 it grows 6.4× from δ=5 to δ=7
+(0.385% to 2.477% in the card's sweep). The scorecard's sweeps of the two training checkpoints start
+at δ=3 and grow 9.6× and 9.7× by δ=7 (0.215% to 2.062% and 2.092%). Use the
 smallest δ that clears the recall bar. Golden no-DL FP stays 0, so the venue-confound FP is the
 only cost of a larger δ.
 
@@ -349,7 +355,8 @@ The invariants (§5 of the road-to-v8 roadmap) plus what the arc added:
 
 - **Measure in the shipped configuration.** Two harness-cache errors happened in one night: a cache
   missing `postcode-<cc>.bin` silenced the anchor channel and under-counted recall (55/69 became
-  50/69), and a borrowed cache mis-stated `en-nz` venue FP by 6×. Pin the harness to the production
+  50/69), and a borrowed cache under-reported `en-nz` anchored venue FP as 0.862% (56/6,500) where the shipped
+  configuration gives 1.354% (88/6,500). Pin the harness to the production
   default before reading any number. Suspect the cache rather than the code, when an identical-artifact
   rerun disagrees.
 - **Candidate geometry before calibration.** The 79% window-mode FP was geometry rather than magnitude — δ

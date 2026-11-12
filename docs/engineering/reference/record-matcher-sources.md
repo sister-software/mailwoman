@@ -85,6 +85,10 @@ Each row has the columns `Filing HCP` and `Participating HCP`. Split each row in
 `Medicare Provider Number` / `Medicaid Provider Number` are present and could later join to NPPES via CMS
 certification data.
 
+The file's `Geo Location` column holds `lat,lon`. The matcher mapping doesn't read it, and the config entry sets
+`hasCoordinate: false`. `packages/entity-resolution/tools/txhhsc-to-oarow.ts` reads the column to grade the geocoder
+against the provided coordinates.
+
 ## Join structure
 
 - **Within NPPES:** `NPI` links registry ↔ other-names ↔ practice-locations. This key lets the dedup

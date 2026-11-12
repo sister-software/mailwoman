@@ -115,7 +115,9 @@ confidence ≥ 0.85): 13,681,698 rows (US 11.52M / CA 794k / FR 721k / MX 644k),
 "coffee near Springfield IL" → 11 ranked results, nearest 743 m.
 
 A crashed build leaves a partial, unsealed `.db` behind (the builder direct-writes and
-seals at the end, per the candidate-builder precedent). The next run's `rmSync` clears it,
+seals at the end, per the candidate-builder precedent). `buildPOIDatabase` doesn't use the temp-path
+build and swap that the [layer interface](./layer-interface.mdx) describes, so the previous
+`poi.db` is already gone when a build crashes. The next run removes the partial file,
 but never point a reader (or the publish path) at an unsealed file. No manifest row is
 the tell (`readLayerManifest` throws).
 
@@ -135,7 +137,8 @@ uploader (`packages/mailwoman/tools/dev-tools/data/publish-public-bucket.run.ts`
 version constant (`POI_LAYER_VERSION` in `packages/mailwoman/lib/browser-runtime/resources.ts`). Note:
 `gazetteer publish` is admin-gazetteer-shaped — it uploads as `candidate.db` — and **isn't**
 the poi path. It would land the file at the wrong key. The docs tester
-(`understanding/exotic-poi/try-it.mdx`) is intent-only until the layer is published.
+(`docs/records/site-2026-08/understanding/exotic-poi/try-it.mdx`, now in the archived site records)
+is intent-only until the layer is published.
 
 ## Flag state
 
@@ -145,9 +148,15 @@ v1.1 92.2% (see
 [`2026-07-20-poi-promotion-battery.md`](../../records/evals/2026-07-20-poi-promotion-battery.md) and
 the [runtime-flag register](./runtime-flags.mdx)). With #1206/#1208/#1209 (leaf fan-out,
 indexed brand fetch, full ~2,110-category snapshot), the board is at **50/51 = 98.0%** against the
-rebuilt `poi/2026-07-20a/poi.db`, with both hard floors green. The one holdout is `nm-04`, a
-ring-budget case and not a coverage gap (see the 2026-07-20 standing update in
+rebuilt `poi/2026-07-20a/poi.db`, with both hard floors green. On that 2026-07-20 run the one
+failing case was `nm-04` (`hiking trail near Marseille`), a ring-budget case and not a coverage gap
+(see the 2026-07-20 standing update in
 [`2026-07-19-poi-query-board-v1-baseline.md`](../../records/evals/2026-07-19-poi-query-board-v1-baseline.md)).
+The lookup's default ring budget has since risen from 12 to 16 (`DEFAULT_MAX_RINGS` in
+`packages/resolver-wof-sqlite/lib/poi/lookup.ts`). The 2026-08-03 run in
+[`2026-08-03-backend-parity.md`](../../records/evals/2026-08-03-backend-parity.md) scored 51/51 on
+the FTS backend and 50/51 on the candidate backend, where the one failure is `cat-ca-02`
+(`gas station near Ottawa ON`), the case [resolver backends](./resolver-backends.mdx) reports.
 `"extract"`, the value an unset option takes, is intent/abstain-only with no database. Pass
 `"none"` to remove the POI stage and restore the pre-flag, byte-identical address-only
 classification. `forceFullPipeline` doesn't bypass the poi branch, because the branch is a routing

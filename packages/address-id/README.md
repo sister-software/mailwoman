@@ -12,10 +12,10 @@ case where two records share the same canonical address.
 import { createPostalAddressID } from "@mailwoman/address-id"
 
 const id = createPostalAddressID({
-	components: { street: "123 Main St", locality: "Austin", region: "TX", postcode: "78701" },
-	coordinate: { lat: 30.2672, lon: -97.7431 },
+	address: "123 Main St, Austin, TX 78701",
+	coordinate: { latitude: 30.2672, longitude: -97.7431 },
 })
-// → "tx.882830829dfffff.abc123def456"
+// → "tx.89489e34677ffff.914a2515aefa50ed"
 ```
 
 ## Key structure
@@ -28,17 +28,17 @@ const id = createPostalAddressID({
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **State prefix** | Coarse region (`tx`, `ca`, `ny`, …) from a supplied state or from the ZIP via `@mailwoman/codex`. It is `xx` when the state is unknown. The prefix makes the key sortable by region.                                  |
 | **H3 cell**      | Jitter-stable locality token from the resolved coordinate (`@sister.software/h3` `latLngToCell` at resolution 9). The cell is coarse so that two geocodes of the same place a few meters apart land in the same cell. |
-| **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN STREET` hash identically. The hash is the identity. The cell and state localize and partition it.                         |
+| **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN ST` hash identically. The hash is the identity. The cell and state localize and partition it.                             |
 
 ## API
 
 ```ts
 // Create a stable address primary key
-createPostalAddressID(input: PostalAddressIDInput): string
+createPostalAddressID(input: CreatePostalAddressIDInput): PostalAddressID
 
 // Parse a key back into its components
-parsePostalAddressID(id: string): ParsedPostalAddressID
-// → { state: "tx", h3Cell: "882830829dfffff", hash: "abc123def456" }
+parsePostalAddressID(id: string): ParsedPostalAddressID | null
+// → { state: "tx", cell: "89489e34677ffff", hash: "914a2515aefa50ed" }
 ```
 
 ## Design

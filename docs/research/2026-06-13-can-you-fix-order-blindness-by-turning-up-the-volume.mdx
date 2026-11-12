@@ -21,7 +21,7 @@ Bugatel`. The house number, `69`, sits in the back half. Our model learned house
 from data that almost always puts them out front, so when the number moves, the model
 labels the first number-shaped thing it sees, `47110`, the postcode, as the house number.
 
-For a while we never noticed, because a decode-time span bridge was papering over the
+We hadn't noticed, because a decode-time span bridge was papering over the
 worst of it. When we shipped the char-offset corpus and retired that bridge (by then a
 confirmed no-op everywhere else), French house numbers were the one tag that
 fell out the bottom: 97.7 down to 89.6. That's the regression we set out to fix.

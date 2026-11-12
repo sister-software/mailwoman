@@ -8,14 +8,18 @@ these proposals so it answers the simpler "what type is this proposed span?"
 rather than jointly discovering boundaries and types.
 
 ```ts
-import { groupPhrases } from "@mailwoman/phrase-grouper"
+import { groupPhrasesSync } from "@mailwoman/phrase-grouper"
+import { computeQueryShape } from "@mailwoman/query-shape"
 
-const groups = groupPhrases(normalizedInput, queryShape, localeHint)
-// groups → [
-//   {text: "1600 Amphitheatre Parkway", kind: "street_phrase", confidence: 0.95},
-//   {text: "Mountain View", kind: "locality_phrase", confidence: 0.8},
-//   {text: "CA", kind: "region_abbreviation", confidence: 0.99},
-//   {text: "94043", kind: "postcode", confidence: 0.98},
+const text = "1600 Amphitheatre Parkway, Mountain View, CA 94043"
+const proposals = groupPhrasesSync({ raw: text, normalized: text }, computeQueryShape(text))
+// 12 overlapping proposals, highest confidence first. The first four:
+// [
+//   { span: { body: "1600", start: 0, end: 4, … }, kindHypothesis: "NUMERIC", confidence: 0.95 },
+//   { span: { body: "Amphitheatre Parkway", start: 5, end: 25, … }, kindHypothesis: "STREET_PHRASE", confidence: 0.9 },
+//   { span: { body: "Mountain View", start: 27, end: 40, … }, kindHypothesis: "STREET_PHRASE", confidence: 0.75 },
+//   { span: { body: "CA", start: 42, end: 44, … }, kindHypothesis: "REGION_ABBREVIATION", confidence: 0.7 },
+//   …
 // ]
 ```
 
@@ -38,13 +42,13 @@ groupPhrases(
   input: NormalizedInputLite,
   shape: QueryShapeLike,
   locale?: LocaleHint
-): Promise<PhraseGroup[]>
+): Promise<PhraseProposal[]>
 
 groupPhrasesSync(
   input: NormalizedInputLite,
   shape: QueryShapeLike,
   locale?: LocaleHint
-): PhraseGroup[]
+): PhraseProposal[]
 ```
 
 ## Pipeline position

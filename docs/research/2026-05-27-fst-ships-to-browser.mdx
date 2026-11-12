@@ -13,11 +13,11 @@ The `/demo` page now loads a 9 MB FST (finite-state transducer) gazetteer alongs
 
 The FST binary encodes every US admin place name from Who's On First as a trie: `"new york"` walks to a state with 7 interpretations (NYC locality, NY state region, New York County, etc.). At query time, the classifier receives additive logit biases proportional to each place's Wikipedia importance — Washington DC (importance 0.815) correctly outranks Washington state (0.764).
 
-The browser integration required a new deserializer (`fst-deserialize-web.ts`) that uses `DataView` + `TextDecoder` instead of Node's `Buffer`. It reads the same binary format and has no Node dependencies. The FST loads in parallel with the ONNX model, so it adds no latency on the critical path.
+The browser integration required a new deserializer (`fst-deserialize-web.ts`) that uses `DataView` + `TextDecoder` instead of Node's `Buffer`. It reads the same binary format and has no Node dependencies. The demo fetches the FST alongside its module imports and the basemap source, and starts loading the ONNX model once those finish.
 
 ## The tokenizer incident
 
-While wiring the FST, we discovered the live demo was serving the **wrong tokenizer**. The v0.5.3 model (48K vocab, 29 MB) was paired with the old v0.1.0 tokenizer (24K vocab, 474 KB). This produced garbage output — every span labeled as locality with sub-0.5 confidence. The team didn't notice because the demo was "working" (it showed results), just badly.
+While wiring the FST, we discovered the live demo was serving the **wrong tokenizer**. The v0.5.3 model (48K vocab, 29 MB) was paired with the old v0.1.0 tokenizer (16K vocab, 474 KB). This produced garbage output — every span labeled as locality with sub-0.5 confidence. The team didn't notice because the demo was "working" (it showed results), just badly.
 
 The files in `docs/static/mailwoman/` were managed by hand. Model and tokenizer were copied independently, and the tokenizer copy was missed during the v0.5.3 update.
 

@@ -151,7 +151,7 @@ curl "http://127.0.0.1:7803/reverse?lat=38.8977&lon=-77.0365&format=jsonv2"
 null
 ```
 
-With an admin gazetteer in the data root, the same request returned `"display_name":"White House Grounds, Northwest Washington, Washington, District of Columbia, District of Columbia, United States"` and no `address` object. `/status?format=json` returns `"status":0,"message":"OK"` with a `mailwoman.artifacts` list that identifies each database the server opened.
+The compatible servers look for the admin gazetteer among the data root's Who's On First databases, where its conventional path is `db/wof/admin-global-priority.db`. They don't read `MAILWOMAN_WOF_ADMIN_DB`, the variable the `mailwoman reverse` command reads. With an admin gazetteer in the data root, the same request returned `"display_name":"White House Grounds, Northwest Washington, Washington, District of Columbia, District of Columbia, United States"` and no `address` object. `/status?format=json` returns `"status":0,"message":"OK"` with a `mailwoman.artifacts` list that identifies each database the server opened.
 
 ## Photon clients
 

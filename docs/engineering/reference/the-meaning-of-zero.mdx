@@ -35,36 +35,48 @@ one thing. The separate presence bit fixes it, and the choice of range doesn't.
 
 ## The audit
 
-Four confirmed sites, in descending order of how much they cost.
+Three confirmed sites, in descending order of how much they cost.
 
 ### 1. The postcode-anchor channel
 
 `packages/neural/lib/postcode/anchor.ts` documents it:
 
 ```ts
-/** `1 - normalizedEntropy(posterior)` when the postcode exists; `0` when it is in no gazetteer. */
+/**
+ * The anchor strength in [0, 1].
+ *
+ * It equals `1 - log2(k) / log2(10)` for `k` matched countries, multiplied by
+ * the fuzzy penalty and `positionFactor`.
+ * It is `0` when no gazetteer contains the postcode.
+ */
 confidence: number
 ```
 
 So `confidence: 0` means **either**:
 
 - `27` isn't a postcode at all, **or**
-- `75008` is a postcode, and it exists in most countries, so the posterior is uniform.
+- `75008` is a postcode, and it exists in most countries. At ten or more matched countries
+  (`MAX_COUNTRIES`) the formula reaches `0`.
 
 Those are opposite claims. The first means "ignore this token". The second means "this is a postcode,
 just don't trust the country."
 
 The type already has the discriminator — `matchType: "exact" | "outward" | "fuzzy" | "none"`,
-where `"none"` is exactly "in no gazetteer". The channel's consumer doesn't read it:
-`soft-features.ts` builds the channel from `anchor.confidence` with no other input, so the model is
-fed one number and can't recover the difference.
+where `"none"` is exactly "in no gazetteer". No code outside `anchor.ts` and its tests reads
+`matchType`.
 
-This is the most expensive instance, because the anchor channel is how the model learns about
-postcodes at all.
+The audit of 2026-07-16 ranked this site the most expensive, on the grounds that `soft-features.ts`
+builds the model's anchor channel from this `confidence`. The code doesn't do that, and didn't in
+the commit that added this page (`3fe00349a`). `buildAnchorFeatures` in
+`packages/neural/lib/anchor-inference.ts` writes the channel's own per-piece `confidence`, `1` on a
+postcode span the lookup holds and `0` on every other piece, and `soft-features.ts` passes that
+array on. `extractPostcodeAnchors`, which fills the field quoted above, has one caller outside
+tests, in `packages/mailwoman/tools/eval-harness/oa/resolver/coordinate-tiers.ts`. The double
+meaning of `0` is in the type, and the model isn't fed it.
 
 ### 2. Gazetteer importance — no bit at all (#1142)
 
-`packages/neural/lib/fst-prior.ts`:
+`packages/neural/lib/fst-prior.ts`, as it read on 2026-07-16:
 
 ```ts
 const impBias = entry.importance * biasScale * maxBias
@@ -76,11 +88,17 @@ if (impBias > existing) {
 ```
 
 `importance: 0` ⇒ `impBias: 0` ⇒ never greater than the initial `0` ⇒ **the tag is never biased**.
-An unknown place and a known but unimportant place both get no bias, and 82% of places read `0`.
-The change looks configured and has no effect. Tracked on #1142.
+An unknown place and a known but unimportant place both got no bias, and 82% of places read `0`.
+The importance bias looked configured and had no effect on those places.
 
-Measured on the Paris fixtures, only 3 of 43 surfaces were inert this way, so on that corpus the
-inertia does little harm. The ambiguity remains wherever else places read `0`.
+Measured on the Paris fixtures, the shipped FST returned 43 distinct surfaces. 37 of them would
+fire a bias and only 3 (`avenue`, `budapest`, `paix`) were inert at importance `0`, so on that
+corpus the inertia did little harm
+([`2026-07-16-t1b-gazetteer-feedback-verdict.md`](../../records/evals/2026-07-16-t1b-gazetteer-feedback-verdict.md)).
+
+#1142 closed on 2026-08-25. The prior now multiplies `entry.referential`, a population-based score
+in [0, 1], where it multiplied `entry.importance`. A `referential` of `0` still gives an `impBias`
+of `0` and no bias, and `FSTPlaceEntryLike` has no separate presence field.
 
 ### 3. Zero-valued baselines
 
@@ -90,8 +108,9 @@ The fix there was `tolerance_abs`, an absolute tolerance the row declares. The c
 instead of the relative band. It's the same split on a smaller scale: the row states what "zero"
 means instead of leaving it to the arithmetic.
 
-`span_scorer.py`'s `_NEG_INF = -1e4` is the sentinel-inside-the-value-domain version: a magic number
-living in the same space as real scores.
+The span scorer's `NEG_INF = -1e4` (`packages/trainer/crates/trainer-model/src/span.rs`, and
+`_NEG_INF` in the deleted `span_scorer.py`) is the sentinel-inside-the-value-domain version: a
+magic number living in the same space as real scores.
 
 ## New numeric fields
 
@@ -108,6 +127,8 @@ One tell is a docstring that reads "`0` when …", as at site 1. Grep for it.
 ## The Phase 4a rerank
 
 None of the sites above raised an error, and each cost a wrong verdict or a change with no effect.
-Phase 4a's rerank was VOID because a resolver reading `0.000` street evidence looked exactly like a
-resolver with no street evidence to give. The number was well-formed, and the report presented it as
+Phase 4a's
+[first rerank measurement](../../records/evals/2026-07-16-phase4a-rerank-invalid-measurement.md)
+was VOID because a resolver reading `0.000` street evidence looked exactly like a resolver with no
+street evidence to give. The number was well-formed, and the report presented it as
 a finding. The type checker accepts a magnitude that also encodes its own absence.

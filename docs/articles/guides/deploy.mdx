@@ -56,7 +56,7 @@ The build installed 318 packages, and the image measured 1.09 GB. Podman's defau
 
 ## 3. Run the container with read-only data
 
-The server exits with status 1 when it finds no gazetteer, so a container started without data stops immediately. Its log shows the reason:
+The server exits with status 1 when it finds neither a candidate database nor a Who's On First database, so a container started without data stops immediately. Its log shows the reason:
 
 ```text
 ✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.

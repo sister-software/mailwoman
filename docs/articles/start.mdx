@@ -54,7 +54,7 @@ const result = await parse("apt 4b 350 5th ave new york ny 10118")
 type TreeNode = (typeof result)["tree"]["roots"][number]
 
 console.log("input:", result.input)
-console.log("normalized:", result.tree.raw)
+console.log("tree.raw:", result.tree.raw)
 console.log("locale:", result.locale.locale)
 console.log("kind:", result.kind.kind)
 
@@ -79,7 +79,7 @@ node parse.ts
 
 ```text
 input: apt 4b 350 5th ave new york ny 10118
-normalized: Apt 4B 350 5TH Ave New York NY 10118
+tree.raw: Apt 4B 350 5TH Ave New York NY 10118
 locale: en-US
 kind: structured_address
 region [28, 30): "NY"
@@ -91,7 +91,7 @@ region [28, 30): "NY"
     postcode [31, 36): "10118"
 ```
 
-The printed indentation shows the returned tree. Each node has a component tag, such as `street` or `postcode`, and a value. The `[start, end)` span selects text from `result.tree.raw`. For example, `result.tree.raw.slice(19, 27)` returns `"New York"`. Read spans against `tree.raw`, the case-adjusted text that the classifier returns with the tree. The script prints it on the `normalized:` line.
+The printed indentation shows the returned tree. Each node has a component tag, such as `street` or `postcode`, and a value. The `[start, end)` span selects text from `result.tree.raw`. For example, `result.tree.raw.slice(19, 27)` returns `"New York"`. Read spans against `tree.raw`, the case-adjusted text that the classifier returns with the tree. The script prints it on the `tree.raw:` line.
 
 The `locale` and `kind` lines report the pipeline's decisions for this input. This script returns labeled address components. Forward geocoding reads a separate geographic data layer. [Geocode a file of addresses](./tutorials/geocode-a-file.mdx) installs one.
 

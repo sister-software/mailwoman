@@ -69,7 +69,7 @@ published it.
 
 The repository has thirteen `neural-weights-*` workspaces. Twelve publish, and `base-latn` is private.
 
-The SPDX column and the counts are as first observed. The data-artifact column counts files whose
+Every column is as first observed on 2026-09-20. The data-artifact column counts files whose
 provenance is in question, so it excludes the README, the model card and the two generated rights
 files. Those files document the package rather than holding data.
 
@@ -92,6 +92,19 @@ files. Those files document the package rather than holding data.
 `base-latn` is private, so it ships no generated record and its row reads as unmeasured rather than
 as zero. `en-gb`'s card now records the attribution for `pair-index-gb.bin` itself, and the entry
 no longer sits in `en-us`'s card (see entry 1 under the `en-us` sources below).
+
+The repository has moved since that observation. Read on 2026-11-12 from each package's generated
+`PROVENANCE.json`:
+
+- All twelve manifests are at 11.0.0. `en-us`'s card is at 10.8.0, and the other eleven card versions
+  are unchanged.
+- The records list 72 declared artifacts and a digest for 7 of them: 4 of `en-us`'s 13, both of
+  `cjk`'s, and `pair-index-gb.bin` among `en-gb`'s 9.
+- Ten packages record attribution: `en-us` 10 entries, `cjk` 6, `en-gb` 2, and 1 each for `de-de`,
+  `en-au`, `en-in`, `en-nz`, `es-es`, `fr-fr` and `it-it`. `ja-jp` and `zh-cn` read
+  `none-recorded-in-this-package`.
+
+The sections below describe the first observation unless they say otherwise.
 
 ### SPDX license field
 
@@ -363,7 +376,8 @@ A build freezes what contributed. `TRAINING_SOURCES.json` records per source the
 both refusals, the license stamped on them, and the register's decisions over the source's mapped
 inputs as the build read them, under a digest over itself. `sourcesNotPermitting` is what a publish
 path asks, and it separates the ways a source fails to permit an act: an unmapped source, a missing
-decision, an unelected decision and an elected grant that omits the act. No released model was built from a corpus carrying one.
+decision, an unelected decision and an elected grant that omits the act. No released model was built from a corpus
+that holds a `TRAINING_SOURCES.json`.
 
 ## Runtime datasets and their obligations
 
@@ -404,7 +418,9 @@ The paragraphs below cite those current locations.
 
 `packages/mailwoman/data/coarse-placer/` contains `weights.bin` and `meta.json`: a multinomial logistic-regression
 classifier over 29 country classes on a 65,536-dimension hashed feature space, trained by
-`mailwoman placer train`. It is first-party work, so no third-party license attaches to the artifact.
+`mailwoman placer train`. Its record states that it is first-party work and that no third-party license
+attaches to the artifact itself. Whether an obligation on its training rows reaches the classifier is one of
+the readings this page doesn't make.
 At the first measurement, the repository didn't record what it was trained on. The notices files described
 the third-party data beside it, the classifier lacked a model card, and core's `data/` directory held no
 `PROVENANCE.md`.
@@ -454,8 +470,10 @@ The record listed the Census Bureau and OpenAddresses. The publisher of 68.2% of
 and its open question asked which OpenAddresses source supplied each state's rows while saying a
 per-state answer needed a list the bundle didn't have. The bundle had it on every row.
 
-Thirty-six states are NAD-only, eleven are mixed, and four have a single non-NAD source: Colorado,
-Hawaii, Massachusetts and Nevada. Hawaii's rows record release `openaddresses-latest` rather than the
+The 52 databases are the fifty states, the District of Columbia and the US Virgin Islands, the slugs
+`bundles.ts` lists. Thirty-six are NAD-only, eleven are mixed, and four have a single non-NAD source: Colorado,
+Hawaii, Massachusetts and Nevada. Those are 51. The fifty-second is New Hampshire's. `bundles.ts` records it at 20,480 bytes, and the
+[coverage overlay](./coverage-overlay.mdx) records that the state has no rooftop source. Hawaii's rows record release `openaddresses-latest` rather than the
 dated Overture release, so the fleet isn't one build.
 
 **Scope.** The census read this machine's data root. Those files match the bytes `bundles.ts` records
@@ -553,17 +571,21 @@ The printed entries record the evidence gap and leave any finding against a sour
 because a release control shouldn't reach that conclusion.
 
 `verifyTrainingProvenance` reads both `training.data_attribution` and a top-level `attribution` key.
-`neural-weights-cjk` records its six entries under the second, naming the Overture CDLA terms, the
+`neural-weights-cjk` records its six entries under the second. They cite the upstream register's license for
+Overture's Japanese addresses, the
 National Tax Agency's 利用規約, KOGL Type 1 for the Korean road-name address database, the Korean
 permit registry's 이용허락범위 제한 없음, and the Taiwanese Open Government Data License v1.0 together
-with the fifteen civil affairs bureaux whose 顯名聲明 that license makes a condition of the grant.
+with the fifteen county and city bodies whose 顯名聲明 that license makes a condition of the grant. The
+card lists those fifteen from Overture release `2026-06-17.0`, and its corpus covers 15 of 22 縣市. The 18
+under entry 5 above is the count on Overture's attribution page as read on 2026-09-25. At the first
+observation the card cited CDLA-Permissive-2.0 for both Overture entries.
 
 Two spellings exist because the two graph packages were written separately. A check that read only
 the first would refuse `cjk` as recording no attribution.
 
 Both graph packages pass. `en-us` records ten entries, eight naming a license. The two that do not are
 the OpenAddresses PL entry and the pointer to `THIRD_PARTY_NOTICES.md`. The PL entry's parenthetical
-reads `public, BDOT-derived`. `cjk` records six, four naming a license. The two that do not state their
+reads `public, BDOT-derived`. `cjk` records six, three naming a license. The three that do not state their
 terms outside a parenthetical rather than stating none.
 
 ## Attribution output of `mailwoman license attribution`

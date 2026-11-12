@@ -21,18 +21,18 @@ floor policy, the standard eval set); read that first if you're promoting a mode
 
 ## The instrument inventory
 
-| Instrument                                                         | What it guards                                                               | Where it lives                                                   |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Golden floors (per-locale, noise-aware margins)                    | the shipped baseline everywhere                                              | `mailwoman eval promote` + `mailwoman/eval-harness/specs/*.json` |
-| P0 fragment boards **with lowercase legs**                         | the user register (lowercase is doctrine)                                    | eval-harness fragment boards                                     |
-| Invariance suite vs the shipped reference                          | behavior unchanged against the shipped reference                             | `--baseline` legs of `mailwoman eval promote`                    |
-| Gauntlet ×3 layers (incl. metamorphic INV/DIR)                     | input robustness: label-preserving perturbations mustn't move the coordinate | `mailwoman eval gauntlet`                                        |
-| Evidence ablation (channels-zeroed ≥ baseline on unaffected spans) | the model mustn't launder capability through a retrieval channel             | in place since the v3.16 curriculum work                         |
-| Ablated-vs-fed columns (per channel)                               | what each evidence channel contributes                                       | the capability manifest + the Modal per-channel contrast         |
-| Canary fixtures with receipts                                      | recorded past failures stay fixed (zero-flip)                                | gauntlet fixtures (e.g. Fifth-Ave, world-city rotation)          |
-| Presets byte-check + demo smoke                                    | the user-visible surface                                                     | `mailwoman eval preset-compare` + the demo smoke                 |
-| Capability manifest (register-pinned)                              | the card's published capability block comes from a measurement               | `mailwoman eval capability-manifest`                             |
-| Pre-ship gauntlet on the dev-linked flip                           | the exact bytes about to ship, through the exact runtime                     | the release choreography                                         |
+| Instrument                                                         | What it guards                                                               | Where it lives                                                                  |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Golden floors (per-locale, noise-aware margins)                    | the shipped baseline everywhere                                              | `mailwoman eval promote` + `packages/mailwoman/tools/eval-harness/specs/*.json` |
+| P0 fragment boards **with lowercase legs**                         | the user register (lowercase is doctrine)                                    | eval-harness fragment boards                                                    |
+| Invariance suite vs the shipped reference                          | behavior unchanged against the shipped reference                             | `--baseline` legs of `mailwoman eval promote`                                   |
+| Gauntlet ×3 layers (incl. metamorphic INV/DIR)                     | input robustness: label-preserving perturbations mustn't move the coordinate | `mailwoman eval gauntlet`                                                       |
+| Evidence ablation (channels-zeroed ≥ baseline on unaffected spans) | the model mustn't launder capability through a retrieval channel             | in place since the v3.16 curriculum work                                        |
+| Ablated-vs-fed columns (per channel)                               | what each evidence channel contributes                                       | the capability manifest + the Modal per-channel contrast                        |
+| Canary fixtures with receipts                                      | recorded past failures stay fixed (zero-flip)                                | gauntlet fixtures (e.g. Fifth-Ave, world-city rotation)                         |
+| Presets byte-check + demo smoke                                    | the user-visible surface                                                     | `mailwoman eval preset-compare` + the demo smoke                                |
+| Capability manifest (register-pinned)                              | the card's published capability block comes from a measurement               | `mailwoman eval capability-manifest`                                            |
+| Pre-ship gauntlet on the dev-linked flip                           | the exact bytes about to ship, through the exact runtime                     | the release choreography                                                        |
 
 Margins are **noise-aware**: `max(1.0pp, 2 × the metric's 95% binomial half-width)` at each
 metric's support, taken from the reference model's own readings. Floors can rise when the reference
@@ -69,9 +69,11 @@ A customer engagement adds three things to the existing battery and leaves every
    battery failure at the calibrated λ is a finding about the customer data, reported before
    delivery.
 
-λ calibration happens once, on our own next fine-tune: sweep λ ∈ {0, 1e2, 1e4, 1e6} on a 2k-step
-probe, keep the largest λ that leaves the increment's target metric within noise of λ=0. That λ
-is the template default. An engagement inherits it and revisits only on a battery failure.
+λ calibration happened once, on the GB venue fine-tune (v4.1.2, 2026-08-01): a sweep of
+λ ∈ {0, 1e2, 1e4, 1e6} on 2k-step probes, keeping the largest λ that left the increment's target metric
+within noise of λ=0. The sweep chose λ=1e4
+([pre-registration, Addendum 2](https://github.com/sister-software/mailwoman/blob/main/docs/superpowers/plans/2026-08-01-gb-venue-finetune-preregistration.md)).
+That λ is the template default. An engagement inherits it and revisits only on a battery failure.
 
 ## Not yet packaged
 

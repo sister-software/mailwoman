@@ -154,10 +154,13 @@ Avoid compressed slogans that hide the operation or behavior the reader needs to
 
 ```ts
 // "The guard held." "Parity UP." "Contract confirmed."
-// The fallback kept parity postcode at 0.986 in the 2,000-step probe.
 ```
 
 When the claim depends on an evaluation, name its conditions and metric. Separate the observation from any unverified explanation.
+
+```ts
+// The fallback kept parity postcode at 0.986 in the 2,000-step probe.
+```
 
 ### Do not restate a symbol or preserve empty comments
 

@@ -41,7 +41,7 @@ Point the eval at what we ship and Portugal's 47 kilometers becomes 0.8, Poland'
 
 ## Two evals on the wrong inputs
 
-Twice in one night the thing being measured wasn't the thing we thought. The plan's diagnostic ran without the candidate database loaded, so it blamed coverage on exonyms, the same missing-database confound that [put Warsaw in Indiana](./2026-06-26-warsaw-indiana.mdx) a few weeks back. My parser eval ran against a stale model, so it blamed the shipped parser for a retired one's mistakes. In both cases the harness reported its numbers without saying which database or model it had loaded.
+Twice in one night the thing being measured wasn't the thing we thought. The plan's diagnostic ran without the candidate database loaded, so it blamed coverage on exonyms, the same missing-database confound that [put Warsaw in Indiana](./2026-06-26-warsaw-indiana.mdx) two days earlier. My parser eval ran against a stale model, so it blamed the shipped parser for a retired one's mistakes. In both cases the harness reported its numbers without saying which database or model it had loaded.
 
 Both were caught by the same dull habit: before you trust an aggregate, check what produced it. Dump the rows, read the config, and print the path the symlink resolves to. A model that scores 47 kilometers and a model that scores 0.8 can be the same model graded two ways, and the gap between "ship a fix" and "burn a week on no real problem" is whether you looked.
 

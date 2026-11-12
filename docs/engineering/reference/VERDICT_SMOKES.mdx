@@ -34,7 +34,7 @@ The LR warms up linearly from 0 to `learning_rate` over `warmup_steps`, then **s
 
 ### Mode B — Long-tail cosine
 
-This mode uses a cosine schedule with `max_steps >= 10000`, so the cosine tail doesn't dominate the visible portion of the smoke window. By step 3000, with `max_steps=10000`, LR is still at ~84% of peak. That's close enough for destabilization to surface.
+This mode uses a cosine schedule with `max_steps >= 10000`, so the cosine tail doesn't dominate the visible portion of the smoke window. By step 3000, with `max_steps=10000` and the default `warmup_steps=1000`, LR is still at ~88% of peak. That's close enough for destabilization to surface.
 
 - Use this when the recipe is a tweak on a known-stable baseline (a small source-weight nudge, a tiny class-weight adjustment within a previously-stable family) and when the full-train cosine dynamics matter for the verdict you're trying to reach.
 - This mode costs more wall-clock than constant-LR smokes (a 10K-step smoke is ~6× the wall-clock of a 1.5K-step constant-LR smoke).
@@ -91,7 +91,7 @@ Run these v0.4.0 diagnostic tools against every v0.5.0 smoke / full-run pair. Al
 
 - **`regression_diagnostic.py`** bucketed post-eval false positives and negatives (`non_latin` / `case_only` / `bio_slip` / `empty_pred` / `num_confused` / `other`). It was deleted with the Python trainer (#2874) and has no TypeScript port. The v0.4.0 retrospective entry records its reference distributions.
 
-- **Decoder span-trim** (commit [`c72ab4c`](https://github.com/sister-software/mailwoman/commit/c72ab4c), `core/decoder/build-tree.ts:58`) — `trimBoundary(raw, start, end)` shrinks BIO span bounds past leading / trailing non-`/[\p{L}\p{N}]/u` characters. It requires no retrain and covers the `bio_slip` long tail that the phrase grouper (Thread E) was not designed to catch.
+- **Decoder span-trim** (commit [`c72ab4c`](https://github.com/sister-software/mailwoman/commit/c72ab4c), `core/decoder/build-tree.ts:58` at that commit, now `packages/core/lib/decoder/build-tree.ts`) — `trimBoundary(raw, start, end)` shrinks BIO span bounds past leading / trailing non-`/[\p{L}\p{N}]/u` characters. It requires no retrain and covers the `bio_slip` long tail that the phrase grouper (Thread E) was not designed to catch.
 
 ## Batch-size and gradient-ratio rules (v0.5.0, 2026-05-24)
 
@@ -123,6 +123,8 @@ crf_norm = flat_grad_norm(model)
 
 ratio = crf_norm / max(ce_norm, 1e-12)
 ```
+
+The snippet is PyTorch. The repository has never held a script for the probe: in its history `flat_grad_norm` and `retain_graph` appear only in documentation. The Rust trainer has no command that computes the ratio.
 
 **Read the ratio:**
 

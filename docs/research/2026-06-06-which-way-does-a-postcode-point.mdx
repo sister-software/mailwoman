@@ -9,7 +9,7 @@ The last postcode post concluded that the "which country is this" signal has to 
 
 We took the postcode's gazetteer membership (the `[us, de, fr]` answer from last time) and injected it into the model at the postcode token instead of passing it to a regex. The injection is a small additive vector on the hidden state at the position of the five digits, encoding which countries the code could belong to. On German addresses in German word order, it added thirty-five points of locality accuracy and beat Pelias.
 
-The international-order numbers were much worse. With the same model, the same anchor, and the same German cities written house-number-first with the postcode after the city (the way our test feed renders them), the model scored slightly above 50%. On those rows the anchor did slightly worse than no anchor.
+The international-order numbers were much worse. With the same model, the same anchor, and the same German cities written house-number-first with the postcode after the city (the way our test feed renders them), the model scored around 44%. On those rows the anchor did slightly worse than no anchor.
 
 That left us with three things to find out. When a parser "collapses" on a test, is the parser wrong, or is the test? Can one model learn to read an address in any order, or does each order cost the other? And what does a learned anchor learn: the meaning we intended, or the position where it appeared in training? The last question took three retrains to answer.
 

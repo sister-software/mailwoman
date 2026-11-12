@@ -35,7 +35,7 @@ Define the thing in one sentence, in the reader's vocabulary rather than the cod
 
 > `@mailwoman/address-id` turns a parsed address into a key you can `GROUP BY` or `JOIN ON`. The key has
 > three parts: a coarse region prefix, an H3 cell at resolution 9, and a hash of the address after
-> normalization. Because the hash runs on the normalized form, `123 Main St` and `123 MAIN STREET` produce
+> normalization. Because the hash runs on the normalized form, `123 Main St` and `123 MAIN ST` produce
 > the same key. Because the cell is coarse, two geocodes of the same building a few meters apart still land
 > together. This is the exact-match half of record resolution. When two records disagree in ways
 > normalization cannot settle, you want the fuzzy matcher instead.
@@ -44,10 +44,10 @@ Define the thing in one sentence, in the reader's vocabulary rather than the cod
 
 ```ts
 createPostalAddressID({
-	components: { street: "123 Main St", locality: "Austin", region: "TX", postcode: "78701" },
-	coordinate: { lat: 30.2672, lon: -97.7431 },
+	address: "123 Main St, Austin, TX 78701",
+	coordinate: { latitude: 30.2672, longitude: -97.7431 },
 })
-// → "tx.882830829dfffff.abc123def456"
+// → "tx.89489e34677ffff.914a2515aefa50ed"
 ```
 
 ## Checks before commit

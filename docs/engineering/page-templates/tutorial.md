@@ -47,7 +47,7 @@ straight to prerequisites.
 ```ts
 import { ingestRows, resolveEntities, toGeoJSON } from "@mailwoman/entity-resolution"
 
-// ingestRows(rows, mapping, opts) — the mapping is positional; address columns collect into one field.
+// ingestRows(rows, mapping, opts) — the mapping gives each field its column name or names; address columns join into one field.
 const records = await ingestRows(
 	rows,
 	{ organization: "Provider Name", address: ["Street Address", "City", "State", "ZIP"] },

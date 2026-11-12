@@ -140,7 +140,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 		// country-branch: the only Great Britain tuple CSV this command has read is HM Land
 		// Registry Price Paid Data. packages/corpus/data/license-decisions.json refuses its
-		// address fields refuses (`unchecked-access-free-gb-gb-property-building-1`).
+		// address fields (`unchecked-access-free-gb-gb-property-building-1`).
 		// Great Britain builds from the secondary sources only.
 		// A per-source license check would replace this branch.
 		if (options.source && country === "gb") {

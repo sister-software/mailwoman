@@ -19,7 +19,7 @@ Bare locality names collide constantly across borders, and a name-only check can
 
 ## The postcode hint under the name metric
 
-Every address includes a postcode, and a postcode mostly pins down a country. So we built a small extractor that turns the postcode into a guess about which country you're in, and we ran a simulation: feed that country guess into the resolver's ranking, give candidates from the right country a nudge, and see how much the name-match score improves. It didn't change.
+Every address includes a postcode, and a postcode narrows down the country. So we built a small extractor that turns the postcode into a guess about which country you're in, and we ran a simulation: feed that country guess into the resolver's ranking, give candidates from the right country a nudge, and see how much the name-match score improves. It didn't change.
 
 Briefly, that looked like a dead end. The hint was supposed to help and the number said it didn't. But the number _couldn't_ show the hint helping, because it grades by name, and fixing a wrong-country pick doesn't change the name. We'd handed our metric exactly the kind of improvement it was built to ignore.
 

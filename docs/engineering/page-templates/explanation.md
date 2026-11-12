@@ -43,12 +43,15 @@ than the last.
 <!-- illustrative -->
 
 ```ts
-groupPhrases("1600 Amphitheatre Parkway, Mountain View, CA 94043", shape, locale)
+const text = "1600 Amphitheatre Parkway, Mountain View, CA 94043"
+groupPhrasesSync({ raw: text, normalized: text }, computeQueryShape(text))
+// 12 overlapping proposals, highest confidence first. The first four:
 // [
-//   { text: "1600 Amphitheatre Parkway", kind: "street_phrase", confidence: 0.95 },
-//   { text: "Mountain View",             kind: "locality_phrase", confidence: 0.8 },
-//   { text: "CA",                        kind: "region_abbreviation", confidence: 0.99 },
-//   { text: "94043",                     kind: "postcode", confidence: 0.98 },
+//   { span: { body: "1600", start: 0, end: 4, … },                  kindHypothesis: "NUMERIC",             confidence: 0.95 },
+//   { span: { body: "Amphitheatre Parkway", start: 5, end: 25, … }, kindHypothesis: "STREET_PHRASE",       confidence: 0.9 },
+//   { span: { body: "Mountain View", start: 27, end: 40, … },       kindHypothesis: "STREET_PHRASE",       confidence: 0.75 },
+//   { span: { body: "CA", start: 42, end: 44, … },                  kindHypothesis: "REGION_ABBREVIATION", confidence: 0.7 },
+//   …
 // ]
 ```
 

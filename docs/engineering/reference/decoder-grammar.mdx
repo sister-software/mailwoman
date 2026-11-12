@@ -180,9 +180,10 @@ coherence record applies the same rule to the resolver-side checker.
 | C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/lib/address/system/conventions.ts` is the natural home, but templates are not yet stated as machine-readable sequences |
 | C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector built** (below) — walks the FST for covering entries over every decoded boundary                                                                  |
 
-The proposed instrument is a constraint-violation census over the board, built as an extension of
-`mwdev_diagnose`'s mechanism accounts. Every board failure would then record the predicate(s) it
-violates, and the taxonomy would come from evaluation instead of from arguments over examples.
+The instrument is a constraint-violation census over the board, built as one of
+`mwdev_diagnose`'s mechanism accounts. A census records for every board failure the predicate(s) it
+violates, so the taxonomy comes from evaluation instead of from arguments over examples. §9 still
+registers the census itself as the next measurement.
 
 The C4 and C6 detectors run as `mwdev_diagnose` with `account: "constraints"`. The account parses
 each row as the held-out battery grades it and reports, for each violation, both adjacent spans'

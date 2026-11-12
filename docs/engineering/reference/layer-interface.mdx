@@ -21,7 +21,10 @@ consumer doesn't need to know where the data came from.
 This page describes the interface in prose for layer authors. The code lives in
 [`packages/core/lib/layers/`](https://github.com/sister-software/mailwoman/tree/main/packages/core/lib/layers)
 (`schema.ts` defines the tables, and `manifest.ts` handles read/write IO). The design
-rationale is in the spec listed in the front matter. If you're building a specific layer,
+rationale was in `docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`, which commit
+`10ab20ee7` deleted. Read it with
+`git show 10ab20ee7^:docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`. If you're
+building a specific layer,
 read the worked example first. The [POI layer runbook](./poi-layer-runbook.mdx) records the
 problems found during the first four poi.db builds.
 
@@ -32,10 +35,16 @@ build-then-swap) to analysis data as well as reference data. A layer database:
 
 - Embeds the **two interface tables** below (`layer_manifest`, `layer_coverage`) regardless of
   tier, plus whatever domain tables the layer needs.
-- Is **sealed 0444** on completion (`sealDatabase` from `@mailwoman/core/utils`). It is a
+- Is **sealed 0444** on completion (`sealDatabase` from `@mailwoman/sqlite/sealed/db`). It is a
   readonly artifact and is never reopened read-write. Updates are full rebuilds that are swapped
   into place: build to a temp path, move the old file aside, and move the new one in. The live
-  artifact therefore stays consistent even if a build fails halfway.
+  artifact therefore stays consistent even if a build fails halfway. `buildSealedArtifact` in
+  `packages/sqlite/lib/sealed/build.ts` does this for the flood, coastal, zoning and soil builders.
+  The POI builder is the exception: it removes the previous `poi.db` and writes the output path
+  directly (see the [runbook](./poi-layer-runbook.mdx)). The installer that puts an acquired or
+  recipe-built artifact into a data root is a separate step, described in
+  [Layer installation](./layer-installation.mdx): the artifact moves into an immutable
+  `db/<role>/<sha256>/` directory and `active.json` selects it.
 - Addresses every domain row by **at least one spine key**, so cross-layer joins and spatial
   primitives share a common key.
 

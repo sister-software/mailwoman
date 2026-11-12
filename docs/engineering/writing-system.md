@@ -131,7 +131,7 @@ The six roles are the ones the frontmatter interface enforces
 | ------------- | ---------------------- | ------------ | ------------------ | ------------------------------------------- |
 | `tutorial`    | Second                 | Allowed      | Short to medium    | Every command executed, real output shown   |
 | `guide`       | Second                 | Allowed      | Short to medium    | Executed, output shown when it is the proof |
-| `reference`   | Second, declarative    | No           | Short, table-bound | Generated or executed, never hand-typed     |
+| `reference`   | Second, declarative    | Allowed      | Short, table-bound | Generated or executed, never hand-typed     |
 | `explanation` | Second or plural first | Allowed      | Longer permitted   | Illustrative, marked as such                |
 | `landing`     | Second                 | Allowed      | Short declaratives | One example at most                         |
 | `evidence`    | Plural first           | Allowed      | Medium             | Numbers with the command that produced them |
@@ -144,8 +144,9 @@ one sentence pair. Put a reading-time estimate at the top. Run every command and
 **`guide`.** Use the same warmth as a tutorial, without scenario storytelling. State the outcome first, then a
 prerequisites block, then the steps. Avoid marketing language.
 
-**`reference`.** Use a controlled register: declarative sentences without contractions or humor, and tables in
-place of prose.
+**`reference`.** Use a controlled register: declarative sentences without humor, and tables in
+place of prose. The `styles.Contractions` rule asks for the contracted form on every docs page, reference
+pages included.
 Errors and statuses form one closed table with a stable grep-able code, a one-line meaning, and retry or
 next-step guidance. An entry that restates its own name is decoration. Show the full request and the full
 literal response together. On HTTP surfaces, curl first, then language tabs, every tab hitting the identical

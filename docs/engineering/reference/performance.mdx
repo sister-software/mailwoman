@@ -7,9 +7,12 @@ page recommends. The reasons are not visible from the call site, so this page re
 anyone considering a batch path.
 
 The measurements were taken on 2026-07-16 against the v6.3.0 model shipped at the time
-(`v264-country-softguard`, int8) on a 16-core machine. They also apply to 6.5.0: every release since
-then has changed only the weights on the same int8 graph shape, and parse latency depends on the graph
-shape rather than on the weights.
+(`v264-country-softguard`, int8) on a 16-core machine. They also apply to 6.5.0. That release
+changed only the weights on the same int8 graph shape, and parse latency depends on the graph shape
+rather than on the weights. No later release was measured. The graph has changed since: the measured graph took
+eight inputs (token ids, the mask and three channels), and the en-us graph at 10.7.0 takes token
+ids, the mask, five channels and a locale hint
+([Python removal plan, §4.1](./2026-10-29-python-removal-plan.mdx)).
 
 ## Where the time goes
 
@@ -79,8 +82,11 @@ batching could plausibly help, but it is unmeasured.
 
 ## The ONNX export's batch dimension
 
-`export_onnx.py` requests a dynamic batch dimension on all eight inputs. Until 2026-07-16, the export
-silently ignored that request. The graph advertised `['batch', 'sequence']` on every input while its
+The exporter measured here was `corpus-python/src/mailwoman_train/export_onnx.py`. It moved to
+`export/onnx.py` on 2026-09-12 (`8f1deab77`) and was deleted with the rest of the Python trainer
+(`c0aba3198`). The exporter is now the Rust crate `packages/trainer/crates/trainer-export`. The
+Python exporter requested a dynamic batch dimension on all eight inputs, and the export silently
+ignored that request. The graph advertised `['batch', 'sequence']` on every input while its
 outputs were fixed at `[1, 'sequence', 33]`, and any batch above 1 failed inside an attention
 reshape:
 
@@ -100,10 +106,11 @@ dummy_batch=1  logits_out=[1, 'sequence', 33]        B=4:FAIL
 dummy_batch=2  logits_out=['batch', 'sequence', 33]  B=4:OK  B=32:OK
 ```
 
-The code therefore calls `export_to_onnx(..., dummy_batch=2)`. The parameter defaults to 1, so the
-shipped artifact is unchanged, and the batch=2 re-export reproduces it byte-for-byte at 39.4 MB. The
-fix is in the tree so that the artifact's metadata matches the batch sizes the graph accepts. No
-batching feature is planned.
+`export_to_onnx` therefore gained a `dummy_batch` parameter for the probe. It defaulted to 1 and no
+caller in the tree passed another value, so the shipped artifact stayed the batch=1 graph. The Rust
+exporter declares the same shapes as that graph: dimension 0 of every output is the literal `1`,
+although its computation doesn't specialize the batch
+(`packages/trainer/crates/trainer-export/src/export.rs`). No batching feature is planned.
 
 Do not try to reproduce the specialization with a small model. A minimal reshape repro exports
 correctly at batch=1 on torch 2.13. The failure comes from the transformers attention internals, so
@@ -138,8 +145,9 @@ Avoid two mistakes, both of which produced a wrong answer during the original sw
   code measured no work. This is the same class of bug as
   [the meaning of zero](./the-meaning-of-zero.mdx).
 
-The probes live in `scratchpad/` on the branch that produced this page: `batch-export-probe.py`,
+The probes were scratchpad scripts and were never committed: `batch-export-probe.py`,
 `ort-threads-probe.mjs`, `parse-profile.run.ts`, `parse-concurrency.run.ts`, `parse-cpu.run.ts`.
+`git log --all` finds none of the five on any ref, so a re-measurement has to write them again.
 
 ## CLI cold start versus a warm stream
 

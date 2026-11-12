@@ -46,17 +46,19 @@ promise.
 Errors go in one closed table. Each row gives a stable code a caller can match on, one line of meaning, and
 the next step. A meaning that only restates the code's name gives the reader no information.
 
-| Status | Body                                                 | Explanation                                                      | Next step                                                               |
-| ------ | ---------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `501`  | `{ "error": "not implemented" }`                     | The engine has no `parse` method.                                | Wire `parse` on the engine object.                                      |
-| `503`  | `{ "error": "unavailable" }`                         | The engine method exists in the type but not in this deployment. | Check the data root and the resolver database path.                     |
-| `400`  | `{ "error": "invalid request body", "detail": "…" }` | The body failed validation.                                      | Read `detail` for the field. The raw validator shape is never returned. |
+| Status | Body                                                   | Explanation                                                      | Next step                                                               |
+| ------ | ------------------------------------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `501`  | `{ "error": "parse not implemented", "detail": null }` | The engine has no `parse` method.                                | Wire `parse` on the engine object.                                      |
+| `503`  | `{ "error": "geocoder not available", "detail": "…" }` | The engine method exists in the type but not in this deployment. | Check the data root and the resolver database path.                     |
+| `400`  | `{ "error": "invalid request body", "detail": "…" }`   | The body failed validation.                                      | Read `detail` for the field. The raw validator shape is never returned. |
 
 <!-- illustrative -->
 
 ```bash
 curl -sS localhost:3000/v1/parse -H 'content-type: application/json' \
   -d '{"address":"221B Baker St, London NW1 6XE"}'
+# 501, from an engine with no `parse` method:
+# {"error":"parse not implemented","detail":null}
 ```
 
 ## Checks before commit

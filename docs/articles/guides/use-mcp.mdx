@@ -125,7 +125,7 @@ The parse call returns the full parse pipeline result: the normalized text, quer
 
 ## 3. Know which tools need local data
 
-If the server finds no gazetteer in the data root, the parse and geocode tools return `isError: true` with this message. The server process itself keeps running:
+The server's message uses "gazetteer" for any resolver database: the candidate database or a Who's On First database. If the server finds neither, the parse and geocode tools return `isError: true` with this message. The server process itself keeps running:
 
 ```text
 ✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.

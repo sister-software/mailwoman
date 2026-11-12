@@ -37,7 +37,7 @@ before comparing two training arms. A comparison uses three instruments from it:
    the two measurements.
 5. **A default-on model or decoder change is released against registered quality requirements
    (policy adopted 2026-10-20, #2763).** The
-   [release quality requirements](#the-iron-rules)
+   [release quality requirements](../articles/explanation/data-and-model-quality.mdx)
    replaces the D-rule. A candidate must meet every minimum registered for a required country or
    capability, and the lower confidence bound on its improvement over the published model in the
    equal-country exact-parse objective must meet the registered amount. The published model is the
@@ -64,8 +64,11 @@ before comparing two training arms. A comparison uses three instruments from it:
      block.
 
    **The registered requirements.** `release-requirements.v7.json` registers nine country minima,
-   four capabilities, the equal-weight objective and the confidence settings. The reasons are in
-   [the v3 decision record](../records/evals/2026-10-20-release-requirements-v3.md). A verdict stays
+   four capabilities, the equal-weight objective and the confidence settings. Version 7 keeps the
+   values decided for version 3, and their reasons are in
+   [the v3 decision record](../records/evals/2026-10-20-release-requirements-v3.md). Each later
+   version's `rationale` field records what it changed, including the fourth capability,
+   `postal_unit`, added in version 6. A verdict stays
    `insufficient_evidence` until a frozen dataset with an overlap audit holds admitted rows for every
    required country. Until then the earlier promotion checks keep deciding `mwdev_promotion_eval`.
    [The migration record](../records/evals/2026-10-20-promotion-check-migration.md) lists every
@@ -190,7 +193,7 @@ per-script CN model was refused on 126 rows) and fix #2313 and #2318, because an
 ## The standard eval battery
 
 :::danger[Grade against `v9.0.0-base` rather than an earlier spec]
-**The current spec is
+**The current battery spec is
 [`v9.0.0-base.json`](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/tools/eval-harness/specs/v9.0.0-base.json)**
 — `mailwoman eval promote --weights-cache <dir> --check v9.0.0-base` (or the `mwdev_promotion_eval` tool with
 `check: "v9.0.0-base.json"`). Its floors are reduced from the shipped baseline's own readings under the ship config,
@@ -494,7 +497,7 @@ intended, because a fine-tune mustn't destroy the base. It has two consequences,
 the base learned and one for classes it didn't:
 
 - **Rare-class forgetting:** the base had learned fr.cedex. Each fine-tune's gradient mass pulled
-  toward its own objective, and the small cedex classes eroded (~10/430 CA rows, measured across
+  toward its own objective, and the small cedex classes eroded (~10 CA rows of the 430 behind `fr.cedex_real`, measured across
   every bundle-era fine-tune, with replay boosting reaching a plateau of ~83.4). The v4.0.0 base
   learned it again from its own training: **90.5 vs the waived 82.2 floor**, above even the
   unwaived 85.6 shipped reading.
@@ -533,5 +536,6 @@ three distinct operations, and a recipe must state which one it uses.
 ## When your change doesn't clear the bar
 
 Tune and retry once. If the change still fails, stop and write the postmortem instead of a third
-run. The v0.6.x cycle is the retrospective that shows why. Record the negative result in the
-ledger.
+run. The [v0.6.x cycle retrospective](../records/retrospectives/v0-6-x-cycle-retrospective.mdx)
+shows why: four training runs over about four days produced no shippable release. Record the
+negative result in the ledger.

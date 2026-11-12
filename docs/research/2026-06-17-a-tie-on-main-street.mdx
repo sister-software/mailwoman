@@ -60,15 +60,15 @@ neural: house_number=1600  street="Pennsylvania Ave NW"  unit="Apt 4B"  ...
 
 Both find the unit. The neural net keeps the designator ("Apt") attached, where v0 strips it to the bare "4B".
 
-The neural model has these tags because we trained it on examples that contain them, a discipline we've written about before as **negative space**: you teach the model the tags the rules engine never had. From our parity evals, `unit` coverage went from **0 → 92%**, `street_prefix` 0 → 78%, `street_suffix` 0 → 67%, components the Pelias port doesn't emit. And on multi-locale evals the same recipe is why native-order German resolves locality at ~90% where a US-order assumption falls to the 40s (we've told that story before, in "the right name in the wrong state").
+The neural model has these tags because we trained it on examples that contain them, a discipline we've written about before as **negative space**: you teach the model the tags the rules engine never had. From our parity evals, `unit` coverage went from **0 → 92%**, `street_prefix` 0 → 78%, `street_suffix` 0 → 67%. The Pelias port doesn't emit the two street affixes, and it emits `unit` without its designator. And on multi-locale evals the same recipe is why native-order German resolves locality at ~90% where a US-order assumption falls to the 40s (we've told that story before, in "Which way does a postcode point?").
 
-On the addresses that fit the template, the parsers tie. On PO boxes, intersections, units, sub-street components, and non-US word order, the neural net emits tags the rules engine doesn't have.
+On the addresses that fit the template, the parsers tie. On PO boxes, intersections, units, sub-street components, and non-US word order, the neural net keeps structure the rules engine drops.
 
 ## Where we still struggle (and what we haven't touched)
 
 - **Clean addresses are a tie rather than a win.** The two parsers above agree on `350 5th Ave` down to the components: neural splits `street="5th"` + `street_suffix="Ave"` where v0 keeps `"5th Ave"` whole, and _both are correct_. For a model this good on US structure, matching the rules engine is the target on clean addresses.
 - **Reordered house numbers.** French addresses that lead with the postcode still trip the model: `fr.house_number` plateaus around 87% on the hardest reordered stratum, where the model assigns the leading number to `house_number`. We pushed it from 54% to 87% and then hit a wall that a training-weight tweak won't move. The next change is real reordered data rather than more synthetic.
-- **Whole locales we haven't tackled.** Japanese, Korean, and Taiwanese addressing — block-and-lot systems that don't map onto a Western street grid — are scoped but unbuilt. So is the last stubborn 0% class in the postal arena: Commonwealth and military PO-box formats (BFPO, APO/FPO).
+- **Whole locales the parser hasn't tackled.** Japanese, Korean, and Taiwanese addressing — block-and-lot systems that don't map onto a Western street grid — are scoped but unbuilt. So is the last stubborn 0% class in the postal arena: Commonwealth and military PO-box formats (BFPO, APO/FPO).
 - **Coordinate precision.** Today's US coordinate is the admin-centroid tier: we land you in the right city, and "right city" is a centroid that can sit tens of kilometers from an edge address. The finer tiers (postcode centroid, then street-level interpolation) are wired but not yet the default everywhere.
 
 ## We even tried to have both

@@ -206,8 +206,9 @@ at revision `1115bbe3f`, the Rust figures at the revision that deleted the Pytho
 | Modal cpu=8, Python          |             56.27 |                37.84 |             94.11 |            122.5 |             9,482 |      12,827 |
 | Modal cpu=8, Rust            |             21.41 |                 0.10 |             21.51 |            134.2 |             8,820 |      12,216 |
 
-The sampler by itself costs 2.7 to 3.1 ms per batch on the lab host and 6.8 to 7.2 ms on Modal, so it is about a
-third of the Rust path's remaining `iter_batches` time.
+The same runs timed the Python sampler by itself (`sampler_ms_per_batch`, a field the table omits): 2.7 to 3.1 ms
+per batch on the lab host and 6.8 to 7.2 ms on Modal. That's about a fifth of the Rust path's remaining
+`iter_batches` time on the lab host and about a third on Modal.
 
 ### The Rust sampler
 
@@ -229,7 +230,10 @@ was shared with other jobs: the load average was 26 to 30 during the first pair 
 
 Init is process start to the first converted batch. The sampler's share covers the listing, the sha256 check
 against the cache, the source index and the 131,072-row buffer fill. The milliseconds are per batch. RSS after
-init is read from `/proc/self/statm`, and peak RSS from `ru_maxrss`. On the second pair the Rust sampler reduced
+init is read from `/proc/self/statm`, and peak RSS from `ru_maxrss`. Each peak reads lower than its after-init
+figure, and a peak measured in the same unit cannot be lower. In both Rust rows the ratio is 0.9537, the ratio of
+10^6 to 2^20, so the peak column appears to be in MiB and the after-init column in MB. The script that produced
+this table isn't committed, so the units are inferred from that ratio. On the second pair the Rust sampler reduced
 sampling from 8.09 to 1.75 ms per batch and sampler initialization from 220.3 to 21.0 s. Encoding is the same
 Rust code in both arms. Its spread follows the host load rather than the sampler.
 

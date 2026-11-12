@@ -198,10 +198,10 @@ Usage: mw doctor [options]
 
 Check whether this machine can run mailwoman, and what each missing component costs you. The checks
 cover the runtime first (node, ONNX), then the model weights, then the optional data layers that
-geocoding needs. A missing data layer is reported without failing the command, and every failing
-line prints the command that fixes it. The report ends with the license that applies: the branch of
-mailwoman's license for this installation, and the obligations that each attached layer's recorded
-license imposes (attribution, share\-alike, source offer).
+geocoding needs. A missing data layer is reported without failing the command. Each missing
+component and each failing core check prints a fix line. The report ends with the license that
+applies: the branch of mailwoman's license for this installation, and the obligations that each
+attached layer's recorded license imposes (attribution, share\-alike, source offer).
 
 
 Options:

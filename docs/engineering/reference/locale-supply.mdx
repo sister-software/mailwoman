@@ -31,9 +31,14 @@ prefix never restates `surface` or the register.
 that writes it. `v0.7.0-de-holdout` is the first corpus whose rows store the current spelling. Every
 corpus assembled before it, and every training config that targets one, keeps the `synth-` spelling,
 because a source id is the string stored on every row of a built corpus and a config keys on what its
-corpus stores. The left column below uses the spelling the measured corpus,
-`v0.32.0-locality-shape`, stores, and the middle column gives the spelling a corpus assembled from
-`v0.7.0-de-holdout` on stores:
+corpus stores. `v0.32.0-locality-shape` is the older of the two despite its number: training moved from it to
+`v0.6.0-register-surface`, the `v0.5.0` base rebuilt from source, and then to `v0.7.0-de-holdout`
+(`packages/corpus/data/training-configs/v6.0.0-register-surface-60k.yaml` and
+`v7.0.0-de-holdout-60k.yaml`). The left column below gives the `synth-` spelling a corpus assembled before
+`v0.7.0-de-holdout` stores, and the middle column gives the spelling a corpus assembled from
+`v0.7.0-de-holdout` on stores. The measured corpus, `v0.32.0-locality-shape`, holds no rows from
+`synth-pt`, `synth-ch`, `synth-hr`, `synth-sk` or `synth-lu`, which `v0.6.0-register-surface` was the
+first corpus to include:
 
 | source     | stored now    | reads                                                        |
 | ---------- | ------------- | ------------------------------------------------------------ |
@@ -97,7 +102,9 @@ Every GB row with a street comes from one source, and that source isn't a gazett
 `v0.5.0`, GB's two `wof-*` sources hold 14,812,000 rows and **0** have a `street` or `house_number`
 tag, so every GB street row the model sees is a `synth-gb` rendering of a Price Paid row.
 
-Price Paid holds 25,674,049 rows and the recipe emits 800,000 of them (3.1%). The recipe reads
+Price Paid holds 25,674,049 rows and the recipe emits 800,000 of them (3.1%). The 800,000 is the
+`--count` the recipe was run with, and the reader imposes no such limit: `count` defaults to 4,000 in
+`packages/corpus/lib/international/recipes/locale.ts`. The recipe reads
 them through Algorithm-R reservoir sampling with a reservoir of `RESERVOIR_CAP`, 1,200,000 per
 part, so memory stays bounded on a 1.5 GB input.
 
@@ -134,7 +141,10 @@ These five locales were added on 2026-09-22.
 
 Read by `COUNTRY_SOURCES` in `packages/corpus/lib/international/recipes/locale.ts` for the first
 time. These are pool sizes reported by the recipe's own reader on the run that generated each
-output, rather than corpus row counts. No corpus contains these rows yet.
+output, rather than corpus row counts. The first corpus to include these sources is
+`v0.6.0-register-surface`. Its training config, `v6.0.0-register-surface-60k.yaml`, lists 800,000 PT,
+500,000 CH, 300,000 HR, 150,000 SK and 150,000 LU rows, so the emitted counts below describe this
+run and only the PT and LU counts match that corpus.
 
 | locale | rows in the source CSV | reservoir drew | city-noise drops | rows emitted | skipped |
 | ------ | ---------------------: | -------------: | ---------------: | -----------: | ------: |
@@ -145,7 +155,8 @@ output, rather than corpus row counts. No corpus contains these rows yet.
 | LU     |                164,415 |        164,415 |                0 |      150,000 |       0 |
 
 SK and LU drew their whole source because it is smaller than `RESERVOIR_CAP`'s 1,200,000. Their
-emitted counts are set below the pool so no row is drawn twice.
+emitted counts are set below the pool so no row is drawn twice. Each emitted count is the run's
+`--count`.
 
 Three countries with an extract on disk are deliberately absent, each for a reason recorded at the
 `COUNTRY_SOURCES` call site: Saudi Arabia is Arabic script and this repository ships no Arabic

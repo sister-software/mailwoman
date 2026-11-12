@@ -26,8 +26,9 @@ reports these three by name for the installation it runs on.
 Without a license key, every `mailwoman` command ends with a two-line notice on stderr that states the
 branch. Every HTTP response from the native API and the drop-in servers includes a `Server` header naming
 the branch and a `Link: rel="license"` header pointing here. JSON responses include the same in an
-`engine` object. The notice records which branch applies, and every command runs the same with or
-without a key. The AGPL grants those rights directly, so exercising them requires no key.
+`engine` object. The notice records which branch applies. Every command runs the same with or
+without a key, with one exception: `mailwoman data pull` refuses a licensed bundle unless a valid key
+admits that bundle's tier. The AGPL grants those rights directly, so exercising them requires no key.
 
 ## The commercial branch
 
@@ -43,12 +44,13 @@ the [pricing page](/pricing).
 [`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md)
 in the repository is a reference template, and its own opening notice states that it isn't self-executing and
 grants no rights on its own. It has the published agreement's ten sections in the same order, plus a
-section 4a on third-party datasets, and four of the ten read
-differently from `commercial-2026-10`: the template defines the licensee generically where the
+section 4a on third-party datasets, and four of the ten differ
+in substance from `commercial-2026-10`: the template defines the licensee generically where the
 published agreement identifies the entity given at checkout, the template leaves fees and term open where
 the published agreement states the subscription price and the key-period mechanics, and the published
 agreement's attribution waiver also excludes the attribution owed for datasets the licensee downloads.
-The template covers those datasets in its section 4a. Read the published version for a purchase
+The template covers those datasets in its section 4a. Sections 2 and 3 differ by a few words, and
+section 9 is headed "Governing Law" in the template and "Applicable Law" in the published agreement. Read the published version for a purchase
 made under it. The template is where a negotiated agreement starts.
 
 ### What the commercial grant doesn't cover
@@ -145,7 +147,7 @@ An open-source or non-profit key expires on the next quarter lead date at least 
 issued. The lead dates are 11 March, 10 June, 10 September and 11 December. From 28 days before the
 date, `mailwoman license refresh` re-issues the key, and the notice counts the days down. An academic or
 student key lasts one year. An expired key leaves every artifact on disk working and stops new downloads
-until it is re-issued.
+of licensed bundles until it is re-issued.
 
 **Evaluate** for thirty days with an email address. An address receives one evaluation, and the key isn't
 re-issued. After it, declare or buy.

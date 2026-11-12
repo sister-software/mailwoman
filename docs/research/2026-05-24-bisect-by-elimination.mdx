@@ -13,7 +13,7 @@ If you've ever bisected a software regression, you already understand the method
 
 ## The setup in software terms
 
-Last week we shipped a "v0.4.0" model. A model contains millions of internal numbers (weights). We tune them for hours by feeding the model labeled examples and adjusting the weights according to how wrong each guess is. The output of that tuning is a single file (~50MB) that we copy to production.
+Yesterday we shipped a "v0.4.0" model. A model contains millions of internal numbers (weights). We tune them for hours by feeding the model labeled examples and adjusting the weights according to how wrong each guess is. The output of that tuning is a single file (~50MB) that we copy to production.
 
 v0.4.0 worked. We then changed several things in parallel to ship v0.5.0:
 

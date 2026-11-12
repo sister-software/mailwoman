@@ -58,7 +58,11 @@ Two conventions follow from the table, and measurement established both:
 - A trailing **post-directional joins the suffix**: `Pennsylvania Avenue NW` is
   `street: "Pennsylvania"`, `street_suffix: "Avenue NW"`. There's no post-directional tag, and this
   is what the corpus adapter emits (`packages/corpus/lib/us/adapters/tiger/street-decompose.ts`).
-- A **bare** post-directional with no type before it isn't a suffix: `Seymour East` stays folded.
+  The golden relabel emits the same two-word suffix (row class `split-suffix-postdirectional`). The
+  rule above limits a suffix span to one word, and the two haven't been reconciled.
+- A **bare** post-directional with no type before it isn't a suffix: the golden relabel leaves
+  `Seymour East` folded (row class `postdirectional-tail-only`). The TIGER adapter doesn't agree:
+  `decomposeStreet("Seymour East")` returns `street: "Seymour"` and `suffix: "East"`.
   A directional isn't a Pub-28 suffix, and the rows in that class are unit-contaminated
   (`1ST AVE SW BOX E`, where the trailing `E` is a box letter).
 
@@ -78,8 +82,10 @@ Three components read this convention, and they must agree with each other:
 
 Golden v0.1.2 and earlier folded the street, and per-locale-f1 joined the model's spans to match. That
 mismatch changed a release verdict. The v9.0.0 candidate read `us.street` 87.4 against an 87.8 floor and failed
-the eval floor because of a convention disagreement rather than a model regression. On v0.1.3 the same two models read
-71.7 (shipped 7.0.0) and 75.2 (candidate), so the sign of the delta flips.
+the eval floor because of a convention disagreement rather than a model regression. The floor came from the
+shipped 7.0.0's folded reading of 90.5 (`packages/mailwoman/tools/eval-harness/specs/v9.0.0-base.json`), so the
+candidate trailed by 3.1 points. On v0.1.3 the same two models read 71.7 (shipped 7.0.0) and 75.2 (candidate), so
+the candidate leads by 3.5 and the sign of the delta flips.
 
 ### Venue-level (Phase 3)
 
@@ -209,7 +215,7 @@ A `LocaleProfile.componentsSupported` array must be a subset of `COMPONENT_TAGS`
 
 ## Rationale for specific choices
 
-**Why `dependent_locality` and not `neighborhood` or `borough`?** WOF and ISO use `dependent_locality` for the general concept. Names like `borough` are locale-specific. Pick the umbrella term.
+**Why `dependent_locality` and not `neighborhood` or `borough`?** ISO uses `dependent_locality` for the general concept. WOF has no placetype by that name: the WOF admin adapter maps WOF's `borough`, `macrohood`, `neighbourhood` and `microhood` onto it. Names like `borough` are locale-specific. Pick the umbrella term.
 
 **Why split `street_prefix` from `street_prefix_particle`?** English `SE` and French `de la` are grammatically different, so synthesis pipelines need to treat them differently. A combined field produces worse training data.
 
@@ -224,7 +230,7 @@ highway and postal authorities rather than administrative ones. Mailwoman's `str
 locality and address. Because of that gap, `dependent_locality` is the only labeled slot below locality, so a
 street-decomposition corpus trains the model to put sub-locality material there. A proposal for a new tag states which
 hierarchy level the tag inhabits and which gazetteer layer the model sees for it at inference.
-Non-Western systems (JP chōme, banchi and gō, Mannheim's grid blocks, landmark-relative addresses) deepen
+Systems whose hierarchy differs (JP chōme, banchi and gō, Mannheim's grid blocks, landmark-relative addresses) deepen
 the gap.
 
 **Why were the JP tags declared before activation?** The declarations forced the Phase-0 type design to handle them, so activation at CJK Phase 2 required no changes to core types.

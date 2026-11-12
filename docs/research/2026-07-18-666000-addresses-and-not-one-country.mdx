@@ -35,7 +35,7 @@ I'd checked that the new rows had the tags I wanted: street, city, and postcode,
 
 ## International-form rows
 
-We built the fix for this a year ago and didn't apply it to the new pipeline. Our older locale recipe, the one behind the European countries, renders addresses in their native form and also renders a share of them in an _international_ form, the kind written on a parcel crossing a border: `12 Rue de Rivoli, Paris, France`. That form includes the country deliberately, and it is why adding France never taught the model to drop France. The new Overture pipeline skipped that step and used the addresses exactly as given, without countries.
+We'd already built the fix for this and didn't apply it to the new pipeline. Our older locale recipe, the one behind the European countries, renders addresses in their native form and also renders a share of them in an _international_ form, the kind written on a parcel crossing a border: `12 Rue de Rivoli, Paris, France`. That form includes the country deliberately, and it is why adding France never taught the model to drop France. The new Overture pipeline skipped that step and used the addresses exactly as given, without countries.
 
 Brazil therefore needs only a small change, and the design stays as it is. The change is to render a fraction of the new rows with the country included, so the training set stops teaching the model to omit it. Canada and Mexico ship unchanged, because that run passed. Brazil waits for the next build, and the fix is smaller than it seemed at 4 a.m.
 
@@ -43,4 +43,4 @@ Brazil therefore needs only a small change, and the design stays as it is. The c
 
 June's lesson was to _grade the coordinate the user sees rather than the layer you happened to build._ This one is related: **a model also learns from what your training data consistently omits.** The model can learn an omission as a rule when the omission repeats across a million rows.
 
-A simple two-point regression check caught this before any user saw it. The same check has now caught two different problems of this kind.
+A simple two-point regression check caught this before any user saw it. That's the second time a cheap check has caught a problem of this kind, after June's Toronto pin.

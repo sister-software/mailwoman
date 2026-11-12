@@ -14,11 +14,11 @@ This week our evals were wrong in that direction three times. One of them nearly
 
 ## One bad row out of twenty-seven
 
-We were grading a candidate model against a country-homograph set: addresses where the country name is also a US town, like "Lima, Peru" sitting next to "Lima, Ohio." The candidate scored 80.9 where the shipped model scored 83.3. The table showed a 2.4-point country regression, and a regression that size holds up a promote.
+We were grading a candidate model against a country-homograph set: addresses where the country name is also a US town, like "Lima, Peru" sitting next to "Lima, Ohio." The candidate scored a country F1 of 80.9 where the shipped model scored 83.3. The table showed a 2.4-point country regression, and a regression that size holds up a promote.
 
-We dumped the rows and diffed them, model against model. The entire 2.4 points was _one address_: `Avenida Arequipa, Lima 15046, Peru`. The candidate kept the street, the locality, and the postcode identical and dropped the trailing "Peru" entirely. Every other country in the same sentence shape resolved fine. Swap "Peru" for Chile, Bolivia, France, Jordan and the candidate gets them all. The set only has twenty-seven rows with a gold country, so a single flip moves the score by 3.7 points.
+We dumped the rows and diffed them, model against model. The entire 2.4 points was _one address_: `Avenida Arequipa, Lima 15046, Peru`. The candidate kept the street, the locality, and the postcode identical and dropped the trailing "Peru" entirely. Every other country in the same sentence shape resolved fine. Swap "Peru" for Chile, Bolivia, France, Jordan and the candidate gets them all. The set only has twenty-seven rows with a gold country, so each row is 3.7% of them.
 
-When one record can swing a metric by three and a half points, the metric measures that record more than it measures the model. The "regression" was one row, and we'd have let it sway a decision that mattered if we hadn't read the row.
+When one record can swing a metric by 2.4 points, the metric measures that record more than it measures the model. The "regression" was one row, and we'd have let it sway a decision that mattered if we hadn't read the row.
 
 ## The towns the scorer threw away
 
