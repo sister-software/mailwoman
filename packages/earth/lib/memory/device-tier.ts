@@ -61,13 +61,22 @@ export function stepDownTier(tier: DeviceTier): DeviceTier {
 }
 
 /**
+ * Whether the user agent and touch points describe an iPhone, iPod or iPad.
+ *
+ * iPadOS sends a Mac user agent, so a Mac user agent with more than one touch point is an iPad.
+ */
+export function isAppleTouchDevice(userAgent: string, maxTouchPoints: number): boolean {
+	return /iPhone|iPad|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && maxTouchPoints > 1)
+}
+
+/**
  * Chooses a tier from the device's pointer, screen and touch points, then steps it down once
  * when `deviceMemory` reports less than {@linkcode LOW_DEVICE_MEMORY_GIB}.
  *
- * iPadOS sends a Mac user agent, so a Mac user agent with more than one touch point is a tablet.
+ * An iPad that sends a Mac user agent is a tablet.
  */
 export function detectDeviceTier(signals: DeviceSignals): DeviceTier {
-	const iPadAsMac = /Macintosh/.test(signals.userAgent) && signals.maxTouchPoints > 1
+	const iPadAsMac = /Macintosh/.test(signals.userAgent) && isAppleTouchDevice(signals.userAgent, signals.maxTouchPoints)
 
 	let tier: DeviceTier
 

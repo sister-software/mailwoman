@@ -27,6 +27,12 @@ export default defineConfig({
 				name: "Mailwoman Earth",
 				shortName: "Earth",
 				themeColor: "#0b1020",
+				// The description is provisional.
+				// The operator supplies the final wording.
+				description:
+					"Type any address or place and see where it is. The parser runs on your device, and the map keeps what it has downloaded for use offline.",
+				categories: ["navigation", "utilities"],
+				maskableIcon: "/icon-maskable-512.png",
 			})
 		),
 		buildInfoPlugin({ app: "mailwoman-earth" }),
